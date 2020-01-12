@@ -1487,38 +1487,36 @@ class Points(object):
         """
         self._shuffle(useLog)
 
-    def fill(self, match, fill, points=None, returnModified=False,
-             useLog=None, **kwarguments):
+    def fillMatching(self, fillWith, matchingElements, points=None,
+                     returnModified=False, useLog=None, **kwarguments):
         """
         Replace given values in each point with other values.
 
         Fill matching values within each point with a specified value
-        based on the values in that point. The ``fill`` value can be
+        based on the values in that point. The ``fillWith`` value can be
         a constant or a determined based on unmatched values in the
         point. The match and fill modules in nimble offer common
         functions for these operations.
 
         Parameters
         ----------
-        match : value, list, or function
+        fillWith : value or function
+            * value - a value to fill each matching value in each point
+            * function - must be in the format:
+              fillWith(point, matchingElements) or
+              fillWith(point, matchingElements, **kwarguments)
+              and return the transformed point as a list of values.
+              Certain fill methods can be imported from nimble's fill
+              module.
+        matchingElements : value, list, or function
             * value - a value to locate within each point
             * list - values to locate within each point
             * function - must accept a single value and return True if
               the value is a match. Certain match types can be imported
-              from nimble's match module: missing, nonNumeric, zero, etc
-        fill : value or function
-            * value - a value to fill each matching value in each point
-            * function - must be in the format fill(point, match) or
-              fill(point, match, arguments) and return the transformed
-              point as a list of values. Certain fill methods can be
-              imported from nimble's fill module: mean, median, mode,
-              forwardFill, backwardFill, interpolation
-        arguments : dict
-            Any additional arguments being passed to the fill
-            function.
-        points : identifier or list of identifiers
-            Select specific points to apply fill to. If points is None,
-            the fill will be applied to all points.
+              from nimble's match module.
+        points : identifier, list of identifiers, None
+            Select specific points to apply the fill to. If points is
+            None, the fill will be applied to all points.
         returnModified : return an object containing True for the
             modified values in each point and False for unmodified
             values.
@@ -1529,10 +1527,12 @@ class Points(object):
             send to the logger regardless of the global option. If
             False, do **NOT** send to the logger, regardless of the
             global option.
+        kwarguments
+            Provide additional parameters to a ``fillWith`` function.
 
         See Also
         --------
-        nimble.match, nimble.fill
+         nimble.fill, nimble.match
 
         Examples
         --------
@@ -1544,7 +1544,7 @@ class Points(object):
         ...        [2, 2, 2],
         ...        ['na', 2, 2]]
         >>> data = nimble.createData('Matrix', raw)
-        >>> data.points.fill('na', -1)
+        >>> data.points.fillMatching(-1, 'na')
         >>> data
         Matrix(
             [[1.000  1.000 1.000 ]
@@ -1565,7 +1565,7 @@ class Points(object):
         ...        [2, 2, 2],
         ...        [None, 2, 2]]
         >>> data = nimble.createData('Matrix', raw)
-        >>> data.points.fill(match.missing, fill.mode, points=4)
+        >>> data.points.fillMatching(fill.mode, match.missing, points=4)
         >>> data
         Matrix(
             [[1.000 1.000 1.000]
@@ -1575,8 +1575,8 @@ class Points(object):
              [2.000 2.000 2.000]]
             )
         """
-        return self._fill(match, fill, points, returnModified, useLog,
-                          **kwarguments)
+        return self._fillMatching(fillWith, matchingElements, points,
+                                  returnModified, useLog,  **kwarguments)
 
     def normalize(self, subtract=None, divide=None, applyResultTo=None,
                   useLog=None):
@@ -2134,8 +2134,8 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _fill(self, match, fill, limitTo, returnModified, useLog=None,
-              **kwarguments):
+    def _fillMatching(self, match, fill, limitTo, returnModified, useLog=None,
+                      **kwarguments):
         pass
 
     @abstractmethod

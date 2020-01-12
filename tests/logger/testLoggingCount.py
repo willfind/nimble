@@ -97,7 +97,7 @@ match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 #      copy, featureReport, summaryReport, getTypeString, groupByFeature,
 #      hashCode, nameIsDefault, show, validate
 base_logged = [
-    'calculateOnElements', 'fillUsingAllData', 'featureReport',
+    'calculateOnElements', 'fillMatching', 'featureReport',
     'flattenToOneFeature', 'flattenToOnePoint', 'groupByFeature',
     'matchingElements', 'merge', 'replaceFeatureWithBinaryFeatures',
     'replaceRectangle', 'summaryReport', 'trainAndTestSets',
@@ -117,9 +117,9 @@ base_funcs = base_logged + base_notLogged
 base_tested = list(map(prefixAdder('Base'), base_funcs))
 
 features_logged = [
-    'append', 'calculate', 'copy', 'delete', 'extract', 'fill', 'insert',
-    'mapReduce', 'matching', 'normalize', 'retain', 'setName', 'setNames',
-    'shuffle', 'sort', 'transform', 'splitByParsing',
+    'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
+    'insert', 'mapReduce', 'matching', 'normalize', 'retain', 'setName',
+    'setNames', 'shuffle', 'sort', 'transform', 'splitByParsing',
     ]
 features_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
@@ -129,9 +129,9 @@ features_funcs = features_logged + features_notLogged
 features_tested = list(map(prefixAdder('Features'), features_funcs))
 
 points_logged = [
-    'append', 'calculate', 'copy', 'delete', 'extract', 'fill', 'insert',
-    'mapReduce', 'matching', 'normalize', 'retain', 'setName', 'setNames',
-    'shuffle', 'sort', 'transform', 'combineByExpandingFeatures',
+    'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
+    'insert', 'mapReduce', 'matching', 'normalize', 'retain', 'setName',
+    'setNames', 'shuffle', 'sort', 'transform', 'combineByExpandingFeatures',
     'splitByCollapsingFeatures',
     ]
 points_notLogged = [

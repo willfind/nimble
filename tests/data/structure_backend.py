@@ -8632,7 +8632,7 @@ class StructureModifying(StructureShared):
         assert toTestI == expi
 
 
-    def test_fillWIth_differentType(self):
+    def test_replaceRectangle_differentType(self):
         raw = [[11, 12, 13], [21, 22, 23], [31, 32, 33]]
         fill = [[0, 0], [0, 0]]
         exp = [[0, 0, 13], [0, 0, 23], [31, 32, 33]]

@@ -2926,7 +2926,7 @@ class Base(object):
 
         See Also
         --------
-        fillUsingAllData, nimble.data.points.Points.fill,
+        fillMatching, nimble.data.points.Points.fill,
         nimble.data.features.Features.fill
 
         Examples
@@ -3006,28 +3006,28 @@ class Base(object):
                       pointStart, featureStart, pointEnd, featureEnd)
 
 
-    def fillUsingAllData(self, match, fill, points=None, features=None,
-                         returnModified=False, useLog=None, **kwarguments):
+    def fillMatching(self, fillWith, matchingElements, points=None,
+                     features=None, returnModified=False, useLog=None,
+                     **kwarguments):
         """
         Replace matching values calculated using the entire data object.
 
-        Fill matching values with values based on the context of the
-        entire dataset.
+        Fill matching values with imputed values based on the context of
+        the entire dataset.
 
         Parameters
         ----------
-        match : value, list, or function
+        fillWith : function
+            a function in the format fillWith(feature, match) or
+            fillWith(feature, match, **kwarguments) and return the
+            transformed data as a nimble data object. Certain fill
+            methods can be imported from nimble's fill module.
+        matchingElements : value, list, or function
             * value - a value to locate within each feature
             * list - values to locate within each feature
             * function - must accept a single value and return True if
               the value is a match. Certain match types can be imported
-              from nimble's match module: missing, nonNumeric, zero, etc
-        fill : function
-            a function in the format fill(feature, match) or
-            fill(feature, match, arguments) and return the transformed
-            data as a nimble data object. Certain fill methods can be
-            imported from nimble's fill module:
-            kNeighborsRegressor, kNeighborsClassifier
+              from nimble's match module.
         points : identifier or list of identifiers
             Select specific points to apply fill to. If points is None,
             the fill will be applied to all points.
@@ -3045,7 +3045,7 @@ class Base(object):
             False, do **NOT** send to the logger, regardless of the
             global option.
         kwarguments
-            Any additional arguments being passed to the fill function.
+            Provide additional parameters to a ``fillWith`` function.
 
         See Also
         --------
@@ -3064,8 +3064,7 @@ class Base(object):
         ...        [2, 2, 2],
         ...        ['na', 2, 2]]
         >>> data = nimble.createData('Matrix', raw)
-        >>> data.fillUsingAllData('na', kNeighborsClassifier,
-        ...                       n_neighbors=3)
+        >>> data.fillMatching(kNeighborsClassifier, 'na', n_neighbors=3)
         >>> data
         Matrix(
             [[  1   1   1  ]
@@ -3076,9 +3075,9 @@ class Base(object):
             )
         """
         if returnModified:
-            modified = self.calculateOnElements(match, points=points,
-                                                features=features,
-                                                useLog=False)
+            modified = self.calculateOnElements(
+                matchingElements, points=points, features=features,
+                useLog=False)
             modNames = [name + "_modified" for name
                         in modified.features.getNames()]
             modified.features.setNames(modNames, useLog=False)
@@ -3091,12 +3090,12 @@ class Base(object):
         else:
             modified = None
 
-        if not callable(fill):
-            msg = "fill must be callable. If attempting to modify all "
+        if not callable(fillWith):
+            msg = "fillWith must be callable. If attempting to modify all "
             msg += "matching values to a constant, use either "
-            msg += "points.fill or features.fill."
+            msg += "points.fillMatching or features.fillMatching."
             raise InvalidArgumentType(msg)
-        tmpData = fill(self.copy(), match, **kwarguments)
+        tmpData = fillWith(self.copy(), matchingElements, **kwarguments)
         if points is None and features is None:
             self.referenceDataFrom(tmpData, useLog=False)
         else:
@@ -3104,8 +3103,8 @@ class Base(object):
                 return tmpData[i, j]
             self.transformElements(transform, points, features, useLog=False)
 
-        handleLogging(useLog, 'prep', "fillUsingAllData",
-                      self.getTypeString(), Base.fillUsingAllData, match, fill,
+        handleLogging(useLog, 'prep', "fillMatching", self.getTypeString(),
+                      Base.fillMatching, fillWith, matchingElements,
                       points, features, returnModified, **kwarguments)
 
         return modified

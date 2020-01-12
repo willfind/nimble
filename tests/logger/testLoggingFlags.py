@@ -379,12 +379,12 @@ def test_replaceRectangle():
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
-def test_fillUsingAllData():
+def test_fillMatching():
     for rType in nimble.data.available:
         def simpleFiller(obj, match):
             return nimble.createData(rType, numpy.zeros((18, 3)), useLog=False)
         def wrapped(obj, useLog):
-            obj.fillUsingAllData('a', fill=simpleFiller, useLog=useLog)
+            obj.fillMatching(simpleFiller, 'a', useLog=useLog)
 
         backend(wrapped, prepAndCheck, rType=rType)
 
@@ -626,16 +626,16 @@ def test_features_copy():
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
-def test_points_fill():
+def test_points_fillMatching():
     def wrapped(obj, useLog):
-        return obj.points.fill(match=1, fill=11, useLog=useLog)
+        return obj.points.fillMatching(fillWith=11, matchingElements=1, useLog=useLog)
 
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
-def test_features_fill():
+def test_features_fillMatching():
     def wrapped(obj, useLog):
-        return obj.features.fill(match=1, fill=11, useLog=useLog)
+        return obj.features.fillMatching(fillWith=11, matchingElements=1, useLog=useLog)
 
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)

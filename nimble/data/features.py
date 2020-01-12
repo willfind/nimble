@@ -1479,7 +1479,7 @@ class Features(object):
         """
         self._shuffle(useLog)
 
-    def fill(self, match, fill, features=None, returnModified=False,
+    def fillMatching(self, fillWith, matchingElements, features=None, returnModified=False,
              useLog=None, **kwarguments):
         """
         Replace given values in each feature with other values.
@@ -1492,23 +1492,21 @@ class Features(object):
 
         Parameters
         ----------
-        match : value, list, or function
+        fillWith : value or function
+            * value - a value to fill each matching value in each
+              feature
+            * function - must be in the format:
+              fillWith(feature, matchingElements) or
+              fillWith(feature, matchingElements, **kwarguments)
+              and return the transformed feature as a list of values.
+              Certain fill methods can be imported from nimble's fill
+              module.
+        matchingElements : value, list, or function
             * value - a value to locate within each feature
             * list - values to locate within each feature
             * function - must accept a single value and return True if
               the value is a match. Certain match types can be imported
-              from nimble's match module: missing, nonNumeric, zero, etc
-        fill : value or function
-            * value - a value to fill each matching value in each
-              feature
-            * function - must be in the format fill(feature, match) or
-              fill(feature, match, arguments) and return the transformed
-              feature as a list of values. Certain fill methods can be
-              imported from nimble's fill module: mean, median, mode,
-              forwardFill, backwardFill, interpolation
-        arguments : dict
-            Any additional arguments being passed to the fill
-            function.
+              from nimble's match module.
         features : identifier or list of identifiers
             Select specific features to apply fill to. If features is
             None, the fill will be applied to all features.
@@ -1522,10 +1520,12 @@ class Features(object):
             send to the logger regardless of the global option. If
             False, do **NOT** send to the logger, regardless of the
             global option.
+        kwarguments
+            Provide additional parameters to a ``fillWith`` function.
 
         See Also
         --------
-        nimble.match, nimble.fill
+         nimble.fill, nimble.match
 
         Examples
         --------
@@ -1537,7 +1537,7 @@ class Features(object):
         ...        [2, 2, 2],
         ...        ['na', 2, 2]]
         >>> data = nimble.createData('Matrix', raw)
-        >>> data.features.fill('na', -1)
+        >>> data.features.fillMatching(-1, 'na')
         >>> data
         Matrix(
             [[1.000  1.000 1.000 ]
@@ -1558,7 +1558,7 @@ class Features(object):
         ...        [2, 2, 2],
         ...        [None, 2, 2]]
         >>> data = nimble.createData('Matrix', raw)
-        >>> data.features.fill(match.missing, fill.mean, features=0)
+        >>> data.features.fillMatching(fill.mean, match.missing, features=0)
         >>> data
         Matrix(
             [[1.000 1.000 1.000]
@@ -1568,8 +1568,8 @@ class Features(object):
              [1.250 2.000 2.000]]
             )
         """
-        return self._fill(match, fill, features, returnModified, useLog,
-                          **kwarguments)
+        return self._fillMatching(fillWith, matchingElements, features,
+                                  returnModified, useLog, **kwarguments)
 
     def normalize(self, subtract=None, divide=None, applyResultTo=None,
                   useLog=None):
@@ -2074,8 +2074,8 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _fill(self, match, fill, limitTo, returnModified, useLog=None,
-              **kwarguments):
+    def _fillMatching(self, match, fill, limitTo, returnModified, useLog=None,
+                      **kwarguments):
         pass
 
     @abstractmethod

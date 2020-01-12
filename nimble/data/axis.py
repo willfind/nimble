@@ -647,14 +647,15 @@ class Axis(object):
         return ret
 
 
-    def _fill(self, toMatch, toFill, limitTo=None, returnModified=False,
-              useLog=None, **kwarguments):
+    def _fillMatching(self, fillWith, matchingElements, limitTo=None,
+              returnModified=False, useLog=None, **kwarguments):
         modified = None
-        toTransform = fill.factory(toMatch, toFill, **kwarguments)
+        toTransform = fill.factory(fillWith, matchingElements, **kwarguments)
 
         if returnModified:
             def bools(values):
-                return [True if toMatch(val) else False for val in values]
+                return [True if matchingElements(val) else False
+                        for val in values]
 
             modified = self._calculate(bools, limitTo, useLog=False)
             if isinstance(self, Points):
@@ -668,9 +669,10 @@ class Axis(object):
 
         self._transform(toTransform, limitTo, useLog=False)
 
-        handleLogging(useLog, 'prep', '{ax}s.fill'.format(ax=self._axis),
-                      self._base.getTypeString(), self._sigFunc('fill'),
-                      toMatch, toFill, limitTo, returnModified, **kwarguments)
+        funcName = '{ax}s.fillMatching'.format(ax=self._axis)
+        handleLogging(useLog, 'prep', funcName, self._base.getTypeString(),
+                      self._sigFunc('fillMatching'), fillWith,
+                      matchingElements, limitTo, returnModified, **kwarguments)
 
         return modified
 

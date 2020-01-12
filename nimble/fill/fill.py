@@ -10,29 +10,29 @@ from nimble.match import convertMatchToFunction
 from nimble.match import anyValues
 from nimble.exceptions import InvalidArgumentValue
 
-def factory(match, fill, **kwarguments):
+def factory(fillWith, matchingElements, **kwarguments):
     """
     Return a function for modifying a point or feature.
 
     The returned function accepts a point or feature and returns the
     modified point or feature as a list.  The modifications occur to any
-    value in the point or feature that return True for the ``match``
-    parameter and the new value is determined based on the ``fill``
-    parameter.
+    value in the point or feature that return True for the
+    ``matchingElements`` parameter and the new value is determined based
+    on the ``fillWith`` parameter.
 
     Parameters
     ----------
-    match : value or function
+    fillWith : value or function
+        * value - The value which will replace any matching values.
+        * function - Input a value and return the value which will
+          replace the input value. Nimble offers common use-case
+          functions in this module.
+    matchingElements : value or function
         * value - The value which should be filled if it occurs in the
           data.
         * function - Input a value and return True if that value should
           be filled. nimble offers common use-case functions in its
           match module.
-    fill : value or function
-        * value - The value which will replace any matching values.
-        * function - Input a value and return the value which will
-          replace the input value. Nimble offers common use-case
-          functions in this module.
     kwarguments
         Collection of extra key:value argument pairs to pass to
         fill function.
@@ -51,7 +51,7 @@ def factory(match, fill, **kwarguments):
 
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = nimble.createData('Matrix', raw)
-    >>> transform = factory('na', 0)
+    >>> transform = factory(0, 'na')
     >>> transform(data)
     [1, 0, 3, 0, 5]
 
@@ -61,26 +61,25 @@ def factory(match, fill, **kwarguments):
     >>> from nimble import match
     >>> raw = [1, 0, 3, 0, 5]
     >>> data = nimble.createData('Matrix', raw)
-    >>> transform = factory(match.zero, backwardFill)
+    >>> transform = factory(backwardFill, match.zero)
     >>> transform(data)
     [1.0, 3.0, 3.0, 5.0, 5.0]
     """
-    match = convertMatchToFunction(match)
-    if not hasattr(fill, '__call__'):
-        value = fill
+    if not hasattr(fillWith, '__call__'):
+        value = fillWith
         # for consistency use numpy.nan for None and nans
         if value is None or value != value:
             value = numpy.nan
-        fill = constant
+        fillWith = constant
         kwarguments['constantValue'] = value
     if kwarguments:
-        @functools.wraps(fill)
+        @functools.wraps(fillWith)
         def fillFunction(vector):
-            return fill(vector, match, **kwarguments)
+            return fillWith(vector, matchingElements, **kwarguments)
     else:
-        @functools.wraps(fill)
+        @functools.wraps(fillWith)
         def fillFunction(vector):
-            return fill(vector, match)
+            return fillWith(vector, matchingElements)
 
     return fillFunction
 

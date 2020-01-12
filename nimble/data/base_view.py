@@ -194,9 +194,9 @@ class BaseView(Base):
         readOnlyException("replaceRectangle")
 
     @exceptionDocstring
-    def fillUsingAllData(self, match, fill, points=None, features=None,
+    def fillMatching(self, match, fill, points=None, features=None,
                          returnModified=False, useLog=None, **kwarguments):
-        readOnlyException("fillUsingAllData")
+        readOnlyException("fillMatching")
 
     @exceptionDocstring
     def flattenToOnePoint(self, useLog=None):

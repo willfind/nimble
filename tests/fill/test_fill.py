@@ -6,7 +6,7 @@ from ..assertionHelpers import noLogEntryExpected
 
 @noLogEntryExpected
 def test_fillFactory_matchNumeric_fillNumeric():
-    func = fill.factory(1, 0)
+    func = fill.factory(0, 1)
     data = [1, 1, 2]
     exp = [0, 0, 2]
     for t in nimble.data.available:
@@ -15,7 +15,7 @@ def test_fillFactory_matchNumeric_fillNumeric():
 
 @noLogEntryExpected
 def test_fillFactory_matchString_fillString():
-    func = fill.factory('a', 'b')
+    func = fill.factory('b', 'a')
     data = ['a', 'a', 'c']
     exp = ['b', 'b', 'c']
     for t in nimble.data.available:
@@ -24,7 +24,7 @@ def test_fillFactory_matchString_fillString():
 
 @noLogEntryExpected
 def test_fillFactory_matchString_fillNumeric():
-    func = fill.factory('a', 0)
+    func = fill.factory(0, 'a')
     data = ['a', 'a', 'c']
     exp = [0, 0, 'c']
     for t in nimble.data.available:
@@ -33,7 +33,7 @@ def test_fillFactory_matchString_fillNumeric():
 
 @noLogEntryExpected
 def test_fillFactory_matchNumeric_fillString():
-    func = fill.factory(0, 'a')
+    func = fill.factory('a', 0)
     data = [0, 0, 1]
     exp = ['a', 'a', 1]
     for t in nimble.data.available:
@@ -42,7 +42,7 @@ def test_fillFactory_matchNumeric_fillString():
 
 @noLogEntryExpected
 def test_fillFactory_matchNumeric_fillNone():
-    func = fill.factory(1, None)
+    func = fill.factory(None, 1)
     data = [1, 1, 0]
     for t in nimble.data.available:
         toTest = nimble.createData(t, data, useLog=False)
@@ -52,7 +52,7 @@ def test_fillFactory_matchNumeric_fillNone():
 
 @noLogEntryExpected
 def test_fillFactory_matchString_fillNone():
-    func = fill.factory('a', None)
+    func = fill.factory(None, 'a')
     data = ['a', 'a', 0]
     for t in nimble.data.available:
         toTest = nimble.createData(t, data, useLog=False)
@@ -62,14 +62,14 @@ def test_fillFactory_matchString_fillNone():
 
 @noLogEntryExpected
 def test_fillFactory_matchList_fillConstant():
-    func = fill.factory([1, 2], 0)
+    func = fill.factory(0, [1, 2])
     data = [1, 2, 1, 2]
     exp = [0, 0, 0, 0]
     assert func(data) == exp
 
 @noLogEntryExpected
 def test_fillFactory_matchList_fillFunction():
-    func = fill.factory([1, 2], fill.mean)
+    func = fill.factory(fill.mean, [1, 2])
     # 1, 2 should be ignored for mean calculation
     data = [1, 2, 3]
     exp = [3, 3, 3]
@@ -77,14 +77,14 @@ def test_fillFactory_matchList_fillFunction():
 
 @noLogEntryExpected
 def test_fillFactory_matchFunction_fillConstant():
-    func = fill.factory(match.missing, 0)
+    func = fill.factory(0, match.missing)
     data = [None, None, None]
     exp = [0, 0, 0]
     assert func(data) == exp
 
 @noLogEntryExpected
 def test_fillFactory_matchFunction_fillFunction():
-    func = fill.factory(match.missing, fill.mean)
+    func = fill.factory(fill.mean, match.missing)
     data = [1, None, 5]
     exp = [1, 3, 5]
     assert func(data) == exp

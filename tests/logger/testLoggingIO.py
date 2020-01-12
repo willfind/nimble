@@ -393,13 +393,14 @@ def testPrepTypeFunctionsUseLog():
         {'replaceWith': 1, 'pointStart': 2, 'pointEnd': 4, 'featureStart': 0,
          'featureEnd': 0})
 
-    # fillUsingAllData
+    # fillMatching
     dataObj = nimble.createData("Matrix", data, useLog=False)
     def simpleFiller(obj, match, **kwargs):
         return nimble.createData('Matrix', numpy.zeros_like(dataObj.data))
-    dataObj.fillUsingAllData('a', fill=simpleFiller, a=1, b=3)
-    checkLogContents('fillUsingAllData', 'Matrix', {'match': 'a', 'fill': 'simpleFiller',
-                                                    'a': 1, 'b': 3})
+    dataObj.fillMatching(simpleFiller, 'a', a=1, b=3)
+    checkLogContents('fillMatching', 'Matrix',
+                     {'fillWith': 'simpleFiller','matchingElements': 'a',
+                      'a': 1, 'b': 3})
 
     # flattenToOnePoint
     dataObj = nimble.createData("DataFrame", data, useLog=False)
@@ -608,15 +609,17 @@ def testPrepTypeFunctionsUseLog():
     dataObj.features.append(toAppend)
     checkLogContents('features.append', "Matrix", {'toAppend': toAppend.name})
 
-    # points.fill
+    # points.fillMatching
     dataObj = nimble.createData("Matrix", data, useLog=False)
-    dataObj.points.fill(nimble.match.nonNumeric, 0)
-    checkLogContents('points.fill', "Matrix", {'match': 'nonNumeric', 'fill': 0})
+    dataObj.points.fillMatching(0, nimble.match.nonNumeric)
+    checkLogContents('points.fillMatching', "Matrix",
+                     {'fillWith': 0, 'matchingElements': 'nonNumeric'})
 
-    # features.fill
+    # features.fillMatching
     dataObj = nimble.createData("Matrix", data, useLog=False)
-    dataObj.features.fill(1, nimble.fill.mean, features=[1,2])
-    checkLogContents('features.fill', "Matrix", {'match': 1, 'fill': 'mean'})
+    dataObj.features.fillMatching(nimble.fill.mean, 1, features=[1,2])
+    checkLogContents('features.fillMatching', "Matrix",
+                     {'fillWith': 'mean', 'matchingElements': 1})
 
     # features.splitByParsing
     toSplit = [[1, 'a0', 2], [1, 'a1', 2], [3, 'b0', 4], [5, 'c0', 6]]

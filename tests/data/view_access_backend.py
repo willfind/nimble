@@ -54,7 +54,7 @@ class ViewAccess(DataTestObject):
         testObject = self.constructor(data)
 
         try:
-            testObject.fillUsingAllData(match='a', fill=0)
+            testObject.fillMatching(match='a', fill=0)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)
@@ -96,7 +96,7 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject.fillUsingAllData(0, nimble.fill.kNeighborsClassifier)
+            testObject.fillMatching(0, nimble.fill.kNeighborsClassifier)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)
@@ -242,7 +242,7 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject.points.fill(0, 99)
+            testObject.points.fillMatching(99, 0)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)
@@ -326,7 +326,7 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject.features.fill(0, 99)
+            testObject.features.fillMatching(99, 0)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)
