@@ -43,7 +43,7 @@ class ListAxis(Axis):
         managed separately by each frontend function.
         """
         pointNames, featureNames = self._getStructuralNames(targetList)
-        if isinstance(self, Points):
+        if self._axis == 'point':
             satisfying = [self._base.data[pt] for pt in targetList]
             if structure != 'copy':
                 keepList = [i for i in range(len(self)) if i not in targetList]
@@ -75,7 +75,7 @@ class ListAxis(Axis):
 
     def _sort_implementation(self, indexPosition):
         # run through target axis and change indices
-        if isinstance(self, Points):
+        if self._axis == 'point':
             source = copy.copy(self._base.data)
             for i in range(len(self._base.data)):
                 self._base.data[i] = source[indexPosition[i]]
@@ -99,7 +99,7 @@ class ListAxis(Axis):
 
         axisNames, offAxisNames = uniqueNameGetter(self._base, self._axis,
                                                    uniqueIndices)
-        if isinstance(self, Points):
+        if self._axis == 'point':
             return nimble.createData('List', uniqueData, pointNames=axisNames,
                                      featureNames=offAxisNames, useLog=False)
         else:
@@ -107,7 +107,7 @@ class ListAxis(Axis):
                                       featureNames=axisNames, useLog=False)
 
     def _repeat_implementation(self, totalCopies, copyValueByValue):
-        if isinstance(self, Points):
+        if self._axis == 'point':
             if copyValueByValue:
                 repeated = [list(lst) for lst in self._base.data
                             for _ in range(totalCopies)]

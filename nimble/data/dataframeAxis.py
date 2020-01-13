@@ -46,7 +46,7 @@ class DataFrameAxis(Axis):
         """
         update self.data.index or self.data.columns
         """
-        if isinstance(self, Points):
+        if self._axis == 'point':
             self._base.data.index = range(len(self._base.data.index))
         else:
             self._base.data.columns = range(len(self._base.data.columns))
@@ -68,7 +68,7 @@ class DataFrameAxis(Axis):
         df = self._base.data
 
         pointNames, featureNames = self._getStructuralNames(targetList)
-        if isinstance(self, Points):
+        if self._axis == 'point':
             ret = df.values[targetList, :]
             axis = 0
         else:
@@ -88,7 +88,7 @@ class DataFrameAxis(Axis):
 
     def _sort_implementation(self, indexPosition):
         # use numpy indexing to change the ordering
-        if isinstance(self, Points):
+        if self._axis == 'point':
             self._base.data = self._base.data.iloc[indexPosition, :]
         else:
             self._base.data = self._base.data.iloc[:, indexPosition]
@@ -106,7 +106,7 @@ class DataFrameAxis(Axis):
         axisNames, offAxisNames = uniqueNameGetter(self._base, self._axis,
                                                    uniqueIndices)
 
-        if isinstance(self, Points):
+        if self._axis == 'point':
             return nimble.createData('DataFrame', uniqueData,
                                      pointNames=axisNames,
                                      featureNames=offAxisNames, useLog=False)
@@ -116,7 +116,7 @@ class DataFrameAxis(Axis):
                                      featureNames=axisNames, useLog=False)
 
     def _repeat_implementation(self, totalCopies, copyValueByValue):
-        if isinstance(self, Points):
+        if self._axis == 'point':
             axis = 0
             ptDim = totalCopies
             ftDim = 1

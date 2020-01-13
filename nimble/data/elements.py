@@ -787,6 +787,8 @@ class ElementIterator(object):
         self._source = source
         self._ptPosition = 0
         self._ftPosition = 0
+        self._numPts = len(self._source.points)
+        self._numFts = len(self._source.features)
 
     def __iter__(self):
         return self
@@ -795,8 +797,8 @@ class ElementIterator(object):
         """
         Get next item
         """
-        while self._ptPosition < len(self._source.points):
-            while self._ftPosition < len(self._source.features):
+        while self._ptPosition < self._numPts:
+            while self._ftPosition < self._numFts:
                 value = self._source[self._ptPosition, self._ftPosition]
                 self._ftPosition += 1
                 return value

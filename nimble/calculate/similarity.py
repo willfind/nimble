@@ -1,9 +1,13 @@
+
+import itertools
+
 import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.calculate import fractionIncorrect
 from nimble.calculate import varianceFractionRemaining
+from nimble.data.dataHelpers import createDataNoValidation
 
 
 def _validatePredictedAsLabels(predictedValues):
@@ -106,7 +110,7 @@ rSquared.optimal = 'max'
 
 
 def confusionMatrix(knownValues, predictedValues, labels=None,
-                    outputFractions=False):
+                    convertCountsToFractions=False):
     """
     Generate a confusion matrix for known and predicted label values.
 
@@ -129,7 +133,7 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
         pointNames with the prefixes "known_" and "predicted_",
         respectively.  If labels is None, the prefixes will be applied
         directly to the unique values found in ``knownLabels``.
-    outputFractions : bool
+    convertCountsToFractions : bool
         If False, the default, elements are counts. If True, the counts
         are converted to fractions by dividing by the total number of
         observations.
@@ -190,7 +194,8 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
     ...         ['dog'], ['cat'], ['fish']]
     >>> knownObj = nimble.createData('Matrix', known)
     >>> predObj = nimble.createData('Matrix', pred)
-    >>> cm = confusionMatrix(knownObj, predObj, outputFractions=True)
+    >>> cm = confusionMatrix(knownObj, predObj,
+    ...                      convertCountsToFractions=True)
     >>> print(cm)
                      known_cat known_dog known_fish
     <BLANKLINE>
@@ -216,74 +221,72 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
         msg += 'the range 0 to len(labels)'
         raise InvalidArgumentType(msg)
 
+    numPts = len(knownValues.points)
+    labelsProvided = labels is not None
+
+    mappedLabels = {} # cache mapped labels
+    def mapInt(val):
+        try:
+            return mappedLabels[val]
+        except KeyError:
+            try:
+                if val % 1 == 0:
+                    mappedLabels[val] = int(val)
+                    return int(val)
+                return val
+            except TypeError:
+                return val
+
     knownLabels = set()
     confusionDict = {}
     for kVal, pVal in zip(knownValues.elements, predictedValues.elements):
+        if labelsProvided:
+            try:
+                kVal = labels[mapInt(kVal)]
+            except KeyError:
+                msg = '{kVal} is not a valid key for the labels argument'
+                raise KeyError(msg.format(kVal=kVal))
+            except IndexError:
+                msg = '{kVal} is not a valid index for the labels argument'
+                raise IndexError(msg.format(kVal=mapInt(kVal)))
+            # safe to assume predicted labels will be one of known labels?
+            pVal = labels[mapInt(pVal)]
+
         knownLabels.add(kVal)
         if (kVal, pVal) in confusionDict:
             confusionDict[(kVal, pVal)] += 1
         else:
             confusionDict[(kVal, pVal)] = 1
 
-    knownLabels = sorted(list(knownLabels))
-    confusionMtx = []
-    for pLabel in knownLabels:
-        point = []
-        for kLabel in knownLabels:
-            try:
-                val = confusionDict[(kLabel, pLabel)]
-                if outputFractions:
-                    point.append(val / len(knownValues.points))
-                else:
-                    point.append(val)
-            except KeyError:
-                point.append(0)
-        confusionMtx.append(point)
+    if labels is None:
+        knownLabels = sorted(list(map(mapInt, knownLabels)))
+    elif isinstance(labels, dict):
+        knownLabels = [labels[key] for key in sorted(labels)]
+    else:
+        knownLabels = labels
 
-    def mapInt(val):
+    length = len(knownLabels)
+    if convertCountsToFractions:
+        dtype = float
+    else:
+        dtype = int
+
+    confusionMtx = numpy.zeros((length, length), dtype=dtype)
+
+    for pInfo, kInfo in itertools.product(enumerate(knownLabels), repeat=2):
+        pIdx, pLbl = pInfo
+        kIdx, kLbl = kInfo
         try:
-            if val % 1 == 0:
-                return int(val)
-            return val
-        except TypeError:
-            return val
+            value = confusionDict[(kLbl, pLbl)]
+            if convertCountsToFractions:
+                value /= numPts
+            confusionMtx[pIdx, kIdx] = value
+        except KeyError:
+            pass # never predicted keep value as zero at this index
 
     asType = knownValues.getTypeString()
-    if labels is not None and len(labels) != len(knownLabels):
-        msg = 'labels contained {0} labels '.format(len(labels))
-        msg += 'but knownValues contained {0}. '.format(len(knownLabels))
-        msg += 'The labels identified in knownValues were '
-        msg += str(knownLabels)
-        raise InvalidArgumentValue(msg)
-    if isinstance(labels, dict):
-        try:
-            knownLabels = [labels[l] for l in knownLabels]
-        except KeyError:
-            msg = 'labels contained keys which were not identified in '
-            msg += 'knownValues. The labels identified in knownValues were '
-            msg += str(knownLabels)
-            raise KeyError(msg)
-    elif isinstance(labels, list):
-        if knownLabels != list(range(len(knownLabels))):
-            msg = 'A list can only be used for labels if the labels in '
-            msg += 'knownValues represent index values (they are in range '
-            msg += '0 to len(labels)) for the labels list . The labels '
-            msg += 'identified in knownValues were '
-            msg += str(list(map(mapInt, knownLabels)))
-            raise IndexError(msg)
-        knownLabels = labels
-    else: # no alternate labels provided, using the values in knownLabels
-        # Appending an integer to point/featureNames looks better and makes
-        # sense given this applies to classification problems. So we convert
-        # floats to integers, if possible, before defining point/featureNames.
-        knownLabels = list(map(mapInt, knownLabels))
-
     fNames = ['known_' + str(label) for label in knownLabels]
     pNames = ['predicted_' + str(label) for label in knownLabels]
-    if outputFractions:
-        eType = float
-    else:
-        eType = int
 
-    return nimble.createData(asType, confusionMtx, pNames, fNames,
-                             elementType=eType, useLog=False)
+    return createDataNoValidation(asType, confusionMtx, pNames, fNames,
+                                  reuseData=True)
