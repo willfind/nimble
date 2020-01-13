@@ -201,7 +201,7 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
     """
     if not (isinstance(knownValues, nimble.data.Base)
             and isinstance(predictedValues, nimble.data.Base)):
-        msg = 'knownValues and predictedValues must be a nimble data objects'
+        msg = 'knownValues and predictedValues must be nimble data objects'
         raise InvalidArgumentType(msg)
     if not knownValues.shape[1] == predictedValues.shape[1] == 1:
         msg = 'knownValues and predictedValues must each be a single feature'
@@ -240,6 +240,14 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
                 point.append(0)
         confusionMtx.append(point)
 
+    def mapInt(val):
+        try:
+            if val % 1 == 0:
+                return int(val)
+            return val
+        except TypeError:
+            return val
+
     asType = knownValues.getTypeString()
     if labels is not None and len(labels) != len(knownLabels):
         msg = 'labels contained {0} labels '.format(len(labels))
@@ -260,21 +268,14 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
             msg = 'A list can only be used for labels if the labels in '
             msg += 'knownValues represent index values (they are in range '
             msg += '0 to len(labels)) for the labels list . The labels '
-            msg += 'identified in knownValues were ' + str(knownLabels)
+            msg += 'identified in knownValues were '
+            msg += str(list(map(mapInt, knownLabels)))
             raise IndexError(msg)
         knownLabels = labels
     else: # no alternate labels provided, using the values in knownLabels
         # Appending an integer to point/featureNames looks better and makes
         # sense given this applies to classification problems. So we convert
         # floats to integers, if possible, before defining point/featureNames.
-        def mapInt(val):
-            try:
-                if val % 1 == 0:
-                    return int(val)
-                return val
-            except TypeError:
-                return val
-
         knownLabels = list(map(mapInt, knownLabels))
 
     fNames = ['known_' + str(label) for label in knownLabels]

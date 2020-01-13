@@ -63,6 +63,7 @@ def f1Score(knownValues, predictedValues):
 
     return 2 * ((precision * recall) / (precision + recall))
 
+f1Score.optimal = 'max'
 
 ###########
 # Helpers #
