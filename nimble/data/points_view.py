@@ -80,7 +80,7 @@ class PointsView(Points):
 
     @exceptionDocstring
     def fillMatching(self, fillWith, matchingElements, points=None,
-                     returnModified=False, useLog=None, **kwarguments):
+                     useLog=None, **kwarguments):
         readOnlyException('fill')
 
     @exceptionDocstring

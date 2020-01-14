@@ -1488,7 +1488,7 @@ class Points(object):
         self._shuffle(useLog)
 
     def fillMatching(self, fillWith, matchingElements, points=None,
-                     returnModified=False, useLog=None, **kwarguments):
+                     useLog=None, **kwarguments):
         """
         Replace given values in each point with other values.
 
@@ -1517,9 +1517,6 @@ class Points(object):
         points : identifier, list of identifiers, None
             Select specific points to apply the fill to. If points is
             None, the fill will be applied to all points.
-        returnModified : return an object containing True for the
-            modified values in each point and False for unmodified
-            values.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1576,7 +1573,7 @@ class Points(object):
             )
         """
         return self._fillMatching(fillWith, matchingElements, points,
-                                  returnModified, useLog,  **kwarguments)
+                                  useLog,  **kwarguments)
 
     def normalize(self, subtract=None, divide=None, applyResultTo=None,
                   useLog=None):
@@ -2134,8 +2131,7 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _fillMatching(self, match, fill, limitTo, returnModified, useLog=None,
-                      **kwarguments):
+    def _fillMatching(self, match, fill, limitTo, useLog=None, **kwarguments):
         pass
 
     @abstractmethod

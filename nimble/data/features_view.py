@@ -80,7 +80,7 @@ class FeaturesView(Features):
 
     @exceptionDocstring
     def fillMatching(self, fillWith, matchingElements, features=None,
-                     returnModified=False, useLog=None, **kwarguments):
+                     useLog=None, **kwarguments):
         readOnlyException('fill')
 
     @exceptionDocstring

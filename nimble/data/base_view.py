@@ -195,7 +195,7 @@ class BaseView(Base):
 
     @exceptionDocstring
     def fillMatching(self, match, fill, points=None, features=None,
-                         returnModified=False, useLog=None, **kwarguments):
+                     useLog=None, **kwarguments):
         readOnlyException("fillMatching")
 
     @exceptionDocstring

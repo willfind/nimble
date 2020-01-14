@@ -1479,8 +1479,8 @@ class Features(object):
         """
         self._shuffle(useLog)
 
-    def fillMatching(self, fillWith, matchingElements, features=None, returnModified=False,
-             useLog=None, **kwarguments):
+    def fillMatching(self, fillWith, matchingElements, features=None,
+                     useLog=None, **kwarguments):
         """
         Replace given values in each feature with other values.
 
@@ -1510,9 +1510,6 @@ class Features(object):
         features : identifier or list of identifiers
             Select specific features to apply fill to. If features is
             None, the fill will be applied to all features.
-        returnModified : return an object containing True for the
-            modified values in each feature and False for unmodified
-            values.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1569,7 +1566,7 @@ class Features(object):
             )
         """
         return self._fillMatching(fillWith, matchingElements, features,
-                                  returnModified, useLog, **kwarguments)
+                                  useLog, **kwarguments)
 
     def normalize(self, subtract=None, divide=None, applyResultTo=None,
                   useLog=None):
@@ -2074,8 +2071,7 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _fillMatching(self, match, fill, limitTo, returnModified, useLog=None,
-                      **kwarguments):
+    def _fillMatching(self, match, fill, limitTo, useLog=None, **kwarguments):
         pass
 
     @abstractmethod

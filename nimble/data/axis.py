@@ -648,33 +648,19 @@ class Axis(object):
 
 
     def _fillMatching(self, fillWith, matchingElements, limitTo=None,
-              returnModified=False, useLog=None, **kwarguments):
-        modified = None
+                      useLog=None, **kwarguments):
+        # our fill functions that also need access to the base data
+        needData = [fill.kNeighborsRegressor, fill.kNeighborsClassifier]
+        if fillWith in needData and 'data' not in kwarguments:
+            kwarguments['data'] = self._base.copy()
         toTransform = fill.factory(fillWith, matchingElements, **kwarguments)
-
-        if returnModified:
-            def bools(values):
-                return [True if matchingElements(val) else False
-                        for val in values]
-
-            modified = self._calculate(bools, limitTo, useLog=False)
-            if isinstance(self, Points):
-                currNames = modified.points.getNames()
-                modNames = [n + "_modified" for n in currNames]
-                modified.points.setNames(modNames, useLog=False)
-            else:
-                currNames = modified.features.getNames()
-                modNames = [n + "_modified" for n in currNames]
-                modified.features.setNames(modNames, useLog=False)
 
         self._transform(toTransform, limitTo, useLog=False)
 
         funcName = '{ax}s.fillMatching'.format(ax=self._axis)
         handleLogging(useLog, 'prep', funcName, self._base.getTypeString(),
                       self._sigFunc('fillMatching'), fillWith,
-                      matchingElements, limitTo, returnModified, **kwarguments)
-
-        return modified
+                      matchingElements, limitTo, **kwarguments)
 
 
     def _normalize(self, subtract, divide, applyResultTo, useLog=None):

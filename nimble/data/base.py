@@ -972,7 +972,8 @@ class Base(object):
                   or numpy.issubdtype(values.dtype, numpy.bool_)):
             createDataKwargs['elementType'] = numpy.object_
 
-        ret = nimble.createData(optType, values, **createDataKwargs)
+        ret = nimble.createData(optType, values, treatAsMissing=[None],
+                                **createDataKwargs)
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
@@ -3007,8 +3008,7 @@ class Base(object):
 
 
     def fillMatching(self, fillWith, matchingElements, points=None,
-                     features=None, returnModified=False, useLog=None,
-                     **kwarguments):
+                     features=None, useLog=None, **kwarguments):
         """
         Replace matching values calculated using the entire data object.
 
@@ -3034,9 +3034,6 @@ class Base(object):
         features : identifier or list of identifiers
             Select specific features to apply fill to. If features is
             None, the fill will be applied to all features.
-        returnModified : return an object containing True for the
-            modified values in each feature and False for unmodified
-            values.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -3054,42 +3051,8 @@ class Base(object):
 
         Examples
         --------
-        Fill using the value that occurs most often in each points 3
-        nearest neighbors.
-
-        >>> from nimble.fill import kNeighborsClassifier
-        >>> raw = [[1, 1, 1],
-        ...        [1, 1, 1],
-        ...        [1, 1, 'na'],
-        ...        [2, 2, 2],
-        ...        ['na', 2, 2]]
-        >>> data = nimble.createData('Matrix', raw)
-        >>> data.fillMatching(kNeighborsClassifier, 'na', n_neighbors=3)
-        >>> data
-        Matrix(
-            [[  1   1   1  ]
-             [  1   1   1  ]
-             [  1   1 1.000]
-             [  2   2   2  ]
-             [1.000 2   2  ]]
-            )
+        TODO
         """
-        if returnModified:
-            modified = self.calculateOnElements(
-                matchingElements, points=points, features=features,
-                useLog=False)
-            modNames = [name + "_modified" for name
-                        in modified.features.getNames()]
-            modified.features.setNames(modNames, useLog=False)
-            if points is not None and features is not None:
-                modified = modified[points, features]
-            elif points is not None:
-                modified = modified[points, :]
-            elif features is not None:
-                modified = modified[:, features]
-        else:
-            modified = None
-
         if not callable(fillWith):
             msg = "fillWith must be callable. If attempting to modify all "
             msg += "matching values to a constant, use either "
@@ -3105,9 +3068,7 @@ class Base(object):
 
         handleLogging(useLog, 'prep', "fillMatching", self.getTypeString(),
                       Base.fillMatching, fillWith, matchingElements,
-                      points, features, returnModified, **kwarguments)
-
-        return modified
+                      points, features, **kwarguments)
 
     def _flattenNames(self, discardAxis):
         """

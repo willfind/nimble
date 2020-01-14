@@ -58,7 +58,7 @@ class ListPoints(ListAxis, Points):
                 msg += "as features in this object"
                 raise InvalidArgumentValue(msg)
 
-            self._base.data[i] = currRet
+            self._base.data[i] = list(currRet)
 
     # def _flattenToOne_implementation(self):
     #     onto = self._base.data[0]

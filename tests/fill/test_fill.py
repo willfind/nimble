@@ -300,106 +300,182 @@ def test_interpolate_xKwargIncluded_exception():
 
 @noLogEntryExpected
 def test_kNeighborsRegressor_noMatches():
+    vect = [[1, 1, 1]]
     data = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
     match = lambda x: False
     for t in nimble.data.available:
-        toTest = nimble.createData(t, data, useLog=False)
+        toTest = nimble.createData(t, vect, useLog=False)
+        dataObj = nimble.createData(t, data, useLog=False)
         expTest = toTest.copy()
-        assert fill.kNeighborsRegressor(toTest, match) == expTest
+        assert fill.kNeighborsRegressor(toTest, match, dataObj) == expTest
 
 @noLogEntryExpected
 def test_kNeighborsRegressor_withMatch_K1():
+    vect = [[1, 1, None]]
     data = [[1, 1, 1], [1, 1, None], [2, 2, 2], [2, 2, 2], [None, 3, 3], [3, 3, 3]]
     match = lambda x: x != x
     arguments = {'n_neighbors': 1}
-    expData = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
+    expVect = [[1, 1, 1]]
     for t in nimble.data.available:
-        toTest = nimble.createData(t, data, useLog=False)
-        expTest = nimble.createData(t, expData, useLog=False)
-        assert fill.kNeighborsRegressor(toTest, match, **arguments) == expTest
+        toTest = nimble.createData(t, vect, useLog=False)
+        dataObj = nimble.createData(t, data, useLog=False)
+        expTest = nimble.createData(t, expVect, useLog=False)
+        assert fill.kNeighborsRegressor(toTest, match, dataObj, **arguments) == expTest
 
 @noLogEntryExpected
 def test_kNeighborsRegressor_withMatch_K3():
+    vect = [[1, 1, None]]
     data = [[1, 1, 5], [1, 1, None], [2, 2, 2], [2, 2, 2], [None, 3, 3], [5, 3, 3]]
     match = lambda x: x != x
     arguments = {'n_neighbors': 3}
-    expData = [[1, 1, 5], [1, 1, 3], [2, 2, 2], [2, 2, 2], [3, 3, 3], [5, 3, 3]]
+    expVect = [[1, 1, 3]]
     for t in nimble.data.available:
-        toTest = nimble.createData(t, data, useLog=False)
-        expTest = nimble.createData(t, expData, useLog=False)
-        assert fill.kNeighborsRegressor(toTest, match, **arguments) == expTest
+        toTest = nimble.createData(t, vect, useLog=False)
+        dataObj = nimble.createData(t, data, useLog=False)
+        expTest = nimble.createData(t, expVect, useLog=False)
+        assert fill.kNeighborsRegressor(toTest, match, dataObj, **arguments) == expTest
 
 @noLogEntryExpected
 def test_kNeighborsRegressor_multipleMatch_K1():
+    vect = [[1, None, None]]
     data = [[1, 1, 1], [1, None, None], [2, 2, 2], [2, 2, 2], [None, 3, None], [3, 3, 3]]
     match = lambda x: x != x
     arguments = {'n_neighbors': 1}
-    expData = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
+    expVect = [[1, 1, 1]]
     for t in nimble.data.available:
-        toTest = nimble.createData(t, data, useLog=False)
-        expTest = nimble.createData(t, expData, useLog=False)
-        assert fill.kNeighborsRegressor(toTest, match, **arguments) == expTest
+        toTest = nimble.createData(t, vect, useLog=False)
+        dataObj = nimble.createData(t, data, useLog=False)
+        expTest = nimble.createData(t, expVect, useLog=False)
+        assert fill.kNeighborsRegressor(toTest, match, dataObj, **arguments) == expTest
 
 @noLogEntryExpected
 def test_kNeighborsRegressor_multipleMatch_K3():
+    vect = [1, None, None]
     data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
     match = lambda x: x != x
     arguments = {'n_neighbors': 3}
-    expData = [[1, 2, 6], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
+    expVect = [[1, 2, 6]]
     for t in nimble.data.available:
-        toTest = nimble.createData(t, data, useLog=False)
-        expTest = nimble.createData(t, expData, useLog=False)
-        assert fill.kNeighborsRegressor(toTest, match, **arguments) == expTest
+        toTest = nimble.createData(t, vect, useLog=False)
+        dataObj = nimble.createData(t, data, useLog=False)
+        expTest = nimble.createData(t, expVect, useLog=False)
+        assert fill.kNeighborsRegressor(toTest, match, dataObj, **arguments) == expTest
 
-@noLogEntryExpected
-def test_kNeighborsClassifier_noMatches():
-    data = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
-    match = lambda x: False
-    for t in nimble.data.available:
-        toTest = nimble.createData(t, data, useLog=False)
-        expTest = toTest.copy()
-        assert fill.kNeighborsClassifier(toTest, match) == expTest
-
-@noLogEntryExpected
-def test_kNeighborsClassifier_withMatch_K1():
-    data = [[1, 1, 1], [1, 1, None], [2, 2, 2], [2, 2, 2], [None, 3, 3], [3, 3, 3]]
-    match = lambda x: x != x
-    arguments = {'n_neighbors': 1}
-    expData = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
-    for t in nimble.data.available:
-        toTest = nimble.createData(t, data, useLog=False)
-        expTest = nimble.createData(t, expData, useLog=False)
-        assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest
-
-@noLogEntryExpected
-def test_kNeighborsClassifier_withMatch_K3():
-    data = [[1, 1, 1], [1, 1, None], [2, 2, 2], [2, 2, 2], [None, 3, 3], [3, 3, 3]]
-    match = lambda x: x != x
-    arguments = {'n_neighbors': 3}
-    expData = [[1, 1, 1], [1, 1, 2], [2, 2, 2], [2, 2, 2], [2, 3, 3], [3, 3, 3]]
-    for t in nimble.data.available:
-        toTest = nimble.createData(t, data, useLog=False)
-        expTest = nimble.createData(t, expData, useLog=False)
-        assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest
-
-@noLogEntryExpected
-def test_kNeighborsClassifier_multipleMatch_K1():
-    data = [[1, 1, 1], [1, None, None], [2, 2, 2], [2, 2, 2], [None, 3, None], [3, 3, 3]]
-    match = lambda x: x != x
-    arguments = {'n_neighbors': 1}
-    expData = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
-    for t in nimble.data.available:
-        toTest = nimble.createData(t, data, useLog=False)
-        expTest = nimble.createData(t, expData, useLog=False)
-        assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest
-
-@noLogEntryExpected
-def test_kNeighborsClassifier_multipleMatch_K3():
+def test_kNeighborsRegressor_featureProvided():
+    vect = [[1], [None], [None]]
     data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
     match = lambda x: x != x
     arguments = {'n_neighbors': 3}
-    expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
     for t in nimble.data.available:
-        toTest = nimble.createData(t, data, useLog=False)
-        expTest = nimble.createData(t, expData, useLog=False)
-        assert fill.kNeighborsClassifier(toTest, match, **arguments) == expTest
+        toTest = nimble.createData(t, vect, useLog=False)
+        dataObj = nimble.createData(t, data, useLog=False)
+        try:
+            fill.kNeighborsRegressor(toTest, match, dataObj, **arguments)
+            assert False # expected InvalidArgumentValue
+        except InvalidArgumentValue:
+            pass
+
+def test_kNeighborsRegressor_exception_allMatches():
+    vect = [None, None, None]
+    data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
+    match = lambda x: x != x
+    arguments = {'n_neighbors': 3}
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, vect, useLog=False)
+        dataObj = nimble.createData(t, data, useLog=False)
+        try:
+            fill.kNeighborsRegressor(toTest, match, dataObj, **arguments)
+            assert False # expected InvalidArgumentValue
+        except InvalidArgumentValue:
+            pass
+
+@noLogEntryExpected
+def test_kNeighborsClassifier_noMatches():
+    vect = [[1, 1, 1]]
+    data = [[1, 1, 1], [1, 1, 1], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3]]
+    match = lambda x: False
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, vect, useLog=False)
+        dataObj = nimble.createData(t, data, useLog=False)
+        expTest = toTest.copy()
+        assert fill.kNeighborsClassifier(toTest, match, dataObj) == expTest
+
+@noLogEntryExpected
+def test_kNeighborsClassifier_withMatch_K1():
+    vect = [[1, 1, None]]
+    data = [[1, 1, 1], [1, 1, None], [2, 2, 2], [2, 2, 2], [None, 3, 3], [3, 3, 3]]
+    match = lambda x: x != x
+    arguments = {'n_neighbors': 1}
+    expVect = [[1, 1, 1]]
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, vect, useLog=False)
+        dataObj = nimble.createData(t, data, useLog=False)
+        expTest = nimble.createData(t, expVect, useLog=False)
+        assert fill.kNeighborsClassifier(toTest, match, dataObj, **arguments) == expTest
+
+@noLogEntryExpected
+def test_kNeighborsClassifier_withMatch_K3():
+    vect = [[1, 1, None]]
+    data = [[1, 1, 1], [1, 1, None], [2, 2, 2], [2, 2, 2], [None, 3, 3], [3, 3, 3]]
+    match = lambda x: x != x
+    arguments = {'n_neighbors': 3}
+    expVect = [[1, 1, 2]]
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, vect, useLog=False)
+        dataObj = nimble.createData(t, data, useLog=False)
+        expTest = nimble.createData(t, expVect, useLog=False)
+        assert fill.kNeighborsClassifier(toTest, match, dataObj, **arguments) == expTest
+
+@noLogEntryExpected
+def test_kNeighborsClassifier_multipleMatch_K1():
+    vect = [1, None, None]
+    data = [[1, 1, 1], [1, None, None], [2, 2, 2], [2, 2, 2], [None, 3, None], [3, 3, 3]]
+    match = lambda x: x != x
+    arguments = {'n_neighbors': 1}
+    expVect = [[1, 1, 1]]
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, vect, useLog=False)
+        dataObj = nimble.createData(t, data, useLog=False)
+        expTest = nimble.createData(t, expVect, useLog=False)
+        assert fill.kNeighborsClassifier(toTest, match, dataObj, **arguments) == expTest
+
+@noLogEntryExpected
+def test_kNeighborsClassifier_multipleMatch_K3():
+    vect = [1, None, None]
+    data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
+    match = lambda x: x != x
+    arguments = {'n_neighbors': 3}
+    expVect = [[1, 3, 6]]
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, vect, useLog=False)
+        dataObj = nimble.createData(t, data, useLog=False)
+        expTest = nimble.createData(t, expVect, useLog=False)
+        assert fill.kNeighborsClassifier(toTest, match, dataObj, **arguments) == expTest
+
+def test_kNeighborsClassifier_exception_featureProvided():
+    vect = [[1], [None], [None]]
+    data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
+    match = lambda x: x != x
+    arguments = {'n_neighbors': 3}
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, vect, useLog=False)
+        dataObj = nimble.createData(t, data, useLog=False)
+        try:
+            fill.kNeighborsClassifier(toTest, match, dataObj, **arguments)
+            assert False # expected InvalidArgumentValue
+        except InvalidArgumentValue:
+            pass
+
+def test_kNeighborsClassifier_exception_allMatches():
+    vect = [None, None, None]
+    data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
+    match = lambda x: x != x
+    arguments = {'n_neighbors': 3}
+    for t in nimble.data.available:
+        toTest = nimble.createData(t, vect, useLog=False)
+        dataObj = nimble.createData(t, data, useLog=False)
+        try:
+            fill.kNeighborsClassifier(toTest, match, dataObj, **arguments)
+            assert False # expected InvalidArgumentValue
+        except InvalidArgumentValue:
+            pass

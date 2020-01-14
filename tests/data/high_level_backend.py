@@ -2683,7 +2683,7 @@ class HighLevelModifying(DataTestObject):
     #########################
     # features.fillMatching #
     #########################
-    @logCountAssertionFactory(4)
+    @logCountAssertionFactory(3)
     def test_features_fillMatching_mean_missing(self):
         obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         obj1 = obj0.copy()
@@ -2700,15 +2700,6 @@ class HighLevelModifying(DataTestObject):
         exp2.features.setNames(['a', 'b', 'c'], useLog=False)
         assert obj2 == exp2
 
-        obj3 = obj0.copy()
-        ret = obj3.features.fillMatching(fill.mean, match.missing, returnModified=True)
-        exp3 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
-        exp3.features.setNames(['a', 'b', 'c'], useLog=False)
-        expRet = self.constructor([[False, False, False], [True, False, True], [False, False, True], [False, False, False]])
-        expRet.features.setNames(['a_modified', 'b_modified', 'c_modified'], useLog=False)
-        assert obj3 == exp3
-        assert ret == expRet
-
     def test_features_fillMatching_mean_nonNumeric(self):
         obj0 = self.constructor([[1, 2, 3], ['na', 11, 'na'], [7, 11, 'na'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         obj1 = obj0.copy()
@@ -2723,15 +2714,6 @@ class HighLevelModifying(DataTestObject):
         exp2 = self.constructor([[1, 2, 9], [1, 11, 9], [1, 11, 9], [1, 8, 9]])
         exp2.features.setNames(['a', 'b', 'c'])
         assert obj2 == exp2
-
-        obj3 = obj0.copy()
-        ret = obj3.features.fillMatching(fill.mean, match.nonNumeric, features=['b',2], returnModified=True)
-        exp3 = self.constructor([[1, 2, 3], ['na', 11, 6], [7, 11, 6], [7, 8, 9]])
-        exp3.features.setNames(['a', 'b', 'c'])
-        expRet = self.constructor([[False, False], [False, True], [False, True], [False, False]])
-        expRet.features.setNames(['b_modified', 'c_modified'])
-        assert obj3 == exp3
-        assert ret == expRet
 
     @raises(InvalidArgumentValue)
     def test_features_fillMatching_mean_allMatches(self):
@@ -2926,6 +2908,12 @@ class HighLevelModifying(DataTestObject):
         exp = self.constructor([[1, 2, 'na', 4], [5, 'na', 'na', 8], [9, 10, 11, 'na']])
         assert obj == exp
 
+    @raises(InvalidArgumentValue)
+    def test_features_fillMatching_exception_fillKNeighbors(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999], [1, 2, 3, 4], [9, 10, 11, 12]]
+        obj = self.constructor(data)
+        obj.features.fillMatching(fill.kNeighborsClassifier, 999, n_neighbors=1)
+
     def test_features_fillMatching_NamePath_preservation(self):
         data = [['a'], ['b'], [1]]
         toTest = self.constructor(data)
@@ -2940,11 +2928,10 @@ class HighLevelModifying(DataTestObject):
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-
     #######################
     # points.fillMatching #
     #######################
-    @logCountAssertionFactory(4)
+    @logCountAssertionFactory(3)
     def test_points_fillMatching_mean_missing(self):
         obj0 = self.constructor([[1, 2, 3, 4], [None, 6, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
         obj1 = obj0.copy()
@@ -2961,15 +2948,6 @@ class HighLevelModifying(DataTestObject):
         exp2.points.setNames(['a', 'b', 'c'], useLog=False)
         assert obj2 == exp2
 
-        obj3 = obj0.copy()
-        ret = obj3.points.fillMatching(fill.mean, match.missing, returnModified=True)
-        exp3 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
-        expRet = self.constructor([[False, False, False, False], [True, False, True, False], [False, False, False, True]])
-        exp3.points.setNames(['a', 'b', 'c'], useLog=False)
-        expRet.points.setNames(['a_modified', 'b_modified', 'c_modified'], useLog=False)
-        assert obj3 == exp3
-        assert ret == expRet
-
     def test_points_fillMatching_mean_nonNumeric(self):
         obj0 = self.constructor([[1, 2, 3, 4], ['na', 6, 'na', 8], [9, 1, 11, 'na']], pointNames=['a', 'b', 'c'])
         obj1 = obj0.copy()
@@ -2984,15 +2962,6 @@ class HighLevelModifying(DataTestObject):
         exp2 = self.constructor([[1, 2, 3, 2], [6, 6, 6, 6], [9, 1, 11, 7]])
         exp2.points.setNames(['a', 'b', 'c'])
         assert obj2 == exp2
-
-        obj3 = obj0.copy()
-        ret = obj3.points.fillMatching(fill.mean, match.nonNumeric, points=['b', 2], returnModified=True)
-        exp3 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
-        expRet = self.constructor([[True, False, True, False], [False, False, False, True]])
-        exp3.points.setNames(['a', 'b', 'c'])
-        expRet.points.setNames(['b_modified', 'c_modified'])
-        assert obj3 == exp3
-        assert ret == expRet
 
     @raises(InvalidArgumentValue)
     def test_points_fillMatching_mean_allMatches(self):
@@ -3186,6 +3155,93 @@ class HighLevelModifying(DataTestObject):
         exp = self.constructor([[1, 2, 'na', 4], [5, 'na', 'na', 8], [9, 10, 11, 'na']])
         assert obj == exp
 
+    def test_points_fillMatching_fillKNeighbors(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999], [1, 2, 3, 4], [14, 15, 16, 17]]
+        obj = self.constructor(data)
+        obj.points.fillMatching(fill.kNeighborsClassifier, 999, n_neighbors=1)
+        expData = [[1, 2, 3, 4], [5, 2, 3, 8], [9, 10, 11, 17], [1, 2, 3, 4], [14, 15, 16, 17]]
+        exp = self.constructor(expData)
+        assert obj == exp
+
+    @oneLogEntryExpected
+    def test_points_fillMatching_kNeighborsRegressor_missing(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
+        kwarguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, 2, 6], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        ret = toTest.points.fillMatching(fill.kNeighborsRegressor, match.missing, **kwarguments) # RET CHECK
+        assert toTest == expTest
+        assert ret is None
+
+    def test_points_fillMatching_kNeighborsRegressor_nonNumeric(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = [[1, 'na', 'x'], [1, 3, 9], [2, 1, 6], [3, 2, 3], ['na', 3, 'x']]
+        kwarguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, 2, 6], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        toTest.points.fillMatching(fill.kNeighborsRegressor, match.nonNumeric, **kwarguments)
+        assert toTest == expTest
+
+    @oneLogEntryExpected
+    def test_points_fillMatching_kNeighborsRegressor_pointsLimited(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
+        kwarguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        toTest.points.fillMatching(fill.kNeighborsRegressor, match.missing, points=[2, 3, 4], **kwarguments)
+        assert toTest == expTest
+
+    def test_points_fillMatching_kNeighborsClassifier_missing(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
+        kwarguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        toTest.points.fillMatching(fill.kNeighborsClassifier, match.missing, **kwarguments)
+        assert toTest == expTest
+
+    def test_points_fillMatching_kNeighborsClassifier_nonNumeric(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = [[1, 'na', 'x'], [1, 3, 6], [2, 1, 6], [1, 3, 7], ['na', 3, 'x']]
+        kwarguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        toTest.points.fillMatching(fill.kNeighborsClassifier, match.nonNumeric, **kwarguments)
+        assert toTest == expTest
+
+    def test_points_fillMatching_kNeighborsClassifier_pointsLimited(self):
+        fNames = ['a', 'b', 'c']
+        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
+        data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
+        kwarguments = {'n_neighbors': 3}
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+        expData = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
+        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
+        toTest.points.fillMatching(fill.kNeighborsClassifier, match.missing, points=[2, 3, 4], **kwarguments)
+        assert toTest == expTest
+
+    def test_points_fillMatching_kNeighborsClassifier_lazyNameGeneration(self):
+        data = [[1, 'na', 'x'], [1, 3, 6], [2, 1, 6], [1, 3, 7], ['na', 3, 'x']]
+        kwarguments = {'n_neighbors': 3}
+        toTest = self.constructor(data)
+        expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
+        expTest = self.constructor(expData)
+        toTest.points.fillMatching(fill.kNeighborsClassifier, match.nonNumeric, **kwarguments)
+        assert toTest == expTest
+        assertNoNamesGenerated(toTest)
+
     def test_points_fillMatching_NamePath_preservation(self):
         data = [['a', 'b', 1]]
         toTest = self.constructor(data)
@@ -3203,157 +3259,7 @@ class HighLevelModifying(DataTestObject):
     ################
     # fillMatching #
     ################
-    @oneLogEntryExpected
-    def test_fillMatching_kNeighborsRegressor_missing(self):
-        fNames = ['a', 'b', 'c']
-        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
-        data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
-        kwarguments = {'n_neighbors': 3}
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-        expData = [[1, 2, 6], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
-        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
-        ret = toTest.fillMatching(fill.kNeighborsRegressor, match.missing, **kwarguments) # RET CHECK
-        assert toTest == expTest
-        assert ret is None
-
-    @oneLogEntryExpected
-    def test_fillMatching_kNeighborsRegressor_returnModified_all(self):
-        fNames = ['a', 'b', 'c']
-        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
-        data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
-        kwarguments = {'n_neighbors': 3}
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-        expData = [[1, 2, 6], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
-        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
-        ret = toTest.fillMatching(fill.kNeighborsRegressor, match.missing, returnModified=True, **kwarguments)
-        expRet = self.constructor([[False, True, True], [False, False, False], [False, False, False], [False, False, False], [True, False, True]])
-        expRet.features.setNames([name + "_modified" for name in expRet.features.getNames()], useLog=False)
-        assert toTest == expTest
-        assert ret == expRet
-
-    def test_fillMatching_kNeighborsRegressor_nonNumeric(self):
-        fNames = ['a', 'b', 'c']
-        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
-        data = [[1, 'na', 'x'], [1, 3, 9], [2, 1, 6], [3, 2, 3], ['na', 3, 'x']]
-        kwarguments = {'n_neighbors': 3}
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-        expData = [[1, 2, 6], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
-        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
-        toTest.fillMatching(fill.kNeighborsRegressor, match.nonNumeric, **kwarguments)
-        assert toTest == expTest
-
-    @oneLogEntryExpected
-    def test_fillMatching_kNeighborsRegressor_pointsLimited(self):
-        fNames = ['a', 'b', 'c']
-        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
-        data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
-        kwarguments = {'n_neighbors': 3}
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-        expData = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
-        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
-        toTest.fillMatching(fill.kNeighborsRegressor, match.missing, points=[2, 3, 4], **kwarguments)
-        assert toTest == expTest
-
-    def test_fillMatching_kNeighborsRegressor_featuresLimited(self):
-        fNames = ['a', 'b', 'c']
-        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
-        data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
-        kwarguments = {'n_neighbors': 3}
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-        expData = [[1, 2, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, None]]
-        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
-        toTest.fillMatching(fill.kNeighborsRegressor, match.missing, features=[1,0], **kwarguments)
-        assert toTest == expTest
-
-    def test_fillMatching_kNeighborsRegressor_pointsFeaturesLimited(self):
-        fNames = ['a', 'b', 'c']
-        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
-        data = data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
-        kwarguments = {'n_neighbors': 3}
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-        expData = [[1, None, 6], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
-        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
-        toTest.fillMatching(fill.kNeighborsRegressor, match.missing, points=0, features=2, **kwarguments)
-        assert toTest == expTest
-
-    def test_fillMatching_kNeighborsClassifier_missing(self):
-        fNames = ['a', 'b', 'c']
-        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
-        data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
-        kwarguments = {'n_neighbors': 3}
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-        expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
-        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
-        toTest.fillMatching(fill.kNeighborsClassifier, match.missing, **kwarguments)
-        assert toTest == expTest
-
-    def test_fillMatching_kNeighborsClassifier_nonNumeric(self):
-        fNames = ['a', 'b', 'c']
-        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
-        data = [[1, 'na', 'x'], [1, 3, 6], [2, 1, 6], [1, 3, 7], ['na', 3, 'x']]
-        kwarguments = {'n_neighbors': 3}
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-        expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
-        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
-        toTest.fillMatching(fill.kNeighborsClassifier, match.nonNumeric, **kwarguments)
-        assert toTest == expTest
-
-    def test_fillMatching_kNeighborsClassifier_pointsLimited(self):
-        fNames = ['a', 'b', 'c']
-        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
-        data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
-        kwarguments = {'n_neighbors': 3}
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-        expData = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
-        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
-        toTest.fillMatching(fill.kNeighborsClassifier, match.missing, points=[2, 3, 4], **kwarguments)
-        assert toTest == expTest
-
-    def test_fillMatching_kNeighborsClassifier_featuresLimited(self):
-        fNames = ['a', 'b', 'c']
-        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
-        data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
-        kwarguments = {'n_neighbors': 3}
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-        expData = [[1, 3, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, None]]
-        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
-        toTest.fillMatching(fill.kNeighborsClassifier, match.missing, features=[1,0], **kwarguments)
-        assert toTest == expTest
-
-    def test_fillMatching_kNeighborsClassifier_pointsFeaturesLimited(self):
-        fNames = ['a', 'b', 'c']
-        pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
-        data = data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
-        kwarguments = {'n_neighbors': 3}
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-        expData = [[1, None, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
-        expTest = self.constructor(expData, pointNames=pNames, featureNames=fNames)
-        toTest.fillMatching(fill.kNeighborsClassifier, match.missing, points=0, features=2, **kwarguments)
-        assert toTest == expTest
-
-    def test_fillMatching_kNeighborsClassifier_lazyNameGeneration(self):
-        data = [[1, 'na', 'x'], [1, 3, 6], [2, 1, 6], [1, 3, 7], ['na', 3, 'x']]
-        kwarguments = {'n_neighbors': 3}
-        toTest = self.constructor(data)
-        expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
-        expTest = self.constructor(expData)
-        toTest.fillMatching(fill.kNeighborsClassifier, match.nonNumeric, **kwarguments)
-        assert toTest == expTest
-        assertNoNamesGenerated(toTest)
-
-    def test_fillMatching_NamePath_preservation(self):
-        data = [[None, None, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1]]
-        toTest = self.constructor(data)
-
-        toTest._name = "TestName"
-        toTest._absPath = "TestAbsPath"
-        toTest._relPath = "testRelPath"
-
-        toTest.fillMatching(fill.kNeighborsRegressor, match.missing)
-
-        assert toTest.name == "TestName"
-        assert toTest.absolutePath == "TestAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+    # TODO
 
     ####################################
     # points.splitByCollapsingFeatures #
