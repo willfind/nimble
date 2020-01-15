@@ -39,7 +39,7 @@ class DataFrameFeatures(DataFrameAxis, Features):
         endData = self._base.data.iloc[:, insertBefore:]
         self._base.data = pd.concat((startData, toInsert.data, endData),
                                     axis=1)
-        self._base._updateName(axis='feature')
+        self._updateName()
 
     def _transform_implementation(self, function, limitTo):
         for j, f in enumerate(self):
