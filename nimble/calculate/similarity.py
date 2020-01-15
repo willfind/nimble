@@ -324,17 +324,15 @@ def _confusionMatrixNoLabels(knownValues, predictedValues):
             confusionDict[(kVal, pVal)] = 1
 
     knownLabels = sorted(list(map(_mapInt, knownLabels)))
+    labelsIdx = {}
     length = len(knownLabels)
-
     toFill = numpy.zeros((length, length), dtype=int)
 
-    # after sorting, need all permutations of labels paired with their index
-    for pInfo, kInfo in itertools.product(enumerate(knownLabels), repeat=2):
-        pIdx, pLbl = pInfo
-        kIdx, kLbl = kInfo
-        try:
-            toFill[pIdx, kIdx] = confusionDict[(kLbl, pLbl)]
-        except KeyError:
-            pass # permutation did not occur, keep value as zero
+    for (kVal, pVal), count in confusionDict.items():
+        if kVal not in labelsIdx:
+            labelsIdx[kVal] = knownLabels.index(kVal)
+        if pVal not in labelsIdx:
+            labelsIdx[pVal] = knownLabels.index(pVal)
+        toFill[labelsIdx[pVal], labelsIdx[kVal]] = count
 
     return toFill, knownLabels

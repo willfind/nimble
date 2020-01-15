@@ -198,6 +198,37 @@ def test_confusionMatrix_noLabels():
         assert cm.isIdentical(expObj)
 
 @noLogEntryExpected
+def test_confusionMatrix_noLabels_consistentOutput():
+    known1 = [[1], [2], [3], [4],
+              [1], [2], [3], [4],
+              [1], [2], [3], [4],
+              [1], [2], [3], [4]]
+    pred1 = [[1], [2], [3], [4],
+             [1], [2], [3], [4],
+             [1], [2], [3], [4],
+             [4], [3], [2], [1]]
+    # same result as known1 but in different order
+    known2 = [[4], [3], [2], [1],
+              [4], [3], [2], [1],
+              [4], [3], [2], [1],
+              [4], [3], [2], [1],]
+    pred2 = [[4], [3], [2], [1],
+             [4], [3], [2], [1],
+             [4], [3], [2], [1],
+             [1], [2], [3], [4],]
+
+    for t in nimble.data.available:
+        knownObj1 = createData(t, known1, useLog=False)
+        predObj1 = createData(t, pred1, useLog=False)
+        cm1 = confusionMatrix(knownObj1, predObj1)
+
+        knownObj2 = createData(t, known2, useLog=False)
+        predObj2 = createData(t, pred2, useLog=False)
+        cm2 = confusionMatrix(knownObj2, predObj2)
+
+        assert cm1 == cm2
+
+@noLogEntryExpected
 def test_confusionMatrix_withLabelsDict():
     known = [[1], [2], [3], [4],
              [1], [2], [3], [4],
@@ -227,6 +258,39 @@ def test_confusionMatrix_withLabelsDict():
                             elementType=int, useLog=False)
 
         assert cm.isIdentical(expObj)
+
+@noLogEntryExpected
+def test_confusionMatrix_withLabelsDict_consistentOutput():
+    known1 = [[1], [2], [3], [4],
+              [1], [2], [3], [4],
+              [1], [2], [3], [4],
+              [1], [2], [3], [4]]
+    pred1 = [[1], [2], [3], [4],
+             [1], [2], [3], [4],
+             [1], [2], [3], [4],
+             [4], [3], [2], [1]]
+    # same result as known1 but in different order
+    known2 = [[4], [3], [2], [1],
+              [4], [3], [2], [1],
+              [4], [3], [2], [1],
+              [4], [3], [2], [1],]
+    pred2 = [[4], [3], [2], [1],
+             [4], [3], [2], [1],
+             [4], [3], [2], [1],
+             [1], [2], [3], [4],]
+
+    for t in nimble.data.available:
+        knownObj1 = createData(t, known1, useLog=False)
+        predObj1 = createData(t, pred1, useLog=False)
+        labels1 = {1: 'one', 2: 'two', 3: 'three', 4: 'four'}
+        cm1 = confusionMatrix(knownObj1, predObj1, labels=labels1)
+
+        knownObj2 = createData(t, known2, useLog=False)
+        predObj2 = createData(t, pred2, useLog=False)
+        labels2 = {4: 'four', 3: 'three', 2: 'two', 1: 'one'}
+        cm2 = confusionMatrix(knownObj2, predObj2, labels=labels2)
+
+        assert cm1 == cm2
 
 @noLogEntryExpected
 def test_confusionMatrix_withLabelsList():
