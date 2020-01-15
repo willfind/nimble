@@ -60,7 +60,7 @@ class SparseAxis(Axis):
         for i, idxPos in enumerate(indexPosition):
             reverseIdxPosition[idxPos] = i
 
-        if self._axis == 'point':
+        if self._isPoint:
             self._base.data.row[:] = reverseIdxPosition[self._base.data.row]
         else:
             self._base.data.col[:] = reverseIdxPosition[self._base.data.col]
@@ -72,7 +72,7 @@ class SparseAxis(Axis):
         modCol = []
         dtypes = []
 
-        if self._axis == 'point':
+        if self._isPoint:
             modTarget = modRow
             modOther = modCol
         else:
@@ -137,7 +137,7 @@ class SparseAxis(Axis):
         selfData = self._base.data.data
         addData = toInsert.data.data
         newData = numpy.concatenate((selfData, addData))
-        if self._axis == 'point':
+        if self._isPoint:
             selfAxis = self._base.data.row.copy()
             selfOffAxis = self._base.data.col
             addAxis = toInsert.data.row.copy()
@@ -158,7 +158,7 @@ class SparseAxis(Axis):
         newAxis = numpy.concatenate((selfAxis, addAxis))
         newOffAxis = numpy.concatenate((selfOffAxis, addOffAxis))
 
-        if self._axis == 'point':
+        if self._isPoint:
             rowColTuple = (newAxis, newOffAxis)
         else:
             rowColTuple = (newOffAxis, newAxis)
@@ -174,7 +174,7 @@ class SparseAxis(Axis):
             numpyFunc = numpy.tile
         repData = numpyFunc(self._base.data.data, totalCopies)
         fillDup = numpy.empty_like(repData, dtype=numpy.int)
-        if self._axis == 'point':
+        if self._isPoint:
             repCol = numpyFunc(self._base.data.col, totalCopies)
             repRow = fillDup
             toRepeat = self._base.data.row
@@ -213,7 +213,7 @@ class SparseAxis(Axis):
     #########################
 
     def _nonZeroIterator_implementation(self):
-        if self._axis == 'point':
+        if self._isPoint:
             self._base._sortInternal('point')
         else:
             self._base._sortInternal('feature')
@@ -235,7 +235,7 @@ class SparseAxis(Axis):
                 if idx not in targetList:
                     notTarget.append(idx)
 
-        if self._axis == 'point':
+        if self._isPoint:
             data = self._base.data.tocsr()
             targeted = data[targetList, :]
             if structure != 'copy':
@@ -278,7 +278,7 @@ class SparseAxis(Axis):
             if targetID in targetList:
                 for otherID, value in enumerate(view.data.data):
                     targetData.append(value)
-                    if self._axis == 'point':
+                    if self._isPoint:
                         targetRows.append(targetList.index(targetID))
                         targetCols.append(view.data.col[otherID])
                     else:
@@ -288,7 +288,7 @@ class SparseAxis(Axis):
             elif structure != 'copy':
                 for otherID, value in enumerate(view.data.data):
                     keepData.append(value)
-                    if self._axis == 'point':
+                    if self._isPoint:
                         keepRows.append(keepIndex)
                         keepCols.append(view.data.col[otherID])
                     else:
@@ -322,7 +322,7 @@ class SparseAxis(Axis):
         data = self._base.data.data
         row = self._base.data.row
         col = self._base.data.col
-        if self._axis == 'point':
+        if self._isPoint:
             axisLocator = row
             offAxisLocator = col
             hasOffAxisNames = self._base._featureNamesCreated()
@@ -365,7 +365,7 @@ class SparseAxis(Axis):
         self._base._sorted = None
 
         uniqueData = numpy.array(uniqueData, dtype=numpy.object_)
-        if self._axis == 'point':
+        if self._isPoint:
             shape = (axisCount, len(self._base.features))
             uniqueCoo = scipy.sparse.coo_matrix(
                 (uniqueData, (uniqueAxis, uniqueOffAxis)), shape=shape)

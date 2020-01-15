@@ -55,15 +55,17 @@ class Axis(object):
         kwargs['base'] = base
         if isinstance(self, Points):
             self._axis = 'point'
+            self._isPoint = True
         else:
             self._axis = 'feature'
+            self._isPoint = False
         super(Axis, self).__init__(**kwargs)
 
     def __iter__(self):
         return AxisIterator(self)
 
     def __len__(self):
-        if self._axis == 'point':
+        if self._isPoint:
             return self._base._pointCount
         else:
             return self._base._featureCount
@@ -78,7 +80,7 @@ class Axis(object):
     def _getName(self, index):
         if not self._namesCreated():
             self._setAllDefault()
-        if self._axis == 'point':
+        if self._isPoint:
             return self._base.pointNamesInverse[index]
         else:
             return self._base.featureNamesInverse[index]
@@ -86,7 +88,7 @@ class Axis(object):
     def _getNames(self):
         if not self._namesCreated():
             self._setAllDefault()
-        if self._axis == 'point':
+        if self._isPoint:
             namesList = self._base.pointNamesInverse
         else:
             namesList = self._base.featureNamesInverse
@@ -95,7 +97,7 @@ class Axis(object):
 
 
     def _setName(self, oldIdentifier, newName, useLog=None):
-        if self._axis == 'point':
+        if self._isPoint:
             namesDict = self._base.pointNames
         else:
             namesDict = self._base.featureNames
@@ -113,7 +115,7 @@ class Axis(object):
 
 
     def _setNames(self, assignments, useLog=None):
-        if self._axis == 'point':
+        if self._isPoint:
             names = 'pointNames'
             namesInverse = 'pointNamesInverse'
         else:
@@ -169,7 +171,7 @@ class Axis(object):
     def _getIndices(self, names):
         if not self._namesCreated():
             self._setAllDefault()
-        if self._axis == 'point':
+        if self._isPoint:
             namesDict = self._base.pointNames
         else:
             namesDict = self._base.featureNames
@@ -198,7 +200,7 @@ class Axis(object):
     def _copy(self, toCopy, start, end, number, randomize, useLog=None):
         ret = self._genericStructuralFrontend('copy', toCopy, start, end,
                                               number, randomize)
-        if self._axis == 'point':
+        if self._isPoint:
             ret.features.setNames(self._base.features._getNamesNoGeneration(),
                                   useLog=False)
         else:
@@ -268,7 +270,7 @@ class Axis(object):
             msg = "Either sortBy or sortHelper must not be None"
             raise InvalidArgumentTypeCombination(msg)
 
-        if self._axis == 'point':
+        if self._isPoint:
             otherAxis = 'feature'
             axisCount = self._base._pointCount
             otherCount = self._base._featureCount
@@ -451,7 +453,7 @@ class Axis(object):
 
         self._setNames(self._getNamesNoGeneration(), useLog=False)
         if hasattr(function, '__name__') and function.__name__ !=  '<lambda>':
-            if self._axis == 'point':
+            if self._isPoint:
                 ret.features.setNames([function.__name__], useLog=False)
             else:
                 ret.points.setNames([function.__name__], useLog=False)
@@ -491,7 +493,7 @@ class Axis(object):
         if self._axis != 'point':
             ret.transpose(useLog=False)
 
-        if self._axis == 'point':
+        if self._isPoint:
             if len(limitTo) < len(self) and self._namesCreated():
                 names = []
                 for index in limitTo:
@@ -517,7 +519,7 @@ class Axis(object):
         # non-numeric values.
         convertType = False
         for axisID in limitTo:
-            if self._axis == 'point':
+            if self._isPoint:
                 view = self._base.pointView(axisID)
             else:
                 view = self._base.featureView(axisID)
@@ -586,7 +588,7 @@ class Axis(object):
 
 
     def _mapReduce(self, mapper, reducer, useLog=None):
-        if self._axis == 'point':
+        if self._isPoint:
             targetCount = len(self._base.points)
             otherCount = len(self._base.features)
             otherAxis = 'feature'
@@ -657,7 +659,7 @@ class Axis(object):
                 return [True if toMatch(val) else False for val in values]
 
             modified = self._calculate(bools, limitTo, useLog=False)
-            if self._axis == 'point':
+            if self._isPoint:
                 currNames = modified.points.getNames()
                 modNames = [n + "_modified" for n in currNames]
                 modified.points.setNames(modNames, useLog=False)
@@ -814,7 +816,7 @@ class Axis(object):
         #				divide = self._statistics(divide)
         #			divIsVec = True
 
-        if self._axis == 'point':
+        if self._isPoint:
             indexGetter = lambda x: x._pStart
             if isinstance(subtract, str):
                 subtract = self._statistics(subtract)
@@ -848,7 +850,7 @@ class Axis(object):
         # first perform the subtraction operation
         if subtract is not None and subtract != 0:
             if subIsVec:
-                if self._axis == 'point':
+                if self._isPoint:
                     self._transform(subber, None, useLog=False)
                     if alsoIsObj:
                         applyResultTo.points.transform(subber, useLog=False)
@@ -864,7 +866,7 @@ class Axis(object):
         # then perform the division operation
         if divide is not None and divide != 1:
             if divIsVec:
-                if self._axis == 'point':
+                if self._isPoint:
                     self._transform(diver, None, useLog=False)
                     if alsoIsObj:
                         applyResultTo.points.transform(diver, useLog=False)
@@ -889,7 +891,7 @@ class Axis(object):
 
         repeated = self._repeat_implementation(totalCopies, copyValueByValue)
 
-        if self._axis == 'point':
+        if self._isPoint:
             ptNames = self._getNamesNoGeneration()
             namesToRepeat = ptNames
             ftNames = self._base.features._getNamesNoGeneration()
@@ -963,7 +965,7 @@ class Axis(object):
 
         transposed = self._base.T
 
-        if self._axis == 'point':
+        if self._isPoint:
             ret = toCall(self._base, transposed)
         else:
             ret = toCall(transposed, self._base)
@@ -1023,7 +1025,7 @@ class Axis(object):
             toCall = nimble.calculate.standardDeviation
 
         ret = self._calculate(toCall, limitTo=None, useLog=False)
-        if self._axis == 'point':
+        if self._isPoint:
             ret.points.setNames(self._getNames(), useLog=False)
             ret.features.setName(0, cleanFuncName, useLog=False)
         else:
@@ -1037,13 +1039,13 @@ class Axis(object):
     #####################
 
     def _namesCreated(self):
-        if self._axis == 'point':
+        if self._isPoint:
             return not self._base.pointNames is None
         else:
             return not self._base.featureNames is None
 
     def _nextDefaultName(self):
-        if self._axis == 'point':
+        if self._isPoint:
             ret = DEFAULT_PREFIX2%self._base._nextDefaultValuePoint
             self._base._nextDefaultValuePoint += 1
         else:
@@ -1052,7 +1054,7 @@ class Axis(object):
         return ret
 
     def _setAllDefault(self):
-        if self._axis == 'point':
+        if self._isPoint:
             self._base.pointNames = {}
             self._base.pointNamesInverse = []
             names = self._base.pointNames
@@ -1075,7 +1077,7 @@ class Axis(object):
     def _getIndexByName(self, name):
         if not self._namesCreated():
             self._setAllDefault()
-        if self._axis == 'point':
+        if self._isPoint:
             namesDict = self._base.pointNames
         else:
             namesDict = self._base.featureNames
@@ -1087,7 +1089,7 @@ class Axis(object):
         return namesDict[name]
 
     def _setName_implementation(self, oldIdentifier, newName):
-        if self._axis == 'point':
+        if self._isPoint:
             names = self._base.pointNames
             invNames = self._base.pointNamesInverse
         else:
@@ -1125,7 +1127,7 @@ class Axis(object):
             msg += "is long (" + str(count) + ")"
             raise InvalidArgumentValue(msg)
 
-        if self._axis == 'point':
+        if self._isPoint:
             def checkAndSet(val):
                 if val >= self._base._nextDefaultValuePoint:
                     self._base._nextDefaultValuePoint = val + 1
@@ -1177,7 +1179,7 @@ class Axis(object):
             raise InvalidArgumentValue(msg)
 
         if count == 0:
-            if self._axis == 'point':
+            if self._isPoint:
                 self._base.pointNames = {}
                 self._base.pointNamesInverse = []
             else:
@@ -1193,7 +1195,7 @@ class Axis(object):
             if not isinstance(assignments[name], int):
                 raise InvalidArgumentValue("Indices must be integers")
             if assignments[name] < 0 or assignments[name] >= count:
-                if self._axis == 'point':
+                if self._isPoint:
                     countName = 'points'
                 else:
                     countName = 'features'
@@ -1207,7 +1209,7 @@ class Axis(object):
             reverseMap[assignments[name]] = name
 
         # have to copy the input, could be from another object
-        if self._axis == 'point':
+        if self._isPoint:
             self._base.pointNames = copy.deepcopy(assignments)
             self._base.pointNamesInverse = reverseMap
         else:
@@ -1287,7 +1289,7 @@ class Axis(object):
                 targetList.append(target)
             # if not a name then assume it's a query string
             else:
-                if self._axis == 'point':
+                if self._isPoint:
                     hasNameChecker2 = self._base.features._hasName
                 else:
                     hasNameChecker2 = self._base.points._hasName
@@ -1348,7 +1350,7 @@ class Axis(object):
         nameList = None
         if self._namesCreated():
             nameList = [self._getName(i) for i in targetList]
-        if self._axis == 'point':
+        if self._isPoint:
             return nameList, self._base.features._getNamesNoGeneration()
         else:
             return self._base.points._getNamesNoGeneration(), nameList
@@ -1359,7 +1361,7 @@ class Axis(object):
         this object, removing the names that have been extracted to the
         other object.
         """
-        if self._axis == 'point':
+        if self._isPoint:
             self._base._pointCount -= len(other.points)
             if self._base._pointNamesCreated():
                 idxList = []
@@ -1528,7 +1530,7 @@ class Axis(object):
             msg += str(inspect.getmro(toInsert.__class__))
             raise InvalidArgumentType(msg.format(arg=argName))
 
-        if self._axis == 'point':
+        if self._isPoint:
             objOffAxisLen = self._base._featureCount
             insertOffAxisLen = len(toInsert.features)
             objHasAxisNames = self._base._pointNamesCreated()
@@ -1709,7 +1711,7 @@ class Axis(object):
         Modify the point or feature count to include the insertedObj. If
         one or both objects have names, names will be set as well.
         """
-        if self._axis == 'point':
+        if self._isPoint:
             newPtCount = len(self) + len(insertedObj.points)
             # only need to adjust names if names are present
             if not (self._namesCreated()
@@ -1750,7 +1752,7 @@ class Axis(object):
         """
         Get the top level function containing the correct signature.
         """
-        if self._axis == 'point':
+        if self._isPoint:
             return getattr(Points, funcName)
         return getattr(Features, funcName)
 
