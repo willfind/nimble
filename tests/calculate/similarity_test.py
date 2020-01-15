@@ -117,8 +117,25 @@ def test_confusionMatrix_exception_labelsMissingKnown():
     except KeyError:
         pass
 
+@raises(InvalidArgumentValue)
+def test_confusionMatrix_exception_labelListInvalid_wrongType():
+    known = [['dog'], ['cat'], ['fish'], ['bear'],
+             ['dog'], ['cat'], ['fish'], ['bear'],
+             ['dog'], ['cat'], ['fish'], ['bear'],
+             ['dog'], ['cat'], ['fish'], ['bear']]
+    pred = [['dog'], ['cat'], ['fish'], ['bear'],
+            ['dog'], ['cat'], ['fish'], ['bear'],
+            ['dog'], ['cat'], ['fish'], ['bear'],
+            ['cat'], ['dog'], ['bear'], ['fish']]
+
+    knownObj = createData('Matrix', known, useLog=False)
+    predObj = createData('Matrix', pred, useLog=False)
+
+    labels = ['zero', 'one', 'two', 'three']
+    cm = confusionMatrix(knownObj, predObj, labels=labels)
+
 @raises(IndexError)
-def test_confusionMatrix_exception_labelListInvalid():
+def test_confusionMatrix_exception_labelListInvalid_outOfRange():
     known = [[1], [2], [3], [4],
              [1], [2], [3], [4],
              [1], [2], [3], [4],

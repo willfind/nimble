@@ -6,60 +6,60 @@ from nimble.exceptions import InvalidArgumentValue
 from .similarity import confusionMatrix
 
 def truePositive(knownValues, predictedValues):
-    cm = getValidConfusionMatrix(knownValues, predictedValues)
-    return getTruePositive(cm)
+    cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
+    return _getTruePositive(cm)
 
 truePositive.optimal = 'max'
 
 def trueNegative(knownValues, predictedValues):
-    cm = getValidConfusionMatrix(knownValues, predictedValues)
-    return getTrueNegative(cm)
+    cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
+    return _getTrueNegative(cm)
 
 trueNegative.optimal = 'max'
 
 def falsePositive(knownValues, predictedValues):
-    cm = getValidConfusionMatrix(knownValues, predictedValues)
-    return getFalsePositive(cm)
+    cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
+    return _getFalsePositive(cm)
 
 falsePositive.optimal = 'min'
 
 def falseNegative(knownValues, predictedValues):
-    cm = getValidConfusionMatrix(knownValues, predictedValues)
-    return getFalseNegative(cm)
+    cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
+    return _getFalseNegative(cm)
 
 falseNegative.optimal = 'min'
 
 def recall(knownValues, predictedValues):
-    cm = getValidConfusionMatrix(knownValues, predictedValues)
-    return getRecall(cm)
+    cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
+    return _getRecall(cm)
 
 recall.optimal = 'max'
 
 def precision(knownValues, predictedValues):
-    cm = getValidConfusionMatrix(knownValues, predictedValues)
-    return getPrecision(cm)
+    cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
+    return _getPrecision(cm)
 
 precision.optimal = 'max'
 
 def specificity(knownValues, predictedValues):
-    cm = getValidConfusionMatrix(knownValues, predictedValues)
-    return getSpecificity(cm)
+    cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
+    return _getSpecificity(cm)
 
 specificity.optimal = 'max'
 
 def balancedAccuracy(knownValues, predictedValues):
-    cm = getValidConfusionMatrix(knownValues, predictedValues)
-    recall = getRecall(cm)
-    specificity = getSpecificity(cm)
+    cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
+    recall = _getRecall(cm)
+    specificity = _getSpecificity(cm)
 
     return (recall + specificity) / 2
 
 balancedAccuracy.optimal = 'max'
 
 def f1Score(knownValues, predictedValues):
-    cm = getValidConfusionMatrix(knownValues, predictedValues)
-    recall = getRecall(cm)
-    precision = getPrecision(cm)
+    cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
+    recall = _getRecall(cm)
+    precision = _getPrecision(cm)
 
     return 2 * ((precision * recall) / (precision + recall))
 
@@ -69,7 +69,7 @@ f1Score.optimal = 'max'
 # Helpers #
 ###########
 
-def getValidConfusionMatrix(knownValues, predictedValues):
+def _getBinaryConfusionMatrix(knownValues, predictedValues):
     """
     Providing labels [False, True] to confusionMatrix will validate that
     the provided values are binary. The known labels are features and
@@ -92,43 +92,43 @@ def getValidConfusionMatrix(knownValues, predictedValues):
 
 # these helper functions avoid need to recreate confusion matrix each time
 
-def getTruePositive(cm):
+def _getTruePositive(cm):
     return cm[1, 1]
 
-def getTrueNegative(cm):
+def _getTrueNegative(cm):
     return cm[0, 0]
 
-def getFalsePositive(cm):
+def _getFalsePositive(cm):
     return cm[1, 0]
 
-def getFalseNegative(cm):
+def _getFalseNegative(cm):
     return cm[0, 1]
 
-def getKnownPositive(cm):
+def _getKnownPositive(cm):
     return sum(cm.features[1])
 
-def getKnownNegative(cm):
+def _getKnownNegative(cm):
     return sum(cm.features[0])
 
-def getPredictedPositive(cm):
+def _getPredictedPositive(cm):
     return sum(cm.points[1])
 
-def getPredictedNegative(cm):
+def _getPredictedNegative(cm):
     return sum(cm.points[0])
 
-def getRecall(cm):
-    truePos = getTruePositive(cm)
-    knownPos = getKnownPositive(cm)
+def _getRecall(cm):
+    truePos = _getTruePositive(cm)
+    knownPos = _getKnownPositive(cm)
     return truePos / knownPos
 
-def getPrecision(cm):
-    truePos = getTruePositive(cm)
-    predPos = getPredictedPositive(cm)
+def _getPrecision(cm):
+    truePos = _getTruePositive(cm)
+    predPos = _getPredictedPositive(cm)
 
     return truePos / predPos
 
-def getSpecificity(cm):
-    trueNeg = getTrueNegative(cm)
-    knownNeg = getKnownNegative(cm)
+def _getSpecificity(cm):
+    trueNeg = _getTrueNegative(cm)
+    knownNeg = _getKnownNegative(cm)
 
     return trueNeg / knownNeg

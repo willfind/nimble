@@ -221,68 +221,18 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
         msg += 'the range 0 to len(labels)'
         raise InvalidArgumentType(msg)
 
-    numPts = len(knownValues.points)
-    labelsProvided = labels is not None
-
-    mappedLabels = {} # cache mapped labels
-    def mapInt(val):
-        try:
-            return mappedLabels[val]
-        except KeyError:
-            try:
-                if val % 1 == 0:
-                    mappedLabels[val] = int(val)
-                    return int(val)
-                return val
-            except TypeError:
-                return val
-
-    knownLabels = set()
-    confusionDict = {}
-    for kVal, pVal in zip(knownValues.elements, predictedValues.elements):
-        if labelsProvided:
-            try:
-                kVal = labels[mapInt(kVal)]
-            except KeyError:
-                msg = '{kVal} is not a valid key for the labels argument'
-                raise KeyError(msg.format(kVal=kVal))
-            except IndexError:
-                msg = '{kVal} is not a valid index for the labels argument'
-                raise IndexError(msg.format(kVal=mapInt(kVal)))
-            # safe to assume predicted labels will be one of known labels?
-            pVal = labels[mapInt(pVal)]
-
-        knownLabels.add(kVal)
-        if (kVal, pVal) in confusionDict:
-            confusionDict[(kVal, pVal)] += 1
-        else:
-            confusionDict[(kVal, pVal)] = 1
-
-    if labels is None:
-        knownLabels = sorted(list(map(mapInt, knownLabels)))
-    elif isinstance(labels, dict):
-        knownLabels = [labels[key] for key in sorted(labels)]
+    if isinstance(labels, dict):
+        confusionMtx, knownLabels = _confusionMatrixWithLabelsDict(
+            knownValues, predictedValues, labels)
+    elif labels is not None:
+        confusionMtx, knownLabels = _confusionMatrixWithLabelsList(
+            knownValues, predictedValues, labels)
     else:
-        knownLabels = labels
+        confusionMtx, knownLabels = _confusionMatrixNoLabels(
+            knownValues, predictedValues)
 
-    length = len(knownLabels)
     if convertCountsToFractions:
-        dtype = float
-    else:
-        dtype = int
-
-    confusionMtx = numpy.zeros((length, length), dtype=dtype)
-
-    for pInfo, kInfo in itertools.product(enumerate(knownLabels), repeat=2):
-        pIdx, pLbl = pInfo
-        kIdx, kLbl = kInfo
-        try:
-            value = confusionDict[(kLbl, pLbl)]
-            if convertCountsToFractions:
-                value /= numPts
-            confusionMtx[pIdx, kIdx] = value
-        except KeyError:
-            pass # never predicted keep value as zero at this index
+        confusionMtx = confusionMtx.astype(float) / len(knownValues.points)
 
     asType = knownValues.getTypeString()
     fNames = ['known_' + str(label) for label in knownLabels]
@@ -290,3 +240,101 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
 
     return createDataNoValidation(asType, confusionMtx, pNames, fNames,
                                   reuseData=True)
+
+###########
+# Helpers #
+###########
+
+_intMapCache = {} # increase efficiency by caching
+def _mapInt(val):
+    if val in _intMapCache:
+        return _intMapCache[val]
+
+    try:
+        if val % 1 == 0:
+            _intMapCache[val] = int(val)
+            return int(val)
+        return val
+    except TypeError:
+        return val
+
+def _validateIndex(idx, numLabels, sourceArg):
+    errorType = None
+    if not isinstance(idx, int):
+        errorType = InvalidArgumentValue
+    elif not (0 <= idx < numLabels):
+        errorType = IndexError
+    if errorType is not None:
+        msg = '{arg} contains an invalid value: {val}. All values must be '
+        msg += 'equal to integers 0 through {lastIdx} (inclusive) indicating '
+        msg += 'an index value for the labels argument'
+        msg = msg.format(arg=sourceArg, val=idx, lastIdx=numLabels-1)
+        raise errorType(msg)
+
+def _confusionMatrixWithLabelsList(knownValues, predictedValues, labels):
+    numLabels = len(labels)
+    toFill = numpy.zeros((numLabels, numLabels), dtype=int)
+    validLabels = set() # to prevent repeated validation of same label
+    for kVal, pVal in zip(knownValues.elements, predictedValues.elements):
+        kVal = _mapInt(kVal)
+        if kVal not in validLabels:
+            _validateIndex(kVal, numLabels, 'knownValues')
+            validLabels.add(kVal)
+        pVal = _mapInt(pVal)
+        if pVal not in validLabels:
+            _validateIndex(pVal, numLabels, 'predictedValues')
+            validLabels.add(pVal)
+        toFill[pVal, kVal] += 1
+
+    return toFill, labels
+
+def _validateKey(key, labels, sourceArg):
+    if key not in labels:
+        msg = '{key} was found in {arg} but is not a key in labels'
+        raise KeyError(msg.format(key=key, arg=sourceArg))
+
+def _confusionMatrixWithLabelsDict(knownValues, predictedValues, labels):
+    sortedLabels = sorted(labels)
+    numLabels = len(labels)
+    toFill = numpy.zeros((numLabels, numLabels), dtype=int)
+    labelsIdx = {}
+    for kVal, pVal in zip(knownValues.elements, predictedValues.elements):
+        # trigger KeyError if label not present
+        if kVal not in labelsIdx:
+            _validateKey(kVal, labels, 'knownValues')
+            labelsIdx[kVal] = sortedLabels.index(kVal)
+        if pVal not in labelsIdx:
+            _validateKey(pVal, labels, 'predictedValues')
+            labelsIdx[pVal] = sortedLabels.index(pVal)
+        toFill[labelsIdx[pVal], labelsIdx[kVal]] += 1
+
+    knownLabels = [labels[key] for key in sortedLabels]
+
+    return toFill, knownLabels
+
+def _confusionMatrixNoLabels(knownValues, predictedValues):
+    knownLabels = set()
+    confusionDict = {}
+    # get labels and positions first then we will sort before creating matrix
+    for kVal, pVal in zip(knownValues.elements, predictedValues.elements):
+        knownLabels.add(kVal)
+        if (kVal, pVal) in confusionDict:
+            confusionDict[(kVal, pVal)] += 1
+        else:
+            confusionDict[(kVal, pVal)] = 1
+
+    knownLabels = sorted(list(map(_mapInt, knownLabels)))
+    length = len(knownLabels)
+
+    toFill = numpy.zeros((length, length), dtype=int)
+
+    # after sorting, need all permutations of labels paired with their index
+    for pInfo, kInfo in itertools.product(enumerate(knownLabels), repeat=2):
+        pIdx, pLbl = pInfo
+        kIdx, kLbl = kInfo
+        try:
+            toFill[pIdx, kIdx] = confusionDict[(kLbl, pLbl)]
+        except KeyError:
+            pass # permutation did not occur, keep value as zero
+
+    return toFill, knownLabels
