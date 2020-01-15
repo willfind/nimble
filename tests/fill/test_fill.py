@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import nimble
 from nimble import fill
 from nimble import match

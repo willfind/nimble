@@ -10,11 +10,9 @@ with a leading underscore added to the method name. Additionally, the
 wrapping of function calls for the logger takes place in here.
 """
 
-from __future__ import absolute_import
 from abc import abstractmethod
 
 import numpy
-import six
 
 import nimble
 from nimble.logger import handleLogging
@@ -122,7 +120,7 @@ class Features(object):
         """
         self._setName(oldIdentifier, newName, useLog)
 
-    def setNames(self, assignments=None, useLog=None):
+    def setNames(self, assignments, useLog=None):
         """
         Set or rename all of the feature names of this object.
 
@@ -132,12 +130,13 @@ class Features(object):
 
         Parameters
         ----------
-        assignments : iterable, dict
+        assignments : iterable, dict, None
             * iterable - Given a list-like container, the mapping
               between names and array indices will be used to define the
               feature names.
             * dict - The mapping for each feature name in the format
               {name:index}
+            * None - remove names from this object
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1233,30 +1232,27 @@ class Features(object):
         """
         return self._matching(function, useLog)
 
-    def add(self, toAdd, insertBefore=None, useLog=None):
+    def insert(self, insertBefore, toInsert, useLog=None):
         """
         Insert more features into this object.
 
-        Expand this object by inserting the features of toAdd prior to
-        the insertBefore identifier. The points in toAdd do not need to
-        be in the same order as in the calling object; the data will
-        automatically be placed using the calling object's point order
-        if there is an unambiguous mapping. toAdd will be unaffected by
-        calling this method.
+        Expand this object by inserting the features of ``toInsert``
+        prior to the ``insertBefore`` identifier. The points in
+        ``toInsert`` do not need to be in the same order as in the
+        calling object; the data will automatically be placed using the
+        calling object's point order if there is an unambiguous mapping.
+        ``toInsert`` will be unaffected by calling this method.
 
         Parameters
         ----------
-        toAdd : nimble Base object
+        insertBefore : identifier
+            The index or feature name prior to which the data from
+            toInsert will be inserted.
+        toInsert : nimble Base object
             The nimble Base object whose contents we will be including
             in this object. Must have the same point names as the
             calling object, but not necessarily in the same order. Must
             not share any feature names with the calling object.
-        insertBefore : identifier
-            The index or feature name prior to which the data from
-            toAdd will be inserted. The default value, None, indicates
-            that the data will be inserted to the right of all features
-            in this object, or in other words: appended to the end of
-            the current features.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1265,34 +1261,22 @@ class Features(object):
             False, do **NOT** send to the logger, regardless of the
             global option.
 
+        See Also
+        --------
+        append
+
         Examples
         --------
-        Append added data; default names.
+        Insert data; default names.
 
         >>> data = nimble.zeros('Matrix', 3, 2)
-        >>> toAdd = nimble.ones('Matrix', 3, 2)
-        >>> data.features.add(toAdd)
+        >>> toInsert = nimble.ones('Matrix', 3, 2)
+        >>> data.features.insert(1, toInsert)
         >>> data
         Matrix(
-            [[0.000 0.000 1.000 1.000]
-             [0.000 0.000 1.000 1.000]
-             [0.000 0.000 1.000 1.000]]
-            )
-
-        Reorder names.
-
-        >>> rawData = [[1, 2], [5, 6]]
-        >>> data = nimble.createData('Matrix', rawData,
-        ...                          pointNames=['a', 'b'])
-        >>> rawAdd = [[7, 8], [3, 4]]
-        >>> toAdd = nimble.createData('Matrix', rawAdd,
-        ...                           pointNames=['b', 'a'])
-        >>> data.features.add(toAdd)
-        >>> data
-        Matrix(
-            [[1.000 2.000 3.000 4.000]
-             [5.000 6.000 7.000 8.000]]
-            pointNames={'a':0, 'b':1}
+            [[0.000 1.000 1.000 0.000]
+             [0.000 1.000 1.000 0.000]
+             [0.000 1.000 1.000 0.000]]
             )
 
         Insert before another point; mixed object types.
@@ -1300,18 +1284,112 @@ class Features(object):
         >>> rawData = [[1, 4], [5, 8]]
         >>> data = nimble.createData('Matrix', rawData,
         ...                          featureNames=['1', '4'])
-        >>> rawAdd = [[2, 3], [6, 7]]
-        >>> toAdd = nimble.createData('List', rawAdd,
-        ...                           featureNames=['2', '3'])
-        >>> data.features.add(toAdd, insertBefore='4')
+        >>> rawInsert = [[2, 3], [6, 7]]
+        >>> toInsert = nimble.createData('List', rawInsert,
+        ...                              featureNames=['2', '3'])
+        >>> data.features.insert('4', toInsert)
         >>> data
         Matrix(
             [[1.000 2.000 3.000 4.000]
              [5.000 6.000 7.000 8.000]]
             featureNames={'1':0, '2':1, '3':2, '4':3}
             )
+
+        Reorder names.
+
+        >>> rawData = [[1, 2], [5, 6]]
+        >>> data = nimble.createData('Matrix', rawData,
+        ...                          pointNames=['a', 'b'])
+        >>> rawInsert = [[7, 8], [3, 4]]
+        >>> toInsert = nimble.createData('Matrix', rawInsert,
+        ...                              pointNames=['b', 'a'])
+        >>> data.features.insert(2, toInsert)
+        >>> data
+        Matrix(
+            [[1.000 2.000 3.000 4.000]
+             [5.000 6.000 7.000 8.000]]
+            pointNames={'a':0, 'b':1}
+            )
         """
-        self._add(toAdd, insertBefore, useLog)
+        self._insert(insertBefore, toInsert, False, useLog)
+
+    def append(self, toAppend, useLog=None):
+        """
+        Append features to this object.
+
+        Expand this object by appending the features of ``toAppend``
+        to the end of this object. The points in ``toAppend`` do not
+        need to be in the same order as in the calling object; the data
+        will automatically be placed using the calling object's point
+        order if there is an unambiguous mapping. ``toAppend`` will be
+        unaffected by calling this method.
+
+        Parameters
+        ----------
+        toAppend : nimble Base object
+            The nimble Base object whose contents we will be including
+            in this object. Must have the same point names as the
+            calling object, but not necessarily in the same order. Must
+            not share any feature names with the calling object.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+
+        See Also
+        --------
+        insert
+
+        Examples
+        --------
+        Append data; default names.
+
+        >>> data = nimble.zeros('Matrix', 3, 2)
+        >>> toAppend = nimble.ones('Matrix', 3, 2)
+        >>> data.features.append(toAppend)
+        >>> data
+        Matrix(
+            [[0.000 0.000 1.000 1.000]
+             [0.000 0.000 1.000 1.000]
+             [0.000 0.000 1.000 1.000]]
+            )
+
+        Append mixed object types.
+
+        >>> rawData = [[1, 2], [5, 6]]
+        >>> data = nimble.createData('Matrix', rawData,
+        ...                          featureNames=['1', '2'])
+        >>> rawAppend = [[3, 4], [7, 8]]
+        >>> toAppend = nimble.createData('List', rawAppend,
+        ...                              featureNames=['3', '4'])
+        >>> data.features.append(toAppend)
+        >>> data
+        Matrix(
+            [[1.000 2.000 3.000 4.000]
+             [5.000 6.000 7.000 8.000]]
+            featureNames={'1':0, '2':1, '3':2, '4':3}
+            )
+
+        Reorder names.
+
+        >>> rawData = [[1, 2], [5, 6]]
+        >>> data = nimble.createData('Matrix', rawData,
+        ...                          pointNames=['a', 'b'])
+        >>> rawAppend = [[7, 8], [3, 4]]
+        >>> toAppend = nimble.createData('Matrix', rawAppend,
+        ...                              pointNames=['b', 'a'])
+        >>> data.features.append(toAppend)
+        >>> data
+        Matrix(
+            [[1.000 2.000 3.000 4.000]
+             [5.000 6.000 7.000 8.000]]
+            pointNames={'a':0, 'b':1}
+            )
+        """
+        self._insert(None, toAppend, True, useLog)
 
     def mapReduce(self, mapper, reducer, useLog=None):
         """
@@ -1694,7 +1772,7 @@ class Features(object):
             featureNames={'category':0, 'id':1, 'quantity':2}
             )
         """
-        if not (isinstance(rule, (int, numpy.integer, six.string_types))
+        if not (isinstance(rule, (int, numpy.integer, str))
                 or hasattr(rule, '__iter__')
                 or hasattr(rule, '__call__')):
             msg = "rule must be an integer, string, iterable of integers "
@@ -1704,7 +1782,7 @@ class Features(object):
         splitList = []
         numResultingFts = len(resultingNames)
         for i, value in enumerate(self._base[:, feature]):
-            if isinstance(rule, six.string_types):
+            if isinstance(rule, str):
                 splitList.append(value.split(rule))
             elif isinstance(rule, (int, numpy.number)):
                 splitList.append([value[:rule], value[rule:]])
@@ -1712,7 +1790,7 @@ class Features(object):
                 split = []
                 startIdx = 0
                 for item in rule:
-                    if isinstance(item, six.string_types):
+                    if isinstance(item, str):
                         split.append(value[startIdx:].split(item)[0])
                         # find index of value from startIdx on, o.w. will only
                         # ever return first instance. Add len of previous
@@ -1994,7 +2072,7 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _add(self, toAdd, insertBefore, useLog=None):
+    def _insert(self, insertBefore, toInsert, append=False, useLog=None):
         pass
 
     @abstractmethod

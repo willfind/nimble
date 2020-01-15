@@ -1,9 +1,6 @@
 """
 Unit tests for mlpy_interface.py
-
 """
-
-from __future__ import absolute_import
 
 from nose.tools import *
 import numpy.testing
@@ -11,12 +8,13 @@ import numpy.testing
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.interfaces.mlpy_interface import Mlpy
+from nimble.utility import ImportModule
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
-mlpy = nimble.importExternalLibraries.importModule("mlpy")
+mlpy = ImportModule("mlpy")
 
 mlpySkipDec = SkipMissing('mlpy')
 
@@ -136,7 +134,6 @@ def testMlpyHandmadeInnerProductTrainingPCAException():
 
     ret = nimble.trainAndApply("mlpy.KPCA", trainObj, testX=testObj, output=None, arguments={'k': 1})
 
-    assert ret is not None
 
 @mlpySkipDec
 @oneLogEntryExpected
@@ -346,7 +343,6 @@ def testMlpyKernelExponentialDisallowed():
     kernel = nimble.Init("KernelExponential")
     ret = nimble.trainAndApply("mlpy.KFDA", trainingObj2d, trainY="Y", testX=testObj, output=None,
                             arguments={'kernel': kernel})
-    assert ret is not None
 
 @mlpySkipDec
 @logCountAssertionFactory(2)
@@ -372,15 +368,12 @@ def testMlpyListLearners():
     assert "LibLinear" in ret
     assert "LibSvm" in ret
 
-    toExclude = []
-
     for name in ret:
-        if name not in toExclude:
-            params = nimble.learnerParameters('mlpy.' + name)
-            assert params is not None
-            defaults = nimble.learnerDefaultValues('mlpy.' + name)
-            for key in defaults.keys():
-                assert key in params
+        params = nimble.learnerParameters('mlpy.' + name)
+        assert params is not None
+        defaults = nimble.learnerDefaultValues('mlpy.' + name)
+        for key in defaults.keys():
+            assert key in params
 
 @mlpySkipDec
 @logCountAssertionFactory(8)

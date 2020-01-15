@@ -1,7 +1,6 @@
-from __future__ import absolute_import
 try:
     from unittest import mock #python >=3.3
-except:
+except ImportError:
     import mock
 
 import numpy
@@ -49,7 +48,7 @@ def testCannotImportSciPy():
 def testPredictionsInvalidShape():
     pred = getPredictions()
     toAdd = nimble.createData('Matrix', numpy.ones((len(pred.points), 1)))
-    pred.features.add(toAdd)
+    pred.features.append(toAdd)
     assert len(pred.features) == 2
 
     (low, high) = confidenceIntervalHelper(pred, None, 0.95)

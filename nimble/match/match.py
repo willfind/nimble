@@ -1,10 +1,8 @@
 """
 Variety of functions to determine if data matches given conditions
 """
-from __future__ import absolute_import
 
 import numpy
-import six
 
 import nimble
 from nimble.exceptions import InvalidArgumentType
@@ -210,7 +208,7 @@ def positive(value):
         # will raise exception for strings
         value + 0
         return value > 0
-    except Exception:
+    except TypeError:
         return False
 
 def negative(value):
@@ -248,7 +246,7 @@ def negative(value):
         # raise exception for None
         value + 0
         return value < 0
-    except Exception:
+    except TypeError:
         return False
 
 def infinity(value):
@@ -281,7 +279,7 @@ def infinity(value):
     """
     try:
         return numpy.isinf(value)
-    except Exception:
+    except TypeError:
         return False
 
 def boolean(value):
@@ -1358,7 +1356,7 @@ def convertMatchToFunction(match):
     if not callable(match):
         # case1: list-like
         if ((hasattr(match, '__iter__') or hasattr(match, '__getitem__'))
-                and not isinstance(match, six.string_types)):
+                and not isinstance(match, str)):
             matchList = match
             # if nans in the list, need to include separate check in function
             if not all([val == val for val in matchList]):

@@ -1,12 +1,9 @@
 """
 Tests for the nimble.randomness submodule
-
 """
 
-from __future__ import absolute_import
 import random
 
-from six.moves import range
 import numpy
 import nose
 

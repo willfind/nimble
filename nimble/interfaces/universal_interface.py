@@ -4,23 +4,22 @@ various python packages or custom learners. Also contains the objects
 which store trained learner models and provide functionality for
 applying and testing learners.
 """
-from __future__ import absolute_import
+
 import inspect
 import copy
 import abc
 import functools
 import sys
 import numbers
+import warnings
 
 import numpy
-import six
-from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import PackageException
-from nimble.utility import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, ImportModule
 from nimble.exceptions import prettyListString
 from nimble.exceptions import prettyDictString
 from nimble.interfaces.interface_helpers import (
@@ -33,29 +32,39 @@ from nimble.helpers import generateAllPairs, countWins, inspectArguments
 from nimble.helpers import extractWinningPredictionIndex
 from nimble.helpers import extractWinningPredictionLabel
 from nimble.helpers import extractWinningPredictionIndexAndScore
+from nimble.configuration import configErrors
 
-cloudpickle = nimble.importModule('cloudpickle')
+cloudpickle = ImportModule('cloudpickle')
 
 
 def captureOutput(toWrap):
     """
-    Decorator which will safely redirect standard error within the
-    wrapped function to the temp file at nimble.capturedErr.
+    Decorator which will safely ignore certain warnings.
+
+    Prevent any warnings from displaying that do not apply directly to
+    the operation being run. This can be overridden by -W options at the
+    command line or the PYTHONWARNINGS environment variable.
     """
     @functools.wraps(toWrap)
     def wrapped(*args, **kwarguments):
-        backupErr = sys.stderr
-        sys.stderr = nimble.capturedErr
-        try:
+        # user has not already provided warnings filters
+        if not sys.warnoptions:
+            with warnings.catch_warnings():
+                # filter out warnings that we do not need users to see
+                warnings.simplefilter('ignore', DeprecationWarning)
+                warnings.simplefilter('ignore', FutureWarning)
+                warnings.simplefilter('ignore', PendingDeprecationWarning)
+                warnings.simplefilter('ignore', ImportWarning)
+
+                ret = toWrap(*args, **kwarguments)
+        else:
             ret = toWrap(*args, **kwarguments)
-        finally:
-            sys.stderr = backupErr
         return ret
 
     return wrapped
 
 
-class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
+class UniversalInterface(metaclass=abc.ABCMeta):
     """
     Metaclass defining methods and abstract methods for specific
     package or custom interfaces.
@@ -176,11 +185,16 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
             option.
         """
         if multiClassStrategy != 'default':
-            #if we need to do multiclassification by ourselves
-            trialResult = checkClassificationStrategy(self, learnerName,
-                                                      arguments)
+            # TODO reevaluate use of checkClassificationStrategy, the if
+            # statements below expect a string output but it looks to output
+            # a boolean value. It is also susceptible to failures for binary
+            # classifiers and learners without a getScores method implemented.
+
+            # #if we need to do multiclassification by ourselves
+            # trialResult = checkClassificationStrategy(self, learnerName,
+            #                                           arguments)
             #1 VS All
-            if multiClassStrategy == 'OneVsAll' and trialResult != 'OneVsAll':
+            if multiClassStrategy == 'OneVsAll': # and trialResult != 'OneVsAll':
                 #Remove true labels from from training set, if not separated
                 if isinstance(trainY, (str, numbers.Integral)):
                     trainX = trainX.copy()
@@ -197,9 +211,14 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 # processed labels and get predictions on the test set.
                 trainedLearners = []
                 for label in labelSet:
-                    relabeler.__defaults__ = (label,)
-                    trainLabels = trainY.points.calculate(relabeler,
-                                                          useLog=False)
+
+                    def relabeler(val):
+                        if val == label:
+                            return 1
+                        return 0
+
+                    trainLabels = trainY.elements.calculate(relabeler,
+                                                            useLog=False)
                     trainedLearner = self._train(
                         learnerName, trainX, trainLabels, arguments=arguments)
                     trainedLearner.label = label
@@ -208,11 +227,11 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                 return TrainedLearners(trainedLearners, 'OneVsAll', labelSet)
 
             #1 VS 1
-            if multiClassStrategy == 'OneVsOne' and trialResult != 'OneVsOne':
+            if multiClassStrategy == 'OneVsOne': # and trialResult != 'OneVsOne':
                 # want data and labels together in one object for this method
+                trainX = trainX.copy()
                 if isinstance(trainY, nimble.data.Base):
-                    trainX = trainX.copy()
-                    trainX.features.add(trainY, useLog=False)
+                    trainX.features.append(trainY, useLog=False)
                     trainY = len(trainX.features) - 1
 
                 # Get set of unique class labels, then generate list of all
@@ -239,13 +258,13 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
                             learnerName, pairData.copy(),
                             pairTrueLabels.copy(), arguments=arguments)
                         )
-                    pairData.features.add(pairTrueLabels, useLog=False)
-                    trainX.points.add(pairData, useLog=False)
+                    pairData.features.append(pairTrueLabels, useLog=False)
+                    trainX.points.append(pairData, useLog=False)
 
                 return TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
 
         # separate training data / labels if needed
-        if isinstance(trainY, (six.string_types, int, numpy.integer)):
+        if isinstance(trainY, (str, int, numpy.integer)):
             trainX = trainX.copy()
             trainY = trainX.features.extract(toExtract=trainY, useLog=False)
         return self._train(learnerName, trainX, trainY, arguments,
@@ -453,7 +472,7 @@ class UniversalInterface(six.with_metaclass(abc.ABCMeta, object)):
         ret = ''
         try:
             ret = nimble.settings.get(self.getCanonicalName(), option)
-        except Exception:
+        except configErrors:
             # it is possible that the config file doesn't have an option of
             # this name yet. Just pass through and grab the hardcoded default
             pass
@@ -1082,6 +1101,10 @@ class TrainedLearner(object):
         nimble.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode,
                                           None)
 
+        if not isinstance(testY, nimble.data.Base):
+            testX = testX.copy()
+            testY = testX.features.extract(testY, useLog=False)
+
         mergedArguments = _mergeArguments(arguments, kwarguments)
         pred = self.apply(testX, mergedArguments, output, scoreMode,
                           useLog=False)
@@ -1214,7 +1237,7 @@ class TrainedLearner(object):
                 return row[rowIndex]
 
             scoreVector = scores.points.calculate(grabValue, useLog=False)
-            labels.features.add(scoreVector, useLog=False)
+            labels.features.append(scoreVector, useLog=False)
 
             ret = labels
 
@@ -1257,13 +1280,7 @@ class TrainedLearner(object):
             outputPath = outputPath + extension
 
         with open(outputPath, 'wb') as file:
-            try:
-                cloudpickle.dump(self, file)
-            except Exception as e:
-                raise e
-        # print('session_' + outputFilename)
-        # print(globals())
-        # dill.dump_session('session_' + outputFilename)
+            cloudpickle.dump(self, file)
 
     @captureOutput
     def retrain(self, trainX, trainY=None, arguments=None, useLog=None,
@@ -1379,7 +1396,7 @@ class TrainedLearner(object):
             self.transformedArguments[arg] = value
 
         # separate training data / labels if needed
-        if isinstance(trainY, (six.string_types, int, numpy.integer)):
+        if isinstance(trainY, (str, int, numpy.integer)):
             trainX = trainX.copy()
             trainY = trainX.features.extract(toExtract=trainY, useLog=False)
 
@@ -1686,7 +1703,7 @@ class TrainedLearners(TrainedLearner):
                     # as it's added to results object,
                     # rename each column with its corresponding class label
                     oneLabelResults.features.setName(0, str(label), useLog=False)
-                    rawPredictions.features.add(oneLabelResults, useLog=False)
+                    rawPredictions.features.append(oneLabelResults, useLog=False)
 
             if scoreMode.lower() == 'label'.lower():
 
@@ -1763,7 +1780,7 @@ class TrainedLearners(TrainedLearner):
                 else:
                     predictionName = 'predictions-' + str(predictionFeatureID)
                     partialResults.features.setName(0, predictionName, useLog=False)
-                    rawPredictions.features.add(partialResults, useLog=False)
+                    rawPredictions.features.append(partialResults, useLog=False)
                 predictionFeatureID += 1
             # set up the return data based on which format has been requested
             if scoreMode.lower() == 'label'.lower():
@@ -1812,24 +1829,6 @@ class TrainedLearners(TrainedLearner):
         else:
             raise ImproperObjectAction('Wrong multiclassification method.')
 
-
-###########
-# Helpers #
-###########
-
-def relabeler(point, label=None):
-    """
-    Determine if the point contains the label value. Returning 1 if
-    True else 0.
-
-    Used with points.calculate to convert a feature of labels into a
-    binary feature. The default for label must is set to the actual
-    label prior to calling points.calculate.
-    """
-    if point[0] != label:
-        return 0
-    else:
-        return 1
 
 #######################
 # PredefinedInterface #

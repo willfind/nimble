@@ -3,18 +3,18 @@ Implementations and helpers specific to performing axis-generic
 operations on a nimble DataFrame object.
 """
 
-from __future__ import absolute_import
 from abc import abstractmethod
 
 import numpy
 
 import nimble
+from nimble.utility import ImportModule
 from .axis import Axis
 from .dataHelpers import sortIndexPosition
 from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter
 from .points import Points
 
-pd = nimble.importModule('pandas')
+pd = ImportModule('pandas')
 
 class DataFrameAxis(Axis):
     """
@@ -136,7 +136,7 @@ class DataFrameAxis(Axis):
     ####################
 
     @abstractmethod
-    def _add_implementation(self, toAdd, insertBefore):
+    def _insert_implementation(self, insertBefore, toInsert):
         pass
 
     # @abstractmethod

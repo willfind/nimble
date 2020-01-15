@@ -1,9 +1,7 @@
 """
 Unit tests for scikit_learn_interface.py
-
 """
 
-from __future__ import absolute_import
 import importlib
 import inspect
 import tempfile
@@ -22,13 +20,14 @@ from nimble.helpers import generateRegressionData
 from nimble.helpers import generateClusteredPoints
 from nimble.helpers import inspectArguments
 from nimble.calculate.loss import rootMeanSquareError
+from nimble.utility import ImportModule
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
-scipy = nimble.importModule('scipy.sparse')
-sklearn = nimble.importExternalLibraries.importModule("sklearn")
+scipy = ImportModule('scipy')
+sklearn = ImportModule("sklearn")
 
 packageName = 'sciKitLearn'
 
@@ -243,15 +242,12 @@ def testSciKitLearnListLearners():
     assert 'KMeans' in ret
     assert 'LinearRegression' in ret
 
-    toExclude = []
-
     for name in ret:
-        if name not in toExclude:
-            params = nimble.learnerParameters(toCall(name))
-            assert params is not None
-            defaults = nimble.learnerDefaultValues(toCall(name))
-            for key in defaults.keys():
-                assert key in params
+        params = nimble.learnerParameters(toCall(name))
+        assert params is not None
+        defaults = nimble.learnerDefaultValues(toCall(name))
+        for key in defaults.keys():
+            assert key in params
 
 @sklSkipDec
 @raises(InvalidArgumentValue)

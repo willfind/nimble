@@ -2,38 +2,16 @@
 Utility functions that could be useful in multiple interfaces
 """
 
-from __future__ import absolute_import
 import sys
 import importlib
 import configparser
+import warnings
 
 import numpy
-import six
-from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.randomness import pythonRandom
-
-
-def makeArgString(wanted, argDict, prefix, infix, postfix):
-    """
-    Construct and return a long string containing argument and value
-    pairs, each separated and surrounded by the given strings. If wanted
-    is None, then no args are put in the string.
-    """
-    argString = ""
-    if wanted is None:
-        return argString
-    for arg in wanted:
-        if arg in argDict:
-            value = argDict[arg]
-            if isinstance(value, six.string_types):
-                value = "\"" + value + "\""
-            else:
-                value = str(value)
-            argString += prefix + arg + infix + value + postfix
-    return argString
 
 
 class PythonSearcher(object):
@@ -157,52 +135,6 @@ class PythonSearcher(object):
                     return ret
 
         return None
-
-
-#TODO what about multiple levels???
-def findModule(learnerName, packageName, packageLocation):
-    """
-    Import the desired python package, and search for the module
-    containing the wanted learner. For use by interfaces to python
-    packages.
-    """
-    putOnSearchPath(packageLocation)
-    exec("import " + packageName)
-
-    contents = eval("dir(" + packageName + ")")
-
-    # if all is defined, then we defer to the package to provide
-    # a sensible list of what it contains
-    if "__all__" in contents:
-        contents = eval(packageName + ".__all__")
-
-    for moduleName in contents:
-        if moduleName.startswith("__"):
-            continue
-        cmd = "import " + packageName + "." + moduleName
-        try:
-            exec(cmd)
-        except ImportError:
-            continue
-        subContents = eval("dir(" + packageName + "." + moduleName + ")")
-        if ".__all__" in subContents:
-            contents = eval(packageName + "." + moduleName + ".__all__")
-        if learnerName in subContents:
-            return moduleName
-
-    return None
-
-
-def putOnSearchPath(wantedPath):
-    """
-    Add a path to sys.path.
-    """
-    if wantedPath is None:
-        return
-    elif wantedPath in sys.path:
-        return
-    else:
-        sys.path.append(wantedPath)
 
 
 def checkClassificationStrategy(interface, learnerName, algArgs):
@@ -376,48 +308,6 @@ def valueFromOneVOneData(oneVOneData, posLabel, negLabel, numLabels):
         return value
 
 
-def scoreModeOutputAdjustment(predLabels, scores, scoreMode, labelOrder):
-    """
-    Helper to set up the correct output data for different scoreModes in
-    the multiclass case.
-
-    Parameters
-    ----------
-    predLabels : 2d column vector array
-        Each row contains a single predicted label.
-    scores : 2d array
-        Each row corresponds to the confidence. Used to predict the
-        corresponding label in predLabels.
-    scoreMode : str
-        Valued flag determining the output format.
-    labelOrder : 1d array
-        The ith entry is the label name corresponding to the ith
-        confidence value in each row of scores.
-    """
-    # if 'labels' we just want the predicted labels
-    if scoreMode == 'label':
-        outData = predLabels
-    # in this case we want the first column to be the predicted labels, and
-    # the second column to be that label's score
-    elif scoreMode == 'bestScore':
-        labelToIndexMap = {}
-        for i in range(len(labelOrder)):
-            ithLabel = labelOrder[i]
-            labelToIndexMap[ithLabel] = i
-        outData = predLabels
-        bestScorePerPrediction = numpy.empty((len(scores), 1))
-        for i in range(len(scores)):
-            label = predLabels[i, 0]
-            index = labelToIndexMap[label]
-            matchingScore = scores[i][index]
-            bestScorePerPrediction[i] = matchingScore
-        outData = numpy.concatenate((outData, bestScorePerPrediction), axis=1)
-    else:
-        outData = scores
-
-    return outData
-
-
 def generateBinaryScoresFromHigherSortedLabelScores(scoresPerPoint):
     """
     Given an indexable containing the score for the label with a higher
@@ -494,7 +384,7 @@ def collectAttributes(obj, generators, checkers, recursive=True):
                     ret[k] = val
                 # safety against any sort of error someone may have in their
                 # property code.
-                except Exception:
+                except AttributeError:
                     pass
             return ret
 
@@ -552,14 +442,6 @@ def removeFromArray(orig, toIgnore):
             temp.append(entry)
     return temp
 
-def removeFromDict(orig, toIgnore):
-    """
-    Remove objects from a dictionary.
-    """
-    for entry in toIgnore:
-        if entry in orig:
-            del orig[entry]
-    return orig
 
 def removeFromTailMatchedLists(full, matched, toIgnore):
     """
@@ -599,19 +481,21 @@ def removeFromTailMatchedLists(full, matched, toIgnore):
 
 def modifyImportPathAndImport(directory, package):
     sysPathBackup = sys.path.copy()
-    try:
-        if directory is not None:
-            sys.path.insert(0, directory)
-
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
         try:
-            location = nimble.settings.get(package, 'location')
-            if location:
-                sys.path.insert(0, location)
-        except configparser.Error:
-            pass
+            if directory is not None:
+                sys.path.insert(0, directory)
 
-        if package == 'sciKitLearn':
-            package = 'sklearn'
-        return importlib.import_module(package)
-    finally:
-        sys.path = sysPathBackup
+            try:
+                location = nimble.settings.get(package, 'location')
+                if location:
+                    sys.path.insert(0, location)
+            except configparser.Error:
+                pass
+
+            if package == 'sciKitLearn':
+                package = 'sklearn'
+            return importlib.import_module(package)
+        finally:
+            sys.path = sysPathBackup

@@ -6,7 +6,6 @@ as possible
 
 """
 
-from __future__ import absolute_import
 from nose.plugins.attrib import attr
 
 import nimble
@@ -64,12 +63,14 @@ def wrappedTrainAndApply(learnerName, trainX, trainY, testX, testY):
 
 def wrappedTrainAndApplyOvO(learnerName, trainX, trainY, testX, testY):
     testX = handleApplyTestLabels(testX, testY)
-    return nimble.helpers.trainAndApplyOneVsOne(learnerName, trainX, trainY, testX)
+    return nimble.trainAndApply(learnerName, trainX, trainY, testX,
+                                multiClassStrategy='OneVsOne')
 
 
 def wrappedTrainAndApplyOvA(learnerName, trainX, trainY, testX, testY):
     testX = handleApplyTestLabels(testX, testY)
-    return nimble.helpers.trainAndApplyOneVsAll(learnerName, trainX, trainY, testX)
+    return nimble.trainAndApply(learnerName, trainX, trainY, testX,
+                                multiClassStrategy='OneVsAll')
 
 
 def wrappedTrainAndTest(learnerName, trainX, trainY, testX, testY):
@@ -79,13 +80,15 @@ def wrappedTrainAndTest(learnerName, trainX, trainY, testX, testY):
 
 
 def wrappedTrainAndTestOvO(learnerName, trainX, trainY, testX, testY):
-    return nimble.helpers.trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY,
-                                               performanceFunction=nimble.calculate.fractionIncorrect)
+    return nimble.trainAndTest(learnerName, trainX, trainY, testX, testY,
+                               performanceFunction=nimble.calculate.fractionIncorrect,
+                               multiClassStrategy='OneVsOne')
 
 
 def wrappedTrainAndTestOvA(learnerName, trainX, trainY, testX, testY):
-    return nimble.helpers.trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY,
-                                               performanceFunction=nimble.calculate.fractionIncorrect)
+    return nimble.trainAndTest(learnerName, trainX, trainY, testX, testY,
+                               performanceFunction=nimble.calculate.fractionIncorrect,
+                               multiClassStrategy='OneVsAll')
 
 
 def wrappedCrossValidate(learnerName, trainX, trainY, testX, testY):
@@ -113,9 +116,9 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
     ((cTrainX, cTrainY), (cTestX, cTestY)) = cData
     # data and labels in one object; labels at idx 0
     cTrainCombined = cTrainY.copy()
-    cTrainCombined.features.add(cTrainX)
+    cTrainCombined.features.append(cTrainX)
     cTestCombined = cTestY.copy()
-    cTestCombined.features.add(cTestX)
+    cTestCombined.features.append(cTestX)
 
     backCTrainX = cTrainX.copy()
     backCTrainY = cTrainY.copy()
@@ -128,9 +131,9 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
     ((rTrainX, rTrainY), (rTestX, rTestY)) = rData
     # data and labels in one object; labels at idx 0
     rTrainCombined = rTrainY.copy()
-    rTrainCombined.features.add(rTrainX)
+    rTrainCombined.features.append(rTrainX)
     rTestCombined = rTestY.copy()
-    rTestCombined.features.add(rTestX)
+    rTestCombined.features.append(rTestX)
 
     backRTrainX = rTrainX.copy()
     backRTrainY = rTrainY.copy()

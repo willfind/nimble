@@ -9,8 +9,6 @@ and pylint's json output to provide a custom output of the results.
 --output-format=<format> at the command line will override the custom
 format and provide pylint's output.
 """
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import sys
 import json

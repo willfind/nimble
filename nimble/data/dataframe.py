@@ -2,17 +2,13 @@
 Class extending Base, using a pandas DataFrame to store data.
 """
 
-from __future__ import division
-from __future__ import absolute_import
-
 import numpy
-from six.moves import range
-from six.moves import zip
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
+from nimble.utility import ImportModule
 from .base import Base
 from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView
@@ -22,8 +18,8 @@ from .dataHelpers import allDataIdentical
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import createDataNoValidation
 
-pd = nimble.importModule('pandas')
-scipy = nimble.importModule('scipy.sparse')
+pd = ImportModule('pandas')
+scipy = ImportModule('scipy')
 
 @inheritDocstringsFactory(Base)
 class DataFrame(Base):
@@ -96,29 +92,6 @@ class DataFrame(Base):
             return False
 
         return allDataIdentical(self.data.values, other.data.values)
-
-    def _writeFile_implementation(self, outPath, fileFormat, includePointNames,
-                                  includeFeatureNames):
-        """
-        Function to write the data in this object to a file using the
-        specified format. ``outPath`` is the location (including file
-        name and extension) where we want to write the output file.
-        ``includeNames`` is boolean argument indicating whether the file
-        should start with comment lines designating pointNames and
-        featureNames.
-        """
-        # if format not in ['csv', 'mtx']:
-        #     msg = "Unrecognized file format. Accepted types are 'csv' and "
-        #     msg += "'mtx'. They may either be input as the format parameter, "
-        #     msg += "or as the extension in the outPath"
-        #     raise InvalidArgumentValue(msg)
-
-        if fileFormat == 'csv':
-            return self._writeFileCSV_implementation(
-                outPath, includePointNames, includeFeatureNames)
-        if fileFormat == 'mtx':
-            return self._writeFileMTX_implementation(
-                outPath, includePointNames, includeFeatureNames)
 
     def _writeFileCSV_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):

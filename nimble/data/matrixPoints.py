@@ -3,8 +3,6 @@ Method implementations and helpers acting specifically on points in a
 Matrix object.
 """
 
-from __future__ import absolute_import
-
 import numpy
 
 from nimble.exceptions import InvalidArgumentValue
@@ -31,16 +29,16 @@ class MatrixPoints(MatrixAxis, Points):
     # Structural implementations #
     ##############################
 
-    def _add_implementation(self, toAdd, insertBefore):
+    def _insert_implementation(self, insertBefore, toInsert):
         """
-        Insert the points from the toAdd object below the provided index
-        in this object, the remaining points from this object will
+        Insert the points from the toInsert object below the provided
+        index in this object, the remaining points from this object will
         continue below the inserted points.
         """
         startData = self._base.data[:insertBefore, :]
         endData = self._base.data[insertBefore:, :]
-        self._base.data = numpy.concatenate((startData, toAdd.data, endData),
-                                            0)
+        self._base.data = numpy.concatenate(
+            (startData, toInsert.data, endData), 0)
 
     def _transform_implementation(self, function, limitTo):
         dtypes = []

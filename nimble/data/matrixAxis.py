@@ -3,7 +3,6 @@ Implementations and helpers specific to performing axis-generic
 operations on a nimble Matrix object.
 """
 
-from __future__ import absolute_import
 from abc import abstractmethod
 
 import numpy
@@ -104,7 +103,7 @@ class MatrixAxis(Axis):
     ####################
 
     @abstractmethod
-    def _add_implementation(self, toAdd, insertBefore):
+    def _insert_implementation(self, insertBefore, toInsert):
         pass
 
     # @abstractmethod

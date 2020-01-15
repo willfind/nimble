@@ -21,20 +21,17 @@ fillUsingAllData, points.splitByCollapsingFeatures,
 points.combineByExpandingFeatures, features.splitByParsing
 """
 
-from __future__ import absolute_import
 from copy import deepcopy
 import os.path
 import tempfile
 import inspect
 
 import numpy
-import six
-from six.moves import range
 from nose.tools import *
 from nose.plugins.attrib import attr
 try:
     from unittest import mock #python >=3.3
-except:
+except ImportError:
     import mock
 
 import nimble
@@ -1234,35 +1231,35 @@ class HighLevelDataSafe(DataTestObject):
     def test_trainAndTestSets_nameAppend_PathPreserve(self):
         data = [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]
         toTest = self.constructor(data, )
-        tmpFile = tempfile.NamedTemporaryFile(suffix='.csv')
-        toTest.writeFile(tmpFile.name, fileFormat='csv')
+        with tempfile.NamedTemporaryFile(suffix='.csv') as tmpFile:
+            toTest.writeFile(tmpFile.name, fileFormat='csv')
 
-        toTest = self.constructor(tmpFile.name, name='toTest')
+            toTest = self.constructor(tmpFile.name, name='toTest')
 
-        trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0)
+            trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0)
 
-        assert trX.name == 'toTest trainX'
-        assert trX.path == tmpFile.name
-        assert trX.absolutePath == tmpFile.name
-        assert trX.relativePath == os.path.relpath(tmpFile.name)
+            assert trX.name == 'toTest trainX'
+            assert trX.path == tmpFile.name
+            assert trX.absolutePath == tmpFile.name
+            assert trX.relativePath == os.path.relpath(tmpFile.name)
 
-        assert trY.name == 'toTest trainY'
-        assert trY.path == tmpFile.name
-        assert trY.path == tmpFile.name
-        assert trY.absolutePath == tmpFile.name
-        assert trY.relativePath == os.path.relpath(tmpFile.name)
+            assert trY.name == 'toTest trainY'
+            assert trY.path == tmpFile.name
+            assert trY.path == tmpFile.name
+            assert trY.absolutePath == tmpFile.name
+            assert trY.relativePath == os.path.relpath(tmpFile.name)
 
-        assert teX.name == 'toTest testX'
-        assert teX.path == tmpFile.name
-        assert teX.path == tmpFile.name
-        assert teX.absolutePath == tmpFile.name
-        assert teX.relativePath == os.path.relpath(tmpFile.name)
+            assert teX.name == 'toTest testX'
+            assert teX.path == tmpFile.name
+            assert teX.path == tmpFile.name
+            assert teX.absolutePath == tmpFile.name
+            assert teX.relativePath == os.path.relpath(tmpFile.name)
 
-        assert teY.name == 'toTest testY'
-        assert teY.path == tmpFile.name
-        assert teY.path == tmpFile.name
-        assert teY.absolutePath == tmpFile.name
-        assert teY.relativePath == os.path.relpath(tmpFile.name)
+            assert teY.name == 'toTest testY'
+            assert teY.path == tmpFile.name
+            assert teY.path == tmpFile.name
+            assert teY.absolutePath == tmpFile.name
+            assert teY.relativePath == os.path.relpath(tmpFile.name)
 
 
     def test_trainAndTestSets_PandFnamesPerserved(self):
@@ -1815,7 +1812,7 @@ class HighLevelDataSafe(DataTestObject):
         assert matches[1, 1] is False or matches[1, 1] is numpy.bool_(False)
         assert matches[1, 2] is False or matches[1, 2] is numpy.bool_(False)
 
-    @logCountAssertionFactory(4)
+    @logCountAssertionFactory(5)
     def test_elements_matching_varietyOfFuncs(self):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
         obj = self.constructor(raw)
@@ -1852,6 +1849,20 @@ class HighLevelDataSafe(DataTestObject):
         isNonNumeric = obj.elements.matching(match.nonNumeric)
 
         assert isNonNumeric == expObj
+
+        raw = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        obj = self.constructor(raw)
+        otherRaw = [[1, 2, 3], [0, 0, 0], [9, 8, 7]]
+        otherObj = self.constructor(otherRaw)
+        exp = [[True, True, True], [False, False, False], [False, True, False]]
+        expObj = self.constructor(exp)
+
+        def inOther(val, i, j):
+            return val == otherObj[i, j]
+
+        sameAsOther = obj.elements.matching(inOther)
+
+        assert sameAsOther == expObj
 
     def test_elements_matching_pfname_preservation(self):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]

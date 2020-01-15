@@ -3,14 +3,10 @@ Module containing most of the user facing functions for the top level
 nimble import.
 """
 
-from __future__ import absolute_import
 import copy
-import six.moves.configparser
+import configparser
 
 import numpy
-import six
-from six.moves import range
-from six.moves import zip
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -38,10 +34,10 @@ from nimble.helpers import createConstantHelper
 from nimble.helpers import computeMetrics
 from nimble.randomness import numpyRandom, generateSubsidiarySeed
 from nimble.randomness import startAlternateControl, endAlternateControl
-from nimble.utility import numpy2DArray
+from nimble.utility import numpy2DArray, ImportModule
 
-cloudpickle = nimble.importModule('cloudpickle')
-scipy = nimble.importModule('scipy.sparse')
+cloudpickle = ImportModule('cloudpickle')
+scipy = ImportModule('scipy')
 
 
 def createRandomData(
@@ -706,7 +702,7 @@ def learnerDefaultValues(name):
 
 def listLearners(package=None):
     """
-    Get a list of learners avaliable to nimble or a specific package.
+    Get a list of learners available to nimble or a specific package.
 
     Returns a list a list of learners that are callable through nimble's
     training, applying, and testing functions. If ``package`` is
@@ -947,7 +943,7 @@ def createData(
             reuseData=reuseData, treatAsMissing=treatAsMissing,
             replaceMissingWith=replaceMissingWith)
     # input is an open file or a path to a file
-    elif isinstance(data, six.string_types) or looksFileLike(data):
+    elif isinstance(data, str) or looksFileLike(data):
         ret = createDataFromFile(
             returnType=returnType, data=data, pointNames=pointNames,
             featureNames=featureNames, name=name, keepPoints=keepPoints,
@@ -1455,7 +1451,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                                   done2dOutputFlagCheck=True, **kwarguments)
 
     if testX is None:
-        if isinstance(trainY, (six.string_types, int, numpy.integer)):
+        if isinstance(trainY, (str, int, numpy.integer)):
             testX = trainX.copy()
             testX.features.delete(trainY, useLog=False)
         else:
@@ -1635,7 +1631,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
                                   storeLog=useLog, doneValidData=True,
                                   done2dOutputFlagCheck=True)
 
-    if isinstance(testY, (six.string_types, int, numpy.integer)):
+    if isinstance(testY, (str, int, numpy.integer)):
         testX = testX.copy()
         testY = testX.features.extract(testY, useLog=False)
     predictions = trainedLearner.apply(testX, {}, output, scoreMode,
@@ -1842,9 +1838,9 @@ def log(heading, logInfo):
     --------
     showLog
     """
-    if not isinstance(heading, six.string_types):
+    if not isinstance(heading, str):
         raise InvalidArgumentType("heading must be a string")
-    if not isinstance(logInfo, (six.string_types, list, dict)):
+    if not isinstance(logInfo, (str, list, dict)):
         msg = "logInfo must be a python string, list, or dictionary type"
         raise InvalidArgumentType(msg)
     if len(heading) > 50:
