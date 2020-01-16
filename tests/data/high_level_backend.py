@@ -3259,7 +3259,33 @@ class HighLevelModifying(DataTestObject):
     ################
     # fillMatching #
     ################
-    # TODO
+    def test_fillMatching_constant(self):
+        obj = self.constructor([[1, 2, 3], [0, 0, 0], [7, 0, 0], [7, 8, 9]], pointNames=['a', 'b', 'c', 'd'])
+        obj.fillMatching(100, 0)
+        exp = self.constructor([[1, 2, 3], [100, 100, 100], [7, 100, 100], [7, 8, 9]])
+        exp.points.setNames(['a', 'b', 'c', 'd'])
+        assert obj == exp
+
+    def test_fillMatching_constant_pfLimited(self):
+        obj = self.constructor([[1, 2, 3], [0, 0, 0], [7, 0, 0], [7, 8, 9]], pointNames=['a', 'b', 'c', 'd'])
+        obj.fillMatching(100, 0, points=1, features=[0, 2])
+        exp = self.constructor([[1, 2, 3], [100, 0, 100], [7, 0, 0], [7, 8, 9]])
+        exp.points.setNames(['a', 'b', 'c', 'd'])
+        assert obj == exp
+
+    def test_fillMatching_NamePath_preservation(self):
+        data = [['a', 'b', 1]]
+        toTest = self.constructor(data)
+
+        toTest._name = "TestName"
+        toTest._absPath = "TestAbsPath"
+        toTest._relPath = "testRelPath"
+
+        toTest.fillMatching(0, match.nonNumeric)
+
+        assert toTest.name == "TestName"
+        assert toTest.absolutePath == "TestAbsPath"
+        assert toTest.relativePath == 'testRelPath'
 
     ####################################
     # points.splitByCollapsingFeatures #

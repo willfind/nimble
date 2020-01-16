@@ -3012,16 +3012,17 @@ class Base(object):
         """
         Replace matching values calculated using the entire data object.
 
-        Fill matching values with imputed values based on the context of
-        the entire dataset.
+        Fill matching values with a constant value or imputed values
+        based on the context of the entire dataset.
 
         Parameters
         ----------
-        fillWith : function
-            a function in the format fillWith(feature, match) or
-            fillWith(feature, match, **kwarguments) and return the
-            transformed data as a nimble data object. Certain fill
-            methods can be imported from nimble's fill module.
+        fillWith : constant, function
+            * constant - a single value to use at every fill.
+            * function - in the format fillWith(feature, match) or
+              fillWith(feature, match, **kwarguments) and return the
+              transformed data as a nimble data object. Certain fill
+              methods can be imported from nimble's fill module.
         matchingElements : value, list, or function
             * value - a value to locate within each feature
             * list - values to locate within each feature
@@ -3051,14 +3052,26 @@ class Base(object):
 
         Examples
         --------
-        TODO
+        Constant fill
+
+        >>> raw = [[1, 2, 'fail'],
+                   [2, 'fail', 3],
+                   [3, 4, 'fail']]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> data.fillMatching(0, 'fail')
+        >>> data
+        Matrix(
+            [[1.000 2.000 0.000]
+             [2.000 0.000 3.000]
+             [3.000 4.000 0.000]]
+            )
         """
         if not callable(fillWith):
-            msg = "fillWith must be callable. If attempting to modify all "
-            msg += "matching values to a constant, use either "
-            msg += "points.fillMatching or features.fillMatching."
-            raise InvalidArgumentType(msg)
-        tmpData = fillWith(self.copy(), matchingElements, **kwarguments)
+            tmpData = self.copy()
+            tmpData.features.fillMatching(fillWith, matchingElements,
+                                          **kwarguments)
+        else:
+            tmpData = fillWith(self.copy(), matchingElements, **kwarguments)
         if points is None and features is None:
             self.referenceDataFrom(tmpData, useLog=False)
         else:
