@@ -125,12 +125,9 @@ class Axis(object):
             setattr(self._base, names, None)
             setattr(self._base, namesInverse, None)
         else:
-            count = len(self)
-            if isinstance(assignments, dict):
-                self._setNamesFromDict(assignments, count)
-            else:
+            if not isinstance(assignments, dict):
                 assignments = valuesToPythonList(assignments, 'assignments')
-                self._setNamesFromList(assignments, count)
+            self._setNamesBackend(assignments)
 
         handleLogging(useLog, 'prep', '{ax}s.setNames'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('setNames'),
@@ -1120,63 +1117,30 @@ class Axis(object):
         names[newName] = index
         self._base._incrementDefaultIfNeeded(newName, self._axis)
 
-    def _setNamesFromList(self, assignments, count):
+    def _setNamesBackend(self, assignments):
+        count = len(self)
         if len(assignments) != count:
             msg = "assignments may only be an ordered container type, with as "
             msg += "many entries (" + str(len(assignments)) + ") as this axis "
             msg += "is long (" + str(count) + ")"
             raise InvalidArgumentValue(msg)
-
-        if self._isPoint:
-            def checkAndSet(val):
-                if val >= self._base._nextDefaultValuePoint:
-                    self._base._nextDefaultValuePoint = val + 1
-        else:
-            def checkAndSet(val):
-                if val >= self._base._nextDefaultValueFeature:
-                    self._base._nextDefaultValueFeature = val + 1
-
-        if count == 0:
-            self._setNamesFromDict({}, count)
-            return
-
-        for name in assignments:
-            if name is not None and not isinstance(name, str):
-                msg = 'assignments must contain only string values'
-                raise InvalidArgumentValue(msg)
-            if name is not None and name.startswith(DEFAULT_PREFIX):
-                try:
-                    num = int(name[DEFAULT_PREFIX_LENGTH:])
-                # Case: default prefix with non-integer suffix. This cannot
-                # cause a future integer suffix naming collision, so we
-                # can ignore it.
-                except ValueError:
-                    continue
-                checkAndSet(num)
-
-        #convert to dict so we only write the checking code once
-        temp = {}
-        for index in range(len(assignments)):
-            name = assignments[index]
-            # take this to mean fill it in with a default name
-            if name is None:
-                name = self._nextDefaultName()
-            if name in temp:
-                msg = "Cannot input duplicate names: " + str(name)
-                raise InvalidArgumentValue(msg)
-            temp[name] = index
-        assignments = temp
-
-        self._setNamesFromDict(assignments, count)
-
-    def _setNamesFromDict(self, assignments, count):
         if not isinstance(assignments, dict):
-            msg = "assignments may only be a dict"
-            raise InvalidArgumentType(msg)
-        if len(assignments) != count:
-            msg = "assignments may only have as many entries as this " \
-                  "axis is long"
-            raise InvalidArgumentValue(msg)
+            #convert to dict so we only write the checking code once
+            temp = {}
+            for index, name in enumerate(assignments):
+                # take this to mean fill it in with a default name
+                if name is None:
+                    name = self._nextDefaultName()
+                if not isinstance(name, str):
+                    msg = 'assignments must contain only string values'
+                    raise InvalidArgumentValue(msg)
+                if name.startswith(DEFAULT_PREFIX) and name in temp:
+                    name = self._nextDefaultName()
+                if name in temp:
+                    msg = "Cannot input duplicate names: " + str(name)
+                    raise InvalidArgumentValue(msg)
+                temp[name] = index
+            assignments = temp
 
         if count == 0:
             if self._isPoint:
@@ -1681,14 +1645,14 @@ class Axis(object):
             objNames = self._base.points.getNames
             toInsertNames = toInsert.points.getNames
             def sorter(obj, names):
-                return obj.points.sort(sortHelper=names)
+                obj.points.sort(sortHelper=names)
         else:
             objNamesCreated = self._base._featureNamesCreated()
             toInsertNamesCreated = toInsert._featureNamesCreated()
             objNames = self._base.features.getNames
             toInsertNames = toInsert.features.getNames
             def sorter(obj, names):
-                return obj.features.sort(sortHelper=names)
+                obj.features.sort(sortHelper=names)
 
         # This may not look exhaustive, but because of the previous call to
         # _validateInsertableData before this helper, most of the toInsert
