@@ -103,7 +103,7 @@ def back_binaryscalar_pfname_preservations(callerCon, op, inplace):
             toCall = getattr(caller, op)
             ret = toCall(num)
         except ZeroDivisionError:
-            return
+            continue
 
         assert ret.points.getNames() == pnames
         assert ret.features.getNames() == fnames
@@ -111,7 +111,7 @@ def back_binaryscalar_pfname_preservations(callerCon, op, inplace):
         try:
             caller.points.setName('p1', 'p0')
         except ImproperObjectAction: # Views
-            return
+            continue
 
         if inplace:
             assert 'p0' in ret.points.getNames()

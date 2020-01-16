@@ -10868,6 +10868,20 @@ class StructureModifying(StructureShared):
         leftObj.merge(rightObj, point='union', feature='intersection')
         assert leftObj == exp
 
+    def test_merge_ptUnion_ftIntersection_pointNames_sharedFt_missing(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', -5, -6]]
+        dataR = [['a',3, 4], [None, 7, 8], [None, -3, -4], ['d', -7, -8]]
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesR)
+        expData = [['a'], ['b'], ['c'], ['d']]
+        fNamesExp = ['id']
+        exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd'], featureNames=fNamesExp)
+        leftObj.merge(rightObj, point='union', feature='intersection')
+        assert leftObj == exp
+
+
     def test_merge_ptUnion_ftIntersection_onFeature_sharedFt(self):
         dataL = [['x', 3, 'a', 4], ['y', -3, 'b', -4], ['y', -4, 'c', -3]]
         dataR = [['x', 1, 2, 'a'], ['x', 4, 3, 'a'], ['y', -1, -2, 'b'], ['y', -6, -5, 'c'], ['y', -3, -4, 'c']]

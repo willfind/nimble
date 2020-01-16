@@ -682,6 +682,7 @@ class QueryBackend(DataTestObject):
         assert toTest.points["4":"0"] == tmp2
         assert toTest.points[[1,2,3]] == tmp2
         assert toTest.points[['4', '7', '0']] == tmp2
+        assert toTest.points[0:3] == toTest
 
         tmp3 = self.constructor([['f'], ['m'], ['f'], ['m']], featureNames=['gender'], pointNames=pnames)
         assert toTest.features[4] == tmp3

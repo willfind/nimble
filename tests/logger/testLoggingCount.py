@@ -60,14 +60,16 @@ nimble_tested = list(map(prefixAdder('nimble'), nimble_funcs))
 
 # no calculate functions should be logged.
 calculate_funcs = [
-    'confidenceIntervalHelper', 'correlation', 'cosineSimilarity',
-    'covariance', 'detectBestResult', 'elementwiseMultiply',
-    'elementwisePower', 'fractionCorrect', 'fractionIncorrect', 'inverse',
+    'balancedAccuracy', 'confidenceIntervalHelper', 'confusionMatrix',
+    'correlation', 'cosineSimilarity', 'covariance', 'detectBestResult',
+    'elementwiseMultiply', 'elementwisePower', 'f1Score', 'falseNegative',
+    'falsePositive', 'fractionCorrect', 'fractionIncorrect', 'inverse',
     'leastSquaresSolution', 'maximum', 'mean', 'meanAbsoluteError',
     'meanFeaturewiseRootMeanSquareError', 'median', 'minimum', 'mode',
-    'proportionMissing', 'proportionZero', 'pseudoInverse', 'quartiles',
-    'residuals', 'rootMeanSquareError', 'rSquared', 'solve',
-    'standardDeviation', 'uniqueCount', 'varianceFractionRemaining',
+    'precision', 'proportionMissing', 'proportionZero', 'pseudoInverse',
+    'quartiles', 'recall', 'residuals', 'rootMeanSquareError', 'rSquared',
+    'solve', 'specificity', 'standardDeviation', 'trueNegative',
+    'truePositive', 'uniqueCount', 'varianceFractionRemaining',
     ]
 calculate_tested = list(map(prefixAdder('nimble.calculate'), calculate_funcs))
 
