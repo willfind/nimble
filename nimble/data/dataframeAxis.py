@@ -34,14 +34,6 @@ class DataFrameAxis(Axis):
         #update the index or columns in self.data
         self._updateName()
 
-    def _setNamesFromList(self, assignments, count):
-        super(DataFrameAxis, self)._setNamesFromList(assignments, count)
-        self._updateName()
-
-    def _setNamesFromDict(self, assignments, count):
-        super(DataFrameAxis, self)._setNamesFromDict(assignments, count)
-        self._updateName()
-
     def _updateName(self):
         """
         update self.data.index or self.data.columns
@@ -92,6 +84,7 @@ class DataFrameAxis(Axis):
             self._base.data = self._base.data.iloc[indexPosition, :]
         else:
             self._base.data = self._base.data.iloc[:, indexPosition]
+        self._updateName()
 
     ##############################
     # High Level implementations #

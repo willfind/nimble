@@ -215,7 +215,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.points.Points
+        nimble.data.Points
         """
         return self._points
 
@@ -232,7 +232,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.features.Features
+        nimble.data.Features
         """
         return self._features
 
@@ -629,8 +629,8 @@ class Base(object):
 
         See Also
         --------
-        calculate, nimble.data.points.Points.transform,
-        nimble.data.features.Features.transform
+        calculate, nimble.data.Points.transform,
+        nimble.data.Features.transform
 
         Examples
         --------
@@ -767,8 +767,8 @@ class Base(object):
 
         See Also
         --------
-        transform, nimble.data.points.Points.calculate,
-        nimble.data.features.Features.calculate
+        transform, nimble.data.Points.calculate,
+        nimble.data.Features.calculate
 
         Examples
         --------
@@ -951,6 +951,8 @@ class Base(object):
                 features = list(range(len(self.features)))
             # if unable to vectorize, iterate over each point
             values = numpy.empty([len(points), len(features)])
+            if allowBoolOutput:
+                values = values.astype(numpy.bool_)
             p = 0
             for pi in points:
                 f = 0
@@ -1021,8 +1023,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.points.Points.count,
-        nimble.data.features.Features.count
+        nimble.data.Points.count, nimble.data.Features.count
 
         Examples
         --------
@@ -2927,8 +2928,7 @@ class Base(object):
 
         See Also
         --------
-        fillMatching, nimble.data.points.Points.fill,
-        nimble.data.features.Features.fill
+        fillMatching, nimble.data.Points.fill, nimble.data.Features.fill
 
         Examples
         --------
@@ -3047,16 +3047,16 @@ class Base(object):
 
         See Also
         --------
-        replaceRectangle, nimble.data.points.Points.fill,
-        nimble.data.features.Features.fill
+        replaceRectangle, nimble.data.Points.fill,
+        nimble.data.Features.fill
 
         Examples
         --------
         Constant fill
 
         >>> raw = [[1, 2, 'fail'],
-                   [2, 'fail', 3],
-                   [3, 4, 'fail']]
+        ...        [2, 'fail', 3],
+        ...        [3, 4, 'fail']]
         >>> data = nimble.createData('Matrix', raw)
         >>> data.fillMatching(0, 'fail')
         >>> data
@@ -3607,7 +3607,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.points.Points.add, nimble.data.features.Features.add
+        nimble.data.Points.add, nimble.data.Features.add
 
         Examples
         --------
