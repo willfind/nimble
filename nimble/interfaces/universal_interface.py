@@ -1101,7 +1101,7 @@ class TrainedLearner(object):
         nimble.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode,
                                           None)
 
-        if isinstance(testY, (str, int, numpy.integer)):
+        if not isinstance(testY, nimble.data.Base):
             testX = testX.copy()
             testY = testX.features.extract(testY, useLog=False)
 
