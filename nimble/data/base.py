@@ -216,7 +216,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.points.Points
+        nimble.data.Points
         """
         return self._points
 
@@ -233,7 +233,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.features.Features
+        nimble.data.Features
         """
         return self._features
 
@@ -250,7 +250,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.elements.Elements
+        nimble.data.Elements
         """
         return self._elements
 
@@ -2392,8 +2392,8 @@ class Base(object):
 
         See Also
         --------
-        fillUsingAllData, nimble.data.points.Points.fill,
-        nimble.data.features.Features.fill
+        fillUsingAllData, nimble.data.Points.fill,
+        nimble.data.Features.fill
 
         Examples
         --------
@@ -2507,8 +2507,7 @@ class Base(object):
 
         See Also
         --------
-        fillWith, nimble.data.points.Points.fill,
-        nimble.data.features.Features.fill
+        fillWith, nimble.data.Points.fill, nimble.data.Features.fill
 
         Examples
         --------
@@ -3091,7 +3090,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.points.Points.add, nimble.data.features.Features.add
+        nimble.data.Points.add, nimble.data.Features.add
 
         Examples
         --------
@@ -3638,6 +3637,16 @@ class Base(object):
         return ret
 
     def matrixPower(self, power):
+        """
+        Perform matrix power operations on a square matrix.
+
+        For positive power values, return the result of repeated matrix
+        multiplication over this object. For power of zero, return an
+        identity matrix. For negative power values, return the result of
+        repeated matrix multiplication over the inverse of this object,
+        provided the object can be inverted using
+        nimble.calculate.inverse.
+        """
         if not isinstance(power, (int, numpy.int)):
             msg = 'power must be an integer'
             raise InvalidArgumentType(msg)

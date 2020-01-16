@@ -480,8 +480,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     See Also
     --------
-    nimble.data.points.Points.normalize,
-    nimble.data.features.Features.normalize
+    nimble.data.Points.normalize, nimble.data.Features.normalize
 
     Examples
     --------
@@ -1025,6 +1024,10 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
         results which can be accessed through the object's attributes
         and methods.
 
+    See Also
+    --------
+    nimble.helpers.KFoldCrossValidator
+
     Examples
     --------
     >>> nimble.setRandomSeed(42)
@@ -1191,11 +1194,12 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 
     Returns
     -------
-    nimble.interfaces.universal_interface.TrainedLearner
+    TrainedLearner
 
     See Also
     --------
-    trainAndApply, trainAndTest, trainAndTestOnTrainingData
+    trainAndApply, trainAndTest, trainAndTestOnTrainingData, CV,
+    nimble.interfaces.universal_interface.TrainedLearner
 
     Examples
     --------
@@ -1381,7 +1385,8 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
     See Also
     --------
-    train, trainAndTest, trainAndTestOnTrainingData
+    train, trainAndTest, trainAndTestOnTrainingData, CV,
+    nimble.interfaces.universal_interface.TrainedLearner.apply
 
     Examples
     --------
@@ -1561,7 +1566,8 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
 
     See Also
     --------
-    train, trainAndApply, trainAndTestOnTrainingData
+    train, trainAndApply, trainAndTestOnTrainingData, CV,
+    nimble.interfaces.universal_interface.TrainedLearner.test
 
     Examples
     --------
@@ -1748,7 +1754,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
 
     See Also
     --------
-    train, trainAndApply, trainAndTest
+    train, trainAndApply, trainAndTest, CV
 
     Examples
     --------
@@ -1983,7 +1989,11 @@ def loadTrainedLearner(inputPath, useLog=None):
 
     Returns
     -------
-    nimble.interfaces.UniversalInterface.TrainedLearner
+    TrainedLearner
+
+    See Also
+    --------
+    nimble.interfaces.universal_interface.TrainedLearner
     """
     if not cloudpickle:
         msg = "To load nimble models, cloudpickle must be installed"

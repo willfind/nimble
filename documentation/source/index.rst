@@ -6,20 +6,11 @@
 Welcome to Nimble's documentation!
 ==================================
 
-Contents:
-
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
+   :includehidden:
 
    nimble/nimble
-   nimble/calculate
-   nimble/configuration
-   nimble/customLearners
-   nimble/data
-   nimble/exceptions
-   nimble/fill
-   nimble/match
-   nimble/randomness
 
 .. toctree::
    :maxdepth: 1

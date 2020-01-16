@@ -1,7 +1,6 @@
 Custom.RidgeRegression
 ======================
 
-.. automodule:: nimble.customLearners.ridge_regression
+.. automodule:: nimble.customLearners
+   :noindex:
    :members: RidgeRegression
-   :undoc-members:
-   :show-inheritance:
