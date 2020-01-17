@@ -11,7 +11,6 @@ import multiprocessing
 import signal
 
 import numpy
-import scipy
 from nose.tools import *
 from nose.plugins.attrib import attr
 try:
@@ -31,6 +30,7 @@ from nimble.helpers import generateClassificationData
 from nimble.helpers import generateRegressionData
 from nimble.helpers import generateClusteredPoints
 from nimble.interfaces.shogun_interface import checkProcessFailure
+from nimble.utility import scipy
 
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory

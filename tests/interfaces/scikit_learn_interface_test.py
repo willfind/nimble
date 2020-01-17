@@ -7,7 +7,6 @@ import inspect
 import tempfile
 
 import numpy.testing
-import scipy
 from nose.plugins.attrib import attr
 from nose.tools import raises
 
@@ -21,6 +20,7 @@ from nimble.helpers import generateRegressionData
 from nimble.helpers import generateClusteredPoints
 from nimble.helpers import inspectArguments
 from nimble.calculate.loss import rootMeanSquareError
+from nimble.utility import scipy
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory

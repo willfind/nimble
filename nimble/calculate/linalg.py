@@ -274,6 +274,9 @@ def leastSquaresSolution(aObj, bObj):
     return _backendSolvers(aObj, bObj, leastSquaresSolution)
 
 def _backendSolvers(aObj, bObj, solverFunction):
+    if not scipy.nimbleAccessible():
+        msg = "scipy must be installed in order to use the pseudoInverse function."
+        raise PackageException(msg)
     bObj = _backendSolversValidation(aObj, bObj, solverFunction)
 
     aOriginalType = aObj.getTypeString()

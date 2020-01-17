@@ -24,8 +24,6 @@ except ImportError:
     import mock
 
 import numpy
-import scipy
-import pandas as pd
 from nose.tools import *
 
 import nimble
@@ -43,6 +41,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 from nimble.randomness import numpyRandom
 from nimble.utility import cooMatrixToArray
+from nimble.utility import scipy, pd
 
 from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory
