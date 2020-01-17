@@ -11,8 +11,6 @@ defined in this file.
 
 """
 
-from __future__ import absolute_import
-
 import nimble
 
 from .baseObject import startObjectValidation
@@ -83,11 +81,6 @@ class TestDataFrame(HighLevelAll, AllNumerical, QueryBackend, StructureAll, Stre
 
 class TestBaseOnly(LowLevelBackend):
     def __init__(self):
-        def makeConst(num):
-            def const(dummy=2):
-                return num
-
-            return const
 
         def makeAndDefine(pointNames=None, featureNames=None, psize=0, fsize=0):
             """ Make a base data object that will think it has as many features as it has featureNames,

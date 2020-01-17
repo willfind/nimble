@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import nimble
 from nimble.customLearners.multioutput_linear_regression import MultiOutputLinearRegression
 from nimble.configuration import configSafetyWrapper

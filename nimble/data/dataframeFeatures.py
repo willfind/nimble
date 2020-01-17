@@ -3,9 +3,6 @@ Method implementations and helpers acting specifically on features in a
 DataFrame object.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-
 import numpy
 
 import nimble
@@ -40,7 +37,7 @@ class DataFrameFeatures(DataFrameAxis, Features):
         endData = self._base.data.iloc[:, insertBefore:]
         self._base.data = pd.concat((startData, toInsert.data, endData),
                                     axis=1)
-        self._base._updateName(axis='feature')
+        self._updateName()
 
     def _transform_implementation(self, function, limitTo):
         for j, f in enumerate(self):

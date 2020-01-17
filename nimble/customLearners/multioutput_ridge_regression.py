@@ -2,10 +2,6 @@
 Contains the MultiOutputRidgeRegression custom learner class.
 """
 
-from __future__ import absolute_import
-
-from six.moves import range
-
 import nimble
 from nimble.customLearners import CustomLearner
 

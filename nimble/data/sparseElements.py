@@ -3,8 +3,6 @@ Method implementations and helpers acting specifically on each element
 Sparse object.
 """
 
-from __future__ import absolute_import
-
 import numpy
 
 import nimble

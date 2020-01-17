@@ -7,8 +7,6 @@ the distraction of helpers
 
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import csv
 import inspect
 import importlib
@@ -21,9 +19,6 @@ import sys
 import itertools
 
 import numpy
-import six
-from six.moves import range
-from six.moves import zip
 
 import nimble
 from nimble.logger import handleLogging
@@ -39,7 +34,6 @@ from nimble.randomness import numpyRandom
 from nimble.utility import numpy2DArray, is2DArray
 from nimble.utility import cooMatrixToArray
 from nimble.utility import scipy, pd, requests
-
 
 def findBestInterface(package):
     """
@@ -493,7 +487,7 @@ def convertData(returnType, rawData, pointNames, featureNames,
     if (returnType == 'Sparse'
             and is2DArray(rawData)
             and rawData.shape[0]*rawData.shape[1] > 0
-            and rawData.dtype is numpy.object_):
+            and rawData.dtype == object):
         #replace None to np.NaN, o.w. coo_matrix will convert None to 0
         numpy.place(rawData, numpy.vectorize(lambda x: x is None)(rawData),
                     numpy.NaN)
@@ -757,45 +751,6 @@ def initDataObject(
     return ret
 
 
-def extractNamesFromDataObject(data, pointNamesID, featureNamesID):
-    """
-    Extracts and sets (if needed) the point and feature names from the
-    given nimble Base object, returning the modified object.
-    pointNamesID may be either None, or an integer ID corresponding to a
-    feature in the data object. featureNamesID may b either None, or an
-    integer ID corresponding to a point in the data object.
-    """
-    ret = data
-    praw = None
-    if pointNamesID is not None:
-        # extract the feature of point names
-        pnames = ret.features.extract(pointNamesID)
-        if featureNamesID is not None:
-            # discard the point of feature names that pulled along since we
-            # extracted these first
-            pnames.points.extract(featureNamesID)
-        praw = pnames.copy(to='numpyarray', outputAs1D=True)
-        praw = numpy.vectorize(str)(praw)
-
-    fraw = None
-    if featureNamesID is not None:
-        # extract the point of feature names
-        fnames = ret.points.extract(featureNamesID)
-        # extracted point names first, so if they existed, they aren't in
-        # ret anymore. So we DON'T need to extract them from this object
-        fraw = fnames.copy(to='numpyarray', outputAs1D=True)
-        fraw = numpy.vectorize(str)(fraw)
-
-    # have to wait for everything to be extracted before we add the names,
-    # because otherwise the lenths won't be correct
-    if praw is not None:
-        ret.points.setNames(list(praw), useLog=False)
-    if fraw is not None:
-        ret.features.setNames(list(fraw), useLog=False)
-
-    return ret
-
-
 def createDataFromFile(
         returnType, data, pointNames, featureNames, name,
         ignoreNonNumericalFeatures, keepPoints, keepFeatures, inputSeparator,
@@ -807,7 +762,7 @@ def createDataFromFile(
     createData's parameters with the same names).
     """
     # try to find an extension for possible optimizations
-    if isinstance(data, six.string_types):
+    if isinstance(data, str):
         path = data
     else:
         # try getting name attribute from file
@@ -840,7 +795,7 @@ def createDataFromFile(
     toPass = data
     # Case: string value means we need to open the file, either directly or
     # through an http request
-    if isinstance(toPass, six.string_types):
+    if isinstance(toPass, str):
         if toPass[:4] == 'http':
             if not requests.nimbleAccessible():
                 msg = "To load data from a webpage, the requests module must "
@@ -859,7 +814,6 @@ def createDataFromFile(
             if isMtxFile:
                 toPass = BytesIO(bytes(response.content,
                                        response.apparent_encoding))
-
         else:
             toPass = open(data, 'r', newline=None)
             isMtxFile = isMtxFileChecker(toPass)
@@ -900,7 +854,7 @@ def createDataFromFile(
         toPass.close()
 
     # auto set name if unspecified, and is possible
-    if isinstance(data, six.string_types):
+    if isinstance(data, str):
         path = data
     elif hasattr(data, 'name'):
         path = data.name
@@ -1058,51 +1012,9 @@ def extractNamesFromScipySparse(rawData, pointNames, featureNames):
     -------
     a triple : coo_matrix; None or a pointnames; None or featureNames
     """
-#    try:
-#        ret = extractNamesFromScipyConversion(rawData, pointNames,
-#                                              featureNames)
-#    except (NotImplementedError, TypeError):
     ret = extractNamesFromCooDirect(rawData, pointNames, featureNames)
 
     return ret
-
-def extractNamesFromScipyConversion(rawData, pointNames, featureNames):
-    """
-    Extract names from a scipy sparse csr or csc matrix.
-    """
-    if not isinstance(rawData, scipy.sparse.csr_matrix):
-        rawData = scipy.sparse.csr_matrix(rawData)
-
-    if rawData.shape[0] > 0:
-
-        firstRow = cooMatrixToArray(rawData[0]).flatten().tolist()
-    else:
-        firstRow = None
-    if rawData.shape[0] > 1:
-        secondRow = cooMatrixToArray(rawData[1]).flatten().tolist()
-    else:
-        secondRow = None
-    pointNames, featureNames = autoDetectNamesFromRaw(pointNames, featureNames,
-                                                      firstRow, secondRow)
-    pointNames = 0 if pointNames is True else None
-    featureNames = 0 if featureNames is True else None
-
-    retFNames = None
-    if featureNames == 0:
-        retFNames = cooMatrixToArray(rawData[0]).flatten().tolist()
-        retFNames = list(map(str, retFNames))
-        rawData = rawData[1:]
-
-    retPNames = None
-    if pointNames == 0:
-        rawData = scipy.sparse.csc_matrix(rawData)
-        retPNames = cooMatrixToArray(rawData[:, 0]).flatten().tolist()
-        retPNames = list(map(str, retPNames))
-        rawData = rawData[:, 1:]
-        retFNames = retFNames[1:]
-
-    rawData = scipy.sparse.coo_matrix(rawData)
-    return rawData, retPNames, retFNames
 
 def extractNamesFromCooDirect(data, pnamesID, fnamesID):
     """
@@ -1284,11 +1196,11 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
 
     if ((pointNames is True or pointNames == 'automatic')
             and firstValues[0] == 'pointNames'):
-        allText = all(map(lambda x: isinstance(x, six.string_types),
+        allText = all(map(lambda x: isinstance(x, str),
                           firstValues[1:]))
         allDiff = all(map(teq, zip(firstValues[1:], secondValues[1:])))
     else:
-        allText = all(map(lambda x: isinstance(x, six.string_types),
+        allText = all(map(lambda x: isinstance(x, str),
                           firstValues))
         allDiff = all(map(teq, zip(firstValues, secondValues)))
 
@@ -1910,7 +1822,7 @@ def extractWinningPredictionLabel(predictions):
 
     #get the class that won the most tournaments
     #TODO: what if there are ties?
-    return max(six.iterkeys(predictionCounts),
+    return max(predictionCounts.keys(),
                key=(lambda key: predictionCounts[key]))
 
 
@@ -1975,240 +1887,6 @@ def extractConfidenceScores(predictionScores, featureNamesItoN):
     return scoreMap
 
 
-def copyLabels(dataSet, dependentVar):
-    """
-    A helper function to simplify the process of obtaining a
-    1-dimensional matrix of class labels from a data matrix.  Useful in
-    functions which have an argument that may be a column index or a
-    1-dimensional matrix.  If 'dependentVar' is an index, this function
-    will return a copy of the column in 'dataSet' indexed by
-    'dependentVar'.  If 'dependentVar' is itself a column (1-dimensional
-    matrix w/shape (nx1)), dependentVar will be returned.
-
-    Parameters
-    ----------
-    dataSet : matrix
-        Contains labels and, possibly, features.  May be empty if
-        'dependentVar' is a 1-column matrix containing labels.
-    dependentVar: int, matrix
-        Either a column index indicating which column in dataSet
-        contains class labels, or a matrix containing 1 column of class
-        labels.
-
-    Returns
-    -------
-    matrix
-        A 1-column matrix of class labels.
-    """
-    if isinstance(dependentVar, Base):
-        #The known Indicator argument already contains all known
-        #labels, so we do not need to do any further processing
-        labels = dependentVar
-    elif isinstance(dependentVar, (str, six.text_type, int)):
-        #known Indicator is an index; we extract the column it indicates
-        #from knownValues
-        labels = dataSet.features.copy([dependentVar])
-    else:
-        msg = "Missing or improperly formatted indicator for known labels "
-        msg += "in computeMetrics"
-        raise InvalidArgumentType(msg)
-
-    return labels
-
-
-def applyCodeVersions(functionTextList, inputHash):
-    """
-    Applies all the different various versions of code that can be
-    generated from functionText to each of the variables specified in
-    inputHash, where data is plugged into the variable with name
-    inputVariableName. Returns the result of each application as a list.
-    functionTextList is a list of text objects, each of which defines a
-    python function inputHash is of the form:
-    {variable1Name:variable1Value, variable2Name:variable2Value, ...}.
-    """
-    results = []
-    for codeText in functionTextList:
-        results.append(executeCode(codeText, inputHash))
-    return results
-
-
-def executeCode(code, inputHash):
-    """
-    Execute the given code stored as text in codeText, starting with the
-    variable values specified in inputHash. This function assumes the
-    code consists of EITHER an entire function definition OR a single
-    line of code with statements seperated by semi-colons OR as a python
-    function object.
-    """
-    #make a copy so we don't modify it... but it doesn't seem necessary
-    #inputHash = inputHash.copy()
-    if isSingleLineOfCode(code):
-        #it's one line of text (with ;'s to separate statements)
-        return executeOneLinerCode(code, inputHash)
-    elif isinstance(code, (str, six.text_type)):
-        #it's the text of a function definition
-        return executeFunctionCode(code, inputHash)
-    else:
-        # assume it's a function itself
-        return code(**inputHash)
-
-
-def executeOneLinerCode(codeText, inputHash):
-    """
-    Execute the given code stored as text in codeText, starting with the
-    variable values specified in inputHash. This function assumes the
-    code consists of just one line (with multiple statements seperated
-    by semi-colons.
-    Note: if the last statement in the line starts X=... then the X=
-    gets stripped off (to prevent it from getting broken by A=(X=...)).
-    """
-    if not isSingleLineOfCode(codeText):
-        msg = "The code text was not just one line of code."
-        raise InvalidArgumentValue(msg)
-    codeText = codeText.strip()
-    localVariables = inputHash.copy()
-    pieces = codeText.split(";")
-    lastPiece = pieces[-1].strip()
-    # remove 'X =' if the last statement begins with something like X = ...
-    lastPiece = re.sub(r"\A([\w])+[\s]*=", "", lastPiece)
-    lastPiece = lastPiece.strip()
-    pieces[-1] = "RESULTING_VALUE_ZX7_ = (" + lastPiece + ")"
-    codeText = ";".join(pieces)
-    #oneLiner = True
-
-    #	print "Code text: "+str(codeText)
-    exec(codeText, globals(), localVariables)    #apply the code
-    return localVariables["RESULTING_VALUE_ZX7_"]
-
-
-def executeFunctionCode(codeText, inputHash):
-    """
-    Execute the given code stored as text in codeText, starting with the
-    variable values specified in inputHash. This function assumes the
-    code consists of an entire function definition.
-    """
-    if not "def" in codeText:
-        msg = "No function definition was found in this code!"
-        raise InvalidArgumentValue(msg)
-    localVariables = {}
-    # apply the code, which declares the function definition
-    exec(codeText, globals(), localVariables)
-    #foundFunc = False
-    #result = None
-    for varValue in six.itervalues(localVariables):
-        if "function" in str(type(varValue)):
-            return varValue(**inputHash)
-    return None
-
-
-def isSingleLineOfCode(codeText):
-    """
-    Determine if a code string is a single line.
-    """
-    if not isinstance(codeText, (str, six.text_type)):
-        return False
-    codeText = codeText.strip()
-    try:
-        codeText.strip().index("\n")
-        return False
-    except ValueError:
-        return True
-
-
-def _incrementTrialWindows(allData, orderedFeature, currEndTrain, minTrainSize,
-                           maxTrainSize, stepSize, gap, minTestSize,
-                           maxTestSize):
-    """
-    Helper which will calculate the start and end of the training and
-    testing sizes given the current position in the full data set.
-    """
-    #	set_trace()
-    # determine the location of endTrain.
-    if currEndTrain is None:
-    # points are zero indexed, thus -1 for the num of points case
-    #		set_trace()
-        endTrain = _jumpForward(allData, orderedFeature, 0, minTrainSize, -1)
-    else:
-        endTrain = _jumpForward(allData, orderedFeature, currEndTrain,
-                                stepSize)
-
-    # the value we don't want to split from the training set
-    nonSplit = allData[endTrain, orderedFeature]
-    # we're doing a lookahead here, thus -1 from the last possible index,
-    # and  +1 to our lookup
-    while (endTrain < len(allData.points) - 1
-           and allData[endTrain + 1, orderedFeature] == nonSplit):
-        endTrain += 1
-
-    if endTrain == len(allData.points) - 1:
-        return None
-
-    # we get the start for training by counting back from endTrain
-    startTrain = _jumpBack(allData, orderedFeature, endTrain, maxTrainSize, -1)
-    if startTrain < 0:
-        startTrain = 0
-
-    # we get the start and end of the test set by counting forward from
-    # endTrain speciffically, we go forward by one, and as much more forward
-    # as specified by gap
-    startTest = _jumpForward(allData, orderedFeature, endTrain + 1, gap)
-    if startTest >= len(allData.points):
-        return None
-
-    endTest = _jumpForward(allData, orderedFeature, startTest, maxTestSize, -1)
-    if endTest >= len(allData.points):
-        endTest = len(allData.points) - 1
-    if _diffLessThan(allData, orderedFeature, startTest, endTest, minTestSize):
-        return None
-
-    return (startTrain, endTrain, startTest, endTest)
-
-
-def _jumpBack(allData, orderedFeature, start, delta, intCaseOffset=0):
-    if isinstance(delta, datetime.timedelta):
-        endPoint = start
-        startVal = datetime.timedelta(float(allData[start, orderedFeature]))
-        # loop as long as we don't run off the end of the data
-        while endPoint > 0:
-            prevVal = float(allData[endPoint - 1, orderedFeature])
-            if (startVal - datetime.timedelta(prevVal)) > delta:
-                break
-            endPoint = endPoint - 1
-    else:
-        endPoint = start - (delta + intCaseOffset)
-
-    return endPoint
-
-
-def _jumpForward(allData, orderedFeature, start, delta, intCaseOffset=0):
-    if isinstance(delta, datetime.timedelta):
-        endPoint = start
-        startVal = datetime.timedelta(float(allData[start, orderedFeature]))
-        # loop as long as we don't run off the end of the data
-        while endPoint < (len(allData.points) - 1):
-            nextVal = float(allData[endPoint + 1, orderedFeature])
-            if (datetime.timedelta(nextVal) - startVal) > delta:
-                break
-            endPoint = endPoint + 1
-    else:
-        endPoint = start + (delta + intCaseOffset)
-
-    return endPoint
-
-
-def _diffLessThan(allData, orderedFeature, startPoint, endPoint, delta):
-    if isinstance(delta, datetime.timedelta):
-        startFloat = float(allData[startPoint, orderedFeature])
-        startVal = datetime.timedelta(startFloat)
-        endFloat = float(allData[endPoint, orderedFeature])
-        endVal = datetime.timedelta(endFloat)
-        return (endVal - startVal) < delta
-    else:
-        return (endPoint - startPoint + 1) < delta
-
-
-#def evaluate(metric, knownData, knownLabels, predictedLabels)
-
 def computeMetrics(dependentVar, knownData, predictedData,
                    performanceFunction):
     """
@@ -2261,82 +1939,6 @@ def computeMetrics(dependentVar, knownData, predictedData,
     result = performanceFunction(knownLabels, predictedData)
 
     return result
-
-
-def confusion_matrix_generator(knownY, predictedY):
-    """
-    Given two vectors, one of known class labels (as strings) and one of
-    predicted labels, compute the confusion matrix.  Returns a
-    2-dimensional dictionary in which outer label is keyed by known
-    label, inner label is keyed by predicted label, and the value stored
-    is the count of instances for each combination.  Works for an
-    indefinite number of class labels.
-    """
-    confusionCounts = {}
-    for known, predicted in zip(knownY, predictedY):
-        if confusionCounts[known] is None:
-            confusionCounts[known] = {predicted: 1}
-        elif confusionCounts[known][predicted] is None:
-            confusionCounts[known][predicted] = 1
-        else:
-            confusionCounts[known][predicted] += 1
-
-    #if there are any entries in the square matrix confusionCounts,
-    #then there value must be 0.  Go through and fill them in.
-    for knownY in confusionCounts:
-        if confusionCounts[knownY][knownY] is None:
-            confusionCounts[knownY][knownY] = 0
-
-    return confusionCounts
-
-
-def print_confusion_matrix(confusionMatrix):
-    """
-    Print a confusion matrix in human readable form, with rows indexed
-    by known labels, and columns indexed by predictedlabels.
-    confusionMatrix is a 2-dimensional dictionary, that is also
-    primarily indexed by known labels, and secondarily indexed by
-    predicted labels, with the value at
-    confusionMatrix[knownLabel][predictedLabel] being the count of posts
-    that fell into that slot.  Does not need to be sorted.
-    """
-    #print heading
-    print("*" * 30 + "Confusion Matrix" + "*" * 30)
-    print("\n\n")
-
-    #print top line - just the column headings for
-    #predicted labels
-    spacer = " " * 15
-    sortedLabels = sorted(confusionMatrix.iterKeys())
-    for knownLabel in sortedLabels:
-        spacer += " " * (6 - len(knownLabel)) + knownLabel
-
-    print(spacer)
-    totalPostCount = 0
-    for knownLabel in sortedLabels:
-        outputBuffer = knownLabel + " " * (15 - len(knownLabel))
-        for predictedLabel in sortedLabels:
-            count = confusionMatrix[knownLabel][predictedLabel]
-            totalPostCount += count
-            outputBuffer += " " * (6 - len(count)) + count
-        print(outputBuffer)
-
-    print("Total post count: " + totalPostCount)
-
-
-def checkPrintConfusionMatrix():
-    """
-    Check print ouptut of confusion matrix.
-    """
-    X = {"classLabel": ["A", "B", "C", "C", "B", "C", "A", "B", "C", "C",
-                        "B", "C", "A", "B", "C", "C", "B", "C"]}
-    Y = ["A", "C", "C", "A", "B", "C", "A", "C", "C", "A", "B", "C", "A",
-         "C", "C", "A", "B", "C"]
-    functions = [confusion_matrix_generator]
-    classLabelIndex = "classLabel"
-    confusionMatrixResults = computeMetrics(classLabelIndex, X, Y, functions)
-    confusionMatrix = confusionMatrixResults["confusion_matrix_generator"]
-    print_confusion_matrix(confusionMatrix)
 
 
 def generateAllPairs(items):
@@ -2481,11 +2083,11 @@ class KFoldCrossValidator():
         if not isinstance(X, Base):
             raise InvalidArgumentType("X must be a Base object")
         if Y is not None:
-            if not isinstance(Y, (Base, int, six.string_types, list)):
+            if not isinstance(Y, (Base, int, str, list)):
                 msg = "Y must be a Base object or an index (int) from X where "
                 msg += "Y's data can be found"
                 raise InvalidArgumentType(msg)
-            if isinstance(Y, (int, six.string_types, list)):
+            if isinstance(Y, (int, str, list)):
                 X = X.copy()
                 Y = X.features.extract(Y, useLog=False)
 
@@ -3194,7 +2796,7 @@ class LearnerInspector:
         run on.
         Example output: 'classification', 'regression', 'other'
         """
-        if not isinstance(learnerName, six.string_types):
+        if not isinstance(learnerName, str):
             raise InvalidArgumentType("learnerName must be a string")
         return self._classifyAlgorithmDecisionTree(learnerName)
 
@@ -3469,7 +3071,7 @@ def _validData(trainX, trainY, testX, testY, testRequired):
         raise InvalidArgumentType(msg)
 
     if trainY is not None:
-        if not isinstance(trainY, (Base, six.string_types, int, numpy.int64)):
+        if not isinstance(trainY, (Base, str, int, numpy.int64)):
             msg = "trainY may only be an object derived from Base, or an "
             msg += "ID of the feature containing labels in testX"
             raise InvalidArgumentType(msg)
@@ -3496,7 +3098,7 @@ def _validData(trainX, trainY, testX, testY, testRequired):
     if testRequired[1] and testY is None:
         raise InvalidArgumentType("testY must be provided")
     if testY is not None:
-        if not isinstance(testY, (Base, six.string_types, int, int)):
+        if not isinstance(testY, (Base, str, int, int)):
             msg = "testY may only be an object derived from Base, or an ID "
             msg += "of the feature containing labels in testX"
             raise InvalidArgumentType(msg)
@@ -3529,484 +3131,12 @@ def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
             msg += "'default'"
             raise InvalidArgumentValueCombination(msg)
 
-
-def trainAndApplyOneVsOne(learnerName, trainX, trainY, testX, arguments=None,
-                          scoreMode='label', useLog=None, **kwarguments):
-    """
-    Calls on trainAndApply() to train and evaluate the learner defined
-    by 'learnerName.'  Assumes there are multiple (>2) class labels, and
-    uses the one vs. one method of splitting the training set into
-    2-label subsets. Tests performance using the metric function(s)
-    found in performanceMetricFunctions.
-
-    Parameters
-    ----------
-    trainX: nimble Base object
-        Data to be used for training.
-    trainY: identifier, nimble Base object
-        A name or index of the feature in ``trainX`` containing the
-        labels or another nimble Base object containing the labels that
-        correspond to ``trainX``.
-    testX : nimble Base object
-        data set on which the trained learner will be applied (i.e.
-        performing prediction, transformation, etc. as appropriate to
-        the learner).
-    arguments : dict
-        Mapping argument names (strings) to their values, to be used
-        during training and application. eg. {'dimensions':5, 'k':5}
-        To make use of multiple permutations, specify different values
-        for a parameter as a tuple. eg. {'k': (1,3,5)} will generate an
-        error score for  the learner when the learner was passed all
-        three values of ``k``, separately. These will be merged with
-        kwarguments for the learner.
-    scoreMode : str
-        In the case of a classifying learner, this specifies the type of
-        output wanted: 'label' if we class labels are desired,
-        'bestScore' if both the class label and the score associated
-        with that class are desired, or 'allScores' if a matrix
-        containing the scores for every class label are desired.
-    useLog : bool, None
-        Local control for whether to send results/timing to the logger.
-        If None (default), use the value as specified in the "logger"
-        "enabledByDefault" configuration option. If True, send to the
-        logger regardless of the global option. If False, do **NOT**
-        send to the logger, regardless of the global option.
-    kwarguments
-        Keyword arguments specified variables that are passed to the
-        learner. To make use of multiple permutations, specify different
-        values for parameters as a tuple. eg. arg1=(1,2,3), arg2=(4,5,6)
-        which correspond to permutations/argument states with one
-        element from arg1 and one element from arg2, such that an
-        example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
-    """
-    _validData(trainX, trainY, testX, None, [True, False])
-    _validArguments(arguments)
-    _validArguments(kwarguments)
-    merged = _mergeArguments(arguments, kwarguments)
-
-    # we want the data and the labels together in one object or this method
-    trainX = trainX.copy()
-    if isinstance(trainY, Base):
-        trainX.features.append(trainY)
-        trainY = len(trainX.features) - 1
-
-    # Get set of unique class labels, then generate list of all 2-combinations
-    # of class labels
-    labelVector = trainX.features.copy([trainY])
-    labelVector.transpose()
-    labelSet = list(set(labelVector.copy(to="python list")[0]))
-    labelPairs = generateAllPairs(labelSet)
-
-    # For each pair of class labels: remove all points with one of those
-    # labels, train a classifier on those points, get predictions based on
-    # that model, and put the points back into the data object
-    rawPredictions = None
-    predictionFeatureID = 0
-    for pair in labelPairs:
-        #get all points that have one of the labels in pair
-        pairData = trainX.points.extract(
-            lambda point: ((point[trainY] == pair[0])
-                           or (point[trainY] == pair[1])))
-        pairTrueLabels = pairData.features.extract(trainY)
-        #train classifier on that data; apply it to the test set
-        partialResults = nimble.trainAndApply(learnerName, pairData,
-                                              pairTrueLabels, testX, output=None,
-                                              arguments=merged, useLog=useLog)
-        #put predictions into table of predictions
-        if rawPredictions is None:
-            rawPredictions = partialResults.copy(to="List")
-        else:
-            predName = 'predictions-' + str(predictionFeatureID)
-            partialResults.features.setName(0, predName)
-            rawPredictions.features.append(partialResults.copy(to="List"))
-        pairData.features.append(pairTrueLabels)
-        trainX.points.append(pairData)
-        predictionFeatureID += 1
-
-    #set up the return data based on which format has been requested
-    if scoreMode.lower() == 'label'.lower():
-        ret = rawPredictions.points.calculate(extractWinningPredictionLabel)
-        ret.features.setName(0, "winningLabel")
-        return ret
-    elif scoreMode.lower() == 'bestScore'.lower():
-        # construct a list of lists, with each row in the list containing the
-        # predicted label and score of that label for the corresponding row in
-        # rawPredictions
-        predictionMatrix = rawPredictions.copy(to="python list")
-        tempResultsList = []
-        for row in predictionMatrix:
-            scores = countWins(row)
-            sortedScores = sorted(scores, key=scores.get, reverse=True)
-            bestLabel = sortedScores[0]
-            tempResultsList.append([bestLabel, scores[bestLabel]])
-
-        #wrap the results data in a List container
-        featureNames = ['PredictedClassLabel', 'LabelScore']
-        resultsContainer = nimble.createData("List", tempResultsList,
-                                             featureNames=featureNames,
-                                             useLog=False)
-        return resultsContainer
-    elif scoreMode.lower() == 'allScores'.lower():
-        columnHeaders = sorted([str(i) for i in labelSet])
-        zipIndexLabel = zip(list(range(len(columnHeaders))), columnHeaders)
-        labelIndexDict = {str(v): k for k, v in zipIndexLabel}
-        predictionMatrix = rawPredictions.copy(to="python list")
-        resultsContainer = []
-        for row in predictionMatrix:
-            finalRow = [0] * len(columnHeaders)
-            scores = countWins(row)
-            for label, score in scores.items():
-                finalIndex = labelIndexDict[str(label)]
-                finalRow[finalIndex] = score
-            resultsContainer.append(finalRow)
-
-        return nimble.createData(rawPredictions.getTypeString(),
-                                 resultsContainer, featureNames=columnHeaders,
-                                 useLog=False)
-    else:
-        msg = 'Unknown score mode in trainAndApplyOneVsOne: ' + str(scoreMode)
-        raise InvalidArgumentValue(msg)
-
-
-def trainAndApplyOneVsAll(learnerName, trainX, trainY, testX, arguments=None,
-                          scoreMode='label', useLog=None, **kwarguments):
-    """
-    Calls on trainAndApply() to train and evaluate the learner defined
-    by 'learnerName.'  Assumes there are multiple (>2) class labels, and
-    uses the one vs. all method of splitting the training set into
-    2-label subsets. Tests performance using the metric function(s)
-    found in performanceMetricFunctions.
-
-    Parameters
-    ----------
-    trainX: nimble Base object
-        Data to be used for training.
-    trainY: identifier, nimble Base object
-        A name or index of the feature in ``trainX`` containing the
-        labels or another nimble Base object containing the labels that
-        correspond to ``trainX``.
-    testX : nimble Base object
-        data set on which the trained learner will be applied (i.e.
-        performing prediction, transformation, etc. as appropriate to
-        the learner).
-    arguments : dict
-        Mapping argument names (strings) to their values, to be used
-        during training and application. eg. {'dimensions':5, 'k':5}
-        To make use of multiple permutations, specify different values
-        for a parameter as a tuple. eg. {'k': (1,3,5)} will generate an
-        error score for  the learner when the learner was passed all
-        three values of ``k``, separately. These will be merged with
-        kwarguments for the learner.
-    scoreMode : str
-        In the case of a classifying learner, this specifies the type of
-        output wanted: 'label' if we class labels are desired,
-        'bestScore' if both the class label and the score associated
-        with that class are desired, or 'allScores' if a matrix
-        containing the scores for every class label are desired.
-    useLog : bool, None
-        Local control for whether to send results/timing to the logger.
-        If None (default), use the value as specified in the "logger"
-        "enabledByDefault" configuration option. If True, send to the
-        logger regardless of the global option. If False, do **NOT**
-        send to the logger, regardless of the global option.
-    kwarguments
-        Keyword arguments specified variables that are passed to the
-        learner. To make use of multiple permutations, specify different
-        values for parameters as a tuple. eg. arg1=(1,2,3), arg2=(4,5,6)
-        which correspond to permutations/argument states with one
-        element from arg1 and one element from arg2, such that an
-        example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
-    """
-    _validData(trainX, trainY, testX, None, [True, False])
-    _validArguments(arguments)
-    _validArguments(kwarguments)
-    merged = _mergeArguments(arguments, kwarguments)
-
-    #Remove true labels from from training set, if not already separated
-    if isinstance(trainY, (str, int, int)):
-        trainX = trainX.copy()
-        trainY = trainX.features.extract(trainY)
-
-    # Get set of unique class labels
-    labelVector = trainY.T
-    labelSet = list(set(labelVector.copy(to="python list")[0]))
-
-    # For each class label in the set of labels:  convert the true
-    # labels in trainY into boolean labels (1 if the point
-    # has 'label', 0 otherwise.)  Train a classifier with the processed
-    # labels and get predictions on the test set.
-    rawPredictions = None
-
-    def relabeler(point, label=None):
-        if point[0] != label:
-            return 0
-        else:
-            return 1
-
-    for label in labelSet:
-        relabeler.__defaults__ = (label,)
-        trainLabels = trainY.points.calculate(relabeler)
-        oneLabelResults = nimble.trainAndApply(learnerName, trainX,
-                                               trainLabels, testX, output=None,
-                                               arguments=merged, useLog=useLog)
-        # put all results into one Base container, of the same type as trainX
-        if rawPredictions is None:
-            rawPredictions = oneLabelResults
-            # as it's added to results object, rename each column with its
-            # corresponding class label
-            rawPredictions.features.setName(0, str(label))
-        else:
-            # as it's added to results object, rename each column with its
-            # corresponding class label
-            oneLabelResults.features.setName(0, str(label))
-            rawPredictions.features.append(oneLabelResults)
-
-    if scoreMode.lower() == 'label'.lower():
-        winningPredictionIndices = rawPredictions.points.calculate(
-            extractWinningPredictionIndex).copy(to="python list")
-        winningLabels = []
-        for [winningIndex] in winningPredictionIndices:
-            winningLabels.append([labelSet[int(winningIndex)]])
-        return nimble.createData(rawPredictions.getTypeString(), winningLabels,
-                                 featureNames=['winningLabel'], useLog=False)
-
-    elif scoreMode.lower() == 'bestScore'.lower():
-        # construct a list of lists, with each row in the list containing the
-        # predicted label and score of that label for the corresponding row in
-        # rawPredictions
-        predictionMatrix = rawPredictions.copy(to="python list")
-        indexToLabel = rawPredictions.features.getNames()
-        tempResultsList = []
-        for row in predictionMatrix:
-            bestLabelAndScore = extractWinningPredictionIndexAndScore(
-                row, indexToLabel)
-            tempResultsList.append([bestLabelAndScore[0],
-                                    bestLabelAndScore[1]])
-        #wrap the results data in a List container
-        featureNames = ['PredictedClassLabel', 'LabelScore']
-        resultsContainer = nimble.createData("List", tempResultsList,
-                                             featureNames=featureNames,
-                                             useLog=False)
-        return resultsContainer
-
-    elif scoreMode.lower() == 'allScores'.lower():
-        #create list of Feature Names/Column Headers for final return object
-        columnHeaders = sorted([str(i) for i in labelSet])
-        #create map between label and index in list, so we know where to put
-        # each value
-        zipIndexLabel = zip(list(range(len(columnHeaders))), columnHeaders)
-        labelIndexDict = {v: k for k, v in zipIndexLabel}
-        featureNamesItoN = rawPredictions.features.getNames()
-        predictionMatrix = rawPredictions.copy(to="python list")
-        resultsContainer = []
-        for row in predictionMatrix:
-            finalRow = [0] * len(columnHeaders)
-            scores = extractConfidenceScores(row, featureNamesItoN)
-            for label, score in scores.items():
-                #get numerical index of label in return object
-                finalIndex = labelIndexDict[label]
-                #put score into proper place in its row
-                finalRow[finalIndex] = score
-            resultsContainer.append(finalRow)
-        #wrap data in Base container
-        return nimble.createData(rawPredictions.getTypeString(),
-                                 resultsContainer, featureNames=columnHeaders,
-                                 useLog=False)
-    else:
-        msg = 'Unknown score mode in trainAndApplyOneVsAll: ' + str(scoreMode)
-        raise InvalidArgumentValue(msg)
-
-
-def trainAndTestOneVsAny(learnerName, f, trainX, trainY, testX, testY,
-                         arguments=None, performanceFunction=None, useLog=None,
-                         **kwarguments):
-    """
-    This function is the base model of function trainAndTestOneVsOne and
-    trainAndTestOneVsAll.
-    """
-    _validData(trainX, trainY, testX, testY, [True, True])
-    _validArguments(arguments)
-    _validArguments(kwarguments)
-    merged = _mergeArguments(arguments, kwarguments)
-
-    # timer = Stopwatch() if useLog else None
-
-    # if testY is in testX, we need to extract it before we call a
-    # trainAndApply type function
-    if isinstance(testY, (six.string_types, int, int)):
-        testX = testX.copy()
-        testY = testX.features.extract([testY])
-
-    predictions = f(learnerName, trainX, trainY, testX, merged,
-                    scoreMode='label', useLog=False)
-
-    # now compute performance metric(s) for the set of winning predictions
-    results = computeMetrics(testY, None, predictions, performanceFunction)
-
-    metrics = {}
-    for key, value in zip([performanceFunction], [results]):
-        metrics[key.__name__] = value
-
-    # Send this run to the log, if desired
-    # if useLog:
-    #     if not isinstance(performanceFunction, list):
-    #         performanceFunction = [performanceFunction]
-    #         results = [results]
-    #     nimble.logger.active.logRun(f.__name__, trainX, trainY, testX, testY,
-    #                                 learnerName, merged, metrics, timer)
-
-    return results
-
-def trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY,
-                         arguments=None, performanceFunction=None, useLog=None,
-                         **kwarguments):
-    """
-    Calls on trainAndApply() to train and evaluate the learner defined
-    by 'learnerName.'  Assumes there are multiple (>2) class labels, and
-    uses the one vs. all method of splitting the training set into
-    2-label subsets. Tests performance using the metric function(s)
-    found in performanceMetricFunctions.
-
-    Parameters
-    ----------
-    learnerName : str
-        Name of the learner to be called, in the form 'package.learner'
-    trainX: nimble Base object
-        Data to be used for training.
-    trainY : identifier, nimble Base object
-        * identifier - The name or index of the feature in ``trainX``
-          containing the labels.
-        * nimble Base object - contains the labels that correspond to
-          ``trainX``.
-    testX: nimble Base object
-        Data to be used for testing.
-    testY : identifier, nimble Base object
-        * identifier - A name or index of the feature in ``testX``
-          containing the labels.
-        * nimble Base object - contains the labels that correspond to
-          ``testX``.
-    arguments : dict
-        Mapping argument names (strings) to their values, to be used
-        during training and application. eg. {'dimensions':5, 'k':5}
-        To make use of multiple permutations, specify different values
-        for a parameter as a tuple. eg. {'k': (1,3,5)} will generate an
-        error score for  the learner when the learner was passed all
-        three values of ``k``, separately. These will be merged with
-        kwarguments for the learner.
-    performanceFunction : function
-        If cross validation is triggered to select from the given
-        argument set, then this function will be used to generate a
-        performance score for the run. Function is of the form:
-        def func(knownValues, predictedValues).
-        Look in nimble.calculate for pre-made options. Default is None,
-        since if there is no parameter selection to be done, it is not
-        used.
-    useLog : bool, None
-        Local control for whether to send results/timing to the logger.
-        If None (default), use the value as specified in the "logger"
-        "enabledByDefault" configuration option. If True, send to the
-        logger regardless of the global option. If False, do **NOT**
-        send to the logger, regardless of the global option.
-    kwarguments
-        Keyword arguments specified variables that are passed to the
-        learner. To make use of multiple permutations, specify different
-        values for parameters as a tuple. eg. arg1=(1,2,3), arg2=(4,5,6)
-        which correspond to permutations/argument states with one
-        element from arg1 and one element from arg2, such that an
-        example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
-    """
-    return trainAndTestOneVsAny(learnerName=learnerName, trainX=trainX,
-                                trainY=trainY, testX=testX, testY=testY,
-                                f=trainAndApplyOneVsAll, arguments=arguments,
-                                performanceFunction=performanceFunction,
-                                useLog=useLog, **kwarguments)
-
-def trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY,
-                         arguments=None, performanceFunction=None, useLog=None,
-                         **kwarguments):
-    """
-    Wrapper class for trainAndApplyOneVsOne.  Useful if you want the
-    entire process of training, testing, and computing performance
-    measures to be handled.  Takes in a learner's name and training and
-    testing data sets, trains a learner, passes the test data to the
-    computed model, gets results, and calculates performance based on
-    those results.
-
-    Parameters
-    ----------
-    learnerName : str
-        Name of the learner to be called, in the form 'package.learner'
-    trainX: nimble Base object
-        Data to be used for training.
-    trainY : identifier, nimble Base object
-        * identifier - The name or index of the feature in ``trainX``
-          containing the labels.
-        * nimble Base object - contains the labels that correspond to
-          ``trainX``.
-    testX: nimble Base object
-        Data to be used for testing.
-    testY : identifier, nimble Base object
-        * identifier - A name or index of the feature in ``testX``
-          containing the labels.
-        * nimble Base object - contains the labels that correspond to
-          ``testX``.
-    arguments : dict
-        Mapping argument names (strings) to their values, to be used
-        during training and application. eg. {'dimensions':5, 'k':5}
-        To make use of multiple permutations, specify different values
-        for a parameter as a tuple. eg. {'k': (1,3,5)} will generate an
-        error score for  the learner when the learner was passed all
-        three values of ``k``, separately. These will be merged with
-        kwarguments for the learner.
-    performanceFunction : function
-        If cross validation is triggered to select from the given
-        argument set, then this function will be used to generate a
-        performance score for the run. Function is of the form:
-        def func(knownValues, predictedValues).
-        Look in nimble.calculate for pre-made options. Default is None,
-        since if there is no parameter selection to be done, it is not
-        used.
-    useLog : bool, None
-        Local control for whether to send results/timing to the logger.
-        If None (default), use the value as specified in the "logger"
-        "enabledByDefault" configuration option. If True, send to the
-        logger regardless of the global option. If False, do **NOT**
-        send to the logger, regardless of the global option.
-    kwarguments
-        Keyword arguments specified variables that are passed to the
-        learner. To make use of multiple permutations, specify different
-        values for parameters as a tuple. eg. arg1=(1,2,3), arg2=(4,5,6)
-        which correspond to permutations/argument states with one
-        element from arg1 and one element from arg2, such that an
-        example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
-
-    Returns
-    -------
-    dict
-        A dictionary associating the name or code of performance metrics
-        with the results of those metrics, computed using the
-        predictions of 'learnerName' on testX.
-        Example: { 'fractionIncorrect': 0.21, 'numCorrect': 1020 }
-    """
-    return trainAndTestOneVsAny(learnerName=learnerName, trainX=trainX,
-                                trainY=trainY, testX=testX, testY=testY,
-                                f=trainAndApplyOneVsOne,
-                                arguments=arguments,
-                                performanceFunction=performanceFunction,
-                                useLog=useLog, **kwarguments)
-
-
 def inspectArguments(func):
     """
     To be used in place of inspect.getargspec for Python3 compatibility.
     Return is the tuple (args, varargs, keywords, defaults)
     """
     try:
-        # py>=3.3
         # in py>=3.5 inspect.signature can extract the original signature
         # of wrapped functions
         sig = inspect.signature(func)
@@ -4032,8 +3162,6 @@ def inspectArguments(func):
         d = tuple(d)
         argspec = tuple([a, v, k , d])
     except AttributeError:
-        try:
-            argspec = inspect.getfullargspec(func)[:4] # p>=3
-        except AttributeError:
-            argspec = inspect.getargspec(func) # py2
+        argspec = inspect.getfullargspec(func)[:4] # py>=3
+
     return argspec

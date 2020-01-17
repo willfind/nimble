@@ -7,11 +7,7 @@ st. dev., # of unique values (for non-real valued features), # of
 missing values
 """
 
-from __future__ import absolute_import
 import math
-
-import six
-from six.moves import range
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
@@ -126,7 +122,7 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None,
     infoTable = produceFeaturewiseInfoTable(dataContainer, functionsToApply)
 
     if (displayDigits is not None
-            and isinstance(displayDigits, six.integer_types)):
+            and isinstance(displayDigits, int)):
         displayDigits = "." + str(displayDigits) + "f"
 
     if isSubset:
@@ -168,7 +164,7 @@ def produceAggregateTable(dataContainer):
 
     headers = []
     stats = []
-    for header, value in six.iteritems(resultsDict):
+    for header, value in resultsDict.items():
         headers.append(header)
         stats.append(value)
 
@@ -189,7 +185,7 @@ def produceAggregateReport(dataContainer, displayDigits):
     table = produceAggregateTable(dataContainer)
 
     if (displayDigits is not None
-            and isinstance(displayDigits, six.integer_types)):
+            and isinstance(displayDigits, int)):
         displayDigits = "." + str(displayDigits) + "f"
 
     return tableString(table, False, headers=table[0],

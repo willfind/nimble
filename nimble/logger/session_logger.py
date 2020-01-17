@@ -16,8 +16,7 @@ Level 2: Outputs basic information about learner runs, including
          details, parameter, metric and timer data if available
 Level 3: Cross validation
 """
-from __future__ import absolute_import
-from __future__ import print_function
+
 import os
 import sys
 import time
@@ -29,8 +28,6 @@ from textwrap import wrap
 from functools import wraps
 import datetime
 
-import six
-from six import reraise
 import numpy
 
 import nimble
@@ -82,7 +79,7 @@ class SessionLogger(object):
             The name new logging file.
         """
         if (newFileName is not None
-                and isinstance(newFileName, (str, six.text_type))):
+                and isinstance(newFileName, str)):
             self.logFileName = newFileName
 
         dirPath = os.path.dirname(self.logFileName)
@@ -318,7 +315,7 @@ class SessionLogger(object):
             logType = "run"
             logInfo = {}
             logInfo["function"] = nimbleFunction
-            if isinstance(learnerFunction, (str, six.text_type)):
+            if isinstance(learnerFunction, str):
                 functionCall = learnerFunction
             else:
                 # TODO test this
@@ -333,11 +330,11 @@ class SessionLogger(object):
                 functionCall = funcString
             logInfo["learner"] = functionCall
             # integers or strings passed for Y values, convert if necessary
-            if isinstance(trainLabels, (six.string_types, int, numpy.int64)):
+            if isinstance(trainLabels, (str, int, numpy.int64)):
                 trainData = trainData.copy()
                 trainLabels = trainData.features.extract(trainLabels,
                                                          useLog=False)
-            if isinstance(testLabels, (six.string_types, int, numpy.int64)):
+            if isinstance(testLabels, (str, int, numpy.int64)):
                 testData = testData.copy()
                 testLabels = testData.features.extract(testLabels,
                                                        useLog=False)
@@ -842,7 +839,7 @@ def _buildDefaultLogString(timestamp, logType, log):
     types passed as the log.
     """
     fullLog = _logHeader(logType, timestamp)
-    if isinstance(log, six.string_types):
+    if isinstance(log, str):
         for string in wrap(log, 79):
             fullLog += string
             fullLog += "\n"

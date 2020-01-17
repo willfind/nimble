@@ -1,7 +1,4 @@
 
-from __future__ import absolute_import
-from six.moves import range
-
 import numpy as np
 
 from nose.tools import assert_almost_equal, assert_equal

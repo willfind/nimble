@@ -2,11 +2,8 @@
 Integration tests to demonstrate consistency between output of different methods
 of a single interface. All tests are general, testing knowledge guaranteed by
 the UniversalInterface api.
-
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
 import os
 import sys
 import importlib
@@ -64,18 +61,19 @@ def test__getScoresFormat():
         learners = interface.listLearners()
         for lName in learners:
             fullName = interfaceName + '.' + lName
-            if nimble.learnerType(fullName) == 'classifier':
+            if nimble.learnerType(fullName) == 'classification':
                 try:
                     tl2 = nimble.train(fullName, trainX2, trainY2)
-                except InvalidArgumentValue:
+                except (InvalidArgumentValue, SystemError):
                     # this is to catch learners that have required arguments.
                     # we have to skip them in that case
                     continue
                 (ign1, ign2, transTestX2, ign3) = interface._inputTransformation(lName, None, None, testX2, {},
                                                                                  tl2.customDict)
                 try:
-                    scores2 = interface._getScores(tl2.backend, transTestX2, {}, tl2.customDict)
-                except InvalidArgumentValue:
+                    scores2 = interface._getScores(
+                        lName, tl2.backend, transTestX2, {}, tl2.transformedArguments, tl2.customDict)
+                except (NotImplementedError, SystemError):
                     # this is to catch learners that cannot output scores
                     continue
                 checkFormatRaw(scores2, 2)
@@ -87,7 +85,8 @@ def test__getScoresFormat():
                     continue
                 (ign1, ign2, transTestX4, ign3) = interface._inputTransformation(lName, None, None, testX4, {},
                                                                                  tl4.customDict)
-                scores4 = interface._getScores(tl4.backend, transTestX4, {}, tl4.customDict)
+                scores4 = interface._getScores(
+                    lName, tl4.backend, transTestX4, {}, tl4.transformedArguments, tl4.customDict)
                 checkFormatRaw(scores4, 4)
 
 
@@ -107,20 +106,18 @@ def testGetScoresFormat():
 
         learners = interface.listLearners()
         for lName in learners:
-            if interfaceName == 'shogun':
-                print(lName)
 
             fullName = interfaceName + '.' + lName
-            if nimble.learnerType(fullName) == 'classifier':
+            if nimble.learnerType(fullName) == 'classification':
                 try:
                     tl2 = nimble.train(fullName, trainX2, trainY2)
-                except InvalidArgumentValue:
+                except (InvalidArgumentValue, SystemError):
                     # this is to catch learners that have required arguments.
                     # we have to skip them in that case
                     continue
                 try:
                     scores2 = tl2.getScores(testX2)
-                except InvalidArgumentValue:
+                except (NotImplementedError, SystemError):
                     # this is to catch learners that cannot output scores
                     continue
                 checkFormat(scores2, 2)

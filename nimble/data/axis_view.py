@@ -3,8 +3,6 @@ Defines a subclass of the Axis object, which serves as the primary
 base class for read only axis views of data objects.
 """
 
-from __future__ import absolute_import
-
 from nimble.utility import inheritDocstringsFactory
 from .axis import Axis
 from .points import Points
@@ -67,6 +65,3 @@ class AxisView(Axis):
             return not self._base._source.pointNames is None
         else:
             return not self._base._source.featureNames is None
-
-    def _getIndices(self, names):
-        return [self._getIndex(n) for n in names]

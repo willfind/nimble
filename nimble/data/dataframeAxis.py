@@ -3,7 +3,6 @@ Implementations and helpers specific to performing axis-generic
 operations on a nimble DataFrame object.
 """
 
-from __future__ import absolute_import
 from abc import abstractmethod
 
 import numpy
@@ -31,14 +30,6 @@ class DataFrameAxis(Axis):
         super(DataFrameAxis, self)._setName_implementation(oldIdentifier,
                                                            newName)
         #update the index or columns in self.data
-        self._updateName()
-
-    def _setNamesFromList(self, assignments, count):
-        super(DataFrameAxis, self)._setNamesFromList(assignments, count)
-        self._updateName()
-
-    def _setNamesFromDict(self, assignments, count):
-        super(DataFrameAxis, self)._setNamesFromDict(assignments, count)
         self._updateName()
 
     def _updateName(self):
@@ -91,6 +82,7 @@ class DataFrameAxis(Axis):
             self._base.data = self._base.data.iloc[indexPosition, :]
         else:
             self._base.data = self._base.data.iloc[:, indexPosition]
+        self._updateName()
 
     ##############################
     # High Level implementations #

@@ -10,16 +10,12 @@ generic to axis and object subtype should be included here with abstract
 methods defined for axis and object subtype specific implementations.
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-from __future__ import division
 import copy
 from abc import abstractmethod
 import inspect
 import sys
 import operator
 
-import six
 import numpy
 
 import nimble
@@ -127,12 +123,9 @@ class Axis(object):
             setattr(self._base, names, None)
             setattr(self._base, namesInverse, None)
         else:
-            count = len(self)
-            if isinstance(assignments, dict):
-                self._setNamesFromDict(assignments, count)
-            else:
+            if not isinstance(assignments, dict):
                 assignments = valuesToPythonList(assignments, 'assignments')
-                self._setNamesFromList(assignments, count)
+            self._setNamesBackend(assignments)
 
         handleLogging(useLog, 'prep', '{ax}s.setNames'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('setNames'),
@@ -152,7 +145,7 @@ class Axis(object):
                 msg += "the range of possible indices in the " + self._axis
                 msg += " axis (0 to " + str(num - 1) + ")."
                 raise IndexError(msg)
-        elif isinstance(identifier, six.string_types):
+        elif isinstance(identifier, str):
             identifier = self._getIndexByName(identifier)
         elif allowFloats and isinstance(identifier, (float, numpy.float)):
             if identifier % 1: # x!=int(x)
@@ -282,7 +275,7 @@ class Axis(object):
             otherCount = self._base._pointCount
 
         sortByArg = copy.copy(sortBy)
-        if sortBy is not None and isinstance(sortBy, six.string_types):
+        if sortBy is not None and isinstance(sortBy, str):
             axisObj = self._base._getAxis(otherAxis)
             sortBy = axisObj._getIndex(sortBy)
 
@@ -488,13 +481,15 @@ class Axis(object):
         elif convert:
             createDataKwargs['elementType'] = numpy.object_
 
+        pathPass = (self._base.absolutePath, self._base.relativePath)
+
         ret = nimble.createData(self._base.getTypeString(), retData,
-                                **createDataKwargs)
+                                **createDataKwargs, path=pathPass)
         if self._axis != 'point':
             ret.transpose(useLog=False)
 
         if isinstance(self, Points):
-            if limitTo is not None and self._namesCreated():
+            if len(limitTo) < len(self) and self._namesCreated():
                 names = []
                 for index in limitTo:
                     names.append(self._getName(index))
@@ -502,7 +497,7 @@ class Axis(object):
             elif self._namesCreated():
                 ret.points.setNames(self._getNamesNoGeneration(), useLog=False)
         else:
-            if limitTo is not None and self._namesCreated():
+            if len(limitTo) < len(self) and self._namesCreated():
                 names = []
                 for index in limitTo:
                     names.append(self._getName(index))
@@ -510,9 +505,6 @@ class Axis(object):
             elif self._namesCreated():
                 ret.features.setNames(self._getNamesNoGeneration(),
                                       useLog=False)
-
-        ret._absPath = self._base.absolutePath
-        ret._relPath = self._base.relativePath
 
         return ret
 
@@ -692,7 +684,7 @@ class Axis(object):
         divIsVec = False
 
         # check it is within the desired types
-        allowedTypes = (int, float, six.string_types, nimble.data.Base)
+        allowedTypes = (int, float, str, nimble.data.Base)
         if subtract is not None:
             if not isinstance(subtract, allowedTypes):
                 msg = "The argument named subtract must have a value that is "
@@ -711,9 +703,9 @@ class Axis(object):
             'std', 'population std', 'population standard deviation',
             'sample std', 'sample standard deviation'
             ]
-        if isinstance(subtract, six.string_types):
+        if isinstance(subtract, str):
             validateInputString(subtract, accepted, 'subtract')
-        if isinstance(divide, six.string_types):
+        if isinstance(divide, str):
             validateInputString(divide, accepted, 'divide')
 
         # arg generic helper to check that objects are of the
@@ -821,18 +813,18 @@ class Axis(object):
 
         if isinstance(self, Points):
             indexGetter = lambda x: x._pStart
-            if isinstance(subtract, six.string_types):
+            if isinstance(subtract, str):
                 subtract = self._statistics(subtract)
                 subIsVec = True
-            if isinstance(divide, six.string_types):
+            if isinstance(divide, str):
                 divide = self._statistics(divide)
                 divIsVec = True
         else:
             indexGetter = lambda x: x._fStart
-            if isinstance(subtract, six.string_types):
+            if isinstance(subtract, str):
                 subtract = self._statistics(subtract)
                 subIsVec = True
-            if isinstance(divide, six.string_types):
+            if isinstance(divide, str):
                 divide = self._statistics(divide)
                 divIsVec = True
 
@@ -1101,7 +1093,7 @@ class Axis(object):
 
         index = self._getIndex(oldIdentifier)
         if newName is not None:
-            if not isinstance(newName, six.string_types):
+            if not isinstance(newName, str):
                 msg = "The new name must be either None or a string"
                 raise InvalidArgumentType(msg)
 
@@ -1123,73 +1115,32 @@ class Axis(object):
         names[newName] = index
         self._base._incrementDefaultIfNeeded(newName, self._axis)
 
-    def _setNamesFromList(self, assignments, count):
-        if isinstance(self, Points):
-            def checkAndSet(val):
-                if val >= self._base._nextDefaultValuePoint:
-                    self._base._nextDefaultValuePoint = val + 1
-        else:
-            def checkAndSet(val):
-                if val >= self._base._nextDefaultValueFeature:
-                    self._base._nextDefaultValueFeature = val + 1
-
-        if assignments is None:
-            self._setAllDefault()
-            return
-
-        if count == 0:
-            if len(assignments) > 0:
-                msg = "assignments is too large (" + str(len(assignments))
-                msg += "); this axis is empty"
-                raise InvalidArgumentValue(msg)
-            self._setNamesFromDict({}, count)
-            return
+    def _setNamesBackend(self, assignments):
+        count = len(self)
         if len(assignments) != count:
             msg = "assignments may only be an ordered container type, with as "
             msg += "many entries (" + str(len(assignments)) + ") as this axis "
             msg += "is long (" + str(count) + ")"
             raise InvalidArgumentValue(msg)
-
-        for name in assignments:
-            if name is not None and not isinstance(name, six.string_types):
-                msg = 'assignments must contain only string values'
-                raise InvalidArgumentValue(msg)
-            if name is not None and name.startswith(DEFAULT_PREFIX):
-                try:
-                    num = int(name[DEFAULT_PREFIX_LENGTH:])
-                # Case: default prefix with non-integer suffix. This cannot
-                # cause a future integer suffix naming collision, so we
-                # can ignore it.
-                except ValueError:
-                    continue
-                checkAndSet(num)
-
-        #convert to dict so we only write the checking code once
-        temp = {}
-        for index in range(len(assignments)):
-            name = assignments[index]
-            # take this to mean fill it in with a default name
-            if name is None:
-                name = self._nextDefaultName()
-            if name in temp:
-                msg = "Cannot input duplicate names: " + str(name)
-                raise InvalidArgumentValue(msg)
-            temp[name] = index
-        assignments = temp
-
-        self._setNamesFromDict(assignments, count)
-
-    def _setNamesFromDict(self, assignments, count):
-        if assignments is None:
-            self._setAllDefault()
-            return
         if not isinstance(assignments, dict):
-            msg = "assignments may only be a dict"
-            raise InvalidArgumentType(msg)
+            #convert to dict so we only write the checking code once
+            temp = {}
+            for index, name in enumerate(assignments):
+                # take this to mean fill it in with a default name
+                if name is None:
+                    name = self._nextDefaultName()
+                if not isinstance(name, str):
+                    msg = 'assignments must contain only string values'
+                    raise InvalidArgumentValue(msg)
+                if name.startswith(DEFAULT_PREFIX) and name in temp:
+                    name = self._nextDefaultName()
+                if name in temp:
+                    msg = "Cannot input duplicate names: " + str(name)
+                    raise InvalidArgumentValue(msg)
+                temp[name] = index
+            assignments = temp
+
         if count == 0:
-            if len(assignments) > 0:
-                msg = "assignments is too large; this axis is empty"
-                raise InvalidArgumentValue(msg)
             if isinstance(self, Points):
                 self._base.pointNames = {}
                 self._base.pointNamesInverse = []
@@ -1197,15 +1148,11 @@ class Axis(object):
                 self._base.featureNames = {}
                 self._base.featureNamesInverse = []
             return
-        if len(assignments) != count:
-            msg = "assignments may only have as many entries as this " \
-                  "axis is long"
-            raise InvalidArgumentValue(msg)
 
         # at this point, the input must be a dict
         #check input before performing any action
         for name in assignments.keys():
-            if not None and not isinstance(name, six.string_types):
+            if not None and not isinstance(name, str):
                 raise InvalidArgumentValue("Names must be strings")
             if not isinstance(assignments[name], int):
                 raise InvalidArgumentValue("Indices must be integers")
@@ -1297,7 +1244,7 @@ class Axis(object):
         _validateStructuralArguments(structure, axis, target, start,
                                      end, number, randomize)
         targetList = []
-        if target is not None and isinstance(target, six.string_types):
+        if target is not None and isinstance(target, str):
             # check if target is a valid name
             if self._hasName(target):
                 target = self._getIndex(target)
@@ -1623,11 +1570,11 @@ class Axis(object):
         axis = self._axis
         self._base._defaultNamesGeneration_NamesSetOperations(other, axis)
         if axis == 'point':
-            return (six.viewkeys(self._base.pointNames)
-                    & six.viewkeys(other.pointNames))
+            return (self._base.pointNames.keys()
+                    & other.pointNames.keys())
         else:
-            return (six.viewkeys(self._base.featureNames)
-                    & six.viewkeys(other.featureNames))
+            return (self._base.featureNames.keys()
+                    & other.featureNames.keys())
 
     def _validateReorderedNames(self, axis, callSym, other):
         """
@@ -1696,14 +1643,14 @@ class Axis(object):
             objNames = self._base.points.getNames
             toInsertNames = toInsert.points.getNames
             def sorter(obj, names):
-                return obj.points.sort(sortHelper=names)
+                obj.points.sort(sortHelper=names)
         else:
             objNamesCreated = self._base._featureNamesCreated()
             toInsertNamesCreated = toInsert._featureNamesCreated()
             objNames = self._base.features.getNames
             toInsertNames = toInsert.features.getNames
             def sorter(obj, names):
-                return obj.features.sort(sortHelper=names)
+                obj.features.sort(sortHelper=names)
 
         # This may not look exhaustive, but because of the previous call to
         # _validateInsertableData before this helper, most of the toInsert

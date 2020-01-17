@@ -4,9 +4,6 @@ strategies. Also demonstrates the possible output formats allowed when calling l
 
 """
 
-from __future__ import absolute_import
-from __future__ import print_function
-
 from nimble import createData
 from nimble import trainAndTest
 from nimble import trainAndApply
