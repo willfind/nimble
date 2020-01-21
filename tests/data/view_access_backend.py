@@ -54,12 +54,6 @@ class ViewAccess(DataTestObject):
         testObject = self.constructor(data)
 
         try:
-            testObject.fillMatching(match='a', fill=0)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
-
-        try:
             testObject.replaceFeatureWithBinaryFeatures(0)
             assert False # expected TypeError
         except TypeError as e:
@@ -91,12 +85,6 @@ class ViewAccess(DataTestObject):
 
         try:
             testObject.replaceRectangle(self, [99, 99, 99], 0, 0, 0, 2)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
-
-        try:
-            testObject.fillMatching(0, nimble.fill.kNeighborsClassifier)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)

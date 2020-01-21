@@ -393,15 +393,6 @@ def testPrepTypeFunctionsUseLog():
         {'replaceWith': 1, 'pointStart': 2, 'pointEnd': 4, 'featureStart': 0,
          'featureEnd': 0})
 
-    # fillMatching
-    dataObj = nimble.createData("Matrix", data, useLog=False)
-    def simpleFiller(obj, match, **kwargs):
-        return nimble.createData('Matrix', numpy.zeros_like(dataObj.data))
-    dataObj.fillMatching(simpleFiller, 'a', a=1, b=3)
-    checkLogContents('fillMatching', 'Matrix',
-                     {'fillWith': 'simpleFiller','matchingElements': 'a',
-                      'a': 1, 'b': 3})
-
     # flattenToOnePoint
     dataObj = nimble.createData("DataFrame", data, useLog=False)
     dataObj.flattenToOnePoint()
