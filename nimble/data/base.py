@@ -2928,7 +2928,7 @@ class Base(object):
 
         See Also
         --------
-        fillMatching, nimble.data.Points.fill, nimble.data.Features.fill
+        nimble.data.Points.fill, nimble.data.Features.fill
 
         Examples
         --------
@@ -3006,82 +3006,6 @@ class Base(object):
                       self.getTypeString(), Base.replaceRectangle, replaceWith,
                       pointStart, featureStart, pointEnd, featureEnd)
 
-
-    def fillMatching(self, fillWith, matchingElements, points=None,
-                     features=None, useLog=None, **kwarguments):
-        """
-        Replace matching values calculated using the entire data object.
-
-        Fill matching values with a constant value or imputed values
-        based on the context of the entire dataset.
-
-        Parameters
-        ----------
-        fillWith : constant, function
-            * constant - a single value to use at every fill.
-            * function - in the format fillWith(feature, match) or
-              fillWith(feature, match, **kwarguments) and return the
-              transformed data as a nimble data object. Certain fill
-              methods can be imported from nimble's fill module.
-        matchingElements : value, list, or function
-            * value - a value to locate within each feature
-            * list - values to locate within each feature
-            * function - must accept a single value and return True if
-              the value is a match. Certain match types can be imported
-              from nimble's match module.
-        points : identifier or list of identifiers
-            Select specific points to apply fill to. If points is None,
-            the fill will be applied to all points.
-        features : identifier or list of identifiers
-            Select specific features to apply fill to. If features is
-            None, the fill will be applied to all features.
-        useLog : bool, None
-            Local control for whether to send object creation to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-        kwarguments
-            Provide additional parameters to a ``fillWith`` function.
-
-        See Also
-        --------
-        replaceRectangle, nimble.data.Points.fill,
-        nimble.data.Features.fill
-
-        Examples
-        --------
-        Constant fill
-
-        >>> raw = [[1, 2, 'fail'],
-        ...        [2, 'fail', 3],
-        ...        [3, 4, 'fail']]
-        >>> data = nimble.createData('Matrix', raw)
-        >>> data.fillMatching(0, 'fail')
-        >>> data
-        Matrix(
-            [[1.000 2.000 0.000]
-             [2.000 0.000 3.000]
-             [3.000 4.000 0.000]]
-            )
-        """
-        if not callable(fillWith):
-            tmpData = self.copy()
-            tmpData.features.fillMatching(fillWith, matchingElements,
-                                          **kwarguments)
-        else:
-            tmpData = fillWith(self.copy(), matchingElements, **kwarguments)
-        if points is None and features is None:
-            self.referenceDataFrom(tmpData, useLog=False)
-        else:
-            def transform(value, i, j):
-                return tmpData[i, j]
-            self.transformElements(transform, points, features, useLog=False)
-
-        handleLogging(useLog, 'prep', "fillMatching", self.getTypeString(),
-                      Base.fillMatching, fillWith, matchingElements,
-                      points, features, **kwarguments)
 
     def _flattenNames(self, discardAxis):
         """
@@ -4154,6 +4078,16 @@ class Base(object):
         return ret
 
     def matrixPower(self, power):
+        """
+        Perform matrix power operations on a square matrix.
+
+        For positive power values, return the result of repeated matrix
+        multiplication over this object. For power of zero, return an
+        identity matrix. For negative power values, return the result of
+        repeated matrix multiplication over the inverse of this object,
+        provided the object can be inverted using
+        nimble.calculate.inverse.
+        """
         if not isinstance(power, (int, numpy.int)):
             msg = 'power must be an integer'
             raise InvalidArgumentType(msg)

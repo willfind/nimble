@@ -2,6 +2,7 @@ nimble.data
 ===========
 
 .. automodule:: nimble.data
+   :no-members:
 
    .. toctree::
       :maxdepth: 1

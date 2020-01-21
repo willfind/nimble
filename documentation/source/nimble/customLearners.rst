@@ -2,6 +2,7 @@ nimble.customLearners
 =====================
 
 .. automodule:: nimble.customLearners
+   :no-members:
 
    .. toctree::
       :maxdepth: 1
@@ -9,6 +10,5 @@ nimble.customLearners
       customLearners/customLearner
       customLearners/knn_classification
       customLearners/mean_constant
-      customLearners/multioutput_linear_regression
       customLearners/multioutput_ridge_regression
       customLearners/ridge_regression
