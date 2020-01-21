@@ -463,13 +463,7 @@ class Matrix(Base):
         return Matrix(numpy.matmul(self.data, other.copy(to="numpyarray")))
 
     def _iterateElements_implementation(self, order, only):
-        if order == 'point':
-            iterOrder = 'C'
-        else:
-            iterOrder = 'F'
-        flags = ["refs_ok", "zerosize_ok"]
-        iterator = numpy.nditer(self.data, order=iterOrder, flags=flags)
-        return NimbleElementIterator(iterator, only)
+        return NimbleElementIterator(self.data, order, only)
 
 class MatrixView(BaseView, Matrix):
     """

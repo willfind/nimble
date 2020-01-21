@@ -598,14 +598,8 @@ class List(Base):
         return List(ret)
 
     def _iterateElements_implementation(self, order, only):
-        if order == 'point':
-            iterOrder = 'C'
-        else:
-            iterOrder = 'F'
-        flags = ["refs_ok", "zerosize_ok"]
-        iterator = numpy.nditer(numpy.array(self.data, dtype=numpy.object_),
-                                order=iterOrder, flags=flags)
-        return NimbleElementIterator(iterator, only)
+        array = numpy.array(self.data, dtype=numpy.object_)
+        return NimbleElementIterator(array, order, only)
 
 
 class ListView(BaseView, List):

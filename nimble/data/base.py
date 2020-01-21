@@ -429,6 +429,13 @@ class Base(object):
         >>> list(data.iterateElements(order='feature', only=positive))
         [1.0, 2.0]
         """
+        if order not in ['point', 'feature']:
+            msg = "order must be the string 'point' or 'feature'"
+            if not isinstance(order, str):
+                raise InvalidArgumentType(msg)
+            raise InvalidArgumentValue(msg)
+        if only is not None and not callable(only):
+            raise InvalidArgumentType('if not None, only must be callable')
         return self._iterateElements_implementation(order, only)
 
     def nameIsDefault(self):

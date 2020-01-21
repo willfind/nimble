@@ -793,16 +793,26 @@ class NimbleElementIterator(object):
 
     Parameters
     ----------
-    iterator : numpy.nditer
-        A numpy.nditer iterator that provides access to each element.
+    array : numpy.ndarray
+        A numpy array used to construct the iterator.
+    order: str
+        'point' or 'feature' indicating how the iterator will navigate
+        the values.
     only : function, None
-        The function which indicates whether __next__ should return the
+        The function that indicates whether __next__ should return the
         value. If None, every value is returned.
     """
-    def __init__(self, iterator, only):
-        if not isinstance(iterator, numpy.nditer):
-            msg = 'iterator must be an instance of numpy.nditer'
+    def __init__(self, array, order, only):
+        if not isinstance(array, numpy.ndarray):
+            msg = 'a numpy array is required to build the iterator'
             raise InvalidArgumentType(msg)
+        if order == 'point':
+            iterOrder = 'C'
+        else:
+            iterOrder = 'F'
+        # these flags allow for object dtypes and empty iterators
+        flags = ["refs_ok", "zerosize_ok"]
+        iterator = numpy.nditer(array, order=iterOrder, flags=flags)
         self.iterator = iterator
         self.only = only
 
@@ -811,7 +821,8 @@ class NimbleElementIterator(object):
 
     def __next__(self):
         while True:
-            # numpy.nditer returns an array containing item we want
+            # numpy.nditer returns value as an array type,
+            # item() extracts the actual object we want to return
             val = next(self.iterator).item()
             if self.only is None or self.only(val):
                 return val

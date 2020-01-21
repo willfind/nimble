@@ -1169,19 +1169,11 @@ class Sparse(Base):
     def _iterateElements_implementation(self, order, only):
         flags = ["refs_ok", "zerosize_ok"]
         if only is not None and not only(0): # we can ignore zeros
-            if order == 'point':
-                self._sortInternal('point')
-            else:
-                self._sortInternal('feature')
-            iterator = numpy.nditer(self.data.data, flags=flags)
+            self._sortInternal(order)
+            array = self.data.data
         else:
-            if order == 'point':
-                iterOrder = 'C'
-            else:
-                iterOrder = 'F'
-            iterator = numpy.nditer(cooMatrixToArray(self.data),
-                                    order=iterOrder, flags=flags)
-        return NimbleElementIterator(iterator, only)
+            array = cooMatrixToArray(self.data)
+        return NimbleElementIterator(array, order, only)
 
 ###################
 # Generic Helpers #

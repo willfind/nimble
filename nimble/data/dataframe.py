@@ -408,13 +408,7 @@ class DataFrame(Base):
             self.data.columns = list(range(len(self.data.columns)))
 
     def _iterateElements_implementation(self, order, only):
-        if order == 'point':
-            iterOrder = 'C'
-        else:
-            iterOrder = 'F'
-        flags = ["refs_ok", "zerosize_ok"]
-        iterator = numpy.nditer(self.data.values, order=iterOrder, flags=flags)
-        return NimbleElementIterator(iterator, only)
+        return NimbleElementIterator(self.data.values, order, only)
 
 class DataFrameView(BaseView, DataFrame):
     """

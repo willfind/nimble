@@ -2528,11 +2528,12 @@ class QueryBackend(DataTestObject):
             return
         assert False
 
+    @noLogEntryExpected
     def test_iter_noNextFempty(self):
         data = [[], []]
         data = numpy.array(data)
         toTest = self.constructor(data)
-        viewIter = iter(toTest.iterateElements())
+        viewIter = iter(toTest)
         try:
             next(viewIter)
         except StopIteration:
@@ -2569,9 +2570,10 @@ class QueryBackend(DataTestObject):
         for v in toTest:
             pass
 
-    ################
+    ###################
     # iterateElements #
-    ################
+    ###################
+
     @noLogEntryExpected
     def test_iterateElements_noNextPempty(self):
         """ test iterateElements() has no next value when object is point empty """
@@ -2596,6 +2598,30 @@ class QueryBackend(DataTestObject):
         except StopIteration:
             return
         assert False
+
+    @raises(InvalidArgumentValue)
+    def test_iterateElements_exception_orderInvalidString(self):
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+
+        it = toTest.iterateElements(order='foo')
+
+    @raises(InvalidArgumentType)
+    def test_iterateElements_exception_orderInvalidType(self):
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+
+        it = toTest.iterateElements(order=1)
+
+    @raises(InvalidArgumentType)
+    def test_iterateElements_exception_onlyInvalidType(self):
+        featureNames = ["one", "two", "three"]
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, featureNames=featureNames)
+
+        it = toTest.iterateElements(only=1)
 
     @noLogEntryExpected
     def test_iterateElements_exactValueViaFor(self):
