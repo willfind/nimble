@@ -658,7 +658,7 @@ class Base(object):
 
         >>> data = nimble.identity('Sparse', 5)
         >>> data.transformElements(lambda elem: elem + 10,
-        ...                         preserveZeros=True)
+        ...                        preserveZeros=True)
         >>> data
         Sparse(
             [[11.000   0      0      0      0   ]
@@ -672,7 +672,7 @@ class Base(object):
 
         >>> data = nimble.ones('List', 4, 4)
         >>> data.transformElements(lambda elem: elem + 1,
-        ...                         points=[0, 1], features=[0, 2])
+        ...                        points=[0, 1], features=[0, 2])
         >>> data
         List(
             [[2.000 1.000 2.000 1.000]
@@ -705,7 +705,7 @@ class Base(object):
             )
         >>> skip = nimble.createData('Matrix', raw)
         >>> skip.transformElements(addTenToEvens,
-        ...                         skipNoneReturnValues=True)
+        ...                        skipNoneReturnValues=True)
         >>> skip
         Matrix(
             [[1.000  12.000 3.000 ]

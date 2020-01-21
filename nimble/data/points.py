@@ -1529,7 +1529,7 @@ class Points(object):
 
         See Also
         --------
-         nimble.fill, nimble.match
+        nimble.fill, nimble.match
 
         Examples
         --------
