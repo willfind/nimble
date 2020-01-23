@@ -10,7 +10,7 @@ from nimble.match import convertMatchToFunction
 from nimble.match import anyValues
 from nimble.exceptions import InvalidArgumentValue
 
-def matchToBooleanVector(vector, match):
+def booleanElementMatch(vector, match):
     if not isinstance(match, nimble.data.Base):
         match = convertMatchToFunction(match)
         return vector.matchingElements(match, useLog=False)
@@ -64,7 +64,7 @@ def constant(vector, match, constantValue):
         [[1.000 99.000 3.000 99.000 5.000]]
         )
     """
-    toFill = matchToBooleanVector(vector, match)
+    toFill = booleanElementMatch(vector, match)
 
     def filler(vec):
         return [constantValue if fill else val
@@ -278,7 +278,7 @@ def forwardFill(vector, match):
         [[6.000 6.000 2.000 2.000 4.000]]
         )
     """
-    toFill = matchToBooleanVector(vector, match)
+    toFill = booleanElementMatch(vector, match)
     if toFill[0]:
         msg = directionError('forward fill', vector, 'first')
         raise InvalidArgumentValue(msg)
@@ -347,7 +347,7 @@ def backwardFill(vector, match):
         [[6.000 2.000 2.000 4.000 4.000]]
         )
     """
-    toFill = matchToBooleanVector(vector, match)
+    toFill = booleanElementMatch(vector, match)
     if toFill[-1]:
         msg = directionError('backward fill', vector, 'last')
         raise InvalidArgumentValue(msg)
@@ -422,7 +422,7 @@ def interpolate(vector, match, **kwarguments):
         [[6.000 5.000 4.000 3.000 2.000]]
         )
     """
-    toFill = matchToBooleanVector(vector, match)
+    toFill = booleanElementMatch(vector, match)
     if 'x' in kwarguments:
         msg = "'x' is a disallowed keyword argument because it is "
         msg += "determined by the data in the vector."
@@ -631,7 +631,7 @@ def statsBackend(vector, match, funcString, statisticsFunction):
     """
     Backend for filling with a statistics function from nimble.calculate.
     """
-    toFill = matchToBooleanVector(vector, match)
+    toFill = booleanElementMatch(vector, match)
 
     def toStat(vec):
         return [val for val, fill in zip(vector, toFill) if not fill]

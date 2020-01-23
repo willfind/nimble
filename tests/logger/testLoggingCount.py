@@ -44,9 +44,9 @@ def prefixAdder(prefix):
 
 #  Untested functions: register/deregisterCustomLearnerAsDefault
 nimble_logged = [
-    'createData', 'createRandomData', 'crossValidate', 'log', 'loadData',
-    'loadTrainedLearner', 'normalizeData', 'setRandomSeed', 'train',
-    'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
+    'createData', 'createRandomData', 'crossValidate', 'fillMatching', 'log',
+    'loadData', 'loadTrainedLearner', 'normalizeData', 'setRandomSeed',
+    'train', 'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 nimble_notLogged = [
     'CV', 'Init', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',

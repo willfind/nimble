@@ -9,6 +9,7 @@ import configparser
 import numpy
 
 import nimble
+from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
 from nimble.exceptions import ImproperObjectAction
@@ -537,6 +538,35 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     time = stopTimer(timer)
     handleLogging(useLog, 'run', "normalizeData", trainX, trainY, testX, None,
+                  learnerName, merged, time=time)
+
+def fillMatching(learnerName, matchingElements, trainX, arguments=None,
+                 useLog=None, **kwarguments):
+    timer = startTimer(useLog)
+    if isinstance(matchingElements, nimble.data.Base):
+        matchMatrix = matchingElements
+    else:
+        matchingElements = match.convertMatchToFunction(matchingElements)
+        matchMatrix = trainX.matchingElements(matchingElements)
+        if not matchingElements(numpy.nan):
+            nanLocs = trainX.matchingElements(match.missing)
+            if matchMatrix | nanLocs != matchMatrix:
+                msg = "filling requires all unmatched elements to be non-nan"
+                raise ImproperObjectAction(msg)
+
+    (_, trueLearnerName) = _unpackLearnerName(learnerName)
+    merged = _mergeArguments(arguments, kwarguments)
+    # do not fill actual trainX with nans in case trainAndApply fails
+    toFill = trainX.copy()
+    toFill.features.fillMatching(numpy.nan, matchMatrix, useLog=False)
+    filled = trainAndApply(learnerName, toFill, arguments=merged, useLog=False)
+    if filled.getTypeString() != trainX.getTypeString():
+        filled = filled.copy(to=trainX.getTypeString())
+
+    trainX.referenceDataFrom(filled)
+
+    time = stopTimer(timer)
+    handleLogging(useLog, 'run', "fillMatching", trainX, None, None, None,
                   learnerName, merged, time=time)
 
 
