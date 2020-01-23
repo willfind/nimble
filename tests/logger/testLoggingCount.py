@@ -74,7 +74,7 @@ calculate_tested = list(map(prefixAdder('nimble.calculate'), calculate_funcs))
 
 # no fill functions should be logged.
 fill_funcs = [
-    'backwardFill', 'constant', 'factory', 'forwardFill', 'interpolate',
+    'backwardFill', 'constant', 'forwardFill', 'interpolate',
     'kNeighborsClassifier', 'kNeighborsRegressor', 'mean', 'median', 'mode',
     ]
 fill_tested = list(map(prefixAdder('nimble.fill'), fill_funcs))

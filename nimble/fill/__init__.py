@@ -3,7 +3,6 @@ Collection of functions primarily providing various methods for filling
 values in the data with other values.
 """
 
-from .fill import factory
 from .fill import constant
 from .fill import mean
 from .fill import median

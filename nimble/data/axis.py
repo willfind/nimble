@@ -15,6 +15,7 @@ from abc import abstractmethod
 import inspect
 import sys
 import operator
+import functools
 
 import numpy
 
@@ -646,13 +647,51 @@ class Axis(object):
 
     def _fillMatching(self, fillWith, matchingElements, limitTo=None,
                       useLog=None, **kwarguments):
+        removeKwargs = []
         # our fill functions that also need access to the base data
         needData = [fill.kNeighborsRegressor, fill.kNeighborsClassifier]
         if fillWith in needData and 'data' not in kwarguments:
             kwarguments['data'] = self._base.copy()
-        toTransform = fill.factory(fillWith, matchingElements, **kwarguments)
+            removeKwargs.append('data')
+        # use our fill.constant function with the fillWith value
+        if not callable(fillWith):
+            value = fillWith
+            # for consistency use numpy.nan for None and nans
+            if value is None or value != value:
+                value = numpy.nan
+            fillFunc = fill.constant
+            kwarguments['constantValue'] = value
+            removeKwargs.append('constantValue')
+        else:
+            fillFunc = fillWith
 
-        self._transform(toTransform, limitTo, useLog=False)
+        # if matchingElements is a boolean matrix we need to provide the
+        # corresponding boolean vector for the vector passed to _transform
+        try:
+            idxOrder = iter(limitTo)
+        except TypeError:
+            if limitTo is None:
+                idxOrder = iter(range(len(self)))
+            else: # limitTo is a single identifier
+                idxOrder = iter([self._getIndex(limitTo)])
+
+        @functools.wraps(fillFunc)
+        def fillFunction(vector):
+            isBase = isinstance(matchingElements, nimble.data.Base)
+            if not isBase:
+                matcher = matchingElements
+            elif self._axis == 'point':
+                matcher = matchingElements[next(idxOrder), :]
+            else:
+                matcher = matchingElements[:, next(idxOrder)]
+
+            return fillFunc(vector, matcher, **kwarguments)
+
+        self._transform(fillFunction, limitTo, useLog=False)
+
+        # prevent kwargs we added from being logged
+        for kwarg in removeKwargs:
+            del kwarguments[kwarg]
 
         funcName = '{ax}s.fillMatching'.format(ax=self._axis)
         handleLogging(useLog, 'prep', funcName, self._base.getTypeString(),

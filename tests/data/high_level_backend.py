@@ -2919,13 +2919,13 @@ class HighLevelModifying(DataTestObject):
         toTest = self.constructor(data)
 
         toTest._name = "TestName"
-        toTest._absPath = "TestAbsPath"
+        toTest._absPath = os.path.abspath("TestAbsPath")
         toTest._relPath = "testRelPath"
 
         toTest.features.fillMatching(0, match.nonNumeric)
 
         assert toTest.name == "TestName"
-        assert toTest.absolutePath == "TestAbsPath"
+        assert toTest.absolutePath == os.path.abspath("TestAbsPath")
         assert toTest.relativePath == 'testRelPath'
 
     #######################
@@ -3247,13 +3247,13 @@ class HighLevelModifying(DataTestObject):
         toTest = self.constructor(data)
 
         toTest._name = "TestName"
-        toTest._absPath = "TestAbsPath"
+        toTest._absPath = os.path.abspath("TestAbsPath")
         toTest._relPath = "testRelPath"
 
         toTest.points.fillMatching(0, match.nonNumeric)
 
         assert toTest.name == "TestName"
-        assert toTest.absolutePath == "TestAbsPath"
+        assert toTest.absolutePath == os.path.abspath("TestAbsPath")
         assert toTest.relativePath == 'testRelPath'
 
     ####################################
