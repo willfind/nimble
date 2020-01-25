@@ -315,8 +315,7 @@ class HighLevelDataSafe(DataTestObject):
         def addTenth(pt):
             return [v + 0.1 for v in pt]
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
 
         ret = orig.points.calculate(addTenth)
@@ -327,10 +326,8 @@ class HighLevelDataSafe(DataTestObject):
         def toString(pt):
             return [str(v) for v in pt]
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
-        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
-                               elementType=object)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']])
 
         ret = orig.points.calculate(toString)
         assert ret == exp
@@ -572,8 +569,7 @@ class HighLevelDataSafe(DataTestObject):
         def addTenth(ft):
             return [v + 0.1 for v in ft]
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
 
         ret = orig.features.calculate(addTenth)
@@ -584,10 +580,8 @@ class HighLevelDataSafe(DataTestObject):
         def toString(ft):
             return [str(v) for v in ft]
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
-        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
-                               elementType=object)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']])
 
         ret = orig.features.calculate(toString)
         assert ret == exp
@@ -707,12 +701,12 @@ class HighLevelDataSafe(DataTestObject):
             return toIMap[val] if val in toIMap else val
 
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data, elementType=object)
+        toTest = self.constructor(data)
         ret0A = toTest.elements.calculate(allString)
         ret0B = toTest.elements.calculate(allString, preserveZeros=True)
 
         exp0Data = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
-        exp0Obj = self.constructor(exp0Data, elementType=object)
+        exp0Obj = self.constructor(exp0Data)
         assert ret0A == exp0Obj
         assert ret0B == exp0Obj
 
@@ -792,8 +786,7 @@ class HighLevelDataSafe(DataTestObject):
         def addTenth(elem):
             return elem + 0.1
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
 
         ret = orig.elements.calculate(addTenth)
@@ -804,10 +797,8 @@ class HighLevelDataSafe(DataTestObject):
         def toString(e):
             return str(e)
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
-        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
-                               elementType=object)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']])
 
         ret = orig.elements.calculate(toString)
         assert ret == exp
