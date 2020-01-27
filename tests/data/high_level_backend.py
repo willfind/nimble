@@ -2451,6 +2451,25 @@ class HighLevelModifying(DataTestObject):
         except InvalidArgumentValue:
             pass
 
+    # exception wrong length vector axis
+    def test_points_normalize_exception_wrong_vector_axis(self):
+        self.back_normalize_exception_wrong_vector_length('point')
+
+    def test_features_normalize_exception_wrong_vector_axis(self):
+        self.back_normalize_exception_wrong_vector_length('feature')
+
+    def back_normalize_exception_wrong_vector_axis(self, axis):
+        obj = self.constructor([[1, 2], [3, 4]])
+        if axis == 'point':
+            vectorWrongAxis = self.constructor([[1, 2]])
+        else:
+            vectorWrongAxis = self.constructor([[1], [2]])
+
+        try:
+            self.normalizeHelper(obj, axis, subtract=vectorWrongAxis)
+            assert False  # Expected InvalidArgumentValue
+        except InvalidArgumentValue:
+            pass
 
     # exception wrong size of nimble object
     def test_points_normalize_exception_wrong_size_object(self):
@@ -2543,7 +2562,14 @@ class HighLevelModifying(DataTestObject):
         assert expObj == obj
         assertNoNamesGenerated(obj)
 
-        # vector versions
+    # successful vector inputs
+    def test_points_normalize_success_vector_inputs_NoAlso(self):
+        self.back_normalize_success_vector_inputs_NoAlso("point")
+
+    def test_features_normalize_success_vector_inputs_NoAlso(self):
+        self.back_normalize_success_vector_inputs_NoAlso("feature")
+
+    def back_normalize_success_vector_inputs_NoAlso(self, axis):
         obj = self.constructor([[1, 1, 1], [3, 3, 3], [7, 7, 7]])
         expObj = self.constructor([[0, 0, 0], [4, 4, 4], [12, 12, 12]])
 
@@ -2551,12 +2577,14 @@ class HighLevelModifying(DataTestObject):
             currObj = obj.copy()
             sub = nimble.createData(retType, [1] * 3)
             div = nimble.createData(retType, [0.5] * 3)
+            if axis == 'point':
+                sub.transpose()
+                div.transpose()
             ret = self.normalizeHelper(currObj, axis, subtract=sub, divide=div)
 
             assert ret is None
             assert expObj == currObj
             assertNoNamesGenerated(currObj)
-
 
     # successful float valued inputs
     def test_points_normalize_success_float_int_inputs(self):
@@ -2576,7 +2604,8 @@ class HighLevelModifying(DataTestObject):
         assert ret is None
         assert expObj == obj
         assert expAlso == also
-
+        assertNoNamesGenerated(obj)
+        assertNoNamesGenerated(also)
 
     # successful stats-string valued inputs
     def test_points_normalize_success_stat_string_inputs(self):
@@ -2597,7 +2626,6 @@ class HighLevelModifying(DataTestObject):
         assert expObj == obj
         assert expAlso == also
 
-
     # successful vector object valued inputs
     def test_points_normalize_success_vector_object_inputs(self):
         self.back_normalize_success_vector_object_inputs("point")
@@ -2608,8 +2636,12 @@ class HighLevelModifying(DataTestObject):
     def back_normalize_success_vector_object_inputs(self, axis):
         obj = self.constructor([[1, 3, 7], [10, 30, 70], [100, 300, 700]])
         also = self.constructor([[2, 6, 14], [10, 30, 70], [100, 300, 700]])
-        subVec = self.constructor([[1, 10, 100]])
-        divVec = self.constructor([[.5], [5], [50]])
+        if axis == 'point':
+            subVec = self.constructor([[1], [10], [100]])
+            divVec = self.constructor([[.5], [5], [50]])
+        else:
+            subVec = self.constructor([[1, 10, 100]])
+            divVec = self.constructor([[.5, 5, 50]])
         expObj = self.constructor([[0, 4, 12], [0, 4, 12], [0, 4, 12]])
         expAlso = self.constructor([[2, 10, 26], [0, 4, 12], [0, 4, 12]])
 
