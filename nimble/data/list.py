@@ -312,7 +312,10 @@ class List(Base):
                 raise PackageException(msg)
             if isEmpty:
                 return pd.DataFrame(emptyData)
-            return pd.DataFrame(self.data, dtype=elementType)
+            pnames = self.points._getNamesNoGeneration()
+            fnames = self.features._getNamesNoGeneration()
+            return pd.DataFrame(self.data.copy(), index=pnames, columns=fnames,
+                                dtype=elementType)
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):

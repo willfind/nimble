@@ -8,6 +8,7 @@ import copy
 import sys
 import warnings
 from unittest import mock
+import pkgutil
 
 import numpy
 
@@ -44,12 +45,17 @@ class SciKitLearn(PredefinedInterface, UniversalInterface):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
             self.skl = modifyImportPathAndImport(sciKitLearnDir, 'sciKitLearn')
+            from sklearn.utils.testing import all_estimators
 
         version = self.version()
         self._versionSplit = list(map(int, version.split('.')))
+        if self._versionSplit[0] < 1 and self._versionSplit[1] < 19:
+            msg = "nimble was tested using sklearn 0.19 and above, we cannot "
+            msg += "be sure of success for version {0}".format(version())
+            warnings.warn(msg)
 
-        from sklearn.utils.testing import all_estimators
-        import pkgutil
+        self.randomParam = 'random_state'
+
         walkPackages = pkgutil.walk_packages
         def mockWalkPackages(*args, **kwargs):
             packages = walkPackages(*args, **kwargs)
@@ -348,21 +354,38 @@ To install scikit-learn
 
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
-        if self._versionSplit[1] < 19:
-            msg = "nimble was tested using sklearn 0.19 and above, we cannot "
-            msg += "be sure of success for version {0}".format(self.version())
-            warnings.warn(msg)
-
         # init learner
+        learner = self._initLearner(learnerName, trainX, trainY, arguments)
+        # fit learner
+        self._fitLearner(learner, learnerName, trainX, trainY, arguments)
+
+        if (hasattr(learner, 'decision_function')
+                or hasattr(learner, 'predict_proba')):
+            if trainY is not None:
+                labelOrder = numpy.unique(trainY)
+            else:
+                allLabels = learner.predict(trainX)
+                labelOrder = numpy.unique(allLabels)
+
+            def UIgetScoreOrder():
+                return labelOrder
+
+            learner.UIgetScoreOrder = UIgetScoreOrder
+
+        return learner
+
+    def _initLearner(self, learnerName, trainX, trainY, arguments):
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         initParams = {name: arguments[name] for name in initNames
                       if name in arguments}
         defaults = self.getLearnerDefaultValues(learnerName)[0]
-        if 'random_state' in defaults and 'random_state' not in arguments:
-            initParams['random_state'] = defaults['random_state']
+        if self.randomParam in defaults and self.randomParam not in arguments:
+            initParams[self.randomParam] = defaults[self.randomParam]
         learner = self.findCallable(learnerName)(**initParams)
 
-        # fit learner
+        return learner
+
+    def _fitLearner(self, learner, learnerName, trainX, trainY, arguments):
         fitNames = self._paramQuery('fit', learnerName, ['self'])[0]
         fitParams = {}
         for name in fitNames:
@@ -384,21 +407,6 @@ To install scikit-learn
             # these occur when the learner requires different input data
             # (multi-dimensional, non-negative)
             raise InvalidArgumentValue(str(ve))
-        if (hasattr(learner, 'decision_function')
-                or hasattr(learner, 'predict_proba')):
-            if trainY is not None:
-                labelOrder = numpy.unique(trainY)
-            else:
-                allLabels = learner.predict(trainX)
-                labelOrder = numpy.unique(allLabels)
-
-            def UIgetScoreOrder():
-                return labelOrder
-
-            learner.UIgetScoreOrder = UIgetScoreOrder
-
-        return learner
-
 
     def _incrementalTrainer(self, learner, trainX, trainY, arguments,
                             customDict):
@@ -512,8 +520,8 @@ To install scikit-learn
             initDefaults = obj.get_params()
             initParams = list(initDefaults.keys())
             initValues = list(initDefaults.values())
-            if 'random_state' in initParams:
-                index = initParams.index('random_state')
+            if self.randomParam in initParams:
+                index = initParams.index(self.randomParam)
                 negdex = index - len(initParams)
                 seed = nimble.randomness.generateSubsidiarySeed()
                 initValues[negdex] = seed

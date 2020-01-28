@@ -12,6 +12,7 @@ import functools
 import sys
 import numbers
 import warnings
+import tempfile
 
 import numpy
 
@@ -47,18 +48,24 @@ def captureOutput(toWrap):
     """
     @functools.wraps(toWrap)
     def wrapped(*args, **kwarguments):
-        # user has not already provided warnings filters
-        if not sys.warnoptions:
-            with warnings.catch_warnings():
-                # filter out warnings that we do not need users to see
-                warnings.simplefilter('ignore', DeprecationWarning)
-                warnings.simplefilter('ignore', FutureWarning)
-                warnings.simplefilter('ignore', PendingDeprecationWarning)
-                warnings.simplefilter('ignore', ImportWarning)
+        stdOutBackup = sys.stdout
+        sys.stdout = tempfile.TemporaryFile('w+')
+        try:
+            # user has not already provided warnings filters
+            if not sys.warnoptions:
+                with warnings.catch_warnings():
+                    # filter out warnings that we do not need users to see
+                    warnings.simplefilter('ignore', DeprecationWarning)
+                    warnings.simplefilter('ignore', FutureWarning)
+                    warnings.simplefilter('ignore', PendingDeprecationWarning)
+                    warnings.simplefilter('ignore', ImportWarning)
 
+                    ret = toWrap(*args, **kwarguments)
+            else:
                 ret = toWrap(*args, **kwarguments)
-        else:
-            ret = toWrap(*args, **kwarguments)
+        finally:
+            sys.stdout.close()
+            sys.stdout = stdOutBackup
         return ret
 
     return wrapped

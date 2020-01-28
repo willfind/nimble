@@ -326,7 +326,10 @@ class Sparse(Base):
             if not pd:
                 msg = "pandas is not available"
                 raise PackageException(msg)
-            return pd.DataFrame(cooMatrixToArray(self.data))
+            pnames = self.points._getNamesNoGeneration()
+            fnames = self.features._getNamesNoGeneration()
+            return pd.DataFrame(cooMatrixToArray(self.data), index=pnames,
+                                columns=fnames)
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):

@@ -564,6 +564,8 @@ class StructureDataSafe(StructureShared):
         if pd:
             pandasDF = orig.copy(to='pandas dataframe')
             assert type(pandasDF) == type(pd.DataFrame([]))
+            assert numpy.array_equal(pandasDF.columns, featureNames)
+            assert numpy.array_equal(pandasDF.index, pointNames)
             pandasDF.iloc[0, 0] = 5
             assert orig[0, 0] == 1
 
@@ -619,6 +621,8 @@ class StructureDataSafe(StructureShared):
         if pd:
             out = orig.copy(to='pandasdataframe', rowsArePoints=False)
             assert numpy.array_equal(out, dataT)
+            assert numpy.array_equal(out.columns, pointNames)
+            assert numpy.array_equal(out.index, featureNames)
 
         out = orig.copy(to='list of dict', rowsArePoints=False)
 

@@ -2865,6 +2865,17 @@ class HighLevelModifying(DataTestObject):
         assert toTest == exp
         assertNoNamesGenerated(toTest)
 
+    def test_features_fillMatching_limited_outOfOrder(self):
+        data = [[1, 2, -3, 4], [5, -6, -7, 8], [9, 10, 11, -12]]
+        toTest = self.constructor(data)
+
+        expData = [[1, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, -12]]
+        exp = self.constructor(expData)
+
+        toTest.features.fillMatching(0, match.negative, features=[2, 1])
+        assert toTest == exp
+        assertNoNamesGenerated(toTest)
+
     def test_features_fillMatching_fillValuesWithNaN_constant(self):
         data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
         obj1 = self.constructor(data)
@@ -3111,6 +3122,17 @@ class HighLevelModifying(DataTestObject):
 
         toTest.points.fillMatching(firstValue, negative)
         assert toTest == exp
+
+    def test_points_fillMatching_limited_outOfOrder(self):
+        data = [[1, 2, -3, 4], [5, -6, -7, 8], [9, 10, 11, -12]]
+        toTest = self.constructor(data)
+
+        expData = [[1, 2, -3, 4], [5, 0, 0, 8], [9, 10, 11, 0]]
+        exp = self.constructor(expData)
+
+        toTest.points.fillMatching(0, match.negative, points=[2, 1])
+        assert toTest == exp
+        assertNoNamesGenerated(toTest)
 
     def test_points_fillMatching_fillValuesWithNaN_constant(self):
         data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
