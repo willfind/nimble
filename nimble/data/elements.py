@@ -93,8 +93,8 @@ class Elements(object):
 
         See Also
         --------
-        calculate, nimble.data.points.Points.transform,
-        nimble.data.features.Features.transform
+        calculate, nimble.data.Points.transform,
+        nimble.data.Features.transform
 
         Examples
         --------
@@ -165,9 +165,9 @@ class Elements(object):
         ...                         skipNoneReturnValues=True)
         >>> skip
         Matrix(
-            [[1.000  12.000 3.000 ]
-             [14.000 5.000  16.000]
-             [7.000  18.000 9.000 ]]
+            [[1  12 3 ]
+             [14 5  16]
+             [7  18 9 ]]
             )
         """
         if points is not None:
@@ -235,8 +235,8 @@ class Elements(object):
 
         See Also
         --------
-        transform, nimble.data.points.Points.calculate,
-        nimble.data.features.Features.calculate
+        transform, nimble.data.Points.calculate,
+        nimble.data.Features.calculate
 
         Examples
         --------
@@ -305,9 +305,9 @@ class Elements(object):
         ...                                skipNoneReturnValues=True)
         >>> skip
         Matrix(
-            [[1.000  12.000 3.000 ]
-             [14.000 5.000  16.000]
-             [7.000  18.000 9.000 ]]
+            [[1  12 3 ]
+             [14 5  16]
+             [7  18 9 ]]
             )
         """
         calculator = validateElementFunction(toCalculate, preserveZeros,
@@ -400,8 +400,7 @@ class Elements(object):
 
         See Also
         --------
-        nimble.data.points.Points.count,
-        nimble.data.features.Features.count
+        nimble.data.Points.count, nimble.data.Features.count
 
         Examples
         --------
@@ -531,6 +530,16 @@ class Elements(object):
             msg = "Cannot do elements.multiply with empty points or features"
             raise ImproperObjectAction(msg)
 
+        try:
+            self._base._convertUnusableTypes(float, (int, float, bool), False)
+        except ImproperObjectAction:
+            self._base._numericValidation()
+
+        try:
+            other._convertUnusableTypes(float, (int, float, bool), False)
+        except ImproperObjectAction:
+            other._numericValidation(right=True)
+
         self._base._validateEqualNames('point', 'point',
                                          'elements.multiply', other)
         self._base._validateEqualNames('feature', 'feature',
@@ -589,8 +598,8 @@ class Elements(object):
         >>> data1.elements.power(data2)
         >>> data1
         Matrix(
-            [[64.000 64.000]
-             [64.000 64.000]]
+            [[64 64]
+             [64 64]]
             )
         """
         # other is nimble or single numerical value
@@ -676,10 +685,10 @@ class Elements(object):
         # check if values has numeric dtype
         createDataKwargs = {'useLog': False}
         if allowBoolOutput and numpy.issubdtype(values.dtype, numpy.bool_):
-            createDataKwargs['elementType'] = bool
+            createDataKwargs['convertToType'] = bool
         elif not (numpy.issubdtype(values.dtype, numpy.number)
                   or numpy.issubdtype(values.dtype, numpy.bool_)):
-            createDataKwargs['elementType'] = numpy.object_
+            createDataKwargs['convertToType'] = numpy.object_
 
         ret = nimble.createData(optType, values, **createDataKwargs)
 
@@ -738,8 +747,10 @@ def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
         if preserveZeros and value == 0:
             return float(0)
         ret = func(value, *args)
-        if skipNoneReturnValues and ret is None:
-            return value
+        if ret is None:
+            if skipNoneReturnValues:
+                return value
+            return numpy.nan
         if not dataHelpers.isAllowedSingleElement(ret):
             msg = funcName + " can only return numeric, boolean, or string "
             msg += "values, but the returned value was " + str(type(ret))

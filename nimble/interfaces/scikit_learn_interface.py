@@ -19,7 +19,7 @@ from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.interfaces.interface_helpers import collectAttributes
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
-from nimble.utility import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, dtypeConvert
 
 # Contains path to sciKitLearn root directory
 #sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'

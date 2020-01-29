@@ -7,7 +7,7 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
-from nimble.utility import ImportModule
+from nimble.utility import ImportModule, dtypeConvert
 
 scipy = ImportModule('scipy')
 
@@ -250,7 +250,7 @@ def mode(values):
     >>> raw = [0, 1, 2, float('nan'), float('nan'), float('nan'), 0, 6]
     >>> vector = nimble.createData('Matrix', raw)
     >>> mode(vector)
-    0.0
+    0
     """
     nonMissingValues = [x for x in values if not _isMissing(x)]
     counter = collections.Counter(nonMissingValues)
@@ -340,8 +340,8 @@ def quartiles(values, ignoreNoneOrNan=True):
     (None, None, None)
     """
     if isinstance(values, nimble.data.Base):
-        values = values.copy(to="numpyarray", outputAs1D=True)
-        values = values.astype(numpy.float)
+        #convert to a horizontal array
+        values = dtypeConvert(values.copy(to="numpyarray", outputAs1D=True))
 
     if ignoreNoneOrNan:
         ret = numpy.nanpercentile(values, (25, 50, 75))
@@ -407,8 +407,8 @@ def residuals(toPredict, controlVars):
     workingType = controlVars.getTypeString()
     workingCV = controlVars.copy()
     workingCV.features.append(nimble.ones(workingType, cvP, 1), useLog=False)
-    workingCV = workingCV.copy(to="numpy array")
-    workingTP = toPredict.copy(to="numpy array")
+    workingCV = dtypeConvert(workingCV.copy(to="numpy array"))
+    workingTP = dtypeConvert(toPredict.copy(to="numpy array"))
 
     x,res,r,s = scipy.linalg.lstsq(workingCV, workingTP)
     pred = numpy.matmul(workingCV, x)

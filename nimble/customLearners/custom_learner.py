@@ -8,6 +8,7 @@ import inspect
 import numpy
 
 from nimble.helpers import inspectArguments
+from nimble.utility import dtypeConvert
 
 
 class CustomLearner(metaclass=abc.ABCMeta):
@@ -201,7 +202,8 @@ class CustomLearner(metaclass=abc.ABCMeta):
 
         # TODO store list of classes in trainY if classifying
         if self.__class__.learnerType == 'classification':
-            self.labelList = numpy.unique(trainY.copy(to='numpyarray'))
+            labels = dtypeConvert(trainY.copy(to='numpyarray'))
+            self.labelList = numpy.unique(labels)
 
         self.train(trainX, trainY, **arguments)
 
@@ -209,7 +211,7 @@ class CustomLearner(metaclass=abc.ABCMeta):
 
     def incrementalTrainForInterface(self, trainX, trainY, arguments):
         if self.__class__.learnerType == 'classification':
-            flattenedY = trainY.copy(to='numpyarray').flatten()
+            flattenedY = dtypeConvert(trainY.copy(to='numpyarray').flatten())
             self.labelList = numpy.union1d(self.labelList, flattenedY)
         self.incrementalTrain(trainX, trainY)
         return self

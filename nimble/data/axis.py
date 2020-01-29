@@ -123,12 +123,9 @@ class Axis(object):
             setattr(self._base, names, None)
             setattr(self._base, namesInverse, None)
         else:
-            count = len(self)
-            if isinstance(assignments, dict):
-                self._setNamesFromDict(assignments, count)
-            else:
+            if not isinstance(assignments, dict):
                 assignments = valuesToPythonList(assignments, 'assignments')
-                self._setNamesFromList(assignments, count)
+            self._setNamesBackend(assignments)
 
         handleLogging(useLog, 'prep', '{ax}s.setNames'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('setNames'),
@@ -480,17 +477,17 @@ class Axis(object):
 
         createDataKwargs = {'useLog': False}
         if matching:
-            createDataKwargs['elementType'] = bool
+            createDataKwargs['convertToType'] = bool
         elif convert:
-            createDataKwargs['elementType'] = numpy.object_
+            createDataKwargs['convertToType'] = numpy.object_
+
+        pathPass = (self._base.absolutePath, self._base.relativePath)
 
         ret = nimble.createData(self._base.getTypeString(), retData,
-                                **createDataKwargs)
-        if self._axis != 'point':
-            ret.transpose(useLog=False)
+                                **createDataKwargs, path=pathPass)
 
         if isinstance(self, Points):
-            if limitTo is not None and self._namesCreated():
+            if len(limitTo) < len(self) and self._namesCreated():
                 names = []
                 for index in limitTo:
                     names.append(self._getName(index))
@@ -498,7 +495,8 @@ class Axis(object):
             elif self._namesCreated():
                 ret.points.setNames(self._getNamesNoGeneration(), useLog=False)
         else:
-            if limitTo is not None and self._namesCreated():
+            ret.transpose(useLog=False)
+            if len(limitTo) < len(self) and self._namesCreated():
                 names = []
                 for index in limitTo:
                     names.append(self._getName(index))
@@ -506,9 +504,6 @@ class Axis(object):
             elif self._namesCreated():
                 ret.features.setNames(self._getNamesNoGeneration(),
                                       useLog=False)
-
-        ret._absPath = self._base.absolutePath
-        ret._relPath = self._base.relativePath
 
         return ret
 
@@ -726,33 +721,25 @@ class Axis(object):
             objOffLen = objFC if self._axis == 'point' else objPC
 
             if inMainLen != objMainLen or inOffLen != objOffLen:
-                vecErr = argname + " "
-                vecErr += "was a nimble object in the shape of a "
-                vecErr += "vector (" + str(inPC) + " x "
-                vecErr += str(inFC) + "), "
-                vecErr += "but the length of long axis did not match "
-                vecErr += "the number of " + self._axis + "s in this object ("
-                vecErr += str(self._base._pointCount) + ")."
-                # treat it as a vector
-                if inMainLen == 1:
-                    if inOffLen != objMainLen:
-                        raise InvalidArgumentValue(vecErr)
+                # valid vector
+                if inOffLen == 1 and inMainLen == objMainLen:
                     return True
-                # treat it as a vector
-                elif inOffLen == 1:
-                    if inMainLen != objMainLen:
-                        raise InvalidArgumentValue(vecErr)
-                    argval.transpose(useLog=False)
-                    return True
-                # treat it as a mis-sized object
-                else:
-                    msg = argname + " "
-                    msg += "was a nimble object with a shape of ("
-                    msg += str(inPC) + " x " + str(inFC) + "), "
-                    msg += "but it doesn't match the shape of the calling"
-                    msg += "object (" + str(objPC) + " x "
-                    msg += str(objFC) + ")"
-                    raise InvalidArgumentValue(msg)
+                msg = ""
+                if inOffLen == 1 or inMainLen == 1:
+                    msg += "{argname} "
+                    offAxis = 'feature' if self._axis == 'point' else 'point'
+                    vecErr = 'is an invalid vector. The vector must be one-'
+                    vecErr += 'dimensional along the {offAxis} axis and '
+                    vecErr += 'contain the same number of {selfAxis}s as the '
+                    vecErr += 'calling object. '
+                    msg += vecErr.format(offAxis=offAxis, selfAxis=self._axis)
+                # mis-sized object
+                msg += "{argname} has a shape of ({inPC} x {inFC}), which "
+                msg += "does not align with the shape of the calling object "
+                msg += "({objPC} x {objFC})"
+                msg = msg.format(argname=argname, inPC=inPC, inFC=inFC,
+                                 objPC=objPC, objFC=objFC)
+                raise InvalidArgumentValue(msg)
             return False
 
         def checkAlsoShape(also, objIn):
@@ -796,87 +783,58 @@ class Axis(object):
             divIsVec = validateInObjectSize("divide", divide)
             objArg = True
 
-        # check the shape of applyResultTo
+        # preserve names in case any of the operations modify them
+        if isinstance(self, Points):
+            origPtNames = self._getNamesNoGeneration()
+            origFtNames = self._base.features._getNamesNoGeneration()
+        else:
+             origFtNames = self._getNamesNoGeneration()
+             origPtNames = self._base.points._getNamesNoGeneration()
+        # check the shape of applyResultTo and preserve p/f names
         if alsoIsObj:
             checkAlsoShape(applyResultTo, objArg)
+            alsoPtNames = applyResultTo.points._getNamesNoGeneration()
+            alsoFtNames = applyResultTo.features._getNamesNoGeneration()
 
-        # if a statistics string was entered, generate the results
-        # of that statistic
-        #		if isinstance(subtract, basestring):
-        #			if axis == 'point':
-        #				subtract = self._statistics(subtract)
-        #			else:
-        #				subtract = self._statistics(subtract)
-        #			subIsVec = True
-        #		if isinstance(divide, basestring):
-        #			if axis == 'point':
-        #				divide = self._statistics(divide)
-        #			else:
-        #				divide = self._statistics(divide)
-        #			divIsVec = True
-
-        if isinstance(self, Points):
-            indexGetter = lambda x: x._pStart
-            if isinstance(subtract, str):
-                subtract = self._statistics(subtract)
-                subIsVec = True
-            if isinstance(divide, str):
-                divide = self._statistics(divide)
-                divIsVec = True
-        else:
-            indexGetter = lambda x: x._fStart
-            if isinstance(subtract, str):
-                subtract = self._statistics(subtract)
-                subIsVec = True
-            if isinstance(divide, str):
-                divide = self._statistics(divide)
-                divIsVec = True
-
-        # helper for when subtract is a vector of values
-        def subber(currView):
-            ret = []
-            for val in currView:
-                ret.append(val - subtract[indexGetter(currView)])
-            return ret
-
-        # helper for when divide is a vector of values
-        def diver(currView):
-            ret = []
-            for val in currView:
-                ret.append(val / divide[indexGetter(currView)])
-            return ret
+        if isinstance(subtract, str):
+            subtract = self._statistics(subtract)
+            subIsVec = True
+        if isinstance(divide, str):
+            divide = self._statistics(divide)
+            divIsVec = True
 
         # first perform the subtraction operation
         if subtract is not None and subtract != 0:
-            if subIsVec:
-                if isinstance(self, Points):
-                    self._transform(subber, None, useLog=False)
-                    if alsoIsObj:
-                        applyResultTo.points.transform(subber, useLog=False)
-                else:
-                    self._transform(subber, None, useLog=False)
-                    if alsoIsObj:
-                        applyResultTo.features.transform(subber, useLog=False)
-            else:
-                self._base -= subtract
-                if alsoIsObj:
-                    applyResultTo -= subtract
+            if subIsVec and isinstance(self, Points):
+                subtract = subtract.stretch
+            elif subIsVec:
+                subtract = subtract.stretch
+            self._base.referenceDataFrom(self._base - subtract, useLog=False)
+            if alsoIsObj:
+                applyResultTo.referenceDataFrom(applyResultTo - subtract,
+                                                useLog=False)
 
         # then perform the division operation
         if divide is not None and divide != 1:
-            if divIsVec:
-                if isinstance(self, Points):
-                    self._transform(diver, None, useLog=False)
-                    if alsoIsObj:
-                        applyResultTo.points.transform(diver, useLog=False)
-                else:
-                    self._transform(diver, None, useLog=False)
-                    if alsoIsObj:
-                        applyResultTo.features.transform(diver, useLog=False)
-            else:
-                self._base /= divide
-                if alsoIsObj:
-                    applyResultTo /= divide
+            if divIsVec and isinstance(self, Points):
+                divide = divide.stretch
+            elif divIsVec:
+                divide = divide.stretch
+
+            self._base.referenceDataFrom(self._base / divide, useLog=False)
+            if alsoIsObj:
+                applyResultTo.referenceDataFrom(applyResultTo / divide,
+                                                useLog=False)
+
+        if isinstance(self, Points):
+            self._setNames(origPtNames, useLog=False)
+            self._base.features.setNames(origFtNames, useLog=False)
+        else:
+             self._setNames(origFtNames, useLog=False)
+             self._base.points.setNames(origPtNames, useLog=False)
+        if alsoIsObj:
+            applyResultTo.points.setNames(alsoPtNames, useLog=False)
+            applyResultTo.features.setNames(alsoFtNames, useLog=False)
 
         handleLogging(useLog, 'prep', '{ax}s.normalize'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('normalize'),
@@ -1000,12 +958,8 @@ class Axis(object):
             toCall = nimble.calculate.proportionMissing
         elif cleanFuncName == 'proportionzero':
             toCall = nimble.calculate.proportionZero
-        elif cleanFuncName in ['std', 'standarddeviation']:
-            def sampleStandardDeviation(values):
-                return nimble.calculate.standardDeviation(values, True)
-
-            toCall = sampleStandardDeviation
-        elif cleanFuncName in ['samplestd', 'samplestandarddeviation']:
+        elif cleanFuncName in ['std', 'standarddeviation','samplestd',
+                               'samplestandarddeviation']:
             def sampleStandardDeviation(values):
                 return nimble.calculate.standardDeviation(values, True)
 
@@ -1120,73 +1074,32 @@ class Axis(object):
         names[newName] = index
         self._base._incrementDefaultIfNeeded(newName, self._axis)
 
-    def _setNamesFromList(self, assignments, count):
-        if isinstance(self, Points):
-            def checkAndSet(val):
-                if val >= self._base._nextDefaultValuePoint:
-                    self._base._nextDefaultValuePoint = val + 1
-        else:
-            def checkAndSet(val):
-                if val >= self._base._nextDefaultValueFeature:
-                    self._base._nextDefaultValueFeature = val + 1
-
-        if assignments is None:
-            self._setAllDefault()
-            return
-
-        if count == 0:
-            if len(assignments) > 0:
-                msg = "assignments is too large (" + str(len(assignments))
-                msg += "); this axis is empty"
-                raise InvalidArgumentValue(msg)
-            self._setNamesFromDict({}, count)
-            return
+    def _setNamesBackend(self, assignments):
+        count = len(self)
         if len(assignments) != count:
             msg = "assignments may only be an ordered container type, with as "
             msg += "many entries (" + str(len(assignments)) + ") as this axis "
             msg += "is long (" + str(count) + ")"
             raise InvalidArgumentValue(msg)
-
-        for name in assignments:
-            if name is not None and not isinstance(name, str):
-                msg = 'assignments must contain only string values'
-                raise InvalidArgumentValue(msg)
-            if name is not None and name.startswith(DEFAULT_PREFIX):
-                try:
-                    num = int(name[DEFAULT_PREFIX_LENGTH:])
-                # Case: default prefix with non-integer suffix. This cannot
-                # cause a future integer suffix naming collision, so we
-                # can ignore it.
-                except ValueError:
-                    continue
-                checkAndSet(num)
-
-        #convert to dict so we only write the checking code once
-        temp = {}
-        for index in range(len(assignments)):
-            name = assignments[index]
-            # take this to mean fill it in with a default name
-            if name is None:
-                name = self._nextDefaultName()
-            if name in temp:
-                msg = "Cannot input duplicate names: " + str(name)
-                raise InvalidArgumentValue(msg)
-            temp[name] = index
-        assignments = temp
-
-        self._setNamesFromDict(assignments, count)
-
-    def _setNamesFromDict(self, assignments, count):
-        if assignments is None:
-            self._setAllDefault()
-            return
         if not isinstance(assignments, dict):
-            msg = "assignments may only be a dict"
-            raise InvalidArgumentType(msg)
+            #convert to dict so we only write the checking code once
+            temp = {}
+            for index, name in enumerate(assignments):
+                # take this to mean fill it in with a default name
+                if name is None:
+                    name = self._nextDefaultName()
+                if not isinstance(name, str):
+                    msg = 'assignments must contain only string values'
+                    raise InvalidArgumentValue(msg)
+                if name.startswith(DEFAULT_PREFIX) and name in temp:
+                    name = self._nextDefaultName()
+                if name in temp:
+                    msg = "Cannot input duplicate names: " + str(name)
+                    raise InvalidArgumentValue(msg)
+                temp[name] = index
+            assignments = temp
+
         if count == 0:
-            if len(assignments) > 0:
-                msg = "assignments is too large; this axis is empty"
-                raise InvalidArgumentValue(msg)
             if isinstance(self, Points):
                 self._base.pointNames = {}
                 self._base.pointNamesInverse = []
@@ -1194,10 +1107,6 @@ class Axis(object):
                 self._base.featureNames = {}
                 self._base.featureNamesInverse = []
             return
-        if len(assignments) != count:
-            msg = "assignments may only have as many entries as this " \
-                  "axis is long"
-            raise InvalidArgumentValue(msg)
 
         # at this point, the input must be a dict
         #check input before performing any action
@@ -1693,14 +1602,14 @@ class Axis(object):
             objNames = self._base.points.getNames
             toInsertNames = toInsert.points.getNames
             def sorter(obj, names):
-                return obj.points.sort(sortHelper=names)
+                obj.points.sort(sortHelper=names)
         else:
             objNamesCreated = self._base._featureNamesCreated()
             toInsertNamesCreated = toInsert._featureNamesCreated()
             objNames = self._base.features.getNames
             toInsertNames = toInsert.features.getNames
             def sorter(obj, names):
-                return obj.features.sort(sortHelper=names)
+                obj.features.sort(sortHelper=names)
 
         # This may not look exhaustive, but because of the previous call to
         # _validateInsertableData before this helper, most of the toInsert
