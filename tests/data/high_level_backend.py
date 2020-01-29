@@ -315,8 +315,7 @@ class HighLevelDataSafe(DataTestObject):
         def addTenth(pt):
             return [v + 0.1 for v in pt]
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
 
         ret = orig.points.calculate(addTenth)
@@ -327,10 +326,8 @@ class HighLevelDataSafe(DataTestObject):
         def toString(pt):
             return [str(v) for v in pt]
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
-        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
-                               elementType=object)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']])
 
         ret = orig.points.calculate(toString)
         assert ret == exp
@@ -572,8 +569,7 @@ class HighLevelDataSafe(DataTestObject):
         def addTenth(ft):
             return [v + 0.1 for v in ft]
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
 
         ret = orig.features.calculate(addTenth)
@@ -584,10 +580,8 @@ class HighLevelDataSafe(DataTestObject):
         def toString(ft):
             return [str(v) for v in ft]
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
-        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
-                               elementType=object)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']])
 
         ret = orig.features.calculate(toString)
         assert ret == exp
@@ -707,12 +701,12 @@ class HighLevelDataSafe(DataTestObject):
             return toIMap[val] if val in toIMap else val
 
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data, elementType=object)
+        toTest = self.constructor(data)
         ret0A = toTest.calculateOnElements(allString)
         ret0B = toTest.calculateOnElements(allString, preserveZeros=True)
 
         exp0Data = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
-        exp0Obj = self.constructor(exp0Data, elementType=object)
+        exp0Obj = self.constructor(exp0Data)
         assert ret0A == exp0Obj
         assert ret0B == exp0Obj
 
@@ -792,8 +786,7 @@ class HighLevelDataSafe(DataTestObject):
         def addTenth(elem):
             return elem + 0.1
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
 
         ret = orig.calculateOnElements(addTenth)
@@ -804,10 +797,8 @@ class HighLevelDataSafe(DataTestObject):
         def toString(e):
             return str(e)
 
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]],
-                                elementType=int)
-        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']],
-                               elementType=object)
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']])
 
         ret = orig.calculateOnElements(toString)
         assert ret == exp
@@ -2455,6 +2446,25 @@ class HighLevelModifying(DataTestObject):
         except InvalidArgumentValue:
             pass
 
+    # exception wrong length vector axis
+    def test_points_normalize_exception_wrong_vector_axis(self):
+        self.back_normalize_exception_wrong_vector_length('point')
+
+    def test_features_normalize_exception_wrong_vector_axis(self):
+        self.back_normalize_exception_wrong_vector_length('feature')
+
+    def back_normalize_exception_wrong_vector_axis(self, axis):
+        obj = self.constructor([[1, 2], [3, 4]])
+        if axis == 'point':
+            vectorWrongAxis = self.constructor([[1, 2]])
+        else:
+            vectorWrongAxis = self.constructor([[1], [2]])
+
+        try:
+            self.normalizeHelper(obj, axis, subtract=vectorWrongAxis)
+            assert False  # Expected InvalidArgumentValue
+        except InvalidArgumentValue:
+            pass
 
     # exception wrong size of nimble object
     def test_points_normalize_exception_wrong_size_object(self):
@@ -2547,7 +2557,14 @@ class HighLevelModifying(DataTestObject):
         assert expObj == obj
         assertNoNamesGenerated(obj)
 
-        # vector versions
+    # successful vector inputs
+    def test_points_normalize_success_vector_inputs_NoAlso(self):
+        self.back_normalize_success_vector_inputs_NoAlso("point")
+
+    def test_features_normalize_success_vector_inputs_NoAlso(self):
+        self.back_normalize_success_vector_inputs_NoAlso("feature")
+
+    def back_normalize_success_vector_inputs_NoAlso(self, axis):
         obj = self.constructor([[1, 1, 1], [3, 3, 3], [7, 7, 7]])
         expObj = self.constructor([[0, 0, 0], [4, 4, 4], [12, 12, 12]])
 
@@ -2555,12 +2572,14 @@ class HighLevelModifying(DataTestObject):
             currObj = obj.copy()
             sub = nimble.createData(retType, [1] * 3)
             div = nimble.createData(retType, [0.5] * 3)
+            if axis == 'point':
+                sub.transpose()
+                div.transpose()
             ret = self.normalizeHelper(currObj, axis, subtract=sub, divide=div)
 
             assert ret is None
             assert expObj == currObj
             assertNoNamesGenerated(currObj)
-
 
     # successful float valued inputs
     def test_points_normalize_success_float_int_inputs(self):
@@ -2580,7 +2599,8 @@ class HighLevelModifying(DataTestObject):
         assert ret is None
         assert expObj == obj
         assert expAlso == also
-
+        assertNoNamesGenerated(obj)
+        assertNoNamesGenerated(also)
 
     # successful stats-string valued inputs
     def test_points_normalize_success_stat_string_inputs(self):
@@ -2601,7 +2621,6 @@ class HighLevelModifying(DataTestObject):
         assert expObj == obj
         assert expAlso == also
 
-
     # successful vector object valued inputs
     def test_points_normalize_success_vector_object_inputs(self):
         self.back_normalize_success_vector_object_inputs("point")
@@ -2612,8 +2631,12 @@ class HighLevelModifying(DataTestObject):
     def back_normalize_success_vector_object_inputs(self, axis):
         obj = self.constructor([[1, 3, 7], [10, 30, 70], [100, 300, 700]])
         also = self.constructor([[2, 6, 14], [10, 30, 70], [100, 300, 700]])
-        subVec = self.constructor([[1, 10, 100]])
-        divVec = self.constructor([[.5], [5], [50]])
+        if axis == 'point':
+            subVec = self.constructor([[1], [10], [100]])
+            divVec = self.constructor([[.5], [5], [50]])
+        else:
+            subVec = self.constructor([[1, 10, 100]])
+            divVec = self.constructor([[.5, 5, 50]])
         expObj = self.constructor([[0, 4, 12], [0, 4, 12], [0, 4, 12]])
         expAlso = self.constructor([[2, 10, 26], [0, 4, 12], [0, 4, 12]])
 

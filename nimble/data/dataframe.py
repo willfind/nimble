@@ -36,14 +36,12 @@ class DataFrame(Base):
         pandas DataFrame or two-dimensional numpy array.
     reuseData : bool
         Only used when data is a pandas DataFrame.
-    elementType : type
-        The pandas dtype of the data.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
 
-    def __init__(self, data, reuseData=False, elementType=None, **kwds):
+    def __init__(self, data, reuseData=False, **kwds):
         if not pd:
             msg = 'To use class DataFrame, pandas must be installed.'
             raise PackageException(msg)
@@ -59,7 +57,7 @@ class DataFrame(Base):
             else:
                 self.data = data.copy()
         else:
-            self.data = pd.DataFrame(data)
+            self.data = pd.DataFrame(data, copy=True)
 
         kwds['shape'] = self.data.shape
         super(DataFrame, self).__init__(**kwds)
@@ -159,7 +157,7 @@ class DataFrame(Base):
             comment += ','.join(self.points.getNames())
         if includeFeatureNames:
             comment += '\n#' + ','.join(self.features.getNames())
-        mmwrite(outPath, self.data, comment=comment)
+        mmwrite(outPath, self.data.astype(numpy.float), comment=comment)
 
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, DataFrame):
@@ -199,12 +197,17 @@ class DataFrame(Base):
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
-            if to == 'scipycsc':
-                return scipy.sparse.csc_matrix(self.data.values)
-            if to == 'scipycsr':
-                return scipy.sparse.csr_matrix(self.data.values)
             if to == 'scipycoo':
                 return scipy.sparse.coo_matrix(self.data.values)
+            try:
+                ret = self.data.values.astype(numpy.float)
+            except ValueError:
+                msg = 'Can only create scipy {0} matrix from numeric data'
+                raise ValueError(msg.format(to[-3:]))
+            if to == 'scipycsc':
+                return scipy.sparse.csc_matrix(ret)
+            if to == 'scipycsr':
+                return scipy.sparse.csr_matrix(ret)
         if to == 'pandasdataframe':
             if not pd:
                 msg = "pandas is not available"
@@ -406,6 +409,11 @@ class DataFrame(Base):
         else:
             # self.data.columns = self.features.getNames()
             self.data.columns = list(range(len(self.data.columns)))
+
+    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
+        if not all(dtype in usableTypes for dtype in self.data.dtypes):
+            return self.data.astype(convertTo)
+        return self.data
 
     def _iterateElements_implementation(self, order, only):
         return NimbleElementIterator(self.data.values, order, only)

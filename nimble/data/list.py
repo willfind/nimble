@@ -10,7 +10,7 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.exceptions import PackageException
+from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
 from nimble.utility import ImportModule
 from .base import Base
@@ -52,7 +52,7 @@ class List(Base):
     """
 
     def __init__(self, data, featureNames=None, reuseData=False, shape=None,
-                 checkAll=True, elementType=None, **kwds):
+                 checkAll=True, **kwds):
         if (not (isinstance(data, list) or is2DArray(data))
                 and 'PassThrough' not in str(type(data))):
             msg = "the input data can only be a list, a two-dimensional numpy "
@@ -113,7 +113,6 @@ class List(Base):
 
         self._numFeatures = shape[1]
         self.data = data
-        self._elementType = elementType
 
         kwds['featureNames'] = featureNames
         kwds['shape'] = shape
@@ -260,13 +259,6 @@ class List(Base):
             isEmpty = True
             emptyData = numpy.empty(shape=(len(self.points),
                                            len(self.features)))
-        elementType = self._elementType
-        if elementType is None:
-            arr = numpy.array(self.data)
-            if issubclass(arr.dtype.type, numpy.number):
-                elementType = arr.dtype
-            else:
-                elementType = numpy.object_
         if to in nimble.data.available:
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
@@ -275,7 +267,7 @@ class List(Base):
             elif to == 'List':
                 data = [pt.copy() for pt in self.data]
             else:
-                data = numpy2DArray(self.data, dtype=elementType)
+                data = convertList(numpy2DArray, self.data)
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
@@ -284,16 +276,16 @@ class List(Base):
         if to == 'numpyarray':
             if isEmpty:
                 return emptyData
-            return numpy2DArray(self.data, dtype=elementType)
+            return convertList(numpy2DArray, self.data)
         if to == 'numpymatrix':
             if isEmpty:
                 return numpy.matrix(emptyData)
-            return numpy.matrix(self.data, dtype=elementType)
+            return convertList(numpy.matrix, self.data)
         if 'scipy' in to:
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
-            asArray = numpy.array(self.data, dtype=elementType)
+            asArray = convertList(numpy2DArray, self.data)
             if to == 'scipycsc':
                 if isEmpty:
                     return scipy.sparse.csc_matrix(emptyData)
@@ -312,7 +304,7 @@ class List(Base):
                 raise PackageException(msg)
             if isEmpty:
                 return pd.DataFrame(emptyData)
-            return pd.DataFrame(self.data, dtype=elementType)
+            return pd.DataFrame(self.data)
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):
@@ -597,6 +589,19 @@ class List(Base):
             ret.append(retP)
         return List(ret)
 
+    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
+        def needConversion(val):
+            return type(val) not in usableTypes
+
+        def convertType(val):
+            if type(val) in usableTypes:
+                return val
+            return convertTo(val)
+
+        if any(any(needConversion(v) for v in ft) for ft in self.features):
+            return [list(map(convertType, pt)) for pt in self.points]
+        return self.data
+
     def _iterateElements_implementation(self, order, only):
         array = numpy.array(self.data, dtype=numpy.object_)
         return NimbleElementIterator(array, order, only)
@@ -644,6 +649,22 @@ class ListView(BaseView, List):
                         featureNames=ftNames, shape=self.shape)
         else:
             return listForm
+
+    def _convertUnusableTypes(self, convertTo, usableTypes, returnCopy=True):
+        # We do not want to change the data attribute for ListView!
+        # This converts the data types of the source object's data attribute
+        # Note: Though this is a view object, we allow this modification since
+        # all the values remain equal and only the types change.
+        try:
+            ret = self._source._convertUnusableTypes_implementation(
+                convertTo, usableTypes)
+        except (ValueError, TypeError) as e:
+            msg = 'Unable to coerce the data to the type required for this '
+            msg += 'operation.'
+            raise ImproperObjectAction(msg)
+        if returnCopy:
+            return ret
+        self._source.data = ret
 
 class FeatureViewer(object):
     """
@@ -717,3 +738,13 @@ class ListPassThrough(object):
     def __array__(self, dtype=None):
         tmpArray = numpy.array(self.source.data, dtype=dtype)
         return tmpArray[self.pStart:self.pEnd, self.fStart:self.fEnd]
+
+###########
+# Helpers #
+###########
+
+def convertList(constructor, data):
+    convert = constructor(data)
+    if not convert.dtype in [int, float, bool, object]:
+        convert = constructor(data, dtype=object)
+    return convert
