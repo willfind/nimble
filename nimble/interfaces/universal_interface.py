@@ -1364,14 +1364,14 @@ class TrainedLearner(object):
         ...                   k=1)
         >>> tl.apply(testX)
         Matrix(
-            [[1.000]
-             [3.000]]
+            [[1]
+             [3]]
             )
         >>> tl.retrain(trainX, trainY, k=3)
         >>> tl.apply(testX)
         Matrix(
-            [[3.000]
-             [3.000]]
+            [[3]
+             [3]]
             )
         """
         has2dOutput = False
@@ -1431,10 +1431,9 @@ class TrainedLearner(object):
         trainX: nimble Base object
             Additional data to be used for training.
         trainY : identifier, nimble Base object
-            * identifier - The name or index of the feature in
-            ``trainX`` containing the labels.
-            * nimble Base object - contains the labels that correspond
-              to ``trainX``.
+            A name or index of the feature in ``trainX`` containing the
+            labels or another nimble Base object containing the labels
+            that correspond to ``trainX``.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1807,7 +1806,7 @@ class TrainedLearners(TrainedLearner):
                                                      useLog=False)
                 return resultsContainer
             elif scoreMode.lower() == 'allScores'.lower():
-                colHeaders = sorted([str(i) for i in self.labelSet])
+                colHeaders = sorted([str(float(i)) for i in self.labelSet])
                 colIndices = list(range(len(colHeaders)))
                 labelIndexDict = {v: k for k, v in zip(colIndices, colHeaders)}
                 predictionMatrix = rawPredictions.copy(to="python list")
@@ -1816,7 +1815,7 @@ class TrainedLearners(TrainedLearner):
                     finalRow = [0] * len(colHeaders)
                     scores = countWins(row)
                     for label, score in scores.items():
-                        finalIndex = labelIndexDict[str(label)]
+                        finalIndex = labelIndexDict[str(float(label))]
                         finalRow[finalIndex] = score
                     resultsContainer.append(finalRow)
 

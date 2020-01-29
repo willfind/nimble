@@ -9,7 +9,7 @@ import numpy as np
 
 import nimble
 from nimble.utility import pd
-from nimble.utility import cooMatrixToArray
+from nimble.utility import sparseMatrixToArray
 from .elements import Elements
 from .elements_view import ElementsView
 from .dataHelpers import denseCountUnique
@@ -79,7 +79,7 @@ class DataFrameElements(Elements):
         if isinstance(other, nimble.data.Sparse):
             result = other.data.multiply(self._base.data.values)
             if hasattr(result, 'toarray'):
-                result = cooMatrixToArray(result)
+                result = sparseMatrixToArray(result)
             self._base.data = pd.DataFrame(result)
         else:
             self._base.data = pd.DataFrame(

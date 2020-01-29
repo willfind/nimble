@@ -63,7 +63,7 @@ def factory(match, fill, **kwarguments):
     >>> data = nimble.createData('Matrix', raw)
     >>> transform = factory(match.zero, backwardFill)
     >>> transform(data)
-    [1.0, 3.0, 3.0, 5.0, 5.0]
+    [1, 3, 3, 5, 5]
     """
     match = convertMatchToFunction(match)
     if not hasattr(fill, '__call__'):
@@ -126,7 +126,7 @@ def constant(vector, match, constantValue):
     >>> raw = [1, 0, 3, 0, 5]
     >>> data = nimble.createData('Matrix', raw)
     >>> constant(data, match.zero, 99)
-    [1.0, 99, 3.0, 99, 5.0]
+    [1, 99, 3, 99, 5]
     """
     match = convertMatchToFunction(match)
     return [constantValue if match(val) else val for val in vector]
@@ -174,7 +174,7 @@ def mean(vector, match):
     >>> raw = [6, 0, 2, 0, 4]
     >>> data = nimble.createData('Matrix', raw)
     >>> mean(data, match.zero)
-    [6.0, 4.0, 2.0, 4.0, 4.0]
+    [6, 4.0, 2, 4.0, 4]
     """
     return statsBackend(vector, match, 'mean', nimble.calculate.mean)
 
@@ -222,7 +222,7 @@ def median(vector, match):
     >>> raw = [6, 0, 2, 0, 4]
     >>> data = nimble.createData('Matrix', raw)
     >>> median(data, match.zero)
-    [6.0, 4.0, 2.0, 4.0, 4.0]
+    [6, 4.0, 2, 4.0, 4]
     """
     return statsBackend(vector, match, 'median', nimble.calculate.median)
 
@@ -260,7 +260,7 @@ def mode(vector, match):
     >>> raw = [1, 'na', 1, 'na', 5]
     >>> data = nimble.createData('Matrix', raw)
     >>> mode(data, 'na')
-    [1, 1.0, 1, 1.0, 5]
+    [1, 1, 1, 1, 5]
 
     Match using a function from nimble's match module.
 
@@ -268,7 +268,7 @@ def mode(vector, match):
     >>> raw = [6, 6, 2, 0, 0]
     >>> data = nimble.createData('Matrix', raw)
     >>> mode(data, match.zero)
-    [6.0, 6.0, 2.0, 6.0, 6.0]
+    [6, 6, 2, 6, 6]
     """
     return statsBackend(vector, match, 'mode', nimble.calculate.mode)
 
@@ -317,7 +317,7 @@ def forwardFill(vector, match):
     >>> raw = [6, 0, 2, 0, 4]
     >>> data = nimble.createData('Matrix', raw)
     >>> forwardFill(data, match.zero)
-    [6.0, 6.0, 2.0, 2.0, 4.0]
+    [6, 6, 2, 2, 4]
     """
     match = convertMatchToFunction(match)
     if match(vector[0]):
@@ -376,7 +376,7 @@ def backwardFill(vector, match):
     >>> raw = [6, 0, 2, 0, 4]
     >>> data = nimble.createData('Matrix', raw)
     >>> backwardFill(data, match.zero)
-    [6.0, 2.0, 2.0, 4.0, 4.0]
+    [6, 2, 2, 4, 4]
     """
     match = convertMatchToFunction(match)
     if match(vector[-1]):
@@ -440,7 +440,7 @@ def interpolate(vector, match, **kwarguments):
     >>> raw = [6, 0, 4, 0, 2]
     >>> data = nimble.createData('Matrix', raw)
     >>> interpolate(data, match.zero)
-    [6.0, 5.0, 4.0, 3.0, 2.0]
+    [6, 5.0, 4, 3.0, 2]
     """
     match = convertMatchToFunction(match)
     if 'x' in kwarguments:

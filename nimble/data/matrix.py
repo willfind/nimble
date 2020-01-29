@@ -32,22 +32,18 @@ class Matrix(Base):
     data : object
         Must be a two-dimensional numpy array.
     reuseData : bool
-    elementType : type
-        The numpy dtype of this object.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
 
-    def __init__(self, data, reuseData=False, elementType=None, **kwds):
+    def __init__(self, data, reuseData=False, **kwds):
         if not is2DArray(data):
             msg = "the input data can only be a two-dimensional numpy array."
             raise InvalidArgumentType(msg)
 
         if isinstance(data, numpy.matrix):
             data = numpy2DArray(data)
-        if elementType is not None:
-            data = data.astype(elementType)
         if reuseData:
             self.data = data
         else:
@@ -137,7 +133,8 @@ class Matrix(Base):
         else:
             header += '#\n'
 
-        scipy.io.mmwrite(target=outPath, a=self.data, comment=header)
+        scipy.io.mmwrite(target=outPath, a=self.data.astype(numpy.float),
+                         comment=header)
 
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, Matrix):
@@ -162,12 +159,17 @@ class Matrix(Base):
             if not scipy.nimbleAccessible():
                 msg = "scipy is not available"
                 raise PackageException(msg)
-            if to == 'scipycsc':
-                return scipy.sparse.csc_matrix(self.data)
-            if to == 'scipycsr':
-                return scipy.sparse.csr_matrix(self.data)
             if to == 'scipycoo':
                 return scipy.sparse.coo_matrix(self.data)
+            try:
+                ret = self.data.astype(numpy.float)
+            except ValueError:
+                msg = 'Can only create scipy {0} matrix from numeric data'
+                raise ValueError(msg.format(to[-3:]))
+            if to == 'scipycsc':
+                return scipy.sparse.csc_matrix(ret)
+            if to == 'scipycsr':
+                return scipy.sparse.csr_matrix(ret)
         if to == 'pandasdataframe':
             if not pd.nimbleAccessible():
                 msg = "pandas is not available"
@@ -425,6 +427,11 @@ class Matrix(Base):
             # '*' is matrix multiplication in scipy
             return Matrix(self.data * other.data)
         return Matrix(numpy.matmul(self.data, other.copy(to="numpyarray")))
+
+    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
+        if self.data.dtype not in usableTypes:
+            return self.data.astype(convertTo)
+        return self.data
 
 
 class MatrixView(BaseView, Matrix):

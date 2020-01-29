@@ -12,6 +12,7 @@ import numpy
 
 from nimble.customLearners import CustomLearner
 from nimble.helpers import initDataObject
+from nimble.utility import dtypeConvert
 
 
 class KNNClassifier(CustomLearner):
@@ -81,8 +82,8 @@ class KNNClassifier(CustomLearner):
         each point in trainX. The resulting matrix will be shape:
         numTestPoints x numTrainPoints.
         """
-        trainArray = self._trainX.copy('numpy array')
-        testArray = testX.copy('numpy array')
+        trainArray = dtypeConvert(self._trainX.copy('numpy array'))
+        testArray = dtypeConvert(testX.copy('numpy array'))
         # euclidean distance for each point in test
         dists = numpy.sqrt(-2 * numpy.dot(testArray, trainArray.T)
                            + numpy.sum(trainArray**2, axis=1)

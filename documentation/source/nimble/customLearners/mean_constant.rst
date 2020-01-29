@@ -1,7 +1,6 @@
 Custom.MeanConstant
 ===================
 
-.. automodule:: nimble.customLearners.mean_constant
+.. automodule:: nimble.customLearners
+   :noindex:
    :members: MeanConstant
-   :undoc-members:
-   :show-inheritance:

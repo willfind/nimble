@@ -1,7 +1,5 @@
 Base
 ====
 
-.. automodule:: nimble.data.base
-   :members: Base
-   :undoc-members:
-   :show-inheritance:
+.. autoclass:: nimble.data.Base
+   :members:

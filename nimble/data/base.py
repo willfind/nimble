@@ -212,7 +212,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.points.Points
+        nimble.data.Points
         """
         return self._points
 
@@ -229,7 +229,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.features.Features
+        nimble.data.Features
         """
         return self._features
 
@@ -246,7 +246,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.elements.Elements
+        nimble.data.Elements
         """
         return self._elements
 
@@ -773,16 +773,16 @@ class Base(object):
         >>> trainData, testData = data.trainAndTestSets(.34)
         >>> trainData
         Matrix(
-            [[1.000 0.000 0.000]
-             [0.000 1.000 0.000]
-             [0.000 0.000 1.000]
-             [0.000 0.000 1.000]]
+            [[1 0 0]
+             [0 1 0]
+             [0 0 1]
+             [0 0 1]]
             pointNames={'a':0, 'b':1, 'f':2, 'c':3}
             )
         >>> testData
         Matrix(
-            [[0.000 1.000 0.000]
-             [1.000 0.000 0.000]]
+            [[0 1 0]
+             [1 0 0]]
             pointNames={'e':0, 'd':1}
             )
 
@@ -802,30 +802,30 @@ class Base(object):
         >>> testX, testY = fourTuple[2], fourTuple[3]
         >>> trainX
         Matrix(
-            [[1.000 0.000 0.000]
-             [0.000 1.000 0.000]
-             [0.000 0.000 1.000]
-             [0.000 0.000 1.000]]
+            [[1 0 0]
+             [0 1 0]
+             [0 0 1]
+             [0 0 1]]
             pointNames={'a':0, 'b':1, 'f':2, 'c':3}
             )
         >>> trainY
         Matrix(
-            [[1.000]
-             [2.000]
-             [3.000]
-             [3.000]]
+            [[1]
+             [2]
+             [3]
+             [3]]
             pointNames={'a':0, 'b':1, 'f':2, 'c':3}
             )
         >>> testX
         Matrix(
-            [[0.000 1.000 0.000]
-             [1.000 0.000 0.000]]
+            [[0 1 0]
+             [1 0 0]]
             pointNames={'e':0, 'd':1}
             )
         >>> testY
         Matrix(
-            [[2.000]
-             [1.000]]
+            [[2]
+             [1]]
             pointNames={'e':0, 'd':1}
             )
         """
@@ -1737,11 +1737,11 @@ class Base(object):
             else:
                 plt.savefig(outPath, format=outFormat)
 
-        # toPlot = self.copy(to='numpyarray')
+        toPlot = self._convertUnusableTypes(float, usableTypes=(int, float))
 
         # problem if we were to use mutiprocessing with backends
         # different than Agg.
-        p = self._matplotlibBackendHandling(outPath, plotter, d=self.data)
+        p = self._matplotlibBackendHandling(outPath, plotter, d=toPlot)
         return p
 
     def plotFeatureDistribution(self, feature, outPath=None, xMin=None,
@@ -2053,15 +2053,15 @@ class Base(object):
         >>> data = nimble.createData('List', raw)
         >>> data
         List(
-            [[1.000 2.000 3.000]
-             [4.000 5.000 6.000]]
+            [[1 2 3]
+             [4 5 6]]
             )
         >>> data.transpose()
         >>> data
         List(
-            [[1.000 4.000]
-             [2.000 5.000]
-             [3.000 6.000]]
+            [[1 4]
+             [2 5]
+             [3 6]]
             )
         """
         self._transpose_implementation()
@@ -2090,14 +2090,14 @@ class Base(object):
         >>> data = nimble.createData('List', raw)
         >>> data
         List(
-            [[1.000 2.000 3.000]
-             [4.000 5.000 6.000]]
+            [[1 2 3]
+             [4 5 6]]
             )
         >>> data.T
         List(
-            [[1.000 4.000]
-             [2.000 5.000]
-             [3.000 6.000]]
+            [[1 4]
+             [2 5]
+             [3 6]]
             )
         """
         ret = self.copy()
@@ -2219,16 +2219,16 @@ class Base(object):
         ...                          name="odd&even")
         >>> data
         List(
-            [[1.000 3.000 5.000]
-             [2.000 4.000 6.000]]
+            [[1 3 5]
+             [2 4 6]]
             pointNames={'odd':0, 'even':1}
             name="odd&even"
             )
         >>> dataCopy = data.copy()
         >>> dataCopy
         List(
-            [[1.000 3.000 5.000]
-             [2.000 4.000 6.000]]
+            [[1 3 5]
+             [2 4 6]]
             pointNames={'odd':0, 'even':1}
             name="odd&even"
             )
@@ -2390,8 +2390,8 @@ class Base(object):
 
         See Also
         --------
-        fillUsingAllData, nimble.data.points.Points.fill,
-        nimble.data.features.Features.fill
+        fillUsingAllData, nimble.data.Points.fill,
+        nimble.data.Features.fill
 
         Examples
         --------
@@ -2505,8 +2505,7 @@ class Base(object):
 
         See Also
         --------
-        fillWith, nimble.data.points.Points.fill,
-        nimble.data.features.Features.fill
+        fillWith, nimble.data.Points.fill, nimble.data.Features.fill
 
         Examples
         --------
@@ -2627,7 +2626,7 @@ class Base(object):
         >>> data.flattenToOnePoint()
         >>> data
         Matrix(
-            [[1.000 2.000 3.000 4.000]]
+            [[1 2 3 4]]
             pointNames={'Flattened':0}
             featureNames={'a | 1':0, 'b | 1':1, 'a | 4':2, 'b | 4':3}
             )
@@ -2700,10 +2699,10 @@ class Base(object):
         >>> data.flattenToOneFeature()
         >>> data
         Matrix(
-            [[1.000]
-             [3.000]
-             [2.000]
-             [4.000]]
+            [[1]
+             [3]
+             [2]
+             [4]]
             pointNames={'1 | a':0, '4 | a':1, '1 | b':2, '4 | b':3}
             featureNames={'Flattened':0}
             )
@@ -2883,9 +2882,9 @@ class Base(object):
         >>> data.unflattenFromOnePoint(3)
         >>> data
         Matrix(
-            [[1.000 2.000 3.000]
-             [4.000 5.000 6.000]
-             [7.000 8.000 9.000]]
+            [[1 2 3]
+             [4 5 6]
+             [7 8 9]]
             )
 
         With names consistent with call to ``flattenToOnePoint``.
@@ -2900,9 +2899,9 @@ class Base(object):
         >>> data.unflattenFromOnePoint(3)
         >>> data
         Matrix(
-            [[1.000 2.000 3.000]
-             [4.000 5.000 6.000]
-             [7.000 8.000 9.000]]
+            [[1 2 3]
+             [4 5 6]
+             [7 8 9]]
             pointNames={'1':0, '4':1, '7':2}
             featureNames={'a':0, 'b':1, 'c':2}
             )
@@ -2980,9 +2979,9 @@ class Base(object):
         >>> data.unflattenFromOneFeature(3)
         >>> data
         Matrix(
-            [[1.000 2.000 3.000]
-             [4.000 5.000 6.000]
-             [7.000 8.000 9.000]]
+            [[1 2 3]
+             [4 5 6]
+             [7 8 9]]
             )
 
         With names consistent with call to ``flattenToOneFeature``.
@@ -2997,9 +2996,9 @@ class Base(object):
         >>> data.unflattenFromOneFeature(3)
         >>> data
         Matrix(
-            [[1.000 2.000 3.000]
-             [4.000 5.000 6.000]
-             [7.000 8.000 9.000]]
+            [[1 2 3]
+             [4 5 6]
+             [7 8 9]]
             pointNames={'1':0, '4':1, '7':2}
             featureNames={'a':0, 'b':1, 'c':2}
             )
@@ -3089,7 +3088,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.points.Points.add, nimble.data.features.Features.add
+        nimble.data.Points.add, nimble.data.Features.add
 
         Examples
         --------
@@ -3599,6 +3598,15 @@ class Base(object):
             msg += "empty"
             raise ImproperObjectAction(msg)
 
+        try:
+            self._convertUnusableTypes(float, (int, float, bool), False)
+        except ImproperObjectAction:
+            self._numericValidation()
+        try:
+            other._convertUnusableTypes(float, (int, float, bool), False)
+        except ImproperObjectAction:
+            other._numericValidation(right=True)
+
         if opName.startswith('__r'):
             caller = other
             callee = self
@@ -3636,6 +3644,16 @@ class Base(object):
         return ret
 
     def matrixPower(self, power):
+        """
+        Perform matrix power operations on a square matrix.
+
+        For positive power values, return the result of repeated matrix
+        multiplication over this object. For power of zero, return an
+        identity matrix. For negative power values, return the result of
+        repeated matrix multiplication over the inverse of this object,
+        provided the object can be inverted using
+        nimble.calculate.inverse.
+        """
         if not isinstance(power, (int, numpy.int)):
             msg = 'power must be an integer'
             raise InvalidArgumentType(msg)
@@ -3952,7 +3970,34 @@ class Base(object):
             self._validateEqualNames('point', 'point', opName, other)
             self._validateEqualNames('feature', 'feature', opName, other)
 
+
+    def _convertUnusableTypes(self, convertTo, usableTypes, returnCopy=True):
+        """
+        Convert the data if necessary.
+
+        Convert any type not in usableTypes to the convertTo type.
+        Conversion is done inplace if returnCopy is set to False
+        """
+        try:
+            ret = self._convertUnusableTypes_implementation(convertTo,
+                                                            usableTypes)
+        except (ValueError, TypeError) as e:
+            msg = 'Unable to coerce the data to the type required for this '
+            msg += 'operation.'
+            raise ImproperObjectAction(msg)
+        if returnCopy:
+            return ret
+        self.data = ret
+
     def _genericBinaryOperations(self, opName, other):
+        if 'pow' in opName:
+            usableTypes = (float,)
+        else:
+            usableTypes = (int, float, bool)
+        try:
+            self._convertUnusableTypes(float, usableTypes, False)
+        except ImproperObjectAction:
+            self._numericValidation()
         if isinstance(other, Stretch):
             # __ipow__ does not work if return NotImplemented
             if opName == '__ipow__':
@@ -3968,6 +4013,10 @@ class Base(object):
         # figure out return obj's point / feature names
         otherBase = isinstance(other, Base)
         if otherBase:
+            try:
+                other._convertUnusableTypes(float, usableTypes, False)
+            except ImproperObjectAction:
+                other._numericValidation(right=True)
             # everything else that uses this helper is a binary scalar op
             retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
                                                                     other)
@@ -4750,6 +4799,10 @@ class Base(object):
 
     @abstractmethod
     def _mul__implementation(self, other):
+        pass
+
+    @abstractmethod
+    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
         pass
 
 class BasePoints(Axis, Points):

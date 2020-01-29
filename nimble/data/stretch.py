@@ -13,7 +13,7 @@ class Stretch(object):
     """
     Stretch a one-dimensional Base object along one axis.
 
-    The stretched axis is detemined by the other object being used in
+    The stretched axis is determined by the other object being used in
     conjunction with operation being called. All operations return a
     nimble Base subclass.
 
@@ -163,6 +163,7 @@ class Stretch(object):
                 msg = "Unable to stretch this object to fit. The lengths of "
                 msg += "one of the axes must align between objects"
                 raise InvalidArgumentValueCombination(msg)
+
             self._source._validateEqualNames(matchAxis, matchAxis, opName,
                                              other)
             # divmod operations inconsistently raise errors for zero division
@@ -170,6 +171,23 @@ class Stretch(object):
                 self._source._validateDivMod(opName, other)
 
     def _stretchArithmetic(self, opName, other):
+        if 'pow' in opName:
+            usableTypes = (float,)
+        else:
+            usableTypes = (int, float, bool)
+        try:
+            self._source._convertUnusableTypes(float, usableTypes, False)
+        except ImproperObjectAction:
+            self._source._numericValidation()
+        if isinstance(other, Stretch):
+            otherSource = other._source
+        else:
+            otherSource = other
+        try:
+            otherSource._convertUnusableTypes(float, usableTypes, False)
+        except ImproperObjectAction:
+            otherSource._numericValidation(right=True)
+
         self._stretchArithmetic_validation(opName, other)
 
         try:

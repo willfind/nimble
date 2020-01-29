@@ -799,10 +799,10 @@ def test_getScores_acceptsNewArguments():
              [1, 1, 0, 0], [2, 0, 1, 0], [3, 0, 0, 1]]
     testX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
-    # Need to set elementType b/c conversion will not be done when check_input=False
-    trainObj = nimble.createData('Matrix', train, elementType=numpy.float32, useLog=False)
-    testObj = nimble.createData('Matrix', testX, elementType=numpy.float32, useLog=False)
-
+    # Need to set convertToType b/c conversion will not be done when check_input=False
+    trainObj = nimble.createData('Matrix', train, convertToType=numpy.float32, useLog=False)
+    testObj = nimble.createData('Matrix', testX, convertToType=numpy.float32, useLog=False)
+    
     # DecisionTreeClassifier.predict_proba takes a 'check_input' argument. Default is True.
     tl = nimble.train('SciKitLearn.DecisionTreeClassifier', trainObj, 0)
     assert 'check_input' not in tl.transformedArguments
@@ -819,8 +819,8 @@ def test_getScores_exception():
              [1, 1, 0, 0], [2, 0, 1, 0], [3, 0, 0, 1]]
     testX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
-    trainObj = nimble.createData('Matrix', train, elementType=numpy.float32)
-    testObj = nimble.createData('Matrix', testX, elementType=numpy.float32)
+    trainObj = nimble.createData('Matrix', train, convertToType=numpy.float32)
+    testObj = nimble.createData('Matrix', testX, convertToType=numpy.float32)
 
     # DecisionTreeClassifier.predict_proba does not take a 'foo' argument.
     tl = nimble.train('SciKitLearn.DecisionTreeClassifier', trainObj, 0)
