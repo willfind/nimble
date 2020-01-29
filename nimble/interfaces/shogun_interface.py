@@ -27,7 +27,7 @@ from nimble.interfaces.interface_helpers import PythonSearcher
 from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.utility import inheritDocstringsFactory
+from nimble.utility import inheritDocstringsFactory, dtypeConvert
 
 # Interesting alias cases:
 # * DomainAdaptionMulticlassLibLinear  -- or probably any nested machine
@@ -493,7 +493,7 @@ To install shogun
             #raw = raw.transpose()
             raw = dataObj.copy(to="scipy csc", rowsArePoints=False)
             trans = self._access('Features', 'SparseRealFeatures')()
-            trans.set_sparse_feature_matrix(raw)
+            trans.set_sparse_feature_matrix(dtypeConvert(raw))
             if 'Online' in learnerName:
                 trans = self._access('Features', 'StreamingSparseRealFeatures')(trans)
         else:
@@ -501,7 +501,7 @@ To install shogun
             #raw = raw.transpose()
             raw = dataObj.copy(to='numpyarray', rowsArePoints=False)
             trans = self._access('Features', 'RealFeatures')()
-            trans.set_feature_matrix(raw)
+            trans.set_feature_matrix(dtypeConvert(raw))
             if 'Online' in learnerName:
                 trans = self._access('Features', 'StreamingRealFeatures')()
         return trans

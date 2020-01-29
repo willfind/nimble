@@ -1092,14 +1092,14 @@ def anyBoolean(data):
     >>> raw = [[0, -1.0, True],
     ...        [1, -2.0, False],
     ...        [2, -3.0, False]]
-    >>> data = nimble.createData('Matrix', raw, elementType=object)
+    >>> data = nimble.createData('Matrix', raw)
     >>> anyBoolean(data)
     True
 
     >>> raw = [[0, -1.0, 'a'],
     ...        [1, -2.0, 'b'],
     ...        [2, -3.0, 'c']]
-    >>> data = nimble.createData('List', raw, elementType=object)
+    >>> data = nimble.createData('List', raw)
     >>> anyBoolean(data) # Note: 0 and 1 are not boolean type
     False
     """
@@ -1128,14 +1128,14 @@ def allBoolean(data):
     >>> raw = [[True, True, False],
     ...        [True, True, True],
     ...        [False, True, True]]
-    >>> data = nimble.createData('Matrix', raw, elementType=object)
+    >>> data = nimble.createData('Matrix', raw)
     >>> anyBoolean(data)
     True
 
     >>> raw = [[0, True, False],
     ...        [1, True, True],
     ...        [0, True, True]]
-    >>> data = nimble.createData('List', raw, elementType=object)
+    >>> data = nimble.createData('List', raw)
     >>> allBoolean(data) # Note: 0 and 1 are not boolean type
     False
     """
@@ -1164,14 +1164,14 @@ def anyTrue(data):
     >>> raw = [[0, -1.0, True],
     ...        [1, -2.0, False],
     ...        [2, -3.0, False]]
-    >>> data = nimble.createData('Matrix', raw, elementType=object)
+    >>> data = nimble.createData('Matrix', raw)
     >>> anyTrue(data)
     True
 
     >>> raw = [[0, -1.0, False],
     ...        [1, -2.0, False],
     ...        [2, -3.0, False]]
-    >>> data = nimble.createData('List', raw, elementType=object)
+    >>> data = nimble.createData('List', raw)
     >>> anyTrue(data) # Note: 1 is not boolean type
     False
     """
@@ -1200,14 +1200,14 @@ def allTrue(data):
     >>> raw = [[True, True, True],
     ...        [True, True, True],
     ...        [True, True, True]]
-    >>> data = nimble.createData('Matrix', raw, elementType=bool)
+    >>> data = nimble.createData('Matrix', raw)
     >>> allTrue(data)
     True
 
     >>> raw = [[True, True, True],
     ...        [True, False, True],
     ...        [True, True, True]]
-    >>> data = nimble.createData('List', raw, elementType=bool)
+    >>> data = nimble.createData('List', raw)
     >>> allTrue(data)
     False
     """
@@ -1236,14 +1236,14 @@ def anyFalse(data):
     >>> raw = [[0, -1.0, True],
     ...        [1, -2.0, True],
     ...        [2, -3.0, False]]
-    >>> data = nimble.createData('Matrix', raw, elementType=object)
+    >>> data = nimble.createData('Matrix', raw)
     >>> anyFalse(data)
     True
 
     >>> raw = [[0, -1.0, True],
     ...        [1, -2.0, True],
     ...        [2, -3.0, True]]
-    >>> data = nimble.createData('List', raw, elementType=object)
+    >>> data = nimble.createData('List', raw)
     >>> anyFalse(data) # Note: 0 is not boolean type
     False
     """
@@ -1272,14 +1272,14 @@ def allFalse(data):
     >>> raw = [[False, False, False],
     ...        [False, False, False],
     ...        [False, False, False]]
-    >>> data = nimble.createData('Matrix', raw, elementType=bool)
+    >>> data = nimble.createData('Matrix', raw)
     >>> allFalse(data)
     True
 
     >>> raw = [[False, False, True],
     ...        [False, False, True],
     ...        [False, True, False]]
-    >>> data = nimble.createData('List', raw, elementType=bool)
+    >>> data = nimble.createData('List', raw)
     >>> allFalse(data)
     False
     """

@@ -12,7 +12,7 @@ from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException, ImproperObjectAction
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
 from nimble.utility import ImportModule
-from nimble.utility import cooMatrixToArray
+from nimble.utility import sparseMatrixToArray
 from . import dataHelpers
 from .base import Base
 from .base_view import BaseView
@@ -40,13 +40,11 @@ class Sparse(Base):
     data : object
         A scipy sparse matrix or two-dimensional numpy array.
     reuseData : bool
-    elementType : type
-        The scipy or numpy dtype of the data.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-    def __init__(self, data, reuseData=False, elementType=None, **kwds):
+    def __init__(self, data, reuseData=False, **kwds):
         if not scipy:
             msg = 'To use class Sparse, scipy must be installed.'
             raise PackageException(msg)
@@ -288,7 +286,8 @@ class Sparse(Base):
         else:
             header += '#\n'
 
-        scipy.io.mmwrite(target=outPath, a=self.data, comment=header)
+        scipy.io.mmwrite(target=outPath, a=self.data.astype(numpy.float),
+                         comment=header)
 
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, Sparse):
@@ -305,30 +304,35 @@ class Sparse(Base):
             if to == 'Sparse':
                 data = self.data.copy()
             else:
-                data = cooMatrixToArray(self.data)
+                data = sparseMatrixToArray(self.data)
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
         if to == 'pythonlist':
-            return cooMatrixToArray(self.data).tolist()
+            return sparseMatrixToArray(self.data).tolist()
         if to == 'numpyarray':
-            return cooMatrixToArray(self.data)
+            return sparseMatrixToArray(self.data)
         if to == 'numpymatrix':
-            return numpy.matrix(cooMatrixToArray(self.data))
+            return numpy.matrix(sparseMatrixToArray(self.data))
         if 'scipy' in to:
-            if to == 'scipycsc':
-                return self.data.tocsc()
-            if to == 'scipycsr':
-                return self.data.tocsr()
             if to == 'scipycoo':
                 return self.data.copy()
+            try:
+                ret = self.data.astype(numpy.float)
+            except ValueError:
+                msg = 'Can only create scipy {0} matrix from numeric data'
+                raise ValueError(msg.format(to[-3:]))
+            if to == 'scipycsc':
+                return ret.tocsc()
+            if to == 'scipycsr':
+                return ret.tocsr()
         if to == 'pandasdataframe':
             if not pd:
                 msg = "pandas is not available"
                 raise PackageException(msg)
             pnames = self.points._getNamesNoGeneration()
             fnames = self.features._getNamesNoGeneration()
-            return pd.DataFrame(cooMatrixToArray(self.data), index=pnames,
+            return pd.DataFrame(sparseMatrixToArray(self.data), index=pnames,
                                 columns=fnames)
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
@@ -1169,12 +1173,18 @@ class Sparse(Base):
             selfData = self.data
         return selfData
 
+    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
+        if self.data.dtype not in usableTypes:
+            self._sorted = None
+            return self.data.astype(convertTo)
+        return self.data
+
     def _iterateElements_implementation(self, order, only):
         if only is not None and not only(0): # we can ignore zeros
             self._sortInternal(order)
             array = self.data.data
         else:
-            array = cooMatrixToArray(self.data)
+            array = sparseMatrixToArray(self.data)
         return NimbleElementIterator(array, order, only)
 
 ###################
@@ -1328,7 +1338,7 @@ class SparseView(BaseView, Sparse):
         if to == 'numpyarray':
             pStart, pEnd = self._pStart, self._pEnd
             fStart, fEnd = self._fStart, self._fEnd
-            asArray = cooMatrixToArray(self._source.data)
+            asArray = sparseMatrixToArray(self._source.data)
             limited = asArray[pStart:pEnd, fStart:fEnd]
             return numpy.array(limited)
 
@@ -1401,6 +1411,22 @@ class SparseView(BaseView, Sparse):
         selfConv = self.copy(to="Sparse")
         selfConv._writeFileMTX_implementation(outPath, includePointNames,
                                               includeFeatureNames)
+
+    def _convertUnusableTypes(self, convertTo, usableTypes, returnCopy=True):
+        # We do not want to change the data attribute for SparseView!
+        # This converts the data types of the source object's data attribute
+        # Note: Though this is a view object, we allow this modification since
+        # all the values remain equal and only the types change.
+        try:
+            ret = self._source._convertUnusableTypes_implementation(
+                convertTo, usableTypes)
+        except (ValueError, TypeError) as e:
+            msg = 'Unable to coerce the data to the type required for this '
+            msg += 'operation.'
+            raise ImproperObjectAction(msg)
+        if returnCopy:
+            return ret
+        self._source.data = ret
 
     def _iterateElements_implementation(self, order, only):
         selfConv = self.copy(to="Sparse")

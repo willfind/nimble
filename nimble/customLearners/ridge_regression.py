@@ -6,6 +6,7 @@ import numpy
 
 import nimble
 from nimble.customLearners import CustomLearner
+from nimble.utility import dtypeConvert
 
 
 class RidgeRegression(CustomLearner):
@@ -24,9 +25,9 @@ class RidgeRegression(CustomLearner):
         # in other words: Points x Features.
         # for X data, we want both Points x Features and Features x Points
         # for Y data, we only want Points x Features
-        rawXPxF = trainX.copy(to="numpyarray")
+        rawXPxF = dtypeConvert(trainX.copy(to="numpyarray"))
         rawXFxP = rawXPxF.transpose()
-        rawYPxF = trainY.copy(to="numpyarray")
+        rawYPxF = dtypeConvert(trainY.copy(to="numpyarray"))
 
         featureSpace = numpy.matmul(rawXFxP, rawXPxF)
         lambdaMatrix = lamb * numpy.identity(len(trainX.features))
@@ -43,7 +44,7 @@ class RidgeRegression(CustomLearner):
     #		testX.features.append(ones)
 
         # testX input as points in rows, features in columns
-        rawXPxF = testX.copy(to="numpyarray")
+        rawXPxF = dtypeConvert(testX.copy(to="numpyarray"))
         rawXFxP = rawXPxF.transpose()
 
         pred = numpy.dot(self.w.transpose(), rawXFxP)

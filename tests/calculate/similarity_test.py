@@ -192,7 +192,7 @@ def test_confusionMatrix_noLabels():
         featureNames = ['known_' + str(i) for i in range(1, 5)]
         pointNames = ['predicted_' + str(i) for i in range(1, 5)]
         expObj = createData(t, expData, pointNames, featureNames,
-                            elementType=int, useLog=False)
+                            convertToType=int, useLog=False)
 
         assert cm.isIdentical(expObj)
 
@@ -223,7 +223,7 @@ def test_confusionMatrix_withLabelsDict():
         featureNames = ['known_' + l for l in sortedLabels]
         pointNames = ['predicted_' + l for l in sortedLabels]
         expObj = createData(t, expData, pointNames, featureNames,
-                            elementType=int, useLog=False)
+                            convertToType=int, useLog=False)
 
         assert cm.isIdentical(expObj)
 
@@ -253,7 +253,7 @@ def test_confusionMatrix_withLabelsList():
         featureNames = ['known_' + l for l in labels]
         pointNames = ['predicted_' + l for l in labels]
         expObj = createData(t, expData, pointNames, featureNames,
-                            elementType=int, useLog=False)
+                            convertToType=int, useLog=False)
 
         assert cm.isIdentical(expObj)
 
@@ -308,7 +308,7 @@ def test_confusionMatrix_strings():
 
         featureNames = ['known_' + lab for lab in ['bear', 'cat', 'dog', 'fish']]
         pointNames = ['predicted_' + lab for lab in ['bear', 'cat', 'dog', 'fish']]
-        expObj = createData(t, expData, pointNames, featureNames, elementType=int,
+        expObj = createData(t, expData, pointNames, featureNames, convertToType=int,
                             useLog=False)
 
         assert cm.isIdentical(expObj)

@@ -727,6 +727,8 @@ def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
         if preserveZeros and value == 0:
             return float(0)
         ret = func(value, *args)
+        if ret is None and skipNoneReturnValues:
+            return value
         if skipNoneReturnValues and ret is None:
             return value
         if not isAllowedSingleElement(ret):

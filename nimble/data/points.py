@@ -311,47 +311,47 @@ class Points(object):
         >>> single = data.points.copy('1')
         >>> single
         Matrix(
-            [[1.000 1.000 1.000 1.000]]
+            [[1 1 1 1]]
             pointNames={'1':0}
             featureNames={'a':0, 'b':1, 'c':2, 'd':3}
             )
         >>> multiple = data.points.copy(['1', 3])
         >>> multiple
         Matrix(
-            [[1.000 1.000 1.000 1.000]
-             [4.000 4.000 4.000 4.000]]
+            [[1 1 1 1]
+             [4 4 4 4]]
             pointNames={'1':0, '4':1}
             featureNames={'a':0, 'b':1, 'c':2, 'd':3}
             )
         >>> func = data.points.copy(lambda pt: sum(pt) < 10)
         >>> func
         Matrix(
-            [[1.000 1.000 1.000 1.000]
-             [2.000 2.000 2.000 2.000]]
+            [[1 1 1 1]
+             [2 2 2 2]]
             pointNames={'1':0, '2':1}
             featureNames={'a':0, 'b':1, 'c':2, 'd':3}
             )
         >>> strFunc = data.points.copy("a>=3")
         >>> strFunc
         Matrix(
-            [[3.000 3.000 3.000 3.000]
-             [4.000 4.000 4.000 4.000]]
+            [[3 3 3 3]
+             [4 4 4 4]]
             pointNames={'3':0, '4':1}
             featureNames={'a':0, 'b':1, 'c':2, 'd':3}
             )
         >>> startEnd = data.points.copy(start=1, end=2)
         >>> startEnd
         Matrix(
-            [[2.000 2.000 2.000 2.000]
-             [3.000 3.000 3.000 3.000]]
+            [[2 2 2 2]
+             [3 3 3 3]]
             pointNames={'2':0, '3':1}
             featureNames={'a':0, 'b':1, 'c':2, 'd':3}
             )
         >>> numberNoRandom = data.points.copy(number=2)
         >>> numberNoRandom
         Matrix(
-            [[1.000 1.000 1.000 1.000]
-             [2.000 2.000 2.000 2.000]]
+            [[1 1 1 1]
+             [2 2 2 2]]
             pointNames={'1':0, '2':1}
             featureNames={'a':0, 'b':1, 'c':2, 'd':3}
             )
@@ -359,8 +359,8 @@ class Points(object):
         >>> numberRandom = data.points.copy(number=2, randomize=True)
         >>> numberRandom
         Matrix(
-            [[1.000 1.000 1.000 1.000]
-             [4.000 4.000 4.000 4.000]]
+            [[1 1 1 1]
+             [4 4 4 4]]
             pointNames={'1':0, '4':1}
             featureNames={'a':0, 'b':1, 'c':2, 'd':3}
             )
@@ -1288,10 +1288,10 @@ class Points(object):
         >>> data.points.insert('4', toInsert)
         >>> data
         Matrix(
-            [[1.000 1.000 1.000]
-             [2.000 2.000 2.000]
-             [3.000 3.000 3.000]
-             [4.000 4.000 4.000]]
+            [[1 1 1]
+             [2 2 2]
+             [3 3 3]
+             [4 4 4]]
             pointNames={'1':0, '2':1, '3':2, '4':3}
             )
 
@@ -1306,10 +1306,10 @@ class Points(object):
         >>> data.points.insert(0, toInsert)
         >>> data
         Matrix(
-            [[1.000 2.000 3.000]
-             [1.000 2.000 3.000]
-             [1.000 2.000 3.000]
-             [1.000 2.000 3.000]]
+            [[1 2 3]
+             [1 2 3]
+             [1 2 3]
+             [1 2 3]]
             featureNames={'a':0, 'b':1, 'c':2}
             )
         """
@@ -1371,10 +1371,10 @@ class Points(object):
         >>> data.points.append(toAppend)
         >>> data
         Matrix(
-            [[1.000 1.000 1.000]
-             [2.000 2.000 2.000]
-             [3.000 3.000 3.000]
-             [4.000 4.000 4.000]]
+            [[1 1 1]
+             [2 2 2]
+             [3 3 3]
+             [4 4 4]]
             pointNames={'1':0, '2':1, '3':2, '4':3}
             )
 
@@ -1389,10 +1389,10 @@ class Points(object):
         >>> data.points.append(toAppend)
         >>> data
         Matrix(
-            [[1.000 2.000 3.000]
-             [1.000 2.000 3.000]
-             [1.000 2.000 3.000]
-             [1.000 2.000 3.000]]
+            [[1 2 3]
+             [1 2 3]
+             [1 2 3]
+             [1 2 3]]
             featureNames={'a':0, 'b':1, 'c':2}
             )
         """
@@ -1479,10 +1479,10 @@ class Points(object):
         >>> data.points.shuffle()
         >>> data
         DataFrame(
-            [[3.000 3.000 3.000 3.000]
-             [2.000 2.000 2.000 2.000]
-             [4.000 4.000 4.000 4.000]
-             [1.000 1.000 1.000 1.000]]
+            [[3 3 3 3]
+             [2 2 2 2]
+             [4 4 4 4]
+             [1 1 1 1]]
             )
         """
         self._shuffle(useLog)
@@ -1565,11 +1565,11 @@ class Points(object):
         >>> data.points.fillMatching(fill.mode, match.missing, points=4)
         >>> data
         Matrix(
-            [[1.000 1.000 1.000]
-             [1.000 1.000 1.000]
-             [1.000 1.000  nan ]
-             [2.000 2.000 2.000]
-             [2.000 2.000 2.000]]
+            [[1 1  1 ]
+             [1 1  1 ]
+             [1 1 nan]
+             [2 2  2 ]
+             [2 2  2 ]]
             )
         """
         return self._fillMatching(fillWith, matchingElements, points,
@@ -1929,9 +1929,9 @@ class Points(object):
         >>> data.points.setNames(['a'])
         >>> data.points.repeat(totalCopies=3, copyPointByPoint=False)
         Matrix(
-            [[1.000 2.000 3.000]
-             [1.000 2.000 3.000]
-             [1.000 2.000 3.000]]
+            [[1 2 3]
+             [1 2 3]
+             [1 2 3]]
             pointNames={'a_1':0, 'a_2':1, 'a_3':2}
             )
 
@@ -1941,10 +1941,10 @@ class Points(object):
         >>> data.points.setNames(['a', 'b'])
         >>> data.points.repeat(totalCopies=2, copyPointByPoint=False)
         Matrix(
-            [[1.000 2.000 3.000]
-             [4.000 5.000 6.000]
-             [1.000 2.000 3.000]
-             [4.000 5.000 6.000]]
+            [[1 2 3]
+             [4 5 6]
+             [1 2 3]
+             [4 5 6]]
             pointNames={'a_1':0, 'b_1':1, 'a_2':2, 'b_2':3}
             )
 
@@ -1954,10 +1954,10 @@ class Points(object):
         >>> data.points.setNames(['a', 'b'])
         >>> data.points.repeat(totalCopies=2, copyPointByPoint=True)
         Matrix(
-            [[1.000 2.000 3.000]
-             [1.000 2.000 3.000]
-             [4.000 5.000 6.000]
-             [4.000 5.000 6.000]]
+            [[1 2 3]
+             [1 2 3]
+             [4 5 6]
+             [4 5 6]]
             pointNames={'a_1':0, 'a_2':1, 'b_1':2, 'b_2':3}
             )
         """

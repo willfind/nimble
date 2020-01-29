@@ -51,7 +51,7 @@ def constant(vector, match, constantValue):
     >>> data = nimble.createData('Matrix', raw)
     >>> constant(data, 'na', 0)
     Matrix(
-        [[1.000 0.000 3.000 0.000 5.000]]
+        [[1 0 3 0 5]]
         )
 
     Match using a function from nimble's match module.
@@ -61,7 +61,7 @@ def constant(vector, match, constantValue):
     >>> data = nimble.createData('Matrix', raw)
     >>> constant(data, match.zero, 99)
     Matrix(
-        [[1.000 99.000 3.000 99.000 5.000]]
+        [[1 99 3 99 5]]
         )
     """
     toFill = booleanElementMatch(vector, match)
@@ -110,7 +110,7 @@ def mean(vector, match):
     >>> data = nimble.createData('Matrix', raw)
     >>> mean(data, 'na')
     Matrix(
-        [[1.000 3.000 3.000 3.000 5.000]]
+        [[1 3.000 3 3.000 5]]
         )
 
     Match using a function from nimble's match module.
@@ -120,7 +120,7 @@ def mean(vector, match):
     >>> data = nimble.createData('Matrix', raw)
     >>> mean(data, match.zero)
     Matrix(
-        [[6.000 4.000 2.000 4.000 4.000]]
+        [[6 4.000 2 4.000 4]]
         )
     """
     return statsBackend(vector, match, 'mean', nimble.calculate.mean)
@@ -162,7 +162,7 @@ def median(vector, match):
     >>> data = nimble.createData('Matrix', raw)
     >>> median(data, 'na')
     Matrix(
-        [[1.000 3.000 3.000 3.000 5.000]]
+        [[1 3.000 3 3.000 5]]
         )
 
     Match using a function from nimble's match module.
@@ -172,7 +172,7 @@ def median(vector, match):
     >>> data = nimble.createData('Matrix', raw)
     >>> median(data, match.zero)
     Matrix(
-        [[6.000 4.000 2.000 4.000 4.000]]
+        [[6 4.000 2 4.000 4]]
         )
     """
     return statsBackend(vector, match, 'median', nimble.calculate.median)
@@ -212,7 +212,7 @@ def mode(vector, match):
     >>> data = nimble.createData('Matrix', raw)
     >>> mode(data, 'na')
     Matrix(
-        [[1.000 1.000 1.000 1.000 5.000]]
+        [[1 1 1 1 5]]
         )
 
     Match using a function from nimble's match module.
@@ -222,7 +222,7 @@ def mode(vector, match):
     >>> data = nimble.createData('Matrix', raw)
     >>> mode(data, match.zero)
     Matrix(
-        [[6.000 6.000 2.000 6.000 6.000]]
+        [[6 6 2 6 6]]
         )
     """
     return statsBackend(vector, match, 'mode', nimble.calculate.mode)
@@ -265,7 +265,7 @@ def forwardFill(vector, match):
     >>> data = nimble.createData('Matrix', raw)
     >>> forwardFill(data, 'na')
     Matrix(
-        [[1.000 1.000 3.000 3.000 5.000]]
+        [[1 1 3 3 5]]
         )
 
     Match using a function from nimble's match module.
@@ -275,7 +275,7 @@ def forwardFill(vector, match):
     >>> data = nimble.createData('Matrix', raw)
     >>> forwardFill(data, match.zero)
     Matrix(
-        [[6.000 6.000 2.000 2.000 4.000]]
+        [[6 6 2 2 4]]
         )
     """
     toFill = booleanElementMatch(vector, match)
@@ -334,7 +334,7 @@ def backwardFill(vector, match):
     >>> data = nimble.createData('Matrix', raw)
     >>> backwardFill(data, 'na')
     Matrix(
-        [[1.000 3.000 3.000 5.000 5.000]]
+        [[1 3 3 5 5]]
         )
 
     Match using a function from nimble's match module.
@@ -344,7 +344,7 @@ def backwardFill(vector, match):
     >>> data = nimble.createData('Matrix', raw)
     >>> backwardFill(data, match.zero)
     Matrix(
-        [[6.000 2.000 2.000 4.000 4.000]]
+        [[6 2 2 4 4]]
         )
     """
     toFill = booleanElementMatch(vector, match)
@@ -409,7 +409,7 @@ def interpolate(vector, match, **kwarguments):
     >>> data = nimble.createData('Matrix', raw)
     >>> interpolate(data, 'na')
     Matrix(
-        [[1.000 2.000 3.000 4.000 5.000]]
+        [[1 2.000 3 4.000 5]]
         )
 
     Match using a function from nimble's match module.
@@ -419,7 +419,7 @@ def interpolate(vector, match, **kwarguments):
     >>> data = nimble.createData('Matrix', raw)
     >>> interpolate(data, match.zero)
     Matrix(
-        [[6.000 5.000 4.000 3.000 2.000]]
+        [[6 5.000 4 3.000 2]]
         )
     """
     toFill = booleanElementMatch(vector, match)
