@@ -547,9 +547,9 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
         matchMatrix = matchingElements
     else:
         matchingElements = match.convertMatchToFunction(matchingElements)
-        matchMatrix = trainX.matchingElements(matchingElements)
+        matchMatrix = trainX.matchingElements(matchingElements, useLog=False)
         if not matchingElements(numpy.nan):
-            nanLocs = trainX.matchingElements(match.missing)
+            nanLocs = trainX.matchingElements(match.missing, useLog=False)
             if matchMatrix | nanLocs != matchMatrix:
                 msg = "filling requires all unmatched elements to be non-nan"
                 raise ImproperObjectAction(msg)
@@ -563,7 +563,7 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     if filled.getTypeString() != trainX.getTypeString():
         filled = filled.copy(to=trainX.getTypeString())
 
-    trainX.referenceDataFrom(filled)
+    trainX.referenceDataFrom(filled, useLog=False)
 
     time = stopTimer(timer)
     handleLogging(useLog, 'run', "fillMatching", trainX, None, None, None,

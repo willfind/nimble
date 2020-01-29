@@ -14,7 +14,7 @@ using the nimble.deregisterCustomLearner and
 nimble.deregisterCustomLearnerAsDefault functions.
 
 The out-of-the box learners are all registered during nimble
-initialization and are avaiable in the interface named 'custom'.
+initialization and are available in the interface named 'custom'.
 """
 
 from .custom_learner import CustomLearner
@@ -22,6 +22,7 @@ from .knn_classification import KNNClassifier
 from .mean_constant import MeanConstant
 from .multioutput_ridge_regression import MultiOutputRidgeRegression
 from .ridge_regression import RidgeRegression
+from .knn_imputation import KNNImputation
 
-__all__ = ['CustomLearner', 'KNNClassifier', 'MeanConstant',
+__all__ = ['CustomLearner', 'KNNClassifier', 'KNNImputation', 'MeanConstant',
            'MultiOutputRidgeRegression', 'RidgeRegression']
