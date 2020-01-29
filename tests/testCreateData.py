@@ -18,7 +18,7 @@ from nimble.exceptions import FileFormatException
 from nimble.data.dataHelpers import DEFAULT_PREFIX
 from nimble.helpers import _intFloatOrString
 from nimble.utility import ImportModule
-from nimble.utility import cooMatrixToArray
+from nimble.utility import sparseMatrixToArray
 
 # from .. import logger
 from .assertionHelpers import oneLogEntryExpected
@@ -62,27 +62,62 @@ class GetItemOnly(object):
 # Data values correctness #
 ###########################
 
-def test_createData_raw_stringConversion():
+def test_createData_raw_stringConversion_float():
     """
     """
     for t in returnTypes:
         values = []
-        rawData = [['1','2','3'], ['4','5','6'], ['7','8','9']]
-        toTest = nimble.createData(t, rawData)
+        toTest = nimble.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']],
+                                   convertToType=float)
         for i in range(len(toTest.points)):
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
         assert all(isinstance(val, float) for val in values)
 
+def test_createData_raw_stringConversion_int():
+    """
+    """
+    for t in returnTypes:
+        values = []
+        toTest = nimble.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']],
+                                   convertToType=int)
+        for i in range(len(toTest.points)):
+            for j in range(len(toTest.features)):
+                values.append(toTest[i,j])
+        assert all(isinstance(val, (int, numpy.integer)) for val in values)
+
 def test_createData_raw_noStringConversion():
     for t in returnTypes:
         values = []
-        rawData = [['1','2','3'], ['4','5','6'], ['7','8','9']]
-        toTest = nimble.createData(t, rawData, elementType=object)
+        toTest = nimble.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']])
         for i in range(len(toTest.points)):
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
         assert all(isinstance(val, str) for val in values)
+
+def test_createData_raw_numericConversion_str():
+    """
+    """
+    for t in returnTypes:
+        values = []
+        toTest = nimble.createData(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                                   convertToType=str)
+        for i in range(len(toTest.points)):
+            for j in range(len(toTest.features)):
+                values.append(toTest[i,j])
+        assert all(isinstance(val, str) for val in values)
+
+def test_createData_raw_numericConversion_float():
+    """
+    """
+    for t in returnTypes:
+        values = []
+        toTest = nimble.createData(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                                   convertToType=float)
+        for i in range(len(toTest.points)):
+            for j in range(len(toTest.features)):
+                values.append(toTest[i,j])
+        assert all(isinstance(val, float) for val in values)
 
 def test_createData_raw_invalidPointOrFeatureNames():
     for t in returnTypes:
@@ -969,8 +1004,8 @@ def test_names_dataUnmodified():
         if isinstance(rawData, list):
             rawData == rawDataCopy
         elif scipy.sparse.isspmatrix(rawData):
-            numpy.testing.assert_array_equal(cooMatrixToArray(rawData),
-                                             cooMatrixToArray(rawDataCopy))
+            numpy.testing.assert_array_equal(sparseMatrixToArray(rawData),
+                                             sparseMatrixToArray(rawDataCopy))
         else:
             numpy.testing.assert_array_equal(rawData, rawDataCopy)
 
@@ -2525,7 +2560,7 @@ def test_treatAsMissingIsNone():
         data = [[1, 2, None], [None, 5, 6], [7, None, 9], ["", numpy.nan, ""]]
         toTest = nimble.createData(t, data, treatAsMissing=None)
         notExpData = [[1,2, nan], [nan, 5, 6], [7, nan, 9], [nan, nan, nan]]
-        notExpRet = nimble.createData(t, notExpData, treatAsMissing=None, elementType=object)
+        notExpRet = nimble.createData(t, notExpData, treatAsMissing=None)
         assert toTest != notExpRet
 
 def test_DataOutputWithMissingDataTypes1D():
@@ -2542,8 +2577,8 @@ def test_DataOutputWithMissingDataTypes1D():
         orig3.features.sort(sortBy=orig3.points.getName(0))
         orig4 = nimble.createData(t, [{'a':1, 'b':2, 'c':"None"}])
         orig4.features.sort(sortBy=orig4.points.getName(0))
-        orig5 = nimble.createData(t, numpy.array([1,2,"None"]))
-        orig6 = nimble.createData(t, numpy.matrix([1,2,"None"]))
+        orig5 = nimble.createData(t, numpy.array([1,2,"None"], dtype=object))
+        orig6 = nimble.createData(t, numpy.matrix([1,2,"None"], dtype=object))
         if pd:
             orig7 = nimble.createData(t, pd.DataFrame([[1,2,"None"]]))
             orig8 = nimble.createData(t, pd.Series([1,2,"None"]))
@@ -2581,9 +2616,9 @@ def test_DataOutputWithMissingDataTypes2D():
 
         orig1 = nimble.createData(t, [[1,2,'None'], [3,4,'b']])
         orig2 = nimble.createData(t, ((1,2,'None'), (3,4,'b')))
-        orig3 = nimble.createData(t, {'a':[1,3], 'b':[2,4], 'c':['None', 'b']}, elementType=object)
+        orig3 = nimble.createData(t, {'a':[1,3], 'b':[2,4], 'c':['None', 'b']})
         orig3.features.sort(sortBy=orig3.points.getName(0))
-        orig4 = nimble.createData(t, [{'a':1, 'b':2, 'c':'None'}, {'a':3, 'b':4, 'c':'b'}], elementType=object)
+        orig4 = nimble.createData(t, [{'a':1, 'b':2, 'c':'None'}, {'a':3, 'b':4, 'c':'b'}])
         orig4.features.sort(sortBy=orig4.points.getName(0))
         orig5 = nimble.createData(t, numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
         orig6 = nimble.createData(t, numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))

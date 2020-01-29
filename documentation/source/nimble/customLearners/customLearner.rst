@@ -1,7 +1,6 @@
 CustomLearner
 =============
 
-.. automodule:: nimble.customLearners.custom_learner
+.. automodule:: nimble.customLearners
+   :noindex:
    :members: CustomLearner
-   :undoc-members:
-   :show-inheritance:

@@ -193,7 +193,7 @@ def test_confusionMatrix_noLabels():
         featureNames = ['known_' + str(i) for i in range(1, 5)]
         pointNames = ['predicted_' + str(i) for i in range(1, 5)]
         expObj = createData(t, expData, pointNames, featureNames,
-                            elementType=int, useLog=False)
+                            useLog=False)
 
         assert cm.isIdentical(expObj)
 
@@ -255,7 +255,7 @@ def test_confusionMatrix_withLabelsDict():
         featureNames = ['known_' + l for l in sortedLabels]
         pointNames = ['predicted_' + l for l in sortedLabels]
         expObj = createData(t, expData, pointNames, featureNames,
-                            elementType=int, useLog=False)
+                            useLog=False)
 
         assert cm.isIdentical(expObj)
 
@@ -318,7 +318,7 @@ def test_confusionMatrix_withLabelsList():
         featureNames = ['known_' + l for l in labels]
         pointNames = ['predicted_' + l for l in labels]
         expObj = createData(t, expData, pointNames, featureNames,
-                            elementType=int, useLog=False)
+                            useLog=False)
 
         assert cm.isIdentical(expObj)
 
@@ -354,7 +354,7 @@ def test_confusionMatrix_additionalLabelsProvided():
         featureNames = ['known_' + lbl for lbl in labelsList]
         pointNames = ['predicted_' + lbl for lbl in labelsList]
         expObj = createData(t, expData, pointNames, featureNames,
-                            elementType=int, useLog=False)
+                            useLog=False)
 
         assert cm1 == expObj
         assert cm1 == cm2
@@ -410,7 +410,6 @@ def test_confusionMatrix_strings():
 
         featureNames = ['known_' + lab for lab in ['bear', 'cat', 'dog', 'fish']]
         pointNames = ['predicted_' + lab for lab in ['bear', 'cat', 'dog', 'fish']]
-        expObj = createData(t, expData, pointNames, featureNames, elementType=int,
-                            useLog=False)
+        expObj = createData(t, expData, pointNames, featureNames, useLog=False)
 
         assert cm.isIdentical(expObj)

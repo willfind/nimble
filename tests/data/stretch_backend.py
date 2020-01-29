@@ -690,7 +690,7 @@ class StretchDataSafe(DataTestObject):
         assert ret1.isIdentical(exp)
         assert ret2.isIdentical(exp)
 
-
+    @noLogEntryExpected
     def test_stretch_differentObjectTypes(self):
         matrixObj = self.constructor([[1, 2, 3], [4, 5, 6]])
         pointVect = self.constructor([9, 8, 7])
