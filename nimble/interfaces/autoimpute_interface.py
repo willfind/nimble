@@ -115,12 +115,21 @@ To install autoimpute
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
                              arguments, customDict):
 
+        def dtypeConvert(df):
+            for idx, ser in df.iteritems():
+                try:
+                    df.loc[:, idx] = ser.astype(float)
+                except ValueError:
+                    pass
+
         if trainX is not None:
             customDict['match'] = trainX.getTypeString()
             trainX = trainX.copy(to='pandasdataframe')
+            dtypeConvert(trainX)
 
         if trainY is not None:
             trainY = trainY.copy(to='pandasdataframe')
+            dtypeConvert(trainY)
             # trainY columns cannot be same as trainX in autoimpute
             if (trainX is not None
                     and any(col in trainX.columns for col in trainY.columns)):
@@ -129,6 +138,7 @@ To install autoimpute
 
         if testX is not None:
             testX = testX.copy(to='pandasdataframe')
+            dtypeConvert(testX)
 
         instantiatedArgs = {}
         for arg, val in arguments.items():

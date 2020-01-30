@@ -49,7 +49,7 @@ def captureOutput(toWrap):
     @functools.wraps(toWrap)
     def wrapped(*args, **kwarguments):
         stdOutBackup = sys.stdout
-        sys.stdout = tempfile.TemporaryFile('w+')
+        # sys.stdout = tempfile.TemporaryFile('w+')
         try:
             # user has not already provided warnings filters
             if not sys.warnoptions:
@@ -64,7 +64,7 @@ def captureOutput(toWrap):
             else:
                 ret = toWrap(*args, **kwarguments)
         finally:
-            sys.stdout.close()
+            # sys.stdout.close()
             sys.stdout = stdOutBackup
         return ret
 

@@ -647,11 +647,6 @@ class Axis(object):
     def _fillMatching(self, fillWith, matchingElements, limitTo=None,
                       useLog=None, **kwarguments):
         removeKwargs = []
-        # our fill functions that also need access to the base data
-        needData = [fill.kNeighborsRegressor, fill.kNeighborsClassifier]
-        if fillWith in needData and 'data' not in kwarguments:
-            kwarguments['data'] = self._base.copy()
-            removeKwargs.append('data')
         # use our fill.constant function with the fillWith value
         if not callable(fillWith):
             value = fillWith
