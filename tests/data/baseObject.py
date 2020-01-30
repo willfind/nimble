@@ -12,7 +12,7 @@ def objConstructorMaker(returnType):
     """
 
     def constructor(
-            data, pointNames='automatic', featureNames='automatic', elementType=None,
+            data, pointNames='automatic', featureNames='automatic', convertToType=None,
             name=None, path=(None, None),
             treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
             replaceMissingWith=numpy.nan):
@@ -22,7 +22,7 @@ def objConstructorMaker(returnType):
                 returnType, data=data, pointNames=pointNames,
                 featureNames=featureNames, name=name,
                 treatAsMissing=treatAsMissing,
-                replaceMissingWith=replaceMissingWith, elementType=elementType,
+                replaceMissingWith=replaceMissingWith, convertToType=convertToType,
                 useLog=False)
         # Case: data is some in-python format. We must call initDataObject
         # instead of createData because we sometimes need to specify a
@@ -30,7 +30,7 @@ def objConstructorMaker(returnType):
         else:
             return nimble.createData(
                 returnType, data=data, pointNames=pointNames,
-                featureNames=featureNames, elementType=elementType, name=name,
+                featureNames=featureNames, convertToType=convertToType, name=name,
                 path=path, keepPoints='all', keepFeatures='all',
                 treatAsMissing=treatAsMissing,
                 replaceMissingWith=replaceMissingWith, useLog=False)
@@ -48,7 +48,7 @@ def viewConstructorMaker(concreteType):
 
     def constructor(
             data, pointNames='automatic', featureNames='automatic',
-            name=None, path=(None, None), elementType=None,
+            name=None, path=(None, None), convertToType=None,
             treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
             replaceMissingWith=numpy.nan):
         # Case: data is a path to a file
@@ -57,7 +57,7 @@ def viewConstructorMaker(concreteType):
                 concreteType, data=data, pointNames=pointNames,
                 featureNames=featureNames, name=name,
                 treatAsMissing=treatAsMissing,
-                replaceMissingWith=replaceMissingWith, elementType=elementType,
+                replaceMissingWith=replaceMissingWith, convertToType=convertToType,
                 useLog=False)
         # Case: data is some in-python format. We must call initDataObject
         # instead of createData because we sometimes need to specify a
@@ -66,7 +66,7 @@ def viewConstructorMaker(concreteType):
             orig = nimble.helpers.initDataObject(
                 concreteType, rawData=data, pointNames=pointNames,
                 featureNames=featureNames, name=name, path=path,
-                elementType=elementType, keepPoints='all', keepFeatures='all',
+                convertToType=convertToType, keepPoints='all', keepFeatures='all',
                 treatAsMissing=treatAsMissing,
                 replaceMissingWith=replaceMissingWith)
         origHasPts = orig.points._namesCreated()
@@ -79,13 +79,13 @@ def viewConstructorMaker(concreteType):
             firstPoint = nimble.helpers.initDataObject(
                 concreteType, rawData=firstPRaw, pointNames=['firstPNonView'],
                 featureNames=fNamesParam, name=name, path=orig.path,
-                keepPoints='all', keepFeatures='all', elementType=elementType)
+                keepPoints='all', keepFeatures='all', convertToType=convertToType)
 
             lastPRaw = [[3] * len(orig.features)]
             lastPoint = nimble.helpers.initDataObject(
                 concreteType, rawData=lastPRaw, pointNames=['lastPNonView'],
                 featureNames=fNamesParam, name=name, path=orig.path,
-                keepPoints='all', keepFeatures='all', elementType=elementType)
+                keepPoints='all', keepFeatures='all', convertToType=convertToType)
 
             firstPoint.points.append(orig, useLog=False)
             full = firstPoint
@@ -106,7 +106,7 @@ def viewConstructorMaker(concreteType):
             lastFeature = nimble.helpers.initDataObject(
                 concreteType, rawData=lastFRaw, featureNames=fNames,
                 pointNames=['lastFNonView'], name=name, path=orig.path,
-                keepPoints='all', keepFeatures='all', elementType=elementType)
+                keepPoints='all', keepFeatures='all', convertToType=convertToType)
 
             lastFeature.transpose(useLog=False)
 

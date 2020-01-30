@@ -833,16 +833,16 @@ def test_trainAndApplyOneVsOne():
     results3 = trainAndApply('Custom.KNNClassifier', trainObj1, trainY=3,
                              testX=testObj1, scoreMode='allScores', multiClassStrategy='OneVsOne')
 
-    assert results1.data[0][0] == 1.0
-    assert results1.data[1][0] == 2.0
-    assert results1.data[2][0] == 3.0
+    assert results1.data[0][0] == 1
+    assert results1.data[1][0] == 2
+    assert results1.data[2][0] == 3
     assert len(results1.data) == 3
 
-    assert results2.data[0][0] == 1.0
+    assert results2.data[0][0] == 1
     assert results2.data[0][1] == 2
-    assert results2.data[1][0] == 2.0
+    assert results2.data[1][0] == 2
     assert results2.data[1][1] == 2
-    assert results2.data[2][0] == 3.0
+    assert results2.data[2][0] == 3
     assert results2.data[2][1] == 2
 
     results3FeatureMap = results3.features.getNames()

@@ -285,4 +285,4 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
         eType = int
 
     return nimble.createData(asType, confusionMtx, pNames, fNames,
-                             elementType=eType, useLog=False)
+                             convertToType=eType, useLog=False)
