@@ -28,9 +28,6 @@ class DataFrameAxis(Axis):
     base : DataFrame
         The DataFrame instance that will be queried and modified.
     """
-    def _setName_implementation(self, oldIdentifier, newName):
-        super(DataFrameAxis, self)._setName_implementation(oldIdentifier,
-                                                           newName)
 
     ##############################
     # Structural implementations #
