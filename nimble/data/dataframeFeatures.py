@@ -38,8 +38,7 @@ class DataFrameFeatures(DataFrameAxis, Features):
         startData = self._base.data.iloc[:, :insertBefore]
         endData = self._base.data.iloc[:, insertBefore:]
         self._base.data = pd.concat((startData, toInsert.data, endData),
-                                    axis=1)
-        self._updateName()
+                                    axis=1, ignore_index=True)
 
     def _transform_implementation(self, function, limitTo):
         for j, f in enumerate(self):

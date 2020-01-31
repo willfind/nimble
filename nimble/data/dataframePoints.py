@@ -40,8 +40,7 @@ class DataFramePoints(DataFrameAxis, Points):
         startData = self._base.data.iloc[:insertBefore, :]
         endData = self._base.data.iloc[insertBefore:, :]
         self._base.data = pd.concat((startData, toInsert.data, endData),
-                                    axis=0)
-        self._updateName()
+                                    axis=0,  ignore_index=True)
 
     def _transform_implementation(self, function, limitTo):
         for i, p in enumerate(self):

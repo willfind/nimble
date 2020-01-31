@@ -28,20 +28,6 @@ class DataFrameAxis(Axis):
     base : DataFrame
         The DataFrame instance that will be queried and modified.
     """
-    def _setName_implementation(self, oldIdentifier, newName):
-        super(DataFrameAxis, self)._setName_implementation(oldIdentifier,
-                                                           newName)
-        #update the index or columns in self.data
-        self._updateName()
-
-    def _updateName(self):
-        """
-        update self.data.index or self.data.columns
-        """
-        if isinstance(self, Points):
-            self._base.data.index = range(len(self._base.data.index))
-        else:
-            self._base.data.columns = range(len(self._base.data.columns))
 
     ##############################
     # Structural implementations #
@@ -71,9 +57,9 @@ class DataFrameAxis(Axis):
             df.drop(targetList, axis=axis, inplace=True)
 
         if axis == 0:
-            df.index = numpy.arange(len(df.index), dtype=df.index.dtype)
+            df.index = pd.RangeIndex(len(df.index))
         else:
-            df.columns = numpy.arange(len(df.columns), dtype=df.columns.dtype)
+            df.columns = pd.RangeIndex(len(df.columns))
 
         return nimble.data.DataFrame(pd.DataFrame(ret), pointNames=pointNames,
                                      featureNames=featureNames, reuseData=True)
@@ -82,9 +68,11 @@ class DataFrameAxis(Axis):
         # use numpy indexing to change the ordering
         if isinstance(self, Points):
             self._base.data = self._base.data.iloc[indexPosition, :]
+            self._base.data.index = pd.RangeIndex(len(self))
         else:
             self._base.data = self._base.data.iloc[:, indexPosition]
-        self._updateName()
+            self._base.data.columns = pd.RangeIndex(len(self))
+
 
     ##############################
     # High Level implementations #
