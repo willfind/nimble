@@ -12,7 +12,6 @@ import functools
 import sys
 import numbers
 import warnings
-import tempfile
 
 import numpy
 

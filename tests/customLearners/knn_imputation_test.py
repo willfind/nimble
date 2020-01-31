@@ -63,7 +63,7 @@ def test_KNNImputation_lazyNameGeneration():
         toTest = nimble.createData(t, data)
         expTest = nimble.createData(t, expData)
         learner = KNNImputation()
-        learner.train(toTest, k=3)
+        learner.train(toTest, mode='classification', k=3)
         ret = learner.apply(toTest)
 
         assert ret == expTest
@@ -79,7 +79,7 @@ def test_KNNImputation_NamePath_preservation():
         toTest._relPath = "testRelPath"
 
         learner = KNNImputation()
-        learner.train(toTest, k=3)
+        learner.train(toTest, mode='classification', k=3)
         ret = learner.apply(toTest)
 
         assert toTest.name == "TestName"

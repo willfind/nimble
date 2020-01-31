@@ -13,9 +13,9 @@ sklearn = ImportModule('sklearn')
 class KNNImputation(CustomLearner):
     learnerType = 'unknown'
 
-    def train(self, trainX, trainY=None, k=5, mode='classification'):
+    def train(self, trainX, trainY=None, k=5, mode=None):
         if mode not in ['classification', 'regression']:
-            msg = "mode must be 'classification' or 'regression'"
+            msg = "mode must be set to 'classification' or 'regression'"
             raise InvalidArgumentValue(msg)
         if sklearn:
             self.kwargs = {'n_neighbors': k}

@@ -19,7 +19,7 @@ def test_fillMatching_exception_nansUnmatched():
     for t in nimble.data.available:
         data = nimble.createData(t, raw)
         try:
-            nimble.fillMatching('Custom.KNNImputation', 1, data)
+            nimble.fillMatching('Custom.KNNImputation', 1, data, mode='classification')
             assert False # expected ImproperObjectAction
         except ImproperObjectAction:
             pass
@@ -32,7 +32,7 @@ def test_fillMatching_trainXUnaffectedByFailure():
         dataCopy = data.copy()
         # trying to fill 2 will fail because the training data will be empty
         try:
-            nimble.fillMatching('Custom.KNNImputation', 2, data)
+            nimble.fillMatching('Custom.KNNImputation', 2, data, mode='classification')
             assert False # expected InvalidArgumentValue
         except InvalidArgumentValue:
             assert data == dataCopy
@@ -42,7 +42,8 @@ def backend_fillMatching(matchingElements, raw, expRaw):
     for t in nimble.data.available:
         data = nimble.createData(t, raw, useLog=False)
         exp = nimble.createData(t, expRaw, useLog=False)
-        nimble.fillMatching('Custom.KNNImputation', matchingElements, data, k=1)
+        nimble.fillMatching('Custom.KNNImputation', matchingElements, data,
+                            mode='classification', k=1)
         assert data == exp
 
 def test_fillMatching_matchingElementsAsSingleValue():
@@ -77,7 +78,8 @@ def test_fillMatching_matchingElementsAsBooleanMatrix_exception_wrongSize():
     # reshaped to cause failure
     matchingElements = obj.matchingElements(match.negative)[:2, :2]
     data = nimble.createData('Matrix', raw, useLog=False)
-    nimble.fillMatching('Custom.KNNImputation', matchingElements, data, k=1)
+    nimble.fillMatching('Custom.KNNImputation', matchingElements, data,
+                        mode='classification', k=1)
 
 @raises(InvalidArgumentValue)
 def test_KNNImputation_exception_invalidMode():
@@ -96,7 +98,7 @@ def test_fillMatching_pointsLimited():
         toTest = nimble.createData(t, data, pointNames=pNames, featureNames=fNames)
         expTest = nimble.createData(t, expData, pointNames=pNames, featureNames=fNames)
         nimble.fillMatching('Custom.KNNImputation', match.missing, toTest,
-                            points=[2, 3, 4], k=3)
+                            points=[2, 3, 4], mode='classification', k=3)
         assert toTest == expTest
 
 @raises(InvalidArgumentValue)
@@ -118,7 +120,7 @@ def test_fillMatching_featuresLimited():
         toTest = nimble.createData(t, data, pointNames=pNames, featureNames=fNames)
         expTest = nimble.createData(t, expData, pointNames=pNames, featureNames=fNames)
         nimble.fillMatching('Custom.KNNImputation', match.missing, toTest,
-                            features=[1,0], k=3)
+                            features=[1,0], mode='classification', k=3)
         assert toTest == expTest
 
 def test_fillMatching_pointsFeaturesLimited():
@@ -130,7 +132,7 @@ def test_fillMatching_pointsFeaturesLimited():
         toTest = nimble.createData(t, data, pointNames=pNames, featureNames=fNames)
         expTest = nimble.createData(t, expData, pointNames=pNames, featureNames=fNames)
         nimble.fillMatching('Custom.KNNImputation', match.missing, toTest,
-                            points=0, features=2, k=3)
+                            points=0, features=2, mode='classification', k=3)
         assert toTest == expTest
 
 def test_fillMatching_lazyNameGeneration():

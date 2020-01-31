@@ -3,7 +3,6 @@ Interface to autoimpute package.
 """
 
 import functools
-import logging
 import sys
 from io import StringIO
 import types
@@ -38,7 +37,7 @@ def captureDependencyOutput(toWrap):
     These outputs show calculations and progress during possibly time-
     consuming iterative processes.
     statsmodels -> stdout
-    pymc3 -> stderr
+    pymc3 -> stdout (logging), stderr (progressbar)
     """
     @functools.wraps(toWrap)
     def wrapped(*args, **kwargs):
@@ -71,8 +70,6 @@ class Autoimpute(SciKitLearn):
         """
         self.autoimpute = modifyImportPathAndImport(autoimputeDir,
                                                     'autoimpute')
-
-        logging.getLogger('pymc3').disabled = True
 
         def isLearner(obj):
             try:

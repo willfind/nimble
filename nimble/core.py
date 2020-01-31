@@ -596,7 +596,8 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     ...        [None, 3, None]]
     >>> data = nimble.createData('Matrix', raw)
     >>> toMatch = nimble.match.missing
-    >>> nimble.fillMatching('Custom.KNNImputation', toMatch, data, k=3)
+    >>> nimble.fillMatching('Custom.KNNImputation', toMatch, data,
+    ...                     mode='classification', k=3)
     >>> data
     Matrix(
         [[  1   3.000 6.000]
