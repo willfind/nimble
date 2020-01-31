@@ -48,24 +48,18 @@ def captureOutput(toWrap):
     """
     @functools.wraps(toWrap)
     def wrapped(*args, **kwarguments):
-        stdOutBackup = sys.stdout
-        # sys.stdout = tempfile.TemporaryFile('w+')
-        try:
-            # user has not already provided warnings filters
-            if not sys.warnoptions:
-                with warnings.catch_warnings():
-                    # filter out warnings that we do not need users to see
-                    warnings.simplefilter('ignore', DeprecationWarning)
-                    warnings.simplefilter('ignore', FutureWarning)
-                    warnings.simplefilter('ignore', PendingDeprecationWarning)
-                    warnings.simplefilter('ignore', ImportWarning)
+        # user has not already provided warnings filters
+        if not sys.warnoptions:
+            with warnings.catch_warnings():
+                # filter out warnings that we do not need users to see
+                warnings.simplefilter('ignore', DeprecationWarning)
+                warnings.simplefilter('ignore', FutureWarning)
+                warnings.simplefilter('ignore', PendingDeprecationWarning)
+                warnings.simplefilter('ignore', ImportWarning)
 
-                    ret = toWrap(*args, **kwarguments)
-            else:
                 ret = toWrap(*args, **kwarguments)
-        finally:
-            # sys.stdout.close()
-            sys.stdout = stdOutBackup
+        else:
+            ret = toWrap(*args, **kwarguments)
         return ret
 
     return wrapped

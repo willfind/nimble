@@ -2,9 +2,11 @@
 Interface to autoimpute package.
 """
 
-import warnings
-import types
+import functools
 import logging
+import sys
+from io import StringIO
+import types
 import re
 
 import numpy
@@ -28,24 +30,48 @@ autoimputeDir = None
 # containing learners. To be used by findInPackage
 locationCache = {}
 
+def captureDependencyOutput(toWrap):
+    """
+    Disable output from autoimpute dependecies.
+
+    Some dependencies of autoimpute will output to stdout and stderr.
+    These outputs show calculations and progress during possibly time-
+    consuming iterative processes.
+    statsmodels -> stdout
+    pymc3 -> stderr
+    """
+    @functools.wraps(toWrap)
+    def wrapped(*args, **kwargs):
+        savedStdOut = sys.stdout
+        savedStdErr = sys.stderr
+        sys.stdout = StringIO()
+        sys.stderr = StringIO()
+        try:
+            return toWrap(*args, **kwargs)
+        finally:
+            sys.stdout.close()
+            sys.stderr.close()
+            sys.stdout = savedStdOut
+            sys.stderr = savedStdErr
+    return wrapped
+
 
 @inheritDocstringsFactory(UniversalInterface)
 class Autoimpute(SciKitLearn):
     """
     This class is an interface to autoimpute.
+
+    Autoimpute follows the sci-kit learn api so this class inherits from
+    our SciKitLearn interface so we do not need to define every method.
     """
 
     def __init__(self):
         """
 
         """
-        # suppress DeprecationWarnings
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            self.autoimpute = modifyImportPathAndImport(autoimputeDir,
-                                                        'autoimpute')
+        self.autoimpute = modifyImportPathAndImport(autoimputeDir,
+                                                    'autoimpute')
 
-        # disable logging output from pymc3 unless specified in config
         logging.getLogger('pymc3').disabled = True
 
         def isLearner(obj):
@@ -68,8 +94,6 @@ class Autoimpute(SciKitLearn):
 
         self._searcher = PythonSearcher(
             self.autoimpute, self.autoimpute.__all__, {}, isLearner, 1)
-        _ = self._searcher.allLearners() # populate locationCache
-        self.allEstimators = self._searcher._locationCache
 
         super(SciKitLearn, self).__init__()
 
@@ -101,6 +125,9 @@ To install autoimpute
     https://autoimpute.readthedocs.io/en/latest/user_guide/getting_started.html"""
         return msg
 
+    def _listLearnersBackend(self):
+        return self._searcher.allLearners()
+
     def learnerType(self, name):
         obj = self.findCallable(name)
         if issubclass(obj, self.autoimpute.imputations.BaseImputer):
@@ -111,6 +138,9 @@ To install autoimpute
             return 'regression'
 
         return 'UNKNOWN'
+
+    def _findCallableBackend(self, name):
+        return self._searcher.findInPackage(None, name)
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
                              arguments, customDict):
@@ -148,6 +178,7 @@ To install autoimpute
 
         return (trainX, trainY, testX, instantiatedArgs)
 
+    @captureDependencyOutput
     def _outputTransformation(self, learnerName, outputValue,
                               transformedInputs, outputType, outputFormat,
                               customDict):
@@ -172,6 +203,11 @@ To install autoimpute
         if outputType == 'match':
             outputType = customDict['match']
         return nimble.createData(outputType, outputValue, useLog=False)
+
+    @captureDependencyOutput
+    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
+        return super(Autoimpute, self)._trainer(learnerName, trainX, trainY,
+                                                arguments, customDict)
 
     def _initLearner(self, learnerName, trainX, trainY, arguments):
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
@@ -235,9 +271,14 @@ To install autoimpute
         try:
             learner.fit(*fitArgs, **fitKwargs)
         except ValueError as ve:
-            # these occur when the learner requires different input data
-            # (multi-dimensional, non-negative)
             raise InvalidArgumentValue(str(ve))
+
+    @captureDependencyOutput
+    def _applier(self, learnerName, learner, testX, newArguments,
+                 storedArguments, customDict):
+        return super(Autoimpute, self)._applier(
+            learnerName, learner, testX, newArguments, storedArguments,
+            customDict)
 
     def version(self):
         return self.autoimpute.__version__

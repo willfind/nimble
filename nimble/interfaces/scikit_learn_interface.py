@@ -41,10 +41,9 @@ class SciKitLearn(PredefinedInterface, UniversalInterface):
         """
 
         """
-        # suppress DeprecationWarnings
+        self.skl = modifyImportPathAndImport(sciKitLearnDir, 'sciKitLearn')
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
-            self.skl = modifyImportPathAndImport(sciKitLearnDir, 'sciKitLearn')
             from sklearn.utils.testing import all_estimators
 
         version = self.version()
