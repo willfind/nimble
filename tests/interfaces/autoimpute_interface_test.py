@@ -45,11 +45,16 @@ def getDataWithMissing(retType, assignNames=True):
 def backend_imputation(learnerName, **kwargs):
     for t in nimble.data.available:
         data = getDataWithMissing(t)
-        for ft in data.features:
-            assert nimble.calculate.proportionMissing(ft) > 0
-        nimble.fillMatching(learnerName, match.missing, data, **kwargs)
-        for ft in data.features:
-            assert nimble.calculate.proportionMissing(ft) == 0
+        orig = data.copy()
+        matches = data.matchingElements(match.missing)
+        nimble.fillMatching(learnerName, matches, data, **kwargs)
+
+        for dFt, mFt, oFt in zip(data.features, matches.features, orig.features):
+            for i in range(len(dFt)):
+                if mFt[i]:
+                    assert dFt[i] != oFt[i]
+                else:
+                    assert dFt[i] == oFt[i]
 
 def test_autoimpute_SingleImputer():
     backend_imputation('autoimpute.SingleImputer', strategy='least squares')

@@ -184,7 +184,7 @@ To install autoimpute
                               customDict):
         # MultipleImputer outputs a generator of predicted dataframes
         # we will average the predictions together for our final fill values
-        if isinstance(outputValue, types.GeneratorType):
+        if isinstance(outputValue, (list, types.GeneratorType)):
             finalDF = None
             for i, df in outputValue:
                 if finalDF is None:

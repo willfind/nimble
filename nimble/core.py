@@ -599,11 +599,11 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     >>> nimble.fillMatching('Custom.KNNImputation', toMatch, data, k=3)
     >>> data
     Matrix(
-        [[1.000 3.000 6.000]
-         [1.000 3.000 6.000]
-         [2.000 1.000 6.000]
-         [1.000 3.000 7.000]
-         [1.000 3.000 6.000]]
+        [[  1   3.000 6.000]
+         [  1     3     6  ]
+         [  2     1     6  ]
+         [  1     3     7  ]
+         [1.000   3   6.000]]
         )
 
     Fill last feature zeros based on k-nearest neighbors regressor.
@@ -657,14 +657,12 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     toFill.features.fillMatching(numpy.nan, matchMatrix, useLog=False)
     filled = trainAndApply(learnerName, toFill, arguments=merged, useLog=False)
 
-    if points is None and features is None:
-        if filled.getTypeString() != trainX.getTypeString():
-            filled = filled.copy(to=trainX.getTypeString())
-        trainX.referenceDataFrom(filled, useLog=False)
-    else:
-        def transformer(elem, i, j):
+    def transformer(elem, i, j):
+        if matchMatrix[i, j]:
             return filled[i, j]
-        trainX.transformElements(transformer, points, features, useLog=False)
+        return elem
+
+    trainX.transformElements(transformer, points, features, useLog=False)
 
     time = stopTimer(timer)
     handleLogging(useLog, 'run', "fillMatching", trainX, None, None, None,
