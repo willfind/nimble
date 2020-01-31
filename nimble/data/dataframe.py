@@ -136,9 +136,9 @@ class DataFrame(Base):
                          header=includeFeatureNames)
 
         if includePointNames:
-            self._updateName('point')
+            self.data.index = pd.RangeIndex(len(self.data.index))
         if includeFeatureNames:
-            self._updateName('feature')
+            self.data.columns = pd.RangeIndex(len(self.data.columns))
 
     def _writeFileMTX_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
@@ -179,9 +179,6 @@ class DataFrame(Base):
             ftNames = self.features._getNamesNoGeneration()
             if to == 'DataFrame':
                 data = self.data.copy()
-                # instantiation expects index and columns to be pandas defaults
-                data.reset_index(drop=True, inplace=True)
-                data.columns = range(len(self.features))
             else:
                 data = self.data.values.copy()
             # reuseData=True since we already made copies here
@@ -295,13 +292,13 @@ class DataFrame(Base):
 
             self.data = self.data.merge(tmpDfR, how=point, left_index=True,
                                         right_index=True)
-            self.data.reset_index(drop=True, inplace=True)
-            self.data.columns = range(self.data.shape[1])
         else:
             onIdxL = self.data.columns.get_loc(onFeature)
             self.data = self.data.merge(tmpDfR, how=point, on=onFeature)
-            self.data.reset_index()
-            self.data.columns = range(self.data.shape[1])
+
+        # return labels to default after we've executed the merge
+        self.data.index = pd.RangeIndex(self.data.shape[0])
+        self.data.columns = pd.RangeIndex(self.data.shape[1])
 
         toDrop = []
         for l, r in zip(matchingFtIdx[0], matchingFtIdx[1]):
@@ -324,7 +321,10 @@ class DataFrame(Base):
             if nansL.any():
                 self.data.iloc[:, l][nansL] = self.data.iloc[:, r][nansL]
             toDrop.append(r)
-        self.data.drop(toDrop, axis=1, inplace=True)
+
+        if toDrop:
+            self.data.drop(toDrop, axis=1, inplace=True)
+            self.data.columns = pd.RangeIndex(self.data.shape[1])
 
         self._featureCount = (numColsL + len(tmpDfR.columns)
                               - len(matchingFtIdx[1]))
@@ -338,7 +338,6 @@ class DataFrame(Base):
         return DataFrame(pd.DataFrame(toFill))
 
     def _getitem_implementation(self, x, y):
-        # return self.data.ix[x, y]
         #use self.data.values is much faster
         return self.data.values[x, y]
 
@@ -355,8 +354,11 @@ class DataFrame(Base):
         kwds['reuseData'] = True
 
         ret = DataFrameView(**kwds)
-        ret._updateName('point')
-        ret._updateName('feature')
+
+        # Reassign labels as to match the positions in the view object,
+        # not the positions in the source object.
+        ret.data.index = pd.RangeIndex(pointEnd - pointStart)
+        ret.data.columns = pd.RangeIndex(featureEnd - featureStart)
 
         return ret
 
@@ -364,6 +366,8 @@ class DataFrame(Base):
         shape = self.data.shape
         assert shape[0] == len(self.points)
         assert shape[1] == len(self.features)
+        assert all(self.data.index == pd.RangeIndex(len(self.points)))
+        assert all(self.data.columns == pd.RangeIndex(len(self.features)))
 
     def _containsZero_implementation(self):
         """
@@ -403,16 +407,6 @@ class DataFrame(Base):
         else:
             ret = numpy.matmul(self.data.values, other.copy('numpyarray'))
         return DataFrame(ret)
-
-    def _updateName(self, axis):
-        """
-        update self.data.index or self.data.columns
-        """
-        if axis == 'point':
-            self.data.index = list(range(len(self.data.index)))
-        else:
-            # self.data.columns = self.features.getNames()
-            self.data.columns = list(range(len(self.data.columns)))
 
     def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
         if not all(dtype in usableTypes for dtype in self.data.dtypes):
