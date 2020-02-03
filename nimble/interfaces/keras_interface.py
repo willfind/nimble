@@ -135,7 +135,11 @@ To install keras
         predict = self._paramQuery('predict', learnerName, ignore)
         compile_ = self._paramQuery('compile', learnerName, ignore)
 
-        ret = init[0] + fit[0] + fitGenerator[0] + compile_[0] + predict[0]
+        ret = init[0] + fit[0] + predict[0]
+        if fitGenerator is not None:
+            ret += fitGenerator[0]
+        if compile_ is not None:
+            ret += compile_[0]
         return [ret]
 
     def _getDefaultValuesBackend(self, name):
@@ -161,7 +165,7 @@ To install keras
         toProcess = [init, fit, fitGenerator, compile_, predict]
 
         ret = {}
-        for stage in toProcess:
+        for stage in [stg for stg in toProcess if stg is not None]:
             currNames = stage[0]
             currDefaults = stage[3]
             if stage[3] is not None:
@@ -460,11 +464,17 @@ To install keras
 
         try:
             (args, v, k, d) = inspectArguments(namedModule)
+            # keras 2.2.5+ *_generator functionality merged into fit and
+            # predict but the arguments still only apply when a generator is
+            # used, so we will remove them and continue to use the *_generator
+            # legacy functions
+            genArgs = ['max_queue_size', 'workers', 'use_multiprocessing']
+            if name in ['fit', 'predict']:
+                ignore.extend(genArgs)
             args, d = removeFromTailMatchedLists(args, d, ignore)
             return (args, v, k, d)
         except TypeError:
             return self._paramQueryHardCoded(name, parent, ignore)
-
 
     def _paramQueryHardCoded(self, name, parent, ignore):
         """
