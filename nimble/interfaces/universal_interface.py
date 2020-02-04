@@ -812,8 +812,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def _incrementalTrainer(self, learner, trainX, trainY, arguments,
-                            customDict):
+    def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
+                            arguments, customDict):
         """
         Extend the training of an already trained online learner.
 
@@ -1450,8 +1450,8 @@ class TrainedLearner(object):
         transformedTrainY = transformed[1]
         transformedArguments = transformed[3]
         self.backend = self.interface._incrementalTrainer(
-            self.backend, transformedTrainX, transformedTrainY,
-            transformedArguments, self.customDict)
+            self.learnerName, self.backend, transformedTrainX,
+            transformedTrainY, transformedArguments, self.customDict)
 
         handleLogging(useLog, 'run', 'TrainedLearner.incrementalTrain', trainX,
                       trainY, None, None, self.learnerName, self.arguments,

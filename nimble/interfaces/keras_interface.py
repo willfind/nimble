@@ -38,13 +38,19 @@ class Keras(PredefinedInterface, UniversalInterface):
     def __init__(self):
         # modify path if another directory provided
 
-        self.keras = modifyImportPathAndImport(kerasDir, 'keras')
+        try:
+            # keras recommends using tensorflow.keras when possible
+            self.keras = modifyImportPathAndImport(None, 'tensorflow.keras')
+            backendName = 'tensorflow'
+        except ImportError:
+            self.keras = modifyImportPathAndImport(kerasDir, 'keras')
+            backendName = self.keras.backend.backend()
 
-        backendName = self.keras.backend.backend()
         # tensorflow has a tremendous quantity of informational outputs which
         # drown out anything else on standard out
         if backendName == 'tensorflow':
             logging.getLogger('tensorflow').disabled = True
+            # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
         # keras 2.0.8 has no __all__
         names = os.listdir(self.keras.__path__[0])
@@ -69,8 +75,9 @@ class Keras(PredefinedInterface, UniversalInterface):
             """
             hasFit = hasattr(obj, 'fit')
             hasPred = hasattr(obj, 'predict')
+            hasCompile = hasattr(obj, 'compile')
 
-            if not (hasFit and hasPred):
+            if not (hasFit and hasPred and hasCompile):
                 return False
 
             return True
@@ -86,9 +93,12 @@ class Keras(PredefinedInterface, UniversalInterface):
 
     def accessible(self):
         try:
-            import keras
+            import tensorflow.keras
         except ImportError:
-            return False
+            try:
+                import keras
+            except ImportError:
+                return False
         return True
 
     @classmethod
@@ -204,12 +214,17 @@ To install keras
     def _validateFitArguments(self, dataType, learnerName, arguments):
         fitArgs = self._paramQuery('fit', learnerName)[0]
         fitGenArgs = self._paramQuery('fit_generator', learnerName)[0]
-        if dataType == 'Sparse':
+        if fitGenArgs is not None and dataType == 'Sparse':
             useArgs = fitGenArgs
             ignoreArgs = fitArgs
-        else:
+        elif dataType == 'Sparse':
             useArgs = fitArgs
-            ignoreArgs = fitGenArgs
+            ignoreArgs = []
+        else:
+            # when not Sparse, ignore fit args that only apply to generators
+            genArgs = ['max_queue_size', 'workers', 'use_multiprocessing']
+            useArgs = [arg for arg in fitArgs if arg not in genArgs]
+            ignoreArgs = fitGenArgs if fitGenArgs is not None else []
 
         invalid = frozenset(ignoreArgs) - frozenset(useArgs)
         extra = []
@@ -281,18 +296,20 @@ To install keras
 
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
-        # get parameter names
-        # if learnerName == 'Model':
-        #     initNames = ['inputs', 'outputs']
-        # else:
-        self.learnerName = learnerName
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         compileNames = self._paramQuery('compile', learnerName, ['self'])[0]
-        if isinstance(trainX, nimble.data.Sparse):
+        isSparse = isinstance(trainX, nimble.data.Sparse)
+        # keras 2.2.5+ fit_generator functionality merged into fit.
+        # fit_generator may be removed, but will be used when possible
+        # to support earlier versions.
+        if isSparse:
             param = 'fit_generator'
         else:
             param = 'fit'
         fitNames = self._paramQuery(param, learnerName, ['self'])[0]
+        if fitNames is None: # fit_generator has been removed
+            param = 'fit'
+            fitNames = self._paramQuery('fit', learnerName, ['self'])[0]
 
         # pack parameter sets
         initParams = {name: arguments[name] for name in initNames
@@ -303,10 +320,22 @@ To install keras
                          if name in arguments}
         learner.compile(**compileParams)
 
+        def sparseGenerator():
+            while True:
+                for i in range(len(trainX.points)):
+                    tmpData = (trainX.pointView(i).copy(to='numpyarray'),
+                               numpy2DArray(trainY[i]))
+                    yield tmpData
+
+        fitForGenerator = param == 'fit' and isSparse
         fitParams = {}
         for name in fitNames:
-            if name.lower() == 'x' or name.lower() == 'obs':
+            if name.lower() in ['x', 'obs'] and fitForGenerator:
+                value = sparseGenerator()
+            elif name.lower() in ['x', 'obs']:
                 value = trainX
+            elif name.lower() == 'y' and fitForGenerator:
+                continue # y not allowed when using fit with generator
             elif name.lower() == 'y':
                 value = trainY
             elif name in arguments:
@@ -315,13 +344,7 @@ To install keras
                 continue
             fitParams[name] = value
 
-        if isinstance(trainX, nimble.data.Sparse):
-            def sparseGenerator():
-                while True:
-                    for i in range(len(trainX.points)):
-                        tmpData = (trainX.pointView(i).copy(to='numpyarray'),
-                                   numpy2DArray(trainY[i]))
-                        yield tmpData
+        if param == 'fit_generator':
             fitParams['generator'] = sparseGenerator()
             learner.fit_generator(**fitParams)
         else:
@@ -343,10 +366,9 @@ To install keras
         return learner
 
 
-    def _incrementalTrainer(self, learner, trainX, trainY, arguments,
-                            customDict):
+    def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
+                            arguments, customDict):
         param = 'train_on_batch'
-        learnerName = self.learnerName
         trainOnBatchNames = self._paramQuery(param, learnerName, ['self'])[0]
         trainOnBatchParams = {}
         for name in trainOnBatchNames:
@@ -365,19 +387,25 @@ To install keras
 
     def _applier(self, learnerName, learner, testX, newArguments,
                  storedArguments, customDict):
-        if hasattr(learner, 'predict'):
-            if isinstance(testX, nimble.data.Sparse):
-                method = 'predict_generator'
-            else:
-                method = 'predict'
-            ignore = ['X', 'x', 'self']
-            backendArgs = self._paramQuery(method, learnerName, ignore)[0]
-            applyArgs = self._getMethodArguments(backendArgs, newArguments,
-                                                 storedArguments)
-            return self._predict(learner, testX, applyArgs, customDict)
-        else:
+        if not hasattr(learner, 'predict'):
             msg = "Cannot apply this learner to data, no predict function"
             raise TypeError(msg)
+        # keras 2.2.5+ predict_generator functionality merged into predict.
+        # predict_generator may be removed but will be used when possible
+        # to support earlier versions.
+        if isinstance(testX, nimble.data.Sparse):
+            method = 'predict_generator'
+        else:
+            method = 'predict'
+        ignore = ['X', 'x', 'self']
+        backendArgs = self._paramQuery(method, learnerName, ignore)[0]
+        if backendArgs is None: # predict_generator has been removed
+            method = 'predict'
+            backendArgs = self._paramQuery(method, learnerName, ignore)[0]
+        customDict['predictMethod'] = method
+        applyArgs = self._getMethodArguments(backendArgs, newArguments,
+                                             storedArguments)
+        return self._predict(learner, testX, applyArgs, customDict)
 
 
     def _getAttributes(self, learnerBackend):
@@ -411,16 +439,20 @@ To install keras
         Wrapper for the underlying predict function of a keras learner
         object.
         """
-        if isinstance(testX, nimble.data.Sparse):
-            def sparseGenerator():
-                while True:
-                    for i in range(len(testX.points)):
-                        tmpData = testX.pointView(i).copy(to='numpy array')
-                        yield tmpData
+        def sparseGenerator():
+            while True:
+                for i in range(len(testX.points)):
+                    tmpData = testX.pointView(i).copy(to='numpy array')
+                    yield tmpData
+
+        predGenerator = customDict['predictMethod'] == 'predict_generator'
+        isSparse = isinstance(testX, nimble.data.Sparse)
+        if predGenerator and isSparse:
             arguments['generator'] = sparseGenerator()
             return learner.predict_generator(**arguments)
-        else:
-            return learner.predict(testX, **arguments)
+        elif isSparse:
+            return learner.predict(sparseGenerator(), **arguments)
+        return learner.predict(testX, **arguments)
 
 
     ###############
@@ -464,13 +496,6 @@ To install keras
 
         try:
             (args, v, k, d) = inspectArguments(namedModule)
-            # keras 2.2.5+ *_generator functionality merged into fit and
-            # predict but the arguments still only apply when a generator is
-            # used, so we will remove them and continue to use the *_generator
-            # legacy functions
-            genArgs = ['max_queue_size', 'workers', 'use_multiprocessing']
-            if name in ['fit', 'predict']:
-                ignore.extend(genArgs)
             args, d = removeFromTailMatchedLists(args, d, ignore)
             return (args, v, k, d)
         except TypeError:

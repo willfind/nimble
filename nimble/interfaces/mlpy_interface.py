@@ -325,8 +325,8 @@ To install mlpy
         return learner
 
 
-    def _incrementalTrainer(self, learner, trainX, trainY, arguments,
-                            customDict):
+    def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
+                            arguments, customDict):
         raise NotImplementedError
 
 
