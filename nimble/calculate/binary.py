@@ -6,48 +6,72 @@ from nimble.exceptions import InvalidArgumentValue
 from .similarity import confusionMatrix
 
 def truePositive(knownValues, predictedValues):
+    """
+    Number of predicted positive values that were known to be positive.
+    """
     cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
     return _getTruePositive(cm)
 
 truePositive.optimal = 'max'
 
 def trueNegative(knownValues, predictedValues):
+    """
+    Number of predicted negative values that were known to be negative.
+    """
     cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
     return _getTrueNegative(cm)
 
 trueNegative.optimal = 'max'
 
 def falsePositive(knownValues, predictedValues):
+    """
+    Number of predicted positive values that were known to be negative.
+    """
     cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
     return _getFalsePositive(cm)
 
 falsePositive.optimal = 'min'
 
 def falseNegative(knownValues, predictedValues):
+    """
+    Number of predicted negative values that were known to be positive.
+    """
     cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
     return _getFalseNegative(cm)
 
 falseNegative.optimal = 'min'
 
 def recall(knownValues, predictedValues):
+    """
+    The ratio of true positive values to known positive values.
+    """
     cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
     return _getRecall(cm)
 
 recall.optimal = 'max'
 
 def precision(knownValues, predictedValues):
+    """
+    The ratio of true positive values to predicted positive values.
+    """
     cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
     return _getPrecision(cm)
 
 precision.optimal = 'max'
 
 def specificity(knownValues, predictedValues):
+    """
+    The ratio of true negative values to known negative values.
+    """
     cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
     return _getSpecificity(cm)
 
 specificity.optimal = 'max'
 
 def balancedAccuracy(knownValues, predictedValues):
+    """
+    Accurracy measure accounting for imbalances in the label counts.
+    """
     cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
     recall = _getRecall(cm)
     specificity = _getSpecificity(cm)
@@ -57,6 +81,9 @@ def balancedAccuracy(knownValues, predictedValues):
 balancedAccuracy.optimal = 'max'
 
 def f1Score(knownValues, predictedValues):
+    """
+    The harmonic mean of precision and recall.
+    """
     cm = _getBinaryConfusionMatrix(knownValues, predictedValues)
     recall = _getRecall(cm)
     precision = _getPrecision(cm)
