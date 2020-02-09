@@ -176,6 +176,12 @@ class BaseView(Base):
     ##################################################################
 
     @exceptionDocstring
+    def transformElements(self, toTransform, points=None, features=None,
+                          preserveZeros=False, skipNoneReturnValues=False,
+                          useLog=None):
+        readOnlyException("transform")
+
+    @exceptionDocstring
     def transpose(self, useLog=None):
         readOnlyException("transpose")
 
@@ -184,14 +190,9 @@ class BaseView(Base):
         readOnlyException("referenceDataFrom")
 
     @exceptionDocstring
-    def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd,
-                 useLog=None):
-        readOnlyException("fillWith")
-
-    @exceptionDocstring
-    def fillUsingAllData(self, match, fill, points=None, features=None,
-                         returnModified=False, useLog=None, **kwarguments):
-        readOnlyException("fillUsingAllData")
+    def replaceRectangle(self, replaceWith, pointStart, featureStart, pointEnd,
+                         featureEnd, useLog=None):
+        readOnlyException("replaceRectangle")
 
     @exceptionDocstring
     def flattenToOnePoint(self, useLog=None):

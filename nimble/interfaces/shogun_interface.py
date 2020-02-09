@@ -352,7 +352,13 @@ To install shogun
         if outputFormat == 'label' and 'remap' in customDict:
             remap = customDict['remap']
             if remap is not None:
-                ret.elements.transform(remap, useLog=False)
+                def makeInverseMapper(inverseMappingParam):
+                    def inverseMapper(value):
+                        return inverseMappingParam[int(value)]
+
+                    return inverseMapper
+
+                ret.transformElements(remap, useLog=False)
 
         return ret
 
@@ -545,7 +551,7 @@ def _remapLabels(toRemap, space=None):
     mapping these values back to their original values.
     """
     assert len(toRemap.features) == 1
-    uniqueVals = list(toRemap.elements.countUnique().keys())
+    uniqueVals = list(toRemap.countUniqueElements().keys())
     if space is None:
         space = range(len(uniqueVals))
     remap = {orig: mapped for orig, mapped in zip(uniqueVals, space)}
@@ -559,7 +565,7 @@ def _remapLabels(toRemap, space=None):
             spaceStr = "space " + str(space)
         msg = "Cannot map label values to " + spaceStr
         raise InvalidArgumentValue(msg)
-    toRemap.elements.transform(remap, useLog=False)
+    toRemap.transformElements(remap, useLog=False)
     inverse = {mapped: orig for orig, mapped in remap.items()}
     return inverse
 

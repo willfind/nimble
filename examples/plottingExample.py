@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     # 1000 samples of N(0,1), squared
     def plotDistributionNormalSquared(plotObj, outDir):
-        plotObj.elements.power(2)
+        plotObj **= 2
         plotObj.features.setName(0, "N(0,1) squared")
 
         outPath = None
@@ -72,7 +72,7 @@ if __name__ == "__main__":
         else:
             return 1
 
-    checkObj.elements.transform(makeCheckered)
+    checkObj.transformElements(makeCheckered)
 
     def addGradient(vector):
         n = len(vector)

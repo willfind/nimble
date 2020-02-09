@@ -208,18 +208,6 @@ class SparseAxis(Axis):
 
         return repeated
 
-    #########################
-    # Query implementations #
-    #########################
-
-    def _nonZeroIterator_implementation(self):
-        if isinstance(self, Points):
-            self._base._sortInternal('point')
-        else:
-            self._base._sortInternal('feature')
-
-        return nzIt(self._base)
-
     ######################
     # Structural Helpers #
     ######################
@@ -408,32 +396,3 @@ def _calcShapes(currShape, numExtracted, axisType):
         extColShape = colShape
 
     return ((selfRowShape, selfColShape), (extRowShape, extColShape))
-
-class nzIt(object):
-    """
-    Non-zero iterator to return when iterating through points or
-    features. The iteration axis is dependent on how the internal data
-    is sorted before instantiation.
-    """
-    def __init__(self, source):
-        self._source = source
-        self._index = 0
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        """
-        Get next non zero value.
-        """
-        while self._index < len(self._source.data.data):
-            value = self._source.data.data[self._index]
-
-            self._index += 1
-            if value != 0:
-                return value
-
-        raise StopIteration
-
-    def __next__(self):
-        return self.next()
