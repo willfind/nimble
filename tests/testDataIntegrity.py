@@ -61,11 +61,16 @@ def wrappedTrainAndApply(learnerName, trainX, trainY, testX, testY):
     return nimble.trainAndApply(learnerName, trainX, trainY, testX)
 
 
+def wrappedTLApply(learnerName, trainX, trainY, testX, testY):
+    testX = handleApplyTestLabels(testX, testY)
+    tl = nimble.train(learnerName, trainX, trainY)
+    return tl.apply(testX)
+
+
 def wrappedTrainAndApplyOvO(learnerName, trainX, trainY, testX, testY):
     testX = handleApplyTestLabels(testX, testY)
     return nimble.trainAndApply(learnerName, trainX, trainY, testX,
                                 multiClassStrategy='OneVsOne')
-
 
 def wrappedTrainAndApplyOvA(learnerName, trainX, trainY, testX, testY):
     testX = handleApplyTestLabels(testX, testY)
@@ -77,6 +82,12 @@ def wrappedTrainAndTest(learnerName, trainX, trainY, testX, testY):
     # our performance function doesn't actually matter, we're just checking the data
     return nimble.trainAndTest(learnerName, trainX, trainY, testX, testY,
                                performanceFunction=nimble.calculate.fractionIncorrect)
+
+
+def wrappedTLTest(learnerName, trainX, trainY, testX, testY):
+    # our performance function doesn't actually matter, we're just checking the data
+    tl = nimble.train(learnerName, trainX, trainY)
+    return tl.test(testX, testY, performanceFunction=nimble.calculate.fractionIncorrect)
 
 
 def wrappedTrainAndTestOvO(learnerName, trainX, trainY, testX, testY):
@@ -195,6 +206,11 @@ def testDataIntegrityTrain():
 def testDataIntegrityTrainAndApply():
     backend(wrappedTrainAndApply, 1)
 
+
+@attr('slow')
+def testDataIntegrityTLApply():
+    backend(wrappedTLApply, 1)
+
 # we can test smaller portions here because the backends are all being tested by
 # the previous tests. We only care about the trainAndApply One vs One and One vs
 # all code.
@@ -207,6 +223,11 @@ def testDataIntegrityTrainAndApplyMulticlassStrategies():
 @attr('slow')
 def testDataIntegrityTrainAndTest():
     backend(wrappedTrainAndTest, 1)
+
+
+@attr('slow')
+def testDataIntegrityTLTest():
+    backend(wrappedTLTest, 1)
 
 # we can test smaller portions here because the backends are all being tested by
 # the previous tests. We only care about the trainAndTest One vs One and One vs
