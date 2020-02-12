@@ -438,6 +438,12 @@ def testPrepTypeFunctionsUseLog():
     checkLogContents('calculateOnElements', "Matrix",
                      {'toCalculate': "lambda x: len(x)", 'features': 0})
 
+    # matchingElements
+    dataObj = nimble.createData("Matrix", data, useLog=False)
+    calculated = dataObj.matchingElements(lambda e: e > 2, features=[1, 2])
+    checkLogContents('matchingElements', "Matrix",
+                     {'toMatch': "lambda e: e > 2", 'features': [1, 2]})
+
     ###################
     # Points/Features #
     ###################
@@ -751,6 +757,27 @@ def testFailedLambdaStringConversion():
     calculated = dataObj.calculateOnElements(lambda x: len(x), features=0)
     checkLogContents('calculateOnElements', "Matrix",
                      {'toCalculate': "<lambda>", 'features': 0})
+
+@configSafetyWrapper
+@emptyLogSafetyWrapper
+def testLambdaStringConversionCommas():
+    nimble.settings.set('logger', 'enabledByDefault', 'True')
+
+    data = [["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1],
+            ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
+            ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
+    for retType in nimble.data.available:
+        dataObj = nimble.createData(retType, data, useLog=False)
+        calculated1 = dataObj.points.calculate(lambda x: [x[0], x[2]], points=0)
+        checkLogContents('points.calculate', retType, {'function': "lambda x: [x[0], x[2]]",
+                                                        'points': 0})
+        calculated2 = dataObj.points.calculate(lambda x: (x[0], x[2]), points=6)
+        checkLogContents('points.calculate', retType, {'function': "lambda x: (x[0], x[2])",
+                                                        'points': 6})
+        calculated3 = dataObj.points.calculate(lambda x: {x[0]: None, x[2]: None}, points=12)
+        checkLogContents('points.calculate', retType,
+                         {'function': "lambda x: {x[0]: None, x[2]: None}",
+                          'points': 12})
 
 @emptyLogSafetyWrapper
 @raises(InvalidArgumentType)
