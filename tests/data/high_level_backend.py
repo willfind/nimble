@@ -1806,10 +1806,12 @@ class HighLevelDataSafe(DataTestObject):
     @oneLogEntryExpected
     def test_matchingElements_pfLimited(self):
         raw = [[1, 2, -3], [-1, -2, 3]]
-        obj = self.constructor(raw)
-        matches = obj.matchingElements(lambda x: x > 0, points=0, features=[1, 2])
+        pnames = ['1', '-1']
+        fnames = ['a', 'b', 'c']
+        obj = self.constructor(raw, pnames, fnames)
+        matches = obj.matchingElements(lambda x: x > 0, points='1', features=[1, 2])
         expRaw = [[True, False]]
-        expected = self.constructor(expRaw)
+        expected = self.constructor(expRaw, ['1'], ['b', 'c'])
         assert matches == expected
 
     @logCountAssertionFactory(4)
