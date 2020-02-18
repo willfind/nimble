@@ -13,7 +13,7 @@ from nimble.exceptions import InvalidArgumentType
 from ..assertionHelpers import noLogEntryExpected
 from ..assertionHelpers import CalledFunctionException, calledException
 
-@patch('nimble.data.Elements.multiply', calledException)
+@patch('nimble.data.Base.__mul__', calledException)
 def test_elementwiseMultiply_callsObjElementsMultiply():
     left = [[1, 2, 3], [4, 5, 6]]
     right = [[6, 5, 4], [3, 2, 1]]
@@ -52,7 +52,7 @@ def test_elementwiseMultiply_logCount():
     mult = elementwiseMultiply(leftObj, rightObj)
 
 
-@patch('nimble.data.Elements.power', calledException)
+@patch('nimble.data.Base.__pow__', calledException)
 def test_elementwisePower_callsObjElementsMultiply():
     left = [[1, 2, 3], [4, 5, 6]]
     right = [[6, 5, 4], [3, 2, 1]]

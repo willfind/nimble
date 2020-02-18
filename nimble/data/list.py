@@ -3,6 +3,7 @@ Class extending Base, using a list of lists to store data.
 """
 
 import copy
+import itertools
 from functools import reduce
 
 import numpy
@@ -16,11 +17,12 @@ from .base import Base
 from .base_view import BaseView
 from .listPoints import ListPoints, ListPointsView
 from .listFeatures import ListFeatures, ListFeaturesView
-from .listElements import ListElements, ListElementsView
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import isAllowedSingleElement
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import csvCommaFormat
+from .dataHelpers import denseCountUnique
+from .dataHelpers import NimbleElementIterator
 
 scipy = ImportModule('scipy')
 pd = ImportModule('pandas')
@@ -122,8 +124,31 @@ class List(Base):
     def _getFeatures(self):
         return ListFeatures(self)
 
-    def _getElements(self):
-        return ListElements(self)
+    def _transform_implementation(self, toTransform, points, features):
+        IDs = itertools.product(range(len(self.points)),
+                                range(len(self.features)))
+        for i, j in IDs:
+            currVal = self.data[i][j]
+
+            if points is not None and i not in points:
+                continue
+            if features is not None and j not in features:
+                continue
+
+            if toTransform.oneArg:
+                currRet = toTransform(currVal)
+            else:
+                currRet = toTransform(currVal, i, j)
+
+            self.data[i][j] = currRet
+
+    def _calculate_implementation(self, function, points, features,
+                                  preserveZeros, outputType):
+        return self._calculate_genericVectorized(
+            function, points, features, outputType)
+
+    def _countUnique_implementation(self, points, features):
+        return denseCountUnique(self, points, features)
 
     def _transpose_implementation(self):
         """
@@ -283,15 +308,15 @@ class List(Base):
                 return pd.DataFrame(emptyData)
             return pd.DataFrame(self.data)
 
-    def _fillWith_implementation(self, values, pointStart, featureStart,
-                                 pointEnd, featureEnd):
-        if not isinstance(values, Base):
-            values = [values] * (featureEnd - featureStart + 1)
+    def _replaceRectangle_implementation(self, replaceWith, pointStart,
+                                         featureStart, pointEnd, featureEnd):
+        if not isinstance(replaceWith, Base):
+            values = [replaceWith] * (featureEnd - featureStart + 1)
             for p in range(pointStart, pointEnd + 1):
                 self.data[p][featureStart:featureEnd + 1] = values
         else:
             for p in range(pointStart, pointEnd + 1):
-                fill = values.data[p - pointStart]
+                fill = replaceWith.data[p - pointStart]
                 self.data[p][featureStart:featureEnd + 1] = fill
 
     def _flattenToOnePoint_implementation(self):
@@ -579,6 +604,10 @@ class List(Base):
             return [list(map(convertType, pt)) for pt in self.points]
         return self.data
 
+    def _iterateElements_implementation(self, order, only):
+        array = numpy.array(self.data, dtype=numpy.object_)
+        return NimbleElementIterator(array, order, only)
+
 
 class ListView(BaseView, List):
     """
@@ -592,9 +621,6 @@ class ListView(BaseView, List):
 
     def _getFeatures(self):
         return ListFeaturesView(self)
-
-    def _getElements(self):
-        return ListElementsView(self)
 
     def _copy_implementation(self, to):
         # we only want to change how List and pythonlist copying is

@@ -255,12 +255,5 @@ class StretchSparse(Stretch):
             otherFts = len(other._source.features)
             rhs = other._source.points.repeat(selfPts, True)
             lhs = self._source.features.repeat(otherFts, True)
-        # TODO Sparse uses elements.multiply/power which are revalidating and
-        # can cause a name conflict here; evaluate avoiding the revalidation
-        # For now, removing all names since already stored to be set later
-        lhs.points.setNames(None, useLog=False)
-        lhs.features.setNames(None, useLog=False)
-        rhs.points.setNames(None, useLog=False)
-        rhs.features.setNames(None, useLog=False)
 
         return lhs._binaryOperations_implementation(opName, rhs)

@@ -453,7 +453,11 @@ def convertData(returnType, rawData, pointNames, featureNames,
         if returnType == 'Matrix' and len(rawData.shape) == 1:
             rawData = numpy2DArray(rawData)
         return rawData
-    return convertToArray(rawData, convertToType, pointNames, featureNames)
+    ret = convertToArray(rawData, convertToType, pointNames, featureNames)
+    if returnType == 'Sparse' and ret.dtype == numpy.object_:
+        # Sparse will convert None to 0 so we need to use numpy.nan instead
+        ret[ret == None] = numpy.nan
+    return ret
 
 def convertToArray(rawData, convertToType, pointNames, featureNames):
     if pd and isinstance(rawData, pd.DataFrame):

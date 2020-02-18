@@ -37,8 +37,7 @@ def confidenceIntervalHelper(errors, transform, confidence=0.95):
 
 
 def rootMeanSquareErrorConfidenceInterval(known, predicted, confidence=0.95):
-    errors = known - predicted
-    errors.elements.power(2)
+    errors = (known - predicted) ** 2
 
     def wrappedSqrt(value):
         if value < 0:

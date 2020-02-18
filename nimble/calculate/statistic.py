@@ -5,6 +5,7 @@ import functools
 import numpy
 
 import nimble
+from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
 from nimble.utility import ImportModule, dtypeConvert
@@ -48,7 +49,8 @@ def proportionMissing(values):
     """
     numMissing = 0
     numTotal = len(values)
-    for value in values.points.nonZeroIterator():
+    nonZeroItr = values.iterateElements(only=match.nonZero)
+    for value in nonZeroItr:
         if _isMissing(value):
             numMissing += 1
         else:
@@ -78,7 +80,7 @@ def proportionZero(values):
     """
     totalNum = len(values)
     nonZeroCount = 0
-    nonZeroItr = values.points.nonZeroIterator()
+    nonZeroItr = values.iterateElements(only=match.nonZero)
     for value in nonZeroItr:
         nonZeroCount += 1
 
