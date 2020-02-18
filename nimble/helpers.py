@@ -1216,8 +1216,14 @@ def _csvColTypeTracking(row, convertCols, nonNumericFeatures):
             del convertCols[key]
             nonNumericFeatures.append(key)
 
-def _colTypeConversion(row, conversions):
-    for idx, cType in conversions.items():
+def _colTypeConversion(row, convertCols):
+    """
+    Converts values in each row that are in numeric/boolean columns.
+
+    Since convertCols does not contain non-numeric columns, any empty
+    string is considered to be a missing value.
+    """
+    for idx, cType in convertCols.items():
         val = row[idx]
         if val == '':
             row[idx] = None
