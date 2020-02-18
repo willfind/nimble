@@ -10,4 +10,3 @@ nimble.data
       data/base
       data/points
       data/features
-      data/elements

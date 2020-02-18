@@ -29,17 +29,19 @@ from nimble.utility import cloudpickle, matplotlib
 from .points import Points
 from .features import Features
 from .axis import Axis
-from .elements import Elements
 from .stretch import Stretch
 from . import dataHelpers
 # the prefix for default point and feature names
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import DEFAULT_NAME_PREFIX
 from .dataHelpers import formatIfNeeded
-from .dataHelpers import valuesToPythonList
+from .dataHelpers import valuesToPythonList, constructIndicesList
 from .dataHelpers import createListOfDict, createDictOfList
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import csvCommaFormat
+from .dataHelpers import validateElementFunction, wrapMatchFunctionFactory
+from .dataHelpers import getDictionaryMappingFunction
+from .dataHelpers import ElementIterator1D
 
 
 def to2args(f):
@@ -104,8 +106,6 @@ class Base(object):
         An object handling functions manipulating data by points.
     features : Axis object
         An object handling functions manipulating data by features.
-    elements : Elements object
-        An object handling functions manipulating data by each element.
     name : str
         A name to call this object when printing or logging.
     absolutePath : str
@@ -133,7 +133,6 @@ class Base(object):
 
         self._points = self._getPoints()
         self._features = self._getFeatures()
-        self._elements = self._getElements()
 
         # Set up point names
         self._nextDefaultValuePoint = 0
@@ -232,23 +231,6 @@ class Base(object):
         nimble.data.Features
         """
         return self._features
-
-    def _getElements(self):
-        """
-        Get the object containing element-based methods for this object.
-        """
-        return BaseElements(base=self)
-
-    @property
-    def elements(self):
-        """
-        An object handling functions manipulating data by each element.
-
-        See Also
-        --------
-        nimble.data.Elements
-        """
-        return self._elements
 
     def _setpointCount(self, value):
         self._pointCount = value
@@ -394,10 +376,63 @@ class Base(object):
         msg += ") and the number of features ("
         msg += str(self._featureCount)
         msg += ") are both greater than 1"
-        raise TypeError(msg)
+        raise ImproperObjectAction(msg)
+
+    def __iter__(self):
+        if self._pointCount in [0, 1] or self._featureCount in [0, 1]:
+            return ElementIterator1D(self)
+
+        msg = "Cannot iterate over two-dimensional objects because the "
+        msg = "iteration order is arbitrary. Try the iterateElements() method."
+        raise ImproperObjectAction(msg)
 
     def __bool__(self):
         return self._pointCount > 0 and self._featureCount > 0
+
+    def iterateElements(self, order='point', only=None):
+        """
+        Iterate over each element in this object.
+
+        Provide an iterator which returns elements in the designated
+        ``order``. Optionally, the output of the iterator can be
+        restricted to certain elements by the ``only`` function.
+
+        Parameters
+        ----------
+        order : str
+           'point' or 'feature' to indicate how the iterator will access
+           the elements in this object.
+        only : function, None
+           If None, the default, all elements will be returned by the
+           iterator. If a function, it must return True or False
+           indicating whether the iterator should return the element.
+
+        See Also
+        --------
+        self.data.Points, self.data.Features
+
+        Examples
+        --------
+        >>> from nimble.match import nonZero, positive
+        >>> rawData = [[0, 1, 2], [-2, -1, 0]]
+        >>> data = nimble.createData('Matrix', rawData)
+        >>> list(data.iterateElements(order='point'))
+        [0, 1, 2, -2, -1, 0]
+        >>> list(data.iterateElements(order='feature'))
+        [0, -2, 1, -1, 2, 0]
+        >>> list(data.iterateElements(order='point', only=nonZero))
+        [1, 2, -2, -1]
+        >>> list(data.iterateElements(order='feature', only=positive))
+        [1, 2]
+        """
+        if order not in ['point', 'feature']:
+            msg = "order must be the string 'point' or 'feature'"
+            if not isinstance(order, str):
+                raise InvalidArgumentType(msg)
+            raise InvalidArgumentValue(msg)
+        if only is not None and not callable(only):
+            raise InvalidArgumentType('if not None, only must be callable')
+        return self._iterateElements_implementation(order, only)
 
     def nameIsDefault(self):
         """
@@ -458,7 +493,7 @@ class Base(object):
 
         replace = self.features.extract([index], useLog=False)
 
-        uniqueVals = list(replace.elements.countUnique().keys())
+        uniqueVals = list(replace.countUniqueElements().keys())
 
         binaryObj = replace._replaceFeatureWithBinaryFeatures_implementation(
             uniqueVals)
@@ -531,7 +566,7 @@ class Base(object):
 
         mapping = {}
         def applyMap(ft):
-            uniqueVals = ft.elements.countUnique()
+            uniqueVals = ft.countUniqueElements()
             integerValue = 0
             if 0 in uniqueVals:
                 mapping[0] = 0
@@ -556,6 +591,513 @@ class Base(object):
 
         return {v: k for k, v in mapping.items()}
 
+
+    def transformElements(self, toTransform, points=None, features=None,
+                          preserveZeros=False, skipNoneReturnValues=False,
+                          useLog=None):
+        """
+        Modify each element using a function or mapping.
+
+        Perform an inplace modification of the elements or subset of
+        elements in this object.
+
+        Parameters
+        ----------
+        toTransform : function, dict
+            * function - in the form of toTransform(elementValue)
+              or toTransform(elementValue, pointIndex, featureIndex)
+            * dictionary -  map the current element [key] to the
+              transformed element [value].
+        points : identifier, list of identifiers
+            May be a single point name or index, an iterable,
+            container of point names and/or indices. None indicates
+            application to all points.
+        features : identifier, list of identifiers
+            May be a single feature name or index, an iterable,
+            container of feature names and/or indices. None indicates
+            application to all features.
+        preserveZeros : bool
+            If True it does not apply toTransform to elements in the
+            data that are 0, and that 0 is not modified.
+        skipNoneReturnValues : bool
+            If True, any time toTransform() returns None, the value
+            originally in the data will remain unmodified.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+
+        See Also
+        --------
+        calculate, nimble.data.Points.transform,
+        nimble.data.Features.transform
+
+        Examples
+        --------
+        Simple transformation to all elements.
+
+        >>> data = nimble.ones('Matrix', 5, 5)
+        >>> data.transformElements(lambda elem: elem + 1)
+        >>> data
+        Matrix(
+            [[2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]]
+            )
+
+        Transform while preserving zero values.
+
+        >>> data = nimble.identity('Sparse', 5)
+        >>> data.transformElements(lambda elem: elem + 10,
+        ...                        preserveZeros=True)
+        >>> data
+        Sparse(
+            [[11.000   0      0      0      0   ]
+             [  0    11.000   0      0      0   ]
+             [  0      0    11.000   0      0   ]
+             [  0      0      0    11.000   0   ]
+             [  0      0      0      0    11.000]]
+            )
+
+        Transforming a subset of points and features.
+
+        >>> data = nimble.ones('List', 4, 4)
+        >>> data.transformElements(lambda elem: elem + 1,
+        ...                        points=[0, 1], features=[0, 2])
+        >>> data
+        List(
+            [[2.000 1.000 2.000 1.000]
+             [2.000 1.000 2.000 1.000]
+             [1.000 1.000 1.000 1.000]
+             [1.000 1.000 1.000 1.000]]
+            )
+
+        Transforming with None return values. With the ``addTenToEvens``
+        function defined below, An even values will be return a value,
+        while an odd value will return None. If ``skipNoneReturnValues``
+        is False, the odd values will be replaced with None (or nan
+        depending on the object type) if set to True the odd values will
+        remain as is. Both cases are presented.
+
+        >>> def addTenToEvens(elem):
+        ...     if elem % 2 == 0:
+        ...         return elem + 10
+        ...     return None
+        >>> raw = [[1, 2, 3],
+        ...        [4, 5, 6],
+        ...        [7, 8, 9]]
+        >>> dontSkip = nimble.createData('Matrix', raw)
+        >>> dontSkip.transformElements(addTenToEvens)
+        >>> dontSkip
+        Matrix(
+            [[None  12  None]
+             [ 14  None  16 ]
+             [None  18  None]]
+            )
+        >>> skip = nimble.createData('Matrix', raw)
+        >>> skip.transformElements(addTenToEvens,
+        ...                        skipNoneReturnValues=True)
+        >>> skip
+        Matrix(
+            [[1  12 3 ]
+             [14 5  16]
+             [7  18 9 ]]
+            )
+        """
+        if points is not None:
+            points = constructIndicesList(self, 'point', points)
+        if features is not None:
+            features = constructIndicesList(self, 'feature', features)
+
+        transformer = validateElementFunction(toTransform, preserveZeros,
+                                              skipNoneReturnValues,
+                                              'toTransform')
+
+        self._transform_implementation(transformer, points, features)
+
+        handleLogging(useLog, 'prep', 'transformElements',
+                      self.getTypeString(), Base.transformElements,
+                      toTransform, points, features, preserveZeros,
+                      skipNoneReturnValues)
+
+    def calculateOnElements(self, toCalculate, points=None, features=None,
+                            preserveZeros=False, skipNoneReturnValues=False,
+                            outputType=None, useLog=None):
+        """
+        Return a new object with a calculation applied to each element.
+
+        Apply a function or mapping to each element in this object or
+        subset of points and features in this  object.
+
+        Parameters
+        ----------
+        toCalculate : function, dict
+            * function - in the form of toCalculate(elementValue)
+              or toCalculate(elementValue, pointIndex, featureIndex)
+            * dictionary -  map the current element [key] to the
+              transformed element [value].
+        points : point, list of points
+            The subset of points to limit the calculation to. If None,
+            the calculation will apply to all points.
+        features : feature, list of features
+            The subset of features to limit the calculation to. If None,
+            the calculation will apply to all features.
+        preserveZeros : bool
+            Bypass calculation on zero values
+        skipNoneReturnValues : bool
+            Bypass values when ``toCalculate`` returns None. If False,
+            the value None will replace the value if None is returned.
+        outputType: nimble data type
+            Return an object of the specified type. If None, the
+            returned object will have the same type as the calling
+            object.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+
+        Returns
+        -------
+        nimble Base object
+
+        See Also
+        --------
+        transform, nimble.data.Points.calculate,
+        nimble.data.Features.calculate
+
+        Examples
+        --------
+        Simple calculation on all elements.
+
+        >>> data = nimble.ones('Matrix', 5, 5)
+        >>> twos = data.calculateOnElements(lambda elem: elem + 1)
+        >>> twos
+        Matrix(
+            [[2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]
+             [2.000 2.000 2.000 2.000 2.000]]
+            )
+
+        Calculate while preserving zero values.
+
+        >>> data = nimble.identity('Sparse', 5)
+        >>> addTen = data.calculateOnElements(lambda x: x + 10,
+        ...                                   preserveZeros=True)
+        >>> addTen
+        Sparse(
+            [[11.000   0      0      0      0   ]
+             [  0    11.000   0      0      0   ]
+             [  0      0    11.000   0      0   ]
+             [  0      0      0    11.000   0   ]
+             [  0      0      0      0    11.000]]
+            )
+
+        Calculate on a subset of points and features.
+
+        >>> data = nimble.ones('List', 4, 4)
+        >>> calc = data.calculateOnElements(lambda elem: elem + 1,
+        ...                                 points=[0, 1],
+        ...                                 features=[0, 2])
+        >>> calc
+        List(
+            [[2.000 2.000]
+             [2.000 2.000]]
+            )
+
+        Calculating with None return values. With the ``addTenToEvens``
+        function defined below, An even values will be return a value,
+        while an odd value will return None. If ``skipNoneReturnValues``
+        is False, the odd values will be replaced with None (or nan
+        depending on the object type) if set to True the odd values will
+        remain as is. Both cases are presented.
+
+        >>> def addTenToEvens(elem):
+        ...     if elem % 2 == 0:
+        ...         return elem + 10
+        ...     return None
+        >>> raw = [[1, 2, 3],
+        ...        [4, 5, 6],
+        ...        [7, 8, 9]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> dontSkip = data.calculateOnElements(addTenToEvens)
+        >>> dontSkip
+        Matrix(
+            [[nan  12 nan]
+             [ 14 nan  16]
+             [nan  18 nan]]
+            )
+        >>> skip = data.calculateOnElements(addTenToEvens,
+        ...                                 skipNoneReturnValues=True)
+        >>> skip
+        Matrix(
+            [[1  12 3 ]
+             [14 5  16]
+             [7  18 9 ]]
+            )
+        """
+        calculator = validateElementFunction(toCalculate, preserveZeros,
+                                             skipNoneReturnValues,
+                                             'toCalculate')
+
+        ret = self._calculate_backend(calculator, points, features,
+                                      preserveZeros, skipNoneReturnValues,
+                                      outputType)
+
+        handleLogging(useLog, 'prep', 'calculateOnElements',
+                      self.getTypeString(), Base.calculateOnElements,
+                      toCalculate, points, features, preserveZeros,
+                      skipNoneReturnValues, outputType)
+
+        return ret
+
+    def matchingElements(self, toMatch, points=None, features=None,
+                         useLog=None):
+        """
+        Return an object of boolean values identifying matching values.
+
+        Apply a function returning a boolean value for each element in
+        this object. Common matching functions can be found in nimble's
+        match module.
+
+        Parameters
+        ----------
+        toMatch : function
+            * function - in the form of toMatch(elementValue) which
+              returns True, False, 0 or 1.
+        points : point, list of points
+            The subset of points to limit the matching to. If None,
+            the matching will apply to all points.
+        features : feature, list of features
+            The subset of features to limit the matching to. If None,
+            the matching will apply to all features.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+
+        Returns
+        -------
+        nimble Base object
+            This object will only contain boolean values.
+
+        Examples
+        --------
+        >>> from nimble import match
+        >>> raw = [[1, -1, 1], [-3, 3, -3]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> isPositive = data.matchingElements(match.positive)
+        >>> isPositive
+        Matrix(
+            [[ True False  True]
+             [False  True False]]
+            )
+
+        >>> from nimble import match
+        >>> raw = [[1, -1, None], [None, 3, -3]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> isMissing = data.matchingElements(match.missing)
+        >>> isMissing
+        Matrix(
+            [[False False  True]
+             [ True False False]]
+            )
+        """
+        wrappedMatch = wrapMatchFunctionFactory(toMatch)
+
+        ret = self._calculate_backend(wrappedMatch, points, features,
+                                      allowBoolOutput=True)
+
+        pnames = self.points._getNamesNoGeneration()
+        if pnames is not None and points is not None:
+            ptIdx = constructIndicesList(self, 'point', points)
+            pnames = [pnames[i] for i in ptIdx]
+        fnames = self.features._getNamesNoGeneration()
+        if fnames is not None and features is not None:
+            ftIdx = constructIndicesList(self, 'feature', features)
+            fnames = [fnames[j] for j in ftIdx]
+        ret.points.setNames(pnames, useLog=False)
+        ret.features.setNames(fnames, useLog=False)
+
+        handleLogging(useLog, 'prep', 'matchingElements', self.getTypeString(),
+                      Base.matchingElements, toMatch, points, features)
+
+        return ret
+
+    def _calculate_backend(self, calculator, points=None, features=None,
+                           preserveZeros=False, skipNoneReturnValues=False,
+                           outputType=None, allowBoolOutput=False):
+        if points is not None:
+            points = constructIndicesList(self, 'point', points)
+        if features is not None:
+            features = constructIndicesList(self, 'feature', features)
+
+        if outputType is not None:
+            optType = outputType
+        else:
+            optType = self.getTypeString()
+        # Use vectorized for functions with oneArg
+        if calculator.oneArg:
+            vectorized = numpy.vectorize(calculator)
+            values = self._calculate_implementation(
+                vectorized, points, features, preserveZeros, optType)
+
+        else:
+            if not points:
+                points = list(range(len(self.points)))
+            if not features:
+                features = list(range(len(self.features)))
+            # if unable to vectorize, iterate over each point
+            values = numpy.empty([len(points), len(features)])
+            if allowBoolOutput:
+                values = values.astype(numpy.bool_)
+            p = 0
+            for pi in points:
+                f = 0
+                for fj in features:
+                    value = self[pi, fj]
+                    currRet = calculator(value, pi, fj)
+                    if (match.nonNumeric(currRet) and currRet is not None
+                            and values.dtype != numpy.object_):
+                        values = values.astype(numpy.object_)
+                    values[p, f] = currRet
+                    f += 1
+                p += 1
+
+        ret = nimble.createData(optType, values, treatAsMissing=[None],
+                                useLog=False)
+
+        ret._absPath = self.absolutePath
+        ret._relPath = self.relativePath
+
+        return ret
+
+    def _calculate_genericVectorized(
+            self, function, points, features, outputType):
+        # need points/features as arrays for indexing
+        if points:
+            points = numpy.array(points)
+        else:
+            points = numpy.array(range(len(self.points)))
+        if features:
+            features = numpy.array(features)
+        else:
+            features = numpy.array(range(len(self.features)))
+        toCalculate = self.copy(to='numpyarray')
+        # array with only desired points and features
+        toCalculate = toCalculate[points[:, None], features]
+        try:
+            return function(toCalculate)
+        except Exception:
+            # change output type of vectorized function to object to handle
+            # nonnumeric data
+            function.otypes = [numpy.object_]
+            return function(toCalculate)
+
+    def countElements(self, condition):
+        """
+        The number of values which satisfy the condition.
+
+        Parameters
+        ----------
+        condition : function
+            function - may take two forms:
+            a) a function that accepts an element value as input and
+            will return True if it is to be counted
+            b) a filter function, as a string, containing a comparison
+            operator and a value
+
+        Returns
+        -------
+        int
+
+        See Also
+        --------
+        nimble.data.Points.count, nimble.data.Features.count
+
+        Examples
+        --------
+        Using a python function.
+
+        >>> def greaterThanZero(elem):
+        ...     return elem > 0
+        >>> data = nimble.identity('Matrix', 5)
+        >>> numGreaterThanZero = data.countElements(greaterThanZero)
+        >>> numGreaterThanZero
+        5
+
+        Using a string filter function.
+
+        >>> numLessThanOne = data.countElements("<1")
+        >>> numLessThanOne
+        20
+        """
+        if hasattr(condition, '__call__'):
+            ret = self.calculateOnElements(condition, outputType='Matrix',
+                                           useLog=False)
+        elif isinstance(condition, str):
+            func = lambda x: eval('x'+condition)
+            ret = self.calculateOnElements(func, outputType='Matrix',
+                                           useLog=False)
+        else:
+            msg = 'function can only be a function or string containing a '
+            msg += 'comparison operator and a value'
+            raise InvalidArgumentType(msg)
+        return int(numpy.sum(ret.data))
+
+    def countUniqueElements(self, points=None, features=None):
+        """
+        Count of each unique value in the data.
+
+        Parameters
+        ----------
+        points : identifier, list of identifiers
+            May be None indicating application to all points, a single
+            name or index or an iterable of points and/or indices.
+        features : identifier, list of identifiers
+            May be None indicating application to all features, a single
+            name or index or an iterable of names and/or indices.
+
+        Returns
+        -------
+        dict
+            Each unique value as keys and the number of times that
+            value occurs as values.
+
+        See Also
+        --------
+        nimble.calculate.statistic.uniqueCount
+
+        Examples
+        --------
+        Count for all elements.
+
+        >>> data = nimble.identity('Matrix', 5)
+        >>> unique = data.countUniqueElements()
+        >>> unique
+        {0.0: 20, 1.0: 5}
+
+        Count for a subset of elements.
+
+        >>> data = nimble.identity('Matrix', 5)
+        >>> unique = data.countUniqueElements(points=0,
+        ...                                   features=[0, 1, 2])
+        >>> unique
+        {0.0: 2, 1.0: 1}
+        """
+        return self._countUnique_implementation(points, features)
 
     def groupByFeature(self, by, countUniqueValueOnly=False, useLog=None):
         """
@@ -671,8 +1213,8 @@ class Base(object):
         """
         if self._pointCount == 0 or self._featureCount == 0:
             return 0
-        valueObj = self.elements.calculate(hashCodeFunc, preserveZeros=True,
-                                           outputType='Matrix', useLog=False)
+        valueObj = self.calculateOnElements(hashCodeFunc, preserveZeros=True,
+                                            outputType='Matrix', useLog=False)
         valueList = valueObj.copy(to="python list")
         avg = (sum(itertools.chain.from_iterable(valueList))
                / float(self._pointCount * self._featureCount))
@@ -2352,8 +2894,8 @@ class Base(object):
         return self.copy()
 
 
-    def fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd,
-                 useLog=None):
+    def replaceRectangle(self, replaceWith, pointStart, featureStart, pointEnd,
+                         featureEnd, useLog=None):
         """
         Replace values in the data with other values.
 
@@ -2390,8 +2932,7 @@ class Base(object):
 
         See Also
         --------
-        fillUsingAllData, nimble.data.Points.fill,
-        nimble.data.Features.fill
+        nimble.data.Points.fill, nimble.data.Features.fill
 
         Examples
         --------
@@ -2399,7 +2940,7 @@ class Base(object):
 
         >>> data = nimble.ones('Matrix', 5, 5)
         >>> filler = nimble.zeros('Matrix', 3, 3)
-        >>> data.fillWith(filler, 0, 0, 2, 2)
+        >>> data.replaceRectangle(filler, 0, 0, 2, 2)
         >>> data
         Matrix(
             [[0.000 0.000 0.000 1.000 1.000]
@@ -2423,146 +2964,52 @@ class Base(object):
             msg += "or equal to featureEnd (" + str(featureEnd) + ")."
             raise InvalidArgumentValueCombination(msg)
 
-        if isinstance(values, Base):
+        if isinstance(replaceWith, Base):
             prange = (peIndex - psIndex) + 1
             frange = (feIndex - fsIndex) + 1
-            if len(values.points) != prange:
-                msg = "When the values argument is a nimble Base object, the "
-                msg += "size of values must match the range of modification. "
-                msg += "There are " + str(len(values.points)) + " points in "
-                msg += "values, yet pointStart (" + str(pointStart) + ")"
-                msg += "and pointEnd (" + str(pointEnd) + ") define a range "
-                msg += "of length " + str(prange)
+            raiseException = False
+            if len(replaceWith.points) != prange:
+                raiseException = True
+                axis = 'point'
+                axisLen = len(replaceWith.points)
+                start = pointStart
+                end = pointEnd
+                rangeLen = prange
+            elif len(replaceWith.features) != frange:
+                raiseException = True
+                axis = 'feature'
+                axisLen = len(replaceWith.features)
+                start = featureStart
+                end = featureEnd
+                rangeLen = frange
+            if raiseException:
+                msg = "When the replaceWith argument is a nimble Base object, "
+                msg += "the size of replaceWith must match the range of "
+                msg += "modification. There are {axisLen} {axis}s in "
+                msg += "replaceWith, yet {axis}Start ({start}) and {axis}End "
+                msg += "({end}) define a range of length {rangeLen}"
+                msg = msg.format(axis=axis, axisLen=axisLen, start=start,
+                                 end=end, rangeLen=rangeLen)
                 raise InvalidArgumentValueCombination(msg)
-            if len(values.features) != frange:
-                msg = "When the values argument is a nimble Base object, the "
-                msg += "size of values must match the range of modification. "
-                msg += "There are " + str(len(values.features)) + " features "
-                msg += "in values, yet featureStart (" + str(featureStart)
-                msg += ") and featureEnd (" + str(featureEnd) + ") define a "
-                msg += "range of length " + str(frange)
-                raise InvalidArgumentValueCombination(msg)
-            if values.getTypeString() != self.getTypeString():
-                values = values.copy(to=self.getTypeString())
+            if replaceWith.getTypeString() != self.getTypeString():
+                replaceWith = replaceWith.copy(to=self.getTypeString())
 
-        elif (dataHelpers._looksNumeric(values)
-              or isinstance(values, str)):
+        elif (dataHelpers._looksNumeric(replaceWith)
+              or isinstance(replaceWith, str)):
             pass  # no modifications needed
         else:
-            msg = "values may only be a nimble Base object, or a single "
+            msg = "replaceWith may only be a nimble Base object, or a single "
             msg += "numeric value, yet we received something of "
-            msg += str(type(values))
+            msg += str(type(replaceWith))
             raise InvalidArgumentType(msg)
 
-        self._fillWith_implementation(values, psIndex, fsIndex,
-                                      peIndex, feIndex)
+        self._replaceRectangle_implementation(replaceWith, psIndex, fsIndex,
+                                              peIndex, feIndex)
 
-        handleLogging(useLog, 'prep', "fillWith",
-                      self.getTypeString(), Base.fillWith, values, pointStart,
-                      featureStart, pointEnd, featureEnd)
+        handleLogging(useLog, 'prep', "replaceRectangle",
+                      self.getTypeString(), Base.replaceRectangle, replaceWith,
+                      pointStart, featureStart, pointEnd, featureEnd)
 
-
-    def fillUsingAllData(self, match, fill, points=None, features=None,
-                         returnModified=False, useLog=None, **kwarguments):
-        """
-        Replace matching values calculated using the entire data object.
-
-        Fill matching values with values based on the context of the
-        entire dataset.
-
-        Parameters
-        ----------
-        match : value, list, or function
-            * value - a value to locate within each feature
-            * list - values to locate within each feature
-            * function - must accept a single value and return True if
-              the value is a match. Certain match types can be imported
-              from nimble's match module: missing, nonNumeric, zero, etc
-        fill : function
-            a function in the format fill(feature, match) or
-            fill(feature, match, arguments) and return the transformed
-            data as a nimble data object. Certain fill methods can be
-            imported from nimble's fill module:
-            kNeighborsRegressor, kNeighborsClassifier
-        points : identifier or list of identifiers
-            Select specific points to apply fill to. If points is None,
-            the fill will be applied to all points.
-        features : identifier or list of identifiers
-            Select specific features to apply fill to. If features is
-            None, the fill will be applied to all features.
-        returnModified : return an object containing True for the
-            modified values in each feature and False for unmodified
-            values.
-        useLog : bool, None
-            Local control for whether to send object creation to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-        kwarguments
-            Any additional arguments being passed to the fill function.
-
-        See Also
-        --------
-        fillWith, nimble.data.Points.fill, nimble.data.Features.fill
-
-        Examples
-        --------
-        Fill using the value that occurs most often in each points 3
-        nearest neighbors.
-
-        >>> from nimble.fill import kNeighborsClassifier
-        >>> raw = [[1, 1, 1],
-        ...        [1, 1, 1],
-        ...        [1, 1, 'na'],
-        ...        [2, 2, 2],
-        ...        ['na', 2, 2]]
-        >>> data = nimble.createData('Matrix', raw)
-        >>> data.fillUsingAllData('na', kNeighborsClassifier,
-        ...                       n_neighbors=3)
-        >>> data
-        Matrix(
-            [[  1   1   1  ]
-             [  1   1   1  ]
-             [  1   1 1.000]
-             [  2   2   2  ]
-             [1.000 2   2  ]]
-            )
-        """
-        if returnModified:
-            modified = self.elements.calculate(match, points=points,
-                                               features=features, useLog=False)
-            modNames = [name + "_modified" for name
-                        in modified.features.getNames()]
-            modified.features.setNames(modNames, useLog=False)
-            if points is not None and features is not None:
-                modified = modified[points, features]
-            elif points is not None:
-                modified = modified[points, :]
-            elif features is not None:
-                modified = modified[:, features]
-        else:
-            modified = None
-
-        if not callable(fill):
-            msg = "fill must be callable. If attempting to modify all "
-            msg += "matching values to a constant, use either "
-            msg += "points.fill or features.fill."
-            raise InvalidArgumentType(msg)
-        tmpData = fill(self.copy(), match, **kwarguments)
-        if points is None and features is None:
-            self.referenceDataFrom(tmpData, useLog=False)
-        else:
-            def transform(value, i, j):
-                return tmpData[i, j]
-            self.elements.transform(transform, points, features, useLog=False)
-
-        handleLogging(useLog, 'prep', "fillUsingAllData",
-                      self.getTypeString(), Base.fillUsingAllData, match, fill,
-                      points, features, returnModified, **kwarguments)
-
-        return modified
 
     def _flattenNames(self, discardAxis):
         """
@@ -3877,7 +4324,7 @@ class Base(object):
         """
         Perform element wise absolute value on this object
         """
-        ret = self.elements.calculate(abs, useLog=False)
+        ret = self.calculateOnElements(abs, useLog=False)
         if self._pointNamesCreated():
             ret.points.setNames(self.points.getNames(), useLog=False)
         else:
@@ -3897,7 +4344,7 @@ class Base(object):
         Validate the object elements are all numeric.
         """
         try:
-            self.elements.calculate(dataHelpers._checkNumeric, useLog=False)
+            self.calculateOnElements(dataHelpers._checkNumeric, useLog=False)
         except ValueError:
             msg = "The object on the {0} contains non numeric data, "
             msg += "cannot do this operation"
@@ -4061,7 +4508,6 @@ class Base(object):
 
         return ret
 
-
     def __and__(self, other):
         return self._genericLogicalBinary('__and__', other)
 
@@ -4073,7 +4519,7 @@ class Base(object):
 
     def __invert__(self):
         boolObj = self._logicalValidationAndConversion()
-        ret = boolObj.elements.matching(lambda v: not v, useLog=False)
+        ret = boolObj.matchingElements(lambda v: not v, useLog=False)
         ret.points.setNames(self.points._getNamesNoGeneration(), useLog=False)
         ret.features.setNames(self.features._getNamesNoGeneration(),
                               useLog=False)
@@ -4103,7 +4549,7 @@ class Base(object):
                 msg += 'containing True, False, 0 and 1 values'
                 raise ImproperObjectAction(msg)
 
-            ret = self.elements.matching(lambda v: bool(v), useLog=False)
+            ret = self.matchingElements(lambda v: bool(v), useLog=False)
             ret.points.setNames(self.points._getNamesNoGeneration(),
                                 useLog=False)
             ret.features.setNames(self.features._getNamesNoGeneration(),
@@ -4111,7 +4557,6 @@ class Base(object):
             return ret
 
         return self
-
 
     @property
     def stretch(self):
@@ -4772,8 +5217,8 @@ class Base(object):
         pass
 
     @abstractmethod
-    def _fillWith_implementation(self, values, pointStart, featureStart,
-                                 pointEnd, featureEnd):
+    def _replaceRectangle_implementation(self, replaceWith, pointStart,
+                                         featureStart, pointEnd, featureEnd):
         pass
 
     @abstractmethod
@@ -4814,11 +5259,5 @@ class BasePoints(Axis, Points):
 class BaseFeatures(Axis, Features):
     """
     Access for feature-based methods.
-    """
-    pass
-
-class BaseElements(Elements):
-    """
-    Access for element-based methods.
     """
     pass

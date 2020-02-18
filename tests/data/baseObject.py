@@ -242,7 +242,6 @@ def objectValidationMethods(cls):
 
 objectValidationDict = {}
 objectValidationDict['Base'] = objectValidationMethods(nimble.data.base.Base)
-objectValidationDict['Elements'] = objectValidationMethods(nimble.data.elements.Elements)
 objectValidationDict['Features'] = objectValidationMethods(nimble.data.features.Features)
 objectValidationDict['Points'] = objectValidationMethods(nimble.data.points.Points)
 
@@ -257,7 +256,7 @@ def setClassAttributes(classes, wrapper=None):
 
 
 def startObjectValidation():
-    classList = ['Base', 'Elements', 'Features', 'Points']
+    classList = ['Base', 'Features', 'Points']
     setClassAttributes(classList, methodObjectValidation)
     for cls in classList:
         # set an attribute to allow tests to check this has been setup
@@ -265,7 +264,7 @@ def startObjectValidation():
 
 
 def stopObjectValidation():
-    classList = ['Base', 'Elements', 'Features', 'Points']
+    classList = ['Base', 'Features', 'Points']
     setClassAttributes(classList)
     for cls in classList:
         delattr(objectValidationDict[cls]['class'], 'objectValidation')
