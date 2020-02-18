@@ -645,32 +645,20 @@ class Axis(object):
         return ret
 
 
-    def _fill(self, toMatch, toFill, limitTo=None, returnModified=False,
-              useLog=None, **kwarguments):
-        modified = None
-        toTransform = fill.factory(toMatch, toFill, **kwarguments)
-
-        if returnModified:
-            def bools(values):
-                return [True if toMatch(val) else False for val in values]
-
-            modified = self._calculate(bools, limitTo, useLog=False)
-            if self._isPoint:
-                currNames = modified.points.getNames()
-                modNames = [n + "_modified" for n in currNames]
-                modified.points.setNames(modNames, useLog=False)
-            else:
-                currNames = modified.features.getNames()
-                modNames = [n + "_modified" for n in currNames]
-                modified.features.setNames(modNames, useLog=False)
+    def _fillMatching(self, fillWith, matchingElements, limitTo=None,
+                      useLog=None, **kwarguments):
+        # our fill functions that also need access to the base data
+        needData = [fill.kNeighborsRegressor, fill.kNeighborsClassifier]
+        if fillWith in needData and 'data' not in kwarguments:
+            kwarguments['data'] = self._base.copy()
+        toTransform = fill.factory(fillWith, matchingElements, **kwarguments)
 
         self._transform(toTransform, limitTo, useLog=False)
 
-        handleLogging(useLog, 'prep', '{ax}s.fill'.format(ax=self._axis),
-                      self._base.getTypeString(), self._sigFunc('fill'),
-                      toMatch, toFill, limitTo, returnModified, **kwarguments)
-
-        return modified
+        funcName = '{ax}s.fillMatching'.format(ax=self._axis)
+        handleLogging(useLog, 'prep', funcName, self._base.getTypeString(),
+                      self._sigFunc('fillMatching'), fillWith,
+                      matchingElements, limitTo, **kwarguments)
 
 
     def _normalize(self, subtract, divide, applyResultTo, useLog=None):
@@ -879,12 +867,6 @@ class Axis(object):
     ###################
     # Query functions #
     ###################
-
-    def _nonZeroIterator(self):
-        if self._base._pointCount == 0 or self._base._featureCount == 0:
-            return EmptyIt()
-
-        return self._nonZeroIterator_implementation()
 
     def _unique(self):
         ret = self._unique_implementation()
@@ -1710,10 +1692,6 @@ class Axis(object):
     def _unique_implementation(self):
         pass
 
-    @abstractmethod
-    def _nonZeroIterator_implementation(self):
-        pass
-
 ###########
 # Helpers #
 ###########
@@ -1845,22 +1823,6 @@ class AxisIterator(object):
             return value
         else:
             raise StopIteration
-
-    def __next__(self):
-        return self.next()
-
-class EmptyIt(object):
-    """
-    Non-zero iterator to return when object is point or feature empty.
-    """
-    def __iter__(self):
-        return self
-
-    def next(self):
-        """
-        Raise StopIteration since this object is point or feature empty.
-        """
-        raise StopIteration
 
     def __next__(self):
         return self.next()

@@ -18,12 +18,13 @@ from .base import Base
 from .base_view import BaseView
 from .sparsePoints import SparsePoints, SparsePointsView
 from .sparseFeatures import SparseFeatures, SparseFeaturesView
-from .sparseElements import SparseElements, SparseElementsView
 from .stretch import StretchSparse
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import csvCommaFormat
+from .dataHelpers import denseCountUnique
+from .dataHelpers import NimbleElementIterator
 
 scipy = ImportModule('scipy')
 pd = ImportModule('pandas')
@@ -74,9 +75,6 @@ class Sparse(Base):
     def _getFeatures(self):
         return SparseFeatures(self)
 
-    def _getElements(self):
-        return SparseElements(self)
-
     @property
     def stretch(self):
         return StretchSparse(self)
@@ -84,6 +82,120 @@ class Sparse(Base):
     def _plot(self, outPath=None, includeColorbar=False):
         toPlot = self.copy(to="Matrix")
         return toPlot._plot(outPath, includeColorbar)
+
+    def _transform_implementation(self, toTransform, points, features):
+        if toTransform.preserveZeros:
+            self._transformEachElement_zeroPreserve_implementation(
+                toTransform, points, features)
+        else:
+            self._transformEachElement_noPreserve_implementation(
+                toTransform, points, features)
+
+    def _transformEachElement_noPreserve_implementation(self, toTransform,
+                                                        points, features):
+        # returns None if outside of the specified points and feature so that
+        # when calculateForEach is called we are given a full data object
+        # with only certain values modified.
+        def wrapper(value, pID, fID):
+            if points is not None and pID not in points:
+                return None
+            if features is not None and fID not in features:
+                return None
+
+            if toTransform.oneArg:
+                return toTransform(value)
+            else:
+                return toTransform(value, pID, fID)
+
+        # perserveZeros is always False in this helper, skipNoneReturnValues
+        # is being hijacked by the wrapper: even if it was False, Sparse can't
+        # contain None values.
+        ret = self.calculateOnElements(wrapper, None, None,
+                                       preserveZeros=False,
+                                       skipNoneReturnValues=True, useLog=False)
+
+        pnames = self.points._getNamesNoGeneration()
+        fnames = self.features._getNamesNoGeneration()
+        self.referenceDataFrom(ret, useLog=False)
+        self.points.setNames(pnames, useLog=False)
+        self.features.setNames(fnames, useLog=False)
+        self._sorted = None
+
+    def _transformEachElement_zeroPreserve_implementation(
+            self, toTransform, points, features):
+        for index, val in enumerate(self.data.data):
+            pID = self.data.row[index]
+            fID = self.data.col[index]
+            if points is not None and pID not in points:
+                continue
+            if features is not None and fID not in features:
+                continue
+
+            if toTransform.oneArg:
+                currRet = toTransform(val)
+            else:
+                currRet = toTransform(val, pID, fID)
+
+            self.data.data[index] = currRet
+
+        self.data.eliminate_zeros()
+
+    def _calculate_implementation(self, function, points, features,
+                                  preserveZeros, outputType):
+        if not isinstance(self, nimble.data.BaseView):
+            data = self.data.data
+            row = self.data.row
+            col = self.data.col
+        else:
+            # initiate generic implementation for view types
+            preserveZeros = False
+        # all data
+        if preserveZeros and points is None and features is None:
+            try:
+                data = function(data)
+            except Exception:
+                function.otypes = [numpy.object_]
+                data = function(data)
+            shape = self.data.shape
+            values = scipy.sparse.coo_matrix((data, (row, col)), shape=shape)
+            # note: even if function transforms nonzero values into zeros
+            # our init methods will filter them out from the data attribute
+            return values
+        # subset of data
+        if preserveZeros:
+            dataSubset = []
+            rowSubset = []
+            colSubset = []
+            for idx, val in enumerate(data):
+                if row[idx] in points and col[idx] in features:
+                    rowSubset.append(row[idx])
+                    colSubset.append(col[idx])
+                    dataSubset.append(val)
+            dataSubset = function(dataSubset)
+            values = scipy.sparse.coo_matrix((dataSubset,
+                                              (rowSubset, colSubset)))
+            # note: even if function transforms nonzero values into zeros
+            # our init methods will filter them out from the data attribute
+            return values
+        # zeros not preserved
+        return self._calculate_genericVectorized(
+            function, points, features, outputType)
+
+    def _countUnique_implementation(self, points, features):
+        uniqueCount = {}
+        isView = isinstance(self, nimble.data.BaseView)
+        if points is None and features is None and not isView:
+            source = self
+        else:
+            pWanted = points if points is not None else slice(None)
+            fWanted = features if features is not None else slice(None)
+            source = self[pWanted, fWanted]
+        uniqueCount = denseCountUnique(source.data.data)
+        totalValues = (len(source.points) * len(source.features))
+        numZeros = totalValues - len(source.data.data)
+        if numZeros > 0:
+            uniqueCount[0] = numZeros
+        return uniqueCount
 
     def _transpose_implementation(self):
         self.data = self.data.transpose()
@@ -220,20 +332,20 @@ class Sparse(Base):
                 raise PackageException(msg)
             return pd.DataFrame(sparseMatrixToArray(self.data))
 
-    def _fillWith_implementation(self, values, pointStart, featureStart,
-                                 pointEnd, featureEnd):
+    def _replaceRectangle_implementation(self, replaceWith, pointStart,
+                                         featureStart, pointEnd, featureEnd):
         # sort values or call helper as needed
-        constant = not isinstance(values, Base)
+        constant = not isinstance(replaceWith, Base)
         if constant:
-            if values == 0:
-                self._fillWith_zeros_implementation(pointStart, featureStart,
-                                                    pointEnd, featureEnd)
+            if replaceWith == 0:
+                self._replaceRectangle_zeros_implementation(
+                    pointStart, featureStart, pointEnd, featureEnd)
                 return
         else:
-            values._sortInternal('point')
+            replaceWith._sortInternal('point')
 
         # this has to be after the possible call to
-        # _fillWith_zeros_implementation; it is uncessary for that helper
+        # _replaceRectangle_zeros_implementation; unnecessary for that helper
         self._sortInternal('point')
 
         self_i = 0
@@ -247,7 +359,7 @@ class Sparse(Base):
             valsEnd = ((pointEnd - pointStart + 1)
                        * (featureEnd - featureStart + 1))
         else:
-            valsEnd = len(values.data.data)
+            valsEnd = len(replaceWith.data.data)
 
         # Adjust self_i so that it begins at the values that might need to be
         # replaced, or, if no such values exist, set self_i such that the main
@@ -293,7 +405,7 @@ class Sparse(Base):
             locationVP = pointStart
             locationVF = featureStart
             if constant:
-                vData = values
+                vData = replaceWith
                 # uses truncation of int division
                 locationVP += vals_i / (featureEnd - featureStart + 1)
                 locationVF += vals_i % (featureEnd - featureStart + 1)
@@ -301,9 +413,9 @@ class Sparse(Base):
                 locationVP += pointEnd + 1
                 locationVF += featureEnd + 1
             else:
-                vData = values.data.data[vals_i]
-                locationVP += values.data.row[vals_i]
-                locationVF += values.data.col[vals_i]
+                vData = replaceWith.data.data[vals_i]
+                locationVP += replaceWith.data.row[vals_i]
+                locationVF += replaceWith.data.col[vals_i]
 
             pCmp = locationSP - locationVP
             fCmp = locationSF - locationVF
@@ -444,8 +556,8 @@ class Sparse(Base):
         # array down to size???
         pass
 
-    def _fillWith_zeros_implementation(self, pointStart, featureStart,
-                                       pointEnd, featureEnd):
+    def _replaceRectangle_zeros_implementation(self, pointStart, featureStart,
+                                               pointEnd, featureEnd):
         # walk through col listing and partition all data: extract, and kept,
         # reusing the sparse matrix underlying structure to save space
         copyIndex = 0
@@ -928,8 +1040,21 @@ class Sparse(Base):
             target = self
         else:
             target = self.copy()
-        target.elements.multiply(other, useLog=False)
 
+        # CHOICE OF OUTPUT WILL BE DETERMINED BY SCIPY!!!!!!!!!!!!
+        # for other.data as any dense or sparse matrix
+        directMul = isinstance(other, (Sparse, nimble.data.Matrix))
+        notView = not isinstance(other, BaseView)
+        if directMul and notView:
+            toMul = other.data
+        else:
+            toMul = other.copy(to='numpyarray')
+        raw = target.data.multiply(scipy.sparse.coo_matrix(toMul))
+        if scipy.sparse.isspmatrix(raw):
+            raw = raw.tocoo()
+        else:
+            raw = scipy.sparse.coo_matrix(raw, shape=self.data.shape)
+        target.data = raw
         return target
 
     def _genericPow_implementation(self, opName, other):
@@ -945,8 +1070,15 @@ class Sparse(Base):
             caller = self.copy()
             callee = other
 
-        caller.elements.power(callee, useLog=False)
-        return caller
+        def powFromRight(val, pnum, fnum):
+            try:
+                return val ** callee[pnum, fnum]
+            except Exception:
+                self._numericValidation()
+                other._numericValidation(right=True)
+                raise
+
+        return caller.calculateOnElements(powFromRight, useLog=False)
 
     def _genericFloordiv_implementation(self, opName, other):
         """
@@ -1044,6 +1176,14 @@ class Sparse(Base):
             return self.data.astype(convertTo)
         return self.data
 
+    def _iterateElements_implementation(self, order, only):
+        if only is not None and not only(0): # we can ignore zeros
+            self._sortInternal(order)
+            array = self.data.data
+        else:
+            array = sparseMatrixToArray(self.data)
+        return NimbleElementIterator(array, order, only)
+
 ###################
 # Generic Helpers #
 ###################
@@ -1137,9 +1277,6 @@ class SparseVectorView(BaseView, Sparse):
     def _getFeatures(self):
         return SparseFeaturesView(self)
 
-    def _getElements(self):
-        return SparseElementsView(self)
-
 class SparseView(BaseView, Sparse):
     """
     Read only access to a Sparse object.
@@ -1152,9 +1289,6 @@ class SparseView(BaseView, Sparse):
 
     def _getFeatures(self):
         return SparseFeaturesView(self)
-
-    def _getElements(self):
-        return SparseElementsView(self)
 
     def _validate_implementation(self, level):
         self._source.validate(level)
@@ -1290,3 +1424,7 @@ class SparseView(BaseView, Sparse):
         if returnCopy:
             return ret
         self._source.data = ret
+
+    def _iterateElements_implementation(self, order, only):
+        selfConv = self.copy(to="Sparse")
+        return selfConv._iterateElements_implementation(order, only)

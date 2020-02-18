@@ -275,7 +275,7 @@ def _confusionMatrixWithLabelsList(knownValues, predictedValues, labels):
     numLabels = len(labels)
     toFill = numpy.zeros((numLabels, numLabels), dtype=int)
     validLabels = set() # to prevent repeated validation of same label
-    for kVal, pVal in zip(knownValues.elements, predictedValues.elements):
+    for kVal, pVal in zip(knownValues, predictedValues):
         kVal = _mapInt(kVal)
         if kVal not in validLabels:
             _validateIndex(kVal, numLabels, 'knownValues')
@@ -298,7 +298,7 @@ def _confusionMatrixWithLabelsDict(knownValues, predictedValues, labels):
     numLabels = len(labels)
     toFill = numpy.zeros((numLabels, numLabels), dtype=int)
     labelsIdx = {}
-    for kVal, pVal in zip(knownValues.elements, predictedValues.elements):
+    for kVal, pVal in zip(knownValues, predictedValues):
         # trigger KeyError if label not present
         if kVal not in labelsIdx:
             _validateKey(kVal, labels, 'knownValues')
@@ -316,7 +316,7 @@ def _confusionMatrixNoLabels(knownValues, predictedValues):
     knownLabels = set()
     confusionDict = {}
     # get labels and positions first then we will sort before creating matrix
-    for kVal, pVal in zip(knownValues.elements, predictedValues.elements):
+    for kVal, pVal in zip(knownValues, predictedValues):
         knownLabels.add(kVal)
         if (kVal, pVal) in confusionDict:
             confusionDict[(kVal, pVal)] += 1
