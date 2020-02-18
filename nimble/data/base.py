@@ -924,12 +924,19 @@ class Base(object):
         ret = self._calculate_backend(wrappedMatch, points, features,
                                       allowBoolOutput=True)
 
-        ret.points.setNames(self.points._getNamesNoGeneration(), useLog=False)
-        ret.features.setNames(self.features._getNamesNoGeneration(),
-                              useLog=False)
+        pnames = self.points._getNamesNoGeneration()
+        if pnames is not None and points is not None:
+            ptIdx = constructIndicesList(self, 'point', points)
+            pnames = [pnames[i] for i in ptIdx]
+        fnames = self.features._getNamesNoGeneration()
+        if fnames is not None and features is not None:
+            ftIdx = constructIndicesList(self, 'feature', features)
+            fnames = [fnames[j] for j in ftIdx]
+        ret.points.setNames(pnames, useLog=False)
+        ret.features.setNames(fnames, useLog=False)
 
         handleLogging(useLog, 'prep', 'matchingElements', self.getTypeString(),
-                      Base.matchingElements, toMatch)
+                      Base.matchingElements, toMatch, points, features)
 
         return ret
 

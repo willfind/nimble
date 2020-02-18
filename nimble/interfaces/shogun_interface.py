@@ -352,12 +352,6 @@ To install shogun
         if outputFormat == 'label' and 'remap' in customDict:
             remap = customDict['remap']
             if remap is not None:
-                def makeInverseMapper(inverseMappingParam):
-                    def inverseMapper(value):
-                        return inverseMappingParam[int(value)]
-
-                    return inverseMapper
-
                 ret.transformElements(remap, useLog=False)
 
         return ret
