@@ -28,6 +28,7 @@ from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
 from nimble.randomness import numpyRandom
 from nimble.randomness import pythonRandom
+from nimble.data.dataHelpers import DEFAULT_PREFIX
 
 from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory, noLogEntryExpected
@@ -150,31 +151,10 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
     pnames = ['p1', 'p2', 'p3']
     fnames = ['f1', 'f2', 'f3']
+    # use tuple so must be copied to list to modify
+    defaultNames = tuple(callerCon(data).features.getNames())
 
     otherRaw = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
-
-    # names not the same
-    caller = callerCon(data, pnames, fnames)
-    opnames = pnames
-    ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
-    other = callerCon(otherRaw, opnames, ofnames)
-    try:
-        toCall = getattr(caller, op)
-        ret = toCall(other)
-        if ret != NotImplemented:
-            assert False
-    except InvalidArgumentValue:
-        pass
-
-    # names interwoven
-    other = callerCon(otherRaw, pnames, False)
-    caller = callerCon(data, False, fnames)
-    toCall = getattr(caller, op)
-    ret = toCall(other)
-
-    if ret != NotImplemented:
-        assert ret.points.getNames() == pnames
-        assert ret.features.getNames() == fnames
 
     # both names same
     caller = callerCon(data, pnames, fnames)
@@ -182,23 +162,250 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     toCall = getattr(caller, op)
     ret = toCall(other)
 
-    if ret != NotImplemented:
-        assert ret.points.getNames() == pnames
-        assert ret.features.getNames() == fnames
+    assert ret.points.getNames() == pnames
+    assert ret.features.getNames() == fnames
 
+    if inplace:
+        caller.points.setName('p1', 'p0')
+        assert 'p0' in ret.points.getNames()
+        assert 'p1' not in ret.points.getNames()
+        assert 'p0' in caller.points.getNames()
+        assert 'p1' not in caller.points.getNames()
+    else:
+        ret.points.setName('p1', 'p0')
+        assert 'p0' not in caller.points.getNames()
+        assert 'p1' in caller.points.getNames()
+        assert 'p0' in ret.points.getNames()
+        assert 'p1' not in ret.points.getNames()
+
+    # both names different
+    caller = callerCon(data, pnames, fnames)
+    opnames = {'p0': 0, 'p1': 1, 'p2': 2}
+    ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
+    other = callerCon(otherRaw, opnames, ofnames)
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+
+    # names interwoven
+    other = callerCon(otherRaw, pnames, defaultNames)
+    caller = callerCon(data, defaultNames, fnames)
+    toCall = getattr(caller, op)
+    ret = toCall(other)
+
+    assert ret.points.getNames() == pnames
+    assert ret.features.getNames() == fnames
+
+    other = callerCon(otherRaw, defaultNames, fnames)
+    caller = callerCon(data, pnames, defaultNames)
+    toCall = getattr(caller, op)
+    ret = toCall(other)
+    assert ret.points.getNames() == pnames
+    assert ret.features.getNames() == fnames
+
+    # mixed defaults
+    cpnames = list(defaultNames)
+    cpnames[0] = 'p1'
+    cfnames = list(defaultNames)
+    cfnames[0] = 'f1'
+    caller = callerCon(data, cpnames, cfnames)
+    opnames = list(defaultNames)
+    opnames[2] = 'p3'
+    ofnames = list(defaultNames)
+    ofnames[2] = 'f3'
+    other = callerCon(otherRaw, opnames, ofnames)
+    toCall = getattr(caller, op)
+    ret = toCall(other)
+
+    retPNames = ret.points.getNames()
+    retFNames = ret.features.getNames()
+    assert retPNames[0] == 'p1' and retPNames[2] == 'p3'
+    assert retFNames[0] == 'f1' and retFNames[2] == 'f3'
+
+    # point names equal; some feature names shared
+    caller = callerCon(data, pnames, fnames)
+    opnames = pnames
+    ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
+    other = callerCon(otherRaw, opnames, ofnames)
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert False
+    except InvalidArgumentValue:
+        pass
+
+    # point names equal; no feature names shared
+    caller = callerCon(data, pnames, fnames)
+    opnames = pnames
+    ofnames = {'1f': 0, '2f': 1, '3f': 2}
+    other = callerCon(otherRaw, opnames, ofnames)
+    # inplace requires feature names to match, otherwise not required
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+    except InvalidArgumentValue:
         if inplace:
-            caller.points.setName('p1', 'p0')
-            assert 'p0' in ret.points.getNames()
-            assert 'p1' not in ret.points.getNames()
-            assert 'p0' in caller.points.getNames()
-            assert 'p1' not in caller.points.getNames()
+            pass
         else:
-            ret.points.setName('p1', 'p0')
-            assert 'p0' not in caller.points.getNames()
-            assert 'p1' in caller.points.getNames()
-            assert 'p0' in ret.points.getNames()
-            assert 'p1' not in ret.points.getNames()
+            raise
 
+    # point names equal; shared feature name + default names
+    caller = callerCon(data, pnames, fnames)
+    ofnames = list(defaultNames)
+    ofnames[0] = 'f3'
+    other = callerCon(otherRaw, pnames, ofnames)
+    assert other.features.getName(0) in caller.features.getNames()
+    assert other.features.getName(1).startswith(DEFAULT_PREFIX)
+    assert other.features.getName(2).startswith(DEFAULT_PREFIX)
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert False
+    except InvalidArgumentValue:
+        pass
+
+    # point names equal; no feature names shared + default names
+    caller = callerCon(data, pnames, fnames)
+    ofnames = list(defaultNames)
+    ofnames[0] = '3f'
+    other = callerCon(otherRaw, pnames, ofnames)
+    assert other.features.getName(0) not in caller.features.getNames()
+    assert other.features.getName(1).startswith(DEFAULT_PREFIX)
+    assert other.features.getName(2).startswith(DEFAULT_PREFIX)
+    toCall = getattr(caller, op)
+    # inplace requires feature names to match, otherwise not required
+    try:
+        ret = toCall(other)
+    except InvalidArgumentValue:
+        if inplace:
+            pass
+        else:
+            raise
+
+    # point names equal; conflict feature names partial default
+    cfnames = list(defaultNames)
+    cfnames[0] = 'f1'
+    caller = callerCon(data, pnames, cfnames)
+    ofnames = list(defaultNames)
+    ofnames[2] = 'f1'
+    other = callerCon(otherRaw, pnames, ofnames)
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert False
+    except InvalidArgumentValue:
+        pass
+
+    # point names equal; no conflict feature names partial default
+    cfnames = list(defaultNames)
+    cfnames[0] = 'f1'
+    caller = callerCon(data, pnames, cfnames)
+    ofnames = list(defaultNames)
+    ofnames[2] = 'f3'
+    other = callerCon(otherRaw, pnames, ofnames)
+    toCall = getattr(caller, op)
+    # inplace requires feature names to match, otherwise not required
+    try:
+        ret = toCall(other)
+    except InvalidArgumentValue:
+        if inplace:
+            pass
+        else:
+            raise
+
+    # feature names equal; some point names shared
+    caller = callerCon(data, pnames, fnames)
+    ofnames = fnames
+    opnames = {'p0': 0, 'p1': 1, 'p2': 2}
+    other = callerCon(otherRaw, opnames, ofnames)
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+
+    # feature names equal; no point names shared
+    caller = callerCon(data, pnames, fnames)
+    opnames = {'1p': 0, '2p': 1, '3p': 2}
+    ofnames = fnames
+    other = callerCon(otherRaw, opnames, ofnames)
+    # inplace requires point names to match, otherwise not required
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+    except InvalidArgumentValue:
+        if inplace:
+            pass
+        else:
+            raise
+
+    # feature names equal; shared point name + default names
+    caller = callerCon(data, pnames, fnames)
+    opnames = list(defaultNames)
+    opnames[0] = 'p3'
+    other = callerCon(otherRaw, opnames, fnames)
+    assert other.points.getName(0) in caller.points.getNames()
+    assert other.points.getName(1).startswith(DEFAULT_PREFIX)
+    assert other.points.getName(2).startswith(DEFAULT_PREFIX)
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+
+    # feature names equal; no point names shared + default names
+    caller = callerCon(data, pnames, fnames)
+    opnames = list(defaultNames)
+    opnames[0] = '3p'
+    other = callerCon(otherRaw, opnames, fnames)
+    assert other.points.getName(0) not in caller.points.getNames()
+    assert other.points.getName(1).startswith(DEFAULT_PREFIX)
+    assert other.points.getName(2).startswith(DEFAULT_PREFIX)
+    # inplace requires point names to match, otherwise not required
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+    except InvalidArgumentValue:
+        if inplace:
+            pass
+        else:
+            raise
+
+    # feature names equal; conflict point names partial default
+    cpnames = list(defaultNames)
+    cpnames[0] = 'p1'
+    caller = callerCon(data, cpnames, fnames)
+    opnames = list(defaultNames)
+    opnames[2] = 'p1'
+    other = callerCon(otherRaw, opnames, fnames)
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert False
+    except InvalidArgumentValue:
+        pass
+
+    # feature names equal; no conflict point names partial default
+    cpnames = list(defaultNames)
+    cpnames[0] = 'p1'
+    caller = callerCon(data, pnames, cpnames)
+    opnames = list(defaultNames)
+    opnames[2] = 'p3'
+    other = callerCon(otherRaw, opnames, fnames)
+    toCall = getattr(caller, op)
+    # inplace requires feature names to match, otherwise not required
+    try:
+        ret = toCall(other)
+    except InvalidArgumentValue:
+        if inplace:
+            pass
+        else:
+            raise
 
 def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, attr2=None):
     data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]

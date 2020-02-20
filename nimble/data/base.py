@@ -4416,9 +4416,58 @@ class Base(object):
             raise InvalidArgumentType(msg)
         if otherBase:
             self._genericBinary_sizeValidation(opName, other)
-            self._validateEqualNames('point', 'point', opName, other)
-            self._validateEqualNames('feature', 'feature', opName, other)
+            # inplace operations require both point and feature name equality
+            try:
+                self._validateEqualNames('feature', 'feature', opName, other)
+                ftNamesEqual = True
+            except InvalidArgumentValue:
+                if opName.startswith('__i'):
+                    raise
+                ftNamesEqual = False
+            try:
+                self._validateEqualNames('point', 'point', opName, other)
+                ptNamesEqual = True
+            except InvalidArgumentValue:
+                if opName.startswith('__i'):
+                    raise
+                ptNamesEqual = False
+            # for *NamesEqual to be False, the left and right objects must have
+            # at least one unequal non-default name along that axis.
+            if not ftNamesEqual and not ptNamesEqual:
+                msg = "When both point and feature names are present, {0} "
+                msg += "requires either the point names or feature names to "
+                msg += "be equal between the left and right objects"
+                raise InvalidArgumentValue(msg.format(opName))
+            if ftNamesEqual and not ptNamesEqual:
+                self._genericBinary_axisNamesDisjoint('point', other, opName)
+            elif ptNamesEqual and not ftNamesEqual:
+                self._genericBinary_axisNamesDisjoint('feature', other, opName)
 
+    def _genericBinary_axisNamesDisjoint(self, axis, other, opName):
+        """
+        Verify that the axis names for this object and the other object
+        are disjoint. Equal default names do not imply the same point or
+        feature, so default names are ignored.
+        """
+        def nonDefaultNames(names):
+            return (n for n in names if not n.startswith(DEFAULT_PREFIX))
+
+        if axis == 'point':
+            sNames = nonDefaultNames(self.points.getNames())
+            oNames = nonDefaultNames(other.points.getNames())
+            equalAxis = 'feature'
+        else:
+            sNames = nonDefaultNames(self.features.getNames())
+            oNames = nonDefaultNames(other.features.getNames())
+            equalAxis = 'point'
+
+        if not set(sNames).isdisjoint(oNames):
+            matches = [n for n in sNames if n in oNames]
+            msg = "{0} between objects with equal {1} names must have "
+            msg += "unique {2} names. However, the {2} names {3} were "
+            msg += "found in both the left and right objects"
+            msg = msg.format(opName, equalAxis, axis, matches)
+            raise InvalidArgumentValue(msg)
 
     def _convertUnusableTypes(self, convertTo, usableTypes, returnCopy=True):
         """
@@ -4534,11 +4583,9 @@ class Base(object):
         if not isinstance(other, Base):
             msg = 'other must be an instance of a nimble Base object'
             raise InvalidArgumentType(msg)
-        self._genericBinary_sizeValidation(opName, other)
+        self._genericBinary_validation(opName, other)
         lhsBool = self._logicalValidationAndConversion()
         rhsBool = other._logicalValidationAndConversion()
-        self._validateEqualNames('point', 'point', opName, other)
-        self._validateEqualNames('feature', 'feature', opName, other)
 
         return lhsBool._genericBinaryOperations(opName, rhsBool)
 
