@@ -225,7 +225,7 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     assert retPNames[0] == 'p1' and retPNames[2] == 'p3'
     assert retFNames[0] == 'f1' and retFNames[2] == 'f3'
 
-    # point names equal; some feature names shared
+    # pt names equal; ft names intersect
     caller = callerCon(data, pnames, fnames)
     opnames = pnames
     ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
@@ -237,7 +237,7 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     except InvalidArgumentValue:
         pass
 
-    # point names equal; no feature names shared
+    # pt names equal; ft names disjoint
     caller = callerCon(data, pnames, fnames)
     opnames = pnames
     ofnames = {'1f': 0, '2f': 1, '3f': 2}
@@ -246,13 +246,14 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     toCall = getattr(caller, op)
     try:
         ret = toCall(other)
+        assert not ret.features._namesCreated()
     except InvalidArgumentValue:
         if inplace:
             pass
         else:
             raise
 
-    # point names equal; shared feature name + default names
+    # pt names equal; ft names + mixed ft names intersect
     caller = callerCon(data, pnames, fnames)
     ofnames = list(defaultNames)
     ofnames[0] = 'f3'
@@ -267,7 +268,7 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     except InvalidArgumentValue:
         pass
 
-    # point names equal; no feature names shared + default names
+    # pt names equal; ft names + mixed ft names disjoint
     caller = callerCon(data, pnames, fnames)
     ofnames = list(defaultNames)
     ofnames[0] = '3f'
@@ -279,13 +280,14 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     # inplace requires feature names to match, otherwise not required
     try:
         ret = toCall(other)
+        assert not ret.features._namesCreated()
     except InvalidArgumentValue:
         if inplace:
             pass
         else:
             raise
 
-    # point names equal; conflict feature names partial default
+    # pt names equal; mixed ft names + mixed ft names intersect
     cfnames = list(defaultNames)
     cfnames[0] = 'f1'
     caller = callerCon(data, pnames, cfnames)
@@ -299,24 +301,7 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     except InvalidArgumentValue:
         pass
 
-    # point names equal; no conflict feature names partial default
-    cfnames = list(defaultNames)
-    cfnames[0] = 'f1'
-    caller = callerCon(data, pnames, cfnames)
-    ofnames = list(defaultNames)
-    ofnames[2] = 'f3'
-    other = callerCon(otherRaw, pnames, ofnames)
-    toCall = getattr(caller, op)
-    # inplace requires feature names to match, otherwise not required
-    try:
-        ret = toCall(other)
-    except InvalidArgumentValue:
-        if inplace:
-            pass
-        else:
-            raise
-
-    # feature names equal; some point names shared
+    # ft names equal; pt names intersect
     caller = callerCon(data, pnames, fnames)
     ofnames = fnames
     opnames = {'p0': 0, 'p1': 1, 'p2': 2}
@@ -328,7 +313,7 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     except InvalidArgumentValue:
         pass
 
-    # feature names equal; no point names shared
+    # ft names equal; pt names disjoint
     caller = callerCon(data, pnames, fnames)
     opnames = {'1p': 0, '2p': 1, '3p': 2}
     ofnames = fnames
@@ -337,13 +322,14 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     toCall = getattr(caller, op)
     try:
         ret = toCall(other)
+        assert not ret.points._namesCreated()
     except InvalidArgumentValue:
         if inplace:
             pass
         else:
             raise
 
-    # feature names equal; shared point name + default names
+    # ft names equal; pt names + mixed pt names intersect
     caller = callerCon(data, pnames, fnames)
     opnames = list(defaultNames)
     opnames[0] = 'p3'
@@ -358,7 +344,7 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     except InvalidArgumentValue:
         pass
 
-    # feature names equal; no point names shared + default names
+    # ft names equal; pt names + mixed pt names disjoint
     caller = callerCon(data, pnames, fnames)
     opnames = list(defaultNames)
     opnames[0] = '3p'
@@ -370,13 +356,14 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     toCall = getattr(caller, op)
     try:
         ret = toCall(other)
+        assert not ret.points._namesCreated()
     except InvalidArgumentValue:
         if inplace:
             pass
         else:
             raise
 
-    # feature names equal; conflict point names partial default
+    # ft names equal; mixed pt names + mixed pt names intersect
     cpnames = list(defaultNames)
     cpnames[0] = 'p1'
     caller = callerCon(data, cpnames, fnames)
@@ -389,23 +376,6 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
         assert False
     except InvalidArgumentValue:
         pass
-
-    # feature names equal; no conflict point names partial default
-    cpnames = list(defaultNames)
-    cpnames[0] = 'p1'
-    caller = callerCon(data, pnames, cpnames)
-    opnames = list(defaultNames)
-    opnames[2] = 'p3'
-    other = callerCon(otherRaw, opnames, fnames)
-    toCall = getattr(caller, op)
-    # inplace requires feature names to match, otherwise not required
-    try:
-        ret = toCall(other)
-    except InvalidArgumentValue:
-        if inplace:
-            pass
-        else:
-            raise
 
 def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, attr2=None):
     data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
