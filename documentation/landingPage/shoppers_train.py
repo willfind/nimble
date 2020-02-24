@@ -9,6 +9,9 @@ an unsupervised learner to classify visitors of the website into groups, then
 explore the differences between some of these groups.
 
 Reference:
+Sakar, C.O., Polat, S.O., Katircioglu, M. et al. Neural Comput & Applic (2018).
+[https://doi.org/10.1007/s00521-018-3523-0]
+
 Dua, D. and Graff, C. (2019).
 UCI Machine Learning Repository [http://archive.ics.uci.edu/ml].
 Irvine, CA: University of California, School of Information and Computer Science.
@@ -51,54 +54,102 @@ wcss = nimble.createData('List', withinClusterSumSquares,
                          featureNames=['clusters', 'wcss'])
 wcss.plotFeatureAgainstFeature('clusters', 'wcss')
 
-# 5 clusters seem to be reasonable choice according to the plot. We will train
-# with 5 clusters then add the generated labels as a new `'labels'` feature in
-# our object.
+# 5 clusters seems to be reasonable choice according to the plot. We will train
+# with 5 clusters then add the generated clusters as a new `'clusters'` feature
+# in our object.
 
 tl = nimble.train('skl.KMeans', visits, n_clusters=5)
 
-labels = tl.apply(visits)
-labels.features.setName(0, 'labels')
+clusters = tl.apply(visits)
+clusters.features.setName(0, 'cluster')
+visits.features.append(clusters)
 
-### Analyzing the labels
-# Let's group our data by label so we can begin to examine characteristics of
-# the different groups.
+### Analyzing the clusters
+# Let's group our data by cluster so we can begin to examine characteristics of
+# each cluster. `groupByFeature` will use the unique values in the `cluster`
+# feature to group each point in `visits`. There are 5 clusters so the returned
+# dictionary will have 5 keys paired with 5 new data objects that each contain
+# only the points for the cluster associated with that key.
 
-visits.features.append(labels)
-byLabel = visits.groupByFeature('labels')
+byCluster = visits.groupByFeature('cluster')
 
-# Our goal is to maximize site visits that generate revenue, so we will
-# investigate the proportion of visits that generated revenue for each label.
-# Then we will focus on differences between the worst revenue group and the
-# best revenue group.
-for label, data in byLabel.items():
-    msg = "label {} contains {} with an average Revenue of {}"
-    avgRev = sum(data[:, 'Revenue']) / len(data.points)
-    print(msg.format(label, len(data.points), avgRev))
+# Let's take a look at how some of the features change between clusters
+for cluster, data in byCluster.items():
+    numPoints = len(data.points)
+    print('cluster {} ({} points):'.format(cluster, numPoints))
+    boolFts = ['Weekend', 'SpecialDay', 'NewVisitor', 'Revenue']
+    for ft in boolFts:
+        ftPercentage = (sum(data[:, ft]) / numPoints) * 100
+        print("  {}: {}%".format(ft, round(ftPercentage, 1)))
+    durationFts = ['Administrative_Duration', 'Informational_Duration',
+                   'ProductRelated_Duration']
+    avgPageDurations = sum(data[:, durationFts].points) / numPoints
+    for ft in durationFts:
+        # convert from seconds to minutes
+        avgDurationInMinutes = avgPageDurations[ft] / 60
+        msg = "  Average {}: {} minutes"
+        print(msg.format(ft, round(avgDurationInMinutes, 1)))
 
-# We see a much higher percentage of new visitors in the lowest revenue group.
-worstRevenue = byLabel[0]
-bestRevenue = byLabel[4]
-newVisitWorst = sum(worstRevenue[:, 'NewVisitor']) / len(worstRevenue.points)
-newVisitBest = sum(bestRevenue[:, 'NewVisitor']) / len(bestRevenue.points)
-print("Proportion of new visitors for WORST revenue label:", newVisitWorst)
-print("Proportion of new visitors for BEST revenue label:", newVisitBest)
+# We can see that the biggest differences between clusters are time spent on
+# ProductRelated pages, percentage of new visitors and revenue percentage.
+# We want to develop a strategy to maximize revenue so we will compare some
+# visitor characteristics of our best revenue cluster (4) and our worst revenue
+# cluster (0).
+worstRevenue = byCluster[0]
+bestRevenue = byCluster[4]
 
-# These groups are also spending different proportions of time on different
-# page types. Both groups spend most of their time on product-related pages,
-# but the low revenue group spends less time on product-related pages and
-# more time on administrative pages.
-durationFts = ['Administrative_Duration', 'Informational_Duration',
-               'ProductRelated_Duration']
-worstRevDurations = sum(worstRevenue[:, durationFts].points)
-worstTotalDuration = sum(worstRevDurations)
-worstDurationProportions = worstRevDurations / worstTotalDuration
-worstDurationProportions.show('Duration Proportion for WORST label', False)
-bestRevDurations = sum(bestRevenue[:, durationFts].points)
-bestTotalDuration = sum(bestRevDurations)
-bestDurationProportions = bestRevDurations / bestTotalDuration
-bestDurationProportions.show('Duration Proportion for BEST label', False)
+# A visitors location and the source that brought them to our website
+# might vary between these clusters. The visitors location is classified
+# into one of 9 regions in the Region Feature. The source that directed
+# the visitor to the website is classified into one of 20 sources in the
+# TrafficType feature. Let's see if there are any significant differences
+# in these featrues between the best and worst revenue clusters.
+def featureDistributionProportions(data, feature):
+    """
+    Helper function to examine a features distribution.
+    """
+    distribution = data.features[feature].countUniqueElements()
+    for elem in distribution:
+        distribution[elem] /= len(data.points)
+    return distribution
 
-# This might indicate that we should investigate if the lower revenue is due to
-# administative pages interfering with visitors (especially new visitors)
-# ability to navigate to product pages or make a purchase.
+# Print distribution differences greater than 5 percent
+for ft in ['Region', 'TrafficType']:
+    distBest = featureDistributionProportions(bestRevenue, ft)
+    distWorst = featureDistributionProportions(worstRevenue, ft)
+    for key in distBest:
+        diff = distBest[key] - distWorst[key]
+        if abs(diff) > 0.05:
+            msg = "In {ft} {key}, there is a difference of {diff} between "
+            msg += "the best and worst revenue clusters."
+            print(msg.format(ft=ft, key=key, diff=round(diff, 4)))
+
+# The two clusters are within 5 percent for each region, but the best revenue
+# cluster gets much more traffic via TrafficType 2 and much less via
+# TrafficType 3. Let's check our worst revenue cluster for the types of
+# visitors that are being directed to our website via these two traffic types.
+worstRevNewVisitCount = sum(worstRevenue[:, 'NewVisitor'])
+worstRevReturnVisitCount = len(worstRevenue.points) - worstRevNewVisitCount
+for trafficType in [2, 3]:
+    def trafficCountNewVisit(pt):
+        return pt['TrafficType'] == trafficType and pt['NewVisitor']
+
+    def trafficCountReturnVisit(pt):
+        return pt['TrafficType'] == trafficType and not pt['NewVisitor']
+
+    newTraffic = worstRevenue.points.count(trafficCountNewVisit)
+    returnTraffic = worstRevenue.points.count(trafficCountReturnVisit)
+    byNew = newTraffic / worstRevNewVisitCount * 100
+    byReturn = returnTraffic / worstRevReturnVisitCount * 100
+    msg = '{vType} Visitors for trafficType {num}: {perc}%'
+    print(msg.format(vType='New', num=trafficType, perc=round(byNew, 1)))
+    print(msg.format(vType='Return', num=trafficType, perc=round(byReturn, 1)))
+
+# We saw from our best revenue cluster that we generate more revenue when more
+# traffic is from TrafficType 2 and less traffic is from TrafficType 3. In our
+# worst revenue group, new visitors are primarily coming from TrafficType 2,
+# but many return visitors arrive via TrafficType 3. Our data provides no
+# further details regarding TrafficType, so we will stop here. As a plan to
+# generate more revenue, we would suggest that this website reevaluates its
+# investments in TrafficType 3 and focus on bringing return visitors back via
+# TrafficType 2.

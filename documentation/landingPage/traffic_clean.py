@@ -22,6 +22,12 @@ from datetime import datetime
 import nimble
 from nimble import calculate
 
+# Each point in this dataset represents a point in time where 9 features
+# are recorded. The features are variables which may affect the traffic volume
+# on an interstate highway and a new point is recorded each time a change
+# occurs in one of the weather forecast features. Further details will be
+# provided on any relevant features as the dataset is cleaned.
+
 ### Creating data
 # We start by creating a data object using `nimble.createData`.  Nimble has
 # four different data object types `Matrix`, `List`, `Sparse` and `DataFrame`
@@ -35,7 +41,8 @@ traffic = nimble.createData('Matrix', 'Metro_Interstate_Traffic_Volume.csv',
                             featureNames=True)
 print(traffic.features.getNames())
 print(traffic.summaryReport())
-print(traffic[:5, :])
+# Choosing this point range because shows a holiday
+print(traffic[124:128, :])
 
 ### Cleaning data
 # First, we are going to split the `date_time` feature into four features;
@@ -46,35 +53,35 @@ print(traffic[:5, :])
 
 def dateTimeSplit(values):
     dt = datetime.strptime(values, "%Y-%m-%d %H:%M:%S")
-    return [dt.year, dt.month, dt.weekday(), dt.hour]
+    return [dt.year, dt.month, dt.day, dt.hour, dt.weekday()]
 
 traffic.features.splitByParsing('date_time', dateTimeSplit,
-                                ['year', 'month', 'weekday', 'hour'])
+                                ['year', 'month', 'day', 'hour', 'weekday'])
 
 # Our initial look at the data also showed the `holiday` feature contains
 # missing values. This feature contains a string of the holiday name if it
-# is a holiday, but only for the first hour of that day. Our goal is to make
+# is a holiday, but only for the first point of that day. Our goal is to make
 # this a binary feature with 0 indicating a non-holiday and 1 indicating a
-# holiday for each hour of every day. To do this we will first iterate through
-# each point to create a list of the days which are holidays. `holidayBinary`
-# uses that list to produce new points with the `holiday` feature defined as
-# one or zero. `traffic.points.transform` modifies each point's data inplace
-# to reflect the point returned by `holidayBinary`.
+# holiday for each hour of every day.
 
-holidays = []
-for pt in traffic.points:
-    if isinstance(pt['holiday'], str):
-        holidays.append((pt['year'], pt['month'], pt['weekday']))
-def holidayBinary(pt):
-    newPt = []
-    if (pt['year'], pt['month'], pt['weekday']) in holidays:
-        newPt.append(1)
+# TODO using 1/0 for now until True/False can be loaded from csv
+currentHoliday = {'date': None}
+def holidayToBinary(point):
+    filledPt = []
+    dateTuple = (point['year'], point['month'], point['day'])
+    if isinstance(point['holiday'], str):
+        currentHoliday['date'] = dateTuple
+    if currentHoliday['date'] == dateTuple:
+        filledPt.append(1)
     else:
-        newPt.append(0)
-    newPt.extend(pt[1:])
-    return newPt
+        filledPt.append(0)
+        currentHoliday['date'] = None
 
-traffic.points.transform(holidayBinary)
+    filledPt.extend(point[1:])
+
+    return filledPt
+
+traffic.points.transform(holidayToBinary)
 
 # By default, nimble condenses the printed output of larger objects so we were
 # unable to see the `weather_main` and `weather_description` features. A quick
@@ -82,6 +89,8 @@ traffic.points.transform(holidayBinary)
 # more detail for our predictions. We will remove `weather_main` and transform
 # each of the 36 categories in `weather_description` to a binary feature so we
 # have numeric data for our learners.
+
+print(traffic[:4, ['weather_main', 'weather_description']])
 
 traffic.features.delete('weather_main')
 newCols = traffic.replaceFeatureWithBinaryFeatures('weather_description')
