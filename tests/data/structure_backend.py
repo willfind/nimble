@@ -8405,8 +8405,7 @@ class StructureModifying(StructureShared):
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names,
                                    treatAsMissing=None)
         toTest.transformElements(transformMapping, skipNoneReturnValues=False)
-        print(toTest)
-        print(expTest)
+
         assert toTest.isIdentical(expTest)
 
     def test_transformElements_zerosReturned(self):
