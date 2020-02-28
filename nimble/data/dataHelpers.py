@@ -551,7 +551,7 @@ def fillArrayWithCollapsedFeatures(featuresToCollapse, retainData,
     return fill
 
 def fillArrayWithExpandedFeatures(uniqueDict, namesIdx, uniqueNames,
-                                  numRetFeatures):
+                                  numRetFeatures, numExpanded):
     """
     Helper function for modifying the underlying data for
     combinePointsByExpandingFeatures. Used in all non-sparse
@@ -560,14 +560,18 @@ def fillArrayWithExpandedFeatures(uniqueDict, namesIdx, uniqueNames,
     fill = numpy.empty(shape=(len(uniqueDict), numRetFeatures),
                        dtype=numpy.object_)
 
+    endSlice = slice(namesIdx + (len(uniqueNames) * numExpanded), None)
     for i, point in enumerate(uniqueDict):
         fill[i, :namesIdx] = point[:namesIdx]
         for j, name in enumerate(uniqueNames):
+            fillStart = namesIdx + (j * numExpanded)
+            fillStop = fillStart + numExpanded
+            fillSlice = slice(fillStart, fillStop)
             if name in uniqueDict[point]:
-                fill[i, namesIdx + j] = uniqueDict[point][name]
+                fill[i, fillSlice] = uniqueDict[point][name]
             else:
-                fill[i, namesIdx + j] = numpy.nan
-        fill[i, namesIdx + len(uniqueNames):] = point[namesIdx:]
+                fill[i, fillSlice] = [numpy.nan] * numExpanded
+        fill[i, endSlice] = point[namesIdx:]
 
     return fill
 

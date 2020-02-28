@@ -82,10 +82,12 @@ class DataFramePoints(DataFrameAxis, Points):
 
         self._base.data = pd.DataFrame(tmpData)
 
-    def _combineByExpandingFeatures_implementation(
-            self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
+    def _combineByExpandingFeatures_implementation(self, uniqueDict, namesIdx,
+                                                   uniqueNames, numRetFeatures,
+                                                   numExpanded):
         tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,
-                                                uniqueNames, numRetFeatures)
+                                                uniqueNames, numRetFeatures,
+                                                numExpanded)
 
         self._base.data = pd.DataFrame(tmpData)
 
