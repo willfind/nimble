@@ -7992,6 +7992,23 @@ class StructureModifying(StructureShared):
         orig.points.transform(toString)
         assert orig == exp
 
+    def test_points_transform_toCategoryString(self):
+        pnames = ["obs0", "obs1", "obs2", "obs3"]
+        fnames = ["prediction"]
+        data = [[0], [1], [2], [1]]
+
+        toTrans = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+        def remapCatVar(point):
+            return "category" + str(point[0])
+
+        toTrans.points.transform(remapCatVar)
+
+        expData = [["category0"], ["category1"], ["category2"], ["category1"]]
+        expected = self.constructor(expData, pointNames=pnames, featureNames=fnames)
+
+        assert toTrans == expected
+
     ########################
     # features.transform() #
     ########################
@@ -8202,6 +8219,24 @@ class StructureModifying(StructureShared):
 
         orig.features.transform(toString)
         assert orig == exp
+
+    def test_features_transform_toCategoryString(self):
+        pnames = ["prediction"]
+        fnames = ["obs0", "obs1", "obs2", "obs3"]
+        data = [[0, 1, 2, 1]]
+
+        toTrans = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+        def remapCatVar(feature):
+            return "category" + str(feature[0])
+
+        toTrans.features.transform(remapCatVar)
+
+        expData = ["category0", "category1", "category2", "category1"]
+        expected = self.constructor(expData, pointNames=pnames, featureNames=fnames)
+
+        assert toTrans == expected
+
 
     #######################
     # transformElements() #
