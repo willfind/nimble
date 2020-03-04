@@ -8,6 +8,7 @@ import math
 import numbers
 import inspect
 import re
+from functools import wraps
 
 import numpy
 
@@ -701,6 +702,7 @@ def wrapMatchFunctionFactory(matchFunc):
     try:
         matchFunc(0, 0, 0)
 
+        @wraps(matchFunc)
         def wrappedMatch(value, i, j):
             ret = matchFunc(value, i, j)
             # in [True, False] also covers 0 and 1 and numpy number and bool types
@@ -712,6 +714,7 @@ def wrapMatchFunctionFactory(matchFunc):
         wrappedMatch.oneArg = False
     except TypeError:
 
+        @wraps(matchFunc)
         def wrappedMatch(value):
             ret = matchFunc(value)
             # in [True, False] also covers 0 and 1 and numpy number and bool types
@@ -721,9 +724,6 @@ def wrapMatchFunctionFactory(matchFunc):
             return bool(ret) # converts 1 and 0 to True and False
 
         wrappedMatch.oneArg = True
-
-    wrappedMatch.__name__ = matchFunc.__name__
-    wrappedMatch.__doc__ = matchFunc.__doc__
 
     return wrappedMatch
 
@@ -755,6 +755,7 @@ def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
         func(0, 0, 0)
         oneArg = False
 
+        @wraps(func)
         def wrappedElementFunction(value, i, j):
             return elementValidated(value, i, j)
 
@@ -767,13 +768,12 @@ def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
         except TypeError:
             pass
 
+        @wraps(func)
         def wrappedElementFunction(value):
             return elementValidated(value)
 
     wrappedElementFunction.oneArg = oneArg
     wrappedElementFunction.preserveZeros = preserveZeros
-    wrappedElementFunction.__name__ = func.__name__
-    wrappedElementFunction.__doc__ = func.__doc__
 
     return wrappedElementFunction
 
@@ -790,6 +790,7 @@ def validateAxisFunction(func, axis, allowedLength=None):
     if func is None:
         raise InvalidArgumentType("'function' must not be None")
 
+    @wraps(func)
     def wrappedAxisFunc(*args, **kwargs):
         ret = func(*args, **kwargs)
 
@@ -830,8 +831,6 @@ def validateAxisFunction(func, axis, allowedLength=None):
         return ret
 
     wrappedAxisFunc.convertType = False
-    wrappedAxisFunc.__name__ = func.__name__
-    wrappedAxisFunc.__doc__ = func.__doc__
 
     return wrappedAxisFunc
 
