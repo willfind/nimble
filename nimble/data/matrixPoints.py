@@ -46,10 +46,6 @@ class MatrixPoints(MatrixAxis, Points):
             if limitTo is not None and i not in limitTo:
                 continue
             currRet = function(p)
-            if len(currRet) != len(self._base.features):
-                msg = "function must return an iterable with as many elements "
-                msg += "as features in this object"
-                raise InvalidArgumentValue(msg)
 
             retArray = numpy.array(currRet)
             if not numpy.issubdtype(retArray.dtype, numpy.number):

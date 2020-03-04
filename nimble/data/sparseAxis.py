@@ -85,16 +85,6 @@ class SparseAxis(Axis):
             else:
                 currOut = function(view)
 
-            # easy way to reuse code if we have a singular return
-            if not hasattr(currOut, '__iter__'):
-                currOut = [currOut]
-
-            # if there are multiple values, they must be random accessible
-            if not hasattr(currOut, '__getitem__'):
-                msg = "function must return random accessible data "
-                msg += "(ie has a __getitem__ attribute)"
-                raise InvalidArgumentType(msg)
-
             for i, retVal in enumerate(currOut):
                 if retVal != 0:
                     modData.append(retVal)

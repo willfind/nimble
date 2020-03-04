@@ -7832,6 +7832,29 @@ class StructureModifying(StructureShared):
 
         origObj.points.transform(emitLower)
 
+    @raises(InvalidArgumentValue)
+    def test_points_transform_exceptionInvalidFunctionReturnLength(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(copy.deepcopy(origData), featureNames=featureNames)
+        origObj.points.transform(lambda pt: [0])
+
+    @raises(InvalidArgumentValue)
+    def test_points_transform_exceptionInvalidFunctionReturnType(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(copy.deepcopy(origData), featureNames=featureNames)
+        origObj.points.transform(lambda pt: [0, 0, {}])
+
+    @raises(InvalidArgumentValue)
+    def test_points_transform_dictReturn(self):
+
+        def dictReturn(pt):
+            return {str(i): pt for i in range(len(pt))}
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        orig.points.transform(dictReturn)
+
     @raises(CalledFunctionException)
     @mock.patch('nimble.data.axis.constructIndicesList', calledException)
     def test_points_transform_calls_constructIndicesList(self):
@@ -8009,6 +8032,29 @@ class StructureModifying(StructureShared):
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
         origObj = self.constructor(copy.deepcopy(origData), featureNames=featureNames)
         origObj.features.transform(None)
+
+    @raises(InvalidArgumentValue)
+    def test_features_transform_exceptionInvalidFunctionReturnLength(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(copy.deepcopy(origData), featureNames=featureNames)
+        origObj.features.transform(lambda ft: [0])
+
+    @raises(InvalidArgumentValue)
+    def test_features_transform_exceptionInvalidFunctionReturnValue(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(copy.deepcopy(origData), featureNames=featureNames)
+        origObj.features.transform(lambda ft: [0, 0, 0, {}])
+
+    @raises(InvalidArgumentValue)
+    def test_features_transform_dictReturn(self):
+
+        def dictReturn(ft):
+            return {str(i): ft for i in range(len(ft))}
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        orig.features.transform(dictReturn)
 
     @raises(CalledFunctionException)
     @mock.patch('nimble.data.axis.constructIndicesList', calledException)

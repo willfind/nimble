@@ -12,6 +12,7 @@ import re
 import numpy
 
 import nimble
+from nimble import match
 from nimble.utility import ImportModule
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
@@ -692,6 +693,11 @@ def denseCountUnique(obj, points=None, features=None):
 
 
 def wrapMatchFunctionFactory(matchFunc):
+    """
+    Wrap functions for matchingElements to validate output.
+
+    Function must output a boolean value (True, False, 0, 1).
+    """
     try:
         matchFunc(0, 0, 0)
 
@@ -723,6 +729,12 @@ def wrapMatchFunctionFactory(matchFunc):
 
 def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
                             funcName):
+    """
+    Wrap functions for transformElements to verify and validate output.
+
+    Adjust user function based on preserveZeros and skipNoneReturnValues
+    parameters and validate the returned element types.
+    """
     def elementValidated(value, *args):
         if preserveZeros and value == 0:
             return float(0)
@@ -760,8 +772,68 @@ def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
 
     wrappedElementFunction.oneArg = oneArg
     wrappedElementFunction.preserveZeros = preserveZeros
+    wrappedElementFunction.__name__ = func.__name__
+    wrappedElementFunction.__doc__ = func.__doc__
 
     return wrappedElementFunction
+
+def validateAxisFunction(func, axis, allowedLength=None):
+    """
+    Wrap axis transform and calculate functions to validate types.
+
+    Transform defines oppositeAxisInfo because the function return must
+    have the same length of the axis opposite the one calling transform.
+    Calculate allows for objects of varying lengths or single values to
+    be returned so oppositeAxisInfo is None. For both, the return value
+    types are validated.
+    """
+    if func is None:
+        raise InvalidArgumentType("'function' must not be None")
+
+    def wrappedAxisFunc(*args, **kwargs):
+        ret = func(*args, **kwargs)
+
+        if (allowedLength is not None and (not hasattr(ret, '__len__')
+                                           or len(ret) != allowedLength)):
+            oppositeAxis = 'point' if axis == 'feature' else 'feature'
+            msg = "'function' must return an iterable with as many elements "
+            msg += "as {0}s in this object".format(oppositeAxis)
+            raise InvalidArgumentValue(msg)
+
+        if isinstance(ret, dict):
+            msg = "The return of 'function' cannot be a dictionary. The "
+            msg += 'returned object must contain only new values for each '
+            msg += '{0} and it is unclear what the key/value '.format(axis)
+            msg += 'pairs represent'
+            raise InvalidArgumentValue(msg)
+
+        try:
+            for value in ret:
+                if not isAllowedSingleElement(value):
+                    msg = "The return of 'function' contains an "
+                    msg += "invalid value. Numbers, strings, None, or "
+                    msg += "nan are the only valid values. This value "
+                    msg += "was " + str(type(value))
+                    raise InvalidArgumentValue(msg)
+                if match.nonNumeric(value) and value is not None:
+                    wrappedAxisFunc.convertType = True
+        # not iterable
+        except TypeError:
+            if not isAllowedSingleElement(ret):
+                msg = "'function' must return a single valid value "
+                msg += "(number, string, None, or nan) or an iterable "
+                msg += "container of valid values"
+                raise InvalidArgumentValue(msg)
+            if match.nonNumeric(ret) and ret is not None:
+                wrappedAxisFunc.convertType = True
+
+        return ret
+
+    wrappedAxisFunc.convertType = False
+    wrappedAxisFunc.__name__ = func.__name__
+    wrappedAxisFunc.__doc__ = func.__doc__
+
+    return wrappedAxisFunc
 
 def getDictionaryMappingFunction(dictionary):
     def valueMappingFunction(value):
