@@ -483,8 +483,8 @@ class Axis(object):
         if matching:
             createDataKwargs['convertToType'] = bool
         # function wrapper sets convertType attribute while validating values
-        elif function.convertType:
-            createDataKwargs['convertToType'] = numpy.object_
+        else:
+            createDataKwargs['convertToType'] = function.convertType
 
         pathPass = (self._base.absolutePath, self._base.relativePath)
 

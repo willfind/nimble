@@ -98,6 +98,23 @@ class MatrixAxis(Axis):
             repeated = numpy.tile(self._base.data, (ptDim, ftDim))
         return repeated
 
+    ###########
+    # Helpers #
+    ###########
+
+    def _convertBaseDtype(self, retDtype):
+        """
+        Convert the dtype of the Base object if necessary to replace the
+        current values with the transformed values.
+        """
+        baseDtype = self._base.data.dtype
+        if baseDtype != numpy.object_ and retDtype == numpy.object_:
+            self._base.data = self._base.data.astype(numpy.object_)
+        elif baseDtype == numpy.int and retDtype == numpy.float:
+            self._base.data = self._base.data.astype(numpy.float)
+        elif baseDtype == numpy.bool_ and retDtype != numpy.bool_:
+            self._base.data = self._base.data.astype(retDtype)
+
     ####################
     # Abstract Methods #
     ####################

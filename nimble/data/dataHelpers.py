@@ -810,8 +810,7 @@ def validateAxisFunction(func, axis, allowedLength=None):
             msg += "as {0}s in this object".format(oppositeAxis)
             raise InvalidArgumentValue(msg)
         if isAllowedSingleElement(ret):
-            if match.nonNumeric(ret) and ret is not None:
-                wrappedAxisFunc.convertType = True
+            wrappedAxisFunc.updateConvertType(type(ret))
             return ret
         try:
             for value in ret:
@@ -821,8 +820,7 @@ def validateAxisFunction(func, axis, allowedLength=None):
                     msg += "nan are the only valid values. This value "
                     msg += "was " + str(type(value))
                     raise InvalidArgumentValue(msg)
-                if match.nonNumeric(value) and value is not None:
-                    wrappedAxisFunc.convertType = True
+                wrappedAxisFunc.updateConvertType(type(value))
         except TypeError:
             msg = "'function' must return a single valid value "
             msg += "(number, string, None, or nan) or an iterable "
@@ -831,7 +829,29 @@ def validateAxisFunction(func, axis, allowedLength=None):
 
         return ret
 
-    wrappedAxisFunc.convertType = False
+    # None indicates the convertType has not been set. Since functions using
+    # this wrapper require non-empty data, convertType will always be set to
+    # one of the other 3 typeHierarchy keys.
+    typeHierarchy = {None: -1, bool: 0, int: 1, float: 2, object: 3}
+    def updateConvertType(valueType):
+        # None will be assigned float to align with nan values being floats
+        if valueType == type(None):
+            valueType = float
+        if hasattr(valueType, 'dtype'):
+            if numpy.issubdtype(valueType, numpy.floating):
+                valueType = float
+            elif numpy.issubdtype(valueType, numpy.integer):
+                valueType = int
+            elif numpy.issubdtype(valueType, numpy.bool_):
+                valueType = bool
+        currLevel = typeHierarchy[wrappedAxisFunc.convertType]
+        if valueType not in typeHierarchy:
+            wrappedAxisFunc.convertType = object
+        elif typeHierarchy[valueType] > currLevel:
+            wrappedAxisFunc.convertType = valueType
+
+    wrappedAxisFunc.convertType = None
+    wrappedAxisFunc.updateConvertType = updateConvertType
 
     return wrappedAxisFunc
 

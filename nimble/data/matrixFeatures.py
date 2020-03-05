@@ -39,33 +39,18 @@ class MatrixFeatures(MatrixAxis, Features):
             (startData, toInsert.data, endData), 1)
 
     def _transform_implementation(self, function, limitTo):
-        dtypes = []
         for j, f in enumerate(self):
             if limitTo is not None and j not in limitTo:
                 continue
             currRet = function(f)
-
-            retArray = numpy.array(currRet)
-            if not numpy.issubdtype(retArray.dtype, numpy.number):
-                retArray = numpy.array(currRet, dtype=numpy.object_)
-            dtypes.append(retArray.dtype)
-            if self._base.data.dtype == numpy.object_:
-                self._base.data[:, j] = retArray
-            elif self._base.data.dtype == numpy.int:
-                if retArray.dtype == numpy.float:
-                    self._base.data = self._base.data.astype(numpy.float)
-                elif retArray.dtype != numpy.int:
-                    self._base.data = self._base.data.astype(numpy.object_)
-                self._base.data[:, j] = retArray
-            else:
-                if retArray.dtype not in [numpy.float, numpy.int]:
-                    self._base.data = self._base.data.astype(numpy.object_)
-                self._base.data[:, j] = retArray
-        # if transformations to an object dtype returned numeric dtypes and
-        # applied to all data we will convert to a float dtype.
+            retArray = numpy.array(currRet, dtype=function.convertType)
+            self._convertBaseDtype(retArray.dtype)
+            self._base.data[:, j] = retArray
+        # if transformations applied to all data and function.convertType is
+        # not object we can convert base object dtype to a numeric dtype.
         if (self._base.data.dtype == numpy.object_ and limitTo is None
-                and all(numpy.issubdtype(dt, numpy.number) for dt in dtypes)):
-            self._base.data = self._base.data.astype(numpy.float)
+                and function.convertType is not object):
+            self._base.data = self._base.data.astype(function.convertType)
 
     # def _flattenToOne_implementation(self):
     #     numElements = len(self._base.points) * len(self._base.features)
