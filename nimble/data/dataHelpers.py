@@ -725,6 +725,8 @@ def wrapMatchFunctionFactory(matchFunc):
 
         wrappedMatch.oneArg = True
 
+    wrappedMatch.convertType = bool
+
     return wrappedMatch
 
 def validateElementFunction(func, preserveZeros, skipNoneReturnValues,

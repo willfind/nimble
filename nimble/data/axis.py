@@ -450,7 +450,7 @@ class Axis(object):
     def _matching(self, function, useLog=None):
         wrappedMatch = wrapMatchFunctionFactory(function)
 
-        ret = self._calculate_backend(wrappedMatch, None, matching=True)
+        ret = self._calculate_backend(wrappedMatch, None)
 
         self._setNames(self._getNamesNoGeneration(), useLog=False)
         if hasattr(function, '__name__') and function.__name__ !=  '<lambda>':
@@ -464,7 +464,7 @@ class Axis(object):
                       function)
         return ret
 
-    def _calculate_backend(self, function, limitTo, matching=False):
+    def _calculate_backend(self, function, limitTo):
         if len(self._base.points) == 0:
             msg = "We disallow this function when there are 0 points"
             raise ImproperObjectAction(msg)
@@ -479,17 +479,11 @@ class Axis(object):
 
         retData = self._calculate_implementation(function, limitTo)
 
-        createDataKwargs = {'useLog': False}
-        if matching:
-            createDataKwargs['convertToType'] = bool
-        # function wrapper sets convertType attribute while validating values
-        else:
-            createDataKwargs['convertToType'] = function.convertType
-
         pathPass = (self._base.absolutePath, self._base.relativePath)
 
         ret = nimble.createData(self._base.getTypeString(), retData,
-                                **createDataKwargs, path=pathPass)
+                                convertToType=function.convertType,
+                                path=pathPass, useLog=False)
 
         if isinstance(self, Points):
             if len(limitTo) < len(self) and self._namesCreated():
