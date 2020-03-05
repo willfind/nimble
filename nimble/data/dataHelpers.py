@@ -793,13 +793,6 @@ def validateAxisFunction(func, axis, allowedLength=None):
     def wrappedAxisFunc(*args, **kwargs):
         ret = func(*args, **kwargs)
 
-        if (allowedLength is not None and (not hasattr(ret, '__len__')
-                                           or len(ret) != allowedLength)):
-            oppositeAxis = 'point' if axis == 'feature' else 'feature'
-            msg = "'function' must return an iterable with as many elements "
-            msg += "as {0}s in this object".format(oppositeAxis)
-            raise InvalidArgumentValue(msg)
-
         if isinstance(ret, dict):
             msg = "The return of 'function' cannot be a dictionary. The "
             msg += 'returned object must contain only new values for each '
@@ -807,6 +800,18 @@ def validateAxisFunction(func, axis, allowedLength=None):
             msg += 'pairs represent'
             raise InvalidArgumentValue(msg)
 
+        if (allowedLength is not None
+                and (isinstance(ret, str) or
+                     (not hasattr(ret, '__len__')
+                      or len(ret) != allowedLength))):
+            oppositeAxis = 'point' if axis == 'feature' else 'feature'
+            msg = "'function' must return an iterable with as many elements "
+            msg += "as {0}s in this object".format(oppositeAxis)
+            raise InvalidArgumentValue(msg)
+        if isAllowedSingleElement(ret):
+            if match.nonNumeric(ret) and ret is not None:
+                wrappedAxisFunc.convertType = True
+            return ret
         try:
             for value in ret:
                 if not isAllowedSingleElement(value):
@@ -817,15 +822,11 @@ def validateAxisFunction(func, axis, allowedLength=None):
                     raise InvalidArgumentValue(msg)
                 if match.nonNumeric(value) and value is not None:
                     wrappedAxisFunc.convertType = True
-        # not iterable
         except TypeError:
-            if not isAllowedSingleElement(ret):
-                msg = "'function' must return a single valid value "
-                msg += "(number, string, None, or nan) or an iterable "
-                msg += "container of valid values"
-                raise InvalidArgumentValue(msg)
-            if match.nonNumeric(ret) and ret is not None:
-                wrappedAxisFunc.convertType = True
+            msg = "'function' must return a single valid value "
+            msg += "(number, string, None, or nan) or an iterable "
+            msg += "container of valid values"
+            raise InvalidArgumentValue(msg)
 
         return ret
 
