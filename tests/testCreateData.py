@@ -246,6 +246,81 @@ def test_createData_CSV_data_unicodeCharacters():
 
             assert fromList == fromCSV
 
+def test_createData_CSV_data_columnTypeHierarchy():
+    """ Test of createData() loading a csv file with various column types """
+    for t in returnTypes:
+        data = [[True,'False','True','False','TRUE','false',1,1.0,1.0,'1','1'],
+                [False,'True','False','True','FALSE','true',2,2.0,2.0,'2','2'],
+                [True,'False','True','False','TRUE','false',3,3.0,3.0,'3','3'],
+                [False,'TRUE','false','1','FALSE','true',4,4.0,4.0,'4.0','False'],
+                [True,'FALSE','true','0','TRUE','false',5,5.0,5.0,'5.0', 'True'],
+                [False,'True','False','True','FALSE','true',6,6.0,6.0,'six','6']]
+        fromList = nimble.createData(returnType=t, data=data)
+
+        # instantiate from csv file
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write("True,False,True,False,TRUE,false,1,1.0,1,1,1\n")
+            tmpCSV.write("False,True,False,True,FALSE,true,2,2.0,2,2,2\n")
+            tmpCSV.write("True,False,True,False,TRUE,false,3,3.0,3,3,3\n")
+            tmpCSV.write("False,TRUE,false,1,FALSE,true,4,4.0,4.0,4.0,False\n")
+            tmpCSV.write("True,FALSE,true,0,TRUE,false,5,5.0,5.0,5.0,True\n")
+            tmpCSV.write("False,True,False,True,FALSE,true,6,6.0,6,six,6\n")
+            tmpCSV.flush()
+            objName = 'fromCSV'
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
+
+            assert fromList == fromCSV
+
+def test_createData_CSV_data_columnTypeHierarchyWithNaN():
+    """ Test of createData() loading a csv file with various column types with nan values """
+    for t in returnTypes:
+        data = [[True,'False',1,1.0,1.0,'1'],
+                [False,None,2,None,None,'2'],
+                [True,'False',None,3.0,3.0,None],
+                [None,'TRUE',None,4.0,4.0,None],
+                [True,'FALSE',5,None,None,'5.0'],
+                [None,None,6,6.0,6.0,'six']]
+        fromList = nimble.createData(returnType=t, data=data)
+
+        # instantiate from csv file
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write("True,False,1,1.0,1,1\n")
+            tmpCSV.write("False,,2,,,2\n")
+            tmpCSV.write("True,False,,3.0,3,\n")
+            tmpCSV.write(",TRUE,,4.0,4.0,\n")
+            tmpCSV.write("True,FALSE,5,,,5.0\n")
+            tmpCSV.write(",,6,6.0,6,six\n")
+            tmpCSV.flush()
+            objName = 'fromCSV'
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
+
+            assert fromList == fromCSV
+
+def test_createData_CSV_data_emptyStringsNotMissing():
+    """ Test of createData() loading a csv file empty strings not treated as missing """
+    for t in returnTypes:
+        data = [[True,'False',1,'1'],
+                [False,'',2,'2'],
+                [True,'False',None,''],
+                [None,'TRUE',4,''],
+                [True,'FALSE',None,'5.0'],
+                [None,'',6,'six']]
+        fromList = nimble.createData(returnType=t, data=data, treatAsMissing=[None])
+
+        # instantiate from csv file
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write("True,False,1,1\n")
+            tmpCSV.write("False,,2,2\n")
+            tmpCSV.write("True,False,,\n")
+            tmpCSV.write(",TRUE,4,\n")
+            tmpCSV.write("True,FALSE,,5.0\n")
+            tmpCSV.write(",,6,six\n")
+            tmpCSV.flush()
+            objName = 'fromCSV'
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName,
+                                        treatAsMissing=[None])
+
+            assert fromList == fromCSV
 
 def test_createData_MTXArr_data():
     """ Test of createData() loading a mtx (arr format) file, default params """
@@ -1226,7 +1301,7 @@ def test_createData_http_CSVCarriageReturn(mock_get):
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_CSVNonUnicodeValues(mock_get):
     for t in returnTypes:
-        exp = nimble.createData(returnType=t, data=[[1,2,'\xc2\xa1'],[4,5,6]])
+        exp = nimble.createData(returnType=t, data=[[1,2,'\xc2\xa1'],[4,5,'6']])
         url = 'http://mockrequests.nimble/CSVunicodetest.csv'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
@@ -1234,7 +1309,7 @@ def test_createData_http_CSVNonUnicodeValues(mock_get):
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_CSVQuotedNewLine(mock_get):
     for t in returnTypes:
-        exp = nimble.createData(returnType=t, data=[[1,2,"a/nb"],[4,5,6]])
+        exp = nimble.createData(returnType=t, data=[[1,2,"a/nb"],[4,5,'6']])
         url = 'http://mockrequests.nimble/CSVquotednewline.csv'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
@@ -1486,7 +1561,7 @@ def test_CSVformatting_specialCharsInQuotes():
 
 def test_CSVformatting_emptyAndCommentLines():
     for t in returnTypes:
-        data = [[1, 2, 3, 4], ['#11', 22, 33, 44], [5, 6, 7, 8]]
+        data = [['1', 2, 3, 4], ['#11', 22, 33, 44], ['5', 6, 7, 8]]
 
         fromList = nimble.createData(returnType=t, data=data)
 
