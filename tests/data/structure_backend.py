@@ -7855,6 +7855,19 @@ class StructureModifying(StructureShared):
         orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         orig.points.transform(dictReturn)
 
+    @raises(InvalidArgumentValue)
+    def test_points_transform_stringOfPointLength(self):
+        pnames = ["obs0", "obs1", "obs2", "obs3"]
+        fnames = ["prediction", "actual"]
+        data = [[0, 1], [1, 2], [2, 1], [1, 0]]
+
+        toTrans = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+        def stringOfPointLength(point):
+            return "X" * len(point)
+
+        toTrans.points.transform(stringOfPointLength)
+
     @raises(CalledFunctionException)
     @mock.patch('nimble.data.axis.constructIndicesList', calledException)
     def test_points_transform_calls_constructIndicesList(self):
@@ -8055,6 +8068,19 @@ class StructureModifying(StructureShared):
 
         orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         orig.features.transform(dictReturn)
+
+    @raises(InvalidArgumentValue)
+    def test_features_transform_stringOfFeatureLength(self):
+        pnames = ["obs0", "obs1", "obs2", "obs3"]
+        fnames = ["prediction", "actual"]
+        data = [[0, 1], [1, 2], [2, 1], [1, 0]]
+
+        toTrans = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+        def stringOfFeatureLength(feature):
+            return "X" * len(feature)
+
+        toTrans.points.transform(stringOfFeatureLength)
 
     @raises(CalledFunctionException)
     @mock.patch('nimble.data.axis.constructIndicesList', calledException)

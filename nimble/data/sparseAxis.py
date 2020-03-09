@@ -70,7 +70,6 @@ class SparseAxis(Axis):
         modData = []
         modRow = []
         modCol = []
-        dtypes = []
 
         if isinstance(self, Points):
             modTarget = modRow
@@ -91,25 +90,16 @@ class SparseAxis(Axis):
                     modTarget.append(viewID)
                     modOther.append(i)
 
-            retArray = numpy.array(modData)
-            if not numpy.issubdtype(retArray.dtype, numpy.number):
-                dtypes.append(numpy.dtype(object))
-            else:
-                dtypes.append(retArray.dtype)
-
-        # if any non-numeric dtypes were returned use object dtype
-        if any(dt == numpy.object_ for dt in dtypes):
-            retDtype = numpy.object
-        # if transformations to an object dtype returned numeric dtypes and
-        # applied to all data we will convert to a float dtype.
-        elif (self._base.data.dtype == numpy.object_ and limitTo is None
-                and all(numpy.issubdtype(dt, numpy.number) for dt in dtypes)):
-            retDtype = numpy.float
-        # int dtype will covert floats to ints unless we convert it
-        elif self._base.data.dtype == numpy.int and numpy.float in dtypes:
-            retDtype = numpy.float
-        else:
-            retDtype = self._base.data.dtype
+        baseDtype = self._base.data.dtype
+        retDtype = function.convertType
+        # if applying transformation to a subset, need to be sure dtype is
+        # still compatible with the data that was not transformed
+        if (limitTo is not None and
+                (baseDtype == numpy.object_ or
+                 (baseDtype == numpy.float and retDtype is not object) or
+                 (baseDtype == numpy.int and retDtype not in (float, object))
+                 )):
+            retDtype = baseDtype
 
         modData = numpy.array(modData, dtype=retDtype)
         shape = (len(self._base.points), len(self._base.features))
