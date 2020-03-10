@@ -35,6 +35,7 @@ from .dataHelpers import validateInputString
 from .dataHelpers import isAllowedSingleElement, sortIndexPosition
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import wrapMatchFunctionFactory
+from .dataHelpers import validateAxisFunction
 
 class Axis(object):
     """
@@ -420,12 +421,16 @@ class Axis(object):
         if self._base._featureCount == 0:
             msg = "We disallow this function when there are 0 features"
             raise ImproperObjectAction(msg)
-        if function is None:
-            raise InvalidArgumentType("function must not be None")
+
+        if self._axis == 'point':
+            allowedLength = len(self._base.features)
+        else:
+            allowedLength = len(self._base.points)
+        wrappedFunc = validateAxisFunction(function, self._axis, allowedLength)
         if limitTo is not None:
             limitTo = constructIndicesList(self._base, self._axis, limitTo)
 
-        self._transform_implementation(function, limitTo)
+        self._transform_implementation(wrappedFunc, limitTo)
 
         handleLogging(useLog, 'prep', '{ax}s.transform'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('transform'),
@@ -436,7 +441,8 @@ class Axis(object):
     ###########################
 
     def _calculate(self, function, limitTo, useLog=None):
-        ret = self._calculate_backend(function, limitTo)
+        wrappedFunc = validateAxisFunction(function, self._axis)
+        ret = self._calculate_backend(wrappedFunc, limitTo)
 
         handleLogging(useLog, 'prep', '{ax}s.calculate'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('calculate'),
@@ -446,7 +452,7 @@ class Axis(object):
     def _matching(self, function, useLog=None):
         wrappedMatch = wrapMatchFunctionFactory(function)
 
-        ret = self._calculate_backend(wrappedMatch, None, matching=True)
+        ret = self._calculate_backend(wrappedMatch, None)
 
         self._setNames(self._getNamesNoGeneration(), useLog=False)
         if hasattr(function, '__name__') and function.__name__ !=  '<lambda>':
@@ -460,33 +466,26 @@ class Axis(object):
                       function)
         return ret
 
-    def _calculate_backend(self, function, limitTo, matching=False):
+    def _calculate_backend(self, function, limitTo):
         if len(self._base.points) == 0:
             msg = "We disallow this function when there are 0 points"
             raise ImproperObjectAction(msg)
         if len(self._base.features) == 0:
             msg = "We disallow this function when there are 0 features"
             raise ImproperObjectAction(msg)
-        if function is None:
-            raise InvalidArgumentType("function must not be None")
 
         if limitTo is not None:
             limitTo = constructIndicesList(self._base, self._axis, limitTo)
         else:
             limitTo = [i for i in range(len(self))]
 
-        retData, convert = self._calculate_implementation(function, limitTo)
-
-        createDataKwargs = {'useLog': False}
-        if matching:
-            createDataKwargs['convertToType'] = bool
-        elif convert:
-            createDataKwargs['convertToType'] = numpy.object_
+        retData = self._calculate_implementation(function, limitTo)
 
         pathPass = (self._base.absolutePath, self._base.relativePath)
 
         ret = nimble.createData(self._base.getTypeString(), retData,
-                                **createDataKwargs, path=pathPass)
+                                convertToType=function.convertType,
+                                path=pathPass, useLog=False)
 
         if self._isPoint:
             if len(limitTo) < len(self) and self._namesCreated():
@@ -513,7 +512,6 @@ class Axis(object):
         retData = []
         # signal to convert to object elementType if function is returning
         # non-numeric values.
-        convertType = False
         for axisID in limitTo:
             if self._isPoint:
                 view = self._base.pointView(axisID)
@@ -523,32 +521,11 @@ class Axis(object):
             currOut = function(view)
             # the output could have multiple values or be singular.
             if isAllowedSingleElement(currOut):
-                if match.nonNumeric(currOut) and currOut is not None:
-                    convertType = True
                 retData.append([currOut])
             else:
-                try:
-                    toCopyInto = []
-                    for value in currOut:
-                        if isAllowedSingleElement(value):
-                            if match.nonNumeric(value) and value is not None:
-                                convertType = True
-                            toCopyInto.append(value)
-                        else:
-                            msg = "The return of 'function' contains an "
-                            msg += "invalid value. Numbers, strings, None, or "
-                            msg += "nan are the only valid values. This value "
-                            msg += "was " + str(type(value))
-                            raise InvalidArgumentValue(msg)
-                    retData.append(toCopyInto)
-                # not iterable
-                except TypeError:
-                    msg = "'function' must return a single valid value "
-                    msg += "(number, string, None, or nan) or an iterable "
-                    msg += "container of valid values"
-                    raise InvalidArgumentValue(msg)
+                retData.append(currOut)
 
-        return retData, convertType
+        return retData
 
 
     def _insert(self, insertBefore, toInsert, append=False, useLog=None):
