@@ -1759,24 +1759,31 @@ class Points(object):
     def combineByExpandingFeatures(self, featureWithFeatureNames,
                                    featuresWithValues, useLog=None):
         """
-        Combine points that are identical except at a given feature.
+        Combine similar points based on a differentiating feature.
 
-        Combine any points containing matching values at every feature
-        except ``featureWithFeatureNames`` and ``featuresWithValues``.
-        Each combined point will expand its features to include a new
-        feature for each unique value in ``featureWithFeatureNames``.
-        The corresponding featureName/value pairs in
-        ``featureWithFeatureNames`` and ``featuresWithValues`` from each
+        Combine points that share common features, but are currently
+        separate points due to a feature, ``featureWithFeatureNames``,
+        that is categorizing the values in the remaining unshared
+        features, ``featuresWithValues``. The points can be combined to
+        a single point by instead representing the categorization of the
+        unshared values as different features of the same point. The
+        corresponding featureName/value pairs from
+        ``featureWithFeatureNames`` and ``featuresWithValues`` in each
         point will become the values for the expanded features for the
         combined points. If a combined point lacks a featureName/value
-        pair for any given feature, numpy.nan will be assigned as the
-        value at that feature. The combined point name will be assigned
-        the point name of the first instance of that point, if point
-        names are present.
+        pair for any given feature(s), numpy.nan will be assigned as the
+        value(s) at that feature(s). The resulting featureNames depends
+        on the number of features with values. For a single feature with
+        values, the new feature names are the unique values in
+        ``featureWithFeatureNames``. However, for two or more features
+        with values, the unique values in ``featureWithFeatureNames`` no
+        longer cover all combinations so those values are combined with
+        the names of the features with values using an underscore. The
+        combined point name will be assigned the point name of the first
+        instance of that point, if point names are present.
 
-        An object containing n points with k being unique at every
-        feature except ``featureWithFeatureNames`` and
-        ``featuresWithValues``, m features, i unique values in
+        An object containing m features and n points with k unique
+        point combinations amongst shared features, i unique values in
         ``featureWithFeatureNames`` and j ``featuresWithValues`` will
         result in an object with k points and (m - (1 + j) + (i * j))
         features.
@@ -1788,8 +1795,8 @@ class Points(object):
             will become the names of the features in the combined
             points.
         featuresWithValues : identifier, list of identifiers
-            The name or index of the features of values that correspond
-            to the values in featureWithFeatureNames.
+            The names and/or indices of the features of values that
+            correspond to the values in ``featureWithFeatureNames``.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
