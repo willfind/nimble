@@ -2212,7 +2212,7 @@ class Base(object):
             context = ""
         context += str(self._pointCount) + "pt x "
         context += str(self._featureCount) + "ft"
-        print(context)
+        print(context, '\n')
         print(self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits,
                             maxColumnWidth))
 
