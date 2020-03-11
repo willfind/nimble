@@ -55,10 +55,6 @@ class ListFeatures(ListAxis, Features):
             if limitTo is not None and j not in limitTo:
                 continue
             currRet = function(f)
-            if len(currRet) != len(self._base.points):
-                msg = "function must return an iterable with as many elements "
-                msg += "as points in this object"
-                raise InvalidArgumentValue(msg)
 
             for i in range(len(self._base.points)):
                 self._base.data[i][j] = currRet[i]

@@ -1537,11 +1537,11 @@ class Features(object):
         >>> data.features.fillMatching(-1, 'na')
         >>> data
         Matrix(
-            [[1.000  1.000 1.000 ]
-             [1.000  1.000 1.000 ]
-             [1.000  1.000 -1.000]
-             [2.000  2.000 2.000 ]
-             [-1.000 2.000 2.000 ]]
+            [[1  1 1 ]
+             [1  1 1 ]
+             [1  1 -1]
+             [2  2 2 ]
+             [-1 2 2 ]]
             )
 
         Fill using nimble's match and fill modules; limit to first

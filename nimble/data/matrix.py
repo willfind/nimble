@@ -82,7 +82,7 @@ class Matrix(Base):
 
             self.data[i, j] = currRet
             # numpy modified data due to int dtype
-            if self.data[i, j] != currRet:
+            if self.data[i, j] != currRet and currRet == currRet:
                 if match.nonNumeric(currRet) and currRet is not None:
                     self.data = self.data.astype(numpy.object_)
                 else:

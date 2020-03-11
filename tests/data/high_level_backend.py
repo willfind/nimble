@@ -157,6 +157,15 @@ class HighLevelDataSafe(DataTestObject):
 
         calc = toTest.points.calculate(returnInvalidObj)
 
+    @raises(InvalidArgumentValue)
+    def test_points_calculate_dictReturn(self):
+
+        def dictReturn(pt):
+            return {str(i): pt for i in range(len(pt))}
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        ret = orig.points.calculate(dictReturn)
+
     @raises(CalledFunctionException)
     @mock.patch('nimble.data.axis.constructIndicesList', calledException)
     def test_points_calculate_calls_constructIndicesList(self):
@@ -398,6 +407,15 @@ class HighLevelDataSafe(DataTestObject):
             return int
 
         calc = toTest.features.calculate(returnInvalidObj)
+
+    @raises(InvalidArgumentValue)
+    def test_features_transform_dictReturn(self):
+
+        def dictReturn(ft):
+            return {str(i): ft for i in range(len(ft))}
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        ret = orig.features.calculate(dictReturn)
 
     @raises(CalledFunctionException)
     @mock.patch('nimble.data.axis.constructIndicesList', calledException)

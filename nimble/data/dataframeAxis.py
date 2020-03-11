@@ -46,7 +46,7 @@ class DataFrameAxis(Axis):
         df = self._base.data
 
         pointNames, featureNames = self._getStructuralNames(targetList)
-        if isinstance(self, Points):
+        if self._isPoint:
             ret = df.values[targetList, :]
             axis = 0
         else:
@@ -66,7 +66,7 @@ class DataFrameAxis(Axis):
 
     def _sort_implementation(self, indexPosition):
         # use numpy indexing to change the ordering
-        if isinstance(self, Points):
+        if self._isPoint:
             self._base.data = self._base.data.iloc[indexPosition, :]
             self._base.data.index = pd.RangeIndex(len(self))
         else:
@@ -87,7 +87,7 @@ class DataFrameAxis(Axis):
         axisNames, offAxisNames = uniqueNameGetter(self._base, self._axis,
                                                    uniqueIndices)
 
-        if isinstance(self, Points):
+        if self._isPoint:
             return nimble.createData('DataFrame', uniqueData,
                                      pointNames=axisNames,
                                      featureNames=offAxisNames, useLog=False)
@@ -97,7 +97,7 @@ class DataFrameAxis(Axis):
                                      featureNames=axisNames, useLog=False)
 
     def _repeat_implementation(self, totalCopies, copyValueByValue):
-        if isinstance(self, Points):
+        if self._isPoint:
             axis = 0
             ptDim = totalCopies
             ftDim = 1
