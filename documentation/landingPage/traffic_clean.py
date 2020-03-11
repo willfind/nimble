@@ -76,8 +76,8 @@ traffic.features.splitByParsing('date_time', dateTimeSplit,
 
 traffic.show('New parsed features in traffic data', **showKwargs)
 
-# The `holiday` contains a holiday name string for the first point of each
-# holiday, all other values are missing.
+# The `holiday` feature contains a holiday name string for the first point of
+# each holiday, all other values are missing.
 samplePts = slice(1369,1374)
 dateFts = ['holiday', 'year', 'month', 'day', 'hour']
 print(traffic[samplePts, dateFts])
@@ -115,7 +115,6 @@ print(traffic[samplePts, weatherFts])
 # each of the 11 unique values as 11 new binary features.
 traffic.features.delete('weather_description')
 newCols = traffic.replaceFeatureWithBinaryFeatures('weather_main')
-
 print(traffic[samplePts, newCols[:3]])
 
 # Our dataset is now ready for machine learning.
