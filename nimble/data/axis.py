@@ -892,16 +892,6 @@ class Axis(object):
         return ret
 
     def _statistics(self, statisticsFunction, groupByFeature=None):
-        if self._axis == 'point' or groupByFeature is None:
-            return self._statisticsBackend(statisticsFunction)
-        else:
-            # groupByFeature is only a parameter for .features
-            res = self._base.groupByFeature(groupByFeature, useLog=False)
-            for k in res:
-                res[k] = res[k].features._statisticsBackend(statisticsFunction)
-            return res
-
-    def _statisticsBackend(self, statisticsFunction):
         accepted = [
             'max', 'mean', 'median', 'min', 'unique count',
             'proportion missing', 'proportion zero', 'standard deviation',
@@ -934,6 +924,17 @@ class Axis(object):
         elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
             toCall = nimble.calculate.standardDeviation
 
+        if self._axis == 'point' or groupByFeature is None:
+            return self._statisticsBackend(cleanFuncName, toCall)
+        else:
+            # groupByFeature is only a parameter for .features
+            res = self._base.groupByFeature(groupByFeature, useLog=False)
+            for k in res:
+                res[k] = res[k].features._statisticsBackend(cleanFuncName,
+                                                            toCall)
+            return res
+
+    def _statisticsBackend(self, cleanFuncName, toCall):
         ret = self._calculate(toCall, limitTo=None, useLog=False)
         if self._isPoint:
             ret.points.setNames(self._getNames(), useLog=False)
