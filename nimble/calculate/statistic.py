@@ -81,7 +81,7 @@ def proportionZero(values):
     totalNum = len(values)
     nonZeroCount = 0
     nonZeroItr = values.iterateElements(only=match.nonZero)
-    for value in nonZeroItr:
+    for _ in nonZeroItr:
         nonZeroCount += 1
 
     if totalNum > 0:
@@ -110,7 +110,7 @@ def minimum(values, ignoreNoneNan=True):
     >>> raw = [0, 1, 2, float('nan')]
     >>> vector = nimble.createData('Matrix', raw)
     >>> minimum(vector)
-    0.0
+    0
     >>> minimum(vector, ignoreNoneNan=False)
     nan
     """
@@ -137,7 +137,7 @@ def maximum(values, ignoreNoneNan=True):
     >>> raw = [0, 1, 2, float('nan')]
     >>> vector = nimble.createData('Matrix', raw)
     >>> maximum(vector)
-    2.0
+    2
     >>> maximum(vector, ignoreNoneNan=False)
     nan
     """
@@ -150,19 +150,24 @@ def _minmax(values, minmax, ignoreNoneNan):
     """
     # convert to list not array b/c arrays won't error with non numeric data
     if values.getTypeString() == 'Sparse':
-        lst = values.data.data.tolist()
+        toProcess = values.data.data.tolist()
         if len(values) > values.data.nnz:
-            lst.append(0) # if sparse object has zeros add zero to list
+            toProcess.append(0) # if sparse object has zeros add zero to list
     else:
-        lst = values.copy('pythonlist')
+        toProcess = values.copy('numpyarray')
     if minmax == 'min' and ignoreNoneNan:
-        return numpy.nanmin(lst)
-    if minmax == 'min':
-        return numpy.min(lst)
-    if minmax == 'max' and ignoreNoneNan:
-        return numpy.nanmax(lst)
+        ret = numpy.nanmin(toProcess)
+    elif minmax == 'min':
+        ret = numpy.min(toProcess)
+    elif minmax == 'max' and ignoreNoneNan:
+        ret = numpy.nanmax(toProcess)
     else:
-        return numpy.max(lst)
+        ret = numpy.max(toProcess)
+
+    if isinstance(ret, str):
+        return None
+    else:
+        return ret
 
 def _mean_sparseBackend(nonZeroVals, lenData, numNan):
     """
@@ -229,7 +234,7 @@ def median(values):
     2.0
     """
     arr = values.copy('numpyarray', outputAs1D=True).astype(numpy.float)
-    return numpy.nanmedian(arr)
+    return numpy.nanmedian(arr, overwrite_input=True)
 
 def mode(values):
     """
@@ -341,14 +346,13 @@ def quartiles(values, ignoreNoneOrNan=True):
     >>> quartiles(vector, ignoreNoneNan=False)
     (None, None, None)
     """
-    if isinstance(values, nimble.data.Base):
-        #convert to a horizontal array
-        values = dtypeConvert(values.copy(to="numpyarray", outputAs1D=True))
+    # convert to a horizontal array, make copy to use for intermediate calculations
+    values = dtypeConvert(values.copy(to="numpyarray", outputAs1D=True))
 
     if ignoreNoneOrNan:
-        ret = numpy.nanpercentile(values, (25, 50, 75))
+        ret = numpy.nanpercentile(values, (25, 50, 75), overwrite_input=True)
     else:
-        ret = numpy.percentile(values, (25, 50, 75))
+        ret = numpy.percentile(values, (25, 50, 75), overwrite_input=True)
 
     return tuple(ret)
 
