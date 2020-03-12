@@ -3414,7 +3414,7 @@ class HighLevelModifying(DataTestObject):
     # points.combineByExpandingFeatures #
     #####################################
     @logCountAssertionFactory(3)
-    def test_points_combineByExpandingFeatures(self):
+    def test_points_combineByExpandingFeatures_singleValuesFeature(self):
         data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
                 ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
                 ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2], ["p3", 100, 'r3', 11.0],
@@ -3443,94 +3443,133 @@ class HighLevelModifying(DataTestObject):
         test2.points.combineByExpandingFeatures('run', 3)
         assert test2 == exp
 
-    def test_points_combineByExpandingFeatures_withMissing(self):
-        data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r3', 9.8],
-                ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
-                ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2],
-                ["p1", 200, 'r1', 18.1], ["p1", 200, 'r2', 20.1], ["p1", 200, 'r3', 19.8]]
-        pNames = [str(i) for i in range(10)]
-        fNames = ['type', 'dist', 'run', 'time']
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        expData = [["p1", 100, 9.5, 9.8, None],
-                   ["p2", 100, 6.5, 5.9, 6.0],
-                   ["p3", 100, 11, None, 11.2],
-                   ["p1", 200, 18.1, 19.8, 20.1]]
-        expFNames = ['type', 'dist', 'r1', 'r3', 'r2']
-        expPNames = ["0", "2", "5", "7"]
-        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
-
-        toTest.points.combineByExpandingFeatures('run', 'time')
-        assert toTest == exp
-
-    def test_points_combineByExpandingFeatures_nonConcurrentNamesAndValues(self):
-        data = [[100, "r1", 'p1', 9.5], [100, "r2", 'p1', 9.9], [100, "r3", 'p1', 9.8],
-                [100, "r1", 'p2', 6.5], [100, "r2", 'p2', 6.0], [100, "r3", 'p2', 5.9],
-                [100, "r1", 'p3', 11], [100, "r2", 'p3', 11.2], [100, "r3", 'p3', 11.0],
-                [200, "r1", 'p1', 18.1], [200, "r2", 'p1', 20.1], [200, "r3", 'p1', 19.8]]
+    @logCountAssertionFactory(3)
+    def test_points_combineByExpandingFeatures_multipleValuesFeatures(self):
+        data = [["p1", 100, 'r1', 9.5, 9.4], ["p1", 100, 'r2', 9.9, 9.7], ["p1", 100, 'r3', 9.8, 9.8],
+                ["p2", 100, 'r1', 6.5, 6.5], ["p2", 100, 'r2', 6.0, 6.2], ["p2", 100, 'r3', 5.9, 6.1],
+                ["p3", 100, 'r1', 11.0, 10.9], ["p3", 100, 'r2', 11.2, 11.1], ["p3", 100, 'r3', 11.0, 11.0],
+                ["p1", 200, 'r1', 18.1, 18.0], ["p1", 200, 'r2', 20.1, 20.2], ["p1", 200, 'r3', 19.8, 19.9]]
         pNames = [str(i) for i in range(12)]
-        fNames = ['dist', 'run', 'type', 'time']
+        fNames = ['type', 'dist', 'run', 'timer1', 'timer2']
         toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
 
-        expData = [[100, 9.5, 9.9, 9.8, "p1"],
-                   [100, 6.5, 6.0, 5.9, "p2"],
-                   [100, 11, 11.2, 11.0, "p3"],
-                   [200, 18.1, 20.1, 19.8, "p1"]]
-        expFNames = ['dist', 'r1', 'r2', 'r3', 'type']
+        expData = [["p1", 100, 9.5, 9.4, 9.9, 9.7, 9.8, 9.8],
+                   ["p2", 100, 6.5, 6.5, 6.0, 6.2, 5.9, 6.1],
+                   ["p3", 100, 11, 10.9, 11.2, 11.1, 11.0, 11.0],
+                   ["p1", 200, 18.1, 18.0, 20.1, 20.2, 19.8, 19.9]]
+        expFNames = ['type', 'dist', 'r1_timer1', 'r1_timer2', 'r2_timer1',
+                     'r2_timer2', 'r3_timer1', 'r3_timer2']
         expPNames = ["0", "3", "6", "9"]
         exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
 
-        toTest.points.combineByExpandingFeatures('run', 'time')
+        test0 = toTest.copy()
+        test0.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
+        assert test0 == exp
+
+        test1 = toTest.copy()
+        test1.points.combineByExpandingFeatures(2, [3, 4])
+        assert test1 == exp
+
+        test2 = toTest.copy()
+        test2.points.combineByExpandingFeatures('run', [3, 4])
+        assert test2 == exp
+
+    def test_points_combineByExpandingFeatures_withMissing(self):
+        data = [["p1", 100, 'r2', 9.9, 9.7], ["p1", 100, 'r3', 9.8, 9.8],
+                ["p2", 100, 'r1', 6.5, 6.5], ["p2", 100, 'r2', 6.0, 6.2], ["p2", 100, 'r3', 5.9, 6.1],
+                ["p3", 100, 'r1', 11.0, 10.9], ["p3", 100, 'r2', 11.2, 11.1],
+                ["p1", 200, 'r1', 18.1, 18.0], ["p1", 200, 'r2', 20.1, 20.2], ["p1", 200, 'r3', 19.8, 19.9]]
+        pNames = [str(i) for i in range(10)]
+        fNames = ['type', 'dist', 'run', 'timer1', 'timer2']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [["p1", 100, 9.9, 9.7, 9.8, 9.8, None, None],
+                   ["p2", 100, 6.0, 6.2, 5.9, 6.1, 6.5, 6.5],
+                   ["p3", 100, 11.2, 11.1, None, None, 11.0, 10.9],
+                   ["p1", 200, 20.1, 20.2, 19.8, 19.9, 18.1, 18.0]]
+        expFNames = ['type', 'dist', 'r2_timer1', 'r2_timer2', 'r3_timer1',
+                     'r3_timer2', 'r1_timer1', 'r1_timer2']
+        expPNames = ["0", "2", "5", "7"]
+        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
+
+        toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
+
+        assert toTest == exp
+
+    def test_points_combineByExpandingFeatures_nonConcurrentNamesAndValues(self):
+        data = [[100, 'r1', "p1", 9.5, 9.4], [100, 'r2', "p1", 9.9, 9.7], [100, 'r3', "p1", 9.8, 9.8],
+                [100, 'r1', "p2", 6.5, 6.5], [100, 'r2', "p2", 6.0, 6.2], [100, 'r3', "p2", 5.9, 6.1],
+                [100, 'r1', "p3", 11.0, 10.9], [100, 'r2', "p3", 11.2, 11.1], [100, 'r3', "p3", 11.0, 11.0],
+                [200, 'r1', "p1", 18.1, 18.0], [200, 'r2', "p1", 20.1, 20.2], [200, 'r3', "p1", 19.8, 19.9]]
+        pNames = [str(i) for i in range(12)]
+        fNames = ['type', 'run', 'dist', 'timer1', 'timer2']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [[100, 9.5, 9.4, 9.9, 9.7, 9.8, 9.8, "p1"],
+                   [100, 6.5, 6.5, 6.0, 6.2, 5.9, 6.1, "p2"],
+                   [100, 11, 10.9, 11.2, 11.1, 11.0, 11.0, "p3"],
+                   [200, 18.1, 18.0, 20.1, 20.2, 19.8, 19.9, "p1"]]
+        expFNames = ['type', 'r1_timer1', 'r1_timer2', 'r2_timer1',
+                     'r2_timer2', 'r3_timer1', 'r3_timer2', 'dist']
+        expPNames = ["0", "3", "6", "9"]
+        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
+
+        toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
         assert toTest == exp
 
     def test_points_combineByExpandingFeatures_noPointNames(self):
-        data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
-                ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
-                ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2], ["p3", 100, 'r3', 11.0],
-                ["p1", 200, 'r1', 18.1], ["p1", 200, 'r2', 20.1], ["p1", 200, 'r3', 19.8]]
-        fNames = ['type', 'dist', 'run', 'time']
+        data = [["p1", 100, 'r1', 9.5, 9.4], ["p1", 100, 'r2', 9.9, 9.7], ["p1", 100, 'r3', 9.8, 9.8],
+                ["p2", 100, 'r1', 6.5, 6.5], ["p2", 100, 'r2', 6.0, 6.2], ["p2", 100, 'r3', 5.9, 6.1],
+                ["p3", 100, 'r1', 11.0, 10.9], ["p3", 100, 'r2', 11.2, 11.1], ["p3", 100, 'r3', 11.0, 11.0],
+                ["p1", 200, 'r1', 18.1, 18.0], ["p1", 200, 'r2', 20.1, 20.2], ["p1", 200, 'r3', 19.8, 19.9]]
+        fNames = ['type', 'dist', 'run', 'timer1', 'timer2']
         toTest = self.constructor(data, featureNames=fNames)
 
-        expData = [["p1", 100, 9.5, 9.9, 9.8],
-                   ["p2", 100, 6.5, 6.0, 5.9],
-                   ["p3", 100, 11, 11.2, 11.0],
-                   ["p1", 200, 18.1, 20.1, 19.8]]
-        expFNames = ['type', 'dist', 'r1', 'r2', 'r3']
+        expData = [["p1", 100, 9.5, 9.4, 9.9, 9.7, 9.8, 9.8],
+                   ["p2", 100, 6.5, 6.5, 6.0, 6.2, 5.9, 6.1],
+                   ["p3", 100, 11, 10.9, 11.2, 11.1, 11.0, 11.0],
+                   ["p1", 200, 18.1, 18.0, 20.1, 20.2, 19.8, 19.9]]
+        expFNames = ['type', 'dist', 'r1_timer1', 'r1_timer2', 'r2_timer1',
+                     'r2_timer2', 'r3_timer1', 'r3_timer2']
         exp = self.constructor(expData, featureNames=expFNames)
 
-        toTest.points.combineByExpandingFeatures('run', 'time')
+        toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
         assert toTest == exp
 
     def test_points_combineByExpandingFeatures_noNames(self):
-        data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
-                ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
-                ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2], ["p3", 100, 'r3', 11.0],
-                ["p1", 200, 'r1', 18.1], ["p1", 200, 'r2', 20.1], ["p1", 200, 'r3', 19.8]]
+        data = [["p1", 100, 'r1', 9.5, 9.4], ["p1", 100, 'r2', 9.9, 9.7], ["p1", 100, 'r3', 9.8, 9.8],
+                ["p2", 100, 'r1', 6.5, 6.5], ["p2", 100, 'r2', 6.0, 6.2], ["p2", 100, 'r3', 5.9, 6.1],
+                ["p3", 100, 'r1', 11.0, 10.9], ["p3", 100, 'r2', 11.2, 11.1], ["p3", 100, 'r3', 11.0, 11.0],
+                ["p1", 200, 'r1', 18.1, 18.0], ["p1", 200, 'r2', 20.1, 20.2], ["p1", 200, 'r3', 19.8, 19.9]]
         toTest = self.constructor(data)
 
-        expData = [["p1", 100, 9.5, 9.9, 9.8],
-                   ["p2", 100, 6.5, 6.0, 5.9],
-                   ["p3", 100, 11, 11.2, 11.0],
-                   ["p1", 200, 18.1, 20.1, 19.8]]
-        exp = self.constructor(expData)
-        exp.features.setName(2, 'r1')
-        exp.features.setName(3, 'r2')
-        exp.features.setName(4, 'r3')
+        expData = [["p1", 100, 9.5, 9.4, 9.9, 9.7, 9.8, 9.8],
+                   ["p2", 100, 6.5, 6.5, 6.0, 6.2, 5.9, 6.1],
+                   ["p3", 100, 11, 10.9, 11.2, 11.1, 11.0, 11.0],
+                   ["p1", 200, 18.1, 18.0, 20.1, 20.2, 19.8, 19.9]]
 
-        toTest.points.combineByExpandingFeatures(2, 3)
+        exp = self.constructor(expData,)
+        exp.features.setName(2, 'r1_3')
+        exp.features.setName(3, 'r1_4')
+        exp.features.setName(4, 'r2_3')
+        exp.features.setName(5, 'r2_4')
+        exp.features.setName(6, 'r3_3')
+        exp.features.setName(7, 'r3_4')
+
+        toTest.points.combineByExpandingFeatures(2, [3, 4])
         assert toTest == exp
 
     @raises(ImproperObjectAction)
     def test_points_combineByExpandingFeatures_2valuesSameFeature(self):
-        data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
-                ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
-                ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2], ["p3", 100, 'r1', 11.0], # r1 in p3 twice
-                ["p1", 200, 'r1', 18.1], ["p1", 200, 'r2', 20.1], ["p1", 200, 'r3', 19.8]]
+        data = [["p1", 100, 'r1', 9.5, 9.4], ["p1", 100, 'r2', 9.9, 9.7], ["p1", 100, 'r3', 9.8, 9.8],
+                ["p2", 100, 'r1', 6.5, 6.5], ["p2", 100, 'r2', 6.0, 6.2], ["p2", 100, 'r3', 5.9, 6.1],
+                ["p3", 100, 'r1', 11.0, 10.9], ["p3", 100, 'r2', 11.2, 11.1], ["p3", 100, 'r1', 11.0, 11.0], # r1 in p3 twice
+                ["p1", 200, 'r1', 18.1, 18.0], ["p1", 200, 'r2', 20.1, 20.2], ["p1", 200, 'r3', 19.8, 19.9]]
         pNames = [str(i) for i in range(12)]
-        fNames = ['type', 'dist', 'run', 'time']
+        fNames = ['type', 'dist', 'run', 'timer1', 'timer2']
         toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
 
-        toTest.points.combineByExpandingFeatures('run', 'time')
+        toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
 
     ###########################
     # features.splitByParsing #
