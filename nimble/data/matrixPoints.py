@@ -82,10 +82,12 @@ class MatrixPoints(MatrixAxis, Points):
 
         self._base.data = numpy2DArray(tmpData)
 
-    def _combineByExpandingFeatures_implementation(
-            self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
+    def _combineByExpandingFeatures_implementation(self, uniqueDict, namesIdx, 
+                                                   uniqueNames, numRetFeatures,
+                                                   numExpanded):
         tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,
-                                                uniqueNames, numRetFeatures)
+                                                uniqueNames, numRetFeatures,
+                                                numExpanded)
 
         self._base.data = numpy2DArray(tmpData)
 

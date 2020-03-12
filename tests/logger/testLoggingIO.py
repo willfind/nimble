@@ -646,7 +646,7 @@ def testPrepTypeFunctionsUseLog():
     dataObj = nimble.createData('Matrix', toCombine, featureNames=fNames, useLog=False)
     dataObj.points.combineByExpandingFeatures('dist', 'time')
     checkLogContents('points.combineByExpandingFeatures', 'Matrix',
-                     {'featureWithFeatureNames': 'dist', 'featureWithValues': 'time'})
+                     {'featureWithFeatureNames': 'dist', 'featuresWithValues': ['time']})
 
     # points.setName
     dataObj = nimble.createData('Matrix', data, useLog=False)

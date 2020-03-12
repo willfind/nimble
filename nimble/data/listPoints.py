@@ -101,10 +101,12 @@ class ListPoints(ListAxis, Points):
         self._base.data = tmpData.tolist()
         self._base._numFeatures = numRetFeatures
 
-    def _combineByExpandingFeatures_implementation(
-            self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
+    def _combineByExpandingFeatures_implementation(self, uniqueDict, namesIdx,
+                                                   uniqueNames, numRetFeatures,
+                                                   numExpanded):
         tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,
-                                                uniqueNames, numRetFeatures)
+                                                uniqueNames, numRetFeatures,
+                                                numExpanded)
 
         self._base.data = tmpData.tolist()
         self._base._numFeatures = numRetFeatures
