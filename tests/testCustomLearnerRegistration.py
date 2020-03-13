@@ -10,7 +10,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.customLearners import CustomLearner
 from nimble.customLearners.ridge_regression import RidgeRegression
-from nimble.configuration import configSafetyWrapper
+from .assertionHelpers import configSafetyWrapper
 from .assertionHelpers import noLogEntryExpected
 
 
