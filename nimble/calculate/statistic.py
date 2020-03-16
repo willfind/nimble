@@ -23,9 +23,10 @@ def numericRequired(func):
         try:
             return func(*args, **kwargs)
         except (TypeError, ValueError):
+            nan = numpy.nan
             if func.__name__ == 'quartiles':
-                return (None, None, None)
-            return None
+                return (nan, nan, nan)
+            return nan
     return wrapped
 
 def proportionMissing(values):
@@ -47,20 +48,8 @@ def proportionMissing(values):
     >>> proportionMissing(vector)
     0.4
     """
-    numMissing = 0
-    numTotal = len(values)
-    nonZeroItr = values.iterateElements(only=match.nonZero)
-    for value in nonZeroItr:
-        if _isMissing(value):
-            numMissing += 1
-        else:
-            pass
-
-    if numTotal > 0:
-        return float(numMissing) / float(numTotal)
-    else:
-        return 0.0
-
+    numMissing = sum(1 for _ in values.iterateElements(only=match.missing))
+    return numMissing / len(values)
 
 def proportionZero(values):
     """
@@ -78,18 +67,13 @@ def proportionZero(values):
     >>> proportionZero(vector)
     0.25
     """
-    totalNum = len(values)
-    nonZeroCount = 0
-    nonZeroItr = values.iterateElements(only=match.nonZero)
-    for value in nonZeroItr:
-        nonZeroCount += 1
+    numVals = len(values)
+    if values.getTypeString() == 'Sparse':
+        return (numVals - values.data.nnz) / numVals
+    numZero = sum(1 for _ in values.iterateElements(only=match.zero))
+    return numZero / numVals
 
-    if totalNum > 0:
-        return float(totalNum - nonZeroCount) / float(totalNum)
-    else:
-        return 0.0
-
-def minimum(values, ignoreNoneNan=True):
+def minimum(values):
     """
     The minimum value in a vector.
 
@@ -97,9 +81,6 @@ def minimum(values, ignoreNoneNan=True):
     ----------
     values : nimble Base object
         Must be one-dimensional.
-    ignoreNoneNan : bool
-        True by default ignores missing values to determine the minimum.
-        If False, NaN may be returned if a missing value is present.
 
     See Also
     --------
@@ -111,12 +92,10 @@ def minimum(values, ignoreNoneNan=True):
     >>> vector = nimble.createData('Matrix', raw)
     >>> minimum(vector)
     0.0
-    >>> minimum(vector, ignoreNoneNan=False)
-    nan
     """
-    return _minmax(values, 'min', ignoreNoneNan)
+    return _minmax(values, 'min')
 
-def maximum(values, ignoreNoneNan=True):
+def maximum(values):
     """
     The maximum value in a vector.
 
@@ -124,9 +103,6 @@ def maximum(values, ignoreNoneNan=True):
     ----------
     values : nimble Base object
         Must be one-dimensional.
-    ignoreNoneNan : bool
-        True by default ignores missing values to determine the maximum.
-        If False, NaN may be returned if a missing value is present.
 
     See Also
     --------
@@ -138,13 +114,11 @@ def maximum(values, ignoreNoneNan=True):
     >>> vector = nimble.createData('Matrix', raw)
     >>> maximum(vector)
     2.0
-    >>> maximum(vector, ignoreNoneNan=False)
-    nan
     """
-    return _minmax(values, 'max', ignoreNoneNan)
+    return _minmax(values, 'max')
 
 @numericRequired
-def _minmax(values, minmax, ignoreNoneNan):
+def _minmax(values, minmax):
     """
     Backend for finding the minimum or maximum value in a vector.
     """
@@ -155,14 +129,9 @@ def _minmax(values, minmax, ignoreNoneNan):
             lst.append(0) # if sparse object has zeros add zero to list
     else:
         lst = values.copy('pythonlist')
-    if minmax == 'min' and ignoreNoneNan:
-        return numpy.nanmin(lst)
     if minmax == 'min':
-        return numpy.min(lst)
-    if minmax == 'max' and ignoreNoneNan:
-        return numpy.nanmax(lst)
-    else:
-        return numpy.max(lst)
+        return numpy.nanmin(lst)
+    return numpy.nanmax(lst)
 
 def _mean_sparseBackend(nonZeroVals, lenData, numNan):
     """
@@ -254,9 +223,17 @@ def mode(values):
     >>> mode(vector)
     0
     """
-    nonMissingValues = [x for x in values if not _isMissing(x)]
-    counter = collections.Counter(nonMissingValues)
-    return counter.most_common()[0][0]
+    if values.getTypeString() == 'Sparse':
+        numZero = len(values) - values.data.nnz
+        toProcess = values.iterateElements(only=nonMissingNonZero)
+        counter = collections.Counter(toProcess)
+        mcVal, mcCount = counter.most_common()[0]
+        mostCommon = 0 if numZero > mcCount else mcVal
+    else:
+        toProcess = values.iterateElements(only=nonMissing)
+        counter = collections.Counter(toProcess)
+        mostCommon = counter.most_common()[0][0]
+    return mostCommon
 
 @numericRequired
 def standardDeviation(values, sample=False):
@@ -305,13 +282,18 @@ def uniqueCount(values):
     """
     The number of unique values in the vector.
     """
-    values = [x for x in values if not _isMissing(x)]
-    valueSet = set(values)
+    if values.getTypeString() == 'Sparse':
+        toProcess = values.iterateElements(only=nonMissingNonZero)
+        valueSet = set(toProcess)
+        if len(values) > values.data.nnz:
+            valueSet.add(0)
+    else:
+        toProcess = values.iterateElements(only=nonMissing)
+        valueSet = set(toProcess)
     return len(valueSet)
 
-
 @numericRequired
-def quartiles(values, ignoreNoneOrNan=True):
+def quartiles(values):
     """
     A vector's lower quartile, the median, and the upper quartile.
 
@@ -323,10 +305,6 @@ def quartiles(values, ignoreNoneOrNan=True):
     ----------
     values : nimble Base object
         Must be one-dimensional.
-    ignoreNoneNan : bool
-        True by default ignores missing values to determine the maximum.
-        If False and the tuple contains missing values, the tuple
-        (None, None, None) will be returned.
 
     See Also
     --------
@@ -338,29 +316,17 @@ def quartiles(values, ignoreNoneOrNan=True):
     >>> vector = nimble.createData('Matrix', raw)
     >>> quartiles(vector)
     (8.5, 13.0, 17.5)
-    >>> quartiles(vector, ignoreNoneNan=False)
-    (None, None, None)
     """
-    if isinstance(values, nimble.data.Base):
-        #convert to a horizontal array
-        values = dtypeConvert(values.copy(to="numpyarray", outputAs1D=True))
-
-    if ignoreNoneOrNan:
-        ret = numpy.nanpercentile(values, (25, 50, 75))
-    else:
-        ret = numpy.percentile(values, (25, 50, 75))
-
+    # copy as horizontal array to use for intermediate calculations
+    values = dtypeConvert(values.copy(to="numpyarray", outputAs1D=True))
+    ret = numpy.nanpercentile(values, (25, 50, 75))
     return tuple(ret)
 
+def nonMissing(elem):
+    return not match.missing(elem)
 
-def _isMissing(value):
-    """
-    Determine if a point is missing or not.  If the point is None or
-    NaN, return True. Else return False.
-    """
-    #this might be the fastest way
-    return (value is None) or (value != value)
-
+def nonMissingNonZero(e):
+    return nonMissing(e) and match.nonZero(e)
 
 def residuals(toPredict, controlVars):
     """

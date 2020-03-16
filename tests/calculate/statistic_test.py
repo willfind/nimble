@@ -40,10 +40,6 @@ def testQuartilesAPI():
     ret = quartiles(obj.pointView(0))
     assert ret == (5, 5, 5)
 
-    raw = [1, 1, 3, 3]
-    ret = quartiles(raw)
-    assert ret == (1, 2, 3)
-
     raw = [0, 1, 2, 3, 4, 5, 6, 7, 8]
     obj = createData("List", raw, useLog=False)
     ret = quartiles(obj)
@@ -210,13 +206,19 @@ def testQuartiles():
         assert retlpCorrect.isIdentical(retlp)
 
 
-def testIsMissing():
+def testNonMissing():
     raw = [1, 2.0, 3, np.nan, None, 'a']
-    func = nimble.calculate.statistic._isMissing
+    func = nimble.calculate.statistic.nonMissing
     ret = [func(i) for i in raw]
-    retCorrect = [False, False, False, True, True, False]
-    assert all([ret[i] == retCorrect[i] for i in range(len(raw))])
+    retCorrect = [True, True, True, False, False, True]
+    assert all(act == exp for act, exp in zip(ret, retCorrect))
 
+def testNonMissingNonZero():
+    raw = [0, 1, 2.0, 3, np.nan, None, 'a', 0]
+    func = nimble.calculate.statistic.nonMissingNonZero
+    ret = [func(i) for i in raw]
+    retCorrect = [False, True, True, True, False, False, True, False]
+    assert all(act == exp for act, exp in zip(ret, retCorrect))
 
 #############
 # residuals #
