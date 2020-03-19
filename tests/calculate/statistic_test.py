@@ -40,10 +40,6 @@ def testQuartilesAPI():
     ret = quartiles(obj.pointView(0))
     assert ret == (5, 5, 5)
 
-    raw = [1, 1, 3, 3]
-    ret = quartiles(raw)
-    assert ret == (1, 2, 3)
-
     raw = [0, 1, 2, 3, 4, 5, 6, 7, 8]
     obj = createData("List", raw, useLog=False)
     ret = quartiles(obj)
