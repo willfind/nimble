@@ -91,7 +91,7 @@ def minimum(values):
     >>> raw = [0, 1, 2, float('nan')]
     >>> vector = nimble.createData('Matrix', raw)
     >>> minimum(vector)
-    0.0
+    0
     """
     return _minmax(values, 'min')
 
@@ -113,7 +113,7 @@ def maximum(values):
     >>> raw = [0, 1, 2, float('nan')]
     >>> vector = nimble.createData('Matrix', raw)
     >>> maximum(vector)
-    2.0
+    2
     """
     return _minmax(values, 'max')
 
@@ -124,14 +124,20 @@ def _minmax(values, minmax):
     """
     # convert to list not array b/c arrays won't error with non numeric data
     if values.getTypeString() == 'Sparse':
-        lst = values.data.data.tolist()
+        toProcess = values.data.data.tolist()
         if len(values) > values.data.nnz:
-            lst.append(0) # if sparse object has zeros add zero to list
+            toProcess.append(0) # if sparse object has zeros add zero to list
     else:
-        lst = values.copy('pythonlist')
+        toProcess = values.copy('numpyarray')
     if minmax == 'min':
-        return numpy.nanmin(lst)
-    return numpy.nanmax(lst)
+        ret = numpy.nanmin(toProcess)
+    else:
+        ret = numpy.nanmax(toProcess)
+
+    if isinstance(ret, str):
+        return None
+    else:
+        return ret
 
 def _mean_sparseBackend(nonZeroVals, lenData, numNan):
     """
@@ -198,7 +204,7 @@ def median(values):
     2.0
     """
     arr = values.copy('numpyarray', outputAs1D=True).astype(numpy.float)
-    return numpy.nanmedian(arr)
+    return numpy.nanmedian(arr, overwrite_input=True)
 
 def mode(values):
     """
@@ -319,7 +325,7 @@ def quartiles(values):
     """
     # copy as horizontal array to use for intermediate calculations
     values = dtypeConvert(values.copy(to="numpyarray", outputAs1D=True))
-    ret = numpy.nanpercentile(values, (25, 50, 75))
+    ret = numpy.nanpercentile(values, (25, 50, 75), overwrite_input=True)
     return tuple(ret)
 
 def nonMissing(elem):
