@@ -32,7 +32,6 @@ visits = nimble.createData('DataFrame', 'online_shoppers_intention_clean.csv',
 # Each point in this dataset represents a single visit to an online shopping
 # website where 18 features are recorded.
 featureNames = visits.features.getNames()
-print(*featureNames)
 
 # The first 6 features record the counts and durations of time spent on
 # the site, based on the types of pages the visitor viewed.
