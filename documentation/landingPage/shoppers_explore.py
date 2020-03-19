@@ -37,7 +37,7 @@ featureNames = visits.features.getNames()
 # the site, based on the types of pages the visitor viewed.
 
 webActivityFts = featureNames[:6]
-print(visits[:4, webActivityFts].toString(maxWidth=120))
+print(visits[:4, webActivityFts].toString(maxWidth=120, maxColumnWidth=23))
 
 # The next 3 features are website analytics collected during the visit
 
