@@ -8,6 +8,25 @@ Our data for this example contains 2000 points and 8 features. The first
 from seven different wifi sources . The final feature records which of
 four rooms the mobile device was in. This dataset will help highlight
 additional functionality included in the nimble library.
+
+References:
+Rajen Bhatt, 'Fuzzy-Rough Approaches for Pattern Classification: Hybrid
+measures, Mathematical analysis, Feature selection algorithms, Decision
+tree algorithms, Neural learning, and Applications', Amazon Books
+
+Jayant G Rohra, Boominathan Perumal, Swathi Jamjala Narayanan,
+Priya Thakur, and Rajen B Bhatt, 'User Localization in an Indoor
+Environment Using Fuzzy Hybrid of Particle Swarm Optimization &
+Gravitational Search Algorithm with Neural Networks', in Proceedings of
+Sixth International Conference on Soft Computing for Problem Solving,
+2017, pp. 286-295.
+
+Dua, D. and Graff, C. (2019).
+UCI Machine Learning Repository [http://archive.ics.uci.edu/ml].
+Irvine, CA: University of California, School of Information and Computer Science.
+
+Link to dataset:
+https://archive.ics.uci.edu/ml/datasets/Wireless+Indoor+Localization
 """
 
 ## Getting Started
@@ -87,10 +106,10 @@ trainX, trainY, testX, testY = wifi.trainAndTestSets(testFraction=0.3,
 # Rather than use an algorithm from another package, let's create a simple
 # `CustomLearner`. At a minimum, any `CustomLearner` must define a
 # `learnerType` attribute and `train` and `apply` methods. In `train`, our
-# learner will store the feature averages for each room. `apply` will examine
-# the deviations in the test point from each room's feature averages and
+# learner will store the feature medians for each room. `apply` will examine
+# the deviations in the test point from each room's feature medians and
 # predict the room with the least deviation.
-class LeastFeatureMeanDeviation(nimble.customLearners.CustomLearner):
+class LeastFeatureMedianDeviation(nimble.customLearners.CustomLearner):
     learnerType = 'classification'
 
     def train(self, trainX, trainY):
@@ -98,31 +117,29 @@ class LeastFeatureMeanDeviation(nimble.customLearners.CustomLearner):
         allData.features.append(trainX, useLog=False)
         self.featureMeans = {}
         byLabel = allData.groupByFeature(0, useLog=False)
-        for cls, group in byLabel.items():
-            means = group.features.statistics('mean')
-            self.featureMeans[cls] = means
+        for label, group in byLabel.items():
+            means = group.features.statistics('median')
+            self.featureMeans[label] = means
 
     def apply(self, testX):
-        predictions = []
-        for point in testX.points:
-            nearest = None
-            for room, means in self.featureMeans.items():
+
+        def leastDeviation(point):
+            least = None
+            for label, means in self.featureMeans.items():
                 sumSquaredDiffs = sum((point - means) ** 2)
-                if nearest is None or sumSquaredDiffs < nearest[1]:
-                    nearest = (room, sumSquaredDiffs)
-            predictions.append([nearest[0]])
+                if least is None or sumSquaredDiffs < least[1]:
+                    least = (label, sumSquaredDiffs)
+            return least[0]
 
-        retType = testX.getTypeString()
-
-        return nimble.createData(retType, predictions, useLog=False)
+        return testX.points.calculate(leastDeviation)
 
 # Since the API for nimble's training functions requires learners be identified
 # by strings in the format 'package.learner', we need to register our new
 # learner before we can use it. We will choose 'Example' as the name for our
-# package to contain our new `CustomLearner`, `LeastFeatureMeanDeviation`.
-nimble.registerCustomLearner('Example', LeastFeatureMeanDeviation)
-performance = nimble.trainAndTest('Example.LeastFeatureMeanDeviation', trainX,
-                                  trainY, testX, testY,
+# package to contain our new `CustomLearner`, `LeastFeatureMedianDeviation`.
+nimble.registerCustomLearner('Example', LeastFeatureMedianDeviation)
+performance = nimble.trainAndTest('Example.LeastFeatureMedianDeviation',
+                                  trainX, trainY, testX, testY,
                                   nimble.calculate.fractionCorrect)
 print(performance)
 
