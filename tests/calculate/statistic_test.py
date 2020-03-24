@@ -30,8 +30,8 @@ def testStDev():
     dataArr = np.array([[1], [1], [3], [4], [2], [6], [12], [0]])
     testRowList = createData('List', data=dataArr, featureNames=['nums'])
     stDevContainer = testRowList.features.calculate(standardDeviation)
-    stDev = stDevContainer.copy(to="python list")[0][0]
-    assert_almost_equal(stDev, 3.6379, 3)
+    stDev = stDevContainer[0, 0]
+    assert_almost_equal(stDev, 3.8891, 3)
 
 @noLogEntryExpected
 def testQuartilesAPI():
@@ -160,12 +160,31 @@ def testStandardDeviation():
         objl = createData(dataType, raw, useLog=False)
 
         retlf = objl.features.calculate(func, useLog=False)
-        retlfCorrect = createData(dataType, [3, None, 1.5], useLog=False)
+        retlfData = [4.242640687119285, None, 2.1213203435596424]
+        retlfCorrect = createData(dataType, retlfData, useLog=False)
         assert retlf.isIdentical(retlfCorrect)
         assert retlfCorrect.isIdentical(retlf)
 
         retlp = objl.points.calculate(func, useLog=False)
-        retlpCorrect = createData(dataType, [[None], [0.5], [3.8586123009300755]],
+        retlpData = [[None], [0.7071067811865476], [4.725815626252609]]
+        retlpCorrect = createData(dataType, retlpData, useLog=False)
+        assert retlp.isIdentical(retlpCorrect)
+        assert retlpCorrect.isIdentical(retlp)
+
+@noLogEntryExpected
+def testMedianAbsoluteDeviation():
+    raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9], [3, 9, 15]]
+    func = nimble.calculate.statistic.medianAbsoluteDeviation
+    for dataType in testDataTypes:
+        objl = createData(dataType, raw, useLog=False)
+
+        retlf = objl.features.calculate(func, useLog=False)
+        retlfCorrect = createData(dataType, [2, None, 3], useLog=False)
+        assert retlf.isIdentical(retlfCorrect)
+        assert retlfCorrect.isIdentical(retlf)
+
+        retlp = objl.points.calculate(func, useLog=False)
+        retlpCorrect = createData(dataType, [[None], [0.5], [2], [6]],
                                   useLog=False)
         assert retlp.isIdentical(retlpCorrect)
         assert retlpCorrect.isIdentical(retlp)
