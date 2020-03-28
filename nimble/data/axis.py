@@ -917,12 +917,13 @@ class Axis(object):
             toCall = nimble.calculate.proportionZero
         elif cleanFuncName in ['std', 'standarddeviation','samplestd',
                                'samplestandarddeviation']:
-            def sampleStandardDeviation(values):
-                return nimble.calculate.standardDeviation(values, True)
-
-            toCall = sampleStandardDeviation
-        elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
             toCall = nimble.calculate.standardDeviation
+        elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
+
+            def populationStandardDeviation(values):
+                return nimble.calculate.standardDeviation(values, False)
+
+            toCall = populationStandardDeviation
 
         if self._axis == 'point' or groupByFeature is None:
             return self._statisticsBackend(cleanFuncName, toCall)

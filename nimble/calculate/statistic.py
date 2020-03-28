@@ -16,7 +16,7 @@ numericalTypes = (int, float, numpy.number)
 
 def numericRequired(func):
     """
-    Handles None return for functions that require numeric data.
+    Handles NaN return for functions that require numeric data.
     """
     @functools.wraps(func)
     def wrapped(*args, **kwargs):
@@ -135,7 +135,7 @@ def _minmax(values, minmax):
         ret = numpy.nanmax(toProcess)
 
     if isinstance(ret, str):
-        return None
+        return numpy.nan
     else:
         return ret
 
@@ -154,7 +154,7 @@ def mean(values):
     The mean of the values in a vector.
 
     This function requires numeric data and ignores any NaN values.
-    Non-numeric values will results in None being returned.
+    Non-numeric values will results in NaN being returned.
 
     Parameters
     ----------
@@ -185,7 +185,7 @@ def median(values):
     The median of the values in a vector.
 
     This function requires numeric data and ignores any NaN values.
-    Non-numeric values will results in None being returned.
+    Non-numeric values will results in NaN being returned.
 
     Parameters
     ----------
@@ -211,7 +211,7 @@ def mode(values):
     The mode of the values in a vector.
 
     This function requires numeric data and ignores any NaN values.
-    Non-numeric values will results in None being returned.
+    Non-numeric values will results in NaN being returned.
 
     Parameters
     ----------
@@ -242,29 +242,29 @@ def mode(values):
     return mostCommon
 
 @numericRequired
-def standardDeviation(values, sample=False):
+def standardDeviation(values, sample=True):
     """
     The standard deviation of the values in a vector.
 
     This function requires numeric data and ignores any NaN values.
-    Non-numeric values will results in None being returned.
+    Non-numeric values will results in NaN being returned.
 
     Parameters
     ----------
     values : nimble Base object
         Must be one-dimensional.
     sample : bool
-        If False, the default, the population standard deviation is
-        returned. If True, the sample standard deviation is returned.
+        If True, the default, the sample standard deviation is
+        returned. If False, the population standard deviation is returned.
 
     Examples
     --------
     >>> raw = [1, 2, 3, 4, 5, 6, float('nan')]
     >>> vector = nimble.createData('Matrix', raw)
     >>> standardDeviation(vector)
-    1.707825127659933
-    >>> standardDeviation(vector, sample=True)
     1.8708286933869707
+    >>> standardDeviation(vector, sample=False)
+    1.707825127659933
     """
     if values.getTypeString() == 'Sparse':
         nonZero = values.data.data.astype(numpy.float)
@@ -283,6 +283,30 @@ def standardDeviation(values, sample=False):
     if sample:
         return numpy.nanstd(arr, ddof=1)
     return numpy.nanstd(arr)
+
+@numericRequired
+def medianAbsoluteDeviation(values):
+    """
+    The median absolute deviation of the values in a vector.
+
+    This function requires numeric data and ignores any NaN values.
+    Non-numeric values will results in NaN being returned.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+
+    Examples
+    --------
+    >>> raw = [1, 2, 3, 4, 5, 6, float('nan')]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> medianAbsoluteDeviation(vector)
+    1.5
+    """
+    arr = values.copy('numpy array', outputAs1D=True).astype(numpy.float)
+    mad = numpy.nanmedian(numpy.abs(arr - numpy.nanmedian(arr)))
+    return mad
 
 def uniqueCount(values):
     """
@@ -305,7 +329,7 @@ def quartiles(values):
 
     Return a 3-tuple (lowerQuartile, median, upperQuartile). This
     function requires numeric data and ignores any NaN values.
-    Non-numeric values will results in None being returned.
+    Non-numeric values will results in NaN being returned.
 
     Parameters
     ----------
