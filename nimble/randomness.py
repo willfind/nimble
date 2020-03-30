@@ -40,8 +40,9 @@ def setRandomSeed(seed, useLog=None):
     if shogun.nimbleAccessible():
         if seed is None:
             # use same seed as numpy used
-            seed = int(numpyRandom.get_state()[1][0])
-        shogun.Math.init_random(seed)
+            shogun.Math.init_random(int(numpyRandom.get_state()[1][0]))
+        else:
+            shogun.Math.init_random(seed)
     if _saved != (None, None, None):
         _stillDefault = False
 

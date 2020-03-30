@@ -1,5 +1,6 @@
 import math
 import collections
+import functools
 
 import numpy
 
@@ -10,300 +11,366 @@ from nimble.exceptions import InvalidArgumentValueCombination, PackageException
 from nimble.utility import scipy
 from nimble.utility import dtypeConvert
 
-numericalTypes = (int, float, int, numpy.number)
+numericalTypes = (int, float, numpy.number)
 
+def numericRequired(func):
+    """
+    Handles NaN return for functions that require numeric data.
+    """
+    @functools.wraps(func)
+    def wrapped(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except (TypeError, ValueError):
+            nan = numpy.nan
+            if func.__name__ == 'quartiles':
+                return (nan, nan, nan)
+            return nan
+    return wrapped
 
 def proportionMissing(values):
     """
-    Calculate proportion of entries in 'values' iterator that are missing (defined
-    as being None or NaN).
+    The proportion of values in the vector that are missing.
+
+    Calculate proportion of entries in 'values' iterator that are
+    are None or NaN.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+
+    Examples
+    --------
+    >>> raw = [1, 2, float('nan'), 4, float('nan')]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> proportionMissing(vector)
+    0.4
     """
-    numMissing = 0
-    numTotal = len(values)
-    for value in values:
-        if _isMissing(value):
-            numMissing += 1
-        else:
-            pass
-
-    if numTotal > 0:
-        return float(numMissing) / float(numTotal)
-    else:
-        return 0.0
-
+    numMissing = sum(1 for _ in values.iterateElements(only=match.missing))
+    return numMissing / len(values)
 
 def proportionZero(values):
     """
-    Calculate proportion of entries in 'values' iterator that are equal to zero.
-    """
-    totalNum = len(values)
-    nonZeroCount = 0
-    nonZeroItr = values.iterateElements(only=match.nonZero)
-    for value in nonZeroItr:
-        nonZeroCount += 1
+    The proportion of values in the vector that are equal to zero.
 
-    if totalNum > 0:
-        return float(totalNum - nonZeroCount) / float(totalNum)
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+
+    Examples
+    --------
+    >>> raw = [0, 1, 2, 3]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> proportionZero(vector)
+    0.25
+    """
+    numVals = len(values)
+    if values.getTypeString() == 'Sparse':
+        return (numVals - values.data.nnz) / numVals
+    numZero = sum(1 for _ in values.iterateElements(only=match.zero))
+    return numZero / numVals
+
+def minimum(values):
+    """
+    The minimum value in a vector.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+
+    See Also
+    --------
+    maximum
+
+    Examples
+    --------
+    >>> raw = [0, 1, 2, float('nan')]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> minimum(vector)
+    0
+    """
+    return _minmax(values, 'min')
+
+def maximum(values):
+    """
+    The maximum value in a vector.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+
+    See Also
+    --------
+    minimum
+
+    Examples
+    --------
+    >>> raw = [0, 1, 2, float('nan')]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> maximum(vector)
+    2
+    """
+    return _minmax(values, 'max')
+
+@numericRequired
+def _minmax(values, minmax):
+    """
+    Backend for finding the minimum or maximum value in a vector.
+    """
+    # convert to list not array b/c arrays won't error with non numeric data
+    if values.getTypeString() == 'Sparse':
+        toProcess = values.data.data.tolist()
+        if len(values) > values.data.nnz:
+            toProcess.append(0) # if sparse object has zeros add zero to list
     else:
-        return 0.0
-
-
-def minimum(values, ignoreNoneNan=True, noCompMixType=True):
-    """
-    Given a 1D vector of values, find the minimum value.
-    """
-    return _minmax(values, 'min', ignoreNoneNan, noCompMixType)
-
-
-def maximum(values, ignoreNoneNan=True, noCompMixType=True):
-    """
-    Given a 1D vector of values, find the maximum value.
-    """
-    return _minmax(values, 'max', ignoreNoneNan, noCompMixType)
-
-
-def _minmax(values, minmax, ignoreNoneNan=True, noCompMixType=True):
-    """
-    Given a 1D vector of values, find the minimum or maximum value.
-    """
-    if not _isNumericalFeatureGuesser(values):
-        return None
+        toProcess = values.copy('numpyarray')
     if minmax == 'min':
-        compStr = '__lt__'
-        func1 = lambda x, y: x > y
-        func2 = lambda x, y: x < y
+        ret = numpy.nanmin(toProcess)
     else:
-        compStr = '__gt__'
-        func1 = lambda x, y: x < y
-        func2 = lambda x, y: x > y
+        ret = numpy.nanmax(toProcess)
 
-    first = True
-    nonZeroValues = values.iterateElements(only=match.nonZero)
-    count = 0
-
-    #if data types are mixed and some data are not numerical, such as [1,'a']
-    if noCompMixType and featureType(values) == 'Mixed' and not (_isNumericalFeatureGuesser(values)):
-        return None
-    for value in nonZeroValues:
-        count += 1
-        if ignoreNoneNan and _isMissing(value):
-            continue
-        if (hasattr(value, '__cmp__') or hasattr(value, compStr)):
-            if first:
-                currMin = value
-                first = False
-            else:
-                if func2(value, currMin):
-                    currMin = value
-
-    if first:
-        return None
+    if isinstance(ret, str):
+        return numpy.nan
     else:
-        if func1(currMin, 0) and len(values) > count:
-            return 0
-        else:
-            return currMin
+        return ret
 
+def _mean_sparseBackend(nonZeroVals, lenData, numNan):
+    """
+    Backend helper for sparse mean calculation. The number of nan values
+    is needed for standard deviation calculations so this helper avoids
+    repeated attempts to determine the number of nan values in the data.
+    """
+    dataSum = numpy.nansum(nonZeroVals)
+    return dataSum / (lenData - numNan)
 
+@numericRequired
 def mean(values):
     """
-    Given a 1D vector of values, find the mean value.  If the values are
-    not numerical, return None.
+    The mean of the values in a vector.
+
+    This function requires numeric data and ignores any NaN values.
+    Non-numeric values will results in NaN being returned.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+
+    See Also
+    --------
+    median, mode
+
+    Examples
+    --------
+    >>> raw = [0, 1, 2, float('nan'), float('nan'), 5]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> mean(vector)
+    2.0
     """
-    if not _isNumericalFeatureGuesser(values):
-        return None
+    if values.getTypeString() == 'Sparse':
+        nonZero = values.data.data.astype(numpy.float)
+        numNan = numpy.sum(numpy.isnan(nonZero))
+        return _mean_sparseBackend(nonZero, len(values), numNan)
+    arr = values.copy('numpyarray', outputAs1D=True).astype(numpy.float)
+    return numpy.nanmean(arr)
 
-    numericalCount = 0
-    nonZeroCount = 0
-    runningSum = 0
-    totalCount = len(values)
-    nonZeroValues = values.iterateElements(only=match.nonZero)
-
-    for value in nonZeroValues:
-        nonZeroCount += 1
-        if _isNumericalPoint(value):
-            runningSum += value
-            numericalCount += 1
-
-    if numericalCount == 0 and totalCount > nonZeroCount:
-        return 0
-    elif numericalCount == 0 and totalCount == nonZeroCount:
-        return None
-    elif numericalCount > 0 and totalCount == nonZeroCount:
-        return float(runningSum) / float(numericalCount)
-    elif numericalCount > 0 and totalCount > nonZeroCount:
-        return float(runningSum) / float(numericalCount + totalCount - nonZeroCount)
-
-
+@numericRequired
 def median(values):
     """
-    Given a 1D vector of values, find the median value of the natural ordering.
+    The median of the values in a vector.
 
+    This function requires numeric data and ignores any NaN values.
+    Non-numeric values will results in NaN being returned.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+
+    See Also
+    --------
+    mean, mode
+
+    Examples
+    --------
+    >>> raw = [0, 1, 2, float('nan'), float('nan'), 5, 6]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> median(vector)
+    2.0
     """
-    if not _isNumericalFeatureGuesser(values):
-        return None
-
-    #Filter out None/NaN values from list of values
-    sortedValues = [x for x in values if not _isMissing(x)]
-
-    if len(sortedValues) == 0:
-        return None
-
-    sortedValues = sorted(sortedValues)
-
-    numValues = len(sortedValues)
-
-    if numValues % 2 == 0:
-        median = (float(sortedValues[(numValues // 2) - 1]) + float(sortedValues[numValues // 2])) / float(2)
-    else:
-        median = float(sortedValues[int(math.floor(numValues / 2))])
-
-    return median
+    arr = values.copy('numpyarray', outputAs1D=True).astype(numpy.float)
+    return numpy.nanmedian(arr, overwrite_input=True)
 
 def mode(values):
     """
-    Given a 1D vector of values, find the most frequent value.
+    The mode of the values in a vector.
+
+    This function requires numeric data and ignores any NaN values.
+    Non-numeric values will results in NaN being returned.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+
+    See Also
+    --------
+    mean, median
+
+    Examples
+    --------
+    >>> raw = [0, 1, 2, float('nan'), float('nan'), float('nan'), 0, 6]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> mode(vector)
+    0
     """
-    nonMissingValues = [x for x in values if not _isMissing(x)]
-    counter = collections.Counter(nonMissingValues)
-    return counter.most_common()[0][0]
-
-
-def standardDeviation(values, sample=False):
-    """
-    Given a 1D vector of values, find the standard deviation.  If the values are
-    not numerical, return None.
-    """
-    if not _isNumericalFeatureGuesser(values):
-        return None
-
-    #Filter out None/NaN values from list of values
-    meanRet = mean(values)
-    nonZeroCount = 0
-    numericalCount = 0
-    nonZeroValues = values.iterateElements(only=match.nonZero)
-
-    squaredDifferenceTotal = 0
-    for value in nonZeroValues:
-        nonZeroCount += 1
-        if _isNumericalPoint(value):
-            numericalCount += 1
-            squaredDifferenceTotal += (meanRet - value) ** 2
-
-    if nonZeroCount < len(values):
-        numZeros = len(values) - nonZeroCount
-        squaredDifferenceTotal += numZeros * meanRet ** 2
-        numericalCount += numZeros
-
-    # doing sample covariance calculation
-    if sample:
-        divisor = numericalCount - 1
-    # doing population covariance calculation
+    if values.getTypeString() == 'Sparse':
+        numZero = len(values) - values.data.nnz
+        toProcess = values.iterateElements(only=nonMissingNonZero)
+        counter = collections.Counter(toProcess)
+        mcVal, mcCount = counter.most_common()[0]
+        mostCommon = 0 if numZero > mcCount else mcVal
     else:
-        divisor = numericalCount
+        toProcess = values.iterateElements(only=nonMissing)
+        counter = collections.Counter(toProcess)
+        mostCommon = counter.most_common()[0][0]
+    return mostCommon
 
-    if divisor == 0:
-        return 0
+@numericRequired
+def standardDeviation(values, sample=True):
+    """
+    The standard deviation of the values in a vector.
 
-    stDev = math.sqrt(squaredDifferenceTotal / float(divisor))
-    return stDev
+    This function requires numeric data and ignores any NaN values.
+    Non-numeric values will results in NaN being returned.
 
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+    sample : bool
+        If True, the default, the sample standard deviation is
+        returned. If False, the population standard deviation is returned.
+
+    Examples
+    --------
+    >>> raw = [1, 2, 3, 4, 5, 6, float('nan')]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> standardDeviation(vector)
+    1.8708286933869707
+    >>> standardDeviation(vector, sample=False)
+    1.707825127659933
+    """
+    if values.getTypeString() == 'Sparse':
+        nonZero = values.data.data.astype(numpy.float)
+        numNan = numpy.sum(numpy.isnan(nonZero))
+        meanRet = _mean_sparseBackend(nonZero, len(values), numNan)
+
+        dataSumSquared = numpy.nansum((nonZero - meanRet) ** 2)
+        zeroSumSquared = meanRet ** 2 * (len(values) - values.data.nnz)
+        divisor = len(values) - numNan
+        if sample:
+            divisor -= 1
+        var = (dataSumSquared + zeroSumSquared) / divisor
+        return numpy.sqrt(var)
+
+    arr = values.copy('numpyarray', outputAs1D=True).astype(numpy.float)
+    if sample:
+        return numpy.nanstd(arr, ddof=1)
+    return numpy.nanstd(arr)
+
+@numericRequired
+def medianAbsoluteDeviation(values):
+    """
+    The median absolute deviation of the values in a vector.
+
+    This function requires numeric data and ignores any NaN values.
+    Non-numeric values will results in NaN being returned.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+
+    Examples
+    --------
+    >>> raw = [1, 2, 3, 4, 5, 6, float('nan')]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> medianAbsoluteDeviation(vector)
+    1.5
+    """
+    arr = values.copy('numpy array', outputAs1D=True).astype(numpy.float)
+    mad = numpy.nanmedian(numpy.abs(arr - numpy.nanmedian(arr)))
+    return mad
 
 def uniqueCount(values):
     """
-    Given a 1D vector of values, calculate the number of unique values.
+    The number of unique values in the vector.
     """
-    values = [x for x in values if not _isMissing(x)]
-    valueSet = set(values)
+    if values.getTypeString() == 'Sparse':
+        toProcess = values.iterateElements(only=nonMissingNonZero)
+        valueSet = set(toProcess)
+        if len(values) > values.data.nnz:
+            valueSet.add(0)
+    else:
+        toProcess = values.iterateElements(only=nonMissing)
+        valueSet = set(toProcess)
     return len(valueSet)
 
-
-def featureType(values):
+@numericRequired
+def quartiles(values):
     """
-        Return the type of data: string, int, float
+    A vector's lower quartile, the median, and the upper quartile.
+
+    Return a 3-tuple (lowerQuartile, median, upperQuartile). This
+    function requires numeric data and ignores any NaN values.
+    Non-numeric values will results in NaN being returned.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+
+    See Also
+    --------
+    median
+
+    Examples
+    --------
+    >>> raw = [1, 5, 12, 13, 14, 21, 23, float('nan')]
+    >>> vector = nimble.createData('Matrix', raw)
+    >>> quartiles(vector)
+    (8.5, 13.0, 17.5)
     """
-
-    # types = numpy.unique([type(value) for value in values if not _isMissing(value)])#doesn't work in python3
-    types = list(set([type(value) for value in values if not _isMissing(value)]))
-    #if all data in values are missing
-    if len(types) == 0:
-        return 'Unknown'
-    #if multiple types are in values
-    elif len(types) > 1:
-        return 'Mixed'
-    else:
-        return str(types[0]).split("'")[1]#in python2, it is like "<type 'xxx'>", while in python3, it is like "<class 'xxx'>"
-
-
-def quartiles(values, ignoreNoneOrNan=True):
-    """
-    From the vector of values, return a 3-tuple containing the
-    lower quartile, the median, and the upper quartile.
-
-    """
-    if not _isNumericalFeatureGuesser(values):
-        return (None, None, None)
-
-    if isinstance(values, nimble.data.Base):
-        #conver to a horizontal array
-        values = dtypeConvert(values.copy(to="numpyarray").flatten())
-
-    if ignoreNoneOrNan:
-        values = [v for v in values if not _isMissing(v)]
-    ret = numpy.percentile(values, (25, 50, 75))
-
+    # copy as horizontal array to use for intermediate calculations
+    values = dtypeConvert(values.copy(to="numpyarray", outputAs1D=True))
+    ret = numpy.nanpercentile(values, (25, 50, 75), overwrite_input=True)
     return tuple(ret)
 
+def nonMissing(elem):
+    return not match.missing(elem)
 
-def _isMissing(point):
-    """
-    Determine if a point is missing or not.  If the point is None or NaN, return True.
-    Else return False.
-    """
-    #this might be the fastest way
-    return (point is None) or (point != point)
-
-
-def _isNumericalFeatureGuesser(featureVector):
-    """
-    Returns true if the vector only contains primitive numerical
-    non-complex values, returns false otherwise.
-    """
-    return all(isinstance(val, numericalTypes) for val in featureVector if val)
-
-
-def _isNumericalPoint(point):
-    """
-    Check to see if a point is a valid number that can be used in numerical calculations.
-    If point is of type float, long, or int, and not None or NaN, return True.  Otherwise
-    return False.
-    """
-    #np.nan is in numericalTypes, but None isn't; None==None, but np.nan!=np.nan
-    if isinstance(point, numericalTypes) and (point == point):
-        return True
-    else:
-        return False
-
+def nonMissingNonZero(e):
+    return nonMissing(e) and match.nonZero(e)
 
 def residuals(toPredict, controlVars):
     """
-    Calculate the residuals of toPredict, by a linear regression model using the controlVars.
+    Calculate the residuals by a linear regression model.
 
-    toPredict: nimble Base object, where each feature will be used as the independant
-    variable in a separate linear regression model with the controlVars as the
-    dependant variables.
-
-    controlVars: nimble Base object, with the same number of points as toPredict. Each
-    point will be used as the dependant variables to do predictions for the
-    corresponding point in toPredict.
-
-    Returns: nimble Base object of the same size as toPredict, containing the calculated
-    residuals.
-
-    Raises: InvalidArgumentType if toPredict and controlVars are not nimble
-    data objects and InvalidArgumentValue if either has nonzero points
-    or features and InvalidArgumentValueCombination if they have a different
-    number of points.
+    Parameters
+    ----------
+    toPredict : nimble Base object
+        Each feature will be used as the independent variable in a
+        separate linear regression model with the ``controlVars`` as the
+        dependent variables.
+    controlVars : nimble Base object
+        Must have the same number of points as toPredict. Each point
+        will be used as the dependant variables to do predictions for
+        the corresponding point in ``toPredict``.
     """
     if not scipy.nimbleAccessible():
         msg = "scipy must be installed in order to use the residuals function."

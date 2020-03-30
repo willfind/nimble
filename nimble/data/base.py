@@ -2208,7 +2208,7 @@ class Base(object):
             context = ""
         context += str(self._pointCount) + "pt x "
         context += str(self._featureCount) + "ft"
-        print(context)
+        print(context, '\n')
         print(self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits,
                             maxColumnWidth))
 
@@ -4414,9 +4414,90 @@ class Base(object):
             raise InvalidArgumentType(msg)
         if otherBase:
             self._genericBinary_sizeValidation(opName, other)
-            self._validateEqualNames('point', 'point', opName, other)
-            self._validateEqualNames('feature', 'feature', opName, other)
+        # divmod operations inconsistently raise exceptions for zero division
+        # it is more efficient to validate now than validate after operation
+        if 'div' in opName or 'mod' in opName:
+            self._validateDivMod(opName, other)
 
+    def _genericBinary_axisNames(self, opName, other, usableTypes):
+        """
+        Determines axis names for operations between two Base objects.
+
+        When both Base objects, axis names determine the operations
+        that can be performed. When both axes are determined to have
+        equal names, the operation can be performed and the axis names
+        of the returned object can be set based on the left and right
+        objects. When only one axis has equal names, the other axis must
+        have disjoint names and the names of the disjoint axis cannot be
+        used to set names for the returned object. In all other cases,
+        the operation is disallowed and an exception will be raised.
+        """
+        # inplace operations require both point and feature name equality
+        try:
+            self._validateEqualNames('feature', 'feature', opName, other)
+            ftNamesEqual = True
+        except InvalidArgumentValue:
+            if opName.startswith('__i'):
+                raise
+            ftNamesEqual = False
+        try:
+            self._validateEqualNames('point', 'point', opName, other)
+            ptNamesEqual = True
+        except InvalidArgumentValue:
+            if opName.startswith('__i'):
+                raise
+            ptNamesEqual = False
+        # for *NamesEqual to be False, the left and right objects must have
+        # at least one unequal non-default name along that axis.
+        if not ftNamesEqual and not ptNamesEqual:
+            msg = "When both point and feature names are present, {0} "
+            msg += "requires either the point names or feature names to "
+            msg += "be equal between the left and right objects"
+            raise InvalidArgumentValue(msg.format(opName))
+
+        # determine axis names for returned object
+        try:
+            other._convertUnusableTypes(float, usableTypes, False)
+        except ImproperObjectAction:
+            other._numericValidation(right=True)
+        # everything else that uses this helper is a binary scalar op
+        retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
+                                                                other)
+        # in these cases we cannot define names for the disjoint axis
+        if ftNamesEqual and not ptNamesEqual:
+            self._genericBinary_axisNamesDisjoint('point', other, opName)
+            retPNames = None
+        elif ptNamesEqual and not ftNamesEqual:
+            self._genericBinary_axisNamesDisjoint('feature', other, opName)
+            retFNames = None
+
+        return retPNames, retFNames
+
+    def _genericBinary_axisNamesDisjoint(self, axis, other, opName):
+        """
+        Verify that the axis names for this object and the other object
+        are disjoint. Equal default names do not imply the same point or
+        feature, so default names are ignored.
+        """
+        def nonDefaultNames(names):
+            return (n for n in names if not n.startswith(DEFAULT_PREFIX))
+
+        if axis == 'point':
+            sNames = nonDefaultNames(self.points.getNames())
+            oNames = nonDefaultNames(other.points.getNames())
+            equalAxis = 'feature'
+        else:
+            sNames = nonDefaultNames(self.features.getNames())
+            oNames = nonDefaultNames(other.features.getNames())
+            equalAxis = 'point'
+
+        if not set(sNames).isdisjoint(oNames):
+            matches = [n for n in sNames if n in oNames]
+            msg = "{0} between objects with equal {1} names must have "
+            msg += "unique {2} names. However, the {2} names {3} were "
+            msg += "found in both the left and right objects"
+            msg = msg.format(opName, equalAxis, axis, matches)
+            raise InvalidArgumentValue(msg)
 
     def _convertUnusableTypes(self, convertTo, usableTypes, returnCopy=True):
         """
@@ -4452,21 +4533,12 @@ class Base(object):
             return NotImplemented
 
         self._genericBinary_validation(opName, other)
-        # divmod operations inconsistently raise exceptions for zero division
-        # it is more efficient to validate now than validate after operation
-        if 'div' in opName or 'mod' in opName:
-            self._validateDivMod(opName, other)
 
         # figure out return obj's point / feature names
         otherBase = isinstance(other, Base)
         if otherBase:
-            try:
-                other._convertUnusableTypes(float, usableTypes, False)
-            except ImproperObjectAction:
-                other._numericValidation(right=True)
-            # everything else that uses this helper is a binary scalar op
-            retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
-                                                                    other)
+            retPNames, retFNames = self._genericBinary_axisNames(opName, other,
+                                                                 usableTypes)
         else:
             retPNames = self.points._getNamesNoGeneration()
             retFNames = self.features._getNamesNoGeneration()
@@ -4535,8 +4607,6 @@ class Base(object):
         self._genericBinary_sizeValidation(opName, other)
         lhsBool = self._logicalValidationAndConversion()
         rhsBool = other._logicalValidationAndConversion()
-        self._validateEqualNames('point', 'point', opName, other)
-        self._validateEqualNames('feature', 'feature', opName, other)
 
         return lhsBool._genericBinaryOperations(opName, rhsBool)
 

@@ -53,10 +53,6 @@ class ListPoints(ListAxis, Points):
             if limitTo is not None and i not in limitTo:
                 continue
             currRet = function(p)
-            if len(currRet) != len(self._base.features):
-                msg = "function must return an iterable with as many elements "
-                msg += "as features in this object"
-                raise InvalidArgumentValue(msg)
 
             self._base.data[i] = list(currRet)
 
@@ -105,10 +101,12 @@ class ListPoints(ListAxis, Points):
         self._base.data = tmpData.tolist()
         self._base._numFeatures = numRetFeatures
 
-    def _combineByExpandingFeatures_implementation(
-            self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
+    def _combineByExpandingFeatures_implementation(self, uniqueDict, namesIdx,
+                                                   uniqueNames, numRetFeatures,
+                                                   numExpanded):
         tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,
-                                                uniqueNames, numRetFeatures)
+                                                uniqueNames, numRetFeatures,
+                                                numExpanded)
 
         self._base.data = tmpData.tolist()
         self._base._numFeatures = numRetFeatures

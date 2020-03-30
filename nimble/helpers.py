@@ -1172,6 +1172,66 @@ def _intFloatOrString(inString):
             return None
         return ret
 
+def _intFloatBoolOrString(inString):
+    """
+    Expand on _intFloatOrString to convert True/False strings to bool.
+    """
+    ret = _intFloatOrString(inString)
+    if ret == 'True':
+        return True
+    if ret == 'False':
+        return False
+    return ret
+
+typeHierarchy = {bool: 0, int: 1, float: 2, str: 3}
+
+def _csvColTypeTracking(row, convertCols, nonNumericFeatures):
+    """
+    Track the possible types of values in each column.
+
+    Store the most complex type for values in each column according to
+    the typeHierarchy.  Boolean columns must be exclusively boolean
+    values (ignoring None), otherwise the potential boolean values will
+    be assumed to be strings instead. Once a column has been determined
+    to have a str type, it is removed from convertCols because it will
+    only store columns that require conversion and the columns index is
+    added to nonNumericFeatures.
+    """
+    delKeys = []
+    if convertCols:
+        for idx, currType in convertCols.items():
+            colVal = _intFloatBoolOrString(row[idx])
+            colType = type(colVal)
+            if colVal is not None and colType != currType:
+                if typeHierarchy[colType] > typeHierarchy[currType]:
+                    if currType is bool or colType is str:
+                        delKeys.append(idx)
+                    else:
+                        convertCols[idx] = colType
+                elif colType is bool:
+                    delKeys.append(idx)
+
+    if delKeys:
+        for key in delKeys:
+            del convertCols[key]
+            nonNumericFeatures.append(key)
+
+def _colTypeConversion(row, convertCols):
+    """
+    Converts values in each row that are in numeric/boolean columns.
+
+    Since convertCols does not contain non-numeric columns, any empty
+    string is considered to be a missing value.
+    """
+    for idx, cType in convertCols.items():
+        val = row[idx]
+        if val == '':
+            row[idx] = None
+        elif cType is bool and val == 'False':
+            # bool('False') would return True since val is still a string
+            row[idx] = False
+        else:
+            row[idx] = cType(val)
 
 def isEmptyRaw(raw):
     """
@@ -1600,6 +1660,8 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
         retData = [None] * len(keepPoints)
         extractedPointNames = [None] * len(keepPoints)
 
+    convertCols = None
+    nonNumericFeatures = []
     # lineReader is now at the first line of data
     for i, row in enumerate(lineReader):
         if pointNames is True:
@@ -1644,11 +1706,18 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
                 for ftID in keepFeatures:
                     limitedRow.append(row[ftID])
                 row = limitedRow
-            row = list(map(_intFloatOrString, row))
-            if ignoreNonNumericalFeatures:
+
+            if convertCols is None: # first row
+                convertCols = {}
                 for idx, val in enumerate(row):
-                    if isinstance(val, str):
-                        nonNumericFeatures.add(idx)
+                    colType = type(_intFloatBoolOrString(val))
+                    if colType is not str:
+                        convertCols[idx] = colType
+                    else:
+                        nonNumericFeatures.append(idx)
+            else: # continue to track column types in subsequent rows
+                _csvColTypeTracking(row, convertCols, nonNumericFeatures)
+
             if keepPoints == 'all':
                 retData.append(row)
                 if pointNames is True:
@@ -1672,6 +1741,19 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
             and len(retData) == totalPoints == len(keepPoints)):
         _raiseKeepLengthConflict('point')
 
+    if limitPoints and len(keepPoints) != len(locatedPoints):
+        unlocated = []
+        for ptID in keepPoints:
+            if ptID not in locatedPoints:
+                unlocated.append(ptID)
+        msg = "The points " + ",".join(map(str, unlocated)) + " were not "
+        msg += "found in the data"
+        raise InvalidArgumentValue(msg)
+
+    if convertCols:
+        for row in retData:
+            _colTypeConversion(row, convertCols)
+
     if ignoreNonNumericalFeatures:
         if retFNames:
             retFNames = [retFNames[i] for i in range(len(retFNames))
@@ -1681,15 +1763,6 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
             removeNonNumeric.append([row[i] for i in range(len(row))
                                      if i not in nonNumericFeatures])
         retData = removeNonNumeric
-
-    if limitPoints and len(keepPoints) != len(locatedPoints):
-        unlocated = []
-        for ptID in keepPoints:
-            if ptID not in locatedPoints:
-                unlocated.append(ptID)
-        msg = "The points " + ",".join(map(str, unlocated)) + " were not "
-        msg += "found in the data"
-        raise InvalidArgumentValue(msg)
 
     if pointNames is True:
         retPNames = extractedPointNames

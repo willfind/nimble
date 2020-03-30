@@ -41,7 +41,7 @@ class MatrixAxis(Axis):
         managed separately by each frontend function.
         """
         pointNames, featureNames = self._getStructuralNames(targetList)
-        if isinstance(self, Points):
+        if self._isPoint:
             axisVal = 0
             ret = self._base.data[targetList]
         else:
@@ -57,7 +57,7 @@ class MatrixAxis(Axis):
 
     def _sort_implementation(self, indexPosition):
         # use numpy indexing to change the ordering
-        if isinstance(self, Points):
+        if self._isPoint:
             self._base.data = self._base.data[indexPosition, :]
         else:
             self._base.data = self._base.data[:, indexPosition]
@@ -75,7 +75,7 @@ class MatrixAxis(Axis):
 
         axisNames, offAxisNames = uniqueNameGetter(self._base, self._axis,
                                                    uniqueIndices)
-        if isinstance(self, Points):
+        if self._isPoint:
             return nimble.createData('Matrix', uniqueData, pointNames=axisNames,
                                      featureNames=offAxisNames, useLog=False)
         else:
@@ -84,7 +84,7 @@ class MatrixAxis(Axis):
                                      featureNames=axisNames, useLog=False)
 
     def _repeat_implementation(self, totalCopies, copyValueByValue):
-        if isinstance(self, Points):
+        if self._isPoint:
             axis = 0
             ptDim = totalCopies
             ftDim = 1
@@ -97,6 +97,23 @@ class MatrixAxis(Axis):
         else:
             repeated = numpy.tile(self._base.data, (ptDim, ftDim))
         return repeated
+
+    ###########
+    # Helpers #
+    ###########
+
+    def _convertBaseDtype(self, retDtype):
+        """
+        Convert the dtype of the Base object if necessary to replace the
+        current values with the transformed values.
+        """
+        baseDtype = self._base.data.dtype
+        if baseDtype != numpy.object_ and retDtype == numpy.object_:
+            self._base.data = self._base.data.astype(numpy.object_)
+        elif baseDtype == numpy.int and retDtype == numpy.float:
+            self._base.data = self._base.data.astype(numpy.float)
+        elif baseDtype == numpy.bool_ and retDtype != numpy.bool_:
+            self._base.data = self._base.data.astype(retDtype)
 
     ####################
     # Abstract Methods #

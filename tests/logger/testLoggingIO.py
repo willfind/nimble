@@ -21,10 +21,10 @@ import numpy
 import nimble
 from nimble.helpers import generateClassificationData
 from nimble.calculate import rootMeanSquareError as RMSE
-from nimble.configuration import configSafetyWrapper
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import InvalidArgumentType
+from ..assertionHelpers import configSafetyWrapper
 
 #####################
 # Helpers for tests #
@@ -646,7 +646,7 @@ def testPrepTypeFunctionsUseLog():
     dataObj = nimble.createData('Matrix', toCombine, featureNames=fNames, useLog=False)
     dataObj.points.combineByExpandingFeatures('dist', 'time')
     checkLogContents('points.combineByExpandingFeatures', 'Matrix',
-                     {'featureWithFeatureNames': 'dist', 'featureWithValues': 'time'})
+                     {'featureWithFeatureNames': 'dist', 'featuresWithValues': ['time']})
 
     # points.setName
     dataObj = nimble.createData('Matrix', data, useLog=False)
@@ -774,10 +774,6 @@ def testLambdaStringConversionCommas():
         calculated2 = dataObj.points.calculate(lambda x: (x[0], x[2]), points=6)
         checkLogContents('points.calculate', retType, {'function': "lambda x: (x[0], x[2])",
                                                         'points': 6})
-        calculated3 = dataObj.points.calculate(lambda x: {x[0]: None, x[2]: None}, points=12)
-        checkLogContents('points.calculate', retType,
-                         {'function': "lambda x: {x[0]: None, x[2]: None}",
-                          'points': 12})
 
 @emptyLogSafetyWrapper
 @raises(InvalidArgumentType)

@@ -101,21 +101,23 @@ class SparsePoints(SparseAxis, Points):
             (tmpData, (tmpRow, tmpCol)), shape=(numRetPoints, numRetFeatures))
         self._base._sorted = None
 
-    def _combineByExpandingFeatures_implementation(
-            self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
+    def _combineByExpandingFeatures_implementation( self, uniqueDict, namesIdx,
+                                                   uniqueNames, numRetFeatures,
+                                                   numExpanded):
         tmpData = []
         tmpRow = []
         tmpCol = []
+        numNewFts = len(uniqueNames) * numExpanded
         for idx, point in enumerate(uniqueDict):
             tmpPoint = list(point[:namesIdx])
             for name in uniqueNames:
                 if name in uniqueDict[point]:
-                    tmpPoint.append(uniqueDict[point][name])
+                    tmpPoint.extend(uniqueDict[point][name])
                 else:
-                    tmpPoint.append(numpy.nan)
+                    tmpPoint.extend([numpy.nan] * numExpanded)
             tmpPoint.extend(point[namesIdx:])
             tmpData.extend(tmpPoint)
-            tmpRow.extend([idx for _ in range(len(point) + len(uniqueNames))])
+            tmpRow.extend([idx for _ in range(len(point) + numNewFts)])
             tmpCol.extend([i for i in range(numRetFeatures)])
 
         tmpData = numpy.array(tmpData, dtype=numpy.object_)
