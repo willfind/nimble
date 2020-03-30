@@ -12,7 +12,7 @@ import numpy
 import nimble
 from nimble.helpers import generateClassificationData
 from nimble.calculate import fractionIncorrect
-from nimble.configuration import configSafetyWrapper
+from ..assertionHelpers import configSafetyWrapper
 
 learnerName = 'custom.KNNClassifier'
 

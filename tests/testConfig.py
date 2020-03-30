@@ -14,9 +14,9 @@ import configparser
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
-from nimble.configuration import configSafetyWrapper
 from nimble.interfaces.universal_interface import UniversalInterface
 from nimble.interfaces.universal_interface import PredefinedInterface
+from .assertionHelpers import configSafetyWrapper
 
 
 ###############
