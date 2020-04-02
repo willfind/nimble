@@ -62,16 +62,16 @@ class Axis(object):
             self._isPoint = False
         super(Axis, self).__init__(**kwargs)
 
-    def __iter__(self):
+    def _iter(self):
         return AxisIterator(self)
 
-    def __len__(self):
+    def _len(self):
         if self._isPoint:
             return self._base._pointCount
         else:
             return self._base._featureCount
 
-    def __bool__(self):
+    def _bool(self):
         return len(self) > 0
 
     ########################
@@ -183,7 +183,7 @@ class Axis(object):
         except KeyError:
             return False
 
-    def __getitem__(self, key):
+    def _getitem(self, key):
         if isinstance(key, (int, float, str, numpy.integer)):
             key = [self._getIndex(key, allowFloats=True)]
         else:

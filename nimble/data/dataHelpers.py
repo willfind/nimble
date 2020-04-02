@@ -931,3 +931,17 @@ def csvCommaFormat(name):
     if isinstance(name, str) and ',' in name:
         return '"{0}"'.format(name)
     return name
+
+def limitedTo2D(method):
+    @wraps(method)
+    def wrapped(self, *args, **kwargs):
+        if hasattr(self, '_base'):
+            tensorRank = self._base._tensorRank
+        else:
+            tensorRank = self._tensorRank
+        if tensorRank > 2:
+            msg = "The {0} method is not permitted ".format(method.__name__)
+            msg += "when the data has more than two dimensions"
+            raise ImproperObjectAction(msg)
+        return method(self, *args, **kwargs)
+    return wrapped

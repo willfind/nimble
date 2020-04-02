@@ -42,6 +42,7 @@ from .dataHelpers import csvCommaFormat
 from .dataHelpers import validateElementFunction, wrapMatchFunctionFactory
 from .dataHelpers import getDictionaryMappingFunction
 from .dataHelpers import ElementIterator1D
+from .dataHelpers import limitedTo2D
 
 cloudpickle = ImportModule('cloudpickle')
 matplotlib = ImportModule('matplotlib')
@@ -209,11 +210,8 @@ class Base(object):
         return self._shape[1]
 
     @_featureCount.setter
+    @limitedTo2D
     def _featureCount(self, value):
-        if self._tensorRank > 2:
-            msg = "Cannot change feature count when data has more than "
-            msg += 'two dimensions'
-            raise InvalidArgumentValue(msg)
         self._shape[1] = value
 
     @property
@@ -404,6 +402,7 @@ class Base(object):
         msg += ") are both greater than 1"
         raise ImproperObjectAction(msg)
 
+    @limitedTo2D
     def __iter__(self):
         if self._pointCount in [0, 1] or self._featureCount in [0, 1]:
             return ElementIterator1D(self)
@@ -415,6 +414,7 @@ class Base(object):
     def __bool__(self):
         return self._pointCount > 0 and self._featureCount > 0
 
+    @limitedTo2D
     def iterateElements(self, order='point', only=None):
         """
         Iterate over each element in this object.
@@ -469,7 +469,7 @@ class Base(object):
     ###########################
     # Higher Order Operations #
     ###########################
-
+    @limitedTo2D
     def replaceFeatureWithBinaryFeatures(self, featureToReplace, useLog=None):
         """
         Create binary features for each unique value in a feature.
@@ -546,7 +546,7 @@ class Base(object):
 
         return ftNames
 
-
+    @limitedTo2D
     def transformFeatureToIntegers(self, featureToConvert, useLog=None):
         """
         Represent each unique value in a feature with a unique integer.
@@ -617,7 +617,7 @@ class Base(object):
 
         return {v: k for k, v in mapping.items()}
 
-
+    @limitedTo2D
     def transformElements(self, toTransform, points=None, features=None,
                           preserveZeros=False, skipNoneReturnValues=False,
                           useLog=None):
@@ -751,6 +751,7 @@ class Base(object):
                       toTransform, points, features, preserveZeros,
                       skipNoneReturnValues)
 
+    @limitedTo2D
     def calculateOnElements(self, toCalculate, points=None, features=None,
                             preserveZeros=False, skipNoneReturnValues=False,
                             outputType=None, useLog=None):
@@ -886,6 +887,7 @@ class Base(object):
 
         return ret
 
+    @limitedTo2D
     def matchingElements(self, toMatch, points=None, features=None,
                          useLog=None):
         """
@@ -1032,6 +1034,7 @@ class Base(object):
             function.otypes = [numpy.object_]
             return function(toCalculate)
 
+    @limitedTo2D
     def countElements(self, condition):
         """
         The number of values which satisfy the condition.
@@ -1083,6 +1086,7 @@ class Base(object):
             raise InvalidArgumentType(msg)
         return int(numpy.sum(ret.data))
 
+    @limitedTo2D
     def countUniqueElements(self, points=None, features=None):
         """
         Count of each unique value in the data.
@@ -1125,6 +1129,7 @@ class Base(object):
         """
         return self._countUnique_implementation(points, features)
 
+    @limitedTo2D
     def groupByFeature(self, by, countUniqueValueOnly=False, useLog=None):
         """
         Group data object by one or more features.
@@ -1225,6 +1230,7 @@ class Base(object):
 
         return res
 
+    @limitedTo2D
     def hashCode(self):
         """
         Returns a hash for this matrix.
@@ -1248,6 +1254,7 @@ class Base(object):
         #this should return an integer x in the range 0<= x < 1 billion
         return int(int(round(bigNum * avg)) % bigNum)
 
+    @limitedTo2D
     def isApproximatelyEqual(self, other):
         """
         Determine if the data in both objects is likely the same.
@@ -1280,7 +1287,7 @@ class Base(object):
             return False
         return True
 
-
+    @limitedTo2D
     def trainAndTestSets(self, testFraction, labels=None, randomOrder=True,
                          useLog=None):
         """
@@ -1437,7 +1444,7 @@ class Base(object):
     ###   Functions related to logging   ###
     ########################################
     ########################################
-
+    @limitedTo2D
     def featureReport(self, maxFeaturesToCover=50, displayDigits=2,
                       useLog=None):
         """
@@ -1471,7 +1478,7 @@ class Base(object):
         handleLogging(useLog, 'data', "feature", ret)
         return ret
 
-
+    @limitedTo2D
     def summaryReport(self, displayDigits=2, useLog=None):
         """
         Report containing information regarding the data in this object.
@@ -1501,7 +1508,7 @@ class Base(object):
     ###   Subclass implemented information querying functions   ###
     ###############################################################
     ###############################################################
-
+    @limitedTo2D
     def isIdentical(self, other):
         """
         Check for equality between two objects.
@@ -1516,6 +1523,7 @@ class Base(object):
 
         return self._isIdentical_implementation(other)
 
+    @limitedTo2D
     def writeFile(self, outPath, fileFormat=None, includeNames=True):
         """
         Write the data in this object to a file in the specified format.
@@ -1588,6 +1596,7 @@ class Base(object):
         fnamesLine += '\n'
         openFile.write(fnamesLine)
 
+    @limitedTo2D
     def save(self, outputPath):
         """
         Save object to a file.
@@ -1631,6 +1640,7 @@ class Base(object):
         """
         return self._getTypeString_implementation()
 
+    @limitedTo2D
     def __getitem__(self, key):
         """
         Return a copy of a subset of the data.
@@ -1821,6 +1831,7 @@ class Base(object):
             ret = ret.features._structuralBackend_implementation('copy', y)
         return ret
 
+    @limitedTo2D
     def pointView(self, ID):
         """
         A read-only view of a single point.
@@ -1843,6 +1854,7 @@ class Base(object):
         index = self.points.getIndex(ID)
         return self.view(index, index, None, None)
 
+    @limitedTo2D
     def featureView(self, ID):
         """
         A read-only view of a single feature.
@@ -1866,6 +1878,7 @@ class Base(object):
         index = self.features.getIndex(ID)
         return self.view(None, None, index, index)
 
+    @limitedTo2D
     def view(self, pointStart=None, pointEnd=None, featureStart=None,
              featureEnd=None):
         """
@@ -1979,6 +1992,7 @@ class Base(object):
 
         self._validate_implementation(level)
 
+    @limitedTo2D
     def containsZero(self):
         """
         Evaluate if the object contains one or more zero values.
@@ -2001,6 +2015,7 @@ class Base(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    @limitedTo2D
     def toString(self, includeNames=True, maxWidth=79, maxHeight=30,
                  sigDigits=3, maxColumnWidth=19, keepTrailingWhitespace=False):
         """
@@ -2190,6 +2205,7 @@ class Base(object):
     def __str__(self):
         return self.toString()
 
+    @limitedTo2D
     def show(self, description, includeObjectName=True, includeAxisNames=True,
              maxWidth=79, maxHeight=30, sigDigits=3, maxColumnWidth=19):
         """
@@ -2238,6 +2254,7 @@ class Base(object):
         print(self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits,
                             maxColumnWidth))
 
+    @limitedTo2D
     def plot(self, outPath=None, includeColorbar=False):
         """
         Display a plot of the data.
@@ -2310,6 +2327,7 @@ class Base(object):
         p = self._matplotlibBackendHandling(outPath, plotter, d=toPlot)
         return p
 
+    @limitedTo2D
     def plotFeatureDistribution(self, feature, outPath=None, xMin=None,
                                 xMax=None):
         """
@@ -2403,6 +2421,7 @@ class Base(object):
                                             xLim=(xMin, xMax))
         return p
 
+    @limitedTo2D
     def plotFeatureAgainstFeatureRollingAverage(
             self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
             yMax=None, sampleSizeForAverage=20):
@@ -2445,6 +2464,7 @@ class Base(object):
         self._plotFeatureAgainstFeature(x, y, outPath, xMin, xMax, yMin, yMax,
                                         sampleSizeForAverage)
 
+    @limitedTo2D
     def plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None,
                                   xMax=None, yMin=None, yMax=None):
         """
@@ -2594,7 +2614,7 @@ class Base(object):
     ###   Subclass implemented structural manipulation functions   ###
     ##################################################################
     ##################################################################
-
+    @limitedTo2D
     def transpose(self, useLog=None):
         """
         Invert the feature and point indices of the data.
@@ -2643,6 +2663,7 @@ class Base(object):
                       Base.transpose)
 
     @property
+    @limitedTo2D
     def T(self):
         """
         Invert the feature and point indices of the data.
@@ -2670,7 +2691,7 @@ class Base(object):
         ret.transpose(useLog=False)
         return ret
 
-
+    @limitedTo2D
     def referenceDataFrom(self, other, useLog=None):
         """
         Redefine the object data using the data from another object.
@@ -2740,7 +2761,7 @@ class Base(object):
         handleLogging(useLog, 'prep', "referenceDataFrom",
                       self.getTypeString(), Base.referenceDataFrom, other)
 
-
+    @limitedTo2D
     def copy(self, to=None, rowsArePoints=True, outputAs1D=False):
         """
         Duplicate an object. Optionally to another nimble or raw format.
@@ -2917,7 +2938,7 @@ class Base(object):
     def __deepcopy__(self, memo):
         return self.copy()
 
-
+    @limitedTo2D
     def replaceRectangle(self, replaceWith, pointStart, featureStart, pointEnd,
                          featureEnd, useLog=None):
         """
@@ -3055,7 +3076,7 @@ class Base(object):
 
         return ret
 
-
+    @limitedTo2D
     def flattenToOnePoint(self, useLog=None):
         """
         Modify this object so that its values are in a single point.
@@ -3128,7 +3149,7 @@ class Base(object):
         handleLogging(useLog, 'prep', "flattenToOnePoint",
                       self.getTypeString(), Base.flattenToOnePoint)
 
-
+    @limitedTo2D
     def flattenToOneFeature(self, useLog=None):
         """
         Modify this object so that its values are in a single feature.
@@ -3313,7 +3334,7 @@ class Base(object):
 
         return allDefaultStatus
 
-
+    @limitedTo2D
     def unflattenFromOnePoint(self, numPoints, useLog=None):
         """
         Adjust a flattened point vector to contain multiple points.
@@ -3410,7 +3431,7 @@ class Base(object):
                       self.getTypeString(), Base.unflattenFromOnePoint,
                       numPoints)
 
-
+    @limitedTo2D
     def unflattenFromOneFeature(self, numFeatures, useLog=None):
         """
         Adjust a flattened feature vector to contain multiple features.
@@ -3508,7 +3529,7 @@ class Base(object):
                       self.getTypeString(), Base.unflattenFromOneFeature,
                       numFeatures)
 
-
+    @limitedTo2D
     def merge(self, other, point='strict', feature='union', onFeature=None,
               useLog=None):
         """
@@ -3968,7 +3989,7 @@ class Base(object):
     ###   Linear Algebra functions   ###
     ###################################
     ###################################
-
+    @limitedTo2D
     def inverse(self, pseudoInverse=False):
         """
         Compute the inverse or pseudo-inverse of an object.
@@ -3988,7 +4009,7 @@ class Base(object):
             inverse = nimble.calculate.inverse(self)
         return inverse
 
-
+    @limitedTo2D
     def solveLinearSystem(self, b, solveFunction='solve'):
         """
         Solves the linear equation A * x = b for unknown x.
@@ -4055,6 +4076,7 @@ class Base(object):
             ret = self
         return ret
 
+    @limitedTo2D
     def _genericMatMul_implementation(self, opName, other):
         if not isinstance(other, Base):
             return NotImplemented
@@ -4114,6 +4136,7 @@ class Base(object):
 
         return ret
 
+    @limitedTo2D
     def matrixPower(self, power):
         """
         Perform matrix power operations on a square matrix.
@@ -4541,6 +4564,7 @@ class Base(object):
             return ret
         self.data = ret
 
+    @limitedTo2D
     def _genericBinaryOperations(self, opName, other):
         if 'pow' in opName:
             usableTypes = (float,)
@@ -4621,7 +4645,7 @@ class Base(object):
                               useLog=False)
         return ret
 
-
+    @limitedTo2D
     def _genericLogicalBinary(self, opName, other):
         if isinstance(other, Stretch):
             return getattr(other, opName)(self)
@@ -4653,6 +4677,7 @@ class Base(object):
         return self
 
     @property
+    @limitedTo2D
     def stretch(self):
         """
         Extend along a one-dimensional axis to fit another object.

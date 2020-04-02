@@ -2436,7 +2436,6 @@ class StructureModifying(StructureShared):
         # _reshape refers to elements, not entire object
         elem = [1, 2, 3]
         ret = self.constructor([[elem, elem], [elem, elem]])
-        print(ret._shape)
         assert ret._shape == [2, 2, 3]
         assert ret._pointCount == 2
         assert ret._featureCount == 6
