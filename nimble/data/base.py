@@ -122,8 +122,8 @@ class Base(object):
 
     def __init__(self, shape, pointNames=None, featureNames=None, name=None,
                  paths=(None, None), **kwds):
-        self._pointCount = shape[0]
-        self._featureCount = shape[1]
+        self._shape = list(shape)
+        self._tensorRank = len(self._shape)
         if pointNames is not None and len(pointNames) != shape[0]:
             msg = "The length of the pointNames (" + str(len(pointNames))
             msg += ") must match the points given in shape (" + str(shape[0])
@@ -193,6 +193,28 @@ class Base(object):
     #######################
     # Property Attributes #
     #######################
+
+    @property
+    def _pointCount(self):
+        return self._shape[0]
+
+    @_pointCount.setter
+    def _pointCount(self, value):
+        self._shape[0] = value
+
+    @property
+    def _featureCount(self):
+        if self._tensorRank > 2:
+            return int(numpy.prod(self._shape[1:]))
+        return self._shape[1]
+
+    @_featureCount.setter
+    def _featureCount(self, value):
+        if self._tensorRank > 2:
+            msg = "Cannot change feature count when data has more than "
+            msg += 'two dimensions'
+            raise InvalidArgumentValue(msg)
+        self._shape[1] = value
 
     @property
     def shape(self):

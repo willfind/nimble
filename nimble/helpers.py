@@ -606,6 +606,157 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
 
     return rawData
 
+class SparseCOORowIterator(object):
+    """
+    Iterate through the nonZero values of a coo matrix by row.
+    """
+    def __init__(self, data):
+        self.data = data
+        self.rowIdx = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        while True:
+            if self.rowIdx < self.data.shape[0]:
+                ret = self.data.data[self.data.row == self.rowIdx]
+                self.rowIdx += 1
+                return ret
+            else:
+                raise StopIteration
+
+def getPointIterator(rawData):
+    """
+    Generate an iterator for the points in the object.
+    """
+    if pd and isinstance(rawData, (pd.DataFrame, pd.Series)):
+        return iter(rawData.values)
+    if scipy and scipy.sparse.isspmatrix(rawData):
+        return SparseCOORowIterator(rawData.tocoo(False))
+    if isinstance(rawData, numpy.matrix):
+        return iter(numpy.array(rawData))
+    if isinstance(rawData, dict):
+            return iter(rawData.values())
+    return iter(rawData)
+
+def isHighDimensionData(rawData):
+    """
+    Identify data with more than two-dimensions.
+    """
+    if scipy and scipy.sparse.isspmatrix(rawData):
+        if not rawData.data.size:
+            return False
+        return not isAllowedSingleElement(rawData.data[0])
+    try:
+        if (isAllowedSingleElement(rawData[0])
+                or isAllowedSingleElement(rawData[0][0])):
+            return False
+        else:
+            return True
+    except KeyError: # rawData or rawData[0] is dict
+        return False
+    except IndexError: # rawData or rawData[0] is empty
+        return False
+
+def highDimensionNames(rawData, pointNames, featureNames):
+    """
+    Names cannot be extracted at higher dimensions because the elements
+    are not strings. If 'automatic' we can set to False, if True an
+    exception must be raised. If a list, the length must align with
+    the dimensions.
+    are not strings so 'automatic' must be set to False and an exception
+    must be raised if either is set to True.
+    """
+    if any(param is True for param in (pointNames, featureNames)):
+        failedAxis = []
+        if pointNames is True:
+            failedAxis.append('point')
+        if featureNames is True:
+            failedAxis.append('feature')
+        if failedAxis:
+            axes = ' and '.join(failedAxis)
+            msg = '{} names cannot be True for data with more '.format(axes)
+            msg += "than two dimensions "
+            raise InvalidArgumentValue(msg)
+
+    pointNames = False if pointNames == 'automatic' else pointNames
+    featureNames = False if featureNames == 'automatic' else featureNames
+
+    return pointNames, featureNames
+
+def validateDataLength(actual, expected):
+    if actual != expected:
+        msg = 'Inconsistent data lengths in object. Expected lengths of '
+        msg += '{0} based on the first available object at '.format(expected)
+        msg += 'dimension, but found length {0}'.format(actual)
+        raise InvalidArgumentValue(msg)
+
+def flattenToOneDimension(data, dimensions=False, toFill=None):
+    """
+    Recursive function to flatten an object.
+
+    Flattened values are placed in toFill and this function also records
+    the object's dimensions prior to being flattened. getPointIterator
+    always return a point-based iterator for these cases so data is
+    flattened point by point.
+    """
+    if toFill is None:
+        toFill = []
+    returnDims = dimensions is True
+    if returnDims:
+        dimensions = [True, [len(data)]]
+    elif dimensions is False:
+        dimensions = [False]
+    elif dimensions[0]:
+        dimensions[1].append(len(data))
+    if all(map(isAllowedSingleElement, data)):
+        toFill.extend(data)
+    else:
+        for obj in data:
+            flattenToOneDimension(obj, dimensions, toFill)
+            dimensions[0] = False
+
+    if returnDims:
+        return toFill, dimensions[1]
+    return toFill
+
+def flattenHighDimensionFeatures(rawData):
+    """
+    Flatten data with multi-dimensional features to vectors.
+
+    Features are flattened point by point whether numpy.reshape or
+    flattenToOneDimension are used.
+    """
+    if isinstance(rawData, numpy.ndarray) and rawData.dtype != numpy.object_:
+        newShape = (rawData.shape[0], numpy.prod(rawData.shape[1:]))
+        origDims = rawData.shape
+        rawData = numpy.reshape(rawData, newShape)
+    else:
+        if hasattr(rawData, 'shape'):
+            numPts = rawData.shape[0]
+        else:
+            numPts = len(rawData)
+        points = getPointIterator(rawData)
+        firstPoint = next(points)
+        firstPointFlat, ptDims = flattenToOneDimension(firstPoint, True)
+        origDims = [numPts] + ptDims
+        numFts = len(firstPointFlat)
+        rawData = numpy.empty((numPts, numFts), dtype=numpy.object_)
+        rawData[0] = firstPointFlat
+        for i, point in enumerate(points):
+            flat = flattenToOneDimension(point, False)
+            numVals = len(flat)
+            if numVals != numFts:
+                msg = "The number of values in the point at index {0} ({1}) "
+                msg += "is not equal to the number of values in first point "
+                msg += "({2}). All points must contain an equal number of "
+                msg += "values to allow nimble to flatten this data so it "
+                msg += "can be represented in our data objects"
+                raise InvalidArgumentValue(msg.format(i + 1, numVals, numFts))
+            rawData[i + 1] = flat
+
+    return rawData, tuple(origDims)
 
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name=None, path=None,
@@ -615,20 +766,23 @@ def initDataObject(
         replaceMissingWith=numpy.nan, skipDataProcessing=False,
         extracted=(None, None)):
     """
-    1. Set up autoType
-    2. Extract names
-    3. Handle missing data
-    4. Convert data if necessary
+    1. Setup autoType
+    2. Extract Names
+    3. Convert to 2D representation
+    4. Handle Missing data
+    5. Convert to acceptable form for returnType init
     """
-    if (scipy and scipy.sparse.issparse(rawData)) or \
-            (pd and isinstance(rawData, pd.SparseDataFrame)):
-        autoType = 'Sparse'
-    else:
-        autoType = 'Matrix'
-
     if returnType is None:
-        returnType = autoType
+        if ((scipy and scipy.sparse.issparse(rawData)) or
+                (pd and isinstance(rawData, pd.SparseDataFrame))):
+            returnType = 'Sparse'
+        else:
+            returnType = 'Matrix'
 
+    if not reuseData:
+        rawData = copy.deepcopy(rawData)
+
+    # record if extraction occurred before we possibly modify *Names parameters
     ptsExtracted = extracted[0] if extracted[0] else pointNames is True
     ftsExtracted = extracted[1] if extracted[1] else featureNames is True
 
@@ -641,11 +795,24 @@ def initDataObject(
         pointNames = pointNames if pointNames != 'automatic' else None
         featureNames = featureNames if featureNames != 'automatic' else None
     else:
+        # convert these types as indexing may cause dimensionality confusion
+        if isinstance(rawData, numpy.matrix):
+            rawData = numpy.array(rawData)
+        if scipy and scipy.sparse.isspmatrix(rawData):
+            rawData = rawData.tocoo()
+        if isHighDimensionData(rawData):
+            # additional name validation / processing before extractNames
+            pointNames, featureNames = highDimensionNames(rawData, pointNames,
+                                                          featureNames)
+            rawData, tensorShape = flattenHighDimensionFeatures(rawData)
+            kwargs['shape'] = tensorShape
+
         rawData, pointNames, featureNames = extractNames(rawData, pointNames,
                                                          featureNames)
-    if treatAsMissing is not None and not skipDataProcessing:
-        rawData = replaceMissingData(rawData, treatAsMissing,
-                                     replaceMissingWith)
+        if treatAsMissing is not None:
+            rawData = replaceMissingData(rawData, treatAsMissing,
+                                         replaceMissingWith)
+
     # convert to convertToType, if necessary
     rawData = convertData(returnType, rawData, pointNames, featureNames,
                           convertToType)

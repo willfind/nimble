@@ -2432,9 +2432,26 @@ class StructureModifying(StructureShared):
         assert fromMTXCoo.isIdentical(fromMTXArr)
 
 
-    @raises(TypeError)
-    def test_init_noThriceNestedListInputs(self):
-        self.constructor([[[1, 2, 3]]])
+    def test_init_multiDimensionNestedListInputs(self):
+        # _reshape refers to elements, not entire object
+        elem = [1, 2, 3]
+        ret = self.constructor([[elem, elem], [elem, elem]])
+        print(ret._shape)
+        assert ret._shape == [2, 2, 3]
+        assert ret._pointCount == 2
+        assert ret._featureCount == 6
+
+        data1 = [elem, elem, elem]
+        ret = self.constructor([[data1, data1], [data1, data1]])
+        assert ret._shape == [2, 2, 3, 3]
+        assert ret._pointCount == 2
+        assert ret._featureCount == 18
+
+        data2 = [data1, data1, data1]
+        ret = self.constructor([[data2, data2], [data2, data2]])
+        assert ret._shape == [2, 2, 3, 3, 3]
+        assert ret._pointCount == 2
+        assert ret._featureCount == 54
 
 
     def test_init_coo_matrix_duplicates(self):

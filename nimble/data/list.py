@@ -63,9 +63,9 @@ class List(Base):
             #case1: data=[]. self.data will be [], shape will be (0, shape[1])
             # or (0, len(featureNames)) or (0, 0)
             if len(data) == 0:
-                if shape:
+                if shape and len(shape) == 2:
                     shape = (0, shape[1])
-                else:
+                elif shape is None:
                     shape = (0, len(featureNames) if featureNames else 0)
             elif isAllowedSingleElement(data[0]):
             #case2: data=['a', 'b', 'c'] or [1,2,3]. self.data will be
@@ -75,7 +75,8 @@ class List(Base):
                         if not isAllowedSingleElement(i):
                             msg = 'invalid input data format.'
                             raise InvalidArgumentValue(msg)
-                shape = (1, len(data))
+                if shape is None:
+                    shape = (1, len(data))
                 data = [data]
             elif isinstance(data[0], list) or hasattr(data[0], 'setLimit'):
             #case3: data=[[1,2,3], ['a', 'b', 'c']] or [[]] or [[], []].
@@ -91,7 +92,8 @@ class List(Base):
                             if not isAllowedSingleElement(j):
                                 msg = '%s is invalid input data format.'%j
                                 raise InvalidArgumentValue(msg)
-                shape = (len(data), numFeatures)
+                if shape is None:
+                    shape = (len(data), numFeatures)
 
             if reuseData:
                 data = data
@@ -104,7 +106,8 @@ class List(Base):
 
         if is2DArray(data):
             #case5: data is a numpy array. shape is already in np array
-            shape = data.shape
+            if shape is None:
+                shape = data.shape
             data = data.tolist()
 
         if len(data) == 0:

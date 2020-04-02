@@ -66,7 +66,9 @@ class Sparse(Base):
             self.data = scipy.sparse.coo_matrix(data)
 
         self._sorted = None
-        kwds['shape'] = self.data.shape
+        shape = kwds.get('shape', None)
+        if shape is None:
+            kwds['shape'] = self.data.shape
         super(Sparse, self).__init__(**kwds)
 
     def _getPoints(self):

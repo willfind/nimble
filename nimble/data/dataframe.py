@@ -59,7 +59,9 @@ class DataFrame(Base):
         else:
             self.data = pd.DataFrame(data, copy=True)
 
-        kwds['shape'] = self.data.shape
+        shape = kwds.get('shape', None)
+        if shape is None:
+            kwds['shape'] = self.data.shape
         super(DataFrame, self).__init__(**kwds)
 
     def _getPoints(self):

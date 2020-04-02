@@ -55,7 +55,9 @@ class Matrix(Base):
         else:
             self.data = data.copy()
 
-        kwds['shape'] = self.data.shape
+        shape = kwds.get('shape', None)
+        if shape is None:
+            kwds['shape'] = self.data.shape
         super(Matrix, self).__init__(**kwds)
 
     def _getPoints(self):
