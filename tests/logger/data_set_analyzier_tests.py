@@ -1,15 +1,10 @@
-try:
-    import scipy.spatial
-
-    scipyImported = True
-except ImportError:
-    scipyImported = False
 
 import numpy as np
 
 from nose.tools import assert_almost_equal, assert_equal
 
 from nimble import createData
+from nimble.utility import scipy
 from nimble.logger.data_set_analyzer import *
 
 
@@ -70,10 +65,6 @@ def testProduceInfoTable_sparseData():
     row = np.array([0, 0, 1, 1, 2, 2, 2, 3, 4, 4, 4, 5])
     col = np.array([0, 4, 2, 3, 1, 3, 4, 0, 1, 3, 4, 5])
     vals = np.array([1, 1, 1, 1, 1, None, 1, 1, 1, 1, 1, 1])
-
-    if not scipyImported:
-        msg = "scipy is not available"
-        raise PackageException(msg)
 
     raw = scipy.sparse.coo_matrix((vals, (row, col)))
 

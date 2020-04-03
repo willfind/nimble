@@ -9,9 +9,8 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
-from nimble.utility import ImportModule, dtypeConvert
-
-scipy = ImportModule('scipy')
+from nimble.utility import scipy
+from nimble.utility import dtypeConvert
 
 def inverse(aObj):
     """
@@ -51,7 +50,7 @@ def inverse(aObj):
          [1.500  -0.500]]
         )
     """
-    if not scipy:
+    if not scipy.nimbleAccessible():
         msg = "scipy must be installed in order to use the inverse function."
         raise PackageException(msg)
     if not isinstance(aObj, nimble.data.Base):
@@ -147,7 +146,7 @@ def pseudoInverse(aObj, method='svd'):
          [0.000  0.000  0.000  0.000 ]]
         )
     """
-    if not scipy:
+    if not scipy.nimbleAccessible():
         msg = "scipy must be installed in order to use the pseudoInverse function."
         raise PackageException(msg)
     if not isinstance(aObj, nimble.data.Base):
@@ -275,6 +274,9 @@ def leastSquaresSolution(aObj, bObj):
     return _backendSolvers(aObj, bObj, leastSquaresSolution)
 
 def _backendSolvers(aObj, bObj, solverFunction):
+    if not scipy.nimbleAccessible():
+        msg = "scipy must be installed in order to use the pseudoInverse function."
+        raise PackageException(msg)
     bObj = _backendSolversValidation(aObj, bObj, solverFunction)
 
     aOriginalType = aObj.getTypeString()

@@ -4,12 +4,11 @@ Tests for nimble.utility submodule
 
 from nose.tools import raises
 
-from nimble.utility import ImportModule
-from nimble.exceptions import PackageException
+from nimble.utility import DeferredModuleImport
 
-def test_ImportModule_numpy():
-    optNumpy = ImportModule('numpy')
-
+def test_DeferredModuleImport_numpy():
+    optNumpy = DeferredModuleImport('numpy')
+    assert optNumpy.nimbleAccessible() # performs the import
     # use some top level numpy functions
     arr_data = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     opt_arr = optNumpy.array(arr_data)
@@ -34,22 +33,26 @@ def test_ImportModule_numpy():
     assert type(numpy_arr) == type(opt_arr)
     assert numpy.array_equal(inverse, opt_arr)
 
-def test_ImportModule_numpy_boolSuccess():
-    optNumpy = ImportModule('numpy')
-    if not optNumpy:
+def test_DeferredModuleImport_numpy_nimbleAccessibleSuccess():
+    optNumpy = DeferredModuleImport('numpy')
+    if not optNumpy.nimbleAccessible():
         assert False
 
 @raises(AttributeError)
-def test_ImportModule_numpy_bogusAttribute():
-    optNumpy = ImportModule('numpy')
+def test_DeferredModuleImport_numpy_noAccessibleCheck():
+    numpy = DeferredModuleImport('numpy')
+    # random is a valid numpy module but will get an AttributeError since
+    # we never verified numpy is accessible using numpy.nimbleAccessible()
+    numpy.random
+
+@raises(AttributeError)
+def test_DeferredModuleImport_numpy_bogusAttribute():
+    optNumpy = DeferredModuleImport('numpy')
+    assert optNumpy.nimbleAccessible() # performs the import
+    assert hasattr(optNumpy, 'random')
     optNumpy.random.bogus
 
-@raises(PackageException)
-def test_ImportModule_bogus():
-    bogus = ImportModule('bogus')
-    bogus.foo
-
-def test_ImportModule_bogus_boolFailure():
-    bogus = ImportModule('bogus')
-    if bogus:
+def test_DeferredModuleImport_bogus_nimbleAccessibleFailure():
+    bogus = DeferredModuleImport('bogus')
+    if bogus.nimbleAccessible():
         assert False

@@ -10,7 +10,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
-from nimble.utility import ImportModule
+from nimble.utility import scipy, pd
 from .base import Base
 from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView
@@ -20,9 +20,6 @@ from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import denseCountUnique
 from .dataHelpers import NimbleElementIterator
-
-pd = ImportModule('pandas')
-scipy = ImportModule('scipy')
 
 @inheritDocstringsFactory(Base)
 class DataFrame(Base):
@@ -42,7 +39,7 @@ class DataFrame(Base):
     """
 
     def __init__(self, data, reuseData=False, **kwds):
-        if not pd:
+        if not pd.nimbleAccessible():
             msg = 'To use class DataFrame, pandas must be installed.'
             raise PackageException(msg)
 
@@ -146,7 +143,7 @@ class DataFrame(Base):
         Function to write the data in this object to a matrix market
         file at the designated path.
         """
-        if not scipy:
+        if not scipy.nimbleAccessible():
             msg = "scipy is not available"
             raise PackageException(msg)
 
@@ -191,7 +188,7 @@ class DataFrame(Base):
         if to == 'numpymatrix':
             return numpy.matrix(self.data.values)
         if 'scipy' in to:
-            if not scipy:
+            if not scipy.nimbleAccessible():
                 msg = "scipy is not available"
                 raise PackageException(msg)
             if to == 'scipycoo':
@@ -206,7 +203,7 @@ class DataFrame(Base):
             if to == 'scipycsr':
                 return scipy.sparse.csr_matrix(ret)
         if to == 'pandasdataframe':
-            if not pd:
+            if not pd.nimbleAccessible():
                 msg = "pandas is not available"
                 raise PackageException(msg)
             return pd.DataFrame(self.data.copy())
