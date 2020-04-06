@@ -1544,11 +1544,11 @@ class Points(object):
         >>> data.points.fillMatching(-1, 'na')
         >>> data
         Matrix(
-            [[1.000  1.000 1.000 ]
-             [1.000  1.000 1.000 ]
-             [1.000  1.000 -1.000]
-             [2.000  2.000 2.000 ]
-             [-1.000 2.000 2.000 ]]
+            [[1  1 1 ]
+             [1  1 1 ]
+             [1  1 -1]
+             [2  2 2 ]
+             [-1 2 2 ]]
             )
 
         Fill using nimble's match and fill modules; limit to last point.
@@ -1757,26 +1757,36 @@ class Points(object):
 
 
     def combineByExpandingFeatures(self, featureWithFeatureNames,
-                                   featureWithValues, useLog=None):
+                                   featuresWithValues, useLog=None):
         """
-        Combine points that are identical except at a given feature.
+        Combine similar points based on a differentiating feature.
 
-        Combine any points containing matching values at every feature
-        except featureWithFeatureNames and featureWithValues. Each
-        combined point will expand its features to include a new feature
-        for each unique value invfeatureWithFeatureNames. The
-        corresponding featureName/value pairs invfeatureWithFeatureNames
-        and featureWithValues from each point willvbecome the values for
-        the expanded features for the combined points. If a combined
-        point lacks a featureName/value pair for any given feature,
-        numpy.nan will be assigned as the value at that feature. The
+        Combine points that share common features, but are currently
+        separate points due to a feature, ``featureWithFeatureNames``,
+        that is categorizing the values in the remaining unshared
+        features, ``featuresWithValues``. The points can be combined to
+        a single point by instead representing the categorization of the
+        unshared values as different features of the same point. The
+        corresponding featureName/value pairs from
+        ``featureWithFeatureNames`` and ``featuresWithValues`` in each
+        point will become the values for the expanded features for the
+        combined points. If a combined point lacks a featureName/value
+        pair for any given feature(s), numpy.nan will be assigned as the
+        value(s) at that feature(s). The resulting featureNames depends
+        on the number of features with values. For a single feature with
+        values, the new feature names are the unique values in
+        ``featureWithFeatureNames``. However, for two or more features
+        with values, the unique values in ``featureWithFeatureNames`` no
+        longer cover all combinations so those values are combined with
+        the names of the features with values using an underscore. The
         combined point name will be assigned the point name of the first
         instance of that point, if point names are present.
 
-        An object containing n points with k being unique at every
-        feature except featureWithFeatureNames and featureWithValues,
-        m features, and j unique values in featureWithFeatureNames will
-        be modified to include k points and (m - 2 + j) features.
+        An object containing m features and n points with k unique
+        point combinations amongst shared features, i unique values in
+        ``featureWithFeatureNames`` and j ``featuresWithValues`` will
+        result in an object with k points and (m - (1 + j) + (i * j))
+        features.
 
         Parameters
         ----------
@@ -1784,9 +1794,9 @@ class Points(object):
             The name or index of the feature containing the values that
             will become the names of the features in the combined
             points.
-        featureWithValues : identifier
-            The name or index of the feature of values that corresponds
-            to the values in featureWithFeatureNames.
+        featuresWithValues : identifier, list of identifiers
+            The names and/or indices of the features of values that
+            correspond to the values in ``featureWithFeatureNames``.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1846,52 +1856,81 @@ class Points(object):
             )
         """
         namesIdx = self._base.features.getIndex(featureWithFeatureNames)
-        valuesIdx = self._base.features.getIndex(featureWithValues)
+        if not isinstance(featuresWithValues, list):
+            featuresWithValues = [featuresWithValues]
+        valuesIdx = [self._base.features.getIndex(idx) for idx
+                     in featuresWithValues]
+        combinedIdx = [namesIdx] + valuesIdx
         uncombinedIdx = [i for i in range(len(self._base.features))
-                         if i not in (namesIdx, valuesIdx)]
+                         if i not in combinedIdx]
 
         # using OrderedDict supports point name setting
         unique = OrderedDict()
         pNames = []
+        uniqueNames = []
         for idx, row in enumerate(iter(self)):
             uncombined = tuple(row[uncombinedIdx])
             if uncombined not in unique:
                 unique[uncombined] = {}
                 if self._base._pointNamesCreated():
                     pNames.append(self.getName(idx))
-            if row[namesIdx] in unique[uncombined]:
+            nameIdxVal = row[namesIdx]
+            if nameIdxVal in unique[uncombined]:
                 msg = "The point at index {0} cannot be combined ".format(idx)
                 msg += "because there is already a value for the feature "
-                msg += "{0} in another point which this ".format(row[namesIdx])
+                msg += "{0} in another point which this ".format(nameIdxVal)
                 msg += "point would be combined with."
                 raise ImproperObjectAction(msg)
+            if nameIdxVal not in uniqueNames:
+                uniqueNames.append(nameIdxVal)
+
             unique[uncombined][row[namesIdx]] = row[valuesIdx]
 
-        uniqueNames = []
-        for name in self._base[:, featureWithFeatureNames]:
-            if name not in uniqueNames:
-                uniqueNames.append(name)
-        numRetFeatures = len(self._base.features) + len(uniqueNames) - 2
+        numExpanded = len(featuresWithValues)
+        numRetFeatures = (len(self._base.features)
+                          + (len(uniqueNames) * numExpanded)
+                          - (1 + numExpanded))
 
         self._combineByExpandingFeatures_implementation(unique, namesIdx,
                                                         uniqueNames,
-                                                        numRetFeatures)
+                                                        numRetFeatures,
+                                                        numExpanded)
 
         self._base._featureCount = numRetFeatures
         self._base._pointCount = len(unique)
 
-        fNames = [self._base.features.getName(i) for i in uncombinedIdx]
-        for name in reversed(uniqueNames):
-            fNames.insert(namesIdx, name)
-        self._base.features.setNames(fNames, useLog=False)
+        newFtNames = []
+        for prefix in map(str, uniqueNames):
+            # if only one feature is expanded we will use the unique values
+            # from the featureNames feature, otherwise we will concatenate
+            # the feature name with the values feature name.
+            if numExpanded > 1:
+                for suffix in featuresWithValues:
+                    if not isinstance(suffix, str):
+                        if self._base.features._namesCreated():
+                            suffix = self._base.features.getName(suffix)
+                        else:
+                            suffix = str(suffix)
+                    concat = prefix + '_' + suffix
+                    newFtNames.append(concat)
+            else:
+                newFtNames.append(prefix)
 
+        if self._base.features._namesCreated():
+            origFts = self._base.features.getNames()
+            keptFts = [origFts[i] for i in uncombinedIdx]
+            fNames = keptFts[:namesIdx] + newFtNames + keptFts[namesIdx:]
+            self._base.features.setNames(fNames, useLog=False)
+        else:
+            for i, name in enumerate(newFtNames):
+                self._base.features.setName(namesIdx + i, name, useLog=False)
         if self._base._pointNamesCreated():
             self.setNames(pNames, useLog=False)
 
         handleLogging(useLog, 'prep', 'points.combineByExpandingFeatures',
                       self._base.getTypeString(),
                       Points.combineByExpandingFeatures,
-                      featureWithFeatureNames, featureWithValues)
+                      featureWithFeatureNames, featuresWithValues)
 
     def repeat(self, totalCopies, copyPointByPoint):
         """

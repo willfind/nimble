@@ -7,6 +7,7 @@ nimble.calculate
    .. toctree::
       :maxdepth: 1
 
+      calculate/binary
       calculate/confidence
       calculate/distance
       calculate/linalg

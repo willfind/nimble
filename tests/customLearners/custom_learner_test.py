@@ -3,8 +3,8 @@ import numpy.testing
 
 import nimble
 from nimble.customLearners import CustomLearner
-from nimble.configuration import configSafetyWrapper
 from nimble.exceptions import InvalidArgumentValue
+from ..assertionHelpers import configSafetyWrapper
 
 
 @raises(TypeError)

@@ -32,11 +32,8 @@ from nimble.data.sparse import removeDuplicatesNative
 from nimble.randomness import pythonRandom
 from nimble.randomness import numpyRandom
 from nimble.utility import numpy2DArray, is2DArray
-from nimble.utility import ImportModule, sparseMatrixToArray
-
-scipy = ImportModule('scipy')
-pd = ImportModule('pandas')
-requests = ImportModule('requests')
+from nimble.utility import sparseMatrixToArray
+from nimble.utility import scipy, pd, requests
 
 def findBestInterface(package):
     """
@@ -93,12 +90,12 @@ def isAllowedRaw(data, allowLPT=False):
     """
     if allowLPT and 'PassThrough' in str(type(data)):
         return True
-    if scipy and scipy.sparse.issparse(data):
+    if scipy.nimbleAccessible() and scipy.sparse.issparse(data):
         return True
     if isinstance(data, (tuple, list, dict, numpy.ndarray)):
         return True
 
-    if pd:
+    if pd.nimbleAccessible():
         if isinstance(data, (pd.DataFrame, pd.Series, pd.SparseDataFrame)):
             return True
 
@@ -250,7 +247,7 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
         raise InvalidArgumentValueCombination(msg)
 
     if returnType == 'Sparse':
-        if not scipy:
+        if not scipy.nimbleAccessible():
             msg = "scipy is not available"
             raise PackageException(msg)
         if numpyMaker == numpy.ones:
@@ -352,15 +349,16 @@ def extractNames(rawData, pointNames, featureNames):
             func = extractNamesFromRawList
         elif isinstance(rawData, numpy.ndarray):
             func = extractNamesFromNumpy
-        elif scipy and scipy.sparse.issparse(rawData):
+        elif scipy.nimbleAccessible() and scipy.sparse.issparse(rawData):
             # all input coo_matrices must have their duplicates removed; all
             # helpers past this point rely on there being single entires only.
             if isinstance(rawData, scipy.sparse.coo_matrix):
                 rawData = removeDuplicatesNative(rawData)
             func = extractNamesFromScipySparse
-        elif pd and isinstance(rawData, (pd.DataFrame, pd.SparseDataFrame)):
+        elif (pd.nimbleAccessible()
+                and isinstance(rawData, (pd.DataFrame, pd.SparseDataFrame))):
             func = extractNamesFromPdDataFrame
-        elif pd and isinstance(rawData, pd.Series):
+        elif pd.nimbleAccessible() and isinstance(rawData, pd.Series):
             func = extractNamesFromPdSeries
 
         rawData, tempPointNames, tempFeatureNames = func(rawData, pointNames,
@@ -579,7 +577,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
     replaceMissingWith value.
     """
     # need to convert SparseDataFrame to coo matrix before handling missing
-    if isinstance(rawData, pd.SparseDataFrame):
+    if pd.nimbleAccessible() and isinstance(rawData, pd.SparseDataFrame):
         rawData = scipy.sparse.coo_matrix(rawData)
 
     if isinstance(rawData, (list, tuple)):
@@ -597,7 +595,8 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
                                            replaceMissingWith)
         rawData.data = handleMissing
 
-    elif isinstance(rawData, (pd.DataFrame, pd.Series)):
+    elif (pd.nimbleAccessible()
+            and isinstance(rawData, (pd.DataFrame, pd.Series))):
         if len(rawData.values) > 0:
             # .where keeps the values that return True, use ~ to replace those
             # values instead
@@ -620,8 +619,9 @@ def initDataObject(
     3. Handle missing data
     4. Convert data if necessary
     """
-    if (scipy and scipy.sparse.issparse(rawData)) or \
-            (pd and isinstance(rawData, pd.SparseDataFrame)):
+    if ((scipy.nimbleAccessible() and scipy.sparse.issparse(rawData)) or
+            (pd.nimbleAccessible()
+                and isinstance(rawData, pd.SparseDataFrame))):
         autoType = 'Sparse'
     else:
         autoType = 'Matrix'
@@ -807,7 +807,7 @@ def createDataFromFile(
     # through an http request
     if isinstance(toPass, str):
         if toPass[:4] == 'http':
-            if not requests:
+            if not requests.nimbleAccessible():
                 msg = "To load data from a webpage, the requests module must "
                 msg += "be installed"
                 raise PackageException(msg)
@@ -902,7 +902,7 @@ def _loadmtxForAuto(
     market coordinate type, a sparse scipy coo_matrix is returned as
     data. If featureNames are present, they are also read.
     """
-    if not scipy:
+    if not scipy.nimbleAccessible():
         msg = "scipy is not available"
         raise PackageException(msg)
     startPosition = openFile.tell()
@@ -1060,7 +1060,7 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
     # of the present data.
 
     # these will be ID -> name mappings
-    if not scipy:
+    if not scipy.nimbleAccessible():
         msg = "scipy is not available"
         raise PackageException(msg)
     tempPointNames = {}
@@ -1172,6 +1172,66 @@ def _intFloatOrString(inString):
             return None
         return ret
 
+def _intFloatBoolOrString(inString):
+    """
+    Expand on _intFloatOrString to convert True/False strings to bool.
+    """
+    ret = _intFloatOrString(inString)
+    if ret == 'True':
+        return True
+    if ret == 'False':
+        return False
+    return ret
+
+typeHierarchy = {bool: 0, int: 1, float: 2, str: 3}
+
+def _csvColTypeTracking(row, convertCols, nonNumericFeatures):
+    """
+    Track the possible types of values in each column.
+
+    Store the most complex type for values in each column according to
+    the typeHierarchy.  Boolean columns must be exclusively boolean
+    values (ignoring None), otherwise the potential boolean values will
+    be assumed to be strings instead. Once a column has been determined
+    to have a str type, it is removed from convertCols because it will
+    only store columns that require conversion and the columns index is
+    added to nonNumericFeatures.
+    """
+    delKeys = []
+    if convertCols:
+        for idx, currType in convertCols.items():
+            colVal = _intFloatBoolOrString(row[idx])
+            colType = type(colVal)
+            if colVal is not None and colType != currType:
+                if typeHierarchy[colType] > typeHierarchy[currType]:
+                    if currType is bool or colType is str:
+                        delKeys.append(idx)
+                    else:
+                        convertCols[idx] = colType
+                elif colType is bool:
+                    delKeys.append(idx)
+
+    if delKeys:
+        for key in delKeys:
+            del convertCols[key]
+            nonNumericFeatures.append(key)
+
+def _colTypeConversion(row, convertCols):
+    """
+    Converts values in each row that are in numeric/boolean columns.
+
+    Since convertCols does not contain non-numeric columns, any empty
+    string is considered to be a missing value.
+    """
+    for idx, cType in convertCols.items():
+        val = row[idx]
+        if val == '':
+            row[idx] = None
+        elif cType is bool and val == 'False':
+            # bool('False') would return True since val is still a string
+            row[idx] = False
+        else:
+            row[idx] = cType(val)
 
 def isEmptyRaw(raw):
     """
@@ -1600,6 +1660,8 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
         retData = [None] * len(keepPoints)
         extractedPointNames = [None] * len(keepPoints)
 
+    convertCols = None
+    nonNumericFeatures = []
     # lineReader is now at the first line of data
     for i, row in enumerate(lineReader):
         if pointNames is True:
@@ -1644,11 +1706,18 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
                 for ftID in keepFeatures:
                     limitedRow.append(row[ftID])
                 row = limitedRow
-            row = list(map(_intFloatOrString, row))
-            if ignoreNonNumericalFeatures:
+
+            if convertCols is None: # first row
+                convertCols = {}
                 for idx, val in enumerate(row):
-                    if isinstance(val, str):
-                        nonNumericFeatures.add(idx)
+                    colType = type(_intFloatBoolOrString(val))
+                    if colType is not str:
+                        convertCols[idx] = colType
+                    else:
+                        nonNumericFeatures.append(idx)
+            else: # continue to track column types in subsequent rows
+                _csvColTypeTracking(row, convertCols, nonNumericFeatures)
+
             if keepPoints == 'all':
                 retData.append(row)
                 if pointNames is True:
@@ -1672,6 +1741,19 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
             and len(retData) == totalPoints == len(keepPoints)):
         _raiseKeepLengthConflict('point')
 
+    if limitPoints and len(keepPoints) != len(locatedPoints):
+        unlocated = []
+        for ptID in keepPoints:
+            if ptID not in locatedPoints:
+                unlocated.append(ptID)
+        msg = "The points " + ",".join(map(str, unlocated)) + " were not "
+        msg += "found in the data"
+        raise InvalidArgumentValue(msg)
+
+    if convertCols:
+        for row in retData:
+            _colTypeConversion(row, convertCols)
+
     if ignoreNonNumericalFeatures:
         if retFNames:
             retFNames = [retFNames[i] for i in range(len(retFNames))
@@ -1681,15 +1763,6 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
             removeNonNumeric.append([row[i] for i in range(len(row))
                                      if i not in nonNumericFeatures])
         retData = removeNonNumeric
-
-    if limitPoints and len(keepPoints) != len(locatedPoints):
-        unlocated = []
-        for ptID in keepPoints:
-            if ptID not in locatedPoints:
-                unlocated.append(ptID)
-        msg = "The points " + ",".join(map(str, unlocated)) + " were not "
-        msg += "found in the data"
-        raise InvalidArgumentValue(msg)
 
     if pointNames is True:
         retPNames = extractedPointNames
@@ -2192,7 +2265,8 @@ class KFoldCrossValidator():
             # combine the results objects into one, and then calc performance
             else:
                 for resultIndex in range(1, len(results)):
-                    results[0].points.append(results[resultIndex], useLog=False)
+                    results[0].points.append(results[resultIndex],
+                                             useLog=False)
 
                 # TODO raise RuntimeError(
                 #     "How do we guarantee Y and results are in same order?")
@@ -2506,12 +2580,12 @@ class FoldIterator(object):
         for data in self.dataList:
             if data is not None:
                 if len(data.points) == 0:
-                    msg = "One of the objects has 0 points, it is impossible to "
-                    msg += "specify a valid number of folds"
+                    msg = "One of the objects has 0 points, it is impossible "
+                    msg += "to specify a valid number of folds"
                     raise InvalidArgumentValueCombination(msg)
                 if len(data.points) != len(self.dataList[0].points):
-                    msg = "All data objects in the list must have the same number "
-                    msg += "of points and features"
+                    msg = "All data objects in the list must have the same "
+                    msg += "number of points and features"
                     raise InvalidArgumentValueCombination(msg)
 
         # note: we want truncation here

@@ -9,12 +9,10 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.utility import ImportModule
+from nimble.utility import scipy
 from .axis import Axis
 from .points import Points
 from .dataHelpers import sortIndexPosition
-
-scipy = ImportModule('scipy')
 
 class SparseAxis(Axis):
     """
@@ -60,7 +58,7 @@ class SparseAxis(Axis):
         for i, idxPos in enumerate(indexPosition):
             reverseIdxPosition[idxPos] = i
 
-        if isinstance(self, Points):
+        if self._isPoint:
             self._base.data.row[:] = reverseIdxPosition[self._base.data.row]
         else:
             self._base.data.col[:] = reverseIdxPosition[self._base.data.col]
@@ -70,9 +68,8 @@ class SparseAxis(Axis):
         modData = []
         modRow = []
         modCol = []
-        dtypes = []
 
-        if isinstance(self, Points):
+        if self._isPoint:
             modTarget = modRow
             modOther = modCol
         else:
@@ -85,41 +82,22 @@ class SparseAxis(Axis):
             else:
                 currOut = function(view)
 
-            # easy way to reuse code if we have a singular return
-            if not hasattr(currOut, '__iter__'):
-                currOut = [currOut]
-
-            # if there are multiple values, they must be random accessible
-            if not hasattr(currOut, '__getitem__'):
-                msg = "function must return random accessible data "
-                msg += "(ie has a __getitem__ attribute)"
-                raise InvalidArgumentType(msg)
-
             for i, retVal in enumerate(currOut):
                 if retVal != 0:
                     modData.append(retVal)
                     modTarget.append(viewID)
                     modOther.append(i)
 
-            retArray = numpy.array(modData)
-            if not numpy.issubdtype(retArray.dtype, numpy.number):
-                dtypes.append(numpy.dtype(object))
-            else:
-                dtypes.append(retArray.dtype)
-
-        # if any non-numeric dtypes were returned use object dtype
-        if any(dt == numpy.object_ for dt in dtypes):
-            retDtype = numpy.object
-        # if transformations to an object dtype returned numeric dtypes and
-        # applied to all data we will convert to a float dtype.
-        elif (self._base.data.dtype == numpy.object_ and limitTo is None
-                and all(numpy.issubdtype(dt, numpy.number) for dt in dtypes)):
-            retDtype = numpy.float
-        # int dtype will covert floats to ints unless we convert it
-        elif self._base.data.dtype == numpy.int and numpy.float in dtypes:
-            retDtype = numpy.float
-        else:
-            retDtype = self._base.data.dtype
+        baseDtype = self._base.data.dtype
+        retDtype = function.convertType
+        # if applying transformation to a subset, need to be sure dtype is
+        # still compatible with the data that was not transformed
+        if (limitTo is not None and
+                (baseDtype == numpy.object_ or
+                 (baseDtype == numpy.float and retDtype is not object) or
+                 (baseDtype == numpy.int and retDtype not in (float, object))
+                 )):
+            retDtype = baseDtype
 
         modData = numpy.array(modData, dtype=retDtype)
         shape = (len(self._base.points), len(self._base.features))
@@ -137,7 +115,7 @@ class SparseAxis(Axis):
         selfData = self._base.data.data
         addData = toInsert.data.data
         newData = numpy.concatenate((selfData, addData))
-        if isinstance(self, Points):
+        if self._isPoint:
             selfAxis = self._base.data.row.copy()
             selfOffAxis = self._base.data.col
             addAxis = toInsert.data.row.copy()
@@ -158,7 +136,7 @@ class SparseAxis(Axis):
         newAxis = numpy.concatenate((selfAxis, addAxis))
         newOffAxis = numpy.concatenate((selfOffAxis, addOffAxis))
 
-        if isinstance(self, Points):
+        if self._isPoint:
             rowColTuple = (newAxis, newOffAxis)
         else:
             rowColTuple = (newOffAxis, newAxis)
@@ -174,7 +152,7 @@ class SparseAxis(Axis):
             numpyFunc = numpy.tile
         repData = numpyFunc(self._base.data.data, totalCopies)
         fillDup = numpy.empty_like(repData, dtype=numpy.int)
-        if isinstance(self, Points):
+        if self._isPoint:
             repCol = numpyFunc(self._base.data.col, totalCopies)
             repRow = fillDup
             toRepeat = self._base.data.row
@@ -223,7 +201,7 @@ class SparseAxis(Axis):
                 if idx not in targetList:
                     notTarget.append(idx)
 
-        if isinstance(self, Points):
+        if self._isPoint:
             data = self._base.data.tocsr()
             targeted = data[targetList, :]
             if structure != 'copy':
@@ -264,7 +242,7 @@ class SparseAxis(Axis):
             if targetID in targetList:
                 for otherID, value in enumerate(view.data.data):
                     targetData.append(value)
-                    if isinstance(self, Points):
+                    if self._isPoint:
                         targetRows.append(targetList.index(targetID))
                         targetCols.append(view.data.col[otherID])
                     else:
@@ -274,7 +252,7 @@ class SparseAxis(Axis):
             elif structure != 'copy':
                 for otherID, value in enumerate(view.data.data):
                     keepData.append(value)
-                    if isinstance(self, Points):
+                    if self._isPoint:
                         keepRows.append(keepIndex)
                         keepCols.append(view.data.col[otherID])
                     else:
@@ -313,7 +291,7 @@ class SparseAxis(Axis):
         data = self._base.data.data
         row = self._base.data.row
         col = self._base.data.col
-        if isinstance(self, Points):
+        if self._isPoint:
             axisLocator = row
             offAxisLocator = col
             hasOffAxisNames = self._base._featureNamesCreated()
@@ -356,7 +334,7 @@ class SparseAxis(Axis):
         self._base._sorted = None
 
         uniqueData = numpy.array(uniqueData, dtype=numpy.object_)
-        if isinstance(self, Points):
+        if self._isPoint:
             shape = (axisCount, len(self._base.features))
             uniqueCoo = scipy.sparse.coo_matrix(
                 (uniqueData, (uniqueAxis, uniqueOffAxis)), shape=shape)

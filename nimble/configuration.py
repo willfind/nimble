@@ -19,9 +19,7 @@ configuration file reflects all available options.
 # Note: .ini format's option names are not case sensitive?
 
 import os
-import copy
 import sys
-import tempfile
 import inspect
 import importlib
 import configparser
@@ -609,49 +607,3 @@ def autoRegisterFromSettings():
             msg += " and have therefore ignored that configuration "
             msg += "entry"
             print(msg, file=sys.stderr)
-
-
-def configSafetyWrapper(toWrap):
-    """
-    Decorator which ensures the safety of nimble.settings, the
-    configuration file, and associated global nimble state. To be used
-    to wrap unit tests which intersect with configuration functionality.
-    """
-    def wrapped(*args, **kwargs):
-        backupFile = tempfile.TemporaryFile('w+')
-        configFilePath = os.path.join(nimble.nimblePath, 'configuration.ini')
-        configurationFile = open(configFilePath, 'r')
-        backupFile.write(configurationFile.read())
-        configurationFile.close()
-
-        backupChanges = copy.copy(nimble.settings.changes)
-        backupHooks = copy.copy(nimble.settings.hooks)
-        backupAvailable = copy.copy(nimble.interfaces.available)
-
-        try:
-            toWrap(*args, **kwargs)
-        finally:
-            backupFile.seek(0)
-            configurationFile = open(configFilePath, 'w')
-            configurationFile.write(backupFile.read())
-            configurationFile.close()
-            backupFile.close()
-
-            nimble.settings = nimble.configuration.loadSettings()
-            nimble.settings.changes = backupChanges
-            nimble.settings.hooks = backupHooks
-            nimble.interfaces.available = backupAvailable
-
-            # this guarantees that if these options had been changed in the
-            # wrapped function, that active logger will have the correct open
-            # files before we continue on
-            loggerLocation = nimble.settings.get("logger", 'location')
-            loggerName = nimble.settings.get("logger", 'name')
-            nimble.settings.set("logger", 'location', loggerLocation)
-            nimble.settings.set("logger", 'name', loggerName)
-            nimble.settings.saveChanges("logger")
-
-    wrapped.__name__ = toWrap.__name__
-    wrapped.__doc__ = toWrap.__doc__
-
-    return wrapped

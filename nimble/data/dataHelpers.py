@@ -8,15 +8,15 @@ import math
 import numbers
 import inspect
 import re
+from functools import wraps
 
 import numpy
 
 import nimble
-from nimble.utility import ImportModule
+from nimble.utility import pd
+from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
-
-pd = ImportModule('pandas')
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
@@ -425,7 +425,7 @@ def constructIndicesList(obj, axis, values, argName=None):
     if argName is None:
         argName = axis + 's'
     # pandas DataFrames are iterable but do not iterate through the values
-    if pd and isinstance(values, pd.DataFrame):
+    if pd.nimbleAccessible() and isinstance(values, pd.DataFrame):
         msg = "A pandas DataFrame object is not a valid input "
         msg += "for '{0}'. ".format(argName)
         msg += "Only one-dimensional objects are accepted."
@@ -551,7 +551,7 @@ def fillArrayWithCollapsedFeatures(featuresToCollapse, retainData,
     return fill
 
 def fillArrayWithExpandedFeatures(uniqueDict, namesIdx, uniqueNames,
-                                  numRetFeatures):
+                                  numRetFeatures, numExpanded):
     """
     Helper function for modifying the underlying data for
     combinePointsByExpandingFeatures. Used in all non-sparse
@@ -560,14 +560,18 @@ def fillArrayWithExpandedFeatures(uniqueDict, namesIdx, uniqueNames,
     fill = numpy.empty(shape=(len(uniqueDict), numRetFeatures),
                        dtype=numpy.object_)
 
+    endSlice = slice(namesIdx + (len(uniqueNames) * numExpanded), None)
     for i, point in enumerate(uniqueDict):
         fill[i, :namesIdx] = point[:namesIdx]
         for j, name in enumerate(uniqueNames):
+            fillStart = namesIdx + (j * numExpanded)
+            fillStop = fillStart + numExpanded
+            fillSlice = slice(fillStart, fillStop)
             if name in uniqueDict[point]:
-                fill[i, namesIdx + j] = uniqueDict[point][name]
+                fill[i, fillSlice] = uniqueDict[point][name]
             else:
-                fill[i, namesIdx + j] = numpy.nan
-        fill[i, namesIdx + len(uniqueNames):] = point[namesIdx:]
+                fill[i, fillSlice] = [numpy.nan] * numExpanded
+        fill[i, endSlice] = point[namesIdx:]
 
     return fill
 
@@ -692,9 +696,15 @@ def denseCountUnique(obj, points=None, features=None):
 
 
 def wrapMatchFunctionFactory(matchFunc):
+    """
+    Wrap functions for matchingElements to validate output.
+
+    Function must output a boolean value (True, False, 0, 1).
+    """
     try:
         matchFunc(0, 0, 0)
 
+        @wraps(matchFunc)
         def wrappedMatch(value, i, j):
             ret = matchFunc(value, i, j)
             # in [True, False] also covers 0 and 1 and numpy number and bool types
@@ -706,6 +716,7 @@ def wrapMatchFunctionFactory(matchFunc):
         wrappedMatch.oneArg = False
     except TypeError:
 
+        @wraps(matchFunc)
         def wrappedMatch(value):
             ret = matchFunc(value)
             # in [True, False] also covers 0 and 1 and numpy number and bool types
@@ -716,13 +727,18 @@ def wrapMatchFunctionFactory(matchFunc):
 
         wrappedMatch.oneArg = True
 
-    wrappedMatch.__name__ = matchFunc.__name__
-    wrappedMatch.__doc__ = matchFunc.__doc__
+    wrappedMatch.convertType = bool
 
     return wrappedMatch
 
 def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
                             funcName):
+    """
+    Wrap functions for transformElements to verify and validate output.
+
+    Adjust user function based on preserveZeros and skipNoneReturnValues
+    parameters and validate the returned element types.
+    """
     def elementValidated(value, *args):
         if preserveZeros and value == 0:
             return float(0)
@@ -743,6 +759,7 @@ def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
         func(0, 0, 0)
         oneArg = False
 
+        @wraps(func)
         def wrappedElementFunction(value, i, j):
             return elementValidated(value, i, j)
 
@@ -755,6 +772,7 @@ def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
         except TypeError:
             pass
 
+        @wraps(func)
         def wrappedElementFunction(value):
             return elementValidated(value)
 
@@ -762,6 +780,84 @@ def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
     wrappedElementFunction.preserveZeros = preserveZeros
 
     return wrappedElementFunction
+
+def validateAxisFunction(func, axis, allowedLength=None):
+    """
+    Wrap axis transform and calculate functions to validate types.
+
+    Transform defines oppositeAxisInfo because the function return must
+    have the same length of the axis opposite the one calling transform.
+    Calculate allows for objects of varying lengths or single values to
+    be returned so oppositeAxisInfo is None. For both, the return value
+    types are validated.
+    """
+    if func is None:
+        raise InvalidArgumentType("'function' must not be None")
+
+    @wraps(func)
+    def wrappedAxisFunc(*args, **kwargs):
+        ret = func(*args, **kwargs)
+
+        if isinstance(ret, dict):
+            msg = "The return of 'function' cannot be a dictionary. The "
+            msg += 'returned object must contain only new values for each '
+            msg += '{0} and it is unclear what the key/value '.format(axis)
+            msg += 'pairs represent'
+            raise InvalidArgumentValue(msg)
+
+        if (allowedLength is not None
+                and (isinstance(ret, str) or
+                     (not hasattr(ret, '__len__')
+                      or len(ret) != allowedLength))):
+            oppositeAxis = 'point' if axis == 'feature' else 'feature'
+            msg = "'function' must return an iterable with as many elements "
+            msg += "as {0}s in this object".format(oppositeAxis)
+            raise InvalidArgumentValue(msg)
+        if isAllowedSingleElement(ret):
+            wrappedAxisFunc.updateConvertType(type(ret))
+            return ret
+        try:
+            for value in ret:
+                if not isAllowedSingleElement(value):
+                    msg = "The return of 'function' contains an "
+                    msg += "invalid value. Numbers, strings, None, or "
+                    msg += "nan are the only valid values. This value "
+                    msg += "was " + str(type(value))
+                    raise InvalidArgumentValue(msg)
+                wrappedAxisFunc.updateConvertType(type(value))
+        except TypeError:
+            msg = "'function' must return a single valid value "
+            msg += "(number, string, None, or nan) or an iterable "
+            msg += "container of valid values"
+            raise InvalidArgumentValue(msg)
+
+        return ret
+
+    # None indicates the convertType has not been set. Since functions using
+    # this wrapper require non-empty data, convertType will always be set to
+    # one of the other 3 typeHierarchy keys.
+    typeHierarchy = {None: -1, bool: 0, int: 1, float: 2, object: 3}
+    def updateConvertType(valueType):
+        # None will be assigned float to align with nan values being floats
+        if valueType == type(None):
+            valueType = float
+        if hasattr(valueType, 'dtype'):
+            if numpy.issubdtype(valueType, numpy.floating):
+                valueType = float
+            elif numpy.issubdtype(valueType, numpy.integer):
+                valueType = int
+            elif numpy.issubdtype(valueType, numpy.bool_):
+                valueType = bool
+        currLevel = typeHierarchy[wrappedAxisFunc.convertType]
+        if valueType not in typeHierarchy:
+            wrappedAxisFunc.convertType = object
+        elif typeHierarchy[valueType] > currLevel:
+            wrappedAxisFunc.convertType = valueType
+
+    wrappedAxisFunc.convertType = None
+    wrappedAxisFunc.updateConvertType = updateConvertType
+
+    return wrappedAxisFunc
 
 def getDictionaryMappingFunction(dictionary):
     def valueMappingFunction(value):

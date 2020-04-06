@@ -20,14 +20,11 @@ from nimble.helpers import generateRegressionData
 from nimble.helpers import generateClusteredPoints
 from nimble.helpers import inspectArguments
 from nimble.calculate.loss import rootMeanSquareError
-from nimble.utility import ImportModule
+from nimble.utility import scipy
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
-
-scipy = ImportModule('scipy')
-sklearn = ImportModule("sklearn")
 
 packageName = 'sciKitLearn'
 
@@ -36,6 +33,7 @@ sklSkipDec = SkipMissing(packageName)
 @sklSkipDec
 @noLogEntryExpected
 def test_SciKitLearn_version():
+    import sklearn
     interface = nimble.helpers.findBestInterface('scikitlearn')
     assert interface.version() == sklearn.__version__
 
@@ -88,9 +86,6 @@ def testSciKitLearnHandmadeRegression():
 @oneLogEntryExpected
 def testSciKitLearnSparseRegression():
     """ Test sciKitLearn() by calling on a sparse regression learner with an extremely large, but highly sparse, matrix """
-    if not scipy:
-        return
-
     x = 1000
     c = 10
     points = numpyRandom.randint(0, x, c)
@@ -135,8 +130,6 @@ def testSciKitLearnHandmadeClustering():
 @oneLogEntryExpected
 def testSciKitLearnHandmadeSparseClustering():
     """ Test sciKitLearn() by calling on a sparse clustering learner with known output """
-    if not scipy:
-        return
     trainData = scipy.sparse.lil_matrix((3, 3))
     trainData[0, :] = [2, 3, 1]
     trainData[1, :] = [2, 2, 1]

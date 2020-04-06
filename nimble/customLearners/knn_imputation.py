@@ -2,13 +2,18 @@
 import numpy
 
 import nimble
+from nimble.helpers import findBestInterface
 from nimble.match import anyTrue, convertMatchToFunction
-from nimble.utility import ImportModule
 from nimble.exceptions import InvalidArgumentValue
 
 from .custom_learner import CustomLearner
 
-sklearn = ImportModule('sklearn')
+def sklPresent():
+    try:
+        findBestInterface("skl")
+    except InvalidArgumentValue:
+        return False
+    return True
 
 class KNNImputation(CustomLearner):
     learnerType = 'unknown'
@@ -17,7 +22,7 @@ class KNNImputation(CustomLearner):
         if mode not in ['classification', 'regression']:
             msg = "mode must be set to 'classification' or 'regression'"
             raise InvalidArgumentValue(msg)
-        if sklearn:
+        if sklPresent():
             self.kwargs = {'n_neighbors': k}
             if mode == 'classification':
                 self.learner = 'sciKitLearn.KNeighborsClassifier'

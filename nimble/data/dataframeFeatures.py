@@ -7,13 +7,11 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
-from nimble.utility import ImportModule
+from nimble.utility import pd
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
 from .features import Features
 from .features_view import FeaturesView
-
-pd = ImportModule('pandas')
 
 class DataFrameFeatures(DataFrameAxis, Features):
     """
@@ -45,10 +43,6 @@ class DataFrameFeatures(DataFrameAxis, Features):
             if limitTo is not None and j not in limitTo:
                 continue
             currRet = function(f)
-            if len(currRet) != len(self._base.points):
-                msg = "function must return an iterable with as many elements "
-                msg += "as points in this object"
-                raise InvalidArgumentValue(msg)
 
             self._base.data.iloc[:, j] = currRet
 

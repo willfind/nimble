@@ -1,172 +1,123 @@
-try:
-    import scipy.spatial
-
-    scipyImported = True
-except ImportError:
-    scipyImported = False
 
 import numpy as np
 
 from nose.tools import assert_almost_equal, assert_equal
 
 from nimble import createData
+from nimble.utility import scipy
 from nimble.logger.data_set_analyzer import *
 
 
-def testMatrix():
+def testProduceInfoTable_denseData():
     """
-        Test the functionality of calculating statistical/informational
-        funcs on a Matrix object using the produceInfoTable.
+    Test the functionality of calculating statistical/informational
+    funcs on objects with dense data using the produceInfoTable.
     """
     data1 = np.array([[1, 2, 3, 1], [3, 3, 1, 5], [1, 1, 5, 2]])
     names1 = ['var1', 'var2', 'var3', 'var4']
+    for retType in nimble.data.available:
+        trainObj = createData(retType, data=data1, featureNames=names1)
+        funcs = featurewiseFunctionGenerator()
+        rawTable = produceFeaturewiseInfoTable(trainObj, funcs)
+        funcNames = rawTable[0]
+        for i in range(len(funcNames)):
+            funcName = funcNames[i]
+            if funcName == "mean":
+                assert_almost_equal(rawTable[1][i], 1.6667, 3)
+                assert_almost_equal(rawTable[2][i], 2.000, 3)
+                assert_almost_equal(rawTable[3][i], 3.000, 3)
+                assert_almost_equal(rawTable[4][i], 2.6667, 3)
+            elif funcName == "minimum":
+                assert_equal(rawTable[1][i], 1)
+                assert_equal(rawTable[2][i], 1)
+                assert_equal(rawTable[3][i], 1)
+                assert_equal(rawTable[4][i], 1)
+            elif funcName == "maximum":
+                assert_equal(rawTable[1][i], 3)
+                assert_equal(rawTable[2][i], 3)
+                assert_equal(rawTable[3][i], 5)
+                assert_equal(rawTable[4][i], 5)
+            elif funcName == "uniqueCount":
+                assert_equal(rawTable[1][i], 2)
+                assert_equal(rawTable[2][i], 3)
+                assert_equal(rawTable[3][i], 3)
+                assert_equal(rawTable[4][i], 3)
+            elif funcName == "standardDeviation":
+                assert_almost_equal(rawTable[1][i], 1.1547, 3)
+                assert_almost_equal(rawTable[2][i], 1.0000, 3)
+                assert_almost_equal(rawTable[3][i], 2.0000, 3)
+                assert_almost_equal(rawTable[4][i], 2.0816, 3)
+            elif funcName == "median":
+                assert_equal(rawTable[1][i], 1.0)
+                assert_equal(rawTable[2][i], 2.0)
+                assert_equal(rawTable[3][i], 3.0)
+                assert_equal(rawTable[4][i], 2.0)
 
-    trainObj = createData('Matrix', data=data1, featureNames=names1)
-    funcs = featurewiseFunctionGenerator()
-    rawTable = produceFeaturewiseInfoTable(trainObj, funcs)
-    funcNames = rawTable[0]
-    for i in range(len(funcNames)):
-        funcName = funcNames[i]
-        if funcName == "mean":
-            assert_almost_equal(rawTable[1][i], 1.6667, 3)
-            assert_almost_equal(rawTable[2][i], 2.000, 3)
-            assert_almost_equal(rawTable[3][i], 3.000, 3)
-            assert_almost_equal(rawTable[4][i], 2.6667, 3)
-        elif funcName == "minimum":
-            assert_equal(rawTable[1][i], 1)
-            assert_equal(rawTable[2][i], 1)
-            assert_equal(rawTable[3][i], 1)
-            assert_equal(rawTable[4][i], 1)
-        elif funcName == "maximum":
-            assert_equal(rawTable[1][i], 3)
-            assert_equal(rawTable[2][i], 3)
-            assert_equal(rawTable[3][i], 5)
-            assert_equal(rawTable[4][i], 5)
-        elif funcName == "uniqueCount":
-            assert_equal(rawTable[1][i], 2)
-            assert_equal(rawTable[2][i], 3)
-            assert_equal(rawTable[3][i], 3)
-            assert_equal(rawTable[4][i], 3)
-        elif funcName == "standardDeviation":
-            assert_almost_equal(rawTable[1][i], 0.9428, 3)
-            assert_almost_equal(rawTable[2][i], 0.8165, 3)
-            assert_almost_equal(rawTable[3][i], 1.633, 3)
-            assert_almost_equal(rawTable[4][i], 1.6997, 3)
-        elif funcName == "median":
-            assert_equal(rawTable[1][i], 1.0)
-            assert_equal(rawTable[2][i], 2.0)
-            assert_equal(rawTable[3][i], 3.0)
-            assert_equal(rawTable[4][i], 2.0)
 
-
-def testSparse():
+def testProduceInfoTable_sparseData():
     """
-        Test the functionality of calculating statistical/informational
-        funcs on a Matrix object using the produceInfoTable.
+    Test the functionality of calculating statistical/informational
+    funcs on objects with sparse data using the produceInfoTable.
 
-        Testing matrix is 6 x 6, with 11 non-zero values, 1 None/Missing value,
-        and 24 zero values.
+    Testing matrix is 6 x 6, with 11 non-zero values, 1 None/Missing value,
+    and 24 zero values.
     """
     row = np.array([0, 0, 1, 1, 2, 2, 2, 3, 4, 4, 4, 5])
     col = np.array([0, 4, 2, 3, 1, 3, 4, 0, 1, 3, 4, 5])
     vals = np.array([1, 1, 1, 1, 1, None, 1, 1, 1, 1, 1, 1])
 
-    if not scipyImported:
-        msg = "scipy is not available"
-        raise PackageException(msg)
-
     raw = scipy.sparse.coo_matrix((vals, (row, col)))
-    testObj = createData('Sparse', data=raw)
-    funcs = featurewiseFunctionGenerator()
-    rawTable = produceFeaturewiseInfoTable(testObj, funcs)
 
-    funcNames = rawTable[0]
-    for i in range(len(funcNames)):
-        funcName = funcNames[i]
-        if funcName == "mean":
-            assert_almost_equal(rawTable[1][i], 0.3333, 3)
-            assert_almost_equal(rawTable[2][i], 0.3333, 3)
-            assert_almost_equal(rawTable[3][i], 0.1667, 3)
-            assert_almost_equal(rawTable[4][i], 0.4000, 3)
-            assert_almost_equal(rawTable[5][i], 0.5000, 3)
-            assert_almost_equal(rawTable[6][i], 0.1667, 3)
-        elif funcName == "minimum":
-            assert_equal(rawTable[1][i], 0)
-            assert_equal(rawTable[2][i], 0)
-            assert_equal(rawTable[3][i], 0)
-            assert_equal(rawTable[4][i], 0)
-            assert_equal(rawTable[5][i], 0)
-            assert_equal(rawTable[6][i], 0)
-        elif funcName == "maximum":
-            assert_equal(rawTable[1][i], 1)
-            assert_equal(rawTable[2][i], 1)
-            assert_equal(rawTable[3][i], 1)
-            assert_equal(rawTable[4][i], 1)
-            assert_equal(rawTable[5][i], 1)
-            assert_equal(rawTable[6][i], 1)
-        elif funcName == "uniqueCount":
-            assert_equal(rawTable[1][i], 2)
-            assert_equal(rawTable[2][i], 2)
-            assert_equal(rawTable[3][i], 2)
-            assert_equal(rawTable[4][i], 2)
-            assert_equal(rawTable[5][i], 2)
-            assert_equal(rawTable[6][i], 2)
-        elif funcName == "standardDeviation":
-            assert_almost_equal(rawTable[1][i], 0.4714, 3)
-            assert_almost_equal(rawTable[2][i], 0.4714, 3)
-            assert_almost_equal(rawTable[3][i], 0.3727, 3)
-            assert_almost_equal(rawTable[4][i], 0.4899, 3)
-            assert_almost_equal(rawTable[5][i], 0.500, 3)
-            assert_almost_equal(rawTable[6][i], 0.3727, 3)
-        elif funcName == "median":
-            assert_equal(rawTable[1][i], 0)
-            assert_equal(rawTable[2][i], 0)
-            assert_equal(rawTable[3][i], 0)
-            assert_equal(rawTable[4][i], 0)
-            assert_equal(rawTable[5][i], 0.5)
-            assert_equal(rawTable[6][i], 0)
-
-
-def testList():
-    data1 = np.array([[1, 2, 3, 1], [3, 3, 1, 5], [1, 1, 5, 2]])
-    names1 = ['var1', 'var2', 'var3', 'var4']
-
-    trainObj = createData('List', data=data1, featureNames=names1)
-    funcs = featurewiseFunctionGenerator()
-    rawTable = produceFeaturewiseInfoTable(trainObj, funcs)
-    funcNames = rawTable[0]
-    for i in range(len(funcNames)):
-        funcName = funcNames[i]
-        if funcName == "mean":
-            assert_almost_equal(rawTable[1][i], 1.6667, 3)
-            assert_almost_equal(rawTable[2][i], 2.000, 3)
-            assert_almost_equal(rawTable[3][i], 3.000, 3)
-            assert_almost_equal(rawTable[4][i], 2.6667, 3)
-        elif funcName == "minimum":
-            assert_equal(rawTable[1][i], 1)
-            assert_equal(rawTable[2][i], 1)
-            assert_equal(rawTable[3][i], 1)
-            assert_equal(rawTable[4][i], 1)
-        elif funcName == "maximum":
-            assert_equal(rawTable[1][i], 3)
-            assert_equal(rawTable[2][i], 3)
-            assert_equal(rawTable[3][i], 5)
-            assert_equal(rawTable[4][i], 5)
-        elif funcName == "uniqueCount":
-            assert_equal(rawTable[1][i], 2)
-            assert_equal(rawTable[2][i], 3)
-            assert_equal(rawTable[3][i], 3)
-            assert_equal(rawTable[4][i], 3)
-        elif funcName == "standardDeviation":
-            assert_almost_equal(rawTable[1][i], 0.9428, 3)
-            assert_almost_equal(rawTable[2][i], 0.8165, 3)
-            assert_almost_equal(rawTable[3][i], 1.633, 3)
-            assert_almost_equal(rawTable[4][i], 1.6997, 3)
-        elif funcName == "median":
-            assert_equal(rawTable[1][i], 1.0)
-            assert_equal(rawTable[2][i], 2.0)
-            assert_equal(rawTable[3][i], 3.0)
-            assert_equal(rawTable[4][i], 2.0)
+    for retType in nimble.data.available:
+        testObj = createData(retType, data=raw)
+        funcs = featurewiseFunctionGenerator()
+        rawTable = produceFeaturewiseInfoTable(testObj, funcs)
+        print(rawTable)
+        funcNames = rawTable[0]
+        for i in range(len(funcNames)):
+            funcName = funcNames[i]
+            if funcName == "mean":
+                assert_almost_equal(rawTable[1][i], 0.3333, 3)
+                assert_almost_equal(rawTable[2][i], 0.3333, 3)
+                assert_almost_equal(rawTable[3][i], 0.1667, 3)
+                assert_almost_equal(rawTable[4][i], 0.4000, 3)
+                assert_almost_equal(rawTable[5][i], 0.5000, 3)
+                assert_almost_equal(rawTable[6][i], 0.1667, 3)
+            elif funcName == "minimum":
+                assert_equal(rawTable[1][i], 0)
+                assert_equal(rawTable[2][i], 0)
+                assert_equal(rawTable[3][i], 0)
+                assert_equal(rawTable[4][i], 0)
+                assert_equal(rawTable[5][i], 0)
+                assert_equal(rawTable[6][i], 0)
+            elif funcName == "maximum":
+                assert_equal(rawTable[1][i], 1)
+                assert_equal(rawTable[2][i], 1)
+                assert_equal(rawTable[3][i], 1)
+                assert_equal(rawTable[4][i], 1)
+                assert_equal(rawTable[5][i], 1)
+                assert_equal(rawTable[6][i], 1)
+            elif funcName == "uniqueCount":
+                assert_equal(rawTable[1][i], 2)
+                assert_equal(rawTable[2][i], 2)
+                assert_equal(rawTable[3][i], 2)
+                assert_equal(rawTable[4][i], 2)
+                assert_equal(rawTable[5][i], 2)
+                assert_equal(rawTable[6][i], 2)
+            elif funcName == "standardDeviation":
+                assert_almost_equal(rawTable[1][i], 0.5164, 3)
+                assert_almost_equal(rawTable[2][i], 0.5164, 3)
+                assert_almost_equal(rawTable[3][i], 0.4082, 3)
+                assert_almost_equal(rawTable[4][i], 0.5477, 3)
+                assert_almost_equal(rawTable[5][i], 0.5477, 3)
+                assert_almost_equal(rawTable[6][i], 0.4082, 3)
+            elif funcName == "median":
+                assert_equal(rawTable[1][i], 0)
+                assert_equal(rawTable[2][i], 0)
+                assert_equal(rawTable[3][i], 0)
+                assert_equal(rawTable[4][i], 0)
+                assert_equal(rawTable[5][i], 0.5)
+                assert_equal(rawTable[6][i], 0)
 
 
 def testAppendColumns():
@@ -238,13 +189,3 @@ def testProduceAggregateTable():
             assert rawTable[1][i] == 4
         elif funcName == "points":
             assert rawTable[1][i] == 3
-
-
-
-
-
-
-
-
-
-
