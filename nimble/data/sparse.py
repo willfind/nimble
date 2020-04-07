@@ -839,6 +839,8 @@ class Sparse(Base):
         singleFeat = featureEnd - featureStart == 1
         # singleFeat = singlePoint = False
         if singleFeat or singlePoint:
+            pshape = pointEnd - pointStart
+            fshape = featureEnd - featureStart
             if singlePoint:
                 if self._sorted is None or self._sorted == 'feature':
                     self._sortInternal('point')
@@ -856,10 +858,15 @@ class Sparse(Base):
                     outerStart = start
                     start = start + innerStart
                     end = outerStart + innerEnd
-
-                row = numpy.tile([0], end - start)
-                col = self.data.col[start:end] - featureStart
-
+                if len(self._shape) > 2:
+                    pshape = self._shape[1]
+                    fshape = int(numpy.prod(self._shape[2:]))
+                    row = self.data.col[start:end] // fshape
+                    col = self.data.col[start:end] % fshape
+                    kwds['shape'] = [pshape] + self._shape[2:]
+                else:
+                    row = numpy.tile([0], end - start)
+                    col = self.data.col[start:end] - featureStart
             else:  # case single feature
                 if self._sorted is None or self._sorted == 'point':
                     self._sortInternal('feature')
@@ -883,8 +890,6 @@ class Sparse(Base):
                 col = numpy.tile([0], end - start)
 
             data = self.data.data[start:end]
-            pshape = pointEnd - pointStart
-            fshape = featureEnd - featureStart
 
             newInternal = scipy.sparse.coo_matrix((data, (row, col)),
                                                   shape=(pshape, fshape))
@@ -900,6 +905,10 @@ class Sparse(Base):
                                   featureEnd - featureStart)
             newInternal.data = None
             kwds['data'] = newInternal
+            if len(self._shape) > 2:
+                shape = self._shape.copy()
+                shape[0] = pointEnd - pointStart
+                kwds['shape'] = shape
 
             return SparseView(**kwds)
 
@@ -1363,12 +1372,13 @@ class SparseView(BaseView, Sparse):
         sIt = self.points
         oIt = other.points
         for sPoint, oPoint in zip(sIt, oIt):
-            for i, sVal in enumerate(sPoint):
-                oVal = oPoint[i]
-                # check element equality - which is only relevant if one of
-                # the elements is non-NaN
-                if sVal != oVal and (sVal == sVal or oVal == oVal):
-                    return False
+            if sPoint != oPoint:
+                return False
+            if sPoint != sPoint and oPoint == oPoint:
+                return False
+            if sPoint == sPoint and oPoint != oPoint:
+                return False
+
         return True
 
     def _containsZero_implementation(self):

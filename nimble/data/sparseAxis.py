@@ -229,56 +229,106 @@ class SparseAxis(Axis):
         """
         Iterate through each member to index targeted values
         """
-        dtype = numpy.object_
+        selfData = self._base._getSparseData()
+        dtype = selfData.data.dtype
 
         targetLength = len(targetList)
         targetData = []
         targetRows = []
         targetCols = []
-        keepData = []
-        keepRows = []
-        keepCols = []
-        keepIndex = 0
+        targetIdx = 0
 
-        # iterate through self._axis data
-        for targetID, view in enumerate(self):
-            # coo_matrix data for return object
-            if targetID in targetList:
-                for otherID, value in enumerate(view.data.data):
-                    targetData.append(value)
-                    if self._isPoint:
-                        targetRows.append(targetList.index(targetID))
-                        targetCols.append(view.data.col[otherID])
-                    else:
-                        targetRows.append(view.data.row[otherID])
-                        targetCols.append(targetList.index(targetID))
-            # coo_matrix data for modified self._base
-            elif structure != 'copy':
-                for otherID, value in enumerate(view.data.data):
-                    keepData.append(value)
-                    if self._isPoint:
-                        keepRows.append(keepIndex)
-                        keepCols.append(view.data.col[otherID])
-                    else:
-                        keepRows.append(view.data.row[otherID])
-                        keepCols.append(keepIndex)
-                keepIndex += 1
+        if self._isPoint:
+            targetAxis = targetRows
+            targetOffAxis = targetCols
+            targetAxisData = selfData.row
+            offAxisData = selfData.col
+        else:
+            targetAxis = targetCols
+            targetOffAxis = targetRows
+            targetAxisData = selfData.col
+            offAxisData = selfData.row
+
+        for i in targetList:
+            locs = targetAxisData == i
+            targetData.extend(selfData.data[locs])
+            targetAxis.extend([targetIdx] * sum(locs))
+            targetIdx += 1
+            targetOffAxis.extend(offAxisData[locs])
+
 
         # instantiate return data
-        selfShape, targetShape = _calcShapes(self._base.data.shape,
+        selfShape, targetShape = _calcShapes(self._base.data._shape,
                                              targetLength, self._axis)
         if structure != 'copy':
+            keepData = []
+            keepRows = []
+            keepCols = []
+            keepIdx = 0
+            if self._isPoint:
+                keepAxis = keepRows
+                keepOffAxis = keepCols
+            else:
+                keepAxis = keepCols
+                keepOffAxis = keepRows
+            for i in range(len(self)):
+                if i not in targetList:
+                    locs = targetAxisData == i
+                    keepData.extend(self._base.data.data[locs])
+                    keepAxis.extend([keepIdx] * sum(locs))
+                    keepIdx += 1
+                    keepOffAxis.extend(offAxisData[locs])
             keepData = numpy.array(keepData, dtype=dtype)
             self._base.data = scipy.sparse.coo_matrix(
                 (keepData, (keepRows, keepCols)), shape=selfShape)
             self._base._sorted = None
+
         # need to manually set dtype or coo_matrix will force to simplest dtype
         targetData = numpy.array(targetData, dtype=dtype)
         ret = scipy.sparse.coo_matrix((targetData, (targetRows, targetCols)),
                                       shape=targetShape)
-
         return nimble.data.Sparse(ret, pointNames=pointNames,
                                   featureNames=featureNames, reuseData=True)
+
+
+        # # iterate through self._axis data
+        # for targetID, view in enumerate(self):
+        #     # coo_matrix data for return object
+        #     if targetID in targetList:
+        #         for otherID, value in enumerate(view.data.data):
+        #             targetData.append(value)
+        #             if self._isPoint:
+        #                 targetRows.append(targetList.index(targetID))
+        #                 targetCols.append(view.data.col[otherID])
+        #             else:
+        #                 targetRows.append(view.data.row[otherID])
+        #                 targetCols.append(targetList.index(targetID))
+        #     # coo_matrix data for modified self._base
+        #     elif structure != 'copy':
+        #         for otherID, value in enumerate(view.data.data):
+        #             keepData.append(value)
+        #             if self._isPoint:
+        #                 keepRows.append(keepIndex)
+        #                 keepCols.append(view.data.col[otherID])
+        #             else:
+        #                 keepRows.append(view.data.row[otherID])
+        #                 keepCols.append(keepIndex)
+        #         keepIndex += 1
+
+        # # instantiate return data
+        # selfShape, targetShape = _calcShapes(self._base.data.shape,
+        #                                      targetLength, self._axis)
+        # if structure != 'copy':
+        #     keepData = numpy.array(keepData, dtype=dtype)
+        #     self._base.data = scipy.sparse.coo_matrix(
+        #         (keepData, (keepRows, keepCols)), shape=selfShape)
+        #     self._base._sorted = None
+        # # need to manually set dtype or coo_matrix will force to simplest dtype
+        # targetData = numpy.array(targetData, dtype=dtype)
+        # ret = scipy.sparse.coo_matrix((targetData, (targetRows, targetCols)),
+        #                               shape=targetShape)
+        # return nimble.data.Sparse(ret, pointNames=pointNames,
+        #                           featureNames=featureNames, reuseData=True)
 
     def _unique_implementation(self):
         if self._base._sorted is None:
@@ -363,13 +413,16 @@ class SparseAxis(Axis):
 ###################
 
 def _calcShapes(currShape, numExtracted, axisType):
-    (rowShape, colShape) = currShape
     if axisType == "feature":
+        (rowShape, colShape) = currShape
         selfRowShape = rowShape
         selfColShape = colShape - numExtracted
         extRowShape = rowShape
         extColShape = numExtracted
     elif axisType == "point":
+        rowShape = currShape[0]
+        # flattened call shape since can be more than 2D
+        colShape = int(numpy.prod(currShape[1:]))
         selfRowShape = rowShape - numExtracted
         selfColShape = colShape
         extRowShape = numExtracted

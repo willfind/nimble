@@ -34,12 +34,6 @@ class Points(object):
     def __iter__(self):
         return self._iter()
 
-    def __len__(self):
-        return self._len()
-
-    def __bool__(self):
-        return self._bool()
-
     def __getitem__(self, key):
         return self._getitem(key)
 

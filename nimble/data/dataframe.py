@@ -112,10 +112,6 @@ class DataFrame(Base):
     def _isIdentical_implementation(self, other):
         if not isinstance(other, DataFrame):
             return False
-        if len(self.points) != len(other.points):
-            return False
-        if len(self.features) != len(other.features):
-            return False
 
         return allDataIdentical(self.data.values, other.data.values)
 
@@ -344,6 +340,18 @@ class DataFrame(Base):
         kwds = {}
         kwds['data'] = self.data.iloc[pointStart:pointEnd,
                                       featureStart:featureEnd]
+        pRange = pointEnd - pointStart
+        fRange = featureEnd - featureStart
+        if len(self._shape) > 2:
+            if pRange == 1:
+                shape = self._shape[1:]
+                pRange = shape[0]
+                fRange = int(numpy.prod(shape[1:]))
+                kwds['data'] = kwds['data'].values.reshape((pRange, fRange))
+            else:
+                shape = self._shape.copy()
+                shape[0] = pRange
+            kwds['shape'] = shape
         kwds['source'] = self
         kwds['pointStart'] = pointStart
         kwds['pointEnd'] = pointEnd
@@ -355,8 +363,8 @@ class DataFrame(Base):
 
         # Reassign labels as to match the positions in the view object,
         # not the positions in the source object.
-        ret.data.index = pd.RangeIndex(pointEnd - pointStart)
-        ret.data.columns = pd.RangeIndex(featureEnd - featureStart)
+        ret.data.index = pd.RangeIndex(pRange)
+        ret.data.columns = pd.RangeIndex(fRange)
 
         return ret
 

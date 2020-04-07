@@ -2738,6 +2738,101 @@ def test_createData_logCount():
     for t in returnTypes:
         byType(t)
 
+def makeTensorData(matrix):
+    rank3List = [matrix, matrix, matrix]
+    rank4List = [rank3List, rank3List, rank3List]
+    rank5List = [rank4List, rank4List, rank4List]
+    rank3Array = numpy.array(rank3List)
+    rank4Array = numpy.array(rank4List)
+    rank5Array = numpy.array(rank5List)
+    rank3Array2D = numpy.empty((3, 3), dtype='O')
+    for i, lst in enumerate(rank3List):
+        rank3Array2D[i] = lst
+    rank4Array2D = numpy.empty((3, 3), dtype='O')
+    for i, lst in enumerate(rank4List):
+        rank4Array2D[i] = lst
+    rank5Array2D = numpy.empty((3, 3), dtype='O')
+    for i, lst in enumerate(rank5List):
+        rank5Array2D[i] = lst
+    rank3DF = pd.DataFrame(rank3Array2D)
+    rank4DF = pd.DataFrame(rank4Array2D)
+    rank5DF = pd.DataFrame(rank5Array2D)
+    rank3COO = scipy.sparse.coo_matrix(rank3Array2D)
+    rank4COO = scipy.sparse.coo_matrix(rank4Array2D)
+    rank5COO = scipy.sparse.coo_matrix(rank5Array2D)
+
+    tensors = [rank3List, rank4List, rank5List, rank3Array, rank4Array, rank5Array,
+               rank3Array2D, rank4Array2D, rank5Array2D, rank3DF, rank4DF, rank5DF]
+    # cannot construct high dimension empty tensors for sparse
+    if rank3Array.shape[-1] > 0:
+        tensors.extend([rank3COO, rank4COO, rank5COO])
+
+    return tensors
+
+
+def test_createData_multidimensionalData():
+    vector1 = [0, 1, 2, 3, 0]
+    vector2 = [4, 5, 0, 6, 7]
+    vector3 = [8, 0, 9, 0, 8]
+    matrix = [vector1, vector2, vector3]
+
+    tensors = makeTensorData(matrix)
+
+    emptyTensors = makeTensorData([[], [], []])
+
+    expPoints = 3
+    for retType in returnTypes:
+        for idx, tensor in enumerate(tensors):
+            toTest = nimble.createData(retType, tensor)
+            expShape = [3, 3, 5]
+            for i in range(idx % 3):
+                expShape.insert(0, 3)
+            expFeatures = numpy.prod(expShape[1:])
+            assert toTest._shape == expShape
+            assert toTest._pointCount == expPoints
+            assert toTest._featureCount == expFeatures
+
+        for idx, tensor in enumerate(emptyTensors):
+            toTest = nimble.createData(retType, tensor)
+            expShape = [3, 3, 0]
+            for i in range(idx % 3):
+                expShape.insert(0, 3)
+            expFeatures = numpy.prod(expShape[1:])
+            assert toTest._shape == expShape
+            assert toTest._pointCount == expPoints
+            assert toTest._featureCount == expFeatures
+
+def test_createData_multidimensionalData_pointNames():
+    vector1 = [0, 1, 2, 3, 0]
+    vector2 = [4, 5, 0, 6, 7]
+    vector3 = [8, 0, 9, 0, 8]
+    matrix = [vector1, vector2, vector3]
+
+    tensors = makeTensorData(matrix)
+
+    ptNames = ['a', 'b', 'c']
+    for retType in returnTypes:
+        for tensor in tensors:
+            toTest = nimble.createData(retType, tensor, pointNames=ptNames)
+            assert toTest.points.getNames() == ptNames
+
+def test_createData_multidimensionalData_featureNames():
+    vector1 = [0, 1, 2, 3, 0]
+    vector2 = [4, 5, 0, 6, 7]
+    vector3 = [8, 0, 9, 0, 8]
+    matrix = [vector1, vector2, vector3]
+
+    tensors = makeTensorData(matrix)
+
+    for retType in returnTypes:
+        for idx, tensor in enumerate(tensors):
+            flattenedLen = 15
+            for i in range(idx % 3):
+                flattenedLen *= 3
+            ftNames = ['ft' + str(x) for x in range(flattenedLen)]
+            toTest = nimble.createData(retType, tensor, featureNames=ftNames)
+            assert toTest.features.getNames() == ftNames
+
 
 # tests for combination of one name set being specified and one set being
 # in data.

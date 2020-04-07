@@ -124,13 +124,12 @@ class Base(object):
     def __init__(self, shape, pointNames=None, featureNames=None, name=None,
                  paths=(None, None), **kwds):
         self._shape = list(shape)
-        self._tensorRank = len(self._shape)
-        if pointNames is not None and len(pointNames) != shape[0]:
+        if pointNames is not None and len(pointNames) != self._pointCount:
             msg = "The length of the pointNames (" + str(len(pointNames))
             msg += ") must match the points given in shape (" + str(shape[0])
             msg += ")"
             raise InvalidArgumentValue(msg)
-        if featureNames is not None and len(featureNames) != shape[1]:
+        if featureNames is not None and len(featureNames) != self._featureCount:
             msg = "The length of the featureNames (" + str(len(featureNames))
             msg += ") must match the features given in shape ("
             msg += str(shape[1]) + ")"
@@ -205,7 +204,7 @@ class Base(object):
 
     @property
     def _featureCount(self):
-        if self._tensorRank > 2:
+        if len(self._shape) > 2:
             return int(numpy.prod(self._shape[1:]))
         return self._shape[1]
 
@@ -221,6 +220,13 @@ class Base(object):
         (points, features).
         """
         return self._pointCount, self._featureCount
+
+    @property
+    def dimensions(self):
+        """
+        The true dimensions of this object.
+        """
+        return tuple(self._shape)
 
     def _getPoints(self):
         """
@@ -381,6 +387,19 @@ class Base(object):
         else:
             return True
 
+    def _treatAs2D(self):
+        """
+        Copy of this object with _shape modified to be two-dimensional.
+        This can be applied when dimensionality does not affect an
+        operation, but it cannot be applied to this object at higher
+        dimensions due to the ambiguity in the definition of elements.
+        """
+        if len(self._shape) > 2:
+            ret = self.copy()
+            ret._shape = [ret._pointCount, ret._featureCount]
+            return ret
+        return self.copy()
+
     ########################
     # Low Level Operations #
     ########################
@@ -412,7 +431,7 @@ class Base(object):
         raise ImproperObjectAction(msg)
 
     def __bool__(self):
-        return self._pointCount > 0 and self._featureCount > 0
+        return self._shape[0] > 0 and self._shape[-1] > 0
 
     @limitedTo2D
     def iterateElements(self, order='point', only=None):
@@ -1230,7 +1249,6 @@ class Base(object):
 
         return res
 
-    @limitedTo2D
     def hashCode(self):
         """
         Returns a hash for this matrix.
@@ -1245,7 +1263,8 @@ class Base(object):
         """
         if self._pointCount == 0 or self._featureCount == 0:
             return 0
-        valueObj = self.calculateOnElements(hashCodeFunc, preserveZeros=True,
+        self2D = self._treatAs2D()
+        valueObj = self2D.calculateOnElements(hashCodeFunc, preserveZeros=True,
                                             outputType='Matrix', useLog=False)
         valueList = valueObj.copy(to="python list")
         avg = (sum(itertools.chain.from_iterable(valueList))
@@ -1254,7 +1273,6 @@ class Base(object):
         #this should return an integer x in the range 0<= x < 1 billion
         return int(int(round(bigNum * avg)) % bigNum)
 
-    @limitedTo2D
     def isApproximatelyEqual(self, other):
         """
         Determine if the data in both objects is likely the same.
@@ -1278,16 +1296,13 @@ class Base(object):
             True if approximately equal, else False.
         """
         #first check to make sure they have the same number of rows and columns
-        if self._pointCount != len(other.points):
-            return False
-        if self._featureCount != len(other.features):
+        if self._shape != other._shape:
             return False
         #now check if the hashes of each matrix are the same
         if self.hashCode() != other.hashCode():
             return False
         return True
 
-    @limitedTo2D
     def trainAndTestSets(self, testFraction, labels=None, randomOrder=True,
                          useLog=None):
         """
@@ -1420,6 +1435,10 @@ class Base(object):
 
         if labels is None:
             ret = trainX, testX
+        elif len(self._shape) > 2:
+            msg = "labels parameter must be None when the data has more "
+            msg += "than two dimensions"
+            raise ImproperObjectAction(msg)
         else:
             # safety for empty objects
             toExtract = labels
@@ -1508,7 +1527,7 @@ class Base(object):
     ###   Subclass implemented information querying functions   ###
     ###############################################################
     ###############################################################
-    @limitedTo2D
+
     def isIdentical(self, other):
         """
         Check for equality between two objects.
@@ -1516,6 +1535,10 @@ class Base(object):
         Return True if all values and names in the other object match
         the values and names in this object.
         """
+        if not isinstance(other, Base):
+            return False
+        if self._shape != other._shape:
+            return False
         if not self._equalFeatureNames(other):
             return False
         if not self._equalPointNames(other):
@@ -1831,7 +1854,6 @@ class Base(object):
             ret = ret.features._structuralBackend_implementation('copy', y)
         return ret
 
-    @limitedTo2D
     def pointView(self, ID):
         """
         A read-only view of a single point.
@@ -1878,7 +1900,6 @@ class Base(object):
         index = self.features.getIndex(ID)
         return self.view(None, None, index, index)
 
-    @limitedTo2D
     def view(self, pointStart=None, pointEnd=None, featureStart=None,
              featureEnd=None):
         """
@@ -1960,6 +1981,12 @@ class Base(object):
             # make exclusive now that it won't ruin the validation check
             featureEnd += 1
 
+        if len(self._shape) > 2:
+            if featureStart != 0 or featureEnd != self._featureCount:
+                msg = "feature limited views are not allowed for data with "
+                msg += "more than two dimensions."
+                raise ImproperObjectAction(msg)
+
         return self._view_implementation(pointStart, pointEnd,
                                          featureStart, featureEnd)
 
@@ -1992,7 +2019,6 @@ class Base(object):
 
         self._validate_implementation(level)
 
-    @limitedTo2D
     def containsZero(self):
         """
         Evaluate if the object contains one or more zero values.
@@ -2015,7 +2041,6 @@ class Base(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    @limitedTo2D
     def toString(self, includeNames=True, maxWidth=79, maxHeight=30,
                  sigDigits=3, maxColumnWidth=19, keepTrailingWhitespace=False):
         """
@@ -2091,7 +2116,8 @@ class Base(object):
 
         # Set up data values to fit in the available space including
         # featureNames if includeFNames=True
-        dataTable, colWidths, fnames = self._arrangeDataWithLimits(
+        self2D = self._treatAs2D()
+        dataTable, colWidths, fnames = self2D._arrangeDataWithLimits(
             maxDataWidth, maxDataRows, includeFNames, sigDigits,
             maxColumnWidth, colSep, colHold, rowHold, nameHolder)
 
@@ -2205,7 +2231,6 @@ class Base(object):
     def __str__(self):
         return self.toString()
 
-    @limitedTo2D
     def show(self, description, includeObjectName=True, includeAxisNames=True,
              maxWidth=79, maxHeight=30, sigDigits=3, maxColumnWidth=19):
         """
@@ -2248,8 +2273,11 @@ class Base(object):
             context = self.name + " : "
         else:
             context = ""
-        context += str(self._pointCount) + "pt x "
-        context += str(self._featureCount) + "ft"
+        if len(self._shape) > 2:
+            context += " x ".join(map(str, self._shape))
+        else:
+            context += str(self._pointCount) + "pt x "
+            context += str(self._featureCount) + "ft"
         print(context, '\n')
         print(self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits,
                             maxColumnWidth))
@@ -2691,7 +2719,6 @@ class Base(object):
         ret.transpose(useLog=False)
         return ret
 
-    @limitedTo2D
     def referenceDataFrom(self, other, useLog=None):
         """
         Redefine the object data using the data from another object.
@@ -2749,8 +2776,7 @@ class Base(object):
         self.featureNames = other.featureNames
         self.featureNamesInverse = other.featureNamesInverse
 
-        self._pointCount = other._pointCount
-        self._featureCount = other._featureCount
+        self._shape = other._shape
 
         self._absPath = other.absolutePath
         self._relPath = other.relativePath
@@ -2761,7 +2787,6 @@ class Base(object):
         handleLogging(useLog, 'prep', "referenceDataFrom",
                       self.getTypeString(), Base.referenceDataFrom, other)
 
-    @limitedTo2D
     def copy(self, to=None, rowsArePoints=True, outputAs1D=False):
         """
         Duplicate an object. Optionally to another nimble or raw format.
@@ -2884,6 +2909,7 @@ class Base(object):
         # nimble, numpy and scipy types
         ret = self._copy_implementation(to)
         if isinstance(ret, Base):
+            ret._shape = self._shape.copy()
             if not rowsArePoints:
                 ret.transpose(useLog=False)
             ret._name = self.name
@@ -4371,7 +4397,9 @@ class Base(object):
         """
         Perform element wise absolute value on this object
         """
-        ret = self.calculateOnElements(abs, useLog=False)
+        self2D = self._treatAs2D()
+        ret = self2D.calculateOnElements(abs, useLog=False)
+        ret._shape = self._shape.copy()
         if self._pointNamesCreated():
             ret.points.setNames(self.points.getNames(), useLog=False)
         else:
@@ -4402,6 +4430,9 @@ class Base(object):
             raise ImproperObjectAction(msg)
 
     def _genericBinary_sizeValidation(self, opName, other):
+        if self._shape != other._shape:
+            msg = "The dimensions of the objects must be equal."
+            raise InvalidArgumentValue(msg)
         if self._pointCount != len(other.points):
             msg = "The number of points in each object must be equal. "
             msg += "(self=" + str(self._pointCount) + " vs other="
@@ -4424,10 +4455,12 @@ class Base(object):
         else:
             toCheck = other
 
-        if isinstance(toCheck, Base) and toCheck.containsZero():
-            msg = "Cannot perform " + opName + " when the second argument "
-            msg += "contains any zeros"
-            raise ZeroDivisionError(msg)
+        if isinstance(toCheck, Base):
+            toCheck = toCheck._treatAs2D()
+            if toCheck.containsZero():
+                msg = "Cannot perform " + opName + " when the second argument "
+                msg += "contains any zeros"
+                raise ZeroDivisionError(msg)
         elif toCheck == 0:
             msg = "Cannot perform " + opName + " when the second argument "
             msg += "is zero"
@@ -4564,7 +4597,6 @@ class Base(object):
             return ret
         self.data = ret
 
-    @limitedTo2D
     def _genericBinaryOperations(self, opName, other):
         if 'pow' in opName:
             usableTypes = (float,)
@@ -4602,6 +4634,7 @@ class Base(object):
         except (TypeError, ValueError, FloatingPointError) as error:
             self._diagnoseFailureAndRaiseException(opName, other, error)
 
+        ret._shape = self._shape
         if opName.startswith('__i'):
             absPath, relPath = self._absPath, self._relPath
             self.referenceDataFrom(ret, useLog=False)
@@ -5098,14 +5131,10 @@ class Base(object):
                 | other.featureNames.keys())
 
     def _equalPointNames(self, other):
-        if other is None or not isinstance(other, Base):
-            return False
         return self._equalNames(self.points._getNamesNoGeneration(),
                                 other.points._getNamesNoGeneration())
 
     def _equalFeatureNames(self, other):
-        if other is None or not isinstance(other, Base):
-            return False
         return (self._equalNames(self.features._getNamesNoGeneration(),
                                  other.features._getNamesNoGeneration()))
 

@@ -38,14 +38,6 @@ class Features(object):
         return self._iter()
 
     @limitedTo2D
-    def __len__(self):
-        return self._len()
-
-    @limitedTo2D
-    def __bool__(self):
-        return self._bool()
-
-    @limitedTo2D
     def __getitem__(self, key):
         return self._getitem(key)
 

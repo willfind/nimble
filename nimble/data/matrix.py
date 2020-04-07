@@ -115,11 +115,6 @@ class Matrix(Base):
     def _isIdentical_implementation(self, other):
         if not isinstance(other, Matrix):
             return False
-        if len(self.points) != len(other.points):
-            return False
-        if len(self.features) != len(other.features):
-            return False
-
         return allDataIdentical(self.data, other.data)
 
 
@@ -412,6 +407,16 @@ class Matrix(Base):
                              featureEnd):
         kwds = {}
         kwds['data'] = self.data[pointStart:pointEnd, featureStart:featureEnd]
+        if len(self._shape) > 2:
+            pRange = pointEnd - pointStart
+            if pRange == 1:
+                shape = self._shape[1:]
+                reshape = (shape[0], int(numpy.prod(shape[1:])))
+                kwds['data'] = kwds['data'].reshape(reshape)
+            else:
+                shape = self._shape.copy()
+                shape[0] = pRange
+            kwds['shape'] = shape
         kwds['source'] = self
         kwds['pointStart'] = pointStart
         kwds['pointEnd'] = pointEnd

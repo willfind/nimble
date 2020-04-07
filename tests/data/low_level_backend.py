@@ -740,8 +740,6 @@ class LowLevelBackend(object):
         """ Test _equalPointNames() against some non-equal input """
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        assert not toTest._equalPointNames(None)
-        assert not toTest._equalPointNames(5)
         assert not toTest._equalPointNames(self.constructor(pointNames=["short", "list"]))
 
         subset = self.constructor(pointNames=["zero", "one", "two"])
@@ -816,8 +814,6 @@ class LowLevelBackend(object):
         """ Test _equalFeatureNames() against some non-equal input """
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        assert not toTest._equalFeatureNames(None)
-        assert not toTest._equalFeatureNames(5)
         assert not toTest._equalFeatureNames(self.constructor(featureNames=["short", "list"]))
 
         subset = self.constructor(featureNames=["zero", "one", "two"])

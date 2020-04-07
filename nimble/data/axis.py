@@ -62,17 +62,17 @@ class Axis(object):
             self._isPoint = False
         super(Axis, self).__init__(**kwargs)
 
-    def _iter(self):
-        return AxisIterator(self)
-
-    def _len(self):
+    def __len__(self):
         if self._isPoint:
             return self._base._pointCount
         else:
             return self._base._featureCount
 
-    def _bool(self):
+    def __bool__(self):
         return len(self) > 0
+
+    def _iter(self):
+        return AxisIterator(self)
 
     ########################
     # Low Level Operations #
@@ -184,13 +184,17 @@ class Axis(object):
             return False
 
     def _getitem(self, key):
-        if isinstance(key, (int, float, str, numpy.integer)):
+        singleKey = isinstance(key, (int, float, str, numpy.integer))
+        if singleKey:
             key = [self._getIndex(key, allowFloats=True)]
         else:
             key = self._processMultiple(key)
         if key is None:
             return self._base.copy()
-        return self._structuralBackend_implementation('copy', key)
+        ret = self._structuralBackend_implementation('copy', key)
+        if singleKey and len(self._base._shape) > 2:
+            ret._shape = self._base._shape[1:]
+        return ret
 
     #########################
     # Structural Operations #
@@ -201,6 +205,7 @@ class Axis(object):
         if self._isPoint:
             ret.features.setNames(self._base.features._getNamesNoGeneration(),
                                   useLog=False)
+            ret._shape[1:] = self._base._shape[1:]
         else:
             ret.points.setNames(self._base.points._getNamesNoGeneration(),
                                 useLog=False)
@@ -1408,6 +1413,11 @@ class Axis(object):
             msg += ", and a method resolution order of "
             msg += str(inspect.getmro(toInsert.__class__))
             raise InvalidArgumentType(msg.format(arg=argName))
+        if len(self._base._shape) != len(toInsert._shape):
+            func = "append" if append else "insert"
+            msg = "Cannot perform {0} operation when data has  ".format(func)
+            msg += "different dimensions"
+            raise ImproperObjectAction(msg)
 
         if self._isPoint:
             objOffAxisLen = self._base._featureCount
@@ -1595,24 +1605,25 @@ class Axis(object):
             # only need to adjust names if names are present
             if not (self._namesCreated()
                     or insertedObj.points._namesCreated()):
-                self._base._setpointCount(newPtCount)
+                self._base._pointCount = newPtCount
                 return
             objNames = self._getNames()
             insertedNames = insertedObj.points.getNames()
             # must change point count AFTER getting names
-            self._base._setpointCount(newPtCount)
+            self._base._pointCount = newPtCount
             setObjNames = self._setNames
+            self._base._shape[0] = newPtCount
         else:
             newFtCount = len(self) + len(insertedObj.features)
             # only need to adjust names if names are present
             if not (self._base._featureNamesCreated()
                     or insertedObj._featureNamesCreated()):
-                self._base._setfeatureCount(newFtCount)
+                self._base._featureCount = newFtCount
                 return
             objNames = self._getNames()
             insertedNames = insertedObj.features.getNames()
             # must change point count AFTER getting names
-            self._base._setfeatureCount(newFtCount)
+            self._base._featureCount = newFtCount
             setObjNames = self._setNames
         # ensure no collision with default names
         adjustedNames = []
@@ -1788,10 +1799,7 @@ class AxisIterator(object):
     def __iter__(self):
         return self
 
-    def next(self):
-        """
-        Get next item
-        """
+    def __next__(self):
         if isinstance(self._axisObj, Points):
             viewer = self._axisObj._base.pointView
         else:
@@ -1802,6 +1810,3 @@ class AxisIterator(object):
             return value
         else:
             raise StopIteration
-
-    def __next__(self):
-        return self.next()

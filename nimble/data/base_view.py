@@ -54,7 +54,12 @@ class BaseView(Base):
         self._pEnd = pointEnd
         self._fStart = featureStart
         self._fEnd = featureEnd
-        #		kwds['name'] = self._source.name
+        if len(source._shape) > 2:
+            if self._fStart != 0 or self._fEnd != source._featureCount:
+                msg = "feature limited views are not allowed for data with "
+                msg += "more than two dimensions."
+                raise ImproperObjectAction(msg)
+
         super(BaseView, self).__init__(**kwds)
 
     # redefinition from Base, except without the setter, using source

@@ -114,7 +114,7 @@ class List(Base):
             #case6: data is a ListPassThrough associated with empty list
             data = []
 
-        self._numFeatures = shape[1]
+        self._numFeatures = int(numpy.prod(shape[1:]))
         self.data = data
 
         kwds['featureNames'] = featureNames
@@ -179,10 +179,7 @@ class List(Base):
     def _isIdentical_implementation(self, other):
         if not isinstance(other, List):
             return False
-        if len(self.points) != len(other.points):
-            return False
-        if len(self.features) != len(other.features):
-            return False
+
         for index in range(len(self.points)):
             sPoint = self.data[index]
             oPoint = other.data[index]
@@ -533,13 +530,26 @@ class List(Base):
         kwds = {}
         kwds['data'] = ListPassThrough(self, pointStart, pointEnd,
                                        featureStart, featureEnd)
+        kwds['shape'] = (pointEnd - pointStart, featureEnd - featureStart)
+        if len(self._shape) > 2:
+            # only when features not limited
+            pRange = pointEnd - pointStart
+            if pRange == 1:
+                shape = self._shape[1:]
+                reshape = (shape[0], int(numpy.prod(shape[1:])))
+                kwds['data'] = ListPassThrough(
+                    self.points[pointStart], 0, self._shape[1],
+                    0, int(numpy.prod(self._shape[2:])))
+            else:
+                shape = self._shape.copy()
+                shape[0] = pRange
+            kwds['shape'] = shape
         kwds['source'] = self
         kwds['pointStart'] = pointStart
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
         kwds['reuseData'] = True
-        kwds['shape'] = (pointEnd - pointStart, featureEnd - featureStart)
         return ListView(**kwds)
 
     def _validate_implementation(self, level):
@@ -603,8 +613,8 @@ class List(Base):
                 return val
             return convertTo(val)
 
-        if any(any(needConversion(v) for v in ft) for ft in self.features):
-            return [list(map(convertType, pt)) for pt in self.points]
+        if any(any(needConversion(v) for v in pt) for pt in self.data):
+            return [list(map(convertType, pt)) for pt in self.data]
         return self.data
 
     def _iterateElements_implementation(self, order, only):
