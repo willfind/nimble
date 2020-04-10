@@ -312,15 +312,29 @@ class Sparse(Base):
                                           reuseData=True)
         if to == 'pythonlist':
             return sparseMatrixToArray(self.data).tolist()
+        needsReshape = len(self._shape) > 2
         if to == 'numpyarray':
-            return sparseMatrixToArray(self.data)
+            ret = sparseMatrixToArray(self.data)
+            if needsReshape:
+                return ret.reshape(self._shape)
+            return ret
+        if needsReshape:
+            data = numpy.empty(self._shape[:2], dtype=numpy.object_)
+            for i in range(self.shape[0]):
+                data[i] = self.points[i].copy('pythonlist')
+        elif 'scipy' in to:
+            data = self.data
+        else:
+            data = sparseMatrixToArray(self.data)
         if to == 'numpymatrix':
-            return numpy.matrix(sparseMatrixToArray(self.data))
+            return numpy.matrix(data)
         if 'scipy' in to:
             if to == 'scipycoo':
-                return self.data.copy()
+                if needsReshape:
+                    return scipy.sparse.coo_matrix(data)
+                return data.copy()
             try:
-                ret = self.data.astype(numpy.float)
+                ret = data.astype(numpy.float)
             except ValueError:
                 msg = 'Can only create scipy {0} matrix from numeric data'
                 raise ValueError(msg.format(to[-3:]))
@@ -332,7 +346,7 @@ class Sparse(Base):
             if not pd:
                 msg = "pandas is not available"
                 raise PackageException(msg)
-            return pd.DataFrame(sparseMatrixToArray(self.data))
+            return pd.DataFrame(data)
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):
@@ -818,7 +832,7 @@ class Sparse(Base):
         return self._binarySearch(x, y)
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
-                             featureEnd):
+                             featureEnd, dropDimension):
         """
         The Sparse object specific implementation necessarly to complete
         the Base object's view method. pointStart and feature start are
@@ -859,11 +873,19 @@ class Sparse(Base):
                     start = start + innerStart
                     end = outerStart + innerEnd
                 if len(self._shape) > 2:
-                    pshape = self._shape[1]
-                    fshape = int(numpy.prod(self._shape[2:]))
+                    if dropDimension:
+                        firstIdx = 1
+                        pshape = self._shape[firstIdx]
+                        fshape = int(numpy.prod(self._shape[firstIdx + 1:]))
+                        kwds['pointStart'] = 0
+                        kwds['pointEnd'] = self._shape[1]
+                        kwds['featureStart'] = 0
+                        kwds['featureEnd'] = int(numpy.prod(self._shape[2:]))
+                    else:
+                        firstIdx = 0
                     row = self.data.col[start:end] // fshape
                     col = self.data.col[start:end] % fshape
-                    kwds['shape'] = [pshape] + self._shape[2:]
+                    kwds['shape'] = [pshape] + self._shape[firstIdx + 1:]
                 else:
                     row = numpy.tile([0], end - start)
                     col = self.data.col[start:end] - featureStart
@@ -894,6 +916,9 @@ class Sparse(Base):
             newInternal = scipy.sparse.coo_matrix((data, (row, col)),
                                                   shape=(pshape, fshape))
             kwds['data'] = newInternal
+            if singlePoint and len(self._shape) > 2 and dropDimension:
+                kwds['source'] = Sparse(newInternal, shape=kwds['shape'],
+                                        reuseData=True)
 
             return SparseVectorView(**kwds)
 
@@ -946,7 +971,7 @@ class Sparse(Base):
         Returns True if there is a value that is equal to integer 0
         contained in this object. False otherwise
         """
-        return (self.data.shape[0] * self.data.shape[1]) > self.data.nnz
+        return (self.shape[0] * self.shape[1]) > self.data.nnz
 
 
     def _binaryOperations_implementation(self, opName, other):
@@ -1307,7 +1332,7 @@ class SparseView(BaseView, Sparse):
     def _getitem_implementation(self, x, y):
         adjX = x + self._pStart
         adjY = y + self._fStart
-        return self._source[adjX, adjY]
+        return self._source._getitem_implementation(adjX, adjY)
 
     def _copy_implementation(self, to):
         if to == "Sparse":
@@ -1338,7 +1363,7 @@ class SparseView(BaseView, Sparse):
             return Sparse(coo, pointNames=pNames, featureNames=fNames)
 
         if len(self.points) == 0 or len(self.features) == 0:
-            emptyStandin = numpy.empty((len(self.points), len(self.features)))
+            emptyStandin = numpy.empty(self._shape)
             intermediate = nimble.createData('Matrix', emptyStandin,
                                              useLog=False)
             return intermediate.copy(to=to)
@@ -1348,12 +1373,15 @@ class SparseView(BaseView, Sparse):
             fStart, fEnd = self._fStart, self._fEnd
             asArray = sparseMatrixToArray(self._source.data)
             limited = asArray[pStart:pEnd, fStart:fEnd]
-            return numpy.array(limited)
+            if len(self._shape) > 2:
+                return limited.reshape(self._shape)
+            return limited.copy()
 
         limited = self._source.points.copy(start=self._pStart,
                                            end=self._pEnd - 1, useLog=False)
-        limited = limited.features.copy(start=self._fStart,
-                                        end=self._fEnd - 1, useLog=False)
+        if self._fEnd - self._fStart < self._source._featureCount:
+            limited = limited.features.copy(start=self._fStart,
+                                            end=self._fEnd - 1, useLog=False)
 
         return limited._copy_implementation(to)
 
@@ -1385,7 +1413,6 @@ class SparseView(BaseView, Sparse):
         for sPoint in self.points:
             if sPoint.containsZero():
                 return True
-
         return False
 
     def _binaryOperations_implementation(self, opName, other):

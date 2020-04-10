@@ -91,8 +91,8 @@ class TestDataFrame(BaseChildTests):
 class TestBaseOnly(LowLevelBackend):
     def __init__(self):
 
-        def makeAndDefine(pointNames=None, featureNames=None, psize=0, fsize=0,
-                          shape=None):
+        def makeAndDefine(shape=None, pointNames=None, featureNames=None,
+                          psize=0, fsize=0):
             """ Make a base data object that will think it has as many features as it has featureNames,
             even though it has no actual data """
             rows = psize if pointNames is None else len(pointNames)

@@ -191,10 +191,10 @@ class Axis(object):
             key = self._processMultiple(key)
         if key is None:
             return self._base.copy()
-        ret = self._structuralBackend_implementation('copy', key)
+
         if singleKey and len(self._base._shape) > 2:
-            ret._shape = self._base._shape[1:]
-        return ret
+            return self._base.pointView(key[0]).copy()
+        return self._structuralBackend_implementation('copy', key)
 
     #########################
     # Structural Operations #
@@ -205,7 +205,6 @@ class Axis(object):
         if self._isPoint:
             ret.features.setNames(self._base.features._getNamesNoGeneration(),
                                   useLog=False)
-            ret._shape[1:] = self._base._shape[1:]
         else:
             ret.points.setNames(self._base.points._getNamesNoGeneration(),
                                 useLog=False)
@@ -266,9 +265,10 @@ class Axis(object):
 
     def _sort(self, sortBy, sortHelper, useLog=None):
         if sortBy is not None and sortHelper is not None:
-            msg = "Cannot specify a feature to sort by and a helper function. "
+            sortAxis = 'feature' if self._axis == 'point' else 'point'
+            msg = "Cannot specify a {0} to sort by and a helper function. "
             msg += "Either sortBy or sortHelper must be None"
-            raise InvalidArgumentTypeCombination(msg)
+            raise InvalidArgumentTypeCombination(msg.format(sortAxis))
         if sortBy is None and sortHelper is None:
             msg = "Either sortBy or sortHelper must not be None"
             raise InvalidArgumentTypeCombination(msg)
@@ -284,6 +284,10 @@ class Axis(object):
 
         sortByArg = copy.copy(sortBy)
         if sortBy is not None and isinstance(sortBy, str):
+            if len(self._base._shape) > 2:
+                msg = "sortBy cannot be used for objects with more than "
+                msg += "two dimensions"
+                raise ImproperObjectAction(msg)
             axisObj = self._base._getAxis(otherAxis)
             sortBy = axisObj._getIndex(sortBy)
 
@@ -302,6 +306,11 @@ class Axis(object):
                 raise InvalidArgumentValue(msg)
             indexPosition = indices
         else:
+            if len(self._base._shape) > 2:
+                sVal = 'sortHelper functions' if sortBy is None else 'sortBy'
+                msg = "{0} cannot be used for objects with ".format(sVal)
+                msg += "more than two dimensions"
+                raise ImproperObjectAction(msg)
             axis = self._axis + 's'
             indexPosition = sortIndexPosition(self, sortBy, sortHelper, axis)
 
@@ -843,8 +852,11 @@ class Axis(object):
                     else:
                         namesToRepeat.append(name + "_" + str(i + 1))
 
-        return createDataNoValidation(self._base.getTypeString(), repeated,
-                                      pointNames=ptNames, featureNames=ftNames)
+        ret = createDataNoValidation(self._base.getTypeString(), repeated,
+                                     pointNames=ptNames, featureNames=ftNames)
+        if self._isPoint:
+            ret._shape[1:] = self._base._shape[1:]
+        return ret
 
     ###################
     # Query functions #
@@ -852,7 +864,8 @@ class Axis(object):
 
     def _unique(self):
         ret = self._unique_implementation()
-
+        if self._isPoint:
+            ret._shape[1:] = self._base._shape[1:]
         ret._absPath = self._base.absolutePath
         ret._relPath = self._base.relativePath
 
@@ -1166,12 +1179,17 @@ class Axis(object):
         _validateStructuralArguments(structure, axis, target, start,
                                      end, number, randomize)
         targetList = []
+        argName = 'to' + structure.capitalize()
         if target is not None and isinstance(target, str):
             # check if target is a valid name
             if self._hasName(target):
                 target = self._getIndex(target)
                 targetList.append(target)
             # if not a name then assume it's a query string
+            elif len(self._base._shape) > 2:
+                msg = "query strings for {0} are not supported for data with "
+                msg += "more than two dimensions"
+                raise ImproperObjectAction(msg.format(argName))
             else:
                 if self._isPoint:
                     hasNameChecker2 = self._base.features._hasName
@@ -1181,7 +1199,6 @@ class Axis(object):
 
         # list-like container types
         if target is not None and not hasattr(target, '__call__'):
-            argName = 'to' + structure.capitalize()
             targetList = constructIndicesList(self._base, axis, target,
                                               argName)
             if len(set(targetList)) != len(targetList):
@@ -1193,6 +1210,10 @@ class Axis(object):
                 raise InvalidArgumentValue(msg)
         # boolean function
         elif target is not None:
+            if len(self._base._shape) > 2:
+                msg = "functions for {0} are not supported for data with more "
+                msg += "than two dimensions"
+                raise ImproperObjectAction(msg.format(argName))
             # construct list from function
             for targetID, view in enumerate(self):
                 if target(view):
@@ -1228,7 +1249,13 @@ class Axis(object):
 
         if structure == 'count':
             return len(targetList)
-        return self._structuralBackend_implementation(structure, targetList)
+        ret = self._structuralBackend_implementation(structure, targetList)
+
+        if self._isPoint and ret is not None:
+            # retain internal dimensions
+            ret._shape[1:] = self._base._shape[1:]
+
+        return ret
 
     def _getStructuralNames(self, targetList):
         nameList = None
@@ -1413,11 +1440,6 @@ class Axis(object):
             msg += ", and a method resolution order of "
             msg += str(inspect.getmro(toInsert.__class__))
             raise InvalidArgumentType(msg.format(arg=argName))
-        if len(self._base._shape) != len(toInsert._shape):
-            func = "append" if append else "insert"
-            msg = "Cannot perform {0} operation when data has  ".format(func)
-            msg += "different dimensions"
-            raise ImproperObjectAction(msg)
 
         if self._isPoint:
             objOffAxisLen = self._base._featureCount
@@ -1439,6 +1461,10 @@ class Axis(object):
             funcName = 'features.' + func
 
         if objOffAxisLen != insertOffAxisLen:
+            if len(self._base._shape) > 2:
+                msg = "Cannot perform {0} operation when data has "
+                msg += "different dimensions"
+                raise ImproperObjectAction(msg.format(funcName))
             msg = "The argument '{arg}' must have the same number of "
             msg += "{offAxis}s as the caller object. This object contains "
             msg += "{objCount} {offAxis}s and {arg} contains {insertCount} "

@@ -3,6 +3,7 @@
 """
 import sys
 from io import StringIO
+import tempfile
 
 import numpy
 import pandas as pd
@@ -33,24 +34,6 @@ nzMatrix = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [-1, -2, -3, -4, -5]]
 nzTensors = makeTensorData(nzMatrix)
 
 class HighDimensionSafe(DataTestObject):
-
-    def test_highDimension_len(self):
-        for tensor in tensors:
-            toTest = self.constructor(tensor)
-            try:
-                len(toTest)
-                assert False # expected ImproperObjectAction
-            except ImproperObjectAction:
-                pass
-
-    def test_highDimension_bool(self):
-        for tensor in tensors:
-            toTest = self.constructor(tensor)
-            assert bool(toTest)
-
-        for tensor in emptyTensors:
-            toTest = self.constructor(tensor)
-            assert not bool(toTest)
 
     def test_highDimension_equality(self):
         for tens1, tens2 in zip(tensors, tensors):
@@ -136,10 +119,58 @@ class HighDimensionSafe(DataTestObject):
                 sys.stdout = stdoutBackup
 
     def test_highDimension_copy(self):
-        for tensor in tensors:
-            toTest = self.constructor(tensor)
-            testCopy = toTest.copy()
-            assert toTest._shape == testCopy._shape
+        for tensorList in [tensors, emptyTensors]:
+            for tensor in tensorList:
+                toTest = self.constructor(tensor)
+                for rType in nimble.data.available:
+                    testCopy = toTest.copy(rType)
+                    exp = nimble.createData(rType, tensor)
+                    assert toTest._shape == testCopy._shape
+                    assert testCopy == exp
+
+                listCopy = toTest.copy('python list')
+                assert listCopy == tensor
+
+                arrCopy = toTest.copy('numpy array')
+                assert numpy.array_equal(arrCopy, numpy.array(tensor))
+                assert arrCopy.shape == toTest.dimensions
+
+                objArr = numpy.empty(toTest._shape[:2], dtype=numpy.object_)
+                for i, lst in enumerate(tensor):
+                    objArr[i] = lst
+
+                matCopy = toTest.copy('numpy matrix')
+                assert numpy.array_equal(matCopy, numpy.matrix(objArr))
+
+                cooCopy = toTest.copy('scipy coo')
+                expCoo = scipy.sparse.coo_matrix(objArr)
+                # coo __eq__ fails for object dtype b/c attempt conversion to csr
+                assert numpy.array_equal(cooCopy.data, expCoo.data)
+                assert numpy.array_equal(cooCopy.row, expCoo.row)
+                assert numpy.array_equal(cooCopy.col, expCoo.col)
+
+                dfCopy = toTest.copy('pandas dataframe')
+                assert numpy.array_equal(dfCopy, pd.DataFrame(objArr))
+
+                for cType in ['listofdict', 'dictoflist', 'scipycsc',
+                              'scipycsr']:
+                    try:
+                        toTest.copy(cType)
+                        assert False
+                    except ImproperObjectAction:
+                        pass
+
+                try:
+                    toTest.copy('pythonlist', outputAs1D=True)
+                    assert False
+                except ImproperObjectAction:
+                    pass
+
+                try:
+                    toTest.copy('pythonlist', rowsArePoints=False)
+                    assert False
+                except ImproperObjectAction:
+                    pass
 
     def test_highDimension_views(self):
         for tensor in tensors:
@@ -148,23 +179,38 @@ class HighDimensionSafe(DataTestObject):
             assert toTest._shape == testView._shape
 
             ptView = toTest.pointView(1)
-            assert ptView._shape == toTest._shape[1:]
+            assert ptView._shape[0] == toTest._shape[1]
+            assert ptView._shape[1:] == toTest._shape[2:]
 
             ptsView = toTest.view(pointStart=1, pointEnd=2)
             assert ptsView._shape[0] == 2
             assert ptsView._shape[1:] == toTest._shape[1:]
 
             try:
-                ftView = toTest.featureView(1)
-                assert False # expected ImproperObjectAction
-            except ImproperObjectAction:
-                pass
-
-            try:
                 ftsView = toTest.view(featureStart=1, featureEnd=2)
                 assert False # expected ImproperObjectAction
             except ImproperObjectAction:
                 pass
+
+    def test_highDimension_save(self):
+        for tensor in tensors:
+            toSave = self.constructor(tensor)
+            toSaveShape = toSave._shape
+            assert len(toSave._shape) > 2
+
+            with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
+                toSave.save(tmpFile.name)
+                loadObj = nimble.loadData(tmpFile.name)
+
+            assert loadObj._shape == toSaveShape
+            assert toSave.isIdentical(loadObj)
+            assert loadObj.isIdentical(toSave)
+
+    def test_highDimension_getTypeString(self):
+        retType = self.constructor([]).getTypeString()
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+            assert toTest.getTypeString() == retType
 
     def test_highDimension_posNegAbs(self):
         mixedSigns = [[0, -1, -2, 3, 0], [4, -5, 0, -6, 7], [8, 0, -9, 0, -8]]
@@ -181,6 +227,17 @@ class HighDimensionSafe(DataTestObject):
             assert -toTest == expNeg
             assert abs(toTest) == expAbs
 
+    def test_highDimension_containsZero(self):
+        noZeros = [[1, 1, 2, -3, 3], [-4, 5, -5, 6, -7], [-8, 9, 9, -9, 8]]
+        noZerosTensors = makeTensorData(noZeros)
+
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+            assert toTest.containsZero()
+        for nzTensor in noZerosTensors:
+            toTest = self.constructor(nzTensor)
+            assert not toTest.containsZero()
+
     def test_highDimension_binaryOperations(self):
         ops = ['__add__', '__sub__', '__mul__', '__truediv__', '__floordiv__',
                '__mod__', '__radd__', '__rsub__', '__rmul__', '__rtruediv__',
@@ -193,6 +250,113 @@ class HighDimensionSafe(DataTestObject):
 
                 ret = getattr(toTest, op)(toTest)
                 assert ret._shape == toTest._shape
+
+    def test_highDimension_flattenAndUnflatten(self):
+
+        def flattenTensor(tensor, store=None):
+            if store is None:
+                store = []
+            if not isinstance(tensor, list):
+                store.append(tensor)
+            else:
+                for pt in tensor:
+                    flattenTensor(pt, store)
+
+            return store
+        raise NotImplementedError
+        # for tensor in tensors:
+        #     flatPt = flattenTensor(tensor)
+        #     orig = self.constructor(tensor)
+        #     toTestPt = orig.copy()
+        #     expPt = self.constructor(flatPt, pointNames=['Flattened'])
+        #     # check flattenTensor worked as expected
+        #     assert expPt._shape[0] == 1 and len(expPt._shape) == 2
+        #
+        #     toTestPt.flattenToOnePoint()
+        #     assert toTestPt == expPt
+        #
+        #     toTestPt.unflattenFromOnePoint(orig._shape)
+        #     assert toTestPt == orig
+        #
+        #     toTestFt = orig.copy()
+        #     try:
+        #         toTestFt.flattenToOneFeature()
+        #     except ImproperObjectAction:
+        #         pass
+
+    def test_highDimension_points_iter(self):
+        for idx, tensor in enumerate(tensors):
+            flattenedLen = 15
+            for i in range(idx % 3):
+                flattenedLen *= 3
+            ftNames = ['ft' + str(x) for x in range(flattenedLen)]
+            ptNames = ['a', 'b', 'c']
+            toTest = self.constructor(tensor, pointNames=ptNames,
+                                      featureNames=ftNames)
+            for pt in toTest.points:
+                assert pt._shape == toTest._shape[1:]
+                assert not pt.points._namesCreated()
+                assert not pt.features._namesCreated()
+
+    def test_highDimension_points_getitem(self):
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+            for i in range(len(toTest.points)):
+                pt = toTest.points[i]
+                assert pt._shape == toTest._shape[1:]
+
+    def test_highDimension_points_copy(self):
+        params = [([[0, 1]], {}),
+                  ([['a', 'b']], {}),
+                  ([], {'start': 0, 'end': 1}),
+                  ([], {'start': 'a', 'end': 'b'}),
+                  ([], {'number': 2})]
+        for tensor in tensors:
+            for args, kwargs in params:
+                orig = self.constructor(tensor, pointNames=['a', 'b', 'c'])
+                testCopy = orig.copy()
+
+                exp1 = self.constructor(tensor[:2], pointNames=['a', 'b'])
+                exp2 = self.constructor(tensor[2:], pointNames=['c'])
+
+                retCopy = testCopy.points.copy(*args, **kwargs)
+                assert retCopy == exp1
+                assert testCopy == orig
+
+        params = [lambda pt: True, 'ft0=0']
+        for i, tensor in enumerate(tensors):
+            for arg in params:
+                ftNames = ['ft' + str(j) for j in range(5 * (3 ** (i + 1)))]
+                testCopy = self.constructor(tensor, pointNames=['a', 'b', 'c'],
+                                            featureNames=ftNames)
+                try:
+                    retCopy = testCopy.points.copy(arg)
+                    assert False
+                except ImproperObjectAction:
+                    pass
+
+    def test_highDimension_axis_count(self):
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+
+            try:
+                toTest.points.count(lambda pt: True)
+                assert False
+            except ImproperObjectAction:
+                pass
+
+            try:
+                toTest.features.count(lambda ft: True)
+                assert False
+            except ImproperObjectAction:
+                pass
+
+    def test_highDimension_axis_unique(self):
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+            unique = toTest.points.unique()
+            assert unique._shape[0] == 1
+            assert unique._shape[1:] == toTest._shape[1:]
 
 class HighDimensionModifying(DataTestObject):
 
@@ -221,6 +385,258 @@ class HighDimensionModifying(DataTestObject):
                 toTest = self.constructor(tensor)
                 ret = getattr(toTest, op)(toTest)
                 assert ret._shape == toTest._shape
+
+    def test_highDimension_sort(self):
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+
+            toTest.points.sort(sortHelper=[2, 0, 1])
+
+            expData = [tensor[2], tensor[0], tensor[1]]
+            exp = self.constructor(expData)
+            assert toTest == exp
+
+            try:
+                toTest.points.sort(0)
+                assert False
+            except ImproperObjectAction:
+                pass
+
+            try:
+                toTest.points.sort(sortHelper=lambda pt: -1)
+                assert False
+            except ImproperObjectAction:
+                pass
+
+            try:
+                toTest.features.sort(sortHelper=[2, 0, 1])
+                assert False
+            except ImproperObjectAction:
+                pass
+
+    def test_highDimension_insertAndAppend(self):
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+            origShape = toTest._shape
+            numPts = len(toTest.points)
+
+            toTest.points.insert(0, toTest)
+            assert toTest._shape[0] == numPts * 2
+            assert toTest._shape[1:] == origShape[1:]
+
+            toTest.points.append(toTest)
+            assert toTest._shape[0] == numPts * 4
+            assert toTest._shape[1:] == origShape[1:]
+
+            try:
+                toTest.features.insert(0, toTest)
+                assert False
+            except ImproperObjectAction:
+                pass
+
+            try:
+                toTest.features.append(toTest)
+                assert False
+            except ImproperObjectAction:
+                pass
+
+    def test_highDimension_insertAndAppend_wrongShape(self):
+        for tens1 in tensors:
+            for tens2 in tensors:
+                toTest = self.constructor(tens1)
+                toInsert = self.constructor(tens2)
+                if toTest._shape != toInsert._shape:
+                    try:
+                        toTest.points.insert(0, toInsert)
+                        assert False
+                    except ImproperObjectAction:
+                        pass
+
+                    try:
+                        toTest.points.append(toInsert)
+                        assert False
+                    except ImproperObjectAction:
+                        pass
+
+    def test_highDimension_shuffle(self):
+        for tensor in tensors:
+            toTest = self.constructor(tensor, pointNames=['a', 'b', 'c'])
+            origShape = toTest._shape
+            shuffled = False
+            for i in range(5):
+                toTest.points.shuffle()
+                assert toTest._shape == origShape
+                if toTest.points.getNames() != ['a', 'b', 'c']:
+                    shuffled = True
+                    break
+            assert shuffled
+
+            try:
+                toTest.features.shuffle()
+                assert False
+            except ImproperObjectAction:
+                pass
+
+    def test_highDimension_points_structuralModifying(self):
+        params = [([[0, 1]], {}),
+                  ([['a', 'b']], {}),
+                  ([], {'start': 0, 'end': 1}),
+                  ([], {'start': 'a', 'end': 'b'}),
+                  ([], {'number': 2})]
+        for tensor in tensors:
+            for args, kwargs in params:
+                orig = self.constructor(tensor, pointNames=['a', 'b', 'c'])
+                testExtract = orig.copy()
+                testDelete = orig.copy()
+                testRetain = orig.copy()
+
+                exp1 = self.constructor(tensor[:2], pointNames=['a', 'b'])
+                exp2 = self.constructor(tensor[2:], pointNames=['c'])
+
+                retExtract = testExtract.points.extract(*args, **kwargs)
+                assert retExtract == exp1
+                assert testExtract == exp2
+
+                retDelete = testDelete.points.delete(*args, **kwargs)
+                assert retDelete is None
+                assert testDelete == exp2
+
+                retRetain = testRetain.points.retain(*args, **kwargs)
+                assert retRetain is None
+                assert testRetain == exp1
+
+        params = [lambda pt: True, 'ft0=0']
+        for i, tensor in enumerate(tensors):
+            for arg in params:
+                ftNames = ['ft' + str(j) for j in range(5 * (3 ** (i + 1)))]
+                orig = self.constructor(tensor, pointNames=['a', 'b', 'c'],
+                                        featureNames=ftNames)
+                testExtract = orig.copy()
+                testDelete = orig.copy()
+                testRetain = orig.copy()
+
+                try:
+                    retExtract = testExtract.points.extract(arg)
+                    assert False
+                except ImproperObjectAction:
+                    pass
+
+                try:
+                    retDelete = testDelete.points.delete(arg)
+                    assert False
+                except ImproperObjectAction:
+                    pass
+
+                try:
+                    retRetain = testRetain.points.retain(arg)
+                    assert False
+                except ImproperObjectAction:
+                    pass
+
+    def test_highDimension_axis_repeat(self):
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+            origShape = toTest._shape
+            repeated = toTest.points.repeat(2, True)
+            assert toTest._shape == origShape
+            assert repeated._shape[0] == origShape[0] * 2
+            assert repeated._shape[1:] == origShape[1:]
+
+            try:
+                repeated = toTest.features.repeat(2, True)
+                assert False
+            except ImproperObjectAction:
+                pass
+
+    def test_highDimension_disallowed(self):
+        # Goal here is to make sure that all functions that we have not
+        # explicitly allowed for high dimension data are wrapped in the
+        # limitTo2D decorator. This should ensure  that any new functionality
+        # is automatically flagged if not wrapped with limitTo2D or explicitly
+        # allowed below.
+
+        def getNimbleDefined(cls):
+            nimbleDefined = set()
+            ignore = ['__init__', '__init_subclass__', '__subclasshook__']
+            objectDir = dir(object)
+            for attr in dir(cls):
+                if attr in ignore:
+                    continue
+                if attr.startswith('_') and not attr.startswith('__'):
+                    continue
+                bound = getattr(cls, attr)
+                if not callable(bound) and attr != 'T':
+                    continue
+                if attr in objectDir:
+                    # add only if we redefined it
+                    if getattr(object, attr) != bound:
+                        nimbleDefined.add(attr)
+                else:
+                    nimbleDefined.add(attr)
+            return nimbleDefined
+
+        def isLimitedTo2D(obj, method, callable=True):
+            # Unfortunately, using mock is problematic when dealing with
+            # decorators, so instead this checks that the exception message
+            # matches our expectations.
+            endStr = "{0} is not permitted when the ".format(method)
+            endStr += "data has more than two dimensions"
+            if callable:
+                try:
+                    getattr(obj, method)()
+                    return False
+                except ImproperObjectAction as ioa:
+                    return str(ioa) == endStr
+            else:
+                try:
+                    getattr(obj, method)
+                    return False
+                except ImproperObjectAction as ioa:
+                    return str(ioa) == endStr
+
+        toTest = self.constructor(tensors[0])
+
+        baseUser = getNimbleDefined(nimble.data.Base)
+        baseAllowed = set((
+            '__bool__', '__eq__', '__ne__', '__add__', '__radd__', '__iadd__',
+            '__sub__', '__rsub__', '__isub__', '__mul__', '__rmul__',
+            '__imul__', '__truediv__', '__rtruediv__', '__itruediv__',
+            '__floordiv__', '__rfloordiv__', '__ifloordiv__', '__mod__',
+            '__rmod__', '__imod__', '__pow__', '__rpow__', '__ipow__',
+            '__str__', '__repr__', '__pos__', '__neg__', '__abs__', '__copy__',
+            '__deepcopy__', 'nameIsDefault', 'isApproximatelyEqual',
+            'trainAndTestSets', 'isIdentical', 'writeFile', 'save',
+            'getTypeString', 'pointView', 'view', 'validate', 'containsZero',
+            'toString', 'show', 'referenceDataFrom', 'copy',))
+        baseDisallowed = baseUser.difference(baseAllowed)
+
+        for method in baseDisallowed:
+            if method == 'T': # only property we need to test
+                assert isLimitedTo2D(toTest, method, callable=False)
+            else:
+                assert isLimitedTo2D(toTest, method)
+
+        axisAllowed = set((
+            '__len__', 'getName', 'getNames', 'setName', 'setNames',
+            'getIndex', 'getIndices', 'hasName',))
+        ptUser = getNimbleDefined(nimble.data.Points)
+        ptAllowed = set((
+            '__iter__', '__getitem__', 'copy', 'extract', 'delete', 'retain',
+            'sort', 'insert', 'append', 'shuffle', 'repeat', 'unique',))
+        ptAllAllowed = axisAllowed.union(ptAllowed)
+        ptDisallowed = ptUser.difference(ptAllAllowed)
+
+        ftUser = getNimbleDefined(nimble.data.Features)
+        # only the Axis methods are allowed for features
+        ftDisallowed = ftUser.difference(axisAllowed)
+
+        ptAxis = getattr(toTest, 'points')
+        for method in ptDisallowed:
+            assert isLimitedTo2D(ptAxis, method)
+
+        ftAxis = getattr(toTest, 'features')
+        for method in ftDisallowed:
+            assert isLimitedTo2D(ftAxis, method)
 
 class HighDimensionAll(HighDimensionSafe, HighDimensionModifying):
     pass

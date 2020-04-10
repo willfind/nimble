@@ -116,8 +116,8 @@ class BaseView(Base):
     # Reimplemented Operations #
     ############################
 
-    def view(self, pointStart=None, pointEnd=None, featureStart=None,
-             featureEnd=None):
+    def _view_backend(self, pointStart=None, pointEnd=None, featureStart=None,
+                      featureEnd=None, dropDimension=False):
 
         # -1 because _pEnd and _fEnd are exclusive indices,
         # but view takes inclusive
@@ -146,7 +146,8 @@ class BaseView(Base):
             feIndex = self._source.features.getIndex(featureEnd)
             feAdj = feIndex + self._fStart
 
-        return self._source.view(psAdj, peAdj, fsAdj, feAdj)
+        return self._source._view_backend(psAdj, peAdj, fsAdj, feAdj,
+                                          dropDimension)
 
     ###########################
     # Higher Order Operations #

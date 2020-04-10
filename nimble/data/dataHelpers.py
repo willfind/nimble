@@ -940,8 +940,8 @@ def limitedTo2D(method):
         else:
             tensorRank = len(self._shape)
         if tensorRank > 2:
-            msg = "The {0} method is not permitted ".format(method.__name__)
-            msg += "when the data has more than two dimensions"
+            msg = "{0} is not permitted when the ".format(method.__name__)
+            msg += "data has more than two dimensions"
             raise ImproperObjectAction(msg)
         return method(self, *args, **kwargs)
     return wrapped

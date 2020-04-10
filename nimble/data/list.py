@@ -257,8 +257,7 @@ class List(Base):
         isEmpty = False
         if len(self.points) == 0 or len(self.features) == 0:
             isEmpty = True
-            emptyData = numpy.empty(shape=(len(self.points),
-                                           len(self.features)))
+            emptyData = numpy.empty(shape=self.shape)
 
         if to == 'pythonlist':
             return [pt.copy() for pt in self.data]
@@ -275,38 +274,51 @@ class List(Base):
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
+
+        needsReshape = len(self._shape) > 2
         if to == 'numpyarray':
             if isEmpty:
-                return emptyData
-            return convertList(numpy2DArray, self.data)
+                ret = emptyData
+            else:
+                ret = convertList(numpy2DArray, self.data)
+            if needsReshape:
+                return ret.reshape(self._shape)
+            return ret
+        if needsReshape:
+            data = numpy.empty(self._shape[:2], dtype=numpy.object_)
+            for i in range(self.shape[0]):
+                data[i] = self.points[i].copy('pythonlist')
+            if isEmpty:
+                emptyData = data
+        else:
+            data = self.data
         if to == 'numpymatrix':
             if isEmpty:
                 return numpy.matrix(emptyData)
-            return convertList(numpy.matrix, self.data)
+            return convertList(numpy.matrix, data)
         if 'scipy' in to:
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
-            asArray = convertList(numpy2DArray, self.data)
             if to == 'scipycsc':
                 if isEmpty:
                     return scipy.sparse.csc_matrix(emptyData)
-                return scipy.sparse.csc_matrix(asArray)
+                return scipy.sparse.csc_matrix(data)
             if to == 'scipycsr':
                 if isEmpty:
                     return scipy.sparse.csr_matrix(emptyData)
-                return scipy.sparse.csr_matrix(asArray)
+                return scipy.sparse.csr_matrix(data)
             if to == 'scipycoo':
                 if isEmpty:
                     return scipy.sparse.coo_matrix(emptyData)
-                return scipy.sparse.coo_matrix(asArray)
+                return scipy.sparse.coo_matrix(data)
         if to == 'pandasdataframe':
             if not pd:
                 msg = "pandas is not available"
                 raise PackageException(msg)
             if isEmpty:
                 return pd.DataFrame(emptyData)
-            return pd.DataFrame(self.data)
+            return pd.DataFrame(data)
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):
@@ -526,31 +538,45 @@ class List(Base):
         return self.data[x][y]
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
-                             featureEnd):
+                             featureEnd, dropDimension):
         kwds = {}
         kwds['data'] = ListPassThrough(self, pointStart, pointEnd,
                                        featureStart, featureEnd)
         kwds['shape'] = (pointEnd - pointStart, featureEnd - featureStart)
+        kwds['source'] = self
         if len(self._shape) > 2:
-            # only when features not limited
-            pRange = pointEnd - pointStart
-            if pRange == 1:
+            if dropDimension:
                 shape = self._shape[1:]
-                reshape = (shape[0], int(numpy.prod(shape[1:])))
-                kwds['data'] = ListPassThrough(
-                    self.points[pointStart], 0, self._shape[1],
-                    0, int(numpy.prod(self._shape[2:])))
+                source = self._createNestedObject(pointStart)
+                kwds['source'] = source
+                kwds['data'] = source.data
+                pointStart, pointEnd = 0, source.shape[0]
+                featureStart, featureEnd = 0, source.shape[1]
             else:
                 shape = self._shape.copy()
-                shape[0] = pRange
+                shape[0] = pointEnd - pointStart
             kwds['shape'] = shape
-        kwds['source'] = self
         kwds['pointStart'] = pointStart
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
         kwds['reuseData'] = True
+
         return ListView(**kwds)
+
+    def _createNestedObject(self, pointIndex):
+        """
+        Create an object of one less dimension
+        """
+        reshape = (self._shape[1], int(numpy.prod(self._shape[2:])))
+        data = []
+        point = self.data[pointIndex]
+        for i in range(reshape[0]):
+            start = i * reshape[1]
+            end = start + reshape[1]
+            data.append(point[start:end])
+
+        return List(data, shape=self._shape[1:], reuseData=True)
 
     def _validate_implementation(self, level):
         assert len(self.data) == len(self.points)
@@ -569,9 +595,12 @@ class List(Base):
         contained in this object. False otherwise
         """
         for point in self.points:
-            for i in range(len(point)):
-                if point[i] == 0:
-                    return True
+            if len(point._shape) == 2 and point._shape[0] == 1:
+                for i in range(len(point)):
+                    if point[i] == 0:
+                        return True
+            else:
+                return point.containsZero()
         return False
 
 
@@ -641,8 +670,7 @@ class ListView(BaseView, List):
         # for copy
         if ((len(self.points) == 0 or len(self.features) == 0)
                 and to != 'List'):
-            emptyStandin = numpy.empty((len(self.points),
-                                        len(self.features)))
+            emptyStandin = numpy.empty(self._shape)
             intermediate = nimble.createData('Matrix', emptyStandin,
                                              useLog=False)
             return intermediate.copy(to=to)

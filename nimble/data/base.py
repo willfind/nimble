@@ -13,6 +13,7 @@ import itertools
 import os.path
 from multiprocessing import Process
 from abc import abstractmethod
+from functools import wraps
 
 import numpy
 
@@ -387,23 +388,30 @@ class Base(object):
         else:
             return True
 
-    def _treatAs2D(self):
+    def _treatAs2D(self, method):
         """
-        Copy of this object with _shape modified to be two-dimensional.
         This can be applied when dimensionality does not affect an
-        operation, but it cannot be applied to this object at higher
-        dimensions due to the ambiguity in the definition of elements.
+        operation, but an method call within the operation is blocked
+        when the data has more than two dimensions due to the ambiguity
+        in the definition of elements.
         """
         if len(self._shape) > 2:
-            ret = self.copy()
-            ret._shape = [ret._pointCount, ret._featureCount]
-            return ret
-        return self.copy()
+            @wraps(method)
+            def wrapped(*args, **kwargs):
+                savedShape = self._shape
+                try:
+                    self._shape = [self._pointCount, self._featureCount]
+                    return method(*args, **kwargs)
+                finally:
+                    self._shape = savedShape
+            return wrapped
+
+        return method
 
     ########################
     # Low Level Operations #
     ########################
-
+    @limitedTo2D
     def __len__(self):
         # ordered such that the larger axis is always printed, even
         # if they are both in the range [0,1]
@@ -1249,6 +1257,7 @@ class Base(object):
 
         return res
 
+    @limitedTo2D
     def hashCode(self):
         """
         Returns a hash for this matrix.
@@ -1263,8 +1272,7 @@ class Base(object):
         """
         if self._pointCount == 0 or self._featureCount == 0:
             return 0
-        self2D = self._treatAs2D()
-        valueObj = self2D.calculateOnElements(hashCodeFunc, preserveZeros=True,
+        valueObj = self.calculateOnElements(hashCodeFunc, preserveZeros=True,
                                             outputType='Matrix', useLog=False)
         valueList = valueObj.copy(to="python list")
         avg = (sum(itertools.chain.from_iterable(valueList))
@@ -1295,13 +1303,17 @@ class Base(object):
         bool
             True if approximately equal, else False.
         """
-        #first check to make sure they have the same number of rows and columns
+        #first check to make sure they have the same dimensions
         if self._shape != other._shape:
             return False
         #now check if the hashes of each matrix are the same
-        if self.hashCode() != other.hashCode():
-            return False
-        return True
+
+        if len(self._shape) > 2:
+            selfHashFunc = self._treatAs2D(self.hashCode)
+            otherHashFunc = other._treatAs2D(other.hashCode)
+            return selfHashFunc() == otherHashFunc()
+        else:
+            return self.hashCode() == other.hashCode()
 
     def trainAndTestSets(self, testFraction, labels=None, randomOrder=True,
                          useLog=None):
@@ -1619,7 +1631,6 @@ class Base(object):
         fnamesLine += '\n'
         openFile.write(fnamesLine)
 
-    @limitedTo2D
     def save(self, outputPath):
         """
         Save object to a file.
@@ -1874,7 +1885,8 @@ class Base(object):
             raise ImproperObjectAction(msg)
 
         index = self.points.getIndex(ID)
-        return self.view(index, index, None, None)
+        ret = self._view_backend(index, index, None, None, True)
+        return ret
 
     @limitedTo2D
     def featureView(self, ID):
@@ -1898,7 +1910,7 @@ class Base(object):
             raise ImproperObjectAction(msg)
 
         index = self.features.getIndex(ID)
-        return self.view(None, None, index, index)
+        return self._view_backend(None, None, index, index)
 
     def view(self, pointStart=None, pointEnd=None, featureStart=None,
              featureEnd=None):
@@ -1947,6 +1959,11 @@ class Base(object):
         --------
         pointView, featureView
         """
+        return self._view_backend(pointStart, pointEnd, featureStart,
+                                  featureEnd)
+
+    def _view_backend(self, pointStart, pointEnd, featureStart, featureEnd,
+                      dropDimension=False):
         # transform defaults to mean take as much data as possible,
         # transform end values to be EXCLUSIVE
         if pointStart is None:
@@ -1988,7 +2005,8 @@ class Base(object):
                 raise ImproperObjectAction(msg)
 
         return self._view_implementation(pointStart, pointEnd,
-                                         featureStart, featureEnd)
+                                         featureStart, featureEnd,
+                                         dropDimension)
 
     def validate(self, level=1):
         """
@@ -2033,6 +2051,8 @@ class Base(object):
         # trivially False.
         if self._pointCount == 0 or self._featureCount == 0:
             return False
+        if len(self._shape) > 2:
+            return self._treatAs2D(self._containsZero_implementation)()
         return self._containsZero_implementation()
 
     def __eq__(self, other):
@@ -2116,8 +2136,11 @@ class Base(object):
 
         # Set up data values to fit in the available space including
         # featureNames if includeFNames=True
-        self2D = self._treatAs2D()
-        dataTable, colWidths, fnames = self2D._arrangeDataWithLimits(
+        if len(self._shape) > 2:
+            arrangeFunc = self._treatAs2D(self._arrangeDataWithLimits)
+        else:
+            arrangeFunc = self._arrangeDataWithLimits
+        dataTable, colWidths, fnames = arrangeFunc(
             maxDataWidth, maxDataRows, includeFNames, sigDigits,
             maxColumnWidth, colSep, colHold, rowHold, nameHolder)
 
@@ -2871,6 +2894,7 @@ class Base(object):
         # format is one of the accepted nimble data types
         if to is None:
             to = self.getTypeString()
+        origTo = to
         if not isinstance(to, str):
             raise InvalidArgumentType("'to' must be a string")
         if to not in ['List', 'Matrix', 'Sparse', 'DataFrame']:
@@ -2891,6 +2915,21 @@ class Base(object):
                 msg += "'and dict of list'"
                 raise InvalidArgumentValue(msg)
 
+        if len(self._shape) > 2:
+            if to in ['listofdict', 'dictoflist', 'scipycsr', 'scipycsc']:
+                msg = 'Objects with more than two dimensions cannot be '
+                msg += 'copied to {0}'.format(origTo)
+                raise ImproperObjectAction(msg)
+            if outputAs1D or not rowsArePoints:
+                if outputAs1D:
+                    param = 'outputAs1D'
+                    value = False
+                elif not rowsArePoints:
+                    param = 'rowsArePoints'
+                    value = True
+                msg = '{0} must be {1} when the data '.format(param, value)
+                msg += 'has more than two dimensions'
+                raise ImproperObjectAction(msg)
         # only 'numpyarray' and 'pythonlist' are allowed to use outputAs1D flag
         if outputAs1D:
             if to != 'numpyarray' and to != 'pythonlist':
@@ -2932,14 +2971,9 @@ class Base(object):
         return raw
 
     def _copy_pythonList(self, rowsArePoints):
-        if self._pointCount == 0:
-            return []
-        if self._featureCount == 0:
-            ret = []
-            for _ in range(self._pointCount):
-                ret.append([])
-            return ret
         ret = self._copy_implementation('pythonlist')
+        if len(self._shape) > 2:
+            ret = numpy.reshape(ret, self._shape).tolist()
         if not rowsArePoints:
             ret = numpy.transpose(ret).tolist()
         return ret
@@ -3165,6 +3199,7 @@ class Base(object):
         if not self._featureNamesCreated():
             self.features._setAllDefault()
 
+        self._shape = list(self.shape) # make 2D before flattening
         self._flattenToOnePoint_implementation()
 
         self._featureCount = self._pointCount * self._featureCount
@@ -4073,25 +4108,28 @@ class Base(object):
     ###   Subclass implemented numerical operation functions    ###
     ###############################################################
     ###############################################################
-
+    @limitedTo2D
     def matrixMultiply(self, other):
         """
         Perform matrix multiplication.
         """
         return self.__matmul__(other)
 
+    @limitedTo2D
     def __matmul__(self, other):
         """
         Perform matrix multiplication.
         """
         return self._genericMatMul_implementation('__matmul__', other)
 
+    @limitedTo2D
     def __rmatmul__(self, other):
         """
         Perform matrix multiplication with this object on the right.
         """
         return self._genericMatMul_implementation('__rmatmul__', other)
 
+    @limitedTo2D
     def __imatmul__(self, other):
         """
         Perform in place matrix multiplication.
@@ -4102,7 +4140,6 @@ class Base(object):
             ret = self
         return ret
 
-    @limitedTo2D
     def _genericMatMul_implementation(self, opName, other):
         if not isinstance(other, Base):
             return NotImplemented
@@ -4397,8 +4434,11 @@ class Base(object):
         """
         Perform element wise absolute value on this object
         """
-        self2D = self._treatAs2D()
-        ret = self2D.calculateOnElements(abs, useLog=False)
+        if len(self._shape) > 2:
+            calcFunc = self._treatAs2D(self.calculateOnElements)
+        else:
+            calcFunc = self.calculateOnElements
+        ret = calcFunc(abs, useLog=False)
         ret._shape = self._shape.copy()
         if self._pointNamesCreated():
             ret.points.setNames(self.points.getNames(), useLog=False)
@@ -4456,7 +4496,6 @@ class Base(object):
             toCheck = other
 
         if isinstance(toCheck, Base):
-            toCheck = toCheck._treatAs2D()
             if toCheck.containsZero():
                 msg = "Cannot perform " + opName + " when the second argument "
                 msg += "contains any zeros"
@@ -4651,9 +4690,9 @@ class Base(object):
 
 
     def _defaultBinaryOperations_implementation(self, opName, other):
-        selfData = self.copy('numpyarray')
+        selfData = self._treatAs2D(self.copy)('numpyarray')
         if isinstance(other, Base):
-            otherData = other.copy('numpyarray')
+            otherData = other._treatAs2D(other.copy)('numpyarray')
         else:
             otherData = other
         data = getattr(selfData, opName)(otherData)
@@ -4661,15 +4700,19 @@ class Base(object):
 
         return ret
 
+    @limitedTo2D
     def __and__(self, other):
         return self._genericLogicalBinary('__and__', other)
 
+    @limitedTo2D
     def __or__(self, other):
         return self._genericLogicalBinary('__or__', other)
 
+    @limitedTo2D
     def __xor__(self, other):
         return self._genericLogicalBinary('__xor__', other)
 
+    @limitedTo2D
     def __invert__(self):
         boolObj = self._logicalValidationAndConversion()
         ret = boolObj.matchingElements(lambda v: not v, useLog=False)
@@ -4678,7 +4721,6 @@ class Base(object):
                               useLog=False)
         return ret
 
-    @limitedTo2D
     def _genericLogicalBinary(self, opName, other):
         if isinstance(other, Stretch):
             return getattr(other, opName)(self)

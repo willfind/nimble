@@ -184,16 +184,27 @@ class DataFrame(Base):
                                           reuseData=True)
         if to == 'pythonlist':
             return self.data.values.tolist()
+        needsReshape = len(self._shape) > 2
         if to == 'numpyarray':
+            if needsReshape:
+                return self.data.values.reshape(self._shape)
             return self.data.values.copy()
+        if needsReshape:
+            data = numpy.empty(self._shape[:2], dtype=numpy.object_)
+            for i in range(self.shape[0]):
+                data[i] = self.points[i].copy('pythonlist')
+        elif to == 'pandasdataframe':
+            data = self.data.copy()
+        else:
+            data = self.data
         if to == 'numpymatrix':
-            return numpy.matrix(self.data.values)
+            return numpy.matrix(data)
         if 'scipy' in to:
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
             if to == 'scipycoo':
-                return scipy.sparse.coo_matrix(self.data.values)
+                return scipy.sparse.coo_matrix(data)
             try:
                 ret = self.data.values.astype(numpy.float)
             except ValueError:
@@ -207,7 +218,7 @@ class DataFrame(Base):
             if not pd:
                 msg = "pandas is not available"
                 raise PackageException(msg)
-            return pd.DataFrame(self.data.copy())
+            return pd.DataFrame(data)
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):
@@ -336,23 +347,27 @@ class DataFrame(Base):
         return self.data.values[x, y]
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
-                             featureEnd):
+                             featureEnd, dropDimension):
         kwds = {}
         kwds['data'] = self.data.iloc[pointStart:pointEnd,
                                       featureStart:featureEnd]
+        kwds['source'] = self
         pRange = pointEnd - pointStart
         fRange = featureEnd - featureStart
         if len(self._shape) > 2:
-            if pRange == 1:
+            if dropDimension:
                 shape = self._shape[1:]
-                pRange = shape[0]
-                fRange = int(numpy.prod(shape[1:]))
-                kwds['data'] = kwds['data'].values.reshape((pRange, fRange))
+                source = self._createNestedObject(pointStart)
+                kwds['source'] = source
+                kwds['data'] = source.data
+                pointStart, pointEnd = 0, source.shape[0]
+                featureStart, featureEnd = 0, source.shape[1]
+                pRange = source.shape[0]
+                fRange = source.shape[1]
             else:
                 shape = self._shape.copy()
                 shape[0] = pRange
             kwds['shape'] = shape
-        kwds['source'] = self
         kwds['pointStart'] = pointStart
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
@@ -367,6 +382,14 @@ class DataFrame(Base):
         ret.data.columns = pd.RangeIndex(fRange)
 
         return ret
+
+    def _createNestedObject(self, pointIndex):
+        """
+        Create an object of one less dimension
+        """
+        reshape = (self._shape[1], int(numpy.prod(self._shape[2:])))
+        data = self.data.values[pointIndex].reshape(reshape)
+        return DataFrame(data, shape=self._shape[1:], reuseData=True)
 
     def _validate_implementation(self, level):
         shape = self.data.shape

@@ -184,18 +184,27 @@ class Matrix(Base):
             return createDataNoValidation(to, self.data, ptNames, ftNames)
         if to == 'pythonlist':
             return self.data.tolist()
+        needsReshape = len(self._shape) > 2
         if to == 'numpyarray':
+            if needsReshape:
+                return self.data.reshape(self._shape)
             return self.data.copy()
+        if needsReshape:
+            data = numpy.empty(self._shape[:2], dtype=numpy.object_)
+            for i in range(self.shape[0]):
+                data[i] = self.points[i].copy('pythonlist')
+        else:
+            data = self.data
         if to == 'numpymatrix':
-            return numpy.matrix(self.data)
+            return numpy.matrix(data)
         if 'scipy' in to:
             if not scipy:
                 msg = "scipy is not available"
                 raise PackageException(msg)
             if to == 'scipycoo':
-                return scipy.sparse.coo_matrix(self.data)
+                return scipy.sparse.coo_matrix(data)
             try:
-                ret = self.data.astype(numpy.float)
+                ret = data.astype(numpy.float)
             except ValueError:
                 msg = 'Can only create scipy {0} matrix from numeric data'
                 raise ValueError(msg.format(to[-3:]))
@@ -207,7 +216,7 @@ class Matrix(Base):
             if not pd:
                 msg = "pandas is not available"
                 raise PackageException(msg)
-            return pd.DataFrame(self.data.copy())
+            return pd.DataFrame(data.copy())
 
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
@@ -404,26 +413,37 @@ class Matrix(Base):
         return self.data[x, y]
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
-                             featureEnd):
+                             featureEnd, dropDimension):
         kwds = {}
         kwds['data'] = self.data[pointStart:pointEnd, featureStart:featureEnd]
+        kwds['source'] = self
         if len(self._shape) > 2:
-            pRange = pointEnd - pointStart
-            if pRange == 1:
+            if dropDimension:
                 shape = self._shape[1:]
-                reshape = (shape[0], int(numpy.prod(shape[1:])))
-                kwds['data'] = kwds['data'].reshape(reshape)
+                source = self._createNestedObject(pointStart)
+                kwds['source'] = source
+                kwds['data'] = source.data
+                pointStart, pointEnd = 0, source.shape[0]
+                featureStart, featureEnd = 0, source.shape[1]
             else:
                 shape = self._shape.copy()
-                shape[0] = pRange
+                shape[0] = pointEnd - pointStart
             kwds['shape'] = shape
-        kwds['source'] = self
         kwds['pointStart'] = pointStart
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
         kwds['reuseData'] = True
+
         return MatrixView(**kwds)
+
+    def _createNestedObject(self, pointIndex):
+        """
+        Create an object of one less dimension
+        """
+        reshape = (self._shape[1], int(numpy.prod(self._shape[2:])))
+        data = self.data[pointIndex].reshape(reshape)
+        return Matrix(data, shape=self._shape[1:], reuseData=True)
 
     def _validate_implementation(self, level):
         shape = numpy.shape(self.data)
