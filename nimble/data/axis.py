@@ -892,16 +892,6 @@ class Axis(object):
         return ret
 
     def _statistics(self, statisticsFunction, groupByFeature=None):
-        if self._axis == 'point' or groupByFeature is None:
-            return self._statisticsBackend(statisticsFunction)
-        else:
-            # groupByFeature is only a parameter for .features
-            res = self._base.groupByFeature(groupByFeature, useLog=False)
-            for k in res:
-                res[k] = res[k].features._statisticsBackend(statisticsFunction)
-            return res
-
-    def _statisticsBackend(self, statisticsFunction):
         accepted = [
             'max', 'mean', 'median', 'min', 'unique count',
             'proportion missing', 'proportion zero', 'standard deviation',
@@ -927,13 +917,25 @@ class Axis(object):
             toCall = nimble.calculate.proportionZero
         elif cleanFuncName in ['std', 'standarddeviation','samplestd',
                                'samplestandarddeviation']:
-            def sampleStandardDeviation(values):
-                return nimble.calculate.standardDeviation(values, True)
-
-            toCall = sampleStandardDeviation
-        elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
             toCall = nimble.calculate.standardDeviation
+        elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
 
+            def populationStandardDeviation(values):
+                return nimble.calculate.standardDeviation(values, False)
+
+            toCall = populationStandardDeviation
+
+        if self._axis == 'point' or groupByFeature is None:
+            return self._statisticsBackend(cleanFuncName, toCall)
+        else:
+            # groupByFeature is only a parameter for .features
+            res = self._base.groupByFeature(groupByFeature, useLog=False)
+            for k in res:
+                res[k] = res[k].features._statisticsBackend(cleanFuncName,
+                                                            toCall)
+            return res
+
+    def _statisticsBackend(self, cleanFuncName, toCall):
         ret = self._calculate(toCall, limitTo=None, useLog=False)
         if self._isPoint:
             ret.points.setNames(self._getNames(), useLog=False)

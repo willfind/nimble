@@ -34,10 +34,8 @@ from nimble.helpers import createConstantHelper
 from nimble.helpers import computeMetrics
 from nimble.randomness import numpyRandom, generateSubsidiarySeed
 from nimble.randomness import startAlternateControl, endAlternateControl
-from nimble.utility import numpy2DArray, ImportModule
-
-cloudpickle = ImportModule('cloudpickle')
-scipy = ImportModule('scipy')
+from nimble.utility import numpy2DArray
+from nimble.utility import scipy, cloudpickle
 
 
 def createRandomData(
@@ -146,7 +144,7 @@ def createRandomData(
     startAlternateControl(seed=seed)
     #note: sparse is not stochastic sparsity, it uses rigid density measures
     if returnType == 'Sparse':
-        if not scipy:
+        if not scipy.nimbleAccessible():
             msg = "scipy is not available"
             raise PackageException(msg)
 
@@ -423,7 +421,7 @@ def identity(returnType, size, pointNames='automatic',
         raise InvalidArgumentValue(msg)
 
     if returnType == 'Sparse':
-        if not scipy:
+        if not scipy.nimbleAccessible():
             msg = "scipy is not available"
             raise PackageException(msg)
 
@@ -1960,7 +1958,7 @@ def loadData(inputPath, useLog=None):
     nimble.data.Base
         Subclass of Base object.
     """
-    if not cloudpickle:
+    if not cloudpickle.nimbleAccessible():
         msg = "To load nimble objects, cloudpickle must be installed"
         raise PackageException(msg)
     if not inputPath.endswith('.nimd'):
@@ -2002,7 +2000,7 @@ def loadTrainedLearner(inputPath, useLog=None):
     --------
     nimble.interfaces.universal_interface.TrainedLearner
     """
-    if not cloudpickle:
+    if not cloudpickle.nimbleAccessible():
         msg = "To load nimble models, cloudpickle must be installed"
         raise PackageException(msg)
     if not inputPath.endswith('.nimm'):

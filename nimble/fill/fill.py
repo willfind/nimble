@@ -647,7 +647,7 @@ def statsBackend(vector, match, funcString, statisticsFunction):
         raise InvalidArgumentValue(msg)
     unmatched = nimble.createData('List', unmatched, useLog=False)
     stat = statisticsFunction(unmatched)
-    if stat is None:
+    if stat != stat:
         msg = statsExceptionInvalidInput(funcString, vector)
         raise InvalidArgumentValue(msg)
 

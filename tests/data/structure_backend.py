@@ -40,17 +40,14 @@ from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 from nimble.randomness import numpyRandom
-from nimble.utility import ImportModule
 from nimble.utility import sparseMatrixToArray
+from nimble.utility import scipy, pd
 
 from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 from ..assertionHelpers import assertNoNamesGenerated
 from ..assertionHelpers import CalledFunctionException, calledException
-
-scipy = ImportModule('scipy')
-pd = ImportModule('pandas')
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
@@ -324,19 +321,17 @@ class StructureDataSafe(StructureShared):
         numpyMatrix = orig.copy(to='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
-        if scipy:
-            scipyCsr = orig.copy(to='scipy csr')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
+        scipyCsr = orig.copy(to='scipy csr')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
 
-            scipyCsc = orig.copy(to='scipy csc')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
+        scipyCsc = orig.copy(to='scipy csc')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
 
-            scipyCoo = orig.copy(to='scipy coo')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
+        scipyCoo = orig.copy(to='scipy coo')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
 
-        if pd:
-            pandasDF = orig.copy(to='pandas dataframe')
-            assert numpy.array_equal(pandasDF, data)
+        pandasDF = orig.copy(to='pandas dataframe')
+        assert numpy.array_equal(pandasDF, data)
 
         listOfDict = orig.copy(to='list of dict')
         assert listOfDict == []
@@ -382,19 +377,18 @@ class StructureDataSafe(StructureShared):
         numpyMatrix = orig.copy(to='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
-        if scipy:
-            scipyCsr = orig.copy(to='scipy csr')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
+        scipyCsr = orig.copy(to='scipy csr')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
 
-            scipyCsc = orig.copy(to='scipy csc')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
+        scipyCsc = orig.copy(to='scipy csc')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
 
-            scipyCoo = orig.copy(to='scipy coo')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
+        scipyCoo = orig.copy(to='scipy coo')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
 
-        if pd:
-            pandasDF = orig.copy(to='pandas dataframe')
-            assert numpy.array_equal(pandasDF, data)
+
+        pandasDF = orig.copy(to='pandas dataframe')
+        assert numpy.array_equal(pandasDF, data)
 
         listOfDict = orig.copy(to='list of dict')
         assert listOfDict == [{}, {}]
@@ -438,19 +432,17 @@ class StructureDataSafe(StructureShared):
         numpyMatrix = orig.copy(to='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
-        if scipy:
-            scipyCsr = orig.copy(to='scipy csr')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
+        scipyCsr = orig.copy(to='scipy csr')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
 
-            scipyCsc = orig.copy(to='scipy csc')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
+        scipyCsc = orig.copy(to='scipy csc')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
 
-            scipyCoo = orig.copy(to='scipy coo')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
+        scipyCoo = orig.copy(to='scipy coo')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
 
-        if pd:
-            pandasDF = orig.copy(to='pandas dataframe')
-            assert numpy.array_equal(pandasDF, data)
+        pandasDF = orig.copy(to='pandas dataframe')
+        assert numpy.array_equal(pandasDF, data)
 
         listOfDict = orig.copy(to='list of dict')
         assert listOfDict == []
@@ -542,30 +534,28 @@ class StructureDataSafe(StructureShared):
         numpyMatrix[0, 0] = 5
         assert orig[0, 0] == 1
 
-        if scipy:
-            # copying to scipy requires numeric values only
-            numeric = self.constructor(data[:4], pointNames=pointNames[:4],
-                                       featureNames=featureNames)
-            spcsc = numeric.copy(to='scipy csc')
-            assert type(spcsc) == type(scipy.sparse.csc_matrix([]))
-            spcsc[0, 0] = 5
-            assert numeric[0, 0] == 1
+        # copying to scipy requires numeric values only
+        numeric = self.constructor(data[:4], pointNames=pointNames[:4],
+                                   featureNames=featureNames)
+        spcsc = numeric.copy(to='scipy csc')
+        assert type(spcsc) == type(scipy.sparse.csc_matrix([]))
+        spcsc[0, 0] = 5
+        assert numeric[0, 0] == 1
 
-            spcsr = numeric.copy(to='scipy csr')
-            assert type(spcsr) == type(scipy.sparse.csr_matrix([]))
-            spcsr[0, 0] = 5
-            assert numeric[0, 0] == 1
+        spcsr = numeric.copy(to='scipy csr')
+        assert type(spcsr) == type(scipy.sparse.csr_matrix([]))
+        spcsr[0, 0] = 5
+        assert numeric[0, 0] == 1
 
-            spcoo = numeric.copy(to='scipy coo')
-            assert type(spcoo) == type(scipy.sparse.coo_matrix([]))
-            spcoo.data[(spcoo.row == 0) & (spcoo.col == 0)] = 5
-            assert numeric[0, 0] == 1
+        spcoo = numeric.copy(to='scipy coo')
+        assert type(spcoo) == type(scipy.sparse.coo_matrix([]))
+        spcoo.data[(spcoo.row == 0) & (spcoo.col == 0)] = 5
+        assert numeric[0, 0] == 1
 
-        if pd:
-            pandasDF = orig.copy(to='pandas dataframe')
-            assert type(pandasDF) == type(pd.DataFrame([]))
-            pandasDF.iloc[0, 0] = 5
-            assert orig[0, 0] == 1
+        pandasDF = orig.copy(to='pandas dataframe')
+        assert type(pandasDF) == type(pd.DataFrame([]))
+        pandasDF.iloc[0, 0] = 5
+        assert orig[0, 0] == 1
 
         listOfDict = orig.copy(to='list of dict')
         assert type(listOfDict) == list
@@ -606,19 +596,17 @@ class StructureDataSafe(StructureShared):
         out = orig.copy(to='numpymatrix', rowsArePoints=False)
         assert numpy.array_equal(out, dataT)
 
-        if scipy:
-            out = orig.copy(to='scipycsr', rowsArePoints=False)
-            assert numpy.array_equal(sparseMatrixToArray(out), dataT)
+        out = orig.copy(to='scipycsr', rowsArePoints=False)
+        assert numpy.array_equal(sparseMatrixToArray(out), dataT)
 
-            out = orig.copy(to='scipycsc', rowsArePoints=False)
-            assert numpy.array_equal(sparseMatrixToArray(out), dataT)
+        out = orig.copy(to='scipycsc', rowsArePoints=False)
+        assert numpy.array_equal(sparseMatrixToArray(out), dataT)
 
-            out = out = orig.copy(to='scipycoo', rowsArePoints=False)
-            assert numpy.array_equal(sparseMatrixToArray(out), dataT)
+        out = out = orig.copy(to='scipycoo', rowsArePoints=False)
+        assert numpy.array_equal(sparseMatrixToArray(out), dataT)
 
-        if pd:
-            out = orig.copy(to='pandasdataframe', rowsArePoints=False)
-            assert numpy.array_equal(out, dataT)
+        out = orig.copy(to='pandasdataframe', rowsArePoints=False)
+        assert numpy.array_equal(out, dataT)
 
         out = orig.copy(to='list of dict', rowsArePoints=False)
 
@@ -661,27 +649,28 @@ class StructureDataSafe(StructureShared):
             assert False
         except InvalidArgumentValueCombination as ivc:
             pass
-        if scipy:
-            try:
-                orig.copy(to="scipy csr", outputAs1D=True)
-                assert False
-            except InvalidArgumentValueCombination as ivc:
-                pass
-            try:
-                orig.copy(to="scipy csc", outputAs1D=True)
-                assert False
-            except InvalidArgumentValueCombination as ivc:
-                pass
-            try:
-                orig.copy(to="scipy coo", outputAs1D=True)
-                assert False
-            except InvalidArgumentValueCombination as ivc:
-                pass
-        if pd:
-            try:
-                orig.copy(to='pandas dataframe', outputAs1D=True)
-            except InvalidArgumentValueCombination as ivc:
-                pass
+
+        try:
+            orig.copy(to="scipy csr", outputAs1D=True)
+            assert False
+        except InvalidArgumentValueCombination as ivc:
+            pass
+        try:
+            orig.copy(to="scipy csc", outputAs1D=True)
+            assert False
+        except InvalidArgumentValueCombination as ivc:
+            pass
+        try:
+            orig.copy(to="scipy coo", outputAs1D=True)
+            assert False
+        except InvalidArgumentValueCombination as ivc:
+            pass
+
+        try:
+            orig.copy(to='pandas dataframe', outputAs1D=True)
+        except InvalidArgumentValueCombination as ivc:
+            pass
+
         try:
             orig.copy(to="list of dict", outputAs1D=True)
             assert False
@@ -2220,10 +2209,10 @@ class StructureModifying(StructureShared):
         orig3 = self.constructor({})
         orig4 = self.constructor(numpy.empty([0, 0]))
         orig5 = self.constructor(numpy.matrix(numpy.empty([0, 0])))
-        if pd:
-            orig6 = self.constructor(pd.DataFrame())
-            orig7 = self.constructor(pd.Series())
-            orig8 = self.constructor(pd.SparseDataFrame())
+
+        orig6 = self.constructor(pd.DataFrame())
+        orig7 = self.constructor(pd.Series())
+        orig8 = self.constructor(pd.SparseDataFrame())
 
         assert orig1.isIdentical(orig2)
         assert orig1.isIdentical(orig3)
@@ -2245,11 +2234,9 @@ class StructureModifying(StructureShared):
         orig3 = self.constructor([{}])
         orig4 = self.constructor(numpy.empty([1, 0]))
         orig5 = self.constructor(numpy.matrix(numpy.empty([1, 0])))
-        if pd:
-            orig6 = self.constructor(pd.DataFrame([[]]))
-            orig8 = self.constructor(pd.SparseDataFrame([[]]))
-        if scipy:
-            orig9 = self.constructor(scipy.sparse.coo_matrix([[]]))
+        orig6 = self.constructor(pd.DataFrame([[]]))
+        orig8 = self.constructor(pd.SparseDataFrame([[]]))
+        orig9 = self.constructor(scipy.sparse.coo_matrix([[]]))
 
         assert orig1.isIdentical(orig3)
         assert orig1.isIdentical(orig4)
@@ -2269,11 +2256,9 @@ class StructureModifying(StructureShared):
         orig3 = self.constructor([{}, {}])
         orig4 = self.constructor(numpy.empty([2, 0]))
         orig5 = self.constructor(numpy.matrix(numpy.empty([2, 0])))
-        if pd:
-            orig6 = self.constructor(pd.DataFrame([[], []]))
-            orig8 = self.constructor(pd.SparseDataFrame([[], []]))
-        if scipy:
-            orig9 = self.constructor(scipy.sparse.coo_matrix([[], []]))
+        orig6 = self.constructor(pd.DataFrame([[], []]))
+        orig8 = self.constructor(pd.SparseDataFrame([[], []]))
+        orig9 = self.constructor(scipy.sparse.coo_matrix([[], []]))
 
         assert orig1.isIdentical(orig3)
         assert orig1.isIdentical(orig4)
@@ -2297,12 +2282,10 @@ class StructureModifying(StructureShared):
         orig10.features.sort(sortBy=orig10.points.getName(0))
         orig4 = self.constructor(numpy.array([1,2,3]), featureNames=['a', 'b', 'c'])
         orig5 = self.constructor(numpy.matrix([1,2,3]), featureNames=['a', 'b', 'c'])
-        if pd:
-            orig6 = self.constructor(pd.DataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
-            orig7 = self.constructor(pd.Series([1,2,3]), featureNames=['a', 'b', 'c'])
-            orig8 = self.constructor(pd.SparseDataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
-        if scipy:
-            orig9 = self.constructor(scipy.sparse.coo_matrix([1,2,3]), featureNames=['a', 'b', 'c'])
+        orig6 = self.constructor(pd.DataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
+        orig7 = self.constructor(pd.Series([1,2,3]), featureNames=['a', 'b', 'c'])
+        orig8 = self.constructor(pd.SparseDataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
+        orig9 = self.constructor(scipy.sparse.coo_matrix([1,2,3]), featureNames=['a', 'b', 'c'])
 
         assert orig1.isIdentical(orig2)
         assert orig1.isIdentical(orig3)
@@ -2329,10 +2312,8 @@ class StructureModifying(StructureShared):
         orig7.features.sort(sortBy=orig7.points.getName(0))
         orig4 = self.constructor(numpy.array([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
         orig5 = self.constructor(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
-        if pd:
-            orig6 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']]), featureNames=['a', 'b', 'c'])
-        if scipy:
-            orig9 = self.constructor(scipy.sparse.coo_matrix(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object)), featureNames=['a', 'b', 'c'])
+        orig6 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']]), featureNames=['a', 'b', 'c'])
+        orig9 = self.constructor(scipy.sparse.coo_matrix(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object)), featureNames=['a', 'b', 'c'])
 
         assert orig1.isIdentical(orig2)
         assert orig1.isIdentical(orig3)

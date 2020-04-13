@@ -12,7 +12,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
-from nimble.utility import ImportModule
+from nimble.utility import scipy, pd
 from .base import Base
 from .base_view import BaseView
 from .listPoints import ListPoints, ListPointsView
@@ -23,9 +23,6 @@ from .dataHelpers import createDataNoValidation
 from .dataHelpers import csvCommaFormat
 from .dataHelpers import denseCountUnique
 from .dataHelpers import NimbleElementIterator
-
-scipy = ImportModule('scipy')
-pd = ImportModule('pandas')
 
 @inheritDocstringsFactory(Base)
 class List(Base):
@@ -259,6 +256,10 @@ class List(Base):
             isEmpty = True
             emptyData = numpy.empty(shape=(len(self.points),
                                            len(self.features)))
+
+        if to == 'pythonlist':
+            return [pt.copy() for pt in self.data]
+
         if to in nimble.data.available:
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
@@ -271,8 +272,6 @@ class List(Base):
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
-        if to == 'pythonlist':
-            return [pt.copy() for pt in self.data]
         if to == 'numpyarray':
             if isEmpty:
                 return emptyData
@@ -282,7 +281,7 @@ class List(Base):
                 return numpy.matrix(emptyData)
             return convertList(numpy.matrix, self.data)
         if 'scipy' in to:
-            if not scipy:
+            if not scipy.nimbleAccessible():
                 msg = "scipy is not available"
                 raise PackageException(msg)
             asArray = convertList(numpy2DArray, self.data)
@@ -299,7 +298,7 @@ class List(Base):
                     return scipy.sparse.coo_matrix(emptyData)
                 return scipy.sparse.coo_matrix(asArray)
         if to == 'pandasdataframe':
-            if not pd:
+            if not pd.nimbleAccessible():
                 msg = "pandas is not available"
                 raise PackageException(msg)
             if isEmpty:
@@ -632,13 +631,14 @@ class ListView(BaseView, List):
                                              useLog=False)
             return intermediate.copy(to=to)
 
-        listForm = [list(pt) for pt in self.points]
+        # fastest way to generate list of view data
+        listForm = [self._source.data[i][self._fStart:self._fEnd]
+                    for i in range(self._pStart, self._pEnd)]
 
         if to not in ['List', 'pythonlist']:
             origData = self.data
             self.data = listForm
-            res = super(ListView, self)._copy_implementation(
-                to)
+            res = super(ListView, self)._copy_implementation(to)
             self.data = origData
             return res
 

@@ -2869,9 +2869,9 @@ class QueryBackend(DataTestObject):
 
         ret = obj.featureReport()
         line1 = "featureName   minimum   maximum   mean   median   standardDeviation   uniqueCount"
-        line2 = "        one     1.00      3.00    2.00    2.00           0.82              3     "
-        line3 = "        two     0.00      4.00    2.00    2.00           1.63              3     "
-        line4 = "      three     8.80      9.20    9.00    9.00           0.16              3     "
+        line2 = "        one     1.00      3.00    2.00    2.00           1.00              3     "
+        line3 = "        two     0.00      4.00    2.00    2.00           2.00              3     "
+        line4 = "      three     8.80      9.20    9.00    9.00           0.20              3     "
         expLines = [line1, line2, line3, line4]
 
         for retLine, expLine in zip(ret.split('\n'), expLines):
@@ -2884,8 +2884,8 @@ class QueryBackend(DataTestObject):
 
         ret = obj.featureReport()
         line1 = "featureName   minimum   maximum   mean   median   standardDeviation   uniqueCount"
-        line2 = "        one     1.00      3.00    2.00    2.00           0.82              3     "
-        line3 = "        two     1.00      3.00    2.00    2.00           0.82              3     "
+        line2 = "        one     1.00      3.00    2.00    2.00           1.00              3     "
+        line3 = "        two     1.00      3.00    2.00    2.00           1.00              3     "
         line4 = "      three     nan       nan     nan     nan            nan               3     "
         expLines = [line1, line2, line3, line4]
 

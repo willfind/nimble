@@ -21,10 +21,10 @@ import numpy
 import nimble
 from nimble.helpers import generateClassificationData
 from nimble.calculate import rootMeanSquareError as RMSE
-from nimble.configuration import configSafetyWrapper
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import InvalidArgumentType
+from ..assertionHelpers import configSafetyWrapper
 
 #####################
 # Helpers for tests #
