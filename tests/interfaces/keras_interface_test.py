@@ -12,17 +12,15 @@ import nimble
 from nimble import createData
 from nimble.interfaces.keras_interface import Keras
 from nimble.exceptions import InvalidArgumentValue
-from nimble.utility import ImportModule
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory, noLogEntryExpected
-
-keras = ImportModule("keras")
 
 keraSkipDec = SkipMissing('Keras')
 
 @keraSkipDec
 @noLogEntryExpected
 def test_Keras_version():
+    import keras
     interface = Keras()
     assert interface.version() == keras.__version__
 

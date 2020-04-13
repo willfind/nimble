@@ -7,13 +7,11 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
-from nimble.utility import ImportModule
+from nimble.utility import pd
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
 from .features import Features
 from .features_view import FeaturesView
-
-pd = ImportModule('pandas')
 
 class DataFrameFeatures(DataFrameAxis, Features):
     """

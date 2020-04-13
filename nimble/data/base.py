@@ -26,7 +26,7 @@ from nimble.logger import handleLogging
 from nimble.logger import produceFeaturewiseReport
 from nimble.logger import produceAggregateReport
 from nimble.randomness import numpyRandom
-from nimble.utility import ImportModule
+from nimble.utility import cloudpickle, matplotlib
 from .points import Points
 from .features import Features
 from .axis import Axis
@@ -45,10 +45,6 @@ from .dataHelpers import getDictionaryMappingFunction
 from .dataHelpers import ElementIterator1D
 from .dataHelpers import limitedTo2D
 
-cloudpickle = ImportModule('cloudpickle')
-matplotlib = ImportModule('matplotlib')
-
-#print('matplotlib backend: {}'.format(matplotlib.get_backend()))
 
 def to2args(f):
     """
@@ -1645,7 +1641,7 @@ class Base(object):
             .nimd is not included in file name it would be added to the
             output file.
         """
-        if not cloudpickle:
+        if not cloudpickle.nimbleAccessible():
             msg = "To save nimble objects, cloudpickle must be installed"
             raise PackageException(msg)
 
@@ -2321,6 +2317,8 @@ class Base(object):
         return outFormat
 
     def _matplotlibBackendHandling(self, outPath, plotter, **kwargs):
+        if not matplotlib.nimbleAccessible():
+            raise PackageException("Plots require matplotlib to be installed.")
         import __main__ as main
         # for .show() to work in interactive sessions
         # a backend different than Agg needs to be use

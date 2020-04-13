@@ -8,9 +8,8 @@ import nimble
 from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
-from nimble.utility import ImportModule, dtypeConvert
-
-scipy = ImportModule('scipy')
+from nimble.utility import scipy
+from nimble.utility import dtypeConvert
 
 numericalTypes = (int, float, numpy.number)
 
@@ -373,7 +372,7 @@ def residuals(toPredict, controlVars):
         will be used as the dependant variables to do predictions for
         the corresponding point in ``toPredict``.
     """
-    if not scipy:
+    if not scipy.nimbleAccessible():
         msg = "scipy must be installed in order to use the residuals function."
         raise PackageException(msg)
 

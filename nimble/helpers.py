@@ -32,11 +32,8 @@ from nimble.data.sparse import removeDuplicatesNative
 from nimble.randomness import pythonRandom
 from nimble.randomness import numpyRandom
 from nimble.utility import numpy2DArray, is2DArray
-from nimble.utility import ImportModule, sparseMatrixToArray
-
-scipy = ImportModule('scipy')
-pd = ImportModule('pandas')
-requests = ImportModule('requests')
+from nimble.utility import sparseMatrixToArray
+from nimble.utility import scipy, pd, requests
 
 def findBestInterface(package):
     """
@@ -93,12 +90,12 @@ def isAllowedRaw(data, allowLPT=False):
     """
     if allowLPT and 'PassThrough' in str(type(data)):
         return True
-    if scipy and scipy.sparse.issparse(data):
+    if scipy.nimbleAccessible() and scipy.sparse.issparse(data):
         return True
     if isinstance(data, (tuple, list, dict, numpy.ndarray)):
         return True
 
-    if pd:
+    if pd.nimbleAccessible():
         if isinstance(data, (pd.DataFrame, pd.Series, pd.SparseDataFrame)):
             return True
 
@@ -250,7 +247,7 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
         raise InvalidArgumentValueCombination(msg)
 
     if returnType == 'Sparse':
-        if not scipy:
+        if not scipy.nimbleAccessible():
             msg = "scipy is not available"
             raise PackageException(msg)
         if numpyMaker == numpy.ones:
@@ -352,15 +349,16 @@ def extractNames(rawData, pointNames, featureNames):
             func = extractNamesFromRawList
         elif isinstance(rawData, numpy.ndarray):
             func = extractNamesFromNumpy
-        elif scipy and scipy.sparse.issparse(rawData):
+        elif scipy.nimbleAccessible() and scipy.sparse.issparse(rawData):
             # all input coo_matrices must have their duplicates removed; all
             # helpers past this point rely on there being single entires only.
             if isinstance(rawData, scipy.sparse.coo_matrix):
                 rawData = removeDuplicatesNative(rawData)
             func = extractNamesFromScipySparse
-        elif pd and isinstance(rawData, (pd.DataFrame, pd.SparseDataFrame)):
+        elif (pd.nimbleAccessible()
+                and isinstance(rawData, (pd.DataFrame, pd.SparseDataFrame))):
             func = extractNamesFromPdDataFrame
-        elif pd and isinstance(rawData, pd.Series):
+        elif pd.nimbleAccessible() and isinstance(rawData, pd.Series):
             func = extractNamesFromPdSeries
 
         rawData, tempPointNames, tempFeatureNames = func(rawData, pointNames,
@@ -579,7 +577,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
     replaceMissingWith value.
     """
     # need to convert SparseDataFrame to coo matrix before handling missing
-    if isinstance(rawData, pd.SparseDataFrame):
+    if pd.nimbleAccessible() and isinstance(rawData, pd.SparseDataFrame):
         rawData = scipy.sparse.coo_matrix(rawData)
 
     if isinstance(rawData, (list, tuple)):
@@ -597,7 +595,8 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
                                            replaceMissingWith)
         rawData.data = handleMissing
 
-    elif isinstance(rawData, (pd.DataFrame, pd.Series)):
+    elif (pd.nimbleAccessible()
+            and isinstance(rawData, (pd.DataFrame, pd.Series))):
         if len(rawData.values) > 0:
             # .where keeps the values that return True, use ~ to replace those
             # values instead
@@ -773,8 +772,9 @@ def initDataObject(
     5. Convert to acceptable form for returnType init
     """
     if returnType is None:
-        if ((scipy and scipy.sparse.issparse(rawData)) or
-                (pd and isinstance(rawData, pd.SparseDataFrame))):
+        if ((scipy.nimbleAccessible() and scipy.sparse.issparse(rawData))
+            or (pd.nimbleAccessible()
+                and isinstance(rawData, pd.SparseDataFrame))):
             returnType = 'Sparse'
         else:
             returnType = 'Matrix'
@@ -974,7 +974,7 @@ def createDataFromFile(
     # through an http request
     if isinstance(toPass, str):
         if toPass[:4] == 'http':
-            if not requests:
+            if not requests.nimbleAccessible():
                 msg = "To load data from a webpage, the requests module must "
                 msg += "be installed"
                 raise PackageException(msg)
@@ -1069,7 +1069,7 @@ def _loadmtxForAuto(
     market coordinate type, a sparse scipy coo_matrix is returned as
     data. If featureNames are present, they are also read.
     """
-    if not scipy:
+    if not scipy.nimbleAccessible():
         msg = "scipy is not available"
         raise PackageException(msg)
     startPosition = openFile.tell()
@@ -1227,7 +1227,7 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
     # of the present data.
 
     # these will be ID -> name mappings
-    if not scipy:
+    if not scipy.nimbleAccessible():
         msg = "scipy is not available"
         raise PackageException(msg)
     tempPointNames = {}
@@ -2432,7 +2432,8 @@ class KFoldCrossValidator():
             # combine the results objects into one, and then calc performance
             else:
                 for resultIndex in range(1, len(results)):
-                    results[0].points.append(results[resultIndex], useLog=False)
+                    results[0].points.append(results[resultIndex],
+                                             useLog=False)
 
                 # TODO raise RuntimeError(
                 #     "How do we guarantee Y and results are in same order?")
@@ -2746,12 +2747,12 @@ class FoldIterator(object):
         for data in self.dataList:
             if data is not None:
                 if len(data.points) == 0:
-                    msg = "One of the objects has 0 points, it is impossible to "
-                    msg += "specify a valid number of folds"
+                    msg = "One of the objects has 0 points, it is impossible "
+                    msg += "to specify a valid number of folds"
                     raise InvalidArgumentValueCombination(msg)
                 if len(data.points) != len(self.dataList[0].points):
-                    msg = "All data objects in the list must have the same number "
-                    msg += "of points and features"
+                    msg = "All data objects in the list must have the same "
+                    msg += "number of points and features"
                     raise InvalidArgumentValueCombination(msg)
 
         # note: we want truncation here

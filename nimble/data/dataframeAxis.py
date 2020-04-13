@@ -8,13 +8,11 @@ from abc import abstractmethod
 import numpy
 
 import nimble
-from nimble.utility import ImportModule
+from nimble.utility import pd
 from .axis import Axis
 from .dataHelpers import sortIndexPosition
 from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter
 from .points import Points
-
-pd = ImportModule('pandas')
 
 class DataFrameAxis(Axis):
     """

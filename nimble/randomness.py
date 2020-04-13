@@ -7,11 +7,11 @@ import random
 
 import numpy
 
-from .utility import ImportModule
+from .utility import DeferredModuleImport
 from .logger import handleLogging
 
-shogun = ImportModule('shogun')
-if shogun:
+shogun = DeferredModuleImport('shogun')
+if shogun.nimbleAccessible():
     shogun.Math.init_random(42)
 
 pythonRandom = random.Random(42)
@@ -37,7 +37,7 @@ def setRandomSeed(seed, useLog=None):
     global _stillDefault
     pythonRandom.seed(seed)
     numpyRandom.seed(seed)
-    if shogun:
+    if shogun.nimbleAccessible():
         if seed is None:
             # use same seed as numpy used
             shogun.Math.init_random(int(numpyRandom.get_state()[1][0]))
@@ -107,7 +107,7 @@ def startAlternateControl(seed=None):
     """
     global _saved
 
-    if shogun:
+    if shogun.nimbleAccessible():
         shogunSeed = shogun.Math.get_seed()
     else:
         shogunSeed = None
@@ -130,6 +130,6 @@ def endAlternateControl():
     if _saved != (None, None, None):
         pythonRandom.setstate(_saved[0])
         numpyRandom.set_state(_saved[1])
-        if shogun:
+        if shogun.nimbleAccessible():
             shogun.Math.init_random(_saved[2])
         _saved = (None, None, None)
