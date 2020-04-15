@@ -33,7 +33,7 @@ from nimble.randomness import pythonRandom
 from nimble.randomness import numpyRandom
 from nimble.utility import numpy2DArray, is2DArray
 from nimble.utility import sparseMatrixToArray
-from nimble.utility import scipy, pd, requests
+from nimble.utility import scipy, pd, requests, h5py
 
 def findBestInterface(package):
     """
@@ -629,9 +629,10 @@ def getPointIterator(rawData):
     """
     Generate an iterator for the points in the object.
     """
-    if pd and isinstance(rawData, (pd.DataFrame, pd.Series)):
+    if (pd.nimbleAccessible()
+            and isinstance(rawData, (pd.DataFrame, pd.Series))):
         return iter(rawData.values)
-    if scipy and scipy.sparse.isspmatrix(rawData):
+    if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(rawData):
         return SparseCOORowIterator(rawData.tocoo(False))
     if isinstance(rawData, numpy.matrix):
         return iter(numpy.array(rawData))
@@ -812,7 +813,6 @@ def initDataObject(
         if treatAsMissing is not None:
             rawData = replaceMissingData(rawData, treatAsMissing,
                                          replaceMissingWith)
-
     # convert to convertToType, if necessary
     rawData = convertData(returnType, rawData, pointNames, featureNames,
                           convertToType)
@@ -938,36 +938,26 @@ def createDataFromFile(
     and featureNames (the later two following the same semantics as
     createData's parameters with the same names).
     """
-    # try to find an extension for possible optimizations
-    if isinstance(data, str):
-        path = data
-    else:
-        # try getting name attribute from file
-        try:
-            path = data.name
-        except AttributeError:
-            path = None
 
-    # detect extension from the path
-    if path is not None:
-        split = path.rsplit('.', 1)
-        extension = None
-        if len(split) > 1:
-            extension = split[1].lower()
-    else:
-        extension = None
-
-    def isMtxFileChecker(ioStream):
+    def autoFileTypeChecker(ioStream):
         # find first non empty line to check header
         startPosition = ioStream.tell()
         currLine = ioStream.readline()
-        while currLine == '':
+        while currLine == ['', b'']:
             currLine = ioStream.readline()
         header = currLine
         ioStream.seek(startPosition)
 
         # check beginning of header for sentinel on string or binary stream
-        return header[:14] in ["%%MatrixMarket", b"%%MatrixMarket"]
+        if isinstance(header, bytes):
+            if header[:14] == b"%%MatrixMarket":
+                return 'mtx'
+            if header.strip().endswith(b'\x89HDF'):
+                return 'hdf5'
+        if header[:14] == "%%MatrixMarket":
+            return 'mtx'
+        # we default to csv otherwise
+        return 'csv'
 
     toPass = data
     # Case: string value means we need to open the file, either directly or
@@ -985,50 +975,58 @@ def createDataFromFile(
                 msg += "Reason: {0}".format(response.reason)
                 raise InvalidArgumentValue(msg)
 
-            toPass = StringIO(response.text, newline=None)
-            isMtxFile = isMtxFileChecker(toPass)
-            # scipy.io.mmreader needs bytes object
-            if isMtxFile:
-                toPass = BytesIO(bytes(response.content,
-                                       response.apparent_encoding))
+            # start with BytesIO since mtx and hdf5 need them
+            toPass = BytesIO(response.content)
+            extension = autoFileTypeChecker(toPass)
+            if extension == 'csv':
+                toPass.close()
+                toPass = StringIO(response.text, newline=None)
         else:
             toPass = open(data, 'r', newline=None)
-            isMtxFile = isMtxFileChecker(toPass)
+            try:
+                extension = autoFileTypeChecker(toPass)
+            except UnicodeDecodeError:
+                toPass.close()
+                toPass = open(data, 'rb', newline=None)
+                extension = autoFileTypeChecker(toPass)
     # Case: we are given an open file already
     else:
-        isMtxFile = isMtxFileChecker(toPass)
+        extension = autoFileTypeChecker(toPass)
 
-    loadType = returnType
-    if loadType is None:
-        loadType = 'Auto' if isMtxFile else 'Matrix'
-
-    # use detected format to override file extension
-    if isMtxFile:
-        extension = 'mtx'
-
-    # Choose what code to use to load the file. Take into consideration the end
-    # result we are trying to load into.
-    if loadType is not None and extension is not None:
-        directPath = "_load" + extension + "For" + loadType
+    # if the file has a different, valid extension from the one we determined
+    # we will defer to the file's extension
+    if isinstance(data, str):
+        path = data
     else:
-        directPath = None
+        # try getting name attribute from file
+        try:
+            path = data.name
+        except AttributeError:
+            path = None
+    if path is not None:
+        split = path.rsplit('.', 1)
+        supportedExtensions = ['csv', 'mtx', 'hdf5', 'h5']
+        if len(split) > 1 and split[1].lower() in supportedExtensions:
+            extension = split[1].lower()
+            if extension == 'h5':
+                extension = 'hdf5' # h5 and hdf5 are synonymous
+
+    if extension == 'csv':
+        loader = _loadcsvUsingPython
+    elif extension == 'mtx':
+        loader = _loadmtxForAuto
+    elif extension == 'hdf5':
+        loader = _loadhdf5ForAuto
 
     # want to make sure we close the file if loading fails
     try:
-        if directPath in globals():
-            loader = globals()[directPath]
-            loaded = loader(
-                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-                keepPoints, keepFeatures, inputSeparator=inputSeparator)
-        # If we don't know, default to trying to load a value separated file
-        else:
-            loaded = _loadcsvUsingPython(
-                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-                keepPoints, keepFeatures, inputSeparator=inputSeparator)
-
-        (retData, retPNames, retFNames, selectSuccess) = loaded
+        loaded = loader(
+            toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+            keepPoints, keepFeatures, inputSeparator=inputSeparator)
     finally:
         toPass.close()
+
+    retData, retPNames, retFNames, selectSuccess = loaded
 
     # auto set name if unspecified, and is possible
     if isinstance(data, str):
@@ -1125,6 +1123,81 @@ def _loadmtxForAuto(
     retFNames = extFNames if retFNames is None else retFNames
 
     return (data, retPNames, retFNames, False)
+
+
+def _loadhdf5ForAuto(
+        openFile, pointNames, featureNames, ignoreNonNumericalFeatures,
+        keepPoints, keepFeatures, **kwargs):
+    """
+    Use h5py module to load high dimension data. The openFile is used
+    to create a h5py.File object. Each Group and Dataset in the object
+    are considered a deeper dimension. If pointNames is True, the keys
+    of the initial file object will be used as points, otherwise, the
+    point and feature name validity will be assessed in initDataObject.
+    """
+    if not h5py.nimbleAccessible():
+        msg = 'loading hdf5 files requires the h5py module'
+        raise PackageException(msg)
+
+    def extractArray(obj):
+        arrays = []
+        if isinstance(obj, h5py.Dataset):
+            # Ellipsis extracts the numpy array
+            return obj[...]
+        else:
+            for value in obj.values():
+                arrays.append(extractArray(value))
+        return arrays
+
+    with h5py.File(openFile, 'r') as hdf:
+        data = []
+        pnames = []
+        expShape = None
+        for key, val in hdf.items():
+            ptData = extractArray(val)
+            ptShape = numpy.array(ptData).shape
+            if expShape is None:
+                expShape = ptShape
+            elif expShape != ptShape:
+                msg = 'Each point in the data must have the same shape. '
+                msg += "The data in key '{k}' had shape {act} but the first "
+                msg += 'point had shape {exp}'
+                msg = msg.format(k=key, act=ptShape, exp=expShape)
+                raise InvalidArgumentValue(msg)
+            pnames.append(key)
+            data.append(ptData)
+
+    # by default 'automatic' will only assign point names if we identify
+    # this was a file generated by nimble where includeNames was True.
+    openFile.seek(0)
+    includePtNames = openFile.readline().startswith(b'includePointNames')
+    if pointNames == 'automatic' and includePtNames:
+        pointNames = pnames
+    elif pointNames == 'automatic':
+        pointNames = None
+    # if we only have one Dataset, we will default to returning only the
+    # array contained in the Dataset unless the pointNames indicate that
+    # we should keep the array contained in a single point
+    if len(data) == 1 and pointNames and pointNames is not True:
+        numNames = len(pointNames)
+        innerShape = data[0].shape[0]
+        # point names are for the array in the dataset
+        if numNames == innerShape:
+            data = data[0]
+        elif numNames > 1:
+            msg = 'This file contains a single Dataset. The length of '
+            msg += 'pointNames can either be 1, indicating the data in the '
+            msg += 'Dataset will be loaded as a single point, or '
+            msg += '{0} the data in the Dataset will be loaded directly, but '
+            msg += 'pointNames contained {1} names'
+            raise InvalidArgumentValue(msg.format(innerShape, numNames))
+    elif len(data) == 1 and not pointNames:
+        data = data[0]
+
+    if pointNames is True or (includePtNames and pointNames is None):
+        pointNames = pnames
+
+    return (data, pointNames, featureNames, False)
 
 
 def extractNamesFromNumpy(data, pnamesID, fnamesID):
@@ -1947,20 +2020,6 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
         retPNames = pointNames
 
     return (retData, retPNames, retFNames, True)
-
-
-# Register how you want all the various input output combinations
-# to be called; those combinations which are ommited will be loaded
-# and then converted using some best guesses.
-_loadcsvForList = _loadcsvUsingPython
-_loadcsvForMatrix = _loadcsvUsingPython
-_loadcsvForSparse = _loadcsvUsingPython
-_loadcsvForDataFrame = _loadcsvUsingPython
-_loadmtxForList = _loadmtxForAuto
-_loadmtxForMatrix = _loadmtxForAuto
-_loadmtxForSparse = _loadmtxForAuto
-_loadmtxForDataFrame = _loadmtxForAuto
-
 
 def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
     """

@@ -26,7 +26,7 @@ from nimble.logger import handleLogging
 from nimble.logger import produceFeaturewiseReport
 from nimble.logger import produceAggregateReport
 from nimble.randomness import numpyRandom
-from nimble.utility import cloudpickle, matplotlib
+from nimble.utility import cloudpickle, matplotlib, h5py
 from .points import Points
 from .features import Features
 from .axis import Axis
@@ -1554,7 +1554,6 @@ class Base(object):
 
         return self._isIdentical_implementation(other)
 
-    @limitedTo2D
     def writeFile(self, outPath, fileFormat=None, includeNames=True):
         """
         Write the data in this object to a file in the specified format.
@@ -1586,10 +1585,10 @@ class Base(object):
             if len(split) > 1:
                 fileFormat = split[1].lower()
 
-        if fileFormat not in ['csv', 'mtx']:
-            msg = "Unrecognized file format. Accepted types are 'csv' and "
-            msg += "'mtx'. They may either be input as the format parameter, "
-            msg += "or as the extension in the outPath"
+        if fileFormat not in ['csv', 'mtx', 'hdf5', 'h5']:
+            msg = "Unrecognized file format. Accepted types are 'csv', "
+            msg += "'mtx', 'hdf5', and 'h5'. They may either be input as the "
+            msg += "format parameter, or as the extension in the outPath"
             raise InvalidArgumentValue(msg)
 
         includePointNames = includeNames
@@ -1612,7 +1611,16 @@ class Base(object):
             if not seen:
                 includeFeatureNames = False
 
-        if fileFormat.lower() == "csv":
+
+        if fileFormat.lower() in ['hdf5', 'h5']:
+            self._writeFileHDF_implementation(outPath, includePointNames,
+                                              includeFeatureNames)
+        elif len(self._shape) > 2:
+            msg = 'Data with more than two dimensions can only be written '
+            msg += 'to .hdf5 or .h5 formats otherwise the dimensionality '
+            msg += 'would be lost'
+            raise InvalidArgumentValue(msg)
+        elif fileFormat.lower() == "csv":
             self._writeFileCSV_implementation(
                 outPath, includePointNames, includeFeatureNames)
         elif fileFormat.lower() == "mtx":
@@ -1626,6 +1634,28 @@ class Base(object):
         fnamesLine = ','.join(fnames)
         fnamesLine += '\n'
         openFile.write(fnamesLine)
+
+    def _writeFileHDF_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
+        if not h5py.nimbleAccessible():
+            msg = 'h5py must be installed to write to an hdf file'
+            raise PackageException(msg)
+        if includePointNames:
+            pnames = self.points.getNames()
+            userblockSize = 512
+        else:
+            pnames = [str(i) for i in range(len(self.points))]
+            userblockSize = 0
+        with h5py.File(outPath, 'w', userblock_size=userblockSize) as hdf:
+            for name, point in zip(pnames, self.points):
+                point._convertUnusableTypes(float, (int, float, bool), False)
+                asArray = point.copy('numpy array')
+                _ = hdf.create_dataset(name, data=asArray)
+                hdf.flush()
+        if includePointNames:
+            with open(outPath, 'rb+') as f:
+                f.write(b'includePointNames ')
+                f.flush()
 
     def save(self, outputPath):
         """
