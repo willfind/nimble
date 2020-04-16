@@ -1505,7 +1505,6 @@ class Base(object):
         handleLogging(useLog, 'data', "feature", ret)
         return ret
 
-    @limitedTo2D
     def summaryReport(self, displayDigits=2, useLog=None):
         """
         Report containing information regarding the data in this object.

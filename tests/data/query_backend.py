@@ -2903,12 +2903,24 @@ class QueryBackend(DataTestObject):
                                featureNames=fnames)
 
         ret = obj.summaryReport()
-        line1 = "proportionZero   proportionMissing   Values   Points   Features"
-        line2 = "     0.22               0.11           9        3         3    "
+        line1 = "Values   Points   Features   proportionZero   proportionMissing"
+        line2 = "  9        3         3            0.22               0.11      "
         expLines = [line1, line2]
 
         for retLine, expLine in zip(ret.split('\n'), expLines):
             assert retLine == expLine
+
+        obj._shape = [3, 1, 1, 3]
+        obj.features.setNames(None)
+
+        ret = obj.summaryReport()
+        line1 = "Values     Dimensions    proportionZero   proportionMissing"
+        line2 = "  9      3 x 1 x 1 x 3        0.22               0.11      "
+        expLines = [line1, line2]
+
+        for retLine, expLine in zip(ret.split('\n'), expLines):
+            assert retLine == expLine
+
 
 ###########
 # Helpers #
