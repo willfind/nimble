@@ -393,23 +393,25 @@ def testPrepTypeFunctionsUseLog():
         {'replaceWith': 1, 'pointStart': 2, 'pointEnd': 4, 'featureStart': 0,
          'featureEnd': 0})
 
-    # flattenToOnePoint
+    # flatten (point order)
     dataObj = nimble.createData("DataFrame", data, useLog=False)
-    dataObj.flattenToOnePoint()
+    dataObj.flatten()
 
-    checkLogContents('flattenToOnePoint', "DataFrame")
-    # unflattenFromOnePoint; using same dataObj from flattenToOnePoint
-    dataObj.unflattenFromOnePoint(18)
-    checkLogContents('unflattenFromOnePoint', "DataFrame")
+    checkLogContents('flatten', "DataFrame")
 
-    # flattenToOneFeature
+    # unflatten; using flattened dataObj from above
+    dataObj.unflatten(18)
+    checkLogContents('unflatten', "DataFrame")
+
+    # flatten (feature order)
     dataObj = nimble.createData("Sparse", data, useLog=False)
-    dataObj.flattenToOneFeature()
-    checkLogContents('flattenToOneFeature', "Sparse")
+    dataObj.flatten(order='feature')
+    checkLogContents('flatten', "Sparse", {'order': 'feature'})
 
-    # unflattenFromOnePoint; using same dataObj from flattenToOneFeature
-    dataObj.unflattenFromOneFeature(3)
-    checkLogContents('unflattenFromOneFeature', "Sparse")
+    # unflatten; using flattened dataObj from above
+    dataObj.unflatten(3, order='feature')
+    checkLogContents('unflatten', "Sparse", {'pointDataDimensions': (3,18),
+                                             'order': 'feature'})
 
     # merge
     dPtNames = ['p' + str(i) for i in range(18)]

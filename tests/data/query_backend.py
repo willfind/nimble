@@ -2910,8 +2910,7 @@ class QueryBackend(DataTestObject):
         for retLine, expLine in zip(ret.split('\n'), expLines):
             assert retLine == expLine
 
-        obj._shape = [3, 1, 1, 3]
-        obj.features.setNames(None)
+        obj = self.constructor([[[[0, 2, 'a']]], [[[2, None, 'b']]], [[[0, 3, 'c']]]])
 
         ret = obj.summaryReport()
         line1 = "Values     Dimensions    proportionZero   proportionMissing"

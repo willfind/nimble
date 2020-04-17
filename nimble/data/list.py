@@ -328,43 +328,33 @@ class List(Base):
                 fill = replaceWith.data[p - pointStart]
                 self.data[p][featureStart:featureEnd + 1] = fill
 
-    def _flattenToOnePoint_implementation(self):
-        onto = self.data[0]
-        for _ in range(1, len(self.points)):
-            onto += self.data[1]
-            del self.data[1]
 
-        self._numFeatures = len(onto)
+    def _flatten_implementation(self, order):
+        if order == 'point':
+            onto = self.data[0]
+            for _ in range(1, len(self.points)):
+                onto += self.data[1]
+                del self.data[1]
+        else:
+            result = [[]]
+            for i in range(len(self.features)):
+                result[0].extend(p[i] for p in self.data)
+            self.data = result
+        self._numFeatures = self.shape[0] * self.shape[1]
 
-    def _flattenToOneFeature_implementation(self):
+    def _unflatten_implementation(self, reshape, order):
         result = []
-        for i in range(len(self.features)):
-            for p in self.data:
-                result.append([p[i]])
-
-        self.data = result
-        self._numFeatures = 1
-
-    def _unflattenFromOnePoint_implementation(self, numPoints):
-        result = []
-        numFeatures = len(self.features) // numPoints
-        for i in range(numPoints):
-            temp = self.data[0][(i*numFeatures):((i+1)*numFeatures)]
-            result.append(temp)
-
-        self.data = result
-        self._numFeatures = numFeatures
-
-    def _unflattenFromOneFeature_implementation(self, numFeatures):
-        result = []
-        numPoints = len(self.points) // numFeatures
-        # reconstruct the shape we want, point by point. We access the
-        # singleton values from the current data in an out of order iteration
-        for i in range(numPoints):
-            temp = []
-            for j in range(i, len(self.points), numPoints):
-                temp += self.data[j]
-            result.append(temp)
+        numPoints = reshape[0]
+        numFeatures = numpy.prod(reshape[1:])
+        data = self.copy('pythonlist', outputAs1D=True)
+        if order == 'point':
+            for i in range(numPoints):
+                temp = data[(i*numFeatures):((i+1)*numFeatures)]
+                result.append(temp)
+        else:
+            for i in range(numPoints):
+                temp = data[i::numPoints]
+                result.append(temp)
 
         self.data = result
         self._numFeatures = numFeatures

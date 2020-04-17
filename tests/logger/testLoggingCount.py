@@ -97,11 +97,11 @@ match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 #      copy, featureReport, summaryReport, getTypeString, groupByFeature,
 #      hashCode, nameIsDefault, show, validate
 base_logged = [
-    'calculateOnElements', 'featureReport', 'flattenToOneFeature',
-    'flattenToOnePoint', 'groupByFeature', 'matchingElements', 'merge',
-    'replaceFeatureWithBinaryFeatures', 'replaceRectangle', 'summaryReport',
-    'trainAndTestSets', 'transformElements', 'transformFeatureToIntegers',
-    'transpose', 'unflattenFromOneFeature', 'unflattenFromOnePoint',
+    'calculateOnElements', 'featureReport', 'flatten', 'groupByFeature',
+    'matchingElements', 'merge', 'replaceFeatureWithBinaryFeatures',
+    'replaceRectangle', 'summaryReport', 'trainAndTestSets',
+    'transformElements', 'transformFeatureToIntegers', 'transpose',
+    'unflatten',
     ]
 base_notLogged = [
     'containsZero', 'copy', 'countElements', 'countUniqueElements',

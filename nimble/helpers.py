@@ -458,13 +458,13 @@ def convertData(returnType, rawData, pointNames, featureNames,
     return ret
 
 def convertToArray(rawData, convertToType, pointNames, featureNames):
-    if pd and isinstance(rawData, pd.DataFrame):
+    if pd.nimbleAccessible() and isinstance(rawData, pd.DataFrame):
         return rawData.values
-    if pd and isinstance(rawData, pd.Series):
+    if pd.nimbleAccessible() and isinstance(rawData, pd.Series):
         if rawData.empty:
             return numpy.empty((0, rawData.shape[0]))
         return numpy2DArray(rawData.values)
-    if scipy and scipy.sparse.isspmatrix(rawData):
+    if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(rawData):
         return sparseMatrixToArray(rawData)
     if isinstance(rawData, numpy.ndarray):
         if not is2DArray(rawData):
@@ -644,7 +644,7 @@ def isHighDimensionData(rawData):
     """
     Identify data with more than two-dimensions.
     """
-    if scipy and scipy.sparse.isspmatrix(rawData):
+    if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(rawData):
         if not rawData.data.size:
             return False
         return not isAllowedSingleElement(rawData.data[0])
@@ -799,7 +799,7 @@ def initDataObject(
         # convert these types as indexing may cause dimensionality confusion
         if isinstance(rawData, numpy.matrix):
             rawData = numpy.array(rawData)
-        if scipy and scipy.sparse.isspmatrix(rawData):
+        if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(rawData):
             rawData = rawData.tocoo()
         if isHighDimensionData(rawData):
             # additional name validation / processing before extractNames

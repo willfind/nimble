@@ -86,7 +86,7 @@ class HighDimensionSafe(DataTestObject):
         stdoutBackup = sys.stdout
         for tensor in tensors:
             toTest = self.constructor(tensor, name='test')
-            expData = toTest.copy().data # get flattened data
+            expData = toTest.copy().data # get 2D data
             exp = self.constructor(expData, name='test')
             assert len(exp._shape) == 2
             assert toTest.toString() == exp.toString()
@@ -263,26 +263,34 @@ class HighDimensionSafe(DataTestObject):
                     flattenTensor(pt, store)
 
             return store
-        raise NotImplementedError
-        # for tensor in tensors:
-        #     flatPt = flattenTensor(tensor)
-        #     orig = self.constructor(tensor)
-        #     toTestPt = orig.copy()
-        #     expPt = self.constructor(flatPt, pointNames=['Flattened'])
-        #     # check flattenTensor worked as expected
-        #     assert expPt._shape[0] == 1 and len(expPt._shape) == 2
-        #
-        #     toTestPt.flattenToOnePoint()
-        #     assert toTestPt == expPt
-        #
-        #     toTestPt.unflattenFromOnePoint(orig._shape)
-        #     assert toTestPt == orig
-        #
-        #     toTestFt = orig.copy()
-        #     try:
-        #         toTestFt.flattenToOneFeature()
-        #     except ImproperObjectAction:
-        #         pass
+
+        for tensor in tensors:
+            flatPt = flattenTensor(tensor)
+            orig = self.constructor(tensor)
+            expPt = self.constructor(flatPt, pointNames=['Flattened'])
+            # sanity check flattenTensor worked as expected
+            assert expPt._shape[0] == 1 and len(expPt._shape) == 2
+
+            toTestPt = orig.copy()
+            toTestPt.flatten()
+            assert toTestPt == expPt
+
+            toTestPt.unflatten(orig._shape)
+            assert toTestPt == orig
+
+            toTestFt = orig.copy()
+            try:
+                toTestFt.flatten(order='feature')
+                assert False
+            except ImproperObjectAction:
+                pass
+
+            flat = expPt.copy()
+            try:
+                flat.unflatten(orig._shape, order='feature')
+                assert False
+            except ImproperObjectAction:
+                pass
 
     def test_highDimension_points_iter(self):
         for idx, tensor in enumerate(tensors):
@@ -607,7 +615,8 @@ class HighDimensionModifying(DataTestObject):
             '__deepcopy__', 'nameIsDefault', 'isApproximatelyEqual',
             'trainAndTestSets', 'summaryReport', 'isIdentical', 'writeFile',
             'getTypeString', 'pointView', 'view', 'validate', 'containsZero',
-            'save', 'toString', 'show', 'referenceDataFrom', 'copy',))
+            'save', 'toString', 'show', 'referenceDataFrom', 'copy',
+            'flatten', 'unflatten',))
         baseDisallowed = baseUser.difference(baseAllowed)
 
         for method in baseDisallowed:

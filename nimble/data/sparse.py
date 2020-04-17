@@ -500,69 +500,40 @@ class Sparse(Base):
 
         self._sorted = None
 
-    def _flattenToOnePoint_implementation(self):
-        self._sortInternal('point')
-        pLen = len(self.features)
-        numElem = len(self.points) * len(self.features)
-        for i in range(len(self.data.data)):
-            if self.data.row[i] > 0:
-                self.data.col[i] += (self.data.row[i] * pLen)
-                self.data.row[i] = 0
+    def _flatten_implementation(self, order):
+        if self._sorted != order:
+            self._sortInternal(order)
+
+        row = numpy.zeros_like(self.data.row)
+        if order == 'point':
+            col = self.data.col + (self.data.row * len(self.features))
+        else:
+            col = self.data.row + (self.data.col * len(self.points))
 
         data = self.data.data
-        row = self.data.row
-        col = self.data.col
+        numElem = len(self.points) * len(self.features)
         self.data = scipy.sparse.coo_matrix((data, (row, col)), (1, numElem))
+        self._sorted = 'point'
 
-    def _flattenToOneFeature_implementation(self):
-        self._sortInternal('feature')
-        fLen = len(self.points)
-        numElem = len(self.points) * len(self.features)
-        for i in range(len(self.data.data)):
-            if self.data.col[i] > 0:
-                self.data.row[i] += (self.data.col[i] * fLen)
-                self.data.col[i] = 0
-
-        data = self.data.data
-        row = self.data.row
-        col = self.data.col
-        self.data = scipy.sparse.coo_matrix((data, (row, col)), (numElem, 1))
-
-    def _unflattenFromOnePoint_implementation(self, numPoints):
-        # only one feature, so both sorts are the same order
-        if self._sorted is None:
-            self._sortInternal('point')
-
-        numFeatures = len(self.features) // numPoints
-        newShape = (numPoints, numFeatures)
-
-        for i in range(len(self.data.data)):
-            # must change the row entry before modifying the col entry
-            self.data.row[i] = self.data.col[i] / numFeatures
-            self.data.col[i] = self.data.col[i] % numFeatures
+    def _unflatten_implementation(self, reshape, order):
+        if self._sorted != order:
+            self._sortInternal(order)
+        if all(self.data.row == 0): # point vector
+            values = self.data.col
+        else: # feature vector
+            values = self.data.row
+        if order == 'point':
+            divisor = numpy.prod(reshape[1:])
+            row = values // divisor
+            col = values % divisor
+        else:
+            divisor = reshape[0]
+            col = values // divisor
+            row = values % divisor
 
         data = self.data.data
-        row = self.data.row
-        col = self.data.col
-        self.data = scipy.sparse.coo_matrix((data, (row, col)), newShape)
-
-    def _unflattenFromOneFeature_implementation(self, numFeatures):
-        # only one feature, so both sorts are the same order
-        if self._sorted is None:
-            self._sortInternal('feature')
-
-        numPoints = len(self.points) // numFeatures
-        newShape = (numPoints, numFeatures)
-
-        for i in range(len(self.data.data)):
-            # must change the col entry before modifying the row entry
-            self.data.col[i] = self.data.row[i] / numPoints
-            self.data.row[i] = self.data.row[i] % numPoints
-
-        data = self.data.data
-        row = self.data.row
-        col = self.data.col
-        self.data = scipy.sparse.coo_matrix((data, (row, col)), newShape)
+        self.data = scipy.sparse.coo_matrix((data, (row, col)), reshape)
+        self._sorted = None
 
     def _mergeIntoNewData(self, copyIndex, toAddData, toAddRow, toAddCol):
         #instead of always copying, use reshape or resize to sometimes cut

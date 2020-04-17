@@ -229,21 +229,14 @@ class Matrix(Base):
         featureEnd += 1
         self.data[pointStart:pointEnd, featureStart:featureEnd] = values
 
-    def _flattenToOnePoint_implementation(self):
+    def _flatten_implementation(self, order):
         numElements = len(self.points) * len(self.features)
-        self.data = self.data.reshape((1, numElements), order='C')
+        order = 'C' if order == 'point' else 'F'
+        self.data = self.data.reshape((1, numElements), order=order)
 
-    def _flattenToOneFeature_implementation(self):
-        numElements = len(self.points) * len(self.features)
-        self.data = self.data.reshape((numElements, 1), order='F')
-
-    def _unflattenFromOnePoint_implementation(self, numPoints):
-        numFeatures = len(self.features) // numPoints
-        self.data = self.data.reshape((numPoints, numFeatures), order='C')
-
-    def _unflattenFromOneFeature_implementation(self, numFeatures):
-        numPoints = len(self.points) // numFeatures
-        self.data = self.data.reshape((numPoints, numFeatures), order='F')
+    def _unflatten_implementation(self, reshape, order):
+        order = 'C' if order == 'point' else 'F'
+        self.data = self.data.reshape(reshape, order=order)
 
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):

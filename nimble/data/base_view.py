@@ -201,20 +201,12 @@ class BaseView(Base):
         readOnlyException("replaceRectangle")
 
     @exceptionDocstring
-    def flattenToOnePoint(self, useLog=None):
-        readOnlyException("flattenToOnePoint")
+    def flatten(self, order='point', useLog=None):
+        readOnlyException("flatten")
 
     @exceptionDocstring
-    def flattenToOneFeature(self, useLog=None):
-        readOnlyException("flattenToOneFeature")
-
-    @exceptionDocstring
-    def unflattenFromOnePoint(self, numPoints, useLog=None):
-        readOnlyException("unflattenFromOnePoint")
-
-    @exceptionDocstring
-    def unflattenFromOneFeature(self, numFeatures, useLog=None):
-        readOnlyException("unflattenFromOneFeature")
+    def unflatten(self, dataDimensions, order='point', useLog=None):
+        readOnlyException("unflatten")
 
     @exceptionDocstring
     def merge(self, other, point='strict', feature='union', onFeature=None,
