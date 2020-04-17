@@ -14,6 +14,7 @@ import os.path
 from multiprocessing import Process
 from abc import abstractmethod
 from functools import wraps
+from contextlib import contextmanager
 
 import numpy
 
@@ -384,7 +385,8 @@ class Base(object):
         else:
             return True
 
-    def _treatAs2D(self, method):
+    @contextmanager
+    def _treatAs2D(self):
         """
         This can be applied when dimensionality does not affect an
         operation, but an method call within the operation is blocked
@@ -392,17 +394,14 @@ class Base(object):
         in the definition of elements.
         """
         if len(self._shape) > 2:
-            @wraps(method)
-            def wrapped(*args, **kwargs):
-                savedShape = self._shape
-                try:
-                    self._shape = [self._pointCount, self._featureCount]
-                    return method(*args, **kwargs)
-                finally:
-                    self._shape = savedShape
-            return wrapped
-
-        return method
+            savedShape = self._shape
+            self._shape = [self._pointCount, self._featureCount]
+            try:
+                yield self
+            finally:
+                self._shape = savedShape
+        else:
+            yield self
 
     ########################
     # Low Level Operations #
@@ -1304,12 +1303,9 @@ class Base(object):
             return False
         #now check if the hashes of each matrix are the same
 
-        if len(self._shape) > 2:
-            selfHashFunc = self._treatAs2D(self.hashCode)
-            otherHashFunc = other._treatAs2D(other.hashCode)
-            return selfHashFunc() == otherHashFunc()
-        else:
-            return self.hashCode() == other.hashCode()
+        with self._treatAs2D():
+            with other._treatAs2D():
+                return self.hashCode() == other.hashCode()
 
     def trainAndTestSets(self, testFraction, labels=None, randomOrder=True,
                          useLog=None):
@@ -2076,9 +2072,8 @@ class Base(object):
         # trivially False.
         if self._pointCount == 0 or self._featureCount == 0:
             return False
-        if len(self._shape) > 2:
-            return self._treatAs2D(self._containsZero_implementation)()
-        return self._containsZero_implementation()
+        with self._treatAs2D():
+            return self._containsZero_implementation()
 
     def __eq__(self, other):
         return self.isIdentical(other)
@@ -2161,11 +2156,8 @@ class Base(object):
 
         # Set up data values to fit in the available space including
         # featureNames if includeFNames=True
-        if len(self._shape) > 2:
-            arrangeFunc = self._treatAs2D(self._arrangeDataWithLimits)
-        else:
-            arrangeFunc = self._arrangeDataWithLimits
-        dataTable, colWidths, fnames = arrangeFunc(
+        with self._treatAs2D():
+            dataTable, colWidths, fnames = self._arrangeDataWithLimits(
             maxDataWidth, maxDataRows, includeFNames, sigDigits,
             maxColumnWidth, colSep, colHold, rowHold, nameHolder)
 
@@ -4287,11 +4279,8 @@ class Base(object):
         """
         Perform element wise absolute value on this object
         """
-        if len(self._shape) > 2:
-            calcFunc = self._treatAs2D(self.calculateOnElements)
-        else:
-            calcFunc = self.calculateOnElements
-        ret = calcFunc(abs, useLog=False)
+        with self._treatAs2D():
+            ret = self.calculateOnElements(abs, useLog=False)
         ret._shape = self._shape.copy()
         if self._pointNamesCreated():
             ret.points.setNames(self.points.getNames(), useLog=False)
@@ -4543,9 +4532,11 @@ class Base(object):
 
 
     def _defaultBinaryOperations_implementation(self, opName, other):
-        selfData = self._treatAs2D(self.copy)('numpyarray')
+        with self._treatAs2D():
+            selfData = self.copy('numpyarray')
         if isinstance(other, Base):
-            otherData = other._treatAs2D(other.copy)('numpyarray')
+            with other._treatAs2D():
+                otherData = other.copy('numpyarray')
         else:
             otherData = other
         data = getattr(selfData, opName)(otherData)
