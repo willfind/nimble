@@ -340,6 +340,8 @@ def checkLogContents(funcName, objectID, arguments=None):
             # double quotations may wrap the second arg if it contains quotations
             expArgs2 = """'{0}': "{1}" """.format(argName, argVal).strip()
             assert expArgs1 in lastLog or expArgs2 in lastLog
+    else:
+        assert "'arguments': {}" in lastLog
 
 
 @emptyLogSafetyWrapper
@@ -400,8 +402,8 @@ def testPrepTypeFunctionsUseLog():
     checkLogContents('flatten', "DataFrame")
 
     # unflatten; using flattened dataObj from above
-    dataObj.unflatten(18)
-    checkLogContents('unflatten', "DataFrame")
+    dataObj.unflatten((18, 3))
+    checkLogContents('unflatten', "DataFrame", {'dataDimensions': (18,3)})
 
     # flatten (feature order)
     dataObj = nimble.createData("Sparse", data, useLog=False)
@@ -409,8 +411,8 @@ def testPrepTypeFunctionsUseLog():
     checkLogContents('flatten', "Sparse", {'order': 'feature'})
 
     # unflatten; using flattened dataObj from above
-    dataObj.unflatten(3, order='feature')
-    checkLogContents('unflatten', "Sparse", {'pointDataDimensions': (3,18),
+    dataObj.unflatten((18, 3), order='feature')
+    checkLogContents('unflatten', "Sparse", {'dataDimensions': (18,3),
                                              'order': 'feature'})
 
     # merge

@@ -8903,26 +8903,22 @@ class StructureModifying(StructureShared):
 
 
     # exception: numPoints / numFeatures does not divide length of mega P/F
-    def test_unflatten_pointOrder_doesNotDivide(self):
-        self.back_unflatten_doesNotDivide('point')
+    def test_unflatten_pointOrder_invalidDimensions(self):
+        self.back_unflatten_invalidDimensions('point')
 
-    def test_unflatten_featureOrder_doesNotDivide(self):
-        self.back_unflatten_doesNotDivide('feature')
+    def test_unflatten_featureOrder_invalidDimensions(self):
+        self.back_unflatten_invalidDimensions('feature')
 
-    def back_unflatten_doesNotDivide(self, order):
+    def back_unflatten_invalidDimensions(self, order):
         checkMsg = False
 
-        undivisablePt = self.constructor(numpyRandom.rand(7, 1))
-        exceptionHelper(undivisablePt, 'unflatten', [2, order], InvalidArgumentValue, checkMsg)
+        testPt = self.constructor(numpyRandom.rand(8, 1))
+        exceptionHelper(testPt, 'unflatten', [(5, 2), order],
+                        InvalidArgumentValue, checkMsg)
 
-        undivisableFt = self.constructor(numpyRandom.rand(1, 7))
-        exceptionHelper(undivisableFt, 'unflatten', [2, order], InvalidArgumentValue, checkMsg)
-
-        divisableFt = self.constructor(numpyRandom.rand(8, 1))
-        exceptionHelper(divisableFt, 'unflatten', [5, order], InvalidArgumentValue, checkMsg)
-
-        divisableFt = self.constructor(numpyRandom.rand(1, 8))
-        exceptionHelper(divisableFt, 'unflatten', [5, order], InvalidArgumentValue, checkMsg)
+        testFt = self.constructor(numpyRandom.rand(1, 8))
+        exceptionHelper(testFt, 'unflatten', [(5, 2), order],
+                        InvalidArgumentValue, checkMsg)
 
 
     def test_unflatten_pointOrder_namesUnformatted(self):
@@ -8935,13 +8931,13 @@ class StructureModifying(StructureShared):
         checkMsg = False
         names = ['a', 'b', 'c', 'd']
         testPt = self.constructor([1, 2, 3, 4], featureNames=names)
-        testPt.unflatten(2, order)
+        testPt.unflatten((2, 2), order)
         assert testPt.shape == (2, 2)
         assert not testPt.points._namesCreated()
         assert not testPt.features._namesCreated()
 
         testFt = self.constructor([[1], [2], [3], [4]], pointNames=names)
-        testFt.unflatten(2, order)
+        testFt.unflatten((2, 2), order)
         assert testFt.shape == (2, 2)
         assert not testFt.points._namesCreated()
         assert not testFt.features._namesCreated()
@@ -8957,14 +8953,14 @@ class StructureModifying(StructureShared):
         names = ["a | 1", "b | 1", "a | 2", "b | 2"]
         testPt = self.constructor([1, 2, 3, 4], featureNames=names)
         testPt.features.setName(1, None)
-        testPt.unflatten(2, order)
+        testPt.unflatten((2, 2), order)
         assert testPt.shape == (2, 2)
         assert not testPt.points._namesCreated()
         assert not testPt.features._namesCreated()
 
         testFt = self.constructor([[1], [2], [3], [4]], pointNames=names)
         testFt.points.setName(1, None)
-        testFt.unflatten(2, order)
+        testFt.unflatten((2, 2), order)
         assert testFt.shape == (2, 2)
         assert not testFt.points._namesCreated()
         assert not testFt.features._namesCreated()
@@ -8994,8 +8990,8 @@ class StructureModifying(StructureShared):
             expData = numpy.array([["el0", "el2", "el4"], ["el1", "el3", "el5"]])
             exp = self.constructor(expData, pointNames=namesP, featureNames=namesF)
 
-        toTestPt.unflatten(2, order)
-        toTestFt.unflatten(2, order)
+        toTestPt.unflatten((2, 3), order)
+        toTestFt.unflatten((2, 3), order)
 
         assert toTestPt.shape == toTestFt.shape == (2, 3)
         assert toTestPt == toTestFt == exp
@@ -9019,7 +9015,7 @@ class StructureModifying(StructureShared):
             toTest.transpose(useLog=False)
             exp = self.constructor(expData.T)
 
-        toTest.unflatten(2, order)
+        toTest.unflatten((2, 2), order)
         assert toTest == exp
 
         # check that the name conforms to the standards of how nimble objects assign
@@ -9050,12 +9046,12 @@ class StructureModifying(StructureShared):
         expObj = testObj.copy()
 
         testObj.flatten(order=order)
-        testObj.unflatten(30, order=order)
+        testObj.unflatten((30, 50), order=order)
         assert testObj == expObj
 
         # second round to see if status of hidden internal variable are still viable
         testObj.flatten(order=order)
-        testObj.unflatten(30, order=order)
+        testObj.unflatten((30, 50), order=order)
         assert testObj == expObj
 
     ###########

@@ -922,8 +922,8 @@ class Base(object):
         Parameters
         ----------
         toMatch : function
-            * function - in the form of toMatch(elementValue) which
-              returns True, False, 0 or 1.
+            In the form of toMatch(elementValue) which returns True,
+            False, 0 or 1.
         points : point, list of points
             The subset of points to limit the matching to. If None,
             the matching will apply to all points.
@@ -3153,23 +3153,23 @@ class Base(object):
         """
         Modify this object so that its values are in a single point.
 
-        TODO
-        Each point in the result maps to exactly one value from the
-        original object. The order of values respects the feature order
-        from the original object, if there were n points in the
-        original, the first n values in the result will exactly match
-        the first feature, the nth to (2n-1)th values will exactly
-        match the original second feature, etc. The point names will be
-        transformed such that the value at the intersection of the
-        "pn_i" named point and "fn_j" named feature from the original
-        object will have a point name of "pn_i | fn_j". The single
-        feature will have a name of "Flattened". This is an inplace
-        operation.
+        Each value in the result maps to exactly one value from the
+        original object. For data in two-dimensions, ``order`` may be
+        'point' or 'feature'. If order='point', the first n values in
+        the result will match the original first point, the nth to
+        (2n-1)th values will match the original second point and so on.
+        If order='feature', the first n values in the result will match
+        the original first feature, the nth to (2n-1)th values will
+        match the original second feature and so on. For higher
+        dimension data, 'point' is the only accepted ``order``. If
+        pointNames and/or featureNames are present. The feature names of
+        the flattened result will be formatted as "ptName | ftName".
+        This is an inplace operation.
 
         Parameters
         ----------
         order : str
-            The order to iterate through the object. TODO
+            Either 'point' or 'feature'.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -3285,24 +3285,29 @@ class Base(object):
 
 
     @limitedTo2D
-    def unflatten(self, pointDataDimensions, order='point', useLog=None):
+    def unflatten(self, dataDimensions, order='point', useLog=None):
         """
-        Adjust a flattened point vector to contain multiple points.
+        Adjust a single point or feature to contain multiple points.
 
-        TODO
-        This is an inverse of the method ``flatten``: if an
-        object foo with n points calls the flatten method, then this
-        method with n as the argument, the result should be identical to
-        the original foo. It is not limited to objects that have
-        previously had ``flatten`` called on them; any object
-        whose structure and names are consistent with a previous call to
-        ``flatten`` may call this method. This includes
-        objects with all default names. This is an inplace operation.
+        The flat object is reshaped to match the dimensions of
+        ``dataDimensions``. ``order`` determines whether point or
+        feature vectors are created from the data. Provided
+        ``dataDimensions`` of (m, n), the first n values become the
+        first point when ``order='point'`` or the first m values become
+        the first feature when ``order='feature'``. For higher dimension
+        data, 'point' is the only accepted ``order``. If pointNames or
+        featureNames match the format established in ``flatten``,
+        "ptName | ftName", and they align eith the ``dataDimensions``,
+        point and feature names will be unflattened as well, otherwise
+        the result will not have pointNames or featureNames.
+        This is an inplace operation.
 
         Parameters
         ----------
-        pointDataDimensions : int, tuple, list
-            TODO
+        dataDimensions : tuple, list
+            The dimensions of the unflattend object.
+        order : str
+            Either 'point' or 'feature'.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -3318,11 +3323,11 @@ class Base(object):
         Examples
         --------
 
-        Unflatten a point with all default names.
+        Unflatten a point in point order with default names.
 
         >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
         >>> data = nimble.createData('Matrix', raw)
-        >>> data.unflatten(3)
+        >>> data.unflatten((3, 3))
         >>> data
         Matrix(
             [[1 2 3]
@@ -3330,31 +3335,23 @@ class Base(object):
              [7 8 9]]
             )
 
-        Unflatten a point with feature names using ``flatten``
-        convention ('ptName | ftName').
+        Unflatten a point in feature order with default names.
 
         >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
-        >>> ptNames = {'Flattened':0}
-        >>> ftNames = {'1 | a':0, '1 | b':1, '1 | c':2,
-        ...            '4 | a':3, '4 | b':4, '4 | c':5,
-        ...            '7 | a':6, '7 | b':7, '7 | c':8}
-        >>> data = nimble.createData('Matrix', raw, pointNames=ptNames,
-        ...                          featureNames=ftNames)
-        >>> data.unflatten(3)
+        >>> data = nimble.createData('Matrix', raw)
+        >>> data.unflatten((3, 3), order='feature')
         >>> data
         Matrix(
-            [[1 2 3]
-             [4 5 6]
-             [7 8 9]]
-            pointNames={'1':0, '4':1, '7':2}
-            featureNames={'a':0, 'b':1, 'c':2}
+            [[1 4 7]
+             [2 5 8]
+             [3 6 9]]
             )
 
-        Unflatten a feature with default names.
+        Unflatten a feature in feature order with default names.
 
         >>> raw = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
         >>> data = nimble.createData('Matrix', raw)
-        >>> data.unflatten(3, order='feature')
+        >>> data.unflatten((3, 3), order='feature')
         >>> data
         Matrix(
             [[1 2 3]
@@ -3362,17 +3359,26 @@ class Base(object):
              [7 8 9]]
             )
 
-        Unflatten a feature with with names using ``flatten`` convention
-        ('ptName | ftName').
+        Unflatten a feature in point order with default names.
 
         >>> raw = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
-        >>> ptNames = {'1 | a':0, '4 | a':1, '7 | a':2,
-        ...            '1 | b':3, '4 | b':4, '7 | b':5,
-        ...            '1 | c':6, '4 | c':7, '7 | c':8}
-        >>> ftNames = {'Flattened':0}
-        >>> data = nimble.createData('Matrix', raw, pointNames=ptNames,
-        ...                          featureNames=ftNames)
-        >>> data.unflatten(3, order='feature')
+        >>> data = nimble.createData('Matrix', raw)
+        >>> data.unflatten((3, 3), order='point')
+        >>> data
+        Matrix(
+            [[1 4 7]
+             [2 5 8]
+             [3 6 9]]
+            )
+
+        Unflatten a point with names that can be unflattened.
+
+        >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
+        >>> ftNames = ['1 | a', '1 | b', '1 | c',
+        ...            '4 | a', '4 | b', '4 | c',
+        ...            '7 | a', '7 | b', '7 | c']
+        >>> data = nimble.createData('Matrix', raw, featureNames=ftNames)
+        >>> data.unflatten((3, 3))
         >>> data
         Matrix(
             [[1 2 3]
@@ -3393,32 +3399,29 @@ class Base(object):
         if self._pointCount != 1 and self._featureCount != 1:
             msg = "Can only unflatten when there is only one point or feature."
             raise ImproperObjectAction(msg)
-        if isinstance(pointDataDimensions, (int, numpy.integer)):
-            if len(self) % pointDataDimensions != 0:
-                msg = "When pointDataDimensions is an integer, it must be "
-                msg += "evenly divisible by the number of elements in the "
-                msg += "flattened object"
-                raise InvalidArgumentValue(msg)
-            pointDataDimensions = (pointDataDimensions,
-                                   len(self) // pointDataDimensions)
-            shape2D = pointDataDimensions
-        elif self.shape[0] * self.shape[1] != numpy.prod(pointDataDimensions):
+        if not isinstance(dataDimensions, (list, tuple)):
+            raise InvalidArgumentType('dataDimensions must be a list or tuple')
+        if len(dataDimensions) < 2:
+            msg = "dataDimensions must contain a minimum of 2 values"
+            raise InvalidArgumentValue(msg)
+        if self.shape[0] * self.shape[1] != numpy.prod(dataDimensions):
+            print(self.shape, numpy.prod(dataDimensions), dataDimensions, type(numpy.prod(dataDimensions)))
             msg = "The product of the dimensions must be equal to the number "
             msg += "of values in this object"
             raise InvalidArgumentValue(msg)
-        elif len(pointDataDimensions) > 2:
+
+        if len(dataDimensions) > 2:
             if order == 'feature':
-                msg = "order='feature' is not allowed when unflattening to more "
-                msg += 'than two dimensions'
+                msg = "order='feature' is not allowed when unflattening to "
+                msg += 'more than two dimensions'
                 raise ImproperObjectAction(msg)
-            numFeatures = numpy.prod(pointDataDimensions[1:])
-            shape2D = (pointDataDimensions[0], numFeatures)
+            shape2D = (dataDimensions[0], numpy.prod(dataDimensions[1:]))
         else:
-            shape2D = pointDataDimensions
+            shape2D = dataDimensions
 
         self._unflatten_implementation(shape2D, order)
 
-        if len(pointDataDimensions) == 2:
+        if len(dataDimensions) == 2:
             pNames, fNames = self._unflattenNames()
             if pNames and len(pNames) != shape2D[0]:
                 pNames = None
@@ -3427,12 +3430,12 @@ class Base(object):
         else:
             pNames, fNames = (None, None)
 
-        self._shape = list(pointDataDimensions)
+        self._shape = list(dataDimensions)
         self.points.setNames(pNames, useLog=False)
         self.features.setNames(fNames, useLog=False)
 
         handleLogging(useLog, 'prep', "unflatten", self.getTypeString(),
-                      Base.unflatten, pointDataDimensions, order)
+                      Base.unflatten, dataDimensions, order)
 
 
     @limitedTo2D
@@ -5260,7 +5263,7 @@ class Base(object):
         pass
 
     @abstractmethod
-    def _unflatten_implementation(self, pointDataDimensions, order):
+    def _unflatten_implementation(self, dataDimensions, order):
         pass
 
     @abstractmethod

@@ -962,8 +962,8 @@ def createData(
         msg += "loaded"
         raise InvalidArgumentType(msg)
 
-    handleLogging(useLog, 'load', returnType, ret._pointCount,
-                  ret._featureCount, name, path)
+    handleLogging(useLog, 'load', returnType, len(ret.points),
+                  len(ret.features), name, path)
     return ret
 
 
@@ -1970,8 +1970,8 @@ def loadData(inputPath, useLog=None):
         msg = 'File does not contain a valid nimble data object.'
         raise InvalidArgumentType(msg)
 
-    handleLogging(useLog, 'load', ret.getTypeString(), ret._pointCount,
-                  ret._featureCount, ret.name, inputPath)
+    handleLogging(useLog, 'load', ret.getTypeString(), len(ret.points),
+                  len(ret.features), ret.name, inputPath)
     return ret
 
 

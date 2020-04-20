@@ -96,7 +96,7 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject.unflatten(3)
+            testObject.unflatten((3, 3))
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)
