@@ -288,46 +288,6 @@ class SparseAxis(Axis):
         return nimble.data.Sparse(ret, pointNames=pointNames,
                                   featureNames=featureNames, reuseData=True)
 
-
-        # # iterate through self._axis data
-        # for targetID, view in enumerate(self):
-        #     # coo_matrix data for return object
-        #     if targetID in targetList:
-        #         for otherID, value in enumerate(view.data.data):
-        #             targetData.append(value)
-        #             if self._isPoint:
-        #                 targetRows.append(targetList.index(targetID))
-        #                 targetCols.append(view.data.col[otherID])
-        #             else:
-        #                 targetRows.append(view.data.row[otherID])
-        #                 targetCols.append(targetList.index(targetID))
-        #     # coo_matrix data for modified self._base
-        #     elif structure != 'copy':
-        #         for otherID, value in enumerate(view.data.data):
-        #             keepData.append(value)
-        #             if self._isPoint:
-        #                 keepRows.append(keepIndex)
-        #                 keepCols.append(view.data.col[otherID])
-        #             else:
-        #                 keepRows.append(view.data.row[otherID])
-        #                 keepCols.append(keepIndex)
-        #         keepIndex += 1
-
-        # # instantiate return data
-        # selfShape, targetShape = _calcShapes(self._base.data.shape,
-        #                                      targetLength, self._axis)
-        # if structure != 'copy':
-        #     keepData = numpy.array(keepData, dtype=dtype)
-        #     self._base.data = scipy.sparse.coo_matrix(
-        #         (keepData, (keepRows, keepCols)), shape=selfShape)
-        #     self._base._sorted = None
-        # # need to manually set dtype or coo_matrix will force to simplest dtype
-        # targetData = numpy.array(targetData, dtype=dtype)
-        # ret = scipy.sparse.coo_matrix((targetData, (targetRows, targetCols)),
-        #                               shape=targetShape)
-        # return nimble.data.Sparse(ret, pointNames=pointNames,
-        #                           featureNames=featureNames, reuseData=True)
-
     def _unique_implementation(self):
         if self._base._sorted is None:
             self._base._sortInternal("feature")

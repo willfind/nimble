@@ -2050,14 +2050,6 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _len(self):
-        pass
-
-    @abstractmethod
-    def _bool(self):
-        pass
-
-    @abstractmethod
     def _getitem(self, key):
         pass
 
