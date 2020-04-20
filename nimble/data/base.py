@@ -3405,7 +3405,6 @@ class Base(object):
             msg = "dataDimensions must contain a minimum of 2 values"
             raise InvalidArgumentValue(msg)
         if self.shape[0] * self.shape[1] != numpy.prod(dataDimensions):
-            print(self.shape, numpy.prod(dataDimensions), dataDimensions, type(numpy.prod(dataDimensions)))
             msg = "The product of the dimensions must be equal to the number "
             msg += "of values in this object"
             raise InvalidArgumentValue(msg)
