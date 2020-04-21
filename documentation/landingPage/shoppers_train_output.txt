@@ -1,0 +1,31 @@
+cluster 0 (7460 points):
+       Revenue SpecialDay Weekend NewVisitor
+
+mean    0.103    0.067     0.226    0.172
+
+cluster 2 (3059 points):
+       Revenue SpecialDay Weekend NewVisitor
+
+mean    0.209    0.056     0.249    0.109
+
+cluster 1 (1161 points):
+       Revenue SpecialDay Weekend NewVisitor
+
+mean    0.233    0.048     0.227    0.048
+
+cluster 4 (412 points):
+       Revenue SpecialDay Weekend NewVisitor
+
+mean    0.345    0.051     0.214    0.015
+
+cluster 3 (120 points):
+       Revenue SpecialDay Weekend NewVisitor
+
+mean    0.333    0.017     0.258    0.008
+
+In TrafficType 3, there is a difference of -0.0945 between the best and worst revenue clusters.
+In TrafficType 2, there is a difference of 0.1419 between the best and worst revenue clusters.
+New Visitors for trafficType 2: 52.7%
+Return Visitors for trafficType 2: 22.9%
+New Visitors for trafficType 3: 9.0%
+Return Visitors for trafficType 3: 21.3%

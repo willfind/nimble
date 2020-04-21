@@ -1,0 +1,38 @@
+sklearn.LinearRegression root mean square error: 1795.9503055580249
+sklearn.Ridge root mean square error: 1795.953098977254
+sklearn.Lasso root mean square error: 1795.9595756125507
+sklearn.KNeighborsRegressor root mean square error: 799.344295436004
+sklearn.RandomForestRegressor root mean square error: 343.31654572985366
+{'n_neighbors': 1, 'rootMeanSquareError': 992.3917948600059}
+{'n_neighbors': 5, 'rootMeanSquareError': 859.1318649344181}
+{'n_neighbors': 11, 'rootMeanSquareError': 908.9189704356494}
+{'n_neighbors': 99, 'rootMeanSquareError': 1190.216738400028}
+{'min_samples_split': 2, 'min_samples_leaf': 2} 352.1472115776803
+191.1881830601792
+ volume  hour
+
+757.640   0
+387.292   1
+303.815   2
+412.903   3
+876.150   4
+2710.784  5
+5318.323  6
+5740.137  7
+5543.612  8
+4868.167  9
+4169.120  10
+4760.770  11
+5000.892  12
+5015.100  13
+5119.889  14
+5682.758  15
+6506.428  16
+5895.043  17
+4681.383  18
+3264.560  19
+2698.284  20
+2675.509  21
+2218.005  22
+1842.585  23
+

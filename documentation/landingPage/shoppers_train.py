@@ -19,6 +19,7 @@ Irvine, CA: University of California, School of Information and Computer Science
 Link to original dataset:
 https://archive.ics.uci.edu/ml/datasets/Online+Shoppers+Purchasing+Intention+Dataset
 """
+## Getting Started
 
 import nimble
 

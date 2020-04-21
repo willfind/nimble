@@ -122,7 +122,7 @@ print(tempData[:5, :])
 # features, we can combine the points with the same 'date', 'hour', and
 # 'station' features
 tempData.points.combineByExpandingFeatures(featureWithFeatureNames='extreme',
-                                           featureWithValues='temp')
+                                           featuresWithValues='temp')
 print(tempData.name, tempData.shape)
 print(tempData[:5, :])
 

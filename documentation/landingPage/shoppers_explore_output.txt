@@ -1,0 +1,51 @@
+Administrative Administrative_Duration Informational Informational_Duration ProductRelated ProductRelated_Duration
+
+      0                 0.000                0               0.000                1                 0.000
+      0                 0.000                0               0.000                2                 64.000
+      0                 0.000                0               0.000                1                 0.000
+      0                 0.000                0               0.000                2                 2.667
+      0                 0.000                0               0.000                10               627.500
+
+BounceRates ExitRates PageValues
+
+   0.200      0.200     0.000
+   0.000      0.100     0.000
+   0.200      0.200     0.000
+   0.050      0.140     0.000
+   0.020      0.050     0.000
+
+SpecialDay Month OperatingSystems Browser Region TrafficType NewVisitor Weekend Revenue
+
+  0.000      0          1            1      1         1        False     False   False
+  0.000      0          2            2      1         2        False     False   False
+  0.000      0          4            1      9         3        False     False   False
+  0.000      0          3            2      2         4        False     False   False
+  0.000      0          3            3      1         4        False      True   False
+
+                      Revenue
+
+     Administrative    0.139
+Administrative_D...    0.106
+      Informational    0.100
+Informational_Du...    0.089
+     ProductRelated    0.165
+ProductRelated_D...    0.172
+        BounceRates    -0.150
+          ExitRates    -0.206
+         PageValues    0.538
+         SpecialDay    -0.082
+              Month    0.104
+   OperatingSystems    -0.017
+            Browser    0.022
+             Region    -0.012
+        TrafficType    -0.006
+         NewVisitor    0.103
+            Weekend    0.030
+            Revenue    1.000
+
+Proportion of visits that generated revenue: 0.15263675073698002
+Proportion of visits near a special day: 0.10194890271863741
+Administrative average hits per visit 2.27104487389453
+Informational average hits per visit 0.4758434326891582
+ProductRelated average hits per visit 30.687684245004913
+Proportion of visitors that view a product page: 0.9968883065836882

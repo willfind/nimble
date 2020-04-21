@@ -43,8 +43,10 @@ import nimble
 # configuration.ini is used to establish the settings for the
 # session. Through `nimble.settings`, we can access the current settings
 # as well as modify settings for this session or all future sessions.
-# Note: This example is assuming that configuration.ini is in the default
-# state generated when nimble is imported for the first time.
+# To start our session, let's make sure our logging output settings are set
+# to the defaults used when nimble is first installed.
+nimble.settings.set('logger', 'enabledByDefault', 'True')
+nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
 
 ## Logging
 # Nimble keeps an ongoing log of each session, by default. The logging
