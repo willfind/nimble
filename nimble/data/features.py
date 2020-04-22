@@ -1497,7 +1497,7 @@ class Features(object):
               feature
             * function - must be in the format:
               fillWith(feature, matchingElements) or
-              fillWith(feature, matchingElements, **kwarguments)
+              fillWith(feature, matchingElements, \*\*kwarguments)
               and return the transformed feature as a list of values.
               Certain fill methods can be imported from nimble's fill
               module.

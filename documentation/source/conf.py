@@ -17,6 +17,7 @@ import sys
 import os
 import shlex
 import inspect
+from datetime import datetime
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -70,7 +71,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Nimble'
-copyright = u'2019, Spark Wave'
+copyright = u'{}, Spark Wave'.format(datetime.now().year)
 author = u'Spark Wave'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -138,8 +139,8 @@ html_theme = 'alabaster'
 # documentation.
 html_theme_options = {
     'fixed_sidebar': True,
-    'page_width': '85%',
-    'body_max_width': '85%'
+    'page_width': '95%',
+    'body_max_width': None,
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
@@ -164,7 +165,7 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
