@@ -299,7 +299,7 @@ class Features(object):
 
         See Also
         --------
-        nimble.data.base.Base.copy
+        Base.copy
 
         Examples
         --------
@@ -903,8 +903,7 @@ class Features(object):
 
         See Also
         --------
-        nimble.data.Base.countElements,
-        nimble.data.Base.countUniqueElements
+        Base.countElements, Base.countUniqueElements
 
         Examples
         --------
@@ -1522,7 +1521,7 @@ class Features(object):
 
         See Also
         --------
-         nimble.fill, nimble.match
+        nimble.fill, nimble.match
 
         Examples
         --------

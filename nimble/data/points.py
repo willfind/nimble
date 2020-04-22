@@ -297,7 +297,7 @@ class Points(object):
 
         See Also
         --------
-        nimble.data.base.Base.copy
+        Base.copy
 
         Examples
         --------
@@ -843,8 +843,7 @@ class Points(object):
 
         See Also
         --------
-        nimble.data.Base.countElements,
-        nimble.data.Base.countUniqueElements
+        Base.countElements, Base.countUniqueElements
 
         Examples
         --------

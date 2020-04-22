@@ -2,5 +2,4 @@ Similarity
 ==========
 
 .. automodule:: nimble.calculate
-   :noindex:
-   :members: correlation, cosineSimilarity, covariance, fractionCorrect, rSquared
+   :members: correlation, cosineSimilarity, covariance, fractionCorrect, rSquared, confusionMatrix
