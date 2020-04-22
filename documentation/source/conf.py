@@ -42,10 +42,13 @@ def setup(app):
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.intersphinx',
     'numpydoc'#,
     #    'sphinx.ext.coverage',
     #    'sphinx.ext.ifconfig',
 ]
+
+intersphinx_mapping = {'numpy': ('http://docs.scipy.org/doc/numpy/', None),}
 
 autodoc_default_options = {
     'undoc-members': True,
