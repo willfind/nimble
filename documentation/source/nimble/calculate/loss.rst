@@ -1,5 +1,14 @@
 Loss
 ====
 
-.. automodule:: nimble.calculate
-   :members: fractionIncorrect, meanAbsoluteError, meanFeaturewiseRootMeanSquareError, rootMeanSquareError, varianceFractionRemaining
+.. currentmodule:: nimble.calculate
+
+.. autofunction:: fractionIncorrect
+
+.. autofunction:: meanAbsoluteError
+
+.. autofunction:: meanFeaturewiseRootMeanSquareError
+
+.. autofunction:: rootMeanSquareError
+
+.. autofunction:: varianceFractionRemaining

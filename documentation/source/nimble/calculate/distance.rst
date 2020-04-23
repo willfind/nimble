@@ -1,4 +1,4 @@
 Distance
 ========
 
-.. automodule:: nimble.calculate
+.. currentmodule:: nimble.calculate

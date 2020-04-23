@@ -1,5 +1,16 @@
 Similarity
 ==========
 
-.. automodule:: nimble.calculate
-   :members: correlation, cosineSimilarity, covariance, fractionCorrect, rSquared, confusionMatrix
+.. currentmodule:: nimble.calculate
+
+.. autofunction:: correlation
+
+.. autofunction:: cosineSimilarity
+
+.. autofunction:: confusionMatrix
+
+.. autofunction:: covariance
+
+.. autofunction:: fractionCorrect
+
+.. autofunction:: rSquared

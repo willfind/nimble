@@ -1076,7 +1076,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.calculate.confusionMatrix
+        nimble.calculate.uniqueCount
 
         Examples
         --------
