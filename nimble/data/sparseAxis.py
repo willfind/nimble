@@ -227,8 +227,6 @@ class SparseAxis(Axis):
         """
         Iterate through each member to index targeted values
         """
-        dtype = numpy.object_
-
         targetLength = len(targetList)
         targetData = []
         targetRows = []
@@ -266,13 +264,18 @@ class SparseAxis(Axis):
         selfShape, targetShape = _calcShapes(self._base.data.shape,
                                              targetLength, self._axis)
         if structure != 'copy':
-            keepData = numpy.array(keepData, dtype=dtype)
+            # need to manually set dtype or coo_matrix will force to simplest dtype
+            keepArr = numpy.array(keepData)
+            if not numpy.issubdtype(keepArr.dtype, numpy.number):
+                keepArr = numpy.array(keepData, dtype=numpy.object_)
             self._base.data = scipy.sparse.coo_matrix(
-                (keepData, (keepRows, keepCols)), shape=selfShape)
+                (keepArr, (keepRows, keepCols)), shape=selfShape)
             self._base._sorted = None
         # need to manually set dtype or coo_matrix will force to simplest dtype
-        targetData = numpy.array(targetData, dtype=dtype)
-        ret = scipy.sparse.coo_matrix((targetData, (targetRows, targetCols)),
+        targetArr = numpy.array(targetData)
+        if not numpy.issubdtype(targetArr.dtype, numpy.number):
+            targetArr = numpy.array(targetData, dtype=numpy.object_)
+        ret = scipy.sparse.coo_matrix((targetArr, (targetRows, targetCols)),
                                       shape=targetShape)
 
         return nimble.data.Sparse(ret, pointNames=pointNames,
