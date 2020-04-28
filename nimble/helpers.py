@@ -88,6 +88,8 @@ def isAllowedRaw(data, allowLPT=False):
     """
     Verify raw data is one of the accepted types.
     """
+    if isinstance(data, Base):
+        return True
     if allowLPT and 'PassThrough' in str(type(data)):
         return True
     if scipy.nimbleAccessible() and scipy.sparse.issparse(data):
@@ -605,7 +607,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
 
     return rawData
 
-class SparseCOORowIterator(object):
+class SparseCOORowIterator:
     """
     Iterate through the nonZero values of a coo matrix by row.
     """
@@ -617,40 +619,84 @@ class SparseCOORowIterator(object):
         return self
 
     def __next__(self):
-        while True:
-            if self.rowIdx < self.data.shape[0]:
-                ret = self.data.data[self.data.row == self.rowIdx]
-                self.rowIdx += 1
-                return ret
-            else:
-                raise StopIteration
+        if self.rowIdx < self.data.shape[0]:
+            ret = self.data.data[self.data.row == self.rowIdx]
+            self.rowIdx += 1
+            return ret
+        else:
+            raise StopIteration
 
-def getPointIterator(rawData):
+class GenericPointIterator:
+    """
+    Iterate through a list-like object row by row.
+
+    This iterator optimizes performance when objects contain nimble data
+    objects. Recursively iterating through nimble objects is more costly
+    so copying to a python list whenever the object is not a point
+    vector is much more efficient. If the object does not contain any
+    nimble objects this is effectively the same as using iter().
+    """
+    def __init__(self, data):
+        self.iterator = iter(data)
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        val = next(self.iterator)
+        if isinstance(val, Base) and 1 not in val.shape:
+            return val.copy('python list')
+        return val
+
+def getPointIterator(data):
     """
     Generate an iterator for the points in the object.
     """
+    if isinstance(data, Base):
+        return data.points
+    if isinstance(data, numpy.matrix):
+        return iter(numpy.array(data))
+    if isinstance(data, dict):
+        return iter(data.values())
     if (pd.nimbleAccessible()
-            and isinstance(rawData, (pd.DataFrame, pd.Series))):
-        return iter(rawData.values)
-    if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(rawData):
-        return SparseCOORowIterator(rawData.tocoo(False))
-    if isinstance(rawData, numpy.matrix):
-        return iter(numpy.array(rawData))
-    if isinstance(rawData, dict):
-            return iter(rawData.values())
-    return iter(rawData)
+            and isinstance(data, (pd.DataFrame, pd.Series))):
+        return iter(data.values)
+    if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(data):
+        return SparseCOORowIterator(data.tocoo(False))
+    return GenericPointIterator(data)
 
-def isHighDimensionData(rawData):
+def isHighDimensionData(rawData, skipDataProcessing):
     """
     Identify data with more than two-dimensions.
     """
     if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(rawData):
         if not rawData.data.size:
             return False
-        return not isAllowedSingleElement(rawData.data[0])
+        rawData = [rawData.data]
     try:
-        if (isAllowedSingleElement(rawData[0])
-                or isAllowedSingleElement(rawData[0][0])):
+        if isAllowedSingleElement(rawData[0]):
+            if (not skipDataProcessing and
+                    not all(map(isAllowedSingleElement, rawData))):
+                msg = "Numbers, strings, None, and nan are the only values "
+                msg += "allowed in nimble data objects"
+                raise InvalidArgumentValue(msg)
+            return False
+        if isAllowedSingleElement(rawData[0][0]):
+            if not skipDataProcessing:
+                toIter = getPointIterator(rawData)
+                firstLength = len(next(toIter))
+                for i, point in enumerate(toIter):
+                    if not len(point) == firstLength:
+                        msg = "All points in the data do not have the same "
+                        msg += "number of features. The first point had {0} "
+                        msg += "features but the point at index {1} had {2} "
+                        msg += "features"
+                        msg = msg.format(firstLength, i, len(point))
+                        raise InvalidArgumentValue(msg)
+                    if not all(map(isAllowedSingleElement, point)):
+                        msg = "Numbers, strings, None, and nan are the only "
+                        msg += "values allowed in nimble data objects"
+                        raise InvalidArgumentValue(msg)
             return False
         else:
             return True
@@ -658,6 +704,12 @@ def isHighDimensionData(rawData):
         return False
     except IndexError: # rawData or rawData[0] is empty
         return False
+    except (ImproperObjectAction, InvalidArgumentType): # high dimension Base
+        return True
+    except TypeError: # invalid non-subscriptable object
+        msg = "Numbers, strings, None, and nan are the only "
+        msg += "values allowed in nimble data objects"
+        raise InvalidArgumentValue(msg)
 
 def highDimensionNames(rawData, pointNames, featureNames):
     """
@@ -710,12 +762,17 @@ def flattenToOneDimension(data, dimensions=False, toFill=None):
         dimensions = [False]
     elif dimensions[0]:
         dimensions[1].append(len(data))
-    if all(map(isAllowedSingleElement, data)):
-        toFill.extend(data)
-    else:
-        for obj in data:
-            flattenToOneDimension(obj, dimensions, toFill)
-            dimensions[0] = False
+    try:
+        if all(map(isAllowedSingleElement, data)):
+            toFill.extend(data)
+        else:
+            for obj in data:
+                flattenToOneDimension(obj, dimensions, toFill)
+                dimensions[0] = False
+    except TypeError:
+        msg = "Numbers, strings, None, and nan are the only "
+        msg += "values allowed in nimble data objects"
+        raise InvalidArgumentValue(msg)
 
     if returnDims:
         return toFill, dimensions[1]
@@ -729,8 +786,8 @@ def flattenHighDimensionFeatures(rawData):
     flattenToOneDimension are used.
     """
     if isinstance(rawData, numpy.ndarray) and rawData.dtype != numpy.object_:
-        newShape = (rawData.shape[0], numpy.prod(rawData.shape[1:]))
         origDims = rawData.shape
+        newShape = (rawData.shape[0], numpy.prod(rawData.shape[1:]))
         rawData = numpy.reshape(rawData, newShape)
     else:
         if hasattr(rawData, 'shape'):
@@ -780,6 +837,9 @@ def initDataObject(
         else:
             returnType = 'Matrix'
 
+    if isinstance(rawData, Base):
+        # point/featureNames, treatAsMissing, etc. may vary
+        rawData = rawData.data
     if not reuseData:
         rawData = copy.deepcopy(rawData)
 
@@ -790,24 +850,26 @@ def initDataObject(
     # If skipping data processing, no modification needs to be made
     # to the data, so we can skip name extraction and missing replacement.
     kwargs = {}
+    # convert these types as indexing may cause dimensionality confusion
+    if isinstance(rawData, numpy.matrix):
+        rawData = numpy.array(rawData)
+    if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(rawData):
+        rawData = rawData.tocoo()
+    import time
+    s = time.time()
+    if isHighDimensionData(rawData, skipDataProcessing):
+        # additional name validation / processing before extractNames
+        pointNames, featureNames = highDimensionNames(rawData, pointNames,
+                                                      featureNames)
+        rawData, tensorShape = flattenHighDimensionFeatures(rawData)
+        kwargs['shape'] = tensorShape
+
     if skipDataProcessing:
         if returnType == 'List':
             kwargs['checkAll'] = False
         pointNames = pointNames if pointNames != 'automatic' else None
         featureNames = featureNames if featureNames != 'automatic' else None
     else:
-        # convert these types as indexing may cause dimensionality confusion
-        if isinstance(rawData, numpy.matrix):
-            rawData = numpy.array(rawData)
-        if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(rawData):
-            rawData = rawData.tocoo()
-        if isHighDimensionData(rawData):
-            # additional name validation / processing before extractNames
-            pointNames, featureNames = highDimensionNames(rawData, pointNames,
-                                                          featureNames)
-            rawData, tensorShape = flattenHighDimensionFeatures(rawData)
-            kwargs['shape'] = tensorShape
-
         rawData, pointNames, featureNames = extractNames(rawData, pointNames,
                                                          featureNames)
         if treatAsMissing is not None:

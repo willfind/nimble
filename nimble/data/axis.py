@@ -422,6 +422,10 @@ class Axis(object):
             elif self._namesCreated():
                 ret.points.setNames(self._getNamesNoGeneration(), useLog=False)
         else:
+            if len(ret._shape) > 2:
+                msg = "'function' cannot return an object with more than one "
+                msg += 'dimension when operating over the feature axis'
+                raise ImproperObjectAction(msg)
             ret.transpose(useLog=False)
             if len(limitTo) < len(self) and self._namesCreated():
                 names = []
@@ -438,16 +442,21 @@ class Axis(object):
         retData = []
         # signal to convert to object elementType if function is returning
         # non-numeric values.
+        if self._isPoint:
+            viewer = self._base.pointView
+        else:
+            viewer = self._base.featureView
         for axisID in limitTo:
-            if self._isPoint:
-                view = self._base.pointView(axisID)
-            else:
-                view = self._base.featureView(axisID)
-
+            view = viewer(axisID)
             currOut = function(view)
             # the output could have multiple values or be singular.
             if isAllowedSingleElement(currOut):
                 retData.append([currOut])
+            elif isinstance(retData, nimble.data.Base):
+                # TODO we are treating all output as if it is 1D, but what
+                # behavior do we expect when points.calculate returns a
+                # feature vector?
+                pass
             else:
                 retData.append(currOut)
 
@@ -1731,19 +1740,19 @@ class AxisIterator(object):
     Object providing iteration through each item in the axis.
     """
     def __init__(self, axisObj):
-        self._axisObj = axisObj
+        if axisObj._isPoint:
+            self.viewer = axisObj._base.pointView
+        else:
+            self.viewer = axisObj._base.featureView
+        self._axisLen = len(axisObj)
         self._position = 0
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        if isinstance(self._axisObj, Points):
-            viewer = self._axisObj._base.pointView
-        else:
-            viewer = self._axisObj._base.featureView
-        if self._position < len(self._axisObj):
-            value = viewer(self._position)
+        if self._position < self._axisLen:
+            value = self.viewer(self._position)
             self._position += 1
             return value
         else:

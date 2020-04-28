@@ -181,7 +181,9 @@ class List(Base):
             sPoint = self.data[index]
             oPoint = other.data[index]
             if sPoint != oPoint:
-                return False
+                for sVal, oVal in zip(sPoint, oPoint):
+                    if sVal != oVal and (sVal == sVal or oVal == oVal):
+                        return False
         return True
 
     def _writeFileCSV_implementation(self, outPath, includePointNames,

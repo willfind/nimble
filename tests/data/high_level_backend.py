@@ -131,7 +131,6 @@ class HighLevelDataSafe(DataTestObject):
 
         origObj.points.calculate(emitLower)
 
-    @raises(InvalidArgumentValue)
     def test_points_calculate_functionReturns2D(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -143,6 +142,7 @@ class HighLevelDataSafe(DataTestObject):
             return [[val for val in point]]
 
         calc = toTest.points.calculate(return2D)
+        assert calc._shape == [4, 1, 3]
 
     @raises(InvalidArgumentValue)
     def test_points_calculate_functionReturnsInvalidObj(self):
@@ -382,7 +382,7 @@ class HighLevelDataSafe(DataTestObject):
         origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
         origObj.features.calculate(None)
 
-    @raises(InvalidArgumentValue)
+    @raises(ImproperObjectAction)
     def test_features_calculate_functionReturns2D(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
