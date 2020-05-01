@@ -620,24 +620,44 @@ class SparseCOORowIterator:
 
     def __next__(self):
         if self.rowIdx < self.data.shape[0]:
-            ret = self.data.data[self.data.row == self.rowIdx]
+            point = numpy.zeros((self.data.shape[1],))
+            row = self.data.row == self.rowIdx
+            for val, col in zip(self.data.data[row], self.data.col[row]):
+                try:
+                    point[col] = val
+                except ValueError:
+                    point = point.astype(numpy.object_)
+                    point[col] = val
+
             self.rowIdx += 1
-            return ret
+            return point
         else:
             raise StopIteration
 
 class GenericPointIterator:
     """
-    Iterate through a list-like object row by row.
+    Iterate through all objects in the same manner.
 
-    This iterator optimizes performance when objects contain nimble data
-    objects. Recursively iterating through nimble objects is more costly
-    so copying to a python list whenever the object is not a point
-    vector is much more efficient. If the object does not contain any
-    nimble objects this is effectively the same as using iter().
+    Iterates through all objects point by point. Iterating through
+    non-vector nimble objects is more costly so copying to a python list
+    whenever the object is not a point vector is much more efficient. If
+    the object does not contain any nimble objects this is effectively
+    the same as using iter()
     """
     def __init__(self, data):
-        self.iterator = iter(data)
+        if isinstance(data, Base) and data.shape[0] > 1:
+            self.iterator = data.points
+        elif isinstance(data, numpy.matrix):
+            self.iterator = iter(numpy.array(data))
+        elif isinstance(data, dict):
+            self.iterator = iter(data.values())
+        elif (pd.nimbleAccessible()
+                and isinstance(data, (pd.DataFrame, pd.Series))):
+            self.iterator = iter(data.values)
+        elif scipy.nimbleAccessible() and scipy.sparse.isspmatrix(data):
+            self.iterator = SparseCOORowIterator(data.tocoo(False))
+        else:
+            self.iterator = iter(data)
 
     def __iter__(self):
         return self
@@ -648,22 +668,18 @@ class GenericPointIterator:
             return val.copy('python list')
         return val
 
-def getPointIterator(data):
-    """
-    Generate an iterator for the points in the object.
-    """
-    if isinstance(data, Base):
-        return data.points
-    if isinstance(data, numpy.matrix):
-        return iter(numpy.array(data))
-    if isinstance(data, dict):
-        return iter(data.values())
-    if (pd.nimbleAccessible()
-            and isinstance(data, (pd.DataFrame, pd.Series))):
-        return iter(data.values)
-    if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(data):
-        return SparseCOORowIterator(data.tocoo(False))
-    return GenericPointIterator(data)
+def getFirstIndex(data):
+    if scipy.nimbleAccessible() and scipy.sparse.isspmatrix_coo(data):
+        first = data.data[data.row == 0]
+    elif pd.nimbleAccessible() and isinstance(data, (pd.DataFrame, pd.Series)):
+        first = data.iloc[0]
+    elif isinstance(data, Base) and 1 not in data.shape:
+        first = data.points[0]
+    elif isinstance(data, dict):
+        first = data[list(data.keys())[0]]
+    else:
+        first = data[0]
+    return first
 
 def isHighDimensionData(rawData, skipDataProcessing):
     """
@@ -674,16 +690,18 @@ def isHighDimensionData(rawData, skipDataProcessing):
             return False
         rawData = [rawData.data]
     try:
-        if isAllowedSingleElement(rawData[0]):
+        indexZero = getFirstIndex(rawData)
+        if isAllowedSingleElement(indexZero):
             if (not skipDataProcessing and
                     not all(map(isAllowedSingleElement, rawData))):
                 msg = "Numbers, strings, None, and nan are the only values "
                 msg += "allowed in nimble data objects"
                 raise InvalidArgumentValue(msg)
             return False
-        if isAllowedSingleElement(rawData[0][0]):
+        indexZeroZero = getFirstIndex(indexZero)
+        if isAllowedSingleElement(indexZeroZero):
             if not skipDataProcessing:
-                toIter = getPointIterator(rawData)
+                toIter = GenericPointIterator(rawData)
                 firstLength = len(next(toIter))
                 for i, point in enumerate(toIter):
                     if not len(point) == firstLength:
@@ -700,8 +718,6 @@ def isHighDimensionData(rawData, skipDataProcessing):
             return False
         else:
             return True
-    except KeyError: # rawData or rawData[0] is dict
-        return False
     except IndexError: # rawData or rawData[0] is empty
         return False
     except (ImproperObjectAction, InvalidArgumentType): # high dimension Base
@@ -744,7 +760,14 @@ def validateDataLength(actual, expected):
         msg += 'dimension, but found length {0}'.format(actual)
         raise InvalidArgumentValue(msg)
 
-def flattenToOneDimension(data, dimensions=False, toFill=None):
+def getPointCount(data):
+    if isinstance(data, Base):
+        return len(data.points)
+    if hasattr(data, 'shape'):
+        return data.shape[0]
+    return len(data)
+
+def flattenToOneDimension(data, toFill=None, dimensions=None):
     """
     Recursive function to flatten an object.
 
@@ -753,30 +776,28 @@ def flattenToOneDimension(data, dimensions=False, toFill=None):
     always return a point-based iterator for these cases so data is
     flattened point by point.
     """
+    # if Base and not a vector, use points attribute for __len__ and __iter__
+    if isinstance(data, Base) and (len(data._shape) > 2 or data.shape[0] > 1):
+        data = data.points
     if toFill is None:
         toFill = []
-    returnDims = dimensions is True
-    if returnDims:
-        dimensions = [True, [len(data)]]
-    elif dimensions is False:
-        dimensions = [False]
+    if dimensions is None:
+        dimensions = [True, [getPointCount(data)]]
     elif dimensions[0]:
-        dimensions[1].append(len(data))
+        dimensions[1].append(getPointCount(data))
     try:
-        if all(map(isAllowedSingleElement, data)):
+        if all(map(isAllowedSingleElement, GenericPointIterator(data))):
             toFill.extend(data)
         else:
-            for obj in data:
-                flattenToOneDimension(obj, dimensions, toFill)
+            for obj in GenericPointIterator(data):
+                flattenToOneDimension(obj,toFill, dimensions)
                 dimensions[0] = False
     except TypeError:
         msg = "Numbers, strings, None, and nan are the only "
         msg += "values allowed in nimble data objects"
         raise InvalidArgumentValue(msg)
 
-    if returnDims:
-        return toFill, dimensions[1]
-    return toFill
+    return toFill, tuple(dimensions[1])
 
 def flattenHighDimensionFeatures(rawData):
     """
@@ -794,26 +815,23 @@ def flattenHighDimensionFeatures(rawData):
             numPts = rawData.shape[0]
         else:
             numPts = len(rawData)
-        points = getPointIterator(rawData)
+        points = GenericPointIterator(rawData)
         firstPoint = next(points)
-        firstPointFlat, ptDims = flattenToOneDimension(firstPoint, True)
-        origDims = [numPts] + ptDims
+        firstPointFlat, ptDims = flattenToOneDimension(firstPoint)
+        origDims = tuple([numPts] + list(ptDims))
         numFts = len(firstPointFlat)
         rawData = numpy.empty((numPts, numFts), dtype=numpy.object_)
         rawData[0] = firstPointFlat
         for i, point in enumerate(points):
-            flat = flattenToOneDimension(point, False)
-            numVals = len(flat)
-            if numVals != numFts:
-                msg = "The number of values in the point at index {0} ({1}) "
-                msg += "is not equal to the number of values in first point "
-                msg += "({2}). All points must contain an equal number of "
-                msg += "values to allow nimble to flatten this data so it "
-                msg += "can be represented in our data objects"
-                raise InvalidArgumentValue(msg.format(i + 1, numVals, numFts))
+            flat, dims = flattenToOneDimension(point)
+            if dims != ptDims:
+                msg = 'The dimensions of each nested object must equal. The '
+                msg += 'first point had dimensions {0}, but point {1} had '
+                msg += 'dimensions {2}'
+                raise InvalidArgumentValue(msg.format(ptDims, i + 1, dims))
             rawData[i + 1] = flat
 
-    return rawData, tuple(origDims)
+    return rawData, origDims
 
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name=None, path=None,

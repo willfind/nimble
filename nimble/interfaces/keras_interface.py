@@ -242,9 +242,7 @@ To install keras
                 trainY = trainY.copy(to='numpy array', outputAs1D=True)
 
         if testX is not None:
-            if testX.getTypeString() == 'Matrix':
-                testX = testX.data
-            elif testX.getTypeString() != 'Sparse':
+            if testX.getTypeString() != 'Sparse':
             #for sparse cases, keep it untouched here.
                 testX = testX.copy(to='numpy array')
 

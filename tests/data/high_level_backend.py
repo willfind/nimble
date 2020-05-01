@@ -341,6 +341,42 @@ class HighLevelDataSafe(DataTestObject):
         ret = orig.points.calculate(toString)
         assert ret == exp
 
+    def test_points_calculate_featureVector(self):
+
+        def asFeature(pt):
+            return pt.T
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        exp = self.constructor([[[1], [2], [3]], [[4], [5], [6]], [[0], [0], [0]]])
+
+        ret = orig.points.calculate(asFeature)
+        assert ret == exp
+
+    def test_points_calculate_reshape(self):
+
+        def reshape3D(pt):
+            pt = pt.copy()
+            pt.unflatten((2, 2))
+            return pt
+
+        orig = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, 0, 0, 0]])
+        exp3D = self.constructor([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[0, 0], [0, 0]]])
+
+        ret = orig.points.calculate(reshape3D)
+        assert ret == exp3D
+
+        def reshape5D(pt):
+            pt = pt.copy()
+            pt.unflatten((1, 2, 2, 1))
+            return pt
+
+        exp5D = self.constructor([[[[[1], [2]], [[3], [4]]]],
+                                  [[[[5], [6]], [[7], [8]]]],
+                                  [[[[0], [0]], [[0], [0]]]]])
+
+        ret = orig.points.calculate(reshape5D)
+        assert ret == exp5D
+
     ##########################
     # .features.calculate() #
     #########################
@@ -603,6 +639,26 @@ class HighLevelDataSafe(DataTestObject):
 
         ret = orig.features.calculate(toString)
         assert ret == exp
+
+    @raises(ImproperObjectAction)
+    def test_features_calculate_pointVector(self):
+
+        def asPoint(ft):
+            return ft.T
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        ret = orig.features.calculate(asPoint)
+
+    @raises(ImproperObjectAction)
+    def test_features_calculate_reshape(self):
+
+        def reshape3D(ft):
+            ft = ft.copy()
+            ft.unflatten((2, 2))
+            return ft
+
+        orig = self.constructor([[1, 5, 0], [2, 6, 0], [3, 7, 0], [4, 8, 0]])
+        ret = orig.features.calculate(reshape3D)
 
     #######################
     # calculateOnElements #

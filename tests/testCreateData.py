@@ -3011,6 +3011,35 @@ def test_createData_multidimensionalData_featureNames():
             toTest = nimble.createData(retType, tensor, featureNames=ftNames)
             assert toTest.features.getNames() == ftNames
 
+def test_createData_multidimensionalData_listsOfMultiDimensionalObjects():
+    for (rType1, rType2) in itertools.product(returnTypes, returnTypes):
+        arr1D = numpy.array([1, 2, 3, 0])
+        nim1D = nimble.createData(rType1, [1, 2, 3, 0])
+
+        fromListArr1D = nimble.createData(rType2, [arr1D, arr1D, arr1D])
+        assert fromListArr1D._shape == [3, 4]
+        fromListNim1D = nimble.createData(rType2, [nim1D, nim1D, nim1D])
+        assert fromListNim1D._shape == [3, 4]
+
+        arr2D = fromListArr1D.data
+        coo2D = scipy.sparse.coo_matrix([[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 3, 0]])
+        df2D = pd.DataFrame([[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 3, 0]])
+        nim2D = fromListNim1D
+
+        fromListArr2D = nimble.createData(rType2, [arr2D, arr2D, arr2D])
+        assert fromListArr2D._shape == [3, 3, 4]
+        fromListCoo2D = nimble.createData(rType2, [coo2D, coo2D, coo2D])
+        print(fromListCoo2D._shape)
+        print(fromListCoo2D)
+        assert fromListCoo2D._shape == [3, 3, 4]
+        fromListDF2D = nimble.createData(rType2, [df2D, df2D, df2D])
+        assert fromListDF2D._shape == [3, 3, 4]
+        fromListNim2D = nimble.createData(rType2, [nim2D, nim2D, nim2D])
+        assert fromListNim2D._shape == [3, 3, 4]
+
+        nim3D = fromListNim2D
+        fromListNim3D = nimble.createData(rType2, [nim3D, nim3D])
+        assert fromListNim3D._shape == [2, 3, 3, 4]
 
 # tests for combination of one name set being specified and one set being
 # in data.

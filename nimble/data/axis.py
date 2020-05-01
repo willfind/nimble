@@ -420,12 +420,8 @@ class Axis(object):
                     names.append(self._getName(index))
                 ret.points.setNames(names, useLog=False)
             elif self._namesCreated():
-                ret.points.setNames(self._getNamesNoGeneration(), useLog=False)
+                ret.points.setNames(self._getNames(), useLog=False)
         else:
-            if len(ret._shape) > 2:
-                msg = "'function' cannot return an object with more than one "
-                msg += 'dimension when operating over the feature axis'
-                raise ImproperObjectAction(msg)
             ret.transpose(useLog=False)
             if len(limitTo) < len(self) and self._namesCreated():
                 names = []
@@ -433,8 +429,7 @@ class Axis(object):
                     names.append(self._getName(index))
                 ret.features.setNames(names, useLog=False)
             elif self._namesCreated():
-                ret.features.setNames(self._getNamesNoGeneration(),
-                                      useLog=False)
+                ret.features.setNames(self._getNames(), useLog=False)
 
         return ret
 
@@ -446,19 +441,31 @@ class Axis(object):
             viewer = self._base.pointView
         else:
             viewer = self._base.featureView
+
         for axisID in limitTo:
             view = viewer(axisID)
             currOut = function(view)
             # the output could have multiple values or be singular.
             if isAllowedSingleElement(currOut):
-                retData.append([currOut])
-            elif isinstance(retData, nimble.data.Base):
-                # TODO we are treating all output as if it is 1D, but what
-                # behavior do we expect when points.calculate returns a
-                # feature vector?
-                pass
-            else:
-                retData.append(currOut)
+                currOut = [currOut]
+            elif isinstance(currOut, nimble.data.Base):
+                # make 2D if a vector and axis does not match vector direction
+                axisIdx = 0 if self._isPoint else 1
+                if (len(currOut._shape) == 2
+                        and 1 in currOut.shape
+                        and currOut.shape[axisIdx] != 1):
+                    currOut = currOut.copy('python list')
+            # only point axis can handle multidimensional data
+            if not self._isPoint:
+                try:
+                    assert all(isAllowedSingleElement(v) for v in currOut)
+                except AssertionError:
+                    msg = "function must return a one-dimensional object "
+                    raise ImproperObjectAction(msg)
+                except TypeError:
+                    msg = "function must return a valid single element or "
+                    msg = "an iterable, but got type " + str(type(currOut))
+            retData.append(currOut)
 
         return retData
 

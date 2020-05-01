@@ -29,8 +29,7 @@ defaultObjectNumber = 0
 
 def isAllowedSingleElement(x):
     """
-    This function is to determine if an element is an allowed single
-    element.
+    Determine if an element is an allowed single element.
     """
     if isinstance(x, (numbers.Number, str)):
         return True
@@ -41,7 +40,7 @@ def isAllowedSingleElement(x):
     if x is None or x != x:#None and np.NaN are allowed
         return True
 
-    return
+    return False
 
 def nextDefaultObjectName():
     """
@@ -805,7 +804,7 @@ def validateAxisFunction(func, axis, allowedLength=None):
             msg += 'pairs represent'
             raise InvalidArgumentValue(msg)
 
-        # for transform, we need to validate the function's returned values 
+        # for transform, we need to validate the function's returned values
         # for calculate, the validation occurs when the new object is created
         if allowedLength:
             if (isinstance(ret, str)
