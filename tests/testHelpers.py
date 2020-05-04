@@ -392,6 +392,44 @@ def testMergeArgumentsHand():
 
     assert ret == {1: 'a', 2: 'b', 3: 'd', 4: 'b'}
 
+def testMergeArgumentsMakesCopy():
+    """Test helpers._mergeArguments does not modify or return either original dict"""
+    emptyA = {}
+    emptyB = {}
+    dictA = {'foo': 'bar'}
+    dictB = {'bar': 'foo'}
+
+    merged0 = _mergeArguments(None, emptyB)
+    assert emptyB == merged0
+    assert id(emptyB) != id(merged0)
+    assert emptyB == {}
+
+    merged1 = _mergeArguments(emptyA, emptyB)
+    assert emptyA == merged1
+    assert emptyB == merged1
+    assert id(emptyA) != id(merged1)
+    assert id(emptyB) != id(merged1)
+    assert emptyA == {}
+    assert emptyB == {}
+
+    merged2 = _mergeArguments(dictA, emptyB)
+    assert dictA == merged2
+    assert id(dictA) != id(merged2)
+    assert dictA == {'foo': 'bar'}
+    assert emptyB == {}
+
+    merged3 = _mergeArguments(emptyA, dictB)
+    assert dictB == merged3
+    assert id(dictB) != id(merged3)
+    assert emptyA == {}
+    assert dictB == {'bar': 'foo'}
+
+    merged4 = _mergeArguments(dictA, dictB)
+    assert dictA != merged4
+    assert dictB != merged4
+    assert dictA == {'foo': 'bar'}
+    assert dictB == {'bar': 'foo'}
+
 
 def test_computeMetrics_1d_2arg():
     knownLabels = numpy.array([[1.0], [2.0], [3.0]])
