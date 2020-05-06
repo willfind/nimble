@@ -141,7 +141,7 @@ def digitsExampleOutputMatch(output, expected):
     # lines the output will contain. Instead we will verify that the format
     # matches our expectations
     newEpoch = re.compile(b'Epoch [0-9]{1,2}/10')
-    epochStatus = re.compile(r'[0-9]{1,4}/1195 \[[=\.]{30}\]')
+    epochStatus = re.compile(r'[0-9]{1,4}/1195 \[[=>\.]{30}\]')
     expectEpochStatus = False
     for i, line in enumerate(outLines):
         # most lines will be epoch status updates
