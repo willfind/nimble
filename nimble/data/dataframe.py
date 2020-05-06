@@ -212,10 +212,14 @@ class DataFrame(Base):
             if to == 'scipycsr':
                 return scipy.sparse.csr_matrix(ret)
         if to == 'pandasdataframe':
-            if not pd.nimbleAccessible():
-                msg = "pandas is not available"
-                raise PackageException(msg)
-            return pd.DataFrame(data)
+            pnames = self.points._getNamesNoGeneration()
+            fnames = self.features._getNamesNoGeneration()
+            df = pd.DataFrame(data)
+            if pnames is not None:
+                df.index = pnames
+            if fnames is not None:
+                df.columns = fnames
+            return df
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):

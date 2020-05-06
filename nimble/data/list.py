@@ -317,7 +317,9 @@ class List(Base):
                 raise PackageException(msg)
             if isEmpty:
                 return pd.DataFrame(emptyData)
-            return pd.DataFrame(data)
+            pnames = self.points._getNamesNoGeneration()
+            fnames = self.features._getNamesNoGeneration()
+            return pd.DataFrame(data, index=pnames, columns=fnames)
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):

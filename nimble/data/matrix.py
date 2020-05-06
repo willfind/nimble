@@ -213,8 +213,9 @@ class Matrix(Base):
             if not pd.nimbleAccessible():
                 msg = "pandas is not available"
                 raise PackageException(msg)
-            return pd.DataFrame(data.copy())
-
+            pnames = self.points._getNamesNoGeneration()
+            fnames = self.features._getNamesNoGeneration()
+            return pd.DataFrame(data.copy(), index=pnames, columns=fnames)
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):

@@ -9,6 +9,7 @@ import configparser
 import numpy
 
 import nimble
+from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
 from nimble.exceptions import ImproperObjectAction
@@ -535,6 +536,135 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     time = stopTimer(timer)
     handleLogging(useLog, 'run', "normalizeData", trainX, trainY, testX, None,
+                  learnerName, merged, time=time)
+
+def fillMatching(learnerName, matchingElements, trainX, arguments=None,
+                 points=None, features=None, useLog=None, **kwarguments):
+    """
+    Fill matching values using imputation learners.
+
+    Transform the data in the ``trainX`` object to replace all matching
+    values with values calculated by the learner.
+
+    Parameters
+    ----------
+    learnerName : str
+        Name of the learner to be called, in the form 'package.learner'
+    trainX: nimble Base object
+        Data to be used for training.
+    arguments : dict
+        Mapping argument names (strings) to their values, to be used
+        during training and application.
+        Example: {'dimensions': 5, 'k': 5}
+        If an argument requires its own parameters for instantiation,
+        use a nimble.Init object.
+        Example: {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+    points : identifier, list of identifiers, None
+        May be a single point name or index, an iterable,
+        container of point names and/or indices. None indicates
+        application to all points, otherwise only the matching values in
+        the specified points will be modified.
+    features : identifier, list of identifiers, None
+        May be a single feature name or index, an iterable,
+        container of feature names and/or indices. None indicates
+        application to all features, otherwise only the matching values
+        in the specified features will be modified.
+    useLog : bool, None
+        Local control for whether to send object creation to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
+    kwarguments
+        Keyword arguments specified variables that are passed to the
+        learner. Same format as the arguments parameter.
+
+    See Also
+    --------
+    nimble.data.Points.fillMatching, nimble.data.Features.fillMatching
+
+    Examples
+    --------
+    Fill missing values based on k-nearest neighbors classifier.
+
+    >>> raw = [[1, None, None],
+    ...        [1, 3, 6],
+    ...        [2, 1, 6],
+    ...        [1, 3, 7],
+    ...        [None, 3, None]]
+    >>> data = nimble.createData('Matrix', raw)
+    >>> toMatch = nimble.match.missing
+    >>> nimble.fillMatching('Custom.KNNImputation', toMatch, data,
+    ...                     mode='classification', k=3)
+    >>> data
+    Matrix(
+        [[  1   3.000 6.000]
+         [  1     3     6  ]
+         [  2     1     6  ]
+         [  1     3     7  ]
+         [1.000   3   6.000]]
+        )
+
+    Fill last feature zeros based on k-nearest neighbors regressor.
+
+    >>> raw = [[1, 0, 0],
+    ...        [1, 3, 6],
+    ...        [2, 1, 6],
+    ...        [1, 3, 7],
+    ...        [0, 3, 0]]
+    >>> data = nimble.createData('Sparse', raw)
+    >>> toMatch = nimble.match.zero
+    >>> nimble.fillMatching('Custom.KNNImputation', toMatch, data,
+    ...                     features=-1, k=3, mode='regression')
+    >>> data
+    Sparse(
+        [[1.000   0   6.333]
+         [1.000 3.000 6.000]
+         [2.000 1.000 6.000]
+         [1.000 3.000 7.000]
+         [  0   3.000 6.333]]
+        )
+    """
+    timer = startTimer(useLog)
+    package, objectName = _unpackLearnerName(learnerName)
+    interface = findBestInterface(package)
+    merged = _mergeArguments(arguments, kwarguments)
+    if interface.isAlias('sklearn') and 'missing_values' in merged:
+        msg = 'The missing_values argument for {objectName} is disallowed '
+        msg += 'because nimble handles alternative values via its '
+        msg += 'matchingElements argument'
+        raise InvalidArgumentValue(msg.format(objectName=objectName))
+    checkNans = True
+    if isinstance(matchingElements, nimble.data.Base):
+        if matchingElements.shape != trainX.shape:
+            msg = 'The shape of matchingElements and trainX must match'
+            raise InvalidArgumentValue(msg)
+        matchMatrix = matchingElements
+    else:
+        matchingElements = match.convertMatchToFunction(matchingElements)
+        matchMatrix = trainX.matchingElements(matchingElements, useLog=False)
+        if matchingElements(numpy.nan):
+            checkNans = False
+    if checkNans:
+        nanLocs = trainX.matchingElements(match.missing, useLog=False)
+        if matchMatrix | nanLocs != matchMatrix:
+            msg = "filling requires all unmatched elements to be non-nan"
+            raise ImproperObjectAction(msg)
+
+    # do not fill actual trainX with nans in case trainAndApply fails
+    toFill = trainX.copy()
+    toFill.features.fillMatching(numpy.nan, matchMatrix, useLog=False)
+    filled = trainAndApply(learnerName, toFill, arguments=merged, useLog=False)
+
+    def transformer(elem, i, j):
+        if matchMatrix[i, j]:
+            return filled[i, j]
+        return elem
+
+    trainX.transformElements(transformer, points, features, useLog=False)
+
+    time = stopTimer(timer)
+    handleLogging(useLog, 'run', "fillMatching", trainX, None, None, None,
                   learnerName, merged, time=time)
 
 

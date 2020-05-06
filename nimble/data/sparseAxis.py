@@ -276,14 +276,16 @@ class SparseAxis(Axis):
                     keepAxis.extend([keepIdx] * sum(locs))
                     keepIdx += 1
                     keepOffAxis.extend(offAxisData[locs])
-            keepData = numpy.array(keepData, dtype=dtype)
+            keepArr = numpy.array(keepData, dtype=dtype)
             self._base.data = scipy.sparse.coo_matrix(
-                (keepData, (keepRows, keepCols)), shape=selfShape)
+                (keepArr, (keepRows, keepCols)), shape=selfShape)
             self._base._sorted = None
 
         # need to manually set dtype or coo_matrix will force to simplest dtype
-        targetData = numpy.array(targetData, dtype=dtype)
-        ret = scipy.sparse.coo_matrix((targetData, (targetRows, targetCols)),
+        targetArr = numpy.array(targetData)
+        if not numpy.issubdtype(targetArr.dtype, numpy.number):
+            targetArr = numpy.array(targetData, dtype=numpy.object_)
+        ret = scipy.sparse.coo_matrix((targetArr, (targetRows, targetCols)),
                                       shape=targetShape)
         return nimble.data.Sparse(ret, pointNames=pointNames,
                                   featureNames=featureNames, reuseData=True)
