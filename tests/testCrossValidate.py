@@ -25,7 +25,7 @@ from nimble.helpers import computeMetrics
 from nimble.helpers import generateClassificationData
 from nimble.helpers import KFoldCrossValidator
 from nimble.customLearners import CustomLearner
-from nimble.configuration import configSafetyWrapper
+from .assertionHelpers import configSafetyWrapper
 from .assertionHelpers import oneLogEntryExpected
 
 

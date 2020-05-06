@@ -13,12 +13,12 @@ import nimble
 from nimble import createData
 from nimble.interfaces.keras_interface import Keras
 from nimble.exceptions import InvalidArgumentValue
-from nimble.utility import ImportModule
+from nimble.utility import DeferredModuleImport
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory, noLogEntryExpected
 
-keras = ImportModule("keras")
-tfKeras = ImportModule('tensorflow.keras')
+keras = DeferredModuleImport("keras")
+tfKeras = DeferredModuleImport('tensorflow.keras')
 
 keraSkipDec = SkipMissing('Keras')
 
@@ -43,9 +43,13 @@ def chooseOptimizer(func):
 @keraSkipDec
 @noLogEntryExpected
 def test_Keras_version():
+    import keras
     interface = Keras()
-    # tensorflow.keras is prioritized based on recommendation from keras
-    version = tfKeras.__version__ if tfKeras else keras.__version__
+    if tfKeras.nimbleAccessible():
+        # tensorflow.keras is prioritized based on recommendation from keras
+        version = tfKeras.__version__ 
+    elif keras.nimbleAccessible():
+        version = keras.__version__
     assert interface.version() == version
 
 @keraSkipDec

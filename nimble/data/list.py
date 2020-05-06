@@ -3,6 +3,7 @@ Class extending Base, using a list of lists to store data.
 """
 
 import copy
+import itertools
 from functools import reduce
 
 import numpy
@@ -11,19 +12,17 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
-from nimble.utility import ImportModule
+from nimble.utility import scipy, pd
 from .base import Base
 from .base_view import BaseView
 from .listPoints import ListPoints, ListPointsView
 from .listFeatures import ListFeatures, ListFeaturesView
-from .listElements import ListElements, ListElementsView
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import isAllowedSingleElement
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import csvCommaFormat
-
-scipy = ImportModule('scipy')
-pd = ImportModule('pandas')
+from .dataHelpers import denseCountUnique
+from .dataHelpers import NimbleElementIterator
 
 @inheritDocstringsFactory(Base)
 class List(Base):
@@ -122,8 +121,31 @@ class List(Base):
     def _getFeatures(self):
         return ListFeatures(self)
 
-    def _getElements(self):
-        return ListElements(self)
+    def _transform_implementation(self, toTransform, points, features):
+        IDs = itertools.product(range(len(self.points)),
+                                range(len(self.features)))
+        for i, j in IDs:
+            currVal = self.data[i][j]
+
+            if points is not None and i not in points:
+                continue
+            if features is not None and j not in features:
+                continue
+
+            if toTransform.oneArg:
+                currRet = toTransform(currVal)
+            else:
+                currRet = toTransform(currVal, i, j)
+
+            self.data[i][j] = currRet
+
+    def _calculate_implementation(self, function, points, features,
+                                  preserveZeros, outputType):
+        return self._calculate_genericVectorized(
+            function, points, features, outputType)
+
+    def _countUnique_implementation(self, points, features):
+        return denseCountUnique(self, points, features)
 
     def _transpose_implementation(self):
         """
@@ -234,6 +256,10 @@ class List(Base):
             isEmpty = True
             emptyData = numpy.empty(shape=(len(self.points),
                                            len(self.features)))
+
+        if to == 'pythonlist':
+            return [pt.copy() for pt in self.data]
+
         if to in nimble.data.available:
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
@@ -246,8 +272,6 @@ class List(Base):
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
-        if to == 'pythonlist':
-            return [pt.copy() for pt in self.data]
         if to == 'numpyarray':
             if isEmpty:
                 return emptyData
@@ -257,7 +281,7 @@ class List(Base):
                 return numpy.matrix(emptyData)
             return convertList(numpy.matrix, self.data)
         if 'scipy' in to:
-            if not scipy:
+            if not scipy.nimbleAccessible():
                 msg = "scipy is not available"
                 raise PackageException(msg)
             asArray = convertList(numpy2DArray, self.data)
@@ -274,22 +298,24 @@ class List(Base):
                     return scipy.sparse.coo_matrix(emptyData)
                 return scipy.sparse.coo_matrix(asArray)
         if to == 'pandasdataframe':
-            if not pd:
+            if not pd.nimbleAccessible():
                 msg = "pandas is not available"
                 raise PackageException(msg)
             if isEmpty:
                 return pd.DataFrame(emptyData)
-            return pd.DataFrame(self.data)
+            pnames = self.points._getNamesNoGeneration()
+            fnames = self.features._getNamesNoGeneration()
+            return pd.DataFrame(self.data.copy(), index=pnames, columns=fnames)
 
-    def _fillWith_implementation(self, values, pointStart, featureStart,
-                                 pointEnd, featureEnd):
-        if not isinstance(values, Base):
-            values = [values] * (featureEnd - featureStart + 1)
+    def _replaceRectangle_implementation(self, replaceWith, pointStart,
+                                         featureStart, pointEnd, featureEnd):
+        if not isinstance(replaceWith, Base):
+            values = [replaceWith] * (featureEnd - featureStart + 1)
             for p in range(pointStart, pointEnd + 1):
                 self.data[p][featureStart:featureEnd + 1] = values
         else:
             for p in range(pointStart, pointEnd + 1):
-                fill = values.data[p - pointStart]
+                fill = replaceWith.data[p - pointStart]
                 self.data[p][featureStart:featureEnd + 1] = fill
 
     def _flattenToOnePoint_implementation(self):
@@ -577,6 +603,10 @@ class List(Base):
             return [list(map(convertType, pt)) for pt in self.points]
         return self.data
 
+    def _iterateElements_implementation(self, order, only):
+        array = numpy.array(self.data, dtype=numpy.object_)
+        return NimbleElementIterator(array, order, only)
+
 
 class ListView(BaseView, List):
     """
@@ -591,9 +621,6 @@ class ListView(BaseView, List):
     def _getFeatures(self):
         return ListFeaturesView(self)
 
-    def _getElements(self):
-        return ListElementsView(self)
-
     def _copy_implementation(self, to):
         # we only want to change how List and pythonlist copying is
         # done we also temporarily convert self.data to a python list
@@ -606,13 +633,14 @@ class ListView(BaseView, List):
                                              useLog=False)
             return intermediate.copy(to=to)
 
-        listForm = [list(pt) for pt in self.points]
+        # fastest way to generate list of view data
+        listForm = [self._source.data[i][self._fStart:self._fEnd]
+                    for i in range(self._pStart, self._pEnd)]
 
         if to not in ['List', 'pythonlist']:
             origData = self.data
             self.data = listForm
-            res = super(ListView, self)._copy_implementation(
-                to)
+            res = super(ListView, self)._copy_implementation(to)
             self.data = origData
             return res
 

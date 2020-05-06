@@ -903,7 +903,8 @@ class Features(object):
 
         See Also
         --------
-        nimble.data.Elements.count, nimble.data.Elements.countUnique
+        nimble.data.Base.countElements,
+        nimble.data.Base.countUniqueElements
 
         Examples
         --------
@@ -1478,8 +1479,8 @@ class Features(object):
         """
         self._shuffle(useLog)
 
-    def fill(self, match, fill, features=None, returnModified=False,
-             useLog=None, **kwarguments):
+    def fillMatching(self, fillWith, matchingElements, features=None,
+                     useLog=None, **kwarguments):
         """
         Replace given values in each feature with other values.
 
@@ -1491,26 +1492,24 @@ class Features(object):
 
         Parameters
         ----------
-        match : value, list, or function
+        fillWith : value or function
+            * value - a value to fill each matching value in each
+              feature
+            * function - must be in the format:
+              fillWith(feature, matchingElements) or
+              fillWith(feature, matchingElements, **kwarguments)
+              and return the transformed feature as a list of values.
+              Certain fill methods can be imported from nimble's fill
+              module.
+        matchingElements : value, list, or function
             * value - a value to locate within each feature
             * list - values to locate within each feature
             * function - must accept a single value and return True if
               the value is a match. Certain match types can be imported
-              from nimble's match module: missing, nonNumeric, zero, etc
-        fill : value or function
-            * value - a value to fill each matching value in each
-              feature
-            * function - must be in the format fill(feature, match) or
-              fill(feature, match, arguments) and return the transformed
-              feature as a list of values. Certain fill methods can be
-              imported from nimble's fill module: mean, median, mode,
-              forwardFill, backwardFill, interpolation
+              from nimble's match module.
         features : identifier or list of identifiers
             Select specific features to apply fill to. If features is
             None, the fill will be applied to all features.
-        returnModified : return an object containing True for the
-            modified values in each feature and False for unmodified
-            values.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1519,12 +1518,11 @@ class Features(object):
             False, do **NOT** send to the logger, regardless of the
             global option.
         kwarguments
-            Any additional arguments being passed to the fill
-            function.
+            Provide additional parameters to a ``fillWith`` function.
 
         See Also
         --------
-        nimble.match, nimble.fill
+         nimble.fill, nimble.match
 
         Examples
         --------
@@ -1536,14 +1534,14 @@ class Features(object):
         ...        [2, 2, 2],
         ...        ['na', 2, 2]]
         >>> data = nimble.createData('Matrix', raw)
-        >>> data.features.fill('na', -1)
+        >>> data.features.fillMatching(-1, 'na')
         >>> data
         Matrix(
-            [[1.000  1.000 1.000 ]
-             [1.000  1.000 1.000 ]
-             [1.000  1.000 -1.000]
-             [2.000  2.000 2.000 ]
-             [-1.000 2.000 2.000 ]]
+            [[1  1 1 ]
+             [1  1 1 ]
+             [1  1 -1]
+             [2  2 2 ]
+             [-1 2 2 ]]
             )
 
         Fill using nimble's match and fill modules; limit to first
@@ -1557,7 +1555,7 @@ class Features(object):
         ...        [2, 2, 2],
         ...        [None, 2, 2]]
         >>> data = nimble.createData('Matrix', raw)
-        >>> data.features.fill(match.missing, fill.mean, features=0)
+        >>> data.features.fillMatching(fill.mean, match.missing, features=0)
         >>> data
         Matrix(
             [[1.000 1  1 ]
@@ -1567,8 +1565,8 @@ class Features(object):
              [1.250 2  2 ]]
             )
         """
-        return self._fill(match, fill, features, returnModified, useLog,
-                          **kwarguments)
+        return self._fillMatching(fillWith, matchingElements, features,
+                                  useLog, **kwarguments)
 
     def normalize(self, subtract=None, divide=None, applyResultTo=None,
                   useLog=None):
@@ -1907,17 +1905,6 @@ class Features(object):
     # Query functions #
     ###################
 
-    def nonZeroIterator(self):
-        """
-        Iterate through each non-zero value following the feature order.
-
-        Return an iterator for all non-zero elements contained in this
-        object, where the values in the same feature will be
-        contiguous, with the earlier indexed features coming
-        before the later indexed features.
-        """
-        return self._nonZeroIterator()
-
     def unique(self):
         """
         Only the unique features from this object.
@@ -2084,8 +2071,7 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _fill(self, match, fill, limitTo, returnModified, useLog=None,
-              **kwarguments):
+    def _fillMatching(self, match, fill, limitTo, useLog=None, **kwarguments):
         pass
 
     @abstractmethod
@@ -2099,10 +2085,6 @@ class Features(object):
 
     @abstractmethod
     def _repeat(self, totalCopies, copyValueByValue):
-        pass
-
-    @abstractmethod
-    def _nonZeroIterator(self):
         pass
 
     @abstractmethod

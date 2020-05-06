@@ -61,7 +61,7 @@ class KNNClassifier(CustomLearner):
         """
         ret = None
         dists = self._getDistanceMatrix(testX)
-        labelVals = list(self._trainY.elements.countUnique().keys())
+        labelVals = list(self._trainY.countUniqueElements().keys())
         labelVals.sort()
         for point in dists:
             _, labelVotes = self._kNeighborOrderedLabelsAndVotes(point)

@@ -4,15 +4,13 @@ import numpy
 
 import nimble
 from nimble.exceptions import ImproperObjectAction, PackageException
-from nimble.utility import ImportModule
-
-scipy = ImportModule('scipy')
+from nimble.utility import scipy
 
 def confidenceIntervalHelper(errors, transform, confidence=0.95):
     """Helper to calculate the confidence interval, given a vector of errors
     and a monotonic transform to be applied after the calculation.
     """
-    if not scipy:
+    if not scipy.nimbleAccessible():
         msg = 'To call this function, scipy must be installed.'
         raise PackageException(msg)
 
@@ -37,8 +35,7 @@ def confidenceIntervalHelper(errors, transform, confidence=0.95):
 
 
 def rootMeanSquareErrorConfidenceInterval(known, predicted, confidence=0.95):
-    errors = known - predicted
-    errors.elements.power(2)
+    errors = (known - predicted) ** 2
 
     def wrappedSqrt(value):
         if value < 0:

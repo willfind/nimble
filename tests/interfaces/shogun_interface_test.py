@@ -30,13 +30,11 @@ from nimble.helpers import generateClassificationData
 from nimble.helpers import generateRegressionData
 from nimble.helpers import generateClusteredPoints
 from nimble.interfaces.shogun_interface import checkProcessFailure
-from nimble.utility import ImportModule
+from nimble.utility import scipy
 
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
-
-scipy = ImportModule('scipy')
 
 shogunSkipDec = SkipMissing('shogun')
 
@@ -190,8 +188,6 @@ def testShogunMulticlassSVM():
 @oneLogEntryExpected
 def testShogunSparseRegression():
     """ Test shogun sparse data instantiation by calling on a sparse regression learner with a large, but highly sparse, matrix """
-    if not scipy:
-        return
     x = 100
     c = 10
     points = numpyRandom.randint(0, x, c)
@@ -528,7 +524,7 @@ def testShogunClassificationLearners():
         elif ptVal == sg._access('Classifier', 'PT_BINARY'):
             trainX = abs(binaryData[0][0])
             trainY = abs(binaryData[0][1])
-            trainY.points.fill(0, -1, useLog=False)
+            trainY.points.fillMatching(-1, 0, useLog=False)
             testX = abs(binaryData[1][0])
             Ytrain = trainY.copy('numpy array', outputAs1D=True)
             Ytrain = BinaryLabels(Ytrain)
@@ -620,7 +616,7 @@ def testShogunGaussianProcessClassification():
     data = generateClassificationData(2, 20, 20)
     trainX = data[0][0]
     trainY = data[0][1]
-    trainY.points.fill(0, -1, useLog=False)
+    trainY.points.fillMatching(-1, 0, useLog=False)
     testX = data[1][0]
     Ytrain = trainY.copy('numpy array', outputAs1D=True)
     Ytrain = BinaryLabels(Ytrain)

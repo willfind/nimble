@@ -10,79 +10,11 @@ from nimble.match import convertMatchToFunction
 from nimble.match import anyValues
 from nimble.exceptions import InvalidArgumentValue
 
-def factory(match, fill, **kwarguments):
-    """
-    Return a function for modifying a point or feature.
-
-    The returned function accepts a point or feature and returns the
-    modified point or feature as a list.  The modifications occur to any
-    value in the point or feature that return True for the ``match``
-    parameter and the new value is determined based on the ``fill``
-    parameter.
-
-    Parameters
-    ----------
-    match : value or function
-        * value - The value which should be filled if it occurs in the
-          data.
-        * function - Input a value and return True if that value should
-          be filled. nimble offers common use-case functions in its
-          match module.
-    fill : value or function
-        * value - The value which will replace any matching values.
-        * function - Input a value and return the value which will
-          replace the input value. Nimble offers common use-case
-          functions in this module.
-    kwarguments
-        Collection of extra key:value argument pairs to pass to
-        fill function.
-
-    Returns
-    -------
-    function
-
-    See Also
-    --------
-    nimble.match
-
-    Examples
-    --------
-    Match a value and fill with a different value.
-
-    >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = nimble.createData('Matrix', raw)
-    >>> transform = factory('na', 0)
-    >>> transform(data)
-    [1, 0, 3, 0, 5]
-
-    Match using a function from nimble's match module and fill using
-    another function in this module.
-
-    >>> from nimble import match
-    >>> raw = [1, 0, 3, 0, 5]
-    >>> data = nimble.createData('Matrix', raw)
-    >>> transform = factory(match.zero, backwardFill)
-    >>> transform(data)
-    [1, 3, 3, 5, 5]
-    """
-    match = convertMatchToFunction(match)
-    if not hasattr(fill, '__call__'):
-        value = fill
-        # for consistency use numpy.nan for None and nans
-        if value is None or value != value:
-            value = numpy.nan
-        fill = constant
-        kwarguments['constantValue'] = value
-    if kwarguments:
-        @functools.wraps(fill)
-        def fillFunction(vector):
-            return fill(vector, match, **kwarguments)
-    else:
-        @functools.wraps(fill)
-        def fillFunction(vector):
-            return fill(vector, match)
-
-    return fillFunction
+def booleanElementMatch(vector, match):
+    if not isinstance(match, nimble.data.Base):
+        match = convertMatchToFunction(match)
+        return vector.matchingElements(match, useLog=False)
+    return match
 
 def constant(vector, match, constantValue):
     """
@@ -118,7 +50,9 @@ def constant(vector, match, constantValue):
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = nimble.createData('Matrix', raw)
     >>> constant(data, 'na', 0)
-    [1, 0, 3, 0, 5]
+    Matrix(
+        [[1 0 3 0 5]]
+        )
 
     Match using a function from nimble's match module.
 
@@ -126,10 +60,19 @@ def constant(vector, match, constantValue):
     >>> raw = [1, 0, 3, 0, 5]
     >>> data = nimble.createData('Matrix', raw)
     >>> constant(data, match.zero, 99)
-    [1, 99, 3, 99, 5]
+    Matrix(
+        [[1 99 3 99 5]]
+        )
     """
-    match = convertMatchToFunction(match)
-    return [constantValue if match(val) else val for val in vector]
+    toFill = booleanElementMatch(vector, match)
+
+    def filler(vec):
+        return [constantValue if fill else val
+                for val, fill in zip(vec, toFill)]
+
+    if len(vector.points) == 1:
+        return vector.points.calculate(filler, useLog=False)
+    return vector.features.calculate(filler, useLog=False)
 
 def mean(vector, match):
     """
@@ -166,7 +109,9 @@ def mean(vector, match):
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = nimble.createData('Matrix', raw)
     >>> mean(data, 'na')
-    [1, 3.0, 3, 3.0, 5]
+    Matrix(
+        [[1.000 3.000 3.000 3.000 5.000]]
+        )
 
     Match using a function from nimble's match module.
 
@@ -174,7 +119,9 @@ def mean(vector, match):
     >>> raw = [6, 0, 2, 0, 4]
     >>> data = nimble.createData('Matrix', raw)
     >>> mean(data, match.zero)
-    [6, 4.0, 2, 4.0, 4]
+    Matrix(
+        [[6.000 4.000 2.000 4.000 4.000]]
+        )
     """
     return statsBackend(vector, match, 'mean', nimble.calculate.mean)
 
@@ -214,7 +161,9 @@ def median(vector, match):
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = nimble.createData('Matrix', raw)
     >>> median(data, 'na')
-    [1, 3.0, 3, 3.0, 5]
+    Matrix(
+        [[1.000 3.000 3.000 3.000 5.000]]
+        )
 
     Match using a function from nimble's match module.
 
@@ -222,7 +171,9 @@ def median(vector, match):
     >>> raw = [6, 0, 2, 0, 4]
     >>> data = nimble.createData('Matrix', raw)
     >>> median(data, match.zero)
-    [6, 4.0, 2, 4.0, 4]
+    Matrix(
+        [[6.000 4.000 2.000 4.000 4.000]]
+        )
     """
     return statsBackend(vector, match, 'median', nimble.calculate.median)
 
@@ -260,7 +211,9 @@ def mode(vector, match):
     >>> raw = [1, 'na', 1, 'na', 5]
     >>> data = nimble.createData('Matrix', raw)
     >>> mode(data, 'na')
-    [1, 1, 1, 1, 5]
+    Matrix(
+        [[1 1 1 1 5]]
+        )
 
     Match using a function from nimble's match module.
 
@@ -268,7 +221,9 @@ def mode(vector, match):
     >>> raw = [6, 6, 2, 0, 0]
     >>> data = nimble.createData('Matrix', raw)
     >>> mode(data, match.zero)
-    [6, 6, 2, 6, 6]
+    Matrix(
+        [[6 6 2 6 6]]
+        )
     """
     return statsBackend(vector, match, 'mode', nimble.calculate.mode)
 
@@ -309,7 +264,9 @@ def forwardFill(vector, match):
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = nimble.createData('Matrix', raw)
     >>> forwardFill(data, 'na')
-    [1, 1, 3, 3, 5]
+    Matrix(
+        [[1 1 3 3 5]]
+        )
 
     Match using a function from nimble's match module.
 
@@ -317,19 +274,27 @@ def forwardFill(vector, match):
     >>> raw = [6, 0, 2, 0, 4]
     >>> data = nimble.createData('Matrix', raw)
     >>> forwardFill(data, match.zero)
-    [6, 6, 2, 2, 4]
+    Matrix(
+        [[6 6 2 2 4]]
+        )
     """
-    match = convertMatchToFunction(match)
-    if match(vector[0]):
+    toFill = booleanElementMatch(vector, match)
+    if toFill[0]:
         msg = directionError('forward fill', vector, 'first')
         raise InvalidArgumentValue(msg)
-    ret = []
-    for val in vector:
-        if match(val):
-            ret.append(ret[-1])
-        else:
-            ret.append(val)
-    return ret
+
+    def filler(vec):
+        ret = []
+        for val, fill in zip(vec, toFill):
+            if fill:
+                ret.append(ret[-1])
+            else:
+                ret.append(val)
+        return ret
+
+    if len(vector.points) == 1:
+        return vector.points.calculate(filler, useLog=False)
+    return vector.features.calculate(filler, useLog=False)
 
 def backwardFill(vector, match):
     """
@@ -368,7 +333,9 @@ def backwardFill(vector, match):
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = nimble.createData('Matrix', raw)
     >>> backwardFill(data, 'na')
-    [1, 3, 3, 5, 5]
+    Matrix(
+        [[1 3 3 5 5]]
+        )
 
     Match using a function from nimble's match module.
 
@@ -376,21 +343,30 @@ def backwardFill(vector, match):
     >>> raw = [6, 0, 2, 0, 4]
     >>> data = nimble.createData('Matrix', raw)
     >>> backwardFill(data, match.zero)
-    [6, 2, 2, 4, 4]
+    Matrix(
+        [[6 2 2 4 4]]
+        )
     """
-    match = convertMatchToFunction(match)
-    if match(vector[-1]):
+    toFill = booleanElementMatch(vector, match)
+    if toFill[-1]:
         msg = directionError('backward fill', vector, 'last')
         raise InvalidArgumentValue(msg)
-    ret = numpy.empty_like(vector, dtype=numpy.object_)
-    numValues = len(vector)
-    for i, val in enumerate(reversed(vector)):
-        idx = numValues - i - 1
-        if match(val):
-            ret[idx] = ret[idx + 1]
-        else:
-            ret[idx] = val
-    return ret.tolist()
+
+    def filler(vec):
+        ret = numpy.empty_like(vector, dtype=numpy.object_)
+        numValues = len(vec)
+        for i, (val, fill) in enumerate(zip(reversed(vector),
+                                            reversed(toFill))):
+            idx = numValues - i - 1
+            if fill:
+                ret[idx] = ret[idx + 1]
+            else:
+                ret[idx] = val
+        return ret
+
+    if len(vector.points) == 1:
+        return vector.points.calculate(filler, useLog=False)
+    return vector.features.calculate(filler, useLog=False)
 
 def interpolate(vector, match, **kwarguments):
     """
@@ -432,7 +408,9 @@ def interpolate(vector, match, **kwarguments):
     >>> raw = [1, 'na', 3, 'na', 5]
     >>> data = nimble.createData('Matrix', raw)
     >>> interpolate(data, 'na')
-    [1, 2.0, 3, 4.0, 5]
+    Matrix(
+        [[1.000 2.000 3.000 4.000 5.000]]
+        )
 
     Match using a function from nimble's match module.
 
@@ -440,204 +418,74 @@ def interpolate(vector, match, **kwarguments):
     >>> raw = [6, 0, 4, 0, 2]
     >>> data = nimble.createData('Matrix', raw)
     >>> interpolate(data, match.zero)
-    [6, 5.0, 4, 3.0, 2]
+    Matrix(
+        [[6.000 5.000 4.000 3.000 2.000]]
+        )
     """
-    match = convertMatchToFunction(match)
+    toFill = booleanElementMatch(vector, match)
     if 'x' in kwarguments:
         msg = "'x' is a disallowed keyword argument because it is "
         msg += "determined by the data in the vector."
         raise TypeError(msg)
-    matchedLoc = [i for i, val in enumerate(vector) if match(val)]
+    matchedLoc = []
+    unmatchedLoc = []
+    unmatchedVals = []
+    for i, (val, fill) in enumerate(zip(vector, toFill)):
+        if fill:
+            matchedLoc.append(i)
+        else:
+            unmatchedLoc.append(i)
+            unmatchedVals.append(val)
+
     kwarguments['x'] = matchedLoc
     if 'xp' not in kwarguments:
-        unmatchedLoc = [i for i, val in enumerate(vector) if not match(val)]
         kwarguments['xp'] = unmatchedLoc
     if 'fp' not in kwarguments:
-        unmatchedVals = [val for i, val in enumerate(vector) if not match(val)]
         kwarguments['fp'] = unmatchedVals
 
     tmpV = numpy.interp(**kwarguments)
 
-    ret = []
-    j = 0
-    for i, val in enumerate(vector):
-        if i in matchedLoc:
-            ret.append(tmpV[j])
-            j += 1
-        else:
-            ret.append(val)
-    return ret
+    def filler(vec):
+        ret = []
+        j = 0
+        for i, val in enumerate(vec):
+            if i in matchedLoc:
+                ret.append(tmpV[j])
+                j += 1
+            else:
+                ret.append(val)
+        return ret
 
-def kNeighborsRegressor(data, match, **kwarguments):
-    """
-    Fill matched values with value from skl.kNeighborsRegressor
-
-    The k nearest neighbors are determined by analyzing all points with
-    the same unmatched features as the point with missing data. The
-    values for the matched feature at those k points are averaged to
-    fill the matched value. By default, k=5. This and other parameters
-    for skl.kNeighborsRegressor can be adjusted using keyword arguments.
-
-    Parameters
-    ----------
-    data : nimble point or feature
-        A nimble Base object containing the data.
-    match : value or function
-        * value - The value which should be filled if it occurs in the
-          data.
-        * function - Input a value and return True if that value should
-          be filled. Nimble offers common use-case functions in its
-          match module.
-    kwarguments
-        Collection of extra key:value argument pairs to pass to
-        skl.kNeighborsRegressor.
-
-    Returns
-    -------
-    list
-        The vector values with the kNeighborsRegressor values replacing
-        the ``match`` values.
-
-    See Also
-    --------
-    nimble.match
-
-    Examples
-    --------
-    >>> raw = [[1, 1, 1],
-    ...        [1, 1, 1],
-    ...        [1, 1, 'na'],
-    ...        [2, 2, 2],
-    ...        ['na', 2, 2]]
-    >>> data = nimble.createData('Matrix', raw)
-    >>> kNeighborsRegressor(data, 'na', arguments={'n_neighbors': 3})
-    Matrix(
-        [[  1   1   1  ]
-         [  1   1   1  ]
-         [  1   1 1.333]
-         [  2   2   2  ]
-         [1.333 2   2  ]]
-        )
-    """
-    return kNeighborsBackend("skl.KNeighborsRegressor", data, match,
-                             **kwarguments)
-
-def kNeighborsClassifier(data, match, **kwarguments):
-    """
-    Fill matched values with value from skl.kNeighborsClassifier
-
-    The k nearest neighbors are determined by analyzing all points with
-    the same unmatched features as the point with missing data. The
-    values for the matched feature at those k points are averaged to
-    fill the matched value. By default, k=5. This and other parameters
-    for skl.kNeighborsClassifier can be adjusted using ``arguments``.
-
-    Parameters
-    ----------
-    data : nimble point or feature
-        A nimble Base object containing the data.
-    match : value or function
-        * value - The value which should be filled if it occurs in the
-          data.
-        * function - Input a value and return True if that value should
-          be filled. Nimble offers common use-case functions in its
-          match module.
-    kwarguments
-        Collection of extra key:value argument pairs to pass to
-        skl.kNeighborsClassifier.
-
-    Returns
-    -------
-    list
-        The vector values with the kNeighborsClassifier values replacing
-        the ``match`` values.
-
-    See Also
-    --------
-    nimble.match
-
-    Examples
-    --------
-    >>> raw = [[1, 1, 1],
-    ...        [1, 1, 1],
-    ...        [1, 1, 'na'],
-    ...        [2, 2, 2],
-    ...        ['na', 2, 2]]
-    >>> data = nimble.createData('Matrix', raw)
-    >>> kNeighborsClassifier(data, 'na', arguments={'n_neighbors': 3})
-    Matrix(
-        [[  1   1   1  ]
-         [  1   1   1  ]
-         [  1   1 1.000]
-         [  2   2   2  ]
-         [1.000 2   2  ]]
-        )
-    """
-    return kNeighborsBackend("skl.KNeighborsClassifier", data, match,
-                             **kwarguments)
+    if len(vector.points) == 1:
+        return vector.points.calculate(filler, useLog=False)
+    return vector.features.calculate(filler, useLog=False)
 
 ############
 # Backends #
 ############
 
-def kNeighborsBackend(method, data, match, **kwarguments):
-    """
-    Backend for filling using skl kNeighbors functions.
-    """
-    match = convertMatchToFunction(match)
-    tmpDict = {}#store idx, col and values for matching values
-    for pID, pt in enumerate(data.points):
-        # find matching values in the point
-        if anyValues(match)(pt):
-            notMatchFts = []
-            matchFts = []
-            for idx, val in enumerate(pt):
-                if match(val):
-                    matchFts.append(idx)
-                else:
-                    notMatchFts.append(idx)
-            predictData = data[pID, notMatchFts]
-
-            # make prediction for each feature in the point with matching value
-            for fID in matchFts:
-                # training data includes not matching features and this feature
-                notMatchFts.append(fID)
-                trainingData = data[:, notMatchFts]
-                # training data includes only points that have valid data at
-                # each feature this will also remove the point we are
-                # evaluating from the training data
-                trainingData.points.delete(anyValues(match), useLog=False)
-                pred = nimble.trainAndApply(method, trainingData, -1, predictData,
-                                            useLog=False, **kwarguments)
-                pred = pred[0]
-                tmpDict[pID, fID] = pred
-                # remove this feature so next prediction will not include it
-                del notMatchFts[-1]
-
-    def transform(value, i, j):
-        try:
-            return tmpDict[(i, j)]
-        except KeyError:
-            return value
-
-    data.elements.transform(transform, useLog=False)
-
-    return data
-
 def statsBackend(vector, match, funcString, statisticsFunction):
     """
     Backend for filling with a statistics function from nimble.calculate.
     """
-    match = convertMatchToFunction(match)
-    unmatched = [val for val in vector if not match(val)]
+    toFill = booleanElementMatch(vector, match)
+
+    def toStat(vec):
+        return [val for val, fill in zip(vector, toFill) if not fill]
+
+    if len(vector.points) == 1:
+        unmatched = vector.points.calculate(toStat, useLog=False)
+    else:
+        unmatched = vector.features.calculate(toStat, useLog=False)
+
     if len(unmatched) == len(vector):
-        return list(vector)
+        return vector
     if not unmatched:
         msg = statsExceptionNoMatches(funcString, vector)
         raise InvalidArgumentValue(msg)
-    unmatched = nimble.createData('List', unmatched, useLog=False)
+
     stat = statisticsFunction(unmatched)
-    if stat is None:
+    if stat != stat:
         msg = statsExceptionInvalidInput(funcString, vector)
         raise InvalidArgumentValue(msg)
 

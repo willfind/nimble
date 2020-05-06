@@ -3,26 +3,26 @@ Class extending Base, using a numpy dense matrix to store data.
 """
 
 import copy
+import itertools
 
 import numpy
 
 import nimble
+from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
-from nimble.utility import ImportModule
+from nimble.utility import scipy, pd
 from .base import Base
 from .base_view import BaseView
 from .matrixPoints import MatrixPoints, MatrixPointsView
 from .matrixFeatures import MatrixFeatures, MatrixFeaturesView
-from .matrixElements import MatrixElements, MatrixElementsView
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import allDataIdentical
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import csvCommaFormat
-
-scipy = ImportModule('scipy')
-pd = ImportModule('pandas')
+from .dataHelpers import denseCountUnique
+from .dataHelpers import NimbleElementIterator
 
 @inheritDocstringsFactory(Base)
 class Matrix(Base):
@@ -61,8 +61,38 @@ class Matrix(Base):
     def _getFeatures(self):
         return MatrixFeatures(self)
 
-    def _getElements(self):
-        return MatrixElements(self)
+    def _transform_implementation(self, toTransform, points, features):
+        IDs = itertools.product(range(len(self.points)),
+                                range(len(self.features)))
+        for i, j in IDs:
+            currVal = self.data[i, j]
+
+            if points is not None and i not in points:
+                continue
+            if features is not None and j not in features:
+                continue
+
+            if toTransform.oneArg:
+                currRet = toTransform(currVal)
+            else:
+                currRet = toTransform(currVal, i, j)
+
+            self.data[i, j] = currRet
+            # numpy modified data due to int dtype
+            if self.data[i, j] != currRet and currRet == currRet:
+                if match.nonNumeric(currRet) and currRet is not None:
+                    self.data = self.data.astype(numpy.object_)
+                else:
+                    self.data = self.data.astype(numpy.float)
+                self.data[i, j] = currRet
+
+    def _calculate_implementation(self, function, points, features,
+                                  preserveZeros, outputType):
+        return self._calculate_genericVectorized(
+            function, points, features, outputType)
+
+    def _countUnique_implementation(self, points, features):
+        return denseCountUnique(self, points, features)
 
     def _transpose_implementation(self):
         """
@@ -113,7 +143,7 @@ class Matrix(Base):
 
     def _writeFileMTX_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
-        if not scipy:
+        if not scipy.nimbleAccessible():
             msg = "scipy is not available"
             raise PackageException(msg)
 
@@ -159,7 +189,7 @@ class Matrix(Base):
         if to == 'numpymatrix':
             return numpy.matrix(self.data)
         if 'scipy' in to:
-            if not scipy:
+            if not scipy.nimbleAccessible():
                 msg = "scipy is not available"
                 raise PackageException(msg)
             if to == 'scipycoo':
@@ -174,19 +204,21 @@ class Matrix(Base):
             if to == 'scipycsr':
                 return scipy.sparse.csr_matrix(ret)
         if to == 'pandasdataframe':
-            if not pd:
+            if not pd.nimbleAccessible():
                 msg = "pandas is not available"
                 raise PackageException(msg)
-            return pd.DataFrame(self.data.copy())
+            pnames = self.points._getNamesNoGeneration()
+            fnames = self.features._getNamesNoGeneration()
+            return pd.DataFrame(self.data.copy(), index=pnames, columns=fnames)
 
 
-    def _fillWith_implementation(self, values, pointStart, featureStart,
-                                 pointEnd, featureEnd):
-        if not isinstance(values, Base):
-            values = values * numpy.ones((pointEnd - pointStart + 1,
-                                          featureEnd - featureStart + 1))
+    def _replaceRectangle_implementation(self, replaceWith, pointStart,
+                                         featureStart, pointEnd, featureEnd):
+        if not isinstance(replaceWith, Base):
+            values = replaceWith * numpy.ones((pointEnd - pointStart + 1,
+                                               featureEnd - featureStart + 1))
         else:
-            values = values.data
+            values = replaceWith.data
 
         # numpy is exclusive
         pointEnd += 1
@@ -436,6 +468,8 @@ class Matrix(Base):
             return self.data.astype(convertTo)
         return self.data
 
+    def _iterateElements_implementation(self, order, only):
+        return NimbleElementIterator(self.data, order, only)
 
 class MatrixView(BaseView, Matrix):
     """
@@ -449,6 +483,3 @@ class MatrixView(BaseView, Matrix):
 
     def _getFeatures(self):
         return MatrixFeaturesView(self)
-
-    def _getElements(self):
-        return MatrixElementsView(self)

@@ -1,9 +1,13 @@
+
+import itertools
+
 import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.calculate import fractionIncorrect
 from nimble.calculate import varianceFractionRemaining
+from nimble.data.dataHelpers import createDataNoValidation
 
 
 def _validatePredictedAsLabels(predictedValues):
@@ -106,7 +110,7 @@ rSquared.optimal = 'max'
 
 
 def confusionMatrix(knownValues, predictedValues, labels=None,
-                    outputFractions=False):
+                    convertCountsToFractions=False):
     """
     Generate a confusion matrix for known and predicted label values.
 
@@ -129,7 +133,7 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
         pointNames with the prefixes "known_" and "predicted_",
         respectively.  If labels is None, the prefixes will be applied
         directly to the unique values found in ``knownLabels``.
-    outputFractions : bool
+    convertCountsToFractions : bool
         If False, the default, elements are counts. If True, the counts
         are converted to fractions by dividing by the total number of
         observations.
@@ -190,7 +194,8 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
     ...         ['dog'], ['cat'], ['fish']]
     >>> knownObj = nimble.createData('Matrix', known)
     >>> predObj = nimble.createData('Matrix', pred)
-    >>> cm = confusionMatrix(knownObj, predObj, outputFractions=True)
+    >>> cm = confusionMatrix(knownObj, predObj,
+    ...                      convertCountsToFractions=True)
     >>> print(cm)
                      known_cat known_dog known_fish
     <BLANKLINE>
@@ -201,7 +206,7 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
     """
     if not (isinstance(knownValues, nimble.data.Base)
             and isinstance(predictedValues, nimble.data.Base)):
-        msg = 'knownValues and predictedValues must be a nimble data objects'
+        msg = 'knownValues and predictedValues must be nimble data objects'
         raise InvalidArgumentType(msg)
     if not knownValues.shape[1] == predictedValues.shape[1] == 1:
         msg = 'knownValues and predictedValues must each be a single feature'
@@ -216,73 +221,118 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
         msg += 'the range 0 to len(labels)'
         raise InvalidArgumentType(msg)
 
+    if isinstance(labels, dict):
+        confusionMtx, knownLabels = _confusionMatrixWithLabelsDict(
+            knownValues, predictedValues, labels)
+    elif labels is not None:
+        confusionMtx, knownLabels = _confusionMatrixWithLabelsList(
+            knownValues, predictedValues, labels)
+    else:
+        confusionMtx, knownLabels = _confusionMatrixNoLabels(
+            knownValues, predictedValues)
+
+    if convertCountsToFractions:
+        confusionMtx = confusionMtx.astype(float) / len(knownValues.points)
+
+    asType = knownValues.getTypeString()
+    fNames = ['known_' + str(label) for label in knownLabels]
+    pNames = ['predicted_' + str(label) for label in knownLabels]
+
+    return createDataNoValidation(asType, confusionMtx, pNames, fNames,
+                                  reuseData=True)
+
+###########
+# Helpers #
+###########
+
+_intMapCache = {} # increase efficiency by caching
+def _mapInt(val):
+    if val in _intMapCache:
+        return _intMapCache[val]
+
+    try:
+        if val % 1 == 0:
+            _intMapCache[val] = int(val)
+            return int(val)
+        return val
+    except TypeError:
+        return val
+
+def _validateIndex(idx, numLabels, sourceArg):
+    errorType = None
+    if not isinstance(idx, int):
+        errorType = InvalidArgumentValue
+    elif not (0 <= idx < numLabels):
+        errorType = IndexError
+    if errorType is not None:
+        msg = '{arg} contains an invalid value: {val}. All values must be '
+        msg += 'equal to integers 0 through {lastIdx} (inclusive) indicating '
+        msg += 'an index value for the labels argument'
+        msg = msg.format(arg=sourceArg, val=idx, lastIdx=numLabels-1)
+        raise errorType(msg)
+
+def _confusionMatrixWithLabelsList(knownValues, predictedValues, labels):
+    numLabels = len(labels)
+    toFill = numpy.zeros((numLabels, numLabels), dtype=int)
+    validLabels = set() # to prevent repeated validation of same label
+    for kVal, pVal in zip(knownValues, predictedValues):
+        kVal = _mapInt(kVal)
+        if kVal not in validLabels:
+            _validateIndex(kVal, numLabels, 'knownValues')
+            validLabels.add(kVal)
+        pVal = _mapInt(pVal)
+        if pVal not in validLabels:
+            _validateIndex(pVal, numLabels, 'predictedValues')
+            validLabels.add(pVal)
+        toFill[pVal, kVal] += 1
+
+    return toFill, labels
+
+def _validateKey(key, labels, sourceArg):
+    if key not in labels:
+        msg = '{key} was found in {arg} but is not a key in labels'
+        raise KeyError(msg.format(key=key, arg=sourceArg))
+
+def _confusionMatrixWithLabelsDict(knownValues, predictedValues, labels):
+    sortedLabels = sorted(labels)
+    numLabels = len(labels)
+    toFill = numpy.zeros((numLabels, numLabels), dtype=int)
+    labelsIdx = {}
+    for kVal, pVal in zip(knownValues, predictedValues):
+        # trigger KeyError if label not present
+        if kVal not in labelsIdx:
+            _validateKey(kVal, labels, 'knownValues')
+            labelsIdx[kVal] = sortedLabels.index(kVal)
+        if pVal not in labelsIdx:
+            _validateKey(pVal, labels, 'predictedValues')
+            labelsIdx[pVal] = sortedLabels.index(pVal)
+        toFill[labelsIdx[pVal], labelsIdx[kVal]] += 1
+
+    knownLabels = [labels[key] for key in sortedLabels]
+
+    return toFill, knownLabels
+
+def _confusionMatrixNoLabels(knownValues, predictedValues):
     knownLabels = set()
     confusionDict = {}
-    for kVal, pVal in zip(knownValues.elements, predictedValues.elements):
+    # get labels and positions first then we will sort before creating matrix
+    for kVal, pVal in zip(knownValues, predictedValues):
         knownLabels.add(kVal)
         if (kVal, pVal) in confusionDict:
             confusionDict[(kVal, pVal)] += 1
         else:
             confusionDict[(kVal, pVal)] = 1
 
-    knownLabels = sorted(list(knownLabels))
-    confusionMtx = []
-    for pLabel in knownLabels:
-        point = []
-        for kLabel in knownLabels:
-            try:
-                val = confusionDict[(kLabel, pLabel)]
-                if outputFractions:
-                    point.append(val / len(knownValues.points))
-                else:
-                    point.append(val)
-            except KeyError:
-                point.append(0)
-        confusionMtx.append(point)
+    knownLabels = sorted(list(map(_mapInt, knownLabels)))
+    labelsIdx = {}
+    length = len(knownLabels)
+    toFill = numpy.zeros((length, length), dtype=int)
 
-    asType = knownValues.getTypeString()
-    if labels is not None and len(labels) != len(knownLabels):
-        msg = 'labels contained {0} labels '.format(len(labels))
-        msg += 'but knownValues contained {0}. '.format(len(knownLabels))
-        msg += 'The labels identified in knownValues were '
-        msg += str(knownLabels)
-        raise InvalidArgumentValue(msg)
-    if isinstance(labels, dict):
-        try:
-            knownLabels = [labels[l] for l in knownLabels]
-        except KeyError:
-            msg = 'labels contained keys which were not identified in '
-            msg += 'knownValues. The labels identified in knownValues were '
-            msg += str(knownLabels)
-            raise KeyError(msg)
-    elif isinstance(labels, list):
-        if knownLabels != list(range(len(knownLabels))):
-            msg = 'A list can only be used for labels if the labels in '
-            msg += 'knownValues represent index values (they are in range '
-            msg += '0 to len(labels)) for the labels list . The labels '
-            msg += 'identified in knownValues were ' + str(knownLabels)
-            raise IndexError(msg)
-        knownLabels = labels
-    else: # no alternate labels provided, using the values in knownLabels
-        # Appending an integer to point/featureNames looks better and makes
-        # sense given this applies to classification problems. So we convert
-        # floats to integers, if possible, before defining point/featureNames.
-        def mapInt(val):
-            try:
-                if val % 1 == 0:
-                    return int(val)
-                return val
-            except TypeError:
-                return val
+    for (kVal, pVal), count in confusionDict.items():
+        if kVal not in labelsIdx:
+            labelsIdx[kVal] = knownLabels.index(kVal)
+        if pVal not in labelsIdx:
+            labelsIdx[pVal] = knownLabels.index(pVal)
+        toFill[labelsIdx[pVal], labelsIdx[kVal]] = count
 
-        knownLabels = list(map(mapInt, knownLabels))
-
-    fNames = ['known_' + str(label) for label in knownLabels]
-    pNames = ['predicted_' + str(label) for label in knownLabels]
-    if outputFractions:
-        eType = float
-    else:
-        eType = int
-
-    return nimble.createData(asType, confusionMtx, pNames, fNames,
-                             convertToType=eType, useLog=False)
+    return toFill, knownLabels

@@ -36,6 +36,7 @@ from .core import ones
 from .core import zeros
 from .core import identity
 from .core import normalizeData
+from .core import fillMatching
 from .core import registerCustomLearner
 from .core import registerCustomLearnerAsDefault
 from .core import deregisterCustomLearner
@@ -65,6 +66,8 @@ settings.set("RegisteredLearners", "Custom.MeanConstant",
              'nimble.customLearners.MeanConstant')
 settings.set("RegisteredLearners", "Custom.MultiOutputRidgeRegression",
              'nimble.customLearners.MultiOutputRidgeRegression')
+settings.set("RegisteredLearners", "Custom.KNNImputation",
+             'nimble.customLearners.KNNImputation')
 settings.saveChanges("RegisteredLearners")
 
 # register those custom learners listed in nimble.settings

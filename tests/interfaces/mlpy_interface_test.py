@@ -8,19 +8,17 @@ import numpy.testing
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.interfaces.mlpy_interface import Mlpy
-from nimble.utility import ImportModule
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
-
-mlpy = ImportModule("mlpy")
 
 mlpySkipDec = SkipMissing('mlpy')
 
 @mlpySkipDec
 @noLogEntryExpected
 def test_Mlpy_version():
+    import mlpy
     interface = Mlpy()
     assert interface.version() == mlpy.__version__
 

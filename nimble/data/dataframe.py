@@ -2,24 +2,24 @@
 Class extending Base, using a pandas DataFrame to store data.
 """
 
+import itertools
+
 import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
-from nimble.utility import ImportModule
+from nimble.utility import scipy, pd
 from .base import Base
 from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView
 from .dataframeFeatures import DataFrameFeatures, DataFrameFeaturesView
-from .dataframeElements import DataFrameElements, DataFrameElementsView
 from .dataHelpers import allDataIdentical
 from .dataHelpers import DEFAULT_PREFIX
 from .dataHelpers import createDataNoValidation
-
-pd = ImportModule('pandas')
-scipy = ImportModule('scipy')
+from .dataHelpers import denseCountUnique
+from .dataHelpers import NimbleElementIterator
 
 @inheritDocstringsFactory(Base)
 class DataFrame(Base):
@@ -39,7 +39,7 @@ class DataFrame(Base):
     """
 
     def __init__(self, data, reuseData=False, **kwds):
-        if not pd:
+        if not pd.nimbleAccessible():
             msg = 'To use class DataFrame, pandas must be installed.'
             raise PackageException(msg)
 
@@ -65,8 +65,31 @@ class DataFrame(Base):
     def _getFeatures(self):
         return DataFrameFeatures(self)
 
-    def _getElements(self):
-        return DataFrameElements(self)
+    def _transform_implementation(self, toTransform, points, features):
+        IDs = itertools.product(range(len(self.points)),
+                                range(len(self.features)))
+        for i, j in IDs:
+            currVal = self.data.values[i, j]
+
+            if points is not None and i not in points:
+                continue
+            if features is not None and j not in features:
+                continue
+
+            if toTransform.oneArg:
+                currRet = toTransform(currVal)
+            else:
+                currRet = toTransform(currVal, i, j)
+
+            self.data.iloc[i, j] = currRet
+
+    def _calculate_implementation(self, function, points, features,
+                                  preserveZeros, outputType):
+        return self._calculate_genericVectorized(
+            function, points, features, outputType)
+
+    def _countUnique_implementation(self, points, features):
+        return denseCountUnique(self, points, features)
 
     def _transpose_implementation(self):
         """
@@ -120,7 +143,7 @@ class DataFrame(Base):
         Function to write the data in this object to a matrix market
         file at the designated path.
         """
-        if not scipy:
+        if not scipy.nimbleAccessible():
             msg = "scipy is not available"
             raise PackageException(msg)
 
@@ -165,7 +188,7 @@ class DataFrame(Base):
         if to == 'numpymatrix':
             return numpy.matrix(self.data.values)
         if 'scipy' in to:
-            if not scipy:
+            if not scipy.nimbleAccessible():
                 msg = "scipy is not available"
                 raise PackageException(msg)
             if to == 'scipycoo':
@@ -180,21 +203,25 @@ class DataFrame(Base):
             if to == 'scipycsr':
                 return scipy.sparse.csr_matrix(ret)
         if to == 'pandasdataframe':
-            if not pd:
-                msg = "pandas is not available"
-                raise PackageException(msg)
-            return pd.DataFrame(self.data.copy())
+            pnames = self.points._getNamesNoGeneration()
+            fnames = self.features._getNamesNoGeneration()
+            df = self.data.copy()
+            if pnames is not None:
+                df.index = pnames
+            if fnames is not None:
+                df.columns = fnames
+            return df
 
-    def _fillWith_implementation(self, values, pointStart, featureStart,
-                                 pointEnd, featureEnd):
+    def _replaceRectangle_implementation(self, replaceWith, pointStart,
+                                         featureStart, pointEnd, featureEnd):
         """
         """
-        if not isinstance(values, Base):
-            values = values * numpy.ones((pointEnd - pointStart + 1,
-                                          featureEnd - featureStart + 1))
+        if not isinstance(replaceWith, Base):
+            values = replaceWith * numpy.ones((pointEnd - pointStart + 1,
+                                               featureEnd - featureStart + 1))
         else:
             #convert values to be array or matrix, instead of pandas DataFrame
-            values = values.data.values
+            values = replaceWith.data.values
 
         # pandas is exclusive
         pointEnd += 1
@@ -383,6 +410,9 @@ class DataFrame(Base):
             return self.data.astype(convertTo)
         return self.data
 
+    def _iterateElements_implementation(self, order, only):
+        return NimbleElementIterator(self.data.values, order, only)
+
 class DataFrameView(BaseView, DataFrame):
     """
     Read only access to a DataFrame object.
@@ -395,9 +425,6 @@ class DataFrameView(BaseView, DataFrame):
 
     def _getFeatures(self):
         return DataFrameFeaturesView(self)
-
-    def _getElements(self):
-        return DataFrameElementsView(self)
 
     def _setAllDefault(self, axis):
         super(DataFrameView, self)._setAllDefault(axis)

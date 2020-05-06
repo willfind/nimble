@@ -9,7 +9,7 @@ __mod__, __rmod__ ,  __pow__,  __pos__, __neg__, __abs__,
 __matmul__, matrixMultiply, __rmatmul__, __imatmul__, matrixPower
 
 In object NumericalModifying:
-elements.power, elements.multiply, __imul__, __iadd__, __isub__,
+__imul__, __iadd__, __isub__,
 __itruediv__, __ifloordiv__,  __imod__, __ipow__, __imatmul__, __and__,
 __or__, __xor__
 
@@ -28,6 +28,7 @@ from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
 from nimble.randomness import numpyRandom
 from nimble.randomness import pythonRandom
+from nimble.data.dataHelpers import DEFAULT_PREFIX
 
 from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory, noLogEntryExpected
@@ -150,31 +151,10 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
     pnames = ['p1', 'p2', 'p3']
     fnames = ['f1', 'f2', 'f3']
+    # use tuple so must be copied to list to modify
+    defaultNames = tuple(callerCon(data).features.getNames())
 
     otherRaw = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
-
-    # names not the same
-    caller = callerCon(data, pnames, fnames)
-    opnames = pnames
-    ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
-    other = callerCon(otherRaw, opnames, ofnames)
-    try:
-        toCall = getattr(caller, op)
-        ret = toCall(other)
-        if ret != NotImplemented:
-            assert False
-    except InvalidArgumentValue:
-        pass
-
-    # names interwoven
-    other = callerCon(otherRaw, pnames, False)
-    caller = callerCon(data, False, fnames)
-    toCall = getattr(caller, op)
-    ret = toCall(other)
-
-    if ret != NotImplemented:
-        assert ret.points.getNames() == pnames
-        assert ret.features.getNames() == fnames
 
     # both names same
     caller = callerCon(data, pnames, fnames)
@@ -182,23 +162,220 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     toCall = getattr(caller, op)
     ret = toCall(other)
 
-    if ret != NotImplemented:
-        assert ret.points.getNames() == pnames
-        assert ret.features.getNames() == fnames
+    assert ret.points.getNames() == pnames
+    assert ret.features.getNames() == fnames
 
+    if inplace:
+        caller.points.setName('p1', 'p0')
+        assert 'p0' in ret.points.getNames()
+        assert 'p1' not in ret.points.getNames()
+        assert 'p0' in caller.points.getNames()
+        assert 'p1' not in caller.points.getNames()
+    else:
+        ret.points.setName('p1', 'p0')
+        assert 'p0' not in caller.points.getNames()
+        assert 'p1' in caller.points.getNames()
+        assert 'p0' in ret.points.getNames()
+        assert 'p1' not in ret.points.getNames()
+
+    # both names different
+    caller = callerCon(data, pnames, fnames)
+    opnames = {'p0': 0, 'p1': 1, 'p2': 2}
+    ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
+    other = callerCon(otherRaw, opnames, ofnames)
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+
+    # names interwoven
+    other = callerCon(otherRaw, pnames, defaultNames)
+    caller = callerCon(data, defaultNames, fnames)
+    toCall = getattr(caller, op)
+    ret = toCall(other)
+
+    assert ret.points.getNames() == pnames
+    assert ret.features.getNames() == fnames
+
+    other = callerCon(otherRaw, defaultNames, fnames)
+    caller = callerCon(data, pnames, defaultNames)
+    toCall = getattr(caller, op)
+    ret = toCall(other)
+    assert ret.points.getNames() == pnames
+    assert ret.features.getNames() == fnames
+
+    # mixed defaults
+    cpnames = list(defaultNames)
+    cpnames[0] = 'p1'
+    cfnames = list(defaultNames)
+    cfnames[0] = 'f1'
+    caller = callerCon(data, cpnames, cfnames)
+    opnames = list(defaultNames)
+    opnames[2] = 'p3'
+    ofnames = list(defaultNames)
+    ofnames[2] = 'f3'
+    other = callerCon(otherRaw, opnames, ofnames)
+    toCall = getattr(caller, op)
+    ret = toCall(other)
+
+    retPNames = ret.points.getNames()
+    retFNames = ret.features.getNames()
+    assert retPNames[0] == 'p1' and retPNames[2] == 'p3'
+    assert retFNames[0] == 'f1' and retFNames[2] == 'f3'
+
+    # pt names equal; ft names intersect
+    caller = callerCon(data, pnames, fnames)
+    opnames = pnames
+    ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
+    other = callerCon(otherRaw, opnames, ofnames)
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert False
+    except InvalidArgumentValue:
+        pass
+
+    # pt names equal; ft names disjoint
+    caller = callerCon(data, pnames, fnames)
+    opnames = pnames
+    ofnames = {'1f': 0, '2f': 1, '3f': 2}
+    other = callerCon(otherRaw, opnames, ofnames)
+    # inplace requires feature names to match, otherwise not required
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert not ret.features._namesCreated()
+    except InvalidArgumentValue:
         if inplace:
-            caller.points.setName('p1', 'p0')
-            assert 'p0' in ret.points.getNames()
-            assert 'p1' not in ret.points.getNames()
-            assert 'p0' in caller.points.getNames()
-            assert 'p1' not in caller.points.getNames()
+            pass
         else:
-            ret.points.setName('p1', 'p0')
-            assert 'p0' not in caller.points.getNames()
-            assert 'p1' in caller.points.getNames()
-            assert 'p0' in ret.points.getNames()
-            assert 'p1' not in ret.points.getNames()
+            raise
 
+    # pt names equal; ft names + mixed ft names intersect
+    caller = callerCon(data, pnames, fnames)
+    ofnames = list(defaultNames)
+    ofnames[0] = 'f3'
+    other = callerCon(otherRaw, pnames, ofnames)
+    assert other.features.getName(0) in caller.features.getNames()
+    assert other.features.getName(1).startswith(DEFAULT_PREFIX)
+    assert other.features.getName(2).startswith(DEFAULT_PREFIX)
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert False
+    except InvalidArgumentValue:
+        pass
+
+    # pt names equal; ft names + mixed ft names disjoint
+    caller = callerCon(data, pnames, fnames)
+    ofnames = list(defaultNames)
+    ofnames[0] = '3f'
+    other = callerCon(otherRaw, pnames, ofnames)
+    assert other.features.getName(0) not in caller.features.getNames()
+    assert other.features.getName(1).startswith(DEFAULT_PREFIX)
+    assert other.features.getName(2).startswith(DEFAULT_PREFIX)
+    toCall = getattr(caller, op)
+    # inplace requires feature names to match, otherwise not required
+    try:
+        ret = toCall(other)
+        assert not ret.features._namesCreated()
+    except InvalidArgumentValue:
+        if inplace:
+            pass
+        else:
+            raise
+
+    # pt names equal; mixed ft names + mixed ft names intersect
+    cfnames = list(defaultNames)
+    cfnames[0] = 'f1'
+    caller = callerCon(data, pnames, cfnames)
+    ofnames = list(defaultNames)
+    ofnames[2] = 'f1'
+    other = callerCon(otherRaw, pnames, ofnames)
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert False
+    except InvalidArgumentValue:
+        pass
+
+    # ft names equal; pt names intersect
+    caller = callerCon(data, pnames, fnames)
+    ofnames = fnames
+    opnames = {'p0': 0, 'p1': 1, 'p2': 2}
+    other = callerCon(otherRaw, opnames, ofnames)
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+
+    # ft names equal; pt names disjoint
+    caller = callerCon(data, pnames, fnames)
+    opnames = {'1p': 0, '2p': 1, '3p': 2}
+    ofnames = fnames
+    other = callerCon(otherRaw, opnames, ofnames)
+    # inplace requires point names to match, otherwise not required
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert not ret.points._namesCreated()
+    except InvalidArgumentValue:
+        if inplace:
+            pass
+        else:
+            raise
+
+    # ft names equal; pt names + mixed pt names intersect
+    caller = callerCon(data, pnames, fnames)
+    opnames = list(defaultNames)
+    opnames[0] = 'p3'
+    other = callerCon(otherRaw, opnames, fnames)
+    assert other.points.getName(0) in caller.points.getNames()
+    assert other.points.getName(1).startswith(DEFAULT_PREFIX)
+    assert other.points.getName(2).startswith(DEFAULT_PREFIX)
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert False # expected InvalidArgumentValue
+    except InvalidArgumentValue:
+        pass
+
+    # ft names equal; pt names + mixed pt names disjoint
+    caller = callerCon(data, pnames, fnames)
+    opnames = list(defaultNames)
+    opnames[0] = '3p'
+    other = callerCon(otherRaw, opnames, fnames)
+    assert other.points.getName(0) not in caller.points.getNames()
+    assert other.points.getName(1).startswith(DEFAULT_PREFIX)
+    assert other.points.getName(2).startswith(DEFAULT_PREFIX)
+    # inplace requires point names to match, otherwise not required
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert not ret.points._namesCreated()
+    except InvalidArgumentValue:
+        if inplace:
+            pass
+        else:
+            raise
+
+    # ft names equal; mixed pt names + mixed pt names intersect
+    cpnames = list(defaultNames)
+    cpnames[0] = 'p1'
+    caller = callerCon(data, cpnames, fnames)
+    opnames = list(defaultNames)
+    opnames[2] = 'p1'
+    other = callerCon(otherRaw, opnames, fnames)
+    toCall = getattr(caller, op)
+    try:
+        ret = toCall(other)
+        assert False
+    except InvalidArgumentValue:
+        pass
 
 def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, attr2=None):
     data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
@@ -1658,264 +1835,6 @@ class NumericalDataSafe(DataTestObject):
 
 
 class NumericalModifying(DataTestObject):
-    ##################
-    # elements.power #
-    ##################
-
-    @raises(InvalidArgumentType)
-    def test_elements_power_otherObjectExceptions(self):
-        """ Test elements.power raises exception when param is not a nimble Base object """
-        back_otherObjectExceptions(self.constructor, 'elements', 'power')
-
-    @raises(ImproperObjectAction)
-    def test_elements_power_selfNotNumericException(self):
-        """ Test elements.power raises exception if self has non numeric data """
-        back_selfNotNumericException(self.constructor, self.constructor, 'elements', 'power')
-
-    @raises(InvalidArgumentValue)
-    def test_elements_power_otherNotNumericException(self):
-        """ Test elements.power raises exception if param object has non numeric data """
-        back_otherNotNumericException(self.constructor, self.constructor, 'elements', 'power')
-
-    @raises(InvalidArgumentValue)
-    def test_elements_power_pShapeException(self):
-        """ Test elements.power raises exception the shapes of the object don't fit correctly """
-        back_pShapeException(self.constructor, self.constructor, 'elements', 'power')
-
-    @raises(InvalidArgumentValue)
-    def test_elements_power_fShapeException(self):
-        """ Test elements.power raises exception the shapes of the object don't fit correctly """
-        back_fShapeException(self.constructor, self.constructor, 'elements', 'power')
-
-    @raises(ImproperObjectAction)
-    def test_elements_power_pEmptyException(self):
-        """ Test elements.power raises exception for point empty data """
-        back_pEmptyException(self.constructor, self.constructor, 'elements', 'power')
-
-    @raises(ImproperObjectAction)
-    def test_elements_power_fEmptyException(self):
-        """ Test elements.power raises exception for feature empty data """
-        back_fEmptyException(self.constructor, self.constructor, 'elements', 'power')
-
-    @logCountAssertionFactory(len(nimble.data.available))
-    def test_elements_power_handmade(self):
-        """ Test elements.power on handmade data """
-        data = [[1.0, 2], [4, 5], [7, 4]]
-        exponents = [[0, -1], [-.5, 2], [2, .5]]
-        exp1 = [[1, .5], [.5, 25], [49, 2]]
-        callerpnames = ['1', '2', '3']
-
-        calleepnames = ['I', 'dont', 'match']
-        calleefnames = ['one', 'two']
-
-        for retType in nimble.data.available:
-            caller = self.constructor(data, pointNames=callerpnames)
-            exponentsObj = nimble.createData(retType, exponents, pointNames=calleepnames,
-                                             featureNames=calleefnames, useLog=False)
-            caller.elements.power(exponentsObj)
-
-            exp1Obj = self.constructor(exp1, pointNames=callerpnames)
-
-            assert exp1Obj.isIdentical(caller)
-
-    def test_elements_power_lazyNameGeneration(self):
-        """ Test elements.power on handmade data """
-        data = [[1.0, 2], [4, 5], [7, 4]]
-        exponents = [[0, -1], [-.5, 2], [2, .5]]
-        exp1 = [[1, .5], [.5, 25], [49, 2]]
-
-        for retType in nimble.data.available:
-            caller = self.constructor(data)
-            exponentsObj = nimble.createData(retType, exponents)
-            caller.elements.power(exponentsObj)
-
-            assertNoNamesGenerated(caller)
-
-    @logCountAssertionFactory(len([getattr(nimble.data, retType) for retType in nimble.data.available]))
-    def test_elements_power_handmadeScalar(self):
-        """ Test elements.power on handmade data with scalar parameter"""
-        data = [[1.0, 2], [4, 5], [7, 4]]
-        exponent = 2
-        exp1 = [[1, 4], [16, 25], [49, 16]]
-        callerpnames = ['1', '2', '3']
-
-        makers = [getattr(nimble.data, retType) for retType in nimble.data.available]
-
-        for maker in makers:
-            caller = self.constructor(data, pointNames=callerpnames)
-            caller.elements.power(exponent)
-
-            exp1Obj = self.constructor(exp1, pointNames=callerpnames)
-
-            assert exp1Obj.isIdentical(caller)
-
-    def test_elements_power_NamePath_preservations(self):
-        back_binaryelementwise_NamePath_preservations(self.constructor, 'elements', False, 'power')
-
-    ######################
-    # elements.multiply #
-    #####################
-
-    @raises(InvalidArgumentType)
-    def test_elements_multiply_otherObjectExceptions(self):
-        """ Test elements.multiply raises exception when param is not a nimble Base object """
-        back_otherObjectExceptions(self.constructor, 'elements', 'multiply')
-
-    @raises(ImproperObjectAction)
-    def test_elements_multiply_selfNotNumericException(self):
-        """ Test elements.multiply raises exception if self has non numeric data """
-        back_selfNotNumericException(self.constructor, self.constructor, 'elements', 'multiply')
-
-    @raises(InvalidArgumentValue)
-    def test_elements_multiply_otherNotNumericException(self):
-        """ Test elements.multiply raises exception if param object has non numeric data """
-        back_otherNotNumericException(self.constructor, self.constructor, 'elements', 'multiply')
-
-    @raises(InvalidArgumentValue)
-    def test_elements_multiply_pShapeException(self):
-        """ Test elements.multiply raises exception the shapes of the object don't fit correctly """
-        back_pShapeException(self.constructor, self.constructor, 'elements', 'multiply')
-
-    @raises(InvalidArgumentValue)
-    def test_elements_multiply_fShapeException(self):
-        """ Test elements.multiply raises exception the shapes of the object don't fit correctly """
-        back_fShapeException(self.constructor, self.constructor, 'elements', 'multiply')
-
-    @raises(ImproperObjectAction)
-    def test_elements_multiply_pEmptyException(self):
-        """ Test elements.multiply raises exception for point empty data """
-        back_pEmptyException(self.constructor, self.constructor, 'elements', 'multiply')
-
-    @raises(ImproperObjectAction)
-    def test_elements_multiply_fEmptyException(self):
-        """ Test elements.multiply raises exception for feature empty data """
-        back_fEmptyException(self.constructor, self.constructor, 'elements', 'multiply')
-
-    @logCountAssertionFactory(2)
-    def test_elements_multiply_handmade(self):
-        """ Test elements.multiply on handmade data """
-        data = [[1, 2], [4, 5], [7, 8]]
-        twos = [[2, 2], [2, 2], [2, 2]]
-        exp1 = [[2, 4], [8, 10], [14, 16]]
-        halves = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
-
-        caller = self.constructor(data)
-        twosObj = self.constructor(twos)
-        caller.elements.multiply(twosObj)
-
-        exp1Obj = self.constructor(exp1)
-
-        assert exp1Obj.isIdentical(caller)
-        assertNoNamesGenerated(caller)
-
-        halvesObj = self.constructor(halves)
-        caller.elements.multiply(halvesObj)
-
-        exp2Obj = self.constructor(data)
-
-        assert caller.isIdentical(exp2Obj)
-        assertNoNamesGenerated(caller)
-
-    @logCountAssertionFactory(len(nimble.data.available) * 2)
-    def test_elements_multiply_handmadeDifInputs(self):
-        """ Test elements.multiply on handmade data with different input object types"""
-        data = [[1, 2], [4, 5], [7, 8]]
-        twos = [[2, 2], [2, 2], [2, 2]]
-        exp1 = [[2, 4], [8, 10], [14, 16]]
-        halves = [[0.5, 0.5], [0.5, 0.5], [0.5, 0.5]]
-
-        for retType in nimble.data.available:
-            caller = self.constructor(data)
-            twosObj = nimble.createData(retType, twos, useLog=False)
-            caller.elements.multiply(twosObj)
-
-            exp1Obj = self.constructor(exp1)
-
-            assert exp1Obj.isIdentical(caller)
-            assertNoNamesGenerated(caller)
-
-            halvesObj = nimble.createData(retType, halves, useLog=False)
-            caller.elements.multiply(halvesObj)
-
-            exp2Obj = self.constructor(data)
-
-            assert caller.isIdentical(exp2Obj)
-            assertNoNamesGenerated(caller)
-
-    def test_elementwiseMultipy_auto(self):
-        """ Test elements.multiply on generated data against the numpy op """
-        makers = [getattr(nimble.data, retType) for retType in nimble.data.available]
-
-        for i in range(len(makers)):
-            maker = makers[i]
-            numPts = pythonRandom.randint(1, 10)
-            numFts = pythonRandom.randint(1, 10)
-
-            randomlf = nimble.createRandomData('Matrix', numPts, numFts, .2)
-            randomrf = nimble.createRandomData('Matrix', numPts, numFts, .2)
-            lhsf = randomlf.copy(to="numpyarray")
-            rhsf = randomrf.copy(to="numpyarray")
-            lhsi = numpy.ones((numPts, numFts))
-            rhsi = numpy.ones((numPts, numFts))
-
-            lhsfObj = self.constructor(lhsf)
-            rhsfObj = maker(rhsf)
-            lhsiObj = self.constructor(lhsi)
-            rhsiObj = maker(rhsi)
-
-            resultf = numpy.multiply(lhsf, rhsf)
-            resulti = numpy.multiply(lhsi, rhsi)
-            lhsfObj.elements.multiply(rhsfObj)
-            lhsiObj.elements.multiply(rhsiObj)
-
-            expfObj = self.constructor(resultf)
-            expiObj = self.constructor(resulti)
-
-            assert expfObj.isApproximatelyEqual(lhsfObj)
-            assert expiObj.isIdentical(lhsiObj)
-
-    def test_elementwiseMultipy_pfname_preservations(self):
-        """ Test p/f names are preserved when calling elementwiseMultipy"""
-        data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
-        pnames = ['p1', 'p2', 'p3']
-        fnames = ['f1', 'f2', 'f3']
-
-        otherRaw = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
-
-        # names not the same
-        caller = self.constructor(data, pnames, fnames)
-        opnames = pnames
-        ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
-        other = self.constructor(otherRaw, opnames, ofnames)
-        try:
-            toCall = getattr(getattr(caller, 'elements'), 'multiply')
-            ret = toCall(other)
-            assert False
-        except InvalidArgumentValue:
-            pass
-
-        # names interwoven
-        other = self.constructor(otherRaw, pnames, False)
-        caller = self.constructor(data, False, fnames)
-        toCall = getattr(getattr(caller, 'elements'), 'multiply')
-        ret = toCall(other)
-
-        assert ret is None
-        assert caller.points.getNames() == pnames
-        assert caller.features.getNames() == fnames
-
-        # both names same
-        caller = self.constructor(data, pnames, fnames)
-        other = self.constructor(otherRaw, pnames, fnames)
-        toCall = getattr(getattr(caller, 'elements'), 'multiply')
-        ret = toCall(other)
-
-        assert caller.points.getNames() == pnames
-        assert caller.features.getNames() == fnames
-
-    def test_elementwiseMultipy_NamePath_preservations(self):
-        back_binaryelementwise_NamePath_preservations(self.constructor, 'elements', False, 'multiply')
-
 
     ###############
     # __imatmul__ #

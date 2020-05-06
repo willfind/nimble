@@ -22,14 +22,13 @@ from nimble.data import Base
 from nimble.data import Axis
 from nimble.data import Points
 from nimble.data import Features
-from nimble.data import Elements
 from nimble.interfaces.universal_interface import UniversalInterface
 from nimble.interfaces.universal_interface import TrainedLearner
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 ALL_USER_FACING = []
 modules = [nimble, calculate, fill, match]
-classes = [Base, Axis, Points, Features, Elements, UniversalInterface,
+classes = [Base, Axis, Points, Features, UniversalInterface,
            TrainedLearner]
 modulesAndClasses = modules + classes
 for call in modulesAndClasses:
@@ -45,9 +44,9 @@ def prefixAdder(prefix):
 
 #  Untested functions: register/deregisterCustomLearnerAsDefault
 nimble_logged = [
-    'createData', 'createRandomData', 'crossValidate', 'log', 'loadData',
-    'loadTrainedLearner', 'normalizeData', 'setRandomSeed', 'train',
-    'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
+    'createData', 'createRandomData', 'crossValidate', 'fillMatching', 'log',
+    'loadData', 'loadTrainedLearner', 'normalizeData', 'setRandomSeed',
+    'train', 'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 nimble_notLogged = [
     'CV', 'Init', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
@@ -65,18 +64,18 @@ calculate_funcs = [
     'elementwiseMultiply', 'elementwisePower', 'f1Score', 'falseNegative',
     'falsePositive', 'fractionCorrect', 'fractionIncorrect', 'inverse',
     'leastSquaresSolution', 'maximum', 'mean', 'meanAbsoluteError',
-    'meanFeaturewiseRootMeanSquareError', 'median', 'minimum', 'mode',
-    'precision', 'proportionMissing', 'proportionZero', 'pseudoInverse',
-    'quartiles', 'recall', 'residuals', 'rootMeanSquareError', 'rSquared',
-    'solve', 'specificity', 'standardDeviation', 'trueNegative',
+    'meanFeaturewiseRootMeanSquareError', 'median', 'medianAbsoluteDeviation',
+    'minimum', 'mode', 'precision', 'proportionMissing', 'proportionZero',
+    'pseudoInverse', 'quartiles', 'recall', 'residuals', 'rootMeanSquareError',
+    'rSquared', 'solve', 'specificity', 'standardDeviation', 'trueNegative',
     'truePositive', 'uniqueCount', 'varianceFractionRemaining',
     ]
 calculate_tested = list(map(prefixAdder('nimble.calculate'), calculate_funcs))
 
 # no fill functions should be logged.
 fill_funcs = [
-    'backwardFill', 'constant', 'factory', 'forwardFill', 'interpolate',
-    'kNeighborsClassifier', 'kNeighborsRegressor', 'mean', 'median', 'mode',
+    'backwardFill', 'constant', 'forwardFill', 'interpolate', 'mean', 'median',
+    'mode',
     ]
 fill_tested = list(map(prefixAdder('nimble.fill'), fill_funcs))
 
@@ -98,15 +97,16 @@ match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 #      copy, featureReport, summaryReport, getTypeString, groupByFeature,
 #      hashCode, nameIsDefault, show, validate
 base_logged = [
-    'fillUsingAllData', 'featureReport', 'fillWith', 'flattenToOneFeature',
-    'flattenToOnePoint', 'groupByFeature', 'merge',
-    'replaceFeatureWithBinaryFeatures', 'summaryReport', 'trainAndTestSets',
-    'transformFeatureToIntegers', 'transpose', 'unflattenFromOneFeature',
-    'unflattenFromOnePoint',
+    'calculateOnElements', 'featureReport', 'flattenToOneFeature',
+    'flattenToOnePoint', 'groupByFeature', 'matchingElements', 'merge',
+    'replaceFeatureWithBinaryFeatures', 'replaceRectangle', 'summaryReport',
+    'trainAndTestSets', 'transformElements', 'transformFeatureToIntegers',
+    'transpose', 'unflattenFromOneFeature', 'unflattenFromOnePoint',
     ]
 base_notLogged = [
-    'containsZero', 'copy', 'featureView', 'getTypeString', 'hashCode',
-    'inverse', 'isApproximatelyEqual', 'isIdentical', 'matrixMultiply',
+    'containsZero', 'copy', 'countElements', 'countUniqueElements',
+    'featureView', 'getTypeString', 'hashCode', 'inverse',
+    'isApproximatelyEqual', 'isIdentical', 'iterateElements', 'matrixMultiply',
     'matrixPower', 'nameIsDefault', 'plot', 'plotFeatureAgainstFeature',
     'plotFeatureAgainstFeatureRollingAverage', 'plotFeatureDistribution',
     'pointView', 'referenceDataFrom', 'save', 'show', 'solveLinearSystem',
@@ -116,38 +116,29 @@ base_funcs = base_logged + base_notLogged
 base_tested = list(map(prefixAdder('Base'), base_funcs))
 
 features_logged = [
-    'append', 'calculate', 'copy', 'delete', 'extract', 'fill', 'insert',
-    'mapReduce', 'matching', 'normalize', 'retain', 'setName', 'setNames',
-    'shuffle', 'sort', 'transform', 'splitByParsing',
+    'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
+    'insert', 'mapReduce', 'matching', 'normalize', 'retain', 'setName',
+    'setNames', 'shuffle', 'sort', 'transform', 'splitByParsing',
     ]
 features_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
-    'hasName', 'nonZeroIterator', 'similarities', 'statistics', 'unique',
+    'hasName', 'similarities', 'statistics', 'unique',
     ]
 features_funcs = features_logged + features_notLogged
 features_tested = list(map(prefixAdder('Features'), features_funcs))
 
 points_logged = [
-    'append', 'calculate', 'copy', 'delete', 'extract', 'fill', 'insert',
-    'mapReduce', 'matching', 'normalize', 'retain', 'setName', 'setNames',
-    'shuffle', 'sort', 'transform', 'combineByExpandingFeatures',
+    'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
+    'insert', 'mapReduce', 'matching', 'normalize', 'retain', 'setName',
+    'setNames', 'shuffle', 'sort', 'transform', 'combineByExpandingFeatures',
     'splitByCollapsingFeatures',
     ]
 points_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
-    'hasName', 'nonZeroIterator', 'similarities', 'statistics', 'unique',
+    'hasName', 'similarities', 'statistics', 'unique',
     ]
 points_funcs = points_logged + points_notLogged
 points_tested = list(map(prefixAdder('Points'), points_funcs))
-
-elements_logged = [
-    'calculate', 'transform', 'multiply', 'power', 'matching',
-    ]
-elements_notLogged = [
-    'count', 'countUnique',
-    ]
-elements_funcs = elements_logged + elements_notLogged
-elements_tested = list(map(prefixAdder('Elements'), elements_funcs))
 
 ui_logged = [
     'train',
@@ -171,8 +162,7 @@ tl_tested = list(map(prefixAdder('TrainedLearner'), tl_funcs))
 
 USER_FACING_TESTED = (nimble_tested + calculate_tested + fill_tested
                       + match_tested + base_tested + features_tested
-                      + points_tested + elements_tested + ui_tested
-                      + tl_tested)
+                      + points_tested + ui_tested + tl_tested)
 
 ##############
 # All tested #
@@ -324,8 +314,8 @@ baseDunder_tested = list(map(prefixAdder('Base'),
     ['__abs__', '__add__', '__and__', '__bool__', '__copy__', '__deepcopy__',
      '__getitem__', '__floordiv__', '__iadd__', '__ifloordiv__', '__imod__',
      '__imatmul__', '__imul__', '__invert__', '__ipow__', '__isub__',
-     '__itruediv__', '__len__', '__matmul__', '__mod__', '__mul__', '__neg__',
-     '__or__', '__pos__', '__pow__', '__radd__', '__rfloordiv__',
+     '__iter__', '__itruediv__', '__len__', '__matmul__', '__mod__', '__mul__',
+     '__neg__', '__or__', '__pos__', '__pow__', '__radd__', '__rfloordiv__',
      '__rmatmul__', '__rmod__', '__rmul__', '__rpow__', '__rsub__',
      '__rtruediv__', '__sub__', '__truediv__', '__xor__',
     ]))
@@ -333,13 +323,11 @@ axisDunder_tested = ['Axis.__bool__', 'Axis.__iter__', 'Axis.__len__',
                      'Axis.__getitem__']
 pointsDunder_tested = []
 featuresDunder_tested = []
-elementsDunder_tested = ['Elements.__bool__', 'Elements.__iter__']
 uiDunder_tested = []
 tlDunder_tested = []
 
 ALL_DUNDER_TESTED = (baseDunder_tested + axisDunder_tested
                      + pointsDunder_tested + featuresDunder_tested
-                     + elementsDunder_tested
                      + uiDunder_tested + tlDunder_tested)
 
 def testAllClassesDunderFunctions():

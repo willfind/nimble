@@ -17,14 +17,11 @@ from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import FileFormatException
 from nimble.data.dataHelpers import DEFAULT_PREFIX
 from nimble.helpers import _intFloatOrString
-from nimble.utility import ImportModule
+from nimble.utility import scipy, pd
 from nimble.utility import sparseMatrixToArray
 
 # from .. import logger
 from .assertionHelpers import oneLogEntryExpected
-
-scipy = ImportModule('scipy')
-pd = ImportModule('pandas')
 
 returnTypes = copy.copy(nimble.data.available)
 returnTypes.append(None)
@@ -246,6 +243,81 @@ def test_createData_CSV_data_unicodeCharacters():
 
             assert fromList == fromCSV
 
+def test_createData_CSV_data_columnTypeHierarchy():
+    """ Test of createData() loading a csv file with various column types """
+    for t in returnTypes:
+        data = [[True,'False','True','False','TRUE','false',1,1.0,1.0,'1','1'],
+                [False,'True','False','True','FALSE','true',2,2.0,2.0,'2','2'],
+                [True,'False','True','False','TRUE','false',3,3.0,3.0,'3','3'],
+                [False,'TRUE','false','1','FALSE','true',4,4.0,4.0,'4.0','False'],
+                [True,'FALSE','true','0','TRUE','false',5,5.0,5.0,'5.0', 'True'],
+                [False,'True','False','True','FALSE','true',6,6.0,6.0,'six','6']]
+        fromList = nimble.createData(returnType=t, data=data)
+
+        # instantiate from csv file
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write("True,False,True,False,TRUE,false,1,1.0,1,1,1\n")
+            tmpCSV.write("False,True,False,True,FALSE,true,2,2.0,2,2,2\n")
+            tmpCSV.write("True,False,True,False,TRUE,false,3,3.0,3,3,3\n")
+            tmpCSV.write("False,TRUE,false,1,FALSE,true,4,4.0,4.0,4.0,False\n")
+            tmpCSV.write("True,FALSE,true,0,TRUE,false,5,5.0,5.0,5.0,True\n")
+            tmpCSV.write("False,True,False,True,FALSE,true,6,6.0,6,six,6\n")
+            tmpCSV.flush()
+            objName = 'fromCSV'
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
+
+            assert fromList == fromCSV
+
+def test_createData_CSV_data_columnTypeHierarchyWithNaN():
+    """ Test of createData() loading a csv file with various column types with nan values """
+    for t in returnTypes:
+        data = [[True,'False',1,1.0,1.0,'1'],
+                [False,None,2,None,None,'2'],
+                [True,'False',None,3.0,3.0,None],
+                [None,'TRUE',None,4.0,4.0,None],
+                [True,'FALSE',5,None,None,'5.0'],
+                [None,None,6,6.0,6.0,'six']]
+        fromList = nimble.createData(returnType=t, data=data)
+
+        # instantiate from csv file
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write("True,False,1,1.0,1,1\n")
+            tmpCSV.write("False,,2,,,2\n")
+            tmpCSV.write("True,False,,3.0,3,\n")
+            tmpCSV.write(",TRUE,,4.0,4.0,\n")
+            tmpCSV.write("True,FALSE,5,,,5.0\n")
+            tmpCSV.write(",,6,6.0,6,six\n")
+            tmpCSV.flush()
+            objName = 'fromCSV'
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
+
+            assert fromList == fromCSV
+
+def test_createData_CSV_data_emptyStringsNotMissing():
+    """ Test of createData() loading a csv file empty strings not treated as missing """
+    for t in returnTypes:
+        data = [[True,'False',1,'1'],
+                [False,'',2,'2'],
+                [True,'False',None,''],
+                [None,'TRUE',4,''],
+                [True,'FALSE',None,'5.0'],
+                [None,'',6,'six']]
+        fromList = nimble.createData(returnType=t, data=data, treatAsMissing=[None])
+
+        # instantiate from csv file
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write("True,False,1,1\n")
+            tmpCSV.write("False,,2,2\n")
+            tmpCSV.write("True,False,,\n")
+            tmpCSV.write(",TRUE,4,\n")
+            tmpCSV.write("True,FALSE,,5.0\n")
+            tmpCSV.write(",,6,six\n")
+            tmpCSV.flush()
+            objName = 'fromCSV'
+            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName,
+                                        treatAsMissing=[None])
+
+            assert fromList == fromCSV
 
 def test_createData_MTXArr_data():
     """ Test of createData() loading a mtx (arr format) file, default params """
@@ -583,12 +655,7 @@ def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
         dataRow = list(map(_intFloatOrString, rawStr.split('\n')[1].split(',')))
         lolFromRaw = [fnameRow, dataRow]
         baseObj = nimble.createData("List", lolFromRaw, pointNames=False, featureNames=False)
-        if rawType == 'scipycoo':
-            npRaw = numpy.array(lolFromRaw, dtype=object)
-            finalRaw = scipy.sparse.coo_matrix(npRaw)
-        else:
-            finalRaw = baseObj.copy(to=rawType)
-
+        finalRaw = baseObj.copy(to=rawType)
         ret = nimble.createData(returnType=returnType, data=finalRaw,
                                 pointNames=pointNames, featureNames=featureNames)
 
@@ -597,12 +664,6 @@ def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
 def test_automaticByType_fnames_rawAndCSV():
     availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix', 'scipycoo']
     for (rawT, retT) in itertools.product(availableRaw, returnTypes):
-#        rawT = 'scipycoo'
-#        retT = 'List'
-#        print rawT + " " + str(retT)
-#        import pdb
-#        pdb.set_trace()
-
         # example which triggers automatic removal
         correctRaw = "fname0,fname1,fname2\n1,2,3\n"
         correct = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames='automatic')
@@ -643,12 +704,6 @@ def test_userOverrideOfAutomaticByType_fnames_rawAndCSV():
 def test_automaticByType_pname_interaction_with_fname():
     availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix', 'scipycoo']
     for (rawT, retT) in itertools.product(availableRaw, returnTypes):
-#        rawT = 'scipycoo'
-#        retT = None
-#        print rawT + " " + str(retT)
-#        import pdb
-#        pdb.set_trace()
-
         # pnames auto triggered with auto fnames
         raw = "pointNames,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
@@ -935,9 +990,6 @@ def test_extractNames_NPMatrix():
 
 def test_extractNames_CooSparse():
     """ Test of createData() given scipy Coo matrix, extracting names """
-    if not scipy:
-        return
-
     pNames = ['11']
     fNames = ['21', '22', '23']
 
@@ -955,9 +1007,6 @@ def test_extractNames_CooSparse():
 
 def test_extractNames_CscSparse():
     """ Test of createData() given scipy Csc matrix, extracting names """
-    if not scipy:
-        return
-
     pNames = ['11']
     fNames = ['21', '22', '23']
 
@@ -1020,7 +1069,7 @@ def test_names_dataUnmodified():
         assertUnmodified(scipy.sparse.coo_matrix(autoArray), 'automatic')
         assertUnmodified(scipy.sparse.coo_matrix(trueData), True)
         assertUnmodified(pd.DataFrame([[1, -1, -3]], index=['pt'],
-                                      columns=['fname0', 'fname1', 'fname2']),
+                         columns=['fname0', 'fname1', 'fname2']),
                          'automatic')
         assertUnmodified(pd.DataFrame([[1, -1, -3]], index=[11], columns=[21, 22, 23]),
                          True)
@@ -1226,7 +1275,7 @@ def test_createData_http_CSVCarriageReturn(mock_get):
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_CSVNonUnicodeValues(mock_get):
     for t in returnTypes:
-        exp = nimble.createData(returnType=t, data=[[1,2,'\xc2\xa1'],[4,5,6]])
+        exp = nimble.createData(returnType=t, data=[[1,2,'\xc2\xa1'],[4,5,'6']])
         url = 'http://mockrequests.nimble/CSVunicodetest.csv'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
@@ -1234,7 +1283,7 @@ def test_createData_http_CSVNonUnicodeValues(mock_get):
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_CSVQuotedNewLine(mock_get):
     for t in returnTypes:
-        exp = nimble.createData(returnType=t, data=[[1,2,"a/nb"],[4,5,6]])
+        exp = nimble.createData(returnType=t, data=[[1,2,"a/nb"],[4,5,'6']])
         url = 'http://mockrequests.nimble/CSVquotednewline.csv'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
@@ -1486,7 +1535,7 @@ def test_CSVformatting_specialCharsInQuotes():
 
 def test_CSVformatting_emptyAndCommentLines():
     for t in returnTypes:
-        data = [[1, 2, 3, 4], ['#11', 22, 33, 44], [5, 6, 7, 8]]
+        data = [['1', 2, 3, 4], ['#11', 22, 33, 44], ['5', 6, 7, 8]]
 
         fromList = nimble.createData(returnType=t, data=data)
 
@@ -2015,8 +2064,6 @@ def test_createData_keepPF_npMatrix_simple():
 
 
 def test_createData_keepPF_spCoo_simple():
-    if not scipy:
-        return
     wanted = nimble.createData("Matrix", data=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
     raw = scipy.sparse.coo_matrix(rawList)
@@ -2032,8 +2079,6 @@ def test_createData_keepPF_spCoo_simple():
 
 
 def test_createData_keepPF_spCsc_simple():
-    if not scipy:
-        return
     wanted = nimble.createData("Matrix", data=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
     raw = scipy.sparse.csc_matrix(rawList)
@@ -2579,14 +2624,12 @@ def test_DataOutputWithMissingDataTypes1D():
         orig4.features.sort(sortBy=orig4.points.getName(0))
         orig5 = nimble.createData(t, numpy.array([1,2,"None"], dtype=object))
         orig6 = nimble.createData(t, numpy.matrix([1,2,"None"], dtype=object))
-        if pd:
-            orig7 = nimble.createData(t, pd.DataFrame([[1,2,"None"]]))
-            orig8 = nimble.createData(t, pd.Series([1,2,"None"]))
-            orig9 = nimble.createData(t, pd.SparseDataFrame([[1,2,"None"]]))
-        if scipy:
-            orig10 = nimble.createData(t, scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
-            orig11 = nimble.createData(t, scipy.sparse.csc_matrix(numpy.array([1,2,float('nan')])))
-            orig12 = nimble.createData(t, scipy.sparse.csr_matrix(numpy.array([1,2,float('nan')])))
+        orig7 = nimble.createData(t, pd.DataFrame([[1,2,"None"]]))
+        orig8 = nimble.createData(t, pd.Series([1,2,"None"]))
+        orig9 = nimble.createData(t, pd.SparseDataFrame([[1,2,"None"]]))
+        orig10 = nimble.createData(t, scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
+        orig11 = nimble.createData(t, scipy.sparse.csc_matrix(numpy.array([1,2,float('nan')])))
+        orig12 = nimble.createData(t, scipy.sparse.csr_matrix(numpy.array([1,2,float('nan')])))
 
         originals = [orig1, orig2, orig3, orig4, orig5, orig6, orig7, orig8, orig9, orig10, orig11, orig12]
 
@@ -2622,11 +2665,9 @@ def test_DataOutputWithMissingDataTypes2D():
         orig4.features.sort(sortBy=orig4.points.getName(0))
         orig5 = nimble.createData(t, numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
         orig6 = nimble.createData(t, numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
-        if pd:
-            orig7 = nimble.createData(t, pd.DataFrame([[1,2,'None'], [3,4,'b']]))
-            orig8 = nimble.createData(t, pd.SparseDataFrame([[1,2,'None'], [3,4,'b']]))
-        if scipy:
-            orig9 = nimble.createData(t, scipy.sparse.coo_matrix(numpy.array([[1,2,'None'], [3,4,'b']], dtype=object)))
+        orig7 = nimble.createData(t, pd.DataFrame([[1,2,'None'], [3,4,'b']]))
+        orig8 = nimble.createData(t, pd.SparseDataFrame([[1,2,'None'], [3,4,'b']]))
+        orig9 = nimble.createData(t, scipy.sparse.coo_matrix(numpy.array([[1,2,'None'], [3,4,'b']], dtype=object)))
 
         originals = [orig1, orig2, orig3, orig4, orig5, orig6, orig7, orig8, orig9]
         for orig in originals:

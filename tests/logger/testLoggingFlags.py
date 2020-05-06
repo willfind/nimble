@@ -12,7 +12,7 @@ import numpy
 import nimble
 from nimble.helpers import generateClassificationData
 from nimble.calculate import fractionIncorrect
-from nimble.configuration import configSafetyWrapper
+from ..assertionHelpers import configSafetyWrapper
 
 learnerName = 'custom.KNNClassifier'
 
@@ -372,20 +372,11 @@ def test_transpose():
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
-def test_fillWith():
+def test_replaceRectangle():
     def wrapped(obj, useLog):
-        obj.fillWith(1, 2, 0, 4, 0, useLog=useLog)
+        obj.replaceRectangle(1, 2, 0, 4, 0, useLog=useLog)
 
     for rType in nimble.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
-
-def test_fillUsingAllData():
-    for rType in nimble.data.available:
-        def simpleFiller(obj, match):
-            return nimble.createData(rType, numpy.zeros((18, 3)), useLog=False)
-        def wrapped(obj, useLog):
-            obj.fillUsingAllData('a', fill=simpleFiller, useLog=useLog)
-
         backend(wrapped, prepAndCheck, rType=rType)
 
 def test_featureReport():
@@ -456,9 +447,31 @@ def test_merge():
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
-############################
-# Points/Features/Elements #
-############################
+def test_transformElements():
+    def wrapped(obj, useLog):
+        ret = obj.transformElements(lambda elm: elm, features=0, useLog=useLog)
+        return ret
+
+    for rType in nimble.data.available:
+        backend(wrapped, prepAndCheck, rType=rType)
+
+def test_calculateOnElements():
+    def wrapped(obj, useLog):
+        return obj.calculateOnElements(lambda x: len(x), features=0, useLog=useLog)
+
+    for rType in nimble.data.available:
+        backend(wrapped, prepAndCheck, rType=rType)
+
+def test_matchingElements():
+    def wrapped(obj, useLog):
+        return obj.matchingElements(lambda x: True, useLog=useLog)
+
+    for rType in nimble.data.available:
+        backend(wrapped, prepAndCheck, rType=rType)
+
+###################
+# Points/Features #
+###################
 
 def simpleMapper(vector):
     vID = vector[0]
@@ -488,13 +501,6 @@ def test_features_mapReduce():
         # transpose data to make use of same mapper and reducer
         obj.transpose(useLog=False)
         return obj.features.mapReduce(simpleMapper, simpleReducer, useLog=useLog)
-
-    for rType in nimble.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
-
-def test_elements_calculate():
-    def wrapped(obj, useLog):
-        return obj.elements.calculate(lambda x: len(x), features=0, useLog=useLog)
 
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
@@ -611,16 +617,16 @@ def test_features_copy():
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
-def test_points_fill():
+def test_points_fillMatching():
     def wrapped(obj, useLog):
-        return obj.points.fill(match=1, fill=11, useLog=useLog)
+        return obj.points.fillMatching(fillWith=11, matchingElements=1, useLog=useLog)
 
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
-def test_features_fill():
+def test_features_fillMatching():
     def wrapped(obj, useLog):
-        return obj.features.fill(match=1, fill=11, useLog=useLog)
+        return obj.features.fillMatching(fillWith=11, matchingElements=1, useLog=useLog)
 
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
@@ -636,14 +642,6 @@ def test_points_transform():
 def test_features_transform():
     def wrapped(obj, useLog):
         return obj.features.transform(lambda ft: [val for val in ft], features=0, useLog=useLog)
-
-    for rType in nimble.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
-
-def test_elements_transform():
-    def wrapped(obj, useLog):
-        ret = obj.elements.transform(lambda elm: elm, features=0, useLog=useLog)
-        return ret
 
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
@@ -667,6 +665,7 @@ def test_features_insert():
         backend(wrapped, prepAndCheck, rType=rType)
 
 def test_points_append():
+
     def wrapped(obj, useLog):
         appendData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
         toAppend = nimble.createData("Matrix", appendData, useLog=False)

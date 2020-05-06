@@ -4,7 +4,7 @@ Tests for the top level function nimble.normalizeData
 
 import nimble
 from nimble.customLearners import CustomLearner
-from nimble.configuration import configSafetyWrapper
+from .assertionHelpers import configSafetyWrapper
 from .assertionHelpers import oneLogEntryExpected
 
 # successful run no testX

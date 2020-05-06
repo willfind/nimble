@@ -24,6 +24,7 @@ from .similarity import confusionMatrix
 from .statistic import maximum
 from .statistic import mean
 from .statistic import median
+from .statistic import medianAbsoluteDeviation
 from .statistic import mode
 from .statistic import minimum
 from .statistic import uniqueCount

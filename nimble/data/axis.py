@@ -15,6 +15,7 @@ from abc import abstractmethod
 import inspect
 import sys
 import operator
+import functools
 
 import numpy
 
@@ -35,6 +36,7 @@ from .dataHelpers import validateInputString
 from .dataHelpers import isAllowedSingleElement, sortIndexPosition
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import wrapMatchFunctionFactory
+from .dataHelpers import validateAxisFunction
 
 class Axis(object):
     """
@@ -55,15 +57,17 @@ class Axis(object):
         kwargs['base'] = base
         if isinstance(self, Points):
             self._axis = 'point'
+            self._isPoint = True
         else:
             self._axis = 'feature'
+            self._isPoint = False
         super(Axis, self).__init__(**kwargs)
 
     def __iter__(self):
         return AxisIterator(self)
 
     def __len__(self):
-        if isinstance(self, Points):
+        if self._isPoint:
             return self._base._pointCount
         else:
             return self._base._featureCount
@@ -78,7 +82,7 @@ class Axis(object):
     def _getName(self, index):
         if not self._namesCreated():
             self._setAllDefault()
-        if isinstance(self, Points):
+        if self._isPoint:
             return self._base.pointNamesInverse[index]
         else:
             return self._base.featureNamesInverse[index]
@@ -86,7 +90,7 @@ class Axis(object):
     def _getNames(self):
         if not self._namesCreated():
             self._setAllDefault()
-        if isinstance(self, Points):
+        if self._isPoint:
             namesList = self._base.pointNamesInverse
         else:
             namesList = self._base.featureNamesInverse
@@ -95,7 +99,7 @@ class Axis(object):
 
 
     def _setName(self, oldIdentifier, newName, useLog=None):
-        if isinstance(self, Points):
+        if self._isPoint:
             namesDict = self._base.pointNames
         else:
             namesDict = self._base.featureNames
@@ -113,7 +117,7 @@ class Axis(object):
 
 
     def _setNames(self, assignments, useLog=None):
-        if isinstance(self, Points):
+        if self._isPoint:
             names = 'pointNames'
             namesInverse = 'pointNamesInverse'
         else:
@@ -166,7 +170,7 @@ class Axis(object):
     def _getIndices(self, names):
         if not self._namesCreated():
             self._setAllDefault()
-        if isinstance(self, Points):
+        if self._isPoint:
             namesDict = self._base.pointNames
         else:
             namesDict = self._base.featureNames
@@ -195,7 +199,7 @@ class Axis(object):
     def _copy(self, toCopy, start, end, number, randomize, useLog=None):
         ret = self._genericStructuralFrontend('copy', toCopy, start, end,
                                               number, randomize)
-        if isinstance(self, Points):
+        if self._isPoint:
             ret.features.setNames(self._base.features._getNamesNoGeneration(),
                                   useLog=False)
         else:
@@ -265,7 +269,7 @@ class Axis(object):
             msg = "Either sortBy or sortHelper must not be None"
             raise InvalidArgumentTypeCombination(msg)
 
-        if isinstance(self, Points):
+        if self._isPoint:
             otherAxis = 'feature'
             axisCount = self._base._pointCount
             otherCount = self._base._featureCount
@@ -418,12 +422,16 @@ class Axis(object):
         if self._base._featureCount == 0:
             msg = "We disallow this function when there are 0 features"
             raise ImproperObjectAction(msg)
-        if function is None:
-            raise InvalidArgumentType("function must not be None")
+
+        if self._axis == 'point':
+            allowedLength = len(self._base.features)
+        else:
+            allowedLength = len(self._base.points)
+        wrappedFunc = validateAxisFunction(function, self._axis, allowedLength)
         if limitTo is not None:
             limitTo = constructIndicesList(self._base, self._axis, limitTo)
 
-        self._transform_implementation(function, limitTo)
+        self._transform_implementation(wrappedFunc, limitTo)
 
         handleLogging(useLog, 'prep', '{ax}s.transform'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('transform'),
@@ -434,7 +442,8 @@ class Axis(object):
     ###########################
 
     def _calculate(self, function, limitTo, useLog=None):
-        ret = self._calculate_backend(function, limitTo)
+        wrappedFunc = validateAxisFunction(function, self._axis)
+        ret = self._calculate_backend(wrappedFunc, limitTo)
 
         handleLogging(useLog, 'prep', '{ax}s.calculate'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('calculate'),
@@ -444,11 +453,11 @@ class Axis(object):
     def _matching(self, function, useLog=None):
         wrappedMatch = wrapMatchFunctionFactory(function)
 
-        ret = self._calculate_backend(wrappedMatch, None, matching=True)
+        ret = self._calculate_backend(wrappedMatch, None)
 
         self._setNames(self._getNamesNoGeneration(), useLog=False)
         if hasattr(function, '__name__') and function.__name__ !=  '<lambda>':
-            if self._axis == 'point':
+            if self._isPoint:
                 ret.features.setNames([function.__name__], useLog=False)
             else:
                 ret.points.setNames([function.__name__], useLog=False)
@@ -458,35 +467,28 @@ class Axis(object):
                       function)
         return ret
 
-    def _calculate_backend(self, function, limitTo, matching=False):
+    def _calculate_backend(self, function, limitTo):
         if len(self._base.points) == 0:
             msg = "We disallow this function when there are 0 points"
             raise ImproperObjectAction(msg)
         if len(self._base.features) == 0:
             msg = "We disallow this function when there are 0 features"
             raise ImproperObjectAction(msg)
-        if function is None:
-            raise InvalidArgumentType("function must not be None")
 
         if limitTo is not None:
             limitTo = constructIndicesList(self._base, self._axis, limitTo)
         else:
             limitTo = [i for i in range(len(self))]
 
-        retData, convert = self._calculate_implementation(function, limitTo)
-
-        createDataKwargs = {'useLog': False}
-        if matching:
-            createDataKwargs['convertToType'] = bool
-        elif convert:
-            createDataKwargs['convertToType'] = numpy.object_
+        retData = self._calculate_implementation(function, limitTo)
 
         pathPass = (self._base.absolutePath, self._base.relativePath)
 
         ret = nimble.createData(self._base.getTypeString(), retData,
-                                **createDataKwargs, path=pathPass)
+                                convertToType=function.convertType,
+                                path=pathPass, useLog=False)
 
-        if isinstance(self, Points):
+        if self._isPoint:
             if len(limitTo) < len(self) and self._namesCreated():
                 names = []
                 for index in limitTo:
@@ -511,9 +513,8 @@ class Axis(object):
         retData = []
         # signal to convert to object elementType if function is returning
         # non-numeric values.
-        convertType = False
         for axisID in limitTo:
-            if isinstance(self, Points):
+            if self._isPoint:
                 view = self._base.pointView(axisID)
             else:
                 view = self._base.featureView(axisID)
@@ -521,32 +522,11 @@ class Axis(object):
             currOut = function(view)
             # the output could have multiple values or be singular.
             if isAllowedSingleElement(currOut):
-                if match.nonNumeric(currOut) and currOut is not None:
-                    convertType = True
                 retData.append([currOut])
             else:
-                try:
-                    toCopyInto = []
-                    for value in currOut:
-                        if isAllowedSingleElement(value):
-                            if match.nonNumeric(value) and value is not None:
-                                convertType = True
-                            toCopyInto.append(value)
-                        else:
-                            msg = "The return of 'function' contains an "
-                            msg += "invalid value. Numbers, strings, None, or "
-                            msg += "nan are the only valid values. This value "
-                            msg += "was " + str(type(value))
-                            raise InvalidArgumentValue(msg)
-                    retData.append(toCopyInto)
-                # not iterable
-                except TypeError:
-                    msg = "'function' must return a single valid value "
-                    msg += "(number, string, None, or nan) or an iterable "
-                    msg += "container of valid values"
-                    raise InvalidArgumentValue(msg)
+                retData.append(currOut)
 
-        return retData, convertType
+        return retData
 
 
     def _insert(self, insertBefore, toInsert, append=False, useLog=None):
@@ -582,7 +562,7 @@ class Axis(object):
 
 
     def _mapReduce(self, mapper, reducer, useLog=None):
-        if isinstance(self, Points):
+        if self._isPoint:
             targetCount = len(self._base.points)
             otherCount = len(self._base.features)
             otherAxis = 'feature'
@@ -643,32 +623,53 @@ class Axis(object):
         return ret
 
 
-    def _fill(self, toMatch, toFill, limitTo=None, returnModified=False,
-              useLog=None, **kwarguments):
-        modified = None
-        toTransform = fill.factory(toMatch, toFill, **kwarguments)
+    def _fillMatching(self, fillWith, matchingElements, limitTo=None,
+                      useLog=None, **kwarguments):
+        removeKwargs = []
+        # use our fill.constant function with the fillWith value
+        if not callable(fillWith):
+            value = fillWith
+            # for consistency use numpy.nan for None and nans
+            if value is None or value != value:
+                value = numpy.nan
+            fillFunc = fill.constant
+            kwarguments['constantValue'] = value
+            removeKwargs.append('constantValue')
+        else:
+            fillFunc = fillWith
 
-        if returnModified:
-            def bools(values):
-                return [True if toMatch(val) else False for val in values]
+        # if matchingElements is a boolean matrix we need to provide the
+        # corresponding boolean vector for the vector passed to _transform
+        try:
+            idxOrder = iter(limitTo)
+        except TypeError:
+            if limitTo is None:
+                idxOrder = iter(range(len(self)))
+            else: # limitTo is a single identifier
+                idxOrder = iter([self._getIndex(limitTo)])
 
-            modified = self._calculate(bools, limitTo, useLog=False)
-            if isinstance(self, Points):
-                currNames = modified.points.getNames()
-                modNames = [n + "_modified" for n in currNames]
-                modified.points.setNames(modNames, useLog=False)
+        @functools.wraps(fillFunc)
+        def fillFunction(vector):
+            isBase = isinstance(matchingElements, nimble.data.Base)
+            if not isBase:
+                matcher = matchingElements
+            elif self._axis == 'point':
+                matcher = matchingElements[next(idxOrder), :]
             else:
-                currNames = modified.features.getNames()
-                modNames = [n + "_modified" for n in currNames]
-                modified.features.setNames(modNames, useLog=False)
+                matcher = matchingElements[:, next(idxOrder)]
 
-        self._transform(toTransform, limitTo, useLog=False)
+            return fillFunc(vector, matcher, **kwarguments)
 
-        handleLogging(useLog, 'prep', '{ax}s.fill'.format(ax=self._axis),
-                      self._base.getTypeString(), self._sigFunc('fill'),
-                      toMatch, toFill, limitTo, returnModified, **kwarguments)
+        self._transform(fillFunction, limitTo, useLog=False)
 
-        return modified
+        # prevent kwargs we added from being logged
+        for kwarg in removeKwargs:
+            del kwarguments[kwarg]
+
+        funcName = '{ax}s.fillMatching'.format(ax=self._axis)
+        handleLogging(useLog, 'prep', funcName, self._base.getTypeString(),
+                      self._sigFunc('fillMatching'), fillWith,
+                      matchingElements, limitTo, **kwarguments)
 
 
     def _normalize(self, subtract, divide, applyResultTo, useLog=None):
@@ -784,7 +785,7 @@ class Axis(object):
             objArg = True
 
         # preserve names in case any of the operations modify them
-        if isinstance(self, Points):
+        if self._isPoint:
             origPtNames = self._getNamesNoGeneration()
             origFtNames = self._base.features._getNamesNoGeneration()
         else:
@@ -805,9 +806,7 @@ class Axis(object):
 
         # first perform the subtraction operation
         if subtract is not None and subtract != 0:
-            if subIsVec and isinstance(self, Points):
-                subtract = subtract.stretch
-            elif subIsVec:
+            if subIsVec:
                 subtract = subtract.stretch
             self._base.referenceDataFrom(self._base - subtract, useLog=False)
             if alsoIsObj:
@@ -816,9 +815,7 @@ class Axis(object):
 
         # then perform the division operation
         if divide is not None and divide != 1:
-            if divIsVec and isinstance(self, Points):
-                divide = divide.stretch
-            elif divIsVec:
+            if divIsVec:
                 divide = divide.stretch
 
             self._base.referenceDataFrom(self._base / divide, useLog=False)
@@ -826,7 +823,7 @@ class Axis(object):
                 applyResultTo.referenceDataFrom(applyResultTo / divide,
                                                 useLog=False)
 
-        if isinstance(self, Points):
+        if self._isPoint:
             self._setNames(origPtNames, useLog=False)
             self._base.features.setNames(origFtNames, useLog=False)
         else:
@@ -848,7 +845,7 @@ class Axis(object):
 
         repeated = self._repeat_implementation(totalCopies, copyValueByValue)
 
-        if isinstance(self, Points):
+        if self._isPoint:
             ptNames = self._getNamesNoGeneration()
             namesToRepeat = ptNames
             ftNames = self._base.features._getNamesNoGeneration()
@@ -881,12 +878,6 @@ class Axis(object):
     ###################
     # Query functions #
     ###################
-
-    def _nonZeroIterator(self):
-        if self._base._pointCount == 0 or self._base._featureCount == 0:
-            return EmptyIt()
-
-        return self._nonZeroIterator_implementation()
 
     def _unique(self):
         ret = self._unique_implementation()
@@ -922,7 +913,7 @@ class Axis(object):
 
         transposed = self._base.T
 
-        if isinstance(self, Points):
+        if self._isPoint:
             ret = toCall(self._base, transposed)
         else:
             ret = toCall(transposed, self._base)
@@ -935,16 +926,6 @@ class Axis(object):
         return ret
 
     def _statistics(self, statisticsFunction, groupByFeature=None):
-        if self._axis == 'point' or groupByFeature is None:
-            return self._statisticsBackend(statisticsFunction)
-        else:
-            # groupByFeature is only a parameter for .features
-            res = self._base.groupByFeature(groupByFeature, useLog=False)
-            for k in res:
-                res[k] = res[k].features._statisticsBackend(statisticsFunction)
-            return res
-
-    def _statisticsBackend(self, statisticsFunction):
         accepted = [
             'max', 'mean', 'median', 'min', 'unique count',
             'proportion missing', 'proportion zero', 'standard deviation',
@@ -970,15 +951,27 @@ class Axis(object):
             toCall = nimble.calculate.proportionZero
         elif cleanFuncName in ['std', 'standarddeviation','samplestd',
                                'samplestandarddeviation']:
-            def sampleStandardDeviation(values):
-                return nimble.calculate.standardDeviation(values, True)
-
-            toCall = sampleStandardDeviation
-        elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
             toCall = nimble.calculate.standardDeviation
+        elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
 
+            def populationStandardDeviation(values):
+                return nimble.calculate.standardDeviation(values, False)
+
+            toCall = populationStandardDeviation
+
+        if self._axis == 'point' or groupByFeature is None:
+            return self._statisticsBackend(cleanFuncName, toCall)
+        else:
+            # groupByFeature is only a parameter for .features
+            res = self._base.groupByFeature(groupByFeature, useLog=False)
+            for k in res:
+                res[k] = res[k].features._statisticsBackend(cleanFuncName,
+                                                            toCall)
+            return res
+
+    def _statisticsBackend(self, cleanFuncName, toCall):
         ret = self._calculate(toCall, limitTo=None, useLog=False)
-        if isinstance(self, Points):
+        if self._isPoint:
             ret.points.setNames(self._getNames(), useLog=False)
             ret.features.setName(0, cleanFuncName, useLog=False)
         else:
@@ -992,13 +985,13 @@ class Axis(object):
     #####################
 
     def _namesCreated(self):
-        if isinstance(self, Points):
+        if self._isPoint:
             return not self._base.pointNames is None
         else:
             return not self._base.featureNames is None
 
     def _nextDefaultName(self):
-        if isinstance(self, Points):
+        if self._isPoint:
             ret = DEFAULT_PREFIX2%self._base._nextDefaultValuePoint
             self._base._nextDefaultValuePoint += 1
         else:
@@ -1007,7 +1000,7 @@ class Axis(object):
         return ret
 
     def _setAllDefault(self):
-        if isinstance(self, Points):
+        if self._isPoint:
             self._base.pointNames = {}
             self._base.pointNamesInverse = []
             names = self._base.pointNames
@@ -1030,7 +1023,7 @@ class Axis(object):
     def _getIndexByName(self, name):
         if not self._namesCreated():
             self._setAllDefault()
-        if isinstance(self, Points):
+        if self._isPoint:
             namesDict = self._base.pointNames
         else:
             namesDict = self._base.featureNames
@@ -1042,7 +1035,7 @@ class Axis(object):
         return namesDict[name]
 
     def _setName_implementation(self, oldIdentifier, newName):
-        if isinstance(self, Points):
+        if self._isPoint:
             names = self._base.pointNames
             invNames = self._base.pointNamesInverse
         else:
@@ -1099,7 +1092,7 @@ class Axis(object):
             assignments = temp
 
         if count == 0:
-            if isinstance(self, Points):
+            if self._isPoint:
                 self._base.pointNames = {}
                 self._base.pointNamesInverse = []
             else:
@@ -1115,7 +1108,7 @@ class Axis(object):
             if not isinstance(assignments[name], int):
                 raise InvalidArgumentValue("Indices must be integers")
             if assignments[name] < 0 or assignments[name] >= count:
-                if isinstance(self, Points):
+                if self._isPoint:
                     countName = 'points'
                 else:
                     countName = 'features'
@@ -1129,7 +1122,7 @@ class Axis(object):
             reverseMap[assignments[name]] = name
 
         # have to copy the input, could be from another object
-        if isinstance(self, Points):
+        if self._isPoint:
             self._base.pointNames = copy.deepcopy(assignments)
             self._base.pointNamesInverse = reverseMap
         else:
@@ -1209,7 +1202,7 @@ class Axis(object):
                 targetList.append(target)
             # if not a name then assume it's a query string
             else:
-                if isinstance(self, Points):
+                if self._isPoint:
                     hasNameChecker2 = self._base.features._hasName
                 else:
                     hasNameChecker2 = self._base.points._hasName
@@ -1270,7 +1263,7 @@ class Axis(object):
         nameList = None
         if self._namesCreated():
             nameList = [self._getName(i) for i in targetList]
-        if isinstance(self, Points):
+        if self._isPoint:
             return nameList, self._base.features._getNamesNoGeneration()
         else:
             return self._base.points._getNamesNoGeneration(), nameList
@@ -1281,7 +1274,7 @@ class Axis(object):
         this object, removing the names that have been extracted to the
         other object.
         """
-        if isinstance(self, Points):
+        if self._isPoint:
             self._base._pointCount -= len(other.points)
             if self._base._pointNamesCreated():
                 idxList = []
@@ -1450,7 +1443,7 @@ class Axis(object):
             msg += str(inspect.getmro(toInsert.__class__))
             raise InvalidArgumentType(msg.format(arg=argName))
 
-        if isinstance(self, Points):
+        if self._isPoint:
             objOffAxisLen = self._base._featureCount
             insertOffAxisLen = len(toInsert.features)
             objHasAxisNames = self._base._pointNamesCreated()
@@ -1631,7 +1624,7 @@ class Axis(object):
         Modify the point or feature count to include the insertedObj. If
         one or both objects have names, names will be set as well.
         """
-        if isinstance(self, Points):
+        if self._isPoint:
             newPtCount = len(self) + len(insertedObj.points)
             # only need to adjust names if names are present
             if not (self._namesCreated()
@@ -1672,7 +1665,7 @@ class Axis(object):
         """
         Get the top level function containing the correct signature.
         """
-        if isinstance(self, Points):
+        if self._isPoint:
             return getattr(Points, funcName)
         return getattr(Features, funcName)
 
@@ -1710,10 +1703,6 @@ class Axis(object):
 
     @abstractmethod
     def _unique_implementation(self):
-        pass
-
-    @abstractmethod
-    def _nonZeroIterator_implementation(self):
         pass
 
 ###########
@@ -1847,22 +1836,6 @@ class AxisIterator(object):
             return value
         else:
             raise StopIteration
-
-    def __next__(self):
-        return self.next()
-
-class EmptyIt(object):
-    """
-    Non-zero iterator to return when object is point or feature empty.
-    """
-    def __iter__(self):
-        return self
-
-    def next(self):
-        """
-        Raise StopIteration since this object is point or feature empty.
-        """
-        raise StopIteration
 
     def __next__(self):
         return self.next()

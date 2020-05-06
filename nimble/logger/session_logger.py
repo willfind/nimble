@@ -416,7 +416,7 @@ class SessionLogger(object):
                     arguments[name] = repr(value)
             logInfo["learnerArgs"] = arguments
             logInfo["folds"] = folds
-            logInfo["metric"] = metric.__name__
+            logInfo["metric"] = (metric.__name__, metric.optimal)
             logInfo["performance"] = performance
 
             self.log(logType, logInfo)
@@ -822,9 +822,9 @@ def _buildCVLogString(timestamp, log):
         fullLog += _dictToKeywordString(log["learnerArgs"])
         fullLog += "\n\n"
     folds = log["folds"]
-    metric = log["metric"]
-    fullLog += "{0}-folding using {1} ".format(folds, metric)
-    fullLog += "optimizing for min values\n\n"
+    metricName, metricOptimal = log["metric"]
+    fullLog += "{0}-folding using {1} ".format(folds, metricName)
+    fullLog += "optimizing for {0} values\n\n".format(metricOptimal)
     fullLog += "{0:<20s}{1:20s}\n".format("Results", "Arguments")
     for arguments, result in log["performance"]:
         argString = _dictToKeywordString(arguments)

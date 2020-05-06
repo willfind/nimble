@@ -17,12 +17,12 @@ from nose.plugins.attrib import attr
 #@attr('slow')
 
 import nimble
-from nimble.configuration import configSafetyWrapper
 from nimble.exceptions import InvalidArgumentValue, PackageException
 from nimble.interfaces.universal_interface import UniversalInterface
 from nimble.helpers import generateClusteredPoints
 from nimble.helpers import generateClassificationData
 from nimble.helpers import generateRegressionData
+from ..assertionHelpers import configSafetyWrapper
 
 
 def checkFormat(scores, numLabels):
@@ -196,6 +196,9 @@ def getCanonicalNameAndPossibleAliases(interface):
     elif interface.__name__ == 'Shogun':
         canonicalName = 'shogun'
         aliases = ['shogun', 'SHOGUN', 'ShOGUn']
+    elif interface.__name__ == 'Autoimpute':
+        canonicalName = 'autoimpute'
+        aliases = ['autoimpute', 'AUTOIMPUTE', 'AuToImpUTe']
     else:
         msg = "the canonical name and aliases are not defined for this interface"
         raise ValueError(msg)

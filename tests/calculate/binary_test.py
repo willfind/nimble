@@ -136,8 +136,6 @@ def test_binary_metricsAsPerformanceFunction():
     assert score8 == .4
     assert balancedAccuracy.optimal == 'max'
 
-    assert not hasattr(f1Score, 'optimal')
-    f1Score.optimal = 'max'
     score9 = tl.test(testData, 0, f1Score, useLog=False)
     assert score9 == .5
     assert f1Score.optimal == 'max'

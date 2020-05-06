@@ -9,7 +9,7 @@ In object StructureModifying:
 __init__,  transpose, T, points.insert, features.insert, points.sort,
 features.sort, points.extract, features.extract, points.delete,
 features.delete, points.retain, features.retain, referenceDataFrom,
-points.transform, features.transform, elements.transform, fillWith,
+points.transform, features.transform, transformElements, replaceRectangle,
 flattenToOnePoint, flattenToOneFeature, merge, unflattenFromOnePoint,
 unflattenFromOneFeature, points.append, features.append,
 """
@@ -40,17 +40,14 @@ from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 from nimble.randomness import numpyRandom
-from nimble.utility import ImportModule
 from nimble.utility import sparseMatrixToArray
+from nimble.utility import scipy, pd
 
 from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 from ..assertionHelpers import assertNoNamesGenerated
 from ..assertionHelpers import CalledFunctionException, calledException
-
-scipy = ImportModule('scipy')
-pd = ImportModule('pandas')
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
@@ -174,7 +171,6 @@ class StructureDataSafe(StructureShared):
     def test_objectValidationSetup(self):
         """ Test that object validation has been setup """
         assert hasattr(nimble.data.Base, 'objectValidation')
-        assert hasattr(nimble.data.Elements, 'objectValidation')
         assert hasattr(nimble.data.Features, 'objectValidation')
         assert hasattr(nimble.data.Points, 'objectValidation')
 
@@ -325,19 +321,17 @@ class StructureDataSafe(StructureShared):
         numpyMatrix = orig.copy(to='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
-        if scipy:
-            scipyCsr = orig.copy(to='scipy csr')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
+        scipyCsr = orig.copy(to='scipy csr')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
 
-            scipyCsc = orig.copy(to='scipy csc')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
+        scipyCsc = orig.copy(to='scipy csc')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
 
-            scipyCoo = orig.copy(to='scipy coo')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
+        scipyCoo = orig.copy(to='scipy coo')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
 
-        if pd:
-            pandasDF = orig.copy(to='pandas dataframe')
-            assert numpy.array_equal(pandasDF, data)
+        pandasDF = orig.copy(to='pandas dataframe')
+        assert numpy.array_equal(pandasDF, data)
 
         listOfDict = orig.copy(to='list of dict')
         assert listOfDict == []
@@ -383,19 +377,18 @@ class StructureDataSafe(StructureShared):
         numpyMatrix = orig.copy(to='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
-        if scipy:
-            scipyCsr = orig.copy(to='scipy csr')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
+        scipyCsr = orig.copy(to='scipy csr')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
 
-            scipyCsc = orig.copy(to='scipy csc')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
+        scipyCsc = orig.copy(to='scipy csc')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
 
-            scipyCoo = orig.copy(to='scipy coo')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
+        scipyCoo = orig.copy(to='scipy coo')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
 
-        if pd:
-            pandasDF = orig.copy(to='pandas dataframe')
-            assert numpy.array_equal(pandasDF, data)
+
+        pandasDF = orig.copy(to='pandas dataframe')
+        assert numpy.array_equal(pandasDF, data)
 
         listOfDict = orig.copy(to='list of dict')
         assert listOfDict == [{}, {}]
@@ -439,19 +432,17 @@ class StructureDataSafe(StructureShared):
         numpyMatrix = orig.copy(to='numpy matrix')
         assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
 
-        if scipy:
-            scipyCsr = orig.copy(to='scipy csr')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
+        scipyCsr = orig.copy(to='scipy csr')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
 
-            scipyCsc = orig.copy(to='scipy csc')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
+        scipyCsc = orig.copy(to='scipy csc')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
 
-            scipyCoo = orig.copy(to='scipy coo')
-            assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
+        scipyCoo = orig.copy(to='scipy coo')
+        assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
 
-        if pd:
-            pandasDF = orig.copy(to='pandas dataframe')
-            assert numpy.array_equal(pandasDF, data)
+        pandasDF = orig.copy(to='pandas dataframe')
+        assert numpy.array_equal(pandasDF, data)
 
         listOfDict = orig.copy(to='list of dict')
         assert listOfDict == []
@@ -543,30 +534,30 @@ class StructureDataSafe(StructureShared):
         numpyMatrix[0, 0] = 5
         assert orig[0, 0] == 1
 
-        if scipy:
-            # copying to scipy requires numeric values only
-            numeric = self.constructor(data[:4], pointNames=pointNames[:4],
-                                       featureNames=featureNames)
-            spcsc = numeric.copy(to='scipy csc')
-            assert type(spcsc) == type(scipy.sparse.csc_matrix([]))
-            spcsc[0, 0] = 5
-            assert numeric[0, 0] == 1
+        # copying to scipy requires numeric values only
+        numeric = self.constructor(data[:4], pointNames=pointNames[:4],
+                                   featureNames=featureNames)
+        spcsc = numeric.copy(to='scipy csc')
+        assert type(spcsc) == type(scipy.sparse.csc_matrix([]))
+        spcsc[0, 0] = 5
+        assert numeric[0, 0] == 1
 
-            spcsr = numeric.copy(to='scipy csr')
-            assert type(spcsr) == type(scipy.sparse.csr_matrix([]))
-            spcsr[0, 0] = 5
-            assert numeric[0, 0] == 1
+        spcsr = numeric.copy(to='scipy csr')
+        assert type(spcsr) == type(scipy.sparse.csr_matrix([]))
+        spcsr[0, 0] = 5
+        assert numeric[0, 0] == 1
 
-            spcoo = numeric.copy(to='scipy coo')
-            assert type(spcoo) == type(scipy.sparse.coo_matrix([]))
-            spcoo.data[(spcoo.row == 0) & (spcoo.col == 0)] = 5
-            assert numeric[0, 0] == 1
+        spcoo = numeric.copy(to='scipy coo')
+        assert type(spcoo) == type(scipy.sparse.coo_matrix([]))
+        spcoo.data[(spcoo.row == 0) & (spcoo.col == 0)] = 5
+        assert numeric[0, 0] == 1
 
-        if pd:
-            pandasDF = orig.copy(to='pandas dataframe')
-            assert type(pandasDF) == type(pd.DataFrame([]))
-            pandasDF.iloc[0, 0] = 5
-            assert orig[0, 0] == 1
+        pandasDF = orig.copy(to='pandas dataframe')
+        assert type(pandasDF) == type(pd.DataFrame([]))
+        assert numpy.array_equal(pandasDF.columns, featureNames)
+        assert numpy.array_equal(pandasDF.index, pointNames)
+        pandasDF.iloc[0, 0] = 5
+        assert orig[0, 0] == 1
 
         listOfDict = orig.copy(to='list of dict')
         assert type(listOfDict) == list
@@ -607,19 +598,19 @@ class StructureDataSafe(StructureShared):
         out = orig.copy(to='numpymatrix', rowsArePoints=False)
         assert numpy.array_equal(out, dataT)
 
-        if scipy:
-            out = orig.copy(to='scipycsr', rowsArePoints=False)
-            assert numpy.array_equal(sparseMatrixToArray(out), dataT)
+        out = orig.copy(to='scipycsr', rowsArePoints=False)
+        assert numpy.array_equal(sparseMatrixToArray(out), dataT)
 
-            out = orig.copy(to='scipycsc', rowsArePoints=False)
-            assert numpy.array_equal(sparseMatrixToArray(out), dataT)
+        out = orig.copy(to='scipycsc', rowsArePoints=False)
+        assert numpy.array_equal(sparseMatrixToArray(out), dataT)
 
-            out = out = orig.copy(to='scipycoo', rowsArePoints=False)
-            assert numpy.array_equal(sparseMatrixToArray(out), dataT)
+        out = out = orig.copy(to='scipycoo', rowsArePoints=False)
+        assert numpy.array_equal(sparseMatrixToArray(out), dataT)
 
-        if pd:
-            out = orig.copy(to='pandasdataframe', rowsArePoints=False)
-            assert numpy.array_equal(out, dataT)
+        out = orig.copy(to='pandasdataframe', rowsArePoints=False)
+        assert numpy.array_equal(out, dataT)
+        assert numpy.array_equal(out.columns, pointNames)
+        assert numpy.array_equal(out.index, featureNames)
 
         out = orig.copy(to='list of dict', rowsArePoints=False)
 
@@ -662,27 +653,28 @@ class StructureDataSafe(StructureShared):
             assert False
         except InvalidArgumentValueCombination as ivc:
             pass
-        if scipy:
-            try:
-                orig.copy(to="scipy csr", outputAs1D=True)
-                assert False
-            except InvalidArgumentValueCombination as ivc:
-                pass
-            try:
-                orig.copy(to="scipy csc", outputAs1D=True)
-                assert False
-            except InvalidArgumentValueCombination as ivc:
-                pass
-            try:
-                orig.copy(to="scipy coo", outputAs1D=True)
-                assert False
-            except InvalidArgumentValueCombination as ivc:
-                pass
-        if pd:
-            try:
-                orig.copy(to='pandas dataframe', outputAs1D=True)
-            except InvalidArgumentValueCombination as ivc:
-                pass
+
+        try:
+            orig.copy(to="scipy csr", outputAs1D=True)
+            assert False
+        except InvalidArgumentValueCombination as ivc:
+            pass
+        try:
+            orig.copy(to="scipy csc", outputAs1D=True)
+            assert False
+        except InvalidArgumentValueCombination as ivc:
+            pass
+        try:
+            orig.copy(to="scipy coo", outputAs1D=True)
+            assert False
+        except InvalidArgumentValueCombination as ivc:
+            pass
+
+        try:
+            orig.copy(to='pandas dataframe', outputAs1D=True)
+        except InvalidArgumentValueCombination as ivc:
+            pass
+
         try:
             orig.copy(to="list of dict", outputAs1D=True)
             assert False
@@ -2221,10 +2213,10 @@ class StructureModifying(StructureShared):
         orig3 = self.constructor({})
         orig4 = self.constructor(numpy.empty([0, 0]))
         orig5 = self.constructor(numpy.matrix(numpy.empty([0, 0])))
-        if pd:
-            orig6 = self.constructor(pd.DataFrame())
-            orig7 = self.constructor(pd.Series())
-            orig8 = self.constructor(pd.SparseDataFrame())
+
+        orig6 = self.constructor(pd.DataFrame())
+        orig7 = self.constructor(pd.Series())
+        orig8 = self.constructor(pd.SparseDataFrame())
 
         assert orig1.isIdentical(orig2)
         assert orig1.isIdentical(orig3)
@@ -2246,11 +2238,9 @@ class StructureModifying(StructureShared):
         orig3 = self.constructor([{}])
         orig4 = self.constructor(numpy.empty([1, 0]))
         orig5 = self.constructor(numpy.matrix(numpy.empty([1, 0])))
-        if pd:
-            orig6 = self.constructor(pd.DataFrame([[]]))
-            orig8 = self.constructor(pd.SparseDataFrame([[]]))
-        if scipy:
-            orig9 = self.constructor(scipy.sparse.coo_matrix([[]]))
+        orig6 = self.constructor(pd.DataFrame([[]]))
+        orig8 = self.constructor(pd.SparseDataFrame([[]]))
+        orig9 = self.constructor(scipy.sparse.coo_matrix([[]]))
 
         assert orig1.isIdentical(orig3)
         assert orig1.isIdentical(orig4)
@@ -2270,11 +2260,9 @@ class StructureModifying(StructureShared):
         orig3 = self.constructor([{}, {}])
         orig4 = self.constructor(numpy.empty([2, 0]))
         orig5 = self.constructor(numpy.matrix(numpy.empty([2, 0])))
-        if pd:
-            orig6 = self.constructor(pd.DataFrame([[], []]))
-            orig8 = self.constructor(pd.SparseDataFrame([[], []]))
-        if scipy:
-            orig9 = self.constructor(scipy.sparse.coo_matrix([[], []]))
+        orig6 = self.constructor(pd.DataFrame([[], []]))
+        orig8 = self.constructor(pd.SparseDataFrame([[], []]))
+        orig9 = self.constructor(scipy.sparse.coo_matrix([[], []]))
 
         assert orig1.isIdentical(orig3)
         assert orig1.isIdentical(orig4)
@@ -2298,12 +2286,10 @@ class StructureModifying(StructureShared):
         orig10.features.sort(sortBy=orig10.points.getName(0))
         orig4 = self.constructor(numpy.array([1,2,3]), featureNames=['a', 'b', 'c'])
         orig5 = self.constructor(numpy.matrix([1,2,3]), featureNames=['a', 'b', 'c'])
-        if pd:
-            orig6 = self.constructor(pd.DataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
-            orig7 = self.constructor(pd.Series([1,2,3]), featureNames=['a', 'b', 'c'])
-            orig8 = self.constructor(pd.SparseDataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
-        if scipy:
-            orig9 = self.constructor(scipy.sparse.coo_matrix([1,2,3]), featureNames=['a', 'b', 'c'])
+        orig6 = self.constructor(pd.DataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
+        orig7 = self.constructor(pd.Series([1,2,3]), featureNames=['a', 'b', 'c'])
+        orig8 = self.constructor(pd.SparseDataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
+        orig9 = self.constructor(scipy.sparse.coo_matrix([1,2,3]), featureNames=['a', 'b', 'c'])
 
         assert orig1.isIdentical(orig2)
         assert orig1.isIdentical(orig3)
@@ -2330,10 +2316,8 @@ class StructureModifying(StructureShared):
         orig7.features.sort(sortBy=orig7.points.getName(0))
         orig4 = self.constructor(numpy.array([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
         orig5 = self.constructor(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
-        if pd:
-            orig6 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']]), featureNames=['a', 'b', 'c'])
-        if scipy:
-            orig9 = self.constructor(scipy.sparse.coo_matrix(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object)), featureNames=['a', 'b', 'c'])
+        orig6 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']]), featureNames=['a', 'b', 'c'])
+        orig9 = self.constructor(scipy.sparse.coo_matrix(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object)), featureNames=['a', 'b', 'c'])
 
         assert orig1.isIdentical(orig2)
         assert orig1.isIdentical(orig3)
@@ -7833,6 +7817,42 @@ class StructureModifying(StructureShared):
 
         origObj.points.transform(emitLower)
 
+    @raises(InvalidArgumentValue)
+    def test_points_transform_exceptionInvalidFunctionReturnLength(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(copy.deepcopy(origData), featureNames=featureNames)
+        origObj.points.transform(lambda pt: [0])
+
+    @raises(InvalidArgumentValue)
+    def test_points_transform_exceptionInvalidFunctionReturnType(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(copy.deepcopy(origData), featureNames=featureNames)
+        origObj.points.transform(lambda pt: [0, 0, {}])
+
+    @raises(InvalidArgumentValue)
+    def test_points_transform_dictReturn(self):
+
+        def dictReturn(pt):
+            return {str(i): pt for i in range(len(pt))}
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        orig.points.transform(dictReturn)
+
+    @raises(InvalidArgumentValue)
+    def test_points_transform_stringOfPointLength(self):
+        pnames = ["obs0", "obs1", "obs2", "obs3"]
+        fnames = ["prediction", "actual"]
+        data = [[0, 1], [1, 2], [2, 1], [1, 0]]
+
+        toTrans = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+        def stringOfPointLength(point):
+            return "X" * len(point)
+
+        toTrans.points.transform(stringOfPointLength)
+
     @raises(CalledFunctionException)
     @mock.patch('nimble.data.axis.constructIndicesList', calledException)
     def test_points_transform_calls_constructIndicesList(self):
@@ -7917,7 +7937,7 @@ class StructureModifying(StructureShared):
         def emitNumNZ(point):
             ret = 0
             assert len(point) == 3
-            for value in point.points.nonZeroIterator():
+            for value in point.iterateElements(only=match.nonZero):
                 ret += 1
             return [ret, ret, ret]
 
@@ -8010,6 +8030,42 @@ class StructureModifying(StructureShared):
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
         origObj = self.constructor(copy.deepcopy(origData), featureNames=featureNames)
         origObj.features.transform(None)
+
+    @raises(InvalidArgumentValue)
+    def test_features_transform_exceptionInvalidFunctionReturnLength(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(copy.deepcopy(origData), featureNames=featureNames)
+        origObj.features.transform(lambda ft: [0])
+
+    @raises(InvalidArgumentValue)
+    def test_features_transform_exceptionInvalidFunctionReturnValue(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(copy.deepcopy(origData), featureNames=featureNames)
+        origObj.features.transform(lambda ft: [0, 0, 0, {}])
+
+    @raises(InvalidArgumentValue)
+    def test_features_transform_dictReturn(self):
+
+        def dictReturn(ft):
+            return {str(i): ft for i in range(len(ft))}
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        orig.features.transform(dictReturn)
+
+    @raises(InvalidArgumentValue)
+    def test_features_transform_stringOfFeatureLength(self):
+        pnames = ["obs0", "obs1", "obs2", "obs3"]
+        fnames = ["prediction", "actual"]
+        data = [[0, 1], [1, 2], [2, 1], [1, 0]]
+
+        toTrans = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+        def stringOfFeatureLength(feature):
+            return "X" * len(feature)
+
+        toTrans.points.transform(stringOfFeatureLength)
 
     @raises(CalledFunctionException)
     @mock.patch('nimble.data.axis.constructIndicesList', calledException)
@@ -8105,7 +8161,7 @@ class StructureModifying(StructureShared):
         def emitNumNZ(feature):
             ret = 0
             assert len(feature) == 4
-            for value in feature.features.nonZeroIterator():
+            for value in feature.iterateElements(order='feature', only=match.nonZero):
                 ret += 1
             return [ret, ret, ret, ret]
 
@@ -8158,42 +8214,42 @@ class StructureModifying(StructureShared):
         orig.features.transform(toString)
         assert orig == exp
 
-    ##########################
-    # elements.transform() #
-    ##########################
+    #######################
+    # transformElements() #
+    #######################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.elements.constructIndicesList', calledException)
-    def test_elements_transform_calls_constructIndicesList1(self):
+    @mock.patch('nimble.data.base.constructIndicesList', calledException)
+    def test_transformElements_calls_constructIndicesList1(self):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
         def noChange(point):
             return point
 
-        toTest.elements.transform(noChange, points=['a', 'b'])
+        toTest.transformElements(noChange, points=['a', 'b'])
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.elements.constructIndicesList', calledException)
-    def test_elements_transform_calls_constructIndicesList2(self):
+    @mock.patch('nimble.data.base.constructIndicesList', calledException)
+    def test_transformElements_calls_constructIndicesList2(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
         def noChange(point):
             return point
 
-        toTest.elements.transform(noChange, features=['a', 'b'])
+        toTest.transformElements(noChange, features=['a', 'b'])
 
     @raises(InvalidArgumentValue)
-    def test_elements_transform_invalidElementReturned(self):
+    def test_transformElements_invalidElementReturned(self):
         data = [['a', 'b', 'c'], ['d', 'e', 'f'], ['g', 'h', 'i']]
         toTest = self.constructor(data)
-        toTest.elements.transform(lambda e: [e])
+        toTest.transformElements(lambda e: [e])
 
     @oneLogEntryExpected
-    def test_elements_transform_passthrough(self):
+    def test_transformElements_passthrough(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        ret = toTest.elements.transform(passThrough)  # RET CHECK
+        ret = toTest.transformElements(passThrough)  # RET CHECK
         assert ret is None
         retRaw = toTest.copy(to="python list")
 
@@ -8203,7 +8259,7 @@ class StructureModifying(StructureShared):
         assertNoNamesGenerated(toTest)
 
 
-    def test_elements_transform_NamePath_preservation(self):
+    def test_transformElements_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
@@ -8211,18 +8267,18 @@ class StructureModifying(StructureShared):
         toTest._absPath = "TestAbsPath"
         toTest._relPath = "testRelPath"
 
-        toTest.elements.transform(passThrough)
+        toTest.transformElements(passThrough)
 
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
     @oneLogEntryExpected
-    def test_elements_transform_plusOnePreserve(self):
+    def test_transformElements_plusOnePreserve(self):
         data = [[1, 0, 3], [0, 5, 6], [7, 0, 9]]
         toTest = self.constructor(data)
 
-        toTest.elements.transform(plusOne, preserveZeros=True)
+        toTest.transformElements(plusOne, preserveZeros=True)
         retRaw = toTest.copy(to="python list")
 
         assert [2, 0, 4] in retRaw
@@ -8230,11 +8286,11 @@ class StructureModifying(StructureShared):
         assert [8, 0, 10] in retRaw
 
     @oneLogEntryExpected
-    def test_elements_transform_plusOneExclude(self):
+    def test_transformElements_plusOneExclude(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
 
-        toTest.elements.transform(plusOneOnlyEven, skipNoneReturnValues=True)
+        toTest.transformElements(plusOneOnlyEven, skipNoneReturnValues=True)
         retRaw = toTest.copy(to="python list")
 
         assert [1, 3, 3] in retRaw
@@ -8242,13 +8298,13 @@ class StructureModifying(StructureShared):
         assert [7, 9, 9] in retRaw
 
     @oneLogEntryExpected
-    def test_elements_transform_plusOneLimited(self):
+    def test_transformElements_plusOneLimited(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(plusOneOnlyEven, points=1, features=[1, 'three'], skipNoneReturnValues=True)
+        toTest.transformElements(plusOneOnlyEven, points=1, features=[1, 'three'], skipNoneReturnValues=True)
         retRaw = toTest.copy(to="python list")
 
         assert [1, 2, 3] in retRaw
@@ -8256,7 +8312,7 @@ class StructureModifying(StructureShared):
         assert [7, 8, 9] in retRaw
 
     @oneLogEntryExpected
-    def test_elements_transform_DictionaryAllMapped(self):
+    def test_transformElements_DictionaryAllMapped(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8265,12 +8321,12 @@ class StructureModifying(StructureShared):
         expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping)
+        toTest.transformElements(transformMapping)
 
         assert toTest.isIdentical(expTest)
 
     @oneLogEntryExpected
-    def test_elements_transform_DictionaryAllMappedStrings(self):
+    def test_transformElements_DictionaryAllMappedStrings(self):
         data = [["a", "b", "c"], ["d", "e", "f"], ["g", "h", "i"]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8279,12 +8335,12 @@ class StructureModifying(StructureShared):
         expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping)
+        toTest.transformElements(transformMapping)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionarySomeMapped(self):
+    def test_transformElements_DictionarySomeMapped(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8293,12 +8349,12 @@ class StructureModifying(StructureShared):
         expData = [[1, 8, 3], [4, 5, 6], [7, 2, 9]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping)
+        toTest.transformElements(transformMapping)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionaryMappedNotInPoints(self):
+    def test_transformElements_DictionaryMappedNotInPoints(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8307,12 +8363,12 @@ class StructureModifying(StructureShared):
         expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping, points=1)
+        toTest.transformElements(transformMapping, points=1)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionaryMappedNotInFeatures(self):
+    def test_transformElements_DictionaryMappedNotInFeatures(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8321,12 +8377,12 @@ class StructureModifying(StructureShared):
         expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping, features=0)
+        toTest.transformElements(transformMapping, features=0)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionaryPreserveZerosNoZeroMap(self):
+    def test_transformElements_DictionaryPreserveZerosNoZeroMap(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8335,12 +8391,12 @@ class StructureModifying(StructureShared):
         expData = [[0, 0, 0], [2, 2, 2], [0, 0, 0]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping, preserveZeros=True)
+        toTest.transformElements(transformMapping, preserveZeros=True)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionaryPreserveZerosZeroMapZero(self):
+    def test_transformElements_DictionaryPreserveZerosZeroMapZero(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8349,12 +8405,12 @@ class StructureModifying(StructureShared):
         expData = [[0, 0, 0], [2, 2, 2], [0, 0, 0]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping, preserveZeros=True)
+        toTest.transformElements(transformMapping, preserveZeros=True)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionaryPreserveZerosZeroMapNonZero(self):
+    def test_transformElements_DictionaryPreserveZerosZeroMapNonZero(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8363,12 +8419,12 @@ class StructureModifying(StructureShared):
         expData = [[0, 0, 0], [2, 2, 2], [0, 0, 0]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping, preserveZeros=True)
+        toTest.transformElements(transformMapping, preserveZeros=True)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionaryDoNotPreserveZerosZeroMapNonZero(self):
+    def test_transformElements_DictionaryDoNotPreserveZerosZeroMapNonZero(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8377,12 +8433,12 @@ class StructureModifying(StructureShared):
         expData = [[100, 100, 100], [1, 1, 1], [100, 100, 100]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping, preserveZeros=False)
+        toTest.transformElements(transformMapping, preserveZeros=False)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionarySkipNoneReturn(self):
+    def test_transformElements_DictionarySkipNoneReturn(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
@@ -8391,24 +8447,25 @@ class StructureModifying(StructureShared):
         expData = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         expTest = self.constructor(expData, pointNames=pnames, featureNames=names)
 
-        toTest.elements.transform(transformMapping, skipNoneReturnValues=True)
+        toTest.transformElements(transformMapping, skipNoneReturnValues=True)
 
         assert toTest.isIdentical(expTest)
 
 
-    def test_elements_transform_DictionaryDoNotSkipNoneReturn(self):
+    def test_transformElements_DictionaryDoNotSkipNoneReturn(self):
         data = [[0, 0, 0], [1, 1, 1], [0, 0, 0]]
         names = ['one', 'two', 'three']
         pnames = ['1', '4', '7']
         toTest = self.constructor(data, pointNames=pnames, featureNames=names)
         transformMapping = {1: None}
         expData = [[0, 0, 0], [None, None, None], [0, 0, 0]]
-        expTest = self.constructor(expData, pointNames=pnames, featureNames=names, treatAsMissing=[None])
-        toTest.elements.transform(transformMapping, skipNoneReturnValues=False)
+        expTest = self.constructor(expData, pointNames=pnames, featureNames=names,
+                                   treatAsMissing=None)
+        toTest.transformElements(transformMapping, skipNoneReturnValues=False)
 
         assert toTest.isIdentical(expTest)
 
-    def test_elements_transform_zerosReturned(self):
+    def test_transformElements_zerosReturned(self):
 
         def returnAllZero(elem):
             return 0
@@ -8416,7 +8473,7 @@ class StructureModifying(StructureShared):
         orig1 = self.constructor([[1, 2, 3], [1, 2, 3], [0, 0, 0]])
         exp1 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
 
-        orig1.elements.transform(returnAllZero)
+        orig1.transformElements(returnAllZero)
         assert orig1 == exp1
 
         def invert(elem):
@@ -8425,16 +8482,16 @@ class StructureModifying(StructureShared):
         orig2 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
         exp2 = self.constructor([[0, 0, 0], [1, 0, 1], [1, 1, 1]])
 
-        orig2.elements.transform(invert)
+        orig2.transformElements(invert)
         assert orig2 == exp2
 
         orig3 = self.constructor([[1, 1, 1], [0, 1, 0], [0, 0, 0]])
         exp3 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
 
-        orig3.elements.transform(invert, preserveZeros=True)
+        orig3.transformElements(invert, preserveZeros=True)
         assert orig3 == exp3
 
-    def test_elements_transform_conversionWhenIntType(self):
+    def test_transformElements_conversionWhenIntType(self):
 
         def addTenth(elem):
             return elem + 0.1
@@ -8442,10 +8499,10 @@ class StructureModifying(StructureShared):
         orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         exp = self.constructor([[1.1, 2.1, 3.1], [4.1, 5.1, 6.1], [0.1, 0.1, 0.1]])
 
-        orig.elements.transform(addTenth)
+        orig.transformElements(addTenth)
         assert orig == exp
 
-    def test_elements_transform_stringReturnsPreserved(self):
+    def test_transformElements_stringReturnsPreserved(self):
 
         def toString(e):
             return str(e)
@@ -8453,33 +8510,33 @@ class StructureModifying(StructureShared):
         orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']])
 
-        orig.elements.transform(toString)
+        orig.transformElements(toString)
         assert orig == exp
 
-    ##############
-    # fillWith() #
-    ##############
+    ######################
+    # replaceRectangle() #
+    ######################
 
-    # fillWith(self, values, pointStart, featureStart, pointEnd, featureEnd)
+    # replaceRectangle(self, values, pointStart, featureStart, pointEnd, featureEnd)
 
-    def test_fillWith_acceptableValues(self):
+    def test_replaceRectangle_acceptableValues(self):
         raw = [[1, 2], [3, 4]]
         toTest = self.constructor(raw)
 
         try:
-            toTest.fillWith(set([1, 3]), 0, 0, 0, 1)
+            toTest.replaceRectangle(set([1, 3]), 0, 0, 0, 1)
             assert False  # expected InvalidArgumentType
         except InvalidArgumentType as iat:
             pass
 
         try:
-            toTest.fillWith(lambda x: x * x, 0, 0, 0, 1)
+            toTest.replaceRectangle(lambda x: x * x, 0, 0, 0, 1)
             assert False  # expected InvalidArgumentType
         except InvalidArgumentType as iat:
             pass
 
 
-    def test_fillWith_sizeMismatch(self):
+    def test_replaceRectangle_sizeMismatch(self):
         raw = [[1, 2], [3, 4]]
         toTest = self.constructor(raw)
 
@@ -8487,7 +8544,7 @@ class StructureModifying(StructureShared):
         val = self.constructor(raw)
 
         try:
-            toTest.fillWith(val, 0, 0, 1, 1)
+            toTest.replaceRectangle(val, 0, 0, 1, 1)
             assert False  # expected InvalidArgumentValueCombination
         except InvalidArgumentValueCombination as ivc:
             pass
@@ -8495,59 +8552,59 @@ class StructureModifying(StructureShared):
         val.transpose()
 
         try:
-            toTest.fillWith(val, 0, 0, 1, 1)
+            toTest.replaceRectangle(val, 0, 0, 1, 1)
             assert False  # expected InvalidArgumentValueCombination
         except InvalidArgumentValueCombination as ivc:
             pass
 
 
-    def test_fillWith_invalidID(self):
+    def test_replaceRectangle_invalidID(self):
         raw = [[1, 2], [3, 4]]
         toTest = self.constructor(raw)
 
         val = 1
 
         try:
-            toTest.fillWith(val, "hello", 0, 1, 1)
+            toTest.replaceRectangle(val, "hello", 0, 1, 1)
             assert False  # expected KeyError
         except KeyError:
             pass
         try:
-            toTest.fillWith(val, 0, "Wrong", 1, 1)
+            toTest.replaceRectangle(val, 0, "Wrong", 1, 1)
             assert False  # expected KeyError
         except KeyError:
             pass
         try:
-            toTest.fillWith(val, 0, 0, 2, 1)
+            toTest.replaceRectangle(val, 0, 0, 2, 1)
             assert False  # expected IndexError
         except IndexError:
             pass
         try:
-            toTest.fillWith(val, 0, 0, 1, -12)
+            toTest.replaceRectangle(val, 0, 0, 1, -12)
             assert False  # expected IndexError
         except IndexError as iav:
             pass
 
 
-    def test_fillWith_start_lessThan_end(self):
+    def test_replaceRectangle_start_lessThan_end(self):
         raw = [[1, 2], [3, 4]]
         toTest = self.constructor(raw)
 
         val = 1
 
         try:
-            toTest.fillWith(val, 1, 0, 0, 1)
+            toTest.replaceRectangle(val, 1, 0, 0, 1)
             assert False  # expected InvalidArgumentValueCombination
         except InvalidArgumentValueCombination as ivc:
             pass
         try:
-            toTest.fillWith(val, 0, 1, 1, 0)
+            toTest.replaceRectangle(val, 0, 1, 1, 0)
             assert False  # expected InvalidArgumentValueCombination
         except InvalidArgumentValueCombination as ivc:
             pass
 
     @oneLogEntryExpected
-    def test_fillWith_fullObjectFill(self):
+    def test_replaceRectangle_fullObjectFill(self):
         raw = [[1, 2], [3, 4]]
         toTest = self.constructor(raw)
 
@@ -8555,7 +8612,7 @@ class StructureModifying(StructureShared):
         arg = self.constructor(arg)
         exp = arg.copy()
 
-        ret = toTest.fillWith(arg, 0, 0, len(toTest.points) - 1, len(toTest.features) - 1)
+        ret = toTest.replaceRectangle(arg, 0, 0, len(toTest.points) - 1, len(toTest.features) - 1)
         assert ret is None
 
         arg *= 10
@@ -8565,7 +8622,7 @@ class StructureModifying(StructureShared):
         assertNoNamesGenerated(toTest)
 
     @twoLogEntriesExpected
-    def test_fillWith_vectorFill(self):
+    def test_replaceRectangle_vectorFill(self):
         raw = [[1, 2], [3, 4]]
         toTestP = self.constructor(raw)
         toTestF = self.constructor(raw)
@@ -8582,14 +8639,14 @@ class StructureModifying(StructureShared):
         expF = [[-1, 2], [-3, 4]]
         expF = self.constructor(expF)
 
-        toTestP.fillWith(valP, 0, 0, 0, 1)
+        toTestP.replaceRectangle(valP, 0, 0, 0, 1)
         assert toTestP == expP
 
-        toTestF.fillWith(valF, 0, 0, 1, 0)
+        toTestF.replaceRectangle(valF, 0, 0, 1, 0)
         assert toTestF == expF
 
 
-    def test_fillWith_offsetSquare(self):
+    def test_replaceRectangle_offsetSquare(self):
         raw = [[11, 12, 13], [21, 22, 23], [31, 32, 33]]
         base = self.constructor(raw)
         trialRaw = [[0, 0], [0, 0]]
@@ -8599,32 +8656,32 @@ class StructureModifying(StructureShared):
         for p, f in leftCorner:
             toTest = base.copy()
 
-            toTest.fillWith(trial, p, f, p + 1, f + 1)
+            toTest.replaceRectangle(trial, p, f, p + 1, f + 1)
             assert toTest[p, f] == 0
             assert toTest[p + 1, f] == 0
             assert toTest[p, f + 1] == 0
             assert toTest[p + 1, f + 1] == 0
 
     @logCountAssertionFactory(4)
-    def test_fillWith_constants(self):
+    def test_replaceRectangle_constants(self):
         toTest0 = self.constructor([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
         exp0 = self.constructor([[0, 1, 1], [0, 1, 1], [0, 0, 0]])
-        toTest0.fillWith(1, 0, 1, 1, 2)
+        toTest0.replaceRectangle(1, 0, 1, 1, 2)
         assert toTest0 == exp0
 
         toTest1 = self.constructor([[1, 1, 1], [1, 1, 1], [1, 1, 1]])
         exp1 = self.constructor([[1, 0, 1], [1, 0, 1], [1, 0, 1]])
-        toTest1.fillWith(0, 0, 1, 2, 1)
+        toTest1.replaceRectangle(0, 0, 1, 2, 1)
         assert toTest1 == exp1
 
         toTestI = self.constructor([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         expi = self.constructor([[1, 0, 2], [0, 1, 0], [2, 0, 1]])
-        toTestI.fillWith(2, 0, 2, 0, 2)
-        toTestI.fillWith(2, 2, 0, 2, 0)
+        toTestI.replaceRectangle(2, 0, 2, 0, 2)
+        toTestI.replaceRectangle(2, 2, 0, 2, 0)
         assert toTestI == expi
 
 
-    def test_fillWIth_differentType(self):
+    def test_replaceRectangle_differentType(self):
         raw = [[11, 12, 13], [21, 22, 23], [31, 32, 33]]
         fill = [[0, 0], [0, 0]]
         exp = [[0, 0, 13], [0, 0, 23], [31, 32, 33]]
@@ -8632,7 +8689,7 @@ class StructureModifying(StructureShared):
         for t in nimble.data.available:
             toTest = self.constructor(raw)
             arg = nimble.createData(t, fill)
-            toTest.fillWith(arg, 0, 0, 1, 1)
+            toTest.replaceRectangle(arg, 0, 0, 1, 1)
             assert toTest == exp
 
     ###########################################

@@ -20,7 +20,6 @@ features.hasName, points.hasName, __bool__
 """
 
 import numpy
-import pandas
 try:
     from unittest import mock #python >=3.3
 except ImportError:
@@ -32,6 +31,7 @@ from nimble import createData
 from nimble.data import Base
 from nimble.data import available
 from nimble.utility import inheritDocstringsFactory, numpy2DArray
+from nimble.utility import pd
 from nimble.data.dataHelpers import DEFAULT_PREFIX
 from nimble.data.dataHelpers import DEFAULT_NAME_PREFIX
 from nimble.data.dataHelpers import constructIndicesList
@@ -1134,20 +1134,6 @@ class LowLevelBackend(object):
         assert bool(noEmpty.points)
         assert bool(noEmpty.features)
 
-    #####################
-    # elements.__bool__ #
-    #####################
-    @noLogEntryExpected
-    def test_elements_bool_handmade(self):
-        bothEmpty = self.constructor(psize=0, fsize=0)
-        assert not bool(bothEmpty.elements)
-        pointEmpty = self.constructor(psize=0, fsize=4)
-        assert not bool(pointEmpty.elements)
-        featEmpty = self.constructor(psize=4, fsize=0)
-        assert not bool(featEmpty.elements)
-        noEmpty = self.constructor(psize=4, fsize=4)
-        assert bool(noEmpty.elements)
-
     #########################
     # constructIndicesList #
     #########################
@@ -1200,7 +1186,7 @@ class LowLevelBackend(object):
         self.constructIndicesList_backend(lambda lst: numpy.array(lst,dtype=object))
 
     def testconstructIndicesList_pandasSeries(self):
-        self.constructIndicesList_backend(lambda lst: pandas.Series(lst))
+        self.constructIndicesList_backend(lambda lst: pd.Series(lst))
 
     def testconstructIndicesList_handmadeIterator(self):
         self.constructIndicesList_backend(lambda lst: SimpleIterator(*lst))
@@ -1302,7 +1288,7 @@ class LowLevelBackend(object):
 
     @raises(InvalidArgumentType)
     def testconstructIndicesList_pandasDataFrame(self):
-        self.constructIndicesList_backend(lambda lst: pandas.DataFrame(lst))
+        self.constructIndicesList_backend(lambda lst: pd.DataFrame(lst))
 
     @raises(InvalidArgumentType)
     def testconstructIndicesList_handmade2DOne(self):
