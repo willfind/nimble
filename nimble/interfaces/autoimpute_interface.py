@@ -29,32 +29,6 @@ autoimputeDir = None
 # containing learners. To be used by findInPackage
 locationCache = {}
 
-def captureDependencyOutput(toWrap):
-    """
-    Disable output from autoimpute dependecies.
-
-    Some dependencies of autoimpute will output to stdout and stderr.
-    These outputs show calculations and progress during possibly time-
-    consuming iterative processes.
-    statsmodels -> stdout
-    pymc3 -> stdout (logging), stderr (progressbar)
-    """
-    @functools.wraps(toWrap)
-    def wrapped(*args, **kwargs):
-        savedStdOut = sys.stdout
-        savedStdErr = sys.stderr
-        sys.stdout = StringIO()
-        sys.stderr = StringIO()
-        try:
-            return toWrap(*args, **kwargs)
-        finally:
-            sys.stdout.close()
-            sys.stderr.close()
-            sys.stdout = savedStdOut
-            sys.stderr = savedStdErr
-    return wrapped
-
-
 @inheritDocstringsFactory(UniversalInterface)
 class Autoimpute(SciKitLearn):
     """
@@ -91,8 +65,6 @@ class Autoimpute(SciKitLearn):
 
         self._searcher = PythonSearcher(
             self.autoimpute, self.autoimpute.__all__, {}, isLearner, 1)
-
-        super(SciKitLearn, self).__init__()
 
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
@@ -175,7 +147,7 @@ To install autoimpute
 
         return (trainX, trainY, testX, instantiatedArgs)
 
-    @captureDependencyOutput
+
     def _outputTransformation(self, learnerName, outputValue,
                               transformedInputs, outputType, outputFormat,
                               customDict):
@@ -201,7 +173,7 @@ To install autoimpute
             outputType = customDict['match']
         return nimble.createData(outputType, outputValue, useLog=False)
 
-    @captureDependencyOutput
+
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
         return super(Autoimpute, self)._trainer(learnerName, trainX, trainY,
                                                 arguments, customDict)
@@ -270,7 +242,7 @@ To install autoimpute
         except ValueError as ve:
             raise InvalidArgumentValue(str(ve))
 
-    @captureDependencyOutput
+
     def _applier(self, learnerName, learner, testX, newArguments,
                  storedArguments, customDict):
         return super(Autoimpute, self)._applier(
