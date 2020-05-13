@@ -406,7 +406,8 @@ class Axis(object):
         else:
             limitTo = [i for i in range(len(self))]
 
-        retData = self._calculate_implementation(function, limitTo)
+        retData, offAxisNames = self._calculate_implementation(function,
+                                                               limitTo)
 
         pathPass = (self._base.absolutePath, self._base.relativePath)
 
@@ -414,22 +415,21 @@ class Axis(object):
                                 path=pathPass, useLog=False)
 
         if self._isPoint:
-            if len(limitTo) < len(self) and self._namesCreated():
-                names = []
-                for index in limitTo:
-                    names.append(self._getName(index))
-                ret.points.setNames(names, useLog=False)
-            elif self._namesCreated():
-                ret.points.setNames(self._getNames(), useLog=False)
+            axisNameSetter = ret.points.setNames
+            offAxisNameSetter = ret.features.setNames
         else:
             ret.transpose(useLog=False)
-            if len(limitTo) < len(self) and self._namesCreated():
-                names = []
-                for index in limitTo:
-                    names.append(self._getName(index))
-                ret.features.setNames(names, useLog=False)
-            elif self._namesCreated():
-                ret.features.setNames(self._getNames(), useLog=False)
+            axisNameSetter = ret.features.setNames
+            offAxisNameSetter = ret.points.setNames
+        if len(limitTo) < len(self) and self._namesCreated():
+            names = []
+            for index in limitTo:
+                names.append(self._getName(index))
+            axisNameSetter(names, useLog=False)
+        elif self._namesCreated():
+            axisNameSetter(self._getNames(), useLog=False)
+        if offAxisNames is not None:
+            offAxisNameSetter(offAxisNames, useLog=False)
 
         return ret
 
@@ -442,19 +442,23 @@ class Axis(object):
         else:
             viewer = self._base.featureView
 
-        for axisID in limitTo:
+        offAxisNames = None
+        for i, axisID in enumerate(limitTo):
             view = viewer(axisID)
             currOut = function(view)
             # the output could have multiple values or be singular.
             if isAllowedSingleElement(currOut):
                 currOut = [currOut]
-            elif isinstance(currOut, nimble.data.Base):
+            elif (isinstance(currOut, nimble.data.Base)
+                    and len(currOut._shape) == 2):
                 # make 2D if a vector and axis does not match vector direction
                 axisIdx = 0 if self._isPoint else 1
-                if (len(currOut._shape) == 2
-                        and 1 in currOut.shape
-                        and currOut.shape[axisIdx] != 1):
+                if 1 in currOut.shape and currOut.shape[axisIdx] != 1:
                     currOut = currOut.copy('python list')
+                elif i == 0 and self._isPoint:
+                    offAxisNames = currOut.features._getNamesNoGeneration()
+                elif i == 0:
+                    offAxisNames = currOut.points._getNamesNoGeneration()
             # only point axis can handle multidimensional data
             if not self._isPoint:
                 try:
@@ -467,7 +471,7 @@ class Axis(object):
                     msg = "an iterable, but got type " + str(type(currOut))
             retData.append(currOut)
 
-        return retData
+        return retData, offAxisNames
 
 
     def _insert(self, insertBefore, toInsert, append=False, useLog=None):
