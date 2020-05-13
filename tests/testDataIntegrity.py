@@ -5,14 +5,17 @@ use of listLearners and learnerType to try this operation with as many learners
 as possible
 
 """
+from unittest import mock
 
 from nose.plugins.attrib import attr
+from nose.tools import raises
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.helpers import generateClassificationData
 from nimble.helpers import generateRegressionData
 from nimble.randomness import pythonRandom
+from .assertionHelpers import calledException, CalledFunctionException
 
 
 def assertUnchanged4Obj(learnerName, passed, trainX, trainY, testX, testY):
@@ -250,3 +253,77 @@ def testDataIntegrityTrainedLearner():
 #	backend(setupAndCallIncrementalTrain, 1) TODO
     backend(setupAndCallRetrain, 1)
     backend(setupAndCallGetScores, 1, False, True)
+
+
+#######################
+# Arguments Integrity #
+#######################
+
+# _mergeArguments calls indicate that the user arguments parameter will be not
+# be modified because it returns a new dictionary (verified in testHelpers)
+
+def patch_mergeArguments(source):
+    return mock.patch(source + '._mergeArguments', calledException)
+
+@raises(CalledFunctionException)
+@patch_mergeArguments('nimble.core')
+def testArgumentIntegrityTrain():
+    arguments = {'k': 1}
+    train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    tl = nimble.train('Custom.KNNClassifier', train, 2, arguments=arguments)
+
+@raises(CalledFunctionException)
+@patch_mergeArguments('nimble.core')
+def testArgumentIntegrityTrainAndApply():
+    arguments = {'k': 1}
+    train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    test = nimble.createData('Matrix', [[0, 1], [1, 0]])
+    pred = nimble.trainAndApply('Custom.KNNClassifier', train, 2, test, arguments=arguments)
+
+@raises(CalledFunctionException)
+@patch_mergeArguments('nimble.core')
+def testArgumentIntegrityTrainAndTest():
+    arguments = {'k': 1}
+    train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    test = nimble.createData('Matrix', [[0, 1, 1], [1, 0, 2]])
+    perf = nimble.trainAndTest('Custom.KNNClassifier', train, 2, test, 2,
+                               performanceFunction=nimble.calculate.fractionIncorrect,
+                               arguments=arguments)
+
+@patch_mergeArguments('nimble.core')
+def testArgumentIntegrityTrainAndTestOnTrainingData():
+    arguments = {'k': 1}
+    train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    try:
+        perf = nimble.trainAndTestOnTrainingData(
+            'Custom.KNNClassifier', train, 2, arguments=arguments,
+            performanceFunction=nimble.calculate.fractionIncorrect)
+        assert False # expected CalledFunctionException
+    except CalledFunctionException:
+        pass
+    try:
+        perf = nimble.trainAndTestOnTrainingData(
+            'Custom.KNNClassifier', train, 2, folds=2, arguments=arguments,
+            crossValidationError=True,
+            performanceFunction=nimble.calculate.fractionIncorrect)
+        assert False # expected CalledFunctionException
+    except CalledFunctionException:
+        pass
+
+@raises(CalledFunctionException)
+@patch_mergeArguments('nimble.interfaces.universal_interface')
+def testArgumentIntegrityTLApply():
+    arguments = {'k': 1}
+    train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    test = nimble.createData('Matrix', [[0, 1], [1, 0]])
+    tl = nimble.train('Custom.KNNClassifier', train, 2, arguments=arguments)
+    pred = tl.apply(test)
+
+@raises(CalledFunctionException)
+@patch_mergeArguments('nimble.interfaces.universal_interface')
+def testArgumentIntegrityTLTest():
+    arguments = {'k': 1}
+    train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    test = nimble.createData('Matrix', [[0, 1, 1], [1, 0, 2]])
+    tl = nimble.train('Custom.KNNClassifier', train, 2, arguments=arguments)
+    perf = tl.test(test, 2, performanceFunction=nimble.calculate.fractionIncorrect)
