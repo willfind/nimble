@@ -1375,6 +1375,9 @@ class Base(object):
         if randomOrder:
             numpyRandom.shuffle(order)
 
+        if not 0 <= testFraction <= 1:
+            msg = 'testFraction must be between 0 and 1 (inclusive)'
+            raise InvalidArgumentValue(msg)
         testXSize = int(round(testFraction * self._pointCount))
         splitIndex = self._pointCount - testXSize
 
@@ -1388,13 +1391,27 @@ class Base(object):
         if labels is None:
             ret = trainX, testX
         else:
-            # safety for empty objects
-            toExtract = labels
-            if testXSize == 0:
-                toExtract = []
+            if isinstance(labels, Base):
+                if len(labels.points) != len(self.points):
+                    msg = 'labels must have the same number of points ({0}) '
+                    msg += 'as the calling object ({1})'
+                    msg = msg.format(len(labels.points), len(self.points))
+                    raise InvalidArgumentValue(msg)
+                try:
+                    self._validateEqualNames('point', 'point', '', labels)
+                except InvalidArgumentValue:
+                    msg = 'labels and calling object pointNames must be equal'
+                    raise InvalidArgumentValue(msg)
+                trainY = labels.points.copy(order[:splitIndex], useLog=False)
+                testY = labels.points.copy(order[splitIndex:], useLog=False)
+            else:
+                # safety for empty objects
+                toExtract = labels
+                if testXSize == 0:
+                    toExtract = []
 
-            trainY = trainX.features.extract(toExtract, useLog=False)
-            testY = testX.features.extract(toExtract, useLog=False)
+                trainY = trainX.features.extract(toExtract, useLog=False)
+                testY = testX.features.extract(toExtract, useLog=False)
 
             trainY.name = self.name + " trainY"
             testY.name = self.name + " testY"
