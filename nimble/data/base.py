@@ -4142,7 +4142,7 @@ class Base(object):
                 msg += "nimble.calculate.inverse. For safety and efficiency, "
                 msg += "matrixPower does not attempt to use pseudoInverse but "
                 msg += "it is available to users in nimble.calculate. "
-                msg += "The inverse operation failed because: " + e.value
+                msg += "The inverse operation failed because: " + e.message
                 raise exceptionType(msg)
 
         ret = operand
