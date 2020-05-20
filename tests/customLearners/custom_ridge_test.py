@@ -14,7 +14,7 @@ def testRidgeRegressionShapes():
     data2 = [[5.5, 5], [20, -3]]
     testObj = nimble.createData('Matrix', data2)
 
-    name = 'Custom.RidgeRegression'
+    name = 'nimble.RidgeRegression'
     ret = nimble.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj,
                                arguments={'lamb': 0})
 

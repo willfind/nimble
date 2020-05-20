@@ -11,6 +11,7 @@ import inspect
 
 from . import configuration
 from .configuration import nimblePath
+from .custom_learner import CustomLearner
 # load settings from configuration file
 settings = configuration.loadSettings()
 
@@ -58,16 +59,16 @@ from .core import Init
 # These learners are required for unit testing, so we ensure they will
 # be automatically registered by making surey they have entries in
 # nimble.settings.
-settings.set("RegisteredLearners", "Custom.RidgeRegression",
-             'nimble.customLearners.RidgeRegression')
-settings.set("RegisteredLearners", "Custom.KNNClassifier",
-             'nimble.customLearners.KNNClassifier')
-settings.set("RegisteredLearners", "Custom.MeanConstant",
-             'nimble.customLearners.MeanConstant')
-settings.set("RegisteredLearners", "Custom.MultiOutputRidgeRegression",
-             'nimble.customLearners.MultiOutputRidgeRegression')
-settings.set("RegisteredLearners", "Custom.KNNImputation",
-             'nimble.customLearners.KNNImputation')
+settings.set("RegisteredLearners", "nimble.RidgeRegression",
+             'nimble.learners.RidgeRegression')
+settings.set("RegisteredLearners", "nimble.KNNClassifier",
+             'nimble.learners.KNNClassifier')
+settings.set("RegisteredLearners", "nimble.MeanConstant",
+             'nimble.learners.MeanConstant')
+settings.set("RegisteredLearners", "nimble.MultiOutputRidgeRegression",
+             'nimble.learners.MultiOutputRidgeRegression')
+settings.set("RegisteredLearners", "nimble.KNNImputation",
+             'nimble.learners.KNNImputation')
 settings.saveChanges("RegisteredLearners")
 
 # register those custom learners listed in nimble.settings

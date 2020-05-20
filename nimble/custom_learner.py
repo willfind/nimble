@@ -7,8 +7,8 @@ import inspect
 
 import numpy
 
-from nimble.helpers import inspectArguments
-from nimble.utility import dtypeConvert
+from .helpers import inspectArguments
+from .utility import dtypeConvert
 
 
 class CustomLearner(metaclass=abc.ABCMeta):

@@ -5,8 +5,8 @@ Base class for a CustomLearner.
 import copy
 
 import nimble
+from nimble import CustomLearner
 from nimble.exceptions import InvalidArgumentValue
-from nimble.customLearners import CustomLearner
 from nimble.interfaces.universal_interface import UniversalInterface
 from nimble.utility import inheritDocstringsFactory
 
@@ -14,7 +14,7 @@ from nimble.utility import inheritDocstringsFactory
 @inheritDocstringsFactory(UniversalInterface)
 class CustomLearnerInterface(UniversalInterface):
     """
-    Base interface class for customLearners.
+    Base interface class for any CustomLearner.
     """
 
     _ignoreNames = ['trainX', 'trainY', 'testX']

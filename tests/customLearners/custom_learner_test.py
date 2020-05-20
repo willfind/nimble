@@ -2,7 +2,7 @@ from nose.tools import *
 import numpy.testing
 
 import nimble
-from nimble.customLearners import CustomLearner
+from nimble import CustomLearner
 from nimble.exceptions import InvalidArgumentValue
 from ..assertionHelpers import configSafetyWrapper
 

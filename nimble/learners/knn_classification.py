@@ -10,7 +10,7 @@ If there is a tie, use k=1
 
 import numpy
 
-from nimble.customLearners import CustomLearner
+from nimble import CustomLearner
 from nimble.helpers import initDataObject
 from nimble.utility import dtypeConvert
 

@@ -49,7 +49,8 @@ nimble_logged = [
     'train', 'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 nimble_notLogged = [
-    'CV', 'Init', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
+    'CustomLearner', 'CV', 'Init', 'deregisterCustomLearner',
+    'deregisterCustomLearnerAsDefault',
     'identity', 'listLearners', 'learnerParameters', 'learnerDefaultValues',
     'learnerType', 'ones', 'registerCustomLearner',
     'registerCustomLearnerAsDefault', 'showLog', 'zeros',

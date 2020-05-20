@@ -7,9 +7,9 @@ import copy
 from nose.tools import raises
 
 import nimble
+from nimble import CustomLearner
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.customLearners import CustomLearner
-from nimble.customLearners.ridge_regression import RidgeRegression
+from nimble.learners import RidgeRegression
 from .assertionHelpers import configSafetyWrapper
 from .assertionHelpers import noLogEntryExpected
 
@@ -386,7 +386,7 @@ def test_registerCustomLearnerAsDefaultWrittenToConfig():
                 fooLine = 'Foo.LoveAtFirstSightClassifier = '
                 fooLine += testLoc + '.LoveAtFirstSightClassifier\n'
                 barLine = 'Bar.RidgeRegression = '
-                barLine += 'nimble.customLearners.ridge_regression.RidgeRegression\n'
+                barLine += 'nimble.learners.ridge_regression.RidgeRegression\n'
                 bazLine = 'Baz.UncallableLearner = '
                 bazLine += testLoc + '.UncallableLearner\n'
 
@@ -439,7 +439,7 @@ def test_registerCustomLearnerAsDefaultDeregisterNotDefault():
                 fooLine = 'Foo.LoveAtFirstSightClassifier = '
                 fooLine += testLoc + '.LoveAtFirstSightClassifier\n'
                 barLine = 'Bar.RidgeRegression = '
-                barLine += 'nimble.customLearners.ridge_regression.RidgeRegression\n'
+                barLine += 'nimble.learners.ridge_regression.RidgeRegression\n'
                 bazLine = 'Baz.UncallableLearner = '
                 bazLine += testLoc + '.UncallableLearner\n'
 
@@ -509,7 +509,7 @@ def test_registerCustomLearnerAsDefaultOnlyOneWrittenToConfig():
         fooLine += testLoc + '.LoveAtFirstSightClassifier\n'
         assert fooLine not in testLines and fooLine not in origLines
         barLine = 'Bar.RidgeRegression = '
-        barLine += 'nimble.customLearners.ridge_regression.RidgeRegression\n'
+        barLine += 'nimble.learners.ridge_regression.RidgeRegression\n'
         assert barLine not in testLines and barLine not in origLines
         bazLine = 'Baz.UncallableLearner = '
         bazLine += testLoc + '.UncallableLearner\n'

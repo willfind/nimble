@@ -449,7 +449,7 @@ def test_settings_allowedNames():
     """ Test that you can only set allowed names in interface sections """
 
     assert nimble.settings.changes == {}
-    nimble.settings.set('Custom', 'Hello', "Goodbye")
+    nimble.settings.set('nimble', 'Hello', "Goodbye")
     nimble.settings.changes = {}
 
 

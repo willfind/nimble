@@ -1815,7 +1815,7 @@ def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
 
     # do validation before we potentially construct an interface to a
     # custom package
-    nimble.customLearners.CustomLearner.validateSubclass(learnerClassObject)
+    nimble.CustomLearner.validateSubclass(learnerClassObject)
 
     try:
         currInterface = findBestInterface(customPackageName)
@@ -2314,7 +2314,7 @@ class KFoldCrossValidator():
         >>> X = nimble.createData('Matrix', xRaw)
         >>> Y = nimble.createData('Matrix', yRaw)
         >>> crossValidator = KFoldCrossValidator(
-        ...    'Custom.KNNClassifier', X, Y, arguments={'k': 3},
+        ...    'nimble.KNNClassifier', X, Y, arguments={'k': 3},
         ...    performanceFunction=nimble.calculate.fractionIncorrect,
         ...    folds=3)
         >>> crossValidator.allResults
@@ -2401,7 +2401,7 @@ class KFoldCrossValidator():
         >>> Y = nimble.createData('Matrix', yRaw)
         >>> kValues = nimble.CV([1, 3])
         >>> crossValidator = KFoldCrossValidator(
-        ...    'Custom.KNNClassifier', X, Y, arguments={},
+        ...    'nimble.KNNClassifier', X, Y, arguments={},
         ...    performanceFunction=nimble.calculate.fractionIncorrect,
         ...    folds=3, k=kValues)
         >>> crossValidator.getFoldResults(arguments={'k': 1})
@@ -2455,7 +2455,7 @@ class KFoldCrossValidator():
         >>> Y = nimble.createData('Matrix', yRaw)
         >>> kValues = nimble.CV([1, 3])
         >>> crossValidator = KFoldCrossValidator(
-        ...    'Custom.KNNClassifier', X, Y, arguments={},
+        ...    'nimble.KNNClassifier', X, Y, arguments={},
         ...    performanceFunction=nimble.calculate.fractionIncorrect,
         ...    folds=3, k=kValues)
         >>> crossValidator.getResult(arguments={'k': 1})

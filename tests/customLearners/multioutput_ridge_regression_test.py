@@ -16,8 +16,8 @@ def test_MultiOutputWrapper_simple():
     data = [[5, 5, 5], [0, 0, 1]]
     testX = nimble.createData('Matrix', data)
 
-    testName = 'Custom.MultiOutputRidgeRegression'
-    wrappedName = 'Custom.RidgeRegression'
+    testName = 'nimble.MultiOutputRidgeRegression'
+    wrappedName = 'nimble.RidgeRegression'
 
     retMulti = nimble.trainAndApply(testName, trainX=trainX, trainY=trainY, testX=testX, lamb=1)
 

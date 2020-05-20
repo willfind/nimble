@@ -12,7 +12,7 @@ def testMeanConstantSimple():
     dataY = [[0], [1], [0], [1], [0], [1]]
     trainY = nimble.createData('Matrix', dataY)
 
-    name = 'Custom.MeanConstant'
+    name = 'nimble.MeanConstant'
     ret = nimble.trainAndApply(name, trainX=trainX, trainY=trainY, testX=trainX)
 
     assert len(ret.points) == 6

@@ -594,7 +594,7 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     ...        [None, 3, None]]
     >>> data = nimble.createData('Matrix', raw)
     >>> toMatch = nimble.match.missing
-    >>> nimble.fillMatching('Custom.KNNImputation', toMatch, data,
+    >>> nimble.fillMatching('nimble.KNNImputation', toMatch, data,
     ...                     mode='classification', k=3)
     >>> data
     Matrix(
@@ -614,7 +614,7 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     ...        [0, 3, 0]]
     >>> data = nimble.createData('Sparse', raw)
     >>> toMatch = nimble.match.zero
-    >>> nimble.fillMatching('Custom.KNNImputation', toMatch, data,
+    >>> nimble.fillMatching('nimble.KNNImputation', toMatch, data,
     ...                     features=-1, k=3, mode='regression')
     >>> data
     Sparse(
@@ -1175,13 +1175,13 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     >>> X = nimble.createData('Matrix', xRaw)
     >>> Y = nimble.createData('Matrix', yRaw)
     >>> crossValidator = nimble.crossValidate(
-    ...    'Custom.KNNClassifier', X, Y,
+    ...    'nimble.KNNClassifier', X, Y,
     ...    performanceFunction=nimble.calculate.fractionIncorrect,
     ...    folds=3, k=3)
     >>> type(crossValidator)
     <class 'nimble.helpers.KFoldCrossValidator'>
     >>> crossValidator.learnerName
-    'Custom.KNNClassifier'
+    'nimble.KNNClassifier'
     >>> crossValidator.folds
     3
     >>> crossValidator.bestArguments
@@ -1349,7 +1349,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     >>> ftNames = ['a', 'b' ,'c', 'label']
     >>> trainData = nimble.createData('Matrix', data,
     ...                               featureNames=ftNames)
-    >>> tl = nimble.train('Custom.KNNClassifier', trainX=trainData,
+    >>> tl = nimble.train('nimble.KNNClassifier', trainX=trainData,
     ...                   trainY='label')
     >>> print(type(tl))
     <class 'nimble.interfaces.universal_interface.TrainedLearner'>
@@ -1536,7 +1536,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     >>> rawTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     >>> trainData = nimble.createData('Matrix', rawTrain)
     >>> testX = nimble.createData('Matrix', rawTestX)
-    >>> predict = nimble.trainAndApply('Custom.KNNClassifier',
+    >>> predict = nimble.trainAndApply('nimble.KNNClassifier',
     ...                                trainX=trainData, trainY=3,
     ...                                testX=testX)
     >>> predict
@@ -1721,7 +1721,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     >>> testData = nimble.createData('Matrix', rawTest,
     ...                              featureNames=ftNames)
     >>> perform = nimble.trainAndTest(
-    ...     'Custom.KNNClassifier', trainX=trainData, trainY='label',
+    ...     'nimble.KNNClassifier', trainX=trainData, trainY='label',
     ...     testX=testData, testY='label',
     ...     performanceFunction=nimble.calculate.fractionIncorrect)
     >>> perform
@@ -1905,7 +1905,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     >>> trainData = nimble.createData('Matrix', rawTrain,
     ...                               featureNames=ftNames)
     >>> perform = nimble.trainAndTestOnTrainingData(
-    ...     'Custom.KNNClassifier', trainX=trainData, trainY='label',
+    ...     'nimble.KNNClassifier', trainX=trainData, trainY='label',
     ...     performanceFunction=nimble.calculate.fractionIncorrect)
     >>> perform
     0.0

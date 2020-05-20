@@ -67,7 +67,7 @@ def prepopulatedLogSafetyWrapper(testFunc):
             trainYObj = trainObj.features.extract(3)
             testYObj = testObj.features.extract(3)
             # run and crossVal
-            results = nimble.trainAndTest('Custom.KNNClassifier', trainX=trainObj,
+            results = nimble.trainAndTest('nimble.KNNClassifier', trainX=trainObj,
                                        trainY=trainYObj, testX=testObj, testY=testYObj,
                                        performanceFunction=RMSE,
                                        arguments={"k": nimble.CV([3, 5])})
@@ -213,7 +213,7 @@ def testLoadTypeFunctionsUseLog():
     assert "seed" in logInfo
 
     # loadTrainedLearner
-    tl = nimble.train('custom.KNNClassifier', trainXObj, trainYObj, arguments={'k': 1})
+    tl = nimble.train('nimble.KNNClassifier', trainXObj, trainYObj, arguments={'k': 1})
     with tempfile.NamedTemporaryFile(suffix=".nimm") as tmpFile:
         tl.save(tmpFile.name)
         load = nimble.loadTrainedLearner(tmpFile.name)
@@ -320,10 +320,10 @@ def testRunTypeFunctionsUseLog():
     nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
 
     # crossValidate
-    top = nimble.crossValidate('custom.KNNClassifier', trainXObj, trainYObj,
+    top = nimble.crossValidate('nimble.KNNClassifier', trainXObj, trainYObj,
                             performanceFunction=RMSE)
     logInfo = getLastLogData()
-    assert "'learner': 'custom.KNNClassifier'" in logInfo
+    assert "'learner': 'nimble.KNNClassifier'" in logInfo
 
 
 def checkLogContents(funcName, objectID, arguments=None):
@@ -880,7 +880,7 @@ def testShowLogToStdOut():
 def testShowLogWithSubobject():
     class Int_(object):
         """
-        For the purposes of custom.KNNClassifier, behaves exactly as the
+        For the purposes of nimble.KNNClassifier, behaves exactly as the
         integer needed for k , but for the log will cause a failure if
         not represented in arguments as a string.
         """
@@ -900,7 +900,7 @@ def testShowLogWithSubobject():
         trainY = [[0], [1], [2], [0], [1], [2], [0], [1], [2], [0], [1], [2]]
         trainXObj = nimble.createData('Sparse', trainX)
         trainYObj = nimble.createData('List', trainY)
-        tl = nimble.train('custom.KNNClassifier', trainXObj, trainYObj,
+        tl = nimble.train('nimble.KNNClassifier', trainXObj, trainYObj,
                           arguments={'k': Int_(1)}, useLog=True)
         # redirect stdout
         out = StringIO()

@@ -1335,7 +1335,7 @@ class TrainedLearner(object):
         >>> trainY1 = nimble.createData('Matrix', rawTrainY1)
         >>> rawTestX = [[8, 8], [-3, -3]]
         >>> testX = nimble.createData('Matrix', rawTestX)
-        >>> tl = nimble.train('Custom.MeanConstant', trainX1, trainY1)
+        >>> tl = nimble.train('nimble.MeanConstant', trainX1, trainY1)
         >>> tl.apply(testX)
         Matrix(
             [[2.000]
@@ -1360,7 +1360,7 @@ class TrainedLearner(object):
         >>> trainY = nimble.createData('Matrix', rawTrainY)
         >>> rawTestX = [[1, 1], [3, 3]]
         >>> testX = nimble.createData('Matrix', rawTestX)
-        >>> tl = nimble.train('Custom.KNNClassifier', trainX, trainY,
+        >>> tl = nimble.train('nimble.KNNClassifier', trainX, trainY,
         ...                   k=1)
         >>> tl.apply(testX)
         Matrix(

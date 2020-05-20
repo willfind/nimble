@@ -10,7 +10,7 @@ def testKNNClassificationSimple():
     data2 = [[2, 2], [20, 20]]
     testObj = nimble.createData('Matrix', data2)
 
-    name = 'Custom.KNNClassifier'
+    name = 'nimble.KNNClassifier'
     ret = nimble.trainAndApply(name, trainX=trainObj, trainY=0, testX=testObj, k=3)
 
     assert ret[0, 0] == 0
@@ -26,7 +26,7 @@ def testKNNClassificationSimpleScores():
     data2 = [[2, 2], [20, 20]]
     testObj = nimble.createData('Matrix', data2)
 
-    name = 'Custom.KNNClassifier'
+    name = 'nimble.KNNClassifier'
     tl = nimble.train(name, trainX=trainObj, trainY=0, k=3)
 
     ret = tl.getScores(testObj)
@@ -46,7 +46,7 @@ def testKNNClassification_NearestBreaksTie():
     data2 = [[1, 1], [-1, -1]]
     testObj = nimble.createData('Matrix', data2)
 
-    name = 'Custom.KNNClassifier'
+    name = 'nimble.KNNClassifier'
 
     tl = nimble.train(name, trainObj, 0, k=5)
     predK5 = tl.apply(testObj)
@@ -73,7 +73,7 @@ def testKNNClassificationGetScores():
     data2 = [[2, 2], [20, 20], [-99, -99]]
     testObj = nimble.createData('Matrix', data2)
 
-    name = 'Custom.KNNClassifier'
+    name = 'nimble.KNNClassifier'
     tl = nimble.train(name, trainX=trainObj, trainY=0, k=3)
 
     ret = tl.getScores(testObj)

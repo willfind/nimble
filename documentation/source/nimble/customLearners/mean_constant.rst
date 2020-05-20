@@ -1,4 +1,4 @@
-Custom.MeanConstant
+nimble.MeanConstant
 ===================
 
 .. automodule:: nimble.customLearners

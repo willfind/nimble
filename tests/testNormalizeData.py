@@ -3,7 +3,7 @@ Tests for the top level function nimble.normalizeData
 """
 
 import nimble
-from nimble.customLearners import CustomLearner
+from nimble import CustomLearner
 from .assertionHelpers import configSafetyWrapper
 from .assertionHelpers import oneLogEntryExpected
 

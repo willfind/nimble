@@ -14,7 +14,7 @@ from nimble.helpers import generateClassificationData
 from nimble.calculate import fractionIncorrect
 from ..assertionHelpers import configSafetyWrapper
 
-learnerName = 'custom.KNNClassifier'
+learnerName = 'nimble.KNNClassifier'
 
 def logEntryCount(logger):
     entryCount = logger.extractFromLog("SELECT COUNT(entry) FROM logger;")
@@ -76,7 +76,7 @@ def test_loadTrainedLearner():
     for rType in nimble.data.available:
         train = nimble.createData(rType, [[0, 0, 1], [0, 1, 0], [1, 0, 0]], useLog=False)
         test = nimble.createData(rType, [[3], [2], [1]], useLog=False)
-        tl = nimble.train('custom.KNNClassifier', train, test)
+        tl = nimble.train('nimble.KNNClassifier', train, test)
         with tempfile.NamedTemporaryFile(suffix='.nimm') as tmpFile:
             tl.save(tmpFile.name)
             back_load(nimble.loadTrainedLearner, tmpFile.name)
