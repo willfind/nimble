@@ -55,7 +55,7 @@ def test__getScoresFormat():
     ((trainX2, trainY2), (testX2, testY2)) = data2
     data4 = generateClassificationData(4, 4, 2)
     ((trainX4, trainY4), (testX4, testY4)) = data4
-    for interface in nimble.interfaces.available:
+    for interface in nimble.interfaces.available.values():
         interfaceName = interface.getCanonicalName()
 
         learners = interface.listLearners()
@@ -101,7 +101,7 @@ def testGetScoresFormat():
     ((trainX2, trainY2), (testX2, testY2)) = data2
     data4 = generateClassificationData(4, 4, 2)
     ((trainX4, trainY4), (testX4, testY4)) = data4
-    for interface in nimble.interfaces.available:
+    for interface in nimble.interfaces.available.values():
         interfaceName = interface.getCanonicalName()
 
         learners = interface.listLearners()
@@ -138,7 +138,7 @@ def testRandomnessControl():
 
     #	assert 'RanomizedLogisticRegression' in nimble.listLearners('sciKitLearn')
 
-    for interface in nimble.interfaces.available:
+    for interface in nimble.interfaces.available.values():
         interfaceName = interface.getCanonicalName()
         # if interfaceName != 'shogun':
         #     continue
@@ -224,7 +224,7 @@ def test_failedInit():
             # override interfaces.available so findBestInterface will check
             # predefined and use mock object as the predefined so we can raise
             # different errors
-            nimble.interfaces.available = []
+            nimble.interfaces.available = {}
             nimble.interfaces.predefined = [MockInterface]
 
             # the learner must start with package and the data must be nimble
@@ -344,7 +344,7 @@ def test_loadModulesFromConfigLocation():
             sys.path = sysPathBackup
 
 def test_getParametersAndDefaultsReturnTypes():
-    for interface in nimble.interfaces.available:
+    for interface in nimble.interfaces.available.values():
         interfaceName = interface.getCanonicalName()
         for learner in nimble.listLearners(interfaceName):
             params = interface._getParameterNames(learner)

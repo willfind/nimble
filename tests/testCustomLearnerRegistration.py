@@ -66,9 +66,8 @@ class UncallableLearner(CustomLearner):
 @configSafetyWrapper
 def testCustomPackageNameCollision():
     """ Test registerCustomLearner raises an exception when the given name collides with a real package """
-    avail = nimble.interfaces.available
     nonCustom = None
-    for inter in avail:
+    for inter in nimble.interfaces.available.values():
         if not isinstance(inter, nimble.interfaces.CustomLearnerInterface):
             nonCustom = inter
             break
@@ -318,7 +317,7 @@ def test_registerCustomLearnerNotWrittenToConfig():
     try:
         newSession = nimble.configuration.SessionConfiguration(tmpConfig.name)
         with mock.patch('nimble.settings', new=newSession):
-            with mock.patch('nimble.interfaces.available', new=[]):
+            with mock.patch('nimble.interfaces.available', new={}):
                 nimble.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
                 nimble.registerCustomLearner("Bar", RidgeRegression)
                 nimble.registerCustomLearner("Baz", UncallableLearner)
@@ -374,7 +373,7 @@ def test_registerCustomLearnerAsDefaultWrittenToConfig():
     try:
         newSession = nimble.configuration.SessionConfiguration(tmpConfig.name)
         with mock.patch('nimble.settings', new=newSession):
-            with mock.patch('nimble.interfaces.available', new=[]):
+            with mock.patch('nimble.interfaces.available', new={}):
                 nimble.registerCustomLearnerAsDefault("Foo", LoveAtFirstSightClassifier)
                 nimble.registerCustomLearnerAsDefault("Bar", RidgeRegression)
                 nimble.registerCustomLearnerAsDefault("Baz", UncallableLearner)
@@ -427,7 +426,7 @@ def test_registerCustomLearnerAsDefaultDeregisterNotDefault():
     try:
         newSession = nimble.configuration.SessionConfiguration(tmpConfig.name)
         with mock.patch('nimble.settings', new=newSession):
-            with mock.patch('nimble.interfaces.available', new=[]):
+            with mock.patch('nimble.interfaces.available', new={}):
                 nimble.registerCustomLearnerAsDefault("Foo", LoveAtFirstSightClassifier)
                 nimble.registerCustomLearnerAsDefault("Bar", RidgeRegression)
                 nimble.registerCustomLearnerAsDefault("Baz", UncallableLearner)
@@ -489,7 +488,7 @@ def test_registerCustomLearnerAsDefaultOnlyOneWrittenToConfig():
     try:
         newSession = nimble.configuration.SessionConfiguration(tmpConfig.name)
         with mock.patch('nimble.settings', new=newSession):
-            with mock.patch('nimble.interfaces.available', new=[]):
+            with mock.patch('nimble.interfaces.available', new={}):
                 nimble.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
                 nimble.registerCustomLearner("Bar", RidgeRegression)
                 nimble.registerCustomLearnerAsDefault("Baz", UncallableLearner)

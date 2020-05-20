@@ -33,7 +33,7 @@ from nimble.helpers import generateAllPairs, countWins, inspectArguments
 from nimble.helpers import extractWinningPredictionIndex
 from nimble.helpers import extractWinningPredictionLabel
 from nimble.helpers import extractWinningPredictionIndexAndScore
-from nimble.configuration import configErrors
+from nimble.configuration import configErrors, setInterfaceOptions
 
 
 def captureOutput(toWrap):
@@ -124,6 +124,9 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                 msg += "member's first argument must be 'self', interpreted "
                 msg += "as a TrainedLearner"
                 raise TypeError(msg)
+
+        nimble.interfaces.available[self.getCanonicalName()] = self
+        setInterfaceOptions(nimble.settings, self, True)
 
 
     @property

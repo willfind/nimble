@@ -44,7 +44,7 @@ def findBestInterface(package):
     best matches that name amoung those available. If it does not match
     any available interfaces, then an exception is thrown.
     """
-    for interface in nimble.interfaces.available:
+    for interface in nimble.interfaces.available.values():
         if (package == interface.getCanonicalName()
                 or interface.isAlias(package)):
             return interface
@@ -1804,7 +1804,7 @@ def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
     session, unless saveChanges() is called later in the session.
     """
     # detect name collision
-    for currInterface in nimble.interfaces.available:
+    for currInterface in nimble.interfaces.available.values():
         if not isinstance(currInterface,
                           nimble.interfaces.CustomLearnerInterface):
             if currInterface.isAlias(customPackageName):
@@ -1822,7 +1822,7 @@ def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
     except InvalidArgumentValue:
         currInterface = nimble.interfaces.CustomLearnerInterface(
             customPackageName)
-        nimble.interfaces.available.append(currInterface)
+        nimble.interfaces.available[customPackageName] = currInterface
 
     currInterface.registerLearnerClass(learnerClassObject)
 
@@ -1865,7 +1865,7 @@ def deregisterCustomLearnerBackend(customPackageName, learnerName, save):
                 nimble.settings.saveChanges(customPackageName, optName)
 
     if empty:
-        nimble.interfaces.available.remove(currInterface)
+        del nimble.interfaces.available[customPackageName]
         #remove section
         nimble.settings.delete(customPackageName, None)
         if save:

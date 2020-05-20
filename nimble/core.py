@@ -851,8 +851,7 @@ def listLearners(package=None):
     """
     results = []
     if package is None:
-        for interface in nimble.interfaces.available:
-            packageName = interface.getCanonicalName()
+        for packageName, interface in nimble.interfaces.available.items():
             currResults = interface.listLearners()
             for learnerName in currResults:
                 results.append(packageName + "." + learnerName)

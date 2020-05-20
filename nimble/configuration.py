@@ -578,7 +578,7 @@ def setAndSaveAvailableInterfaceOptions():
     """
     Set and save the options for each available interface.
     """
-    for interface in nimble.interfaces.available:
+    for interface in nimble.interfaces.available.values():
         setInterfaceOptions(nimble.settings, interface, save=True)
 
 
