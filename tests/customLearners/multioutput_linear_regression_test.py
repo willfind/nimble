@@ -18,12 +18,8 @@ def test_MultiOutputLinearRegression_simple():
     data = [[5, 5, 5], [0, 0, 1]]
     testX = nimble.createData('Matrix', data)
 
-    nimble.registerCustomLearner('custom', MultiOutputLinearRegression)
-
-    name = 'Custom.MultiOutputLinearRegression'
+    name = MultiOutputLinearRegression
     retMulti = nimble.trainAndApply(name, trainX=trainX, trainY=trainY, testX=testX)
-
-    nimble.deregisterCustomLearner('custom', 'MultiOutputLinearRegression')
 
     name = 'scikitlearn.LinearRegression'
     ret0 = nimble.trainAndApply(name, trainX=trainX, trainY=trainY0, testX=testX)

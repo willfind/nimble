@@ -34,6 +34,7 @@ from nimble.randomness import numpyRandom
 from nimble.utility import numpy2DArray, is2DArray
 from nimble.utility import sparseMatrixToArray
 from nimble.utility import scipy, pd, requests
+from nimble._configuration import setInterfaceOptions
 
 def findBestInterface(package):
     """
@@ -44,19 +45,41 @@ def findBestInterface(package):
     best matches that name amoung those available. If it does not match
     any available interfaces, then an exception is thrown.
     """
+    if package in nimble.interfaces.available:
+        # canonical name provided and available
+        return nimble.interfaces.available[package]
     for interface in nimble.interfaces.available.values():
-        if (package == interface.getCanonicalName()
-                or interface.isAlias(package)):
+        if interface.isAlias(package):
             return interface
     for interface in nimble.interfaces.predefined:
-        if (package == interface.getCanonicalName()
-                or interface.isAlias(package)):
-            # interface is a predefined one, but instantiation failed
-            return interface.provideInitExceptionInfo()
+        if interface.isAlias(package):
+            try:
+                interfaceObj = interface()
+            except Exception:
+                # interface is a predefined one, but instantiation failed
+                return interface.provideInitExceptionInfo()
+            # add successful instantiations to interfaces.available and
+            # set options in config
+            interfaceName = interfaceObj.getCanonicalName()
+            nimble.interfaces.available[interfaceName] = interfaceObj
+            setInterfaceOptions(nimble.settings, interfaceObj, True)
+            return interfaceObj
     # if package is not recognized, provide generic exception information
     msg = "package '" + package
     msg += "' was not associated with any of the available package interfaces"
     raise InvalidArgumentValue(msg)
+
+
+def initAvailablePredefinedInterfaces():
+    for interface in nimble.interfaces.predefined:
+        if interface.getCanonicalName() not in nimble.interfaces.available:
+            try:
+                interfaceObj = interface()
+                interfaceName = interfaceObj.getCanonicalName()
+                nimble.interfaces.available[interfaceName] = interfaceObj
+            except Exception:
+                # if fails for any reason, it's not available
+                pass
 
 
 def _learnerQuery(name, queryType):
@@ -1795,87 +1818,88 @@ _loadmtxForSparse = _loadmtxForAuto
 _loadmtxForDataFrame = _loadmtxForAuto
 
 
-def registerCustomLearnerBackend(customPackageName, learnerClassObject, save):
+def validateCustomLearnerSubclass(check):
     """
-    Backend for registering custom Learners in nimble.
-
-    A save value of true will run saveChanges(), modifying the config
-    file. When save is False the changes will exist only for that
-    session, unless saveChanges() is called later in the session.
+    Ensures the the given class conforms to the custom learner
+    specification.
     """
-    # detect name collision
-    for currInterface in nimble.interfaces.available.values():
-        if not isinstance(currInterface,
-                          nimble.interfaces.CustomLearnerInterface):
-            if currInterface.isAlias(customPackageName):
-                msg = "The customPackageName '" + customPackageName
-                msg += "' cannot be used: it is an accepted alias of a "
-                msg += "non-custom package"
-                raise InvalidArgumentValue(msg)
+    # check learnerType
+    accepted = ["unknown", 'regression', 'classification',
+                'featureselection', 'dimensionalityreduction']
+    if (not hasattr(check, 'learnerType')
+            or check.learnerType not in accepted):
+        msg = "The custom learner must have a class variable named "
+        msg += "'learnerType' with a value from the list " + str(accepted)
+        raise TypeError(msg)
 
-    # do validation before we potentially construct an interface to a
-    # custom package
-    nimble.CustomLearner.validateSubclass(learnerClassObject)
+    # check train / apply params
+    trainInfo = inspectArguments(check.train)
+    incInfo = inspectArguments(check.incrementalTrain)
+    applyInfo = inspectArguments(check.apply)
+    if (trainInfo[0][0] != 'self'
+            or trainInfo[0][1] != 'trainX'
+            or trainInfo[0][2] != 'trainY'):
+        msg = "The train method of a CustomLearner must have 'trainX' and "
+        msg += " 'trainY' as its first two (non 'self') parameters"
+        raise TypeError(msg)
+    if (incInfo[0][0] != 'self'
+            or incInfo[0][1] != 'trainX'
+            or incInfo[0][2] != 'trainY'):
+        msg = "The incrementalTrain method of a CustomLearner must have "
+        msg += "'trainX' and 'trainY' as its first two (non 'self') "
+        msg += "parameters"
+        raise TypeError(msg)
+    if applyInfo[0][0] != 'self' or applyInfo[0][1] != 'testX':
+        msg = "The apply method of a CustomLearner must have 'testX' as "
+        msg += "its first (non 'self') parameter"
+        raise TypeError(msg)
 
-    try:
-        currInterface = findBestInterface(customPackageName)
-    except InvalidArgumentValue:
-        currInterface = nimble.interfaces.CustomLearnerInterface(
-            customPackageName)
-        nimble.interfaces.available[customPackageName] = currInterface
+    # need either train or incremental train
+    def overridden(func):
+        for checkBases in inspect.getmro(check):
+            if func in checkBases.__dict__ and checkBases == check:
+                return True
+        return False
 
-    currInterface.registerLearnerClass(learnerClassObject)
+    incrementalImplemented = overridden('incrementalTrain')
+    trainImplemented = overridden('train')
+    if not trainImplemented:
+        if not incrementalImplemented:
+            raise TypeError("Must provide an implementation for train()")
+        else:
+            check.train = check.incrementalTrain
+            newVal = check.__abstractmethods__ - frozenset(['train'])
+            check.__abstractmethods__ = newVal
 
-    opName = customPackageName + "." + learnerClassObject.__name__
-    opValue = learnerClassObject.__module__ + '.' + learnerClassObject.__name__
+    # getScores has same params as apply if overridden
+    getScoresImplemented = overridden('getScores')
+    if getScoresImplemented:
+        getScoresInfo = inspectArguments(check.getScores)
+        if getScoresInfo != applyInfo:
+            msg = "The signature for the getScores() method must be the "
+            msg += "same as the apply() method"
+            raise TypeError(msg)
 
-    nimble.settings.set('RegisteredLearners', opName, opValue)
-    if save:
-        nimble.settings.saveChanges('RegisteredLearners', opName)
+    # check the return type of options() is legit
+    options = check.options()
+    if not isinstance(options, list):
+        msg = "The classmethod options must return a list of stings"
+        raise TypeError(msg)
+    for name in options:
+        if not isinstance(name, str):
+            msg = "The classmethod options must return a list of stings"
+            raise TypeError(msg)
 
-    # check if new option names introduced, call sync if needed
-    if learnerClassObject.options() != []:
-        nimble.configuration.setInterfaceOptions(nimble.settings,
-                                                 currInterface, save=save)
+    # check that we can instantiate this subclass
+    initInfo = inspectArguments(check.__init__)
+    if len(initInfo[0]) > 1 or initInfo[0][0] != 'self':
+        msg = "The __init__() method for this class must only have self "
+        msg += "as an argument"
+        raise TypeError(msg)
 
 
-def deregisterCustomLearnerBackend(customPackageName, learnerName, save):
-    """
-    Backend for deregistering custom Learners in nimble.
-
-    A save value of true will run saveChanges(), modifying the config
-    file. When save is False the changes will exist only for that
-    session, unless saveChanges() is called later in the session.
-    """
-    currInterface = findBestInterface(customPackageName)
-    if not isinstance(currInterface, nimble.interfaces.CustomLearnerInterface):
-        msg = "May only attempt to deregister learners from the interfaces of "
-        msg += "custom packages. '" + customPackageName
-        msg += "' is not a custom package"
-        raise InvalidArgumentType(msg)
-    origOptions = currInterface.optionNames
-    empty = currInterface.deregisterLearner(learnerName)
-    newOptions = currInterface.optionNames
-
-    # remove options
-    for optName in origOptions:
-        if optName not in newOptions:
-            nimble.settings.delete(customPackageName, optName)
-            if save:
-                nimble.settings.saveChanges(customPackageName, optName)
-
-    if empty:
-        del nimble.interfaces.available[customPackageName]
-        #remove section
-        nimble.settings.delete(customPackageName, None)
-        if save:
-            nimble.settings.saveChanges(customPackageName)
-
-    regOptName = customPackageName + '.' + learnerName
-    # delete from registered learner list
-    nimble.settings.delete('RegisteredLearners', regOptName)
-    if save:
-        nimble.settings.saveChanges('RegisteredLearners', regOptName)
+    # instantiate it so that the abc stuff gets validated
+    check()
 
 
 def countWins(predictions):
@@ -3091,15 +3115,26 @@ def _unpackLearnerName(learnerName):
     Split a learnerName parameter into the portion defining the package,
     and the portion defining the learner.
     """
-    splitList = learnerName.split('.', 1)
-    if len(splitList) < 2:
-        msg = "Recieved the ill formed learner name '" + learnerName + "'. "
-        msg += "The learner name must identify both the desired package and "
-        msg += "learner, separated by a dot. Example:'mlpy.KNN'"
-        raise InvalidArgumentValue(msg)
-    package = splitList[0]
-    learnerName = splitList[1]
-    return (package, learnerName)
+    if isinstance(learnerName, str):
+        splitList = learnerName.split('.', 1)
+        if len(splitList) < 2:
+            msg = "Recieved the ill formed learner name '" + learnerName + "'. "
+            msg += "The learner name must identify both the desired package and "
+            msg += "learner, separated by a dot. Example:'mlpy.KNN'"
+            raise InvalidArgumentValue(msg)
+        package, name = splitList
+    else:
+        package = learnerName.__module__.split('.')[0]
+        if (issubclass(learnerName, nimble.CustomLearner)
+                and package != 'nimble'):
+            validateCustomLearnerSubclass(learnerName)
+            package = 'custom'
+        name = learnerName.__name__
+    interface = findBestInterface(package)
+    if package == 'custom' and not isinstance(learnerName, str):
+        nimble.interfaces.available['custom'].registerLearnerClass(learnerName)
+
+    return interface, name
 
 
 def _validArguments(arguments):

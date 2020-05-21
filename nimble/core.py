@@ -33,6 +33,7 @@ from nimble.helpers import initDataObject
 from nimble.helpers import createDataFromFile
 from nimble.helpers import createConstantHelper
 from nimble.helpers import computeMetrics
+from nimble.helpers import initAvailablePredefinedInterfaces
 from nimble.randomness import numpyRandom, generateSubsidiarySeed
 from nimble.randomness import startAlternateControl, endAlternateControl
 from nimble.utility import numpy2DArray
@@ -511,7 +512,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         )
     """
     timer = startTimer(useLog)
-    (_, trueLearnerName) = _unpackLearnerName(learnerName)
+    _, trueLearnerName = _unpackLearnerName(learnerName)
     merged = _mergeArguments(arguments, kwarguments)
 
     tl = nimble.train(learnerName, trainX, trainY, arguments=merged,
@@ -626,8 +627,7 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
         )
     """
     timer = startTimer(useLog)
-    package, objectName = _unpackLearnerName(learnerName)
-    interface = findBestInterface(package)
+    interface, objectName = _unpackLearnerName(learnerName)
     merged = _mergeArguments(arguments, kwarguments)
     if interface.isAlias('sklearn') and 'missing_values' in merged:
         msg = 'The missing_values argument for {objectName} is disallowed '
@@ -666,120 +666,6 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     time = stopTimer(timer)
     handleLogging(useLog, 'run', "fillMatching", trainX, None, None, None,
                   learnerName, merged, time=time)
-
-
-def registerCustomLearnerAsDefault(customPackageName, learnerClassObject):
-    """
-    Permanently add a customLearner to be made available to nimble.
-
-    Register the given customLearner class so that it is callable by the
-    top level nimble functions through the interface of the specified
-    custom package. This operation modifies the saved configuration file
-    so that this change will be reflected during future sesssions.
-
-    Parameters
-    ----------
-    customPackageName : str
-        The str name of the package preface you want to use when calling
-        the learner. If there is already an interface for a custom
-        package with this name, the learner will be accessible through
-        that interface. If there is no interface to a custom package of
-        that name, then one will be created. You cannot register a
-        custom learner to be callable through the interface for a
-        non-custom package (such as ScikitLearn or MLPY). Therefore,
-        customPackageName cannot be a value which is the accepted alias
-        of another package's interface.
-    learnerClassObject : class
-        The class object implementing the learner you want registered.
-        It will be checked using
-        nimble.interfaces.CustomLearner.validateSubclass to ensure that
-        all details of the provided implementation are acceptable.
-    """
-    nimble.helpers.registerCustomLearnerBackend(customPackageName,
-                                                learnerClassObject, True)
-
-
-def registerCustomLearner(customPackageName, learnerClassObject):
-    """
-    Add a customLearner to be made available to nimble for this session.
-
-    Register the given customLearner class so that it is callable by the
-    top level nimble functions through the interface of the specified
-    custom package. Though this operation by itself is temporary, it has
-    effects in nimble.settings, so subsequent saveChanges operations may
-    cause it to be reflected in future sessions.
-
-    Parameters
-    ----------
-    customPackageName : str
-        The str name of the package preface you want to use when calling
-        the learner. If there is already an interface for a custom
-        package with this name, the learner will be accessible through
-        that interface. If there is no interface to a custom package of
-        that name, then one will be created. You cannot register a
-        custom learner to be callable through the interface for a
-        non-custom package (such as ScikitLearn or MLPY). Therefore,
-        customPackageName cannot be a value which is the accepted alias
-        of another package's interface.
-    learnerClassObject : class
-        The class object implementing the learner you want registered.
-        It will be checked using
-        nimble.interfaces.CustomLearner.validateSubclass to ensure that
-        all details of the provided implementation are acceptable.
-    """
-    nimble.helpers.registerCustomLearnerBackend(customPackageName,
-                                                learnerClassObject, False)
-
-
-def deregisterCustomLearnerAsDefault(customPackageName, learnerName):
-    """
-    Permanently disable a customLearner from being available to nimble.
-
-    Remove accessibility of the learner with the given name from the
-    interface of the package with the given name permenantly. This
-    operation modifies the saved configuration file so that this
-    change will be reflected during future sesssions.
-
-    Parameters
-    ----------
-    customPackageName : str
-        The name of the interface / custom package from which the
-        learner named 'learnerName' is to be removed from. If that
-        learner was the last one grouped in that custom package, then
-        the interface is removed from the nimble.interfaces.available
-        list.
-    learnerName : str
-        The name of the learner to be removed from the
-        interface / custom package with the name 'customPackageName'.
-    """
-    nimble.helpers.deregisterCustomLearnerBackend(customPackageName,
-                                                  learnerName, True)
-
-
-def deregisterCustomLearner(customPackageName, learnerName):
-    """
-    Temporarily disable a customLearner from being available to nimble.
-
-    Remove accessibility of the learner with the given name from the
-    interface of the package with the given name temporarily in this
-    session. This has effects in nimble.settings, so subsequent
-    saveChanges operations may cause it to be reflected in future
-    sessions.
-
-    Parameters
-    ----------
-    customPackageName : str
-        The name of the interface / custom package from which the
-        learner named 'learnerName' is to be removed from. If that
-        learner was the last one grouped in that custom package, then
-        the interface is removed from the nimble.interfaces.available
-        list.
-    learnerName : str
-        The name of the learner to be removed from the
-        interface / custom package with the name 'customPackageName'.
-    """
-    nimble.helpers.deregisterCustomLearnerBackend(customPackageName,
-                                                  learnerName, False)
 
 
 def learnerParameters(name):
@@ -851,6 +737,7 @@ def listLearners(package=None):
     """
     results = []
     if package is None:
+        initAvailablePredefinedInterfaces()
         for packageName, interface in nimble.interfaces.available.items():
             currResults = interface.listLearners()
             for learnerName in currResults:
@@ -1232,7 +1119,7 @@ def learnerType(learnerNames):
             raise InvalidArgumentType(msg)
 
         splitTuple = _unpackLearnerName(name)
-        currInterface = findBestInterface(splitTuple[0])
+        currInterface = splitTuple[0]
         allValidLearnerNames = currInterface.listLearners()
         if not splitTuple[1] in allValidLearnerNames:
             msg = name + " is not a valid learner on your machine."
@@ -1375,7 +1262,6 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     0.1 linear
     """
     timer = startTimer(useLog)
-    (package, trueLearnerName) = _unpackLearnerName(learnerName)
     if not doneValidData:
         _validData(trainX, trainY, None, None, [False, False])
     if not doneValidArguments1:
@@ -1388,6 +1274,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         _2dOutputFlagCheck(trainX, trainY, None, multiClassStrategy)
 
     merged = _mergeArguments(arguments, kwarguments)
+    interface, trueLearnerName = _unpackLearnerName(learnerName)
 
     # perform CV (if needed)
     argCheck = ArgumentIterator(merged)
@@ -1419,9 +1306,6 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     else:
         crossValidationResults = None
         bestArguments = merged
-
-
-    interface = findBestInterface(package)
 
     trainedLearner = interface.train(trueLearnerName, trainX, trainY,
                                      bestArguments, multiClassStrategy,

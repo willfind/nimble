@@ -339,15 +339,13 @@ def test_crossValidateBestArguments():
                     ret[i][0] = 0
             return ret
 
-    nimble.registerCustomLearner('custom', FlipWrapper)
-
     # want to have a predictable random state in order to control folding
     seed = nimble.randomness.pythonRandom.randint(0, 2**32 - 1)
 
     def trial(metric, maximize):
         # get a baseline result
         nimble.setRandomSeed(seed)
-        crossValidator = crossValidate('custom.FlipWrapper', X, Y,
+        crossValidator = crossValidate(FlipWrapper, X, Y,
                                    metric, flip=nimble.CV([0, .5, .9]),
                                    wrapped="nimble.KNNClassifier")
         resultTuple = (crossValidator.bestArguments, crossValidator.bestResult)
@@ -355,7 +353,7 @@ def test_crossValidateBestArguments():
 
         # Confirm that the best result is also returned in the 'returnAll' results
         nimble.setRandomSeed(seed)
-        crossValidator = crossValidate('custom.FlipWrapper', X, Y,
+        crossValidator = crossValidate(FlipWrapper, X, Y,
                                    metric, flip=nimble.CV([0, .5, .9]),
                                    wrapped="nimble.KNNClassifier")
         allResultsList = crossValidator.allResults
@@ -386,8 +384,6 @@ def test_crossValidateBestArguments():
 
     trial(fractionIncorrect, False)
     trial(fractionCorrect, True)
-
-    nimble.deregisterCustomLearner('custom', 'FlipWrapper')
 
 
 def test_crossValidate_attributes_withDefaultArgs():
@@ -486,8 +482,6 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected_orderReliant():
 
     copiedPerfFunc.optimal = fractionIncorrect.optimal
 
-    nimble.registerCustomLearner('custom', UnitPredictor)
-
     data = [1, 3, 5, 6, 8, 4, 10, -12, -2, 22]
     X = nimble.createData("Matrix", data)
     X.transpose()
@@ -495,11 +489,11 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected_orderReliant():
     Y.transpose()
 
     copiedPerfFunc.avgFolds = False
-    crossValidator = crossValidate('custom.UnitPredictor', X, Y, copiedPerfFunc, {'bozoArg': (1, 2)}, folds=5)
+    crossValidator = crossValidate(UnitPredictor, X, Y, copiedPerfFunc, {'bozoArg': (1, 2)}, folds=5)
     nonAvgResult = crossValidator.bestResult
 
     copiedPerfFunc.avgFolds = True
-    crossValidator = crossValidate('custom.UnitPredictor', X, Y, copiedPerfFunc, {'bozoArg': (1, 2)}, folds=5)
+    crossValidator = crossValidate(UnitPredictor, X, Y, copiedPerfFunc, {'bozoArg': (1, 2)}, folds=5)
     avgResult = crossValidator.bestResult
 
     # should have 100 percent accuracy, so these results should be the same

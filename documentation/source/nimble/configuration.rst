@@ -1,5 +1,5 @@
-nimble.configuration
+nimble._configuration
 ====================
 
-.. automodule:: nimble.configuration
+.. automodule:: nimble._configuration
    :members: SessionConfiguration

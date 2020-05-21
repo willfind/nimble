@@ -25,13 +25,12 @@ class CustomLearnerInterface(UniversalInterface):
         self._configurableOptionNamesAvailable = []
         super(CustomLearnerInterface, self).__init__()
 
-
     def registerLearnerClass(self, learnerClass):
         """
         Record the given learnerClass as being accessible through this
         particular interface. The parameter is assumed to be class
         object which is a subclass of CustomLearner and has been
-        validated by CustomLearner.validateSubclass(); no sanity
+        validated by helpers.validateCustomLearnerSubclass(); no sanity
         checking is performed in this method.
         """
         self.registeredLearners[learnerClass.__name__] = learnerClass
@@ -51,33 +50,6 @@ class CustomLearnerInterface(UniversalInterface):
             fullName = learnerClass.__name__ + '.' + name
             self._configurableOptionNamesAvailable.append(fullName)
 
-    def deregisterLearner(self, learnerName):
-        """
-        Remove accessibility of the learner with the given name from
-        this interface.
-
-        Returns True of there are other learners still accessible
-        through this interface, False if there are not.
-        """
-        if not learnerName in self.registeredLearners:
-            msg = "Given learnerName does not refer to a learner accessible "
-            msg += "through this interface"
-            raise InvalidArgumentValue(msg)
-
-        # TODO remove option names
-        toRemove = self.registeredLearners[learnerName].options()
-        fullNameToRemove = [learnerName + '.' + x for x in toRemove]
-
-        temp = []
-        for opName in self._configurableOptionNamesAvailable:
-            if not opName in fullNameToRemove:
-                temp.append(opName)
-
-        self._configurableOptionNamesAvailable = temp
-
-        del self.registeredLearners[learnerName]
-
-        return len(self.registeredLearners) == 0
 
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###

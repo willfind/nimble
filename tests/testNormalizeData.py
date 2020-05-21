@@ -58,15 +58,13 @@ def test_mormalizeData_referenceDataSafety():
         def apply(self, testX):
             return testX.copy(to='List')
 
-    nimble.registerCustomLearner("custom", ListOutputer)
-
     data1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
     trainX = nimble.createData("Matrix", data1, name='trainX')
 
     data2 = [[-1, 0, 5]]
     testX = nimble.createData("Matrix", data2, name='testX')
 
-    nimble.normalizeData('custom.ListOutputer', trainX, testX=testX)
+    nimble.normalizeData(ListOutputer, trainX, testX=testX)
 
 @oneLogEntryExpected
 def test_normalizeData_logCount():

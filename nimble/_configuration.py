@@ -426,8 +426,8 @@ class SessionConfiguration(object):
         # if ignore is true, this exception comes from the findBestInterface
         # call, and means that the section is not related to an interface.
         except InvalidArgumentValue:
-            if not ignore:
-                raise
+                if not ignore:
+                    raise
         # a PackageException is the result of a possible interface being
         # unavailable, we will allow setting a location for possible interfaces
         # as this may aid in loading them in the future.
@@ -574,36 +574,15 @@ def setInterfaceOptions(settingsObj, interface, save):
         settingsObj.saveChanges(interfaceName)
 
 
-def setAndSaveAvailableInterfaceOptions():
-    """
-    Set and save the options for each available interface.
-    """
-    for interface in nimble.interfaces.available.values():
-        setInterfaceOptions(nimble.settings, interface, save=True)
+def setupCustomLearnerInterfaces():
+    # These learners are required for unit testing, so we ensure they will
+    # be automatically registered by making surey they have entries in
+    # nimble.settings.
+    nimbleInterface = nimble.interfaces.CustomLearnerInterface('nimble')
+    for learnerName in nimble.learners.__all__:
+        learner = getattr(nimble.learners, learnerName)
+        nimbleInterface.registerLearnerClass(learner)
+    nimble.interfaces.available['nimble'] = nimbleInterface
 
-
-def autoRegisterFromSettings():
-    """
-    Helper which looks at the learners listed in nimble.settings under
-    the 'RegisteredLearners' section and makes sure they are registered.
-    """
-    # query for all entries in 'RegisteredLearners' section
-    toRegister = nimble.settings.get('RegisteredLearners', None)
-    # call register custom learner on them
-    for key in toRegister:
-        try:
-            (packName, _) = key.split('.')
-            (modPath, attrName) = toRegister[key].rsplit('.', 1)
-        except ValueError:
-            continue
-        try:
-            module = importlib.import_module(modPath)
-            learnerClass = getattr(module, attrName)
-            nimble.registerCustomLearnerAsDefault(packName, learnerClass)
-        except ImportError:
-            msg = "When trying to automatically register a custom "
-            msg += "learner at " + key + " we were unable to import "
-            msg += "the learner object from the location " + toRegister[key]
-            msg += " and have therefore ignored that configuration "
-            msg += "entry"
-            print(msg, file=sys.stderr)
+    customInterface = nimble.interfaces.CustomLearnerInterface('custom')
+    nimble.interfaces.available['custom'] = customInterface
