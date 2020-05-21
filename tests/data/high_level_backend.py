@@ -1042,6 +1042,12 @@ class HighLevelDataSafe(DataTestObject):
         ret = toTest.countElements('>=5')
         assert ret == 5
 
+        ret = toTest.countElements('   >=   5   ')
+        assert ret == 5
+
+        ret = toTest.countElements('=5')
+        assert ret == 1
+
         ret = toTest.countElements(lambda x: x % 2 == 1)
         assert ret == 5
 
@@ -1941,6 +1947,62 @@ class HighLevelDataSafe(DataTestObject):
         assert matches[1, 0] is False or matches[1, 0] is numpy.bool_(False)
         assert matches[1, 1] is False or matches[1, 1] is numpy.bool_(False)
         assert matches[1, 2] is False or matches[1, 2] is numpy.bool_(False)
+
+    def test_matchingElements_valueInput(self):
+        raw = [[1, 2, 3], [-1, -2, -3], [0, 'a', 0]]
+        obj = self.constructor(raw)
+        match1 = obj.matchingElements(lambda x: x == 0)
+        match2 = obj.matchingElements(0)
+        assert match1 == match2
+
+        match1 = obj.matchingElements(lambda x: x == 'a')
+        match2 = obj.matchingElements('a')
+        assert match1 == match2
+
+    def test_matchingElements_comparisonStringInput(self):
+        raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
+        obj = self.constructor(raw)
+        ['==', '=', '!=', '>', '<', '>=', '<=']
+        match1 = obj.matchingElements(lambda x: x == 0)
+        match2 = obj.matchingElements('==0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '==' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match2 = obj.matchingElements('=0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '=' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match1 = obj.matchingElements(lambda x: x != 0)
+        match2 = obj.matchingElements('!=0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '!=' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match1 = obj.matchingElements(lambda x: x > 0)
+        match2 = obj.matchingElements('>0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '>' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match1 = obj.matchingElements(lambda x: x < 0)
+        match2 = obj.matchingElements('<0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '<' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match1 = obj.matchingElements(lambda x: x >= 0)
+        match2 = obj.matchingElements('>=0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '>=' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match1 = obj.matchingElements(lambda x: x <= 0)
+        match2 = obj.matchingElements('<=0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '<=' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
 
     @oneLogEntryExpected
     def test_matchingElements_pfLimited(self):

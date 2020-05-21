@@ -8,6 +8,7 @@ import math
 import numbers
 import inspect
 import re
+import operator
 from functools import wraps
 
 import numpy
@@ -929,3 +930,86 @@ def csvCommaFormat(name):
     if isinstance(name, str) and ',' in name:
         return '"{0}"'.format(name)
     return name
+
+operatorDict = {'!=': operator.ne, '==': operator.eq, '=': operator.eq,
+                '<=': operator.le, '>=': operator.ge,
+                '<': operator.lt, '>': operator.gt}
+
+def isQueryString(value, startswithOperator=True):
+    """
+    If a value is a query string, returns match object from re module if
+    so. startswithOperator denotes whether the operator is expected at
+    the beginning (excluding whitespace) of the string, ">=0", or if it
+    can be within the string, "ft0<1".
+    """
+    if not isinstance(value, str):
+        return False
+
+    pattern = r'==|=|!=|>=|>|<=|<'
+    if startswithOperator:
+        match = re.match(pattern, value.strip())
+    else:
+        match = re.search(pattern, value.strip())
+    return match if match else False
+
+def elementQueryFunction(match):
+    """
+    Convert a re module match object to an element input function.
+    """
+    func = operatorDict[match.string[:match.end()]]
+    matchVal = match.string[match.end():].strip()
+    try:
+        matchVal = float(matchVal)
+    except ValueError:
+        pass
+    return lambda elem: func(elem, matchVal)
+
+def axisQueryFunction(match, axis, nameChecker):
+    """
+    Convert a re module match object to an axis input function.
+    """
+    # to set in for loop
+    nameOfPtOrFt = None
+    valueOfPtOrFt = None
+    optrOperator = None
+
+    optr = match.string[match.start():match.end()]
+    targetList = match.string.split(optr)
+    #after splitting at the optr, list must have 2 items
+    if len(targetList) != 2:
+        msg = "the target({0}) is a ".format(string)
+        msg += "query string but there is an error"
+        raise InvalidArgumentValue(msg)
+    nameOfPtOrFt = targetList[0]
+    valueOfPtOrFt = targetList[1]
+    nameOfPtOrFt = nameOfPtOrFt.strip()
+    valueOfPtOrFt = valueOfPtOrFt.strip()
+
+    #when point, check if the feature exists or not
+    #when feature, check if the point exists or not
+    if not nameChecker(nameOfPtOrFt):
+        if axis == 'point':
+            offAxis = 'feature'
+        else:
+            offAxis = 'point'
+        msg = "the {0} ".format(offAxis)
+        msg += "'{0}' doesn't exist".format(nameOfPtOrFt)
+        raise InvalidArgumentValue(msg)
+
+    optrOperator = operatorDict[optr]
+    # convert valueOfPtOrFt from a string, if possible
+    try:
+        valueOfPtOrFt = float(valueOfPtOrFt)
+    except ValueError:
+        pass
+    #convert query string to a function
+    def target_f(vector):
+        return optrOperator(vector[nameOfPtOrFt], valueOfPtOrFt)
+
+    target_f.vectorized = True
+    target_f.nameOfPtOrFt = nameOfPtOrFt
+    target_f.valueOfPtOrFt = valueOfPtOrFt
+    target_f.optr = optrOperator
+    target = target_f
+
+    return target
