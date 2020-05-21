@@ -1,24 +1,23 @@
 """
-Module defining exceptions to be used in nimble.
-
+Module defining exceptions used in nimble.
 """
 
 class NimbleException(Exception):
     """
-    Override Python's Exception, requiring a value upon instantiation.
+    Override Python's Exception, requiring a message upon instantiation.
     """
-    def __init__(self, value):
-        if not isinstance(value, str):
-            raise TypeError("value must be a string")
-        self.value = value
-        self.className = self.__class__.__name__
-        super(NimbleException, self).__init__(value)
+    def __init__(self, message):
+        if not isinstance(message, str):
+            raise TypeError("message must be a string")
+        self.message = message
+        super(NimbleException, self).__init__(message)
 
     def __str__(self):
-        return self.value
+        return self.message
 
     def __repr__(self):
-        return "{cls}({val})".format(cls=self.className, val=repr(self.value))
+        return "{cls}({msg})".format(cls=self.__class__.__name__,
+                                     msg=repr(self.message))
 
 class InvalidArgumentType(NimbleException, TypeError):
     """
@@ -85,11 +84,13 @@ class PackageException(NimbleException, ImportError):
 class FileFormatException(NimbleException, ValueError):
     """
     Raised when the formatting of a file is not as expected.
+
+    This is a subclass of Python's ValueError.
     """
     pass
 
 
-def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
+def _prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
     """
     Used in the creation of exception messages to display lists in a
     more appealing way than default.
@@ -106,7 +107,7 @@ def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
     return ret
 
 
-def prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str,
+def _prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str,
                       delim='=', valueStr=str):
     """
     Used in the creation of exception messages to display dicts in a
