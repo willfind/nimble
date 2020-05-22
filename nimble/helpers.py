@@ -90,7 +90,7 @@ def _learnerQuery(name, queryType):
     getParameters(learnerName) function or the package's
     getDefaultValues(learnerName) function.
     """
-    [package, learnerName] = name.split('.')
+    interface, learnerName = _unpackLearnerName(name)
 
     if queryType == "parameters":
         toCallName = 'getLearnerParameterNames'
@@ -99,7 +99,6 @@ def _learnerQuery(name, queryType):
     else:
         raise InvalidArgumentValue("Unrecognized queryType: " + queryType)
 
-    interface = findBestInterface(package)
     ret = getattr(interface, toCallName)(learnerName)
 
     if len(ret) == 1:
@@ -3125,14 +3124,15 @@ def _unpackLearnerName(learnerName):
         package, name = splitList
     else:
         package = learnerName.__module__.split('.')[0]
+        name = learnerName.__name__
         if (issubclass(learnerName, nimble.CustomLearner)
                 and package != 'nimble'):
             validateCustomLearnerSubclass(learnerName)
             package = 'custom'
-        name = learnerName.__name__
+            customInterface = nimble.interfaces.available['custom']
+            if name not in customInterface.registeredLearners:
+                customInterface.registerLearnerClass(learnerName)
     interface = findBestInterface(package)
-    if package == 'custom' and not isinstance(learnerName, str):
-        nimble.interfaces.available['custom'].registerLearnerClass(learnerName)
 
     return interface, name
 

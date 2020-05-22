@@ -1117,10 +1117,6 @@ def learnerType(learnerNames):
     resultsList = []
     secondPassLearnerNames = []
     for name in learnerNames:
-        if not isinstance(name, str):
-            msg = "learnerNames must be a string or a list of strings."
-            raise InvalidArgumentType(msg)
-
         splitTuple = _unpackLearnerName(name)
         currInterface = splitTuple[0]
         allValidLearnerNames = currInterface.listLearners()

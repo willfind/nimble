@@ -4,7 +4,7 @@ import numpy
 
 import nimble
 from nimble import CustomLearner
-from nimble.learners import RidgeRegression, MeanConstant
+from nimble.learners import RidgeRegression, KNNClassifier
 from .assertionHelpers import configSafetyWrapper
 from .assertionHelpers import noLogEntryExpected
 
@@ -45,7 +45,7 @@ class LoveAtFirstSightClassifier(CustomLearner):
 class UncallableLearner(CustomLearner):
     learnerType = 'classification'
 
-    def train(self, trainX, trainY, foo):
+    def train(self, trainX, trainY, foo, bar=None):
         return None
 
     def apply(self, testX):
@@ -71,7 +71,7 @@ def testCustomPackage():
     assert 'UncallableLearner' in nimble.listLearners("custom")
 
     assert nimble.learnerParameters("custom.LoveAtFirstSightClassifier") == set()
-    assert nimble.learnerParameters("custom.UncallableLearner") == {'foo'}
+    assert nimble.learnerParameters("custom.UncallableLearner") == {'foo', 'bar'}
 
 @configSafetyWrapper
 def testNimblePackage():
@@ -83,13 +83,13 @@ def testNimblePackage():
     testY = nimble.createData('Matrix', labels)
 
     nimble.train(RidgeRegression, testX, testY, lamb=1)
-    nimble.train(MeanConstant, testX, testY)
+    nimble.train(KNNClassifier, testX, testY, k=1)
 
     assert 'RidgeRegression' in nimble.listLearners("nimble")
-    assert 'MeanConstant' in nimble.listLearners("nimble")
+    assert 'KNNClassifier' in nimble.listLearners("nimble")
 
     assert nimble.learnerParameters("nimble.RidgeRegression") == {'lamb'}
-    assert nimble.learnerParameters("nimble.MeanConstant") == set()
+    assert nimble.learnerParameters("nimble.KNNClassifier") == {'k'}
 
 
 # test that registering a sample custom learner with option names
@@ -160,3 +160,28 @@ def test_listLearnersDirectFromModule():
         assert 'KNeighborsClassifier' in sklearnLearners
     except ImportError:
         pass
+
+@configSafetyWrapper
+def test_learnerQueries():
+    data = [[1, 2, 3], [4, 5, 6], [0, 0, 0]]
+    labels = [[1], [2], [0]]
+    testX = nimble.createData('Matrix', data, useLog=False)
+    testY = nimble.createData('Matrix', labels, useLog=False)
+
+    params = nimble.learnerParameters(UncallableLearner)
+    defaults = nimble.learnerDefaultValues(UncallableLearner)
+    lType = nimble.learnerType(UncallableLearner)
+    lst = nimble.listLearners("custom")
+
+    assert params == {'foo', 'bar'}
+    assert defaults == {'bar': None}
+    assert lType == 'classification'
+    assert lst == ['UncallableLearner']
+
+    params = nimble.learnerParameters(KNNClassifier)
+    defaults = nimble.learnerDefaultValues(KNNClassifier)
+    lType = nimble.learnerType(KNNClassifier)
+
+    assert params == {'k',}
+    assert defaults == {'k': 5}
+    assert lType == 'classification'
