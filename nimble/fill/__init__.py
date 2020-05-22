@@ -11,5 +11,5 @@ from .fill import forwardFill
 from .fill import backwardFill
 from .fill import interpolate
 
-__all__ = ['backwardFill', 'constant', 'factory', 'forwardFill', 'interpolate',
-           'mean', 'median', 'mode',]
+__all__ = ['backwardFill', 'constant', 'forwardFill', 'interpolate', 'mean',
+           'median', 'mode',]

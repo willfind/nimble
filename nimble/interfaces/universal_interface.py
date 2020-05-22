@@ -21,8 +21,8 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import PackageException
 from nimble.utility import inheritDocstringsFactory
 from nimble.utility import cloudpickle
-from nimble.exceptions import prettyListString
-from nimble.exceptions import prettyDictString
+from nimble.exceptions import _prettyListString
+from nimble.exceptions import _prettyDictString
 from nimble.interfaces.interface_helpers import (
     generateBinaryScoresFromHigherSortedLabelScores,
     calculateSingleLabelScoresFromOneVsOneScores,
@@ -370,13 +370,13 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                 msg += ", we couldn't find a value for the parameter named "
                 msg += "'" + param + "'. "
                 msg += "The allowed parameters were: "
-                msg += prettyListString(neededParams, useAnd=True)
+                msg += _prettyListString(neededParams, useAnd=True)
                 if len(possibleParams) > 1:
                     msg += ". These were choosen as the best guess given the "
                     msg += "inputs out of the following (numbered) list of "
                     msg += "possible parameter sets: "
-                    msg += prettyListString(possibleParams, numberItems=True,
-                                            itemStr=prettyListString)
+                    msg += _prettyListString(possibleParams, numberItems=True,
+                                            itemStr=_prettyListString)
 
                 if len(availableDefaults) == 0:
                     msg += ". All of the allowed parameters must be specified "
@@ -385,13 +385,13 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                     msg += ". Out of the allowed parameters, the following "
                     msg += "could be omitted, which would result in the "
                     msg += "associated default value being used: "
-                    msg += prettyDictString(availableDefaults, useAnd=True)
+                    msg += _prettyDictString(availableDefaults, useAnd=True)
 
                 if len(arguments) == 0:
                     msg += ". However, no arguments were provided."
                 else:
                     msg += ". The full mapping of inputs actually provided "
-                    msg += "was: " + prettyDictString(arguments)
+                    msg += "was: " + _prettyDictString(arguments)
 
                 raise InvalidArgumentValue(msg)
 
@@ -400,18 +400,18 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             msg += "When trying to validate arguments for "
             msg += name + ", the following list of parameter "
             msg += "names were not matched: "
-            msg += prettyListString(list(check.keys()), useAnd=True)
+            msg += _prettyListString(list(check.keys()), useAnd=True)
             msg += ". The allowed parameters were: "
-            msg += prettyListString(neededParams, useAnd=True)
+            msg += _prettyListString(neededParams, useAnd=True)
             if len(possibleParams) > 1:
                 msg += ". These were choosen as the best guess given the "
                 msg += "inputs out of the following (numbered) list of "
                 msg += "possible parameter sets: "
-                msg += prettyListString(possibleParams, numberItems=True,
-                                    itemStr=prettyListString)
+                msg += _prettyListString(possibleParams, numberItems=True,
+                                    itemStr=_prettyListString)
 
             msg += ". The full mapping of inputs actually provided was: "
-            msg += prettyDictString(arguments) + ". "
+            msg += _prettyDictString(arguments) + ". "
             msg += "If extra parameters were intended to be passed to one of "
             msg += "the arguments, be sure to group them using a nimble.Init "
             msg += "object. "
@@ -513,17 +513,17 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             msg += "match the given input. However, from each possible "
             msg += "(numbered) parameter set, the following parameter names "
             msg += "were missing "
-            msg += prettyListString(missing, numberItems=True,
-                                     itemStr=prettyListString)
+            msg += _prettyListString(missing, numberItems=True,
+                                     itemStr=_prettyListString)
             msg += ". The following lists the required names in each of the "
             msg += "possible (numbered) parameter sets: "
-            msg += prettyListString(nonDefaults, numberItems=True,
-                                     itemStr=prettyListString)
+            msg += _prettyListString(nonDefaults, numberItems=True,
+                                     itemStr=_prettyListString)
             if len(arguments) == 0:
                 msg += ". However, no arguments were inputed."
             else:
                 msg += ". The full mapping of inputs actually provided was: "
-                msg += prettyDictString(arguments) + ". "
+                msg += _prettyDictString(arguments) + ". "
 
             raise InvalidArgumentValue(msg)
 
@@ -543,9 +543,9 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             msg = "EXTRA PARAMETER! "
             if argNames:
                 msg += "The following parameter names cannot be applied: "
-                msg += prettyListString(invalidArguments, useAnd=True)
+                msg += _prettyListString(invalidArguments, useAnd=True)
                 msg += ". The allowed parameters are: "
-                msg += prettyListString(argNames, useAnd=True)
+                msg += _prettyListString(argNames, useAnd=True)
             else:
                 msg += "No parameters are accepted for this operation"
             raise InvalidArgumentValue(msg)
