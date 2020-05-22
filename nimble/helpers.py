@@ -62,7 +62,7 @@ def findBestInterface(package):
             # set options in config
             interfaceName = interfaceObj.getCanonicalName()
             nimble.interfaces.available[interfaceName] = interfaceObj
-            setInterfaceOptions(nimble.settings, interfaceObj, True)
+            setInterfaceOptions(interfaceObj, True)
             return interfaceObj
     # if package is not recognized, provide generic exception information
     msg = "package '" + package

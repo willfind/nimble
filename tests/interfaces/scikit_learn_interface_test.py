@@ -41,7 +41,7 @@ def toCall(learner):
     return packageName + '.' + learner
 
 @sklSkipDec
-@logCountAssertionFactory(5)
+@logCountAssertionFactory(6)
 def testScikitLearnAliases():
     """ Test availability of correct aliases for 'sciKitLearn' """
     variables = ["Y", "x1", "x2"]
@@ -58,6 +58,8 @@ def testScikitLearnAliases():
     nimble.trainAndApply("skl.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
     nimble.trainAndApply("SciKitLearn.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
     nimble.trainAndApply("sklearn.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
+    from sklearn.linear_model import LinearRegression
+    nimble.trainAndApply(LinearRegression, trainingObj, trainY="Y", testX=testObj, arguments={})
 
 
 @sklSkipDec
@@ -802,7 +804,7 @@ def test_getScores_acceptsNewArguments():
     # Need to set convertToType b/c conversion will not be done when check_input=False
     trainObj = nimble.createData('Matrix', train, convertToType=numpy.float32, useLog=False)
     testObj = nimble.createData('Matrix', testX, convertToType=numpy.float32, useLog=False)
-    
+
     # DecisionTreeClassifier.predict_proba takes a 'check_input' argument. Default is True.
     tl = nimble.train('SciKitLearn.DecisionTreeClassifier', trainObj, 0)
     assert 'check_input' not in tl.transformedArguments

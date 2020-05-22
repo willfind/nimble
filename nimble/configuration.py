@@ -545,7 +545,7 @@ def loadSettings():
     return ret
 
 
-def setInterfaceOptions(settingsObj, interface, save):
+def setInterfaceOptions(interface, save):
     """
     Synchronizes the configuration file, settings object in memory, and
     the the available interfaces, so that all three have the same option
@@ -558,17 +558,17 @@ def setInterfaceOptions(settingsObj, interface, save):
     optionNames = interface.optionNames
     # remove any existing option names which are no longer in optionNames
     try:
-        allOptions = settingsObj.get(interfaceName, None)
+        allOptions = nimble.settings.get(interfaceName, None)
         for opName in allOptions:
             if opName not in optionNames:
-                settingsObj.delete(interfaceName, opName)
+                nimble.settings.delete(interfaceName, opName)
     except configparser.NoSectionError:
         pass
     # set new option names
     for opName in optionNames:
         try:
-            settingsObj.get(interfaceName, opName)
+            nimble.settings.get(interfaceName, opName)
         except (configparser.Error):
-            settingsObj.set(interfaceName, opName, "")
+            nimble.settings.set(interfaceName, opName, "")
     if save:
-        settingsObj.saveChanges(interfaceName)
+        nimble.settings.saveChanges(interfaceName)

@@ -23,7 +23,7 @@ def test_Mlpy_version():
     assert interface.version() == mlpy.__version__
 
 @mlpySkipDec
-@oneLogEntryExpected
+@logCountAssertionFactory(2)
 def testMlpyHandmadeSVMClassification():
     """ Test mlpy() by calling on SVM classification with handmade output """
 
@@ -34,14 +34,13 @@ def testMlpyHandmadeSVMClassification():
     data2 = [[2, 3], [-200, 0]]
     testObj = nimble.createData('Matrix', data2, useLog=False)
 
-    ret = nimble.trainAndApply("mlpy.LibSvm", trainingObj, trainY="Y", testX=testObj, arguments={})
+    expected = nimble.createData('Matrix', [[1], [2]], useLog=False)
 
-    assert ret is not None
+    from mlpy import LibSvm
+    for value in ["mlpy.LibSvm", LibSvm]:
+        ret = nimble.trainAndApply(value, trainingObj, trainY="Y", testX=testObj)
 
-    expected = [[1.]]
-    expectedObj = nimble.createData('Matrix', expected, useLog=False)
-
-    numpy.testing.assert_approx_equal(ret.data[0, 0], 1.)
+        assert ret == expected
 
 @mlpySkipDec
 @oneLogEntryExpected

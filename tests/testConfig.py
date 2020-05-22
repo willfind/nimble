@@ -360,8 +360,7 @@ def setAndSaveAvailableInterfaceOptions():
     Set and save the options for each available interface.
     """
     for interface in nimble.interfaces.available.values():
-        nimble.configuration.setInterfaceOptions(nimble.settings, interface,
-                                                  save=True)
+        nimble.configuration.setInterfaceOptions(interface, save=True)
 
 @configSafetyWrapper
 def test_settings_addingNewInterface():

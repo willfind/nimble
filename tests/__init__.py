@@ -1,6 +1,6 @@
-from nimble.interfaces import predefined
-from nimble.helpers import findBestInterface
-from nimble.exceptions import PackageException
+import logging
+
+from nimble.helpers import initAvailablePredefinedInterfaces
 
 def setup():
     """
@@ -10,8 +10,8 @@ def setup():
     is no longer the case we need to load them now to ensure that those
     tests continue to test all interfaces.
     """
-    for interface in predefined:
-        try:
-            findBestInterface(interface.getCanonicalName())
-        except PackageException:
-            pass
+    # Prevent these modules cluttering nose output
+    logging.getLogger("tensorflow").setLevel(logging.WARNING)
+    logging.getLogger("matplotlib").setLevel(logging.WARNING)
+    
+    initAvailablePredefinedInterfaces()

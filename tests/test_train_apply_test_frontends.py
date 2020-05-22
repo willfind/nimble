@@ -10,6 +10,7 @@ from nimble import trainAndApply
 from nimble import trainAndTest
 from nimble.calculate import fractionIncorrect
 from nimble.randomness import pythonRandom
+from nimble.learners import KNNClassifier
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from .assertionHelpers import logCountAssertionFactory, oneLogEntryExpected
@@ -28,45 +29,45 @@ def test_trainAndApply_dataInputs():
     testObj = createData('Matrix', data=testData, featureNames=variables)
     testObjNoLabels = testObj[:, :2]
 
-    learner = 'nimble.KNNClassifier'
-    # Expected outcomes
-    exp = nimble.trainAndApply(learner, trainObjData, trainObjLabels, testObjNoLabels)
-    expSelf = nimble.trainAndApply(learner, trainObjData, trainObjLabels, trainObjData)
-    # trainY is ID, testX does not contain labels; test int
-    out = nimble.trainAndApply(learner, trainObj, 3, testObjNoLabels)
-    assert out == exp
-    # trainY is ID, testX does not contain labels; test string
-    out = nimble.trainAndApply(learner, trainObj, 'label', testObjNoLabels)
-    assert out == exp
-    # trainY is Base; testX None
-    out = nimble.trainAndApply(learner, trainObjData, trainObjLabels, None)
-    assert out == expSelf
-    # trainY is ID; testX None
-    out = nimble.trainAndApply(learner, trainObj, 3, None)
-    assert out == expSelf
-    # Exception trainY is ID; testX contains labels
-    try:
-        out = nimble.trainAndApply(learner, trainObj, 3, testObj)
-        assert False # expected ValueError
-    except ValueError:
-        pass
-    try:
-        out = nimble.trainAndApply(learner, trainObj, 'label', testObj)
-        assert False # expected ValueError
-    except ValueError:
-        pass
-    # Exception trainY is Base; testX contains labels
-    try:
-        out = nimble.trainAndApply(learner, trainObjData, trainObjLabels, testObj)
-        assert False # expected ValueError
-    except ValueError:
-        pass
-    # Exception trainY is ID; testX bad shape
-    try:
-        out = nimble.trainAndApply(learner, trainObj, 3, testObj[:, 2:])
-        assert False # expected ValueError
-    except ValueError:
-        pass
+    for learner in ['nimble.KNNClassifier', KNNClassifier]:
+        # Expected outcomes
+        exp = nimble.trainAndApply(learner, trainObjData, trainObjLabels, testObjNoLabels)
+        expSelf = nimble.trainAndApply(learner, trainObjData, trainObjLabels, trainObjData)
+        # trainY is ID, testX does not contain labels; test int
+        out = nimble.trainAndApply(learner, trainObj, 3, testObjNoLabels)
+        assert out == exp
+        # trainY is ID, testX does not contain labels; test string
+        out = nimble.trainAndApply(learner, trainObj, 'label', testObjNoLabels)
+        assert out == exp
+        # trainY is Base; testX None
+        out = nimble.trainAndApply(learner, trainObjData, trainObjLabels, None)
+        assert out == expSelf
+        # trainY is ID; testX None
+        out = nimble.trainAndApply(learner, trainObj, 3, None)
+        assert out == expSelf
+        # Exception trainY is ID; testX contains labels
+        try:
+            out = nimble.trainAndApply(learner, trainObj, 3, testObj)
+            assert False # expected ValueError
+        except ValueError:
+            pass
+        try:
+            out = nimble.trainAndApply(learner, trainObj, 'label', testObj)
+            assert False # expected ValueError
+        except ValueError:
+            pass
+        # Exception trainY is Base; testX contains labels
+        try:
+            out = nimble.trainAndApply(learner, trainObjData, trainObjLabels, testObj)
+            assert False # expected ValueError
+        except ValueError:
+            pass
+        # Exception trainY is ID; testX bad shape
+        try:
+            out = nimble.trainAndApply(learner, trainObj, 3, testObj[:, 2:])
+            assert False # expected ValueError
+        except ValueError:
+            pass
 
 def test_trainAndTest_dataInputs():
     variables = ["x1", "x2", "x3", "label"]

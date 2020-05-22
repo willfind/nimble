@@ -57,6 +57,9 @@ def backend_imputation(learnerName, **kwargs):
 
 def test_autoimpute_SingleImputer():
     backend_imputation('autoimpute.SingleImputer', strategy='least squares')
+    # check also that the object itself is a valid input
+    from autoimpute.imputations import SingleImputer
+    backend_imputation(SingleImputer, strategy='least squares')
 
 @raises(InvalidArgumentValue)
 def test_autoimpute_SingleImputer_exception_noStrategy():

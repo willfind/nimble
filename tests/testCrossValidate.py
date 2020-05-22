@@ -22,6 +22,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 from nimble.calculate import *
 from nimble.randomness import pythonRandom
+from nimble.learners import KNNClassifier
 from nimble.helpers import computeMetrics
 from nimble.helpers import generateClassificationData
 from nimble.helpers import KFoldCrossValidator
@@ -49,13 +50,13 @@ def test_crossValidate_XY_unchanged():
     X and Y, the original data is unchanged
 
     """
-    classifierAlgo = 'nimble.KNNClassifier'
-    X, Y = _randomLabeledDataSet(numLabels=5)
-    copyX = X.copy()
-    copyY = Y.copy()
-    crossValidator = crossValidate(classifierAlgo, X, Y, fractionIncorrect, {}, folds=5)
-    assert X == copyX
-    assert Y == copyY
+    for classifierAlgo in ['nimble.KNNClassifier', KNNClassifier]:
+        X, Y = _randomLabeledDataSet(numLabels=5)
+        copyX = X.copy()
+        copyY = Y.copy()
+        crossValidator = crossValidate(classifierAlgo, X, Y, fractionIncorrect, {}, folds=5)
+        assert X == copyX
+        assert Y == copyY
 
 
 def test_crossValidate_callable():
@@ -319,7 +320,7 @@ def test_crossValidateBestArguments():
 
     # need to setup a situation where we guarantee certain returns
     # from the performanceMetric fractionIncorrect. Thus, we generate
-    # obvious data, that custom.KNNClassifer will predict with 100%
+    # obvious data, that custom.KNNClassifier will predict with 100%
     # accuracy, and FlipWrapper messes up a specified percentage
     # of the returns
     class FlipWrapper(CustomLearner):

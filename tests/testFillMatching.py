@@ -8,6 +8,7 @@ from nose.tools import raises
 
 import nimble
 from nimble import match
+from nimble.learners import KNNImputation
 from nimble.exceptions import ImproperObjectAction, InvalidArgumentValue
 
 from .assertionHelpers import logCountAssertionFactory
@@ -37,14 +38,15 @@ def test_fillMatching_trainXUnaffectedByFailure():
         except InvalidArgumentValue:
             assert data == dataCopy
 
-@logCountAssertionFactory(len(nimble.data.available))
+@logCountAssertionFactory(len(nimble.data.available) * 2)
 def backend_fillMatching(matchingElements, raw, expRaw):
     for t in nimble.data.available:
         data = nimble.createData(t, raw, useLog=False)
         exp = nimble.createData(t, expRaw, useLog=False)
-        nimble.fillMatching('nimble.KNNImputation', matchingElements, data,
-                            mode='classification', k=1)
-        assert data == exp
+        for value in ['nimble.KNNImputation', KNNImputation]:
+            nimble.fillMatching(value, matchingElements, data,
+                                mode='classification', k=1)
+            assert data == exp
 
 def test_fillMatching_matchingElementsAsSingleValue():
     matchingElements = 0

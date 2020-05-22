@@ -95,7 +95,7 @@ def testShogun_multiClassDataToBinaryAlg():
 
 
 @shogunSkipDec
-@oneLogEntryExpected
+@logCountAssertionFactory(2)
 def testShogunHandmadeBinaryClassification():
     """ Test shogun by calling a binary linear classifier """
     variables = ["Y", "x1", "x2"]
@@ -106,13 +106,14 @@ def testShogunHandmadeBinaryClassification():
     data2 = [[3, 3], [-1, 0]]
     testObj = nimble.createData('Matrix', data2, useLog=False)
 
-    args = {}
-    ret = nimble.trainAndApply("shogun.LibLinear", trainingObj, trainY="Y",
-                            testX=testObj, output=None, arguments=args)
+    from shogun import LibLinear
+    for value in ["shogun.LibLinear", LibLinear]:
+        ret = nimble.trainAndApply(value, trainingObj, trainY="Y",
+                                testX=testObj, output=None)
 
-    assert ret is not None
-    assert ret[0, 0] == 5
-    assert ret[1, 0] == 0
+        assert ret is not None
+        assert ret[0, 0] == 5
+        assert ret[1, 0] == 0
 
 
 @shogunSkipDec

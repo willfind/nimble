@@ -67,6 +67,12 @@ def testKerasAPI():
     bestArguments = results.bestArguments
     bestScore = results.bestResult
 
+    #####test fit with Sequential object
+    from keras.models import Sequential
+    mym = nimble.train(Sequential, trainX=x_train, trainY=y_train, optimizer=optimizer,
+                       layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
+                       epochs=20, batch_size=128, useLog=False)
+
 @keraSkipDec
 @logCountAssertionFactory(3)
 def testKerasIncremental():
