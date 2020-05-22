@@ -572,17 +572,3 @@ def setInterfaceOptions(settingsObj, interface, save):
             settingsObj.set(interfaceName, opName, "")
     if save:
         settingsObj.saveChanges(interfaceName)
-
-
-def setupCustomLearnerInterfaces():
-    # These learners are required for unit testing, so we ensure they will
-    # be automatically registered by making surey they have entries in
-    # nimble.settings.
-    nimbleInterface = nimble.interfaces.CustomLearnerInterface('nimble')
-    for learnerName in nimble.learners.__all__:
-        learner = getattr(nimble.learners, learnerName)
-        nimbleInterface.registerLearnerClass(learner)
-    nimble.interfaces.available['nimble'] = nimbleInterface
-
-    customInterface = nimble.interfaces.CustomLearnerInterface('custom')
-    nimble.interfaces.available['custom'] = customInterface

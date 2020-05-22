@@ -39,33 +39,9 @@ class ExtensionPlugin(Plugin):
     # Controls which files are checked for tests. In this case, we check every
     # file we discover, as long as it ends with '.py'
     def wantFile(self, file):
-        # TODO fix selection of files in interfaces/tests
+        # TODO fix selection of files in interfaces/tests?
         if not file.endswith('.py'):
             return False
-
-        # dname = os.path.dirname(file)
-        # if dname == os.path.join(nimblePath, 'interfaces', 'tests'):
-        #     fname = os.path.basename(file)
-        #
-        #     #need to confirm that fname is associated with an interface
-        #     associated = False
-        #     for intName in os.listdir(dname):
-        #         if not intName.endswith('.py'):
-        #             continue
-        #         intName = intName.split('.')[0]
-        #         if intName in fname:
-        #             associated = True
-        #             break
-        #         # if it is associated with an interface, we only want to run it
-        #     # if it is associated with an available interface.
-        #     if associated:
-        #         associated = False
-        #         for interface in nimble.interfaces.available:
-        #             if interface.__module__.rsplit('.', 1)[1] in fname:
-        #                 associated = True
-        #                 break
-        #         if not associated:
-        #             return False
 
         return True
 

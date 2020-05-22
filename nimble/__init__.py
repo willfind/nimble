@@ -53,9 +53,6 @@ from . import _configuration
 # load settings from configuration file
 settings = _configuration.loadSettings()
 
-# register those custom learners listed in nimble.settings
-_configuration.setupCustomLearnerInterfaces()
-
 # initialize the logging file
 logger.active = logger.initLoggerAndLogConfig()
 

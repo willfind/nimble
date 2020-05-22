@@ -355,6 +355,13 @@ def test_settings_savingOption():
     except configparser.NoOptionError:
         pass
 
+def setAndSaveAvailableInterfaceOptions():
+    """
+    Set and save the options for each available interface.
+    """
+    for interface in nimble.interfaces.available.values():
+        nimble._configuration.setInterfaceOptions(nimble.settings, interface,
+                                                  save=True)
 
 @configSafetyWrapper
 def test_settings_addingNewInterface():
@@ -365,8 +372,7 @@ def test_settings_addingNewInterface():
     nimble.interfaces.available[ignoreInterface.name] = ignoreInterface
 
     # set options for all interfaces
-    for interface in nimble.interfaces.available.values():
-        nimble._configuration.setInterfaceOptions(nimble.settings, interface, True)
+    setAndSaveAvailableInterfaceOptions()
 
     # reload settings - to make sure the options setting was recorded
     nimble.settings = nimble._configuration.loadSettings()
@@ -379,14 +385,6 @@ def test_settings_addingNewInterface():
     # '' is default value when adding options from interfaces
     assert nimble.settings.get('Test', 'Temp0') == ''
     assert nimble.settings.get('Test', 'Temp1') == ''
-
-def setAndSaveAvailableInterfaceOptions():
-    """
-    Set and save the options for each available interface.
-    """
-    for interface in nimble.interfaces.available.values():
-        nimble._configuration.setInterfaceOptions(nimble.settings, interface,
-                                                  save=True)
 
 @configSafetyWrapper
 def test_settings_setInterfaceOptionsSafety():
