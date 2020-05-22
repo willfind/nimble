@@ -5,6 +5,7 @@ nimble import.
 
 import copy
 import configparser
+from types import ModuleType
 
 import numpy
 
@@ -735,6 +736,8 @@ def listLearners(package=None):
     -------
     list
     """
+    if isinstance(package, ModuleType):
+        package = package.__name__
     results = []
     if package is None:
         initAvailablePredefinedInterfaces()

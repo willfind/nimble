@@ -37,19 +37,10 @@ class CustomLearnerInterface(UniversalInterface):
 
         options = learnerClass.options()
 
-        #		if isinstance(options, list):
-        #			temp = {}
-        #			for name in options:
-        #				temp[name] = ''
-        #			options = temp
-
-        #		for (k,v) in options.items():
-        #			fullKey = learnerClass.__name__ + '.' + k
-        #			self._configurableOptionNamesAvailable[fullKey] = v
         for name in options:
             fullName = learnerClass.__name__ + '.' + name
             self._configurableOptionNamesAvailable.append(fullName)
-
+            nimble.settings.set(self.name, fullName, "")
 
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
