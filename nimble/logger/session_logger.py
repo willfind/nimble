@@ -32,7 +32,7 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
-from nimble._configuration import configErrors
+from nimble.configuration import configErrors
 from .stopwatch import Stopwatch
 
 class SessionLogger(object):

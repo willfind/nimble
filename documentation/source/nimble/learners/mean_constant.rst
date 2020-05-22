@@ -1,6 +1,6 @@
 nimble.MeanConstant
 ===================
 
-.. automodule:: nimble.customLearners
+.. automodule:: nimble.learners
    :noindex:
    :members: MeanConstant

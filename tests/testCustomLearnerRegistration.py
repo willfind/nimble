@@ -181,7 +181,7 @@
 #     assert nimble.settings.get(regSec, opName) == opValue
 #
 #     # check that it is *not* recorded to file
-#     tempSettings = nimble._configuration.loadSettings()
+#     tempSettings = nimble.configuration.loadSettings()
 #     try:
 #         assert tempSettings.get(regSec, opName) == opValue
 #         assert False  # expected NoOptionError
@@ -263,7 +263,7 @@
 #     nimble.settings.set("RegisteredLearners", name, value)
 #
 #     # call helper
-#     nimble._configuration.autoRegisterFromSettings()
+#     nimble.configuration.autoRegisterFromSettings()
 #
 #     # check that correct learners are available through nimble.interfaces.available
 #     assert 'LoveAtFirstSightClassifier' in nimble.listLearners('Foo')
@@ -278,7 +278,7 @@
 #     nimble.settings.set("RegisteredLearners", name, value)
 #
 #     # should throw warning, not exception
-#     nimble._configuration.autoRegisterFromSettings()
+#     nimble.configuration.autoRegisterFromSettings()
 #
 # @configSafetyWrapper
 # @noLogEntryExpected
@@ -315,7 +315,7 @@
 #         tmpConfig.close()
 #     origConfigSize = os.path.getsize(nimble.settings.path)
 #     try:
-#         newSession = nimble._configuration.SessionConfiguration(tmpConfig.name)
+#         newSession = nimble.configuration.SessionConfiguration(tmpConfig.name)
 #         with mock.patch('nimble.settings', new=newSession):
 #             with mock.patch('nimble.interfaces.available', new={}):
 #                 nimble.registerCustomLearner("Foo", LoveAtFirstSightClassifier)
@@ -351,7 +351,7 @@
 #                 # learners ToDelete in changes and removed from config
 #                 for learner in regLearners:
 #                     learnerObj = nimble.settings.changes['RegisteredLearners'][learner]
-#                     assert isinstance(learnerObj, nimble._configuration.ToDelete)
+#                     assert isinstance(learnerObj, nimble.configuration.ToDelete)
 #                 assert os.path.getsize(tmpConfig.name) == origConfigSize
 #                 assert deregisteredLines == origLines
 #     finally:
@@ -371,7 +371,7 @@
 #         tmpConfig.close()
 #     origConfigSize = os.path.getsize(nimble.settings.path)
 #     try:
-#         newSession = nimble._configuration.SessionConfiguration(tmpConfig.name)
+#         newSession = nimble.configuration.SessionConfiguration(tmpConfig.name)
 #         with mock.patch('nimble.settings', new=newSession):
 #             with mock.patch('nimble.interfaces.available', new={}):
 #                 nimble.registerCustomLearnerAsDefault("Foo", LoveAtFirstSightClassifier)
@@ -424,7 +424,7 @@
 #         tmpConfig.close()
 #     origConfigSize = os.path.getsize(nimble.settings.path)
 #     try:
-#         newSession = nimble._configuration.SessionConfiguration(tmpConfig.name)
+#         newSession = nimble.configuration.SessionConfiguration(tmpConfig.name)
 #         with mock.patch('nimble.settings', new=newSession):
 #             with mock.patch('nimble.interfaces.available', new={}):
 #                 nimble.registerCustomLearnerAsDefault("Foo", LoveAtFirstSightClassifier)
@@ -460,7 +460,7 @@
 #                                'Baz.UncallableLearner']
 #                 for learner in regLearners:
 #                     learnerObj = nimble.settings.changes['RegisteredLearners'][learner]
-#                     assert isinstance(learnerObj, nimble._configuration.ToDelete)
+#                     assert isinstance(learnerObj, nimble.configuration.ToDelete)
 #                 assert os.path.getsize(tmpConfig.name) > origConfigSize
 #                 assert deregisteredLines == registeredLines
 #
@@ -486,7 +486,7 @@
 #             tmpConfig.write(line)
 #         tmpConfig.close()
 #     try:
-#         newSession = nimble._configuration.SessionConfiguration(tmpConfig.name)
+#         newSession = nimble.configuration.SessionConfiguration(tmpConfig.name)
 #         with mock.patch('nimble.settings', new=newSession):
 #             with mock.patch('nimble.interfaces.available', new={}):
 #                 nimble.registerCustomLearner("Foo", LoveAtFirstSightClassifier)

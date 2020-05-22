@@ -20,7 +20,7 @@ from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.interfaces.interface_helpers import PythonSearcher
 from nimble.helpers import inspectArguments
 from nimble.utility import inheritDocstringsFactory
-from nimble._configuration import configErrors
+from nimble.configuration import configErrors
 
 # Contains path to sciKitLearn root directory
 #sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'

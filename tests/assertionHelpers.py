@@ -11,7 +11,7 @@ import copy
 
 import nimble
 from nimble.data import BaseView
-from nimble._configuration import SessionConfiguration
+from nimble.configuration import SessionConfiguration
 
 def configSafetyWrapper(toWrap):
     """
@@ -34,21 +34,21 @@ def configSafetyWrapper(toWrap):
         copyChanges = copy.copy(nimble.settings.changes)
         copyHooks = copy.copy(nimble.settings.hooks)
         backupSettings = nimble.settings
-        backupLoadSettings = nimble._configuration.loadSettings
+        backupLoadSettings = nimble.configuration.loadSettings
         backupLogger = nimble.logger.active
         availableBackup = copy.copy(nimble.interfaces.available)
 
         nimble.settings = loadSettingsFromTempFile()
         nimble.settings.changes = copyChanges
         nimble.settings.hooks = copyHooks
-        nimble._configuration.loadSettings = loadSettingsFromTempFile
+        nimble.configuration.loadSettings = loadSettingsFromTempFile
 
         try:
             toWrap(*args, **kwargs)
         finally:
             nimble.settings = backupSettings
             nimble.logger.active = backupLogger
-            nimble._configuration.loadSettings = backupLoadSettings
+            nimble.configuration.loadSettings = backupLoadSettings
             nimble.interfaces.available = availableBackup
 
     return wrapped

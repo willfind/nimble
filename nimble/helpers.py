@@ -34,7 +34,7 @@ from nimble.randomness import numpyRandom
 from nimble.utility import numpy2DArray, is2DArray
 from nimble.utility import sparseMatrixToArray
 from nimble.utility import scipy, pd, requests
-from nimble._configuration import setInterfaceOptions
+from nimble.configuration import setInterfaceOptions
 
 def findBestInterface(package):
     """

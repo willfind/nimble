@@ -1,6 +1,6 @@
 nimble.RidgeRegression
 ======================
 
-.. automodule:: nimble.customLearners
+.. automodule:: nimble.learners
    :noindex:
    :members: RidgeRegression

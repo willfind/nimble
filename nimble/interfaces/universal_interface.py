@@ -33,7 +33,7 @@ from nimble.helpers import generateAllPairs, countWins, inspectArguments
 from nimble.helpers import extractWinningPredictionIndex
 from nimble.helpers import extractWinningPredictionLabel
 from nimble.helpers import extractWinningPredictionIndexAndScore
-from nimble._configuration import configErrors
+from nimble.configuration import configErrors
 
 
 def captureOutput(toWrap):

@@ -37,7 +37,7 @@ from .core import loadTrainedLearner
 from .core import CV
 from .core import Init
 from .custom_learner import CustomLearner
-from ._configuration import nimblePath
+from .configuration import nimblePath
 
 # Import those submodules that need setup or we want to be
 # accessible to the user
@@ -48,10 +48,10 @@ from . import match
 from . import fill
 from . import interfaces
 from . import logger
-from . import _configuration
+from . import configuration
 
 # load settings from configuration file
-settings = _configuration.loadSettings()
+settings = configuration.loadSettings()
 
 # initialize the logging file
 logger.active = logger.initLoggerAndLogConfig()
