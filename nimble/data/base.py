@@ -212,7 +212,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.Points
+        Points
         """
         return self._points
 
@@ -229,7 +229,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.Features
+        Features
         """
         return self._features
 
@@ -410,7 +410,7 @@ class Base(object):
 
         See Also
         --------
-        self.data.Points, self.data.Features
+        Points, Features
 
         Examples
         --------
@@ -633,8 +633,7 @@ class Base(object):
 
         See Also
         --------
-        calculate, nimble.data.Points.transform,
-        nimble.data.Features.transform
+        calculateOnElements, Points.transform, Features.transform
 
         Examples
         --------
@@ -771,8 +770,7 @@ class Base(object):
 
         See Also
         --------
-        transform, nimble.data.Points.calculate,
-        nimble.data.Features.calculate
+        transformElements, Points.calculate, Features.calculate
 
         Examples
         --------
@@ -1047,7 +1045,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.Points.count, nimble.data.Features.count
+        Points.count, Features.count
 
         Examples
         --------
@@ -1099,7 +1097,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.calculate.statistic.uniqueCount
+        nimble.calculate.uniqueCount
 
         Examples
         --------
@@ -2970,7 +2968,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.Points.fill, nimble.data.Features.fill
+        Points.fill, Features.fill
 
         Examples
         --------
@@ -3573,7 +3571,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.Points.add, nimble.data.Features.add
+        Points.add, Features.add
 
         Examples
         --------

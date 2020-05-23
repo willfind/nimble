@@ -1,6 +1,12 @@
 Linear Algebra
 ==============
 
-.. automodule:: nimble.calculate
-   :noindex:
-   :members: inverse, pseudoInverse, solve, leastSquaresSolution
+.. currentmodule:: nimble.calculate
+
+.. autofunction:: leastSquaresSolution
+
+.. autofunction:: inverse
+
+.. autofunction:: pseudoInverse
+
+.. autofunction:: solve

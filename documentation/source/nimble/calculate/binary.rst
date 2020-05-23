@@ -1,6 +1,20 @@
 Binary
 ======
 
-.. automodule:: nimble.calculate
-   :noindex:
-   :members: truePositive, trueNegative, falsePositive, falseNegative, recall, precision, specificity, balancedAccuracy, f1Score
+.. currentmodule:: nimble.calculate
+
+.. autofunction:: balancedAccuracy
+
+.. autofunction:: f1Score
+
+.. autofunction:: falseNegative
+
+.. autofunction:: precision
+
+.. autofunction:: recall
+
+.. autofunction:: specificity
+
+.. autofunction:: truePositive
+
+.. autofunction:: trueNegative

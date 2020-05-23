@@ -297,7 +297,7 @@ class Points(object):
 
         See Also
         --------
-        nimble.data.base.Base.copy
+        Base.copy
 
         Examples
         --------
@@ -843,8 +843,7 @@ class Points(object):
 
         See Also
         --------
-        nimble.data.Base.countElements,
-        nimble.data.Base.countUniqueElements
+        Base.countElements, Base.countUniqueElements
 
         Examples
         --------
@@ -1504,7 +1503,7 @@ class Points(object):
             * value - a value to fill each matching value in each point
             * function - must be in the format:
               fillWith(point, matchingElements) or
-              fillWith(point, matchingElements, **kwarguments)
+              fillWith(point, matchingElements, \*\*kwarguments)
               and return the transformed point as a list of values.
               Certain fill methods can be imported from nimble's fill
               module.
