@@ -68,11 +68,12 @@ def test__getScoresFormat():
                     # this is to catch learners that have required arguments.
                     # we have to skip them in that case
                     continue
-                (ign1, ign2, transTestX2, ign3) = interface._inputTransformation(lName, None, None, testX2, {},
-                                                                                 tl2.customDict)
+                (ign1, ign2, transTestX2, ign3) = interface._inputTransformation(
+                    lName, None, None, testX2, {}, tl2._customDict)
                 try:
                     scores2 = interface._getScores(
-                        lName, tl2.backend, transTestX2, {}, tl2.transformedArguments, tl2.customDict)
+                        lName, tl2._backend, transTestX2, {},
+                        tl2._transformedArguments, tl2._customDict)
                 except (NotImplementedError, SystemError):
                     # this is to catch learners that cannot output scores
                     continue
@@ -83,10 +84,11 @@ def test__getScoresFormat():
                 except:
                     # some classifiers are binary only
                     continue
-                (ign1, ign2, transTestX4, ign3) = interface._inputTransformation(lName, None, None, testX4, {},
-                                                                                 tl4.customDict)
+                (ign1, ign2, transTestX4, ign3) = interface._inputTransformation(
+                    lName, None, None, testX4, {}, tl4._customDict)
                 scores4 = interface._getScores(
-                    lName, tl4.backend, transTestX4, {}, tl4.transformedArguments, tl4.customDict)
+                    lName, tl4._backend, transTestX4, {},
+                    tl4._transformedArguments, tl4._customDict)
                 checkFormatRaw(scores4, 4)
 
 

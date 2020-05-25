@@ -922,38 +922,9 @@ class UniversalInterface(metaclass=abc.ABCMeta):
 
 class TrainedLearner(object):
     """
-    Container for a learner model that has been trained. Provides
-    methods for applying and testing the model.
+    Container for a learner model that has been trained.
 
-    Parameters
-    ----------
-    learnerName : str
-        The name of the learner used in the backend.
-    arguments : dict
-        Reference to the original arguments parameter to the
-        trainAndApply() function.
-    transformedArguments : tuple
-        Contains the return value of _inputTransformation() that was
-        called when training the learner in the backend.
-    customDict : dict
-        Reference to the customizable dictionary that is passed to I/O
-        transformation, training and applying a learner.
-    backend : object
-        The return value from _trainer(), a reference to some object
-        that is to be used by the package implementor during
-        application.
-    interfaceObject : nimble.interfaces.UniversalInterface
-        A reference to the subclass of UniversalInterface from which
-        this TrainedLearner is being instantiated.
-    has2dOutput : bool
-        True if output will be 2-dimensional, False assumes the output
-        will be 1-dimensional.
-    crossValidation : KFoldsCrossValidator
-        The object containing the cross-validation results if
-        cross-validation occurred while training the learner, otherwise
-        None.
-    trainXShape : tuple
-        The shape, (numPts, numFts), of the trainX object.
+    Provides methods for applying and testing the trained model.
 
     Attributes
     ----------
@@ -961,18 +932,6 @@ class TrainedLearner(object):
         The name of the learner used for training.
     arguments : dict
         The original arguments passed to the learner.
-    transformedArguments : dict
-        The complete dictionary of arguments used to train the learner.
-    customDict : dict
-        The customizable dictionary passed to I/O transformation,
-        training and applying a learner.
-    backend : object
-        The learner object returned after training the learner.
-    interface : UniversalInterface
-        The interface used to train this learner.
-    has2dOutput : bool
-        True if output will be 2-dimensional, False assumes the output
-        will be 1-dimensional.
     crossValidation : KFoldCrossValidator
         The object containing the cross-validation results, provided
         cross-validation occurred.  See the Attributes section in
@@ -987,18 +946,48 @@ class TrainedLearner(object):
         Initialize the object wrapping the trained learner stored in
         backend, and setting up the object methods that may be used to
         modify or query the backend trained learner.
+
+        Parameters
+        ----------
+        learnerName : str
+            The name of the learner used in the backend.
+        arguments : dict
+            Reference to the original arguments parameter to the
+            trainAndApply() function.
+        transformedArguments : tuple
+            Contains the return value of _inputTransformation() that was
+            called when training the learner in the backend.
+        customDict : dict
+            Reference to the customizable dictionary that is passed to
+            I/O transformation, training and applying a learner.
+        backend : object
+            The return value from _trainer(), a reference to some object
+            that is to be used by the package implementor during
+            application.
+        interfaceObject : nimble.interfaces.UniversalInterface
+            A reference to the subclass of UniversalInterface from which
+            this TrainedLearner is being instantiated.
+        has2dOutput : bool
+            True if output will be 2-dimensional, False assumes the
+            output will be 1-dimensional.
+        crossValidationResults : KFoldsCrossValidator
+            The object containing the cross-validation results if
+            cross-validation occurred while training the learner,
+            otherwise None.
+        trainXShape : tuple
+            The shape, (numPts, numFts), of the trainX object.
         """
         self.learnerName = learnerName
         self.arguments = arguments
-        self.transformedArguments = transformedArguments
-        self.customDict = customDict
-        self.backend = backend
-        self.interface = interfaceObject
-        self.has2dOutput = has2dOutput
+        self._transformedArguments = transformedArguments
+        self._customDict = customDict
+        self._backend = backend
+        self._interface = interfaceObject
+        self._has2dOutput = has2dOutput
         self.crossValidation = crossValidationResults
         self._trainXShape = trainXShape
 
-        exposedFunctions = self.interface._exposedFunctions()
+        exposedFunctions = self._interface._exposedFunctions()
         for exposed in exposedFunctions:
             methodName = getattr(exposed, '__name__')
             (args, _, _, _) = inspectArguments(exposed)
@@ -1095,9 +1084,9 @@ class TrainedLearner(object):
         TODO
         """
         timer = startTimer(useLog)
-        #nimble.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode,
+        #nimble.helpers._2dOutputFlagCheck(self._has2dOutput, None, scoreMode,
         #                                  multiClassStrategy)
-        nimble.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode,
+        nimble.helpers._2dOutputFlagCheck(self._has2dOutput, None, scoreMode,
                                           None)
 
         if not isinstance(testY, nimble.data.Base):
@@ -1115,7 +1104,7 @@ class TrainedLearner(object):
         for key, value in zip([performanceFunction], [performance]):
             metrics[key.__name__] = value
 
-        fullName = self.interface.getCanonicalName() + self.learnerName
+        fullName = self._interface.getCanonicalName() + self.learnerName
         # Signature:
         # (nimbleFunction, trainData, trainLabels, testData, testLabels,
         # learnerFunction, arguments, metrics, extraInfo=None, folds=None)
@@ -1197,15 +1186,15 @@ class TrainedLearner(object):
         """
         timer = startTimer(useLog)
         self._validTestData(testX)
-        nimble.helpers._2dOutputFlagCheck(self.has2dOutput, None, scoreMode,
+        nimble.helpers._2dOutputFlagCheck(self._has2dOutput, None, scoreMode,
                                           None)
 
         mergedArguments = _mergeArguments(arguments, kwarguments)
 
         # input transformation
-        transformedInputs = self.interface._inputTransformation(
+        transformedInputs = self._interface._inputTransformation(
             self.learnerName, None, None, testX, mergedArguments,
-            self.customDict)
+            self._customDict)
         transTestX = transformedInputs[2]
         usedArguments = transformedInputs[3]
 
@@ -1214,20 +1203,20 @@ class TrainedLearner(object):
         if scoreMode != 'label':
             scores = self.getScores(testX, usedArguments)
         if scoreMode != 'allScores':
-            labels = self.interface._applier(self.learnerName, self.backend,
-                                             transTestX, usedArguments,
-                                             self.transformedArguments,
-                                             self.customDict)
-            labels = self.interface._outputTransformation(
+            labels = self._interface._applier(self.learnerName, self._backend,
+                                              transTestX, usedArguments,
+                                              self._transformedArguments,
+                                              self._customDict)
+            labels = self._interface._outputTransformation(
                 self.learnerName, labels, usedArguments, output, "label",
-                self.customDict)
+                self._customDict)
 
         if scoreMode == 'label':
             ret = labels
         elif scoreMode == 'allScores':
             ret = scores
         else:
-            scoreOrder = self.interface._getScoresOrder(self.backend)
+            scoreOrder = self._interface._getScoresOrder(self._backend)
             scoreOrder = list(scoreOrder)
             # find scores matching predicted labels
             def grabValue(row):
@@ -1242,7 +1231,7 @@ class TrainedLearner(object):
 
         time = stopTimer(timer)
 
-        fullName = self.interface.getCanonicalName() + self.learnerName
+        fullName = self._interface.getCanonicalName() + self.learnerName
         # Signature:
         # (self, nimbleFunction, trainData, trainLabels, testData, testLabels,
         # learnerFunction, arguments, metrics, extraInfo=None, folds=None
@@ -1382,8 +1371,8 @@ class TrainedLearner(object):
             has2dOutput = len(outputData) > 1
 
         merged = _mergeArguments(arguments, kwarguments)
-        self.interface._validateLearnerArgumentValues(self.learnerName,
-                                                      merged)
+        self._interface._validateLearnerArgumentValues(self.learnerName,
+                                                       merged)
         for arg, value in merged.items():
             if isinstance(value, nimble.CV):
                 msg = "Cannot provide a cross-validation arguments "
@@ -1392,26 +1381,26 @@ class TrainedLearner(object):
                 msg += "nimble.train()"
                 raise InvalidArgumentValue(msg)
             self.arguments[arg] = value
-            self.transformedArguments[arg] = value
+            self._transformedArguments[arg] = value
 
         # separate training data / labels if needed
         if isinstance(trainY, (str, int, numpy.integer)):
             trainX = trainX.copy()
             trainY = trainX.features.extract(toExtract=trainY, useLog=False)
 
-        trainedBackend = self.interface._trainBackend(
-            self.learnerName, trainX, trainY, self.transformedArguments)
+        trainedBackend = self._interface._trainBackend(
+            self.learnerName, trainX, trainY, self._transformedArguments)
 
         newBackend = trainedBackend[0]
         transformedInputs = trainedBackend[1]
         customDict = trainedBackend[2]
 
-        self.backend = newBackend
+        self._backend = newBackend
         self._trainXShape = trainX.shape
         self.arguments = merged
-        self.transformedArguments = transformedInputs[3]
-        self.customDict = customDict
-        self.has2dOutput = has2dOutput
+        self._transformedArguments = transformedInputs[3]
+        self._customDict = customDict
+        self._has2dOutput = has2dOutput
         self.crossValidation = None
 
         handleLogging(useLog, 'run', 'TrainedLearner.retrain', trainX, trainY,
@@ -1442,15 +1431,15 @@ class TrainedLearner(object):
             False, do **NOT** send to the logger, regardless of the
             global option.
         """
-        transformed = self.interface._inputTransformation(
+        transformed = self._interface._inputTransformation(
             self.learnerName, trainX, trainY, None, self.arguments,
-            self.customDict)
+            self._customDict)
         transformedTrainX = transformed[0]
         transformedTrainY = transformed[1]
         transformedArguments = transformed[3]
-        self.backend = self.interface._incrementalTrainer(
-            self.backend, transformedTrainX, transformedTrainY,
-            transformedArguments, self.customDict)
+        self._backend = self._interface._incrementalTrainer(
+            self._backend, transformedTrainX, transformedTrainY,
+            transformedArguments, self._customDict)
 
         handleLogging(useLog, 'run', 'TrainedLearner.incrementalTrain', trainX,
                       trainY, None, None, self.learnerName, self.arguments,
@@ -1473,7 +1462,7 @@ class TrainedLearner(object):
         dict
             A mapping of attribute name to values of attributes.
         """
-        discovered = self.interface._getAttributes(self.backend)
+        discovered = self._interface._getAttributes(self._backend)
         inputs = self.arguments
 
         if inputs is not None:
@@ -1494,24 +1483,24 @@ class TrainedLearner(object):
         by natural label ordering, or one vs all by natural label
         ordering) and returns them in a one vs all accepted format.
         """
-        order = self.interface._getScoresOrder(self.backend)
+        order = self._interface._getScoresOrder(self._backend)
         numLabels = len(order)
         if numLabels == 2 and len(rawScores.features) == 1:
             ret = generateBinaryScoresFromHigherSortedLabelScores(rawScores)
             return nimble.createData("Matrix", ret, useLog=False)
 
         if applyResults is None:
-            applyResults = self.interface._applier(
-                self.learnerName, self.backend, testX, arguments,
-                self.transformedArguments, self.customDict)
-            applyResults = self.interface._outputTransformation(
+            applyResults = self._interface._applier(
+                self.learnerName, self._backend, testX, arguments,
+                self._transformedArguments, self._customDict)
+            applyResults = self._interface._outputTransformation(
                 self.learnerName, applyResults, arguments, "match", "label",
-                self.customDict)
+                self._customDict)
         if len(rawScores.features) != 3:
             strategy = ovaNotOvOFormatted(rawScores, applyResults, numLabels)
         else:
             strategy = checkClassificationStrategy(
-                self.interface, self.learnerName, arguments)
+                self._interface, self.learnerName, arguments)
         # want the scores to be per label, regardless of the original format,
         # so we check the strategy, and modify it if necessary
         if not strategy:
@@ -1541,20 +1530,20 @@ class TrainedLearner(object):
         """
         self._validTestData(testX)
         usedArguments = _mergeArguments(arguments, kwarguments)
-        (_, _, testX, usedArguments) = self.interface._inputTransformation(
+        (_, _, testX, usedArguments) = self._interface._inputTransformation(
             self.learnerName, None, None, testX, usedArguments,
-            self.customDict)
+            self._customDict)
 
-        rawScores = self.interface._getScores(self.learnerName, self.backend,
-                                              testX, usedArguments,
-                                              self.transformedArguments,
-                                              self.customDict)
-        nimbleTypeRawScores = self.interface._outputTransformation(
+        rawScores = self._interface._getScores(self.learnerName, self._backend,
+                                               testX, usedArguments,
+                                               self._transformedArguments,
+                                               self._customDict)
+        nimbleTypeRawScores = self._interface._outputTransformation(
             self.learnerName, rawScores, usedArguments, "Matrix", "allScores",
-            self.customDict)
+            self._customDict)
         formatedRawOrder = self._formatScoresToOvA(
             testX, None, nimbleTypeRawScores, usedArguments)
-        internalOrder = self.interface._getScoresOrder(self.backend)
+        internalOrder = self._interface._getScoresOrder(self._backend)
         naturalOrder = sorted(internalOrder)
         if numpy.array_equal(naturalOrder, internalOrder):
             return formatedRawOrder
@@ -1593,19 +1582,61 @@ class TrainedLearner(object):
 @inheritDocstringsFactory(TrainedLearner)
 class TrainedLearners(TrainedLearner):
     """
-    Container for a learner models when the training employed a
-    multiClassStrategy. Provides method for applying the models.
+    Container for learner models trained using a multiClassStrategy.
+
+    Provides methods for applying and testing the trained model.
+
+    Attributes
+    ----------
+    learnerName : str
+        The name of the learner used for training.
+    arguments : dict
+        The original arguments passed to the learner.
+    crossValidation : KFoldCrossValidator
+        The object containing the cross-validation results, provided
+        cross-validation occurred.  See the Attributes section in
+        ``help(nimble.helpers.KFoldCrossValidator)`` or the Examples
+        section in ``help(nimble.crossValidate)`` for more information
+        on extracting various results from this object.
+    method : str
+        The multiClassStrategy used, "OneVsAll" or "OneVsOne".
     """
     def __init__(self, trainedLearners, method, labelSet):
-        self.trainedLearnersList = trainedLearners
-        self.method = method
-        self.labelSet = labelSet
-        self.arguments = trainedLearners[0].arguments
-        self.has2dOutput = trainedLearners[0].has2dOutput
-        self.transformedArguments = trainedLearners[0].transformedArguments
-        self.interface = trainedLearners[0].interface
-        self.learnerName = trainedLearners[0].learnerName
+        """
+        Initialize the object wrapping the trained learner stored in
+        backend, and setting up the object methods that may be used to
+        modify or query the backend trained learner.
 
+        Parameters
+        ----------
+        trainedLearners : list
+            The list of TrainedLearner objects.
+        method : str
+            The multiClassStrategy used, "OneVsAll" or "OneVsOne".
+        labelSet : list
+            The list of unique labels.
+        """
+        self._trainedLearnersList = trainedLearners
+        self.method = method
+        self._labelSet = labelSet
+
+        # we need the TrainedLearner attributes to complete the instantiation
+        # we can access them using the first TrainedLearner in trainedLearners
+        # because they all have identical attribute values
+        trainedLearnerAttrs = trainedLearners[0]
+        learnerName = trainedLearnerAttrs.learnerName
+        arguments = trainedLearnerAttrs.arguments
+        transformedArguments = trainedLearnerAttrs._transformedArguments
+        customDict = trainedLearnerAttrs._customDict
+        backend = trainedLearnerAttrs._backend
+        interfaceObject = trainedLearnerAttrs._interface
+        has2dOutput = trainedLearnerAttrs._has2dOutput
+        crossValidationResults = trainedLearnerAttrs.crossValidation
+        trainXShape = trainedLearnerAttrs._trainXShape
+
+        super(TrainedLearners, self).__init__(
+            learnerName, arguments, transformedArguments, customDict, backend,
+            interfaceObject, has2dOutput, crossValidationResults, trainXShape)
 
     @captureOutput
     def apply(self, testX, arguments=None, output='match', scoreMode='label',
@@ -1687,7 +1718,7 @@ class TrainedLearners(TrainedLearner):
         rawPredictions = None
         #1 VS All
         if self.method == 'OneVsAll':
-            for trainedLearner in self.trainedLearnersList:
+            for trainedLearner in self._trainedLearnersList:
                 oneLabelResults = trainedLearner.apply(testX, arguments,
                                                        output, 'label',
                                                        useLog)
@@ -1712,7 +1743,7 @@ class TrainedLearners(TrainedLearner):
                     to="python list")
                 winningLabels = []
                 for [winningIndex] in winningPredictionIndices:
-                    winningLabels.append([self.labelSet[int(winningIndex)]])
+                    winningLabels.append([self._labelSet[int(winningIndex)]])
                 return nimble.createData(rawPredictions.getTypeString(),
                                          winningLabels,
                                          featureNames=['winningLabel'],
@@ -1740,7 +1771,7 @@ class TrainedLearners(TrainedLearner):
             elif scoreMode.lower() == 'allScores'.lower():
                 # create list of Feature Names/Column Headers for final
                 # return object
-                colHeaders = sorted([str(i) for i in self.labelSet])
+                colHeaders = sorted([str(i) for i in self._labelSet])
                 # create map between label and index in list,
                 # so we know where to put each value
                 colIndices = list(range(len(colHeaders)))
@@ -1769,7 +1800,7 @@ class TrainedLearners(TrainedLearner):
         #1 VS 1
         elif self.method == 'OneVsOne':
             predictionFeatureID = 0
-            for trainedLearner in self.trainedLearnersList:
+            for trainedLearner in self._trainedLearnersList:
                 # train classifier on that data; apply it to the test set
                 partialResults = trainedLearner.apply(testX, arguments, output,
                                                       'label', useLog)
@@ -1806,7 +1837,7 @@ class TrainedLearners(TrainedLearner):
                                                      useLog=False)
                 return resultsContainer
             elif scoreMode.lower() == 'allScores'.lower():
-                colHeaders = sorted([str(float(i)) for i in self.labelSet])
+                colHeaders = sorted([str(float(i)) for i in self._labelSet])
                 colIndices = list(range(len(colHeaders)))
                 labelIndexDict = {v: k for k, v in zip(colIndices, colHeaders)}
                 predictionMatrix = rawPredictions.copy(to="python list")
