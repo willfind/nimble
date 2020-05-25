@@ -953,25 +953,6 @@ class Features(object):
         Sort by a given point using ``sortBy``.
         TODO
 
-        Sort with a list of identifiers.
-
-        >>> raw = [['home', 81, 3],
-        ...        ['gard', 98, 10],
-        ...        ['home', 14, 1],
-        ...        ['home', 11, 3]]
-        >>> cols = ['dept', 'ID', 'quantity']
-        >>> orders = nimble.createData('DataFrame', raw,
-        ...                            featureNames=cols)
-        >>> orders.features.sort(sortHelper=['ID', 'quantity', 'dept'])
-        >>> orders
-        DataFrame(
-            [[81 3  home]
-             [98 10 gard]
-             [14 1  home]
-             [11 3  home]]
-            featureNames={'ID':0, 'quantity':1, 'dept':2}
-            )
-
         Sort using a comparator function.
         TODO
 
@@ -1439,12 +1420,20 @@ class Features(object):
         """
         return self._mapReduce(mapper, reducer, useLog)
 
-    def shuffle(self, useLog=None):
+    def permute(self, order=None, useLog=None):
         """
-        Permute the indexing of the features to a random order.
+        Permute the indexing of the features.
+
+        Change the arrangement of features in the object. A specific
+        permutation can be provided as the ``order`` argument. If
+        ``order`` is None, the permutation will be random. Note: a
+        random permutation may be the same as the current permutation.
 
         Parameters
         ----------
+        order : list, None
+            A list of identifiers indicating the new permutation order.
+            If None, the permutation will be random.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1455,8 +1444,8 @@ class Features(object):
 
         Notes
         -----
-        This relies on python's random.shuffle() so may not be
-        sufficiently random for large number of features.
+        Random permutation relies on python's random.shuffle() which may
+        not be sufficiently random for large number of features.
         See random.shuffle()'s documentation.
 
         Examples
@@ -1467,7 +1456,7 @@ class Features(object):
         ...        [1, 2, 3, 4],
         ...        [1, 2, 3, 4]]
         >>> data = nimble.createData('DataFrame', raw)
-        >>> data.features.shuffle()
+        >>> data.features.permute()
         >>> data
         DataFrame(
             [[3 2 4 1]
@@ -1475,8 +1464,27 @@ class Features(object):
              [3 2 4 1]
              [3 2 4 1]]
             )
+
+        Permute with a list of identifiers.
+
+        >>> raw = [['home', 81, 3],
+        ...        ['gard', 98, 10],
+        ...        ['home', 14, 1],
+        ...        ['home', 11, 3]]
+        >>> cols = ['dept', 'ID', 'quantity']
+        >>> orders = nimble.createData('DataFrame', raw,
+        ...                            featureNames=cols)
+        >>> orders.features.permute(['ID', 'quantity', 'dept'])
+        >>> orders
+        DataFrame(
+            [[81 3  home]
+             [98 10 gard]
+             [14 1  home]
+             [11 3  home]]
+            featureNames={'ID':0, 'quantity':1, 'dept':2}
+            )
         """
-        self._shuffle(useLog)
+        self._permute(order, useLog)
 
     def fillMatching(self, fillWith, matchingElements, features=None,
                      useLog=None, **kwarguments):
@@ -2066,7 +2074,7 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _shuffle(self, useLog=None):
+    def _permute(self, order=None, useLog=None):
         pass
 
     @abstractmethod

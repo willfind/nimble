@@ -488,15 +488,15 @@ def testPrepTypeFunctionsUseLog():
     checkLogContents('features.calculate', "Matrix", {'function': "lambda x: len(x)",
                                                       'features': 0})
 
-    # points.shuffle
+    # points.permute
     dataObj = nimble.createData("List", data, useLog=False)
-    dataObj.points.shuffle()
-    checkLogContents('points.shuffle', "List")
+    dataObj.points.permute()
+    checkLogContents('points.permute', "List")
 
-    # features.shuffle
+    # features.permute
     dataObj = nimble.createData("Matrix", data, useLog=False)
-    dataObj.features.shuffle()
-    checkLogContents('features.shuffle', "Matrix")
+    dataObj.features.permute()
+    checkLogContents('features.permute', "Matrix")
 
     # points.normalize
     dataObj = nimble.createData("Matrix", data, useLog=False)

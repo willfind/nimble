@@ -212,13 +212,13 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject.points.shuffle()
+            testObject.points.permute()
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject.points.sort(sortHelper=[2, 0, 1])
+            testObject.points.sort(sortBy=0)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)
@@ -296,13 +296,13 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject.features.shuffle()
+            testObject.features.permute()
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject.features.sort(sortHelper=[2, 0, 1])
+            testObject.features.sort(sortBy=0)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)

@@ -909,25 +909,6 @@ class Points(object):
             featureNames={'dept':0, 'ID':1, 'quantity':2}
             )
 
-        Sort with a list of identifiers.
-
-        >>> raw = [['home', 81, 3],
-        ...        ['gard', 98, 10],
-        ...        ['home', 14, 1],
-        ...        ['home', 11, 3]]
-        >>> pts = ['o_4', 'o_3', 'o_2', 'o_1']
-        >>> orders = nimble.createData('DataFrame', raw, pointNames=pts)
-        >>> orders.points.sort(sortHelper=['o_1', 'o_2', 'o_3', 'o_4'])
-        >>> orders
-        DataFrame(
-            [[home 11 3 ]
-             [home 14 1 ]
-             [gard 98 10]
-             [home 81 3 ]]
-            pointNames={'o_1':0, 'o_2':1, 'o_3':2, 'o_4':3}
-            )
-
-
         Sort using a comparator function.
 
         >>> def compareQuantity(pt1, pt2):
@@ -1447,12 +1428,20 @@ class Points(object):
         """
         return self._mapReduce(mapper, reducer, useLog)
 
-    def shuffle(self, useLog=None):
+    def permute(self, order=None, useLog=None):
         """
-        Permute the indexing of the points to a random order.
+        Permute the indexing of the points.
+
+        Change the arrangement of points in the object. A specific
+        permutation can be provided as the ``order`` argument. If
+        ``order`` is None, the permutation will be random. Note: a
+        random permutation may be the same as the current permutation.
 
         Parameters
         ----------
+        order : list, None
+            A list of identifiers indicating the new permutation order.
+            If None, the permutation will be random.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1463,8 +1452,8 @@ class Points(object):
 
         Notes
         -----
-        This relies on python's random.shuffle() so may not be
-        sufficiently random for large number of points.
+        Random permutation relies on python's random.shuffle() which may
+        not be sufficiently random for large number of points.
         See random.shuffle()'s documentation.
 
         Examples
@@ -1475,7 +1464,7 @@ class Points(object):
         ...        [3, 3, 3, 3],
         ...        [4, 4, 4, 4]]
         >>> data = nimble.createData('DataFrame', raw)
-        >>> data.points.shuffle()
+        >>> data.points.permute()
         >>> data
         DataFrame(
             [[3 3 3 3]
@@ -1483,8 +1472,26 @@ class Points(object):
              [4 4 4 4]
              [1 1 1 1]]
             )
+
+        Permute with a list of identifiers.
+
+        >>> raw = [['home', 81, 3],
+        ...        ['gard', 98, 10],
+        ...        ['home', 14, 1],
+        ...        ['home', 11, 3]]
+        >>> pts = ['o_4', 'o_3', 'o_2', 'o_1']
+        >>> orders = nimble.createData('DataFrame', raw, pointNames=pts)
+        >>> orders.points.permute(['o_1', 'o_2', 'o_3', 'o_4'])
+        >>> orders
+        DataFrame(
+            [[home 11 3 ]
+             [home 14 1 ]
+             [gard 98 10]
+             [home 81 3 ]]
+            pointNames={'o_1':0, 'o_2':1, 'o_3':2, 'o_4':3}
+            )
         """
-        self._shuffle(useLog)
+        self._permute(order, useLog)
 
     def fillMatching(self, fillWith, matchingElements, points=None,
                      useLog=None, **kwarguments):
@@ -2165,7 +2172,7 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _shuffle(self, useLog=None):
+    def _permute(self, order=None, useLog=None):
         pass
 
     @abstractmethod

@@ -519,16 +519,16 @@ def test_features_calculate():
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
-def test_points_shuffle():
+def test_points_permute():
     def wrapped(obj, useLog):
-        return obj.points.shuffle(useLog=useLog)
+        return obj.points.permute(useLog=useLog)
 
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
-def test_features_shuffle():
+def test_features_permute():
     def wrapped(obj, useLog):
-        return obj.features.shuffle(useLog=useLog)
+        return obj.features.permute(useLog=useLog)
 
     for rType in nimble.data.available:
         backend(wrapped, prepAndCheck, rType=rType)

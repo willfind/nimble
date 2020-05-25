@@ -15,7 +15,7 @@ isApproximatelyEqual, trainAndTestSets, points.repeat,
 features.repeat, points.matching, features.matching, matchingElements
 
 In object HighLevelModifying:
-replaceFeatureWithBinaryFeatures, points.shuffle, features.shuffle,
+replaceFeatureWithBinaryFeatures, points.permute, features.permute,
 points.normalize, features.normalize, points.fill, features.fill,
 fillMatching, points.splitByCollapsingFeatures,
 points.combineByExpandingFeatures, features.splitByParsing
@@ -2463,21 +2463,21 @@ class HighLevelModifying(DataTestObject):
         assert toTest.relativePath == 'testRelPath'
 
     ####################
-    # points.shuffle() #
+    # points.permute() #
     ####################
 
-    def testpoints_shuffle_noLongerEqual(self):
-        """ Tests points.shuffle() results in a changed object """
+    def testpoints_permute_random_noLongerEqual(self):
+        """ Tests points.permute() results in a changed object """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(deepcopy(data))
         toCompare = self.constructor(deepcopy(data))
 
-        # it is possible that it shuffles it into the same configuration.
+        # it is possible that it permutes it into the same configuration.
         # the odds are vanishingly low that it will do so over consecutive calls
         # however. We will pass as long as it changes once
         returns = []
-        for i in range(5):
-            ret = toTest.points.shuffle() # RET CHECK
+        for _ in range(5):
+            ret = toTest.points.permute() # RET CHECK
             returns.append(ret)
             if not toTest.isApproximatelyEqual(toCompare):
                 break
@@ -2488,7 +2488,7 @@ class HighLevelModifying(DataTestObject):
         assertNoNamesGenerated(toTest)
 
 
-    def testpoints_shuffle_NamePath_preservation(self):
+    def testpoints_permute_random_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(deepcopy(data))
         toCompare = self.constructor(deepcopy(data))
@@ -2497,34 +2497,112 @@ class HighLevelModifying(DataTestObject):
         toTest._absPath = "TestAbsPath"
         toTest._relPath = "testRelPath"
 
-        # it is possible that it shuffles it into the same configuration.
-        # we only test after we're sure we've done something
-        while True:
-            toTest.points.shuffle()  # RET CHECK
+        # odds are vanishingly low that it generates same configuration over
+        # consecutive calls. We will pass as long as soon as it changes once
+        for _ in range(5):
+            toTest.points.permute()
             if not toTest.isApproximatelyEqual(toCompare):
                 break
 
+        assert not toTest.isApproximatelyEqual(toCompare)
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
+    def test_points_permute_dataTypeRetainedFromList(self):
+        """ Test points.permute() data not converted when permuting by list"""
+        data = [['a', 2, 3.0], ['b', 5, 6.0], ['c', 8, 9.0]]
+        toTest = self.constructor(data)
+
+        toTest.points.permute([2, 1, 0])
+
+        expData = [['c', 8, 9.0], ['b', 5, 6.0], ['a', 2, 3.0]]
+        exp = self.constructor(expData)
+
+        assert toTest == exp
+        assertNoNamesGenerated(toTest)
+
+    def test_points_permute_indicesList(self):
+        """ Test points.permute() when we specify a list of indices """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        toTest = self.constructor(data)
+
+        toTest.points.permute([2, 1, 0])
+
+        expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
+        exp = self.constructor(expData)
+
+        assert toTest == exp
+
+    def test_points_permute_namesList(self):
+        """ Test points.permute() when we specify a list of point names """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        pnames = ['3', '6', '9']
+        toTest = self.constructor(data, pointNames=pnames)
+
+        toTest.points.permute(['9', '6', '3'])
+
+        expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
+        expNames = ['9', '6', '3']
+        exp = self.constructor(expData, pointNames=expNames)
+
+        assert toTest == exp
+
+    @oneLogEntryExpected
+    def test_points_permute_mixedList(self):
+        """ Test points.permute() when we specify a mixed list (names/indices) """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        pnames = ['3', '6', '9']
+        toTest = self.constructor(data, pointNames=pnames)
+
+        toTest.points.permute(['9', '6', 0])
+
+        expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
+        expNames = ['9', '6', '3']
+        exp = self.constructor(expData, pointNames=expNames)
+
+        assert toTest == exp
+
+    @raises(IndexError)
+    def test_points_permute_exceptionIndicesPEmpty(self):
+        """ tests points.permute() throws an IndexError when given invalid indices """
+        data = [[], []]
+        data = numpy.array(data).T
+        toTest = self.constructor(data)
+        toTest.points.permute([1, 3])
+
+    @raises(InvalidArgumentValue)
+    def test_points_permute_exceptionIndicesSmall(self):
+        """ tests points.permute() throws an InvalidArgumentValue when given an incorrectly sized indices list """
+        data = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
+        toTest = self.constructor(data)
+
+        toTest.points.permute([1, 0])
+
+    @raises(InvalidArgumentValue)
+    def test_points_permute_exceptionNotUniqueIds(self):
+        """ tests points.permute() throws an InvalidArgumentValue when given duplicate indices """
+        data = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
+        toTest = self.constructor(data)
+        toTest.points.permute([1, 1, 0])
+
 
     ######################
-    # features.shuffle() #
+    # features.permute() #
     ######################
 
-    def test_features_shuffle_noLongerEqual(self):
-        """ Tests features.shuffle() results in a changed object """
+    def test_features_permute_random_noLongerEqual(self):
+        """ Tests features.permute() results in a changed object """
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 1111111]]
         toTest = self.constructor(deepcopy(data))
         toCompare = self.constructor(deepcopy(data))
 
-        # it is possible that it shuffles it into the same configuration.
+        # it is possible that it permutes it into the same configuration.
         # the odds are vanishly low that it will do so over consecutive calls
         # however. We will pass as long as it changes once
         returns = []
-        for i in range(5):
-            ret = toTest.features.shuffle() # RET CHECK
+        for _ in range(5):
+            ret = toTest.features.permute() # RET CHECK
             returns.append(ret)
             if not toTest.isApproximatelyEqual(toCompare):
                 break
@@ -2535,7 +2613,7 @@ class HighLevelModifying(DataTestObject):
         assertNoNamesGenerated(toTest)
 
 
-    def test_features_shuffle_NamePath_preservation(self):
+    def test_features_permute_random_NamePath_preservation(self):
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 1111111]]
         toTest = self.constructor(deepcopy(data))
         toCompare = self.constructor(deepcopy(data))
@@ -2544,16 +2622,97 @@ class HighLevelModifying(DataTestObject):
         toTest._absPath = "TestAbsPath"
         toTest._relPath = "testRelPath"
 
-        # it is possible that it shuffles it into the same configuration.
-        # we only test after we're sure we've done something
-        while True:
-            toTest.features.shuffle()  # RET CHECK
+        # odds are vanishingly low that it generates same configuration over
+        # consecutive calls. We will pass as long as soon as it changes once
+        for _ in range(5):
+            toTest.features.permute()
             if not toTest.isApproximatelyEqual(toCompare):
                 break
 
+        assert not toTest.isApproximatelyEqual(toCompare)
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
+
+    def test_features_permute_dataTypeRetainedFromList(self):
+        """ Test features.permute() data not converted when permuting by list"""
+        data = [['a', 2, 3.0], ['b', 5, 6.0], ['c', 8, 9.0]]
+        toTest = self.constructor(data)
+
+        toTest.features.permute([2, 1, 0])
+
+        expData = [[3.0, 2, 'a'], [6.0, 5, 'b'], [9.0, 8, 'c']]
+        exp = self.constructor(expData)
+
+        assert toTest == exp
+        assertNoNamesGenerated(toTest)
+
+    def test_features_permute_indicesList(self):
+        """ Test features.permute() when we specify a list of indices """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        toTest = self.constructor(data)
+
+        toTest.features.permute([2, 1, 0])
+
+        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        exp = self.constructor(expData)
+
+        assert toTest == exp
+
+    def test_features_permute_namesList(self):
+        """ Test features.permute() when we specify a list of feature names """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        fnames = ['third', 'second', 'first']
+        toTest = self.constructor(data, featureNames=fnames)
+
+        toTest.features.permute(['first', 'second', 'third'])
+
+        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        expNames = ['first', 'second', 'third']
+        exp = self.constructor(expData, featureNames=expNames)
+
+        assert toTest == exp
+
+    @oneLogEntryExpected
+    def test_features_permute_mixedList(self):
+        """ Test features.permute() when we specify a mixed list (names/indices) """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        fnames = ['third', 'second', 'first']
+        toTest = self.constructor(data, featureNames=fnames)
+
+        toTest.features.permute(['first', 'second', 0])
+
+        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        expNames = ['first', 'second', 'third']
+        exp = self.constructor(expData, featureNames=expNames)
+
+        assert toTest == exp
+
+    @raises(IndexError)
+    def test_features_permute_exceptionIndicesFEmpty(self):
+        """ tests features.permute() throws an IndexError when given invalid indices """
+        data = [[], []]
+        data = numpy.array(data)
+        toTest = self.constructor(data)
+        toTest.features.permute([1, 3])
+
+
+    @raises(InvalidArgumentValue)
+    def test_features_permute_exceptionIndicesSmall(self):
+        """ tests features.permute() throws an InvalidArgumentValue when given an incorrectly sized indices list """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        toTest = self.constructor(data)
+
+        toTest.features.permute([1, 0])
+
+
+    @raises(InvalidArgumentValue)
+    def test_features_permute_exceptionNotUniqueIds(self):
+        """ tests features.permute() throws an InvalidArgumentValue when given duplicate indices """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        data = numpy.array(data)
+        toTest = self.constructor(data)
+        toTest.features.permute([1, 1, 0])
 
     ###########################################
     # points.normalize / features.normalize() #

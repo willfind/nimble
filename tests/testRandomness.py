@@ -54,13 +54,13 @@ def testSetRandomSeedPropagate():
     toTest3 = toTest1.copy()
 
     nimble.setRandomSeed(1337)
-    toTest1.points.shuffle(useLog=False)
+    toTest1.points.permute(useLog=False)
 
     nimble.setRandomSeed(1336)
-    toTest2.points.shuffle(useLog=False)
+    toTest2.points.permute(useLog=False)
 
     nimble.setRandomSeed(1337)
-    toTest3.points.shuffle(useLog=False)
+    toTest3.points.permute(useLog=False)
 
     assert toTest1 == toTest3
     assert toTest1 != toTest2
