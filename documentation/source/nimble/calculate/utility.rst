@@ -1,6 +1,6 @@
 Utility
 =======
 
-.. automodule:: nimble.calculate
-   :noindex:
-   :members: detectBestResult
+.. currentmodule:: nimble.calculate
+
+.. autofunction:: detectBestResult

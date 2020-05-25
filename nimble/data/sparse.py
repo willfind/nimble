@@ -1049,13 +1049,13 @@ class Sparse(Base):
 
         # CHOICE OF OUTPUT WILL BE DETERMINED BY SCIPY!!!!!!!!!!!!
         # for other.data as any dense or sparse matrix
-        directMul = isinstance(other, (Sparse, nimble.data.Matrix))
-        notView = not isinstance(other, BaseView)
-        if directMul and notView:
-            toMul = other.data
+        if isinstance(other, Sparse):
+            toMul = other._getSparseData()
+        elif isinstance(other, nimble.data.Matrix):
+            toMul = scipy.sparse.coo_matrix(other.data)
         else:
-            toMul = other.copy(to='numpyarray')
-        raw = target.data.multiply(scipy.sparse.coo_matrix(toMul))
+            toMul = scipy.sparse.coo_matrix(other.copy(to='numpyarray'))
+        raw = target.data.multiply(toMul)
         if scipy.sparse.isspmatrix(raw):
             raw = raw.tocoo()
         else:

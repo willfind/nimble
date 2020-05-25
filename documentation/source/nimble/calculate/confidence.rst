@@ -1,6 +1,5 @@
 Confidence
 ==========
+.. currentmodule:: nimble.calculate
 
-.. automodule:: nimble.calculate
-   :noindex:
-   :members: confidenceIntervalHelper
+.. autofunction:: confidenceIntervalHelper

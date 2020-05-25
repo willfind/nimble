@@ -18,7 +18,7 @@ from nimble.interfaces.interface_helpers import collectAttributes
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.helpers import inspectArguments
 from nimble.utility import inheritDocstringsFactory, numpy2DArray
-from nimble.exceptions import InvalidArgumentValue, prettyListString
+from nimble.exceptions import InvalidArgumentValue, _prettyListString
 
 
 # Contains path to keras root directory
@@ -217,7 +217,7 @@ To install keras
             msg += "When trying to validate arguments for "
             msg += learnerName + ", the following list of parameter "
             msg += "names were not matched: "
-            msg += prettyListString(extra, useAnd=True)
+            msg += _prettyListString(extra, useAnd=True)
             msg += ". Those parameters are only suitable for "
             if dataType == 'Sparse':
                 msg += "dense types (List, Matrix, DataFrame) and this object "

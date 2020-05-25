@@ -1174,6 +1174,12 @@ class HighLevelDataSafe(DataTestObject):
         ret = toTest.countElements('>=5')
         assert ret == 5
 
+        ret = toTest.countElements('   >=   5   ')
+        assert ret == 5
+
+        ret = toTest.countElements('=5')
+        assert ret == 1
+
         ret = toTest.countElements(lambda x: x % 2 == 1)
         assert ret == 5
 
@@ -1235,6 +1241,14 @@ class HighLevelDataSafe(DataTestObject):
     # trainAndTestSets() #
     ######################
 
+    @raises(InvalidArgumentValue)
+    def test_trainAndTestSets_invalidFraction(self):
+        data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
+        featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
+        toTest = self.constructor(data, featureNames=featureNames)
+
+        trX, teX = toTest.trainAndTestSets(20)
+
     # simple sucess - no labels
     @logCountAssertionFactory(2)
     def test_trainAndTestSets_simple_nolabels(self):
@@ -1284,6 +1298,96 @@ class HighLevelDataSafe(DataTestObject):
         assertNoNamesGenerated(trY)
         assertNoNamesGenerated(teX)
         assertNoNamesGenerated(teY)
+
+    # simple sucess - single label
+    @logCountAssertionFactory(2)
+    def test_trainAndTestSets_simple_nimbleLabels(self):
+        data = [[5, -1, 3, 33], [5, -2, 6, 66], [5, -2, 9, 99], [5, -4, 12, 111]]
+        labels = [[1], [3], [2], [4]]
+        featureNames = ['fives', 'labs2', 'bozo', 'long']
+        pointNames = ['pt0', 'pt1', 'pt2', 'pt3']
+        toTest = self.constructor(data, pointNames=pointNames,
+                                  featureNames=featureNames)
+        toTestLabels = self.constructor(labels, pointNames=pointNames,
+                                        featureNames=['labs1'])
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=toTestLabels)
+        assert len(trX.points) == 2
+        assert len(trX.features) == 4
+        assert len(trY.points) == 2
+        assert len(trY.features) == 1
+        assert trX.points.getNames() == trY.points.getNames()
+        assert len(teX.points) == 2
+        assert len(teX.features) == 4
+        assert len(teY.points) == 2
+        assert len(teY.features) == 1
+        assert teX.points.getNames() == teY.points.getNames()
+
+        # try the same test with a default named object
+        toTest = self.constructor(data)
+        toTestLabels = self.constructor(labels)
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=toTestLabels)
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(trX)
+        assertNoNamesGenerated(trY)
+        assertNoNamesGenerated(teX)
+        assertNoNamesGenerated(teY)
+
+    @raises(InvalidArgumentValue)
+    def test_trainAndTestSets_simple_nimbleLabels_invalidLength(self):
+        data = [[5, -1, 3, 33], [5, -2, 6, 66], [5, -2, 9, 99], [5, -4, 12, 111]]
+        featureNames = ['fives', 'labs2', 'bozo', 'long']
+        pointNames = ['pt0', 'pt1', 'pt2', 'pt3']
+        toTest = self.constructor(data, pointNames=pointNames,
+                                  featureNames=featureNames)
+        toTestLabels = self.constructor([[1], [2]])
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, toTestLabels)
+
+    @raises(InvalidArgumentValue)
+    def test_trainAndTestSets_simple_nimbleLabels_invalidPointNames(self):
+        data = [[5, -1, 3, 33], [5, -2, 6, 66], [5, -2, 9, 99], [5, -4, 12, 111]]
+        featureNames = ['fives', 'labs2', 'bozo', 'long']
+        pointNamesX = ['pt0', 'pt2', 'pt1', 'pt3']
+        toTest = self.constructor(data, pointNames=pointNamesX,
+                                  featureNames=featureNames)
+        pointNamesY = ['pt0', 'pt1', 'pt2', 'pt3']
+        toTestLabels = self.constructor([[1], [3], [2], [4]],
+                                        pointNames=pointNamesY)
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, toTestLabels)
+
+    def test_trainAndTestSets_simple_nimbleLabels_defaultPointNames(self):
+        # Only testing that the default names do not generate an error
+        data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
+        featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
+        pointNamesX = ['pt0', 'pt1', DEFAULT_PREFIX + '0', 'pt3']
+        pointNamesY = ['pt0', 'pt1', DEFAULT_PREFIX + '4', 'pt3']
+        toTest = self.constructor(data, pointNames=pointNamesX,
+                                  featureNames=featureNames)
+        toTestLabels = self.constructor([[4], [3], [2], [1]],
+                                        pointNames=pointNamesY)
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, toTestLabels)
+
+        pointNamesX = [DEFAULT_PREFIX + '0', 'pt1', 'pt2', 'pt3']
+        pointNamesY = ['pt0', 'pt1', 'pt2', DEFAULT_PREFIX + '3']
+        toTest = self.constructor(data, pointNames=pointNamesX,
+                                  featureNames=featureNames)
+        toTestLabels = self.constructor([[4], [3], [2], [1]],
+                                        pointNames=pointNamesY)
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, toTestLabels)
+
+        pointNamesX = [DEFAULT_PREFIX + '0', 'pt0', 'pt2' , 'pt3']
+        pointNamesY = [DEFAULT_PREFIX + '4', 'pt0', DEFAULT_PREFIX + '8', 'pt3']
+        toTest = self.constructor(data, pointNames=pointNamesX,
+                                  featureNames=featureNames)
+        toTestLabels = self.constructor([[4], [3], [2], [1]],
+                                        pointNames=pointNamesY)
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, toTestLabels)
 
     # simple sucess - multi label
     @logCountAssertionFactory(2)
@@ -1403,13 +1507,36 @@ class HighLevelDataSafe(DataTestObject):
             assert teY.relativePath == os.path.relpath(tmpFile.name)
 
 
-    def test_trainAndTestSets_PandFnamesPerserved(self):
+    def test_trainAndTestSets_PandFnamesPerserved_identifier(self):
         data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
         pnames = ['one', 'two', 'three', 'four']
         fnames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
 
         trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=0, randomOrder=False)
+
+        assert trX.points.getNames() == ['one', 'two']
+        assert trX.features.getNames() == ['fives', 'labs2', 'bozo', 'long']
+
+        assert trY.points.getNames() == ['one', 'two']
+        assert trY.features.getNames() == ['labs1']
+
+        assert teX.points.getNames() == ['three', 'four']
+        assert teX.features.getNames() == ['fives', 'labs2', 'bozo', 'long']
+
+        assert teY.points.getNames() == ['three', 'four']
+        assert teY.features.getNames() == ['labs1']
+
+    def test_trainAndTestSets_PandFnamesPerserved_nimbleObject(self):
+        data = [[5, -1, 3, 33], [5, -2, 6, 66], [5, -2, 9, 99], [5, -4, 12, 111]]
+        labels = [[1], [2], [3], [4]]
+        pnames = ['one', 'two', 'three', 'four']
+        fnames = ['fives', 'labs2', 'bozo', 'long']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        toTestLabels = self.constructor(labels, pointNames=pnames,
+                                        featureNames=['labs1'])
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=toTestLabels,
+                                                     randomOrder=False)
 
         assert trX.points.getNames() == ['one', 'two']
         assert trX.features.getNames() == ['fives', 'labs2', 'bozo', 'long']
@@ -1952,6 +2079,62 @@ class HighLevelDataSafe(DataTestObject):
         assert matches[1, 0] is False or matches[1, 0] is numpy.bool_(False)
         assert matches[1, 1] is False or matches[1, 1] is numpy.bool_(False)
         assert matches[1, 2] is False or matches[1, 2] is numpy.bool_(False)
+
+    def test_matchingElements_valueInput(self):
+        raw = [[1, 2, 3], [-1, -2, -3], [0, 'a', 0]]
+        obj = self.constructor(raw)
+        match1 = obj.matchingElements(lambda x: x == 0)
+        match2 = obj.matchingElements(0)
+        assert match1 == match2
+
+        match1 = obj.matchingElements(lambda x: x == 'a')
+        match2 = obj.matchingElements('a')
+        assert match1 == match2
+
+    def test_matchingElements_comparisonStringInput(self):
+        raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
+        obj = self.constructor(raw)
+        ['==', '=', '!=', '>', '<', '>=', '<=']
+        match1 = obj.matchingElements(lambda x: x == 0)
+        match2 = obj.matchingElements('==0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '==' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match2 = obj.matchingElements('=0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '=' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match1 = obj.matchingElements(lambda x: x != 0)
+        match2 = obj.matchingElements('!=0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '!=' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match1 = obj.matchingElements(lambda x: x > 0)
+        match2 = obj.matchingElements('>0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '>' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match1 = obj.matchingElements(lambda x: x < 0)
+        match2 = obj.matchingElements('<0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '<' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match1 = obj.matchingElements(lambda x: x >= 0)
+        match2 = obj.matchingElements('>=0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '>=' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match1 = obj.matchingElements(lambda x: x <= 0)
+        match2 = obj.matchingElements('<=0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '<=' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
 
     @oneLogEntryExpected
     def test_matchingElements_pfLimited(self):

@@ -451,17 +451,19 @@ def test_createData_CSV_unequalRowLength_position():
             nimble.createData(returnType="List", data=tmpCSV.name, featureNames=True)
             assert False  # the previous call should have raised an exception
         except FileFormatException as ffe:
+            # print(ffe.message)
+
             # We expect a message of the format:
             #
-            assert '1' in ffe.value  # defining line
-            assert '4' in ffe.value  # offending line
+            assert '1' in ffe.message  # defining line
+            assert '4' in ffe.message  # offending line
             # offending line number comes before defining line number
-            assert ffe.value.index('4') < ffe.value.index('1')
+            assert ffe.message.index('4') < ffe.message.index('1')
 
-            assert '8' in ffe.value  # expected length
-            assert '6' in ffe.value  # offending length
+            assert '8' in ffe.message  # expected length
+            assert '6' in ffe.message  # offending length
             # offending length comes before expected length
-            assert ffe.value.index('6') < ffe.value.index('8')
+            assert ffe.message.index('6') < ffe.message.index('8')
 
 def test_createData_HDF5_data():
     """ """

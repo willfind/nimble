@@ -14,7 +14,6 @@ import copy
 from abc import abstractmethod
 import inspect
 import sys
-import operator
 import functools
 
 import numpy
@@ -33,6 +32,7 @@ from .features import Features
 from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
 from .dataHelpers import valuesToPythonList, constructIndicesList
 from .dataHelpers import validateInputString
+from .dataHelpers import isQueryString, axisQueryFunction
 from .dataHelpers import isAllowedSingleElement, sortIndexPosition
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import wrapMatchFunctionFactory
@@ -1156,11 +1156,16 @@ class Axis(object):
                 msg += "more than two dimensions"
                 raise ImproperObjectAction(msg.format(argName))
             else:
-                if self._isPoint:
-                    hasNameChecker2 = self._base.features._hasName
+                query = isQueryString(target, startswithOperator=False)
+                if query:
+                    offAxis = 'features' if self._isPoint else 'points'
+                    hasName = getattr(self._base, offAxis)._hasName
+                    target = axisQueryFunction(query, axis, hasName)
+                # the target can't be converted to a function
                 else:
-                    hasNameChecker2 = self._base.points._hasName
-                target = _stringToFunction(target, axis, hasNameChecker2)
+                    msg = "'{0}' is not a valid {1} ".format(target, axis)
+                    msg += 'name nor a valid query string'
+                    raise InvalidArgumentValue(msg)
 
         # list-like container types
         if target is not None and not hasattr(target, '__call__'):
@@ -1468,7 +1473,7 @@ class Axis(object):
             msg = "The argument named " + argName + " must not share any "
             msg += self._axis + "Names with the calling object, yet the "
             msg += "following names occured in both: "
-            msg += nimble.exceptions.prettyListString(shared)
+            msg += nimble.exceptions._prettyListString(shared)
             if truncated:
                 msg += "... (only first 10 entries out of " + str(full)
                 msg += " total)"
@@ -1716,68 +1721,6 @@ def _validateStartEndRange(start, end, axis, axisLength):
     if start > end:
         msg = "The start index cannot be greater than the end index"
         raise InvalidArgumentValueCombination(msg)
-
-def _stringToFunction(string, axis, nameChecker):
-    """
-    Convert a query string into a python function.
-    """
-    optrDict = {'<=': operator.le, '>=': operator.ge,
-                '!=': operator.ne, '==': operator.eq,
-                '<': operator.lt, '>': operator.gt}
-    # to set in for loop
-    nameOfPtOrFt = None
-    valueOfPtOrFt = None
-    optrOperator = None
-
-    for optr in ['<=', '>=', '!=', '==', '=', '<', '>']:
-        if optr in string:
-            targetList = string.split(optr)
-            # user can use '=' but optrDict only contains '=='
-            optr = '==' if optr == '=' else optr
-            #after splitting at the optr, list must have 2 items
-            if len(targetList) != 2:
-                msg = "the target({0}) is a ".format(string)
-                msg += "query string but there is an error"
-                raise InvalidArgumentValue(msg)
-            nameOfPtOrFt = targetList[0]
-            valueOfPtOrFt = targetList[1]
-            nameOfPtOrFt = nameOfPtOrFt.strip()
-            valueOfPtOrFt = valueOfPtOrFt.strip()
-
-            #when point, check if the feature exists or not
-            #when feature, check if the point exists or not
-            if not nameChecker(nameOfPtOrFt):
-                if axis == 'point':
-                    offAxis = 'feature'
-                else:
-                    offAxis = 'point'
-                msg = "the {0} ".format(offAxis)
-                msg += "'{0}' doesn't exist".format(nameOfPtOrFt)
-                raise InvalidArgumentValue(msg)
-
-            optrOperator = optrDict[optr]
-            # convert valueOfPtOrFt from a string, if possible
-            try:
-                valueOfPtOrFt = float(valueOfPtOrFt)
-            except ValueError:
-                pass
-            #convert query string to a function
-            def target_f(x):
-                return optrOperator(x[nameOfPtOrFt], valueOfPtOrFt)
-
-            target_f.vectorized = True
-            target_f.nameOfPtOrFt = nameOfPtOrFt
-            target_f.valueOfPtOrFt = valueOfPtOrFt
-            target_f.optr = optrOperator
-            target = target_f
-            break
-    # the target can't be converted to a function
-    else:
-        msg = "'{0}' is not a valid {1} ".format(string, axis)
-        msg += 'name nor a valid query string'
-        raise InvalidArgumentValue(msg)
-
-    return target
 
 class AxisIterator(object):
     """

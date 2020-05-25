@@ -44,6 +44,7 @@ from .dataHelpers import csvCommaFormat
 from .dataHelpers import validateElementFunction, wrapMatchFunctionFactory
 from .dataHelpers import getDictionaryMappingFunction
 from .dataHelpers import ElementIterator1D
+from .dataHelpers import isQueryString, elementQueryFunction
 from .dataHelpers import limitedTo2D
 
 
@@ -239,7 +240,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.Points
+        Points
         """
         return self._points
 
@@ -256,7 +257,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.Features
+        Features
         """
         return self._features
 
@@ -457,7 +458,7 @@ class Base(object):
 
         See Also
         --------
-        self.data.Points, self.data.Features
+        Points, Features
 
         Examples
         --------
@@ -680,8 +681,7 @@ class Base(object):
 
         See Also
         --------
-        calculate, nimble.data.Points.transform,
-        nimble.data.Features.transform
+        calculateOnElements, Points.transform, Features.transform
 
         Examples
         --------
@@ -819,8 +819,7 @@ class Base(object):
 
         See Also
         --------
-        transform, nimble.data.Points.calculate,
-        nimble.data.Features.calculate
+        transformElements, Points.calculate, Features.calculate
 
         Examples
         --------
@@ -915,15 +914,15 @@ class Base(object):
         """
         Return an object of boolean values identifying matching values.
 
-        Apply a function returning a boolean value for each element in
-        this object. Common matching functions can be found in nimble's
-        match module.
+        Common matching functions can be found in nimble's match module.
 
         Parameters
         ----------
-        toMatch : function
-            In the form of toMatch(elementValue) which returns True,
-            False, 0 or 1.
+        toMatch
+            * value - elements equal to the value return True
+            * function - in the form of toMatch(elementValue) that
+              returns True, False, 0 or 1.
+            * str - a comparison operator and a value (i.e ">=0")
         points : point, list of points
             The subset of points to limit the matching to. If None,
             the matching will apply to all points.
@@ -948,11 +947,11 @@ class Base(object):
         >>> from nimble import match
         >>> raw = [[1, -1, 1], [-3, 3, -3]]
         >>> data = nimble.createData('Matrix', raw)
-        >>> isPositive = data.matchingElements(match.positive)
-        >>> isPositive
+        >>> isNegativeOne = data.matchingElements(-1)
+        >>> isNegativeOne
         Matrix(
-            [[ True False  True]
-             [False  True False]]
+            [[False  True False]
+             [False False False]]
             )
 
         >>> from nimble import match
@@ -964,8 +963,29 @@ class Base(object):
             [[False False  True]
              [ True False False]]
             )
+
+        >>> from nimble import match
+        >>> raw = [[1, -1, 1], [-3, 3, -3]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> isPositive = data.matchingElements(">0")
+        >>> isPositive
+        Matrix(
+            [[ True False  True]
+             [False  True False]]
+            )
         """
-        wrappedMatch = wrapMatchFunctionFactory(toMatch)
+        matchArg = toMatch # preserve toMatch in original state for log
+        if not callable(matchArg):
+            query = isQueryString(matchArg)
+            if query:
+                func = elementQueryFunction(query)
+            # if not a comparison string, element must equal matchArg
+            else:
+                matchVal = matchArg
+                func = lambda elem: elem == matchVal
+            matchArg = func
+
+        wrappedMatch = wrapMatchFunctionFactory(matchArg)
 
         ret = self._calculate_backend(wrappedMatch, points, features,
                                       allowBoolOutput=True)
@@ -1076,7 +1096,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.Points.count, nimble.data.Features.count
+        Points.count, Features.count
 
         Examples
         --------
@@ -1095,17 +1115,16 @@ class Base(object):
         >>> numLessThanOne
         20
         """
-        if hasattr(condition, '__call__'):
-            ret = self.calculateOnElements(condition, outputType='Matrix',
-                                           useLog=False)
-        elif isinstance(condition, str):
-            func = lambda x: eval('x'+condition)
-            ret = self.calculateOnElements(func, outputType='Matrix',
-                                           useLog=False)
-        else:
-            msg = 'function can only be a function or string containing a '
+        query = isQueryString(condition)
+        if query:
+            condition = elementQueryFunction(query)
+        elif not hasattr(condition, '__call__'):
+            msg = 'condition can only be a function or string containing a '
             msg += 'comparison operator and a value'
             raise InvalidArgumentType(msg)
+
+        ret = self.calculateOnElements(condition, outputType='Matrix',
+                                       useLog=False)
         return int(numpy.sum(ret.data))
 
     @limitedTo2D
@@ -1130,7 +1149,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.calculate.statistic.uniqueCount
+        nimble.calculate.uniqueCount
 
         Examples
         --------
@@ -1427,6 +1446,9 @@ class Base(object):
         if randomOrder:
             numpyRandom.shuffle(order)
 
+        if not 0 <= testFraction <= 1:
+            msg = 'testFraction must be between 0 and 1 (inclusive)'
+            raise InvalidArgumentValue(msg)
         testXSize = int(round(testFraction * self._pointCount))
         splitIndex = self._pointCount - testXSize
 
@@ -1444,13 +1466,27 @@ class Base(object):
             msg += "than two dimensions"
             raise ImproperObjectAction(msg)
         else:
-            # safety for empty objects
-            toExtract = labels
-            if testXSize == 0:
-                toExtract = []
+            if isinstance(labels, Base):
+                if len(labels.points) != len(self.points):
+                    msg = 'labels must have the same number of points ({0}) '
+                    msg += 'as the calling object ({1})'
+                    msg = msg.format(len(labels.points), len(self.points))
+                    raise InvalidArgumentValue(msg)
+                try:
+                    self._validateEqualNames('point', 'point', '', labels)
+                except InvalidArgumentValue:
+                    msg = 'labels and calling object pointNames must be equal'
+                    raise InvalidArgumentValue(msg)
+                trainY = labels.points.copy(order[:splitIndex], useLog=False)
+                testY = labels.points.copy(order[splitIndex:], useLog=False)
+            else:
+                # safety for empty objects
+                toExtract = labels
+                if testXSize == 0:
+                    toExtract = []
 
-            trainY = trainX.features.extract(toExtract, useLog=False)
-            testY = testX.features.extract(toExtract, useLog=False)
+                trainY = trainX.features.extract(toExtract, useLog=False)
+                testY = testX.features.extract(toExtract, useLog=False)
 
             trainY.name = self.name + " trainY"
             testY.name = self.name + " testY"
@@ -3056,7 +3092,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.Points.fill, nimble.data.Features.fill
+        Points.fill, Features.fill
 
         Examples
         --------
@@ -3488,7 +3524,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.Points.add, nimble.data.Features.add
+        Points.add, Features.add
 
         Examples
         --------
@@ -4082,7 +4118,7 @@ class Base(object):
                 msg += "nimble.calculate.inverse. For safety and efficiency, "
                 msg += "matrixPower does not attempt to use pseudoInverse but "
                 msg += "it is available to users in nimble.calculate. "
-                msg += "The inverse operation failed because: " + e.value
+                msg += "The inverse operation failed because: " + e.message
                 raise exceptionType(msg)
 
         ret = operand

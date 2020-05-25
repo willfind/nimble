@@ -1,6 +1,8 @@
 Matrix
 ======
 
-.. automodule:: nimble.calculate
-   :noindex:
-   :members: elementwiseMultiply, elementwisePower
+.. currentmodule:: nimble.calculate
+
+.. autofunction:: elementwiseMultiply
+
+.. autofunction:: elementwisePower
