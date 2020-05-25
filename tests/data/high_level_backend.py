@@ -131,7 +131,6 @@ class HighLevelDataSafe(DataTestObject):
 
         origObj.points.calculate(emitLower)
 
-    @raises(InvalidArgumentValue)
     def test_points_calculate_functionReturns2D(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -143,6 +142,7 @@ class HighLevelDataSafe(DataTestObject):
             return [[val for val in point]]
 
         calc = toTest.points.calculate(return2D)
+        assert calc._shape == [4, 1, 3]
 
     @raises(InvalidArgumentValue)
     def test_points_calculate_functionReturnsInvalidObj(self):
@@ -219,7 +219,8 @@ class HighLevelDataSafe(DataTestObject):
         calc = toTest.points.calculate(returnNimbleObj)
 
         expData = [[2, 0.2, 0.02], [2, 0.2, 0.04], [2, 0.2, 0.06], [2, 0.4, 0.04]]
-        exp = self.constructor(expData, pointNames=pointNames)
+        exp = self.constructor(expData, pointNames=pointNames,
+                               featureNames=featureNames)
 
         assert calc.isIdentical(exp)
 
@@ -277,9 +278,45 @@ class HighLevelDataSafe(DataTestObject):
         calc = toTest.points.calculate(returnNimbleObj, points=['two', 'zero'])
 
         expData = [[2, 0.2, 0.06], [2, 0.2, 0.02]]
-        exp = self.constructor(expData, pointNames=['two', 'zero'])
+        exp = self.constructor(expData, pointNames=['two', 'zero'],
+                               featureNames=featureNames)
 
         assert calc.isIdentical(exp)
+
+    def test_points_calculate_functionReturnsNimbleObject_featureLimited(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+        def emitLowers(point):
+            return point[['centi', 'deci']]
+
+        lowerCounts = origObj.points.calculate(emitLowers)
+
+        expectedOut = [[0.01, 0.1], [0.02, 0.1], [0.03, 0.1], [0.02, 0.2]]
+        exp = self.constructor(expectedOut, pointNames=pointNames,
+                               featureNames=['centi', 'deci'])
+
+        assert lowerCounts.isIdentical(exp)
+
+    def test_points_calculate_functionReturnsNimbleObject_newFtNames(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+        def changeFtNames(point):
+            pt = point.copy()
+            pt.features.setNames(['new1', 'new2', 'new3'])
+            return pt
+
+        lowerCounts = origObj.points.calculate(changeFtNames)
+
+        exp = self.constructor(origData, pointNames=pointNames,
+                               featureNames=['new1', 'new2', 'new3'])
+
+        assert lowerCounts.isIdentical(exp)
 
     def test_points_calculate_nonZeroItAndLen(self):
         origData = [[1, 1, 1], [1, 0, 2], [1, 1, 0], [0, 2, 0]]
@@ -341,6 +378,42 @@ class HighLevelDataSafe(DataTestObject):
         ret = orig.points.calculate(toString)
         assert ret == exp
 
+    def test_points_calculate_featureVector(self):
+
+        def asFeature(pt):
+            return pt.T
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        exp = self.constructor([[[1], [2], [3]], [[4], [5], [6]], [[0], [0], [0]]])
+
+        ret = orig.points.calculate(asFeature)
+        assert ret == exp
+
+    def test_points_calculate_reshape(self):
+
+        def reshape3D(pt):
+            pt = pt.copy()
+            pt.unflatten((2, 2))
+            return pt
+
+        orig = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, 0, 0, 0]])
+        exp3D = self.constructor([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[0, 0], [0, 0]]])
+
+        ret = orig.points.calculate(reshape3D)
+        assert ret == exp3D
+
+        def reshape5D(pt):
+            pt = pt.copy()
+            pt.unflatten((1, 2, 2, 1))
+            return pt
+
+        exp5D = self.constructor([[[[[1], [2]], [[3], [4]]]],
+                                  [[[[5], [6]], [[7], [8]]]],
+                                  [[[[0], [0]], [[0], [0]]]]])
+
+        ret = orig.points.calculate(reshape5D)
+        assert ret == exp5D
+
     ##########################
     # .features.calculate() #
     #########################
@@ -382,7 +455,7 @@ class HighLevelDataSafe(DataTestObject):
         origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
         origObj.features.calculate(None)
 
-    @raises(InvalidArgumentValue)
+    @raises(ImproperObjectAction)
     def test_features_calculate_functionReturns2D(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -476,7 +549,8 @@ class HighLevelDataSafe(DataTestObject):
         calc = toTest.features.calculate(returnNimbleObj)
 
         expData = [[2, 0.2, 0.02], [2, 0.2, 0.04], [2, 0.2, 0.06], [2, 0.4, 0.04]]
-        exp = self.constructor(expData, featureNames=featureNames)
+        exp = self.constructor(expData, pointNames=pointNames,
+                               featureNames=featureNames)
 
         assert calc.isIdentical(exp)
 
@@ -540,7 +614,45 @@ class HighLevelDataSafe(DataTestObject):
         calc = toTest.features.calculate(returnNimbleObj, features=['deci', 'number'])
 
         expData = [[0.2, 2], [0.2, 2], [0.2, 2], [0.4, 2]]
-        exp = self.constructor(expData, featureNames=['deci', 'number'])
+        exp = self.constructor(expData, pointNames=pointNames,
+                               featureNames=['deci', 'number'])
+
+        assert calc.isIdentical(exp)
+
+    def test_features_calculate_functionReturnsNimbleObject_pointLimited(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
+                                  featureNames=featureNames)
+
+        def firstAndLastPoint(feature):
+            return feature[['zero', 'three']]
+
+        calc = toTest.features.calculate(firstAndLastPoint)
+
+        expData = [[1, 0.1, 0.01], [1, 0.2, 0.02]]
+        exp = self.constructor(expData, pointNames=['zero', 'three'],
+                               featureNames=featureNames)
+
+        assert calc.isIdentical(exp)
+
+    def test_features_calculate_functionReturnsNimbleObject_newPointNames(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
+                                  featureNames=featureNames)
+
+        def changePtNames(feature):
+            ft = feature.copy()
+            ft.points.setNames(['new1', 'new2', 'new3', 'new4'])
+            return ft
+
+        calc = toTest.features.calculate(changePtNames)
+
+        exp = self.constructor(origData, featureNames=featureNames,
+                               pointNames=['new1', 'new2', 'new3', 'new4'])
 
         assert calc.isIdentical(exp)
 
@@ -603,6 +715,26 @@ class HighLevelDataSafe(DataTestObject):
 
         ret = orig.features.calculate(toString)
         assert ret == exp
+
+    @raises(ImproperObjectAction)
+    def test_features_calculate_pointVector(self):
+
+        def asPoint(ft):
+            return ft.T
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        ret = orig.features.calculate(asPoint)
+
+    @raises(ImproperObjectAction)
+    def test_features_calculate_reshape(self):
+
+        def reshape3D(ft):
+            ft = ft.copy()
+            ft.unflatten((2, 2))
+            return ft
+
+        orig = self.constructor([[1, 5, 0], [2, 6, 0], [3, 7, 0], [4, 8, 0]])
+        ret = orig.features.calculate(reshape3D)
 
     #######################
     # calculateOnElements #

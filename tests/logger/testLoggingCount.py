@@ -97,11 +97,11 @@ match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 #      copy, featureReport, summaryReport, getTypeString, groupByFeature,
 #      hashCode, nameIsDefault, show, validate
 base_logged = [
-    'calculateOnElements', 'featureReport', 'flattenToOneFeature',
-    'flattenToOnePoint', 'groupByFeature', 'matchingElements', 'merge',
-    'replaceFeatureWithBinaryFeatures', 'replaceRectangle', 'summaryReport',
-    'trainAndTestSets', 'transformElements', 'transformFeatureToIntegers',
-    'transpose', 'unflattenFromOneFeature', 'unflattenFromOnePoint',
+    'calculateOnElements', 'featureReport', 'flatten', 'groupByFeature',
+    'matchingElements', 'merge', 'replaceFeatureWithBinaryFeatures',
+    'replaceRectangle', 'summaryReport', 'trainAndTestSets',
+    'transformElements', 'transformFeatureToIntegers', 'transpose',
+    'unflatten',
     ]
 base_notLogged = [
     'containsZero', 'copy', 'countElements', 'countUniqueElements',
@@ -319,10 +319,9 @@ baseDunder_tested = list(map(prefixAdder('Base'),
      '__rmatmul__', '__rmod__', '__rmul__', '__rpow__', '__rsub__',
      '__rtruediv__', '__sub__', '__truediv__', '__xor__',
     ]))
-axisDunder_tested = ['Axis.__bool__', 'Axis.__iter__', 'Axis.__len__',
-                     'Axis.__getitem__']
-pointsDunder_tested = []
-featuresDunder_tested = []
+axisDunder_tested = ['Axis.__bool__', 'Axis.__len__']
+pointsDunder_tested = ['Points.__iter__', 'Points.__getitem__']
+featuresDunder_tested = ['Features.__iter__', 'Features.__getitem__']
 uiDunder_tested = []
 tlDunder_tested = []
 

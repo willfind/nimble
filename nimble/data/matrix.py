@@ -52,7 +52,9 @@ class Matrix(Base):
         else:
             self.data = data.copy()
 
-        kwds['shape'] = self.data.shape
+        shape = kwds.get('shape', None)
+        if shape is None:
+            kwds['shape'] = self.data.shape
         super(Matrix, self).__init__(**kwds)
 
     def _getPoints(self):
@@ -110,11 +112,6 @@ class Matrix(Base):
     def _isIdentical_implementation(self, other):
         if not isinstance(other, Matrix):
             return False
-        if len(self.points) != len(other.points):
-            return False
-        if len(self.features) != len(other.features):
-            return False
-
         return allDataIdentical(self.data, other.data)
 
 
@@ -184,18 +181,27 @@ class Matrix(Base):
             return createDataNoValidation(to, self.data, ptNames, ftNames)
         if to == 'pythonlist':
             return self.data.tolist()
+        needsReshape = len(self._shape) > 2
         if to == 'numpyarray':
+            if needsReshape:
+                return self.data.reshape(self._shape)
             return self.data.copy()
+        if needsReshape:
+            data = numpy.empty(self._shape[:2], dtype=numpy.object_)
+            for i in range(self.shape[0]):
+                data[i] = self.points[i].copy('pythonlist')
+        else:
+            data = self.data
         if to == 'numpymatrix':
-            return numpy.matrix(self.data)
+            return numpy.matrix(data)
         if 'scipy' in to:
             if not scipy.nimbleAccessible():
                 msg = "scipy is not available"
                 raise PackageException(msg)
             if to == 'scipycoo':
-                return scipy.sparse.coo_matrix(self.data)
+                return scipy.sparse.coo_matrix(data)
             try:
-                ret = self.data.astype(numpy.float)
+                ret = data.astype(numpy.float)
             except ValueError:
                 msg = 'Can only create scipy {0} matrix from numeric data'
                 raise ValueError(msg.format(to[-3:]))
@@ -209,8 +215,7 @@ class Matrix(Base):
                 raise PackageException(msg)
             pnames = self.points._getNamesNoGeneration()
             fnames = self.features._getNamesNoGeneration()
-            return pd.DataFrame(self.data.copy(), index=pnames, columns=fnames)
-
+            return pd.DataFrame(data.copy(), index=pnames, columns=fnames)
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):
@@ -225,21 +230,14 @@ class Matrix(Base):
         featureEnd += 1
         self.data[pointStart:pointEnd, featureStart:featureEnd] = values
 
-    def _flattenToOnePoint_implementation(self):
+    def _flatten_implementation(self, order):
         numElements = len(self.points) * len(self.features)
-        self.data = self.data.reshape((1, numElements), order='C')
+        order = 'C' if order == 'point' else 'F'
+        self.data = self.data.reshape((1, numElements), order=order)
 
-    def _flattenToOneFeature_implementation(self):
-        numElements = len(self.points) * len(self.features)
-        self.data = self.data.reshape((numElements, 1), order='F')
-
-    def _unflattenFromOnePoint_implementation(self, numPoints):
-        numFeatures = len(self.features) // numPoints
-        self.data = self.data.reshape((numPoints, numFeatures), order='C')
-
-    def _unflattenFromOneFeature_implementation(self, numFeatures):
-        numPoints = len(self.points) // numFeatures
-        self.data = self.data.reshape((numPoints, numFeatures), order='F')
+    def _unflatten_implementation(self, reshape, order):
+        order = 'C' if order == 'point' else 'F'
+        self.data = self.data.reshape(reshape, order=order)
 
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):
@@ -406,16 +404,37 @@ class Matrix(Base):
         return self.data[x, y]
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
-                             featureEnd):
+                             featureEnd, dropDimension):
         kwds = {}
         kwds['data'] = self.data[pointStart:pointEnd, featureStart:featureEnd]
         kwds['source'] = self
+        if len(self._shape) > 2:
+            if dropDimension:
+                shape = self._shape[1:]
+                source = self._createNestedObject(pointStart)
+                kwds['source'] = source
+                kwds['data'] = source.data
+                pointStart, pointEnd = 0, source.shape[0]
+                featureStart, featureEnd = 0, source.shape[1]
+            else:
+                shape = self._shape.copy()
+                shape[0] = pointEnd - pointStart
+            kwds['shape'] = shape
         kwds['pointStart'] = pointStart
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
         kwds['reuseData'] = True
+
         return MatrixView(**kwds)
+
+    def _createNestedObject(self, pointIndex):
+        """
+        Create an object of one less dimension
+        """
+        reshape = (self._shape[1], int(numpy.prod(self._shape[2:])))
+        data = self.data[pointIndex].reshape(reshape)
+        return Matrix(data, shape=self._shape[1:], reuseData=True)
 
     def _validate_implementation(self, level):
         shape = numpy.shape(self.data)

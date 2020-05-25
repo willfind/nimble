@@ -421,16 +421,16 @@ def flattenUnflattenBackend(toCall, validator, **kwargs):
 
 def test_flattenUnflatten_pointAxis():
     def wrapped_Flatten_UnFlatten(obj, useLog):
-        obj.flattenToOnePoint(useLog=useLog)
-        obj.unflattenFromOnePoint(18, useLog=useLog)
+        obj.flatten(useLog=useLog)
+        obj.unflatten((18, 3), useLog=useLog)
 
     for rType in nimble.data.available:
         flattenUnflattenBackend(wrapped_Flatten_UnFlatten, prepAndCheck, rType=rType)
 
 def test_flattenUnflatten_featureAxis():
     def wrapped_Flatten_UnFlatten(obj, useLog):
-        obj.flattenToOneFeature(useLog=useLog)
-        obj.unflattenFromOneFeature(3, useLog=useLog)
+        obj.flatten(order='feature', useLog=useLog)
+        obj.unflatten((18, 3), order='feature', useLog=useLog)
 
     for rType in nimble.data.available:
         flattenUnflattenBackend(wrapped_Flatten_UnFlatten, prepAndCheck, rType=rType)
