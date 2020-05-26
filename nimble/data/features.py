@@ -18,6 +18,7 @@ import nimble
 from nimble.logger import handleLogging
 from nimble.exceptions import InvalidArgumentType
 from nimble.exceptions import InvalidArgumentValueCombination
+from .dataHelpers import limitedTo2D
 
 class Features(object):
     """
@@ -31,6 +32,14 @@ class Features(object):
     def __init__(self, base):
         self._base = base
         super(Features, self).__init__()
+
+    @limitedTo2D
+    def __iter__(self):
+        return self._iter()
+
+    @limitedTo2D
+    def __getitem__(self, key):
+        return self._getitem(key)
 
     ########################
     # Low Level Operations #
@@ -247,7 +256,7 @@ class Features(object):
     #########################
     # Structural Operations #
     #########################
-
+    @limitedTo2D
     def copy(self, toCopy=None, start=None, end=None, number=None,
              randomize=False, useLog=None):
         """
@@ -299,7 +308,7 @@ class Features(object):
 
         See Also
         --------
-        nimble.data.base.Base.copy
+        Base.copy
 
         Examples
         --------
@@ -384,6 +393,7 @@ class Features(object):
         """
         return self._copy(toCopy, start, end, number, randomize, useLog)
 
+    @limitedTo2D
     def extract(self, toExtract=None, start=None, end=None, number=None,
                 randomize=False, useLog=None):
         """
@@ -587,6 +597,7 @@ class Features(object):
         """
         return self._extract(toExtract, start, end, number, randomize, useLog)
 
+    @limitedTo2D
     def delete(self, toDelete=None, start=None, end=None, number=None,
                randomize=False, useLog=None):
         """
@@ -735,6 +746,7 @@ class Features(object):
         """
         self._delete(toDelete, start, end, number, randomize, useLog)
 
+    @limitedTo2D
     def retain(self, toRetain=None, start=None, end=None, number=None,
                randomize=False, useLog=None):
         """
@@ -883,6 +895,7 @@ class Features(object):
         """
         self._retain(toRetain, start, end, number, randomize, useLog)
 
+    @limitedTo2D
     def count(self, condition):
         """
         The number of features which satisfy the condition.
@@ -903,8 +916,7 @@ class Features(object):
 
         See Also
         --------
-        nimble.data.Base.countElements,
-        nimble.data.Base.countUniqueElements
+        Base.countElements, Base.countUniqueElements
 
         Examples
         --------
@@ -925,6 +937,7 @@ class Features(object):
         """
         return self._count(condition)
 
+    @limitedTo2D
     def sort(self, sortBy=None, sortHelper=None, useLog=None):
         """
         Arrange the features in this object.
@@ -954,25 +967,6 @@ class Features(object):
         Sort by a given point using ``sortBy``.
         TODO
 
-        Sort with a list of identifiers.
-
-        >>> raw = [['home', 81, 3],
-        ...        ['gard', 98, 10],
-        ...        ['home', 14, 1],
-        ...        ['home', 11, 3]]
-        >>> cols = ['dept', 'ID', 'quantity']
-        >>> orders = nimble.createData('DataFrame', raw,
-        ...                            featureNames=cols)
-        >>> orders.features.sort(sortHelper=['ID', 'quantity', 'dept'])
-        >>> orders
-        DataFrame(
-            [[81 3  home]
-             [98 10 gard]
-             [14 1  home]
-             [11 3  home]]
-            featureNames={'ID':0, 'quantity':1, 'dept':2}
-            )
-
         Sort using a comparator function.
         TODO
 
@@ -981,60 +975,7 @@ class Features(object):
         """
         self._sort(sortBy, sortHelper, useLog)
 
-    # def flattenToOne(self):
-    #     """
-    #     Modify this object so that its values are in a single feature.
-    #
-    #     Each point in the result maps to exactly one value from the
-    #     original object. The order of values respects the feature order
-    #     from the original object, if there were n points in the
-    #     original, the first n values in the result will exactly match
-    #     the first feature, the nth to (2n-1)th values will exactly
-    #     match the original second feature, etc. The point names will be
-    #     transformed such that the value at the intersection of the
-    #     "pn_i" named point and "fn_j" named feature from the original
-    #     object will have a point name of "pn_i | fn_j". The single
-    #     feature will have a name of "Flattened". This is an inplace
-    #     operation.
-    #
-    #     See Also
-    #     --------
-    #     unflattenFromOne
-    #
-    #     Examples
-    #     --------
-    #     TODO
-    #     """
-    #     self._flattenToOne()
-    #
-    # def unflattenFromOne(self, numFeatures):
-    #     """
-    #     Adjust a flattened feature vector to contain multiple features.
-    #
-    #     This is an inverse of the method ``flattenToOne``: if an
-    #     object foo with n features calls the flatten method, then this
-    #     method with n as the argument, the result should be identical to
-    #     the original foo. It is not limited to objects that have
-    #     previously had ``flattenToOne`` called on them; any
-    #     object whose structure and names are consistent with a previous
-    #     call to flattenToOnePoint may call this method. This includes
-    #     objects with all default names. This is an inplace operation.
-    #
-    #     Parameters
-    #     ----------
-    #     numFeatures : int
-    #         The number of features in the modified object.
-    #
-    #     See Also
-    #     --------
-    #     flattenToOneFeature
-    #
-    #     Examples
-    #     --------
-    #     TODO
-    #     """
-    #     self._unflattenFromOne(numFeatures)
-
+    @limitedTo2D
     def transform(self, function, features=None, useLog=None):
         """
         Modify this object by applying a function to each feature.
@@ -1109,7 +1050,7 @@ class Features(object):
     ###########################
     # Higher Order Operations #
     ###########################
-
+    @limitedTo2D
     def calculate(self, function, features=None, useLog=None):
         """
         Return a new object with a calculation applied to each feature.
@@ -1188,6 +1129,7 @@ class Features(object):
         """
         return self._calculate(function, features, useLog)
 
+    @limitedTo2D
     def matching(self, function, useLog=None):
         """
         Return a boolean value object identifying matching features.
@@ -1233,6 +1175,7 @@ class Features(object):
         """
         return self._matching(function, useLog)
 
+    @limitedTo2D
     def insert(self, insertBefore, toInsert, useLog=None):
         """
         Insert more features into this object.
@@ -1314,6 +1257,7 @@ class Features(object):
         """
         self._insert(insertBefore, toInsert, False, useLog)
 
+    @limitedTo2D
     def append(self, toAppend, useLog=None):
         """
         Append features to this object.
@@ -1392,6 +1336,7 @@ class Features(object):
         """
         self._insert(None, toAppend, True, useLog)
 
+    @limitedTo2D
     def mapReduce(self, mapper, reducer, useLog=None):
         """
         Apply a mapper and reducer function to this object.
@@ -1440,12 +1385,21 @@ class Features(object):
         """
         return self._mapReduce(mapper, reducer, useLog)
 
-    def shuffle(self, useLog=None):
+    @limitedTo2D
+    def permute(self, order=None, useLog=None):
         """
-        Permute the indexing of the features to a random order.
+        Permute the indexing of the features.
+
+        Change the arrangement of features in the object. A specific
+        permutation can be provided as the ``order`` argument. If
+        ``order`` is None, the permutation will be random. Note: a
+        random permutation may be the same as the current permutation.
 
         Parameters
         ----------
+        order : list, None
+            A list of identifiers indicating the new permutation order.
+            If None, the permutation will be random.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1456,8 +1410,8 @@ class Features(object):
 
         Notes
         -----
-        This relies on python's random.shuffle() so may not be
-        sufficiently random for large number of features.
+        Random permutation relies on python's random.shuffle() which may
+        not be sufficiently random for large number of features.
         See random.shuffle()'s documentation.
 
         Examples
@@ -1468,7 +1422,7 @@ class Features(object):
         ...        [1, 2, 3, 4],
         ...        [1, 2, 3, 4]]
         >>> data = nimble.createData('DataFrame', raw)
-        >>> data.features.shuffle()
+        >>> data.features.permute()
         >>> data
         DataFrame(
             [[3 2 4 1]
@@ -1476,9 +1430,29 @@ class Features(object):
              [3 2 4 1]
              [3 2 4 1]]
             )
-        """
-        self._shuffle(useLog)
 
+        Permute with a list of identifiers.
+
+        >>> raw = [['home', 81, 3],
+        ...        ['gard', 98, 10],
+        ...        ['home', 14, 1],
+        ...        ['home', 11, 3]]
+        >>> cols = ['dept', 'ID', 'quantity']
+        >>> orders = nimble.createData('DataFrame', raw,
+        ...                            featureNames=cols)
+        >>> orders.features.permute(['ID', 'quantity', 'dept'])
+        >>> orders
+        DataFrame(
+            [[81 3  home]
+             [98 10 gard]
+             [14 1  home]
+             [11 3  home]]
+            featureNames={'ID':0, 'quantity':1, 'dept':2}
+            )
+        """
+        self._permute(order, useLog)
+
+    @limitedTo2D
     def fillMatching(self, fillWith, matchingElements, features=None,
                      useLog=None, **kwarguments):
         """
@@ -1497,7 +1471,7 @@ class Features(object):
               feature
             * function - must be in the format:
               fillWith(feature, matchingElements) or
-              fillWith(feature, matchingElements, **kwarguments)
+              fillWith(feature, matchingElements, \*\*kwarguments)
               and return the transformed feature as a list of values.
               Certain fill methods can be imported from nimble's fill
               module.
@@ -1522,7 +1496,7 @@ class Features(object):
 
         See Also
         --------
-         nimble.fill, nimble.match
+        nimble.fill, nimble.match
 
         Examples
         --------
@@ -1568,6 +1542,7 @@ class Features(object):
         return self._fillMatching(fillWith, matchingElements, features,
                                   useLog, **kwarguments)
 
+    @limitedTo2D
     def normalize(self, subtract=None, divide=None, applyResultTo=None,
                   useLog=None):
         """
@@ -1654,7 +1629,7 @@ class Features(object):
         """
         self._normalize(subtract, divide, applyResultTo, useLog)
 
-
+    @limitedTo2D
     def splitByParsing(self, feature, rule, resultingNames, useLog=None):
         """
         Split a feature into multiple features.
@@ -1830,6 +1805,7 @@ class Features(object):
                       self._base.getTypeString(), Features.splitByParsing,
                       feature, rule, resultingNames)
 
+    @limitedTo2D
     def repeat(self, totalCopies, copyFeatureByFeature):
         """
         Create an object using copies of this object's features.
@@ -1904,7 +1880,7 @@ class Features(object):
     ###################
     # Query functions #
     ###################
-
+    @limitedTo2D
     def unique(self):
         """
         Only the unique features from this object.
@@ -1942,7 +1918,7 @@ class Features(object):
     #########################
     # Statistical functions #
     #########################
-
+    @limitedTo2D
     def similarities(self, similarityFunction):
         """
         Calculate similarities between features.
@@ -1963,6 +1939,7 @@ class Features(object):
         """
         return self._similarities(similarityFunction)
 
+    @limitedTo2D
     def statistics(self, statisticsFunction, groupByFeature=None):
         """
         Calculate feature statistics.
@@ -1985,6 +1962,14 @@ class Features(object):
     ####################
     # Abstract Methods #
     ####################
+
+    @abstractmethod
+    def _iter(self):
+        pass
+
+    @abstractmethod
+    def _getitem(self, key):
+        pass
 
     @abstractmethod
     def _getName(self, index):
@@ -2067,7 +2052,7 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _shuffle(self, useLog=None):
+    def _permute(self, order=None, useLog=None):
         pass
 
     @abstractmethod

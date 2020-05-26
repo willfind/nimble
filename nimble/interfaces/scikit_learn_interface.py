@@ -34,7 +34,7 @@ locationCache = {}
 
 class _SciKitLearnAPI(abc.ABC):
     """
-    A class interface for interfaces following the scikit-learn api.
+    Base class for interfaces following the scikit-learn api.
     """
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###

@@ -30,8 +30,7 @@ defaultObjectNumber = 0
 
 def isAllowedSingleElement(x):
     """
-    This function is to determine if an element is an allowed single
-    element.
+    Determine if an element is an allowed single element.
     """
     if isinstance(x, (numbers.Number, str)):
         return True
@@ -42,7 +41,7 @@ def isAllowedSingleElement(x):
     if x is None or x != x:#None and np.NaN are allowed
         return True
 
-    return
+    return False
 
 def nextDefaultObjectName():
     """
@@ -806,31 +805,33 @@ def validateAxisFunction(func, axis, allowedLength=None):
             msg += 'pairs represent'
             raise InvalidArgumentValue(msg)
 
-        if (allowedLength is not None
-                and (isinstance(ret, str) or
-                     (not hasattr(ret, '__len__')
-                      or len(ret) != allowedLength))):
-            oppositeAxis = 'point' if axis == 'feature' else 'feature'
-            msg = "'function' must return an iterable with as many elements "
-            msg += "as {0}s in this object".format(oppositeAxis)
-            raise InvalidArgumentValue(msg)
-        if isAllowedSingleElement(ret):
-            wrappedAxisFunc.updateConvertType(type(ret))
-            return ret
-        try:
-            for value in ret:
-                if not isAllowedSingleElement(value):
-                    msg = "The return of 'function' contains an "
-                    msg += "invalid value. Numbers, strings, None, or "
-                    msg += "nan are the only valid values. This value "
-                    msg += "was " + str(type(value))
-                    raise InvalidArgumentValue(msg)
-                wrappedAxisFunc.updateConvertType(type(value))
-        except TypeError:
-            msg = "'function' must return a single valid value "
-            msg += "(number, string, None, or nan) or an iterable "
-            msg += "container of valid values"
-            raise InvalidArgumentValue(msg)
+        # for transform, we need to validate the function's returned values
+        # for calculate, the validation occurs when the new object is created
+        if allowedLength:
+            if (isinstance(ret, str)
+                    or (not hasattr(ret, '__len__')
+                        or len(ret) != allowedLength)):
+                oppositeAxis = 'point' if axis == 'feature' else 'feature'
+                msg = "'function' must return an iterable with as many elements "
+                msg += "as {0}s in this object".format(oppositeAxis)
+                raise InvalidArgumentValue(msg)
+            if isAllowedSingleElement(ret):
+                wrappedAxisFunc.updateConvertType(type(ret))
+                return ret
+            try:
+                for value in ret:
+                    if not isAllowedSingleElement(value):
+                        msg = "The return of 'function' contains an "
+                        msg += "invalid value. Numbers, strings, None, or "
+                        msg += "nan are the only valid values. This value "
+                        msg += "was " + str(type(value))
+                        raise InvalidArgumentValue(msg)
+                    wrappedAxisFunc.updateConvertType(type(value))
+            except TypeError:
+                msg = "'function' must return a single valid value "
+                msg += "(number, string, None, or nan) or an iterable "
+                msg += "container of valid values"
+                raise InvalidArgumentValue(msg)
 
         return ret
 
@@ -872,14 +873,18 @@ class ElementIterator1D(object):
     Object providing iteration through each item in the axis.
     """
     def __init__(self, source):
-        self.source = source
+        if source:
+            self.source = source.copy('python list', outputAs1D=True)
+        else:
+            self.source = []
+        self.sourceLen = len(source)
         self.position = 0
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        while self.position < len(self.source):
+        while self.position < self.sourceLen:
             value = self.source[self.position]
             self.position += 1
             return value
@@ -1013,3 +1018,17 @@ def axisQueryFunction(match, axis, nameChecker):
     target = target_f
 
     return target
+
+def limitedTo2D(method):
+    @wraps(method)
+    def wrapped(self, *args, **kwargs):
+        if hasattr(self, '_base'):
+            tensorRank = len(self._base._shape)
+        else:
+            tensorRank = len(self._shape)
+        if tensorRank > 2:
+            msg = "{0} is not permitted when the ".format(method.__name__)
+            msg += "data has more than two dimensions"
+            raise ImproperObjectAction(msg)
+        return method(self, *args, **kwargs)
+    return wrapped

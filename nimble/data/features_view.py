@@ -63,8 +63,8 @@ class FeaturesView(Features):
         readOnlyException('append')
 
     @exceptionDocstring
-    def shuffle(self, useLog=None):
-        readOnlyException('shuffle')
+    def permute(self, order=None, useLog=None):
+        readOnlyException('permute')
 
     @exceptionDocstring
     def sort(self, sortBy=None, sortHelper=None, useLog=None):

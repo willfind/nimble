@@ -9,6 +9,8 @@ missing values
 
 import math
 
+import numpy
+
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
@@ -147,24 +149,30 @@ def produceAggregateTable(dataContainer):
     missing values, number of Points in the data set, number of features
     in the data set.
     """
-    shape = computeShape(dataContainer)
+    shape = dataContainer._shape
+    results = []
+    results.append(('Values', numpy.prod(shape)))
+    if len(shape) > 2:
+        results.append(('Dimensions', ' x '.join(map(str, shape))))
+        # use as 2D to allow calculations of aggregate functions
+        dataContainer = dataContainer.copy()
+        dataContainer._shape = list(dataContainer.shape)
+    else:
+        results.append(('Points', shape[0]))
+        results.append(('Features', shape[1]))
+
     funcs = aggregateFunctionGenerator()
-    resultsDict = {}
     for func in funcs:
         funcResults = dataContainer.features.calculate(func, useLog=False)
         funcResults.transpose(useLog=False)
         aggregateResults = funcResults.features.calculate(
             nimble.calculate.mean, useLog=False)
         aggregateResults = aggregateResults.copy(to="python list")[0][0]
-        resultsDict[func.__name__] = aggregateResults
-
-    resultsDict['Values'] = shape[0] * shape[1]
-    resultsDict['Points'] = shape[0]
-    resultsDict['Features'] = shape[1]
+        results.append((func.__name__, aggregateResults))
 
     headers = []
     stats = []
-    for header, value in resultsDict.items():
+    for header, value in results:
         headers.append(header)
         stats.append(value)
 

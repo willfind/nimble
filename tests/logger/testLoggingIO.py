@@ -340,6 +340,8 @@ def checkLogContents(funcName, objectID, arguments=None):
             # double quotations may wrap the second arg if it contains quotations
             expArgs2 = """'{0}': "{1}" """.format(argName, argVal).strip()
             assert expArgs1 in lastLog or expArgs2 in lastLog
+    else:
+        assert "'arguments': {}" in lastLog
 
 
 @emptyLogSafetyWrapper
@@ -393,23 +395,25 @@ def testPrepTypeFunctionsUseLog():
         {'replaceWith': 1, 'pointStart': 2, 'pointEnd': 4, 'featureStart': 0,
          'featureEnd': 0})
 
-    # flattenToOnePoint
+    # flatten (point order)
     dataObj = nimble.createData("DataFrame", data, useLog=False)
-    dataObj.flattenToOnePoint()
+    dataObj.flatten()
 
-    checkLogContents('flattenToOnePoint', "DataFrame")
-    # unflattenFromOnePoint; using same dataObj from flattenToOnePoint
-    dataObj.unflattenFromOnePoint(18)
-    checkLogContents('unflattenFromOnePoint', "DataFrame")
+    checkLogContents('flatten', "DataFrame")
 
-    # flattenToOneFeature
+    # unflatten; using flattened dataObj from above
+    dataObj.unflatten((18, 3))
+    checkLogContents('unflatten', "DataFrame", {'dataDimensions': (18,3)})
+
+    # flatten (feature order)
     dataObj = nimble.createData("Sparse", data, useLog=False)
-    dataObj.flattenToOneFeature()
-    checkLogContents('flattenToOneFeature', "Sparse")
+    dataObj.flatten(order='feature')
+    checkLogContents('flatten', "Sparse", {'order': 'feature'})
 
-    # unflattenFromOnePoint; using same dataObj from flattenToOneFeature
-    dataObj.unflattenFromOneFeature(3)
-    checkLogContents('unflattenFromOneFeature', "Sparse")
+    # unflatten; using flattened dataObj from above
+    dataObj.unflatten((18, 3), order='feature')
+    checkLogContents('unflatten', "Sparse", {'dataDimensions': (18,3),
+                                             'order': 'feature'})
 
     # merge
     dPtNames = ['p' + str(i) for i in range(18)]
@@ -488,15 +492,15 @@ def testPrepTypeFunctionsUseLog():
     checkLogContents('features.calculate', "Matrix", {'function': "lambda x: len(x)",
                                                       'features': 0})
 
-    # points.shuffle
+    # points.permute
     dataObj = nimble.createData("List", data, useLog=False)
-    dataObj.points.shuffle()
-    checkLogContents('points.shuffle', "List")
+    dataObj.points.permute()
+    checkLogContents('points.permute', "List")
 
-    # features.shuffle
+    # features.permute
     dataObj = nimble.createData("Matrix", data, useLog=False)
-    dataObj.features.shuffle()
-    checkLogContents('features.shuffle', "Matrix")
+    dataObj.features.permute()
+    checkLogContents('features.permute', "Matrix")
 
     # points.normalize
     dataObj = nimble.createData("Matrix", data, useLog=False)

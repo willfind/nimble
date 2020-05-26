@@ -2869,8 +2869,8 @@ class QueryBackend(DataTestObject):
 
         ret = obj.featureReport()
         line1 = "featureName   minimum   maximum   mean   median   standardDeviation   uniqueCount"
-        line2 = "        one     1.00      3.00    2.00    2.00           1.00              3     "
-        line3 = "        two     0.00      4.00    2.00    2.00           2.00              3     "
+        line2 = "        one      1         3      2.00    2.00           1.00              3     "
+        line3 = "        two      0         4      2.00    2.00           2.00              3     "
         line4 = "      three     8.80      9.20    9.00    9.00           0.20              3     "
         expLines = [line1, line2, line3, line4]
 
@@ -2884,8 +2884,8 @@ class QueryBackend(DataTestObject):
 
         ret = obj.featureReport()
         line1 = "featureName   minimum   maximum   mean   median   standardDeviation   uniqueCount"
-        line2 = "        one     1.00      3.00    2.00    2.00           1.00              3     "
-        line3 = "        two     1.00      3.00    2.00    2.00           1.00              3     "
+        line2 = "        one      1         3      2.00    2.00           1.00              3     "
+        line3 = "        two      1         3      2.00    2.00           1.00              3     "
         line4 = "      three     nan       nan     nan     nan            nan               3     "
         expLines = [line1, line2, line3, line4]
 
@@ -2903,12 +2903,23 @@ class QueryBackend(DataTestObject):
                                featureNames=fnames)
 
         ret = obj.summaryReport()
-        line1 = "proportionZero   proportionMissing   Values   Points   Features"
-        line2 = "     0.22               0.11           9        3         3    "
+        line1 = "Values   Points   Features   proportionZero   proportionMissing"
+        line2 = "  9        3         3            0.22               0.11      "
         expLines = [line1, line2]
 
         for retLine, expLine in zip(ret.split('\n'), expLines):
             assert retLine == expLine
+
+        obj = self.constructor([[[[0, 2, 'a']]], [[[2, None, 'b']]], [[[0, 3, 'c']]]])
+
+        ret = obj.summaryReport()
+        line1 = "Values     Dimensions    proportionZero   proportionMissing"
+        line2 = "  9      3 x 1 x 1 x 3        0.22               0.11      "
+        expLines = [line1, line2]
+
+        for retLine, expLine in zip(ret.split('\n'), expLines):
+            assert retLine == expLine
+
 
 ###########
 # Helpers #

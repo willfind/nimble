@@ -13,6 +13,8 @@ import itertools
 import os.path
 from multiprocessing import Process
 from abc import abstractmethod
+from functools import wraps
+from contextlib import contextmanager
 
 import numpy
 
@@ -25,7 +27,7 @@ from nimble.logger import handleLogging
 from nimble.logger import produceFeaturewiseReport
 from nimble.logger import produceAggregateReport
 from nimble.randomness import numpyRandom
-from nimble.utility import cloudpickle, matplotlib
+from nimble.utility import cloudpickle, matplotlib, h5py
 from .points import Points
 from .features import Features
 from .axis import Axis
@@ -43,6 +45,7 @@ from .dataHelpers import validateElementFunction, wrapMatchFunctionFactory
 from .dataHelpers import getDictionaryMappingFunction
 from .dataHelpers import ElementIterator1D
 from .dataHelpers import isQueryString, elementQueryFunction
+from .dataHelpers import limitedTo2D
 
 
 def to2args(f):
@@ -119,14 +122,13 @@ class Base(object):
 
     def __init__(self, shape, pointNames=None, featureNames=None, name=None,
                  paths=(None, None), **kwds):
-        self._pointCount = shape[0]
-        self._featureCount = shape[1]
-        if pointNames is not None and len(pointNames) != shape[0]:
+        self._shape = list(shape)
+        if pointNames is not None and len(pointNames) != self._pointCount:
             msg = "The length of the pointNames (" + str(len(pointNames))
             msg += ") must match the points given in shape (" + str(shape[0])
             msg += ")"
             raise InvalidArgumentValue(msg)
-        if featureNames is not None and len(featureNames) != shape[1]:
+        if featureNames is not None and len(featureNames) != self._featureCount:
             msg = "The length of the featureNames (" + str(len(featureNames))
             msg += ") must match the features given in shape ("
             msg += str(shape[1]) + ")"
@@ -192,12 +194,38 @@ class Base(object):
     #######################
 
     @property
+    def _pointCount(self):
+        return self._shape[0]
+
+    @_pointCount.setter
+    def _pointCount(self, value):
+        self._shape[0] = value
+
+    @property
+    def _featureCount(self):
+        if len(self._shape) > 2:
+            return int(numpy.prod(self._shape[1:]))
+        return self._shape[1]
+
+    @_featureCount.setter
+    @limitedTo2D
+    def _featureCount(self, value):
+        self._shape[1] = value
+
+    @property
     def shape(self):
         """
         The number of points and features in the object in the format
         (points, features).
         """
         return self._pointCount, self._featureCount
+
+    @property
+    def dimensions(self):
+        """
+        The true dimensions of this object.
+        """
+        return tuple(self._shape)
 
     def _getPoints(self):
         """
@@ -212,7 +240,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.Points
+        Points
         """
         return self._points
 
@@ -229,7 +257,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.Features
+        Features
         """
         return self._features
 
@@ -358,10 +386,28 @@ class Base(object):
         else:
             return True
 
+    @contextmanager
+    def _treatAs2D(self):
+        """
+        This can be applied when dimensionality does not affect an
+        operation, but an method call within the operation is blocked
+        when the data has more than two dimensions due to the ambiguity
+        in the definition of elements.
+        """
+        if len(self._shape) > 2:
+            savedShape = self._shape
+            self._shape = [self._pointCount, self._featureCount]
+            try:
+                yield self
+            finally:
+                self._shape = savedShape
+        else:
+            yield self
+
     ########################
     # Low Level Operations #
     ########################
-
+    @limitedTo2D
     def __len__(self):
         # ordered such that the larger axis is always printed, even
         # if they are both in the range [0,1]
@@ -379,6 +425,7 @@ class Base(object):
         msg += ") are both greater than 1"
         raise ImproperObjectAction(msg)
 
+    @limitedTo2D
     def __iter__(self):
         if self._pointCount in [0, 1] or self._featureCount in [0, 1]:
             return ElementIterator1D(self)
@@ -388,8 +435,9 @@ class Base(object):
         raise ImproperObjectAction(msg)
 
     def __bool__(self):
-        return self._pointCount > 0 and self._featureCount > 0
+        return self._shape[0] > 0 and self._shape[-1] > 0
 
+    @limitedTo2D
     def iterateElements(self, order='point', only=None):
         """
         Iterate over each element in this object.
@@ -410,7 +458,7 @@ class Base(object):
 
         See Also
         --------
-        self.data.Points, self.data.Features
+        Points, Features
 
         Examples
         --------
@@ -444,7 +492,7 @@ class Base(object):
     ###########################
     # Higher Order Operations #
     ###########################
-
+    @limitedTo2D
     def replaceFeatureWithBinaryFeatures(self, featureToReplace, useLog=None):
         """
         Create binary features for each unique value in a feature.
@@ -521,7 +569,7 @@ class Base(object):
 
         return ftNames
 
-
+    @limitedTo2D
     def transformFeatureToIntegers(self, featureToConvert, useLog=None):
         """
         Represent each unique value in a feature with a unique integer.
@@ -592,7 +640,7 @@ class Base(object):
 
         return {v: k for k, v in mapping.items()}
 
-
+    @limitedTo2D
     def transformElements(self, toTransform, points=None, features=None,
                           preserveZeros=False, skipNoneReturnValues=False,
                           useLog=None):
@@ -633,8 +681,7 @@ class Base(object):
 
         See Also
         --------
-        calculate, nimble.data.Points.transform,
-        nimble.data.Features.transform
+        calculateOnElements, Points.transform, Features.transform
 
         Examples
         --------
@@ -726,6 +773,7 @@ class Base(object):
                       toTransform, points, features, preserveZeros,
                       skipNoneReturnValues)
 
+    @limitedTo2D
     def calculateOnElements(self, toCalculate, points=None, features=None,
                             preserveZeros=False, skipNoneReturnValues=False,
                             outputType=None, useLog=None):
@@ -771,8 +819,7 @@ class Base(object):
 
         See Also
         --------
-        transform, nimble.data.Points.calculate,
-        nimble.data.Features.calculate
+        transformElements, Points.calculate, Features.calculate
 
         Examples
         --------
@@ -861,6 +908,7 @@ class Base(object):
 
         return ret
 
+    @limitedTo2D
     def matchingElements(self, toMatch, points=None, features=None,
                          useLog=None):
         """
@@ -1028,6 +1076,7 @@ class Base(object):
             function.otypes = [numpy.object_]
             return function(toCalculate)
 
+    @limitedTo2D
     def countElements(self, condition):
         """
         The number of values which satisfy the condition.
@@ -1047,7 +1096,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.Points.count, nimble.data.Features.count
+        Points.count, Features.count
 
         Examples
         --------
@@ -1078,6 +1127,7 @@ class Base(object):
                                        useLog=False)
         return int(numpy.sum(ret.data))
 
+    @limitedTo2D
     def countUniqueElements(self, points=None, features=None):
         """
         Count of each unique value in the data.
@@ -1099,7 +1149,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.calculate.statistic.uniqueCount
+        nimble.calculate.uniqueCount
 
         Examples
         --------
@@ -1120,6 +1170,7 @@ class Base(object):
         """
         return self._countUnique_implementation(points, features)
 
+    @limitedTo2D
     def groupByFeature(self, by, countUniqueValueOnly=False, useLog=None):
         """
         Group data object by one or more features.
@@ -1220,6 +1271,7 @@ class Base(object):
 
         return res
 
+    @limitedTo2D
     def hashCode(self):
         """
         Returns a hash for this matrix.
@@ -1265,16 +1317,14 @@ class Base(object):
         bool
             True if approximately equal, else False.
         """
-        #first check to make sure they have the same number of rows and columns
-        if self._pointCount != len(other.points):
-            return False
-        if self._featureCount != len(other.features):
+        #first check to make sure they have the same dimensions
+        if self._shape != other._shape:
             return False
         #now check if the hashes of each matrix are the same
-        if self.hashCode() != other.hashCode():
-            return False
-        return True
 
+        with self._treatAs2D():
+            with other._treatAs2D():
+                return self.hashCode() == other.hashCode()
 
     def trainAndTestSets(self, testFraction, labels=None, randomOrder=True,
                          useLog=None):
@@ -1411,6 +1461,10 @@ class Base(object):
 
         if labels is None:
             ret = trainX, testX
+        elif len(self._shape) > 2:
+            msg = "labels parameter must be None when the data has more "
+            msg += "than two dimensions"
+            raise ImproperObjectAction(msg)
         else:
             if isinstance(labels, Base):
                 if len(labels.points) != len(self.points):
@@ -1449,7 +1503,7 @@ class Base(object):
     ###   Functions related to logging   ###
     ########################################
     ########################################
-
+    @limitedTo2D
     def featureReport(self, maxFeaturesToCover=50, displayDigits=2,
                       useLog=None):
         """
@@ -1482,7 +1536,6 @@ class Base(object):
             displayDigits=displayDigits)
         handleLogging(useLog, 'data', "feature", ret)
         return ret
-
 
     def summaryReport(self, displayDigits=2, useLog=None):
         """
@@ -1521,6 +1574,10 @@ class Base(object):
         Return True if all values and names in the other object match
         the values and names in this object.
         """
+        if not isinstance(other, Base):
+            return False
+        if self._shape != other._shape:
+            return False
         if not self._equalFeatureNames(other):
             return False
         if not self._equalPointNames(other):
@@ -1559,10 +1616,10 @@ class Base(object):
             if len(split) > 1:
                 fileFormat = split[1].lower()
 
-        if fileFormat not in ['csv', 'mtx']:
-            msg = "Unrecognized file format. Accepted types are 'csv' and "
-            msg += "'mtx'. They may either be input as the format parameter, "
-            msg += "or as the extension in the outPath"
+        if fileFormat not in ['csv', 'mtx', 'hdf5', 'h5']:
+            msg = "Unrecognized file format. Accepted types are 'csv', "
+            msg += "'mtx', 'hdf5', and 'h5'. They may either be input as the "
+            msg += "format parameter, or as the extension in the outPath"
             raise InvalidArgumentValue(msg)
 
         includePointNames = includeNames
@@ -1585,7 +1642,16 @@ class Base(object):
             if not seen:
                 includeFeatureNames = False
 
-        if fileFormat.lower() == "csv":
+
+        if fileFormat.lower() in ['hdf5', 'h5']:
+            self._writeFileHDF_implementation(outPath, includePointNames,
+                                              includeFeatureNames)
+        elif len(self._shape) > 2:
+            msg = 'Data with more than two dimensions can only be written '
+            msg += 'to .hdf5 or .h5 formats otherwise the dimensionality '
+            msg += 'would be lost'
+            raise InvalidArgumentValue(msg)
+        elif fileFormat.lower() == "csv":
             self._writeFileCSV_implementation(
                 outPath, includePointNames, includeFeatureNames)
         elif fileFormat.lower() == "mtx":
@@ -1599,6 +1665,28 @@ class Base(object):
         fnamesLine = ','.join(fnames)
         fnamesLine += '\n'
         openFile.write(fnamesLine)
+
+    def _writeFileHDF_implementation(self, outPath, includePointNames,
+                                     includeFeatureNames):
+        if not h5py.nimbleAccessible():
+            msg = 'h5py must be installed to write to an hdf file'
+            raise PackageException(msg)
+        if includePointNames:
+            pnames = self.points.getNames()
+            userblockSize = 512
+        else:
+            pnames = [str(i) for i in range(len(self.points))]
+            userblockSize = 0
+        with h5py.File(outPath, 'w', userblock_size=userblockSize) as hdf:
+            for name, point in zip(pnames, self.points):
+                point._convertUnusableTypes(float, (int, float, bool), False)
+                asArray = point.copy('numpy array')
+                _ = hdf.create_dataset(name, data=asArray)
+                hdf.flush()
+        if includePointNames:
+            with open(outPath, 'rb+') as f:
+                f.write(b'includePointNames ')
+                f.flush()
 
     def save(self, outputPath):
         """
@@ -1643,6 +1731,7 @@ class Base(object):
         """
         return self._getTypeString_implementation()
 
+    @limitedTo2D
     def __getitem__(self, key):
         """
         Return a copy of a subset of the data.
@@ -1853,8 +1942,10 @@ class Base(object):
             raise ImproperObjectAction(msg)
 
         index = self.points.getIndex(ID)
-        return self.view(index, index, None, None)
+        ret = self._view_backend(index, index, None, None, True)
+        return ret
 
+    @limitedTo2D
     def featureView(self, ID):
         """
         A read-only view of a single feature.
@@ -1876,7 +1967,7 @@ class Base(object):
             raise ImproperObjectAction(msg)
 
         index = self.features.getIndex(ID)
-        return self.view(None, None, index, index)
+        return self._view_backend(None, None, index, index)
 
     def view(self, pointStart=None, pointEnd=None, featureStart=None,
              featureEnd=None):
@@ -1925,6 +2016,11 @@ class Base(object):
         --------
         pointView, featureView
         """
+        return self._view_backend(pointStart, pointEnd, featureStart,
+                                  featureEnd)
+
+    def _view_backend(self, pointStart, pointEnd, featureStart, featureEnd,
+                      dropDimension=False):
         # transform defaults to mean take as much data as possible,
         # transform end values to be EXCLUSIVE
         if pointStart is None:
@@ -1959,8 +2055,15 @@ class Base(object):
             # make exclusive now that it won't ruin the validation check
             featureEnd += 1
 
+        if len(self._shape) > 2:
+            if featureStart != 0 or featureEnd != self._featureCount:
+                msg = "feature limited views are not allowed for data with "
+                msg += "more than two dimensions."
+                raise ImproperObjectAction(msg)
+
         return self._view_implementation(pointStart, pointEnd,
-                                         featureStart, featureEnd)
+                                         featureStart, featureEnd,
+                                         dropDimension)
 
     def validate(self, level=1):
         """
@@ -2005,7 +2108,8 @@ class Base(object):
         # trivially False.
         if self._pointCount == 0 or self._featureCount == 0:
             return False
-        return self._containsZero_implementation()
+        with self._treatAs2D():
+            return self._containsZero_implementation()
 
     def __eq__(self, other):
         return self.isIdentical(other)
@@ -2088,7 +2192,8 @@ class Base(object):
 
         # Set up data values to fit in the available space including
         # featureNames if includeFNames=True
-        dataTable, colWidths, fnames = self._arrangeDataWithLimits(
+        with self._treatAs2D():
+            dataTable, colWidths, fnames = self._arrangeDataWithLimits(
             maxDataWidth, maxDataRows, includeFNames, sigDigits,
             maxColumnWidth, colSep, colHold, rowHold, nameHolder)
 
@@ -2244,12 +2349,16 @@ class Base(object):
             context = self.name + " : "
         else:
             context = ""
-        context += str(self._pointCount) + "pt x "
-        context += str(self._featureCount) + "ft"
+        if len(self._shape) > 2:
+            context += " x ".join(map(str, self._shape))
+        else:
+            context += str(self._pointCount) + "pt x "
+            context += str(self._featureCount) + "ft"
         print(context, '\n')
         print(self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits,
                             maxColumnWidth))
 
+    @limitedTo2D
     def plot(self, outPath=None, includeColorbar=False):
         """
         Display a plot of the data.
@@ -2324,6 +2433,7 @@ class Base(object):
         p = self._matplotlibBackendHandling(outPath, plotter, d=toPlot)
         return p
 
+    @limitedTo2D
     def plotFeatureDistribution(self, feature, outPath=None, xMin=None,
                                 xMax=None):
         """
@@ -2417,6 +2527,7 @@ class Base(object):
                                             xLim=(xMin, xMax))
         return p
 
+    @limitedTo2D
     def plotFeatureAgainstFeatureRollingAverage(
             self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
             yMax=None, sampleSizeForAverage=20):
@@ -2459,6 +2570,7 @@ class Base(object):
         self._plotFeatureAgainstFeature(x, y, outPath, xMin, xMax, yMin, yMax,
                                         sampleSizeForAverage)
 
+    @limitedTo2D
     def plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None,
                                   xMax=None, yMin=None, yMax=None):
         """
@@ -2608,7 +2720,7 @@ class Base(object):
     ###   Subclass implemented structural manipulation functions   ###
     ##################################################################
     ##################################################################
-
+    @limitedTo2D
     def transpose(self, useLog=None):
         """
         Invert the feature and point indices of the data.
@@ -2657,6 +2769,7 @@ class Base(object):
                       Base.transpose)
 
     @property
+    @limitedTo2D
     def T(self):
         """
         Invert the feature and point indices of the data.
@@ -2683,7 +2796,6 @@ class Base(object):
         ret = self.copy()
         ret.transpose(useLog=False)
         return ret
-
 
     def referenceDataFrom(self, other, useLog=None):
         """
@@ -2742,8 +2854,7 @@ class Base(object):
         self.featureNames = other.featureNames
         self.featureNamesInverse = other.featureNamesInverse
 
-        self._pointCount = other._pointCount
-        self._featureCount = other._featureCount
+        self._shape = other._shape
 
         self._absPath = other.absolutePath
         self._relPath = other.relativePath
@@ -2753,7 +2864,6 @@ class Base(object):
 
         handleLogging(useLog, 'prep', "referenceDataFrom",
                       self.getTypeString(), Base.referenceDataFrom, other)
-
 
     def copy(self, to=None, rowsArePoints=True, outputAs1D=False):
         """
@@ -2839,6 +2949,7 @@ class Base(object):
         # format is one of the accepted nimble data types
         if to is None:
             to = self.getTypeString()
+        origTo = to
         if not isinstance(to, str):
             raise InvalidArgumentType("'to' must be a string")
         if to not in ['List', 'Matrix', 'Sparse', 'DataFrame']:
@@ -2859,6 +2970,21 @@ class Base(object):
                 msg += "'and dict of list'"
                 raise InvalidArgumentValue(msg)
 
+        if len(self._shape) > 2:
+            if to in ['listofdict', 'dictoflist', 'scipycsr', 'scipycsc']:
+                msg = 'Objects with more than two dimensions cannot be '
+                msg += 'copied to {0}'.format(origTo)
+                raise ImproperObjectAction(msg)
+            if outputAs1D or not rowsArePoints:
+                if outputAs1D:
+                    param = 'outputAs1D'
+                    value = False
+                elif not rowsArePoints:
+                    param = 'rowsArePoints'
+                    value = True
+                msg = '{0} must be {1} when the data '.format(param, value)
+                msg += 'has more than two dimensions'
+                raise ImproperObjectAction(msg)
         # only 'numpyarray' and 'pythonlist' are allowed to use outputAs1D flag
         if outputAs1D:
             if to != 'numpyarray' and to != 'pythonlist':
@@ -2877,6 +3003,7 @@ class Base(object):
         # nimble, numpy and scipy types
         ret = self._copy_implementation(to)
         if isinstance(ret, Base):
+            ret._shape = self._shape.copy()
             if not rowsArePoints:
                 ret.transpose(useLog=False)
             ret._name = self.name
@@ -2899,14 +3026,9 @@ class Base(object):
         return raw
 
     def _copy_pythonList(self, rowsArePoints):
-        if self._pointCount == 0:
-            return []
-        if self._featureCount == 0:
-            ret = []
-            for _ in range(self._pointCount):
-                ret.append([])
-            return ret
         ret = self._copy_implementation('pythonlist')
+        if len(self._shape) > 2:
+            ret = numpy.reshape(ret, self._shape).tolist()
         if not rowsArePoints:
             ret = numpy.transpose(ret).tolist()
         return ret
@@ -2931,7 +3053,7 @@ class Base(object):
     def __deepcopy__(self, memo):
         return self.copy()
 
-
+    @limitedTo2D
     def replaceRectangle(self, replaceWith, pointStart, featureStart, pointEnd,
                          featureEnd, useLog=None):
         """
@@ -2970,7 +3092,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.Points.fill, nimble.data.Features.fill
+        Points.fill, Features.fill
 
         Examples
         --------
@@ -3049,45 +3171,41 @@ class Base(object):
                       pointStart, featureStart, pointEnd, featureEnd)
 
 
-    def _flattenNames(self, discardAxis):
+    def _flattenNames(self, order):
         """
         Helper calculating the axis names for the unflattend axis after
         a flatten operation.
         """
-        self._validateAxis(discardAxis)
-        if discardAxis == 'point':
-            keepNames = self.features.getNames()
-            dropNames = self.points.getNames()
+        pNames = self.points.getNames()
+        fNames = self.features.getNames()
+
+        if order == 'point':
+            ret = (a + ' | ' + b for a, b in itertools.product(pNames, fNames))
         else:
-            keepNames = self.points.getNames()
-            dropNames = self.features.getNames()
+            ret = (b + ' | ' + a for a, b in itertools.product(fNames, pNames))
+        return list(ret)
 
-        ret = []
-        for d in dropNames:
-            for k in keepNames:
-                ret.append(k + ' | ' + d)
-
-        return ret
-
-
-    def flattenToOnePoint(self, useLog=None):
+    def flatten(self, order='point', useLog=None):
         """
         Modify this object so that its values are in a single point.
 
-        Each feature in the result maps to exactly one value from the
-        original object. The order of values respects the point order
-        from the original object, if there were n features in the
-        original, the first n values in the result will exactly match
-        the first point, the nth to (2n-1)th values will exactly match
-        the original second point, etc. The feature names will be
-        transformed such that the value at the intersection of the
-        "pn_i" named point and "fn_j" named feature from the original
-        object will have a feature name of "fn_j | pn_i". The single
-        point will have a name of "Flattened". This is an inplace
-        operation.
+        Each value in the result maps to exactly one value from the
+        original object. For data in two-dimensions, ``order`` may be
+        'point' or 'feature'. If order='point', the first n values in
+        the result will match the original first point, the nth to
+        (2n-1)th values will match the original second point and so on.
+        If order='feature', the first n values in the result will match
+        the original first feature, the nth to (2n-1)th values will
+        match the original second feature and so on. For higher
+        dimension data, 'point' is the only accepted ``order``. If
+        pointNames and/or featureNames are present. The feature names of
+        the flattened result will be formatted as "ptName | ftName".
+        This is an inplace operation.
 
         Parameters
         ----------
+        order : str
+            Either 'point' or 'feature'.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -3098,431 +3216,264 @@ class Base(object):
 
         See Also
         --------
-        unflattenFromOnePoint
+        unflatten
 
         Examples
         --------
         >>> raw = [[1, 2],
         ...        [3, 4]]
-        >>> ptNames = ['1', '4']
+        >>> ptNames = ['1', '3']
         >>> ftNames = ['a', 'b']
         >>> data = nimble.createData('Matrix', raw, pointNames=ptNames,
         ...                          featureNames=ftNames)
-        >>> data.flattenToOnePoint()
+        >>> data.flatten()
         >>> data
         Matrix(
             [[1 2 3 4]]
             pointNames={'Flattened':0}
-            featureNames={'a | 1':0, 'b | 1':1, 'a | 4':2, 'b | 4':3}
+            featureNames={'1 | a':0, '1 | b':1, '3 | a':2, '3 | b':3}
             )
-        """
-        if self._pointCount == 0:
-            msg = "Can only flattenToOnePoint when there is one or more "
-            msg += "points. This object has 0 points."
-            raise ImproperObjectAction(msg)
-        if self._featureCount == 0:
-            msg = "Can only flattenToOnePoint when there is one or more "
-            msg += "features. This object has 0 features."
-            raise ImproperObjectAction(msg)
 
-        # TODO: flatten nameless Objects without the need to generate default
-        # names for them.
-        if not self._pointNamesCreated():
-            self.points._setAllDefault()
-        if not self._featureNamesCreated():
-            self.features._setAllDefault()
-
-        self._flattenToOnePoint_implementation()
-
-        self._featureCount = self._pointCount * self._featureCount
-        self._pointCount = 1
-        self.features.setNames(self._flattenNames('point'), useLog=False)
-        self.points.setNames(['Flattened'], useLog=False)
-
-        handleLogging(useLog, 'prep', "flattenToOnePoint",
-                      self.getTypeString(), Base.flattenToOnePoint)
-
-
-    def flattenToOneFeature(self, useLog=None):
-        """
-        Modify this object so that its values are in a single feature.
-
-        Each point in the result maps to exactly one value from the
-        original object. The order of values respects the feature order
-        from the original object, if there were n points in the
-        original, the first n values in the result will exactly match
-        the first feature, the nth to (2n-1)th values will exactly
-        match the original second feature, etc. The point names will be
-        transformed such that the value at the intersection of the
-        "pn_i" named point and "fn_j" named feature from the original
-        object will have a point name of "pn_i | fn_j". The single
-        feature will have a name of "Flattened". This is an inplace
-        operation.
-
-        Parameters
-        ----------
-        useLog : bool, None
-            Local control for whether to send object creation to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-
-        See Also
-        --------
-        unflattenFromOneFeature
-
-        Examples
-        --------
         >>> raw = [[1, 2],
         ...        [3, 4]]
-        >>> ptNames = ['1', '4']
+        >>> ptNames = ['1', '3']
         >>> ftNames = ['a', 'b']
         >>> data = nimble.createData('Matrix', raw, pointNames=ptNames,
         ...                          featureNames=ftNames)
-        >>> data.flattenToOneFeature()
+        >>> data.flatten(order='feature')
         >>> data
         Matrix(
-            [[1]
-             [3]
-             [2]
-             [4]]
-            pointNames={'1 | a':0, '4 | a':1, '1 | b':2, '4 | b':3}
-            featureNames={'Flattened':0}
+            [[1 3 2 4]]
+            pointNames={'Flattened':0}
+            featureNames={'1 | a':0, '3 | a':1, '1 | b':2, '3 | b':3}
             )
         """
+        if order not in ['point', 'feature']:
+            msg = "order must be the string 'point' or 'feature'"
+            if not isinstance(order, str):
+                raise InvalidArgumentType(msg)
+            raise InvalidArgumentValue(msg)
         if self._pointCount == 0:
-            msg = "Can only flattenToOnePoint when there is one or more "
+            msg = "Can only flatten when there is one or more "
             msg += "points. This object has 0 points."
             raise ImproperObjectAction(msg)
         if self._featureCount == 0:
-            msg = "Can only flattenToOnePoint when there is one or more "
+            msg = "Can only flatten when there is one or more "
             msg += "features. This object has 0 features."
             raise ImproperObjectAction(msg)
+        if order == 'feature' and len(self._shape) > 2:
+            msg = "order='feature' is not allowed for flattening objects with "
+            msg += 'more than two dimensions'
+            raise ImproperObjectAction(msg)
 
-        # TODO: flatten nameless Objects without the need to generate default
-        # names for them.
-        if not self._pointNamesCreated():
-            self.points._setAllDefault()
-        if not self._featureNamesCreated():
-            self.features._setAllDefault()
+        fNames = None
+        if self.points._namesCreated() or self.features._namesCreated():
+            fNames = self._flattenNames(order)
+        self._shape = list(self.shape) # make 2D before flattening
+        self._flatten_implementation(order)
+        self._featureCount = self._pointCount * self._featureCount
+        self._pointCount = 1
 
-        self._flattenToOneFeature_implementation()
+        self.features.setNames(fNames, useLog=False)
+        self.points.setNames(['Flattened'], useLog=False)
 
-        self._pointCount = self._pointCount * self._featureCount
-        self._featureCount = 1
-        self.points.setNames(self._flattenNames('feature'), useLog=False)
-        self.features.setNames(['Flattened'], useLog=False)
+        handleLogging(useLog, 'prep', "flatten", self.getTypeString(),
+                      Base.flatten, order)
 
-        handleLogging(useLog, 'prep', "flattenToOneFeature",
-                      self.getTypeString(), Base.flattenToOneFeature)
 
-    def _unflattenNames(self, addedAxis, addedAxisLength):
+    def _unflattenNames(self):
         """
         Helper calculating the new axis names after an unflattening
         operation.
         """
-        self._validateAxis(addedAxis)
-        if addedAxis == 'point':
-            both = self.features.getNames()
-            keptAxisLength = self._featureCount // addedAxisLength
-            allDefault = self._namesAreFlattenFormatConsistent(
-                'point', addedAxisLength, keptAxisLength)
-        else:
-            both = self.points.getNames()
-            keptAxisLength = self._pointCount // addedAxisLength
-            allDefault = self._namesAreFlattenFormatConsistent(
-                'feature', addedAxisLength, keptAxisLength)
+        possibleNames = None
+        if len(self.points) > 1 and self.points._namesCreated():
+            possibleNames = self.points.getNames()
+        elif len(self.features) > 1 and self.features._namesCreated():
+            possibleNames = self.features.getNames()
+        if not possibleNames:
+            return (None, None)
+        splitNames = [name.split(' | ') for name in possibleNames]
+        if not all(len(split) == 2 for split in splitNames):
+            return (None, None)
 
-        if allDefault:
-            addedAxisName = None
-            keptAxisName = None
-        else:
-            # we consider the split of the elements into keptAxisLength chunks
-            # (of which there will be addedAxisLength number of chunks), and
-            # want the index of the first of each chunk. We allow that first
-            # name to be representative for that chunk: all will have the same
-            # stuff past the vertical bar.
-            locations = range(0, len(both), keptAxisLength)
-            addedAxisName = [both[n].split(" | ")[1] for n in locations]
-            keptAxisName = [name.split(" | ")[0] for name
-                            in both[:keptAxisLength]]
+        pNames = []
+        fNames = []
+        allPtDefault = True
+        allFtDefault = True
+        for pName, fName in splitNames:
+            if pName not in pNames:
+                pNames.append(pName)
+            if allPtDefault and not pName.startswith(DEFAULT_PREFIX):
+                allPtDefault = False
+            if fNames is not None:
+                if fName not in fNames:
+                    fNames.append(fName)
+            if allFtDefault and not fName.startswith(DEFAULT_PREFIX):
+                allFtDefault = False
 
-        return addedAxisName, keptAxisName
+        if allPtDefault:
+            pNames = None
+        if allFtDefault:
+            fNames = None
 
-    def _namesAreFlattenFormatConsistent(self, flatAxis, newFLen, newUFLen):
+        return pNames, fNames
+
+
+    @limitedTo2D
+    def unflatten(self, dataDimensions, order='point', useLog=None):
         """
-        Helper which validates the formatting of axis names prior to
-        unflattening.
+        Adjust a single point or feature to contain multiple points.
 
-        Will raise ImproperObjectAction if an inconsistency with the
-        formatting done by the flatten operations is discovered. Returns
-        True if all the names along the unflattend axis are default,
-        False otherwise.
+        The flat object is reshaped to match the dimensions of
+        ``dataDimensions``. ``order`` determines whether point or
+        feature vectors are created from the data. Provided
+        ``dataDimensions`` of (m, n), the first n values become the
+        first point when ``order='point'`` or the first m values become
+        the first feature when ``order='feature'``. For higher dimension
+        data, 'point' is the only accepted ``order``. If pointNames or
+        featureNames match the format established in ``flatten``,
+        "ptName | ftName", and they align eith the ``dataDimensions``,
+        point and feature names will be unflattened as well, otherwise
+        the result will not have pointNames or featureNames.
+        This is an inplace operation.
+
+        Parameters
+        ----------
+        dataDimensions : tuple, list
+            The dimensions of the unflattend object.
+        order : str
+            Either 'point' or 'feature'.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+
+        See Also
+        --------
+        flatten
+
+        Examples
+        --------
+
+        Unflatten a point in point order with default names.
+
+        >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> data.unflatten((3, 3))
+        >>> data
+        Matrix(
+            [[1 2 3]
+             [4 5 6]
+             [7 8 9]]
+            )
+
+        Unflatten a point in feature order with default names.
+
+        >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> data.unflatten((3, 3), order='feature')
+        >>> data
+        Matrix(
+            [[1 4 7]
+             [2 5 8]
+             [3 6 9]]
+            )
+
+        Unflatten a feature in feature order with default names.
+
+        >>> raw = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> data.unflatten((3, 3), order='feature')
+        >>> data
+        Matrix(
+            [[1 2 3]
+             [4 5 6]
+             [7 8 9]]
+            )
+
+        Unflatten a feature in point order with default names.
+
+        >>> raw = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
+        >>> data = nimble.createData('Matrix', raw)
+        >>> data.unflatten((3, 3), order='point')
+        >>> data
+        Matrix(
+            [[1 4 7]
+             [2 5 8]
+             [3 6 9]]
+            )
+
+        Unflatten a point with names that can be unflattened.
+
+        >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
+        >>> ftNames = ['1 | a', '1 | b', '1 | c',
+        ...            '4 | a', '4 | b', '4 | c',
+        ...            '7 | a', '7 | b', '7 | c']
+        >>> data = nimble.createData('Matrix', raw, featureNames=ftNames)
+        >>> data.unflatten((3, 3))
+        >>> data
+        Matrix(
+            [[1 2 3]
+             [4 5 6]
+             [7 8 9]]
+            pointNames={'1':0, '4':1, '7':2}
+            featureNames={'a':0, 'b':1, 'c':2}
+            )
         """
-        if flatAxis == 'point':
-            flat = self.points.getNames()
-            formatted = self.features.getNames()
-        else:
-            flat = self.features.getNames()
-            formatted = self.points.getNames()
-
-        def checkIsDefault(axisName):
-            ret = False
-            try:
-                if axisName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                    int(axisName[DEFAULT_PREFIX_LENGTH:])
-                    ret = True
-            except ValueError:
-                ret = False
-            return ret
-
-        # check the contents of the names along the flattened axis
-        isDefault = checkIsDefault(flat[0])
-        isExact = flat == ['Flattened']
-        msg = "In order to unflatten this object, the names must be "
-        msg += "consistent with the results from a flatten call. "
-        if not (isDefault or isExact):
-            msg += "Therefore, the {axis} name for this object ('{axisName}')"
-            msg += "must either be a default name or the string 'Flattened'"
-            msg = msg.format(axis=flatAxis, axisName=flat[0])
+        if order not in ['point', 'feature']:
+            msg = "order must be the string 'point' or 'feature'"
+            if not isinstance(order, str):
+                raise InvalidArgumentType(msg)
+            raise InvalidArgumentValue(msg)
+        if self._featureCount == 0 or self._pointCount == 0:
+            msg = "Cannot unflatten when there are 0 points or features."
             raise ImproperObjectAction(msg)
+        if self._pointCount != 1 and self._featureCount != 1:
+            msg = "Can only unflatten when there is only one point or feature."
+            raise ImproperObjectAction(msg)
+        if not isinstance(dataDimensions, (list, tuple)):
+            raise InvalidArgumentType('dataDimensions must be a list or tuple')
+        if len(dataDimensions) < 2:
+            msg = "dataDimensions must contain a minimum of 2 values"
+            raise InvalidArgumentValue(msg)
+        if self.shape[0] * self.shape[1] != numpy.prod(dataDimensions):
+            msg = "The product of the dimensions must be equal to the number "
+            msg += "of values in this object"
+            raise InvalidArgumentValue(msg)
 
-        # check the contents of the names along the unflattend axis
-        msg += "Therefore, the {axis} names for this object must either be "
-        msg += "all default, or they must be ' | ' split names with name "
-        msg += "values consistent with the positioning from a flatten call."
-        msg.format(axis=flatAxis)
-        # each name - default or correctly formatted
-        allDefaultStatus = None
-        for name in formatted:
-            isDefault = checkIsDefault(name)
-            formatCorrect = len(name.split(" | ")) == 2
-            if allDefaultStatus is None:
-                allDefaultStatus = isDefault
-            else:
-                if isDefault != allDefaultStatus:
-                    raise ImproperObjectAction(msg)
-
-            if not (isDefault or formatCorrect):
+        if len(dataDimensions) > 2:
+            if order == 'feature':
+                msg = "order='feature' is not allowed when unflattening to "
+                msg += 'more than two dimensions'
                 raise ImproperObjectAction(msg)
+            shape2D = (dataDimensions[0], numpy.prod(dataDimensions[1:]))
+        else:
+            shape2D = dataDimensions
 
-        # consistency only relevant if we have non-default names
-        if not allDefaultStatus:
-            # seen values - consistent wrt original flattend axis names
-            for i in range(newFLen):
-                same = formatted[newUFLen*i].split(' | ')[1]
-                for name in formatted[newUFLen*i:newUFLen*(i+1)]:
-                    if same != name.split(' | ')[1]:
-                        raise ImproperObjectAction(msg)
+        self._unflatten_implementation(shape2D, order)
 
-            # seen values - consistent wrt original unflattend axis names
-            for i in range(newUFLen):
-                same = formatted[i].split(' | ')[0]
-                for j in range(newFLen):
-                    name = formatted[i + (j * newUFLen)]
-                    if same != name.split(' | ')[0]:
-                        raise ImproperObjectAction(msg)
+        if len(dataDimensions) == 2:
+            pNames, fNames = self._unflattenNames()
+            if pNames and len(pNames) != shape2D[0]:
+                pNames = None
+            if fNames and len(fNames) != shape2D[1]:
+                fNames = None
+        else:
+            pNames, fNames = (None, None)
 
-        return allDefaultStatus
+        self._shape = list(dataDimensions)
+        self.points.setNames(pNames, useLog=False)
+        self.features.setNames(fNames, useLog=False)
 
-
-    def unflattenFromOnePoint(self, numPoints, useLog=None):
-        """
-        Adjust a flattened point vector to contain multiple points.
-
-        This is an inverse of the method ``flattenToOnePoint``: if an
-        object foo with n points calls the flatten method, then this
-        method with n as the argument, the result should be identical to
-        the original foo. It is not limited to objects that have
-        previously had ``flattenToOnePoint`` called on them; any object
-        whose structure and names are consistent with a previous call to
-        ``flattenToOnePoint`` may call this method. This includes
-        objects with all default names. This is an inplace operation.
-
-        Parameters
-        ----------
-        numPoints : int
-            The number of points in the modified object.
-        useLog : bool, None
-            Local control for whether to send object creation to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-
-        See Also
-        --------
-        flattenToOnePoint
-
-        Examples
-        --------
-
-        With all default names.
-
-        >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
-        >>> data = nimble.createData('Matrix', raw)
-        >>> data.unflattenFromOnePoint(3)
-        >>> data
-        Matrix(
-            [[1 2 3]
-             [4 5 6]
-             [7 8 9]]
-            )
-
-        With names consistent with call to ``flattenToOnePoint``.
-
-        >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
-        >>> ptNames = {'Flattened':0}
-        >>> ftNames = {'a | 1':0, 'b | 1':1, 'c | 1':2,
-        ...            'a | 4':3, 'b | 4':4, 'c | 4':5,
-        ...            'a | 7':6, 'b | 7':7, 'c | 7':8}
-        >>> data = nimble.createData('Matrix', raw, pointNames=ptNames,
-        ...                          featureNames=ftNames)
-        >>> data.unflattenFromOnePoint(3)
-        >>> data
-        Matrix(
-            [[1 2 3]
-             [4 5 6]
-             [7 8 9]]
-            pointNames={'1':0, '4':1, '7':2}
-            featureNames={'a':0, 'b':1, 'c':2}
-            )
-        """
-        if self._featureCount == 0:
-            msg = "Can only unflattenFromOnePoint when there is one or more "
-            msg += "features.  This object has 0 features."
-            raise ImproperObjectAction(msg)
-        if self._pointCount != 1:
-            msg = "Can only unflattenFromOnePoint when there is only one "
-            msg += "point.  This object has " + str(self._pointCount)
-            msg += " points."
-            raise ImproperObjectAction(msg)
-        if self._featureCount % numPoints != 0:
-            msg = "The argument numPoints (" + str(numPoints) + ") must be a "
-            msg += "divisor of  this object's featureCount ("
-            msg += str(self._featureCount) + ") otherwise  it will not be "
-            msg += "possible to equally divide the elements into the desired "
-            msg += "number of points."
-            raise InvalidArgumentValue(msg)
-
-        if not self._pointNamesCreated():
-            self.points._setAllDefault()
-        if not self._featureNamesCreated():
-            self.features._setAllDefault()
-
-        self._unflattenFromOnePoint_implementation(numPoints)
-        ret = self._unflattenNames('point', numPoints)
-        self._featureCount = self._featureCount // numPoints
-        self._pointCount = numPoints
-        self.points.setNames(ret[0], useLog=False)
-        self.features.setNames(ret[1], useLog=False)
-
-        handleLogging(useLog, 'prep', "unflattenFromOnePoint",
-                      self.getTypeString(), Base.unflattenFromOnePoint,
-                      numPoints)
+        handleLogging(useLog, 'prep', "unflatten", self.getTypeString(),
+                      Base.unflatten, dataDimensions, order)
 
 
-    def unflattenFromOneFeature(self, numFeatures, useLog=None):
-        """
-        Adjust a flattened feature vector to contain multiple features.
-
-        This is an inverse of the method ``flattenToOneFeature``: if an
-        object foo with n features calls the flatten method, then this
-        method with n as the argument, the result should be identical to
-        the original foo. It is not limited to objects that have
-        previously had ``flattenToOneFeature`` called on them; any
-        object whose structure and names are consistent with a previous
-        call to ``flattenToOneFeature`` may call this method. This
-        includes objects with all default names. This is an inplace
-        operation.
-
-        Parameters
-        ----------
-        numFeatures : int
-            The number of features in the modified object.
-        useLog : bool, None
-            Local control for whether to send object creation to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-
-        See Also
-        --------
-        flattenToOneFeature
-
-        Examples
-        --------
-        With default names.
-
-        >>> raw = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
-        >>> data = nimble.createData('Matrix', raw)
-        >>> data.unflattenFromOneFeature(3)
-        >>> data
-        Matrix(
-            [[1 2 3]
-             [4 5 6]
-             [7 8 9]]
-            )
-
-        With names consistent with call to ``flattenToOneFeature``.
-
-        >>> raw = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
-        >>> ptNames = {'1 | a':0, '4 | a':1, '7 | a':2,
-        ...            '1 | b':3, '4 | b':4, '7 | b':5,
-        ...            '1 | c':6, '4 | c':7, '7 | c':8}
-        >>> ftNames = {'Flattened':0}
-        >>> data = nimble.createData('Matrix', raw, pointNames=ptNames,
-        ...                          featureNames=ftNames)
-        >>> data.unflattenFromOneFeature(3)
-        >>> data
-        Matrix(
-            [[1 2 3]
-             [4 5 6]
-             [7 8 9]]
-            pointNames={'1':0, '4':1, '7':2}
-            featureNames={'a':0, 'b':1, 'c':2}
-            )
-        """
-        if self._pointCount == 0:
-            msg = "Can only unflattenFromOneFeature when there is one or more "
-            msg += "points. This object has 0 points."
-            raise ImproperObjectAction(msg)
-        if self._featureCount != 1:
-            msg = "Can only unflattenFromOneFeature when there is only one "
-            msg += "feature. This object has " + str(self._featureCount)
-            msg += " features."
-            raise ImproperObjectAction(msg)
-
-        if self._pointCount % numFeatures != 0:
-            msg = "The argument numFeatures (" + str(numFeatures) + ") must "
-            msg += "be a divisor of this object's pointCount ("
-            msg += str(self._pointCount) + ") otherwise "
-            msg += "it will not be possible to equally divide the elements "
-            msg += "into the desired number of features."
-            raise InvalidArgumentValue(msg)
-
-        if not self._pointNamesCreated():
-            self.points._setAllDefault()
-        if not self._featureNamesCreated():
-            self.features._setAllDefault()
-
-        self._unflattenFromOneFeature_implementation(numFeatures)
-        ret = self._unflattenNames('feature', numFeatures)
-        self._pointCount = self._pointCount // numFeatures
-        self._featureCount = numFeatures
-        self.points.setNames(ret[1], useLog=False)
-        self.features.setNames(ret[0], useLog=False)
-
-        handleLogging(useLog, 'prep', "unflattenFromOneFeature",
-                      self.getTypeString(), Base.unflattenFromOneFeature,
-                      numFeatures)
-
-
+    @limitedTo2D
     def merge(self, other, point='strict', feature='union', onFeature=None,
               useLog=None):
         """
@@ -3573,7 +3524,7 @@ class Base(object):
 
         See Also
         --------
-        nimble.data.Points.add, nimble.data.Features.add
+        Points.add, Features.add
 
         Examples
         --------
@@ -3982,7 +3933,7 @@ class Base(object):
     ###   Linear Algebra functions   ###
     ###################################
     ###################################
-
+    @limitedTo2D
     def inverse(self, pseudoInverse=False):
         """
         Compute the inverse or pseudo-inverse of an object.
@@ -4002,7 +3953,7 @@ class Base(object):
             inverse = nimble.calculate.inverse(self)
         return inverse
 
-
+    @limitedTo2D
     def solveLinearSystem(self, b, solveFunction='solve'):
         """
         Solves the linear equation A * x = b for unknown x.
@@ -4040,25 +3991,28 @@ class Base(object):
     ###   Subclass implemented numerical operation functions    ###
     ###############################################################
     ###############################################################
-
+    @limitedTo2D
     def matrixMultiply(self, other):
         """
         Perform matrix multiplication.
         """
         return self.__matmul__(other)
 
+    @limitedTo2D
     def __matmul__(self, other):
         """
         Perform matrix multiplication.
         """
         return self._genericMatMul_implementation('__matmul__', other)
 
+    @limitedTo2D
     def __rmatmul__(self, other):
         """
         Perform matrix multiplication with this object on the right.
         """
         return self._genericMatMul_implementation('__rmatmul__', other)
 
+    @limitedTo2D
     def __imatmul__(self, other):
         """
         Perform in place matrix multiplication.
@@ -4128,6 +4082,7 @@ class Base(object):
 
         return ret
 
+    @limitedTo2D
     def matrixPower(self, power):
         """
         Perform matrix power operations on a square matrix.
@@ -4362,7 +4317,9 @@ class Base(object):
         """
         Perform element wise absolute value on this object
         """
-        ret = self.calculateOnElements(abs, useLog=False)
+        with self._treatAs2D():
+            ret = self.calculateOnElements(abs, useLog=False)
+        ret._shape = self._shape.copy()
         if self._pointNamesCreated():
             ret.points.setNames(self.points.getNames(), useLog=False)
         else:
@@ -4393,6 +4350,9 @@ class Base(object):
             raise ImproperObjectAction(msg)
 
     def _genericBinary_sizeValidation(self, opName, other):
+        if self._shape != other._shape:
+            msg = "The dimensions of the objects must be equal."
+            raise InvalidArgumentValue(msg)
         if self._pointCount != len(other.points):
             msg = "The number of points in each object must be equal. "
             msg += "(self=" + str(self._pointCount) + " vs other="
@@ -4415,10 +4375,11 @@ class Base(object):
         else:
             toCheck = other
 
-        if isinstance(toCheck, Base) and toCheck.containsZero():
-            msg = "Cannot perform " + opName + " when the second argument "
-            msg += "contains any zeros"
-            raise ZeroDivisionError(msg)
+        if isinstance(toCheck, Base):
+            if toCheck.containsZero():
+                msg = "Cannot perform " + opName + " when the second argument "
+                msg += "contains any zeros"
+                raise ZeroDivisionError(msg)
         elif toCheck == 0:
             msg = "Cannot perform " + opName + " when the second argument "
             msg += "is zero"
@@ -4592,6 +4553,7 @@ class Base(object):
         except (TypeError, ValueError, FloatingPointError) as error:
             self._diagnoseFailureAndRaiseException(opName, other, error)
 
+        ret._shape = self._shape
         if opName.startswith('__i'):
             absPath, relPath = self._absPath, self._relPath
             self.referenceDataFrom(ret, useLog=False)
@@ -4608,9 +4570,11 @@ class Base(object):
 
 
     def _defaultBinaryOperations_implementation(self, opName, other):
-        selfData = self.copy('numpyarray')
+        with self._treatAs2D():
+            selfData = self.copy('numpyarray')
         if isinstance(other, Base):
-            otherData = other.copy('numpyarray')
+            with other._treatAs2D():
+                otherData = other.copy('numpyarray')
         else:
             otherData = other
         data = getattr(selfData, opName)(otherData)
@@ -4618,15 +4582,19 @@ class Base(object):
 
         return ret
 
+    @limitedTo2D
     def __and__(self, other):
         return self._genericLogicalBinary('__and__', other)
 
+    @limitedTo2D
     def __or__(self, other):
         return self._genericLogicalBinary('__or__', other)
 
+    @limitedTo2D
     def __xor__(self, other):
         return self._genericLogicalBinary('__xor__', other)
 
+    @limitedTo2D
     def __invert__(self):
         boolObj = self._logicalValidationAndConversion()
         ret = boolObj.matchingElements(lambda v: not v, useLog=False)
@@ -4634,7 +4602,6 @@ class Base(object):
         ret.features.setNames(self.features._getNamesNoGeneration(),
                               useLog=False)
         return ret
-
 
     def _genericLogicalBinary(self, opName, other):
         if isinstance(other, Stretch):
@@ -4667,6 +4634,7 @@ class Base(object):
         return self
 
     @property
+    @limitedTo2D
     def stretch(self):
         """
         Extend along a one-dimensional axis to fit another object.
@@ -5087,14 +5055,10 @@ class Base(object):
                 | other.featureNames.keys())
 
     def _equalPointNames(self, other):
-        if other is None or not isinstance(other, Base):
-            return False
         return self._equalNames(self.points._getNamesNoGeneration(),
                                 other.points._getNamesNoGeneration())
 
     def _equalFeatureNames(self, other):
-        if other is None or not isinstance(other, Base):
-            return False
         return (self._equalNames(self.features._getNamesNoGeneration(),
                                  other.features._getNamesNoGeneration()))
 
@@ -5330,19 +5294,11 @@ class Base(object):
         pass
 
     @abstractmethod
-    def _flattenToOnePoint_implementation(self):
+    def _flatten_implementation(self, order):
         pass
 
     @abstractmethod
-    def _flattenToOneFeature_implementation(self):
-        pass
-
-    @abstractmethod
-    def _unflattenFromOnePoint_implementation(self, numPoints):
-        pass
-
-    @abstractmethod
-    def _unflattenFromOneFeature_implementation(self, numFeatures):
+    def _unflatten_implementation(self, dataDimensions, order):
         pass
 
     @abstractmethod

@@ -60,9 +60,9 @@ class List(Base):
             #case1: data=[]. self.data will be [], shape will be (0, shape[1])
             # or (0, len(featureNames)) or (0, 0)
             if len(data) == 0:
-                if shape:
+                if shape and len(shape) == 2:
                     shape = (0, shape[1])
-                else:
+                elif shape is None:
                     shape = (0, len(featureNames) if featureNames else 0)
             elif isAllowedSingleElement(data[0]):
             #case2: data=['a', 'b', 'c'] or [1,2,3]. self.data will be
@@ -72,7 +72,8 @@ class List(Base):
                         if not isAllowedSingleElement(i):
                             msg = 'invalid input data format.'
                             raise InvalidArgumentValue(msg)
-                shape = (1, len(data))
+                if shape is None:
+                    shape = (1, len(data))
                 data = [data]
             elif isinstance(data[0], list) or hasattr(data[0], 'setLimit'):
             #case3: data=[[1,2,3], ['a', 'b', 'c']] or [[]] or [[], []].
@@ -88,7 +89,8 @@ class List(Base):
                             if not isAllowedSingleElement(j):
                                 msg = '%s is invalid input data format.'%j
                                 raise InvalidArgumentValue(msg)
-                shape = (len(data), numFeatures)
+                if shape is None:
+                    shape = (len(data), numFeatures)
 
             if reuseData:
                 data = data
@@ -101,14 +103,15 @@ class List(Base):
 
         if is2DArray(data):
             #case5: data is a numpy array. shape is already in np array
-            shape = data.shape
+            if shape is None:
+                shape = data.shape
             data = data.tolist()
 
         if len(data) == 0:
             #case6: data is a ListPassThrough associated with empty list
             data = []
 
-        self._numFeatures = shape[1]
+        self._numFeatures = int(numpy.prod(shape[1:]))
         self.data = data
 
         kwds['featureNames'] = featureNames
@@ -173,15 +176,14 @@ class List(Base):
     def _isIdentical_implementation(self, other):
         if not isinstance(other, List):
             return False
-        if len(self.points) != len(other.points):
-            return False
-        if len(self.features) != len(other.features):
-            return False
+
         for index in range(len(self.points)):
             sPoint = self.data[index]
             oPoint = other.data[index]
             if sPoint != oPoint:
-                return False
+                for sVal, oVal in zip(sPoint, oPoint):
+                    if sVal != oVal and (sVal == sVal or oVal == oVal):
+                        return False
         return True
 
     def _writeFileCSV_implementation(self, outPath, includePointNames,
@@ -254,8 +256,7 @@ class List(Base):
         isEmpty = False
         if len(self.points) == 0 or len(self.features) == 0:
             isEmpty = True
-            emptyData = numpy.empty(shape=(len(self.points),
-                                           len(self.features)))
+            emptyData = numpy.empty(shape=self.shape)
 
         if to == 'pythonlist':
             return [pt.copy() for pt in self.data]
@@ -272,31 +273,44 @@ class List(Base):
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
+
+        needsReshape = len(self._shape) > 2
         if to == 'numpyarray':
             if isEmpty:
-                return emptyData
-            return convertList(numpy2DArray, self.data)
+                ret = emptyData
+            else:
+                ret = convertList(numpy2DArray, self.data)
+            if needsReshape:
+                return ret.reshape(self._shape)
+            return ret
+        if needsReshape:
+            data = numpy.empty(self._shape[:2], dtype=numpy.object_)
+            for i in range(self.shape[0]):
+                data[i] = self.points[i].copy('pythonlist')
+            if isEmpty:
+                emptyData = data
+        else:
+            data = convertList(numpy2DArray, self.data)
         if to == 'numpymatrix':
             if isEmpty:
                 return numpy.matrix(emptyData)
-            return convertList(numpy.matrix, self.data)
+            return numpy.matrix(data)
         if 'scipy' in to:
             if not scipy.nimbleAccessible():
                 msg = "scipy is not available"
                 raise PackageException(msg)
-            asArray = convertList(numpy2DArray, self.data)
             if to == 'scipycsc':
                 if isEmpty:
                     return scipy.sparse.csc_matrix(emptyData)
-                return scipy.sparse.csc_matrix(asArray)
+                return scipy.sparse.csc_matrix(data)
             if to == 'scipycsr':
                 if isEmpty:
                     return scipy.sparse.csr_matrix(emptyData)
-                return scipy.sparse.csr_matrix(asArray)
+                return scipy.sparse.csr_matrix(data)
             if to == 'scipycoo':
                 if isEmpty:
                     return scipy.sparse.coo_matrix(emptyData)
-                return scipy.sparse.coo_matrix(asArray)
+                return scipy.sparse.coo_matrix(data)
         if to == 'pandasdataframe':
             if not pd.nimbleAccessible():
                 msg = "pandas is not available"
@@ -305,7 +319,7 @@ class List(Base):
                 return pd.DataFrame(emptyData)
             pnames = self.points._getNamesNoGeneration()
             fnames = self.features._getNamesNoGeneration()
-            return pd.DataFrame(self.data.copy(), index=pnames, columns=fnames)
+            return pd.DataFrame(data, index=pnames, columns=fnames)
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):
@@ -318,43 +332,33 @@ class List(Base):
                 fill = replaceWith.data[p - pointStart]
                 self.data[p][featureStart:featureEnd + 1] = fill
 
-    def _flattenToOnePoint_implementation(self):
-        onto = self.data[0]
-        for _ in range(1, len(self.points)):
-            onto += self.data[1]
-            del self.data[1]
 
-        self._numFeatures = len(onto)
+    def _flatten_implementation(self, order):
+        if order == 'point':
+            onto = self.data[0]
+            for _ in range(1, len(self.points)):
+                onto += self.data[1]
+                del self.data[1]
+        else:
+            result = [[]]
+            for i in range(len(self.features)):
+                result[0].extend(p[i] for p in self.data)
+            self.data = result
+        self._numFeatures = self.shape[0] * self.shape[1]
 
-    def _flattenToOneFeature_implementation(self):
+    def _unflatten_implementation(self, reshape, order):
         result = []
-        for i in range(len(self.features)):
-            for p in self.data:
-                result.append([p[i]])
-
-        self.data = result
-        self._numFeatures = 1
-
-    def _unflattenFromOnePoint_implementation(self, numPoints):
-        result = []
-        numFeatures = len(self.features) // numPoints
-        for i in range(numPoints):
-            temp = self.data[0][(i*numFeatures):((i+1)*numFeatures)]
-            result.append(temp)
-
-        self.data = result
-        self._numFeatures = numFeatures
-
-    def _unflattenFromOneFeature_implementation(self, numFeatures):
-        result = []
-        numPoints = len(self.points) // numFeatures
-        # reconstruct the shape we want, point by point. We access the
-        # singleton values from the current data in an out of order iteration
-        for i in range(numPoints):
-            temp = []
-            for j in range(i, len(self.points), numPoints):
-                temp += self.data[j]
-            result.append(temp)
+        numPoints = reshape[0]
+        numFeatures = numpy.prod(reshape[1:])
+        data = self.copy('pythonlist', outputAs1D=True)
+        if order == 'point':
+            for i in range(numPoints):
+                temp = data[(i*numFeatures):((i+1)*numFeatures)]
+                result.append(temp)
+        else:
+            for i in range(numPoints):
+                temp = data[i::numPoints]
+                result.append(temp)
 
         self.data = result
         self._numFeatures = numFeatures
@@ -525,18 +529,45 @@ class List(Base):
         return self.data[x][y]
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
-                             featureEnd):
+                             featureEnd, dropDimension):
         kwds = {}
         kwds['data'] = ListPassThrough(self, pointStart, pointEnd,
                                        featureStart, featureEnd)
+        kwds['shape'] = (pointEnd - pointStart, featureEnd - featureStart)
         kwds['source'] = self
+        if len(self._shape) > 2:
+            if dropDimension:
+                shape = self._shape[1:]
+                source = self._createNestedObject(pointStart)
+                kwds['source'] = source
+                kwds['data'] = source.data
+                pointStart, pointEnd = 0, source.shape[0]
+                featureStart, featureEnd = 0, source.shape[1]
+            else:
+                shape = self._shape.copy()
+                shape[0] = pointEnd - pointStart
+            kwds['shape'] = shape
         kwds['pointStart'] = pointStart
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
         kwds['reuseData'] = True
-        kwds['shape'] = (pointEnd - pointStart, featureEnd - featureStart)
+
         return ListView(**kwds)
+
+    def _createNestedObject(self, pointIndex):
+        """
+        Create an object of one less dimension
+        """
+        reshape = (self._shape[1], int(numpy.prod(self._shape[2:])))
+        data = []
+        point = self.data[pointIndex]
+        for i in range(reshape[0]):
+            start = i * reshape[1]
+            end = start + reshape[1]
+            data.append(point[start:end])
+
+        return List(data, shape=self._shape[1:], reuseData=True)
 
     def _validate_implementation(self, level):
         assert len(self.data) == len(self.points)
@@ -555,9 +586,12 @@ class List(Base):
         contained in this object. False otherwise
         """
         for point in self.points:
-            for i in range(len(point)):
-                if point[i] == 0:
-                    return True
+            if len(point._shape) == 2 and point._shape[0] == 1:
+                for i in range(len(point)):
+                    if point[i] == 0:
+                        return True
+            else:
+                return point.containsZero()
         return False
 
 
@@ -599,8 +633,8 @@ class List(Base):
                 return val
             return convertTo(val)
 
-        if any(any(needConversion(v) for v in ft) for ft in self.features):
-            return [list(map(convertType, pt)) for pt in self.points]
+        if any(any(needConversion(v) for v in pt) for pt in self.data):
+            return [list(map(convertType, pt)) for pt in self.data]
         return self.data
 
     def _iterateElements_implementation(self, order, only):
@@ -627,8 +661,7 @@ class ListView(BaseView, List):
         # for copy
         if ((len(self.points) == 0 or len(self.features) == 0)
                 and to != 'List'):
-            emptyStandin = numpy.empty((len(self.points),
-                                        len(self.features)))
+            emptyStandin = numpy.empty(self._shape)
             intermediate = nimble.createData('Matrix', emptyStandin,
                                              useLog=False)
             return intermediate.copy(to=to)

@@ -16,6 +16,7 @@ from collections import OrderedDict
 import nimble
 from nimble.logger import handleLogging
 from nimble.exceptions import ImproperObjectAction
+from .dataHelpers import limitedTo2D
 
 class Points(object):
     """
@@ -29,6 +30,12 @@ class Points(object):
     def __init__(self, base):
         self._base = base
         super(Points, self).__init__()
+
+    def __iter__(self):
+        return self._iter()
+
+    def __getitem__(self, key):
+        return self._getitem(key)
 
     ########################
     # Low Level Operations #
@@ -297,7 +304,7 @@ class Points(object):
 
         See Also
         --------
-        nimble.data.base.Base.copy
+        Base.copy
 
         Examples
         --------
@@ -823,6 +830,7 @@ class Points(object):
         """
         self._retain(toRetain, start, end, number, randomize, useLog)
 
+    @limitedTo2D
     def count(self, condition):
         """
         The number of points which satisfy the condition.
@@ -843,8 +851,7 @@ class Points(object):
 
         See Also
         --------
-        nimble.data.Base.countElements,
-        nimble.data.Base.countUniqueElements
+        Base.countElements, Base.countUniqueElements
 
         Examples
         --------
@@ -910,25 +917,6 @@ class Points(object):
             featureNames={'dept':0, 'ID':1, 'quantity':2}
             )
 
-        Sort with a list of identifiers.
-
-        >>> raw = [['home', 81, 3],
-        ...        ['gard', 98, 10],
-        ...        ['home', 14, 1],
-        ...        ['home', 11, 3]]
-        >>> pts = ['o_4', 'o_3', 'o_2', 'o_1']
-        >>> orders = nimble.createData('DataFrame', raw, pointNames=pts)
-        >>> orders.points.sort(sortHelper=['o_1', 'o_2', 'o_3', 'o_4'])
-        >>> orders
-        DataFrame(
-            [[home 11 3 ]
-             [home 14 1 ]
-             [gard 98 10]
-             [home 81 3 ]]
-            pointNames={'o_1':0, 'o_2':1, 'o_3':2, 'o_4':3}
-            )
-
-
         Sort using a comparator function.
 
         >>> def compareQuantity(pt1, pt2):
@@ -974,60 +962,7 @@ class Points(object):
         """
         self._sort(sortBy, sortHelper, useLog)
 
-    # def flattenToOne(self):
-    #     """
-    #     Modify this object so that its values are in a single point.
-    #
-    #     Each feature in the result maps to exactly one value from the
-    #     original object. The order of values respects the point order
-    #     from the original object, if there were n features in the
-    #     original, the first n values in the result will exactly match
-    #     the first point, the nth to (2n-1)th values will exactly match
-    #     the original second point, etc. The feature names will be
-    #     transformed such that the value at the intersection of the
-    #     "pn_i" named point and "fn_j" named feature from the original
-    #     object will have a feature name of "fn_j | pn_i". The single
-    #     point will have a name of "Flattened". This is an inplace
-    #     operation.
-    #
-    #     See Also
-    #     --------
-    #     unflattenFromOne
-    #
-    #     Examples
-    #     --------
-    #     TODO
-    #     """
-    #     self._flattenToOne()
-    #
-    # def unflattenFromOne(self, numPoints):
-    #     """
-    #     Adjust a flattened point vector to contain multiple points.
-    #
-    #     This is an inverse of the method ``flattenToOne``: if an
-    #     object foo with n points calls the flatten method, then this
-    #     method with n as the argument, the result should be identical to
-    #     the original foo. It is not limited to objects that have
-    #     previously had ``flattenToOne`` called on them; any object
-    #     whose structure and names are consistent with a previous call to
-    #     flattenToOnePoint may call this method. This includes objects
-    #     with all default names. This is an inplace operation.
-    #
-    #     Parameters
-    #     ----------
-    #     numPoints : int
-    #         The number of points in the modified object.
-    #
-    #     See Also
-    #     --------
-    #     flattenToOnePoint
-    #
-    #     Examples
-    #     --------
-    #     TODO
-    #     """
-    #     self._unflattenFromOne(numPoints)
-
+    @limitedTo2D
     def transform(self, function, points=None, useLog=None):
         """
         Modify this object by applying a function to each point.
@@ -1102,7 +1037,7 @@ class Points(object):
     ###########################
     # Higher Order Operations #
     ###########################
-
+    @limitedTo2D
     def calculate(self, function, points=None, useLog=None):
         """
         Return a new object with a calculation applied to each point.
@@ -1180,6 +1115,7 @@ class Points(object):
         """
         return self._calculate(function, points, useLog)
 
+    @limitedTo2D
     def matching(self, function, useLog=None):
         """
         Return a boolean value object identifying matching points.
@@ -1398,6 +1334,7 @@ class Points(object):
         """
         self._insert(None, toAppend, True, useLog)
 
+    @limitedTo2D
     def mapReduce(self, mapper, reducer, useLog=None):
         """
         Apply a mapper and reducer function to this object.
@@ -1448,12 +1385,20 @@ class Points(object):
         """
         return self._mapReduce(mapper, reducer, useLog)
 
-    def shuffle(self, useLog=None):
+    def permute(self, order=None, useLog=None):
         """
-        Permute the indexing of the points to a random order.
+        Permute the indexing of the points.
+
+        Change the arrangement of points in the object. A specific
+        permutation can be provided as the ``order`` argument. If
+        ``order`` is None, the permutation will be random. Note: a
+        random permutation may be the same as the current permutation.
 
         Parameters
         ----------
+        order : list, None
+            A list of identifiers indicating the new permutation order.
+            If None, the permutation will be random.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1464,8 +1409,8 @@ class Points(object):
 
         Notes
         -----
-        This relies on python's random.shuffle() so may not be
-        sufficiently random for large number of points.
+        Random permutation relies on python's random.shuffle() which may
+        not be sufficiently random for large number of points.
         See random.shuffle()'s documentation.
 
         Examples
@@ -1476,7 +1421,7 @@ class Points(object):
         ...        [3, 3, 3, 3],
         ...        [4, 4, 4, 4]]
         >>> data = nimble.createData('DataFrame', raw)
-        >>> data.points.shuffle()
+        >>> data.points.permute()
         >>> data
         DataFrame(
             [[3 3 3 3]
@@ -1484,9 +1429,28 @@ class Points(object):
              [4 4 4 4]
              [1 1 1 1]]
             )
-        """
-        self._shuffle(useLog)
 
+        Permute with a list of identifiers.
+
+        >>> raw = [['home', 81, 3],
+        ...        ['gard', 98, 10],
+        ...        ['home', 14, 1],
+        ...        ['home', 11, 3]]
+        >>> pts = ['o_4', 'o_3', 'o_2', 'o_1']
+        >>> orders = nimble.createData('DataFrame', raw, pointNames=pts)
+        >>> orders.points.permute(['o_1', 'o_2', 'o_3', 'o_4'])
+        >>> orders
+        DataFrame(
+            [[home 11 3 ]
+             [home 14 1 ]
+             [gard 98 10]
+             [home 81 3 ]]
+            pointNames={'o_1':0, 'o_2':1, 'o_3':2, 'o_4':3}
+            )
+        """
+        self._permute(order, useLog)
+
+    @limitedTo2D
     def fillMatching(self, fillWith, matchingElements, points=None,
                      useLog=None, **kwarguments):
         """
@@ -1504,7 +1468,7 @@ class Points(object):
             * value - a value to fill each matching value in each point
             * function - must be in the format:
               fillWith(point, matchingElements) or
-              fillWith(point, matchingElements, **kwarguments)
+              fillWith(point, matchingElements, \*\*kwarguments)
               and return the transformed point as a list of values.
               Certain fill methods can be imported from nimble's fill
               module.
@@ -1575,6 +1539,7 @@ class Points(object):
         return self._fillMatching(fillWith, matchingElements, points,
                                   useLog,  **kwarguments)
 
+    @limitedTo2D
     def normalize(self, subtract=None, divide=None, applyResultTo=None,
                   useLog=None):
         """
@@ -1624,7 +1589,7 @@ class Points(object):
         """
         self._normalize(subtract, divide, applyResultTo, useLog)
 
-
+    @limitedTo2D
     def splitByCollapsingFeatures(self, featuresToCollapse, featureForNames,
                                   featureForValues, useLog=None):
         """
@@ -1755,7 +1720,7 @@ class Points(object):
                       Points.splitByCollapsingFeatures, featuresToCollapse,
                       featureForNames, featureForValues)
 
-
+    @limitedTo2D
     def combineByExpandingFeatures(self, featureWithFeatureNames,
                                    featuresWithValues, useLog=None):
         """
@@ -2041,7 +2006,7 @@ class Points(object):
     #########################
     # Statistical functions #
     #########################
-
+    @limitedTo2D
     def similarities(self, similarityFunction):
         """
         Calculate similarities between points.
@@ -2062,6 +2027,7 @@ class Points(object):
         """
         return self._similarities(similarityFunction)
 
+    @limitedTo2D
     def statistics(self, statisticsFunction):
         """
         Calculate point statistics.
@@ -2084,6 +2050,14 @@ class Points(object):
     ####################
     # Abstract Methods #
     ####################
+
+    @abstractmethod
+    def _iter(self):
+        pass
+
+    @abstractmethod
+    def _getitem(self, key):
+        pass
 
     @abstractmethod
     def _getName(self, index):
@@ -2166,7 +2140,7 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _shuffle(self, useLog=None):
+    def _permute(self, order=None, useLog=None):
         pass
 
     @abstractmethod

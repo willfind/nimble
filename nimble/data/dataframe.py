@@ -56,7 +56,9 @@ class DataFrame(Base):
         else:
             self.data = pd.DataFrame(data, copy=True)
 
-        kwds['shape'] = self.data.shape
+        shape = kwds.get('shape', None)
+        if shape is None:
+            kwds['shape'] = self.data.shape
         super(DataFrame, self).__init__(**kwds)
 
     def _getPoints(self):
@@ -106,10 +108,6 @@ class DataFrame(Base):
 
     def _isIdentical_implementation(self, other):
         if not isinstance(other, DataFrame):
-            return False
-        if len(self.points) != len(other.points):
-            return False
-        if len(self.features) != len(other.features):
             return False
 
         return allDataIdentical(self.data.values, other.data.values)
@@ -183,16 +181,27 @@ class DataFrame(Base):
                                           reuseData=True)
         if to == 'pythonlist':
             return self.data.values.tolist()
+        needsReshape = len(self._shape) > 2
         if to == 'numpyarray':
+            if needsReshape:
+                return self.data.values.reshape(self._shape)
             return self.data.values.copy()
+        if needsReshape:
+            data = numpy.empty(self._shape[:2], dtype=numpy.object_)
+            for i in range(self.shape[0]):
+                data[i] = self.points[i].copy('pythonlist')
+        elif to == 'pandasdataframe':
+            data = self.data.copy()
+        else:
+            data = self.data
         if to == 'numpymatrix':
-            return numpy.matrix(self.data.values)
+            return numpy.matrix(data)
         if 'scipy' in to:
             if not scipy.nimbleAccessible():
                 msg = "scipy is not available"
                 raise PackageException(msg)
             if to == 'scipycoo':
-                return scipy.sparse.coo_matrix(self.data.values)
+                return scipy.sparse.coo_matrix(data)
             try:
                 ret = self.data.values.astype(numpy.float)
             except ValueError:
@@ -205,7 +214,7 @@ class DataFrame(Base):
         if to == 'pandasdataframe':
             pnames = self.points._getNamesNoGeneration()
             fnames = self.features._getNamesNoGeneration()
-            df = self.data.copy()
+            df = pd.DataFrame(data)
             if pnames is not None:
                 df.index = pnames
             if fnames is not None:
@@ -228,25 +237,16 @@ class DataFrame(Base):
         featureEnd += 1
         self.data.iloc[pointStart:pointEnd, featureStart:featureEnd] = values
 
-    def _flattenToOnePoint_implementation(self):
+    def _flatten_implementation(self, order):
         numElements = len(self.points) * len(self.features)
-        self.data = pd.DataFrame(
-            self.data.values.reshape((1, numElements), order='C'))
+        order = 'C' if order == 'point' else 'F'
+        self.data = pd.DataFrame(self.data.values.reshape((1, numElements),
+                                                          order=order))
 
-    def _flattenToOneFeature_implementation(self):
-        numElements = len(self.points) * len(self.features)
-        self.data = pd.DataFrame(
-            self.data.values.reshape((numElements, 1), order='F'))
-
-    def _unflattenFromOnePoint_implementation(self, numPoints):
-        numFeatures = len(self.features) // numPoints
-        self.data = pd.DataFrame(
-            self.data.values.reshape((numPoints, numFeatures), order='C'))
-
-    def _unflattenFromOneFeature_implementation(self, numFeatures):
-        numPoints = len(self.points) // numFeatures
-        self.data = pd.DataFrame(
-            self.data.values.reshape((numPoints, numFeatures), order='F'))
+    def _unflatten_implementation(self, reshape, order):
+        order = 'C' if order == 'point' else 'F'
+        self.data = pd.DataFrame(self.data.values.reshape(reshape,
+                                                          order=order))
 
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):
@@ -339,11 +339,27 @@ class DataFrame(Base):
         return self.data.values[x, y]
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
-                             featureEnd):
+                             featureEnd, dropDimension):
         kwds = {}
         kwds['data'] = self.data.iloc[pointStart:pointEnd,
                                       featureStart:featureEnd]
         kwds['source'] = self
+        pRange = pointEnd - pointStart
+        fRange = featureEnd - featureStart
+        if len(self._shape) > 2:
+            if dropDimension:
+                shape = self._shape[1:]
+                source = self._createNestedObject(pointStart)
+                kwds['source'] = source
+                kwds['data'] = source.data
+                pointStart, pointEnd = 0, source.shape[0]
+                featureStart, featureEnd = 0, source.shape[1]
+                pRange = source.shape[0]
+                fRange = source.shape[1]
+            else:
+                shape = self._shape.copy()
+                shape[0] = pRange
+            kwds['shape'] = shape
         kwds['pointStart'] = pointStart
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
@@ -354,10 +370,18 @@ class DataFrame(Base):
 
         # Reassign labels as to match the positions in the view object,
         # not the positions in the source object.
-        ret.data.index = pd.RangeIndex(pointEnd - pointStart)
-        ret.data.columns = pd.RangeIndex(featureEnd - featureStart)
+        ret.data.index = pd.RangeIndex(pRange)
+        ret.data.columns = pd.RangeIndex(fRange)
 
         return ret
+
+    def _createNestedObject(self, pointIndex):
+        """
+        Create an object of one less dimension
+        """
+        reshape = (self._shape[1], int(numpy.prod(self._shape[2:])))
+        data = self.data.values[pointIndex].reshape(reshape)
+        return DataFrame(data, shape=self._shape[1:], reuseData=True)
 
     def _validate_implementation(self, level):
         shape = self.data.shape

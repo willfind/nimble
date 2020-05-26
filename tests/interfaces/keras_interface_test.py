@@ -4,6 +4,7 @@ Unit tests for keras_interface.py
 Cannot test for expected result equality due to inability to control for
 randomness in Keras.
 """
+import functools
 
 import numpy as np
 from nose.tools import raises
@@ -12,33 +13,60 @@ import nimble
 from nimble import createData
 from nimble.interfaces.keras_interface import Keras
 from nimble.exceptions import InvalidArgumentValue
+from nimble.utility import DeferredModuleImport
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory, noLogEntryExpected
 
+keras = DeferredModuleImport("keras")
+tfKeras = DeferredModuleImport('tensorflow.keras')
+
 keraSkipDec = SkipMissing('Keras')
+
+def chooseOptimizer(func):
+    """
+    Optimizer objects and/or parameters vary by keras API being used.
+    """
+    @functools.wraps(func)
+    def wrapped():
+        kwOld = {'lr': 0.1, 'decay': 1e-6, 'momentum': 0.9, 'nesterov': True}
+        # keras 2.3+ decay deprecated and lr changed to learning_rate
+        kwNew =  {'learning_rate': 0.1, 'momentum': 0.9, 'nesterov': True}
+        try:
+            optimizer = nimble.Init('SGD', **kwOld)
+            return func(optimizer=optimizer)
+        except InvalidArgumentValue:
+            optimizer = nimble.Init('SGD', **kwNew)
+            return func(optimizer=optimizer)
+
+    return wrapped
 
 @keraSkipDec
 @noLogEntryExpected
 def test_Keras_version():
     import keras
     interface = Keras()
-    assert interface.version() == keras.__version__
+    if tfKeras.nimbleAccessible():
+        # tensorflow.keras is prioritized based on recommendation from keras
+        version = tfKeras.__version__ 
+    elif keras.nimbleAccessible():
+        version = keras.__version__
+    assert interface.version() == version
 
 @keraSkipDec
 @logCountAssertionFactory(5)
-def testKerasAPI():
+@chooseOptimizer
+def testKerasAPI(optimizer):
     """
     Test Keras can handle a variety of arguments passed to all major learning functions
     """
     x_train = createData('Matrix', np.random.random((1000, 20)), useLog=False)
-    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)), useLog=False)
+    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)),
+                         convertToType=float, useLog=False)
 
     layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
     layer1 = nimble.Init('Dropout', rate=0.5)
     layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
-
-    optimizer = nimble.Init('sgd', lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
     #####test fit
     mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
                        layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
@@ -75,18 +103,19 @@ def testKerasAPI():
 
 @keraSkipDec
 @logCountAssertionFactory(3)
-def testKerasIncremental():
+@chooseOptimizer
+def testKerasIncremental(optimizer):
     """
     Test Keras can handle and incrementalTrain call
     """
     x_train = createData('Matrix', np.random.random((1000, 20)), useLog=False)
-    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)), useLog=False)
+    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)),
+                         convertToType=float, useLog=False)
 
     layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
     layer1 = nimble.Init('Dropout', rate=0.5)
     layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
-    optimizer = nimble.Init('sgd', lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
     #####test fit
     mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
                        layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
@@ -100,7 +129,8 @@ def testKerasIncremental():
 
 @keraSkipDec
 @logCountAssertionFactory(2)
-def testKeras_Sparse_FitGenerator():
+@chooseOptimizer
+def testKeras_Sparse_FitGenerator(optimizer):
     """
     Test Keras on Sparse data; uses different training method - fit_generator
     """
@@ -108,13 +138,12 @@ def testKeras_Sparse_FitGenerator():
     y_data = np.random.randint(2, size=(20, 1))
 
     x_train = createData('Sparse', x_data, useLog=False)
-    y_train = createData('Matrix', y_data, useLog=False)
+    y_train = createData('Matrix', y_data, useLog=False, convertToType=float)
 
     layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=7)
     layer1 = nimble.Init('Dropout', rate=0.5)
     layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
-    optimizer = nimble.Init('sgd', lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
 
     mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
                        layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
@@ -125,17 +154,18 @@ def testKeras_Sparse_FitGenerator():
 
 @keraSkipDec
 @logCountAssertionFactory(3)
-def testKeras_TrainedLearnerApplyArguments():
+@chooseOptimizer
+def testKeras_TrainedLearnerApplyArguments(optimizer):
     """ Test a keras function that accept arguments for predict"""
     x_train = createData('Matrix', np.random.random((1000, 20)), useLog=False)
-    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)), useLog=False)
+    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)),
+                         convertToType=float, useLog=False)
 
     layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
     layer1 = nimble.Init('Dropout', rate=0.5)
     layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
 
-    optimizer = nimble.Init('sgd', lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
     # Sequential.predict takes a 'steps' argument. Default is 20
     mym = nimble.train(
         'keras.Sequential', trainX=x_train, trainY=y_train,
@@ -148,17 +178,18 @@ def testKeras_TrainedLearnerApplyArguments():
 
 @keraSkipDec
 @logCountAssertionFactory(1)
-def testKeras_TrainedLearnerApplyArguments_exception():
+@chooseOptimizer
+def testKeras_TrainedLearnerApplyArguments_exception(optimizer):
     """ Test an keras function with invalid arguments for predict"""
     x_train = createData('Matrix', np.random.random((1000, 20)), useLog=False)
-    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)), useLog=False)
+    y_train = createData('Matrix', np.random.randint(2, size=(1000, 1)),
+                         convertToType=float, useLog=False)
 
     layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
     layer1 = nimble.Init('Dropout', rate=0.5)
     layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
 
-    optimizer = nimble.Init('sgd', lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
     # Sequential.predict does not take a 'foo' argument.
     mym = nimble.train(
         'keras.Sequential', trainX=x_train, trainY=y_train,
@@ -179,18 +210,18 @@ def testKeras_TrainedLearnerApplyArguments_exception():
 
 
 @raises(InvalidArgumentValue)
-def testKeras_fitGeneratorOnlyParametersDisallowedForDense():
+@chooseOptimizer
+def testKeras_fitGeneratorOnlyParametersDisallowedForDense(optimizer):
     x_data = np.random.random((20, 7))
     y_data = np.random.randint(2, size=(20, 1))
 
     x_train = createData('Matrix', x_data, useLog=False)
-    y_train = createData('Matrix', y_data, useLog=False)
+    y_train = createData('Matrix', y_data, useLog=False, convertToType=float)
 
     layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=7)
     layer1 = nimble.Init('Dropout', rate=0.5)
     layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
-    optimizer = nimble.Init('sgd', lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
 
     # max_queue_size only applies to fit_generator for Sparse data
     mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train,
@@ -200,18 +231,18 @@ def testKeras_fitGeneratorOnlyParametersDisallowedForDense():
 
 
 @raises(InvalidArgumentValue)
-def testKeras_fitOnlyParametersDisallowedForSparse():
+@chooseOptimizer
+def testKeras_fitOnlyParametersDisallowedForSparse(optimizer):
     x_data = np.random.random((20, 7))
     y_data = np.random.randint(2, size=(20, 1))
 
     x_train = createData('Sparse', x_data, useLog=False)
-    y_train = createData('Matrix', y_data, useLog=False)
+    y_train = createData('Matrix', y_data, useLog=False, convertToType=float)
 
     layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=7)
     layer1 = nimble.Init('Dropout', rate=0.5)
     layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
     layers = [layer0, layer1, layer2]
-    optimizer = nimble.Init('sgd', lr=0.1, decay=1e-6, momentum=0.9, nesterov=True)
 
     # max_queue_size only applies to fit_generator for Sparse data
     mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train,

@@ -63,9 +63,6 @@ class Axis(object):
             self._isPoint = False
         super(Axis, self).__init__(**kwargs)
 
-    def __iter__(self):
-        return AxisIterator(self)
-
     def __len__(self):
         if self._isPoint:
             return self._base._pointCount
@@ -74,6 +71,9 @@ class Axis(object):
 
     def __bool__(self):
         return len(self) > 0
+
+    def _iter(self):
+        return AxisIterator(self)
 
     ########################
     # Low Level Operations #
@@ -184,13 +184,17 @@ class Axis(object):
         except KeyError:
             return False
 
-    def __getitem__(self, key):
-        if isinstance(key, (int, float, str, numpy.integer)):
+    def _getitem(self, key):
+        singleKey = isinstance(key, (int, float, str, numpy.integer))
+        if singleKey:
             key = [self._getIndex(key, allowFloats=True)]
         else:
             key = self._processMultiple(key)
         if key is None:
             return self._base.copy()
+
+        if singleKey and len(self._base._shape) > 2:
+            return self._base.pointView(key[0]).copy()
         return self._structuralBackend_implementation('copy', key)
 
     #########################
@@ -262,9 +266,10 @@ class Axis(object):
 
     def _sort(self, sortBy, sortHelper, useLog=None):
         if sortBy is not None and sortHelper is not None:
-            msg = "Cannot specify a feature to sort by and a helper function. "
+            sortAxis = 'feature' if self._axis == 'point' else 'point'
+            msg = "Cannot specify a {0} to sort by and a helper function. "
             msg += "Either sortBy or sortHelper must be None"
-            raise InvalidArgumentTypeCombination(msg)
+            raise InvalidArgumentTypeCombination(msg.format(sortAxis))
         if sortBy is None and sortHelper is None:
             msg = "Either sortBy or sortHelper must not be None"
             raise InvalidArgumentTypeCombination(msg)
@@ -279,28 +284,17 @@ class Axis(object):
             otherCount = self._base._pointCount
 
         sortByArg = copy.copy(sortBy)
+        if sortBy is not None and len(self._base._shape) > 2:
+            msg = "sortBy cannot be used for objects with more than "
+            msg += "two dimensions"
+            raise ImproperObjectAction(msg)
         if sortBy is not None and isinstance(sortBy, str):
             axisObj = self._base._getAxis(otherAxis)
             sortBy = axisObj._getIndex(sortBy)
-
         if sortHelper is not None and not hasattr(sortHelper, '__call__'):
-            indices = constructIndicesList(self._base, self._axis,
-                                           sortHelper)
-            if len(indices) != axisCount:
-                msg = "This object contains {0} {1}s, "
-                msg += "but sortHelper has {2} identifiers"
-                msg = msg.format(axisCount, self._axis, len(indices))
-                raise InvalidArgumentValue(msg)
-            if len(indices) != len(set(indices)):
-                msg = "This object contains {0} {1}s, "
-                msg += "but sortHelper has {2} unique identifiers"
-                msg = msg.format(axisCount, self._axis, len(set(indices)))
-                raise InvalidArgumentValue(msg)
-            indexPosition = indices
-        else:
-            axis = self._axis + 's'
-            indexPosition = sortIndexPosition(self, sortBy, sortHelper, axis)
-
+            raise InvalidArgumentType('sortHelper must be callabe')
+        axis = self._axis + 's'
+        indexPosition = sortIndexPosition(self, sortBy, sortHelper, axis)
         # its already sorted in these cases
         if otherCount == 0 or axisCount == 0 or axisCount == 1:
             return
@@ -316,103 +310,40 @@ class Axis(object):
                       self._base.getTypeString(), self._sigFunc('sort'),
                       sortByArg, sortHelper)
 
-    # def _flattenToOne(self):
-    #     if self._base._pointCount == 0 or self._base._featureCount == 0:
-    #         msg = "Can only flattenToOne when there is one or more {0}s. "
-    #         msg += "This object has 0 {0}s."
-    #         msg = msg.format(self._axis)
-    #         raise ImproperActionException(msg)
-    #
-    #     # TODO: flatten nameless Objects without the need to generate default
-    #     # names for them.
-    #     if not self._base._pointNamesCreated():
-    #         self._base.points._setAllDefault()
-    #     if not self._base._featureNamesCreated():
-    #         self._base.features._setAllDefault()
-    #
-    #     self._flattenToOne_implementation()
-    #
-    #     if isinstance(self, Points):
-    #         axisCount = self._base._pointCount
-    #         offAxisCount = self._base._featureCount
-    #         setAxisCount = self._base._setpointCount
-    #         setOffAxisCount = self._base._setfeatureCount
-    #         setAxisNames = self._base.points.setNames
-    #         setOffAxisNames = self._base.features.setNames
-    #     else:
-    #         axisCount = self._base._featureCount
-    #         offAxisCount = self._base._pointCount
-    #         setAxisCount = self._base._setfeatureCount
-    #         setOffAxisCount = self._base._setpointCount
-    #         setAxisNames = self._base.features.setNames
-    #         setOffAxisNames = self._base.points.setNames
-    #
-    #     setOffAxisCount(axisCount * offAxisCount)
-    #     setAxisCount(1)
-    #     setOffAxisNames(self._flattenNames(self._axis))
-    #     setAxisNames(['Flattened'])
-    #
-    # def _unflattenFromOne(self, divideInto):
-    #     if isinstance(self, Points):
-    #         offAxis = 'feature'
-    #         axisCount = self._base._pointCount
-    #         offAxisCount = self._base._featureCount
-    #         setAxisCount = self._base._setpointCount
-    #         setOffAxisCount = self._base._setfeatureCount
-    #         setAxisNames = self._base.points.setNames
-    #         setOffAxisNames = self._base.features.setNames
-    #     else:
-    #         offAxis = 'point'
-    #         axisCount = self._base._featureCount
-    #         offAxisCount = self._base._pointCount
-    #         setAxisCount = self._base._setfeatureCount
-    #         setOffAxisCount = self._base._setpointCount
-    #         setAxisNames = self._base.features.setNames
-    #         setOffAxisNames = self._base.points.setNames
-    #
-    #     if offAxisCount == 0:
-    #         msg = "Can only unflattenFromOne when there is one or more "
-    #         msg = "{offAxis}s. This object has 0 {offAxis}s."
-    #         msg = msg.format(offAxis=offAxis)
-    #         raise ImproperActionException(msg)
-    #     if axisCount != 1:
-    #         msg = "Can only unflattenFromOne when there is only one {axis}. "
-    #         msg += "This object has {axisCount} {axis}s."
-    #         msg += msg.format(axis=self._axis, axisCount=axisCount)
-    #         raise ImproperActionException(msg)
-    #     if offAxisCount % divideInto != 0:
-    #         msg = "The argument num{axisCap}s ({divideInto}) must be a "
-    #         msg += "divisor of this object's {offAxis}Count ({offAxisCount}) "
-    #         msg += "otherwise it will not be possible to equally divide the "
-    #         msg += "elements into the desired number of {axis}s."
-    #         msg = msg.format(axisCap=self._axis.capitalize(),
-    #                          divideInto=divideInto, offAxis=offAxis,
-    #                          offAxisCount=offAxisCount, axis=self._axis)
-    #         raise InvalidArgumentValue(msg)
-    #
-    #     if not self._base._pointNamesCreated():
-    #         self._base.points._setAllDefault()
-    #     if not self._base._featureNamesCreated():
-    #         self._base.features._setAllDefault()
-    #
-    #     self._unflattenFromOne_implementation(divideInto)
-    #     ret = self._unflattenNames(divideInto)
-    #
-    #     setOffAxisCount(offAxisCount // divideInto)
-    #     setAxisCount(divideInto)
-    #     setAxisNames(ret[0])
-    #     setOffAxisNames(ret[1])
 
+    def _permute(self, order=None, useLog=None):
+        if order is None:
+            values = len(self)
+            order = list(range(values))
+            pythonRandom.shuffle(order)
+        else:
+            order = constructIndicesList(self._base, self._axis, order,
+                                         'order')
+            if len(order) != len(self):
+                msg = "This object contains {0} {1}s, "
+                msg += "but order has {2} identifiers"
+                msg = msg.format(len(self), self._axis, len(order))
+                raise InvalidArgumentValue(msg)
+            if len(order) != len(set(order)):
+                msg = "This object contains {0} unique identifiers but "
+                msg += "but order has {1} {2}s"
+                msg = msg.format(len(self), len(set(order)), self._axis)
+                raise InvalidArgumentValue(msg)
 
-    def _shuffle(self, useLog=None):
-        values = len(self)
-        indices = list(range(values))
-        pythonRandom.shuffle(indices)
+        # only one possible permutation
+        if len(self) <= 1:
+            return
 
-        self._sort(sortBy=None, sortHelper=indices, useLog=False)
+        # will become _permute_implementation when sort is refactored
+        self._sort_implementation(order)
 
-        handleLogging(useLog, 'prep', '{ax}s.shuffle'.format(ax=self._axis),
-                      self._base.getTypeString(), self._sigFunc('shuffle'))
+        if self._namesCreated():
+            names = self._getNames()
+            reorderedNames = [names[idx] for idx in order]
+            self._setNames(reorderedNames, useLog=False)
+
+        handleLogging(useLog, 'prep', '{ax}s.permute'.format(ax=self._axis),
+                      self._base.getTypeString(), self._sigFunc('permute'))
 
 
     def _transform(self, function, limitTo, useLog=None):
@@ -480,32 +411,30 @@ class Axis(object):
         else:
             limitTo = [i for i in range(len(self))]
 
-        retData = self._calculate_implementation(function, limitTo)
+        retData, offAxisNames = self._calculate_implementation(function,
+                                                               limitTo)
 
         pathPass = (self._base.absolutePath, self._base.relativePath)
 
         ret = nimble.createData(self._base.getTypeString(), retData,
-                                convertToType=function.convertType,
                                 path=pathPass, useLog=False)
 
         if self._isPoint:
-            if len(limitTo) < len(self) and self._namesCreated():
-                names = []
-                for index in limitTo:
-                    names.append(self._getName(index))
-                ret.points.setNames(names, useLog=False)
-            elif self._namesCreated():
-                ret.points.setNames(self._getNamesNoGeneration(), useLog=False)
+            axisNameSetter = ret.points.setNames
+            offAxisNameSetter = ret.features.setNames
         else:
             ret.transpose(useLog=False)
-            if len(limitTo) < len(self) and self._namesCreated():
-                names = []
-                for index in limitTo:
-                    names.append(self._getName(index))
-                ret.features.setNames(names, useLog=False)
-            elif self._namesCreated():
-                ret.features.setNames(self._getNamesNoGeneration(),
-                                      useLog=False)
+            axisNameSetter = ret.features.setNames
+            offAxisNameSetter = ret.points.setNames
+        if len(limitTo) < len(self) and self._namesCreated():
+            names = []
+            for index in limitTo:
+                names.append(self._getName(index))
+            axisNameSetter(names, useLog=False)
+        elif self._namesCreated():
+            axisNameSetter(self._getNames(), useLog=False)
+        if offAxisNames is not None:
+            offAxisNameSetter(offAxisNames, useLog=False)
 
         return ret
 
@@ -513,20 +442,41 @@ class Axis(object):
         retData = []
         # signal to convert to object elementType if function is returning
         # non-numeric values.
-        for axisID in limitTo:
-            if self._isPoint:
-                view = self._base.pointView(axisID)
-            else:
-                view = self._base.featureView(axisID)
+        if self._isPoint:
+            viewer = self._base.pointView
+        else:
+            viewer = self._base.featureView
 
+        offAxisNames = None
+        for i, axisID in enumerate(limitTo):
+            view = viewer(axisID)
             currOut = function(view)
             # the output could have multiple values or be singular.
             if isAllowedSingleElement(currOut):
-                retData.append([currOut])
-            else:
-                retData.append(currOut)
+                currOut = [currOut]
+            elif (isinstance(currOut, nimble.data.Base)
+                    and len(currOut._shape) == 2):
+                # make 2D if a vector and axis does not match vector direction
+                axisIdx = 0 if self._isPoint else 1
+                if 1 in currOut.shape and currOut.shape[axisIdx] != 1:
+                    currOut = currOut.copy('python list')
+                elif i == 0 and self._isPoint:
+                    offAxisNames = currOut.features._getNamesNoGeneration()
+                elif i == 0:
+                    offAxisNames = currOut.points._getNamesNoGeneration()
+            # only point axis can handle multidimensional data
+            if not self._isPoint:
+                try:
+                    assert all(isAllowedSingleElement(v) for v in currOut)
+                except AssertionError:
+                    msg = "function must return a one-dimensional object "
+                    raise ImproperObjectAction(msg)
+                except TypeError:
+                    msg = "function must return a valid single element or "
+                    msg = "an iterable, but got type " + str(type(currOut))
+            retData.append(currOut)
 
-        return retData
+        return retData, offAxisNames
 
 
     def _insert(self, insertBefore, toInsert, append=False, useLog=None):
@@ -872,8 +822,11 @@ class Axis(object):
                     else:
                         namesToRepeat.append(name + "_" + str(i + 1))
 
-        return createDataNoValidation(self._base.getTypeString(), repeated,
-                                      pointNames=ptNames, featureNames=ftNames)
+        ret = createDataNoValidation(self._base.getTypeString(), repeated,
+                                     pointNames=ptNames, featureNames=ftNames)
+        if self._isPoint:
+            ret._shape[1:] = self._base._shape[1:]
+        return ret
 
     ###################
     # Query functions #
@@ -881,7 +834,8 @@ class Axis(object):
 
     def _unique(self):
         ret = self._unique_implementation()
-
+        if self._isPoint:
+            ret._shape[1:] = self._base._shape[1:]
         ret._absPath = self._base.absolutePath
         ret._relPath = self._base.relativePath
 
@@ -1195,12 +1149,17 @@ class Axis(object):
         _validateStructuralArguments(structure, axis, target, start,
                                      end, number, randomize)
         targetList = []
+        argName = 'to' + structure.capitalize()
         if target is not None and isinstance(target, str):
             # check if target is a valid name
             if self._hasName(target):
                 target = self._getIndex(target)
                 targetList.append(target)
             # if not a name then assume it's a query string
+            elif len(self._base._shape) > 2:
+                msg = "query strings for {0} are not supported for data with "
+                msg += "more than two dimensions"
+                raise ImproperObjectAction(msg.format(argName))
             else:
                 query = isQueryString(target, startswithOperator=False)
                 if query:
@@ -1215,7 +1174,6 @@ class Axis(object):
 
         # list-like container types
         if target is not None and not hasattr(target, '__call__'):
-            argName = 'to' + structure.capitalize()
             targetList = constructIndicesList(self._base, axis, target,
                                               argName)
             if len(set(targetList)) != len(targetList):
@@ -1227,6 +1185,10 @@ class Axis(object):
                 raise InvalidArgumentValue(msg)
         # boolean function
         elif target is not None:
+            if len(self._base._shape) > 2:
+                msg = "functions for {0} are not supported for data with more "
+                msg += "than two dimensions"
+                raise ImproperObjectAction(msg.format(argName))
             # construct list from function
             for targetID, view in enumerate(self):
                 if target(view):
@@ -1262,7 +1224,13 @@ class Axis(object):
 
         if structure == 'count':
             return len(targetList)
-        return self._structuralBackend_implementation(structure, targetList)
+        ret = self._structuralBackend_implementation(structure, targetList)
+
+        if self._isPoint and ret is not None:
+            # retain internal dimensions
+            ret._shape[1:] = self._base._shape[1:]
+
+        return ret
 
     def _getStructuralNames(self, targetList):
         nameList = None
@@ -1468,6 +1436,10 @@ class Axis(object):
             funcName = 'features.' + func
 
         if objOffAxisLen != insertOffAxisLen:
+            if len(self._base._shape) > 2:
+                msg = "Cannot perform {0} operation when data has "
+                msg += "different dimensions"
+                raise ImproperObjectAction(msg.format(funcName))
             msg = "The argument '{arg}' must have the same number of "
             msg += "{offAxis}s as the caller object. This object contains "
             msg += "{objCount} {offAxis}s and {arg} contains {insertCount} "
@@ -1599,14 +1571,14 @@ class Axis(object):
             objNames = self._base.points.getNames
             toInsertNames = toInsert.points.getNames
             def sorter(obj, names):
-                obj.points.sort(sortHelper=names)
+                obj.points.permute(names)
         else:
             objNamesCreated = self._base._featureNamesCreated()
             toInsertNamesCreated = toInsert._featureNamesCreated()
             objNames = self._base.features.getNames
             toInsertNames = toInsert.features.getNames
             def sorter(obj, names):
-                obj.features.sort(sortHelper=names)
+                obj.features.permute(names)
 
         # This may not look exhaustive, but because of the previous call to
         # _validateInsertableData before this helper, most of the toInsert
@@ -1634,24 +1606,25 @@ class Axis(object):
             # only need to adjust names if names are present
             if not (self._namesCreated()
                     or insertedObj.points._namesCreated()):
-                self._base._setpointCount(newPtCount)
+                self._base._pointCount = newPtCount
                 return
             objNames = self._getNames()
             insertedNames = insertedObj.points.getNames()
             # must change point count AFTER getting names
-            self._base._setpointCount(newPtCount)
+            self._base._pointCount = newPtCount
             setObjNames = self._setNames
+            self._base._shape[0] = newPtCount
         else:
             newFtCount = len(self) + len(insertedObj.features)
             # only need to adjust names if names are present
             if not (self._base._featureNamesCreated()
                     or insertedObj._featureNamesCreated()):
-                self._base._setfeatureCount(newFtCount)
+                self._base._featureCount = newFtCount
                 return
             objNames = self._getNames()
             insertedNames = insertedObj.features.getNames()
             # must change point count AFTER getting names
-            self._base._setfeatureCount(newFtCount)
+            self._base._featureCount = newFtCount
             setObjNames = self._setNames
         # ensure no collision with default names
         adjustedNames = []
@@ -1759,26 +1732,20 @@ class AxisIterator(object):
     Object providing iteration through each item in the axis.
     """
     def __init__(self, axisObj):
-        self._axisObj = axisObj
+        if axisObj._isPoint:
+            self.viewer = axisObj._base.pointView
+        else:
+            self.viewer = axisObj._base.featureView
+        self._axisLen = len(axisObj)
         self._position = 0
 
     def __iter__(self):
         return self
 
-    def next(self):
-        """
-        Get next item
-        """
-        if isinstance(self._axisObj, Points):
-            viewer = self._axisObj._base.pointView
-        else:
-            viewer = self._axisObj._base.featureView
-        if self._position < len(self._axisObj):
-            value = viewer(self._position)
+    def __next__(self):
+        if self._position < self._axisLen:
+            value = self.viewer(self._position)
             self._position += 1
             return value
         else:
             raise StopIteration
-
-    def __next__(self):
-        return self.next()

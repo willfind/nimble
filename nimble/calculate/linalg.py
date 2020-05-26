@@ -334,8 +334,7 @@ def _backendSolversValidation(aObj, bObj, solverFunction):
             raise InvalidArgumentValueCombination(
                 'A and b have incompatible dimensions.')
         else:
-            bObj = bObj.copy()
-            bObj.flattenToOneFeature(useLog=False)
+            bObj = bObj.T
     elif len(bObj.points) > 1 and len(bObj.features) == 1:
         if len(aObj.points) != len(bObj.points):
             raise InvalidArgumentValueCombination(

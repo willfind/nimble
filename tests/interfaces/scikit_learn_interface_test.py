@@ -760,7 +760,7 @@ def test_applier_acceptsNewArguments():
 
     # StandardScaler.transform takes a 'copy' argument. Default is None.
     tl = nimble.train('SciKitLearn.StandardScaler', dataObj)
-    assert 'copy' not in tl.transformedArguments
+    assert 'copy' not in tl._transformedArguments
     # using arguments parameter
     transformed = tl.apply(dataObj, arguments={'copy':True})
 
@@ -779,7 +779,7 @@ def test_applier_exception():
 
     # StandardScaler.transform does not takes a 'foo' argument
     tl = nimble.train('SciKitLearn.StandardScaler', dataObj)
-    assert 'foo' not in tl.transformedArguments
+    assert 'foo' not in tl._transformedArguments
     try:
         # using arguments parameter
         transformed = tl.apply(dataObj, arguments={'foo': True})
@@ -807,7 +807,7 @@ def test_getScores_acceptsNewArguments():
 
     # DecisionTreeClassifier.predict_proba takes a 'check_input' argument. Default is True.
     tl = nimble.train('SciKitLearn.DecisionTreeClassifier', trainObj, 0)
-    assert 'check_input' not in tl.transformedArguments
+    assert 'check_input' not in tl._transformedArguments
     # using arguments parameter
     transformed = tl.apply(testObj, arguments={'check_input':False})
 
@@ -826,7 +826,7 @@ def test_getScores_exception():
 
     # DecisionTreeClassifier.predict_proba does not take a 'foo' argument.
     tl = nimble.train('SciKitLearn.DecisionTreeClassifier', trainObj, 0)
-    assert 'foo' not in tl.transformedArguments
+    assert 'foo' not in tl._transformedArguments
     try:
         # using arguments parameter
         transformed = tl.getScores(testObj, arguments={'foo': True})

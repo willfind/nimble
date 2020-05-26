@@ -481,7 +481,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     See Also
     --------
-    nimble.data.Points.normalize, nimble.data.Features.normalize
+    data.Points.normalize, data.Features.normalize
 
     Examples
     --------
@@ -1050,7 +1050,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
 
     See Also
     --------
-    nimble.helpers.KFoldCrossValidator
+    helpers.KFoldCrossValidator
 
     Examples
     --------
@@ -1219,7 +1219,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     See Also
     --------
     trainAndApply, trainAndTest, trainAndTestOnTrainingData, CV,
-    nimble.interfaces.universal_interface.TrainedLearner
+    interfaces.universal_interface.TrainedLearner
 
     Examples
     --------
@@ -1403,7 +1403,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     See Also
     --------
     train, trainAndTest, trainAndTestOnTrainingData, CV,
-    nimble.interfaces.universal_interface.TrainedLearner.apply
+    interfaces.universal_interface.TrainedLearner.apply
 
     Examples
     --------
@@ -1584,7 +1584,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     See Also
     --------
     train, trainAndApply, trainAndTestOnTrainingData, CV,
-    nimble.interfaces.universal_interface.TrainedLearner.test
+    interfaces.universal_interface.TrainedLearner.test
 
     Examples
     --------
@@ -2010,7 +2010,7 @@ def loadTrainedLearner(inputPath, useLog=None):
 
     See Also
     --------
-    nimble.interfaces.universal_interface.TrainedLearner
+    interfaces.universal_interface.TrainedLearner
     """
     if not cloudpickle.nimbleAccessible():
         msg = "To load nimble models, cloudpickle must be installed"

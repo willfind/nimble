@@ -95,11 +95,11 @@ match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 #      copy, featureReport, summaryReport, getTypeString, groupByFeature,
 #      hashCode, nameIsDefault, show, validate
 base_logged = [
-    'calculateOnElements', 'featureReport', 'flattenToOneFeature',
-    'flattenToOnePoint', 'groupByFeature', 'matchingElements', 'merge',
-    'replaceFeatureWithBinaryFeatures', 'replaceRectangle', 'summaryReport',
-    'trainAndTestSets', 'transformElements', 'transformFeatureToIntegers',
-    'transpose', 'unflattenFromOneFeature', 'unflattenFromOnePoint',
+    'calculateOnElements', 'featureReport', 'flatten', 'groupByFeature',
+    'matchingElements', 'merge', 'replaceFeatureWithBinaryFeatures',
+    'replaceRectangle', 'summaryReport', 'trainAndTestSets',
+    'transformElements', 'transformFeatureToIntegers', 'transpose',
+    'unflatten',
     ]
 base_notLogged = [
     'containsZero', 'copy', 'countElements', 'countUniqueElements',
@@ -115,8 +115,8 @@ base_tested = list(map(prefixAdder('Base'), base_funcs))
 
 features_logged = [
     'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
-    'insert', 'mapReduce', 'matching', 'normalize', 'retain', 'setName',
-    'setNames', 'shuffle', 'sort', 'transform', 'splitByParsing',
+    'insert', 'mapReduce', 'matching', 'normalize', 'permute', 'retain',
+    'setName', 'setNames', 'sort', 'transform', 'splitByParsing',
     ]
 features_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
@@ -127,8 +127,8 @@ features_tested = list(map(prefixAdder('Features'), features_funcs))
 
 points_logged = [
     'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
-    'insert', 'mapReduce', 'matching', 'normalize', 'retain', 'setName',
-    'setNames', 'shuffle', 'sort', 'transform', 'combineByExpandingFeatures',
+    'insert', 'mapReduce', 'matching', 'normalize', 'permute', 'retain',
+    'setName', 'setNames', 'sort', 'transform', 'combineByExpandingFeatures',
     'splitByCollapsingFeatures',
     ]
 points_notLogged = [
@@ -276,19 +276,19 @@ def test_validate_logCount():
 # Points/Features/Elements #
 ############################
 
-def test_points_shuffle_logCount():
+def test_points_permute_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
-        return obj.points.shuffle()
+        return obj.points.permute()
     for rType in nimble.data.available:
         obj = nimble.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)
         grouped = wrapped(obj)
 
-def test_features_shuffle_logCount():
+def test_features_permute_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
-        return obj.features.shuffle()
+        return obj.features.permute()
     for rType in nimble.data.available:
         obj = nimble.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)
@@ -317,10 +317,9 @@ baseDunder_tested = list(map(prefixAdder('Base'),
      '__rmatmul__', '__rmod__', '__rmul__', '__rpow__', '__rsub__',
      '__rtruediv__', '__sub__', '__truediv__', '__xor__',
     ]))
-axisDunder_tested = ['Axis.__bool__', 'Axis.__iter__', 'Axis.__len__',
-                     'Axis.__getitem__']
-pointsDunder_tested = []
-featuresDunder_tested = []
+axisDunder_tested = ['Axis.__bool__', 'Axis.__len__']
+pointsDunder_tested = ['Points.__iter__', 'Points.__getitem__']
+featuresDunder_tested = ['Features.__iter__', 'Features.__getitem__']
 uiDunder_tested = []
 tlDunder_tested = []
 

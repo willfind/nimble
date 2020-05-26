@@ -129,8 +129,8 @@ class CustomLearnerInterface(UniversalInterface):
         ret = self.registeredLearners[learnerName]()
         return ret.trainForInterface(trainX, trainY, arguments)
 
-    def _incrementalTrainer(self, learner, trainX, trainY, arguments,
-                            customDict):
+    def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
+                            arguments, customDict):
         return learner.incrementalTrainForInterface(trainX, trainY, arguments)
 
     def _applier(self, learnerName, learner, testX, arguments, storedArguments,

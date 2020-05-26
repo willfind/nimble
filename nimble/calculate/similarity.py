@@ -130,7 +130,7 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
         to a more specific label. A list may also be used provided the
         values in ``knownLabels`` represent an index to each value in
         the list. The labels will be used to create the featureNames and
-        pointNames with the prefixes "known_" and "predicted_",
+        pointNames with the prefixes `known_` and `predicted_`,
         respectively.  If labels is None, the prefixes will be applied
         directly to the unique values found in ``knownLabels``.
     convertCountsToFractions : bool
