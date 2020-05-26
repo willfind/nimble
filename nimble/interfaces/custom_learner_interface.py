@@ -5,8 +5,8 @@ Base class for a CustomLearner.
 import copy
 
 import nimble
+from nimble import CustomLearner
 from nimble.exceptions import InvalidArgumentValue
-from nimble.customLearners import CustomLearner
 from nimble.interfaces.universal_interface import UniversalInterface
 from nimble.utility import inheritDocstringsFactory
 
@@ -14,7 +14,7 @@ from nimble.utility import inheritDocstringsFactory
 @inheritDocstringsFactory(UniversalInterface)
 class CustomLearnerInterface(UniversalInterface):
     """
-    Base interface class for customLearners.
+    Base interface class for any CustomLearner.
     """
 
     _ignoreNames = ['trainX', 'trainY', 'testX']
@@ -25,59 +25,22 @@ class CustomLearnerInterface(UniversalInterface):
         self._configurableOptionNamesAvailable = []
         super(CustomLearnerInterface, self).__init__()
 
-
     def registerLearnerClass(self, learnerClass):
         """
         Record the given learnerClass as being accessible through this
         particular interface. The parameter is assumed to be class
         object which is a subclass of CustomLearner and has been
-        validated by CustomLearner.validateSubclass(); no sanity
+        validated by helpers.validateCustomLearnerSubclass(); no sanity
         checking is performed in this method.
         """
         self.registeredLearners[learnerClass.__name__] = learnerClass
 
         options = learnerClass.options()
 
-        #		if isinstance(options, list):
-        #			temp = {}
-        #			for name in options:
-        #				temp[name] = ''
-        #			options = temp
-
-        #		for (k,v) in options.items():
-        #			fullKey = learnerClass.__name__ + '.' + k
-        #			self._configurableOptionNamesAvailable[fullKey] = v
         for name in options:
             fullName = learnerClass.__name__ + '.' + name
             self._configurableOptionNamesAvailable.append(fullName)
-
-    def deregisterLearner(self, learnerName):
-        """
-        Remove accessibility of the learner with the given name from
-        this interface.
-
-        Returns True of there are other learners still accessible
-        through this interface, False if there are not.
-        """
-        if not learnerName in self.registeredLearners:
-            msg = "Given learnerName does not refer to a learner accessible "
-            msg += "through this interface"
-            raise InvalidArgumentValue(msg)
-
-        # TODO remove option names
-        toRemove = self.registeredLearners[learnerName].options()
-        fullNameToRemove = [learnerName + '.' + x for x in toRemove]
-
-        temp = []
-        for opName in self._configurableOptionNamesAvailable:
-            if not opName in fullNameToRemove:
-                temp.append(opName)
-
-        self._configurableOptionNamesAvailable = temp
-
-        del self.registeredLearners[learnerName]
-
-        return len(self.registeredLearners) == 0
+            nimble.settings.set(self.name, fullName, "")
 
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###

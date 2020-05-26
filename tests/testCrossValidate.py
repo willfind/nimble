@@ -16,15 +16,16 @@ import nimble
 from nimble import crossValidate
 from nimble import createData
 from nimble import CV
+from nimble import CustomLearner
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 from nimble.calculate import *
 from nimble.randomness import pythonRandom
+from nimble.learners import KNNClassifier
 from nimble.helpers import computeMetrics
 from nimble.helpers import generateClassificationData
 from nimble.helpers import KFoldCrossValidator
-from nimble.customLearners import CustomLearner
 from .assertionHelpers import configSafetyWrapper
 from .assertionHelpers import oneLogEntryExpected
 
@@ -49,13 +50,13 @@ def test_crossValidate_XY_unchanged():
     X and Y, the original data is unchanged
 
     """
-    classifierAlgo = 'Custom.KNNClassifier'
-    X, Y = _randomLabeledDataSet(numLabels=5)
-    copyX = X.copy()
-    copyY = Y.copy()
-    crossValidator = crossValidate(classifierAlgo, X, Y, fractionIncorrect, {}, folds=5)
-    assert X == copyX
-    assert Y == copyY
+    for classifierAlgo in ['nimble.KNNClassifier', KNNClassifier]:
+        X, Y = _randomLabeledDataSet(numLabels=5)
+        copyX = X.copy()
+        copyY = Y.copy()
+        crossValidator = crossValidate(classifierAlgo, X, Y, fractionIncorrect, {}, folds=5)
+        assert X == copyX
+        assert Y == copyY
 
 
 def test_crossValidate_callable():
@@ -70,14 +71,14 @@ def test_crossValidate_callable():
     for dType in nimble.data.available:
         X, Y = _randomLabeledDataSet(numPoints=numPoints, numLabels=numLabels, dataType=dType)
 
-        classifierAlgos = ['Custom.KNNClassifier']
+        classifierAlgos = ['nimble.KNNClassifier']
         for curAlgo in classifierAlgos:
             crossValidator = crossValidate(curAlgo, X, Y, fractionIncorrect, {}, folds=3)
             assert isinstance(crossValidator.bestResult, float)
 
             #With regression dataset (no repeated labels)
             X, Y = _randomLabeledDataSet(numPoints=numPoints, numLabels=None, dataType=dType)
-            classifierAlgos = ['Custom.RidgeRegression']
+            classifierAlgos = ['nimble.RidgeRegression']
             for curAlgo in classifierAlgos:
                 crossValidator = crossValidate(curAlgo, X, Y, meanAbsoluteError, {}, folds=3)
                 assert isinstance(crossValidator.bestResult, float)
@@ -103,7 +104,7 @@ def test_crossValidate_reasonable_results():
     regressors:
         LinearRegression - have no error when the dataset all lies on one plane
     """
-    classifierAlgo = 'Custom.KNNClassifier'
+    classifierAlgo = 'nimble.KNNClassifier'
     #assert that when whole dataset has the same label, crossValidated score
     #reflects 100% accruacy (with a classifier)
     X, Y = _randomLabeledDataSet(numLabels=1)
@@ -121,7 +122,7 @@ def test_crossValidate_reasonable_results():
     #assert that for an easy dataset (no noise, overdetermined linear hyperplane!),
     #crossValidated error is perfect
     #for all folds, with simple LinearRegression
-    regressionAlgo = 'Custom.RidgeRegression'
+    regressionAlgo = 'nimble.RidgeRegression'
 
     #make random data set where all points lie on a linear hyperplane
     numFeats = 3
@@ -158,7 +159,7 @@ def test_crossValidate_2d_api_check():
     # using an easy dataset (no noise, overdetermined linear hyperplane!),
     # check that crossValidated error is perfect for all folds, with simple
     # LinearRegression
-    regressionAlgo = 'Custom.RidgeRegression'
+    regressionAlgo = 'nimble.RidgeRegression'
 
     #make random data set where all points lie on a linear hyperplane
     numFeats = 3
@@ -214,7 +215,7 @@ def test_crossValidate_2d_Non_label_scoremodes_disallowed():
     #assert that for an easy dataset (no noise, overdetermined linear hyperplane!),
     #crossValidated error is perfect
     #for all folds, with simple LinearRegression
-    regressionAlgo = 'Custom.RidgeRegression'
+    regressionAlgo = 'nimble.RidgeRegression'
 
     #make random data set where all points lie on a linear hyperplane
     numFeats = 3
@@ -253,9 +254,9 @@ def test_crossValidate_foldingRandomness():
         X, Y = _randomLabeledDataSet(numPoints=50, numFeatures=10, numLabels=5)
         seed = nimble.randomness.pythonRandom.randint(0, 2**32 - 1)
         nimble.setRandomSeed(seed)
-        resultOne = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, folds=3)
+        resultOne = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, {}, folds=3)
         nimble.setRandomSeed(seed)
-        resultTwo = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, {}, folds=3)
+        resultTwo = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, {}, folds=3)
         assert resultOne.bestResult == resultTwo.bestResult
 
 @attr('slow')
@@ -270,13 +271,13 @@ def test_crossValidateResults():
     """
     X, Y = _randomLabeledDataSet(numPoints=50, numFeatures=10, numLabels=5)
     #try with no extra arguments at all; yet we know an argument exists (k):
-    crossValidator = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect)
+    crossValidator = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect)
     resultsList = crossValidator.allResults
     assert resultsList
     assert 1 == len(resultsList)
     assert len(resultsList[0]) == 1 and 'fractionIncorrect' in resultsList[0]
     #try with some extra elements, including the default
-    crossValidator = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, k=nimble.CV([1, 2, 3]))
+    crossValidator = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, k=nimble.CV([1, 2, 3]))
     resultsList = crossValidator.allResults
     assert resultsList
     assert 3 == len(resultsList)
@@ -286,9 +287,9 @@ def test_crossValidateResults():
     # ordered differently
     seed = nimble.randomness.pythonRandom.randint(0, 2**32 - 1)
     nimble.setRandomSeed(seed)
-    result1 = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, k=nimble.CV([1, 2, 3, 4, 5]))
+    result1 = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, k=nimble.CV([1, 2, 3, 4, 5]))
     nimble.setRandomSeed(seed)
-    result2 = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect, k=nimble.CV([1, 5, 4, 3, 2]))
+    result2 = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, k=nimble.CV([1, 5, 4, 3, 2]))
     #assert the the resulting SCORES are identical
     #uncertain about the order
     resultOneScores = [curEntry['fractionIncorrect'] for curEntry in result1.allResults]
@@ -319,7 +320,7 @@ def test_crossValidateBestArguments():
 
     # need to setup a situation where we guarantee certain returns
     # from the performanceMetric fractionIncorrect. Thus, we generate
-    # obvious data, that custom.KNNClassifer will predict with 100%
+    # obvious data, that custom.KNNClassifier will predict with 100%
     # accuracy, and FlipWrapper messes up a specified percentage
     # of the returns
     class FlipWrapper(CustomLearner):
@@ -339,25 +340,23 @@ def test_crossValidateBestArguments():
                     ret[i][0] = 0
             return ret
 
-    nimble.registerCustomLearner('custom', FlipWrapper)
-
     # want to have a predictable random state in order to control folding
     seed = nimble.randomness.pythonRandom.randint(0, 2**32 - 1)
 
     def trial(metric, maximize):
         # get a baseline result
         nimble.setRandomSeed(seed)
-        crossValidator = crossValidate('custom.FlipWrapper', X, Y,
+        crossValidator = crossValidate(FlipWrapper, X, Y,
                                    metric, flip=nimble.CV([0, .5, .9]),
-                                   wrapped="custom.KNNClassifier")
+                                   wrapped="nimble.KNNClassifier")
         resultTuple = (crossValidator.bestArguments, crossValidator.bestResult)
         assert resultTuple
 
         # Confirm that the best result is also returned in the 'returnAll' results
         nimble.setRandomSeed(seed)
-        crossValidator = crossValidate('custom.FlipWrapper', X, Y,
+        crossValidator = crossValidate(FlipWrapper, X, Y,
                                    metric, flip=nimble.CV([0, .5, .9]),
-                                   wrapped="custom.KNNClassifier")
+                                   wrapped="nimble.KNNClassifier")
         allResultsList = crossValidator.allResults
         #since same args were used, the best tuple should be in allResultsList
         allArguments = []
@@ -387,8 +386,6 @@ def test_crossValidateBestArguments():
     trial(fractionIncorrect, False)
     trial(fractionCorrect, True)
 
-    nimble.deregisterCustomLearner('custom', 'FlipWrapper')
-
 
 def test_crossValidate_attributes_withDefaultArgs():
     """Assert that return best and return all work with default arguments as predicted
@@ -396,13 +393,13 @@ def test_crossValidate_attributes_withDefaultArgs():
     """
     X, Y = _randomLabeledDataSet(numPoints=20, numFeatures=5, numLabels=5)
     #run with default arguments
-    crossValidator = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect)
+    crossValidator = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect)
     bestTuple = (crossValidator.bestArguments, crossValidator.bestResult)
     assert bestTuple
     assert isinstance(bestTuple, tuple)
     assert bestTuple[0] == {}
     #run return all with default arguments
-    crossValidator = crossValidate('Custom.KNNClassifier', X, Y, fractionIncorrect)
+    crossValidator = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect)
     allResultsList = crossValidator.allResults
     assert allResultsList
     assert 1 == len(allResultsList)
@@ -413,7 +410,7 @@ def test_crossValidate_attributes_withDefaultArgs():
 def test_crossValidate_sameResults_avgfold_vs_allcollected():
     # When whole dataset has the same label, crossValidated score
     #reflects 100% accruacy (with a classifier)
-    classifierAlgo = 'Custom.KNNClassifier'
+    classifierAlgo = 'nimble.KNNClassifier'
     X, Y = _randomLabeledDataSet(numLabels=1)
 
     def copiedPerfFunc(knowns, predicted):
@@ -437,7 +434,7 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected():
 
     #For an easy dataset (no noise, overdetermined linear hyperplane!),
     #crossValidated error is perfect
-    regressionAlgo = 'Custom.RidgeRegression'
+    regressionAlgo = 'nimble.RidgeRegression'
 
     #make random data set where all points lie on a linear hyperplane
     numFeats = 3
@@ -486,8 +483,6 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected_orderReliant():
 
     copiedPerfFunc.optimal = fractionIncorrect.optimal
 
-    nimble.registerCustomLearner('custom', UnitPredictor)
-
     data = [1, 3, 5, 6, 8, 4, 10, -12, -2, 22]
     X = nimble.createData("Matrix", data)
     X.transpose()
@@ -495,11 +490,11 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected_orderReliant():
     Y.transpose()
 
     copiedPerfFunc.avgFolds = False
-    crossValidator = crossValidate('custom.UnitPredictor', X, Y, copiedPerfFunc, {'bozoArg': (1, 2)}, folds=5)
+    crossValidator = crossValidate(UnitPredictor, X, Y, copiedPerfFunc, {'bozoArg': (1, 2)}, folds=5)
     nonAvgResult = crossValidator.bestResult
 
     copiedPerfFunc.avgFolds = True
-    crossValidator = crossValidate('custom.UnitPredictor', X, Y, copiedPerfFunc, {'bozoArg': (1, 2)}, folds=5)
+    crossValidator = crossValidate(UnitPredictor, X, Y, copiedPerfFunc, {'bozoArg': (1, 2)}, folds=5)
     avgResult = crossValidator.bestResult
 
     # should have 100 percent accuracy, so these results should be the same
@@ -588,7 +583,7 @@ def test_KFoldCrossValidator_invalidPerformanceFunction():
     X = nimble.createData('Matrix', xRaw)
     Y = nimble.createData('Matrix', yRaw)
     crossValidator = KFoldCrossValidator(
-        'Custom.KNNClassifier', X, Y, arguments={'k': 3},
+        'nimble.KNNClassifier', X, Y, arguments={'k': 3},
         performanceFunction=noOptimal, folds=3)
 
 @raises(InvalidArgumentValue)
@@ -602,7 +597,7 @@ def test_KFoldCrossValidator_zeroFolds():
     X = nimble.createData('Matrix', xRaw)
     Y = nimble.createData('Matrix', yRaw)
     crossValidator = KFoldCrossValidator(
-        'Custom.KNNClassifier', X, Y, arguments={'k': 3},
+        'nimble.KNNClassifier', X, Y, arguments={'k': 3},
         performanceFunction=nimble.calculate.fractionIncorrect, folds=0)
 
 def test_CV():
@@ -622,7 +617,7 @@ def test_CV_immutable():
 
 @oneLogEntryExpected
 def back_crossValidate_logCount(toCall):
-    classifierAlgo = 'Custom.KNNClassifier'
+    classifierAlgo = 'nimble.KNNClassifier'
     X, Y = _randomLabeledDataSet(numLabels=5)
     copyX = X.copy()
     copyY = Y.copy()

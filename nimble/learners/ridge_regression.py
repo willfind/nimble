@@ -5,7 +5,7 @@ Contains the RidgeRegression custom learner class.
 import numpy
 
 import nimble
-from nimble.customLearners import CustomLearner
+from nimble import CustomLearner
 from nimble.utility import dtypeConvert
 
 

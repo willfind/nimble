@@ -45,7 +45,7 @@ class FailedPredefined(object):
 
     @classmethod
     def isAlias(cls, name):
-        return name.lower() == cls.getCanonicalName()
+        return name.lower() == cls.getCanonicalName().lower()
 
     @classmethod
     def provideInitExceptionInfo(cls):
@@ -198,7 +198,7 @@ def test_settings_GetSet():
     origChangeSet = copy.deepcopy(nimble.settings.changes)
 
     # for available interfaces
-    for interface in nimble.interfaces.available:
+    for interface in nimble.interfaces.available.values():
         name = interface.getCanonicalName()
         for option in interface.optionNames:
             # get values of options
@@ -355,18 +355,23 @@ def test_settings_savingOption():
     except configparser.NoOptionError:
         pass
 
+def setAndSaveAvailableInterfaceOptions():
+    """
+    Set and save the options for each available interface.
+    """
+    for interface in nimble.interfaces.available.values():
+        nimble.configuration.setInterfaceOptions(interface, save=True)
 
 @configSafetyWrapper
 def test_settings_addingNewInterface():
     """ Test nimble.configuration.setInterfaceOptions correctly modifies file """
     tempInterface = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
-    nimble.interfaces.available.append(tempInterface)
+    nimble.interfaces.available[tempInterface.name] = tempInterface
     ignoreInterface = OptionNamedLookalike("ig", [])
-    nimble.interfaces.available.append(ignoreInterface)
+    nimble.interfaces.available[ignoreInterface.name] = ignoreInterface
 
     # set options for all interfaces
-    for interface in nimble.interfaces.available:
-        nimble.configuration.setInterfaceOptions(nimble.settings, interface, True)
+    setAndSaveAvailableInterfaceOptions()
 
     # reload settings - to make sure the options setting was recorded
     nimble.settings = nimble.configuration.loadSettings()
@@ -380,16 +385,14 @@ def test_settings_addingNewInterface():
     assert nimble.settings.get('Test', 'Temp0') == ''
     assert nimble.settings.get('Test', 'Temp1') == ''
 
-
 @configSafetyWrapper
 def test_settings_setInterfaceOptionsSafety():
     """ Test that setting options preserves values already in the config file """
     tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
-    nimble.interfaces.available.append(tempInterface1)
+    nimble.interfaces.available[tempInterface1.name] = tempInterface1
 
     # set options for all interfaces, then reload
-    for interface in nimble.interfaces.available:
-        nimble.configuration.setInterfaceOptions(nimble.settings, interface, True)
+    setAndSaveAvailableInterfaceOptions()
     nimble.settings = nimble.configuration.loadSettings()
 
     nimble.settings.set('Test', 'Temp0', '0')
@@ -398,11 +401,10 @@ def test_settings_setInterfaceOptionsSafety():
 
     # now set up another trigger to set options for
     tempInterface2 = OptionNamedLookalike("TestOther", ['Temp0'])
-    nimble.interfaces.available.append(tempInterface2)
+    nimble.interfaces.available[tempInterface2.name] = tempInterface2
 
     # set options for all interfaces, then reload
-    for interface in nimble.interfaces.available:
-        nimble.configuration.setInterfaceOptions(nimble.settings, interface, True)
+    setAndSaveAvailableInterfaceOptions()
     nimble.settings = nimble.configuration.loadSettings()
 
     assert nimble.settings.get("Test", 'Temp0') == '0'
@@ -414,11 +416,11 @@ def test_settings_setInterfaceOptionsChanges():
     """ Test that setting interface options properly saves current changes """
     tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
     tempInterface2 = OptionNamedLookalike("TestOther", ['Temp0'])
-    nimble.interfaces.available.append(tempInterface1)
-    nimble.interfaces.available.append(tempInterface2)
+    nimble.interfaces.available[tempInterface1.name] = tempInterface1
+    nimble.interfaces.available[tempInterface2.name] = tempInterface2
 
     # set options for all interfaces, then reload
-    nimble.configuration.setAndSaveAvailableInterfaceOptions()
+    setAndSaveAvailableInterfaceOptions()
     nimble.settings = nimble.configuration.loadSettings()
 
     nimble.settings.set('Test', 'Temp0', '0')
@@ -429,7 +431,7 @@ def test_settings_setInterfaceOptionsChanges():
 
     # change Test option names and reset options for all interfaces
     tempInterface1.optionNames[1] = 'NotTemp1'
-    nimble.configuration.setAndSaveAvailableInterfaceOptions()
+    setAndSaveAvailableInterfaceOptions()
 
     # check values of both changed and unchanged names
     assert nimble.settings.get('Test', 'Temp0') == '0'
@@ -449,7 +451,7 @@ def test_settings_allowedNames():
     """ Test that you can only set allowed names in interface sections """
 
     assert nimble.settings.changes == {}
-    nimble.settings.set('Custom', 'Hello', "Goodbye")
+    nimble.settings.set('nimble', 'Hello', "Goodbye")
     nimble.settings.changes = {}
 
 

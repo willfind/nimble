@@ -1,6 +1,6 @@
-Custom.KNNClassifier
+nimble.KNNClassifier
 ====================
 
-.. automodule:: nimble.customLearners
+.. automodule:: nimble.learners
    :noindex:
    :members: KNNClassifier

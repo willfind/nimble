@@ -1,4 +1,5 @@
 import nimble
+from nimble.learners import MultiOutputRidgeRegression
 
 # test for failure to import?
 
@@ -16,15 +17,18 @@ def test_MultiOutputWrapper_simple():
     data = [[5, 5, 5], [0, 0, 1]]
     testX = nimble.createData('Matrix', data)
 
-    testName = 'Custom.MultiOutputRidgeRegression'
-    wrappedName = 'Custom.RidgeRegression'
+    wrappedName = 'nimble.RidgeRegression'
+    ret0 = nimble.trainAndApply(wrappedName, trainX=trainX, trainY=trainY0,
+                                testX=testX, lamb=1)
+    ret1 = nimble.trainAndApply(wrappedName, trainX=trainX, trainY=trainY1,
+                                testX=testX, lamb=1)
 
-    retMulti = nimble.trainAndApply(testName, trainX=trainX, trainY=trainY, testX=testX, lamb=1)
+    for value in ['nimble.MultiOutputRidgeRegression',
+                  MultiOutputRidgeRegression]:
+        retMulti = nimble.trainAndApply(value, trainX=trainX, trainY=trainY,
+                                        testX=testX, lamb=1)
 
-    ret0 = nimble.trainAndApply(wrappedName, trainX=trainX, trainY=trainY0, testX=testX, lamb=1)
-    ret1 = nimble.trainAndApply(wrappedName, trainX=trainX, trainY=trainY1, testX=testX, lamb=1)
-
-    assert retMulti[0, 0] == ret0[0]
-    assert retMulti[0, 1] == ret1[0]
-    assert retMulti[1, 0] == ret0[1]
-    assert retMulti[1, 1] == ret1[1]
+        assert retMulti[0, 0] == ret0[0]
+        assert retMulti[0, 1] == ret1[0]
+        assert retMulti[1, 0] == ret0[1]
+        assert retMulti[1, 1] == ret1[1]

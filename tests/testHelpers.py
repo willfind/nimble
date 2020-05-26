@@ -205,8 +205,8 @@ def testClassifyAlgorithms(printResultsDontThrow=False):
     Next, compares the result to the algorithm's assocaited value in knownAlgorithmToTypeHash.
     If the algorithm types don't match, an AssertionError is thrown."""
 
-    knownAlgorithmToTypeHash = {'Custom.KNNClassifier': 'classification',
-                                'Custom.RidgeRegression': 'regression',
+    knownAlgorithmToTypeHash = {'nimble.KNNClassifier': 'classification',
+                                'nimble.RidgeRegression': 'regression',
     }
     try:
         findBestInterface('sciKitLearn')

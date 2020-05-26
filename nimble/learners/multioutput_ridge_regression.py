@@ -3,12 +3,12 @@ Contains the MultiOutputRidgeRegression custom learner class.
 """
 
 import nimble
-from nimble.customLearners import CustomLearner
+from nimble import CustomLearner
 
 
 class MultiOutputRidgeRegression(CustomLearner):
     """
-    Learner which will train a version of 'Custom.RidgeRegression' on
+    Learner which will train a version of 'nimble.RidgeRegression' on
     each of the (one or more) features of the prediction data. It then
     matches that output shape when apply() is called.
     """
@@ -21,7 +21,7 @@ class MultiOutputRidgeRegression(CustomLearner):
         for i in range(len(trainY.features)):
             currY = trainY.features.copy(i, useLog=False)
 
-            currTL = nimble.train('Custom.RidgeRegression', trainX, currY,
+            currTL = nimble.train('nimble.RidgeRegression', trainX, currY,
                                   lamb=lamb, useLog=False)
             self._learners.append(currTL)
 

@@ -9,6 +9,7 @@ import sys
 import warnings
 from unittest import mock
 import pkgutil
+import abc
 
 import numpy
 
@@ -31,8 +32,319 @@ sciKitLearnDir = None
 locationCache = {}
 
 
+class _SciKitLearnAPI(abc.ABC):
+    """
+    Base class for interfaces following the scikit-learn api.
+    """
+    #######################################
+    ### ABSTRACT METHOD IMPLEMENTATIONS ###
+    #######################################
+
+
+    def _getParameterNamesBackend(self, name):
+        ret = self._paramQuery(name, None)
+        if ret is None:
+            return ret
+        (objArgs, _) = ret
+        return [objArgs]
+
+    def _getLearnerParameterNamesBackend(self, learnerName):
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T', 'raw_documents']
+        init = self._paramQuery('__init__', learnerName, ignore)
+        fit = self._paramQuery('fit', learnerName, ignore)
+        predict = self._paramQuery('predict', learnerName, ignore)
+        transform = self._paramQuery('transform', learnerName, ignore)
+        fitPredict = self._paramQuery('fit_predict', learnerName, ignore)
+        fitTransform = self._paramQuery('fit_transform', learnerName, ignore)
+
+        if predict is not None:
+            ret = init[0] + fit[0] + predict[0]
+        elif transform is not None:
+            ret = init[0] + fit[0] + transform[0]
+        elif fitPredict is not None:
+            ret = init[0] + fitPredict[0]
+        elif fitTransform is not None:
+            ret = init[0] + fitTransform[0]
+        else:
+            msg = "Cannot get parameter names for learner " + learnerName
+            raise InvalidArgumentValue(msg)
+
+        return [ret]
+
+    def _getDefaultValuesBackend(self, name):
+        ret = self._paramQuery(name, None)
+        if ret is None:
+            return ret
+        (objArgs, d) = ret
+        ret = {}
+        if d is not None:
+            for i in range(len(d)):
+                ret[objArgs[-(i + 1)]] = d[-(i + 1)]
+
+        return [ret]
+
+    def _getLearnerDefaultValuesBackend(self, learnerName):
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'raw_documents']
+        init = self._paramQuery('__init__', learnerName, ignore)
+        fit = self._paramQuery('fit', learnerName, ignore)
+        predict = self._paramQuery('predict', learnerName, ignore)
+        transform = self._paramQuery('transform', learnerName, ignore)
+        fitPredict = self._paramQuery('fit_predict', learnerName, ignore)
+        fitTransform = self._paramQuery('fit_transform', learnerName, ignore)
+
+        if predict is not None:
+            toProcess = [init, fit, predict]
+        elif transform is not None:
+            toProcess = [init, fit, transform]
+        elif fitPredict is not None:
+            toProcess = [init, fitPredict]
+        else:
+            toProcess = [init, fitTransform]
+
+        ret = {}
+        for stage in toProcess:
+            currNames = stage[0]
+            currDefaults = stage[1]
+
+            if stage[1] is not None:
+                for i in range(len(currDefaults)):
+                    key = currNames[-(i + 1)]
+                    value = currDefaults[-(i + 1)]
+                    ret[key] = value
+
+        return [ret]
+
+    def _getScores(self, learnerName, learner, testX, newArguments,
+                   storedArguments, customDict):
+        if hasattr(learner, 'decision_function'):
+            method = 'decision_function'
+            toCall = learner.decision_function
+        elif hasattr(learner, 'predict_proba'):
+            method = 'predict_proba'
+            toCall = learner.predict_proba
+        else:
+            raise NotImplementedError('Cannot get scores for this learner')
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'raw_documents']
+        backendArgs = self._paramQuery(method, learnerName, ignore)[0]
+        scoreArgs = self._getMethodArguments(backendArgs, newArguments,
+                                             storedArguments)
+        raw = toCall(testX, **scoreArgs)
+        # in binary classification, we return a row vector. need to reshape
+        if len(raw.shape) == 1:
+            return raw.reshape(len(raw), 1)
+        else:
+            return raw
+
+
+    def _getScoresOrder(self, learner):
+        return learner.UIgetScoreOrder()
+
+
+    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
+        # init learner
+        learner = self._initLearner(learnerName, trainX, trainY, arguments)
+        # fit learner
+        self._fitLearner(learner, learnerName, trainX, trainY, arguments)
+
+        if (hasattr(learner, 'decision_function')
+                or hasattr(learner, 'predict_proba')):
+            if trainY is not None:
+                labelOrder = numpy.unique(trainY)
+            else:
+                allLabels = learner.predict(trainX)
+                labelOrder = numpy.unique(allLabels)
+
+            def UIgetScoreOrder():
+                return labelOrder
+
+            learner.UIgetScoreOrder = UIgetScoreOrder
+
+        return learner
+
+    def _incrementalTrainer(self, learner, trainX, trainY, arguments,
+                            customDict):
+        # see partial_fit(X, y[, classes, sample_weight])
+        raise NotImplementedError
+
+    def _applier(self, learnerName, learner, testX, newArguments,
+                 storedArguments, customDict):
+        if hasattr(learner, 'predict'):
+            method = 'predict'
+            toCall = self._predict
+        elif hasattr(learner, 'transform'):
+            method = 'transform'
+            toCall = self._transform
+        elif hasattr(learner, 'fit_predict'):
+            method = 'fit_predict'
+            toCall = self._fit_predict
+        elif hasattr(learner, 'fit_transform'):
+            method = 'fit_transform'
+            toCall = self._fit_transform
+        else:
+            msg = "Cannot apply this learner to data, no predict or "
+            msg += "transform function"
+            raise TypeError(msg)
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'raw_documents']
+        backendArgs = self._paramQuery(method, learnerName, ignore)[0]
+        applyArgs = self._getMethodArguments(backendArgs, newArguments,
+                                             storedArguments)
+        if 'raw_documents' in self._paramQuery(method, learnerName)[0]:
+            testX = testX.tolist()[0] # 1D list
+        return toCall(learner, testX, applyArgs, customDict)
+
+
+    def _getAttributes(self, learnerBackend):
+        obj = learnerBackend
+        generators = None
+        checkers = []
+        checkers.append(nimble.interfaces.interface_helpers.noLeading__)
+        checkers.append(nimble.interfaces.interface_helpers.notCallable)
+        checkers.append(nimble.interfaces.interface_helpers.notABCAssociated)
+
+        ret = collectAttributes(obj, generators, checkers)
+        return ret
+
+
+    def _optionDefaults(self, option):
+        return None
+
+
+    def _configurableOptionNames(self):
+        return ['location']
+
+
+    def _exposedFunctions(self):
+        return [self._predict, self._transform]
+
+    # fit_transform
+
+    def _predict(self, learner, testX, arguments, customDict):
+        """
+        Wrapper for the underlying predict function of a scikit-learn
+        learner object.
+        """
+        return learner.predict(testX, **arguments)
+
+    def _transform(self, learner, testX, arguments, customDict):
+        """
+        Wrapper for the underlying transform function of a scikit-learn
+        learner object.
+        """
+        return learner.transform(testX, **arguments)
+
+    def _fit_predict(self, learner, testX, arguments, customDict):
+        """
+        Wrapper for the underlying fit_predict function of a
+        scikit-learn learner object.
+        """
+        return learner.labels_
+
+    def _fit_transform(self, learner, testX, arguments, customDict):
+        """
+        Wrapper for the underlying fit_transform function of a
+        scikit-learn learner object.
+        """
+        return learner.embedding_
+
+    ###############
+    ### HELPERS ###
+    ###############
+
+    def _paramQuery(self, name, parent, ignore=None):
+        """
+        Takes the name of some scikit learn object or function, returns
+        a list of parameters used to instantiate that object or run that
+        function, or None if the desired thing cannot be found.
+        """
+        if ignore is None:
+            ignore = []
+        if parent is None:
+            namedModule = self.findCallable(name)
+        else:
+            namedModule = self.findCallable(parent)
+
+        if parent is None or name == '__init__':
+            obj = namedModule()
+            initDefaults = obj.get_params()
+            initParams = list(initDefaults.keys())
+            initValues = list(initDefaults.values())
+            if self.randomParam in initParams:
+                index = initParams.index(self.randomParam)
+                negdex = index - len(initParams)
+                seed = nimble.randomness.generateSubsidiarySeed()
+                initValues[negdex] = seed
+            return (initParams, initValues)
+        elif not hasattr(namedModule, name):
+            return None
+        else:
+            (args, _, _, d) = inspectArguments(getattr(namedModule, name))
+            (args, d) = removeFromTailMatchedLists(args, d, ignore)
+            return (args, d)
+
+    #######################################
+    ### ABSTRACT METHOD IMPLEMENTATIONS ###
+    #######################################
+    @abc.abstractmethod
+    def __init__(self):
+        pass
+
+    @abc.abstractmethod
+    def accessible(self):
+        pass
+
+    @classmethod
+    @abc.abstractmethod
+    def getCanonicalName(cls):
+        pass
+
+    @classmethod
+    @abc.abstractmethod
+    def isAlias(cls, name):
+        pass
+
+
+    @classmethod
+    @abc.abstractmethod
+    def _installInstructions(cls):
+        pass
+
+    @abc.abstractmethod
+    def _listLearnersBackend(self):
+        pass
+
+    @abc.abstractmethod
+    def learnerType(self, name):
+        pass
+
+    @abc.abstractmethod
+    def _findCallableBackend(self, name):
+        pass
+
+    @abc.abstractmethod
+    def _inputTransformation(self, learnerName, trainX, trainY, testX,
+                             arguments, customDict):
+        pass
+
+    @abc.abstractmethod
+    def _outputTransformation(self, learnerName, outputValue,
+                              transformedInputs, outputType, outputFormat,
+                              customDict):
+        pass
+
+    @abc.abstractmethod
+    def _initLearner(self, learnerName, trainX, trainY, arguments):
+        pass
+
+    @abc.abstractmethod
+    def _fitLearner(self, learner, learnerName, trainX, trainY, arguments):
+        pass
+
+    @abc.abstractmethod
+    def version(self):
+        pass
+
 @inheritDocstringsFactory(UniversalInterface)
-class SciKitLearn(PredefinedInterface, UniversalInterface):
+class SciKitLearn(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
     """
     This class is an interface to scikit-learn.
     """
@@ -175,105 +487,6 @@ To install scikit-learn
         except KeyError:
             return None
 
-    def _getParameterNamesBackend(self, name):
-        ret = self._paramQuery(name, None)
-        if ret is None:
-            return ret
-        (objArgs, _) = ret
-        return [objArgs]
-
-    def _getLearnerParameterNamesBackend(self, learnerName):
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T', 'raw_documents']
-        init = self._paramQuery('__init__', learnerName, ignore)
-        fit = self._paramQuery('fit', learnerName, ignore)
-        predict = self._paramQuery('predict', learnerName, ignore)
-        transform = self._paramQuery('transform', learnerName, ignore)
-        fitPredict = self._paramQuery('fit_predict', learnerName, ignore)
-        fitTransform = self._paramQuery('fit_transform', learnerName, ignore)
-
-        if predict is not None:
-            ret = init[0] + fit[0] + predict[0]
-        elif transform is not None:
-            ret = init[0] + fit[0] + transform[0]
-        elif fitPredict is not None:
-            ret = init[0] + fitPredict[0]
-        elif fitTransform is not None:
-            ret = init[0] + fitTransform[0]
-        else:
-            msg = "Cannot get parameter names for learner " + learnerName
-            raise InvalidArgumentValue(msg)
-
-        return [ret]
-
-    def _getDefaultValuesBackend(self, name):
-        ret = self._paramQuery(name, None)
-        if ret is None:
-            return ret
-        (objArgs, d) = ret
-        ret = {}
-        if d is not None:
-            for i in range(len(d)):
-                ret[objArgs[-(i + 1)]] = d[-(i + 1)]
-
-        return [ret]
-
-    def _getLearnerDefaultValuesBackend(self, learnerName):
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'raw_documents']
-        init = self._paramQuery('__init__', learnerName, ignore)
-        fit = self._paramQuery('fit', learnerName, ignore)
-        predict = self._paramQuery('predict', learnerName, ignore)
-        transform = self._paramQuery('transform', learnerName, ignore)
-        fitPredict = self._paramQuery('fit_predict', learnerName, ignore)
-        fitTransform = self._paramQuery('fit_transform', learnerName, ignore)
-
-        if predict is not None:
-            toProcess = [init, fit, predict]
-        elif transform is not None:
-            toProcess = [init, fit, transform]
-        elif fitPredict is not None:
-            toProcess = [init, fitPredict]
-        else:
-            toProcess = [init, fitTransform]
-
-        ret = {}
-        for stage in toProcess:
-            currNames = stage[0]
-            currDefaults = stage[1]
-
-            if stage[1] is not None:
-                for i in range(len(currDefaults)):
-                    key = currNames[-(i + 1)]
-                    value = currDefaults[-(i + 1)]
-                    ret[key] = value
-
-        return [ret]
-
-    def _getScores(self, learnerName, learner, testX, newArguments,
-                   storedArguments, customDict):
-        if hasattr(learner, 'decision_function'):
-            method = 'decision_function'
-            toCall = learner.decision_function
-        elif hasattr(learner, 'predict_proba'):
-            method = 'predict_proba'
-            toCall = learner.predict_proba
-        else:
-            raise NotImplementedError('Cannot get scores for this learner')
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'raw_documents']
-        backendArgs = self._paramQuery(method, learnerName, ignore)[0]
-        scoreArgs = self._getMethodArguments(backendArgs, newArguments,
-                                             storedArguments)
-        raw = toCall(testX, **scoreArgs)
-        # in binary classification, we return a row vector. need to reshape
-        if len(raw.shape) == 1:
-            return raw.reshape(len(raw), 1)
-        else:
-            return raw
-
-
-    def _getScoresOrder(self, learner):
-        return learner.UIgetScoreOrder()
-
-
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
                              arguments, customDict):
 
@@ -351,28 +564,6 @@ To install scikit-learn
             outputType = customDict['match']
         return nimble.createData(outputType, outputValue, useLog=False)
 
-
-    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
-        # init learner
-        learner = self._initLearner(learnerName, trainX, trainY, arguments)
-        # fit learner
-        self._fitLearner(learner, learnerName, trainX, trainY, arguments)
-
-        if (hasattr(learner, 'decision_function')
-                or hasattr(learner, 'predict_proba')):
-            if trainY is not None:
-                labelOrder = numpy.unique(trainY)
-            else:
-                allLabels = learner.predict(trainX)
-                labelOrder = numpy.unique(allLabels)
-
-            def UIgetScoreOrder():
-                return labelOrder
-
-            learner.UIgetScoreOrder = UIgetScoreOrder
-
-        return learner
-
     def _initLearner(self, learnerName, trainX, trainY, arguments):
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         initParams = {name: arguments[name] for name in initNames
@@ -407,127 +598,5 @@ To install scikit-learn
             # (multi-dimensional, non-negative)
             raise InvalidArgumentValue(str(ve))
 
-    def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
-                            arguments, customDict):
-        # see partial_fit(X, y[, classes, sample_weight])
-        raise NotImplementedError
-
-
-    def _applier(self, learnerName, learner, testX, newArguments,
-                 storedArguments, customDict):
-        if hasattr(learner, 'predict'):
-            method = 'predict'
-            toCall = self._predict
-        elif hasattr(learner, 'transform'):
-            method = 'transform'
-            toCall = self._transform
-        elif hasattr(learner, 'fit_predict'):
-            method = 'fit_predict'
-            toCall = self._fit_predict
-        elif hasattr(learner, 'fit_transform'):
-            method = 'fit_transform'
-            toCall = self._fit_transform
-        else:
-            msg = "Cannot apply this learner to data, no predict or "
-            msg += "transform function"
-            raise TypeError(msg)
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'raw_documents']
-        backendArgs = self._paramQuery(method, learnerName, ignore)[0]
-        applyArgs = self._getMethodArguments(backendArgs, newArguments,
-                                             storedArguments)
-        if 'raw_documents' in self._paramQuery(method, learnerName)[0]:
-            testX = testX.tolist()[0] # 1D list
-        return toCall(learner, testX, applyArgs, customDict)
-
-
-    def _getAttributes(self, learnerBackend):
-        obj = learnerBackend
-        generators = None
-        checkers = []
-        checkers.append(nimble.interfaces.interface_helpers.noLeading__)
-        checkers.append(nimble.interfaces.interface_helpers.notCallable)
-        checkers.append(nimble.interfaces.interface_helpers.notABCAssociated)
-
-        ret = collectAttributes(obj, generators, checkers)
-        return ret
-
-
-    def _optionDefaults(self, option):
-        return None
-
-
-    def _configurableOptionNames(self):
-        return ['location']
-
-
-    def _exposedFunctions(self):
-        return [self._predict, self._transform]
-
-
     def version(self):
         return self.skl.__version__
-
-    # fit_transform
-
-    def _predict(self, learner, testX, arguments, customDict):
-        """
-        Wrapper for the underlying predict function of a scikit-learn
-        learner object.
-        """
-        return learner.predict(testX, **arguments)
-
-    def _transform(self, learner, testX, arguments, customDict):
-        """
-        Wrapper for the underlying transform function of a scikit-learn
-        learner object.
-        """
-        return learner.transform(testX, **arguments)
-
-    def _fit_predict(self, learner, testX, arguments, customDict):
-        """
-        Wrapper for the underlying fit_predict function of a
-        scikit-learn learner object.
-        """
-        return learner.labels_
-
-    def _fit_transform(self, learner, testX, arguments, customDict):
-        """
-        Wrapper for the underlying fit_transform function of a
-        scikit-learn learner object.
-        """
-        return learner.embedding_
-
-    ###############
-    ### HELPERS ###
-    ###############
-
-    def _paramQuery(self, name, parent, ignore=None):
-        """
-        Takes the name of some scikit learn object or function, returns
-        a list of parameters used to instantiate that object or run that
-        function, or None if the desired thing cannot be found.
-        """
-        if ignore is None:
-            ignore = []
-        if parent is None:
-            namedModule = self.findCallable(name)
-        else:
-            namedModule = self.findCallable(parent)
-
-        if parent is None or name == '__init__':
-            obj = namedModule()
-            initDefaults = obj.get_params()
-            initParams = list(initDefaults.keys())
-            initValues = list(initDefaults.values())
-            if self.randomParam in initParams:
-                index = initParams.index(self.randomParam)
-                negdex = index - len(initParams)
-                seed = nimble.randomness.generateSubsidiarySeed()
-                initValues[negdex] = seed
-            return (initParams, initValues)
-        elif not hasattr(namedModule, name):
-            return None
-        else:
-            (args, _, _, d) = inspectArguments(getattr(namedModule, name))
-            (args, d) = removeFromTailMatchedLists(args, d, ignore)
-            return (args, d)

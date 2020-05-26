@@ -5,7 +5,7 @@ Contains the MeanConstant custom learner class.
 import numpy
 
 import nimble
-from nimble.customLearners import CustomLearner
+from nimble import CustomLearner
 
 
 class MeanConstant(CustomLearner):

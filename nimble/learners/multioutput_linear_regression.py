@@ -10,7 +10,7 @@ except ImportError:
     imported = False
 
 import nimble
-from nimble.customLearners import CustomLearner
+from nimble import CustomLearner
 from nimble.utility import numpy2DArray, dtypeConvert
 
 

@@ -103,7 +103,7 @@ def test_binary_metricsAsPerformanceFunction():
     trainData = createData('Matrix', rawTrain, useLog=False)
     testData = createData('Matrix', rawTest, useLog=False)
 
-    tl = train('Custom.KNNClassifier', trainData, 0, arguments={'k': 1}, useLog=False)
+    tl = train('nimble.KNNClassifier', trainData, 0, arguments={'k': 1}, useLog=False)
     score1 = tl.test(testData, 0, truePositive, useLog=False)
     assert score1 == 6
     assert truePositive.optimal == 'max'

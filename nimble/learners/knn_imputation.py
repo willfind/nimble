@@ -2,11 +2,10 @@
 import numpy
 
 import nimble
+from nimble import CustomLearner
 from nimble.helpers import findBestInterface
 from nimble.match import anyTrue, convertMatchToFunction
 from nimble.exceptions import InvalidArgumentValue
-
-from .custom_learner import CustomLearner
 
 def sklPresent():
     try:
@@ -31,9 +30,9 @@ class KNNImputation(CustomLearner):
         else:
             self.kwargs = {'k': k}
             if mode == 'classification':
-                self.learner = 'Custom.KNNClassifier'
+                self.learner = 'nimble.KNNClassifier'
             elif mode == 'regression':
-                # TODO Custom.KNNRegressor
+                # TODO nimble.KNNRegressor
                 msg = "nimble does not offer a KNN regressor at this time. "
                 msg += "However, installing sci-kit learn will allow for "
                 msg += 'regression mode.'

@@ -42,17 +42,15 @@ def prefixAdder(prefix):
     return addPrefix
 
 
-#  Untested functions: register/deregisterCustomLearnerAsDefault
 nimble_logged = [
     'createData', 'createRandomData', 'crossValidate', 'fillMatching', 'log',
     'loadData', 'loadTrainedLearner', 'normalizeData', 'setRandomSeed',
     'train', 'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 nimble_notLogged = [
-    'CV', 'Init', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
-    'identity', 'listLearners', 'learnerParameters', 'learnerDefaultValues',
-    'learnerType', 'ones', 'registerCustomLearner',
-    'registerCustomLearnerAsDefault', 'showLog', 'zeros',
+    'CustomLearner', 'CV', 'Init', 'identity', 'listLearners',
+    'learnerParameters', 'learnerDefaultValues', 'learnerType', 'ones',
+    'showLog', 'zeros',
     ]
 nimble_funcs = nimble_logged + nimble_notLogged
 nimble_tested = list(map(prefixAdder('nimble'), nimble_funcs))

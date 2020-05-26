@@ -41,7 +41,7 @@ def toCall(learner):
     return packageName + '.' + learner
 
 @sklSkipDec
-@logCountAssertionFactory(5)
+@logCountAssertionFactory(6)
 def testScikitLearnAliases():
     """ Test availability of correct aliases for 'sciKitLearn' """
     variables = ["Y", "x1", "x2"]
@@ -58,6 +58,8 @@ def testScikitLearnAliases():
     nimble.trainAndApply("skl.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
     nimble.trainAndApply("SciKitLearn.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
     nimble.trainAndApply("sklearn.LinearRegression", trainingObj, trainY="Y", testX=testObj, arguments={})
+    from sklearn.linear_model import LinearRegression
+    nimble.trainAndApply(LinearRegression, trainingObj, trainY="Y", testX=testObj, arguments={})
 
 
 @sklSkipDec
@@ -639,7 +641,7 @@ def testCustomRidgeRegressionCompare():
     data2 = [[122, 34], [76, -3]]
     testObj = nimble.createData('Matrix', data2, useLog=False)
 
-    name = 'Custom.RidgeRegression'
+    name = 'nimble.RidgeRegression'
     TL = nimble.train(name, trainX=trainObj, trainY=0, arguments={'lamb': 1})
     ret1 = TL.apply(testObj)
     ret2 = nimble.trainAndApply("Scikitlearn.Ridge", trainX=trainObj, trainY=0, testX=testObj,
@@ -656,7 +658,7 @@ def testCustomRidgeRegressionCompareRandomized():
     trainObj = nimble.createRandomData("Matrix", 1000, 60, .1, useLog=False)
     testObj = nimble.createRandomData("Matrix", 100, 59, .1, useLog=False)
 
-    name = 'Custom.RidgeRegression'
+    name = 'nimble.RidgeRegression'
     TL = nimble.train(name, trainX=trainObj, trainY=0, arguments={'lamb': 1})
     ret1 = TL.apply(testObj)
     ret2 = nimble.trainAndApply("Scikitlearn.Ridge", trainX=trainObj, trainY=0, testX=testObj,
@@ -676,7 +678,7 @@ def testCustomKNNClassficationCompareRandomized():
     testX, ignore, testY = generateClusteredPoints(5, 5, 5, addFeatureNoise=True, addLabelNoise=False,
                                                    addLabelColumn=False)
 
-    cusname = 'Custom.KNNClassifier'
+    cusname = 'nimble.KNNClassifier'
     sklname = "Scikitlearn.KNeighborsClassifier"
     TL = nimble.train(cusname, trainX, trainY=trainY, k=5)
     ret1 = TL.apply(testX)

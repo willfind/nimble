@@ -317,17 +317,20 @@ class SessionLogger(object):
             logInfo["function"] = nimbleFunction
             if isinstance(learnerFunction, str):
                 functionCall = learnerFunction
-            else:
-                # TODO test this
-                # we get the source code of the function as a list of strings
-                # and glue them together
-                funcLines = inspect.getsourcelines(learnerFunction)
-                funcString = ""
-                for i in range(len(funcLines) - 1):
-                    funcString += str(funcLines[i])
-                if funcLines is None:
-                    funcLines = "N/A"
-                functionCall = funcString
+            else: # learner object was provided directly
+                try:
+                    name = learnerFunction.__name__
+                    module = learnerFunction.__module__.split('.')[0]
+                    package = 'custom'
+                    for interface in nimble.interfaces.available.values():
+                        if interface.isAlias(module):
+                            package = interface.getCanonicalName()
+                    functionCall = package + '.' + name
+                # the above should cover all expected cases, but for safety we
+                # will catch any exceptions to prevent a successful operation
+                # from failing here due to a logging issue
+                except Exception:
+                    functionCall = "Unable to determine learner name"
             logInfo["learner"] = functionCall
             # integers or strings passed for Y values, convert if necessary
             if isinstance(trainLabels, (str, int, numpy.int64)):

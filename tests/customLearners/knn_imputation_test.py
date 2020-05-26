@@ -9,7 +9,7 @@ from nose.tools import raises
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
-from nimble.customLearners import KNNImputation
+from nimble.learners import KNNImputation
 
 from ..assertionHelpers import assertNoNamesGenerated
 
@@ -50,7 +50,7 @@ def test_KNNImputation_regression():
 
 @raises(InvalidArgumentValue)
 def test_KNNImputation_regression_exception_NoSKL():
-    with mock.patch('nimble.customLearners.knn_imputation.sklPresent', lambda: False):
+    with mock.patch('nimble.learners.knn_imputation.sklPresent', lambda: False):
         data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
         toTest = nimble.createData('Matrix', data)
         learner = KNNImputation()

@@ -37,6 +37,10 @@ def configSafetyWrapper(toWrap):
         backupLoadSettings = nimble.configuration.loadSettings
         backupLogger = nimble.logger.active
         availableBackup = copy.copy(nimble.interfaces.available)
+        # CustomLearnerInterface attributes are not copied above
+        clInterface = nimble.interfaces.available['custom']
+        clReg = copy.copy(clInterface.registeredLearners)
+        clOpt = copy.copy(clInterface._configurableOptionNamesAvailable)
 
         nimble.settings = loadSettingsFromTempFile()
         nimble.settings.changes = copyChanges
@@ -50,6 +54,8 @@ def configSafetyWrapper(toWrap):
             nimble.logger.active = backupLogger
             nimble.configuration.loadSettings = backupLoadSettings
             nimble.interfaces.available = availableBackup
+            clInterface.registeredLearners = clReg
+            clInterface._configurableOptionNamesAvailable = clOpt
 
     return wrapped
 

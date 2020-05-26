@@ -12,7 +12,8 @@ import numpy
 
 import nimble
 from nimble.interfaces.universal_interface import UniversalInterface
-from nimble.interfaces.scikit_learn_interface import SciKitLearn
+from nimble.interfaces.universal_interface import PredefinedInterface
+from nimble.interfaces.scikit_learn_interface import _SciKitLearnAPI
 from nimble.exceptions import InvalidArgumentValue
 from nimble.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.interfaces.interface_helpers import removeFromTailMatchedLists
@@ -30,7 +31,7 @@ autoimputeDir = None
 locationCache = {}
 
 @inheritDocstringsFactory(UniversalInterface)
-class Autoimpute(SciKitLearn):
+class Autoimpute(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
     """
     This class is an interface to autoimpute.
 
@@ -65,6 +66,8 @@ class Autoimpute(SciKitLearn):
 
         self._searcher = PythonSearcher(
             self.autoimpute, self.autoimpute.__all__, {}, isLearner, 1)
+
+        super(Autoimpute, self).__init__()
 
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###

@@ -426,8 +426,8 @@ class SessionConfiguration(object):
         # if ignore is true, this exception comes from the findBestInterface
         # call, and means that the section is not related to an interface.
         except InvalidArgumentValue:
-            if not ignore:
-                raise
+                if not ignore:
+                    raise
         # a PackageException is the result of a possible interface being
         # unavailable, we will allow setting a location for possible interfaces
         # as this may aid in loading them in the future.
@@ -545,7 +545,7 @@ def loadSettings():
     return ret
 
 
-def setInterfaceOptions(settingsObj, interface, save):
+def setInterfaceOptions(interface, save):
     """
     Synchronizes the configuration file, settings object in memory, and
     the the available interfaces, so that all three have the same option
@@ -558,52 +558,17 @@ def setInterfaceOptions(settingsObj, interface, save):
     optionNames = interface.optionNames
     # remove any existing option names which are no longer in optionNames
     try:
-        allOptions = settingsObj.get(interfaceName, None)
+        allOptions = nimble.settings.get(interfaceName, None)
         for opName in allOptions:
             if opName not in optionNames:
-                settingsObj.delete(interfaceName, opName)
+                nimble.settings.delete(interfaceName, opName)
     except configparser.NoSectionError:
         pass
     # set new option names
     for opName in optionNames:
         try:
-            settingsObj.get(interfaceName, opName)
+            nimble.settings.get(interfaceName, opName)
         except (configparser.Error):
-            settingsObj.set(interfaceName, opName, "")
+            nimble.settings.set(interfaceName, opName, "")
     if save:
-        settingsObj.saveChanges(interfaceName)
-
-
-def setAndSaveAvailableInterfaceOptions():
-    """
-    Set and save the options for each available interface.
-    """
-    for interface in nimble.interfaces.available:
-        setInterfaceOptions(nimble.settings, interface, save=True)
-
-
-def autoRegisterFromSettings():
-    """
-    Helper which looks at the learners listed in nimble.settings under
-    the 'RegisteredLearners' section and makes sure they are registered.
-    """
-    # query for all entries in 'RegisteredLearners' section
-    toRegister = nimble.settings.get('RegisteredLearners', None)
-    # call register custom learner on them
-    for key in toRegister:
-        try:
-            (packName, _) = key.split('.')
-            (modPath, attrName) = toRegister[key].rsplit('.', 1)
-        except ValueError:
-            continue
-        try:
-            module = importlib.import_module(modPath)
-            learnerClass = getattr(module, attrName)
-            nimble.registerCustomLearnerAsDefault(packName, learnerClass)
-        except ImportError:
-            msg = "When trying to automatically register a custom "
-            msg += "learner at " + key + " we were unable to import "
-            msg += "the learner object from the location " + toRegister[key]
-            msg += " and have therefore ignored that configuration "
-            msg += "entry"
-            print(msg, file=sys.stderr)
+        nimble.settings.saveChanges(interfaceName)

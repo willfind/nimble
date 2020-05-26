@@ -270,7 +270,7 @@ def patch_mergeArguments(source):
 def testArgumentIntegrityTrain():
     arguments = {'k': 1}
     train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
-    tl = nimble.train('Custom.KNNClassifier', train, 2, arguments=arguments)
+    tl = nimble.train('nimble.KNNClassifier', train, 2, arguments=arguments)
 
 @raises(CalledFunctionException)
 @patch_mergeArguments('nimble.core')
@@ -278,7 +278,7 @@ def testArgumentIntegrityTrainAndApply():
     arguments = {'k': 1}
     train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
     test = nimble.createData('Matrix', [[0, 1], [1, 0]])
-    pred = nimble.trainAndApply('Custom.KNNClassifier', train, 2, test, arguments=arguments)
+    pred = nimble.trainAndApply('nimble.KNNClassifier', train, 2, test, arguments=arguments)
 
 @raises(CalledFunctionException)
 @patch_mergeArguments('nimble.core')
@@ -286,7 +286,7 @@ def testArgumentIntegrityTrainAndTest():
     arguments = {'k': 1}
     train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
     test = nimble.createData('Matrix', [[0, 1, 1], [1, 0, 2]])
-    perf = nimble.trainAndTest('Custom.KNNClassifier', train, 2, test, 2,
+    perf = nimble.trainAndTest('nimble.KNNClassifier', train, 2, test, 2,
                                performanceFunction=nimble.calculate.fractionIncorrect,
                                arguments=arguments)
 
@@ -296,14 +296,14 @@ def testArgumentIntegrityTrainAndTestOnTrainingData():
     train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
     try:
         perf = nimble.trainAndTestOnTrainingData(
-            'Custom.KNNClassifier', train, 2, arguments=arguments,
+            'nimble.KNNClassifier', train, 2, arguments=arguments,
             performanceFunction=nimble.calculate.fractionIncorrect)
         assert False # expected CalledFunctionException
     except CalledFunctionException:
         pass
     try:
         perf = nimble.trainAndTestOnTrainingData(
-            'Custom.KNNClassifier', train, 2, folds=2, arguments=arguments,
+            'nimble.KNNClassifier', train, 2, folds=2, arguments=arguments,
             crossValidationError=True,
             performanceFunction=nimble.calculate.fractionIncorrect)
         assert False # expected CalledFunctionException
@@ -316,7 +316,7 @@ def testArgumentIntegrityTLApply():
     arguments = {'k': 1}
     train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
     test = nimble.createData('Matrix', [[0, 1], [1, 0]])
-    tl = nimble.train('Custom.KNNClassifier', train, 2, arguments=arguments)
+    tl = nimble.train('nimble.KNNClassifier', train, 2, arguments=arguments)
     pred = tl.apply(test)
 
 @raises(CalledFunctionException)
@@ -325,5 +325,5 @@ def testArgumentIntegrityTLTest():
     arguments = {'k': 1}
     train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
     test = nimble.createData('Matrix', [[0, 1, 1], [1, 0, 2]])
-    tl = nimble.train('Custom.KNNClassifier', train, 2, arguments=arguments)
+    tl = nimble.train('nimble.KNNClassifier', train, 2, arguments=arguments)
     perf = tl.test(test, 2, performanceFunction=nimble.calculate.fractionIncorrect)

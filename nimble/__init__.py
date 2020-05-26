@@ -9,18 +9,6 @@ data, and do package level configuration and information querying.
 import os
 import inspect
 
-from . import configuration
-from .configuration import nimblePath
-# load settings from configuration file
-settings = configuration.loadSettings()
-
-# Import those submodules that need setup or we want to be
-# accessible to the user
-from . import interfaces
-from . import calculate
-from . import randomness
-from . import logger
-
 # Import those functions that we want to be accessible in the
 # top level
 from .randomness import setRandomSeed
@@ -37,10 +25,6 @@ from .core import zeros
 from .core import identity
 from .core import normalizeData
 from .core import fillMatching
-from .core import registerCustomLearner
-from .core import registerCustomLearnerAsDefault
-from .core import deregisterCustomLearner
-from .core import deregisterCustomLearnerAsDefault
 from .core import listLearners
 from .core import learnerParameters
 from .core import learnerDefaultValues
@@ -52,39 +36,30 @@ from .core import loadData
 from .core import loadTrainedLearner
 from .core import CV
 from .core import Init
+from .custom_learner import CustomLearner
+from .configuration import nimblePath
 
-# now finish out with any other configuration that needs to be done
+# Import those submodules that need setup or we want to be
+# accessible to the user
+from . import learners
+from . import calculate
+from . import randomness
+from . import match
+from . import fill
+from . import interfaces
+from . import logger
+from . import configuration
 
-# These learners are required for unit testing, so we ensure they will
-# be automatically registered by making surey they have entries in
-# nimble.settings.
-settings.set("RegisteredLearners", "Custom.RidgeRegression",
-             'nimble.customLearners.RidgeRegression')
-settings.set("RegisteredLearners", "Custom.KNNClassifier",
-             'nimble.customLearners.KNNClassifier')
-settings.set("RegisteredLearners", "Custom.MeanConstant",
-             'nimble.customLearners.MeanConstant')
-settings.set("RegisteredLearners", "Custom.MultiOutputRidgeRegression",
-             'nimble.customLearners.MultiOutputRidgeRegression')
-settings.set("RegisteredLearners", "Custom.KNNImputation",
-             'nimble.customLearners.KNNImputation')
-settings.saveChanges("RegisteredLearners")
-
-# register those custom learners listed in nimble.settings
-configuration.autoRegisterFromSettings()
-
-# Now that we have loaded everything else, sync up the the settings object
-# as needed.
-configuration.setAndSaveAvailableInterfaceOptions()
+# load settings from configuration file
+settings = configuration.loadSettings()
 
 # initialize the logging file
 logger.active = logger.initLoggerAndLogConfig()
 
-__all__ = ['createData', 'createRandomData', 'crossValidate', 'CV',
-           'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
-           'identity', 'Init', 'learnerDefaultValues', 'learnerParameters',
+__all__ = ['calculate', 'createData', 'createRandomData', 'crossValidate',
+           'CustomLearner', 'CV', 'fill', 'identity', 'Init',
+           'learnerDefaultValues', 'learnerParameters', 'learners',
            'learnerType', 'listLearners', 'loadData', 'loadTrainedLearner',
-           'log', 'normalizeData', 'ones', 'registerCustomLearner',
-           'registerCustomLearnerAsDefault', 'setRandomSeed', 'settings',
-           'showLog', 'train', 'trainAndApply', 'trainAndTest',
-           'trainAndTestOnTrainingData', 'nimblePath', 'zeros']
+           'log', 'match', 'normalizeData', 'ones', 'setRandomSeed',
+           'settings', 'showLog', 'randomness', 'train', 'trainAndApply',
+           'trainAndTest', 'trainAndTestOnTrainingData', 'nimblePath', 'zeros']
