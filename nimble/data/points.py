@@ -16,6 +16,7 @@ from collections import OrderedDict
 import nimble
 from nimble.logger import handleLogging
 from nimble.exceptions import ImproperObjectAction
+from .dataHelpers import limitedTo2D
 
 class Points(object):
     """
@@ -29,6 +30,12 @@ class Points(object):
     def __init__(self, base):
         self._base = base
         super(Points, self).__init__()
+
+    def __iter__(self):
+        return self._iter()
+
+    def __getitem__(self, key):
+        return self._getitem(key)
 
     ########################
     # Low Level Operations #
@@ -823,6 +830,7 @@ class Points(object):
         """
         self._retain(toRetain, start, end, number, randomize, useLog)
 
+    @limitedTo2D
     def count(self, condition):
         """
         The number of points which satisfy the condition.
@@ -954,60 +962,7 @@ class Points(object):
         """
         self._sort(sortBy, sortHelper, useLog)
 
-    # def flattenToOne(self):
-    #     """
-    #     Modify this object so that its values are in a single point.
-    #
-    #     Each feature in the result maps to exactly one value from the
-    #     original object. The order of values respects the point order
-    #     from the original object, if there were n features in the
-    #     original, the first n values in the result will exactly match
-    #     the first point, the nth to (2n-1)th values will exactly match
-    #     the original second point, etc. The feature names will be
-    #     transformed such that the value at the intersection of the
-    #     "pn_i" named point and "fn_j" named feature from the original
-    #     object will have a feature name of "fn_j | pn_i". The single
-    #     point will have a name of "Flattened". This is an inplace
-    #     operation.
-    #
-    #     See Also
-    #     --------
-    #     unflattenFromOne
-    #
-    #     Examples
-    #     --------
-    #     TODO
-    #     """
-    #     self._flattenToOne()
-    #
-    # def unflattenFromOne(self, numPoints):
-    #     """
-    #     Adjust a flattened point vector to contain multiple points.
-    #
-    #     This is an inverse of the method ``flattenToOne``: if an
-    #     object foo with n points calls the flatten method, then this
-    #     method with n as the argument, the result should be identical to
-    #     the original foo. It is not limited to objects that have
-    #     previously had ``flattenToOne`` called on them; any object
-    #     whose structure and names are consistent with a previous call to
-    #     flattenToOnePoint may call this method. This includes objects
-    #     with all default names. This is an inplace operation.
-    #
-    #     Parameters
-    #     ----------
-    #     numPoints : int
-    #         The number of points in the modified object.
-    #
-    #     See Also
-    #     --------
-    #     flattenToOnePoint
-    #
-    #     Examples
-    #     --------
-    #     TODO
-    #     """
-    #     self._unflattenFromOne(numPoints)
-
+    @limitedTo2D
     def transform(self, function, points=None, useLog=None):
         """
         Modify this object by applying a function to each point.
@@ -1082,7 +1037,7 @@ class Points(object):
     ###########################
     # Higher Order Operations #
     ###########################
-
+    @limitedTo2D
     def calculate(self, function, points=None, useLog=None):
         """
         Return a new object with a calculation applied to each point.
@@ -1160,6 +1115,7 @@ class Points(object):
         """
         return self._calculate(function, points, useLog)
 
+    @limitedTo2D
     def matching(self, function, useLog=None):
         """
         Return a boolean value object identifying matching points.
@@ -1378,6 +1334,7 @@ class Points(object):
         """
         self._insert(None, toAppend, True, useLog)
 
+    @limitedTo2D
     def mapReduce(self, mapper, reducer, useLog=None):
         """
         Apply a mapper and reducer function to this object.
@@ -1493,6 +1450,7 @@ class Points(object):
         """
         self._permute(order, useLog)
 
+    @limitedTo2D
     def fillMatching(self, fillWith, matchingElements, points=None,
                      useLog=None, **kwarguments):
         """
@@ -1581,6 +1539,7 @@ class Points(object):
         return self._fillMatching(fillWith, matchingElements, points,
                                   useLog,  **kwarguments)
 
+    @limitedTo2D
     def normalize(self, subtract=None, divide=None, applyResultTo=None,
                   useLog=None):
         """
@@ -1630,7 +1589,7 @@ class Points(object):
         """
         self._normalize(subtract, divide, applyResultTo, useLog)
 
-
+    @limitedTo2D
     def splitByCollapsingFeatures(self, featuresToCollapse, featureForNames,
                                   featureForValues, useLog=None):
         """
@@ -1761,7 +1720,7 @@ class Points(object):
                       Points.splitByCollapsingFeatures, featuresToCollapse,
                       featureForNames, featureForValues)
 
-
+    @limitedTo2D
     def combineByExpandingFeatures(self, featureWithFeatureNames,
                                    featuresWithValues, useLog=None):
         """
@@ -2047,7 +2006,7 @@ class Points(object):
     #########################
     # Statistical functions #
     #########################
-
+    @limitedTo2D
     def similarities(self, similarityFunction):
         """
         Calculate similarities between points.
@@ -2068,6 +2027,7 @@ class Points(object):
         """
         return self._similarities(similarityFunction)
 
+    @limitedTo2D
     def statistics(self, statisticsFunction):
         """
         Calculate point statistics.
@@ -2090,6 +2050,14 @@ class Points(object):
     ####################
     # Abstract Methods #
     ####################
+
+    @abstractmethod
+    def _iter(self):
+        pass
+
+    @abstractmethod
+    def _getitem(self, key):
+        pass
 
     @abstractmethod
     def _getName(self, index):

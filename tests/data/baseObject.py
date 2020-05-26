@@ -74,14 +74,14 @@ def viewConstructorMaker(concreteType):
         # generate points of data to be present before and after the viewable
         # data in the concrete object
         if len(orig.points) != 0:
-            firstPRaw = [[0] * len(orig.features)]
+            firstPRaw = numpy.zeros([1] + orig._shape[1:]).tolist()
             fNamesParam = orig.features._getNamesNoGeneration()
             firstPoint = nimble.helpers.initDataObject(
                 concreteType, rawData=firstPRaw, pointNames=['firstPNonView'],
                 featureNames=fNamesParam, name=name, path=orig.path,
                 keepPoints='all', keepFeatures='all', convertToType=convertToType)
 
-            lastPRaw = [[3] * len(orig.features)]
+            lastPRaw = (numpy.ones([1] + orig._shape[1:]) * 3).tolist()
             lastPoint = nimble.helpers.initDataObject(
                 concreteType, rawData=lastPRaw, pointNames=['lastPNonView'],
                 featureNames=fNamesParam, name=name, path=orig.path,
@@ -100,7 +100,7 @@ def viewConstructorMaker(concreteType):
 
         # generate features of data to be present before and after the viewable
         # data in the concrete object
-        if len(orig.features) != 0:
+        if len(orig.features) != 0 and not len(orig._shape) > 2:
             lastFRaw = [[1] * len(full.points)]
             fNames = full.points._getNamesNoGeneration()
             lastFeature = nimble.helpers.initDataObject(
@@ -186,7 +186,6 @@ def methodObjectValidation(func):
         startRelPath = source._relPath
 
         ret = func(self, *args, **kwargs)
-
         source.validate()
         if isinstance(ret, nimble.data.Base):
             ret.validate()

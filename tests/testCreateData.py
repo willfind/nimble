@@ -11,13 +11,15 @@ except ImportError:
 
 from nose.tools import *
 from nose.plugins.attrib import attr
+import scipy.sparse
+import pandas as pd
+import h5py
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import FileFormatException
 from nimble.data.dataHelpers import DEFAULT_PREFIX
 from nimble.helpers import _intFloatOrString
-from nimble.utility import scipy, pd
 from nimble.utility import sparseMatrixToArray
 
 # from .. import logger
@@ -449,7 +451,8 @@ def test_createData_CSV_unequalRowLength_position():
             nimble.createData(returnType="List", data=tmpCSV.name, featureNames=True)
             assert False  # the previous call should have raised an exception
         except FileFormatException as ffe:
-            print(ffe.message)
+            # print(ffe.message)
+
             # We expect a message of the format:
             #
             assert '1' in ffe.message  # defining line
@@ -462,6 +465,126 @@ def test_createData_CSV_unequalRowLength_position():
             # offending length comes before expected length
             assert ffe.message.index('6') < ffe.message.index('8')
 
+def test_createData_HDF5_data():
+    """ """
+    for t in returnTypes:
+        fromList = nimble.createData(returnType=t, data=[[[[1, 2], [3, 4]],
+                                                          [[1, 2], [3, 4]],],
+                                                         [[[1, 2], [3, 4]],
+                                                          [[1, 2], [3, 4]]]])
+        # HDF5 commonly uses two extensions .hdf5 and .h5
+        for suffix in ['.hdf5', '.h5']:
+            with tempfile.NamedTemporaryFile(suffix=suffix) as tmpHDF:
+                arr = numpy.array([[1, 2], [3, 4]])
+                hdfFile = h5py.File(tmpHDF, 'w')
+                one = hdfFile.create_group('one')
+                one.create_dataset('mtx1', data=arr)
+                one.create_dataset('mtx2', data=arr)
+                two = hdfFile.create_group('two')
+                two.create_dataset('mtx1', data=arr)
+                two.create_dataset('mtx2', data=arr)
+                hdfFile.flush()
+                hdfFile.close()
+                tmpHDF.seek(0)
+                fromHDF = nimble.createData(returnType=t, data=tmpHDF.name)
+
+                if t is None and fromList.getTypeString() != fromHDF.getTypeString():
+                    assert fromList.isApproximatelyEqual(fromHDF)
+                else:
+                    assert fromList == fromHDF
+
+def test_createData_HDF5_dataRandomExtension():
+    for t in returnTypes:
+        fromList = nimble.createData(returnType=t, data=[[[[1, 2], [3, 4]],
+                                                          [[1, 2], [3, 4]],],
+                                                         [[[1, 2], [3, 4]],
+                                                          [[1, 2], [3, 4]]]])
+
+        with tempfile.NamedTemporaryFile(suffix=".data") as tmpHDF:
+            arr = numpy.array([[1, 2], [3, 4]])
+            hdfFile = h5py.File(tmpHDF, 'w')
+            one = hdfFile.create_group('one')
+            one.create_dataset('mtx1', data=arr)
+            one.create_dataset('mtx2', data=arr)
+            two = hdfFile.create_group('two')
+            two.create_dataset('mtx1', data=arr)
+            two.create_dataset('mtx2', data=arr)
+            hdfFile.flush()
+            hdfFile.close()
+            tmpHDF.seek(0)
+            fromHDF = nimble.createData(returnType=t, data=tmpHDF.name)
+
+            if t is None and fromList.getTypeString() != fromHDF.getTypeString():
+                assert fromList.isApproximatelyEqual(fromHDF)
+            else:
+                assert fromList == fromHDF
+
+def test_createData_HDF5_dataDifferentStructures():
+    data = [[[[1, 2], [3, 4]],
+             [[1, 2], [3, 4]]],
+            [[[-1, -2], [-3, -4]],
+             [[-1, -2], [-3, -4]]]]
+    for t in returnTypes:
+        fromList = nimble.createData(returnType=t, data=data)
+
+        # Case 1: file contains single Dataset with all data
+        with tempfile.NamedTemporaryFile(suffix=".h5") as tmpHDF:
+            hdfFile = h5py.File(tmpHDF, 'w')
+            ds1 = hdfFile.create_dataset('data', data=numpy.array(data))
+            hdfFile.flush()
+            hdfFile.close()
+            tmpHDF.seek(0)
+            fromHDF = nimble.createData(returnType=t, data=tmpHDF.name)
+
+            if t is None and fromList.getTypeString() != fromHDF.getTypeString():
+                assert fromList.isApproximatelyEqual(fromHDF)
+            else:
+                assert fromList == fromHDF
+
+        # Case 2: Two Datasets
+        with tempfile.NamedTemporaryFile(suffix=".h5") as tmpHDF:
+            hdfFile = h5py.File(tmpHDF, 'w')
+            hdfFile.create_dataset('mtx1', data=numpy.array(data)[0])
+            hdfFile.create_dataset('mtx2', data=numpy.array(data)[1])
+            hdfFile.flush()
+            hdfFile.close()
+            tmpHDF.seek(0)
+            fromHDF = nimble.createData(returnType=t, data=tmpHDF.name)
+
+            if t is None and fromList.getTypeString() != fromHDF.getTypeString():
+                assert fromList.isApproximatelyEqual(fromHDF)
+            else:
+                assert fromList == fromHDF
+
+        # Case 3: Two groups containing two Datasets (matrices)
+        # This is the stucture in other tests so we will not test here
+
+        # Case 4: Two groups each containing two groups with two Datasets (vectors)
+        with tempfile.NamedTemporaryFile(suffix=".hdf5") as tmpHDF:
+            hdfFile = h5py.File(tmpHDF, 'w')
+            zero = hdfFile.create_group('index0')
+            zeroZero = zero.create_group('index0')
+            zeroZero.create_dataset('index0', data=numpy.array(data)[0, 0, 0])
+            zeroZero.create_dataset('index1', data=numpy.array(data)[0, 0, 1])
+            zeroOne = zero.create_group('index1')
+            zeroOne.create_dataset('index0', data=numpy.array(data)[0, 1, 0])
+            zeroOne.create_dataset('index1', data=numpy.array(data)[0, 1, 1])
+            one = hdfFile.create_group('index1')
+            oneZero = one.create_group('index0')
+            oneZero.create_dataset('index0', data=numpy.array(data)[1, 0, 0])
+            oneZero.create_dataset('index1', data=numpy.array(data)[1, 0, 1])
+            oneOne = one.create_group('index1')
+            oneOne.create_dataset('index0', data=numpy.array(data)[1, 1, 0])
+            oneOne.create_dataset('index1', data=numpy.array(data)[1, 1, 1])
+            hdfFile.flush()
+            hdfFile.close()
+            tmpHDF.seek(0)
+            fromHDF = nimble.createData(returnType=t, data=tmpHDF.name)
+
+            if t is None and fromList.getTypeString() != fromHDF.getTypeString():
+                assert fromList.isApproximatelyEqual(fromHDF)
+            else:
+                assert fromList == fromHDF
 
 ############################
 # Name and path attributes #
@@ -893,6 +1016,35 @@ def test_extractNames_MTXCoo():
         else:
             assert fromList == fromMTXCoo
 
+def test_extractNames_HDF():
+    pNames = ['one', 'two']
+    for t in returnTypes:
+        fromList = nimble.createData(returnType=t, data=[[[[1, 2], [3, 4]],
+                                                          [[1, 2], [3, 4]],],
+                                                         [[[1, 2], [3, 4]],
+                                                          [[1, 2], [3, 4]]]],
+                                     pointNames=pNames)
+
+        with tempfile.NamedTemporaryFile(suffix=".data") as tmpHDF:
+            arr = numpy.array([[1, 2], [3, 4]])
+            hdfFile = h5py.File(tmpHDF, 'w')
+            one = hdfFile.create_group('one')
+            one.create_dataset('mtx1', data=arr)
+            one.create_dataset('mtx2', data=arr)
+            two = hdfFile.create_group('two')
+            two.create_dataset('mtx1', data=arr)
+            two.create_dataset('mtx2', data=arr)
+            hdfFile.flush()
+            hdfFile.close()
+            tmpHDF.seek(0)
+            fromHDF = nimble.createData(returnType=t, data=tmpHDF.name,
+                                        pointNames=True)
+
+            if t is None and fromList.getTypeString() != fromHDF.getTypeString():
+                assert fromList.isApproximatelyEqual(fromHDF)
+            else:
+                assert fromList == fromHDF
+
 
 @raises(InvalidArgumentValue)
 def test_csv_extractNames_duplicatePointName():
@@ -937,6 +1089,17 @@ def test_csv_roundtrip_autonames():
             fromFileBoth = nimble.createData(returnType=retType, data=tmpCSVBoth.name)
             assert fromFileBoth == withBoth
 
+def test_hdf_roundtrip_autonames():
+    for t in returnTypes:
+        pNames = ['one', 'two']
+        data=[[[[1, 2], [3, 4]], [[1, 2], [3, 4]]],
+              [[[-1, -2], [-3, -4]], [[-1, -2], [-3, -4]]]]
+        withPNames = nimble.createData(t, data, pointNames=pNames)
+
+        with tempfile.NamedTemporaryFile(suffix=".hdf5") as tmpHDF:
+            withPNames.writeFile(tmpHDF.name, includeNames=True)
+            fromFile = nimble.createData(t, tmpHDF.name)
+            assert withPNames == fromFile
 
 ##################################
 # Point / Feature names from Raw #
@@ -1210,33 +1373,49 @@ def mocked_requests_get(*args, **kwargs):
         """mock of Response object returned by a call to requests.get"""
         def __init__(self, content, status_code, ok=True, reason=None, encoding='utf-8'):
             # In Response object, .content returns bytes and .text returns unicode
-            # python2 uses .content and python3 uses .text in the code, so setting
-            # self.content and self.text to content replicates the desired behavior
-            self.content = content
-            self.text = content
             self.status_code = status_code
             self.ok = ok
             self.reason = reason
+            if content is not None:
+                self.content = content
+                try:
+                    self.text = content.decode(encoding)
+                    self.encoding = encoding
+                except UnicodeDecodeError:
+                    self.text = str(self.content, errors='replace')
+                    self.encoding = None
+            else:
+                self.content = None
+                self.text = None
+                self.encoding = None
             self.apparent_encoding = encoding
 
     if args[0] == 'http://mockrequests.nimble/CSVNoExtension':
-        return MockResponse('1,2,3\n4,5,6', 200)
+        return MockResponse(b'1,2,3\n4,5,6', 200)
     elif args[0] == 'http://mockrequests.nimble/CSVAmbiguousExtension.data':
-        return MockResponse('1,2,3\n4,5,6', 200)
+        return MockResponse(b'1,2,3\n4,5,6', 200)
     elif args[0] == 'http://mockrequests.nimble/CSV.csv':
-        return MockResponse('1,2,3\n4,5,6', 200)
+        return MockResponse(b'1,2,3\n4,5,6', 200)
     elif args[0] == 'http://mockrequests.nimble/CSVcarriagereturn.csv':
-        return MockResponse('1,2,3\r4,5,6', 200)
+        return MockResponse(b'1,2,3\r4,5,6', 200)
     elif args[0] == 'http://mockrequests.nimble/CSVunicodetest.csv':
-        return MockResponse('1,2,\xc2\xa1\n4,5,6', 200)
+        return MockResponse(b'1,2,\xc2\xa1\n4,5,6', 200)
     elif args[0] == 'http://mockrequests.nimble/CSVquotednewline.csv':
         # csv allows for newline characters in field values within double quotes
-        return MockResponse('1,2,"a/nb"\n4,5,6', 200)
-    elif (args[0] == 'http://mockrequests.nimble/MTXNoExtension' or
-          args[0] == 'http://mockrequests.nimble/MTXAmbiguousExtension.data' or
-          args[0] == 'http://mockrequests.nimble/MTX.mtx'):
-        mtx = '%%MatrixMarket matrix coordinate real general\n2 3 6\n1 1 1\n1 2 2\n1 3 3\n2 1 4\n2 2 5\n2 3 6'
+        return MockResponse(b'1,2,"a/nb"\n4,5,6', 200)
+    elif args[0].startswith('http://mockrequests.nimble/MTX'):
+        mtx = b'%%MatrixMarket matrix coordinate real general\n'
+        mtx += b'2 3 6\n1 1 1\n1 2 2\n1 3 3\n2 1 4\n2 2 5\n2 3 6'
         return MockResponse(mtx, 200)
+    elif args[0].startswith('http://mockrequests.nimble/HDF'):
+        data = [[[[1, 2], [3, 4]]], [[[-1, -2], [-3, -4]]]]
+        with tempfile.NamedTemporaryFile(suffix=".data") as tmpHDF:
+            hdfFile = h5py.File(tmpHDF, 'w')
+            ds1 = hdfFile.create_dataset('data', data=numpy.array(data))
+            hdfFile.flush()
+            hdfFile.close()
+            tmpHDF.seek(0)
+            return MockResponse(tmpHDF.read(), 200)
 
     return MockResponse(None, 404, False, 'Not Found')
 
@@ -1275,7 +1454,7 @@ def test_createData_http_CSVCarriageReturn(mock_get):
 @mock.patch('requests.get', side_effect=mocked_requests_get)
 def test_createData_http_CSVNonUnicodeValues(mock_get):
     for t in returnTypes:
-        exp = nimble.createData(returnType=t, data=[[1,2,'\xc2\xa1'],[4,5,'6']])
+        exp = nimble.createData(returnType=t, data=[[1,2,"\u00A1"],[4,5,'6']])
         url = 'http://mockrequests.nimble/CSVunicodetest.csv'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb == exp
@@ -1289,9 +1468,8 @@ def test_createData_http_CSVQuotedNewLine(mock_get):
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_CSVPathsEqualUrl(mock_get):
+def test_createData_http_CSVPathsWithUrl(mock_get):
     for t in returnTypes:
-        exp = nimble.createData(returnType=t, data=[[1,2,3],[4,5,6]])
         url = 'http://mockrequests.nimble/CSVNoExtension'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb.absolutePath == url
@@ -1328,12 +1506,48 @@ def test_createData_http_MTXFileOK(mock_get):
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_MTXPathsEqualUrl(mock_get):
+def test_createData_http_MTXPathsWithUrl(mock_get):
     for t in returnTypes:
-        # None returnType for url will default to Sparse so use coo_matrix for data
         data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
-        exp = nimble.createData(returnType=t, data=data)
         url = 'http://mockrequests.nimble/MTXNoExtension'
+        fromWeb = nimble.createData(returnType=t, data=url)
+        assert fromWeb.absolutePath == url
+        assert fromWeb.relativePath == None
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_HDFNoExtension(mock_get):
+    for t in returnTypes:
+        data = [[[[1, 2], [3, 4]]], [[[-1, -2], [-3, -4]]]]
+        exp = nimble.createData(returnType=t, data=data)
+        url = 'http://mockrequests.nimble/HDFNoExtension'
+        fromWeb = nimble.createData(returnType=t, data=url)
+        assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_HDFAmbiguousExtension(mock_get):
+    for t in returnTypes:
+        data = [[[[1, 2], [3, 4]]], [[[-1, -2], [-3, -4]]]]
+        exp = nimble.createData(returnType=t, data=data)
+        url = 'http://mockrequests.nimble/HDFAmbiguousExtension.data'
+        fromWeb = nimble.createData(returnType=t, data=url)
+        assert fromWeb == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_HDFFileOK(mock_get):
+    for t in returnTypes:
+        data = [[[[1, 2], [3, 4]]], [[[-1, -2], [-3, -4]]]]
+        exp = nimble.createData(returnType=t, data=data)
+        url1 = 'http://mockrequests.nimble/HDF.hdf5'
+        fromWeb1 = nimble.createData(returnType=t, data=url1)
+        url2 = 'http://mockrequests.nimble/HDF.h5'
+        fromWeb2 = nimble.createData(returnType=t, data=url2)
+        assert fromWeb1 == fromWeb2 == exp
+
+@mock.patch('requests.get', side_effect=mocked_requests_get)
+def test_createData_http_HDFPathsWithUrl(mock_get):
+    for t in returnTypes:
+        data = [[[[1, 2], [3, 4]]], [[[-1, -2], [-3, -4]]]]
+        url = 'http://mockrequests.nimble/HDFNoExtension'
         fromWeb = nimble.createData(returnType=t, data=url)
         assert fromWeb.absolutePath == url
         assert fromWeb.relativePath == None
@@ -2704,6 +2918,130 @@ def test_createData_logCount():
     for t in returnTypes:
         byType(t)
 
+def makeTensorData(matrix):
+    rank3List = [matrix, matrix, matrix]
+    rank4List = [rank3List, rank3List, rank3List]
+    rank5List = [rank4List, rank4List, rank4List]
+    rank3Array = numpy.array(rank3List)
+    rank4Array = numpy.array(rank4List)
+    rank5Array = numpy.array(rank5List)
+    rank3Array2D = numpy.empty((3, 3), dtype='O')
+    for i, lst in enumerate(rank3List):
+        rank3Array2D[i] = lst
+    rank4Array2D = numpy.empty((3, 3), dtype='O')
+    for i, lst in enumerate(rank4List):
+        rank4Array2D[i] = lst
+    rank5Array2D = numpy.empty((3, 3), dtype='O')
+    for i, lst in enumerate(rank5List):
+        rank5Array2D[i] = lst
+    rank3DF = pd.DataFrame(rank3Array2D)
+    rank4DF = pd.DataFrame(rank4Array2D)
+    rank5DF = pd.DataFrame(rank5Array2D)
+    rank3COO = scipy.sparse.coo_matrix(rank3Array2D)
+    rank4COO = scipy.sparse.coo_matrix(rank4Array2D)
+    rank5COO = scipy.sparse.coo_matrix(rank5Array2D)
+
+    tensors = [rank3List, rank4List, rank5List, rank3Array, rank4Array, rank5Array,
+               rank3Array2D, rank4Array2D, rank5Array2D, rank3DF, rank4DF, rank5DF]
+    # cannot construct high dimension empty tensors for sparse
+    if rank3Array.shape[-1] > 0:
+        tensors.extend([rank3COO, rank4COO, rank5COO])
+
+    return tensors
+
+
+def test_createData_multidimensionalData():
+    vector1 = [0, 1, 2, 3, 0]
+    vector2 = [4, 5, 0, 6, 7]
+    vector3 = [8, 0, 9, 0, 8]
+    matrix = [vector1, vector2, vector3]
+
+    tensors = makeTensorData(matrix)
+
+    emptyTensors = makeTensorData([[], [], []])
+
+    expPoints = 3
+    for retType in returnTypes:
+        for idx, tensor in enumerate(tensors):
+            toTest = nimble.createData(retType, tensor)
+            expShape = [3, 3, 5]
+            for i in range(idx % 3):
+                expShape.insert(0, 3)
+            expFeatures = numpy.prod(expShape[1:])
+            assert toTest._shape == expShape
+            assert toTest._pointCount == expPoints
+            assert toTest._featureCount == expFeatures
+
+        for idx, tensor in enumerate(emptyTensors):
+            toTest = nimble.createData(retType, tensor)
+            expShape = [3, 3, 0]
+            for i in range(idx % 3):
+                expShape.insert(0, 3)
+            expFeatures = numpy.prod(expShape[1:])
+            assert toTest._shape == expShape
+            assert toTest._pointCount == expPoints
+            assert toTest._featureCount == expFeatures
+
+def test_createData_multidimensionalData_pointNames():
+    vector1 = [0, 1, 2, 3, 0]
+    vector2 = [4, 5, 0, 6, 7]
+    vector3 = [8, 0, 9, 0, 8]
+    matrix = [vector1, vector2, vector3]
+
+    tensors = makeTensorData(matrix)
+
+    ptNames = ['a', 'b', 'c']
+    for retType in returnTypes:
+        for tensor in tensors:
+            toTest = nimble.createData(retType, tensor, pointNames=ptNames)
+            assert toTest.points.getNames() == ptNames
+
+def test_createData_multidimensionalData_featureNames():
+    vector1 = [0, 1, 2, 3, 0]
+    vector2 = [4, 5, 0, 6, 7]
+    vector3 = [8, 0, 9, 0, 8]
+    matrix = [vector1, vector2, vector3]
+
+    tensors = makeTensorData(matrix)
+
+    for retType in returnTypes:
+        for idx, tensor in enumerate(tensors):
+            flattenedLen = 15
+            for i in range(idx % 3):
+                flattenedLen *= 3
+            ftNames = ['ft' + str(x) for x in range(flattenedLen)]
+            toTest = nimble.createData(retType, tensor, featureNames=ftNames)
+            assert toTest.features.getNames() == ftNames
+
+def test_createData_multidimensionalData_listsOfMultiDimensionalObjects():
+    for (rType1, rType2) in itertools.product(returnTypes, returnTypes):
+        arr1D = numpy.array([1, 2, 3, 0])
+        nim1D = nimble.createData(rType1, [1, 2, 3, 0])
+
+        fromListArr1D = nimble.createData(rType2, [arr1D, arr1D, arr1D])
+        assert fromListArr1D._shape == [3, 4]
+        fromListNim1D = nimble.createData(rType2, [nim1D, nim1D, nim1D])
+        assert fromListNim1D._shape == [3, 4]
+
+        arr2D = fromListArr1D.data
+        coo2D = scipy.sparse.coo_matrix([[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 3, 0]])
+        df2D = pd.DataFrame([[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 3, 0]])
+        nim2D = fromListNim1D
+
+        fromListArr2D = nimble.createData(rType2, [arr2D, arr2D, arr2D])
+        assert fromListArr2D._shape == [3, 3, 4]
+        fromListCoo2D = nimble.createData(rType2, [coo2D, coo2D, coo2D])
+        print(fromListCoo2D._shape)
+        print(fromListCoo2D)
+        assert fromListCoo2D._shape == [3, 3, 4]
+        fromListDF2D = nimble.createData(rType2, [df2D, df2D, df2D])
+        assert fromListDF2D._shape == [3, 3, 4]
+        fromListNim2D = nimble.createData(rType2, [nim2D, nim2D, nim2D])
+        assert fromListNim2D._shape == [3, 3, 4]
+
+        nim3D = fromListNim2D
+        fromListNim3D = nimble.createData(rType2, [nim3D, nim3D])
+        assert fromListNim3D._shape == [2, 3, 3, 4]
 
 # tests for combination of one name set being specified and one set being
 # in data.

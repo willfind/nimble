@@ -54,7 +54,12 @@ class BaseView(Base):
         self._pEnd = pointEnd
         self._fStart = featureStart
         self._fEnd = featureEnd
-        #		kwds['name'] = self._source.name
+        if len(source._shape) > 2:
+            if self._fStart != 0 or self._fEnd != source._featureCount:
+                msg = "feature limited views are not allowed for data with "
+                msg += "more than two dimensions."
+                raise ImproperObjectAction(msg)
+
         super(BaseView, self).__init__(**kwds)
 
     # redefinition from Base, except without the setter, using source
@@ -111,8 +116,8 @@ class BaseView(Base):
     # Reimplemented Operations #
     ############################
 
-    def view(self, pointStart=None, pointEnd=None, featureStart=None,
-             featureEnd=None):
+    def _view_backend(self, pointStart=None, pointEnd=None, featureStart=None,
+                      featureEnd=None, dropDimension=False):
 
         # -1 because _pEnd and _fEnd are exclusive indices,
         # but view takes inclusive
@@ -141,7 +146,8 @@ class BaseView(Base):
             feIndex = self._source.features.getIndex(featureEnd)
             feAdj = feIndex + self._fStart
 
-        return self._source.view(psAdj, peAdj, fsAdj, feAdj)
+        return self._source._view_backend(psAdj, peAdj, fsAdj, feAdj,
+                                          dropDimension)
 
     ###########################
     # Higher Order Operations #
@@ -195,20 +201,12 @@ class BaseView(Base):
         readOnlyException("replaceRectangle")
 
     @exceptionDocstring
-    def flattenToOnePoint(self, useLog=None):
-        readOnlyException("flattenToOnePoint")
+    def flatten(self, order='point', useLog=None):
+        readOnlyException("flatten")
 
     @exceptionDocstring
-    def flattenToOneFeature(self, useLog=None):
-        readOnlyException("flattenToOneFeature")
-
-    @exceptionDocstring
-    def unflattenFromOnePoint(self, numPoints, useLog=None):
-        readOnlyException("unflattenFromOnePoint")
-
-    @exceptionDocstring
-    def unflattenFromOneFeature(self, numFeatures, useLog=None):
-        readOnlyException("unflattenFromOneFeature")
+    def unflatten(self, dataDimensions, order='point', useLog=None):
+        readOnlyException("unflatten")
 
     @exceptionDocstring
     def merge(self, other, point='strict', feature='union', onFeature=None,
