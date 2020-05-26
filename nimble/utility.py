@@ -112,6 +112,7 @@ pd = DeferredModuleImport('pandas')
 matplotlib = DeferredModuleImport('matplotlib')
 requests = DeferredModuleImport('requests')
 cloudpickle = DeferredModuleImport('cloudpickle')
+h5py = DeferredModuleImport('h5py')
 
 def sparseMatrixToArray(sparseMatrix):
     """

@@ -63,7 +63,9 @@ class Sparse(Base):
             self.data = scipy.sparse.coo_matrix(data)
 
         self._sorted = None
-        kwds['shape'] = self.data.shape
+        shape = kwds.get('shape', None)
+        if shape is None:
+            kwds['shape'] = self.data.shape
         super(Sparse, self).__init__(**kwds)
 
     def _getPoints(self):
@@ -307,15 +309,29 @@ class Sparse(Base):
                                           reuseData=True)
         if to == 'pythonlist':
             return sparseMatrixToArray(self.data).tolist()
+        needsReshape = len(self._shape) > 2
         if to == 'numpyarray':
-            return sparseMatrixToArray(self.data)
+            ret = sparseMatrixToArray(self.data)
+            if needsReshape:
+                return ret.reshape(self._shape)
+            return ret
+        if needsReshape:
+            data = numpy.empty(self._shape[:2], dtype=numpy.object_)
+            for i in range(self.shape[0]):
+                data[i] = self.points[i].copy('pythonlist')
+        elif 'scipy' in to:
+            data = self.data
+        else:
+            data = sparseMatrixToArray(self.data)
         if to == 'numpymatrix':
-            return numpy.matrix(sparseMatrixToArray(self.data))
+            return numpy.matrix(data)
         if 'scipy' in to:
             if to == 'scipycoo':
-                return self.data.copy()
+                if needsReshape:
+                    return scipy.sparse.coo_matrix(data)
+                return data.copy()
             try:
-                ret = self.data.astype(numpy.float)
+                ret = data.astype(numpy.float)
             except ValueError:
                 msg = 'Can only create scipy {0} matrix from numeric data'
                 raise ValueError(msg.format(to[-3:]))
@@ -329,8 +345,7 @@ class Sparse(Base):
                 raise PackageException(msg)
             pnames = self.points._getNamesNoGeneration()
             fnames = self.features._getNamesNoGeneration()
-            return pd.DataFrame(sparseMatrixToArray(self.data), index=pnames,
-                                columns=fnames)
+            return pd.DataFrame(data, index=pnames, columns=fnames)
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):
@@ -487,69 +502,40 @@ class Sparse(Base):
 
         self._sorted = None
 
-    def _flattenToOnePoint_implementation(self):
-        self._sortInternal('point')
-        pLen = len(self.features)
-        numElem = len(self.points) * len(self.features)
-        for i in range(len(self.data.data)):
-            if self.data.row[i] > 0:
-                self.data.col[i] += (self.data.row[i] * pLen)
-                self.data.row[i] = 0
+    def _flatten_implementation(self, order):
+        if self._sorted != order:
+            self._sortInternal(order)
+
+        row = numpy.zeros_like(self.data.row)
+        if order == 'point':
+            col = self.data.col + (self.data.row * len(self.features))
+        else:
+            col = self.data.row + (self.data.col * len(self.points))
 
         data = self.data.data
-        row = self.data.row
-        col = self.data.col
+        numElem = len(self.points) * len(self.features)
         self.data = scipy.sparse.coo_matrix((data, (row, col)), (1, numElem))
+        self._sorted = 'point'
 
-    def _flattenToOneFeature_implementation(self):
-        self._sortInternal('feature')
-        fLen = len(self.points)
-        numElem = len(self.points) * len(self.features)
-        for i in range(len(self.data.data)):
-            if self.data.col[i] > 0:
-                self.data.row[i] += (self.data.col[i] * fLen)
-                self.data.col[i] = 0
-
-        data = self.data.data
-        row = self.data.row
-        col = self.data.col
-        self.data = scipy.sparse.coo_matrix((data, (row, col)), (numElem, 1))
-
-    def _unflattenFromOnePoint_implementation(self, numPoints):
-        # only one feature, so both sorts are the same order
-        if self._sorted is None:
-            self._sortInternal('point')
-
-        numFeatures = len(self.features) // numPoints
-        newShape = (numPoints, numFeatures)
-
-        for i in range(len(self.data.data)):
-            # must change the row entry before modifying the col entry
-            self.data.row[i] = self.data.col[i] / numFeatures
-            self.data.col[i] = self.data.col[i] % numFeatures
+    def _unflatten_implementation(self, reshape, order):
+        if self._sorted != order:
+            self._sortInternal(order)
+        if all(self.data.row == 0): # point vector
+            values = self.data.col
+        else: # feature vector
+            values = self.data.row
+        if order == 'point':
+            divisor = numpy.prod(reshape[1:])
+            row = values // divisor
+            col = values % divisor
+        else:
+            divisor = reshape[0]
+            col = values // divisor
+            row = values % divisor
 
         data = self.data.data
-        row = self.data.row
-        col = self.data.col
-        self.data = scipy.sparse.coo_matrix((data, (row, col)), newShape)
-
-    def _unflattenFromOneFeature_implementation(self, numFeatures):
-        # only one feature, so both sorts are the same order
-        if self._sorted is None:
-            self._sortInternal('feature')
-
-        numPoints = len(self.points) // numFeatures
-        newShape = (numPoints, numFeatures)
-
-        for i in range(len(self.data.data)):
-            # must change the col entry before modifying the row entry
-            self.data.col[i] = self.data.row[i] / numPoints
-            self.data.row[i] = self.data.row[i] % numPoints
-
-        data = self.data.data
-        row = self.data.row
-        col = self.data.col
-        self.data = scipy.sparse.coo_matrix((data, (row, col)), newShape)
+        self.data = scipy.sparse.coo_matrix((data, (row, col)), reshape)
+        self._sorted = None
 
     def _mergeIntoNewData(self, copyIndex, toAddData, toAddRow, toAddCol):
         #instead of always copying, use reshape or resize to sometimes cut
@@ -816,7 +802,7 @@ class Sparse(Base):
         return self._binarySearch(x, y)
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
-                             featureEnd):
+                             featureEnd, dropDimension):
         """
         The Sparse object specific implementation necessarly to complete
         the Base object's view method. pointStart and feature start are
@@ -837,6 +823,8 @@ class Sparse(Base):
         singleFeat = featureEnd - featureStart == 1
         # singleFeat = singlePoint = False
         if singleFeat or singlePoint:
+            pshape = pointEnd - pointStart
+            fshape = featureEnd - featureStart
             if singlePoint:
                 if self._sorted is None or self._sorted == 'feature':
                     self._sortInternal('point')
@@ -854,10 +842,23 @@ class Sparse(Base):
                     outerStart = start
                     start = start + innerStart
                     end = outerStart + innerEnd
-
-                row = numpy.tile([0], end - start)
-                col = self.data.col[start:end] - featureStart
-
+                if len(self._shape) > 2:
+                    if dropDimension:
+                        firstIdx = 1
+                        pshape = self._shape[firstIdx]
+                        fshape = int(numpy.prod(self._shape[firstIdx + 1:]))
+                        kwds['pointStart'] = 0
+                        kwds['pointEnd'] = self._shape[1]
+                        kwds['featureStart'] = 0
+                        kwds['featureEnd'] = int(numpy.prod(self._shape[2:]))
+                    else:
+                        firstIdx = 0
+                    row = self.data.col[start:end] // fshape
+                    col = self.data.col[start:end] % fshape
+                    kwds['shape'] = [pshape] + self._shape[firstIdx + 1:]
+                else:
+                    row = numpy.tile([0], end - start)
+                    col = self.data.col[start:end] - featureStart
             else:  # case single feature
                 if self._sorted is None or self._sorted == 'point':
                     self._sortInternal('feature')
@@ -881,12 +882,13 @@ class Sparse(Base):
                 col = numpy.tile([0], end - start)
 
             data = self.data.data[start:end]
-            pshape = pointEnd - pointStart
-            fshape = featureEnd - featureStart
 
             newInternal = scipy.sparse.coo_matrix((data, (row, col)),
                                                   shape=(pshape, fshape))
             kwds['data'] = newInternal
+            if singlePoint and len(self._shape) > 2 and dropDimension:
+                kwds['source'] = Sparse(newInternal, shape=kwds['shape'],
+                                        reuseData=True)
 
             return SparseVectorView(**kwds)
 
@@ -898,6 +900,10 @@ class Sparse(Base):
                                   featureEnd - featureStart)
             newInternal.data = None
             kwds['data'] = newInternal
+            if len(self._shape) > 2:
+                shape = self._shape.copy()
+                shape[0] = pointEnd - pointStart
+                kwds['shape'] = shape
 
             return SparseView(**kwds)
 
@@ -935,7 +941,7 @@ class Sparse(Base):
         Returns True if there is a value that is equal to integer 0
         contained in this object. False otherwise
         """
-        return (self.data.shape[0] * self.data.shape[1]) > self.data.nnz
+        return (self.shape[0] * self.shape[1]) > self.data.nnz
 
 
     def _binaryOperations_implementation(self, opName, other):
@@ -1296,7 +1302,7 @@ class SparseView(BaseView, Sparse):
     def _getitem_implementation(self, x, y):
         adjX = x + self._pStart
         adjY = y + self._fStart
-        return self._source[adjX, adjY]
+        return self._source._getitem_implementation(adjX, adjY)
 
     def _copy_implementation(self, to):
         if to == "Sparse":
@@ -1327,7 +1333,7 @@ class SparseView(BaseView, Sparse):
             return Sparse(coo, pointNames=pNames, featureNames=fNames)
 
         if len(self.points) == 0 or len(self.features) == 0:
-            emptyStandin = numpy.empty((len(self.points), len(self.features)))
+            emptyStandin = numpy.empty(self._shape)
             intermediate = nimble.createData('Matrix', emptyStandin,
                                              useLog=False)
             return intermediate.copy(to=to)
@@ -1337,12 +1343,15 @@ class SparseView(BaseView, Sparse):
             fStart, fEnd = self._fStart, self._fEnd
             asArray = sparseMatrixToArray(self._source.data)
             limited = asArray[pStart:pEnd, fStart:fEnd]
-            return numpy.array(limited)
+            if len(self._shape) > 2:
+                return limited.reshape(self._shape)
+            return limited.copy()
 
         limited = self._source.points.copy(start=self._pStart,
                                            end=self._pEnd - 1, useLog=False)
-        limited = limited.features.copy(start=self._fStart,
-                                        end=self._fEnd - 1, useLog=False)
+        if self._fEnd - self._fStart < self._source._featureCount:
+            limited = limited.features.copy(start=self._fStart,
+                                            end=self._fEnd - 1, useLog=False)
 
         return limited._copy_implementation(to)
 
@@ -1361,19 +1370,19 @@ class SparseView(BaseView, Sparse):
         sIt = self.points
         oIt = other.points
         for sPoint, oPoint in zip(sIt, oIt):
-            for i, sVal in enumerate(sPoint):
-                oVal = oPoint[i]
-                # check element equality - which is only relevant if one of
-                # the elements is non-NaN
-                if sVal != oVal and (sVal == sVal or oVal == oVal):
-                    return False
+            if sPoint != oPoint:
+                return False
+            if sPoint != sPoint and oPoint == oPoint:
+                return False
+            if sPoint == sPoint and oPoint != oPoint:
+                return False
+
         return True
 
     def _containsZero_implementation(self):
         for sPoint in self.points:
             if sPoint.containsZero():
                 return True
-
         return False
 
     def _binaryOperations_implementation(self, opName, other):

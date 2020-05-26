@@ -34,17 +34,15 @@ class ListPoints(ListAxis, Points):
         index in this object, the remaining points from this object will
         continue below the inserted points.
         """
-        insert = toInsert.copy('pythonlist')
+        insert = toInsert.copy('List').data
         if insertBefore != 0 and insertBefore != len(self):
-            breakIdx = insertBefore - 1
-            restartIdx = insertBefore
-            start = self._base.view(pointEnd=breakIdx).copy('pythonlist')
-            end = self._base.view(pointStart=restartIdx).copy('pythonlist')
+            start = self._base.data[:insertBefore]
+            end = self._base.data[insertBefore:]
             allData = start + insert + end
         elif insertBefore == 0:
-            allData = insert + self._base.copy('pythonlist')
+            allData = insert + self._base.data
         else:
-            allData = self._base.copy('pythonlist') + insert
+            allData = self._base.data + insert
 
         self._base.data = allData
 

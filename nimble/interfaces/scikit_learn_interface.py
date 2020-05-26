@@ -407,8 +407,8 @@ To install scikit-learn
             # (multi-dimensional, non-negative)
             raise InvalidArgumentValue(str(ve))
 
-    def _incrementalTrainer(self, learner, trainX, trainY, arguments,
-                            customDict):
+    def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
+                            arguments, customDict):
         # see partial_fit(X, y[, classes, sample_weight])
         raise NotImplementedError
 

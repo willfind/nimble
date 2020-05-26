@@ -134,7 +134,8 @@ class TestInterface(UniversalInterface):
     def _getAttributes(self, learnerBackend):
         pass
 
-    def _incrementalTrainer(self, learner, trainX, trainY, arguments, customDict):
+    def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
+                            arguments, customDict):
         pass
 
     def version(self):
@@ -322,7 +323,8 @@ class AlwaysWarnInterface(UniversalInterface):
         self.issueWarnings()
         return (learnerName, trainX, trainY, arguments)
 
-    def _incrementalTrainer(self, learner, trainX, trainY, arguments, customDict):
+    def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
+                            arguments, customDict):
         self.issueWarnings()
         pass
 
