@@ -478,8 +478,8 @@ class StructureDataSafe(StructureShared):
         copySparse.points.setName('one', 'WHAT', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
-        copySparse.points.sort(sortHelper=pointsShuffleIndices, useLog=False)
-        copySparse.features.sort(sortHelper=featuresShuffleIndices, useLog=False)
+        copySparse.points.permute(pointsShuffleIndices, useLog=False)
+        copySparse.features.permute(featuresShuffleIndices, useLog=False)
         assert orig[0, 0] == 1
 
         copyList = orig.copy(to='List')
@@ -490,8 +490,8 @@ class StructureDataSafe(StructureShared):
         copyList.points.setName('one', 'WHAT', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
-        copyList.points.sort(sortHelper=pointsShuffleIndices, useLog=False)
-        copyList.features.sort(sortHelper=featuresShuffleIndices, useLog=False)
+        copyList.points.permute(pointsShuffleIndices, useLog=False)
+        copyList.features.permute(featuresShuffleIndices, useLog=False)
         assert orig[0, 0] == 1
 
         copyMatrix = orig.copy(to='Matrix')
@@ -502,8 +502,8 @@ class StructureDataSafe(StructureShared):
         copyMatrix.points.setName('one', 'WHAT', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
-        copyMatrix.points.sort(sortHelper=pointsShuffleIndices, useLog=False)
-        copyMatrix.features.sort(sortHelper=featuresShuffleIndices, useLog=False)
+        copyMatrix.points.permute(pointsShuffleIndices, useLog=False)
+        copyMatrix.features.permute(featuresShuffleIndices, useLog=False)
         assert orig[0, 0] == 1
 
         copyDataFrame = orig.copy(to='DataFrame')
@@ -514,8 +514,8 @@ class StructureDataSafe(StructureShared):
         copyDataFrame.points.setName('one', 'WHAT', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
-        copyDataFrame.points.sort(sortHelper=pointsShuffleIndices, useLog=False)
-        copyDataFrame.features.sort(sortHelper=featuresShuffleIndices, useLog=False)
+        copyDataFrame.points.permute(pointsShuffleIndices, useLog=False)
+        copyDataFrame.features.permute(featuresShuffleIndices, useLog=False)
         assert orig[0, 0] == 1
 
         pyList = orig.copy(to='python list')
@@ -3464,83 +3464,6 @@ class StructureModifying(StructureShared):
         assert toTest.isIdentical(objExp)
         assertNoNamesGenerated(toTest)
 
-    def test_points_sort_dataTypeRetainedFromList(self):
-        """ Test points.sort() data not converted when sorting by list"""
-        data = [['a', 2, 3.0], ['b', 5, 6.0], ['c', 8, 9.0]]
-        toTest = self.constructor(data)
-
-        toTest.points.sort(sortHelper=[2, 1, 0])
-
-        expData = [['c', 8, 9.0], ['b', 5, 6.0], ['a', 2, 3.0]]
-        exp = self.constructor(expData)
-
-        assert toTest == exp
-        assertNoNamesGenerated(toTest)
-
-    def test_points_sort_indicesList(self):
-        """ Test points.sort() when we specify a list of indices """
-        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        toTest = self.constructor(data)
-
-        toTest.points.sort(sortHelper=[2, 1, 0])
-
-        expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
-        exp = self.constructor(expData)
-
-        assert toTest == exp
-
-    def test_points_sort_namesList(self):
-        """ Test points.sort() when we specify a list of point names """
-        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        pnames = ['3', '6', '9']
-        toTest = self.constructor(data, pointNames=pnames)
-
-        toTest.points.sort(sortHelper=['9', '6', '3'])
-
-        expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
-        expNames = ['9', '6', '3']
-        exp = self.constructor(expData, pointNames=expNames)
-
-        assert toTest == exp
-
-    @oneLogEntryExpected
-    def test_points_sort_mixedList(self):
-        """ Test points.sort() when we specify a mixed list (names/indices) """
-        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        pnames = ['3', '6', '9']
-        toTest = self.constructor(data, pointNames=pnames)
-
-        toTest.points.sort(sortHelper=['9', '6', 0])
-
-        expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
-        expNames = ['9', '6', '3']
-        exp = self.constructor(expData, pointNames=expNames)
-
-        assert toTest == exp
-
-    @raises(IndexError)
-    def test_points_sort_exceptionIndicesPEmpty(self):
-        """ tests points.sort() throws an IndexError when given invalid indices """
-        data = [[], []]
-        data = numpy.array(data).T
-        toTest = self.constructor(data)
-        toTest.points.sort(sortHelper=[1, 3])
-
-    @raises(InvalidArgumentValue)
-    def test_points_sort_exceptionIndicesSmall(self):
-        """ tests points.sort() throws an InvalidArgumentValue when given an incorrectly sized indices list """
-        data = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
-        toTest = self.constructor(data)
-
-        toTest.points.sort(sortHelper=[1, 0])
-
-    @raises(InvalidArgumentValue)
-    def test_points_sort_exceptionNotUniqueIds(self):
-        """ tests points.sort() throws an InvalidArgumentValue when given duplicate indices """
-        data = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
-        toTest = self.constructor(data)
-        toTest.points.sort(sortHelper=[1, 1, 0])
-
     #################
     # features.sort() #
     #################
@@ -3639,86 +3562,6 @@ class StructureModifying(StructureShared):
 
         assert toTest.isIdentical(objExp)
         assertNoNamesGenerated(toTest)
-
-    def test_features_sort_dataTypeRetainedFromList(self):
-        """ Test features.sort() data not converted when sorting by list"""
-        data = [['a', 2, 3.0], ['b', 5, 6.0], ['c', 8, 9.0]]
-        toTest = self.constructor(data)
-
-        toTest.features.sort(sortHelper=[2, 1, 0])
-
-        expData = [[3.0, 2, 'a'], [6.0, 5, 'b'], [9.0, 8, 'c']]
-        exp = self.constructor(expData)
-
-        assert toTest == exp
-        assertNoNamesGenerated(toTest)
-
-    def test_features_sort_indicesList(self):
-        """ Test features.sort() when we specify a list of indices """
-        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        toTest = self.constructor(data)
-
-        toTest.features.sort(sortHelper=[2, 1, 0])
-
-        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        exp = self.constructor(expData)
-
-        assert toTest == exp
-
-    def test_features_sort_namesList(self):
-        """ Test features.sort() when we specify a list of feature names """
-        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        fnames = ['third', 'second', 'first']
-        toTest = self.constructor(data, featureNames=fnames)
-
-        toTest.features.sort(sortHelper=['first', 'second', 'third'])
-
-        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        expNames = ['first', 'second', 'third']
-        exp = self.constructor(expData, featureNames=expNames)
-
-        assert toTest == exp
-
-    @oneLogEntryExpected
-    def test_features_sort_mixedList(self):
-        """ Test features.sort() when we specify a mixed list (names/indices) """
-        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        fnames = ['third', 'second', 'first']
-        toTest = self.constructor(data, featureNames=fnames)
-
-        toTest.features.sort(sortHelper=['first', 'second', 0])
-
-        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        expNames = ['first', 'second', 'third']
-        exp = self.constructor(expData, featureNames=expNames)
-
-        assert toTest == exp
-
-    @raises(IndexError)
-    def test_features_sort_exceptionIndicesFEmpty(self):
-        """ tests features.sort() throws an IndexError when given invalid indices """
-        data = [[], []]
-        data = numpy.array(data)
-        toTest = self.constructor(data)
-        toTest.features.sort(sortHelper=[1, 3])
-
-
-    @raises(InvalidArgumentValue)
-    def test_features_sort_exceptionIndicesSmall(self):
-        """ tests features.sort() throws an InvalidArgumentValue when given an incorrectly sized indices list """
-        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        toTest = self.constructor(data)
-
-        toTest.features.sort(sortHelper=[1, 0])
-
-
-    @raises(InvalidArgumentValue)
-    def test_features_sort_exceptionNotUniqueIds(self):
-        """ tests features.sort() throws an InvalidArgumentValue when given duplicate indices """
-        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        data = numpy.array(data)
-        toTest = self.constructor(data)
-        toTest.features.sort(sortHelper=[1, 1, 0])
 
     ##################
     # points.extract #

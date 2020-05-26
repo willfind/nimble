@@ -395,14 +395,16 @@ class HighDimensionModifying(DataTestObject):
                 assert ret._shape == toTest._shape
 
     def test_highDimension_sort(self):
+        # TODO: with change to permute, sort for tensors is no longer
+        # usable. Should we allow for scorer and comparator functions?
         for tensor in tensors:
-            toTest = self.constructor(tensor)
+            toTest = self.constructor(tensor, pointNames=['a', 'b', 'c'])
 
-            toTest.points.sort(sortHelper=[2, 0, 1])
-
-            expData = [tensor[2], tensor[0], tensor[1]]
-            exp = self.constructor(expData)
-            assert toTest == exp
+            try:
+                toTest.features.sort(sortHelper=lambda ft: -1)
+                assert False
+            except ImproperObjectAction:
+                pass
 
             try:
                 toTest.points.sort(0)
@@ -411,13 +413,7 @@ class HighDimensionModifying(DataTestObject):
                 pass
 
             try:
-                toTest.points.sort(sortHelper=lambda pt: -1)
-                assert False
-            except ImproperObjectAction:
-                pass
-
-            try:
-                toTest.features.sort(sortHelper=[2, 0, 1])
+                toTest.features.sort(0)
                 assert False
             except ImproperObjectAction:
                 pass
@@ -466,24 +462,39 @@ class HighDimensionModifying(DataTestObject):
                     except ImproperObjectAction:
                         pass
 
-    def test_highDimension_shuffle(self):
+    def test_highDimension_permute(self):
         for tensor in tensors:
             toTest = self.constructor(tensor, pointNames=['a', 'b', 'c'])
             origShape = toTest._shape
-            shuffled = False
+            permuted = False
             for i in range(5):
-                toTest.points.shuffle()
+                toTest.points.permute()
                 assert toTest._shape == origShape
                 if toTest.points.getNames() != ['a', 'b', 'c']:
-                    shuffled = True
+                    permuted = True
                     break
-            assert shuffled
+            assert permuted
 
             try:
-                toTest.features.shuffle()
+                toTest.features.permute()
                 assert False
             except ImproperObjectAction:
                 pass
+
+            toTest = self.constructor(tensor, pointNames=['a', 'b', 'c'])
+
+            toTest.points.permute([2, 0, 1])
+
+            expData = [tensor[2], tensor[0], tensor[1]]
+            exp = self.constructor(expData, pointNames=['c', 'a', 'b'])
+            assert toTest == exp
+
+            try:
+                toTest.features.permute([2, 0, 1])
+                assert False
+            except ImproperObjectAction:
+                pass
+
 
     def test_highDimension_points_structuralModifying(self):
         params = [([[0, 1]], {}),
@@ -631,7 +642,7 @@ class HighDimensionModifying(DataTestObject):
         ptUser = getNimbleDefined(nimble.data.Points)
         ptAllowed = set((
             '__iter__', '__getitem__', 'copy', 'extract', 'delete', 'retain',
-            'sort', 'insert', 'append', 'shuffle', 'repeat', 'unique',))
+            'sort', 'insert', 'append', 'permute', 'repeat', 'unique',))
         ptAllAllowed = axisAllowed.union(ptAllowed)
         ptDisallowed = ptUser.difference(ptAllAllowed)
 

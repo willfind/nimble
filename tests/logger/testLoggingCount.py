@@ -117,8 +117,8 @@ base_tested = list(map(prefixAdder('Base'), base_funcs))
 
 features_logged = [
     'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
-    'insert', 'mapReduce', 'matching', 'normalize', 'retain', 'setName',
-    'setNames', 'shuffle', 'sort', 'transform', 'splitByParsing',
+    'insert', 'mapReduce', 'matching', 'normalize', 'permute', 'retain',
+    'setName', 'setNames', 'sort', 'transform', 'splitByParsing',
     ]
 features_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
@@ -129,8 +129,8 @@ features_tested = list(map(prefixAdder('Features'), features_funcs))
 
 points_logged = [
     'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
-    'insert', 'mapReduce', 'matching', 'normalize', 'retain', 'setName',
-    'setNames', 'shuffle', 'sort', 'transform', 'combineByExpandingFeatures',
+    'insert', 'mapReduce', 'matching', 'normalize', 'permute', 'retain',
+    'setName', 'setNames', 'sort', 'transform', 'combineByExpandingFeatures',
     'splitByCollapsingFeatures',
     ]
 points_notLogged = [
@@ -278,19 +278,19 @@ def test_validate_logCount():
 # Points/Features/Elements #
 ############################
 
-def test_points_shuffle_logCount():
+def test_points_permute_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
-        return obj.points.shuffle()
+        return obj.points.permute()
     for rType in nimble.data.available:
         obj = nimble.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)
         grouped = wrapped(obj)
 
-def test_features_shuffle_logCount():
+def test_features_permute_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
-        return obj.features.shuffle()
+        return obj.features.permute()
     for rType in nimble.data.available:
         obj = nimble.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)

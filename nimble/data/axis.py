@@ -284,37 +284,17 @@ class Axis(object):
             otherCount = self._base._pointCount
 
         sortByArg = copy.copy(sortBy)
+        if sortBy is not None and len(self._base._shape) > 2:
+            msg = "sortBy cannot be used for objects with more than "
+            msg += "two dimensions"
+            raise ImproperObjectAction(msg)
         if sortBy is not None and isinstance(sortBy, str):
-            if len(self._base._shape) > 2:
-                msg = "sortBy cannot be used for objects with more than "
-                msg += "two dimensions"
-                raise ImproperObjectAction(msg)
             axisObj = self._base._getAxis(otherAxis)
             sortBy = axisObj._getIndex(sortBy)
-
         if sortHelper is not None and not hasattr(sortHelper, '__call__'):
-            indices = constructIndicesList(self._base, self._axis,
-                                           sortHelper)
-            if len(indices) != axisCount:
-                msg = "This object contains {0} {1}s, "
-                msg += "but sortHelper has {2} identifiers"
-                msg = msg.format(axisCount, self._axis, len(indices))
-                raise InvalidArgumentValue(msg)
-            if len(indices) != len(set(indices)):
-                msg = "This object contains {0} {1}s, "
-                msg += "but sortHelper has {2} unique identifiers"
-                msg = msg.format(axisCount, self._axis, len(set(indices)))
-                raise InvalidArgumentValue(msg)
-            indexPosition = indices
-        else:
-            if len(self._base._shape) > 2:
-                sVal = 'sortHelper functions' if sortBy is None else 'sortBy'
-                msg = "{0} cannot be used for objects with ".format(sVal)
-                msg += "more than two dimensions"
-                raise ImproperObjectAction(msg)
-            axis = self._axis + 's'
-            indexPosition = sortIndexPosition(self, sortBy, sortHelper, axis)
-
+            raise InvalidArgumentType('sortHelper must be callabe')
+        axis = self._axis + 's'
+        indexPosition = sortIndexPosition(self, sortBy, sortHelper, axis)
         # its already sorted in these cases
         if otherCount == 0 or axisCount == 0 or axisCount == 1:
             return
@@ -330,15 +310,40 @@ class Axis(object):
                       self._base.getTypeString(), self._sigFunc('sort'),
                       sortByArg, sortHelper)
 
-    def _shuffle(self, useLog=None):
-        values = len(self)
-        indices = list(range(values))
-        pythonRandom.shuffle(indices)
 
-        self._sort(sortBy=None, sortHelper=indices, useLog=False)
+    def _permute(self, order=None, useLog=None):
+        if order is None:
+            values = len(self)
+            order = list(range(values))
+            pythonRandom.shuffle(order)
+        else:
+            order = constructIndicesList(self._base, self._axis, order,
+                                         'order')
+            if len(order) != len(self):
+                msg = "This object contains {0} {1}s, "
+                msg += "but order has {2} identifiers"
+                msg = msg.format(len(self), self._axis, len(order))
+                raise InvalidArgumentValue(msg)
+            if len(order) != len(set(order)):
+                msg = "This object contains {0} unique identifiers but "
+                msg += "but order has {1} {2}s"
+                msg = msg.format(len(self), len(set(order)), self._axis)
+                raise InvalidArgumentValue(msg)
 
-        handleLogging(useLog, 'prep', '{ax}s.shuffle'.format(ax=self._axis),
-                      self._base.getTypeString(), self._sigFunc('shuffle'))
+        # only one possible permutation
+        if len(self) <= 1:
+            return
+
+        # will become _permute_implementation when sort is refactored
+        self._sort_implementation(order)
+
+        if self._namesCreated():
+            names = self._getNames()
+            reorderedNames = [names[idx] for idx in order]
+            self._setNames(reorderedNames, useLog=False)
+
+        handleLogging(useLog, 'prep', '{ax}s.permute'.format(ax=self._axis),
+                      self._base.getTypeString(), self._sigFunc('permute'))
 
 
     def _transform(self, function, limitTo, useLog=None):
@@ -1566,14 +1571,14 @@ class Axis(object):
             objNames = self._base.points.getNames
             toInsertNames = toInsert.points.getNames
             def sorter(obj, names):
-                obj.points.sort(sortHelper=names)
+                obj.points.permute(names)
         else:
             objNamesCreated = self._base._featureNamesCreated()
             toInsertNamesCreated = toInsert._featureNamesCreated()
             objNames = self._base.features.getNames
             toInsertNames = toInsert.features.getNames
             def sorter(obj, names):
-                obj.features.sort(sortHelper=names)
+                obj.features.permute(names)
 
         # This may not look exhaustive, but because of the previous call to
         # _validateInsertableData before this helper, most of the toInsert

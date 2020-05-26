@@ -2868,7 +2868,7 @@ class FoldIterator(object):
                 currTest = copied.points.extract(self.foldList[self.index],
                                                  useLog=False)
                 currTrain = copied
-                currTrain.points.sort(sortHelper=indices, useLog=False)
+                currTrain.points.permute(indices, useLog=False)
                 resultsList.append((currTrain, currTest))
         self.index = self.index + 1
         return resultsList
