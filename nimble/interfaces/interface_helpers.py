@@ -156,11 +156,11 @@ def checkClassificationStrategy(interface, learnerName, algArgs):
     tlObj = interface.train(learnerName, xObj, yObj, arguments=algArgs)
     applyResults = tlObj.apply(testObj, arguments=algArgs, useLog=False)
     (_, _, testTrans, _) = interface._inputTransformation(
-        learnerName, None, None, testObj, algArgs, tlObj.customDict)
-    rawScores = interface._getScores(tlObj.learnerName, tlObj.backend,
+        learnerName, None, None, testObj, algArgs, tlObj._customDict)
+    rawScores = interface._getScores(tlObj.learnerName, tlObj._backend,
                                      testTrans, algArgs,
-                                     tlObj.transformedArguments,
-                                     tlObj.customDict)
+                                     tlObj._transformedArguments,
+                                     tlObj._customDict)
 
     return ovaNotOvOFormatted(rawScores, applyResults, 4)
 
