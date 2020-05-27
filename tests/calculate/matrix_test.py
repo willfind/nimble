@@ -13,13 +13,13 @@ from nimble.exceptions import InvalidArgumentType
 from ..assertionHelpers import noLogEntryExpected
 from ..assertionHelpers import CalledFunctionException, calledException
 
-@patch('nimble.data.Base.__mul__', calledException)
+@patch('nimble.core.data.Base.__mul__', calledException)
 def test_elementwiseMultiply_callsObjElementsMultiply():
     left = [[1, 2, 3], [4, 5, 6]]
     right = [[6, 5, 4], [3, 2, 1]]
-    for leftRType in nimble.data.available:
+    for leftRType in nimble.core.data.available:
         leftObj = nimble.createData(leftRType, left)
-        for rightRType in nimble.data.available:
+        for rightRType in nimble.core.data.available:
             rightObj = nimble.createData(rightRType, right)
             try:
                 mult = elementwiseMultiply(leftObj, rightObj)
@@ -31,11 +31,11 @@ def test_elementwiseMultiply():
     left = [[1, 2, 3], [4, 5, 6]]
     right = [[6, 5, 4], [3, 2, 1]]
     exp = [[6, 10, 12], [12, 10, 6]]
-    for leftRType in nimble.data.available:
+    for leftRType in nimble.core.data.available:
         leftObj = nimble.createData(leftRType, left)
         origLeft = leftObj.copy()
         expObj = nimble.createData(leftRType, exp)
-        for rightRType in nimble.data.available:
+        for rightRType in nimble.core.data.available:
             rightObj = nimble.createData(rightRType, right)
             origRight = rightObj.copy()
             mult = elementwiseMultiply(leftObj, rightObj)
@@ -52,13 +52,13 @@ def test_elementwiseMultiply_logCount():
     mult = elementwiseMultiply(leftObj, rightObj)
 
 
-@patch('nimble.data.Base.__pow__', calledException)
+@patch('nimble.core.data.Base.__pow__', calledException)
 def test_elementwisePower_callsObjElementsMultiply():
     left = [[1, 2, 3], [4, 5, 6]]
     right = [[6, 5, 4], [3, 2, 1]]
-    for leftRType in nimble.data.available:
+    for leftRType in nimble.core.data.available:
         leftObj = nimble.createData(leftRType, left)
-        for rightRType in nimble.data.available:
+        for rightRType in nimble.core.data.available:
             rightObj = nimble.createData(rightRType, right)
             try:
                 pow = elementwisePower(leftObj, rightObj)
@@ -70,11 +70,11 @@ def test_elementwisePower():
     left = [[1, 2, 3], [4, 5, 6]]
     right = [[1, 2, 3], [3, 2, 1]]
     exp = [[1, 4, 27], [64, 25, 6]]
-    for leftRType in nimble.data.available:
+    for leftRType in nimble.core.data.available:
         leftObj = nimble.createData(leftRType, left)
         origLeft = leftObj.copy()
         expObj = nimble.createData(leftRType, exp)
-        for rightRType in nimble.data.available:
+        for rightRType in nimble.core.data.available:
             rightObj = nimble.createData(rightRType, right)
             origRight = rightObj.copy()
             pow = elementwisePower(leftObj, rightObj)

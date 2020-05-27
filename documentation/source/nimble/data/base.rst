@@ -1,5 +1,5 @@
 Base
 ====
 
-.. autoclass:: nimble.data.Base
+.. autoclass:: nimble.core.data.Base
    :members:

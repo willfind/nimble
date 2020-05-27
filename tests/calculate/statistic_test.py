@@ -4,8 +4,8 @@ Tests for nimble.calculate.statistics
 
 # Many of the functions in nimble.calculate.statitic are tested not directly
 # in this module, but through the functions that call them: featureReport
-# in nimble.logger.tests.data_set_analyzier_tests and in the data
-# hierarchy in nimble.data.tests.query_backend
+# in nimble.core.logger.tests.data_set_analyzier_tests and in the data
+# hierarchy in nimble.core.data.tests.query_backend
 
 try:
     from unittest import mock #python >=3.3
@@ -23,7 +23,7 @@ from nimble.calculate import standardDeviation
 from nimble.calculate import quartiles
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
-from nimble.helpers import generateRegressionData
+from nimble.core.helpers import generateRegressionData
 from ..assertionHelpers import noLogEntryExpected
 
 def testStDev():
@@ -46,7 +46,7 @@ def testQuartilesAPI():
     assert ret == (2, 4, 6)
 
 #the following tests will test both None/NaN ignoring and calculation correctness
-testDataTypes = nimble.data.available
+testDataTypes = nimble.core.data.available
 
 @noLogEntryExpected
 def testProportionMissing():
@@ -304,7 +304,7 @@ def test_residuals_exception_zeroAxisOnParam():
 @noLogEntryExpected
 def test_residuals_matches_SKL():
     try:
-        nimble.helpers.findBestInterface("scikitlearn")
+        nimble.core.helpers.findBestInterface("scikitlearn")
     except InvalidArgumentValue:
         return
 

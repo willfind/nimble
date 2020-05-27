@@ -39,8 +39,8 @@ from nimble import match
 from nimble import fill
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
-from nimble.data.dataHelpers import DEFAULT_PREFIX
-from nimble.randomness import numpyRandom
+from nimble.core.data.dataHelpers import DEFAULT_PREFIX
+from nimble.core.randomness import numpyRandom
 from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
@@ -167,7 +167,7 @@ class HighLevelDataSafe(DataTestObject):
         ret = orig.points.calculate(dictReturn)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_points_calculate_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -213,7 +213,7 @@ class HighLevelDataSafe(DataTestObject):
 
         def returnNimbleObj(point):
             ret = point * 2
-            assert isinstance(ret, nimble.data.Base)
+            assert isinstance(ret, nimble.core.data.Base)
             return ret
 
         calc = toTest.points.calculate(returnNimbleObj)
@@ -272,7 +272,7 @@ class HighLevelDataSafe(DataTestObject):
 
         def returnNimbleObj(point):
             ret = point * 2
-            assert isinstance(ret, nimble.data.Base)
+            assert isinstance(ret, nimble.core.data.Base)
             return ret
 
         calc = toTest.points.calculate(returnNimbleObj, points=['two', 'zero'])
@@ -491,7 +491,7 @@ class HighLevelDataSafe(DataTestObject):
         ret = orig.features.calculate(dictReturn)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_features_calculate_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
@@ -543,7 +543,7 @@ class HighLevelDataSafe(DataTestObject):
 
         def returnNimbleObj(feature):
             ret = feature * 2
-            assert isinstance(ret, nimble.data.Base)
+            assert isinstance(ret, nimble.core.data.Base)
             return ret
 
         calc = toTest.features.calculate(returnNimbleObj)
@@ -608,7 +608,7 @@ class HighLevelDataSafe(DataTestObject):
 
         def returnNimbleObj(feature):
             ret = feature * 2
-            assert isinstance(ret, nimble.data.Base)
+            assert isinstance(ret, nimble.core.data.Base)
             return ret
 
         calc = toTest.features.calculate(returnNimbleObj, features=['deci', 'number'])
@@ -741,7 +741,7 @@ class HighLevelDataSafe(DataTestObject):
     #######################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.base.constructIndicesList', calledException)
     def test_calculateOnElements_calls_constructIndicesList1(self):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
@@ -751,7 +751,7 @@ class HighLevelDataSafe(DataTestObject):
         ret = toTest.calculateOnElements(noChange, points=['a', 'b'])
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.base.constructIndicesList', calledException)
     def test_calculateOnElements_calls_constructIndicesList2(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
@@ -1229,7 +1229,7 @@ class HighLevelDataSafe(DataTestObject):
 
             toTest = self.constructor(data)
 
-            for retType in nimble.data.available:
+            for retType in nimble.core.data.available:
                 currObj = nimble.createData(retType, data, useLog=False)
                 assert toTest.isApproximatelyEqual(currObj)
                 assert toTest.hashCode() == currObj.hashCode()
@@ -1911,7 +1911,7 @@ class HighLevelDataSafe(DataTestObject):
     ####################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.Base.copy', calledException)
+    @mock.patch('nimble.core.data.Base.copy', calledException)
     def test_points_repeat_OneCopyCallsCopy(self):
         data = [0, 1, 2, 3]
         ptNames = ['pt']
@@ -1985,7 +1985,7 @@ class HighLevelDataSafe(DataTestObject):
     ######################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.Base.copy', calledException)
+    @mock.patch('nimble.core.data.Base.copy', calledException)
     def test_features_repeat_OneCopyCallsCopy(self):
         data = [0, 1, 2, 3]
         ptNames = ['pt']
@@ -2855,7 +2855,7 @@ class HighLevelModifying(DataTestObject):
             func = caller.points.normalize
         else:
             func = caller.features.normalize
-        a, va, vk, d = nimble.helpers.inspectArguments(func)
+        a, va, vk, d = nimble.core.helpers.inspectArguments(func)
         assert d == (None, None, None, None)
 
         if axis == 'point':
@@ -3062,7 +3062,7 @@ class HighLevelModifying(DataTestObject):
         obj = self.constructor([[1, 1, 1], [3, 3, 3], [7, 7, 7]])
         expObj = self.constructor([[0, 0, 0], [4, 4, 4], [12, 12, 12]])
 
-        for retType in nimble.data.available:
+        for retType in nimble.core.data.available:
             currObj = obj.copy()
             sub = nimble.createData(retType, [1] * 3)
             div = nimble.createData(retType, [0.5] * 3)

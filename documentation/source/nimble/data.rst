@@ -1,7 +1,7 @@
-nimble.data
+nimble.core.data
 ===========
 
-.. automodule:: nimble.data
+.. automodule:: nimble.core.data
    :no-members:
 
    .. toctree::

@@ -76,7 +76,7 @@ def test_detectBestResult_labels_nonmonotonic_maxizer():
         if knowns == predicted:
             return 100
         else:
-            return nimble.randomness.pythonRandom.randint(0, 20)
+            return nimble.core.randomness.pythonRandom.randint(0, 20)
 
     detectBestResult(foo)
 

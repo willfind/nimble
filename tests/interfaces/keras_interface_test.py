@@ -11,7 +11,7 @@ from nose.tools import raises
 
 import nimble
 from nimble import createData
-from nimble.interfaces.keras_interface import Keras
+from nimble.core.interfaces.keras_interface import Keras
 from nimble.exceptions import InvalidArgumentValue
 from nimble.utility import DeferredModuleImport
 from .skipTestDecorator import SkipMissing

@@ -6,7 +6,7 @@ out-of-the-box, custom learner.
 
 import nimble
 from nimble.calculate import rootMeanSquareError as RMSE
-from nimble.randomness import numpyRandom
+from nimble.core.randomness import numpyRandom
 
 if __name__ == "__main__":
     # produce some simple linear data

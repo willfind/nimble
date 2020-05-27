@@ -17,7 +17,7 @@ from nimble import createRandomData
 from .assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 
-returnTypes = copy.copy(nimble.data.available)
+returnTypes = copy.copy(nimble.core.data.available)
 
 
 ########################

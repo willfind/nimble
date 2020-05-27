@@ -4,13 +4,13 @@ nimble
 .. automodule:: nimble
    :members:
 
-.. autoclass:: nimble.helpers.KFoldCrossValidator
+.. autoclass:: nimble.core.helpers.KFoldCrossValidator
    :members:
 
-.. autoclass:: nimble.interfaces.universal_interface.TrainedLearner
+.. autoclass:: nimble.core.interfaces.universal_interface.TrainedLearner
    :members:
 
-.. autoclass:: nimble.custom_learner.CustomLearner
+.. autoclass:: nimble.core.custom_learner.CustomLearner
    :members:
 
 .. This toctree is to allow index.rst to display the submodules

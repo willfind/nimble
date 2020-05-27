@@ -19,7 +19,7 @@ from nose.tools import raises
 import numpy
 
 import nimble
-from nimble.helpers import generateClassificationData
+from nimble.core.helpers import generateClassificationData
 from nimble.calculate import rootMeanSquareError as RMSE
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
@@ -96,7 +96,7 @@ def prepopulatedLogSafetyWrapper(testFunc):
 
 
 def removeLogFile():
-    nimble.logger.active.cleanup()
+    nimble.core.logger.active.cleanup()
     location = nimble.settings.get("logger", "location")
     name = nimble.settings.get("logger", "name")
     pathToFile = os.path.join(location, name + ".mr")
@@ -105,7 +105,7 @@ def removeLogFile():
 
 def getLastLogData():
     query = "SELECT logInfo FROM logger ORDER BY entry DESC LIMIT 1"
-    valueList = nimble.logger.active.extractFromLog(query)
+    valueList = nimble.core.logger.active.extractFromLog(query)
     lastLog = valueList[0][0]
     return lastLog
 
@@ -143,7 +143,7 @@ def testTopLevelInputFunction():
     nimble.log(header, logInfo)
     # select all columns from the last entry into the logger
     query = "SELECT * FROM logger"
-    lastLog = nimble.logger.active.extractFromLog(query)
+    lastLog = nimble.core.logger.active.extractFromLog(query)
     lastLog = lastLog[0]
 
     assert lastLog[0] == 1
@@ -161,9 +161,9 @@ def testNewSessionNumberEachSetup():
     for session in range(5):
         nimble.createData("Matrix", data)
         # cleanup will require setup before the next log entry
-        nimble.logger.active.cleanup()
+        nimble.core.logger.active.cleanup()
     query = "SELECT sessionNumber FROM logger"
-    lastLogs = nimble.logger.active.extractFromLog(query)
+    lastLogs = nimble.core.logger.active.extractFromLog(query)
 
     for entry, log in enumerate(lastLogs):
         assert log[0] == entry
@@ -236,9 +236,9 @@ def testLoadTypeFunctionsUseLog():
 @configSafetyWrapper
 def test_setRandomSeed():
     nimble.settings.set('logger', 'enabledByDefault', 'True')
-    nimble.randomness.startAlternateControl()
+    nimble.core.randomness.startAlternateControl()
     nimble.setRandomSeed(1337)
-    nimble.randomness.endAlternateControl()
+    nimble.core.randomness.endAlternateControl()
     logInfo = getLastLogData()
     assert "{'seed': 1337}" in logInfo
 
@@ -711,7 +711,7 @@ def testHandmadeLogEntriesInput():
     customString = "enter this string into the log"
     nimble.log("customString", customString)
 
-    logType = nimble.logger.active.extractFromLog(typeQuery)[0][0]
+    logType = nimble.core.logger.active.extractFromLog(typeQuery)[0][0]
     logInfo = getLastLogData()
     assert logType == "User - customString"
     assert customString in logInfo
@@ -720,7 +720,7 @@ def testHandmadeLogEntriesInput():
     customList = ["this", "custom", "list", 1, 2, 3, {"list":"tested"}]
     nimble.log("customList", customList)
 
-    logType = nimble.logger.active.extractFromLog(typeQuery)[0][0]
+    logType = nimble.core.logger.active.extractFromLog(typeQuery)[0][0]
     logInfo = getLastLogData()
     assert logType == "User - customList"
     for value in customList:
@@ -730,7 +730,7 @@ def testHandmadeLogEntriesInput():
     customDict = {"custom":"dict", "log":"testing", 1:2, 3:"four"}
     nimble.log("customDict", customDict)
 
-    logType = nimble.logger.active.extractFromLog(typeQuery)[0][0]
+    logType = nimble.core.logger.active.extractFromLog(typeQuery)[0][0]
     logInfo = getLastLogData()
     assert logType == "User - customDict"
     for key in customDict.keys():
@@ -740,7 +740,7 @@ def testHandmadeLogEntriesInput():
 
     # heading matches nimble logType
     nimble.log('run', "User log with heading that matches a logType")
-    logType = nimble.logger.active.extractFromLog(typeQuery)[0][0]
+    logType = nimble.core.logger.active.extractFromLog(typeQuery)[0][0]
     logInfo = getLastLogData()
     assert logType == "User - run"
     assert "User log with heading that matches a logType" in logInfo
@@ -770,7 +770,7 @@ def testLambdaStringConversionCommas():
     data = [["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1],
             ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
             ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
-    for retType in nimble.data.available:
+    for retType in nimble.core.data.available:
         dataObj = nimble.createData(retType, data, useLog=False)
         calculated1 = dataObj.points.calculate(lambda x: [x[0], x[2]], points=0)
         checkLogContents('points.calculate', retType, {'function': "lambda x: [x[0], x[2]]",
@@ -1091,7 +1091,7 @@ def testMostSessionsLessThanLeastSessions():
 @emptyLogSafetyWrapper
 def testShowLogSuccessWithUserLog():
     """ Test user headings that match defined logTypes are successfully rendered """
-    for lType in nimble.logger.active.logTypes:
+    for lType in nimble.core.logger.active.logTypes:
         nimble.log(lType, "foo")
     # defined logTypes require specific input to render correctly, if these
     # headings are stored as a defined logType, the log would not render

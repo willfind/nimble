@@ -17,7 +17,7 @@ from .assertionHelpers import assertNoNamesGenerated
 def test_fillMatching_exception_nansUnmatched():
     raw = [[1, 1, 1, 0], [1, 1, 1, None], [2, 2, 2, 0], [2, 2, 2, 3],
            [2, 2, 2, 4], [2, 2, 2, 4]]
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         data = nimble.createData(t, raw)
         try:
             nimble.fillMatching('nimble.KNNImputation', 1, data, mode='classification')
@@ -28,7 +28,7 @@ def test_fillMatching_exception_nansUnmatched():
 def test_fillMatching_trainXUnaffectedByFailure():
     raw = [[2, 2, 2, 4], [2, 2, 2, 4], [2, 2, 2, 0], [2, 2, 2, 3],
            [2, 2, 2, 4], [2, 2, 2, 4]]
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         data = nimble.createData(t, raw)
         dataCopy = data.copy()
         # trying to fill 2 will fail because the training data will be empty
@@ -38,9 +38,9 @@ def test_fillMatching_trainXUnaffectedByFailure():
         except InvalidArgumentValue:
             assert data == dataCopy
 
-@logCountAssertionFactory(len(nimble.data.available) * 2)
+@logCountAssertionFactory(len(nimble.core.data.available) * 2)
 def backend_fillMatching(matchingElements, raw, expRaw):
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         data = nimble.createData(t, raw, useLog=False)
         exp = nimble.createData(t, expRaw, useLog=False)
         for value in ['nimble.KNNImputation', KNNImputation]:
@@ -96,7 +96,7 @@ def test_fillMatching_pointsLimited():
     pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
     data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
     expData = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         toTest = nimble.createData(t, data, pointNames=pNames, featureNames=fNames)
         expTest = nimble.createData(t, expData, pointNames=pNames, featureNames=fNames)
         nimble.fillMatching('nimble.KNNImputation', match.missing, toTest,
@@ -118,7 +118,7 @@ def test_fillMatching_featuresLimited():
     pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
     data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
     expData = [[1, 3, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, None]]
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         toTest = nimble.createData(t, data, pointNames=pNames, featureNames=fNames)
         expTest = nimble.createData(t, expData, pointNames=pNames, featureNames=fNames)
         nimble.fillMatching('nimble.KNNImputation', match.missing, toTest,
@@ -130,7 +130,7 @@ def test_fillMatching_pointsFeaturesLimited():
     pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
     data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
     expData = [[1, None, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         toTest = nimble.createData(t, data, pointNames=pNames, featureNames=fNames)
         expTest = nimble.createData(t, expData, pointNames=pNames, featureNames=fNames)
         nimble.fillMatching('nimble.KNNImputation', match.missing, toTest,
@@ -140,7 +140,7 @@ def test_fillMatching_pointsFeaturesLimited():
 def test_fillMatching_lazyNameGeneration():
     data = [[1, 'na', 'x'], [1, 3, 6], [2, 1, 6], [1, 3, 7], ['na', 3, 'x']]
     expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         toTest = nimble.createData(t, data)
         expTest = nimble.createData(t, expData)
         nimble.fillMatching('nimble.KNNImputation', match.nonNumeric, toTest,
@@ -151,7 +151,7 @@ def test_fillMatching_lazyNameGeneration():
 
 def test_fillMatching_NamePath_preservation():
     data = [[None, None, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1]]
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         toTest = nimble.createData(t, data)
 
         toTest._name = "TestName"

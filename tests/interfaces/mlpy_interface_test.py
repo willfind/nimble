@@ -7,7 +7,7 @@ import numpy.testing
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
-from nimble.interfaces.mlpy_interface import Mlpy
+from nimble.core.interfaces.mlpy_interface import Mlpy
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
 from ..assertionHelpers import logCountAssertionFactory

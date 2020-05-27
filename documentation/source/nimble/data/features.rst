@@ -1,5 +1,5 @@
 Base.features
 =============
 
-.. autoclass:: nimble.data.Features
+.. autoclass:: nimble.core.data.Features
    :members:

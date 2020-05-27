@@ -10,7 +10,7 @@ import os
 import copy
 
 import nimble
-from nimble.data import BaseView
+from nimble.core.data import BaseView
 from nimble.configuration import SessionConfiguration
 
 def configSafetyWrapper(toWrap):
@@ -35,10 +35,10 @@ def configSafetyWrapper(toWrap):
         copyHooks = copy.copy(nimble.settings.hooks)
         backupSettings = nimble.settings
         backupLoadSettings = nimble.configuration.loadSettings
-        backupLogger = nimble.logger.active
-        availableBackup = copy.copy(nimble.interfaces.available)
+        backupLogger = nimble.core.logger.active
+        availableBackup = copy.copy(nimble.core.interfaces.available)
         # CustomLearnerInterface attributes are not copied above
-        clInterface = nimble.interfaces.available['custom']
+        clInterface = nimble.core.interfaces.available['custom']
         clReg = copy.copy(clInterface.registeredLearners)
         clOpt = copy.copy(clInterface._configurableOptionNamesAvailable)
 
@@ -51,9 +51,9 @@ def configSafetyWrapper(toWrap):
             toWrap(*args, **kwargs)
         finally:
             nimble.settings = backupSettings
-            nimble.logger.active = backupLogger
+            nimble.core.logger.active = backupLogger
             nimble.configuration.loadSettings = backupLoadSettings
-            nimble.interfaces.available = availableBackup
+            nimble.core.interfaces.available = availableBackup
             clInterface.registeredLearners = clReg
             clInterface._configurableOptionNamesAvailable = clOpt
 
@@ -72,7 +72,7 @@ def logCountAssertionFactory(count):
         def wrapped(*args, **kwargs):
             nimble.settings.set('logger', 'enabledByDefault', 'True')
             nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
-            logger = nimble.logger.active
+            logger = nimble.core.logger.active
             countQuery = "SELECT COUNT(entry) FROM logger"
             startCount = logger.extractFromLog(countQuery)[0][0]
             ret = function(*args, **kwargs)

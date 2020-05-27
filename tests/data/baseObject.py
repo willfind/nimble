@@ -63,7 +63,7 @@ def viewConstructorMaker(concreteType):
         # instead of createData because we sometimes need to specify a
         # particular path attribute.
         else:
-            orig = nimble.helpers.initDataObject(
+            orig = nimble.core.helpers.initDataObject(
                 concreteType, rawData=data, pointNames=pointNames,
                 featureNames=featureNames, name=name, path=path,
                 convertToType=convertToType, keepPoints='all', keepFeatures='all',
@@ -76,13 +76,13 @@ def viewConstructorMaker(concreteType):
         if len(orig.points) != 0:
             firstPRaw = numpy.zeros([1] + orig._shape[1:]).tolist()
             fNamesParam = orig.features._getNamesNoGeneration()
-            firstPoint = nimble.helpers.initDataObject(
+            firstPoint = nimble.core.helpers.initDataObject(
                 concreteType, rawData=firstPRaw, pointNames=['firstPNonView'],
                 featureNames=fNamesParam, name=name, path=orig.path,
                 keepPoints='all', keepFeatures='all', convertToType=convertToType)
 
             lastPRaw = (numpy.ones([1] + orig._shape[1:]) * 3).tolist()
-            lastPoint = nimble.helpers.initDataObject(
+            lastPoint = nimble.core.helpers.initDataObject(
                 concreteType, rawData=lastPRaw, pointNames=['lastPNonView'],
                 featureNames=fNamesParam, name=name, path=orig.path,
                 keepPoints='all', keepFeatures='all', convertToType=convertToType)
@@ -103,7 +103,7 @@ def viewConstructorMaker(concreteType):
         if len(orig.features) != 0 and not len(orig._shape) > 2:
             lastFRaw = [[1] * len(full.points)]
             fNames = full.points._getNamesNoGeneration()
-            lastFeature = nimble.helpers.initDataObject(
+            lastFeature = nimble.core.helpers.initDataObject(
                 concreteType, rawData=lastFRaw, featureNames=fNames,
                 pointNames=['lastFNonView'], name=name, path=orig.path,
                 keepPoints='all', keepFeatures='all', convertToType=convertToType)
@@ -174,11 +174,11 @@ def methodObjectValidation(func):
             source = self._base
         else:
             source = self
-        assert isinstance(source, nimble.data.Base)
+        assert isinstance(source, nimble.core.data.Base)
         # store Base arguments for validation after function call
         baseArgs = []
         for argVal in (list(args) + list(kwargs.values())):
-            if isinstance(argVal, nimble.data.Base):
+            if isinstance(argVal, nimble.core.data.Base):
                 baseArgs.append(argVal)
         # name and path preservation
         startName = source._name
@@ -187,7 +187,7 @@ def methodObjectValidation(func):
 
         ret = func(self, *args, **kwargs)
         source.validate()
-        if isinstance(ret, nimble.data.Base):
+        if isinstance(ret, nimble.core.data.Base):
             ret.validate()
         for arg in baseArgs:
             arg.validate()
@@ -240,9 +240,9 @@ def objectValidationMethods(cls):
 
 
 objectValidationDict = {}
-objectValidationDict['Base'] = objectValidationMethods(nimble.data.base.Base)
-objectValidationDict['Features'] = objectValidationMethods(nimble.data.features.Features)
-objectValidationDict['Points'] = objectValidationMethods(nimble.data.points.Points)
+objectValidationDict['Base'] = objectValidationMethods(nimble.core.data.base.Base)
+objectValidationDict['Features'] = objectValidationMethods(nimble.core.data.features.Features)
+objectValidationDict['Points'] = objectValidationMethods(nimble.core.data.points.Points)
 
 
 def setClassAttributes(classes, wrapper=None):

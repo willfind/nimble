@@ -25,7 +25,7 @@ def test_KNNImputation_classification():
     pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
     data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
     expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         toTest = nimble.createData(t, data, pointNames=pNames, featureNames=fNames, useLog=False)
         expTest = nimble.createData(t, expData, pointNames=pNames, featureNames=fNames, useLog=False)
         learner = KNNImputation()
@@ -39,7 +39,7 @@ def test_KNNImputation_regression():
     pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
     data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
     expData = [[1, 2, 6], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         toTest = nimble.createData(t, data, pointNames=pNames, featureNames=fNames, useLog=False)
         expTest = nimble.createData(t, expData, pointNames=pNames, featureNames=fNames, useLog=False)
         learner = KNNImputation()
@@ -59,7 +59,7 @@ def test_KNNImputation_regression_exception_NoSKL():
 def test_KNNImputation_lazyNameGeneration():
     data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
     expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         toTest = nimble.createData(t, data)
         expTest = nimble.createData(t, expData)
         learner = KNNImputation()
@@ -71,7 +71,7 @@ def test_KNNImputation_lazyNameGeneration():
 
 def test_KNNImputation_NamePath_preservation():
     data = [[None, None, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1]]
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         toTest = nimble.createData(t, data)
 
         toTest._name = "TestName"

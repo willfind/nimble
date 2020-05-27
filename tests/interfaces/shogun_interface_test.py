@@ -21,15 +21,15 @@ except ImportError:
 
 import nimble
 from nimble import Init
-from nimble.randomness import numpyRandom
-from nimble.randomness import startAlternateControl, endAlternateControl
+from nimble.core.randomness import numpyRandom
+from nimble.core.randomness import startAlternateControl, endAlternateControl
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.interfaces.interface_helpers import PythonSearcher
-from nimble.helpers import generateClassificationData
-from nimble.helpers import generateRegressionData
-from nimble.helpers import generateClusteredPoints
-from nimble.interfaces.shogun_interface import checkProcessFailure
+from nimble.core.interfaces.interface_helpers import PythonSearcher
+from nimble.core.helpers import generateClassificationData
+from nimble.core.helpers import generateRegressionData
+from nimble.core.helpers import generateClusteredPoints
+from nimble.core.interfaces.shogun_interface import checkProcessFailure
 from nimble.utility import scipy
 
 from .skipTestDecorator import SkipMissing
@@ -40,7 +40,7 @@ shogunSkipDec = SkipMissing('shogun')
 
 @shogunSkipDec
 def test_Shogun_findCallable_nameAndDocPreservation():
-    shogunInt = nimble.helpers.findBestInterface('shogun')
+    shogunInt = nimble.core.helpers.findBestInterface('shogun')
     swigObj = shogunInt.findCallable('LibSVM')
     wrappedShogun = swigObj()
     assert 'WrappedShogun' in str(type(wrappedShogun))
@@ -424,7 +424,7 @@ def equalityAssertHelper(ret1, ret2, ret3=None):
 
 def shogunTrainBackend(learner, data, toSet):
     Xtrain, Ytrain = data
-    sg = nimble.helpers.findBestInterface('shogun')
+    sg = nimble.core.helpers.findBestInterface('shogun')
     sgObj = sg.findCallable(learner)
     shogunObj = sgObj()
     args = {}
@@ -457,7 +457,7 @@ def shogunApplyBackend(obj, toTest, applier):
 @with_setup(startAlternateControl, endAlternateControl)
 def trainAndApplyBackend(learner, data, applier, needKernel, needDistance,
                          extraTrainSetup):
-    seed = nimble.randomness.generateSubsidiarySeed()
+    seed = nimble.core.randomness.generateSubsidiarySeed()
     nimble.setRandomSeed(seed, useLog=False)
     trainX, trainY, testX = data[:3]
     shogunTraining = data[3:5]
@@ -512,7 +512,7 @@ def testShogunClassificationLearners():
 
     @logCountAssertionFactory(2)
     def compareOutputs(learner):
-        sg = nimble.helpers.findBestInterface('shogun')
+        sg = nimble.core.helpers.findBestInterface('shogun')
         sgObj = sg.findCallable(learner)
         shogunObj = sgObj()
         ptVal = shogunObj.get_machine_problem_type()

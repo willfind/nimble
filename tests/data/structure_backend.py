@@ -28,17 +28,17 @@ from nose.tools import *
 import nimble
 from nimble import match
 from nimble import createData
-from nimble.data import List
-from nimble.data import Matrix
-from nimble.data import DataFrame
-from nimble.data import Sparse
-from nimble.data import BaseView
-from nimble.data.dataHelpers import DEFAULT_PREFIX
+from nimble.core.data import List
+from nimble.core.data import Matrix
+from nimble.core.data import DataFrame
+from nimble.core.data import Sparse
+from nimble.core.data import BaseView
+from nimble.core.data.dataHelpers import DEFAULT_PREFIX
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
-from nimble.randomness import numpyRandom
+from nimble.core.randomness import numpyRandom
 from nimble.utility import sparseMatrixToArray
 from nimble.utility import scipy, pd
 
@@ -169,9 +169,9 @@ class StructureDataSafe(StructureShared):
 
     def test_objectValidationSetup(self):
         """ Test that object validation has been setup """
-        assert hasattr(nimble.data.Base, 'objectValidation')
-        assert hasattr(nimble.data.Features, 'objectValidation')
-        assert hasattr(nimble.data.Points, 'objectValidation')
+        assert hasattr(nimble.core.data.Base, 'objectValidation')
+        assert hasattr(nimble.core.data.Features, 'objectValidation')
+        assert hasattr(nimble.core.data.Points, 'objectValidation')
 
     ##########################
     # T (transpose property) #
@@ -580,7 +580,7 @@ class StructureDataSafe(StructureShared):
         pointNames = ['1', 'one', '2', '0']
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        for retType in nimble.data.available:
+        for retType in nimble.core.data.available:
 
             out = orig.copy(to=retType, rowsArePoints=False)
             desired = nimble.createData(retType, dataT,
@@ -750,13 +750,13 @@ class StructureDataSafe(StructureShared):
         assert copyDataFrame.relativePath == os.path.relpath(path)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.Base.copy', calledException)
+    @mock.patch('nimble.core.data.Base.copy', calledException)
     def test_copy__copy__(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
         ret = copy.copy(toTest)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.Base.copy', calledException)
+    @mock.patch('nimble.core.data.Base.copy', calledException)
     def test_copy__deepcopy__(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
         ret = copy.deepcopy(toTest)
@@ -766,7 +766,7 @@ class StructureDataSafe(StructureShared):
     ###############
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_points_copy_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -791,7 +791,7 @@ class StructureDataSafe(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         # need to set source paths for view objects
-        if isinstance(toTest, nimble.data.BaseView):
+        if isinstance(toTest, nimble.core.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -927,7 +927,7 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data)
 
         # need to set source paths for view objects
-        if isinstance(toTest, nimble.data.BaseView):
+        if isinstance(toTest, nimble.core.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -1012,7 +1012,7 @@ class StructureDataSafe(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         # need to set source paths for view objects
-        if isinstance(toTest, nimble.data.BaseView):
+        if isinstance(toTest, nimble.core.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -1473,22 +1473,22 @@ class StructureDataSafe(StructureShared):
         toTest4 = toTest1.copy()
         expTest = toTest1.copy()
 
-        seed = nimble.randomness.generateSubsidiarySeed()
-        nimble.randomness.startAlternateControl(seed)
+        seed = nimble.core.randomness.generateSubsidiarySeed()
+        nimble.core.randomness.startAlternateControl(seed)
         ret = getattr(toTest1, toCall).copy(number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         retList = getattr(toTest2, toCall).copy([0, 1, 2, 3], number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         retRange = getattr(toTest3, toCall).copy(start=0, end=3, number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         retFunc = getattr(toTest4, toCall).copy(allTrue, number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
         if axis == 'point':
             assert len(ret.points) == 3
@@ -1524,21 +1524,21 @@ class StructureDataSafe(StructureShared):
             exp1 = toTest1[:, 1]
             exp2 = toTest1[:, 2]
 
-        seed = nimble.randomness.generateSubsidiarySeed()
-        nimble.randomness.startAlternateControl(seed)
+        seed = nimble.core.randomness.generateSubsidiarySeed()
+        nimble.core.randomness.startAlternateControl(seed)
         retList = getattr(toTest1, toCall).copy([1, 2], number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         retRange = getattr(toTest2, toCall).copy(start=1, end=2, number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         retFunc = getattr(toTest3, toCall).copy(middleRowsOrCols, number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
         assert retList.isIdentical(exp1) or retList.isIdentical(exp2)
         assert retRange.isIdentical(exp1) or retList.isIdentical(exp2)
@@ -1549,7 +1549,7 @@ class StructureDataSafe(StructureShared):
     #####################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_features_copy_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -1575,7 +1575,7 @@ class StructureDataSafe(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         # need to set source paths for view objects
-        if isinstance(toTest, nimble.data.BaseView):
+        if isinstance(toTest, nimble.core.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -1748,7 +1748,7 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data)
 
         # need to set source paths for view objects
-        if isinstance(toTest, nimble.data.BaseView):
+        if isinstance(toTest, nimble.core.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -1862,7 +1862,7 @@ class StructureDataSafe(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         # need to set source paths for view objects
-        if isinstance(toTest, nimble.data.BaseView):
+        if isinstance(toTest, nimble.core.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -2509,12 +2509,12 @@ class StructureModifying(StructureShared):
         ret = self.constructor(coo_str)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.valuesToPythonList', calledException)
+    @mock.patch('nimble.core.data.base.valuesToPythonList', calledException)
     def test_init_pointNames_calls_valuesToPythonList(self):
         self.constructor([1,2,3], pointNames=['one'])
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.valuesToPythonList', calledException)
+    @mock.patch('nimble.core.data.base.valuesToPythonList', calledException)
     def test_init_featureNames_calls_valuesToPythonList(self):
         self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
 
@@ -3127,7 +3127,7 @@ class StructureModifying(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         currType = self.constructor([]).getTypeString()
-        availableTypes = nimble.data.available
+        availableTypes = nimble.core.data.available
         otherTypes = [retType for retType in availableTypes if retType != currType]
         inserted = []
         for other in otherTypes:
@@ -3306,7 +3306,7 @@ class StructureModifying(StructureShared):
     # points.append() / features.append() #
     #######################################
 
-    @mock.patch('nimble.data.axis.Axis._insert', calledException)
+    @mock.patch('nimble.core.data.axis.Axis._insert', calledException)
     def test_append_callsInsertBackend(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
@@ -3568,7 +3568,7 @@ class StructureModifying(StructureShared):
     ##################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_points_extract_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -4283,22 +4283,22 @@ class StructureModifying(StructureShared):
         toTest3 = toTest1.copy()
         toTest4 = toTest1.copy()
 
-        seed = nimble.randomness.generateSubsidiarySeed()
-        nimble.randomness.startAlternateControl(seed)
+        seed = nimble.core.randomness.generateSubsidiarySeed()
+        nimble.core.randomness.startAlternateControl(seed)
         ret = getattr(toTest1, toCall).extract(number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         retList = getattr(toTest2, toCall).extract([0, 1, 2, 3], number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         retRange = getattr(toTest3, toCall).extract(start=0, end=3, number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         retFunc = getattr(toTest4, toCall).extract(allTrue, number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
         if axis == 'point':
             assert len(ret.points) == 3
@@ -4338,21 +4338,21 @@ class StructureModifying(StructureShared):
             expTest1 = toTest1[:, [0, 1, 3]]
             expTest2 = toTest1[:, [0, 2, 3]]
 
-        seed = nimble.randomness.generateSubsidiarySeed()
-        nimble.randomness.startAlternateControl(seed)
+        seed = nimble.core.randomness.generateSubsidiarySeed()
+        nimble.core.randomness.startAlternateControl(seed)
         retList = getattr(toTest1, toCall).extract([1, 2], number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         retRange = getattr(toTest2, toCall).extract(start=1, end=2, number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         retFunc = getattr(toTest3, toCall).extract(middleRowsOrCols, number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
         assert retList.isIdentical(expRet1) or retList.isIdentical(expRet2)
         assert retRange.isIdentical(expRet1) or retList.isIdentical(expRet2)
@@ -4367,7 +4367,7 @@ class StructureModifying(StructureShared):
     ######################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_features_extract_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -5047,7 +5047,7 @@ class StructureModifying(StructureShared):
     #################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_points_delete_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -5631,22 +5631,22 @@ class StructureModifying(StructureShared):
         toTest3 = toTest1.copy()
         toTest4 = toTest1.copy()
 
-        seed = nimble.randomness.generateSubsidiarySeed()
-        nimble.randomness.startAlternateControl(seed)
+        seed = nimble.core.randomness.generateSubsidiarySeed()
+        nimble.core.randomness.startAlternateControl(seed)
         getattr(toTest1, toCall).delete(number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         getattr(toTest2, toCall).delete([0, 1, 2, 3], number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         getattr(toTest3, toCall).delete(start=0, end=3, number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         getattr(toTest4, toCall).delete(allTrue, number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
         if axis == 'point':
             assert len(toTest1.points) == 1
@@ -5677,21 +5677,21 @@ class StructureModifying(StructureShared):
             exp1 = toTest1[:, [0, 1, 3]]
             exp2 = toTest1[:, [0, 2, 3]]
 
-        seed = nimble.randomness.generateSubsidiarySeed()
-        nimble.randomness.startAlternateControl(seed)
+        seed = nimble.core.randomness.generateSubsidiarySeed()
+        nimble.core.randomness.startAlternateControl(seed)
         getattr(toTest1, toCall).delete([1, 2], number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         getattr(toTest2, toCall).delete(start=1, end=2, number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         getattr(toTest3, toCall).delete(middleRowsOrCols, number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
         assert toTest1.isIdentical(exp1) or toTest1.isIdentical(exp2)
         assert toTest2.isIdentical(exp1) or toTest2.isIdentical(exp2)
@@ -5702,7 +5702,7 @@ class StructureModifying(StructureShared):
     ###################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_features_delete_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -6257,7 +6257,7 @@ class StructureModifying(StructureShared):
     #################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_points_retain_calls_constructIndicesList(self):
         """ Test points.retain calls constructIndicesList before calling _genericStructuralFrontend"""
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
@@ -6887,22 +6887,22 @@ class StructureModifying(StructureShared):
         toTest3 = toTest1.copy()
         toTest4 = toTest1.copy()
 
-        seed = nimble.randomness.generateSubsidiarySeed()
-        nimble.randomness.startAlternateControl(seed)
+        seed = nimble.core.randomness.generateSubsidiarySeed()
+        nimble.core.randomness.startAlternateControl(seed)
         getattr(toTest1, toCall).retain(number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         getattr(toTest2, toCall).retain([0, 1, 2, 3], number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         getattr(toTest3, toCall).retain(start=0, end=3, number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         getattr(toTest4, toCall).retain(allTrue, number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
         if axis == 'point':
             assert len(toTest1.points) == 3
@@ -6933,21 +6933,21 @@ class StructureModifying(StructureShared):
             exp1 = toTest1[:, 1]
             exp2 = toTest1[:, 2]
 
-        seed = nimble.randomness.generateSubsidiarySeed()
-        nimble.randomness.startAlternateControl(seed)
+        seed = nimble.core.randomness.generateSubsidiarySeed()
+        nimble.core.randomness.startAlternateControl(seed)
         getattr(toTest1, toCall).retain([1, 2], number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         getattr(toTest2, toCall).retain(start=1, end=2, number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.core.randomness.startAlternateControl(seed)
         getattr(toTest3, toCall).retain(middleRowsOrCols, number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.core.randomness.endAlternateControl()
 
         assert toTest1.isIdentical(exp1) or toTest1.isIdentical(exp2)
         assert toTest2.isIdentical(exp1) or toTest2.isIdentical(exp2)
@@ -6958,7 +6958,7 @@ class StructureModifying(StructureShared):
     ###################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_features_retain_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -7552,8 +7552,8 @@ class StructureModifying(StructureShared):
         pNames = ['1', 'one', '2', '0']
         orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
 
-        retType0 = nimble.data.available[0]
-        retType1 = nimble.data.available[1]
+        retType0 = nimble.core.data.available[0]
+        retType1 = nimble.core.data.available[1]
 
         objType0 = nimble.createData(retType0, data1, pointNames=pNames, featureNames=featureNames)
         objType1 = nimble.createData(retType1, data1, pointNames=pNames, featureNames=featureNames)
@@ -7712,7 +7712,7 @@ class StructureModifying(StructureShared):
         toTrans.points.transform(stringOfPointLength)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_points_transform_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -7926,7 +7926,7 @@ class StructureModifying(StructureShared):
         toTrans.points.transform(stringOfFeatureLength)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_features_transform_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -8077,7 +8077,7 @@ class StructureModifying(StructureShared):
     #######################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.base.constructIndicesList', calledException)
     def test_transformElements_calls_constructIndicesList1(self):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
@@ -8087,7 +8087,7 @@ class StructureModifying(StructureShared):
         toTest.transformElements(noChange, points=['a', 'b'])
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.base.constructIndicesList', calledException)
     def test_transformElements_calls_constructIndicesList2(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
@@ -8544,7 +8544,7 @@ class StructureModifying(StructureShared):
         fill = [[0, 0], [0, 0]]
         exp = [[0, 0, 13], [0, 0, 23], [31, 32, 33]]
         exp = self.constructor(exp)
-        for t in nimble.data.available:
+        for t in nimble.core.data.available:
             toTest = self.constructor(raw)
             arg = nimble.createData(t, fill)
             toTest.replaceRectangle(arg, 0, 0, 1, 1)

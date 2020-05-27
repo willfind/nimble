@@ -26,7 +26,7 @@ def testInverseSquareObject():
     pnames = ['p1', 'p2', 'p3']
     fnames = ['f1', 'f2', 'f3']
 
-    for dataType in nimble.data.available:
+    for dataType in nimble.core.data.available:
         identityObj = nimble.identity(dataType, 3)
         origObj = createData(
             dataType, data, pointNames=pnames, featureNames=fnames)
@@ -46,7 +46,7 @@ def testInverseEmptyObject():
     """
     data = []
 
-    for dataType in nimble.data.available:
+    for dataType in nimble.core.data.available:
         obj = createData(dataType, data)
         objInv = inverse(obj)
         assert objInv == obj
@@ -58,7 +58,7 @@ def testInverseNonSquareObject():
     """
     data = [[1, 2, 3], [4, 5, 6]]
 
-    for dataType in nimble.data.available:
+    for dataType in nimble.core.data.available:
         obj = createData(dataType, data)
         try:
             inverse(obj)
@@ -73,7 +73,7 @@ def testNonInvertibleObject():
     """
     data = [[1, 1], [1, 1]]
 
-    for dataType in nimble.data.available:
+    for dataType in nimble.core.data.available:
         obj = createData(dataType, data)
 
         try:
@@ -142,7 +142,7 @@ def testPseudoInverseObject():
         assert identityFromPinv.isApproximatelyEqual(identity)
         assert origObj == obj
 
-    for dataType in nimble.data.available:
+    for dataType in nimble.core.data.available:
         for method in ['least-squares', 'svd']:
             objList = _testPseudoInverseCreateObjects(dataType)
             for obj in objList:
@@ -155,7 +155,7 @@ def testPseudoInverseEmptyObject():
     """
     data = []
 
-    for dataType in nimble.data.available:
+    for dataType in nimble.core.data.available:
         obj = createData(dataType, data)
         objInv = pseudoInverse(obj)
         assert objInv == obj
@@ -209,8 +209,8 @@ def _backendSolverSuccess(solverFunction):
     aArray = numpy.array([[1, 20], [-30, 4]])
     bArrays = [numpy.array([-30, 4]), numpy.array([[-30], [4]])]
 
-    for dataType in nimble.data.available:
-        for dataTypeB in nimble.data.available:
+    for dataType in nimble.core.data.available:
+        for dataTypeB in nimble.core.data.available:
             for bArray in bArrays:
                 A = createData(dataType, aArray, featureNames=['f1', 'f2'])
                 b = createData(dataTypeB, bArray)
@@ -227,8 +227,8 @@ def _backendSolverSuccess(solverFunction):
                 assert sol.getTypeString() == A.getTypeString()
 
 def _backendNonSquareSolverSucces(aArray,  bArrays, featureNames):
-    for dataType in nimble.data.available:
-        for dataTypeB in nimble.data.available:
+    for dataType in nimble.core.data.available:
+        for dataTypeB in nimble.core.data.available:
             for bArray in bArrays:
                 aOrig = createData(
                     dataType, aArray, featureNames=featureNames)

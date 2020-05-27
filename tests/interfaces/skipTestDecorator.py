@@ -12,7 +12,7 @@ class SkipMissing(object):
     """
     Decorator object which raises SkipTest if the provided interface is missing
 
-    Whether an interface is present is defined by nimble.helpers.findBestInterface.
+    Whether an interface is present is defined by nimble.core.helpers.findBestInterface.
     This object will be instantiated once in every interface test file, with
     the appropriate interface name.
     """
@@ -22,7 +22,7 @@ class SkipMissing(object):
 
         self.missing = False
         try:
-            nimble.helpers.findBestInterface(interfaceName)
+            nimble.core.helpers.findBestInterface(interfaceName)
         except PackageException:
             self.missing = True
 

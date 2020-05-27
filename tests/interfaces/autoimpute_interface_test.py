@@ -42,7 +42,7 @@ def getDataWithMissing(retType, assignNames=True):
 
 @autoimputeSkipDec
 def backend_imputation(learnerName, **kwargs):
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         data = getDataWithMissing(t)
         orig = data.copy()
         matches = data.matchingElements(match.missing)
@@ -76,7 +76,7 @@ def test_autoimpute_MultipleImputer_exception_noStrategy():
 
 @autoimputeSkipDec
 def test_autoimpute_MiLinearRegression():
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         data = getDataWithMissing(t)
         trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels='y')
         # test data cannot have missing values
@@ -96,7 +96,7 @@ def test_autoimpute_MiLinearRegression():
 
 @autoimputeSkipDec
 def test_autoimpute_MiLinearRegression_noNames():
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         data = getDataWithMissing(t, False)
         trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels=0)
         testX.features.fillMatching(fill.mean, match.missing)
@@ -125,7 +125,7 @@ def test_autoimpute_MiLinearRegression_exception_noStrategy():
 
 @autoimputeSkipDec
 def test_autoimpute_MiLogisticRegression():
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         data = getDataWithMissing(t)
         # make y binary
         data.features.transform(lambda ft: numpy.random.choice(2, len(ft.points)),
@@ -149,7 +149,7 @@ def test_autoimpute_MiLogisticRegression():
 
 @autoimputeSkipDec
 def test_autoimpute_MiLogisticRegression_directMultipleImputer():
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         data = getDataWithMissing(t)
         # make y binary
         data.features.transform(lambda ft: numpy.random.choice(2, len(ft.points)),
@@ -173,7 +173,7 @@ def test_autoimpute_MiLogisticRegression_directMultipleImputer():
 
 @autoimputeSkipDec
 def test_autoimpute_MiLogisticRegression_noNames():
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         data = getDataWithMissing(t, False)
         data.features.transform(lambda ft: numpy.random.choice(2, len(ft.points)),
                                 features=0)

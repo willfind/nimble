@@ -25,9 +25,9 @@ from nose.plugins.attrib import attr
 import nimble
 from nimble import match
 from nimble import loadData
-from nimble.data import BaseView
-from nimble.data.dataHelpers import formatIfNeeded
-from nimble.data.dataHelpers import DEFAULT_PREFIX
+from nimble.core.data import BaseView
+from nimble.core.data.dataHelpers import formatIfNeeded
+from nimble.core.data.dataHelpers import DEFAULT_PREFIX
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
@@ -227,14 +227,14 @@ class QueryBackend(DataTestObject):
         def excludeAxis(axis):
             if axis == 'point':
                 exclude = self.constructor(data, featureNames=featureNames)
-                if isinstance(exclude, nimble.data.BaseView):
+                if isinstance(exclude, nimble.core.data.BaseView):
                     setter = exclude._source.points.setNames
                 else:
                     setter = exclude.points.setNames
                 count = len(exclude.points)
             else:
                 exclude = self.constructor(data, pointNames=pointNames)
-                if isinstance(exclude, nimble.data.BaseView):
+                if isinstance(exclude, nimble.core.data.BaseView):
                     setter = exclude._source.features.setNames
                 else:
                     setter = exclude.features.setNames
@@ -361,7 +361,7 @@ class QueryBackend(DataTestObject):
 
             toSave.save(fileNameWithoutExtension)
             LoadObj = loadData(tmpFile.name)
-            assert isinstance(LoadObj, nimble.data.Base)
+            assert isinstance(LoadObj, nimble.core.data.Base)
 
             try:
                 LoadObj = loadData(fileNameWithoutExtension)
@@ -1897,7 +1897,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def test_featureStatistics_groupbyfeature(self):
         orig = self.constructor([[1,2,3,'f'], [4,5,6,'m'], [7,8,9,'f'], [10,11,12,'m']], featureNames=['a','b', 'c', 'gender'])
-        if isinstance(orig, nimble.data.BaseView):
+        if isinstance(orig, nimble.core.data.BaseView):
             return
         #don't test view.
         res = orig.features.statistics('mean', groupByFeature='gender')

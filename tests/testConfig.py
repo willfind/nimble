@@ -14,8 +14,8 @@ import configparser
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
-from nimble.interfaces.universal_interface import UniversalInterface
-from nimble.interfaces.universal_interface import PredefinedInterface
+from nimble.core.interfaces.universal_interface import UniversalInterface
+from nimble.core.interfaces.universal_interface import PredefinedInterface
 from .assertionHelpers import configSafetyWrapper
 
 
@@ -198,7 +198,7 @@ def test_settings_GetSet():
     origChangeSet = copy.deepcopy(nimble.settings.changes)
 
     # for available interfaces
-    for interface in nimble.interfaces.available.values():
+    for interface in nimble.core.interfaces.available.values():
         name = interface.getCanonicalName()
         for option in interface.optionNames:
             # get values of options
@@ -359,16 +359,16 @@ def setAndSaveAvailableInterfaceOptions():
     """
     Set and save the options for each available interface.
     """
-    for interface in nimble.interfaces.available.values():
+    for interface in nimble.core.interfaces.available.values():
         nimble.configuration.setInterfaceOptions(interface, save=True)
 
 @configSafetyWrapper
 def test_settings_addingNewInterface():
     """ Test nimble.configuration.setInterfaceOptions correctly modifies file """
     tempInterface = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
-    nimble.interfaces.available[tempInterface.name] = tempInterface
+    nimble.core.interfaces.available[tempInterface.name] = tempInterface
     ignoreInterface = OptionNamedLookalike("ig", [])
-    nimble.interfaces.available[ignoreInterface.name] = ignoreInterface
+    nimble.core.interfaces.available[ignoreInterface.name] = ignoreInterface
 
     # set options for all interfaces
     setAndSaveAvailableInterfaceOptions()
@@ -389,7 +389,7 @@ def test_settings_addingNewInterface():
 def test_settings_setInterfaceOptionsSafety():
     """ Test that setting options preserves values already in the config file """
     tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
-    nimble.interfaces.available[tempInterface1.name] = tempInterface1
+    nimble.core.interfaces.available[tempInterface1.name] = tempInterface1
 
     # set options for all interfaces, then reload
     setAndSaveAvailableInterfaceOptions()
@@ -401,7 +401,7 @@ def test_settings_setInterfaceOptionsSafety():
 
     # now set up another trigger to set options for
     tempInterface2 = OptionNamedLookalike("TestOther", ['Temp0'])
-    nimble.interfaces.available[tempInterface2.name] = tempInterface2
+    nimble.core.interfaces.available[tempInterface2.name] = tempInterface2
 
     # set options for all interfaces, then reload
     setAndSaveAvailableInterfaceOptions()
@@ -416,8 +416,8 @@ def test_settings_setInterfaceOptionsChanges():
     """ Test that setting interface options properly saves current changes """
     tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
     tempInterface2 = OptionNamedLookalike("TestOther", ['Temp0'])
-    nimble.interfaces.available[tempInterface1.name] = tempInterface1
-    nimble.interfaces.available[tempInterface2.name] = tempInterface2
+    nimble.core.interfaces.available[tempInterface1.name] = tempInterface1
+    nimble.core.interfaces.available[tempInterface2.name] = tempInterface2
 
     # set options for all interfaces, then reload
     setAndSaveAvailableInterfaceOptions()
@@ -680,13 +680,13 @@ def testToDeleteSentinalObject():
 
 
 @configSafetyWrapper
-@mock.patch('nimble.interfaces.predefined', [FailedPredefined])
+@mock.patch('nimble.core.interfaces.predefined', [FailedPredefined])
 def testSetLocationForFailedPredefinedInterface():
     nimble.settings.set('FailedPredefined', 'location', 'path/to/mock')
 
 
 @configSafetyWrapper
 @raises(InvalidArgumentValue)
-@mock.patch('nimble.interfaces.predefined', [FailedPredefined])
+@mock.patch('nimble.core.interfaces.predefined', [FailedPredefined])
 def testExceptionSetOptionForFailedPredefinedInterface():
     nimble.settings.set('FailedPredefined', 'foo', 'path/to/mock')

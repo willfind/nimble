@@ -1,5 +1,5 @@
 Base.points
 ===========
 
-.. autoclass:: nimble.data.Points
+.. autoclass:: nimble.core.data.Points
    :members:

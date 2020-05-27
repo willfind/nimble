@@ -179,7 +179,7 @@ def test_confusionMatrix_noLabels():
             [1], [2], [3], [4],
             [4], [3], [2], [1]]
 
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         knownObj = createData(t, known, useLog=False)
         predObj = createData(t, pred, useLog=False)
 
@@ -217,7 +217,7 @@ def test_confusionMatrix_noLabels_consistentOutput():
              [4], [3], [2], [1],
              [1], [2], [3], [4],]
 
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         knownObj1 = createData(t, known1, useLog=False)
         predObj1 = createData(t, pred1, useLog=False)
         cm1 = confusionMatrix(knownObj1, predObj1)
@@ -239,7 +239,7 @@ def test_confusionMatrix_withLabelsDict():
             [1], [2], [3], [4],
             [4], [3], [2], [1]]
 
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         knownObj = createData(t, known, useLog=False)
         predObj = createData(t, pred, useLog=False)
 
@@ -279,7 +279,7 @@ def test_confusionMatrix_withLabelsDict_consistentOutput():
              [4], [3], [2], [1],
              [1], [2], [3], [4],]
 
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         knownObj1 = createData(t, known1, useLog=False)
         predObj1 = createData(t, pred1, useLog=False)
         labels1 = {1: 'one', 2: 'two', 3: 'three', 4: 'four'}
@@ -303,7 +303,7 @@ def test_confusionMatrix_withLabelsList():
             [3], [2], [1], [0],
             [0], [1], [2], [3]]
 
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         knownObj = createData(t, known, useLog=False)
         predObj = createData(t, pred, useLog=False)
 
@@ -335,7 +335,7 @@ def test_confusionMatrix_additionalLabelsProvided():
             [0], [1], [2], [4],
             [4], [2], [1], [0]]
 
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         knownObj = createData(t, known, useLog=False)
         predObj = createData(t, pred, useLog=False)
 
@@ -370,7 +370,7 @@ def test_confusionMatrix_convertCountsToFractions():
             [3], [2], [1],
             [3], [2], [1]]
 
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         knownObj = createData(t, known, useLog=False)
         predObj = createData(t, pred, useLog=False)
 
@@ -397,7 +397,7 @@ def test_confusionMatrix_strings():
             ['dog'], ['cat'], ['fish'], ['bear'],
             ['cat'], ['dog'], ['bear'], ['fish']]
 
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         knownObj = createData(t, known, useLog=False)
         predObj = createData(t, pred, useLog=False)
 

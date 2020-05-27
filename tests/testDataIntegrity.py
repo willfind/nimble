@@ -12,9 +12,9 @@ from nose.tools import raises
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
-from nimble.helpers import generateClassificationData
-from nimble.helpers import generateRegressionData
-from nimble.randomness import pythonRandom
+from nimble.core.helpers import generateClassificationData
+from nimble.core.helpers import generateRegressionData
+from nimble.core.randomness import pythonRandom
 from .assertionHelpers import calledException, CalledFunctionException
 
 
@@ -266,14 +266,14 @@ def patch_mergeArguments(source):
     return mock.patch(source + '._mergeArguments', calledException)
 
 @raises(CalledFunctionException)
-@patch_mergeArguments('nimble.core')
+@patch_mergeArguments('nimble.core.core')
 def testArgumentIntegrityTrain():
     arguments = {'k': 1}
     train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
     tl = nimble.train('nimble.KNNClassifier', train, 2, arguments=arguments)
 
 @raises(CalledFunctionException)
-@patch_mergeArguments('nimble.core')
+@patch_mergeArguments('nimble.core.core')
 def testArgumentIntegrityTrainAndApply():
     arguments = {'k': 1}
     train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
@@ -281,7 +281,7 @@ def testArgumentIntegrityTrainAndApply():
     pred = nimble.trainAndApply('nimble.KNNClassifier', train, 2, test, arguments=arguments)
 
 @raises(CalledFunctionException)
-@patch_mergeArguments('nimble.core')
+@patch_mergeArguments('nimble.core.core')
 def testArgumentIntegrityTrainAndTest():
     arguments = {'k': 1}
     train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
@@ -290,7 +290,7 @@ def testArgumentIntegrityTrainAndTest():
                                performanceFunction=nimble.calculate.fractionIncorrect,
                                arguments=arguments)
 
-@patch_mergeArguments('nimble.core')
+@patch_mergeArguments('nimble.core.core')
 def testArgumentIntegrityTrainAndTestOnTrainingData():
     arguments = {'k': 1}
     train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
@@ -311,7 +311,7 @@ def testArgumentIntegrityTrainAndTestOnTrainingData():
         pass
 
 @raises(CalledFunctionException)
-@patch_mergeArguments('nimble.interfaces.universal_interface')
+@patch_mergeArguments('nimble.core.interfaces.universal_interface')
 def testArgumentIntegrityTLApply():
     arguments = {'k': 1}
     train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
@@ -320,7 +320,7 @@ def testArgumentIntegrityTLApply():
     pred = tl.apply(test)
 
 @raises(CalledFunctionException)
-@patch_mergeArguments('nimble.interfaces.universal_interface')
+@patch_mergeArguments('nimble.core.interfaces.universal_interface')
 def testArgumentIntegrityTLTest():
     arguments = {'k': 1}
     train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])

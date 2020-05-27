@@ -1,6 +1,6 @@
 import logging
 
-from nimble.helpers import initAvailablePredefinedInterfaces
+from nimble.core.helpers import initAvailablePredefinedInterfaces
 
 def setup():
     """

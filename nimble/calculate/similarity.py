@@ -7,12 +7,12 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.calculate import fractionIncorrect
 from nimble.calculate import varianceFractionRemaining
-from nimble.data.dataHelpers import createDataNoValidation
+from nimble.core.data.dataHelpers import createDataNoValidation
 
 
 def _validatePredictedAsLabels(predictedValues):
-    if not isinstance(predictedValues, nimble.data.Base):
-        msg = "predictedValues must be derived class of nimble.data.Base"
+    if not isinstance(predictedValues, nimble.core.data.Base):
+        msg = "predictedValues must be derived class of nimble.core.data.Base"
         raise InvalidArgumentType(msg)
     if len(predictedValues.features) > 1:
         msg = "predictedValues must be labels only; this has more than "
@@ -22,8 +22,8 @@ def _validatePredictedAsLabels(predictedValues):
 
 def cosineSimilarity(knownValues, predictedValues):
     _validatePredictedAsLabels(predictedValues)
-    if not isinstance(knownValues, nimble.data.Base):
-        msg = "knownValues must be derived class of nimble.data.Base"
+    if not isinstance(knownValues, nimble.core.data.Base):
+        msg = "knownValues must be derived class of nimble.core.data.Base"
         raise InvalidArgumentType(msg)
 
     known = knownValues.copy(to="numpy array").flatten()
@@ -204,8 +204,8 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
     predicted_fish     0.000     0.000     0.333
     <BLANKLINE>
     """
-    if not (isinstance(knownValues, nimble.data.Base)
-            and isinstance(predictedValues, nimble.data.Base)):
+    if not (isinstance(knownValues, nimble.core.data.Base)
+            and isinstance(predictedValues, nimble.core.data.Base)):
         msg = 'knownValues and predictedValues must be nimble data objects'
         raise InvalidArgumentType(msg)
     if not knownValues.shape[1] == predictedValues.shape[1] == 1:

@@ -11,7 +11,7 @@ from nimble.match import anyValues
 from nimble.exceptions import InvalidArgumentValue
 
 def booleanElementMatch(vector, match):
-    if not isinstance(match, nimble.data.Base):
+    if not isinstance(match, nimble.core.data.Base):
         match = convertMatchToFunction(match)
         return vector.matchingElements(match, useLog=False)
     return match
@@ -510,12 +510,12 @@ def getNameAndIndex(axis, vector):
     if axis == 'point':
         if vector._pointNamesCreated():
             name = vector.points.getName(0)
-        if isinstance(vector, nimble.data.BaseView):
+        if isinstance(vector, nimble.core.data.BaseView):
             index = vector._pStart
     else:
         if vector._featureNamesCreated():
             name = vector.features.getName(0)
-        if isinstance(vector, nimble.data.BaseView):
+        if isinstance(vector, nimble.core.data.BaseView):
             index = vector._fStart
 
     return name, index

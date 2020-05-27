@@ -4,8 +4,8 @@ Functions that could be useful accross multple interface test suites
 
 import numpy
 
-from nimble.data import Base
-from nimble.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
+from nimble.core.data import Base
+from nimble.core.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
 
 
 def test_OvOTournament():

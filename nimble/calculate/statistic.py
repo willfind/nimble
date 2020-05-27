@@ -376,10 +376,10 @@ def residuals(toPredict, controlVars):
         msg = "scipy must be installed in order to use the residuals function."
         raise PackageException(msg)
 
-    if not isinstance(toPredict, nimble.data.Base):
+    if not isinstance(toPredict, nimble.core.data.Base):
         msg = "toPredict must be a nimble data object"
         raise InvalidArgumentType(msg)
-    if not isinstance(controlVars, nimble.data.Base):
+    if not isinstance(controlVars, nimble.core.data.Base):
         msg = "controlVars must be a nimble data object"
         raise InvalidArgumentType(msg)
 

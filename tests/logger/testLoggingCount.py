@@ -18,12 +18,12 @@ import nimble
 import nimble.calculate as calculate
 import nimble.fill as fill
 import nimble.match as match
-from nimble.data import Base
-from nimble.data import Axis
-from nimble.data import Points
-from nimble.data import Features
-from nimble.interfaces.universal_interface import UniversalInterface
-from nimble.interfaces.universal_interface import TrainedLearner
+from nimble.core.data import Base
+from nimble.core.data import Axis
+from nimble.core.data import Points
+from nimble.core.data import Features
+from nimble.core.interfaces.universal_interface import UniversalInterface
+from nimble.core.interfaces.universal_interface import TrainedLearner
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 ALL_USER_FACING = []
@@ -211,7 +211,7 @@ def test_Init_logCount():
 
 @noLogEntryExpected
 def test_copy_logCount():
-    for rType in nimble.data.available:
+    for rType in nimble.core.data.available:
         obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
         copy = obj.copy()
 
@@ -231,26 +231,26 @@ def test_groupByFeature_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
         return obj.groupByFeature(0)
-    for rType in nimble.data.available:
+    for rType in nimble.core.data.available:
         obj = nimble.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)
         grouped = wrapped(obj)
 
 @noLogEntryExpected
 def test_getTypeString_logCount():
-    for rType in nimble.data.available:
+    for rType in nimble.core.data.available:
         obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
         ts = obj.getTypeString()
 
 @noLogEntryExpected
 def test_hashCode_logCount():
-    for rType in nimble.data.available:
+    for rType in nimble.core.data.available:
         obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
         hash = obj.hashCode()
 
 @noLogEntryExpected
 def test_nameIsDefault_logCount():
-    for rType in nimble.data.available:
+    for rType in nimble.core.data.available:
         obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
         isDefault = obj.nameIsDefault()
 
@@ -268,7 +268,7 @@ def test_toString_logCount():
 
 @noLogEntryExpected
 def test_validate_logCount():
-    for rType in nimble.data.available:
+    for rType in nimble.core.data.available:
         obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
         isDefault = obj.validate()
 
@@ -280,7 +280,7 @@ def test_points_permute_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
         return obj.points.permute()
-    for rType in nimble.data.available:
+    for rType in nimble.core.data.available:
         obj = nimble.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)
         grouped = wrapped(obj)
@@ -289,7 +289,7 @@ def test_features_permute_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
         return obj.features.permute()
-    for rType in nimble.data.available:
+    for rType in nimble.core.data.available:
         obj = nimble.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)
         grouped = wrapped(obj)
@@ -339,7 +339,7 @@ def captureOutput(toCall):
         backupOut = sys.stdout
         sys.stdout = tmpFile
         try:
-            for rType in nimble.data.available:
+            for rType in nimble.core.data.available:
                 obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
                 ret = toCall(obj)
         finally:

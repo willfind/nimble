@@ -12,20 +12,20 @@ from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import PackageException
-from nimble.helpers import extractWinningPredictionLabel
-from nimble.helpers import generateAllPairs
-from nimble.helpers import findBestInterface
-from nimble.helpers import FoldIterator
-from nimble.helpers import sumAbsoluteDifference
-from nimble.helpers import generateClusteredPoints
-from nimble.helpers import _mergeArguments
-from nimble.helpers import computeMetrics
-from nimble.helpers import inspectArguments
+from nimble.core.helpers import extractWinningPredictionLabel
+from nimble.core.helpers import generateAllPairs
+from nimble.core.helpers import findBestInterface
+from nimble.core.helpers import FoldIterator
+from nimble.core.helpers import sumAbsoluteDifference
+from nimble.core.helpers import generateClusteredPoints
+from nimble.core.helpers import _mergeArguments
+from nimble.core.helpers import computeMetrics
+from nimble.core.helpers import inspectArguments
 from nimble.utility import numpy2DArray, is2DArray
 from nimble.calculate import rootMeanSquareError
 from nimble.calculate import meanAbsoluteError
 from nimble.calculate import fractionIncorrect
-from nimble.randomness import pythonRandom
+from nimble.core.randomness import pythonRandom
 
 ##########
 # TESTER #

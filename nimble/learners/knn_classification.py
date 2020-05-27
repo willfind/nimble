@@ -11,7 +11,7 @@ If there is a tie, use k=1
 import numpy
 
 from nimble import CustomLearner
-from nimble.helpers import initDataObject
+from nimble.core.helpers import initDataObject
 from nimble.utility import dtypeConvert
 
 

@@ -53,9 +53,9 @@ def inverse(aObj):
     if not scipy.nimbleAccessible():
         msg = "scipy must be installed in order to use the inverse function."
         raise PackageException(msg)
-    if not isinstance(aObj, nimble.data.Base):
+    if not isinstance(aObj, nimble.core.data.Base):
         raise InvalidArgumentType(
-            "Object must be derived class of nimble.data.Base")
+            "Object must be derived class of nimble.core.data.Base")
     if not len(aObj.points) and not len(aObj.features):
         return aObj.copy()
     if len(aObj.points) != len(aObj.features):
@@ -149,9 +149,9 @@ def pseudoInverse(aObj, method='svd'):
     if not scipy.nimbleAccessible():
         msg = "scipy must be installed in order to use the pseudoInverse function."
         raise PackageException(msg)
-    if not isinstance(aObj, nimble.data.Base):
+    if not isinstance(aObj, nimble.core.data.Base):
         raise InvalidArgumentType(
-            "Object must be derived class of nimble.data.Base.")
+            "Object must be derived class of nimble.core.data.Base.")
     if not len(aObj.points) and not len(aObj.features):
         return aObj
     if method not in ['least-squares', 'svd']:
@@ -315,12 +315,12 @@ def _backendSolvers(aObj, bObj, solverFunction):
 
 
 def _backendSolversValidation(aObj, bObj, solverFunction):
-    if not isinstance(aObj, nimble.data.Base):
+    if not isinstance(aObj, nimble.core.data.Base):
         raise InvalidArgumentType(
-            "Left hand side object must be derived class of nimble.data.Base")
-    if not isinstance(bObj, nimble.data.Base):
+            "Left hand side object must be derived class of nimble.core.data.Base")
+    if not isinstance(bObj, nimble.core.data.Base):
         raise InvalidArgumentType(
-            "Right hand side object must be derived class of nimble.data.Base")
+            "Right hand side object must be derived class of nimble.core.data.Base")
 
     if solverFunction.__name__ == 'solve' and len(aObj.points) != len(aObj.features):
         msg = 'Object A has to be square \

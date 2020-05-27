@@ -68,7 +68,7 @@ def test_match_infinity():
 def backend_match_anyAll(anyOrAll, func, data):
     """backend for match functions accepting 1D and 2D data and testing for any or all"""
     data = numpy.array(data, dtype=numpy.object_)
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         toTest = nimble.createData(t, data, useLog=False)
         # test whole matrix
         if anyOrAll == 'any':

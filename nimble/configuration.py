@@ -346,7 +346,7 @@ class SessionConfiguration(object):
             if not hasattr(toCall, '__call__'):
                 msg = 'toCall must be callable (function, method, etc) or None'
                 raise InvalidArgumentType(msg)
-            if len(nimble.helpers.inspectArguments(toCall)[0]) != 1:
+            if len(nimble.core.helpers.inspectArguments(toCall)[0]) != 1:
                 msg = 'toCall may only take one argument'
                 raise InvalidArgumentValue(msg)
 
@@ -414,7 +414,7 @@ class SessionConfiguration(object):
         try:
             ignore = True
             # raises InvalidArgumentValue if not an interface name
-            interface = nimble.helpers.findBestInterface(section)
+            interface = nimble.core.helpers.findBestInterface(section)
             ignore = False
             acceptedNames = interface.optionNames
             if option not in acceptedNames:

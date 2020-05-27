@@ -5,7 +5,7 @@ from nose.tools import assert_almost_equal, assert_equal
 
 from nimble import createData
 from nimble.utility import scipy
-from nimble.logger.data_set_analyzer import *
+from nimble.core.logger.data_set_analyzer import *
 
 
 def testProduceInfoTable_denseData():
@@ -15,7 +15,7 @@ def testProduceInfoTable_denseData():
     """
     data1 = np.array([[1, 2, 3, 1], [3, 3, 1, 5], [1, 1, 5, 2]])
     names1 = ['var1', 'var2', 'var3', 'var4']
-    for retType in nimble.data.available:
+    for retType in nimble.core.data.available:
         trainObj = createData(retType, data=data1, featureNames=names1)
         funcs = featurewiseFunctionGenerator()
         rawTable = produceFeaturewiseInfoTable(trainObj, funcs)
@@ -68,7 +68,7 @@ def testProduceInfoTable_sparseData():
 
     raw = scipy.sparse.coo_matrix((vals, (row, col)))
 
-    for retType in nimble.data.available:
+    for retType in nimble.core.data.available:
         testObj = createData(retType, data=raw)
         funcs = featurewiseFunctionGenerator()
         rawTable = produceFeaturewiseInfoTable(testObj, funcs)

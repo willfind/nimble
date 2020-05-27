@@ -18,10 +18,10 @@ from nose.plugins.attrib import attr
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, PackageException
-from nimble.interfaces.universal_interface import UniversalInterface
-from nimble.helpers import generateClusteredPoints
-from nimble.helpers import generateClassificationData
-from nimble.helpers import generateRegressionData
+from nimble.core.interfaces.universal_interface import UniversalInterface
+from nimble.core.helpers import generateClusteredPoints
+from nimble.core.helpers import generateClassificationData
+from nimble.core.helpers import generateRegressionData
 from ..assertionHelpers import configSafetyWrapper
 
 
@@ -55,7 +55,7 @@ def test__getScoresFormat():
     ((trainX2, trainY2), (testX2, testY2)) = data2
     data4 = generateClassificationData(4, 4, 2)
     ((trainX4, trainY4), (testX4, testY4)) = data4
-    for interface in nimble.interfaces.available.values():
+    for interface in nimble.core.interfaces.available.values():
         interfaceName = interface.getCanonicalName()
 
         learners = interface.listLearners()
@@ -103,7 +103,7 @@ def testGetScoresFormat():
     ((trainX2, trainY2), (testX2, testY2)) = data2
     data4 = generateClassificationData(4, 4, 2)
     ((trainX4, trainY4), (testX4, testY4)) = data4
-    for interface in nimble.interfaces.available.values():
+    for interface in nimble.core.interfaces.available.values():
         interfaceName = interface.getCanonicalName()
 
         learners = interface.listLearners()
@@ -134,13 +134,13 @@ def testGetScoresFormat():
 
 
 @attr('slow')
-@nose.with_setup(nimble.randomness.startAlternateControl, nimble.randomness.endAlternateControl)
+@nose.with_setup(nimble.core.randomness.startAlternateControl, nimble.core.randomness.endAlternateControl)
 def testRandomnessControl():
     """ Test that nimble takes over the control of randomness of each interface """
 
     #	assert 'RanomizedLogisticRegression' in nimble.listLearners('sciKitLearn')
 
-    for interface in nimble.interfaces.available.values():
+    for interface in nimble.core.interfaces.available.values():
         interfaceName = interface.getCanonicalName()
         # if interfaceName != 'shogun':
         #     continue
@@ -207,7 +207,7 @@ def getCanonicalNameAndPossibleAliases(interface):
     return canonicalName, aliases
 
 def test_classmethods():
-    for interface in nimble.interfaces.predefined:
+    for interface in nimble.core.interfaces.predefined:
         canonicalName, aliases = getCanonicalNameAndPossibleAliases(interface)
         assert interface.getCanonicalName() == canonicalName
         for alias in aliases:
@@ -216,18 +216,18 @@ def test_classmethods():
 
 
 def test_failedInit():
-    availableBackup = nimble.interfaces.available
-    predefinedBackup = nimble.interfaces.predefined
+    availableBackup = nimble.core.interfaces.available
+    predefinedBackup = nimble.core.interfaces.predefined
     try:
-        for interface in nimble.interfaces.predefined:
+        for interface in nimble.core.interfaces.predefined:
             class MockInterface(interface):
                 pass
 
             # override interfaces.available so findBestInterface will check
             # predefined and use mock object as the predefined so we can raise
             # different errors
-            nimble.interfaces.available = {}
-            nimble.interfaces.predefined = [MockInterface]
+            nimble.core.interfaces.available = {}
+            nimble.core.interfaces.predefined = [MockInterface]
 
             # the learner must start with package and the data must be nimble
             # objects but the learner name and data values are irrelevant
@@ -255,8 +255,8 @@ def test_failedInit():
                 assert not "To install" in str(e)
                 assert not "If {0} installed".format(interface.getCanonicalName()) in str(e)
     finally:
-        nimble.interfaces.available = availableBackup
-        nimble.interfaces.predefined = predefinedBackup
+        nimble.core.interfaces.available = availableBackup
+        nimble.core.interfaces.predefined = predefinedBackup
 
 
 ## Helpers for test_loadModulesFromConfigLocation ##
@@ -294,7 +294,7 @@ def reload(module):
 
 @configSafetyWrapper
 def test_loadModulesFromConfigLocation():
-    for interface in nimble.interfaces.predefined:
+    for interface in nimble.core.interfaces.predefined:
         sysPathBackup = sys.path.copy()
         try:
             canonicalName, _ = getCanonicalNameAndPossibleAliases(interface)
@@ -346,7 +346,7 @@ def test_loadModulesFromConfigLocation():
             sys.path = sysPathBackup
 
 def test_getParametersAndDefaultsReturnTypes():
-    for interface in nimble.interfaces.available.values():
+    for interface in nimble.core.interfaces.available.values():
         interfaceName = interface.getCanonicalName()
         for learner in nimble.listLearners(interfaceName):
             params = interface._getParameterNames(learner)

@@ -1,5 +1,5 @@
 """
-Tests for the nimble.randomness submodule
+Tests for the nimble.core.randomness submodule
 """
 
 import random
@@ -8,7 +8,7 @@ import numpy
 import nose
 
 import nimble
-from nimble.randomness import startAlternateControl, endAlternateControl
+from nimble.core.randomness import startAlternateControl, endAlternateControl
 from .assertionHelpers import logCountAssertionFactory
 
 

@@ -18,14 +18,14 @@ import h5py
 import nimble
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import FileFormatException
-from nimble.data.dataHelpers import DEFAULT_PREFIX
-from nimble.helpers import _intFloatOrString
+from nimble.core.data.dataHelpers import DEFAULT_PREFIX
+from nimble.core.helpers import _intFloatOrString
 from nimble.utility import sparseMatrixToArray
 
 # from .. import logger
 from .assertionHelpers import oneLogEntryExpected
 
-returnTypes = copy.copy(nimble.data.available)
+returnTypes = copy.copy(nimble.core.data.available)
 returnTypes.append(None)
 
 class NoIter(object):
@@ -1281,7 +1281,7 @@ def test_createData_CSV_passedOpen():
                 returnType=t, data=namelessOpenFile)
             openFile.close()
             namelessOpenFile.close()
-            assert fromCSV.name.startswith(nimble.data.dataHelpers.DEFAULT_NAME_PREFIX)
+            assert fromCSV.name.startswith(nimble.core.data.dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromCSV.path is None
             assert fromCSV.absolutePath is None
             assert fromCSV.relativePath is None
@@ -1320,7 +1320,7 @@ def test_createData_MTXArr_passedOpen():
             openFile.close()
             namelessOpenFile.close()
             assert fromMTXArr.name.startswith(
-                nimble.data.dataHelpers.DEFAULT_NAME_PREFIX)
+                nimble.core.data.dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromMTXArr.path is None
             assert fromMTXArr.absolutePath is None
             assert fromMTXArr.relativePath is None
@@ -1359,7 +1359,7 @@ def test_createData_MTXCoo_passedOpen():
             openFile.close()
             namelessOpenFile.close()
             assert fromMTXCoo.name.startswith(
-                nimble.data.dataHelpers.DEFAULT_NAME_PREFIX)
+                nimble.core.data.dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromMTXCoo.path is None
             assert fromMTXCoo.absolutePath is None
             assert fromMTXCoo.relativePath is None
@@ -2094,7 +2094,7 @@ def test_createData_csv_keepPoints_IndexingGivenFeatureNames():
 
 def test_createData_keepPF_csv_noUncessaryStorage():
     wanted = nimble.createData("List", data=[[22], [222]])
-    backup = nimble.helpers.initDataObject
+    backup = nimble.core.helpers.initDataObject
 
     try:
         def fakeinitDataObject(
@@ -2103,9 +2103,9 @@ def test_createData_keepPF_csv_noUncessaryStorage():
                 reuseData=False, extracted=(None, None)):
             assert len(rawData) == 2
             assert len(rawData[0]) == 1
-            return nimble.data.List(rawData)
+            return nimble.core.data.List(rawData)
 
-        nimble.helpers.initDataObject = fakeinitDataObject
+        nimble.core.helpers.initDataObject = fakeinitDataObject
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -2118,11 +2118,11 @@ def test_createData_keepPF_csv_noUncessaryStorage():
                 "List", data=tmpCSV.name, keepPoints=[1, 2], keepFeatures=[1])
             assert fromCSV == wanted
     finally:
-        nimble.helpers.initDataObject = backup
+        nimble.core.helpers.initDataObject = backup
 
 #def TODOtest_createData_keepPF_mtxArr_noUncessaryStorage():
 #	fromList = nimble.createData(returnType='Matrix', data=[[2]])
-#	backup = nimble.helpers.initDataObject
+#	backup = nimble.core.helpers.initDataObject
 #
 #	try:
 #		def fakeinitDataObject(
@@ -2130,9 +2130,9 @@ def test_createData_keepPF_csv_noUncessaryStorage():
 #				keepPoints, keepFeatures):
 #			assert len(rawData) == 1
 #			assert len(rawData[0]) == 1
-#			return nimble.data.List(rawData)
+#			return nimble.core.data.List(rawData)
 #
-#		nimble.helpers.initDataObject = fakeinitDataObject
+#		nimble.core.helpers.initDataObject = fakeinitDataObject
 #
 #		# instantiate from mtx array file
 #		with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
@@ -2148,21 +2148,21 @@ def test_createData_keepPF_csv_noUncessaryStorage():
 #
 #			assert fromList == fromMTXArr
 #	finally:
-#		nimble.helpers.initDataObject = backup
+#		nimble.core.helpers.initDataObject = backup
 
 
 #def TODOtest_createData_keepPF_mtxCoo_noUncessaryStorage():
 #	fromList = nimble.createData(returnType='Matrix', data=[[2]])
-#	backup = nimble.helpers.initDataObject
+#	backup = nimble.core.helpers.initDataObject
 #
 #	try:
 #		def fakeinitDataObject(
 #				returnType, rawData, pointNames, featureNames, name, path,
 #				keepPoints, keepFeatures):
 #			assert rawData.shape == (1,1)
-#			return nimble.data.List(rawData)
+#			return nimble.core.data.List(rawData)
 #
-#		nimble.helpers.initDataObject = fakeinitDataObject
+#		nimble.core.helpers.initDataObject = fakeinitDataObject
 #
 #		# instantiate from mtx coordinate file
 #		with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
@@ -2179,7 +2179,7 @@ def test_createData_keepPF_csv_noUncessaryStorage():
 #			assert fromList == fromMTXCoo
 #
 #	finally:
-#		nimble.helpers.initDataObject = backup
+#		nimble.core.helpers.initDataObject = backup
 
 
 def test_createData_keepPF_csv_simple():
@@ -2554,7 +2554,7 @@ def test_createData_keepPoints_csv_endAfterAllFound():
 
 
 def test_createData_keepPF_csv_nameAlignment_allNames():
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
@@ -2586,7 +2586,7 @@ def test_createData_keepPF_csv_nameAlignment_allNames():
 
 
 def test_createData_keepPF_csv_nameAlignment_keptNames():
-    for t in nimble.data.available:
+    for t in nimble.core.data.available:
         # instantiate from csv file
         keptPNames = ['third', 'second']
         keptFNames = ['two', 'one']

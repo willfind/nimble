@@ -1,4 +1,4 @@
-from nimble.data import Base
+from nimble.core.data import Base
 from nimble.exceptions import InvalidArgumentType
 
 def elementwiseMultiply(left, right):
