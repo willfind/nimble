@@ -21,7 +21,7 @@ from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 from nimble.calculate import *
-from nimble.core.randomness import pythonRandom
+from nimble.random import pythonRandom
 from nimble.learners import KNNClassifier
 from nimble.core.helpers import computeMetrics
 from nimble.core.helpers import generateClassificationData
@@ -241,7 +241,7 @@ def test_crossValidate_2d_Non_label_scoremodes_disallowed():
 
 
 @attr('slow')
-@nose.with_setup(nimble.core.randomness.startAlternateControl, nimble.core.randomness.endAlternateControl)
+@nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
 def test_crossValidate_foldingRandomness():
     """Assert that for a dataset, the same algorithm will generate the same model
     (and have the same accuracy) when presented with identical random state (and
@@ -252,15 +252,15 @@ def test_crossValidate_foldingRandomness():
     numTrials = 5
     for _ in range(numTrials):
         X, Y = _randomLabeledDataSet(numPoints=50, numFeatures=10, numLabels=5)
-        seed = nimble.core.randomness.pythonRandom.randint(0, 2**32 - 1)
-        nimble.setRandomSeed(seed)
+        seed = nimble.random.pythonRandom.randint(0, 2**32 - 1)
+        nimble.random.setSeed(seed)
         resultOne = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, {}, folds=3)
-        nimble.setRandomSeed(seed)
+        nimble.random.setSeed(seed)
         resultTwo = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, {}, folds=3)
         assert resultOne.bestResult == resultTwo.bestResult
 
 @attr('slow')
-@nose.with_setup(nimble.core.randomness.startAlternateControl, nimble.core.randomness.endAlternateControl)
+@nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
 def test_crossValidateResults():
     """Check basic properties of crossValidate.allResults
 
@@ -285,10 +285,10 @@ def test_crossValidateResults():
     # since the same seed is used, and these calls are effectively building the
     # same arguments, the scores in results list should be the same, though
     # ordered differently
-    seed = nimble.core.randomness.pythonRandom.randint(0, 2**32 - 1)
-    nimble.setRandomSeed(seed)
+    seed = nimble.random.pythonRandom.randint(0, 2**32 - 1)
+    nimble.random.setSeed(seed)
     result1 = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, k=nimble.CV([1, 2, 3, 4, 5]))
-    nimble.setRandomSeed(seed)
+    nimble.random.setSeed(seed)
     result2 = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, k=nimble.CV([1, 5, 4, 3, 2]))
     #assert the the resulting SCORES are identical
     #uncertain about the order
@@ -309,7 +309,7 @@ def test_crossValidateResults():
 
 @attr('slow')
 @configSafetyWrapper
-@nose.with_setup(nimble.core.randomness.startAlternateControl, nimble.core.randomness.endAlternateControl)
+@nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
 def test_crossValidateBestArguments():
     """Check that the best / fittest argument set is returned.
 
@@ -341,11 +341,11 @@ def test_crossValidateBestArguments():
             return ret
 
     # want to have a predictable random state in order to control folding
-    seed = nimble.core.randomness.pythonRandom.randint(0, 2**32 - 1)
+    seed = nimble.random.pythonRandom.randint(0, 2**32 - 1)
 
     def trial(metric, maximize):
         # get a baseline result
-        nimble.setRandomSeed(seed)
+        nimble.random.setSeed(seed)
         crossValidator = crossValidate(FlipWrapper, X, Y,
                                    metric, flip=nimble.CV([0, .5, .9]),
                                    wrapped="nimble.KNNClassifier")
@@ -353,7 +353,7 @@ def test_crossValidateBestArguments():
         assert resultTuple
 
         # Confirm that the best result is also returned in the 'returnAll' results
-        nimble.setRandomSeed(seed)
+        nimble.random.setSeed(seed)
         crossValidator = crossValidate(FlipWrapper, X, Y,
                                    metric, flip=nimble.CV([0, .5, .9]),
                                    wrapped="nimble.KNNClassifier")

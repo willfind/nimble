@@ -12,8 +12,8 @@ from nose.tools import raises
 
 import nimble
 from nimble import loadTrainedLearner
-from nimble.core.randomness import numpyRandom
-from nimble.core.randomness import generateSubsidiarySeed
+from nimble.random import numpyRandom
+from nimble.random import _generateSubsidiarySeed
 from nimble.exceptions import InvalidArgumentValue
 from nimble.core.helpers import generateClassificationData
 from nimble.core.helpers import generateRegressionData
@@ -284,7 +284,7 @@ def testSciKitLearnClassificationLearners():
         skl = nimble.core.helpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
-        seed = nimble.core.randomness.generateSubsidiarySeed()
+        seed = _generateSubsidiarySeed()
         arguments = {}
         if 'random_state' in sciKitLearnObj.get_params():
             arguments['random_state'] = seed
@@ -323,7 +323,7 @@ def testSciKitLearnRegressionLearners():
         skl = nimble.core.helpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
-        seed = nimble.core.randomness.generateSubsidiarySeed()
+        seed = _generateSubsidiarySeed()
         arguments = {}
         if 'random_state' in sciKitLearnObj.get_params():
             arguments['random_state'] = seed
@@ -398,7 +398,7 @@ def testSciKitLearnClusterLearners():
         skl = nimble.core.helpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
-        seed = nimble.core.randomness.generateSubsidiarySeed()
+        seed = _generateSubsidiarySeed()
         arguments = {}
         if 'random_state' in sciKitLearnObj.get_params():
             arguments['random_state'] = seed
@@ -440,7 +440,7 @@ def testSciKitLearnOtherPredictLearners():
     def compareOutputs(learner):
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
-        seed = nimble.core.randomness.generateSubsidiarySeed()
+        seed = _generateSubsidiarySeed()
         arguments = {}
         if 'random_state' in sciKitLearnObj.get_params():
             arguments['random_state'] = seed
@@ -471,7 +471,7 @@ def testSciKitLearnTransformationLearners():
         skl = nimble.core.helpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
-        seed = nimble.core.randomness.generateSubsidiarySeed()
+        seed = _generateSubsidiarySeed()
         arguments = {}
         if 'random_state' in sciKitLearnObj.get_params():
             arguments['random_state'] = seed
@@ -492,7 +492,7 @@ def testSciKitLearnTransformationLearners():
         skl = nimble.core.helpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
-        seed = nimble.core.randomness.generateSubsidiarySeed()
+        seed = _generateSubsidiarySeed()
         arguments = {}
         if 'random_state' in sciKitLearnObj.get_params():
             arguments['random_state'] = seed
@@ -541,7 +541,7 @@ def testSciKitLearnSparsePCATransformation():
         skl = nimble.core.helpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
-        seed = nimble.core.randomness.generateSubsidiarySeed()
+        seed = _generateSubsidiarySeed()
         arguments = {}
         #TODO explore why ridge_alpha defaults to 'deprecated'
         arguments['ridge_alpha'] = 0.1
@@ -580,7 +580,7 @@ def testSciKitLearnOtherFitTransformLearners():
     def compareOutputs(learner):
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
-        seed = nimble.core.randomness.generateSubsidiarySeed()
+        seed = _generateSubsidiarySeed()
         arguments = {}
         if 'random_state' in sciKitLearnObj.get_params():
             arguments['random_state'] = seed

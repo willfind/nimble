@@ -10,6 +10,7 @@ import importlib
 import copy
 from unittest import mock
 import tempfile
+from types import ModuleType
 
 import nose
 from nose.tools import raises
@@ -134,7 +135,7 @@ def testGetScoresFormat():
 
 
 @attr('slow')
-@nose.with_setup(nimble.core.randomness.startAlternateControl, nimble.core.randomness.endAlternateControl)
+@nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
 def testRandomnessControl():
     """ Test that nimble takes over the control of randomness of each interface """
 
@@ -162,16 +163,16 @@ def testRandomnessControl():
 
             result1 = None
             try:
-                nimble.setRandomSeed(50)
+                nimble.random.setSeed(50)
                 result1 = nimble.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
 
-                nimble.setRandomSeed(50)
+                nimble.random.setSeed(50)
                 result2 = nimble.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
 
-                nimble.setRandomSeed(None)
+                nimble.random.setSeed(None)
                 result3 = nimble.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
 
-                nimble.setRandomSeed(13)
+                nimble.random.setSeed(13)
                 result4 = nimble.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
 
             except Exception as e:
@@ -194,7 +195,7 @@ def getCanonicalNameAndPossibleAliases(interface):
         aliases = ['mlpy', 'MLPY', 'mLpY']
     elif interface.__name__ == 'Keras':
         canonicalName = 'keras'
-        aliases = ['keras', 'KERAS', 'KeRaS']
+        aliases = ['keras', 'KERAS', 'KeRaS', 'tensorflow.keras', 'tf.keras']
     elif interface.__name__ == 'Shogun':
         canonicalName = 'shogun'
         aliases = ['shogun', 'SHOGUN', 'ShOGUn']
@@ -284,13 +285,31 @@ def reload(module):
     Reload the module so that the returned module is the one from the
     first available location on sys.path.
     """
-    # if the module did not load successfully on init, this will
-    # access the new sys.path and should raise exception here
-    mod = importlib.import_module_(module)
-    # if the module loaded successfully on init, need to reload so
-    # it checks the new sys.path and should raise exception here
-    mod = importlib.reload(mod)
+    # reloading a module like tensorflow.keras requires reloading tensorflow
+    # first, then reloading tensorflow.keras
+    split = module.split('.')
+    modules = ['.'.join(split[:i + 1]) for i in range(len(split))]
+    for module in modules:
+        # if the module did not load successfully on init, this will
+        # access the new sys.path and should raise exception here
+        mod = importlib.import_module_(module)
+        # if the module loaded successfully on init, need to reload so
+        # it checks the new sys.path and should raise exception here
+        mod = importlib.reload(mod)
     return mod
+
+def makeMockedModule(mockDirectory, packageNames, mockedMsg):
+    packagePath = mockDirectory
+    for i, packageName in enumerate(packageNames):
+        packagePath = os.path.join(packagePath, packageName)
+        os.mkdir(packagePath)
+        if i == len(packageNames) - 1:
+            toWrite = mockedMsg # raise expected exception
+        else:
+            toWrite = '' # make an importable python package
+        initPath = os.path.join(packagePath, '__init__.py')
+        with open(initPath, 'w+') as initFile:
+            initFile.write(toWrite)
 
 @configSafetyWrapper
 def test_loadModulesFromConfigLocation():
@@ -301,40 +320,38 @@ def test_loadModulesFromConfigLocation():
             packageName = canonicalName
             if packageName == 'sciKitLearn':
                 packageName = 'sklearn'
+            if packageName == 'keras':
+                # determine if it will use tensorflow.keras or keras
+                try:
+                    importlib.import_module('tensorflow.keras')
+                    packageName = 'tensorflow.keras'
+                except ImportError:
+                    pass
+            packageNames = packageName.split('.')
             with tempfile.TemporaryDirectory() as mockDirectory1:
-                # first directory containing the package
-                packagePath1 = os.path.join(mockDirectory1, packageName)
-                os.mkdir(packagePath1)
-                initPath1 = os.path.join(packagePath1, '__init__.py')
-                with open(initPath1, 'w+') as initFile1:
-                    initFile1.write(mockedInit1) # raises FirstImportedModule
-
-                # second directory containing the same package
+                # first directory containing the same package
+                makeMockedModule(mockDirectory1, packageNames, mockedInit1)
                 with tempfile.TemporaryDirectory() as mockDirectory2:
-                    packagePath2 = os.path.join(mockDirectory2, packageName)
-                    os.mkdir(packagePath2)
-                    initPath2 = os.path.join(packagePath2, '__init__.py')
-                    with open(initPath2, 'w+') as initFile2:
-                        initFile2.write(mockedInit2) # raises SecondImportedModule
-
-                    # manually add first directory to sys.path
+                    # second directory containing the same package
+                    makeMockedModule(mockDirectory2, packageNames, mockedInit2)
+                    # manually insert first directory to sys.path
                     # first, check that it loads from the path of the first
                     # directory which raises FirstImportedModule
                     sys.path.insert(0, mockDirectory1)
                     try:
-                        # patch import_module so it reloads from settings location
+                        # patch import_module to reload from settings location
                         with mock.patch('importlib.import_module', reload):
                             interface()
                         assert False # expected FirstImportedModule
                     except FirstImportedModule as e:
                         pass
-
                     # next, set a location in settings to check that this
                     # takes priority over mockDirectory1. Also check that
                     # the change to the path is temporary
-                    nimble.settings.set(canonicalName, 'location', mockDirectory2)
+                    nimble.settings.set(canonicalName, 'location',
+                                        mockDirectory2)
                     try:
-                        # patch import_module so it reloads from settings location
+                        # patch import_module to reload from settings location
                         with mock.patch('importlib.import_module', reload):
                             interface()
                         assert False # expected SecondImportedModule

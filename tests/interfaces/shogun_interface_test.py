@@ -21,8 +21,8 @@ except ImportError:
 
 import nimble
 from nimble import Init
-from nimble.core.randomness import numpyRandom
-from nimble.core.randomness import startAlternateControl, endAlternateControl
+from nimble.random import numpyRandom
+from nimble.random import _startAlternateControl, _endAlternateControl
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.interfaces.interface_helpers import PythonSearcher
@@ -454,11 +454,11 @@ def shogunApplyBackend(obj, toTest, applier):
     predSG = nimble.createData('Matrix', predArray, useLog=False)
     return predSG
 
-@with_setup(startAlternateControl, endAlternateControl)
+@with_setup(_startAlternateControl, _endAlternateControl)
 def trainAndApplyBackend(learner, data, applier, needKernel, needDistance,
                          extraTrainSetup):
-    seed = nimble.core.randomness.generateSubsidiarySeed()
-    nimble.setRandomSeed(seed, useLog=False)
+    seed = nimble.random._generateSubsidiarySeed()
+    nimble.random.setSeed(seed, useLog=False)
     trainX, trainY, testX = data[:3]
     shogunTraining = data[3:5]
     shogunTesting = data[5]
@@ -475,7 +475,7 @@ def trainAndApplyBackend(learner, data, applier, needKernel, needDistance,
     testShogun = data[5]
     predSG = shogunApplyBackend(shogunObj, shogunTesting, applier)
 
-    nimble.setRandomSeed(seed, useLog=False)
+    nimble.random.setSeed(seed, useLog=False)
     TL = nimble.train(toCall(learner), trainX, trainY, arguments=args)
     predNimble = TL.apply(testX)
 

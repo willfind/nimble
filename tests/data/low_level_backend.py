@@ -37,7 +37,7 @@ from nimble.core.data.dataHelpers import DEFAULT_NAME_PREFIX
 from nimble.core.data.dataHelpers import constructIndicesList
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
-from nimble.core.randomness import pythonRandom
+from nimble.random import pythonRandom
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 from ..assertionHelpers import CalledFunctionException, calledException

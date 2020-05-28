@@ -10,7 +10,7 @@ import numpy
 import nimble
 from nimble.exceptions import ImproperObjectAction, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.core.randomness import pythonRandom
+from nimble.random import pythonRandom
 from .baseObject import DataTestObject
 from ..assertionHelpers import assertNoNamesGenerated
 from ..assertionHelpers import noLogEntryExpected

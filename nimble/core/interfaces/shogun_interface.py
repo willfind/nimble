@@ -48,7 +48,8 @@ class Shogun(PredefinedInterface, UniversalInterface):
     """
 
     def __init__(self):
-        self.shogun = modifyImportPathAndImport(shogunDir, 'shogun')
+        self.shogun = modifyImportPathAndImport(
+            shogunDir, ('shogun', 'shogun'))
         self.versionString = None
 
         def isLearner(obj):

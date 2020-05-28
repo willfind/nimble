@@ -16,8 +16,10 @@ import tempfile
 
 import nimble
 import nimble.calculate as calculate
+import nimble.exceptions as exceptions
 import nimble.fill as fill
 import nimble.match as match
+import nimble.random as random
 from nimble.core.data import Base
 from nimble.core.data import Axis
 from nimble.core.data import Points
@@ -27,9 +29,8 @@ from nimble.core.interfaces.universal_interface import TrainedLearner
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
 
 ALL_USER_FACING = []
-modules = [nimble, calculate, fill, match]
-classes = [Base, Axis, Points, Features, UniversalInterface,
-           TrainedLearner]
+modules = [nimble, calculate, exceptions, fill, match, random]
+classes = [Base, Axis, Points, Features, TrainedLearner]
 modulesAndClasses = modules + classes
 for call in modulesAndClasses:
     for attribute in dir(call):
@@ -44,8 +45,8 @@ def prefixAdder(prefix):
 
 nimble_logged = [
     'createData', 'createRandomData', 'crossValidate', 'fillMatching', 'log',
-    'loadData', 'loadTrainedLearner', 'normalizeData', 'setRandomSeed',
-    'train', 'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
+    'loadData', 'loadTrainedLearner', 'normalizeData', 'train',
+    'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 nimble_notLogged = [
     'CustomLearner', 'CV', 'Init', 'identity', 'listLearners',
@@ -70,6 +71,15 @@ calculate_funcs = [
     ]
 calculate_tested = list(map(prefixAdder('nimble.calculate'), calculate_funcs))
 
+# no exceptions should be logged.
+exceptions_funcs = [
+    'NimbleException', 'InvalidArgumentType', 'InvalidArgumentValue',
+    'InvalidArgumentTypeCombination', 'InvalidArgumentValueCombination',
+    'ImproperObjectAction', 'PackageException', 'FileFormatException'
+    ]
+exceptions_tested = list(map(prefixAdder('nimble.exceptions'),
+                             exceptions_funcs))
+
 # no fill functions should be logged.
 fill_funcs = [
     'backwardFill', 'constant', 'forwardFill', 'interpolate', 'mean', 'median',
@@ -77,7 +87,7 @@ fill_funcs = [
     ]
 fill_tested = list(map(prefixAdder('nimble.fill'), fill_funcs))
 
-# no match functions should not be logged.
+# no match functions should be logged.
 match_funcs = [
     'allBoolean', 'allFalse', 'allInfinity', 'allMissing', 'allNegative',
     'allNonNumeric', 'allNonZero', 'allNumeric', 'allPositive', 'allTrue',
@@ -88,6 +98,12 @@ match_funcs = [
     'nonNumeric', 'nonZero', 'numeric', 'positive', 'true', 'zero'
     ]
 match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
+
+random_logged = [
+    'setSeed'
+    ]
+random_funcs = random_logged
+random_tested = list(map(prefixAdder('nimble.random'), random_funcs))
 
 # NOTES:
 #  The functionality of these functions is untested, but a test of their
@@ -138,17 +154,6 @@ points_notLogged = [
 points_funcs = points_logged + points_notLogged
 points_tested = list(map(prefixAdder('Points'), points_funcs))
 
-ui_logged = [
-    'train',
-    ]
-ui_notLogged = [
-    'accessible', 'findCallable', 'getCanonicalName',
-    'getLearnerDefaultValues', 'getLearnerParameterNames', 'getOption',
-    'isAlias', 'learnerType', 'listLearners', 'setOption', 'version',
-]
-ui_funcs = ui_logged + ui_notLogged
-ui_tested = list(map(prefixAdder('UniversalInterface'), ui_funcs))
-
 tl_logged = [
     'apply', 'incrementalTrain', 'retrain', 'test',
     ]
@@ -158,9 +163,10 @@ tl_notLogged = [
 tl_funcs = tl_logged + tl_notLogged
 tl_tested = list(map(prefixAdder('TrainedLearner'), tl_funcs))
 
-USER_FACING_TESTED = (nimble_tested + calculate_tested + fill_tested
-                      + match_tested + base_tested + features_tested
-                      + points_tested + ui_tested + tl_tested)
+USER_FACING_TESTED = (nimble_tested + calculate_tested + exceptions_tested
+                      + fill_tested + match_tested + random_tested
+                      + base_tested + features_tested + points_tested
+                      + tl_tested)
 
 ##############
 # All tested #

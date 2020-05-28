@@ -40,7 +40,7 @@ from nimble import fill
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
 from nimble.core.data.dataHelpers import DEFAULT_PREFIX
-from nimble.core.randomness import numpyRandom
+from nimble.random import numpyRandom
 from .baseObject import DataTestObject
 from ..assertionHelpers import logCountAssertionFactory
 from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected

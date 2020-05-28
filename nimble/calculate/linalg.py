@@ -129,7 +129,7 @@ def pseudoInverse(aObj, method='svd'):
 
     Examples
     --------
-    >>> nimble.setRandomSeed(42)
+    >>> nimble.random.setSeed(42)
     >>> data = nimble.createRandomData('Matrix', numPoints=4,
     ...                                numFeatures=3, sparsity=0.5)
     >>> data

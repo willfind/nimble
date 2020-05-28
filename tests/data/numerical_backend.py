@@ -26,8 +26,8 @@ from nose.tools import *
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
-from nimble.core.randomness import numpyRandom
-from nimble.core.randomness import pythonRandom
+from nimble.random import numpyRandom
+from nimble.random import pythonRandom
 from nimble.core.data.dataHelpers import DEFAULT_PREFIX
 
 from .baseObject import DataTestObject

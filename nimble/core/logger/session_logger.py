@@ -60,7 +60,7 @@ class SessionLogger(object):
         self.logTypes = {'load': self.logLoad, 'prep': self.logPrep,
                          'run': self.logRun, 'data': self.logData,
                          'crossVal': self.logCrossValidation,
-                         'setRandomSeed': self.logRandomSeed}
+                         'setSeed': self.logRandomSeed}
 
 
     def setup(self, newFileName=None):
@@ -426,7 +426,7 @@ class SessionLogger(object):
 
     def logRandomSeed(self, useLog, seed):
         if enableLogging(useLog):
-            logType = 'setRandomSeed'
+            logType = 'setSeed'
             logInfo = {'seed': seed}
             self.log(logType, logInfo)
 
@@ -1059,7 +1059,7 @@ def initLoggerAndLogConfig():
         nimble.settings.saveChanges("logger",
                                     'enableCrossValidationDeepLogging')
 
-    return SessionLogger(location, name)
+    nimble.core.logger.active = SessionLogger(location, name)
 
 
 def cleanThenReInit_Loc(newLocation):

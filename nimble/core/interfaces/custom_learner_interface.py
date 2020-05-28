@@ -5,7 +5,7 @@ Base class for a CustomLearner.
 import copy
 
 import nimble
-from nimble import CustomLearner
+from nimble.core.custom_learner import CustomLearner
 from nimble.exceptions import InvalidArgumentValue
 from nimble.core.interfaces.universal_interface import UniversalInterface
 from nimble.utility import inheritDocstringsFactory

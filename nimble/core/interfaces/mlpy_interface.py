@@ -22,6 +22,7 @@ from nimble.core.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.core.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.core.helpers import inspectArguments
 from nimble.utility import inheritDocstringsFactory, dtypeConvert
+from nimble.random import _generateSubsidiarySeed
 
 # Contains path to mlpy root directory
 mlpyDir = None
@@ -45,7 +46,8 @@ class Mlpy(PredefinedInterface, UniversalInterface):
         # modify path if another directory provided
 
 
-        self.mlpy = modifyImportPathAndImport(mlpyDir, 'mlpy')
+        self.mlpy = modifyImportPathAndImport(
+            mlpyDir, ('mlpy', 'mlpy'))
 
         def isLearner(obj):
             hasLearn = hasattr(obj, 'learn')
@@ -425,7 +427,7 @@ To install mlpy
                 if 'seed' in args:
                     index = args.index('seed')
                     negdex = index - len(args)
-                    d[negdex] = nimble.core.randomness.generateSubsidiarySeed()
+                    d[negdex] = _generateSubsidiarySeed()
                 return (args, v, k, d)
             except TypeError:
                 try:
@@ -434,7 +436,7 @@ To install mlpy
                     if 'seed' in args:
                         index = args.index('seed')
                         negdex = index - len(args)
-                        d[negdex] = nimble.core.randomness.generateSubsidiarySeed()
+                        d[negdex] = _generateSubsidiarySeed()
                     return (args, v, k, d)
                 except TypeError:
                     pass
@@ -533,7 +535,7 @@ To install mlpy
         elif parent.lower() == 'kmeans'.lower():
             if name == '__init__':
                 pnames = ['k', 'plus', 'seed']
-                pdefaults = [False, nimble.core.randomness.generateSubsidiarySeed()]
+                pdefaults = [False, _generateSubsidiarySeed()]
             elif name == 'learn':
                 pnames = ['x']
             elif name == 'pred':

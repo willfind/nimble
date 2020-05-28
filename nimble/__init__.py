@@ -6,14 +6,9 @@ create data objects, call machine learning algorithms on that
 data, and do package level configuration and information querying.
 """
 
-import os
-import inspect
-
 # Import those functions that we want to be accessible in the
 # top level
-from nimble.core.randomness import setRandomSeed
-from nimble.core.randomness import pythonRandom
-from nimble.core.randomness import numpyRandom
+from nimble.configuration import nimblePath
 from nimble.core.core import train
 from nimble.core.core import trainAndApply
 from nimble.core.core import trainAndTest
@@ -37,24 +32,25 @@ from nimble.core.core import loadTrainedLearner
 from nimble.core.core import CV
 from nimble.core.core import Init
 from nimble.core.custom_learner import CustomLearner
-from .configuration import nimblePath
 
 # Import those submodules that need setup or we want to be
 # accessible to the user
-from . import learners
-from . import calculate
-from .core import randomness
-from . import match
-from . import fill
-from .core import interfaces
-from .core import logger
-from . import configuration
+from nimble import configuration
+from nimble import core
+from nimble import learners
+from nimble import calculate
+from nimble import random
+from nimble import match
+from nimble import fill
 
 # load settings from configuration file
 settings = configuration.loadSettings()
 
+# initialize the interfaces
+core.interfaces.initInterfaceSetup()
+
 # initialize the logging file
-logger.active = logger.initLoggerAndLogConfig()
+core.logger.initLoggerAndLogConfig()
 
 __all__ = ['calculate', 'createData', 'createRandomData', 'crossValidate',
            'CustomLearner', 'CV', 'fill', 'identity', 'Init',

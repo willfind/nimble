@@ -22,6 +22,7 @@ from nimble.core.interfaces.interface_helpers import collectAttributes
 from nimble.core.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.core.helpers import inspectArguments
 from nimble.utility import inheritDocstringsFactory, dtypeConvert
+from nimble.random import _generateSubsidiarySeed
 
 # Contains path to sciKitLearn root directory
 #sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'
@@ -271,7 +272,7 @@ class _SciKitLearnAPI(abc.ABC):
             if self.randomParam in initParams:
                 index = initParams.index(self.randomParam)
                 negdex = index - len(initParams)
-                seed = nimble.core.randomness.generateSubsidiarySeed()
+                seed = _generateSubsidiarySeed()
                 initValues[negdex] = seed
             return (initParams, initValues)
         elif not hasattr(namedModule, name):
@@ -350,13 +351,12 @@ class SciKitLearn(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
     """
 
     def __init__(self):
-        """
+        self.skl = modifyImportPathAndImport(
+            sciKitLearnDir, ('sciKitLearn', 'sklearn'))
+        testUtils = modifyImportPathAndImport(
+            sciKitLearnDir, ('SciKitLearn', 'sklearn.utils.testing'))
 
-        """
-        self.skl = modifyImportPathAndImport(sciKitLearnDir, 'sciKitLearn')
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=DeprecationWarning)
-            from sklearn.utils.testing import all_estimators
+        from sklearn.utils.testing import all_estimators
 
         version = self.version()
         self._versionSplit = list(map(int, version.split('.')))
@@ -366,7 +366,6 @@ class SciKitLearn(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
             warnings.warn(msg)
 
         self.randomParam = 'random_state'
-
         walkPackages = pkgutil.walk_packages
         def mockWalkPackages(*args, **kwargs):
             packages = walkPackages(*args, **kwargs)
@@ -384,31 +383,35 @@ class SciKitLearn(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
 
             return ret
 
-        with mock.patch('pkgutil.walk_packages', mockWalkPackages):
-            try:
-                all_estimators = all_estimators(include_dont_test=True)
-            except TypeError:
-                # include_dont_test will be removed in later versions
-                all_estimators = all_estimators()
-        self.allEstimators = {}
-        for name, obj in all_estimators:
-            if name.startswith('_'):
-                continue
-            try:
-                # if object cannot be instantiated without additional
-                # arguments, we cannot support it at this time
-                init = obj()
-            except TypeError:
-                continue
-            # only support learners with a predict, transform,
-            # fit_predict or fit_transform, all have fit attribute
-            hasPred = hasattr(obj, 'predict')
-            hasTrans = hasattr(obj, 'transform')
-            hasFitPred = hasattr(obj, 'fit_predict')
-            hasFitTrans = hasattr(obj, 'fit_transform')
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', DeprecationWarning)
+            with mock.patch('pkgutil.walk_packages', mockWalkPackages):
+                try:
+                    kwargs = {'include_dont_test': True}
+                    all_estimators = testUtils.all_estimators(**kwargs)
+                except TypeError:
+                    # include_dont_test will be removed in later versions
+                    all_estimators = testUtils.all_estimators()
 
-            if hasPred or hasTrans or hasFitPred or hasFitTrans:
-                self.allEstimators[name] = obj
+            self.allEstimators = {}
+            for name, obj in all_estimators:
+                if name.startswith('_'):
+                    continue
+                try:
+                    # if object cannot be instantiated without additional
+                    # arguments, we cannot support it at this time
+                    init = obj()
+                except TypeError:
+                    continue
+                # only support learners with a predict, transform,
+                # fit_predict or fit_transform, all have fit attribute
+                hasPred = hasattr(obj, 'predict')
+                hasTrans = hasattr(obj, 'transform')
+                hasFitPred = hasattr(obj, 'fit_predict')
+                hasFitTrans = hasattr(obj, 'fit_transform')
+
+                if hasPred or hasTrans or hasFitPred or hasFitTrans:
+                    self.allEstimators[name] = obj
 
         super(SciKitLearn, self).__init__()
 

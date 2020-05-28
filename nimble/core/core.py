@@ -35,8 +35,8 @@ from nimble.core.helpers import createDataFromFile
 from nimble.core.helpers import createConstantHelper
 from nimble.core.helpers import computeMetrics
 from nimble.core.helpers import initAvailablePredefinedInterfaces
-from nimble.core.randomness import numpyRandom, generateSubsidiarySeed
-from nimble.core.randomness import startAlternateControl, endAlternateControl
+from nimble.random import numpyRandom, _generateSubsidiarySeed
+from nimble.random import _startAlternateControl, _endAlternateControl
 from nimble.utility import numpy2DArray
 from nimble.utility import scipy, cloudpickle
 
@@ -102,7 +102,7 @@ def createRandomData(
     --------
     Random integers.
 
-    >>> nimble.setRandomSeed(42)
+    >>> nimble.random.setSeed(42)
     >>> ptNames = ['a', 'b', 'c', 'd', 'e']
     >>> random = nimble.createRandomData('Matrix', 5, 5, 0,
     ...                                  pointNames=ptNames,
@@ -119,7 +119,7 @@ def createRandomData(
 
     Random floats, high sparsity.
 
-    >>> nimble.setRandomSeed(42)
+    >>> nimble.random.setSeed(42)
     >>> sparse = nimble.createRandomData('Sparse', 5, 5, .9)
     >>> sparse
     Sparse(
@@ -143,8 +143,8 @@ def createRandomData(
     if elementType != "int" and elementType != "float":
         raise InvalidArgumentValue("elementType may only be 'int' or 'float'")
 
-    seed = generateSubsidiarySeed()
-    startAlternateControl(seed=seed)
+    seed =_generateSubsidiarySeed()
+    _startAlternateControl(seed=seed)
     #note: sparse is not stochastic sparsity, it uses rigid density measures
     if returnType == 'Sparse':
         if not scipy.nimbleAccessible():
@@ -192,7 +192,7 @@ def createRandomData(
             binarySparsityMatrix = numpyRandom.binomial(1, 1.0 - sparsity,
                                                         size=size)
             randData = binarySparsityMatrix * randData
-    endAlternateControl()
+    _endAlternateControl()
 
     handleLogging(useLog, 'load', "Random " + returnType, numPoints,
                   numFeatures, name, sparsity=sparsity, seed=seed)
@@ -1054,7 +1054,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
 
     Examples
     --------
-    >>> nimble.setRandomSeed(42)
+    >>> nimble.random.setSeed(42)
     >>> xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
     ...         [1, 0, 0], [0, 1, 0], [0, 0, 1],
     ...         [1, 0, 1], [1, 1, 0], [0, 1, 1]]

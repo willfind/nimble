@@ -25,7 +25,7 @@ from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.core.randomness import pythonRandom
+from nimble.random import pythonRandom
 from nimble.core.logger import handleLogging
 from .points import Points
 from .features import Features

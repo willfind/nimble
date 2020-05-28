@@ -23,8 +23,6 @@ sys.path.append(os.path.dirname(nimblePath))
 
 import nimble
 
-available = nimble.core.interfaces.available
-
 
 class ExtensionPlugin(Plugin):
     name = "ExtensionPlugin"

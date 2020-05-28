@@ -14,7 +14,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.core.helpers import generateClassificationData
 from nimble.core.helpers import generateRegressionData
-from nimble.core.randomness import pythonRandom
+from nimble.random import pythonRandom
 from .assertionHelpers import calledException, CalledFunctionException
 
 

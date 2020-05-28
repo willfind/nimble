@@ -362,7 +362,7 @@ class Points(object):
             pointNames={'1':0, '2':1}
             featureNames={'a':0, 'b':1, 'c':2, 'd':3}
             )
-        >>> nimble.core.randomness.setRandomSeed(42)
+        >>> nimble.random.setSeed(42)
         >>> numberRandom = data.points.copy(number=2, randomize=True)
         >>> numberRandom
         Matrix(
@@ -537,7 +537,7 @@ class Points(object):
 
         Select a set number to extract, choosing points at random.
 
-        >>> nimble.core.randomness.setRandomSeed(42)
+        >>> nimble.random.setSeed(42)
         >>> data = nimble.identity('Matrix', 3)
         >>> data.points.setNames(['a', 'b', 'c'])
         >>> numberRandom = data.points.extract(number=2, randomize=True)
@@ -680,7 +680,7 @@ class Points(object):
 
         Select a set number to delete, choosing points at random.
 
-        >>> nimble.core.randomness.setRandomSeed(42)
+        >>> nimble.random.setSeed(42)
         >>> data = nimble.identity('Matrix', 3)
         >>> data.points.setNames(['a', 'b', 'c'])
         >>> data.points.delete(number=2, randomize=True)
@@ -817,7 +817,7 @@ class Points(object):
 
         Select a set number to retain, choosing points at random.
 
-        >>> nimble.core.randomness.setRandomSeed(42)
+        >>> nimble.random.setSeed(42)
         >>> data = nimble.identity('Matrix', 3)
         >>> data.points.setNames(['a', 'b', 'c'])
         >>> data.points.retain(number=2, randomize=True)
@@ -1415,7 +1415,7 @@ class Points(object):
 
         Examples
         --------
-        >>> nimble.core.randomness.setRandomSeed(42)
+        >>> nimble.random.setSeed(42)
         >>> raw = [[1, 1, 1, 1],
         ...        [2, 2, 2, 2],
         ...        [3, 3, 3, 3],

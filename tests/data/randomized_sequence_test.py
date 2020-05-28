@@ -21,7 +21,7 @@ import nimble
 from nimble.core.data import Base
 from nimble.core.data import BaseView
 from nimble.core.helpers import inspectArguments
-from nimble.core.randomness import pythonRandom
+from nimble.random import pythonRandom
 
 numberOperations = 100
 numPoints = 4
@@ -133,7 +133,7 @@ def runSequence(objectList):
 
         # set up parameters
         paramsPerObj = []
-        randomseed = nimble.core.randomness.pythonRandom.randint(0, 2**32 - 1)
+        randomseed = nimble.random.pythonRandom.randint(0, 2**32 - 1)
         for i in range(len(objectList)):
             paramsPerObj.append(makeParams(currFunc, objectList[i], randomseed))
 
@@ -141,9 +141,9 @@ def runSequence(objectList):
         results = []
         for i in range(len(objectList)):
             funcToCall = getattr(objectList[i], currFunc) #eval('objectList[i].' + currFunc)
-            nimble.core.randomness.startAlternateControl(randomseed)
+            nimble.random._startAlternateControl(randomseed)
             currResult = funcToCall(*paramsPerObj[i])
-            nimble.core.randomness.endAlternateControl()
+            nimble.random._endAlternateControl()
             results.append(currResult)
 
         # need to check equality of results
@@ -255,11 +255,11 @@ def genObj(dataObj, seed, matchType=True, matchPoints=False, matchFeatures=False
         ret = nimble.createData('Matrix', rawData)
         ret = ret.copy(to=dataType)
     else:
-        nimble.core.randomness.startAlternateControl()
-        nimble.setRandomSeed(random.randint(0, 2**32 - 1))
+        nimble.random._startAlternateControl()
+        nimble.random.setSeed(random.randint(0, 2**32 - 1))
         ret = nimble.createRandomData("Matrix", points, features, .5, elementType='int')
         ret = ret.copy(to=dataType)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
     return ret
 
 
@@ -675,7 +675,7 @@ def TODO_MakeParamsExclusivity():
     for funcName in mutuallyExclusiveParams.keys():
         # random trials
         for i in range(50):
-            genArgs = makeParams(funcName, dobj, nimble.core.randomness.pythonRandom.random())
+            genArgs = makeParams(funcName, dobj, nimble.random.pythonRandom.random())
             (args, v, k, defaults) = inspectArguments(getattr(dobj, funcName))
             seenNonDefault = False
             for ex in mutuallyExclusiveParams[funcName]:

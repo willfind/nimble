@@ -40,12 +40,13 @@ class Keras(PredefinedInterface, UniversalInterface):
 
         try:
             # keras recommends using tensorflow.keras when possible
-            self.keras = modifyImportPathAndImport(None, 'tensorflow.keras')
+            self.keras = modifyImportPathAndImport(
+                kerasDir, ('keras', 'tensorflow.keras'))
             backendName = 'tensorflow'
         except ImportError:
-            self.keras = modifyImportPathAndImport(kerasDir, 'keras')
+            self.keras = modifyImportPathAndImport(
+                kerasDir, ('keras', 'keras'))
             backendName = self.keras.backend.backend()
-
         # tensorflow has a tremendous quantity of informational outputs which
         # drown out anything else on standard out
         if backendName == 'tensorflow':
@@ -104,6 +105,12 @@ class Keras(PredefinedInterface, UniversalInterface):
     @classmethod
     def getCanonicalName(cls):
         return 'keras'
+
+    @classmethod
+    def isAlias(cls, name):
+        if name.lower() in ['tensorflow.keras', 'tf.keras']:
+            return True
+        return name.lower() == cls.getCanonicalName().lower()
 
     @classmethod
     def _installInstructions(cls):

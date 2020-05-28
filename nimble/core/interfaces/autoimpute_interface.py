@@ -43,8 +43,8 @@ class Autoimpute(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
         """
 
         """
-        self.autoimpute = modifyImportPathAndImport(autoimputeDir,
-                                                    'autoimpute')
+        self.autoimpute = modifyImportPathAndImport(
+            autoimputeDir, ('autoimpute', 'autoimpute'))
 
         def isLearner(obj):
             try:

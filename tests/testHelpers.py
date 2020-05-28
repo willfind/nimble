@@ -25,7 +25,7 @@ from nimble.utility import numpy2DArray, is2DArray
 from nimble.calculate import rootMeanSquareError
 from nimble.calculate import meanAbsoluteError
 from nimble.calculate import fractionIncorrect
-from nimble.core.randomness import pythonRandom
+from nimble.random import pythonRandom
 
 ##########
 # TESTER #

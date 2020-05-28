@@ -29,8 +29,8 @@ from nimble.exceptions import FileFormatException
 from nimble.core.data import Base
 from nimble.core.data.dataHelpers import isAllowedSingleElement
 from nimble.core.data.sparse import removeDuplicatesNative
-from nimble.core.randomness import pythonRandom
-from nimble.core.randomness import numpyRandom
+from nimble.random import pythonRandom
+from nimble.random import numpyRandom
 from nimble.utility import numpy2DArray, is2DArray
 from nimble.utility import sparseMatrixToArray
 from nimble.utility import scipy, pd, requests, h5py
@@ -2634,7 +2634,7 @@ class KFoldCrossValidator():
 
         Examples
         --------
-        >>> nimble.setRandomSeed(42)
+        >>> nimble.random.setSeed(42)
         >>> xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
         ...         [1, 0, 0], [0, 1, 0], [0, 0, 1],
         ...         [1, 0, 1], [1, 1, 0], [0, 1, 1]]
@@ -2720,7 +2720,7 @@ class KFoldCrossValidator():
 
         Examples
         --------
-        >>> nimble.setRandomSeed(42)
+        >>> nimble.random.setSeed(42)
         >>> xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
         ...         [1, 0, 0], [0, 1, 0], [0, 0, 1],
         ...         [1, 0, 1], [1, 1, 0], [0, 1, 1]]
@@ -2774,7 +2774,7 @@ class KFoldCrossValidator():
 
         Examples
         --------
-        >>> nimble.setRandomSeed(42)
+        >>> nimble.random.setSeed(42)
         >>> xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
         ...         [1, 0, 0], [0, 1, 0], [0, 0, 1],
         ...         [1, 0, 1], [1, 1, 0], [0, 1, 1]]

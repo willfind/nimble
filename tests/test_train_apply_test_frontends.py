@@ -9,7 +9,7 @@ from nimble import train
 from nimble import trainAndApply
 from nimble import trainAndTest
 from nimble.calculate import fractionIncorrect
-from nimble.core.randomness import pythonRandom
+from nimble.random import pythonRandom
 from nimble.learners import KNNClassifier
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
@@ -224,16 +224,16 @@ def test_multioutput_learners_callable_from_all():
                                                 lamb=1)
 
     # Control randomness for each cross-validation so folds are consistent
-    nimble.core.randomness.startAlternateControl(seed=0)
+    nimble.random._startAlternateControl(seed=0)
     ret_TTTD_multi_cv = nimble.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY, performanceFunction=metric,
                                                        lamb=1, crossValidationError=True)
-    nimble.core.randomness.setRandomSeed(0)
+    nimble.random.setSeed(0)
     ret_TTTD_0_cv = nimble.trainAndTestOnTrainingData(wrappedName, trainX=trainX, trainY=trainY0, performanceFunction=metric,
                                                    lamb=1, crossValidationError=True)
-    nimble.core.randomness.setRandomSeed(0)
+    nimble.random.setSeed(0)
     ret_TTTD_1_cv = nimble.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY1, performanceFunction=metric,
                                                    lamb=1, crossValidationError=True)
-    nimble.core.randomness.endAlternateControl()
+    nimble.random._endAlternateControl()
 
     # tl.test()
     ret_TLT_multi = TLmulti.test(testX, testY, metric)

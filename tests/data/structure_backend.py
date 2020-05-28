@@ -38,7 +38,7 @@ from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
-from nimble.core.randomness import numpyRandom
+from nimble.random import numpyRandom
 from nimble.utility import sparseMatrixToArray
 from nimble.utility import scipy, pd
 
@@ -1473,22 +1473,22 @@ class StructureDataSafe(StructureShared):
         toTest4 = toTest1.copy()
         expTest = toTest1.copy()
 
-        seed = nimble.core.randomness.generateSubsidiarySeed()
-        nimble.core.randomness.startAlternateControl(seed)
+        seed = nimble.random._generateSubsidiarySeed()
+        nimble.random._startAlternateControl(seed)
         ret = getattr(toTest1, toCall).copy(number=3, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retList = getattr(toTest2, toCall).copy([0, 1, 2, 3], number=3, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retRange = getattr(toTest3, toCall).copy(start=0, end=3, number=3, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retFunc = getattr(toTest4, toCall).copy(allTrue, number=3, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         if axis == 'point':
             assert len(ret.points) == 3
@@ -1524,21 +1524,21 @@ class StructureDataSafe(StructureShared):
             exp1 = toTest1[:, 1]
             exp2 = toTest1[:, 2]
 
-        seed = nimble.core.randomness.generateSubsidiarySeed()
-        nimble.core.randomness.startAlternateControl(seed)
+        seed = nimble.random._generateSubsidiarySeed()
+        nimble.random._startAlternateControl(seed)
         retList = getattr(toTest1, toCall).copy([1, 2], number=1, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retRange = getattr(toTest2, toCall).copy(start=1, end=2, number=1, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retFunc = getattr(toTest3, toCall).copy(middleRowsOrCols, number=1, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         assert retList.isIdentical(exp1) or retList.isIdentical(exp2)
         assert retRange.isIdentical(exp1) or retList.isIdentical(exp2)
@@ -4283,22 +4283,22 @@ class StructureModifying(StructureShared):
         toTest3 = toTest1.copy()
         toTest4 = toTest1.copy()
 
-        seed = nimble.core.randomness.generateSubsidiarySeed()
-        nimble.core.randomness.startAlternateControl(seed)
+        seed = nimble.random._generateSubsidiarySeed()
+        nimble.random._startAlternateControl(seed)
         ret = getattr(toTest1, toCall).extract(number=3, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retList = getattr(toTest2, toCall).extract([0, 1, 2, 3], number=3, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retRange = getattr(toTest3, toCall).extract(start=0, end=3, number=3, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retFunc = getattr(toTest4, toCall).extract(allTrue, number=3, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         if axis == 'point':
             assert len(ret.points) == 3
@@ -4338,21 +4338,21 @@ class StructureModifying(StructureShared):
             expTest1 = toTest1[:, [0, 1, 3]]
             expTest2 = toTest1[:, [0, 2, 3]]
 
-        seed = nimble.core.randomness.generateSubsidiarySeed()
-        nimble.core.randomness.startAlternateControl(seed)
+        seed = nimble.random._generateSubsidiarySeed()
+        nimble.random._startAlternateControl(seed)
         retList = getattr(toTest1, toCall).extract([1, 2], number=1, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retRange = getattr(toTest2, toCall).extract(start=1, end=2, number=1, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retFunc = getattr(toTest3, toCall).extract(middleRowsOrCols, number=1, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         assert retList.isIdentical(expRet1) or retList.isIdentical(expRet2)
         assert retRange.isIdentical(expRet1) or retList.isIdentical(expRet2)
@@ -5631,22 +5631,22 @@ class StructureModifying(StructureShared):
         toTest3 = toTest1.copy()
         toTest4 = toTest1.copy()
 
-        seed = nimble.core.randomness.generateSubsidiarySeed()
-        nimble.core.randomness.startAlternateControl(seed)
+        seed = nimble.random._generateSubsidiarySeed()
+        nimble.random._startAlternateControl(seed)
         getattr(toTest1, toCall).delete(number=3, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest2, toCall).delete([0, 1, 2, 3], number=3, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest3, toCall).delete(start=0, end=3, number=3, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest4, toCall).delete(allTrue, number=3, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         if axis == 'point':
             assert len(toTest1.points) == 1
@@ -5677,21 +5677,21 @@ class StructureModifying(StructureShared):
             exp1 = toTest1[:, [0, 1, 3]]
             exp2 = toTest1[:, [0, 2, 3]]
 
-        seed = nimble.core.randomness.generateSubsidiarySeed()
-        nimble.core.randomness.startAlternateControl(seed)
+        seed = nimble.random._generateSubsidiarySeed()
+        nimble.random._startAlternateControl(seed)
         getattr(toTest1, toCall).delete([1, 2], number=1, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest2, toCall).delete(start=1, end=2, number=1, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest3, toCall).delete(middleRowsOrCols, number=1, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         assert toTest1.isIdentical(exp1) or toTest1.isIdentical(exp2)
         assert toTest2.isIdentical(exp1) or toTest2.isIdentical(exp2)
@@ -6887,22 +6887,22 @@ class StructureModifying(StructureShared):
         toTest3 = toTest1.copy()
         toTest4 = toTest1.copy()
 
-        seed = nimble.core.randomness.generateSubsidiarySeed()
-        nimble.core.randomness.startAlternateControl(seed)
+        seed = nimble.random._generateSubsidiarySeed()
+        nimble.random._startAlternateControl(seed)
         getattr(toTest1, toCall).retain(number=3, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest2, toCall).retain([0, 1, 2, 3], number=3, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest3, toCall).retain(start=0, end=3, number=3, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest4, toCall).retain(allTrue, number=3, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         if axis == 'point':
             assert len(toTest1.points) == 3
@@ -6933,21 +6933,21 @@ class StructureModifying(StructureShared):
             exp1 = toTest1[:, 1]
             exp2 = toTest1[:, 2]
 
-        seed = nimble.core.randomness.generateSubsidiarySeed()
-        nimble.core.randomness.startAlternateControl(seed)
+        seed = nimble.random._generateSubsidiarySeed()
+        nimble.random._startAlternateControl(seed)
         getattr(toTest1, toCall).retain([1, 2], number=1, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest2, toCall).retain(start=1, end=2, number=1, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
-        nimble.core.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest3, toCall).retain(middleRowsOrCols, number=1, randomize=True)
-        nimble.core.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         assert toTest1.isIdentical(exp1) or toTest1.isIdentical(exp2)
         assert toTest2.isIdentical(exp1) or toTest2.isIdentical(exp2)

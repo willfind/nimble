@@ -234,11 +234,11 @@ def testLoadTypeFunctionsUseLog():
 
 @emptyLogSafetyWrapper
 @configSafetyWrapper
-def test_setRandomSeed():
+def test_setSeed():
     nimble.settings.set('logger', 'enabledByDefault', 'True')
-    nimble.core.randomness.startAlternateControl()
-    nimble.setRandomSeed(1337)
-    nimble.core.randomness.endAlternateControl()
+    nimble.random._startAlternateControl()
+    nimble.random.setSeed(1337)
+    nimble.random._endAlternateControl()
     logInfo = getLastLogData()
     assert "{'seed': 1337}" in logInfo
 

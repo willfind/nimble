@@ -26,7 +26,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.logger import handleLogging
 from nimble.core.logger import produceFeaturewiseReport
 from nimble.core.logger import produceAggregateReport
-from nimble.core.randomness import numpyRandom
+from nimble.random import numpyRandom
 from nimble.utility import cloudpickle, matplotlib, h5py
 from .points import Points
 from .features import Features
@@ -1374,7 +1374,7 @@ class Base(object):
         --------
         Returning a 2-tuple.
 
-        >>> nimble.core.randomness.setRandomSeed(42)
+        >>> nimble.random.setSeed(42)
         >>> raw = [[1, 0, 0],
         ...        [0, 1, 0],
         ...        [0, 0, 1],
@@ -1401,7 +1401,7 @@ class Base(object):
 
         Returning a 4-tuple.
 
-        >>> nimble.core.randomness.setRandomSeed(42)
+        >>> nimble.random.setSeed(42)
         >>> raw = [[1, 0, 0, 1],
         ...        [0, 1, 0, 2],
         ...        [0, 0, 1, 3],

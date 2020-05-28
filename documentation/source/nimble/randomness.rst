@@ -1,5 +1,5 @@
-nimble.core.randomness
+nimble.random
 =================
 
-.. automodule:: nimble.core.randomness
+.. automodule:: nimble.random
    :members:

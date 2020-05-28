@@ -7,8 +7,8 @@ import random
 
 import numpy
 
-from nimble.utility import DeferredModuleImport
-from .logger import handleLogging
+from nimble.utility import DeferredModuleImport, scipy
+from nimble.core.logger import handleLogging
 
 shogun = DeferredModuleImport('shogun')
 if shogun.nimbleAccessible():
@@ -23,7 +23,7 @@ _saved = (None, None, None)
 _stillDefault = True
 
 
-def setRandomSeed(seed, useLog=None):
+def setSeed(seed, useLog=None):
     """
     Set the seeds on all sources of randomness in nimble.
 
@@ -46,10 +46,10 @@ def setRandomSeed(seed, useLog=None):
     if _saved != (None, None, None):
         _stillDefault = False
 
-    handleLogging(useLog, 'setRandomSeed', seed=seed)
+    handleLogging(useLog, 'setSeed', seed=seed)
 
 
-def generateSubsidiarySeed():
+def _generateSubsidiarySeed():
     """
     Randomly generate an integer seed.
 
@@ -65,11 +65,11 @@ def generateSubsidiarySeed():
     return pythonRandom.randint(1, maxSeed)
 
 
-def stillDefaultState():
+def _stillDefaultState():
     """
     Determine if the random state is default or has been modified.
 
-    Will return False if setRandomSeed has been called to modify the
+    Will return False if setSeed has been called to modify the
     state of the internal sources of randomness (with the exception of
     calls made within a section designated by startUncontrolledSection
     and endUncontrolledSection). Return True if there has been no
@@ -84,7 +84,7 @@ def stillDefaultState():
 
 #return _stillDefault
 
-def startAlternateControl(seed=None):
+def _startAlternateControl(seed=None):
     """
     Begin using a temporary new seed for randomness.
 
@@ -92,8 +92,8 @@ def startAlternateControl(seed=None):
     kind of randomness than the current default, without changing the
     reproducibility of later random calls outside of the section. This
     saves the state of the nimble internal random sources, and calls
-    setRandomSeed using the given parameter. The saved state can then be
-    restored with a call to endAlternateControl. Meant to be used in
+    setSeed using the given parameter. The saved state can then be
+    restored with a call to_endAlternateControl. Meant to be used in
     unit tests, to either protect later calls from the modifications in
     this section, or to ensure consistency regardless of the current
     state of randomness in nimble.
@@ -113,18 +113,18 @@ def startAlternateControl(seed=None):
         shogunSeed = None
 
     _saved = (pythonRandom.getstate(), numpyRandom.get_state(), shogunSeed)
-    setRandomSeed(seed, useLog=False)
+    setSeed(seed, useLog=False)
 
 
-def endAlternateControl():
+def _endAlternateControl():
     """
-    Stop using the temporary seed created by ``startAlternateControl``.
+    Stop using the temporary seed created by `_startAlternateControl``.
 
     Called to close a certain section of code that needs to have
     different kind of randomness than the current default without
     changing the reproducibility of later random calls outside of the
     section. This will restore the state saved by
-    ``startAlternateControl``.
+    `_startAlternateControl``.
     """
     global _saved
     if _saved != (None, None, None):

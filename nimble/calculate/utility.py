@@ -10,7 +10,7 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
-from nimble.core.randomness import numpyRandom
+from nimble.random import numpyRandom
 
 
 def detectBestResult(functionToCheck):

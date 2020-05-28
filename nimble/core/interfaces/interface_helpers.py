@@ -11,7 +11,7 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
-from nimble.core.randomness import pythonRandom
+from nimble.random import pythonRandom
 
 
 class PythonSearcher(object):
@@ -479,8 +479,9 @@ def removeFromTailMatchedLists(full, matched, toIgnore):
     return (retFull, retMatched)
 
 
-def modifyImportPathAndImport(directory, package):
+def modifyImportPathAndImport(directory, interfaceInfo):
     sysPathBackup = sys.path.copy()
+    canonicalName, package = interfaceInfo
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         try:
@@ -488,14 +489,12 @@ def modifyImportPathAndImport(directory, package):
                 sys.path.insert(0, directory)
 
             try:
-                location = nimble.settings.get(package, 'location')
+                location = nimble.settings.get(canonicalName, 'location')
                 if location:
                     sys.path.insert(0, location)
             except configparser.Error:
                 pass
 
-            if package == 'sciKitLearn':
-                package = 'sklearn'
             return importlib.import_module(package)
         finally:
             sys.path = sysPathBackup
