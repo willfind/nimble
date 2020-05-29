@@ -25,7 +25,6 @@ from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.random import pythonRandom
 from nimble.core.logger import handleLogging
 from .points import Points
 from .features import Features
@@ -315,7 +314,7 @@ class Axis(object):
         if order is None:
             values = len(self)
             order = list(range(values))
-            pythonRandom.shuffle(order)
+            nimble.random.pythonRandom.shuffle(order)
         else:
             order = constructIndicesList(self._base, self._axis, order,
                                          'order')
@@ -1218,7 +1217,8 @@ class Axis(object):
                 msg += "to {0} ({1})".format(structure, len(targetList))
                 raise InvalidArgumentValue(msg)
             if randomize:
-                targetList = pythonRandom.sample(targetList, number)
+                targetList = nimble.random.pythonRandom.sample(targetList,
+                                                               number)
             else:
                 targetList = targetList[:number]
 

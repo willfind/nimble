@@ -705,8 +705,8 @@ def back_byInf(callerCon, calleeCon, opName):
 
 
 def makeAllData(constructor, rhsCons, numPts, numFts, sparsity):
-    randomlf = nimble.createRandomData('Matrix', numPts, numFts, sparsity, useLog=False)
-    randomrf = nimble.createRandomData('Matrix', numPts, numFts, sparsity, useLog=False)
+    randomlf = nimble.random.data('Matrix', numPts, numFts, sparsity, useLog=False)
+    randomrf = nimble.random.data('Matrix', numPts, numFts, sparsity, useLog=False)
     lhsf = randomlf.copy(to="numpyarray")
     rhsf = randomrf.copy(to="numpyarray")
     lhsi = numpy.array(numpyRandom.random_integers(1, 10, (numPts, numFts)), dtype=float)

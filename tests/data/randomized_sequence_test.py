@@ -73,7 +73,7 @@ def TODO_RandomSequenceOfMethods():
     # dense int trial
     sparcity = 0.05
     objectList = []
-    first = nimble.createRandomData('List', points, features, sparcity, elementType='int')
+    first = nimble.random.data('List', points, features, sparcity, elementType='int')
     objectList.append(first)
     objectList.append(first.copy(to='Matrix'))
     objectList.append(first.copy(to='Sparse'))
@@ -82,7 +82,7 @@ def TODO_RandomSequenceOfMethods():
     ## dense float trial
     sparcity = 0.05
     objectList = []
-    first = nimble.createRandomData('List', points, features, sparcity, elementType='float')
+    first = nimble.random.data('List', points, features, sparcity, elementType='float')
     objectList.append(first)
     objectList.append(first.copy(to='Matrix'))
     objectList.append(first.copy(to='Sparse'))
@@ -91,7 +91,7 @@ def TODO_RandomSequenceOfMethods():
     # sparse int trial
     sparcity = 0.9
     objectList = []
-    first = nimble.createRandomData('List', points, features, sparcity, elementType='int')
+    first = nimble.random.data('List', points, features, sparcity, elementType='int')
     objectList.append(first)
     objectList.append(first.copy(to='Matrix'))
     objectList.append(first.copy(to='Sparse'))
@@ -100,7 +100,7 @@ def TODO_RandomSequenceOfMethods():
     # sparse float trial
     sparcity = 0.9
     objectList = []
-    first = nimble.createRandomData('List', points, features, sparcity, elementType='float')
+    first = nimble.random.data('List', points, features, sparcity, elementType='float')
     objectList.append(first)
     objectList.append(first.copy(to='Matrix'))
     objectList.append(first.copy(to='Sparse'))
@@ -257,7 +257,7 @@ def genObj(dataObj, seed, matchType=True, matchPoints=False, matchFeatures=False
     else:
         nimble.random._startAlternateControl()
         nimble.random.setSeed(random.randint(0, 2**32 - 1))
-        ret = nimble.createRandomData("Matrix", points, features, .5, elementType='int')
+        ret = nimble.random.data("Matrix", points, features, .5, elementType='int')
         ret = ret.copy(to=dataType)
         nimble.random._endAlternateControl()
     return ret

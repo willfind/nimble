@@ -44,9 +44,9 @@ def prefixAdder(prefix):
 
 
 nimble_logged = [
-    'createData', 'createRandomData', 'crossValidate', 'fillMatching', 'log',
-    'loadData', 'loadTrainedLearner', 'normalizeData', 'train',
-    'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
+    'createData', 'crossValidate', 'fillMatching', 'log', 'loadData',
+    'loadTrainedLearner', 'normalizeData', 'train', 'trainAndApply',
+    'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 nimble_notLogged = [
     'CustomLearner', 'CV', 'Init', 'identity', 'listLearners',
@@ -100,7 +100,7 @@ match_funcs = [
 match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 
 random_logged = [
-    'setSeed'
+    'data', 'setSeed'
     ]
 random_funcs = random_logged
 random_tested = list(map(prefixAdder('nimble.random'), random_funcs))

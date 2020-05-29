@@ -1,7 +1,7 @@
 """
 Unit tests for data creation functions other than createData, which generate
 the values placed in the data object. Specifically tested are:
-nimble.createRandomData, nimble.ones, nimble.zeros, nimble.identity
+nimble.random.data, nimble.ones, nimble.zeros, nimble.identity
 
 """
 
@@ -13,16 +13,15 @@ from nose.tools import *
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble import createRandomData
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 
 
 returnTypes = copy.copy(nimble.core.data.available)
 
 
-########################
-### createRandomData ###
-########################
+###################
+### random.data ###
+###################
 
 def testReturnsFundamentalsCorrect():
     """
@@ -48,7 +47,8 @@ def testReturnsFundamentalsCorrect():
     for curType in supportedFundamentalTypes:
         for curReturnType in returnTypes:
             for curSparsity in sparsities:
-                returned = createRandomData(curReturnType, nPoints, nFeatures, curSparsity, elementType=curType)
+                returned = nimble.random.data(curReturnType, nPoints, nFeatures,
+                                              curSparsity, elementType=curType)
 
                 assert (len(returned.points) == nPoints)
                 assert (len(returned.features) == nFeatures)
@@ -82,7 +82,8 @@ def testSparsityReturnedPlausible():
     for curType in supportedFundamentalTypes:
         for curReturnType in returnTypes:
             for curSparsity in sparsities:
-                returned = createRandomData(curReturnType, nPoints, nFeatures, curSparsity, elementType=curType)
+                returned = nimble.random.data(curReturnType, nPoints, nFeatures,
+                                              curSparsity, elementType=curType)
 
                 if curReturnType.lower() == 'sparse':
                     nonZerosCount = returned.data.nnz
@@ -126,18 +127,18 @@ def test_createRandomizedData_names_passed():
     for curType in supportedFundamentalTypes:
         for curReturnType in returnTypes:
             for curSparsity in sparsities:
-                ret = createRandomData(
+                ret = nimble.random.data(
                     curReturnType, numberPoints, numberFeatures, curSparsity,
                     elementType=curType, pointNames=pnames, featureNames=fnames)
 
                 assert ret.points.getNames() == pnames
                 assert ret.features.getNames() == fnames
 
-def test_createRandomData_logCount():
+def test_random_data_logCount():
 
     @oneLogEntryExpected
     def byType(rType):
-        toTest = nimble.createRandomData(rType, 5, 5, 0)
+        toTest = nimble.random.data(rType, 5, 5, 0)
 
     for t in returnTypes:
         byType(t)

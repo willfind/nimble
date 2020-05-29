@@ -206,7 +206,7 @@ def testLoadTypeFunctionsUseLog():
     assert "'numFeatures': 1" in logInfo
 
     # the sparsity and seed are also stored for random data
-    randomObj = nimble.createRandomData("Matrix", 5, 5, 0)
+    randomObj = nimble.random.data("Matrix", 5, 5, 0)
     logInfo = getLastLogData()
     assert randomObj.getTypeString() in logInfo
     assert "'sparsity': 0" in logInfo

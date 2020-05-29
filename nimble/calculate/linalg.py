@@ -130,8 +130,8 @@ def pseudoInverse(aObj, method='svd'):
     Examples
     --------
     >>> nimble.random.setSeed(42)
-    >>> data = nimble.createRandomData('Matrix', numPoints=4,
-    ...                                numFeatures=3, sparsity=0.5)
+    >>> data = nimble.random.data('Matrix', numPoints=4, numFeatures=3, 
+    ...                           sparsity=0.5)
     >>> data
     Matrix(
         [[0.583  -0.000 0.000 ]

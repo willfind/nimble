@@ -330,7 +330,7 @@ class OneOrZeroClassifier(CustomLearner):
 
 @configSafetyWrapper
 def test_retrain_withArg():
-    trainObj = nimble.createRandomData('Matrix', 4, 3, 0)
+    trainObj = nimble.random.data('Matrix', 4, 3, 0)
     testObj = nimble.createData('Matrix', [[0, 0], [1, 1]])
     expZeros = nimble.zeros('Matrix', 2, 1)
     expOnes = nimble.ones('Matrix', 2, 1)
@@ -346,7 +346,7 @@ def test_retrain_withArg():
 @raises(InvalidArgumentValue)
 @configSafetyWrapper
 def test_retrain_invalidArg():
-    trainObj = nimble.createRandomData('Matrix', 4, 3, 0)
+    trainObj = nimble.random.data('Matrix', 4, 3, 0)
     testObj = nimble.createData('Matrix', [[0, 0], [1, 1]])
     expZeros = nimble.zeros('Matrix', 2, 1)
     expOnes = nimble.ones('Matrix', 2, 1)
@@ -360,7 +360,7 @@ def test_retrain_invalidArg():
 @raises(InvalidArgumentValue)
 @configSafetyWrapper
 def test_retrain_CVArg():
-    trainObj = nimble.createRandomData('Matrix', 4, 3, 0)
+    trainObj = nimble.random.data('Matrix', 4, 3, 0)
     testObj = nimble.createData('Matrix', [[0, 0], [1, 1]])
     expZeros = nimble.zeros('Matrix', 2, 1)
     expOnes = nimble.ones('Matrix', 2, 1)

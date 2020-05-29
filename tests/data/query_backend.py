@@ -1050,7 +1050,7 @@ class QueryBackend(DataTestObject):
         """ Regression test with random data and limits. Recreates expected results """
         for pNum in [3, 9]:
             for fNum in [2, 5, 8, 15]:
-                randGen = nimble.createRandomData("List", pNum, fNum, 0)
+                randGen = nimble.random.data("List", pNum, fNum, 0)
                 raw = randGen.data
 
                 fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6', 'fn7', 'fn8', 'fn9', 'fna', 'fnb', 'fnc',
@@ -1079,7 +1079,7 @@ class QueryBackend(DataTestObject):
 
     def test_toString_nameAndValRecreation_randomized_longNames(self):
         """ Test long point and feature names do not exceed max width"""
-        randGen = nimble.createRandomData("List", 9, 9, 0)
+        randGen = nimble.random.data("List", 9, 9, 0)
         raw = randGen.data
 
         suffix = [1, 22, 333, 4444, 55555, 666666, 7777777, 88888888, 999999999]
@@ -1148,7 +1148,7 @@ class QueryBackend(DataTestObject):
 
     def test_toString_knownHeights(self):
         """ Test max string height reaches but does not exceed max height """
-        randGen = nimble.createRandomData("List", 9, 3, 0)
+        randGen = nimble.random.data("List", 9, 3, 0)
 
         data = self.constructor(randGen.data)
 
@@ -1237,7 +1237,7 @@ class QueryBackend(DataTestObject):
 
     @raises(InvalidArgumentValue)
     def test_arrangeDataWithLimits_exception_maxH(self):
-        randGen = nimble.createRandomData("List", 5, 5, 0, elementType='int')
+        randGen = nimble.random.data("List", 5, 5, 0, elementType='int')
         randGen._arrangeDataWithLimits(maxHeight=1, maxWidth=120)
 
     @attr('slow')
@@ -1269,7 +1269,7 @@ class QueryBackend(DataTestObject):
                 data.features.extract(0)
             else:
                 if valLen is None:
-                    data = nimble.createRandomData("List", pNum, fNum, .25, elementType='int')
+                    data = nimble.random.data("List", pNum, fNum, .25, elementType='int')
                 else:
                     data = makeUniformLength("List", pNum, fNum, valLen)
                 if includeFNames:
@@ -1320,7 +1320,7 @@ class QueryBackend(DataTestObject):
     ############
 
     def back_reprOutput(self, numPts, numFts, truncated=False):
-        randGen = nimble.createRandomData("List", numPts, numFts, 0)
+        randGen = nimble.random.data("List", numPts, numFts, 0)
         pNames = ['pt' + str(i) for i in range(numPts)]
         fNames = ['ft' + str(i) for i in range(numFts)]
         data = self.constructor(randGen.data, pointNames=pNames, featureNames=fNames)
@@ -2263,7 +2263,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = nimble.createRandomData("List", 10, 10, 0, useLog=False)
+            randGenerated = nimble.random.data("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copy(to='pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
@@ -2286,7 +2286,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = nimble.createRandomData("List", 10, 10, 0, useLog=False)
+            randGenerated = nimble.random.data("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copy(to='pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
@@ -2310,7 +2310,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = nimble.createRandomData("List", 10, 10, 0, useLog=False)
+            randGenerated = nimble.random.data("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copy(to='pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it

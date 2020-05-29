@@ -26,7 +26,6 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.logger import handleLogging
 from nimble.core.logger import produceFeaturewiseReport
 from nimble.core.logger import produceAggregateReport
-from nimble.random import numpyRandom
 from nimble.utility import cloudpickle, matplotlib, h5py
 from .points import Points
 from .features import Features
@@ -1444,7 +1443,7 @@ class Base(object):
         """
         order = list(range(len(self.points)))
         if randomOrder:
-            numpyRandom.shuffle(order)
+            nimble.random.numpyRandom.shuffle(order)
 
         if not 0 <= testFraction <= 1:
             msg = 'testFraction must be between 0 and 1 (inclusive)'

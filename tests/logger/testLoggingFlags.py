@@ -61,9 +61,9 @@ def test_createData():
     for rType in nimble.core.data.available:
         back_load(nimble.createData, rType, [[1, 2, 3], [4, 5, 6]])
 
-def test_createRandomData():
+def test_random_data():
     for rType in nimble.core.data.available:
-        back_load(nimble.createRandomData, rType, 5, 5, 0.99)
+        back_load(nimble.random.data, rType, 5, 5, 0.99)
 
 def test_loadData():
     for rType in nimble.core.data.available:

@@ -522,7 +522,7 @@ def testSciKitLearnTransformationLearners():
                 compareSingleInputOutputs(learner)
             except ValueError:
                 # GaussianRandomProjection, SparseRandomProjection,
-                trainX = nimble.createRandomData('Matrix', 10, 5000, 0.98)
+                trainX = nimble.random.data('Matrix', 10, 5000, 0.98)
                 Xtrain = trainX.data
                 compareSingleInputOutputs(learner)
 
@@ -531,7 +531,7 @@ def testSciKitLearnTransformationLearners():
 @attr('slow')
 def testSciKitLearnSparsePCATransformation():
     # do not accept sparse matrices
-    trainX = nimble.createRandomData('Matrix', 100, 10, sparsity=0.9)
+    trainX = nimble.random.data('Matrix', 100, 10, sparsity=0.9)
     Xtrain = trainX.data
 
     learners = ['MiniBatchSparsePCA', 'SparsePCA',]
@@ -655,8 +655,8 @@ def testCustomRidgeRegressionCompare():
 @logCountAssertionFactory(4)
 def testCustomRidgeRegressionCompareRandomized():
     """ Sanity check for custom RidgeRegression, compare results to SKL's Ridge on random data"""
-    trainObj = nimble.createRandomData("Matrix", 1000, 60, .1, useLog=False)
-    testObj = nimble.createRandomData("Matrix", 100, 59, .1, useLog=False)
+    trainObj = nimble.random.data("Matrix", 1000, 60, .1, useLog=False)
+    testObj = nimble.random.data("Matrix", 100, 59, .1, useLog=False)
 
     name = 'nimble.RidgeRegression'
     TL = nimble.train(name, trainX=trainObj, trainY=0, arguments={'lamb': 1})

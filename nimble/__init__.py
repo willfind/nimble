@@ -10,7 +10,6 @@ data, and do package level configuration and information querying.
 # top level
 from nimble.configuration import nimblePath
 from nimble.core.create import createData
-from nimble.core.create import createRandomData
 from nimble.core.create import ones
 from nimble.core.create import zeros
 from nimble.core.create import identity
@@ -42,6 +41,7 @@ from nimble import calculate
 from nimble import random
 from nimble import match
 from nimble import fill
+from nimble import exceptions
 
 # load settings from configuration file
 settings = configuration.loadSettings()
@@ -52,10 +52,10 @@ core.interfaces.initInterfaceSetup()
 # initialize the logging file
 core.logger.initLoggerAndLogConfig()
 
-__all__ = ['calculate', 'createData', 'createRandomData', 'crossValidate',
-           'CustomLearner', 'CV', 'fill', 'identity', 'Init',
-           'learnerDefaultValues', 'learnerParameters', 'learners',
-           'learnerType', 'listLearners', 'loadData', 'loadTrainedLearner',
-           'log', 'match', 'normalizeData', 'ones', 'setRandomSeed',
-           'settings', 'showLog', 'randomness', 'train', 'trainAndApply',
-           'trainAndTest', 'trainAndTestOnTrainingData', 'nimblePath', 'zeros']
+__all__ = ['calculate', 'createData', 'crossValidate', 'CustomLearner', 'CV',
+           'exceptions', 'fill', 'identity', 'Init', 'learnerDefaultValues',
+           'learnerParameters', 'learners', 'learnerType', 'listLearners',
+           'loadData', 'loadTrainedLearner', 'log', 'match', 'nimblePath',
+           'normalizeData', 'ones', 'setRandomSeed', 'settings', 'showLog',
+           'random', 'train', 'trainAndApply', 'trainAndTest',
+           'trainAndTestOnTrainingData', 'zeros']
