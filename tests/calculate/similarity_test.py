@@ -9,7 +9,7 @@ from nimble.calculate import cosineSimilarity
 from nimble.calculate import rSquared
 from nimble.calculate import confusionMatrix
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from ..assertionHelpers import noLogEntryExpected
+from tests.helpers import noLogEntryExpected
 
 ####################
 # cosineSimilarity #

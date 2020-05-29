@@ -11,6 +11,7 @@ import copy
 
 import nimble
 from nimble.core.data import BaseView
+from nimble.core._learnHelpers import generateClusteredPoints
 from nimble.configuration import SessionConfiguration
 
 def configSafetyWrapper(toWrap):
@@ -104,3 +105,41 @@ class CalledFunctionException(Exception):
 
 def calledException(*args, **kwargs):
     raise CalledFunctionException()
+
+
+# TODO: polish and relocate to random module
+def generateClassificationData(labels, pointsPer, featuresPer):
+    """
+    Randomly generate sensible data for a classification problem.
+    Returns a tuple of tuples, where the first value is a tuple
+    containing (trainX, trainY) and the second value is a tuple
+    containing (testX ,testY).
+    """
+    #add noise to the features only
+    trainData, _, noiselessTrainLabels = generateClusteredPoints(
+        labels, pointsPer, featuresPer, addFeatureNoise=True,
+        addLabelNoise=False, addLabelColumn=False)
+    testData, _, noiselessTestLabels = generateClusteredPoints(
+        labels, 1, featuresPer, addFeatureNoise=True, addLabelNoise=False,
+        addLabelColumn=False)
+
+    return ((trainData, noiselessTrainLabels), (testData, noiselessTestLabels))
+
+
+# TODO: polish and relocate to random module
+def generateRegressionData(labels, pointsPer, featuresPer):
+    """
+    Randomly generate sensible data for a regression problem. Returns a
+    tuple of tuples, where the first value is a tuple containing
+    (trainX, trainY) and the second value is a tuple containing
+    (testX ,testY).
+    """
+    #add noise to both the features and the labels
+    regressorTrainData, trainLabels, _ = generateClusteredPoints(
+        labels, pointsPer, featuresPer, addFeatureNoise=True,
+        addLabelNoise=True, addLabelColumn=False)
+    regressorTestData, testLabels, _ = generateClusteredPoints(
+        labels, 1, featuresPer, addFeatureNoise=True, addLabelNoise=True,
+        addLabelColumn=False)
+
+    return ((regressorTrainData, trainLabels), (regressorTestData, testLabels))

@@ -11,7 +11,7 @@ from nimble.calculate import rootMeanSquareError
 from nimble.calculate import rSquared
 from nimble.calculate import varianceFractionRemaining
 from nimble.exceptions import InvalidArgumentValue
-from ..assertionHelpers import noLogEntryExpected
+from tests.helpers import noLogEntryExpected
 
 ####################
 # detectBestResult #

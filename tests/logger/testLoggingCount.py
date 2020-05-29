@@ -26,7 +26,7 @@ from nimble.core.data import Points
 from nimble.core.data import Features
 from nimble.core.interfaces.universal_interface import UniversalInterface
 from nimble.core.interfaces.universal_interface import TrainedLearner
-from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 
 ALL_USER_FACING = []
 modules = [nimble, calculate, exceptions, fill, match, random]

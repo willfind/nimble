@@ -1,6 +1,6 @@
 import nimble
 from nimble.learners import MultiOutputLinearRegression
-from ..assertionHelpers import configSafetyWrapper
+from tests.helpers import configSafetyWrapper
 
 # test for failure to import?
 

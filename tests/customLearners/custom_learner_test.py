@@ -4,8 +4,8 @@ import numpy.testing
 import nimble
 from nimble import CustomLearner
 from nimble.exceptions import InvalidArgumentValue
-from nimble.core.helpers import validateCustomLearnerSubclass
-from ..assertionHelpers import configSafetyWrapper
+from nimble.core.custom_learner import validateCustomLearnerSubclass
+from tests.helpers import configSafetyWrapper
 
 
 @raises(TypeError)

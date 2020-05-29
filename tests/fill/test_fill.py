@@ -2,7 +2,7 @@ import nimble
 from nimble import fill
 from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from ..assertionHelpers import noLogEntryExpected
+from tests.helpers import noLogEntryExpected
 
 
 @noLogEntryExpected

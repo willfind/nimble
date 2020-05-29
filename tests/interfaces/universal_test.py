@@ -12,8 +12,8 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.interfaces.universal_interface import UniversalInterface
-from nimble.core.helpers import generateClassificationData
-from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import generateClassificationData
 
 
 class Initable(object):

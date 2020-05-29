@@ -10,9 +10,9 @@ from nose.plugins.attrib import attr
 import numpy
 
 import nimble
-from nimble.core.helpers import generateClassificationData
 from nimble.calculate import fractionIncorrect
-from ..assertionHelpers import configSafetyWrapper
+from tests.helpers import configSafetyWrapper
+from tests.helpers import generateClassificationData
 
 learnerName = 'nimble.KNNClassifier'
 
@@ -162,18 +162,6 @@ def test_normalizeData():
                                   arguments={'k': 1}, useLog=useLog)
 
     backend(wrapped, runAndCheck)
-
-#def test_trainAndTestOvO():
-#	def wrapped(trainX, trainY, testX, testY, useLog):
-#		return nimble.core.helpers.trainAndTestOneVsOne(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, useLog=useLog)
-
-#	backend(wrapped, runAndCheck)
-
-#def test_trainAndTestOvA():
-#	def wrapped(trainX, trainY, testX, testY, useLog):
-#		return nimble.core.helpers.trainAndTestOneVsAll(learnerName, trainX, trainY, testX, testY, performanceFunction=fractionIncorrect, useLog=useLog)
-
-#	backend(wrapped, runAndCheck)
 
 def test_TrainedLearner_apply():
     cData = generateClassificationData(2, 10, 2)

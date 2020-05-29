@@ -63,7 +63,7 @@ def viewConstructorMaker(concreteType):
         # instead of createData because we sometimes need to specify a
         # particular path attribute.
         else:
-            orig = nimble.core.helpers.initDataObject(
+            orig = nimble.core._createHelpers.initDataObject(
                 concreteType, rawData=data, pointNames=pointNames,
                 featureNames=featureNames, name=name, path=path,
                 convertToType=convertToType, keepPoints='all', keepFeatures='all',
@@ -76,13 +76,13 @@ def viewConstructorMaker(concreteType):
         if len(orig.points) != 0:
             firstPRaw = numpy.zeros([1] + orig._shape[1:]).tolist()
             fNamesParam = orig.features._getNamesNoGeneration()
-            firstPoint = nimble.core.helpers.initDataObject(
+            firstPoint = nimble.core._createHelpers.initDataObject(
                 concreteType, rawData=firstPRaw, pointNames=['firstPNonView'],
                 featureNames=fNamesParam, name=name, path=orig.path,
                 keepPoints='all', keepFeatures='all', convertToType=convertToType)
 
             lastPRaw = (numpy.ones([1] + orig._shape[1:]) * 3).tolist()
-            lastPoint = nimble.core.helpers.initDataObject(
+            lastPoint = nimble.core._createHelpers.initDataObject(
                 concreteType, rawData=lastPRaw, pointNames=['lastPNonView'],
                 featureNames=fNamesParam, name=name, path=orig.path,
                 keepPoints='all', keepFeatures='all', convertToType=convertToType)
@@ -103,7 +103,7 @@ def viewConstructorMaker(concreteType):
         if len(orig.features) != 0 and not len(orig._shape) > 2:
             lastFRaw = [[1] * len(full.points)]
             fNames = full.points._getNamesNoGeneration()
-            lastFeature = nimble.core.helpers.initDataObject(
+            lastFeature = nimble.core._createHelpers.initDataObject(
                 concreteType, rawData=lastFRaw, featureNames=fNames,
                 pointNames=['lastFNonView'], name=name, path=orig.path,
                 keepPoints='all', keepFeatures='all', convertToType=convertToType)

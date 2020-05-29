@@ -12,16 +12,11 @@ from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import PackageException
-from nimble.core.helpers import extractWinningPredictionLabel
-from nimble.core.helpers import generateAllPairs
-from nimble.core.helpers import findBestInterface
-from nimble.core.helpers import FoldIterator
-from nimble.core.helpers import sumAbsoluteDifference
-from nimble.core.helpers import generateClusteredPoints
-from nimble.core.helpers import _mergeArguments
-from nimble.core.helpers import computeMetrics
-from nimble.core.helpers import inspectArguments
-from nimble.utility import numpy2DArray, is2DArray
+from nimble.core._learnHelpers import findBestInterface
+from nimble.core._learnHelpers import FoldIterator
+from nimble.core._learnHelpers import sumAbsoluteDifference
+from nimble.core._learnHelpers import generateClusteredPoints
+from nimble.core._learnHelpers import computeMetrics
 from nimble.calculate import rootMeanSquareError
 from nimble.calculate import meanAbsoluteError
 from nimble.calculate import fractionIncorrect
@@ -202,7 +197,7 @@ class TestRand(FoldIteratorTester):
 @attr('slow')
 def testClassifyAlgorithms(printResultsDontThrow=False):
     """tries the algorithm names (which are keys in knownAlgorithmToTypeHash) with learnerType().
-    Next, compares the result to the algorithm's assocaited value in knownAlgorithmToTypeHash.
+    Next, compares the result to the algorithm's associated value in knownAlgorithmToTypeHash.
     If the algorithm types don't match, an AssertionError is thrown."""
 
     knownAlgorithmToTypeHash = {'nimble.KNNClassifier': 'classification',
@@ -250,9 +245,9 @@ def testGenerateClusteredPoints():
     pointsPer = 10
     featuresPer = 5
 
-    dataset, labelsObj, noiselessLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer,
-                                                                  addFeatureNoise=True, addLabelNoise=True,
-                                                                  addLabelColumn=True)
+    dataset, labelsObj, noiselessLabels = generateClusteredPoints(
+        clusterCount, pointsPer, featuresPer, addFeatureNoise=True,
+        addLabelNoise=True, addLabelColumn=True)
     pts, feats = len(noiselessLabels.points), len(noiselessLabels.features)
     for i in range(pts):
         for j in range(feats):
@@ -265,9 +260,9 @@ def testGenerateClusteredPoints():
             #assert dataset has noise for all entries
             assert (dataset[i, j] % 1 != 0.0)
 
-    dataset, labelsObj, noiselessLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer,
-                                                                  addFeatureNoise=False, addLabelNoise=False,
-                                                                  addLabelColumn=True)
+    dataset, labelsObj, noiselessLabels = generateClusteredPoints(
+        clusterCount, pointsPer, featuresPer, addFeatureNoise=False,
+        addLabelNoise=False, addLabelColumn=True)
     pts, feats = len(noiselessLabels.points), len(noiselessLabels.features)
     for i in range(pts):
         for j in range(feats):
@@ -281,9 +276,9 @@ def testGenerateClusteredPoints():
             assert (dataset[i, j] % 1 == 0.0)
 
     #test that addLabelColumn flag works
-    dataset, labelsObj, noiselessLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer,
-                                                                  addFeatureNoise=False, addLabelNoise=False,
-                                                                  addLabelColumn=False)
+    dataset, labelsObj, noiselessLabels = generateClusteredPoints(
+        clusterCount, pointsPer, featuresPer, addFeatureNoise=False,
+        addLabelNoise=False, addLabelColumn=False)
     labelColumnlessRows, labelColumnlessCols = len(dataset.points), len(dataset.features)
     #columnLess should have one less column in the DATASET, rows should be the same
     assert (labelColumnlessCols - feats == -1)
@@ -291,9 +286,9 @@ def testGenerateClusteredPoints():
 
 
     #test that generated points have plausible values expected from the nature of generateClusteredPoints
-    allNoiseDataset, labsObj, noiselessLabels = generateClusteredPoints(clusterCount, pointsPer, featuresPer,
-                                                                        addFeatureNoise=True, addLabelNoise=True,
-                                                                        addLabelColumn=True)
+    allNoiseDataset, labsObj, noiselessLabels = generateClusteredPoints(
+        clusterCount, pointsPer, featuresPer, addFeatureNoise=True,
+        addLabelNoise=True, addLabelColumn=True)
     pts, feats = len(allNoiseDataset.points), len(allNoiseDataset.features)
     for curRow in range(pts):
         for curCol in range(feats):
@@ -373,62 +368,6 @@ def testSumDifferenceFunction():
     if not discrepencyEffectivelyZero:
         raise AssertionError("difference result should be " + str(18 * 0.1 * 2) + ' but it is ' + str(diffResult))
     # assert(diffResult == 18 * 0.1 * 2)
-
-@raises(InvalidArgumentValueCombination)
-def testMergeArgumentsException():
-    """ Test helpers._mergeArguments will throw the exception it should """
-    args = {1: 'a', 2: 'b', 3: 'd'}
-    kwargs = {1: 1, 2: 'b'}
-
-    _mergeArguments(args, kwargs)
-
-
-def testMergeArgumentsHand():
-    """ Test helpers._mergeArguments is correct on hand construsted data """
-    args = {1: 'a', 2: 'b', 3: 'd'}
-    kwargs = {1: 'a', 4: 'b'}
-
-    ret = _mergeArguments(args, kwargs)
-
-    assert ret == {1: 'a', 2: 'b', 3: 'd', 4: 'b'}
-
-def testMergeArgumentsMakesCopy():
-    """Test helpers._mergeArguments does not modify or return either original dict"""
-    emptyA = {}
-    emptyB = {}
-    dictA = {'foo': 'bar'}
-    dictB = {'bar': 'foo'}
-
-    merged0 = _mergeArguments(None, emptyB)
-    assert emptyB == merged0
-    assert id(emptyB) != id(merged0)
-    assert emptyB == {}
-
-    merged1 = _mergeArguments(emptyA, emptyB)
-    assert emptyA == merged1
-    assert emptyB == merged1
-    assert id(emptyA) != id(merged1)
-    assert id(emptyB) != id(merged1)
-    assert emptyA == {}
-    assert emptyB == {}
-
-    merged2 = _mergeArguments(dictA, emptyB)
-    assert dictA == merged2
-    assert id(dictA) != id(merged2)
-    assert dictA == {'foo': 'bar'}
-    assert emptyB == {}
-
-    merged3 = _mergeArguments(emptyA, dictB)
-    assert dictB == merged3
-    assert id(dictB) != id(merged3)
-    assert emptyA == {}
-    assert dictB == {'bar': 'foo'}
-
-    merged4 = _mergeArguments(dictA, dictB)
-    assert dictA != merged4
-    assert dictB != merged4
-    assert dictA == {'foo': 'bar'}
-    assert dictB == {'bar': 'foo'}
 
 
 def test_computeMetrics_1d_2arg():
@@ -520,85 +459,3 @@ def test_computeMetrics_multiple_metrics_disallowed():
 
     metricFunctions = [nimble.calculate.cosineSimilarity, rootMeanSquareError]
     computeMetrics(origObj, None, outObj, metricFunctions)
-
-
-def testExtractWinningPredictionLabel():
-    """
-    Unit test for extractWinningPrediction function in runner.py
-    """
-    predictionData = [[1, 3, 3, 2, 3, 2], [2, 3, 3, 2, 2, 2], [1, 1, 1, 1, 1, 1], [4, 4, 4, 3, 3, 3]]
-    BaseObj = createData('Matrix', predictionData)
-    BaseObj.transpose()
-    predictions = BaseObj.features.calculate(extractWinningPredictionLabel)
-    listPredictions = predictions.copy(to="python list")
-
-    assert listPredictions[0][0] - 3 == 0.0
-    assert listPredictions[0][1] - 2 == 0.0
-    assert listPredictions[0][2] - 1 == 0.0
-    assert (listPredictions[0][3] - 4 == 0.0) or (listPredictions[0][3] - 3 == 0.0)
-
-
-def testGenerateAllPairs():
-    """
-    Unit test function for testGenerateAllPairs
-    """
-    testList1 = [1, 2, 3, 4]
-    testPairs = generateAllPairs(testList1)
-    print(testPairs)
-
-    assert len(testPairs) == 6
-    assert ((1, 2) in testPairs) or ((2, 1) in testPairs)
-    assert not (((1, 2) in testPairs) and ((2, 1) in testPairs))
-    assert ((1, 3) in testPairs) or ((3, 1) in testPairs)
-    assert not (((1, 3) in testPairs) and ((3, 1) in testPairs))
-    assert ((1, 4) in testPairs) or ((4, 1) in testPairs)
-    assert not (((1, 4) in testPairs) and ((4, 1) in testPairs))
-    assert ((2, 3) in testPairs) or ((3, 2) in testPairs)
-    assert not (((2, 3) in testPairs) and ((3, 2) in testPairs))
-    assert ((2, 4) in testPairs) or ((4, 2) in testPairs)
-    assert not (((2, 4) in testPairs) and ((4, 2) in testPairs))
-    assert ((3, 4) in testPairs) or ((4, 3) in testPairs)
-    assert not (((3, 4) in testPairs) and ((4, 3) in testPairs))
-
-    testList2 = []
-    testPairs2 = generateAllPairs(testList2)
-    assert testPairs2 is None
-
-def test_inspectArguments():
-
-    def checkSignature(a, b, c, d=False, e=True, f=None, *sigArgs, **sigKwargs):
-        pass
-
-    a, v, k, d = inspectArguments(checkSignature)
-
-    assert a == ['a', 'b', 'c', 'd', 'e', 'f']
-    assert v == 'sigArgs'
-    assert k == 'sigKwargs'
-    assert d == (False, True, None)
-
-def test_numpy2DArray_converts1D():
-    raw = [1, 2, 3, 4]
-    ret = numpy2DArray(raw)
-    fromNumpy = numpy.array(raw)
-    assert len(ret.shape) == 2
-    assert not numpy.array_equal(ret,fromNumpy)
-
-@raises(InvalidArgumentValue)
-def test_numpy2DArray_dimensionException():
-    raw = [[[1, 2], [3, 4]]]
-    ret = numpy2DArray(raw)
-
-def test_is2DArray():
-    raw1D = [1, 2, 3]
-    arr1D = numpy.array(raw1D)
-    mat1D = numpy.matrix(raw1D)
-    assert not is2DArray(arr1D)
-    assert is2DArray(mat1D)
-    raw2D = [[1, 2, 3]]
-    arr2D = numpy.array(raw2D)
-    mat2D = numpy.matrix(raw2D)
-    assert is2DArray(arr2D)
-    assert is2DArray(mat2D)
-    raw3D = [[[1, 2, 3]]]
-    arr3D = numpy.array(raw3D)
-    assert not is2DArray(arr3D)

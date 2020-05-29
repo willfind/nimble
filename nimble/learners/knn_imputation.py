@@ -3,7 +3,7 @@ import numpy
 
 import nimble
 from nimble import CustomLearner
-from nimble.core.helpers import findBestInterface
+from nimble.core._learnHelpers import findBestInterface
 from nimble.match import anyTrue, convertMatchToFunction
 from nimble.exceptions import InvalidArgumentValue
 

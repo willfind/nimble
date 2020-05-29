@@ -11,7 +11,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.learners import KNNImputation
 
-from ..assertionHelpers import assertNoNamesGenerated
+from tests.helpers import assertNoNamesGenerated
 
 @raises(InvalidArgumentValue)
 def test_KNNImputation_exception_invalidMode():

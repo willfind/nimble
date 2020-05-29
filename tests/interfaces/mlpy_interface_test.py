@@ -10,8 +10,8 @@ from nimble.exceptions import InvalidArgumentValue
 from nimble.core.interfaces.mlpy_interface import Mlpy
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
-from ..assertionHelpers import logCountAssertionFactory
-from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import logCountAssertionFactory
+from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 
 mlpySkipDec = SkipMissing('mlpy')
 

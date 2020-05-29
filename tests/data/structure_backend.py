@@ -43,10 +43,10 @@ from nimble.utility import sparseMatrixToArray
 from nimble.utility import scipy, pd
 
 from .baseObject import DataTestObject
-from ..assertionHelpers import logCountAssertionFactory
-from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
-from ..assertionHelpers import assertNoNamesGenerated
-from ..assertionHelpers import CalledFunctionException, calledException
+from tests.helpers import logCountAssertionFactory
+from tests.helpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import assertNoNamesGenerated
+from tests.helpers import CalledFunctionException, calledException
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")

@@ -16,7 +16,7 @@ from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.core.interfaces.universal_interface import UniversalInterface
 from nimble.core.interfaces.universal_interface import PredefinedInterface
-from .assertionHelpers import configSafetyWrapper
+from tests.helpers import configSafetyWrapper
 
 
 ###############

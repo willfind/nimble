@@ -498,3 +498,117 @@ def modifyImportPathAndImport(directory, interfaceInfo):
             return importlib.import_module(package)
         finally:
             sys.path = sysPathBackup
+
+
+def generateAllPairs(items):
+    """
+    Given a list of items, generate a list of all possible pairs
+    (2-combinations) of items from the list, and return as a list
+    of tuples.  Assumes that no two items in the list refer to the same
+    object or number.  If there are duplicates in the input list, there
+    will be duplicates in the output list.
+    """
+    if items is None or len(items) == 0:
+        return None
+
+    pairs = []
+    for i in range(len(items)):
+        firstItem = items[i]
+        for j in range(i + 1, len(items)):
+            secondItem = items[j]
+            pair = (firstItem, secondItem)
+            pairs.append(pair)
+
+    return pairs
+
+
+def countWins(predictions):
+    """
+    Count how many contests were won by each label in the set.  If a
+    class label doesn't win any predictions, it will not be included in
+    the results.  Return a dictionary: {classLabel: # of contests won}.
+    """
+    predictionCounts = {}
+    for prediction in predictions:
+        if prediction in predictionCounts:
+            predictionCounts[prediction] += 1
+        else:
+            predictionCounts[prediction] = 1
+
+    return predictionCounts
+
+
+def extractWinningPredictionLabel(predictions):
+    """
+    Provided a list of tournament winners (class labels) for one
+    point/row in a test set, choose the label that wins the most
+    tournaments.  Returns the winning label.
+    """
+    #Count how many times each class won
+    predictionCounts = countWins(predictions)
+
+    #get the class that won the most tournaments
+    #TODO: what if there are ties?
+    return max(predictionCounts.keys(),
+               key=(lambda key: predictionCounts[key]))
+
+
+def extractWinningPredictionIndex(predictionScores):
+    """
+    Provided a list of confidence scores for one point/row in a test
+    set, return the index of the column (i.e. label) of the highest
+    score.  If no score in the list of predictionScores is a number
+    greater than negative infinity, returns None.
+    """
+    maxScore = float("-inf")
+    maxScoreIndex = -1
+    for i in range(len(predictionScores)):
+        score = predictionScores[i]
+        if score > maxScore:
+            maxScore = score
+            maxScoreIndex = i
+
+    if maxScoreIndex == -1:
+        return None
+    else:
+        return maxScoreIndex
+
+
+def extractWinningPredictionIndexAndScore(predictionScores, featureNamesItoN):
+    """
+    Provided a list of confidence scores for one point/row in a test
+    set, return the index of the column (i.e. label) of the highest
+    score.  If no score in the list of predictionScores is a number
+    greater than negative infinity, returns None.
+    """
+    allScores = extractConfidenceScores(predictionScores, featureNamesItoN)
+
+    if allScores is None:
+        return None
+    else:
+        bestScore = float("-inf")
+        bestLabel = None
+        for key in allScores:
+            value = allScores[key]
+            if value > bestScore:
+                bestScore = value
+                bestLabel = key
+        return (bestLabel, bestScore)
+
+
+def extractConfidenceScores(predictionScores, featureNamesItoN):
+    """
+    Provided a list of confidence scores for one point/row in a test
+    set, and a dict mapping indices to featureNames, return a dict
+    mapping featureNames to scores.
+    """
+    if predictionScores is None or len(predictionScores) == 0:
+        return None
+
+    scoreMap = {}
+    for i in range(len(predictionScores)):
+        score = predictionScores[i]
+        label = featureNamesItoN[i]
+        scoreMap[label] = score
+
+    return scoreMap

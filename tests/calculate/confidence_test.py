@@ -9,7 +9,7 @@ from nose.tools import *
 import nimble
 from nimble.calculate import confidenceIntervalHelper
 from nimble.exceptions import PackageException, ImproperObjectAction
-from ..assertionHelpers import noLogEntryExpected
+from tests.helpers import noLogEntryExpected
 
 def getPredictions():
     predRaw = [252.7, 247.7] * 12

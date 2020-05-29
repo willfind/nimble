@@ -9,7 +9,7 @@ from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.exceptions import FileFormatException
-from .assertionHelpers import noLogEntryExpected
+from tests.helpers import noLogEntryExpected
 
 @raises(TypeError)
 def test_NimbleException_noMessage():

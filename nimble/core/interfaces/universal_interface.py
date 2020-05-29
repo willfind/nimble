@@ -19,20 +19,20 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import PackageException
+from nimble.utility import inspectArguments
 from nimble.utility import inheritDocstringsFactory
 from nimble.utility import cloudpickle
+from nimble.utility import mergeArguments
 from nimble.exceptions import _prettyListString
 from nimble.exceptions import _prettyDictString
 from nimble.core.interfaces.interface_helpers import (
     generateBinaryScoresFromHigherSortedLabelScores,
     calculateSingleLabelScoresFromOneVsOneScores,
-    ovaNotOvOFormatted, checkClassificationStrategy, cacheWrapper)
+    ovaNotOvOFormatted, checkClassificationStrategy, cacheWrapper,
+    generateAllPairs, countWins, extractWinningPredictionIndex,
+    extractWinningPredictionLabel, extractWinningPredictionIndexAndScore,
+    extractConfidenceScores)
 from nimble.core.logger import handleLogging, startTimer, stopTimer
-from nimble.core.helpers import _mergeArguments
-from nimble.core.helpers import generateAllPairs, countWins, inspectArguments
-from nimble.core.helpers import extractWinningPredictionIndex
-from nimble.core.helpers import extractWinningPredictionLabel
-from nimble.core.helpers import extractWinningPredictionIndexAndScore
 from nimble.configuration import configErrors
 
 
@@ -934,7 +934,7 @@ class TrainedLearner(object):
     crossValidation : KFoldCrossValidator
         The object containing the cross-validation results, provided
         cross-validation occurred.  See the Attributes section in
-        ``help(nimble.core.helpers.KFoldCrossValidator)`` or the Examples
+        ``help(nimble.core.learn.KFoldCrossValidator)`` or the Examples
         section in ``help(nimble.crossValidate)`` for more information
         on extracting various results from this object.
     """
@@ -1083,20 +1083,18 @@ class TrainedLearner(object):
         TODO
         """
         timer = startTimer(useLog)
-        #nimble.core.helpers._2dOutputFlagCheck(self._has2dOutput, None, scoreMode,
-        #                                  multiClassStrategy)
-        nimble.core.helpers._2dOutputFlagCheck(self._has2dOutput, None, scoreMode,
-                                          None)
+        nimble.core._learnHelpers._2dOutputFlagCheck(
+            self._has2dOutput, None, scoreMode, None)
 
         if not isinstance(testY, nimble.core.data.Base):
             testX = testX.copy()
             testY = testX.features.extract(testY, useLog=False)
 
-        mergedArguments = _mergeArguments(arguments, kwarguments)
+        mergedArguments = mergeArguments(arguments, kwarguments)
         pred = self.apply(testX, mergedArguments, output, scoreMode,
                           useLog=False)
-        performance = nimble.core.helpers.computeMetrics(testY, None, pred,
-                                                 performanceFunction)
+        performance = nimble.core._learnHelpers.computeMetrics(
+            testY, None, pred, performanceFunction)
         time = stopTimer(timer)
 
         metrics = {}
@@ -1185,10 +1183,10 @@ class TrainedLearner(object):
         """
         timer = startTimer(useLog)
         self._validTestData(testX)
-        nimble.core.helpers._2dOutputFlagCheck(self._has2dOutput, None, scoreMode,
-                                          None)
+        nimble.core._learnHelpers._2dOutputFlagCheck(
+            self._has2dOutput, None, scoreMode, None)
 
-        mergedArguments = _mergeArguments(arguments, kwarguments)
+        mergedArguments = mergeArguments(arguments, kwarguments)
 
         # input transformation
         transformedInputs = self._interface._inputTransformation(
@@ -1369,7 +1367,7 @@ class TrainedLearner(object):
         elif isinstance(outputData, (list, tuple)):
             has2dOutput = len(outputData) > 1
 
-        merged = _mergeArguments(arguments, kwarguments)
+        merged = mergeArguments(arguments, kwarguments)
         self._interface._validateLearnerArgumentValues(self.learnerName,
                                                        merged)
         for arg, value in merged.items():
@@ -1528,7 +1526,7 @@ class TrainedLearner(object):
             The label scores.
         """
         self._validTestData(testX)
-        usedArguments = _mergeArguments(arguments, kwarguments)
+        usedArguments = mergeArguments(arguments, kwarguments)
         (_, _, testX, usedArguments) = self._interface._inputTransformation(
             self.learnerName, None, None, testX, usedArguments,
             self._customDict)
@@ -1594,7 +1592,7 @@ class TrainedLearners(TrainedLearner):
     crossValidation : KFoldCrossValidator
         The object containing the cross-validation results, provided
         cross-validation occurred.  See the Attributes section in
-        ``help(nimble.core.helpers.KFoldCrossValidator)`` or the Examples
+        ``help(nimble.core.learn.KFoldCrossValidator)`` or the Examples
         section in ``help(nimble.crossValidate)`` for more information
         on extracting various results from this object.
     method : str
@@ -1780,7 +1778,7 @@ class TrainedLearners(TrainedLearner):
                 resultsContainer = []
                 for row in predictionMatrix:
                     finalRow = [0] * len(colHeaders)
-                    scores = nimble.core.helpers.extractConfidenceScores(
+                    scores = extractConfidenceScores(
                         row, featureNamesItoN)
                     for label, score in scores.items():
                         #get numerical index of label in return object

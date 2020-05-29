@@ -23,8 +23,8 @@ from nimble.calculate import standardDeviation
 from nimble.calculate import quartiles
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
-from nimble.core.helpers import generateRegressionData
-from ..assertionHelpers import noLogEntryExpected
+from tests.helpers import generateRegressionData
+from tests.helpers import noLogEntryExpected
 
 def testStDev():
     dataArr = np.array([[1], [1], [3], [4], [2], [6], [12], [0]])
@@ -304,7 +304,7 @@ def test_residuals_exception_zeroAxisOnParam():
 @noLogEntryExpected
 def test_residuals_matches_SKL():
     try:
-        nimble.core.helpers.findBestInterface("scikitlearn")
+        nimble.core._learnHelpers.findBestInterface("scikitlearn")
     except InvalidArgumentValue:
         return
 

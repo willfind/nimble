@@ -13,8 +13,8 @@ from nimble.random import pythonRandom
 from nimble.learners import KNNClassifier
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from .assertionHelpers import logCountAssertionFactory, oneLogEntryExpected
-from .assertionHelpers import CalledFunctionException, calledException
+from tests.helpers import logCountAssertionFactory, oneLogEntryExpected
+from tests.helpers import CalledFunctionException, calledException
 
 def test_trainAndApply_dataInputs():
     variables = ["x1", "x2", "x3", "label"]
@@ -481,7 +481,7 @@ def test_trainFunctions_cv_triggered_errors():
         # different exception since this triggers crossValidation directly
         assert "folds" in str(iav)
 
-@mock.patch('nimble.core.core.crossValidate', calledException)
+@mock.patch('nimble.core.learn.crossValidate', calledException)
 def test_frontend_CV_triggering():
     #with small data set
     variables = ["x1", "x2", "x3"]

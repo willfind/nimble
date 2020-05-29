@@ -38,9 +38,9 @@ from nimble.core.data.dataHelpers import constructIndicesList
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
 from nimble.random import pythonRandom
-from ..assertionHelpers import logCountAssertionFactory
-from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
-from ..assertionHelpers import CalledFunctionException, calledException
+from tests.helpers import logCountAssertionFactory
+from tests.helpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import CalledFunctionException, calledException
 
 ###########
 # helpers #

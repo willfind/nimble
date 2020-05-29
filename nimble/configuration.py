@@ -21,7 +21,6 @@ configuration file reflects all available options.
 import os
 import sys
 import inspect
-import importlib
 import configparser
 
 import nimble
@@ -346,7 +345,7 @@ class SessionConfiguration(object):
             if not hasattr(toCall, '__call__'):
                 msg = 'toCall must be callable (function, method, etc) or None'
                 raise InvalidArgumentType(msg)
-            if len(nimble.core.helpers.inspectArguments(toCall)[0]) != 1:
+            if len(nimble.utility.inspectArguments(toCall)[0]) != 1:
                 msg = 'toCall may only take one argument'
                 raise InvalidArgumentValue(msg)
 
@@ -414,7 +413,7 @@ class SessionConfiguration(object):
         try:
             ignore = True
             # raises InvalidArgumentValue if not an interface name
-            interface = nimble.core.helpers.findBestInterface(section)
+            interface = nimble.core._learnHelpers.findBestInterface(section)
             ignore = False
             acceptedNames = interface.optionNames
             if option not in acceptedNames:

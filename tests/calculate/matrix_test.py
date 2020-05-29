@@ -10,8 +10,8 @@ import nimble
 from nimble.calculate import elementwiseMultiply
 from nimble.calculate import elementwisePower
 from nimble.exceptions import InvalidArgumentType
-from ..assertionHelpers import noLogEntryExpected
-from ..assertionHelpers import CalledFunctionException, calledException
+from tests.helpers import noLogEntryExpected
+from tests.helpers import CalledFunctionException, calledException
 
 @patch('nimble.core.data.Base.__mul__', calledException)
 def test_elementwiseMultiply_callsObjElementsMultiply():

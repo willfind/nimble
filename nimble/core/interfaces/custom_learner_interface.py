@@ -30,8 +30,8 @@ class CustomLearnerInterface(UniversalInterface):
         Record the given learnerClass as being accessible through this
         particular interface. The parameter is assumed to be class
         object which is a subclass of CustomLearner and has been
-        validated by helpers.validateCustomLearnerSubclass(); no sanity
-        checking is performed in this method.
+        validated by custom_learner.validateCustomLearnerSubclass(); no
+        sanity checking is performed in this method.
         """
         self.registeredLearners[learnerClass.__name__] = learnerClass
 

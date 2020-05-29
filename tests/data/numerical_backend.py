@@ -31,9 +31,9 @@ from nimble.random import pythonRandom
 from nimble.core.data.dataHelpers import DEFAULT_PREFIX
 
 from .baseObject import DataTestObject
-from ..assertionHelpers import logCountAssertionFactory, noLogEntryExpected
-from ..assertionHelpers import assertNoNamesGenerated
-from ..assertionHelpers import CalledFunctionException, calledException
+from tests.helpers import logCountAssertionFactory, noLogEntryExpected
+from tests.helpers import assertNoNamesGenerated
+from tests.helpers import CalledFunctionException, calledException
 
 
 preserveName = "PreserveTestName"

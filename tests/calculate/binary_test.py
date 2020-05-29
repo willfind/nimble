@@ -7,7 +7,7 @@ from nimble.exceptions import InvalidArgumentValue
 from nimble.calculate import (
     truePositive, trueNegative, falsePositive, falseNegative, recall,
     precision, specificity, balancedAccuracy, f1Score, confusionMatrix)
-from ..assertionHelpers import noLogEntryExpected
+from tests.helpers import noLogEntryExpected
 
 def test_binary_confusionMatrix_nonBinary():
     known = [[1], [2], [1], [2],

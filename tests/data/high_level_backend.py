@@ -42,10 +42,10 @@ from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAct
 from nimble.core.data.dataHelpers import DEFAULT_PREFIX
 from nimble.random import numpyRandom
 from .baseObject import DataTestObject
-from ..assertionHelpers import logCountAssertionFactory
-from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
-from ..assertionHelpers import assertNoNamesGenerated
-from ..assertionHelpers import CalledFunctionException, calledException
+from tests.helpers import logCountAssertionFactory
+from tests.helpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import assertNoNamesGenerated
+from tests.helpers import CalledFunctionException, calledException
 
 
 preserveName = "PreserveTestName"
@@ -2855,7 +2855,7 @@ class HighLevelModifying(DataTestObject):
             func = caller.points.normalize
         else:
             func = caller.features.normalize
-        a, va, vk, d = nimble.core.helpers.inspectArguments(func)
+        a, va, vk, d = nimble.utility.inspectArguments(func)
         assert d == (None, None, None, None)
 
         if axis == 'point':

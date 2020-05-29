@@ -12,8 +12,8 @@ from nimble.exceptions import ImproperObjectAction, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.random import pythonRandom
 from .baseObject import DataTestObject
-from ..assertionHelpers import assertNoNamesGenerated
-from ..assertionHelpers import noLogEntryExpected
+from tests.helpers import assertNoNamesGenerated
+from tests.helpers import noLogEntryExpected
 
 class StretchDataSafe(DataTestObject):
 

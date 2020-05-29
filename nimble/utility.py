@@ -13,6 +13,7 @@ import numpy
 
 # nimble.exceptions may be imported
 from nimble.exceptions import InvalidArgumentValue, PackageException
+from nimble.exceptions import InvalidArgumentValueCombination
 
 
 def isFunction(func):
@@ -23,6 +24,77 @@ def isFunction(func):
     if inspect.isfunction(func):
         return True
     return type(func).__name__ == 'cython_function_or_method'
+
+
+def inspectArguments(func):
+    """
+    To be used in place of inspect.getargspec for Python3 compatibility.
+    Return is the tuple (args, varargs, keywords, defaults)
+    """
+    try:
+        # in py>=3.5 inspect.signature can extract the original signature
+        # of wrapped functions
+        sig = inspect.signature(func)
+        a = []
+        if inspect.isclass(func) or hasattr(func, '__self__'):
+            # self included already for cython function signature
+            if not 'cython' in str(type(func)):
+                # add self to classes and bounded methods to align
+                # with output of getfullargspec
+                a.append('self')
+        v = None
+        k = None
+        d = []
+        for param in sig.parameters.values():
+            if param.kind == param.POSITIONAL_OR_KEYWORD:
+                a.append(param.name)
+                if param.default is not param.empty:
+                    d.append(param.default)
+            elif param.kind == param.VAR_POSITIONAL:
+                v = param.name
+            elif param.kind == param.VAR_KEYWORD:
+                k = param.name
+        d = tuple(d)
+        argspec = tuple([a, v, k , d])
+    except AttributeError:
+        argspec = inspect.getfullargspec(func)[:4] # py>=3
+
+    return argspec
+
+
+def mergeArguments(argumentsParam, kwargsParam):
+    """
+    Takes two dicts and returns a new dict of them merged together. Will
+    throw an exception if the two inputs have contradictory values for
+    the same key.
+    """
+    ret = {}
+    if argumentsParam is None:
+        argumentsParam = {}
+    # UniversalInterface uses this helper to merge params a little differently,
+    # arguments (which might be None) is passed as kwargsParam so in that case
+    # we need to set kwargsParam to {}.
+    if kwargsParam is None:
+        kwargsParam = {}
+    if len(argumentsParam) < len(kwargsParam):
+        smaller = argumentsParam
+        larger = kwargsParam
+    else:
+        smaller = kwargsParam
+        larger = argumentsParam
+
+    for k in larger:
+        ret[k] = larger[k]
+    for k in smaller:
+        val = smaller[k]
+        if k in ret and ret[k] != val:
+            msg = "The two dicts disagree. key= " + str(k)
+            msg += " | arguments value= " + str(argumentsParam[k])
+            msg += " | **kwargs value= " + str(kwargsParam[k])
+            raise InvalidArgumentValueCombination(msg)
+        ret[k] = val
+
+    return ret
 
 
 def inheritDocstringsFactory(toInherit):

@@ -5,8 +5,8 @@ import numpy
 import nimble
 from nimble import CustomLearner
 from nimble.learners import RidgeRegression, KNNClassifier
-from .assertionHelpers import configSafetyWrapper
-from .assertionHelpers import noLogEntryExpected
+from tests.helpers import configSafetyWrapper
+from tests.helpers import noLogEntryExpected
 
 class LoveAtFirstSightClassifier(CustomLearner):
     """ Always predicts the value of the first class it sees in the most recently trained data """

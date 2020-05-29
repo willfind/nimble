@@ -18,7 +18,7 @@ from nimble.exceptions import InvalidArgumentValue
 from nimble.core.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.core.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.core.interfaces.interface_helpers import PythonSearcher
-from nimble.core.helpers import inspectArguments
+from nimble.utility import inspectArguments
 from nimble.utility import inheritDocstringsFactory
 from nimble.configuration import configErrors
 

@@ -20,10 +20,10 @@ from nose.plugins.attrib import attr
 import nimble
 from nimble.exceptions import InvalidArgumentValue, PackageException
 from nimble.core.interfaces.universal_interface import UniversalInterface
-from nimble.core.helpers import generateClusteredPoints
-from nimble.core.helpers import generateClassificationData
-from nimble.core.helpers import generateRegressionData
-from ..assertionHelpers import configSafetyWrapper
+from nimble.core._learnHelpers import generateClusteredPoints
+from tests.helpers import configSafetyWrapper
+from tests.helpers import generateClassificationData
+from tests.helpers import generateRegressionData
 
 
 def checkFormat(scores, numLabels):

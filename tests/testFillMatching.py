@@ -11,8 +11,8 @@ from nimble import match
 from nimble.learners import KNNImputation
 from nimble.exceptions import ImproperObjectAction, InvalidArgumentValue
 
-from .assertionHelpers import logCountAssertionFactory
-from .assertionHelpers import assertNoNamesGenerated
+from tests.helpers import logCountAssertionFactory
+from tests.helpers import assertNoNamesGenerated
 
 def test_fillMatching_exception_nansUnmatched():
     raw = [[1, 1, 1, 0], [1, 1, 1, None], [2, 2, 2, 0], [2, 2, 2, 3],

@@ -9,7 +9,7 @@ import nose
 
 import nimble
 from nimble.random import _startAlternateControl, _endAlternateControl
-from .assertionHelpers import logCountAssertionFactory
+from tests.helpers import logCountAssertionFactory
 
 
 @nose.with_setup(_startAlternateControl, _endAlternateControl)

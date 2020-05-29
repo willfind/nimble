@@ -2,7 +2,7 @@ import numpy
 
 import nimble
 from nimble import match
-from ..assertionHelpers import noLogEntryExpected
+from tests.helpers import noLogEntryExpected
 
 @noLogEntryExpected
 def backend_match_value(toMatch, true, false):

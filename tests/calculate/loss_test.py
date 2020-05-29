@@ -12,7 +12,7 @@ from nimble.calculate import fractionCorrect
 from nimble.calculate import fractionIncorrect
 from nimble.calculate import rSquared
 from nimble.calculate import varianceFractionRemaining
-from ..assertionHelpers import noLogEntryExpected
+from tests.helpers import noLogEntryExpected
 
 #################
 # _computeError #

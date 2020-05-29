@@ -4,7 +4,7 @@ nimble
 .. automodule:: nimble
    :members:
 
-.. autoclass:: nimble.core.helpers.KFoldCrossValidator
+.. autoclass:: nimble.core.learn.KFoldCrossValidator
    :members:
 
 .. autoclass:: nimble.core.interfaces.universal_interface.TrainedLearner

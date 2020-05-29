@@ -26,21 +26,21 @@ from nimble.random import _startAlternateControl, _endAlternateControl
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.interfaces.interface_helpers import PythonSearcher
-from nimble.core.helpers import generateClassificationData
-from nimble.core.helpers import generateRegressionData
-from nimble.core.helpers import generateClusteredPoints
+from nimble.core._learnHelpers import generateClusteredPoints
 from nimble.core.interfaces.shogun_interface import checkProcessFailure
 from nimble.utility import scipy
 
 from .skipTestDecorator import SkipMissing
-from ..assertionHelpers import logCountAssertionFactory
-from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import logCountAssertionFactory
+from tests.helpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import generateClassificationData
+from tests.helpers import generateRegressionData
 
 shogunSkipDec = SkipMissing('shogun')
 
 @shogunSkipDec
 def test_Shogun_findCallable_nameAndDocPreservation():
-    shogunInt = nimble.core.helpers.findBestInterface('shogun')
+    shogunInt = nimble.core._learnHelpers.findBestInterface('shogun')
     swigObj = shogunInt.findCallable('LibSVM')
     wrappedShogun = swigObj()
     assert 'WrappedShogun' in str(type(wrappedShogun))
@@ -424,7 +424,7 @@ def equalityAssertHelper(ret1, ret2, ret3=None):
 
 def shogunTrainBackend(learner, data, toSet):
     Xtrain, Ytrain = data
-    sg = nimble.core.helpers.findBestInterface('shogun')
+    sg = nimble.core._learnHelpers.findBestInterface('shogun')
     sgObj = sg.findCallable(learner)
     shogunObj = sgObj()
     args = {}
@@ -512,7 +512,7 @@ def testShogunClassificationLearners():
 
     @logCountAssertionFactory(2)
     def compareOutputs(learner):
-        sg = nimble.core.helpers.findBestInterface('shogun')
+        sg = nimble.core._learnHelpers.findBestInterface('shogun')
         sgObj = sg.findCallable(learner)
         shogunObj = sgObj()
         ptVal = shogunObj.get_machine_problem_type()

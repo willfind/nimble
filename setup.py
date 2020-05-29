@@ -45,10 +45,13 @@ if '--universal' not in sys.argv:
     # Make sure the compiled Cython files in the distribution are up-to-date
     try:
         from Cython.Build import cythonize, build_ext
-        to_cythonize = [os.path.join('nimble', 'core.py'),
-                        os.path.join('nimble', 'helpers.py'),
-                        os.path.join('nimble', 'data', '*.py'),
+        to_cythonize = [os.path.join('nimble', 'core', 'create.py'),
+                        os.path.join('nimble', 'core', '_createHelpers.py'),
+                        os.path.join('nimble', 'core', 'learn.py'),
+                        os.path.join('nimble', 'core', '_learnHelpers.py'),
+                        os.path.join('nimble', 'core', 'data', '*.py'),
                         os.path.join('nimble', 'calculate', '*.py'),
+                        os.path.join('nimble', 'random', '*.py'),
                         os.path.join('nimble', 'match', '*.py'),
                         os.path.join('nimble', 'fill', '*.py')]
         exclude = [os.path.join('nimble', '*', '__init__.py')]

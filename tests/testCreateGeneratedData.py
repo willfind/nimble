@@ -14,7 +14,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble import createRandomData
-from .assertionHelpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 
 
 returnTypes = copy.copy(nimble.core.data.available)

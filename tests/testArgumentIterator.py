@@ -9,7 +9,7 @@ from functools import reduce
 sys.path.append('../..')
 
 from nimble import CV
-from nimble.core.helpers import ArgumentIterator
+from nimble.core._learnHelpers import ArgumentIterator
 
 # example call to _buildArgPermutationsList:
 # if rawArgInput is {'a':(1,2,3), 'b':(4,5)}

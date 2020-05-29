@@ -19,12 +19,12 @@ from nose.tools import raises
 import numpy
 
 import nimble
-from nimble.core.helpers import generateClassificationData
 from nimble.calculate import rootMeanSquareError as RMSE
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import InvalidArgumentType
-from ..assertionHelpers import configSafetyWrapper
+from tests.helpers import generateClassificationData
+from tests.helpers import configSafetyWrapper
 
 #####################
 # Helpers for tests #

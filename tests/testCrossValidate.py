@@ -23,11 +23,11 @@ from nimble.exceptions import ImproperObjectAction
 from nimble.calculate import *
 from nimble.random import pythonRandom
 from nimble.learners import KNNClassifier
-from nimble.core.helpers import computeMetrics
-from nimble.core.helpers import generateClassificationData
-from nimble.core.helpers import KFoldCrossValidator
-from .assertionHelpers import configSafetyWrapper
-from .assertionHelpers import oneLogEntryExpected
+from nimble.core._learnHelpers import computeMetrics
+from nimble.core.learn import KFoldCrossValidator
+from tests.helpers import configSafetyWrapper
+from tests.helpers import oneLogEntryExpected
+from tests.helpers import generateClassificationData
 
 
 def _randomLabeledDataSet(dataType='Matrix', numPoints=50, numFeatures=5, numLabels=3):
