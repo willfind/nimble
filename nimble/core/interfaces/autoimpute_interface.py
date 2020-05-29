@@ -18,9 +18,9 @@ from nimble.exceptions import InvalidArgumentValue
 from nimble.core.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.core.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble.core.interfaces.interface_helpers import PythonSearcher
-from nimble.utility import inspectArguments
-from nimble.utility import inheritDocstringsFactory
-from nimble.configuration import configErrors
+from nimble._utility import inspectArguments
+from nimble._utility import inheritDocstringsFactory
+from nimble._configuration import configErrors
 
 # Contains path to sciKitLearn root directory
 #sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'

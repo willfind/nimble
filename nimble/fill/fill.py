@@ -1,18 +1,16 @@
 """
 Variety of functions to replace values in data with other values
 """
-import functools
 
 import numpy
 
 import nimble
-from nimble.match import convertMatchToFunction
-from nimble.match import anyValues
+from nimble.match import _convertMatchToFunction
 from nimble.exceptions import InvalidArgumentValue
 
-def booleanElementMatch(vector, match):
+def _booleanElementMatch(vector, match):
     if not isinstance(match, nimble.core.data.Base):
-        match = convertMatchToFunction(match)
+        match = _convertMatchToFunction(match)
         return vector.matchingElements(match, useLog=False)
     return match
 
@@ -64,7 +62,7 @@ def constant(vector, match, constantValue):
         [[1 99 3 99 5]]
         )
     """
-    toFill = booleanElementMatch(vector, match)
+    toFill = _booleanElementMatch(vector, match)
 
     def filler(vec):
         return [constantValue if fill else val
@@ -278,7 +276,7 @@ def forwardFill(vector, match):
         [[6 6 2 2 4]]
         )
     """
-    toFill = booleanElementMatch(vector, match)
+    toFill = _booleanElementMatch(vector, match)
     if toFill[0]:
         msg = directionError('forward fill', vector, 'first')
         raise InvalidArgumentValue(msg)
@@ -347,7 +345,7 @@ def backwardFill(vector, match):
         [[6 2 2 4 4]]
         )
     """
-    toFill = booleanElementMatch(vector, match)
+    toFill = _booleanElementMatch(vector, match)
     if toFill[-1]:
         msg = directionError('backward fill', vector, 'last')
         raise InvalidArgumentValue(msg)
@@ -422,7 +420,7 @@ def interpolate(vector, match, **kwarguments):
         [[6 5.000 4 3.000 2]]
         )
     """
-    toFill = booleanElementMatch(vector, match)
+    toFill = _booleanElementMatch(vector, match)
     if 'x' in kwarguments:
         msg = "'x' is a disallowed keyword argument because it is "
         msg += "determined by the data in the vector."
@@ -468,7 +466,7 @@ def statsBackend(vector, match, funcString, statisticsFunction):
     """
     Backend for filling with a statistics function from nimble.calculate.
     """
-    toFill = booleanElementMatch(vector, match)
+    toFill = _booleanElementMatch(vector, match)
 
     def toStat(vec):
         return [val for val, fill in zip(vector, toFill) if not fill]

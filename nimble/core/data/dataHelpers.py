@@ -14,7 +14,7 @@ from functools import wraps
 import numpy
 
 import nimble
-from nimble.utility import pd
+from nimble._utility import pd
 from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction

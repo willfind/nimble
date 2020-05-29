@@ -20,8 +20,8 @@ from nimble.core.interfaces.universal_interface import PredefinedInterface
 from nimble.core.interfaces.interface_helpers import PythonSearcher
 from nimble.core.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.core.interfaces.interface_helpers import removeFromTailMatchedLists
-from nimble.utility import inspectArguments
-from nimble.utility import inheritDocstringsFactory, dtypeConvert
+from nimble._utility import inspectArguments
+from nimble._utility import inheritDocstringsFactory, dtypeConvert
 from nimble.random import _generateSubsidiarySeed
 
 # Contains path to mlpy root directory

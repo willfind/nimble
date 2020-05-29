@@ -1,5 +1,5 @@
 """
-Tests for nimble.utility submodule
+Tests for nimble._utility submodule
 """
 
 from nose.tools import raises
@@ -7,10 +7,10 @@ import numpy
 
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.utility import DeferredModuleImport
-from nimble.utility import mergeArguments
-from nimble.utility import inspectArguments
-from nimble.utility import numpy2DArray, is2DArray
+from nimble._utility import DeferredModuleImport
+from nimble._utility import mergeArguments
+from nimble._utility import inspectArguments
+from nimble._utility import numpy2DArray, is2DArray
 
 def test_DeferredModuleImport_numpy():
     optNumpy = DeferredModuleImport('numpy')

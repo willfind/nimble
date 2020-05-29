@@ -7,7 +7,7 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
-from nimble.utility import pd
+from nimble._utility import pd
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
 from .dataHelpers import fillArrayWithCollapsedFeatures

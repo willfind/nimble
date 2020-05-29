@@ -19,13 +19,8 @@ from .axis import Axis
 from .points import Points
 from .features import Features
 
-
+# List of type strings for the concrete objects which subclass
+# nimble.core.data.Base These may be used in calls to nimble.data or
+# other similiar object creation methods.
 # We want this for unit testing
 available = ['List', 'Matrix', 'Sparse', 'DataFrame']
-"""
-List of type strings for the concrete objects which subclass
-nimble.core.data.Base These may be used in calls to nimble.data or
-other similiar object creation methods.
-"""
-
-__all__ = ['available', 'Axis', 'Base', 'BaseView', 'Features', 'Points']

@@ -30,8 +30,8 @@ from nose.tools import *
 import nimble
 from nimble.core.data import Base
 from nimble.core.data import available
-from nimble.utility import inheritDocstringsFactory, numpy2DArray
-from nimble.utility import pd
+from nimble._utility import inheritDocstringsFactory, numpy2DArray
+from nimble._utility import pd
 from nimble.core.data.dataHelpers import DEFAULT_PREFIX
 from nimble.core.data.dataHelpers import DEFAULT_NAME_PREFIX
 from nimble.core.data.dataHelpers import constructIndicesList

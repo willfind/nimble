@@ -1,3 +1,6 @@
+"""
+Module defining exceptions used in nimble.
+"""
 
 from .exceptions import NimbleException
 from .exceptions import InvalidArgumentType

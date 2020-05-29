@@ -1,5 +1,5 @@
 nimble.settings
 ===============
 
-.. autoclass:: nimble.configuration.SessionConfiguration
+.. autoclass:: nimble._configuration.SessionConfiguration
    :members:

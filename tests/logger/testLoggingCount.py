@@ -58,11 +58,11 @@ nimble_tested = list(map(prefixAdder('nimble'), nimble_funcs))
 
 # no calculate functions should be logged.
 calculate_funcs = [
-    'balancedAccuracy', 'confidenceIntervalHelper', 'confusionMatrix',
-    'correlation', 'cosineSimilarity', 'covariance', 'detectBestResult',
-    'elementwiseMultiply', 'elementwisePower', 'f1Score', 'falseNegative',
-    'falsePositive', 'fractionCorrect', 'fractionIncorrect', 'inverse',
-    'leastSquaresSolution', 'maximum', 'mean', 'meanAbsoluteError',
+    'balancedAccuracy', 'confusionMatrix', 'correlation', 'cosineSimilarity',
+    'covariance', 'detectBestResult', 'elementwiseMultiply',
+    'elementwisePower', 'f1Score', 'falseNegative', 'falsePositive',
+    'fractionCorrect', 'fractionIncorrect', 'inverse', 'leastSquaresSolution',
+    'maximum', 'mean', 'meanAbsoluteError',
     'meanFeaturewiseRootMeanSquareError', 'median', 'medianAbsoluteDeviation',
     'minimum', 'mode', 'precision', 'proportionMissing', 'proportionZero',
     'pseudoInverse', 'quartiles', 'recall', 'residuals', 'rootMeanSquareError',
@@ -75,7 +75,7 @@ calculate_tested = list(map(prefixAdder('nimble.calculate'), calculate_funcs))
 exceptions_funcs = [
     'NimbleException', 'InvalidArgumentType', 'InvalidArgumentValue',
     'InvalidArgumentTypeCombination', 'InvalidArgumentValueCombination',
-    'ImproperObjectAction', 'PackageException', 'FileFormatException'
+    'ImproperObjectAction', 'PackageException', 'FileFormatException',
     ]
 exceptions_tested = list(map(prefixAdder('nimble.exceptions'),
                              exceptions_funcs))
@@ -93,14 +93,14 @@ match_funcs = [
     'allNonNumeric', 'allNonZero', 'allNumeric', 'allPositive', 'allTrue',
     'allValues', 'allZero', 'anyBoolean', 'anyFalse', 'anyInfinity',
     'anyMissing', 'anyNegative', 'anyNonNumeric', 'anyNonZero', 'anyNumeric',
-    'anyPositive', 'anyTrue', 'anyValues', 'anyZero', 'boolean',
-    'convertMatchToFunction', 'false', 'infinity', 'missing', 'negative',
-    'nonNumeric', 'nonZero', 'numeric', 'positive', 'true', 'zero'
+    'anyPositive', 'anyTrue', 'anyValues', 'anyZero', 'boolean', 'false',
+    'infinity', 'missing', 'negative', 'nonNumeric', 'nonZero', 'numeric',
+    'positive', 'true', 'zero',
     ]
 match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 
 random_logged = [
-    'data', 'setSeed'
+    'data', 'setSeed',
     ]
 random_funcs = random_logged
 random_tested = list(map(prefixAdder('nimble.random'), random_funcs))

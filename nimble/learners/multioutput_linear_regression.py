@@ -2,7 +2,6 @@
 Contains the MultiOutputLinearRegression custom learner class.
 """
 
-import numpy
 try:
     from sklearn.linear_model import LinearRegression
     imported = True
@@ -11,7 +10,7 @@ except ImportError:
 
 import nimble
 from nimble import CustomLearner
-from nimble.utility import numpy2DArray, dtypeConvert
+from nimble._utility import numpy2DArray, dtypeConvert
 
 
 class MultiOutputLinearRegression(CustomLearner):
@@ -30,7 +29,7 @@ class MultiOutputLinearRegression(CustomLearner):
         for i in range(len(trainY.features)):
             currY = trainY.features.copy(i, useLog=False)
             rawCurrY = dtypeConvert(currY.copy(to='numpyarray',
-                                    outputAs1D=True))
+                                               outputAs1D=True))
 
             currModel = LinearRegression()
             currModel.fit(rawTrainX, rawCurrY)

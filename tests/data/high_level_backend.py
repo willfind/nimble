@@ -2855,7 +2855,7 @@ class HighLevelModifying(DataTestObject):
             func = caller.points.normalize
         else:
             func = caller.features.normalize
-        a, va, vk, d = nimble.utility.inspectArguments(func)
+        a, va, vk, d = nimble._utility.inspectArguments(func)
         assert d == (None, None, None, None)
 
         if axis == 'point':

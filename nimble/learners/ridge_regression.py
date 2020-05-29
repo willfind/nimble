@@ -6,7 +6,7 @@ import numpy
 
 import nimble
 from nimble import CustomLearner
-from nimble.utility import dtypeConvert
+from nimble._utility import dtypeConvert
 
 
 class RidgeRegression(CustomLearner):

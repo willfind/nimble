@@ -12,7 +12,7 @@ import numpy
 
 from nimble import CustomLearner
 from nimble.core._createHelpers import initDataObject
-from nimble.utility import dtypeConvert
+from nimble._utility import dtypeConvert
 
 
 class KNNClassifier(CustomLearner):

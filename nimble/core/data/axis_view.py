@@ -3,7 +3,7 @@ Defines a subclass of the Axis object, which serves as the primary
 base class for read only axis views of data objects.
 """
 
-from nimble.utility import inheritDocstringsFactory
+from nimble._utility import inheritDocstringsFactory
 from .axis import Axis
 from .points import Points
 

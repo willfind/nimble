@@ -11,9 +11,9 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.core.interfaces.universal_interface import UniversalInterface
-from nimble.utility import inheritDocstringsFactory
-from nimble.utility import inspectArguments
-from nimble.utility import dtypeConvert
+from nimble._utility import inheritDocstringsFactory
+from nimble._utility import inspectArguments
+from nimble._utility import dtypeConvert
 
 
 @inheritDocstringsFactory(UniversalInterface)

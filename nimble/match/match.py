@@ -5,7 +5,6 @@ Variety of functions to determine if data matches given conditions
 import numpy
 
 import nimble
-from nimble.exceptions import InvalidArgumentType
 
 def missing(value):
     """
@@ -343,7 +342,7 @@ def true(value):
     >>> true('True')
     False
     """
-    return boolean(value) and value == True
+    return boolean(value) and value is True
 
 def false(value):
     """
@@ -375,7 +374,7 @@ def false(value):
     >>> false('False')
     False
     """
-    return boolean(value) and value == False
+    return boolean(value) and value is False
 
 def anyValues(match):
     """
@@ -421,7 +420,7 @@ def anyValues(match):
     >>> anyLetterD(data)
     False
     """
-    match = convertMatchToFunction(match)
+    match = _convertMatchToFunction(match)
     def anyValueFinder(data):
         return anyAllValuesBackend(any, data, match)
     return anyValueFinder
@@ -470,7 +469,7 @@ def allValues(match):
     >>> allLetterA(data)
     False
     """
-    match = convertMatchToFunction(match)
+    match = _convertMatchToFunction(match)
     def allValueFinder(data):
         return anyAllValuesBackend(all, data, match)
     return allValueFinder
@@ -1311,7 +1310,7 @@ def anyAllValuesBackend(quantity, data, match):
                 return False
         return True
 
-def convertMatchToFunction(match):
+def _convertMatchToFunction(match):
     """
     Factory for functions determing if a value is a match.
 
@@ -1337,13 +1336,13 @@ def convertMatchToFunction(match):
 
     Examples
     --------
-    >>> matchA = convertMatchToFunction('A')
+    >>> matchA = _convertMatchToFunction('A')
     >>> matchA('A')
     True
     >>> matchA('B')
     False
 
-    >>> matchList = convertMatchToFunction([1, 'A'])
+    >>> matchList = _convertMatchToFunction([1, 'A'])
     >>> matchList(1)
     True
     >>> matchList('A')

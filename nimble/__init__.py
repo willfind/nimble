@@ -8,7 +8,7 @@ data, and do package level configuration and information querying.
 
 # Import those functions that we want to be accessible in the
 # top level
-from nimble.configuration import nimblePath
+from nimble._configuration import nimblePath
 from nimble.core.create import data
 from nimble.core.create import ones
 from nimble.core.create import zeros
@@ -32,10 +32,11 @@ from nimble.core.logger import log
 from nimble.core.logger import showLog
 from nimble.core.custom_learner import CustomLearner
 
-# Import those submodules that need setup or we want to be
-# accessible to the user
-from nimble import configuration
+# import submodules that need setup (not in __all__)
+from nimble import _configuration
 from nimble import core
+
+# import submodules accessible to the user (in __all__)
 from nimble import learners
 from nimble import calculate
 from nimble import random
@@ -44,7 +45,7 @@ from nimble import fill
 from nimble import exceptions
 
 # load settings from configuration file
-settings = configuration.loadSettings()
+settings = _configuration.loadSettings()
 
 # initialize the interfaces
 core.interfaces.initInterfaceSetup()
@@ -53,9 +54,9 @@ core.interfaces.initInterfaceSetup()
 core.logger.initLoggerAndLogConfig()
 
 __all__ = ['calculate', 'crossValidate', 'CustomLearner', 'CV', 'data',
-           'exceptions', 'fill', 'identity', 'Init', 'learnerDefaultValues',
-           'learnerParameters', 'learners', 'learnerType', 'listLearners',
-           'loadData', 'loadTrainedLearner', 'log', 'match', 'nimblePath',
-           'normalizeData', 'ones', 'setRandomSeed', 'settings', 'showLog',
-           'random', 'train', 'trainAndApply', 'trainAndTest',
-           'trainAndTestOnTrainingData', 'zeros']
+           'exceptions', 'fill', 'fillMatching', 'identity', 'Init',
+           'learnerDefaultValues', 'learnerParameters', 'learners',
+           'learnerType', 'listLearners', 'loadData', 'loadTrainedLearner',
+           'log', 'match', 'nimblePath', 'normalizeData', 'ones',
+           'settings', 'showLog', 'random', 'train', 'trainAndApply',
+           'trainAndTest', 'trainAndTestOnTrainingData', 'zeros']

@@ -17,7 +17,7 @@ from nimble.core.data import Base
 from nimble.random import pythonRandom
 from nimble.random import numpyRandom
 from nimble.core.custom_learner import validateCustomLearnerSubclass
-from nimble.configuration import setInterfaceOptions
+from nimble._configuration import setInterfaceOptions
 
 
 def findBestInterface(package):

@@ -19,10 +19,10 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import PackageException
-from nimble.utility import inspectArguments
-from nimble.utility import inheritDocstringsFactory
-from nimble.utility import cloudpickle
-from nimble.utility import mergeArguments
+from nimble._utility import inspectArguments
+from nimble._utility import inheritDocstringsFactory
+from nimble._utility import cloudpickle
+from nimble._utility import mergeArguments
 from nimble.exceptions import _prettyListString
 from nimble.exceptions import _prettyDictString
 from nimble.core.interfaces.interface_helpers import (
@@ -33,7 +33,7 @@ from nimble.core.interfaces.interface_helpers import (
     extractWinningPredictionLabel, extractWinningPredictionIndexAndScore,
     extractConfidenceScores)
 from nimble.core.logger import handleLogging, startTimer, stopTimer
-from nimble.configuration import configErrors
+from nimble._configuration import configErrors
 
 
 def captureOutput(toWrap):

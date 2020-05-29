@@ -3,7 +3,7 @@ Tests a that base class and its subclasses are being documentated as
 expected.
 """
 
-from nimble.utility import inheritDocstringsFactory
+from nimble._utility import inheritDocstringsFactory
 from nimble.core.data import Base, Matrix, List, Sparse, DataFrame
 from nimble.core.interfaces.universal_interface import UniversalInterface
 from nimble.core.interfaces.keras_interface import Keras

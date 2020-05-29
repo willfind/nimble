@@ -25,5 +25,5 @@ from .ridge_regression import RidgeRegression
 from .knn_imputation import KNNImputation
 
 __all__ = ['KNNClassifier', 'KNNImputation', 'MeanConstant',
-           'MultiOutputLinearRegression', 'MultiOutputRidgeRegression', 
+           'MultiOutputLinearRegression', 'MultiOutputRidgeRegression',
            'RidgeRegression']

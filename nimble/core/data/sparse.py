@@ -10,9 +10,9 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException, ImproperObjectAction
-from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
-from nimble.utility import scipy, pd
-from nimble.utility import sparseMatrixToArray
+from nimble._utility import inheritDocstringsFactory, numpy2DArray, is2DArray
+from nimble._utility import scipy, pd
+from nimble._utility import sparseMatrixToArray
 from . import dataHelpers
 from .base import Base
 from .base_view import BaseView

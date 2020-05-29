@@ -6,7 +6,7 @@ Sparse object.
 import numpy
 
 import nimble
-from nimble.utility import scipy
+from nimble._utility import scipy
 from .axis_view import AxisView
 from .sparseAxis import SparseAxis
 from .points import Points

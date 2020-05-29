@@ -12,7 +12,7 @@ import importlib
 import numpy
 
 # nimble.exceptions may be imported
-from nimble.exceptions import InvalidArgumentValue, PackageException
+from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 
 
@@ -38,7 +38,7 @@ def inspectArguments(func):
         a = []
         if inspect.isclass(func) or hasattr(func, '__self__'):
             # self included already for cython function signature
-            if not 'cython' in str(type(func)):
+            if 'cython' not in str(type(func)):
                 # add self to classes and bounded methods to align
                 # with output of getfullargspec
                 a.append('self')
@@ -55,7 +55,7 @@ def inspectArguments(func):
             elif param.kind == param.VAR_KEYWORD:
                 k = param.name
         d = tuple(d)
-        argspec = tuple([a, v, k , d])
+        argspec = tuple([a, v, k, d])
     except AttributeError:
         argspec = inspect.getfullargspec(func)[:4] # py>=3
 
@@ -135,11 +135,20 @@ def is2DArray(arr):
     return isinstance(arr, numpy.ndarray) and len(arr.shape) == 2
 
 class DeferredModuleImport(object):
+    """
+    Defer import of third-party modules.
+
+    Module must first be determined to accessible to nimble by calling
+    the ``nimbleAccessible`` method.
+    """
     def __init__(self, name):
         self.name = name
         self.imported = None
 
     def nimbleAccessible(self):
+        """
+        Determine if nimble can successfully import the module.
+        """
         if self.imported is None:
             try:
                 mod = importlib.import_module(self.name)

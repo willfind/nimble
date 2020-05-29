@@ -17,8 +17,8 @@ from nimble.random import _generateSubsidiarySeed
 from nimble.exceptions import InvalidArgumentValue
 from nimble.core._learnHelpers import generateClusteredPoints
 from nimble.calculate.loss import rootMeanSquareError
-from nimble.utility import inspectArguments
-from nimble.utility import scipy
+from nimble._utility import inspectArguments
+from nimble._utility import scipy
 from .test_helpers import checkLabelOrderingAndScoreAssociations
 from .skipTestDecorator import SkipMissing
 from tests.helpers import logCountAssertionFactory

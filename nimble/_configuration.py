@@ -19,7 +19,6 @@ configuration file reflects all available options.
 # Note: .ini format's option names are not case sensitive?
 
 import os
-import sys
 import inspect
 import configparser
 
@@ -158,9 +157,8 @@ class SortedCommentPreservingConfigParser(configparser.SafeConfigParser):
                     optname = None
                 # no section header in the file?
                 elif cursect is None:
-                    raise configparser.MissingSectionHeaderError(fpname,
-                                                                 lineno,
-                                                                 line)
+                    raise configparser.MissingSectionHeaderError(
+                        fpname, lineno, line)
                 # an option line?
                 else:
                     mo = self._optcre.match(line)
@@ -272,8 +270,7 @@ class SessionConfiguration(object):
                 msg = "If specifying an option, one must also specify "
                 msg += "a section"
                 raise InvalidArgumentTypeCombination(msg)
-            else:
-                pass  # if None, None is specified, we will return false
+
         return success
 
 
@@ -345,7 +342,7 @@ class SessionConfiguration(object):
             if not hasattr(toCall, '__call__'):
                 msg = 'toCall must be callable (function, method, etc) or None'
                 raise InvalidArgumentType(msg)
-            if len(nimble.utility.inspectArguments(toCall)[0]) != 1:
+            if len(nimble._utility.inspectArguments(toCall)[0]) != 1:
                 msg = 'toCall may only take one argument'
                 raise InvalidArgumentValue(msg)
 
@@ -425,8 +422,8 @@ class SessionConfiguration(object):
         # if ignore is true, this exception comes from the findBestInterface
         # call, and means that the section is not related to an interface.
         except InvalidArgumentValue:
-                if not ignore:
-                    raise
+            if not ignore:
+                raise
         # a PackageException is the result of a possible interface being
         # unavailable, we will allow setting a location for possible interfaces
         # as this may aid in loading them in the future.
@@ -567,7 +564,7 @@ def setInterfaceOptions(interface, save):
     for opName in optionNames:
         try:
             nimble.settings.get(interfaceName, opName)
-        except (configparser.Error):
+        except configparser.Error:
             nimble.settings.set(interfaceName, opName, "")
     if save:
         nimble.settings.saveChanges(interfaceName)

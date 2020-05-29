@@ -20,7 +20,7 @@ import numpy
 import nimble
 from nimble.core.data import Base
 from nimble.core.data import BaseView
-from nimble.utility import inspectArguments
+from nimble._utility import inspectArguments
 from nimble.random import pythonRandom
 
 numberOperations = 100

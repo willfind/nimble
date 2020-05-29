@@ -8,7 +8,7 @@ import nimble
 from nimble.core.custom_learner import CustomLearner
 from nimble.exceptions import InvalidArgumentValue
 from nimble.core.interfaces.universal_interface import UniversalInterface
-from nimble.utility import inheritDocstringsFactory
+from nimble._utility import inheritDocstringsFactory
 
 
 @inheritDocstringsFactory(UniversalInterface)

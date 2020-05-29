@@ -12,7 +12,7 @@ import nimble
 from nimble import match
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.utility import mergeArguments
+from nimble._utility import mergeArguments
 from nimble.core.logger import handleLogging, startTimer, stopTimer
 from nimble.core._learnHelpers import findBestInterface
 from nimble.core._learnHelpers import _learnerQuery
@@ -376,7 +376,7 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
             raise InvalidArgumentValue(msg)
         matchMatrix = matchingElements
     else:
-        matchingElements = match.convertMatchToFunction(matchingElements)
+        matchingElements = match._convertMatchToFunction(matchingElements)
         matchMatrix = trainX.matchingElements(matchingElements, useLog=False)
         if matchingElements(numpy.nan):
             checkNans = False

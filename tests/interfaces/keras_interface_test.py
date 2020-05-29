@@ -12,7 +12,7 @@ from nose.tools import raises
 import nimble
 from nimble.core.interfaces.keras_interface import Keras
 from nimble.exceptions import InvalidArgumentValue
-from nimble.utility import DeferredModuleImport
+from nimble._utility import DeferredModuleImport
 from .skipTestDecorator import SkipMissing
 from tests.helpers import logCountAssertionFactory, noLogEntryExpected
 

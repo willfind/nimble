@@ -4,7 +4,7 @@ import numpy
 import nimble
 from nimble import CustomLearner
 from nimble.core._learnHelpers import findBestInterface
-from nimble.match import anyTrue, convertMatchToFunction
+from nimble.match import anyTrue, _convertMatchToFunction
 from nimble.exceptions import InvalidArgumentValue
 
 def sklPresent():
@@ -15,6 +15,9 @@ def sklPresent():
     return True
 
 class KNNImputation(CustomLearner):
+    """
+    Imputation using K-Nearest Neighbors algorithms.
+    """
     learnerType = 'unknown'
 
     def train(self, trainX, trainY=None, k=5, mode=None):
@@ -38,7 +41,7 @@ class KNNImputation(CustomLearner):
                 msg += 'regression mode.'
                 raise InvalidArgumentValue(msg)
 
-        match = convertMatchToFunction(numpy.nan)
+        match = _convertMatchToFunction(numpy.nan)
         self.match = trainX.matchingElements(match, useLog=False)
 
     def apply(self, testX):

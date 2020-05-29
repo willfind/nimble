@@ -28,7 +28,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.interfaces.interface_helpers import PythonSearcher
 from nimble.core._learnHelpers import generateClusteredPoints
 from nimble.core.interfaces.shogun_interface import checkProcessFailure
-from nimble.utility import scipy
+from nimble._utility import scipy
 
 from .skipTestDecorator import SkipMissing
 from tests.helpers import logCountAssertionFactory

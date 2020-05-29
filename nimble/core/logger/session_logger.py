@@ -33,7 +33,7 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.configuration import configErrors
+from nimble._configuration import configErrors
 from .stopwatch import Stopwatch
 
 def log(heading, logInfo):
@@ -1021,7 +1021,7 @@ def _buildArgDict(func, *args, **kwargs):
     defaults : tuple
         The default values of the arguments.
     """
-    argNames, _, _, defaults = nimble.utility.inspectArguments(func)
+    argNames, _, _, defaults = nimble._utility.inspectArguments(func)
     argNames = argNames[1:] # ignore self arg
     nameArgMap = {}
     for name, arg in zip(argNames, args):

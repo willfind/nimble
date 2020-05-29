@@ -3,7 +3,7 @@ import numpy as np
 from nose.tools import assert_almost_equal, assert_equal
 
 import nimble
-from nimble.utility import scipy
+from nimble._utility import scipy
 from nimble.core.logger.data_set_analyzer import *
 
 

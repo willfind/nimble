@@ -9,8 +9,8 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
-from nimble.utility import inheritDocstringsFactory, numpy2DArray, is2DArray
-from nimble.utility import scipy, pd
+from nimble._utility import inheritDocstringsFactory, numpy2DArray, is2DArray
+from nimble._utility import scipy, pd
 from .base import Base
 from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView

@@ -6,7 +6,7 @@ base class for read only views of data objects.
 import copy
 
 import nimble
-from nimble.utility import inheritDocstringsFactory
+from nimble._utility import inheritDocstringsFactory
 from nimble.exceptions import ImproperObjectAction
 from .base import Base
 from .dataHelpers import readOnlyException

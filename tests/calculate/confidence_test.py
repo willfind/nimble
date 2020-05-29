@@ -7,7 +7,7 @@ import numpy
 from nose.tools import *
 
 import nimble
-from nimble.calculate import confidenceIntervalHelper
+from nimble.calculate.confidence import confidenceIntervalHelper
 from nimble.exceptions import PackageException, ImproperObjectAction
 from tests.helpers import noLogEntryExpected
 

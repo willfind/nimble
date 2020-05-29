@@ -14,5 +14,3 @@ from .session_logger import stringToDatetime
 from .stopwatch import Stopwatch
 
 active = None
-
-__all__ = ['active']

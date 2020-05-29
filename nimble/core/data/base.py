@@ -26,7 +26,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.logger import handleLogging
 from nimble.core.logger import produceFeaturewiseReport
 from nimble.core.logger import produceAggregateReport
-from nimble.utility import cloudpickle, matplotlib, h5py
+from nimble._utility import cloudpickle, matplotlib, h5py
 from .points import Points
 from .features import Features
 from .axis import Axis

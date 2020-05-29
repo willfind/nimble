@@ -9,7 +9,7 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.utility import scipy
+from nimble._utility import scipy
 from .axis import Axis
 from .points import Points
 from .dataHelpers import sortIndexPosition

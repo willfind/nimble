@@ -20,7 +20,7 @@ from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import FileFormatException
 from nimble.core.data.dataHelpers import DEFAULT_PREFIX
 from nimble.core._createHelpers import _intFloatOrString
-from nimble.utility import sparseMatrixToArray
+from nimble._utility import sparseMatrixToArray
 
 # from .. import logger
 from tests.helpers import oneLogEntryExpected

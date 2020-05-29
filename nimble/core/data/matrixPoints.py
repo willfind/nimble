@@ -6,7 +6,7 @@ Matrix object.
 import numpy
 
 from nimble.exceptions import InvalidArgumentValue
-from nimble.utility import numpy2DArray
+from nimble._utility import numpy2DArray
 from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .points import Points

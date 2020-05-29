@@ -9,8 +9,8 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
-from nimble.utility import scipy
-from nimble.utility import dtypeConvert
+from nimble._utility import scipy
+from nimble._utility import dtypeConvert
 
 def inverse(aObj):
     """

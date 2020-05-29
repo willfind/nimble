@@ -38,8 +38,8 @@ from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 from nimble.random import numpyRandom
-from nimble.utility import sparseMatrixToArray
-from nimble.utility import scipy, pd
+from nimble._utility import sparseMatrixToArray
+from nimble._utility import scipy, pd
 
 from .baseObject import DataTestObject
 from tests.helpers import logCountAssertionFactory

@@ -9,7 +9,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble.core.logger import handleLogging
-from nimble.utility import scipy, cloudpickle
+from nimble._utility import scipy, cloudpickle
 from nimble.core._createHelpers import validateReturnType
 from nimble.core._createHelpers import isAllowedRaw
 from nimble.core._createHelpers import initDataObject

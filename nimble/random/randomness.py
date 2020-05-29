@@ -8,7 +8,9 @@ import random
 import numpy
 
 import nimble
-from nimble.utility import DeferredModuleImport, scipy
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import PackageException
+from nimble._utility import DeferredModuleImport, scipy
 from nimble.core.logger import handleLogging
 from nimble.core._createHelpers import validateReturnType, initDataObject
 
@@ -150,10 +152,10 @@ def data(
     if sparsity < 0 or sparsity >= 1:
         msg = "sparsity must be greater than zero and less than one"
         raise InvalidArgumentType(msg)
-    if elementType != "int" and elementType != "float":
+    if elementType not in ["int", "float"]:
         raise InvalidArgumentValue("elementType may only be 'int' or 'float'")
 
-    seed =_generateSubsidiarySeed()
+    seed = _generateSubsidiarySeed()
     _startAlternateControl(seed=seed)
     #note: sparse is not stochastic sparsity, it uses rigid density measures
     if returnType == 'Sparse':
@@ -194,8 +196,7 @@ def data(
         if elementType == 'int':
             randData = numpyRandom.randint(1, 100, size=size)
         else:
-            randData = numpyRandom.normal(loc=0.0, scale=1.0,
-                                                   size=size)
+            randData = numpyRandom.normal(loc=0.0, scale=1.0, size=size)
 
         #if sparsity is zero
         if sparsity > 0:
