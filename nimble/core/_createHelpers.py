@@ -1183,10 +1183,10 @@ def createDataFromFile(
         ignoreNonNumericalFeatures, keepPoints, keepFeatures, inputSeparator,
         treatAsMissing, replaceMissingWith):
     """
-    Helper for createData which deals with the case of loading data
+    Helper for nimble.data which deals with the case of loading data
     from a file. Returns a triple containing the raw data, pointNames,
     and featureNames (the later two following the same semantics as
-    createData's parameters with the same names).
+    nimble.data's parameters with the same names).
     """
 
     def autoFileTypeChecker(ioStream):
@@ -1341,14 +1341,12 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
         else:  # case: numpyMaker == numpy.zeros
             assert numpyMaker == numpy.zeros
             rawSparse = scipy.sparse.coo_matrix((numPoints, numFeatures))
-        return nimble.createData(returnType, rawSparse, pointNames=pointNames,
-                                 featureNames=featureNames, name=name,
-                                 useLog=False)
+        return nimble.data(returnType, rawSparse, pointNames=pointNames,
+                           featureNames=featureNames, name=name, useLog=False)
     else:
         raw = numpyMaker((numPoints, numFeatures))
-        return nimble.createData(returnType, raw, pointNames=pointNames,
-                                 featureNames=featureNames, name=name,
-                                 useLog=False)
+        return nimble.data(returnType, raw, pointNames=pointNames,
+                           featureNames=featureNames, name=name, useLog=False)
 
 
 def _intFloatOrString(inString):
@@ -1729,7 +1727,7 @@ def _loadmtxForAuto(
     if pointNames is True or featureNames is True:
         # the helpers operate based on positional inputs with a None
         # sentinal indicating no extration. So we need to convert from
-        # the createData input semantics
+        # the nimble.data input semantics
 #        pNameID = 0 if pointNames is True else None
 #        fNameID = 0 if featureNames is True else None
         if scipy.sparse.issparse(data):

@@ -38,7 +38,7 @@ def inverse(aObj):
     Examples
     --------
     >>> raw = [[1, 2], [3, 4]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> data
     Matrix(
         [[1 2]
@@ -96,7 +96,7 @@ def inverse(aObj):
                 raise InvalidArgumentType(msg)
             raise exception
 
-    return nimble.createData(aObj.getTypeString(), invData, useLog=False)
+    return nimble.data(aObj.getTypeString(), invData, useLog=False)
 
 
 def pseudoInverse(aObj, method='svd'):
@@ -130,7 +130,7 @@ def pseudoInverse(aObj, method='svd'):
     Examples
     --------
     >>> nimble.random.setSeed(42)
-    >>> data = nimble.random.data('Matrix', numPoints=4, numFeatures=3, 
+    >>> data = nimble.random.data('Matrix', numPoints=4, numFeatures=3,
     ...                           sparsity=0.5)
     >>> data
     Matrix(
@@ -180,7 +180,7 @@ def pseudoInverse(aObj, method='svd'):
         except ValueError as exception:
             _handleNonSupportedTypes(exception)
 
-    return nimble.createData(aObj.getTypeString(), pinvData, useLog=False)
+    return nimble.data(aObj.getTypeString(), pinvData, useLog=False)
 
 
 def solve(aObj, bObj):
@@ -215,9 +215,9 @@ def solve(aObj, bObj):
     --------
     >>> from nimble.calculate import solve
     >>> aData = [[3,2,0],[1,-1,0],[0,5,1]]
-    >>> aObj = nimble.createData('Matrix', aData)
+    >>> aObj = nimble.data('Matrix', aData)
     >>> bData = [2,4,-1]
-    >>> bObj = nimble.createData('Matrix', bData)
+    >>> bObj = nimble.data('Matrix', bData)
     >>> aObj
     Matrix(
         [[3 2  0]
@@ -307,9 +307,8 @@ def _backendSolvers(aObj, bObj, solverFunction):
             solution = scipy.sparse.linalg.lsqr(aData, bData)
             solution = solution[0]
 
-    sol = nimble.createData(aOriginalType, solution,
-                         featureNames=aObj.features.getNames(),
-                         useLog=False)
+    sol = nimble.data(aOriginalType, solution,
+                      featureNames=aObj.features.getNames(), useLog=False)
     return sol
 
 

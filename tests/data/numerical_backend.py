@@ -1703,7 +1703,7 @@ class NumericalDataSafe(DataTestObject):
         exp = self.getLogicalExpectedOutput(logicOp)
         expObj = self.constructor(exp)
         for rType in [t for t in nimble.core.data.available if t != lhsObj.getTypeString()]:
-            rhsObj = nimble.createData(rType, rhs, useLog=False)
+            rhsObj = nimble.data(rType, rhs, useLog=False)
 
             assert expObj == getattr(lhsObj, logicOp)(rhsObj)
 

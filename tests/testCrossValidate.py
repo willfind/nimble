@@ -14,7 +14,6 @@ from nose.plugins.attrib import attr
 
 import nimble
 from nimble import crossValidate
-from nimble import createData
 from nimble import CV
 from nimble import CustomLearner
 from nimble.exceptions import InvalidArgumentValue
@@ -42,7 +41,7 @@ def _randomLabeledDataSet(dataType='Matrix', numPoints=50, numFeatures=5, numLab
 
     rawFeatures = [[pythonRandom.random() for _x in range(numFeatures)] for _y in range(numPoints)]
 
-    return (createData(dataType, rawFeatures, useLog=False), createData(dataType, labelsRaw, useLog=False))
+    return (nimble.data(dataType, rawFeatures, useLog=False), nimble.data(dataType, labelsRaw, useLog=False))
 
 
 def test_crossValidate_XY_unchanged():
@@ -129,8 +128,8 @@ def test_crossValidate_reasonable_results():
     numPoints = 50
     points = [[pythonRandom.gauss(0, 1) for _x in range(numFeats)] for _y in range(numPoints)]
     labels = [[sum(featVector)] for featVector in points]
-    X = createData('Matrix', points)
-    Y = createData('Matrix', labels)
+    X = nimble.data('Matrix', points)
+    Y = nimble.data('Matrix', labels)
 
     #run in crossValidate
     crossValidator = crossValidate(regressionAlgo, X, Y, meanAbsoluteError, {}, folds=5)
@@ -166,8 +165,8 @@ def test_crossValidate_2d_api_check():
     numPoints = 50
     points = [[pythonRandom.gauss(0, 1) for _x in range(numFeats)] for _y in range(numPoints)]
     labels = [[sum(featVector), sum(featVector)] for featVector in points]
-    X = createData('Matrix', points)
-    Y = createData('Matrix', labels)
+    X = nimble.data('Matrix', points)
+    Y = nimble.data('Matrix', labels)
 
     # crossValidate.bestResult
     metric = meanFeaturewiseRootMeanSquareError
@@ -222,8 +221,8 @@ def test_crossValidate_2d_Non_label_scoremodes_disallowed():
     numPoints = 50
     points = [[pythonRandom.gauss(0, 1) for _x in range(numFeats)] for _y in range(numPoints)]
     labels = [[sum(featVector), sum(featVector)] for featVector in points]
-    X = createData('Matrix', points)
-    Y = createData('Matrix', labels)
+    X = nimble.data('Matrix', points)
+    Y = nimble.data('Matrix', labels)
 
     #run in crossValidate
     metric = meanFeaturewiseRootMeanSquareError
@@ -441,8 +440,8 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected():
     numPoints = 50
     points = [[pythonRandom.gauss(0, 1) for _x in range(numFeats)] for _y in range(numPoints)]
     labels = [[sum(featVector)] for featVector in points]
-    X = createData('Matrix', points)
-    Y = createData('Matrix', labels)
+    X = nimble.data('Matrix', points)
+    Y = nimble.data('Matrix', labels)
 
     def copiedPerfFunc(knowns, predicted):
         return meanAbsoluteError(knowns, predicted)
@@ -484,9 +483,9 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected_orderReliant():
     copiedPerfFunc.optimal = fractionIncorrect.optimal
 
     data = [1, 3, 5, 6, 8, 4, 10, -12, -2, 22]
-    X = nimble.createData("Matrix", data)
+    X = nimble.data("Matrix", data)
     X.transpose()
-    Y = nimble.createData("Matrix", data)
+    Y = nimble.data("Matrix", data)
     Y.transpose()
 
     copiedPerfFunc.avgFolds = False
@@ -580,8 +579,8 @@ def test_KFoldCrossValidator_invalidPerformanceFunction():
     yRaw = [[1], [2], [3],
             [1], [2], [3],
             [1], [2], [3]]
-    X = nimble.createData('Matrix', xRaw)
-    Y = nimble.createData('Matrix', yRaw)
+    X = nimble.data('Matrix', xRaw)
+    Y = nimble.data('Matrix', yRaw)
     crossValidator = KFoldCrossValidator(
         'nimble.KNNClassifier', X, Y, arguments={'k': 3},
         performanceFunction=noOptimal, folds=3)
@@ -594,8 +593,8 @@ def test_KFoldCrossValidator_zeroFolds():
     yRaw = [[1], [2], [3],
             [1], [2], [3],
             [1], [2], [3]]
-    X = nimble.createData('Matrix', xRaw)
-    Y = nimble.createData('Matrix', yRaw)
+    X = nimble.data('Matrix', xRaw)
+    Y = nimble.data('Matrix', yRaw)
     crossValidator = KFoldCrossValidator(
         'nimble.KNNClassifier', X, Y, arguments={'k': 3},
         performanceFunction=nimble.calculate.fractionIncorrect, folds=0)

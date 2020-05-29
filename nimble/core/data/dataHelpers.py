@@ -630,8 +630,8 @@ def createDataNoValidation(returnType, data, pointNames=None,
 
     This function assumes that data being used is already in a format
     acceptable for nimble and the returnType's __init__ method. This
-    allows for faster instantiation than through createData. However, if
-    the data has not already been processed by nimble, it is not
+    allows for faster instantiation than through nimble.data. However,
+    if the data has not already been processed by nimble, it is not
     recommended to use this function.  Note that this function will
     handle point and feature names, but all other metadata will be set
     to default values.

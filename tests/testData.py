@@ -61,130 +61,130 @@ class GetItemOnly(object):
 # Data values correctness #
 ###########################
 
-def test_createData_raw_stringConversion_float():
+def test_data_raw_stringConversion_float():
     """
     """
     for t in returnTypes:
         values = []
-        toTest = nimble.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']],
-                                   convertToType=float)
+        toTest = nimble.data(t, [['1','2','3'], ['4','5','6'], ['7','8','9']],
+                             convertToType=float)
         for i in range(len(toTest.points)):
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
         assert all(isinstance(val, float) for val in values)
 
-def test_createData_raw_stringConversion_int():
+def test_data_raw_stringConversion_int():
     """
     """
     for t in returnTypes:
         values = []
-        toTest = nimble.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']],
-                                   convertToType=int)
+        toTest = nimble.data(t, [['1','2','3'], ['4','5','6'], ['7','8','9']],
+                             convertToType=int)
         for i in range(len(toTest.points)):
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
         assert all(isinstance(val, (int, numpy.integer)) for val in values)
 
-def test_createData_raw_noStringConversion():
+def test_data_raw_noStringConversion():
     for t in returnTypes:
         values = []
-        toTest = nimble.createData(t, [['1','2','3'], ['4','5','6'], ['7','8','9']])
+        toTest = nimble.data(t, [['1','2','3'], ['4','5','6'], ['7','8','9']])
         for i in range(len(toTest.points)):
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
         assert all(isinstance(val, str) for val in values)
 
-def test_createData_raw_numericConversion_str():
+def test_data_raw_numericConversion_str():
     """
     """
     for t in returnTypes:
         values = []
-        toTest = nimble.createData(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
-                                   convertToType=str)
+        toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                             convertToType=str)
         for i in range(len(toTest.points)):
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
         assert all(isinstance(val, str) for val in values)
 
-def test_createData_raw_numericConversion_float():
+def test_data_raw_numericConversion_float():
     """
     """
     for t in returnTypes:
         values = []
-        toTest = nimble.createData(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
-                                   convertToType=float)
+        toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                             convertToType=float)
         for i in range(len(toTest.points)):
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
         assert all(isinstance(val, float) for val in values)
 
-def test_createData_raw_invalidPointOrFeatureNames():
+def test_data_raw_invalidPointOrFeatureNames():
     for t in returnTypes:
         try:
             pNames = NoIter(['1', '4'])
-            toTest = nimble.createData(t, [[1,2,3], [4,5,6]], pointNames=pNames)
+            toTest = nimble.data(t, [[1,2,3], [4,5,6]], pointNames=pNames)
             assert False # expected InvalidArgumentType
         except InvalidArgumentType:
             pass
 
         try:
             fNames = NoIter(['a', 'b', 'c'])
-            toTest = nimble.createData(t, [[1,2,3], [4,5,6]], featureNames=fNames)
+            toTest = nimble.data(t, [[1,2,3], [4,5,6]], featureNames=fNames)
             assert False # expected InvalidArgumentType
         except InvalidArgumentType:
             pass
 
-def test_createData_raw_pointAndFeatureIterators():
+def test_data_raw_pointAndFeatureIterators():
     for t in returnTypes:
         pNames = IterNext(['1', '4'])
         fNames = IterNext(['a', 'b', 'c'])
         rawData = [[1,2,3], [4,5,6]]
-        toTest1 = nimble.createData(t, rawData, pointNames=pNames,
-                                        featureNames=fNames)
+        toTest1 = nimble.data(t, rawData, pointNames=pNames,
+                              featureNames=fNames)
         assert toTest1.points.getNames() == ['1', '4']
         assert toTest1.features.getNames() == ['a', 'b', 'c']
 
         pNames = GetItemOnly(['1', '4'])
         fNames = GetItemOnly(['a', 'b', 'c'])
-        toTest2 = nimble.createData(t, rawData, pointNames=pNames,
-                                        featureNames=fNames)
+        toTest2 = nimble.data(t, rawData, pointNames=pNames,
+                              featureNames=fNames)
         assert toTest2.points.getNames() == ['1', '4']
         assert toTest2.features.getNames() == ['a', 'b', 'c']
 
 
-def test_createData_CSV_data():
-    """ Test of createData() loading a csv file, default params """
+def test_data_CSV_data():
+    """ Test of data() loading a csv file, default params """
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.data(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             objName = 'fromCSV'
-            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
+            fromCSV = nimble.data(returnType=t, data=tmpCSV.name, name=objName)
 
             assert fromList == fromCSV
 
 
-def test_createData_CSV_dataRandomExtension():
-    """ Test of createData() loading a csv file without csv extension """
+def test_data_CSV_dataRandomExtension():
+    """ Test of data() loading a csv file without csv extension """
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.data(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".foo", mode='w') as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             objName = 'fromCSV'
-            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
+            fromCSV = nimble.data(returnType=t, data=tmpCSV.name, name=objName)
 
             assert fromList == fromCSV
 
 
-def test_createData_CSV_data_noComment():
+def test_data_CSV_data_noComment():
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 2], [1, 2]])
+        fromList = nimble.data(returnType=t, data=[[1, 2], [1, 2]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -192,13 +192,13 @@ def test_createData_CSV_data_noComment():
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             objName = 'fromCSV'
-            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName, ignoreNonNumericalFeatures=True)
+            fromCSV = nimble.data(returnType=t, data=tmpCSV.name, name=objName, ignoreNonNumericalFeatures=True)
 
             assert fromList == fromCSV
 
 
-def test_createData_CSV_data_ListOnly():
-    fromList = nimble.createData(returnType="List", data=[[1, 2, 'three'], [4, 5, 'six']])
+def test_data_CSV_data_ListOnly():
+    fromList = nimble.data(returnType="List", data=[[1, 2, 'three'], [4, 5, 'six']])
 
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -206,13 +206,13 @@ def test_createData_CSV_data_ListOnly():
         tmpCSV.write("4,5,six\n")
         tmpCSV.flush()
         objName = 'fromCSV'
-        fromCSV = nimble.createData(returnType="List", data=tmpCSV.name, name=objName)
+        fromCSV = nimble.data(returnType="List", data=tmpCSV.name, name=objName)
 
         assert fromList == fromCSV
 
 
-def test_createData_CSV_data_ListOnly_noComment():
-    fromList = nimble.createData(returnType="List", data=[[1, 2, 'three'], [4, 5, '#six']])
+def test_data_CSV_data_ListOnly_noComment():
+    fromList = nimble.data(returnType="List", data=[[1, 2, 'three'], [4, 5, '#six']])
 
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -220,16 +220,16 @@ def test_createData_CSV_data_ListOnly_noComment():
         tmpCSV.write("4,5,#six\n")
         tmpCSV.flush()
         objName = 'fromCSV'
-        fromCSV = nimble.createData(returnType="List", data=tmpCSV.name, name=objName)
+        fromCSV = nimble.data(returnType="List", data=tmpCSV.name, name=objName)
 
         assert fromList == fromCSV
 
-def test_createData_CSV_data_unicodeCharacters():
-    """ Test of createData() loading a csv file with unicode characters """
+def test_data_CSV_data_unicodeCharacters():
+    """ Test of data() loading a csv file with unicode characters """
     for t in returnTypes:
         data = [['P', "\u2119"] ,['Y', "\u01B4" ],['T', "\u2602"],
                 ['H', "\u210C"], ['O', "\u00F8"], ['N', "\u1F24"]]
-        fromList = nimble.createData(returnType=t, data=data)
+        fromList = nimble.data(returnType=t, data=data)
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -241,12 +241,12 @@ def test_createData_CSV_data_unicodeCharacters():
             tmpCSV.write("N,\u1F24\n")
             tmpCSV.flush()
             objName = 'fromCSV'
-            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
+            fromCSV = nimble.data(returnType=t, data=tmpCSV.name, name=objName)
 
             assert fromList == fromCSV
 
-def test_createData_CSV_data_columnTypeHierarchy():
-    """ Test of createData() loading a csv file with various column types """
+def test_data_CSV_data_columnTypeHierarchy():
+    """ Test of data() loading a csv file with various column types """
     for t in returnTypes:
         data = [[True,'False','True','False','TRUE','false',1,1.0,1.0,'1','1'],
                 [False,'True','False','True','FALSE','true',2,2.0,2.0,'2','2'],
@@ -254,7 +254,7 @@ def test_createData_CSV_data_columnTypeHierarchy():
                 [False,'TRUE','false','1','FALSE','true',4,4.0,4.0,'4.0','False'],
                 [True,'FALSE','true','0','TRUE','false',5,5.0,5.0,'5.0', 'True'],
                 [False,'True','False','True','FALSE','true',6,6.0,6.0,'six','6']]
-        fromList = nimble.createData(returnType=t, data=data)
+        fromList = nimble.data(returnType=t, data=data)
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -266,12 +266,12 @@ def test_createData_CSV_data_columnTypeHierarchy():
             tmpCSV.write("False,True,False,True,FALSE,true,6,6.0,6,six,6\n")
             tmpCSV.flush()
             objName = 'fromCSV'
-            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
+            fromCSV = nimble.data(returnType=t, data=tmpCSV.name, name=objName)
 
             assert fromList == fromCSV
 
-def test_createData_CSV_data_columnTypeHierarchyWithNaN():
-    """ Test of createData() loading a csv file with various column types with nan values """
+def test_data_CSV_data_columnTypeHierarchyWithNaN():
+    """ Test of data() loading a csv file with various column types with nan values """
     for t in returnTypes:
         data = [[True,'False',1,1.0,1.0,'1'],
                 [False,None,2,None,None,'2'],
@@ -279,7 +279,7 @@ def test_createData_CSV_data_columnTypeHierarchyWithNaN():
                 [None,'TRUE',None,4.0,4.0,None],
                 [True,'FALSE',5,None,None,'5.0'],
                 [None,None,6,6.0,6.0,'six']]
-        fromList = nimble.createData(returnType=t, data=data)
+        fromList = nimble.data(returnType=t, data=data)
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -291,12 +291,12 @@ def test_createData_CSV_data_columnTypeHierarchyWithNaN():
             tmpCSV.write(",,6,6.0,6,six\n")
             tmpCSV.flush()
             objName = 'fromCSV'
-            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
+            fromCSV = nimble.data(returnType=t, data=tmpCSV.name, name=objName)
 
             assert fromList == fromCSV
 
-def test_createData_CSV_data_emptyStringsNotMissing():
-    """ Test of createData() loading a csv file empty strings not treated as missing """
+def test_data_CSV_data_emptyStringsNotMissing():
+    """ Test of data() loading a csv file empty strings not treated as missing """
     for t in returnTypes:
         data = [[True,'False',1,'1'],
                 [False,'',2,'2'],
@@ -304,7 +304,7 @@ def test_createData_CSV_data_emptyStringsNotMissing():
                 [None,'TRUE',4,''],
                 [True,'FALSE',None,'5.0'],
                 [None,'',6,'six']]
-        fromList = nimble.createData(returnType=t, data=data, treatAsMissing=[None])
+        fromList = nimble.data(returnType=t, data=data, treatAsMissing=[None])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -316,15 +316,15 @@ def test_createData_CSV_data_emptyStringsNotMissing():
             tmpCSV.write(",,6,six\n")
             tmpCSV.flush()
             objName = 'fromCSV'
-            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, name=objName,
-                                        treatAsMissing=[None])
+            fromCSV = nimble.data(returnType=t, data=tmpCSV.name, name=objName,
+                                  treatAsMissing=[None])
 
             assert fromList == fromCSV
 
-def test_createData_MTXArr_data():
-    """ Test of createData() loading a mtx (arr format) file, default params """
+def test_data_MTXArr_data():
+    """ Test of data() loading a mtx (arr format) file, default params """
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.data(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from mtx array file
         with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
@@ -335,17 +335,17 @@ def test_createData_MTXArr_data():
             tmpMTXArr.write("3\n")
             tmpMTXArr.flush()
             objName = 'fromMTXArr'
-            fromMTXArr = nimble.createData(returnType=t, data=tmpMTXArr.name, name=objName)
+            fromMTXArr = nimble.data(returnType=t, data=tmpMTXArr.name, name=objName)
 
             if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
                 assert fromList.isApproximatelyEqual(fromMTXArr)
             else:
                 assert fromList == fromMTXArr
 
-def test_createData_MTXArr_dataRandomExtension():
-    """ Test of createData() loading a mtx (arr format) file without mtx extension """
+def test_data_MTXArr_dataRandomExtension():
+    """ Test of data() loading a mtx (arr format) file without mtx extension """
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.data(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from mtx array file
         with tempfile.NamedTemporaryFile(suffix=".foo", mode='w') as tmpMTXArr:
@@ -356,7 +356,7 @@ def test_createData_MTXArr_dataRandomExtension():
             tmpMTXArr.write("3\n")
             tmpMTXArr.flush()
             objName = 'fromMTXArr'
-            fromMTXArr = nimble.createData(returnType=t, data=tmpMTXArr.name, name=objName)
+            fromMTXArr = nimble.data(returnType=t, data=tmpMTXArr.name, name=objName)
 
             if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
                 assert fromList.isApproximatelyEqual(fromMTXArr)
@@ -364,10 +364,10 @@ def test_createData_MTXArr_dataRandomExtension():
                 assert fromList == fromMTXArr
 
 
-def test_createData_MTXCoo_data():
-    """ Test of createData() loading a mtx (coo format) file, default params """
+def test_data_MTXCoo_data():
+    """ Test of data() loading a mtx (coo format) file, default params """
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.data(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from mtx coordinate file
         with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
@@ -378,17 +378,17 @@ def test_createData_MTXCoo_data():
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.flush()
             objName = 'fromMTXCoo'
-            fromMTXCoo = nimble.createData(returnType=t, data=tmpMTXCoo.name, name=objName)
+            fromMTXCoo = nimble.data(returnType=t, data=tmpMTXCoo.name, name=objName)
 
             if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
                 assert fromList.isApproximatelyEqual(fromMTXCoo)
             else:
                 assert fromList == fromMTXCoo
 
-def test_createData_MTXCoo_dataRandomExtension():
-    """ Test of createData() loading a mtx (coo format) file without mtx extension """
+def test_data_MTXCoo_dataRandomExtension():
+    """ Test of data() loading a mtx (coo format) file without mtx extension """
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.data(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from mtx coordinate file
         with tempfile.NamedTemporaryFile(suffix=".foo", mode='w') as tmpMTXCoo:
@@ -399,7 +399,7 @@ def test_createData_MTXCoo_dataRandomExtension():
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.flush()
             objName = 'fromMTXCoo'
-            fromMTXCoo = nimble.createData(returnType=t, data=tmpMTXCoo.name, name=objName)
+            fromMTXCoo = nimble.data(returnType=t, data=tmpMTXCoo.name, name=objName)
 
             if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
                 assert fromList.isApproximatelyEqual(fromMTXCoo)
@@ -408,37 +408,37 @@ def test_createData_MTXCoo_dataRandomExtension():
 
 
 @raises(FileFormatException)
-def test_createData_CSV_unequalRowLength_short():
+def test_data_CSV_unequalRowLength_short():
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write('1,2,3,4\n')
         tmpCSV.write('4,5,6\n')
         tmpCSV.flush()
 
-        nimble.createData(returnType="List", data=tmpCSV.name)
+        nimble.data(returnType="List", data=tmpCSV.name)
 
 @raises(FileFormatException)
-def test_createData_CSV_unequalRowLength_long():
+def test_data_CSV_unequalRowLength_long():
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
         tmpCSV.write("11,22,33\n")
         tmpCSV.write("4,5,6,7\n")
         tmpCSV.flush()
 
-        nimble.createData(returnType="List", data=tmpCSV.name)
+        nimble.data(returnType="List", data=tmpCSV.name)
 
 
 @raises(FileFormatException)
-def test_createData_CSV_unequalRowLength_definedByNames():
+def test_data_CSV_unequalRowLength_definedByNames():
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("one,two,three\n")
         tmpCSV.write("11,22,33,44\n")
         tmpCSV.write("4,5,6,7\n")
         tmpCSV.flush()
 
-        nimble.createData(returnType="List", data=tmpCSV.name, featureNames=True)
+        nimble.data(returnType="List", data=tmpCSV.name, featureNames=True)
 
 
-def test_createData_CSV_unequalRowLength_position():
+def test_data_CSV_unequalRowLength_position():
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("#ignore\n")
         tmpCSV.write("1,2,3,4,0,0,0,0\n")
@@ -448,7 +448,7 @@ def test_createData_CSV_unequalRowLength_position():
         tmpCSV.flush()
 
         try:
-            nimble.createData(returnType="List", data=tmpCSV.name, featureNames=True)
+            nimble.data(returnType="List", data=tmpCSV.name, featureNames=True)
             assert False  # the previous call should have raised an exception
         except FileFormatException as ffe:
             # print(ffe.message)
@@ -465,13 +465,13 @@ def test_createData_CSV_unequalRowLength_position():
             # offending length comes before expected length
             assert ffe.message.index('6') < ffe.message.index('8')
 
-def test_createData_HDF5_data():
+def test_data_HDF5_data():
     """ """
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[[[1, 2], [3, 4]],
-                                                          [[1, 2], [3, 4]],],
-                                                         [[[1, 2], [3, 4]],
-                                                          [[1, 2], [3, 4]]]])
+        fromList = nimble.data(returnType=t, data=[[[[1, 2], [3, 4]],
+                                                    [[1, 2], [3, 4]],],
+                                                   [[[1, 2], [3, 4]],
+                                                    [[1, 2], [3, 4]]]])
         # HDF5 commonly uses two extensions .hdf5 and .h5
         for suffix in ['.hdf5', '.h5']:
             with tempfile.NamedTemporaryFile(suffix=suffix) as tmpHDF:
@@ -486,19 +486,19 @@ def test_createData_HDF5_data():
                 hdfFile.flush()
                 hdfFile.close()
                 tmpHDF.seek(0)
-                fromHDF = nimble.createData(returnType=t, data=tmpHDF.name)
+                fromHDF = nimble.data(returnType=t, data=tmpHDF.name)
 
                 if t is None and fromList.getTypeString() != fromHDF.getTypeString():
                     assert fromList.isApproximatelyEqual(fromHDF)
                 else:
                     assert fromList == fromHDF
 
-def test_createData_HDF5_dataRandomExtension():
+def test_data_HDF5_dataRandomExtension():
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[[[1, 2], [3, 4]],
-                                                          [[1, 2], [3, 4]],],
-                                                         [[[1, 2], [3, 4]],
-                                                          [[1, 2], [3, 4]]]])
+        fromList = nimble.data(returnType=t, data=[[[[1, 2], [3, 4]],
+                                                    [[1, 2], [3, 4]],],
+                                                   [[[1, 2], [3, 4]],
+                                                    [[1, 2], [3, 4]]]])
 
         with tempfile.NamedTemporaryFile(suffix=".data") as tmpHDF:
             arr = numpy.array([[1, 2], [3, 4]])
@@ -512,20 +512,20 @@ def test_createData_HDF5_dataRandomExtension():
             hdfFile.flush()
             hdfFile.close()
             tmpHDF.seek(0)
-            fromHDF = nimble.createData(returnType=t, data=tmpHDF.name)
+            fromHDF = nimble.data(returnType=t, data=tmpHDF.name)
 
             if t is None and fromList.getTypeString() != fromHDF.getTypeString():
                 assert fromList.isApproximatelyEqual(fromHDF)
             else:
                 assert fromList == fromHDF
 
-def test_createData_HDF5_dataDifferentStructures():
+def test_data_HDF5_dataDifferentStructures():
     data = [[[[1, 2], [3, 4]],
              [[1, 2], [3, 4]]],
             [[[-1, -2], [-3, -4]],
              [[-1, -2], [-3, -4]]]]
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=data)
+        fromList = nimble.data(returnType=t, data=data)
 
         # Case 1: file contains single Dataset with all data
         with tempfile.NamedTemporaryFile(suffix=".h5") as tmpHDF:
@@ -534,7 +534,7 @@ def test_createData_HDF5_dataDifferentStructures():
             hdfFile.flush()
             hdfFile.close()
             tmpHDF.seek(0)
-            fromHDF = nimble.createData(returnType=t, data=tmpHDF.name)
+            fromHDF = nimble.data(returnType=t, data=tmpHDF.name)
 
             if t is None and fromList.getTypeString() != fromHDF.getTypeString():
                 assert fromList.isApproximatelyEqual(fromHDF)
@@ -549,7 +549,7 @@ def test_createData_HDF5_dataDifferentStructures():
             hdfFile.flush()
             hdfFile.close()
             tmpHDF.seek(0)
-            fromHDF = nimble.createData(returnType=t, data=tmpHDF.name)
+            fromHDF = nimble.data(returnType=t, data=tmpHDF.name)
 
             if t is None and fromList.getTypeString() != fromHDF.getTypeString():
                 assert fromList.isApproximatelyEqual(fromHDF)
@@ -579,7 +579,7 @@ def test_createData_HDF5_dataDifferentStructures():
             hdfFile.flush()
             hdfFile.close()
             tmpHDF.seek(0)
-            fromHDF = nimble.createData(returnType=t, data=tmpHDF.name)
+            fromHDF = nimble.data(returnType=t, data=tmpHDF.name)
 
             if t is None and fromList.getTypeString() != fromHDF.getTypeString():
                 assert fromList.isApproximatelyEqual(fromHDF)
@@ -591,7 +591,7 @@ def test_createData_HDF5_dataDifferentStructures():
 ############################
 
 
-def test_createData_objName_and_path_CSV():
+def test_data_objName_and_path_CSV():
     for t in returnTypes:
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -599,7 +599,7 @@ def test_createData_objName_and_path_CSV():
             tmpCSV.flush()
 
             objName = 'fromCSV'
-            ret = nimble.createData(returnType=t, data=tmpCSV.name, name=objName)
+            ret = nimble.data(returnType=t, data=tmpCSV.name, name=objName)
             assert ret.name == objName
             assert ret.path == tmpCSV.name
             assert ret.absolutePath == tmpCSV.name
@@ -607,12 +607,12 @@ def test_createData_objName_and_path_CSV():
             relExp = os.path.relpath(ret.absolutePath)
             assert ret.relativePath == relExp
 
-            retDefName = nimble.createData(returnType=t, data=tmpCSV.name)
+            retDefName = nimble.data(returnType=t, data=tmpCSV.name)
             tokens = tmpCSV.name.rsplit(os.path.sep)
             assert retDefName.name == tokens[len(tokens) - 1]
 
 
-def test_createData_objName_and_path_MTXArr():
+def test_data_objName_and_path_MTXArr():
     for t in returnTypes:
         # instantiate from mtx array file
         with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
@@ -624,7 +624,7 @@ def test_createData_objName_and_path_MTXArr():
             tmpMTXArr.flush()
 
             objName = 'fromMTXArr'
-            ret = nimble.createData(returnType=t, data=tmpMTXArr.name, name=objName)
+            ret = nimble.data(returnType=t, data=tmpMTXArr.name, name=objName)
             assert ret.name == objName
             assert ret.path == tmpMTXArr.name
             assert ret.absolutePath == tmpMTXArr.name
@@ -632,12 +632,12 @@ def test_createData_objName_and_path_MTXArr():
             relExp = os.path.relpath(ret.absolutePath)
             assert ret.relativePath == relExp
 
-            retDefName = nimble.createData(returnType=t, data=tmpMTXArr.name)
+            retDefName = nimble.data(returnType=t, data=tmpMTXArr.name)
             tokens = tmpMTXArr.name.rsplit(os.path.sep)
             assert retDefName.name == tokens[len(tokens) - 1]
 
 
-def test_createData_objName_and_path_MTXCoo():
+def test_data_objName_and_path_MTXCoo():
     for t in returnTypes:
         # instantiate from mtx coordinate file
         with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
@@ -649,7 +649,7 @@ def test_createData_objName_and_path_MTXCoo():
             tmpMTXCoo.flush()
 
             objName = 'fromMTXCoo'
-            ret = nimble.createData(returnType=t, data=tmpMTXCoo.name, name=objName)
+            ret = nimble.data(returnType=t, data=tmpMTXCoo.name, name=objName)
             assert ret.name == objName
             assert ret.path == tmpMTXCoo.name
             assert ret.absolutePath == tmpMTXCoo.name
@@ -657,7 +657,7 @@ def test_createData_objName_and_path_MTXCoo():
             relExp = os.path.relpath(ret.absolutePath)
             assert ret.relativePath == relExp
 
-            retDefName = nimble.createData(returnType=t, data=tmpMTXCoo.name)
+            retDefName = nimble.data(returnType=t, data=tmpMTXCoo.name)
             tokens = tmpMTXCoo.name.rsplit(os.path.sep)
             assert retDefName.name == tokens[len(tokens) - 1]
 
@@ -667,11 +667,11 @@ def test_createData_objName_and_path_MTXCoo():
 ###################################
 
 def test_extractNames_CSV():
-    """ Test of createData() loading a csv file and extracting names """
+    """ Test of data() loading a csv file and extracting names """
     pNames = ['pn1']
     fNames = ['one', 'two', 'three']
     for t in returnTypes:
-        fromList = nimble.createData(
+        fromList = nimble.data(
             returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from csv file
@@ -680,7 +680,7 @@ def test_extractNames_CSV():
         tmpCSV.write("pn1,1,2,3\n")
         tmpCSV.flush()
 
-        fromCSV = nimble.createData(
+        fromCSV = nimble.data(
             returnType=t, data=tmpCSV.name, pointNames=True, featureNames=True)
         tmpCSV.close()
         assert fromList == fromCSV
@@ -690,7 +690,7 @@ def test_names_AutoDetectedBlankLines_CSV():
     pNames = ['pn1']
     fNames = ['one', 'two', 'three']
     for t in returnTypes:
-        fromList = nimble.createData(
+        fromList = nimble.data(
             returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from csv file
@@ -701,7 +701,7 @@ def test_names_AutoDetectedBlankLines_CSV():
         tmpCSV.write("pn1,1,2,3\n")
         tmpCSV.flush()
 
-        fromCSV = nimble.createData(returnType=t, data=tmpCSV.name)
+        fromCSV = nimble.data(returnType=t, data=tmpCSV.name)
         tmpCSV.close()
         assert fromList == fromCSV
 
@@ -709,7 +709,7 @@ def test_names_AutoDetectedBlankLines_CSV():
 def test_featNamesOnly_AutoDetectedBlankLines_CSV():
     fNames = ['one', 'two', 'three']
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]], featureNames=fNames)
+        fromList = nimble.data(returnType=t, data=[[1, 2, 3]], featureNames=fNames)
 
         # instantiate from csv file
         tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
@@ -719,7 +719,7 @@ def test_featNamesOnly_AutoDetectedBlankLines_CSV():
         tmpCSV.write("1,2,3\n")
         tmpCSV.flush()
 
-        fromCSV = nimble.createData(returnType=t, data=tmpCSV.name)
+        fromCSV = nimble.data(returnType=t, data=tmpCSV.name)
         tmpCSV.close()
         assert fromList == fromCSV
 
@@ -727,7 +727,7 @@ def test_pointNames_AutoDetected_from_specified_featNames_CSV():
     fNames = ['one', 'two', 'three']
     pNames = ['pn1']
     for t in returnTypes:
-        fromList = nimble.createData(
+        fromList = nimble.data(
             returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from csv file
@@ -737,7 +737,7 @@ def test_pointNames_AutoDetected_from_specified_featNames_CSV():
         tmpCSV.write("pointNames,one,two,three\n")
         tmpCSV.write("pn1,1,2,3\n")
         tmpCSV.flush()
-        fromCSV = nimble.createData(returnType=t, data=tmpCSV.name, featureNames=True)
+        fromCSV = nimble.data(returnType=t, data=tmpCSV.name, featureNames=True)
         tmpCSV.close()
         assert fromList == fromCSV
 
@@ -745,7 +745,7 @@ def test_pointNames_AutoDetected_from_specified_featNames_CSV():
 def test_specifiedIgnore_overides_autoDetectBlankLine_CSV():
     for t in returnTypes:
         data = [[0, 1, 2, 3], [10, 11, 12, 13]]
-        fromList = nimble.createData(returnType=t, data=data)
+        fromList = nimble.data(returnType=t, data=data)
 
         # instantiate from csv file
         tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
@@ -754,7 +754,7 @@ def test_specifiedIgnore_overides_autoDetectBlankLine_CSV():
         tmpCSV.write('0,1,2,3\n')
         tmpCSV.write("10,11,12,13\n")
         tmpCSV.flush()
-        fromCSV = nimble.createData(
+        fromCSV = nimble.data(
             returnType=t, data=tmpCSV.name, pointNames=False, featureNames=False)
         tmpCSV.close()
         assert fromList == fromCSV
@@ -762,7 +762,7 @@ def test_specifiedIgnore_overides_autoDetectBlankLine_CSV():
 
 def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
     """
-    Writes a CSV and reads it in using nimble.createData, fixing in place the given arguments,
+    Writes a CSV and reads it in using nimble.data, fixing in place the given arguments,
     returning the resultant object
 
     """
@@ -770,17 +770,17 @@ def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
         tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
         tmpCSV.write(rawStr)
         tmpCSV.flush()
-        ret = nimble.createData(returnType=returnType, data=tmpCSV.name,
-                                pointNames=pointNames, featureNames=featureNames)
+        ret = nimble.data(returnType=returnType, data=tmpCSV.name,
+                          pointNames=pointNames, featureNames=featureNames)
         tmpCSV.close()
     else:
         fnameRow = list(map(_intFloatOrString, rawStr.split('\n')[0].split(',')))
         dataRow = list(map(_intFloatOrString, rawStr.split('\n')[1].split(',')))
         lolFromRaw = [fnameRow, dataRow]
-        baseObj = nimble.createData("List", lolFromRaw, pointNames=False, featureNames=False)
+        baseObj = nimble.data("List", lolFromRaw, pointNames=False, featureNames=False)
         finalRaw = baseObj.copy(to=rawType)
-        ret = nimble.createData(returnType=returnType, data=finalRaw,
-                                pointNames=pointNames, featureNames=featureNames)
+        ret = nimble.data(returnType=returnType, data=finalRaw,
+                          pointNames=pointNames, featureNames=featureNames)
 
     return ret
 
@@ -865,15 +865,15 @@ def test_automaticByType_pname_interaction_with_fname():
 
 
 def test_names_AutomaticVsTrueVsFalseVsNone():
-    """ Test createData() accepted inputs for pointNames and featureNames """
+    """ Test data() accepted inputs for pointNames and featureNames """
     for t in returnTypes:
         # pNames and fNames triggered for automatic
         raw1 = [['pointNames', 'fname0','fname1','fname2'],
                 ['pname0', 0, 1, 2]]
-        testAuto = nimble.createData(t, raw1, pointNames='automatic', featureNames='automatic')
-        testTrue = nimble.createData(t, raw1, pointNames=True, featureNames=True)
-        testFalse = nimble.createData(t, raw1, pointNames=False, featureNames=False)
-        testNone = nimble.createData(t, raw1, pointNames=None, featureNames=None)
+        testAuto = nimble.data(t, raw1, pointNames='automatic', featureNames='automatic')
+        testTrue = nimble.data(t, raw1, pointNames=True, featureNames=True)
+        testFalse = nimble.data(t, raw1, pointNames=False, featureNames=False)
+        testNone = nimble.data(t, raw1, pointNames=None, featureNames=None)
 
         assert testAuto == testTrue
         assert testAuto != testFalse
@@ -882,10 +882,10 @@ def test_names_AutomaticVsTrueVsFalseVsNone():
         # pNames not triggered, fNames triggered for automatic
         raw2 = [['either', 'fname0','fname1','fname2'],
                 [99, 0, 1, 2]]
-        testAuto = nimble.createData(t, raw2, pointNames='automatic', featureNames='automatic')
-        testTrue = nimble.createData(t, raw2, pointNames=True, featureNames=True)
-        testFalse = nimble.createData(t, raw2, pointNames=False, featureNames=False)
-        testNone = nimble.createData(t, raw2, pointNames=None, featureNames=None)
+        testAuto = nimble.data(t, raw2, pointNames='automatic', featureNames='automatic')
+        testTrue = nimble.data(t, raw2, pointNames=True, featureNames=True)
+        testFalse = nimble.data(t, raw2, pointNames=False, featureNames=False)
+        testNone = nimble.data(t, raw2, pointNames=None, featureNames=None)
 
         assert testAuto != testTrue
         assert testAuto != testFalse
@@ -895,10 +895,10 @@ def test_names_AutomaticVsTrueVsFalseVsNone():
         # no names triggered for automatic
         raw3 = [[-1, 9, 8, 7],
                 [99, 0, 1, 2]]
-        testAuto = nimble.createData(t, raw3, pointNames='automatic', featureNames='automatic')
-        testTrue = nimble.createData(t, raw3, pointNames=True, featureNames=True)
-        testFalse = nimble.createData(t, raw3, pointNames=False, featureNames=False)
-        testNone = nimble.createData(t, raw3, pointNames=None, featureNames=None)
+        testAuto = nimble.data(t, raw3, pointNames='automatic', featureNames='automatic')
+        testTrue = nimble.data(t, raw3, pointNames=True, featureNames=True)
+        testFalse = nimble.data(t, raw3, pointNames=False, featureNames=False)
+        testNone = nimble.data(t, raw3, pointNames=None, featureNames=None)
 
         assert testAuto != testTrue
         assert testAuto == testFalse
@@ -906,11 +906,11 @@ def test_names_AutomaticVsTrueVsFalseVsNone():
 
 
 def test_namesInComment_MTXArr():
-    """ Test of createData() loading a mtx (arr format) file and comment Names """
+    """ Test of data() loading a mtx (arr format) file and comment Names """
     pNames = ['pn1']
     fNames = ['one', 'two', 'three']
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
+        fromList = nimble.data(returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from mtx array file
         tmpMTXArr = tempfile.NamedTemporaryFile(suffix=".mtx", mode='w')
@@ -922,7 +922,7 @@ def test_namesInComment_MTXArr():
         tmpMTXArr.write("2\n")
         tmpMTXArr.write("3\n")
         tmpMTXArr.flush()
-        fromMTXArr = nimble.createData(returnType=t, data=tmpMTXArr.name)
+        fromMTXArr = nimble.data(returnType=t, data=tmpMTXArr.name)
         tmpMTXArr.close()
         if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
             assert fromList.isApproximatelyEqual(fromMTXArr)
@@ -931,11 +931,11 @@ def test_namesInComment_MTXArr():
 
 
 def test_namesInComment_MTXCoo():
-    """ Test of createData() loading a mtx (coo format) file and comment Names """
+    """ Test of data() loading a mtx (coo format) file and comment Names """
     pNames = ['pn1']
     fNames = ['one', 'two', 'three']
     for t in returnTypes:
-        fromList = nimble.createData(
+        fromList = nimble.data(
             returnType=t, data=[[1, 2, 3]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from mtx coordinate file
@@ -948,7 +948,7 @@ def test_namesInComment_MTXCoo():
         tmpMTXCoo.write("1 2 2\n")
         tmpMTXCoo.write("1 3 3\n")
         tmpMTXCoo.flush()
-        fromMTXCoo = nimble.createData(returnType=t, data=tmpMTXCoo.name)
+        fromMTXCoo = nimble.data(returnType=t, data=tmpMTXCoo.name)
         tmpMTXCoo.close()
         if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
             assert fromList.isApproximatelyEqual(fromMTXCoo)
@@ -957,11 +957,11 @@ def test_namesInComment_MTXCoo():
 
 
 def test_extractNames_MTXArr():
-    """ Test of createData() loading a mtx (arr format) file and extracting names """
+    """ Test of data() loading a mtx (arr format) file and extracting names """
     pNames = ['11']
     fNames = ['1', '2', '3']
     for t in returnTypes:
-        fromList = nimble.createData(
+        fromList = nimble.data(
             returnType=t, data=[[21, 22, 23]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from mtx array file
@@ -978,7 +978,7 @@ def test_extractNames_MTXArr():
         tmpMTXArr.write("23\n")
         tmpMTXArr.flush()
 
-        fromMTXArr = nimble.createData(
+        fromMTXArr = nimble.data(
             returnType=t, data=tmpMTXArr.name, pointNames=True, featureNames=True)
         tmpMTXArr.close()
         if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
@@ -988,11 +988,11 @@ def test_extractNames_MTXArr():
 
 
 def test_extractNames_MTXCoo():
-    """ Test of createData() loading a mtx (coo format) file and extracting names """
+    """ Test of data() loading a mtx (coo format) file and extracting names """
     pNames = ['21']
     fNames = ['1', '2', '3']
     for t in returnTypes:
-        fromList = nimble.createData(
+        fromList = nimble.data(
             returnType=t, data=[[22, -5, 23]], pointNames=pNames, featureNames=fNames)
 
         # instantiate from mtx coordinate file
@@ -1008,7 +1008,7 @@ def test_extractNames_MTXCoo():
         tmpMTXCoo.write("2 3 -5\n")
         tmpMTXCoo.write("2 4 23\n")
         tmpMTXCoo.flush()
-        fromMTXCoo = nimble.createData(
+        fromMTXCoo = nimble.data(
             returnType=t, data=tmpMTXCoo.name, pointNames=True, featureNames=True)
         tmpMTXCoo.close()
         if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
@@ -1019,11 +1019,11 @@ def test_extractNames_MTXCoo():
 def test_extractNames_HDF():
     pNames = ['one', 'two']
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[[[1, 2], [3, 4]],
-                                                          [[1, 2], [3, 4]],],
-                                                         [[[1, 2], [3, 4]],
-                                                          [[1, 2], [3, 4]]]],
-                                     pointNames=pNames)
+        fromList = nimble.data(returnType=t, data=[[[[1, 2], [3, 4]],
+                                                    [[1, 2], [3, 4]],],
+                                                   [[[1, 2], [3, 4]],
+                                                    [[1, 2], [3, 4]]]],
+                               pointNames=pNames)
 
         with tempfile.NamedTemporaryFile(suffix=".data") as tmpHDF:
             arr = numpy.array([[1, 2], [3, 4]])
@@ -1037,8 +1037,8 @@ def test_extractNames_HDF():
             hdfFile.flush()
             hdfFile.close()
             tmpHDF.seek(0)
-            fromHDF = nimble.createData(returnType=t, data=tmpHDF.name,
-                                        pointNames=True)
+            fromHDF = nimble.data(returnType=t, data=tmpHDF.name,
+                                  pointNames=True)
 
             if t is None and fromList.getTypeString() != fromHDF.getTypeString():
                 assert fromList.isApproximatelyEqual(fromHDF)
@@ -1055,7 +1055,7 @@ def test_csv_extractNames_duplicatePointName():
         tmpCSV.write("pn1,11,22,33\n")
         tmpCSV.flush()
 
-        nimble.createData(returnType="List", data=tmpCSV.name, pointNames=True)
+        nimble.data(returnType="List", data=tmpCSV.name, pointNames=True)
 
 
 @raises(InvalidArgumentValue)
@@ -1067,7 +1067,7 @@ def test_csv_extractNames_duplicateFeatureName():
         tmpCSV.write("11,22,33\n")
         tmpCSV.flush()
 
-        nimble.createData(returnType="List", data=tmpCSV.name, featureNames=True)
+        nimble.data(returnType="List", data=tmpCSV.name, featureNames=True)
 
 
 def test_csv_roundtrip_autonames():
@@ -1076,17 +1076,17 @@ def test_csv_roundtrip_autonames():
         pnames = ['p0','p1','p2']
         fnames = ['f0','f1','f2', 'f3']
 
-        withFnames = nimble.createData(retType, data, featureNames=fnames)
-        withBoth = nimble.createData(retType, data, featureNames=fnames, pointNames=pnames)
+        withFnames = nimble.data(retType, data, featureNames=fnames)
+        withBoth = nimble.data(retType, data, featureNames=fnames, pointNames=pnames)
 
         with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSVFnames:
             withFnames.writeFile(tmpCSVFnames.name, 'csv', includeNames=True)
-            fromFileFnames = nimble.createData(returnType=retType, data=tmpCSVFnames.name)
+            fromFileFnames = nimble.data(returnType=retType, data=tmpCSVFnames.name)
             assert fromFileFnames == withFnames
 
         with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSVBoth:
             withBoth.writeFile(tmpCSVBoth.name, 'csv', includeNames=True)
-            fromFileBoth = nimble.createData(returnType=retType, data=tmpCSVBoth.name)
+            fromFileBoth = nimble.data(returnType=retType, data=tmpCSVBoth.name)
             assert fromFileBoth == withBoth
 
 def test_hdf_roundtrip_autonames():
@@ -1094,11 +1094,11 @@ def test_hdf_roundtrip_autonames():
         pNames = ['one', 'two']
         data=[[[[1, 2], [3, 4]], [[1, 2], [3, 4]]],
               [[[-1, -2], [-3, -4]], [[-1, -2], [-3, -4]]]]
-        withPNames = nimble.createData(t, data, pointNames=pNames)
+        withPNames = nimble.data(t, data, pointNames=pNames)
 
         with tempfile.NamedTemporaryFile(suffix=".hdf5") as tmpHDF:
             withPNames.writeFile(tmpHDF.name, includeNames=True)
-            fromFile = nimble.createData(t, tmpHDF.name)
+            fromFile = nimble.data(t, tmpHDF.name)
             assert withPNames == fromFile
 
 ##################################
@@ -1107,52 +1107,52 @@ def test_hdf_roundtrip_autonames():
 
 
 def test_extractNames_pythonList():
-    """ Test of createData() given python list, extracting names """
+    """ Test of data() given python list, extracting names """
     pNames = ['pn1']
     fNames = ['one', '2', 'three']
 
     for t in returnTypes:
         inDataRaw = [['foo', 'one', 2, 'three'], ['pn1', 1, -1, -3]]
         specRaw = [[1, -1, -3]]
-        inData = nimble.createData(
+        inData = nimble.data(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-        specified = nimble.createData(
+        specified = nimble.data(
             returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
 
 def test_extractNames_NPArray():
-    """ Test of createData() given numpy array, extracting names """
+    """ Test of data() given numpy array, extracting names """
     pNames = ['11']
     fNames = ['21', '22', '23']
 
     for t in returnTypes:
         inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
         specRaw = numpy.array([[1, -1, -3]])
-        inData = nimble.createData(
+        inData = nimble.data(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-        specified = nimble.createData(
+        specified = nimble.data(
             returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
 
 def test_extractNames_NPMatrix():
-    """ Test of createData() given numpy matrix, extracting names """
+    """ Test of data() given numpy matrix, extracting names """
     pNames = ['11']
     fNames = ['21', '22', '23']
 
     for t in returnTypes:
         inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
         specRaw = numpy.matrix([[1, -1, -3]])
-        inData = nimble.createData(
+        inData = nimble.data(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-        specified = nimble.createData(
+        specified = nimble.data(
             returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
 
 def test_extractNames_CooSparse():
-    """ Test of createData() given scipy Coo matrix, extracting names """
+    """ Test of data() given scipy Coo matrix, extracting names """
     pNames = ['11']
     fNames = ['21', '22', '23']
 
@@ -1161,15 +1161,15 @@ def test_extractNames_CooSparse():
         inDataRaw = scipy.sparse.coo_matrix(inDataRaw)
         specRaw = numpy.array([[1, -1, -3]])
         specRaw = scipy.sparse.coo_matrix(specRaw)
-        inData = nimble.createData(
+        inData = nimble.data(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-        specified = nimble.createData(
+        specified = nimble.data(
             returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
 
 def test_extractNames_CscSparse():
-    """ Test of createData() given scipy Csc matrix, extracting names """
+    """ Test of data() given scipy Csc matrix, extracting names """
     pNames = ['11']
     fNames = ['21', '22', '23']
 
@@ -1178,9 +1178,9 @@ def test_extractNames_CscSparse():
         inDataRaw = scipy.sparse.csc_matrix(inDataRaw)
         specRaw = numpy.array([[1, -1, -3]])
         specRaw = scipy.sparse.csc_matrix(specRaw)
-        inData = nimble.createData(
+        inData = nimble.data(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-        specified = nimble.createData(
+        specified = nimble.data(
             returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
@@ -1192,9 +1192,9 @@ def test_extractNames_pandasDataFrame():
     for t in returnTypes:
         inDataRaw = pd.DataFrame([[1, -1, -3]], index=[11], columns=[21, 22, 23])
         specRaw = pd.DataFrame([[1, -1, -3]])
-        inData = nimble.createData(
+        inData = nimble.data(
             returnType=t, data=inDataRaw, pointNames=True, featureNames=True)
-        specified = nimble.createData(
+        specified = nimble.data(
             returnType=t, data=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
@@ -1210,7 +1210,7 @@ def test_names_dataUnmodified():
             rawDataCopy = [lst.copy() for lst in rawData]
         else:
             rawDataCopy = rawData.copy()
-        inData = nimble.createData(
+        inData = nimble.data(
             returnType=t, data=rawData, pointNames=names, featureNames=names)
 
         if isinstance(rawData, list):
@@ -1256,9 +1256,9 @@ class NamelessFile(object):
         return self.inner.__iter__()
 
 
-def test_createData_CSV_passedOpen():
+def test_data_CSV_passedOpen():
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.data(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1266,7 +1266,7 @@ def test_createData_CSV_passedOpen():
             tmpCSV.flush()
             objName = 'fromCSV'
             openFile = open(tmpCSV.name, 'r')
-            fromCSV = nimble.createData(returnType=t, data=openFile, name=objName)
+            fromCSV = nimble.data(returnType=t, data=openFile, name=objName)
             openFile.close()
 
             assert fromList == fromCSV
@@ -1277,7 +1277,7 @@ def test_createData_CSV_passedOpen():
 
             openFile = open(openFile.name, 'r')
             namelessOpenFile = NamelessFile(openFile)
-            fromCSV = nimble.createData(
+            fromCSV = nimble.data(
                 returnType=t, data=namelessOpenFile)
             openFile.close()
             namelessOpenFile.close()
@@ -1287,9 +1287,9 @@ def test_createData_CSV_passedOpen():
             assert fromCSV.relativePath is None
 
 
-def test_createData_MTXArr_passedOpen():
+def test_data_MTXArr_passedOpen():
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.data(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from mtx array file
         with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
@@ -1301,7 +1301,7 @@ def test_createData_MTXArr_passedOpen():
             tmpMTXArr.flush()
             objName = 'fromMTXArr'
             openFile = open(tmpMTXArr.name, 'r')
-            fromMTXArr = nimble.createData(returnType=t, data=openFile, name=objName)
+            fromMTXArr = nimble.data(returnType=t, data=openFile, name=objName)
             openFile.close()
 
             if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
@@ -1315,7 +1315,7 @@ def test_createData_MTXArr_passedOpen():
 
             openFile = open(tmpMTXArr.name, 'r')
             namelessOpenFile = NamelessFile(openFile)
-            fromMTXArr = nimble.createData(
+            fromMTXArr = nimble.data(
                 returnType=t, data=namelessOpenFile)
             openFile.close()
             namelessOpenFile.close()
@@ -1326,9 +1326,9 @@ def test_createData_MTXArr_passedOpen():
             assert fromMTXArr.relativePath is None
 
 
-def test_createData_MTXCoo_passedOpen():
+def test_data_MTXCoo_passedOpen():
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 2, 3]])
+        fromList = nimble.data(returnType=t, data=[[1, 2, 3]])
 
         # instantiate from mtx coordinate file
         with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
@@ -1340,7 +1340,7 @@ def test_createData_MTXCoo_passedOpen():
             tmpMTXCoo.flush()
             objName = 'fromMTXCoo'
             openFile = open(tmpMTXCoo.name, 'r')
-            fromMTXCoo = nimble.createData(returnType=t, data=openFile, name=objName)
+            fromMTXCoo = nimble.data(returnType=t, data=openFile, name=objName)
             openFile.close()
 
             if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
@@ -1354,7 +1354,7 @@ def test_createData_MTXCoo_passedOpen():
 
             openFile = open(tmpMTXCoo.name, 'r')
             namelessOpenFile = NamelessFile(openFile)
-            fromMTXCoo = nimble.createData(
+            fromMTXCoo = nimble.data(
                 returnType=t, data=namelessOpenFile)
             openFile.close()
             namelessOpenFile.close()
@@ -1420,144 +1420,144 @@ def mocked_requests_get(*args, **kwargs):
     return MockResponse(None, 404, False, 'Not Found')
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_CSVNoExtension(mock_get):
+def test_data_http_CSVNoExtension(mock_get):
     for t in returnTypes:
-        exp = nimble.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        exp = nimble.data(returnType=t, data=[[1,2,3],[4,5,6]])
         url = 'http://mockrequests.nimble/CSVNoExtension'
-        fromWeb = nimble.createData(returnType=t, data=url)
+        fromWeb = nimble.data(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_CSVAmbiguousExtension(mock_get):
+def test_data_http_CSVAmbiguousExtension(mock_get):
     for t in returnTypes:
-        exp = nimble.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        exp = nimble.data(returnType=t, data=[[1,2,3],[4,5,6]])
         url = 'http://mockrequests.nimble/CSVAmbiguousExtension.data'
-        fromWeb = nimble.createData(returnType=t, data=url)
+        fromWeb = nimble.data(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_CSVFileOK(mock_get):
+def test_data_http_CSVFileOK(mock_get):
     for t in returnTypes:
-        exp = nimble.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        exp = nimble.data(returnType=t, data=[[1,2,3],[4,5,6]])
         url = 'http://mockrequests.nimble/CSV.csv'
-        fromWeb = nimble.createData(returnType=t, data=url)
+        fromWeb = nimble.data(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_CSVCarriageReturn(mock_get):
+def test_data_http_CSVCarriageReturn(mock_get):
     for t in returnTypes:
-        exp = nimble.createData(returnType=t, data=[[1,2,3],[4,5,6]])
+        exp = nimble.data(returnType=t, data=[[1,2,3],[4,5,6]])
         url = 'http://mockrequests.nimble/CSVcarriagereturn.csv'
-        fromWeb = nimble.createData(returnType=t, data=url)
+        fromWeb = nimble.data(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_CSVNonUnicodeValues(mock_get):
+def test_data_http_CSVNonUnicodeValues(mock_get):
     for t in returnTypes:
-        exp = nimble.createData(returnType=t, data=[[1,2,"\u00A1"],[4,5,'6']])
+        exp = nimble.data(returnType=t, data=[[1,2,"\u00A1"],[4,5,'6']])
         url = 'http://mockrequests.nimble/CSVunicodetest.csv'
-        fromWeb = nimble.createData(returnType=t, data=url)
+        fromWeb = nimble.data(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_CSVQuotedNewLine(mock_get):
+def test_data_http_CSVQuotedNewLine(mock_get):
     for t in returnTypes:
-        exp = nimble.createData(returnType=t, data=[[1,2,"a/nb"],[4,5,'6']])
+        exp = nimble.data(returnType=t, data=[[1,2,"a/nb"],[4,5,'6']])
         url = 'http://mockrequests.nimble/CSVquotednewline.csv'
-        fromWeb = nimble.createData(returnType=t, data=url)
+        fromWeb = nimble.data(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_CSVPathsWithUrl(mock_get):
+def test_data_http_CSVPathsWithUrl(mock_get):
     for t in returnTypes:
         url = 'http://mockrequests.nimble/CSVNoExtension'
-        fromWeb = nimble.createData(returnType=t, data=url)
+        fromWeb = nimble.data(returnType=t, data=url)
         assert fromWeb.absolutePath == url
         assert fromWeb.relativePath == None
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_MTXNoExtension(mock_get):
+def test_data_http_MTXNoExtension(mock_get):
     for t in returnTypes:
         # None returnType for url will default to Sparse so use coo_matrix for data
         data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
-        exp = nimble.createData(returnType=t, data=data)
+        exp = nimble.data(returnType=t, data=data)
         url = 'http://mockrequests.nimble/MTXNoExtension'
-        fromWeb = nimble.createData(returnType=t, data=url)
+        fromWeb = nimble.data(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_MTXAmbiguousExtension(mock_get):
+def test_data_http_MTXAmbiguousExtension(mock_get):
     for t in returnTypes:
         # None returnType for url will default to Sparse so use coo_matrix for data
         data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
-        exp = nimble.createData(returnType=t, data=data)
+        exp = nimble.data(returnType=t, data=data)
         url = 'http://mockrequests.nimble/MTXAmbiguousExtension.data'
-        fromWeb = nimble.createData(returnType=t, data=url)
+        fromWeb = nimble.data(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_MTXFileOK(mock_get):
+def test_data_http_MTXFileOK(mock_get):
     for t in returnTypes:
         # None returnType for url will default to Sparse so use coo_matrix for data
         data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
-        exp = nimble.createData(returnType=t, data=data)
+        exp = nimble.data(returnType=t, data=data)
         url = 'http://mockrequests.nimble/MTX.mtx'
-        fromWeb = nimble.createData(returnType=t, data=url)
+        fromWeb = nimble.data(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_MTXPathsWithUrl(mock_get):
+def test_data_http_MTXPathsWithUrl(mock_get):
     for t in returnTypes:
         data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
         url = 'http://mockrequests.nimble/MTXNoExtension'
-        fromWeb = nimble.createData(returnType=t, data=url)
+        fromWeb = nimble.data(returnType=t, data=url)
         assert fromWeb.absolutePath == url
         assert fromWeb.relativePath == None
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_HDFNoExtension(mock_get):
+def test_data_http_HDFNoExtension(mock_get):
     for t in returnTypes:
         data = [[[[1, 2], [3, 4]]], [[[-1, -2], [-3, -4]]]]
-        exp = nimble.createData(returnType=t, data=data)
+        exp = nimble.data(returnType=t, data=data)
         url = 'http://mockrequests.nimble/HDFNoExtension'
-        fromWeb = nimble.createData(returnType=t, data=url)
+        fromWeb = nimble.data(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_HDFAmbiguousExtension(mock_get):
+def test_data_http_HDFAmbiguousExtension(mock_get):
     for t in returnTypes:
         data = [[[[1, 2], [3, 4]]], [[[-1, -2], [-3, -4]]]]
-        exp = nimble.createData(returnType=t, data=data)
+        exp = nimble.data(returnType=t, data=data)
         url = 'http://mockrequests.nimble/HDFAmbiguousExtension.data'
-        fromWeb = nimble.createData(returnType=t, data=url)
+        fromWeb = nimble.data(returnType=t, data=url)
         assert fromWeb == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_HDFFileOK(mock_get):
+def test_data_http_HDFFileOK(mock_get):
     for t in returnTypes:
         data = [[[[1, 2], [3, 4]]], [[[-1, -2], [-3, -4]]]]
-        exp = nimble.createData(returnType=t, data=data)
+        exp = nimble.data(returnType=t, data=data)
         url1 = 'http://mockrequests.nimble/HDF.hdf5'
-        fromWeb1 = nimble.createData(returnType=t, data=url1)
+        fromWeb1 = nimble.data(returnType=t, data=url1)
         url2 = 'http://mockrequests.nimble/HDF.h5'
-        fromWeb2 = nimble.createData(returnType=t, data=url2)
+        fromWeb2 = nimble.data(returnType=t, data=url2)
         assert fromWeb1 == fromWeb2 == exp
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_HDFPathsWithUrl(mock_get):
+def test_data_http_HDFPathsWithUrl(mock_get):
     for t in returnTypes:
         data = [[[[1, 2], [3, 4]]], [[[-1, -2], [-3, -4]]]]
         url = 'http://mockrequests.nimble/HDFNoExtension'
-        fromWeb = nimble.createData(returnType=t, data=url)
+        fromWeb = nimble.data(returnType=t, data=url)
         assert fromWeb.absolutePath == url
         assert fromWeb.relativePath == None
 
 @mock.patch('requests.get', side_effect=mocked_requests_get)
-def test_createData_http_linkError(mock_get):
+def test_data_http_linkError(mock_get):
     for t in returnTypes:
         try:
             url = 'http://mockrequests.nimble/linknotfound.csv'
-            fromWeb = nimble.createData(returnType=t, data=url)
+            fromWeb = nimble.data(returnType=t, data=url)
             assert False # expected InvalidArgumentValue
         except InvalidArgumentValue:
             pass
@@ -1566,9 +1566,9 @@ def test_createData_http_linkError(mock_get):
 # ignoreNonNumericalFeatures flag #
 ###################################
 
-def test_createData_ignoreNonNumericalFeaturesCSV():
+def test_data_ignoreNonNumericalFeaturesCSV():
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 3], [5, 7]])
+        fromList = nimble.data(returnType=t, data=[[1, 3], [5, 7]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1576,19 +1576,19 @@ def test_createData_ignoreNonNumericalFeaturesCSV():
             tmpCSV.write("5,six,7,8\n")
             tmpCSV.flush()
 
-            fromCSV = nimble.createData(
+            fromCSV = nimble.data(
                 returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
 
             assert fromList == fromCSV
 
             # sanity check
-            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name)
+            fromCSV = nimble.data(returnType=t, data=tmpCSV.name)
             assert len(fromCSV.features) == 4
 
 
-def test_createData_CSV_ignoreNonNumerical_removalCleanup_hard():
+def test_data_CSV_ignoreNonNumerical_removalCleanup_hard():
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 3], [5, 7], [11, 12], [13, 14]])
+        fromList = nimble.data(returnType=t, data=[[1, 3], [5, 7], [11, 12], [13, 14]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1598,19 +1598,19 @@ def test_createData_CSV_ignoreNonNumerical_removalCleanup_hard():
             tmpCSV.write("13,one,14,9,who?\n")
             tmpCSV.flush()
 
-            fromCSV = nimble.createData(
+            fromCSV = nimble.data(
                 returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
 
             assert fromList == fromCSV
 
             # sanity check
-            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name)
+            fromCSV = nimble.data(returnType=t, data=tmpCSV.name)
             assert len(fromCSV.features) == 5
 
 
-def test_createData_CSV_ignoreNonNumerical_removalCleanup_easy():
+def test_data_CSV_ignoreNonNumerical_removalCleanup_easy():
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 3], [5, 7], [11, 12], [13, 14]])
+        fromList = nimble.data(returnType=t, data=[[1, 3], [5, 7], [11, 12], [13, 14]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1620,19 +1620,19 @@ def test_createData_CSV_ignoreNonNumerical_removalCleanup_easy():
             tmpCSV.write("13,1,14,9,2\n")
             tmpCSV.flush()
 
-            fromCSV = nimble.createData(
+            fromCSV = nimble.data(
                 returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
 
             assert fromList == fromCSV
 
             # sanity check
-            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name)
+            fromCSV = nimble.data(returnType=t, data=tmpCSV.name)
             assert len(fromCSV.features) == 5
 
 
-def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
+def test_data_ignoreNonNumericalFeaturesCSV_noEffect():
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 2, 3, 4], [5, 6, 7, 8]])
+        fromList = nimble.data(returnType=t, data=[[1, 2, 3, 4], [5, 6, 7, 8]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1640,19 +1640,19 @@ def test_createData_ignoreNonNumericalFeaturesCSV_noEffect():
             tmpCSV.write("5,6,7,8\n")
             tmpCSV.flush()
 
-            fromCSV = nimble.createData(
+            fromCSV = nimble.data(
                 returnType=t, data=tmpCSV.name, ignoreNonNumericalFeatures=True)
 
             assert fromList == fromCSV
 
-            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name)
+            fromCSV = nimble.data(returnType=t, data=tmpCSV.name)
             assert len(fromCSV.features) == 4
 
 
 def test_CSV_ignoreNonNumericalFeatures_featureNamesDontTrigger():
     for t in returnTypes:
         fnames = ['1', '2', '3', 'four']
-        fromList = nimble.createData(returnType=t, featureNames=fnames, data=[[5, 6, 7, 8]])
+        fromList = nimble.data(returnType=t, featureNames=fnames, data=[[5, 6, 7, 8]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1660,7 +1660,7 @@ def test_CSV_ignoreNonNumericalFeatures_featureNamesDontTrigger():
             tmpCSV.write("5,6,7,8\n")
             tmpCSV.flush()
 
-            fromCSV = nimble.createData(
+            fromCSV = nimble.data(
                 returnType=t, data=tmpCSV.name, featureNames=True,
                 ignoreNonNumericalFeatures=True)
 
@@ -1671,7 +1671,7 @@ def test_CSV_ignoreNonNumericalFeatures_featureNamesAdjusted():
     for t in returnTypes:
         fNames = ["1", "2", "3"]
         data = [[1, 2, 3], [5, 6, 7]]
-        fromList = nimble.createData(returnType=t, featureNames=fNames, data=data)
+        fromList = nimble.data(returnType=t, featureNames=fNames, data=data)
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1680,17 +1680,17 @@ def test_CSV_ignoreNonNumericalFeatures_featureNamesAdjusted():
             tmpCSV.write("5,6,7,H8\n")
             tmpCSV.flush()
 
-            fromCSV = nimble.createData(
+            fromCSV = nimble.data(
                 returnType=t, data=tmpCSV.name, featureNames=True,
                 ignoreNonNumericalFeatures=True)
 
             assert fromList == fromCSV
 
 
-def test_CSV_createData_ignoreNonNumericalFeatures_allRemoved():
+def test_CSV_data_ignoreNonNumericalFeatures_allRemoved():
     for t in returnTypes:
         pNames = ['single', 'dubs', 'trips']
-        fromList = nimble.createData(returnType=t, pointNames=pNames, data=[[], [], []])
+        fromList = nimble.data(returnType=t, pointNames=pNames, data=[[], [], []])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1700,7 +1700,7 @@ def test_CSV_createData_ignoreNonNumericalFeatures_allRemoved():
             tmpCSV.write("trips,111,222,333\n")
             tmpCSV.flush()
 
-            fromCSV = nimble.createData(
+            fromCSV = nimble.data(
                 returnType=t, data=tmpCSV.name, pointNames=True,
                 featureNames=True, ignoreNonNumericalFeatures=True)
 
@@ -1713,7 +1713,7 @@ def test_CSV_createData_ignoreNonNumericalFeatures_allRemoved():
 
 def test_CSVformatting_simpleQuotedValues():
     for t in returnTypes:
-        fromList = nimble.createData(returnType=t, data=[[1, 2, 3, 4], [5, 6, 7, 8]])
+        fromList = nimble.data(returnType=t, data=[[1, 2, 3, 4], [5, 6, 7, 8]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1721,7 +1721,7 @@ def test_CSVformatting_simpleQuotedValues():
             tmpCSV.write("5,\"6\",\"7\",8\n")
             tmpCSV.flush()
 
-            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name)
+            fromCSV = nimble.data(returnType=t, data=tmpCSV.name)
 
             assert fromList == fromCSV
 
@@ -1731,7 +1731,7 @@ def test_CSVformatting_specialCharsInQuotes():
         fNames = ["1,ONE", "2;TWO", "3\t'EE'"]
         data = [[1, 2, 3], [5, 6, 7]]
         dataAll = [[1, 2, 3, 4], [5, 6, 7, 8]]
-        fromList = nimble.createData(returnType=t, featureNames=fNames[:3], data=data)
+        fromList = nimble.data(returnType=t, featureNames=fNames[:3], data=data)
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1740,7 +1740,7 @@ def test_CSVformatting_specialCharsInQuotes():
             tmpCSV.write("5,6,7,H8\n")
             tmpCSV.flush()
 
-            fromCSV = nimble.createData(
+            fromCSV = nimble.data(
                 returnType=t, data=tmpCSV.name, featureNames=True,
                 ignoreNonNumericalFeatures=True)
 
@@ -1751,7 +1751,7 @@ def test_CSVformatting_emptyAndCommentLines():
     for t in returnTypes:
         data = [['1', 2, 3, 4], ['#11', 22, 33, 44], ['5', 6, 7, 8]]
 
-        fromList = nimble.createData(returnType=t, data=data)
+        fromList = nimble.data(returnType=t, data=data)
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1767,7 +1767,7 @@ def test_CSVformatting_emptyAndCommentLines():
             tmpCSV.write("\n")
             tmpCSV.flush()
 
-            fromCSV = nimble.createData(
+            fromCSV = nimble.data(
                 returnType=t, data=tmpCSV.name, featureNames=False)
 
             assert fromList == fromCSV
@@ -1776,7 +1776,7 @@ def test_CSVformatting_emptyAndCommentLines():
 def test_CSVformatting_scientificNotation():
     for t in returnTypes:
         data = [[1., 2., 3.], [11., 22., 33.], [111., 222., 333.]]
-        fromRaw = nimble.createData(returnType=t, data=data)
+        fromRaw = nimble.data(returnType=t, data=data)
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -1785,7 +1785,7 @@ def test_CSVformatting_scientificNotation():
             tmpCSV.write("1.110000000e+02,2.220000000e+02,3.330000000e+02\n")
             tmpCSV.flush()
 
-            fromCSV = nimble.createData(returnType=t, data=tmpCSV.name)
+            fromCSV = nimble.data(returnType=t, data=tmpCSV.name)
 
             assert fromRaw == fromCSV
 
@@ -1794,39 +1794,39 @@ def test_CSVformatting_scientificNotation():
 # keepPoints, keepFeatures #
 ################################
 
-def test_createData_keepPF_AllPossibleNatOrder():
+def test_data_keepPF_AllPossibleNatOrder():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
-        orig = nimble.createData(returnType=t, data=data)
+        orig = nimble.data(returnType=t, data=data)
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
             orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [2], [0, 1], [0, 2], [1, 2], 'all']
             for (pSel, fSel) in itertools.product(poss, poss):
-                ret = nimble.createData(
+                ret = nimble.data(
                     t, tmpF.name, keepPoints=pSel, keepFeatures=fSel)
-                fromOrig = nimble.createData(
+                fromOrig = nimble.data(
                     t, orig.data, keepPoints=pSel, keepFeatures=fSel)
 
                 assert ret == fromOrig
 
 
-def test_createData_keepPF_AllPossibleReverseOrder():
+def test_data_keepPF_AllPossibleReverseOrder():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
-        orig = nimble.createData(returnType=t, data=data)
+        orig = nimble.data(returnType=t, data=data)
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
             orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0, 1], [0, 2], [1, 2]]
             for (pSel, fSel) in itertools.product(poss, poss):
-                ret = nimble.createData(
+                ret = nimble.data(
                     t, tmpF.name, keepPoints=pSel, keepFeatures=fSel)
-                fromOrig = nimble.createData(
+                fromOrig = nimble.data(
                     t, orig.data, keepPoints=pSel, keepFeatures=fSel)
 
                 assert ret == fromOrig
@@ -1836,9 +1836,9 @@ def test_createData_keepPF_AllPossibleReverseOrder():
                 fSelR = copy.copy(fSel)
                 fSelR.reverse()
 
-                retT = nimble.createData(
+                retT = nimble.data(
                     t, tmpF.name, keepPoints=pSelR, keepFeatures=fSelR)
-                fromOrigT = nimble.createData(
+                fromOrigT = nimble.data(
                     t, orig.data, keepPoints=pSelR, keepFeatures=fSelR)
 
                 assert retT != ret
@@ -1846,9 +1846,9 @@ def test_createData_keepPF_AllPossibleReverseOrder():
                 assert fromOrigT != fromOrig
 
 
-def test_createData_keepPF_AllPossibleWithNames_extracted():
+def test_data_keepPF_AllPossibleWithNames_extracted():
     data = [[1., 2., 3.], [11., 22., 33.], [111., 222., 333.]]
-    orig = nimble.createData(returnType="List", data=data)
+    orig = nimble.data(returnType="List", data=data)
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
@@ -1858,11 +1858,11 @@ def test_createData_keepPF_AllPossibleWithNames_extracted():
             poss = [[0], [1], [0, 1], [1, 0], 'all']
             for (pSel, fSel) in itertools.product(poss, poss):
                 toUse = orig.copy(to="pythonlist")
-                fromOrig = nimble.createData(
+                fromOrig = nimble.data(
                     t, toUse, keepPoints=pSel, keepFeatures=fSel,
                     pointNames=True, featureNames=True)
 
-                ret = nimble.createData(
+                ret = nimble.data(
                     t, tmpF.name, keepPoints=pSel, keepFeatures=fSel,
                     pointNames=True, featureNames=True)
 
@@ -1876,7 +1876,7 @@ def test_createData_keepPF_AllPossibleWithNames_extracted():
                     for i in range(len(fSel)):
                         fSelUse[i] = ret.features.getName(i)
 
-                retN = nimble.createData(
+                retN = nimble.data(
                     t, tmpF.name, keepPoints=pSelUse,
                     keepFeatures=fSelUse, pointNames=True,
                     featureNames=True)
@@ -1885,11 +1885,11 @@ def test_createData_keepPF_AllPossibleWithNames_extracted():
                 assert retN == fromOrig
 
 
-def test_createData_keepPF_AllPossibleWithNames_fullNamesListProvided():
+def test_data_keepPF_AllPossibleWithNames_fullNamesListProvided():
     pnames = ["11.", "111.", "1111"]
     fnames = ["2.", "3.", "4."]
     data = [[22., 33., 44.], [222., 333., 444.], [2222., 3333., 4444.]]
-    orig = nimble.createData(
+    orig = nimble.data(
         returnType="List", data=data, pointNames=pnames, featureNames=fnames)
 
     filesForms = ['csv', 'mtx']
@@ -1902,11 +1902,11 @@ def test_createData_keepPF_AllPossibleWithNames_fullNamesListProvided():
             for (pSel, fSel) in itertools.product(poss, poss):
                 toUseData = orig.copy(to="pythonlist")
 
-                fromOrig = nimble.createData(
+                fromOrig = nimble.data(
                     t, toUseData, keepPoints=pSel, keepFeatures=fSel,
                     pointNames=pnames, featureNames=fnames)
 
-                ret = nimble.createData(
+                ret = nimble.data(
                     t, tmpF.name, keepPoints=pSel, keepFeatures=fSel,
                     pointNames=pnames, featureNames=fnames)
 
@@ -1920,7 +1920,7 @@ def test_createData_keepPF_AllPossibleWithNames_fullNamesListProvided():
                     for i in range(len(fSel)):
                         fSelUse[i] = ret.features.getName(i)
 
-                retN = nimble.createData(
+                retN = nimble.data(
                     t, tmpF.name, keepPoints=pSelUse,
                     keepFeatures=fSelUse, pointNames=pnames,
                     featureNames=fnames)
@@ -1929,11 +1929,11 @@ def test_createData_keepPF_AllPossibleWithNames_fullNamesListProvided():
                 assert retN == fromOrig
 
 
-def test_createData_keepPF_AllPossibleWithNames_fullNamesDictProvided():
+def test_data_keepPF_AllPossibleWithNames_fullNamesDictProvided():
     pnames = {"11.": 0, "111.": 1, "1111.": 2}
     fnames = {"2.": 0, "3.": 1, "4.": 2}
     data = [[22., 33., 44.], [222., 333., 444.], [2222., 3333., 4444.]]
-    orig = nimble.createData(
+    orig = nimble.data(
         returnType="List", data=data, pointNames=pnames, featureNames=fnames)
 
     filesForms = ['csv', 'mtx']
@@ -1946,11 +1946,11 @@ def test_createData_keepPF_AllPossibleWithNames_fullNamesDictProvided():
             for (pSel, fSel) in itertools.product(poss, poss):
                 toUseData = orig.copy(to="pythonlist")
 
-                fromOrig = nimble.createData(
+                fromOrig = nimble.data(
                     t, toUseData, keepPoints=pSel, keepFeatures=fSel,
                     pointNames=pnames, featureNames=fnames)
 
-                ret = nimble.createData(
+                ret = nimble.data(
                     t, tmpF.name, keepPoints=pSel, keepFeatures=fSel,
                     pointNames=pnames, featureNames=fnames)
 
@@ -1964,7 +1964,7 @@ def test_createData_keepPF_AllPossibleWithNames_fullNamesDictProvided():
                     for i in range(len(fSel)):
                         fSelUse[i] = ret.features.getName(i)
 
-                retN = nimble.createData(
+                retN = nimble.data(
                     t, tmpF.name, keepPoints=pSelUse,
                     keepFeatures=fSelUse, pointNames=pnames,
                     featureNames=fnames)
@@ -1973,11 +1973,11 @@ def test_createData_keepPF_AllPossibleWithNames_fullNamesDictProvided():
                 assert retN == fromOrig
 
 
-def test_createData_keepPF_AllCombosWithExactNamesProvided():
+def test_data_keepPF_AllCombosWithExactNamesProvided():
     pnames = ["11.", "111.", "1111."]
     fnames = ["2.", "3.", "4."]
     data = [[22., 33., 44.], [222., 333., 444.], [2222., 3333., 4444.]]
-    orig = nimble.createData(
+    orig = nimble.data(
         returnType="List", data=data, pointNames=pnames, featureNames=fnames)
 
     filesForms = ['csv', 'mtx']
@@ -1992,11 +1992,11 @@ def test_createData_keepPF_AllCombosWithExactNamesProvided():
             pNameSel = ["11.", "111."]
             fNameSel = ["3.", "2."]
 
-            fromOrig = nimble.createData(
+            fromOrig = nimble.data(
                 t, toUseData, keepPoints=pSel, keepFeatures=fSel,
                 pointNames=pNameSel, featureNames=fNameSel)
 
-            ret = nimble.createData(
+            ret = nimble.data(
                 t, tmpF.name, keepPoints=pSel, keepFeatures=fSel,
                 pointNames=pNameSel, featureNames=fNameSel)
 
@@ -2006,7 +2006,7 @@ def test_createData_keepPF_AllCombosWithExactNamesProvided():
             # using names should fail because we do not have full
             # access to the names for every data point
             try:
-                retN = nimble.createData(
+                retN = nimble.data(
                     t, tmpF.name, keepPoints=pSel, pointNames=pNameSel,
                     featureNames=fNameSel)
                 assert False # expected InvalidArgumentValue
@@ -2017,7 +2017,7 @@ def test_createData_keepPF_AllCombosWithExactNamesProvided():
             # using names should fail because we do not have full
             # access to the names for every data point
             try:
-                retN = nimble.createData(
+                retN = nimble.data(
                     t, tmpF.name, keepFeatures=fSel, pointNames=pNameSel,
                     featureNames=fNameSel)
                 assert False # expected InvalidArgumentValue
@@ -2028,7 +2028,7 @@ def test_createData_keepPF_AllCombosWithExactNamesProvided():
             # as its respective axis when names are not extracted
             pSel = [1, 0, 2]
             try:
-                ret = nimble.createData(
+                ret = nimble.data(
                     t, tmpF.name, keepPoints=pSel, pointNames=pnames,
                     featureNames=fnames)
                 assert False # expected InvalidArgumentValue
@@ -2037,7 +2037,7 @@ def test_createData_keepPF_AllCombosWithExactNamesProvided():
 
             pSel = ["111.", "11.", "1111."]
             try:
-                retN = nimble.createData(
+                retN = nimble.data(
                     t, tmpF.name, keepPoints=pSel, pointNames=pnames,
                     featureNames=fnames)
                 assert False # expected InvalidArgumentValue
@@ -2046,7 +2046,7 @@ def test_createData_keepPF_AllCombosWithExactNamesProvided():
 
             fSel = [2, 1, 0]
             try:
-                ret = nimble.createData(
+                ret = nimble.data(
                     t, tmpF.name, keepFeatures=fSel, pointNames=pnames,
                     featureNames=fnames)
                 assert False # expected InvalidArgumentValue
@@ -2055,7 +2055,7 @@ def test_createData_keepPF_AllCombosWithExactNamesProvided():
 
             fSel = ["3.", "2.", "4."]
             try:
-                retN = nimble.createData(
+                retN = nimble.data(
                     t, tmpF.name, keepFeatures=fSel, pointNames=pnames,
                     featureNames=fnames)
                 assert False # expected InvalidArgumentValue
@@ -2063,10 +2063,10 @@ def test_createData_keepPF_AllCombosWithExactNamesProvided():
                 pass
 
 
-def test_createData_csv_keepPoints_IndexingGivenFeatureNames():
+def test_data_csv_keepPoints_IndexingGivenFeatureNames():
     data = [[111, 222, 333]]
     fnames = ['1', '2', '3']
-    wanted = nimble.createData("Matrix", data=data, featureNames=fnames)
+    wanted = nimble.data("Matrix", data=data, featureNames=fnames)
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
@@ -2074,26 +2074,26 @@ def test_createData_csv_keepPoints_IndexingGivenFeatureNames():
         tmpCSV.write("111,222,333\n")
         tmpCSV.flush()
 
-        fromCSV = nimble.createData(
+        fromCSV = nimble.data(
             "Matrix", data=tmpCSV.name, keepPoints=[1], featureNames=True)
 
         raw = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
-        fromRaw = nimble.createData(
+        fromRaw = nimble.data(
             "Matrix", data=raw, keepPoints=[1], featureNames=True)
 
         assert fromRaw == wanted
         assert fromCSV == wanted
 
 
-# since the createData helper for raw data is chained onto the
+# since the data helper for raw data is chained onto the
 # helper for file input, we need tests to show that we don't
 # just read all of the data into an object and then remove the
 # stuff we don't want in the raw data helper. If these pass,
 # unwanted data could still be stored in memory, but it limits
 # that mistake to the file input helpers only.
 
-def test_createData_keepPF_csv_noUncessaryStorage():
-    wanted = nimble.createData("List", data=[[22], [222]])
+def test_data_keepPF_csv_noUncessaryStorage():
+    wanted = nimble.data("List", data=[[22], [222]])
     backup = nimble.core._createHelpers.initDataObject
 
     try:
@@ -2114,14 +2114,14 @@ def test_createData_keepPF_csv_noUncessaryStorage():
             tmpCSV.write("111,222,333\n")
             tmpCSV.flush()
 
-            fromCSV = nimble.createData(
+            fromCSV = nimble.data(
                 "List", data=tmpCSV.name, keepPoints=[1, 2], keepFeatures=[1])
             assert fromCSV == wanted
     finally:
         nimble.core._createHelpers.initDataObject = backup
 
-#def TODOtest_createData_keepPF_mtxArr_noUncessaryStorage():
-#	fromList = nimble.createData(returnType='Matrix', data=[[2]])
+#def TODOtest_data_keepPF_mtxArr_noUncessaryStorage():
+#	fromList = nimble.data(returnType='Matrix', data=[[2]])
 #	backup = nimble.core._createHelpers.initDataObject
 #
 #	try:
@@ -2142,7 +2142,7 @@ def test_createData_keepPF_csv_noUncessaryStorage():
 #			tmpMTXArr.write("2\n")
 #			tmpMTXArr.write("3\n")
 #			tmpMTXArr.flush()
-#			fromMTXArr = nimble.createData(
+#			fromMTXArr = nimble.data(
 #				returnType='Matrix', data=tmpMTXArr.name, keepPoints=[0],
 #				keepFeatures=[1])
 #
@@ -2151,8 +2151,8 @@ def test_createData_keepPF_csv_noUncessaryStorage():
 #		nimble.core._createHelpers.initDataObject = backup
 
 
-#def TODOtest_createData_keepPF_mtxCoo_noUncessaryStorage():
-#	fromList = nimble.createData(returnType='Matrix', data=[[2]])
+#def TODOtest_data_keepPF_mtxCoo_noUncessaryStorage():
+#	fromList = nimble.data(returnType='Matrix', data=[[2]])
 #	backup = nimble.core._createHelpers.initDataObject
 #
 #	try:
@@ -2172,7 +2172,7 @@ def test_createData_keepPF_csv_noUncessaryStorage():
 #			tmpMTXCoo.write("1 2 2\n")
 #			tmpMTXCoo.write("1 3 3\n")
 #			tmpMTXCoo.flush()
-#			fromMTXCoo = nimble.createData(
+#			fromMTXCoo = nimble.data(
 #				returnType='Matrix', data=tmpMTXCoo.name, keepPoints=[0],
 #				keepFeatures=[1])
 #
@@ -2182,8 +2182,8 @@ def test_createData_keepPF_csv_noUncessaryStorage():
 #		nimble.core._createHelpers.initDataObject = backup
 
 
-def test_createData_keepPF_csv_simple():
-    wanted = nimble.createData("Matrix", data=[[222], [22]])
+def test_data_keepPF_csv_simple():
+    wanted = nimble.data("Matrix", data=[[222], [22]])
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
@@ -2191,13 +2191,13 @@ def test_createData_keepPF_csv_simple():
         tmpCSV.write("111,222,333\n")
         tmpCSV.flush()
 
-        fromCSV = nimble.createData(
+        fromCSV = nimble.data(
             "Matrix", data=tmpCSV.name, keepPoints=[2, 1], keepFeatures=[1])
         assert fromCSV == wanted
 
 
-def test_createData_keepPF_mtxArr_simple():
-    fromList = nimble.createData(returnType='Matrix', data=[[3]])
+def test_data_keepPF_mtxArr_simple():
+    fromList = nimble.data(returnType='Matrix', data=[[3]])
 
     # instantiate from mtx array file
     with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXArr:
@@ -2208,15 +2208,15 @@ def test_createData_keepPF_mtxArr_simple():
         tmpMTXArr.write("3\n")
         tmpMTXArr.write("4\n")
         tmpMTXArr.flush()
-        fromMTXArr = nimble.createData(
+        fromMTXArr = nimble.data(
             returnType='Matrix', data=tmpMTXArr.name, keepPoints=[0],
             keepFeatures=[1])
 
         assert fromList == fromMTXArr
 
 
-def test_createData_keepPF_mtxCoo_simple():
-    fromList = nimble.createData(returnType='Matrix', data=[[2]])
+def test_data_keepPF_mtxCoo_simple():
+    fromList = nimble.data(returnType='Matrix', data=[[2]])
 
     # instantiate from mtx coordinate file
     with tempfile.NamedTemporaryFile(suffix=".mtx", mode='w') as tmpMTXCoo:
@@ -2226,83 +2226,83 @@ def test_createData_keepPF_mtxCoo_simple():
         tmpMTXCoo.write("1 2 2\n")
         tmpMTXCoo.write("2 3 3\n")
         tmpMTXCoo.flush()
-        fromMTXCoo = nimble.createData(
+        fromMTXCoo = nimble.data(
             returnType='Matrix', data=tmpMTXCoo.name, keepPoints=[0],
             keepFeatures=[1])
 
         assert fromList == fromMTXCoo
 
 
-def test_createData_keepPF_pythonList_simple():
-    wanted = nimble.createData("Matrix", data=[[22, 33], [222, 333]])
+def test_data_keepPF_pythonList_simple():
+    wanted = nimble.data("Matrix", data=[[22, 33], [222, 333]])
     raw = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
 
-    fromList = nimble.createData(
+    fromList = nimble.data(
         "Matrix", data=raw, keepPoints=[1, 2], keepFeatures=[1, 2])
     assert fromList == wanted
 
-    wanted = nimble.createData("Matrix", data=[[333, 222], [33, 22]])
-    fromList = nimble.createData(
+    wanted = nimble.data("Matrix", data=[[333, 222], [33, 22]])
+    fromList = nimble.data(
         "Matrix", data=raw, keepPoints=[2, 1], keepFeatures=[2, 1])
     assert fromList == wanted
 
 
-def test_createData_keepPF_npArray_simple():
-    wanted = nimble.createData("Matrix", data=[[22, 33], [222, 333]])
+def test_data_keepPF_npArray_simple():
+    wanted = nimble.data("Matrix", data=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
     raw = numpy.array(rawList)
 
-    fromNPArr = nimble.createData(
+    fromNPArr = nimble.data(
         "Matrix", data=raw, keepPoints=[1, 2], keepFeatures=[1, 2])
     assert fromNPArr == wanted
 
-    wanted = nimble.createData("Matrix", data=[[333, 222], [33, 22]])
-    fromNPArr = nimble.createData(
+    wanted = nimble.data("Matrix", data=[[333, 222], [33, 22]])
+    fromNPArr = nimble.data(
         "Matrix", data=raw, keepPoints=[2, 1], keepFeatures=[2, 1])
     assert fromNPArr == wanted
 
 
-def test_createData_keepPF_npMatrix_simple():
-    wanted = nimble.createData("Matrix", data=[[22, 33], [222, 333]])
+def test_data_keepPF_npMatrix_simple():
+    wanted = nimble.data("Matrix", data=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
     raw = numpy.matrix(rawList)
 
-    fromList = nimble.createData(
+    fromList = nimble.data(
         "Matrix", data=raw, keepPoints=[1, 2], keepFeatures=[1, 2])
     assert fromList == wanted
 
-    wanted = nimble.createData("Matrix", data=[[333, 222], [33, 22]])
-    fromList = nimble.createData(
+    wanted = nimble.data("Matrix", data=[[333, 222], [33, 22]])
+    fromList = nimble.data(
         "Matrix", data=raw, keepPoints=[2, 1], keepFeatures=[2, 1])
     assert fromList == wanted
 
 
-def test_createData_keepPF_spCoo_simple():
-    wanted = nimble.createData("Matrix", data=[[22, 33], [222, 333]])
+def test_data_keepPF_spCoo_simple():
+    wanted = nimble.data("Matrix", data=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
     raw = scipy.sparse.coo_matrix(rawList)
 
-    fromCOO = nimble.createData(
+    fromCOO = nimble.data(
         "Matrix", data=raw, keepPoints=[1, 2], keepFeatures=[1, 2])
     assert fromCOO == wanted
 
-    wanted = nimble.createData("Matrix", data=[[333, 222], [33, 22]])
-    fromCOO = nimble.createData(
+    wanted = nimble.data("Matrix", data=[[333, 222], [33, 22]])
+    fromCOO = nimble.data(
         "Matrix", data=raw, keepPoints=[2, 1], keepFeatures=[2, 1])
     assert fromCOO == wanted
 
 
-def test_createData_keepPF_spCsc_simple():
-    wanted = nimble.createData("Matrix", data=[[22, 33], [222, 333]])
+def test_data_keepPF_spCsc_simple():
+    wanted = nimble.data("Matrix", data=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
     raw = scipy.sparse.csc_matrix(rawList)
 
-    fromCSC = nimble.createData(
+    fromCSC = nimble.data(
         "Matrix", data=raw, keepPoints=[1, 2], keepFeatures=[1, 2])
     assert fromCSC == wanted
 
-    wanted = nimble.createData("Matrix", data=[[333, 222], [33, 22]])
-    fromCSC = nimble.createData(
+    wanted = nimble.data("Matrix", data=[[333, 222], [33, 22]])
+    fromCSC = nimble.data(
         "Matrix", data=raw, keepPoints=[2, 1], keepFeatures=[2, 1])
     assert fromCSC == wanted
 
@@ -2317,7 +2317,7 @@ def test_keepPF_csv_ExceptionUnknownFeatureName_Extracted():
         tmpCSV.write("trips,111,222,333\n")
         tmpCSV.flush()
 
-        nimble.createData(
+        nimble.data(
             returnType='List', data=tmpCSV.name, pointNames=True,
             featureNames=True, keepFeatures=[0, "fours"])
 
@@ -2331,7 +2331,7 @@ def test_keepPF_csv_ExceptionUnknownFeatureName_Provided():
         tmpCSV.write("111,222,333\n")
         tmpCSV.flush()
 
-        nimble.createData(
+        nimble.data(
             returnType='List', data=tmpCSV.name,
             featureNames=['ones', 'twos', 'threes'], keepFeatures=[0, "fours"])
 
@@ -2345,7 +2345,7 @@ def test_csv_keepFeatures_indexNotInFile():
         tmpCSV.write("trips,111,222,333\n")
         tmpCSV.flush()
 
-        nimble.createData(
+        nimble.data(
             returnType='List', data=tmpCSV.name, pointNames=False,
             featureNames=False, keepPoints=[1, 2], keepFeatures=[1, 42])
 
@@ -2359,7 +2359,7 @@ def test_csv_keepPoints_indexNotInFile():
         tmpCSV.write("trips,111,222,333\n")
         tmpCSV.flush()
 
-        nimble.createData(
+        nimble.data(
             returnType='List', data=tmpCSV.name, pointNames=False,
             featureNames=False, keepPoints=[12, 2, 3], keepFeatures=[1, 2])
 
@@ -2374,7 +2374,7 @@ def test_keepPF_csv_ExceptionUnknownPointName_extracted():
         tmpCSV.write("trips,111,222,333\n")
         tmpCSV.flush()
 
-        nimble.createData(
+        nimble.data(
             returnType='List', data=tmpCSV.name, pointNames=True,
             featureNames=True, keepPoints=[1, "quads"])
 
@@ -2388,7 +2388,7 @@ def test_keepPF_csv_ExceptionUnknownPointName_provided():
         tmpCSV.write("111,222,333\n")
         tmpCSV.flush()
 
-        nimble.createData(
+        nimble.data(
             returnType='List', data=tmpCSV.name,
             pointNames=['single', 'dubs', 'trips'], keepPoints=[1, "quads"])
 
@@ -2402,7 +2402,7 @@ def test_csv_keepPoints_noNamesButNameSpecified():
         tmpCSV.write("trips,111,222,333\n")
         tmpCSV.flush()
 
-        nimble.createData(
+        nimble.data(
             returnType='List', data=tmpCSV.name, pointNames=False,
             featureNames=False, keepPoints=['dubs', 1], keepFeatures=[2])
 
@@ -2416,7 +2416,7 @@ def test_csv_keepFeatures_noNamesButNameSpecified():
         tmpCSV.write("trips,111,222,333\n")
         tmpCSV.flush()
 
-        nimble.createData(
+        nimble.data(
             returnType='List', data=tmpCSV.name, pointNames=False,
             featureNames=False, keepFeatures=["threes"])
 
@@ -2430,35 +2430,35 @@ def test_csv_keepFeatures_duplicatesInList():
         tmpCSV.flush()
 
         try:
-            nimble.createData(
+            nimble.data(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepFeatures=[1, 1])
             assert False
         except InvalidArgumentValue:
             pass
         try:
-            nimble.createData(
+            nimble.data(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepFeatures=[1, 'twos'])
             assert False
         except InvalidArgumentValue:
             pass
         try:
-            nimble.createData(
+            nimble.data(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepFeatures=['threes', 'threes'])
             assert False
         except InvalidArgumentValue:
             pass
         try:
-            nimble.createData(
+            nimble.data(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=['ones', 'twos', 'threes'], keepFeatures=[1, 'twos'])
             assert False
         except InvalidArgumentValue:
             pass
         try:
-            nimble.createData(
+            nimble.data(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=['ones', 'twos', 'threes'],
                 keepFeatures=['threes', 'threes'])
@@ -2476,28 +2476,28 @@ def test_csv_keepPoints_duplicatesInList():
         tmpCSV.flush()
 
         try:
-            nimble.createData(
+            nimble.data(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepPoints=[1, 1])
             assert False
         except InvalidArgumentValue:
             pass
         try:
-            nimble.createData(
+            nimble.data(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepPoints=[1, 'dubs'])
             assert False
         except InvalidArgumentValue:
             pass
         try:
-            nimble.createData(
+            nimble.data(
                 returnType='List', data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepPoints=['trips', 'trips'])
             assert False
         except InvalidArgumentValue:
             pass
         try:
-            nimble.createData(
+            nimble.data(
                 returnType='List', data=tmpCSV.name,
                 pointNames=['single', 'dubs', 'trips'], featureNames=True,
                 keepPoints=[1, 'dubs'])
@@ -2505,7 +2505,7 @@ def test_csv_keepPoints_duplicatesInList():
         except InvalidArgumentValue:
             pass
         try:
-            nimble.createData(
+            nimble.data(
                 returnType='List', data=tmpCSV.name,
                 pointNames=['single', 'dubs', 'trips'], featureNames=True,
                 keepPoints=['trips', 'trips'])
@@ -2514,12 +2514,12 @@ def test_csv_keepPoints_duplicatesInList():
             pass
 
 
-def test_createData_csv_keepPF_and_ignoreFlag():
+def test_data_csv_keepPF_and_ignoreFlag():
     for t in returnTypes:
         fnames = ['threes']
         pnames = ['trips', 'dubs']
         data = [[333], [33]]
-        fromList = nimble.createData(
+        fromList = nimble.data(
             returnType=t, data=data, pointNames=pnames, featureNames=fnames)
 
         # instantiate from csv file
@@ -2530,7 +2530,7 @@ def test_createData_csv_keepPF_and_ignoreFlag():
             tmpCSV.write("trips,111,222,333\n")
             tmpCSV.flush()
 
-            fromCSV = nimble.createData(
+            fromCSV = nimble.data(
                 returnType=t, data=tmpCSV.name, pointNames=True,
                 featureNames=True, keepPoints=[2, 'dubs'],
                 keepFeatures=[1, 'threes'], ignoreNonNumericalFeatures=True)
@@ -2538,8 +2538,8 @@ def test_createData_csv_keepPF_and_ignoreFlag():
             assert fromList == fromCSV
 
 
-def test_createData_keepPoints_csv_endAfterAllFound():
-    wanted = nimble.createData("Matrix", data=[[11, 22, 33], [1, 2, 3]])
+def test_data_keepPoints_csv_endAfterAllFound():
+    wanted = nimble.data("Matrix", data=[[11, 22, 33], [1, 2, 3]])
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
@@ -2549,11 +2549,11 @@ def test_createData_keepPoints_csv_endAfterAllFound():
         tmpCSV.write("111,222,333,444\n")
         tmpCSV.flush()
 
-        fromCSV = nimble.createData("Matrix", data=tmpCSV.name, keepPoints=[1, 0])
+        fromCSV = nimble.data("Matrix", data=tmpCSV.name, keepPoints=[1, 0])
         assert fromCSV == wanted
 
 
-def test_createData_keepPF_csv_nameAlignment_allNames():
+def test_data_keepPF_csv_nameAlignment_allNames():
     for t in nimble.core.data.available:
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
@@ -2569,23 +2569,23 @@ def test_createData_keepPF_csv_nameAlignment_allNames():
             pNamesD = {'first': 0, 'second': 1, 'third': 2}
             fNamesD = {'one': 0, 'two': 1, 'three': 2}
 
-            fromCSVL = nimble.createData(t, data=tmpCSV.name, pointNames=pNamesL,
-                                         featureNames=fNamesL, keepPoints=[2, 1],
-                                         keepFeatures=[1, 0])
-            fromCSVD = nimble.createData(t, data=tmpCSV.name, pointNames=pNamesD,
-                                         featureNames=fNamesD, keepPoints=[2, 1],
-                                         keepFeatures=[1, 0])
+            fromCSVL = nimble.data(t, data=tmpCSV.name, pointNames=pNamesL,
+                                   featureNames=fNamesL, keepPoints=[2, 1],
+                                   keepFeatures=[1, 0])
+            fromCSVD = nimble.data(t, data=tmpCSV.name, pointNames=pNamesD,
+                                   featureNames=fNamesD, keepPoints=[2, 1],
+                                   keepFeatures=[1, 0])
 
         keptPNames = ['third', 'second']
         keptFNames = ['two', 'one']
         keptData = [[222, 111], [22, 11]]
-        expected = nimble.createData(t, keptData, keptPNames, keptFNames)
+        expected = nimble.data(t, keptData, keptPNames, keptFNames)
 
         assert fromCSVL == expected
         assert fromCSVD == expected
 
 
-def test_createData_keepPF_csv_nameAlignment_keptNames():
+def test_data_keepPF_csv_nameAlignment_keptNames():
     for t in nimble.core.data.available:
         # instantiate from csv file
         keptPNames = ['third', 'second']
@@ -2596,27 +2596,27 @@ def test_createData_keepPF_csv_nameAlignment_keptNames():
             tmpCSV.write("111,222,333\n")
             tmpCSV.flush()
 
-            fromCSVL = nimble.createData(t, data=tmpCSV.name, pointNames=keptPNames,
-                                         featureNames=keptFNames, keepPoints=[2, 1],
-                                         keepFeatures=[1, 0])
-            fromCSVD = nimble.createData(t, data=tmpCSV.name, pointNames=keptPNames,
-                                         featureNames=keptFNames, keepPoints=[2, 1],
-                                         keepFeatures=[1, 0])
+            fromCSVL = nimble.data(t, data=tmpCSV.name, pointNames=keptPNames,
+                                   featureNames=keptFNames, keepPoints=[2, 1],
+                                   keepFeatures=[1, 0])
+            fromCSVD = nimble.data(t, data=tmpCSV.name, pointNames=keptPNames,
+                                   featureNames=keptFNames, keepPoints=[2, 1],
+                                   keepFeatures=[1, 0])
 
         keptPNames = ['third', 'second']
         keptFNames = ['two', 'one']
         keptData = [[222, 111], [22, 11]]
-        expected = nimble.createData(t, keptData, keptPNames, keptFNames)
+        expected = nimble.data(t, keptData, keptPNames, keptFNames)
 
         assert fromCSVL == expected
         assert fromCSVD == expected
 
 
 @raises(InvalidArgumentValue)
-def test_createData_csv_keepPoints_keepingAllPointNames_index():
+def test_data_csv_keepPoints_keepingAllPointNames_index():
     data = [[111, 222, 333], [11, 22, 33], [1, 2, 3]]
     pnames = ['1', '2', '3']
-    wanted = nimble.createData("Matrix", data=data, pointNames=pnames)
+    wanted = nimble.data("Matrix", data=data, pointNames=pnames)
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
@@ -2625,15 +2625,15 @@ def test_createData_csv_keepPoints_keepingAllPointNames_index():
         tmpCSV.flush()
 
         # cannot assume that pnames contains all pointNames for data
-        fromCSV = nimble.createData(
+        fromCSV = nimble.data(
             "Matrix", data=tmpCSV.name, pointNames=pnames, keepPoints=[2, 1, 0])
 
 
 @raises(InvalidArgumentValue)
-def test_createData_csv_keepPoints_keepingAllPointNames_names():
+def test_data_csv_keepPoints_keepingAllPointNames_names():
     data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
     pnames = ['1', '2', '3']
-    wanted = nimble.createData("Matrix", data=data, pointNames=pnames)
+    wanted = nimble.data("Matrix", data=data, pointNames=pnames)
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
@@ -2642,15 +2642,15 @@ def test_createData_csv_keepPoints_keepingAllPointNames_names():
         tmpCSV.flush()
 
         # cannot assume that pnames contains all pointNames for data
-        fromCSV = nimble.createData(
+        fromCSV = nimble.data(
             "Matrix", data=tmpCSV.name, pointNames=pnames, keepPoints=['3', '2', '1'])
 
 
 @raises(InvalidArgumentValue)
-def test_createData_csv_keepFeatures_keepingAllFeatureNames_index():
+def test_data_csv_keepFeatures_keepingAllFeatureNames_index():
     data = [[2, 3, 1], [22, 33, 11], [222, 333, 111]]
     fnames = ['2', '3', '1']
-    wanted = nimble.createData("Matrix", data=data, featureNames=fnames)
+    wanted = nimble.data("Matrix", data=data, featureNames=fnames)
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
@@ -2659,15 +2659,15 @@ def test_createData_csv_keepFeatures_keepingAllFeatureNames_index():
         tmpCSV.flush()
 
         # assume featureNames passed aligns with order of keepFeatures
-        fromCSV = nimble.createData(
+        fromCSV = nimble.data(
             "Matrix", data=tmpCSV.name, featureNames=fnames, keepFeatures=[1, 2, 0])
 
 
 @raises(InvalidArgumentValue)
-def test_createData_csv_keepFeatures_keepingAllFeatureNames_names():
+def test_data_csv_keepFeatures_keepingAllFeatureNames_names():
     data = [[2, 3, 1], [22, 33, 11], [222, 333, 111]]
     fnames = ['b', 'c', 'a']
-    wanted = nimble.createData("Matrix", data=data, featureNames=fnames)
+    wanted = nimble.data("Matrix", data=data, featureNames=fnames)
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
@@ -2676,14 +2676,14 @@ def test_createData_csv_keepFeatures_keepingAllFeatureNames_names():
         tmpCSV.flush()
 
         # assume featureNames passed aligns with order of keepFeatures
-        fromCSV = nimble.createData(
+        fromCSV = nimble.data(
             "Matrix", data=tmpCSV.name, featureNames=['a', 'b', 'c'], keepFeatures=['b', 'c' ,'a'])
 
 
-def test_createData_csv_keepFeatures_reordersFeatureNames_fnamesTrue():
+def test_data_csv_keepFeatures_reordersFeatureNames_fnamesTrue():
     data = [[22, 33, 11], [222, 333, 111]]
     fnames = ['2', '3', '1']
-    wanted = nimble.createData("Matrix", data=data, featureNames=fnames)
+    wanted = nimble.data("Matrix", data=data, featureNames=fnames)
     # instantiate from csv file
     with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
         tmpCSV.write("1,2,3\n")
@@ -2692,12 +2692,12 @@ def test_createData_csv_keepFeatures_reordersFeatureNames_fnamesTrue():
         tmpCSV.flush()
 
         # reordered based on keepFeatures since featureNames extracted
-        fromCSVNames = nimble.createData(
+        fromCSVNames = nimble.data(
             "Matrix", data=tmpCSV.name, featureNames=True, keepFeatures=fnames)
         assert fromCSVNames == wanted
 
         # reordered based on keepFeatures since featureNames extracted
-        fromCSVIndex = nimble.createData(
+        fromCSVIndex = nimble.data(
             "Matrix", data=tmpCSV.name, featureNames=True, keepFeatures=[1, 2, 0])
         assert fromCSVIndex == wanted
 
@@ -2705,8 +2705,8 @@ def test_createData_csv_keepFeatures_reordersFeatureNames_fnamesTrue():
 ### inputSeparator ###
 ######################
 
-def test_createData_csv_inputSeparatorAutomatic():
-    wanted = nimble.createData("Matrix", data=[[1,2,3], [4,5,6]])
+def test_data_csv_inputSeparatorAutomatic():
+    wanted = nimble.data("Matrix", data=[[1,2,3], [4,5,6]])
     # instantiate from csv file
     for delimiter in [',', '\t', ' ', ':', ';', '|']:
         with tempfile.NamedTemporaryFile(mode='w') as tmpCSV:
@@ -2714,11 +2714,11 @@ def test_createData_csv_inputSeparatorAutomatic():
             tmpCSV.write("4{0}5{0}6\n".format(delimiter))
             tmpCSV.flush()
 
-            fromCSV = nimble.createData("Matrix", data=tmpCSV.name)
+            fromCSV = nimble.data("Matrix", data=tmpCSV.name)
             assert fromCSV == wanted
 
-def test_createData_csv_inputSeparatorSpecified():
-    wanted = nimble.createData("Matrix", data=[[1,2,3], [4,5,6]])
+def test_data_csv_inputSeparatorSpecified():
+    wanted = nimble.data("Matrix", data=[[1,2,3], [4,5,6]])
     # instantiate from csv file
     for delimiter in [',', '\t', ' ', ':', ';', '|']:
         with tempfile.NamedTemporaryFile(mode='w') as tmpCSV:
@@ -2726,26 +2726,26 @@ def test_createData_csv_inputSeparatorSpecified():
             tmpCSV.write("4{0}5{0}6\n".format(delimiter))
             tmpCSV.flush()
 
-            fromCSV = nimble.createData("Matrix", data=tmpCSV.name, inputSeparator=delimiter)
+            fromCSV = nimble.data("Matrix", data=tmpCSV.name, inputSeparator=delimiter)
             assert fromCSV == wanted
 
 @raises(FileFormatException)
-def test_createData_csv_inputSeparatorConfusion():
+def test_data_csv_inputSeparatorConfusion():
     with tempfile.NamedTemporaryFile(mode='w') as tmpCSV:
         tmpCSV.write("1,2;3\n")
         tmpCSV.write("4,5,6\n")
         tmpCSV.flush()
 
-        fromCSV = nimble.createData("Matrix", data=tmpCSV.name)
+        fromCSV = nimble.data("Matrix", data=tmpCSV.name)
 
 @raises(InvalidArgumentValue)
-def test_createData_csv_inputSeparatorNot1Character():
+def test_data_csv_inputSeparatorNot1Character():
     with tempfile.NamedTemporaryFile(mode='w') as tmpCSV:
         tmpCSV.write("1,,2,,3\n")
         tmpCSV.write("4,,5,,6\n")
         tmpCSV.flush()
 
-        fromCSV = nimble.createData("Matrix", data=tmpCSV.name, inputSeparator=',,')
+        fromCSV = nimble.data("Matrix", data=tmpCSV.name, inputSeparator=',,')
 
 
 #########################################
@@ -2756,25 +2756,25 @@ def test_missingDefaults():
     for t in returnTypes:
         nan = numpy.nan
         data = [[1, 2, float('nan')], [numpy.nan, 5, 6], [7, None, 9], ["", "nan", "None"]]
-        toTest = nimble.createData(t, data)
+        toTest = nimble.data(t, data)
         expData = [[1, 2, nan], [nan, 5, 6], [7, nan, 9], [nan, nan, nan]]
-        expRet = nimble.createData(t, expData)
+        expRet = nimble.data(t, expData)
         assert toTest == expRet
 
 def test_handmadeReplaceMissingWith():
     for t in returnTypes:
         data = [[1, 2, float('nan')], [numpy.nan, 5, 6], [7, None, 9], ["", "nan", "None"]]
-        toTest = nimble.createData(t, data, replaceMissingWith=0)
+        toTest = nimble.data(t, data, replaceMissingWith=0)
         expData = [[1, 2, 0], [0, 5, 6], [7, 0, 9], [0, 0, 0]]
-        expRet = nimble.createData(t, expData)
+        expRet = nimble.data(t, expData)
         assert toTest == expRet
 
 def test_numericalReplaceMissingWithNonNumeric():
     for t in returnTypes:
         data = [[1, 2, None], [None, 5, 6], [7, None, 9], [None, None, None]]
-        toTest = nimble.createData(t, data, replaceMissingWith="Missing")
+        toTest = nimble.data(t, data, replaceMissingWith="Missing")
         expData = [[1, 2, "Missing"], ["Missing", 5, 6], [7, "Missing", 9], ["Missing", "Missing", "Missing"]]
-        expRet = nimble.createData(t, expData)
+        expRet = nimble.data(t, expData)
         assert toTest == expRet
 
 def test_handmadeTreatAsMissing():
@@ -2783,43 +2783,43 @@ def test_handmadeTreatAsMissing():
         data = [[1, 2, ""], [nan, 5, 6], [7, "", 9], [nan, "nan", "None"]]
         missingList = [nan, "", 5]
         assert numpy.array(missingList).dtype != numpy.object_
-        toTest = nimble.createData(t, data, treatAsMissing=missingList)
+        toTest = nimble.data(t, data, treatAsMissing=missingList)
         expData = [[1, 2, nan], [nan, nan, 6], [7, nan, 9], [nan, "nan", "None"]]
-        expRet = nimble.createData(t, expData, treatAsMissing=None)
+        expRet = nimble.data(t, expData, treatAsMissing=None)
         assert toTest == expRet
 
 def test_handmadeConsiderAndReplaceMissingWith():
     for t in returnTypes:
         data = [[1, 2, "NA"], ["NA", 5, 6], [7, "NA", 9], ["NA", "NA", "NA"]]
-        toTest = nimble.createData(t, data, treatAsMissing=["NA"], replaceMissingWith=0)
+        toTest = nimble.data(t, data, treatAsMissing=["NA"], replaceMissingWith=0)
         expData = [[1, 2, 0], [0, 5, 6], [7, 0, 9], [0, 0, 0]]
-        expRet = nimble.createData(t, expData)
+        expRet = nimble.data(t, expData)
         assert toTest == expRet
 
 def test_replaceDataTypeMismatch():
     for t in returnTypes:
         data = [[1, 2, 99], [99, 5, 6], [7, 99, 9], [99, 99, 99]]
-        toTest = nimble.createData(t, data, treatAsMissing=[99], replaceMissingWith="")
+        toTest = nimble.data(t, data, treatAsMissing=[99], replaceMissingWith="")
         expData = [[1, 2, ""], ["", 5, 6], [7, "", 9], ["", "", ""]]
-        expRet = nimble.createData(t, expData, treatAsMissing=None)
+        expRet = nimble.data(t, expData, treatAsMissing=None)
         assert toTest == expRet
 
 def test_keepNanAndReplaceAlternateMissing():
     for t in returnTypes:
         nan = numpy.nan
         data = [[1, 2, "NA"], [numpy.nan, 5, 6], [7, "NA", 9], ["NA", numpy.nan, "NA"]]
-        toTest = nimble.createData(t, data, treatAsMissing=["NA"], replaceMissingWith=-1)
+        toTest = nimble.data(t, data, treatAsMissing=["NA"], replaceMissingWith=-1)
         expData = [[1, 2, -1], [nan, 5, 6], [7, -1, 9], [-1, nan, -1]]
-        expRet = nimble.createData(t, expData, treatAsMissing=None)
+        expRet = nimble.data(t, expData, treatAsMissing=None)
         assert toTest == expRet
 
 def test_treatAsMissingIsNone():
     for t in returnTypes:
         nan = numpy.nan
         data = [[1, 2, None], [None, 5, 6], [7, None, 9], ["", numpy.nan, ""]]
-        toTest = nimble.createData(t, data, treatAsMissing=None)
+        toTest = nimble.data(t, data, treatAsMissing=None)
         notExpData = [[1,2, nan], [nan, 5, 6], [7, nan, 9], [nan, nan, nan]]
-        notExpRet = nimble.createData(t, notExpData, treatAsMissing=None)
+        notExpRet = nimble.data(t, notExpData, treatAsMissing=None)
         assert toTest != notExpRet
 
 def test_DataOutputWithMissingDataTypes1D():
@@ -2830,20 +2830,20 @@ def test_DataOutputWithMissingDataTypes1D():
         expDataFrameOutput = pd.DataFrame(expListOutput)
         expSparseOutput = scipy.sparse.coo_matrix(expListOutput)
 
-        orig1 = nimble.createData(t, [1,2,"None"])
-        orig2 = nimble.createData(t, (1,2,"None"))
-        orig3 = nimble.createData(t, {'a':1, 'b':2, 'c':"None"})
+        orig1 = nimble.data(t, [1,2,"None"])
+        orig2 = nimble.data(t, (1,2,"None"))
+        orig3 = nimble.data(t, {'a':1, 'b':2, 'c':"None"})
         orig3.features.sort(sortBy=orig3.points.getName(0))
-        orig4 = nimble.createData(t, [{'a':1, 'b':2, 'c':"None"}])
+        orig4 = nimble.data(t, [{'a':1, 'b':2, 'c':"None"}])
         orig4.features.sort(sortBy=orig4.points.getName(0))
-        orig5 = nimble.createData(t, numpy.array([1,2,"None"], dtype=object))
-        orig6 = nimble.createData(t, numpy.matrix([1,2,"None"], dtype=object))
-        orig7 = nimble.createData(t, pd.DataFrame([[1,2,"None"]]))
-        orig8 = nimble.createData(t, pd.Series([1,2,"None"]))
-        orig9 = nimble.createData(t, pd.SparseDataFrame([[1,2,"None"]]))
-        orig10 = nimble.createData(t, scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
-        orig11 = nimble.createData(t, scipy.sparse.csc_matrix(numpy.array([1,2,float('nan')])))
-        orig12 = nimble.createData(t, scipy.sparse.csr_matrix(numpy.array([1,2,float('nan')])))
+        orig5 = nimble.data(t, numpy.array([1,2,"None"], dtype=object))
+        orig6 = nimble.data(t, numpy.matrix([1,2,"None"], dtype=object))
+        orig7 = nimble.data(t, pd.DataFrame([[1,2,"None"]]))
+        orig8 = nimble.data(t, pd.Series([1,2,"None"]))
+        orig9 = nimble.data(t, pd.SparseDataFrame([[1,2,"None"]]))
+        orig10 = nimble.data(t, scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
+        orig11 = nimble.data(t, scipy.sparse.csc_matrix(numpy.array([1,2,float('nan')])))
+        orig12 = nimble.data(t, scipy.sparse.csr_matrix(numpy.array([1,2,float('nan')])))
 
         originals = [orig1, orig2, orig3, orig4, orig5, orig6, orig7, orig8, orig9, orig10, orig11, orig12]
 
@@ -2871,17 +2871,17 @@ def test_DataOutputWithMissingDataTypes2D():
         expDataFrameOutput = pd.DataFrame(expMatrixOutput)
         expSparseOutput = scipy.sparse.coo_matrix(expMatrixOutput)
 
-        orig1 = nimble.createData(t, [[1,2,'None'], [3,4,'b']])
-        orig2 = nimble.createData(t, ((1,2,'None'), (3,4,'b')))
-        orig3 = nimble.createData(t, {'a':[1,3], 'b':[2,4], 'c':['None', 'b']})
+        orig1 = nimble.data(t, [[1,2,'None'], [3,4,'b']])
+        orig2 = nimble.data(t, ((1,2,'None'), (3,4,'b')))
+        orig3 = nimble.data(t, {'a':[1,3], 'b':[2,4], 'c':['None', 'b']})
         orig3.features.sort(sortBy=orig3.points.getName(0))
-        orig4 = nimble.createData(t, [{'a':1, 'b':2, 'c':'None'}, {'a':3, 'b':4, 'c':'b'}])
+        orig4 = nimble.data(t, [{'a':1, 'b':2, 'c':'None'}, {'a':3, 'b':4, 'c':'b'}])
         orig4.features.sort(sortBy=orig4.points.getName(0))
-        orig5 = nimble.createData(t, numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
-        orig6 = nimble.createData(t, numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
-        orig7 = nimble.createData(t, pd.DataFrame([[1,2,'None'], [3,4,'b']]))
-        orig8 = nimble.createData(t, pd.SparseDataFrame([[1,2,'None'], [3,4,'b']]))
-        orig9 = nimble.createData(t, scipy.sparse.coo_matrix(numpy.array([[1,2,'None'], [3,4,'b']], dtype=object)))
+        orig5 = nimble.data(t, numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
+        orig6 = nimble.data(t, numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
+        orig7 = nimble.data(t, pd.DataFrame([[1,2,'None'], [3,4,'b']]))
+        orig8 = nimble.data(t, pd.SparseDataFrame([[1,2,'None'], [3,4,'b']]))
+        orig9 = nimble.data(t, scipy.sparse.coo_matrix(numpy.array([[1,2,'None'], [3,4,'b']], dtype=object)))
 
         originals = [orig1, orig2, orig3, orig4, orig5, orig6, orig7, orig8, orig9]
         for orig in originals:
@@ -2908,12 +2908,12 @@ def test_DataOutputWithMissingDataTypes2D():
 #################
 # Logging count #
 #################
-def test_createData_logCount():
-    """Test createData adds one entry to the log for each return type"""
+def test_data_logCount():
+    """Test data adds one entry to the log for each return type"""
 
     @oneLogEntryExpected
     def byType(rType):
-        toTest = nimble.createData(rType, [[1,2,3], [4,5,6], [7,8,9]])
+        toTest = nimble.data(rType, [[1,2,3], [4,5,6], [7,8,9]])
 
     for t in returnTypes:
         byType(t)
@@ -2950,7 +2950,7 @@ def makeTensorData(matrix):
     return tensors
 
 
-def test_createData_multidimensionalData():
+def test_data_multidimensionalData():
     vector1 = [0, 1, 2, 3, 0]
     vector2 = [4, 5, 0, 6, 7]
     vector3 = [8, 0, 9, 0, 8]
@@ -2963,7 +2963,7 @@ def test_createData_multidimensionalData():
     expPoints = 3
     for retType in returnTypes:
         for idx, tensor in enumerate(tensors):
-            toTest = nimble.createData(retType, tensor)
+            toTest = nimble.data(retType, tensor)
             expShape = [3, 3, 5]
             for i in range(idx % 3):
                 expShape.insert(0, 3)
@@ -2973,7 +2973,7 @@ def test_createData_multidimensionalData():
             assert toTest._featureCount == expFeatures
 
         for idx, tensor in enumerate(emptyTensors):
-            toTest = nimble.createData(retType, tensor)
+            toTest = nimble.data(retType, tensor)
             expShape = [3, 3, 0]
             for i in range(idx % 3):
                 expShape.insert(0, 3)
@@ -2982,7 +2982,7 @@ def test_createData_multidimensionalData():
             assert toTest._pointCount == expPoints
             assert toTest._featureCount == expFeatures
 
-def test_createData_multidimensionalData_pointNames():
+def test_data_multidimensionalData_pointNames():
     vector1 = [0, 1, 2, 3, 0]
     vector2 = [4, 5, 0, 6, 7]
     vector3 = [8, 0, 9, 0, 8]
@@ -2993,10 +2993,10 @@ def test_createData_multidimensionalData_pointNames():
     ptNames = ['a', 'b', 'c']
     for retType in returnTypes:
         for tensor in tensors:
-            toTest = nimble.createData(retType, tensor, pointNames=ptNames)
+            toTest = nimble.data(retType, tensor, pointNames=ptNames)
             assert toTest.points.getNames() == ptNames
 
-def test_createData_multidimensionalData_featureNames():
+def test_data_multidimensionalData_featureNames():
     vector1 = [0, 1, 2, 3, 0]
     vector2 = [4, 5, 0, 6, 7]
     vector3 = [8, 0, 9, 0, 8]
@@ -3010,17 +3010,17 @@ def test_createData_multidimensionalData_featureNames():
             for i in range(idx % 3):
                 flattenedLen *= 3
             ftNames = ['ft' + str(x) for x in range(flattenedLen)]
-            toTest = nimble.createData(retType, tensor, featureNames=ftNames)
+            toTest = nimble.data(retType, tensor, featureNames=ftNames)
             assert toTest.features.getNames() == ftNames
 
-def test_createData_multidimensionalData_listsOfMultiDimensionalObjects():
+def test_data_multidimensionalData_listsOfMultiDimensionalObjects():
     for (rType1, rType2) in itertools.product(returnTypes, returnTypes):
         arr1D = numpy.array([1, 2, 3, 0])
-        nim1D = nimble.createData(rType1, [1, 2, 3, 0])
+        nim1D = nimble.data(rType1, [1, 2, 3, 0])
 
-        fromListArr1D = nimble.createData(rType2, [arr1D, arr1D, arr1D])
+        fromListArr1D = nimble.data(rType2, [arr1D, arr1D, arr1D])
         assert fromListArr1D._shape == [3, 4]
-        fromListNim1D = nimble.createData(rType2, [nim1D, nim1D, nim1D])
+        fromListNim1D = nimble.data(rType2, [nim1D, nim1D, nim1D])
         assert fromListNim1D._shape == [3, 4]
 
         arr2D = fromListArr1D.data
@@ -3028,19 +3028,19 @@ def test_createData_multidimensionalData_listsOfMultiDimensionalObjects():
         df2D = pd.DataFrame([[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 3, 0]])
         nim2D = fromListNim1D
 
-        fromListArr2D = nimble.createData(rType2, [arr2D, arr2D, arr2D])
+        fromListArr2D = nimble.data(rType2, [arr2D, arr2D, arr2D])
         assert fromListArr2D._shape == [3, 3, 4]
-        fromListCoo2D = nimble.createData(rType2, [coo2D, coo2D, coo2D])
+        fromListCoo2D = nimble.data(rType2, [coo2D, coo2D, coo2D])
         print(fromListCoo2D._shape)
         print(fromListCoo2D)
         assert fromListCoo2D._shape == [3, 3, 4]
-        fromListDF2D = nimble.createData(rType2, [df2D, df2D, df2D])
+        fromListDF2D = nimble.data(rType2, [df2D, df2D, df2D])
         assert fromListDF2D._shape == [3, 3, 4]
-        fromListNim2D = nimble.createData(rType2, [nim2D, nim2D, nim2D])
+        fromListNim2D = nimble.data(rType2, [nim2D, nim2D, nim2D])
         assert fromListNim2D._shape == [3, 3, 4]
 
         nim3D = fromListNim2D
-        fromListNim3D = nimble.createData(rType2, [nim3D, nim3D])
+        fromListNim3D = nimble.data(rType2, [nim3D, nim3D])
         assert fromListNim3D._shape == [2, 3, 3, 4]
 
 # tests for combination of one name set being specified and one set being

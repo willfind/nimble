@@ -4,7 +4,7 @@ Functions that could be useful accross multple interface test suites
 
 import numpy
 
-from nimble import createData
+import nimble
 from nimble.core.data import Base
 from nimble.core.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
 from nimble.core.interfaces.interface_helpers import extractWinningPredictionLabel
@@ -54,7 +54,7 @@ def testExtractWinningPredictionLabel():
     Unit test for extractWinningPrediction function in runner.py
     """
     predictionData = [[1, 3, 3, 2, 3, 2], [2, 3, 3, 2, 2, 2], [1, 1, 1, 1, 1, 1], [4, 4, 4, 3, 3, 3]]
-    BaseObj = createData('Matrix', predictionData)
+    BaseObj = nimble.data('Matrix', predictionData)
     BaseObj.transpose()
     predictions = BaseObj.features.calculate(extractWinningPredictionLabel)
     listPredictions = predictions.copy(to="python list")
@@ -89,4 +89,3 @@ def testGenerateAllPairs():
     testList2 = []
     testPairs2 = generateAllPairs(testList2)
     assert testPairs2 is None
-    

@@ -463,7 +463,7 @@ class Base(object):
         --------
         >>> from nimble.match import nonZero, positive
         >>> rawData = [[0, 1, 2], [-2, -1, 0]]
-        >>> data = nimble.createData('Matrix', rawData)
+        >>> data = nimble.data('Matrix', rawData)
         >>> list(data.iterateElements(order='point'))
         [0, 1, 2, -2, -1, 0]
         >>> list(data.iterateElements(order='feature'))
@@ -520,8 +520,7 @@ class Base(object):
         Examples
         --------
         >>> raw = [['a'], ['b'], ['c']]
-        >>> data = nimble.createData('Matrix', raw,
-        ...                          featureNames=['replace'])
+        >>> data = nimble.data('Matrix', raw, featureNames=['replace'])
         >>> replaced = data.replaceFeatureWithBinaryFeatures('replace')
         >>> replaced
         ['replace=a', 'replace=b', 'replace=c']
@@ -593,8 +592,7 @@ class Base(object):
         --------
         >>> raw = [[1, 'a', 1], [2, 'b', 2], [3, 'c', 3]]
         >>> featureNames = ['keep1', 'transform', 'keep2']
-        >>> data = nimble.createData('Matrix', raw,
-        ...                          featureNames=featureNames)
+        >>> data = nimble.data('Matrix', raw, featureNames=featureNames)
         >>> mapping = data.transformFeatureToIntegers('transform')
         >>> mapping
         {0: 'a', 1: 'b', 2: 'c'}
@@ -738,7 +736,7 @@ class Base(object):
         >>> raw = [[1, 2, 3],
         ...        [4, 5, 6],
         ...        [7, 8, 9]]
-        >>> dontSkip = nimble.createData('Matrix', raw)
+        >>> dontSkip = nimble.data('Matrix', raw)
         >>> dontSkip.transformElements(addTenToEvens)
         >>> dontSkip
         Matrix(
@@ -746,7 +744,7 @@ class Base(object):
              [ 14  None  16 ]
              [None  18  None]]
             )
-        >>> skip = nimble.createData('Matrix', raw)
+        >>> skip = nimble.data('Matrix', raw)
         >>> skip.transformElements(addTenToEvens,
         ...                        skipNoneReturnValues=True)
         >>> skip
@@ -875,7 +873,7 @@ class Base(object):
         >>> raw = [[1, 2, 3],
         ...        [4, 5, 6],
         ...        [7, 8, 9]]
-        >>> data = nimble.createData('Matrix', raw)
+        >>> data = nimble.data('Matrix', raw)
         >>> dontSkip = data.calculateOnElements(addTenToEvens)
         >>> dontSkip
         Matrix(
@@ -945,7 +943,7 @@ class Base(object):
         --------
         >>> from nimble import match
         >>> raw = [[1, -1, 1], [-3, 3, -3]]
-        >>> data = nimble.createData('Matrix', raw)
+        >>> data = nimble.data('Matrix', raw)
         >>> isNegativeOne = data.matchingElements(-1)
         >>> isNegativeOne
         Matrix(
@@ -955,7 +953,7 @@ class Base(object):
 
         >>> from nimble import match
         >>> raw = [[1, -1, None], [None, 3, -3]]
-        >>> data = nimble.createData('Matrix', raw)
+        >>> data = nimble.data('Matrix', raw)
         >>> isMissing = data.matchingElements(match.missing)
         >>> isMissing
         Matrix(
@@ -965,7 +963,7 @@ class Base(object):
 
         >>> from nimble import match
         >>> raw = [[1, -1, 1], [-3, 3, -3]]
-        >>> data = nimble.createData('Matrix', raw)
+        >>> data = nimble.data('Matrix', raw)
         >>> isPositive = data.matchingElements(">0")
         >>> isPositive
         Matrix(
@@ -1045,8 +1043,7 @@ class Base(object):
                     f += 1
                 p += 1
 
-        ret = nimble.createData(optType, values, treatAsMissing=[None],
-                                useLog=False)
+        ret = nimble.data(optType, values, treatAsMissing=[None], useLog=False)
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
@@ -1211,8 +1208,7 @@ class Base(object):
         ...        ['SEC', 'Florida', 10, 3],
         ...        ['SEC', 'Georgia', 11, 3]]
         >>> ftNames = ['conference', 'team', 'wins', 'losses']
-        >>> top10 = nimble.createData('DataFrame', raw,
-        ...                           featureNames=ftNames)
+        >>> top10 = nimble.data('DataFrame', raw, featureNames=ftNames)
         >>> groupByLosses = top10.groupByFeature('losses')
         >>> list(groupByLosses.keys())
         [0, 1, 2, 3]
@@ -1381,7 +1377,7 @@ class Base(object):
         ...        [0, 1, 0],
         ...        [0, 0, 1]]
         >>> ptNames = ['a', 'b', 'c', 'd', 'e', 'f']
-        >>> data = nimble.createData('Matrix', raw, pointNames=ptNames)
+        >>> data = nimble.data('Matrix', raw, pointNames=ptNames)
         >>> trainData, testData = data.trainAndTestSets(.34)
         >>> trainData
         Matrix(
@@ -1408,7 +1404,7 @@ class Base(object):
         ...        [0, 1, 0, 2],
         ...        [0, 0, 1, 3]]
         >>> ptNames = ['a', 'b', 'c', 'd', 'e', 'f']
-        >>> data = nimble.createData('Matrix', raw, pointNames=ptNames)
+        >>> data = nimble.data('Matrix', raw, pointNames=ptNames)
         >>> fourTuple = data.trainAndTestSets(.34, labels=3)
         >>> trainX, trainY = fourTuple[0], fourTuple[1]
         >>> testX, testY = fourTuple[2], fourTuple[3]
@@ -1722,7 +1718,7 @@ class Base(object):
 
         A string representing the non-abstract type of this
         object (e.g. Matrix, Sparse, etc.) that can be passed to
-        createData() function to create a new object of the same type.
+        nimble.data() function to create a new object of the same type.
 
         Returns
         -------
@@ -1760,9 +1756,8 @@ class Base(object):
         >>> pointNames = ['michael', 'jim', 'pam', 'dwight', 'angela']
         >>> featureNames = ['id', 'age', 'department', 'salary',
         ...                 'gender']
-        >>> office = nimble.createData('Matrix', raw,
-        ...                            pointNames=pointNames,
-        ...                            featureNames=featureNames)
+        >>> office = nimble.data('Matrix', raw, pointNames=pointNames,
+        ...                      featureNames=featureNames)
 
         Get a single value.
 
@@ -2741,7 +2736,7 @@ class Base(object):
         Examples
         --------
         >>> raw = [[1, 2, 3], [4, 5, 6]]
-        >>> data = nimble.createData('List', raw)
+        >>> data = nimble.data('List', raw)
         >>> data
         List(
             [[1 2 3]
@@ -2779,7 +2774,7 @@ class Base(object):
         Examples
         --------
         >>> raw = [[1, 2, 3], [4, 5, 6]]
-        >>> data = nimble.createData('List', raw)
+        >>> data = nimble.data('List', raw)
         >>> data
         List(
             [[1 2 3]
@@ -2904,8 +2899,8 @@ class Base(object):
 
         >>> raw = [[1, 3, 5], [2, 4, 6]]
         >>> ptNames = ['odd', 'even']
-        >>> data = nimble.createData('List', raw, pointNames=ptNames,
-        ...                          name="odd&even")
+        >>> data = nimble.data('List', raw, pointNames=ptNames,
+        ...                    name="odd&even")
         >>> data
         List(
             [[1 3 5]
@@ -3223,8 +3218,8 @@ class Base(object):
         ...        [3, 4]]
         >>> ptNames = ['1', '3']
         >>> ftNames = ['a', 'b']
-        >>> data = nimble.createData('Matrix', raw, pointNames=ptNames,
-        ...                          featureNames=ftNames)
+        >>> data = nimble.data('Matrix', raw, pointNames=ptNames,
+        ...                    featureNames=ftNames)
         >>> data.flatten()
         >>> data
         Matrix(
@@ -3237,8 +3232,8 @@ class Base(object):
         ...        [3, 4]]
         >>> ptNames = ['1', '3']
         >>> ftNames = ['a', 'b']
-        >>> data = nimble.createData('Matrix', raw, pointNames=ptNames,
-        ...                          featureNames=ftNames)
+        >>> data = nimble.data('Matrix', raw, pointNames=ptNames,
+        ...                    featureNames=ftNames)
         >>> data.flatten(order='feature')
         >>> data
         Matrix(
@@ -3361,7 +3356,7 @@ class Base(object):
         Unflatten a point in point order with default names.
 
         >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
-        >>> data = nimble.createData('Matrix', raw)
+        >>> data = nimble.data('Matrix', raw)
         >>> data.unflatten((3, 3))
         >>> data
         Matrix(
@@ -3373,7 +3368,7 @@ class Base(object):
         Unflatten a point in feature order with default names.
 
         >>> raw = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
-        >>> data = nimble.createData('Matrix', raw)
+        >>> data = nimble.data('Matrix', raw)
         >>> data.unflatten((3, 3), order='feature')
         >>> data
         Matrix(
@@ -3385,7 +3380,7 @@ class Base(object):
         Unflatten a feature in feature order with default names.
 
         >>> raw = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
-        >>> data = nimble.createData('Matrix', raw)
+        >>> data = nimble.data('Matrix', raw)
         >>> data.unflatten((3, 3), order='feature')
         >>> data
         Matrix(
@@ -3397,7 +3392,7 @@ class Base(object):
         Unflatten a feature in point order with default names.
 
         >>> raw = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
-        >>> data = nimble.createData('Matrix', raw)
+        >>> data = nimble.data('Matrix', raw)
         >>> data.unflatten((3, 3), order='point')
         >>> data
         Matrix(
@@ -3412,7 +3407,7 @@ class Base(object):
         >>> ftNames = ['1 | a', '1 | b', '1 | c',
         ...            '4 | a', '4 | b', '4 | c',
         ...            '7 | a', '7 | b', '7 | c']
-        >>> data = nimble.createData('Matrix', raw, featureNames=ftNames)
+        >>> data = nimble.data('Matrix', raw, featureNames=ftNames)
         >>> data.unflatten((3, 3))
         >>> data
         Matrix(
@@ -3540,13 +3535,13 @@ class Base(object):
         >>> dataL = [["a", 1, 'X'], ["b", 2, 'Y'], ["c", 3, 'Z']]
         >>> fNamesL = ["f1", "f2", "f3"]
         >>> pNamesL = ["p1", "p2", "p3"]
-        >>> left = nimble.createData('Matrix', dataL, pointNames=pNamesL,
-        ...                          featureNames=fNamesL)
+        >>> left = nimble.data('Matrix', dataL, pointNames=pNamesL,
+        ...                    featureNames=fNamesL)
         >>> dataR = [['Z', "f", 6], ['Y', "e", 5], ['X', "d", 4]]
         >>> fNamesR = ["f3", "f4", "f5"]
         >>> pNamesR = ["p3", "p2", "p1"]
-        >>> right = nimble.createData('Matrix', dataR, pointNames=pNamesR,
-        ...                           featureNames=fNamesR)
+        >>> right = nimble.data('Matrix', dataR, pointNames=pNamesR,
+        ...                     featureNames=fNamesR)
         >>> left.merge(right, point='strict', feature='union')
         >>> left
         Matrix(
@@ -3556,8 +3551,8 @@ class Base(object):
             pointNames={'p1':0, 'p2':1, 'p3':2}
             featureNames={'f1':0, 'f2':1, 'f3':2, 'f4':3, 'f5':4}
             )
-        >>> left = nimble.createData('Matrix', dataL, pointNames=pNamesL,
-        ...                          featureNames=fNamesL)
+        >>> left = nimble.data('Matrix', dataL, pointNames=pNamesL,
+        ...                    featureNames=fNamesL)
         >>> left.merge(right, point='strict', feature='intersection')
         >>> left
         Matrix(
@@ -3575,12 +3570,11 @@ class Base(object):
 
         >>> dataL = [["a", 1, 'id1'], ["b", 2, 'id2'], ["c", 3, 'id3']]
         >>> fNamesL = ["f1", "f2", "id"]
-        >>> left = nimble.createData("DataFrame", dataL,
-        ...                          featureNames=fNamesL)
+        >>> left = nimble.data("DataFrame", dataL, featureNames=fNamesL)
         >>> dataR = [['id3', "x", 7], ['id4', "y", 8], ['id5', "z", 9]]
         >>> fNamesR = ["id", "f4", "f5"]
-        >>> right = nimble.createData("DataFrame", dataR,
-        ...                           featureNames=fNamesR)
+        >>> right = nimble.data("DataFrame", dataR,
+        ...                     featureNames=fNamesR)
         >>> left.merge(right, point='union', feature='union',
         ...            onFeature="id")
         >>> left
@@ -3592,8 +3586,7 @@ class Base(object):
              [nan nan id5  z   9 ]]
             featureNames={'f1':0, 'f2':1, 'id':2, 'f4':3, 'f5':4}
             )
-        >>> left = nimble.createData("DataFrame", dataL,
-        ...                          featureNames=fNamesL)
+        >>> left = nimble.data("DataFrame", dataL, featureNames=fNamesL)
         >>> left.merge(right, point='union', feature='intersection',
         ...            onFeature="id")
         >>> left
@@ -3605,8 +3598,7 @@ class Base(object):
              [id5]]
             featureNames={'id':0}
             )
-        >>> left = nimble.createData("DataFrame", dataL,
-        ...                          featureNames=fNamesL)
+        >>> left = nimble.data("DataFrame", dataL, featureNames=fNamesL)
         >>> left.merge(right, point='union', feature='left',
         ...            onFeature="id")
         >>> left
@@ -3618,8 +3610,7 @@ class Base(object):
              [nan nan id5]]
             featureNames={'f1':0, 'f2':1, 'id':2}
             )
-        >>> left = nimble.createData("DataFrame", dataL,
-        ...                          featureNames=fNamesL)
+        >>> left = nimble.data("DataFrame", dataL, featureNames=fNamesL)
         >>> left.merge(right, point='intersection', feature='union',
         ...            onFeature="id")
         >>> left
@@ -3627,8 +3618,7 @@ class Base(object):
             [[c 3 id3 x 7]]
             featureNames={'f1':0, 'f2':1, 'id':2, 'f4':3, 'f5':4}
             )
-        >>> left = nimble.createData("DataFrame", dataL,
-        ...                          featureNames=fNamesL)
+        >>> left = nimble.data("DataFrame", dataL, featureNames=fNamesL)
         >>> left.merge(right, point='intersection',
         ...            feature='intersection', onFeature="id")
         >>> left
@@ -3636,8 +3626,7 @@ class Base(object):
             [[id3]]
             featureNames={'id':0}
             )
-        >>> left = nimble.createData("DataFrame", dataL,
-        ...                          featureNames=fNamesL)
+        >>> left = nimble.data("DataFrame", dataL, featureNames=fNamesL)
         >>> left.merge(right, point='intersection', feature='left',
         ...            onFeature="id")
         >>> left
@@ -3645,8 +3634,7 @@ class Base(object):
             [[c 3 id3]]
             featureNames={'f1':0, 'f2':1, 'id':2}
             )
-        >>> left = nimble.createData("DataFrame", dataL,
-        ...                          featureNames=fNamesL)
+        >>> left = nimble.data("DataFrame", dataL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='union',
         ...            onFeature="id")
         >>> left
@@ -3656,8 +3644,7 @@ class Base(object):
              [c 3 id3  x   7 ]]
             featureNames={'f1':0, 'f2':1, 'id':2, 'f4':3, 'f5':4}
             )
-        >>> left = nimble.createData("DataFrame", dataL,
-        ...                          featureNames=fNamesL)
+        >>> left = nimble.data("DataFrame", dataL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='intersection',
         ...            onFeature="id")
         >>> left
@@ -3667,8 +3654,7 @@ class Base(object):
              [id3]]
             featureNames={'id':0}
             )
-        >>> left = nimble.createData("DataFrame", dataL,
-        ...                          featureNames=fNamesL)
+        >>> left = nimble.data("DataFrame", dataL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='left',
         ...            onFeature="id")
         >>> left
@@ -4653,8 +4639,8 @@ class Base(object):
 
         >>> rawBase = [[1, 2, 3], [4, 5, 6], [0, -1, -2]]
         >>> rawPt = [1, 2, 3]
-        >>> baseObj = nimble.createData('Matrix', rawBase)
-        >>> pointObj = nimble.createData('List', rawPt)
+        >>> baseObj = nimble.data('Matrix', rawBase)
+        >>> pointObj = nimble.data('List', rawPt)
         >>> baseObj * pointObj.stretch
         Matrix(
             [[1.000 4.000  9.000 ]
@@ -4666,8 +4652,8 @@ class Base(object):
 
         >>> rawBase = [[1, 2, 3], [4, 5, 6], [0, -1, -2]]
         >>> rawFt = [[1], [2], [3]]
-        >>> baseObj = nimble.createData('Matrix', rawBase)
-        >>> featObj = nimble.createData('List', rawFt)
+        >>> baseObj = nimble.data('Matrix', rawBase)
+        >>> featObj = nimble.data('List', rawFt)
         >>> featObj.stretch + baseObj
         List(
             [[2.000 3.000 4.000]
@@ -4679,8 +4665,8 @@ class Base(object):
 
         >>> rawPt = [[1, 2, 3]]
         >>> rawFt = [[1], [2], [3]]
-        >>> pointObj = nimble.createData('Matrix', rawPt)
-        >>> featObj = nimble.createData('List', rawFt)
+        >>> pointObj = nimble.data('Matrix', rawPt)
+        >>> featObj = nimble.data('List', rawFt)
         >>> pointObj.stretch - featObj.stretch
         Matrix(
             [[0.000  1.000  2.000]

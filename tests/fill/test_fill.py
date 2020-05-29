@@ -12,8 +12,8 @@ def test_constant_noMatches():
     constant = 100
     expected = [1, 2, 2, 9]
     for t in nimble.core.data.available:
-        toTest = nimble.createData(t, data, useLog=False)
-        exp = nimble.createData(t, expected, useLog=False)
+        toTest = nimble.data(t, data, useLog=False)
+        exp = nimble.data(t, expected, useLog=False)
         assert fill.constant(toTest, match, constant) == exp
 
 @noLogEntryExpected
@@ -23,8 +23,8 @@ def test_constant_number_ignoreMatches():
     constant = 100
     expected = [1, 100, 100, 9]
     for t in nimble.core.data.available:
-        toTest = nimble.createData(t, data, useLog=False)
-        exp = nimble.createData(t, expected, useLog=False)
+        toTest = nimble.data(t, data, useLog=False)
+        exp = nimble.data(t, expected, useLog=False)
         assert fill.constant(toTest, match, constant) == exp
 
 @noLogEntryExpected
@@ -34,8 +34,8 @@ def test_constant_string_ignoreMatches():
     constant = ""
     expected = [1, "", "", 9]
     for t in nimble.core.data.available:
-        toTest = nimble.createData(t, data, useLog=False)
-        exp = nimble.createData(t, expected, useLog=False)
+        toTest = nimble.data(t, data, useLog=False)
+        exp = nimble.data(t, expected, useLog=False)
         assert fill.constant(toTest, match, constant) == exp
 
 @noLogEntryExpected
@@ -45,16 +45,16 @@ def test_constant_allMatches():
     constant = 100
     expected = [100, 100, 100, 100]
     for t in nimble.core.data.available:
-        toTest = nimble.createData(t, data, useLog=False)
-        exp = nimble.createData(t, expected, useLog=False)
+        toTest = nimble.data(t, data, useLog=False)
+        exp = nimble.data(t, expected, useLog=False)
         assert fill.constant(toTest, match, constant) == exp
 
 @noLogEntryExpected
 def backend_fill(func, data, match, expected=None):
     "backend for fill functions that do not require additional arguments"
     for t in nimble.core.data.available:
-        toTest = nimble.createData(t, data, useLog=False)
-        exp = nimble.createData(t, expected, useLog=False)
+        toTest = nimble.data(t, data, useLog=False)
+        exp = nimble.data(t, expected, useLog=False)
         assert func(toTest, match) == exp
 
 @noLogEntryExpected
@@ -62,7 +62,7 @@ def backend_fill_exception(func, data, match, exceptionType):
     "backend for fill functions when testing exception raising"
     for t in nimble.core.data.available:
         try:
-            toTest = nimble.createData(t, data, useLog=False)
+            toTest = nimble.data(t, data, useLog=False)
             func(toTest, match)
             assert False  # Expected an exception
         except exceptionType as et:
@@ -199,8 +199,8 @@ def test_interpolate_withArguments():
     match = lambda x: x == "na"
     expected = [1, 7, 9, 5]
     for t in nimble.core.data.available:
-        toTest = nimble.createData(t, data, useLog=False)
-        exp = nimble.createData(t, expected, useLog=False)
+        toTest = nimble.data(t, data, useLog=False)
+        exp = nimble.data(t, expected, useLog=False)
         assert fill.interpolate(toTest, match, **arguments) == exp
 
 @noLogEntryExpected
@@ -214,7 +214,7 @@ def test_interpolate_xKwargIncluded_exception():
     match = lambda x: x == "na"
     for t in nimble.core.data.available:
         try:
-            toTest = nimble.createData(t, data, useLog=False)
+            toTest = nimble.data(t, data, useLog=False)
             ret = fill.interpolate(toTest, match, **arguments)
             assert False  # expected TypeError
         except TypeError:

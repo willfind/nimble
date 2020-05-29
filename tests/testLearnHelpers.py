@@ -7,7 +7,6 @@ from nose.plugins.attrib import attr
 
 import nimble
 from nimble import learnerType
-from nimble import createData
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
@@ -163,7 +162,7 @@ class FoldIteratorTester(object):
 class TestList(FoldIteratorTester):
     def __init__(self):
         def maker(data=None, featureNames=False):
-            return nimble.createData("List", data=data, featureNames=featureNames)
+            return nimble.data("List", data=data, featureNames=featureNames)
 
         super(TestList, self).__init__(maker)
 
@@ -171,7 +170,7 @@ class TestList(FoldIteratorTester):
 class TestMatrix(FoldIteratorTester):
     def __init__(self):
         def maker(data, featureNames=False):
-            return nimble.createData("Matrix", data=data, featureNames=featureNames)
+            return nimble.data("Matrix", data=data, featureNames=featureNames)
 
         super(TestMatrix, self).__init__(maker)
 
@@ -179,7 +178,7 @@ class TestMatrix(FoldIteratorTester):
 class TestSparse(FoldIteratorTester):
     def __init__(self):
         def maker(data, featureNames=False):
-            return nimble.createData("Sparse", data=data, featureNames=featureNames)
+            return nimble.data("Sparse", data=data, featureNames=featureNames)
 
         super(TestSparse, self).__init__(maker)
 
@@ -189,7 +188,7 @@ class TestRand(FoldIteratorTester):
         def maker(data, featureNames=False):
             possible = ['List', 'Matrix', 'Sparse']
             returnType = possible[pythonRandom.randint(0, 2)]
-            return nimble.createData(returnType=returnType, data=data, featureNames=featureNames)
+            return nimble.data(returnType=returnType, data=data, featureNames=featureNames)
 
         super(TestRand, self).__init__(maker)
 
@@ -303,7 +302,7 @@ def testGenerateClusteredPoints():
 
 
 def testSumDifferenceFunction():
-    """ Function verifies that for different shaped matricies, generated via createData, sumAbsoluteDifference() throws an InvalidArgumentValueCombination."""
+    """ Function verifies that for different shaped matricies, generated via nimble.data, sumAbsoluteDifference() throws an InvalidArgumentValueCombination."""
 
     data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
              [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
@@ -311,8 +310,8 @@ def testSumDifferenceFunction():
     data2 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
              [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
              [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2], [0, 0, 0, 0]]
-    matrix1 = createData('Matrix', data1)
-    matrix2 = createData('Matrix', data2)
+    matrix1 = nimble.data('Matrix', data1)
+    matrix2 = nimble.data('Matrix', data2)
     failedShape = False
     try:
         result = sumAbsoluteDifference(matrix1, matrix2)
@@ -325,8 +324,8 @@ def testSumDifferenceFunction():
     data2 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
              [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
              [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
-    matrix1 = createData('Matrix', data1)
-    matrix2 = createData('Matrix', data2)
+    matrix1 = nimble.data('Matrix', data1)
+    matrix2 = nimble.data('Matrix', data2)
     failedShape = False
     try:
         result = sumAbsoluteDifference(matrix1, matrix2)
@@ -340,8 +339,8 @@ def testSumDifferenceFunction():
     data2 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
              [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
              [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
-    matrix1 = createData('Matrix', data1)
-    matrix2 = createData('Matrix', data2)
+    matrix1 = nimble.data('Matrix', data1)
+    matrix2 = nimble.data('Matrix', data2)
     failedShape = False
     try:
         result = sumAbsoluteDifference(matrix1, matrix2)
@@ -359,8 +358,8 @@ def testSumDifferenceFunction():
              [0 - 0.1, 0, 1, 3.1], [1 - 0.1, 0, 0, 1.1], [0 - 0.1, 1, 0, 2.1], [0 - 0.1, 0, 1, 3.1],
              [1 - 0.1, 0, 0, 1.1], [0 - 0.1, 1, 0, 2.1], [0 - 0.1, 0, 1, 3.1], [1 - 0.1, 0, 0, 3.1],
              [0 - 0.1, 1, 0, 1.1], [0 - 0.1, 0, 1, 2.1]]
-    matrix1 = createData('Matrix', data1)
-    matrix2 = createData('Matrix', data2)
+    matrix1 = nimble.data('Matrix', data1)
+    matrix2 = nimble.data('Matrix', data2)
     diffResult = sumAbsoluteDifference(matrix1, matrix2)
     shouldBe = 18 * 0.1 * 2
     # 18 entries, discrepencies of 0.1 in the first column, and the last column
@@ -374,8 +373,8 @@ def test_computeMetrics_1d_2arg():
     knownLabels = numpy.array([[1.0], [2.0], [3.0]])
     predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
 
-    knownLabelsMatrix = createData('Matrix', data=knownLabels)
-    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = nimble.data('Matrix', data=knownLabels)
+    predictedLabelsMatrix = nimble.data('Matrix', data=predictedLabels)
 
     metricFunctions = rootMeanSquareError
     result = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
@@ -384,8 +383,8 @@ def test_computeMetrics_1d_2arg():
     knownLabels = numpy.array([[1.5], [2.5], [3.5]])
     predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
 
-    knownLabelsMatrix = createData('Matrix', data=knownLabels)
-    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = nimble.data('Matrix', data=knownLabels)
+    predictedLabelsMatrix = nimble.data('Matrix', data=predictedLabels)
 
     metricFunctions = meanAbsoluteError
     result = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
@@ -397,8 +396,8 @@ def test_computeMetrics_1d_labelsInData():
     training = numpy.array([[1.0, 5], [2.0, 27], [3.0, 42]])
     predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
 
-    trainingObj = createData('Matrix', data=training)
-    predictedObj = createData('Matrix', data=predictedLabels)
+    trainingObj = nimble.data('Matrix', data=training)
+    predictedObj = nimble.data('Matrix', data=predictedLabels)
 
     metricFunctions = rootMeanSquareError
     result = computeMetrics(0, trainingObj, predictedObj, metricFunctions)
@@ -413,8 +412,8 @@ def test_computeMetrics_2d_2arg():
     knownLabels = numpy.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
     predictedLabels = numpy.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
 
-    knownLabelsMatrix = createData('Matrix', data=knownLabels)
-    predictedLabelsMatrix = createData('Matrix', data=predictedLabels)
+    knownLabelsMatrix = nimble.data('Matrix', data=knownLabels)
+    predictedLabelsMatrix = nimble.data('Matrix', data=predictedLabels)
 
     metricFunctions = nimble.calculate.meanFeaturewiseRootMeanSquareError
     result = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
@@ -426,8 +425,8 @@ def test_computeMetrics_2d_labelsInData():
     training = numpy.array([[1.0, 5, 1.0], [2.0, 27, 2.0], [3.0, 42, 3.0]])
     predictedLabels = numpy.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
 
-    trainingObj = createData('Matrix', data=training)
-    predictedObj = createData('Matrix', data=predictedLabels)
+    trainingObj = nimble.data('Matrix', data=training)
+    predictedObj = nimble.data('Matrix', data=predictedLabels)
 
     metricFunctions = nimble.calculate.meanFeaturewiseRootMeanSquareError
     result = computeMetrics([0, 2], trainingObj, predictedObj, metricFunctions)
@@ -441,8 +440,8 @@ def test_computeMetrics_1d_2d_symmetric():
     origData = numpy.array([[1.0], [2.0], [3.0]])
     outputData = numpy.array([[1.0], [2.0], [3.0]])
 
-    origObj = createData('Matrix', data=origData)
-    outObj = createData('Matrix', data=outputData)
+    origObj = nimble.data('Matrix', data=origData)
+    outObj = nimble.data('Matrix', data=outputData)
 
     metricFunctions = nimble.calculate.cosineSimilarity
     result = computeMetrics(origObj, None, outObj, metricFunctions)
@@ -454,8 +453,8 @@ def test_computeMetrics_multiple_metrics_disallowed():
     origData = numpy.array([[1.0], [2.0], [3.0]])
     outputData = numpy.array([[1.0], [2.0], [3.0]])
 
-    origObj = createData('Matrix', data=origData)
-    outObj = createData('Matrix', data=outputData)
+    origObj = nimble.data('Matrix', data=origData)
+    outObj = nimble.data('Matrix', data=outputData)
 
     metricFunctions = [nimble.calculate.cosineSimilarity, rootMeanSquareError]
     computeMetrics(origObj, None, outObj, metricFunctions)

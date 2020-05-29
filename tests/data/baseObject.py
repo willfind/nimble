@@ -18,17 +18,17 @@ def objConstructorMaker(returnType):
             replaceMissingWith=numpy.nan):
         # Case: data is a path to a file
         if isinstance(data, str):
-            return nimble.createData(
+            return nimble.data(
                 returnType, data=data, pointNames=pointNames,
                 featureNames=featureNames, name=name,
                 treatAsMissing=treatAsMissing,
                 replaceMissingWith=replaceMissingWith, convertToType=convertToType,
                 useLog=False)
         # Case: data is some in-python format. We must call initDataObject
-        # instead of createData because we sometimes need to specify a
+        # instead of nimble.data because we sometimes need to specify a
         # particular path attribute.
         else:
-            return nimble.createData(
+            return nimble.data(
                 returnType, data=data, pointNames=pointNames,
                 featureNames=featureNames, convertToType=convertToType, name=name,
                 path=path, keepPoints='all', keepFeatures='all',
@@ -53,14 +53,14 @@ def viewConstructorMaker(concreteType):
             replaceMissingWith=numpy.nan):
         # Case: data is a path to a file
         if isinstance(data, str):
-            orig = nimble.createData(
+            orig = nimble.data(
                 concreteType, data=data, pointNames=pointNames,
                 featureNames=featureNames, name=name,
                 treatAsMissing=treatAsMissing,
                 replaceMissingWith=replaceMissingWith, convertToType=convertToType,
                 useLog=False)
         # Case: data is some in-python format. We must call initDataObject
-        # instead of createData because we sometimes need to specify a
+        # instead of nimble.data because we sometimes need to specify a
         # particular path attribute.
         else:
             orig = nimble.core._createHelpers.initDataObject(

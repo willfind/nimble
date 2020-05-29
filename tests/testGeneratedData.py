@@ -1,152 +1,21 @@
 """
-Unit tests for data creation functions other than createData, which generate
-the values placed in the data object. Specifically tested are:
+Unit tests for data creation functions other than nimble.data that
+generate the values placed in the data object. Specifically tested are:
 nimble.random.data, nimble.ones, nimble.zeros, nimble.identity
-
 """
 
-import numpy
 import copy
 
+import numpy
 from nose.tools import *
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from tests.helpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import noLogEntryExpected
 
 
 returnTypes = copy.copy(nimble.core.data.available)
-
-
-###################
-### random.data ###
-###################
-
-def testReturnsFundamentalsCorrect():
-    """
-    function that tests
-    -the size of the underlying data is consistent with that requested through our API
-    -the data class requested (Matrix, Sparse, List) is that which you get back
-    -the data fundamental data type used to store the value of (point, feature) pairs
-        is what the user requests ('int' or 'float')
-    Note:
-    These tests are run for all combinations of the paramaters:
-        supportedFundamentalTypes = ['int', 'float']
-        returnTypes = ['Matrix','Sparse','List']
-        sparsities = [0.0, 0.5, .99]
-    """
-
-    supportedFundamentalTypes = ['int', 'float']
-    sparsities = [0.0, 0.5, .99]
-
-    nPoints = 100
-    nFeatures = 200
-    #sparsity = .5
-
-    for curType in supportedFundamentalTypes:
-        for curReturnType in returnTypes:
-            for curSparsity in sparsities:
-                returned = nimble.random.data(curReturnType, nPoints, nFeatures,
-                                              curSparsity, elementType=curType)
-
-                assert (len(returned.points) == nPoints)
-                assert (len(returned.features) == nFeatures)
-
-                #assert that the requested numerical type was returned
-                assert type(returned[0, 0] == curType)
-
-
-#note: makes calls to Base.data with assumptions about underlying datatstructure for sparse data
-def testSparsityReturnedPlausible():
-    """
-    function that tests:
-    -for a dataset with 1500 points and 2000 features (2M pairs) that the number of
-        zero entries is reasonably close to the amount requested.
-    Notes:
-    -Because the generation of zeros is done stochastically, exact numbers of zeros
-        is not informative. Instead, the test checks that the ratio of zeros to all
-        points (zeros and non zeros) is within 1 percent of the 1 - sparsity.
-    -These tests are run for all combinations of the paramaters:
-        supportedFundamentalTypes = ['int', 'float']
-        returnTypes = ['Matrix','Sparse','List']
-        sparsities = [0.0, 0.5, .99]
-    """
-    supportedFundamentalTypes = ['int', 'float']
-    sparsities = [0.0, 0.5, .99]
-
-    nPoints = 500
-    nFeatures = 1000
-    #sparsity = .5
-
-    for curType in supportedFundamentalTypes:
-        for curReturnType in returnTypes:
-            for curSparsity in sparsities:
-                returned = nimble.random.data(curReturnType, nPoints, nFeatures,
-                                              curSparsity, elementType=curType)
-
-                if curReturnType.lower() == 'sparse':
-                    nonZerosCount = returned.data.nnz
-                    actualSparsity = 1.0 - nonZerosCount / float(nPoints * nFeatures)
-                    difference = abs(actualSparsity - curSparsity)
-
-                    assert (difference < .01)
-                else:
-                    nonZerosCount = numpy.count_nonzero(returned.copy(to='numpyarray'))
-                    actualSparsity = 1.0 - nonZerosCount / float(nPoints * nFeatures)
-                    difference = abs(actualSparsity - curSparsity)
-
-                    assert (difference < .01)
-
-
-def test_createRandomizedData_names_passed():
-    '''
-    function that tests:
-    - Given correctly sized lists of strings for pointNames and featureNames
-    arguments, checks if the returned object has those axis names.
-
-    - Validity checking of pointNames and featureNames is not tested
-    since it is done exclusively in createData. We only check for successful
-    behavior.
-
-    - These tests are run for all combinations of the paramaters:
-    supportedFundamentalTypes = ['int', 'float']
-    returnTypes = ['Matrix','Sparse','List']
-    sparsities = [0.0, 0.5, .99]
-    '''
-    supportedFundamentalTypes = ['int', 'float']
-    sparsities = [0.0, 0.5, .99]
-
-    numberPoints = 10
-    numberFeatures = 3
-    pnames = ['p{}'.format(i) for i in range(0, numberPoints)]
-    fnames = ['f{}'.format(i) for i in range(0, numberFeatures)]
-
-    # TODO create a function summarizing the calling of the function with
-    # the different combinations.
-    for curType in supportedFundamentalTypes:
-        for curReturnType in returnTypes:
-            for curSparsity in sparsities:
-                ret = nimble.random.data(
-                    curReturnType, numberPoints, numberFeatures, curSparsity,
-                    elementType=curType, pointNames=pnames, featureNames=fnames)
-
-                assert ret.points.getNames() == pnames
-                assert ret.features.getNames() == fnames
-
-def test_random_data_logCount():
-
-    @oneLogEntryExpected
-    def byType(rType):
-        toTest = nimble.random.data(rType, 5, 5, 0)
-
-    for t in returnTypes:
-        byType(t)
-
-#todo check that sizes of returned objects are what you request via npoints and nfeatures
-
-
-
 
 #######################
 ### shared backends ###
@@ -180,8 +49,8 @@ def back_constant_emptyCreation(toTest):
         retPEmpty = toTest(t, 0, 2)
         retFEmpty = toTest(t, 2, 0)
 
-        expFEmpty = nimble.createData(t, fEmpty)
-        expPEmpty = nimble.createData(t, pEmpty)
+        expFEmpty = nimble.data(t, fEmpty)
+        expPEmpty = nimble.data(t, pEmpty)
 
         assert retPEmpty == expPEmpty
         assert retFEmpty == expFEmpty
@@ -245,10 +114,10 @@ def back_constant_logCount(toTest):
 
 #nimble.ones(returnType, numPoints, numFeatures, pointNames=None, featureNames=None, name=None)
 
-# This function relies on createData to actually instantiate our data, and
+# This function relies on nimble.data to actually instantiate our data, and
 # never touches the pointNames, featureNames, or names arguments. The
 # validity checking of those arguments is therefore not tested, since
-# it is done exclusively in createData. We only check for successful behaviour.
+# it is done exclusively in nimble.data. We only check for successful behaviour.
 
 def test_ones_sizeChecking():
     back_constant_sizeChecking(nimble.ones)
@@ -279,10 +148,10 @@ def test_ones_logCount():
 
 #nimble.zeros(returnType, numPoints, numFeatures, pointNames=None, featureNames=None, name=None)
 
-# This function relies on createData to actually instantiate our data, and
+# This function relies on nimble.data to actually instantiate our data, and
 # never touches the pointNames, featureNames, or names arguments. The
 # validity checking of those arguments is therefore not tested, since
-# it is done exclusively in createData. We only check for successful behaviour.
+# it is done exclusively in nimble.data. We only check for successful behaviour.
 
 def test_zeros_sizeChecking():
     back_constant_sizeChecking(nimble.zeros)
@@ -313,10 +182,10 @@ def test_zeros_logCount():
 
 #nimble.identity(returnType, size, pointNames=None, featureNames=None, name=None)
 
-# This function relies on createData to actually instantiate our data, and
+# This function relies on nimble.data to actually instantiate our data, and
 # never touches the pointNames, featureNames, or names arguments. The
 # validity checking of those arguments is therefore not tested, since
-# it is done exclusively in createData. We only check for successful behaviour.
+# it is done exclusively in nimble.data. We only check for successful behaviour.
 
 
 def test_identity_sizeChecking():

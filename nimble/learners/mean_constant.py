@@ -18,6 +18,6 @@ class MeanConstant(CustomLearner):
         raw = numpy.zeros(len(testX.points))
         numpy.ndarray.fill(raw, self.mean)
 
-        ret = nimble.createData("Matrix", raw, useLog=False)
+        ret = nimble.data("Matrix", raw, useLog=False)
         ret.transpose(useLog=False)
         return ret

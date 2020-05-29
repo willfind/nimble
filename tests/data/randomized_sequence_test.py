@@ -252,7 +252,7 @@ def genObj(dataObj, seed, matchType=True, matchPoints=False, matchFeatures=False
 
     if points == 0 or features == 0:
         rawData = numpy.empty((points, features))
-        ret = nimble.createData('Matrix', rawData)
+        ret = nimble.data('Matrix', rawData)
         ret = ret.copy(to=dataType)
     else:
         nimble.random._startAlternateControl()
@@ -647,7 +647,7 @@ def makeParams(funcName, dataObj, seed):
 
 def TODO_GeneratorListSandC():
     data = [[1, 2, 3], [4, 5, 6]]
-    dobj = nimble.createData('List', data)
+    dobj = nimble.data('List', data)
 
     allMethods = dir(Base)
     testable = []
@@ -670,7 +670,7 @@ def TODO_GeneratorListSandC():
 
 def TODO_MakeParamsExclusivity():
     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    dobj = nimble.createData('List', data)
+    dobj = nimble.data('List', data)
 
     for funcName in mutuallyExclusiveParams.keys():
         # random trials

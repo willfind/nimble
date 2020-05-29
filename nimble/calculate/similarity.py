@@ -162,8 +162,8 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
     ...         [0], [1], [2],
     ...         [0], [1], [2],
     ...         [1], [0], [2]]
-    >>> knownObj = nimble.createData('Matrix', known)
-    >>> predObj = nimble.createData('Matrix', pred)
+    >>> knownObj = nimble.data('Matrix', known)
+    >>> predObj = nimble.data('Matrix', pred)
     >>> cm = confusionMatrix(knownObj, predObj)
     >>> print(cm)
                   known_0 known_1 known_2
@@ -192,8 +192,8 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
     ...         ['cat'], ['dog'], ['fish'],
     ...         ['cat'], ['dog'], ['fish'],
     ...         ['dog'], ['cat'], ['fish']]
-    >>> knownObj = nimble.createData('Matrix', known)
-    >>> predObj = nimble.createData('Matrix', pred)
+    >>> knownObj = nimble.data('Matrix', known)
+    >>> predObj = nimble.data('Matrix', pred)
     >>> cm = confusionMatrix(knownObj, predObj,
     ...                      convertCountsToFractions=True)
     >>> print(cm)

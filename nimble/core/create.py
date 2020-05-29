@@ -17,14 +17,13 @@ from nimble.core._createHelpers import createDataFromFile
 from nimble.core._createHelpers import createConstantHelper
 
 
-def createData(
-        returnType, data, pointNames='automatic', featureNames='automatic',
-        convertToType=None, name=None, path=None, keepPoints='all',
-        keepFeatures='all', ignoreNonNumericalFeatures=False,
-        reuseData=False, inputSeparator='automatic',
-        treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan',
-                        'NULL', 'NA'),
-        replaceMissingWith=numpy.nan, useLog=None):
+def data(returnType, data, pointNames='automatic', featureNames='automatic',
+         convertToType=None, name=None, path=None, keepPoints='all',
+         keepFeatures='all', ignoreNonNumericalFeatures=False,
+         reuseData=False, inputSeparator='automatic',
+         treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan',
+                         'NULL', 'NA'),
+         replaceMissingWith=numpy.nan, useLog=None):
     """
     Function to instantiate one of the nimble data container types.
 
@@ -164,7 +163,7 @@ def createData(
     Examples
     --------
     >>> data = [[1, 2, 3], [4, 5, 6]]
-    >>> asList = nimble.createData('List', data, name='simple')
+    >>> asList = nimble.data('List', data, name='simple')
     >>> asList
     List(
         [[1 2 3]
@@ -174,23 +173,22 @@ def createData(
 
     Loading data from a file.
 
-    >>> with open('createData.csv', 'w') as cd:
+    >>> with open('simpleData.csv', 'w') as cd:
     ...     out = cd.write('1,2,3\\n4,5,6')
-    >>> fromFile = nimble.createData('Matrix', 'createData.csv')
+    >>> fromFile = nimble.data('Matrix', 'simpleData.csv')
     >>> fromFile # doctest: +ELLIPSIS
     Matrix(
         [[1 2 3]
          [4 5 6]]
-        name="createData.csv"
-        path="...createData.csv"
+        name="simpleData.csv"
+        path="...simpleData.csv"
         )
 
     Adding point and feature names.
 
     >>> data = [['a', 'b', 'c'], [0, 0, 1], [1, 0, 0]]
-    >>> asSparse = nimble.createData('Sparse', data,
-    ...                              pointNames=['1', '2'],
-    ...                              featureNames=True)
+    >>> asSparse = nimble.data('Sparse', data, pointNames=['1', '2'],
+    ...                        featureNames=True)
     >>> asSparse
     Sparse(
         [[0 0 1]
@@ -203,10 +201,10 @@ def createData(
 
     >>> data = [[1, 'Missing', 3], [4, 'Missing', 6]]
     >>> ftNames = {'a': 0, 'b': 1, 'c': 2}
-    >>> asDataFrame = nimble.createData('DataFrame', data,
-    ...                                 featureNames = ftNames,
-    ...                                 treatAsMissing=["Missing", 3],
-    ...                                 replaceMissingWith=-1)
+    >>> asDataFrame = nimble.data('DataFrame', data,
+    ...                           featureNames=ftNames,
+    ...                           treatAsMissing=["Missing", 3],
+    ...                           replaceMissingWith=-1)
     >>> asDataFrame
     DataFrame(
         [[1 -1 -1]
@@ -478,14 +476,12 @@ def identity(returnType, size, pointNames='automatic',
         assert returnType == 'Sparse'
         rawDiag = scipy.sparse.identity(size)
         rawCoo = scipy.sparse.coo_matrix(rawDiag)
-        return nimble.createData(returnType, rawCoo, pointNames=pointNames,
-                                 featureNames=featureNames, name=name,
-                                 useLog=False)
+        return nimble.data(returnType, rawCoo, pointNames=pointNames,
+                           featureNames=featureNames, name=name,  useLog=False)
     else:
         raw = numpy.identity(size)
-        return nimble.createData(returnType, raw, pointNames=pointNames,
-                                 featureNames=featureNames, name=name,
-                                 useLog=False)
+        return nimble.data(returnType, raw, pointNames=pointNames,
+                           featureNames=featureNames, name=name, useLog=False)
 
 
 def loadData(inputPath, useLog=None):

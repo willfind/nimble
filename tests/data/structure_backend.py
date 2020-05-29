@@ -27,7 +27,6 @@ from nose.tools import *
 
 import nimble
 from nimble import match
-from nimble import createData
 from nimble.core.data import List
 from nimble.core.data import Matrix
 from nimble.core.data import DataFrame
@@ -290,10 +289,10 @@ class StructureDataSafe(StructureShared):
         data = numpy.array(data).T
 
         orig = self.constructor(data)
-        sparseObj = createData(returnType="Sparse", data=data, useLog=False)
-        listObj = createData(returnType="List", data=data, useLog=False)
-        matixObj = createData(returnType="Matrix", data=data, useLog=False)
-        dataframeObj = createData(returnType="DataFrame", data=data, useLog=False)
+        sparseObj = nimble.data(returnType="Sparse", data=data, useLog=False)
+        listObj = nimble.data(returnType="List", data=data, useLog=False)
+        matixObj = nimble.data(returnType="Matrix", data=data, useLog=False)
+        dataframeObj = nimble.data(returnType="DataFrame", data=data, useLog=False)
 
         copySparse = orig.copy(to='Sparse')
         assert copySparse.isIdentical(sparseObj)
@@ -346,10 +345,10 @@ class StructureDataSafe(StructureShared):
         data = numpy.array(data)
 
         orig = self.constructor(data)
-        sparseObj = createData(returnType="Sparse", data=data, useLog=False)
-        listObj = createData(returnType="List", data=data, useLog=False)
-        matixObj = createData(returnType="Matrix", data=data, useLog=False)
-        dataframeObj = createData(returnType="DataFrame", data=data, useLog=False)
+        sparseObj = nimble.data(returnType="Sparse", data=data, useLog=False)
+        listObj = nimble.data(returnType="List", data=data, useLog=False)
+        matixObj = nimble.data(returnType="Matrix", data=data, useLog=False)
+        dataframeObj = nimble.data(returnType="DataFrame", data=data, useLog=False)
 
         copySparse = orig.copy(to='Sparse')
         assert copySparse.isIdentical(sparseObj)
@@ -401,10 +400,10 @@ class StructureDataSafe(StructureShared):
         data = numpy.empty(shape=(0, 0))
 
         orig = self.constructor(data)
-        sparseObj = createData(returnType="Sparse", data=data, useLog=False)
-        listObj = createData(returnType="List", data=data, useLog=False)
-        matixObj = createData(returnType="Matrix", data=data, useLog=False)
-        dataframeObj = createData(returnType="DataFrame", data=data, useLog=False)
+        sparseObj = nimble.data(returnType="Sparse", data=data, useLog=False)
+        listObj = nimble.data(returnType="List", data=data, useLog=False)
+        matixObj = nimble.data(returnType="Matrix", data=data, useLog=False)
+        dataframeObj = nimble.data(returnType="DataFrame", data=data, useLog=False)
 
         copySparse = orig.copy(to='Sparse')
         assert copySparse.isIdentical(sparseObj)
@@ -457,15 +456,15 @@ class StructureDataSafe(StructureShared):
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0', 'str']
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        sparseObj = createData(returnType="Sparse", data=data, pointNames=pointNames,
-                               featureNames=featureNames, useLog=False)
-        listObj = createData(returnType="List", data=data, pointNames=pointNames,
-                             featureNames=featureNames, useLog=False)
-        matixObj = createData(returnType="Matrix", data=data, pointNames=pointNames,
+        sparseObj = nimble.data(returnType="Sparse", data=data, pointNames=pointNames,
+                                featureNames=featureNames, useLog=False)
+        listObj = nimble.data(returnType="List", data=data, pointNames=pointNames,
                               featureNames=featureNames, useLog=False)
-        dataframeObj = createData(returnType="DataFrame", data=data,
-                                  pointNames=pointNames, featureNames=featureNames,
-                                  useLog=False)
+        matixObj = nimble.data(returnType="Matrix", data=data, pointNames=pointNames,
+                               featureNames=featureNames, useLog=False)
+        dataframeObj = nimble.data(returnType="DataFrame", data=data,
+                                   pointNames=pointNames, featureNames=featureNames,
+                                   useLog=False)
 
         pointsShuffleIndices = [4, 3, 1, 2, 0]
         featuresShuffleIndices = [1, 2, 0]
@@ -583,9 +582,8 @@ class StructureDataSafe(StructureShared):
         for retType in nimble.core.data.available:
 
             out = orig.copy(to=retType, rowsArePoints=False)
-            desired = nimble.createData(retType, dataT,
-                                        pointNames=featureNames,
-                                        featureNames=pointNames, useLog=False)
+            desired = nimble.data(retType, dataT, pointNames=featureNames,
+                                  featureNames=pointNames, useLog=False)
             assert out == desired
 
         out = orig.copy(to='pythonlist', rowsArePoints=False)
@@ -3134,13 +3132,13 @@ class StructureModifying(StructureShared):
             toTest = self.constructor(data)
             if axis == 'point':
                 insertData = [[-1, -2, -3]]
-                otherTest = nimble.createData(other, insertData)
+                otherTest = nimble.data(other, insertData)
                 exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
                 toTest.points.insert(len(toTest.points), otherTest)
                 inserted.append(toTest)
             else:
                 insertData = [[-1], [-2], [-3]]
-                otherTest = nimble.createData(other, insertData)
+                otherTest = nimble.data(other, insertData)
                 exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
                 toTest.features.insert(len(toTest.features), otherTest)
                 inserted.append(toTest)
@@ -7555,8 +7553,8 @@ class StructureModifying(StructureShared):
         retType0 = nimble.core.data.available[0]
         retType1 = nimble.core.data.available[1]
 
-        objType0 = nimble.createData(retType0, data1, pointNames=pNames, featureNames=featureNames)
-        objType1 = nimble.createData(retType1, data1, pointNames=pNames, featureNames=featureNames)
+        objType0 = nimble.data(retType0, data1, pointNames=pNames, featureNames=featureNames)
+        objType1 = nimble.data(retType1, data1, pointNames=pNames, featureNames=featureNames)
 
         # at least one of these two will be the wrong type
         orig.referenceDataFrom(objType0)
@@ -8546,7 +8544,7 @@ class StructureModifying(StructureShared):
         exp = self.constructor(exp)
         for t in nimble.core.data.available:
             toTest = self.constructor(raw)
-            arg = nimble.createData(t, fill)
+            arg = nimble.data(t, fill)
             toTest.replaceRectangle(arg, 0, 0, 1, 1)
             assert toTest == exp
 

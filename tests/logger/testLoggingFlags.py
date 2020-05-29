@@ -57,9 +57,9 @@ def loadAndCheck(toCall, useLog, *args):
     endCount = logEntryCount(logger)
     return (startCount, endCount)
 
-def test_createData():
+def test_data():
     for rType in nimble.core.data.available:
-        back_load(nimble.createData, rType, [[1, 2, 3], [4, 5, 6]])
+        back_load(nimble.data, rType, [[1, 2, 3], [4, 5, 6]])
 
 def test_random_data():
     for rType in nimble.core.data.available:
@@ -67,15 +67,15 @@ def test_random_data():
 
 def test_loadData():
     for rType in nimble.core.data.available:
-        obj = nimble.createData(rType, [[1, 2, 3], [4, 5, 6]], useLog=False)
+        obj = nimble.data(rType, [[1, 2, 3], [4, 5, 6]], useLog=False)
         with tempfile.NamedTemporaryFile(suffix='.nimd') as tmpFile:
             obj.save(tmpFile.name)
             back_load(nimble.loadData, tmpFile.name)
 
 def test_loadTrainedLearner():
     for rType in nimble.core.data.available:
-        train = nimble.createData(rType, [[0, 0, 1], [0, 1, 0], [1, 0, 0]], useLog=False)
-        test = nimble.createData(rType, [[3], [2], [1]], useLog=False)
+        train = nimble.data(rType, [[0, 0, 1], [0, 1, 0], [1, 0, 0]], useLog=False)
+        test = nimble.data(rType, [[3], [2], [1]], useLog=False)
         tl = nimble.train('nimble.KNNClassifier', train, test)
         with tempfile.NamedTemporaryFile(suffix='.nimm') as tmpFile:
             tl.save(tmpFile.name)
@@ -300,9 +300,9 @@ def prepAndCheck(toCall, rType, useLog):
             ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
     pNames = ['p' + str(i) for i in range(18)]
     fNames = ['f0', 'f1', 'f2']
-    # createData not logged
-    dataObj = nimble.createData(rType, data, pointNames=pNames,
-                             featureNames=fNames, useLog=False)
+    # nimble.data not logged
+    dataObj = nimble.data(rType, data, pointNames=pNames,
+                          featureNames=fNames, useLog=False)
 
     logger = nimble.core.logger.active
     # count number of starting log entries
@@ -427,8 +427,8 @@ def test_merge():
     mData = [[1, 4], [2, 5], [3, 6]]
     mPtNames = ['p0', 'p6', 'p12']
     mFtNames = ['f2', 'f3']
-    mergeObj = nimble.createData('Matrix', mData, pointNames=mPtNames,
-                              featureNames=mFtNames)
+    mergeObj = nimble.data('Matrix', mData, pointNames=mPtNames,
+                           featureNames=mFtNames)
     def wrapped(obj, useLog):
         obj.merge(mergeObj, point='intersection', feature='union', useLog=useLog)
 
@@ -637,7 +637,7 @@ def test_features_transform():
 def test_points_insert():
     def wrapped(obj, useLog):
         insertData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
-        toInsert = nimble.createData("Matrix", insertData, useLog=False)
+        toInsert = nimble.data("Matrix", insertData, useLog=False)
         return obj.points.insert(0, toInsert, useLog=useLog)
 
     for rType in nimble.core.data.available:
@@ -646,7 +646,7 @@ def test_points_insert():
 def test_features_insert():
     def wrapped(obj, useLog):
         insertData = numpy.zeros((18,1))
-        toInsert = nimble.createData("Matrix", insertData, useLog=False)
+        toInsert = nimble.data("Matrix", insertData, useLog=False)
         return obj.features.insert(0, toInsert, useLog=useLog)
 
     for rType in nimble.core.data.available:
@@ -656,7 +656,7 @@ def test_points_append():
 
     def wrapped(obj, useLog):
         appendData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
-        toAppend = nimble.createData("Matrix", appendData, useLog=False)
+        toAppend = nimble.data("Matrix", appendData, useLog=False)
         return obj.points.append(toAppend, useLog=useLog)
 
     for rType in nimble.core.data.available:
@@ -665,7 +665,7 @@ def test_points_append():
 def test_features_append():
     def wrapped(obj, useLog):
         appendData = numpy.zeros((18,1))
-        toAppend = nimble.createData("Matrix", appendData, useLog=False)
+        toAppend = nimble.data("Matrix", appendData, useLog=False)
         return obj.features.append(toAppend, useLog=useLog)
 
     for rType in nimble.core.data.available:
@@ -701,7 +701,7 @@ def test_points_combineByExpandingFeatures():
                    ['de Grasse', '200m', 20.02],
                    ['de Grasse', '100m', 9.91]]
         fNames = ['athlete', 'dist', 'time']
-        newObj = nimble.createData('Matrix', newData, featureNames=fNames, useLog=False)
+        newObj = nimble.data('Matrix', newData, featureNames=fNames, useLog=False)
         return newObj.points.combineByExpandingFeatures('dist', 'time', useLog=useLog)
 
     for rType in nimble.core.data.available:

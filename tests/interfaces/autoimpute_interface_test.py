@@ -31,7 +31,7 @@ def getDataWithMissing(retType, assignNames=True):
     rm1 = numpy.random.random_sample(num) > 0.85
     x[rm1] = numpy.nan
 
-    data = nimble.createData(retType, {"y": y, "x": x})
+    data = nimble.data(retType, {"y": y, "x": x})
     if not assignNames:
         data.points.setNames(None)
         data.features.setNames(None)

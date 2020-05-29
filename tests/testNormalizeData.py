@@ -10,7 +10,7 @@ from tests.helpers import oneLogEntryExpected
 # successful run no testX
 def test_normalizeData_successTest_noTestX():
     data = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
-    trainX = nimble.createData("Matrix", data)
+    trainX = nimble.data("Matrix", data)
     orig = trainX.copy()
 
     nimble.normalizeData('scikitlearn.PCA', trainX, n_components=2)
@@ -20,11 +20,11 @@ def test_normalizeData_successTest_noTestX():
 # successful run trainX and testX
 def test_normalizeData_successTest_BothDataSets():
     data1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
-    trainX = nimble.createData("Matrix", data1)
+    trainX = nimble.data("Matrix", data1)
     orig1 = trainX.copy()
 
     data2 = [[-1, 0, 5]]
-    testX = nimble.createData("Matrix", data2)
+    testX = nimble.data("Matrix", data2)
     orig2 = testX.copy()
 
     nimble.normalizeData('scikitlearn.PCA', trainX, testX=testX, n_components=2)
@@ -35,10 +35,10 @@ def test_normalizeData_successTest_BothDataSets():
 # names changed
 def test_normalizeData_namesChanged():
     data1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
-    trainX = nimble.createData("Matrix", data1, name='trainX')
+    trainX = nimble.data("Matrix", data1, name='trainX')
 
     data2 = [[-1, 0, 5]]
-    testX = nimble.createData("Matrix", data2, name='testX')
+    testX = nimble.data("Matrix", data2, name='testX')
 
     nimble.normalizeData('scikitlearn.PCA', trainX, testX=testX, n_components=2)
 
@@ -59,19 +59,19 @@ def test_mormalizeData_referenceDataSafety():
             return testX.copy(to='List')
 
     data1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
-    trainX = nimble.createData("Matrix", data1, name='trainX')
+    trainX = nimble.data("Matrix", data1, name='trainX')
 
     data2 = [[-1, 0, 5]]
-    testX = nimble.createData("Matrix", data2, name='testX')
+    testX = nimble.data("Matrix", data2, name='testX')
 
     nimble.normalizeData(ListOutputer, trainX, testX=testX)
 
 @oneLogEntryExpected
 def test_normalizeData_logCount():
     data1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
-    trainX = nimble.createData("Matrix", data1, useLog=False)
+    trainX = nimble.data("Matrix", data1, useLog=False)
     data2 = [[-1, 0, 5]]
-    testX = nimble.createData("Matrix", data2, useLog=False)
+    testX = nimble.data("Matrix", data2, useLog=False)
 
     nimble.normalizeData('scikitlearn.PCA', trainX, testX=testX, n_components=2)
 

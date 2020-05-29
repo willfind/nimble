@@ -394,13 +394,13 @@ def generateClusteredPoints(numClusters, numPointsPerCluster,
     # then convert
     # finally make matrix object out of the list of points w/ labels in last
     # column of each vector/entry:
-    pointsObj = nimble.createData('Matrix', pointsArray, useLog=False)
+    pointsObj = nimble.data('Matrix', pointsArray, useLog=False)
 
-    labelsObj = nimble.createData('Matrix', labelsArray, useLog=False)
+    labelsObj = nimble.data('Matrix', labelsArray, useLog=False)
 
     # todo change actuallavels to something like associatedClusterCentroid
-    noiselessLabelsObj = nimble.createData('Matrix', clusterNoiselessLabelArray,
-                                           useLog=False)
+    noiselessLabelsObj = nimble.data('Matrix', clusterNoiselessLabelArray,
+                                     useLog=False)
 
     # convert datatype if not matrix
     if returnType.lower() != 'matrix':

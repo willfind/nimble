@@ -6,10 +6,10 @@ def testKNNClassificationSimple():
     """ Test KNN classification by checking the ouput given simple hand made inputs """
 
     data = [[0, 0, 0], [1, 10, 10], [0, -1, 4], [1, 0, 20]]
-    trainObj = nimble.createData('Matrix', data)
+    trainObj = nimble.data('Matrix', data)
 
     data2 = [[2, 2], [20, 20]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.data('Matrix', data2)
 
     for value in ['nimble.KNNClassifier', KNNClassifier]:
         ret = nimble.trainAndApply(value, trainX=trainObj, trainY=0, testX=testObj, k=3)
@@ -22,10 +22,10 @@ def testKNNClassificationSimpleScores():
     """ Test KNN classification by checking the shapes of the inputs and outputs """
 
     data = [[0, 0, 0], [1, 10, 10], [0, -1, 4], [1, 0, 20]]
-    trainObj = nimble.createData('Matrix', data)
+    trainObj = nimble.data('Matrix', data)
 
     data2 = [[2, 2], [20, 20]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.data('Matrix', data2)
 
     for value in ['nimble.KNNClassifier', KNNClassifier]:
         tl = nimble.train(value, trainX=trainObj, trainY=0, k=3)
@@ -42,10 +42,10 @@ def testKNNClassification_NearestBreaksTie():
     """ Test KNN classification uses nearest value to break tie """
 
     data = [[0, 0, 0], [1, 10, 10], [1, 11, 11], [2, -9, -9], [2, -10, -10]]
-    trainObj = nimble.createData('Matrix', data)
+    trainObj = nimble.data('Matrix', data)
 
     data2 = [[1, 1], [-1, -1]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.data('Matrix', data2)
 
     for value in ['nimble.KNNClassifier', KNNClassifier]:
         tl = nimble.train(value, trainObj, 0, k=5)
@@ -68,10 +68,10 @@ def testKNNClassificationGetScores():
     """ Test KNN classification getScores outputs match expectations """
 
     data = [[0, 0, 0], [0, -1, 4], [1, 10, 10], [1, 0, 20], [2, -94, -56], [2, -22, -44], [2, -32, -87]]
-    trainObj = nimble.createData('Matrix', data)
+    trainObj = nimble.data('Matrix', data)
 
     data2 = [[2, 2], [20, 20], [-99, -99]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.data('Matrix', data2)
 
     for value in ['nimble.KNNClassifier', KNNClassifier]:
         tl = nimble.train(value, trainX=trainObj, trainY=0, k=3)

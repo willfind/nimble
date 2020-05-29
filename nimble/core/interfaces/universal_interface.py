@@ -1041,7 +1041,7 @@ class TrainedLearner(object):
         output : str
             The kind of nimble Base object that the output of this
             function should be in. Any of the normal string inputs to
-            the createData ``returnType`` parameter are accepted here.
+            the nimble.data ``returnType`` parameter are accepted here.
             Alternatively, the value 'match' will indicate to use the
             type of the ``trainX`` parameter.
         scoreMode : str
@@ -1141,7 +1141,7 @@ class TrainedLearner(object):
         output : str
             The kind of nimble Base object that the output of this
             function should be in. Any of the normal string inputs to
-            the createData ``returnType`` parameter are accepted here.
+            the nimble.data ``returnType`` parameter are accepted here.
             Alternatively, the value 'match' will indicate to use the
             type of the ``trainX`` parameter.
         scoreMode : str
@@ -1316,11 +1316,11 @@ class TrainedLearner(object):
         Changing the training data.
 
         >>> rawTrainX1 = [[1, 1], [2, 2], [3, 3]]
-        >>> trainX1 = nimble.createData('Matrix', rawTrainX1)
+        >>> trainX1 = nimble.data('Matrix', rawTrainX1)
         >>> rawTrainY1 = [[1], [2], [3]] # mean of 2
-        >>> trainY1 = nimble.createData('Matrix', rawTrainY1)
+        >>> trainY1 = nimble.data('Matrix', rawTrainY1)
         >>> rawTestX = [[8, 8], [-3, -3]]
-        >>> testX = nimble.createData('Matrix', rawTestX)
+        >>> testX = nimble.data('Matrix', rawTestX)
         >>> tl = nimble.train('nimble.MeanConstant', trainX1, trainY1)
         >>> tl.apply(testX)
         Matrix(
@@ -1328,9 +1328,9 @@ class TrainedLearner(object):
              [2.000]]
             )
         >>> rawTrainX2 = [[4, 4], [5, 5], [6, 6]]
-        >>> trainX2 = nimble.createData('Matrix', rawTrainX2)
+        >>> trainX2 = nimble.data('Matrix', rawTrainX2)
         >>> rawTrainY2 = [[4], [5], [6]] # mean of 5
-        >>> trainY2 = nimble.createData('Matrix', rawTrainY2)
+        >>> trainY2 = nimble.data('Matrix', rawTrainY2)
         >>> tl.retrain(trainX2, trainY2)
         >>> tl.apply(testX)
         Matrix(
@@ -1341,11 +1341,11 @@ class TrainedLearner(object):
         Changing the learner arguments.
 
         >>> rawTrainX = [[1, 1], [3, 3], [3, 3]]
-        >>> trainX = nimble.createData('Matrix', rawTrainX)
+        >>> trainX = nimble.data('Matrix', rawTrainX)
         >>> rawTrainY = [[1], [3], [3]]
-        >>> trainY = nimble.createData('Matrix', rawTrainY)
+        >>> trainY = nimble.data('Matrix', rawTrainY)
         >>> rawTestX = [[1, 1], [3, 3]]
-        >>> testX = nimble.createData('Matrix', rawTestX)
+        >>> testX = nimble.data('Matrix', rawTestX)
         >>> tl = nimble.train('nimble.KNNClassifier', trainX, trainY,
         ...                   k=1)
         >>> tl.apply(testX)
@@ -1484,7 +1484,7 @@ class TrainedLearner(object):
         numLabels = len(order)
         if numLabels == 2 and len(rawScores.features) == 1:
             ret = generateBinaryScoresFromHigherSortedLabelScores(rawScores)
-            return nimble.createData("Matrix", ret, useLog=False)
+            return nimble.data("Matrix", ret, useLog=False)
 
         if applyResults is None:
             applyResults = self._interface._applier(
@@ -1507,7 +1507,7 @@ class TrainedLearner(object):
                     rawScores.pointView(i), numLabels)
                 scores.append(combinedScores)
             scores = numpy.array(scores)
-            return nimble.createData("Matrix", scores, useLog=False)
+            return nimble.data("Matrix", scores, useLog=False)
         else:
             return rawScores
 
@@ -1672,7 +1672,7 @@ class TrainedLearners(TrainedLearner):
         output : str
             The kind of nimble Base object that the output of this
             function should be in. Any of the normal string inputs to
-            the createData ``returnType`` parameter are accepted here.
+            the nimble.data ``returnType`` parameter are accepted here.
             Alternatively, the value 'match' will indicate to use the
             type of the ``trainX`` parameter.
         scoreMode : str
@@ -1741,10 +1741,9 @@ class TrainedLearners(TrainedLearner):
                 winningLabels = []
                 for [winningIndex] in winningPredictionIndices:
                     winningLabels.append([self._labelSet[int(winningIndex)]])
-                return nimble.createData(rawPredictions.getTypeString(),
-                                         winningLabels,
-                                         featureNames=['winningLabel'],
-                                         useLog=False)
+                return nimble.data(
+                    rawPredictions.getTypeString(), winningLabels,
+                    featureNames=['winningLabel'], useLog=False)
 
             elif scoreMode.lower() == 'bestScore'.lower():
                 #construct a list of lists, with each row in the list
@@ -1760,9 +1759,9 @@ class TrainedLearners(TrainedLearner):
                                             bestLabelAndScore[1]])
                 #wrap the results data in a List container
                 featureNames = ['PredictedClassLabel', 'LabelScore']
-                resultsContainer = nimble.createData("List", tempResultsList,
-                                                     featureNames=featureNames,
-                                                     useLog=False)
+                resultsContainer = nimble.data("List", tempResultsList,
+                                               featureNames=featureNames,
+                                               useLog=False)
                 return resultsContainer
 
             elif scoreMode.lower() == 'allScores'.lower():
@@ -1787,9 +1786,9 @@ class TrainedLearners(TrainedLearner):
                         finalRow[finalIndex] = score
                     resultsContainer.append(finalRow)
                 #wrap data in Base container
-                return nimble.createData(rawPredictions.getTypeString(),
-                                         resultsContainer,
-                                         featureNames=colHeaders, useLog=False)
+                return nimble.data(rawPredictions.getTypeString(),
+                                   resultsContainer, featureNames=colHeaders,
+                                   useLog=False)
             else:
                 msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
                 raise InvalidArgumentValue(msg)
@@ -1829,9 +1828,9 @@ class TrainedLearners(TrainedLearner):
 
                 #wrap the results data in a List container
                 featureNames = ['PredictedClassLabel', 'LabelScore']
-                resultsContainer = nimble.createData("List", tempResultsList,
-                                                     featureNames=featureNames,
-                                                     useLog=False)
+                resultsContainer = nimble.data("List", tempResultsList,
+                                               featureNames=featureNames,
+                                               useLog=False)
                 return resultsContainer
             elif scoreMode.lower() == 'allScores'.lower():
                 colHeaders = sorted([str(float(i)) for i in self._labelSet])
@@ -1847,9 +1846,9 @@ class TrainedLearners(TrainedLearner):
                         finalRow[finalIndex] = score
                     resultsContainer.append(finalRow)
 
-                return nimble.createData(rawPredictions.getTypeString(),
-                                         resultsContainer,
-                                         featureNames=colHeaders, useLog=False)
+                return nimble.data(rawPredictions.getTypeString(),
+                                   resultsContainer, featureNames=colHeaders,
+                                   useLog=False)
             else:
                 msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
                 raise InvalidArgumentValue(msg)

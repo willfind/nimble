@@ -148,7 +148,7 @@ class FileRemover(Plugin):
     def __init__(self):
         super(FileRemover, self).__init__()
         # nimblePath is working directory
-        self.deleteFiles = ['createData.csv']
+        self.deleteFiles = ['simpleData.csv']
 
     def options(self, parser, env):
         Plugin.options(self, parser, env)

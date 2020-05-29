@@ -234,7 +234,7 @@ def test_failedInit():
             # objects but the learner name and data values are irrelevant
             # since a PackageException should occur
             learner = interface.__name__ + '.Foo'
-            X = nimble.createData('Matrix', [])
+            X = nimble.data('Matrix', [])
             y = X.copy()
             def raiseError(error):
                 raise error

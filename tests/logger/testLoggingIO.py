@@ -59,8 +59,8 @@ def prepopulatedLogSafetyWrapper(testFunc):
         # add data to log
         for i in range(5):
             # load
-            trainObj = nimble.createData('Matrix', data=data1, featureNames=variables)
-            testObj = nimble.createData('Matrix', data=data2, featureNames=variables)
+            trainObj = nimble.data('Matrix', data=data1, featureNames=variables)
+            testObj = nimble.data('Matrix', data=data2, featureNames=variables)
             # data
             report = trainObj.summaryReport()
             # prep
@@ -124,7 +124,7 @@ def testLogDirectoryAndFileSetup():
     assert not os.path.exists(newDirectory)
     assert not os.path.exists(pathToFile)
 
-    X = nimble.createData("Matrix", [], useLog=True)
+    X = nimble.data("Matrix", [], useLog=True)
 
     assert os.path.exists(newDirectory)
     assert os.path.exists(pathToFile)
@@ -159,7 +159,7 @@ def testNewSessionNumberEachSetup():
 
     data = [[],[]]
     for session in range(5):
-        nimble.createData("Matrix", data)
+        nimble.data("Matrix", data)
         # cleanup will require setup before the next log entry
         nimble.core.logger.active.cleanup()
     query = "SELECT sessionNumber FROM logger"
@@ -171,7 +171,7 @@ def testNewSessionNumberEachSetup():
 @emptyLogSafetyWrapper
 @configSafetyWrapper
 def testLoadTypeFunctionsUseLog():
-    """tests that createData is being logged"""
+    """tests that nimble.data is being logged"""
     nimble.settings.set('logger', 'enabledByDefault', 'True')
     # data
     trainX = [[1,0,0], [0,1,0], [0,0,1], [1,0,0], [0,1,0], [0,0,1],
@@ -180,26 +180,26 @@ def testLoadTypeFunctionsUseLog():
     testX = [[1,0,0], [0,1,0], [0,0,1], [1,1,0]]
     testY = [[0], [1], [2], [1]]
 
-    # createData
-    trainXObj = nimble.createData("Matrix", trainX)
+    # nimble.data
+    trainXObj = nimble.data("Matrix", trainX)
     logInfo = getLastLogData()
     assert trainXObj.getTypeString() in logInfo
     assert "'numPoints': 12" in logInfo
     assert "'numFeatures': 3" in logInfo
 
-    trainYObj = nimble.createData("List", trainY)
+    trainYObj = nimble.data("List", trainY)
     logInfo = getLastLogData()
     assert trainYObj.getTypeString() in logInfo
     assert "'numPoints': 12" in logInfo
     assert "'numFeatures': 1" in logInfo
 
-    testXObj = nimble.createData("Sparse", testX)
+    testXObj = nimble.data("Sparse", testX)
     logInfo = getLastLogData()
     assert testXObj.getTypeString() in logInfo
     assert "'numPoints': 4" in logInfo
     assert "'numFeatures': 3" in logInfo
 
-    testYObj = nimble.createData("DataFrame", testY)
+    testYObj = nimble.data("DataFrame", testY)
     logInfo = getLastLogData()
     assert testYObj.getTypeString() in logInfo
     assert "'numPoints': 4" in logInfo
@@ -254,10 +254,10 @@ def testRunTypeFunctionsUseLog():
     testX = [[1,0,0], [0,1,0], [0,0,1], [1,1,0]]
     testY = [[0], [1], [2], [1]]
 
-    trainXObj = nimble.createData("Matrix", trainX, useLog=False)
-    trainYObj = nimble.createData("Matrix", trainY, useLog=False)
-    testXObj = nimble.createData("Matrix", testX, useLog=False)
-    testYObj = nimble.createData("Matrix", testY, useLog=False)
+    trainXObj = nimble.data("Matrix", trainX, useLog=False)
+    trainYObj = nimble.data("Matrix", trainY, useLog=False)
+    testXObj = nimble.data("Matrix", testX, useLog=False)
+    testYObj = nimble.data("Matrix", testY, useLog=False)
 
     timePattern = re.compile(r"'time': [0-9]+\.[0-9]+")
 
@@ -359,44 +359,44 @@ def testPrepTypeFunctionsUseLog():
     ########
 
     # replaceFeatureWithBinaryFeatures
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     dataObj.replaceFeatureWithBinaryFeatures(0)
     checkLogContents('replaceFeatureWithBinaryFeatures', 'Matrix', {'featureToReplace': 0})
 
     # transformFeatureToIntegers
-    dataObj = nimble.createData("List", data, useLog=False)
+    dataObj = nimble.data("List", data, useLog=False)
     dataObj.transformFeatureToIntegers(0)
     checkLogContents('transformFeatureToIntegers', 'List', {'featureToConvert': 0})
 
     # trainAndTestSets
-    dataObj = nimble.createData("DataFrame", data, useLog=False)
+    dataObj = nimble.data("DataFrame", data, useLog=False)
     train, test = dataObj.trainAndTestSets(testFraction=0.5)
     checkLogContents('trainAndTestSets', 'DataFrame', {'testFraction': 0.5})
 
     # groupByFeature
-    dataObj = nimble.createData("Sparse", data, useLog=False)
+    dataObj = nimble.data("Sparse", data, useLog=False)
     calculated = dataObj.groupByFeature(by=0)
     checkLogContents('groupByFeature', 'Sparse', {'by': 0})
 
     # referenceDataFrom
-    dataObj = nimble.createData("Matrix", data, useLog=False, name='refData')
+    dataObj = nimble.data("Matrix", data, useLog=False, name='refData')
     dataObj.referenceDataFrom(dataObj)
     checkLogContents('referenceDataFrom', 'Matrix', {'other': 'refData'})
 
     # transpose
-    dataObj = nimble.createData("List", data, useLog=False)
+    dataObj = nimble.data("List", data, useLog=False)
     dataObj.transpose()
     checkLogContents('transpose', 'List')
 
     # replaceRectangle
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     dataObj.replaceRectangle(1, 2, 0, 4, 0)
     checkLogContents('replaceRectangle', "Matrix",
         {'replaceWith': 1, 'pointStart': 2, 'pointEnd': 4, 'featureStart': 0,
          'featureEnd': 0})
 
     # flatten (point order)
-    dataObj = nimble.createData("DataFrame", data, useLog=False)
+    dataObj = nimble.data("DataFrame", data, useLog=False)
     dataObj.flatten()
 
     checkLogContents('flatten', "DataFrame")
@@ -406,7 +406,7 @@ def testPrepTypeFunctionsUseLog():
     checkLogContents('unflatten', "DataFrame", {'dataDimensions': (18,3)})
 
     # flatten (feature order)
-    dataObj = nimble.createData("Sparse", data, useLog=False)
+    dataObj = nimble.data("Sparse", data, useLog=False)
     dataObj.flatten(order='feature')
     checkLogContents('flatten', "Sparse", {'order': 'feature'})
 
@@ -418,32 +418,32 @@ def testPrepTypeFunctionsUseLog():
     # merge
     dPtNames = ['p' + str(i) for i in range(18)]
     dFtNames = ['f0', 'f1', 'f2']
-    dataObj = nimble.createData("Matrix", data, pointNames=dPtNames,
-                             featureNames=dFtNames, useLog=False)
+    dataObj = nimble.data("Matrix", data, pointNames=dPtNames,
+                          featureNames=dFtNames, useLog=False)
     mData = [[1, 4], [2, 5], [3, 6]]
     mPtNames = ['p0', 'p6', 'p12']
     mFtNames = ['f2', 'f3']
-    mergeObj = nimble.createData('Matrix', mData, pointNames=mPtNames,
-                              featureNames=mFtNames, useLog=False)
+    mergeObj = nimble.data('Matrix', mData, pointNames=mPtNames,
+                           featureNames=mFtNames, useLog=False)
     dataObj.merge(mergeObj, point='intersection', feature='union')
     checkLogContents('merge', "Matrix", {"other": mergeObj.name,
                                          "point": 'intersection'})
 
     # transformElements
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     dataCopy = dataObj.copy()
     calculated = dataCopy.transformElements(lambda x: x, features=0)
     checkLogContents('transformElements', "Matrix",
                      {'toTransform': 'lambda x: x', 'features': [0]})
 
     # calculateOnElements
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     calculated = dataObj.calculateOnElements(lambda x: len(x), features=0)
     checkLogContents('calculateOnElements', "Matrix",
                      {'toCalculate': "lambda x: len(x)", 'features': 0})
 
     # matchingElements
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     calculated = dataObj.matchingElements(lambda e: e > 2, features=[1, 2])
     checkLogContents('matchingElements', "Matrix",
                      {'toMatch': "lambda e: e > 2", 'features': [1, 2]})
@@ -469,87 +469,87 @@ def testPrepTypeFunctionsUseLog():
         return (identifier, total)
 
     # points.mapReduce
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     calculated = dataObj.points.mapReduce(simpleMapper,simpleReducer)
     checkLogContents('points.mapReduce', "Matrix", {"mapper": "simpleMapper",
                                                     "reducer": "simpleReducer"})
 
     # features.mapReduce
-    dataObj = nimble.createData("Matrix", numpy.array(data, dtype=object).T,
-                             featureNames=False, useLog=False)
+    dataObj = nimble.data("Matrix", numpy.array(data, dtype=object).T,
+                          featureNames=False, useLog=False)
     calculated = dataObj.features.mapReduce(simpleMapper,simpleReducer)
     checkLogContents('features.mapReduce', "Matrix", {"mapper": "simpleMapper",
                                                       "reducer": "simpleReducer"})
 
     # points.calculate
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     calculated = dataObj.points.calculate(lambda x: len(x))
     checkLogContents('points.calculate', "Matrix", {'function': "lambda x: len(x)"})
 
     # features.calculate
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     calculated = dataObj.features.calculate(lambda x: len(x), features=0)
     checkLogContents('features.calculate', "Matrix", {'function': "lambda x: len(x)",
                                                       'features': 0})
 
     # points.permute
-    dataObj = nimble.createData("List", data, useLog=False)
+    dataObj = nimble.data("List", data, useLog=False)
     dataObj.points.permute()
     checkLogContents('points.permute', "List")
 
     # features.permute
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     dataObj.features.permute()
     checkLogContents('features.permute', "Matrix")
 
     # points.normalize
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     dataObj.points.normalize(subtract=0, divide=1)
     checkLogContents('points.normalize', "Matrix", {'subtract': 0, 'divide': 1})
 
     # features.normalize
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     dataObj.features.normalize(subtract=0, divide=1)
     checkLogContents('features.normalize', "Matrix", {'subtract': 0, 'divide': 1})
 
     # points.sort
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     dataObj.points.sort(sortBy=dataObj.features.getName(0))
     checkLogContents('points.sort', "Matrix", {'sortBy': dataObj.features.getName(0)})
 
     # features.sort
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     dataObj.features.sort(sortBy=[2, 1, 0])
     checkLogContents('features.sort', "Matrix", {'sortBy': [2, 1, 0]})
 
     # points.copy
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     extracted = dataObj.points.copy(0)
     checkLogContents('points.copy', "Matrix", {'toCopy': 0})
 
     # features.copy
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     extracted = dataObj.features.copy(number=1)
     checkLogContents('features.copy', "Matrix", {'number': 1})
 
     # points.extract
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     extracted = dataObj.points.extract(toExtract=0)
     checkLogContents('points.extract', "Matrix", {'toExtract': 0})
 
     # features.extract
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     extracted = dataObj.features.extract(number=1)
     checkLogContents('features.extract', "Matrix", {'number': 1})
 
     # points.delete
-    dataObj = nimble.createData("Matrix", data, useLog=False,
-                             pointNames=['p' + str(i) for i in range(18)])
+    dataObj = nimble.data("Matrix", data, useLog=False,
+                          pointNames=['p' + str(i) for i in range(18)])
     extracted = dataObj.points.delete(start='p0', end='p3')
     checkLogContents('points.delete', "Matrix", {'start': 'p0', 'end': 'p3'})
 
     # features.delete
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     extracted = dataObj.features.delete(number=2, randomize=True)
     checkLogContents('features.delete', "Matrix", {'number': 2, 'randomize': True})
 
@@ -557,67 +557,67 @@ def testPrepTypeFunctionsUseLog():
         return True
 
     # points.retain
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     extracted = dataObj.points.retain(toRetain=retainer)
     checkLogContents('points.retain', "Matrix", {'toRetain': 'retainer'})
 
     # features.retain
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     extracted = dataObj.features.retain(toRetain=lambda ft: True)
     checkLogContents('features.retain', "Matrix", {'toRetain': 'lambda ft: True'})
 
     # points.transform
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     dataCopy = dataObj.copy()
     calculated = dataCopy.points.transform(lambda x: [val for val in x])
     checkLogContents('points.transform', "Matrix",
                      {'function': 'lambda x: [val for val in x]'})
 
     # features.transform
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     dataCopy = dataObj.copy()
     calculated = dataCopy.features.transform(lambda x: [val for val in x], features=0)
     checkLogContents('features.transform', "Matrix",
                      {'function': 'lambda x: [val for val in x]', 'features': [0]})
 
     # points.insert
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     insertData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
-    toInsert = nimble.createData("Matrix", insertData, useLog=False)
+    toInsert = nimble.data("Matrix", insertData, useLog=False)
     dataObj.points.insert(0, toInsert)
     checkLogContents('points.insert', "Matrix", {'insertBefore': 0,
                                                  'toInsert': toInsert.name})
 
     # features.insert
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     insertData = numpy.zeros((18,1))
-    toInsert = nimble.createData("Matrix", insertData, useLog=False)
+    toInsert = nimble.data("Matrix", insertData, useLog=False)
     dataObj.features.insert(0, toInsert)
     checkLogContents('features.insert', "Matrix", {'insertBefore': 0,
                                                    'toInsert': toInsert.name})
 
     # points.append
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     appendData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
-    toAppend = nimble.createData("Matrix", appendData, useLog=False)
+    toAppend = nimble.data("Matrix", appendData, useLog=False)
     dataObj.points.append(toAppend)
     checkLogContents('points.append', "Matrix", {'toAppend': toAppend.name})
 
     # features.append
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     appendData = numpy.zeros((18,1))
-    toAppend = nimble.createData("Matrix", appendData, useLog=False)
+    toAppend = nimble.data("Matrix", appendData, useLog=False)
     dataObj.features.append(toAppend)
     checkLogContents('features.append', "Matrix", {'toAppend': toAppend.name})
 
     # points.fillMatching
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     dataObj.points.fillMatching(0, nimble.match.nonNumeric)
     checkLogContents('points.fillMatching', "Matrix",
                      {'fillWith': 0, 'matchingElements': 'nonNumeric'})
 
     # features.fillMatching
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     dataObj.features.fillMatching(nimble.fill.mean, 1, features=[1,2])
     checkLogContents('features.fillMatching', "Matrix",
                      {'fillWith': 'mean', 'matchingElements': 1})
@@ -625,7 +625,7 @@ def testPrepTypeFunctionsUseLog():
     # features.splitByParsing
     toSplit = [[1, 'a0', 2], [1, 'a1', 2], [3, 'b0', 4], [5, 'c0', 6]]
     fNames = ['keep1', 'split', 'keep2']
-    dataObj = nimble.createData('List', toSplit, featureNames=fNames, useLog=False)
+    dataObj = nimble.data('List', toSplit, featureNames=fNames, useLog=False)
     dataObj.features.splitByParsing('split', 1, ['str', 'int'])
     checkLogContents('features.splitByParsing', 'List',
                      {'feature': 'split', 'rule': 1, 'resultingNames': ['str', 'int']})
@@ -633,7 +633,7 @@ def testPrepTypeFunctionsUseLog():
     # points.splitByCollapsingFeatures
     toSplit = [['NYC', 4, 5, 10], ['LA', 20, 21, 21], ['CHI', 0, 2, 7]]
     fNames = ['city', 'jan', 'feb', 'mar']
-    dataObj = nimble.createData('DataFrame', toSplit, featureNames=fNames, useLog=False)
+    dataObj = nimble.data('DataFrame', toSplit, featureNames=fNames, useLog=False)
     dataObj.points.splitByCollapsingFeatures(['jan', 'feb', 'mar'],
                                               'month', 'temp')
     checkLogContents('points.splitByCollapsingFeatures', 'DataFrame',
@@ -647,25 +647,25 @@ def testPrepTypeFunctionsUseLog():
                  ['de Grasse', '200m', 20.02],
                  ['de Grasse', '100m', 9.91]]
     fNames = ['athlete', 'dist', 'time']
-    dataObj = nimble.createData('Matrix', toCombine, featureNames=fNames, useLog=False)
+    dataObj = nimble.data('Matrix', toCombine, featureNames=fNames, useLog=False)
     dataObj.points.combineByExpandingFeatures('dist', 'time')
     checkLogContents('points.combineByExpandingFeatures', 'Matrix',
                      {'featureWithFeatureNames': 'dist', 'featuresWithValues': ['time']})
 
     # points.setName
-    dataObj = nimble.createData('Matrix', data, useLog=False)
+    dataObj = nimble.data('Matrix', data, useLog=False)
     dataObj.points.setName(0, 'newPtName')
     checkLogContents('points.setName', 'Matrix', {'oldIdentifier': 0,
                                                   'newName': 'newPtName'})
 
     # features.setName
-    dataObj = nimble.createData('Matrix', data, useLog=False)
+    dataObj = nimble.data('Matrix', data, useLog=False)
     dataObj.features.setName(0, 'newFtName')
     checkLogContents('features.setName', 'Matrix', {'oldIdentifier': 0,
                                                     'newName': 'newFtName'})
 
     # points.setNames
-    dataObj = nimble.createData('Matrix', data, useLog=False)
+    dataObj = nimble.data('Matrix', data, useLog=False)
     newPtNames = ['point' + str(i) for i in range(18)]
     dataObj.points.setNames(newPtNames)
     checkLogContents('points.setNames', 'Matrix', {'assignments': newPtNames})
@@ -673,7 +673,7 @@ def testPrepTypeFunctionsUseLog():
     checkLogContents('points.setNames', 'Matrix', {'assignments': None})
 
     # features.setNames
-    dataObj = nimble.createData('Matrix', data, useLog=False)
+    dataObj = nimble.data('Matrix', data, useLog=False)
     newFtNames = ['feature' + str(i) for i in range(3)]
     dataObj.features.setNames(newFtNames)
     checkLogContents('features.setNames', 'Matrix', {'assignments': newFtNames})
@@ -690,14 +690,14 @@ def testDataTypeFunctionsUseLog():
             ["c", 3], ["c", 3], ["c", 3], ["c", 3], ["c", 3], ["c", 3]]
 
     # featureReport
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     fReport = dataObj[:,1].featureReport()
 
     logInfo = getLastLogData()
     assert "'reportType': 'feature'" in logInfo
 
     # summaryReport
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     sReport = dataObj.summaryReport()
 
     logInfo = getLastLogData()
@@ -757,7 +757,7 @@ def testFailedLambdaStringConversion():
     data = [["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1],
             ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
             ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
-    dataObj = nimble.createData("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, useLog=False)
     calculated = dataObj.calculateOnElements(lambda x: len(x), features=0)
     checkLogContents('calculateOnElements', "Matrix",
                      {'toCalculate': "<lambda>", 'features': 0})
@@ -771,7 +771,7 @@ def testLambdaStringConversionCommas():
             ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
             ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
     for retType in nimble.core.data.available:
-        dataObj = nimble.createData(retType, data, useLog=False)
+        dataObj = nimble.data(retType, data, useLog=False)
         calculated1 = dataObj.points.calculate(lambda x: [x[0], x[2]], points=0)
         checkLogContents('points.calculate', retType, {'function': "lambda x: [x[0], x[2]]",
                                                         'points': 0})
@@ -787,7 +787,7 @@ def testLogUnacceptedlogType():
 @emptyLogSafetyWrapper
 @raises(InvalidArgumentType)
 def testLogUnacceptedlogInfo():
-    dataObj = nimble.createData("Matrix", [[1]], useLog=False)
+    dataObj = nimble.data("Matrix", [[1]], useLog=False)
     nimble.log("acceptable", dataObj)
 
 @emptyLogSafetyWrapper
@@ -803,8 +803,8 @@ def testLogHeadingTooLong():
 @emptyLogSafetyWrapper
 @configSafetyWrapper
 def testShowLogToFile():
-    nimble.createData("Matrix", [[1], [2], [3]], useLog=True)
-    nimble.createData("Matrix", [[4, 5], [6, 7], [8, 9]], useLog=True)
+    nimble.data("Matrix", [[1], [2], [3]], useLog=True)
+    nimble.data("Matrix", [[4, 5], [6, 7], [8, 9]], useLog=True)
     # write to log
     location = nimble.settings.get("logger", "location")
     with tempfile.NamedTemporaryFile() as out:
@@ -816,14 +816,14 @@ def testShowLogToFile():
         removeLogFile()
 
         # overwrite
-        nimble.createData("Matrix", [[1], [2], [3]], useLog=True)
+        nimble.data("Matrix", [[1], [2], [3]], useLog=True)
         nimble.showLog(saveToFileName=pathToFile)
         overwriteSize = os.path.getsize(pathToFile)
         assert overwriteSize < originalSize
         removeLogFile()
 
         # append
-        nimble.createData("Matrix", [[4, 5], [6, 7], [8, 9]], useLog=True)
+        nimble.data("Matrix", [[4, 5], [6, 7], [8, 9]], useLog=True)
         nimble.showLog(saveToFileName=pathToFile, append=True)
         appendSize = os.path.getsize(pathToFile)
         # though the information is the same as the original, the appended
@@ -902,8 +902,8 @@ def testShowLogWithSubobject():
         trainX = [[1,0,0], [0,1,0], [0,0,1], [1,0,0], [0,1,0], [0,0,1],
                   [1,0,0], [0,1,0], [0,0,1], [1,0,0], [0,1,0], [0,0,1]]
         trainY = [[0], [1], [2], [0], [1], [2], [0], [1], [2], [0], [1], [2]]
-        trainXObj = nimble.createData('Sparse', trainX)
-        trainYObj = nimble.createData('List', trainY)
+        trainXObj = nimble.data('Sparse', trainX)
+        trainYObj = nimble.data('List', trainY)
         tl = nimble.train('nimble.KNNClassifier', trainXObj, trainYObj,
                           arguments={'k': Int_(1)}, useLog=True)
         # redirect stdout

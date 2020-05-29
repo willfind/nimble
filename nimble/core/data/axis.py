@@ -415,8 +415,8 @@ class Axis(object):
 
         pathPass = (self._base.absolutePath, self._base.relativePath)
 
-        ret = nimble.createData(self._base.getTypeString(), retData,
-                                path=pathPass, useLog=False)
+        ret = nimble.data(self._base.getTypeString(), retData,
+                          path=pathPass, useLog=False)
 
         if self._isPoint:
             axisNameSetter = ret.points.setNames
@@ -535,8 +535,8 @@ class Axis(object):
             raise InvalidArgumentType("The reducer must be callable")
 
         if targetCount == 0:
-            ret = nimble.createData(self._base.getTypeString(),
-                                    numpy.empty(shape=(0, 0)), useLog=False)
+            ret = nimble.data(self._base.getTypeString(),
+                              numpy.empty(shape=(0, 0)), useLog=False)
         else:
             mapResults = {}
             # apply the mapper to each point in the data
@@ -559,8 +559,7 @@ class Axis(object):
                 if redRet is not None:
                     (redKey, redValue) = redRet
                     ret.append([redKey, redValue])
-            ret = nimble.createData(self._base.getTypeString(), ret,
-                                    useLog=False)
+            ret = nimble.data(self._base.getTypeString(), ret, useLog=False)
 
         ret._absPath = self._base.absolutePath
         ret._relPath = self._base.relativePath

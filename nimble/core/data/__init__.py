@@ -3,7 +3,7 @@ Contains the hierarchy of objects which can be used to store data
 in nimble.
 
 Object creation is meant to be done via nimble top level functions such
-as nimble.createData, even though the objects themselves are contained
+as nimble.data, even though the objects themselves are contained
 within this module. They are avilable only for the purposes of instance
 checking, and are excluded from __all__ and the automatically generated
 documentation.
@@ -24,7 +24,7 @@ from .features import Features
 available = ['List', 'Matrix', 'Sparse', 'DataFrame']
 """
 List of type strings for the concrete objects which subclass
-nimble.core.data.Base These may be used in calls to nimble.createData or
+nimble.core.data.Base These may be used in calls to nimble.data or
 other similiar object creation methods.
 """
 

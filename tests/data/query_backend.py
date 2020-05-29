@@ -1253,7 +1253,7 @@ class QueryBackend(DataTestObject):
                 for j in range(f):
                     raw[i].append(val)
 
-            return nimble.createData(rType, raw)
+            return nimble.data(rType, raw)
 
         def runTrial(pNum, fNum, valLen, maxW, maxH, colSep, includeFNames):
             if pNum == 0 and fNum == 0:

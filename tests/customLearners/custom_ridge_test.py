@@ -8,10 +8,10 @@ def testRidgeRegressionShapes():
     """ Test ridge regression by checking the shapes of the inputs and outputs """
 
     data = [[0, 0, 0], [4, 3, 1], [12, 15, -3], ]
-    trainObj = nimble.createData('Matrix', data)
+    trainObj = nimble.data('Matrix', data)
 
     data2 = [[5.5, 5], [20, -3]]
-    testObj = nimble.createData('Matrix', data2)
+    testObj = nimble.data('Matrix', data2)
 
     for value in ['nimble.RidgeRegression', RidgeRegression]:
         ret = nimble.trainAndApply(value, trainX=trainObj, trainY=0,

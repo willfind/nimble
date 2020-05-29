@@ -16,7 +16,7 @@ class RidgeRegression(CustomLearner):
         self.lamb = lamb
 
         # setup for intercept term
-        #		ones = nimble.createData("Matrix", numpy.ones(len(trainX.points)))
+        #		ones = nimble.data("Matrix", numpy.ones(len(trainX.points)))
         #		ones.transpose()
         #		trainX = trainX.copy()
         #		trainX.features.append(ones)
@@ -38,7 +38,7 @@ class RidgeRegression(CustomLearner):
 
     def apply(self, testX):
     # setup intercept
-    #		ones = nimble.createData("Matrix", numpy.ones(len(testX.points)))
+    #		ones = nimble.data("Matrix", numpy.ones(len(testX.points)))
     #		ones.transpose()
     #		testX = testX.copy()
     #		testX.features.append(ones)
@@ -49,4 +49,4 @@ class RidgeRegression(CustomLearner):
 
         pred = numpy.dot(self.w.transpose(), rawXFxP)
 
-        return nimble.createData("Matrix", pred.transpose(), useLog=False)
+        return nimble.data("Matrix", pred.transpose(), useLog=False)

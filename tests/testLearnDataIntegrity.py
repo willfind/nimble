@@ -1,9 +1,8 @@
 """
-A group of tests which passes data to train, trainAndApply, and trainAndTest,
-checking that after the call, the input data remains unmodified. It makes
-use of listLearners and learnerType to try this operation with as many learners
-as possible
-
+A group of tests which passes data to train, trainAndApply, and
+trainAndTest, checking that after the call, the input data remains
+unmodified. It makes use of listLearners and learnerType to try this
+operation with as many learners as possible.
 """
 from unittest import mock
 
@@ -269,23 +268,23 @@ def patch_mergeArguments(source):
 @patch_mergeArguments('nimble.core.learn')
 def testArgumentIntegrityTrain():
     arguments = {'k': 1}
-    train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
     tl = nimble.train('nimble.KNNClassifier', train, 2, arguments=arguments)
 
 @raises(CalledFunctionException)
 @patch_mergeArguments('nimble.core.learn')
 def testArgumentIntegrityTrainAndApply():
     arguments = {'k': 1}
-    train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
-    test = nimble.createData('Matrix', [[0, 1], [1, 0]])
+    train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    test = nimble.data('Matrix', [[0, 1], [1, 0]])
     pred = nimble.trainAndApply('nimble.KNNClassifier', train, 2, test, arguments=arguments)
 
 @raises(CalledFunctionException)
 @patch_mergeArguments('nimble.core.learn')
 def testArgumentIntegrityTrainAndTest():
     arguments = {'k': 1}
-    train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
-    test = nimble.createData('Matrix', [[0, 1, 1], [1, 0, 2]])
+    train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    test = nimble.data('Matrix', [[0, 1, 1], [1, 0, 2]])
     perf = nimble.trainAndTest('nimble.KNNClassifier', train, 2, test, 2,
                                performanceFunction=nimble.calculate.fractionIncorrect,
                                arguments=arguments)
@@ -293,7 +292,7 @@ def testArgumentIntegrityTrainAndTest():
 @patch_mergeArguments('nimble.core.learn')
 def testArgumentIntegrityTrainAndTestOnTrainingData():
     arguments = {'k': 1}
-    train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
     try:
         perf = nimble.trainAndTestOnTrainingData(
             'nimble.KNNClassifier', train, 2, arguments=arguments,
@@ -314,8 +313,8 @@ def testArgumentIntegrityTrainAndTestOnTrainingData():
 @patch_mergeArguments('nimble.core.interfaces.universal_interface')
 def testArgumentIntegrityTLApply():
     arguments = {'k': 1}
-    train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
-    test = nimble.createData('Matrix', [[0, 1], [1, 0]])
+    train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    test = nimble.data('Matrix', [[0, 1], [1, 0]])
     tl = nimble.train('nimble.KNNClassifier', train, 2, arguments=arguments)
     pred = tl.apply(test)
 
@@ -323,7 +322,7 @@ def testArgumentIntegrityTLApply():
 @patch_mergeArguments('nimble.core.interfaces.universal_interface')
 def testArgumentIntegrityTLTest():
     arguments = {'k': 1}
-    train = nimble.createData('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
-    test = nimble.createData('Matrix', [[0, 1, 1], [1, 0, 2]])
+    train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    test = nimble.data('Matrix', [[0, 1, 1], [1, 0, 2]])
     tl = nimble.train('nimble.KNNClassifier', train, 2, arguments=arguments)
     perf = tl.test(test, 2, performanceFunction=nimble.calculate.fractionIncorrect)

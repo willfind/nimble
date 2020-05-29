@@ -124,7 +124,7 @@ class HighDimensionSafe(DataTestObject):
                 toTest = self.constructor(tensor)
                 for rType in nimble.core.data.available:
                     testCopy = toTest.copy(rType)
-                    exp = nimble.createData(rType, tensor)
+                    exp = nimble.data(rType, tensor)
                     assert toTest._shape == testCopy._shape
                     assert testCopy == exp
 

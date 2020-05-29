@@ -1230,7 +1230,7 @@ class HighLevelDataSafe(DataTestObject):
             toTest = self.constructor(data)
 
             for retType in nimble.core.data.available:
-                currObj = nimble.createData(retType, data, useLog=False)
+                currObj = nimble.data(retType, data, useLog=False)
                 assert toTest.isApproximatelyEqual(currObj)
                 assert toTest.hashCode() == currObj.hashCode()
                 assertNoNamesGenerated(toTest)
@@ -2173,7 +2173,7 @@ class HighLevelDataSafe(DataTestObject):
 
         assert isMissing == expObj
 
-        # None is converted to nan by createData, here we explicitly pass the
+        # None is converted to nan by nimble.data, here we explicitly pass the
         # value the underlying representation uses, so we avoid making it
         # look like None is considered a numeric
         raw = [['a', numpy.nan, 'c'], [numpy.nan, numpy.nan, -3], [0, 'zero', numpy.nan]]
@@ -2267,7 +2267,7 @@ class HighLevelDataSafe(DataTestObject):
 
         assert allMissing == expObj
 
-        # None is converted to nan by createData, here we explicitly pass the
+        # None is converted to nan by nimble.data, here we explicitly pass the
         # value the underlying representation uses, so we avoid making it
         # look like None is considered a numeric
         raw = [['a', numpy.nan, 'c'], [numpy.nan, numpy.nan, -3], [0, 'zero', numpy.nan]]
@@ -3064,8 +3064,8 @@ class HighLevelModifying(DataTestObject):
 
         for retType in nimble.core.data.available:
             currObj = obj.copy()
-            sub = nimble.createData(retType, [1] * 3)
-            div = nimble.createData(retType, [0.5] * 3)
+            sub = nimble.data(retType, [1] * 3)
+            div = nimble.data(retType, [0.5] * 3)
             if axis == 'point':
                 sub.transpose()
                 div.transpose()

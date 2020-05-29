@@ -14,7 +14,7 @@ from tests.helpers import noLogEntryExpected
 def getPredictions():
     predRaw = [252.7, 247.7] * 12
     predRaw.append(250.2)
-    pred = nimble.createData("Matrix", predRaw, useLog=False)
+    pred = nimble.data("Matrix", predRaw, useLog=False)
     pred.transpose(useLog=False)
 
     assert len(pred.points) == 25
@@ -47,7 +47,7 @@ def testCannotImportSciPy():
 @raises(ImproperObjectAction)
 def testPredictionsInvalidShape():
     pred = getPredictions()
-    toAdd = nimble.createData('Matrix', numpy.ones((len(pred.points), 1)))
+    toAdd = nimble.data('Matrix', numpy.ones((len(pred.points), 1)))
     pred.features.append(toAdd)
     assert len(pred.features) == 2
 

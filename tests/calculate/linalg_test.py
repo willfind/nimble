@@ -7,8 +7,8 @@ inverse, pseudoInverse, solve, leastSquaresSolution.
 
 import numpy
 from nose.tools import raises
+
 import nimble
-from nimble import createData
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.calculate import inverse, pseudoInverse, leastSquaresSolution, solve
 
@@ -28,11 +28,11 @@ def testInverseSquareObject():
 
     for dataType in nimble.core.data.available:
         identityObj = nimble.identity(dataType, 3)
-        origObj = createData(
+        origObj = nimble.data(
             dataType, data, pointNames=pnames, featureNames=fnames)
-        obj = createData(dataType, data, pointNames=pnames,
-                         featureNames=fnames)
-        objNoNames = createData(dataType, data)
+        obj = nimble.data(dataType, data, pointNames=pnames,
+                          featureNames=fnames)
+        objNoNames = nimble.data(dataType, data)
 
         objInv = inverse(obj)
 
@@ -47,7 +47,7 @@ def testInverseEmptyObject():
     data = []
 
     for dataType in nimble.core.data.available:
-        obj = createData(dataType, data)
+        obj = nimble.data(dataType, data)
         objInv = inverse(obj)
         assert objInv == obj
 
@@ -59,7 +59,7 @@ def testInverseNonSquareObject():
     data = [[1, 2, 3], [4, 5, 6]]
 
     for dataType in nimble.core.data.available:
-        obj = createData(dataType, data)
+        obj = nimble.data(dataType, data)
         try:
             inverse(obj)
             assert False # expected InvalidArgumentValue
@@ -74,7 +74,7 @@ def testNonInvertibleObject():
     data = [[1, 1], [1, 1]]
 
     for dataType in nimble.core.data.available:
-        obj = createData(dataType, data)
+        obj = nimble.data(dataType, data)
 
         try:
             inverse(obj)
@@ -101,30 +101,30 @@ def testPseudoInverseObject():
         data = [[1, 1, 0], [1, 0, 1], [1, 1, 1]]
         pnames = ['p1', 'p2', 'p3']
         fnames = ['f1', 'f2', 'f3']
-        obj = createData(dataType, data, pointNames=pnames,
-                         featureNames=fnames)
+        obj = nimble.data(dataType, data, pointNames=pnames,
+                          featureNames=fnames)
         objsList.append(obj)
 
         data = [[1, 2, 3], [3, 4, 5]]
         pnames = ['p1', 'p2']
         fnames = ['f1', 'f2', 'f3']
-        obj = createData(dataType, data, pointNames=pnames,
-                         featureNames=fnames)
+        obj = nimble.data(dataType, data, pointNames=pnames,
+                          featureNames=fnames)
         objsList.append(obj)
 
         data = [[1, 2], [3, 4], [5, 6]]
         pnames = ['p1', 'p2', 'p3']
         fnames = ['f1', 'f2']
-        obj = createData(dataType, data, pointNames=pnames,
-                         featureNames=fnames)
+        obj = nimble.data(dataType, data, pointNames=pnames,
+                          featureNames=fnames)
         objsList.append(obj)
 
         data = [[1, 1], [1, 1]]
-        obj = createData(dataType, data)
+        obj = nimble.data(dataType, data)
         objsList.append(obj)
 
         data = [[1, 2]]
-        obj = createData(dataType, data)
+        obj = nimble.data(dataType, data)
         objsList.append(obj)
 
         return objsList
@@ -156,7 +156,7 @@ def testPseudoInverseEmptyObject():
     data = []
 
     for dataType in nimble.core.data.available:
-        obj = createData(dataType, data)
+        obj = nimble.data(dataType, data)
         objInv = pseudoInverse(obj)
         assert objInv == obj
 
@@ -212,8 +212,8 @@ def _backendSolverSuccess(solverFunction):
     for dataType in nimble.core.data.available:
         for dataTypeB in nimble.core.data.available:
             for bArray in bArrays:
-                A = createData(dataType, aArray, featureNames=['f1', 'f2'])
-                b = createData(dataTypeB, bArray)
+                A = nimble.data(dataType, aArray, featureNames=['f1', 'f2'])
+                b = nimble.data(dataTypeB, bArray)
                 sol = solverFunction(A, b)
                 aInv = inverse(A)
                 if len(b.features) > 1:
@@ -230,12 +230,12 @@ def _backendNonSquareSolverSucces(aArray,  bArrays, featureNames):
     for dataType in nimble.core.data.available:
         for dataTypeB in nimble.core.data.available:
             for bArray in bArrays:
-                aOrig = createData(
+                aOrig = nimble.data(
                     dataType, aArray, featureNames=featureNames)
-                A = createData(dataType, aArray,
-                               featureNames=featureNames)
-                bOrig = createData(dataTypeB, bArray)
-                b = createData(dataTypeB, bArray)
+                A = nimble.data(dataType, aArray,
+                                featureNames=featureNames)
+                bOrig = nimble.data(dataTypeB, bArray)
+                b = nimble.data(dataTypeB, bArray)
                 sol = leastSquaresSolution(A, b)
 
                 assert A == aOrig

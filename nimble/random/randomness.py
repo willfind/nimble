@@ -107,7 +107,7 @@ def data(
 
     See Also
     --------
-    createData
+    nimble.data, nimble.ones, nimble.zeros, nimble.identity
 
     Examples
     --------

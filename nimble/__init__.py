@@ -9,7 +9,7 @@ data, and do package level configuration and information querying.
 # Import those functions that we want to be accessible in the
 # top level
 from nimble.configuration import nimblePath
-from nimble.core.create import createData
+from nimble.core.create import data
 from nimble.core.create import ones
 from nimble.core.create import zeros
 from nimble.core.create import identity
@@ -52,7 +52,7 @@ core.interfaces.initInterfaceSetup()
 # initialize the logging file
 core.logger.initLoggerAndLogConfig()
 
-__all__ = ['calculate', 'createData', 'crossValidate', 'CustomLearner', 'CV',
+__all__ = ['calculate', 'crossValidate', 'CustomLearner', 'CV', 'data',
            'exceptions', 'fill', 'identity', 'Init', 'learnerDefaultValues',
            'learnerParameters', 'learners', 'learnerType', 'listLearners',
            'loadData', 'loadTrainedLearner', 'log', 'match', 'nimblePath',

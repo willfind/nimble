@@ -16,7 +16,7 @@ from tests.helpers import assertNoNamesGenerated
 @raises(InvalidArgumentValue)
 def test_KNNImputation_exception_invalidMode():
     data = [[1, 'na', 'x'], [1, 3, 6], [2, 1, 6], [1, 3, 7], ['na', 3, 'x']]
-    toTest = nimble.createData('Matrix', data)
+    toTest = nimble.data('Matrix', data)
     learner = KNNImputation()
     learner.train(toTest, mode='classify')
 
@@ -26,8 +26,8 @@ def test_KNNImputation_classification():
     data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
     expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
     for t in nimble.core.data.available:
-        toTest = nimble.createData(t, data, pointNames=pNames, featureNames=fNames, useLog=False)
-        expTest = nimble.createData(t, expData, pointNames=pNames, featureNames=fNames, useLog=False)
+        toTest = nimble.data(t, data, pointNames=pNames, featureNames=fNames, useLog=False)
+        expTest = nimble.data(t, expData, pointNames=pNames, featureNames=fNames, useLog=False)
         learner = KNNImputation()
         learner.train(toTest, k=3, mode='classification')
         ret = learner.apply(toTest)
@@ -40,8 +40,8 @@ def test_KNNImputation_regression():
     data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
     expData = [[1, 2, 6], [1, 3, 9], [2, 1, 6], [3, 2, 3], [2, 3, 6]]
     for t in nimble.core.data.available:
-        toTest = nimble.createData(t, data, pointNames=pNames, featureNames=fNames, useLog=False)
-        expTest = nimble.createData(t, expData, pointNames=pNames, featureNames=fNames, useLog=False)
+        toTest = nimble.data(t, data, pointNames=pNames, featureNames=fNames, useLog=False)
+        expTest = nimble.data(t, expData, pointNames=pNames, featureNames=fNames, useLog=False)
         learner = KNNImputation()
         learner.train(toTest, k=3, mode='regression')
         ret = learner.apply(toTest)
@@ -52,7 +52,7 @@ def test_KNNImputation_regression():
 def test_KNNImputation_regression_exception_NoSKL():
     with mock.patch('nimble.learners.knn_imputation.sklPresent', lambda: False):
         data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
-        toTest = nimble.createData('Matrix', data)
+        toTest = nimble.data('Matrix', data)
         learner = KNNImputation()
         learner.train(toTest, mode='regression')
 
@@ -60,8 +60,8 @@ def test_KNNImputation_lazyNameGeneration():
     data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]
     expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
     for t in nimble.core.data.available:
-        toTest = nimble.createData(t, data)
-        expTest = nimble.createData(t, expData)
+        toTest = nimble.data(t, data)
+        expTest = nimble.data(t, expData)
         learner = KNNImputation()
         learner.train(toTest, mode='classification', k=3)
         ret = learner.apply(toTest)
@@ -72,7 +72,7 @@ def test_KNNImputation_lazyNameGeneration():
 def test_KNNImputation_NamePath_preservation():
     data = [[None, None, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1]]
     for t in nimble.core.data.available:
-        toTest = nimble.createData(t, data)
+        toTest = nimble.data(t, data)
 
         toTest._name = "TestName"
         toTest._absPath = os.path.abspath("TestAbsPath")

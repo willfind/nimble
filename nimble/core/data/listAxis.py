@@ -100,11 +100,11 @@ class ListAxis(Axis):
         axisNames, offAxisNames = uniqueNameGetter(self._base, self._axis,
                                                    uniqueIndices)
         if self._isPoint:
-            return nimble.createData('List', uniqueData, pointNames=axisNames,
-                                     featureNames=offAxisNames, useLog=False)
+            return nimble.data('List', uniqueData, pointNames=axisNames,
+                               featureNames=offAxisNames, useLog=False)
         else:
-            return nimble.createData('List', uniqueData, pointNames=offAxisNames,
-                                      featureNames=axisNames, useLog=False)
+            return nimble.data('List', uniqueData, pointNames=offAxisNames,
+                               featureNames=axisNames, useLog=False)
 
     def _repeat_implementation(self, totalCopies, copyValueByValue):
         if self._isPoint:

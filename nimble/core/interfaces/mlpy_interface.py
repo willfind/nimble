@@ -285,7 +285,7 @@ To install mlpy
         outputType = 'Matrix'
         if outputType == 'match':
             outputType = customDict['match']
-        return nimble.createData(outputType, outputValue, useLog=False)
+        return nimble.data(outputType, outputValue, useLog=False)
 
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):

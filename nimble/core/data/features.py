@@ -316,9 +316,9 @@ class Features(object):
         ...        [1, 2, 3, 4],
         ...        [1, 2, 3, 4],
         ...        [1, 2, 3, 4]]
-        >>> data = nimble.createData('Matrix', raw,
-        ...                          pointNames=['a', 'b', 'c', 'd'],
-        ...                          featureNames=['1', '2', '3', '4'])
+        >>> data = nimble.data('Matrix', raw,
+        ...                    pointNames=['a', 'b', 'c', 'd'],
+        ...                    featureNames=['1', '2', '3', '4'])
         >>> single = data.features.copy('1')
         >>> single
         Matrix(
@@ -1155,7 +1155,7 @@ class Features(object):
         --------
         >>> from nimble import match
         >>> raw = [[1, -1, 1], [-3, 3, 3]]
-        >>> data = nimble.createData('Matrix', raw)
+        >>> data = nimble.data('Matrix', raw)
         >>> allPositiveFts = data.features.matching(match.allPositive)
         >>> allPositiveFts
         Matrix(
@@ -1165,7 +1165,7 @@ class Features(object):
 
         >>> from nimble import match
         >>> raw = [[1, float('nan'), 1], [-3, 3, 3]]
-        >>> data = nimble.createData('Matrix', raw)
+        >>> data = nimble.data('Matrix', raw)
         >>> ftHasMissing = data.features.matching(match.anyMissing)
         >>> ftHasMissing
         Matrix(
@@ -1226,11 +1226,11 @@ class Features(object):
         Insert before another point; mixed object types.
 
         >>> rawData = [[1, 4], [5, 8]]
-        >>> data = nimble.createData('Matrix', rawData,
-        ...                          featureNames=['1', '4'])
+        >>> data = nimble.data('Matrix', rawData,
+        ...                    featureNames=['1', '4'])
         >>> rawInsert = [[2, 3], [6, 7]]
-        >>> toInsert = nimble.createData('List', rawInsert,
-        ...                              featureNames=['2', '3'])
+        >>> toInsert = nimble.data('List', rawInsert,
+        ...                        featureNames=['2', '3'])
         >>> data.features.insert('4', toInsert)
         >>> data
         Matrix(
@@ -1242,11 +1242,10 @@ class Features(object):
         Reorder names.
 
         >>> rawData = [[1, 2], [5, 6]]
-        >>> data = nimble.createData('Matrix', rawData,
-        ...                          pointNames=['a', 'b'])
+        >>> data = nimble.data('Matrix', rawData, pointNames=['a', 'b'])
         >>> rawInsert = [[7, 8], [3, 4]]
-        >>> toInsert = nimble.createData('Matrix', rawInsert,
-        ...                              pointNames=['b', 'a'])
+        >>> toInsert = nimble.data('Matrix', rawInsert,
+        ...                        pointNames=['b', 'a'])
         >>> data.features.insert(2, toInsert)
         >>> data
         Matrix(
@@ -1305,11 +1304,11 @@ class Features(object):
         Append mixed object types.
 
         >>> rawData = [[1, 2], [5, 6]]
-        >>> data = nimble.createData('Matrix', rawData,
-        ...                          featureNames=['1', '2'])
+        >>> data = nimble.data('Matrix', rawData,
+        ...                    featureNames=['1', '2'])
         >>> rawAppend = [[3, 4], [7, 8]]
-        >>> toAppend = nimble.createData('List', rawAppend,
-        ...                              featureNames=['3', '4'])
+        >>> toAppend = nimble.data('List', rawAppend,
+        ...                        featureNames=['3', '4'])
         >>> data.features.append(toAppend)
         >>> data
         Matrix(
@@ -1321,11 +1320,11 @@ class Features(object):
         Reorder names.
 
         >>> rawData = [[1, 2], [5, 6]]
-        >>> data = nimble.createData('Matrix', rawData,
-        ...                          pointNames=['a', 'b'])
+        >>> data = nimble.data('Matrix', rawData,
+        ...                    pointNames=['a', 'b'])
         >>> rawAppend = [[7, 8], [3, 4]]
-        >>> toAppend = nimble.createData('Matrix', rawAppend,
-        ...                              pointNames=['b', 'a'])
+        >>> toAppend = nimble.data('Matrix', rawAppend,
+        ...                        pointNames=['b', 'a'])
         >>> data.features.append(toAppend)
         >>> data
         Matrix(
@@ -1375,8 +1374,7 @@ class Features(object):
         ...        [72968, 'Dome', 'New Orleans Saints'],
         ...        [76500, 'Open', 'Miami Dolphins']]
         >>> ftNames = ['CAPACITY', 'ROOF_TYPE', 'TEAM']
-        >>> data = nimble.createData('Matrix', raw,
-        ...                          featureNames=ftNames)
+        >>> data = nimble.data('Matrix', raw, featureNames=ftNames)
         >>> data.features.mapReduce(typeMapper, typeReducer)
         Matrix(
             [[<class 'int'> 1]
@@ -1421,7 +1419,7 @@ class Features(object):
         ...        [1, 2, 3, 4],
         ...        [1, 2, 3, 4],
         ...        [1, 2, 3, 4]]
-        >>> data = nimble.createData('DataFrame', raw)
+        >>> data = nimble.data('DataFrame', raw)
         >>> data.features.permute()
         >>> data
         DataFrame(
@@ -1438,8 +1436,7 @@ class Features(object):
         ...        ['home', 14, 1],
         ...        ['home', 11, 3]]
         >>> cols = ['dept', 'ID', 'quantity']
-        >>> orders = nimble.createData('DataFrame', raw,
-        ...                            featureNames=cols)
+        >>> orders = nimble.data('DataFrame', raw, featureNames=cols)
         >>> orders.features.permute(['ID', 'quantity', 'dept'])
         >>> orders
         DataFrame(
@@ -1507,7 +1504,7 @@ class Features(object):
         ...        [1, 1, 'na'],
         ...        [2, 2, 2],
         ...        ['na', 2, 2]]
-        >>> data = nimble.createData('Matrix', raw)
+        >>> data = nimble.data('Matrix', raw)
         >>> data.features.fillMatching(-1, 'na')
         >>> data
         Matrix(
@@ -1528,7 +1525,7 @@ class Features(object):
         ...        [1, 1, None],
         ...        [2, 2, 2],
         ...        [None, 2, 2]]
-        >>> data = nimble.createData('Matrix', raw)
+        >>> data = nimble.data('Matrix', raw)
         >>> data.features.fillMatching(fill.mean, match.missing, features=0)
         >>> data
         Matrix(
@@ -1595,7 +1592,7 @@ class Features(object):
         ...        [2, 3.0, 29]]
         >>> pts = ['movie1', 'movie2', 'movie3']
         >>> fts = ['review1', 'review2', 'review3']
-        >>> reviews = nimble.createData('Matrix', raw, pts, fts)
+        >>> reviews = nimble.data('Matrix', raw, pts, fts)
         >>> reviews.features.normalize(subtract='min')
         >>> reviews.features.normalize(divide='max')
         >>> reviews
@@ -1614,7 +1611,7 @@ class Features(object):
         ...        [2, 3.0, 29]]
         >>> pts = ['movie1', 'movie2', 'movie3']
         >>> fts = ['review1', 'review2', 'review3']
-        >>> reviews = nimble.createData('Matrix', raw, pts, fts)
+        >>> reviews = nimble.data('Matrix', raw, pts, fts)
         >>> means = reviews.features.statistics('mean')
         >>> stdDevs = reviews.features.statistics('standard deviation')
         >>> reviews.features.normalize(subtract=means, divide=stdDevs)
@@ -1715,8 +1712,7 @@ class Features(object):
         ...        ['Lima, Peru'],
         ...        ['Moscow, Russia']]
         >>> fts = ['location']
-        >>> locations = nimble.createData('Matrix', raw,
-        ...                               featureNames=fts)
+        >>> locations = nimble.data('Matrix', raw, featureNames=fts)
         >>> locations.features.splitByParsing('location', ', ',
         ...                                   ['city', 'country'])
         >>> locations
@@ -1734,7 +1730,7 @@ class Features(object):
         ...        ['HEQ892', 1],
         ...        ['LEQ331', 2]]
         >>> fts = ['product', 'quantity']
-        >>> inventory = nimble.createData('List', raw, featureNames=fts)
+        >>> inventory = nimble.data('List', raw, featureNames=fts)
         >>> inventory.features.splitByParsing(0, 3, ['category', 'id'])
         >>> inventory
         List(
@@ -1838,7 +1834,7 @@ class Features(object):
         --------
         Single feature
 
-        >>> data = nimble.createData('Matrix', [[1], [2], [3]])
+        >>> data = nimble.data('Matrix', [[1], [2], [3]])
         >>> data.features.setNames(['a'])
         >>> data.features.repeat(totalCopies=3,
         ...                      copyFeatureByFeature=False)
@@ -1851,7 +1847,7 @@ class Features(object):
 
         Two-dimensional, copyFeatureByFeature is False
 
-        >>> data = nimble.createData('Matrix', [[1, 2], [3, 4], [5, 6]])
+        >>> data = nimble.data('Matrix', [[1, 2], [3, 4], [5, 6]])
         >>> data.features.setNames(['a', 'b'])
         >>> data.features.repeat(totalCopies=2,
         ...                      copyFeatureByFeature=False)
@@ -1864,7 +1860,7 @@ class Features(object):
 
         Two-dimensional, copyFeatureByFeature is True
 
-        >>> data = nimble.createData('Matrix', [[1, 2], [3, 4], [5, 6]])
+        >>> data = nimble.data('Matrix', [[1, 2], [3, 4], [5, 6]])
         >>> data.features.setNames(['a', 'b'])
         >>> data.features.repeat(totalCopies=2,
         ...                      copyFeatureByFeature=True)
@@ -1901,8 +1897,7 @@ class Features(object):
         ...        ['b', 7, 1, 'b'],
         ...        ['c', 2, 9, 'c']]
         >>> ftNames = ['f1', 'f2', 'f3', 'f1_copy']
-        >>> data = nimble.createData('Matrix', raw,
-        ...                          featureNames=ftNames)
+        >>> data = nimble.data('Matrix', raw, featureNames=ftNames)
         >>> uniqueFeatures = data.features.unique()
         >>> uniqueFeatures
         Matrix(

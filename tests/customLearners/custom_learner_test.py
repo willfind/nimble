@@ -220,7 +220,7 @@ class LoveAtFirstSightClassifier(CustomLearner):
         ret = []
         for point in testX.points:
             ret.append([self.prediction])
-        return nimble.createData("Matrix", ret)
+        return nimble.data("Matrix", ret)
 
     def getScores(self, testX):
         ret = []
@@ -232,7 +232,7 @@ class LoveAtFirstSightClassifier(CustomLearner):
                 else:
                     currScores.append(0)
             ret.append(currScores)
-        return nimble.createData("Matrix", ret)
+        return nimble.data("Matrix", ret)
 
 
 @configSafetyWrapper
@@ -241,11 +241,11 @@ def testCustomLearnerGetScores():
     data = [[1, 3], [2, -5], [1, 44]]
     labels = [[0], [2], [1]]
 
-    trainObj = nimble.createData('Matrix', data)
-    labelsObj = nimble.createData('Matrix', labels)
+    trainObj = nimble.data('Matrix', data)
+    labelsObj = nimble.data('Matrix', labels)
 
     tdata = [[23, 2343], [23, 22], [454, -44]]
-    testObj = nimble.createData('Matrix', tdata)
+    testObj = nimble.data('Matrix', tdata)
 
     name = LoveAtFirstSightClassifier
     preds = nimble.trainAndApply(name, trainX=trainObj, trainY=labelsObj, testX=testObj, scoreMode='label')
@@ -264,11 +264,11 @@ def testCustomLearnerIncTrainCheck():
     """ Test that a CustomLearner with incrementalTrain() but no train() works as expected """
     data = [[1, 3], [2, -5], [1, 44]]
     labels = [[0], [2], [1]]
-    trainObj = nimble.createData('Matrix', data)
-    labelsObj = nimble.createData('Matrix', labels)
+    trainObj = nimble.data('Matrix', data)
+    labelsObj = nimble.data('Matrix', labels)
 
     tdata = [[23, 2343], [23, 22], [454, -44]]
-    testObj = nimble.createData('Matrix', tdata)
+    testObj = nimble.data('Matrix', tdata)
 
     def verifyScores(scores, currPredIndex):
         for rowNum in range(len(scores.points)):
@@ -289,8 +289,8 @@ def testCustomLearnerIncTrainCheck():
 
     extendData = [[-343, -23]]
     extendLabels = [[3]]
-    extTrainObj = nimble.createData("Matrix", extendData)
-    extLabelsObj = nimble.createData("Matrix", extendLabels)
+    extTrainObj = nimble.data("Matrix", extendData)
+    extLabelsObj = nimble.data("Matrix", extendLabels)
 
     tlObj.incrementalTrain(extTrainObj, extLabelsObj)
     # check incrementalTrain does not instantiate a new backend
@@ -302,8 +302,8 @@ def testCustomLearnerIncTrainCheck():
 
     reData = [[11, 12], [13, 14], [-22, -48]]
     reLabels = [[-1], [-1], [-2]]
-    reTrainObj = nimble.createData("Matrix", reData)
-    reLabelsObj = nimble.createData('Matrix', reLabels)
+    reTrainObj = nimble.data("Matrix", reData)
+    reLabelsObj = nimble.data('Matrix', reLabels)
 
     tlObj.retrain(reTrainObj, reLabelsObj)
     # retrain instantiates a new trained backend on only the retrain data,
@@ -326,12 +326,12 @@ class OneOrZeroClassifier(CustomLearner):
 
     def apply(self, testX):
         preds = [[self.prediction] for _ in range(len(testX.points))]
-        return nimble.createData("Matrix", preds)
+        return nimble.data("Matrix", preds)
 
 @configSafetyWrapper
 def test_retrain_withArg():
     trainObj = nimble.random.data('Matrix', 4, 3, 0)
-    testObj = nimble.createData('Matrix', [[0, 0], [1, 1]])
+    testObj = nimble.data('Matrix', [[0, 0], [1, 1]])
     expZeros = nimble.zeros('Matrix', 2, 1)
     expOnes = nimble.ones('Matrix', 2, 1)
 
@@ -347,7 +347,7 @@ def test_retrain_withArg():
 @configSafetyWrapper
 def test_retrain_invalidArg():
     trainObj = nimble.random.data('Matrix', 4, 3, 0)
-    testObj = nimble.createData('Matrix', [[0, 0], [1, 1]])
+    testObj = nimble.data('Matrix', [[0, 0], [1, 1]])
     expZeros = nimble.zeros('Matrix', 2, 1)
     expOnes = nimble.ones('Matrix', 2, 1)
 
@@ -361,7 +361,7 @@ def test_retrain_invalidArg():
 @configSafetyWrapper
 def test_retrain_CVArg():
     trainObj = nimble.random.data('Matrix', 4, 3, 0)
-    testObj = nimble.createData('Matrix', [[0, 0], [1, 1]])
+    testObj = nimble.data('Matrix', [[0, 0], [1, 1]])
     expZeros = nimble.zeros('Matrix', 2, 1)
     expOnes = nimble.ones('Matrix', 2, 1)
 

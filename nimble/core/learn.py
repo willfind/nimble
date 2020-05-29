@@ -221,7 +221,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     Normalize a single data set.
 
     >>> data = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
-    >>> trainX = nimble.createData("Matrix", data)
+    >>> trainX = nimble.data("Matrix", data)
     >>> orig = trainX.copy()
     >>> nimble.normalizeData('scikitlearn.PCA', trainX, n_components=2)
     >>> trainX
@@ -234,9 +234,9 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     Normalize training and testing data.
 
     >>> data1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
-    >>> trainX = nimble.createData("Matrix", data1)
+    >>> trainX = nimble.data("Matrix", data1)
     >>> data2 = [[-1, 0, 5]]
-    >>> testX = nimble.createData("Matrix", data2)
+    >>> testX = nimble.data("Matrix", data2)
     >>> nimble.normalizeData('scikitlearn.PCA', trainX, testX=testX,
     ...                      n_components=2)
     >>> # trainX is the same as above example.
@@ -328,7 +328,7 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     ...        [2, 1, 6],
     ...        [1, 3, 7],
     ...        [None, 3, None]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> toMatch = nimble.match.missing
     >>> nimble.fillMatching('nimble.KNNImputation', toMatch, data,
     ...                     mode='classification', k=3)
@@ -348,7 +348,7 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     ...        [2, 1, 6],
     ...        [1, 3, 7],
     ...        [0, 3, 0]]
-    >>> data = nimble.createData('Sparse', raw)
+    >>> data = nimble.data('Sparse', raw)
     >>> toMatch = nimble.match.zero
     >>> nimble.fillMatching('nimble.KNNImputation', toMatch, data,
     ...                     features=-1, k=3, mode='regression')
@@ -478,8 +478,8 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     >>> yRaw = [[1], [2], [3],
     ...         [1], [2], [3],
     ...         [1], [2], [3]]
-    >>> X = nimble.createData('Matrix', xRaw)
-    >>> Y = nimble.createData('Matrix', yRaw)
+    >>> X = nimble.data('Matrix', xRaw)
+    >>> Y = nimble.data('Matrix', yRaw)
     >>> crossValidator = nimble.crossValidate(
     ...    'nimble.KNNClassifier', X, Y,
     ...    performanceFunction=nimble.calculate.fractionIncorrect,
@@ -589,8 +589,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     ...         [0, 1, 0, 2],
     ...         [0, 0, 1, 3]]
     >>> ftNames = ['a', 'b' ,'c', 'label']
-    >>> trainData = nimble.createData('Matrix', data,
-    ...                               featureNames=ftNames)
+    >>> trainData = nimble.data('Matrix', data, featureNames=ftNames)
     >>> tl = nimble.train('nimble.KNNClassifier', trainX=trainData,
     ...                   trainY='label')
     >>> print(type(tl))
@@ -607,8 +606,8 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     ...          [0, 1, 0],
     ...          [0, 0, 1]]
     >>> dataY = [[1], [2], [3], [1], [2], [3]]
-    >>> trainX = nimble.createData('Matrix', dataX)
-    >>> trainY = nimble.createData('Matrix', dataY)
+    >>> trainX = nimble.data('Matrix', dataX)
+    >>> trainY = nimble.data('Matrix', dataY)
     >>> tl = nimble.train('sciKitLearn.SVC', trainX=trainX, trainY=trainY,
     ...                   arguments={'C': 0.1}, kernel='linear')
     >>> tlAttributes = tl.getAttributes()
@@ -721,7 +720,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         ``arguments`` will be merged with the learner ``kwarguments``
     output : str
         The kind of nimble Base object that the output of this function
-        should be in. Any of the normal string inputs to the createData
+        should be in. Any of the normal string inputs to the nimble.data
         ``returnType`` parameter are accepted here. Alternatively, the
         value 'match' will indicate to use the type of the ``trainX``
         parameter.
@@ -773,8 +772,8 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     ...             [0, 1, 0, 2],
     ...             [0, 0, 1, 3]]
     >>> rawTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    >>> trainData = nimble.createData('Matrix', rawTrain)
-    >>> testX = nimble.createData('Matrix', rawTestX)
+    >>> trainData = nimble.data('Matrix', rawTrain)
+    >>> testX = nimble.data('Matrix', rawTestX)
     >>> predict = nimble.trainAndApply('nimble.KNNClassifier',
     ...                                trainX=trainData, trainY=3,
     ...                                testX=testX)
@@ -797,9 +796,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     ...              [0, 0, 1]]
     >>> rawTrainY = [[1], [2], [3], [1], [2], [3]]
     >>> rawTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    >>> trainX = nimble.createData('Matrix', rawTrainX)
-    >>> trainY = nimble.createData('Matrix', rawTrainY)
-    >>> testX = nimble.createData('Matrix', rawTestX)
+    >>> trainX = nimble.data('Matrix', rawTrainX)
+    >>> trainY = nimble.data('Matrix', rawTrainY)
+    >>> testX = nimble.data('Matrix', rawTestX)
     >>> pred = nimble.trainAndApply('sciKitLearn.SVC', trainX=trainX,
     ...                             trainY=trainY, testX=testX,
     ...                             arguments={'C': 0.1}, kernel='linear')
@@ -901,7 +900,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         ``arguments`` will be merged with the learner ``kwarguments``
     output : str
         The kind of nimble Base object that the output of this function
-        should be in. Any of the normal string inputs to the createData
+        should be in. Any of the normal string inputs to the nimble.data
         ``returnType`` parameter are accepted here. Alternatively, the
         value 'match' will indicate to use the type of the ``trainX``
         parameter.
@@ -955,10 +954,9 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     ...             [0, 0, 1, 3]]
     >>> rawTest = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
     >>> ftNames = ['a', 'b', 'c', 'label']
-    >>> trainData = nimble.createData('Matrix', rawTrain,
-    ...                               featureNames=ftNames)
-    >>> testData = nimble.createData('Matrix', rawTest,
-    ...                              featureNames=ftNames)
+    >>> trainData = nimble.data('Matrix', rawTrain,
+    ...                         featureNames=ftNames)
+    >>> testData = nimble.data('Matrix', rawTest, featureNames=ftNames)
     >>> perform = nimble.trainAndTest(
     ...     'nimble.KNNClassifier', trainX=trainData, trainY='label',
     ...     testX=testData, testY='label',
@@ -979,10 +977,10 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     >>> rawTrainY = [[1], [2], [3], [1], [2], [3]]
     >>> rawTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     >>> rawTestY = [[1], [2], [3]]
-    >>> trainX = nimble.createData('Matrix', rawTrainX)
-    >>> trainY = nimble.createData('Matrix', rawTrainY)
-    >>> testX = nimble.createData('Matrix', rawTestX)
-    >>> testY = nimble.createData('Matrix', rawTestY)
+    >>> trainX = nimble.data('Matrix', rawTrainX)
+    >>> trainY = nimble.data('Matrix', rawTrainY)
+    >>> testX = nimble.data('Matrix', rawTestX)
+    >>> testY = nimble.data('Matrix', rawTestY)
     >>> perform = nimble.trainAndTest(
     ...     'sciKitLearn.SVC', trainX=trainX, trainY=trainY,
     ...     testX=testX, testY=testY,
@@ -1093,7 +1091,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         ``arguments`` will be merged with the learner ``kwarguments``
     output : str
         The kind of nimble Base object that the output of this function
-        should be in. Any of the normal string inputs to the createData
+        should be in. Any of the normal string inputs to the nimble.data
         ``returnType`` parameter are accepted here. Alternatively, the
         value 'match' will indicate to use the type of the ``trainX``
         parameter.
@@ -1141,8 +1139,8 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     ...             [0, 1, 0, 2],
     ...             [0, 0, 1, 3]]
     >>> ftNames = ['a', 'b', 'c', 'label']
-    >>> trainData = nimble.createData('Matrix', rawTrain,
-    ...                               featureNames=ftNames)
+    >>> trainData = nimble.data('Matrix', rawTrain,
+    ...                         featureNames=ftNames)
     >>> perform = nimble.trainAndTestOnTrainingData(
     ...     'nimble.KNNClassifier', trainX=trainData, trainY='label',
     ...     performanceFunction=nimble.calculate.fractionIncorrect)
@@ -1160,8 +1158,8 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     ...              [0, 1, 0],
     ...              [0, 0, 1]]
     >>> rawTrainY = [[1], [2], [3], [1], [2], [3]]
-    >>> trainX = nimble.createData('Matrix', rawTrainX)
-    >>> trainY = nimble.createData('Matrix', rawTrainY)
+    >>> trainX = nimble.data('Matrix', rawTrainX)
+    >>> trainY = nimble.data('Matrix', rawTrainY)
     >>> perform = nimble.trainAndTestOnTrainingData(
     ...     'sciKitLearn.SVC', trainX=trainX, trainY=trainY,
     ...     performanceFunction=nimble.calculate.fractionIncorrect,
@@ -1512,8 +1510,8 @@ class KFoldCrossValidator():
         >>> yRaw = [[1], [2], [3],
         ...         [1], [2], [3],
         ...         [1], [2], [3]]
-        >>> X = nimble.createData('Matrix', xRaw)
-        >>> Y = nimble.createData('Matrix', yRaw)
+        >>> X = nimble.data('Matrix', xRaw)
+        >>> Y = nimble.data('Matrix', yRaw)
         >>> crossValidator = KFoldCrossValidator(
         ...    'nimble.KNNClassifier', X, Y, arguments={'k': 3},
         ...    performanceFunction=nimble.calculate.fractionIncorrect,
@@ -1598,8 +1596,8 @@ class KFoldCrossValidator():
         >>> yRaw = [[1], [2], [3],
         ...         [1], [2], [3],
         ...         [1], [2], [3]]
-        >>> X = nimble.createData('Matrix', xRaw)
-        >>> Y = nimble.createData('Matrix', yRaw)
+        >>> X = nimble.data('Matrix', xRaw)
+        >>> Y = nimble.data('Matrix', yRaw)
         >>> kValues = nimble.CV([1, 3])
         >>> crossValidator = KFoldCrossValidator(
         ...    'nimble.KNNClassifier', X, Y, arguments={},
@@ -1652,8 +1650,8 @@ class KFoldCrossValidator():
         >>> yRaw = [[1], [2], [3],
         ...         [1], [2], [3],
         ...         [1], [2], [3]]
-        >>> X = nimble.createData('Matrix', xRaw)
-        >>> Y = nimble.createData('Matrix', yRaw)
+        >>> X = nimble.data('Matrix', xRaw)
+        >>> Y = nimble.data('Matrix', yRaw)
         >>> kValues = nimble.CV([1, 3])
         >>> crossValidator = KFoldCrossValidator(
         ...    'nimble.KNNClassifier', X, Y, arguments={},

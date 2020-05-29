@@ -43,7 +43,7 @@ def proportionMissing(values):
     Examples
     --------
     >>> raw = [1, 2, float('nan'), 4, float('nan')]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> proportionMissing(vector)
     0.4
     """
@@ -62,7 +62,7 @@ def proportionZero(values):
     Examples
     --------
     >>> raw = [0, 1, 2, 3]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> proportionZero(vector)
     0.25
     """
@@ -88,7 +88,7 @@ def minimum(values):
     Examples
     --------
     >>> raw = [0, 1, 2, float('nan')]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> minimum(vector)
     0
     """
@@ -110,7 +110,7 @@ def maximum(values):
     Examples
     --------
     >>> raw = [0, 1, 2, float('nan')]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> maximum(vector)
     2
     """
@@ -167,7 +167,7 @@ def mean(values):
     Examples
     --------
     >>> raw = [0, 1, 2, float('nan'), float('nan'), 5]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> mean(vector)
     2.0
     """
@@ -198,7 +198,7 @@ def median(values):
     Examples
     --------
     >>> raw = [0, 1, 2, float('nan'), float('nan'), 5, 6]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> median(vector)
     2.0
     """
@@ -224,7 +224,7 @@ def mode(values):
     Examples
     --------
     >>> raw = [0, 1, 2, float('nan'), float('nan'), float('nan'), 0, 6]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> mode(vector)
     0
     """
@@ -259,7 +259,7 @@ def standardDeviation(values, sample=True):
     Examples
     --------
     >>> raw = [1, 2, 3, 4, 5, 6, float('nan')]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> standardDeviation(vector)
     1.8708286933869707
     >>> standardDeviation(vector, sample=False)
@@ -299,7 +299,7 @@ def medianAbsoluteDeviation(values):
     Examples
     --------
     >>> raw = [1, 2, 3, 4, 5, 6, float('nan')]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> medianAbsoluteDeviation(vector)
     1.5
     """
@@ -342,7 +342,7 @@ def quartiles(values):
     Examples
     --------
     >>> raw = [1, 5, 12, 13, 14, 21, 23, float('nan')]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> quartiles(vector)
     (8.5, 13.0, 17.5)
     """

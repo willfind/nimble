@@ -1,7 +1,6 @@
 """
 Script demonstrating the training, applying, and testing api using an
 out-of-the-box, custom learner.
-
 """
 
 import nimble
@@ -20,10 +19,10 @@ if __name__ == "__main__":
     testYRaw = testXRaw.dot(targetCoefs)
 
     # encapsulate in nimble Base objects
-    trainX = nimble.createData("Matrix", trainXRaw)
-    trainY = nimble.createData("Matrix", trainYRaw)
-    testX = nimble.createData("Matrix", testXRaw)
-    testY = nimble.createData("Matrix", testYRaw)
+    trainX = nimble.data("Matrix", trainXRaw)
+    trainY = nimble.data("Matrix", trainYRaw)
+    testX = nimble.data("Matrix", testXRaw)
+    testY = nimble.data("Matrix", testYRaw)
 
     # an example of getting a TrainedLearner and querying its attributes. In
     # RidgeRegression's case, we check the learned coefficients, named 'w'

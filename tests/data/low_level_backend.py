@@ -27,7 +27,7 @@ except ImportError:
 
 from nose.tools import *
 
-from nimble import createData
+import nimble
 from nimble.core.data import Base
 from nimble.core.data import available
 from nimble.utility import inheritDocstringsFactory, numpy2DArray
@@ -1176,7 +1176,7 @@ class LowLevelBackend(object):
     def testconstructIndicesList_NimbleObjects(self):
         for retType in available:
             self.constructIndicesList_backend(
-                lambda lst: createData(retType, lst, convertToType=object))
+                lambda lst: nimble.data(retType, lst, convertToType=object))
 
     def testconstructIndicesList_numpyArray(self):
         self.constructIndicesList_backend(lambda lst: numpy.array(lst,dtype=object))

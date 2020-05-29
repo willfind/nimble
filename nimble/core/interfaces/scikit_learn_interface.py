@@ -565,7 +565,7 @@ To install scikit-learn
         outputType = 'Matrix'
         if outputType == 'match':
             outputType = customDict['match']
-        return nimble.createData(outputType, outputValue, useLog=False)
+        return nimble.data(outputType, outputValue, useLog=False)
 
     def _initLearner(self, learnerName, trainX, trainY, arguments):
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]

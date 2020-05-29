@@ -53,6 +53,6 @@ def meanAbsoluteErrorConfidenceInterval(known, predicted, confidence=0.95):
 def fractionIncorrectConfidenceInterval(known, predicted, confidence=0.95):
     rawErrors = known.copy(to='numpyarray') - predicted.copy(to='numpyarray')
     rawErrors = numpy.absolute(rawErrors)
-    errors = nimble.createData("Matrix", rawErrors)
+    errors = nimble.data("Matrix", rawErrors)
 
     return confidenceIntervalHelper(errors, None, confidence)

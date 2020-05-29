@@ -86,13 +86,11 @@ class DataFrameAxis(Axis):
                                                    uniqueIndices)
 
         if self._isPoint:
-            return nimble.createData('DataFrame', uniqueData,
-                                     pointNames=axisNames,
-                                     featureNames=offAxisNames, useLog=False)
+            return nimble.data('DataFrame', uniqueData, pointNames=axisNames,
+                               featureNames=offAxisNames, useLog=False)
         else:
-            return nimble.createData('DataFrame', uniqueData,
-                                     pointNames=offAxisNames,
-                                     featureNames=axisNames, useLog=False)
+            return nimble.data('DataFrame', uniqueData, featureNames=axisNames,
+                               pointNames=offAxisNames, useLog=False)
 
     def _repeat_implementation(self, totalCopies, copyValueByValue):
         if self._isPoint:
