@@ -351,12 +351,10 @@ class SciKitLearn(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
     """
 
     def __init__(self):
-        self.skl = modifyImportPathAndImport(
-            sciKitLearnDir, ('sciKitLearn', 'sklearn'))
-        testUtils = modifyImportPathAndImport(
-            sciKitLearnDir, ('SciKitLearn', 'sklearn.utils.testing'))
-
-        from sklearn.utils.testing import all_estimators
+        self.skl = modifyImportPathAndImport(sciKitLearnDir, 'sklearn',
+                                             'sklearn')
+        testUtils = modifyImportPathAndImport(sciKitLearnDir, 'sklearn',
+                                              'sklearn.utils.testing')
 
         version = self.version()
         self._versionSplit = list(map(int, version.split('.')))
@@ -421,18 +419,19 @@ class SciKitLearn(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
 
     def accessible(self):
         try:
-            import sklearn
+            _ = modifyImportPathAndImport(sciKitLearnDir, 'sklearn',
+                                          'sklearn')
         except ImportError:
             return False
         return True
 
     @classmethod
     def getCanonicalName(cls):
-        return 'sciKitLearn'
+        return 'sklearn'
 
     @classmethod
     def isAlias(cls, name):
-        if name.lower() in ['skl', 'sklearn']:
+        if name.lower() in ['skl', 'scikitlearn']:
             return True
         return name.lower() == cls.getCanonicalName().lower()
 

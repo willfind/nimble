@@ -40,12 +40,11 @@ class Keras(PredefinedInterface, UniversalInterface):
 
         try:
             # keras recommends using tensorflow.keras when possible
-            self.keras = modifyImportPathAndImport(
-                kerasDir, ('keras', 'tensorflow.keras'))
+            self.keras = modifyImportPathAndImport(kerasDir, 'keras',
+                                                   'tensorflow.keras')
             backendName = 'tensorflow'
         except ImportError:
-            self.keras = modifyImportPathAndImport(
-                kerasDir, ('keras', 'keras'))
+            self.keras = modifyImportPathAndImport(kerasDir, 'keras', 'keras')
             backendName = self.keras.backend.backend()
         # tensorflow has a tremendous quantity of informational outputs which
         # drown out anything else on standard out
@@ -94,12 +93,13 @@ class Keras(PredefinedInterface, UniversalInterface):
 
     def accessible(self):
         try:
-            import tensorflow.keras
-        except ImportError:
             try:
-                import keras
+                _ = modifyImportPathAndImport(kerasDir, 'keras',
+                                              'tensorflow.keras')
             except ImportError:
-                return False
+                _ = modifyImportPathAndImport(kerasDir, 'keras', 'keras')
+        except ImportError:
+            return False
         return True
 
     @classmethod

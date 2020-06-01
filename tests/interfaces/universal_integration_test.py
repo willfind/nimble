@@ -188,8 +188,8 @@ def testRandomnessControl():
 
 def getCanonicalNameAndPossibleAliases(interface):
     if interface.__name__ == 'SciKitLearn':
-        canonicalName = 'sciKitLearn'
-        aliases = ['scikitlearn', 'skl', 'sklearn', 'sKLeARN', 'SKL']
+        canonicalName = 'sklearn'
+        aliases = ['scikitlearn', 'skl', 'SciKitLearn', 'sKLeARN', 'SKL']
     elif interface.__name__ == 'Mlpy':
         canonicalName = 'mlpy'
         aliases = ['mlpy', 'MLPY', 'mLpY']
@@ -298,8 +298,9 @@ def reload(module):
         mod = importlib.reload(mod)
     return mod
 
-def makeMockedModule(mockDirectory, packageNames, mockedMsg):
+def makeMockedModule(mockDirectory, packageName, mockedMsg):
     packagePath = mockDirectory
+    packageNames = packageName.split('.')
     for i, packageName in enumerate(packageNames):
         packagePath = os.path.join(packagePath, packageName)
         os.mkdir(packagePath)
@@ -317,23 +318,26 @@ def test_loadModulesFromConfigLocation():
         sysPathBackup = sys.path.copy()
         try:
             canonicalName, _ = getCanonicalNameAndPossibleAliases(interface)
-            packageName = canonicalName
-            if packageName == 'sciKitLearn':
-                packageName = 'sklearn'
-            if packageName == 'keras':
+            packageName1 = packageName2 = canonicalName
+            if canonicalName == 'keras':
                 # determine if it will use tensorflow.keras or keras
                 try:
                     importlib.import_module('tensorflow.keras')
-                    packageName = 'tensorflow.keras'
+                    # first round we load from modified sys.path so we are
+                    # import tensorflow.keras
+                    packageName1 = 'tensorflow.keras'
+                    # second round we load from settings location so we
+                    # want to import the canonicalName
+                    packageName2 = 'keras'
                 except ImportError:
                     pass
-            packageNames = packageName.split('.')
+            print(packageName1, packageName2)
             with tempfile.TemporaryDirectory() as mockDirectory1:
                 # first directory containing the same package
-                makeMockedModule(mockDirectory1, packageNames, mockedInit1)
+                makeMockedModule(mockDirectory1, packageName1, mockedInit1)
                 with tempfile.TemporaryDirectory() as mockDirectory2:
                     # second directory containing the same package
-                    makeMockedModule(mockDirectory2, packageNames, mockedInit2)
+                    makeMockedModule(mockDirectory2, packageName2, mockedInit2)
                     # manually insert first directory to sys.path
                     # first, check that it loads from the path of the first
                     # directory which raises FirstImportedModule

@@ -46,8 +46,7 @@ class Mlpy(PredefinedInterface, UniversalInterface):
         # modify path if another directory provided
 
 
-        self.mlpy = modifyImportPathAndImport(
-            mlpyDir, ('mlpy', 'mlpy'))
+        self.mlpy = modifyImportPathAndImport(mlpyDir, 'mlpy', 'mlpy')
 
         def isLearner(obj):
             hasLearn = hasattr(obj, 'learn')
@@ -69,7 +68,7 @@ class Mlpy(PredefinedInterface, UniversalInterface):
 
     def accessible(self):
         try:
-            import mlpy
+            _ = modifyImportPathAndImport(mlpyDir, 'mlpy', 'mlpy')
         except ImportError:
             return False
         return True
@@ -317,7 +316,8 @@ To install mlpy
         # use patch if necessary
         patchedLearners = ["DLDA", "Parzen", "ElasticNet", "ElasticNetC"]
         if learnerName in patchedLearners:
-            patchModule = importlib.import_module("nimble.core.interfaces.mlpy_patches")
+            patchLoc = "nimble.core.interfaces._mlpy_patches"
+            patchModule = importlib.import_module(patchLoc)
             initLearner = getattr(patchModule, learnerName)
         else:
             initLearner = self.findCallable(learnerName)

@@ -22,13 +22,7 @@ from nimble._utility import inspectArguments
 from nimble._utility import inheritDocstringsFactory
 from nimble._configuration import configErrors
 
-# Contains path to sciKitLearn root directory
-#sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'
 autoimputeDir = None
-
-# a dictionary mapping names to learners, or modules
-# containing learners. To be used by findInPackage
-locationCache = {}
 
 @inheritDocstringsFactory(UniversalInterface)
 class Autoimpute(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
@@ -43,8 +37,8 @@ class Autoimpute(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
         """
 
         """
-        self.autoimpute = modifyImportPathAndImport(
-            autoimputeDir, ('autoimpute', 'autoimpute'))
+        self.autoimpute = modifyImportPathAndImport(autoimputeDir,
+                                                    'autoimpute', 'autoimpute')
 
         def isLearner(obj):
             try:
@@ -75,7 +69,8 @@ class Autoimpute(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
 
     def accessible(self):
         try:
-            import autoimpute
+            _ = modifyImportPathAndImport(autoimputeDir, 'autoimpute',
+                                          'autoimpute')
         except ImportError:
             return False
         return True

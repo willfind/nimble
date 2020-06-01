@@ -479,23 +479,50 @@ def removeFromTailMatchedLists(full, matched, toIgnore):
     return (retFull, retMatched)
 
 
-def modifyImportPathAndImport(directory, interfaceInfo):
+def modifyImportPathAndImport(directory, canonicalName, importPackage):
+    """
+    Supports importing packages and subpackages for interfaces by
+    modifying sys.path based on other locations that could potentially
+    contain the package. The directory is given first priority, followed
+    by a location designated in nimble.settings.
+
+    Parameters
+    ----------
+    directory : str
+        The alternative location provided for the interface package
+        provided by the interface file's global directory location
+        variable.
+    canonicalName : str
+        The canonical name of the interface using this helper.
+        Alternative locations are located in nimble.settings under this
+        name.
+    importPackage : str
+        The name of the package to import. Most often this mirrors the
+        canonicalName. It can also be a subpackage of the interface or
+        another location from which to import the interface package.
+        Other locations are provided by us, for example we prioritize
+        tensorflow.keras over keras, but a user's keras location takes
+        priority so importPackage is modified to be the canonicalName.
+    """
     sysPathBackup = sys.path.copy()
-    canonicalName, package = interfaceInfo
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         try:
             if directory is not None:
                 sys.path.insert(0, directory)
+                if not importPackage.startswith(canonicalName):
+                    importPackage = canonicalName
 
             try:
                 location = nimble.settings.get(canonicalName, 'location')
                 if location:
                     sys.path.insert(0, location)
+                    if not importPackage.startswith(canonicalName):
+                        importPackage = canonicalName
             except configparser.Error:
                 pass
 
-            return importlib.import_module(package)
+            return importlib.import_module(importPackage)
         finally:
             sys.path = sysPathBackup
 
