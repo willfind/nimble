@@ -576,7 +576,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     See Also
     --------
     trainAndApply, trainAndTest, trainAndTestOnTrainingData, CV,
-    interfaces.universal_interface.TrainedLearner
+    interfaces.TrainedLearner
 
     Examples
     --------
@@ -759,7 +759,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     See Also
     --------
     train, trainAndTest, trainAndTestOnTrainingData, CV,
-    interfaces.universal_interface.TrainedLearner.apply
+    interfaces.TrainedLearner.apply
 
     Examples
     --------
@@ -940,7 +940,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     See Also
     --------
     train, trainAndApply, trainAndTestOnTrainingData, CV,
-    interfaces.universal_interface.TrainedLearner.test
+    interfaces.TrainedLearner.test
 
     Examples
     --------

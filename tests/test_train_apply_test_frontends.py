@@ -628,7 +628,7 @@ def test_trainAndTestOnTrainingData_logCount_withCV():
     back_logCount(wrapped)
 
 @raises(CalledFunctionException)
-@mock.patch('nimble.core.interfaces.universal_interface.TrainedLearner._validTestData', calledException)
+@mock.patch('nimble.core.interfaces.TrainedLearner._validTestData', calledException)
 def test_trainAndApply_testXValidation():
     variables = ["x1", "x2", "x3", "label"]
     numPoints = 20
@@ -648,7 +648,7 @@ def test_trainAndApply_testXValidation():
     out = nimble.trainAndApply(learner, trainObj, 3, testObjNoLabels)
 
 @raises(CalledFunctionException)
-@mock.patch('nimble.core.interfaces.universal_interface.TrainedLearner._validTestData', calledException)
+@mock.patch('nimble.core.interfaces.TrainedLearner._validTestData', calledException)
 def test_trainAndTest_testXValidation():
     variables = ["x1", "x2", "x3", "label"]
     numPoints = 20
@@ -671,7 +671,7 @@ def test_trainAndTest_testXValidation():
                               testObjLabels, perfFunc)
 
 @raises(CalledFunctionException)
-@mock.patch('nimble.core.interfaces.universal_interface.TrainedLearner._validTestData', calledException)
+@mock.patch('nimble.core.interfaces.TrainedLearner._validTestData', calledException)
 def test_TL_apply_testXValidation():
     variables = ["x1", "x2", "x3", "label"]
     numPoints = 20
@@ -692,7 +692,7 @@ def test_TL_apply_testXValidation():
     out = tl.apply(testObjNoLabels)
 
 @raises(CalledFunctionException)
-@mock.patch('nimble.core.interfaces.universal_interface.TrainedLearner._validTestData', calledException)
+@mock.patch('nimble.core.interfaces.TrainedLearner._validTestData', calledException)
 def test_TL_test_testXValidation():
     variables = ["x1", "x2", "x3", "label"]
     numPoints = 20
@@ -715,7 +715,7 @@ def test_TL_test_testXValidation():
     out = tl.test(testObjData, testObjLabels, perfFunc)
 
 @raises(CalledFunctionException)
-@mock.patch('nimble.core.interfaces.universal_interface.TrainedLearner._validTestData', calledException)
+@mock.patch('nimble.core.interfaces.TrainedLearner._validTestData', calledException)
 def test_TL_getScores_testXValidation():
     variables = ["x1", "x2", "x3", "label"]
     numPoints = 20

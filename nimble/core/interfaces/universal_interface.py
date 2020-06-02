@@ -567,11 +567,9 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         """
         Return a list of all learners callable through this interface.
         """
-        isCustom = isinstance(self, nimble.core.interfaces.CustomLearnerInterface)
         if self._listLearnersCached is None:
             ret = self._listLearnersBackend()
-            if not isCustom:
-                self._listLearnersCached = ret
+            self._listLearnersCached = ret
         else:
             ret = self._listLearnersCached
         return ret

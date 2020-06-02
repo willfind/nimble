@@ -8,7 +8,7 @@ import abc
 
 import nimble
 from .universal_interface import PredefinedInterface
-from .custom_learner_interface import CustomLearnerInterface
+from .custom_learner import CustomLearnerInterface
 
 
 def initInterfaceSetup():

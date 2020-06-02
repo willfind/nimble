@@ -16,7 +16,6 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.data import Base
 from nimble.random import pythonRandom
 from nimble.random import numpyRandom
-from nimble.core.custom_learner import validateCustomLearnerSubclass
 from nimble._configuration import setInterfaceOptions
 
 
@@ -712,7 +711,6 @@ def _unpackLearnerName(learnerName):
         name = learnerName.__name__
         if (issubclass(learnerName, nimble.CustomLearner)
                 and package != 'nimble'):
-            validateCustomLearnerSubclass(learnerName)
             package = 'custom'
             customInterface = nimble.core.interfaces.available['custom']
             if name not in customInterface.registeredLearners:

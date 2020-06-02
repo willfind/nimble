@@ -10,7 +10,7 @@ from nimble.core.interfaces.keras_interface import Keras
 from nimble.core.interfaces.mlpy_interface import Mlpy
 from nimble.core.interfaces.scikit_learn_interface import SciKitLearn
 from nimble.core.interfaces.shogun_interface import Shogun
-from nimble.core.interfaces import CustomLearnerInterface
+from nimble.core.interfaces.custom_learner import CustomLearnerInterface
 
 ############################
 # inheritDocstringsFactory #

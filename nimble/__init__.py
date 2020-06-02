@@ -30,7 +30,7 @@ from nimble.core.learn import CV
 from nimble.core.learn import Init
 from nimble.core.logger import log
 from nimble.core.logger import showLog
-from nimble.core.custom_learner import CustomLearner
+from nimble.core.interfaces import CustomLearner
 
 # import submodules that need setup (not in __all__)
 from nimble import _configuration

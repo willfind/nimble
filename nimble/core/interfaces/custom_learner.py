@@ -11,6 +11,7 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.core.interfaces.universal_interface import UniversalInterface
+from nimble.core.interfaces.universal_interface import captureOutput
 from nimble._utility import inheritDocstringsFactory
 from nimble._utility import inspectArguments
 from nimble._utility import dtypeConvert
@@ -33,11 +34,9 @@ class CustomLearnerInterface(UniversalInterface):
     def registerLearnerClass(self, learnerClass):
         """
         Record the given learnerClass as being accessible through this
-        particular interface. The parameter is assumed to be class
-        object which is a subclass of CustomLearner and has been
-        validated by custom_learner.validateCustomLearnerSubclass(); no
-        sanity checking is performed in this method.
+        particular interface.
         """
+        validateCustomLearnerSubclass(learnerClass)
         self.registeredLearners[learnerClass.__name__] = learnerClass
 
         options = learnerClass.options()
@@ -56,6 +55,14 @@ class CustomLearnerInterface(UniversalInterface):
 
     def getCanonicalName(self):
         return self.name
+
+    @captureOutput
+    def listLearners(self):
+        """
+        Return a list of all learners callable through this interface.
+        """
+        # can't cache because new learners can be registered
+        return self._listLearnersBackend()
 
     def _listLearnersBackend(self):
         return list(self.registeredLearners.keys())

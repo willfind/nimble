@@ -546,7 +546,7 @@ def loadTrainedLearner(inputPath, useLog=None):
 
     See Also
     --------
-    interfaces.universal_interface.TrainedLearner
+    interfaces.TrainedLearner
     """
     if not cloudpickle.nimbleAccessible():
         msg = "To load nimble models, cloudpickle must be installed"
@@ -557,7 +557,7 @@ def loadTrainedLearner(inputPath, useLog=None):
     with open(inputPath, 'rb') as file:
         ret = cloudpickle.load(file)
     if not isinstance(ret,
-                      nimble.core.interfaces.universal_interface.TrainedLearner):
+                      nimble.core.interfaces.TrainedLearner):
         msg = 'File does not contain a nimble valid trainedLearner Object.'
         raise InvalidArgumentType(msg)
 

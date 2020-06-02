@@ -15,7 +15,7 @@ from nimble._utility import numpy2DArray, dtypeConvert
 
 class MultiOutputLinearRegression(CustomLearner):
     """
-    Learner which trains a separate linear regerssion model on each of
+    Learner which trains a separate linear regeession model on each of
     the features of the prediction data. The backend learner is provided
     by scikit-learn.
     """

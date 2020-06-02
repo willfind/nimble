@@ -1,6 +1,6 @@
 """
 Any method, object, or constant that might be used by multiple tests or
-the main data wrapper objects defined in this module
+the main data wrapper objects defined in this module.
 """
 
 import copy
