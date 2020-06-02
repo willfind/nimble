@@ -1,4 +1,3 @@
-import math
 import collections
 import functools
 
@@ -389,8 +388,8 @@ def residuals(toPredict, controlVars):
     cvF = len(controlVars.features)
 
     if tpP != cvP:
-        msg = "toPredict and controlVars must have the same number of points: ("
-        msg += str(tpP) + ") vs (" + str(cvP) + ")"
+        msg = "toPredict and controlVars must have the same number of points: "
+        msg += "(" + str(tpP) + ") vs (" + str(cvP) + ")"
         raise InvalidArgumentValueCombination(msg)
     if tpP == 0 or tpF == 0:
         msg = "toPredict must have nonzero points (" + str(tpP) + ") and "
@@ -407,7 +406,7 @@ def residuals(toPredict, controlVars):
     workingCV = dtypeConvert(workingCV.copy(to="numpy array"))
     workingTP = dtypeConvert(toPredict.copy(to="numpy array"))
 
-    x,res,r,s = scipy.linalg.lstsq(workingCV, workingTP)
+    x, _, _, _ = scipy.linalg.lstsq(workingCV, workingTP)
     pred = numpy.matmul(workingCV, x)
     ret = toPredict - pred
     return ret

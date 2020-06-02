@@ -7,8 +7,6 @@ import importlib
 import configparser
 import warnings
 
-import numpy
-
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.random import pythonRandom

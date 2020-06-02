@@ -5,7 +5,6 @@ Matrix object.
 
 import numpy
 
-from nimble.exceptions import InvalidArgumentValue
 from nimble._utility import numpy2DArray
 from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
@@ -13,7 +12,6 @@ from .points import Points
 from .points_view import PointsView
 from .dataHelpers import fillArrayWithCollapsedFeatures
 from .dataHelpers import fillArrayWithExpandedFeatures
-from .dataHelpers import allDataIdentical
 
 class MatrixPoints(MatrixAxis, Points):
     """
@@ -54,18 +52,6 @@ class MatrixPoints(MatrixAxis, Points):
                 and function.convertType is not object):
             self._base.data = self._base.data.astype(function.convertType)
 
-    # def _flattenToOne_implementation(self):
-    #     numElements = len(self._base.points) * len(self._base.features)
-    #     self._base.data = self._base.data.reshape((1, numElements),
-    #                                                 order='C')
-    #
-    # def _unflattenFromOne_implementation(self, divideInto):
-    #     numPoints = divideInto
-    #     numFeatures = len(self._base.features) // numPoints
-    #     self._base.data = self._base.data.reshape((numPoints,
-    #                                                    numFeatures),
-    #                                                 order='C')
-
     ################################
     # Higher Order implementations #
     ################################
@@ -82,7 +68,7 @@ class MatrixPoints(MatrixAxis, Points):
 
         self._base.data = numpy2DArray(tmpData)
 
-    def _combineByExpandingFeatures_implementation(self, uniqueDict, namesIdx, 
+    def _combineByExpandingFeatures_implementation(self, uniqueDict, namesIdx,
                                                    uniqueNames, numRetFeatures,
                                                    numExpanded):
         tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,

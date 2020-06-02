@@ -5,8 +5,6 @@ List object.
 
 import numpy
 
-from nimble.exceptions import InvalidArgumentValue
-
 from .axis_view import AxisView
 from .listAxis import ListAxis
 from .features import Features
@@ -58,30 +56,6 @@ class ListFeatures(ListAxis, Features):
 
             for i in range(len(self._base.points)):
                 self._base.data[i][j] = currRet[i]
-
-    # def _flattenToOne_implementation(self):
-    #     result = []
-    #     for i in range(len(self._base.features)):
-    #         for p in self._base.data:
-    #             result.append([p[i]])
-    #
-    #     self._base.data = result
-    #     self._base._numFeatures = 1
-    #
-    # def _unflattenFromOne_implementation(self, divideInto):
-    #     result = []
-    #     numFeatures = divideInto
-    #     numPoints = len(self._base.points) // numFeatures
-    #     # reconstruct the shape we want, point by point. We access the
-    #     # singleton values from the current data in an out of order iteration
-    #     for i in range(numPoints):
-    #         temp = []
-    #         for j in range(i, len(self._base.points), numPoints):
-    #             temp += self._base.data[j]
-    #         result.append(temp)
-    #
-    #     self._base.data = result
-    #     self._base._numFeatures = numFeatures
 
     ################################
     # Higher Order implementations #

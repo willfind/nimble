@@ -25,19 +25,25 @@ def _validatePredictedAsLabels(predictedValues):
         raise InvalidArgumentValue(msg)
 
 
-def _computeError(knownValues, predictedValues, loopFunction, compressionFunction):
+def _computeError(knownValues, predictedValues, loopFunction,
+                  compressionFunction):
     """
-    A generic function to compute different kinds of error metrics.  knownValues
-    is a 1d Base object with one known label (or number) per row. predictedValues is a 1d Base
-    object with one predictedLabel (or score) per row.  The ith row in knownValues should refer
-    to the same point as the ith row in predictedValues. loopFunction is a function to be applied
-    to each row in knownValues/predictedValues, that takes 3 arguments: a known class label,
-    a predicted label, and runningTotal, which contains the successive output of loopFunction.
-    compressionFunction is a function that should take two arguments: runningTotal, the final
-    output of loopFunction, and n, the number of values in knownValues/predictedValues.
+    A generic function to compute different kinds of error metrics.
+    knownValues is a 1d Base object with one known label (or number) per
+    row. predictedValues is a 1d Base object with one predictedLabel
+    (or score) per row.  The ith row in knownValues should refer to the
+    same point as the ith row in predictedValues. loopFunction is a
+    function to be applied to each row in knownValues/predictedValues,
+    that takes 3 arguments: a known class label, a predicted label, and
+    runningTotal, which contains the successive output of loopFunction.
+    compressionFunction is a function that should take two arguments:
+    runningTotal, the final output of loopFunction, and n, the number of
+    values in knownValues/predictedValues.
     """
-    knownIsEmpty = len(knownValues.points) == 0 or len(knownValues.features) == 0
-    predIsEmpty = len(predictedValues.points) == 0 or len(predictedValues.features) == 0
+    knownIsEmpty = (len(knownValues.points) == 0
+                    or len(knownValues.features) == 0)
+    predIsEmpty = (len(predictedValues.points) == 0
+                   or len(predictedValues.features) == 0)
     if knownValues is None or not isinstance(knownValues, Base):
         msg = "knownValues must be derived class of nimble.core.data.Base"
         raise InvalidArgumentType(msg)
@@ -69,7 +75,8 @@ def _computeError(knownValues, predictedValues, loopFunction, compressionFunctio
 
     n = 0.0
     runningTotal = 0.0
-    #Go through all values in known and predicted values, and pass those values to loopFunction
+    # Go through all values in known and predicted values, and pass those
+    # values to loopFunction
     for i in range(len(predictedValues.points)):
         pV = predictedValues[i, 0]
         aV = knownValues[i, 0]
@@ -77,11 +84,12 @@ def _computeError(knownValues, predictedValues, loopFunction, compressionFunctio
         n += 1
     if n > 0:
         try:
-            #provide the final value from loopFunction to compressionFunction, along with the
-            #number of values looped over
+            #provide the final value from loopFunction to compressionFunction,
+            #along with the number of values looped over
             runningTotal = compressionFunction(runningTotal, n)
         except ZeroDivisionError:
-            raise ZeroDivisionError('Tried to divide by zero when calculating performance metric')
+            msg = 'Tried to divide by zero when calculating performance metric'
+            raise ZeroDivisionError(msg)
 
     else:
         raise InvalidArgumentValue("Empty argument(s) in error calculator")
@@ -96,7 +104,9 @@ def rootMeanSquareError(knownValues, predictedValues):
     data.
     """
     _validatePredictedAsLabels(predictedValues)
-    return _computeError(knownValues, predictedValues, lambda x, y, z: z + (y - x) ** 2, lambda x, y: sqrt(x / y))
+    return _computeError(knownValues, predictedValues,
+                         lambda x, y, z: z + (y - x) ** 2,
+                         lambda x, y: sqrt(x / y))
 
 
 rootMeanSquareError.optimal = 'min'
@@ -107,9 +117,13 @@ def meanFeaturewiseRootMeanSquareError(knownValues, predictedValues):
     average the results.
     """
     if len(knownValues.features) != len(predictedValues.features):
-        raise InvalidArgumentValueCombination("The known and predicted data must have the same number of features")
+        msg = "The known and predicted data must have the same number of "
+        msg += "features"
+        raise InvalidArgumentValueCombination(msg)
     if len(knownValues.points) != len(predictedValues.points):
-        raise InvalidArgumentValueCombination("The known and predicted data must have the same number of points")
+        msg = "The known and predicted data must have the same number of "
+        msg += "points"
+        raise InvalidArgumentValueCombination(msg)
 
     results = []
     for i in range(len(knownValues.features)):
@@ -125,11 +139,14 @@ meanFeaturewiseRootMeanSquareError.optimal = 'min'
 
 def meanAbsoluteError(knownValues, predictedValues):
     """
-        Compute mean absolute error. Assumes that knownValues and predictedValues contain
-        numerical values, rather than categorical data.
+    Compute mean absolute error. Assumes that knownValues and
+    predictedValues contain numerical values, rather than categorical
+    data.
     """
     _validatePredictedAsLabels(predictedValues)
-    return _computeError(knownValues, predictedValues, lambda x, y, z: z + abs(y - x), lambda x, y: x / y)
+    return _computeError(knownValues, predictedValues,
+                         lambda x, y, z: z + abs(y - x),
+                         lambda x, y: x / y)
 
 
 meanAbsoluteError.optimal = 'min'
@@ -142,7 +159,9 @@ def fractionIncorrect(knownValues, predictedValues):
     are categorical.
     """
     _validatePredictedAsLabels(predictedValues)
-    return _computeError(knownValues, predictedValues, lambda x, y, z: z if x == y else z + 1, lambda x, y: x / y)
+    return _computeError(knownValues, predictedValues,
+                         lambda x, y, z: z if x == y else z + 1,
+                         lambda x, y: x / y)
 
 
 fractionIncorrect.optimal = 'min'
@@ -155,11 +174,13 @@ def varianceFractionRemaining(knownValues, predictedValues):
     the same inputs.
     """
     if len(knownValues.points) != len(predictedValues.points):
-        raise InvalidArgumentValueCombination("Objects had different numbers of points")
+        msg = "Objects had different numbers of points"
+        raise InvalidArgumentValueCombination(msg)
     if len(knownValues.features) != len(predictedValues.features):
-        raise InvalidArgumentValueCombination(
-        "Objects had different numbers of features. Known values had " + str(
-            len(knownValues.features)) + " and predicted values had " + str(len(predictedValues.features)))
+        msg = "Objects had different numbers of features. Known values had "
+        msg += str(len(knownValues.features)) + " and predicted values had "
+        msg += str(len(predictedValues.features))
+        raise InvalidArgumentValueCombination(msg)
     diffObject = predictedValues - knownValues
     rawDiff = diffObject.copy(to="numpy array")
     rawKnowns = knownValues.copy(to="numpy array")

@@ -5,7 +5,6 @@ which store trained learner models and provide functionality for
 applying and testing learners.
 """
 
-import inspect
 import copy
 import abc
 import functools
@@ -25,15 +24,15 @@ from nimble._utility import cloudpickle
 from nimble._utility import mergeArguments
 from nimble.exceptions import _prettyListString
 from nimble.exceptions import _prettyDictString
-from nimble.core.interfaces.interface_helpers import (
+from nimble.core.logger import handleLogging, startTimer, stopTimer
+from nimble._configuration import configErrors
+from .interface_helpers import (
     generateBinaryScoresFromHigherSortedLabelScores,
     calculateSingleLabelScoresFromOneVsOneScores,
     ovaNotOvOFormatted, checkClassificationStrategy, cacheWrapper,
     generateAllPairs, countWins, extractWinningPredictionIndex,
     extractWinningPredictionLabel, extractWinningPredictionIndexAndScore,
     extractConfidenceScores)
-from nimble.core.logger import handleLogging, startTimer, stopTimer
-from nimble._configuration import configErrors
 
 
 def captureOutput(toWrap):
@@ -192,7 +191,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             # trialResult = checkClassificationStrategy(self, learnerName,
             #                                           arguments)
             #1 VS All
-            if multiClassStrategy == 'OneVsAll': # and trialResult != 'OneVsAll':
+            if multiClassStrategy == 'OneVsAll':
+                # and trialResult != 'OneVsAll':?
                 #Remove true labels from from training set, if not separated
                 if isinstance(trainY, (str, numbers.Integral)):
                     trainX = trainX.copy()
@@ -225,7 +225,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                 return TrainedLearners(trainedLearners, 'OneVsAll', labelSet)
 
             #1 VS 1
-            if multiClassStrategy == 'OneVsOne': # and trialResult != 'OneVsOne':
+            if multiClassStrategy == 'OneVsOne':
+                # and trialResult != 'OneVsOne': ?
                 # want data and labels together in one object for this method
                 trainX = trainX.copy()
                 if isinstance(trainY, nimble.core.data.Base):
@@ -376,7 +377,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                     msg += "inputs out of the following (numbered) list of "
                     msg += "possible parameter sets: "
                     msg += _prettyListString(possibleParams, numberItems=True,
-                                            itemStr=_prettyListString)
+                                             itemStr=_prettyListString)
 
                 if len(availableDefaults) == 0:
                     msg += ". All of the allowed parameters must be specified "
@@ -408,7 +409,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                 msg += "inputs out of the following (numbered) list of "
                 msg += "possible parameter sets: "
                 msg += _prettyListString(possibleParams, numberItems=True,
-                                    itemStr=_prettyListString)
+                                         itemStr=_prettyListString)
 
             msg += ". The full mapping of inputs actually provided was: "
             msg += _prettyDictString(arguments) + ". "
@@ -1723,12 +1724,15 @@ class TrainedLearners(TrainedLearner):
                     rawPredictions = oneLabelResults
                     # as it's added to results object,
                     # rename each column with its corresponding class label
-                    rawPredictions.features.setName(0, str(label), useLog=False)
+                    rawPredictions.features.setName(0, str(label),
+                                                    useLog=False)
                 else:
                     # as it's added to results object,
                     # rename each column with its corresponding class label
-                    oneLabelResults.features.setName(0, str(label), useLog=False)
-                    rawPredictions.features.append(oneLabelResults, useLog=False)
+                    oneLabelResults.features.setName(0, str(label),
+                                                     useLog=False)
+                    rawPredictions.features.append(oneLabelResults,
+                                                   useLog=False)
 
             if scoreMode.lower() == 'label'.lower():
 
@@ -1803,8 +1807,10 @@ class TrainedLearners(TrainedLearner):
                     rawPredictions = partialResults.copy(to="List")
                 else:
                     predictionName = 'predictions-' + str(predictionFeatureID)
-                    partialResults.features.setName(0, predictionName, useLog=False)
-                    rawPredictions.features.append(partialResults, useLog=False)
+                    partialResults.features.setName(0, predictionName,
+                                                    useLog=False)
+                    rawPredictions.features.append(partialResults,
+                                                   useLog=False)
                 predictionFeatureID += 1
             # set up the return data based on which format has been requested
             if scoreMode.lower() == 'label'.lower():

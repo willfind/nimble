@@ -18,14 +18,12 @@ Level 3: Cross validation
 """
 
 import os
-import sys
 import time
 import inspect
 import re
 import sqlite3
 from ast import literal_eval
 from textwrap import wrap
-from functools import wraps
 import datetime
 
 import numpy
@@ -146,9 +144,9 @@ def showLog(levelOfDetail=2, leastSessionsAgo=0, mostSessionsAgo=2,
             msg += "leastSessionsAgo"
             raise InvalidArgumentValueCombination(msg)
     nimble.core.logger.active.showLog(levelOfDetail, leastSessionsAgo,
-                                 mostSessionsAgo, startDate, endDate,
-                                 maximumEntries, searchForText, regex,
-                                 saveToFileName, append)
+                                      mostSessionsAgo, startDate, endDate,
+                                      maximumEntries, searchForText, regex,
+                                      saveToFileName, append)
 
 class SessionLogger(object):
     """
@@ -878,7 +876,7 @@ def _buildRunLogString(timestamp, log):
     if log.get("trainData", False):
         if log["trainData"].startswith("OBJECT_#"):
             fullLog += _formatSessionLine("trainX", log["trainDataPoints"],
-                                      log["trainDataFeatures"])
+                                          log["trainDataFeatures"])
         else:
             fullLog += _formatSessionLine(log["trainData"],
                                           log["trainDataPoints"],
@@ -886,15 +884,15 @@ def _buildRunLogString(timestamp, log):
     if log.get("trainLabels", False):
         if log["trainLabels"].startswith("OBJECT_#"):
             fullLog += _formatSessionLine("trainY", log["trainLabelsPoints"],
-                                      log["trainLabelsFeatures"])
+                                          log["trainLabelsFeatures"])
         else:
             fullLog += _formatSessionLine(log["trainLabels"],
-                                      log["trainLabelsPoints"],
-                                      log["trainLabelsFeatures"])
+                                          log["trainLabelsPoints"],
+                                          log["trainLabelsFeatures"])
     if log.get("testData", False):
         if log["testData"].startswith("OBJECT_#"):
             fullLog += _formatSessionLine("testX", log["testDataPoints"],
-                                      log["testDataFeatures"])
+                                          log["testDataFeatures"])
         else:
             fullLog += _formatSessionLine(log["testData"],
                                           log["testDataPoints"],
@@ -902,11 +900,11 @@ def _buildRunLogString(timestamp, log):
     if log.get("testLabels", False):
         if log["testLabels"].startswith("OBJECT_#"):
             fullLog += _formatSessionLine("testY", log["testLabelsPoints"],
-                                      log["testLabelsFeatures"])
+                                          log["testLabelsFeatures"])
         else:
             fullLog += _formatSessionLine(log["testLabels"],
-                                      log["testLabelsPoints"],
-                                      log["testLabelsFeatures"])
+                                          log["testLabelsPoints"],
+                                          log["testLabelsFeatures"])
     fullLog += "\n"
     # parameter data
     if log.get("arguments", False):

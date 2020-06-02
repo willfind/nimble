@@ -3,10 +3,8 @@ Any method, object, or constant that might be used by multiple tests or
 the main data wrapper objects defined in this module.
 """
 
-import copy
 import math
 import numbers
-import inspect
 import re
 import operator
 from functools import wraps
@@ -15,7 +13,6 @@ import numpy
 
 import nimble
 from nimble._utility import pd
-from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
 
@@ -342,7 +339,7 @@ def exceptionDocstringFactory(cls):
         return func
     return exceptionDocstring
 
-def nonSparseAxisUniqueArray(obj, axis):
+def denseAxisUniqueArray(obj, axis):
     """
     Get an array of unique data from non sparse types.
 
@@ -478,7 +475,7 @@ def sortIndexPosition(obj, sortBy, sortHelper, axisAttr):
         for v in obj:
             viewArray.append(v)
         sortIndices = sorted(enumerate(viewArray),
-                             key=lambda x:cmp_to_key(comparator)(x[1]))
+                             key=lambda x: cmp_to_key(comparator)(x[1]))
         indexPosition = [i[0] for i in sortIndices]
     elif hasattr(scorer, 'permuter'):
         scoreArray = scorer.indices
@@ -707,7 +704,7 @@ def wrapMatchFunctionFactory(matchFunc):
         @wraps(matchFunc)
         def wrappedMatch(value, i, j):
             ret = matchFunc(value, i, j)
-            # in [True, False] also covers 0 and 1 and numpy number and bool types
+            # in [True, False] also covers 0, 1 and numpy number and bool types
             if ret not in [True, False]:
                 msg = 'toMatch function must return True, False, 0 or 1'
                 raise InvalidArgumentValue(msg)
@@ -719,7 +716,7 @@ def wrapMatchFunctionFactory(matchFunc):
         @wraps(matchFunc)
         def wrappedMatch(value):
             ret = matchFunc(value)
-            # in [True, False] also covers 0 and 1 and numpy number and bool types
+            # in [True, False] also covers 0, 1 and numpy number and bool types
             if ret not in [True, False]:
                 msg = 'toMatch function must return True, False, 0 or 1'
                 raise InvalidArgumentValue(msg)
@@ -812,8 +809,8 @@ def validateAxisFunction(func, axis, allowedLength=None):
                     or (not hasattr(ret, '__len__')
                         or len(ret) != allowedLength)):
                 oppositeAxis = 'point' if axis == 'feature' else 'feature'
-                msg = "'function' must return an iterable with as many elements "
-                msg += "as {0}s in this object".format(oppositeAxis)
+                msg = "'function' must return an iterable with as many "
+                msg += "elements as {0}s in this object".format(oppositeAxis)
                 raise InvalidArgumentValue(msg)
             if isAllowedSingleElement(ret):
                 wrappedAxisFunc.updateConvertType(type(ret))
@@ -982,7 +979,7 @@ def axisQueryFunction(match, axis, nameChecker):
     targetList = match.string.split(optr)
     #after splitting at the optr, list must have 2 items
     if len(targetList) != 2:
-        msg = "the target({0}) is a ".format(string)
+        msg = "the target({0}) is a ".format(match.string)
         msg += "query string but there is an error"
         raise InvalidArgumentValue(msg)
     nameOfPtOrFt = targetList[0]

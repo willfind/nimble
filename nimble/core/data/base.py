@@ -13,7 +13,6 @@ import itertools
 import os.path
 from multiprocessing import Process
 from abc import abstractmethod
-from functools import wraps
 from contextlib import contextmanager
 
 import numpy
@@ -41,7 +40,6 @@ from .dataHelpers import createListOfDict, createDictOfList
 from .dataHelpers import createDataNoValidation
 from .dataHelpers import csvCommaFormat
 from .dataHelpers import validateElementFunction, wrapMatchFunctionFactory
-from .dataHelpers import getDictionaryMappingFunction
 from .dataHelpers import ElementIterator1D
 from .dataHelpers import isQueryString, elementQueryFunction
 from .dataHelpers import limitedTo2D
@@ -127,7 +125,8 @@ class Base(object):
             msg += ") must match the points given in shape (" + str(shape[0])
             msg += ")"
             raise InvalidArgumentValue(msg)
-        if featureNames is not None and len(featureNames) != self._featureCount:
+        if (featureNames is not None
+                and len(featureNames) != self._featureCount):
             msg = "The length of the featureNames (" + str(len(featureNames))
             msg += ") must match the features given in shape ("
             msg += str(shape[1]) + ")"
@@ -2188,8 +2187,8 @@ class Base(object):
         # featureNames if includeFNames=True
         with self._treatAs2D():
             dataTable, colWidths, fnames = self._arrangeDataWithLimits(
-            maxDataWidth, maxDataRows, includeFNames, sigDigits,
-            maxColumnWidth, colSep, colHold, rowHold, nameHolder)
+                maxDataWidth, maxDataRows, includeFNames, sigDigits,
+                maxColumnWidth, colSep, colHold, rowHold, nameHolder)
 
         # combine names into finalized table
         finalTable, finalWidths = self._arrangeFinalTable(
@@ -4387,8 +4386,6 @@ class Base(object):
         # test element type other
         if isinstance(other, Base):
             other._numericValidation(right=True)
-        # backup, above unable to identify source of error
-        raise
 
     def _genericBinary_validation(self, opName, other):
         otherBase = isinstance(other, Base)
@@ -4493,7 +4490,7 @@ class Base(object):
         try:
             ret = self._convertUnusableTypes_implementation(convertTo,
                                                             usableTypes)
-        except (ValueError, TypeError) as e:
+        except (ValueError, TypeError):
             msg = 'Unable to coerce the data to the type required for this '
             msg += 'operation.'
             raise ImproperObjectAction(msg)

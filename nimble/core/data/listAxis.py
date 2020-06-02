@@ -10,10 +10,7 @@ import numpy
 
 import nimble
 from .axis import Axis
-from .points import Points
-
-from .dataHelpers import sortIndexPosition
-from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter
+from .dataHelpers import denseAxisUniqueArray, uniqueNameGetter
 
 class ListAxis(Axis):
     """
@@ -50,9 +47,9 @@ class ListAxis(Axis):
                 self._base.data = [self._base.data[pt] for pt in keepList]
             if satisfying == []:
                 return nimble.core.data.List(satisfying, pointNames=pointNames,
-                                        featureNames=featureNames,
-                                        shape=((0, self._base.shape[1])),
-                                        checkAll=False, reuseData=True)
+                                             featureNames=featureNames,
+                                             shape=((0, self._base.shape[1])),
+                                             checkAll=False, reuseData=True)
 
         else:
             if self._base.data == []:
@@ -65,13 +62,13 @@ class ListAxis(Axis):
             if structure != 'copy':
                 keepList = [i for i in range(len(self)) if i not in targetList]
                 self._base.data = [[self._base.data[pt][ft] for ft in keepList]
-                                     for pt in range(len(self._base.points))]
+                                   for pt in range(len(self._base.points))]
                 remainingFts = self._base._numFeatures - len(targetList)
                 self._base._numFeatures = remainingFts
 
         return nimble.core.data.List(satisfying, pointNames=pointNames,
-                                featureNames=featureNames,
-                                checkAll=False, reuseData=True)
+                                     featureNames=featureNames,
+                                     checkAll=False, reuseData=True)
 
     def _sort_implementation(self, indexPosition):
         # run through target axis and change indices
@@ -91,8 +88,8 @@ class ListAxis(Axis):
     ##############################
 
     def _unique_implementation(self):
-        uniqueData, uniqueIndices = nonSparseAxisUniqueArray(self._base,
-                                                             self._axis)
+        uniqueData, uniqueIndices = denseAxisUniqueArray(self._base,
+                                                         self._axis)
         uniqueData = uniqueData.tolist()
         if self._base.data == uniqueData:
             return self._base.copy()
@@ -135,14 +132,6 @@ class ListAxis(Axis):
     @abstractmethod
     def _insert_implementation(self, insertBefore, toInsert):
         pass
-
-    # @abstractmethod
-    # def _flattenToOne_implementation(self):
-    #     pass
-    #
-    # @abstractmethod
-    # def _unflattenFromOne_implementation(self, divideInto):
-    #     pass
 
     @abstractmethod
     def _transform_implementation(self, function, limitTo):

@@ -3,7 +3,6 @@ Module containing the user-facing learner functions for the top level
 nimble import.
 """
 
-import copy
 from types import ModuleType
 
 import numpy
@@ -317,7 +316,7 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
 
     See Also
     --------
-    nimble.core.data.Points.fillMatching, nimble.core.data.Features.fillMatching
+    data.Points.fillMatching, data.Features.fillMatching
 
     Examples
     --------
@@ -1434,7 +1433,7 @@ class KFoldCrossValidator():
                                                 curRunResult,
                                                 self.performanceFunction)
                 self._resultsByFold.append((curArgumentCombination,
-                                                 curPerformance))
+                                            curPerformance))
 
                 if canAvgFolds:
                     performanceOfEachCombination[argSetIndex][1].append(
@@ -1669,7 +1668,7 @@ class KFoldCrossValidator():
         for argSet, result in self._allResults:
             if argSet == merged:
                 return result
-        self._noMatchingArguments()
+        return self._noMatchingArguments()
 
     def _bestArgumentsAndResult(self):
         """

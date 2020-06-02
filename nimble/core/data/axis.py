@@ -20,7 +20,6 @@ import numpy
 
 import nimble
 from nimble import fill
-from nimble import match
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import InvalidArgumentTypeCombination
@@ -256,7 +255,7 @@ class Axis(object):
 
         handleLogging(useLog, 'prep', '{ax}s.retain'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('retain'),
-                      toRetain, start,  end, number, randomize)
+                      toRetain, start, end, number, randomize)
 
 
     def _count(self, condition):
@@ -386,7 +385,7 @@ class Axis(object):
         ret = self._calculate_backend(wrappedMatch, None)
 
         self._setNames(self._getNamesNoGeneration(), useLog=False)
-        if hasattr(function, '__name__') and function.__name__ !=  '<lambda>':
+        if hasattr(function, '__name__') and function.__name__ != '<lambda>':
             if self._isPoint:
                 ret.features.setNames([function.__name__], useLog=False)
             else:
@@ -454,7 +453,7 @@ class Axis(object):
             if isAllowedSingleElement(currOut):
                 currOut = [currOut]
             elif (isinstance(currOut, nimble.core.data.Base)
-                    and len(currOut._shape) == 2):
+                  and len(currOut._shape) == 2):
                 # make 2D if a vector and axis does not match vector direction
                 axisIdx = 0 if self._isPoint else 1
                 if 1 in currOut.shape and currOut.shape[axisIdx] != 1:
@@ -737,8 +736,8 @@ class Axis(object):
             origPtNames = self._getNamesNoGeneration()
             origFtNames = self._base.features._getNamesNoGeneration()
         else:
-             origFtNames = self._getNamesNoGeneration()
-             origPtNames = self._base.points._getNamesNoGeneration()
+            origFtNames = self._getNamesNoGeneration()
+            origPtNames = self._base.points._getNamesNoGeneration()
         # check the shape of applyResultTo and preserve p/f names
         if alsoIsObj:
             checkAlsoShape(applyResultTo, objArg)
@@ -775,8 +774,8 @@ class Axis(object):
             self._setNames(origPtNames, useLog=False)
             self._base.features.setNames(origFtNames, useLog=False)
         else:
-             self._setNames(origFtNames, useLog=False)
-             self._base.points.setNames(origPtNames, useLog=False)
+            self._setNames(origFtNames, useLog=False)
+            self._base.points.setNames(origPtNames, useLog=False)
         if alsoIsObj:
             applyResultTo.points.setNames(alsoPtNames, useLog=False)
             applyResultTo.features.setNames(alsoFtNames, useLog=False)
@@ -901,7 +900,7 @@ class Axis(object):
             toCall = nimble.calculate.proportionMissing
         elif cleanFuncName == 'proportionzero':
             toCall = nimble.calculate.proportionZero
-        elif cleanFuncName in ['std', 'standarddeviation','samplestd',
+        elif cleanFuncName in ['std', 'standarddeviation', 'samplestd',
                                'samplestandarddeviation']:
             toCall = nimble.calculate.standardDeviation
         elif cleanFuncName in ['populationstd', 'populationstandarddeviation']:
@@ -1118,8 +1117,8 @@ class Axis(object):
                 return [i for i, v in enumerate(key) if v]
             if numBool > 0:
                 msg = 'The key provided for {ax}s contains boolean values. '
-                msg += 'Booleans are only permitted if the key contains '
-                msg += 'only boolean type values for every {ax} in this object.'
+                msg += 'Booleans are only permitted if the key contains only '
+                msg += 'boolean type values for every {ax} in this object.'
                 raise KeyError(msg.format(ax=self._axis))
             key = [self._getIndex(i, allowFloats=True) for i in key]
             if key == list(range(length)):  # full slice
@@ -1271,127 +1270,6 @@ class Axis(object):
                 self._base.featureNames = {}
                 for idx, ft in enumerate(self._base.featureNamesInverse):
                     self._base.featureNames[ft] = idx
-
-    # def _flattenNames(self, discardAxis):
-    #     """
-    #     Axis names for the unflattened axis after a flatten operation.
-    #     """
-    #     if discardAxis == 'point':
-    #         keepNames = self._base.features.getNames()
-    #         dropNames = self._base.points.getNames()
-    #     else:
-    #         keepNames = self._base.points.getNames()
-    #         dropNames = self._base.features.getNames()
-    #
-    #     ret = []
-    #     for d in dropNames:
-    #         for k in keepNames:
-    #             ret.append(k + ' | ' + d)
-    #
-    #     return ret
-    #
-    # def _unflattenNames(self, addedAxisLength):
-    #     """
-    #     New axis names after an unflattening operation.
-    #     """
-    #     if isinstance(self, Points):
-    #         both = self._base.features.getNames()
-    #         keptAxisLength = self._base._featureCount // addedAxisLength
-    #     else:
-    #         both = self._base.points.getNames()
-    #         keptAxisLength = self._base._pointCount // addedAxisLength
-    #     allDefault = self._namesAreFlattenFormatConsistent(addedAxisLength,
-    #                                                        keptAxisLength)
-    #
-    #     if allDefault:
-    #         addedAxisName = None
-    #         keptAxisName = None
-    #     else:
-    #         # we consider the split of the elements into keptAxisLength chunks
-    #         # (of which there will be addedAxisLength number of chunks), and
-    #         # want the index of the first of each chunk. We allow that first
-    #         # name to be representative for that chunk: all will have the same
-    #         # stuff past the vertical bar.
-    #         locations = range(0, len(both), keptAxisLength)
-    #         addedAxisName = [both[n].split(" | ")[1] for n in locations]
-    #         keptAxisName = [n.split(" | ")[0] for n in both[:keptAxisLength]]
-    #
-    #     return addedAxisName, keptAxisName
-    #
-    # def _namesAreFlattenFormatConsistent(self, newFLen, newUFLen):
-    #     """
-    #     Validate the formatting of axis names prior to unflattening.
-    #
-    #     Will raise ImproperActionException if an inconsistency with the
-    #     formatting done by the flatten operations is discovered. Returns
-    #     True if all the names along the unflattend axis are default, False
-    #     otherwise.
-    #     """
-    #     if isinstance(self, Points):
-    #         flat = self._base.points.getNames()
-    #         formatted = self._base.features.getNames()
-    #     else:
-    #         flat = self._base.features.getNames()
-    #         formatted = self._base.points.getNames()
-    #
-    #     def checkIsDefault(axisName):
-    #         ret = False
-    #         try:
-    #             if axisName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-    #                 int(axisName[DEFAULT_PREFIX_LENGTH:])
-    #                 ret = True
-    #         except ValueError:
-    #             ret = False
-    #         return ret
-    #
-    #     # check the contents of the names along the flattened axis
-    #     isDefault = checkIsDefault(flat[0])
-    #     isExact = flat == ['Flattened']
-    #     msg = "In order to unflatten this object, the names must be "
-    #     msg += "consistent with the results from a flatten call. "
-    #     if not (isDefault or isExact):
-    #         msg += "Therefore, the {axis} name for this object ('{axisName}')"
-    #         msg += "must either be a default name or the string 'Flattened'"
-    #         msg = msg.format(axis=self._axis, axisName=flat[0])
-    #         raise ImproperActionException(msg)
-    #
-    #     # check the contents of the names along the unflattend axis
-    #     msg += "Therefore, the {axis} names for this object must either be "
-    #     msg += "all default, or they must be ' | ' split names with name "
-    #     msg += "values consistent with the positioning from a flatten call."
-    #     msg.format(axis=self._axis)
-    #     # each name - default or correctly formatted
-    #     allDefaultStatus = None
-    #     for name in formatted:
-    #         isDefault = checkIsDefault(name)
-    #         formatCorrect = len(name.split(" | ")) == 2
-    #         if allDefaultStatus is None:
-    #             allDefaultStatus = isDefault
-    #         else:
-    #             if isDefault != allDefaultStatus:
-    #                 raise ImproperActionException(msg)
-    #
-    #         if not (isDefault or formatCorrect):
-    #             raise ImproperActionException(msg)
-    #
-    #     # consistency only relevant if we have non-default names
-    #     if not allDefaultStatus:
-    #         # seen values - consistent wrt original flattend axis names
-    #         for i in range(newFLen):
-    #             same = formatted[newUFLen*i].split(' | ')[1]
-    #             for name in formatted[newUFLen*i:newUFLen*(i+1)]:
-    #                 if same != name.split(' | ')[1]:
-    #                     raise ImproperActionException(msg)
-    #
-    #         # seen values - consistent wrt original unflattend axis names
-    #         for i in range(newUFLen):
-    #             same = formatted[i].split(' | ')[0]
-    #             for j in range(newFLen):
-    #                 name = formatted[i + (j * newUFLen)]
-    #                 if same != name.split(' | ')[0]:
-    #                     raise ImproperActionException(msg)
-    #
-    #     return allDefaultStatus
 
     ##########################
     #  Higher Order Helpers  #
@@ -1586,7 +1464,7 @@ class Axis(object):
             objAllDefault = all(n.startswith(DEFAULT_PREFIX)
                                 for n in objNames())
             toInsertAllDefault = all(n.startswith(DEFAULT_PREFIX)
-                                  for n in toInsertNames())
+                                     for n in toInsertNames())
             reorder = objNames() != toInsertNames()
             if not (objAllDefault or toInsertAllDefault) and reorder:
                 # use copy when reordering so toInsert object is not modified
@@ -1651,7 +1529,7 @@ class Axis(object):
     ####################
 
     @abstractmethod
-    def _sort_implementation(self, sortBy, sortHelper):
+    def _sort_implementation(self, indexPosition):
         pass
 
     @abstractmethod
@@ -1661,14 +1539,6 @@ class Axis(object):
     @abstractmethod
     def _insert_implementation(self, insertBefore, toInsert):
         pass
-
-    # @abstractmethod
-    # def _flattenToOne_implementation(self):
-    #     pass
-    #
-    # @abstractmethod
-    # def _unflattenFromOne_implementation(self, divideInto):
-    #     pass
 
     @abstractmethod
     def _transform_implementation(self, function, limitTo):

@@ -6,5 +6,5 @@ from .universal_interface import TrainedLearner
 from .custom_learner import CustomLearner
 from ._collect_interfaces import initInterfaceSetup
 
-predefined = None
-available = None
+predefined = []
+available = {}

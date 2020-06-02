@@ -2,7 +2,6 @@
 Class extending Base, using a numpy dense matrix to store data.
 """
 
-import copy
 import itertools
 
 import numpy
@@ -456,7 +455,8 @@ class Matrix(Base):
         representations if possible. Otherwise, uses the generic
         implementation.
         """
-        if isinstance(other, nimble.core.data.Sparse) and opName.startswith('__r'):
+        if (isinstance(other, nimble.core.data.Sparse)
+                and opName.startswith('__r')):
             # rhs may return array of sparse matrices so use default
             return self._defaultBinaryOperations_implementation(opName, other)
         try:

@@ -4,8 +4,6 @@ Relies on being scikit-learn 0.19 or above
 TODO: multinomialHMM requires special input processing for obs param
 """
 
-import copy
-import sys
 import warnings
 from unittest import mock
 import pkgutil
@@ -14,15 +12,16 @@ import abc
 import numpy
 
 import nimble
-from nimble.core.interfaces.universal_interface import UniversalInterface
-from nimble.core.interfaces.universal_interface import PredefinedInterface
 from nimble.exceptions import InvalidArgumentValue
-from nimble.core.interfaces.interface_helpers import modifyImportPathAndImport
-from nimble.core.interfaces.interface_helpers import collectAttributes
-from nimble.core.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble._utility import inspectArguments
-from nimble._utility import inheritDocstringsFactory, dtypeConvert
+from nimble._utility import inheritDocstringsFactory
 from nimble.random import _generateSubsidiarySeed
+from .universal_interface import UniversalInterface
+from .universal_interface import PredefinedInterface
+from .interface_helpers import modifyImportPathAndImport
+from .interface_helpers import collectAttributes
+from .interface_helpers import removeFromTailMatchedLists
+from .interface_helpers import noLeading__, notCallable, notABCAssociated
 
 # Contains path to sciKitLearn root directory
 #sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'
@@ -198,9 +197,9 @@ class _SciKitLearnAPI(abc.ABC):
         obj = learnerBackend
         generators = None
         checkers = []
-        checkers.append(nimble.core.interfaces.interface_helpers.noLeading__)
-        checkers.append(nimble.core.interfaces.interface_helpers.notCallable)
-        checkers.append(nimble.core.interfaces.interface_helpers.notABCAssociated)
+        checkers.append(noLeading__)
+        checkers.append(notCallable)
+        checkers.append(notABCAssociated)
 
         ret = collectAttributes(obj, generators, checkers)
         return ret
@@ -398,7 +397,7 @@ class SciKitLearn(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
                 try:
                     # if object cannot be instantiated without additional
                     # arguments, we cannot support it at this time
-                    init = obj()
+                    _ = obj()
                 except TypeError:
                     continue
                 # only support learners with a predict, transform,

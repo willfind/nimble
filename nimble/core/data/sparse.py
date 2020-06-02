@@ -3,14 +3,12 @@ Class extending Base, defining an object to hold and manipulate a scipy
 coo_matrix.
 """
 
-from functools import reduce
-
 import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException, ImproperObjectAction
-from nimble._utility import inheritDocstringsFactory, numpy2DArray, is2DArray
+from nimble._utility import inheritDocstringsFactory, is2DArray
 from nimble._utility import scipy, pd
 from nimble._utility import sparseMatrixToArray
 from . import dataHelpers
@@ -978,11 +976,11 @@ class Sparse(Base):
                 elif opName == '__rsub__':
                     return self._rsub__implementation(other)
                 return self._defaultBinaryOperations_implementation(opName,
-                                                                     other)
+                                                                    other)
 
             return Sparse(ret)
 
-        except AttributeError as ae:
+        except AttributeError:
             if opName.startswith('__i'):
                 return self._inplaceBinary_implementation(opName, other)
             if 'floordiv' in opName:
@@ -1425,7 +1423,7 @@ class SparseView(BaseView, Sparse):
         try:
             ret = self._source._convertUnusableTypes_implementation(
                 convertTo, usableTypes)
-        except (ValueError, TypeError) as e:
+        except (ValueError, TypeError):
             msg = 'Unable to coerce the data to the type required for this '
             msg += 'operation.'
             raise ImproperObjectAction(msg)

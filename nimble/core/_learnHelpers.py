@@ -5,7 +5,6 @@ They are separated here so that that (most) top level user-facing
 functions are contained in learn.py without the distraction of helpers.
 """
 
-import copy
 import itertools
 
 import numpy
@@ -54,8 +53,13 @@ def findBestInterface(package):
 
 
 def initAvailablePredefinedInterfaces():
+    """
+    Instantiate all available predefined interfaces for functions that
+    require access to all available.
+    """
     for interface in nimble.core.interfaces.predefined:
-        if interface.getCanonicalName() not in nimble.core.interfaces.available:
+        canonicalName = interface.getCanonicalName()
+        if canonicalName not in nimble.core.interfaces.available:
             try:
                 interfaceObj = interface()
                 interfaceName = interfaceObj.getCanonicalName()
@@ -307,10 +311,9 @@ class ArgumentIterator(object):
         if self.index >= self.numPermutations:
             self.index = 0
             raise StopIteration
-        else:
-            permutation = self.permutationsList[self.index]
-            self.index += 1
-            return permutation
+        permutation = self.permutationsList[self.index]
+        self.index += 1
+        return permutation
 
     def __next__(self):
         return self.next()
@@ -540,7 +543,7 @@ class LearnerInspector:
 
         # if the classifer data set genereated a low error, but not exact,
         # it is regressor
-        elif classifierTrialResult == 'near':
+        if classifierTrialResult == 'near':
             return 'regression'
 
         # if the classifier dataset doesn't see classifier or regressor
@@ -548,8 +551,7 @@ class LearnerInspector:
         # todo this is where to insert future sensors for other types of
         # algorithms, but currently we can only resolve classifiers,
         # regressors, and other.
-        else:
-            return 'other'
+        return 'other'
 
     def _regressorDataset(self):
         """
@@ -659,7 +661,8 @@ class LearnerInspector:
             return 'other'
 
         try:
-            sumError = sumAbsoluteDifference(runResults, testLabels) #should be identical to noiselessTestLabels
+            #should be identical to noiselessTestLabels
+            sumError = sumAbsoluteDifference(runResults, testLabels)
         except InvalidArgumentValueCombination:
             return 'other'
 
@@ -678,7 +681,7 @@ def _validScoreMode(scoreMode):
     """
     scoreMode = scoreMode.lower()
     if scoreMode not in ['label', 'bestscore', 'allscores']:
-        msg ="scoreMode may only be 'label' 'bestScore' or 'allScores'"
+        msg = "scoreMode may only be 'label' 'bestScore' or 'allScores'"
         raise InvalidArgumentValue(msg)
 
 
@@ -701,9 +704,9 @@ def _unpackLearnerName(learnerName):
     if isinstance(learnerName, str):
         splitList = learnerName.split('.', 1)
         if len(splitList) < 2:
-            msg = "Recieved the ill formed learner name '" + learnerName + "'. "
-            msg += "The learner name must identify both the desired package and "
-            msg += "learner, separated by a dot. Example:'mlpy.KNN'"
+            msg = "Recieved ill formed learner name '" + learnerName + "'. "
+            msg += "The learner name must identify both the desired package "
+            msg += "and learner, separated by a dot. Example:'mlpy.KNN'"
             raise InvalidArgumentValue(msg)
         package, name = splitList
     else:

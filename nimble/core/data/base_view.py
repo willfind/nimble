@@ -3,8 +3,6 @@ Defines a subclass of the base data object, which serves as the primary
 base class for read only views of data objects.
 """
 
-import copy
-
 import nimble
 from nimble._utility import inheritDocstringsFactory
 from nimble.exceptions import ImproperObjectAction

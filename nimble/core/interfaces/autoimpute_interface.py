@@ -2,25 +2,16 @@
 Interface to autoimpute package.
 """
 
-import functools
-import sys
-from io import StringIO
 import types
-import re
-
-import numpy
 
 import nimble
-from nimble.core.interfaces.universal_interface import UniversalInterface
-from nimble.core.interfaces.universal_interface import PredefinedInterface
-from nimble.core.interfaces.scikit_learn_interface import _SciKitLearnAPI
 from nimble.exceptions import InvalidArgumentValue
-from nimble.core.interfaces.interface_helpers import modifyImportPathAndImport
-from nimble.core.interfaces.interface_helpers import removeFromTailMatchedLists
-from nimble.core.interfaces.interface_helpers import PythonSearcher
-from nimble._utility import inspectArguments
 from nimble._utility import inheritDocstringsFactory
-from nimble._configuration import configErrors
+from .universal_interface import UniversalInterface
+from .universal_interface import PredefinedInterface
+from .scikit_learn_interface import _SciKitLearnAPI
+from .interface_helpers import modifyImportPathAndImport
+from .interface_helpers import PythonSearcher
 
 autoimputeDir = None
 
@@ -44,7 +35,7 @@ class Autoimpute(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
             try:
                 # if object cannot be instantiated without additional
                 # arguments, we cannot support it at this time
-                init = obj()
+                _ = obj()
             except TypeError:
                 return False
             # only support learners with a predict, transform,

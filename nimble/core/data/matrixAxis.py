@@ -9,9 +9,7 @@ import numpy
 
 import nimble
 from .axis import Axis
-from .points import Points
-from .dataHelpers import sortIndexPosition
-from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter
+from .dataHelpers import denseAxisUniqueArray, uniqueNameGetter
 
 class MatrixAxis(Axis):
     """
@@ -50,10 +48,11 @@ class MatrixAxis(Axis):
 
         if structure != 'copy':
             self._base.data = numpy.delete(self._base.data,
-                                             targetList, axisVal)
+                                           targetList, axisVal)
 
         return nimble.core.data.Matrix(ret, pointNames=pointNames,
-                                  featureNames=featureNames, reuseData=True)
+                                       featureNames=featureNames,
+                                       reuseData=True)
 
     def _sort_implementation(self, indexPosition):
         # use numpy indexing to change the ordering
@@ -68,8 +67,8 @@ class MatrixAxis(Axis):
     ##############################
 
     def _unique_implementation(self):
-        uniqueData, uniqueIndices = nonSparseAxisUniqueArray(self._base,
-                                                             self._axis)
+        uniqueData, uniqueIndices = denseAxisUniqueArray(self._base,
+                                                         self._axis)
         if numpy.array_equal(self._base.data, uniqueData):
             return self._base.copy()
 
@@ -121,14 +120,6 @@ class MatrixAxis(Axis):
     @abstractmethod
     def _insert_implementation(self, insertBefore, toInsert):
         pass
-
-    # @abstractmethod
-    # def _flattenToOne_implementation(self):
-    #     pass
-    #
-    # @abstractmethod
-    # def _unflattenFromOne_implementation(self, divideInto):
-    #     pass
 
     @abstractmethod
     def _transform_implementation(self, function, limitTo):

@@ -10,24 +10,19 @@ for Shogun ML.
 # *
 
 import importlib
-import numpy
-import copy
-import sys
-import os
-import json
-import distutils.version
 import multiprocessing
-import re
 import warnings
 
+import numpy
+
 import nimble
-from nimble.core.interfaces.universal_interface import UniversalInterface
-from nimble.core.interfaces.universal_interface import PredefinedInterface
-from nimble.core.interfaces.interface_helpers import PythonSearcher
-from nimble.core.interfaces.interface_helpers import modifyImportPathAndImport
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._utility import inheritDocstringsFactory, dtypeConvert
+from .universal_interface import UniversalInterface
+from .universal_interface import PredefinedInterface
+from .interface_helpers import PythonSearcher
+from .interface_helpers import modifyImportPathAndImport
 
 # Interesting alias cases:
 # * DomainAdaptionMulticlassLibLinear  -- or probably any nested machine
@@ -67,8 +62,8 @@ class Shogun(PredefinedInterface, UniversalInterface):
             if obj.__name__ in excludedLearners:
                 return False
 
-            # needs more to be able to distinguish between things that are runnable
-            # and partial implementations. try get_machine_problem_type()?
+            # needs more to be able to distinguish between things that are
+            # runnable and partial implementations. get_machine_problem_type()?
             try:
                 instantiated = obj()
                 instantiated.get_machine_problem_type()
@@ -79,30 +74,31 @@ class Shogun(PredefinedInterface, UniversalInterface):
 
         self.hasAll = hasattr(self.shogun, '__all__')
         contents = self.shogun.__all__ if self.hasAll else dir(self.shogun)
-        self._searcher = PythonSearcher(self.shogun, contents, {}, isLearner, 2)
+        self._searcher = PythonSearcher(self.shogun, contents, {}, isLearner,
+                                        2)
 
         super(Shogun, self).__init__()
 
     def _access(self, module, target):
         """
-        Helper to automatically search the correct locations for target objects
-        in different historical versions of shogun that have different module
-        structures. Due to the automated component that attempts to smooth
-        over multiple competing versions of the package, this should be
-        used with caution.
-
+        Helper to automatically search the correct locations for target
+        objects in different historical versions of shogun that have
+        different module structures. Due to the automated component that
+        attempts to smooth over multiple competing versions of the
+        package, this should be used with caution.
         """
-        # If shogun has an __all__ attribute, it is in the old style of organization,
-        # where things are separated into submodules. They need to be loaded before
-        # access.
+        # If shogun has an __all__ attribute, it is in the old style of
+        # organization, where things are separated into submodules. They need
+        # to be loaded before access.
         if self.hasAll:
             if hasattr(self.shogun, module):
                 submod = getattr(self.shogun, module)
             else:
                 submod = importlib.import_module('shogun.' + module)
-        # If there is no __all__ attribute, we're in the newer, flatter style of module
-        # organization. Some things will still be in the submodule they were previously,
-        # others will up at the top level. This will check both locations
+        # If there is no __all__ attribute, we're in the newer, flatter style
+        # of module organization. Some things will still be in the submodule
+        # they were previously,others will up at the top level. This will check
+        # both locations
         else:
             if hasattr(self.shogun, target):
                 submod = self.shogun
@@ -235,7 +231,8 @@ To install shogun
             for i in range(len(predLabels)):
                 currConfidences = predObj.get_multiclass_confidences(i)
                 if len(currConfidences) == 0:
-                    msg = "The shogun learner %s doesn't provide confidence scores" % str(learner)
+                    msg = "The shogun learner {0} ".format(learner)
+                    msg += "doesn't provide confidence scores"
                     raise NotImplementedError(msg)
                 scoresPerPoint[i, :] = currConfidences
         # otherwise we must be dealing with binary classification
@@ -287,11 +284,15 @@ To install shogun
                     customDict['pointLen'] = len(trainX.features)
                 else:
                     customDict['pointLen'] = len(testX.features)
-            if trainX is not None and len(trainX.features) != customDict['pointLen']:
-                msg = "Length of points in the training data and testing data must be the same"
+            if (trainX is not None
+                    and len(trainX.features) != customDict['pointLen']):
+                msg = "Length of points in the training data and testing data "
+                msg += "must be the same"
                 raise InvalidArgumentValueCombination(msg)
-            if testX is not None and len(testX.features) != customDict['pointLen']:
-                msg = "Length of points in the training data and testing data must be the same"
+            if (testX is not None
+                    and len(testX.features) != customDict['pointLen']):
+                msg = "Length of points in the training data and testing data "
+                msg += "must be the same"
                 raise InvalidArgumentValueCombination(msg)
 
         trainXTrans = None
@@ -433,7 +434,8 @@ To install shogun
 
     def version(self):
         if self.versionString is None:
-            self.versionString = self._access('Version', 'get_version_release')()
+            accessVersion = self._access('Version', 'get_version_release')()
+            self.versionString = accessVersion
 
         return self.versionString
 
@@ -470,7 +472,9 @@ To install shogun
                 flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
                 labeler = self._access('Features', 'RegressionLabels')
             else:
-                raise InvalidArgumentValue("Learner problem type (" + str(problemType) + ") not supported")
+                msg = "Learner problem type (" + str(problemType) + ") "
+                msg += "not supported"
+                raise InvalidArgumentValue(msg)
             labels = labeler(flattened.astype(float))
         except ImportError:
             from shogun.Features import Labels
@@ -489,7 +493,8 @@ To install shogun
             trans = self._access('Features', 'SparseRealFeatures')()
             trans.set_sparse_feature_matrix(dtypeConvert(raw))
             if 'Online' in learnerName:
-                trans = self._access('Features', 'StreamingSparseRealFeatures')(trans)
+                sprf = self._access('Features', 'StreamingSparseRealFeatures')
+                trans = sprf(trans)
         else:
             #raw = dataObj.copy(to='numpyarray').astype(numpy.float)
             #raw = raw.transpose()
@@ -527,13 +532,14 @@ class ShogunDefault(object):
 ### GENERIC HELPERS ###
 #######################
 
-excludedLearners = [ # parent classes, not actually runnable
-                    'CSVM',
-                    'MulticlassSVM',
+excludedLearners = [
+    # parent classes, not actually runnable
+    'CSVM',
+    'MulticlassSVM',
 
-                    # Deliberately unsupported
-                    'ScatterSVM',  # experimental method
-                    ]
+    # Deliberately unsupported
+    'ScatterSVM',  # experimental method
+    ]
 
 def _remapLabels(toRemap, space=None):
     """

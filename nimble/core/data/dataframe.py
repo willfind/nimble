@@ -9,7 +9,7 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
-from nimble._utility import inheritDocstringsFactory, numpy2DArray, is2DArray
+from nimble._utility import inheritDocstringsFactory, is2DArray
 from nimble._utility import scipy, pd
 from .base import Base
 from .base_view import BaseView
@@ -404,7 +404,8 @@ class DataFrame(Base):
         representations if possible. Otherwise, uses the generic
         implementation.
         """
-        if isinstance(other, nimble.core.data.Sparse) and opName.startswith('__r'):
+        if (isinstance(other, nimble.core.data.Sparse)
+                and opName.startswith('__r')):
             # rhs may return array of sparse matrices so use default
             return self._defaultBinaryOperations_implementation(opName, other)
         try:
@@ -449,6 +450,3 @@ class DataFrameView(BaseView, DataFrame):
 
     def _getFeatures(self):
         return DataFrameFeaturesView(self)
-
-    def _setAllDefault(self, axis):
-        super(DataFrameView, self)._setAllDefault(axis)

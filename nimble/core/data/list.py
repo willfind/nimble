@@ -4,7 +4,6 @@ Class extending Base, using a list of lists to store data.
 
 import copy
 import itertools
-from functools import reduce
 
 import numpy
 
@@ -78,7 +77,7 @@ class List(Base):
             elif isinstance(data[0], list) or hasattr(data[0], 'setLimit'):
             #case3: data=[[1,2,3], ['a', 'b', 'c']] or [[]] or [[], []].
             # self.data will be = data, shape will be (len(data), len(data[0]))
-            #case4: data=[<nimble.core.data.list.FeatureViewer object at 0x43fd410>]
+            #case4: data=[FeatureViewer]
                 numFeatures = len(data[0])
                 if checkAll:#check all items
                     for i in data:
@@ -237,7 +236,8 @@ class List(Base):
             else:
                 outFile.write('%#\n')
 
-            outFile.write("{0} {1}\n".format(len(self.points), len(self.features)))
+            outFile.write("{0} {1}\n".format(len(self.points),
+                                             len(self.features)))
 
             for j in range(len(self.features)):
                 for i in range(len(self.points)):
@@ -692,7 +692,7 @@ class ListView(BaseView, List):
         try:
             ret = self._source._convertUnusableTypes_implementation(
                 convertTo, usableTypes)
-        except (ValueError, TypeError) as e:
+        except (ValueError, TypeError):
             msg = 'Unable to coerce the data to the type required for this '
             msg += 'operation.'
             raise ImproperObjectAction(msg)

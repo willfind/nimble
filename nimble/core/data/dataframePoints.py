@@ -5,8 +5,6 @@ DataFrame object.
 
 import numpy
 
-import nimble
-from nimble.exceptions import InvalidArgumentValue
 from nimble._utility import pd
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
@@ -38,7 +36,7 @@ class DataFramePoints(DataFrameAxis, Points):
         startData = self._base.data.iloc[:insertBefore, :]
         endData = self._base.data.iloc[insertBefore:, :]
         self._base.data = pd.concat((startData, toInsert.data, endData),
-                                    axis=0,  ignore_index=True)
+                                    axis=0, ignore_index=True)
 
     def _transform_implementation(self, function, limitTo):
         for i, p in enumerate(self):
@@ -47,18 +45,6 @@ class DataFramePoints(DataFrameAxis, Points):
             currRet = function(p)
 
             self._base.data.iloc[i, :] = currRet
-
-    # def _flattenToOne_implementation(self):
-    #     numElements = len(self._base.points) * len(self._base.features)
-    #     self._base.data = pd.DataFrame(
-    #         self._base.data.values.reshape((1, numElements), order='C'))
-    #
-    # def _unflattenFromOne_implementation(self, divideInto):
-    #     numPoints = divideInto
-    #     numFeatures = len(self._base.features) // numPoints
-    #     self._base.data = pd.DataFrame(
-    #         self._base.data.values.reshape((numPoints, numFeatures),
-    #                                         order='C'))
 
     ################################
     # Higher Order implementations #

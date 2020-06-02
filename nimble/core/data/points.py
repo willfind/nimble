@@ -1531,7 +1531,7 @@ class Points(object):
             )
         """
         return self._fillMatching(fillWith, matchingElements, points,
-                                  useLog,  **kwarguments)
+                                  useLog, **kwarguments)
 
     @limitedTo2D
     def normalize(self, subtract=None, divide=None, applyResultTo=None,
@@ -2069,7 +2069,7 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _getIndex(self, identifier):
+    def _getIndex(self, identifier, allowFloats=False):
         pass
 
     @abstractmethod
@@ -2103,14 +2103,6 @@ class Points(object):
     @abstractmethod
     def _sort(self, sortBy, sortHelper, useLog=None):
         pass
-
-    # @abstractmethod
-    # def _flattenToOne(self):
-    #     pass
-    #
-    # @abstractmethod
-    # def _unflattenFromOne(self, divideInto):
-    #     pass
 
     @abstractmethod
     def _transform(self, function, limitTo, useLog=None):

@@ -13,7 +13,6 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
-from nimble.exceptions import InvalidArgumentValueCombination
 from .tableString import tableString
 
 def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
@@ -211,10 +210,10 @@ def featurewiseFunctionGenerator():
     calculateForEachFeature function.  Includes: min(), max(), mean(),
     median(), standardDeviation(), numUniqueValues()
     """
-    functions = (nimble.calculate.minimum, nimble.calculate.maximum,
+    functions = [nimble.calculate.minimum, nimble.calculate.maximum,
                  nimble.calculate.mean, nimble.calculate.median,
                  nimble.calculate.standardDeviation,
-                 nimble.calculate.uniqueCount)
+                 nimble.calculate.uniqueCount]
     return functions
 
 

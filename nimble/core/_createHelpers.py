@@ -6,20 +6,14 @@ functions are contained in create.py without the distraction of helpers.
 """
 
 import csv
-import inspect
-import importlib
 from io import StringIO, BytesIO
 import os.path
-import re
-import datetime
 import copy
 import sys
-import itertools
 
 import numpy
 
 import nimble
-from nimble.core.logger import handleLogging
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
 from nimble.exceptions import ImproperObjectAction
@@ -518,7 +512,7 @@ def extractNames(rawData, pointNames, featureNames):
                 rawData = removeDuplicatesNative(rawData)
             func = extractNamesFromScipySparse
         elif (pd.nimbleAccessible()
-                and isinstance(rawData, (pd.DataFrame, pd.SparseDataFrame))):
+              and isinstance(rawData, (pd.DataFrame, pd.SparseDataFrame))):
             func = extractNamesFromPdDataFrame
         elif pd.nimbleAccessible() and isinstance(rawData, pd.Series):
             func = extractNamesFromPdSeries
@@ -750,7 +744,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
 
     elif isinstance(rawData, numpy.ndarray):
         rawData = replaceNumpyValues(rawData, treatAsMissing,
-                                           replaceMissingWith)
+                                     replaceMissingWith)
 
     elif scipy.sparse.issparse(rawData):
         handleMissing = replaceNumpyValues(rawData.data, treatAsMissing,
@@ -758,7 +752,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
         rawData.data = handleMissing
 
     elif (pd.nimbleAccessible()
-            and isinstance(rawData, (pd.DataFrame, pd.Series))):
+          and isinstance(rawData, (pd.DataFrame, pd.Series))):
         if len(rawData.values) > 0:
             # .where keeps the values that return True, use ~ to replace those
             # values instead
@@ -814,7 +808,7 @@ class GenericPointIterator:
         elif isinstance(data, dict):
             self.iterator = iter(data.values())
         elif (pd.nimbleAccessible()
-                and isinstance(data, (pd.DataFrame, pd.Series))):
+              and isinstance(data, (pd.DataFrame, pd.Series))):
             self.iterator = iter(data.values)
         elif scipy.nimbleAccessible() and scipy.sparse.isspmatrix(data):
             self.iterator = SparseCOORowIterator(data.tocoo(False))
@@ -958,7 +952,7 @@ def flattenToOneDimension(data, toFill=None, dimensions=None):
             toFill.extend(data)
         else:
             for obj in GenericPointIterator(data):
-                flattenToOneDimension(obj,toFill, dimensions)
+                flattenToOneDimension(obj, toFill, dimensions)
                 dimensions[0] = False
     except TypeError:
         msg = "Numbers, strings, None, and nan are the only "
@@ -1019,8 +1013,8 @@ def initDataObject(
     """
     if returnType is None:
         if ((scipy.nimbleAccessible() and scipy.sparse.issparse(rawData))
-            or (pd.nimbleAccessible()
-                and isinstance(rawData, pd.SparseDataFrame))):
+                or (pd.nimbleAccessible()
+                    and isinstance(rawData, pd.SparseDataFrame))):
             returnType = 'Sparse'
         else:
             returnType = 'Matrix'
@@ -1043,8 +1037,7 @@ def initDataObject(
         rawData = numpy.array(rawData)
     if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(rawData):
         rawData = rawData.tocoo()
-    import time
-    s = time.time()
+
     if isHighDimensionData(rawData, skipDataProcessing):
         # additional name validation / processing before extractNames
         pointNames, featureNames = highDimensionNames(rawData, pointNames,

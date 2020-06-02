@@ -477,11 +477,11 @@ def identity(returnType, size, pointNames='automatic',
         rawDiag = scipy.sparse.identity(size)
         rawCoo = scipy.sparse.coo_matrix(rawDiag)
         return nimble.data(returnType, rawCoo, pointNames=pointNames,
-                           featureNames=featureNames, name=name,  useLog=False)
-    else:
-        raw = numpy.identity(size)
-        return nimble.data(returnType, raw, pointNames=pointNames,
                            featureNames=featureNames, name=name, useLog=False)
+
+    raw = numpy.identity(size)
+    return nimble.data(returnType, raw, pointNames=pointNames,
+                       featureNames=featureNames, name=name, useLog=False)
 
 
 def loadData(inputPath, useLog=None):

@@ -10,9 +10,7 @@ import numpy
 import nimble
 from nimble._utility import pd
 from .axis import Axis
-from .dataHelpers import sortIndexPosition
-from .dataHelpers import nonSparseAxisUniqueArray, uniqueNameGetter
-from .points import Points
+from .dataHelpers import denseAxisUniqueArray, uniqueNameGetter
 
 class DataFrameAxis(Axis):
     """
@@ -59,8 +57,9 @@ class DataFrameAxis(Axis):
         else:
             df.columns = pd.RangeIndex(len(df.columns))
 
-        return nimble.core.data.DataFrame(pd.DataFrame(ret), pointNames=pointNames,
-                                     featureNames=featureNames, reuseData=True)
+        return nimble.core.data.DataFrame(
+            pd.DataFrame(ret), pointNames=pointNames,
+            featureNames=featureNames, reuseData=True)
 
     def _sort_implementation(self, indexPosition):
         # use numpy indexing to change the ordering
@@ -77,8 +76,8 @@ class DataFrameAxis(Axis):
     ##############################
 
     def _unique_implementation(self):
-        uniqueData, uniqueIndices = nonSparseAxisUniqueArray(self._base,
-                                                             self._axis)
+        uniqueData, uniqueIndices = denseAxisUniqueArray(self._base,
+                                                         self._axis)
         uniqueData = pd.DataFrame(uniqueData)
         if numpy.array_equal(self._base.data.values, uniqueData):
             return self._base.copy()
@@ -115,14 +114,6 @@ class DataFrameAxis(Axis):
     @abstractmethod
     def _insert_implementation(self, insertBefore, toInsert):
         pass
-
-    # @abstractmethod
-    # def _flattenToOne_implementation(self):
-    #     pass
-    #
-    # @abstractmethod
-    # def _unflattenFromOne_implementation(self, divideInto):
-    #     pass
 
     @abstractmethod
     def _transform_implementation(self, function, limitTo):

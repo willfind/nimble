@@ -78,12 +78,12 @@ class DLDA:
             yi = (yarr == self._labels[i])
             xim = np.mean(xarr[yi], axis=0)
             nk = np.sum(yi)
-            mk = np.sqrt(np.float_power(nk,1) - np.float_power(n,-1))
+            mk = np.sqrt(np.float_power(nk, 1) - np.float_power(n, -1))
             d = (xim - xm) / (mk * (self._xstd + s0))
 
             # soft thresholding
             tmp = np.abs(d) - self._delta
-            tmp[tmp<0] = 0.0
+            tmp[tmp < 0] = 0.0
             self._dprime[i] = np.sign(d) * tmp
 
             self._xmprime[i] = xm + (mk * (self._xstd + s0) * self._dprime[i])
@@ -161,7 +161,7 @@ class DLDA:
             return self._prob(tarr)
         else:
             ret = np.empty((tarr.shape[0], self._labels.shape[0]),
-                dtype=np.float)
+                           dtype=np.float)
             for i in range(tarr.shape[0]):
                 ret[i] = self._prob(tarr[i])
             return ret
@@ -225,18 +225,18 @@ class Parzen:
         if self._labels.shape[0] != 2:
             raise ValueError("number of classes != 2")
 
-        ynew = np.where(y_arr==self._labels[0], -1., 1.)
+        ynew = np.where(y_arr == self._labels[0], -1., 1.)
         n = K_arr.shape[0]
 
         # from Kernel Methods for Pattern Analysis
         # Algorithm 5.6
 
-        nplus = np.sum(ynew==1)
+        nplus = np.sum(ynew == 1)
         nminus = n - nplus
-        alphaplus = np.where(ynew==1, np.float_power(nplus,-1), 0)
-        alphaminus = np.where(ynew==-1, np.float_power(nminus,-1), 0)
-        self._b = -0.5 * (np.dot(np.dot(alphaplus, K_arr), alphaplus) - \
-                         np.dot(np.dot(alphaminus, K_arr), alphaminus))
+        alphaplus = np.where(ynew == 1, np.float_power(nplus, -1), 0)
+        alphaminus = np.where(ynew == -1, np.float_power(nminus, -1), 0)
+        self._b = -0.5 * (np.dot(np.dot(alphaplus, K_arr), alphaplus)
+                          - np.dot(np.dot(alphaminus, K_arr), alphaminus))
         self._alpha = alphaplus - alphaminus
 
     def pred(self, Kt):
@@ -264,8 +264,8 @@ class Parzen:
         except ValueError:
             raise ValueError("Kt, alpha: shape mismatch")
 
-        return np.where(s==-1, self._labels[0], self._labels[1]) \
-            .astype(np.int)
+        ret = np.where(s == -1, self._labels[0], self._labels[1])
+        return ret.astype(np.int)
 
     def alpha(self):
         """Return alpha.
@@ -458,8 +458,9 @@ class ElasticNet(object):
         # center y
         ymean = np.mean(yarr)
 
-        self._beta, self._iters = elasticnet_base(xarr, yarr,
-            lmb=self._lmb, eps=self._eps, supp=self._supp, tol=self._tol)
+        self._beta, self._iters = elasticnet_base(
+            xarr, yarr, lmb=self._lmb, eps=self._eps, supp=self._supp,
+            tol=self._tol)
         self._beta /= xnorm
         self._beta0 = ymean - np.dot(xmean, self._beta)
 

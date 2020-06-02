@@ -4,10 +4,9 @@ Stretch object to allow for broadcasting operations.
 import numpy
 
 import nimble
-from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
+from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
 from . import dataHelpers
-from .dataHelpers import createDataNoValidation
 
 class Stretch(object):
     """

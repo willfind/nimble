@@ -5,8 +5,6 @@ List object.
 
 import numpy
 
-from nimble.exceptions import InvalidArgumentValue
-
 from .axis_view import AxisView
 from .listAxis import ListAxis
 from .points import Points
@@ -53,25 +51,6 @@ class ListPoints(ListAxis, Points):
             currRet = function(p)
 
             self._base.data[i] = list(currRet)
-
-    # def _flattenToOne_implementation(self):
-    #     onto = self._base.data[0]
-    #     for _ in range(1, len(self._base.points)):
-    #         onto += self._base.data[1]
-    #         del self._base.data[1]
-    #
-    #     self._base._numFeatures = len(onto)
-    #
-    # def _unflattenFromOne_implementation(self, divideInto):
-    #     result = []
-    #     numPoints = divideInto
-    #     numFeatures = len(self._base.features) // numPoints
-    #     for i in range(numPoints):
-    #         temp = self._base.data[0][(i*numFeatures):((i+1)*numFeatures)]
-    #         result.append(temp)
-    #
-    #     self._base.data = result
-    #     self._base._numFeatures = numFeatures
 
     ################################
     # Higher Order implementations #

@@ -5,13 +5,11 @@ Matrix object.
 
 import numpy
 
-from nimble.exceptions import InvalidArgumentValue
 from nimble._utility import numpy2DArray
 from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .features import Features
 from .features_view import FeaturesView
-from .dataHelpers import allDataIdentical
 
 class MatrixFeatures(MatrixAxis, Features):
     """
@@ -51,18 +49,6 @@ class MatrixFeatures(MatrixAxis, Features):
         if (self._base.data.dtype == numpy.object_ and limitTo is None
                 and function.convertType is not object):
             self._base.data = self._base.data.astype(function.convertType)
-
-    # def _flattenToOne_implementation(self):
-    #     numElements = len(self._base.points) * len(self._base.features)
-    #     self._base.data = self._base.data.reshape((numElements, 1),
-    #                                                 order='F')
-    #
-    # def _unflattenFromOne_implementation(self, divideInto):
-    #     numFeatures = divideInto
-    #     numPoints = len(self._base.points) // numFeatures
-    #     self._base.data = self._base.data.reshape((numPoints,
-    #                                                    numFeatures),
-    #                                                 order='F')
 
     ################################
     # Higher Order implementations #

@@ -5,7 +5,6 @@ Sparse object.
 
 import numpy
 
-import nimble
 from nimble._utility import scipy
 from .axis_view import AxisView
 from .sparseAxis import SparseAxis
@@ -21,43 +20,6 @@ class SparseFeatures(SparseAxis, Features):
     base : Sparse
         The Sparse instance that will be queried and modified.
     """
-
-    ##############################
-    # Structural implementations #
-    ##############################
-
-    # def _flattenToOne_implementation(self):
-    #     self._base._sortInternal('feature')
-    #     fLen = len(self._base.points)
-    #     numElem = len(self._base.points) * len(self._base.features)
-    #     data = self._base.data.data
-    #     row = self._base.data.row
-    #     col = self._base.data.col
-    #     for i in range(len(data)):
-    #         if col[i] > 0:
-    #             row[i] += (col[i] * fLen)
-    #             col[i] = 0
-    #
-    #     self._base.data = coo_matrix((data, (row, col)), (numElem, 1))
-    #
-    # def _unflattenFromOne_implementation(self, divideInto):
-    #     # only one feature, so both sorts are the same order
-    #     if self._base._sorted is None:
-    #         self._base._sortInternal('feature')
-    #
-    #     numFeatures = divideInto
-    #     numPoints = len(self._base.points) // numFeatures
-    #     newShape = (numPoints, numFeatures)
-    #     data = self._base.data.data
-    #     row = self._base.data.row
-    #     col = self._base.data.col
-    #     for i in range(len(data)):
-    #         # must change the col entry before modifying the row entry
-    #         col[i] = row[i] / numPoints
-    #         row[i] = row[i] % numPoints
-    #
-    #     self._base.data = coo_matrix((data, (row, col)), newShape)
-    #     self._base._sorted = 'feature'
 
     ################################
     # Higher Order implementations #

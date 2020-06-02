@@ -3,16 +3,11 @@ Implementations and helpers specific to performing axis-generic
 operations on a nimble Sparse object.
 """
 
-from abc import abstractmethod
-
 import numpy
 
 import nimble
-from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble._utility import scipy
 from .axis import Axis
-from .points import Points
-from .dataHelpers import sortIndexPosition
 
 class SparseAxis(Axis):
     """
@@ -219,8 +214,8 @@ class SparseAxis(Axis):
         ret = targeted.tocoo()
 
         return nimble.core.data.Sparse(ret, pointNames=pointNames,
-                                  featureNames=featureNames,
-                                  reuseData=True)
+                                       featureNames=featureNames,
+                                       reuseData=True)
 
     def _structuralIterative_implementation(self, structure, targetList,
                                             pointNames, featureNames):
@@ -288,7 +283,8 @@ class SparseAxis(Axis):
         ret = scipy.sparse.coo_matrix((targetArr, (targetRows, targetCols)),
                                       shape=targetShape)
         return nimble.core.data.Sparse(ret, pointNames=pointNames,
-                                  featureNames=featureNames, reuseData=True)
+                                       featureNames=featureNames,
+                                       reuseData=True)
 
     def _unique_implementation(self):
         if self._base._sorted is None:
@@ -356,17 +352,6 @@ class SparseAxis(Axis):
             return nimble.data('Sparse', uniqueCoo, pointNames=offAxisNames,
                                featureNames=axisNames, useLog=False)
 
-    ####################
-    # Abstract Methods #
-    ####################
-
-    # @abstractmethod
-    # def _flattenToOne_implementation(self):
-    #     pass
-    #
-    # @abstractmethod
-    # def _unflattenFromOne_implementation(self, divideInto):
-    #     pass
 
 ###################
 # Generic Helpers #

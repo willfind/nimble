@@ -10,11 +10,11 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
-from nimble.core.interfaces.universal_interface import UniversalInterface
-from nimble.core.interfaces.universal_interface import captureOutput
 from nimble._utility import inheritDocstringsFactory
 from nimble._utility import inspectArguments
 from nimble._utility import dtypeConvert
+from .universal_interface import UniversalInterface
+from .universal_interface import captureOutput
 
 
 @inheritDocstringsFactory(UniversalInterface)

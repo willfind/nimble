@@ -1,6 +1,4 @@
 
-import itertools
-
 import numpy
 
 import nimble

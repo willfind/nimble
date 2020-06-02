@@ -8,21 +8,19 @@ TODO: multinomialHMM requires special input processing for obs param
 """
 
 import importlib
-import copy
-import sys
 
 import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
-from nimble.core.interfaces.universal_interface import UniversalInterface
-from nimble.core.interfaces.universal_interface import PredefinedInterface
-from nimble.core.interfaces.interface_helpers import PythonSearcher
-from nimble.core.interfaces.interface_helpers import modifyImportPathAndImport
-from nimble.core.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble._utility import inspectArguments
 from nimble._utility import inheritDocstringsFactory, dtypeConvert
 from nimble.random import _generateSubsidiarySeed
+from .universal_interface import UniversalInterface
+from .universal_interface import PredefinedInterface
+from .interface_helpers import PythonSearcher
+from .interface_helpers import modifyImportPathAndImport
+from .interface_helpers import removeFromTailMatchedLists
 
 # Contains path to mlpy root directory
 mlpyDir = None
@@ -250,7 +248,7 @@ To install mlpy
                     validate = False
 
                 if isinstance(val, self.mlpy.KernelExponential):
-                    msg = "This interface disallows the use of KernelExponential; "
+                    msg = "This interface disallows KernelExponential; "
                     msg = "it is bugged in some versions of mlpy"
                     raise InvalidArgumentValue(msg)
 

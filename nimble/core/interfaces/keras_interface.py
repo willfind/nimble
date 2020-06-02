@@ -2,23 +2,22 @@
 Relies on being keras 2.0.8
 """
 
-import copy
 import os
-import sys
 import logging
 
 import numpy
 
 import nimble
-from nimble.core.interfaces.universal_interface import UniversalInterface
-from nimble.core.interfaces.universal_interface import PredefinedInterface
-from nimble.core.interfaces.interface_helpers import PythonSearcher
-from nimble.core.interfaces.interface_helpers import modifyImportPathAndImport
-from nimble.core.interfaces.interface_helpers import collectAttributes
-from nimble.core.interfaces.interface_helpers import removeFromTailMatchedLists
 from nimble._utility import inspectArguments
 from nimble._utility import inheritDocstringsFactory, numpy2DArray
 from nimble.exceptions import InvalidArgumentValue, _prettyListString
+from .universal_interface import UniversalInterface
+from .universal_interface import PredefinedInterface
+from .interface_helpers import PythonSearcher
+from .interface_helpers import modifyImportPathAndImport
+from .interface_helpers import collectAttributes
+from .interface_helpers import removeFromTailMatchedLists
+from .interface_helpers import noLeading__, notCallable, notABCAssociated
 
 
 # Contains path to keras root directory
@@ -417,9 +416,9 @@ To install keras
         obj = learnerBackend
         generators = None
         checkers = []
-        checkers.append(nimble.core.interfaces.interface_helpers.noLeading__)
-        checkers.append(nimble.core.interfaces.interface_helpers.notCallable)
-        checkers.append(nimble.core.interfaces.interface_helpers.notABCAssociated)
+        checkers.append(noLeading__)
+        checkers.append(notCallable)
+        checkers.append(notABCAssociated)
 
         ret = collectAttributes(obj, generators, checkers)
         return ret
