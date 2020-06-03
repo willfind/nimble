@@ -25,7 +25,7 @@ from nimble._utility import mergeArguments
 from nimble.exceptions import _prettyListString
 from nimble.exceptions import _prettyDictString
 from nimble.core.logger import handleLogging, startTimer, stopTimer
-from nimble._configuration import configErrors
+from nimble.core.configuration import configErrors
 from .interface_helpers import (
     generateBinaryScoresFromHigherSortedLabelScores,
     calculateSingleLabelScoresFromOneVsOneScores,

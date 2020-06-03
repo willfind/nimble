@@ -8,7 +8,7 @@ data, and do package level configuration and information querying.
 
 # Import those functions that we want to be accessible in the
 # top level
-from nimble._configuration import nimblePath
+from nimble.core.configuration import nimblePath
 from nimble.core.create import data
 from nimble.core.create import ones
 from nimble.core.create import zeros
@@ -32,8 +32,7 @@ from nimble.core.logger import log
 from nimble.core.logger import showLog
 from nimble.core.interfaces import CustomLearner
 
-# import submodules that need setup (not in __all__)
-from nimble import _configuration
+# import core (not in __all__)
 from nimble import core
 
 # import submodules accessible to the user (in __all__)
@@ -45,7 +44,10 @@ from nimble import fill
 from nimble import exceptions
 
 # load settings from configuration file
-settings = _configuration.loadSettings()
+settings = core.configuration.loadSettings()
+"""
+User control over configurable options.
+"""
 
 # initialize the interfaces
 core.interfaces.initInterfaceSetup()

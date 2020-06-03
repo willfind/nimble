@@ -12,7 +12,7 @@ import copy
 import nimble
 from nimble.core.data import BaseView
 from nimble.core._learnHelpers import generateClusteredPoints
-from nimble._configuration import SessionConfiguration
+from nimble.core.configuration import SessionConfiguration
 
 def configSafetyWrapper(toWrap):
     """
@@ -35,7 +35,7 @@ def configSafetyWrapper(toWrap):
         copyChanges = copy.copy(nimble.settings.changes)
         copyHooks = copy.copy(nimble.settings.hooks)
         backupSettings = nimble.settings
-        backupLoadSettings = nimble._configuration.loadSettings
+        backupLoadSettings = nimble.core.configuration.loadSettings
         backupLogger = nimble.core.logger.active
         availableBackup = copy.copy(nimble.core.interfaces.available)
         # CustomLearnerInterface attributes are not copied above
@@ -46,14 +46,14 @@ def configSafetyWrapper(toWrap):
         nimble.settings = loadSettingsFromTempFile()
         nimble.settings.changes = copyChanges
         nimble.settings.hooks = copyHooks
-        nimble._configuration.loadSettings = loadSettingsFromTempFile
+        nimble.core.configuration.loadSettings = loadSettingsFromTempFile
 
         try:
             toWrap(*args, **kwargs)
         finally:
             nimble.settings = backupSettings
             nimble.core.logger.active = backupLogger
-            nimble._configuration.loadSettings = backupLoadSettings
+            nimble.core.configuration.loadSettings = backupLoadSettings
             nimble.core.interfaces.available = availableBackup
             clInterface.registeredLearners = clReg
             clInterface._configurableOptionNamesAvailable = clOpt

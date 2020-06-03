@@ -26,7 +26,6 @@ from .interface_helpers import modifyImportPathAndImport
 
 # Interesting alias cases:
 # * DomainAdaptionMulticlassLibLinear  -- or probably any nested machine
-shogunDir = None
 
 trainXAliases = ['traindat', 'f', 'features', 'feats', 'feat', 'training_data',
                  'train_features', 'data']
@@ -43,7 +42,7 @@ class Shogun(PredefinedInterface, UniversalInterface):
     """
 
     def __init__(self):
-        self.shogun = modifyImportPathAndImport(shogunDir, 'shogun', 'shogun')
+        self.shogun = modifyImportPathAndImport('shogun', 'shogun')
         self.versionString = None
 
         def isLearner(obj):
@@ -114,7 +113,7 @@ class Shogun(PredefinedInterface, UniversalInterface):
 
     def accessible(self):
         try:
-            _ = modifyImportPathAndImport(shogunDir, 'shogun', 'shogun')
+            _ = modifyImportPathAndImport('shogun', 'shogun')
         except ImportError:
             return False
         return True

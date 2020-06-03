@@ -23,14 +23,6 @@ from .interface_helpers import collectAttributes
 from .interface_helpers import removeFromTailMatchedLists
 from .interface_helpers import noLeading__, notCallable, notABCAssociated
 
-# Contains path to sciKitLearn root directory
-#sciKitLearnDir = '/usr/local/lib/python2.7/dist-packages'
-sciKitLearnDir = None
-
-# a dictionary mapping names to learners, or modules
-# containing learners. To be used by findInPackage
-locationCache = {}
-
 
 class _SciKitLearnAPI(abc.ABC):
     """
@@ -350,9 +342,8 @@ class SciKitLearn(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
     """
 
     def __init__(self):
-        self.skl = modifyImportPathAndImport(sciKitLearnDir, 'sklearn',
-                                             'sklearn')
-        testUtils = modifyImportPathAndImport(sciKitLearnDir, 'sklearn',
+        self.skl = modifyImportPathAndImport('sklearn', 'sklearn')
+        testUtils = modifyImportPathAndImport('sklearn',
                                               'sklearn.utils.testing')
 
         version = self.version()
@@ -418,8 +409,7 @@ class SciKitLearn(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
 
     def accessible(self):
         try:
-            _ = modifyImportPathAndImport(sciKitLearnDir, 'sklearn',
-                                          'sklearn')
+            _ = modifyImportPathAndImport('sklearn', 'sklearn')
         except ImportError:
             return False
         return True

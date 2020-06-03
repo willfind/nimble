@@ -13,7 +13,6 @@ from .scikit_learn_interface import _SciKitLearnAPI
 from .interface_helpers import modifyImportPathAndImport
 from .interface_helpers import PythonSearcher
 
-autoimputeDir = None
 
 @inheritDocstringsFactory(UniversalInterface)
 class Autoimpute(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
@@ -28,8 +27,7 @@ class Autoimpute(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
         """
 
         """
-        self.autoimpute = modifyImportPathAndImport(autoimputeDir,
-                                                    'autoimpute', 'autoimpute')
+        self.autoimpute = modifyImportPathAndImport('autoimpute', 'autoimpute')
 
         def isLearner(obj):
             try:
@@ -60,8 +58,7 @@ class Autoimpute(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
 
     def accessible(self):
         try:
-            _ = modifyImportPathAndImport(autoimputeDir, 'autoimpute',
-                                          'autoimpute')
+            _ = modifyImportPathAndImport('autoimpute', 'autoimpute')
         except ImportError:
             return False
         return True

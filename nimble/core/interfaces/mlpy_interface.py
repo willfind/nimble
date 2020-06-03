@@ -22,13 +22,6 @@ from .interface_helpers import PythonSearcher
 from .interface_helpers import modifyImportPathAndImport
 from .interface_helpers import removeFromTailMatchedLists
 
-# Contains path to mlpy root directory
-mlpyDir = None
-
-# a dictionary mapping names to learners, or modules
-# containing learners. To be used by findInPackage
-locationCache = {}
-
 
 @inheritDocstringsFactory(UniversalInterface)
 class Mlpy(PredefinedInterface, UniversalInterface):
@@ -44,7 +37,7 @@ class Mlpy(PredefinedInterface, UniversalInterface):
         # modify path if another directory provided
 
 
-        self.mlpy = modifyImportPathAndImport(mlpyDir, 'mlpy', 'mlpy')
+        self.mlpy = modifyImportPathAndImport('mlpy', 'mlpy')
 
         def isLearner(obj):
             hasLearn = hasattr(obj, 'learn')
@@ -66,7 +59,7 @@ class Mlpy(PredefinedInterface, UniversalInterface):
 
     def accessible(self):
         try:
-            _ = modifyImportPathAndImport(mlpyDir, 'mlpy', 'mlpy')
+            _ = modifyImportPathAndImport('mlpy', 'mlpy')
         except ImportError:
             return False
         return True

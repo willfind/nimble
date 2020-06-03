@@ -6,7 +6,7 @@ During nimble initialization, there is a specific order to tasks
 relating to configuration. Before any operation that might rely on being
 able to access nimble.settings (for example, interface initialization)
 we must load it from file, so that in the normal course of operations,
-user set values are available to be used accross nimble. Alternatively,
+user set values are available to be used across nimble. Alternatively,
 in the case that there is a new source of user set options (for example,
 an interface that has been loaded for the first time) we still load from
 the config file first, then do initialization of all of the those
@@ -27,8 +27,8 @@ from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import ImproperObjectAction, PackageException
 
-currentFile = inspect.getfile(inspect.currentframe())
-nimblePath = os.path.dirname(os.path.abspath(currentFile))
+# source file is __init__.py, we split to get the directory containing it
+nimblePath = os.path.split(inspect.getsourcefile(nimble))[0]
 configErrors = (configparser.NoSectionError, configparser.NoOptionError)
 
 class SortedCommentPreservingConfigParser(configparser.SafeConfigParser):

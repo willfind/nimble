@@ -20,15 +20,6 @@ from .interface_helpers import removeFromTailMatchedLists
 from .interface_helpers import noLeading__, notCallable, notABCAssociated
 
 
-# Contains path to keras root directory
-#kerasDir = '/usr/local/lib/python2.7/dist-packages'
-kerasDir = None
-
-# a dictionary mapping names to learners, or modules
-# containing learners. To be used by findInPackage
-locationCache = {}
-
-
 @inheritDocstringsFactory(UniversalInterface)
 class Keras(PredefinedInterface, UniversalInterface):
     """
@@ -39,11 +30,10 @@ class Keras(PredefinedInterface, UniversalInterface):
 
         try:
             # keras recommends using tensorflow.keras when possible
-            self.keras = modifyImportPathAndImport(kerasDir, 'keras',
-                                                   'tensorflow.keras')
+            self.keras = modifyImportPathAndImport('keras', 'tensorflow.keras')
             backendName = 'tensorflow'
         except ImportError:
-            self.keras = modifyImportPathAndImport(kerasDir, 'keras', 'keras')
+            self.keras = modifyImportPathAndImport('keras', 'keras')
             backendName = self.keras.backend.backend()
         # tensorflow has a tremendous quantity of informational outputs which
         # drown out anything else on standard out
@@ -93,10 +83,9 @@ class Keras(PredefinedInterface, UniversalInterface):
     def accessible(self):
         try:
             try:
-                _ = modifyImportPathAndImport(kerasDir, 'keras',
-                                              'tensorflow.keras')
+                _ = modifyImportPathAndImport('keras', 'tensorflow.keras')
             except ImportError:
-                _ = modifyImportPathAndImport(kerasDir, 'keras', 'keras')
+                _ = modifyImportPathAndImport('keras', 'keras')
         except ImportError:
             return False
         return True

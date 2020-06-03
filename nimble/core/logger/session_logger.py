@@ -31,7 +31,7 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble._configuration import configErrors
+from nimble.core.configuration import configErrors
 from .stopwatch import Stopwatch
 
 def log(heading, logInfo):

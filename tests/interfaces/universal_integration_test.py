@@ -331,7 +331,7 @@ def test_loadModulesFromConfigLocation():
                     packageName2 = 'keras'
                 except ImportError:
                     pass
-            print(packageName1, packageName2)
+
             with tempfile.TemporaryDirectory() as mockDirectory1:
                 # first directory containing the same package
                 makeMockedModule(mockDirectory1, packageName1, mockedInit1)

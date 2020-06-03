@@ -15,7 +15,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.data import Base
 from nimble.random import pythonRandom
 from nimble.random import numpyRandom
-from nimble._configuration import setInterfaceOptions
+from nimble.core.configuration import setInterfaceOptions
 
 
 def findBestInterface(package):

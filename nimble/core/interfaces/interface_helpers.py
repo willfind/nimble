@@ -477,19 +477,13 @@ def removeFromTailMatchedLists(full, matched, toIgnore):
     return (retFull, retMatched)
 
 
-def modifyImportPathAndImport(directory, canonicalName, importPackage):
+def modifyImportPathAndImport(canonicalName, importPackage):
     """
-    Supports importing packages and subpackages for interfaces by
-    modifying sys.path based on other locations that could potentially
-    contain the package. The directory is given first priority, followed
-    by a location designated in nimble.settings.
+    Supports importing packages and subpackages for interfaces from
+    an alternative location specified by nimble.settings.
 
     Parameters
     ----------
-    directory : str
-        The alternative location provided for the interface package
-        provided by the interface file's global directory location
-        variable.
     canonicalName : str
         The canonical name of the interface using this helper.
         Alternative locations are located in nimble.settings under this
@@ -506,11 +500,6 @@ def modifyImportPathAndImport(directory, canonicalName, importPackage):
     with warnings.catch_warnings():
         warnings.simplefilter('ignore')
         try:
-            if directory is not None:
-                sys.path.insert(0, directory)
-                if not importPackage.startswith(canonicalName):
-                    importPackage = canonicalName
-
             try:
                 location = nimble.settings.get(canonicalName, 'location')
                 if location:
