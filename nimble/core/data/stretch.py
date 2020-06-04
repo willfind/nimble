@@ -6,7 +6,7 @@ import numpy
 import nimble
 from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
-from . import dataHelpers
+from . import _dataHelpers
 
 class Stretch(object):
     """
@@ -98,7 +98,7 @@ class Stretch(object):
         def defaultNames(names):
             if names is None:
                 return True
-            if all(n.startswith(dataHelpers.DEFAULT_PREFIX) for n in names):
+            if all(n.startswith(_dataHelpers.DEFAULT_PREFIX) for n in names):
                 return True
             return False
 
@@ -118,7 +118,7 @@ class Stretch(object):
                 sName = sNames[0]
                 return [sName + '_' + str(i + 1) for i in range(setNum)]
             if len(sNames) == len(oNames): # some default names present
-                return dataHelpers.mergeNames(sNames, oNames)
+                return _dataHelpers.mergeNames(sNames, oNames)
             return None
 
         setPts = getNames(sPtNames, oPtNames, self._numPts, oNumPts, setNumPts)

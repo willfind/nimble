@@ -32,9 +32,9 @@ from nimble.core.data import Base
 from nimble.core.data import available
 from nimble._utility import inheritDocstringsFactory, numpy2DArray
 from nimble._utility import pd
-from nimble.core.data.dataHelpers import DEFAULT_PREFIX
-from nimble.core.data.dataHelpers import DEFAULT_NAME_PREFIX
-from nimble.core.data.dataHelpers import constructIndicesList
+from nimble.core.data._dataHelpers import DEFAULT_PREFIX
+from nimble.core.data._dataHelpers import DEFAULT_NAME_PREFIX
+from nimble.core.data._dataHelpers import constructIndicesList
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
 from nimble.random import pythonRandom
@@ -1161,7 +1161,7 @@ class LowLevelBackend(object):
         toTest = self.constructor(pointNames=pointNames)
         # need to use mock.patch as context manager after object creation
         # because Base.__init__ also calls valuesToPythonList
-        with mock.patch('nimble.core.data.dataHelpers.valuesToPythonList', calledException):
+        with mock.patch('nimble.core.data._dataHelpers.valuesToPythonList', calledException):
             constructIndicesList(toTest, 'point', pointNames)
 
     def testconstructIndicesList_pythonList(self):

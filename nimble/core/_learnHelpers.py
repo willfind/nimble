@@ -44,7 +44,7 @@ def findBestInterface(package):
             # set options in config
             interfaceName = interfaceObj.getCanonicalName()
             nimble.core.interfaces.available[interfaceName] = interfaceObj
-            setInterfaceOptions(interfaceObj, True)
+            setInterfaceOptions(interfaceObj, False)
             return interfaceObj
     # if package is not recognized, provide generic exception information
     msg = "package '" + package
@@ -64,7 +64,7 @@ def initAvailablePredefinedInterfaces():
                 interfaceObj = interface()
                 interfaceName = interfaceObj.getCanonicalName()
                 nimble.core.interfaces.available[interfaceName] = interfaceObj
-                setInterfaceOptions(interfaceObj, True)
+                setInterfaceOptions(interfaceObj, False)
             except Exception:
                 # if fails for any reason, it's not available
                 pass

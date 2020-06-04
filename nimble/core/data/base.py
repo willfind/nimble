@@ -30,19 +30,19 @@ from .points import Points
 from .features import Features
 from .axis import Axis
 from .stretch import Stretch
-from . import dataHelpers
+from . import _dataHelpers
 # the prefix for default point and feature names
-from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
-from .dataHelpers import DEFAULT_NAME_PREFIX
-from .dataHelpers import formatIfNeeded
-from .dataHelpers import valuesToPythonList, constructIndicesList
-from .dataHelpers import createListOfDict, createDictOfList
-from .dataHelpers import createDataNoValidation
-from .dataHelpers import csvCommaFormat
-from .dataHelpers import validateElementFunction, wrapMatchFunctionFactory
-from .dataHelpers import ElementIterator1D
-from .dataHelpers import isQueryString, elementQueryFunction
-from .dataHelpers import limitedTo2D
+from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
+from ._dataHelpers import DEFAULT_NAME_PREFIX
+from ._dataHelpers import formatIfNeeded
+from ._dataHelpers import valuesToPythonList, constructIndicesList
+from ._dataHelpers import createListOfDict, createDictOfList
+from ._dataHelpers import createDataNoValidation
+from ._dataHelpers import csvCommaFormat
+from ._dataHelpers import validateElementFunction, wrapMatchFunctionFactory
+from ._dataHelpers import ElementIterator1D
+from ._dataHelpers import isQueryString, elementQueryFunction
+from ._dataHelpers import limitedTo2D
 
 
 def to2args(f):
@@ -177,7 +177,7 @@ class Base(object):
 
         # Set up object name
         if name is None:
-            self._name = dataHelpers.nextDefaultObjectName()
+            self._name = _dataHelpers.nextDefaultObjectName()
         else:
             self._name = name
 
@@ -284,7 +284,7 @@ class Base(object):
 
     def _setObjName(self, value):
         if value is None:
-            self._name = dataHelpers.nextDefaultObjectName()
+            self._name = _dataHelpers.nextDefaultObjectName()
         else:
             if not isinstance(value, str):
                 msg = "The name of an object may only be a string or None"
@@ -2175,8 +2175,8 @@ class Base(object):
         includeFNames = False
 
         if includeNames:
-            includePNames = dataHelpers.hasNonDefault(self, 'point')
-            includeFNames = dataHelpers.hasNonDefault(self, 'feature')
+            includePNames = _dataHelpers.hasNonDefault(self, 'point')
+            includeFNames = _dataHelpers.hasNonDefault(self, 'feature')
             if includeFNames:
                 # plus or minus 2 because we will be dealing with both
                 # feature names and a gap row
@@ -2253,7 +2253,7 @@ class Base(object):
 
         numRows = min(self._pointCount, maxH)
         # if non default point names, print all (truncated) point names
-        ret += dataHelpers.makeNamesLines(
+        ret += _dataHelpers.makeNamesLines(
             indent, maxW, numRows, self._pointCount,
             self.points._getNamesNoGeneration(), 'pointNames')
         # if non default feature names, print all (truncated) feature names
@@ -2274,14 +2274,14 @@ class Base(object):
                          + len(''.join([str(i) for i
                                         in range(self._featureCount)])))
             numCols = int(min(1, maxW / float(strLength)) * self._featureCount)
-        # because of how dataHelpers.indicesSplit works, we need this to be
+        # because of how _dataHelpers.indicesSplit works, we need this to be
         # +1 in some cases this means one extra feature name is displayed. But
         # that's acceptable
         if numCols <= self._featureCount:
             numCols += 1
         elif numCols > self._featureCount:
             numCols = self._featureCount
-        ret += dataHelpers.makeNamesLines(
+        ret += _dataHelpers.makeNamesLines(
             indent, maxW, numCols, self._featureCount,
             self.features._getNamesNoGeneration(), 'featureNames')
 
@@ -3161,7 +3161,7 @@ class Base(object):
             if replaceWith.getTypeString() != self.getTypeString():
                 replaceWith = replaceWith.copy(to=self.getTypeString())
 
-        elif (dataHelpers._looksNumeric(replaceWith)
+        elif (_dataHelpers._looksNumeric(replaceWith)
               or isinstance(replaceWith, str)):
             pass  # no modifications needed
         else:
@@ -4076,7 +4076,7 @@ class Base(object):
         if callee._featureNamesCreated():
             ret.features.setNames(callee.features.getNames(), useLog=False)
 
-        dataHelpers.binaryOpNamePathMerge(caller, callee, ret, None, 'merge')
+        _dataHelpers.binaryOpNamePathMerge(caller, callee, ret, None, 'merge')
 
         return ret
 
@@ -4297,7 +4297,7 @@ class Base(object):
         Return this object.
         """
         ret = self.copy()
-        ret._name = dataHelpers.nextDefaultObjectName()
+        ret._name = _dataHelpers.nextDefaultObjectName()
 
         return ret
 
@@ -4307,7 +4307,7 @@ class Base(object):
         """
         ret = self.copy()
         ret *= -1
-        ret._name = dataHelpers.nextDefaultObjectName()
+        ret._name = _dataHelpers.nextDefaultObjectName()
 
         return ret
 
@@ -4327,7 +4327,7 @@ class Base(object):
         else:
             ret.points.setNames(None, useLog=False)
 
-        ret._name = dataHelpers.nextDefaultObjectName()
+        ret._name = _dataHelpers.nextDefaultObjectName()
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
         return ret
@@ -4337,7 +4337,7 @@ class Base(object):
         Validate the object elements are all numeric.
         """
         try:
-            self.calculateOnElements(dataHelpers._checkNumeric, useLog=False)
+            self.calculateOnElements(_dataHelpers._checkNumeric, useLog=False)
         except ValueError:
             msg = "The object on the {0} contains non numeric data, "
             msg += "cannot do this operation"
@@ -4403,7 +4403,7 @@ class Base(object):
 
     def _genericBinary_validation(self, opName, other):
         otherBase = isinstance(other, Base)
-        if not otherBase and not dataHelpers._looksNumeric(other):
+        if not otherBase and not _dataHelpers._looksNumeric(other):
             msg = "'other' must be an instance of a nimble Base object or a "
             msg += "scalar"
             raise InvalidArgumentType(msg)
@@ -4456,7 +4456,7 @@ class Base(object):
         except ImproperObjectAction:
             other._numericValidation(right=True)
         # everything else that uses this helper is a binary scalar op
-        retPNames, retFNames = dataHelpers.mergeNonDefaultNames(self,
+        retPNames, retFNames = _dataHelpers.mergeNonDefaultNames(self,
                                                                 other)
         # in these cases we cannot define names for the disjoint axis
         if ftNamesEqual and not ptNamesEqual:
@@ -4560,7 +4560,7 @@ class Base(object):
 
         nameSource = 'self' if opName.startswith('__i') else None
         pathSource = 'merge' if otherBase else 'self'
-        dataHelpers.binaryOpNamePathMerge(
+        _dataHelpers.binaryOpNamePathMerge(
             self, other, ret, nameSource, pathSource)
         return ret
 
@@ -4746,7 +4746,7 @@ class Base(object):
         names = []
         pnamesWidth = 0
         nameCutIndex = nameLength - len(nameHold)
-        (tRowIDs, bRowIDs) = dataHelpers.indicesSplit(maxRows,
+        (tRowIDs, bRowIDs) = _dataHelpers.indicesSplit(maxRows,
                                                       self._pointCount)
 
         # we pull indices from two lists: tRowIDs and bRowIDs
@@ -4821,7 +4821,7 @@ class Base(object):
         maxRows = min(maxHeight, self._pointCount)
         maxDataRows = maxRows
 
-        (tRowIDs, bRowIDs) = dataHelpers.indicesSplit(maxDataRows,
+        (tRowIDs, bRowIDs) = _dataHelpers.indicesSplit(maxDataRows,
                                                       self._pointCount)
         combinedRowIDs = tRowIDs + bRowIDs
         if len(combinedRowIDs) < self._pointCount:
@@ -4936,7 +4936,7 @@ class Base(object):
     def _defaultNamesGeneration_NamesSetOperations(self, other, axis):
         """
         TODO: Find a shorter descriptive name.
-        TODO: Should we place this function in dataHelpers.py?
+        TODO: Should we place this function in _dataHelpers.py?
         """
         if axis == 'point':
             if self.pointNames is None:

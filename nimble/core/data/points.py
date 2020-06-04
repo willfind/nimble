@@ -16,7 +16,7 @@ from collections import OrderedDict
 import nimble
 from nimble.core.logger import handleLogging
 from nimble.exceptions import ImproperObjectAction
-from .dataHelpers import limitedTo2D
+from ._dataHelpers import limitedTo2D
 
 class Points(object):
     """

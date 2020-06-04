@@ -136,13 +136,13 @@ def testSciKitLearnHandmadeSparseClustering():
     trainData[0, :] = [2, 3, 1]
     trainData[1, :] = [2, 2, 1]
     trainData[2, :] = [0, 0, 0]
-    trainData = nimble.data('Sparse', data=trainData, useLog=False)
+    trainData = nimble.data('Sparse', source=trainData, useLog=False)
 
     testData = scipy.sparse.lil_matrix((3, 2))
     testData[0, :] = [3, 3]
     testData[1, :] = [3, 2]
     testData[2, :] = [-1, 0]
-    testData = nimble.data('Sparse', data=testData, useLog=False)
+    testData = nimble.data('Sparse', source=testData, useLog=False)
 
     ret = nimble.trainAndApply(toCall('MiniBatchKMeans'), trainData, trainY=2, testX=testData, arguments={'n_clusters': 2})
 

@@ -10,8 +10,8 @@ from .axis_view import AxisView
 from .matrixAxis import MatrixAxis
 from .points import Points
 from .points_view import PointsView
-from .dataHelpers import fillArrayWithCollapsedFeatures
-from .dataHelpers import fillArrayWithExpandedFeatures
+from ._dataHelpers import fillArrayWithCollapsedFeatures
+from ._dataHelpers import fillArrayWithExpandedFeatures
 
 class MatrixPoints(MatrixAxis, Points):
     """

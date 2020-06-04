@@ -5,7 +5,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.calculate import fractionIncorrect
 from nimble.calculate import varianceFractionRemaining
-from nimble.core.data.dataHelpers import createDataNoValidation
+from nimble.core.data._dataHelpers import createDataNoValidation
 
 
 def _validatePredictedAsLabels(predictedValues):

@@ -16,12 +16,12 @@ from .base import Base
 from .base_view import BaseView
 from .matrixPoints import MatrixPoints, MatrixPointsView
 from .matrixFeatures import MatrixFeatures, MatrixFeaturesView
-from .dataHelpers import DEFAULT_PREFIX
-from .dataHelpers import allDataIdentical
-from .dataHelpers import createDataNoValidation
-from .dataHelpers import csvCommaFormat
-from .dataHelpers import denseCountUnique
-from .dataHelpers import NimbleElementIterator
+from ._dataHelpers import DEFAULT_PREFIX
+from ._dataHelpers import allDataIdentical
+from ._dataHelpers import createDataNoValidation
+from ._dataHelpers import csvCommaFormat
+from ._dataHelpers import denseCountUnique
+from ._dataHelpers import NimbleElementIterator
 
 @inheritDocstringsFactory(Base)
 class Matrix(Base):

@@ -26,7 +26,7 @@ from nimble.exceptions import _prettyListString
 from nimble.exceptions import _prettyDictString
 from nimble.core.logger import handleLogging, startTimer, stopTimer
 from nimble.core.configuration import configErrors
-from .interface_helpers import (
+from ._interface_helpers import (
     generateBinaryScoresFromHigherSortedLabelScores,
     calculateSingleLabelScoresFromOneVsOneScores,
     ovaNotOvOFormatted, checkClassificationStrategy, cacheWrapper,

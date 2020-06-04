@@ -13,11 +13,11 @@ from nimble._utility import inheritDocstringsFactory, numpy2DArray
 from nimble.exceptions import InvalidArgumentValue, _prettyListString
 from .universal_interface import UniversalInterface
 from .universal_interface import PredefinedInterface
-from .interface_helpers import PythonSearcher
-from .interface_helpers import modifyImportPathAndImport
-from .interface_helpers import collectAttributes
-from .interface_helpers import removeFromTailMatchedLists
-from .interface_helpers import noLeading__, notCallable, notABCAssociated
+from ._interface_helpers import PythonSearcher
+from ._interface_helpers import modifyImportPathAndImport
+from ._interface_helpers import collectAttributes
+from ._interface_helpers import removeFromTailMatchedLists
+from ._interface_helpers import noLeading__, notCallable, notABCAssociated
 
 
 @inheritDocstringsFactory(UniversalInterface)

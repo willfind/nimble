@@ -59,8 +59,8 @@ def prepopulatedLogSafetyWrapper(testFunc):
         # add data to log
         for i in range(5):
             # load
-            trainObj = nimble.data('Matrix', data=data1, featureNames=variables)
-            testObj = nimble.data('Matrix', data=data2, featureNames=variables)
+            trainObj = nimble.data('Matrix', source=data1, featureNames=variables)
+            testObj = nimble.data('Matrix', source=data2, featureNames=variables)
             # data
             report = trainObj.summaryReport()
             # prep

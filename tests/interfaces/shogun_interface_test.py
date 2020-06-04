@@ -25,7 +25,7 @@ from nimble.random import numpyRandom
 from nimble.random import _startAlternateControl, _endAlternateControl
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.core.interfaces.interface_helpers import PythonSearcher
+from nimble.core.interfaces._interface_helpers import PythonSearcher
 from nimble.core._learnHelpers import generateClusteredPoints
 from nimble.core.interfaces.shogun_interface import checkProcessFailure
 from nimble._utility import scipy

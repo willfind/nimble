@@ -6,8 +6,8 @@ base class for read only axis views of data objects.
 import nimble
 from nimble._utility import inheritDocstringsFactory
 from .features import Features
-from .dataHelpers import readOnlyException
-from .dataHelpers import exceptionDocstringFactory
+from ._dataHelpers import readOnlyException
+from ._dataHelpers import exceptionDocstringFactory
 
 exceptionDocstring = exceptionDocstringFactory(Features)
 

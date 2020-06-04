@@ -39,7 +39,7 @@ from nimble import match
 from nimble import fill
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
-from nimble.core.data.dataHelpers import DEFAULT_PREFIX
+from nimble.core.data._dataHelpers import DEFAULT_PREFIX
 from nimble.random import numpyRandom
 from .baseObject import DataTestObject
 from tests.helpers import logCountAssertionFactory

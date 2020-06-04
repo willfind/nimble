@@ -240,7 +240,7 @@ def _generateMixedRandom(length):
         # we don't want all zeros or all ones
         if numpy.any(correct) and not numpy.all(correct):
             break
-    correct = nimble.data(returnType="List", data=correct, useLog=False)
+    correct = nimble.data(returnType="List", source=correct, useLog=False)
     return correct
 
 
@@ -259,7 +259,7 @@ def _generatePredicted(knowns, predictionType):
     # Labels and the score for that label (aka 'bestScores')
     elif predictionType == 1:
         scores = numpyRandom.randint(2, size=[len(workingCopy.points), 1])
-        scores = nimble.data(returnType="List", data=scores,
+        scores = nimble.data(returnType="List", source=scores,
                              featureNames=['LabelScore'], useLog=False)
         workingCopy.features.append(scores, useLog=False)
         return workingCopy
@@ -278,7 +278,7 @@ def _generatePredicted(knowns, predictionType):
                 currConfidences[1] = winner
             dataToFill.append(currConfidences)
 
-        scores = nimble.data(returnType="List", data=dataToFill,
+        scores = nimble.data(returnType="List", source=dataToFill,
                              featureNames=['0', '1'], useLog=False)
         return scores
 

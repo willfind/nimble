@@ -15,13 +15,13 @@ if __name__ == "__main__":
              [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
              [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3],
              [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
-    trainObj = nimble.data('Matrix', data=data1, featureNames=variables)
+    trainObj = nimble.data('Matrix', source=data1, featureNames=variables)
 
     # formated vertically for easier comparison with printed results
     data2 = [[1, 0, 0, 1],
              [0, 1, 0, 2],
              [0, 0, 1, 3]]
-    testObj = nimble.data('Matrix', data=data2, featureNames=variables)
+    testObj = nimble.data('Matrix', source=data2, featureNames=variables)
     tesObjNoY = testObj.features.copy([0,1,2])
 
     results = trainAndTest('sciKitLearn.SVC', trainX=trainObj, trainY=3,

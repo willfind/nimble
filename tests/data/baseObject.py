@@ -8,28 +8,27 @@ import nimble
 def objConstructorMaker(returnType):
     """
     Creates the constructor method for a test object, given the return type.
-
     """
 
     def constructor(
-            data, pointNames='automatic', featureNames='automatic', convertToType=None,
-            name=None, path=(None, None),
+            source, pointNames='automatic', featureNames='automatic',
+            convertToType=None, name=None, path=(None, None),
             treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
             replaceMissingWith=numpy.nan):
-        # Case: data is a path to a file
-        if isinstance(data, str):
+        # Case: source is a path to a file
+        if isinstance(source, str):
             return nimble.data(
-                returnType, data=data, pointNames=pointNames,
+                returnType, source=source, pointNames=pointNames,
                 featureNames=featureNames, name=name,
                 treatAsMissing=treatAsMissing,
                 replaceMissingWith=replaceMissingWith, convertToType=convertToType,
                 useLog=False)
-        # Case: data is some in-python format. We must call initDataObject
+        # Case: source is some in-python format. We must call initDataObject
         # instead of nimble.data because we sometimes need to specify a
         # particular path attribute.
         else:
             return nimble.data(
-                returnType, data=data, pointNames=pointNames,
+                returnType, source=source, pointNames=pointNames,
                 featureNames=featureNames, convertToType=convertToType, name=name,
                 path=path, keepPoints='all', keepFeatures='all',
                 treatAsMissing=treatAsMissing,
@@ -47,24 +46,24 @@ def viewConstructorMaker(concreteType):
     """
 
     def constructor(
-            data, pointNames='automatic', featureNames='automatic',
+            source, pointNames='automatic', featureNames='automatic',
             name=None, path=(None, None), convertToType=None,
             treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
             replaceMissingWith=numpy.nan):
-        # Case: data is a path to a file
-        if isinstance(data, str):
+        # Case: source is a path to a file
+        if isinstance(source, str):
             orig = nimble.data(
-                concreteType, data=data, pointNames=pointNames,
+                concreteType, source=source, pointNames=pointNames,
                 featureNames=featureNames, name=name,
                 treatAsMissing=treatAsMissing,
                 replaceMissingWith=replaceMissingWith, convertToType=convertToType,
                 useLog=False)
-        # Case: data is some in-python format. We must call initDataObject
+        # Case: source is some in-python format. We must call initDataObject
         # instead of nimble.data because we sometimes need to specify a
         # particular path attribute.
         else:
             orig = nimble.core._createHelpers.initDataObject(
-                concreteType, rawData=data, pointNames=pointNames,
+                concreteType, rawData=source, pointNames=pointNames,
                 featureNames=featureNames, name=name, path=path,
                 convertToType=convertToType, keepPoints='all', keepFeatures='all',
                 treatAsMissing=treatAsMissing,
@@ -201,7 +200,7 @@ def methodObjectValidation(func):
         finalAbsPath = startAbsPath
         finalRelPath = startRelPath
         # referenceDataFrom always gets path from other object, inplace numeric
-        # binary will follow dataHelpers.binaryOpNamePathMerge logic
+        # binary will follow _dataHelpers.binaryOpNamePathMerge logic
         if funcName == 'referenceDataFrom':
             finalAbsPath, finalRelPath = getOtherPaths(args, kwargs)
         elif funcName in inplaceNumeric:

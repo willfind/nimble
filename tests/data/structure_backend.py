@@ -32,7 +32,7 @@ from nimble.core.data import Matrix
 from nimble.core.data import DataFrame
 from nimble.core.data import Sparse
 from nimble.core.data import BaseView
-from nimble.core.data.dataHelpers import DEFAULT_PREFIX
+from nimble.core.data._dataHelpers import DEFAULT_PREFIX
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
@@ -289,10 +289,10 @@ class StructureDataSafe(StructureShared):
         data = numpy.array(data).T
 
         orig = self.constructor(data)
-        sparseObj = nimble.data(returnType="Sparse", data=data, useLog=False)
-        listObj = nimble.data(returnType="List", data=data, useLog=False)
-        matixObj = nimble.data(returnType="Matrix", data=data, useLog=False)
-        dataframeObj = nimble.data(returnType="DataFrame", data=data, useLog=False)
+        sparseObj = nimble.data(returnType="Sparse", source=data, useLog=False)
+        listObj = nimble.data(returnType="List", source=data, useLog=False)
+        matixObj = nimble.data(returnType="Matrix", source=data, useLog=False)
+        dataframeObj = nimble.data(returnType="DataFrame", source=data, useLog=False)
 
         copySparse = orig.copy(to='Sparse')
         assert copySparse.isIdentical(sparseObj)
@@ -345,10 +345,10 @@ class StructureDataSafe(StructureShared):
         data = numpy.array(data)
 
         orig = self.constructor(data)
-        sparseObj = nimble.data(returnType="Sparse", data=data, useLog=False)
-        listObj = nimble.data(returnType="List", data=data, useLog=False)
-        matixObj = nimble.data(returnType="Matrix", data=data, useLog=False)
-        dataframeObj = nimble.data(returnType="DataFrame", data=data, useLog=False)
+        sparseObj = nimble.data(returnType="Sparse", source=data, useLog=False)
+        listObj = nimble.data(returnType="List", source=data, useLog=False)
+        matixObj = nimble.data(returnType="Matrix", source=data, useLog=False)
+        dataframeObj = nimble.data(returnType="DataFrame", source=data, useLog=False)
 
         copySparse = orig.copy(to='Sparse')
         assert copySparse.isIdentical(sparseObj)
@@ -400,10 +400,10 @@ class StructureDataSafe(StructureShared):
         data = numpy.empty(shape=(0, 0))
 
         orig = self.constructor(data)
-        sparseObj = nimble.data(returnType="Sparse", data=data, useLog=False)
-        listObj = nimble.data(returnType="List", data=data, useLog=False)
-        matixObj = nimble.data(returnType="Matrix", data=data, useLog=False)
-        dataframeObj = nimble.data(returnType="DataFrame", data=data, useLog=False)
+        sparseObj = nimble.data(returnType="Sparse", source=data, useLog=False)
+        listObj = nimble.data(returnType="List", source=data, useLog=False)
+        matixObj = nimble.data(returnType="Matrix", source=data, useLog=False)
+        dataframeObj = nimble.data(returnType="DataFrame", source=data, useLog=False)
 
         copySparse = orig.copy(to='Sparse')
         assert copySparse.isIdentical(sparseObj)
@@ -456,13 +456,13 @@ class StructureDataSafe(StructureShared):
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0', 'str']
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        sparseObj = nimble.data(returnType="Sparse", data=data, pointNames=pointNames,
+        sparseObj = nimble.data(returnType="Sparse", source=data, pointNames=pointNames,
                                 featureNames=featureNames, useLog=False)
-        listObj = nimble.data(returnType="List", data=data, pointNames=pointNames,
+        listObj = nimble.data(returnType="List", source=data, pointNames=pointNames,
                               featureNames=featureNames, useLog=False)
-        matixObj = nimble.data(returnType="Matrix", data=data, pointNames=pointNames,
+        matixObj = nimble.data(returnType="Matrix", source=data, pointNames=pointNames,
                                featureNames=featureNames, useLog=False)
-        dataframeObj = nimble.data(returnType="DataFrame", data=data,
+        dataframeObj = nimble.data(returnType="DataFrame", source=data,
                                    pointNames=pointNames, featureNames=featureNames,
                                    useLog=False)
 
@@ -2331,13 +2331,13 @@ class StructureModifying(StructureShared):
     def test_init_allEqual(self):
         """ Test __init__() that every way to instantiate produces equal objects """
         # instantiate from list of lists
-        fromList = self.constructor(data=[[1, 2, 3]])
+        fromList = self.constructor(source=[[1, 2, 3]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(mode='w', suffix=".csv") as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
-            fromCSV = self.constructor(data=tmpCSV.name)
+            fromCSV = self.constructor(source=tmpCSV.name)
 
         # instantiate from mtx array file
         with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXArr:
@@ -2347,7 +2347,7 @@ class StructureModifying(StructureShared):
             tmpMTXArr.write("2\n")
             tmpMTXArr.write("3\n")
             tmpMTXArr.flush()
-            fromMTXArr = self.constructor(data=tmpMTXArr.name)
+            fromMTXArr = self.constructor(source=tmpMTXArr.name)
 
         # instantiate from mtx coordinate file
         with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXCoo:
@@ -2357,7 +2357,7 @@ class StructureModifying(StructureShared):
             tmpMTXCoo.write("1 2 2\n")
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.flush()
-            fromMTXCoo = self.constructor(data=tmpMTXCoo.name)
+            fromMTXCoo = self.constructor(source=tmpMTXCoo.name)
 
         # check equality between all pairs
         assert fromList.isIdentical(fromCSV)
@@ -2370,7 +2370,7 @@ class StructureModifying(StructureShared):
     def test_init_allEqualWithNames(self):
         """ Test __init__() that every way to instantiate produces equal objects, with names """
         # instantiate from list of lists
-        fromList = self.constructor(data=[[1, 2, 3]], pointNames=['1P'], featureNames=['one', 'two', 'three'])
+        fromList = self.constructor(source=[[1, 2, 3]], pointNames=['1P'], featureNames=['one', 'two', 'three'])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(mode='w', suffix=".csv") as tmpCSV:
@@ -2379,7 +2379,7 @@ class StructureModifying(StructureShared):
             tmpCSV.write("pointNames,one,two,three\n")
             tmpCSV.write("1P,1,2,3\n")
             tmpCSV.flush()
-            fromCSV = self.constructor(data=tmpCSV.name)
+            fromCSV = self.constructor(source=tmpCSV.name)
 
         # instantiate from mtx file
         with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXArr:
@@ -2391,7 +2391,7 @@ class StructureModifying(StructureShared):
             tmpMTXArr.write("2\n")
             tmpMTXArr.write("3\n")
             tmpMTXArr.flush()
-            fromMTXArr = self.constructor(data=tmpMTXArr.name)
+            fromMTXArr = self.constructor(source=tmpMTXArr.name)
 
         # instantiate from mtx coordinate file
         with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXCoo:
@@ -2403,7 +2403,7 @@ class StructureModifying(StructureShared):
             tmpMTXCoo.write("1 2 2\n")
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.flush()
-            fromMTXCoo = self.constructor(data=tmpMTXCoo.name)
+            fromMTXCoo = self.constructor(source=tmpMTXCoo.name)
 
         # check equality between all pairs
         assert fromList.isIdentical(fromCSV)

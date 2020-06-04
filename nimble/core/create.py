@@ -17,7 +17,7 @@ from nimble.core._createHelpers import createDataFromFile
 from nimble.core._createHelpers import createConstantHelper
 
 
-def data(returnType, data, pointNames='automatic', featureNames='automatic',
+def data(returnType, source, pointNames='automatic', featureNames='automatic',
          convertToType=None, name=None, path=None, keepPoints='all',
          keepFeatures='all', ignoreNonNumericalFeatures=False,
          reuseData=False, inputSeparator='automatic',
@@ -40,13 +40,13 @@ def data(returnType, data, pointNames='automatic', featureNames='automatic',
         "DataFrame" -- which are **case sensitive**. If None is given,
         nimble will attempt to detect the type most appropriate for the
         data.
-    data : object, str
+    source : object, str
         The source of the data to be loaded into the returned object.
-        The source may be any number of in-python objects (lists,
-        numpy arrays, numpy matrices, scipy sparse objects, pandas
-        dataframes) as long as they specify a 2d matrix of data.
-        Alternatively, the data may be read from a file, specified
-        either as a string path, or a currently open file-like object.
+
+        * in-python data object - list, dictionary, numpy array or
+          matrix, scipy sparse matrix, pandas dataframe or series.
+        * open file-like object
+        * str - A path or url to the data file.
     pointNames : 'automatic', bool, list, dict
         Specifices the source for point names in the returned object.
 
@@ -121,7 +121,7 @@ def data(returnType, data, pointNames='automatic', featureNames='automatic',
         not selected, then that feature will be included
     ignoreNonNumericalFeatures : bool
         Indicate whether, when loading from a file, features containing
-        non numercal data shouldn't be loaded into the final object. For
+        non-numeric data shouldn't be loaded into the final object. For
         example, you may be loading a file which has a column of
         strings; setting this flag to true will allow you to load that
         file into a Matrix object (which may contain floats only).
@@ -220,17 +220,17 @@ def data(returnType, data, pointNames='automatic', featureNames='automatic',
         return hasRead and hasWrite
 
     # input is raw data
-    if isAllowedRaw(data, allowLPT=True):
+    if isAllowedRaw(source, allowLPT=True):
         ret = initDataObject(
-            returnType=returnType, rawData=data, pointNames=pointNames,
+            returnType=returnType, rawData=source, pointNames=pointNames,
             featureNames=featureNames, convertToType=convertToType, name=name,
             path=path, keepPoints=keepPoints, keepFeatures=keepFeatures,
             reuseData=reuseData, treatAsMissing=treatAsMissing,
             replaceMissingWith=replaceMissingWith)
     # input is an open file or a path to a file
-    elif isinstance(data, str) or looksFileLike(data):
+    elif isinstance(source, str) or looksFileLike(source):
         ret = createDataFromFile(
-            returnType=returnType, data=data, pointNames=pointNames,
+            returnType=returnType, data=source, pointNames=pointNames,
             featureNames=featureNames, name=name, keepPoints=keepPoints,
             keepFeatures=keepFeatures,
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
@@ -238,8 +238,8 @@ def data(returnType, data, pointNames='automatic', featureNames='automatic',
             replaceMissingWith=replaceMissingWith)
     # no other allowed inputs
     else:
-        msg = "data must contain either raw data or the path to a file to be "
-        msg += "loaded"
+        msg = "source must contain either raw data or the path to a file to "
+        msg += "be loaded"
         raise InvalidArgumentType(msg)
 
     handleLogging(useLog, 'load', returnType, len(ret.points),

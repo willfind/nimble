@@ -16,12 +16,12 @@ from .base import Base
 from .base_view import BaseView
 from .listPoints import ListPoints, ListPointsView
 from .listFeatures import ListFeatures, ListFeaturesView
-from .dataHelpers import DEFAULT_PREFIX
-from .dataHelpers import isAllowedSingleElement
-from .dataHelpers import createDataNoValidation
-from .dataHelpers import csvCommaFormat
-from .dataHelpers import denseCountUnique
-from .dataHelpers import NimbleElementIterator
+from ._dataHelpers import DEFAULT_PREFIX
+from ._dataHelpers import isAllowedSingleElement
+from ._dataHelpers import createDataNoValidation
+from ._dataHelpers import csvCommaFormat
+from ._dataHelpers import denseCountUnique
+from ._dataHelpers import NimbleElementIterator
 
 @inheritDocstringsFactory(Base)
 class List(Base):

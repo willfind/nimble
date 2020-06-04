@@ -11,18 +11,18 @@ from nimble.exceptions import PackageException, ImproperObjectAction
 from nimble._utility import inheritDocstringsFactory, is2DArray
 from nimble._utility import scipy, pd
 from nimble._utility import sparseMatrixToArray
-from . import dataHelpers
+from . import _dataHelpers
 from .base import Base
 from .base_view import BaseView
 from .sparsePoints import SparsePoints, SparsePointsView
 from .sparseFeatures import SparseFeatures, SparseFeaturesView
 from .stretch import StretchSparse
-from .dataHelpers import DEFAULT_PREFIX
-from .dataHelpers import allDataIdentical
-from .dataHelpers import createDataNoValidation
-from .dataHelpers import csvCommaFormat
-from .dataHelpers import denseCountUnique
-from .dataHelpers import NimbleElementIterator
+from ._dataHelpers import DEFAULT_PREFIX
+from ._dataHelpers import allDataIdentical
+from ._dataHelpers import createDataNoValidation
+from ._dataHelpers import csvCommaFormat
+from ._dataHelpers import denseCountUnique
+from ._dataHelpers import NimbleElementIterator
 
 @inheritDocstringsFactory(Base)
 class Sparse(Base):
@@ -1393,7 +1393,7 @@ class SparseView(BaseView, Sparse):
         """ Perform element wise absolute value on this object """
         ret = self.copy(to="Sparse")
         numpy.absolute(ret.data.data, out=ret.data.data)
-        ret._name = dataHelpers.nextDefaultObjectName()
+        ret._name = _dataHelpers.nextDefaultObjectName()
 
         return ret
 

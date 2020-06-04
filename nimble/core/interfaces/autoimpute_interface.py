@@ -10,8 +10,8 @@ from nimble._utility import inheritDocstringsFactory
 from .universal_interface import UniversalInterface
 from .universal_interface import PredefinedInterface
 from .scikit_learn_interface import _SciKitLearnAPI
-from .interface_helpers import modifyImportPathAndImport
-from .interface_helpers import PythonSearcher
+from ._interface_helpers import modifyImportPathAndImport
+from ._interface_helpers import PythonSearcher
 
 
 @inheritDocstringsFactory(UniversalInterface)

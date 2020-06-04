@@ -10,7 +10,7 @@ import numpy
 import nimble
 from nimble._utility import pd
 from .axis import Axis
-from .dataHelpers import denseAxisUniqueArray, uniqueNameGetter
+from ._dataHelpers import denseAxisUniqueArray, uniqueNameGetter
 
 class DataFrameAxis(Axis):
     """

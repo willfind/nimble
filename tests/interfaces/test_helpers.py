@@ -6,9 +6,9 @@ import numpy
 
 import nimble
 from nimble.core.data import Base
-from nimble.core.interfaces.interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
-from nimble.core.interfaces.interface_helpers import extractWinningPredictionLabel
-from nimble.core.interfaces.interface_helpers import generateAllPairs
+from nimble.core.interfaces._interface_helpers import calculateSingleLabelScoresFromOneVsOneScores
+from nimble.core.interfaces._interface_helpers import extractWinningPredictionLabel
+from nimble.core.interfaces._interface_helpers import generateAllPairs
 
 
 def test_OvOTournament():

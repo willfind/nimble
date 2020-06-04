@@ -7,8 +7,8 @@ import nimble
 from nimble._utility import inheritDocstringsFactory
 from nimble.exceptions import ImproperObjectAction
 from .base import Base
-from .dataHelpers import readOnlyException
-from .dataHelpers import exceptionDocstringFactory
+from ._dataHelpers import readOnlyException
+from ._dataHelpers import exceptionDocstringFactory
 
 exceptionDocstring = exceptionDocstringFactory(Base)
 

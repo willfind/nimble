@@ -19,9 +19,9 @@ def test_cosineSimilarity():
     orth = numpy.array([[0], [1]])
     neg = numpy.array([[-1], [0]])
 
-    origMatrix = nimble.data('Matrix', data=orig, useLog=False)
-    orthMatrix = nimble.data('Matrix', data=orth, useLog=False)
-    negMatrix = nimble.data('Matrix', data=neg, useLog=False)
+    origMatrix = nimble.data('Matrix', source=orig, useLog=False)
+    orthMatrix = nimble.data('Matrix', source=orth, useLog=False)
+    negMatrix = nimble.data('Matrix', source=neg, useLog=False)
 
     result0 = cosineSimilarity(origMatrix, origMatrix)
     result1 = cosineSimilarity(origMatrix, orthMatrix)
@@ -34,7 +34,7 @@ def test_cosineSimilarity():
 def test_cosineSimilarityZeros():
     zeros = [[0], [0]]
 
-    zerosMatrix = nimble.data('Matrix', data=zeros)
+    zerosMatrix = nimble.data('Matrix', source=zeros)
 
     result0 = cosineSimilarity(zerosMatrix, zerosMatrix)
 
@@ -43,23 +43,23 @@ def test_cosineSimilarityZeros():
 @raises(InvalidArgumentType)
 def test_cosineSimilarityKnownWrongType():
     orig = numpy.array([[1], [0]])
-    origMatrix = nimble.data('Matrix', data=orig)
+    origMatrix = nimble.data('Matrix', source=orig)
 
     result = cosineSimilarity(orig, origMatrix)
 
 @raises(InvalidArgumentType)
 def test_cosineSimilarityPredictedWrongType():
     orig = numpy.array([[1], [0]])
-    origMatrix = nimble.data('Matrix', data=orig)
+    origMatrix = nimble.data('Matrix', source=orig)
 
     result = cosineSimilarity(origMatrix, orig)
 
 @raises(InvalidArgumentValue)
 def test_cosineSimilarityPredictedWrongShape():
     orig = numpy.array([[1], [0]])
-    origMatrix = nimble.data('Matrix', data=orig)
+    origMatrix = nimble.data('Matrix', source=orig)
     pred = numpy.array([[1, 1], [0, 0]])
-    predMatrix = nimble.data('Matrix', data=pred)
+    predMatrix = nimble.data('Matrix', source=pred)
 
     result = cosineSimilarity(origMatrix, predMatrix)
 

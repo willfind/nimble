@@ -9,7 +9,7 @@ import numpy
 
 import nimble
 from .axis import Axis
-from .dataHelpers import denseAxisUniqueArray, uniqueNameGetter
+from ._dataHelpers import denseAxisUniqueArray, uniqueNameGetter
 
 class MatrixAxis(Axis):
     """

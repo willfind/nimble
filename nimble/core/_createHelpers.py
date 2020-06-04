@@ -19,7 +19,7 @@ from nimble.exceptions import InvalidArgumentValueCombination, PackageException
 from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import FileFormatException
 from nimble.core.data import Base
-from nimble.core.data.dataHelpers import isAllowedSingleElement
+from nimble.core.data._dataHelpers import isAllowedSingleElement
 from nimble.core.data.sparse import removeDuplicatesNative
 from nimble._utility import numpy2DArray, is2DArray
 from nimble._utility import sparseMatrixToArray

@@ -27,7 +27,7 @@ from tests.helpers import noLogEntryExpected
 
 def testStDev():
     dataArr = np.array([[1], [1], [3], [4], [2], [6], [12], [0]])
-    testRowList = nimble.data('List', data=dataArr, featureNames=['nums'])
+    testRowList = nimble.data('List', source=dataArr, featureNames=['nums'])
     stDevContainer = testRowList.features.calculate(standardDeviation)
     stDev = stDevContainer[0, 0]
     assert_almost_equal(stDev, 3.8891, 3)

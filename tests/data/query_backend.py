@@ -26,8 +26,8 @@ import nimble
 from nimble import match
 from nimble import loadData
 from nimble.core.data import BaseView
-from nimble.core.data.dataHelpers import formatIfNeeded
-from nimble.core.data.dataHelpers import DEFAULT_PREFIX
+from nimble.core.data._dataHelpers import formatIfNeeded
+from nimble.core.data._dataHelpers import DEFAULT_PREFIX
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
@@ -197,7 +197,7 @@ class QueryBackend(DataTestObject):
             toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
 
             # read it back into a different object, then test equality
-            readObj = self.constructor(data=tmpFile.name)
+            readObj = self.constructor(source=tmpFile.name)
 
         assert readObj.isIdentical(toWrite)
         assert toWrite.isIdentical(readObj)
@@ -251,9 +251,9 @@ class QueryBackend(DataTestObject):
 
                 # read it back into a different object, then test equality
                 if axis == 'point':
-                    readObj = self.constructor(data=tmpFile.name, featureNames=True)
+                    readObj = self.constructor(source=tmpFile.name, featureNames=True)
                 else:
-                    readObj = self.constructor(data=tmpFile.name, pointNames=True)
+                    readObj = self.constructor(source=tmpFile.name, pointNames=True)
             axisRead = getattr(readObj, axis + 's')
             # isIdentical will ignore default names, but we still want to
             # ensure everything else is a match
@@ -284,7 +284,7 @@ class QueryBackend(DataTestObject):
 
             # read it back into a different object, then test equality
             # must specify featureNames=True because 'automatic' will not detect
-            readObj = self.constructor(data=tmpFile.name, featureNames=True)
+            readObj = self.constructor(source=tmpFile.name, featureNames=True)
 
         assert readObj.isIdentical(toWrite)
         assert toWrite.isIdentical(readObj)
@@ -304,7 +304,7 @@ class QueryBackend(DataTestObject):
             toWrite.writeFile(tmpFile.name, fileFormat='mtx', includeNames=True)
 
             # read it back into a different object, then test equality
-            readObj = self.constructor(data=tmpFile.name)
+            readObj = self.constructor(source=tmpFile.name)
 
         assert readObj.isIdentical(toWrite)
         assert toWrite.isIdentical(readObj)

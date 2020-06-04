@@ -304,6 +304,8 @@ def test_settings_saving():
 @configSafetyWrapper
 def test_settings_savingSection():
     """ Test nimble.settings.saveChanges when specifying a section """
+    nimble.settings.changes = {}
+
     nimble.settings.set("TestSec1", "op1", '1')
     nimble.settings.set("TestSec1", "op2", '2')
     nimble.settings.set("TestSec2", "op1", '1')
@@ -328,6 +330,8 @@ def test_settings_savingSection():
 @configSafetyWrapper
 def test_settings_savingOption():
     """ Test nimble.settings.saveChanges when specifying a section and option """
+    nimble.settings.changes = {}
+
     nimble.settings.set("TestSec1", "op1", '1')
     nimble.settings.set("TestSec1", "op2", '2')
     nimble.settings.set("TestSec2", "op1", '1')
@@ -450,9 +454,7 @@ def test_settings_setInterfaceOptionsChanges():
 def test_settings_allowedNames():
     """ Test that you can only set allowed names in interface sections """
 
-    assert nimble.settings.changes == {}
     nimble.settings.set('nimble', 'Hello', "Goodbye")
-    nimble.settings.changes = {}
 
 
 @configSafetyWrapper

@@ -28,7 +28,7 @@ from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
 from nimble.random import numpyRandom
 from nimble.random import pythonRandom
-from nimble.core.data.dataHelpers import DEFAULT_PREFIX
+from nimble.core.data._dataHelpers import DEFAULT_PREFIX
 
 from .baseObject import DataTestObject
 from tests.helpers import logCountAssertionFactory, noLogEntryExpected

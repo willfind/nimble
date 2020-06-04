@@ -8,8 +8,8 @@ import numpy
 from nimble._utility import pd
 from .axis_view import AxisView
 from .dataframeAxis import DataFrameAxis
-from .dataHelpers import fillArrayWithCollapsedFeatures
-from .dataHelpers import fillArrayWithExpandedFeatures
+from ._dataHelpers import fillArrayWithCollapsedFeatures
+from ._dataHelpers import fillArrayWithExpandedFeatures
 from .points import Points
 from .points_view import PointsView
 

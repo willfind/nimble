@@ -27,14 +27,14 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.logger import handleLogging
 from .points import Points
 from .features import Features
-from .dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
-from .dataHelpers import valuesToPythonList, constructIndicesList
-from .dataHelpers import validateInputString
-from .dataHelpers import isQueryString, axisQueryFunction
-from .dataHelpers import isAllowedSingleElement, sortIndexPosition
-from .dataHelpers import createDataNoValidation
-from .dataHelpers import wrapMatchFunctionFactory
-from .dataHelpers import validateAxisFunction
+from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
+from ._dataHelpers import valuesToPythonList, constructIndicesList
+from ._dataHelpers import validateInputString
+from ._dataHelpers import isQueryString, axisQueryFunction
+from ._dataHelpers import isAllowedSingleElement, sortIndexPosition
+from ._dataHelpers import createDataNoValidation
+from ._dataHelpers import wrapMatchFunctionFactory
+from ._dataHelpers import validateAxisFunction
 
 class Axis(object):
     """

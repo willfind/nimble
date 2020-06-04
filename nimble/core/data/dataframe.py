@@ -15,11 +15,11 @@ from .base import Base
 from .base_view import BaseView
 from .dataframePoints import DataFramePoints, DataFramePointsView
 from .dataframeFeatures import DataFrameFeatures, DataFrameFeaturesView
-from .dataHelpers import allDataIdentical
-from .dataHelpers import DEFAULT_PREFIX
-from .dataHelpers import createDataNoValidation
-from .dataHelpers import denseCountUnique
-from .dataHelpers import NimbleElementIterator
+from ._dataHelpers import allDataIdentical
+from ._dataHelpers import DEFAULT_PREFIX
+from ._dataHelpers import createDataNoValidation
+from ._dataHelpers import denseCountUnique
+from ._dataHelpers import NimbleElementIterator
 
 @inheritDocstringsFactory(Base)
 class DataFrame(Base):
