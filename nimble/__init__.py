@@ -44,10 +44,12 @@ from nimble import fill
 from nimble import exceptions
 
 # load settings from configuration file
+#: User control over configurable options
+#:
+#: See Also
+#: --------
+#: nimble.core.configuration.SessionConfiguration
 settings = core.configuration.loadSettings()
-"""
-User control over configurable options.
-"""
 
 # initialize the interfaces
 core.interfaces.initInterfaceSetup()

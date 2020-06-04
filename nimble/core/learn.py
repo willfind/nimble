@@ -213,7 +213,8 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     See Also
     --------
-    data.Points.normalize, data.Features.normalize
+    nimble.core.data.Points.normalize,
+    nimble.core.data.Features.normalize
 
     Examples
     --------
@@ -316,7 +317,8 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
 
     See Also
     --------
-    data.Points.fillMatching, data.Features.fillMatching
+    nimble.core.data.Points.fillMatching,
+    nimble.core.data.Features.fillMatching
 
     Examples
     --------
@@ -466,7 +468,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
 
     See Also
     --------
-    KFoldCrossValidator
+    nimble.core.learn.KFoldCrossValidator
 
     Examples
     --------
@@ -575,7 +577,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     See Also
     --------
     trainAndApply, trainAndTest, trainAndTestOnTrainingData, CV,
-    interfaces.TrainedLearner
+    nimble.interfaces.TrainedLearner
 
     Examples
     --------
@@ -758,7 +760,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     See Also
     --------
     train, trainAndTest, trainAndTestOnTrainingData, CV,
-    interfaces.TrainedLearner.apply
+    nimble.core.interfaces.TrainedLearner.apply
 
     Examples
     --------
@@ -939,7 +941,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     See Also
     --------
     train, trainAndApply, trainAndTestOnTrainingData, CV,
-    interfaces.TrainedLearner.test
+    nimble.core.interfaces.TrainedLearner.test
 
     Examples
     --------
@@ -1250,56 +1252,9 @@ class Init(object):
         kwargStr = ", ".join(formatKwargs)
         return "Init({}, {})".format(repr(self.name), kwargStr)
 
-class KFoldCrossValidator():
+class KFoldCrossValidator(object):
     """
-    Perform k-fold cross-validation and store the results.
-
-    On instantiation, cross-validation will be performed.  The results
-    can be accessed through the object's attributes and methods.
-
-    Parameters
-    ----------
-    learnerName : str
-        nimble compliant algorithm name in the form 'package.algorithm'
-        e.g. 'sciKitLearn.KNeighborsClassifier'
-    X : nimble Base object
-        points/features data
-    Y : nimble Base object
-        labels/data about points in X
-    performanceFunction : function
-        Premade options are available in nimble.calculate.
-        Function used to evaluate the performance score for each run.
-        Function is of the form: def func(knownValues, predictedValues).
-    arguments : dict
-        Mapping argument names (strings) to their values, to be used
-        during training and application. eg. {'dimensions':5, 'k':5}
-        To trigger cross-validation using multiple values for arguments,
-        specify different values for each parameter using a nimble.CV
-        object. eg. {'k': nimble.CV([1,3,5])} will generate an error
-        score for  the learner when the learner was passed all three
-        values of ``k``, separately. These will be merged any
-        kwarguments for the learner.
-    folds : int
-        The number of folds used in the cross validation. Can't exceed
-        the number of points in X, Y.
-    scoreMode : str
-        Used by computeMetrics.
-    useLog : bool, None
-        Local control for whether to send results/timing to the logger.
-        If None (default), use the value as specified in the "logger"
-        "enabledByDefault" configuration option. If True, send to the
-        logger regardless of the global option. If False, do **NOT**
-        send to the logger, regardless of the global option.
-    kwarguments
-        Keyword arguments specified variables that are passed to the
-        learner. To trigger cross-validation using multiple values for
-        arguments, specify different values for each parameter using a
-        nimble.CV object.
-        eg. arg1=nimble.CV([1,2,3]), arg2=nimble.CV([4,5,6])
-        which correspond to permutations/argument states with one
-        element from arg1 and one element from arg2, such that an
-        example generated permutation/argument state would be
-        ``arg1=2, arg2=4``. Will be merged with ``arguments``.
+    Full access to the results of cross-validation.
 
     Attributes
     ----------
@@ -1315,23 +1270,57 @@ class KFoldCrossValidator():
         The scoreMode set for training.
     arguments : dict
         A dictionary of the merged arguments and kwarguments.
-    allResults : list
-        Each dictionary in the returned list will contain a permutation
-        of the arguments and the performance of that permutation. A list
-        of dictionaries containing each argument permutation and its
-        performance based on the ``performanceFunction``.  The key to
-        access the performance value will be the __name__ attribute of
-        the ``performanceFunction``. If the ``performanceFunction`` has
-        no __name__ attribute or is a lambda function the key will be
-        set to 'performance'.
-    bestArguments : dict
-        The argument permutation names and values which provided the
-        optimal result according to the ``performanceFunction``.
-    bestResult
-        The optimal output value from the ``performanceFunction``.
     """
     def __init__(self, learnerName, X, Y, performanceFunction, arguments=None,
                  folds=10, scoreMode='label', useLog=None, **kwarguments):
+        """
+        Perform k-fold cross-validation and store the results.
+
+        On instantiation, cross-validation will be performed.  The results
+        can be accessed through the object's attributes and methods.
+
+        Parameters
+        ----------
+        learnerName : str
+            nimble compliant algorithm name in the form
+            'package.algorithm' e.g. 'sciKitLearn.KNeighborsClassifier'
+        X : nimble Base object
+            points/features data
+        Y : nimble Base object
+            labels/data about points in X
+        performanceFunction : function
+            Premade options are available in nimble.calculate.
+            Function used to evaluate the performance score for each
+            run. Function is of the form:
+            def func(knownValues, predictedValues).
+        arguments : dict
+            Mapping argument names (strings) to their values, to be used
+            during training and application. eg. {'dimensions':5, 'k':5}
+            To trigger cross-validation using multiple values for
+            arguments, specify different values for each parameter using
+            a nimble.CV object. eg. {'k': nimble.CV([1,3,5])} will
+            generate an error score for  the learner when the learner
+            was passed all three values of ``k``, separately. These will
+            be merged any kwarguments for the learner.
+        folds : int
+            The number of folds used in the cross validation. Can't
+            exceed the number of points in X, Y.
+        scoreMode : str
+            Used by computeMetrics.
+        useLog : bool, None
+            Local control for whether to send results/timing to the
+            logger.
+        kwarguments
+            Keyword arguments specified variables that are passed to the
+            learner. To trigger cross-validation using multiple values
+            for arguments, specify different values for each parameter
+            using a nimble.CV object.
+            eg. arg1=nimble.CV([1,2,3]), arg2=nimble.CV([4,5,6])
+            which correspond to permutations/argument states with one
+            element from arg1 and one element from arg2, such that an
+            example generated permutation/argument state would be
+            ``arg1=2, arg2=4``. Will be merged with ``arguments``.
+        """
         self.learnerName = learnerName
         # detectBestResult will raise exception for invalid performanceFunction
         detected = nimble.calculate.detectBestResult(performanceFunction)

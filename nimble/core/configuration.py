@@ -216,17 +216,21 @@ class ToDelete(object):
 
 class SessionConfiguration(object):
     """
-    Class through which nimble user interacts with the saveable
-    configuration options define behavior dependent on the host system.
-    The backend is a SortedConfigParser (essentially a SafeConfigParser
-    where sections and options are written in sorted order) object which
-    deals with the file I/O of the INI formated file on disk. This
-    wrapper class allows for temporary changes to that configuration set
-    and gives the user control over which changes should be saved and
-    when.
+    Manage settings during a Session.
     """
 
     def __init__(self, path):
+        """
+        Class through which nimble user interacts with the saveable
+        configuration options to define behavior dependent on the host
+        system.
+        The backend is a SortedConfigParser (essentially a
+        SafeConfigParser where sections and options are written in
+        sorted order) object which deals with the file I/O of the INI
+        formated file on disk. This wrapper class allows for temporary
+        changes to that configuration set and gives the user control
+        over which changes should be saved and when.
+        """
         self.cp = SortedCommentPreservingConfigParser()
         # Needs to be set if you want option names to be case sensitive
         self.cp.optionxform = str

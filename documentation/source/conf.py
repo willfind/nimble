@@ -34,8 +34,18 @@ def process_docstring(app, what, name, obj, options, lines):
     if what == 'module' and options.get('noindex', False):
         del lines[:]
 
+def process_signature(app, what, name, obj, options, signature,
+                      return_annotation):
+    keepSignatures = ['nimble.CV', 'nimble.Init']
+    if what == 'class' and name not in keepSignatures:
+        signature = ''
+
+    return signature, return_annotation
+
+
 def setup(app):
     app.connect('autodoc-process-docstring', process_docstring)
+    app.connect('autodoc-process-signature', process_signature)
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -52,7 +62,6 @@ intersphinx_mapping = {'numpy': ('http://docs.scipy.org/doc/numpy/', None),}
 
 autodoc_default_options = {
     'undoc-members': True,
-    'show-inheritance': True
 }
 
 # prevents autoclass from adding an autosummary table which leads to a warning

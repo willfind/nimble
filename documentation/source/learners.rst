@@ -9,5 +9,6 @@ nimble.learners
 
       learners/knn_classification
       learners/mean_constant
-      learners/multioutput_ridge_regression
       learners/ridge_regression
+      learners/multioutput_ridge_regression
+      learners/multioutput_linear_regression

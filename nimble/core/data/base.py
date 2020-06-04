@@ -64,49 +64,28 @@ def hashCodeFunc(elementValue, pointNum, featureNum):
 
 class Base(object):
     """
-    Class defining important data manipulation operations and giving
-    functionality for the naming the points and features of that data. A
-    mapping from names to indices is given by the [point/feature]Names
-    attribute, the inverse of that mapping is given by
-    [point/feature]NamesInverse.
+    The base class for all nimble data objects.
 
-    Specifically, this includes point and feature names, an object
-    name, and originating pathes for the data in this object. Note:
-    this method (as should all other __init__ methods in this
-    hierarchy) makes use of super().
-
-    Parameters
-    ----------
-    pointNames : iterable, dict
-        A list of point names in the order they appear in the data
-        or a dictionary mapping names to indices. None is given if
-        default names are desired.
-    featureNames : iterable, dict
-        A list of feature names in the order they appear in the data
-        or a dictionary mapping names to indices. None is given if
-        default names are desired.
-    name : str
-        The name to be associated with this object.
-    paths : tuple
-        The first entry is taken to be the string representing the
-        absolute path to the source file of the data and the second
-        entry is taken to be the relative path. Both may be None if
-        these values are to be unspecified.
-    kwds
-        Potentially full of arguments further up the class
-        hierarchy, as following best practices for use of super().
-        Note, however, that this class is the root of the object
-        hierarchy as statically defined.
+    All data types inherit their functionality from this object, then
+    apply their own implementations of its methods (when necessary).
+    Methods in this object apply to the entire object or its elements
+    and its ``points`` and ``features`` attributes provide addtional
+    methods that apply point-by-point and feature-by-feature,
+    respectively.
 
     Attributes
     ----------
+    points
+        Access to methods applying to points.
+    features
+        Access to methods applying to features.
     shape : tuple
         The number of points and features in the object in the format
         (points, features).
-    points : Axis object
-        An object handling functions manipulating data by points.
-    features : Axis object
-        An object handling functions manipulating data by features.
+    dimensions : tuple
+        The actual dimensions of the data in the object. All data is
+        stored two-dimensionally, so for objects with more than two-
+        dimensions this value will differ from the ``shape`` attribute.
     name : str
         A name to call this object when printing or logging.
     absolutePath : str
@@ -119,6 +98,41 @@ class Base(object):
 
     def __init__(self, shape, pointNames=None, featureNames=None, name=None,
                  paths=(None, None), **kwds):
+        """
+        Class defining important data manipulation operations and giving
+        functionality for the naming the points and features of that
+        data. A mapping from names to indices is given by the
+        [point/feature]Names attribute, the inverse of that mapping is
+        given by [point/feature]NamesInverse.
+
+        Specifically, this includes point and feature names, an object
+        name, and originating pathes for the data in this object. Note:
+        this method (as should all other __init__ methods in this
+        hierarchy) makes use of super().
+
+        Parameters
+        ----------
+        pointNames : iterable, dict
+            A list of point names in the order they appear in the data
+            or a dictionary mapping names to indices. None is given if
+            default names are desired.
+        featureNames : iterable, dict
+            A list of feature names in the order they appear in the data
+            or a dictionary mapping names to indices. None is given if
+            default names are desired.
+        name : str
+            The name to be associated with this object.
+        paths : tuple
+            The first entry is taken to be the string representing the
+            absolute path to the source file of the data and the second
+            entry is taken to be the relative path. Both may be None if
+            these values are to be unspecified.
+        kwds
+            Potentially full of arguments further up the class
+            hierarchy, as following best practices for use of super().
+            Note, however, that this class is the root of the object
+            hierarchy as statically defined.
+        """
         self._shape = list(shape)
         if pointNames is not None and len(pointNames) != self._pointCount:
             msg = "The length of the pointNames (" + str(len(pointNames))

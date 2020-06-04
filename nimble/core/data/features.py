@@ -23,13 +23,14 @@ from .dataHelpers import limitedTo2D
 class Features(object):
     """
     Methods that can be called on a nimble Base objects feature axis.
-
-    Parameters
-    ----------
-    base : Base
-        The Base instance that will be queried and modified.
     """
     def __init__(self, base):
+        """
+        Parameters
+        ----------
+        base : Base
+            The Base instance that will be queried and modified.
+        """
         self._base = base
         super(Features, self).__init__()
 

@@ -89,7 +89,10 @@ def showLog(levelOfDetail=2, leastSessionsAgo=0, mostSessionsAgo=2,
           Includes timestamp, session number, learner name, train and
           test object details, parameter, metric, and timer data if
           available.
-        * Level 3 - Include cross-validation data.
+        * Level 3 - Include cross-validation data. Note: The
+          'enableCrossValidationDeepLogging' option in the 'logger'
+          section of nimble.settings, must be set to 'True' during the
+          session in order for Level 3 data to be stored in the log.
     leastSessionsAgo : int
         The least number of sessions since the most recent session to
         include in the log. Default is 0.

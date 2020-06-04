@@ -21,13 +21,14 @@ from .dataHelpers import limitedTo2D
 class Points(object):
     """
     Methods that can be called on a nimble Base objects point axis.
-
-    Parameters
-    ----------
-    base : Base
-        The Base instance that will be queried and modified.
     """
     def __init__(self, base):
+        """
+        Parameters
+        ----------
+        base : Base
+            The Base instance that will be queried and modified.
+        """
         self._base = base
         super(Points, self).__init__()
 
