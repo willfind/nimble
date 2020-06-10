@@ -3,8 +3,8 @@ import numpy
 
 import nimble
 from nimble import CustomLearner
-from nimble.helpers import findBestInterface
-from nimble.match import anyTrue, convertMatchToFunction
+from nimble.core._learnHelpers import findBestInterface
+from nimble.match import anyTrue, _convertMatchToFunction
 from nimble.exceptions import InvalidArgumentValue
 
 def sklPresent():
@@ -15,6 +15,9 @@ def sklPresent():
     return True
 
 class KNNImputation(CustomLearner):
+    """
+    Imputation using K-Nearest Neighbors algorithms.
+    """
     learnerType = 'unknown'
 
     def train(self, trainX, trainY=None, k=5, mode=None):
@@ -38,7 +41,7 @@ class KNNImputation(CustomLearner):
                 msg += 'regression mode.'
                 raise InvalidArgumentValue(msg)
 
-        match = convertMatchToFunction(numpy.nan)
+        match = _convertMatchToFunction(numpy.nan)
         self.match = trainX.matchingElements(match, useLog=False)
 
     def apply(self, testX):
@@ -72,6 +75,5 @@ class KNNImputation(CustomLearner):
         pnames = testX.points._getNamesNoGeneration()
         fnames = testX.features._getNamesNoGeneration()
         paths = (testX._absPath, testX._relPath)
-        return nimble.createData(testX.getTypeString(), result,
-                                 pointNames=pnames, featureNames=fnames,
-                                 path=paths, useLog=False)
+        return nimble.data(testX.getTypeString(), result, pointNames=pnames,
+                           featureNames=fnames, path=paths, useLog=False)

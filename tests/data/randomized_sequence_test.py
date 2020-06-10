@@ -18,10 +18,10 @@ import random
 import numpy
 
 import nimble
-from nimble.data import Base
-from nimble.data import BaseView
-from nimble.helpers import inspectArguments
-from nimble.randomness import pythonRandom
+from nimble.core.data import Base
+from nimble.core.data import BaseView
+from nimble._utility import inspectArguments
+from nimble.random import pythonRandom
 
 numberOperations = 100
 numPoints = 4
@@ -73,7 +73,7 @@ def TODO_RandomSequenceOfMethods():
     # dense int trial
     sparcity = 0.05
     objectList = []
-    first = nimble.createRandomData('List', points, features, sparcity, elementType='int')
+    first = nimble.random.data('List', points, features, sparcity, elementType='int')
     objectList.append(first)
     objectList.append(first.copy(to='Matrix'))
     objectList.append(first.copy(to='Sparse'))
@@ -82,7 +82,7 @@ def TODO_RandomSequenceOfMethods():
     ## dense float trial
     sparcity = 0.05
     objectList = []
-    first = nimble.createRandomData('List', points, features, sparcity, elementType='float')
+    first = nimble.random.data('List', points, features, sparcity, elementType='float')
     objectList.append(first)
     objectList.append(first.copy(to='Matrix'))
     objectList.append(first.copy(to='Sparse'))
@@ -91,7 +91,7 @@ def TODO_RandomSequenceOfMethods():
     # sparse int trial
     sparcity = 0.9
     objectList = []
-    first = nimble.createRandomData('List', points, features, sparcity, elementType='int')
+    first = nimble.random.data('List', points, features, sparcity, elementType='int')
     objectList.append(first)
     objectList.append(first.copy(to='Matrix'))
     objectList.append(first.copy(to='Sparse'))
@@ -100,7 +100,7 @@ def TODO_RandomSequenceOfMethods():
     # sparse float trial
     sparcity = 0.9
     objectList = []
-    first = nimble.createRandomData('List', points, features, sparcity, elementType='float')
+    first = nimble.random.data('List', points, features, sparcity, elementType='float')
     objectList.append(first)
     objectList.append(first.copy(to='Matrix'))
     objectList.append(first.copy(to='Sparse'))
@@ -133,7 +133,7 @@ def runSequence(objectList):
 
         # set up parameters
         paramsPerObj = []
-        randomseed = nimble.randomness.pythonRandom.randint(0, 2**32 - 1)
+        randomseed = nimble.random.pythonRandom.randint(0, 2**32 - 1)
         for i in range(len(objectList)):
             paramsPerObj.append(makeParams(currFunc, objectList[i], randomseed))
 
@@ -141,9 +141,9 @@ def runSequence(objectList):
         results = []
         for i in range(len(objectList)):
             funcToCall = getattr(objectList[i], currFunc) #eval('objectList[i].' + currFunc)
-            nimble.randomness.startAlternateControl(randomseed)
+            nimble.random._startAlternateControl(randomseed)
             currResult = funcToCall(*paramsPerObj[i])
-            nimble.randomness.endAlternateControl()
+            nimble.random._endAlternateControl()
             results.append(currResult)
 
         # need to check equality of results
@@ -252,14 +252,14 @@ def genObj(dataObj, seed, matchType=True, matchPoints=False, matchFeatures=False
 
     if points == 0 or features == 0:
         rawData = numpy.empty((points, features))
-        ret = nimble.createData('Matrix', rawData)
+        ret = nimble.data('Matrix', rawData)
         ret = ret.copy(to=dataType)
     else:
-        nimble.randomness.startAlternateControl()
-        nimble.setRandomSeed(random.randint(0, 2**32 - 1))
-        ret = nimble.createRandomData("Matrix", points, features, .5, elementType='int')
+        nimble.random._startAlternateControl()
+        nimble.random.setSeed(random.randint(0, 2**32 - 1))
+        ret = nimble.random.data("Matrix", points, features, .5, elementType='int')
         ret = ret.copy(to=dataType)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
     return ret
 
 
@@ -647,7 +647,7 @@ def makeParams(funcName, dataObj, seed):
 
 def TODO_GeneratorListSandC():
     data = [[1, 2, 3], [4, 5, 6]]
-    dobj = nimble.createData('List', data)
+    dobj = nimble.data('List', data)
 
     allMethods = dir(Base)
     testable = []
@@ -670,12 +670,12 @@ def TODO_GeneratorListSandC():
 
 def TODO_MakeParamsExclusivity():
     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    dobj = nimble.createData('List', data)
+    dobj = nimble.data('List', data)
 
     for funcName in mutuallyExclusiveParams.keys():
         # random trials
         for i in range(50):
-            genArgs = makeParams(funcName, dobj, nimble.randomness.pythonRandom.random())
+            genArgs = makeParams(funcName, dobj, nimble.random.pythonRandom.random())
             (args, v, k, defaults) = inspectArguments(getattr(dobj, funcName))
             seenNonDefault = False
             for ex in mutuallyExclusiveParams[funcName]:

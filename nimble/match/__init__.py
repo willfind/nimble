@@ -1,9 +1,9 @@
 """
-Collection of functions primarily determining if a data value or entire
-data object satisfy a given condition.
+Collection of functions determining if a data value or entire data
+object satisfy a given condition.
 """
 
-from .match import convertMatchToFunction
+from .match import _convertMatchToFunction
 from .match import missing
 from .match import numeric
 from .match import nonNumeric
@@ -46,7 +46,6 @@ __all__ = ['allBoolean', 'allFalse', 'allInfinity', 'allMissing',
            'allPositive', 'allTrue', 'allValues', 'allZero', 'anyBoolean',
            'anyFalse', 'anyInfinity', 'anyMissing', 'anyNegative',
            'anyNonNumeric', 'anyNonZero', 'anyNumeric', 'anyPositive',
-           'anyTrue', 'anyValues', 'anyZero', 'boolean',
-           'convertMatchToFunction', 'false', 'infinity', 'missing',
-           'negative', 'nonNumeric', 'nonZero', 'numeric', 'positive', 'true',
-           'zero']
+           'anyTrue', 'anyValues', 'anyZero', 'boolean', 'false', 'infinity',
+           'missing', 'negative', 'nonNumeric', 'nonZero', 'numeric',
+           'positive', 'true', 'zero']

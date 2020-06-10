@@ -99,7 +99,7 @@ class TestBaseOnly(LowLevelBackend):
             cols = fsize if featureNames is None else len(featureNames)
             if shape is None:
                 shape = [rows, cols]
-            ret = nimble.data.Base(shape, pointNames=pointNames, featureNames=featureNames)
+            ret = nimble.core.data.Base(shape, pointNames=pointNames, featureNames=featureNames)
             return ret
 
         self.constructor = makeAndDefine

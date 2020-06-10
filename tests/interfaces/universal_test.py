@@ -11,9 +11,9 @@ from nose.tools import raises
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.interfaces.universal_interface import UniversalInterface
-from nimble.helpers import generateClassificationData
-from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
+from nimble.core.interfaces.universal_interface import UniversalInterface
+from tests.helpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import generateClassificationData
 
 
 class Initable(object):
@@ -229,7 +229,7 @@ def test_setOptionGetOption():
 #########################
 
 def test_eachExposedPresent():
-    dummyNimble = nimble.createData('Matrix', [[1, 1], [2, 2]])
+    dummyNimble = nimble.data('Matrix', [[1, 1], [2, 2]])
     tl = TestObject.train('exposeTest', dummyNimble, dummyNimble)
     assert hasattr(tl, 'exposedOne')
     assert tl.exposedOne() == 1
@@ -296,7 +296,7 @@ class AlwaysWarnInterface(UniversalInterface):
         self.issueWarnings()
         num = len(testX.points)
         raw = [0] * num
-        return nimble.createData("Matrix", raw, useLog=False)
+        return nimble.data("Matrix", raw, useLog=False)
 
     def _getScoresOrder(self, learner):
         self.issueWarnings()

@@ -9,8 +9,8 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
-from nimble.utility import scipy
-from nimble.utility import dtypeConvert
+from nimble._utility import scipy
+from nimble._utility import dtypeConvert
 
 def inverse(aObj):
     """
@@ -38,7 +38,7 @@ def inverse(aObj):
     Examples
     --------
     >>> raw = [[1, 2], [3, 4]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> data
     Matrix(
         [[1 2]
@@ -53,9 +53,9 @@ def inverse(aObj):
     if not scipy.nimbleAccessible():
         msg = "scipy must be installed in order to use the inverse function."
         raise PackageException(msg)
-    if not isinstance(aObj, nimble.data.Base):
+    if not isinstance(aObj, nimble.core.data.Base):
         raise InvalidArgumentType(
-            "Object must be derived class of nimble.data.Base")
+            "Object must be derived class of nimble.core.data.Base")
     if not len(aObj.points) and not len(aObj.features):
         return aObj.copy()
     if len(aObj.points) != len(aObj.features):
@@ -96,7 +96,7 @@ def inverse(aObj):
                 raise InvalidArgumentType(msg)
             raise exception
 
-    return nimble.createData(aObj.getTypeString(), invData, useLog=False)
+    return nimble.data(aObj.getTypeString(), invData, useLog=False)
 
 
 def pseudoInverse(aObj, method='svd'):
@@ -129,9 +129,9 @@ def pseudoInverse(aObj, method='svd'):
 
     Examples
     --------
-    >>> nimble.setRandomSeed(42)
-    >>> data = nimble.createRandomData('Matrix', numPoints=4,
-    ...                                numFeatures=3, sparsity=0.5)
+    >>> nimble.random.setSeed(42)
+    >>> data = nimble.random.data('Matrix', numPoints=4, numFeatures=3,
+    ...                           sparsity=0.5)
     >>> data
     Matrix(
         [[0.583  -0.000 0.000 ]
@@ -147,11 +147,12 @@ def pseudoInverse(aObj, method='svd'):
         )
     """
     if not scipy.nimbleAccessible():
-        msg = "scipy must be installed in order to use the pseudoInverse function."
+        msg = "scipy must be installed in order to use the pseudoInverse "
+        msg += "function."
         raise PackageException(msg)
-    if not isinstance(aObj, nimble.data.Base):
+    if not isinstance(aObj, nimble.core.data.Base):
         raise InvalidArgumentType(
-            "Object must be derived class of nimble.data.Base.")
+            "Object must be derived class of nimble.core.data.Base.")
     if not len(aObj.points) and not len(aObj.features):
         return aObj
     if method not in ['least-squares', 'svd']:
@@ -180,7 +181,7 @@ def pseudoInverse(aObj, method='svd'):
         except ValueError as exception:
             _handleNonSupportedTypes(exception)
 
-    return nimble.createData(aObj.getTypeString(), pinvData, useLog=False)
+    return nimble.data(aObj.getTypeString(), pinvData, useLog=False)
 
 
 def solve(aObj, bObj):
@@ -215,9 +216,9 @@ def solve(aObj, bObj):
     --------
     >>> from nimble.calculate import solve
     >>> aData = [[3,2,0],[1,-1,0],[0,5,1]]
-    >>> aObj = nimble.createData('Matrix', aData)
+    >>> aObj = nimble.data('Matrix', aData)
     >>> bData = [2,4,-1]
-    >>> bObj = nimble.createData('Matrix', bData)
+    >>> bObj = nimble.data('Matrix', bData)
     >>> aObj
     Matrix(
         [[3 2  0]
@@ -275,7 +276,8 @@ def leastSquaresSolution(aObj, bObj):
 
 def _backendSolvers(aObj, bObj, solverFunction):
     if not scipy.nimbleAccessible():
-        msg = "scipy must be installed in order to use the pseudoInverse function."
+        msg = "scipy must be installed in order to use the pseudoInverse "
+        msg += "function."
         raise PackageException(msg)
     bObj = _backendSolversValidation(aObj, bObj, solverFunction)
 
@@ -307,24 +309,26 @@ def _backendSolvers(aObj, bObj, solverFunction):
             solution = scipy.sparse.linalg.lsqr(aData, bData)
             solution = solution[0]
 
-    sol = nimble.createData(aOriginalType, solution,
-                         featureNames=aObj.features.getNames(),
-                         useLog=False)
+    sol = nimble.data(aOriginalType, solution,
+                      featureNames=aObj.features.getNames(), useLog=False)
     return sol
 
 
 
 def _backendSolversValidation(aObj, bObj, solverFunction):
-    if not isinstance(aObj, nimble.data.Base):
-        raise InvalidArgumentType(
-            "Left hand side object must be derived class of nimble.data.Base")
-    if not isinstance(bObj, nimble.data.Base):
-        raise InvalidArgumentType(
-            "Right hand side object must be derived class of nimble.data.Base")
+    if not isinstance(aObj, nimble.core.data.Base):
+        msg = "Left hand side object must be derived class of "
+        msg += "nimble.core.data.Base"
+        raise InvalidArgumentType(msg)
+    if not isinstance(bObj, nimble.core.data.Base):
+        msg = "Right hand side object must be derived class of "
+        msg += "nimble.core.data.Base"
+        raise InvalidArgumentType(msg)
 
-    if solverFunction.__name__ == 'solve' and len(aObj.points) != len(aObj.features):
-        msg = 'Object A has to be square \
-        (Number of features and points needs to be equal).'
+    if (solverFunction.__name__ == 'solve'
+            and len(aObj.points) != len(aObj.features)):
+        msg = 'Object A has to be square (Number of features and points needs '
+        msg += 'to be equal).'
         raise InvalidArgumentValue(msg)
 
     if len(bObj.points) != 1 and len(bObj.features) != 1:

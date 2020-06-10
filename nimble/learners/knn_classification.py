@@ -11,8 +11,8 @@ If there is a tie, use k=1
 import numpy
 
 from nimble import CustomLearner
-from nimble.helpers import initDataObject
-from nimble.utility import dtypeConvert
+from nimble.core._createHelpers import initDataObject
+from nimble._utility import dtypeConvert
 
 
 class KNNClassifier(CustomLearner):

@@ -3,40 +3,41 @@ Functions (and their helpers) used to analyze arbitrary performance
 functions.
 """
 
-import inspect
 import math
 
 import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
-from nimble.randomness import numpyRandom
+from nimble.random import numpyRandom
 
 
 def detectBestResult(functionToCheck):
     """
-    Provides sample data to the function in question and evaluates the results
-    to determine whether the function associates correctness of predictions with
-    minimum returned values or maximum returned values. If the user wants these
-    trials to be avoided, then they can add an attribute named 'optimal' to
-    functionToCheck. Two values are accepted: 'min' if lower values are
-    associated with correctness of predictions by functionToCheck, or 'max' if
-    higher values are associated with correctness. If the attribute 'optimal'
-    is set to any other value then the trials are run in the same way as if
+    Provides sample data to the function in question and evaluates the
+    results to determine whether the function associates correctness of
+    predictions with minimum returned values or maximum returned values.
+    If the user wants these trials to be avoided, then they can add an
+    attribute named 'optimal' to functionToCheck. Two values are
+    accepted: 'min' if lower values are associated with correctness of
+    predictions by functionToCheck, or 'max' if higher values are
+    associated with correctness. If the attribute 'optimal' is set to
+    any other value then the trials are run in the same way as if
     functionToCheck had no attribute by that name.
 
-    functionToCheck may only take two or three arguments. In the two argument
-    case, the first must be a vector of desired values and the second must be
-    a vector of predicted values. In the second case, the first argument must
-    be a vector of known labes, the second argument must be an object
-    containing confidence scores for different labels, and the third argument
-    must be the value of a label value present in the data. In either cause,
-    the functions must return a float value.
+    functionToCheck may only take two or three arguments. In the two
+    argument case, the first must be a vector of desired values and the
+    second must be a vector of predicted values. In the second case, the
+    first argument must be a vector of known labes, the second argument
+    must be an object containing confidence scores for different labels,
+    and the third argument must be the value of a label value present in
+    the data. In either cause, the functions must return a float value.
 
-    returns: Either 'min' or 'max'; the former if lower values returned from
-    functionToCheck are associated with correctness of predictions, the later
-    if larger values are associated with correctness. If we are unable to
-    determine which is correct, then an InvalidArgumentValue is thrown.
+    returns: Either 'min' or 'max'; the former if lower values returned
+    from functionToCheck are associated with correctness of predictions,
+    the later if larger values are associated with correctness. If we
+    are unable to determine which is correct, then an
+    InvalidArgumentValue is thrown.
     """
     if hasattr(functionToCheck, 'optimal'):
         if functionToCheck.optimal == 'min':
@@ -60,16 +61,17 @@ def detectBestResult(functionToCheck):
         # Run the main trial, which uses a mixture of ones and zeros
         knowns = _generateMixedRandom(trialSize)
         try:
-            result = _runTrialGivenParameters(functionToCheck, knowns, predictionType)
+            result = _runTrialGivenParameters(functionToCheck, knowns,
+                                              predictionType)
         except Exception as e:
             result = e
 
         # If the trial ends successfully, then we do further trials for
         # consistency
         if validResult(result):
-            # for bestScores and allscores, there is a lot more random generation,
-            # so we run a bundle of trials for consistency. For labels we only
-            # run one extra trial.
+            # for bestScores and allscores, there is a lot more random
+            # generation, so we run a bundle of trials for consistency. For
+            # labels we only run one extra trial.
             confidenceTrials = 1 if predictionType == 0 else 10
 
             # Since we are doing randomly generated data, if the performance
@@ -77,10 +79,12 @@ def detectBestResult(functionToCheck):
             # possible for us to generate numbers cause weirdness or outright
             # failures. We allow for one such result
             freebieAvailable = False if predictionType == 0 else True
-            for i in range(confidenceTrials):
+            for _ in range(confidenceTrials):
                 knownsMixed = _generateMixedRandom(trialSize)
                 try:
-                    resultMixed = _runTrialGivenParameters(functionToCheck, knownsMixed, predictionType)
+                    resultMixed = _runTrialGivenParameters(functionToCheck,
+                                                           knownsMixed,
+                                                           predictionType)
                 except Exception as e:
                     resultMixed = e
 
@@ -90,9 +94,10 @@ def detectBestResult(functionToCheck):
                     else:
                         # inconsistent but valid results
                         if validResult(resultMixed):
-                            msg = "In repeated trials with different known values, "
-                            msg += "functionToCheck was inconsistent in attributing "
-                            msg += "high versus low values to optimal predictions."
+                            msg = "In repeated trials with different known "
+                            msg += "values, functionToCheck was inconsistent "
+                            msg += "in attributing high versus low values to "
+                            msg += "optimal predictions."
                             result = InvalidArgumentValue(msg)
                         # erroneous call on what should be acceptable data;
                         # report the error to the user
@@ -100,27 +105,34 @@ def detectBestResult(functionToCheck):
                             result = resultMixed
                             break
 
-            # in the labels case we additionally check against some simpler data
+            # in labels case we additionally check against some simpler data
             if predictionType == 0:
                 knownsZeros = _generateAllZeros(trialSize)
                 try:
-                    resultZeros = _runTrialGivenParameters(functionToCheck, knownsZeros, predictionType)
+                    resultZeros = _runTrialGivenParameters(functionToCheck,
+                                                           knownsZeros,
+                                                           predictionType)
                 except Exception as e:
                     resultZeros = e
                 knownsOnes = _generateAllOnes(trialSize)
                 try:
-                    resultOnes = _runTrialGivenParameters(functionToCheck, knownsOnes, predictionType)
+                    resultOnes = _runTrialGivenParameters(functionToCheck,
+                                                          knownsOnes,
+                                                          predictionType)
                 except Exception as e:
                     resultOnes = e
 
                 # check knownsZeros results same as knowns ones results
-                rzValid = resultZeros != 'nan' and not isinstance(resultZeros, Exception)
-                roValid = resultOnes != 'nan' and not isinstance(resultOnes, Exception)
+                rzValid = (resultZeros != 'nan'
+                           and not isinstance(resultZeros, Exception))
+                roValid = (resultOnes != 'nan'
+                           and not isinstance(resultOnes, Exception))
                 if rzValid and roValid:
                     if resultZeros != resultOnes:
                         msg = "Over trials with different knowns, "
-                        msg += "functionToCheck was inconsistent in attributing "
-                        msg += "high versus low values to optimal predictions."
+                        msg += "functionToCheck was inconsistent in "
+                        msg += "attributing high versus low values to optimal "
+                        msg += "predictions."
                         result = InvalidArgumentValue(msg)
 
         # record the result, regardless of whether it was successful, nan,
@@ -132,8 +144,8 @@ def detectBestResult(functionToCheck):
         if result != 'nan' and not isinstance(result, Exception):
             # inconsistent results
             if best is not None and result != best:
-                reason = "Trials were run with all possible formats for predicted "
-                reason += "values, but gave inconsistent results. "
+                reason = "Trials were run with all possible formats for "
+                reason += "predicted values, but gave inconsistent results. "
                 raiseException(reason, resultsByType)
             best = result
 
@@ -149,8 +161,8 @@ def detectBestResult(functionToCheck):
 def raiseException(preface, outputs):
     msg = "Either functionToCheck has bugs, is not a performance function, "
     msg += "or is incompatible with these trials. These trials can be avoided "
-    msg += "if the user manulally declares which kinds of values are associated "
-    msg += "with correct predictions (either 'min' or 'max') "
+    msg += "if the user manulally declares which kinds of values are "
+    msg += "associated with correct predictions (either 'min' or 'max') "
     msg += "by adding an attribute named 'optimal' to functionToCheck. For "
     msg += "debugging purposes, the trial results per format are given:"
     msg += " (labels) " + str(outputs[0])
@@ -165,7 +177,8 @@ def _runTrialGivenParameters(toCheck, knowns, predictionType):
 
     allCorrectScore = toCheck(knowns.copy(), predicted)
     # this is going to hold the output of the function. Each value will
-    # correspond to a trial that contains incrementally less correct predicted values
+    # correspond to a trial that contains incrementally less correct predicted
+    # values
     scoreList = [allCorrectScore]
     # range over the indices of predicted values, making them incorrect one
     # by one
@@ -182,39 +195,43 @@ def _runTrialGivenParameters(toCheck, knowns, predictionType):
     if allWrongScore < allCorrectScore:
         prevScore = allCorrectScore + 1
         for score in scoreList:
-            if score < allWrongScore or score > allCorrectScore or score > prevScore:
-                msg = "all-correct and all-incorrect trials indicated max optimality, "
-                msg += "but mixed correct/incorrect scores were not monotonicly "
-                msg += "increasing with correctness"
+            if (score < allWrongScore
+                    or score > allCorrectScore
+                    or score > prevScore):
+                msg = "all-correct and all-incorrect trials indicated max "
+                msg += "optimality, but mixed correct/incorrect scores were "
+                msg += "not monotonicly increasing with correctness"
                 raise _NonMonotonicResultsException(msg)
             prevScore = score
         return "max"
     elif allWrongScore > allCorrectScore:
         prevScore = allCorrectScore - 1
         for score in scoreList:
-            if score > allWrongScore or score < allCorrectScore or score < prevScore:
-                msg = "all-correct and all-incorrect trials indicated min optimality, "
-                msg += "but mixed correct/incorrect scores were not monotonicly "
-                msg += "decreasing with correctness"
+            if (score > allWrongScore
+                    or score < allCorrectScore
+                    or score < prevScore):
+                msg = "all-correct and all-incorrect trials indicated min "
+                msg += "optimality, but mixed correct/incorrect scores were "
+                msg += "not monotonicly decreasing with correctness"
                 raise _NonMonotonicResultsException(msg)
             prevScore = score
         return "min"
-    # allWrong and allCorrect must not be equal, otherwise it cannot be a measure
-    # of correct performance
+    # allWrong and allCorrect must not be equal, otherwise it cannot be a
+    # measure of correct performance
     else:
-        msg = "functionToCheck produced the same values for trials including "
-        msg += "all-correct and all-incorrect predictions."
+        msg = "functionToCheck produced the same values for trials "
+        msg += "including all-correct and all-incorrect predictions."
         raise _NoDifferenceResultsException(msg)
 
 
 def _generateAllZeros(length):
-    return nimble.createData("List", numpy.zeros([length, 1], dtype=int),
-                             useLog=False)
+    return nimble.data("List", numpy.zeros([length, 1], dtype=int),
+                       useLog=False)
 
 
 def _generateAllOnes(length):
-    return nimble.createData("List", numpy.ones([length, 1], dtype=int),
-                             useLog=False)
+    return nimble.data("List", numpy.ones([length, 1], dtype=int),
+                       useLog=False)
 
 
 def _generateMixedRandom(length):
@@ -223,16 +240,16 @@ def _generateMixedRandom(length):
         # we don't want all zeros or all ones
         if numpy.any(correct) and not numpy.all(correct):
             break
-    correct = nimble.createData(returnType="List", data=correct, useLog=False)
+    correct = nimble.data(returnType="List", source=correct, useLog=False)
     return correct
 
 
 def _generatePredicted(knowns, predictionType):
     """
-    Predicted may mean any of the three kinds of output formats for trainAndApply:
-    predicted labels, bestScores, or allScores. If confidences are involved, they are
-    randomly generated, yet consistent with correctness
-
+    Predicted may mean any of the three kinds of output formats for
+    trainAndApply: predicted labels, bestScores, or allScores.
+    If confidences are involved, they are randomly generated, yet
+    consistent with correctness
     """
     workingCopy = knowns.copy()
     workingCopy.features.setName(0, 'PredictedClassLabel', useLog=False)
@@ -242,8 +259,8 @@ def _generatePredicted(knowns, predictionType):
     # Labels and the score for that label (aka 'bestScores')
     elif predictionType == 1:
         scores = numpyRandom.randint(2, size=[len(workingCopy.points), 1])
-        scores = nimble.createData(returnType="List", data=scores,
-                                   featureNames=['LabelScore'], useLog=False)
+        scores = nimble.data(returnType="List", source=scores,
+                             featureNames=['LabelScore'], useLog=False)
         workingCopy.features.append(scores, useLog=False)
         return workingCopy
     # Labels, and scores for all possible labels (aka 'allScores')
@@ -261,8 +278,8 @@ def _generatePredicted(knowns, predictionType):
                 currConfidences[1] = winner
             dataToFill.append(currConfidences)
 
-        scores = nimble.createData(returnType="List", data=dataToFill,
-                                   featureNames=['0', '1'], useLog=False)
+        scores = nimble.data(returnType="List", source=dataToFill,
+                             featureNames=['0', '1'], useLog=False)
         return scores
 
 

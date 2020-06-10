@@ -5,7 +5,6 @@ Variety of functions to determine if data matches given conditions
 import numpy
 
 import nimble
-from nimble.exceptions import InvalidArgumentType
 
 def missing(value):
     """
@@ -343,7 +342,7 @@ def true(value):
     >>> true('True')
     False
     """
-    return boolean(value) and value == True
+    return boolean(value) and value is True
 
 def false(value):
     """
@@ -375,7 +374,7 @@ def false(value):
     >>> false('False')
     False
     """
-    return boolean(value) and value == False
+    return boolean(value) and value is False
 
 def anyValues(match):
     """
@@ -408,7 +407,7 @@ def anyValues(match):
     >>> raw = [[1, 1, 1],
     ...        [1, 1, 1],
     ...        [1, 1, -1]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> anyNegativeOne = anyValues(-1)
     >>> anyNegativeOne(data)
     True
@@ -416,12 +415,12 @@ def anyValues(match):
     >>> raw = [['A', 'B', 'C'],
     ...        ['A', 'B', 'C'],
     ...        ['A', 'B', 'C']]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> anyLetterD = anyValues('D')
     >>> anyLetterD(data)
     False
     """
-    match = convertMatchToFunction(match)
+    match = _convertMatchToFunction(match)
     def anyValueFinder(data):
         return anyAllValuesBackend(any, data, match)
     return anyValueFinder
@@ -457,7 +456,7 @@ def allValues(match):
     >>> raw = [[1, 1, 1],
     ...        [1, 1, 1],
     ...        [1, 1, 1]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> allOne = allValues(1)
     >>> allOne(data)
     True
@@ -465,12 +464,12 @@ def allValues(match):
     >>> raw = [['A', 'B', 'C'],
     ...        ['A', 'B', 'C'],
     ...        ['A', 'B', 'C']]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> allLetterA = allValues('A')
     >>> allLetterA(data)
     False
     """
-    match = convertMatchToFunction(match)
+    match = _convertMatchToFunction(match)
     def allValueFinder(data):
         return anyAllValuesBackend(all, data, match)
     return allValueFinder
@@ -500,14 +499,14 @@ def anyMissing(data):
     >>> raw = [[1, 1, 1],
     ...        [1, 1, 1],
     ...        [1, None, 1]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> anyMissing(data)
     True
 
     >>> raw = [['A', 'B', 'C'],
     ...        ['A', 'B', 'C'],
     ...        ['A', 'B', 'C']]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> anyMissing(data)
     False
     """
@@ -537,14 +536,14 @@ def allMissing(data):
     >>> raw = [[float('nan'), None, None],
     ...        [float('nan'), None, None],
     ...        [float('nan'), None, None]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> allMissing(data)
     True
 
     >>> raw = [[float('nan'), None, None],
     ...        [float('nan'), 0, None],
     ...        [float('nan'), None, None]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> allMissing(data)
     False
     """
@@ -574,14 +573,14 @@ def anyNumeric(data):
     >>> raw = [[1, 'a', None],
     ...        [1, 'b', 3],
     ...        [1, 'c', None]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> anyNumeric(data)
     True
 
     >>> raw = [['A', 'B', 'C'],
     ...        ['A', 'B', 'C'],
     ...        ['A', 'B', 'C']]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> anyNumeric(data)
     False
     """
@@ -611,14 +610,14 @@ def allNumeric(data):
     >>> raw = [[1, 2, 3],
     ...        [4, 5, 6],
     ...        [-1, -2, float('nan')]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> allNumeric(data)
     True
 
     >>> raw = [[1, 2, 3],
     ...        [4, 5, 6],
     ...        [-1, -2, '?']]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> allNumeric(data)
     False
     """
@@ -649,14 +648,14 @@ def anyNonNumeric(data):
     >>> raw = [[1, 'a', None],
     ...        [1, 'b', 3],
     ...        [1, 'c', None]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> anyNonNumeric(data)
     True
 
     >>> raw = [[1, 2, 3],
     ...        [1, 2, 3],
     ...        [1, 2, 3]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> anyNonNumeric(data)
     False
     """
@@ -686,14 +685,14 @@ def allNonNumeric(data):
     >>> raw = [['A', 'B', 'C'],
     ...        ['A', 'B', 'C'],
     ...        ['A', 'B', 'C']]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> allNonNumeric(data)
     True
 
     >>> raw = [[1, 'a', None],
     ...        [1, 'b', 3],
     ...        [1, 'c', None]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> allNonNumeric(data)
     False
     """
@@ -723,14 +722,14 @@ def anyZero(data):
     >>> raw = [[1, 'a', 0],
     ...        [1, 'b', 3],
     ...        [1, 'c', None]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> anyZero(data)
     True
 
     >>> raw = [[1, 2, 3],
     ...        [1, 2, 3],
     ...        [1, 2, 3]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> anyZero(data)
     False
     """
@@ -760,14 +759,14 @@ def allZero(data):
     >>> raw = [[0, 0.0, 0],
     ...        [0, 0.0, 0],
     ...        [0, 0.0, 0]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> allZero(data)
     True
 
     >>> raw = [[0, 0.0, 0],
     ...        [0, 0.0, 0],
     ...        [0, 0.0, 1]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> allZero(data)
     False
     """
@@ -797,14 +796,14 @@ def anyNonZero(data):
     >>> raw = [[1, 'a', 0],
     ...        [1, 'b', 3],
     ...        [1, 'c', None]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> anyNonZero(data)
     True
 
     >>> raw = [[0, 0, 0.0],
     ...        [0, 0, 0.0],
     ...        [0, 0, 0.0]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> anyNonZero(data)
     False
     """
@@ -834,14 +833,14 @@ def allNonZero(data):
     >>> raw = [[1, 'a', None],
     ...        [2, 'b', -2],
     ...        [3, 'c', -3.0]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> allNonZero(data)
     True
 
     >>> raw = [[1, 'a', None],
     ...        [2, 'b', -2],
     ...        [3, 'c', 0.0]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> allNonZero(data)
     False
     """
@@ -871,14 +870,14 @@ def anyPositive(data):
     >>> raw = [[1, 'a', -1],
     ...        [1, 'b', -2],
     ...        [1, 'c', -3]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> anyPositive(data)
     True
 
     >>> raw = [[0, 'a', -1],
     ...        [0, 'b', -2],
     ...        [0, 'c', -3]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> anyPositive(data)
     False
     """
@@ -908,14 +907,14 @@ def allPositive(data):
     >>> raw = [[1, 2, 3],
     ...        [1, 2, 3],
     ...        [1.0, 2.0, 3.0]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> allPositive(data)
     True
 
     >>> raw = [[1, 2, 3],
     ...        [1, 2, 3],
     ...        [0.0, 2.0, 3.0]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> allPositive(data)
     False
     """
@@ -945,14 +944,14 @@ def anyNegative(data):
     >>> raw = [[0, 'a', -1],
     ...        [1, 'b', -2],
     ...        [2, 'c', -3]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> anyNegative(data)
     True
 
     >>> raw = [[1, 'a', 0],
     ...        [1, 'b', None],
     ...        [1, 'c', 3]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> anyNegative(data)
     False
     """
@@ -982,14 +981,14 @@ def allNegative(data):
     >>> raw = [[-1, -2, -3],
     ...        [-1, -2, -3],
     ...        [-1.0, -2.0, -3.0]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> allNegative(data)
     True
 
     >>> raw = [[-1, -2, -3],
     ...        [-1, -2, -3],
     ...        [0.0, -2.0, -3.0]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> allNegative(data)
     False
     """
@@ -1019,14 +1018,14 @@ def anyInfinity(data):
     >>> raw = [[0, -1.0, float('inf')],
     ...        [1, -2.0, 0],
     ...        [2, -3.0, 0]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> anyInfinity(data)
     True
 
     >>> raw = [[0, -1.0, 'infinity'],
     ...        [1, -2.0, 'zero'],
     ...        [2, -3.0, 'one']]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> anyInfinity(data)
     False
     """
@@ -1056,14 +1055,14 @@ def allInfinity(data):
     >>> raw = [[float('inf'), float('inf'), float('inf')],
     ...        [float('inf'), float('inf'), float('inf')],
     ...        [float('inf'), float('inf'), float('inf')]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> allInfinity(data)
     True
 
     >>> raw = [[float('inf'), float('inf'), float('inf')],
     ...        [float('inf'), 0, float('inf')],
     ...        [float('inf'), float('inf'), float('inf')]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> allInfinity(data)
     False
     """
@@ -1092,14 +1091,14 @@ def anyBoolean(data):
     >>> raw = [[0, -1.0, True],
     ...        [1, -2.0, False],
     ...        [2, -3.0, False]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> anyBoolean(data)
     True
 
     >>> raw = [[0, -1.0, 'a'],
     ...        [1, -2.0, 'b'],
     ...        [2, -3.0, 'c']]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> anyBoolean(data) # Note: 0 and 1 are not boolean type
     False
     """
@@ -1128,14 +1127,14 @@ def allBoolean(data):
     >>> raw = [[True, True, False],
     ...        [True, True, True],
     ...        [False, True, True]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> anyBoolean(data)
     True
 
     >>> raw = [[0, True, False],
     ...        [1, True, True],
     ...        [0, True, True]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> allBoolean(data) # Note: 0 and 1 are not boolean type
     False
     """
@@ -1164,14 +1163,14 @@ def anyTrue(data):
     >>> raw = [[0, -1.0, True],
     ...        [1, -2.0, False],
     ...        [2, -3.0, False]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> anyTrue(data)
     True
 
     >>> raw = [[0, -1.0, False],
     ...        [1, -2.0, False],
     ...        [2, -3.0, False]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> anyTrue(data) # Note: 1 is not boolean type
     False
     """
@@ -1200,14 +1199,14 @@ def allTrue(data):
     >>> raw = [[True, True, True],
     ...        [True, True, True],
     ...        [True, True, True]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> allTrue(data)
     True
 
     >>> raw = [[True, True, True],
     ...        [True, False, True],
     ...        [True, True, True]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> allTrue(data)
     False
     """
@@ -1236,14 +1235,14 @@ def anyFalse(data):
     >>> raw = [[0, -1.0, True],
     ...        [1, -2.0, True],
     ...        [2, -3.0, False]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> anyFalse(data)
     True
 
     >>> raw = [[0, -1.0, True],
     ...        [1, -2.0, True],
     ...        [2, -3.0, True]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> anyFalse(data) # Note: 0 is not boolean type
     False
     """
@@ -1272,14 +1271,14 @@ def allFalse(data):
     >>> raw = [[False, False, False],
     ...        [False, False, False],
     ...        [False, False, False]]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> allFalse(data)
     True
 
     >>> raw = [[False, False, True],
     ...        [False, False, True],
     ...        [False, True, False]]
-    >>> data = nimble.createData('List', raw)
+    >>> data = nimble.data('List', raw)
     >>> allFalse(data)
     False
     """
@@ -1311,7 +1310,7 @@ def anyAllValuesBackend(quantity, data, match):
                 return False
         return True
 
-def convertMatchToFunction(match):
+def _convertMatchToFunction(match):
     """
     Factory for functions determing if a value is a match.
 
@@ -1337,13 +1336,13 @@ def convertMatchToFunction(match):
 
     Examples
     --------
-    >>> matchA = convertMatchToFunction('A')
+    >>> matchA = _convertMatchToFunction('A')
     >>> matchA('A')
     True
     >>> matchA('B')
     False
 
-    >>> matchList = convertMatchToFunction([1, 'A'])
+    >>> matchList = _convertMatchToFunction([1, 'A'])
     >>> matchList(1)
     True
     >>> matchList('A')

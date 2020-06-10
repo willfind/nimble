@@ -6,16 +6,16 @@ from nimble.learners import MultiOutputRidgeRegression
 
 def test_MultiOutputWrapper_simple():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2]]
-    trainX = nimble.createData('Matrix', data)
+    trainX = nimble.data('Matrix', data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222]]
-    trainY = nimble.createData('Matrix', data)
+    trainY = nimble.data('Matrix', data)
 
     trainY0 = trainY.features.copy(0)
     trainY1 = trainY.features.copy(1)
 
     data = [[5, 5, 5], [0, 0, 1]]
-    testX = nimble.createData('Matrix', data)
+    testX = nimble.data('Matrix', data)
 
     wrappedName = 'nimble.RidgeRegression'
     ret0 = nimble.trainAndApply(wrappedName, trainX=trainX, trainY=trainY0,

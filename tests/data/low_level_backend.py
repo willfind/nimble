@@ -27,20 +27,20 @@ except ImportError:
 
 from nose.tools import *
 
-from nimble import createData
-from nimble.data import Base
-from nimble.data import available
-from nimble.utility import inheritDocstringsFactory, numpy2DArray
-from nimble.utility import pd
-from nimble.data.dataHelpers import DEFAULT_PREFIX
-from nimble.data.dataHelpers import DEFAULT_NAME_PREFIX
-from nimble.data.dataHelpers import constructIndicesList
+import nimble
+from nimble.core.data import Base
+from nimble.core.data import available
+from nimble._utility import inheritDocstringsFactory, numpy2DArray
+from nimble._utility import pd
+from nimble.core.data._dataHelpers import DEFAULT_PREFIX
+from nimble.core.data._dataHelpers import DEFAULT_NAME_PREFIX
+from nimble.core.data._dataHelpers import constructIndicesList
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
-from nimble.randomness import pythonRandom
-from ..assertionHelpers import logCountAssertionFactory
-from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
-from ..assertionHelpers import CalledFunctionException, calledException
+from nimble.random import pythonRandom
+from tests.helpers import logCountAssertionFactory
+from tests.helpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import CalledFunctionException, calledException
 
 ###########
 # helpers #
@@ -482,7 +482,7 @@ class LowLevelBackend(object):
         toTest = self.constructor(pointNames=['one', 'two', 'three'])
         # need to use mock.patch as context manager after object creation
         # because Base.__init__ also calls valuesToPythonList
-        with mock.patch('nimble.data.axis.valuesToPythonList', calledException):
+        with mock.patch('nimble.core.data.axis.valuesToPythonList', calledException):
             toTest.points.setNames(['a', 'b', 'c'])
 
     def test_points_setNames_emptyDataAndList(self):
@@ -614,7 +614,7 @@ class LowLevelBackend(object):
         toTest = self.constructor(featureNames=['one', 'two', 'three'])
         # need to use mock.patch as context manager after object creation
         # because Base.__init__ also calls valuesToPythonList
-        with mock.patch('nimble.data.axis.valuesToPythonList', calledException):
+        with mock.patch('nimble.core.data.axis.valuesToPythonList', calledException):
             toTest.features.setNames(['a', 'b', 'c'])
 
     def test_features_setNames_emptyDataAndDict(self):
@@ -1161,7 +1161,7 @@ class LowLevelBackend(object):
         toTest = self.constructor(pointNames=pointNames)
         # need to use mock.patch as context manager after object creation
         # because Base.__init__ also calls valuesToPythonList
-        with mock.patch('nimble.data.dataHelpers.valuesToPythonList', calledException):
+        with mock.patch('nimble.core.data._dataHelpers.valuesToPythonList', calledException):
             constructIndicesList(toTest, 'point', pointNames)
 
     def testconstructIndicesList_pythonList(self):
@@ -1176,7 +1176,7 @@ class LowLevelBackend(object):
     def testconstructIndicesList_NimbleObjects(self):
         for retType in available:
             self.constructIndicesList_backend(
-                lambda lst: createData(retType, lst, convertToType=object))
+                lambda lst: nimble.data(retType, lst, convertToType=object))
 
     def testconstructIndicesList_numpyArray(self):
         self.constructIndicesList_backend(lambda lst: numpy.array(lst,dtype=object))

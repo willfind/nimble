@@ -4,7 +4,7 @@ import numpy
 
 import nimble
 from nimble.exceptions import ImproperObjectAction, PackageException
-from nimble.utility import scipy
+from nimble._utility import scipy
 
 def confidenceIntervalHelper(errors, transform, confidence=0.95):
     """Helper to calculate the confidence interval, given a vector of errors
@@ -53,6 +53,6 @@ def meanAbsoluteErrorConfidenceInterval(known, predicted, confidence=0.95):
 def fractionIncorrectConfidenceInterval(known, predicted, confidence=0.95):
     rawErrors = known.copy(to='numpyarray') - predicted.copy(to='numpyarray')
     rawErrors = numpy.absolute(rawErrors)
-    errors = nimble.createData("Matrix", rawErrors)
+    errors = nimble.data("Matrix", rawErrors)
 
     return confidenceIntervalHelper(errors, None, confidence)

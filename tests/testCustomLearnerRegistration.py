@@ -5,8 +5,8 @@ import numpy
 import nimble
 from nimble import CustomLearner
 from nimble.learners import RidgeRegression, KNNClassifier
-from .assertionHelpers import configSafetyWrapper
-from .assertionHelpers import noLogEntryExpected
+from tests.helpers import configSafetyWrapper
+from tests.helpers import noLogEntryExpected
 
 class LoveAtFirstSightClassifier(CustomLearner):
     """ Always predicts the value of the first class it sees in the most recently trained data """
@@ -23,7 +23,7 @@ class LoveAtFirstSightClassifier(CustomLearner):
         ret = []
         for point in testX.points:
             ret.append([self.prediction])
-        return nimble.createData("Matrix", ret)
+        return nimble.data("Matrix", ret)
 
     def getScores(self, testX):
         ret = []
@@ -35,7 +35,7 @@ class LoveAtFirstSightClassifier(CustomLearner):
                 else:
                     currScores.append(0)
             ret.append(currScores)
-        return nimble.createData("Matrix", ret)
+        return nimble.data("Matrix", ret)
 
     @classmethod
     def options(cls):
@@ -61,8 +61,8 @@ def testCustomPackage():
 
     data = [[1, 2, 3], [4, 5, 6], [0, 0, 0]]
     labels = [[1], [2], [0]]
-    testX = nimble.createData('Matrix', data)
-    testY = nimble.createData('Matrix', labels)
+    testX = nimble.data('Matrix', data)
+    testY = nimble.data('Matrix', labels)
 
     nimble.train(LoveAtFirstSightClassifier, testX, testY)
     nimble.train(UncallableLearner, testX, testY, foo='foo')
@@ -79,8 +79,8 @@ def testNimblePackage():
 
     data = [[1, 2, 3], [4, 5, 6], [0, 0, 0]]
     labels = [[1], [2], [0]]
-    testX = nimble.createData('Matrix', data)
-    testY = nimble.createData('Matrix', labels)
+    testX = nimble.data('Matrix', data)
+    testY = nimble.data('Matrix', labels)
 
     nimble.train(RidgeRegression, testX, testY, lamb=1)
     nimble.train(KNNClassifier, testX, testY, k=1)
@@ -100,8 +100,8 @@ def testRegisterLearnersWithOptionNames():
 
     data = [[1, 2, 3], [4, 5, 6], [0, 0, 0]]
     labels = [[1], [2], [0]]
-    testX = nimble.createData('Matrix', data)
-    testY = nimble.createData('Matrix', labels)
+    testX = nimble.data('Matrix', data)
+    testY = nimble.data('Matrix', labels)
 
     nimble.train(LoveAtFirstSightClassifier, testX, testY)
     nimble.train(UncallableLearner, testX, testY, foo=0)
@@ -135,8 +135,8 @@ def test_logCount():
 
     data = [[1, 2, 3], [4, 5, 6], [0, 0, 0]]
     labels = [[1], [2], [0]]
-    testX = nimble.createData('Matrix', data, useLog=False)
-    testY = nimble.createData('Matrix', labels, useLog=False)
+    testX = nimble.data('Matrix', data, useLog=False)
+    testY = nimble.data('Matrix', labels, useLog=False)
 
     nimble.train(LoveAtFirstSightClassifier, testX, testY, useLog=False)
     lst = nimble.listLearners("custom")
@@ -165,8 +165,8 @@ def test_listLearnersDirectFromModule():
 def test_learnerQueries():
     data = [[1, 2, 3], [4, 5, 6], [0, 0, 0]]
     labels = [[1], [2], [0]]
-    testX = nimble.createData('Matrix', data, useLog=False)
-    testY = nimble.createData('Matrix', labels, useLog=False)
+    testX = nimble.data('Matrix', data, useLog=False)
+    testY = nimble.data('Matrix', labels, useLog=False)
 
     params = nimble.learnerParameters(UncallableLearner)
     defaults = nimble.learnerDefaultValues(UncallableLearner)

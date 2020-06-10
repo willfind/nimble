@@ -39,7 +39,7 @@ There are two cases where the organization requirements are more stringent,
 making use of nosetests test organization at the object or package level
 in order to do something otherwise impossible.
 
-Firstly, nimble.interfaces defines interfaces to packages which may not be
+Firstly, nimble.core.interfaces defines interfaces to packages which may not be
 present on the host machine. Therefore tests of those interfaces, which
 rely on those packages, must be conditionally disabled if the package
 is not present. Therefore, if an interface is defined in
@@ -48,17 +48,17 @@ relies on the presence of that interface must have foo as substring of its
 name. The common case would be 'testfoo' or 'foo_test', but any substring
 relation will suffice.
 
-Secondly, nimble.data defines a class hierarchy of objects which share exactly
+Secondly, nimble.core.data defines a class hierarchy of objects which share exactly
 the same user facing API. It is inconvenient to have to define new tests
 for each class, we want instead to write tests for each forward facing
 function, and have it run once for each subclass. This is accomplished
 by grouping all tests of forward facing methods into objects, each of
-which are subclasses of DataTestObject defined in nimble.data.tests.baseObject.
-Any subclass of nimble.data.Base must have a corresponding test object placed
-in nimble.data.tests.testObjects and subclass from all of the method grouping
+which are subclasses of DataTestObject defined in nimble.core.data.tests.baseObject.
+Any subclass of nimble.core.data.Base must have a corresponding test object placed
+in nimble.core.data.tests.testObjects and subclass from all of the method grouping
 objects (StructureBackend, QueryBackend, etc.). During __init__ a call to
 super(...).__init__ must be made with a string value to be used for the
-returnType parameter of nimble.createData() defining which kind of object to
+returnType parameter of nimble.data() defining which kind of object to
 be tested. Any further tests, for private helpers can also be placed in
-that test object. We disallow all other ways of testing nimble.data.Base
+that test object. We disallow all other ways of testing nimble.core.data.Base
 subclasses.

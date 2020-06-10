@@ -25,17 +25,17 @@ from nose.plugins.attrib import attr
 import nimble
 from nimble import match
 from nimble import loadData
-from nimble.data import BaseView
-from nimble.data.dataHelpers import formatIfNeeded
-from nimble.data.dataHelpers import DEFAULT_PREFIX
+from nimble.core.data import BaseView
+from nimble.core.data._dataHelpers import formatIfNeeded
+from nimble.core.data._dataHelpers import DEFAULT_PREFIX
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 
 from .baseObject import DataTestObject
-from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
-from ..assertionHelpers import assertNoNamesGenerated
-from ..assertionHelpers import CalledFunctionException, calledException
+from tests.helpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import assertNoNamesGenerated
+from tests.helpers import CalledFunctionException, calledException
 
 
 preserveName = "PreserveTestName"
@@ -197,7 +197,7 @@ class QueryBackend(DataTestObject):
             toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
 
             # read it back into a different object, then test equality
-            readObj = self.constructor(data=tmpFile.name)
+            readObj = self.constructor(source=tmpFile.name)
 
         assert readObj.isIdentical(toWrite)
         assert toWrite.isIdentical(readObj)
@@ -227,14 +227,14 @@ class QueryBackend(DataTestObject):
         def excludeAxis(axis):
             if axis == 'point':
                 exclude = self.constructor(data, featureNames=featureNames)
-                if isinstance(exclude, nimble.data.BaseView):
+                if isinstance(exclude, nimble.core.data.BaseView):
                     setter = exclude._source.points.setNames
                 else:
                     setter = exclude.points.setNames
                 count = len(exclude.points)
             else:
                 exclude = self.constructor(data, pointNames=pointNames)
-                if isinstance(exclude, nimble.data.BaseView):
+                if isinstance(exclude, nimble.core.data.BaseView):
                     setter = exclude._source.features.setNames
                 else:
                     setter = exclude.features.setNames
@@ -251,9 +251,9 @@ class QueryBackend(DataTestObject):
 
                 # read it back into a different object, then test equality
                 if axis == 'point':
-                    readObj = self.constructor(data=tmpFile.name, featureNames=True)
+                    readObj = self.constructor(source=tmpFile.name, featureNames=True)
                 else:
-                    readObj = self.constructor(data=tmpFile.name, pointNames=True)
+                    readObj = self.constructor(source=tmpFile.name, pointNames=True)
             axisRead = getattr(readObj, axis + 's')
             # isIdentical will ignore default names, but we still want to
             # ensure everything else is a match
@@ -284,7 +284,7 @@ class QueryBackend(DataTestObject):
 
             # read it back into a different object, then test equality
             # must specify featureNames=True because 'automatic' will not detect
-            readObj = self.constructor(data=tmpFile.name, featureNames=True)
+            readObj = self.constructor(source=tmpFile.name, featureNames=True)
 
         assert readObj.isIdentical(toWrite)
         assert toWrite.isIdentical(readObj)
@@ -304,7 +304,7 @@ class QueryBackend(DataTestObject):
             toWrite.writeFile(tmpFile.name, fileFormat='mtx', includeNames=True)
 
             # read it back into a different object, then test equality
-            readObj = self.constructor(data=tmpFile.name)
+            readObj = self.constructor(source=tmpFile.name)
 
         assert readObj.isIdentical(toWrite)
         assert toWrite.isIdentical(readObj)
@@ -361,7 +361,7 @@ class QueryBackend(DataTestObject):
 
             toSave.save(fileNameWithoutExtension)
             LoadObj = loadData(tmpFile.name)
-            assert isinstance(LoadObj, nimble.data.Base)
+            assert isinstance(LoadObj, nimble.core.data.Base)
 
             try:
                 LoadObj = loadData(fileNameWithoutExtension)
@@ -1050,7 +1050,7 @@ class QueryBackend(DataTestObject):
         """ Regression test with random data and limits. Recreates expected results """
         for pNum in [3, 9]:
             for fNum in [2, 5, 8, 15]:
-                randGen = nimble.createRandomData("List", pNum, fNum, 0)
+                randGen = nimble.random.data("List", pNum, fNum, 0)
                 raw = randGen.data
 
                 fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6', 'fn7', 'fn8', 'fn9', 'fna', 'fnb', 'fnc',
@@ -1079,7 +1079,7 @@ class QueryBackend(DataTestObject):
 
     def test_toString_nameAndValRecreation_randomized_longNames(self):
         """ Test long point and feature names do not exceed max width"""
-        randGen = nimble.createRandomData("List", 9, 9, 0)
+        randGen = nimble.random.data("List", 9, 9, 0)
         raw = randGen.data
 
         suffix = [1, 22, 333, 4444, 55555, 666666, 7777777, 88888888, 999999999]
@@ -1148,7 +1148,7 @@ class QueryBackend(DataTestObject):
 
     def test_toString_knownHeights(self):
         """ Test max string height reaches but does not exceed max height """
-        randGen = nimble.createRandomData("List", 9, 3, 0)
+        randGen = nimble.random.data("List", 9, 3, 0)
 
         data = self.constructor(randGen.data)
 
@@ -1237,7 +1237,7 @@ class QueryBackend(DataTestObject):
 
     @raises(InvalidArgumentValue)
     def test_arrangeDataWithLimits_exception_maxH(self):
-        randGen = nimble.createRandomData("List", 5, 5, 0, elementType='int')
+        randGen = nimble.random.data("List", 5, 5, 0, elementType='int')
         randGen._arrangeDataWithLimits(maxHeight=1, maxWidth=120)
 
     @attr('slow')
@@ -1253,7 +1253,7 @@ class QueryBackend(DataTestObject):
                 for j in range(f):
                     raw[i].append(val)
 
-            return nimble.createData(rType, raw)
+            return nimble.data(rType, raw)
 
         def runTrial(pNum, fNum, valLen, maxW, maxH, colSep, includeFNames):
             if pNum == 0 and fNum == 0:
@@ -1269,7 +1269,7 @@ class QueryBackend(DataTestObject):
                 data.features.extract(0)
             else:
                 if valLen is None:
-                    data = nimble.createRandomData("List", pNum, fNum, .25, elementType='int')
+                    data = nimble.random.data("List", pNum, fNum, .25, elementType='int')
                 else:
                     data = makeUniformLength("List", pNum, fNum, valLen)
                 if includeFNames:
@@ -1320,7 +1320,7 @@ class QueryBackend(DataTestObject):
     ############
 
     def back_reprOutput(self, numPts, numFts, truncated=False):
-        randGen = nimble.createRandomData("List", numPts, numFts, 0)
+        randGen = nimble.random.data("List", numPts, numFts, 0)
         pNames = ['pt' + str(i) for i in range(numPts)]
         fNames = ['ft' + str(i) for i in range(numFts)]
         data = self.constructor(randGen.data, pointNames=pNames, featureNames=fNames)
@@ -1897,7 +1897,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def test_featureStatistics_groupbyfeature(self):
         orig = self.constructor([[1,2,3,'f'], [4,5,6,'m'], [7,8,9,'f'], [10,11,12,'m']], featureNames=['a','b', 'c', 'gender'])
-        if isinstance(orig, nimble.data.BaseView):
+        if isinstance(orig, nimble.core.data.BaseView):
             return
         #don't test view.
         res = orig.features.statistics('mean', groupByFeature='gender')
@@ -2263,7 +2263,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = nimble.createRandomData("List", 10, 10, 0, useLog=False)
+            randGenerated = nimble.random.data("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copy(to='pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
@@ -2286,7 +2286,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = nimble.createRandomData("List", 10, 10, 0, useLog=False)
+            randGenerated = nimble.random.data("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copy(to='pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
@@ -2310,7 +2310,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = nimble.createRandomData("List", 10, 10, 0, useLog=False)
+            randGenerated = nimble.random.data("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copy(to='pythonlist')
             obj = self.constructor(raw)
             #we call the leading underscore version, because it

@@ -6,60 +6,61 @@ create data objects, call machine learning algorithms on that
 data, and do package level configuration and information querying.
 """
 
-import os
-import inspect
-
 # Import those functions that we want to be accessible in the
 # top level
-from .randomness import setRandomSeed
-from .randomness import pythonRandom
-from .randomness import numpyRandom
-from .core import train
-from .core import trainAndApply
-from .core import trainAndTest
-from .core import trainAndTestOnTrainingData
-from .core import createData
-from .core import createRandomData
-from .core import ones
-from .core import zeros
-from .core import identity
-from .core import normalizeData
-from .core import fillMatching
-from .core import listLearners
-from .core import learnerParameters
-from .core import learnerDefaultValues
-from .core import crossValidate
-from .core import log
-from .core import showLog
-from .core import learnerType
-from .core import loadData
-from .core import loadTrainedLearner
-from .core import CV
-from .core import Init
-from .custom_learner import CustomLearner
-from .configuration import nimblePath
+from nimble.core.configuration import nimblePath
+from nimble.core.create import data
+from nimble.core.create import ones
+from nimble.core.create import zeros
+from nimble.core.create import identity
+from nimble.core.create import loadData
+from nimble.core.create import loadTrainedLearner
+from nimble.core.learn import learnerType
+from nimble.core.learn import listLearners
+from nimble.core.learn import learnerParameters
+from nimble.core.learn import learnerDefaultValues
+from nimble.core.learn import train
+from nimble.core.learn import trainAndApply
+from nimble.core.learn import trainAndTest
+from nimble.core.learn import trainAndTestOnTrainingData
+from nimble.core.learn import normalizeData
+from nimble.core.learn import fillMatching
+from nimble.core.learn import crossValidate
+from nimble.core.learn import CV
+from nimble.core.learn import Init
+from nimble.core.logger import log
+from nimble.core.logger import showLog
+from nimble.core.interfaces import CustomLearner
 
-# Import those submodules that need setup or we want to be
-# accessible to the user
-from . import learners
-from . import calculate
-from . import randomness
-from . import match
-from . import fill
-from . import interfaces
-from . import logger
-from . import configuration
+# import core (not in __all__)
+from nimble import core
+
+# import submodules accessible to the user (in __all__)
+from nimble import learners
+from nimble import calculate
+from nimble import random
+from nimble import match
+from nimble import fill
+from nimble import exceptions
 
 # load settings from configuration file
-settings = configuration.loadSettings()
+#: User control over configurable options
+#:
+#: See Also
+#: --------
+#: nimble.core.configuration.SessionConfiguration
+settings = core.configuration.loadSettings()
+
+# initialize the interfaces
+core.interfaces.initInterfaceSetup()
 
 # initialize the logging file
-logger.active = logger.initLoggerAndLogConfig()
+core.logger.initLoggerAndLogConfig()
 
-__all__ = ['calculate', 'createData', 'createRandomData', 'crossValidate',
-           'CustomLearner', 'CV', 'fill', 'identity', 'Init',
+__all__ = ['calculate', 'crossValidate', 'CustomLearner', 'CV', 'data',
+           'exceptions', 'fill', 'fillMatching', 'identity', 'Init',
            'learnerDefaultValues', 'learnerParameters', 'learners',
            'learnerType', 'listLearners', 'loadData', 'loadTrainedLearner',
-           'log', 'match', 'normalizeData', 'ones', 'setRandomSeed',
-           'settings', 'showLog', 'randomness', 'train', 'trainAndApply',
-           'trainAndTest', 'trainAndTestOnTrainingData', 'nimblePath', 'zeros']
+           'log', 'match', 'nimblePath', 'normalizeData', 'ones',
+           'settings', 'showLog', 'random', 'train', 'trainAndApply',
+           'trainAndTest', 'trainAndTestOnTrainingData', 'zeros']

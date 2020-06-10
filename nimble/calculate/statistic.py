@@ -1,4 +1,3 @@
-import math
 import collections
 import functools
 
@@ -8,8 +7,8 @@ import nimble
 from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
-from nimble.utility import scipy
-from nimble.utility import dtypeConvert
+from nimble._utility import scipy
+from nimble._utility import dtypeConvert
 
 numericalTypes = (int, float, numpy.number)
 
@@ -43,7 +42,7 @@ def proportionMissing(values):
     Examples
     --------
     >>> raw = [1, 2, float('nan'), 4, float('nan')]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> proportionMissing(vector)
     0.4
     """
@@ -62,7 +61,7 @@ def proportionZero(values):
     Examples
     --------
     >>> raw = [0, 1, 2, 3]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> proportionZero(vector)
     0.25
     """
@@ -88,7 +87,7 @@ def minimum(values):
     Examples
     --------
     >>> raw = [0, 1, 2, float('nan')]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> minimum(vector)
     0
     """
@@ -110,7 +109,7 @@ def maximum(values):
     Examples
     --------
     >>> raw = [0, 1, 2, float('nan')]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> maximum(vector)
     2
     """
@@ -167,7 +166,7 @@ def mean(values):
     Examples
     --------
     >>> raw = [0, 1, 2, float('nan'), float('nan'), 5]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> mean(vector)
     2.0
     """
@@ -198,7 +197,7 @@ def median(values):
     Examples
     --------
     >>> raw = [0, 1, 2, float('nan'), float('nan'), 5, 6]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> median(vector)
     2.0
     """
@@ -224,7 +223,7 @@ def mode(values):
     Examples
     --------
     >>> raw = [0, 1, 2, float('nan'), float('nan'), float('nan'), 0, 6]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> mode(vector)
     0
     """
@@ -259,7 +258,7 @@ def standardDeviation(values, sample=True):
     Examples
     --------
     >>> raw = [1, 2, 3, 4, 5, 6, float('nan')]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> standardDeviation(vector)
     1.8708286933869707
     >>> standardDeviation(vector, sample=False)
@@ -299,7 +298,7 @@ def medianAbsoluteDeviation(values):
     Examples
     --------
     >>> raw = [1, 2, 3, 4, 5, 6, float('nan')]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> medianAbsoluteDeviation(vector)
     1.5
     """
@@ -342,7 +341,7 @@ def quartiles(values):
     Examples
     --------
     >>> raw = [1, 5, 12, 13, 14, 21, 23, float('nan')]
-    >>> vector = nimble.createData('Matrix', raw)
+    >>> vector = nimble.data('Matrix', raw)
     >>> quartiles(vector)
     (8.5, 13.0, 17.5)
     """
@@ -376,10 +375,10 @@ def residuals(toPredict, controlVars):
         msg = "scipy must be installed in order to use the residuals function."
         raise PackageException(msg)
 
-    if not isinstance(toPredict, nimble.data.Base):
+    if not isinstance(toPredict, nimble.core.data.Base):
         msg = "toPredict must be a nimble data object"
         raise InvalidArgumentType(msg)
-    if not isinstance(controlVars, nimble.data.Base):
+    if not isinstance(controlVars, nimble.core.data.Base):
         msg = "controlVars must be a nimble data object"
         raise InvalidArgumentType(msg)
 
@@ -389,8 +388,8 @@ def residuals(toPredict, controlVars):
     cvF = len(controlVars.features)
 
     if tpP != cvP:
-        msg = "toPredict and controlVars must have the same number of points: ("
-        msg += str(tpP) + ") vs (" + str(cvP) + ")"
+        msg = "toPredict and controlVars must have the same number of points: "
+        msg += "(" + str(tpP) + ") vs (" + str(cvP) + ")"
         raise InvalidArgumentValueCombination(msg)
     if tpP == 0 or tpF == 0:
         msg = "toPredict must have nonzero points (" + str(tpP) + ") and "
@@ -407,7 +406,7 @@ def residuals(toPredict, controlVars):
     workingCV = dtypeConvert(workingCV.copy(to="numpy array"))
     workingTP = dtypeConvert(toPredict.copy(to="numpy array"))
 
-    x,res,r,s = scipy.linalg.lstsq(workingCV, workingTP)
+    x, _, _, _ = scipy.linalg.lstsq(workingCV, workingTP)
     pred = numpy.matmul(workingCV, x)
     ret = toPredict - pred
     return ret

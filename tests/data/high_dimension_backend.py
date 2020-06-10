@@ -122,9 +122,9 @@ class HighDimensionSafe(DataTestObject):
         for tensorList in [tensors, emptyTensors]:
             for tensor in tensorList:
                 toTest = self.constructor(tensor)
-                for rType in nimble.data.available:
+                for rType in nimble.core.data.available:
                     testCopy = toTest.copy(rType)
-                    exp = nimble.createData(rType, tensor)
+                    exp = nimble.data(rType, tensor)
                     assert toTest._shape == testCopy._shape
                     assert testCopy == exp
 
@@ -615,7 +615,7 @@ class HighDimensionModifying(DataTestObject):
 
         toTest = self.constructor(tensors[0])
 
-        baseUser = getNimbleDefined(nimble.data.Base)
+        baseUser = getNimbleDefined(nimble.core.data.Base)
         baseAllowed = set((
             '__bool__', '__eq__', '__ne__', '__add__', '__radd__', '__iadd__',
             '__sub__', '__rsub__', '__isub__', '__mul__', '__rmul__',
@@ -639,14 +639,14 @@ class HighDimensionModifying(DataTestObject):
         axisAllowed = set((
             '__len__', 'getName', 'getNames', 'setName', 'setNames',
             'getIndex', 'getIndices', 'hasName',))
-        ptUser = getNimbleDefined(nimble.data.Points)
+        ptUser = getNimbleDefined(nimble.core.data.Points)
         ptAllowed = set((
             '__iter__', '__getitem__', 'copy', 'extract', 'delete', 'retain',
             'sort', 'insert', 'append', 'permute', 'repeat', 'unique',))
         ptAllAllowed = axisAllowed.union(ptAllowed)
         ptDisallowed = ptUser.difference(ptAllAllowed)
 
-        ftUser = getNimbleDefined(nimble.data.Features)
+        ftUser = getNimbleDefined(nimble.core.data.Features)
         # only the Axis methods are allowed for features
         ftDisallowed = ftUser.difference(axisAllowed)
 

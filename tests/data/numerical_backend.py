@@ -26,14 +26,14 @@ from nose.tools import *
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
-from nimble.randomness import numpyRandom
-from nimble.randomness import pythonRandom
-from nimble.data.dataHelpers import DEFAULT_PREFIX
+from nimble.random import numpyRandom
+from nimble.random import pythonRandom
+from nimble.core.data._dataHelpers import DEFAULT_PREFIX
 
 from .baseObject import DataTestObject
-from ..assertionHelpers import logCountAssertionFactory, noLogEntryExpected
-from ..assertionHelpers import assertNoNamesGenerated
-from ..assertionHelpers import CalledFunctionException, calledException
+from tests.helpers import logCountAssertionFactory, noLogEntryExpected
+from tests.helpers import assertNoNamesGenerated
+from tests.helpers import CalledFunctionException, calledException
 
 
 preserveName = "PreserveTestName"
@@ -594,7 +594,7 @@ def back_otherNotNumericException(callerCon, calleeCon, attr1, attr2=None):
     data1 = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
     data2 = [['one', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
     caller = callerCon(data1)
-    callee = calleeConstructor(data2, nimble.data.List)  # need to use nimble.data.List for string valued element
+    callee = calleeConstructor(data2, nimble.core.data.List)  # need to use nimble.core.data.List for string valued element
 
     toCall = getattr(caller, attr1)
     if attr2 is not None:
@@ -705,8 +705,8 @@ def back_byInf(callerCon, calleeCon, opName):
 
 
 def makeAllData(constructor, rhsCons, numPts, numFts, sparsity):
-    randomlf = nimble.createRandomData('Matrix', numPts, numFts, sparsity, useLog=False)
-    randomrf = nimble.createRandomData('Matrix', numPts, numFts, sparsity, useLog=False)
+    randomlf = nimble.random.data('Matrix', numPts, numFts, sparsity, useLog=False)
+    randomrf = nimble.random.data('Matrix', numPts, numFts, sparsity, useLog=False)
     lhsf = randomlf.copy(to="numpyarray")
     rhsf = randomrf.copy(to="numpyarray")
     lhsi = numpy.array(numpyRandom.random_integers(1, 10, (numPts, numFts)), dtype=float)
@@ -801,7 +801,7 @@ def back_autoVsNumpyScalar(constructor, opName, nimbleinplace, sparsity):
 
 def back_autoVsNumpyObjCalleeDiffTypes(constructor, opName, nimbleinplace, sparsity):
     """ Test operation on handmade data with different types of data objects"""
-    makers = [getattr(nimble.data, retType) for retType in nimble.data.available]
+    makers = [getattr(nimble.core.data, retType) for retType in nimble.core.data.available]
 
     for i in range(len(makers)):
         maker = makers[i]
@@ -838,9 +838,9 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, opName, nimbleinplace, spars
             assert expiObj.isIdentical(resiObj)
 
             if type(resfObj) != type(lhsfObj):
-                assert isinstance(resfObj, nimble.data.Base)
+                assert isinstance(resfObj, nimble.core.data.Base)
             if type(resiObj) != type(lhsiObj):
-                assert isinstance(resiObj, nimble.data.Base)
+                assert isinstance(resiObj, nimble.core.data.Base)
 
         assertNoNamesGenerated(lhsfObj)
         assertNoNamesGenerated(lhsiObj)
@@ -878,7 +878,7 @@ def run_full_backend(constructor, opName, inplace, sparsity):
     back_autoVsNumpyObjCalleeDiffTypes(constructor, opName, inplace, sparsity)
 
 
-@patch('nimble.data.Sparse._scalarZeroPreservingBinary_implementation', calledException)
+@patch('nimble.core.data.Sparse._scalarZeroPreservingBinary_implementation', calledException)
 def back_sparseScalarZeroPreserving(constructor, nimbleOp):
     data = [[1, 2, 3], [0, 0, 0]]
     toTest = constructor(data)
@@ -892,8 +892,8 @@ def back_sparseScalarZeroPreserving(constructor, nimbleOp):
     except ZeroDivisionError:
         assert nimbleOp.startswith('__r')
 
-@patch('nimble.data.Sparse._defaultBinaryOperations_implementation', calledException)
-@patch('nimble.data.Sparse._scalarZeroPreservingBinary_implementation', calledException)
+@patch('nimble.core.data.Sparse._defaultBinaryOperations_implementation', calledException)
+@patch('nimble.core.data.Sparse._scalarZeroPreservingBinary_implementation', calledException)
 def back_sparseScalarOfOne(constructor, nimbleOp):
     """Test Sparse does not call helper functions for these scalar ops """
     data = [[1, 2, 3], [0, 0, 0]]
@@ -994,7 +994,7 @@ class NumericalDataSafe(DataTestObject):
     ###############################
 
     @raises(CalledFunctionException)
-    @patch('nimble.data.Base.__matmul__', calledException)
+    @patch('nimble.core.data.Base.__matmul__', calledException)
     def test_matrixMultiply_uses__matmul__backend(self):
         data1 = [[1, 2], [4, 5], [7, 8]]
         data2 = [[1, 2, 3], [4, 5, 6]]
@@ -1702,8 +1702,8 @@ class NumericalDataSafe(DataTestObject):
 
         exp = self.getLogicalExpectedOutput(logicOp)
         expObj = self.constructor(exp)
-        for rType in [t for t in nimble.data.available if t != lhsObj.getTypeString()]:
-            rhsObj = nimble.createData(rType, rhs, useLog=False)
+        for rType in [t for t in nimble.core.data.available if t != lhsObj.getTypeString()]:
+            rhsObj = nimble.data(rType, rhs, useLog=False)
 
             assert expObj == getattr(lhsObj, logicOp)(rhsObj)
 

@@ -14,7 +14,6 @@ source code) are for organizational purposes only. All of the functions
 can be imported and called directly from ``nimble.calculate``.
 """
 
-from .confidence import confidenceIntervalHelper
 from .loss import fractionIncorrect
 from .loss import meanAbsoluteError
 from .loss import meanFeaturewiseRootMeanSquareError
@@ -56,8 +55,8 @@ from .binary import balancedAccuracy
 from .binary import f1Score
 
 
-__all__ = ['balancedAccuracy', 'confidenceIntervalHelper', 'confusionMatrix',
-           'correlation', 'cosineSimilarity', 'covariance', 'detectBestResult',
+__all__ = ['balancedAccuracy', 'confusionMatrix', 'correlation',
+           'cosineSimilarity', 'covariance', 'detectBestResult',
            'elementwiseMultiply', 'elementwisePower', 'f1Score',
            'falseNegative', 'falsePositive', 'fractionCorrect',
            'fractionIncorrect', 'inverse', 'leastSquaresSolution', 'maximum',

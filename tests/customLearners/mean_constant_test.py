@@ -6,10 +6,10 @@ def testMeanConstantSimple():
     """ Test MeanConstant by checking the ouput given simple hand made inputs """
 
     dataX = [[0, 0, 0], [1, 10, 10], [0, -1, 4], [1, 0, 20], [0, 1, 0], [1, 2, 3]]
-    trainX = nimble.createData('Matrix', dataX)
+    trainX = nimble.data('Matrix', dataX)
 
     dataY = [[0], [1], [0], [1], [0], [1]]
-    trainY = nimble.createData('Matrix', dataY)
+    trainY = nimble.data('Matrix', dataY)
 
     for value in ['nimble.MeanConstant', MeanConstant]:
         ret = nimble.trainAndApply(value, trainX=trainX, trainY=trainY, testX=trainX)
