@@ -61,7 +61,7 @@ class DataFrameAxis(Axis):
             pd.DataFrame(ret), pointNames=pointNames,
             featureNames=featureNames, reuseData=True)
 
-    def _sort_implementation(self, indexPosition):
+    def _permute_implementation(self, indexPosition):
         # use numpy indexing to change the ordering
         if self._isPoint:
             self._base.data = self._base.data.iloc[indexPosition, :]

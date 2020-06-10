@@ -70,7 +70,7 @@ class ListAxis(Axis):
                                      featureNames=featureNames,
                                      checkAll=False, reuseData=True)
 
-    def _sort_implementation(self, indexPosition):
+    def _permute_implementation(self, indexPosition):
         # run through target axis and change indices
         if self._isPoint:
             source = copy.copy(self._base.data)

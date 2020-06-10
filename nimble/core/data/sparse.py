@@ -828,15 +828,30 @@ class Sparse(Base):
                     self._sortInternal('point')
                 sortedIndices = self.data.row
 
-                start = numpy.searchsorted(sortedIndices, pointStart, 'left')
-                end = numpy.searchsorted(sortedIndices, pointEnd - 1, 'right')
+                inView = numpy.logical_and(sortedIndices >= pointStart,
+                                           sortedIndices < pointEnd)
+                inViewIdx = inView.nonzero()[0]
 
+                if inView.any():
+                    start = inViewIdx[0]
+                    end = inViewIdx[-1] + 1
+                else:
+                    start = 0
+                    end = 0
+
+                    # assert False
                 if not allFeats:
                     sortedIndices = self.data.col[start:end]
-                    innerStart = numpy.searchsorted(sortedIndices,
-                                                    featureStart, 'left')
-                    innerEnd = numpy.searchsorted(sortedIndices,
-                                                  featureEnd - 1, 'right')
+                    inView = numpy.logical_and(sortedIndices >= featureStart,
+                                               sortedIndices < featureEnd)
+                    inViewIdx = inView.nonzero()[0]
+
+                    if inView.any():
+                        innerStart = inViewIdx[0]
+                        innerEnd = inViewIdx[-1] + 1
+                    else:
+                        innerStart = 0
+                        innerEnd = 0
                     outerStart = start
                     start = start + innerStart
                     end = outerStart + innerEnd

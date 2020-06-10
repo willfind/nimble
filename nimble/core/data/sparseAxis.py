@@ -46,8 +46,8 @@ class SparseAxis(Axis):
         return self._structuralVectorized_implementation(
             structure, targetList, pointNames, featureNames)
 
-    def _sort_implementation(self, indexPosition):
-        # since we want to access with with positions in the original
+    def _permute_implementation(self, indexPosition):
+        # since we want to access with positions in the original
         # data, we reverse the 'map'
         reverseIdxPosition = numpy.empty(len(indexPosition))
         for i, idxPos in enumerate(indexPosition):

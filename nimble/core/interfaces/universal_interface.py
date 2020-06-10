@@ -1554,7 +1554,7 @@ class TrainedLearner(object):
             label = internalOrder[index]
             return desiredDict[label]
 
-        formatedRawOrder.features.sort(sortHelper=sortScorer, useLog=False)
+        formatedRawOrder.features.sort(by=sortScorer, useLog=False)
         return formatedRawOrder
 
 

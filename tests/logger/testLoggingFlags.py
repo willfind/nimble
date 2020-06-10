@@ -537,14 +537,14 @@ def test_features_normalize():
 
 def test_points_sort():
     def wrapped(obj, useLog):
-        return obj.points.sort(sortBy="f0", useLog=useLog)
+        return obj.points.sort(by="f0", useLog=useLog)
 
     for rType in nimble.core.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
 def test_features_sort():
     def wrapped(obj, useLog):
-        return obj.features.sort(sortBy="p0", useLog=useLog)
+        return obj.features.sort(by=nimble.match.allNumeric, useLog=useLog)
 
     for rType in nimble.core.data.available:
         backend(wrapped, prepAndCheck, rType=rType)

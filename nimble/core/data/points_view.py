@@ -67,7 +67,7 @@ class PointsView(Points):
         readOnlyException('permute')
 
     @exceptionDocstring
-    def sort(self, sortBy=None, sortHelper=None, useLog=None):
+    def sort(self, by=None, reverse=False, useLog=None):
         readOnlyException('sort')
 
     @exceptionDocstring

@@ -10,8 +10,5 @@ def setup():
     is no longer the case we need to load them now to ensure that those
     tests continue to test all interfaces.
     """
-    # Prevent logging of these modules cluttering nose output
-    logging.getLogger("tensorflow").setLevel(logging.WARNING)
-    logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
     initAvailablePredefinedInterfaces()

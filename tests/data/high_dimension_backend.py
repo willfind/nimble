@@ -395,13 +395,65 @@ class HighDimensionModifying(DataTestObject):
                 assert ret._shape == toTest._shape
 
     def test_highDimension_sort(self):
-        # TODO: with change to permute, sort for tensors is no longer
-        # usable. Should we allow for scorer and comparator functions?
-        for tensor in tensors:
-            toTest = self.constructor(tensor, pointNames=['a', 'b', 'c'])
+
+        tensor3D = [[[2]], [[3]], [[1]]]
+        tensor4D = [[[[2]]], [[[3]]], [[[1]]]]
+        tensor5D = [[[[[2]]]], [[[[3]]]], [[[[1]]]]]
+        sortTensors = [tensor3D, tensor4D, tensor5D]
+
+        def getValue(obj):
+            try:
+                return int(obj[0])
+            except TypeError:
+                return getValue(obj.points[0])
+
+        for tensor in sortTensors:
+            toTest = self.constructor(tensor, pointNames=['b', 'c', 'a'])
+
+            toTest.points.sort()
+            assert getValue(toTest.points[0]) == 1
+            assert getValue(toTest.points[1]) == 2
+            assert getValue(toTest.points[2]) == 3
+            assert toTest.points.getNames() == ['a', 'b', 'c']
+
+            toTest.points.sort(reverse=True)
+            assert getValue(toTest.points[0]) == 3
+            assert getValue(toTest.points[1]) == 2
+            assert getValue(toTest.points[2]) == 1
+            assert toTest.points.getNames() == ['c', 'b', 'a']
+
+            def valSort(pt):
+                return getValue(pt)
+
+            toTest.points.sort(valSort)
+            assert getValue(toTest.points[0]) == 1
+            assert getValue(toTest.points[1]) == 2
+            assert getValue(toTest.points[2]) == 3
+            assert toTest.points.getNames() == ['a', 'b', 'c']
+
+            toTest.points.sort(valSort, reverse=True)
+            assert getValue(toTest.points[0]) == 3
+            assert getValue(toTest.points[1]) == 2
+            assert getValue(toTest.points[2]) == 1
+            assert toTest.points.getNames() == ['c', 'b', 'a']
+
+            def valCompare(pt1, pt2):
+                return getValue(pt1) - getValue(pt2)
+
+            toTest.points.sort(valCompare)
+            assert getValue(toTest.points[0]) == 1
+            assert getValue(toTest.points[1]) == 2
+            assert getValue(toTest.points[2]) == 3
+            assert toTest.points.getNames() == ['a', 'b', 'c']
+
+            toTest.points.sort(valCompare, reverse=True)
+            assert getValue(toTest.points[0]) == 3
+            assert getValue(toTest.points[1]) == 2
+            assert getValue(toTest.points[2]) == 1
+            assert toTest.points.getNames() == ['c', 'b', 'a']
 
             try:
-                toTest.features.sort(sortHelper=lambda ft: -1)
+                toTest.features.sort(by=lambda ft: -1)
                 assert False
             except ImproperObjectAction:
                 pass

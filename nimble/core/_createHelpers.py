@@ -82,19 +82,24 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
     if featureNames is False:
         return (failPN, failFN)
 
-    def teq(double):
+    def typeEqual(double):
         x, y = double
         return not isinstance(x, type(y))
 
+    def noDuplicates(row):
+        return len(row) == len(set(row))
+
     if ((pointNames is True or pointNames == 'automatic')
             and firstValues[0] == 'pointNames'):
-        allText = all(map(lambda x: isinstance(x, str),
+        allText = (all(map(lambda x: isinstance(x, str),
                           firstValues[1:]))
-        allDiff = all(map(teq, zip(firstValues[1:], secondValues[1:])))
+                   and noDuplicates(firstValues[1:]))
+        allDiff = all(map(typeEqual, zip(firstValues[1:], secondValues[1:])))
     else:
-        allText = all(map(lambda x: isinstance(x, str),
+        allText = (all(map(lambda x: isinstance(x, str),
                           firstValues))
-        allDiff = all(map(teq, zip(firstValues, secondValues)))
+                   and noDuplicates(firstValues[1:]))
+        allDiff = all(map(typeEqual, zip(firstValues, secondValues)))
 
     if featureNames == 'automatic' and allText and allDiff:
         featureNames = True
@@ -1135,7 +1140,7 @@ def initDataObject(
                 cleaned.append(converted)
         if len(cleaned) == len(ret.points):
             pCmp = makeCmp(cleaned, ret, 'point')
-            ret.points.sort(sortHelper=pCmp)
+            ret.points.sort(by=pCmp)
         else:
             ret = ret.points.copy(cleaned)
         # if we had a subset of pointNames can set now on the cleaned data
@@ -1161,7 +1166,7 @@ def initDataObject(
 
         if len(cleaned) == len(ret.features):
             fCmp = makeCmp(cleaned, ret, 'feature')
-            ret.features.sort(sortHelper=fCmp)
+            ret.features.sort(by=fCmp)
         else:
             ret = ret.features.copy(cleaned)
         # if we had a subset of featureNames can set now on the cleaned data
