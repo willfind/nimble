@@ -5,9 +5,9 @@ Tests functionality that is limited only to View objects.
 import nimble
 from nimble.core.data import Base, BaseView
 from nimble.core.data.points import Points
-from nimble.core.data.points_view import PointsView
+from nimble.core.data.views import PointsView
 from nimble.core.data.features import Features
-from nimble.core.data.features_view import FeaturesView
+from nimble.core.data.views import FeaturesView
 from .baseObject import DataTestObject
 
 

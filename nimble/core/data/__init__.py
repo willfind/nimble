@@ -10,7 +10,7 @@ documentation.
 """
 
 from .base import Base
-from .base_view import BaseView
+from .views import BaseView
 from .list import List
 from .matrix import Matrix
 from .sparse import Sparse

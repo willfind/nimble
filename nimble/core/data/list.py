@@ -13,9 +13,9 @@ from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble._utility import inheritDocstringsFactory, numpy2DArray, is2DArray
 from nimble._utility import scipy, pd
 from .base import Base
-from .base_view import BaseView
-from .listPoints import ListPoints, ListPointsView
-from .listFeatures import ListFeatures, ListFeaturesView
+from .views import BaseView
+from .listAxis import ListPoints, ListPointsView
+from .listAxis import ListFeatures, ListFeaturesView
 from ._dataHelpers import DEFAULT_PREFIX
 from ._dataHelpers import isAllowedSingleElement
 from ._dataHelpers import createDataNoValidation
