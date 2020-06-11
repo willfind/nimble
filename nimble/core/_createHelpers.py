@@ -576,9 +576,9 @@ def convertData(returnType, rawData, pointNames, featureNames,
     """
     typeMatch = {'List': list,
                  'Matrix': numpy.ndarray}
-    if scipy:
+    if scipy.nimbleAccessible():
         typeMatch['Sparse'] = scipy.sparse.spmatrix
-    if pd:
+    if pd.nimbleAccessible():
         typeMatch['DataFrame'] = pd.DataFrame
 
     # perform type conversion if necessary
