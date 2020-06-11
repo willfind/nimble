@@ -570,31 +570,6 @@ class Sparse(Base):
         shape = (len(self.points), len(self.features))
         self.data = scipy.sparse.coo_matrix((newData, (newRow, newCol)), shape)
 
-    def _binarySearch(self, x, y):
-        if self._sorted == 'point':
-            axis = self.data.row
-            offAxis = self.data.col
-            axisVal = x
-            offAxisVal = y
-        elif self._sorted == 'feature':
-            axis = self.data.col
-            offAxis = self.data.row
-            axisVal = y
-            offAxisVal = x
-
-        #binary search
-        start, end = numpy.searchsorted(axis, [axisVal, axisVal+1])
-        if start == end: # axisVal is not in self.data.row
-            if numpy.issubdtype(self.data.dtype, numpy.bool_):
-                return False
-            return 0
-        k = numpy.searchsorted(offAxis[start:end], offAxisVal) + start
-        if k < end and offAxis[k] == offAxisVal:
-            return self.data.data[k]
-        if numpy.issubdtype(self.data.dtype, numpy.bool_):
-            return False
-        return 0
-
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):
         if self._sorted != 'feature':
@@ -797,7 +772,13 @@ class Sparse(Base):
         if self._sorted is None:
             self._sortInternal('point')
 
-        return self._binarySearch(x, y)
+        val = self.data.data[(self.data.row == x) & (self.data.col == y)]
+        if val.any(): # False for cases: [], [0], [False]
+            # since we ensure no duplicates, val contains a single value
+            return val[0]
+        if numpy.issubdtype(self.data.dtype, numpy.bool_):
+            return False
+        return 0
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd, dropDimension):
@@ -823,79 +804,80 @@ class Sparse(Base):
         if singleFeat or singlePoint:
             pshape = pointEnd - pointStart
             fshape = featureEnd - featureStart
-            if singlePoint:
-                if self._sorted is None or self._sorted == 'feature':
-                    self._sortInternal('point')
-                sortedIndices = self.data.row
 
-                inView = numpy.logical_and(sortedIndices >= pointStart,
-                                           sortedIndices < pointEnd)
+            axis = 'point' if singlePoint else 'feature'
+            if self._sorted != axis:
+                self._sortInternal(axis)
+
+            if singlePoint:
+                sortedPrimary = self.data.row
+                primaryStart = pointStart
+                primaryEnd = pointEnd
+                allOtherAxis = allFeats
+                sortedSecondary = self.data.col
+                secondaryStart = featureStart
+                secondaryEnd = featureEnd
+            else:
+                sortedPrimary = self.data.col
+                primaryStart = featureStart
+                primaryEnd = featureEnd
+                allOtherAxis = allPoints
+                sortedSecondary = self.data.row
+                secondaryStart = pointStart
+                secondaryEnd = pointEnd
+
+            inView = numpy.logical_and(sortedPrimary >= primaryStart,
+                                       sortedPrimary < primaryEnd)
+            inViewIdx = inView.nonzero()[0]
+            if len(inViewIdx):
+                start = inViewIdx[0]
+                end = inViewIdx[-1] + 1
+            else:
+                start = 0
+                end = 0
+
+            if not allOtherAxis:
+                secondaryLimited = sortedSecondary[start:end]
+                inView = numpy.logical_and(secondaryLimited >= secondaryStart,
+                                           secondaryLimited < secondaryEnd)
                 inViewIdx = inView.nonzero()[0]
 
-                if inView.any():
-                    start = inViewIdx[0]
-                    end = inViewIdx[-1] + 1
+                if len(inViewIdx):
+                    innerStart = inViewIdx[0]
+                    innerEnd = inViewIdx[-1] + 1
                 else:
-                    start = 0
-                    end = 0
-
-                    # assert False
-                if not allFeats:
-                    sortedIndices = self.data.col[start:end]
-                    inView = numpy.logical_and(sortedIndices >= featureStart,
-                                               sortedIndices < featureEnd)
-                    inViewIdx = inView.nonzero()[0]
-
-                    if inView.any():
-                        innerStart = inViewIdx[0]
-                        innerEnd = inViewIdx[-1] + 1
-                    else:
-                        innerStart = 0
-                        innerEnd = 0
-                    outerStart = start
-                    start = start + innerStart
-                    end = outerStart + innerEnd
-                if len(self._shape) > 2:
-                    if dropDimension:
-                        firstIdx = 1
-                        pshape = self._shape[firstIdx]
-                        fshape = int(numpy.prod(self._shape[firstIdx + 1:]))
-                        kwds['pointStart'] = 0
-                        kwds['pointEnd'] = self._shape[1]
-                        kwds['featureStart'] = 0
-                        kwds['featureEnd'] = int(numpy.prod(self._shape[2:]))
-                    else:
-                        firstIdx = 0
-                    row = self.data.col[start:end] // fshape
-                    col = self.data.col[start:end] % fshape
-                    kwds['shape'] = [pshape] + self._shape[firstIdx + 1:]
+                    innerStart = 0
+                    innerEnd = 0
+                outerStart = start
+                start = start + innerStart
+                end = outerStart + innerEnd
+            # high dimension data only allowed for points
+            if singlePoint and len(self._shape) > 2:
+                if dropDimension:
+                    firstIdx = 1
+                    pshape = self._shape[firstIdx]
+                    fshape = int(numpy.prod(self._shape[firstIdx + 1:]))
+                    kwds['pointStart'] = 0
+                    kwds['pointEnd'] = self._shape[1]
+                    kwds['featureStart'] = 0
+                    kwds['featureEnd'] = int(numpy.prod(self._shape[2:]))
                 else:
-                    row = numpy.tile([0], end - start)
-                    col = self.data.col[start:end] - featureStart
-            else:  # case single feature
-                if self._sorted is None or self._sorted == 'point':
-                    self._sortInternal('feature')
-                sortedIndices = self.data.col
+                    firstIdx = 0
+                primary = sortedSecondary[start:end] // fshape
+                secondary = sortedSecondary[start:end] % fshape
+                kwds['shape'] = [pshape] + self._shape[firstIdx + 1:]
+            else:
+                primary = numpy.zeros((end - start,), dtype=int)
+                secondary = sortedSecondary[start:end] - secondaryStart
 
-                start = numpy.searchsorted(sortedIndices, featureStart, 'left')
-                end = numpy.searchsorted(sortedIndices,
-                                         featureEnd - 1, 'right')
-
-                if not allPoints:
-                    sortedIndices = self.data.row[start:end]
-                    innerStart = numpy.searchsorted(sortedIndices,
-                                                    pointStart, 'left')
-                    innerEnd = numpy.searchsorted(sortedIndices,
-                                                  pointEnd - 1, 'right')
-                    outerStart = start
-                    start = start + innerStart
-                    end = outerStart + innerEnd
-
-                row = self.data.row[start:end] - pointStart
-                col = numpy.tile([0], end - start)
+            if singlePoint:
+                row = primary
+                col = secondary
+            else:
+                col = primary
+                row = secondary
 
             data = self.data.data[start:end]
-
             newInternal = scipy.sparse.coo_matrix((data, (row, col)),
                                                   shape=(pshape, fshape))
             kwds['data'] = newInternal
