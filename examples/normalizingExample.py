@@ -30,14 +30,15 @@ if __name__ == "__main__":
 
     # use normalize to modify our data; we call a dimentionality reduction algorithm to
     # simply our mostly redundant points. k is the desired number of dimensions in the output
-    normalizeData('mlpy.PCA', trainObj, testX=testObj, arguments={'k': 1})
+    normalizeData('skl.PCA', trainObj, testX=testObj, arguments={'n_components': 1})
 
     # assert that we actually do have fewer dimensions
     assert len(trainObj.features) == 1
     assert len(testObj.features) == 1
 
     # assert we can predict the correct classes
-    ret = trainAndApply('mlpy.KNN', trainObj, trainObjY, testObj, arguments={'k': 1})
+    ret = trainAndApply('nimble.KNNClassifier', trainObj, trainObjY, testObj,
+                        arguments={'k': 1})
     assert ret[0, 0] == 1
     assert ret[1, 0] == 1
     assert ret[2, 0] == 0
@@ -45,5 +46,6 @@ if __name__ == "__main__":
 
     # demonstrate that the results have not changed, when compared to the original data;
     # uses python's **kwargs based argument passing.
-    retOrig = trainAndApply('mlpy.KNN', trainObjOrig, trainObjY, testObjOrig, k=1)
+    retOrig = trainAndApply('nimble.KNNClassifier', trainObjOrig, trainObjY,
+                            testObjOrig, k=1)
     assert ret == retOrig
