@@ -13,9 +13,9 @@ from nimble.exceptions import PackageException
 from nimble._utility import inheritDocstringsFactory, numpy2DArray, is2DArray
 from nimble._utility import scipy, pd
 from .base import Base
-from .base_view import BaseView
-from .matrixPoints import MatrixPoints, MatrixPointsView
-from .matrixFeatures import MatrixFeatures, MatrixFeaturesView
+from .views import BaseView
+from .matrixAxis import MatrixPoints, MatrixPointsView
+from .matrixAxis import MatrixFeatures, MatrixFeaturesView
 from ._dataHelpers import DEFAULT_PREFIX
 from ._dataHelpers import allDataIdentical
 from ._dataHelpers import createDataNoValidation

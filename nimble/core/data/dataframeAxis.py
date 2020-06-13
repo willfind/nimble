@@ -10,7 +10,15 @@ import numpy
 import nimble
 from nimble._utility import pd
 from .axis import Axis
+from .views import AxisView
+from .points import Points
+from .views import PointsView
+from .features import Features
+from .views import FeaturesView
 from ._dataHelpers import denseAxisUniqueArray, uniqueNameGetter
+from ._dataHelpers import fillArrayWithCollapsedFeatures
+from ._dataHelpers import fillArrayWithExpandedFeatures
+
 
 class DataFrameAxis(Axis):
     """
@@ -118,3 +126,141 @@ class DataFrameAxis(Axis):
     @abstractmethod
     def _transform_implementation(self, function, limitTo):
         pass
+
+
+class DataFramePoints(DataFrameAxis, Points):
+    """
+    DataFrame method implementations performed on the points axis.
+
+    Parameters
+    ----------
+    base : DataFrame
+        The DataFrame instance that will be queried and modified.
+    """
+
+    ##############################
+    # Structural implementations #
+    ##############################
+
+    def _insert_implementation(self, insertBefore, toInsert):
+        """
+        Insert the points from the toInsert object below the provided
+        index in this object, the remaining points from this object will
+        continue below the inserted points.
+        """
+        startData = self._base.data.iloc[:insertBefore, :]
+        endData = self._base.data.iloc[insertBefore:, :]
+        self._base.data = pd.concat((startData, toInsert.data, endData),
+                                    axis=0, ignore_index=True)
+
+    def _transform_implementation(self, function, limitTo):
+        for i, p in enumerate(self):
+            if limitTo is not None and i not in limitTo:
+                continue
+            currRet = function(p)
+
+            self._base.data.iloc[i, :] = currRet
+
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByCollapsingFeatures_implementation(
+            self, featuresToCollapse, collapseIndices, retainIndices,
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures):
+        collapseData = self._base.data.values[:, collapseIndices]
+        retainData = self._base.data.values[:, retainIndices]
+
+        tmpData = fillArrayWithCollapsedFeatures(
+            featuresToCollapse, retainData, numpy.array(collapseData),
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures)
+
+        self._base.data = pd.DataFrame(tmpData)
+
+    def _combineByExpandingFeatures_implementation(self, uniqueDict, namesIdx,
+                                                   uniqueNames, numRetFeatures,
+                                                   numExpanded):
+        tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,
+                                                uniqueNames, numRetFeatures,
+                                                numExpanded)
+
+        self._base.data = pd.DataFrame(tmpData)
+
+
+class DataFramePointsView(PointsView, AxisView, DataFramePoints):
+    """
+    Limit functionality of DataFramePoints to read-only.
+
+    Parameters
+    ----------
+    base : DataFrameView
+        The DataFrameView instance that will be queried.
+    """
+    pass
+
+
+class DataFrameFeatures(DataFrameAxis, Features):
+    """
+    DataFrame method implementations performed on the feature axis.
+
+    Parameters
+    ----------
+    base : DataFrame
+        The DataFrame instance that will be queried and modified.
+    """
+
+    ##############################
+    # Structural implementations #
+    ##############################
+
+    def _insert_implementation(self, insertBefore, toInsert):
+        """
+        Insert the features from the toInsert object to the right of the
+        provided index in this object, the remaining points from this
+        object will continue to the right of the inserted points.
+        """
+        startData = self._base.data.iloc[:, :insertBefore]
+        endData = self._base.data.iloc[:, insertBefore:]
+        self._base.data = pd.concat((startData, toInsert.data, endData),
+                                    axis=1, ignore_index=True)
+
+    def _transform_implementation(self, function, limitTo):
+        for j, f in enumerate(self):
+            if limitTo is not None and j not in limitTo:
+                continue
+            currRet = function(f)
+
+            self._base.data.iloc[:, j] = currRet
+
+
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByParsing_implementation(self, featureIndex, splitList,
+                                       numRetFeatures, numResultingFts):
+        tmpData = numpy.empty(shape=(len(self._base.points), numRetFeatures),
+                              dtype=numpy.object_)
+
+        tmpData[:, :featureIndex] = self._base.data.values[:, :featureIndex]
+        for i in range(numResultingFts):
+            newFeat = []
+            for lst in splitList:
+                newFeat.append(lst[i])
+            tmpData[:, featureIndex + i] = newFeat
+        existingData = self._base.data.values[:, featureIndex + 1:]
+        tmpData[:, featureIndex + numResultingFts:] = existingData
+
+        self._base.data = pd.DataFrame(tmpData)
+
+
+class DataFrameFeaturesView(FeaturesView, AxisView, DataFrameFeatures):
+    """
+    Limit functionality of DataFrameFeatures to read-only.
+
+    Parameters
+    ----------
+    base : DataFrameView
+        The DataFrameView instance that will be queried.
+    """
+    pass

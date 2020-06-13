@@ -12,9 +12,9 @@ from nimble.exceptions import PackageException
 from nimble._utility import inheritDocstringsFactory, is2DArray
 from nimble._utility import scipy, pd
 from .base import Base
-from .base_view import BaseView
-from .dataframePoints import DataFramePoints, DataFramePointsView
-from .dataframeFeatures import DataFrameFeatures, DataFrameFeaturesView
+from .views import BaseView
+from .dataframeAxis import DataFramePoints, DataFramePointsView
+from .dataframeAxis import DataFrameFeatures, DataFrameFeaturesView
 from ._dataHelpers import allDataIdentical
 from ._dataHelpers import DEFAULT_PREFIX
 from ._dataHelpers import createDataNoValidation
