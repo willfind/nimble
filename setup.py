@@ -105,7 +105,7 @@ def run_setup(extensions=None):
         'Operating System :: OS Independent',
         )
     setupKwargs['include_package_data'] = True
-    setupKwargs['install_requires'] = ['six>=1.5.1', 'numpy>=1.10.4',]
+    setupKwargs['install_requires'] = ['numpy>=1.10.4']
     # extras
     pandas = 'pandas>=0.20'
     scipy = 'scipy>=1.0'
@@ -115,16 +115,21 @@ def run_setup(extensions=None):
     mlpy = 'machine-learning-py>=3.5;python_version<"3.7"'
     scikitlearn = 'scikit-learn>=0.19'
     keras = 'keras>=2.0'
-    nose = 'nose>=1.3'
+    autoimpute = 'autoimpute>=0.12'
     requests = 'requests>2.12'
-    interfaces = [mlpy, scikitlearn, keras]
-    userAll = [pandas, scipy, matplotlib, cloudpickle, cython, requests]
+    h5py = 'h5py>=2.10'
+    nose = 'nose>=1.3'
+    data = [pandas, scipy]
+    interfaces = [mlpy, scikitlearn, keras, autoimpute]
+    userAll = [matplotlib, cloudpickle, cython, requests, h5py]
+    userAll.extend(data)
     userAll.extend(interfaces)
     setupKwargs['extras_require'] = {
-        'all': userAll, 'interfaces': interfaces, 'pandas': pandas,
-        'scipy': scipy, 'matplotlib': matplotlib, 'cloudpickle': cloudpickle,
-        'cython': cython, 'mlpy': mlpy, 'scikit-learn': scikitlearn,
-        'keras': keras, 'nose': nose, 'requests': requests,
+        'all': userAll, 'data': data, 'interfaces': interfaces,
+        'pandas': pandas, 'scipy': scipy, 'matplotlib': matplotlib,
+        'cloudpickle': cloudpickle, 'cython': cython, 'requests': requests,
+        'h5py': h5py, 'mlpy': mlpy,  'scikit-learn': scikitlearn,
+        'keras': keras, 'autoimpute': autoimpute, 'nose': nose,
         }
 
     if extensions is not None:
