@@ -13,9 +13,9 @@ from nimble._utility import scipy, pd
 from nimble._utility import sparseMatrixToArray
 from . import _dataHelpers
 from .base import Base
-from .base_view import BaseView
-from .sparsePoints import SparsePoints, SparsePointsView
-from .sparseFeatures import SparseFeatures, SparseFeaturesView
+from .views import BaseView
+from .sparseAxis import SparsePoints, SparsePointsView
+from .sparseAxis import SparseFeatures, SparseFeaturesView
 from .stretch import StretchSparse
 from ._dataHelpers import DEFAULT_PREFIX
 from ._dataHelpers import allDataIdentical

@@ -8,6 +8,11 @@ import numpy
 import nimble
 from nimble._utility import scipy
 from .axis import Axis
+from .views import AxisView
+from .points import Points
+from .views import PointsView
+from .features import Features
+from .views import FeaturesView
 
 class SparseAxis(Axis):
     """
@@ -352,6 +357,173 @@ class SparseAxis(Axis):
             return nimble.data('Sparse', uniqueCoo, pointNames=offAxisNames,
                                featureNames=axisNames, useLog=False)
 
+
+class SparsePoints(SparseAxis, Points):
+    """
+    Sparse method implementations performed on the points axis.
+
+    Parameters
+    ----------
+    base : Sparse
+        The Sparse instance that will be queried and modified.
+    """
+
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByCollapsingFeatures_implementation(
+            self, featuresToCollapse, collapseIndices, retainIndices,
+            currNumPoints, currFtNames, numRetPoints, numRetFeatures):
+        if self._base._sorted is None:
+            self._base._sortInternal('point')
+        data = self._base.data.data
+        row = self._base.data.row
+        col = self._base.data.col
+        tmpData = []
+        tmpRow = []
+        tmpCol = []
+        collapseNames = [self._base.features.getName(idx)
+                         for idx in collapseIndices]
+        for ptIdx in range(len(self)):
+            inRetain = [val in retainIndices for val in col]
+            inCollapse = [val in collapseIndices for val in col]
+            retainData = data[(row == ptIdx) & (inRetain)]
+            retainCol = col[(row == ptIdx) & (inRetain)]
+            collapseData = data[(row == ptIdx) & (inCollapse)]
+            sort = numpy.argsort(collapseIndices)
+            collapseData = collapseData[sort]
+            for idx, value in enumerate(collapseData):
+                tmpData.extend(retainData)
+                tmpRow.extend([ptIdx * len(featuresToCollapse) + idx]
+                              * len(retainData))
+                tmpCol.extend([i for i in range(len(retainCol))])
+                tmpData.append(collapseNames[idx])
+                tmpRow.append(ptIdx * len(featuresToCollapse) + idx)
+                tmpCol.append(numRetFeatures - 2)
+                tmpData.append(value)
+                tmpRow.append(ptIdx * len(featuresToCollapse) + idx)
+                tmpCol.append(numRetFeatures - 1)
+
+        tmpData = numpy.array(tmpData, dtype=numpy.object_)
+        self._base.data = scipy.sparse.coo_matrix(
+            (tmpData, (tmpRow, tmpCol)), shape=(numRetPoints, numRetFeatures))
+        self._base._sorted = None
+
+    def _combineByExpandingFeatures_implementation(self, uniqueDict, namesIdx,
+                                                   uniqueNames, numRetFeatures,
+                                                   numExpanded):
+        tmpData = []
+        tmpRow = []
+        tmpCol = []
+        numNewFts = len(uniqueNames) * numExpanded
+        for idx, point in enumerate(uniqueDict):
+            tmpPoint = list(point[:namesIdx])
+            for name in uniqueNames:
+                if name in uniqueDict[point]:
+                    tmpPoint.extend(uniqueDict[point][name])
+                else:
+                    tmpPoint.extend([numpy.nan] * numExpanded)
+            tmpPoint.extend(point[namesIdx:])
+            tmpData.extend(tmpPoint)
+            tmpRow.extend([idx for _ in range(len(point) + numNewFts)])
+            tmpCol.extend([i for i in range(numRetFeatures)])
+
+        tmpData = numpy.array(tmpData, dtype=numpy.object_)
+        shape = (len(uniqueDict), numRetFeatures)
+        self._base.data = scipy.sparse.coo_matrix((tmpData, (tmpRow, tmpCol)),
+                                                  shape=shape)
+        self._base._sorted = None
+
+
+class SparsePointsView(PointsView, AxisView, SparsePoints):
+    """
+    Limit functionality of SparsePoints to read-only.
+
+    Parameters
+    ----------
+    base : SparseView
+        The SparseView instance that will be queried.
+    """
+
+    #########################
+    # Query implementations #
+    #########################
+
+    def _unique_implementation(self):
+        unique = self._base.copy(to='Sparse')
+        return unique.points._unique_implementation()
+
+    def _repeat_implementation(self, totalCopies, copyValueByValue):
+        copy = self._base.copy(to='Sparse')
+        return copy.points._repeat_implementation(totalCopies,
+                                                  copyValueByValue)
+
+
+class SparseFeatures(SparseAxis, Features):
+    """
+    Sparse method implementations performed on the feature axis.
+
+    Parameters
+    ----------
+    base : Sparse
+        The Sparse instance that will be queried and modified.
+    """
+
+    ################################
+    # Higher Order implementations #
+    ################################
+
+    def _splitByParsing_implementation(self, featureIndex, splitList,
+                                       numRetFeatures, numResultingFts):
+        keep = self._base.data.col != featureIndex
+        tmpData = self._base.data.data[keep]
+        tmpRow = self._base.data.row[keep]
+        tmpCol = self._base.data.col[keep]
+
+        shift = tmpCol > featureIndex
+        tmpCol[shift] = tmpCol[shift] + numResultingFts - 1
+
+        for idx in range(numResultingFts):
+            newFeat = []
+            for lst in splitList:
+                newFeat.append(lst[idx])
+            tmpData = numpy.concatenate((tmpData, newFeat))
+            newRows = [i for i in range(len(self._base.points))]
+            tmpRow = numpy.concatenate((tmpRow, newRows))
+            newCols = [featureIndex + idx for _
+                       in range(len(self._base.points))]
+            tmpCol = numpy.concatenate((tmpCol, newCols))
+
+        tmpData = numpy.array(tmpData, dtype=numpy.object_)
+        shape = (len(self._base.points), numRetFeatures)
+        self._base.data = scipy.sparse.coo_matrix((tmpData, (tmpRow, tmpCol)),
+                                                  shape=shape)
+        self._base._sorted = None
+
+
+class SparseFeaturesView(FeaturesView, AxisView, SparseFeatures):
+    """
+    Limit functionality of SparseFeatures to read-only.
+
+    Parameters
+    ----------
+    base : SparseView
+        The SparseView instance that will be queried.
+    """
+
+    #########################
+    # Query implementations #
+    #########################
+
+    def _unique_implementation(self):
+        unique = self._base.copy(to='Sparse')
+        return unique.features._unique_implementation()
+
+    def _repeat_implementation(self, totalCopies, copyValueByValue):
+        copy = self._base.copy(to='Sparse')
+        return copy.features._repeat_implementation(totalCopies,
+                                                    copyValueByValue)
 
 ###################
 # Generic Helpers #

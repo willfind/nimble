@@ -158,8 +158,8 @@ def test_trainAndTestOnTrainingData_trainError():
 
 def test_normalizeData():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        return nimble.normalizeData('mlpy.PCA', trainX, testX=testX,
-                                  arguments={'k': 1}, useLog=useLog)
+        return nimble.normalizeData('skl.PCA', trainX, testX=testX,
+                                  arguments={'n_components': 1}, useLog=useLog)
 
     backend(wrapped, runAndCheck)
 
