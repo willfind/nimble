@@ -8,11 +8,12 @@ import numbers
 import re
 import operator
 from functools import wraps
+from multiprocessing import Process
 
 import numpy
 
 import nimble
-from nimble._utility import pd
+from nimble._utility import pd, matplotlib
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
 
@@ -1029,3 +1030,137 @@ def limitedTo2D(method):
             raise ImproperObjectAction(msg)
         return method(self, *args, **kwargs)
     return wrapped
+
+####################
+# Plotting Helpers #
+####################
+
+def matplotlibAccessible(func):
+    """
+    Since plotting occurs as a separate process, the accessibility of
+    matplotlib needs to be checked before each function call.
+    """
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        if not matplotlib.nimbleAccessible():
+            raise PackageException('matplotlib is required for plotting')
+        return func(*args, **kwargs)
+    return wrapped
+
+@matplotlibAccessible
+def matplotlibBackendHandling(outPath, plotter, **kwargs):
+    import __main__ as main
+    # for .show() to work in interactive sessions
+    # a backend different than Agg needs to be use
+    # The interactive session can choose by default e.g.,
+    # in jupyter-notebook inline is the default.
+    if hasattr(main, '__file__'):
+        # It must be agg  for non-interactive sessions
+        # otherwise the combination of matplotlib and multiprocessing
+        # produces a segfault.
+        # Open matplotlib issue here:
+        # https://github.com/matplotlib/matplotlib/issues/8795
+        # It applies for both for python 2 and 3
+        matplotlib.use('Agg')
+
+    kwargs['outPath'] = outPath
+    if outPath is None:
+        if matplotlib.get_backend() == 'agg':
+            plt = matplotlib.pyplot
+            plt.switch_backend('TkAgg')
+            plotter(**kwargs)
+            plt.switch_backend('agg')
+        else:
+            plotter(**kwargs)
+        p = Process(target=lambda: None)
+        p.start()
+    else:
+        p = Process(target=plotter, kwargs=kwargs)
+        p.start()
+
+    return p
+
+@matplotlibAccessible
+def plotPlotter(d, includeColorbar, name, outPath, outFormat):
+    plt = matplotlib.pyplot
+
+    plt.matshow(d, cmap=matplotlib.cm.gray)
+
+    if includeColorbar:
+        plt.colorbar()
+
+    if not name.startswith(DEFAULT_NAME_PREFIX):
+        #plt.title("Heatmap of " + self.name)
+        plt.title(name)
+    plt.xlabel("Feature Values", labelpad=10)
+    plt.ylabel("Point Values")
+
+    if outPath is None:
+        plt.show()
+    else:
+        plt.savefig(outPath, format=outFormat)
+
+@matplotlibAccessible
+def distributionPlotter(d, binCount, name, index, axis, xLim, outPath,
+                        outFormat):
+    plt = matplotlib.pyplot
+
+    plt.hist(d, binCount)
+
+    if not name or name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+        titlemsg = '#' + str(index)
+    else:
+        titlemsg = "named: " + name
+    plt.title("Distribution of " + axis + " " + titlemsg)
+    plt.xlabel("Values")
+    plt.ylabel("Number of values")
+
+    plt.xlim(xLim)
+
+    if outPath is None:
+        plt.show()
+    else:
+        plt.savefig(outPath, format=outFormat)
+
+@matplotlibAccessible
+def crossPlotter(inX, inY, xName, yName, xIndex, yIndex, xAxis, yAxis,
+                 xLim, yLim, sampleSizeForAverage, name, outPath, outFormat):
+    plt = matplotlib.pyplot
+    #plt.scatter(inX, inY)
+    plt.scatter(inX, inY, marker='.')
+
+    if not xName or xName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+        xlabel = xAxis + ' #' + str(xIndex)
+    else:
+        xlabel = xName
+    if not yName or yName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+        ylabel = yAxis + ' #' + str(yIndex)
+    else:
+        ylabel = yName
+
+    xName2 = xName
+    yName2 = yName
+    if sampleSizeForAverage:
+        tmpStr = ' (%s sample average)' % sampleSizeForAverage
+        xlabel += tmpStr
+        ylabel += tmpStr
+        xName2 += ' average'
+        yName2 += ' average'
+
+    if name.startswith(DEFAULT_NAME_PREFIX):
+        titleStr = ('%s vs. %s') % (xName2, yName2)
+    else:
+        titleStr = ('%s: %s vs. %s') % (name, xName2, yName2)
+
+
+    plt.title(titleStr)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+    plt.xlim(xLim)
+    plt.ylim(yLim)
+
+    if outPath is None:
+        plt.show()
+    else:
+        plt.savefig(outPath, format=outFormat)

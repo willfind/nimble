@@ -40,7 +40,7 @@ def isAllowedRaw(data, allowLPT=False):
         return True
 
     if pd.nimbleAccessible():
-        if isinstance(data, (pd.DataFrame, pd.Series, pd.SparseDataFrame)):
+        if isinstance(data, (pd.DataFrame, pd.Series)):
             return True
 
     return False
@@ -511,8 +511,7 @@ def extractNames(rawData, pointNames, featureNames):
             if isinstance(rawData, scipy.sparse.coo_matrix):
                 rawData = removeDuplicatesNative(rawData)
             func = extractNamesFromScipySparse
-        elif (pd.nimbleAccessible()
-              and isinstance(rawData, (pd.DataFrame, pd.SparseDataFrame))):
+        elif pd.nimbleAccessible() and isinstance(rawData, pd.DataFrame):
             func = extractNamesFromPdDataFrame
         elif pd.nimbleAccessible() and isinstance(rawData, pd.Series):
             func = extractNamesFromPdSeries
@@ -732,9 +731,19 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
     Convert any values in rawData found in treatAsMissing with
     replaceMissingWith value.
     """
-    # need to convert SparseDataFrame to coo matrix before handling missing
-    if pd.nimbleAccessible() and isinstance(rawData, pd.SparseDataFrame):
-        rawData = scipy.sparse.coo_matrix(rawData)
+    if (pd.nimbleAccessible()
+            and isinstance(rawData, (pd.DataFrame, pd.Series))):
+        # pandas 1.0: SparseDataFrame still in pd namespace but does not work
+        # Sparse functionality now determined by presence of .sparse accessor
+        # need to convert sparse objects to coo matrix before handling missing
+        if hasattr(rawData, 'sparse') and not rawData.empty:
+            rawData = rawData.sparse.to_coo()
+        else:
+            try:
+                if isinstance(rawData, pd.SparseDataFrame):
+                    rawData = scipy.sparse.coo_matrix(rawData)
+            except AttributeError:
+                pass
 
     if isinstance(rawData, (list, tuple)):
         handleMissing = numpy.array(rawData, dtype=numpy.object_)
@@ -1012,9 +1021,15 @@ def initDataObject(
     5. Convert to acceptable form for returnType init
     """
     if returnType is None:
+        # scipy sparse matrix or a pandas sparse object
         if ((scipy.nimbleAccessible() and scipy.sparse.issparse(rawData))
                 or (pd.nimbleAccessible()
-                    and isinstance(rawData, pd.SparseDataFrame))):
+                    and isinstance(rawData, (pd.Series, pd.DataFrame))
+                    # latest pandas versions use pd.DataFrame.sparse accessor,
+                    # previous versions used pd.SparseDataFrame
+                    and ((hasattr(rawData, 'sparse'))
+                         or (hasattr(pd, 'SparseDataFrame')
+                             and isinstance(rawData, pd.SparseDataFrame))))):
             returnType = 'Sparse'
         else:
             returnType = 'Matrix'
