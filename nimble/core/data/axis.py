@@ -275,26 +275,24 @@ class Axis(object):
                     msg += "can only be performed on point names or using a "
                     msg += "function."
                     raise ImproperObjectAction(msg)
-                toCheck = self._base.features
-            else:
-                toCheck = self._base.points
-            try: # single identifier
-                func = itemgetter(toCheck._getIndex(by))
-            except TypeError: # iterable of identifiers
-                indices = []
-                for id in by:
-                    indices.append(toCheck._getIndex(id))
-                func = itemgetter(*indices)
-            self._sortByFunction(func, reverse)
+            self._sortByIdentifier(by, reverse)
         # functions
+        elif isinstance(by, itemgetter):
+            # extract the items and use the faster _sortByIdentifier
+            indices = list(by.__reduce__()[1])
+            self._sortByIdentifier(indices, reverse)
         else:
-            args, _, _, _ = inspectArguments(by)
-            if len(args) == 2: # comparator function
-                func = functools.cmp_to_key(by)
-            elif not args or len(args) > 2:
-                msg = 'by must take one or two positional arguments'
-                raise InvalidArgumentValue(msg)
-            else:
+            try:
+                args, _, _, _ = inspectArguments(by)
+                if len(args) == 2: # comparator function
+                    func = functools.cmp_to_key(by)
+                elif not args or len(args) > 2:
+                    msg = 'by must take one or two positional arguments'
+                    raise InvalidArgumentValue(msg)
+                else:
+                    func = by
+            except TypeError:
+                # inspect fails when 'by' is already cmp_to_key
                 func = by
             self._sortByFunction(func, reverse)
 
@@ -1274,8 +1272,21 @@ class Axis(object):
         self._permute(sorted(self.getNames(), reverse=reverse),
                       useLog=False)
 
-    def _sortByFunction(self, by, reverse):
-        sortedData = sorted(enumerate(self), key=lambda x: by(x[1]),
+    def _sortByIdentifier(self, index, reverse):
+        if isinstance(index, list):
+            for idx in index[::-1]:
+                self._sortByIdentifier(idx, reverse)
+        else:
+            if self._axis == 'point':
+                data = self._base.features[index]
+            else:
+                data = self._base.points[index]
+            sortedIndex = sorted(enumerate(data), key=itemgetter(1),
+                                 reverse=reverse)
+            self._permute((val[0] for val in sortedIndex), useLog=False)
+
+    def _sortByFunction(self, func, reverse):
+        sortedData = sorted(enumerate(self), key=lambda x: func(x[1]),
                             reverse=reverse)
         self._permute((val[0] for val in sortedData), useLog=False)
 

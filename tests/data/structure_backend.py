@@ -3436,7 +3436,7 @@ class StructureModifying(StructureShared):
         pythonSortRev = sorted(data, key=itemgetter(1), reverse=True)
         assert testIndex.copy('pythonlist') == pythonSortRev
 
-    @twoLogEntriesExpected
+    @logCountAssertionFactory(4)
     def test_points_sort_naturalByMultipleFeatures(self):
         """ Test points.sort() when we specify features to sort by """
         data = [[1, 2, 3], [7, 1, 9], [4, 5, 6], [0, 1, 8]]
@@ -3469,6 +3469,16 @@ class StructureModifying(StructureShared):
 
         pythonSortRev = sorted(data, key=itemgetter(1, 0), reverse=True)
         assert toTest.copy('pythonlist') == pythonSortRev
+
+        # itemgetter already applied with indices
+        ret = toTest.points.sort(itemgetter(1, 0))
+
+        assert toTest.isIdentical(objExp)
+
+        # itemgetter already applied with names
+        ret = toTest.points.sort(itemgetter('b', 'a'), reverse=True)
+
+        assert toTest.isIdentical(revExp)
 
     @twoLogEntriesExpected
     def test_points_sort_scorer(self):
@@ -3505,7 +3515,7 @@ class StructureModifying(StructureShared):
         pythonSort = sorted(data, key=numOdds, reverse=True)
         assert toTest.copy('pythonlist') == pythonSort
 
-    @twoLogEntriesExpected
+    @logCountAssertionFactory(3)
     def test_points_sort_comparator(self):
         """ Test points.sort() when we specify a comparator function """
         data = [[1, 2, 3], [4, 5, 6], [0, 0, 0], [7, 1, 9], [2, 2, 2]]
@@ -3543,6 +3553,15 @@ class StructureModifying(StructureShared):
 
         pythonSort = sorted(data, key=cmp_to_key(compOdds), reverse=True)
         assert toTest.copy('pythonlist') == pythonSort
+
+        # with cmp_to_key already applied
+        toTest.points.sort(by=cmp_to_key(compOdds))
+
+        dataExpected = [[0, 0, 0], [2, 2, 2], [4, 5, 6], [1, 2, 3], [7, 1, 9]]
+        objExp = self.constructor(dataExpected)
+
+        assert toTest.isIdentical(objExp)
+        assertNoNamesGenerated(toTest)
 
     def test_points_sort_stability(self):
         colors = [['red', 1], ['blue', 1], ['green', 1],
@@ -3584,6 +3603,21 @@ class StructureModifying(StructureShared):
         exp = self.constructor(expNames, featureNames=ftnames)
 
         assert toTest.isIdentical(exp)
+
+    def test_points_sort_repeated_sorting(self):
+        data = [[1, 2, 3], [4, 5, 6], [0, 0, 0], [7, 1, 9], [2, 2, 2]]
+        toTest = self.constructor(data)
+
+        # check that repeated sorting does not have any unintended effects
+        # this ensures that, for example, Sparse's _compressed attribute is
+        # reset each time sort is called.
+        toTest.points.sort(0)
+        sorted1 = toTest.copy()
+        toTest.points.sort(0)
+        sorted2 = toTest.copy()
+        toTest.points.sort(0)
+
+        assert toTest == sorted1 == sorted2
 
     #################
     # features.sort() #
@@ -3781,6 +3815,21 @@ class StructureModifying(StructureShared):
                                featureNames=expFts)
 
         assert toTest.isIdentical(exp)
+
+    def test_features_sort_repeated_sorting(self):
+        data = [[7, 1, 9, 0, 1], [1, 2, 3, 0, 1], [4, 2, 9, 0, 1]]
+        toTest = self.constructor(data)
+
+        # check that repeated sorting does not have any unintended effects
+        # this ensures that, for example, Sparse's _compressed attribute is
+        # reset each time sort is called.
+        toTest.features.sort(0)
+        sorted1 = toTest.copy()
+        toTest.features.sort(0)
+        sorted2 = toTest.copy()
+        toTest.features.sort(0)
+
+        assert toTest == sorted1 == sorted2
 
     ##################
     # points.extract #
