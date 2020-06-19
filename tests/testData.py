@@ -2935,7 +2935,7 @@ def test_replaceNumpyValues_dtypePreservation():
 
         toTest = nimble.data(t, data, replaceMissingWith='x',
                              treatAsMissing=[0])
-        # should upcast to float, since replaceMissingWith is float
+        # should upcast to object, since replaceMissingWith is a string
         if hasattr(toTest.data, 'dtype'):
             assert toTest.data.dtype == numpy.object_
         assert toTest[0, 0] == True
