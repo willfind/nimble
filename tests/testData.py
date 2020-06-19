@@ -20,6 +20,7 @@ from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import FileFormatException
 from nimble.core.data._dataHelpers import DEFAULT_PREFIX
 from nimble.core._createHelpers import _intFloatOrString
+from nimble.core._createHelpers import replaceNumpyValues
 from nimble._utility import sparseMatrixToArray
 
 # from .. import logger
@@ -2904,6 +2905,41 @@ def test_DataOutputWithMissingDataTypes2D():
                 assert numpy.isnan(orig.data.data[2])
                 assert numpy.array_equal(orig.data.data[3:], expSparseOutput.data[3:])
 
+def test_replaceNumpyValues_dtypePreservation():
+    for t in returnTypes:
+        data = numpy.array([[True, False, True], [False, True, False]])
+        toTest = nimble.data(t, data, replaceMissingWith=2,
+                             treatAsMissing=[False])
+        # should upcast to int, since replaceMissingWith is int
+        if hasattr(toTest.data, 'dtype'):
+            assert toTest.data.dtype == int
+        assert toTest[0, 0] == True # could be 1 or True depending on type
+        assert toTest[0, 1] == 2
+
+        data = numpy.array([[1, 0, 1], [0, 1, 0]])
+        toTest = nimble.data(t, data, replaceMissingWith=numpy.nan,
+                             treatAsMissing=[None])
+        # should skip attempted replacement because no treatAsMissing values
+        if hasattr(toTest.data, 'dtype'):
+            assert toTest.data.dtype == int
+        assert all(isinstance(val, int) for val in toTest.iterateElements())
+
+        toTest = nimble.data(t, data, replaceMissingWith=numpy.nan,
+                             treatAsMissing=[0])
+        # should upcast to float, since replaceMissingWith is float
+        if hasattr(toTest.data, 'dtype'):
+            assert toTest.data.dtype == float
+        assert toTest[0, 0] == True # could be 1.0 or True depending on type
+        assert numpy.isnan(toTest[0, 1])
+
+
+        toTest = nimble.data(t, data, replaceMissingWith='x',
+                             treatAsMissing=[0])
+        # should upcast to object, since replaceMissingWith is a string
+        if hasattr(toTest.data, 'dtype'):
+            assert toTest.data.dtype == numpy.object_
+        assert toTest[0, 0] == True
+        assert toTest[0, 1] == 'x'
 
 #################
 # Logging count #

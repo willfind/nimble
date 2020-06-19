@@ -637,8 +637,8 @@ def convertToArray(rawData, convertToType, pointNames, featureNames):
         arr = numpy2DArray(rawData, dtype=convertToType)
         # run through elementType to convert to object if not accepted type
         return elementTypeConvert(arr, None)
-    else:
-        arr = numpy2DArray(rawData)
+
+    arr = numpy2DArray(rawData)
     # The bool dtype is acceptable, but others run the risk of transforming the
     # data so we default to object dtype.
     if arr.dtype == bool:
@@ -716,11 +716,22 @@ def replaceNumpyValues(data, toReplace, replaceWith):
 
     # try to avoid converting dtype if possible for efficiency.
     try:
-        data[numpy.isin(data, toReplace)] = replaceWith
+        replaceLocs = numpy.isin(data, toReplace)
+        if replaceLocs.any():
+            if data.dtype == bool and not isinstance(replaceWith, bool):
+                # numpy will replace with bool(replaceWith) instead
+                raise ValueError('replaceWith is not a bool type')
+            data[replaceLocs] = replaceWith
         if replaceNan:
-            data[data != data] = replaceWith
+            nanLocs = data != data
+            if nanLocs.any():
+                data[nanLocs] = replaceWith
     except ValueError:
-        data = data.astype(numpy.object_)
+        dtype = type(replaceWith)
+        if dtype not in [int, float, bool, numpy.bool_]:
+            dtype = numpy.object_
+
+        data = data.astype(dtype)
         data[numpy.isin(data, toReplace)] = replaceWith
         if replaceNan:
             data[data != data] = replaceWith
