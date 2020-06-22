@@ -17,6 +17,8 @@ import tempfile
 import os
 import os.path
 import copy
+from operator import itemgetter
+from functools import cmp_to_key
 try:
     from unittest import mock #python >=3.3
 except ImportError:
@@ -2278,9 +2280,9 @@ class StructureModifying(StructureShared):
         orig1 = self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
         orig2 = self.constructor((1,2,3), featureNames=['a', 'b', 'c'])
         orig3 = self.constructor({'a':1, 'b':2, 'c':3})
-        orig3.features.sort(sortBy=orig3.points.getName(0))
+        orig3.features.sort()
         orig10 = self.constructor([{'a':1, 'b':2, 'c':3}])
-        orig10.features.sort(sortBy=orig10.points.getName(0))
+        orig10.features.sort()
         orig4 = self.constructor(numpy.array([1,2,3]), featureNames=['a', 'b', 'c'])
         orig5 = self.constructor(numpy.matrix([1,2,3]), featureNames=['a', 'b', 'c'])
         orig6 = self.constructor(pd.DataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
@@ -2308,9 +2310,9 @@ class StructureModifying(StructureShared):
         orig1 = self.constructor([[1,2,'a'], [3,4,'b']], featureNames=['a', 'b', 'c'])
         orig2 = self.constructor(((1,2,'a'), (3,4,'b')), featureNames=['a', 'b', 'c'])
         orig3 = self.constructor({'a':[1,3], 'b':[2,4], 'c':['a', 'b']})
-        orig3.features.sort(sortBy=orig3.points.getName(0))
+        orig3.features.sort()
         orig7 = self.constructor([{'a':1, 'b':2, 'c':'a'}, {'a':3, 'b':4, 'c':'b'}])
-        orig7.features.sort(sortBy=orig7.points.getName(0))
+        orig7.features.sort()
         orig4 = self.constructor(numpy.array([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
         orig5 = self.constructor(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
         orig6 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']]), featureNames=['a', 'b', 'c'])
@@ -3367,80 +3369,156 @@ class StructureModifying(StructureShared):
     # points.sort() #
     #################
 
-    @raises(InvalidArgumentTypeCombination)
-    def test_points_sort_exceptionAtLeastOne(self):
-        """ Test points.sort() has at least one parameter """
+    @raises(InvalidArgumentValue)
+    def test_points_sort_defaultParamsNeedsNames(self):
+        """ Test points.sort() needs names if default params used """
         data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
         toTest = self.constructor(data)
 
         toTest.points.sort()
 
-    @raises(InvalidArgumentTypeCombination)
-    def test_points_sort_exceptionBothNotNone(self):
-        """ Test points.sort() has only one parameter """
+    @twoLogEntriesExpected
+    def test_points_sort_defaultParamsWithNames(self):
+        """ Test points.sort() default params sort by point names """
         data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
-        toTest = self.constructor(data)
+        toTest = self.constructor(data, pointNames=['c', 'a', 'b'])
 
-        toTest.points.sort(sortBy=1, sortHelper=[1,2,0])
+        toTest.points.sort()
 
-    @oneLogEntryExpected
-    def test_points_sort_naturalByFeature(self):
-        """ Test points.sort() when we specify a feature to sort by """
-        data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
-        names = ['1', '7', '4']
-        toTest = self.constructor(data, pointNames=names)
+        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        exp = self.constructor(expData, pointNames=['a', 'b' , 'c'])
+        assert toTest.isIdentical(exp)
 
-        ret = toTest.points.sort(sortBy=1) # RET CHECK
+        expRev = self.constructor(expData[::-1], pointNames=['c', 'b', 'a'])
+        toTest.points.sort(reverse=True)
 
-        dataExpected = [[7, 1, 9], [1, 2, 3], [4, 5, 6]]
-        namesExp = ['7', '1', '4']
-        objExp = self.constructor(dataExpected, pointNames=namesExp)
+        assert toTest.isIdentical(expRev)
+
+    @logCountAssertionFactory(4)
+    def test_points_sort_naturalByOneFeature(self):
+        """ Test points.sort() when we specify a feature index to sort by """
+        data = [[1, 2, 3], [7, 1, 9], [4, 5, 6], [0, 1, 8]]
+        ptNames = ['1', '7', '4', '0']
+        ftNames = ['a', 'b', 'c']
+        toTest = self.constructor(data, pointNames=ptNames,
+                                  featureNames=ftNames)
+        testIndex = toTest.copy()
+        testName = toTest.copy()
+
+        dataExpected = [[7, 1, 9], [0, 1, 8], [1, 2, 3], [4, 5, 6]]
+        namesExp = ['7', '0', '1', '4']
+        objExp = self.constructor(dataExpected, pointNames=namesExp,
+                                  featureNames=ftNames)
+
+        retIdx = testIndex.points.sort(1) # RET CHECK
+        retName = testName.points.sort('b') # RET CHECK
+
+        assert testIndex.isIdentical(objExp)
+        assert testName.isIdentical(objExp)
+        assert retIdx is None and retName is None
+
+        pythonSort = sorted(data, key=itemgetter(1))
+        assert testIndex.copy('pythonlist') == pythonSort
+
+        testIndex = toTest.copy()
+        testName = toTest.copy()
+        testIndex.points.sort(1, reverse=True)
+        testName.points.sort('b', reverse=True)
+
+        revExpected = [[4, 5, 6], [1, 2, 3], [7, 1, 9], [0, 1, 8]]
+        namesRev = ['4', '1', '7', '0']
+        revExp = self.constructor(revExpected, pointNames=namesRev,
+                                  featureNames=ftNames)
+
+        assert testIndex.isIdentical(revExp)
+        assert testName.isIdentical(revExp)
+
+        pythonSortRev = sorted(data, key=itemgetter(1), reverse=True)
+        assert testIndex.copy('pythonlist') == pythonSortRev
+
+    @logCountAssertionFactory(4)
+    def test_points_sort_naturalByMultipleFeatures(self):
+        """ Test points.sort() when we specify features to sort by """
+        data = [[1, 2, 3], [7, 1, 9], [4, 5, 6], [0, 1, 8]]
+        ptNames = ['1', '7', '4', '0']
+        ftNames = ['a', 'b', 'c']
+        toTest = self.constructor(data, pointNames=ptNames,
+                                  featureNames=ftNames)
+
+        dataExpected = [[0, 1, 8], [7, 1, 9], [1, 2, 3], [4, 5, 6]]
+        namesExp = ['0', '7', '1', '4']
+        objExp = self.constructor(dataExpected, pointNames=namesExp,
+                                  featureNames=ftNames)
+
+        ret = toTest.points.sort([1, 'a']) # RET CHECK
 
         assert toTest.isIdentical(objExp)
         assert ret is None
 
-    def test_points_sort_naturalByFeatureName(self):
-        """ Test points.sort() when we specify a feature name to sort by """
-        data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
-        pnames = ['1', '7', '4']
-        fnames = ['1', '2', '3']
-        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        pythonSort = sorted(data, key=itemgetter(1, 0))
+        assert toTest.copy('pythonlist') == pythonSort
 
-        ret = toTest.points.sort(sortBy='2') # RET CHECK
+        toTest.points.sort(['b', 0], reverse=True)
 
-        dataExpected = [[7, 1, 9], [1, 2, 3], [4, 5, 6]]
-        namesExp = ['7', '1', '4']
-        objExp = self.constructor(dataExpected, pointNames=namesExp, featureNames=fnames)
+        revExpected = [[4, 5, 6], [1, 2, 3], [7, 1, 9], [0, 1, 8]]
+        namesRev = ['4', '1', '7', '0']
+        revExp = self.constructor(revExpected, pointNames=namesRev,
+                                  featureNames=ftNames)
+
+        assert toTest.isIdentical(revExp)
+
+        pythonSortRev = sorted(data, key=itemgetter(1, 0), reverse=True)
+        assert toTest.copy('pythonlist') == pythonSortRev
+
+        # itemgetter already applied with indices
+        ret = toTest.points.sort(itemgetter(1, 0))
 
         assert toTest.isIdentical(objExp)
-        assert ret is None
 
-    @oneLogEntryExpected
+        # itemgetter already applied with names
+        ret = toTest.points.sort(itemgetter('b', 'a'), reverse=True)
+
+        assert toTest.isIdentical(revExp)
+
+    @twoLogEntriesExpected
     def test_points_sort_scorer(self):
         """ Test points.sort() when we specify a scoring function """
-        data = [[1, 2, 3], [4, 5, 6], [7, 1, 9], [0, 0, 0]]
+        data = [[1, 2, 3], [4, 5, 6], [0, 0, 0], [7, 1, 9], [2, 2, 2]]
         toTest = self.constructor(data)
 
         def numOdds(point):
-            assert isinstance(point, BaseView)
             ret = 0
             for val in point:
                 if val % 2 != 0:
                     ret += 1
             return ret
 
-        toTest.points.sort(sortHelper=numOdds)
+        toTest.points.sort(by=numOdds)
 
-        dataExpected = [[0, 0, 0], [4, 5, 6], [1, 2, 3], [7, 1, 9]]
+        dataExpected = [[0, 0, 0], [2, 2, 2], [4, 5, 6], [1, 2, 3], [7, 1, 9]]
         objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
         assertNoNamesGenerated(toTest)
 
-    @oneLogEntryExpected
+        pythonSort = sorted(data, key=numOdds)
+        assert toTest.copy('pythonlist') == pythonSort
+
+        toTest.points.sort(by=numOdds, reverse=True)
+
+        revExpected = [[7, 1, 9], [1, 2, 3], [4, 5, 6], [0, 0, 0], [2, 2, 2]]
+        revExp = self.constructor(revExpected)
+
+        assert toTest.isIdentical(revExp)
+        assertNoNamesGenerated(toTest)
+
+        pythonSort = sorted(data, key=numOdds, reverse=True)
+        assert toTest.copy('pythonlist') == pythonSort
+
+    @logCountAssertionFactory(3)
     def test_points_sort_comparator(self):
         """ Test points.sort() when we specify a comparator function """
-        data = [[1, 2, 3], [4, 5, 6], [7, 1, 9], [0, 0, 0]]
+        data = [[1, 2, 3], [4, 5, 6], [0, 0, 0], [7, 1, 9], [2, 2, 2]]
         toTest = self.constructor(data)
 
         def compOdds(point1, point2):
@@ -3454,72 +3532,194 @@ class StructureModifying(StructureShared):
                     odds2 += 1
             return odds1 - odds2
 
-        toTest.points.sort(sortHelper=compOdds)
+        toTest.points.sort(by=compOdds)
 
-        dataExpected = [[0, 0, 0], [4, 5, 6], [1, 2, 3], [7, 1, 9]]
+        dataExpected = [[0, 0, 0], [2, 2, 2], [4, 5, 6], [1, 2, 3], [7, 1, 9]]
         objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
         assertNoNamesGenerated(toTest)
 
+        pythonSort = sorted(data, key=cmp_to_key(compOdds))
+        assert toTest.copy('pythonlist') == pythonSort
+
+        toTest.points.sort(by=compOdds, reverse=True)
+
+        revExpected = [[7, 1, 9], [1, 2, 3], [4, 5, 6], [0, 0, 0], [2, 2, 2]]
+        revExp = self.constructor(revExpected)
+
+        assert toTest.isIdentical(revExp)
+        assertNoNamesGenerated(toTest)
+
+        pythonSort = sorted(data, key=cmp_to_key(compOdds), reverse=True)
+        assert toTest.copy('pythonlist') == pythonSort
+
+        # with cmp_to_key already applied
+        toTest.points.sort(by=cmp_to_key(compOdds))
+
+        dataExpected = [[0, 0, 0], [2, 2, 2], [4, 5, 6], [1, 2, 3], [7, 1, 9]]
+        objExp = self.constructor(dataExpected)
+
+        assert toTest.isIdentical(objExp)
+        assertNoNamesGenerated(toTest)
+
+    def test_points_sort_stability(self):
+        colors = [['red', 1], ['blue', 1], ['green', 1],
+                  ['red', 2], ['blue', 2], ['green', 2],
+                  ['red', 3], ['blue', 3], ['green', 3]]
+        toTest = self.constructor(colors)
+        toTest.points.sort(0)
+
+        expData = [['blue', 1], ['blue', 2], ['blue', 3],
+                   ['green', 1], ['green', 2], ['green', 3],
+                   ['red', 1], ['red', 2], ['red', 3]]
+        exp = self.constructor(expData)
+        assert toTest.isIdentical(exp)
+
+        testRev = self.constructor(colors)
+        testRev.points.sort(0, reverse=True)
+
+        dataRev = [['red', 1], ['red', 2], ['red', 3],
+                   ['green', 1], ['green', 2], ['green', 3],
+                   ['blue', 1], ['blue', 2], ['blue', 3]]
+        expRev = self.constructor(dataRev)
+        assert testRev.isIdentical(expRev)
+
+    def test_points_sort_stability_chained(self):
+        names = [['john', 'a', 'smith'], ['john', 'f', 'brown'],
+                 ['peter', 'm', 'smith'], ['peter', 't', 'brown'],
+                 ['adam', 'o', 'brown'], ['adam', 'a', 'smith'],
+                 ['john', 't', 'smith'], ['john', 'a', 'brown']]
+
+        ftnames = ['first', 'mi', 'last']
+        toTest = self.constructor(names, featureNames=ftnames)
+        toTest.points.sort('first')
+        toTest.points.sort('last', reverse=True)
+
+        expNames = [['adam', 'a', 'smith'], ['john', 'a', 'smith'],
+                    ['john', 't', 'smith'], ['peter', 'm', 'smith'],
+                    ['adam', 'o', 'brown'], ['john', 'f', 'brown'],
+                    ['john', 'a', 'brown'], ['peter', 't', 'brown']]
+        exp = self.constructor(expNames, featureNames=ftnames)
+
+        assert toTest.isIdentical(exp)
+
+    def test_points_sort_repeated_sorting(self):
+        data = [[1, 2, 3], [4, 5, 6], [0, 0, 0], [7, 1, 9], [2, 2, 2]]
+        toTest = self.constructor(data)
+
+        # check that repeated sorting does not have any unintended effects
+        # this ensures that, for example, Sparse's _compressed attribute is
+        # reset each time sort is called.
+        toTest.points.sort(0)
+        sorted1 = toTest.copy()
+        toTest.points.sort(0)
+        sorted2 = toTest.copy()
+        toTest.points.sort(0)
+
+        assert toTest == sorted1 == sorted2
+
     #################
     # features.sort() #
     #################
 
-    @raises(InvalidArgumentTypeCombination)
-    def test_features_sort_exceptionAtLeastOne(self):
-        """ Test features.sort() has at least one paramater """
+    @raises(InvalidArgumentValue)
+    def test_features_sort_defaultParamsNeedsNames(self):
+        """ Test features.sort() needs names if default params used """
         data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
         toTest = self.constructor(data)
 
         toTest.features.sort()
 
-    @raises(InvalidArgumentTypeCombination)
-    def test_features_sort_exceptionBothNotNone(self):
-        """ Test points.sort() has only one parameter """
-        data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
-        toTest = self.constructor(data)
-
-        toTest.features.sort(sortBy=1, sortHelper=[1,2,0])
-
-    @oneLogEntryExpected
-    def test_features_sort_naturalByPointWithNames(self):
-        """ Test features.sort() when we specify a point to sort by; includes featureNames """
-        data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
-        names = ["1", "2", "3"]
+    @twoLogEntriesExpected
+    def test_features_sort_defaultParamsWithNames(self):
+        """ Test features.sort() sorts by feature names with default params """
+        data = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
+        names = ["3", "2", "1"]
         toTest = self.constructor(data, featureNames=names)
 
-        ret = toTest.features.sort(sortBy=1) # RET CHECK
+        ret = toTest.features.sort() # RET CHECK
 
-        dataExpected = [[2, 1, 3], [1, 7, 9], [5, 4, 6]]
-        namesExp = ["2", "1", "3"]
+        dataExpected = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        namesExp = ["1", "2", "3"]
         objExp = self.constructor(dataExpected, featureNames=namesExp)
 
         assert toTest.isIdentical(objExp)
         assert ret is None
 
-    def test_features_sort_naturalByPointNameWithFNames(self):
-        """ Test features.sort() when we specify a point name to sort by; includes featureNames """
+        toTest.features.sort(reverse=True)
+
+        revExp = self.constructor(data, featureNames=names)
+
+        assert toTest.isIdentical(revExp)
+
+    def test_features_sort_naturalByOnePoint(self):
+        """ Test features.sort() when we specify a point name to sort by """
         data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
         pnames = ['1', '7', '4']
         fnames = ["1", "2", "3"]
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        testIdx = toTest.copy()
+        testName = toTest.copy()
 
-        ret = toTest.features.sort(sortBy='7') # RET CHECK
+        retIdx = testIdx.features.sort(1) # RET CHECK
+        retName = testName.features.sort('7') # RET CHECK
 
         dataExpected = [[2, 1, 3], [1, 7, 9], [5, 4, 6]]
         namesExp = ["2", "1", "3"]
-        objExp = self.constructor(dataExpected, pointNames=pnames, featureNames=namesExp)
+        objExp = self.constructor(dataExpected, pointNames=pnames,
+                                  featureNames=namesExp)
+
+        assert testIdx.isIdentical(objExp)
+        assert testName.isIdentical(objExp)
+        assert retIdx is None
+        assert retName is None
+
+        testIdxRev = toTest.copy()
+        testNameRev = toTest.copy()
+
+        testIdxRev.features.sort(1, reverse=True)
+        testNameRev.features.sort('7', reverse=True)
+
+        dataExpected = [[3, 1, 2], [9, 7, 1], [6, 4, 5]]
+        namesExp = ["3", "1", "2"]
+        objExp = self.constructor(dataExpected, pointNames=pnames,
+                                  featureNames=namesExp)
+
+        assert testIdxRev.isIdentical(objExp)
+        assert testNameRev.isIdentical(objExp)
+
+    def test_features_sort_naturalByMultiplePoints(self):
+        """ Test features.sort() when we specify a point name to sort by """
+        data = [[1, 2, 3, 4, 5], [7, 1, 9, 1, 1], [4, 5, 6, 3, 5]]
+        pnames = ['1', '7', '4']
+        fnames = ["1", "2", "3", "4", "5"]
+        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+        ret = toTest.features.sort([1, '4']) # RET CHECK
+
+        dataExpected = [[4, 2, 5, 1, 3], [1, 1, 1, 7, 9], [3, 5, 5, 4, 6]]
+        namesExp = ["4", "2", "5", "1", "3"]
+        objExp = self.constructor(dataExpected, pointNames=pnames,
+                                  featureNames=namesExp)
 
         assert toTest.isIdentical(objExp)
         assert ret is None
 
-    @oneLogEntryExpected
+        toTest.features.sort([1, '4'], reverse=True)
+
+        revExpected = [[3, 1, 2, 5, 4], [9, 7, 1, 1, 1], [6, 4, 5, 5, 3]]
+        namesRev = ["3", "1", "2", "5", "4"]
+        revExp = self.constructor(revExpected, pointNames=pnames,
+                                  featureNames=namesRev)
+
+        assert toTest.isIdentical(revExp)
+
+    @twoLogEntriesExpected
     def test_features_sort_scorer(self):
         """ Test features.sort() when we specify a scoring function """
-        data = [[7, 1, 9, 0], [1, 2, 3, 0], [4, 2, 9, 0]]
-        names = ["2", "1", "3", "0"]
-        toTest = self.constructor(data, featureNames=names)
+        data = [[7, 1, 9, 0, 1], [1, 2, 3, 0, 1], [4, 2, 9, 0, 1]]
+        toTest = self.constructor(data)
 
         def numOdds(feature):
             ret = 0
@@ -3528,18 +3728,24 @@ class StructureModifying(StructureShared):
                     ret += 1
             return ret
 
-        toTest.features.sort(sortHelper=numOdds)
+        toTest.features.sort(by=numOdds)
 
-        dataExpected = [[0, 1, 7, 9], [0, 2, 1, 3], [0, 2, 4, 9]]
-        namesExp = ['0', '1', '2', '3']
-        objExp = self.constructor(dataExpected, featureNames=namesExp)
+        dataExpected = [[0, 1, 7, 9, 1], [0, 2, 1, 3, 1], [0, 2, 4, 9, 1]]
+        objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
 
-    @oneLogEntryExpected
+        toTest.features.sort(by=numOdds, reverse=True)
+
+        revExpected = [[9, 1, 7, 1, 0], [3, 1, 1, 2, 0], [9, 1, 4, 2, 0]]
+        revExp = self.constructor(revExpected)
+
+        assert toTest.isIdentical(revExp)
+
+    @twoLogEntriesExpected
     def test_features_sort_comparator(self):
         """ Test features.sort() when we specify a comparator function """
-        data = [[7, 1, 9, 0], [1, 2, 3, 0], [4, 2, 9, 0]]
+        data = [[7, 1, 9, 0, 1], [1, 2, 3, 0, 1], [4, 2, 9, 0, 1]]
         toTest = self.constructor(data)
 
         def compOdds(point1, point2):
@@ -3553,13 +3759,77 @@ class StructureModifying(StructureShared):
                     odds2 += 1
             return odds1 - odds2
 
-        toTest.features.sort(sortHelper=compOdds)
+        toTest.features.sort(by=compOdds)
 
-        dataExpected = [[0, 1, 7, 9], [0, 2, 1, 3], [0, 2, 4, 9]]
+        dataExpected = [[0, 1, 7, 9, 1], [0, 2, 1, 3, 1], [0, 2, 4, 9, 1]]
         objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
-        assertNoNamesGenerated(toTest)
+
+        toTest.features.sort(by=compOdds, reverse=True)
+
+        revExpected = [[9, 1, 7, 1, 0], [3, 1, 1, 2, 0], [9, 1, 4, 2, 0]]
+        revExp = self.constructor(revExpected)
+
+        assert toTest.isIdentical(revExp)
+
+    def test_features_sort_stability(self):
+        colors = [['red', 'blue', 'green', 'red', 'blue', 'green', 'red', 'blue', 'green'],
+                  [1, 1, 1, 2, 2, 2, 3, 3, 3]]
+        toTest = self.constructor(colors)
+        toTest.features.sort(0)
+
+        expData = [['blue', 'blue', 'blue', 'green', 'green', 'green', 'red', 'red', 'red'],
+                   [1, 2, 3, 1, 2, 3, 1, 2, 3]]
+        exp = self.constructor(expData)
+        assert toTest.isIdentical(exp)
+
+        testRev = self.constructor(colors)
+        testRev.features.sort(0, reverse=True)
+
+        dataRev = [['red', 'red', 'red', 'green', 'green', 'green', 'blue', 'blue', 'blue'],
+                   [1, 2, 3, 1, 2, 3, 1, 2, 3]]
+        expRev = self.constructor(dataRev)
+        assert testRev.isIdentical(expRev)
+
+
+    def test_features_sort_stability_chained(self):
+        runs = [[10, 7, 14, 6, 10],
+                [14, 8, 12, 4, 9],
+                [12, 5, 15, 8, 12],
+                [11, 9, 11, 9, 11]]
+
+        ptnames = ['control1', 'control2', 'proto1', 'proto2']
+        ftnames = ['clear', 'wind', 'wet', 'hot', 'cold']
+        toTest = self.constructor(runs, pointNames=ptnames,
+                                  featureNames=ftnames)
+        toTest.features.sort('control2')
+        toTest.features.sort('control1', reverse=True)
+
+        expRuns = [[14, 10, 10, 7, 6],
+                   [12, 9, 14, 8, 4],
+                   [15, 12, 12, 5, 8],
+                   [11, 11, 11, 9, 9]]
+        expFts = ['wet', 'cold', 'clear', 'wind', 'hot']
+        exp = self.constructor(expRuns, pointNames=ptnames,
+                               featureNames=expFts)
+
+        assert toTest.isIdentical(exp)
+
+    def test_features_sort_repeated_sorting(self):
+        data = [[7, 1, 9, 0, 1], [1, 2, 3, 0, 1], [4, 2, 9, 0, 1]]
+        toTest = self.constructor(data)
+
+        # check that repeated sorting does not have any unintended effects
+        # this ensures that, for example, Sparse's _compressed attribute is
+        # reset each time sort is called.
+        toTest.features.sort(0)
+        sorted1 = toTest.copy()
+        toTest.features.sort(0)
+        sorted2 = toTest.copy()
+        toTest.features.sort(0)
+
+        assert toTest == sorted1 == sorted2
 
     ##################
     # points.extract #
@@ -8817,7 +9087,7 @@ class StructureModifying(StructureShared):
         self.backend_unflatten_handmadeFormattedNames('feature')
 
     # unflatten something that was flattened - include name transformation
-    @logCountAssertionFactory(2)
+    @twoLogEntriesExpected
     def backend_unflatten_handmadeFormattedNames(self, order):
         raw = [["el0", "el1", "el2", "el3", "el4", "el5"]]
         rawNames = ["A | 1", "A | 2", "A | 3", "B | 1", "B | 2", "B | 3"]

@@ -371,7 +371,7 @@ class PointsView(Points):
         readOnlyException('permute')
 
     @pointsExceptionDoc
-    def sort(self, sortBy=None, sortHelper=None, useLog=None):
+    def sort(self, by=None, reverse=False, useLog=None):
         readOnlyException('sort')
 
     @pointsExceptionDoc
@@ -459,7 +459,7 @@ class FeaturesView(Features):
         readOnlyException('permute')
 
     @featuresExceptionDoc
-    def sort(self, sortBy=None, sortHelper=None, useLog=None):
+    def sort(self, by=None, reverse=False, useLog=None):
         readOnlyException('sort')
 
     @featuresExceptionDoc

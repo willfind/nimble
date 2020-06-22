@@ -514,13 +514,13 @@ def testPrepTypeFunctionsUseLog():
 
     # points.sort
     dataObj = nimble.data("Matrix", data, useLog=False)
-    dataObj.points.sort(sortBy=dataObj.features.getName(0))
-    checkLogContents('points.sort', "Matrix", {'sortBy': dataObj.features.getName(0)})
+    dataObj.points.sort(by=dataObj.features.getName(0))
+    checkLogContents('points.sort', "Matrix", {'by': dataObj.features.getName(0)})
 
     # features.sort
     dataObj = nimble.data("Matrix", data, useLog=False)
-    dataObj.features.sort(sortBy=[2, 1, 0])
-    checkLogContents('features.sort', "Matrix", {'sortBy': [2, 1, 0]})
+    dataObj.features.sort(by=nimble.match.allNumeric, reverse=True)
+    checkLogContents('features.sort', "Matrix", {'by': 'allNumeric', 'reverse': True})
 
     # points.copy
     dataObj = nimble.data("Matrix", data, useLog=False)
