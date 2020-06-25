@@ -20,6 +20,7 @@ from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import FileFormatException
 from nimble.core.data._dataHelpers import DEFAULT_PREFIX
 from nimble.core._createHelpers import _intFloatOrString
+from nimble.core._createHelpers import replaceNumpyValues
 from nimble._utility import sparseMatrixToArray
 
 # from .. import logger
@@ -2833,9 +2834,9 @@ def test_DataOutputWithMissingDataTypes1D():
         orig1 = nimble.data(t, [1,2,"None"])
         orig2 = nimble.data(t, (1,2,"None"))
         orig3 = nimble.data(t, {'a':1, 'b':2, 'c':"None"})
-        orig3.features.sort(sortBy=orig3.points.getName(0))
+        orig3.features.sort()
         orig4 = nimble.data(t, [{'a':1, 'b':2, 'c':"None"}])
-        orig4.features.sort(sortBy=orig4.points.getName(0))
+        orig4.features.sort()
         orig5 = nimble.data(t, numpy.array([1,2,"None"], dtype=object))
         orig6 = nimble.data(t, numpy.matrix([1,2,"None"], dtype=object))
         orig7 = nimble.data(t, pd.DataFrame([[1,2,"None"]]))
@@ -2877,9 +2878,9 @@ def test_DataOutputWithMissingDataTypes2D():
         orig1 = nimble.data(t, [[1,2,'None'], [3,4,'b']])
         orig2 = nimble.data(t, ((1,2,'None'), (3,4,'b')))
         orig3 = nimble.data(t, {'a':[1,3], 'b':[2,4], 'c':['None', 'b']})
-        orig3.features.sort(sortBy=orig3.points.getName(0))
+        orig3.features.sort()
         orig4 = nimble.data(t, [{'a':1, 'b':2, 'c':'None'}, {'a':3, 'b':4, 'c':'b'}])
-        orig4.features.sort(sortBy=orig4.points.getName(0))
+        orig4.features.sort()
         orig5 = nimble.data(t, numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
         orig6 = nimble.data(t, numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
         orig7 = nimble.data(t, pd.DataFrame([[1,2,'None'], [3,4,'b']]))
@@ -2911,6 +2912,41 @@ def test_DataOutputWithMissingDataTypes2D():
                 assert numpy.isnan(orig.data.data[2])
                 assert numpy.array_equal(orig.data.data[3:], expSparseOutput.data[3:])
 
+def test_replaceNumpyValues_dtypePreservation():
+    for t in returnTypes:
+        data = numpy.array([[True, False, True], [False, True, False]])
+        toTest = nimble.data(t, data, replaceMissingWith=2,
+                             treatAsMissing=[False])
+        # should upcast to int, since replaceMissingWith is int
+        if hasattr(toTest.data, 'dtype'):
+            assert toTest.data.dtype == int
+        assert toTest[0, 0] == True # could be 1 or True depending on type
+        assert toTest[0, 1] == 2
+
+        data = numpy.array([[1, 0, 1], [0, 1, 0]])
+        toTest = nimble.data(t, data, replaceMissingWith=numpy.nan,
+                             treatAsMissing=[None])
+        # should skip attempted replacement because no treatAsMissing values
+        if hasattr(toTest.data, 'dtype'):
+            assert toTest.data.dtype == int
+        assert all(isinstance(val, int) for val in toTest.iterateElements())
+
+        toTest = nimble.data(t, data, replaceMissingWith=numpy.nan,
+                             treatAsMissing=[0])
+        # should upcast to float, since replaceMissingWith is float
+        if hasattr(toTest.data, 'dtype'):
+            assert toTest.data.dtype == float
+        assert toTest[0, 0] == True # could be 1.0 or True depending on type
+        assert numpy.isnan(toTest[0, 1])
+
+
+        toTest = nimble.data(t, data, replaceMissingWith='x',
+                             treatAsMissing=[0])
+        # should upcast to object, since replaceMissingWith is a string
+        if hasattr(toTest.data, 'dtype'):
+            assert toTest.data.dtype == numpy.object_
+        assert toTest[0, 0] == True
+        assert toTest[0, 1] == 'x'
 
 #################
 # Logging count #

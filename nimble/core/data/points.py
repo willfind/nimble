@@ -873,22 +873,29 @@ class Points(object):
         """
         return self._count(condition)
 
-    def sort(self, sortBy=None, sortHelper=None, useLog=None):
+    def sort(self, by=None, reverse=False, useLog=None):
         """
         Arrange the points in this object.
 
-        A variety of methods to sort the points. May define either
-        ``sortBy`` or ``sortHelper`` parameter, not both.
+        This sort is stable, meaning the initial point order is retained
+        for points that evaluate as equal.
 
         Parameters
         ----------
-        sortBy : str
-            May indicate the feature to sort by or None if the entire
-            point is to be taken as a key.
-        sortHelper : list, function
-            Either an iterable, list-like object of identifiers (names
-            and/or indices), a comparator or a scoring function, or None
-            to indicate the natural ordering.
+        by : identifier(s), function, None
+            Based on the parameter type:
+
+            * identifier(s) - a single feature index or name or a list
+              of feature indices and/or names. For lists, sorting occurs
+              according to the first index with ties being broken in the
+              order of the subsequent indices. Sort follows the natural
+              ordering of the values in the identifier(s).
+            * function - a scorer or comparator function. Must take
+              either one or two positional arguments accepting point
+              views.
+            * None - sort by the point names.
+        reverse : bool
+            Sort as if each comparison were reversed.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -899,66 +906,69 @@ class Points(object):
 
         Examples
         --------
-        Sort by a given feature using ``sortBy``.
+        Sort by features.
 
-        >>> raw = [['home', 81, 3],
-        ...        ['gard', 98, 10],
-        ...        ['home', 14, 1],
-        ...        ['home', 11, 3]]
-        >>> fts = ['dept', 'ID', 'quantity']
+        >>> raw = [['home', 81, 3, 2.49],
+        ...        ['gard', 98, 10, 0.99],
+        ...        ['home', 14, 1, 8.99],
+        ...        ['home', 11, 3, 3.89]]
+        >>> fts = ['dept', 'ID', 'quantity', 'price']
         >>> orders = nimble.data('DataFrame', raw, featureNames=fts)
-        >>> orders.points.sort('ID')
+        >>> orders.points.sort(['quantity', 'dept'])
         >>> orders
         DataFrame(
-            [[home 11 3 ]
-             [home 14 1 ]
-             [home 81 3 ]
-             [gard 98 10]]
-            featureNames={'dept':0, 'ID':1, 'quantity':2}
+            [[home 14 1  8.990]
+             [home 81 3  2.490]
+             [home 11 3  3.890]
+             [gard 98 10 0.990]]
+            featureNames={'dept':0, 'ID':1, 'quantity':2, 'price':3}
             )
 
         Sort using a comparator function.
 
-        >>> def compareQuantity(pt1, pt2):
-        ...     return pt1['quantity'] - pt2['quantity']
-        >>> raw = [['home', 81, 3],
-        ...        ['gard', 98, 10],
-        ...        ['home', 14, 1],
-        ...        ['home', 11, 3]]
-        >>> fts = ['dept', 'ID', 'quantity']
+        >>> raw = [['home', 81, 3, 2.49],
+        ...        ['gard', 98, 10, 0.99],
+        ...        ['home', 14, 1, 8.99],
+        ...        ['home', 11, 3, 3.89]]
+        >>> fts = ['dept', 'ID', 'quantity', 'price']
         >>> orders = nimble.data('DataFrame', raw, featureNames=fts)
-        >>> orders.points.sort(sortHelper=compareQuantity)
+        >>> def incomeDifference(pt1, pt2):
+        ...     pt1Income = pt1['quantity'] * pt1['price']
+        ...     pt2Income = pt2['quantity'] * pt2['price']
+        ...     return pt2Income - pt1Income
+        >>> orders.points.sort(incomeDifference)
         >>> orders
         DataFrame(
-            [[home 14 1 ]
-             [home 81 3 ]
-             [home 11 3 ]
-             [gard 98 10]]
-            featureNames={'dept':0, 'ID':1, 'quantity':2}
+            [[home 11 3  3.890]
+             [gard 98 10 0.990]
+             [home 14 1  8.990]
+             [home 81 3  2.490]]
+            featureNames={'dept':0, 'ID':1, 'quantity':2, 'price':3}
             )
 
         Sort using a scoring function.
 
-        >>> def scoreQuantity(pt):
-        ...     # multiply by -1 to sort starting with highest quantity.
-        ...     return pt['quantity'] * -1
-        >>> raw = [['home', 81, 3],
-        ...        ['gard', 98, 10],
-        ...        ['home', 14, 1],
-        ...        ['home', 11, 3]]
-        >>> fts = ['dept', 'ID', 'quantity']
+        >>> raw = [['home', 81, 3, 2.49],
+        ...        ['gard', 98, 10, 0.99],
+        ...        ['home', 14, 1, 8.99],
+        ...        ['home', 11, 3, 3.89]]
+        >>> fts = ['dept', 'ID', 'quantity', 'price']
         >>> orders = nimble.data('DataFrame', raw, featureNames=fts)
-        >>> orders.points.sort(sortHelper=scoreQuantity)
+        >>> def weightedQuantity(pt):
+        ...     weights = {'home': 2, 'gard': 0.5}
+        ...     score = pt['quantity'] * weights[pt['dept']]
+        ...     return score
+        >>> orders.points.sort(weightedQuantity, reverse=True)
         >>> orders
         DataFrame(
-            [[gard 98 10]
-             [home 81 3 ]
-             [home 11 3 ]
-             [home 14 1 ]]
-            featureNames={'dept':0, 'ID':1, 'quantity':2}
+            [[home 81 3  2.490]
+             [home 11 3  3.890]
+             [gard 98 10 0.990]
+             [home 14 1  8.990]]
+            featureNames={'dept':0, 'ID':1, 'quantity':2, 'price':3}
             )
         """
-        self._sort(sortBy, sortHelper, useLog)
+        self._sort(by, reverse, useLog)
 
     @limitedTo2D
     def transform(self, function, points=None, useLog=None):
@@ -2102,7 +2112,7 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _sort(self, sortBy, sortHelper, useLog=None):
+    def _sort(self, by, reverse, useLog=None):
         pass
 
     @abstractmethod

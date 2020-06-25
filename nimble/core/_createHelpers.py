@@ -82,19 +82,24 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
     if featureNames is False:
         return (failPN, failFN)
 
-    def teq(double):
+    def typeEqual(double):
         x, y = double
         return not isinstance(x, type(y))
 
+    def noDuplicates(row):
+        return len(row) == len(set(row))
+
     if ((pointNames is True or pointNames == 'automatic')
             and firstValues[0] == 'pointNames'):
-        allText = all(map(lambda x: isinstance(x, str),
+        allText = (all(map(lambda x: isinstance(x, str),
                           firstValues[1:]))
-        allDiff = all(map(teq, zip(firstValues[1:], secondValues[1:])))
+                   and noDuplicates(firstValues[1:]))
+        allDiff = all(map(typeEqual, zip(firstValues[1:], secondValues[1:])))
     else:
-        allText = all(map(lambda x: isinstance(x, str),
+        allText = (all(map(lambda x: isinstance(x, str),
                           firstValues))
-        allDiff = all(map(teq, zip(firstValues, secondValues)))
+                   and noDuplicates(firstValues[1:]))
+        allDiff = all(map(typeEqual, zip(firstValues, secondValues)))
 
     if featureNames == 'automatic' and allText and allDiff:
         featureNames = True
@@ -636,8 +641,8 @@ def convertToArray(rawData, convertToType, pointNames, featureNames):
         arr = numpy2DArray(rawData, dtype=convertToType)
         # run through elementType to convert to object if not accepted type
         return elementTypeConvert(arr, None)
-    else:
-        arr = numpy2DArray(rawData)
+
+    arr = numpy2DArray(rawData)
     # The bool dtype is acceptable, but others run the risk of transforming the
     # data so we default to object dtype.
     if arr.dtype == bool:
@@ -715,11 +720,22 @@ def replaceNumpyValues(data, toReplace, replaceWith):
 
     # try to avoid converting dtype if possible for efficiency.
     try:
-        data[numpy.isin(data, toReplace)] = replaceWith
+        replaceLocs = numpy.isin(data, toReplace)
+        if replaceLocs.any():
+            if data.dtype == bool and not isinstance(replaceWith, bool):
+                # numpy will replace with bool(replaceWith) instead
+                raise ValueError('replaceWith is not a bool type')
+            data[replaceLocs] = replaceWith
         if replaceNan:
-            data[data != data] = replaceWith
+            nanLocs = data != data
+            if nanLocs.any():
+                data[nanLocs] = replaceWith
     except ValueError:
-        data = data.astype(numpy.object_)
+        dtype = type(replaceWith)
+        if dtype not in [int, float, bool, numpy.bool_]:
+            dtype = numpy.object_
+
+        data = data.astype(dtype)
         data[numpy.isin(data, toReplace)] = replaceWith
         if replaceNan:
             data[data != data] = replaceWith
@@ -1150,7 +1166,7 @@ def initDataObject(
                 cleaned.append(converted)
         if len(cleaned) == len(ret.points):
             pCmp = makeCmp(cleaned, ret, 'point')
-            ret.points.sort(sortHelper=pCmp)
+            ret.points.sort(by=pCmp)
         else:
             ret = ret.points.copy(cleaned)
         # if we had a subset of pointNames can set now on the cleaned data
@@ -1176,7 +1192,7 @@ def initDataObject(
 
         if len(cleaned) == len(ret.features):
             fCmp = makeCmp(cleaned, ret, 'feature')
-            ret.features.sort(sortHelper=fCmp)
+            ret.features.sort(by=fCmp)
         else:
             ret = ret.features.copy(cleaned)
         # if we had a subset of featureNames can set now on the cleaned data

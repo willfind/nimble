@@ -939,22 +939,29 @@ class Features(object):
         return self._count(condition)
 
     @limitedTo2D
-    def sort(self, sortBy=None, sortHelper=None, useLog=None):
+    def sort(self, by=None, reverse=False, useLog=None):
         """
         Arrange the features in this object.
 
-        A variety of methods to sort the features. May define either
-        ``sortBy`` or ``sortHelper`` parameter, not both.
+        This sort is stable, meaning the initial feature order is
+        retained for features that evaluate as equal.
 
         Parameters
         ----------
-        sortBy : str
-            May indicate the feature to sort by or None if the entire
-            feature is to be taken as a key.
-        sortHelper : list, function
-            Either an iterable, list-like object of identifiers (names
-            and/or indices), a comparator or a scoring function, or None
-            to indicate the natural ordering.
+        by : identifier(s), function, None
+            Based on the parameter type:
+
+            * identifier(s) - a single point index or name or a list
+              of point indices and/or names. For lists, sorting occurs
+              according to the first index with ties being broken in the
+              order of the subsequent indices. Sort follows the natural
+              ordering of the values in the identifier(s).
+            * function - a scorer or comparator function. Must take
+              either one or two positional arguments accepting feature
+              views.
+            * None - sort by the feature names.
+        reverse : bool
+            Reverse the sorted order.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -965,16 +972,61 @@ class Features(object):
 
         Examples
         --------
-        Sort by a given point using ``sortBy``.
-        TODO
+        Sort by feature names.
 
-        Sort using a comparator function.
-        TODO
+        >>> raw = [[64, 67, 64],
+        ...        [68, 71, 66],
+        ...        [73, 71, 70],
+        ...        [45, 40, 51]]
+        >>> fts = ['Denver', 'Boulder', 'Fort Collins']
+        >>> highTemps = nimble.data('Matrix', raw, featureNames=fts)
+        >>> highTemps.features.sort()
+        >>> highTemps
+        Matrix(
+            [[67 64 64]
+             [71 68 66]
+             [71 73 70]
+             [40 45 51]]
+            featureNames={'Boulder':0, 'Denver':1, 'Fort Col...':2}
+            )
 
-        Sort using a scoring function.
-        TODO
+        Sort by points.
+
+        >>> raw = [[3, 1, 2, 0, 2],
+        ...        [100, 1, 10, 0, 11],
+        ...        [200, 2, 20, 0, 21],
+        ...        [300, 3, 30, 0, 31]]
+        >>> orders = nimble.data('Matrix', raw)
+        >>> orders.features.sort(0)
+        >>> orders
+        Matrix(
+            [[0 1 2  2   3 ]
+             [0 1 10 11 100]
+             [0 2 20 21 200]
+             [0 3 30 31 300]]
+            )
+
+        Sort using function.
+
+        >>> raw = [[64, 67, 64],
+        ...        [68, 71, 66],
+        ...        [73, 71, 70],
+        ...        [45, 40, 51]]
+        >>> fts = ['Denver', 'Boulder', 'Fort Collins']
+        >>> highTemps = nimble.data('Matrix', raw, featureNames=fts)
+        >>> def averageHighTemp(ft):
+        ...     return nimble.calculate.mean(ft)
+        >>> highTemps.features.sort(averageHighTemp, reverse=True)
+        >>> highTemps
+        Matrix(
+            [[64 64 67]
+             [66 68 71]
+             [70 73 71]
+             [51 45 40]]
+            featureNames={'Fort Col...':0, 'Denver':1, 'Boulder':2}
+            )
         """
-        self._sort(sortBy, sortHelper, useLog)
+        self._sort(by, reverse, useLog)
 
     @limitedTo2D
     def transform(self, function, features=None, useLog=None):
@@ -2016,7 +2068,7 @@ class Features(object):
         pass
 
     @abstractmethod
-    def _sort(self, sortBy, sortHelper, useLog=None):
+    def _sort(self, by, reverse, useLog=None):
         pass
 
     @abstractmethod

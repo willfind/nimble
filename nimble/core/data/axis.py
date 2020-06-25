@@ -14,7 +14,9 @@ import copy
 from abc import abstractmethod
 import inspect
 import sys
+from operator import itemgetter
 import functools
+from nimble._utility import inspectArguments
 
 import numpy
 
@@ -31,7 +33,7 @@ from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
 from ._dataHelpers import valuesToPythonList, constructIndicesList
 from ._dataHelpers import validateInputString
 from ._dataHelpers import isQueryString, axisQueryFunction
-from ._dataHelpers import isAllowedSingleElement, sortIndexPosition
+from ._dataHelpers import isAllowedSingleElement
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import wrapMatchFunctionFactory
 from ._dataHelpers import validateAxisFunction
@@ -262,51 +264,41 @@ class Axis(object):
         return self._genericStructuralFrontend('count', condition)
 
 
-    def _sort(self, sortBy, sortHelper, useLog=None):
-        if sortBy is not None and sortHelper is not None:
-            sortAxis = 'feature' if self._axis == 'point' else 'point'
-            msg = "Cannot specify a {0} to sort by and a helper function. "
-            msg += "Either sortBy or sortHelper must be None"
-            raise InvalidArgumentTypeCombination(msg.format(sortAxis))
-        if sortBy is None and sortHelper is None:
-            msg = "Either sortBy or sortHelper must not be None"
-            raise InvalidArgumentTypeCombination(msg)
-
-        if self._isPoint:
-            otherAxis = 'feature'
-            axisCount = self._base._pointCount
-            otherCount = self._base._featureCount
+    def _sort(self, by, reverse, useLog=None):
+        if by is None:
+            self._sortByNames(reverse)
+        # identifiers
+        elif not callable(by):
+            if self._isPoint:
+                if len(self._base._shape) > 2:
+                    msg = "For object with more than two-dimensions, sorting "
+                    msg += "can only be performed on point names or using a "
+                    msg += "function."
+                    raise ImproperObjectAction(msg)
+            self._sortByIdentifier(by, reverse)
+        # functions
+        elif isinstance(by, itemgetter):
+            # extract the items and use the faster _sortByIdentifier
+            indices = list(by.__reduce__()[1])
+            self._sortByIdentifier(indices, reverse)
         else:
-            otherAxis = 'point'
-            axisCount = self._base._featureCount
-            otherCount = self._base._pointCount
-
-        sortByArg = copy.copy(sortBy)
-        if sortBy is not None and len(self._base._shape) > 2:
-            msg = "sortBy cannot be used for objects with more than "
-            msg += "two dimensions"
-            raise ImproperObjectAction(msg)
-        if sortBy is not None and isinstance(sortBy, str):
-            axisObj = self._base._getAxis(otherAxis)
-            sortBy = axisObj._getIndex(sortBy)
-        if sortHelper is not None and not hasattr(sortHelper, '__call__'):
-            raise InvalidArgumentType('sortHelper must be callabe')
-        axis = self._axis + 's'
-        indexPosition = sortIndexPosition(self, sortBy, sortHelper, axis)
-        # its already sorted in these cases
-        if otherCount == 0 or axisCount == 0 or axisCount == 1:
-            return
-
-        self._sort_implementation(indexPosition)
-
-        if self._namesCreated():
-            names = self._getNames()
-            reorderedNames = [names[idx] for idx in indexPosition]
-            self._setNames(reorderedNames, useLog=False)
+            try:
+                args, _, _, _ = inspectArguments(by)
+                if len(args) == 2: # comparator function
+                    func = functools.cmp_to_key(by)
+                elif not args or len(args) > 2:
+                    msg = 'by must take one or two positional arguments'
+                    raise InvalidArgumentValue(msg)
+                else:
+                    func = by
+            except TypeError:
+                # inspect fails when 'by' is already cmp_to_key
+                func = by
+            self._sortByFunction(func, reverse)
 
         handleLogging(useLog, 'prep', '{ax}s.sort'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('sort'),
-                      sortByArg, sortHelper)
+                      by, reverse)
 
 
     def _permute(self, order=None, useLog=None):
@@ -332,8 +324,7 @@ class Axis(object):
         if len(self) <= 1:
             return
 
-        # will become _permute_implementation when sort is refactored
-        self._sort_implementation(order)
+        self._permute_implementation(order)
 
         if self._namesCreated():
             names = self._getNames()
@@ -1271,6 +1262,34 @@ class Axis(object):
                 for idx, ft in enumerate(self._base.featureNamesInverse):
                     self._base.featureNames[ft] = idx
 
+    def _sortByNames(self, reverse):
+        names = self._getNamesNoGeneration()
+        if names is None or any(n.startswith(DEFAULT_PREFIX) for n in names):
+            msg = "When by=None, all {0} names must be defined (non-default). "
+            msg += "Either set the {0} names of this object or provide "
+            msg += "another argument for by"
+            raise InvalidArgumentValue(msg.format(self._axis))
+        self._permute(sorted(self.getNames(), reverse=reverse),
+                      useLog=False)
+
+    def _sortByIdentifier(self, index, reverse):
+        if isinstance(index, list):
+            for idx in index[::-1]:
+                self._sortByIdentifier(idx, reverse)
+        else:
+            if self._axis == 'point':
+                data = self._base.features[index]
+            else:
+                data = self._base.points[index]
+            sortedIndex = sorted(enumerate(data), key=itemgetter(1),
+                                 reverse=reverse)
+            self._permute((val[0] for val in sortedIndex), useLog=False)
+
+    def _sortByFunction(self, func, reverse):
+        sortedData = sorted(enumerate(self), key=lambda x: func(x[1]),
+                            reverse=reverse)
+        self._permute((val[0] for val in sortedData), useLog=False)
+
     ##########################
     #  Higher Order Helpers  #
     ##########################
@@ -1529,7 +1548,7 @@ class Axis(object):
     ####################
 
     @abstractmethod
-    def _sort_implementation(self, indexPosition):
+    def _permute_implementation(self, indexPosition):
         pass
 
     @abstractmethod

@@ -28,7 +28,7 @@ from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import ImproperObjectAction, PackageException
 
 # source file is __init__.py, we split to get the directory containing it
-nimblePath = os.path.split(inspect.getsourcefile(nimble))[0]
+nimblePath = os.path.dirname(inspect.getsourcefile(nimble))
 configErrors = (configparser.NoSectionError, configparser.NoOptionError)
 
 class SortedCommentPreservingConfigParser(configparser.SafeConfigParser):

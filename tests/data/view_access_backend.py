@@ -206,7 +206,7 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject.points.sort(sortBy=0)
+            testObject.points.sort(by=0)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)
@@ -290,7 +290,7 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject.features.sort(sortBy=0)
+            testObject.features.sort(by=0)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)

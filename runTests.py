@@ -11,17 +11,22 @@ import os
 import sys
 import tempfile
 from io import StringIO#python 3
+import logging
 
 import nose
 from nose.plugins.base import Plugin
 import nose.pyversion
 from nose.util import ln
 
+import nimble
+
 currPath = os.path.abspath(inspect.getfile(inspect.currentframe()))
 nimblePath = os.path.dirname(currPath)
 sys.path.append(os.path.dirname(nimblePath))
 
-import nimble
+# Prevent logging of these modules cluttering nose output
+logging.getLogger("tensorflow").setLevel(logging.WARNING)
+logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
 
 class ExtensionPlugin(Plugin):
