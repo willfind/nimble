@@ -327,10 +327,10 @@ class DataFrame(Base):
                               - len(matchingFtIdx[1]))
         self._pointCount = len(self.data.index)
 
-    def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueVals):
-        toFill = numpy.zeros((len(self.points), len(uniqueVals)))
-        for ptIdx, val in enumerate(self.data.values):
-            ftIdx = uniqueVals.index(val)
+    def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueIdx):
+        toFill = numpy.zeros((len(self.points), len(uniqueIdx)))
+        for ptIdx, val in self.data.iterrows():
+            ftIdx = uniqueIdx[val[0]]
             toFill[ptIdx, ftIdx] = 1
         return DataFrame(pd.DataFrame(toFill))
 
