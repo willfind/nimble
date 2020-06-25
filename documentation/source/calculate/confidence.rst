@@ -1,0 +1,3 @@
+Confidence
+==========
+.. currentmodule:: nimble.calculate

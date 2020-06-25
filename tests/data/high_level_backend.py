@@ -15,7 +15,7 @@ isApproximatelyEqual, trainAndTestSets, points.repeat,
 features.repeat, points.matching, features.matching, matchingElements
 
 In object HighLevelModifying:
-replaceFeatureWithBinaryFeatures, points.shuffle, features.shuffle,
+replaceFeatureWithBinaryFeatures, points.permute, features.permute,
 points.normalize, features.normalize, points.fill, features.fill,
 fillMatching, points.splitByCollapsingFeatures,
 points.combineByExpandingFeatures, features.splitByParsing
@@ -39,13 +39,13 @@ from nimble import match
 from nimble import fill
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
-from nimble.data.dataHelpers import DEFAULT_PREFIX
-from nimble.randomness import numpyRandom
+from nimble.core.data._dataHelpers import DEFAULT_PREFIX
+from nimble.random import numpyRandom
 from .baseObject import DataTestObject
-from ..assertionHelpers import logCountAssertionFactory
-from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
-from ..assertionHelpers import assertNoNamesGenerated
-from ..assertionHelpers import CalledFunctionException, calledException
+from tests.helpers import logCountAssertionFactory
+from tests.helpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import assertNoNamesGenerated
+from tests.helpers import CalledFunctionException, calledException
 
 
 preserveName = "PreserveTestName"
@@ -131,7 +131,6 @@ class HighLevelDataSafe(DataTestObject):
 
         origObj.points.calculate(emitLower)
 
-    @raises(InvalidArgumentValue)
     def test_points_calculate_functionReturns2D(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -143,6 +142,7 @@ class HighLevelDataSafe(DataTestObject):
             return [[val for val in point]]
 
         calc = toTest.points.calculate(return2D)
+        assert calc._shape == [4, 1, 3]
 
     @raises(InvalidArgumentValue)
     def test_points_calculate_functionReturnsInvalidObj(self):
@@ -167,7 +167,7 @@ class HighLevelDataSafe(DataTestObject):
         ret = orig.points.calculate(dictReturn)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_points_calculate_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -213,13 +213,14 @@ class HighLevelDataSafe(DataTestObject):
 
         def returnNimbleObj(point):
             ret = point * 2
-            assert isinstance(ret, nimble.data.Base)
+            assert isinstance(ret, nimble.core.data.Base)
             return ret
 
         calc = toTest.points.calculate(returnNimbleObj)
 
         expData = [[2, 0.2, 0.02], [2, 0.2, 0.04], [2, 0.2, 0.06], [2, 0.4, 0.04]]
-        exp = self.constructor(expData, pointNames=pointNames)
+        exp = self.constructor(expData, pointNames=pointNames,
+                               featureNames=featureNames)
 
         assert calc.isIdentical(exp)
 
@@ -271,15 +272,51 @@ class HighLevelDataSafe(DataTestObject):
 
         def returnNimbleObj(point):
             ret = point * 2
-            assert isinstance(ret, nimble.data.Base)
+            assert isinstance(ret, nimble.core.data.Base)
             return ret
 
         calc = toTest.points.calculate(returnNimbleObj, points=['two', 'zero'])
 
         expData = [[2, 0.2, 0.06], [2, 0.2, 0.02]]
-        exp = self.constructor(expData, pointNames=['two', 'zero'])
+        exp = self.constructor(expData, pointNames=['two', 'zero'],
+                               featureNames=featureNames)
 
         assert calc.isIdentical(exp)
+
+    def test_points_calculate_functionReturnsNimbleObject_featureLimited(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+        def emitLowers(point):
+            return point[['centi', 'deci']]
+
+        lowerCounts = origObj.points.calculate(emitLowers)
+
+        expectedOut = [[0.01, 0.1], [0.02, 0.1], [0.03, 0.1], [0.02, 0.2]]
+        exp = self.constructor(expectedOut, pointNames=pointNames,
+                               featureNames=['centi', 'deci'])
+
+        assert lowerCounts.isIdentical(exp)
+
+    def test_points_calculate_functionReturnsNimbleObject_newFtNames(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        origObj = self.constructor(deepcopy(origData), pointNames=pointNames, featureNames=featureNames)
+
+        def changeFtNames(point):
+            pt = point.copy()
+            pt.features.setNames(['new1', 'new2', 'new3'])
+            return pt
+
+        lowerCounts = origObj.points.calculate(changeFtNames)
+
+        exp = self.constructor(origData, pointNames=pointNames,
+                               featureNames=['new1', 'new2', 'new3'])
+
+        assert lowerCounts.isIdentical(exp)
 
     def test_points_calculate_nonZeroItAndLen(self):
         origData = [[1, 1, 1], [1, 0, 2], [1, 1, 0], [0, 2, 0]]
@@ -341,6 +378,42 @@ class HighLevelDataSafe(DataTestObject):
         ret = orig.points.calculate(toString)
         assert ret == exp
 
+    def test_points_calculate_featureVector(self):
+
+        def asFeature(pt):
+            return pt.T
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        exp = self.constructor([[[1], [2], [3]], [[4], [5], [6]], [[0], [0], [0]]])
+
+        ret = orig.points.calculate(asFeature)
+        assert ret == exp
+
+    def test_points_calculate_reshape(self):
+
+        def reshape3D(pt):
+            pt = pt.copy()
+            pt.unflatten((2, 2))
+            return pt
+
+        orig = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, 0, 0, 0]])
+        exp3D = self.constructor([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[0, 0], [0, 0]]])
+
+        ret = orig.points.calculate(reshape3D)
+        assert ret == exp3D
+
+        def reshape5D(pt):
+            pt = pt.copy()
+            pt.unflatten((1, 2, 2, 1))
+            return pt
+
+        exp5D = self.constructor([[[[[1], [2]], [[3], [4]]]],
+                                  [[[[5], [6]], [[7], [8]]]],
+                                  [[[[0], [0]], [[0], [0]]]]])
+
+        ret = orig.points.calculate(reshape5D)
+        assert ret == exp5D
+
     ##########################
     # .features.calculate() #
     #########################
@@ -382,7 +455,7 @@ class HighLevelDataSafe(DataTestObject):
         origObj = self.constructor(deepcopy(origData), featureNames=featureNames)
         origObj.features.calculate(None)
 
-    @raises(InvalidArgumentValue)
+    @raises(ImproperObjectAction)
     def test_features_calculate_functionReturns2D(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
@@ -418,7 +491,7 @@ class HighLevelDataSafe(DataTestObject):
         ret = orig.features.calculate(dictReturn)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_features_calculate_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
@@ -470,13 +543,14 @@ class HighLevelDataSafe(DataTestObject):
 
         def returnNimbleObj(feature):
             ret = feature * 2
-            assert isinstance(ret, nimble.data.Base)
+            assert isinstance(ret, nimble.core.data.Base)
             return ret
 
         calc = toTest.features.calculate(returnNimbleObj)
 
         expData = [[2, 0.2, 0.02], [2, 0.2, 0.04], [2, 0.2, 0.06], [2, 0.4, 0.04]]
-        exp = self.constructor(expData, featureNames=featureNames)
+        exp = self.constructor(expData, pointNames=pointNames,
+                               featureNames=featureNames)
 
         assert calc.isIdentical(exp)
 
@@ -534,13 +608,51 @@ class HighLevelDataSafe(DataTestObject):
 
         def returnNimbleObj(feature):
             ret = feature * 2
-            assert isinstance(ret, nimble.data.Base)
+            assert isinstance(ret, nimble.core.data.Base)
             return ret
 
         calc = toTest.features.calculate(returnNimbleObj, features=['deci', 'number'])
 
         expData = [[0.2, 2], [0.2, 2], [0.2, 2], [0.4, 2]]
-        exp = self.constructor(expData, featureNames=['deci', 'number'])
+        exp = self.constructor(expData, pointNames=pointNames,
+                               featureNames=['deci', 'number'])
+
+        assert calc.isIdentical(exp)
+
+    def test_features_calculate_functionReturnsNimbleObject_pointLimited(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
+                                  featureNames=featureNames)
+
+        def firstAndLastPoint(feature):
+            return feature[['zero', 'three']]
+
+        calc = toTest.features.calculate(firstAndLastPoint)
+
+        expData = [[1, 0.1, 0.01], [1, 0.2, 0.02]]
+        exp = self.constructor(expData, pointNames=['zero', 'three'],
+                               featureNames=featureNames)
+
+        assert calc.isIdentical(exp)
+
+    def test_features_calculate_functionReturnsNimbleObject_newPointNames(self):
+        featureNames = {'number': 0, 'centi': 2, 'deci': 1}
+        pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
+        origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
+        toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
+                                  featureNames=featureNames)
+
+        def changePtNames(feature):
+            ft = feature.copy()
+            ft.points.setNames(['new1', 'new2', 'new3', 'new4'])
+            return ft
+
+        calc = toTest.features.calculate(changePtNames)
+
+        exp = self.constructor(origData, featureNames=featureNames,
+                               pointNames=['new1', 'new2', 'new3', 'new4'])
 
         assert calc.isIdentical(exp)
 
@@ -604,12 +716,32 @@ class HighLevelDataSafe(DataTestObject):
         ret = orig.features.calculate(toString)
         assert ret == exp
 
+    @raises(ImproperObjectAction)
+    def test_features_calculate_pointVector(self):
+
+        def asPoint(ft):
+            return ft.T
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        ret = orig.features.calculate(asPoint)
+
+    @raises(ImproperObjectAction)
+    def test_features_calculate_reshape(self):
+
+        def reshape3D(ft):
+            ft = ft.copy()
+            ft.unflatten((2, 2))
+            return ft
+
+        orig = self.constructor([[1, 5, 0], [2, 6, 0], [3, 7, 0], [4, 8, 0]])
+        ret = orig.features.calculate(reshape3D)
+
     #######################
     # calculateOnElements #
     #######################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.base.constructIndicesList', calledException)
     def test_calculateOnElements_calls_constructIndicesList1(self):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
@@ -619,7 +751,7 @@ class HighLevelDataSafe(DataTestObject):
         ret = toTest.calculateOnElements(noChange, points=['a', 'b'])
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.base.constructIndicesList', calledException)
     def test_calculateOnElements_calls_constructIndicesList2(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
@@ -1042,6 +1174,12 @@ class HighLevelDataSafe(DataTestObject):
         ret = toTest.countElements('>=5')
         assert ret == 5
 
+        ret = toTest.countElements('   >=   5   ')
+        assert ret == 5
+
+        ret = toTest.countElements('=5')
+        assert ret == 1
+
         ret = toTest.countElements(lambda x: x % 2 == 1)
         assert ret == 5
 
@@ -1091,8 +1229,8 @@ class HighLevelDataSafe(DataTestObject):
 
             toTest = self.constructor(data)
 
-            for retType in nimble.data.available:
-                currObj = nimble.createData(retType, data, useLog=False)
+            for retType in nimble.core.data.available:
+                currObj = nimble.data(retType, data, useLog=False)
                 assert toTest.isApproximatelyEqual(currObj)
                 assert toTest.hashCode() == currObj.hashCode()
                 assertNoNamesGenerated(toTest)
@@ -1102,6 +1240,14 @@ class HighLevelDataSafe(DataTestObject):
     ######################
     # trainAndTestSets() #
     ######################
+
+    @raises(InvalidArgumentValue)
+    def test_trainAndTestSets_invalidFraction(self):
+        data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
+        featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
+        toTest = self.constructor(data, featureNames=featureNames)
+
+        trX, teX = toTest.trainAndTestSets(20)
 
     # simple sucess - no labels
     @logCountAssertionFactory(2)
@@ -1152,6 +1298,96 @@ class HighLevelDataSafe(DataTestObject):
         assertNoNamesGenerated(trY)
         assertNoNamesGenerated(teX)
         assertNoNamesGenerated(teY)
+
+    # simple sucess - single label
+    @logCountAssertionFactory(2)
+    def test_trainAndTestSets_simple_nimbleLabels(self):
+        data = [[5, -1, 3, 33], [5, -2, 6, 66], [5, -2, 9, 99], [5, -4, 12, 111]]
+        labels = [[1], [3], [2], [4]]
+        featureNames = ['fives', 'labs2', 'bozo', 'long']
+        pointNames = ['pt0', 'pt1', 'pt2', 'pt3']
+        toTest = self.constructor(data, pointNames=pointNames,
+                                  featureNames=featureNames)
+        toTestLabels = self.constructor(labels, pointNames=pointNames,
+                                        featureNames=['labs1'])
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=toTestLabels)
+        assert len(trX.points) == 2
+        assert len(trX.features) == 4
+        assert len(trY.points) == 2
+        assert len(trY.features) == 1
+        assert trX.points.getNames() == trY.points.getNames()
+        assert len(teX.points) == 2
+        assert len(teX.features) == 4
+        assert len(teY.points) == 2
+        assert len(teY.features) == 1
+        assert teX.points.getNames() == teY.points.getNames()
+
+        # try the same test with a default named object
+        toTest = self.constructor(data)
+        toTestLabels = self.constructor(labels)
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=toTestLabels)
+        assertNoNamesGenerated(toTest)
+        assertNoNamesGenerated(trX)
+        assertNoNamesGenerated(trY)
+        assertNoNamesGenerated(teX)
+        assertNoNamesGenerated(teY)
+
+    @raises(InvalidArgumentValue)
+    def test_trainAndTestSets_simple_nimbleLabels_invalidLength(self):
+        data = [[5, -1, 3, 33], [5, -2, 6, 66], [5, -2, 9, 99], [5, -4, 12, 111]]
+        featureNames = ['fives', 'labs2', 'bozo', 'long']
+        pointNames = ['pt0', 'pt1', 'pt2', 'pt3']
+        toTest = self.constructor(data, pointNames=pointNames,
+                                  featureNames=featureNames)
+        toTestLabels = self.constructor([[1], [2]])
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, toTestLabels)
+
+    @raises(InvalidArgumentValue)
+    def test_trainAndTestSets_simple_nimbleLabels_invalidPointNames(self):
+        data = [[5, -1, 3, 33], [5, -2, 6, 66], [5, -2, 9, 99], [5, -4, 12, 111]]
+        featureNames = ['fives', 'labs2', 'bozo', 'long']
+        pointNamesX = ['pt0', 'pt2', 'pt1', 'pt3']
+        toTest = self.constructor(data, pointNames=pointNamesX,
+                                  featureNames=featureNames)
+        pointNamesY = ['pt0', 'pt1', 'pt2', 'pt3']
+        toTestLabels = self.constructor([[1], [3], [2], [4]],
+                                        pointNames=pointNamesY)
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, toTestLabels)
+
+    def test_trainAndTestSets_simple_nimbleLabels_defaultPointNames(self):
+        # Only testing that the default names do not generate an error
+        data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
+        featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
+        pointNamesX = ['pt0', 'pt1', DEFAULT_PREFIX + '0', 'pt3']
+        pointNamesY = ['pt0', 'pt1', DEFAULT_PREFIX + '4', 'pt3']
+        toTest = self.constructor(data, pointNames=pointNamesX,
+                                  featureNames=featureNames)
+        toTestLabels = self.constructor([[4], [3], [2], [1]],
+                                        pointNames=pointNamesY)
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, toTestLabels)
+
+        pointNamesX = [DEFAULT_PREFIX + '0', 'pt1', 'pt2', 'pt3']
+        pointNamesY = ['pt0', 'pt1', 'pt2', DEFAULT_PREFIX + '3']
+        toTest = self.constructor(data, pointNames=pointNamesX,
+                                  featureNames=featureNames)
+        toTestLabels = self.constructor([[4], [3], [2], [1]],
+                                        pointNames=pointNamesY)
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, toTestLabels)
+
+        pointNamesX = [DEFAULT_PREFIX + '0', 'pt0', 'pt2' , 'pt3']
+        pointNamesY = [DEFAULT_PREFIX + '4', 'pt0', DEFAULT_PREFIX + '8', 'pt3']
+        toTest = self.constructor(data, pointNames=pointNamesX,
+                                  featureNames=featureNames)
+        toTestLabels = self.constructor([[4], [3], [2], [1]],
+                                        pointNames=pointNamesY)
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, toTestLabels)
 
     # simple sucess - multi label
     @logCountAssertionFactory(2)
@@ -1271,13 +1507,36 @@ class HighLevelDataSafe(DataTestObject):
             assert teY.relativePath == os.path.relpath(tmpFile.name)
 
 
-    def test_trainAndTestSets_PandFnamesPerserved(self):
+    def test_trainAndTestSets_PandFnamesPerserved_identifier(self):
         data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
         pnames = ['one', 'two', 'three', 'four']
         fnames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
 
         trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=0, randomOrder=False)
+
+        assert trX.points.getNames() == ['one', 'two']
+        assert trX.features.getNames() == ['fives', 'labs2', 'bozo', 'long']
+
+        assert trY.points.getNames() == ['one', 'two']
+        assert trY.features.getNames() == ['labs1']
+
+        assert teX.points.getNames() == ['three', 'four']
+        assert teX.features.getNames() == ['fives', 'labs2', 'bozo', 'long']
+
+        assert teY.points.getNames() == ['three', 'four']
+        assert teY.features.getNames() == ['labs1']
+
+    def test_trainAndTestSets_PandFnamesPerserved_nimbleObject(self):
+        data = [[5, -1, 3, 33], [5, -2, 6, 66], [5, -2, 9, 99], [5, -4, 12, 111]]
+        labels = [[1], [2], [3], [4]]
+        pnames = ['one', 'two', 'three', 'four']
+        fnames = ['fives', 'labs2', 'bozo', 'long']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        toTestLabels = self.constructor(labels, pointNames=pnames,
+                                        featureNames=['labs1'])
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=toTestLabels,
+                                                     randomOrder=False)
 
         assert trX.points.getNames() == ['one', 'two']
         assert trX.features.getNames() == ['fives', 'labs2', 'bozo', 'long']
@@ -1652,7 +1911,7 @@ class HighLevelDataSafe(DataTestObject):
     ####################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.Base.copy', calledException)
+    @mock.patch('nimble.core.data.Base.copy', calledException)
     def test_points_repeat_OneCopyCallsCopy(self):
         data = [0, 1, 2, 3]
         ptNames = ['pt']
@@ -1726,7 +1985,7 @@ class HighLevelDataSafe(DataTestObject):
     ######################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.Base.copy', calledException)
+    @mock.patch('nimble.core.data.Base.copy', calledException)
     def test_features_repeat_OneCopyCallsCopy(self):
         data = [0, 1, 2, 3]
         ptNames = ['pt']
@@ -1821,6 +2080,62 @@ class HighLevelDataSafe(DataTestObject):
         assert matches[1, 1] is False or matches[1, 1] is numpy.bool_(False)
         assert matches[1, 2] is False or matches[1, 2] is numpy.bool_(False)
 
+    def test_matchingElements_valueInput(self):
+        raw = [[1, 2, 3], [-1, -2, -3], [0, 'a', 0]]
+        obj = self.constructor(raw)
+        match1 = obj.matchingElements(lambda x: x == 0)
+        match2 = obj.matchingElements(0)
+        assert match1 == match2
+
+        match1 = obj.matchingElements(lambda x: x == 'a')
+        match2 = obj.matchingElements('a')
+        assert match1 == match2
+
+    def test_matchingElements_comparisonStringInput(self):
+        raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
+        obj = self.constructor(raw)
+        ['==', '=', '!=', '>', '<', '>=', '<=']
+        match1 = obj.matchingElements(lambda x: x == 0)
+        match2 = obj.matchingElements('==0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '==' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match2 = obj.matchingElements('=0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '=' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match1 = obj.matchingElements(lambda x: x != 0)
+        match2 = obj.matchingElements('!=0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '!=' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match1 = obj.matchingElements(lambda x: x > 0)
+        match2 = obj.matchingElements('>0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '>' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match1 = obj.matchingElements(lambda x: x < 0)
+        match2 = obj.matchingElements('<0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '<' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match1 = obj.matchingElements(lambda x: x >= 0)
+        match2 = obj.matchingElements('>=0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '>=' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
+        match1 = obj.matchingElements(lambda x: x <= 0)
+        match2 = obj.matchingElements('<=0')
+        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        match3 = obj.matchingElements(ws1 + '<=' + ws2 + '0' + ws3)
+        assert match1 == match2 == match3
+
     @oneLogEntryExpected
     def test_matchingElements_pfLimited(self):
         raw = [[1, 2, -3], [-1, -2, 3]]
@@ -1858,7 +2173,7 @@ class HighLevelDataSafe(DataTestObject):
 
         assert isMissing == expObj
 
-        # None is converted to nan by createData, here we explicitly pass the
+        # None is converted to nan by nimble.data, here we explicitly pass the
         # value the underlying representation uses, so we avoid making it
         # look like None is considered a numeric
         raw = [['a', numpy.nan, 'c'], [numpy.nan, numpy.nan, -3], [0, 'zero', numpy.nan]]
@@ -1952,7 +2267,7 @@ class HighLevelDataSafe(DataTestObject):
 
         assert allMissing == expObj
 
-        # None is converted to nan by createData, here we explicitly pass the
+        # None is converted to nan by nimble.data, here we explicitly pass the
         # value the underlying representation uses, so we avoid making it
         # look like None is considered a numeric
         raw = [['a', numpy.nan, 'c'], [numpy.nan, numpy.nan, -3], [0, 'zero', numpy.nan]]
@@ -2280,21 +2595,21 @@ class HighLevelModifying(DataTestObject):
         assert toTest.relativePath == 'testRelPath'
 
     ####################
-    # points.shuffle() #
+    # points.permute() #
     ####################
 
-    def testpoints_shuffle_noLongerEqual(self):
-        """ Tests points.shuffle() results in a changed object """
+    def testpoints_permute_random_noLongerEqual(self):
+        """ Tests points.permute() results in a changed object """
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(deepcopy(data))
         toCompare = self.constructor(deepcopy(data))
 
-        # it is possible that it shuffles it into the same configuration.
+        # it is possible that it permutes it into the same configuration.
         # the odds are vanishingly low that it will do so over consecutive calls
         # however. We will pass as long as it changes once
         returns = []
-        for i in range(5):
-            ret = toTest.points.shuffle() # RET CHECK
+        for _ in range(5):
+            ret = toTest.points.permute() # RET CHECK
             returns.append(ret)
             if not toTest.isApproximatelyEqual(toCompare):
                 break
@@ -2305,7 +2620,7 @@ class HighLevelModifying(DataTestObject):
         assertNoNamesGenerated(toTest)
 
 
-    def testpoints_shuffle_NamePath_preservation(self):
+    def testpoints_permute_random_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]
         toTest = self.constructor(deepcopy(data))
         toCompare = self.constructor(deepcopy(data))
@@ -2314,34 +2629,112 @@ class HighLevelModifying(DataTestObject):
         toTest._absPath = "TestAbsPath"
         toTest._relPath = "testRelPath"
 
-        # it is possible that it shuffles it into the same configuration.
-        # we only test after we're sure we've done something
-        while True:
-            toTest.points.shuffle()  # RET CHECK
+        # odds are vanishingly low that it generates same configuration over
+        # consecutive calls. We will pass as long as soon as it changes once
+        for _ in range(5):
+            toTest.points.permute()
             if not toTest.isApproximatelyEqual(toCompare):
                 break
 
+        assert not toTest.isApproximatelyEqual(toCompare)
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
+    def test_points_permute_dataTypeRetainedFromList(self):
+        """ Test points.permute() data not converted when permuting by list"""
+        data = [['a', 2, 3.0], ['b', 5, 6.0], ['c', 8, 9.0]]
+        toTest = self.constructor(data)
+
+        toTest.points.permute([2, 1, 0])
+
+        expData = [['c', 8, 9.0], ['b', 5, 6.0], ['a', 2, 3.0]]
+        exp = self.constructor(expData)
+
+        assert toTest == exp
+        assertNoNamesGenerated(toTest)
+
+    def test_points_permute_indicesList(self):
+        """ Test points.permute() when we specify a list of indices """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        toTest = self.constructor(data)
+
+        toTest.points.permute([2, 1, 0])
+
+        expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
+        exp = self.constructor(expData)
+
+        assert toTest == exp
+
+    def test_points_permute_namesList(self):
+        """ Test points.permute() when we specify a list of point names """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        pnames = ['3', '6', '9']
+        toTest = self.constructor(data, pointNames=pnames)
+
+        toTest.points.permute(['9', '6', '3'])
+
+        expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
+        expNames = ['9', '6', '3']
+        exp = self.constructor(expData, pointNames=expNames)
+
+        assert toTest == exp
+
+    @oneLogEntryExpected
+    def test_points_permute_mixedList(self):
+        """ Test points.permute() when we specify a mixed list (names/indices) """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        pnames = ['3', '6', '9']
+        toTest = self.constructor(data, pointNames=pnames)
+
+        toTest.points.permute(['9', '6', 0])
+
+        expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
+        expNames = ['9', '6', '3']
+        exp = self.constructor(expData, pointNames=expNames)
+
+        assert toTest == exp
+
+    @raises(IndexError)
+    def test_points_permute_exceptionIndicesPEmpty(self):
+        """ tests points.permute() throws an IndexError when given invalid indices """
+        data = [[], []]
+        data = numpy.array(data).T
+        toTest = self.constructor(data)
+        toTest.points.permute([1, 3])
+
+    @raises(InvalidArgumentValue)
+    def test_points_permute_exceptionIndicesSmall(self):
+        """ tests points.permute() throws an InvalidArgumentValue when given an incorrectly sized indices list """
+        data = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
+        toTest = self.constructor(data)
+
+        toTest.points.permute([1, 0])
+
+    @raises(InvalidArgumentValue)
+    def test_points_permute_exceptionNotUniqueIds(self):
+        """ tests points.permute() throws an InvalidArgumentValue when given duplicate indices """
+        data = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
+        toTest = self.constructor(data)
+        toTest.points.permute([1, 1, 0])
+
 
     ######################
-    # features.shuffle() #
+    # features.permute() #
     ######################
 
-    def test_features_shuffle_noLongerEqual(self):
-        """ Tests features.shuffle() results in a changed object """
+    def test_features_permute_random_noLongerEqual(self):
+        """ Tests features.permute() results in a changed object """
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 1111111]]
         toTest = self.constructor(deepcopy(data))
         toCompare = self.constructor(deepcopy(data))
 
-        # it is possible that it shuffles it into the same configuration.
+        # it is possible that it permutes it into the same configuration.
         # the odds are vanishly low that it will do so over consecutive calls
         # however. We will pass as long as it changes once
         returns = []
-        for i in range(5):
-            ret = toTest.features.shuffle() # RET CHECK
+        for _ in range(5):
+            ret = toTest.features.permute() # RET CHECK
             returns.append(ret)
             if not toTest.isApproximatelyEqual(toCompare):
                 break
@@ -2352,7 +2745,7 @@ class HighLevelModifying(DataTestObject):
         assertNoNamesGenerated(toTest)
 
 
-    def test_features_shuffle_NamePath_preservation(self):
+    def test_features_permute_random_NamePath_preservation(self):
         data = [[1, 2, 3, 33], [4, 5, 6, 66], [7, 8, 9, 99], [10, 11, 12, 1111111]]
         toTest = self.constructor(deepcopy(data))
         toCompare = self.constructor(deepcopy(data))
@@ -2361,16 +2754,97 @@ class HighLevelModifying(DataTestObject):
         toTest._absPath = "TestAbsPath"
         toTest._relPath = "testRelPath"
 
-        # it is possible that it shuffles it into the same configuration.
-        # we only test after we're sure we've done something
-        while True:
-            toTest.features.shuffle()  # RET CHECK
+        # odds are vanishingly low that it generates same configuration over
+        # consecutive calls. We will pass as long as soon as it changes once
+        for _ in range(5):
+            toTest.features.permute()
             if not toTest.isApproximatelyEqual(toCompare):
                 break
 
+        assert not toTest.isApproximatelyEqual(toCompare)
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
+
+    def test_features_permute_dataTypeRetainedFromList(self):
+        """ Test features.permute() data not converted when permuting by list"""
+        data = [['a', 2, 3.0], ['b', 5, 6.0], ['c', 8, 9.0]]
+        toTest = self.constructor(data)
+
+        toTest.features.permute([2, 1, 0])
+
+        expData = [[3.0, 2, 'a'], [6.0, 5, 'b'], [9.0, 8, 'c']]
+        exp = self.constructor(expData)
+
+        assert toTest == exp
+        assertNoNamesGenerated(toTest)
+
+    def test_features_permute_indicesList(self):
+        """ Test features.permute() when we specify a list of indices """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        toTest = self.constructor(data)
+
+        toTest.features.permute([2, 1, 0])
+
+        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        exp = self.constructor(expData)
+
+        assert toTest == exp
+
+    def test_features_permute_namesList(self):
+        """ Test features.permute() when we specify a list of feature names """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        fnames = ['third', 'second', 'first']
+        toTest = self.constructor(data, featureNames=fnames)
+
+        toTest.features.permute(['first', 'second', 'third'])
+
+        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        expNames = ['first', 'second', 'third']
+        exp = self.constructor(expData, featureNames=expNames)
+
+        assert toTest == exp
+
+    @oneLogEntryExpected
+    def test_features_permute_mixedList(self):
+        """ Test features.permute() when we specify a mixed list (names/indices) """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        fnames = ['third', 'second', 'first']
+        toTest = self.constructor(data, featureNames=fnames)
+
+        toTest.features.permute(['first', 'second', 0])
+
+        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        expNames = ['first', 'second', 'third']
+        exp = self.constructor(expData, featureNames=expNames)
+
+        assert toTest == exp
+
+    @raises(IndexError)
+    def test_features_permute_exceptionIndicesFEmpty(self):
+        """ tests features.permute() throws an IndexError when given invalid indices """
+        data = [[], []]
+        data = numpy.array(data)
+        toTest = self.constructor(data)
+        toTest.features.permute([1, 3])
+
+
+    @raises(InvalidArgumentValue)
+    def test_features_permute_exceptionIndicesSmall(self):
+        """ tests features.permute() throws an InvalidArgumentValue when given an incorrectly sized indices list """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        toTest = self.constructor(data)
+
+        toTest.features.permute([1, 0])
+
+
+    @raises(InvalidArgumentValue)
+    def test_features_permute_exceptionNotUniqueIds(self):
+        """ tests features.permute() throws an InvalidArgumentValue when given duplicate indices """
+        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        data = numpy.array(data)
+        toTest = self.constructor(data)
+        toTest.features.permute([1, 1, 0])
 
     ###########################################
     # points.normalize / features.normalize() #
@@ -2381,7 +2855,7 @@ class HighLevelModifying(DataTestObject):
             func = caller.points.normalize
         else:
             func = caller.features.normalize
-        a, va, vk, d = nimble.helpers.inspectArguments(func)
+        a, va, vk, d = nimble._utility.inspectArguments(func)
         assert d == (None, None, None, None)
 
         if axis == 'point':
@@ -2588,10 +3062,10 @@ class HighLevelModifying(DataTestObject):
         obj = self.constructor([[1, 1, 1], [3, 3, 3], [7, 7, 7]])
         expObj = self.constructor([[0, 0, 0], [4, 4, 4], [12, 12, 12]])
 
-        for retType in nimble.data.available:
+        for retType in nimble.core.data.available:
             currObj = obj.copy()
-            sub = nimble.createData(retType, [1] * 3)
-            div = nimble.createData(retType, [0.5] * 3)
+            sub = nimble.data(retType, [1] * 3)
+            div = nimble.data(retType, [0.5] * 3)
             if axis == 'point':
                 sub.transpose()
                 div.transpose()

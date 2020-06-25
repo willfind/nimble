@@ -3,14 +3,14 @@ Tests a that base class and its subclasses are being documentated as
 expected.
 """
 
-from nimble.utility import inheritDocstringsFactory
-from nimble.data import Base, Matrix, List, Sparse, DataFrame
-from nimble.interfaces.universal_interface import UniversalInterface
-from nimble.interfaces.keras_interface import Keras
-from nimble.interfaces.mlpy_interface import Mlpy
-from nimble.interfaces.scikit_learn_interface import SciKitLearn
-from nimble.interfaces.shogun_interface import Shogun
-from nimble.interfaces import CustomLearnerInterface
+from nimble._utility import inheritDocstringsFactory
+from nimble.core.data import Base, Matrix, List, Sparse, DataFrame
+from nimble.core.interfaces.universal_interface import UniversalInterface
+from nimble.core.interfaces.keras_interface import Keras
+from nimble.core.interfaces.mlpy_interface import Mlpy
+from nimble.core.interfaces.scikit_learn_interface import SciKitLearn
+from nimble.core.interfaces.shogun_interface import Shogun
+from nimble.core.interfaces.custom_learner import CustomLearnerInterface
 
 ############################
 # inheritDocstringsFactory #

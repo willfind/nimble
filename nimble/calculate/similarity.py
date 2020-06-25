@@ -1,18 +1,16 @@
 
-import itertools
-
 import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.calculate import fractionIncorrect
 from nimble.calculate import varianceFractionRemaining
-from nimble.data.dataHelpers import createDataNoValidation
+from nimble.core.data._dataHelpers import createDataNoValidation
 
 
 def _validatePredictedAsLabels(predictedValues):
-    if not isinstance(predictedValues, nimble.data.Base):
-        msg = "predictedValues must be derived class of nimble.data.Base"
+    if not isinstance(predictedValues, nimble.core.data.Base):
+        msg = "predictedValues must be derived class of nimble.core.data.Base"
         raise InvalidArgumentType(msg)
     if len(predictedValues.features) > 1:
         msg = "predictedValues must be labels only; this has more than "
@@ -22,8 +20,8 @@ def _validatePredictedAsLabels(predictedValues):
 
 def cosineSimilarity(knownValues, predictedValues):
     _validatePredictedAsLabels(predictedValues)
-    if not isinstance(knownValues, nimble.data.Base):
-        msg = "knownValues must be derived class of nimble.data.Base"
+    if not isinstance(knownValues, nimble.core.data.Base):
+        msg = "knownValues must be derived class of nimble.core.data.Base"
         raise InvalidArgumentType(msg)
 
     known = knownValues.copy(to="numpy array").flatten()
@@ -130,7 +128,7 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
         to a more specific label. A list may also be used provided the
         values in ``knownLabels`` represent an index to each value in
         the list. The labels will be used to create the featureNames and
-        pointNames with the prefixes "known_" and "predicted_",
+        pointNames with the prefixes `known_` and `predicted_`,
         respectively.  If labels is None, the prefixes will be applied
         directly to the unique values found in ``knownLabels``.
     convertCountsToFractions : bool
@@ -162,8 +160,8 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
     ...         [0], [1], [2],
     ...         [0], [1], [2],
     ...         [1], [0], [2]]
-    >>> knownObj = nimble.createData('Matrix', known)
-    >>> predObj = nimble.createData('Matrix', pred)
+    >>> knownObj = nimble.data('Matrix', known)
+    >>> predObj = nimble.data('Matrix', pred)
     >>> cm = confusionMatrix(knownObj, predObj)
     >>> print(cm)
                   known_0 known_1 known_2
@@ -192,8 +190,8 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
     ...         ['cat'], ['dog'], ['fish'],
     ...         ['cat'], ['dog'], ['fish'],
     ...         ['dog'], ['cat'], ['fish']]
-    >>> knownObj = nimble.createData('Matrix', known)
-    >>> predObj = nimble.createData('Matrix', pred)
+    >>> knownObj = nimble.data('Matrix', known)
+    >>> predObj = nimble.data('Matrix', pred)
     >>> cm = confusionMatrix(knownObj, predObj,
     ...                      convertCountsToFractions=True)
     >>> print(cm)
@@ -204,8 +202,8 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
     predicted_fish     0.000     0.000     0.333
     <BLANKLINE>
     """
-    if not (isinstance(knownValues, nimble.data.Base)
-            and isinstance(predictedValues, nimble.data.Base)):
+    if not (isinstance(knownValues, nimble.core.data.Base)
+            and isinstance(predictedValues, nimble.core.data.Base)):
         msg = 'knownValues and predictedValues must be nimble data objects'
         raise InvalidArgumentType(msg)
     if not knownValues.shape[1] == predictedValues.shape[1] == 1:

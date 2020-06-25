@@ -34,47 +34,56 @@ from .view_access_backend import ViewAccess
 from .stretch_backend import StretchAll
 from .stretch_backend import StretchDataSafe
 
+from .high_dimension_backend import HighDimensionAll
+from .high_dimension_backend import HighDimensionSafe
 
-class TestListView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-                   StructureDataSafe, ViewAccess, StretchDataSafe):
+class BaseViewChildTests(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
+                   StructureDataSafe, ViewAccess, StretchDataSafe,
+                   HighDimensionSafe):
+    def __init__(self, returnType):
+        super(BaseViewChildTests, self).__init__(returnType)
+
+class BaseChildTests(HighLevelAll, AllNumerical, QueryBackend, StructureAll,
+                 StretchAll, HighDimensionAll):
+    def __init__(self, returnType):
+        super(BaseChildTests, self).__init__(returnType)
+
+class TestListView(BaseViewChildTests):
     def __init__(self):
         super(TestListView, self).__init__('ListView')
 
 
-class TestMatrixView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-                     StructureDataSafe, ViewAccess, StretchDataSafe):
+class TestMatrixView(BaseViewChildTests):
     def __init__(self):
         super(TestMatrixView, self).__init__('MatrixView')
 
 
-class TestSparseView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-                     StructureDataSafe, ViewAccess, StretchDataSafe):
+class TestSparseView(BaseViewChildTests):
     def __init__(self):
         super(TestSparseView, self).__init__('SparseView')
 
 
-class TestDataFrameView(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-                        StructureDataSafe, ViewAccess, StretchDataSafe):
+class TestDataFrameView(BaseViewChildTests):
     def __init__(self):
         super(TestDataFrameView, self).__init__('DataFrameView')
 
 
-class TestList(HighLevelAll, AllNumerical, QueryBackend, StructureAll, StretchAll):
+class TestList(BaseChildTests):
     def __init__(self):
         super(TestList, self).__init__('List')
 
 
-class TestMatrix(HighLevelAll, AllNumerical, QueryBackend, StructureAll, StretchAll):
+class TestMatrix(BaseChildTests):
     def __init__(self):
         super(TestMatrix, self).__init__('Matrix')
 
 
-class TestSparse(HighLevelAll, AllNumerical, QueryBackend, StructureAll, StretchAll):
+class TestSparse(BaseChildTests):
     def __init__(self):
         super(TestSparse, self).__init__('Sparse')
 
 
-class TestDataFrame(HighLevelAll, AllNumerical, QueryBackend, StructureAll, StretchAll):
+class TestDataFrame(BaseChildTests):
     def __init__(self):
         super(TestDataFrame, self).__init__('DataFrame')
 
@@ -82,12 +91,15 @@ class TestDataFrame(HighLevelAll, AllNumerical, QueryBackend, StructureAll, Stre
 class TestBaseOnly(LowLevelBackend):
     def __init__(self):
 
-        def makeAndDefine(pointNames=None, featureNames=None, psize=0, fsize=0):
+        def makeAndDefine(shape=None, pointNames=None, featureNames=None,
+                          psize=0, fsize=0):
             """ Make a base data object that will think it has as many features as it has featureNames,
             even though it has no actual data """
             rows = psize if pointNames is None else len(pointNames)
             cols = fsize if featureNames is None else len(featureNames)
-            ret = nimble.data.Base((rows, cols), pointNames=pointNames, featureNames=featureNames)
+            if shape is None:
+                shape = [rows, cols]
+            ret = nimble.core.data.Base(shape, pointNames=pointNames, featureNames=featureNames)
             return ret
 
         self.constructor = makeAndDefine

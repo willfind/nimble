@@ -2,12 +2,13 @@
 Tests for binary metrics based on a confusion matrix.
 """
 
-from nimble import createData, train
+import nimble
+from nimble import train
 from nimble.exceptions import InvalidArgumentValue
 from nimble.calculate import (
     truePositive, trueNegative, falsePositive, falseNegative, recall,
     precision, specificity, balancedAccuracy, f1Score, confusionMatrix)
-from ..assertionHelpers import noLogEntryExpected
+from tests.helpers import noLogEntryExpected
 
 def test_binary_confusionMatrix_nonBinary():
     known = [[1], [2], [1], [2],
@@ -21,8 +22,8 @@ def test_binary_confusionMatrix_nonBinary():
             [2], [1], [2], [1],
             [2], [1], [2], [1]]
 
-    knownObj = createData('Matrix', known, useLog=False)
-    predObj = createData('Matrix', pred, useLog=False)
+    knownObj = nimble.data('Matrix', known, useLog=False)
+    predObj = nimble.data('Matrix', pred, useLog=False)
 
     # check that confusionMatrix raises IndexError but using the binary
     # functions raises InvalidArgumentValue because confusionMatrix error
@@ -53,8 +54,8 @@ def test_binary_confusionMatrixValues():
             [0], [0],                               # 2 TN
             [0], [0], [0], [0]]                     # 4 FN
 
-    knownObj = createData('Matrix', known, useLog=False)
-    predObj = createData('Matrix', pred, useLog=False)
+    knownObj = nimble.data('Matrix', known, useLog=False)
+    predObj = nimble.data('Matrix', pred, useLog=False)
 
     expTP = 6
     expTN = 2
@@ -77,8 +78,8 @@ def test_binary_confusionMatrixMetrics():
             [0], [0],                               # 2 TN
             [0], [0], [0], [0]]                     # 4 FN
 
-    knownObj = createData('Matrix', known, useLog=False)
-    predObj = createData('Matrix', pred, useLog=False)
+    knownObj = nimble.data('Matrix', known, useLog=False)
+    predObj = nimble.data('Matrix', pred, useLog=False)
 
     expRecall = .6
     expPrecision = 6 / 14
@@ -100,10 +101,10 @@ def test_binary_metricsAsPerformanceFunction():
                [0, 0], [0, 0],                                                 # 2 TN
                [1, 0], [1, 0], [1, 0], [1, 0]]                                 # 4 FN
 
-    trainData = createData('Matrix', rawTrain, useLog=False)
-    testData = createData('Matrix', rawTest, useLog=False)
+    trainData = nimble.data('Matrix', rawTrain, useLog=False)
+    testData = nimble.data('Matrix', rawTest, useLog=False)
 
-    tl = train('Custom.KNNClassifier', trainData, 0, arguments={'k': 1}, useLog=False)
+    tl = train('nimble.KNNClassifier', trainData, 0, arguments={'k': 1}, useLog=False)
     score1 = tl.test(testData, 0, truePositive, useLog=False)
     assert score1 == 6
     assert truePositive.optimal == 'max'

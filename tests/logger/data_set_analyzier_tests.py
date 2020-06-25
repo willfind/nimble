@@ -1,11 +1,10 @@
 
 import numpy as np
-
 from nose.tools import assert_almost_equal, assert_equal
 
-from nimble import createData
-from nimble.utility import scipy
-from nimble.logger.data_set_analyzer import *
+import nimble
+from nimble._utility import scipy
+from nimble.core.logger.data_set_analyzer import *
 
 
 def testProduceInfoTable_denseData():
@@ -15,8 +14,8 @@ def testProduceInfoTable_denseData():
     """
     data1 = np.array([[1, 2, 3, 1], [3, 3, 1, 5], [1, 1, 5, 2]])
     names1 = ['var1', 'var2', 'var3', 'var4']
-    for retType in nimble.data.available:
-        trainObj = createData(retType, data=data1, featureNames=names1)
+    for retType in nimble.core.data.available:
+        trainObj = nimble.data(retType, source=data1, featureNames=names1)
         funcs = featurewiseFunctionGenerator()
         rawTable = produceFeaturewiseInfoTable(trainObj, funcs)
         funcNames = rawTable[0]
@@ -68,8 +67,8 @@ def testProduceInfoTable_sparseData():
 
     raw = scipy.sparse.coo_matrix((vals, (row, col)))
 
-    for retType in nimble.data.available:
-        testObj = createData(retType, data=raw)
+    for retType in nimble.core.data.available:
+        testObj = nimble.data(retType, source=raw)
         funcs = featurewiseFunctionGenerator()
         rawTable = produceFeaturewiseInfoTable(testObj, funcs)
         print(rawTable)
@@ -174,7 +173,7 @@ def testProduceAggregateTable():
     data1 = np.array([[1, 2, 3, 1], [3, 3, 1, 5], [1, 1, 5, 2]])
     names1 = ['var1', 'var2', 'var3', 'var4']
 
-    trainObj = createData('List', data=data1, featureNames=names1)
+    trainObj = nimble.data('List', source=data1, featureNames=names1)
     rawTable = produceAggregateTable(trainObj)
 
     for i in range(len(rawTable[0])):

@@ -6,85 +6,61 @@ create data objects, call machine learning algorithms on that
 data, and do package level configuration and information querying.
 """
 
-import os
-import inspect
-
-from . import configuration
-from .configuration import nimblePath
-# load settings from configuration file
-settings = configuration.loadSettings()
-
-# Import those submodules that need setup or we want to be
-# accessible to the user
-from . import interfaces
-from . import calculate
-from . import randomness
-from . import logger
-
 # Import those functions that we want to be accessible in the
 # top level
-from .randomness import setRandomSeed
-from .randomness import pythonRandom
-from .randomness import numpyRandom
-from .core import train
-from .core import trainAndApply
-from .core import trainAndTest
-from .core import trainAndTestOnTrainingData
-from .core import createData
-from .core import createRandomData
-from .core import ones
-from .core import zeros
-from .core import identity
-from .core import normalizeData
-from .core import fillMatching
-from .core import registerCustomLearner
-from .core import registerCustomLearnerAsDefault
-from .core import deregisterCustomLearner
-from .core import deregisterCustomLearnerAsDefault
-from .core import listLearners
-from .core import learnerParameters
-from .core import learnerDefaultValues
-from .core import crossValidate
-from .core import log
-from .core import showLog
-from .core import learnerType
-from .core import loadData
-from .core import loadTrainedLearner
-from .core import CV
-from .core import Init
+from nimble.core.configuration import nimblePath
+from nimble.core.create import data
+from nimble.core.create import ones
+from nimble.core.create import zeros
+from nimble.core.create import identity
+from nimble.core.create import loadData
+from nimble.core.create import loadTrainedLearner
+from nimble.core.learn import learnerType
+from nimble.core.learn import listLearners
+from nimble.core.learn import learnerParameters
+from nimble.core.learn import learnerDefaultValues
+from nimble.core.learn import train
+from nimble.core.learn import trainAndApply
+from nimble.core.learn import trainAndTest
+from nimble.core.learn import trainAndTestOnTrainingData
+from nimble.core.learn import normalizeData
+from nimble.core.learn import fillMatching
+from nimble.core.learn import crossValidate
+from nimble.core.learn import CV
+from nimble.core.learn import Init
+from nimble.core.logger import log
+from nimble.core.logger import showLog
+from nimble.core.interfaces import CustomLearner
 
-# now finish out with any other configuration that needs to be done
+# import core (not in __all__)
+from nimble import core
 
-# These learners are required for unit testing, so we ensure they will
-# be automatically registered by making surey they have entries in
-# nimble.settings.
-settings.set("RegisteredLearners", "Custom.RidgeRegression",
-             'nimble.customLearners.RidgeRegression')
-settings.set("RegisteredLearners", "Custom.KNNClassifier",
-             'nimble.customLearners.KNNClassifier')
-settings.set("RegisteredLearners", "Custom.MeanConstant",
-             'nimble.customLearners.MeanConstant')
-settings.set("RegisteredLearners", "Custom.MultiOutputRidgeRegression",
-             'nimble.customLearners.MultiOutputRidgeRegression')
-settings.set("RegisteredLearners", "Custom.KNNImputation",
-             'nimble.customLearners.KNNImputation')
-settings.saveChanges("RegisteredLearners")
+# import submodules accessible to the user (in __all__)
+from nimble import learners
+from nimble import calculate
+from nimble import random
+from nimble import match
+from nimble import fill
+from nimble import exceptions
 
-# register those custom learners listed in nimble.settings
-configuration.autoRegisterFromSettings()
+# load settings from configuration file
+#: User control over configurable options
+#:
+#: See Also
+#: --------
+#: nimble.core.configuration.SessionConfiguration
+settings = core.configuration.loadSettings()
 
-# Now that we have loaded everything else, sync up the the settings object
-# as needed.
-configuration.setAndSaveAvailableInterfaceOptions()
+# initialize the interfaces
+core.interfaces.initInterfaceSetup()
 
 # initialize the logging file
-logger.active = logger.initLoggerAndLogConfig()
+core.logger.initLoggerAndLogConfig()
 
-__all__ = ['createData', 'createRandomData', 'crossValidate', 'CV',
-           'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
-           'identity', 'Init', 'learnerDefaultValues', 'learnerParameters',
+__all__ = ['calculate', 'crossValidate', 'CustomLearner', 'CV', 'data',
+           'exceptions', 'fill', 'fillMatching', 'identity', 'Init',
+           'learnerDefaultValues', 'learnerParameters', 'learners',
            'learnerType', 'listLearners', 'loadData', 'loadTrainedLearner',
-           'log', 'normalizeData', 'ones', 'registerCustomLearner',
-           'registerCustomLearnerAsDefault', 'setRandomSeed', 'settings',
-           'showLog', 'train', 'trainAndApply', 'trainAndTest',
-           'trainAndTestOnTrainingData', 'nimblePath', 'zeros']
+           'log', 'match', 'nimblePath', 'normalizeData', 'ones',
+           'settings', 'showLog', 'random', 'train', 'trainAndApply',
+           'trainAndTest', 'trainAndTestOnTrainingData', 'zeros']

@@ -1,14 +1,12 @@
 """
-Demonstrates loading and processing some string valued data into a dataset that
-is purely numerical. Uses a portion of the UCI ML repository census income data
-set (aka Adult).
-
+Demonstrates loading and processing some string valued data into a
+dataset that is purely numerical. Uses a portion of the UCI ML
+repository census income dataset (aka Adult).
 """
 import sys
 import os.path
 
 import nimble
-from nimble import createData
 from nimble import match
 
 if __name__ == "__main__":
@@ -28,7 +26,7 @@ if __name__ == "__main__":
     # we specify that we want a List object returned, and that we want the first row to
     # taken as the featureNames. Given the .csv extension on the path it will infer the
     # format of the file to be loaded, though that could be explicitly specified if desired.
-    processed = createData("List", pathOrig, featureNames=True)
+    processed = nimble.data("List", pathOrig, featureNames=True)
 
     # this feature is a precalculated similarity rating. Let's not make it too easy...
     processed.features.extract('fnlwgt')

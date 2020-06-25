@@ -17,6 +17,7 @@ import sys
 import os
 import shlex
 import inspect
+from datetime import datetime
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -33,22 +34,34 @@ def process_docstring(app, what, name, obj, options, lines):
     if what == 'module' and options.get('noindex', False):
         del lines[:]
 
+def process_signature(app, what, name, obj, options, signature,
+                      return_annotation):
+    keepSignatures = ['nimble.CV', 'nimble.Init']
+    if what == 'class' and name not in keepSignatures:
+        signature = ''
+
+    return signature, return_annotation
+
+
 def setup(app):
     app.connect('autodoc-process-docstring', process_docstring)
+    app.connect('autodoc-process-signature', process_signature)
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.intersphinx',
     'numpydoc'#,
     #    'sphinx.ext.coverage',
     #    'sphinx.ext.ifconfig',
 ]
 
+intersphinx_mapping = {'numpy': ('http://docs.scipy.org/doc/numpy/', None),}
+
 autodoc_default_options = {
     'undoc-members': True,
-    'show-inheritance': True
 }
 
 # prevents autoclass from adding an autosummary table which leads to a warning
@@ -70,7 +83,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Nimble'
-copyright = u'2019, Spark Wave'
+copyright = u'{}, Spark Wave'.format(datetime.now().year)
 author = u'Spark Wave'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -138,8 +151,8 @@ html_theme = 'alabaster'
 # documentation.
 html_theme_options = {
     'fixed_sidebar': True,
-    'page_width': '85%',
-    'body_max_width': '85%'
+    'page_width': '95%',
+    'body_max_width': None,
 }
 
 # Add any paths that contain custom themes here, relative to this directory.
@@ -164,7 +177,7 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied

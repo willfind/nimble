@@ -10,14 +10,15 @@ __init__,  transpose, T, points.insert, features.insert, points.sort,
 features.sort, points.extract, features.extract, points.delete,
 features.delete, points.retain, features.retain, referenceDataFrom,
 points.transform, features.transform, transformElements, replaceRectangle,
-flattenToOnePoint, flattenToOneFeature, merge, unflattenFromOnePoint,
-unflattenFromOneFeature, points.append, features.append,
+flatten, merge, unflatten, points.append, features.append,
 """
 
 import tempfile
 import os
 import os.path
 import copy
+from operator import itemgetter
+from functools import cmp_to_key
 try:
     from unittest import mock #python >=3.3
 except ImportError:
@@ -28,26 +29,25 @@ from nose.tools import *
 
 import nimble
 from nimble import match
-from nimble import createData
-from nimble.data import List
-from nimble.data import Matrix
-from nimble.data import DataFrame
-from nimble.data import Sparse
-from nimble.data import BaseView
-from nimble.data.dataHelpers import DEFAULT_PREFIX
+from nimble.core.data import List
+from nimble.core.data import Matrix
+from nimble.core.data import DataFrame
+from nimble.core.data import Sparse
+from nimble.core.data import BaseView
+from nimble.core.data._dataHelpers import DEFAULT_PREFIX
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
-from nimble.randomness import numpyRandom
-from nimble.utility import sparseMatrixToArray
-from nimble.utility import scipy, pd
+from nimble.random import numpyRandom
+from nimble._utility import sparseMatrixToArray
+from nimble._utility import scipy, pd
 
 from .baseObject import DataTestObject
-from ..assertionHelpers import logCountAssertionFactory
-from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
-from ..assertionHelpers import assertNoNamesGenerated
-from ..assertionHelpers import CalledFunctionException, calledException
+from tests.helpers import logCountAssertionFactory
+from tests.helpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import assertNoNamesGenerated
+from tests.helpers import CalledFunctionException, calledException
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
@@ -170,9 +170,9 @@ class StructureDataSafe(StructureShared):
 
     def test_objectValidationSetup(self):
         """ Test that object validation has been setup """
-        assert hasattr(nimble.data.Base, 'objectValidation')
-        assert hasattr(nimble.data.Features, 'objectValidation')
-        assert hasattr(nimble.data.Points, 'objectValidation')
+        assert hasattr(nimble.core.data.Base, 'objectValidation')
+        assert hasattr(nimble.core.data.Features, 'objectValidation')
+        assert hasattr(nimble.core.data.Points, 'objectValidation')
 
     ##########################
     # T (transpose property) #
@@ -291,10 +291,10 @@ class StructureDataSafe(StructureShared):
         data = numpy.array(data).T
 
         orig = self.constructor(data)
-        sparseObj = createData(returnType="Sparse", data=data, useLog=False)
-        listObj = createData(returnType="List", data=data, useLog=False)
-        matixObj = createData(returnType="Matrix", data=data, useLog=False)
-        dataframeObj = createData(returnType="DataFrame", data=data, useLog=False)
+        sparseObj = nimble.data(returnType="Sparse", source=data, useLog=False)
+        listObj = nimble.data(returnType="List", source=data, useLog=False)
+        matixObj = nimble.data(returnType="Matrix", source=data, useLog=False)
+        dataframeObj = nimble.data(returnType="DataFrame", source=data, useLog=False)
 
         copySparse = orig.copy(to='Sparse')
         assert copySparse.isIdentical(sparseObj)
@@ -347,10 +347,10 @@ class StructureDataSafe(StructureShared):
         data = numpy.array(data)
 
         orig = self.constructor(data)
-        sparseObj = createData(returnType="Sparse", data=data, useLog=False)
-        listObj = createData(returnType="List", data=data, useLog=False)
-        matixObj = createData(returnType="Matrix", data=data, useLog=False)
-        dataframeObj = createData(returnType="DataFrame", data=data, useLog=False)
+        sparseObj = nimble.data(returnType="Sparse", source=data, useLog=False)
+        listObj = nimble.data(returnType="List", source=data, useLog=False)
+        matixObj = nimble.data(returnType="Matrix", source=data, useLog=False)
+        dataframeObj = nimble.data(returnType="DataFrame", source=data, useLog=False)
 
         copySparse = orig.copy(to='Sparse')
         assert copySparse.isIdentical(sparseObj)
@@ -402,10 +402,10 @@ class StructureDataSafe(StructureShared):
         data = numpy.empty(shape=(0, 0))
 
         orig = self.constructor(data)
-        sparseObj = createData(returnType="Sparse", data=data, useLog=False)
-        listObj = createData(returnType="List", data=data, useLog=False)
-        matixObj = createData(returnType="Matrix", data=data, useLog=False)
-        dataframeObj = createData(returnType="DataFrame", data=data, useLog=False)
+        sparseObj = nimble.data(returnType="Sparse", source=data, useLog=False)
+        listObj = nimble.data(returnType="List", source=data, useLog=False)
+        matixObj = nimble.data(returnType="Matrix", source=data, useLog=False)
+        dataframeObj = nimble.data(returnType="DataFrame", source=data, useLog=False)
 
         copySparse = orig.copy(to='Sparse')
         assert copySparse.isIdentical(sparseObj)
@@ -458,15 +458,15 @@ class StructureDataSafe(StructureShared):
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0', 'str']
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        sparseObj = createData(returnType="Sparse", data=data, pointNames=pointNames,
-                               featureNames=featureNames, useLog=False)
-        listObj = createData(returnType="List", data=data, pointNames=pointNames,
-                             featureNames=featureNames, useLog=False)
-        matixObj = createData(returnType="Matrix", data=data, pointNames=pointNames,
+        sparseObj = nimble.data(returnType="Sparse", source=data, pointNames=pointNames,
+                                featureNames=featureNames, useLog=False)
+        listObj = nimble.data(returnType="List", source=data, pointNames=pointNames,
                               featureNames=featureNames, useLog=False)
-        dataframeObj = createData(returnType="DataFrame", data=data,
-                                  pointNames=pointNames, featureNames=featureNames,
-                                  useLog=False)
+        matixObj = nimble.data(returnType="Matrix", source=data, pointNames=pointNames,
+                               featureNames=featureNames, useLog=False)
+        dataframeObj = nimble.data(returnType="DataFrame", source=data,
+                                   pointNames=pointNames, featureNames=featureNames,
+                                   useLog=False)
 
         pointsShuffleIndices = [4, 3, 1, 2, 0]
         featuresShuffleIndices = [1, 2, 0]
@@ -479,8 +479,8 @@ class StructureDataSafe(StructureShared):
         copySparse.points.setName('one', 'WHAT', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
-        copySparse.points.sort(sortHelper=pointsShuffleIndices, useLog=False)
-        copySparse.features.sort(sortHelper=featuresShuffleIndices, useLog=False)
+        copySparse.points.permute(pointsShuffleIndices, useLog=False)
+        copySparse.features.permute(featuresShuffleIndices, useLog=False)
         assert orig[0, 0] == 1
 
         copyList = orig.copy(to='List')
@@ -491,8 +491,8 @@ class StructureDataSafe(StructureShared):
         copyList.points.setName('one', 'WHAT', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
-        copyList.points.sort(sortHelper=pointsShuffleIndices, useLog=False)
-        copyList.features.sort(sortHelper=featuresShuffleIndices, useLog=False)
+        copyList.points.permute(pointsShuffleIndices, useLog=False)
+        copyList.features.permute(featuresShuffleIndices, useLog=False)
         assert orig[0, 0] == 1
 
         copyMatrix = orig.copy(to='Matrix')
@@ -503,8 +503,8 @@ class StructureDataSafe(StructureShared):
         copyMatrix.points.setName('one', 'WHAT', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
-        copyMatrix.points.sort(sortHelper=pointsShuffleIndices, useLog=False)
-        copyMatrix.features.sort(sortHelper=featuresShuffleIndices, useLog=False)
+        copyMatrix.points.permute(pointsShuffleIndices, useLog=False)
+        copyMatrix.features.permute(featuresShuffleIndices, useLog=False)
         assert orig[0, 0] == 1
 
         copyDataFrame = orig.copy(to='DataFrame')
@@ -515,8 +515,8 @@ class StructureDataSafe(StructureShared):
         copyDataFrame.points.setName('one', 'WHAT', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
-        copyDataFrame.points.sort(sortHelper=pointsShuffleIndices, useLog=False)
-        copyDataFrame.features.sort(sortHelper=featuresShuffleIndices, useLog=False)
+        copyDataFrame.points.permute(pointsShuffleIndices, useLog=False)
+        copyDataFrame.features.permute(featuresShuffleIndices, useLog=False)
         assert orig[0, 0] == 1
 
         pyList = orig.copy(to='python list')
@@ -581,12 +581,11 @@ class StructureDataSafe(StructureShared):
         pointNames = ['1', 'one', '2', '0']
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        for retType in nimble.data.available:
+        for retType in nimble.core.data.available:
 
             out = orig.copy(to=retType, rowsArePoints=False)
-            desired = nimble.createData(retType, dataT,
-                                        pointNames=featureNames,
-                                        featureNames=pointNames, useLog=False)
+            desired = nimble.data(retType, dataT, pointNames=featureNames,
+                                  featureNames=pointNames, useLog=False)
             assert out == desired
 
         out = orig.copy(to='pythonlist', rowsArePoints=False)
@@ -751,13 +750,13 @@ class StructureDataSafe(StructureShared):
         assert copyDataFrame.relativePath == os.path.relpath(path)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.Base.copy', calledException)
+    @mock.patch('nimble.core.data.Base.copy', calledException)
     def test_copy__copy__(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
         ret = copy.copy(toTest)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.Base.copy', calledException)
+    @mock.patch('nimble.core.data.Base.copy', calledException)
     def test_copy__deepcopy__(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
         ret = copy.deepcopy(toTest)
@@ -767,7 +766,7 @@ class StructureDataSafe(StructureShared):
     ###############
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_points_copy_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -792,7 +791,7 @@ class StructureDataSafe(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         # need to set source paths for view objects
-        if isinstance(toTest, nimble.data.BaseView):
+        if isinstance(toTest, nimble.core.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -928,7 +927,7 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data)
 
         # need to set source paths for view objects
-        if isinstance(toTest, nimble.data.BaseView):
+        if isinstance(toTest, nimble.core.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -1013,7 +1012,7 @@ class StructureDataSafe(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         # need to set source paths for view objects
-        if isinstance(toTest, nimble.data.BaseView):
+        if isinstance(toTest, nimble.core.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -1474,22 +1473,22 @@ class StructureDataSafe(StructureShared):
         toTest4 = toTest1.copy()
         expTest = toTest1.copy()
 
-        seed = nimble.randomness.generateSubsidiarySeed()
-        nimble.randomness.startAlternateControl(seed)
+        seed = nimble.random._generateSubsidiarySeed()
+        nimble.random._startAlternateControl(seed)
         ret = getattr(toTest1, toCall).copy(number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retList = getattr(toTest2, toCall).copy([0, 1, 2, 3], number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retRange = getattr(toTest3, toCall).copy(start=0, end=3, number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retFunc = getattr(toTest4, toCall).copy(allTrue, number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         if axis == 'point':
             assert len(ret.points) == 3
@@ -1525,21 +1524,21 @@ class StructureDataSafe(StructureShared):
             exp1 = toTest1[:, 1]
             exp2 = toTest1[:, 2]
 
-        seed = nimble.randomness.generateSubsidiarySeed()
-        nimble.randomness.startAlternateControl(seed)
+        seed = nimble.random._generateSubsidiarySeed()
+        nimble.random._startAlternateControl(seed)
         retList = getattr(toTest1, toCall).copy([1, 2], number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retRange = getattr(toTest2, toCall).copy(start=1, end=2, number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retFunc = getattr(toTest3, toCall).copy(middleRowsOrCols, number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         assert retList.isIdentical(exp1) or retList.isIdentical(exp2)
         assert retRange.isIdentical(exp1) or retList.isIdentical(exp2)
@@ -1550,7 +1549,7 @@ class StructureDataSafe(StructureShared):
     #####################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_features_copy_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -1576,7 +1575,7 @@ class StructureDataSafe(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         # need to set source paths for view objects
-        if isinstance(toTest, nimble.data.BaseView):
+        if isinstance(toTest, nimble.core.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -1749,7 +1748,7 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data)
 
         # need to set source paths for view objects
-        if isinstance(toTest, nimble.data.BaseView):
+        if isinstance(toTest, nimble.core.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -1863,7 +1862,7 @@ class StructureDataSafe(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         # need to set source paths for view objects
-        if isinstance(toTest, nimble.data.BaseView):
+        if isinstance(toTest, nimble.core.data.BaseView):
             toTest._source._absPath = 'testAbsPath'
             toTest._source._relPath = 'testRelPath'
         else:
@@ -2281,9 +2280,9 @@ class StructureModifying(StructureShared):
         orig1 = self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
         orig2 = self.constructor((1,2,3), featureNames=['a', 'b', 'c'])
         orig3 = self.constructor({'a':1, 'b':2, 'c':3})
-        orig3.features.sort(sortBy=orig3.points.getName(0))
+        orig3.features.sort()
         orig10 = self.constructor([{'a':1, 'b':2, 'c':3}])
-        orig10.features.sort(sortBy=orig10.points.getName(0))
+        orig10.features.sort()
         orig4 = self.constructor(numpy.array([1,2,3]), featureNames=['a', 'b', 'c'])
         orig5 = self.constructor(numpy.matrix([1,2,3]), featureNames=['a', 'b', 'c'])
         orig6 = self.constructor(pd.DataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
@@ -2311,9 +2310,9 @@ class StructureModifying(StructureShared):
         orig1 = self.constructor([[1,2,'a'], [3,4,'b']], featureNames=['a', 'b', 'c'])
         orig2 = self.constructor(((1,2,'a'), (3,4,'b')), featureNames=['a', 'b', 'c'])
         orig3 = self.constructor({'a':[1,3], 'b':[2,4], 'c':['a', 'b']})
-        orig3.features.sort(sortBy=orig3.points.getName(0))
+        orig3.features.sort()
         orig7 = self.constructor([{'a':1, 'b':2, 'c':'a'}, {'a':3, 'b':4, 'c':'b'}])
-        orig7.features.sort(sortBy=orig7.points.getName(0))
+        orig7.features.sort()
         orig4 = self.constructor(numpy.array([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
         orig5 = self.constructor(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
         orig6 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']]), featureNames=['a', 'b', 'c'])
@@ -2334,13 +2333,13 @@ class StructureModifying(StructureShared):
     def test_init_allEqual(self):
         """ Test __init__() that every way to instantiate produces equal objects """
         # instantiate from list of lists
-        fromList = self.constructor(data=[[1, 2, 3]])
+        fromList = self.constructor(source=[[1, 2, 3]])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(mode='w', suffix=".csv") as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
-            fromCSV = self.constructor(data=tmpCSV.name)
+            fromCSV = self.constructor(source=tmpCSV.name)
 
         # instantiate from mtx array file
         with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXArr:
@@ -2350,7 +2349,7 @@ class StructureModifying(StructureShared):
             tmpMTXArr.write("2\n")
             tmpMTXArr.write("3\n")
             tmpMTXArr.flush()
-            fromMTXArr = self.constructor(data=tmpMTXArr.name)
+            fromMTXArr = self.constructor(source=tmpMTXArr.name)
 
         # instantiate from mtx coordinate file
         with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXCoo:
@@ -2360,7 +2359,7 @@ class StructureModifying(StructureShared):
             tmpMTXCoo.write("1 2 2\n")
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.flush()
-            fromMTXCoo = self.constructor(data=tmpMTXCoo.name)
+            fromMTXCoo = self.constructor(source=tmpMTXCoo.name)
 
         # check equality between all pairs
         assert fromList.isIdentical(fromCSV)
@@ -2373,7 +2372,7 @@ class StructureModifying(StructureShared):
     def test_init_allEqualWithNames(self):
         """ Test __init__() that every way to instantiate produces equal objects, with names """
         # instantiate from list of lists
-        fromList = self.constructor(data=[[1, 2, 3]], pointNames=['1P'], featureNames=['one', 'two', 'three'])
+        fromList = self.constructor(source=[[1, 2, 3]], pointNames=['1P'], featureNames=['one', 'two', 'three'])
 
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(mode='w', suffix=".csv") as tmpCSV:
@@ -2382,7 +2381,7 @@ class StructureModifying(StructureShared):
             tmpCSV.write("pointNames,one,two,three\n")
             tmpCSV.write("1P,1,2,3\n")
             tmpCSV.flush()
-            fromCSV = self.constructor(data=tmpCSV.name)
+            fromCSV = self.constructor(source=tmpCSV.name)
 
         # instantiate from mtx file
         with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXArr:
@@ -2394,7 +2393,7 @@ class StructureModifying(StructureShared):
             tmpMTXArr.write("2\n")
             tmpMTXArr.write("3\n")
             tmpMTXArr.flush()
-            fromMTXArr = self.constructor(data=tmpMTXArr.name)
+            fromMTXArr = self.constructor(source=tmpMTXArr.name)
 
         # instantiate from mtx coordinate file
         with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXCoo:
@@ -2406,7 +2405,7 @@ class StructureModifying(StructureShared):
             tmpMTXCoo.write("1 2 2\n")
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.flush()
-            fromMTXCoo = self.constructor(data=tmpMTXCoo.name)
+            fromMTXCoo = self.constructor(source=tmpMTXCoo.name)
 
         # check equality between all pairs
         assert fromList.isIdentical(fromCSV)
@@ -2417,9 +2416,25 @@ class StructureModifying(StructureShared):
         assert fromMTXCoo.isIdentical(fromMTXArr)
 
 
-    @raises(TypeError)
-    def test_init_noThriceNestedListInputs(self):
-        self.constructor([[[1, 2, 3]]])
+    def test_init_multiDimensionNestedListInputs(self):
+        # _reshape refers to elements, not entire object
+        elem = [1, 2, 3]
+        ret = self.constructor([[elem, elem], [elem, elem]])
+        assert ret._shape == [2, 2, 3]
+        assert ret._pointCount == 2
+        assert ret._featureCount == 6
+
+        data1 = [elem, elem, elem]
+        ret = self.constructor([[data1, data1], [data1, data1]])
+        assert ret._shape == [2, 2, 3, 3]
+        assert ret._pointCount == 2
+        assert ret._featureCount == 18
+
+        data2 = [data1, data1, data1]
+        ret = self.constructor([[data2, data2], [data2, data2]])
+        assert ret._shape == [2, 2, 3, 3, 3]
+        assert ret._pointCount == 2
+        assert ret._featureCount == 54
 
 
     def test_init_coo_matrix_duplicates(self):
@@ -2494,12 +2509,12 @@ class StructureModifying(StructureShared):
         ret = self.constructor(coo_str)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.valuesToPythonList', calledException)
+    @mock.patch('nimble.core.data.base.valuesToPythonList', calledException)
     def test_init_pointNames_calls_valuesToPythonList(self):
         self.constructor([1,2,3], pointNames=['one'])
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.valuesToPythonList', calledException)
+    @mock.patch('nimble.core.data.base.valuesToPythonList', calledException)
     def test_init_featureNames_calls_valuesToPythonList(self):
         self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
 
@@ -3112,20 +3127,20 @@ class StructureModifying(StructureShared):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
         currType = self.constructor([]).getTypeString()
-        availableTypes = nimble.data.available
+        availableTypes = nimble.core.data.available
         otherTypes = [retType for retType in availableTypes if retType != currType]
         inserted = []
         for other in otherTypes:
             toTest = self.constructor(data)
             if axis == 'point':
                 insertData = [[-1, -2, -3]]
-                otherTest = nimble.createData(other, insertData)
+                otherTest = nimble.data(other, insertData)
                 exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
                 toTest.points.insert(len(toTest.points), otherTest)
                 inserted.append(toTest)
             else:
                 insertData = [[-1], [-2], [-3]]
-                otherTest = nimble.createData(other, insertData)
+                otherTest = nimble.data(other, insertData)
                 exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
                 toTest.features.insert(len(toTest.features), otherTest)
                 inserted.append(toTest)
@@ -3291,7 +3306,7 @@ class StructureModifying(StructureShared):
     # points.append() / features.append() #
     #######################################
 
-    @mock.patch('nimble.data.axis.Axis._insert', calledException)
+    @mock.patch('nimble.core.data.axis.Axis._insert', calledException)
     def test_append_callsInsertBackend(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
@@ -3354,80 +3369,156 @@ class StructureModifying(StructureShared):
     # points.sort() #
     #################
 
-    @raises(InvalidArgumentTypeCombination)
-    def test_points_sort_exceptionAtLeastOne(self):
-        """ Test points.sort() has at least one parameter """
+    @raises(InvalidArgumentValue)
+    def test_points_sort_defaultParamsNeedsNames(self):
+        """ Test points.sort() needs names if default params used """
         data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
         toTest = self.constructor(data)
 
         toTest.points.sort()
 
-    @raises(InvalidArgumentTypeCombination)
-    def test_points_sort_exceptionBothNotNone(self):
-        """ Test points.sort() has only one parameter """
+    @twoLogEntriesExpected
+    def test_points_sort_defaultParamsWithNames(self):
+        """ Test points.sort() default params sort by point names """
         data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
-        toTest = self.constructor(data)
+        toTest = self.constructor(data, pointNames=['c', 'a', 'b'])
 
-        toTest.points.sort(sortBy=1, sortHelper=[1,2,0])
+        toTest.points.sort()
 
-    @oneLogEntryExpected
-    def test_points_sort_naturalByFeature(self):
-        """ Test points.sort() when we specify a feature to sort by """
-        data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
-        names = ['1', '7', '4']
-        toTest = self.constructor(data, pointNames=names)
+        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        exp = self.constructor(expData, pointNames=['a', 'b' , 'c'])
+        assert toTest.isIdentical(exp)
 
-        ret = toTest.points.sort(sortBy=1) # RET CHECK
+        expRev = self.constructor(expData[::-1], pointNames=['c', 'b', 'a'])
+        toTest.points.sort(reverse=True)
 
-        dataExpected = [[7, 1, 9], [1, 2, 3], [4, 5, 6]]
-        namesExp = ['7', '1', '4']
-        objExp = self.constructor(dataExpected, pointNames=namesExp)
+        assert toTest.isIdentical(expRev)
+
+    @logCountAssertionFactory(4)
+    def test_points_sort_naturalByOneFeature(self):
+        """ Test points.sort() when we specify a feature index to sort by """
+        data = [[1, 2, 3], [7, 1, 9], [4, 5, 6], [0, 1, 8]]
+        ptNames = ['1', '7', '4', '0']
+        ftNames = ['a', 'b', 'c']
+        toTest = self.constructor(data, pointNames=ptNames,
+                                  featureNames=ftNames)
+        testIndex = toTest.copy()
+        testName = toTest.copy()
+
+        dataExpected = [[7, 1, 9], [0, 1, 8], [1, 2, 3], [4, 5, 6]]
+        namesExp = ['7', '0', '1', '4']
+        objExp = self.constructor(dataExpected, pointNames=namesExp,
+                                  featureNames=ftNames)
+
+        retIdx = testIndex.points.sort(1) # RET CHECK
+        retName = testName.points.sort('b') # RET CHECK
+
+        assert testIndex.isIdentical(objExp)
+        assert testName.isIdentical(objExp)
+        assert retIdx is None and retName is None
+
+        pythonSort = sorted(data, key=itemgetter(1))
+        assert testIndex.copy('pythonlist') == pythonSort
+
+        testIndex = toTest.copy()
+        testName = toTest.copy()
+        testIndex.points.sort(1, reverse=True)
+        testName.points.sort('b', reverse=True)
+
+        revExpected = [[4, 5, 6], [1, 2, 3], [7, 1, 9], [0, 1, 8]]
+        namesRev = ['4', '1', '7', '0']
+        revExp = self.constructor(revExpected, pointNames=namesRev,
+                                  featureNames=ftNames)
+
+        assert testIndex.isIdentical(revExp)
+        assert testName.isIdentical(revExp)
+
+        pythonSortRev = sorted(data, key=itemgetter(1), reverse=True)
+        assert testIndex.copy('pythonlist') == pythonSortRev
+
+    @logCountAssertionFactory(4)
+    def test_points_sort_naturalByMultipleFeatures(self):
+        """ Test points.sort() when we specify features to sort by """
+        data = [[1, 2, 3], [7, 1, 9], [4, 5, 6], [0, 1, 8]]
+        ptNames = ['1', '7', '4', '0']
+        ftNames = ['a', 'b', 'c']
+        toTest = self.constructor(data, pointNames=ptNames,
+                                  featureNames=ftNames)
+
+        dataExpected = [[0, 1, 8], [7, 1, 9], [1, 2, 3], [4, 5, 6]]
+        namesExp = ['0', '7', '1', '4']
+        objExp = self.constructor(dataExpected, pointNames=namesExp,
+                                  featureNames=ftNames)
+
+        ret = toTest.points.sort([1, 'a']) # RET CHECK
 
         assert toTest.isIdentical(objExp)
         assert ret is None
 
-    def test_points_sort_naturalByFeatureName(self):
-        """ Test points.sort() when we specify a feature name to sort by """
-        data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
-        pnames = ['1', '7', '4']
-        fnames = ['1', '2', '3']
-        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        pythonSort = sorted(data, key=itemgetter(1, 0))
+        assert toTest.copy('pythonlist') == pythonSort
 
-        ret = toTest.points.sort(sortBy='2') # RET CHECK
+        toTest.points.sort(['b', 0], reverse=True)
 
-        dataExpected = [[7, 1, 9], [1, 2, 3], [4, 5, 6]]
-        namesExp = ['7', '1', '4']
-        objExp = self.constructor(dataExpected, pointNames=namesExp, featureNames=fnames)
+        revExpected = [[4, 5, 6], [1, 2, 3], [7, 1, 9], [0, 1, 8]]
+        namesRev = ['4', '1', '7', '0']
+        revExp = self.constructor(revExpected, pointNames=namesRev,
+                                  featureNames=ftNames)
+
+        assert toTest.isIdentical(revExp)
+
+        pythonSortRev = sorted(data, key=itemgetter(1, 0), reverse=True)
+        assert toTest.copy('pythonlist') == pythonSortRev
+
+        # itemgetter already applied with indices
+        ret = toTest.points.sort(itemgetter(1, 0))
 
         assert toTest.isIdentical(objExp)
-        assert ret is None
 
-    @oneLogEntryExpected
+        # itemgetter already applied with names
+        ret = toTest.points.sort(itemgetter('b', 'a'), reverse=True)
+
+        assert toTest.isIdentical(revExp)
+
+    @twoLogEntriesExpected
     def test_points_sort_scorer(self):
         """ Test points.sort() when we specify a scoring function """
-        data = [[1, 2, 3], [4, 5, 6], [7, 1, 9], [0, 0, 0]]
+        data = [[1, 2, 3], [4, 5, 6], [0, 0, 0], [7, 1, 9], [2, 2, 2]]
         toTest = self.constructor(data)
 
         def numOdds(point):
-            assert isinstance(point, BaseView)
             ret = 0
             for val in point:
                 if val % 2 != 0:
                     ret += 1
             return ret
 
-        toTest.points.sort(sortHelper=numOdds)
+        toTest.points.sort(by=numOdds)
 
-        dataExpected = [[0, 0, 0], [4, 5, 6], [1, 2, 3], [7, 1, 9]]
+        dataExpected = [[0, 0, 0], [2, 2, 2], [4, 5, 6], [1, 2, 3], [7, 1, 9]]
         objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
         assertNoNamesGenerated(toTest)
 
-    @oneLogEntryExpected
+        pythonSort = sorted(data, key=numOdds)
+        assert toTest.copy('pythonlist') == pythonSort
+
+        toTest.points.sort(by=numOdds, reverse=True)
+
+        revExpected = [[7, 1, 9], [1, 2, 3], [4, 5, 6], [0, 0, 0], [2, 2, 2]]
+        revExp = self.constructor(revExpected)
+
+        assert toTest.isIdentical(revExp)
+        assertNoNamesGenerated(toTest)
+
+        pythonSort = sorted(data, key=numOdds, reverse=True)
+        assert toTest.copy('pythonlist') == pythonSort
+
+    @logCountAssertionFactory(3)
     def test_points_sort_comparator(self):
         """ Test points.sort() when we specify a comparator function """
-        data = [[1, 2, 3], [4, 5, 6], [7, 1, 9], [0, 0, 0]]
+        data = [[1, 2, 3], [4, 5, 6], [0, 0, 0], [7, 1, 9], [2, 2, 2]]
         toTest = self.constructor(data)
 
         def compOdds(point1, point2):
@@ -3441,149 +3532,194 @@ class StructureModifying(StructureShared):
                     odds2 += 1
             return odds1 - odds2
 
-        toTest.points.sort(sortHelper=compOdds)
+        toTest.points.sort(by=compOdds)
 
-        dataExpected = [[0, 0, 0], [4, 5, 6], [1, 2, 3], [7, 1, 9]]
+        dataExpected = [[0, 0, 0], [2, 2, 2], [4, 5, 6], [1, 2, 3], [7, 1, 9]]
         objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
         assertNoNamesGenerated(toTest)
 
-    def test_points_sort_dataTypeRetainedFromList(self):
-        """ Test points.sort() data not converted when sorting by list"""
-        data = [['a', 2, 3.0], ['b', 5, 6.0], ['c', 8, 9.0]]
-        toTest = self.constructor(data)
+        pythonSort = sorted(data, key=cmp_to_key(compOdds))
+        assert toTest.copy('pythonlist') == pythonSort
 
-        toTest.points.sort(sortHelper=[2, 1, 0])
+        toTest.points.sort(by=compOdds, reverse=True)
 
-        expData = [['c', 8, 9.0], ['b', 5, 6.0], ['a', 2, 3.0]]
-        exp = self.constructor(expData)
+        revExpected = [[7, 1, 9], [1, 2, 3], [4, 5, 6], [0, 0, 0], [2, 2, 2]]
+        revExp = self.constructor(revExpected)
 
-        assert toTest == exp
+        assert toTest.isIdentical(revExp)
         assertNoNamesGenerated(toTest)
 
-    def test_points_sort_indicesList(self):
-        """ Test points.sort() when we specify a list of indices """
-        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        toTest = self.constructor(data)
+        pythonSort = sorted(data, key=cmp_to_key(compOdds), reverse=True)
+        assert toTest.copy('pythonlist') == pythonSort
 
-        toTest.points.sort(sortHelper=[2, 1, 0])
+        # with cmp_to_key already applied
+        toTest.points.sort(by=cmp_to_key(compOdds))
 
-        expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
+        dataExpected = [[0, 0, 0], [2, 2, 2], [4, 5, 6], [1, 2, 3], [7, 1, 9]]
+        objExp = self.constructor(dataExpected)
+
+        assert toTest.isIdentical(objExp)
+        assertNoNamesGenerated(toTest)
+
+    def test_points_sort_stability(self):
+        colors = [['red', 1], ['blue', 1], ['green', 1],
+                  ['red', 2], ['blue', 2], ['green', 2],
+                  ['red', 3], ['blue', 3], ['green', 3]]
+        toTest = self.constructor(colors)
+        toTest.points.sort(0)
+
+        expData = [['blue', 1], ['blue', 2], ['blue', 3],
+                   ['green', 1], ['green', 2], ['green', 3],
+                   ['red', 1], ['red', 2], ['red', 3]]
         exp = self.constructor(expData)
+        assert toTest.isIdentical(exp)
 
-        assert toTest == exp
+        testRev = self.constructor(colors)
+        testRev.points.sort(0, reverse=True)
 
-    def test_points_sort_namesList(self):
-        """ Test points.sort() when we specify a list of point names """
-        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        pnames = ['3', '6', '9']
-        toTest = self.constructor(data, pointNames=pnames)
+        dataRev = [['red', 1], ['red', 2], ['red', 3],
+                   ['green', 1], ['green', 2], ['green', 3],
+                   ['blue', 1], ['blue', 2], ['blue', 3]]
+        expRev = self.constructor(dataRev)
+        assert testRev.isIdentical(expRev)
 
-        toTest.points.sort(sortHelper=['9', '6', '3'])
+    def test_points_sort_stability_chained(self):
+        names = [['john', 'a', 'smith'], ['john', 'f', 'brown'],
+                 ['peter', 'm', 'smith'], ['peter', 't', 'brown'],
+                 ['adam', 'o', 'brown'], ['adam', 'a', 'smith'],
+                 ['john', 't', 'smith'], ['john', 'a', 'brown']]
 
-        expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
-        expNames = ['9', '6', '3']
-        exp = self.constructor(expData, pointNames=expNames)
+        ftnames = ['first', 'mi', 'last']
+        toTest = self.constructor(names, featureNames=ftnames)
+        toTest.points.sort('first')
+        toTest.points.sort('last', reverse=True)
 
-        assert toTest == exp
+        expNames = [['adam', 'a', 'smith'], ['john', 'a', 'smith'],
+                    ['john', 't', 'smith'], ['peter', 'm', 'smith'],
+                    ['adam', 'o', 'brown'], ['john', 'f', 'brown'],
+                    ['john', 'a', 'brown'], ['peter', 't', 'brown']]
+        exp = self.constructor(expNames, featureNames=ftnames)
 
-    @oneLogEntryExpected
-    def test_points_sort_mixedList(self):
-        """ Test points.sort() when we specify a mixed list (names/indices) """
-        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        pnames = ['3', '6', '9']
-        toTest = self.constructor(data, pointNames=pnames)
+        assert toTest.isIdentical(exp)
 
-        toTest.points.sort(sortHelper=['9', '6', 0])
-
-        expData = [[9, 8, 7], [6, 5, 4], [3, 2, 1]]
-        expNames = ['9', '6', '3']
-        exp = self.constructor(expData, pointNames=expNames)
-
-        assert toTest == exp
-
-    @raises(IndexError)
-    def test_points_sort_exceptionIndicesPEmpty(self):
-        """ tests points.sort() throws an IndexError when given invalid indices """
-        data = [[], []]
-        data = numpy.array(data).T
-        toTest = self.constructor(data)
-        toTest.points.sort(sortHelper=[1, 3])
-
-    @raises(InvalidArgumentValue)
-    def test_points_sort_exceptionIndicesSmall(self):
-        """ tests points.sort() throws an InvalidArgumentValue when given an incorrectly sized indices list """
-        data = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
+    def test_points_sort_repeated_sorting(self):
+        data = [[1, 2, 3], [4, 5, 6], [0, 0, 0], [7, 1, 9], [2, 2, 2]]
         toTest = self.constructor(data)
 
-        toTest.points.sort(sortHelper=[1, 0])
+        # check that repeated sorting does not have any unintended effects
+        # this ensures that, for example, Sparse's _compressed attribute is
+        # reset each time sort is called.
+        toTest.points.sort(0)
+        sorted1 = toTest.copy()
+        toTest.points.sort(0)
+        sorted2 = toTest.copy()
+        toTest.points.sort(0)
 
-    @raises(InvalidArgumentValue)
-    def test_points_sort_exceptionNotUniqueIds(self):
-        """ tests points.sort() throws an InvalidArgumentValue when given duplicate indices """
-        data = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
-        toTest = self.constructor(data)
-        toTest.points.sort(sortHelper=[1, 1, 0])
+        assert toTest == sorted1 == sorted2
 
     #################
     # features.sort() #
     #################
 
-    @raises(InvalidArgumentTypeCombination)
-    def test_features_sort_exceptionAtLeastOne(self):
-        """ Test features.sort() has at least one paramater """
+    @raises(InvalidArgumentValue)
+    def test_features_sort_defaultParamsNeedsNames(self):
+        """ Test features.sort() needs names if default params used """
         data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
         toTest = self.constructor(data)
 
         toTest.features.sort()
 
-    @raises(InvalidArgumentTypeCombination)
-    def test_features_sort_exceptionBothNotNone(self):
-        """ Test points.sort() has only one parameter """
-        data = [[7, 8, 9], [1, 2, 3], [4, 5, 6]]
-        toTest = self.constructor(data)
-
-        toTest.features.sort(sortBy=1, sortHelper=[1,2,0])
-
-    @oneLogEntryExpected
-    def test_features_sort_naturalByPointWithNames(self):
-        """ Test features.sort() when we specify a point to sort by; includes featureNames """
-        data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
-        names = ["1", "2", "3"]
+    @twoLogEntriesExpected
+    def test_features_sort_defaultParamsWithNames(self):
+        """ Test features.sort() sorts by feature names with default params """
+        data = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
+        names = ["3", "2", "1"]
         toTest = self.constructor(data, featureNames=names)
 
-        ret = toTest.features.sort(sortBy=1) # RET CHECK
+        ret = toTest.features.sort() # RET CHECK
 
-        dataExpected = [[2, 1, 3], [1, 7, 9], [5, 4, 6]]
-        namesExp = ["2", "1", "3"]
+        dataExpected = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        namesExp = ["1", "2", "3"]
         objExp = self.constructor(dataExpected, featureNames=namesExp)
 
         assert toTest.isIdentical(objExp)
         assert ret is None
 
-    def test_features_sort_naturalByPointNameWithFNames(self):
-        """ Test features.sort() when we specify a point name to sort by; includes featureNames """
+        toTest.features.sort(reverse=True)
+
+        revExp = self.constructor(data, featureNames=names)
+
+        assert toTest.isIdentical(revExp)
+
+    def test_features_sort_naturalByOnePoint(self):
+        """ Test features.sort() when we specify a point name to sort by """
         data = [[1, 2, 3], [7, 1, 9], [4, 5, 6]]
         pnames = ['1', '7', '4']
         fnames = ["1", "2", "3"]
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        testIdx = toTest.copy()
+        testName = toTest.copy()
 
-        ret = toTest.features.sort(sortBy='7') # RET CHECK
+        retIdx = testIdx.features.sort(1) # RET CHECK
+        retName = testName.features.sort('7') # RET CHECK
 
         dataExpected = [[2, 1, 3], [1, 7, 9], [5, 4, 6]]
         namesExp = ["2", "1", "3"]
-        objExp = self.constructor(dataExpected, pointNames=pnames, featureNames=namesExp)
+        objExp = self.constructor(dataExpected, pointNames=pnames,
+                                  featureNames=namesExp)
+
+        assert testIdx.isIdentical(objExp)
+        assert testName.isIdentical(objExp)
+        assert retIdx is None
+        assert retName is None
+
+        testIdxRev = toTest.copy()
+        testNameRev = toTest.copy()
+
+        testIdxRev.features.sort(1, reverse=True)
+        testNameRev.features.sort('7', reverse=True)
+
+        dataExpected = [[3, 1, 2], [9, 7, 1], [6, 4, 5]]
+        namesExp = ["3", "1", "2"]
+        objExp = self.constructor(dataExpected, pointNames=pnames,
+                                  featureNames=namesExp)
+
+        assert testIdxRev.isIdentical(objExp)
+        assert testNameRev.isIdentical(objExp)
+
+    def test_features_sort_naturalByMultiplePoints(self):
+        """ Test features.sort() when we specify a point name to sort by """
+        data = [[1, 2, 3, 4, 5], [7, 1, 9, 1, 1], [4, 5, 6, 3, 5]]
+        pnames = ['1', '7', '4']
+        fnames = ["1", "2", "3", "4", "5"]
+        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+
+        ret = toTest.features.sort([1, '4']) # RET CHECK
+
+        dataExpected = [[4, 2, 5, 1, 3], [1, 1, 1, 7, 9], [3, 5, 5, 4, 6]]
+        namesExp = ["4", "2", "5", "1", "3"]
+        objExp = self.constructor(dataExpected, pointNames=pnames,
+                                  featureNames=namesExp)
 
         assert toTest.isIdentical(objExp)
         assert ret is None
 
-    @oneLogEntryExpected
+        toTest.features.sort([1, '4'], reverse=True)
+
+        revExpected = [[3, 1, 2, 5, 4], [9, 7, 1, 1, 1], [6, 4, 5, 5, 3]]
+        namesRev = ["3", "1", "2", "5", "4"]
+        revExp = self.constructor(revExpected, pointNames=pnames,
+                                  featureNames=namesRev)
+
+        assert toTest.isIdentical(revExp)
+
+    @twoLogEntriesExpected
     def test_features_sort_scorer(self):
         """ Test features.sort() when we specify a scoring function """
-        data = [[7, 1, 9, 0], [1, 2, 3, 0], [4, 2, 9, 0]]
-        names = ["2", "1", "3", "0"]
-        toTest = self.constructor(data, featureNames=names)
+        data = [[7, 1, 9, 0, 1], [1, 2, 3, 0, 1], [4, 2, 9, 0, 1]]
+        toTest = self.constructor(data)
 
         def numOdds(feature):
             ret = 0
@@ -3592,18 +3728,24 @@ class StructureModifying(StructureShared):
                     ret += 1
             return ret
 
-        toTest.features.sort(sortHelper=numOdds)
+        toTest.features.sort(by=numOdds)
 
-        dataExpected = [[0, 1, 7, 9], [0, 2, 1, 3], [0, 2, 4, 9]]
-        namesExp = ['0', '1', '2', '3']
-        objExp = self.constructor(dataExpected, featureNames=namesExp)
+        dataExpected = [[0, 1, 7, 9, 1], [0, 2, 1, 3, 1], [0, 2, 4, 9, 1]]
+        objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
 
-    @oneLogEntryExpected
+        toTest.features.sort(by=numOdds, reverse=True)
+
+        revExpected = [[9, 1, 7, 1, 0], [3, 1, 1, 2, 0], [9, 1, 4, 2, 0]]
+        revExp = self.constructor(revExpected)
+
+        assert toTest.isIdentical(revExp)
+
+    @twoLogEntriesExpected
     def test_features_sort_comparator(self):
         """ Test features.sort() when we specify a comparator function """
-        data = [[7, 1, 9, 0], [1, 2, 3, 0], [4, 2, 9, 0]]
+        data = [[7, 1, 9, 0, 1], [1, 2, 3, 0, 1], [4, 2, 9, 0, 1]]
         toTest = self.constructor(data)
 
         def compOdds(point1, point2):
@@ -3617,100 +3759,84 @@ class StructureModifying(StructureShared):
                     odds2 += 1
             return odds1 - odds2
 
-        toTest.features.sort(sortHelper=compOdds)
+        toTest.features.sort(by=compOdds)
 
-        dataExpected = [[0, 1, 7, 9], [0, 2, 1, 3], [0, 2, 4, 9]]
+        dataExpected = [[0, 1, 7, 9, 1], [0, 2, 1, 3, 1], [0, 2, 4, 9, 1]]
         objExp = self.constructor(dataExpected)
 
         assert toTest.isIdentical(objExp)
-        assertNoNamesGenerated(toTest)
 
-    def test_features_sort_dataTypeRetainedFromList(self):
-        """ Test features.sort() data not converted when sorting by list"""
-        data = [['a', 2, 3.0], ['b', 5, 6.0], ['c', 8, 9.0]]
-        toTest = self.constructor(data)
+        toTest.features.sort(by=compOdds, reverse=True)
 
-        toTest.features.sort(sortHelper=[2, 1, 0])
+        revExpected = [[9, 1, 7, 1, 0], [3, 1, 1, 2, 0], [9, 1, 4, 2, 0]]
+        revExp = self.constructor(revExpected)
 
-        expData = [[3.0, 2, 'a'], [6.0, 5, 'b'], [9.0, 8, 'c']]
+        assert toTest.isIdentical(revExp)
+
+    def test_features_sort_stability(self):
+        colors = [['red', 'blue', 'green', 'red', 'blue', 'green', 'red', 'blue', 'green'],
+                  [1, 1, 1, 2, 2, 2, 3, 3, 3]]
+        toTest = self.constructor(colors)
+        toTest.features.sort(0)
+
+        expData = [['blue', 'blue', 'blue', 'green', 'green', 'green', 'red', 'red', 'red'],
+                   [1, 2, 3, 1, 2, 3, 1, 2, 3]]
         exp = self.constructor(expData)
+        assert toTest.isIdentical(exp)
 
-        assert toTest == exp
-        assertNoNamesGenerated(toTest)
+        testRev = self.constructor(colors)
+        testRev.features.sort(0, reverse=True)
 
-    def test_features_sort_indicesList(self):
-        """ Test features.sort() when we specify a list of indices """
-        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
+        dataRev = [['red', 'red', 'red', 'green', 'green', 'green', 'blue', 'blue', 'blue'],
+                   [1, 2, 3, 1, 2, 3, 1, 2, 3]]
+        expRev = self.constructor(dataRev)
+        assert testRev.isIdentical(expRev)
+
+
+    def test_features_sort_stability_chained(self):
+        runs = [[10, 7, 14, 6, 10],
+                [14, 8, 12, 4, 9],
+                [12, 5, 15, 8, 12],
+                [11, 9, 11, 9, 11]]
+
+        ptnames = ['control1', 'control2', 'proto1', 'proto2']
+        ftnames = ['clear', 'wind', 'wet', 'hot', 'cold']
+        toTest = self.constructor(runs, pointNames=ptnames,
+                                  featureNames=ftnames)
+        toTest.features.sort('control2')
+        toTest.features.sort('control1', reverse=True)
+
+        expRuns = [[14, 10, 10, 7, 6],
+                   [12, 9, 14, 8, 4],
+                   [15, 12, 12, 5, 8],
+                   [11, 11, 11, 9, 9]]
+        expFts = ['wet', 'cold', 'clear', 'wind', 'hot']
+        exp = self.constructor(expRuns, pointNames=ptnames,
+                               featureNames=expFts)
+
+        assert toTest.isIdentical(exp)
+
+    def test_features_sort_repeated_sorting(self):
+        data = [[7, 1, 9, 0, 1], [1, 2, 3, 0, 1], [4, 2, 9, 0, 1]]
         toTest = self.constructor(data)
 
-        toTest.features.sort(sortHelper=[2, 1, 0])
+        # check that repeated sorting does not have any unintended effects
+        # this ensures that, for example, Sparse's _compressed attribute is
+        # reset each time sort is called.
+        toTest.features.sort(0)
+        sorted1 = toTest.copy()
+        toTest.features.sort(0)
+        sorted2 = toTest.copy()
+        toTest.features.sort(0)
 
-        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        exp = self.constructor(expData)
-
-        assert toTest == exp
-
-    def test_features_sort_namesList(self):
-        """ Test features.sort() when we specify a list of feature names """
-        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        fnames = ['third', 'second', 'first']
-        toTest = self.constructor(data, featureNames=fnames)
-
-        toTest.features.sort(sortHelper=['first', 'second', 'third'])
-
-        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        expNames = ['first', 'second', 'third']
-        exp = self.constructor(expData, featureNames=expNames)
-
-        assert toTest == exp
-
-    @oneLogEntryExpected
-    def test_features_sort_mixedList(self):
-        """ Test features.sort() when we specify a mixed list (names/indices) """
-        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        fnames = ['third', 'second', 'first']
-        toTest = self.constructor(data, featureNames=fnames)
-
-        toTest.features.sort(sortHelper=['first', 'second', 0])
-
-        expData = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        expNames = ['first', 'second', 'third']
-        exp = self.constructor(expData, featureNames=expNames)
-
-        assert toTest == exp
-
-    @raises(IndexError)
-    def test_features_sort_exceptionIndicesFEmpty(self):
-        """ tests features.sort() throws an IndexError when given invalid indices """
-        data = [[], []]
-        data = numpy.array(data)
-        toTest = self.constructor(data)
-        toTest.features.sort(sortHelper=[1, 3])
-
-
-    @raises(InvalidArgumentValue)
-    def test_features_sort_exceptionIndicesSmall(self):
-        """ tests features.sort() throws an InvalidArgumentValue when given an incorrectly sized indices list """
-        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        toTest = self.constructor(data)
-
-        toTest.features.sort(sortHelper=[1, 0])
-
-
-    @raises(InvalidArgumentValue)
-    def test_features_sort_exceptionNotUniqueIds(self):
-        """ tests features.sort() throws an InvalidArgumentValue when given duplicate indices """
-        data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        data = numpy.array(data)
-        toTest = self.constructor(data)
-        toTest.features.sort(sortHelper=[1, 1, 0])
+        assert toTest == sorted1 == sorted2
 
     ##################
     # points.extract #
     ##################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_points_extract_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -4425,22 +4551,22 @@ class StructureModifying(StructureShared):
         toTest3 = toTest1.copy()
         toTest4 = toTest1.copy()
 
-        seed = nimble.randomness.generateSubsidiarySeed()
-        nimble.randomness.startAlternateControl(seed)
+        seed = nimble.random._generateSubsidiarySeed()
+        nimble.random._startAlternateControl(seed)
         ret = getattr(toTest1, toCall).extract(number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retList = getattr(toTest2, toCall).extract([0, 1, 2, 3], number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retRange = getattr(toTest3, toCall).extract(start=0, end=3, number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retFunc = getattr(toTest4, toCall).extract(allTrue, number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         if axis == 'point':
             assert len(ret.points) == 3
@@ -4480,21 +4606,21 @@ class StructureModifying(StructureShared):
             expTest1 = toTest1[:, [0, 1, 3]]
             expTest2 = toTest1[:, [0, 2, 3]]
 
-        seed = nimble.randomness.generateSubsidiarySeed()
-        nimble.randomness.startAlternateControl(seed)
+        seed = nimble.random._generateSubsidiarySeed()
+        nimble.random._startAlternateControl(seed)
         retList = getattr(toTest1, toCall).extract([1, 2], number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retRange = getattr(toTest2, toCall).extract(start=1, end=2, number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         retFunc = getattr(toTest3, toCall).extract(middleRowsOrCols, number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         assert retList.isIdentical(expRet1) or retList.isIdentical(expRet2)
         assert retRange.isIdentical(expRet1) or retList.isIdentical(expRet2)
@@ -4509,7 +4635,7 @@ class StructureModifying(StructureShared):
     ######################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_features_extract_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -5189,7 +5315,7 @@ class StructureModifying(StructureShared):
     #################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_points_delete_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -5773,22 +5899,22 @@ class StructureModifying(StructureShared):
         toTest3 = toTest1.copy()
         toTest4 = toTest1.copy()
 
-        seed = nimble.randomness.generateSubsidiarySeed()
-        nimble.randomness.startAlternateControl(seed)
+        seed = nimble.random._generateSubsidiarySeed()
+        nimble.random._startAlternateControl(seed)
         getattr(toTest1, toCall).delete(number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest2, toCall).delete([0, 1, 2, 3], number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest3, toCall).delete(start=0, end=3, number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest4, toCall).delete(allTrue, number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         if axis == 'point':
             assert len(toTest1.points) == 1
@@ -5819,21 +5945,21 @@ class StructureModifying(StructureShared):
             exp1 = toTest1[:, [0, 1, 3]]
             exp2 = toTest1[:, [0, 2, 3]]
 
-        seed = nimble.randomness.generateSubsidiarySeed()
-        nimble.randomness.startAlternateControl(seed)
+        seed = nimble.random._generateSubsidiarySeed()
+        nimble.random._startAlternateControl(seed)
         getattr(toTest1, toCall).delete([1, 2], number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest2, toCall).delete(start=1, end=2, number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest3, toCall).delete(middleRowsOrCols, number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         assert toTest1.isIdentical(exp1) or toTest1.isIdentical(exp2)
         assert toTest2.isIdentical(exp1) or toTest2.isIdentical(exp2)
@@ -5844,7 +5970,7 @@ class StructureModifying(StructureShared):
     ###################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_features_delete_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -6399,7 +6525,7 @@ class StructureModifying(StructureShared):
     #################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_points_retain_calls_constructIndicesList(self):
         """ Test points.retain calls constructIndicesList before calling _genericStructuralFrontend"""
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
@@ -7029,22 +7155,22 @@ class StructureModifying(StructureShared):
         toTest3 = toTest1.copy()
         toTest4 = toTest1.copy()
 
-        seed = nimble.randomness.generateSubsidiarySeed()
-        nimble.randomness.startAlternateControl(seed)
+        seed = nimble.random._generateSubsidiarySeed()
+        nimble.random._startAlternateControl(seed)
         getattr(toTest1, toCall).retain(number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest2, toCall).retain([0, 1, 2, 3], number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest3, toCall).retain(start=0, end=3, number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest4, toCall).retain(allTrue, number=3, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         if axis == 'point':
             assert len(toTest1.points) == 3
@@ -7075,21 +7201,21 @@ class StructureModifying(StructureShared):
             exp1 = toTest1[:, 1]
             exp2 = toTest1[:, 2]
 
-        seed = nimble.randomness.generateSubsidiarySeed()
-        nimble.randomness.startAlternateControl(seed)
+        seed = nimble.random._generateSubsidiarySeed()
+        nimble.random._startAlternateControl(seed)
         getattr(toTest1, toCall).retain([1, 2], number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest2, toCall).retain(start=1, end=2, number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         def middleRowsOrCols(value):
             return value[0] in [2, 4, 5, 7]
 
-        nimble.randomness.startAlternateControl(seed)
+        nimble.random._startAlternateControl(seed)
         getattr(toTest3, toCall).retain(middleRowsOrCols, number=1, randomize=True)
-        nimble.randomness.endAlternateControl()
+        nimble.random._endAlternateControl()
 
         assert toTest1.isIdentical(exp1) or toTest1.isIdentical(exp2)
         assert toTest2.isIdentical(exp1) or toTest2.isIdentical(exp2)
@@ -7100,7 +7226,7 @@ class StructureModifying(StructureShared):
     ###################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_features_retain_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -7694,11 +7820,11 @@ class StructureModifying(StructureShared):
         pNames = ['1', 'one', '2', '0']
         orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
 
-        retType0 = nimble.data.available[0]
-        retType1 = nimble.data.available[1]
+        retType0 = nimble.core.data.available[0]
+        retType1 = nimble.core.data.available[1]
 
-        objType0 = nimble.createData(retType0, data1, pointNames=pNames, featureNames=featureNames)
-        objType1 = nimble.createData(retType1, data1, pointNames=pNames, featureNames=featureNames)
+        objType0 = nimble.data(retType0, data1, pointNames=pNames, featureNames=featureNames)
+        objType1 = nimble.data(retType1, data1, pointNames=pNames, featureNames=featureNames)
 
         # at least one of these two will be the wrong type
         orig.referenceDataFrom(objType0)
@@ -7854,7 +7980,7 @@ class StructureModifying(StructureShared):
         toTrans.points.transform(stringOfPointLength)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_points_transform_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -8068,7 +8194,7 @@ class StructureModifying(StructureShared):
         toTrans.points.transform(stringOfFeatureLength)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.axis.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
     def test_features_transform_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -8219,7 +8345,7 @@ class StructureModifying(StructureShared):
     #######################
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.base.constructIndicesList', calledException)
     def test_transformElements_calls_constructIndicesList1(self):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
@@ -8229,7 +8355,7 @@ class StructureModifying(StructureShared):
         toTest.transformElements(noChange, points=['a', 'b'])
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.data.base.constructIndicesList', calledException)
+    @mock.patch('nimble.core.data.base.constructIndicesList', calledException)
     def test_transformElements_calls_constructIndicesList2(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
@@ -8686,318 +8812,325 @@ class StructureModifying(StructureShared):
         fill = [[0, 0], [0, 0]]
         exp = [[0, 0, 13], [0, 0, 23], [31, 32, 33]]
         exp = self.constructor(exp)
-        for t in nimble.data.available:
+        for t in nimble.core.data.available:
             toTest = self.constructor(raw)
-            arg = nimble.createData(t, fill)
+            arg = nimble.data(t, fill)
             toTest.replaceRectangle(arg, 0, 0, 1, 1)
             assert toTest == exp
 
-    ###########################################
-    # flattenToOnePoint | flattenToOneFeature #
-    ###########################################
+    ###########
+    # flatten #
+    ###########
 
     # exception: either axis empty
-    def test_flattenToOnePoint_empty(self):
+    def test_flatten_pointOrder_empty(self):
         self.back_flatten_empty('point')
 
-    def test_flattenToOneFeature_empty(self):
+    def test_flatten_featureOrder_empty(self):
         self.back_flatten_empty('feature')
 
-    def back_flatten_empty(self, axis):
+    def back_flatten_empty(self, order):
         checkMsg = False
-        target = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
 
         pempty = self.constructor(numpy.empty((0,2)))
-        exceptionHelper(pempty, target, [], ImproperObjectAction, checkMsg)
+        exceptionHelper(pempty, 'flatten', [order], ImproperObjectAction, checkMsg)
 
         fempty = self.constructor(numpy.empty((4,0)))
-        exceptionHelper(fempty, target, [], ImproperObjectAction, checkMsg)
+        exceptionHelper(fempty, 'flatten', [order], ImproperObjectAction, checkMsg)
 
         trueEmpty = self.constructor(numpy.empty((0,0)))
-        exceptionHelper(trueEmpty, target, [], ImproperObjectAction, checkMsg)
+        exceptionHelper(trueEmpty, 'flatten', [order], ImproperObjectAction, checkMsg)
 
 
     # flatten single p/f - see name changes
-    def test_flattenToOnePoint_vector(self):
+    def test_flatten_pointOrder_vector(self):
         self.back_flatten_vector('point')
 
-    def test_flattenToOneFeature_vector(self):
+    def test_flatten_featureOrder_vector(self):
         self.back_flatten_vector('feature')
 
     @oneLogEntryExpected
-    def back_flatten_vector(self, axis):
-        target = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
+    def back_flatten_vector(self, order):
         raw = [1, -1, 2, -2, 3, -3, 4, -4]
         vecNames = ['vector']
-        longNames = ['one+', 'one-', 'two+', 'two-', 'three+', 'three-', 'four+', 'four-',]
+        longNames = ['one+', 'one-', 'two+', 'two-',
+                     'three+', 'three-', 'four+', 'four-',]
+        testObj = self.constructor(raw, pointNames=vecNames,
+                                 featureNames=longNames)
+        expLongNames = ['vector | one+', 'vector | one-',
+                        'vector | two+', 'vector | two-',
+                        'vector | three+', 'vector | three-',
+                        'vector | four+', 'vector | four-']
 
-        testObj = self.constructor(raw, pointNames=vecNames, featureNames=longNames)
+        # Always expect point vector returned
+        expObj = self.constructor(raw, pointNames=['Flattened'],
+                                  featureNames=expLongNames)
 
-        expLongNames = ['one+ | vector', 'one- | vector',
-                        'two+ | vector', 'two- | vector',
-                        'three+ | vector', 'three- | vector',
-                        'four+ | vector', 'four- | vector']
-#        expLongNames = [n + ' | ' + vecNames[0] for n in longNames]
-        expObj = self.constructor(raw, pointNames=['Flattened'], featureNames=expLongNames)
-
-        if axis != 'point':
-            testObj.transpose(useLog=False)
-            expObj.transpose(useLog=False)
-
-        ret = getattr(testObj, target)()
+        ret = testObj.flatten(order=order)
 
         assert testObj == expObj
         assert ret is None  # in place op, nothing returned
 
 
-    def test_flattenToOnePoint_handMade_valuesOnly(self):
+    def test_flatten_pointOrder_handMade_valuesOnly(self):
         dataRaw = [["p1,f1", "p1,f2"], ["p2,f1", "p2,f2"]]
         expRaw = [["p1,f1", "p1,f2", "p2,f1", "p2,f2"]]
         testObj = self.constructor(dataRaw)
 
-        testObj.flattenToOnePoint()
+        testObj.flatten()
 
         expObj = self.constructor(expRaw, pointNames=["Flattened"])
         assert testObj == expObj
 
-    def test_flattenToOneFeature_handMade_valuesOnly(self):
+    def test_flatten_featureOrder_handMade_valuesOnly(self):
         dataRaw = [["p1,f1", "p1,f2"], ["p2,f1", "p2,f2"]]
-        expRaw = [["p1,f1"], ["p2,f1"], ["p1,f2"], ["p2,f2"]]
+        expRaw = ["p1,f1", "p2,f1", "p1,f2", "p2,f2"]
         testObj = self.constructor(dataRaw)
 
-        testObj.flattenToOneFeature()
+        testObj.flatten(order='feature')
 
-        expObj = self.constructor(expRaw, featureNames=["Flattened"])
+        expObj = self.constructor(expRaw, pointNames=["Flattened"])
 
         assert testObj == expObj
 
 
     # flatten rectangular object
-    def test_flattenToOnePoint_rectangleRandom(self):
+    def test_flatten_pointOrder_rectangleRandom(self):
         self.back_flatten_rectangleRandom('point')
 
-    def test_flattenToOneFeature_rectangleRandom(self):
+    def test_flatten_featureOrder_rectangleRandom(self):
         self.back_flatten_rectangleRandom('feature')
 
-    @oneLogEntryExpected
-    def back_flatten_rectangleRandom(self, axis):
-        target = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
-        order = 'C' if axis == 'point' else 'F'  # controls row or column major flattening
-        discardAxisLen = 30
-        keptAxisLen = 50
-        shape = (discardAxisLen, keptAxisLen) if axis == 'point' else (keptAxisLen, discardAxisLen)
-        endLength = discardAxisLen * keptAxisLen
-        targetShape = (1, endLength) if axis == 'point' else (endLength, 1)
-        origRaw = numpyRandom.randint(0, 2, shape)  # array of ones and zeroes
-        expRaw = numpy.reshape(origRaw, targetShape, order)
+    @logCountAssertionFactory(4)
+    def back_flatten_rectangleRandom(self, order):
+        origRaw = numpyRandom.randint(0, 2, (30, 50))  # array of ones and zeroes
+        npOrder = 'C' if order == 'point' else 'F'  # controls row or column major flattening
+        expRaw = numpy.reshape(origRaw,  (1, 1500), npOrder)
+        expObj = self.constructor(expRaw, pointNames=['Flattened'])
 
+        # No point or feature names
         testObj = self.constructor(origRaw)
-        copyObj = testObj.copy()  # freeze the default axis names to check against later
-        if axis == 'point':
-            expObj = self.constructor(expRaw, pointNames=['Flattened'])
-        else:
-            expObj = self.constructor(expRaw, featureNames=['Flattened'])
+        testObj.flatten(order=order)
 
-        getattr(testObj, target)()
+        assert testObj == expObj
+        assert not testObj.features._namesCreated()
+
+        # featureNames only
+        fNames = [str(i) for i in range(50)]
+        testObj = self.constructor(origRaw, featureNames=fNames)
+
+        flatNames = []
+        if order == 'point':
+            for i in range(30):
+                for j in range(50):
+                    flatNames.append('{0}{1} | {2}'.format(DEFAULT_PREFIX, i, j))
+        else:
+            for j in range(50):
+                for i in range(30):
+                    flatNames.append('{0}{1} | {2}'.format(DEFAULT_PREFIX, i, j))
+
+        expObj = self.constructor(expRaw, pointNames=['Flattened'],
+                                  featureNames=flatNames)
+
+        testObj.flatten(order=order)
+
         assert testObj == expObj
 
-        # default names are ignored by ==, so we explicitly check them in this test
-        keptAxisNames = copyObj.features.getNames() if axis == 'point' else copyObj.points.getNames()
-        discardAxisNames = copyObj.points.getNames() if axis == 'point' else copyObj.features.getNames()
-        check = testObj.features.getNames() if axis == 'point' else testObj.points.getNames()
+        # pointNames only
+        pNames = [str(i) for i in range(30)]
+        testObj = self.constructor(origRaw, pointNames=pNames)
 
-        for i,name in enumerate(check):
-            splitName = name.split(' | ')
-            assert len(splitName) == 2
-            # we cycle through the names from the kept axis
-            assert splitName[0] == keptAxisNames[i % keptAxisLen]
-            # we have to go through all of the names of the kept axis before we increment
-            # the name from the discarded axis
-            assert splitName[1] == discardAxisNames[i // keptAxisLen]
+        flatNames = []
+        if order == 'point':
+            for i in range(30):
+                for j in range(50):
+                    flatNames.append('{0} | {1}{2}'.format(i, DEFAULT_PREFIX, j))
+        else:
+            for j in range(50):
+                for i in range(30):
+                    flatNames.append('{0} | {1}{2}'.format(i, DEFAULT_PREFIX, j))
+
+        expObj = self.constructor(expRaw, pointNames=['Flattened'],
+                                  featureNames=flatNames)
+
+        testObj.flatten(order=order)
+
+        assert testObj == expObj
+
+        # pointNames and featureNames
+        testObj = self.constructor(origRaw, pointNames=pNames,
+                                   featureNames=fNames)
+
+        flatNames = []
+        if order == 'point':
+            for i in range(30):
+                for j in range(50):
+                    flatNames.append('{0} | {1}'.format(i, j))
+        else:
+            for j in range(50):
+                for i in range(30):
+                    flatNames.append('{0} | {1}'.format(i, j))
+
+        expObj = self.constructor(expRaw, pointNames=['Flattened'],
+                                  featureNames=flatNames)
+
+        testObj.flatten(order=order)
+
+        assert testObj == expObj
 
 
-    ###################################################
-    # unflattenFromOnePoint | unflattenFromOneFeature #
-    ###################################################
+    #############
+    # unflatten #
+    #############
 
     # exception: either axis empty
-    def test_unflattenFromOnePoint_empty(self):
+    def test_unflatten_pointOrder_empty(self):
         self.back_unflatten_empty('point')
 
-    def test_unflattenFromOneFeature_empty(self):
+    def test_unflatten_featureOrder_empty(self):
         self.back_unflatten_empty('feature')
 
-    def back_unflatten_empty(self, axis):
+    def back_unflatten_empty(self, order):
         checkMsg = False
-        target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
-        single = (0,2) if axis == 'point' else (2,0)
 
-        singleEmpty = self.constructor(numpy.empty(single))
-        exceptionHelper(singleEmpty, target, [2], ImproperObjectAction, checkMsg)
+        ptEmpty = self.constructor(numpy.empty((0, 2)))
+        exceptionHelper(ptEmpty, 'unflatten', [2], ImproperObjectAction, checkMsg)
+
+        ftEmpty = self.constructor(numpy.empty((2, 0)))
+        exceptionHelper(ftEmpty, 'unflatten', [2], ImproperObjectAction, checkMsg)
 
         trueEmpty = self.constructor(numpy.empty((0,0)))
-        exceptionHelper(trueEmpty, target, [2], ImproperObjectAction, checkMsg)
+        exceptionHelper(trueEmpty, 'unflatten', [2], ImproperObjectAction, checkMsg)
 
 
     # exceptions: opposite vector, 2d data
-    def test_unflattenFromOnePoint_wrongShape(self):
+    def test_unflatten_pointOrder_wrongShape(self):
         self.back_unflatten_wrongShape('point')
 
-    def test_unflattenFromOneFeature_wrongShape(self):
+    def test_unflatten_featureOrder_wrongShape(self):
         self.back_unflatten_wrongShape('feature')
 
-    def back_unflatten_wrongShape(self, axis):
+    def back_unflatten_wrongShape(self, order):
         checkMsg = False
-        target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
-        vecShape = (4,1) if axis == 'point' else (1,4)
-
-        wrongVector = self.constructor(numpyRandom.rand(*vecShape))
-        exceptionHelper(wrongVector, target, [2], ImproperObjectAction, checkMsg)
 
         rectangle = self.constructor(numpyRandom.rand(4,4))
-        exceptionHelper(rectangle, target, [2], ImproperObjectAction, checkMsg)
+        exceptionHelper(rectangle,  'unflatten', [2, order], ImproperObjectAction, checkMsg)
 
 
     # exception: numPoints / numFeatures does not divide length of mega P/F
-    def test_unflattenFromOnePoint_doesNotDivide(self):
-        self.back_unflatten_doesNotDivide('point')
+    def test_unflatten_pointOrder_invalidDimensions(self):
+        self.back_unflatten_invalidDimensions('point')
 
-    def test_unflattenFromOneFeature_doesNotDivide(self):
-        self.back_unflatten_doesNotDivide('feature')
+    def test_unflatten_featureOrder_invalidDimensions(self):
+        self.back_unflatten_invalidDimensions('feature')
 
-    def back_unflatten_doesNotDivide(self, axis):
+    def back_unflatten_invalidDimensions(self, order):
         checkMsg = False
-        target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
-        primeLength = (1,7) if axis == 'point' else (7,1)
-        divisableLength = (1,8) if axis == 'point' else (8,1)
 
-        undivisable = self.constructor(numpyRandom.rand(*primeLength))
-        exceptionHelper(undivisable, target, [2], InvalidArgumentValue, checkMsg)
+        testPt = self.constructor(numpyRandom.rand(8, 1))
+        exceptionHelper(testPt, 'unflatten', [(5, 2), order],
+                        InvalidArgumentValue, checkMsg)
 
-        divisable = self.constructor(numpyRandom.rand(*divisableLength))
-        exceptionHelper(divisable, target, [5], InvalidArgumentValue, checkMsg)
+        testFt = self.constructor(numpyRandom.rand(1, 8))
+        exceptionHelper(testFt, 'unflatten', [(5, 2), order],
+                        InvalidArgumentValue, checkMsg)
 
 
-    # exception: unflattening would destroy an axis name
-    def test_unflattenFromOnePoint_nameDestroyed(self):
-        self.back_unflatten_nameDestroyed('point')
+    def test_unflatten_pointOrder_namesUnformatted(self):
+        self.back_unflatten_namesUnformatted('point')
 
-    def test_unflattenFromOneFeature_nameDestroyed(self):
-        self.back_unflatten_nameDestroyed('feature')
+    def test_unflatten_featureOrder_namesUnformatted(self):
+        self.back_unflatten_namesUnformatted('feature')
 
-    def back_unflatten_nameDestroyed(self, axis):
+    def back_unflatten_namesUnformatted(self, order):
         checkMsg = False
-        target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
-        vecShape = (1,4) if axis == 'point' else (4,1)
-        data = numpyRandom.rand(*vecShape)
+        names = ['a', 'b', 'c', 'd']
+        testPt = self.constructor([1, 2, 3, 4], featureNames=names)
+        testPt.unflatten((2, 2), order)
+        assert testPt.shape == (2, 2)
+        assert not testPt.points._namesCreated()
+        assert not testPt.features._namesCreated()
 
-        # non-default name, flattened axis
-        args = {"pointNames":["non-default"]} if axis == 'point' else {"featureNames":["non-default"]}
-        testObj = self.constructor(data, **args)
-        exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
+        testFt = self.constructor([[1], [2], [3], [4]], pointNames=names)
+        testFt.unflatten((2, 2), order)
+        assert testFt.shape == (2, 2)
+        assert not testFt.points._namesCreated()
+        assert not testFt.features._namesCreated()
 
-        # all non-default names, unflattened axis
-        names = ["a", "b", "c", "d"]
-        args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
-        testObj = self.constructor(data, **args)
-        exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
-
-        # single non-default name, unflattened axis
-        testObj = self.constructor(data)
-        if axis == 'point':
-            testObj.features.setName(1, "non-default")
-        else:
-            testObj.points.setName(2, "non-default")
-        exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
-
-    # exception: unflattening would destroy an axis name
-    def test_unflattenFromOnePoint_nameFormatInconsistent(self):
+    def test_unflatten_pointOrder_nameFormatInconsistent(self):
         self.back_unflatten_nameFormatInconsistent('point')
 
-    def test_unflattenFromOneFeature_nameFormatInconsistent(self):
+    def test_unflatten_featureOrder_nameFormatInconsistent(self):
         self.back_unflatten_nameFormatInconsistent('feature')
 
-    def back_unflatten_nameFormatInconsistent(self, axis):
+    def back_unflatten_nameFormatInconsistent(self, order):
         checkMsg = False
-        target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
-        vecShape = (1,4) if axis == 'point' else (4,1)
-        data = numpyRandom.rand(*vecShape)
-
-        # unflattend axis, mix of default names and correctly formatted
         names = ["a | 1", "b | 1", "a | 2", "b | 2"]
-        args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
-        testObj = self.constructor(data, **args)
-        if axis == 'point':
-            testObj.features.setName(1, None)
-        else:
-            testObj.points.setName(1, None)
-        exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
+        testPt = self.constructor([1, 2, 3, 4], featureNames=names)
+        testPt.features.setName(1, None)
+        testPt.unflatten((2, 2), order)
+        assert testPt.shape == (2, 2)
+        assert not testPt.points._namesCreated()
+        assert not testPt.features._namesCreated()
 
-        # unflattened axis, inconsistent along original unflattened axis
-        names = ["a | 1", "b | 1", "a | 2", "c | 2"]
-        args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
-        testObj = self.constructor(data, **args)
-        exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
+        testFt = self.constructor([[1], [2], [3], [4]], pointNames=names)
+        testFt.points.setName(1, None)
+        testFt.unflatten((2, 2), order)
+        assert testFt.shape == (2, 2)
+        assert not testFt.points._namesCreated()
+        assert not testFt.features._namesCreated()
 
-        # unflattened axis, inconsistent along original flattened axis
-        names = ["a | 1", "b | 2", "a | 2", "b | 3"]
-        args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
-        testObj = self.constructor(data, **args)
-        exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
+    def test_unflatten_pointOrder_handmadeFormattedNames(self):
+        self.backend_unflatten_handmadeFormattedNames('point')
 
+    def test_unflatten_featureOrder_handmadeFormattedNames(self):
+        self.backend_unflatten_handmadeFormattedNames('feature')
 
     # unflatten something that was flattened - include name transformation
-    @oneLogEntryExpected
-    def test_unflattenFromOnePoint_handmadeWithNames(self):
+    @twoLogEntriesExpected
+    def backend_unflatten_handmadeFormattedNames(self, order):
         raw = [["el0", "el1", "el2", "el3", "el4", "el5"]]
-        rawNames = ["1 | A", "2 | A", "3 | A", "1 | B", "2 | B", "3 | B"]
-        toTest = self.constructor(raw, pointNames=["Flattened"], featureNames=rawNames)
-        expData = numpy.array([["el0", "el1", "el2"], ["el3", "el4", "el5"]])
+        rawNames = ["A | 1", "A | 2", "A | 3", "B | 1", "B | 2", "B | 3"]
+        toTestPt = self.constructor(raw, pointNames=["vector"],
+                                    featureNames=rawNames)
+        toTestFt = toTestPt.T
+
         namesP = ["A", "B"]
         namesF = ["1", "2", "3"]
 
-        exp = self.constructor(expData, pointNames=namesP, featureNames=namesF)
+        if order == 'point':
+             expData = numpy.array([["el0", "el1", "el2"], ["el3", "el4", "el5"]])
+             exp = self.constructor(expData, pointNames=namesP, featureNames=namesF)
+        else:
+            expData = numpy.array([["el0", "el2", "el4"], ["el1", "el3", "el5"]])
+            exp = self.constructor(expData, pointNames=namesP, featureNames=namesF)
 
-        toTest.unflattenFromOnePoint(2)
-        assert toTest == exp
+        toTestPt.unflatten((2, 3), order)
+        toTestFt.unflatten((2, 3), order)
 
-    # unflatten something that was flattened - include name transformation
-    @oneLogEntryExpected
-    def test_unflattenFromOneFeature_handmadeWithNames(self):
-        raw = [["el0"], ["el1"], ["el2"], ["el3"], ["el4"], ["el5"]]
-        rawNames = ["1 | A", "2 | A", "3 | A", "1 | B", "2 | B", "3 | B"]
-        toTest = self.constructor(raw, pointNames=rawNames, featureNames=["Flattened"])
-        expData = [["el0", "el3"],["el1", "el4"], ["el2", "el5"]]
-        namesP = ["1", "2", "3"]
-        namesF = ["A", "B"]
-
-        exp = self.constructor(expData, pointNames=namesP, featureNames=namesF)
-
-        toTest.unflattenFromOneFeature(2)
-        assert toTest == exp
-
+        assert toTestPt.shape == toTestFt.shape == (2, 3)
+        assert toTestPt == toTestFt == exp
 
     # unflatten something that is just a vector - default names
-    def test_unflattenFromOnePoint_handmadeDefaultNames(self):
+    def test_unflatten_pointOrder_handmadeDefaultNames(self):
         self.back_unflatten_handmadeDefaultNames('point')
 
-    def test_unflattenFromOneFeature_handmadeDefaultNames(self):
+    def test_unflatten_featureOrder_handmadeDefaultNames(self):
         self.back_unflatten_handmadeDefaultNames('feature')
 
     @oneLogEntryExpected
-    def back_unflatten_handmadeDefaultNames(self, axis):
-        target = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
+    def back_unflatten_handmadeDefaultNames(self, order):
         raw = [[1, 10, 20, 2]]
         toTest = self.constructor(raw)
         expData = numpy.array([[1,10],[20,2]])
 
-        if axis == 'point':
+        if order == 'point':
             exp = self.constructor(expData)
         else:
             toTest.transpose(useLog=False)
             exp = self.constructor(expData.T)
 
-        getattr(toTest, target)(2)
+        toTest.unflatten((2, 2), order)
         assert toTest == exp
 
         # check that the name conforms to the standards of how nimble objects assign
@@ -9011,380 +9144,30 @@ class StructureModifying(StructureShared):
 
 
     # random round trip
-    def test_flatten_to_unflatten_point_roundTrip(self):
+    def test_flatten_to_unflatten_pointOrder_roundTrip(self):
         self.back_flatten_to_unflatten_roundTrip('point')
 
-    def test_flatten_to_unflatten_feature_roundTrip(self):
+    def test_flatten_to_unflatten_featureOrder_roundTrip(self):
         self.back_flatten_to_unflatten_roundTrip('feature')
 
     @logCountAssertionFactory(4)
-    def back_flatten_to_unflatten_roundTrip(self, axis):
-        targetDown = "flattenToOnePoint" if axis == 'point' else "flattenToOneFeature"
-        targetUp = "unflattenFromOnePoint" if axis == 'point' else "unflattenFromOneFeature"
-        discardAxisLen = 30
-        keptAxisLen = 50
-        shape = (discardAxisLen, keptAxisLen) if axis == 'point' else (keptAxisLen, discardAxisLen)
-        origRaw = numpyRandom.randint(0, 2, shape)  # array of ones and zeroes
-        namesDiscard = list(map(str, numpyRandom.choice(100, discardAxisLen, replace=False).tolist()))
-        namesKept = list(map(str, numpyRandom.choice(100, keptAxisLen, replace=False).tolist()))
-        namesArgs = {"pointNames":namesDiscard, "featureNames":namesKept} if axis == 'point' else {"pointNames":namesKept, "featureNames":namesDiscard}
+    def back_flatten_to_unflatten_roundTrip(self, order):
+        origRaw = numpyRandom.randint(0, 2, (30, 50))  # array of ones and zeroes
+        ptNames = list(map(str, numpyRandom.choice(100, 30, replace=False)))
+        ftNames = list(map(str, numpyRandom.choice(100, 50, replace=False)))
 
-        testObj = self.constructor(origRaw, **namesArgs)
+        testObj = self.constructor(origRaw, pointNames=ptNames,
+                                   featureNames=ftNames)
         expObj = testObj.copy()
 
-        getattr(testObj, targetDown)()
-        getattr(testObj, targetUp)(discardAxisLen)
+        testObj.flatten(order=order)
+        testObj.unflatten((30, 50), order=order)
         assert testObj == expObj
 
         # second round to see if status of hidden internal variable are still viable
-        getattr(testObj, targetDown)()
-        getattr(testObj, targetUp)(discardAxisLen)
+        testObj.flatten(order=order)
+        testObj.unflatten((30, 50), order=order)
         assert testObj == expObj
-
-#     ###############################################
-#     # points.flattenToOne | features.flattenToOne #
-#     ###############################################
-#
-#     # exception: either axis empty
-#     def test_points_flattenToOne_empty(self):
-#         self.back_flatten_empty('point')
-#
-#     def test_features_flattenToOne_empty(self):
-#         self.back_flatten_empty('feature')
-#
-#     def back_flatten_empty(self, axis):
-#         checkMsg = True
-#         target = (axis + 's', 'flattenToOne')
-#         pempty = self.constructor(numpy.empty((0,2)))
-#         exceptionHelper(pempty, target, [], ImproperObjectAction, checkMsg)
-#
-#         fempty = self.constructor(numpy.empty((4,0)))
-#         exceptionHelper(fempty, target, [], ImproperObjectAction, checkMsg)
-#
-#         trueEmpty = self.constructor(numpy.empty((0,0)))
-#         exceptionHelper(trueEmpty, target, [], ImproperObjectAction, checkMsg)
-#
-#
-#     # flatten single p/f - see name changes
-#     def test_points_flattenToOne_vector(self):
-#         self.back_flatten_vector('point')
-#
-#     def test_features_flattenToOne_vector(self):
-#         self.back_flatten_vector('feature')
-#
-#     def back_flatten_vector(self, axis):
-#         raw = [1, -1, 2, -2, 3, -3, 4, -4]
-#         vecNames = ['vector']
-#         longNames = ['one+', 'one-', 'two+', 'two-', 'three+', 'three-', 'four+', 'four-',]
-#
-#         testObj = self.constructor(raw, pointNames=vecNames, featureNames=longNames)
-#
-#         expLongNames = ['one+ | vector', 'one- | vector',
-#                         'two+ | vector', 'two- | vector',
-#                         'three+ | vector', 'three- | vector',
-#                         'four+ | vector', 'four- | vector']
-# #        expLongNames = [n + ' | ' + vecNames[0] for n in longNames]
-#         expObj = self.constructor(raw, pointNames=['Flattened'], featureNames=expLongNames)
-#
-#         if axis != 'point':
-#             testObj.transpose()
-#             expObj.transpose()
-#
-#         axisObj = getattr(testObj, axis + 's')
-#         ret = getattr(axisObj, 'flattenToOne')()
-#
-#         assert testObj == expObj
-#         assert ret is None  # in place op, nothing returned
-#
-#
-#     def test_points_flattenToOne_handMade_valuesOnly(self):
-#         dataRaw = [["p1,f1", "p1,f2"], ["p2,f1", "p2,f2"]]
-#         expRaw = [["p1,f1", "p1,f2", "p2,f1", "p2,f2"]]
-#         testObj = self.constructor(dataRaw)
-#
-#         testObj.points.flattenToOne()
-#
-#         expObj = self.constructor(expRaw, pointNames=["Flattened"])
-#
-#         assert testObj == expObj
-#
-#     def test_features_flattenToOne_handMade_valuesOnly(self):
-#         dataRaw = [["p1,f1", "p1,f2"], ["p2,f1", "p2,f2"]]
-#         expRaw = [["p1,f1"], ["p2,f1"], ["p1,f2"], ["p2,f2"]]
-#         testObj = self.constructor(dataRaw)
-#
-#         testObj.features.flattenToOne()
-#
-#         expObj = self.constructor(expRaw, featureNames=["Flattened"])
-#
-#         assert testObj == expObj
-#
-#
-#     # flatten rectangular object
-#     def test_points_flattenToOne_rectangleRandom(self):
-#         self.back_flatten_rectangleRandom('point')
-#
-#     def test_features_flattenToOne_rectangleRandom(self):
-#         self.back_flatten_rectangleRandom('feature')
-#
-#     def back_flatten_rectangleRandom(self, axis):
-#         order = 'C' if axis == 'point' else 'F'  # controls row or column major flattening
-#         discardAxisLen = 30
-#         keptAxisLen = 50
-#         shape = (discardAxisLen, keptAxisLen) if axis == 'point' else (keptAxisLen, discardAxisLen)
-#         endLength = discardAxisLen * keptAxisLen
-#         targetShape = (1, endLength) if axis == 'point' else (endLength, 1)
-#         origRaw = numpyRandom.randint(0, 2, shape)  # array of ones and zeroes
-#         expRaw = numpy.reshape(origRaw, targetShape, order)
-#
-#         testObj = self.constructor(origRaw)
-#         copyObj = testObj.copy()  # freeze the default axis names to check against later
-#         if axis == 'point':
-#             expObj = self.constructor(expRaw, pointNames=['Flattened'])
-#         else:
-#             expObj = self.constructor(expRaw, featureNames=['Flattened'])
-#
-#         axisObj = getattr(testObj, axis + 's')
-#         getattr(axisObj, 'flattenToOne')()
-#         assert testObj == expObj
-#
-#         # default names are ignored by ==, so we explicitly check them in this test
-#         keptAxisNames = copyObj.features.getNames() if axis == 'point' else copyObj.points.getNames()
-#         discardAxisNames = copyObj.points.getNames() if axis == 'point' else copyObj.features.getNames()
-#         check = testObj.features.getNames() if axis == 'point' else testObj.points.getNames()
-#
-#         for i, name in enumerate(check):
-#             splitName = name.split(' | ')
-#             assert len(splitName) == 2
-#             # we cycle through the names from the kept axis
-#             assert splitName[0] == keptAxisNames[i % keptAxisLen]
-#             # we have to go through all of the names of the kept axis before we increment
-#             # the name from the discarded axis
-#             assert splitName[1] == discardAxisNames[i // keptAxisLen]
-#
-#
-#     ###################################################
-#     # points.unflattenFromOne | features.unflattenFromOne #
-#     ###################################################
-#
-#     # exception: either axis empty
-#     def test_points_unflattenFromOne_empty(self):
-#         self.back_unflatten_empty('point')
-#
-#     def test_features_unflattenFromOne_empty(self):
-#         self.back_unflatten_empty('feature')
-#
-#     def back_unflatten_empty(self, axis):
-#         checkMsg = True
-#         target = (axis + 's', 'unflattenFromOne')
-#         single = (0,2) if axis == 'point' else (2,0)
-#
-#         singleEmpty = self.constructor(numpy.empty(single))
-#         exceptionHelper(singleEmpty, target, [2], ImproperObjectAction, checkMsg)
-#
-#         trueEmpty = self.constructor(numpy.empty((0,0)))
-#         exceptionHelper(trueEmpty, target, [2], ImproperObjectAction, checkMsg)
-#
-#
-#     # exceptions: opposite vector, 2d data
-#     def test_points_unflattenFromOne_wrongShape(self):
-#         self.back_unflatten_wrongShape('point')
-#
-#     def test_features_unflattenFromOne_wrongShape(self):
-#         self.back_unflatten_wrongShape('feature')
-#
-#     def back_unflatten_wrongShape(self, axis):
-#         checkMsg = True
-#         target = (axis + 's', 'unflattenFromOne')
-#         vecShape = (4,1) if axis == 'point' else (1,4)
-#
-#         wrongVector = self.constructor(numpyRandom.rand(*vecShape))
-#         exceptionHelper(wrongVector, target, [2], ImproperObjectAction, checkMsg)
-#
-#         rectangle = self.constructor(numpyRandom.rand(4,4))
-#         exceptionHelper(rectangle, target, [2], ImproperObjectAction, checkMsg)
-#
-#
-#     # exception: numPoints / numFeatures does not divide length of mega P/F
-#     def test_points_unflattenFromOne_doesNotDivide(self):
-#         self.back_unflatten_doesNotDivide('point')
-#
-#     def test_features_unflattenFromOne_doesNotDivide(self):
-#         self.back_unflatten_doesNotDivide('feature')
-#
-#     def back_unflatten_doesNotDivide(self, axis):
-#         checkMsg = True
-#         target = (axis + 's', 'unflattenFromOne')
-#         primeLength = (1,7) if axis == 'point' else (7,1)
-#         divisableLength = (1,8) if axis == 'point' else (8,1)
-#
-#         undivisable = self.constructor(numpyRandom.rand(*primeLength))
-#         exceptionHelper(undivisable, target, [2], InvalidArgumentValue, checkMsg)
-#
-#         divisable = self.constructor(numpyRandom.rand(*divisableLength))
-#         exceptionHelper(divisable, target, [5], InvalidArgumentValue, checkMsg)
-#
-#
-#     # exception: unflattening would destroy an axis name
-#     def test_points_unflattenFromOne_nameDestroyed(self):
-#         self.back_unflatten_nameDestroyed('point')
-#
-#     def test_features_unflattenFromOne_nameDestroyed(self):
-#         self.back_unflatten_nameDestroyed('feature')
-#
-#     def back_unflatten_nameDestroyed(self, axis):
-#         checkMsg = True
-#         target = (axis + 's', 'unflattenFromOne')
-#         vecShape = (1,4) if axis == 'point' else (4,1)
-#         data = numpyRandom.rand(*vecShape)
-#
-#         # non-default name, flattened axis
-#         args = {"pointNames":["non-default"]} if axis == 'point' else {"featureNames":["non-default"]}
-#         testObj = self.constructor(data, **args)
-#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
-#
-#         # all non-default names, unflattened axis
-#         names = ["a", "b", "c", "d"]
-#         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
-#         testObj = self.constructor(data, **args)
-#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
-#
-#         # single non-default name, unflattened axis
-#         testObj = self.constructor(data)
-#         if axis == 'point':
-#             testObj.features.setName(1, "non-default")
-#         else:
-#             testObj.points.setName(2, "non-default")
-#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
-#
-#     # exception: unflattening would destroy an axis name
-#     def test_points_unflattenFromOne_nameFormatInconsistent(self):
-#         self.back_unflatten_nameFormatInconsistent('point')
-#
-#     def test_features_unflattenFromOne_nameFormatInconsistent(self):
-#         self.back_unflatten_nameFormatInconsistent('feature')
-#
-#     def back_unflatten_nameFormatInconsistent(self, axis):
-#         checkMsg = True
-#         target = (axis + 's', 'unflattenFromOne')
-#         vecShape = (1,4) if axis == 'point' else (4,1)
-#         data = numpyRandom.rand(*vecShape)
-#
-#         # unflattend axis, mix of default names and correctly formatted
-#         names = ["a | 1", "b | 1", "a | 2", "b | 2"]
-#         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
-#         testObj = self.constructor(data, **args)
-#         if axis == 'point':
-#             testObj.features.setName(1, None)
-#         else:
-#             testObj.points.setName(1, None)
-#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
-#
-#         # unflattened axis, inconsistent along original unflattened axis
-#         names = ["a | 1", "b | 1", "a | 2", "c | 2"]
-#         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
-#         testObj = self.constructor(data, **args)
-#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
-#
-#         # unflattened axis, inconsistent along original flattened axis
-#         names = ["a | 1", "b | 2", "a | 2", "b | 3"]
-#         args = {"featureNames":names} if axis == 'point' else {"pointNames":names}
-#         testObj = self.constructor(data, **args)
-#         exceptionHelper(testObj, target, [2], ImproperObjectAction, checkMsg)
-#
-#
-#     # unflatten something that was flattened - include name transformation
-#     def test_points_unflattenFromOne_handmadeWithNames(self):
-#         raw = [["el0", "el1", "el2", "el3", "el4", "el5"]]
-#         rawNames = ["1 | A", "2 | A", "3 | A", "1 | B", "2 | B", "3 | B"]
-#         toTest = self.constructor(raw, pointNames=["Flattened"], featureNames=rawNames)
-#         expData = numpy.array([["el0", "el1", "el2"], ["el3", "el4", "el5"]])
-#         namesP = ["A", "B"]
-#         namesF = ["1", "2", "3"]
-#
-#         exp = self.constructor(expData, pointNames=namesP, featureNames=namesF)
-#
-#         toTest.points.unflattenFromOne(2)
-#         assert toTest == exp
-#
-#     # unflatten something that was flattend - include name transformation
-#     def test_features_unflattenFromOne_handmadeWithNames(self):
-#         raw = [["el0"], ["el1"], ["el2"], ["el3"], ["el4"], ["el5"]]
-#         rawNames = ["1 | A", "2 | A", "3 | A", "1 | B", "2 | B", "3 | B"]
-#         toTest = self.constructor(raw, pointNames=rawNames, featureNames=["Flattened"])
-#         expData = [["el0", "el3"],["el1", "el4"], ["el2", "el5"]]
-#         namesP = ["1", "2", "3"]
-#         namesF = ["A", "B"]
-#
-#         exp = self.constructor(expData, pointNames=namesP, featureNames=namesF)
-#
-#         toTest.features.unflattenFromOne(2)
-#         assert toTest == exp
-#
-#
-#     # unflatten something that is just a vector - default names
-#     def test_points_unflattenFromOne_handmadeDefaultNames(self):
-#         self.back_unflatten_handmadeDefaultNames('point')
-#
-#     def test_features_unflattenFromOne_handmadeDefaultNames(self):
-#         self.back_unflatten_handmadeDefaultNames('feature')
-#
-#     def back_unflatten_handmadeDefaultNames(self, axis):
-#         raw = [[1, 10, 20, 2]]
-#         toTest = self.constructor(raw)
-#         expData = numpy.array([[1,10],[20,2]])
-#
-#         if axis == 'point':
-#             exp = self.constructor(expData)
-#         else:
-#             toTest.transpose()
-#             exp = self.constructor(expData.T)
-#
-#         axisObj = getattr(toTest, axis + 's')
-#         getattr(axisObj, 'unflattenFromOne')(2)
-#         assert toTest == exp
-#
-#         # check that the name conforms to the standards of how nimble objects assign
-#         # default names
-#         def checkName(n):
-#             assert n.startswith(DEFAULT_PREFIX)
-#             assert int(n[len(DEFAULT_PREFIX):]) >= 0
-#
-#         list(map(checkName, toTest.points.getNames()))
-#         list(map(checkName, toTest.features.getNames()))
-#
-#
-#     # random round trip
-#     def test_flatten_to_unflatten_point_roundTrip(self):
-#         self.back_flatten_to_unflatten_roundTrip('point')
-#
-#     def test_flatten_to_unflatten_feature_roundTrip(self):
-#         self.back_flatten_to_unflatten_roundTrip('feature')
-#
-#     def back_flatten_to_unflatten_roundTrip(self, axis):
-#         discardAxisLen = 30
-#         keptAxisLen = 50
-#         shape = (discardAxisLen, keptAxisLen) if axis == 'point' else (keptAxisLen, discardAxisLen)
-#         origRaw = numpyRandom.randint(0, 2, shape)  # array of ones and zeroes
-#         namesDiscard = list(map(str, numpyRandom.choice(100, discardAxisLen, replace=False).tolist()))
-#         namesKept = list(map(str, numpyRandom.choice(100, keptAxisLen, replace=False).tolist()))
-#         namesArgs = {"pointNames":namesDiscard, "featureNames":namesKept} if axis == 'point' else {"pointNames":namesKept, "featureNames":namesDiscard}
-#
-#         testObj = self.constructor(origRaw, **namesArgs)
-#         expObj = testObj.copy()
-#
-#         axisObj = getattr(testObj, axis + 's')
-#         getattr(axisObj, 'flattenToOne')()
-#         axisObj = getattr(testObj, axis + 's')
-#         getattr(axisObj, 'unflattenFromOne')(discardAxisLen)
-#         assert testObj == expObj
-#
-#         # second round to see if status of hidden internal variable are still viable
-#         axisObj = getattr(testObj, axis + 's')
-#         getattr(axisObj, 'flattenToOne')()
-#         axisObj = getattr(testObj, axis + 's')
-#         getattr(axisObj, 'unflattenFromOne')(discardAxisLen)
-#         assert testObj == expObj
 
     ###########
     # merge() #

@@ -1,18 +1,16 @@
 """
 Variety of functions to replace values in data with other values
 """
-import functools
 
 import numpy
 
 import nimble
-from nimble.match import convertMatchToFunction
-from nimble.match import anyValues
+from nimble.match import _convertMatchToFunction
 from nimble.exceptions import InvalidArgumentValue
 
-def booleanElementMatch(vector, match):
-    if not isinstance(match, nimble.data.Base):
-        match = convertMatchToFunction(match)
+def _booleanElementMatch(vector, match):
+    if not isinstance(match, nimble.core.data.Base):
+        match = _convertMatchToFunction(match)
         return vector.matchingElements(match, useLog=False)
     return match
 
@@ -48,7 +46,7 @@ def constant(vector, match, constantValue):
     Match a value.
 
     >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> constant(data, 'na', 0)
     Matrix(
         [[1 0 3 0 5]]
@@ -58,13 +56,13 @@ def constant(vector, match, constantValue):
 
     >>> from nimble import match
     >>> raw = [1, 0, 3, 0, 5]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> constant(data, match.zero, 99)
     Matrix(
         [[1 99 3 99 5]]
         )
     """
-    toFill = booleanElementMatch(vector, match)
+    toFill = _booleanElementMatch(vector, match)
 
     def filler(vec):
         return [constantValue if fill else val
@@ -107,20 +105,20 @@ def mean(vector, match):
     Match a value.
 
     >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> mean(data, 'na')
     Matrix(
-        [[1.000 3.000 3.000 3.000 5.000]]
+        [[1 3.000 3 3.000 5]]
         )
 
     Match using a function from nimble's match module.
 
     >>> from nimble import match
     >>> raw = [6, 0, 2, 0, 4]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> mean(data, match.zero)
     Matrix(
-        [[6.000 4.000 2.000 4.000 4.000]]
+        [[6 4.000 2 4.000 4]]
         )
     """
     return statsBackend(vector, match, 'mean', nimble.calculate.mean)
@@ -159,20 +157,20 @@ def median(vector, match):
     Match a value.
 
     >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> median(data, 'na')
     Matrix(
-        [[1.000 3.000 3.000 3.000 5.000]]
+        [[1 3.000 3 3.000 5]]
         )
 
     Match using a function from nimble's match module.
 
     >>> from nimble import match
     >>> raw = [6, 0, 2, 0, 4]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> median(data, match.zero)
     Matrix(
-        [[6.000 4.000 2.000 4.000 4.000]]
+        [[6 4.000 2 4.000 4]]
         )
     """
     return statsBackend(vector, match, 'median', nimble.calculate.median)
@@ -209,7 +207,7 @@ def mode(vector, match):
     Match a value.
 
     >>> raw = [1, 'na', 1, 'na', 5]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> mode(data, 'na')
     Matrix(
         [[1 1 1 1 5]]
@@ -219,7 +217,7 @@ def mode(vector, match):
 
     >>> from nimble import match
     >>> raw = [6, 6, 2, 0, 0]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> mode(data, match.zero)
     Matrix(
         [[6 6 2 6 6]]
@@ -262,7 +260,7 @@ def forwardFill(vector, match):
     Match a value.
 
     >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> forwardFill(data, 'na')
     Matrix(
         [[1 1 3 3 5]]
@@ -272,13 +270,13 @@ def forwardFill(vector, match):
 
     >>> from nimble import match
     >>> raw = [6, 0, 2, 0, 4]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> forwardFill(data, match.zero)
     Matrix(
         [[6 6 2 2 4]]
         )
     """
-    toFill = booleanElementMatch(vector, match)
+    toFill = _booleanElementMatch(vector, match)
     if toFill[0]:
         msg = directionError('forward fill', vector, 'first')
         raise InvalidArgumentValue(msg)
@@ -331,7 +329,7 @@ def backwardFill(vector, match):
     Match a value.
 
     >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> backwardFill(data, 'na')
     Matrix(
         [[1 3 3 5 5]]
@@ -341,13 +339,13 @@ def backwardFill(vector, match):
 
     >>> from nimble import match
     >>> raw = [6, 0, 2, 0, 4]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> backwardFill(data, match.zero)
     Matrix(
         [[6 2 2 4 4]]
         )
     """
-    toFill = booleanElementMatch(vector, match)
+    toFill = _booleanElementMatch(vector, match)
     if toFill[-1]:
         msg = directionError('backward fill', vector, 'last')
         raise InvalidArgumentValue(msg)
@@ -406,23 +404,23 @@ def interpolate(vector, match, **kwarguments):
     Match a value.
 
     >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> interpolate(data, 'na')
     Matrix(
-        [[1.000 2.000 3.000 4.000 5.000]]
+        [[1 2.000 3 4.000 5]]
         )
 
     Match using a function from nimble's match module.
 
     >>> from nimble import match
     >>> raw = [6, 0, 4, 0, 2]
-    >>> data = nimble.createData('Matrix', raw)
+    >>> data = nimble.data('Matrix', raw)
     >>> interpolate(data, match.zero)
     Matrix(
-        [[6.000 5.000 4.000 3.000 2.000]]
+        [[6 5.000 4 3.000 2]]
         )
     """
-    toFill = booleanElementMatch(vector, match)
+    toFill = _booleanElementMatch(vector, match)
     if 'x' in kwarguments:
         msg = "'x' is a disallowed keyword argument because it is "
         msg += "determined by the data in the vector."
@@ -468,7 +466,7 @@ def statsBackend(vector, match, funcString, statisticsFunction):
     """
     Backend for filling with a statistics function from nimble.calculate.
     """
-    toFill = booleanElementMatch(vector, match)
+    toFill = _booleanElementMatch(vector, match)
 
     def toStat(vec):
         return [val for val, fill in zip(vector, toFill) if not fill]
@@ -510,12 +508,12 @@ def getNameAndIndex(axis, vector):
     if axis == 'point':
         if vector._pointNamesCreated():
             name = vector.points.getName(0)
-        if isinstance(vector, nimble.data.BaseView):
+        if isinstance(vector, nimble.core.data.BaseView):
             index = vector._pStart
     else:
         if vector._featureNamesCreated():
             name = vector.features.getName(0)
-        if isinstance(vector, nimble.data.BaseView):
+        if isinstance(vector, nimble.core.data.BaseView):
             index = vector._fStart
 
     return name, index

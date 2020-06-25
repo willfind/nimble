@@ -11,7 +11,7 @@ from nimble.calculate import rootMeanSquareError
 from nimble.calculate import rSquared
 from nimble.calculate import varianceFractionRemaining
 from nimble.exceptions import InvalidArgumentValue
-from ..assertionHelpers import noLogEntryExpected
+from tests.helpers import noLogEntryExpected
 
 ####################
 # detectBestResult #
@@ -76,7 +76,7 @@ def test_detectBestResult_labels_nonmonotonic_maxizer():
         if knowns == predicted:
             return 100
         else:
-            return nimble.randomness.pythonRandom.randint(0, 20)
+            return nimble.random.pythonRandom.randint(0, 20)
 
     detectBestResult(foo)
 
@@ -107,7 +107,7 @@ def test_detectBestResult_exceptionsAreReported():
         detectBestResult(neverWorks)
         assert False  # we expected an exception in this test
     except InvalidArgumentValue as iav:
-        assert wanted in iav.value
+        assert wanted in iav.message
 
 @noLogEntryExpected
 def _backend(performanceFunction, optimality):

@@ -10,10 +10,10 @@ import numpy
 import nimble
 from nimble.exceptions import ImproperObjectAction, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.randomness import pythonRandom
+from nimble.random import pythonRandom
 from .baseObject import DataTestObject
-from ..assertionHelpers import assertNoNamesGenerated
-from ..assertionHelpers import noLogEntryExpected
+from tests.helpers import assertNoNamesGenerated
+from tests.helpers import noLogEntryExpected
 
 class StretchDataSafe(DataTestObject):
 
@@ -695,7 +695,7 @@ class StretchDataSafe(DataTestObject):
         matrixObj = self.constructor([[1, 2, 3], [4, 5, 6]])
         pointVect = self.constructor([9, 8, 7])
         featureVect = self.constructor([[8], [9]])
-        otherTypes = [t for t in nimble.data.available if t != matrixObj.getTypeString()]
+        otherTypes = [t for t in nimble.core.data.available if t != matrixObj.getTypeString()]
         for oType in otherTypes:
             possibleOps = [operator.add, operator.sub, operator.mul, operator.truediv,
                            operator.floordiv, operator.mod, operator.pow]

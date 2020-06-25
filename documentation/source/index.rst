@@ -8,9 +8,22 @@ Welcome to Nimble's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :includehidden:
 
-   nimble/nimble
+   nimble
+
+.. rubric:: Submodules
+
+.. toctree::
+   :maxdepth: 1
+
+   calculate
+   exceptions
+   fill
+   learners
+   match
+   random
+
+.. rubric:: Resources
 
 .. toctree::
    :maxdepth: 1

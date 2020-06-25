@@ -1,6 +1,6 @@
 from nose.tools import *
 
-from nimble.logger.stopwatch import Stopwatch
+from nimble.core.logger.stopwatch import Stopwatch
 
 def testBasicFuncs():
     watch = Stopwatch()

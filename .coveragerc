@@ -8,7 +8,7 @@ omit =
     testProf.py
     documentation/*
     examples/*
-    tests/assertionHelpers.py
+    tests/helpers.py
 
 [report]
 skip_covered = True

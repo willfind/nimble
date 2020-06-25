@@ -16,20 +16,21 @@ import tempfile
 
 import nimble
 import nimble.calculate as calculate
+import nimble.exceptions as exceptions
 import nimble.fill as fill
 import nimble.match as match
-from nimble.data import Base
-from nimble.data import Axis
-from nimble.data import Points
-from nimble.data import Features
-from nimble.interfaces.universal_interface import UniversalInterface
-from nimble.interfaces.universal_interface import TrainedLearner
-from ..assertionHelpers import noLogEntryExpected, oneLogEntryExpected
+import nimble.random as random
+from nimble.core.data import Base
+from nimble.core.data import Axis
+from nimble.core.data import Points
+from nimble.core.data import Features
+from nimble.core.interfaces.universal_interface import UniversalInterface
+from nimble.core.interfaces.universal_interface import TrainedLearner
+from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 
 ALL_USER_FACING = []
-modules = [nimble, calculate, fill, match]
-classes = [Base, Axis, Points, Features, UniversalInterface,
-           TrainedLearner]
+modules = [nimble, calculate, exceptions, fill, match, random]
+classes = [Base, Axis, Points, Features, TrainedLearner]
 modulesAndClasses = modules + classes
 for call in modulesAndClasses:
     for attribute in dir(call):
@@ -42,28 +43,26 @@ def prefixAdder(prefix):
     return addPrefix
 
 
-#  Untested functions: register/deregisterCustomLearnerAsDefault
 nimble_logged = [
-    'createData', 'createRandomData', 'crossValidate', 'fillMatching', 'log',
-    'loadData', 'loadTrainedLearner', 'normalizeData', 'setRandomSeed',
-    'train', 'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
+    'crossValidate', 'data', 'fillMatching', 'log', 'loadData',
+    'loadTrainedLearner', 'normalizeData', 'train', 'trainAndApply',
+    'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 nimble_notLogged = [
-    'CV', 'Init', 'deregisterCustomLearner', 'deregisterCustomLearnerAsDefault',
-    'identity', 'listLearners', 'learnerParameters', 'learnerDefaultValues',
-    'learnerType', 'ones', 'registerCustomLearner',
-    'registerCustomLearnerAsDefault', 'showLog', 'zeros',
+    'CustomLearner', 'CV', 'Init', 'identity', 'listLearners',
+    'learnerParameters', 'learnerDefaultValues', 'learnerType', 'ones',
+    'showLog', 'zeros',
     ]
 nimble_funcs = nimble_logged + nimble_notLogged
 nimble_tested = list(map(prefixAdder('nimble'), nimble_funcs))
 
 # no calculate functions should be logged.
 calculate_funcs = [
-    'balancedAccuracy', 'confidenceIntervalHelper', 'confusionMatrix',
-    'correlation', 'cosineSimilarity', 'covariance', 'detectBestResult',
-    'elementwiseMultiply', 'elementwisePower', 'f1Score', 'falseNegative',
-    'falsePositive', 'fractionCorrect', 'fractionIncorrect', 'inverse',
-    'leastSquaresSolution', 'maximum', 'mean', 'meanAbsoluteError',
+    'balancedAccuracy', 'confusionMatrix', 'correlation', 'cosineSimilarity',
+    'covariance', 'detectBestResult', 'elementwiseMultiply',
+    'elementwisePower', 'f1Score', 'falseNegative', 'falsePositive',
+    'fractionCorrect', 'fractionIncorrect', 'inverse', 'leastSquaresSolution',
+    'maximum', 'mean', 'meanAbsoluteError',
     'meanFeaturewiseRootMeanSquareError', 'median', 'medianAbsoluteDeviation',
     'minimum', 'mode', 'precision', 'proportionMissing', 'proportionZero',
     'pseudoInverse', 'quartiles', 'recall', 'residuals', 'rootMeanSquareError',
@@ -72,6 +71,15 @@ calculate_funcs = [
     ]
 calculate_tested = list(map(prefixAdder('nimble.calculate'), calculate_funcs))
 
+# no exceptions should be logged.
+exceptions_funcs = [
+    'NimbleException', 'InvalidArgumentType', 'InvalidArgumentValue',
+    'InvalidArgumentTypeCombination', 'InvalidArgumentValueCombination',
+    'ImproperObjectAction', 'PackageException', 'FileFormatException',
+    ]
+exceptions_tested = list(map(prefixAdder('nimble.exceptions'),
+                             exceptions_funcs))
+
 # no fill functions should be logged.
 fill_funcs = [
     'backwardFill', 'constant', 'forwardFill', 'interpolate', 'mean', 'median',
@@ -79,17 +87,23 @@ fill_funcs = [
     ]
 fill_tested = list(map(prefixAdder('nimble.fill'), fill_funcs))
 
-# no match functions should not be logged.
+# no match functions should be logged.
 match_funcs = [
     'allBoolean', 'allFalse', 'allInfinity', 'allMissing', 'allNegative',
     'allNonNumeric', 'allNonZero', 'allNumeric', 'allPositive', 'allTrue',
     'allValues', 'allZero', 'anyBoolean', 'anyFalse', 'anyInfinity',
     'anyMissing', 'anyNegative', 'anyNonNumeric', 'anyNonZero', 'anyNumeric',
-    'anyPositive', 'anyTrue', 'anyValues', 'anyZero', 'boolean',
-    'convertMatchToFunction', 'false', 'infinity', 'missing', 'negative',
-    'nonNumeric', 'nonZero', 'numeric', 'positive', 'true', 'zero'
+    'anyPositive', 'anyTrue', 'anyValues', 'anyZero', 'boolean', 'false',
+    'infinity', 'missing', 'negative', 'nonNumeric', 'nonZero', 'numeric',
+    'positive', 'true', 'zero',
     ]
 match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
+
+random_logged = [
+    'data', 'setSeed',
+    ]
+random_funcs = random_logged
+random_tested = list(map(prefixAdder('nimble.random'), random_funcs))
 
 # NOTES:
 #  The functionality of these functions is untested, but a test of their
@@ -97,11 +111,11 @@ match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 #      copy, featureReport, summaryReport, getTypeString, groupByFeature,
 #      hashCode, nameIsDefault, show, validate
 base_logged = [
-    'calculateOnElements', 'featureReport', 'flattenToOneFeature',
-    'flattenToOnePoint', 'groupByFeature', 'matchingElements', 'merge',
-    'replaceFeatureWithBinaryFeatures', 'replaceRectangle', 'summaryReport',
-    'trainAndTestSets', 'transformElements', 'transformFeatureToIntegers',
-    'transpose', 'unflattenFromOneFeature', 'unflattenFromOnePoint',
+    'calculateOnElements', 'featureReport', 'flatten', 'groupByFeature',
+    'matchingElements', 'merge', 'replaceFeatureWithBinaryFeatures',
+    'replaceRectangle', 'summaryReport', 'trainAndTestSets',
+    'transformElements', 'transformFeatureToIntegers', 'transpose',
+    'unflatten',
     ]
 base_notLogged = [
     'containsZero', 'copy', 'countElements', 'countUniqueElements',
@@ -117,8 +131,8 @@ base_tested = list(map(prefixAdder('Base'), base_funcs))
 
 features_logged = [
     'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
-    'insert', 'mapReduce', 'matching', 'normalize', 'retain', 'setName',
-    'setNames', 'shuffle', 'sort', 'transform', 'splitByParsing',
+    'insert', 'mapReduce', 'matching', 'normalize', 'permute', 'retain',
+    'setName', 'setNames', 'sort', 'transform', 'splitByParsing',
     ]
 features_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
@@ -129,8 +143,8 @@ features_tested = list(map(prefixAdder('Features'), features_funcs))
 
 points_logged = [
     'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
-    'insert', 'mapReduce', 'matching', 'normalize', 'retain', 'setName',
-    'setNames', 'shuffle', 'sort', 'transform', 'combineByExpandingFeatures',
+    'insert', 'mapReduce', 'matching', 'normalize', 'permute', 'retain',
+    'setName', 'setNames', 'sort', 'transform', 'combineByExpandingFeatures',
     'splitByCollapsingFeatures',
     ]
 points_notLogged = [
@@ -139,17 +153,6 @@ points_notLogged = [
     ]
 points_funcs = points_logged + points_notLogged
 points_tested = list(map(prefixAdder('Points'), points_funcs))
-
-ui_logged = [
-    'train',
-    ]
-ui_notLogged = [
-    'accessible', 'findCallable', 'getCanonicalName',
-    'getLearnerDefaultValues', 'getLearnerParameterNames', 'getOption',
-    'isAlias', 'learnerType', 'listLearners', 'setOption', 'version',
-]
-ui_funcs = ui_logged + ui_notLogged
-ui_tested = list(map(prefixAdder('UniversalInterface'), ui_funcs))
 
 tl_logged = [
     'apply', 'incrementalTrain', 'retrain', 'test',
@@ -160,9 +163,10 @@ tl_notLogged = [
 tl_funcs = tl_logged + tl_notLogged
 tl_tested = list(map(prefixAdder('TrainedLearner'), tl_funcs))
 
-USER_FACING_TESTED = (nimble_tested + calculate_tested + fill_tested
-                      + match_tested + base_tested + features_tested
-                      + points_tested + ui_tested + tl_tested)
+USER_FACING_TESTED = (nimble_tested + calculate_tested + exceptions_tested
+                      + fill_tested + match_tested + random_tested
+                      + base_tested + features_tested + points_tested
+                      + tl_tested)
 
 ##############
 # All tested #
@@ -213,8 +217,8 @@ def test_Init_logCount():
 
 @noLogEntryExpected
 def test_copy_logCount():
-    for rType in nimble.data.available:
-        obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for rType in nimble.core.data.available:
+        obj = nimble.data(rType, [[1,2,3],[4,5,6]], useLog=False)
         copy = obj.copy()
 
 def test_featureReport_logCount():
@@ -233,27 +237,27 @@ def test_groupByFeature_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
         return obj.groupByFeature(0)
-    for rType in nimble.data.available:
-        obj = nimble.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
-                             useLog=False)
+    for rType in nimble.core.data.available:
+        obj = nimble.data(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
+                          useLog=False)
         grouped = wrapped(obj)
 
 @noLogEntryExpected
 def test_getTypeString_logCount():
-    for rType in nimble.data.available:
-        obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for rType in nimble.core.data.available:
+        obj = nimble.data(rType, [[1,2,3],[4,5,6]], useLog=False)
         ts = obj.getTypeString()
 
 @noLogEntryExpected
 def test_hashCode_logCount():
-    for rType in nimble.data.available:
-        obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for rType in nimble.core.data.available:
+        obj = nimble.data(rType, [[1,2,3],[4,5,6]], useLog=False)
         hash = obj.hashCode()
 
 @noLogEntryExpected
 def test_nameIsDefault_logCount():
-    for rType in nimble.data.available:
-        obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for rType in nimble.core.data.available:
+        obj = nimble.data(rType, [[1,2,3],[4,5,6]], useLog=False)
         isDefault = obj.nameIsDefault()
 
 @noLogEntryExpected
@@ -270,29 +274,29 @@ def test_toString_logCount():
 
 @noLogEntryExpected
 def test_validate_logCount():
-    for rType in nimble.data.available:
-        obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for rType in nimble.core.data.available:
+        obj = nimble.data(rType, [[1,2,3],[4,5,6]], useLog=False)
         isDefault = obj.validate()
 
 ############################
 # Points/Features/Elements #
 ############################
 
-def test_points_shuffle_logCount():
+def test_points_permute_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
-        return obj.points.shuffle()
-    for rType in nimble.data.available:
-        obj = nimble.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
-                             useLog=False)
+        return obj.points.permute()
+    for rType in nimble.core.data.available:
+        obj = nimble.data(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
+                          useLog=False)
         grouped = wrapped(obj)
 
-def test_features_shuffle_logCount():
+def test_features_permute_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
-        return obj.features.shuffle()
-    for rType in nimble.data.available:
-        obj = nimble.createData(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
+        return obj.features.permute()
+    for rType in nimble.core.data.available:
+        obj = nimble.data(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)
         grouped = wrapped(obj)
 
@@ -319,10 +323,9 @@ baseDunder_tested = list(map(prefixAdder('Base'),
      '__rmatmul__', '__rmod__', '__rmul__', '__rpow__', '__rsub__',
      '__rtruediv__', '__sub__', '__truediv__', '__xor__',
     ]))
-axisDunder_tested = ['Axis.__bool__', 'Axis.__iter__', 'Axis.__len__',
-                     'Axis.__getitem__']
-pointsDunder_tested = []
-featuresDunder_tested = []
+axisDunder_tested = ['Axis.__bool__', 'Axis.__len__']
+pointsDunder_tested = ['Points.__iter__', 'Points.__getitem__']
+featuresDunder_tested = ['Features.__iter__', 'Features.__getitem__']
 uiDunder_tested = []
 tlDunder_tested = []
 
@@ -342,8 +345,8 @@ def captureOutput(toCall):
         backupOut = sys.stdout
         sys.stdout = tmpFile
         try:
-            for rType in nimble.data.available:
-                obj = nimble.createData(rType, [[1,2,3],[4,5,6]], useLog=False)
+            for rType in nimble.core.data.available:
+                obj = nimble.data(rType, [[1,2,3],[4,5,6]], useLog=False)
                 ret = toCall(obj)
         finally:
             sys.stdout = backupOut
