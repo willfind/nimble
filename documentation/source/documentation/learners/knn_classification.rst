@@ -2,3 +2,4 @@ nimble.KNNClassifier
 ====================
 
 .. autoclass:: nimble.learners.KNNClassifier
+   :members:
