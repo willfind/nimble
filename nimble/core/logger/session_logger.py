@@ -542,7 +542,7 @@ class SessionLogger(object):
 
     def logRandomSeed(self, useLog, seed):
         if enableLogging(useLog):
-            logType = 'setSeed'
+            logType = 'random.setSeed'
             logInfo = {'seed': seed}
             self.log(logType, logInfo)
 

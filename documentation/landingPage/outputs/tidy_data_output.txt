@@ -35,8 +35,8 @@ combined temperature data (2840, 27)
 2011-01-01 downtown   max   2.840  2.021  -- 10.221 9.401  9.401  9.401  11.861
 2011-01-01 airport    min   6.138  5.299  -- 13.579 12.789 12.789 12.769 15.259
 2011-01-01 airport    max   6.142  5.301  -- 13.581 12.791 12.791 12.771 15.261
-2011-01-02 downtown   max   11.860 11.040 -- 6.122  5.300  3.661  2.841  2.020
 2011-01-02 downtown   min    nan    nan   -- 6.118  5.300  3.659  2.839  2.020
+2011-01-02 downtown   max   11.860 11.040 -- 6.122  5.300  3.661  2.841  2.020
 
 combined temperature data (68160, 5)
    date    station  extreme hour  temp

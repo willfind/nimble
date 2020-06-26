@@ -27,6 +27,7 @@ We'll divide our `traffic` data into training and testing sets, then use `nimble
 ```python
 testFraction = 0.25
 yFeature = 'traffic_volume'
+nimble.random.setSeed(23)
 trainX, trainY, testX, testY = traffic.trainAndTestSets(testFraction, yFeature)
 
 learners = ['sklearn.Lasso', 'sklearn.ElasticNet', 'sklearn.Ridge',

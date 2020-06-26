@@ -49,7 +49,7 @@ class ExtensionPlugin(Plugin):
         return True
 
     def wantDirectory(self, directory):
-        if os.path.basename(directory) == 'broken':
+        if os.path.basename(directory) in ['broken', 'documentation']:
             return False
         return True
 
