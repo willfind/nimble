@@ -16,7 +16,7 @@ showKwargs = {'includeObjectName': False, 'maxHeight': 9, 'maxWidth': 120}
 traffic.show("Raw traffic data", **showKwargs)
 ```
 
-![rawTraffic](images/rawTraffic.png)
+![rawTraffic](../images/rawTraffic.png)
 
 Our data contains 48,204 points and 9 features. The features are variables which may affect the traffic volume on an interstate highway and the current traffic volume. A `featureReport` can provide a good starting point for cleaning the data.
 
@@ -24,7 +24,7 @@ Our data contains 48,204 points and 9 features. The features are variables which
 print(traffic.featureReport())
 ```
 
-![featureReport](images/featureReport.png)
+![featureReport](../images/featureReport.png)
 
 Statistics could not be calculated for four of our features, indicating they are non-numeric. The other five features are numeric but there are indications that some outlier values may be present. Nimble provides a variety of functions and methods to help us address these issues.
 
@@ -43,7 +43,7 @@ print(traffic[:, ['temp', 'rain_1h']].featureReport())
 print('Number of points with outliers:', len(outliers.points))
 ```
 
-![outliers](images/outliers.png)
+![outliers](../images/outliers.png)
 
 After extracting those values, our `featureReport` statistics look much more reasonable for those features. We can assume the 11 extracted points contain recording errors so we will ignore `outliers` and continue with the 48,193 points still remaining in `traffic`.
 
@@ -61,7 +61,7 @@ traffic.features.splitByParsing('date_time', dateTimeSplit,
 traffic.show('New parsed features in traffic data', **showKwargs)
 ```
 
-![parsedDateTime](images/parseDateTime.png)
+![parsedDateTime](../images/parseDateTime.png)
 
 The `holiday` feature contains a holiday name string for the first point of each holiday, all other values are missing.
 
@@ -71,7 +71,7 @@ dateFts = ['holiday', 'year', 'month', 'day', 'hour']
 print(traffic[samplePts, dateFts])
 ```
 
-![holiday](images/holiday.png)
+![holiday](../images/holiday.png)
 
 We will transform the `holiday` feature to a numeric feature by writing a function that assigns each point a new binary value in the `holiday` feature.
 
@@ -98,7 +98,7 @@ traffic.points.transform(holidayToBinary)
 print(traffic[samplePts, dateFts])
 ```
 
-![transformedHoliday](images/transformedHoliday.png)
+![transformedHoliday](../images/transformedHoliday.png)
 
 The `weather_main` and `weather_description` features are very similar.
 
@@ -107,7 +107,7 @@ weatherFts = ['weather_main', 'weather_description']
 print(traffic[samplePts, weatherFts])
 ```
 
-![weather](images/weather.png)
+![weather](../images/weather.png)
 
 While `weather_description` is more detailed, many of its unique values represent a very small proportion of the data. So, we will utilize the more general `weather_main` and remove `weather_description`. To make the string values in `weather_main` suitable for machine learning, we will represent each of the 11 unique values as 11 new binary features.
 
@@ -117,7 +117,7 @@ newCols = traffic.replaceFeatureWithBinaryFeatures('weather_main')
 print(traffic[samplePts, newCols[:3]])
 ```
 
-![binaryWeather](images/binaryWeather.png)
+![binaryWeather](../images/binaryWeather.png)
 
 Our dataset is now ready for machine learning.
 
@@ -125,7 +125,7 @@ Our dataset is now ready for machine learning.
 traffic.show('Cleaned traffic data', **showKwargs)
 ```
 
-![cleanedTraffic](images/cleanedTraffic.png)
+![cleanedTraffic](../image/cleanedTraffic.png)
 
 ## Writing to a file
 So that we can load the cleaned data for our supervised learning example, we will write it to a new csv file.

@@ -3,8 +3,8 @@
 
 This example will use two datasets that contain data on interstate traffic volumes and features that may contribute to changes in traffic volume. `Metro_Interstate_Traffic_Volume_Cleaned.csv`, was generated in our [Data Cleaning example](cleaningData.md) and is the cleaned data we will use to build our supervised learning models. `Metro_Interstate_Traffic_Volume_Predict.csv`, contains fictional "forecast" data that we will use to simulate making traffic volume predictions using our supervised learning model.
 
-![cleanedTraffic](images/cleanedTraffic.png)
-![forecast](images/forecast.png)
+![cleanedTraffic](../image/cleanedTraffic.png)
+![forecast](../image/forecast.png)
 
 ## Getting Started
 Create data objects from our `csv` files, which can be downloaded [here](#).
@@ -39,7 +39,7 @@ for learner in learners:
     print(learner, 'root mean square error:', performance)
 ```
 
-![RMSE](images/RMSE.png)
+![RMSE](../image/RMSE.png)
 
 `'sklearn.KNeighborsRegressor'` and `'sklearn.RandomForestRegressor'` look to be better choices for predicting traffic volume with this data than the linear regression learners, so let's focus on optimizing those two.
 
@@ -63,7 +63,7 @@ for result in knnTL.crossValidation.allResults:
     print(result)
 ```
 
-![knnCV](images/knnCV.png)
+![knnCV](../image/knnCV.png)
 
 Or we can access only the best arguments and results.  Note, the returned `TrainedLearner` is always trained using the best argument set if cross validation occurred.
 
@@ -71,7 +71,7 @@ Or we can access only the best arguments and results.  Note, the returned `Train
 print(rfTL.crossValidation.bestArguments, rfTL.crossValidation.bestResult)
 ```
 
-![rfCV](images/rfCV.png)
+![rfCV](../image/rfCV.png)
 
 `knnTL` found `n_neighbors` of 5 to be the best argument.  This is the same as the default value so we already know how it performs on the testing data. However, `rfTL` found `min_samples_leaf` of 2 outperformed the default, 1. Let's see how it performs on our testing data.
 
@@ -80,7 +80,7 @@ rfPerf = rfTL.test(trainX, trainY, nimble.calculate.rootMeanSquareError)
 print(rfPerf)
 ```
 
-![rfPerformance](images/rfPerformance.png)
+![rfPerformance](../image/rfPerformance.png)
 
 ## Applying our learner
 We see a further improvement in the performance so let's use `rfTL` to predict the traffic volumes for our `forecast` object. Before printing, we will append the `hour` feature from `forecasts` to get a better visual of the traffic throughout the day.
@@ -92,7 +92,7 @@ predictedTraffic.features.append(forecast.features['hour'])
 print(predictedTraffic)
 ```
 
-![predictions](images/predictions.png)
+![predictions](../image/predictions.png)
 
 Based on our forecasted data, our learner is predicting heavy traffic starting in the morning and continuing throughout the day. Traffic volumes are expected to peak during the 7am hour for the morning commute and again at 4pm for the afternoon commute.
 

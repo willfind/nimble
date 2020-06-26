@@ -141,9 +141,9 @@ and again at 4pm for the afternoon commute.
 
 .. toctree::
 
-  view source <python/traffic_train>
+  view source <scripts/traffic_train>
 
-* :download:`download source <python/traffic_train.py>`
+* :download:`download source <scripts/traffic_train.py>`
 
 | **Link to original dataset:**
 | `https://archive.ics.uci.edu/ml/datasets/Metro+Interstate+Traffic+Volume`_

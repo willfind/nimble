@@ -150,9 +150,9 @@ applying an `Unsupervised Learning`_ model can help us learn even more.
 
 .. toctree::
 
-  view source <python/shoppers_explore>
+  view source <scripts/shoppers_explore>
 
-* :download:`download source <python/shoppers_explore.py>`
+* :download:`download source <scripts/shoppers_explore.py>`
 
 | **Link to original dataset:**
 | `https://archive.ics.uci.edu/ml/datasets/Online+Shoppers+Purchasing+Intention+Dataset`_

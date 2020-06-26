@@ -5,6 +5,6 @@ TODO
 
 .. toctree::
 
-  view source <python/digits_train>
+  view source <scripts/digits_train>
 
-* :download:`download source <python/digits_train.py>`
+* :download:`download source <scripts/digits_train.py>`

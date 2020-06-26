@@ -25,7 +25,7 @@ webActivityFts = featureNames[:6]
 print(visits[:4, webActivityFts].toString(maxWidth=120))
 ```
 
-![activity](images/activity.png)
+![activity](../image/activity.png)
 
 The next 3 features are website analytics collected during the visit.
 
@@ -34,7 +34,7 @@ webAnalyticsFts = featureNames[6:9]
 print(visits[:4, webAnalyticsFts].toString(maxWidth=120))
 ```
 
-![analytics](images/analytics.png)
+![analytics](../image/analytics.png)
 
 The last 9 features are details on the visit or visitor.
 
@@ -43,7 +43,7 @@ visitDetailFts = featureNames[9:]
 print(visits[:4, visitDetailFts].toString(maxWidth=120))
 ```
 
-![details](images/details.png)
+![details](../image/details.png)
 
 Now that we have a better understanding of our data, let's see what we can learn from it.
 
@@ -56,7 +56,7 @@ correlations = visits.features.similarities('correlation')
 print(correlations[:, 'Revenue'])
 ```
 
-![correlations](images/correlations.png)
+![correlations](../image/correlations.png)
 
 What proportion of visits generated revenue?
 
@@ -65,7 +65,7 @@ revenueGen = sum(visits.features['Revenue']) / len(visits.points)
 print('Proportion of visits that generated revenue:', revenueGen)
 ```
 
-![revenue](images/revenue.png)
+![revenue](../image/revenue.png)
 
 The SpecialDay feature ranges from 0 to 1 indicating proximity to a special day (such as Mother's Day), where increased visits might be expected.  
 What proportion of visits occur in proximity to a special day?
@@ -74,7 +74,7 @@ special = visits.points.count('SpecialDay>0') / len(visits.points)
 print('Proportion of visits near a special day:', special)
 ```
 
-![specialDay](images/specialDay.png)
+![specialDay](../image/specialDay.png)
 
 ## Exploring data through nimble's calculate module
 
@@ -87,7 +87,7 @@ for ft in ['Administrative', 'Informational', 'ProductRelated']:
     print(ft, 'average hits per visit', mean)
 ```
 
-![pageHits](images/pageHits.png)
+![pageHits](../image/pageHits.png)
 
 What proportion of visitors reach a product-related page?
 
@@ -96,7 +96,7 @@ noProduct = nimble.calculate.proportionZero(visits.features['ProductRelated'])
 print('Proportion of visitors that view a product page:', 1 - noProduct)
 ```
 
-![product](images/product.png)
+![product](../image/product.png)
 
 ## Exploring data through plotting
 Is there a relationship between time spent on administrative pages and product related pages?
@@ -106,7 +106,7 @@ visits.plotFeatureAgainstFeature('Administrative_Duration',
                                  'ProductRelated_Duration')
 ```
 
-![duration](images/duration.png)
+![duration](../image/duration.png)
 
 Each visitor's location is classified into one of nine regions in the Region feature.  
 How is site traffic distributed by region?
@@ -114,7 +114,7 @@ How is site traffic distributed by region?
 ```python
 visits.plotFeatureDistribution('Region')
 ```
-![regions](images/regions.png)
+![regions](../image/regions.png)
 
 We have learned a lot about website visitors on our own. Next see how applying an [Unsupervised Learning](unsupervisedLearning.md) model can help us learn even more.
 

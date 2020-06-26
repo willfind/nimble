@@ -26,7 +26,7 @@ wcss = nimble.createData('List', withinClusterSumSquares,
 wcss.plotFeatureAgainstFeature('clusters', 'wcss')
 ```
 
-![elbowMethod](images/elbowMethod.png)  
+![elbowMethod](../image/elbowMethod.png)  
 
 5 clusters is a reasonable choice according to the plot. We will train with 5 clusters then add the generated labels as a new `'cluster'` feature in our object.
 
@@ -51,7 +51,7 @@ for cluster, data in byCluster.items():
     print(data[:, targetFts].features.statistics('mean'))
 ```
 
-![clusters](images/clusters.png)
+![clusters](../image/clusters.png)
 
 We see that weekends and special days do not seem to have much effect on revenue, so marketing based on the day may not be effective. However, clusters with more new visitors are clearly less likely to buy, so we may want to focus on ways to bring visitors back to the site.
 
@@ -83,7 +83,7 @@ for ft in ['Region', 'TrafficType']:
             print(msg.format(ft=ft, key=key, diff=round(diff, 4)))
  ```
 
-![trafficTypes](images/trafficTypes.png)
+![trafficTypes](../image/trafficTypes.png)
 
 The two clusters are within 5 percent for each region, but the best revenue cluster gets much more traffic via TrafficType 2 and much less via TrafficType 3. We already know most visitors in `bestRevenue` are not new. But let's check how different visitor types in `worstRevenue` are being directed to our website via these two traffic types.
 
@@ -106,7 +106,7 @@ for trafficType in [2, 3]:
     print(msg.format(vType='Return', num=trafficType, perc=round(byReturn, 1)))
 ```
 
-![visitors](images/visitors.png)
+![visitors](../image/visitors.png)
 
 We saw that our best revenue cluster generates more traffic from TrafficType 2 and less traffic from TrafficType 3. In our worst revenue group, new visitors are primarily coming from TrafficType 2, but many return visitors arrive via TrafficType 3. As a plan to generate more revenue, we would suggest that this website reevaluates any investment in TrafficType 3 and focuses on bringing more return visitors back via TrafficType 2.
 

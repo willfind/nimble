@@ -153,9 +153,9 @@ TrafficType 2.
 
 .. toctree::
 
-  view source <python/shoppers_train>
+  view source <scripts/shoppers_train>
 
-* :download:`download source <python/shoppers_train.py>`
+* :download:`download source <scripts/shoppers_train.py>`
 
 | **Link to original dataset:**
 | `https://archive.ics.uci.edu/ml/datasets/Online+Shoppers+Purchasing+Intention+Dataset`_

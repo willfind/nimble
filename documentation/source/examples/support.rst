@@ -5,6 +5,6 @@ TODO
 
 .. toctree::
 
-  view source <python/wifi_support>
+  view source <scripts/wifi_support>
 
-* :download:`download source <python/wifi_support.py>`
+* :download:`download source <scripts/wifi_support.py>`

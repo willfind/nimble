@@ -5,6 +5,6 @@ TODO
 
 .. toctree::
 
-  view source <python/tidy_data>
+  view source <scripts/tidy_data>
 
-* :download:`download source <python/tidy_data.py>`
+* :download:`download source <scripts/tidy_data.py>`

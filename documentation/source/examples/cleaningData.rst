@@ -175,9 +175,9 @@ example, we will write it to a new csv file.
 
 .. toctree::
 
-  view source <python/traffic_clean>
+  view source <scripts/traffic_clean>
 
-* :download:`download source <python/traffic_clean.py>`
+* :download:`download source <scripts/traffic_clean.py>`
 
 | **Link to dataset:**
 | `https://archive.ics.uci.edu/ml/datasets/Metro+Interstate+Traffic+Volume`_
