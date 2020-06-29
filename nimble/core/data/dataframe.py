@@ -411,7 +411,7 @@ class DataFrame(Base):
         try:
             ret = getattr(self.data.values, opName)(other.data)
             return DataFrame(ret)
-        except (AttributeError, InvalidArgumentType):
+        except (AttributeError, InvalidArgumentType, ValueError):
             return self._defaultBinaryOperations_implementation(opName, other)
 
     def _matmul__implementation(self, other):

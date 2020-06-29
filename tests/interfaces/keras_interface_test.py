@@ -42,7 +42,6 @@ def chooseOptimizer(func):
 @keraSkipDec
 @noLogEntryExpected
 def test_Keras_version():
-    import keras
     interface = Keras()
     if tfKeras.nimbleAccessible():
         # tensorflow.keras is prioritized based on recommendation from keras
@@ -52,7 +51,7 @@ def test_Keras_version():
     assert interface.version() == version
 
 @keraSkipDec
-@logCountAssertionFactory(5)
+@logCountAssertionFactory(6)
 @chooseOptimizer
 def testKerasAPI(optimizer):
     """
@@ -95,10 +94,14 @@ def testKerasAPI(optimizer):
     bestScore = results.bestResult
 
     #####test fit with Sequential object
-    from keras.models import Sequential
+    try:
+        from tensorflow.keras.models import Sequential
+    except ImportError:
+        from keras.models import Sequential
+
     mym = nimble.train(Sequential, trainX=x_train, trainY=y_train, optimizer=optimizer,
                        layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
-                       epochs=20, batch_size=128, useLog=False)
+                       epochs=20, batch_size=128)
 
 @keraSkipDec
 @logCountAssertionFactory(3)

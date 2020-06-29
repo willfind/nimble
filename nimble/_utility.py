@@ -210,7 +210,8 @@ def sparseMatrixToArray(sparseMatrix):
         # strings, but the rest are implicitly zero. In order to match
         # that, we must explicitly specify a mixed type for our destination
         # matrix
-        if not scipy.sparse.isspmatrix_coo(sparseMatrix):
+        if (scipy.nimbleAccessible()
+                and not scipy.sparse.isspmatrix_coo(sparseMatrix)):
             sparseMatrix = sparseMatrix.tocoo()
         retDType = sparseMatrix.dtype
         if isinstance(retDType, numpy.flexible):
