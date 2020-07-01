@@ -20,6 +20,7 @@ from ._dataHelpers import DEFAULT_PREFIX
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import denseCountUnique
 from ._dataHelpers import NimbleElementIterator
+from ._dataHelpers import convertToNumpyOrder
 
 @inheritDocstringsFactory(Base)
 class DataFrame(Base):
@@ -239,12 +240,12 @@ class DataFrame(Base):
 
     def _flatten_implementation(self, order):
         numElements = len(self.points) * len(self.features)
-        order = 'C' if order == 'point' else 'F'
+        order = convertToNumpyOrder(order)
         self.data = pd.DataFrame(self.data.values.reshape((1, numElements),
                                                           order=order))
 
     def _unflatten_implementation(self, reshape, order):
-        order = 'C' if order == 'point' else 'F'
+        order = convertToNumpyOrder(order)
         self.data = pd.DataFrame(self.data.values.reshape(reshape,
                                                           order=order))
 

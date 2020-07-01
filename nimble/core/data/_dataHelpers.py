@@ -946,3 +946,6 @@ def limitedTo2D(method):
             raise ImproperObjectAction(msg)
         return method(self, *args, **kwargs)
     return wrapped
+
+def convertToNumpyOrder(order):
+    return 'C' if order == 'point' else 'F'
