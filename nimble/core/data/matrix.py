@@ -463,7 +463,7 @@ class Matrix(Base):
         try:
             ret = getattr(self.data, opName)(other.data)
             return Matrix(ret)
-        except (AttributeError, InvalidArgumentType):
+        except (AttributeError, InvalidArgumentType, ValueError):
             return self._defaultBinaryOperations_implementation(opName, other)
 
     def _matmul__implementation(self, other):

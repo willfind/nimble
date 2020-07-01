@@ -193,7 +193,7 @@ class Stretch(object):
             with numpy.errstate(divide='raise', invalid='raise'):
                 ret = self._stretchArithmetic_implementation(opName, other)
         except (TypeError, ValueError, FloatingPointError) as error:
-            self._source._diagnoseFailureAndRaiseException(opName, other,
+            self._source._diagnoseFailureAndRaiseException(opName, otherSource,
                                                            error)
 
         if (opName.startswith('__r')
@@ -209,7 +209,6 @@ class Stretch(object):
     def _stretchArithmetic_implementation(self, opName, other):
         if isinstance(other, Stretch):
             other = other._source
-
         return self._source._binaryOperations_implementation(opName, other)
 
     def __and__(self, other):

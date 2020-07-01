@@ -52,9 +52,9 @@ def test__getScoresFormat():
     Automatically checks the _getScores() format for as many classifiers we can identify in each
     interface.
     """
-    data2 = generateClassificationData(2, 4, 2)
+    data2 = generateClassificationData(2, 4, 3)
     ((trainX2, trainY2), (testX2, testY2)) = data2
-    data4 = generateClassificationData(4, 4, 2)
+    data4 = generateClassificationData(4, 4, 3)
     ((trainX4, trainY4), (testX4, testY4)) = data4
     for interface in nimble.core.interfaces.available.values():
         interfaceName = interface.getCanonicalName()
