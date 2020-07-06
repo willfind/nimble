@@ -2268,8 +2268,7 @@ class QueryBackend(DataTestObject):
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
             # returns the process
-            p = obj._plot(outPath=path)
-            p.join()
+            obj.plot(outPath=path)
 
             endSize = os.path.getsize(path)
             assert startSize < endSize
@@ -2291,8 +2290,7 @@ class QueryBackend(DataTestObject):
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
             # returns the process
-            p = obj._plotFeatureDistribution(feature=0, outPath=path)
-            p.join()
+            obj.plotFeatureDistribution(feature=0, outPath=path)
 
             endSize = os.path.getsize(path)
             assert startSize < endSize
@@ -2315,8 +2313,7 @@ class QueryBackend(DataTestObject):
             obj = self.constructor(raw)
             #we call the leading underscore version, because it
             # returns the process
-            p = obj._plotFeatureAgainstFeature(x=0, y=1, outPath=path)
-            p.join()
+            obj.plotFeatureAgainstFeature(x=0, y=1, outPath=path)
 
             endSize = os.path.getsize(path)
             assert startSize < endSize

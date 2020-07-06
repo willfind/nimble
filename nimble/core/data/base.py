@@ -24,7 +24,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.logger import handleLogging
 from nimble.core.logger import produceFeaturewiseReport
 from nimble.core.logger import produceAggregateReport
-from nimble._utility import cloudpickle, h5py
+from nimble._utility import cloudpickle, h5py, matplotlib
 from .points import Points
 from .features import Features
 from .axis import Axis
@@ -42,8 +42,7 @@ from ._dataHelpers import validateElementFunction, wrapMatchFunctionFactory
 from ._dataHelpers import ElementIterator1D
 from ._dataHelpers import isQueryString, elementQueryFunction
 from ._dataHelpers import limitedTo2D
-from ._dataHelpers import plotPlotter, distributionPlotter, crossPlotter
-from ._dataHelpers import matplotlibBackendHandling
+from ._dataHelpers import matplotlibRequired, matplotlibOutput
 
 
 def to2args(f):
@@ -2367,39 +2366,56 @@ class Base(object):
                             maxColumnWidth))
 
     @limitedTo2D
-    def plot(self, outPath=None, includeColorbar=False):
+    def plot(self, outPath=None, includeColorbar=False, show=True, **kwargs):
         """
         Display a plot of the data.
+
+        Parameters
+        ----------
+        outPath : str, None
+            A string of the path to save the plot output. If None, the
+            plot will be displayed.
+        includeColorbar : bool
+            Add a colorbar to the plot.
+        show : bool
+            If True, output the plot. If False, the plot will not be
+            displayed, to allow for additional plots to be added to the
+            same figure.
+        kwargs
+            Any keyword arguments accepted by matplotlib.pyplot's
+            ``matshow`` function.
+
+        Returns
+        -------
+        plot
+            Displayed or written to the ``outPath`` file.
         """
-        self._plot(outPath, includeColorbar)
+        self._plot(outPath, includeColorbar, show, **kwargs)
 
-    def _setupOutFormatForPlotting(self, outPath):
-        outFormat = None
-        if isinstance(outPath, str):
-            (_, ext) = os.path.splitext(outPath)
-            if len(ext) == 0:
-                outFormat = 'png'
-        return outFormat
-
-    def _plot(self, outPath=None, includeColorbar=False):
-        plotKwargs = {}
-        plotKwargs['name'] = self.name
-        plotKwargs['includeColorbar'] = includeColorbar
-
-        outFormat = self._setupOutFormatForPlotting(outPath)
-        plotKwargs['outFormat'] = outFormat
-
+    @matplotlibRequired
+    def _plot(self, outPath, includeColorbar, show, **kwargs):
         toPlot = self._convertUnusableTypes(float, usableTypes=(int, float))
-        plotKwargs['d'] = toPlot
-        # problem if we were to use mutiprocessing with backends
-        # different than Agg.
-        p = matplotlibBackendHandling(outPath, plotPlotter, **plotKwargs)
 
-        return p
+        if 'cmap' not in kwargs:
+            kwargs['cmap'] = matplotlib.cm.gray
+
+        plt = matplotlib.pyplot
+        plt.matshow(toPlot, **kwargs)
+
+        if includeColorbar:
+            plt.colorbar()
+
+        if not self.name.startswith(DEFAULT_NAME_PREFIX):
+            #plt.title("Heatmap of " + self.name)
+            plt.title(self.name)
+        plt.xlabel("Feature Values", labelpad=10)
+        plt.ylabel("Point Values")
+
+        matplotlibOutput(outPath, show)
 
     @limitedTo2D
     def plotFeatureDistribution(self, feature, outPath=None, xMin=None,
-                                xMax=None):
+                                xMax=None, show=True, **kwargs):
         """
         Plot a histogram of the distribution of values in a feature.
 
@@ -2420,31 +2436,34 @@ class Base(object):
             plot will be displayed.
         xMin : int, float
             The least value shown on the x axis of the resultant plot.
-        xMax: int, float
+        xMax : int, float
             The largest value shown on the x axis of teh resultant plot.
+        show : bool
+            If True, output the plot. If False, the plot will not be
+            displayed, to allow for additional plots to be added to the
+            same figure.
+        kwargs
+            Any keyword arguments accepted by matplotlib.pyplot's
+            ``hist`` function.
 
         Returns
         -------
         plot
             Displayed or written to the ``outPath`` file.
         """
-        self._plotFeatureDistribution(feature, outPath, xMin, xMax)
+        self._plotFeatureDistribution(feature, outPath, xMin, xMax, show,
+                                      **kwargs)
 
-    def _plotFeatureDistribution(self, feature, outPath=None, xMin=None,
-                                 xMax=None):
-        return self._plotDistribution('feature', feature, outPath, xMin, xMax)
+    def _plotFeatureDistribution(self, feature, outPath, xMin, xMax, show,
+                                 **kwargs):
+        return self._plotDistribution('feature', feature, outPath, xMin, xMax,
+                                      show)
 
-    def _plotDistribution(self, axis, identifier, outPath, xMin, xMax):
-        plotKwargs = {}
-        plotKwargs['axis'] = axis
-        plotKwargs['xLim'] = (xMin, xMax)
-
-        outFormat = self._setupOutFormatForPlotting(outPath)
-        plotKwargs['outFormat'] = outFormat
-
+    @matplotlibRequired
+    def _plotDistribution(self, axis, identifier, outPath, xMin, xMax, show,
+                          **kwargs):
         axisObj = self._getAxis(axis)
         index = axisObj.getIndex(identifier)
-        plotKwargs['index'] = index
         name = None
         if axis == 'point':
             getter = self.pointView
@@ -2454,36 +2473,44 @@ class Base(object):
             getter = self.featureView
             if self.features._namesCreated():
                 name = self.features.getName(index)
-        plotKwargs['name'] = name
         toPlot = getter(index)
-        plotKwargs['d'] = toPlot
 
-        quartiles = nimble.calculate.quartiles(toPlot)
-        IQR = quartiles[2] - quartiles[0]
-        binWidth = (2 * IQR) / (len(toPlot) ** (1. / 3))
-        # TODO: replace with calculate points after it subsumes
-        # pointStatistics?
-        valMax = max(toPlot)
-        valMin = min(toPlot)
-        if binWidth == 0:
-            binCount = 1
+        if 'bins' not in kwargs:
+            quartiles = nimble.calculate.quartiles(toPlot)
+            IQR = quartiles[2] - quartiles[0]
+            binWidth = (2 * IQR) / (len(toPlot) ** (1. / 3))
+            # TODO: replace with calculate points after it subsumes
+            # pointStatistics?
+            valMax = max(toPlot)
+            valMin = min(toPlot)
+            if binWidth == 0:
+                binCount = 1
+            else:
+                # we must convert to int, in some versions of numpy, the helper
+                # functions matplotlib calls will require it.
+                binCount = int(math.ceil((valMax - valMin) / binWidth))
+            kwargs['bins'] = binCount
+
+        plt = matplotlib.pyplot
+        plt.hist(toPlot, **kwargs)
+
+        if not name or name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+            titlemsg = '#' + str(index)
         else:
-            # we must convert to int, in some versions of numpy, the helper
-            # functions matplotlib calls will require it.
-            binCount = int(math.ceil((valMax - valMin) / binWidth))
-        plotKwargs['binCount'] = binCount
+            titlemsg = "named: " + name
+        plt.title("Distribution of " + axis + " " + titlemsg)
+        plt.xlabel("Values")
+        plt.ylabel("Number of values")
 
-        # problem if we were to use mutiprocessing with backends
-        # different than Agg.
-        p = matplotlibBackendHandling(outPath, distributionPlotter,
-                                      **plotKwargs)
+        xLim = (xMin, xMax)
+        plt.xlim(xLim)
 
-        return p
+        matplotlibOutput(outPath, show)
 
     @limitedTo2D
     def plotFeatureAgainstFeatureRollingAverage(
             self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
-            yMax=None, sampleSizeForAverage=20):
+            yMax=None, sampleSizeForAverage=20, show=True, **kwargs):
         """
         A rolling average of the pairwise combination of feature values.
 
@@ -2514,6 +2541,13 @@ class Base(object):
         sampleSizeForAverage : int
             The number of samples to use for the calculation of the
             rolling average.
+        show : bool
+            If True, output the plot. If False, the plot will not be
+            displayed, to allow for additional plots to be added to the
+            same figure.
+        kwargs
+            Any keyword arguments accepted by matplotlib.pyplot's
+            ``scatter`` function.
 
         Returns
         -------
@@ -2521,11 +2555,12 @@ class Base(object):
             Displayed or written to the ``outPath`` file.
         """
         self._plotFeatureAgainstFeature(x, y, outPath, xMin, xMax, yMin, yMax,
-                                        sampleSizeForAverage)
+                                        show, sampleSizeForAverage, **kwargs)
 
     @limitedTo2D
     def plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None,
-                                  xMax=None, yMin=None, yMax=None):
+                                  xMax=None, yMin=None, yMax=None, show=True,
+                                  **kwargs):
         """
         A scatter plot of the pairwise combination of feature values.
 
@@ -2550,41 +2585,37 @@ class Base(object):
             The largest value shown on the x axis of teh resultant plot.
         yMin : int, float
             The least value shown on the y axis of the resultant plot.
-        yMax: int, float
-            The largest value shown on the y axis of teh resultant plot.
+        yMax : int, float
+            The largest value shown on the y axis of the resultant plot.
+        show : bool
+            If True, output the plot. If False, the plot will not be
+            displayed, to allow for additional plots to be added to the
+            same figure.
+        kwargs
+            Any keyword arguments accepted by matplotlib.pyplot's
+            ``scatter`` function.
 
         Returns
         -------
         plot
             Displayed or written to the ``outPath`` file.
         """
-        self._plotFeatureAgainstFeature(x, y, outPath, xMin, xMax, yMin, yMax)
+        self._plotFeatureAgainstFeature(x, y, outPath, xMin, xMax, yMin, yMax,
+                                        None, show, **kwargs)
 
-    def _plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None,
-                                   xMax=None, yMin=None, yMax=None,
-                                   sampleSizeForAverage=None):
+    def _plotFeatureAgainstFeature(self, x, y, outPath, xMin, xMax, yMin, yMax,
+                                   sampleSizeForAverage, show, **kwargs):
         return self._plotCross(x, 'feature', y, 'feature', outPath, xMin, xMax,
-                               yMin, yMax, sampleSizeForAverage)
+                               yMin, yMax, sampleSizeForAverage, show,
+                               **kwargs)
 
+    @matplotlibRequired
     def _plotCross(self, x, xAxis, y, yAxis, outPath, xMin, xMax, yMin, yMax,
-                   sampleSizeForAverage=None):
-        plotKwargs = {}
-        plotKwargs['name'] = self.name
-        plotKwargs['xAxis'] = xAxis
-        plotKwargs['yAxis'] = yAxis
-        plotKwargs['xLim'] = (xMin, xMax)
-        plotKwargs['yLim'] = (yMin, yMax)
-        plotKwargs['sampleSizeForAverage'] = sampleSizeForAverage
-
-        outFormat = self._setupOutFormatForPlotting(outPath)
-        plotKwargs['outFormat'] = outFormat
-
+                   sampleSizeForAverage, show, **kwargs):
         xAxisObj = self._getAxis(xAxis)
         yAxisObj = self._getAxis(yAxis)
         xIndex = xAxisObj.getIndex(x)
         yIndex = yAxisObj.getIndex(y)
-        plotKwargs['xIndex'] = xIndex
-        plotKwargs['yIndex'] = yIndex
 
         def customGetter(index, axis):
             if axis == 'point':
@@ -2618,13 +2649,11 @@ class Base(object):
             yGetter = fGetter
             if self.features._namesCreated():
                 yName = self.features.getName(yIndex)
-        plotKwargs['xName'] = xName
-        plotKwargs['yName'] = yName
 
         xToPlot = xGetter(xIndex)
         yToPlot = yGetter(yIndex)
 
-        if sampleSizeForAverage:
+        if sampleSizeForAverage is not None:
             #do rolling average
             xToPlot, yToPlot = list(zip(*sorted(zip(xToPlot, yToPlot),
                                                 key=lambda x: x[0])))
@@ -2634,14 +2663,46 @@ class Base(object):
             xToPlot = numpy.convolve(xToPlot, convShape)[startIdx:-startIdx]
             yToPlot = numpy.convolve(yToPlot, convShape)[startIdx:-startIdx]
 
-        plotKwargs['inX'] = xToPlot
-        plotKwargs['inY'] = yToPlot
+        if 'marker' not in kwargs:
+            kwargs['marker'] = '.'
 
-        # problem if we were to use mutiprocessing with backends
-        # different than Agg.
-        p = matplotlibBackendHandling(outPath, crossPlotter, **plotKwargs)
+        plt = matplotlib.pyplot
+        plt.scatter(xToPlot, yToPlot, **kwargs)
 
-        return p
+        if not xName or xName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+            xlabel = xAxis + ' #' + str(xIndex)
+        else:
+            xlabel = xName
+        if not yName or yName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+            ylabel = yAxis + ' #' + str(yIndex)
+        else:
+            ylabel = yName
+
+        xName2 = xName
+        yName2 = yName
+        if sampleSizeForAverage:
+            tmpStr = ' (%s sample average)' % sampleSizeForAverage
+            xlabel += tmpStr
+            ylabel += tmpStr
+            xName2 += ' average'
+            yName2 += ' average'
+
+        if self.name.startswith(DEFAULT_NAME_PREFIX):
+            titleStr = ('%s vs. %s') % (xName2, yName2)
+        else:
+            titleStr = ('%s: %s vs. %s') % (self.name, xName2, yName2)
+
+
+        plt.title(titleStr)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+
+        xLim = (xMin, xMax)
+        yLim = (yMin, yMax)
+        plt.xlim(xLim)
+        plt.ylim(yLim)
+
+        matplotlibOutput(outPath, show)
 
     ##################################################################
     ##################################################################
