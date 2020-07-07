@@ -2016,7 +2016,7 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
                 convertCols = {}
                 for idx, val in enumerate(row):
                     colType = type(_intFloatBoolOrString(val))
-                    if colType is not str:
+                    if colType not in (str, type(None)):
                         convertCols[idx] = colType
                     else:
                         nonNumericFeatures.append(idx)

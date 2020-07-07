@@ -747,18 +747,18 @@ class Sparse(Base):
 
         self._sorted = None
 
-    def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueVals):
+    def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueIdx):
         if self._sorted is None:
             self._sortInternal('feature')
         binaryRow = []
         binaryCol = []
         binaryData = []
         for ptIdx, val in zip(self.data.row, self.data.data):
-            ftIdx = uniqueVals.index(val)
+            ftIdx = uniqueIdx[val]
             binaryRow.append(ptIdx)
             binaryCol.append(ftIdx)
             binaryData.append(1)
-        shape = (len(self.points), len(uniqueVals))
+        shape = (len(self.points), len(uniqueIdx))
         binaryCoo = scipy.sparse.coo_matrix(
             (binaryData, (binaryRow, binaryCol)), shape=shape)
         self._sorted = None

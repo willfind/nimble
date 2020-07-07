@@ -123,19 +123,18 @@ class Matrix(Base):
         with open(outPath, 'w') as outFile:
             if includeFeatureNames:
                 self._writeFeatureNamesToCSV(outFile, includePointNames)
+            if not numpy.issubdtype(self.data.dtype, numpy.number):
+                vectorizeCommas = numpy.vectorize(csvCommaFormat,
+                                                  otypes=[object])
+                viewData = vectorizeCommas(self.data).view()
+            else:
+                viewData = self.data.view()
             if includePointNames:
                 pnames = list(map(csvCommaFormat, self.points.getNames()))
                 pnames = numpy2DArray(pnames).transpose()
-                if not numpy.issubdtype(self.data.dtype, numpy.number):
-                    vectorizeCommas = numpy.vectorize(csvCommaFormat,
-                                                      otypes=[object])
-                    viewData = vectorizeCommas(self.data).view()
-                else:
-                    viewData = self.data.view()
-                toWrite = numpy.concatenate((pnames, viewData), 1)
-                numpy.savetxt(outFile, toWrite, delimiter=',', fmt='%s')
-            else:
-                numpy.savetxt(outFile, self.data, delimiter=',')
+                viewData = numpy.concatenate((pnames, viewData), 1)
+
+            numpy.savetxt(outFile, viewData, delimiter=',', fmt='%s')
 
     def _writeFileMTX_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
@@ -392,10 +391,10 @@ class Matrix(Base):
 
         self.data = numpy2DArray(merged, dtype=numpy.object_)
 
-    def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueVals):
-        toFill = numpy.zeros((len(self.points), len(uniqueVals)))
+    def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueIdx):
+        toFill = numpy.zeros((len(self.points), len(uniqueIdx)))
         for ptIdx, val in enumerate(self.data):
-            ftIdx = uniqueVals.index(val)
+            ftIdx = uniqueIdx[val.item()]
             toFill[ptIdx, ftIdx] = 1
         return Matrix(toFill)
 

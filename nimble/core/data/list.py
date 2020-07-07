@@ -518,10 +518,10 @@ class List(Base):
 
         self.data = merged
 
-    def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueVals):
-        toFill = numpy.zeros((len(self.points), len(uniqueVals)))
+    def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueIdx):
+        toFill = numpy.zeros((len(self.points), len(uniqueIdx)))
         for ptIdx, val in enumerate(self.data):
-            ftIdx = uniqueVals.index(val[0])
+            ftIdx = uniqueIdx[val[0]]
             toFill[ptIdx, ftIdx] = 1
         return List(toFill.tolist())
 
