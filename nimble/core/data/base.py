@@ -24,7 +24,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.logger import handleLogging
 from nimble.core.logger import produceFeaturewiseReport
 from nimble.core.logger import produceAggregateReport
-from nimble._utility import cloudpickle, h5py, matplotlib
+from nimble._utility import cloudpickle, h5py, matplotlib, plt
 from .points import Points
 from .features import Features
 from .axis import Axis
@@ -42,7 +42,7 @@ from ._dataHelpers import validateElementFunction, wrapMatchFunctionFactory
 from ._dataHelpers import ElementIterator1D
 from ._dataHelpers import isQueryString, elementQueryFunction
 from ._dataHelpers import limitedTo2D
-from ._dataHelpers import matplotlibRequired, matplotlibOutput
+from ._dataHelpers import matplotlibRequired, plotOutput, plotFigureHandling
 
 
 def to2args(f):
@@ -2366,56 +2366,68 @@ class Base(object):
                             maxColumnWidth))
 
     @limitedTo2D
-    def plot(self, outPath=None, includeColorbar=False, show=True, **kwargs):
+    def plot(self, includeColorbar=False, outPath=None, show=True,
+             title=None, xAxisLabel=None, yAxisLabel=None, **kwargs):
         """
         Display a plot of the data.
 
         Parameters
         ----------
-        outPath : str, None
-            A string of the path to save the plot output. If None, the
-            plot will be displayed.
         includeColorbar : bool
             Add a colorbar to the plot.
+        outPath : str, None
+            A string of the path to save the current figure.
         show : bool
-            If True, output the plot. If False, the plot will not be
-            displayed, to allow for additional plots to be added to the
-            same figure.
+            If True, display the plot. If False, the figure will not
+            display until a plotting function with show=True is called.
+        title : str, None
+            The title of the plot. If None and this object has a name,
+            the title will be the object name.
+        xAxisLabel : str
+            A label for the x axis. If None, the label will be "Feature
+            Values".
+        yAxisLabel : str
+            A label for the x axis. If None, the label will be "Point
+            Values".
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
             ``matshow`` function.
-
-        Returns
-        -------
-        plot
-            Displayed or written to the ``outPath`` file.
         """
-        self._plot(outPath, includeColorbar, show, **kwargs)
+        self._plot(includeColorbar, outPath, show, title, xAxisLabel,
+                   yAxisLabel, **kwargs)
 
     @matplotlibRequired
-    def _plot(self, outPath, includeColorbar, show, **kwargs):
+    def _plot(self, includeColorbar, outPath, show, title, xAxisLabel,
+              yAxisLabel, **kwargs):
         toPlot = self._convertUnusableTypes(float, usableTypes=(int, float))
 
         if 'cmap' not in kwargs:
             kwargs['cmap'] = matplotlib.cm.gray
 
-        plt = matplotlib.pyplot
+        # matshow generates a new figure b/c existing axes are an issue.
         plt.matshow(toPlot, **kwargs)
 
         if includeColorbar:
             plt.colorbar()
 
-        if not self.name.startswith(DEFAULT_NAME_PREFIX):
-            #plt.title("Heatmap of " + self.name)
-            plt.title(self.name)
-        plt.xlabel("Feature Values", labelpad=10)
-        plt.ylabel("Point Values")
+        if title is None and self.name.startswith(DEFAULT_NAME_PREFIX):
+            title = self.name
+        if title:
+            plt.title(title)
+        if xAxisLabel is None:
+            xAxisLabel = "Feature Values"
+        if yAxisLabel is None:
+            yAxisLabel = "Point Values"
+        plt.xlabel(xAxisLabel, labelpad=10)
+        plt.ylabel(yAxisLabel)
 
-        matplotlibOutput(outPath, show)
+        plotOutput(outPath, show)
 
     @limitedTo2D
-    def plotFeatureDistribution(self, feature, outPath=None, xMin=None,
-                                xMax=None, show=True, **kwargs):
+    def plotFeatureDistribution(self, feature, outPath=None, show=True,
+                                figureName=None, title=None, xAxisLabel=None,
+                                yAxisLabel=None, xMin=None, xMax=None,
+                                **kwargs):
         """
         Plot a histogram of the distribution of values in a feature.
 
@@ -2432,36 +2444,48 @@ class Base(object):
         feature : identifier
             The index of name of the feature to plot.
         outPath : str, None
-            A string of the path to save the plot output. If None, the
-            plot will be displayed.
-        xMin : int, float
-            The least value shown on the x axis of the resultant plot.
-        xMax : int, float
-            The largest value shown on the x axis of teh resultant plot.
+            A string of the path to save the current figure.
         show : bool
-            If True, output the plot. If False, the plot will not be
-            displayed, to allow for additional plots to be added to the
-            same figure.
+            If True, display the plot. If False, the figure will not
+            display until a plotting function with show=True is called.
+            This allows for future plots to placed on the figure with
+            the same ``figureName`` before being shown.
+        figureName : str, None
+            A new figure will be generated when None or a new name,
+            otherwise the figure with that name will be activated to
+            draw the plot on an existing figure.
+        title : str, None
+            The title of the plot. If None the title will identify which
+            feature is presented in the distribution.
+        xAxisLabel : str
+            A label for the x axis. If None, the label will be "Values".
+        yAxisLabel : str
+            A label for the x axis. If None, the label will be "Number
+            of Values".
+        xMin : int, float
+            The minimum value shown on the x axis of the resultant plot.
+        xMax : int, float
+            The maximum value shown on the x axis of the resultant plot.
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
             ``hist`` function.
-
-        Returns
-        -------
-        plot
-            Displayed or written to the ``outPath`` file.
         """
-        self._plotFeatureDistribution(feature, outPath, xMin, xMax, show,
-                                      **kwargs)
+        self._plotFeatureDistribution(feature, outPath, show, figureName,
+                                      title, xAxisLabel, yAxisLabel, xMin,
+                                      xMax, **kwargs)
 
-    def _plotFeatureDistribution(self, feature, outPath, xMin, xMax, show,
+    def _plotFeatureDistribution(self, feature, outPath, show, figureName,
+                                 title, xAxisLabel, yAxisLabel, xMin, xMax,
                                  **kwargs):
-        return self._plotDistribution('feature', feature, outPath, xMin, xMax,
-                                      show)
+        return self._plotDistribution('feature', feature, outPath, show,
+                                      figureName, title, xAxisLabel,
+                                      yAxisLabel,xMin, xMax, **kwargs)
 
     @matplotlibRequired
-    def _plotDistribution(self, axis, identifier, outPath, xMin, xMax, show,
-                          **kwargs):
+    def _plotDistribution(self, axis, identifier, outPath, show, figureName,
+                          title, xAxisLabel, yAxisLabel, xMin, xMax, **kwargs):
+        fig, ax = plotFigureHandling(figureName)
+
         axisObj = self._getAxis(axis)
         index = axisObj.getIndex(identifier)
         name = None
@@ -2473,6 +2497,14 @@ class Base(object):
             getter = self.featureView
             if self.features._namesCreated():
                 name = self.features.getName(index)
+
+        if title is None:
+            title = "Distribution of " + axis + " "
+            if not name or name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+                title += '#' + str(index)
+            else:
+                title += "named: " + name
+        ax.set_title(title)
         toPlot = getter(index)
 
         if 'bins' not in kwargs:
@@ -2491,33 +2523,32 @@ class Base(object):
                 binCount = int(math.ceil((valMax - valMin) / binWidth))
             kwargs['bins'] = binCount
 
-        plt = matplotlib.pyplot
-        plt.hist(toPlot, **kwargs)
+        ax.hist(toPlot, **kwargs)
+        if 'label' in kwargs:
+            ax.legend()
 
-        if not name or name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-            titlemsg = '#' + str(index)
-        else:
-            titlemsg = "named: " + name
-        plt.title("Distribution of " + axis + " " + titlemsg)
-        plt.xlabel("Values")
-        plt.ylabel("Number of values")
+        if xAxisLabel is None:
+            xAxisLabel = "Values"
+        if yAxisLabel is None:
+            yAxisLabel = "Number of Values"
+        ax.set_xlabel(xAxisLabel)
+        ax.set_ylabel(yAxisLabel)
 
-        xLim = (xMin, xMax)
-        plt.xlim(xLim)
+        ax.update_datalim([(xMin, None), (xMax, None)], updatey=False)
 
-        matplotlibOutput(outPath, show)
+        plotOutput(outPath, show)
 
     @limitedTo2D
     def plotFeatureAgainstFeatureRollingAverage(
-            self, x, y, outPath=None, xMin=None, xMax=None, yMin=None,
-            yMax=None, sampleSizeForAverage=20, show=True, **kwargs):
+            self, x, y, sampleSizeForAverage=20, outPath=None, show=True,
+            figureName=None, title=None, xAxisLabel=None, yAxisLabel=None,
+            xMin=None, xMax=None, yMin=None, yMax=None, **kwargs):
         """
         A rolling average of the pairwise combination of feature values.
 
         Control over the width of the both axes is given, with the
         warning that user specified values can obscure data that would
         otherwise be plotted given default inputs.
-
 
         Parameters
         ----------
@@ -2527,40 +2558,49 @@ class Base(object):
         y : identifier
             The index or name of the feature from which we draw y-axis
             coordinates.
-        outPath : str, None
-            A string of the path to save the plot output. If None, the
-            plot will be displayed.
-        xMin : int, float
-            The least value shown on the x axis of the resultant plot.
-        xMax: int, float
-            The largest value shown on the x axis of teh resultant plot.
-        yMin : int, float
-            The least value shown on the y axis of the resultant plot.
-        yMax: int, float
-            The largest value shown on the y axis of teh resultant plot.
         sampleSizeForAverage : int
             The number of samples to use for the calculation of the
             rolling average.
+        outPath : str, None
+            A string of the path to save the current figure.
         show : bool
-            If True, output the plot. If False, the plot will not be
-            displayed, to allow for additional plots to be added to the
-            same figure.
+            If True, display the plot. If False, the figure will not
+            display until a plotting function with show=True is called.
+            This allows for future plots to placed on the figure with
+            the same ``figureName`` before being shown.
+        figureName : str, None
+            A new figure will be generated when None or a new name,
+            otherwise the figure with that name will be activated to
+            draw the plot on an existing figure.
+        title : str, None
+            The title of the plot. If None the title will identify which
+            features are presented in the plot.
+        xAxisLabel : str
+            A label for the x axis. If None, the label will be "Values".
+        yAxisLabel : str
+            A label for the x axis. If None, the label will be "Number
+            of Values".
+        xMin : int, float
+            The minimum value shown on the x axis of the resultant plot.
+        xMax : int, float
+            The maximum value shown on the x axis of the resultant plot.
+        yMin : int, float
+            The minimum value shown on the y axis of the resultant plot.
+        yMax : int, float
+            The maximum value shown on the y axis of the resultant plot.
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
             ``scatter`` function.
-
-        Returns
-        -------
-        plot
-            Displayed or written to the ``outPath`` file.
         """
-        self._plotFeatureAgainstFeature(x, y, outPath, xMin, xMax, yMin, yMax,
-                                        show, sampleSizeForAverage, **kwargs)
+        self._plotFeatureAgainstFeature(
+            x, y, sampleSizeForAverage, outPath, show, figureName, title,
+            xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax, **kwargs)
 
     @limitedTo2D
-    def plotFeatureAgainstFeature(self, x, y, outPath=None, xMin=None,
-                                  xMax=None, yMin=None, yMax=None, show=True,
-                                  **kwargs):
+    def plotFeatureAgainstFeature(
+        self, x, y, outPath=None, show=True, figureName=None, title=None,
+        xAxisLabel=None, yAxisLabel=None, xMin=None, xMax=None, yMin=None,
+        yMax=None,  **kwargs):
         """
         A scatter plot of the pairwise combination of feature values.
 
@@ -2577,41 +2617,55 @@ class Base(object):
             The index or name of the feature from which we draw y-axis
             coordinates.
         outPath : str, None
-            A string of the path to save the plot output. If None, the
-            plot will be displayed.
-        xMin : int, float
-            The least value shown on the x axis of the resultant plot.
-        xMax: int, float
-            The largest value shown on the x axis of teh resultant plot.
-        yMin : int, float
-            The least value shown on the y axis of the resultant plot.
-        yMax : int, float
-            The largest value shown on the y axis of the resultant plot.
+            A string of the path to save the current figure.
         show : bool
-            If True, output the plot. If False, the plot will not be
-            displayed, to allow for additional plots to be added to the
-            same figure.
+            If True, display the plot. If False, the figure will not
+            display until a plotting function with show=True is called.
+            This allows for future plots to placed on the figure with
+            the same ``figureName`` before being shown.
+        figureName : str, None
+            A new figure will be generated when None or a new name,
+            otherwise the figure with that name will be activated to
+            draw the plot on an existing figure.
+        title : str, None
+            The title of the plot. If None the title will identify which
+            features are presented in the plot.
+        xAxisLabel : str
+            A label for the x axis. If None, the label will be the x
+            feature name or index.
+        yAxisLabel : str
+            A label for the x axis. If None, the label will be the y
+            feature name or index.
+        xMin : int, float
+            The minimum value shown on the x axis of the resultant plot.
+        xMax : int, float
+            The maximum value shown on the x axis of the resultant plot.
+        yMin : int, float
+            The minimum value shown on the y axis of the resultant plot.
+        yMax : int, float
+            The maximum value shown on the y axis of the resultant plot.
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
             ``scatter`` function.
-
-        Returns
-        -------
-        plot
-            Displayed or written to the ``outPath`` file.
         """
-        self._plotFeatureAgainstFeature(x, y, outPath, xMin, xMax, yMin, yMax,
-                                        None, show, **kwargs)
+        self._plotFeatureAgainstFeature(
+            x, y, None, outPath, show, figureName, title, xAxisLabel,
+            yAxisLabel, xMin, xMax, yMin, yMax, **kwargs)
 
-    def _plotFeatureAgainstFeature(self, x, y, outPath, xMin, xMax, yMin, yMax,
-                                   sampleSizeForAverage, show, **kwargs):
-        return self._plotCross(x, 'feature', y, 'feature', outPath, xMin, xMax,
-                               yMin, yMax, sampleSizeForAverage, show,
-                               **kwargs)
+    def _plotFeatureAgainstFeature(
+            self, x, y, sampleSizeForAverage, outPath, show, figureName, title,
+            xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax, **kwargs):
+        return self._plotCross(
+            x, 'feature', y, 'feature', sampleSizeForAverage, outPath, show,
+            figureName, title, xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax,
+            **kwargs)
 
     @matplotlibRequired
-    def _plotCross(self, x, xAxis, y, yAxis, outPath, xMin, xMax, yMin, yMax,
-                   sampleSizeForAverage, show, **kwargs):
+    def _plotCross(self, x, xAxis, y, yAxis, sampleSizeForAverage, outPath,
+                   show, figureName, title, xAxisLabel, yAxisLabel, xMin,
+                   xMax, yMin, yMax, **kwargs):
+        fig, ax = plotFigureHandling(figureName)
+
         xAxisObj = self._getAxis(xAxis)
         yAxisObj = self._getAxis(yAxis)
         xIndex = xAxisObj.getIndex(x)
@@ -2663,46 +2717,49 @@ class Base(object):
             xToPlot = numpy.convolve(xToPlot, convShape)[startIdx:-startIdx]
             yToPlot = numpy.convolve(yToPlot, convShape)[startIdx:-startIdx]
 
-        if 'marker' not in kwargs:
-            kwargs['marker'] = '.'
-
-        plt = matplotlib.pyplot
-        plt.scatter(xToPlot, yToPlot, **kwargs)
-
-        if not xName or xName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+        if xName is None or xName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
             xlabel = xAxis + ' #' + str(xIndex)
         else:
             xlabel = xName
-        if not yName or yName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+        if yName is None or yName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
             ylabel = yAxis + ' #' + str(yIndex)
         else:
             ylabel = yName
 
-        xName2 = xName
-        yName2 = yName
+        if xName is None:
+            xName = str(xIndex)
+        if yName is None:
+            yName = str(yIndex)
         if sampleSizeForAverage:
             tmpStr = ' (%s sample average)' % sampleSizeForAverage
             xlabel += tmpStr
             ylabel += tmpStr
-            xName2 += ' average'
-            yName2 += ' average'
+            xName += ' average'
+            yName += ' average'
 
-        if self.name.startswith(DEFAULT_NAME_PREFIX):
-            titleStr = ('%s vs. %s') % (xName2, yName2)
-        else:
-            titleStr = ('%s: %s vs. %s') % (self.name, xName2, yName2)
+        if 'marker' not in kwargs:
+            kwargs['marker'] = '.'
 
+        ax.scatter(xToPlot, yToPlot, **kwargs)
+        if 'label' in kwargs:
+            ax.legend()
 
-        plt.title(titleStr)
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
+        if title is None and self.name.startswith(DEFAULT_NAME_PREFIX):
+            title = ('%s vs. %s') % (xName, yName)
+        elif title is None:
+            title = ('%s: %s vs. %s') % (self.name, xName, yName)
+        ax.set_title(title)
 
-        xLim = (xMin, xMax)
-        yLim = (yMin, yMax)
-        plt.xlim(xLim)
-        plt.ylim(yLim)
+        if xAxisLabel is None:
+            xAxisLabel = xlabel
+        ax.set_xlabel(xAxisLabel)
+        if yAxisLabel is None:
+            yAxisLabel = ylabel
+        ax.set_ylabel(yAxisLabel)
 
-        matplotlibOutput(outPath, show)
+        ax.update_datalim([(xMin, yMin), (xMax, yMax)])
+
+        plotOutput(outPath, show)
 
     ##################################################################
     ##################################################################

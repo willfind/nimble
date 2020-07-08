@@ -29,6 +29,23 @@ if __name__ == "__main__":
 
         plotObj.plotFeatureDistribution(0, outPath=outPath)
 
+    # 1000 samples of N(0,1)
+    def plotDistributionCompare(plotObj, outDir):
+        outPath = None
+        if outDir is not None:
+            outPath = os.path.join(outDir, "DistributionCompare")
+
+        title = "Shifted Normal Distributions"
+        alpha = 0.5
+        shiftLeft = plotObj - 1
+        shiftRight = plotObj + 1
+        shiftLeft.plotFeatureDistribution(0, show=False, figureName='dists',
+                                          alpha=alpha, label='shiftLeft')
+        shiftRight.plotFeatureDistribution(0, outPath=outPath, title=title,
+                                           show=False, figureName='dists',
+                                           label='shiftRight', alpha=alpha,
+                                           color='g')
+
     # 1000 samples of N(0,1), squared
     def plotDistributionNormalSquared(plotObj, outDir):
         plotObj **= 2
@@ -38,7 +55,6 @@ if __name__ == "__main__":
         if outDir is not None:
             outPath = os.path.join(outDir, "NormalSquared")
         plotObj.plotFeatureDistribution(0, outPath=outPath)
-
 
     #compare two columns: col1= rand noise, col2 =3* col1 + noise
     def plotComparisonNoiseVsScaled(outDir):
@@ -59,6 +75,22 @@ if __name__ == "__main__":
             outPath = os.path.join(outDir, "NoiseVsScaled")
         obj1.plotFeatureAgainstFeature(0, 1, outPath=outPath)
 
+    def plotComparisonMultipleNoiseVsScaled(outDir):
+        import numpy
+        raw1 = numpy.random.rand(50, 3)
+        raw1[:, 1] = (raw1[:, 0] * 3) + raw1[:, 1]
+        raw1[:, 2] = (raw1[:, 0] * 3) + raw1[:, 2]
+        obj1 = nimble.data("Matrix", raw1)
+
+        outPath = None
+        if outDir is not None:
+            outPath = os.path.join(outDir, "NoiseVsMultipleScaled")
+        obj1.plotFeatureAgainstFeature(0, 1, outPath=None, show=False,
+                                       figureName='noise', label='1')
+        obj1.plotFeatureAgainstFeature(0, 2, outPath=outPath,
+                                       figureName='noise', label='2',
+                                       title='Feature 0 Vs 1 and 2',
+                                       yAxisLabel='Features 1 and 2')
 
     checkObj = nimble.data("Matrix", numpy.zeros((15, 12)), name="Checkerboard")
 
@@ -101,7 +133,9 @@ if __name__ == "__main__":
 
     # one function for each plot being drawn.
     plotDistributionNormal(objNorm, givenOutDir)
+    plotDistributionCompare(objNorm, givenOutDir)
     plotDistributionNormalSquared(objNorm, givenOutDir)
     plotComparisonNoiseVsScaled(givenOutDir)
+    plotComparisonMultipleNoiseVsScaled(givenOutDir)
     plotCheckerboad(checkObj, givenOutDir)
     plotCheckeredGradient(checkGradObj,givenOutDir)

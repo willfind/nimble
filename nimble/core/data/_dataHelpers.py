@@ -14,7 +14,7 @@ import os.path
 import numpy
 
 import nimble
-from nimble._utility import pd, matplotlib
+from nimble._utility import pd, matplotlib, plt
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
 
@@ -955,19 +955,28 @@ def matplotlibRequired(func):
     """
     @wraps(func)
     def wrapped(*args, **kwargs):
-        if not matplotlib.nimbleAccessible():
+        if not (matplotlib.nimbleAccessible() and plt.nimbleAccessible()):
             raise PackageException('matplotlib is required for plotting')
         return func(*args, **kwargs)
     return wrapped
 
-def matplotlibOutput(outPath, show):
-    plt = matplotlib.pyplot
-    if show and outPath is None:
-        plt.show()
-    elif show:
+def plotFigureHandling(figureName):
+    figures = nimble.core.data._plotFigures
+    if figureName and figureName in figures:
+        return figures[figureName]
+
+    plot = plt.subplots()
+    if figureName is not None:
+        figures[figureName] = plot
+    return plot
+
+def plotOutput(outPath, show):
+    if outPath is not None:
         outFormat = None
         if isinstance(outPath, str):
             (_, ext) = os.path.splitext(outPath)
             if len(ext) == 0:
                 outFormat = 'png'
         plt.savefig(outPath, format=outFormat)
+    if show:
+        plt.show()
