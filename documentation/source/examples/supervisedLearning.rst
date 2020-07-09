@@ -1,8 +1,8 @@
 Supervised Learning
 ===================
 
-Using nimble to predict interstate traffic volume
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Training interstate traffic data to make future predictions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This example will use two datasets that contain data on interstate
 traffic volumes and features that may contribute to changes in traffic

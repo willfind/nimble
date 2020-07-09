@@ -1,7 +1,7 @@
 Cleaning Data
 =============
 
-Using nimble to prepare interstate traffic volume data
+Preparing interstate traffic data for machine learning
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Our goal is to prepare the ``'Metro_Interstate_Traffic_Volume.csv'``

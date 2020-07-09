@@ -1,7 +1,7 @@
 """
 Neural Networks
 
-Using neural networks in nimble to identify handwritten digits.
+Using neural networks to identify handwritten digits.
 
 Each point in our dataset contains 267 features. The first 256 features
 represent pixel values for a flattened 16x16 grayscale image. The final
@@ -9,7 +9,7 @@ represent pixel values for a flattened 16x16 grayscale image. The final
 image. Our goal is to correctly identify handwritten digits using neural
 networks.
 
-Reference:
+References:
 Semeion Research Center of Sciences of Communication, via Sersale 117,
 00128 Rome, Italy
 Tattile Via Gaetano Donizetti, 1-3-5,25030 Mairano (Brescia), Italy

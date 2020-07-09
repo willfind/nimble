@@ -1,7 +1,7 @@
 """
 Exploring Data
 
-Using nimble to gain insight on the behaviors of online shoppers
+Analyzing the behaviors of online shoppers
 
 Our dataset, `'online_shoppers_intention_clean.csv'`, is a collection of
 behaviors for visitors to an online shopping website. Our goal is to

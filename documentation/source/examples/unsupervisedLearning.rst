@@ -1,8 +1,8 @@
 Unsupervised Learning
 =====================
 
-Using nimble to classify online shoppers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Classifying online shoppers to maximize revenue
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Our dataset, ``'online_shoppers_intention_clean.csv'``, is a collection
 of behaviors for visitors to an online shopping website. Our goal will

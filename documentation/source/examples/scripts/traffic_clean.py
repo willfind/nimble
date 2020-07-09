@@ -1,7 +1,7 @@
 """
 Cleaning Data
 
-Using nimble to prepare interstate traffic volume
+Preparing interstate traffic data for machine learning
 
 The goal here is to address several issues present in the
 `'Metro_Interstate_Traffic_Volume.csv'` dataset to make it suitable for
