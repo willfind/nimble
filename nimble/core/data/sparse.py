@@ -76,9 +76,11 @@ class Sparse(Base):
     def stretch(self):
         return StretchSparse(self)
 
-    def _plot(self, outPath=None, includeColorbar=False):
+    def _plot(self, includeColorbar, outPath, show, title, xAxisLabel,
+              yAxisLabel, **kwargs):
         toPlot = self.copy(to="Matrix")
-        return toPlot._plot(outPath, includeColorbar)
+        return toPlot._plot(includeColorbar, outPath, show, title, xAxisLabel,
+                            yAxisLabel, **kwargs)
 
     def _transform_implementation(self, toTransform, points, features):
         if toTransform.preserveZeros:

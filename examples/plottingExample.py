@@ -11,6 +11,12 @@ import sys
 
 import nimble
 
+def getOutPath(outDir, outName):
+    outPath = None
+    if outDir is not None:
+        outPath = os.path.join(outDir, outName)
+    return outPath
+
 if __name__ == "__main__":
 
     # if a directory is given, plots will be output to file in that location.
@@ -18,22 +24,22 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         givenOutDir = sys.argv[1]
 
+    givenShow = True
+    if len(sys.argv) > 2:
+        givenShow = True if sys.argv[2].lower() != "false" else False
+
     rawNorm = numpy.random.normal(loc=0, scale=1, size=(1000, 1))
     objNorm = nimble.data("Matrix", rawNorm, featureNames=["N(0,1)"])
 
     # 1000 samples of N(0,1)
-    def plotDistributionNormal(plotObj, outDir):
-        outPath = None
-        if outDir is not None:
-            outPath = os.path.join(outDir, "NormalDistribution")
+    def plotDistributionNormal(plotObj, outDir, givenShow):
+        outPath = getOutPath(outDir, "NormalDistribution")
 
-        plotObj.plotFeatureDistribution(0, outPath=outPath)
+        plotObj.plotFeatureDistribution(0, outPath=outPath, show=givenShow)
 
     # 1000 samples of N(0,1)
     def plotDistributionCompare(plotObj, outDir):
-        outPath = None
-        if outDir is not None:
-            outPath = os.path.join(outDir, "DistributionCompare")
+        outPath = getOutPath(outDir, "DistributionCompare")
 
         title = "Shifted Normal Distributions"
         alpha = 0.5
@@ -47,17 +53,15 @@ if __name__ == "__main__":
                                            color='g')
 
     # 1000 samples of N(0,1), squared
-    def plotDistributionNormalSquared(plotObj, outDir):
+    def plotDistributionNormalSquared(plotObj, outDir, givenShow):
         plotObj **= 2
         plotObj.features.setName(0, "N(0,1) squared")
 
-        outPath = None
-        if outDir is not None:
-            outPath = os.path.join(outDir, "NormalSquared")
-        plotObj.plotFeatureDistribution(0, outPath=outPath)
+        outPath = getOutPath(outDir, "NormalSquared")
+        plotObj.plotFeatureDistribution(0, outPath=outPath, show=givenShow)
 
     #compare two columns: col1= rand noise, col2 =3* col1 + noise
-    def plotComparisonNoiseVsScaled(outDir):
+    def plotComparisonNoiseVsScaled(outDir, givenShow):
         import numpy
         raw1 = numpy.random.rand(50, 1)
         raw2 = numpy.random.rand(50, 1)
@@ -70,27 +74,23 @@ if __name__ == "__main__":
         obj1.features.setName(1, "(Feature 0 * 3) + noise")
         obj1.name = "Noise"
 
-        outPath = None
-        if outDir is not None:
-            outPath = os.path.join(outDir, "NoiseVsScaled")
-        obj1.plotFeatureAgainstFeature(0, 1, outPath=outPath)
+        outPath = getOutPath(outDir, "NoiseVsScaled")
+        obj1.plotFeatureAgainstFeature(0, 1, outPath=outPath, show=givenShow)
 
-    def plotComparisonMultipleNoiseVsScaled(outDir):
+    def plotComparisonMultipleNoiseVsScaled(outDir, givenShow):
         import numpy
         raw1 = numpy.random.rand(50, 3)
-        raw1[:, 1] = (raw1[:, 0] * 3) + raw1[:, 1]
-        raw1[:, 2] = (raw1[:, 0] * 3) + raw1[:, 2]
+        raw1[:, 1] = raw1[:, 0] + raw1[:, 1]
+        raw1[:, 2] = raw1[:, 0] + raw1[:, 2]
         obj1 = nimble.data("Matrix", raw1)
 
-        outPath = None
-        if outDir is not None:
-            outPath = os.path.join(outDir, "NoiseVsMultipleScaled")
+        outPath = getOutPath(outDir, "NoiseVsMultipleScaled")
         obj1.plotFeatureAgainstFeature(0, 1, outPath=None, show=False,
                                        figureName='noise', label='1')
-        obj1.plotFeatureAgainstFeature(0, 2, outPath=outPath,
+        title = 'Feature 0 Vs Feature 0 + Noises 1 and 2'
+        obj1.plotFeatureAgainstFeature(0, 2, outPath=outPath, show=givenShow,
                                        figureName='noise', label='2',
-                                       title='Feature 0 Vs 1 and 2',
-                                       yAxisLabel='Features 1 and 2')
+                                       title=title, yAxisLabel='')
 
     checkObj = nimble.data("Matrix", numpy.zeros((15, 12)), name="Checkerboard")
 
@@ -118,24 +118,71 @@ if __name__ == "__main__":
 
     # plot
     #heatMap: checkboard pattern, even columns 0s, odds = 1's, offset every other point
-    def plotCheckerboad(plotObj, outDir):
-        outPath = None
-        if outDir is not None:
-            outPath = os.path.join(outDir, "checkerboard")
-        plotObj.plot(outPath=outPath)
+    def plotCheckerboad(plotObj, outDir, givenShow):
+        outPath = getOutPath(outDir, "checkerboard")
+        plotObj.plot(outPath=outPath, show=givenShow)
 
     # heatmap: another one to show a gradient from a given formula (linear?)
-    def plotCheckeredGradient(plotObj, outDir):
-        outPath = None
-        if outDir is not None:
-            outPath = os.path.join(outDir, "checkerboardWithBar")
-        plotObj.plot(includeColorbar=True, outPath=outPath)
+    def plotCheckeredGradient(plotObj, outDir, givenShow):
+        outPath = getOutPath(outDir, "checkerboardWithBar")
+        plotObj.plot(includeColorbar=True, outPath=outPath, show=givenShow)
+
+    groups = [['G1', 'W', 25], ['G1', 'M', 20], ['G1', 'W', 32],
+              ['G1', 'M', 29], ['G1', 'M', 26], ['G1', 'M', 31],
+              ['G2', 'M', 33], ['G2', 'W', 32], ['G2', 'M', 25],
+              ['G2', 'W', 27], ['G3', 'M', 30], ['G3', 'W', 34],
+              ['G3', 'W', 29], ['G3', 'W', 28], ['G3', 'W', 28]]
+
+    features = ['GroupID', 'Gender', 'Score']
+    groupObj = nimble.data('Matrix', groups, featureNames=features)
+
+    def plotGroupMeans(plotObj, outDir, givenShow):
+        outPath = getOutPath(outDir, "groupMeansCI")
+
+        plotObj.plotFeatureGroupMeans(feature=2, groupFeature=0, ecolor='g',
+                                      xAxisLabel=False,  yAxisLabel=False,
+                                      outPath=outPath, show=givenShow)
+
+    def plotGroupCounts(plotObj, outDir, givenShow):
+        outPath = getOutPath(outDir, "groupCounts")
+
+        plotObj.plotFeatureGroupStatistics(
+            nimble.calculate.count, feature=2, groupFeature=0, show=False,
+            figureName='count', color='y', alpha=0.6)
+        plotObj.plotFeatureGroupStatistics(
+            nimble.calculate.count, feature=2, groupFeature=0,
+            subgroupFeature=1, outPath=outPath, show=givenShow,
+            figureName='count', edgecolor='k')
+
+    def plotFeatureComparisons(outDir, givenShow):
+        import numpy
+        d = numpy.random.rand(500, 6) * 2
+        d[:, 1] /= 2
+        d[:, 2] *= 2
+        d[:, 3] += 0.5
+        d[:, 4] = 1
+        d[:250, 5] = -2
+        d[250:, 5] = 4
+        plotObj = nimble.data("Matrix", d)
+        plotObj.name = 'MAD'
+
+        pathCI = getOutPath(outDir, "featureMeansCI")
+        plotObj.plotFeatureMeans(horizontal=True, show=False, outPath=pathCI)
+
+        pathBar = getOutPath(outDir, "featureMAD")
+        # show x tick label rotation when labels too long
+        plotObj.plotFeatureStatistics(nimble.calculate.medianAbsoluteDeviation,
+                                      outPath=pathBar, show=givenShow,
+                                      yAxisLabel='MAD', color='orange')
 
     # one function for each plot being drawn.
-    plotDistributionNormal(objNorm, givenOutDir)
+    plotDistributionNormal(objNorm, givenOutDir, givenShow)
     plotDistributionCompare(objNorm, givenOutDir)
-    plotDistributionNormalSquared(objNorm, givenOutDir)
-    plotComparisonNoiseVsScaled(givenOutDir)
-    plotComparisonMultipleNoiseVsScaled(givenOutDir)
-    plotCheckerboad(checkObj, givenOutDir)
-    plotCheckeredGradient(checkGradObj,givenOutDir)
+    plotDistributionNormalSquared(objNorm, givenOutDir, givenShow)
+    plotComparisonNoiseVsScaled(givenOutDir, givenShow)
+    plotComparisonMultipleNoiseVsScaled(givenOutDir, givenShow)
+    plotCheckerboad(checkObj, givenOutDir, givenShow)
+    plotCheckeredGradient(checkGradObj, givenOutDir, givenShow)
+    plotGroupMeans(groupObj, givenOutDir, givenShow)
+    plotGroupCounts(groupObj, givenOutDir, givenShow)
+    plotFeatureComparisons(givenOutDir, givenShow)

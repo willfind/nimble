@@ -14,7 +14,7 @@ import os.path
 import numpy
 
 import nimble
-from nimble._utility import pd, matplotlib, plt
+from nimble._utility import pd, matplotlib, plt, scipy
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
 
@@ -949,6 +949,10 @@ def limitedTo2D(method):
         return method(self, *args, **kwargs)
     return wrapped
 
+####################
+# Plotting Helpers #
+####################
+
 def matplotlibRequired(func):
     """
     Wrap plotting functions to check that matplotlib is accessible.
@@ -966,6 +970,7 @@ def plotFigureHandling(figureName):
         return figures[figureName]
 
     plot = plt.subplots()
+    plot[0].set_tight_layout(True)
     if figureName is not None:
         figures[figureName] = plot
     return plot
@@ -980,3 +985,39 @@ def plotOutput(outPath, show):
         plt.savefig(outPath, format=outFormat)
     if show:
         plt.show()
+        # once plt.show() is called, existing figures will no longer display on
+        # the next plt.show() call, so there is no need to keep _plotFigures
+        nimble.core.data._plotFigures = {}
+
+def plotAxisLabels(axisObj, xAxisLabel, xLabelIfTrue, yAxisLabel, yLabelIfTrue):
+    if xAxisLabel is True:
+        xAxisLabel = xLabelIfTrue
+    if xAxisLabel is False:
+        xAxisLabel = None
+    axisObj.set_xlabel(xAxisLabel)
+    if yAxisLabel is True:
+        yAxisLabel = yLabelIfTrue
+    if yAxisLabel is False:
+        yAxisLabel = None
+    axisObj.set_ylabel(yAxisLabel)
+
+def plotXTickLabels(ax, fig, names, numTicks):
+    xtickMax = max(len(name) for name in names)
+    # 1 unit of figwidth can contain 9 characters
+    tickWidth = int(fig.get_figwidth() / numTicks * 9)
+    if xtickMax > tickWidth:
+        ax.set_xticklabels(names, rotation='vertical')
+    else:
+        ax.set_xticklabels(names)
+
+def plotConfidenceIntervalMeanAndError(feature):
+    if not scipy.nimbleAccessible():
+        msg = 'scipy must be installed for confidence intervals.'
+        raise PackageException(msg)
+    mean = nimble.calculate.mean(feature)
+    std = nimble.calculate.standardDeviation(feature)
+    # two tailed 95% CI with n -1 degrees of freedom
+    tStat = scipy.stats.t.ppf(0.025, len(feature) - 1)
+    error = tStat * (std / numpy.sqrt(len(feature)))
+
+    return mean, error

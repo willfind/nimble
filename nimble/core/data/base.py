@@ -42,7 +42,9 @@ from ._dataHelpers import validateElementFunction, wrapMatchFunctionFactory
 from ._dataHelpers import ElementIterator1D
 from ._dataHelpers import isQueryString, elementQueryFunction
 from ._dataHelpers import limitedTo2D
-from ._dataHelpers import matplotlibRequired, plotOutput, plotFigureHandling
+from ._dataHelpers import matplotlibRequired, plotOutput
+from ._dataHelpers import plotFigureHandling, plotAxisLabels, plotXTickLabels
+from ._dataHelpers import plotConfidenceIntervalMeanAndError
 
 
 def to2args(f):
@@ -2368,7 +2370,7 @@ class Base(object):
 
     @limitedTo2D
     def plot(self, includeColorbar=False, outPath=None, show=True,
-             title=None, xAxisLabel=None, yAxisLabel=None, **kwargs):
+             title=True, xAxisLabel=True, yAxisLabel=True, **kwargs):
         """
         Display a plot of the data.
 
@@ -2381,14 +2383,14 @@ class Base(object):
         show : bool
             If True, display the plot. If False, the figure will not
             display until a plotting function with show=True is called.
-        title : str, None
-            The title of the plot. If None and this object has a name,
+        title : str, bool
+            The title of the plot. If True and this object has a name,
             the title will be the object name.
-        xAxisLabel : str
-            A label for the x axis. If None, the label will be "Feature
+        xAxisLabel : str, bool
+            A label for the x axis. If True, the label will be "Feature
             Values".
-        yAxisLabel : str
-            A label for the x axis. If None, the label will be "Point
+        yAxisLabel : str, bool
+            A label for the x axis. If True, the label will be "Point
             Values".
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
@@ -2411,13 +2413,17 @@ class Base(object):
         if includeColorbar:
             plt.colorbar()
 
-        if title is None and self.name.startswith(DEFAULT_NAME_PREFIX):
+        if title is True and not self.name.startswith(DEFAULT_NAME_PREFIX):
             title = self.name
-        if title:
-            plt.title(title)
-        if xAxisLabel is None:
+        elif title is True:
+            title = None
+        elif title is False:
+            title = None
+        plt.title(title)
+
+        if xAxisLabel is True:
             xAxisLabel = "Feature Values"
-        if yAxisLabel is None:
+        if yAxisLabel is True:
             yAxisLabel = "Point Values"
         plt.xlabel(xAxisLabel, labelpad=10)
         plt.ylabel(yAxisLabel)
@@ -2426,8 +2432,8 @@ class Base(object):
 
     @limitedTo2D
     def plotFeatureDistribution(self, feature, outPath=None, show=True,
-                                figureName=None, title=None, xAxisLabel=None,
-                                yAxisLabel=None, xMin=None, xMax=None,
+                                figureName=None, title=True, xAxisLabel=True,
+                                yAxisLabel=True, xMin=None, xMax=None,
                                 **kwargs):
         """
         Plot a histogram of the distribution of values in a feature.
@@ -2456,12 +2462,12 @@ class Base(object):
             otherwise the figure with that name will be activated to
             draw the plot on an existing figure.
         title : str, None
-            The title of the plot. If None the title will identify which
-            feature is presented in the distribution.
+            The title of the plot. If True, the title will identify the
+            feature presented in the distribution.
         xAxisLabel : str
-            A label for the x axis. If None, the label will be "Values".
+            A label for the x axis. If True, the label will be "Values".
         yAxisLabel : str
-            A label for the x axis. If None, the label will be "Number
+            A label for the x axis. If True, the label will be "Number
             of Values".
         xMin : int, float
             The minimum value shown on the x axis of the resultant plot.
@@ -2499,12 +2505,14 @@ class Base(object):
             if self.features._namesCreated():
                 name = self.features.getName(index)
 
-        if title is None:
+        if title is True:
             title = "Distribution of " + axis + " "
             if not name or name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
                 title += '#' + str(index)
             else:
                 title += "named: " + name
+        elif title is False:
+            title = None
         ax.set_title(title)
         toPlot = getter(index)
 
@@ -2528,12 +2536,8 @@ class Base(object):
         if 'label' in kwargs:
             ax.legend()
 
-        if xAxisLabel is None:
-            xAxisLabel = "Values"
-        if yAxisLabel is None:
-            yAxisLabel = "Number of Values"
-        ax.set_xlabel(xAxisLabel)
-        ax.set_ylabel(yAxisLabel)
+        plotAxisLabels(ax, xAxisLabel, "Values", yAxisLabel,
+                       "Number of Values")
 
         ax.update_datalim([(xMin, None), (xMax, None)], updatey=False)
 
@@ -2542,7 +2546,7 @@ class Base(object):
     @limitedTo2D
     def plotFeatureAgainstFeatureRollingAverage(
             self, x, y, sampleSizeForAverage=20, outPath=None, show=True,
-            figureName=None, title=None, xAxisLabel=None, yAxisLabel=None,
+            figureName=None, title=True, xAxisLabel=True, yAxisLabel=True,
             xMin=None, xMax=None, yMin=None, yMax=None, **kwargs):
         """
         A rolling average of the pairwise combination of feature values.
@@ -2574,12 +2578,12 @@ class Base(object):
             otherwise the figure with that name will be activated to
             draw the plot on an existing figure.
         title : str, None
-            The title of the plot. If None the title will identify which
-            features are presented in the plot.
+            The title of the plot. If True, the title will identify the
+            two features presented in the plot.
         xAxisLabel : str
-            A label for the x axis. If None, the label will be "Values".
+            A label for the x axis. If True, the label will be "Values".
         yAxisLabel : str
-            A label for the x axis. If None, the label will be "Number
+            A label for the x axis. If True, the label will be "Number
             of Values".
         xMin : int, float
             The minimum value shown on the x axis of the resultant plot.
@@ -2599,8 +2603,8 @@ class Base(object):
 
     @limitedTo2D
     def plotFeatureAgainstFeature(
-        self, x, y, outPath=None, show=True, figureName=None, title=None,
-        xAxisLabel=None, yAxisLabel=None, xMin=None, xMax=None, yMin=None,
+        self, x, y, outPath=None, show=True, figureName=None, title=True,
+        xAxisLabel=True, yAxisLabel=True, xMin=None, xMax=None, yMin=None,
         yMax=None,  **kwargs):
         """
         A scatter plot of the pairwise combination of feature values.
@@ -2629,13 +2633,13 @@ class Base(object):
             otherwise the figure with that name will be activated to
             draw the plot on an existing figure.
         title : str, None
-            The title of the plot. If None the title will identify which
-            features are presented in the plot.
+            The title of the plot. If True, the title will identify the
+            two features presented in the plot.
         xAxisLabel : str
-            A label for the x axis. If None, the label will be the x
+            A label for the x axis. If True, the label will be the x
             feature name or index.
         yAxisLabel : str
-            A label for the x axis. If None, the label will be the y
+            A label for the x axis. If True, the label will be the y
             feature name or index.
         xMin : int, float
             The minimum value shown on the x axis of the resultant plot.
@@ -2661,6 +2665,20 @@ class Base(object):
             figureName, title, xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax,
             **kwargs)
 
+    def _formattedStringID(self, axis, id):
+        if axis == 'point':
+            namesAxis = self.points
+        else:
+            namesAxis = self.features
+        if not isinstance(id, str):
+            names = namesAxis._getNamesNoGeneration()
+            if names is None or names[id].startswith(DEFAULT_PREFIX):
+                id = axis.capitalize() + ' #' + str(id)
+            else:
+                id = names[id]
+
+        return id
+
     @matplotlibRequired
     def _plotCross(self, x, xAxis, y, yAxis, sampleSizeForAverage, outPath,
                    show, figureName, title, xAxisLabel, yAxisLabel, xMin,
@@ -2685,25 +2703,14 @@ class Base(object):
         def fGetter(index):
             return customGetter(index, 'feature')
 
-        xName = None
-        yName = None
         if xAxis == 'point':
             xGetter = pGetter
-            if self.points._namesCreated():
-                xName = self.points.getName(xIndex)
         else:
             xGetter = fGetter
-            if self.features._namesCreated():
-                xName = self.features.getName(xIndex)
-
         if yAxis == 'point':
             yGetter = pGetter
-            if self.points._namesCreated():
-                yName = self.points.getName(yIndex)
         else:
             yGetter = fGetter
-            if self.features._namesCreated():
-                yName = self.features.getName(yIndex)
 
         xToPlot = xGetter(xIndex)
         yToPlot = yGetter(yIndex)
@@ -2718,19 +2725,9 @@ class Base(object):
             xToPlot = numpy.convolve(xToPlot, convShape)[startIdx:-startIdx]
             yToPlot = numpy.convolve(yToPlot, convShape)[startIdx:-startIdx]
 
-        if xName is None or xName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-            xlabel = xAxis + ' #' + str(xIndex)
-        else:
-            xlabel = xName
-        if yName is None or yName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-            ylabel = yAxis + ' #' + str(yIndex)
-        else:
-            ylabel = yName
+        xName = xlabel = self._formattedStringID(xAxis, xIndex)
+        yName = ylabel = self._formattedStringID(yAxis, yIndex)
 
-        if xName is None:
-            xName = str(xIndex)
-        if yName is None:
-            yName = str(yIndex)
         if sampleSizeForAverage:
             tmpStr = ' (%s sample average)' % sampleSizeForAverage
             xlabel += tmpStr
@@ -2745,22 +2742,413 @@ class Base(object):
         if 'label' in kwargs:
             ax.legend()
 
-        if title is None and self.name.startswith(DEFAULT_NAME_PREFIX):
+        if title is True and self.name.startswith(DEFAULT_NAME_PREFIX):
             title = ('%s vs. %s') % (xName, yName)
-        elif title is None:
+        elif title is True:
             title = ('%s: %s vs. %s') % (self.name, xName, yName)
+        elif title is False:
+            title = None
         ax.set_title(title)
 
-        if xAxisLabel is None:
-            xAxisLabel = xlabel
-        ax.set_xlabel(xAxisLabel)
-        if yAxisLabel is None:
-            yAxisLabel = ylabel
-        ax.set_ylabel(yAxisLabel)
-
+        plotAxisLabels(ax, xAxisLabel, xlabel, yAxisLabel, ylabel)
         ax.update_datalim([(xMin, yMin), (xMax, yMax)])
 
         plotOutput(outPath, show)
+
+    @limitedTo2D
+    def plotFeatureMeans(
+            self, features=None, horizontal=False, outPath=None, show=True,
+            figureName=None, title=True, xAxisLabel=True, yAxisLabel=True,
+            **kwargs):
+        """
+        Plot feature means with 95% confidence interval bars.
+
+        The 95% confidence interval for each feature is calculated using
+        the critical value from the two-sided Student's t-distribution.
+
+        Parameters
+        ----------
+        features : list of identifiers, None
+            List of feature names and/or indices to plot. None will
+            apply to all features.
+        horizontal : bool
+            False, the default, draws plot bars vertically. True will
+            draw bars horizontally.
+        outPath : str, None
+            A string of the path to save the current figure.
+        show : bool
+            If True, display the plot. If False, the figure will not
+            display until a plotting function with show=True is called.
+            This allows for future plots to placed on the figure with
+            the same ``figureName`` before being shown.
+        figureName : str, None
+            A new figure will be generated when None or a new name,
+            otherwise the figure with that name will be activated to
+            draw the plot on an existing figure.
+        title : str, bool
+            The title of the plot. If True, a title will automatically
+            be generated.
+        xAxisLabel : str, bool
+            A label for the x axis. If True, a label will automatically
+            be generated.
+        yAxisLabel : str, bool
+            A label for the x axis. If True, a label will automatically
+            be generated.
+        kwargs
+            Any keyword arguments accepted by matplotlib.pyplot's
+            ``errorbar`` function.
+        """
+        self._plotFeatureComparison(
+            nimble.calculate.mean, features, True, horizontal, outPath,
+            show, figureName, title, xAxisLabel, yAxisLabel, **kwargs)
+
+    @limitedTo2D
+    def plotFeatureStatistics(
+            self, statistic, features=None, horizontal=False, outPath=None,
+            show=True, figureName=None, title=True, xAxisLabel=True,
+            yAxisLabel=True, **kwargs):
+        """
+        Plot comparing an aggregate statistic between features.
+
+        A bar chart where bars in the plot represent the output of the
+        statistic function applied to each feature.
+
+        Parameters
+        ----------
+        statistic : function
+            Functions must take a feature view as an argument and return
+            a single numeric value. Common statistic functions can be
+            found in nimble.calculate.
+        features : list of identifiers, None
+            List of feature names and/or indices to plot. None will
+            apply to all features.
+        horizontal : bool
+            False, the default, draws plot bars vertically. True will
+            draw bars horizontally.
+        outPath : str, None
+            A string of the path to save the current figure.
+        show : bool
+            If True, display the plot. If False, the figure will not
+            display until a plotting function with show=True is called.
+            This allows for future plots to placed on the figure with
+            the same ``figureName`` before being shown.
+        figureName : str, None
+            A new figure will be generated when None or a new name,
+            otherwise the figure with that name will be activated to
+            draw the plot on an existing figure.
+        title : str, bool
+            The title of the plot. If True, a title will automatically
+            be generated.
+        xAxisLabel : str, bool
+            A label for the x axis. If True, a label will automatically
+            be generated.
+        yAxisLabel : str, bool
+            A label for the x axis. If True, a label will automatically
+            be generated.
+        kwargs
+            Any keyword arguments accepted by matplotlib.pyplot's
+            ``bar`` function.
+        """
+        self._plotFeatureComparison(
+            statistic, features, False, horizontal, outPath, show, figureName,
+            title, xAxisLabel, yAxisLabel, **kwargs)
+
+    @matplotlibRequired
+    def _plotFeatureComparison(
+            self, statistic, features, confidenceIntervals, horizontal,
+            outPath, show, figureName, title, xAxisLabel, yAxisLabel,
+            **kwargs):
+        fig, ax = plotFigureHandling(figureName)
+        if features is None:
+            features = [i for i in range(len(self.features))]
+        compareRange = range(len(features))
+        target = self.features[features]
+        names = [self._formattedStringID('feature', ft)
+                 for ft in features]
+        if hasattr(statistic, '__name__') and statistic.__name__ != '<lambda>':
+            statName = statistic.__name__
+        else:
+            statName = ''
+        if confidenceIntervals:
+            means = []
+            errors = []
+            for ft in target.features:
+                mean, error = plotConfidenceIntervalMeanAndError(ft)
+                means.append(mean)
+                errors.append(error)
+
+            if 'fmt' not in kwargs:
+                kwargs['fmt'] ='o'
+            if 'capsize' not in kwargs:
+                 kwargs['capsize'] = 8
+
+            if horizontal:
+                ax.errorbar(y=compareRange, x=means, xerr=errors, **kwargs)
+            else:
+                ax.errorbar(x=compareRange, y=means, yerr=errors, **kwargs)
+
+            if title is True:
+                title = "95% Confidence Intervals for Feature Means"
+        else:
+            applied = target.features.calculate(statistic, useLog=False)
+            if horizontal:
+                ax.barh(compareRange, applied, **kwargs)
+            else:
+                ax.bar(compareRange, applied, **kwargs)
+            if title is True:
+                title = ''
+                objName = '' if self.name is None else self.name
+                if objName and not objName.startswith(DEFAULT_NAME_PREFIX):
+                    title += "{}: ".format(objName)
+                title += "Feature Comparison"
+
+        if title is False:
+            title = None
+        ax.set_title(title)
+        if horizontal:
+            ax.set_yticks(compareRange)
+            ax.set_yticklabels(names)
+            yAxisDefault = "Feature"
+            xAxisDefault = statName
+        else:
+            ax.set_xticks(compareRange)
+            plotXTickLabels(ax, fig, names, len(features))
+            xAxisDefault = "Feature"
+            yAxisDefault = statName
+
+        plotAxisLabels(ax, xAxisLabel, xAxisDefault, yAxisLabel, yAxisDefault)
+
+        plotOutput(outPath, show)
+
+    @limitedTo2D
+    def plotFeatureGroupMeans(
+            self, feature, groupFeature, horizontal=False, outPath=None,
+            show=True, figureName=None, title=True, xAxisLabel=True,
+            yAxisLabel=True, **kwargs):
+        """
+        Plot the means of a feature grouped by another feature.
+
+        The plot will include 95% confidence interval bars. The 95%
+        confidence interval for each feature is calculated using the
+        critical value from the two-sided Student's t-distribution.
+
+        Parameters
+        ----------
+        feature : identifier
+            The feature name or index that will be grouped.
+        groupFeature : identifier
+            The feature name or index that defines the groups in
+            ``feature``
+        horizontal : bool
+            False, the default, draws plot bars vertically. True will
+            draw bars horizontally.
+        outPath : str, None
+            A string of the path to save the current figure.
+        show : bool
+            If True, display the plot. If False, the figure will not
+            display until a plotting function with show=True is called.
+            This allows for future plots to placed on the figure with
+            the same ``figureName`` before being shown.
+        figureName : str, None
+            A new figure will be generated when None or a new name,
+            otherwise the figure with that name will be activated to
+            draw the plot on an existing figure.
+        title : str, bool
+            The title of the plot. If True, a title will automatically
+            be generated.
+        xAxisLabel : str, bool
+            A label for the x axis. If True, a label will automatically
+            be generated.
+        yAxisLabel : str, bool
+            A label for the x axis. If True, a label will automatically
+            be generated.
+        kwargs
+            Any keyword arguments accepted by matplotlib.pyplot's
+            ``errorbar`` function.
+        """
+        self._plotFeatureGroupStatistics(
+            nimble.calculate.mean, feature, groupFeature, None, True,
+            horizontal, outPath, show, figureName, title, xAxisLabel,
+            yAxisLabel, **kwargs)
+
+    @limitedTo2D
+    def plotFeatureGroupStatistics(
+            self, statistic, feature, groupFeature, subgroupFeature=None,
+            horizontal=False, outPath=None, show=True, figureName=None,
+            title=True, xAxisLabel=True, yAxisLabel=True, **kwargs):
+        """
+        Plot an aggregate statistic for each group of a feature.
+
+        A bar chart where each bar in the plot represent the output of
+        the statistic function applied to each group (or subgroup, when
+        applicable).
+
+        Parameters
+        ----------
+        statistic : function
+            Functions must take a feature view as an argument and return
+            a single numeric value. Common statistic functions can be
+            found in nimble.calculate.
+        feature : identifier
+            The feature name or index that will be grouped.
+        groupFeature : identifier
+            The feature name or index that defines the groups in
+            ``feature``
+        subgroupFeature : identifier, None
+            An optional subgrouping feature. When not None, the bar for
+            each group defined by ``groupFeature`` will be subdivided
+            based on this feature with a unique colored bar for each
+            subgroup.
+        horizontal : bool
+            False, the default, draws plot bars vertically. True will
+            draw bars horizontally.
+        outPath : str, None
+            A string of the path to save the current figure.
+        show : bool
+            If True, display the plot. If False, the figure will not
+            display until a plotting function with show=True is called.
+            This allows for future plots to placed on the figure with
+            the same ``figureName`` before being shown.
+        figureName : str, None
+            A new figure will be generated when None or a new name,
+            otherwise the figure with that name will be activated to
+            draw the plot on an existing figure.
+        title : str, bool
+            The title of the plot. If True, a title will automatically
+            be generated.
+        xAxisLabel : str, bool
+            A label for the x axis. If True, a label will automatically
+            be generated.
+        yAxisLabel : str, bool
+            A label for the x axis. If True, a label will automatically
+            be generated.
+        kwargs
+            Any keyword arguments accepted by matplotlib.pyplot's
+            ``bar`` function.
+        """
+        self._plotFeatureGroupStatistics(
+            statistic, feature, groupFeature, subgroupFeature, False,
+            horizontal, outPath, show, figureName, title, xAxisLabel,
+            yAxisLabel, **kwargs)
+
+    @matplotlibRequired
+    def _plotFeatureGroupStatistics(
+            self, statistic, feature, groupFeature, subgroupFeature,
+            confidenceIntervals, horizontal, outPath, show, figureName, title,
+            xAxisLabel, yAxisLabel, **kwargs):
+        fig, ax = plotFigureHandling(figureName)
+        featureName = self._formattedStringID('feature', feature)
+        if hasattr(statistic, '__name__') and statistic.__name__ != '<lambda>':
+            statName = statistic.__name__
+        else:
+            statName = ''
+        if subgroupFeature:
+            target = [groupFeature, subgroupFeature, feature]
+        else:
+            target = [groupFeature, feature]
+        toGroup = self.features[target]
+        grouped = toGroup.groupByFeature(0, useLog=False)
+
+        axis = range(1, len(grouped) + 1)
+        names = []
+        if confidenceIntervals:
+            means = []
+            errors = []
+            for name, ft in grouped.items():
+                names.append(name)
+                mean, error = plotConfidenceIntervalMeanAndError(ft)
+                means.append(mean)
+                errors.append(error)
+
+            if 'fmt' not in kwargs:
+                kwargs['fmt'] ='o'
+            if 'capsize' not in kwargs:
+                 kwargs['capsize'] = 8
+
+            if horizontal:
+                ax.errorbar(y=axis, x=means, xerr=errors, **kwargs)
+            else:
+                ax.errorbar(x=axis, y=means, yerr=errors, **kwargs)
+
+            if title is True:
+                title = "95% Confidence Intervals for Mean of " + featureName
+
+        elif subgroupFeature:
+            heights = {}
+            for name, group in grouped.items():
+                names.append(name)
+                subgrouped = group.groupByFeature(0, useLog=False)
+                for subname, subgroup in subgrouped.items():
+                    if subname in heights:
+                        heights[subname].append(statistic(subgroup))
+                    else:
+                        heights[subname] = [statistic(subgroup)]
+
+            # need to manually handle some kwargs with subgroups
+            if 'width' in kwargs:
+                width = kwargs['width']
+                del kwargs['width']
+            else:
+                width = 0.8 # plt.bar default
+            if 'color' in kwargs:
+                # sets color array to apply to subgroup bars not group bars
+                ax.set_prop_cycle(color=kwargs['color'])
+                del kwargs['color']
+            singleWidth = width / len(heights)
+            start = 1 - (width / 2) + (singleWidth / 2)
+
+            for i, (name, height) in enumerate(heights.items()):
+                widths = numpy.arange(start, len(height))
+                widths += i * singleWidth
+                if horizontal:
+                    ax.barh(widths, height, height=singleWidth, label=name,
+                            **kwargs)
+                else:
+                    ax.bar(widths, height, width=singleWidth, label=name,
+                           **kwargs)
+
+            subgroup = self._formattedStringID('feature', subgroupFeature)
+            if title is True:
+                title = "{feat} {stat} by {group}"
+                group = self._formattedStringID('feature', groupFeature)
+                title = title.format(feat=featureName, stat=statName,
+                                     group=group)
+            ax.legend(title=subgroup)
+
+        else:
+            heights = []
+            for name, group in grouped.items():
+                names.append(name)
+                heights.append(statistic(group))
+            if horizontal:
+                ax.barh(axis, heights, **kwargs)
+            else:
+                ax.bar(axis, heights, **kwargs)
+
+            if title is True:
+                title = "{feat} {stat} by {group}"
+                group = self._formattedStringID('feature', groupFeature)
+                title = title.format(feat=featureName, stat=statName,
+                                     group=group)
+
+        if title is False:
+            title = None
+        ax.set_title(title)
+        if horizontal:
+            ax.set_yticks(axis)
+            ax.set_yticklabels(names)
+            yAxisDefault = self._formattedStringID('feature', groupFeature)
+            xAxisDefault = statName
+        else:
+            ax.set_xticks(axis)
+            plotXTickLabels(ax, fig, names, len(grouped))
+            xAxisDefault = self._formattedStringID('feature', groupFeature)
+            yAxisDefault = statName
+
+        plotAxisLabels(ax, xAxisLabel, xAxisDefault, yAxisLabel, yAxisDefault)
+
+        plotOutput(outPath, show)
+
 
     ##################################################################
     ##################################################################

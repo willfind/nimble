@@ -2257,6 +2257,7 @@ class QueryBackend(DataTestObject):
     ########
 
     @attr('slow')
+    @noLogEntryExpected
     def test_plot_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
             path = outFile.name
@@ -2279,6 +2280,7 @@ class QueryBackend(DataTestObject):
     ###########################
 
     @attr('slow')
+    @noLogEntryExpected
     def test_plotFeatureDistribution_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
             path = outFile.name
@@ -2302,6 +2304,7 @@ class QueryBackend(DataTestObject):
     #############################
 
     @attr('slow')
+    @noLogEntryExpected
     def test_plotFeatureAgainstFeature_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
             path = outFile.name
@@ -2318,6 +2321,102 @@ class QueryBackend(DataTestObject):
             endSize = os.path.getsize(path)
             assert startSize < endSize
             assertNoNamesGenerated(obj)
+
+    ####################
+    # plotFeatureMeans #
+    ####################
+
+    @attr('slow')
+    @noLogEntryExpected
+    def test_plotFeatureMeans_fileOutput(self):
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+            path = outFile.name
+            startSize = os.path.getsize(path)
+            assert startSize == 0
+
+            obj = nimble.random.data("List", 10, 10, 0, useLog=False)
+            #we call the leading underscore version, because it
+            # returns the process
+            obj.plotFeatureMeans(outPath=path, show=False)
+
+            endSize = os.path.getsize(path)
+            assert startSize < endSize
+            assertNoNamesGenerated(obj)
+
+    #########################
+    # plotFeatureStatistics #
+    #########################
+
+    @attr('slow')
+    @noLogEntryExpected
+    def test_plotFeatureStatistics_fileOutput(self):
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+            path = outFile.name
+            startSize = os.path.getsize(path)
+            assert startSize == 0
+
+            obj = nimble.random.data("List", 10, 10, 0, useLog=False)
+            #we call the leading underscore version, because it
+            # returns the process
+            obj.plotFeatureStatistics(sum, outPath=path, show=False)
+
+            endSize = os.path.getsize(path)
+            assert startSize < endSize
+            assertNoNamesGenerated(obj)
+
+
+    #########################
+    # plotFeatureGroupMeans #
+    #########################
+
+    @attr('slow')
+    @noLogEntryExpected
+    def test_plotFeatureGroupMeans_fileOutput(self):
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+            path = outFile.name
+            startSize = os.path.getsize(path)
+            assert startSize == 0
+
+            groups = [['a'], ['a'], ['a'], ['b'], ['b'], ['b'],
+                      ['c'], ['c'], ['c'], ['d']]
+            groupObj = nimble.data('List', groups, useLog=False)
+            obj = nimble.random.data("List", 10, 1, 0, useLog=False)
+            obj.features.append(groupObj, useLog=False)
+
+            #we call the leading underscore version, because it
+            # returns the process
+            obj.plotFeatureGroupMeans(0, 1, outPath=path, show=False)
+
+            endSize = os.path.getsize(path)
+            assert startSize < endSize
+            assertNoNamesGenerated(obj)
+
+    ##############################
+    # plotFeatureGroupStatistics #
+    ##############################
+
+    @attr('slow')
+    @noLogEntryExpected
+    def test_plotFeatureGroupStatistics_fileOutput(self):
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+            path = outFile.name
+            startSize = os.path.getsize(path)
+            assert startSize == 0
+
+            groups = [['a'], ['a'], ['a'], ['b'], ['b'], ['b'],
+                      ['c'], ['c'], ['c'], ['d']]
+            groupObj = nimble.data('List', groups, useLog=False)
+            obj = nimble.random.data("List", 10, 1, 0, useLog=False)
+            obj.features.append(groupObj, useLog=False)
+
+            #we call the leading underscore version, because it
+            # returns the process
+            obj.plotFeatureGroupStatistics(sum, 0, 1, outPath=path, show=False)
+
+            endSize = os.path.getsize(path)
+            assert startSize < endSize
+            assertNoNamesGenerated(obj)
+
 
     ###################
     # points.__iter__ #

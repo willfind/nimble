@@ -325,3 +325,38 @@ def test_residuals_matches_SKL():
 
     assert sklRet.isApproximatelyEqual(nimbleRet)
     assert_array_almost_equal(nimbleRet.copy(to="numpy array"), sklRet.copy(to="numpy array"), 15)
+
+
+@noLogEntryExpected
+def test_count():
+    raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
+    func = nimble.calculate.statistic.count
+    for dataType in testDataTypes:
+        objl = nimble.data(dataType, raw, useLog=False)
+
+        retlf = objl.features.calculate(func, useLog=False)
+        retlfCorrect = nimble.data(dataType, [2, 3, 2], useLog=False)
+        assert retlf.isIdentical(retlfCorrect)
+        assert retlfCorrect.isIdentical(retlf)
+
+        retlp = objl.points.calculate(func, useLog=False)
+        retlpCorrect = nimble.data(dataType, [[2], [2], [3]], useLog=False)
+        assert retlp.isIdentical(retlpCorrect)
+        assert retlpCorrect.isIdentical(retlp)
+
+@noLogEntryExpected
+def test_sum():
+    raw = [[1, 0, np.nan], [None, 5, 6], [7, 0, 9]]
+    func = nimble.calculate.statistic.sum
+    for dataType in testDataTypes:
+        objl = nimble.data(dataType, raw, useLog=False)
+
+        retlf = objl.features.calculate(func, useLog=False)
+        retlfCorrect = nimble.data(dataType, [8, 5, 15], useLog=False)
+        assert retlf.isIdentical(retlfCorrect)
+        assert retlfCorrect.isIdentical(retlf)
+
+        retlp = objl.points.calculate(func, useLog=False)
+        retlpCorrect = nimble.data(dataType, [[1], [11], [16]], useLog=False)
+        assert retlp.isIdentical(retlpCorrect)
+        assert retlpCorrect.isIdentical(retlp)
