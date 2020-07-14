@@ -554,10 +554,11 @@ class Base(object):
 
         replace = self.features.extract([index], useLog=False)
 
-        uniqueVals = list(replace.countUniqueElements().keys())
+        uniqueVals = replace.countUniqueElements().keys()
+        uniqueIdx = {key: i for i, key in enumerate(uniqueVals)}
 
         binaryObj = replace._replaceFeatureWithBinaryFeatures_implementation(
-            uniqueVals)
+            uniqueIdx)
 
         binaryObj.points.setNames(self.points._getNamesNoGeneration(),
                                   useLog=False)

@@ -105,6 +105,7 @@ def run_setup(extensions=None):
         'Operating System :: OS Independent',
         )
     setupKwargs['include_package_data'] = True
+    setupKwargs['convert_2to3_doctests'] = []
     setupKwargs['install_requires'] = ['numpy>=1.10.4']
     # extras
     pandas = 'pandas>=0.20'

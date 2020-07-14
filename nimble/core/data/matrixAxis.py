@@ -55,6 +55,9 @@ class MatrixAxis(Axis):
             ret = self._base.data[:, targetList]
 
         if structure != 'copy':
+            if len(targetList) == 1:
+                targetList = targetList[0]
+            # numpy.delete can be faster by passing an integer when possible
             self._base.data = numpy.delete(self._base.data,
                                            targetList, axisVal)
 

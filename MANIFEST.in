@@ -1,8 +1,0 @@
-# Include the configuration file
-include nimble/configuration.ini
-
-# Include interface metadata files
-recursive-include nimble/interfaces/metadata *
-
-# Exclude tests
-prune tests
