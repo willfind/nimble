@@ -568,13 +568,12 @@ class Base(object):
             ftNames.append(prefix + str(val))
         binaryObj.features.setNames(ftNames, useLog=False)
 
-        # by default, put back in same place
-        insertBefore = index
         # must use append if the object is now feature empty
         if len(self.features) == 0:
             self.features.append(binaryObj, useLog=False)
         else:
-            self.features.insert(insertBefore, binaryObj, useLog=False)
+            # insert data at same index of the original feature
+            self.features.insert(index, binaryObj, useLog=False)
 
         handleLogging(useLog, 'prep', "replaceFeatureWithBinaryFeatures",
                       self.getTypeString(),

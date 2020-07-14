@@ -22,6 +22,7 @@ from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
 from ._dataHelpers import denseCountUnique
 from ._dataHelpers import NimbleElementIterator
+from ._dataHelpers import convertToNumpyOrder
 
 @inheritDocstringsFactory(Base)
 class Matrix(Base):
@@ -230,11 +231,11 @@ class Matrix(Base):
 
     def _flatten_implementation(self, order):
         numElements = len(self.points) * len(self.features)
-        order = 'C' if order == 'point' else 'F'
+        order = convertToNumpyOrder(order)
         self.data = self.data.reshape((1, numElements), order=order)
 
     def _unflatten_implementation(self, reshape, order):
-        order = 'C' if order == 'point' else 'F'
+        order = convertToNumpyOrder(order)
         self.data = self.data.reshape(reshape, order=order)
 
     def _merge_implementation(self, other, point, feature, onFeature,

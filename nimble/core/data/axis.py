@@ -775,13 +775,13 @@ class Axis(object):
                       self._base.getTypeString(), self._sigFunc('normalize'),
                       subtract, divide, applyResultTo)
 
-    def _repeat(self, totalCopies, copyValueByValue):
+    def _repeat(self, totalCopies, copyVectorByVector):
         if not isinstance(totalCopies, (int, numpy.int)) or totalCopies < 1:
             raise InvalidArgumentType("totalCopies must be a positive integer")
         if totalCopies == 1:
             return self._base.copy()
 
-        repeated = self._repeat_implementation(totalCopies, copyValueByValue)
+        repeated = self._repeat_implementation(totalCopies, copyVectorByVector)
 
         if self._isPoint:
             ptNames = self._getNamesNoGeneration()
@@ -792,7 +792,7 @@ class Axis(object):
             namesToRepeat = ftNames
             ptNames = self._base.points._getNamesNoGeneration()
 
-        if copyValueByValue and namesToRepeat is not None:
+        if copyVectorByVector and namesToRepeat is not None:
             origNames = namesToRepeat.copy()
             for idx, name in enumerate(origNames):
                 for i in range(totalCopies):
@@ -1564,7 +1564,7 @@ class Axis(object):
         pass
 
     @abstractmethod
-    def _repeat_implementation(self, totalCopies, copyValueByValue):
+    def _repeat_implementation(self, totalCopies, copyVectorByVector):
         pass
 
     @abstractmethod
