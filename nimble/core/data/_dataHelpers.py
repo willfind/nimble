@@ -969,11 +969,18 @@ def plotFigureHandling(figureName):
     if figureName and figureName in figures:
         return figures[figureName]
 
-    plot = plt.subplots()
-    plot[0].set_tight_layout(True)
+    fig, ax = plt.subplots()
+    # tight_layout automatically adjusts margins to accommodate labels
+    fig.set_tight_layout(True)
+    # ax.set_[xy]lims will set the upper and lower limits even if only one is
+    # specified. This is problematic for multiple plots because subsequent
+    # plots are restricted to both limits when one of the limits should still
+    # be dynamic. Setting a _nimbleAxisLimits attribute is a workaround to
+    # set the limits the user wants to set while keeping the others dynamic
+    ax._nimbleAxisLimits = [None, None, None, None]
     if figureName is not None:
-        figures[figureName] = plot
-    return plot
+        figures[figureName] = fig, ax
+    return fig, ax
 
 def plotOutput(outPath, show):
     if outPath is not None:
@@ -989,17 +996,34 @@ def plotOutput(outPath, show):
         # the next plt.show() call, so there is no need to keep _plotFigures
         nimble.core.data._plotFigures = {}
 
-def plotAxisLabels(axisObj, xAxisLabel, xLabelIfTrue, yAxisLabel, yLabelIfTrue):
+def plotAxisLabels(ax, xAxisLabel, xLabelIfTrue, yAxisLabel, yLabelIfTrue):
     if xAxisLabel is True:
         xAxisLabel = xLabelIfTrue
     if xAxisLabel is False:
         xAxisLabel = None
-    axisObj.set_xlabel(xAxisLabel)
+    ax.set_xlabel(xAxisLabel)
     if yAxisLabel is True:
         yAxisLabel = yLabelIfTrue
     if yAxisLabel is False:
         yAxisLabel = None
-    axisObj.set_ylabel(yAxisLabel)
+    ax.set_ylabel(yAxisLabel)
+
+def plotUpdateAxisLimits(ax, xMin, xMax, yMin, yMax):
+    if xMin is not None:
+        ax._nimbleAxisLimits[0] = xMin
+    if xMax is not None:
+        ax._nimbleAxisLimits[1] = xMax
+    if yMin is not None:
+        ax._nimbleAxisLimits[0] = yMin
+    if yMax is not None:
+        ax._nimbleAxisLimits[1] = yMax
+    ax.set_xlim(auto=True)
+    ax.set_ylim(auto=True)
+
+def plotAxisLimits(ax):
+    xMin, xMax, yMin, yMax = ax._nimbleAxisLimits
+    ax.set_xlim(left=xMin, right=xMax)
+    ax.set_ylim(bottom=yMin, top=yMax)
 
 def plotXTickLabels(ax, fig, names, numTicks):
     xtickMax = max(len(name) for name in names)

@@ -42,8 +42,9 @@ from ._dataHelpers import validateElementFunction, wrapMatchFunctionFactory
 from ._dataHelpers import ElementIterator1D
 from ._dataHelpers import isQueryString, elementQueryFunction
 from ._dataHelpers import limitedTo2D
-from ._dataHelpers import matplotlibRequired, plotOutput
-from ._dataHelpers import plotFigureHandling, plotAxisLabels, plotXTickLabels
+from ._dataHelpers import matplotlibRequired, plotOutput, plotFigureHandling
+from ._dataHelpers import plotUpdateAxisLimits, plotAxisLimits
+from ._dataHelpers import plotAxisLabels, plotXTickLabels
 from ._dataHelpers import plotConfidenceIntervalMeanAndError
 
 
@@ -2486,12 +2487,13 @@ class Base(object):
                                  **kwargs):
         return self._plotDistribution('feature', feature, outPath, show,
                                       figureName, title, xAxisLabel,
-                                      yAxisLabel,xMin, xMax, **kwargs)
+                                      yAxisLabel, xMin, xMax, **kwargs)
 
     @matplotlibRequired
     def _plotDistribution(self, axis, identifier, outPath, show, figureName,
                           title, xAxisLabel, yAxisLabel, xMin, xMax, **kwargs):
         fig, ax = plotFigureHandling(figureName)
+        plotUpdateAxisLimits(ax, xMin, xMax, None, None)
 
         axisObj = self._getAxis(axis)
         index = axisObj.getIndex(identifier)
@@ -2536,18 +2538,18 @@ class Base(object):
         if 'label' in kwargs:
             ax.legend()
 
+        plotAxisLimits(ax)
         plotAxisLabels(ax, xAxisLabel, "Values", yAxisLabel,
                        "Number of Values")
-
-        ax.update_datalim([(xMin, None), (xMax, None)], updatey=False)
 
         plotOutput(outPath, show)
 
     @limitedTo2D
     def plotFeatureAgainstFeatureRollingAverage(
-            self, x, y, sampleSizeForAverage=20, outPath=None, show=True,
-            figureName=None, title=True, xAxisLabel=True, yAxisLabel=True,
-            xMin=None, xMax=None, yMin=None, yMax=None, **kwargs):
+            self, x, y, sampleSizeForAverage=20, trend=None, outPath=None,
+            show=True, figureName=None, title=True, xAxisLabel=True,
+            yAxisLabel=True, xMin=None, xMax=None, yMin=None, yMax=None,
+            **kwargs):
         """
         A rolling average of the pairwise combination of feature values.
 
@@ -2566,6 +2568,9 @@ class Base(object):
         sampleSizeForAverage : int
             The number of samples to use for the calculation of the
             rolling average.
+        trend : str, None
+            Specify a trendline type. Currently "linear" is the only
+            supported string option. None will not add a trendline.
         outPath : str, None
             A string of the path to save the current figure.
         show : bool
@@ -2598,14 +2603,14 @@ class Base(object):
             ``scatter`` function.
         """
         self._plotFeatureAgainstFeature(
-            x, y, sampleSizeForAverage, outPath, show, figureName, title,
-            xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax, **kwargs)
+            x, y, sampleSizeForAverage, trend, outPath, show, figureName,
+            title, xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax, **kwargs)
 
     @limitedTo2D
     def plotFeatureAgainstFeature(
-        self, x, y, outPath=None, show=True, figureName=None, title=True,
-        xAxisLabel=True, yAxisLabel=True, xMin=None, xMax=None, yMin=None,
-        yMax=None,  **kwargs):
+        self, x, y, trend=None, outPath=None, show=True, figureName=None,
+        title=True, xAxisLabel=True, yAxisLabel=True, xMin=None, xMax=None,
+        yMin=None, yMax=None, **kwargs):
         """
         A scatter plot of the pairwise combination of feature values.
 
@@ -2621,6 +2626,9 @@ class Base(object):
         y : identifier
             The index or name of the feature from which we draw y-axis
             coordinates.
+        trend : str, None
+            Specify a trendline type. Currently "linear" is the only
+            supported string option. None will not add a trendline.
         outPath : str, None
             A string of the path to save the current figure.
         show : bool
@@ -2654,16 +2662,16 @@ class Base(object):
             ``scatter`` function.
         """
         self._plotFeatureAgainstFeature(
-            x, y, None, outPath, show, figureName, title, xAxisLabel,
+            x, y, None, trend, outPath, show, figureName, title, xAxisLabel,
             yAxisLabel, xMin, xMax, yMin, yMax, **kwargs)
 
     def _plotFeatureAgainstFeature(
-            self, x, y, sampleSizeForAverage, outPath, show, figureName, title,
-            xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax, **kwargs):
+            self, x, y, trend, sampleSizeForAverage, outPath, show, figureName,
+            title, xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax, **kwargs):
         return self._plotCross(
-            x, 'feature', y, 'feature', sampleSizeForAverage, outPath, show,
-            figureName, title, xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax,
-            **kwargs)
+            x, 'feature', y, 'feature', trend, sampleSizeForAverage, outPath,
+            show, figureName, title, xAxisLabel, yAxisLabel, xMin, xMax, yMin,
+            yMax, **kwargs)
 
     def _formattedStringID(self, axis, id):
         if axis == 'point':
@@ -2680,9 +2688,9 @@ class Base(object):
         return id
 
     @matplotlibRequired
-    def _plotCross(self, x, xAxis, y, yAxis, sampleSizeForAverage, outPath,
-                   show, figureName, title, xAxisLabel, yAxisLabel, xMin,
-                   xMax, yMin, yMax, **kwargs):
+    def _plotCross(self, x, xAxis, y, yAxis, sampleSizeForAverage, trend,
+                   outPath, show, figureName, title, xAxisLabel, yAxisLabel,
+                   xMin, xMax, yMin, yMax, **kwargs):
         fig, ax = plotFigureHandling(figureName)
 
         xAxisObj = self._getAxis(xAxis)
@@ -2742,6 +2750,25 @@ class Base(object):
         if 'label' in kwargs:
             ax.legend()
 
+        plotAxisLimits(ax)
+
+        if trend is not None and trend.lower() == 'linear':
+            meanX = numpy.mean(xToPlot)
+            meanY = numpy.mean(yToPlot)
+            errorX = meanX - xToPlot
+            sumSquareErrorX = sum((errorX) ** 2)
+            sumErrorXY = sum(errorX * (meanY - yToPlot))
+            slope = sumErrorXY / sumSquareErrorX
+            intercept = meanY - slope * meanX
+            xVals = ax.get_xlim()
+            yVals = list(map(lambda x: slope * x + intercept, xVals))
+            ax.plot(xVals, yVals, scalex=False, scaley=False)
+
+        elif trend is not None:
+            msg = 'invalid trend value. "linear" is the only value supported '
+            msg += 'at this time'
+            raise InvalidArgumentValue(msg)
+
         if title is True and self.name.startswith(DEFAULT_NAME_PREFIX):
             title = ('%s vs. %s') % (xName, yName)
         elif title is True:
@@ -2751,7 +2778,6 @@ class Base(object):
         ax.set_title(title)
 
         plotAxisLabels(ax, xAxisLabel, xlabel, yAxisLabel, ylabel)
-        ax.update_datalim([(xMin, yMin), (xMax, yMax)])
 
         plotOutput(outPath, show)
 

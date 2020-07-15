@@ -24,6 +24,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         givenOutDir = sys.argv[1]
 
+    # plots will not show when show value set to False
     givenShow = True
     if len(sys.argv) > 2:
         givenShow = True if sys.argv[2].lower() != "false" else False
@@ -37,7 +38,7 @@ if __name__ == "__main__":
 
         plotObj.plotFeatureDistribution(0, outPath=outPath, show=givenShow)
 
-    # 1000 samples of N(0,1)
+    # 1000 samples of N(0,1) shifted left and right
     def plotDistributionCompare(plotObj, outDir):
         outPath = getOutPath(outDir, "DistributionCompare")
 
@@ -75,7 +76,9 @@ if __name__ == "__main__":
         obj1.name = "Noise"
 
         outPath = getOutPath(outDir, "NoiseVsScaled")
-        obj1.plotFeatureAgainstFeature(0, 1, outPath=outPath, show=givenShow)
+        obj1.plotFeatureAgainstFeature(0, 1, trend='linear', outPath=outPath,
+                                       show=givenShow, xMin=-0.2, xMax=1.2,
+                                       yMin=-0.2, yMax=5.2)
 
     def plotComparisonMultipleNoiseVsScaled(outDir, givenShow):
         import numpy
