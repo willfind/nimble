@@ -92,7 +92,7 @@ class MatrixAxis(Axis):
             return nimble.data('Matrix', uniqueData, pointNames=offAxisNames,
                                featureNames=axisNames, useLog=False)
 
-    def _repeat_implementation(self, totalCopies, copyValueByValue):
+    def _repeat_implementation(self, totalCopies, copyVectorByVector):
         if self._isPoint:
             axis = 0
             ptDim = totalCopies
@@ -101,7 +101,7 @@ class MatrixAxis(Axis):
             axis = 1
             ptDim = 1
             ftDim = totalCopies
-        if copyValueByValue:
+        if copyVectorByVector:
             repeated = numpy.repeat(self._base.data, totalCopies, axis)
         else:
             repeated = numpy.tile(self._base.data, (ptDim, ftDim))

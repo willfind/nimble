@@ -16,7 +16,7 @@ import numpy
 import nimble
 from nimble._utility import pd, matplotlib, plt, scipy
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.exceptions import ImproperObjectAction
+from nimble.exceptions import ImproperObjectAction, PackageException
 
 # the prefix for default featureNames
 DEFAULT_PREFIX = "_DEFAULT_#"
@@ -948,6 +948,9 @@ def limitedTo2D(method):
             raise ImproperObjectAction(msg)
         return method(self, *args, **kwargs)
     return wrapped
+
+def convertToNumpyOrder(order):
+    return 'C' if order == 'point' else 'F'
 
 ####################
 # Plotting Helpers #
