@@ -124,8 +124,9 @@ base_notLogged = [
     'matrixPower', 'nameIsDefault', 'plot', 'plotFeatureAgainstFeature',
     'plotFeatureAgainstFeatureRollingAverage', 'plotFeatureDistribution',
     'plotFeatureMeans', 'plotFeatureStatistics', 'plotFeatureGroupMeans',
-    'plotFeatureGroupStatistics', 'pointView', 'referenceDataFrom', 'save',
-    'show', 'solveLinearSystem', 'toString', 'validate', 'view', 'writeFile',
+    'plotFeatureGroupStatistics', 'plotFeatures', 'pointView',
+    'referenceDataFrom', 'save', 'show', 'solveLinearSystem', 'toString',
+    'validate', 'view', 'writeFile',
     ]
 base_funcs = base_logged + base_notLogged
 base_tested = list(map(prefixAdder('Base'), base_funcs))

@@ -1045,3 +1045,46 @@ def plotConfidenceIntervalMeanAndError(feature):
     error = tStat * (std / numpy.sqrt(len(feature)))
 
     return mean, error
+
+def plotErrorBars(ax, axisRange, means, errors, horizontal, **kwargs):
+    if 'fmt' not in kwargs:
+        kwargs['fmt'] ='o'
+    if 'capsize' not in kwargs:
+         kwargs['capsize'] = 8
+
+    if horizontal:
+        ax.errorbar(y=axisRange, x=means, xerr=errors, **kwargs)
+    else:
+        ax.errorbar(x=axisRange, y=means, yerr=errors, **kwargs)
+
+def plotSingleBarChart(ax, axisRange, heights, horizontal, **kwargs):
+    if horizontal:
+        ax.barh(axisRange, heights, **kwargs)
+    else:
+        ax.bar(axisRange, heights, **kwargs)
+
+def plotMultiBarChart(ax, heights, horizontal, legendTitle, **kwargs):
+    # need to manually handle some kwargs with subgroups
+    if 'width' in kwargs:
+        width = kwargs['width']
+        del kwargs['width']
+    else:
+        width = 0.8 # plt.bar default
+    if 'color' in kwargs:
+        # sets color array to apply to subgroup bars not group bars
+        ax.set_prop_cycle(color=kwargs['color'])
+        del kwargs['color']
+    singleWidth = width / len(heights)
+    start = 1 - (width / 2) + (singleWidth / 2)
+
+    for i, (name, height) in enumerate(heights.items()):
+        widths = numpy.arange(start, len(height))
+        widths += i * singleWidth
+        if horizontal:
+            ax.barh(widths, height, height=singleWidth, label=name,
+                    **kwargs)
+        else:
+            ax.bar(widths, height, width=singleWidth, label=name,
+                   **kwargs)
+
+    ax.legend(title=legendTitle)

@@ -45,7 +45,8 @@ from ._dataHelpers import limitedTo2D
 from ._dataHelpers import matplotlibRequired, plotOutput, plotFigureHandling
 from ._dataHelpers import plotUpdateAxisLimits, plotAxisLimits
 from ._dataHelpers import plotAxisLabels, plotXTickLabels
-from ._dataHelpers import plotConfidenceIntervalMeanAndError
+from ._dataHelpers import plotConfidenceIntervalMeanAndError, plotErrorBars
+from ._dataHelpers import plotSingleBarChart, plotMultiBarChart
 
 
 def to2args(f):
@@ -2826,25 +2827,31 @@ class Base(object):
         """
         self._plotFeatureComparison(
             nimble.calculate.mean, features, True, horizontal, outPath,
-            show, figureName, title, xAxisLabel, yAxisLabel, **kwargs)
+            show, figureName, title, xAxisLabel, yAxisLabel, None, **kwargs)
 
     @limitedTo2D
     def plotFeatureStatistics(
             self, statistic, features=None, horizontal=False, outPath=None,
             show=True, figureName=None, title=True, xAxisLabel=True,
-            yAxisLabel=True, **kwargs):
+            yAxisLabel=True, legendTitle=None, **kwargs):
         """
-        Plot comparing an aggregate statistic between features.
+        Bar chart comparing an aggregate statistic between features.
 
-        A bar chart where bars in the plot represent the output of the
-        statistic function applied to each feature.
+        The bars in the plot represent the output of the ``statistic``
+        function applied to each feature. Typically, functions return a
+        single numeric value, however, the function may return a feature
+        vector. In that case, each point in the object returned by
+        ``statistic`` is considered to be the heights of separate bars
+        for that feature. Bars will be grouped by each feature and
+        bar colors indicate each point. If multiple bar colors are
+        necessary, a legend mapping the pointName (when available) or
+        point index to its bar color will be added.
 
         Parameters
         ----------
         statistic : function
-            Functions must take a feature view as an argument and return
-            a single numeric value. Common statistic functions can be
-            found in nimble.calculate.
+            Functions take a feature view the only required argument.
+            Common statistic functions can be found in nimble.calculate.
         features : list of identifiers, None
             List of feature names and/or indices to plot. None will
             apply to all features.
@@ -2871,23 +2878,80 @@ class Base(object):
         yAxisLabel : str, bool
             A label for the x axis. If True, a label will automatically
             be generated.
+        legendTitle : str, None
+            A title for the legend. A legend is only added when multiple
+            bar colors are necessary, otherwise this parameter is
+            ignored. None will not add a title to the legend.
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
             ``bar`` function.
         """
         self._plotFeatureComparison(
             statistic, features, False, horizontal, outPath, show, figureName,
-            title, xAxisLabel, yAxisLabel, **kwargs)
+            title, xAxisLabel, yAxisLabel, legendTitle, **kwargs)
+
+    @limitedTo2D
+    def plotFeatures(self, features=None, horizontal=False, outPath=None,
+            show=True, figureName=None, title=True, xAxisLabel=True,
+            yAxisLabel=True, legendTitle=None, **kwargs):
+        """
+        Bar chart comparing features.
+
+        Each value in the object is considered to be the height of a
+        bar in the chart. Bars will be grouped by each feature and bar
+        colors indicate each point. If multiple bar colors are
+        necessary, a legend mapping the pointName (when available) or
+        point index to its bar color will be added.
+
+        Parameters
+        ----------
+        features : list of identifiers, None
+            List of feature names and/or indices to plot. None will
+            apply to all features.
+        horizontal : bool
+            False, the default, draws plot bars vertically. True will
+            draw bars horizontally.
+        outPath : str, None
+            A string of the path to save the current figure.
+        show : bool
+            If True, display the plot. If False, the figure will not
+            display until a plotting function with show=True is called.
+            This allows for future plots to placed on the figure with
+            the same ``figureName`` before being shown.
+        figureName : str, None
+            A new figure will be generated when None or a new name,
+            otherwise the figure with that name will be activated to
+            draw the plot on an existing figure.
+        title : str, bool
+            The title of the plot. If True, a title will automatically
+            be generated.
+        xAxisLabel : str, bool
+            A label for the x axis. If True, a label will automatically
+            be generated.
+        yAxisLabel : str, bool
+            A label for the x axis. If True, a label will automatically
+            be generated.
+        legendTitle : str, None
+            A title for the legend. A legend is only added when multiple
+            bar colors are necessary, otherwise this parameter is
+            ignored. None will not add a title to the legend.
+        kwargs
+            Any keyword arguments accepted by matplotlib.pyplot's
+            ``bar`` function.
+        """
+        self._plotFeatureComparison(
+            None, features, None, horizontal, outPath, show, figureName, title,
+            xAxisLabel, yAxisLabel, legendTitle, **kwargs)
 
     @matplotlibRequired
     def _plotFeatureComparison(
             self, statistic, features, confidenceIntervals, horizontal,
             outPath, show, figureName, title, xAxisLabel, yAxisLabel,
-            **kwargs):
+            legendTitle, **kwargs):
         fig, ax = plotFigureHandling(figureName)
         if features is None:
             features = [i for i in range(len(self.features))]
-        compareRange = range(len(features))
+        axisRange = range(1, len(features) + 1)
         target = self.features[features]
         names = [self._formattedStringID('feature', ft)
                  for ft in features]
@@ -2903,27 +2967,29 @@ class Base(object):
                 means.append(mean)
                 errors.append(error)
 
-            if 'fmt' not in kwargs:
-                kwargs['fmt'] ='o'
-            if 'capsize' not in kwargs:
-                 kwargs['capsize'] = 8
-
-            if horizontal:
-                ax.errorbar(y=compareRange, x=means, xerr=errors, **kwargs)
-            else:
-                ax.errorbar(x=compareRange, y=means, yerr=errors, **kwargs)
+            plotErrorBars(ax, axisRange, means, errors, horizontal, **kwargs)
 
             if title is True:
                 title = "95% Confidence Intervals for Feature Means"
         else:
-            applied = target.features.calculate(statistic, useLog=False)
-            if horizontal:
-                ax.barh(compareRange, applied, **kwargs)
+            if statistic is None:
+                calc = target
             else:
-                ax.bar(compareRange, applied, **kwargs)
+                calc = target.features.calculate(statistic, useLog=False)
+            if len(calc.points) == 1:
+                plotSingleBarChart(ax, axisRange, calc, horizontal, **kwargs)
+            else:
+                heights = {}
+                for i, pt in enumerate(calc.points):
+                    name = calc._formattedStringID('point', i)
+                    heights[name] = pt
+
+                plotMultiBarChart(ax, heights, horizontal, legendTitle,
+                                  **kwargs)
+
             if title is True:
                 title = ''
-                objName = '' if self.name is None else self.name
+                objName = False if self.name is None else self.name
                 if objName and not objName.startswith(DEFAULT_NAME_PREFIX):
                     title += "{}: ".format(objName)
                 title += "Feature Comparison"
@@ -2932,12 +2998,12 @@ class Base(object):
             title = None
         ax.set_title(title)
         if horizontal:
-            ax.set_yticks(compareRange)
+            ax.set_yticks(axisRange)
             ax.set_yticklabels(names)
             yAxisDefault = "Feature"
             xAxisDefault = statName
         else:
-            ax.set_xticks(compareRange)
+            ax.set_xticks(axisRange)
             plotXTickLabels(ax, fig, names, len(features))
             xAxisDefault = "Feature"
             yAxisDefault = statName
@@ -3075,7 +3141,7 @@ class Base(object):
         toGroup = self.features[target]
         grouped = toGroup.groupByFeature(0, useLog=False)
 
-        axis = range(1, len(grouped) + 1)
+        axisRange = range(1, len(grouped) + 1)
         names = []
         if confidenceIntervals:
             means = []
@@ -3086,15 +3152,7 @@ class Base(object):
                 means.append(mean)
                 errors.append(error)
 
-            if 'fmt' not in kwargs:
-                kwargs['fmt'] ='o'
-            if 'capsize' not in kwargs:
-                 kwargs['capsize'] = 8
-
-            if horizontal:
-                ax.errorbar(y=axis, x=means, xerr=errors, **kwargs)
-            else:
-                ax.errorbar(x=axis, y=means, yerr=errors, **kwargs)
+            plotErrorBars(ax, axisRange, means, errors, horizontal, **kwargs)
 
             if title is True:
                 title = "95% Confidence Intervals for Mean of " + featureName
@@ -3110,46 +3168,21 @@ class Base(object):
                     else:
                         heights[subname] = [statistic(subgroup)]
 
-            # need to manually handle some kwargs with subgroups
-            if 'width' in kwargs:
-                width = kwargs['width']
-                del kwargs['width']
-            else:
-                width = 0.8 # plt.bar default
-            if 'color' in kwargs:
-                # sets color array to apply to subgroup bars not group bars
-                ax.set_prop_cycle(color=kwargs['color'])
-                del kwargs['color']
-            singleWidth = width / len(heights)
-            start = 1 - (width / 2) + (singleWidth / 2)
-
-            for i, (name, height) in enumerate(heights.items()):
-                widths = numpy.arange(start, len(height))
-                widths += i * singleWidth
-                if horizontal:
-                    ax.barh(widths, height, height=singleWidth, label=name,
-                            **kwargs)
-                else:
-                    ax.bar(widths, height, width=singleWidth, label=name,
-                           **kwargs)
-
             subgroup = self._formattedStringID('feature', subgroupFeature)
             if title is True:
                 title = "{feat} {stat} by {group}"
                 group = self._formattedStringID('feature', groupFeature)
                 title = title.format(feat=featureName, stat=statName,
                                      group=group)
-            ax.legend(title=subgroup)
+
+            plotMultiBarChart(ax, heights, horizontal, subgroup, **kwargs)
 
         else:
             heights = []
             for name, group in grouped.items():
                 names.append(name)
                 heights.append(statistic(group))
-            if horizontal:
-                ax.barh(axis, heights, **kwargs)
-            else:
-                ax.bar(axis, heights, **kwargs)
+            plotSingleBarChart(ax, axisRange, heights, horizontal, **kwargs)
 
             if title is True:
                 title = "{feat} {stat} by {group}"
@@ -3161,12 +3194,12 @@ class Base(object):
             title = None
         ax.set_title(title)
         if horizontal:
-            ax.set_yticks(axis)
+            ax.set_yticks(axisRange)
             ax.set_yticklabels(names)
             yAxisDefault = self._formattedStringID('feature', groupFeature)
             xAxisDefault = statName
         else:
-            ax.set_xticks(axis)
+            ax.set_xticks(axisRange)
             plotXTickLabels(ax, fig, names, len(grouped))
             xAxisDefault = self._formattedStringID('feature', groupFeature)
             yAxisDefault = statName

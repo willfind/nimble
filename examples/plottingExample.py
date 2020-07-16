@@ -157,6 +157,27 @@ if __name__ == "__main__":
             subgroupFeature=1, outPath=outPath, show=givenShow,
             figureName='count', edgecolor='k')
 
+    def plotFeatureSumsManual(plotObj, outDir, givenShow):
+        outPath = getOutPath(outDir, "groupSumsManual")
+
+        groups = plotObj.groupByFeature(0)
+        counts = {}
+        for name, group in groups.items():
+            count = [None, None]
+            subgroups = group.groupByFeature(0)
+            for subname, subgroup in subgroups.items():
+                if subname == 'W':
+                    count[0] = sum(subgroup)
+                else:
+                    count[1] = sum(subgroup)
+            counts[name] = count
+
+        countObj = nimble.data('Matrix', counts)
+        countObj.points.setNames(['W', 'M'])
+        countObj.plotFeatures(outPath=outPath, show=givenShow,
+                              yAxisLabel='sum', title='Score sum by GroupID',
+                              legendTitle='Gender')
+
     def plotFeatureComparisons(outDir, givenShow):
         import numpy
         d = numpy.random.rand(500, 6) * 2
@@ -188,4 +209,5 @@ if __name__ == "__main__":
     plotCheckeredGradient(checkGradObj, givenOutDir, givenShow)
     plotGroupMeans(groupObj, givenOutDir, givenShow)
     plotGroupCounts(groupObj, givenOutDir, givenShow)
+    plotFeatureSumsManual(groupObj, givenOutDir, givenShow)
     plotFeatureComparisons(givenOutDir, givenShow)

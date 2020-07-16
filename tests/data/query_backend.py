@@ -2267,8 +2267,6 @@ class QueryBackend(DataTestObject):
             randGenerated = nimble.random.data("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copy(to='pythonlist')
             obj = self.constructor(raw)
-            #we call the leading underscore version, because it
-            # returns the process
             obj.plot(outPath=path, show=False)
 
             endSize = os.path.getsize(path)
@@ -2290,8 +2288,6 @@ class QueryBackend(DataTestObject):
             randGenerated = nimble.random.data("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copy(to='pythonlist')
             obj = self.constructor(raw)
-            #we call the leading underscore version, because it
-            # returns the process
             obj.plotFeatureDistribution(feature=0, outPath=path, show=False)
 
             endSize = os.path.getsize(path)
@@ -2314,8 +2310,6 @@ class QueryBackend(DataTestObject):
             randGenerated = nimble.random.data("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copy(to='pythonlist')
             obj = self.constructor(raw)
-            #we call the leading underscore version, because it
-            # returns the process
             obj.plotFeatureAgainstFeature(x=0, y=1, outPath=path, show=False)
 
             endSize = os.path.getsize(path)
@@ -2335,8 +2329,6 @@ class QueryBackend(DataTestObject):
             assert startSize == 0
 
             obj = nimble.random.data("List", 10, 10, 0, useLog=False)
-            #we call the leading underscore version, because it
-            # returns the process
             obj.plotFeatureMeans(outPath=path, show=False)
 
             endSize = os.path.getsize(path)
@@ -2356,14 +2348,30 @@ class QueryBackend(DataTestObject):
             assert startSize == 0
 
             obj = nimble.random.data("List", 10, 10, 0, useLog=False)
-            #we call the leading underscore version, because it
-            # returns the process
             obj.plotFeatureStatistics(sum, outPath=path, show=False)
 
             endSize = os.path.getsize(path)
             assert startSize < endSize
             assertNoNamesGenerated(obj)
 
+    #################
+    # plotFeatures #
+    ################
+
+    @attr('slow')
+    @noLogEntryExpected
+    def test_plotFeatures_fileOutput(self):
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+            path = outFile.name
+            startSize = os.path.getsize(path)
+            assert startSize == 0
+
+            obj = nimble.random.data("List", 3, 3, 0, useLog=False)
+            obj.plotFeatures(outPath=path, show=False)
+
+            endSize = os.path.getsize(path)
+            assert startSize < endSize
+            assertNoNamesGenerated(obj)
 
     #########################
     # plotFeatureGroupMeans #
