@@ -1158,7 +1158,11 @@ class Sparse(Base):
     ###########
 
     def _sortInternal(self, axis, setIndices=False):
-        if self._sorted['axis'] != axis:
+        if self._sorted['axis'] == axis:
+            # axis sorted; can return now if do not need to set indices
+            if not setIndices or self._sorted['indices'] is not None:
+                return
+        else:
             self._validateAxis(axis)
             if axis == "point":
                 sortPrime = self.data.row
@@ -1176,6 +1180,7 @@ class Sparse(Base):
             self.data.col = self.data.col[sortKeys]
 
             self._sorted['axis'] = axis
+            self._sorted['indices'] = None
 
         if setIndices:
             if axis == "point":
@@ -1187,8 +1192,6 @@ class Sparse(Base):
 
             indices = numpy.searchsorted(sortedAxis, range(sortedLength + 1))
             self._sorted['indices'] = indices
-        else:
-            self._sorted['indices'] = None
 
     def _getSparseData(self):
         """
