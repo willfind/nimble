@@ -37,6 +37,8 @@ from .stretch_backend import StretchDataSafe
 from .high_dimension_backend import HighDimensionAll
 from .high_dimension_backend import HighDimensionSafe
 
+from .data_specific_backend import SparseSpecific
+
 class BaseViewChildTests(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
                    StructureDataSafe, ViewAccess, StretchDataSafe,
                    HighDimensionSafe):
@@ -78,7 +80,7 @@ class TestMatrix(BaseChildTests):
         super(TestMatrix, self).__init__('Matrix')
 
 
-class TestSparse(BaseChildTests):
+class TestSparse(BaseChildTests, SparseSpecific):
     def __init__(self):
         super(TestSparse, self).__init__('Sparse')
 
