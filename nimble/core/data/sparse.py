@@ -3,6 +3,8 @@ Class extending Base, defining an object to hold and manipulate a scipy
 coo_matrix.
 """
 
+import warnings
+
 import numpy
 
 import nimble
@@ -921,7 +923,6 @@ class Sparse(Base):
 
             assert self.data.dtype.type is not numpy.string_
 
-
             sortedAxis = self._sorted['axis']
             sortedIndices = self._sorted['indices']
             if sortedAxis is not None:
@@ -941,8 +942,10 @@ class Sparse(Base):
             without_replicas_coo = removeDuplicatesNative(self.data)
             assert len(self.data.data) == len(without_replicas_coo.data)
 
-            # call the coo_matrix structure consistency checker
-            self.data._check()
+            with warnings.catch_warnings():
+                warnings.simplefilter('error')
+                # call the coo_matrix structure consistency checker
+                self.data._check()
 
     def _containsZero_implementation(self):
         """
