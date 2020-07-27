@@ -3,6 +3,8 @@ Class extending Base, defining an object to hold and manipulate a scipy
 coo_matrix.
 """
 
+import warnings
+
 import numpy
 
 import nimble
@@ -76,8 +78,12 @@ class Sparse(Base):
                 we are confident _check is unnecessary.
                 """
                 def __init__(self, *args, **kwargs):
-                    self._check = self._check_override
-                    super(coo_matrix_skipcheck, self).__init__(*args, **kwargs)
+                    backup = self._check
+                    try:
+                        self._check = self._check_override
+                        super(coo_matrix_skipcheck, self).__init__(*args, **kwargs)
+                    finally:
+                        self._check = backup
 
                 def _check_override(self):
                     pass
@@ -917,7 +923,6 @@ class Sparse(Base):
 
             assert self.data.dtype.type is not numpy.string_
 
-
             sortedAxis = self._sorted['axis']
             sortedIndices = self._sorted['indices']
             if sortedAxis is not None:
@@ -937,14 +942,10 @@ class Sparse(Base):
             without_replicas_coo = removeDuplicatesNative(self.data)
             assert len(self.data.data) == len(without_replicas_coo.data)
 
-            # modified from coo_matrix _check method
-            assert self.data.row.dtype.kind == 'i' # row has non-integer dtype
-            assert self.data.col.dtype.kind == 'i' # col has non-integer dtype
-            if self.data.nnz > 0:
-                assert self.data.row.max() < self.data.shape[0]
-                assert self.data.col.max() < self.data.shape[1]
-                assert self.data.row.min() >= 0
-                assert self.data.col.min() >= 0
+            with warnings.catch_warnings():
+                warnings.simplefilter('error')
+                # call the coo_matrix structure consistency checker
+                self.data._check()
 
     def _containsZero_implementation(self):
         """
