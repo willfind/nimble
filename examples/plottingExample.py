@@ -5,9 +5,10 @@ is passed as an argument to the script, then plots will instead
 be written as files in that directory
 """
 
-import numpy
 import os
 import sys
+
+import numpy
 
 import nimble
 
@@ -63,7 +64,6 @@ if __name__ == "__main__":
 
     #compare two columns: col1= rand noise, col2 =3* col1 + noise
     def plotComparisonNoiseVsScaled(outDir, givenShow):
-        import numpy
         raw1 = numpy.random.rand(50, 1)
         raw2 = numpy.random.rand(50, 1)
         scaled = (raw1 * 3) + raw2
@@ -81,7 +81,6 @@ if __name__ == "__main__":
                                        yMin=-0.2, yMax=5.2)
 
     def plotComparisonMultipleNoiseVsScaled(outDir, givenShow):
-        import numpy
         raw1 = numpy.random.rand(50, 3)
         raw1[:, 1] = raw1[:, 0] + raw1[:, 1]
         raw1[:, 2] = raw1[:, 0] + raw1[:, 2]
@@ -174,12 +173,11 @@ if __name__ == "__main__":
 
         countObj = nimble.data('Matrix', counts)
         countObj.points.setNames(['W', 'M'])
-        countObj.plotFeatures(outPath=outPath, show=givenShow,
-                              yAxisLabel='sum', title='Score sum by GroupID',
-                              legendTitle='Gender')
+        countObj.features.plot(outPath=outPath, show=givenShow,
+                               yAxisLabel='sum', title='Score sum by GroupID',
+                               legendTitle='Gender')
 
     def plotFeatureComparisons(outDir, givenShow):
-        import numpy
         d = numpy.random.rand(500, 6) * 2
         d[:, 1] /= 2
         d[:, 2] *= 2
@@ -191,15 +189,38 @@ if __name__ == "__main__":
         plotObj.name = 'MAD'
 
         pathCI = getOutPath(outDir, "featureMeansCI")
-        plotObj.plotFeatureMeans(horizontal=True, show=False, outPath=pathCI)
+        plotObj.features.plotMeans(horizontal=True, show=False, outPath=pathCI)
 
         pathBar = getOutPath(outDir, "featureMAD")
         # show x tick label rotation when labels too long
-        plotObj.plotFeatureStatistics(nimble.calculate.medianAbsoluteDeviation,
-                                      outPath=pathBar, show=givenShow,
-                                      yAxisLabel='MAD', color='orange')
+        plotObj.features.plotStatistics(
+            nimble.calculate.medianAbsoluteDeviation, outPath=pathBar,
+            show=givenShow, yAxisLabel='MAD', color='orange')
 
-    # one function for each plot being drawn.
+    def plotPointComparison(outDir, givenShow):
+        d = numpy.random.rand(5, 10)
+        d[d < 0.5] = d[d < 0.5] + 0.5 # value range (0.5 - 1)
+        d[0, 0] = 0.1
+        d[1, :] = 0.75
+        d[2, :] /= 2
+        d[3, :] = [0.8 if v < 0.8 else v for v in d[3, :]]
+        pnames = ['Patient #' + str(i) for i in range(1, 6)]
+        fnames = ['Trial #' + str(i) for i in range(1, 11)]
+        plotObj = nimble.data("DataFrame", d, pointNames=pnames,
+                              featureNames=fnames)
+        plotObj.name = 'Patient Trials'
+
+        pathBar = getOutPath(outDir, "pointMinMax")
+        # stat function returning multiple values
+        def minmax(pt):
+            return nimble.data('DataFrame', [min(pt), max(pt)],
+                               featureNames=['min', 'max'])
+
+        plotObj.points.plotStatistics(minmax, outPath=pathBar,
+            show=givenShow, yAxisLabel='Effectiveness', color=['red', 'blue'])
+
+
+    # # one function for each plot being drawn.
     plotDistributionNormal(objNorm, givenOutDir, givenShow)
     plotDistributionCompare(objNorm, givenOutDir)
     plotDistributionNormalSquared(objNorm, givenOutDir, givenShow)
@@ -211,3 +232,4 @@ if __name__ == "__main__":
     plotGroupCounts(groupObj, givenOutDir, givenShow)
     plotFeatureSumsManual(groupObj, givenOutDir, givenShow)
     plotFeatureComparisons(givenOutDir, givenShow)
+    plotPointComparison(givenOutDir, givenShow)

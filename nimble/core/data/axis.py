@@ -16,7 +16,6 @@ import inspect
 import sys
 from operator import itemgetter
 import functools
-from nimble._utility import inspectArguments
 
 import numpy
 
@@ -27,9 +26,11 @@ from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.logger import handleLogging
+from nimble._utility import inspectArguments
 from .points import Points
 from .features import Features
-from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
+from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2
+from ._dataHelpers import DEFAULT_PREFIX_LENGTH, DEFAULT_NAME_PREFIX
 from ._dataHelpers import valuesToPythonList, constructIndicesList
 from ._dataHelpers import validateInputString
 from ._dataHelpers import isQueryString, axisQueryFunction
@@ -37,6 +38,10 @@ from ._dataHelpers import isAllowedSingleElement
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import wrapMatchFunctionFactory
 from ._dataHelpers import validateAxisFunction
+from ._dataHelpers import matplotlibRequired, plotOutput, plotFigureHandling
+from ._dataHelpers import plotAxisLabels, plotXTickLabels
+from ._dataHelpers import plotConfidenceIntervalMeanAndError, plotErrorBars
+from ._dataHelpers import plotSingleBarChart, plotMultiBarChart
 
 class Axis(object):
     """
@@ -921,6 +926,87 @@ class Axis(object):
             ret.features.setNames(self._getNames(), useLog=False)
 
         return ret
+
+    ############
+    # Plotting #
+    ############
+
+    @matplotlibRequired
+    def _plotComparison(
+            self, statistic, identifiers, confidenceIntervals, horizontal,
+            outPath, show, figureName, title, xAxisLabel, yAxisLabel,
+            legendTitle, **kwargs):
+        fig, ax = plotFigureHandling(figureName)
+        if identifiers is None:
+            identifiers = [i for i in range(len(self))]
+        axisRange = range(1, len(identifiers) + 1)
+        target = self[identifiers]
+        if self._isPoint:
+            targetAxis = target.points
+        else:
+            targetAxis = target.features
+        names = [self._base._formattedStringID(self._axis, identity)
+                 for identity in identifiers]
+        if hasattr(statistic, '__name__') and statistic.__name__ != '<lambda>':
+            statName = statistic.__name__
+        else:
+            statName = ''
+        if confidenceIntervals:
+            means = []
+            errors = []
+            for vec in targetAxis:
+                mean, error = plotConfidenceIntervalMeanAndError(vec)
+                means.append(mean)
+                errors.append(error)
+
+            plotErrorBars(ax, axisRange, means, errors, horizontal, **kwargs)
+
+            if title is True:
+                title = "95% Confidence Intervals for Feature Means"
+        else:
+            if statistic is None:
+                calc = target
+            else:
+                calc =  targetAxis.calculate(statistic, useLog=False)
+            if self._isPoint:
+                calcAxis = calc.features
+            else:
+                calcAxis = calc.points
+            if len(calcAxis) == 1:
+                plotSingleBarChart(ax, axisRange, calc, horizontal, **kwargs)
+            else:
+                heights = {}
+                for i, pt in enumerate(calcAxis):
+                    name = calc._formattedStringID(calcAxis._axis, i)
+                    heights[name] = pt
+
+                plotMultiBarChart(ax, heights, horizontal, legendTitle,
+                                  **kwargs)
+
+            if title is True:
+                title = ''
+                objName = False if self._base.name is None else self._base.name
+                if objName and not objName.startswith(DEFAULT_NAME_PREFIX):
+                    title += "{}: ".format(objName)
+                title += "Feature Comparison"
+
+        if title is False:
+            title = None
+        ax.set_title(title)
+        if horizontal:
+            ax.set_yticks(axisRange)
+            ax.set_yticklabels(names)
+            yAxisDefault = self._axis.capitalize()
+            xAxisDefault = statName
+        else:
+            ax.set_xticks(axisRange)
+            plotXTickLabels(ax, fig, names, len(identifiers))
+            xAxisDefault = self._axis.capitalize()
+            yAxisDefault = statName
+
+        plotAxisLabels(ax, xAxisLabel, xAxisDefault, yAxisLabel, yAxisDefault)
+
+        plotOutput(outPath, show)
 
     #####################
     # Low Level Helpers #

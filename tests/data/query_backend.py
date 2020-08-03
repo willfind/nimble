@@ -2316,58 +2316,58 @@ class QueryBackend(DataTestObject):
             assert startSize < endSize
             assertNoNamesGenerated(obj)
 
-    ####################
-    # plotFeatureMeans #
-    ####################
-
-    @attr('slow')
-    @noLogEntryExpected
-    def test_plotFeatureMeans_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
-            path = outFile.name
-            startSize = os.path.getsize(path)
-            assert startSize == 0
-
-            obj = nimble.random.data("List", 10, 10, 0, useLog=False)
-            obj.plotFeatureMeans(outPath=path, show=False)
-
-            endSize = os.path.getsize(path)
-            assert startSize < endSize
-            assertNoNamesGenerated(obj)
-
-    #########################
-    # plotFeatureStatistics #
-    #########################
-
-    @attr('slow')
-    @noLogEntryExpected
-    def test_plotFeatureStatistics_fileOutput(self):
-        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
-            path = outFile.name
-            startSize = os.path.getsize(path)
-            assert startSize == 0
-
-            obj = nimble.random.data("List", 10, 10, 0, useLog=False)
-            obj.plotFeatureStatistics(sum, outPath=path, show=False)
-
-            endSize = os.path.getsize(path)
-            assert startSize < endSize
-            assertNoNamesGenerated(obj)
-
+    ##################
+    # features.plot #
     #################
-    # plotFeatures #
-    ################
 
     @attr('slow')
     @noLogEntryExpected
-    def test_plotFeatures_fileOutput(self):
+    def test_features_plot_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
             assert startSize == 0
 
             obj = nimble.random.data("List", 3, 3, 0, useLog=False)
-            obj.plotFeatures(outPath=path, show=False)
+            obj.features.plot(outPath=path, show=False)
+
+            endSize = os.path.getsize(path)
+            assert startSize < endSize
+            assertNoNamesGenerated(obj)
+
+    ######################
+    # features.plotMeans #
+    ######################
+
+    @attr('slow')
+    @noLogEntryExpected
+    def test_features_plotMeans_fileOutput(self):
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+            path = outFile.name
+            startSize = os.path.getsize(path)
+            assert startSize == 0
+
+            obj = nimble.random.data("List", 10, 10, 0, useLog=False)
+            obj.features.plotMeans(outPath=path, show=False)
+
+            endSize = os.path.getsize(path)
+            assert startSize < endSize
+            assertNoNamesGenerated(obj)
+
+    ###########################
+    # features.plotStatistics #
+    ###########################
+
+    @attr('slow')
+    @noLogEntryExpected
+    def test_features_plotStatistics_fileOutput(self):
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+            path = outFile.name
+            startSize = os.path.getsize(path)
+            assert startSize == 0
+
+            obj = nimble.random.data("List", 10, 10, 0, useLog=False)
+            obj.features.plotStatistics(sum, outPath=path, show=False)
 
             endSize = os.path.getsize(path)
             assert startSize < endSize
@@ -2405,7 +2405,7 @@ class QueryBackend(DataTestObject):
 
     @attr('slow')
     @noLogEntryExpected
-    def test_plotFeatureGroupStatistics_fileOutput(self):
+    def test_plotGroupStatistics_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
             path = outFile.name
             startSize = os.path.getsize(path)
@@ -2425,6 +2425,62 @@ class QueryBackend(DataTestObject):
             assert startSize < endSize
             assertNoNamesGenerated(obj)
 
+    ################
+    # points.plot #
+    ###############
+
+    @attr('slow')
+    @noLogEntryExpected
+    def test_points_plot_fileOutput(self):
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+            path = outFile.name
+            startSize = os.path.getsize(path)
+            assert startSize == 0
+
+            obj = nimble.random.data("List", 3, 3, 0, useLog=False)
+            obj.points.plot(outPath=path, show=False)
+
+            endSize = os.path.getsize(path)
+            assert startSize < endSize
+            assertNoNamesGenerated(obj)
+
+    ####################
+    # points.plotMeans #
+    ####################
+
+    @attr('slow')
+    @noLogEntryExpected
+    def test_points_plotMeans_fileOutput(self):
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+            path = outFile.name
+            startSize = os.path.getsize(path)
+            assert startSize == 0
+
+            obj = nimble.random.data("List", 10, 10, 0, useLog=False)
+            obj.points.plotMeans(outPath=path, show=False)
+
+            endSize = os.path.getsize(path)
+            assert startSize < endSize
+            assertNoNamesGenerated(obj)
+
+    #########################
+    # points.plotStatistics #
+    #########################
+
+    @attr('slow')
+    @noLogEntryExpected
+    def test_points_plotStatistics_fileOutput(self):
+        with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
+            path = outFile.name
+            startSize = os.path.getsize(path)
+            assert startSize == 0
+
+            obj = nimble.random.data("List", 10, 10, 0, useLog=False)
+            obj.points.plotStatistics(sum, outPath=path, show=False)
+
+            endSize = os.path.getsize(path)
+            assert startSize < endSize
+            assertNoNamesGenerated(obj)
 
     ###################
     # points.__iter__ #

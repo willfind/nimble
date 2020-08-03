@@ -123,8 +123,7 @@ base_notLogged = [
     'isApproximatelyEqual', 'isIdentical', 'iterateElements', 'matrixMultiply',
     'matrixPower', 'nameIsDefault', 'plot', 'plotFeatureAgainstFeature',
     'plotFeatureAgainstFeatureRollingAverage', 'plotFeatureDistribution',
-    'plotFeatureMeans', 'plotFeatureStatistics', 'plotFeatureGroupMeans',
-    'plotFeatureGroupStatistics', 'plotFeatures', 'pointView',
+    'plotFeatureGroupMeans', 'plotFeatureGroupStatistics', 'pointView',
     'referenceDataFrom', 'save', 'show', 'solveLinearSystem', 'toString',
     'validate', 'view', 'writeFile',
     ]
@@ -138,7 +137,8 @@ features_logged = [
     ]
 features_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
-    'hasName', 'similarities', 'statistics', 'unique',
+    'hasName', 'plot', 'plotMeans', 'plotStatistics', 'similarities',
+    'statistics', 'unique',
     ]
 features_funcs = features_logged + features_notLogged
 features_tested = list(map(prefixAdder('Features'), features_funcs))
@@ -151,7 +151,8 @@ points_logged = [
     ]
 points_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
-    'hasName', 'similarities', 'statistics', 'unique',
+    'hasName', 'plot', 'plotMeans', 'plotStatistics', 'similarities',
+    'statistics', 'unique',
     ]
 points_funcs = points_logged + points_notLogged
 points_tested = list(map(prefixAdder('Points'), points_funcs))
