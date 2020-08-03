@@ -24,7 +24,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.logger import handleLogging
 from nimble.core.logger import produceFeaturewiseReport
 from nimble.core.logger import produceAggregateReport
-from nimble._utility import cloudpickle, h5py, matplotlib, plt
+from nimble._utility import cloudpickle, h5py, plt
 from .points import Points
 from .features import Features
 from .axis import Axis
@@ -42,7 +42,7 @@ from ._dataHelpers import validateElementFunction, wrapMatchFunctionFactory
 from ._dataHelpers import ElementIterator1D
 from ._dataHelpers import isQueryString, elementQueryFunction
 from ._dataHelpers import limitedTo2D
-from ._dataHelpers import matplotlibRequired, plotOutput, plotFigureHandling
+from ._dataHelpers import pyplotRequired, plotOutput, plotFigureHandling
 from ._dataHelpers import plotUpdateAxisLimits, plotAxisLimits
 from ._dataHelpers import plotAxisLabels, plotXTickLabels
 from ._dataHelpers import plotConfidenceIntervalMeanAndError, plotErrorBars
@@ -2400,13 +2400,13 @@ class Base(object):
         self._plot(includeColorbar, outPath, show, title, xAxisLabel,
                    yAxisLabel, **kwargs)
 
-    @matplotlibRequired
+    @pyplotRequired
     def _plot(self, includeColorbar, outPath, show, title, xAxisLabel,
               yAxisLabel, **kwargs):
         toPlot = self._convertUnusableTypes(float, usableTypes=(int, float))
 
         if 'cmap' not in kwargs:
-            kwargs['cmap'] = matplotlib.cm.gray
+            kwargs['cmap'] = "gray"
 
         # matshow generates a new figure b/c existing axes are an issue.
         plt.matshow(toPlot, **kwargs)
@@ -2489,7 +2489,7 @@ class Base(object):
                                       figureName, title, xAxisLabel,
                                       yAxisLabel, xMin, xMax, **kwargs)
 
-    @matplotlibRequired
+    @pyplotRequired
     def _plotDistribution(self, axis, identifier, outPath, show, figureName,
                           title, xAxisLabel, yAxisLabel, xMin, xMax, **kwargs):
         fig, ax = plotFigureHandling(figureName)
@@ -2687,7 +2687,7 @@ class Base(object):
 
         return id
 
-    @matplotlibRequired
+    @pyplotRequired
     def _plotCross(self, x, xAxis, y, yAxis, sampleSizeForAverage, trend,
                    outPath, show, figureName, title, xAxisLabel, yAxisLabel,
                    xMin, xMax, yMin, yMax, **kwargs):
@@ -2723,6 +2723,9 @@ class Base(object):
         xToPlot = xGetter(xIndex)
         yToPlot = yGetter(yIndex)
 
+        xName = xlabel = self._formattedStringID(xAxis, xIndex)
+        yName = ylabel = self._formattedStringID(yAxis, yIndex)
+
         if sampleSizeForAverage is not None:
             #do rolling average
             xToPlot, yToPlot = list(zip(*sorted(zip(xToPlot, yToPlot),
@@ -2733,10 +2736,6 @@ class Base(object):
             xToPlot = numpy.convolve(xToPlot, convShape)[startIdx:-startIdx]
             yToPlot = numpy.convolve(yToPlot, convShape)[startIdx:-startIdx]
 
-        xName = xlabel = self._formattedStringID(xAxis, xIndex)
-        yName = ylabel = self._formattedStringID(yAxis, yIndex)
-
-        if sampleSizeForAverage:
             tmpStr = ' (%s sample average)' % sampleSizeForAverage
             xlabel += tmpStr
             ylabel += tmpStr
@@ -2892,7 +2891,7 @@ class Base(object):
             horizontal, outPath, show, figureName, title, xAxisLabel,
             yAxisLabel, **kwargs)
 
-    @matplotlibRequired
+    @pyplotRequired
     def _plotFeatureGroupStatistics(
             self, statistic, feature, groupFeature, subgroupFeature,
             confidenceIntervals, horizontal, outPath, show, figureName, title,

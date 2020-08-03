@@ -14,7 +14,7 @@ import os.path
 import numpy
 
 import nimble
-from nimble._utility import pd, matplotlib, plt, scipy
+from nimble._utility import pd, plt, scipy
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 
@@ -956,14 +956,15 @@ def convertToNumpyOrder(order):
 # Plotting Helpers #
 ####################
 
-def matplotlibRequired(func):
+def pyplotRequired(func):
     """
-    Wrap plotting functions to check that matplotlib is accessible.
+    Wrap plotting functions to check that matplotlib.pylot is accessible.
     """
     @wraps(func)
     def wrapped(*args, **kwargs):
-        if not (matplotlib.nimbleAccessible() and plt.nimbleAccessible()):
-            raise PackageException('matplotlib is required for plotting')
+        if not plt.nimbleAccessible():
+            msg = 'matplotlib.pyplot is required for plotting'
+            raise PackageException(msg)
         return func(*args, **kwargs)
     return wrapped
 

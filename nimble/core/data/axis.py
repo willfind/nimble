@@ -38,7 +38,7 @@ from ._dataHelpers import isAllowedSingleElement
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import wrapMatchFunctionFactory
 from ._dataHelpers import validateAxisFunction
-from ._dataHelpers import matplotlibRequired, plotOutput, plotFigureHandling
+from ._dataHelpers import pyplotRequired, plotOutput, plotFigureHandling
 from ._dataHelpers import plotAxisLabels, plotXTickLabels
 from ._dataHelpers import plotConfidenceIntervalMeanAndError, plotErrorBars
 from ._dataHelpers import plotSingleBarChart, plotMultiBarChart
@@ -931,7 +931,7 @@ class Axis(object):
     # Plotting #
     ############
 
-    @matplotlibRequired
+    @pyplotRequired
     def _plotComparison(
             self, statistic, identifiers, confidenceIntervals, horizontal,
             outPath, show, figureName, title, xAxisLabel, yAxisLabel,

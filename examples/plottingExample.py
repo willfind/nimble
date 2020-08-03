@@ -86,13 +86,14 @@ if __name__ == "__main__":
         raw1[:, 2] = raw1[:, 0] + raw1[:, 2]
         obj1 = nimble.data("Matrix", raw1)
 
-        outPath = getOutPath(outDir, "NoiseVsMultipleScaled")
-        obj1.plotFeatureAgainstFeature(0, 1, outPath=None, show=False,
-                                       figureName='noise', label='1')
+        obj1.plotFeatureAgainstFeatureRollingAverage(
+            0, 1, 10, outPath=None, show=False, figureName='noise', label='1')
+
         title = 'Feature 0 Vs Feature 0 + Noises 1 and 2'
-        obj1.plotFeatureAgainstFeature(0, 2, outPath=outPath, show=givenShow,
-                                       figureName='noise', label='2',
-                                       title=title, yAxisLabel='')
+        outPath = getOutPath(outDir, "NoiseVsMultipleScaled")
+        obj1.plotFeatureAgainstFeatureRollingAverage(
+            0, 2, 10, outPath=outPath, show=givenShow, figureName='noise',
+            label='2', title=title, yAxisLabel='')
 
     checkObj = nimble.data("Matrix", numpy.zeros((15, 12)), name="Checkerboard")
 

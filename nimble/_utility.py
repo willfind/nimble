@@ -190,7 +190,6 @@ class DeferredModuleImport(object):
 
 scipy = DeferredModuleImport('scipy')
 pd = DeferredModuleImport('pandas')
-matplotlib = DeferredModuleImport('matplotlib')
 plt = DeferredModuleImport('matplotlib.pyplot')
 requests = DeferredModuleImport('requests')
 cloudpickle = DeferredModuleImport('cloudpickle')
