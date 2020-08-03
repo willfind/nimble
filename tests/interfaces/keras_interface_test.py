@@ -210,7 +210,7 @@ def testKeras_TrainedLearnerApplyArguments_exception(optimizer):
     except InvalidArgumentValue:
         pass
 
-
+@keraSkipDec
 @raises(InvalidArgumentValue)
 @chooseOptimizer
 def testKeras_fitGeneratorOnlyParametersDisallowedForDense(optimizer):
@@ -231,7 +231,7 @@ def testKeras_fitGeneratorOnlyParametersDisallowedForDense(optimizer):
                        loss='binary_crossentropy', metrics=['accuracy'],
                        epochs=2, steps_per_epoch=20, max_queue_size=10)
 
-
+@keraSkipDec
 @raises(InvalidArgumentValue)
 @chooseOptimizer
 def testKeras_fitOnlyParametersDisallowedForSparse(optimizer):
