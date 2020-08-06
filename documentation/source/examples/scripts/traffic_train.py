@@ -36,8 +36,8 @@ forecast = nimble.data('Matrix', 'Metro_Interstate_Traffic_Volume_Predict.csv',
 
 # We'll divide our `traffic` data into training and testing sets. Using
 # `nimble.trainAndTest`, we can quickly test the performance of five different
-# regressors from the sci-kit learn package. We will analyze the performance by
-# comparing each learner's root mean square error.
+# regressors from the sci-kit learn package, using default arguments. We will
+# analyze the performance by comparing each learner's root mean square error.
 
 testFraction = 0.25
 yFeature = 'traffic_volume'
@@ -53,21 +53,22 @@ for learner in learners:
     print(learner, 'root mean square error:', performance)
 
 # `'sklearn.KNeighborsRegressor'` and `'sklearn.RandomForestRegressor'`
-# look to be better choices for predicting traffic volume with this data than
+# had better performance for predicting traffic volume with this data than
 # the linear regression learners, so let's focus on optimizing those two.
 
 ## Cross-validate arguments to improve performance
 
 # Additional arguments for a learner can be supplied through `arguments` as a
-# dict or via keyword arguments and `nimble.CV` allows for multiple arguments
-# to be passed for the same parameter. The presence of `CV` will trigger k-fold
-# cross validation where k is the value of the `folds` arguments. Each
-# combination of arguments will be  trained and tested using the
-# `performanceFunction` to determine the best parameter set to use.
+# dict or via keyword arguments and `nimble.CV` allows for multiple potential
+# arguments to be passed for the same parameter. The presence of `CV` will
+# trigger k-fold cross validation where k is the value of the `folds`
+# argument. Each combination of arguments will be  trained and tested using
+# the `performanceFunction` to determine the best parameter set to use.
 
+knnArgs = {'n_neighbors': nimble.CV([1, 5, 11, 99])}
 knnTL = nimble.train('skl.KNeighborsRegressor', trainX, trainY,
                      performanceFunction, folds=5,
-                     arguments={'n_neighbors': nimble.CV([1, 5, 11, 99])})
+                     arguments=knnArgs)
 rfTL = nimble.train('skl.RandomForestRegressor', trainX, trainY,
                     performanceFunction, folds=5,
                     min_samples_split=nimble.CV([2, 4]),

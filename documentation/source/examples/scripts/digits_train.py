@@ -36,17 +36,18 @@ labels = images.features.extract(range(256, len(images.features)))
 # single feature of integers from the binary features in labels.
 intLabels = labels.points.calculate(lambda pt: list(pt).index(1))
 
-# We'll append our new labels to our images object to divide our data into
-# train and test sets.
+# We'll append our new labels to the end of our images object, then
+# randomly partition that data into train and test sets.
 images.features.append(intLabels)
 trainX, trainY, testX, testY = images.trainAndTestSets(testFraction=0.25, labels=-1)
 
 ## Simple neural network
 # To start, we can build a simple Sequential model using Keras. The `layers`
-# argument for a Sequential object, requires a list of other Keras objects.
-# However, there is no need to import other objects directly from an interface
-# because our `nimble.Init` object will handle that. Below, we see how we
-# create Dense and Dropout layers with varying keyword arguments.
+# argument for a Sequential object requires a list of Keras Layer objects.
+# However, there is no need to import those directly from Keras. nimble.Init
+# can instead be used to trigger instantiation of a matching class in the
+# interfaced package. Below, we create Dense and Dropout objects with varying
+# keyword arguments.
 layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=256)
 layer1 = nimble.Init('Dropout', rate=0.5)
 layer2 = nimble.Init('Dense', units=10, activation='softmax')
@@ -54,25 +55,25 @@ layers = [layer0, layer1, layer2]
 
 # Now that we've taken advantage of nimble.Init to define our layers, we can
 # train and apply our model.
-probs = nimble.trainAndApply(
+digitProbability = nimble.trainAndApply(
     'keras.Sequential', trainX=trainX, trainY=trainY, testX=testX,
     layers=layers, optimizer='adam', loss='sparse_categorical_crossentropy',
     metrics=['accuracy'], epochs=10)
 
-# Similar to our `labels` object, `probs` has 10 features but this time each
-# feature represents a probability for the label at that index.  For our
-# prediction, we will use the index with the maximum probability. Then we can
-# see how our simple neural net performed on our test set.
+# Similar to our `labels` object, `digitProbability` has 10 features but this
+# time each feature represents a probability for the label at that index.  For
+# our prediction, we will use the index with the maximum probability. Then we
+# can see how our simple neural net performed on our test set.
 def maximumProbabilty(pt):
     maximum = max(pt)
     return list(pt).index(maximum)
 
-predictions = probs.points.calculate(maximumProbabilty)
+predictions = digitProbability.points.calculate(maximumProbabilty)
 print(nimble.calculate.fractionCorrect(testY, predictions))
 
-# Nimble cannot control for randomness in Keras models so exact results will
-# vary but should be around 90% accurate. This is pretty good for a simple
-# model only trained for 10 epochs,
+# Keras relies on sources of randomness outside of nimble's control, so exact
+# results will vary but should be around 90% accurate. This is pretty good for
+# a simple model only trained for 10 epochs,
 
 ## Convolutional Neural Network
 # Let's try to do better by increasing the complexity and create a 2D
@@ -100,12 +101,12 @@ layersCNN.append(nimble.Init('Flatten'))
 layersCNN.append(nimble.Init('Dense', units=128, activation='relu'))
 layersCNN.append(nimble.Init('Dense', units=10, activation='softmax'))
 
-probsCNN = nimble.trainAndApply(
+probabilityCNN = nimble.trainAndApply(
     'keras.Sequential', trainX=trainX, trainY=trainY, testX=testX,
     layers=layersCNN, optimizer='adam', loss='sparse_categorical_crossentropy',
     metrics=['accuracy'], epochs=10)
 
 # We see that the loss and accuracy of this model improved much faster than
 # our previous model. Let's check how it performed on our test set.
-predictionsCNN = probsCNN.points.calculate(maximumProbabilty)
+predictionsCNN = probabilityCNN.points.calculate(maximumProbabilty)
 print(nimble.calculate.fractionCorrect(testY, predictionsCNN))

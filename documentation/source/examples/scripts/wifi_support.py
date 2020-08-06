@@ -64,7 +64,7 @@ nimble.settings.set('logger', 'location', tempDir.name)
 
 # All logged functions and methods have a `useLog` parameter. The default,
 # value for `useLog` is `None`, meaning nimble will use the value stored in
-# configuration.ini. The `createData` method has a `useLog` parameter, but
+# configuration.ini. The `nimble.data` method has a `useLog` parameter, but
 # `show` does not. Since `enabledByDefault` is True in our configuration file,
 # `showLog` should have one entry showing we loaded our data as a Matrix.
 wifi = nimble.data('Matrix', 'wifi_localization.txt')
