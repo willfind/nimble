@@ -42,7 +42,7 @@ print(traffic.featureReport())
 
 # Statistics could not be calculated for all features, indicating some are
 # non-numeric. The statistics for the numeric features also indicate that
-# some outlier values may be present.
+# some (physically impossible) outlier values may be present.
 
 ## Cleaning numeric data
 # 0 Kelvin in `temp` and 9831.3 mm in `rain_1h` indicate some outliers exist in

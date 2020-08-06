@@ -1,6 +1,12 @@
 Nimble Documentation
 ====================
 
+Welcome to the Nimble project's API documentation for users. This
+does not include documentation for the entire code base, but
+instead only those portions which are meant to be seen or
+called by a user. Anything not visible here may be considered
+unnecessary for normal operations.
+
 .. toctree::
    :maxdepth: 2
 
@@ -17,10 +23,3 @@ Nimble Documentation
    learners
    match
    random
-
-
-Welcome to the Nimble project's online documentation for users. This
-does not include documentation for the entire code base, but
-instead only those portions which are meant to be seen or
-called by a user. Anything not visible here may be considered
-unnecessary for normal operations.

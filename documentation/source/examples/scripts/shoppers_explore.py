@@ -5,9 +5,8 @@ Analyzing the behaviors of online shoppers
 
 Our dataset, `'online_shoppers_intention_clean.csv'`, is a collection of
 behaviors for visitors to an online shopping website. Our goal is to
-explore this dataset to gather information about the visitors to this
-site using a variety of the function and methods nimble has available
-for digging deeper into a dataset.
+gather information about the visitors to this site using a variety of
+the functionality nimble has available for digging deeper into a dataset.
 
 References:
 Sakar, C.O., Polat, S.O., Katircioglu, M. et al. Neural Comput & Applic (2018).
