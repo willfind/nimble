@@ -13,6 +13,7 @@ import itertools
 import os.path
 from abc import abstractmethod
 from contextlib import contextmanager
+import datetime
 
 import numpy
 
@@ -44,6 +45,7 @@ from ._dataHelpers import isQueryString, elementQueryFunction
 from ._dataHelpers import limitedTo2D
 from ._dataHelpers import plotPlotter, distributionPlotter, crossPlotter
 from ._dataHelpers import matplotlibBackendHandling
+from ._dataHelpers import looksNumeric, isDatetime
 
 
 def to2args(f):
@@ -2915,7 +2917,7 @@ class Base(object):
                 raise ImproperObjectAction(msg)
         # only 'numpyarray' and 'pythonlist' are allowed to use outputAs1D flag
         if outputAs1D:
-            if to != 'numpyarray' and to != 'pythonlist':
+            if to not in ['numpyarray', 'pythonlist']:
                 msg = "Only 'numpy array' or 'python list' can output 1D"
                 raise InvalidArgumentValueCombination(msg)
             if self._pointCount != 1 and self._featureCount != 1:
@@ -2943,15 +2945,15 @@ class Base(object):
         return ret
 
     def _copy_outputAs1D(self, to):
-        if self._pointCount == 0 or self._featureCount == 0:
-            if to == 'numpyarray':
+        if to == 'numpyarray':
+            if self._pointCount == 0 or self._featureCount == 0:
                 return numpy.array([])
-            if to == 'pythonlist':
+            return self._copy_implementation('numpyarray').flatten()
+        else:
+            if self._pointCount == 0 or self._featureCount == 0:
                 return []
-        raw = self._copy_implementation('numpyarray').flatten()
-        if to != 'numpyarray':
-            raw = raw.tolist()
-        return raw
+            list2d = self._copy_implementation('pythonlist')
+            return list(itertools.chain.from_iterable(list2d))
 
     def _copy_pythonList(self, rowsArePoints):
         ret = self._copy_implementation('pythonlist')
@@ -3082,10 +3084,7 @@ class Base(object):
             if replaceWith.getTypeString() != self.getTypeString():
                 replaceWith = replaceWith.copy(to=self.getTypeString())
 
-        elif (_dataHelpers._looksNumeric(replaceWith)
-              or isinstance(replaceWith, str)):
-            pass  # no modifications needed
-        else:
+        elif not (looksNumeric(replaceWith) or isinstance(replaceWith, str)):
             msg = "replaceWith may only be a nimble Base object, or a single "
             msg += "numeric value, yet we received something of "
             msg += str(type(replaceWith))
@@ -4326,12 +4325,12 @@ class Base(object):
 
     def _genericBinary_validation(self, opName, other):
         otherBase = isinstance(other, Base)
-        if not otherBase and not _dataHelpers._looksNumeric(other):
+        if otherBase:
+            self._genericBinary_sizeValidation(opName, other)
+        elif not (looksNumeric(other) or isDatetime(other)):
             msg = "'other' must be an instance of a nimble Base object or a "
             msg += "scalar"
             raise InvalidArgumentType(msg)
-        if otherBase:
-            self._genericBinary_sizeValidation(opName, other)
         # divmod operations inconsistently raise exceptions for zero division
         # it is more efficient to validate now than validate after operation
         if 'div' in opName or 'mod' in opName:

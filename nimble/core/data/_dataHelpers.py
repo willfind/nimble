@@ -9,11 +9,13 @@ import re
 import operator
 from functools import wraps
 from multiprocessing import Process
+import datetime
 
 import numpy
 
 import nimble
 from nimble._utility import pd, matplotlib
+from nimble._utility import inspectArguments
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 
@@ -26,11 +28,20 @@ DEFAULT_NAME_PREFIX = "OBJECT_#"
 
 defaultObjectNumber = 0
 
+def isDatetime(x):
+    datetimeTypes = [datetime.datetime, numpy.datetime64]
+    if pd.nimbleAccessible():
+        datetimeTypes.append(pd.Timestamp)
+    return isinstance(x, tuple(datetimeTypes))
+
 def isAllowedSingleElement(x):
     """
     Determine if an element is an allowed single element.
     """
-    if isinstance(x, (numbers.Number, str)):
+    if isinstance(x, (numbers.Number, str, numpy.bool_)):
+        return True
+
+    if isDatetime(x):
         return True
 
     if hasattr(x, '__len__'):#not a single element
@@ -40,6 +51,12 @@ def isAllowedSingleElement(x):
         return True
 
     return False
+
+def validateAllAllowedElements(data):
+    if not all(map(isAllowedSingleElement, data)):
+        msg = "Number, string, None, nan, and datetime objects are "
+        msg += "the only elements allowed in nimble data objects"
+        raise ImproperObjectAction(msg)
 
 def nextDefaultObjectName():
     """
@@ -141,7 +158,7 @@ def mergeNonDefaultNames(baseSource, otherSource):
     return ptNames, ftNames
 
 
-def _looksNumeric(val):
+def looksNumeric(val):
     # div is a good check of your standard numeric objects, and excludes things
     # list python lists. We must still explicitly exclude strings because of
     # the numpy string implementation.
@@ -154,7 +171,7 @@ def _checkNumeric(val):
     """
     Check if value looks numeric. Raise ValueError if not.
     """
-    if not _looksNumeric(val):
+    if not looksNumeric(val):
         raise ValueError("Value '{}' does not seem to be numeric".format(val))
 
 
@@ -670,22 +687,26 @@ def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
 
     if isinstance(func, dict):
         func = getDictionaryMappingFunction(func)
-    try:
-        func(0, 0, 0)
+
+    a, _, _, d = inspectArguments(func)
+    numRequiredArgs = len(a) - len(d)
+    if numRequiredArgs == 3:
         oneArg = False
 
         @wraps(func)
         def wrappedElementFunction(value, i, j):
             return elementValidated(value, i, j)
 
-    except TypeError:
+    else:
         oneArg = True
         # see if we can preserve zeros even if not explicitly set
-        try:
-            if not preserveZeros and func(0) == 0:
-                preserveZeros = True
-        except TypeError:
-            pass
+        if not preserveZeros:
+            try:
+                if func(0) == 0:
+                    preserveZeros = True
+            # since it is a user function we cannot predict the exception type
+            except Exception:
+                pass
 
         @wraps(func)
         def wrappedElementFunction(value):
@@ -842,7 +863,7 @@ class NimbleElementIterator(object):
         while True:
             # numpy.nditer returns value as an array type,
             # item() extracts the actual object we want to return
-            val = next(self.iterator).item()
+            val = next(self.iterator)[()]
             if self.only is None or self.only(val):
                 return val
 

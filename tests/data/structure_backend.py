@@ -19,6 +19,7 @@ import os.path
 import copy
 from operator import itemgetter
 from functools import cmp_to_key
+import datetime
 try:
     from unittest import mock #python >=3.3
 except ImportError:
@@ -8136,6 +8137,42 @@ class StructureModifying(StructureShared):
         orig.points.transform(toString)
         assert orig == exp
 
+    def test_points_transform_toDatetime(self):
+        data = [['1-1-2020'], ['1-2-2020'], ['1-3-2020']]
+        fnames = ['date']
+        toTest = self.constructor(data, featureNames=fnames)
+
+        def toDatetime(pt):
+            month, day, year = pt[0].split('-')
+            return [datetime.datetime(int(year), int(month), int(day))]
+
+        expData = [[datetime.datetime(2020, 1, 1)],
+                   [datetime.datetime(2020, 1, 2)],
+                   [datetime.datetime(2020, 1, 3)]]
+
+        exp = self.constructor(expData, featureNames=fnames)
+
+        toTest.points.transform(toDatetime)
+
+        assert toTest == exp
+
+    def test_points_transform_fromDatetime(self):
+        data = [[datetime.datetime(2020, 1, 1)],
+                [datetime.datetime(2020, 1, 2)],
+                [datetime.datetime(2020, 1, 3)]]
+        toTest = self.constructor(data)
+
+        def fromDatetime(pt):
+            return ['-'.join(map(str, [pt[0].month, pt[0].day, pt[0].year]))]
+
+        expData = [['1-1-2020'], ['1-2-2020'], ['1-3-2020']]
+
+        exp = self.constructor(expData)
+
+        toTest.points.transform(fromDatetime)
+
+        assert toTest == exp
+
     ########################
     # features.transform() #
     ########################
@@ -8359,6 +8396,41 @@ class StructureModifying(StructureShared):
 
         orig.features.transform(toString)
         assert orig == exp
+
+
+    def test_features_transform_toDatetime(self):
+        data = [['2020-01-01'], ['2020-01-02'], ['2020-01-03']]
+        toTest = self.constructor(data)
+
+        def toDatetime(ft):
+            return [datetime.datetime.strptime(dt, '%Y-%m-%d') for dt in ft]
+
+        expData = [[datetime.datetime(2020, 1, 1)],
+                   [datetime.datetime(2020, 1, 2)],
+                   [datetime.datetime(2020, 1, 3)]]
+
+        exp = self.constructor(expData)
+
+        toTest.features.transform(toDatetime)
+
+        assert toTest == exp
+
+    def test_features_transform_fromDatetime(self):
+        data = [[datetime.datetime(2020, 1, 1)],
+                [datetime.datetime(2020, 1, 2)],
+                [datetime.datetime(2020, 1, 3)]]
+        toTest = self.constructor(data)
+
+        def fromDatetime(ft):
+            return ['-'.join(map(str, [d.year, d.month, d.day])) for d in ft]
+
+        expData = [['2020-1-1'], ['2020-1-2'], ['2020-1-3']]
+
+        exp = self.constructor(expData)
+
+        toTest.features.transform(fromDatetime)
+
+        assert toTest == exp
 
     #######################
     # transformElements() #
@@ -8658,6 +8730,44 @@ class StructureModifying(StructureShared):
 
         orig.transformElements(toString)
         assert orig == exp
+
+    def test_transformElements_toDatetime(self):
+        data = [['2019-01-01', '2019-12-31'],
+                ['2020-01-01', '2020-12-31'],
+                ['2021-01-01', '2021-12-31']]
+        toTest = self.constructor(data)
+
+        def toDatetime(elem):
+            return datetime.datetime.strptime(elem, '%Y-%m-%d')
+
+        expData = [[datetime.datetime(2019, 1, 1), datetime.datetime(2019, 12, 31)],
+                   [datetime.datetime(2020, 1, 1), datetime.datetime(2020, 12, 31)],
+                   [datetime.datetime(2021, 1, 1), datetime.datetime(2021, 12, 31)]]
+
+        exp = self.constructor(expData)
+
+        toTest.transformElements(toDatetime)
+
+        assert toTest == exp
+
+    def test_transformElements_fromDatetime(self):
+        data = [[datetime.datetime(2019, 1, 1), datetime.datetime(2019, 12, 31)],
+                [datetime.datetime(2020, 1, 1), datetime.datetime(2020, 12, 31)],
+                [datetime.datetime(2021, 1, 1), datetime.datetime(2021, 12, 31)]]
+        toTest = self.constructor(data)
+
+        def fromDatetime(elem):
+            return '-'.join(map(str, [elem.year, elem.month, elem.day]))
+
+        expData = [['2019-1-1', '2019-12-31'],
+                   ['2020-1-1', '2020-12-31'],
+                   ['2021-1-1', '2021-12-31']]
+
+        exp = self.constructor(expData)
+
+        toTest.transformElements(fromDatetime)
+
+        assert toTest == exp
 
     ######################
     # replaceRectangle() #

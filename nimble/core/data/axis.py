@@ -29,11 +29,12 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.logger import handleLogging
 from .points import Points
 from .features import Features
-from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2, DEFAULT_PREFIX_LENGTH
+from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2
+from ._dataHelpers import DEFAULT_PREFIX_LENGTH
 from ._dataHelpers import valuesToPythonList, constructIndicesList
 from ._dataHelpers import validateInputString
 from ._dataHelpers import isQueryString, axisQueryFunction
-from ._dataHelpers import isAllowedSingleElement
+from ._dataHelpers import isAllowedSingleElement, validateAllAllowedElements
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import wrapMatchFunctionFactory
 from ._dataHelpers import validateAxisFunction
@@ -456,10 +457,7 @@ class Axis(object):
             # only point axis can handle multidimensional data
             if not self._isPoint:
                 try:
-                    assert all(isAllowedSingleElement(v) for v in currOut)
-                except AssertionError:
-                    msg = "function must return a one-dimensional object "
-                    raise ImproperObjectAction(msg)
+                    validateAllAllowedElements(currOut)
                 except TypeError:
                     msg = "function must return a valid single element or "
                     msg = "an iterable, but got type " + str(type(currOut))

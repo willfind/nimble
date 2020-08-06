@@ -20,6 +20,7 @@ from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import FileFormatException
 from nimble.core.data import Base
 from nimble.core.data._dataHelpers import isAllowedSingleElement
+from nimble.core.data._dataHelpers import validateAllAllowedElements
 from nimble.core.data.sparse import removeDuplicatesNative
 from nimble._utility import numpy2DArray, is2DArray
 from nimble._utility import sparseMatrixToArray
@@ -608,7 +609,7 @@ def convertData(returnType, rawData, pointNames, featureNames,
                 return numpy.empty([lenPts, lenFts])
             if hasattr(rawData[0], '__len__') and len(rawData[0]) == 0:
                 return numpy.empty([len(rawData), lenFts])
-        if returnType == 'Matrix' and len(rawData.shape) == 1:
+        elif returnType == 'Matrix' and len(rawData.shape) == 1:
             rawData = numpy2DArray(rawData)
         return rawData
     ret = convertToArray(rawData, convertToType, pointNames, featureNames)
@@ -875,17 +876,16 @@ def isHighDimensionData(rawData, skipDataProcessing):
     try:
         indexZero = getFirstIndex(rawData)
         if isAllowedSingleElement(indexZero):
-            if (not skipDataProcessing and
-                    not all(map(isAllowedSingleElement, rawData))):
-                msg = "Numbers, strings, None, and nan are the only values "
-                msg += "allowed in nimble data objects"
-                raise InvalidArgumentValue(msg)
+            if not skipDataProcessing:
+                validateAllAllowedElements(rawData)
             return False
         indexZeroZero = getFirstIndex(indexZero)
         if isAllowedSingleElement(indexZeroZero):
             if not skipDataProcessing:
                 toIter = GenericPointIterator(rawData)
-                firstLength = len(next(toIter))
+                first = next(toIter)
+                validateAllAllowedElements(first)
+                firstLength = len(first)
                 for i, point in enumerate(toIter):
                     if not len(point) == firstLength:
                         msg = "All points in the data do not have the same "
@@ -894,10 +894,7 @@ def isHighDimensionData(rawData, skipDataProcessing):
                         msg += "features"
                         msg = msg.format(firstLength, i, len(point))
                         raise InvalidArgumentValue(msg)
-                    if not all(map(isAllowedSingleElement, point)):
-                        msg = "Numbers, strings, None, and nan are the only "
-                        msg += "values allowed in nimble data objects"
-                        raise InvalidArgumentValue(msg)
+                    validateAllAllowedElements(point)
             return False
         else:
             return True

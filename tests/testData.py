@@ -4,6 +4,7 @@ import os
 import sys
 import copy
 import itertools
+import datetime
 try:
     from unittest import mock #python >=3.3
 except ImportError:
@@ -19,6 +20,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import FileFormatException
 from nimble.core.data._dataHelpers import DEFAULT_PREFIX
+from nimble.core.data._dataHelpers import isDatetime
 from nimble.core._createHelpers import _intFloatOrString
 from nimble.core._createHelpers import replaceNumpyValues
 from nimble._utility import sparseMatrixToArray
@@ -58,9 +60,9 @@ class GetItemOnly(object):
     def __getitem__(self, key):
         return self.vals[key]
 
-###########################
-# Data values correctness #
-###########################
+###############################
+# Raw data values correctness #
+###############################
 
 def test_data_raw_stringConversion_float():
     """
@@ -152,6 +154,18 @@ def test_data_raw_pointAndFeatureIterators():
         assert toTest2.points.getNames() == ['1', '4']
         assert toTest2.features.getNames() == ['a', 'b', 'c']
 
+def test_data_raw_datetime():
+    for t in returnTypes:
+        rawData = [[datetime.datetime(2020, 1, 1), -16, 2],
+                   [numpy.datetime64('2020-01-02'), -24, -6],
+                   [pd.Timestamp(year=2020, month=2, day=3), -30, -18]]
+        toTest = nimble.data(t, rawData)
+        for date in toTest.features[0].iterateElements():
+            assert isDatetime(date)
+
+################################
+# File data values correctness #
+################################
 
 def test_data_CSV_data():
     """ Test of data() loading a csv file, default params """
@@ -2929,7 +2943,8 @@ def test_replaceNumpyValues_dtypePreservation():
         # should skip attempted replacement because no treatAsMissing values
         if hasattr(toTest.data, 'dtype'):
             assert toTest.data.dtype == int
-        assert all(isinstance(val, int) for val in toTest.iterateElements())
+        ints = (int, numpy.integer)
+        assert all(isinstance(val, ints) for val in toTest.iterateElements())
 
         toTest = nimble.data(t, data, replaceMissingWith=numpy.nan,
                              treatAsMissing=[0])
