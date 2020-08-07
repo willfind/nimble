@@ -64,10 +64,6 @@ learners.
 
 .. autofunction:: nimble.listLearners
 
-.. autofunction:: nimble.learnerType
-
-.. autofunction:: nimble.listLearners
-
 .. autofunction:: nimble.learnerParameters
 
 .. autofunction:: nimble.learnerDefaultValues

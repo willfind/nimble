@@ -79,7 +79,7 @@ def digitsExampleOutputMatch(output, expected):
 def test_callExamplesAsMain():
     # collect the filenames of the scripts we want to run
     examplesDir = os.path.join(os.getcwd(), 'documentation', 'source',
-                               'examples', 'scripts')
+                               'examples')
     examplesFiles = [f for f in os.listdir(examplesDir) if f.endswith('.py')]
     results = {}
     scriptsWithPlots = ['shoppers_train.py', 'shoppers_explore.py']

@@ -1,0 +1,30 @@
+The python (.py file) examples written for nimble utilize a special formatting
+within the comments and docstrings to enable them to be converted to .ipynb
+files for use with Jupyter notebooks. There is an object in conf.py which
+creates these files when the documentation is rendered so that they are
+always up to date with the .py example file. The notebook files are a JSON
+format and contain cells with either python code or markdown.
+
+Each example starts with a docstring. Within this docstring, the standard
+markdown formatting applies. The standard for examples is the following:
+
+"""
+# Example Heading
+
+### Example Subheading
+
+Markdown paragraph with additional information about the example.
+"""
+
+Any code within a multiline string will have 
+
+For the remainder of the file, comments starting with '##' denote content
+intended to be converted to markdown. For subheadings, the comment should
+also end with the appropriate number of '#'. Here is an example.
+
+## Example Subheading ##
+
+## Markdown paragraph text
+example = 'example'
+# Python comment
+print(example)
