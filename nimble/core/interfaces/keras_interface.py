@@ -27,7 +27,6 @@ class Keras(PredefinedInterface, UniversalInterface):
     """
     def __init__(self):
         # modify path if another directory provided
-
         try:
             # keras recommends using tensorflow.keras when possible
             self.keras = modifyImportPathAndImport('keras', 'tensorflow.keras')
@@ -105,8 +104,17 @@ class Keras(PredefinedInterface, UniversalInterface):
         msg = """
 To install keras
 ----------------
-    Installation instructions for keras can be found at:
-    https://keras.io/#installation"""
+    The latest versions of keras come packaged with tensorflow as
+    tensorflow.keras. Tensorflow install instructions can be found at:
+    https://www.tensorflow.org/install
+    And the latest keras documentation is available at:
+    https://keras.io/
+
+    Nimble supports older (multi-backend) versions of keras as well, but these
+    will not continue to be supported so installing them is NOT recommended.
+    More information regarding these changes is available at:
+    https://github.com/keras-team/keras/releases
+    """
         return msg
 
     def _listLearnersBackend(self):

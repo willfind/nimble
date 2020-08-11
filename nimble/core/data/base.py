@@ -11,7 +11,6 @@ import math
 import numbers
 import itertools
 import os.path
-from multiprocessing import Process
 from abc import abstractmethod
 from contextlib import contextmanager
 
@@ -25,7 +24,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.logger import handleLogging
 from nimble.core.logger import produceFeaturewiseReport
 from nimble.core.logger import produceAggregateReport
-from nimble._utility import cloudpickle, matplotlib, h5py
+from nimble._utility import cloudpickle, h5py
 from .points import Points
 from .features import Features
 from .axis import Axis
@@ -43,6 +42,8 @@ from ._dataHelpers import validateElementFunction, wrapMatchFunctionFactory
 from ._dataHelpers import ElementIterator1D
 from ._dataHelpers import isQueryString, elementQueryFunction
 from ._dataHelpers import limitedTo2D
+from ._dataHelpers import plotPlotter, distributionPlotter, crossPlotter
+from ._dataHelpers import matplotlibBackendHandling
 
 
 def to2args(f):
@@ -553,10 +554,11 @@ class Base(object):
 
         replace = self.features.extract([index], useLog=False)
 
-        uniqueVals = list(replace.countUniqueElements().keys())
+        uniqueVals = replace.countUniqueElements().keys()
+        uniqueIdx = {key: i for i, key in enumerate(uniqueVals)}
 
         binaryObj = replace._replaceFeatureWithBinaryFeatures_implementation(
-            uniqueVals)
+            uniqueIdx)
 
         binaryObj.points.setNames(self.points._getNamesNoGeneration(),
                                   useLog=False)
@@ -566,13 +568,12 @@ class Base(object):
             ftNames.append(prefix + str(val))
         binaryObj.features.setNames(ftNames, useLog=False)
 
-        # by default, put back in same place
-        insertBefore = index
         # must use append if the object is now feature empty
         if len(self.features) == 0:
             self.features.append(binaryObj, useLog=False)
         else:
-            self.features.insert(insertBefore, binaryObj, useLog=False)
+            # insert data at same index of the original feature
+            self.features.insert(index, binaryObj, useLog=False)
 
         handleLogging(useLog, 'prep', "replaceFeatureWithBinaryFeatures",
                       self.getTypeString(),
@@ -2380,64 +2381,20 @@ class Base(object):
                 outFormat = 'png'
         return outFormat
 
-    def _matplotlibBackendHandling(self, outPath, plotter, **kwargs):
-        if not matplotlib.nimbleAccessible():
-            raise PackageException("Plots require matplotlib to be installed.")
-        import __main__ as main
-        # for .show() to work in interactive sessions
-        # a backend different than Agg needs to be use
-        # The interactive session can choose by default e.g.,
-        # in jupyter-notebook inline is the default.
-        if hasattr(main, '__file__'):
-            # It must be agg  for non-interactive sessions
-            # otherwise the combination of matplotlib and multiprocessing
-            # produces a segfault.
-            # Open matplotlib issue here:
-            # https://github.com/matplotlib/matplotlib/issues/8795
-            # It applies for both for python 2 and 3
-            matplotlib.use('Agg')
-        if outPath is None:
-            if matplotlib.get_backend() == 'agg':
-                plt = matplotlib.pyplot
-                plt.switch_backend('TkAgg')
-                plotter(**kwargs)
-                plt.switch_backend('agg')
-            else:
-                plotter(**kwargs)
-            p = Process(target=lambda: None)
-            p.start()
-        else:
-            p = Process(target=plotter, kwargs=kwargs)
-            p.start()
-        return p
-
     def _plot(self, outPath=None, includeColorbar=False):
+        plotKwargs = {}
+        plotKwargs['name'] = self.name
+        plotKwargs['includeColorbar'] = includeColorbar
+
         outFormat = self._setupOutFormatForPlotting(outPath)
-
-        def plotter(d):
-            plt = matplotlib.pyplot
-
-            plt.matshow(d, cmap=matplotlib.cm.gray)
-
-            if includeColorbar:
-                plt.colorbar()
-
-            if not self.name.startswith(DEFAULT_NAME_PREFIX):
-                #plt.title("Heatmap of " + self.name)
-                plt.title(self.name)
-            plt.xlabel("Feature Values", labelpad=10)
-            plt.ylabel("Point Values")
-
-            if outPath is None:
-                plt.show()
-            else:
-                plt.savefig(outPath, format=outFormat)
+        plotKwargs['outFormat'] = outFormat
 
         toPlot = self._convertUnusableTypes(float, usableTypes=(int, float))
-
+        plotKwargs['d'] = toPlot
         # problem if we were to use mutiprocessing with backends
         # different than Agg.
-        p = self._matplotlibBackendHandling(outPath, plotter, d=toPlot)
+        p = matplotlibBackendHandling(outPath, plotPlotter, **plotKwargs)
+
         return p
 
     @limitedTo2D
@@ -2478,9 +2435,16 @@ class Base(object):
         return self._plotDistribution('feature', feature, outPath, xMin, xMax)
 
     def _plotDistribution(self, axis, identifier, outPath, xMin, xMax):
+        plotKwargs = {}
+        plotKwargs['axis'] = axis
+        plotKwargs['xLim'] = (xMin, xMax)
+
         outFormat = self._setupOutFormatForPlotting(outPath)
+        plotKwargs['outFormat'] = outFormat
+
         axisObj = self._getAxis(axis)
         index = axisObj.getIndex(identifier)
+        plotKwargs['index'] = index
         name = None
         if axis == 'point':
             getter = self.pointView
@@ -2490,11 +2454,11 @@ class Base(object):
             getter = self.featureView
             if self.features._namesCreated():
                 name = self.features.getName(index)
-
+        plotKwargs['name'] = name
         toPlot = getter(index)
+        plotKwargs['d'] = toPlot
 
         quartiles = nimble.calculate.quartiles(toPlot)
-
         IQR = quartiles[2] - quartiles[0]
         binWidth = (2 * IQR) / (len(toPlot) ** (1. / 3))
         # TODO: replace with calculate points after it subsumes
@@ -2507,31 +2471,13 @@ class Base(object):
             # we must convert to int, in some versions of numpy, the helper
             # functions matplotlib calls will require it.
             binCount = int(math.ceil((valMax - valMin) / binWidth))
-
-        def plotter(d, xLim):
-            plt = matplotlib.pyplot
-
-            plt.hist(d, binCount)
-
-            if not name or name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                titlemsg = '#' + str(index)
-            else:
-                titlemsg = "named: " + name
-            plt.title("Distribution of " + axis + " " + titlemsg)
-            plt.xlabel("Values")
-            plt.ylabel("Number of values")
-
-            plt.xlim(xLim)
-
-            if outPath is None:
-                plt.show()
-            else:
-                plt.savefig(outPath, format=outFormat)
+        plotKwargs['binCount'] = binCount
 
         # problem if we were to use mutiprocessing with backends
         # different than Agg.
-        p = self._matplotlibBackendHandling(outPath, plotter, d=toPlot,
-                                            xLim=(xMin, xMax))
+        p = matplotlibBackendHandling(outPath, distributionPlotter,
+                                      **plotKwargs)
+
         return p
 
     @limitedTo2D
@@ -2622,11 +2568,23 @@ class Base(object):
 
     def _plotCross(self, x, xAxis, y, yAxis, outPath, xMin, xMax, yMin, yMax,
                    sampleSizeForAverage=None):
+        plotKwargs = {}
+        plotKwargs['name'] = self.name
+        plotKwargs['xAxis'] = xAxis
+        plotKwargs['yAxis'] = yAxis
+        plotKwargs['xLim'] = (xMin, xMax)
+        plotKwargs['yLim'] = (yMin, yMax)
+        plotKwargs['sampleSizeForAverage'] = sampleSizeForAverage
+
         outFormat = self._setupOutFormatForPlotting(outPath)
+        plotKwargs['outFormat'] = outFormat
+
         xAxisObj = self._getAxis(xAxis)
         yAxisObj = self._getAxis(yAxis)
         xIndex = xAxisObj.getIndex(x)
         yIndex = yAxisObj.getIndex(y)
+        plotKwargs['xIndex'] = xIndex
+        plotKwargs['yIndex'] = yIndex
 
         def customGetter(index, axis):
             if axis == 'point':
@@ -2660,6 +2618,8 @@ class Base(object):
             yGetter = fGetter
             if self.features._namesCreated():
                 yName = self.features.getName(yIndex)
+        plotKwargs['xName'] = xName
+        plotKwargs['yName'] = yName
 
         xToPlot = xGetter(xIndex)
         yToPlot = yGetter(yIndex)
@@ -2674,52 +2634,13 @@ class Base(object):
             xToPlot = numpy.convolve(xToPlot, convShape)[startIdx:-startIdx]
             yToPlot = numpy.convolve(yToPlot, convShape)[startIdx:-startIdx]
 
-        def plotter(inX, inY, xLim, yLim, sampleSizeForAverage):
-            plt = matplotlib.pyplot
-            #plt.scatter(inX, inY)
-            plt.scatter(inX, inY, marker='.')
-
-            if not xName or xName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                xlabel = xAxis + ' #' + str(xIndex)
-            else:
-                xlabel = xName
-            if not yName or yName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-                ylabel = yAxis + ' #' + str(yIndex)
-            else:
-                ylabel = yName
-
-            xName2 = xName
-            yName2 = yName
-            if sampleSizeForAverage:
-                tmpStr = ' (%s sample average)' % sampleSizeForAverage
-                xlabel += tmpStr
-                ylabel += tmpStr
-                xName2 += ' average'
-                yName2 += ' average'
-
-            if self.name.startswith(DEFAULT_NAME_PREFIX):
-                titleStr = ('%s vs. %s') % (xName2, yName2)
-            else:
-                titleStr = ('%s: %s vs. %s') % (self.name, xName2, yName2)
-
-
-            plt.title(titleStr)
-            plt.xlabel(xlabel)
-            plt.ylabel(ylabel)
-
-            plt.xlim(xLim)
-            plt.ylim(yLim)
-
-            if outPath is None:
-                plt.show()
-            else:
-                plt.savefig(outPath, format=outFormat)
+        plotKwargs['inX'] = xToPlot
+        plotKwargs['inY'] = yToPlot
 
         # problem if we were to use mutiprocessing with backends
         # different than Agg.
-        p = self._matplotlibBackendHandling(
-            outPath, plotter, inX=xToPlot, inY=yToPlot, xLim=(xMin, xMax),
-            yLim=(yMin, yMax), sampleSizeForAverage=sampleSizeForAverage)
+        p = matplotlibBackendHandling(outPath, crossPlotter, **plotKwargs)
+
         return p
 
     ##################################################################
@@ -4400,6 +4321,8 @@ class Base(object):
         # test element type other
         if isinstance(other, Base):
             other._numericValidation(right=True)
+
+        raise # backup; should be diagnosed in _numericValidation
 
     def _genericBinary_validation(self, opName, other):
         otherBase = isinstance(other, Base)

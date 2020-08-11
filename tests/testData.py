@@ -2841,10 +2841,13 @@ def test_DataOutputWithMissingDataTypes1D():
         orig6 = nimble.data(t, numpy.matrix([1,2,"None"], dtype=object))
         orig7 = nimble.data(t, pd.DataFrame([[1,2,"None"]]))
         orig8 = nimble.data(t, pd.Series([1,2,"None"]))
-        orig9 = nimble.data(t, pd.SparseDataFrame([[1,2,"None"]]))
-        orig10 = nimble.data(t, scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
-        orig11 = nimble.data(t, scipy.sparse.csc_matrix(numpy.array([1,2,float('nan')])))
-        orig12 = nimble.data(t, scipy.sparse.csr_matrix(numpy.array([1,2,float('nan')])))
+        orig9 = nimble.data(t, scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
+        orig10 = nimble.data(t, scipy.sparse.csc_matrix(numpy.array([1,2,float('nan')])))
+        orig11 = nimble.data(t, scipy.sparse.csr_matrix(numpy.array([1,2,float('nan')])))
+        try:
+            orig12 = nimble.data(t, pd.DataFrame([[1,2,"None"]], dtype='Sparse[object]'))
+        except TypeError:
+            orig12 = nimble.data(t, pd.SparseDataFrame([[1,2,"None"]]))
 
         originals = [orig1, orig2, orig3, orig4, orig5, orig6, orig7, orig8, orig9, orig10, orig11, orig12]
 
@@ -2881,10 +2884,14 @@ def test_DataOutputWithMissingDataTypes2D():
         orig5 = nimble.data(t, numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
         orig6 = nimble.data(t, numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
         orig7 = nimble.data(t, pd.DataFrame([[1,2,'None'], [3,4,'b']]))
-        orig8 = nimble.data(t, pd.SparseDataFrame([[1,2,'None'], [3,4,'b']]))
-        orig9 = nimble.data(t, scipy.sparse.coo_matrix(numpy.array([[1,2,'None'], [3,4,'b']], dtype=object)))
+        orig8 = nimble.data(t, scipy.sparse.coo_matrix(numpy.array([[1,2,'None'], [3,4,'b']], dtype=object)))
+        try:
+            orig9 = nimble.data(t, pd.DataFrame([[1,2,'None'], [3,4,'b']], dtype='Sparse[object]'))
+        except TypeError:
+            orig9 = nimble.data(t, pd.SparseDataFrame([[1,2,'None'], [3,4,'b']]))
 
         originals = [orig1, orig2, orig3, orig4, orig5, orig6, orig7, orig8, orig9]
+
         for orig in originals:
             if orig.getTypeString() == "List":
                 assert orig.data[0][0] == expListOutput[0][0]
@@ -3067,8 +3074,7 @@ def test_data_multidimensionalData_listsOfMultiDimensionalObjects():
         fromListArr2D = nimble.data(rType2, [arr2D, arr2D, arr2D])
         assert fromListArr2D._shape == [3, 3, 4]
         fromListCoo2D = nimble.data(rType2, [coo2D, coo2D, coo2D])
-        print(fromListCoo2D._shape)
-        print(fromListCoo2D)
+
         assert fromListCoo2D._shape == [3, 3, 4]
         fromListDF2D = nimble.data(rType2, [df2D, df2D, df2D])
         assert fromListDF2D._shape == [3, 3, 4]

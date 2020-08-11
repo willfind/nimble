@@ -22,6 +22,7 @@ from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
 from ._dataHelpers import denseCountUnique
 from ._dataHelpers import NimbleElementIterator
+from ._dataHelpers import convertToNumpyOrder
 
 @inheritDocstringsFactory(Base)
 class Matrix(Base):
@@ -123,19 +124,18 @@ class Matrix(Base):
         with open(outPath, 'w') as outFile:
             if includeFeatureNames:
                 self._writeFeatureNamesToCSV(outFile, includePointNames)
+            if not numpy.issubdtype(self.data.dtype, numpy.number):
+                vectorizeCommas = numpy.vectorize(csvCommaFormat,
+                                                  otypes=[object])
+                viewData = vectorizeCommas(self.data).view()
+            else:
+                viewData = self.data.view()
             if includePointNames:
                 pnames = list(map(csvCommaFormat, self.points.getNames()))
                 pnames = numpy2DArray(pnames).transpose()
-                if not numpy.issubdtype(self.data.dtype, numpy.number):
-                    vectorizeCommas = numpy.vectorize(csvCommaFormat,
-                                                      otypes=[object])
-                    viewData = vectorizeCommas(self.data).view()
-                else:
-                    viewData = self.data.view()
-                toWrite = numpy.concatenate((pnames, viewData), 1)
-                numpy.savetxt(outFile, toWrite, delimiter=',', fmt='%s')
-            else:
-                numpy.savetxt(outFile, self.data, delimiter=',')
+                viewData = numpy.concatenate((pnames, viewData), 1)
+
+            numpy.savetxt(outFile, viewData, delimiter=',', fmt='%s')
 
     def _writeFileMTX_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
@@ -231,11 +231,11 @@ class Matrix(Base):
 
     def _flatten_implementation(self, order):
         numElements = len(self.points) * len(self.features)
-        order = 'C' if order == 'point' else 'F'
+        order = convertToNumpyOrder(order)
         self.data = self.data.reshape((1, numElements), order=order)
 
     def _unflatten_implementation(self, reshape, order):
-        order = 'C' if order == 'point' else 'F'
+        order = convertToNumpyOrder(order)
         self.data = self.data.reshape(reshape, order=order)
 
     def _merge_implementation(self, other, point, feature, onFeature,
@@ -392,10 +392,10 @@ class Matrix(Base):
 
         self.data = numpy2DArray(merged, dtype=numpy.object_)
 
-    def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueVals):
-        toFill = numpy.zeros((len(self.points), len(uniqueVals)))
+    def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueIdx):
+        toFill = numpy.zeros((len(self.points), len(uniqueIdx)))
         for ptIdx, val in enumerate(self.data):
-            ftIdx = uniqueVals.index(val)
+            ftIdx = uniqueIdx[val.item()]
             toFill[ptIdx, ftIdx] = 1
         return Matrix(toFill)
 
@@ -462,7 +462,7 @@ class Matrix(Base):
         try:
             ret = getattr(self.data, opName)(other.data)
             return Matrix(ret)
-        except (AttributeError, InvalidArgumentType):
+        except (AttributeError, InvalidArgumentType, ValueError):
             return self._defaultBinaryOperations_implementation(opName, other)
 
     def _matmul__implementation(self, other):

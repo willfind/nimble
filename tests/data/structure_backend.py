@@ -2212,10 +2212,12 @@ class StructureModifying(StructureShared):
         orig3 = self.constructor({})
         orig4 = self.constructor(numpy.empty([0, 0]))
         orig5 = self.constructor(numpy.matrix(numpy.empty([0, 0])))
-
         orig6 = self.constructor(pd.DataFrame())
         orig7 = self.constructor(pd.Series())
-        orig8 = self.constructor(pd.SparseDataFrame())
+        try: # SparseDataFrame removed in 1.0 in favor of using SparseDType
+            orig8 = self.constructor(pd.DataFrame(dtype='Sparse[float]'))
+        except TypeError:
+            orig8 = self.constructor(pd.SparseDataFrame())
 
         assert orig1.isIdentical(orig2)
         assert orig1.isIdentical(orig3)
@@ -2225,7 +2227,6 @@ class StructureModifying(StructureShared):
         assert orig1.isIdentical(orig7)
         assert orig1.isIdentical(orig8)
 
-
     def test_createEmptyData2(self):
         """
         create data object using tuple, list,
@@ -2234,19 +2235,22 @@ class StructureModifying(StructureShared):
         as input type.
         """
         orig1 = self.constructor([[]])
-        orig3 = self.constructor([{}])
-        orig4 = self.constructor(numpy.empty([1, 0]))
-        orig5 = self.constructor(numpy.matrix(numpy.empty([1, 0])))
-        orig6 = self.constructor(pd.DataFrame([[]]))
-        orig8 = self.constructor(pd.SparseDataFrame([[]]))
-        orig9 = self.constructor(scipy.sparse.coo_matrix([[]]))
+        orig2 = self.constructor([{}])
+        orig3 = self.constructor(numpy.empty([1, 0]))
+        orig4 = self.constructor(numpy.matrix(numpy.empty([1, 0])))
+        orig5 = self.constructor(pd.DataFrame([[]]))
+        orig6 = self.constructor(scipy.sparse.coo_matrix([[]]))
+        try: # SparseDataFrame removed in 1.0 in favor of using SparseDType
+            orig7 = self.constructor(pd.DataFrame([[]], dtype='Sparse[float]'))
+        except TypeError:
+            orig7 = self.constructor(pd.SparseDataFrame([[]]))
 
+        assert orig1.isIdentical(orig2)
         assert orig1.isIdentical(orig3)
         assert orig1.isIdentical(orig4)
         assert orig1.isIdentical(orig5)
         assert orig1.isIdentical(orig6)
-        assert orig1.isIdentical(orig8)
-        assert orig1.isIdentical(orig9)
+        assert orig1.isIdentical(orig7)
 
     def test_createEmptyData3(self):
         """
@@ -2256,19 +2260,22 @@ class StructureModifying(StructureShared):
         as input type.
         """
         orig1 = self.constructor([[], []])
-        orig3 = self.constructor([{}, {}])
-        orig4 = self.constructor(numpy.empty([2, 0]))
-        orig5 = self.constructor(numpy.matrix(numpy.empty([2, 0])))
-        orig6 = self.constructor(pd.DataFrame([[], []]))
-        orig8 = self.constructor(pd.SparseDataFrame([[], []]))
-        orig9 = self.constructor(scipy.sparse.coo_matrix([[], []]))
+        orig2 = self.constructor([{}, {}])
+        orig3 = self.constructor(numpy.empty([2, 0]))
+        orig4 = self.constructor(numpy.matrix(numpy.empty([2, 0])))
+        orig5 = self.constructor(pd.DataFrame([[], []]))
+        orig6 = self.constructor(scipy.sparse.coo_matrix([[], []]))
+        try: # SparseDataFrame removed in 1.0 in favor of using SparseDType
+            orig7 = self.constructor(pd.DataFrame([[], []], dtype='Sparse[float]'))
+        except TypeError:
+            orig7 = self.constructor(pd.SparseDataFrame([[], []]))
 
+        assert orig1.isIdentical(orig2)
         assert orig1.isIdentical(orig3)
         assert orig1.isIdentical(orig4)
         assert orig1.isIdentical(orig5)
         assert orig1.isIdentical(orig6)
-        assert orig1.isIdentical(orig8)
-        assert orig1.isIdentical(orig9)
+        assert orig1.isIdentical(orig7)
 
     def test_create1DData(self):
         """
@@ -2281,24 +2288,29 @@ class StructureModifying(StructureShared):
         orig2 = self.constructor((1,2,3), featureNames=['a', 'b', 'c'])
         orig3 = self.constructor({'a':1, 'b':2, 'c':3})
         orig3.features.sort()
-        orig10 = self.constructor([{'a':1, 'b':2, 'c':3}])
-        orig10.features.sort()
-        orig4 = self.constructor(numpy.array([1,2,3]), featureNames=['a', 'b', 'c'])
-        orig5 = self.constructor(numpy.matrix([1,2,3]), featureNames=['a', 'b', 'c'])
-        orig6 = self.constructor(pd.DataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
-        orig7 = self.constructor(pd.Series([1,2,3]), featureNames=['a', 'b', 'c'])
-        orig8 = self.constructor(pd.SparseDataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
+        orig4 = self.constructor([{'a':1, 'b':2, 'c':3}])
+        orig4.features.sort()
+        orig5 = self.constructor(numpy.array([1,2,3]), featureNames=['a', 'b', 'c'])
+        orig6 = self.constructor(numpy.matrix([1,2,3]), featureNames=['a', 'b', 'c'])
+        orig7 = self.constructor(pd.DataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
+        orig8 = self.constructor(pd.Series([1,2,3]), featureNames=['a', 'b', 'c'])
         orig9 = self.constructor(scipy.sparse.coo_matrix([1,2,3]), featureNames=['a', 'b', 'c'])
+        try: # SparseDataFrame removed in 1.0 in favor of using SparseDType
+            orig10 = self.constructor(pd.DataFrame([[1,2,3]], dtype='Sparse[int]'),
+                                      featureNames=['a', 'b', 'c'])
+        except TypeError:
+            orig10 = self.constructor(pd.SparseDataFrame([[1,2,3]]),
+                                      featureNames=['a', 'b', 'c'])
 
         assert orig1.isIdentical(orig2)
         assert orig1.isIdentical(orig3)
-        assert orig1.isIdentical(orig10)
         assert orig1.isIdentical(orig4)
         assert orig1.isIdentical(orig5)
         assert orig1.isIdentical(orig6)
         assert orig1.isIdentical(orig7)
         assert orig1.isIdentical(orig8)
         assert orig1.isIdentical(orig9)
+        assert orig1.isIdentical(orig10)
 
     def test_create2DData(self):
         """
@@ -2311,19 +2323,27 @@ class StructureModifying(StructureShared):
         orig2 = self.constructor(((1,2,'a'), (3,4,'b')), featureNames=['a', 'b', 'c'])
         orig3 = self.constructor({'a':[1,3], 'b':[2,4], 'c':['a', 'b']})
         orig3.features.sort()
-        orig7 = self.constructor([{'a':1, 'b':2, 'c':'a'}, {'a':3, 'b':4, 'c':'b'}])
-        orig7.features.sort()
-        orig4 = self.constructor(numpy.array([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
-        orig5 = self.constructor(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
-        orig6 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']]), featureNames=['a', 'b', 'c'])
-        orig9 = self.constructor(scipy.sparse.coo_matrix(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object)), featureNames=['a', 'b', 'c'])
+        orig4 = self.constructor([{'a':1, 'b':2, 'c':'a'}, {'a':3, 'b':4, 'c':'b'}])
+        orig4.features.sort()
+        orig5 = self.constructor(numpy.array([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
+        orig6 = self.constructor(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
+        orig7 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']]), featureNames=['a', 'b', 'c'])
+        orig8 = self.constructor(scipy.sparse.coo_matrix(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object)),
+                                 featureNames=['a', 'b', 'c'])
+        try: # SparseDataFrame removed in 1.0 in favor of using SparseDType
+            orig9 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']], dtype='Sparse[object]'),
+                                     featureNames=['a', 'b', 'c'])
+        except TypeError:
+            orig9 = self.constructor(pd.SparseDataFrame([[1,2,'a'], [3,4,'b']]),
+                                      featureNames=['a', 'b', 'c'])
 
         assert orig1.isIdentical(orig2)
         assert orig1.isIdentical(orig3)
-        assert orig1.isIdentical(orig7)
         assert orig1.isIdentical(orig4)
         assert orig1.isIdentical(orig5)
         assert orig1.isIdentical(orig6)
+        assert orig1.isIdentical(orig7)
+        assert orig1.isIdentical(orig8)
         assert orig1.isIdentical(orig9)
 
     ##############

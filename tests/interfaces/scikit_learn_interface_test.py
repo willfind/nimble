@@ -308,7 +308,7 @@ def testSciKitLearnClassificationLearners():
 def testSciKitLearnRegressionLearners():
     data = generateRegressionData(2, 20, 10)
     trainX = data[0][0]
-    trainY = data[0][1]
+    trainY = abs(data[0][1]) # all positive required for some learners
     testX = data[1][0]
     Xtrain = trainX.data
     Ytrain = trainY.data
@@ -350,8 +350,8 @@ def testSciKitLearnMultiTaskRegressionLearners():
 
     skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
 
-    trainX = [[0,0], [1, 1], [2, 2]]
-    trainY = [[0, 0], [1, 1], [2, 2]]
+    trainX = [[0,0], [1, 1], [2, 2], [0,0], [1, 1], [2, 2]]
+    trainY = [[0, 0], [1, 1], [2, 2], [0, 0], [1, 1], [2, 2]]
     testX = [[2,2], [0,0], [1,1]]
 
     trainXObj = nimble.data('Matrix', trainX, useLog=False)

@@ -62,7 +62,7 @@ class SparseAxis(Axis):
             self._base.data.row[:] = reverseIdxPosition[self._base.data.row]
         else:
             self._base.data.col[:] = reverseIdxPosition[self._base.data.col]
-        self._base._sorted = None
+        self._base._resetSorted()
 
     def _transform_implementation(self, function, limitTo):
         modData = []
@@ -103,7 +103,7 @@ class SparseAxis(Axis):
         shape = (len(self._base.points), len(self._base.features))
         self._base.data = scipy.sparse.coo_matrix(
             (modData, (modRow, modCol)), shape=shape)
-        self._base._sorted = None
+        self._base._resetSorted()
 
     def _insert_implementation(self, insertBefore, toInsert):
         """
@@ -143,10 +143,10 @@ class SparseAxis(Axis):
 
         self._base.data = scipy.sparse.coo_matrix((newData, rowColTuple),
                                                   shape=shape)
-        self._base._sorted = None
+        self._base._resetSorted()
 
-    def _repeat_implementation(self, totalCopies, copyValueByValue):
-        if copyValueByValue:
+    def _repeat_implementation(self, totalCopies, copyVectorByVector):
+        if copyVectorByVector:
             numpyFunc = numpy.repeat
         else:
             numpyFunc = numpy.tile
@@ -167,7 +167,7 @@ class SparseAxis(Axis):
             shape = (len(self._base.points), (len(self) * totalCopies))
 
         startIdx = 0
-        if copyValueByValue:
+        if copyVectorByVector:
             for idx in toRepeat:
                 endIdx = startIdx + totalCopies
                 indexRange = numpy.array(range(totalCopies))
@@ -182,7 +182,6 @@ class SparseAxis(Axis):
 
         repeated = scipy.sparse.coo_matrix((repData, (repRow, repCol)),
                                            shape=shape)
-        self._base._sorted = None
 
         return repeated
 
@@ -214,7 +213,7 @@ class SparseAxis(Axis):
 
         if structure != 'copy':
             self._base.data = notTargeted.tocoo()
-            self._base._sorted = None
+            self._base._resetSorted()
 
         ret = targeted.tocoo()
 
@@ -279,7 +278,7 @@ class SparseAxis(Axis):
             keepArr = numpy.array(keepData, dtype=dtype)
             self._base.data = scipy.sparse.coo_matrix(
                 (keepArr, (keepRows, keepCols)), shape=selfShape)
-            self._base._sorted = None
+            self._base._resetSorted()
 
         # need to manually set dtype or coo_matrix will force to simplest dtype
         targetArr = numpy.array(targetData)
@@ -292,8 +291,7 @@ class SparseAxis(Axis):
                                        reuseData=True)
 
     def _unique_implementation(self):
-        if self._base._sorted is None:
-            self._base._sortInternal("feature")
+        self._base._sortInternal(self._axis)
         count = len(self)
         hasAxisNames = self._namesCreated()
         getAxisName = self._getName
@@ -341,7 +339,6 @@ class SparseAxis(Axis):
             axisNames = keepNames
         if hasOffAxisNames:
             offAxisNames = getOffAxisNames()
-        self._base._sorted = None
 
         uniqueData = numpy.array(uniqueData, dtype=numpy.object_)
         if self._isPoint:
@@ -375,8 +372,7 @@ class SparsePoints(SparseAxis, Points):
     def _splitByCollapsingFeatures_implementation(
             self, featuresToCollapse, collapseIndices, retainIndices,
             currNumPoints, currFtNames, numRetPoints, numRetFeatures):
-        if self._base._sorted is None:
-            self._base._sortInternal('point')
+        self._base._sortInternal(self._axis)
         data = self._base.data.data
         row = self._base.data.row
         col = self._base.data.col
@@ -408,7 +404,7 @@ class SparsePoints(SparseAxis, Points):
         tmpData = numpy.array(tmpData, dtype=numpy.object_)
         self._base.data = scipy.sparse.coo_matrix(
             (tmpData, (tmpRow, tmpCol)), shape=(numRetPoints, numRetFeatures))
-        self._base._sorted = None
+        self._base._resetSorted()
 
     def _combineByExpandingFeatures_implementation(self, uniqueDict, namesIdx,
                                                    uniqueNames, numRetFeatures,
@@ -433,7 +429,7 @@ class SparsePoints(SparseAxis, Points):
         shape = (len(uniqueDict), numRetFeatures)
         self._base.data = scipy.sparse.coo_matrix((tmpData, (tmpRow, tmpCol)),
                                                   shape=shape)
-        self._base._sorted = None
+        self._base._resetSorted()
 
 
 class SparsePointsView(PointsView, AxisView, SparsePoints):
@@ -454,10 +450,10 @@ class SparsePointsView(PointsView, AxisView, SparsePoints):
         unique = self._base.copy(to='Sparse')
         return unique.points._unique_implementation()
 
-    def _repeat_implementation(self, totalCopies, copyValueByValue):
+    def _repeat_implementation(self, totalCopies, copyVectorByVector):
         copy = self._base.copy(to='Sparse')
         return copy.points._repeat_implementation(totalCopies,
-                                                  copyValueByValue)
+                                                  copyVectorByVector)
 
 
 class SparseFeatures(SparseAxis, Features):
@@ -499,7 +495,7 @@ class SparseFeatures(SparseAxis, Features):
         shape = (len(self._base.points), numRetFeatures)
         self._base.data = scipy.sparse.coo_matrix((tmpData, (tmpRow, tmpCol)),
                                                   shape=shape)
-        self._base._sorted = None
+        self._base._resetSorted()
 
 
 class SparseFeaturesView(FeaturesView, AxisView, SparseFeatures):
@@ -520,10 +516,10 @@ class SparseFeaturesView(FeaturesView, AxisView, SparseFeatures):
         unique = self._base.copy(to='Sparse')
         return unique.features._unique_implementation()
 
-    def _repeat_implementation(self, totalCopies, copyValueByValue):
+    def _repeat_implementation(self, totalCopies, copyVectorByVector):
         copy = self._base.copy(to='Sparse')
         return copy.features._repeat_implementation(totalCopies,
-                                                    copyValueByValue)
+                                                    copyVectorByVector)
 
 ###################
 # Generic Helpers #

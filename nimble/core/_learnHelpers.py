@@ -710,7 +710,10 @@ def _unpackLearnerName(learnerName):
             raise InvalidArgumentValue(msg)
         package, name = splitList
     else:
-        package = learnerName.__module__.split('.')[0]
+        module = learnerName.__module__.split('.')
+        package = module[0]
+        if package == 'tensorflow' and 'keras' in module:
+            package = 'keras'
         name = learnerName.__name__
         if (issubclass(learnerName, nimble.CustomLearner)
                 and package != 'nimble'):

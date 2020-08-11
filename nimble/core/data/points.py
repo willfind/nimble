@@ -2159,7 +2159,7 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _repeat(self, totalCopies, copyValueByValue):
+    def _repeat(self, totalCopies, copyVectorByVector):
         pass
 
     @abstractmethod
