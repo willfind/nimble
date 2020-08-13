@@ -9,7 +9,8 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
-from nimble._utility import inheritDocstringsFactory, is2DArray
+from nimble._utility import inheritDocstringsFactory
+from nimble._utility import pandasDataFrameToList
 from nimble._utility import scipy, pd
 from .base import Base
 from .views import BaseView
@@ -20,7 +21,7 @@ from ._dataHelpers import DEFAULT_PREFIX
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import denseCountUnique
 from ._dataHelpers import NimbleElementIterator
-from ._dataHelpers import convertToNumpyOrder
+from ._dataHelpers import convertToNumpyOrder, isValid2DObject
 
 @inheritDocstringsFactory(Base)
 class DataFrame(Base):
@@ -44,9 +45,9 @@ class DataFrame(Base):
             msg = 'To use class DataFrame, pandas must be installed.'
             raise PackageException(msg)
 
-        if not isinstance(data, pd.DataFrame) and not is2DArray(data):
+        if not (isinstance(data, (pd.DataFrame)) or isValid2DObject(data)):
             msg = "the input data can only be a pandas DataFrame or a two-"
-            msg += "dimensional numpy array."
+            msg += "dimensional list or numpy array."
             raise InvalidArgumentType(msg)
 
         if isinstance(data, pd.DataFrame):
@@ -191,8 +192,11 @@ class DataFrame(Base):
             ftNames = self.features._getNamesNoGeneration()
             if to == 'DataFrame':
                 data = self.data.copy()
-            else:
+            elif self.data.empty:
                 data = self.data.values.copy()
+            else:
+                # convert to list because it preserves data types
+                data = pandasDataFrameToList(self.data)
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)

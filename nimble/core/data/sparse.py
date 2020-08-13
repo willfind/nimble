@@ -10,7 +10,7 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException, ImproperObjectAction
-from nimble._utility import inheritDocstringsFactory, is2DArray
+from nimble._utility import inheritDocstringsFactory
 from nimble._utility import scipy, pd
 from nimble._utility import sparseMatrixToArray
 from . import _dataHelpers
@@ -25,7 +25,8 @@ from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
 from ._dataHelpers import denseCountUnique
 from ._dataHelpers import NimbleElementIterator
-from ._dataHelpers import convertToNumpyOrder
+from ._dataHelpers import convertToNumpyOrder, modifyNumpyArrayValue
+from ._dataHelpers import isValid2DObject, numpyArrayFromList
 
 @inheritDocstringsFactory(Base)
 class Sparse(Base):
@@ -49,9 +50,9 @@ class Sparse(Base):
             msg = 'To use class Sparse, scipy must be installed.'
             raise PackageException(msg)
 
-        if not is2DArray(data) and not scipy.sparse.isspmatrix(data):
+        if not isValid2DObject(data) and not scipy.sparse.isspmatrix(data):
             msg = "the input data can only be a scipy sparse matrix or a "
-            msg += "two-dimensional numpy array"
+            msg += "two-dimensional numpy array or python list"
             raise InvalidArgumentType(msg)
 
         if scipy.sparse.isspmatrix_coo(data):
@@ -60,9 +61,17 @@ class Sparse(Base):
             else:
                 self.data = data.copy()
         elif scipy.sparse.isspmatrix(data):
-            #data is a spmatrix in other format instead of coo
+            # data is a spmatrix in other format instead of coo
             self.data = data.tocoo()
-        else:#data is numpy.array
+        else: # data is numpy.array or python list
+            if isinstance(data, list):
+                data = numpyArrayFromList(data)
+            # Sparse will convert None to 0 so we need to use numpy.nan instead
+            if data[data == None].size:
+                if data.dtype not in [float, numpy.floating, object]:
+                    data = data.astype(float)
+                data[data == None] = numpy.nan
+
             self.data = scipy.sparse.coo_matrix(data)
 
         # class attribute prevents repeated object creation for subsequent
@@ -162,7 +171,8 @@ class Sparse(Base):
             else:
                 currRet = toTransform(val, pID, fID)
 
-            self.data.data[index] = currRet
+            self.data.data = modifyNumpyArrayValue(self.data.data, index,
+                                                   currRet)
 
         self.data.eliminate_zeros()
 

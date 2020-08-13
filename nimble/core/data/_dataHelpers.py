@@ -4,18 +4,19 @@ the main data wrapper objects defined in this module.
 """
 
 import math
-import numbers
 import re
 import operator
 from functools import wraps
 from multiprocessing import Process
-import datetime
 
 import numpy
 
 import nimble
+from nimble import match
 from nimble._utility import pd, matplotlib
 from nimble._utility import inspectArguments
+from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
+from nimble._utility import is2DArray, numpy2DArray
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 
@@ -27,36 +28,6 @@ DEFAULT_PREFIX_LENGTH = len(DEFAULT_PREFIX)
 DEFAULT_NAME_PREFIX = "OBJECT_#"
 
 defaultObjectNumber = 0
-
-def isDatetime(x):
-    datetimeTypes = [datetime.datetime, numpy.datetime64]
-    if pd.nimbleAccessible():
-        datetimeTypes.append(pd.Timestamp)
-    return isinstance(x, tuple(datetimeTypes))
-
-def isAllowedSingleElement(x):
-    """
-    Determine if an element is an allowed single element.
-    """
-    if isinstance(x, (numbers.Number, str, numpy.bool_)):
-        return True
-
-    if isDatetime(x):
-        return True
-
-    if hasattr(x, '__len__'):#not a single element
-        return False
-
-    if x is None or x != x:#None and np.NaN are allowed
-        return True
-
-    return False
-
-def validateAllAllowedElements(data):
-    if not all(map(isAllowedSingleElement, data)):
-        msg = "Number, string, None, nan, and datetime objects are "
-        msg += "the only elements allowed in nimble data objects"
-        raise ImproperObjectAction(msg)
 
 def nextDefaultObjectName():
     """
@@ -1105,3 +1076,46 @@ def crossPlotter(inX, inY, xName, yName, xIndex, yIndex, xAxis, yAxis,
         plt.show()
     else:
         plt.savefig(outPath, format=outFormat)
+
+def is2DList(lst):
+    """
+    Determine if a python list is two-dimensional.
+    """
+    if not isinstance(lst, list):
+        return False
+    try:
+        return lst[0] == [] or isAllowedSingleElement(lst[0][0])
+    except IndexError:
+        return lst == []
+
+def isValid2DObject(data):
+    """
+    Determine validity of object for nimble data object instantiation.
+    """
+    return is2DArray(data) or is2DList(data)
+
+def numpyArrayFromList(data):
+    """
+    Use object dtype when all data is not int or float.
+    """
+    ret = numpy2DArray(data)
+    if ret.dtype not in (bool, numpy.bool_, numpy.object_):
+        # numpy will autoconvert bool values, we want to keep them as bools
+        for point in data:
+            if any(isinstance(val, bool) for val in point):
+                return numpy2DArray(data, dtype=numpy.object_)
+
+    return ret
+
+
+def modifyNumpyArrayValue(arr, index, newVal):
+    nonNumericNewVal = match.nonNumeric(newVal) and newVal is not None
+    floatNewVal = isinstance(newVal, (float, numpy.floating)) or newVal is None
+    if nonNumericNewVal and arr.dtype != numpy.object_:
+        arr = arr.astype(numpy.object_)
+    elif floatNewVal and arr.dtype not in (numpy.floating, numpy.object_):
+        arr = arr.astype(numpy.float)
+
+    arr[index] = newVal
+
+    return arr

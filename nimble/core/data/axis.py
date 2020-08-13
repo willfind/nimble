@@ -26,6 +26,7 @@ from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
+from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
 from nimble.core.logger import handleLogging
 from .points import Points
 from .features import Features
@@ -34,7 +35,6 @@ from ._dataHelpers import DEFAULT_PREFIX_LENGTH
 from ._dataHelpers import valuesToPythonList, constructIndicesList
 from ._dataHelpers import validateInputString
 from ._dataHelpers import isQueryString, axisQueryFunction
-from ._dataHelpers import isAllowedSingleElement, validateAllAllowedElements
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import wrapMatchFunctionFactory
 from ._dataHelpers import validateAxisFunction

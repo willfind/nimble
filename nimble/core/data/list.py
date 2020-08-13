@@ -11,13 +11,13 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble._utility import inheritDocstringsFactory, numpy2DArray, is2DArray
+from nimble._utility import isAllowedSingleElement
 from nimble._utility import scipy, pd
 from .base import Base
 from .views import BaseView
 from .listAxis import ListPoints, ListPointsView
 from .listAxis import ListFeatures, ListFeaturesView
 from ._dataHelpers import DEFAULT_PREFIX
-from ._dataHelpers import isAllowedSingleElement
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
 from ._dataHelpers import denseCountUnique
@@ -49,8 +49,8 @@ class List(Base):
 
     def __init__(self, data, featureNames=None, reuseData=False, shape=None,
                  checkAll=True, **kwds):
-        if (not (isinstance(data, list) or is2DArray(data))
-                and 'PassThrough' not in str(type(data))):
+        if (not (isinstance(data, list) or is2DArray(data)
+                or 'PassThrough' in str(type(data)))):
             msg = "the input data can only be a list, a two-dimensional numpy "
             msg += "array, or ListPassThrough."
             raise InvalidArgumentType(msg)

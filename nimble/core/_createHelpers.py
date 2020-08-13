@@ -19,12 +19,11 @@ from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
 from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import FileFormatException
-from nimble.core.data._dataHelpers import isAllowedSingleElement
-from nimble.core.data._dataHelpers import validateAllAllowedElements
 from nimble.core.data.sparse import removeDuplicatesNative
 from nimble._utility import numpy2DArray, is2DArray
-from nimble._utility import sparseMatrixToArray
+from nimble._utility import sparseMatrixToArray, pandasDataFrameToList
 from nimble._utility import scipy, pd, requests, h5py
+from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
 
 ###########
 # Helpers #
@@ -56,7 +55,7 @@ def isPandasObject(data, dataframe=True, series=True, sparse=None):
                 # SparseDataFrame deprecated in pandas >= 1.0
                 sparseDF = (hasattr(pd, 'SparseDataFrame')
                             and isinstance(data, pd.SparseDataFrame))
-            if sparse and (sparseAccessor or sparseDF):
+            if not data.empty and sparse and (sparseAccessor or sparseDF):
                 return True
             if not sparse and not (sparseAccessor or sparseDF):
                 return True
@@ -620,14 +619,10 @@ def extractNames(rawData, pointNames, featureNames):
     return rawData, pointNames, featureNames
 
 
-def convertData(returnType, rawData, pointNames, featureNames,
-                convertToType):
+def convertData(returnType, rawData, pointNames, featureNames):
     """
     Convert data to an object type which is compliant with the
-    initializion for the given returnType. Additionally, ensure the data
-    is converted to the convertToType. If convertToType is None an
-    attempt will be made to convert all the data to floats, if
-    unsuccessful, the data will remain the same object type.
+    initializion for the given returnType.
     """
     typeMatch = {'List': list,
                  'Matrix': numpy.ndarray}
@@ -636,9 +631,6 @@ def convertData(returnType, rawData, pointNames, featureNames,
     if pd.nimbleAccessible():
         typeMatch['DataFrame'] = pd.DataFrame
 
-    # perform type conversion if necessary
-    # this also guarantees data is in an acceptable format
-    rawData = elementTypeConvert(rawData, convertToType)
     try:
         typeMatchesReturn = isinstance(rawData, typeMatch[returnType])
     except KeyError:
@@ -650,7 +642,8 @@ def convertData(returnType, rawData, pointNames, featureNames,
         raise PackageException(msg.format(package, returnType))
 
     # if the data can be used to instantiate the object we pass it as-is
-    # otherwise a 2D array is needed as they are accepted by all init methods
+    # otherwise choose the best option, a 2D list or numpy array, based on
+    # data type preservation. Both are accepted by all init methods.
     if typeMatchesReturn:
         if returnType == 'List':
             lenFts = len(featureNames) if featureNames else 0
@@ -662,43 +655,46 @@ def convertData(returnType, rawData, pointNames, featureNames,
         elif returnType == 'Matrix' and len(rawData.shape) == 1:
             rawData = numpy2DArray(rawData)
         return rawData
-    ret = convertToArray(rawData, convertToType, pointNames, featureNames)
-    if returnType == 'Sparse' and ret.dtype == numpy.object_:
-        # Sparse will convert None to 0 so we need to use numpy.nan instead
-        ret[ret == None] = numpy.nan
+    ret = convertToBest(rawData, pointNames, featureNames)
+
     return ret
 
-def convertToArray(rawData, convertToType, pointNames, featureNames):
+
+def convertToBest(rawData, pointNames, featureNames):
+    """
+    Convert to best object for instantiation. All objects accept python
+    lists and numpy arrays for instantiation. Since numpy and scipy
+    objects only have a single data type, we use an array. Otherwise, we
+    use a list to preserve the data types of the raw values. Arrays are
+    also used for any empty objects.
+    """
     if isPandasDataFrame(rawData):
-        return rawData.values
+        if rawData.empty:
+            return rawData.values
+        return pandasDataFrameToList(rawData)
     if isPandasSeries(rawData):
         if rawData.empty:
             return numpy.empty((0, rawData.shape[0]))
-        return numpy2DArray(rawData.values)
+        return [rawData.to_list()]
     if isScipySparse(rawData):
         return sparseMatrixToArray(rawData)
     if isNumpyArray(rawData):
-        if not is2DArray(rawData):
-            rawData = numpy2DArray(rawData)
-        return rawData
-    # lists (or other similar objects)
-    lenFts = len(featureNames) if featureNames else 0
-    if len(rawData) == 0:
+        if rawData.size == 0:
+            return rawData
+        return numpy2DArray(rawData)
+    # list objects
+    if not isinstance(rawData, list):
+        rawData = list(rawData)
+    if not rawData: # empty
+        lenFts = len(featureNames) if featureNames else 0
         lenPts = len(pointNames) if pointNames else 0
-        return numpy.empty([lenPts, lenFts])
-    if hasattr(rawData[0], '__len__') and len(rawData[0]) == 0:
-        return numpy.empty([len(rawData), lenFts])
-    if convertToType is not None:
-        arr = numpy2DArray(rawData, dtype=convertToType)
-        # run through elementType to convert to object if not accepted type
-        return elementTypeConvert(arr, None)
+        return numpy.empty((lenPts, lenFts))
+    if rawData and isAllowedSingleElement(rawData[0]):
+        return [rawData]
+    if not all(isinstance(point, list) for point in rawData):
+        return [list(point) for point in rawData]
 
-    arr = numpy2DArray(rawData)
-    # The bool dtype is acceptable, but others run the risk of transforming the
-    # data so we default to object dtype.
-    if arr.dtype == bool:
-        return arr
-    return numpy2DArray(rawData, dtype=numpy.object_)
+    return rawData
 
 def elementTypeConvert(rawData, convertToType):
     """
@@ -713,17 +709,21 @@ def elementTypeConvert(rawData, convertToType):
         if hasattr(rawData, 'dtype') and not allowedElemType(rawData.dtype):
             rawData = rawData.astype(numpy.object_)
         return rawData
-    if (isNumpyArray(rawData) or isScipySparse(rawData)
-            or isPandasObject(rawData)):
+    if isPandasObject(rawData):
+        try:
+            return rawData.astype(convertToType)
+        except (TypeError, ValueError) as err:
+            error = err
+    elif isNumpyArray(rawData) or isScipySparse(rawData):
         try:
             converted = rawData.astype(convertToType)
             if not allowedElemType(converted.dtype):
-                converted = rawData.astype(numpy.object_)
+                converted =  converted.astype(numpy.object_)
             return converted
         except (TypeError, ValueError) as err:
             error = err
     # otherwise we assume data follows conventions of a list
-    if convertToType not in [object, numpy.object_] and len(rawData) > 0:
+    elif convertToType not in [object, numpy.object_] and len(rawData) > 0:
         if not hasattr(rawData[0], '__len__'):
             rawData = [rawData] # make 2D
         try:
@@ -1116,9 +1116,10 @@ def initDataObject(
         if treatAsMissing is not None:
             rawData = replaceMissingData(rawData, treatAsMissing,
                                          replaceMissingWith)
-    # convert to convertToType, if necessary
-    rawData = convertData(returnType, rawData, pointNames, featureNames,
-                          convertToType)
+    # convert data to a type compatible with the returnType init method
+    rawData = convertData(returnType, rawData, pointNames, featureNames)
+    if convertToType is not None:
+        rawData = elementTypeConvert(rawData, convertToType)
 
     pathsToPass = (None, None)
     if path is not None:

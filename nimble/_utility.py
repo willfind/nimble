@@ -8,11 +8,13 @@ without risk of circular imports.
 
 import inspect
 import importlib
+import numbers
+import datetime
 
 import numpy
 
 # nimble.exceptions may be imported
-from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
 
 
@@ -123,6 +125,12 @@ def numpy2DArray(obj, dtype=None, copy=True, order='K', subok=False):
                       ndmin=2)
     if len(ret.shape) > 2:
         raise InvalidArgumentValue('obj cannot be more than two-dimensional')
+
+    if not (ret.dtype in [bool, numpy.bool_, int, float, object, numpy.object_]
+            or numpy.issubdtype(ret.dtype, numpy.number)):
+        ret = numpy.array(obj, dtype=numpy.object_, copy=copy, order=order,
+                          subok=subok, ndmin=2)
+
     return ret
 
 def is2DArray(arr):
@@ -133,6 +141,7 @@ def is2DArray(arr):
     return True.
     """
     return isinstance(arr, numpy.ndarray) and len(arr.shape) == 2
+
 
 class DeferredModuleImport(object):
     """
@@ -233,3 +242,36 @@ def dtypeConvert(obj):
         except ValueError:
             pass
     return obj
+
+def isDatetime(x):
+    datetimeTypes = [datetime.datetime, numpy.datetime64]
+    if pd.nimbleAccessible():
+        datetimeTypes.append(pd.Timestamp)
+    return isinstance(x, tuple(datetimeTypes))
+
+def isAllowedSingleElement(x):
+    """
+    Determine if an element is an allowed single element.
+    """
+    if isinstance(x, (numbers.Number, str, numpy.bool_)):
+        return True
+
+    if isDatetime(x):
+        return True
+
+    if hasattr(x, '__len__'):#not a single element
+        return False
+
+    if x is None or x != x:#None and np.NaN are allowed
+        return True
+
+    return False
+
+def validateAllAllowedElements(data):
+    if not all(map(isAllowedSingleElement, data)):
+        msg = "Number, string, None, nan, and datetime objects are "
+        msg += "the only elements allowed in nimble data objects"
+        raise ImproperObjectAction(msg)
+
+def pandasDataFrameToList(pdDataFrame):
+    return list(map(list, zip(*(col for _, col in pdDataFrame.iteritems()))))

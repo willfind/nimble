@@ -1534,11 +1534,11 @@ class Points(object):
         >>> data.points.fillMatching(fill.mode, match.missing, points=4)
         >>> data
         Matrix(
-            [[1 1  1 ]
-             [1 1  1 ]
-             [1 1 nan]
-             [2 2  2 ]
-             [2 2  2 ]]
+            [[1.000 1.000 1.000]
+             [1.000 1.000 1.000]
+             [1.000 1.000  nan ]
+             [2.000 2.000 2.000]
+             [2.000 2.000 2.000]]
             )
         """
         return self._fillMatching(fillWith, matchingElements, points,
