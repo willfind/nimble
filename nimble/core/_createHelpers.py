@@ -10,6 +10,7 @@ from io import StringIO, BytesIO
 import os.path
 import copy
 import sys
+import warnings
 
 import numpy
 
@@ -18,31 +19,80 @@ from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
 from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import FileFormatException
-from nimble.core.data import Base
 from nimble.core.data._dataHelpers import isAllowedSingleElement
 from nimble.core.data._dataHelpers import validateAllAllowedElements
 from nimble.core.data.sparse import removeDuplicatesNative
 from nimble._utility import numpy2DArray, is2DArray
 from nimble._utility import sparseMatrixToArray
 from nimble._utility import scipy, pd, requests, h5py
-#
+
+###########
+# Helpers #
+###########
+
+def isBase(data):
+    return isinstance(data, nimble.core.data.Base)
+
+def isNumpyArray(data):
+    return isinstance(data, numpy.ndarray)
+
+def isNumpyMatrix(data):
+    return isinstance(data, numpy.matrix)
+
+def isPandasObject(data, dataframe=True, series=True, sparse=None):
+    if pd.nimbleAccessible():
+        if dataframe and series:
+            pandasTypes = (pd.DataFrame, pd.Series)
+        elif dataframe:
+            pandasTypes = pd.DataFrame
+        elif series:
+            pandasTypes = pd.Series
+        if isinstance(data, pandasTypes):
+            if sparse is None:
+                return True
+            sparseAccessor = hasattr(data, 'sparse')
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                # SparseDataFrame deprecated in pandas >= 1.0
+                sparseDF = (hasattr(pd, 'SparseDataFrame')
+                            and isinstance(data, pd.SparseDataFrame))
+            if sparse and (sparseAccessor or sparseDF):
+                return True
+            if not sparse and not (sparseAccessor or sparseDF):
+                return True
+    return False
+
+def isPandasSparse(data):
+    return isPandasObject(data, sparse=True)
+
+def isPandasDense(data):
+    return isPandasObject(data, sparse=False)
+
+def isPandasDataFrame(data):
+    return isPandasObject(data, series=False)
+
+def isPandasSeries(data):
+    return isPandasObject(data, dataframe=False)
+
+def isScipySparse(data):
+    if scipy.nimbleAccessible():
+        return scipy.sparse.isspmatrix(data)
+    return False
 
 def isAllowedRaw(data, allowLPT=False):
     """
     Verify raw data is one of the accepted types.
     """
-    if isinstance(data, Base):
+    if isBase(data):
         return True
     if allowLPT and 'PassThrough' in str(type(data)):
         return True
-    if scipy.nimbleAccessible() and scipy.sparse.issparse(data):
-        return True
     if isinstance(data, (tuple, list, dict, numpy.ndarray)):
         return True
-
-    if pd.nimbleAccessible():
-        if isinstance(data, (pd.DataFrame, pd.Series)):
-            return True
+    if isScipySparse(data):
+        return True
+    if isPandasObject(data):
+        return True
 
     return False
 
@@ -260,6 +310,9 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
     """
     Extract names from a scipy sparse coo matrix.
     """
+    if not scipy.nimbleAccessible():
+        msg = "scipy is not available"
+        raise PackageException(msg)
     if not scipy.sparse.isspmatrix_coo(data):
         data = scipy.sparse.coo_matrix(data)
     # gather up the first two rows of entries, to check for automatic name
@@ -290,9 +343,6 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
     # of the present data.
 
     # these will be ID -> name mappings
-    if not scipy.nimbleAccessible():
-        msg = "scipy is not available"
-        raise PackageException(msg)
     tempPointNames = {}
     tempFeatureNames = {}
 
@@ -509,17 +559,17 @@ def extractNames(rawData, pointNames, featureNames):
         elif isinstance(rawData, tuple):
             rawData = list(rawData)
             func = extractNamesFromRawList
-        elif isinstance(rawData, numpy.ndarray):
+        elif isNumpyArray(rawData):
             func = extractNamesFromNumpy
-        elif scipy.nimbleAccessible() and scipy.sparse.issparse(rawData):
+        elif isScipySparse(rawData):
             # all input coo_matrices must have their duplicates removed; all
             # helpers past this point rely on there being single entires only.
             if isinstance(rawData, scipy.sparse.coo_matrix):
                 rawData = removeDuplicatesNative(rawData)
             func = extractNamesFromScipySparse
-        elif pd.nimbleAccessible() and isinstance(rawData, pd.DataFrame):
+        elif isPandasDataFrame(rawData):
             func = extractNamesFromPdDataFrame
-        elif pd.nimbleAccessible() and isinstance(rawData, pd.Series):
+        elif isPandasSeries(rawData):
             func = extractNamesFromPdSeries
 
         rawData, tempPointNames, tempFeatureNames = func(rawData, pointNames,
@@ -619,15 +669,15 @@ def convertData(returnType, rawData, pointNames, featureNames,
     return ret
 
 def convertToArray(rawData, convertToType, pointNames, featureNames):
-    if pd.nimbleAccessible() and isinstance(rawData, pd.DataFrame):
+    if isPandasDataFrame(rawData):
         return rawData.values
-    if pd.nimbleAccessible() and isinstance(rawData, pd.Series):
+    if isPandasSeries(rawData):
         if rawData.empty:
             return numpy.empty((0, rawData.shape[0]))
         return numpy2DArray(rawData.values)
-    if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(rawData):
+    if isScipySparse(rawData):
         return sparseMatrixToArray(rawData)
-    if isinstance(rawData, numpy.ndarray):
+    if isNumpyArray(rawData):
         if not is2DArray(rawData):
             rawData = numpy2DArray(rawData)
         return rawData
@@ -663,9 +713,8 @@ def elementTypeConvert(rawData, convertToType):
         if hasattr(rawData, 'dtype') and not allowedElemType(rawData.dtype):
             rawData = rawData.astype(numpy.object_)
         return rawData
-    if (isinstance(rawData, numpy.ndarray)
-            or (scipy and isinstance(rawData, scipy.sparse.spmatrix))
-            or (pd and isinstance(rawData, (pd.DataFrame, pd.Series)))):
+    if (isNumpyArray(rawData) or isScipySparse(rawData)
+            or isPandasObject(rawData)):
         try:
             converted = rawData.astype(convertToType)
             if not allowedElemType(converted.dtype):
@@ -748,19 +797,11 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
     Convert any values in rawData found in treatAsMissing with
     replaceMissingWith value.
     """
-    if (pd.nimbleAccessible()
-            and isinstance(rawData, (pd.DataFrame, pd.Series))):
-        # pandas 1.0: SparseDataFrame still in pd namespace but does not work
-        # Sparse functionality now determined by presence of .sparse accessor
-        # need to convert sparse objects to coo matrix before handling missing
-        if hasattr(rawData, 'sparse') and not rawData.empty:
-            rawData = rawData.sparse.to_coo()
-        else:
-            try:
-                if isinstance(rawData, pd.SparseDataFrame):
-                    rawData = scipy.sparse.coo_matrix(rawData)
-            except AttributeError:
-                pass
+    # pandas 1.0: SparseDataFrame still in pd namespace but does not work
+    # Sparse functionality now determined by presence of .sparse accessor
+    # need to convert sparse objects to coo matrix before handling missing
+    if isPandasSparse(rawData):
+        rawData = scipy.sparse.coo_matrix(rawData)
 
     if isinstance(rawData, (list, tuple)):
         handleMissing = numpy.array(rawData, dtype=numpy.object_)
@@ -768,7 +809,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
                                            replaceMissingWith)
         rawData = handleMissing.tolist()
 
-    elif isinstance(rawData, numpy.ndarray):
+    elif isNumpyArray(rawData):
         rawData = replaceNumpyValues(rawData, treatAsMissing,
                                      replaceMissingWith)
 
@@ -777,8 +818,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
                                            replaceMissingWith)
         rawData.data = handleMissing
 
-    elif (pd.nimbleAccessible()
-          and isinstance(rawData, (pd.DataFrame, pd.Series))):
+    elif isPandasDense(rawData):
         if len(rawData.values) > 0:
             # .where keeps the values that return True, use ~ to replace those
             # values instead
@@ -827,16 +867,15 @@ class GenericPointIterator:
     the same as using iter()
     """
     def __init__(self, data):
-        if isinstance(data, Base) and data.shape[0] > 1:
+        if isBase(data) and data.shape[0] > 1:
             self.iterator = data.points
-        elif isinstance(data, numpy.matrix):
+        elif isNumpyMatrix(data):
             self.iterator = iter(numpy.array(data))
         elif isinstance(data, dict):
             self.iterator = iter(data.values())
-        elif (pd.nimbleAccessible()
-              and isinstance(data, (pd.DataFrame, pd.Series))):
+        elif isPandasObject(data):
             self.iterator = iter(data.values)
-        elif scipy.nimbleAccessible() and scipy.sparse.isspmatrix(data):
+        elif isScipySparse(data):
             self.iterator = SparseCOORowIterator(data.tocoo(False))
         else:
             self.iterator = iter(data)
@@ -846,17 +885,17 @@ class GenericPointIterator:
 
     def __next__(self):
         val = next(self.iterator)
-        if isinstance(val, Base) and 1 not in val.shape:
+        if isBase(val) and 1 not in val.shape:
             return val.copy('python list')
         return val
 
 
 def getFirstIndex(data):
-    if scipy.nimbleAccessible() and scipy.sparse.isspmatrix_coo(data):
+    if isScipySparse(data):
         first = data.data[data.row == 0]
-    elif pd.nimbleAccessible() and isinstance(data, (pd.DataFrame, pd.Series)):
+    elif isPandasObject(data):
         first = data.iloc[0]
-    elif isinstance(data, Base) and 1 not in data.shape:
+    elif isBase(data) and 1 not in data.shape:
         first = data.points[0]
     elif isinstance(data, dict):
         first = data[list(data.keys())[0]]
@@ -869,7 +908,7 @@ def isHighDimensionData(rawData, skipDataProcessing):
     """
     Identify data with more than two-dimensions.
     """
-    if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(rawData):
+    if isScipySparse(rawData):
         if not rawData.data.size:
             return False
         rawData = [rawData.data]
@@ -944,7 +983,7 @@ def validateDataLength(actual, expected):
 
 
 def getPointCount(data):
-    if isinstance(data, Base):
+    if isBase(data):
         return len(data.points)
     if hasattr(data, 'shape'):
         return data.shape[0]
@@ -961,7 +1000,7 @@ def flattenToOneDimension(data, toFill=None, dimensions=None):
     flattened point by point.
     """
     # if Base and not a vector, use points attribute for __len__ and __iter__
-    if isinstance(data, Base) and (len(data._shape) > 2 or data.shape[0] > 1):
+    if isBase(data) and (len(data._shape) > 2 or data.shape[0] > 1):
         data = data.points
     if toFill is None:
         toFill = []
@@ -991,7 +1030,7 @@ def flattenHighDimensionFeatures(rawData):
     Features are flattened point by point whether numpy.reshape or
     flattenToOneDimension are used.
     """
-    if isinstance(rawData, numpy.ndarray) and rawData.dtype != numpy.object_:
+    if isNumpyArray(rawData) and rawData.dtype != numpy.object_:
         origDims = rawData.shape
         newShape = (rawData.shape[0], numpy.prod(rawData.shape[1:]))
         rawData = numpy.reshape(rawData, newShape)
@@ -1035,19 +1074,12 @@ def initDataObject(
     """
     if returnType is None:
         # scipy sparse matrix or a pandas sparse object
-        if ((scipy.nimbleAccessible() and scipy.sparse.issparse(rawData))
-                or (pd.nimbleAccessible()
-                    and isinstance(rawData, (pd.Series, pd.DataFrame))
-                    # latest pandas versions use pd.DataFrame.sparse accessor,
-                    # previous versions used pd.SparseDataFrame
-                    and ((hasattr(rawData, 'sparse'))
-                         or (hasattr(pd, 'SparseDataFrame')
-                             and isinstance(rawData, pd.SparseDataFrame))))):
+        if isScipySparse(rawData) or isPandasSparse(rawData):
             returnType = 'Sparse'
         else:
             returnType = 'Matrix'
 
-    if isinstance(rawData, Base):
+    if isBase(rawData):
         # point/featureNames, treatAsMissing, etc. may vary
         rawData = rawData.data
     if not reuseData:
@@ -1061,9 +1093,9 @@ def initDataObject(
     # to the data, so we can skip name extraction and missing replacement.
     kwargs = {}
     # convert these types as indexing may cause dimensionality confusion
-    if isinstance(rawData, numpy.matrix):
+    if isNumpyMatrix(rawData):
         rawData = numpy.array(rawData)
-    if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(rawData):
+    if isScipySparse(rawData):
         rawData = rawData.tocoo()
 
     if isHighDimensionData(rawData, skipDataProcessing):
