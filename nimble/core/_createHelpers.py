@@ -1234,8 +1234,8 @@ def initDataObject(
 
 def createDataFromFile(
         returnType, data, pointNames, featureNames, name,
-        ignoreNonNumericalFeatures, keepPoints, keepFeatures, inputSeparator,
-        treatAsMissing, replaceMissingWith):
+        ignoreNonNumericalFeatures, keepPoints, keepFeatures, convertToType,
+        inputSeparator, treatAsMissing, replaceMissingWith):
     """
     Helper for nimble.data which deals with the case of loading data
     from a file. Returns a triple containing the raw data, pointNames,
@@ -1357,8 +1357,9 @@ def createDataFromFile(
 
     return initDataObject(
         returnType, retData, retPNames, retFNames, name, path,
-        keepPoints, keepFeatures, treatAsMissing=treatAsMissing,
-        replaceMissingWith=replaceMissingWith, extracted=extracted)
+        keepPoints, keepFeatures, convertToType=convertToType,
+        treatAsMissing=treatAsMissing, replaceMissingWith=replaceMissingWith,
+        extracted=extracted)
 
 
 def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
