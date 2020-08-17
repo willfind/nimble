@@ -11,14 +11,16 @@ import os.path
 import copy
 import sys
 import warnings
+import functools
 
 import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
+from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
-from nimble.exceptions import ImproperObjectAction
-from nimble.exceptions import FileFormatException
+from nimble.exceptions import ImproperObjectAction, FileFormatException
+from nimble.exceptions import _prettyListString
 from nimble.core.data.sparse import removeDuplicatesNative
 from nimble._utility import numpy2DArray, is2DArray
 from nimble._utility import sparseMatrixToArray, pandasDataFrameToList
@@ -205,30 +207,25 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
     secondRow = rawData[1] if len(rawData) > 1 else None
     pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow,
                                                 secondRow)
-    pnamesID = 0 if pnamesID is True else None
-    fnamesID = 0 if fnamesID is True else None
-
     retPNames = None
-    if pnamesID is not None:
+    if pnamesID is True:
         temp = []
         for i in range(len(rawData)):
-            # grab and remove each value in the feature associated
-            # with point names
-            currVal = rawData[i].pop(pnamesID)
-            # have to skip the index of the feature names, if they are also
-            # in the data
-            if fnamesID is not None and i != fnamesID:
+            # grab and remove each value at index 0
+            currVal = rawData[i].pop(0)
+            # if feature names are also in the data, skip index 0
+            if fnamesID is not True or (fnamesID is True and i != 0):
             # we wrap it with the string constructor in case the
                 # values in question AREN'T strings
                 temp.append(str(currVal))
         retPNames = temp
 
     retFNames = None
-    if fnamesID is not None:
+    if fnamesID is True:
         # don't have to worry about an overlap entry with point names;
         # if they existed we had already removed those values.
         # Therefore: just pop that entire point
-        temp = rawData.pop(fnamesID)
+        temp = rawData.pop(0)
         for i in range(len(temp)):
             temp[i] = str(temp[i])
         retFNames = temp
@@ -261,21 +258,19 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID):
     secondRow = cleanRow(data[1]) if len(data) > 1 else None
     pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow,
                                                 secondRow)
-    pnamesID = 0 if pnamesID is True else None
-    fnamesID = 0 if fnamesID is True else None
 
     retPNames = None
     retFNames = None
-    if pnamesID is not None:
-        retPNames = numpy.array(data[:, pnamesID]).flatten()
-        data = numpy.delete(data, pnamesID, 1)
-        if isinstance(fnamesID, int):
-            retPNames = numpy.delete(retPNames, fnamesID)
+    if pnamesID is True:
+        retPNames = numpy.array(data[:, 0]).flatten()
+        data = numpy.delete(data, 0, 1)
+        if fnamesID is True:
+            retPNames = numpy.delete(retPNames, 0)
         retPNames = numpy.vectorize(str)(retPNames)
         retPNames = list(retPNames)
-    if fnamesID is not None:
-        retFNames = numpy.array(data[fnamesID]).flatten()
-        data = numpy.delete(data, fnamesID, 0)
+    if fnamesID is True:
+        retFNames = numpy.array(data[0]).flatten()
+        data = numpy.delete(data, 0, 0)
         retFNames = numpy.vectorize(str)(retFNames)
         retFNames = list(retFNames)
 
@@ -330,9 +325,6 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
         pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID,
                                                     firstRow, secondRow)
 
-    fnamesID = 0 if fnamesID is True else None
-    pnamesID = 0 if pnamesID is True else None
-
     # run through the entries in the returned coo_matrix to get
     # point / feature Names.
 
@@ -346,11 +338,11 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
     tempFeatureNames = {}
 
     newLen = len(data.data)
-    if pnamesID is not None:
+    if pnamesID is True:
         newLen -= data.shape[0]
-    if fnamesID is not None:
+    if fnamesID is True:
         newLen -= data.shape[1]
-    if (pnamesID is not None) and (fnamesID is not None):
+    if (pnamesID is True) and (fnamesID is True):
         newLen += 1
 
     newRows = numpy.empty(newLen, dtype=data.row.dtype)
@@ -358,8 +350,8 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
     newData = numpy.empty(newLen, dtype=data.dtype)
     writeIndex = 0
     # adjust the sentinal value for easier index modification
-    pnamesID = sys.maxsize if pnamesID is None else pnamesID
-    fnamesID = sys.maxsize if fnamesID is None else fnamesID
+    pnamesID = 0 if pnamesID is True else sys.maxsize
+    fnamesID = 0 if fnamesID is True else sys.maxsize
     for i in range(len(data.data)):
         row = data.row[i]
         setRow = row if row < fnamesID else row - 1
@@ -445,15 +437,13 @@ def extractNamesFromPdDataFrame(rawData, pnamesID, fnamesID):
     secondRow = rawData.values[1] if len(rawData) > 1 else None
     pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow,
                                                 secondRow)
-    pnamesID = 0 if pnamesID is True else None
-    fnamesID = 0 if fnamesID is True else None
 
     retPNames = None
-    if pnamesID is not None:
+    if pnamesID is True:
         retPNames = [str(i) for i in rawData.index.tolist()]
 
     retFNames = None
-    if fnamesID is not None:
+    if fnamesID is True:
         retFNames = [str(i) for i in rawData.columns.tolist()]
 
     return (rawData, retPNames, retFNames)
@@ -696,45 +686,76 @@ def convertToBest(rawData, pointNames, featureNames):
 
     return rawData
 
-def elementTypeConvert(rawData, convertToType):
-    """
-    Attempt to convert rawData to the specified convertToType.
-    """
+def allowedElemType(elemType):
+    return (elemType in [int, float, bool, object]
+            or numpy.issubdtype(elemType, numpy.number))
 
-    def allowedElemType(elemType):
-        return (elemType in [int, float, bool, object]
-                or numpy.issubdtype(elemType, numpy.number))
-
-    if convertToType is None:
-        if hasattr(rawData, 'dtype') and not allowedElemType(rawData.dtype):
-            rawData = rawData.astype(numpy.object_)
-        return rawData
-    if isPandasObject(rawData):
-        try:
-            return rawData.astype(convertToType)
-        except (TypeError, ValueError) as err:
-            error = err
-    elif isNumpyArray(rawData) or isScipySparse(rawData):
-        try:
-            converted = rawData.astype(convertToType)
-            if not allowedElemType(converted.dtype):
-                converted =  converted.astype(numpy.object_)
-            return converted
-        except (TypeError, ValueError) as err:
-            error = err
-    # otherwise we assume data follows conventions of a list
-    elif convertToType not in [object, numpy.object_] and len(rawData) > 0:
-        if not hasattr(rawData[0], '__len__'):
-            rawData = [rawData] # make 2D
-        try:
-            convertedData = []
-            for point in rawData:
-                convertedData.append(list(map(convertToType, point)))
-            return convertedData
-        except (ValueError, TypeError) as err:
-            error = err
+def typeReducer(type1, type2):
+    dtype1 = numpy.dtype(type1)
+    dtype2 = numpy.dtype(type2)
+    if numpy.can_cast(dtype1, dtype2):
+        return dtype2
     else:
-        return rawData
+        return dtype1
+
+def elementTypeConvert(data, convertToType):
+    """
+    Attempt to convert data to the specified convertToType.
+    """
+    singleType = not isinstance(convertToType, list)
+    objectTypes = (object, numpy.object_)
+
+    try:
+        if singleType and isNumpyArray(data):
+            data = data.astype(convertToType)
+            if not allowedElemType(data.dtype):
+                data =  data.astype(numpy.object_)
+        elif singleType and isScipySparse(data):
+            data.data = data.data.astype(convertToType)
+            if not allowedElemType(data.data.dtype):
+                data.data =  data.data.astype(numpy.object_)
+        elif singleType and isPandasDataFrame(data):
+            data =  data.astype(convertToType)
+        elif singleType:
+            # only need to convert if not empty and not object type
+            if convertToType not in objectTypes and len(data):
+                # 2D list
+                convertedData = []
+                for point in data:
+                    convertedData.append(list(map(convertToType, point)))
+                data = convertedData
+
+        # convertToType is a list of differing types
+        elif isNumpyArray(data):
+            for i, feature in enumerate(data.T):
+                convType = convertToType[i]
+                if convType is None:
+                    continue
+                data = data.astype(numpy.object_)
+                data[:, i] = feature.astype(convType)
+        elif isScipySparse(data):
+            for col in range(data.shape[1]):
+                convType = convertToType[col]
+                if convType is None:
+                    continue
+                data = data.astype(numpy.object_)
+                toType = data.data[data.col == col].astype(convType)
+                data.data[data.col == col] = toType
+        elif isPandasDataFrame(data):
+            for i, (idx, ft) in enumerate(data.iteritems()):
+                convType = convertToType[i]
+                if convType is not None:
+                    data[idx] = ft.astype(convType)
+        elif len(data): # 2D list
+            for i, point in enumerate(data):
+                zippedConvert = zip(point, convertToType)
+                data[i] = [val if (ctype is None or ctype in objectTypes)
+                           else ctype(val) for val, ctype in zippedConvert]
+        return data
+
+    except (ValueError, TypeError) as err:
+        error = err
+
     # if nothing has been returned, we cannot convert to the convertToType
     msg = 'Unable to convert the data to convertToType '
     msg += "'{0}'. ".format(convertToType) + str(error)
@@ -1057,6 +1078,69 @@ def flattenHighDimensionFeatures(rawData):
 
     return rawData, origDims
 
+def getKeepIndexValues(axisObj, keepList):
+    """
+    Get only the index values from a list that could contain axis names.
+
+    Additionally validates that there is not an index and name that
+    represent the same point/feature.
+    """
+    cleaned = []
+    for val in keepList:
+        converted = axisObj.getIndex(val)
+        if converted not in cleaned:
+            cleaned.append(converted)
+        else:
+            # we know no duplicates present so an index and name must match
+            msg = "Values in {keep} must represent unique {axis}s. "
+            msg += "'{name}' and {idx} represent the same {axis}. "
+            axis = axisObj._axis
+            keep = 'keepPoints' if axis == 'point' else 'keepFeatures'
+            name = axisObj.getName(converted)
+            msg = msg.format(axis=axis, keep=keep, name=name, idx=converted)
+            raise InvalidArgumentValue(msg)
+
+    return cleaned
+
+def convertToTypeDictToList(convertToType, featuresObj, featureNames):
+     retFNames = featuresObj._getNamesNoGeneration()
+     convertList = [None] * len(featuresObj)
+     # if no feature names, we will use the list of None values as the
+     # featureNames to allow us to use the same process in either case
+     if retFNames is None:
+         retFNames = convertList
+     for i, ftName in enumerate(retFNames):
+         if i in convertToType and ftName in convertToType:
+             if convertToType[i] == convertToType[ftName]:
+                 convertList[i] = convertToType[i]
+                 del convertToType[i]
+                 del convertToType[ftName]
+             else:
+                 msg = "The keys '{name}' and {idx} represent the same "
+                 msg += "feature but have different values"
+                 raise InvalidArgumentValue(msg.format(name=ftName, idx=i))
+         if i in convertToType:
+             convertList[i] = convertToType[i]
+             del convertToType[i]
+         elif ftName in convertToType:
+             convertList[i] = convertToType[ftName]
+             del convertToType[ftName]
+     # if there are any unused values, they must correspond with full data
+     if convertToType:
+         fail = []
+         if featureNames is None:
+             fail = list(convertToType.keys())
+         else:
+             for key in convertToType:
+                 if not ((isinstance(key, int) and key < len(featureNames))
+                         or key in featureNames):
+                     fail.append(key)
+         if fail:
+             msg = 'The key(s) {keys} in convertToType are not valid for '
+             msg += 'this object'
+             raise InvalidArgumentValue(msg.format(keys=fail))
+
+     return convertList
 
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name=None, path=None,
@@ -1066,12 +1150,30 @@ def initDataObject(
         replaceMissingWith=numpy.nan, skipDataProcessing=False,
         extracted=(None, None)):
     """
-    1. Setup autoType
-    2. Extract Names
-    3. Convert to 2D representation
-    4. Handle Missing data
-    5. Convert to acceptable form for returnType init
+    1. Argument Validation
+    2. Setup autoType
+    3. Extract Names
+    4. Convert to 2D representation
+    5. Handle Missing data
+    6. Convert to acceptable form for returnType init
     """
+    limitPoints = keepPoints != 'all'
+    limitFeatures = keepFeatures != 'all'
+    if limitPoints:
+        _checkForDuplicates(keepPoints, 'keepPoints')
+    if limitFeatures:
+        _checkForDuplicates(keepFeatures, 'keepFeatures')
+    if (limitFeatures and isinstance(convertToType, dict)
+            and not all(isinstance(t, str) for t in convertToType.keys())):
+        msg = "When limiting the features using keepFeatures, the keys in a "
+        msg += "convertToType dict cannot be index values because it is "
+        msg += "ambiguous as to whether they reference the full dataset or "
+        msg += "limited dataset. Use featureNames as keys or a list to "
+        msg += "eliminate the ambiguity. None may be used in the list for "
+        msg += "features that do not require conversion."
+        raise InvalidArgumentTypeCombination(msg)
+
+
     if returnType is None:
         # scipy sparse matrix or a pandas sparse object
         if isScipySparse(rawData) or isPandasSparse(rawData):
@@ -1118,8 +1220,6 @@ def initDataObject(
                                          replaceMissingWith)
     # convert data to a type compatible with the returnType init method
     rawData = convertData(returnType, rawData, pointNames, featureNames)
-    if convertToType is not None:
-        rawData = elementTypeConvert(rawData, convertToType)
 
     pathsToPass = (None, None)
     if path is not None:
@@ -1178,23 +1278,19 @@ def initDataObject(
         return retCmp
 
     # keep points and features if still needed
-    if keepPoints != 'all':
-        if not ptsExtracted and len(keepPoints) == len(ret.points):
+    if limitPoints:
+        numPts = len(ret.points)
+        if not ptsExtracted and len(keepPoints) == numPts:
             _raiseKeepLengthConflict('point')
         # if we have all pointNames, set them now
-        if (isinstance(pointNames, (list, dict))
-                and len(pointNames) == len(ret.points)):
+        if isinstance(pointNames, (list, dict)) and len(pointNames) == numPts:
             ret.points.setNames(pointNames, useLog=False)
             setPtNamesAfter = False
         else:
             _keepIndexValuesValidation('point', keepPoints, pointNames)
             setPtNamesAfter = True
-        cleaned = []
-        for val in keepPoints:
-            converted = ret.points.getIndex(val)
-            if converted not in cleaned:
-                cleaned.append(converted)
-        if len(cleaned) == len(ret.points):
+        cleaned = getKeepIndexValues(ret.points, keepPoints)
+        if len(cleaned) == numPts:
             pCmp = makeCmp(cleaned, ret, 'point')
             ret.points.sort(by=pCmp)
         else:
@@ -1202,25 +1298,32 @@ def initDataObject(
         # if we had a subset of pointNames can set now on the cleaned data
         if setPtNamesAfter:
             ret.points.setNames(pointNames, useLog=False)
-    if keepFeatures != 'all':
-        if not ftsExtracted and len(keepFeatures) == len(ret.features):
+    if limitFeatures:
+        numFts = len(ret.features)
+        if not ftsExtracted and len(keepFeatures) == numFts:
             _raiseKeepLengthConflict('feature')
         # if we have all featureNames, set them now
         if (isinstance(featureNames, (list, dict))
-                and len(featureNames) == len(ret.features)):
+                and len(featureNames) == numFts):
             ret.features.setNames(featureNames, useLog=False)
             setFtNamesAfter = False
         # otherwise we require keepFeatures to be index and set names later
         else:
             _keepIndexValuesValidation('feature', keepFeatures, featureNames)
             setFtNamesAfter = True
-        cleaned = []
-        for val in keepFeatures:
-            converted = ret.features.getIndex(val)
-            if converted not in cleaned:
-                cleaned.append(converted)
-
-        if len(cleaned) == len(ret.features):
+        cleaned = getKeepIndexValues(ret.features, keepFeatures)
+        if isinstance(convertToType, list):
+            if len(convertToType) == numFts:
+                convertToType = [convertToType[i] for i in cleaned]
+            elif len(convertToType) != len(cleaned):
+                msg = "Invalid length of convertToType. convertToType must "
+                msg += "be either the length of the full dataset ({full}) "
+                msg += "or the length of the limited dataset ({limited}), but "
+                msg += "was length {actual}."
+                msg = msg.format(full=numFts, limited=len(cleaned),
+                                 actual=len(convertToType))
+                raise InvalidArgumentValue(msg)
+        if len(cleaned) == numFts:
             fCmp = makeCmp(cleaned, ret, 'feature')
             ret.features.sort(by=fCmp)
         else:
@@ -1228,6 +1331,24 @@ def initDataObject(
         # if we had a subset of featureNames can set now on the cleaned data
         if setFtNamesAfter:
             ret.features.setNames(featureNames, useLog=False)
+
+    # To simplify, we will make convertToType dicts into lists of types
+    if isinstance(convertToType, dict):
+        convertToType = convertToTypeDictToList(convertToType, ret.features,
+                                                featureNames)
+    elif isinstance(convertToType, list):
+        if len(convertToType) != len(ret.features):
+            msg = 'A list for convertToType must have many elements as '
+            msg += 'features in the data. The object contains {numFts} '
+            msg += 'features, but convertToType has {numElems} elements.'
+            msg = msg.format(numFts=len(ret.features),
+                             numElems=len(convertToType))
+            raise InvalidArgumentValue(msg)
+        if all(v == convertToType[0] for v in convertToType[1:]):
+            convertToType = convertToType[0]
+
+    if convertToType is not None:
+        ret.data = elementTypeConvert(ret.data, convertToType)
 
     return ret
 
