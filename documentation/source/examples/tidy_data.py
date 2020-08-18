@@ -8,7 +8,7 @@ point in every file records 12 hours of temperatures for each day, but
 files vary by the location, time period and extreme (min or max). This
 data would also benefit from a reorganization of the points and features
 to optimize for machine learning, often called "data tidying" (Wickham).
-Our goal is to create a single, tidy, nimble object where each point has
+Our goal is to create a single, tidy, Nimble object where each point has
 five features: 'date', 'hour', 'location', 'min' and 'max'.
 """
 
@@ -114,7 +114,7 @@ print(tempData.name, tempData.shape)
 print(tempData[:5, :])
 
 ## Our object is now organized how we wanted with a much more tidy structure.
-## There is one more tidying function in nimble as well. It is designed to
+## There is one more tidying function in Nimble as well. It is designed to
 ## separate a feature containing multiple pieces of information into multiple
 ## features. We can demonstrate its functionality by applying it to our 'date'
 ## feature to create 'year', 'month' and 'day' features.

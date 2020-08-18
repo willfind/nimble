@@ -1,5 +1,5 @@
-Nimble Documentation
-====================
+Nimble API Documentation
+========================
 
 Welcome to the Nimble project's API documentation for users. This
 does not include documentation for the entire code base, but

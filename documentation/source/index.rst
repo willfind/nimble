@@ -8,8 +8,8 @@ Welcome to Nimble!
 
 Nimble is built on top of Python's most popular data science and machine
 learning libraries to provide a single, easy to use, API for any data science
-job. We believe the best way to learn about nimble is to see it in action. So,
-we invite you to check out the examples below and explore how nimble makes
+job. We believe the best way to learn about Nimble is to see it in action. So,
+we invite you to check out the examples below and explore how Nimble makes
 data science easier.
 
 .. toctree::

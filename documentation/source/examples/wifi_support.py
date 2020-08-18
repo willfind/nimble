@@ -20,13 +20,13 @@ import nimble
 
 ## Nimble allows for user control of certain aspects of our library through
 ## a configuration file name configuration.ini. If configuration.ini does
-## not exist when nimble is imported (as is expected when importing nimble
-## for the first time) nimble generates configuration.ini. On import,
+## not exist when Nimble is imported (as is expected on the first ever call to
+## `import nimble`) Nimble generates configuration.ini. On import,
 ## configuration.ini is used to establish the settings for the
 ## session. Through `nimble.settings`, we can access the current settings
 ## as well as modify settings for this session or all future sessions.
 ## To start our session, let's make sure our logging output settings are set
-## to the defaults used when nimble is first installed.
+## to the defaults used when Nimble is first installed.
 nimble.settings.set('logger', 'enabledByDefault', 'True')
 nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
 
@@ -46,7 +46,7 @@ tempDir = tempfile.TemporaryDirectory('nimble-logs')
 nimble.settings.set('logger', 'location', tempDir.name)
 
 ## All logged functions and methods have a `useLog` parameter. The default,
-## value for `useLog` is `None`, meaning nimble will use the value stored in
+## value for `useLog` is `None`, meaning Nimble will use the value stored in
 ## configuration.ini. The `nimble.data` method has a `useLog` parameter, but
 ## `show` does not. Since `enabledByDefault` is True in our configuration file,
 ## `showLog` should have one entry showing we loaded our data as a Matrix.
@@ -68,7 +68,7 @@ nimble.showLog()
 
 ## For those following along, you may have not expected that `permute` would
 ## yield the same matrix for you as we displayed above. This is because
-## nimble strives for reproducible results so we control for randomness. Of
+## Nimble strives for reproducible results so we control for randomness. Of
 ## course, this can be disabled or you can choose your own random seed.
 nimble.random.setSeed(None) # disable consistent results
 wifi.points.permute()
@@ -154,8 +154,8 @@ nimble.showLog(levelOfDetail=3, maximumEntries=2)
 ## our object's name, 'wifi'.
 nimble.showLog(searchForText='wifi')
 
-## While not required to do data science with nimble, configuration, logging,
-## randomness and custom learners add a lot of helpful functionality to nimble
+## While not required to do data science with Nimble, configuration, logging,
+## randomness and custom learners add a lot of helpful functionality to Nimble
 ## and we expect you'll find yourself using some or all of it to support your
 ## data science work. That wraps it up for this example, so now is a good time
 ## to cleanup the temporary directory containing our log file.

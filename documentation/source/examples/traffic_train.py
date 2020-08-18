@@ -54,16 +54,15 @@ for learner in learners:
 ## trigger k-fold cross validation where k is the value of the `folds`
 ## argument. Each combination of arguments will be  trained and tested using
 ## the `performanceFunction` to determine the best parameter set to use.
-knnArgs = {'n_neighbors': nimble.CV([1, 5, 11, 99])}
+knnArgs = {'n_neighbors': nimble.CV([1, 5, 11])}
 knnTL = nimble.train('skl.KNeighborsRegressor', trainX, trainY,
-                     performanceFunction, folds=5, arguments=knnArgs)
+                     performanceFunction, folds=3, arguments=knnArgs)
 rfTL = nimble.train('skl.RandomForestRegressor', trainX, trainY,
-                    performanceFunction, folds=5,
-                    min_samples_split=nimble.CV([2, 4]),
+                    performanceFunction, folds=3,
                     min_samples_leaf=nimble.CV([1, 2]))
 
 ## We used `nimble.train` above because it returns a `TrainedLearner`. A
-## `TrainedLearner` allows us to apply and test, but also provides many
+## `TrainedLearner` allows us to `apply` and `test`, but also provides many
 ## additional methods and attributes. As an example, we can access all of our
 ## cross validation results through our `TrainedLearner`.
 for result in knnTL.crossValidation.allResults:
@@ -83,10 +82,10 @@ print(rfPerf)
 
 ## Applying our learner ##
 
-## We see a further improvement in the performance so let's use `rfTL` to
-## predict the traffic volumes for our `forecast` object. Before printing, we
-## will append the `hour` feature from `forecasts` to get a better visual of
-## the traffic throughout the day.
+## We see a further improvement in the performance so now we will apply our
+## `rfTL` trained learner to our `forecast` data to predict traffic volumes
+## for a future day. Before printing, we will append the `hour` feature from
+## `forecasts` to get a better visual of the traffic throughout the day.
 predictedTraffic = rfTL.apply(forecast)
 predictedTraffic.features.setName(0, 'volume')
 predictedTraffic.features.append(forecast.features['hour'])

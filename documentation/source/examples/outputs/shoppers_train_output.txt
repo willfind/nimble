@@ -1,30 +1,30 @@
-cluster 0 (7460 points):
+REGEX: cluster 0 \([0-9]{3,4} points\):
        Revenue SpecialDay Weekend NewVisitor
 
-mean    0.103    0.067     0.226    0.172
+REGEX: mean    0\.[0-9]{3}    0\.[0-9]{3}     0\.[0-9]{3}    0\.[0-9]{3}
 
-cluster 2 (3059 points):
+REGEX: cluster 1 \([0-9]{3,4} points\):
        Revenue SpecialDay Weekend NewVisitor
 
-mean    0.209    0.056     0.249    0.109
+REGEX: mean    0\.[0-9]{3}    0\.[0-9]{3}     0\.[0-9]{3}    0\.[0-9]{3}
 
-cluster 1 (1161 points):
+REGEX: cluster 2 \([0-9]{3,4} points\):
        Revenue SpecialDay Weekend NewVisitor
 
-mean    0.233    0.048     0.227    0.048
+REGEX: mean    0\.[0-9]{3}    0\.[0-9]{3}     0\.[0-9]{3}    0\.[0-9]{3}
 
-cluster 4 (412 points):
+REGEX: cluster 3 \([0-9]{3,4} points\):
        Revenue SpecialDay Weekend NewVisitor
 
-mean    0.345    0.051     0.214    0.015
+REGEX: mean    0\.[0-9]{3}    0\.[0-9]{3}     0\.[0-9]{3}    0\.[0-9]{3}
 
-cluster 3 (120 points):
+REGEX: cluster 4 \([0-9]{3,4} points\):
        Revenue SpecialDay Weekend NewVisitor
 
-mean    0.333    0.017     0.258    0.008
+REGEX: mean    0\.[0-9]{3}    0\.[0-9]{3}     0\.[0-9]{3}    0\.[0-9]{3}
 
-In TrafficType 3, there is a difference of -0.0945 between the best and worst revenue clusters.
-In TrafficType 2, there is a difference of 0.1419 between the best and worst revenue clusters.
+REGEX: In TrafficType 3, there is a difference of -0.09[0-9]+ between the best and worst revenue clusters.
+REGEX: In TrafficType 2, there is a difference of 0.14[0-9]+ between the best and worst revenue clusters.
 New Visitors for trafficType 2: 52.7%
 Return Visitors for trafficType 2: 22.9%
 New Visitors for trafficType 3: 9.0%

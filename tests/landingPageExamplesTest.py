@@ -12,8 +12,6 @@ from nose.plugins.attrib import attr
 
 
 def getScriptOutputChecker(script):
-    if script == 'wifi_support.py':
-        return wifiExampleOutputMatch
     if script == 'digits_train.py':
         return digitsExampleOutputMatch
     raise ValueError('no script checker for ' + script)
@@ -21,39 +19,12 @@ def getScriptOutputChecker(script):
 def decoder(line):
     return line.decode('utf-8')
 
-def wifiExampleOutputMatch(output, expected):
-    """
-    Ignore completely random lines and validate logging format but
-    ignore specific timestamps.
-    """
-    with open(expected, 'rb') as exp:
-        outLines = map(decoder, output.split(b'\n'))
-        expLines = map(decoder, exp.read().split(b'\n'))
-        for i, (line, expLine) in enumerate(zip(outLines, expLines)):
-            if i in [0, 40, 41, 42, 43]:
-                continue # output on these lines will be random
-            pat1 = re.compile(r'Completed\sin\s\d+\.\d{3}\sseconds.*')
-            pat2 = re.compile(r'(.*)\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d')
-            if re.match(pat1, line): # completion times will vary
-                if not re.match(pat1, expLine):
-                    return False
-            elif re.search(pat2, line): # dates will vary
-                preDateOut = re.search(pat2, line)
-                preDateExp = re.search(pat2, expLine)
-                if not preDateExp:
-                    return False
-                if preDateOut.group(1) != preDateExp.group(1):
-                    return False
-            elif line != expLine:
-                return False
-    return True
-
 def digitsExampleOutputMatch(output, expected):
     """
     Validate format of Keras output ignoring variable sections and
     accounting for continuous updates.
     """
-    outLines = map(decoder, re.split(b'[\n\r]', output))
+    outLines = list(map(decoder, re.split(b'\n\r\b', output)))
     # There is no expected output file because Keras does not allow for
     # randomness control and updates continuously. It is even unclear how many
     # lines the output will contain. Instead we will verify that the format
@@ -126,7 +97,7 @@ def test_callExamplesAsMain():
     print("")
 
     failures = []
-    variableOutputScripts = ['digits_train.py', 'wifi_support.py']
+    variableOutputScripts = ['digits_train.py']
     for key in results.keys():
         cp = results[key]
         outputFile = key[:-3] + '_output.txt'
@@ -137,10 +108,24 @@ def test_callExamplesAsMain():
             print("")
         elif key not in variableOutputScripts:
             with open(expOut, 'rb') as exp:
-                expRead = exp.read()
-                if cp.stdout != expRead:
-                    failures.append(key)
-                    print(key + " : Did not match output in " + outputFile)
+                expLines = exp.readlines()
+                outLines = cp.stdout.split(b'\n')
+                for i, (out, exp) in enumerate(zip(outLines, expLines)):
+                    # remove trailing whitespace
+                    out = out.rstrip()
+                    exp = exp.rstrip()
+                    if exp.startswith(b'REGEX: '):
+                        exp = exp[7:]
+                        match = re.match(exp, out)
+                    else:
+                        match = exp == out
+                    if not match:
+                        print(out, exp)
+                        failures.append(key)
+                        print(key + " : Did not match output in " + outputFile)
+                        print('  Discrepancy found in line {i}'.format(i=i))
+                        break
+
         # The following scripts have variable outputs so each requires its
         # own function for validating the output
         else:

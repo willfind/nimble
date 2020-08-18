@@ -10,8 +10,11 @@ explore how differences between groups could help increase the site's revenue.
 """
 ## Getting Started ##
 
+## We will start by importing `nimble`, setting a random seed so that our
+## results are reproducible, and loading in our dataset.
 import nimble
 
+nimble.random.setSeed(42)
 visits = nimble.data('DataFrame', 'online_shoppers_intention_clean.csv',
                      featureNames=True)
 
@@ -19,7 +22,6 @@ visits = nimble.data('DataFrame', 'online_shoppers_intention_clean.csv',
 
 ## We will use the elbow-method to determine the number of clusters we want to
 ## use for scikit-learn's KMeans learner.
-
 withinClusterSumSquares = []
 for i in range(1,11):
     trainedLearner = nimble.train('skl.KMeans', visits, n_clusters=i)
@@ -31,12 +33,12 @@ wcss = nimble.data('List', withinClusterSumSquares,
 wcss.plotFeatureAgainstFeature('clusters', 'wcss')
 
 ## 5 clusters is a reasonable choice according to the plot. We will train
-## with 5 clusters then add the generated clusters as a new `'cluster'` feature
+## with 5 clusters, apply the trained learner to our data to identify a cluster
+## for each point, and add the cluster data as a new `'cluster'` feature
 ## in our object.
+trainedLearner = nimble.train('skl.KMeans', visits, n_clusters=5)
 
-tl = nimble.train('skl.KMeans', visits, n_clusters=5)
-
-clusters = tl.apply(visits)
+clusters = trainedLearner.apply(visits)
 clusters.features.setName(0, 'cluster')
 visits.features.append(clusters)
 
@@ -44,15 +46,18 @@ visits.features.append(clusters)
 
 ## Let's group our data by cluster so we can analyze differences between the
 ## groups identified by the algorithm. Then, we'll examine some difference in
-## features that we could target marketing toward to increase revenue.
-
+## features that we could target marketing toward to possibly increase revenue.
 byCluster = visits.groupByFeature('cluster')
 
 targetFts = ['Revenue', 'SpecialDay', 'Weekend', 'NewVisitor']
 
-for cluster, data in byCluster.items():
+revenueMeans = []
+for cluster in range(5):
+    data = byCluster[cluster]
     print('cluster {} ({} points):'.format(cluster, len(data.points)))
-    print(data[:, targetFts].features.statistics('mean'))
+    means = data[:, targetFts].features.statistics('mean')
+    print(means)
+    revenueMeans.append((cluster, means['Revenue']))
 
 ## We see that weekends and special days do not seem to have much effect on
 ## revenue, so marketing based on the day may not be effective. However,
@@ -60,17 +65,16 @@ for cluster, data in byCluster.items():
 ## may want to focus on ways to bring visitors back to the site.
 
 ## Improving revenue ##
-
 ## Let's examine some additional visitor characteristic differences between
-## our worst revenue cluster (0) and our best revenue cluster (4).
+## our worst revenue cluster and our best revenue cluster.
 ## The visitors location is classified into one of 9 regions in the Region
 ## feature. The source that directed the visitor to the website is classified
 ## into one of 20 sources in the TrafficType feature. Targeted marketing by
 ## region and/or traffic type are practical ways to improve revenue so let's
 ## investigate if the distributions of these vary between the two clusters.
-
-worstRevenue = byCluster[0]
-bestRevenue = byCluster[4]
+sortedRevenueClusters = sorted(revenueMeans, key=lambda x: x[1])
+worstRevenue = byCluster[sortedRevenueClusters[0][0]]
+bestRevenue = byCluster[sortedRevenueClusters[-1][0]]
 
 def featureDistributionProportions(data, feature):
     """

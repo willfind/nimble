@@ -6,7 +6,7 @@
 Our dataset, `online_shoppers_intention_clean.csv`, is a collection of
 behaviors for visitors to an online shopping website. Our goal is to
 gather information about the visitors to this site using a variety of
-the functionality nimble has available for digging deeper into a dataset.
+the functionality Nimble has available for digging deeper into a dataset.
 """
 
 ## Getting Started ##
@@ -55,7 +55,7 @@ print('Proportion of visits that generated revenue:', revenueGen)
 special = visits.points.count('SpecialDay>0') / len(visits.points)
 print('Proportion of visits near a special day:', special)
 
-## Exploring data through nimble's calculate module ##
+## Exploring data through Nimble's calculate module ##
 
 ## This site categorizes their pages into the three types in the list below.
 ## Which types of pages are being visited the most?
@@ -81,7 +81,8 @@ visits.plotFeatureAgainstFeature('Administrative_Duration',
 visits.plotFeatureDistribution('Region')
 
 ## We have learned a lot about website visitors on our own. Next see how
-## applying an unsupervised learning model can help us learn even more.
+## training and applying an unsupervised learning model can help us learn
+## even more.
 
 ## **References:**
 

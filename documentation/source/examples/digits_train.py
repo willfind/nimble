@@ -21,9 +21,10 @@ images = nimble.data('Matrix', 'semeion.data')
 ## We need to separate the labels (the last 10 features) from the image data
 labels = images.features.extract(range(256, len(images.features)))
 
-## We want our neural network to choose digits from 0-9 so let's create a
-## single feature of integers from the binary features in labels.
-intLabels = labels.points.calculate(lambda pt: list(pt).index(1))
+## We want our neural network to choose digits from 0-9. This can be
+## accomplished by matrix multiplying the `labels` object by a feature vector
+## with the range 0-9.
+intLabels = labels @ nimble.data('Matrix', list(range(10))).T
 
 ## We'll append our new labels to the end of our images object, then
 ## randomly partition that data into train and test sets.
@@ -35,7 +36,7 @@ trainX, trainY, testX, testY = images.trainAndTestSets(testFraction=0.25,
 
 ## To start, we can build a simple Sequential model using Keras. The `layers`
 ## argument for a Sequential object requires a list of Keras Layer objects.
-## However, there is no need to import those directly from Keras. nimble.Init
+## However, there is no need to import those directly from Keras. `nimble.Init`
 ## can instead be used to trigger instantiation of a matching class in the
 ## interfaced package. Below, we create Dense and Dropout objects with varying
 ## keyword arguments.
@@ -44,8 +45,10 @@ layer1 = nimble.Init('Dropout', rate=0.5)
 layer2 = nimble.Init('Dense', units=10, activation='softmax')
 layers = [layer0, layer1, layer2]
 
-## Now that we've taken advantage of nimble.Init to define our layers, we can
-## train and apply our model.
+## Now that we've taken advantage of `nimble.Init` to define our layers, we can
+## train and apply our model in one step. `nimble.trainAndApply` will first
+## train the model on our `trainX` and `trainY` data, then apply the model to
+## our testX data. 
 digitProbability = nimble.trainAndApply(
     'keras.Sequential', trainX=trainX, trainY=trainY, testX=testX,
     layers=layers, optimizer='adam', loss='sparse_categorical_crossentropy',
@@ -62,7 +65,7 @@ def maximumProbabilty(pt):
 predictions = digitProbability.points.calculate(maximumProbabilty)
 print(nimble.calculate.fractionCorrect(testY, predictions))
 
-## Keras relies on sources of randomness outside of nimble's control, so exact
+## Keras relies on sources of randomness outside of Nimble's control, so exact
 ## results will vary but should be around 90% accurate. This is pretty good for
 ## a simple model only trained for 10 epochs.
 
@@ -81,7 +84,7 @@ trainX = trainX.points.calculate(reshapePoint)
 testX = testX.points.calculate(reshapePoint)
 
 ## We need even more Keras objects as layers for our 2D convolutional neural
-## network, so again we will use nimble.Init.
+## network, so again we will use `nimble.Init`.
 layersCNN = []
 layersCNN.append(nimble.Init('Conv2D', filters=64, kernel_size=3,
                              activation='relu', input_shape=(16, 16, 1)))
