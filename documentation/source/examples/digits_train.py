@@ -48,7 +48,7 @@ layers = [layer0, layer1, layer2]
 ## Now that we've taken advantage of `nimble.Init` to define our layers, we can
 ## train and apply our model in one step. `nimble.trainAndApply` will first
 ## train the model on our `trainX` and `trainY` data, then apply the model to
-## our testX data. 
+## our testX data.
 digitProbability = nimble.trainAndApply(
     'keras.Sequential', trainX=trainX, trainY=trainY, testX=testX,
     layers=layers, optimizer='adam', loss='sparse_categorical_crossentropy',
@@ -65,9 +65,9 @@ def maximumProbabilty(pt):
 predictions = digitProbability.points.calculate(maximumProbabilty)
 print(nimble.calculate.fractionCorrect(testY, predictions))
 
-## Keras relies on sources of randomness outside of Nimble's control, so exact
-## results will vary but should be around 90% accurate. This is pretty good for
-## a simple model only trained for 10 epochs.
+## Some older Keras versions rely on sources of randomness outside of Nimble's
+## control, so your exact result could vary from ours, but should be around 90%
+## accurate. This is pretty good for a simple model only trained for 10 epochs.
 
 ## Convolutional Neural Network ##
 

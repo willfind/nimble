@@ -10,42 +10,6 @@ import re
 
 from nose.plugins.attrib import attr
 
-
-def getScriptOutputChecker(script):
-    if script == 'digits_train.py':
-        return digitsExampleOutputMatch
-    raise ValueError('no script checker for ' + script)
-
-def decoder(line):
-    return line.decode('utf-8')
-
-def digitsExampleOutputMatch(output, expected):
-    """
-    Validate format of Keras output ignoring variable sections and
-    accounting for continuous updates.
-    """
-    outLines = list(map(decoder, re.split(b'\n\r\b', output)))
-    # There is no expected output file because Keras does not allow for
-    # randomness control and updates continuously. It is even unclear how many
-    # lines the output will contain. Instead we will verify that the format
-    # matches our expectations
-    newEpoch = re.compile('Epoch [0-9]{1,2}/10')
-    epochStatus = re.compile(r'[0-9]{1,4}/1195 \[[=>\.]{30}\]')
-    expectEpochStatus = False
-    for i, line in enumerate(outLines):
-        line = line.strip()
-        # most lines will be epoch status updates
-        if not re.match(epochStatus, line):
-            # Non-blank lines must indicate new epoch, or be a (float) result
-            newEpochLine = re.match(newEpoch, line)
-            if line and not newEpochLine:
-                try:
-                    resultLine = 0 <= float(line) <= 1
-                except ValueError:
-                    return False
-
-    return True
-
 @attr('slow')
 def test_callExamplesAsMain():
     # collect the filenames of the scripts we want to run
@@ -97,7 +61,6 @@ def test_callExamplesAsMain():
     print("")
 
     failures = []
-    variableOutputScripts = ['digits_train.py']
     for key in results.keys():
         cp = results[key]
         outputFile = key[:-3] + '_output.txt'
@@ -106,10 +69,13 @@ def test_callExamplesAsMain():
             failures.append(key)
             print(key + " : " + str(cp.stderr))
             print("")
-        elif key not in variableOutputScripts:
+        else:
+            outLines = cp.stdout.split(b'\n')
+            if key == 'digits_train.py':
+                # check only final line output, ignore intermediate updates
+                outLines = [l.split(b'\r')[-1] for l in outLines]
             with open(expOut, 'rb') as exp:
                 expLines = exp.readlines()
-                outLines = cp.stdout.split(b'\n')
                 for i, (out, exp) in enumerate(zip(outLines, expLines)):
                     # remove trailing whitespace
                     out = out.rstrip()
@@ -120,21 +86,9 @@ def test_callExamplesAsMain():
                     else:
                         match = exp == out
                     if not match:
-                        print(out, exp)
                         failures.append(key)
                         print(key + " : Did not match output in " + outputFile)
                         print('  Discrepancy found in line {i}'.format(i=i))
                         break
-
-        # The following scripts have variable outputs so each requires its
-        # own function for validating the output
-        else:
-            outputChecker = getScriptOutputChecker(key)
-            fail = not outputChecker(cp.stdout, expOut)
-            if fail:
-                failures.append(key)
-                msg = key + " : Did not match output in "
-                msg += outputFile
-                print(msg)
 
     assert not failures
