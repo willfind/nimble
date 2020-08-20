@@ -45,53 +45,43 @@ def checkFormatRaw(scores, numLabels):
     if scores.shape[1] != numLabels and scores.shape[1] != (numLabels * (numLabels - 1)) / 2:
         raise RuntimeError("_getScores() must return scores that are either One vs One or One vs All formatted")
 
-
 @attr('slow')
 def test__getScoresFormat():
     """
-    Automatically checks the _getScores() format for as many classifiers we can identify in each
-    interface.
+    Automatically checks the _getScores() format for as many classifiers
+    we can identify in each interface.
     """
-    data2 = generateClassificationData(2, 4, 3)
-    ((trainX2, trainY2), (testX2, testY2)) = data2
-    data4 = generateClassificationData(4, 4, 3)
-    ((trainX4, trainY4), (testX4, testY4)) = data4
-    for interface in nimble.core.interfaces.available.values():
-        interfaceName = interface.getCanonicalName()
+    for i in [2, 4]:
+        data = generateClassificationData(i, 4, 3)
+        ((trainX, trainY), (testX, testY)) = data
+        for interface in nimble.core.interfaces.available.values():
+            interfaceName = interface.getCanonicalName()
 
-        learners = interface.listLearners()
-        for lName in learners:
-            fullName = interfaceName + '.' + lName
-            if nimble.learnerType(fullName) == 'classification':
-                try:
-                    tl2 = nimble.train(fullName, trainX2, trainY2)
-                except (InvalidArgumentValue, SystemError):
-                    # this is to catch learners that have required arguments.
-                    # we have to skip them in that case
-                    continue
-                (ign1, ign2, transTestX2, ign3) = interface._inputTransformation(
-                    lName, None, None, testX2, {}, tl2._customDict)
-                try:
-                    scores2 = interface._getScores(
-                        lName, tl2._backend, transTestX2, {},
-                        tl2._transformedArguments, tl2._customDict)
-                except (NotImplementedError, SystemError):
-                    # this is to catch learners that cannot output scores
-                    continue
-                checkFormatRaw(scores2, 2)
-
-                try:
-                    tl4 = nimble.train(fullName, trainX4, trainY4)
-                except:
-                    # some classifiers are binary only
-                    continue
-                (ign1, ign2, transTestX4, ign3) = interface._inputTransformation(
-                    lName, None, None, testX4, {}, tl4._customDict)
-                scores4 = interface._getScores(
-                    lName, tl4._backend, transTestX4, {},
-                    tl4._transformedArguments, tl4._customDict)
-                checkFormatRaw(scores4, 4)
-
+            learners = interface.listLearners()
+            for lName in learners:
+                fullName = interfaceName + '.' + lName
+                if nimble.learnerType(fullName) == 'classification':
+                    try:
+                        tl = nimble.train(fullName, trainX, trainY)
+                    except (InvalidArgumentValue, SystemError):
+                        # this is to catch learners that have required arguments.
+                        # we have to skip them in that case
+                        continue
+                    (transTrainX, _, transTestX, _) = interface._inputTransformation(
+                        lName, trainX, None, testX, {}, tl._customDict)
+                    try:
+                        scores = interface._getScores(
+                            lName, tl._backend, transTestX, {},
+                            tl._transformedArguments, tl._customDict)
+                    except IndexError:
+                        # categorical data needed; use train data
+                        scores = interface._getScores(
+                            lName, tl._backend, transTrainX, {},
+                            tl._transformedArguments, tl._customDict)
+                    except (NotImplementedError, SystemError):
+                        # this is to catch learners that cannot output scores
+                        continue
+                    checkFormatRaw(scores, i)
 
 @attr('slow')
 def testGetScoresFormat():
@@ -100,38 +90,30 @@ def testGetScoresFormat():
     can identify in each interface
 
     """
-    data2 = generateClassificationData(2, 4, 2)
-    ((trainX2, trainY2), (testX2, testY2)) = data2
-    data4 = generateClassificationData(4, 4, 2)
-    ((trainX4, trainY4), (testX4, testY4)) = data4
-    for interface in nimble.core.interfaces.available.values():
-        interfaceName = interface.getCanonicalName()
-
-        learners = interface.listLearners()
-        for lName in learners:
-
-            fullName = interfaceName + '.' + lName
-            if nimble.learnerType(fullName) == 'classification':
-                try:
-                    tl2 = nimble.train(fullName, trainX2, trainY2)
-                except (InvalidArgumentValue, SystemError):
-                    # this is to catch learners that have required arguments.
-                    # we have to skip them in that case
-                    continue
-                try:
-                    scores2 = tl2.getScores(testX2)
-                except (NotImplementedError, SystemError):
-                    # this is to catch learners that cannot output scores
-                    continue
-                checkFormat(scores2, 2)
-
-                try:
-                    tl4 = nimble.train(fullName, trainX4, trainY4)
-                except:
-                    # some classifiers are binary only
-                    continue
-                scores4 = tl4.getScores(testX4)
-                checkFormat(scores4, 4)
+    for i in [2, 4]:
+        data = generateClassificationData(i, 4, 2)
+        ((trainX, trainY), (testX, testY)) = data
+        for interface in nimble.core.interfaces.available.values():
+            interfaceName = interface.getCanonicalName()
+            learners = interface.listLearners()
+            for lName in learners:
+                fullName = interfaceName + '.' + lName
+                if nimble.learnerType(fullName) == 'classification':
+                    try:
+                        tl = nimble.train(fullName, trainX, trainY)
+                    except (InvalidArgumentValue, SystemError):
+                        # this is to catch learners that have required arguments.
+                        # we have to skip them in that case
+                        continue
+                    try:
+                        scores = tl.getScores(testX)
+                    except IndexError:
+                        # categorical data needed; use train data
+                        scores = tl.getScores(trainX)
+                    except (NotImplementedError, SystemError):
+                        # this is to catch learners that cannot output scores
+                        continue
+                    checkFormat(scores, i)
 
 
 @attr('slow')

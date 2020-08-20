@@ -4,6 +4,7 @@ Relies on being keras 2.0.8
 
 import os
 import logging
+import warnings
 
 import numpy
 
@@ -20,6 +21,29 @@ from ._interface_helpers import removeFromTailMatchedLists
 from ._interface_helpers import noLeading__, notCallable, notABCAssociated
 
 
+class _TensorFlowRandom:
+    """
+    Wrap tensorflow's randomness module to make adjustments that allow
+    it to work with nimble randomness control.
+    """
+    def __init__(self, tensorflowRandom):
+        self.tensorflowRandom = tensorflowRandom
+        self.setSeed(42)
+        self.state = self.tensorflowRandom.create_rng_state(42, 1)
+
+    def setSeed(self, seed):
+        if seed is None:
+            seed = int(numpy.random.randint(2 ** 32))
+        self.tensorflowRandom.set_seed(seed)
+        self.state = self.tensorflowRandom.create_rng_state(seed, 1)
+
+    def getState(self):
+        return self.state
+
+    def setState(self, state):
+        self.setSeed(int(state[0]))
+
+
 @inheritDocstringsFactory(UniversalInterface)
 class Keras(PredefinedInterface, UniversalInterface):
     """
@@ -29,16 +53,26 @@ class Keras(PredefinedInterface, UniversalInterface):
         # modify path if another directory provided
         try:
             # keras recommends using tensorflow.keras when possible
-            self.keras = modifyImportPathAndImport('keras', 'tensorflow.keras')
-            backendName = 'tensorflow'
-        except ImportError:
-            self.keras = modifyImportPathAndImport('keras', 'keras')
-            backendName = self.keras.backend.backend()
-        # tensorflow has a tremendous quantity of informational outputs which
-        # drown out anything else on standard out
-        if backendName == 'tensorflow':
+            # need to set tensorflow random seed before importing keras
+            tensorflow = modifyImportPathAndImport('tensorflow', 'tensorflow')
+            # tensorflow has a tremendous quantity of informational outputs
+            # that drown out anything else on standard out
             logging.getLogger('tensorflow').disabled = True
             # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+            if tensorflow.__version__[:2] == '1.':
+                msg = "Randomness is outside of Nimble's control for version "
+                msg += "1 of Tensorflow. Reproducible results cannot be "
+                msg += "guaranteed"
+                warnings.warn(msg, UserWarning)
+            else:
+                randomObj = _TensorFlowRandom(tensorflow.random)
+                randomInfo = {'state': None,
+                              'methods': ('setSeed', 'getState', 'setState')}
+                nimble.random._saved[randomObj] =  randomInfo
+
+            self.keras = modifyImportPathAndImport('keras', 'tensorflow.keras')
+        except ImportError:
+            self.keras = modifyImportPathAndImport('keras', 'keras')
 
         # keras 2.0.8 has no __all__
         names = os.listdir(self.keras.__path__[0])
