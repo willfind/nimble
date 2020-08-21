@@ -12,6 +12,7 @@ import copy
 import sys
 import warnings
 import functools
+import datetime
 
 import numpy
 
@@ -24,7 +25,7 @@ from nimble.exceptions import _prettyListString
 from nimble.core.data.sparse import removeDuplicatesNative
 from nimble._utility import numpy2DArray, is2DArray
 from nimble._utility import sparseMatrixToArray, pandasDataFrameToList
-from nimble._utility import scipy, pd, requests, h5py
+from nimble._utility import scipy, pd, requests, h5py, dateutil
 from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
 
 ###########
@@ -688,7 +689,8 @@ def convertToBest(rawData, pointNames, featureNames):
 
 def allowedElemType(elemType):
     return (elemType in [int, float, bool, object]
-            or numpy.issubdtype(elemType, numpy.number))
+            or numpy.issubdtype(elemType, numpy.number)
+            or numpy.issubdtype(elemType, numpy.datetime64))
 
 def typeReducer(type1, type2):
     dtype1 = numpy.dtype(type1)
@@ -698,28 +700,61 @@ def typeReducer(type1, type2):
     else:
         return dtype1
 
+def isDatetimeType(elemType):
+    isDatetime = elemType in [datetime.datetime, numpy.datetime64]
+    if pd.nimbleAccessible():
+        isDatetime = isDatetime or elemType == pd.Timestamp
+    if isDatetime and not dateutil.nimbleAccessible():
+        msg = 'dateutil package must be installed for datetime conversions'
+        raise PackageException(msg)
+
+    return isDatetime
+
+def numpyArrayDatetimeParse(data, datetimeType):
+    data = numpy.vectorize(dateutil.parser.parse)(data)
+    if datetimeType is not datetime.datetime:
+        data = numpy.vectorize(datetimeType)(data)
+        data = data.astype(datetimeType)
+    return data
+
+def valueDatetimeParse(datetimeType):
+    def valueParser(value):
+        if datetimeType is datetime.datetime:
+            return dateutil.parser.parse(value)
+        return datetimeType(dateutil.parser.parse(value))
+    return valueParser
+
 def elementTypeConvert(data, convertToType):
     """
     Attempt to convert data to the specified convertToType.
     """
     singleType = not isinstance(convertToType, list)
     objectTypes = (object, numpy.object_)
-
     try:
         if singleType and isNumpyArray(data):
-            data = data.astype(convertToType)
+            if isDatetimeType(convertToType):
+                data = numpyArrayDatetimeParse(data, convertToType)
+            else:
+                data = data.astype(convertToType)
             if not allowedElemType(data.dtype):
                 data =  data.astype(numpy.object_)
         elif singleType and isScipySparse(data):
-            data.data = data.data.astype(convertToType)
+            if isDatetimeType(convertToType):
+                data.data = numpyArrayDatetimeParse(data.data, convertToType)
+            else:
+                data.data = data.data.astype(convertToType)
             if not allowedElemType(data.data.dtype):
                 data.data =  data.data.astype(numpy.object_)
         elif singleType and isPandasDataFrame(data):
-            data =  data.astype(convertToType)
-        elif singleType:
-            # only need to convert if not empty and not object type
-            if convertToType not in objectTypes and len(data):
-                # 2D list
+            if isDatetimeType(convertToType):
+                data = data.applymap(dateutil.parser.parse)
+            else:
+                data =  data.astype(convertToType)
+        elif singleType and len(data): # 2D list
+            # only need to convert if not object type
+            if convertToType not in objectTypes:
+                if isDatetimeType(convertToType):
+                    convertToType = valueDatetimeParse(convertToType)
                 convertedData = []
                 for point in data:
                     convertedData.append(list(map(convertToType, point)))
@@ -727,39 +762,48 @@ def elementTypeConvert(data, convertToType):
 
         # convertToType is a list of differing types
         elif isNumpyArray(data):
-            for i, feature in enumerate(data.T):
-                convType = convertToType[i]
+            for j, feature in enumerate(data.T):
+                convType = convertToType[j]
                 if convType is None:
                     continue
                 data = data.astype(numpy.object_)
-                data[:, i] = feature.astype(convType)
+                if isDatetimeType(convType):
+                    feature = numpyArrayDatetimeParse(feature, convType)
+                data[:, j] = feature.astype(convType)
         elif isScipySparse(data):
-            for col in range(data.shape[1]):
-                convType = convertToType[col]
+            objectConverted = False
+            for col, convType in enumerate(convertToType):
                 if convType is None:
                     continue
                 data = data.astype(numpy.object_)
-                toType = data.data[data.col == col].astype(convType)
-                data.data[data.col == col] = toType
+                colMask = data.col == col
+                if isDatetimeType(convType):
+                    feature = numpyArrayDatetimeParse(data.data[colMask],
+                                                      convType)
+                    data.data[colMask] = feature
+                data.data[colMask] = data.data[colMask].astype(convType)
         elif isPandasDataFrame(data):
             for i, (idx, ft) in enumerate(data.iteritems()):
                 convType = convertToType[i]
-                if convType is not None:
+                if convType is None:
+                    continue
+                elif isDatetimeType(convType):
+                    data[idx] = data[idx].apply(dateutil.parser.parse)
+                else:
                     data[idx] = ft.astype(convType)
         elif len(data): # 2D list
+            convertToType = [valueDatetimeParse(ctype) if isDatetimeType(ctype)
+                             else ctype for ctype in convertToType]
             for i, point in enumerate(data):
                 zippedConvert = zip(point, convertToType)
                 data[i] = [val if (ctype is None or ctype in objectTypes)
                            else ctype(val) for val, ctype in zippedConvert]
         return data
 
-    except (ValueError, TypeError) as err:
-        error = err
-
-    # if nothing has been returned, we cannot convert to the convertToType
-    msg = 'Unable to convert the data to convertToType '
-    msg += "'{0}'. ".format(convertToType) + str(error)
-    raise InvalidArgumentValue(msg)
+    except (ValueError, TypeError) as error:
+        msg = 'Unable to convert the data to convertToType '
+        msg += "'{0}'. {1}".format(convertToType, repr(error))
+        raise InvalidArgumentValue(msg)
 
 def replaceNumpyValues(data, toReplace, replaceWith):
     """

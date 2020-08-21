@@ -31,6 +31,8 @@ from tests.helpers import oneLogEntryExpected
 returnTypes = copy.copy(nimble.core.data.available)
 returnTypes.append(None)
 
+datetimeTypes = (datetime.datetime, numpy.datetime64, pd.Timestamp)
+
 class NoIter(object):
     def __init__(self, vals):
         self.vals = vals
@@ -65,37 +67,48 @@ class GetItemOnly(object):
 ###############################
 
 def test_data_raw_stringConversion_float():
-    """
-    """
     for t in returnTypes:
-        values = []
         toTest = nimble.data(t, [['1','2','3'], ['4','5','6'], ['7','8','9']],
                              convertToType=float)
-        for i in range(len(toTest.points)):
-            for j in range(len(toTest.features)):
-                values.append(toTest[i,j])
-        assert all(isinstance(val, float) for val in values)
+        for elem in toTest.iterateElements():
+            assert isinstance(elem, float)
 
 def test_data_raw_stringConversion_int():
-    """
-    """
     for t in returnTypes:
-        values = []
         toTest = nimble.data(t, [['1','2','3'], ['4','5','6'], ['7','8','9']],
                              convertToType=int)
-        for i in range(len(toTest.points)):
-            for j in range(len(toTest.features)):
-                values.append(toTest[i,j])
-        assert all(isinstance(val, (int, numpy.integer)) for val in values)
+        for elem in toTest.iterateElements():
+            assert isinstance(elem, (int, numpy.integer))
+
+def test_data_raw_stringConversion_datetimeTypes():
+    for datetimeType in datetimeTypes:
+        for t in returnTypes:
+            dates = [['01-01-01','02-02-2002','03-13-1913'],
+                     ['01/01/1801','02/02/02','03-31-2031']]
+            toTest = nimble.data(t, dates, convertToType=datetimeType)
+            for elem in toTest.iterateElements():
+                if t == 'DataFrame':
+                    # pandas always converts to their Timestamp object
+                    assert isinstance(elem, pd.Timestamp)
+                else:
+                    assert isinstance(elem, datetimeType)
+
+def test_data_raw_stringConversion_datetimeParseError():
+    for datetimeType in datetimeTypes:
+        for t in returnTypes:
+            try:
+                dates = [['01-01-01','02-02-2002','unknown'],
+                         ['01/01/1801','02/02/02','03-31-2031']]
+                toTest = nimble.data(t, dates, convertToType=datetimeType)
+                assert False
+            except InvalidArgumentValue: # expected InvalidArgumentValue
+                pass
 
 def test_data_raw_noStringConversion():
     for t in returnTypes:
-        values = []
         toTest = nimble.data(t, [['1','2','3'], ['4','5','6'], ['7','8','9']])
-        for i in range(len(toTest.points)):
-            for j in range(len(toTest.features)):
-                values.append(toTest[i,j])
-        assert all(isinstance(val, str) for val in values)
+        for elem in toTest.iterateElements():
+            assert isinstance(elem, str)
 
 def test_data_raw_numericConversion_str():
     """
@@ -121,7 +134,7 @@ def test_data_raw_numericConversion_float():
                 values.append(toTest[i,j])
         assert all(isinstance(val, float) for val in values)
 
-def test_data_raw_listConversion():
+def test_data_raw_conversionList():
     for t in returnTypes:
         toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
                              convertToType=[int, float, str])
@@ -130,7 +143,7 @@ def test_data_raw_listConversion():
             assert isinstance(toTest[i, 1], (float, numpy.floating))
             assert isinstance(toTest[i, 2], str)
 
-def test_data_raw_listConversion_None():
+def test_data_raw_conversionList_None():
     for t in returnTypes:
         toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
                              convertToType=[int, float, None])
@@ -139,7 +152,21 @@ def test_data_raw_listConversion_None():
             assert isinstance(toTest[i, 1], (float, numpy.floating))
             assert isinstance(toTest[i, 2], (int, numpy.integer))
 
-def test_data_raw_listConversion_exceptionTooLong():
+def test_data_raw_conversionList_datetimeTypes():
+    dates = [[1, '3', '03-13-1913'],
+             [2, '4', '03-31-2031']]
+    for datetimeType in datetimeTypes:
+        convertToType = [float, int, datetimeType]
+        for t in returnTypes:
+            toTest = nimble.data(t, dates, convertToType=convertToType)
+            for i, ft in enumerate(toTest.features):
+                # numpy converts to datetime.datetime, pandas to pd.Timestamp
+                if convertToType[i] in datetimeTypes:
+                    assert all(isinstance(val, datetimeTypes) for val in ft)
+                else:
+                    assert all(isinstance(val, convertToType[i]) for val in ft)
+
+def test_data_raw_conversionList_exceptionTooLong():
     for t in returnTypes:
         try:
             toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
@@ -148,7 +175,7 @@ def test_data_raw_listConversion_exceptionTooLong():
         except InvalidArgumentValue: # expected InvalidArgumentValue
             pass
 
-def test_data_raw_listConversion_exceptionTooShort():
+def test_data_raw_conversionList_exceptionTooShort():
     for t in returnTypes:
         try:
             toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
@@ -157,7 +184,7 @@ def test_data_raw_listConversion_exceptionTooShort():
         except InvalidArgumentValue: # expected InvalidArgumentValue
             pass
 
-def test_data_raw_listConversion_keepFeatures_allData():
+def test_data_raw_conversionList_keepFeatures_allData():
     for t in returnTypes:
         toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
                              convertToType=[int, float, None],
@@ -166,7 +193,7 @@ def test_data_raw_listConversion_keepFeatures_allData():
             assert isinstance(toTest[i, 0], (float, numpy.floating))
             assert isinstance(toTest[i, 1], (int, numpy.integer))
 
-def test_data_raw_listConversion_keepFeatures_keptData():
+def test_data_raw_conversionList_keepFeatures_keptData():
     for t in returnTypes:
         toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
                              convertToType=[int, float],
@@ -175,7 +202,7 @@ def test_data_raw_listConversion_keepFeatures_keptData():
             assert isinstance(toTest[i, 0], (int, numpy.integer))
             assert isinstance(toTest[i, 1], (float, numpy.floating))
 
-def test_data_raw_dictConversion():
+def test_data_raw_conversionDict():
     for t in returnTypes:
         toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
                              featureNames = ['a', 'b', 'c'],
@@ -185,7 +212,7 @@ def test_data_raw_dictConversion():
             assert isinstance(toTest[i, 1], (float, numpy.floating))
             assert isinstance(toTest[i, 2], str)
 
-def test_data_raw_dictConversion_limited():
+def test_data_raw_conversionDict_limited():
     for t in returnTypes:
         toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
                              featureNames = ['a', 'b', 'c'],
@@ -195,14 +222,14 @@ def test_data_raw_dictConversion_limited():
             assert isinstance(toTest[i, 1], (float, numpy.floating))
             assert isinstance(toTest[i, 0], (int, numpy.integer))
 
-def test_data_raw_dictConversion_validUnusedFtName():
+def test_data_raw_conversionDict_validUnusedFtName():
     for t in returnTypes:
         toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
                              featureNames = ['a', 'b', 'c'],
                              convertToType={'c': float},
                              keepFeatures=['a', 'b'])
 
-def test_data_raw_dictConversion_invalidFtName():
+def test_data_raw_conversionDict_invalidFtName():
     for t in returnTypes:
         try:
             toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
@@ -213,7 +240,7 @@ def test_data_raw_dictConversion_invalidFtName():
         except InvalidArgumentValue: # expected InvalidArgumentValue
             pass
 
-def test_data_raw_dictConversion_indexAndNameSameFt_match():
+def test_data_raw_conversionDict_indexAndNameSameFt_match():
     for t in returnTypes:
         toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
                              featureNames = ['a', 'b', 'c'],
@@ -223,7 +250,22 @@ def test_data_raw_dictConversion_indexAndNameSameFt_match():
             assert isinstance(toTest[i, 1], (float, numpy.floating))
             assert isinstance(toTest[i, 0], (int, numpy.integer))
 
-def test_data_raw_dictConversion_indexAndNameSameFt_noMatch():
+def test_data_raw_conversionDict_datetimeTypes():
+    dates = [[1, '3', '03-13-1913'],
+             [2, '4', '03-31-2031']]
+    for datetimeType in datetimeTypes:
+        convertToType = {1: float, 2: datetimeType}
+        for t in returnTypes:
+            toTest = nimble.data(t, dates, convertToType=convertToType)
+            for key, ctype in convertToType.items():
+                ft = toTest[:, key]
+                # numpy converts to datetime.datetime, pandas to pd.Timestamp
+                if ctype in datetimeTypes:
+                    assert all(isinstance(val, datetimeTypes) for val in ft)
+                else:
+                    assert all(isinstance(val, ctype) for val in ft)
+
+def test_data_raw_conversionDict_indexAndNameSameFt_noMatch():
     for t in returnTypes:
         try:
             toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
@@ -233,7 +275,7 @@ def test_data_raw_dictConversion_indexAndNameSameFt_noMatch():
         except InvalidArgumentValue: # expected InvalidArgumentValue
             pass
 
-def test_data_raw_dictConversion_keepFeatures_ftNames():
+def test_data_raw_conversionDict_keepFeatures_ftNames():
     for t in returnTypes:
         toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
                              featureNames = ['a', 'b', 'c'],
@@ -243,7 +285,7 @@ def test_data_raw_dictConversion_keepFeatures_ftNames():
             assert isinstance(toTest[i, 0], (int, numpy.integer))
             assert isinstance(toTest[i, 1], (float, numpy.floating))
 
-def test_data_raw_dictConversion_keepFeatures_index():
+def test_data_raw_conversionDict_keepFeatures_index():
     for t in returnTypes:
         try:
             toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
