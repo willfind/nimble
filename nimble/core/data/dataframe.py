@@ -45,7 +45,7 @@ class DataFrame(Base):
             msg = 'To use class DataFrame, pandas must be installed.'
             raise PackageException(msg)
 
-        if not (isinstance(data, (pd.DataFrame)) or isValid2DObject(data)):
+        if not (isinstance(data, pd.DataFrame) or isValid2DObject(data)):
             msg = "the input data can only be a pandas DataFrame or a two-"
             msg += "dimensional list or numpy array."
             raise InvalidArgumentType(msg)

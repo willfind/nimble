@@ -11,7 +11,6 @@ import os.path
 import copy
 import sys
 import warnings
-import functools
 import datetime
 
 import numpy
@@ -21,12 +20,12 @@ from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
 from nimble.exceptions import ImproperObjectAction, FileFormatException
-from nimble.exceptions import _prettyListString
-from nimble.core.data.sparse import removeDuplicatesNative
-from nimble._utility import numpy2DArray, is2DArray
+from nimble._utility import removeDuplicatesNative
+from nimble._utility import numpy2DArray
 from nimble._utility import sparseMatrixToArray, pandasDataFrameToList
 from nimble._utility import scipy, pd, requests, h5py, dateutil
 from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
+from nimble._utility import allowedNumpyDType
 
 ###########
 # Helpers #
@@ -145,12 +144,12 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
     if ((pointNames is True or pointNames == 'automatic')
             and firstValues[0] == 'pointNames'):
         allText = (all(map(lambda x: isinstance(x, str),
-                          firstValues[1:]))
+                           firstValues[1:]))
                    and noDuplicates(firstValues[1:]))
         allDiff = all(map(typeEqual, zip(firstValues[1:], secondValues[1:])))
     else:
         allText = (all(map(lambda x: isinstance(x, str),
-                          firstValues))
+                           firstValues))
                    and noDuplicates(firstValues[1:]))
         allDiff = all(map(typeEqual, zip(firstValues, secondValues)))
 
@@ -687,20 +686,7 @@ def convertToBest(rawData, pointNames, featureNames):
 
     return rawData
 
-def allowedElemType(elemType):
-    return (elemType in [int, float, bool, object]
-            or numpy.issubdtype(elemType, numpy.number)
-            or numpy.issubdtype(elemType, numpy.datetime64))
-
-def typeReducer(type1, type2):
-    dtype1 = numpy.dtype(type1)
-    dtype2 = numpy.dtype(type2)
-    if numpy.can_cast(dtype1, dtype2):
-        return dtype2
-    else:
-        return dtype1
-
-def isDatetimeType(elemType):
+def parseDatetime(elemType):
     isDatetime = elemType in [datetime.datetime, numpy.datetime64]
     if pd.nimbleAccessible():
         isDatetime = isDatetime or elemType == pd.Timestamp
@@ -732,28 +718,28 @@ def elementTypeConvert(data, convertToType):
     objectTypes = (object, numpy.object_)
     try:
         if singleType and isNumpyArray(data):
-            if isDatetimeType(convertToType):
+            if parseDatetime(convertToType):
                 data = numpyArrayDatetimeParse(data, convertToType)
             else:
                 data = data.astype(convertToType)
-            if not allowedElemType(data.dtype):
-                data =  data.astype(numpy.object_)
+            if not allowedNumpyDType(data.dtype):
+                data = data.astype(numpy.object_)
         elif singleType and isScipySparse(data):
-            if isDatetimeType(convertToType):
+            if parseDatetime(convertToType):
                 data.data = numpyArrayDatetimeParse(data.data, convertToType)
             else:
                 data.data = data.data.astype(convertToType)
-            if not allowedElemType(data.data.dtype):
-                data.data =  data.data.astype(numpy.object_)
+            if not allowedNumpyDType(data.data.dtype):
+                data.data = data.data.astype(numpy.object_)
         elif singleType and isPandasDataFrame(data):
-            if isDatetimeType(convertToType):
+            if parseDatetime(convertToType):
                 data = data.applymap(dateutil.parser.parse)
             else:
-                data =  data.astype(convertToType)
+                data = data.astype(convertToType)
         elif singleType and len(data): # 2D list
             # only need to convert if not object type
             if convertToType not in objectTypes:
-                if isDatetimeType(convertToType):
+                if parseDatetime(convertToType):
                     convertToType = valueDatetimeParse(convertToType)
                 convertedData = []
                 for point in data:
@@ -767,17 +753,16 @@ def elementTypeConvert(data, convertToType):
                 if convType is None:
                     continue
                 data = data.astype(numpy.object_)
-                if isDatetimeType(convType):
+                if parseDatetime(convType):
                     feature = numpyArrayDatetimeParse(feature, convType)
                 data[:, j] = feature.astype(convType)
         elif isScipySparse(data):
-            objectConverted = False
             for col, convType in enumerate(convertToType):
                 if convType is None:
                     continue
                 data = data.astype(numpy.object_)
                 colMask = data.col == col
-                if isDatetimeType(convType):
+                if parseDatetime(convType):
                     feature = numpyArrayDatetimeParse(data.data[colMask],
                                                       convType)
                     data.data[colMask] = feature
@@ -787,12 +772,12 @@ def elementTypeConvert(data, convertToType):
                 convType = convertToType[i]
                 if convType is None:
                     continue
-                elif isDatetimeType(convType):
+                if parseDatetime(convType):
                     data[idx] = data[idx].apply(dateutil.parser.parse)
                 else:
                     data[idx] = ft.astype(convType)
         elif len(data): # 2D list
-            convertToType = [valueDatetimeParse(ctype) if isDatetimeType(ctype)
+            convertToType = [valueDatetimeParse(ctype) if parseDatetime(ctype)
                              else ctype for ctype in convertToType]
             for i, point in enumerate(data):
                 zippedConvert = zip(point, convertToType)
@@ -847,7 +832,7 @@ def replaceNumpyValues(data, toReplace, replaceWith):
                 data[nanLocs] = replaceWith
     except ValueError:
         dtype = type(replaceWith)
-        if dtype not in [int, float, bool, numpy.bool_]:
+        if not allowedNumpyDType(dtype):
             dtype = numpy.object_
 
         data = data.astype(dtype)
@@ -1147,44 +1132,44 @@ def getKeepIndexValues(axisObj, keepList):
     return cleaned
 
 def convertToTypeDictToList(convertToType, featuresObj, featureNames):
-     retFNames = featuresObj._getNamesNoGeneration()
-     convertList = [None] * len(featuresObj)
-     # if no feature names, we will use the list of None values as the
-     # featureNames to allow us to use the same process in either case
-     if retFNames is None:
-         retFNames = convertList
-     for i, ftName in enumerate(retFNames):
-         if i in convertToType and ftName in convertToType:
-             if convertToType[i] == convertToType[ftName]:
-                 convertList[i] = convertToType[i]
-                 del convertToType[i]
-                 del convertToType[ftName]
-             else:
-                 msg = "The keys '{name}' and {idx} represent the same "
-                 msg += "feature but have different values"
-                 raise InvalidArgumentValue(msg.format(name=ftName, idx=i))
-         if i in convertToType:
-             convertList[i] = convertToType[i]
-             del convertToType[i]
-         elif ftName in convertToType:
-             convertList[i] = convertToType[ftName]
-             del convertToType[ftName]
-     # if there are any unused values, they must correspond with full data
-     if convertToType:
-         fail = []
-         if featureNames is None:
-             fail = list(convertToType.keys())
-         else:
-             for key in convertToType:
-                 if not ((isinstance(key, int) and key < len(featureNames))
-                         or key in featureNames):
-                     fail.append(key)
-         if fail:
-             msg = 'The key(s) {keys} in convertToType are not valid for '
-             msg += 'this object'
-             raise InvalidArgumentValue(msg.format(keys=fail))
+    retFNames = featuresObj._getNamesNoGeneration()
+    convertList = [None] * len(featuresObj)
+    # if no feature names, we will use the list of None values as the
+    # featureNames to allow us to use the same process in either case
+    if retFNames is None:
+        retFNames = convertList
+    for i, ftName in enumerate(retFNames):
+        if i in convertToType and ftName in convertToType:
+            if convertToType[i] == convertToType[ftName]:
+                convertList[i] = convertToType[i]
+                del convertToType[i]
+                del convertToType[ftName]
+            else:
+                msg = "The keys '{name}' and {idx} represent the same "
+                msg += "feature but have different values"
+                raise InvalidArgumentValue(msg.format(name=ftName, idx=i))
+        if i in convertToType:
+            convertList[i] = convertToType[i]
+            del convertToType[i]
+        elif ftName in convertToType:
+            convertList[i] = convertToType[ftName]
+            del convertToType[ftName]
+    # if there are any unused values, they must correspond with full data
+    if convertToType:
+        fail = []
+        if featureNames is None:
+            fail = list(convertToType.keys())
+        else:
+            for key in convertToType:
+                if not ((isinstance(key, int) and key < len(featureNames))
+                        or key in featureNames):
+                    fail.append(key)
+        if fail:
+            msg = 'The key(s) {keys} in convertToType are not valid for '
+            msg += 'this object'
+            raise InvalidArgumentValue(msg.format(keys=fail))
 
-     return convertList
+    return convertList
 
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name=None, path=None,
@@ -1200,6 +1185,9 @@ def initDataObject(
     4. Convert to 2D representation
     5. Handle Missing data
     6. Convert to acceptable form for returnType init
+    7. init returnType object
+    8. Limit to keepPoints / keepFeatures
+    9. Perform any convertToType conversions
     """
     limitPoints = keepPoints != 'all'
     limitFeatures = keepFeatures != 'all'

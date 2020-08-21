@@ -117,6 +117,11 @@ def inheritDocstringsFactory(toInherit):
         return cls
     return inheritDocstring
 
+def allowedNumpyDType(dtype):
+    return (dtype in [int, float, bool, object]
+            or numpy.issubdtype(dtype, numpy.number)
+            or numpy.issubdtype(dtype, numpy.datetime64))
+
 def numpy2DArray(obj, dtype=None, copy=True, order='K', subok=False):
     """
     Mirror numpy.array() but require the data be two-dimensional.
@@ -126,8 +131,7 @@ def numpy2DArray(obj, dtype=None, copy=True, order='K', subok=False):
     if len(ret.shape) > 2:
         raise InvalidArgumentValue('obj cannot be more than two-dimensional')
 
-    if not (ret.dtype in [bool, numpy.bool_, int, float, object, numpy.object_]
-            or numpy.issubdtype(ret.dtype, numpy.number)):
+    if not allowedNumpyDType(ret.dtype):
         ret = numpy.array(obj, dtype=numpy.object_, copy=copy, order=order,
                           subok=subok, ndmin=2)
 
@@ -276,3 +280,60 @@ def validateAllAllowedElements(data):
 
 def pandasDataFrameToList(pdDataFrame):
     return list(map(list, zip(*(col for _, col in pdDataFrame.iteritems()))))
+
+def removeDuplicatesNative(coo_obj):
+    """
+    Creates a new coo_matrix, using summation for numeric data to remove
+    duplicates. If there are duplicate entires involving non-numeric
+    data, an exception is raised.
+
+    coo_obj : the coo_matrix from which the data of the return object
+    originates from. It will not be modified by the function.
+
+    Returns : a new coo_matrix with the same data as in the input
+    matrix, except with duplicate numerical entries summed to a single
+    value. This operation is NOT stable - the row / col attributes are
+    not guaranteed to have an ordering related to those from the input
+    object. This operation is guaranteed to not introduce any 0 values
+    to the data attribute.
+    """
+    if coo_obj.data is None:
+        #When coo_obj data is not iterable: Empty
+        #It will throw TypeError: zip argument #3 must support iteration.
+        #Decided just to do this quick check instead of duck typing.
+        return coo_obj
+
+    seen = {}
+    for i, j, v in zip(coo_obj.row, coo_obj.col, coo_obj.data):
+        if (i, j) not in seen:
+            # all types are allows to be present once
+            seen[(i, j)] = v
+        else:
+            try:
+                seen[(i, j)] += float(v)
+            except ValueError:
+                msg = 'Unable to represent this configuration of data in '
+                msg += 'Sparse object. At least one removeDuplicatesNativeof '
+                msg += 'the duplicate entries is a non-numerical type'
+                raise ValueError(msg)
+
+    rows = []
+    cols = []
+    data = []
+
+    for (i, j) in seen:
+        if seen[(i, j)] != 0:
+            rows.append(i)
+            cols.append(j)
+            data.append(seen[(i, j)])
+
+    dataNP = numpy.array(data)
+    # if there are mixed strings and numeric values numpy will automatically
+    # turn everything into strings. This will check to see if that has
+    # happened and use the object dtype instead.
+    if len(dataNP) > 0 and isinstance(dataNP[0], numpy.flexible):
+        dataNP = numpy.array(data, dtype='O')
+    new_coo = scipy.sparse.coo_matrix((dataNP, (rows, cols)),
+                                      shape=coo_obj.shape)
+
+    return new_coo

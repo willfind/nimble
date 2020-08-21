@@ -7,7 +7,6 @@ import itertools
 import numpy
 
 import nimble
-from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble._utility import inheritDocstringsFactory
