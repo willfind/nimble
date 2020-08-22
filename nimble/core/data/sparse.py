@@ -1163,24 +1163,26 @@ class Sparse(Base):
             # axis sorted; can return now if do not need to set indices
             if not setIndices or self._sorted['indices'] is not None:
                 return
-
-        self._validateAxis(axis)
-        if axis == "point":
-            sortPrime = self.data.row
-            sortOff = self.data.col
-            primeLength = len(self.points)
         else:
-            sortPrime = self.data.col
-            sortOff = self.data.row
-            primeLength = len(self.features)
-        # sort least significant axis first
-        sortKeys = numpy.lexsort((sortOff, sortPrime))
+            self._validateAxis(axis)
+            if axis == "point":
+                sortPrime = self.data.row
+                sortOff = self.data.col
+                primeLength = len(self.points)
+            else:
+                sortPrime = self.data.col
+                sortOff = self.data.row
+                primeLength = len(self.features)
+            # sort least significant axis first
+            sortKeys = numpy.lexsort((sortOff, sortPrime))
 
-        self.data.data = self.data.data[sortKeys]
-        self.data.row = self.data.row[sortKeys]
-        self.data.col = self.data.col[sortKeys]
+            self.data.data = self.data.data[sortKeys]
+            self.data.row = self.data.row[sortKeys]
+            self.data.col = self.data.col[sortKeys]
 
-        indices = None
+            self._sorted['axis'] = axis
+            self._sorted['indices'] = None
+
         if setIndices:
             if axis == "point":
                 sortedAxis = self.data.row
@@ -1190,10 +1192,7 @@ class Sparse(Base):
                 sortedLength = len(self.features)
 
             indices = numpy.searchsorted(sortedAxis, range(sortedLength + 1))
-
-        # flag that we are internally sorted
-        self._sorted['axis'] = axis
-        self._sorted['indices'] = indices
+            self._sorted['indices'] = indices
 
     def _getSparseData(self):
         """
