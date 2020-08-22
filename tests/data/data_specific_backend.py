@@ -29,3 +29,6 @@ class SparseSpecific(DataTestObject):
         # call _sortInternal to generate indices on already sorted obj
         with patch("numpy.lexsort", calledException):
             obj._sortInternal('point', setIndices=True)
+
+        # Confirm the desired action actually took place
+        assert obj._sorted['indices'] is not None
