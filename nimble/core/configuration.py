@@ -211,7 +211,8 @@ class ToDelete(object):
     Sentinal object standing in for options / sections that have not yet
     been deleted, but will be.
     """
-    pass
+    def __eq__(self, other):
+        return isinstance(other, ToDelete)
 
 
 class SessionConfiguration(object):

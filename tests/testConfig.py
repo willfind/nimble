@@ -192,6 +192,7 @@ def testSCPCP_whitespaceIgnored():
     fpWanted.close()
     fpSpaced.close()
 
+@configSafetyWrapper
 def test_settings_GetSet():
     """ Test nimble.settings getters and setters """
     #orig changes
@@ -213,7 +214,12 @@ def test_settings_GetSet():
 
             # change it back
             interface.setOption(option, origValue)
-            # check again
+            # check again; taking into acount default value substitution by
+            # the interface
+            if origValue != "":
+                assert interface.getOption(option) == origValue
+            else:
+                assert interface.getOption(option) is None
             assert nimble.settings.get(name, option) == origValue
 
     # confirm that changes is the same
