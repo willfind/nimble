@@ -91,107 +91,7 @@ def makeDefaultTemplate():
 ### Tests ###
 #############
 
-
-def testSCPCP_simple():
-    """ Test that the ConfigParser subclass works with some simple data """
-    with tempfile.NamedTemporaryFile('w') as fp:
-        template = makeDefaultTemplate()
-        for line in template:
-            fp.write(line)
-        fp.seek(0)
-
-        obj = nimble.core.configuration.SortedCommentPreservingConfigParser()
-        with open(fp.name, 'r') as fp:
-            obj.readfp(fp)
-
-            fileEqualObjOutput(fp, obj)
-
-
-
-def testSCPCP_newOption():
-    """ Test that comments are bound correctly after adding a new option """
-    template = makeDefaultTemplate()
-
-    with tempfile.NamedTemporaryFile('w+') as fp:
-        for line in template:
-            fp.write(line)
-        fp.seek(0)
-
-        obj = nimble.core.configuration.SortedCommentPreservingConfigParser()
-        with open(fp.name, 'r') as fp:
-            obj.readfp(fp)
-
-            obj.set("SectionName", "option2", '1')
-
-            with tempfile.NamedTemporaryFile('w+') as wanted:
-                template = makeDefaultTemplate()
-                template.insert(8, "option2 = 1\n")
-                for line in template:
-                    wanted.write(line)
-                wanted.seek(0)
-
-                fileEqualObjOutput(wanted, obj)
-
-
-def testSCPCP_multilineComments():
-    """ Test that multiline comments are preserved """
-    template = makeDefaultTemplate()
-    template.insert(5, "#SectionComment line 2\n")
-    template.insert(6, "; Another comment, after an empty line\n")
-
-    with tempfile.NamedTemporaryFile('w') as fp:
-        for line in template:
-            fp.write(line)
-        fp.seek(0)
-
-        obj = nimble.core.configuration.SortedCommentPreservingConfigParser()
-        with open(fp.name, 'r') as fp:
-            obj.readfp(fp)
-
-            fp.seek(0)
-            fileEqualObjOutput(fp, obj)
-
-
-def testSCPCP_whitespaceIgnored():
-    """ Test that white space between comment lines is ignored """
-    templateWanted = makeDefaultTemplate()
-    templateSpaced = makeDefaultTemplate()
-
-    templateWanted.insert(5, "#SectionComment line 2\n")
-    templateWanted.insert(6, "; Another comment, after an empty line\n")
-
-    templateSpaced.insert(5, "#SectionComment line 2\n")
-    templateSpaced.insert(6, "\n")
-    templateSpaced.insert(7, "; Another comment, after an empty line\n")
-
-    fpWanted = tempfile.NamedTemporaryFile('w')
-    for line in templateWanted:
-        fpWanted.write(line)
-    fpWanted.seek(0)
-
-    fpSpaced = tempfile.NamedTemporaryFile('w')
-    for line in templateSpaced:
-        fpSpaced.write(line)
-    fpSpaced.seek(0)
-
-    obj = nimble.core.configuration.SortedCommentPreservingConfigParser()
-    fpSpaced = open(fpSpaced.name, 'r')
-    obj.readfp(fpSpaced)
-    fpSpaced.seek(0)
-
-    # should be equal
-    fpWanted = open(fpWanted.name, 'r')
-    fileEqualObjOutput(fpWanted, obj)
-
-    # should raise Assertion error
-    try:
-        fileEqualObjOutput(fpSpaced, obj)
-    except AssertionError:
-        pass
-
-    fpWanted.close()
-    fpSpaced.close()
-
+@configSafetyWrapper
 def test_settings_GetSet():
     """ Test nimble.settings getters and setters """
     #orig changes
@@ -213,7 +113,12 @@ def test_settings_GetSet():
 
             # change it back
             interface.setOption(option, origValue)
-            # check again
+            # check again; taking into acount default value substitution by
+            # the interface
+            if origValue != "":
+                assert interface.getOption(option) == origValue
+            else:
+                assert interface.getOption(option) is None
             assert nimble.settings.get(name, option) == origValue
 
     # confirm that changes is the same
@@ -679,6 +584,10 @@ def testToDeleteSentinalObject():
     val = nimble.core.configuration.ToDelete()
 
     assert isinstance(val, nimble.core.configuration.ToDelete)
+
+    val2 = nimble.core.configuration.ToDelete()
+
+    assert val == val2
 
 
 @configSafetyWrapper

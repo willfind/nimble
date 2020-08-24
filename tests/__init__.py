@@ -10,5 +10,4 @@ def setup():
     is no longer the case we need to load them now to ensure that those
     tests continue to test all interfaces.
     """
-
     initAvailablePredefinedInterfaces()
