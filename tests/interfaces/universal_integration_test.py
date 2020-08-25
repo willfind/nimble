@@ -133,6 +133,66 @@ def testGetScoresFormat():
                 scores4 = tl4.getScores(testX4)
                 checkFormat(scores4, 4)
 
+@attr('slow')
+def testApplyFeatureNames():
+    """ Test that nimble takes over the control of randomness of each interface """
+    regressionData = generateRegressionData(5, 10, 5)
+    classificationData = generateClassificationData(2, 10, 5)
+    success = 0
+    for interface in nimble.core.interfaces.available.values():
+        interfaceName = interface.getCanonicalName()
+        for learner in nimble.listLearners(interfaceName):
+            currType = nimble.learnerType(interfaceName + '.' + learner)
+            if currType == 'regression':
+                data = regressionData
+            elif currType == 'classification':
+                data = classificationData
+            else:
+                continue
+            ((trainData, trainLabels), (testData, testLabels)) = data
+            trainLabels.features.setNames(['label'])
+            trainData.features.transform(lambda ft: abs(ft))
+            testData.features.transform(lambda ft: abs(ft))
+            for mode in ['label', 'allScores', 'bestScore']:
+                strResult = None
+                try:
+                    result = nimble.trainAndApply(interfaceName + '.' + learner,
+                                                  trainData, trainLabels, testData,
+                                                  scoreMode=mode)
+                    if currType == 'classification':
+                        toString = {0: 'a', 1: 'b'}
+                        strLabels = data[0][1].calculateOnElements(lambda e: toString[e])
+                        strResult = nimble.trainAndApply(
+                            interfaceName + '.' + learner, trainData, strLabels,
+                            testData, scoreMode=mode)
+                except InvalidArgumentValue:
+                    if interfaceName == 'autoimpute':
+                        continue
+                    # multioutput learner; only label mode is allowed
+                    if mode != 'label':
+                        continue
+                    multiLabels = trainLabels.copy()
+                    labels2 = trainLabels.copy() + 1
+                    labels2.features.setNames(['label2'])
+                    multiLabels.features.append(labels2)
+
+                    result = nimble.trainAndApply(interfaceName + '.' + learner,
+                                                  trainData, multiLabels, testData,
+                                                  scoreMode=mode)
+                except Exception:
+                    continue
+
+                if mode == 'label':
+                    assert result.features.getName(0) == 'label'
+                elif mode == 'bestScore':
+                    assert result.features.getNames() == ['label', 'score']
+                else:
+                    assert result.features.getNames() == ['0.0', '1.0']
+                    if strResult is not None:
+                        assert strResult.features.getNames() == ['a', 'b']
+                success += 1
+    # ensure not passing because except Exception is catching all cases
+    assert success
 
 @attr('slow')
 @nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
