@@ -188,18 +188,24 @@ def test_TrainedLearner_test():
 
 @configSafetyWrapper
 def backendDeep(toCall, validator):
-    if toCall.__name__.startswith("crossValidate"):
-        expectedLogChangeTrue = 1
-        expectedLogChangeFalse = 0
+    if toCall.__name__ == "crossValidate":
+        entriesWithoutDeep = 1
+        entriesFromFolds = 10
+    elif toCall.__name__ == "trainAndTestOnTrainingData":
+        entriesWithoutDeep = 2
+        entriesFromFolds = 10
     elif toCall.__name__.startswith("train"):
-        expectedLogChangeTrue = 2 # cross val entry and train entry
-        expectedLogChangeFalse = 1 # only train entry
+        entriesWithoutDeep = 2
+        entriesFromFolds = 20 # 10 folds * 2 args
     else:
         msg = "The function name for this test is not recognized. "
         msg += "Functions using this backend must have the wrapped 'toCall' "
         msg += "function renamed to the tested function so it can be "
         msg += "determined how many log entries should be added"
         raise TypeError(msg)
+    expectedLogChangeTrue = entriesWithoutDeep + entriesFromFolds
+    expectedLogChangeFalse = entriesWithoutDeep
+
     nimble.settings.set('logger', 'enabledByDefault', 'True')
     nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
 
@@ -224,8 +230,8 @@ def backendDeep(toCall, validator):
 
     # next we compare the differences between the calls when
     # the deep flag is different
-    assert (endT1 - startT1) - 1 == (endF1 - startF1)
-    assert (endT2 - startT2) - 1 == (endF2 - startF2)
+    assert (endT1 - startT1) - entriesFromFolds == (endF1 - startF1)
+    assert (endT2 - startT2) - entriesFromFolds == (endF2 - startF2)
 
     nimble.settings.set('logger', 'enabledByDefault', 'False')
     nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
@@ -233,7 +239,7 @@ def backendDeep(toCall, validator):
     # the deep logging flag is contingent on global and local
     # control, so we confirm that logging is called or
     # not appropriately
-    (startT1, endT1) = validator(toCall, useLog=True) # 2 logs added
+    (startT1, endT1) = validator(toCall, useLog=True)
     (startT2, endT2) = validator(toCall, useLog=None) # 0 logs added
     assert startT2 == endT2
     (startT3, endT3) = validator(toCall, useLog=False) # 0 logs added
@@ -249,7 +255,7 @@ def backendDeep(toCall, validator):
 
     # next we compare the differences between the calls when
     # the deep flag is different
-    assert (endT1 - startT1) - 1 == (endF1 - startF1)
+    assert (endT1 - startT1) - entriesFromFolds == (endF1 - startF1)
 
 def test_Deep_crossValidate():
     def wrapped(trainX, trainY, testX, testY, useLog):

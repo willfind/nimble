@@ -12,7 +12,8 @@ from nimble import match
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._utility import mergeArguments
-from nimble.core.logger import handleLogging, startTimer, stopTimer
+from nimble.core.logger import handleLogging, loggingEnabled, deepLoggingEnabled
+from nimble.core.logger import startTimer, stopTimer
 from nimble.core._learnHelpers import findBestInterface
 from nimble.core._learnHelpers import _learnerQuery
 from nimble.core._learnHelpers import _validScoreMode
@@ -1400,6 +1401,7 @@ class KFoldCrossValidator(object):
 
         # Folding should be the same for each argset (and is expensive) so
         # iterate over folds first
+        deepLog = loggingEnabled(useLog) and deepLoggingEnabled()
         for fold in foldIter:
             [(curTrainX, curTestingX), (curTrainY, curTestingY)] = fold
             argSetIndex = 0
@@ -1407,12 +1409,16 @@ class KFoldCrossValidator(object):
             # given this fold, do a run for each argument combination
             for curArgumentCombination in argumentCombinationIterator:
                 #run algorithm on the folds' training and testing sets
+                timer = startTimer(useLog)
                 curRunResult = nimble.trainAndApply(
                     learnerName=self.learnerName, trainX=curTrainX,
                     trainY=curTrainY, testX=curTestingX,
                     arguments=curArgumentCombination, scoreMode=self.scoreMode,
                     useLog=False)
-
+                time = stopTimer(timer)
+                handleLogging(deepLog, "runCV", "trainAndApply", curTrainX,
+                              curTrainY, curTestingX, None, self.learnerName,
+                              curArgumentCombination, time=time)
                 performanceOfEachCombination[argSetIndex][0] = (
                     curArgumentCombination)
 
