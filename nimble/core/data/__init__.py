@@ -4,7 +4,7 @@ in nimble.
 
 Object creation is meant to be done via nimble top level functions such
 as nimble.data, even though the objects themselves are contained
-within this module. They are avilable only for the purposes of instance
+within this module. They are available only for the purposes of instance
 checking, and are excluded from __all__ and the automatically generated
 documentation.
 """
@@ -24,3 +24,7 @@ from .features import Features
 # other similiar object creation methods.
 # We want this for unit testing
 available = ['List', 'Matrix', 'Sparse', 'DataFrame']
+
+# Store matplotlib.pyplot figure numbers by name. Multiple plots can be
+# placed on the same figure by indicating the figure name
+_plotFigures = {}

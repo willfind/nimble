@@ -19,7 +19,9 @@ from nimble import CustomLearner
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
-from nimble.calculate import *
+from nimble.calculate import fractionIncorrect, fractionCorrect
+from nimble.calculate import rootMeanSquareError, meanAbsoluteError
+from nimble.calculate import meanFeaturewiseRootMeanSquareError
 from nimble.random import pythonRandom
 from nimble.learners import KNNClassifier
 from nimble.core._learnHelpers import computeMetrics
@@ -597,7 +599,7 @@ def test_KFoldCrossValidator_zeroFolds():
     Y = nimble.data('Matrix', yRaw)
     crossValidator = KFoldCrossValidator(
         'nimble.KNNClassifier', X, Y, arguments={'k': 3},
-        performanceFunction=nimble.calculate.fractionIncorrect, folds=0)
+        performanceFunction=fractionIncorrect, folds=0)
 
 def test_CV():
     crossVal = CV([1, 2, 3])
