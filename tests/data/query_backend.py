@@ -2391,8 +2391,6 @@ class QueryBackend(DataTestObject):
             obj = nimble.random.data("List", 10, 1, 0, useLog=False)
             obj.features.append(groupObj, useLog=False)
 
-            #we call the leading underscore version, because it
-            # returns the process
             obj.plotFeatureGroupMeans(0, 1, outPath=path, show=False)
 
             endSize = os.path.getsize(path)
@@ -2417,8 +2415,6 @@ class QueryBackend(DataTestObject):
             obj = nimble.random.data("List", 10, 1, 0, useLog=False)
             obj.features.append(groupObj, useLog=False)
 
-            #we call the leading underscore version, because it
-            # returns the process
             obj.plotFeatureGroupStatistics(sum, 0, 1, outPath=path, show=False)
 
             endSize = os.path.getsize(path)

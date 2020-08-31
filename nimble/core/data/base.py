@@ -2553,7 +2553,12 @@ class Base(object):
         """
         A rolling average of the pairwise combination of feature values.
 
-        Control over the width of the both axes is given, with the
+        The points in the scatter plot have coordinates defined by
+        taking the average of pairwise values from ``x`` and ``y`` within
+        a rolling window of length ``sampleSizeForAverage`` according
+        to an ordering defined by the sorted values of ``x``.
+
+        Control over the visual width of the both axes is given, with the
         warning that user specified values can obscure data that would
         otherwise be plotted given default inputs.
 
@@ -2705,23 +2710,8 @@ class Base(object):
                 copied = self.features.copy(index, useLog=False)
             return copied.copy(to='numpyarray', outputAs1D=True)
 
-        def pGetter(index):
-            return customGetter(index, 'point')
-
-        def fGetter(index):
-            return customGetter(index, 'feature')
-
-        if xAxis == 'point':
-            xGetter = pGetter
-        else:
-            xGetter = fGetter
-        if yAxis == 'point':
-            yGetter = pGetter
-        else:
-            yGetter = fGetter
-
-        xToPlot = xGetter(xIndex)
-        yToPlot = yGetter(yIndex)
+        xToPlot = customGetter(xIndex, xAxis)
+        yToPlot = customGetter(yIndex, yAxis)
 
         xName = xlabel = self._formattedStringID(xAxis, xIndex)
         yName = ylabel = self._formattedStringID(yAxis, yIndex)
