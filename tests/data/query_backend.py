@@ -2267,7 +2267,7 @@ class QueryBackend(DataTestObject):
             randGenerated = nimble.random.data("List", 10, 10, 0, useLog=False)
             raw = randGenerated.copy(to='pythonlist')
             obj = self.constructor(raw)
-            obj.plot(outPath=path, show=False)
+            obj.plotHeatMap(outPath=path, show=False)
 
             endSize = os.path.getsize(path)
             assert startSize < endSize

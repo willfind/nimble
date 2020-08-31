@@ -121,7 +121,7 @@ base_notLogged = [
     'containsZero', 'copy', 'countElements', 'countUniqueElements',
     'featureView', 'getTypeString', 'hashCode', 'inverse',
     'isApproximatelyEqual', 'isIdentical', 'iterateElements', 'matrixMultiply',
-    'matrixPower', 'nameIsDefault', 'plot', 'plotFeatureAgainstFeature',
+    'matrixPower', 'nameIsDefault', 'plotHeatMap', 'plotFeatureAgainstFeature',
     'plotFeatureAgainstFeatureRollingAverage', 'plotFeatureDistribution',
     'plotFeatureGroupMeans', 'plotFeatureGroupStatistics', 'pointView',
     'referenceDataFrom', 'save', 'show', 'solveLinearSystem', 'toString',

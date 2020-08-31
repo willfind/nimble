@@ -97,6 +97,34 @@ if __name__ == "__main__":
 
     checkObj = nimble.data("Matrix", numpy.zeros((15, 12)), name="Checkerboard")
 
+    def plotClusters(outDir, givenShow):
+        centers = nimble.data('Matrix', [[0, 0], [1, 1], [2, 2], [3, 3]])
+
+        obj = nimble.data("Matrix", numpy.random.rand(25, 2))
+
+        label = 'cluster0'
+        # by setting yMin=0.5, it will trigger yMax to be set to ~1 for
+        # this first plot and for the entire figure. We want to test that
+        # our helpers allow the yMax value to remain dynamic (expanding to
+        # ~4) when adding the plots below while keeping our defined yMin.
+        obj.plotFeatureAgainstFeature(0, 1, yMin=0.5, show=False,
+                                      figureName='fig', label=label)
+
+        for i in range(1, 4):
+            if i < 3:
+                show = False
+                outPath = None
+            else:
+                show = givenShow
+                outPath = getOutPath(outDir, "Clusters")
+
+            obj = nimble.data("Matrix", numpy.random.rand(25, 2))
+            scaled = obj + centers.points[i].stretch
+
+            label = 'cluster' + str(i)
+            scaled.plotFeatureAgainstFeature(0, 1, show=show, outPath=outPath,
+                                             figureName='fig', label=label)
+
     def makeCheckered(val, p, f):
         pParity = p % 2
         fParity = f % 2
@@ -123,12 +151,13 @@ if __name__ == "__main__":
     #heatMap: checkboard pattern, even columns 0s, odds = 1's, offset every other point
     def plotCheckerboad(plotObj, outDir, givenShow):
         outPath = getOutPath(outDir, "checkerboard")
-        plotObj.plot(outPath=outPath, show=givenShow)
+        plotObj.plotHeatMap(outPath=outPath, show=givenShow)
 
     # heatmap: another one to show a gradient from a given formula (linear?)
     def plotCheckeredGradient(plotObj, outDir, givenShow):
         outPath = getOutPath(outDir, "checkerboardWithBar")
-        plotObj.plot(includeColorbar=True, outPath=outPath, show=givenShow)
+        plotObj.plotHeatMap(includeColorbar=True, outPath=outPath,
+                            show=givenShow)
 
     groups = [['G1', 'W', 25], ['G1', 'M', 20], ['G1', 'W', 32],
               ['G1', 'M', 29], ['G1', 'M', 26], ['G1', 'M', 31],
@@ -227,6 +256,7 @@ if __name__ == "__main__":
     plotDistributionNormalSquared(objNorm, givenOutDir, givenShow)
     plotComparisonNoiseVsScaled(givenOutDir, givenShow)
     plotComparisonMultipleNoiseVsScaled(givenOutDir, givenShow)
+    plotClusters(givenOutDir, givenShow)
     plotCheckerboad(checkObj, givenOutDir, givenShow)
     plotCheckeredGradient(checkGradObj, givenOutDir, givenShow)
     plotGroupMeans(groupObj, givenOutDir, givenShow)
