@@ -629,16 +629,20 @@ class Base(object):
 
         mapping = {}
         def applyMap(ft):
-            uniqueVals = ft.countUniqueElements()
             integerValue = 0
-            if 0 in uniqueVals:
-                mapping[0] = 0
-                integerValue = 1
-
             mapped = []
             for val in ft:
                 if val in mapping:
                     mapped.append(mapping[val])
+                elif val == 0:
+                    # will preserve zeros if present in the feature
+                    # increment all values that occurred before this zero
+                    for key in mapping:
+                        mapping[key] += 1
+                    mapped = [v + 1 for v in mapped]
+                    integerValue += 1
+                    mapping[0] = 0
+                    mapped.append(0)
                 else:
                     mapped.append(integerValue)
                     mapping[val] = integerValue
