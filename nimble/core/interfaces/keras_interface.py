@@ -70,8 +70,7 @@ class Keras(PredefinedInterface, UniversalInterface):
 
             return True
 
-        self._searcher = PythonSearcher(self.keras, self.keras.__all__, {},
-                                        isLearner, 2)
+        self._searcher = PythonSearcher(self.keras, isLearner, 2)
 
         super(Keras, self).__init__()
 
