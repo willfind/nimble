@@ -18,7 +18,8 @@ from nose.plugins.attrib import attr
 #@attr('slow')
 
 import nimble
-from nimble.exceptions import InvalidArgumentValue, PackageException
+from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
+from nimble.exceptions import PackageException
 from nimble.core.interfaces.universal_interface import UniversalInterface
 from nimble.core._learnHelpers import generateClusteredPoints
 from tests.helpers import configSafetyWrapper
@@ -30,20 +31,18 @@ def checkFormat(scores, numLabels):
     """
     Check that the provided nimble data typed scores structurally match either a one vs
     one or a one vs all formatting scheme.
-
     """
-    if len(scores.features) != numLabels and len(scores.features) != (numLabels * (numLabels - 1)) / 2:
-        raise RuntimeError("_getScores() must return scores that are either One vs One or One vs All formatted")
+    assert (len(scores.features) == numLabels
+            or len(scores.features) == (numLabels * (numLabels - 1)) / 2)
 
 
 def checkFormatRaw(scores, numLabels):
     """
     Check that the provided numpy typed scores structurally match either a one vs
     one or a one vs all formatting scheme.
-
     """
-    if scores.shape[1] != numLabels and scores.shape[1] != (numLabels * (numLabels - 1)) / 2:
-        raise RuntimeError("_getScores() must return scores that are either One vs One or One vs All formatted")
+    assert (scores.shape[1] == numLabels
+            or scores.shape[1] == (numLabels * (numLabels - 1)) / 2)
 
 
 @attr('slow')
@@ -66,8 +65,7 @@ def test__getScoresFormat():
                 try:
                     tl2 = nimble.train(fullName, trainX2, trainY2)
                 except (InvalidArgumentValue, SystemError):
-                    # this is to catch learners that have required arguments.
-                    # we have to skip them in that case
+                    # skip learners that have required arguments
                     continue
                 (ign1, ign2, transTestX2, ign3) = interface._inputTransformation(
                     lName, None, None, testX2, {}, tl2._customDict)
@@ -75,8 +73,9 @@ def test__getScoresFormat():
                     scores2 = interface._getScores(
                         lName, tl2._backend, transTestX2, {},
                         tl2._transformedArguments, tl2._customDict)
-                except (NotImplementedError, SystemError):
-                    # this is to catch learners that cannot output scores
+                except (NotImplementedError, SystemError, IndexError):
+                    # this is to catch learners that cannot output scores or
+                    # our sample test data is not compatible with this learner.
                     continue
                 checkFormatRaw(scores2, 2)
 
@@ -115,8 +114,7 @@ def testGetScoresFormat():
                 try:
                     tl2 = nimble.train(fullName, trainX2, trainY2)
                 except (InvalidArgumentValue, SystemError):
-                    # this is to catch learners that have required arguments.
-                    # we have to skip them in that case
+                    # skip learners that have required arguments
                     continue
                 try:
                     scores2 = tl2.getScores(testX2)
@@ -135,14 +133,14 @@ def testGetScoresFormat():
 
 @attr('slow')
 def testApplyFeatureNames():
-    """ Test that nimble takes over the control of randomness of each interface """
+    """ Check train label feature name is set during apply for regression and classification """
     regressionData = generateRegressionData(5, 10, 5)
     classificationData = generateClassificationData(2, 10, 5)
     success = 0
     for interface in nimble.core.interfaces.available.values():
         interfaceName = interface.getCanonicalName()
-        for learner in nimble.listLearners(interfaceName):
-            currType = nimble.learnerType(interfaceName + '.' + learner)
+        for learner in interface.listLearners():
+            currType = interface.learnerType(learner)
             if currType == 'regression':
                 data = regressionData
             elif currType == 'classification':
@@ -166,26 +164,25 @@ def testApplyFeatureNames():
                             interfaceName + '.' + learner, trainData, strLabels,
                             testData, scoreMode=mode)
                 except InvalidArgumentValue:
-                    if interfaceName == 'autoimpute':
-                        continue
-                    # multioutput learner; only label mode is allowed
+                    # try multioutput learner; only label mode is allowed
                     if mode != 'label':
                         continue
                     multiLabels = trainLabels.copy()
-                    labels2 = trainLabels.copy() + 1
+                    labels2 = trainLabels.copy()
                     labels2.features.setNames(['label2'])
                     multiLabels.features.append(labels2)
-
-                    result = nimble.trainAndApply(interfaceName + '.' + learner,
-                                                  trainData, multiLabels, testData,
-                                                  scoreMode=mode)
+                    try:
+                        result = nimble.trainAndApply(interfaceName + '.' + learner,
+                                                      trainData, multiLabels, testData,
+                                                      scoreMode=mode)
+                    except (InvalidArgumentValue, ImproperObjectAction):
+                        continue # incompatible data for this operation
                 except Exception:
                     continue
-
                 if mode == 'label':
                     assert result.features.getName(0) == 'label'
                 elif mode == 'bestScore':
-                    assert result.features.getNames() == ['label', 'score']
+                    assert result.features.getNames() == ['label', 'bestScore']
                 else:
                     assert result.features.getNames() == ['0.0', '1.0']
                     if strResult is not None:

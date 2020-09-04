@@ -1208,13 +1208,19 @@ class TrainedLearner(object):
             labels = self._interface._outputTransformation(
                 self.learnerName, labels, usedArguments, output, "label",
                 self._customDict)
+        # if this application is for a classification or regression learner,
+        # we will apply featureNames to the output if possible
+        lType = self._interface.learnerType(self.learnerName)
+        applyFtNames = lType in ['classification', 'regression']
         if scoreMode == 'label':
             ret = labels
-            ret.features.setNames(self._trainYNames, useLog=False)
+            if applyFtNames:
+                ret.features.setNames(self._trainYNames, useLog=False)
         elif scoreMode == 'allScores':
             ret = scores
-            scoreOrder = self._interface._getScoresOrder(self._backend)
-            ret.features.setNames(map(str, scoreOrder), useLog=False)
+            if applyFtNames:
+                scoreOrder = self._interface._getScoresOrder(self._backend)
+                ret.features.setNames(map(str, scoreOrder), useLog=False)
         elif scoreMode == 'bestScore':
             scoreOrder = self._interface._getScoresOrder(self._backend)
             scoreOrder = list(scoreOrder)
@@ -1228,9 +1234,9 @@ class TrainedLearner(object):
             labels.features.append(scoreVector, useLog=False)
 
             ret = labels
-            if self._trainYNames is not None:
+            if applyFtNames and self._trainYNames is not None:
                 ftNames = self._trainYNames.copy()
-                ftNames.append('score')
+                ftNames.append('bestScore')
                 ret.features.setNames(ftNames, useLog=False)
         else:
             msg = 'scoreMode must be "label", "bestScore", or "allScores"'

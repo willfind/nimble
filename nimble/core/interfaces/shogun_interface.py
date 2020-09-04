@@ -243,7 +243,7 @@ To install shogun
         return scoresPerPoint
 
     def _getScoresOrder(self, learner):
-        return learner.get_unique_labels
+        return learner.UIgetScoreOrder
 
 
     def _findCallableBackend(self, name):
@@ -379,8 +379,13 @@ To install shogun
         # TODO online training prep learner.start_train()
         # batch training if data is passed
         if trainY is not None:
-            learner.get_unique_labels = numpy.unique(trainY.get_labels())
-            customDict['numLabels'] = len(learner.get_unique_labels)
+            labelOrder = numpy.unique(trainY.get_labels())
+            if customDict['remap'] is None:
+                learner.UIgetScoreOrder = labelOrder
+            else:
+                remap = customDict['remap']
+                learner.UIgetScoreOrder = [remap[v] for v in labelOrder]
+            customDict['numLabels'] = len(learner.UIgetScoreOrder)
 
         return learner
 
