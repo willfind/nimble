@@ -59,15 +59,15 @@ nimble_tested = list(map(prefixAdder('nimble'), nimble_funcs))
 # no calculate functions should be logged.
 calculate_funcs = [
     'balancedAccuracy', 'confusionMatrix', 'correlation', 'cosineSimilarity',
-    'covariance', 'detectBestResult', 'elementwiseMultiply',
+    'count', 'covariance', 'detectBestResult', 'elementwiseMultiply',
     'elementwisePower', 'f1Score', 'falseNegative', 'falsePositive',
     'fractionCorrect', 'fractionIncorrect', 'inverse', 'leastSquaresSolution',
     'maximum', 'mean', 'meanAbsoluteError',
     'meanFeaturewiseRootMeanSquareError', 'median', 'medianAbsoluteDeviation',
     'minimum', 'mode', 'precision', 'proportionMissing', 'proportionZero',
     'pseudoInverse', 'quartiles', 'recall', 'residuals', 'rootMeanSquareError',
-    'rSquared', 'solve', 'specificity', 'standardDeviation', 'trueNegative',
-    'truePositive', 'uniqueCount', 'varianceFractionRemaining',
+    'rSquared', 'solve', 'specificity', 'standardDeviation', 'sum',
+    'trueNegative', 'truePositive', 'uniqueCount', 'varianceFractionRemaining',
     ]
 calculate_tested = list(map(prefixAdder('nimble.calculate'), calculate_funcs))
 
@@ -123,8 +123,9 @@ base_notLogged = [
     'isApproximatelyEqual', 'isIdentical', 'iterateElements', 'matrixMultiply',
     'matrixPower', 'nameIsDefault', 'plot', 'plotFeatureAgainstFeature',
     'plotFeatureAgainstFeatureRollingAverage', 'plotFeatureDistribution',
-    'pointView', 'referenceDataFrom', 'save', 'show', 'solveLinearSystem',
-    'toString', 'validate', 'view', 'writeFile',
+    'plotFeatureGroupMeans', 'plotFeatureGroupStatistics', 'pointView',
+    'referenceDataFrom', 'save', 'show', 'solveLinearSystem', 'toString',
+    'validate', 'view', 'writeFile',
     ]
 base_funcs = base_logged + base_notLogged
 base_tested = list(map(prefixAdder('Base'), base_funcs))
@@ -136,7 +137,8 @@ features_logged = [
     ]
 features_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
-    'hasName', 'similarities', 'statistics', 'unique',
+    'hasName', 'plot', 'plotMeans', 'plotStatistics', 'similarities',
+    'statistics', 'unique',
     ]
 features_funcs = features_logged + features_notLogged
 features_tested = list(map(prefixAdder('Features'), features_funcs))
@@ -149,7 +151,8 @@ points_logged = [
     ]
 points_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
-    'hasName', 'similarities', 'statistics', 'unique',
+    'hasName', 'plot', 'plotMeans', 'plotStatistics', 'similarities',
+    'statistics', 'unique',
     ]
 points_funcs = points_logged + points_notLogged
 points_tested = list(map(prefixAdder('Points'), points_funcs))

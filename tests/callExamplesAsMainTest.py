@@ -28,7 +28,7 @@ def test_callAllAsMain():
         # plots on the screen.
         tempOutDir = tempfile.TemporaryDirectory()
 
-        cmd = ("python", scriptLoc, tempOutDir.name)
+        cmd = ("python", scriptLoc, tempOutDir.name, "False")
         spP = subprocess.PIPE
 
         # We want these scripts to run with the local copy of nimble, so we need
