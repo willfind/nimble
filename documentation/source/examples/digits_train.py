@@ -8,6 +8,13 @@ represent pixel values for a flattened 16x16 grayscale image. The final
 10 features are a binary representation of the known label for the
 image. Our goal is to correctly identify handwritten digits using neural
 networks.
+
+[Download this example as a script or notebook][files]
+
+[Download the dataset for this example][datasets]
+
+[files]: files.rst#neural-network-example
+[datasets]: ../datasets.rst#neural-network-example
 """
 
 ## Getting Started ##

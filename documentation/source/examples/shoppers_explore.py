@@ -7,13 +7,20 @@ Our dataset, `online_shoppers_intention_clean.csv`, is a collection of
 behaviors for visitors to an online shopping website. Our goal is to
 gather information about the visitors to this site using a variety of
 the functionality Nimble has available for digging deeper into a dataset.
+
+[Download this example as a script or notebook][files]
+
+[Download the dataset for this example][datasets]
+
+[files]: files.rst#exploring-data-example
+[datasets]: ../datasets.rst#exploring-data-example
 """
 
 ## Getting Started ##
 
 import nimble
 
-visits = nimble.data('DataFrame', 'online_shoppers_intention_clean.csv',
+visits = nimble.data('DataFrame', 'online_shoppers_intention_explore.csv',
                      featureNames=True)
 
 ## Data Overview ##
@@ -72,8 +79,7 @@ print('Proportion of visitors that view a product page:', 1 - noProduct)
 ## The amount of time spent on each page type is also recorded.
 ## Is there a relationship between time spent on informational pages and
 ## product related pages?
-visits.plotFeatureAgainstFeature('Administrative_Duration',
-                                 'ProductRelated_Duration')
+visits.plotFeatureAgainstFeature('Admin_Duration', 'Product_Duration')
 
 ## Each visitor's location is classified into one of nine regions in the
 ## Region feature.

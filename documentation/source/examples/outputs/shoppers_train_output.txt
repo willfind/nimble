@@ -1,31 +1,5 @@
-REGEX: cluster 0 \([0-9]{3,4} points\):
-       Revenue SpecialDay Weekend NewVisitor
+REGEX: cluster[0-3] contains [0-9]+ visits \([0-9]{1,2}\.[0-9]{1,2}%\)
+REGEX: cluster[0-3] contains [0-9]+ visits \([0-9]{1,2}\.[0-9]{1,2}%\)
+REGEX: cluster[0-3] contains [0-9]+ visits \([0-9]{1,2}\.[0-9]{1,2}%\)
+REGEX: cluster[0-3] contains [0-9]+ visits \([0-9]{1,2}\.[0-9]{1,2}%\)
 
-REGEX: mean    0\.[0-9]{3}    0\.[0-9]{3}     0\.[0-9]{3}    0\.[0-9]{3}
-
-REGEX: cluster 1 \([0-9]{3,4} points\):
-       Revenue SpecialDay Weekend NewVisitor
-
-REGEX: mean    0\.[0-9]{3}    0\.[0-9]{3}     0\.[0-9]{3}    0\.[0-9]{3}
-
-REGEX: cluster 2 \([0-9]{3,4} points\):
-       Revenue SpecialDay Weekend NewVisitor
-
-REGEX: mean    0\.[0-9]{3}    0\.[0-9]{3}     0\.[0-9]{3}    0\.[0-9]{3}
-
-REGEX: cluster 3 \([0-9]{3,4} points\):
-       Revenue SpecialDay Weekend NewVisitor
-
-REGEX: mean    0\.[0-9]{3}    0\.[0-9]{3}     0\.[0-9]{3}    0\.[0-9]{3}
-
-REGEX: cluster 4 \([0-9]{3,4} points\):
-       Revenue SpecialDay Weekend NewVisitor
-
-REGEX: mean    0\.[0-9]{3}    0\.[0-9]{3}     0\.[0-9]{3}    0\.[0-9]{3}
-
-REGEX: In TrafficType 3, there is a difference of -0.09[0-9]+ between the best and worst revenue clusters.
-REGEX: In TrafficType 2, there is a difference of 0.14[0-9]+ between the best and worst revenue clusters.
-New Visitors for trafficType 2: 52.7%
-Return Visitors for trafficType 2: 22.9%
-New Visitors for trafficType 3: 9.0%
-Return Visitors for trafficType 3: 21.3%

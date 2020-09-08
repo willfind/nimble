@@ -2697,6 +2697,7 @@ class Base(object):
                    outPath, show, figureName, title, xAxisLabel, yAxisLabel,
                    xMin, xMax, yMin, yMax, **kwargs):
         fig, ax = plotFigureHandling(figureName)
+        plotUpdateAxisLimits(ax, xMin, xMax, None, None)
 
         xAxisObj = self._getAxis(xAxis)
         yAxisObj = self._getAxis(yAxis)

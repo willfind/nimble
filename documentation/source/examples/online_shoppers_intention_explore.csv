@@ -1,4 +1,4 @@
-Administrative,Administrative_Duration,Informational,Informational_Duration,ProductRelated,ProductRelated_Duration,BounceRates,ExitRates,PageValues,SpecialDay,Month,OperatingSystems,Browser,Region,TrafficType,NewVisitor,Weekend,Revenue
+Administrative,Admin_Duration,Informational,Info_Duration,ProductRelated,Product_Duration,BounceRates,ExitRates,PageValues,SpecialDay,Month,OperatingSystems,Browser,Region,TrafficType,NewVisitor,Weekend,Revenue
 0,0.0,0,0.0,1,0.0,0.2,0.2,0.0,0.0,0,1,1,1,1,False,False,False
 0,0.0,0,0.0,2,64.0,0.0,0.1,0.0,0.0,0,2,2,1,2,False,False,False
 0,0.0,0,0.0,1,0.0,0.2,0.2,0.0,0.0,0,4,1,9,3,False,False,False

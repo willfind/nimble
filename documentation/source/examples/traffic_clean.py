@@ -10,9 +10,21 @@ time where 9 features are recorded. The features are variables which may
 affect the traffic volume on an interstate highway and the current
 traffic volume. A new point is recorded each time a change occurs in one
 of the weather forecast features.
+
+[Download this example as a script or notebook][files]
+
+[Download the dataset for this example][datasets]
+
+[files]: files.rst#cleaning-data-example
+[datasets]: ../datasets.rst#cleaning-data-example
 """
 
 ## Getting started ##
+
+## The second argument for `nimble.data`, `source`, can be an in-python data
+## object, a path to a file, an open file, or a link to a webpage containing
+## the data. Our data file is in the current directory so we will use a
+## relative path to our dataset.
 
 from datetime import datetime
 
@@ -33,26 +45,26 @@ print(traffic.featureReport())
 
 ## Statistics could not be calculated for all features, indicating some are
 ## non-numeric. The statistics for the numeric features also indicate that
-## some (physically impossible) outlier values may be present.
+## some physically impossible values are present.
 
 ## Cleaning numeric data ##
 
-## 0 Kelvin in `temp` and 9831.3 mm in `rain_1h` indicate some outliers exist
+## 0 Kelvin in `temp` and 9831.3 mm in `rain_1h` indicate some erroneous values
 ## in these features. Let's extract those values to decide how to proceed.
 
-def outlierIdentifier(pt):
+def errorIdentifier(pt):
     if pt['temp'] == 0 or pt['rain_1h'] == 9831.3:
         return True
     return False
 
-outliers = traffic.points.extract(outlierIdentifier)
+extracted = traffic.points.extract(errorIdentifier)
 
 print(traffic[:, ['temp', 'rain_1h']].featureReport())
-print('Number of points with outliers:', len(outliers.points))
+print('Number of points with errors:', len(extracted.points))
 
-## After extracting those values, our `featureReport` statistics look much
-## more reasonable for those features. We can assume the 11 extracted points
-## contain recording errors so we will ignore `outliers` and continue with
+## After extracting those values, our `featureReport` statistics look much more
+## reasonable for those features. We can assume that the 11 extracted points
+## contain recording errors so we will ignore `extracted` and continue with
 ## the 48,193 points still remaining in `traffic`.
 
 ## Cleaning non-numeric data ##
@@ -68,38 +80,28 @@ traffic.features.splitByParsing('date_time', dateTimeSplit,
 
 traffic.show('New parsed features in traffic data', **showKwargs)
 
-## The `holiday` feature contains a holiday name string for the first point of
-## each holiday, all other values are missing.
-samplePts = slice(1369,1374)
-dateFts = ['holiday', 'year', 'month', 'day', 'hour']
-print(traffic[samplePts, dateFts])
-
-## We will transform the `holiday` feature to a numeric feature by writing a
-## function that assigns each point a new binary value in the `holiday`
-## feature.
-# TODO using 1/0 for now until True/False can be loaded from csv
+## The `holiday` feature only identifies the holiday for the first hour of each
+## holiday and every other value is missing. We want to transform this feature
+## to use boolean values that identify every point that falls on a holiday.
 currentHoliday = {'date': None}
-def holidayToBinary(point):
+def holidayToBoolean(point):
     filledPt = []
     dateTuple = (point['year'], point['month'], point['day'])
     if isinstance(point['holiday'], str):
         currentHoliday['date'] = dateTuple
     if currentHoliday['date'] == dateTuple:
-        filledPt.append(1)
+        filledPt.append(True)
     else:
-        filledPt.append(0)
+        filledPt.append(False)
         currentHoliday['date'] = None
 
     filledPt.extend(point[1:])
 
     return filledPt
 
-traffic.points.transform(holidayToBinary)
-print(traffic[samplePts, dateFts])
-
-## The `weather_main` and `weather_description` features are very similar.
-weatherFts = ['weather_main', 'weather_description']
-print(traffic[samplePts, weatherFts])
+samplePts = slice(1368,1372) # a slice that includes a holiday
+traffic.points.transform(holidayToBoolean)
+print(traffic[samplePts, ['holiday', 'year', 'month', 'day', 'hour']])
 
 ## While `weather_description` is more detailed, many of its unique values
 ## represent a very small proportion of the data. So, we will utilize the more
@@ -108,7 +110,8 @@ print(traffic[samplePts, weatherFts])
 ## each of the 11 unique values as 11 new binary features.
 traffic.features.delete('weather_description')
 newCols = traffic.replaceFeatureWithBinaryFeatures('weather_main')
-print(traffic[samplePts, newCols[:3]])
+sampleFts = ['weather_main=Clouds', 'weather_main=Clear', 'weather_main=Mist']
+print(traffic[samplePts, sampleFts])
 
 ## Our dataset is now ready for machine learning.
 traffic.show('Cleaned traffic data', **showKwargs)

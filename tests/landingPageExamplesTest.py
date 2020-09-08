@@ -80,12 +80,15 @@ def test_callExamplesAsMain():
                     # remove trailing whitespace
                     out = out.rstrip()
                     exp = exp.rstrip()
+                    print(out)
+                    print(exp)
                     if exp.startswith(b'REGEX: '):
                         exp = exp[7:]
                         match = re.match(exp, out)
                     else:
                         match = exp == out
                     if not match:
+                        assert False
                         failures.append(key)
                         print(key + " : Did not match output in " + outputFile)
                         print('  Discrepancy found in line {i}'.format(i=i))

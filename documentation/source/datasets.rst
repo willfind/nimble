@@ -12,10 +12,15 @@ Supervised Learning Example
 *  :download:`Metro_Interstate_Traffic_Volume_Cleaned.csv <examples/Metro_Interstate_Traffic_Volume_Cleaned.csv>`
 *  :download:`Metro_Interstate_Traffic_Volume_Predict.csv <examples/Metro_Interstate_Traffic_Volume_Predict.csv>`
 
-Exploring Data and Unsupervised Learning Examples
--------------------------------------------------
+Exploring Data Example
+----------------------
 
-*  :download:`online_shoppers_intention_clean.csv <examples/online_shoppers_intention_clean.csv>`
+*  :download:`online_shoppers_intention_explore.csv <examples/online_shoppers_intention_explore.csv>`
+
+Unsupervised Learning Example
+-----------------------------
+
+*  :download:`online_shoppers_intention_train.csv <examples/online_shoppers_intention_train.csv>`
 
 Neural Network Example
 ----------------------
@@ -34,6 +39,7 @@ Merging and Tidying Example
 *  :download:`airport_pm_min.csv <examples/airport_pm_min.csv>`
 *  :download:`airport_pm_max.csv <examples/airport_pm_max.csv>`
 
-Support Functionality
----------------------
+Support Functionality Example
+-----------------------------
+
 *  :download:`wifi_localization.txt <examples/wifi_localization.txt>`

@@ -6,16 +6,22 @@
 This example will use two datasets that contain data on interstate
 traffic volumes and features that may contribute to changes in traffic
 volume. `Metro_Interstate_Traffic_Volume_Cleaned.csv`, was generated in
-our Data Cleaning example and is the cleaned data we will use to build
-our supervised learning models.
+our [Data Cleaning example](traffic_clean.ipynb) and is the cleaned data
+we will use to build our supervised learning models.
 `Metro_Interstate_Traffic_Volume_Predict.csv`, contains fictional
 "forecast" data that we will use to simulate making traffic volume
 predictions using our supervised learning model.
+
+[Download this example as a script or notebook][files]
+
+[Download the dataset for this example][datasets]
+
+[files]: files.rst#supervised-learning-example
+[datasets]: ../datasets.rst#supervised-learning-example
 """
 
 ## Getting Started ##
 
-## Create data objects from our `csv` files, which can be downloaded [here](#).
 import nimble
 
 traffic = nimble.data('Matrix', 'Metro_Interstate_Traffic_Volume_Cleaned.csv',

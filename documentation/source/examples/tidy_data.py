@@ -1,20 +1,25 @@
 """
-# Combining and Tidying Data
+# Merging and Tidying Data
 
 ### Creating a tidy data object from multiple data objects.
 
-In this example, we have temperature data contained in many files. Each
+In this example, we have temperature data contained in 8 files. Each
 point in every file records 12 hours of temperatures for each day, but
 files vary by the location, time period and extreme (min or max). This
 data would also benefit from a reorganization of the points and features
 to optimize for machine learning, often called "data tidying" (Wickham).
 Our goal is to create a single, tidy, Nimble object where each point has
 five features: 'date', 'hour', 'location', 'min' and 'max'.
+
+[Download this example as a script or notebook][files]
+
+[Download the dataset for this example][datasets]
+
+[files]: files.rst#merging-and-tidying-example
+[datasets]: ../datasets.rst#merging-and-tidying-example
 """
 
 ## Getting Started ##
-
-## Create objects from each of our 8 data files
 
 import nimble
 

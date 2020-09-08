@@ -1,5 +1,5 @@
 Raw traffic data
-48204pt x 9ft 
+48204pt x 9ft
 
 holiday   temp  rain_1h snow_1h clouds_all weather_main weather_description      date_time      traffic_volume
 
@@ -12,23 +12,23 @@ holiday   temp  rain_1h snow_1h clouds_all weather_main weather_description     
   nan   282.120  0.000   0.000      90        Clouds      overcast clouds   2018-09-30 23:00:00      954
 
     featureName       minimum   maximum     mean     median   standardDeviation   uniqueCount
-            holiday     nan       nan       nan       nan            nan               11    
-               temp     0.00     310.07    281.21    282.45         13.34             5843   
-            rain_1h     0.00    9831.30     0.33      0.00          44.79             372    
-            snow_1h     0.00      0.51      0.00      0.00           0.01              12    
-         clouds_all      0        100      49.36     64.00          39.02              60    
-       weather_main     nan       nan       nan       nan            nan               11    
-weather_description     nan       nan       nan       nan            nan               38    
-          date_time     nan       nan       nan       nan            nan             40575   
-     traffic_volume      0        7280    3259.82   3380.00        1986.86            6704   
+            holiday     nan       nan       nan       nan            nan               11
+               temp     0.00     310.07    281.21    282.45         13.34             5843
+            rain_1h     0.00    9831.30     0.33      0.00          44.79             372
+            snow_1h     0.00      0.51      0.00      0.00           0.01              12
+         clouds_all      0        100      49.36     64.00          39.02              60
+       weather_main     nan       nan       nan       nan            nan               11
+weather_description     nan       nan       nan       nan            nan               38
+          date_time     nan       nan       nan       nan            nan             40575
+     traffic_volume      0        7280    3259.82   3380.00        1986.86            6704
 
 featureName   minimum   maximum    mean    median   standardDeviation   uniqueCount
-       temp    243.39    310.07   281.26   282.46         12.71             5842   
-    rain_1h     0.00     55.63     0.13     0.00           1.00             371    
+       temp    243.39    310.07   281.26   282.46         12.71             5842
+    rain_1h     0.00     55.63     0.13     0.00           1.00             371
 
-Number of points with outliers: 11
+Number of points with errors: 11
 New parsed features in traffic data
-48193pt x 13ft 
+48193pt x 13ft
 
 holiday   temp  rain_1h snow_1h clouds_all weather_main weather_description year month day hour weekday traffic_volume
 
@@ -40,52 +40,32 @@ holiday   temp  rain_1h snow_1h clouds_all weather_main weather_description year
   nan   282.090  0.000   0.000      90        Clouds      overcast clouds   2018   9    30  22     6         1450
   nan   282.120  0.000   0.000      90        Clouds      overcast clouds   2018   9    30  23     6         954
 
-    holiday      year month day hour
-
-      nan        2012   11   21  23
-Thanksgiving Day 2012   11   22  0
-      nan        2012   11   22  1
-      nan        2012   11   22  2
-      nan        2012   11   22  3
-      nan        2012   11   22  4
-
 holiday year month day hour
 
-   0    2012   11   21  23
-   1    2012   11   22  0
-   1    2012   11   22  1
-   1    2012   11   22  2
-   1    2012   11   22  3
-   1    2012   11   22  4
+ False  2012   11   21  22
+ False  2012   11   21  23
+  True  2012   11   22  0
+  True  2012   11   22  1
+  True  2012   11   22  2
 
-weather_main weather_description
-
-   Clouds         few clouds
-    Mist             mist
-    Mist             mist
-   Clear         sky is clear
-   Clear         sky is clear
-   Clear         sky is clear
-
-weather_main=Clouds weather_main=Clear weather_main=Rain
+weather_main=Clouds weather_main=Clear weather_main=Mist
 
        1.000              0.000              0.000
-       0.000              0.000              0.000
-       0.000              0.000              0.000
-       0.000              1.000              0.000
-       0.000              1.000              0.000
+       1.000              0.000              0.000
+       0.000              0.000              1.000
+       0.000              0.000              1.000
        0.000              1.000              0.000
 
 Cleaned traffic data
-48193pt x 22ft 
+48193pt x 22ft
 
 holiday   temp  rain_1h snow_1h clouds_all weather_main=Clouds -- year month day hour weekday traffic_volume
 
-   0    288.280  0.000   0.000      40            1.000        -- 2012   10   2   9      1         5545
-   0    289.360  0.000   0.000      75            1.000        -- 2012   10   2   10     1         4516
-   0    289.580  0.000   0.000      90            1.000        -- 2012   10   2   11     1         4767
+ False  288.280  0.000   0.000      40            1.000        -- 2012   10   2   9      1         5545
+ False  289.360  0.000   0.000      75            1.000        -- 2012   10   2   10     1         4516
+ False  289.580  0.000   0.000      90            1.000        -- 2012   10   2   11     1         4767
    |       |       |       |        |               |          --  |     |    |   |      |          |
-   0    282.730  0.000   0.000      90            0.000        -- 2018   9    30  21     6         2159
-   0    282.090  0.000   0.000      90            1.000        -- 2018   9    30  22     6         1450
-   0    282.120  0.000   0.000      90            1.000        -- 2018   9    30  23     6         954
+ False  282.730  0.000   0.000      90            0.000        -- 2018   9    30  21     6         2159
+ False  282.090  0.000   0.000      90            1.000        -- 2018   9    30  22     6         1450
+ False  282.120  0.000   0.000      90            1.000        -- 2018   9    30  23     6         954
 
