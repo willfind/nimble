@@ -246,7 +246,7 @@ To install keras
 
 
     def _getScoresOrder(self, learner):
-        return learner.UIgetScoreOrder()
+        return learner.UIgetScoreOrder
 
     def _validateFitArguments(self, dataType, learnerName, arguments):
         fitArgs = self._paramQuery('fit', learnerName)[0]
@@ -393,10 +393,7 @@ To install keras
                 allLabels = learner.predict(trainX)
                 labelOrder = numpy.unique(allLabels)
 
-            def UIgetScoreOrder():
-                return labelOrder
-
-            learner.UIgetScoreOrder = UIgetScoreOrder
+            learner.UIgetScoreOrder = labelOrder
 
         return learner
 

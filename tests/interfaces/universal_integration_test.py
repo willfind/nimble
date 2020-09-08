@@ -18,7 +18,8 @@ from nose.plugins.attrib import attr
 #@attr('slow')
 
 import nimble
-from nimble.exceptions import InvalidArgumentValue, PackageException
+from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
+from nimble.exceptions import PackageException
 from nimble.core.interfaces.universal_interface import UniversalInterface
 from nimble.core._learnHelpers import generateClusteredPoints
 from tests.helpers import configSafetyWrapper
@@ -30,20 +31,18 @@ def checkFormat(scores, numLabels):
     """
     Check that the provided nimble data typed scores structurally match either a one vs
     one or a one vs all formatting scheme.
-
     """
-    if len(scores.features) != numLabels and len(scores.features) != (numLabels * (numLabels - 1)) / 2:
-        raise RuntimeError("_getScores() must return scores that are either One vs One or One vs All formatted")
+    assert (len(scores.features) == numLabels
+            or len(scores.features) == (numLabels * (numLabels - 1)) / 2)
 
 
 def checkFormatRaw(scores, numLabels):
     """
     Check that the provided numpy typed scores structurally match either a one vs
     one or a one vs all formatting scheme.
-
     """
-    if scores.shape[1] != numLabels and scores.shape[1] != (numLabels * (numLabels - 1)) / 2:
-        raise RuntimeError("_getScores() must return scores that are either One vs One or One vs All formatted")
+    assert (scores.shape[1] == numLabels
+            or scores.shape[1] == (numLabels * (numLabels - 1)) / 2)
 
 @attr('slow')
 def test__getScoresFormat():
@@ -64,8 +63,7 @@ def test__getScoresFormat():
                     try:
                         tl = nimble.train(fullName, trainX, trainY)
                     except (InvalidArgumentValue, SystemError):
-                        # this is to catch learners that have required arguments.
-                        # we have to skip them in that case
+                        # skip learners that have required arguments
                         continue
                     (transTrainX, _, transTestX, _) = interface._inputTransformation(
                         lName, trainX, None, testX, {}, tl._customDict)
@@ -102,8 +100,7 @@ def testGetScoresFormat():
                     try:
                         tl = nimble.train(fullName, trainX, trainY)
                     except (InvalidArgumentValue, SystemError):
-                        # this is to catch learners that have required arguments.
-                        # we have to skip them in that case
+                        # skip learners that have required arguments
                         continue
                     try:
                         scores = tl.getScores(testX)
@@ -115,6 +112,66 @@ def testGetScoresFormat():
                         continue
                     checkFormat(scores, i)
 
+
+@attr('slow')
+def testApplyFeatureNames():
+    """ Check train label feature name is set during apply for regression and classification """
+    regressionData = generateRegressionData(5, 10, 5)
+    classificationData = generateClassificationData(2, 10, 5)
+    success = 0
+    for interface in nimble.core.interfaces.available.values():
+        interfaceName = interface.getCanonicalName()
+        for learner in interface.listLearners():
+            currType = interface.learnerType(learner)
+            if currType == 'regression':
+                data = regressionData
+            elif currType == 'classification':
+                data = classificationData
+            else:
+                continue
+            ((trainData, trainLabels), (testData, testLabels)) = data
+            trainLabels.features.setNames(['label'])
+            trainData.features.transform(lambda ft: abs(ft))
+            testData.features.transform(lambda ft: abs(ft))
+            for mode in ['label', 'allScores', 'bestScore']:
+                strResult = None
+                try:
+                    result = nimble.trainAndApply(interfaceName + '.' + learner,
+                                                  trainData, trainLabels, testData,
+                                                  scoreMode=mode)
+                    if currType == 'classification':
+                        toString = {0: 'a', 1: 'b'}
+                        strLabels = data[0][1].calculateOnElements(lambda e: toString[e])
+                        strResult = nimble.trainAndApply(
+                            interfaceName + '.' + learner, trainData, strLabels,
+                            testData, scoreMode=mode)
+                except InvalidArgumentValue:
+                    # try multioutput learner; only label mode is allowed
+                    if mode != 'label':
+                        continue
+                    multiLabels = trainLabels.copy()
+                    labels2 = trainLabels.copy()
+                    labels2.features.setNames(['label2'])
+                    multiLabels.features.append(labels2)
+                    try:
+                        result = nimble.trainAndApply(interfaceName + '.' + learner,
+                                                      trainData, multiLabels, testData,
+                                                      scoreMode=mode)
+                    except (InvalidArgumentValue, ImproperObjectAction):
+                        continue # incompatible data for this operation
+                except Exception:
+                    continue
+                if mode == 'label':
+                    assert result.features.getName(0) == 'label'
+                elif mode == 'bestScore':
+                    assert result.features.getNames() == ['label', 'bestScore']
+                else:
+                    assert result.features.getNames() == ['0.0', '1.0']
+                    if strResult is not None:
+                        assert strResult.features.getNames() == ['a', 'b']
+                success += 1
+    # ensure not passing because except Exception is catching all cases
+    assert success
 
 @attr('slow')
 @nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)

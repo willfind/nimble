@@ -283,13 +283,15 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             has2dOutput = len(outputData.features) > 1
         elif isinstance(outputData, (list, tuple)):
             has2dOutput = len(outputData) > 1
-
+        trainYNames = None
+        if trainY is not None:
+            trainYNames = trainY.features._getNamesNoGeneration()
         trainXShape = trainX.shape
         transformedArguments = transformedInputs[3]
         # encapsulate into TrainedLearner object
         return TrainedLearner(learnerName, arguments, transformedArguments,
                               customDict, trainedBackend, self, has2dOutput,
-                              crossValidationResults, trainXShape)
+                              crossValidationResults, trainXShape, trainYNames)
 
 
     def _confirmValidLearner(self, learnerName):
@@ -939,7 +941,7 @@ class TrainedLearner(object):
     """
     def __init__(self, learnerName, arguments, transformedArguments,
                  customDict, backend, interfaceObject, has2dOutput,
-                 crossValidationResults, trainXShape):
+                 crossValidationResults, trainXShape, trainYNames):
         """
         Initialize the object wrapping the trained learner stored in
         backend, and setting up the object methods that may be used to
@@ -984,6 +986,7 @@ class TrainedLearner(object):
         self._has2dOutput = has2dOutput
         self.crossValidation = crossValidationResults
         self._trainXShape = trainXShape
+        self._trainYNames = trainYNames
 
         exposedFunctions = self._interface._exposedFunctions()
         for exposed in exposedFunctions:
@@ -1145,11 +1148,10 @@ class TrainedLearner(object):
             type of the ``trainX`` parameter.
         scoreMode : str
             In the case of a classifying learner, this specifies the
-            type of output wanted: 'label' if we class labels are
-            desired, 'bestScore' if both the class label and the score
-            associated with that class are desired, or 'allScores' if a
-            matrix containing the scores for every class label are
-            desired.
+            type of output wanted: 'label' if class labels are desired,
+            'bestScore' if both the class label and the score associated
+            with that class are desired, or 'allScores' if a matrix
+            containing the scores for every class label are desired.
         useLog : bool, None
             Local control for whether to send results/timing to the
             logger. If None (default), use the value as specified in the
@@ -1206,12 +1208,20 @@ class TrainedLearner(object):
             labels = self._interface._outputTransformation(
                 self.learnerName, labels, usedArguments, output, "label",
                 self._customDict)
-
+        # if this application is for a classification or regression learner,
+        # we will apply featureNames to the output if possible
+        lType = self._interface.learnerType(self.learnerName)
+        applyFtNames = lType in ['classification', 'regression']
         if scoreMode == 'label':
             ret = labels
+            if applyFtNames:
+                ret.features.setNames(self._trainYNames, useLog=False)
         elif scoreMode == 'allScores':
             ret = scores
-        else:
+            if applyFtNames:
+                scoreOrder = self._interface._getScoresOrder(self._backend)
+                ret.features.setNames(map(str, scoreOrder), useLog=False)
+        elif scoreMode == 'bestScore':
             scoreOrder = self._interface._getScoresOrder(self._backend)
             scoreOrder = list(scoreOrder)
             # find scores matching predicted labels
@@ -1224,6 +1234,13 @@ class TrainedLearner(object):
             labels.features.append(scoreVector, useLog=False)
 
             ret = labels
+            if applyFtNames and self._trainYNames is not None:
+                ftNames = self._trainYNames.copy()
+                ftNames.append('bestScore')
+                ret.features.setNames(ftNames, useLog=False)
+        else:
+            msg = 'scoreMode must be "label", "bestScore", or "allScores"'
+            raise InvalidArgumentValue(msg)
 
         time = stopTimer(timer)
 
@@ -1629,10 +1646,12 @@ class TrainedLearners(TrainedLearner):
         has2dOutput = trainedLearnerAttrs._has2dOutput
         crossValidationResults = trainedLearnerAttrs.crossValidation
         trainXShape = trainedLearnerAttrs._trainXShape
+        trainYNames = trainedLearnerAttrs._trainYNames
 
         super(TrainedLearners, self).__init__(
             learnerName, arguments, transformedArguments, customDict, backend,
-            interfaceObject, has2dOutput, crossValidationResults, trainXShape)
+            interfaceObject, has2dOutput, crossValidationResults, trainXShape,
+            trainYNames)
 
     @captureOutput
     def apply(self, testX, arguments=None, output='match', scoreMode='label',
