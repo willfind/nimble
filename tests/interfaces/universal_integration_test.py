@@ -52,7 +52,7 @@ def test__getScoresFormat():
     """
     for i in [2, 4]:
         data = generateClassificationData(i, 4, 3)
-        ((trainX, trainY), (testX, testY)) = data
+        ((trainX, trainY), (testX, _)) = data
         for interface in nimble.core.interfaces.available.values():
             interfaceName = interface.getCanonicalName()
 
@@ -65,6 +65,12 @@ def test__getScoresFormat():
                     except (InvalidArgumentValue, SystemError):
                         # skip learners that have required arguments
                         continue
+                    except ValueError as VE:
+                        # this will catch strictly binary classification
+                        # learners, and skip them when i == 4
+                        if i == 4:
+                            continue
+                        raise VE
                     (transTrainX, _, transTestX, _) = interface._inputTransformation(
                         lName, trainX, None, testX, {}, tl._customDict)
                     try:
@@ -90,7 +96,7 @@ def testGetScoresFormat():
     """
     for i in [2, 4]:
         data = generateClassificationData(i, 4, 2)
-        ((trainX, trainY), (testX, testY)) = data
+        ((trainX, trainY), (testX, _)) = data
         for interface in nimble.core.interfaces.available.values():
             interfaceName = interface.getCanonicalName()
             learners = interface.listLearners()
@@ -102,6 +108,13 @@ def testGetScoresFormat():
                     except (InvalidArgumentValue, SystemError):
                         # skip learners that have required arguments
                         continue
+                    except ValueError as VE:
+                        # this will catch strictly binary classification
+                        # learners, and skip them when i == 4
+                        if i == 4:
+                            continue
+                        raise VE
+
                     try:
                         scores = tl.getScores(testX)
                     except IndexError:
