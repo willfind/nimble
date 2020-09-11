@@ -70,8 +70,8 @@ def testCustomPackage():
     assert 'LoveAtFirstSightClassifier' in nimble.listLearners("custom")
     assert 'UncallableLearner' in nimble.listLearners("custom")
 
-    assert nimble.learnerParameters("custom.LoveAtFirstSightClassifier") == set()
-    assert nimble.learnerParameters("custom.UncallableLearner") == {'foo', 'bar'}
+    assert nimble.learnerParameters("custom.LoveAtFirstSightClassifier") == []
+    assert nimble.learnerParameters("custom.UncallableLearner") == ['bar', 'foo']
 
 @configSafetyWrapper
 def testNimblePackage():
@@ -88,8 +88,8 @@ def testNimblePackage():
     assert 'RidgeRegression' in nimble.listLearners("nimble")
     assert 'KNNClassifier' in nimble.listLearners("nimble")
 
-    assert nimble.learnerParameters("nimble.RidgeRegression") == {'lamb'}
-    assert nimble.learnerParameters("nimble.KNNClassifier") == {'k'}
+    assert nimble.learnerParameters("nimble.RidgeRegression") == ['lamb']
+    assert nimble.learnerParameters("nimble.KNNClassifier") == ['k']
 
 
 # test that registering a sample custom learner with option names
@@ -173,7 +173,7 @@ def test_learnerQueries():
     lType = nimble.learnerType(UncallableLearner)
     lst = nimble.listLearners("custom")
 
-    assert params == {'foo', 'bar'}
+    assert params == ['bar', 'foo']
     assert defaults == {'bar': None}
     assert lType == 'classification'
     assert lst == ['UncallableLearner']
@@ -182,6 +182,6 @@ def test_learnerQueries():
     defaults = nimble.learnerDefaultValues(KNNClassifier)
     lType = nimble.learnerType(KNNClassifier)
 
-    assert params == {'k',}
+    assert params == ['k']
     assert defaults == {'k': 5}
     assert lType == 'classification'
