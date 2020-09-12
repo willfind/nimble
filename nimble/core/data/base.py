@@ -2370,8 +2370,8 @@ class Base(object):
                             maxColumnWidth))
 
     @limitedTo2D
-    def plot(self, includeColorbar=False, outPath=None, show=True,
-             title=True, xAxisLabel=True, yAxisLabel=True, **kwargs):
+    def plotHeatMap(self, includeColorbar=False, outPath=None, show=True,
+                    title=True, xAxisLabel=True, yAxisLabel=True, **kwargs):
         """
         Display a plot of the data.
 
@@ -2697,6 +2697,7 @@ class Base(object):
                    outPath, show, figureName, title, xAxisLabel, yAxisLabel,
                    xMin, xMax, yMin, yMax, **kwargs):
         fig, ax = plotFigureHandling(figureName)
+        plotUpdateAxisLimits(ax, xMin, xMax, yMin, yMax)
 
         xAxisObj = self._getAxis(xAxis)
         yAxisObj = self._getAxis(yAxis)
