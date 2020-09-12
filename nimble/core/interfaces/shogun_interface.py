@@ -89,17 +89,17 @@ class Shogun(PredefinedInterface, UniversalInterface):
             # needs more to be able to distinguish between things that are
             # runnable and partial implementations. get_machine_problem_type()?
             try:
-                instantiated = obj()
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore', RuntimeWarning)
+                    instantiated = obj()
                 instantiated.get_machine_problem_type()
             except (SystemError, TypeError):
                 return False
 
             return True
 
-        self.hasAll = hasattr(self.shogun, '__all__')
-        contents = self.shogun.__all__ if self.hasAll else dir(self.shogun)
-        self._searcher = PythonSearcher(self.shogun, contents, {}, isLearner,
-                                        2)
+        self._hasAll = hasattr(self.shogun, '__all__')
+        self._searcher = PythonSearcher(self.shogun, isLearner, 2)
 
         super(Shogun, self).__init__()
 
@@ -114,7 +114,7 @@ class Shogun(PredefinedInterface, UniversalInterface):
         # If shogun has an __all__ attribute, it is in the old style of
         # organization, where things are separated into submodules. They need
         # to be loaded before access.
-        if self.hasAll:
+        if self._hasAll:
             if hasattr(self.shogun, module):
                 submod = getattr(self.shogun, module)
             else:
