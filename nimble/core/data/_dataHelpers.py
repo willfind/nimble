@@ -833,7 +833,7 @@ class NimbleElementIterator(object):
     def __next__(self):
         while True:
             # numpy.nditer returns value as an array type,
-            # item() extracts the actual object we want to return
+            # [()] extracts the actual object we want to return
             val = next(self.iterator)[()]
             if self.only is None or self.only(val):
                 return val
