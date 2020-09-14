@@ -19,13 +19,15 @@ from nimble import CustomLearner
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
-from nimble.calculate import *
+from nimble.calculate import fractionIncorrect, fractionCorrect
+from nimble.calculate import rootMeanSquareError, meanAbsoluteError
+from nimble.calculate import meanFeaturewiseRootMeanSquareError
 from nimble.random import pythonRandom
 from nimble.learners import KNNClassifier
 from nimble.core._learnHelpers import computeMetrics
 from nimble.core.learn import KFoldCrossValidator
 from tests.helpers import configSafetyWrapper
-from tests.helpers import oneLogEntryExpected
+from tests.helpers import logCountAssertionFactory
 from tests.helpers import generateClassificationData
 
 
@@ -597,7 +599,7 @@ def test_KFoldCrossValidator_zeroFolds():
     Y = nimble.data('Matrix', yRaw)
     crossValidator = KFoldCrossValidator(
         'nimble.KNNClassifier', X, Y, arguments={'k': 3},
-        performanceFunction=nimble.calculate.fractionIncorrect, folds=0)
+        performanceFunction=fractionIncorrect, folds=0)
 
 def test_CV():
     crossVal = CV([1, 2, 3])
@@ -614,14 +616,10 @@ def test_CV_immutable():
     # cannot set
     crossVal[1] = 0
 
-@oneLogEntryExpected
-def back_crossValidate_logCount(toCall):
-    classifierAlgo = 'nimble.KNNClassifier'
+@logCountAssertionFactory(6)
+def test_crossValidate_logCount():
     X, Y = _randomLabeledDataSet(numLabels=5)
     copyX = X.copy()
     copyY = Y.copy()
-    result = toCall(classifierAlgo, X, Y, fractionIncorrect, {}, folds=5)
-
-@oneLogEntryExpected
-def test_crossValidate_logCount():
-    back_crossValidate_logCount(crossValidate)
+    result = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, {},
+                           folds=5)

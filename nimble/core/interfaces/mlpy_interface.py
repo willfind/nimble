@@ -48,8 +48,7 @@ class Mlpy(PredefinedInterface, UniversalInterface):
                 return True
             return False
 
-        self._searcher = PythonSearcher(self.mlpy, dir(self.mlpy), {},
-                                        isLearner, 1)
+        self._searcher = PythonSearcher(self.mlpy, isLearner, 1)
 
         super(Mlpy, self).__init__()
 

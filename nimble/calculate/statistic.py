@@ -12,6 +12,9 @@ from nimble._utility import dtypeConvert
 
 numericalTypes = (int, float, numpy.number)
 
+# alias for python sum since we define our own sum function here
+_sum = sum
+
 def numericRequired(func):
     """
     Handles NaN return for functions that require numeric data.
@@ -46,7 +49,7 @@ def proportionMissing(values):
     >>> proportionMissing(vector)
     0.4
     """
-    numMissing = sum(1 for _ in values.iterateElements(only=match.missing))
+    numMissing = _sum(1 for _ in values.iterateElements(only=match.missing))
     return numMissing / len(values)
 
 def proportionZero(values):
@@ -68,7 +71,7 @@ def proportionZero(values):
     numVals = len(values)
     if values.getTypeString() == 'Sparse':
         return (numVals - values.data.nnz) / numVals
-    numZero = sum(1 for _ in values.iterateElements(only=match.zero))
+    numZero = _sum(1 for _ in values.iterateElements(only=match.zero))
     return numZero / numVals
 
 def minimum(values):
@@ -410,3 +413,21 @@ def residuals(toPredict, controlVars):
     pred = numpy.matmul(workingCV, x)
     ret = toPredict - pred
     return ret
+
+def count(values):
+    """
+    The number of values in the vector.
+
+    This function allows for non-numeric values but ignores any NaN
+    values.
+    """
+    return _sum(1 for _ in values.iterateElements(only=nonMissing))
+
+def sum(values):
+    """
+    The sum of the values in the vector.
+
+    This function requires numeric data and ignores any NaN values.
+    Non-numeric values will results in NaN being returned.
+    """
+    return _sum(v for v in values.iterateElements(only=nonMissingNonZero))

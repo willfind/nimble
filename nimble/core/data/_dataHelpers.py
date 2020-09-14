@@ -8,12 +8,13 @@ import re
 import operator
 from functools import wraps
 from multiprocessing import Process
+import os.path
 
 import numpy
 
 import nimble
 from nimble import match
-from nimble._utility import pd, matplotlib
+from nimble._utility import pd, plt, scipy
 from nimble._utility import inspectArguments
 from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
 from nimble._utility import is2DArray, numpy2DArray
@@ -947,135 +948,192 @@ def convertToNumpyOrder(order):
 # Plotting Helpers #
 ####################
 
-def matplotlibAccessible(func):
+def pyplotRequired(func):
     """
-    Since plotting occurs as a separate process, the accessibility of
-    matplotlib needs to be checked before each function call.
+    Wrap plot functions to check that matplotlib.pylot is accessible.
     """
     @wraps(func)
     def wrapped(*args, **kwargs):
-        if not matplotlib.nimbleAccessible():
-            raise PackageException('matplotlib is required for plotting')
+        if not plt.nimbleAccessible():
+            msg = 'matplotlib.pyplot is required for plotting'
+            raise PackageException(msg)
         return func(*args, **kwargs)
     return wrapped
 
-@matplotlibAccessible
-def matplotlibBackendHandling(outPath, plotter, **kwargs):
-    import __main__ as main
-    # for .show() to work in interactive sessions
-    # a backend different than Agg needs to be use
-    # The interactive session can choose by default e.g.,
-    # in jupyter-notebook inline is the default.
-    if hasattr(main, '__file__'):
-        # It must be agg  for non-interactive sessions
-        # otherwise the combination of matplotlib and multiprocessing
-        # produces a segfault.
-        # Open matplotlib issue here:
-        # https://github.com/matplotlib/matplotlib/issues/8795
-        # It applies for both for python 2 and 3
-        matplotlib.use('Agg')
+def plotFigureHandling(figureName):
+    """
+    Provide the figure and axis for the plot.
 
-    kwargs['outPath'] = outPath
-    if outPath is None:
-        if matplotlib.get_backend() == 'agg':
-            plt = matplotlib.pyplot
-            plt.switch_backend('TkAgg')
-            plotter(**kwargs)
-            plt.switch_backend('agg')
+    Use the stored figure and axis if the figureName exists, otherwise
+    generate a new figure and axis.
+    """
+    figures = nimble.core.data._plotFigures
+    if figureName and figureName in figures:
+        return figures[figureName]
+
+    fig, ax = plt.subplots()
+    # tight_layout automatically adjusts margins to accommodate labels
+    fig.set_tight_layout(True)
+    # Setting a _nimbleAxisLimits attribute is a workaround for properly
+    # setting figure axis limits. See plotUpdateAxisLimits docstring.
+    ax._nimbleAxisLimits = [None, None, None, None]
+    if figureName is not None:
+        figures[figureName] = fig, ax
+    return fig, ax
+
+def plotOutput(outPath, show):
+    """
+    Save and/or display a figure, if necessary.
+    """
+    if outPath is not None:
+        outFormat = None
+        if isinstance(outPath, str):
+            (_, ext) = os.path.splitext(outPath)
+            if len(ext) == 0:
+                outFormat = 'png'
+        plt.savefig(outPath, format=outFormat)
+    if show:
+        plt.show()
+        # once plt.show() is called, existing figures will no longer display on
+        # the next plt.show() call, so there is no need to keep _plotFigures
+        nimble.core.data._plotFigures = {}
+
+def plotAxisLabels(ax, xAxisLabel, xLabelIfTrue, yAxisLabel, yLabelIfTrue):
+    """
+    Helper for setting the axis labels on a figure.
+    """
+    if xAxisLabel is True:
+        xAxisLabel = xLabelIfTrue
+    if xAxisLabel is False:
+        xAxisLabel = None
+    ax.set_xlabel(xAxisLabel)
+    if yAxisLabel is True:
+        yAxisLabel = yLabelIfTrue
+    if yAxisLabel is False:
+        yAxisLabel = None
+    ax.set_ylabel(yAxisLabel)
+
+def plotUpdateAxisLimits(ax, xMin, xMax, yMin, yMax):
+    """
+    Internally tracks the user-defined axis limit values.
+
+    This must be called BEFORE the plot is generated.
+    When plotting multiple plots on the same figure, there can be figure
+    axis limits that are defined based on previous plots but should be
+    dynamic. See plotAxisLimits docstring. This may prohibit data in the
+    additional plots from displaying. Instead, we store any user values
+    and ensure that matplotlib can adjust the limit values automatically
+    to accommodate all of the data. After the plot is generated, we
+    apply any user-defined limits with a call to plotAxisLimits.
+    """
+    if xMin is not None:
+        ax._nimbleAxisLimits[0] = xMin
+    if xMax is not None:
+        ax._nimbleAxisLimits[1] = xMax
+    if yMin is not None:
+        ax._nimbleAxisLimits[2] = yMin
+    if yMax is not None:
+        ax._nimbleAxisLimits[3] = yMax
+    ax.set_xlim(auto=True)
+    ax.set_ylim(auto=True)
+
+def plotAxisLimits(ax):
+    """
+    Apply user-defined axis limits.
+
+    This must be called AFTER the plot is generated.
+    Calls to ax.set_[xy]limit will apply defined limits for the axis
+    even if one parameter is set to None. This is problematic for
+    additional plots on the same figure because we want None to indicate
+    that a specific axis limit is still dynamic. For this reason, we use
+    plotUpdateAxisLimits before generating the plot to allow the figure
+    limits to remain dynamic when adding plots. Then apply the limits
+    defined by the user after the plot has been added to the figure.
+    """
+    xMin, xMax, yMin, yMax = ax._nimbleAxisLimits
+    if xMin is not None or xMax is not None:
+        ax.set_xlim(left=xMin, right=xMax)
+    if yMin is not None or yMax is not None:
+        ax.set_ylim(bottom=yMin, top=yMax)
+
+def plotXTickLabels(ax, fig, names, numTicks):
+    """
+    Helper for setting and orienting the labels for x ticks.
+    """
+    xtickMax = max(len(name) for name in names)
+    # 1 unit of figwidth can contain 9 characters
+    tickWidth = int(fig.get_figwidth() / numTicks * 9)
+    if xtickMax > tickWidth:
+        ax.set_xticklabels(names, rotation='vertical')
+    else:
+        ax.set_xticklabels(names)
+
+def plotConfidenceIntervalMeanAndError(feature):
+    """
+    Helper for calculating the mean and error for error bar charts.
+    """
+    if not scipy.nimbleAccessible():
+        msg = 'scipy must be installed for confidence intervals.'
+        raise PackageException(msg)
+    mean = nimble.calculate.mean(feature)
+    std = nimble.calculate.standardDeviation(feature)
+    # two tailed 95% CI with n -1 degrees of freedom
+    tStat = scipy.stats.t.ppf(0.025, len(feature) - 1)
+    error = tStat * (std / numpy.sqrt(len(feature)))
+
+    return mean, error
+
+def plotErrorBars(ax, axisRange, means, errors, horizontal, **kwargs):
+    """
+    Helper for plotting an error bar chart.
+    """
+    if 'fmt' not in kwargs:
+        kwargs['fmt'] ='o'
+    if 'capsize' not in kwargs:
+         kwargs['capsize'] = 8
+
+    if horizontal:
+        ax.errorbar(y=axisRange, x=means, xerr=errors, **kwargs)
+    else:
+        ax.errorbar(x=axisRange, y=means, yerr=errors, **kwargs)
+
+def plotSingleBarChart(ax, axisRange, heights, horizontal, **kwargs):
+    """
+    Helper for plotting a single bar chart.
+    """
+    if horizontal:
+        ax.barh(axisRange, heights, **kwargs)
+    else:
+        ax.bar(axisRange, heights, **kwargs)
+
+def plotMultiBarChart(ax, heights, horizontal, legendTitle, **kwargs):
+    """
+    Helper for plotting a multiple bar chart.
+    """
+    # need to manually handle some kwargs with subgroups
+    if 'width' in kwargs:
+        width = kwargs['width']
+        del kwargs['width']
+    else:
+        width = 0.8 # plt.bar default
+    if 'color' in kwargs:
+        # sets color array to apply to subgroup bars not group bars
+        ax.set_prop_cycle(color=kwargs['color'])
+        del kwargs['color']
+    singleWidth = width / len(heights)
+    start = 1 - (width / 2) + (singleWidth / 2)
+
+    for i, (name, height) in enumerate(heights.items()):
+        widths = numpy.arange(start, len(height))
+        widths += i * singleWidth
+        if horizontal:
+            ax.barh(widths, height, height=singleWidth, label=name,
+                    **kwargs)
         else:
-            plotter(**kwargs)
-        p = Process(target=lambda: None)
-        p.start()
-    else:
-        p = Process(target=plotter, kwargs=kwargs)
-        p.start()
+            ax.bar(widths, height, width=singleWidth, label=name,
+                   **kwargs)
 
-    return p
-
-@matplotlibAccessible
-def plotPlotter(d, includeColorbar, name, outPath, outFormat):
-    plt = matplotlib.pyplot
-
-    plt.matshow(d, cmap=matplotlib.cm.gray)
-
-    if includeColorbar:
-        plt.colorbar()
-
-    if not name.startswith(DEFAULT_NAME_PREFIX):
-        #plt.title("Heatmap of " + self.name)
-        plt.title(name)
-    plt.xlabel("Feature Values", labelpad=10)
-    plt.ylabel("Point Values")
-
-    if outPath is None:
-        plt.show()
-    else:
-        plt.savefig(outPath, format=outFormat)
-
-@matplotlibAccessible
-def distributionPlotter(d, binCount, name, index, axis, xLim, outPath,
-                        outFormat):
-    plt = matplotlib.pyplot
-
-    plt.hist(d, binCount)
-
-    if not name or name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-        titlemsg = '#' + str(index)
-    else:
-        titlemsg = "named: " + name
-    plt.title("Distribution of " + axis + " " + titlemsg)
-    plt.xlabel("Values")
-    plt.ylabel("Number of values")
-
-    plt.xlim(xLim)
-
-    if outPath is None:
-        plt.show()
-    else:
-        plt.savefig(outPath, format=outFormat)
-
-@matplotlibAccessible
-def crossPlotter(inX, inY, xName, yName, xIndex, yIndex, xAxis, yAxis,
-                 xLim, yLim, sampleSizeForAverage, name, outPath, outFormat):
-    plt = matplotlib.pyplot
-    #plt.scatter(inX, inY)
-    plt.scatter(inX, inY, marker='.')
-
-    if not xName or xName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-        xlabel = xAxis + ' #' + str(xIndex)
-    else:
-        xlabel = xName
-    if not yName or yName[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-        ylabel = yAxis + ' #' + str(yIndex)
-    else:
-        ylabel = yName
-
-    xName2 = xName
-    yName2 = yName
-    if sampleSizeForAverage:
-        tmpStr = ' (%s sample average)' % sampleSizeForAverage
-        xlabel += tmpStr
-        ylabel += tmpStr
-        xName2 += ' average'
-        yName2 += ' average'
-
-    if name.startswith(DEFAULT_NAME_PREFIX):
-        titleStr = ('%s vs. %s') % (xName2, yName2)
-    else:
-        titleStr = ('%s: %s vs. %s') % (name, xName2, yName2)
-
-
-    plt.title(titleStr)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-
-    plt.xlim(xLim)
-    plt.ylim(yLim)
-
-    if outPath is None:
-        plt.show()
-    else:
-        plt.savefig(outPath, format=outFormat)
+    ax.legend(title=legendTitle)
 
 def is2DList(lst):
     """

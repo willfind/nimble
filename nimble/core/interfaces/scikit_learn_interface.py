@@ -129,7 +129,7 @@ class _SciKitLearnAPI(abc.ABC):
 
 
     def _getScoresOrder(self, learner):
-        return learner.UIgetScoreOrder()
+        return learner.UIgetScoreOrder
 
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
@@ -146,10 +146,7 @@ class _SciKitLearnAPI(abc.ABC):
                 allLabels = learner.predict(trainX)
                 labelOrder = numpy.unique(allLabels)
 
-            def UIgetScoreOrder():
-                return labelOrder
-
-            learner.UIgetScoreOrder = UIgetScoreOrder
+            learner.UIgetScoreOrder = labelOrder
 
         return learner
 
@@ -372,7 +369,8 @@ class SciKitLearn(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
             return ret
 
         with warnings.catch_warnings():
-            warnings.simplefilter('ignore', DeprecationWarning)
+            warnings.simplefilter('ignore', (DeprecationWarning,
+                                             FutureWarning))
             with mock.patch('pkgutil.walk_packages', mockWalkPackages):
                 try:
                     kwargs = {'include_dont_test': True}

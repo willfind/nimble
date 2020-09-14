@@ -10,20 +10,19 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
-from nimble._utility import DeferredModuleImport, scipy
+from nimble._utility import scipy
 from nimble.core.logger import handleLogging
 from nimble.core._createHelpers import validateReturnType, initDataObject
-
-shogun = DeferredModuleImport('shogun')
-if shogun.nimbleAccessible():
-    shogun.Math.init_random(42)
 
 pythonRandom = random.Random(42)
 numpyRandom = numpy.random.RandomState(42)
 
-# We use (None, None, None) to signal that we are outside of a section of
+# We use None to signal that we are outside of a section of
 # uncontrolled randomness
-_saved = (None, None, None)
+_saved = {pythonRandom: {'state': None,
+                         'methods': ('seed', 'getstate', 'setstate')},
+          numpyRandom: {'state': None,
+                        'methods': ('seed', 'get_state', 'set_state')},}
 _stillDefault = True
 
 
@@ -39,16 +38,12 @@ def setSeed(seed, useLog=None):
         os system time.
     """
     global _stillDefault
-    pythonRandom.seed(seed)
-    numpyRandom.seed(seed)
-    if shogun.nimbleAccessible():
-        if seed is None:
-            # use same seed as numpy used
-            shogun.Math.init_random(int(numpyRandom.get_state()[1][0]))
-        else:
-            shogun.Math.init_random(seed)
-    if _saved != (None, None, None):
-        _stillDefault = False
+
+    for randomObj, savedInfo in _saved.items():
+        seeder = getattr(randomObj, savedInfo['methods'][0])
+        seeder(seed)
+        if _stillDefault and savedInfo['state'] is not None:
+            _stillDefault = False
 
     handleLogging(useLog, 'setSeed', seed=seed)
 
@@ -269,14 +264,10 @@ def _startAlternateControl(seed=None):
         integer for compliance with numpy. If seed is None, then we use
         os system time.
     """
-    global _saved
+    for randomObj, savedInfo in _saved.items():
+        getter = getattr(randomObj, savedInfo['methods'][1])
+        _saved[randomObj]['state'] = getter()
 
-    if shogun.nimbleAccessible():
-        shogunSeed = shogun.Math.get_seed()
-    else:
-        shogunSeed = None
-
-    _saved = (pythonRandom.getstate(), numpyRandom.get_state(), shogunSeed)
     setSeed(seed, useLog=False)
 
 
@@ -290,10 +281,8 @@ def _endAlternateControl():
     section. This will restore the state saved by
     `_startAlternateControl``.
     """
-    global _saved
-    if _saved != (None, None, None):
-        pythonRandom.setstate(_saved[0])
-        numpyRandom.set_state(_saved[1])
-        if shogun.nimbleAccessible():
-            shogun.Math.init_random(_saved[2])
-        _saved = (None, None, None)
+    for randomObj, savedInfo in _saved.items():
+        if savedInfo['state'] is not None:
+            setter = getattr(randomObj, savedInfo['methods'][2])
+            setter(savedInfo['state'])
+            _saved[randomObj]['state'] = None

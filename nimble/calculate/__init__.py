@@ -27,6 +27,7 @@ from .similarity import covariance
 from .similarity import fractionCorrect
 from .similarity import rSquared
 from .similarity import confusionMatrix
+from .statistic import count
 from .statistic import maximum
 from .statistic import mean
 from .statistic import median
@@ -39,6 +40,7 @@ from .statistic import proportionZero
 from .statistic import quartiles
 from .statistic import residuals
 from .statistic import standardDeviation
+from .statistic import sum
 from .utility import detectBestResult
 from .linalg import inverse
 from .linalg import pseudoInverse
@@ -56,7 +58,7 @@ from .binary import f1Score
 
 
 __all__ = ['balancedAccuracy', 'confusionMatrix', 'correlation',
-           'cosineSimilarity', 'covariance', 'detectBestResult',
+           'cosineSimilarity', 'count', 'covariance', 'detectBestResult',
            'elementwiseMultiply', 'elementwisePower', 'f1Score',
            'falseNegative', 'falsePositive', 'fractionCorrect',
            'fractionIncorrect', 'inverse', 'leastSquaresSolution', 'maximum',
@@ -64,5 +66,5 @@ __all__ = ['balancedAccuracy', 'confusionMatrix', 'correlation',
            'median', 'minimum', 'mode', 'precision', 'proportionMissing',
            'proportionZero', 'pseudoInverse', 'quartiles', 'rSquared',
            'recall', 'residuals', 'rootMeanSquareError', 'solve',
-           'specificity', 'standardDeviation', 'trueNegative', 'truePositive',
-           'uniqueCount', 'varianceFractionRemaining']
+           'specificity', 'standardDeviation', 'sum', 'trueNegative',
+           'truePositive', 'uniqueCount', 'varianceFractionRemaining']

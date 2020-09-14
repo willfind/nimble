@@ -18,7 +18,8 @@ from nose.plugins.attrib import attr
 #@attr('slow')
 
 import nimble
-from nimble.exceptions import InvalidArgumentValue, PackageException
+from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
+from nimble.exceptions import PackageException
 from nimble.core.interfaces.universal_interface import UniversalInterface
 from nimble.core._learnHelpers import generateClusteredPoints
 from tests.helpers import configSafetyWrapper
@@ -30,68 +31,61 @@ def checkFormat(scores, numLabels):
     """
     Check that the provided nimble data typed scores structurally match either a one vs
     one or a one vs all formatting scheme.
-
     """
-    if len(scores.features) != numLabels and len(scores.features) != (numLabels * (numLabels - 1)) / 2:
-        raise RuntimeError("_getScores() must return scores that are either One vs One or One vs All formatted")
+    assert (len(scores.features) == numLabels
+            or len(scores.features) == (numLabels * (numLabels - 1)) / 2)
 
 
 def checkFormatRaw(scores, numLabels):
     """
     Check that the provided numpy typed scores structurally match either a one vs
     one or a one vs all formatting scheme.
-
     """
-    if scores.shape[1] != numLabels and scores.shape[1] != (numLabels * (numLabels - 1)) / 2:
-        raise RuntimeError("_getScores() must return scores that are either One vs One or One vs All formatted")
-
+    assert (scores.shape[1] == numLabels
+            or scores.shape[1] == (numLabels * (numLabels - 1)) / 2)
 
 @attr('slow')
 def test__getScoresFormat():
     """
-    Automatically checks the _getScores() format for as many classifiers we can identify in each
-    interface.
+    Automatically checks the _getScores() format for as many classifiers
+    we can identify in each interface.
     """
-    data2 = generateClassificationData(2, 4, 3)
-    ((trainX2, trainY2), (testX2, testY2)) = data2
-    data4 = generateClassificationData(4, 4, 3)
-    ((trainX4, trainY4), (testX4, testY4)) = data4
-    for interface in nimble.core.interfaces.available.values():
-        interfaceName = interface.getCanonicalName()
+    for i in [2, 4]:
+        data = generateClassificationData(i, 4, 3)
+        ((trainX, trainY), (testX, _)) = data
+        for interface in nimble.core.interfaces.available.values():
+            interfaceName = interface.getCanonicalName()
 
-        learners = interface.listLearners()
-        for lName in learners:
-            fullName = interfaceName + '.' + lName
-            if nimble.learnerType(fullName) == 'classification':
-                try:
-                    tl2 = nimble.train(fullName, trainX2, trainY2)
-                except (InvalidArgumentValue, SystemError):
-                    # this is to catch learners that have required arguments.
-                    # we have to skip them in that case
-                    continue
-                (ign1, ign2, transTestX2, ign3) = interface._inputTransformation(
-                    lName, None, None, testX2, {}, tl2._customDict)
-                try:
-                    scores2 = interface._getScores(
-                        lName, tl2._backend, transTestX2, {},
-                        tl2._transformedArguments, tl2._customDict)
-                except (NotImplementedError, SystemError):
-                    # this is to catch learners that cannot output scores
-                    continue
-                checkFormatRaw(scores2, 2)
-
-                try:
-                    tl4 = nimble.train(fullName, trainX4, trainY4)
-                except:
-                    # some classifiers are binary only
-                    continue
-                (ign1, ign2, transTestX4, ign3) = interface._inputTransformation(
-                    lName, None, None, testX4, {}, tl4._customDict)
-                scores4 = interface._getScores(
-                    lName, tl4._backend, transTestX4, {},
-                    tl4._transformedArguments, tl4._customDict)
-                checkFormatRaw(scores4, 4)
-
+            learners = interface.listLearners()
+            for lName in learners:
+                fullName = interfaceName + '.' + lName
+                if nimble.learnerType(fullName) == 'classification':
+                    try:
+                        tl = nimble.train(fullName, trainX, trainY)
+                    except (InvalidArgumentValue, SystemError):
+                        # skip learners that have required arguments
+                        continue
+                    except ValueError as VE:
+                        # this will catch strictly binary classification
+                        # learners, and skip them when i == 4
+                        if i == 4:
+                            continue
+                        raise VE
+                    (transTrainX, _, transTestX, _) = interface._inputTransformation(
+                        lName, trainX, None, testX, {}, tl._customDict)
+                    try:
+                        scores = interface._getScores(
+                            lName, tl._backend, transTestX, {},
+                            tl._transformedArguments, tl._customDict)
+                    except IndexError:
+                        # categorical data needed; use train data
+                        scores = interface._getScores(
+                            lName, tl._backend, transTrainX, {},
+                            tl._transformedArguments, tl._customDict)
+                    except (NotImplementedError, SystemError):
+                        # this is to catch learners that cannot output scores
+                        continue
+                    checkFormatRaw(scores, i)
 
 @attr('slow')
 def testGetScoresFormat():
@@ -100,39 +94,97 @@ def testGetScoresFormat():
     can identify in each interface
 
     """
-    data2 = generateClassificationData(2, 4, 2)
-    ((trainX2, trainY2), (testX2, testY2)) = data2
-    data4 = generateClassificationData(4, 4, 2)
-    ((trainX4, trainY4), (testX4, testY4)) = data4
+    for i in [2, 4]:
+        data = generateClassificationData(i, 4, 2)
+        ((trainX, trainY), (testX, _)) = data
+        for interface in nimble.core.interfaces.available.values():
+            interfaceName = interface.getCanonicalName()
+            learners = interface.listLearners()
+            for lName in learners:
+                fullName = interfaceName + '.' + lName
+                if nimble.learnerType(fullName) == 'classification':
+                    try:
+                        tl = nimble.train(fullName, trainX, trainY)
+                    except (InvalidArgumentValue, SystemError):
+                        # skip learners that have required arguments
+                        continue
+                    except ValueError as VE:
+                        # this will catch strictly binary classification
+                        # learners, and skip them when i == 4
+                        if i == 4:
+                            continue
+                        raise VE
+
+                    try:
+                        scores = tl.getScores(testX)
+                    except IndexError:
+                        # categorical data needed; use train data
+                        scores = tl.getScores(trainX)
+                    except (NotImplementedError, SystemError):
+                        # this is to catch learners that cannot output scores
+                        continue
+                    checkFormat(scores, i)
+
+
+@attr('slow')
+def testApplyFeatureNames():
+    """ Check train label feature name is set during apply for regression and classification """
+    regressionData = generateRegressionData(5, 10, 5)
+    classificationData = generateClassificationData(2, 10, 5)
+    success = 0
     for interface in nimble.core.interfaces.available.values():
         interfaceName = interface.getCanonicalName()
-
-        learners = interface.listLearners()
-        for lName in learners:
-
-            fullName = interfaceName + '.' + lName
-            if nimble.learnerType(fullName) == 'classification':
+        for learner in interface.listLearners():
+            currType = interface.learnerType(learner)
+            if currType == 'regression':
+                data = regressionData
+            elif currType == 'classification':
+                data = classificationData
+            else:
+                continue
+            ((trainData, trainLabels), (testData, testLabels)) = data
+            trainLabels.features.setNames(['label'])
+            trainData.features.transform(lambda ft: abs(ft))
+            testData.features.transform(lambda ft: abs(ft))
+            for mode in ['label', 'allScores', 'bestScore']:
+                strResult = None
                 try:
-                    tl2 = nimble.train(fullName, trainX2, trainY2)
-                except (InvalidArgumentValue, SystemError):
-                    # this is to catch learners that have required arguments.
-                    # we have to skip them in that case
+                    result = nimble.trainAndApply(interfaceName + '.' + learner,
+                                                  trainData, trainLabels, testData,
+                                                  scoreMode=mode)
+                    if currType == 'classification':
+                        toString = {0: 'a', 1: 'b'}
+                        strLabels = data[0][1].calculateOnElements(lambda e: toString[e])
+                        strResult = nimble.trainAndApply(
+                            interfaceName + '.' + learner, trainData, strLabels,
+                            testData, scoreMode=mode)
+                except InvalidArgumentValue:
+                    # try multioutput learner; only label mode is allowed
+                    if mode != 'label':
+                        continue
+                    multiLabels = trainLabels.copy()
+                    labels2 = trainLabels.copy()
+                    labels2.features.setNames(['label2'])
+                    multiLabels.features.append(labels2)
+                    try:
+                        result = nimble.trainAndApply(interfaceName + '.' + learner,
+                                                      trainData, multiLabels, testData,
+                                                      scoreMode=mode)
+                    except (InvalidArgumentValue, ImproperObjectAction):
+                        continue # incompatible data for this operation
+                except Exception:
                     continue
-                try:
-                    scores2 = tl2.getScores(testX2)
-                except (NotImplementedError, SystemError):
-                    # this is to catch learners that cannot output scores
-                    continue
-                checkFormat(scores2, 2)
-
-                try:
-                    tl4 = nimble.train(fullName, trainX4, trainY4)
-                except:
-                    # some classifiers are binary only
-                    continue
-                scores4 = tl4.getScores(testX4)
-                checkFormat(scores4, 4)
-
+                if mode == 'label':
+                    assert result.features.getName(0) == 'label'
+                elif mode == 'bestScore':
+                    assert result.features.getNames() == ['label', 'bestScore']
+                else:
+                    assert result.features.getNames() == ['0.0', '1.0']
+                    if strResult is not None:
+                        assert strResult.features.getNames() == ['a', 'b']
+                success += 1
+    # ensure not passing because except Exception is catching all cases
+    assert success
 
 @attr('slow')
 @nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
@@ -380,20 +432,20 @@ def test_getParametersAndDefaultsReturnTypes():
 
             if params is not None:
                 assert isinstance(params, list)
-                assert all(isinstance(option, set) for option in params)
+                assert all(isinstance(option, list) for option in params)
                 assert isinstance(defaults, list)
                 assert all(isinstance(option, dict) for option in defaults)
 
             assert isinstance(learnerParams, list)
-            assert all(isinstance(option, set) for option in learnerParams)
+            assert all(isinstance(option, list) for option in learnerParams)
             assert isinstance(defaultParams, list)
             assert all(isinstance(option, dict) for option in defaultParams)
 
             # top-level will not be nested in list if only one item in list
-            if isinstance(paramsFromTop, list):
-                assert all(isinstance(option, set) for option in paramsFromTop)
-            else:
-                assert isinstance(paramsFromTop, set)
+            assert isinstance(paramsFromTop, list)
+            if len(learnerParams) > 1:
+                assert all(isinstance(option, list) for option in paramsFromTop)
+
             if isinstance(defaultsFromTop, list):
                 assert all(isinstance(option, dict) for option in defaultsFromTop)
             else:
