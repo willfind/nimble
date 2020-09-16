@@ -15,7 +15,6 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble._utility import inspectArguments
 from nimble._utility import inheritDocstringsFactory
-from nimble.random import _generateSubsidiarySeed
 from .universal_interface import UniversalInterface
 from .universal_interface import PredefinedInterface
 from ._interface_helpers import modifyImportPathAndImport
@@ -31,7 +30,6 @@ class _SciKitLearnAPI(abc.ABC):
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
     #######################################
-
 
     def _getParameterNamesBackend(self, name):
         ret = self._paramQuery(name, None)
@@ -260,7 +258,7 @@ class _SciKitLearnAPI(abc.ABC):
             if self.randomParam in initParams:
                 index = initParams.index(self.randomParam)
                 negdex = index - len(initParams)
-                seed = _generateSubsidiarySeed()
+                seed = nimble.random._generateSubsidiarySeed()
                 initValues[negdex] = seed
             return (initParams, initValues)
         elif not hasattr(namedModule, name):
@@ -556,6 +554,7 @@ To install scikit-learn
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         initParams = {name: arguments[name] for name in initNames
                       if name in arguments}
+        self._addRandomSeedForInit(self.randomParam, initNames, initParams)
         defaults = self.getLearnerDefaultValues(learnerName)[0]
         if self.randomParam in defaults and self.randomParam not in arguments:
             initParams[self.randomParam] = defaults[self.randomParam]

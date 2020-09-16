@@ -14,6 +14,7 @@ import numpy
 from nose.tools import *
 from nose.plugins.attrib import attr
 try:
+    import shogun
     from shogun import RealFeatures
     from shogun import BinaryLabels, MulticlassLabels, RegressionLabels
 except ImportError:
@@ -459,6 +460,7 @@ def trainAndApplyBackend(learner, data, applier, needKernel, needDistance,
                          extraTrainSetup):
     seed = nimble.random._generateSubsidiarySeed()
     nimble.random.setSeed(seed, useLog=False)
+    shogun.Math.init_random(nimble.random._generateSubsidiarySeed())
     trainX, trainY, testX = data[:3]
     shogunTraining = data[3:5]
     shogunTesting = data[5]

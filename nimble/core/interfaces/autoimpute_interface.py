@@ -168,6 +168,7 @@ To install autoimpute
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         initParams = {name: arguments[name] for name in initNames
                       if name in arguments}
+        self._addRandomSeedForInit(self.randomParam, initNames, initParams)
         defaults = self.getLearnerDefaultValues(learnerName)[0]
         if self.randomParam in defaults and self.randomParam not in arguments:
             initParams[self.randomParam] = defaults[self.randomParam]

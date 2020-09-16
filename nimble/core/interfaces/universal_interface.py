@@ -672,6 +672,18 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         """
         return self._getLearnerDefaultValuesBackend(learnerName)
 
+    def _addRandomSeedForInit(self, randomParam, initNames, initParams):
+        """
+        Generate a seed when learner the parameter controls randomness.
+
+        Only applies if the interface's random parameter has not been
+        specified and the learner uses the random parameter. The
+        generated seed will be added to the initParams dictionary so
+        that the learner is always instantiated with a set state.
+        """
+        if randomParam in initNames and randomParam not in initParams:
+            initParams[randomParam] = nimble.random._generateSubsidiarySeed()
+
     ########################
     ### ABSTRACT METHODS ###
     ########################
