@@ -20,7 +20,7 @@ Exploring Data Example
 Unsupervised Learning Example
 -----------------------------
 
-*  :download:`online_shoppers_intention_train.csv <examples/online_shoppers_intention_train.csv>`
+*  :download:`online_shoppers_intention_clean.csv <examples/online_shoppers_intention_clean.csv>`
 
 Neural Network Example
 ----------------------
