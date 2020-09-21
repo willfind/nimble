@@ -24,18 +24,17 @@ visits = nimble.data('Matrix', 'online_shoppers_intention_clean.csv',
                      featureNames=True)
 
 ## We are going to focus on categorizing our visitors that made a purchase,
-## so first we will remove any points with no revenue. After deleting these
-## points, `Revenue` and some other features only contain one unique value so
-## we can remove them as well.
+## so first we will extract any points with no revenue. Without these points,
+## `Revenue` and some other features only contain one unique value so we can
+## remove them.
 revenue = visits.points.extract("Revenue=1")
-revenue.features.delete(lambda ft: nimble.calculate.standardDeviation(ft) == 0)
+revenue.features.delete(lambda ft: len(ft.countUniqueElements()) < 2)
 
-## For both the PCA and KMeans algorithms that we will use, we want to first
-## normalize our data. We will stardardize each feature to have 0 mean and
+## For both the PCA and KMeans algorithms that we will be using, we want to
+## normalize our data. We will standardize each feature to have 0 mean and
 ## unit-variance.
 normalized = revenue.copy()
 normalized.features.normalize(subtract='mean', divide='standard deviation')
-normalized.features.setNames(revenue.features.getNames())
 
 ## Train a learner ##
 
@@ -63,7 +62,7 @@ wcss = nimble.data('List', withinClusterSumSquares,
 wcss.plotFeatureAgainstFeature('clusters', 'wcss')
 
 ## The elbow-method indicates 3 clusters would be optimal. We will apply our
-## TrainedLearner with 3 clusters to our our data.
+## `TrainedLearner` with 3 clusters to our our data.
 numClusters = 3
 
 kmeans = kmeans[numClusters]
@@ -76,9 +75,9 @@ centers.points.setNames(['cluster' + str(i) for i in range(numClusters)])
 
 ## Cluster Visualization ##
 
-## Now we can group our `components` by the KMeans clusters and plot them
-## on the same figure to visualize how the KMeans learner clustered our data.
-## We will also add the cluster centers from our learner to the visualization.
+## Now we can group our components by the KMeans clusters and plot them on the
+## same figure to visualize how the KMeans learner clustered our data. We will
+## also add the cluster centers from our learner to the visualization.
 principal.features.append(clusters)
 groups = principal.groupByFeature('cluster')
 for i in range(numClusters):
@@ -95,8 +94,8 @@ centers.plotFeatureAgainstFeature(0, 1, figureName='figure', marker='x',
 
 ## We can start by learning how many points fall into each cluster. We see some
 ## imbalance in cluster sizes, but each cluster contains at least 20% of our
-## revenue-generating visits. We can also now generate cluster centers for our
-## original data for deeper cluster analysis.
+## revenue-generating visits. We will generate cluster centers for our original
+## data for deeper cluster analysis.
 centers = []
 centerPtNames = []
 centerFtNames = revenue.features.getNames()
@@ -115,10 +114,10 @@ for i in range(numClusters):
 clusterCenters = nimble.data('Matrix', centers, featureNames=centerFtNames,
                              pointNames=centerPtNames)
 
-## Product related pages are the most commonly visited and `cluster0` view many
-##  more pages than `cluster1` and `cluster2`.  We see `cluster0` averaging
-## over 100 product related pages visited each visit, while `cluster1` and
-## `cluster2` average just under 30.
+## Product-related pages are the most commonly visited and visitors in
+## `cluster0` view many more pages than `cluster1` and `cluster2`.  We see
+## `cluster0` averaging over 100 product related pages visited each visit,
+## while `cluster1` and `cluster2` average just under 30.
 pageTypes = ['Administrative', 'Informational', 'ProductRelated']
 clusterCenters[:, pageTypes].features.plot()
 
@@ -129,56 +128,91 @@ clusterCenters[:, pageDurations].features.plot()
 
 ## Here we see that `cluster0` is very unlikely to contain new visitors.
 ## `cluster1` contains the highest percentage of new visitors, followed closely
-## by `cluster2`. However, since `cluster2` is much larger, it does contain more
-## new visitors overall.
+## by `cluster2`. However, since `cluster2` is much larger, it does contain
+## more new visitors overall.
 clusterCenters[:, ['NewVisitor']].features.plot()
 
-## Visits in `cluster1` are likely to be on a weekend, relative to the other
-## clusters, but `cluster2` is more likely to visit near a special day.
+## Visits in `cluster1` are more likely to be on a weekend, relative to the
+## other clusters, but `cluster2` is more likely to visit near a special day.
 clusterCenters[:, ['Weekend', 'SpecialDay']].features.plot()
 
 ## A **PageValue** defines the estimated dollar amount for a visit to any given
 ## page. We know that each visit generated revenue, but not how much, so
-## PageValues may provide some insight on each cluster's spending habits. It
-## is interesting that `cluster0` has the lowest PageValues. This means that
+## `PageValues` may provide some insight on each cluster's spending habits. It
+## is interesting that `cluster0` has the lowest page values. This means that
 ## on average they are looking at lower cost items on the site. So, despite
 ## spending a lot of time on the site, they are less likely to make a high
 ## value purchase. Whereas `cluster1` and `cluster2` view more expensive
-## items on the site, so their purchases are likely to be more costly. However,
-## we do not have more information, like purchase quantities, so we cannot
-## learn anything more definitive about spending habits in our clusters.
+## items on the site, so their purchases are likely to be more costly.
+## Unfortunately, we do not have more information, like purchase quantities, so
+## it is still unclear which cluster generates the most revenue.
 clusterCenters[:,  'PageValues'].features.plot()
 
-## The final features of interest are the months the purchases were made.
-## We have data from 9 months, but we see an overwhelming majority of
-## `cluster0`'s revenue-generating visits came in Month 7, as did a good
-## percentage of `cluster1`'s. Since `cluster0` is mostly return visitors,
-## it is possible some marketing or other event took place in month 7 that
-## lead visitors to return and generate revenue at that time. `cluster2`
-## looks to generate revenue most consistently.
+## Other features of interest are the months the purchases were made. We have
+## data from 9 months, but we see an overwhelming majority of `cluster0`'s
+## revenue-generating visits came in Month 7, as did a good percentage of
+## `cluster1`'s. Since `cluster0` is mostly return visitors, it is possible
+## some marketing or other event took place in month 7 that lead visitors to
+## return and generate revenue at that time. `cluster2` looks to generate
+## revenue most consistently.
 months = [ft for ft in revenue.features.getNames() if ft.startswith('Month')]
 clusterCenters[:, months].features.plot()
 
+## Next, we will look at the operating systems and browsers that visitors are
+## using within the clusters. Often operating systems provide a browser, so it
+## is not surprising to see these are highly correlated. Up to this point,
+## `cluster1` and `cluster2` appeared quite similar, however we see here that
+## visitors use very different operating systems and browsers between these two
+## clusters. We also see that visitors in `cluster0` and `cluster2` generally
+## use similar operating systems and browsers.
+os = [ft for ft in revenue.features.getNames()
+      if ft.startswith('OperatingSystem') or ft.startswith('Browser')]
+clusterCenters[:, os].features.plot()
+
+## Last, let's look at the distribution of regions in each cluster. We see that
+## the majority of visitors in each cluster are from region 1. No cluster
+## contains drastically more visitors from a certain region than the other
+## clusters. This is important to note as it indicates that any major
+## differences we noticed above are less likely to be regional.
+region = [ft for ft in revenue.features.getNames() if ft.startswith('Region')]
+clusterCenters[:, region].features.plot()
+
 ## Cluster Assumptions ##
 
-## * `cluster0`: Contains almost 22% of all revenue-generating visits.
-## Visitors are almost always return visitors and 70% of the visits in this
-## cluster were in month 7. This cluster averages over an hour on the site and
-## 100 individual page visits, but typically on pages with low page values. So,
-## these visitors seem to enjoy browsing for a purchase from the site's lower
-## cost items.
-## * `cluster1`: Contains just over 20% of all revenue-generating visits.
-## This cluster has the highest percentage of new visitors and visits are more
-## likely to occur on a weekend. The average visitor in this cluster spend a
-## bit under 21 minutes on the site and visits around 32 pages. This cluster
-## visits pages with higher page values, though the average is not quite as
-## high as `cluster2`.
-## * `cluster2`: Contains nearly 58% of revenue-generating visits. This cluster
-## tends to visit more often near a special day and is the most consistent for
-## generating revenue month-over-month. These visits average the highest page
-## values despite only averaging about 30 pages over a duration of about 20
-## minutes. These visitors appear to be targeting specific, often more
-## expensive, items when they visit the site.
+## We quickly saw that `cluster0` varied quite a bit from `cluster1` and
+## `cluster2`. `cluster0` averages over an hour on the site and 100 individual
+## page visits, but typically on pages with low page values. Visitors are
+## almost always return visitors and 70% of the visits in `cluster0` were in
+## month 7. So, the visitors in this cluster may have been motivated, possibly
+## by a sale or coupon, to return to the site and spend time browsing the
+## site's lower-cost items to find something to purchase.
+
+## `cluster1` and `cluster2` are very similar in terms of number of pages
+## visited and duration spent on the site. The average visitor in both of
+## these clusters visited around 30 pages and spent about 20 minutes on the
+## site. They also both have similar average page values that are much higher
+## than `cluster0`, with `cluster2` being slightly higher than `cluster1`. So,
+## these visitors appear to be targeting specific, often more expensive, items
+## when they visit the site, rather than browsing the site's inventory.
+
+## Browser looks to differentiate `cluster1` from the other clusters. Nearly
+## all revenue-generating visits that use browser 1 are found in `cluster1`.
+## Most users of other browsers are found in either `cluster0` or `cluster2`.
+## We might expect customer behavior to be mostly consistent across browsers,
+## so it is interesting that revenue-generating visitors using browser 1 very
+## rarely spend long durations on the site. This indicates that something
+## about this browser has caused visitors to, generally, act in a manner that
+## is dissimilar to visitors in `cluster0`.
+
+## We can only speculate, but there are a of couple potential reasons that we
+## might be seeing this inconsistent behavior across browsers. There could be a
+## flaw or poorly optimized aspect of the site on browser 1 that is
+## discouraging visitors from browsing. However, given we expect that the
+## behavior of visitors in `cluster0` may have been driven by marketing, it
+## could be that this marketing failed to reach most users of browser 1. Either
+## way, if this site wanted to generate more behavior similar to that of
+## `cluster0`, they would want to ensure consistency for visitors using
+## different browsers.
 
 ## **Reference:**
 
