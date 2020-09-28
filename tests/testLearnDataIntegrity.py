@@ -26,13 +26,13 @@ def assertUnchanged4Obj(learnerName, passed, trainX, trainY, testX, testY):
     ((pTrainX, pTrainY), (pTestX, pTestY)) = passed
 
     if not pTrainX.isIdentical(trainX):
-        raise ValueError(learnerName + " modified its trainX data")
+        raise AssertionError(learnerName + " modified its trainX data")
     if not pTrainY.isIdentical(trainY):
-        raise ValueError(learnerName + " modified its trainY data")
+        raise AssertionError(learnerName + " modified its trainY data")
     if not pTestX.isIdentical(testX):
-        raise ValueError(learnerName + " modified its testX data")
+        raise AssertionError(learnerName + " modified its testX data")
     if not pTestY.isIdentical(testY):
-        raise ValueError(learnerName + " modified its testY data")
+        raise AssertionError(learnerName + " modified its testY data")
 
 def assertUnchanged2Obj(learnerName, passed, train, test):
     """
@@ -43,9 +43,9 @@ def assertUnchanged2Obj(learnerName, passed, train, test):
     (pTrain, pTest) = passed
 
     if not pTrain.isIdentical(train):
-        raise ValueError(learnerName + " modified its trainX data")
+        raise AssertionError(learnerName + " modified its trainX data")
     if not pTest.isIdentical(test):
-        raise ValueError(learnerName + " modified its testX data")
+        raise AssertionError(learnerName + " modified its testX data")
 
 def handleApplyTestLabels(testX, testY):
     # testX cannot include labels for apply functions, remove labels if test Y is an ID.
@@ -166,7 +166,34 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
         if lType == 'classification':
             try:
                 toCall(learner, cTrainX, cTrainY, cTestX, cTestY)
+                assertUnchanged4Obj(learner, cData, backCTrainX, backCTrainY,
+                                    backCTestX, backCTestY)
                 toCall(learner, cTrainCombined, 0, cTestCombined, 0)
+                assertUnchanged2Obj(learner, (cTrainCombined, cTestCombined),
+                                backCTrainCombined, backCTestCombined)
+            except IndexError:
+                # If a learner transforms our randomly generated data to
+                # integers, it's possible a feature of all 0s can be created.
+                # This is problematic if the learner requires multiple
+                # categories, so we use round to avoid this possibility.
+                def rounded(ft):
+                    return [round(v) for v in ft]
+
+                cTrainXInt = cTrainX.features.calculate(rounded)
+                cTestXInt = cTestX.features.calculate(rounded)
+                cDataInt = ((cTrainXInt, cTrainY), (cTestXInt, cTestY))
+                backCTrainXInt = cTrainXInt.copy()
+                backCTestXInt = cTestXInt.copy()
+                toCall(learner, cTrainXInt, cTrainY, cTestXInt, cTestY)
+                assertUnchanged4Obj(learner, cDataInt, backCTrainXInt,
+                                    backCTrainY, backCTestXInt, backCTestY)
+                cTrainComInt = cTrainCombined.features.calculate(rounded)
+                cTestComInt = cTestCombined.features.calculate(rounded)
+                backCTrainComInt = cTrainComInt.copy()
+                backCTestComInt = cTestComInt.copy()
+                toCall(learner, cTrainComInt, 0, cTestComInt, 0)
+                assertUnchanged2Obj(learner, (cTrainComInt, cTestComInt),
+                                    backCTrainComInt, backCTestComInt)
             # this is meant to safely bypass those learners that have required arguments
             except InvalidArgumentValue as iav:
                 continue
@@ -177,14 +204,14 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
                 if not allowNotImplemented:
                     raise nie
                 continue
-            assertUnchanged4Obj(learner, cData, backCTrainX, backCTrainY,
-                                backCTestX, backCTestY)
-            assertUnchanged2Obj(learner, (cTrainCombined, cTestCombined),
-                                backCTrainCombined, backCTestCombined)
-        if lType == 'regression' and allowRegression:
+        elif lType == 'regression' and allowRegression:
             try:
                 toCall(learner, rTrainX, rTrainY, rTestX, rTestY)
+                assertUnchanged4Obj(learner, rData, backRTrainX, backRTrainY,
+                                    backRTestX, backRTestY)
                 toCall(learner, rTrainCombined, 0, rTestCombined, 0)
+                assertUnchanged2Obj(learner, (rTrainCombined, rTestCombined),
+                                    backRTrainCombined, backRTestCombined)
             # this is meant to safely bypass those learners that have required arguments
             except InvalidArgumentValue as iav:
                 continue
@@ -194,10 +221,7 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
                 if not allowNotImplemented:
                     raise nie
                 continue
-            assertUnchanged4Obj(learner, rData, backRTrainX, backRTrainY,
-                                backRTestX, backRTestY)
-            assertUnchanged2Obj(learner, (rTrainCombined, rTestCombined),
-                                backRTrainCombined, backRTestCombined)
+
 
 @attr('slow')
 def testDataIntegrityTrain():
