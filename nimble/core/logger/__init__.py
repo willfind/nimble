@@ -9,6 +9,8 @@ from .data_set_analyzer import produceAggregateReport
 from .session_logger import SessionLogger, initLoggerAndLogConfig
 from .session_logger import log, showLog
 from .session_logger import handleLogging
+from .session_logger import loggingEnabled
+from .session_logger import deepLoggingEnabled
 from .session_logger import startTimer, stopTimer
 from .session_logger import stringToDatetime
 from .stopwatch import Stopwatch

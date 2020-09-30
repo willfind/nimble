@@ -367,7 +367,8 @@ class SciKitLearn(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
             return ret
 
         with warnings.catch_warnings():
-            warnings.simplefilter('ignore', DeprecationWarning)
+            warnings.simplefilter('ignore', (DeprecationWarning,
+                                             FutureWarning))
             with mock.patch('pkgutil.walk_packages', mockWalkPackages):
                 try:
                     kwargs = {'include_dont_test': True}

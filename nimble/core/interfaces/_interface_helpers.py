@@ -6,6 +6,7 @@ import sys
 import importlib
 import configparser
 import warnings
+import inspect
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
@@ -30,11 +31,9 @@ class PythonSearcher(object):
     allowedDepth : int
         The maximum depth to search the package's directory tree.
     """
-    def __init__(self, baseModule, baseContents, specialCases, isLearner,
-                 allowedDepth):
+    def __init__(self, baseModule, isLearner, allowedDepth):
         self._baseModule = baseModule
-        self._baseContents = baseContents
-        self._specialCases = specialCases
+        self._baseContents = self._getContents(baseModule)
         self._isLearner = isLearner
         self._allowedDepth = allowedDepth
 
@@ -62,6 +61,11 @@ class PythonSearcher(object):
 
         return ret
 
+    def _getContents(self, module):
+        if hasattr(module, '__all__'):
+            return module.__all__
+        return [d for d in dir(module)
+                if d == '__init__' or not d.startswith("_")]
 
     def findInPackage(self, parent, name):
         """
@@ -69,12 +73,7 @@ class PythonSearcher(object):
         containing the wanted learner. For use by interfaces to python
         packages.
         """
-        specialKey = parent + '.' + name if parent is not None else name
-        if specialKey in self._specialCases:
-            return self._specialCases[specialKey]
-
         contents = self._baseContents
-
         searchIn = self._baseModule
         allowedDepth = self._allowedDepth
         if parent is not None:
@@ -83,13 +82,10 @@ class PythonSearcher(object):
             else:
                 searchIn = self._findInPackageRecursive(searchIn, parent,
                                                         allowedDepth, contents)
-            allowedDepth = 0
-            if hasattr(searchIn, '__all__'):
-                contents = searchIn.__all__
-            else:
-                contents = dir(searchIn)
             if searchIn is None:
                 return None
+            allowedDepth = 0
+            contents = self._getContents(searchIn)
 
         if name in self._locationCache:
             ret = self._locationCache[name]
@@ -101,32 +97,30 @@ class PythonSearcher(object):
 
     def _findInPackageRecursive(self, parent, target, allowedDepth, contents):
         for name in contents:
-            if name.startswith("_") and name != '__init__':
-                continue
+            isModule = False
+            # we want to add learners to the cache
+            # NOTE: this adds learners regardless of the state of the target
             try:
-                subMod = getattr(parent, name)
+                attr = getattr(parent, name)
+                if self._isLearner(attr):
+                    self._locationCache[name] = attr
+                elif inspect.ismodule(attr):
+                    isModule = True
             except AttributeError:
                 try:
                     fullName = parent.__name__ + "." + name
-                    subMod = importlib.import_module(fullName)
+                    attr = importlib.import_module(fullName)
+                    isModule = True
                 except ImportError:
                     continue
 
-            # we want to add learners, and the parents of learners to the cache
-            # NOTE: this adds learners regardless of the state of the target
-            if self._isLearner(subMod):
-                self._locationCache[str(name)] = subMod
-
             if name == target:
-                return subMod
+                return attr
 
-            if hasattr(subMod, '__all__'):
-                subContents = subMod.__all__
-            else:
-                subContents = dir(subMod)
+            if isModule and allowedDepth > 0:
+                subContents = self._getContents(attr)
 
-            if allowedDepth > 0:
-                ret = self._findInPackageRecursive(subMod, target,
+                ret = self._findInPackageRecursive(attr, target,
                                                    allowedDepth - 1,
                                                    subContents)
                 if ret is not None:

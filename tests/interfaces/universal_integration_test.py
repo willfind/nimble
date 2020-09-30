@@ -432,20 +432,20 @@ def test_getParametersAndDefaultsReturnTypes():
 
             if params is not None:
                 assert isinstance(params, list)
-                assert all(isinstance(option, set) for option in params)
+                assert all(isinstance(option, list) for option in params)
                 assert isinstance(defaults, list)
                 assert all(isinstance(option, dict) for option in defaults)
 
             assert isinstance(learnerParams, list)
-            assert all(isinstance(option, set) for option in learnerParams)
+            assert all(isinstance(option, list) for option in learnerParams)
             assert isinstance(defaultParams, list)
             assert all(isinstance(option, dict) for option in defaultParams)
 
             # top-level will not be nested in list if only one item in list
-            if isinstance(paramsFromTop, list):
-                assert all(isinstance(option, set) for option in paramsFromTop)
-            else:
-                assert isinstance(paramsFromTop, set)
+            assert isinstance(paramsFromTop, list)
+            if len(learnerParams) > 1:
+                assert all(isinstance(option, list) for option in paramsFromTop)
+
             if isinstance(defaultsFromTop, list):
                 assert all(isinstance(option, dict) for option in defaultsFromTop)
             else:

@@ -14,6 +14,7 @@ from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from tests.helpers import logCountAssertionFactory, oneLogEntryExpected
 from tests.helpers import CalledFunctionException, calledException
+from tests.helpers import configSafetyWrapper
 
 def test_trainAndApply_dataInputs():
     variables = ["x1", "x2", "x3", "label"]
@@ -603,26 +604,58 @@ def test_trainAndTestOnTrainingData_logCount_noCV():
         return nimble.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction)
     back_logCount(wrapped)
 
-@logCountAssertionFactory(2)
-def test_train_logCount_withCV():
+@logCountAssertionFactory(22)
+def test_train_logCount_withCV_deep():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
         return nimble.train(learner, trainX, trainY, performanceFunction=performanceFunction, k=nimble.CV([1, 2]))
     back_logCount(wrapped)
 
-@logCountAssertionFactory(2)
-def test_trainAndApply_logCount_withCV():
+@logCountAssertionFactory(22)
+def test_trainAndApply_logCount_withCV_deep():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
         return nimble.trainAndApply(learner, trainX, trainY, testX, performanceFunction, k=nimble.CV([1, 2]))
     back_logCount(wrapped)
 
-@logCountAssertionFactory(2)
-def test_trainAndTest_logCount_withCV():
+@logCountAssertionFactory(22)
+def test_trainAndTest_logCount_withCV_deep():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
         return nimble.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction, k=nimble.CV([1, 2]))
     back_logCount(wrapped)
 
+@logCountAssertionFactory(22)
+def test_trainAndTestOnTrainingData_logCount_withCV_deep():
+    def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
+        return nimble.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction, k=nimble.CV([1, 2]))
+    back_logCount(wrapped)
+
+@configSafetyWrapper
 @logCountAssertionFactory(2)
-def test_trainAndTestOnTrainingData_logCount_withCV():
+def test_train_logCount_withCV_noDeep():
+    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
+    def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
+        return nimble.train(learner, trainX, trainY, performanceFunction=performanceFunction, k=nimble.CV([1, 2]))
+    back_logCount(wrapped)
+
+@configSafetyWrapper
+@logCountAssertionFactory(2)
+def test_trainAndApply_logCount_withCV_noDeep():
+    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
+    def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
+        return nimble.trainAndApply(learner, trainX, trainY, testX, performanceFunction, k=nimble.CV([1, 2]))
+    back_logCount(wrapped)
+
+@configSafetyWrapper
+@logCountAssertionFactory(2)
+def test_trainAndTest_logCount_withCV_noDeep():
+    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
+    def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
+        return nimble.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction, k=nimble.CV([1, 2]))
+    back_logCount(wrapped)
+
+@configSafetyWrapper
+@logCountAssertionFactory(2)
+def test_trainAndTestOnTrainingData_logCount_withCV_noDeep():
+    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
         return nimble.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction, k=nimble.CV([1, 2]))
     back_logCount(wrapped)

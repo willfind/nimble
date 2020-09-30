@@ -69,7 +69,7 @@ def prepopulatedLogSafetyWrapper(testFunc):
             # run and crossVal
             results = nimble.trainAndTest('nimble.KNNClassifier', trainX=trainObj,
                                        trainY=trainYObj, testX=testObj, testY=testYObj,
-                                       performanceFunction=RMSE,
+                                       performanceFunction=RMSE, folds=5,
                                        arguments={"k": nimble.CV([3, 5])})
         # edit log sessionNumbers and timestamps
         location = nimble.settings.get("logger", "location")
@@ -77,15 +77,15 @@ def prepopulatedLogSafetyWrapper(testFunc):
         pathToFile = os.path.join(location, name + ".mr")
         conn = sqlite3.connect(pathToFile)
         c = conn.cursor()
-        c.execute("UPDATE logger SET timestamp = '2018-03-22 12:00:00' WHERE entry <= 7")
+        c.execute("UPDATE logger SET timestamp = '2018-03-22 12:00:00' WHERE entry <= 17")
         conn.commit()
-        c.execute("UPDATE logger SET sessionNumber = 1, timestamp = '2018-03-23 12:00:00' WHERE entry > 7 AND entry <= 14")
+        c.execute("UPDATE logger SET sessionNumber = 1, timestamp = '2018-03-23 12:00:00' WHERE entry > 17 AND entry <= 34")
         conn.commit()
-        c.execute("UPDATE logger SET sessionNumber = 2, timestamp = '2018-03-23 18:00:00' WHERE entry > 14 AND entry <= 21")
+        c.execute("UPDATE logger SET sessionNumber = 2, timestamp = '2018-03-23 18:00:00' WHERE entry > 34 AND entry <= 51")
         conn.commit()
-        c.execute("UPDATE logger SET sessionNumber = 3, timestamp = '2018-03-25 12:00:00' WHERE entry > 21 AND entry <= 28")
+        c.execute("UPDATE logger SET sessionNumber = 3, timestamp = '2018-03-25 12:00:00' WHERE entry > 51 AND entry <= 68")
         conn.commit()
-        c.execute("UPDATE logger SET sessionNumber = 4, timestamp = '2018-04-24 12:00:00' WHERE entry > 28")
+        c.execute("UPDATE logger SET sessionNumber = 4, timestamp = '2018-04-24 12:00:00' WHERE entry > 68")
         conn.commit()
 
         try:
@@ -1011,7 +1011,7 @@ def testShowLogSearchFilters():
     twoLessSize = os.path.getsize(pathToFile)
     assert twoLessSize < oneLessSize
 
-    nimble.showLog(levelOfDetail=3, mostSessionsAgo=5, maximumEntries=7, saveToFileName=pathToFile)
+    nimble.showLog(levelOfDetail=3, mostSessionsAgo=5, maximumEntries=17, saveToFileName=pathToFile)
     maxEntriesOneSession = os.path.getsize(pathToFile)
     assert maxEntriesOneSession == oneSessionSize
 

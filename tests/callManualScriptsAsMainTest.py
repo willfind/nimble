@@ -9,11 +9,10 @@ import tempfile
 
 def test_callAllAsMain():
     """
-    Calls each script in examples, confirms it completes without an exception.
-
+    Calls each script in manualScripts, confirms it completes without an exception.
     """
     # collect the filenames of the scripts we want to run
-    examplesDir = os.path.join(os.getcwd(), 'examples')
+    examplesDir = os.path.join(os.getcwd(), 'tests', 'manualScripts')
     examplesFiles = os.listdir(examplesDir)
     cleaned = []
     for fileName in examplesFiles:

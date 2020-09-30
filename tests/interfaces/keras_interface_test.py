@@ -53,7 +53,7 @@ def test_Keras_version():
     assert interface.version() == version
 
 @keraSkipDec
-@logCountAssertionFactory(6)
+@logCountAssertionFactory(16)
 @chooseOptimizer
 def testKerasAPI(optimizer):
     """

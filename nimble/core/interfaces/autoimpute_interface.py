@@ -3,6 +3,7 @@ Interface to autoimpute package.
 """
 
 import types
+import logging
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
@@ -13,6 +14,7 @@ from .scikit_learn_interface import _SciKitLearnAPI
 from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import PythonSearcher
 
+logging.getLogger('theano.configdefaults').setLevel(logging.ERROR)
 
 @inheritDocstringsFactory(UniversalInterface)
 class Autoimpute(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
@@ -47,8 +49,7 @@ class Autoimpute(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
 
         self.randomParam = 'seed'
 
-        self._searcher = PythonSearcher(
-            self.autoimpute, self.autoimpute.__all__, {}, isLearner, 1)
+        self._searcher = PythonSearcher(self.autoimpute, isLearner, 1)
 
         super(Autoimpute, self).__init__()
 

@@ -611,8 +611,9 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         ret = self._getParameterNamesBackend(name)
         if ret is not None:
             # Backend may contain duplicates but only one value can be assigned
-            # to a parameter so we use a set.
-            ret = [set(lst) for lst in ret]
+            # to a parameter so we use sets to remove duplicates and sorted
+            # to convert the sets back to lists with a consistent order
+            ret = [sorted(set(lst)) for lst in ret]
 
         return ret
 
@@ -634,8 +635,9 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         ret = self._getLearnerParameterNamesBackend(learnerName)
         if ret is not None:
             # Backend may contain duplicates but only one value can be assigned
-            # to a parameter so we use a set.
-            ret = [set(lst) for lst in ret]
+            # to a parameter so we use sets to remove duplicates and sorted
+            # to convert the sets back to lists with a consistent order
+            ret = [sorted(set(lst)) for lst in ret]
 
         return ret
 
