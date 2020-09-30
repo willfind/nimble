@@ -318,7 +318,6 @@ def testArgumentIntegrityTLApply():
     test = nimble.data('Matrix', [[0, 1], [1, 0]], pointNames=['4', '5'])
     tl = nimble.train('nimble.KNNClassifier', train, 2, arguments=arguments)
     pred = tl.apply(test)
-    assert pred.points.getNames() == testX.points.getNames()
 
 @raises(CalledFunctionException)
 @patch_mergeArguments('nimble.core.interfaces.universal_interface')
