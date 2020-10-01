@@ -126,6 +126,58 @@ def test_TrainedLearnerTest_dataInputs():
     out3 = tl.test(testObjData, testObjLabels, fractionIncorrect)
     assert out3 == exp
 
+
+class VariablePointPredictor(nimble.CustomLearner):
+    """
+    This will be used to test that point name preservation for
+    TrainedLearner apply is based on the number of points returned
+    by the learner.
+    """
+    learnerType = 'unknown'
+
+    def train(self, trainX, trainY, matchTestPoints=True):
+        self.matchTestPoints = matchTestPoints
+
+    def apply(self, testX):
+        # returned object will have no axis names
+        if self.matchTestPoints:
+            retData = [[0]] * len(testX.points)
+        else:
+            retData = [0]
+        return nimble.data(testX.getTypeString(), retData)
+
+def test_TrainedLearnerApply_pointNamePreservation():
+    variables = ["x1", "x2", "x3", "label"]
+    numPoints = 20
+    getRandom = pythonRandom.random
+    data = [[getRandom(), getRandom(), getRandom(), int(getRandom() * 3) + 1]
+             for _pt in range(numPoints)]
+    trainObj = nimble.data('Matrix', source=data, featureNames=variables)
+    trainObjData = trainObj[:, :2]
+    trainObjLabels = trainObj[:, 3]
+
+    testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    testPtNames = ['test1', 'test2', 'test3']
+    testObj = nimble.data('Matrix', source=testData, featureNames=variables,
+                          pointNames=testPtNames)
+    testObjData = testObj[:, :2]
+    testObjLabels = testObj[:, 3]
+
+    tl1 = nimble.train(VariablePointPredictor, trainObjData, trainObjLabels)
+
+    exp1 = nimble.data('Matrix', [[0], [0], [0]], pointNames=testPtNames)
+
+    out1 = tl1.apply(testObjData)
+    assert out1 == exp1
+
+    tl2 = nimble.train(VariablePointPredictor, trainObjData, trainObjLabels,
+                       matchTestPoints=False)
+
+    exp2 = nimble.data('Matrix', [0])
+    
+    out2 = tl2.apply(testObjData)
+    assert out2 == exp2
+
 #todo set seed and verify that you can regenerate error several times with
 #crossValidate.bestArguments, trainAndApply, and your own computeMetrics
 def test_trainAndTest():
