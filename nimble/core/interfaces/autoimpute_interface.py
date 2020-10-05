@@ -13,6 +13,7 @@ from .universal_interface import PredefinedInterface
 from .scikit_learn_interface import _SciKitLearnAPI
 from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import PythonSearcher
+from ._interface_helpers import validInitParams
 
 logging.getLogger('theano.configdefaults').setLevel(logging.ERROR)
 
@@ -160,19 +161,11 @@ To install autoimpute
             outputType = customDict['match']
         return nimble.data(outputType, outputValue, useLog=False)
 
-
-    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
-        return super(Autoimpute, self)._trainer(learnerName, trainX, trainY,
-                                                arguments, customDict)
-
-    def _initLearner(self, learnerName, trainX, trainY, arguments):
+    def _initLearner(self, learnerName, trainX, trainY, arguments, randomSeed):
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
-        initParams = {name: arguments[name] for name in initNames
-                      if name in arguments}
-        self._addRandomSeedForInit(self.randomParam, initNames, initParams)
+        initParams = validInitParams(initNames, arguments, randomSeed,
+                                     self.randomParam)
         defaults = self.getLearnerDefaultValues(learnerName)[0]
-        if self.randomParam in defaults and self.randomParam not in arguments:
-            initParams[self.randomParam] = defaults[self.randomParam]
         learner = self.findCallable(learnerName)(**initParams)
 
         # need to enforce strategy as a required parameter for the imputer

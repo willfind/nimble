@@ -19,6 +19,7 @@ from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import collectAttributes
 from ._interface_helpers import removeFromTailMatchedLists
 from ._interface_helpers import noLeading__, notCallable, notABCAssociated
+from ._interface_helpers import checkArgsForRandomParam
 
 
 @inheritDocstringsFactory(UniversalInterface)
@@ -49,6 +50,8 @@ class Keras(PredefinedInterface, UniversalInterface):
         except ImportError:
             self.keras = modifyImportPathAndImport('keras', 'keras')
 
+        self.randomParam = 'seed'
+
         # keras 2.0.8 has no __all__
         names = os.listdir(self.keras.__path__[0])
         possibilities = []
@@ -78,6 +81,7 @@ class Keras(PredefinedInterface, UniversalInterface):
                 return False
 
             return True
+
 
         self._searcher = PythonSearcher(self.keras, isLearner, 2)
 
@@ -304,16 +308,15 @@ To install keras
         return nimble.data(outputType, outputValue, useLog=False)
 
 
-    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
+    def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
+                 customDict):
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         compileNames = self._paramQuery('compile', learnerName, ['self'])[0]
         isSparse = isinstance(trainX, nimble.core.data.Sparse)
 
         if self._tfVersion2:
-            seed = arguments.get('seed', None)
-            if seed is None:
-                seed = nimble.random._generateSubsidiarySeed()
-            self.tensorflow.random.set_seed(seed)
+            checkArgsForRandomParam(arguments, self.randomParam)
+            self.tensorflow.random.set_seed(randomSeed)
         # keras 2.2.5+ fit_generator functionality merged into fit.
         # fit_generator may be removed, but will be used when possible
         # to support earlier versions.

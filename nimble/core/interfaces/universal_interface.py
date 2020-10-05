@@ -85,6 +85,10 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             msg += "a string"
             raise TypeError(msg)
 
+        # randomParam
+        if not hasattr(self, 'randomParam'):
+            self.randomParam = None
+
         # _configurableOptionNames and _optionDefaults
         optionNames = self._configurableOptionNames()
         if not isinstance(optionNames, list):
@@ -151,7 +155,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
 
     @captureOutput
     def train(self, learnerName, trainX, trainY=None, arguments=None,
-              multiClassStrategy='default', crossValidationResults=None):
+              multiClassStrategy='default', randomSeed=None,
+              crossValidationResults=None):
         """
         Fit the learner model using training data.
 
@@ -173,13 +178,13 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             values for a parameter as a tuple. eg. {'k': (1,3,5)} will
             generate an error score for  the learner when the learner
             was passed all three values of ``k``, separately.
-        useLog : bool, None
-            Local control for whether to send results/timing to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If False,
-            do **NOT** send to the logger, regardless of the global
-            option.
+        randomSeed : int
+           Set a random seed for the operation. When not None, allows for
+           reproducible results for each function call. Ignored if learner
+           does not depend on randomness.
+        crossValidationResults : KFoldCrossValidator
+            The results of any cross-validation performed prior to
+            training.
         """
         if multiClassStrategy != 'default':
             # TODO reevaluate use of checkClassificationStrategy, the if
@@ -218,7 +223,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                     trainLabels = trainY.calculateOnElements(relabeler,
                                                              useLog=False)
                     trainedLearner = self._train(
-                        learnerName, trainX, trainLabels, arguments=arguments)
+                        learnerName, trainX, trainLabels, arguments,
+                        randomSeed, crossValidationResults)
                     trainedLearner.label = label
                     trainedLearners.append(trainedLearner)
 
@@ -247,7 +253,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                 # the data object
                 trainedLearners = []
                 for pair in labelPairs:
-                    #get all points that have one of the labels in pair
+                    # get all points that have one of the labels in pair
                     pairData = trainX.points.extract(
                         lambda point: point[trainY] in pair, useLog=False)
                     pairTrueLabels = pairData.features.extract(trainY,
@@ -255,7 +261,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                     trainedLearners.append(
                         self._train(
                             learnerName, pairData.copy(),
-                            pairTrueLabels.copy(), arguments=arguments)
+                            pairTrueLabels.copy(), arguments, randomSeed,
+                            crossValidationResults)
                         )
                     pairData.features.append(pairTrueLabels, useLog=False)
                     trainX.points.append(pairData, useLog=False)
@@ -267,14 +274,16 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             trainX = trainX.copy()
             trainY = trainX.features.extract(toExtract=trainY, useLog=False)
         return self._train(learnerName, trainX, trainY, arguments,
-                           crossValidationResults)
+                           randomSeed, crossValidationResults)
 
 
     @captureOutput
-    def _train(self, learnerName, trainX, trainY=None, arguments=None,
-               crossValidationResults=None):
+    def _train(self, learnerName, trainX, trainY, arguments, randomSeed,
+               crossValidationResults):
+        if randomSeed is None:
+            randomSeed = nimble.random._generateSubsidiarySeed()
         packedBackend = self._trainBackend(learnerName, trainX, trainY,
-                                           arguments)
+                                           arguments, randomSeed)
         trainedBackend, transformedInputs, customDict = packedBackend
 
         has2dOutput = False
@@ -291,7 +300,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         # encapsulate into TrainedLearner object
         return TrainedLearner(learnerName, arguments, transformedArguments,
                               customDict, trainedBackend, self, has2dOutput,
-                              crossValidationResults, trainXShape, trainYNames)
+                              crossValidationResults, trainXShape, trainYNames,
+                              randomSeed)
 
 
     def _confirmValidLearner(self, learnerName):
@@ -306,7 +316,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             raise InvalidArgumentValue(msg)
 
 
-    def _trainBackend(self, learnerName, trainX, trainY, arguments):
+    def _trainBackend(self, learnerName, trainX, trainY, arguments,
+                      randomSeed):
         ### PLANNING ###
 
         # verify the learner is available
@@ -330,7 +341,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
 
         # train the instantiated learner
         trainedBackend = self._trainer(learnerName, transTrainX, transTrainY,
-                                       transArguments, customDict)
+                                       transArguments, randomSeed, customDict)
 
         return (trainedBackend, transformedInputs, customDict)
 
@@ -674,17 +685,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         """
         return self._getLearnerDefaultValuesBackend(learnerName)
 
-    def _addRandomSeedForInit(self, randomParam, initNames, initParams):
-        """
-        Generate a seed when learner the parameter controls randomness.
-
-        Only applies if the interface's random parameter has not been
-        specified and the learner uses the random parameter. The
-        generated seed will be added to the initParams dictionary so
-        that the learner is always instantiated with a set state.
-        """
-        if randomParam in initNames and randomParam not in initParams:
-            initParams[randomParam] = nimble.random._generateSubsidiarySeed()
 
     ########################
     ### ABSTRACT METHODS ###
@@ -800,7 +800,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
+    def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
+                 customDict):
         """
         Build a learner and perform training with the given data.
 
@@ -955,7 +956,8 @@ class TrainedLearner(object):
     """
     def __init__(self, learnerName, arguments, transformedArguments,
                  customDict, backend, interfaceObject, has2dOutput,
-                 crossValidationResults, trainXShape, trainYNames):
+                 crossValidationResults, trainXShape, trainYNames,
+                 randomSeed):
         """
         Initialize the object wrapping the trained learner stored in
         backend, and setting up the object methods that may be used to
@@ -990,6 +992,10 @@ class TrainedLearner(object):
             otherwise None.
         trainXShape : tuple
             The shape, (numPts, numFts), of the trainX object.
+        randomSeed : int
+           Set a random seed for the operation. When not None, allows for
+           reproducible results for each function call. Ignored if learner
+           does not depend on randomness.
         """
         self.learnerName = learnerName
         self.arguments = arguments
@@ -1001,6 +1007,7 @@ class TrainedLearner(object):
         self.crossValidation = crossValidationResults
         self._trainXShape = trainXShape
         self._trainYNames = trainYNames
+        self._randomSeed = randomSeed
 
         exposedFunctions = self._interface._exposedFunctions()
         for exposed in exposedFunctions:
@@ -1416,7 +1423,8 @@ class TrainedLearner(object):
             trainY = trainX.features.extract(toExtract=trainY, useLog=False)
 
         trainedBackend = self._interface._trainBackend(
-            self.learnerName, trainX, trainY, self._transformedArguments)
+            self.learnerName, trainX, trainY, self._transformedArguments,
+            self._randomSeed)
 
         newBackend = trainedBackend[0]
         transformedInputs = trainedBackend[1]
@@ -1661,11 +1669,12 @@ class TrainedLearners(TrainedLearner):
         crossValidationResults = trainedLearnerAttrs.crossValidation
         trainXShape = trainedLearnerAttrs._trainXShape
         trainYNames = trainedLearnerAttrs._trainYNames
+        randomSeed = trainedLearnerAttrs._randomSeed
 
         super(TrainedLearners, self).__init__(
             learnerName, arguments, transformedArguments, customDict, backend,
             interfaceObject, has2dOutput, crossValidationResults, trainXShape,
-            trainYNames)
+            trainYNames, randomSeed)
 
     @captureOutput
     def apply(self, testX, arguments=None, output='match', scoreMode='label',

@@ -620,3 +620,29 @@ def extractConfidenceScores(predictionScores, featureNamesItoN):
         scoreMap[label] = score
 
     return scoreMap
+
+def checkArgsForRandomParam(arguments, randomParam):
+    if randomParam in arguments:
+        msg = 'Nimble disallows the {0} parameter and provides the '
+        msg += 'randomSeed parameter for randomness control. Provide '
+        msg += '{1} as the value of the randomSeed parameter instead.'
+        value = arguments[randomParam]
+        raise InvalidArgumentValue(msg.format(randomParam, value))
+
+def validInitParams(initNames, arguments, randomSeed, randomParam):
+    """
+    Generate a seed when the learner parameter controls randomness.
+
+    Only applies if the interface's random parameter has not been
+    specified and the learner uses the random parameter. The
+    generated seed will be added to the initParams dictionary so
+    that the learner is always instantiated with a set state.
+    """
+    checkArgsForRandomParam(arguments, randomParam)
+    initParams = {name: arguments[name] for name in initNames
+                  if name in arguments}
+    if randomParam is not None:
+        if (randomParam in initNames and randomParam not in initParams):
+            initParams[randomParam] = randomSeed
+
+    return initParams

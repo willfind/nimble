@@ -105,7 +105,8 @@ class TestInterface(UniversalInterface):
     def _exposedFunctions(self):
         return [self.exposedOne, self.exposedTwo, self.exposedThree]
 
-    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
+    def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
+                 customDict):
         return (learnerName, trainX, trainY, arguments)
 
     def _applier(self, learnerName, learner, testX, arguments, customDict):
@@ -319,7 +320,8 @@ class AlwaysWarnInterface(UniversalInterface):
         self.issueWarnings()
         return outputValue
 
-    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
+    def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
+                 customDict):
         self.issueWarnings()
         return (learnerName, trainX, trainY, arguments)
 

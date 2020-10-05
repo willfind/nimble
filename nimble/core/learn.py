@@ -12,7 +12,8 @@ from nimble import match
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._utility import mergeArguments
-from nimble.core.logger import handleLogging, loggingEnabled, deepLoggingEnabled
+from nimble.core.logger import handleLogging, loggingEnabled
+from nimble.core.logger import deepLoggingEnabled
 from nimble.core.logger import startTimer, stopTimer
 from nimble.core._learnHelpers import findBestInterface
 from nimble.core._learnHelpers import _learnerQuery
@@ -406,7 +407,8 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
 
 
 def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
-                  folds=10, scoreMode='label', useLog=None, **kwarguments):
+                  folds=10, scoreMode='label', randomSeed=None, useLog=None,
+                  **kwarguments):
     """
     Perform K-fold cross validation.
 
@@ -444,6 +446,10 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
         the number of points in X, Y.
     scoreMode : str
         Used by computeMetrics.
+    randomSeed : int
+       Set a random seed for the operation. When not None, allows for
+       reproducible results for each function call. Ignored if learner
+       does not depend on randomness.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -510,8 +516,8 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
           arguments=None, scoreMode='label', multiClassStrategy='default',
           folds=10, doneValidData=False, doneValidArguments1=False,
           doneValidArguments2=False, doneValidMultiClassStrategy=False,
-          done2dOutputFlagCheck=False, useLog=None, storeLog='unset',
-          **kwarguments):
+          done2dOutputFlagCheck=False, randomSeed=None, useLog=None,
+          storeLog='unset', **kwarguments):
     """
     Train a specified learner using the provided data.
 
@@ -551,10 +557,14 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         with that class are desired, or 'allScores' if a matrix
         containing the scores for every class label are desired.
     multiClassStrategy : str
-        May only be 'default' 'OneVsAll' or 'OneVsOne'
+        May only be 'default', 'OneVsAll' or 'OneVsOne'.
     folds : int
         The number of folds used in the cross validation. Cannot exceed
         the number of points in ``trainX``. Default 10.
+    randomSeed : int
+       Set a random seed for the operation. When not None, allows for
+       reproducible results for each function call. Ignored if learner
+       does not depend on randomness.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -666,7 +676,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 
     trainedLearner = interface.train(trueLearnerName, trainX, trainY,
                                      bestArguments, multiClassStrategy,
-                                     crossValidationResults)
+                                     randomSeed, crossValidationResults)
     time = stopTimer(timer)
 
     funcString = interface.getCanonicalName() + '.' + trueLearnerName
@@ -679,7 +689,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                   performanceFunction=None, arguments=None, output=None,
                   scoreMode='label', multiClassStrategy='default',
-                  folds=10, useLog=None, **kwarguments):
+                  folds=10, randomSeed=None, useLog=None, **kwarguments):
     """
     Train a model and apply it to the test data.
 
@@ -733,10 +743,14 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         with that class are desired, or 'allScores' if a matrix
         containing the scores for every class label are desired.
     multiClassStrategy : str
-        May only be 'default' 'OneVsAll' or 'OneVsOne'
+        May only be 'default', 'OneVsAll' or 'OneVsOne'.
     folds : int
         The number of folds used in the cross validation. Cannot exceed
         the number of points in ``trainX``. Default 10.
+    randomSeed : int
+       Set a random seed for the operation. When not None, allows for
+       reproducible results for each function call. Ignored if learner
+       does not depend on randomness.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -821,8 +835,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                                   performanceFunction, merged,
                                   scoreMode='label',
                                   multiClassStrategy=multiClassStrategy,
-                                  folds=folds, useLog=False,
-                                  storeLog=useLog, doneValidData=True,
+                                  folds=folds, randomSeed=randomSeed,
+                                  useLog=False, storeLog=useLog,
+                                  doneValidData=True,
                                   done2dOutputFlagCheck=True, **kwarguments)
 
     if testX is None:
@@ -847,7 +862,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 def trainAndTest(learnerName, trainX, trainY, testX, testY,
                  performanceFunction, arguments=None, output=None,
                  scoreMode='label', multiClassStrategy='default',
-                 folds=10, useLog=None, **kwarguments):
+                 folds=10, randomSeed=None, useLog=None, **kwarguments):
     """
     Train a model and get the results of its performance.
 
@@ -913,10 +928,14 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         with that class are desired, or 'allScores' if a matrix
         containing the scores for every class label are desired.
     multiClassStrategy : str
-        May only be 'default' 'OneVsAll' or 'OneVsOne'
+        May only be 'default', 'OneVsAll' or 'OneVsOne'.
     folds : int
         The number of folds used in the cross validation. Cannot exceed
         the number of points in ``trainX``. Default 10.
+    randomSeed : int
+       Set a random seed for the operation. When not None, allows for
+       reproducible results for each function call. Ignored if learner
+       does not depend on randomness.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1001,8 +1020,9 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
                                   performanceFunction, merged,
                                   scoreMode='label',
                                   multiClassStrategy=multiClassStrategy,
-                                  folds=folds, useLog=False,
-                                  storeLog=useLog, doneValidData=True,
+                                  folds=folds, randomSeed=randomSeed,
+                                  useLog=False, storeLog=useLog,
+                                  doneValidData=True,
                                   done2dOutputFlagCheck=True)
 
     if isinstance(testY, (str, int, numpy.integer)):
@@ -1035,7 +1055,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
                                performanceFunction, crossValidationError=False,
                                folds=10, arguments=None, output=None,
                                scoreMode='label', multiClassStrategy='default',
-                               useLog=None, **kwarguments):
+                               randomSeed=None, useLog=None, **kwarguments):
     """
     Train a model using the train data and get the performance results.
 
@@ -1104,7 +1124,11 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         with that class are desired, or 'allScores' if a matrix
         containing the scores for every class label are desired.
     multiClassStrategy : str
-        May only be 'default' 'OneVsAll' or 'OneVsOne'
+        May only be 'default', 'OneVsAll' or 'OneVsOne'.
+    randomSeed : int
+       Set a random seed for the operation. When not None, allows for
+       reproducible results for each function call. Ignored if learner
+       does not depend on randomness.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1173,7 +1197,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         merged = mergeArguments(arguments, kwarguments)
         results = crossValidate(learnerName, trainX, trainY,
                                 performanceFunction, merged, folds,
-                                scoreMode, useLog)
+                                scoreMode, randomSeed, useLog)
         performance = results.bestResult
         metrics = {}
         for key, value in zip([performanceFunction], [performance]):
@@ -1186,7 +1210,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY,
                                    performanceFunction, arguments, output,
                                    scoreMode, multiClassStrategy, folds,
-                                   useLog, **kwarguments)
+                                   randomSeed, useLog, **kwarguments)
     return performance
 
 

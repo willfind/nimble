@@ -137,7 +137,8 @@ class CustomLearnerInterface(UniversalInterface):
         else:
             return nimble.data('Matrix', outputValue, useLog=False)
 
-    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
+    def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
+                 customDict):
         ret = self.registeredLearners[learnerName]()
         return ret.trainForInterface(trainX, trainY, arguments)
 

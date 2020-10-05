@@ -355,12 +355,12 @@ To install shogun
         return ret
 
 
-    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
+    def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
+                 customDict):
         toCall = self.findCallable(learnerName)
         learnerDefaults = self._getDefaultValuesBackend(learnerName)[0]
 
-        seed = nimble.random._generateSubsidiarySeed()
-        self.shogun.Math.init_random(seed)
+        self.shogun.Math.init_random(randomSeed)
         # Figure out which argument values are needed for training
         setterArgs = {}
         for name, arg in arguments.items():

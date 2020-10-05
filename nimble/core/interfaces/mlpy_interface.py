@@ -20,6 +20,7 @@ from .universal_interface import PredefinedInterface
 from ._interface_helpers import PythonSearcher
 from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import removeFromTailMatchedLists
+from ._interface_helpers import validInitParams
 
 
 @inheritDocstringsFactory(UniversalInterface)
@@ -36,6 +37,8 @@ class Mlpy(PredefinedInterface, UniversalInterface):
         # modify path if another directory provided
 
         self.mlpy = modifyImportPathAndImport('mlpy', 'mlpy')
+
+        self.randomParam = 'seed'
 
         def isLearner(obj):
             hasLearn = hasattr(obj, 'learn')
@@ -274,7 +277,8 @@ To install mlpy
         return nimble.data(outputType, outputValue, useLog=False)
 
 
-    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
+    def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
+                 customDict):
         # get parameter names
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         learnNames = self._paramQuery('learn', learnerName, ['self'])[0]
@@ -286,9 +290,8 @@ To install mlpy
             customDict['transNames'] = transNames[0]
 
         # pack parameter sets
-        initParams = {name: arguments[name] for name in initNames
-                      if name in arguments}
-        self._addRandomSeedForInit('seed', initNames, initParams)
+        initParams = validInitParams(initNames, arguments, randomSeed,
+                                     self.randomParam)
         learnParams = {}
         for name in learnNames:
             if name in self._XDataAliases:
