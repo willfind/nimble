@@ -40,7 +40,8 @@ class _SciKitLearnAPI(abc.ABC):
         return [objArgs]
 
     def _getLearnerParameterNamesBackend(self, learnerName):
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T', 'raw_documents']
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T', 'raw_documents',
+                  self.randomParam]
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
         predict = self._paramQuery('predict', learnerName, ignore)
@@ -75,7 +76,8 @@ class _SciKitLearnAPI(abc.ABC):
         return [ret]
 
     def _getLearnerDefaultValuesBackend(self, learnerName):
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'raw_documents']
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'raw_documents',
+                  self.randomParam]
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
         predict = self._paramQuery('predict', learnerName, ignore)
@@ -258,11 +260,6 @@ class _SciKitLearnAPI(abc.ABC):
             initDefaults = obj.get_params()
             initParams = list(initDefaults.keys())
             initValues = list(initDefaults.values())
-            if self.randomParam in initParams:
-                index = initParams.index(self.randomParam)
-                negdex = index - len(initParams)
-                seed = nimble.random._generateSubsidiarySeed()
-                initValues[negdex] = seed
             return (initParams, initValues)
         elif not hasattr(namedModule, name):
             return None

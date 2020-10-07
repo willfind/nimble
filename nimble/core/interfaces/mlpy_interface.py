@@ -38,8 +38,6 @@ class Mlpy(PredefinedInterface, UniversalInterface):
 
         self.mlpy = modifyImportPathAndImport('mlpy', 'mlpy')
 
-        self.randomParam = 'seed'
-
         def isLearner(obj):
             hasLearn = hasattr(obj, 'learn')
             hasPred = hasattr(obj, 'pred')
@@ -124,7 +122,7 @@ To install mlpy
 
 
     def _getLearnerParameterNamesBackend(self, learnerName):
-        ignore = self._DataAliases + ['self']
+        ignore = self._DataAliases + ['self', 'seed']
         if learnerName == 'MFastHCluster':
             ignore.remove('t')
         init = self._paramQuery('__init__', learnerName, ignore)
@@ -157,7 +155,7 @@ To install mlpy
 
 
     def _getLearnerDefaultValuesBackend(self, learnerName):
-        ignore = self._DataAliases + ['self']
+        ignore = self._DataAliases + ['self', 'seed']
         init = self._paramQuery('__init__', learnerName, ignore)
         learn = self._paramQuery('learn', learnerName, ignore)
         pred = self._paramQuery('pred', learnerName, ignore)
@@ -290,8 +288,7 @@ To install mlpy
             customDict['transNames'] = transNames[0]
 
         # pack parameter sets
-        initParams = validInitParams(initNames, arguments, randomSeed,
-                                     self.randomParam)
+        initParams = validInitParams(initNames, arguments, randomSeed, 'seed')
         learnParams = {}
         for name in learnNames:
             if name in self._XDataAliases:

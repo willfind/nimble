@@ -30,33 +30,33 @@ class FoldIteratorTester(object):
         self.constructor = constructor
 
     @raises(InvalidArgumentValueCombination)
-    def test_makeFoldIterator_exceptionPEmpty(self):
-        """ Test makeFoldIterator() for InvalidArgumentValueCombination when object is point empty """
+    def test_FoldIterator_exceptionPEmpty(self):
+        """ Test FoldIterator() for InvalidArgumentValueCombination when object is point empty """
         data = [[], []]
         data = numpy.array(data).T
         toTest = self.constructor(data)
         FoldIterator([toTest], 2)
 
     #	@raises(ImproperActionException)
-    #	def test_makeFoldIterator_exceptionFEmpty(self):
-    #		""" Test makeFoldIterator() for ImproperActionException when object is feature empty """
+    #	def test_FoldIterator_exceptionFEmpty(self):
+    #		""" Test FoldIterator() for ImproperActionException when object is feature empty """
     #		data = [[],[]]
     #		data = numpy.array(data)
     #		toTest = self.constructor(data)
-    #		makeFoldIterator([toTest],2)
+    #		FoldIterator([toTest],2)
 
 
     @raises(InvalidArgumentValue)
-    def test_makeFoldIterator_exceptionTooManyFolds(self):
-        """ Test makeFoldIterator() for exception when given too many folds """
+    def test_FoldIterator_exceptionTooManyFolds(self):
+        """ Test FoldIterator() for exception when given too many folds """
         data = [[1], [2], [3], [4], [5]]
         names = ['col']
         toTest = self.constructor(data, names)
         FoldIterator([toTest, toTest], 6)
 
 
-    def test_makeFoldIterator_verifyPartitions(self):
-        """ Test makeFoldIterator() yields the correct number folds and partitions the data """
+    def test_FoldIterator_verifyPartitions(self):
+        """ Test FoldIterator() yields the correct number folds and partitions the data """
         data = [[1], [2], [3], [4], [5]]
         names = ['col']
         toTest = self.constructor(data, names)
@@ -77,8 +77,8 @@ class FoldIteratorTester(object):
         fold1Train.points.append(fold1Test)
         fold2Train.points.append(fold2Test)
 
-    def test_makeFoldIterator_verifyPartitions_Unsupervised(self):
-        """ Test makeFoldIterator() yields the correct number folds and partitions the data, with a None data """
+    def test_FoldIterator_verifyPartitions_Unsupervised(self):
+        """ Test FoldIterator() yields the correct number folds and partitions the data, with a None data """
         data = [[1], [2], [3], [4], [5]]
         names = ['col']
         toTest = self.constructor(data, names)
@@ -105,8 +105,8 @@ class FoldIteratorTester(object):
         assert fold2NoneTest is None
 
 
-    def test_makeFoldIterator_verifyMatchups(self):
-        """ Test makeFoldIterator() maintains the correct pairings when given multiple data objects """
+    def test_FoldIterator_verifyMatchups(self):
+        """ Test FoldIterator() maintains the correct pairings when given multiple data objects """
         data0 = [[1], [2], [3], [4], [5], [6], [7]]
         toTest0 = self.constructor(data0)
 
@@ -158,6 +158,24 @@ class FoldIteratorTester(object):
                 for index in range(len(test.points)):
                     assert fabs(test[index, 0]) == fabs(testList[0][index, 0])
 
+    def test_FoldIterator_foldSizes(self):
+        """ Test that the size of each fold created by FoldIterator matches expectations """
+        data1 = self.constructor(numpy.random.random((98, 10)))
+        data2 = self.constructor(numpy.ones((98, 1)))
+        folds = FoldIterator([data1, data2], 10)
+
+        # first 8 folds should have 10, last 2 folds should have 9
+        for i, fold in enumerate(folds):
+            ((trainX, testX), (trainY, testY)) = fold
+            if i < 8:
+                exp = 10
+            else:
+                exp = 9
+
+            assert len(trainX.points) == 98 - exp
+            assert len(testX.points) == exp
+            assert len(trainY.points) == 98 - exp
+            assert len(testY.points) == exp
 
 class TestList(FoldIteratorTester):
     def __init__(self):

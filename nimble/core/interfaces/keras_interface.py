@@ -50,8 +50,6 @@ class Keras(PredefinedInterface, UniversalInterface):
         except ImportError:
             self.keras = modifyImportPathAndImport('keras', 'keras')
 
-        self.randomParam = 'seed'
-
         # keras 2.0.8 has no __all__
         names = os.listdir(self.keras.__path__[0])
         possibilities = []
@@ -81,7 +79,6 @@ class Keras(PredefinedInterface, UniversalInterface):
                 return False
 
             return True
-
 
         self._searcher = PythonSearcher(self.keras, isLearner, 2)
 
@@ -153,7 +150,7 @@ To install keras
         return [objArgs]
 
     def _getLearnerParameterNamesBackend(self, learnerName):
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T']
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T', 'seed']
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
         fitGenerator = self._paramQuery('fit_generator', learnerName, ignore)
@@ -180,7 +177,7 @@ To install keras
         return [ret]
 
     def _getLearnerDefaultValuesBackend(self, learnerName):
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'T']
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'seed']
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
         fitGenerator = self._paramQuery('fit_generator', learnerName, ignore)
@@ -315,7 +312,7 @@ To install keras
         isSparse = isinstance(trainX, nimble.core.data.Sparse)
 
         if self._tfVersion2:
-            checkArgsForRandomParam(arguments, self.randomParam)
+            checkArgsForRandomParam(arguments, 'seed')
             self.tensorflow.random.set_seed(randomSeed)
         # keras 2.2.5+ fit_generator functionality merged into fit.
         # fit_generator may be removed, but will be used when possible

@@ -129,7 +129,7 @@ class PythonSearcher(object):
         return None
 
 
-def checkClassificationStrategy(interface, learnerName, algArgs):
+def checkClassificationStrategy(interface, learnerName, algArgs, seed):
     """
     Helper to determine the classification strategy used for a given
     learner called using the given interface with the given args. Runs a
@@ -145,7 +145,8 @@ def checkClassificationStrategy(interface, learnerName, algArgs):
     dataTest = [[0, 0], [-100, 0], [100, 0], [0, -100], [0, 100]]
     testObj = nimble.data("Matrix", dataTest, useLog=False)
 
-    tlObj = interface.train(learnerName, xObj, yObj, arguments=algArgs)
+    tlObj = interface.train(learnerName, xObj, yObj, arguments=algArgs,
+                            randomSeed=seed)
     applyResults = tlObj.apply(testObj, arguments=algArgs, useLog=False)
     (_, _, testTrans, _) = interface._inputTransformation(
         learnerName, None, None, testObj, algArgs, tlObj._customDict)
@@ -641,8 +642,23 @@ def validInitParams(initNames, arguments, randomSeed, randomParam):
     checkArgsForRandomParam(arguments, randomParam)
     initParams = {name: arguments[name] for name in initNames
                   if name in arguments}
-    if randomParam is not None:
-        if (randomParam in initNames and randomParam not in initParams):
-            initParams[randomParam] = randomSeed
+    if randomParam in initNames:
+        initParams[randomParam] = randomSeed
 
     return initParams
+
+def getValidSeed(seed, interface):
+    if seed is None:
+        seed = nimble.random._generateSubsidiarySeed()
+    elif not isinstance(seed, int):
+        raise InvalidArgumentType('seed must be an integer')
+    elif interface.lower() == 'shogun' and seed == 0:
+        msg = "The seed 0 does not generate reproducible results in shogun. "
+        msg += "Set randomSeed such that 1<=randomSeed<=4294967295."
+        raise InvalidArgumentValue(msg)
+    elif not 0 <= seed <= (2 ** 32) - 1:
+        msg = 'randomSeed is required to be an unsigned 32 bit integer. '
+        msg += 'Set randomSeed such that 0<=randomSeed<=4294967295.'
+        raise InvalidArgumentValue(msg)
+
+    return seed

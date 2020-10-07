@@ -32,7 +32,7 @@ from ._interface_helpers import (
     ovaNotOvOFormatted, checkClassificationStrategy, cacheWrapper,
     generateAllPairs, countWins, extractWinningPredictionIndex,
     extractWinningPredictionLabel, extractWinningPredictionIndexAndScore,
-    extractConfidenceScores)
+    extractConfidenceScores, getValidSeed)
 
 
 def captureOutput(toWrap):
@@ -84,10 +84,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             msg = "Improper implementation of getCanonicalName(), must return "
             msg += "a string"
             raise TypeError(msg)
-
-        # randomParam
-        if not hasattr(self, 'randomParam'):
-            self.randomParam = None
 
         # _configurableOptionNames and _optionDefaults
         optionNames = self._configurableOptionNames()
@@ -186,6 +182,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             The results of any cross-validation performed prior to
             training.
         """
+        randomSeed = getValidSeed(randomSeed, self.getCanonicalName())
         if multiClassStrategy != 'default':
             # TODO reevaluate use of checkClassificationStrategy, the if
             # statements below expect a string output but it looks to output
@@ -280,8 +277,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
     @captureOutput
     def _train(self, learnerName, trainX, trainY, arguments, randomSeed,
                crossValidationResults):
-        if randomSeed is None:
-            randomSeed = nimble.random._generateSubsidiarySeed()
         packedBackend = self._trainBackend(learnerName, trainX, trainY,
                                            arguments, randomSeed)
         trainedBackend, transformedInputs, customDict = packedBackend
@@ -947,6 +942,9 @@ class TrainedLearner(object):
         The name of the learner used for training.
     arguments : dict
         The original arguments passed to the learner.
+    randomSeed : int
+        The random seed used for the learner. Only applicable if the
+        learner utilizes randomness.
     crossValidation : KFoldCrossValidator
         The object containing the cross-validation results, provided
         cross-validation occurred.  See the Attributes section in
@@ -993,21 +991,21 @@ class TrainedLearner(object):
         trainXShape : tuple
             The shape, (numPts, numFts), of the trainX object.
         randomSeed : int
-           Set a random seed for the operation. When not None, allows for
-           reproducible results for each function call. Ignored if learner
-           does not depend on randomness.
+           The random seed to use (when applicable). Also supports
+           logging the randomSeed for top-level functions.
         """
         self.learnerName = learnerName
         self.arguments = arguments
+        self.randomSeed = randomSeed
+        self.crossValidation = crossValidationResults
+
         self._transformedArguments = transformedArguments
         self._customDict = customDict
         self._backend = backend
         self._interface = interfaceObject
         self._has2dOutput = has2dOutput
-        self.crossValidation = crossValidationResults
         self._trainXShape = trainXShape
         self._trainYNames = trainYNames
-        self._randomSeed = randomSeed
 
         exposedFunctions = self._interface._exposedFunctions()
         for exposed in exposedFunctions:
@@ -1424,7 +1422,7 @@ class TrainedLearner(object):
 
         trainedBackend = self._interface._trainBackend(
             self.learnerName, trainX, trainY, self._transformedArguments,
-            self._randomSeed)
+            self.randomSeed)
 
         newBackend = trainedBackend[0]
         transformedInputs = trainedBackend[1]
@@ -1478,7 +1476,7 @@ class TrainedLearner(object):
 
         handleLogging(useLog, 'run', 'TrainedLearner.incrementalTrain', trainX,
                       trainY, None, None, self.learnerName, self.arguments,
-                      None)
+                      None, None)
 
     @captureOutput
     def getAttributes(self):
@@ -1535,7 +1533,7 @@ class TrainedLearner(object):
             strategy = ovaNotOvOFormatted(rawScores, applyResults, numLabels)
         else:
             strategy = checkClassificationStrategy(
-                self._interface, self.learnerName, arguments)
+                self._interface, self.learnerName, arguments, self.randomSeed)
         # want the scores to be per label, regardless of the original format,
         # so we check the strategy, and modify it if necessary
         if not strategy:
@@ -1661,6 +1659,7 @@ class TrainedLearners(TrainedLearner):
         trainedLearnerAttrs = trainedLearners[0]
         learnerName = trainedLearnerAttrs.learnerName
         arguments = trainedLearnerAttrs.arguments
+        randomSeed = trainedLearnerAttrs.randomSeed
         transformedArguments = trainedLearnerAttrs._transformedArguments
         customDict = trainedLearnerAttrs._customDict
         backend = trainedLearnerAttrs._backend
@@ -1669,7 +1668,6 @@ class TrainedLearners(TrainedLearner):
         crossValidationResults = trainedLearnerAttrs.crossValidation
         trainXShape = trainedLearnerAttrs._trainXShape
         trainYNames = trainedLearnerAttrs._trainYNames
-        randomSeed = trainedLearnerAttrs._randomSeed
 
         super(TrainedLearners, self).__init__(
             learnerName, arguments, transformedArguments, customDict, backend,
