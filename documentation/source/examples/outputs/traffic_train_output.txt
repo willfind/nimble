@@ -1,6 +1,6 @@
 REGEX: sklearn.LinearRegression root mean square error: 1795\.95030555802[0-9]+
 REGEX: sklearn.Ridge root mean square error: 1795\.953098977253[0-9]+
-REGEX: sklearn.Lasso root mean square error: 1795\.959575612550[0-9]+
+REGEX: sklearn.Lasso root mean square error: 1795\.95957561255[0-9]+
 REGEX: sklearn.KNeighborsRegressor root mean square error: 799\.34429543600[0-9]+
 REGEX: sklearn.RandomForestRegressor root mean square error: 325\.081475103503[0-9]+
 REGEX: \{'n_neighbors': 1, 'rootMeanSquareError': 1031\.576793691927[0-9]+\}

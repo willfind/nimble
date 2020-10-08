@@ -629,16 +629,20 @@ class Base(object):
 
         mapping = {}
         def applyMap(ft):
-            uniqueVals = ft.countUniqueElements()
             integerValue = 0
-            if 0 in uniqueVals:
-                mapping[0] = 0
-                integerValue = 1
-
             mapped = []
             for val in ft:
                 if val in mapping:
                     mapped.append(mapping[val])
+                elif val == 0:
+                    # will preserve zeros if present in the feature
+                    # increment all values that occurred before this zero
+                    for key in mapping:
+                        mapping[key] += 1
+                    mapped = [v + 1 for v in mapped]
+                    integerValue += 1
+                    mapping[0] = 0
+                    mapped.append(0)
                 else:
                     mapped.append(integerValue)
                     mapping[val] = integerValue
@@ -2370,8 +2374,8 @@ class Base(object):
                             maxColumnWidth))
 
     @limitedTo2D
-    def plot(self, includeColorbar=False, outPath=None, show=True,
-             title=True, xAxisLabel=True, yAxisLabel=True, **kwargs):
+    def plotHeatMap(self, includeColorbar=False, outPath=None, show=True,
+                    title=True, xAxisLabel=True, yAxisLabel=True, **kwargs):
         """
         Display a plot of the data.
 
@@ -2697,7 +2701,7 @@ class Base(object):
                    outPath, show, figureName, title, xAxisLabel, yAxisLabel,
                    xMin, xMax, yMin, yMax, **kwargs):
         fig, ax = plotFigureHandling(figureName)
-        plotUpdateAxisLimits(ax, xMin, xMax, None, None)
+        plotUpdateAxisLimits(ax, xMin, xMax, yMin, yMax)
 
         xAxisObj = self._getAxis(xAxis)
         yAxisObj = self._getAxis(yAxis)

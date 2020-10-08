@@ -35,6 +35,25 @@ trainYAliases = ['trainlab', 'lab', 'labs', 'labels', 'training_labels',
 # kernel : k, kernel
 # distance : d
 
+class _ShogunRandom:
+    """
+    Wrap shogun's randomness object to make adjustments that allow it
+    to work with nimble randomness control.
+    """
+    def __init__(self, shogunRandom):
+        self.shogunRandom = shogunRandom
+        self.setSeed(42)
+
+    def setSeed(self, seed):
+        if seed is None:
+            self.shogunRandom.init_random(int(numpy.random.randint(2 ** 32)))
+        else:
+            self.shogunRandom.init_random(seed)
+
+    def getSeed(self):
+        return self.shogunRandom.get_seed()
+
+
 @inheritDocstringsFactory(UniversalInterface)
 class Shogun(PredefinedInterface, UniversalInterface):
     """
@@ -43,6 +62,12 @@ class Shogun(PredefinedInterface, UniversalInterface):
 
     def __init__(self):
         self.shogun = modifyImportPathAndImport('shogun', 'shogun')
+        # setup handling for shogun randomness
+        shogunRandom = _ShogunRandom(self.shogun.Math)
+        randomInfo = {'state': None,
+                      'methods': ('setSeed', 'getSeed', 'setSeed')}
+        nimble.random._saved[shogunRandom] = randomInfo
+
         self.versionString = None
 
         def isLearner(obj):
@@ -64,17 +89,17 @@ class Shogun(PredefinedInterface, UniversalInterface):
             # needs more to be able to distinguish between things that are
             # runnable and partial implementations. get_machine_problem_type()?
             try:
-                instantiated = obj()
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore', RuntimeWarning)
+                    instantiated = obj()
                 instantiated.get_machine_problem_type()
             except (SystemError, TypeError):
                 return False
 
             return True
 
-        self.hasAll = hasattr(self.shogun, '__all__')
-        contents = self.shogun.__all__ if self.hasAll else dir(self.shogun)
-        self._searcher = PythonSearcher(self.shogun, contents, {}, isLearner,
-                                        2)
+        self._hasAll = hasattr(self.shogun, '__all__')
+        self._searcher = PythonSearcher(self.shogun, isLearner, 2)
 
         super(Shogun, self).__init__()
 
@@ -89,7 +114,7 @@ class Shogun(PredefinedInterface, UniversalInterface):
         # If shogun has an __all__ attribute, it is in the old style of
         # organization, where things are separated into submodules. They need
         # to be loaded before access.
-        if self.hasAll:
+        if self._hasAll:
             if hasattr(self.shogun, module):
                 submod = getattr(self.shogun, module)
             else:
@@ -243,7 +268,7 @@ To install shogun
         return scoresPerPoint
 
     def _getScoresOrder(self, learner):
-        return learner.get_unique_labels
+        return learner.UIgetScoreOrder
 
 
     def _findCallableBackend(self, name):
@@ -379,8 +404,13 @@ To install shogun
         # TODO online training prep learner.start_train()
         # batch training if data is passed
         if trainY is not None:
-            learner.get_unique_labels = numpy.unique(trainY.get_labels())
-            customDict['numLabels'] = len(learner.get_unique_labels)
+            labelOrder = numpy.unique(trainY.get_labels())
+            if customDict['remap'] is None:
+                learner.UIgetScoreOrder = labelOrder
+            else:
+                remap = customDict['remap']
+                learner.UIgetScoreOrder = [remap[v] for v in labelOrder]
+            customDict['numLabels'] = len(learner.UIgetScoreOrder)
 
         return learner
 

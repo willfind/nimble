@@ -5,14 +5,16 @@ Cannot test for expected result equality due to inability to control for
 randomness in Keras.
 """
 import functools
+import warnings
 
 import numpy as np
-from nose.tools import raises
+from nose.tools import raises, with_setup
 
 import nimble
 from nimble.core.interfaces.keras_interface import Keras
 from nimble.exceptions import InvalidArgumentValue
 from nimble._utility import DeferredModuleImport
+from nimble.random import _startAlternateControl, _endAlternateControl
 from .skipTestDecorator import SkipMissing
 from tests.helpers import logCountAssertionFactory, noLogEntryExpected
 
@@ -51,7 +53,7 @@ def test_Keras_version():
     assert interface.version() == version
 
 @keraSkipDec
-@logCountAssertionFactory(6)
+@logCountAssertionFactory(16)
 @chooseOptimizer
 def testKerasAPI(optimizer):
     """
@@ -251,3 +253,64 @@ def testKeras_fitOnlyParametersDisallowedForSparse(optimizer):
                        optimizer=optimizer, layers=layers,
                        loss='binary_crossentropy', metrics=['accuracy'],
                        epochs=2, steps_per_epoch=20, shuffle=True)
+
+
+@with_setup(_startAlternateControl, _endAlternateControl)
+@keraSkipDec
+@noLogEntryExpected
+@chooseOptimizer
+def testKerasReproducibility(optimizer):
+    tfVersion1 = False
+    try:
+        from tensorflow import __version__
+        if __version__[:2] == '1.':
+            tfVersion1 = True
+    except ImportError:
+        pass
+
+    if tfVersion1:
+        # can't control randomness in this version. For testing, keras has
+        # already been loaded, but by instantiating a new Keras instance we can
+        # check that the warning will be displayed when users first use keras
+        with warnings.catch_warnings(record=True) as rec:
+            _ = nimble.core.interfaces.keras_interface.Keras()
+            start = "Randomness is outside of Nimble's control"
+            assert rec and str(rec[0].message).startswith(start)
+    else:
+        # for version2 we expect reproducibility
+        nimble.random.setSeed(1234, useLog=False)
+        x_data = nimble.random.numpyRandom.random((1000, 20))
+        y_data = nimble.random.numpyRandom.randint(2, size=(1000, 1))
+        x_train = nimble.data('Matrix', x_data, useLog=False)
+        y_train = nimble.data('Matrix', y_data, convertToType=float, useLog=False)
+
+        layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
+        layer1 = nimble.Init('Dropout', rate=0.5)
+        layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
+        layers = [layer0, layer1, layer2]
+
+        mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
+                           layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
+                           epochs=20, batch_size=128, useLog=False)
+
+        applied1 = mym.apply(testX=x_train, useLog=False)
+
+
+        nimble.random.setSeed(1234, useLog=False)
+        x_data = nimble.random.numpyRandom.random((1000, 20))
+        y_data = nimble.random.numpyRandom.randint(2, size=(1000, 1))
+        x_train = nimble.data('Matrix', x_data, useLog=False)
+        y_train = nimble.data('Matrix', y_data, convertToType=float, useLog=False)
+
+        layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
+        layer1 = nimble.Init('Dropout', rate=0.5)
+        layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
+        layers = [layer0, layer1, layer2]
+
+        mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
+                           layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
+                           epochs=20, batch_size=128, useLog=False)
+
+        applied2 = mym.apply(testX=x_train, useLog=False)
+
+        assert applied1 == applied2

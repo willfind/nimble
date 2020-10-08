@@ -958,7 +958,7 @@ def convertToNumpyOrder(order):
 
 def pyplotRequired(func):
     """
-    Wrap plotting functions to check that matplotlib.pylot is accessible.
+    Wrap plot functions to check that matplotlib.pylot is accessible.
     """
     @wraps(func)
     def wrapped(*args, **kwargs):
@@ -969,6 +969,12 @@ def pyplotRequired(func):
     return wrapped
 
 def plotFigureHandling(figureName):
+    """
+    Provide the figure and axis for the plot.
+
+    Use the stored figure and axis if the figureName exists, otherwise
+    generate a new figure and axis.
+    """
     figures = nimble.core.data._plotFigures
     if figureName and figureName in figures:
         return figures[figureName]
@@ -976,17 +982,17 @@ def plotFigureHandling(figureName):
     fig, ax = plt.subplots()
     # tight_layout automatically adjusts margins to accommodate labels
     fig.set_tight_layout(True)
-    # ax.set_[xy]lims will set the upper and lower limits even if only one is
-    # specified. This is problematic for multiple plots because subsequent
-    # plots are restricted to both limits when one of the limits should still
-    # be dynamic. Setting a _nimbleAxisLimits attribute is a workaround to
-    # set the limits the user wants to set while keeping the others dynamic
+    # Setting a _nimbleAxisLimits attribute is a workaround for properly
+    # setting figure axis limits. See plotUpdateAxisLimits docstring.
     ax._nimbleAxisLimits = [None, None, None, None]
     if figureName is not None:
         figures[figureName] = fig, ax
     return fig, ax
 
 def plotOutput(outPath, show):
+    """
+    Save and/or display a figure, if necessary.
+    """
     if outPath is not None:
         outFormat = None
         if isinstance(outPath, str):
@@ -1001,6 +1007,9 @@ def plotOutput(outPath, show):
         nimble.core.data._plotFigures = {}
 
 def plotAxisLabels(ax, xAxisLabel, xLabelIfTrue, yAxisLabel, yLabelIfTrue):
+    """
+    Helper for setting the axis labels on a figure.
+    """
     if xAxisLabel is True:
         xAxisLabel = xLabelIfTrue
     if xAxisLabel is False:
@@ -1013,23 +1022,52 @@ def plotAxisLabels(ax, xAxisLabel, xLabelIfTrue, yAxisLabel, yLabelIfTrue):
     ax.set_ylabel(yAxisLabel)
 
 def plotUpdateAxisLimits(ax, xMin, xMax, yMin, yMax):
+    """
+    Internally tracks the user-defined axis limit values.
+
+    This must be called BEFORE the plot is generated.
+    When plotting multiple plots on the same figure, there can be figure
+    axis limits that are defined based on previous plots but should be
+    dynamic. See plotAxisLimits docstring. This may prohibit data in the
+    additional plots from displaying. Instead, we store any user values
+    and ensure that matplotlib can adjust the limit values automatically
+    to accommodate all of the data. After the plot is generated, we
+    apply any user-defined limits with a call to plotAxisLimits.
+    """
     if xMin is not None:
         ax._nimbleAxisLimits[0] = xMin
     if xMax is not None:
         ax._nimbleAxisLimits[1] = xMax
     if yMin is not None:
-        ax._nimbleAxisLimits[0] = yMin
+        ax._nimbleAxisLimits[2] = yMin
     if yMax is not None:
-        ax._nimbleAxisLimits[1] = yMax
+        ax._nimbleAxisLimits[3] = yMax
     ax.set_xlim(auto=True)
     ax.set_ylim(auto=True)
 
 def plotAxisLimits(ax):
+    """
+    Apply user-defined axis limits.
+
+    This must be called AFTER the plot is generated.
+    Calls to ax.set_[xy]limit will apply defined limits for the axis
+    even if one parameter is set to None. This is problematic for
+    additional plots on the same figure because we want None to indicate
+    that a specific axis limit is still dynamic. For this reason, we use
+    plotUpdateAxisLimits before generating the plot to allow the figure
+    limits to remain dynamic when adding plots. Then apply the limits
+    defined by the user after the plot has been added to the figure.
+    """
     xMin, xMax, yMin, yMax = ax._nimbleAxisLimits
-    ax.set_xlim(left=xMin, right=xMax)
-    ax.set_ylim(bottom=yMin, top=yMax)
+    if xMin is not None or xMax is not None:
+        ax.set_xlim(left=xMin, right=xMax)
+    if yMin is not None or yMax is not None:
+        ax.set_ylim(bottom=yMin, top=yMax)
 
 def plotXTickLabels(ax, fig, names, numTicks):
+    """
+    Helper for setting and orienting the labels for x ticks.
+    """
     xtickMax = max(len(name) for name in names)
     # 1 unit of figwidth can contain 9 characters
     tickWidth = int(fig.get_figwidth() / numTicks * 9)
@@ -1039,6 +1077,9 @@ def plotXTickLabels(ax, fig, names, numTicks):
         ax.set_xticklabels(names)
 
 def plotConfidenceIntervalMeanAndError(feature):
+    """
+    Helper for calculating the mean and error for error bar charts.
+    """
     if not scipy.nimbleAccessible():
         msg = 'scipy must be installed for confidence intervals.'
         raise PackageException(msg)
@@ -1051,6 +1092,9 @@ def plotConfidenceIntervalMeanAndError(feature):
     return mean, error
 
 def plotErrorBars(ax, axisRange, means, errors, horizontal, **kwargs):
+    """
+    Helper for plotting an error bar chart.
+    """
     if 'fmt' not in kwargs:
         kwargs['fmt'] ='o'
     if 'capsize' not in kwargs:
@@ -1062,12 +1106,18 @@ def plotErrorBars(ax, axisRange, means, errors, horizontal, **kwargs):
         ax.errorbar(x=axisRange, y=means, yerr=errors, **kwargs)
 
 def plotSingleBarChart(ax, axisRange, heights, horizontal, **kwargs):
+    """
+    Helper for plotting a single bar chart.
+    """
     if horizontal:
         ax.barh(axisRange, heights, **kwargs)
     else:
         ax.bar(axisRange, heights, **kwargs)
 
 def plotMultiBarChart(ax, heights, horizontal, legendTitle, **kwargs):
+    """
+    Helper for plotting a multiple bar chart.
+    """
     # need to manually handle some kwargs with subgroups
     if 'width' in kwargs:
         width = kwargs['width']

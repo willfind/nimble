@@ -129,7 +129,7 @@ class _SciKitLearnAPI(abc.ABC):
 
 
     def _getScoresOrder(self, learner):
-        return learner.UIgetScoreOrder()
+        return learner.UIgetScoreOrder
 
 
     def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
@@ -146,10 +146,7 @@ class _SciKitLearnAPI(abc.ABC):
                 allLabels = learner.predict(trainX)
                 labelOrder = numpy.unique(allLabels)
 
-            def UIgetScoreOrder():
-                return labelOrder
-
-            learner.UIgetScoreOrder = UIgetScoreOrder
+            learner.UIgetScoreOrder = labelOrder
 
         return learner
 

@@ -12,7 +12,8 @@ from nimble import match
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._utility import mergeArguments
-from nimble.core.logger import handleLogging, startTimer, stopTimer
+from nimble.core.logger import handleLogging, loggingEnabled, deepLoggingEnabled
+from nimble.core.logger import startTimer, stopTimer
 from nimble.core._learnHelpers import findBestInterface
 from nimble.core._learnHelpers import _learnerQuery
 from nimble.core._learnHelpers import _validScoreMode
@@ -180,7 +181,10 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     Calls on the functionality of a package to train on some data and
     then modify ``trainX`` and ``testX`` (if provided) according to the
-    results of the trained model.
+    results of the trained model. The name of the learner will be added
+    to each normalized object's ``name`` attribute to indicate the
+    normalization that has been applied. Point and feature names are
+    preserved when possible.
 
     Parameters
     ----------
@@ -220,15 +224,17 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     --------
     Normalize a single data set.
 
-    >>> data = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
-    >>> trainX = nimble.data("Matrix", data)
-    >>> orig = trainX.copy()
-    >>> nimble.normalizeData('scikitlearn.PCA', trainX, n_components=2)
+    >>> data = [[20, 1.97, 89], [28, 1.87, 75], [24, 1.91, 81]]
+    >>> trainX = nimble.data("Matrix", data, pointNames=['a', 'b', 'c'],
+    ...                      featureNames=['age', 'height', 'weight'])
+    >>> nimble.normalizeData('scikitlearn.StandardScaler', trainX)
     >>> trainX
     Matrix(
-        [[-0.216 0.713 ]
-         [-1.005 -0.461]
-         [1.221  -0.253]]
+        [[-1.225 1.298  1.279 ]
+         [1.225  -1.136 -1.162]
+         [0.000  -0.162 -0.116]]
+        pointNames={'a':0, 'b':1, 'c':2}
+        featureNames={'age':0, 'height':1, 'weight':2}
         )
 
     Normalize training and testing data.
@@ -239,7 +245,12 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     >>> testX = nimble.data("Matrix", data2)
     >>> nimble.normalizeData('scikitlearn.PCA', trainX, testX=testX,
     ...                      n_components=2)
-    >>> # trainX is the same as above example.
+    >>> trainX
+    Matrix(
+        [[-0.216 0.713 ]
+         [-1.005 -0.461]
+         [1.221  -0.253]]
+        )
     >>> testX
     Matrix(
         [[-1.739 2.588]]
@@ -256,16 +267,21 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     if normalizedTrain.getTypeString() != trainX.getTypeString():
         normalizedTrain = normalizedTrain.copy(to=trainX.getTypeString())
 
-    if testX is not None:
-        normalizedTest = tl.apply(testX, useLog=False)
-        if normalizedTest.getTypeString() != testX.getTypeString():
-            normalizedTest = normalizedTest.copy(to=testX.getTypeString())
+    if len(normalizedTrain.features) == len(trainX.features):
+        trainXFtNames = trainX.features._getNamesNoGeneration()
+        normalizedTrain.features.setNames(trainXFtNames, useLog=False)
 
-    # modify references and names for trainX and testX
     trainX.referenceDataFrom(normalizedTrain, useLog=False)
     trainX.name = trainX.name + " " + trueLearnerName
 
     if testX is not None:
+        normalizedTest = tl.apply(testX, useLog=False)
+        if normalizedTest.getTypeString() != testX.getTypeString():
+            normalizedTest = normalizedTest.copy(to=testX.getTypeString())
+        if len(normalizedTest.features) == len(testX.features):
+            testXFtNames = testX.features._getNamesNoGeneration()
+            normalizedTest.features.setNames(testXFtNames, useLog=False)
+
         testX.referenceDataFrom(normalizedTest, useLog=False)
         testX.name = testX.name + " " + trueLearnerName
 
@@ -1400,6 +1416,7 @@ class KFoldCrossValidator(object):
 
         # Folding should be the same for each argset (and is expensive) so
         # iterate over folds first
+        deepLog = loggingEnabled(useLog) and deepLoggingEnabled()
         for fold in foldIter:
             [(curTrainX, curTestingX), (curTrainY, curTestingY)] = fold
             argSetIndex = 0
@@ -1407,12 +1424,16 @@ class KFoldCrossValidator(object):
             # given this fold, do a run for each argument combination
             for curArgumentCombination in argumentCombinationIterator:
                 #run algorithm on the folds' training and testing sets
+                timer = startTimer(useLog)
                 curRunResult = nimble.trainAndApply(
                     learnerName=self.learnerName, trainX=curTrainX,
                     trainY=curTrainY, testX=curTestingX,
                     arguments=curArgumentCombination, scoreMode=self.scoreMode,
                     useLog=False)
-
+                time = stopTimer(timer)
+                handleLogging(deepLog, "runCV", "trainAndApply", curTrainX,
+                              curTrainY, curTestingX, None, self.learnerName,
+                              curArgumentCombination, time=time)
                 performanceOfEachCombination[argSetIndex][0] = (
                     curArgumentCombination)
 

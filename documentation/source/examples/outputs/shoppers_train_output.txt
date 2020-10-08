@@ -1,5 +1,4 @@
 REGEX: cluster[0-3] contains [0-9]+ visits \([0-9]{1,2}\.[0-9]{1,2}%\)
 REGEX: cluster[0-3] contains [0-9]+ visits \([0-9]{1,2}\.[0-9]{1,2}%\)
 REGEX: cluster[0-3] contains [0-9]+ visits \([0-9]{1,2}\.[0-9]{1,2}%\)
-REGEX: cluster[0-3] contains [0-9]+ visits \([0-9]{1,2}\.[0-9]{1,2}%\)
 

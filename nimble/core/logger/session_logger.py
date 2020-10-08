@@ -18,7 +18,7 @@ Level 3: Cross validation
 """
 
 import os
-import time
+from time import strftime
 import inspect
 import re
 import sqlite3
@@ -176,7 +176,7 @@ class SessionLogger(object):
         self.logTypes = {'load': self.logLoad, 'prep': self.logPrep,
                          'run': self.logRun, 'data': self.logData,
                          'crossVal': self.logCrossValidation,
-                         'setSeed': self.logRandomSeed}
+                         'runCV': self.logRunCV, 'setSeed': self.logRandomSeed}
 
 
     def setup(self, newFileName=None):
@@ -263,7 +263,7 @@ class SessionLogger(object):
         if not self.isAvailable:
             self.setup(self.logFileName)
 
-        timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = strftime('%Y-%m-%d %H:%M:%S')
         sessionNum = self.sessionNumber
         logInfo = repr(logInfo)
         statement = "INSERT INTO logger "
@@ -325,7 +325,7 @@ class SessionLogger(object):
         path : str
             The path to the data in the loaded object.
         """
-        if enableLogging(useLog):
+        if loggingEnabled(useLog):
             logType = "load"
             logInfo = {}
             logInfo["returnType"] = returnType
@@ -354,7 +354,7 @@ class SessionLogger(object):
             The information generated during the call to the report
             function.
         """
-        if enableLogging(useLog):
+        if loggingEnabled(useLog):
             logType = "data"
             logInfo = {}
             logInfo["reportType"] = reportType
@@ -381,7 +381,7 @@ class SessionLogger(object):
         arguments : dict
             A mapping of the argument name to the argument's value.
         """
-        if enableLogging(useLog):
+        if loggingEnabled(useLog):
             logType = "prep"
             logInfo = {}
             logInfo["function"] = nimbleFunction
@@ -391,44 +391,10 @@ class SessionLogger(object):
 
             self.log(logType, logInfo)
 
-    def logRun(self, useLog, nimbleFunction, trainData, trainLabels, testData,
-               testLabels, learnerFunction, arguments, metrics=None,
-               extraInfo=None, time=None):
-        """
-        Log information about each run.
-
-        If this will be logged, store an entry in the database with
-        "run" as the logType and a dictionary (stored as a string) of
-        the learner function called and its arguments as the logInfo.
-
-        Parameters
-        ----------
-        nimbleFunction : str
-            The name of the nimble function called.
-        trainData : nimble data object
-            The object containing the training data.
-        trainLabels : nimble data object, int
-            The object or feature in ``trainData`` containing the
-            training labels.
-        testData : nimble data object
-            The object containing the testing data.
-        testLabels : nimble data object, int
-            The object or feature in ``testData`` containing the
-            training labels.
-        learnerFunction : str
-            The name of learner function.
-        arguments : dict
-            The arguments passed to the learner.
-        metrics : dict
-            The results of the testing on a run.
-        extraInfo: dict
-            Any extra information to add to the log. Typically provides
-            the best parameters from cross validation.
-        time : float, None
-            The time to run the function. None if function is not timed.
-        """
-        if enableLogging(useLog):
-            logType = "run"
+    def _logRun(self, logType, useLog, nimbleFunction, trainData, trainLabels,
+                testData, testLabels, learnerFunction, arguments, metrics,
+                extraInfo, time):
+        if loggingEnabled(useLog):
             logInfo = {}
             logInfo["function"] = nimbleFunction
             if isinstance(learnerFunction, str):
@@ -474,7 +440,8 @@ class SessionLogger(object):
                 logInfo["testLabelsPoints"] = len(testLabels.points)
                 logInfo["testLabelsFeatures"] = len(testLabels.features)
 
-            if arguments is not None and arguments != {}:
+            if arguments is not None and arguments:
+                arguments = arguments.copy() # don't modify original dict
                 for name, value in arguments.items():
                     try:
                         literal_eval(repr(value))
@@ -484,16 +451,96 @@ class SessionLogger(object):
                         arguments[name] = repr(value)
                 logInfo['arguments'] = arguments
 
-            if metrics is not None and metrics != {}:
+            if metrics is not None and metrics:
                 logInfo["metrics"] = metrics
 
-            if extraInfo is not None and extraInfo != {}:
+            if extraInfo is not None and extraInfo:
                 logInfo["extraInfo"] = extraInfo
 
             if time:
                 logInfo["time"] = time
 
             self.log(logType, logInfo)
+
+    def logRun(self, useLog, nimbleFunction, trainData, trainLabels, testData,
+               testLabels, learnerFunction, arguments, metrics=None,
+               extraInfo=None, time=None):
+        """
+        Log information about each run.
+
+        If this will be logged, store an entry in the database with
+        "run" as the logType and a dictionary (stored as a string) of
+        the learner function called and its arguments as the logInfo.
+
+        Parameters
+        ----------
+        nimbleFunction : str
+            The name of the nimble function called.
+        trainData : nimble data object
+            The object containing the training data.
+        trainLabels : nimble data object, int
+            The object or feature in ``trainData`` containing the
+            training labels.
+        testData : nimble data object
+            The object containing the testing data.
+        testLabels : nimble data object, int
+            The object or feature in ``testData`` containing the
+            training labels.
+        learnerFunction : str
+            The name of learner function.
+        arguments : dict
+            The arguments passed to the learner.
+        metrics : dict
+            The results of the testing on a run.
+        extraInfo: dict
+            Any extra information to add to the log. Typically provides
+            the best parameters from cross validation.
+        time : float, None
+            The time to run the function. None if function is not timed.
+        """
+        self._logRun("run", useLog, nimbleFunction, trainData, trainLabels,
+                     testData, testLabels, learnerFunction, arguments, metrics,
+                     extraInfo, time)
+
+    def logRunCV(self, useLog, nimbleFunction, trainData, trainLabels,
+                 testData, testLabels, learnerFunction, arguments,
+                 metrics=None, extraInfo=None, time=None):
+        """
+        Log information about each run during cross-validation.
+
+        If this will be logged, store an entry in the database with
+        "runCV" as the logType and a dictionary (stored as a string) of
+        the learner function called and its arguments as the logInfo.
+
+        Parameters
+        ----------
+        nimbleFunction : str
+            The name of the nimble function called.
+        trainData : nimble data object
+            The object containing the training data.
+        trainLabels : nimble data object, int
+            The object or feature in ``trainData`` containing the
+            training labels.
+        testData : nimble data object
+            The object containing the testing data.
+        testLabels : nimble data object, int
+            The object or feature in ``testData`` containing the
+            training labels.
+        learnerFunction : str
+            The name of learner function.
+        arguments : dict
+            The arguments passed to the learner.
+        metrics : dict
+            The results of the testing on a run.
+        extraInfo: dict
+            Any extra information to add to the log. Typically provides
+            the best parameters from cross validation.
+        time : float, None
+            The time to run the function. None if function is not timed.
+        """
+        self._logRun("runCV", useLog, nimbleFunction, trainData, trainLabels,
+                     testData, testLabels, learnerFunction, arguments, metrics,
+                     extraInfo, time)
 
     def logCrossValidation(self, useLog, trainData, trainLabels,
                            learnerFunction, arguments, metric, performance,
@@ -526,7 +573,7 @@ class SessionLogger(object):
         folds : int
             The number of folds.
         """
-        if enableLogging(useLog) and enableDeepLogging():
+        if loggingEnabled(useLog):
             logType = "crossVal"
             logInfo = {}
             logInfo["learner"] = learnerFunction
@@ -541,7 +588,17 @@ class SessionLogger(object):
             self.log(logType, logInfo)
 
     def logRandomSeed(self, useLog, seed):
-        if enableLogging(useLog):
+        """
+        Log the random seed value.
+
+        If this will be logged, store an entry in the database with
+        "setSeed" as the logType and a dictionary (stored as a string)
+        of the seed value as the logInfo.
+
+        seed : int
+            The random seed value.
+        """
+        if loggingEnabled(useLog):
             logType = 'random.setSeed'
             logInfo = {'seed': seed}
             self.log(logType, logInfo)
@@ -631,7 +688,7 @@ class SessionLogger(object):
 ### LOG HELPERS ###
 ###################
 
-def enableLogging(useLog):
+def loggingEnabled(useLog):
     """
     Access useLog value from configuration, if not explictly defined.
     """
@@ -640,19 +697,19 @@ def enableLogging(useLog):
         useLog = useLog.lower() == 'true'
     return useLog
 
-def enableDeepLogging():
+def deepLoggingEnabled():
     """
     Access enableCrossValidationDeepLogging value from configuration.
     """
     deepLog = nimble.settings.get("logger", "enableCrossValidationDeepLogging")
-    deepLog = deepLog.lower() == 'true'
-    return deepLog
+
+    return deepLog.lower() == 'true'
 
 def handleLogging(useLog, logType, *args, **kwargs):
     """
     Store information to be logged in the logger.
     """
-    if enableLogging(useLog):
+    if loggingEnabled(useLog):
         logFunc = nimble.core.logger.active.logTypes[logType]
         logFunc(useLog, *args, **kwargs)
 
@@ -775,11 +832,11 @@ def _showLogOutputString(listOfLogs, levelOfDetail, append):
         fullLog = "{0:^79}\n".format("NIMBLE LOGS")
         fullLog += "." * 79
     previousLogSessionNumber = None
-    for log in listOfLogs:
-        timestamp = log[0]
-        sessionNumber = log[1]
-        logType = log[2]
-        logString = log[3]
+    for entry in listOfLogs:
+        timestamp = entry[0]
+        sessionNumber = entry[1]
+        logType = entry[2]
+        logString = entry[3]
         try:
             logInfo = literal_eval(logString)
         except (ValueError, SyntaxError):
@@ -795,7 +852,7 @@ def _showLogOutputString(listOfLogs, levelOfDetail, append):
             fullLog += "." * 79
             previousLogSessionNumber = sessionNumber
         try:
-            if logType not in ["load", "data", "prep", "run", "crossVal"]:
+            if logType not in nimble.core.logger.active.logTypes:
                 fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
                 fullLog += '.' * 79
             elif logType == 'load':
@@ -807,10 +864,11 @@ def _showLogOutputString(listOfLogs, levelOfDetail, append):
             elif logType == 'prep' and levelOfDetail > 1:
                 fullLog += _buildPrepLogString(timestamp, logInfo)
                 fullLog += '.' * 79
-            elif logType == 'run' and levelOfDetail > 1:
+            elif ((logType == 'run' and levelOfDetail > 1)
+                  or (logType == 'runCV' and levelOfDetail > 2)):
                 fullLog += _buildRunLogString(timestamp, logInfo)
                 fullLog += '.' * 79
-            elif logType == 'crossVal' and levelOfDetail > 2:
+            elif logType == 'crossVal' and levelOfDetail > 1:
                 fullLog += _buildCVLogString(timestamp, logInfo)
                 fullLog += '.' * 79
         except (TypeError, KeyError):
@@ -818,157 +876,157 @@ def _showLogOutputString(listOfLogs, levelOfDetail, append):
             fullLog += '.' * 79
     return fullLog
 
-def _buildLoadLogString(timestamp, log):
+def _buildLoadLogString(timestamp, entry):
     """
     Constructs the string that will be output for load logTypes.
     """
-    dataCol = "{0} Loaded".format(log["returnType"])
+    dataCol = "{0} Loaded".format(entry["returnType"])
     fullLog = _logHeader(dataCol, timestamp)
-    if log["returnType"] != "TrainedLearner":
-        fullLog += _formatSessionLine("# of points", log["numPoints"])
-        fullLog += _formatSessionLine("# of features", log["numFeatures"])
+    if entry["returnType"] != "TrainedLearner":
+        fullLog += _formatSessionLine("# of points", entry["numPoints"])
+        fullLog += _formatSessionLine("# of features", entry["numFeatures"])
         for title in ['sparsity', 'name', 'path', 'seed']:
-            if log[title] is not None:
-                fullLog += _formatSessionLine(title, log[title])
+            if entry[title] is not None:
+                fullLog += _formatSessionLine(title, entry[title])
     else:
-        fullLog += _formatSessionLine("Learner name", log["learnerName"])
-        if log['learnerArgs'] is not None and log['learnerArgs'] != {}:
+        fullLog += _formatSessionLine("Learner name", entry["learnerName"])
+        if entry['learnerArgs'] is not None and entry['learnerArgs']:
             argString = "Arguments: "
-            argString += _dictToKeywordString(log["learnerArgs"])
+            argString += _dictToKeywordString(entry["learnerArgs"])
             for string in wrap(argString, 79, subsequent_indent=" "*11):
                 fullLog += string
                 fullLog += "\n"
     return fullLog
 
-def _buildPrepLogString(timestamp, log):
+def _buildPrepLogString(timestamp, entry):
     """
     Constructs the string that will be output for prep logTypes.
     """
-    function = "{0}.{1}".format(log["object"], log["function"])
+    function = "{0}.{1}".format(entry["object"], entry["function"])
     fullLog = _logHeader(function, timestamp)
-    if log['arguments'] != {}:
+    if entry['arguments']:
         argString = "Arguments: "
-        argString += _dictToKeywordString(log["arguments"])
+        argString += _dictToKeywordString(entry["arguments"])
         for string in wrap(argString, 79, subsequent_indent=" "*11):
             fullLog += string
             fullLog += "\n"
     return fullLog
 
-def _buildDataLogString(timestamp, log):
+def _buildDataLogString(timestamp, entry):
     """
     Constructs the string that will be output for data logTypes.
     """
-    reportName = log["reportType"].capitalize() + " Report"
+    reportName = entry["reportType"].capitalize() + " Report"
     fullLog = _logHeader(reportName, timestamp)
     fullLog += "\n"
-    fullLog += log["reportInfo"]
+    fullLog += entry["reportInfo"]
     return fullLog
 
-def _buildRunLogString(timestamp, log):
+def _buildRunLogString(timestamp, entry):
     """
     Constructs the string that will be output for run logTypes.
     """
     # header data
-    time = log.get("time", "")
+    time = entry.get("time", "")
     if time:
-        time = "Completed in {0:.3f} seconds".format(log['time'])
+        time = "Completed in {0:.3f} seconds".format(entry['time'])
     fullLog = _logHeader(time, timestamp)
-    fullLog += '\n{0}("{1}")\n'.format(log['function'], log["learner"])
+    fullLog += '\n{0}("{1}")\n'.format(entry['function'], entry["learner"])
     # train and test data
     fullLog += _formatSessionLine("Data", "# points", "# features")
-    if log.get("trainData", False):
-        if log["trainData"].startswith("OBJECT_#"):
-            fullLog += _formatSessionLine("trainX", log["trainDataPoints"],
-                                          log["trainDataFeatures"])
+    if entry.get("trainData", False):
+        if entry["trainData"].startswith("OBJECT_#"):
+            fullLog += _formatSessionLine("trainX", entry["trainDataPoints"],
+                                          entry["trainDataFeatures"])
         else:
-            fullLog += _formatSessionLine(log["trainData"],
-                                          log["trainDataPoints"],
-                                          log["trainDataFeatures"])
-    if log.get("trainLabels", False):
-        if log["trainLabels"].startswith("OBJECT_#"):
-            fullLog += _formatSessionLine("trainY", log["trainLabelsPoints"],
-                                          log["trainLabelsFeatures"])
+            fullLog += _formatSessionLine(entry["trainData"],
+                                          entry["trainDataPoints"],
+                                          entry["trainDataFeatures"])
+    if entry.get("trainLabels", False):
+        if entry["trainLabels"].startswith("OBJECT_#"):
+            fullLog += _formatSessionLine("trainY", entry["trainLabelsPoints"],
+                                          entry["trainLabelsFeatures"])
         else:
-            fullLog += _formatSessionLine(log["trainLabels"],
-                                          log["trainLabelsPoints"],
-                                          log["trainLabelsFeatures"])
-    if log.get("testData", False):
-        if log["testData"].startswith("OBJECT_#"):
-            fullLog += _formatSessionLine("testX", log["testDataPoints"],
-                                          log["testDataFeatures"])
+            fullLog += _formatSessionLine(entry["trainLabels"],
+                                          entry["trainLabelsPoints"],
+                                          entry["trainLabelsFeatures"])
+    if entry.get("testData", False):
+        if entry["testData"].startswith("OBJECT_#"):
+            fullLog += _formatSessionLine("testX", entry["testDataPoints"],
+                                          entry["testDataFeatures"])
         else:
-            fullLog += _formatSessionLine(log["testData"],
-                                          log["testDataPoints"],
-                                          log["testDataFeatures"])
-    if log.get("testLabels", False):
-        if log["testLabels"].startswith("OBJECT_#"):
-            fullLog += _formatSessionLine("testY", log["testLabelsPoints"],
-                                          log["testLabelsFeatures"])
+            fullLog += _formatSessionLine(entry["testData"],
+                                          entry["testDataPoints"],
+                                          entry["testDataFeatures"])
+    if entry.get("testLabels", False):
+        if entry["testLabels"].startswith("OBJECT_#"):
+            fullLog += _formatSessionLine("testY", entry["testLabelsPoints"],
+                                          entry["testLabelsFeatures"])
         else:
-            fullLog += _formatSessionLine(log["testLabels"],
-                                          log["testLabelsPoints"],
-                                          log["testLabelsFeatures"])
+            fullLog += _formatSessionLine(entry["testLabels"],
+                                          entry["testLabelsPoints"],
+                                          entry["testLabelsFeatures"])
     fullLog += "\n"
     # parameter data
-    if log.get("arguments", False):
+    if entry.get("arguments", False):
         argString = "Arguments: "
-        argString += _dictToKeywordString(log["arguments"])
+        argString += _dictToKeywordString(entry["arguments"])
         for string in wrap(argString, 79, subsequent_indent=" "*11):
             fullLog += string
             fullLog += "\n"
     # metric data
-    if log.get("metrics", False):
+    if entry.get("metrics", False):
         fullLog += "Metrics: "
-        fullLog += _dictToKeywordString(log["metrics"])
+        fullLog += _dictToKeywordString(entry["metrics"])
         fullLog += "\n"
     # extraInfo
-    if log.get("extraInfo", False):
+    if entry.get("extraInfo", False):
         fullLog += "Extra Info: "
-        fullLog += _dictToKeywordString(log["extraInfo"])
+        fullLog += _dictToKeywordString(entry["extraInfo"])
         fullLog += "\n"
 
     return fullLog
 
-def _buildCVLogString(timestamp, log):
+def _buildCVLogString(timestamp, entry):
     """
     Constructs the string that will be output for crossVal logTypes.
     """
-    crossVal = "Cross Validating for {0}".format(log["learner"])
+    crossVal = "Cross Validating for {0}".format(entry["learner"])
     fullLog = _logHeader(crossVal, timestamp)
     fullLog += "\n"
-    if isinstance(log["learnerArgs"], dict):
+    if isinstance(entry["learnerArgs"], dict):
         fullLog += "Variable Arguments: "
-        fullLog += _dictToKeywordString(log["learnerArgs"])
+        fullLog += _dictToKeywordString(entry["learnerArgs"])
         fullLog += "\n\n"
-    folds = log["folds"]
-    metricName, metricOptimal = log["metric"]
+    folds = entry["folds"]
+    metricName, metricOptimal = entry["metric"]
     fullLog += "{0}-folding using {1} ".format(folds, metricName)
     fullLog += "optimizing for {0} values\n\n".format(metricOptimal)
     fullLog += "{0:<20s}{1:20s}\n".format("Results", "Arguments")
-    for arguments, result in log["performance"]:
+    for arguments, result in entry["performance"]:
         argString = _dictToKeywordString(arguments)
         fullLog += "{0:<20.3f}{1:20s}".format(result, argString)
         fullLog += "\n"
     return fullLog
 
-def _buildDefaultLogString(timestamp, logType, log):
+def _buildDefaultLogString(timestamp, logType, entry):
     """
     Constructs the string that will be output for any unrecognized
     logTypes. Formatting varies based on string, list and dictionary
     types passed as the log.
     """
     fullLog = _logHeader(logType, timestamp)
-    if isinstance(log, str):
-        for string in wrap(log, 79):
+    if isinstance(entry, str):
+        for string in wrap(entry, 79):
             fullLog += string
             fullLog += "\n"
-    elif isinstance(log, list):
-        listString = _formatSessionLine(log)
+    elif isinstance(entry, list):
+        listString = _formatSessionLine(entry)
         for string in wrap(listString, 79):
             fullLog += string
             fullLog += "\n"
     else:
-        dictString = _dictToKeywordString(log)
+        dictString = _dictToKeywordString(entry)
         for string in wrap(dictString, 79):
             fullLog += string
             fullLog += "\n"
@@ -1112,11 +1170,11 @@ def startTimer(useLog):
     """
     Start and return a timer object if this will be logged.
     """
-    if enableLogging(useLog):
+    if loggingEnabled(useLog):
         timer = Stopwatch()
         timer.start("timer")
         return timer
-    return
+    return None
 
 def stopTimer(timer):
     """
@@ -1125,7 +1183,7 @@ def stopTimer(timer):
     if timer is not None:
         timer.stop("timer")
         return timer.calcRunTime("timer")
-    return
+    return None
 
 #######################
 ### Initialization  ###
@@ -1159,19 +1217,16 @@ def initLoggerAndLogConfig():
         nimble.settings.hook("logger", "name", cleanThenReInit_Name)
 
     try:
-        loggingEnabled = nimble.settings.get("logger", "enabledByDefault")
+        _ = nimble.settings.get("logger", "enabledByDefault")
     except configErrors:
-        loggingEnabled = 'True'
-        nimble.settings.set("logger", "enabledByDefault", loggingEnabled)
+        nimble.settings.set("logger", "enabledByDefault", 'True')
         nimble.settings.saveChanges("logger", "enabledByDefault")
 
     try:
-        deepCV = nimble.settings.get("logger",
-                                     'enableCrossValidationDeepLogging')
+        _ = nimble.settings.get("logger", 'enableCrossValidationDeepLogging')
     except configErrors:
-        deepCV = 'False'
         nimble.settings.set("logger", 'enableCrossValidationDeepLogging',
-                            deepCV)
+                            'False')
         nimble.settings.saveChanges("logger",
                                     'enableCrossValidationDeepLogging')
 
@@ -1179,12 +1234,18 @@ def initLoggerAndLogConfig():
 
 
 def cleanThenReInit_Loc(newLocation):
+    """
+    Hook for setting a new location of the active logger.
+    """
     nimble.core.logger.active.cleanup()
     currName = nimble.settings.get("logger", 'name')
     nimble.core.logger.active = SessionLogger(newLocation, currName)
 
 
 def cleanThenReInit_Name(newName):
+    """
+    Hook for setting a new name of the active logger.
+    """
     nimble.core.logger.active.cleanup()
     currLoc = nimble.settings.get("logger", 'location')
     nimble.core.logger.active = SessionLogger(currLoc, newName)
