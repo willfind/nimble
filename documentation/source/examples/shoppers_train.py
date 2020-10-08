@@ -22,19 +22,22 @@ import nimble
 
 visits = nimble.data('Matrix', 'online_shoppers_intention_clean.csv',
                      featureNames=True)
+nimble.random.setSeed(42)
 
 ## We are going to focus on categorizing our visitors that made a purchase,
 ## so first we will extract any points with no revenue. Without these points,
 ## `Revenue` and some other features only contain one unique value so we can
 ## remove them.
-revenue = visits.points.extract("Revenue=1")
-revenue.features.delete(lambda ft: len(ft.countUniqueElements()) < 2)
+revenueOnly = visits.points.extract("Revenue=1")
+revenueOnly.features.delete(lambda ft: len(ft.countUniqueElements()) < 2)
+revenueOnlyFtNames = revenueOnly.features.getNames()
 
 ## For both the PCA and KMeans algorithms that we will be using, we want to
 ## normalize our data. We will standardize each feature to have 0 mean and
 ## unit-variance.
-normalized = revenue.copy()
-normalized.features.normalize(subtract='mean', divide='standard deviation')
+revenueNormalized = revenueOnly.copy()
+revenueNormalized.features.normalize(subtract='mean',
+                                     divide='standard deviation')
 
 ## Train a learner ##
 
@@ -42,17 +45,16 @@ normalized.features.normalize(subtract='mean', divide='standard deviation')
 ## 2 principal component features. Using data with reduced dimensionality
 ## supports better results from our KMeans algorithm and helps us to visualize
 ## our clusters.
-pca = nimble.train('skl.PCA', normalized, n_components=2)
-principal = pca.apply(normalized)
-principal.features.setNames(['component_1', 'component_2'])
+pca = nimble.train('skl.PCA', revenueNormalized, n_components=2)
+revenueReduced = pca.apply(revenueNormalized)
+revenueReduced.features.setNames(['component_1', 'component_2'])
 
 ## The elbow-method is useful to determine the number of clusters we should use
 ## for scikit-learn's KMeans learner.
 kmeans = {}
 withinClusterSumSquares = []
-for i in range(1,11):
-    trainedLearner = nimble.train('skl.KMeans', principal, n_clusters=i,
-                                  random_state=6)
+for i in range(1, 11):
+    trainedLearner = nimble.train('skl.KMeans', revenueReduced, n_clusters=i)
     kmeans[i] = trainedLearner
     inertia = trainedLearner.getAttributes()['inertia_']
     withinClusterSumSquares.append([i, inertia])
@@ -66,11 +68,11 @@ wcss.plotFeatureAgainstFeature('clusters', 'wcss')
 numClusters = 3
 
 kmeans = kmeans[numClusters]
-clusters = kmeans.apply(principal)
+clusters = kmeans.apply(revenueReduced)
 clusters.features.setName(0, 'cluster')
 
 centers = nimble.data('Matrix', kmeans.getAttributes()['cluster_centers_'],
-                      featureNames=principal.features.getNames())
+                      featureNames=revenueReduced.features.getNames())
 centers.points.setNames(['cluster' + str(i) for i in range(numClusters)])
 
 ## Cluster Visualization ##
@@ -78,17 +80,17 @@ centers.points.setNames(['cluster' + str(i) for i in range(numClusters)])
 ## Now we can group our components by the KMeans clusters and plot them on the
 ## same figure to visualize how the KMeans learner clustered our data. We will
 ## also add the cluster centers from our learner to the visualization.
-principal.features.append(clusters)
-groups = principal.groupByFeature('cluster')
+revenueReduced.features.append(clusters)
+reducedByCluster = revenueReduced.groupByFeature('cluster')
 for i in range(numClusters):
-    group = groups[i]
+    cluster = reducedByCluster[i]
     label = 'cluster' + str(i)
-    groups[i].plotFeatureAgainstFeature('component_1', 'component_2',
-                                        figureName='figure', label=label,
-                                        show=False)
+    cluster.plotFeatureAgainstFeature('component_1', 'component_2',
+                                      figureName='clusterAndCenters',
+                                      label=label, show=False)
 
-centers.plotFeatureAgainstFeature(0, 1, figureName='figure', marker='x',
-                                  color='k', s=50)
+centers.plotFeatureAgainstFeature(0, 1, figureName='clusterAndCenters',
+                                  marker='x', color='k', s=50)
 
 ## Cluster Analysis ##
 
@@ -98,17 +100,18 @@ centers.plotFeatureAgainstFeature(0, 1, figureName='figure', marker='x',
 ## data for deeper cluster analysis.
 centers = []
 centerPtNames = []
-centerFtNames = revenue.features.getNames()
+centerFtNames = revenueOnlyFtNames
 
-revenue.features.append(clusters)
-groups = revenue.groupByFeature('cluster')
-totalVisits = len(revenue.points)
+revenueOnly.features.append(clusters)
+revenueByCluster = revenueOnly.groupByFeature('cluster')
+totalVisits = len(revenueOnly.points)
 for i in range(numClusters):
-    clusterVisits =  groups[i].shape[0]
+    cluster = revenueByCluster[i]
+    clusterVisits =  len(cluster.points)
     perc = round(clusterVisits / totalVisits * 100, 2)
     print('cluster{} contains {} visits ({}%)'.format(i, clusterVisits, perc))
 
-    centers.append(groups[i].features.statistics('mean'))
+    centers.append(cluster.features.statistics('mean'))
     centerPtNames.append('cluster' + str(i))
 
 clusterCenters = nimble.data('Matrix', centers, featureNames=centerFtNames,
@@ -133,7 +136,7 @@ clusterCenters[:, pageDurations].features.plot()
 clusterCenters[:, ['NewVisitor']].features.plot()
 
 ## Visits in `cluster1` are more likely to be on a weekend, relative to the
-## other clusters, but `cluster2` is more likely to visit near a special day.
+## other clusters, and `cluster0` is very unlikely to visit near a special day.
 clusterCenters[:, ['Weekend', 'SpecialDay']].features.plot()
 
 ## A **PageValue** defines the estimated dollar amount for a visit to any given
@@ -155,7 +158,7 @@ clusterCenters[:,  'PageValues'].features.plot()
 ## some marketing or other event took place in month 7 that lead visitors to
 ## return and generate revenue at that time. `cluster2` looks to generate
 ## revenue most consistently.
-months = [ft for ft in revenue.features.getNames() if ft.startswith('Month')]
+months = [ft for ft in revenueOnlyFtNames if ft.startswith('Month')]
 clusterCenters[:, months].features.plot()
 
 ## Next, we will look at the operating systems and browsers that visitors are
@@ -165,7 +168,7 @@ clusterCenters[:, months].features.plot()
 ## visitors use very different operating systems and browsers between these two
 ## clusters. We also see that visitors in `cluster0` and `cluster2` generally
 ## use similar operating systems and browsers.
-os = [ft for ft in revenue.features.getNames()
+os = [ft for ft in revenueOnlyFtNames
       if ft.startswith('OperatingSystem') or ft.startswith('Browser')]
 clusterCenters[:, os].features.plot()
 
@@ -174,7 +177,7 @@ clusterCenters[:, os].features.plot()
 ## contains drastically more visitors from a certain region than the other
 ## clusters. This is important to note as it indicates that any major
 ## differences we noticed above are less likely to be regional.
-region = [ft for ft in revenue.features.getNames() if ft.startswith('Region')]
+region = [ft for ft in revenueOnlyFtNames if ft.startswith('Region')]
 clusterCenters[:, region].features.plot()
 
 ## Cluster Assumptions ##

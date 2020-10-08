@@ -23,6 +23,8 @@ import nimble
 
 images = nimble.data('Matrix', 'semeion.data')
 
+nimble.random.setSeed(42)
+
 ## Preparing the data ##
 
 ## We need to separate the labels (the last 10 features) from the image data

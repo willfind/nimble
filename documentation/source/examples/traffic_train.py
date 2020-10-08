@@ -28,6 +28,7 @@ traffic = nimble.data('Matrix', 'Metro_Interstate_Traffic_Volume_Cleaned.csv',
                       featureNames=True)
 forecast = nimble.data('Matrix', 'Metro_Interstate_Traffic_Volume_Predict.csv',
                        featureNames=True)
+nimble.random.setSeed(23)
 
 ## Test five different learners ##
 
@@ -37,7 +38,6 @@ forecast = nimble.data('Matrix', 'Metro_Interstate_Traffic_Volume_Predict.csv',
 ## analyze the performance by comparing each learner's root mean square error.
 testFraction = 0.25
 yFeature = 'traffic_volume'
-nimble.random.setSeed(23)
 trainX, trainY, testX, testY = traffic.trainAndTestSets(testFraction, yFeature)
 
 learners = ['sklearn.LinearRegression', 'sklearn.Ridge', 'sklearn.Lasso',
