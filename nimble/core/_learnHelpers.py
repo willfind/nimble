@@ -719,8 +719,7 @@ def _unpackLearnerName(learnerName):
                 and package != 'nimble'):
             package = 'custom'
             customInterface = nimble.core.interfaces.available['custom']
-            if name not in customInterface.registeredLearners:
-                customInterface.registerLearnerClass(learnerName)
+            customInterface.registerLearnerClass(learnerName)
     interface = findBestInterface(package)
 
     return interface, name
