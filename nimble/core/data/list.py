@@ -49,8 +49,7 @@ class List(Base):
 
     def __init__(self, data, featureNames=None, reuseData=False, shape=None,
                  checkAll=True, **kwds):
-        if (not (isinstance(data, list) or is2DArray(data)
-                 or 'PassThrough' in str(type(data)))):
+        if not (isinstance(data, (list, ListPassThrough)) or is2DArray(data)):
             msg = "the input data can only be a list, a two-dimensional numpy "
             msg += "array, or ListPassThrough."
             raise InvalidArgumentType(msg)
@@ -74,7 +73,7 @@ class List(Base):
                 if shape is None:
                     shape = (1, len(data))
                 data = [data]
-            elif isinstance(data[0], list) or hasattr(data[0], 'setLimit'):
+            elif isinstance(data[0], (list, FeatureViewer)):
             #case3: data=[[1,2,3], ['a', 'b', 'c']] or [[]] or [[], []].
             # self.data will be = data, shape will be (len(data), len(data[0]))
             #case4: data=[FeatureViewer]
@@ -683,35 +682,31 @@ class ListView(BaseView, List):
             return listForm
 
     def _convertUnusableTypes(self, convertTo, usableTypes, returnCopy=True):
-        # We do not want to change the data attribute for ListView!
-        # This converts the data types of the source object's data attribute
-        # Note: Though this is a view object, we allow this modification since
-        # all the values remain equal and only the types change.
+        # need to override the Base level function because self.data is a
+        # ListPassThrough. If returnCopy, can return a list otherwise need to
+        # modify the self._source.data the ListPassThrough references
         try:
-            ret = self._source._convertUnusableTypes_implementation(
-                convertTo, usableTypes)
+            ret = self._convertUnusableTypes_implementation(convertTo,
+                                                            usableTypes)
         except (ValueError, TypeError):
             msg = 'Unable to coerce the data to the type required for this '
             msg += 'operation.'
             raise ImproperObjectAction(msg)
         if returnCopy:
             return ret
-        self._source.data = ret
+        pRange = slice(self._pStart, self._pEnd)
+        fRange = slice(self._fStart, self._fEnd)
+        for i, pt in enumerate(self._source.data[pRange]):
+            pt[fRange] = ret[i]
 
 class FeatureViewer(object):
     """
     View by feature axis for list.
     """
-    def __init__(self, source, fStart, fEnd):
+    def __init__(self, source, fStart, fEnd, pIndex):
         self.source = source
         self.fStart = fStart
         self.fRange = fEnd - fStart
-        self.limit = None
-
-    def setLimit(self, pIndex):
-        """
-        Limit to a given point in the feature.
-        """
         self.limit = pIndex
 
     def __getitem__(self, key):
@@ -729,8 +724,7 @@ class FeatureViewer(object):
     def __eq__(self, other):
         if len(self) != len(other):
             return False
-        for i, sVal in enumerate(self):
-            oVal = other[i]
+        for sVal, oVal in zip(self, other):
             # check element equality - which is only relevant if one
             # of the elements is non-NaN
             if sVal != oVal and (sVal == sVal or oVal == oVal):
@@ -753,15 +747,14 @@ class ListPassThrough(object):
         self.fEnd = fEnd
 
     def __getitem__(self, key):
-        self.fviewer = FeatureViewer(self.source, self.fStart,
-                                     self.fEnd)
         if key < 0 or key >= self.pRange:
             msg = "The given index " + str(key) + " is outside of the "
             msg += "range  of possible indices in the point axis (0 "
             msg += "to " + str(self.pRange - 1) + ")."
             raise IndexError(msg)
 
-        self.fviewer.setLimit(key + self.pStart)
+        self.fviewer = FeatureViewer(self.source, self.fStart,
+                                     self.fEnd, key + self.pStart)
         return self.fviewer
 
     def __len__(self):
