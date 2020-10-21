@@ -3054,74 +3054,6 @@ class Base(object):
         ret.transpose(useLog=False)
         return ret
 
-    def referenceDataFrom(self, other, useLog=None):
-        """
-        Redefine the object data using the data from another object.
-
-        Modify the internal data of this object to refer to the same
-        data as other. In other words, the data wrapped by both the self
-        and ``other`` objects resides in the same place in memory.
-        Attributes descrbing this object, not its data, will remain the
-        same. For example the object's ``name`` attribute will remain.
-
-        Parameters
-        ----------
-        other : nimble Base object
-            Must be of the same type as the calling object. Also, the
-            shape of other should be consistent with the shape of this
-            object.
-        useLog : bool, None
-            Local control for whether to send object creation to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-
-        Examples
-        --------
-        Reference data from an object of all zero values.
-
-        >>> data = nimble.ones('List', 2, 3, name='data')
-        >>> data
-        List(
-            [[1.000 1.000 1.000]
-             [1.000 1.000 1.000]]
-            name="data"
-            )
-        >>> ptNames = ['1', '4']
-        >>> ftNames = ['a', 'b', 'c']
-        >>> toReference = nimble.zeros('List', 2, 3, pointNames=ptNames,
-        ...                            featureNames=ftNames,
-        ...                            name='reference')
-        >>> data.referenceDataFrom(toReference)
-        >>> data
-        List(
-            [[0.000 0.000 0.000]
-             [0.000 0.000 0.000]]
-            pointNames={'1':0, '4':1}
-            featureNames={'a':0, 'b':1, 'c':2}
-            name="data"
-            )
-        """
-        # this is called first because it checks the data type
-        self._referenceDataFrom_implementation(other)
-        self.pointNames = other.pointNames
-        self.pointNamesInverse = other.pointNamesInverse
-        self.featureNames = other.featureNames
-        self.featureNamesInverse = other.featureNamesInverse
-
-        self._shape = other._shape
-
-        self._absPath = other.absolutePath
-        self._relPath = other.relativePath
-
-        self._nextDefaultValuePoint = other._nextDefaultValuePoint
-        self._nextDefaultValueFeature = other._nextDefaultValueFeature
-
-        handleLogging(useLog, 'prep', "referenceDataFrom",
-                      self.getTypeString(), Base.referenceDataFrom, other)
-
     def copy(self, to=None, rowsArePoints=True, outputAs1D=False):
         """
         Duplicate an object. Optionally to another nimble or raw format.
@@ -4267,7 +4199,7 @@ class Base(object):
         """
         ret = self.__matmul__(other)
         if ret is not NotImplemented:
-            self.referenceDataFrom(ret, useLog=False)
+            self._referenceDataFrom(ret)
             ret = self
         return ret
 
@@ -4804,7 +4736,7 @@ class Base(object):
         ret._shape = self._shape
         if opName.startswith('__i'):
             absPath, relPath = self._absPath, self._relPath
-            self.referenceDataFrom(ret, useLog=False)
+            self._referenceDataFrom(ret)
             self._absPath, self._relPath = absPath, relPath
             ret = self
         ret.points.setNames(retPNames, useLog=False)
@@ -4950,6 +4882,71 @@ class Base(object):
     ###   Helper functions   ###
     ############################
     ############################
+
+    def _referenceDataFrom(self, other):
+        """
+        Redefine the object data using the data from another object.
+
+        Modify the internal data of this object to refer to the same
+        data as other. In other words, the data wrapped by both the self
+        and ``other`` objects resides in the same place in memory.
+        Attributes descrbing this object, not its data, will remain the
+        same. For example the object's ``name`` attribute will remain.
+
+        Parameters
+        ----------
+        other : nimble Base object
+            Must be of the same type as the calling object. Also, the
+            shape of other should be consistent with the shape of this
+            object.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+
+        Examples
+        --------
+        Reference data from an object of all zero values.
+
+        >>> data = nimble.ones('List', 2, 3, name='data')
+        >>> data
+        List(
+            [[1.000 1.000 1.000]
+             [1.000 1.000 1.000]]
+            name="data"
+            )
+        >>> ptNames = ['1', '4']
+        >>> ftNames = ['a', 'b', 'c']
+        >>> toReference = nimble.zeros('List', 2, 3, pointNames=ptNames,
+        ...                            featureNames=ftNames,
+        ...                            name='reference')
+        >>> data._referenceDataFrom(toReference)
+        >>> data
+        List(
+            [[0.000 0.000 0.000]
+             [0.000 0.000 0.000]]
+            pointNames={'1':0, '4':1}
+            featureNames={'a':0, 'b':1, 'c':2}
+            name="data"
+            )
+        """
+        # this is called first because it checks the data type
+        self._referenceDataFrom_implementation(other)
+        self.pointNames = other.pointNames
+        self.pointNamesInverse = other.pointNamesInverse
+        self.featureNames = other.featureNames
+        self.featureNamesInverse = other.featureNamesInverse
+
+        self._shape = other._shape
+
+        self._absPath = other.absolutePath
+        self._relPath = other.relativePath
+
+        self._nextDefaultValuePoint = other._nextDefaultValuePoint
+        self._nextDefaultValueFeature = other._nextDefaultValueFeature
 
     def _arrangeFinalTable(self, pnames, pnamesWidth, dataTable, dataWidths,
                            fnames, pnameSep):

@@ -378,7 +378,7 @@ class HighDimensionModifying(DataTestObject):
                 testTensor = self.constructor(tensor1)
                 refTensor = self.constructor(tensor2)
                 if testTensor != refTensor:
-                    testTensor.referenceDataFrom(refTensor)
+                    testTensor._referenceDataFrom(refTensor)
                     assert testTensor == refTensor
 
     def test_highDimension_inplaceBinaryOperations(self):

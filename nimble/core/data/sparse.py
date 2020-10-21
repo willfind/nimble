@@ -145,7 +145,7 @@ class Sparse(Base):
 
         pnames = self.points._getNamesNoGeneration()
         fnames = self.features._getNamesNoGeneration()
-        self.referenceDataFrom(ret, useLog=False)
+        self._referenceDataFrom(ret)
         self.points.setNames(pnames, useLog=False)
         self.features.setNames(fnames, useLog=False)
 
@@ -1041,7 +1041,7 @@ class Sparse(Base):
         notInplace = '__' + opName[3:]
         ret = self._binaryOperations_implementation(notInplace, other)
         absPath, relPath = self._absPath, self._relPath
-        self.referenceDataFrom(ret, useLog=False)
+        self._referenceDataFrom(ret)
         self._absPath, self._relPath = absPath, relPath
         return self
 
