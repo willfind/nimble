@@ -40,7 +40,7 @@ from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
 from ._dataHelpers import validateElementFunction, wrapMatchFunctionFactory
 from ._dataHelpers import ElementIterator1D
-from ._dataHelpers import isQueryString, elementQueryFunction
+from ._dataHelpers import elementQueryFunction
 from ._dataHelpers import limitedTo2D
 from ._dataHelpers import pyplotRequired, plotOutput, plotFigureHandling
 from ._dataHelpers import plotUpdateAxisLimits, plotAxisLimits
@@ -936,11 +936,13 @@ class Base(object):
 
         Parameters
         ----------
-        toMatch
+        toMatch: value, function, query
             * value - elements equal to the value return True
-            * function - in the form of toMatch(elementValue) that
-              returns True, False, 0 or 1.
-            * str - a comparison operator and a value (i.e ">=0")
+            * function - accepts an element as its only argument and
+              returns a boolean value to indicate if the element is a
+              match
+            * query - string in the format 'OPERATOR VALUE' (i.e "< 10")
+              where OPERATOR can be ==, !=, <, >, <=, or >=
         points : point, list of points
             The subset of points to limit the matching to. If None,
             the matching will apply to all points.
@@ -994,9 +996,9 @@ class Base(object):
         """
         matchArg = toMatch # preserve toMatch in original state for log
         if not callable(matchArg):
-            query = isQueryString(matchArg)
-            if query:
-                func = elementQueryFunction(query)
+            query = elementQueryFunction(matchArg)
+            if query is not None:
+                func = query
             # if not a comparison string, element must equal matchArg
             else:
                 matchVal = matchArg
@@ -1100,12 +1102,12 @@ class Base(object):
 
         Parameters
         ----------
-        condition : function
-            function - may take two forms:
-            a) a function that accepts an element value as input and
-            will return True if it is to be counted
-            b) a filter function, as a string, containing a comparison
-            operator and a value
+        condition : function, query
+            * function - accepts an element as its only argument and
+              returns a boolean value to indicate if the element should
+              be counted
+            * query - string in the format 'OPERATOR VALUE' (i.e "< 10")
+              where OPERATOR can be ==, !=, <, >, <=, or >=
 
         Returns
         -------
@@ -1132,9 +1134,9 @@ class Base(object):
         >>> numLessThanOne
         20
         """
-        query = isQueryString(condition)
-        if query:
-            condition = elementQueryFunction(query)
+        query = elementQueryFunction(condition)
+        if query is not None:
+            condition = query
         elif not hasattr(condition, '__call__'):
             msg = 'condition can only be a function or string containing a '
             msg += 'comparison operator and a value'
