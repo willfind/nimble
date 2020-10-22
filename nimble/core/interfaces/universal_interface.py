@@ -26,6 +26,7 @@ from nimble.exceptions import _prettyListString
 from nimble.exceptions import _prettyDictString
 from nimble.core.logger import handleLogging, startTimer, stopTimer
 from nimble.core.configuration import configErrors
+from nimble.core._learnHelpers import TrainValidator, computeMetrics
 from ._interface_helpers import (
     generateBinaryScoresFromHigherSortedLabelScores,
     calculateSingleLabelScoresFromOneVsOneScores,
@@ -1087,18 +1088,25 @@ class TrainedLearner(object):
         TODO
         """
         timer = startTimer(useLog)
-        nimble.core._learnHelpers._2dOutputFlagCheck(
-            self._has2dOutput, None, scoreMode, None)
+        if isinstance(useLog, TrainValidator):
+            validator = useLog
+            useLog = False # logging occurs where TrainValidator was generated
+        else:
+            validator = TrainValidator()
+        validator.validateTestData(testX, testY, testYRequired=True)
+        validator.validateScoreMode(scoreMode)
+        validator.validateArguments(arguments)
+        validator.validateOutputFlags(self._has2dOutput, None, scoreMode, None)
+
+        mergedArguments = mergeArguments(arguments, kwarguments)
 
         if not isinstance(testY, nimble.core.data.Base):
             testX = testX.copy()
             testY = testX.features.extract(testY, useLog=False)
 
-        mergedArguments = mergeArguments(arguments, kwarguments)
         pred = self.apply(testX, mergedArguments, output, scoreMode,
-                          useLog=False)
-        performance = nimble.core._learnHelpers.computeMetrics(
-            testY, None, pred, performanceFunction)
+                          useLog=validator)
+        performance = computeMetrics(testY, None, pred, performanceFunction)
         time = stopTimer(timer)
 
         metrics = {}
@@ -1127,7 +1135,7 @@ class TrainedLearner(object):
         to the learner). If ``testX`` has pointNames and the output
         object has the same number of points, the pointNames from
         ``testX`` will be applied to the output object. Equivalent to
-        having called ``trainAndApply``, as long as the data and 
+        having called ``trainAndApply``, as long as the data and
         parameter setup for training was the same.
 
         Parameters
@@ -1204,11 +1212,18 @@ class TrainedLearner(object):
             )
         """
         timer = startTimer(useLog)
-        self._validTestData(testX)
-        nimble.core._learnHelpers._2dOutputFlagCheck(
-            self._has2dOutput, None, scoreMode, None)
+        if isinstance(useLog, TrainValidator):
+            validator = useLog
+            useLog = False # logging occurs where TrainValidator was generated
+        else:
+            validator = TrainValidator()
+        validator.validateTestData(testX)
+        validator.validateScoreMode(scoreMode)
+        validator.validateArguments(arguments)
+        validator.validateOutputFlags(self._has2dOutput, None, scoreMode, None)
 
         mergedArguments = mergeArguments(arguments, kwarguments)
+        self._validTestDataShape(testX)
 
         # input transformation
         transformedInputs = self._interface._inputTransformation(
@@ -1401,6 +1416,10 @@ class TrainedLearner(object):
              [3]]
             )
         """
+        validator = TrainValidator()
+        validator.validateTrainData(trainX, trainY)
+        validator.validateArguments(arguments)
+
         has2dOutput = False
         outputData = trainX if trainY is None else trainY
         if isinstance(outputData, nimble.core.data.Base):
@@ -1469,6 +1488,9 @@ class TrainedLearner(object):
             False, do **NOT** send to the logger, regardless of the
             global option.
         """
+        validator = TrainValidator()
+        validator.validateTrainData(trainX, trainY)
+
         transformed = self._interface._inputTransformation(
             self.learnerName, trainX, trainY, None, self.arguments,
             self._customDict)
@@ -1566,7 +1588,10 @@ class TrainedLearner(object):
         nimble.core.data.Matrix
             The label scores.
         """
-        self._validTestData(testX)
+        validator = TrainValidator()
+        validator.validateTestData(testX)
+        validator.validateArguments(arguments)
+        self._validTestDataShape(testX)
         usedArguments = mergeArguments(arguments, kwarguments)
         (_, _, testX, usedArguments) = self._interface._inputTransformation(
             self.learnerName, None, None, testX, usedArguments,
@@ -1586,8 +1611,7 @@ class TrainedLearner(object):
         if numpy.array_equal(naturalOrder, internalOrder):
             return formatedRawOrder
         desiredDict = {}
-        for i in range(len(naturalOrder)):
-            label = naturalOrder[i]
+        for i, label in enumerate(naturalOrder):
             desiredDict[label] = i
 
         def sortScorer(feature):
@@ -1600,7 +1624,7 @@ class TrainedLearner(object):
         return formatedRawOrder
 
 
-    def _validTestData(self, testX):
+    def _validTestDataShape(self, testX):
         """
         Validate testing data is compatible with the training data.
         """

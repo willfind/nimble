@@ -674,28 +674,6 @@ class LearnerInspector:
             return 'exact'
 
 
-def _validScoreMode(scoreMode):
-    """
-    Check that a scoreMode flag to train() trainAndApply(), etc. is an
-    accepted value.
-    """
-    scoreMode = scoreMode.lower()
-    if scoreMode not in ['label', 'bestscore', 'allscores']:
-        msg = "scoreMode may only be 'label' 'bestScore' or 'allScores'"
-        raise InvalidArgumentValue(msg)
-
-
-def _validMultiClassStrategy(multiClassStrategy):
-    """
-    Check that a multiClassStrategy flag to train() trainAndApply(),
-    etc. is an accepted value.
-    """
-    multiClassStrategy = multiClassStrategy.lower()
-    if multiClassStrategy not in ['default', 'onevsall', 'onevsone']:
-        msg = "multiClassStrategy may be 'default' 'OneVsAll' or 'OneVsOne'"
-        raise InvalidArgumentValue(msg)
-
-
 def _unpackLearnerName(learnerName):
     """
     Split a learnerName parameter into the portion defining the package,
@@ -726,82 +704,135 @@ def _unpackLearnerName(learnerName):
     return interface, name
 
 
-def _validArguments(arguments):
+class TrainValidator:
     """
-    Check that an arguments parmeter to train() trainAndApply(), etc. is
-    an accepted format.
-    """
-    if not isinstance(arguments, dict) and arguments is not None:
-        msg = "The 'arguments' parameter must be a dictionary or None"
-        raise InvalidArgumentType(msg)
+    Perform and record validation for training, applying, and testing.
 
-
-def _validData(trainX, trainY, testX, testY, testRequired):
+    Provides methods for validating parameters when training, applying,
+    and testing. Repeated validation of the same parameters can be
+    prevented by passing an instance as the useLog parameter. Instances
+    should be instantiated with the useLog parameter provided to the
+    function whenever it will be passed to the nimble.train function so
+    that cross-validation is logged correctly.
     """
-    Check that the data parameters to train() trainAndApply(), etc. are
-    in accepted formats.
-    """
-    if not isinstance(trainX, Base):
-        msg = "trainX may only be an object derived from Base"
-        raise InvalidArgumentType(msg)
+    def __init__(self, useLog=None):
+        self.useLog = useLog
+        self.validTrainData = False
+        self.validTestData = False
+        self.validArgs = False
+        self.validScoreMode = False
+        self.validMultiClassStrategy = False
+        self.validOutputFlags = False
 
-    if trainY is not None:
-        if not isinstance(trainY, (Base, str, int, numpy.int64)):
-            msg = "trainY may only be an object derived from Base, or an "
-            msg += "ID of the feature containing labels in testX"
-            raise InvalidArgumentType(msg)
-        if isinstance(trainY, Base):
-        #			if not len(trainY.features) == 1:
-        #               msg = "If trainY is a Data object, then it may only "
-        #               msg += "have one feature"
-        #				raise ArgumentException(msg)
-            if len(trainY.points) != len(trainX.points):
-                msg = "If trainY is a Data object, then it must have the same "
-                msg += "number of points as trainX"
+    def validateTrainData(self, trainX, trainY):
+        """
+        Check the types of the training data.
+        """
+        if not self.validTrainData:
+            if not isinstance(trainX, Base):
+                msg = "trainX may only be an object derived from Base"
+                raise InvalidArgumentType(msg)
+
+            if trainY is not None:
+                if not isinstance(trainY, (Base, str, int, numpy.int64)):
+                    msg = "trainY may only be an object derived from Base, or "
+                    msg += "an ID of the feature containing labels in testX"
+                    raise InvalidArgumentType(msg)
+                if (isinstance(trainY, Base) and
+                        len(trainY.points) != len(trainX.points)):
+                    msg = "If trainY is a Data object, then it must have the "
+                    msg += "same number of points as trainX"
+                    raise InvalidArgumentValueCombination(msg)
+
+            self.validTrainData = True
+
+    def validateTestData(self, testX, testY=None, testXRequired=True,
+                         testYRequired=False):
+        """
+        Check the types of the testing data.
+        """
+        if not self.validTestData:
+            if testXRequired and testX is None:
+                raise InvalidArgumentType("testX must be provided")
+            if testX is not None and not isinstance(testX, Base):
+                msg = "testX may only be an object derived from Base"
+                raise InvalidArgumentType(msg)
+
+            if testYRequired and testY is None:
+                raise InvalidArgumentType("testY must be provided")
+            acceptedTypes = (Base, str, int)
+            if testY is not None and not isinstance(testY, acceptedTypes):
+                msg = "testY may only be an object derived from Base, or "
+                msg += "an ID of the feature containing labels in testX"
+                raise InvalidArgumentType(msg)
+            if (isinstance(testY, Base)
+                    and len(testY.points) != len(testX.points)):
+                msg = "If testY is a Data object, then it must have "
+                msg += "the same number of points as testX"
                 raise InvalidArgumentValueCombination(msg)
 
-    # testX is allowed to be None, sometimes it is appropriate to have it be
-    # filled using the trainX argument (ie things which transform data, or
-    # learn internal structure)
-    if testRequired[0] and testX is None:
-        raise InvalidArgumentType("testX must be provided")
-    if testX is not None:
-        if not isinstance(testX, Base):
-            msg = "testX may only be an object derived from Base"
-            raise InvalidArgumentType(msg)
+            self.validTestData = True
 
-    if testRequired[1] and testY is None:
-        raise InvalidArgumentType("testY must be provided")
-    if testY is not None:
-        if not isinstance(testY, (Base, str, int, int)):
-            msg = "testY may only be an object derived from Base, or an ID "
-            msg += "of the feature containing labels in testX"
-            raise InvalidArgumentType(msg)
-        if isinstance(testY, Base):
-            if len(testY.points) != len(testX.points):
-                msg = "If testY is a Data object, then it must have the same "
-                msg += "number of points as testX"
+    def validateArguments(self, arguments):
+        """
+        Check the types of the argument parameters.
+        """
+        if not self.validArgs:
+            if not isinstance(arguments, dict) and arguments is not None:
+                msg = "The 'arguments' parameter must be a dictionary or None"
+                raise InvalidArgumentType(msg)
+            self.validArgs = True
+
+    def validateScoreMode(self, scoreMode):
+        """
+        Check that a scoreMode flag is an accepted value.
+        """
+        if not self.validScoreMode:
+            scoreMode = scoreMode.lower()
+            if scoreMode not in ['label', 'bestscore', 'allscores']:
+                msg = "scoreMode may only be 'label' 'bestScore' or "
+                msg += "'allScores'"
+                raise InvalidArgumentValue(msg)
+
+            self.validScoreMode = True
+
+    def validateMultiClassStrategy(self, multiClassStrategy):
+        """
+        Check that a multiClassStrategy flag is an accepted value.
+        """
+        if not self.validMultiClassStrategy:
+            multiClassStrategy = multiClassStrategy.lower()
+            if multiClassStrategy not in ['default', 'onevsall', 'onevsone']:
+                msg = "multiClassStrategy may be 'default' 'OneVsAll' or "
+                msg += "'OneVsOne'"
+                raise InvalidArgumentValue(msg)
+
+            self.validMultiClassStrategy = True
+
+    def validateOutputFlags(self, X, Y, scoreMode, multiClassStrategy):
+        """
+        Check flags are compatible when output is 2D.
+        """
+        if not self.validOutputFlags:
+            outputData = X if Y is None else Y
+            if isinstance(outputData, Base):
+                needToCheck = len(outputData.features) > 1
+            elif isinstance(outputData, (list, tuple)):
+                needToCheck = len(outputData) > 1
+            elif isinstance(outputData, bool):
+                needToCheck = outputData
+            else:
+                needToCheck = False
+
+            if needToCheck and scoreMode not in [None, 'label']:
+                msg = "When dealing with multi dimensional outputs / "
+                msg += "predictions, the scoreMode flag is required to be "
+                msg += "set to 'label'"
+                raise InvalidArgumentValueCombination(msg)
+            if needToCheck and multiClassStrategy not in [None, 'default']:
+                msg = "When dealing with multi dimensional outputs / "
+                msg += "predictions, the multiClassStrategy flag is "
+                msg += "required to be set to 'default'"
                 raise InvalidArgumentValueCombination(msg)
 
-
-def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
-    outputData = X if Y is None else Y
-    if isinstance(outputData, Base):
-        needToCheck = len(outputData.features) > 1
-    elif isinstance(outputData, (list, tuple)):
-        needToCheck = len(outputData) > 1
-    elif isinstance(outputData, bool):
-        needToCheck = outputData
-    else:
-        needToCheck = False
-
-    if needToCheck:
-        if scoreMode is not None and scoreMode != 'label':
-            msg = "When dealing with multi dimensional outputs / predictions, "
-            msg += "the scoreMode flag is required to be set to 'label'"
-            raise InvalidArgumentValueCombination(msg)
-        if multiClassStrategy is not None and multiClassStrategy != 'default':
-            msg = "When dealing with multi dimensional outputs / predictions, "
-            msg += "the multiClassStrategy flag is required to be set to "
-            msg += "'default'"
-            raise InvalidArgumentValueCombination(msg)
+            self.validOutputFlags = True

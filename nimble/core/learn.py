@@ -16,12 +16,8 @@ from nimble.core.logger import handleLogging, loggingEnabled, deepLoggingEnabled
 from nimble.core.logger import startTimer, stopTimer
 from nimble.core._learnHelpers import findBestInterface
 from nimble.core._learnHelpers import _learnerQuery
-from nimble.core._learnHelpers import _validScoreMode
-from nimble.core._learnHelpers import _validMultiClassStrategy
 from nimble.core._learnHelpers import _unpackLearnerName
-from nimble.core._learnHelpers import _validArguments
-from nimble.core._learnHelpers import _validData
-from nimble.core._learnHelpers import _2dOutputFlagCheck
+from nimble.core._learnHelpers import TrainValidator
 from nimble.core._learnHelpers import LearnerInspector
 from nimble.core._learnHelpers import ArgumentIterator
 from nimble.core._learnHelpers import FoldIterator
@@ -523,10 +519,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
 
 def train(learnerName, trainX, trainY=None, performanceFunction=None,
           arguments=None, scoreMode='label', multiClassStrategy='default',
-          folds=10, doneValidData=False, doneValidArguments1=False,
-          doneValidArguments2=False, doneValidMultiClassStrategy=False,
-          done2dOutputFlagCheck=False, useLog=None, storeLog='unset',
-          **kwarguments):
+          folds=10, useLog=None, **kwarguments):
     """
     Train a specified learner using the provided data.
 
@@ -634,17 +627,15 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     0.1 linear
     """
     timer = startTimer(useLog)
-    if not doneValidData:
-        _validData(trainX, trainY, None, None, [False, False])
-    if not doneValidArguments1:
-        _validArguments(arguments)
-    if not doneValidArguments2:
-        _validArguments(kwarguments)
-    if not doneValidMultiClassStrategy:
-        _validMultiClassStrategy(multiClassStrategy)
-    if not done2dOutputFlagCheck:
-        _2dOutputFlagCheck(trainX, trainY, None, multiClassStrategy)
-
+    if isinstance(useLog, TrainValidator):
+        validator = useLog
+        useLog = False # logging occurs where TrainValidator was generated
+    else:
+        validator = TrainValidator(useLog)
+    validator.validateTrainData(trainX, trainY)
+    validator.validateMultiClassStrategy(multiClassStrategy)
+    validator.validateOutputFlags(trainX, trainY, None, multiClassStrategy)
+    validator.validateArguments(arguments)
     merged = mergeArguments(arguments, kwarguments)
     interface, trueLearnerName = _unpackLearnerName(learnerName)
 
@@ -665,15 +656,12 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
             msg += str(folds) + " and trainX only contains "
             msg += str(len(trainX.points)) + " points."
             raise InvalidArgumentValueCombination(msg)
-        # useLog value stored if call to train is from another function
-        if storeLog == 'unset':
-            storeLog = useLog
         # sig (learnerName, X, Y, performanceFunction, arguments=None,
         #      folds=10, scoreMode='label', useLog=None, maximize=False,
         #      **kwarguments):
         crossValidationResults = crossValidate(
             learnerName, trainX, trainY, performanceFunction, merged,
-            folds=folds, scoreMode=scoreMode, useLog=storeLog)
+            folds=folds, scoreMode=scoreMode, useLog=validator.useLog)
         bestArguments = crossValidationResults.bestArguments
     else:
         crossValidationResults = None
@@ -827,18 +815,20 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         )
     """
     timer = startTimer(useLog)
-    _validData(trainX, trainY, testX, None, [False, False])
-    _validScoreMode(scoreMode)
-    _2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
+    validator = TrainValidator(useLog)
+    validator.validateTrainData(trainX, trainY)
+    validator.validateTestData(testX, testXRequired=False)
+    validator.validateScoreMode(scoreMode)
+    validator.validateOutputFlags(trainX, trainY, scoreMode,
+                                  multiClassStrategy)
+    validator.validateArguments(arguments)
     merged = mergeArguments(arguments, kwarguments)
 
     trainedLearner = nimble.train(learnerName, trainX, trainY,
                                   performanceFunction, merged,
                                   scoreMode='label',
                                   multiClassStrategy=multiClassStrategy,
-                                  folds=folds, useLog=False,
-                                  storeLog=useLog, doneValidData=True,
-                                  done2dOutputFlagCheck=True, **kwarguments)
+                                  folds=folds, useLog=validator)
 
     if testX is None:
         if isinstance(trainY, (str, int, numpy.integer)):
@@ -847,7 +837,8 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         else:
             testX = trainX
 
-    results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=False)
+    results = trainedLearner.apply(testX, {}, output, scoreMode,
+                                   useLog=validator)
     time = stopTimer(timer)
 
     extraInfo = None
@@ -1007,25 +998,32 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     0.0
     """
     timer = startTimer(useLog)
-    _validData(trainX, trainY, testX, testY, [True, True])
-    _2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
-
+    if isinstance(useLog, TrainValidator):
+        # trainAndTest called by trainAndTestOnTrainingData
+        funcName = 'trainAndTestOnTrainingData'
+        validator = useLog
+    else:
+        funcName = 'trainAndTest'
+        validator = TrainValidator(useLog)
+    validator.validateTrainData(trainX, trainY)
+    validator.validateTestData(testX, testY, testYRequired=True)
+    validator.validateOutputFlags(trainX, trainY, scoreMode,
+                                  multiClassStrategy)
+    validator.validateArguments(arguments)
     merged = mergeArguments(arguments, kwarguments)
 
     trainedLearner = nimble.train(learnerName, trainX, trainY,
                                   performanceFunction, merged,
                                   scoreMode='label',
                                   multiClassStrategy=multiClassStrategy,
-                                  folds=folds, useLog=False,
-                                  storeLog=useLog, doneValidData=True,
-                                  done2dOutputFlagCheck=True)
+                                  folds=folds, useLog=validator)
 
     if isinstance(testY, (str, int, numpy.integer)):
         testX = testX.copy()
         testY = testX.features.extract(testY, useLog=False)
-    predictions = trainedLearner.apply(testX, {}, output, scoreMode,
-                                       useLog=False)
-    performance = computeMetrics(testY, None, predictions, performanceFunction)
+    performance = trainedLearner.test(testX, testY, performanceFunction, {},
+                                      output, scoreMode, useLog=validator)
+
     time = stopTimer(timer)
 
     metrics = {}
@@ -1034,14 +1032,12 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     extraInfo = None
     if merged != trainedLearner.arguments:
         extraInfo = {"bestParams": trainedLearner.arguments}
-    if trainX == testX:
-        name = "trainAndTestOnTrainingData"
+    if funcName.endswith("OnTrainingData"):
         testX = None
         testY = None
-    else:
-        name = "trainAndTest"
-    handleLogging(useLog, "run", name, trainX, trainY, testX, testY,
-                  learnerName, merged, metrics, extraInfo, time)
+
+    handleLogging(validator.useLog, "run", funcName, trainX, trainY, testX,
+                  testY, learnerName, merged, metrics, extraInfo, time)
 
     return performance
 
@@ -1198,10 +1194,13 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
                       extraInfo={'crossValidationError': True})
 
     else:
+        validator = TrainValidator(useLog)
+        validator.validateTrainData(trainX, trainY)
+        validator.validTestData = True
         performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY,
                                    performanceFunction, arguments, output,
                                    scoreMode, multiClassStrategy, folds,
-                                   useLog, **kwarguments)
+                                   validator, **kwarguments)
     return performance
 
 

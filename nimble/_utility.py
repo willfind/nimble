@@ -68,14 +68,14 @@ def mergeArguments(argumentsParam, kwargsParam):
     throw an exception if the two inputs have contradictory values for
     the same key.
     """
+    if not (argumentsParam or kwargsParam):
+        return {}
+    if not argumentsParam:
+        return kwargsParam.copy()
+    if not kwargsParam:
+        return argumentsParam.copy()
+
     ret = {}
-    if argumentsParam is None:
-        argumentsParam = {}
-    # UniversalInterface uses this helper to merge params a little differently,
-    # arguments (which might be None) is passed as kwargsParam so in that case
-    # we need to set kwargsParam to {}.
-    if kwargsParam is None:
-        kwargsParam = {}
     if len(argumentsParam) < len(kwargsParam):
         smaller = argumentsParam
         larger = kwargsParam
