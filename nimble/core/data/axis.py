@@ -16,6 +16,7 @@ import inspect
 import sys
 from operator import itemgetter
 import functools
+import re
 
 import numpy
 
@@ -33,7 +34,7 @@ from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2
 from ._dataHelpers import DEFAULT_PREFIX_LENGTH, DEFAULT_NAME_PREFIX
 from ._dataHelpers import valuesToPythonList, constructIndicesList
 from ._dataHelpers import validateInputString
-from ._dataHelpers import isQueryString, axisQueryFunction
+from ._dataHelpers import operatorDict
 from ._dataHelpers import isAllowedSingleElement
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import wrapMatchFunctionFactory
@@ -1214,6 +1215,52 @@ class Axis(object):
     #  Structural Helpers  #
     ########################
 
+    def _axisQueryFunction(self, string):
+        """
+        Convert a query string to an axis input function.
+        """
+        offAxis = 'feature' if self._isPoint else 'point'
+        # positive lookahead catches all ambiguous cases (i.e age == > 20)
+        operatorCount = len(re.findall(r'(?=\s(==|!=|>=|>|<=|<)\s)', string))
+        if not operatorCount:
+            msg = "'{0}' is not a valid {1} name nor a valid query string. "
+            msg += "A query string must be in the format {2}NAME OPERATOR "
+            msg += "VALUE i.e '{1}3 != 0'"
+            offCaps = offAxis.upper()
+            raise InvalidArgumentValue(msg.format(string, offAxis, offCaps))
+        if operatorCount > 1:
+            msg = "Multiple operators in query string. Strings containing "
+            msg += "more than one whitespace padded operator cannot be "
+            msg += "parsed. Use a function instead or modify the {0}Name or "
+            msg += "values that includes a whitespace padded operator."
+            raise InvalidArgumentValue(msg.format(offAxis))
+
+        name, optr, value = re.split(r'\s(==|!=|>=|>|<=|<)\s', string)
+        name = name.strip()
+        value = value.strip()
+
+        hasName = getattr(self._base, offAxis + 's')._hasName
+        if not hasName(name):
+            msg = "the {0} '{1}' does not exist".format(offAxis, name)
+            raise InvalidArgumentValue(msg)
+
+        operatorFunc = operatorDict[optr]
+        # convert value from a string, if possible
+        try:
+            value = float(value)
+        except ValueError:
+            pass
+        #convert query string to a function
+        def target_f(vector):
+            return operatorFunc(vector[name], value)
+
+        target_f.vectorized = True
+        target_f.name = name
+        target_f.value = value
+        target_f.operator = operatorFunc
+
+        return target_f
+
     def _genericStructuralFrontend(self, structure, target=None,
                                    start=None, end=None, number=None,
                                    randomize=False):
@@ -1235,16 +1282,7 @@ class Axis(object):
                 msg += "more than two dimensions"
                 raise ImproperObjectAction(msg.format(argName))
             else:
-                query = isQueryString(target, startswithOperator=False)
-                if query:
-                    offAxis = 'features' if self._isPoint else 'points'
-                    hasName = getattr(self._base, offAxis)._hasName
-                    target = axisQueryFunction(query, axis, hasName)
-                # the target can't be converted to a function
-                else:
-                    msg = "'{0}' is not a valid {1} ".format(target, axis)
-                    msg += 'name nor a valid query string'
-                    raise InvalidArgumentValue(msg)
+                target = self._axisQueryFunction(target)
 
         # list-like container types
         if target is not None and not hasattr(target, '__call__'):
