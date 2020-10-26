@@ -678,8 +678,7 @@ class HighDimensionModifying(DataTestObject):
             '__deepcopy__', 'nameIsDefault', 'isApproximatelyEqual',
             'trainAndTestSets', 'summaryReport', 'isIdentical', 'writeFile',
             'getTypeString', 'pointView', 'view', 'validate', 'containsZero',
-            'save', 'toString', 'show', 'referenceDataFrom', 'copy',
-            'flatten', 'unflatten',))
+            'save', 'toString', 'show', 'copy', 'flatten', 'unflatten',))
         baseDisallowed = baseUser.difference(baseAllowed)
 
         for method in baseDisallowed:
