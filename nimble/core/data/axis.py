@@ -147,7 +147,7 @@ class Axis(object):
             msg = "There are no valid " + self._axis + " identifiers; "
             msg += "this object has 0 " + self._axis + "s"
             raise IndexError(msg)
-        elif isinstance(identifier, (int, numpy.integer)):
+        if isinstance(identifier, (int, numpy.integer)):
             if identifier < 0:
                 identifier = num + identifier
             if identifier < 0 or identifier >= num:
@@ -259,7 +259,7 @@ class Axis(object):
         ref._relPath = self._base.relativePath
         ref._absPath = self._base.absolutePath
 
-        self._base.referenceDataFrom(ref, useLog=False)
+        self._base._referenceDataFrom(ref)
 
         handleLogging(useLog, 'prep', '{ax}s.retain'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('retain'),
@@ -404,7 +404,7 @@ class Axis(object):
         if limitTo is not None:
             limitTo = constructIndicesList(self._base, self._axis, limitTo)
         else:
-            limitTo = [i for i in range(len(self))]
+            limitTo = list(range(len(self)))
 
         retData, offAxisNames = self._calculate_implementation(function,
                                                                limitTo)
@@ -752,20 +752,17 @@ class Axis(object):
         if subtract is not None and subtract != 0:
             if subIsVec:
                 subtract = subtract.stretch
-            self._base.referenceDataFrom(self._base - subtract, useLog=False)
+            self._base._referenceDataFrom(self._base - subtract)
             if alsoIsObj:
-                applyResultTo.referenceDataFrom(applyResultTo - subtract,
-                                                useLog=False)
+                applyResultTo._referenceDataFrom(applyResultTo - subtract)
 
         # then perform the division operation
         if divide is not None and divide != 1:
             if divIsVec:
                 divide = divide.stretch
-
-            self._base.referenceDataFrom(self._base / divide, useLog=False)
+            self._base._referenceDataFrom(self._base / divide)
             if alsoIsObj:
-                applyResultTo.referenceDataFrom(applyResultTo / divide,
-                                                useLog=False)
+                applyResultTo._referenceDataFrom(applyResultTo / divide)
 
         if self._isPoint:
             self._setNames(origPtNames, useLog=False)
@@ -939,7 +936,7 @@ class Axis(object):
             legendTitle, **kwargs):
         fig, ax = plotFigureHandling(figureName)
         if identifiers is None:
-            identifiers = [i for i in range(len(self))]
+            identifiers = list(range(len(self)))
         axisRange = range(1, len(identifiers) + 1)
         target = self[identifiers]
         if self._isPoint:
@@ -968,7 +965,7 @@ class Axis(object):
             if statistic is None:
                 calc = target
             else:
-                calc =  targetAxis.calculate(statistic, useLog=False)
+                calc = targetAxis.calculate(statistic, useLog=False)
             if self._isPoint:
                 calcAxis = calc.features
             else:
@@ -1187,7 +1184,7 @@ class Axis(object):
                 stop += 1
             else:
                 stop -= 1
-            return [i for i in range(start, stop, step)]
+            return list(range(start, stop, step))
         else:
             numBool = sum(isinstance(val, (bool, numpy.bool_)) for val in key)
             # contains all boolean values
@@ -1321,7 +1318,7 @@ class Axis(object):
             targetList = list(range(start, end + 1))
 
         else:
-            targetList = [value for value in range(axisLength)]
+            targetList = list(range(axisLength))
 
         if number:
             if number > len(targetList):
@@ -1393,7 +1390,7 @@ class Axis(object):
             msg += "Either set the {0} names of this object or provide "
             msg += "another argument for by"
             raise InvalidArgumentValue(msg.format(self._axis))
-        self._permute(sorted(self.getNames(), reverse=reverse),
+        self._permute(sorted(self._getNames(), reverse=reverse),
                       useLog=False)
 
     def _sortByIdentifier(self, index, reverse):

@@ -8,7 +8,7 @@ copy, points.copy, features.copy
 In object StructureModifying:
 __init__,  transpose, T, points.insert, features.insert, points.sort,
 features.sort, points.extract, features.extract, points.delete,
-features.delete, points.retain, features.retain, referenceDataFrom,
+features.delete, points.retain, features.retain, _referenceDataFrom,
 points.transform, features.transform, transformElements, replaceRectangle,
 flatten, merge, unflatten, points.append, features.append,
 """
@@ -7113,13 +7113,13 @@ class StructureModifying(StructureShared):
         expTest.features.setNames(['c'])
         assert toTest == expTest
 
-    #####################
-    # referenceDataFrom #
-    #####################
+    ######################
+    # _referenceDataFrom #
+    ######################
 
     @raises(InvalidArgumentType)
     def test_referenceDataFrom_exceptionWrongType(self):
-        """ Test referenceDataFrom() throws exception when other is not the same type """
+        """ Test _referenceDataFrom() throws exception when other is not the same type """
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
         pNames = ['1', 'one', '2', '0']
@@ -7132,10 +7132,10 @@ class StructureModifying(StructureShared):
         objType1 = nimble.data(retType1, data1, pointNames=pNames, featureNames=featureNames)
 
         # at least one of these two will be the wrong type
-        orig.referenceDataFrom(objType0)
-        orig.referenceDataFrom(objType1)
+        orig._referenceDataFrom(objType0)
+        orig._referenceDataFrom(objType1)
 
-    @oneLogEntryExpected
+    @noLogEntryExpected
     def test_referenceDataFrom_data_axisNames(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
@@ -7147,14 +7147,14 @@ class StructureModifying(StructureShared):
         pNames = ['-1']
         other = self.constructor(data2, pointNames=pNames, featureNames=featureNames)
 
-        ret = orig.referenceDataFrom(other)  # RET CHECK
+        ret = orig._referenceDataFrom(other)  # RET CHECK
 
         assert orig.data is other.data
         assert '-1' in orig.points.getNames()
         assert '1' in orig.features.getNames()
         assert ret is None
 
-    @oneLogEntryExpected
+    @noLogEntryExpected
     def test_referenceDataFrom_lazyNameGeneration(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         orig = self.constructor(data1)
@@ -7162,12 +7162,12 @@ class StructureModifying(StructureShared):
         data2 = [[-1, -2, -3, -4]]
         other = self.constructor(data2)
 
-        orig.referenceDataFrom(other)
+        orig._referenceDataFrom(other)
 
         assertNoNamesGenerated(orig)
         assertNoNamesGenerated(other)
 
-    @oneLogEntryExpected
+    @noLogEntryExpected
     def test_referenceDataFrom_ObjName_Paths(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
@@ -7187,7 +7187,7 @@ class StructureModifying(StructureShared):
         other._absPath = "testAbsPathother"
         other._relPath = "testRelPathother"
 
-        orig.referenceDataFrom(other)
+        orig._referenceDataFrom(other)
 
         assert orig.name == "testName"
         assert orig.absolutePath == "testAbsPathother"
@@ -7197,7 +7197,7 @@ class StructureModifying(StructureShared):
         assert other.absolutePath == "testAbsPathother"
         assert other.relativePath == 'testRelPathother'
 
-    @oneLogEntryExpected
+    @noLogEntryExpected
     def test_referenceDataFrom_allMetadataAttributes(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
@@ -7207,7 +7207,7 @@ class StructureModifying(StructureShared):
         data2 = [[-1, -2, -3, 4, 5, 3, ], [-1, -2, -3, 4, 5, 3, ]]
         other = self.constructor(data2, )
 
-        orig.referenceDataFrom(other)
+        orig._referenceDataFrom(other)
 
         assert orig._pointCount == len(other.points)
         assert orig._featureCount == len(other.features)
