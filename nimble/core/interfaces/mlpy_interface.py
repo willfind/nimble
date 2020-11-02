@@ -16,15 +16,14 @@ from nimble.exceptions import InvalidArgumentValue
 from nimble._utility import inspectArguments
 from nimble._utility import inheritDocstringsFactory, dtypeConvert
 from nimble.random import _generateSubsidiarySeed
-from .universal_interface import UniversalInterface
 from .universal_interface import PredefinedInterface
 from ._interface_helpers import PythonSearcher
 from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import removeFromTailMatchedLists
 
 
-@inheritDocstringsFactory(UniversalInterface)
-class Mlpy(PredefinedInterface, UniversalInterface):
+@inheritDocstringsFactory(PredefinedInterface)
+class Mlpy(PredefinedInterface):
     """
     This class is an interface to mlpy.
     """

@@ -85,20 +85,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             msg += "a string"
             raise TypeError(msg)
 
-        # _configurableOptionNames and _optionDefaults
-        optionNames = self._configurableOptionNames()
-        if not isinstance(optionNames, list):
-            msg = "Improper implementation of _configurableOptionNames(), "
-            msg += "must return a list of strings"
-            raise TypeError(msg)
-        for optionName in optionNames:
-            if not isinstance(optionName, str):
-                msg = "Improper implementation of _configurableOptionNames(), "
-                msg += "must return a list of strings"
-                raise TypeError(msg)
-            # call _optionDefaults to make sure it doesn't throw an exception
-            self._optionDefaults(optionName)
-
         # _exposedFunctions
         exposedFunctions = self._exposedFunctions()
         if exposedFunctions is None or not isinstance(exposedFunctions, list):
@@ -578,7 +564,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         return ret
 
     @captureOutput
-    @cacheWrapper
     def findCallable(self, name):
         """
         Find reference to the callable with the given name.
@@ -594,7 +579,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         """
         return self._findCallableBackend(name)
 
-    @cacheWrapper
     def _getParameterNames(self, name):
         """
         Find params for instantiation and function calls.
@@ -618,7 +602,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         return ret
 
     @captureOutput
-    @cacheWrapper
     def getLearnerParameterNames(self, learnerName):
         """
         Find learner parameter names for a trainAndApply() call.
@@ -641,7 +624,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
 
         return ret
 
-    @cacheWrapper
     def _getDefaultValues(self, name):
         """
         Find default values.
@@ -658,7 +640,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         return self._getDefaultValuesBackend(name)
 
     @captureOutput
-    @cacheWrapper
     def getLearnerDefaultValues(self, learnerName):
         """
         Find learner default parameter values for trainAndApply() call.
@@ -869,26 +850,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         """
         Returns whatever attributes might be available for the given
         learner. For example, in the case of linear regression, TODO
-        """
-        pass
-
-    @abc.abstractmethod
-    def _optionDefaults(self, option):
-        """
-        Define package default values that will be used for as long as a
-        default value hasn't been registered in the nimble configuration
-        file. For example, these values will always be used the first
-        time an interface is instantiated.
-        """
-        pass
-
-
-    @abc.abstractmethod
-    def _configurableOptionNames(self):
-        """
-        Returns a list of strings, where each string is the name of a
-        configurable option of this interface whose value will be stored
-        in nimble's configuration file.
         """
         pass
 
@@ -1127,7 +1088,7 @@ class TrainedLearner(object):
         to the learner). If ``testX`` has pointNames and the output
         object has the same number of points, the pointNames from
         ``testX`` will be applied to the output object. Equivalent to
-        having called ``trainAndApply``, as long as the data and 
+        having called ``trainAndApply``, as long as the data and
         parameter setup for training was the same.
 
         Parameters
@@ -1549,8 +1510,8 @@ class TrainedLearner(object):
                 scores.append(combinedScores)
             scores = numpy.array(scores)
             return nimble.data("Matrix", scores, useLog=False)
-        else:
-            return rawScores
+
+        return rawScores
 
 
     @captureOutput
@@ -1791,7 +1752,7 @@ class TrainedLearners(TrainedLearner):
                     rawPredictions.getTypeString(), winningLabels,
                     featureNames=['winningLabel'], useLog=False)
 
-            elif scoreMode.lower() == 'bestScore'.lower():
+            if scoreMode.lower() == 'bestScore'.lower():
                 #construct a list of lists, with each row in the list
                 # containing the predicted label and score of that label for
                 # the corresponding row in rawPredictions
@@ -1810,7 +1771,7 @@ class TrainedLearners(TrainedLearner):
                                                useLog=False)
                 return resultsContainer
 
-            elif scoreMode.lower() == 'allScores'.lower():
+            if scoreMode.lower() == 'allScores'.lower():
                 # create list of Feature Names/Column Headers for final
                 # return object
                 colHeaders = sorted([str(i) for i in self._labelSet])
@@ -1835,12 +1796,12 @@ class TrainedLearners(TrainedLearner):
                 return nimble.data(rawPredictions.getTypeString(),
                                    resultsContainer, featureNames=colHeaders,
                                    useLog=False)
-            else:
-                msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
-                raise InvalidArgumentValue(msg)
+
+            msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
+            raise InvalidArgumentValue(msg)
 
         #1 VS 1
-        elif self.method == 'OneVsOne':
+        if self.method == 'OneVsOne':
             predictionFeatureID = 0
             for trainedLearner in self._trainedLearnersList:
                 # train classifier on that data; apply it to the test set
@@ -1862,7 +1823,7 @@ class TrainedLearners(TrainedLearner):
                     extractWinningPredictionLabel, useLog=False)
                 ret.features.setName(0, "winningLabel", useLog=False)
                 return ret
-            elif scoreMode.lower() == 'bestScore'.lower():
+            if scoreMode.lower() == 'bestScore'.lower():
                 # construct a list of lists, with each row in the list
                 # containing the predicted label and score of that label for
                 # the corresponding row in rawPredictions
@@ -1880,7 +1841,7 @@ class TrainedLearners(TrainedLearner):
                                                featureNames=featureNames,
                                                useLog=False)
                 return resultsContainer
-            elif scoreMode.lower() == 'allScores'.lower():
+            if scoreMode.lower() == 'allScores'.lower():
                 colHeaders = sorted([str(float(i)) for i in self._labelSet])
                 colIndices = list(range(len(colHeaders)))
                 labelIndexDict = {v: k for k, v in zip(colIndices, colHeaders)}
@@ -1897,11 +1858,11 @@ class TrainedLearners(TrainedLearner):
                 return nimble.data(rawPredictions.getTypeString(),
                                    resultsContainer, featureNames=colHeaders,
                                    useLog=False)
-            else:
-                msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
-                raise InvalidArgumentValue(msg)
-        else:
-            raise ImproperObjectAction('Wrong multiclassification method.')
+
+            msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
+            raise InvalidArgumentValue(msg)
+
+        raise ImproperObjectAction('Wrong multiclassification method.')
 
 
 #######################
@@ -1922,15 +1883,33 @@ def formatPathMessage(name):
     underline = '-' * (len(name) + 13)
     return pathMessage.format(name=name, underline=underline)
 
-
-class PredefinedInterface(abc.ABC):
+@inheritDocstringsFactory(UniversalInterface)
+class PredefinedInterface(UniversalInterface):
     """
-    Abstract base class of classmethods for predefined interfaces.
+    Interfaces to third party packages.
 
-    For predefined interfaces, we need class methods to access certain
-    information about the class and provide a detailed exception if the
-    user attempts to use the interface, but it failed instantiation.
+    For predefined interfaces, additional validation is necessary during
+    init, some methods must be class methods, a custom failure message
+    is required and learner details are cached.
     """
+
+    def __init__(self):
+        # _configurableOptionNames and _optionDefaults
+        optionNames = self._configurableOptionNames()
+        if not isinstance(optionNames, list):
+            msg = "Improper implementation of _configurableOptionNames(), "
+            msg += "must return a list of strings"
+            raise TypeError(msg)
+        for optionName in optionNames:
+            if not isinstance(optionName, str):
+                msg = "Improper implementation of _configurableOptionNames(), "
+                msg += "must return a list of strings"
+                raise TypeError(msg)
+            # call _optionDefaults to make sure it doesn't throw an exception
+            self._optionDefaults(optionName)
+
+        super(PredefinedInterface, self).__init__()
+
     @classmethod
     @abc.abstractmethod
     def getCanonicalName(cls):
@@ -1959,7 +1938,49 @@ class PredefinedInterface(abc.ABC):
                 msg += formatPathMessage(name)
             raise PackageException(msg).with_traceback(origTraceback)
 
+    @abc.abstractmethod
+    def _optionDefaults(self, option):
+        """
+        Define package default values that will be used for as long as a
+        default value hasn't been registered in the nimble configuration
+        file. For example, these values will always be used the first
+        time an interface is instantiated.
+        """
+        pass
+
+
+    @abc.abstractmethod
+    def _configurableOptionNames(self):
+        """
+        Returns a list of strings, where each string is the name of a
+        configurable option of this interface whose value will be stored
+        in nimble's configuration file.
+        """
+        pass
+
     @classmethod
     @abc.abstractmethod
     def _installInstructions(cls):
         pass
+
+    @cacheWrapper
+    def findCallable(self, name):
+        return super(PredefinedInterface, self).findCallable(name)
+
+    @cacheWrapper
+    def _getParameterNames(self, name):
+        return super(PredefinedInterface, self)._getParameterNames(name)
+
+    @cacheWrapper
+    def getLearnerParameterNames(self, learnerName):
+        return super(PredefinedInterface, self).getLearnerParameterNames(
+            learnerName)
+
+    @cacheWrapper
+    def _getDefaultValues(self, name):
+        return super(PredefinedInterface, self)._getDefaultValues(name)
+
+    @cacheWrapper
+    def getLearnerDefaultValues(self, learnerName):
+        return super(PredefinedInterface, self).getLearnerDefaultValues(
+            learnerName)

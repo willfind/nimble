@@ -16,7 +16,6 @@ from nimble.exceptions import InvalidArgumentValue
 from nimble._utility import inspectArguments
 from nimble._utility import inheritDocstringsFactory
 from nimble.random import _generateSubsidiarySeed
-from .universal_interface import UniversalInterface
 from .universal_interface import PredefinedInterface
 from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import collectAttributes
@@ -24,14 +23,14 @@ from ._interface_helpers import removeFromTailMatchedLists
 from ._interface_helpers import noLeading__, notCallable, notABCAssociated
 
 
-class _SciKitLearnAPI(abc.ABC):
+@inheritDocstringsFactory(PredefinedInterface)
+class _SciKitLearnAPI(PredefinedInterface):
     """
     Base class for interfaces following the scikit-learn api.
     """
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
     #######################################
-
 
     def _getParameterNamesBackend(self, name):
         ret = self._paramQuery(name, None)
@@ -124,8 +123,8 @@ class _SciKitLearnAPI(abc.ABC):
         # in binary classification, we return a row vector. need to reshape
         if len(raw.shape) == 1:
             return raw.reshape(len(raw), 1)
-        else:
-            return raw
+
+        return raw
 
 
     def _getScoresOrder(self, learner):
@@ -150,8 +149,8 @@ class _SciKitLearnAPI(abc.ABC):
 
         return learner
 
-    def _incrementalTrainer(self, learner, trainX, trainY, arguments,
-                            customDict):
+    def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
+                            arguments, customDict):
         # see partial_fit(X, y[, classes, sample_weight])
         raise NotImplementedError
 
@@ -263,12 +262,11 @@ class _SciKitLearnAPI(abc.ABC):
                 seed = _generateSubsidiarySeed()
                 initValues[negdex] = seed
             return (initParams, initValues)
-        elif not hasattr(namedModule, name):
+        if not hasattr(namedModule, name):
             return None
-        else:
-            (args, _, _, d) = inspectArguments(getattr(namedModule, name))
-            (args, d) = removeFromTailMatchedLists(args, d, ignore)
-            return (args, d)
+        (args, _, _, d) = inspectArguments(getattr(namedModule, name))
+        (args, d) = removeFromTailMatchedLists(args, d, ignore)
+        return (args, d)
 
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
@@ -332,8 +330,8 @@ class _SciKitLearnAPI(abc.ABC):
     def version(self):
         pass
 
-@inheritDocstringsFactory(UniversalInterface)
-class SciKitLearn(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
+@inheritDocstringsFactory(_SciKitLearnAPI)
+class SciKitLearn(_SciKitLearnAPI):
     """
     This class is an interface to scikit-learn.
     """
