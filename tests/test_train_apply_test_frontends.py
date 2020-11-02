@@ -174,7 +174,7 @@ def test_TrainedLearnerApply_pointNamePreservation():
                        matchTestPoints=False)
 
     exp2 = nimble.data('Matrix', [0])
-    
+
     out2 = tl2.apply(testObjData)
     assert out2 == exp2
 
@@ -820,7 +820,7 @@ def test_TL_getScores_testXValidation():
     # Expected outcomes
     # trainY is ID, testX does not contain labels; test int
     tl = nimble.train(learner, trainObj, trainObjLabels)
-    out = tl.getScores(testObjData, testObjLabels)
+    out = tl.getScores(testObjData)
 
 
 def test_trainAndTestOneVsOne():
