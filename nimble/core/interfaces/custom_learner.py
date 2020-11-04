@@ -28,7 +28,6 @@ class CustomLearnerInterface(UniversalInterface):
     def __init__(self, packageName):
         self.name = packageName
         self.registeredLearners = {}
-        self._configurableOptionNamesAvailable = []
         super(CustomLearnerInterface, self).__init__()
 
     def registerLearnerClass(self, learnerClass):
@@ -39,12 +38,6 @@ class CustomLearnerInterface(UniversalInterface):
         validateCustomLearnerSubclass(learnerClass)
         self.registeredLearners[learnerClass.__name__] = learnerClass
 
-        options = learnerClass.options()
-
-        for name in options:
-            fullName = learnerClass.__name__ + '.' + name
-            self._configurableOptionNamesAvailable.append(fullName)
-            nimble.settings.set(self.name, fullName, "")
 
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
@@ -75,8 +68,8 @@ class CustomLearnerInterface(UniversalInterface):
     def _findCallableBackend(self, name):
         if name in self.registeredLearners:
             return self.registeredLearners[name]
-        else:
-            return None
+
+        return None
 
     def _getParameterNamesBackend(self, name):
         return self.getLearnerParameterNames(name)
@@ -118,9 +111,9 @@ class CustomLearnerInterface(UniversalInterface):
     def _getScoresOrder(self, learner):
         if learner.learnerType == 'classification':
             return learner.labelList
-        else:
-            msg = "Can only get scores order for a classifying learner"
-            raise InvalidArgumentValue(msg)
+
+        msg = "Can only get scores order for a classifying learner"
+        raise InvalidArgumentValue(msg)
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
                              arguments, customDict):
@@ -134,8 +127,8 @@ class CustomLearnerInterface(UniversalInterface):
                               customDict):
         if isinstance(outputValue, nimble.core.data.Base):
             return outputValue
-        else:
-            return nimble.data('Matrix', outputValue, useLog=False)
+
+        return nimble.data('Matrix', outputValue, useLog=False)
 
     def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
                  customDict):
@@ -146,9 +139,12 @@ class CustomLearnerInterface(UniversalInterface):
                             arguments, customDict):
         return learner.incrementalTrainForInterface(trainX, trainY, arguments)
 
-    def _applier(self, learnerName, learner, testX, arguments, storedArguments,
-                 customDict):
-        return learner.applyForInterface(testX, arguments)
+    def _applier(self, learnerName, learner, testX, newArguments,
+                 storedArguments, customDict):
+        backendArgs = learner.getApplyParameters()[1:] # ignore testX param
+        applyArgs = self._getMethodArguments(backendArgs, newArguments,
+                                             storedArguments)
+        return learner.applyForInterface(testX, applyArgs)
 
     def _getAttributes(self, learnerBackend):
         contents = dir(learnerBackend)
@@ -160,19 +156,11 @@ class CustomLearnerInterface(UniversalInterface):
 
         return ret
 
-    def _optionDefaults(self, option):
-        return None
-
-
-    def _configurableOptionNames(self):
-        return self._configurableOptionNamesAvailable
-
     def _exposedFunctions(self):
         return []
 
     def version(self):
         pass
-
 
 
 class CustomLearner(metaclass=abc.ABCMeta):
@@ -186,9 +174,10 @@ class CustomLearner(metaclass=abc.ABCMeta):
     Furthermore, a subclass must not require any arguments for its
     __init__() method.
     """
+    learnerType = None
 
     def __init__(self):
-        pass
+        self.labelList = None
 
     @classmethod
     def getLearnerParameterNames(cls):
@@ -256,14 +245,6 @@ class CustomLearner(metaclass=abc.ABCMeta):
                 ret[objArgs[-(i + 1)]] = d[-(i + 1)]
         return ret
 
-    @classmethod
-    def options(self):
-        """
-        Class function which supplies the names of the configuration
-        options associated with this learner.
-        """
-        return []
-
     def getScores(self, testX):
         """
         If this learner is a classifier, then return the scores for each
@@ -276,10 +257,6 @@ class CustomLearner(metaclass=abc.ABCMeta):
         raise NotImplementedError(msg)
 
     def trainForInterface(self, trainX, trainY, arguments):
-
-        self.trainArgs = arguments
-
-        # TODO store list of classes in trainY if classifying
         if self.__class__.learnerType == 'classification':
             labels = dtypeConvert(trainY.copy(to='numpyarray'))
             self.labelList = numpy.unique(labels)
@@ -291,17 +268,14 @@ class CustomLearner(metaclass=abc.ABCMeta):
     def incrementalTrainForInterface(self, trainX, trainY, arguments):
         if self.__class__.learnerType == 'classification':
             flattenedY = dtypeConvert(trainY.copy(to='numpyarray').flatten())
+            if self.labelList is None: # no previous training
+                self.labelList = []
             self.labelList = numpy.union1d(self.labelList, flattenedY)
-        self.incrementalTrain(trainX, trainY)
+        self.incrementalTrain(trainX, trainY, **arguments)
         return self
 
     def applyForInterface(self, testX, arguments):
-        self.applyArgs = arguments
-        useArgs = {}
-        for value in self.__class__.getApplyParameters():
-            if value in arguments:
-                useArgs[value] = arguments[value]
-        return self.apply(testX, **useArgs)
+        return self.apply(testX, **arguments)
 
     def incrementalTrain(self, trainX, trainY):
         msg = "This learner does not support incremental training"
@@ -324,8 +298,7 @@ def validateCustomLearnerSubclass(check):
     # check learnerType
     accepted = ["unknown", 'regression', 'classification',
                 'featureselection', 'dimensionalityreduction']
-    if (not hasattr(check, 'learnerType')
-            or check.learnerType not in accepted):
+    if check.learnerType not in accepted:
         msg = "The custom learner must have a class variable named "
         msg += "'learnerType' with a value from the list " + str(accepted)
         raise TypeError(msg)
@@ -352,22 +325,24 @@ def validateCustomLearnerSubclass(check):
         msg += "its first (non 'self') parameter"
         raise TypeError(msg)
 
-    # need either train or incremental train
     def overridden(func):
-        for checkBases in inspect.getmro(check):
-            if func in checkBases.__dict__ and checkBases == check:
+        # Determine if a function was redefined outside of its CustomLearner
+        # definition. [:-2] ignores CustomLearner and object
+        for checkBase in inspect.getmro(check)[:-2]:
+            if func in checkBase.__dict__:
                 return True
         return False
 
+    # need either train or incremental train
     incrementalImplemented = overridden('incrementalTrain')
     trainImplemented = overridden('train')
     if not trainImplemented:
         if not incrementalImplemented:
             raise TypeError("Must provide an implementation for train()")
-        else:
-            check.train = check.incrementalTrain
-            newVal = check.__abstractmethods__ - frozenset(['train'])
-            check.__abstractmethods__ = newVal
+
+        check.train = check.incrementalTrain
+        newVal = check.__abstractmethods__ - frozenset(['train'])
+        check.__abstractmethods__ = newVal
 
     # getScores has same params as apply if overridden
     getScoresImplemented = overridden('getScores')
@@ -376,16 +351,6 @@ def validateCustomLearnerSubclass(check):
         if getScoresInfo != applyInfo:
             msg = "The signature for the getScores() method must be the "
             msg += "same as the apply() method"
-            raise TypeError(msg)
-
-    # check the return type of options() is legit
-    options = check.options()
-    if not isinstance(options, list):
-        msg = "The classmethod options must return a list of stings"
-        raise TypeError(msg)
-    for name in options:
-        if not isinstance(name, str):
-            msg = "The classmethod options must return a list of stings"
             raise TypeError(msg)
 
     # check that we can instantiate this subclass

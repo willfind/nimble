@@ -12,7 +12,6 @@ import nimble
 from nimble._utility import inspectArguments
 from nimble._utility import inheritDocstringsFactory, numpy2DArray
 from nimble.exceptions import InvalidArgumentValue, _prettyListString
-from .universal_interface import UniversalInterface
 from .universal_interface import PredefinedInterface
 from ._interface_helpers import PythonSearcher
 from ._interface_helpers import modifyImportPathAndImport
@@ -22,8 +21,8 @@ from ._interface_helpers import noLeading__, notCallable, notABCAssociated
 from ._interface_helpers import checkArgsForRandomParam
 
 
-@inheritDocstringsFactory(UniversalInterface)
-class Keras(PredefinedInterface, UniversalInterface):
+@inheritDocstringsFactory(PredefinedInterface)
+class Keras(PredefinedInterface):
     """
     This class is an interface to keras.
     """

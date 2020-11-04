@@ -8,8 +8,6 @@ import logging
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble._utility import inheritDocstringsFactory
-from .universal_interface import UniversalInterface
-from .universal_interface import PredefinedInterface
 from .scikit_learn_interface import _SciKitLearnAPI
 from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import PythonSearcher
@@ -17,8 +15,9 @@ from ._interface_helpers import validInitParams
 
 logging.getLogger('theano.configdefaults').setLevel(logging.ERROR)
 
-@inheritDocstringsFactory(UniversalInterface)
-class Autoimpute(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
+
+@inheritDocstringsFactory(_SciKitLearnAPI)
+class Autoimpute(_SciKitLearnAPI):
     """
     This class is an interface to autoimpute.
 
@@ -179,10 +178,10 @@ To install autoimpute
             raise InvalidArgumentValue(msg)
         # for regressors, also need to check that MultipleImputer strategy is
         # defined if the user did not provide a MultipleImputer directly
-        elif (isinstance(learner, self.autoimpute.analysis.MiBaseRegressor)
-              and ('mi' not in initParams or initParams['mi'] is None)
-              and ('mi_kwgs' not in initParams
-                   or 'strategy' not in initParams['mi_kwgs'])):
+        if (isinstance(learner, self.autoimpute.analysis.MiBaseRegressor)
+                and ('mi' not in initParams or initParams['mi'] is None)
+                and ('mi_kwgs' not in initParams
+                     or 'strategy' not in initParams['mi_kwgs'])):
             strategies = list(learner.mi.strategies.keys())
             msg = "Due to the level of complexity of {learnerName}'s "
             msg += "default arguments, nimble requires the MultipleImputer "
@@ -222,13 +221,6 @@ To install autoimpute
             learner.fit(*fitArgs, **fitKwargs)
         except ValueError as ve:
             raise InvalidArgumentValue(str(ve))
-
-
-    def _applier(self, learnerName, learner, testX, newArguments,
-                 storedArguments, customDict):
-        return super(Autoimpute, self)._applier(
-            learnerName, learner, testX, newArguments, storedArguments,
-            customDict)
 
     def version(self):
         return self.autoimpute.__version__

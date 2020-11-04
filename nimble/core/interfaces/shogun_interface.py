@@ -4,11 +4,6 @@ for Shogun ML.
 
 """
 
-# TODO?
-# * online learning
-# * different feature types (streaming, for other problem types)
-# *
-
 import importlib
 import multiprocessing
 import warnings
@@ -19,10 +14,14 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._utility import inheritDocstringsFactory, dtypeConvert
-from .universal_interface import UniversalInterface
 from .universal_interface import PredefinedInterface
 from ._interface_helpers import PythonSearcher
 from ._interface_helpers import modifyImportPathAndImport
+
+# TODO?
+# * online learning
+# * different feature types (streaming, for other problem types)
+# *
 
 # Interesting alias cases:
 # * DomainAdaptionMulticlassLibLinear  -- or probably any nested machine
@@ -33,8 +32,8 @@ trainYAliases = ['trainlab', 'lab', 'labs', 'labels', 'training_labels',
                  'train_labels']
 
 
-@inheritDocstringsFactory(UniversalInterface)
-class Shogun(PredefinedInterface, UniversalInterface):
+@inheritDocstringsFactory(PredefinedInterface)
+class Shogun(PredefinedInterface):
     """
     This class is an interface to shogun.
     """

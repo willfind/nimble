@@ -1,11 +1,15 @@
-from nose.tools import *
+from nose.tools import raises
+
+import numpy
 import numpy.testing
 
 import nimble
 from nimble import CustomLearner
-from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.learners import RidgeRegression, KNNClassifier
 from nimble.core.interfaces.custom_learner import validateCustomLearnerSubclass
 from tests.helpers import configSafetyWrapper
+from tests.helpers import noLogEntryExpected
 
 
 @raises(TypeError)
@@ -135,74 +139,6 @@ def testCustomLearnerValidationInstantiates():
             return None
 
     validateCustomLearnerSubclass(NoApp)
-
-
-@raises(TypeError)
-def testCustomLearnerValidationOptionsType():
-    """ Test CustomLearner's validation the options() return type """
-
-    class WrongOptType(CustomLearner):
-        learnerType = 'classification'
-
-        def __init__(self):
-            super(WrongOptType, self).__init__()
-
-        def train(self, trainX, trainY):
-            return None
-
-        def apply(self, testX, foo):
-            return None
-
-        @classmethod
-        def options(self):
-            return {}
-
-    validateCustomLearnerSubclass(WrongOptType)
-
-
-@raises(TypeError)
-def testCustomLearnerValidationOptionsSubType():
-    """ Test CustomLearner's validation of options() value type """
-
-    class WrongOptSubType(CustomLearner):
-        learnerType = 'classification'
-
-        def __init__(self):
-            super(WrongOptSubType, self).__init__()
-
-        def train(self, trainX, trainY):
-            return None
-
-        def apply(self, testX, foo):
-            return None
-
-        @classmethod
-        def options(self):
-            return ['hello', 5]
-
-    validateCustomLearnerSubclass(WrongOptSubType)
-
-
-@raises(TypeError)
-def testCustomLearnerValidationOptionsMethodOveride():
-    """ Test CustomLearner's validation of options() value type """
-
-    class WrongOptSubType(CustomLearner):
-        learnerType = 'classification'
-
-        def __init__(self):
-            super(WrongOptSubType, self).__init__()
-
-        def train(self, trainX, trainY):
-            return None
-
-        def apply(self, testX, foo):
-            return None
-
-        def options(self):
-            return ['hello']
-
-    validateCustomLearnerSubclass(WrongOptSubType)
 
 
 class LoveAtFirstSightClassifier(CustomLearner):
@@ -370,3 +306,142 @@ def test_retrain_CVArg():
     assert predOnes1 == expOnes
 
     tl.retrain(trainObj, 0, predictZero=nimble.CV([True, False]))
+
+
+class UncallableLearner(CustomLearner):
+    learnerType = 'classification'
+
+    def train(self, trainX, trainY, foo, bar=None):
+        return None
+
+    def apply(self, testX):
+        return None
+
+
+@configSafetyWrapper
+def testCustomPackage():
+    """ Test learner registration 'custom' CustomLearnerInterface """
+
+    data = [[1, 2, 3], [4, 5, 6], [0, 0, 0]]
+    labels = [[1], [2], [0]]
+    trainX = nimble.data('Matrix', data)
+    trainY = nimble.data('Matrix', labels)
+
+    nimble.train(LoveAtFirstSightClassifier, trainX, trainY)
+    nimble.train(UncallableLearner, trainX, trainY, foo='foo')
+
+    assert 'LoveAtFirstSightClassifier' in nimble.listLearners("custom")
+    assert 'UncallableLearner' in nimble.listLearners("custom")
+
+    assert nimble.learnerParameters("custom.LoveAtFirstSightClassifier") == []
+    assert nimble.learnerParameters("custom.UncallableLearner") == ['bar', 'foo']
+
+@configSafetyWrapper
+def testNimblePackage():
+    """ Test learner registration 'nimble' CustomLearnerInterface """
+
+    data = [[1, 2, 3], [4, 5, 6], [0, 0, 0]]
+    labels = [[1], [2], [0]]
+    trainX = nimble.data('Matrix', data)
+    trainY = nimble.data('Matrix', labels)
+
+    nimble.train(RidgeRegression, trainX, trainY, lamb=1)
+    nimble.train(KNNClassifier, trainX, trainY, k=1)
+
+    assert 'RidgeRegression' in nimble.listLearners("nimble")
+    assert 'KNNClassifier' in nimble.listLearners("nimble")
+
+    assert nimble.learnerParameters("nimble.RidgeRegression") == ['lamb']
+    assert nimble.learnerParameters("nimble.KNNClassifier") == ['k']
+
+@configSafetyWrapper
+def test_learnersAvailableOnImport():
+    """ Test that the auto registration helper correctly registers learners """
+    nimbleLearners = nimble.listLearners('nimble')
+    assert 'KNNClassifier' in nimbleLearners
+    assert 'RidgeRegression' in nimbleLearners
+    assert 'MeanConstant' in nimbleLearners
+    assert 'MultiOutputRidgeRegression' in nimbleLearners
+    assert 'MultiOutputLinearRegression' in nimbleLearners
+
+    customLearners = nimble.listLearners('custom')
+    assert not customLearners
+
+@configSafetyWrapper
+@noLogEntryExpected
+def test_logCount():
+
+    data = [[1, 2, 3], [4, 5, 6], [0, 0, 0]]
+    labels = [[1], [2], [0]]
+    trainX = nimble.data('Matrix', data, useLog=False)
+    trainY = nimble.data('Matrix', labels, useLog=False)
+
+    nimble.train(LoveAtFirstSightClassifier, trainX, trainY, useLog=False)
+    lst = nimble.listLearners("custom")
+    params = nimble.learnerParameters("custom.LoveAtFirstSightClassifier")
+    defaults = nimble.learnerDefaultValues("custom.LoveAtFirstSightClassifier")
+    lType = nimble.learnerType("custom.LoveAtFirstSightClassifier")
+
+def test_listLearnersDirectFromModule():
+    nimbleLearners = nimble.listLearners(nimble)
+    assert 'KNNClassifier' in nimbleLearners
+    assert 'RidgeRegression' in nimbleLearners
+    assert 'MeanConstant' in nimbleLearners
+    assert 'MultiOutputRidgeRegression' in nimbleLearners
+    assert 'MultiOutputLinearRegression' in nimbleLearners
+
+    try:
+        import sklearn
+        sklearnLearners = nimble.listLearners(sklearn)
+        assert 'LinearRegression' in sklearnLearners
+        assert 'LogisticRegression' in sklearnLearners
+        assert 'KNeighborsClassifier' in sklearnLearners
+    except ImportError:
+        pass
+
+@configSafetyWrapper
+def test_learnerQueries():
+    params = nimble.learnerParameters(UncallableLearner)
+    defaults = nimble.learnerDefaultValues(UncallableLearner)
+    lType = nimble.learnerType(UncallableLearner)
+    lst = nimble.listLearners("custom")
+
+    assert params == ['bar', 'foo']
+    assert defaults == {'bar': None}
+    assert lType == 'classification'
+    assert lst == ['UncallableLearner']
+
+    params = nimble.learnerParameters(KNNClassifier)
+    defaults = nimble.learnerDefaultValues(KNNClassifier)
+    lType = nimble.learnerType(KNNClassifier)
+
+    assert params == ['k']
+    assert defaults == {'k': 5}
+    assert lType == 'classification'
+
+@configSafetyWrapper
+def test_redefinedLearner():
+    data = [[1, 2, 3], [4, 5, 6], [0, 0, 0]]
+    labels = [[1], [2], [0]]
+    trainX = nimble.data('Matrix', data)
+    trainY = nimble.data('Matrix', labels)
+    testX = nimble.data('Matrix', [[0, 0, 0], [1, 2, 3]])
+
+    class Redefine(LoveAtFirstSightClassifier):
+        pass
+
+    tl1 = nimble.train(Redefine, trainX, trainY)
+    out1 = tl1.apply(testX)
+    assert out1 is not None
+
+    class Redefine(UncallableLearner):
+        pass
+
+    # we should now be able to train this learner with a foo argument
+    tl2 = nimble.train(Redefine, trainX, trainY, foo='foo')
+    # we should not be able to apply the learner because it returns None
+    try:
+        tl2.apply(testX)
+        assert False # expected InvalidArgumentType
+    except InvalidArgumentType:
+        pass
