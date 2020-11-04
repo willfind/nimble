@@ -7,3 +7,4 @@ documentation/doctrees
 documentation/html
 .coverage
 coverage_html
+dist
