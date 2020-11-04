@@ -16,6 +16,7 @@ import inspect
 import sys
 from operator import itemgetter
 import functools
+import re
 
 import numpy
 
@@ -33,7 +34,7 @@ from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2
 from ._dataHelpers import DEFAULT_PREFIX_LENGTH, DEFAULT_NAME_PREFIX
 from ._dataHelpers import valuesToPythonList, constructIndicesList
 from ._dataHelpers import validateInputString
-from ._dataHelpers import isQueryString, axisQueryFunction
+from ._dataHelpers import operatorDict
 from ._dataHelpers import isAllowedSingleElement
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import wrapMatchFunctionFactory
@@ -146,7 +147,7 @@ class Axis(object):
             msg = "There are no valid " + self._axis + " identifiers; "
             msg += "this object has 0 " + self._axis + "s"
             raise IndexError(msg)
-        elif isinstance(identifier, (int, numpy.integer)):
+        if isinstance(identifier, (int, numpy.integer)):
             if identifier < 0:
                 identifier = num + identifier
             if identifier < 0 or identifier >= num:
@@ -258,7 +259,7 @@ class Axis(object):
         ref._relPath = self._base.relativePath
         ref._absPath = self._base.absolutePath
 
-        self._base.referenceDataFrom(ref, useLog=False)
+        self._base._referenceDataFrom(ref)
 
         handleLogging(useLog, 'prep', '{ax}s.retain'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('retain'),
@@ -403,7 +404,7 @@ class Axis(object):
         if limitTo is not None:
             limitTo = constructIndicesList(self._base, self._axis, limitTo)
         else:
-            limitTo = [i for i in range(len(self))]
+            limitTo = list(range(len(self)))
 
         retData, offAxisNames = self._calculate_implementation(function,
                                                                limitTo)
@@ -751,20 +752,17 @@ class Axis(object):
         if subtract is not None and subtract != 0:
             if subIsVec:
                 subtract = subtract.stretch
-            self._base.referenceDataFrom(self._base - subtract, useLog=False)
+            self._base._referenceDataFrom(self._base - subtract)
             if alsoIsObj:
-                applyResultTo.referenceDataFrom(applyResultTo - subtract,
-                                                useLog=False)
+                applyResultTo._referenceDataFrom(applyResultTo - subtract)
 
         # then perform the division operation
         if divide is not None and divide != 1:
             if divIsVec:
                 divide = divide.stretch
-
-            self._base.referenceDataFrom(self._base / divide, useLog=False)
+            self._base._referenceDataFrom(self._base / divide)
             if alsoIsObj:
-                applyResultTo.referenceDataFrom(applyResultTo / divide,
-                                                useLog=False)
+                applyResultTo._referenceDataFrom(applyResultTo / divide)
 
         if self._isPoint:
             self._setNames(origPtNames, useLog=False)
@@ -938,7 +936,7 @@ class Axis(object):
             legendTitle, **kwargs):
         fig, ax = plotFigureHandling(figureName)
         if identifiers is None:
-            identifiers = [i for i in range(len(self))]
+            identifiers = list(range(len(self)))
         axisRange = range(1, len(identifiers) + 1)
         target = self[identifiers]
         if self._isPoint:
@@ -967,7 +965,7 @@ class Axis(object):
             if statistic is None:
                 calc = target
             else:
-                calc =  targetAxis.calculate(statistic, useLog=False)
+                calc = targetAxis.calculate(statistic, useLog=False)
             if self._isPoint:
                 calcAxis = calc.features
             else:
@@ -1186,7 +1184,7 @@ class Axis(object):
                 stop += 1
             else:
                 stop -= 1
-            return [i for i in range(start, stop, step)]
+            return list(range(start, stop, step))
         else:
             numBool = sum(isinstance(val, (bool, numpy.bool_)) for val in key)
             # contains all boolean values
@@ -1214,6 +1212,52 @@ class Axis(object):
     #  Structural Helpers  #
     ########################
 
+    def _axisQueryFunction(self, string):
+        """
+        Convert a query string to an axis input function.
+        """
+        offAxis = 'feature' if self._isPoint else 'point'
+        # positive lookahead catches all ambiguous cases (i.e age == > 20)
+        operatorCount = len(re.findall(r'(?=\s(==|!=|>=|>|<=|<)\s)', string))
+        if not operatorCount:
+            msg = "'{0}' is not a valid {1} name nor a valid query string. "
+            msg += "A query string must be in the format {2}NAME OPERATOR "
+            msg += "VALUE i.e '{1}3 != 0'"
+            offCaps = offAxis.upper()
+            raise InvalidArgumentValue(msg.format(string, offAxis, offCaps))
+        if operatorCount > 1:
+            msg = "Multiple operators in query string. Strings containing "
+            msg += "more than one whitespace padded operator cannot be "
+            msg += "parsed. Use a function instead or modify the {0}Name or "
+            msg += "values that includes a whitespace padded operator."
+            raise InvalidArgumentValue(msg.format(offAxis))
+
+        name, optr, value = re.split(r'\s(==|!=|>=|>|<=|<)\s', string)
+        name = name.strip()
+        value = value.strip()
+
+        hasName = getattr(self._base, offAxis + 's')._hasName
+        if not hasName(name):
+            msg = "the {0} '{1}' does not exist".format(offAxis, name)
+            raise InvalidArgumentValue(msg)
+
+        operatorFunc = operatorDict[optr]
+        # convert value from a string, if possible
+        try:
+            value = float(value)
+        except ValueError:
+            pass
+        #convert query string to a function
+        def target_f(vector):
+            return operatorFunc(vector[name], value)
+
+        target_f.vectorized = True
+        target_f.name = name
+        target_f.value = value
+        target_f.operator = operatorFunc
+
+        return target_f
+
     def _genericStructuralFrontend(self, structure, target=None,
                                    start=None, end=None, number=None,
                                    randomize=False):
@@ -1235,16 +1279,7 @@ class Axis(object):
                 msg += "more than two dimensions"
                 raise ImproperObjectAction(msg.format(argName))
             else:
-                query = isQueryString(target, startswithOperator=False)
-                if query:
-                    offAxis = 'features' if self._isPoint else 'points'
-                    hasName = getattr(self._base, offAxis)._hasName
-                    target = axisQueryFunction(query, axis, hasName)
-                # the target can't be converted to a function
-                else:
-                    msg = "'{0}' is not a valid {1} ".format(target, axis)
-                    msg += 'name nor a valid query string'
-                    raise InvalidArgumentValue(msg)
+                target = self._axisQueryFunction(target)
 
         # list-like container types
         if target is not None and not hasattr(target, '__call__'):
@@ -1283,7 +1318,7 @@ class Axis(object):
             targetList = list(range(start, end + 1))
 
         else:
-            targetList = [value for value in range(axisLength)]
+            targetList = list(range(axisLength))
 
         if number:
             if number > len(targetList):
@@ -1355,7 +1390,7 @@ class Axis(object):
             msg += "Either set the {0} names of this object or provide "
             msg += "another argument for by"
             raise InvalidArgumentValue(msg.format(self._axis))
-        self._permute(sorted(self.getNames(), reverse=reverse),
+        self._permute(sorted(self._getNames(), reverse=reverse),
                       useLog=False)
 
     def _sortByIdentifier(self, index, reverse):

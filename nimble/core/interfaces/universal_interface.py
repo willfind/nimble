@@ -1141,9 +1141,11 @@ class TrainedLearner(object):
 
         Return the application of this learner to the given test data
         (i.e. performing prediction, transformation, etc. as appropriate
-        to the learner). Equivalent to having called ``trainAndApply``,
-        as long as the data and parameter setup for training was the
-        same.
+        to the learner). If ``testX`` has pointNames and the output
+        object has the same number of points, the pointNames from
+        ``testX`` will be applied to the output object. Equivalent to
+        having called ``trainAndApply``, as long as the data and 
+        parameter setup for training was the same.
 
         Parameters
         ----------
@@ -1199,7 +1201,24 @@ class TrainedLearner(object):
 
         Examples
         --------
-        TODO
+        >>> rawTrain = [[1, 0, 0, 1],
+        ...             [0, 1, 0, 2],
+        ...             [0, 0, 1, 3],
+        ...             [1, 0, 0, 1],
+        ...             [0, 1, 0, 2],
+        ...             [0, 0, 1, 3]]
+        >>> rawTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+        >>> trainData = nimble.data('Matrix', rawTrain)
+        >>> testX = nimble.data('Matrix', rawTestX)
+        >>> tl = nimble.train('nimble.KNNClassifier', trainX=trainData,
+        ...                   trainY=3)
+        >>> predict = tl.apply(testX)
+        >>> predict
+        Matrix(
+            [[1]
+             [2]
+             [3]]
+            )
         """
         timer = startTimer(useLog)
         self._validTestData(testX)
@@ -1260,6 +1279,10 @@ class TrainedLearner(object):
         else:
             msg = 'scoreMode must be "label", "bestScore", or "allScores"'
             raise InvalidArgumentValue(msg)
+
+        if len(testX.points) == len(ret.points):
+            ret.points.setNames(testX.points._getNamesNoGeneration(),
+                                useLog=False)
 
         time = stopTimer(timer)
 

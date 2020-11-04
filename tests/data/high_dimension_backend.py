@@ -378,7 +378,7 @@ class HighDimensionModifying(DataTestObject):
                 testTensor = self.constructor(tensor1)
                 refTensor = self.constructor(tensor2)
                 if testTensor != refTensor:
-                    testTensor.referenceDataFrom(refTensor)
+                    testTensor._referenceDataFrom(refTensor)
                     assert testTensor == refTensor
 
     def test_highDimension_inplaceBinaryOperations(self):
@@ -678,8 +678,7 @@ class HighDimensionModifying(DataTestObject):
             '__deepcopy__', 'nameIsDefault', 'isApproximatelyEqual',
             'trainAndTestSets', 'summaryReport', 'isIdentical', 'writeFile',
             'getTypeString', 'pointView', 'view', 'validate', 'containsZero',
-            'save', 'toString', 'show', 'referenceDataFrom', 'copy',
-            'flatten', 'unflatten',))
+            'save', 'toString', 'show', 'copy', 'flatten', 'unflatten',))
         baseDisallowed = baseUser.difference(baseAllowed)
 
         for method in baseDisallowed:
