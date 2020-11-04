@@ -12,7 +12,8 @@ from nimble import match
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._utility import mergeArguments
-from nimble.core.logger import handleLogging, loggingEnabled, deepLoggingEnabled
+from nimble.core.logger import handleLogging, loggingEnabled
+from nimble.core.logger import deepLoggingEnabled
 from nimble.core.logger import startTimer, stopTimer
 from nimble.core._learnHelpers import findBestInterface
 from nimble.core._learnHelpers import _learnerQuery
@@ -76,8 +77,7 @@ def learnerType(learnerNames):
     #have valid arguments - a list of learner names
     learnerInspectorObj = LearnerInspector()
 
-    for index in range(len(secondPassLearnerNames)):
-        curLearnerName = secondPassLearnerNames[index]
+    for index, curLearnerName in enumerate(secondPassLearnerNames):
         if curLearnerName is None:
             continue
         resultsList[index] = learnerInspectorObj.learnerType(curLearnerName)
@@ -180,11 +180,13 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     Modify data according to a produced model.
 
     Calls on the functionality of a package to train on some data and
-    then modify ``trainX`` and ``testX`` (if provided) according to the
-    results of the trained model. The name of the learner will be added
-    to each normalized object's ``name`` attribute to indicate the
-    normalization that has been applied. Point and feature names are
-    preserved when possible.
+    then return the modified ``trainX`` and ``testX`` (if provided)
+    according to the results of the trained model. If only ``trainX`` is
+    proved, the normalized ``trainX`` is returned. If ``testX`` is also
+    provided a tuple (normalizedTrain, normalizedTest) is returned. The
+    name of the learner will be added to each normalized object's
+    ``name`` attribute to indicate the normalization that has been
+    applied. Point and feature names are preserved when possible.
 
     Parameters
     ----------
@@ -227,8 +229,9 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     >>> data = [[20, 1.97, 89], [28, 1.87, 75], [24, 1.91, 81]]
     >>> trainX = nimble.data("Matrix", data, pointNames=['a', 'b', 'c'],
     ...                      featureNames=['age', 'height', 'weight'])
-    >>> nimble.normalizeData('scikitlearn.StandardScaler', trainX)
-    >>> trainX
+    >>> normTrainX = nimble.normalizeData('scikitlearn.StandardScaler',
+    ...                                   trainX)
+    >>> normTrainX
     Matrix(
         [[-1.225 1.298  1.279 ]
          [1.225  -1.136 -1.162]
@@ -243,15 +246,16 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     >>> trainX = nimble.data("Matrix", data1)
     >>> data2 = [[-1, 0, 5]]
     >>> testX = nimble.data("Matrix", data2)
-    >>> nimble.normalizeData('scikitlearn.PCA', trainX, testX=testX,
-    ...                      n_components=2)
-    >>> trainX
+    >>> pcaTrain, pcaTest = nimble.normalizeData('scikitlearn.PCA',
+    ...                                          trainX, testX=testX,
+    ...                                          n_components=2)
+    >>> pcaTrain
     Matrix(
         [[-0.216 0.713 ]
          [-1.005 -0.461]
          [1.221  -0.253]]
         )
-    >>> testX
+    >>> pcaTest
     Matrix(
         [[-1.739 2.588]]
         )
@@ -271,10 +275,13 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         trainXFtNames = trainX.features._getNamesNoGeneration()
         normalizedTrain.features.setNames(trainXFtNames, useLog=False)
 
-    trainX.referenceDataFrom(normalizedTrain, useLog=False)
-    trainX.name = trainX.name + " " + trueLearnerName
+    normalizedTrain.name = trainX.name + " " + trueLearnerName
 
-    if testX is not None:
+    # return normalized trainX when testX is not included otherwise return will
+    # be a tuple (normalizedTrain, normalizedTest)
+    if testX is None:
+        ret = normalizedTrain
+    else:
         normalizedTest = tl.apply(testX, useLog=False)
         if normalizedTest.getTypeString() != testX.getTypeString():
             normalizedTest = normalizedTest.copy(to=testX.getTypeString())
@@ -282,13 +289,15 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
             testXFtNames = testX.features._getNamesNoGeneration()
             normalizedTest.features.setNames(testXFtNames, useLog=False)
 
-        testX.referenceDataFrom(normalizedTest, useLog=False)
-        testX.name = testX.name + " " + trueLearnerName
+        normalizedTest.name = testX.name + " " + trueLearnerName
+
+        ret = (normalizedTrain, normalizedTest)
 
     time = stopTimer(timer)
     handleLogging(useLog, 'run', "normalizeData", trainX, trainY, testX, None,
                   learnerName, merged, time=time)
 
+    return ret
 
 def fillMatching(learnerName, matchingElements, trainX, arguments=None,
                  points=None, features=None, useLog=None, **kwarguments):

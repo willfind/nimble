@@ -199,9 +199,9 @@ def methodObjectValidation(func):
 
         finalAbsPath = startAbsPath
         finalRelPath = startRelPath
-        # referenceDataFrom always gets path from other object, inplace numeric
+        # _referenceDataFrom always gets path from other object, inplace numeric
         # binary will follow _dataHelpers.binaryOpNamePathMerge logic
-        if funcName == 'referenceDataFrom':
+        if funcName == '_referenceDataFrom':
             finalAbsPath, finalRelPath = getOtherPaths(args, kwargs)
         elif funcName in inplaceNumeric:
             otherAbsPath, otherRelPath = getOtherPaths(args, kwargs)

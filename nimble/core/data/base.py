@@ -42,7 +42,7 @@ from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
 from ._dataHelpers import validateElementFunction, wrapMatchFunctionFactory
 from ._dataHelpers import ElementIterator1D
-from ._dataHelpers import isQueryString, elementQueryFunction
+from ._dataHelpers import elementQueryFunction
 from ._dataHelpers import limitedTo2D
 from ._dataHelpers import pyplotRequired, plotOutput, plotFigureHandling
 from ._dataHelpers import plotUpdateAxisLimits, plotAxisLimits
@@ -939,11 +939,13 @@ class Base(object):
 
         Parameters
         ----------
-        toMatch
+        toMatch: value, function, query
             * value - elements equal to the value return True
-            * function - in the form of toMatch(elementValue) that
-              returns True, False, 0 or 1.
-            * str - a comparison operator and a value (i.e ">=0")
+            * function - accepts an element as its only argument and
+              returns a boolean value to indicate if the element is a
+              match
+            * query - string in the format 'OPERATOR VALUE' (i.e "< 10")
+              where OPERATOR can be ==, !=, <, >, <=, or >=
         points : point, list of points
             The subset of points to limit the matching to. If None,
             the matching will apply to all points.
@@ -997,9 +999,9 @@ class Base(object):
         """
         matchArg = toMatch # preserve toMatch in original state for log
         if not callable(matchArg):
-            query = isQueryString(matchArg)
-            if query:
-                func = elementQueryFunction(query)
+            query = elementQueryFunction(matchArg)
+            if query is not None:
+                func = query
             # if not a comparison string, element must equal matchArg
             else:
                 matchVal = matchArg
@@ -1103,12 +1105,12 @@ class Base(object):
 
         Parameters
         ----------
-        condition : function
-            function - may take two forms:
-            a) a function that accepts an element value as input and
-            will return True if it is to be counted
-            b) a filter function, as a string, containing a comparison
-            operator and a value
+        condition : function, query
+            * function - accepts an element as its only argument and
+              returns a boolean value to indicate if the element should
+              be counted
+            * query - string in the format 'OPERATOR VALUE' (i.e "< 10")
+              where OPERATOR can be ==, !=, <, >, <=, or >=
 
         Returns
         -------
@@ -1135,9 +1137,9 @@ class Base(object):
         >>> numLessThanOne
         20
         """
-        query = isQueryString(condition)
-        if query:
-            condition = elementQueryFunction(query)
+        query = elementQueryFunction(condition)
+        if query is not None:
+            condition = query
         elif not hasattr(condition, '__call__'):
             msg = 'condition can only be a function or string containing a '
             msg += 'comparison operator and a value'
@@ -3057,74 +3059,6 @@ class Base(object):
         ret.transpose(useLog=False)
         return ret
 
-    def referenceDataFrom(self, other, useLog=None):
-        """
-        Redefine the object data using the data from another object.
-
-        Modify the internal data of this object to refer to the same
-        data as other. In other words, the data wrapped by both the self
-        and ``other`` objects resides in the same place in memory.
-        Attributes descrbing this object, not its data, will remain the
-        same. For example the object's ``name`` attribute will remain.
-
-        Parameters
-        ----------
-        other : nimble Base object
-            Must be of the same type as the calling object. Also, the
-            shape of other should be consistent with the shape of this
-            object.
-        useLog : bool, None
-            Local control for whether to send object creation to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-
-        Examples
-        --------
-        Reference data from an object of all zero values.
-
-        >>> data = nimble.ones('List', 2, 3, name='data')
-        >>> data
-        List(
-            [[1.000 1.000 1.000]
-             [1.000 1.000 1.000]]
-            name="data"
-            )
-        >>> ptNames = ['1', '4']
-        >>> ftNames = ['a', 'b', 'c']
-        >>> toReference = nimble.zeros('List', 2, 3, pointNames=ptNames,
-        ...                            featureNames=ftNames,
-        ...                            name='reference')
-        >>> data.referenceDataFrom(toReference)
-        >>> data
-        List(
-            [[0.000 0.000 0.000]
-             [0.000 0.000 0.000]]
-            pointNames={'1':0, '4':1}
-            featureNames={'a':0, 'b':1, 'c':2}
-            name="data"
-            )
-        """
-        # this is called first because it checks the data type
-        self._referenceDataFrom_implementation(other)
-        self.pointNames = other.pointNames
-        self.pointNamesInverse = other.pointNamesInverse
-        self.featureNames = other.featureNames
-        self.featureNamesInverse = other.featureNamesInverse
-
-        self._shape = other._shape
-
-        self._absPath = other.absolutePath
-        self._relPath = other.relativePath
-
-        self._nextDefaultValuePoint = other._nextDefaultValuePoint
-        self._nextDefaultValueFeature = other._nextDefaultValueFeature
-
-        handleLogging(useLog, 'prep', "referenceDataFrom",
-                      self.getTypeString(), Base.referenceDataFrom, other)
-
     def copy(self, to=None, rowsArePoints=True, outputAs1D=False):
         """
         Duplicate an object. Optionally to another nimble or raw format.
@@ -4268,7 +4202,7 @@ class Base(object):
         """
         ret = self.__matmul__(other)
         if ret is not NotImplemented:
-            self.referenceDataFrom(ret, useLog=False)
+            self._referenceDataFrom(ret)
             ret = self
         return ret
 
@@ -4805,7 +4739,7 @@ class Base(object):
         ret._shape = self._shape
         if opName.startswith('__i'):
             absPath, relPath = self._absPath, self._relPath
-            self.referenceDataFrom(ret, useLog=False)
+            self._referenceDataFrom(ret)
             self._absPath, self._relPath = absPath, relPath
             ret = self
         ret.points.setNames(retPNames, useLog=False)
@@ -4951,6 +4885,71 @@ class Base(object):
     ###   Helper functions   ###
     ############################
     ############################
+
+    def _referenceDataFrom(self, other):
+        """
+        Redefine the object data using the data from another object.
+
+        Modify the internal data of this object to refer to the same
+        data as other. In other words, the data wrapped by both the self
+        and ``other`` objects resides in the same place in memory.
+        Attributes descrbing this object, not its data, will remain the
+        same. For example the object's ``name`` attribute will remain.
+
+        Parameters
+        ----------
+        other : nimble Base object
+            Must be of the same type as the calling object. Also, the
+            shape of other should be consistent with the shape of this
+            object.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+
+        Examples
+        --------
+        Reference data from an object of all zero values.
+
+        >>> data = nimble.ones('List', 2, 3, name='data')
+        >>> data
+        List(
+            [[1.000 1.000 1.000]
+             [1.000 1.000 1.000]]
+            name="data"
+            )
+        >>> ptNames = ['1', '4']
+        >>> ftNames = ['a', 'b', 'c']
+        >>> toReference = nimble.zeros('List', 2, 3, pointNames=ptNames,
+        ...                            featureNames=ftNames,
+        ...                            name='reference')
+        >>> data._referenceDataFrom(toReference)
+        >>> data
+        List(
+            [[0.000 0.000 0.000]
+             [0.000 0.000 0.000]]
+            pointNames={'1':0, '4':1}
+            featureNames={'a':0, 'b':1, 'c':2}
+            name="data"
+            )
+        """
+        # this is called first because it checks the data type
+        self._referenceDataFrom_implementation(other)
+        self.pointNames = other.pointNames
+        self.pointNamesInverse = other.pointNamesInverse
+        self.featureNames = other.featureNames
+        self.featureNamesInverse = other.featureNamesInverse
+
+        self._shape = other._shape
+
+        self._absPath = other.absolutePath
+        self._relPath = other.relativePath
+
+        self._nextDefaultValuePoint = other._nextDefaultValuePoint
+        self._nextDefaultValueFeature = other._nextDefaultValueFeature
 
     def _arrangeFinalTable(self, pnames, pnamesWidth, dataTable, dataWidths,
                            fnames, pnameSep):

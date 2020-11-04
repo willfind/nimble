@@ -28,6 +28,7 @@ from nimble import loadData
 from nimble.core.data import BaseView
 from nimble.core.data._dataHelpers import formatIfNeeded
 from nimble.core.data._dataHelpers import DEFAULT_PREFIX
+from nimble.core.data._dataHelpers import elementQueryFunction
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
@@ -36,6 +37,7 @@ from .baseObject import DataTestObject
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import assertNoNamesGenerated
 from tests.helpers import CalledFunctionException, calledException
+from tests.helpers import assertExpectedException
 
 
 preserveName = "PreserveTestName"
@@ -3080,6 +3082,138 @@ class QueryBackend(DataTestObject):
         for retLine, expLine in zip(ret.split('\n'), expLines):
             assert retLine == expLine
 
+    ######################
+    # _axisQueryFunction #
+    ######################
+    def test__axisQueryFunction(self):
+        """tests both axes for the _axisQueryFunction helper"""
+
+        def constructObjAndGetAxis(axis, data, offAxisNames):
+            if axis == 'points':
+                obj = self.constructor(data, featureNames=offAxisNames)
+            else:
+                obj = self.constructor(numpy.array(data).T,
+                                       pointNames=offAxisNames)
+            return getattr(obj, axis)
+
+        def operatorAssertions(axisObj, query, optr):
+            equal = axisObj[0]
+            notEqual1 = axisObj[1]
+            notEqual2 = axisObj[2]
+
+            func = axisObj._axisQueryFunction(query)
+            if '=' in optr:
+                if '==' in optr:
+                    assert func(equal)
+                    assert not func(notEqual2)
+                    assert not func(notEqual1)
+                elif '!' in optr:
+                    assert not func(equal)
+                    assert func(notEqual2)
+                    assert func(notEqual1)
+                else:
+                    assert func(equal)
+            if '<' in optr:
+                assert func(notEqual2)
+                assert not func(notEqual1)
+            elif '>' in optr:
+                assert func(notEqual1)
+                assert not func(notEqual2)
+
+        for axis in ['points', 'features']:
+            # Success #
+            data = [[0, 1, 2], [3, 4, 5], [-1, -2, -3]]
+            offNames = ['one', 'two', 'three']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            for optr in [' == ', ' != ', ' < ', ' <= ', ' > ', ' >= ']:
+                query = 'one' + optr + '0'
+                operatorAssertions(primaryAxis, query, optr)
+
+            offNames = ['vec one', 'vec two', 'vec three']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            for optr in [' == ', ' != ', ' < ', ' <= ', ' > ', ' >= ']:
+                query = 'vec two' + optr + '1'
+                operatorAssertions(primaryAxis, query, optr)
+
+            offNames = ['<one>', '<two>', '<three>']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            for optr in [' == ', ' != ', ' < ', ' <= ', ' > ', ' >= ']:
+                query = '<three>' + optr + '2'
+                operatorAssertions(primaryAxis, query, optr)
+
+            data = [['a', 'a b', '>=2'], ['b', 'b c', '<2'], ['c', 'c d', '<2']]
+            offNames = ['one', 'two', 'three']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            for optr in [' == ', ' != ']:
+                query = 'one' + optr + 'a'
+                operatorAssertions(primaryAxis, query, optr)
+
+                query = 'two' + optr + 'a b'
+                operatorAssertions(primaryAxis, query, optr)
+
+                query = 'three' + optr + '>=2'
+                operatorAssertions(primaryAxis, query, optr)
+
+            offNames = ['vec one', 'vec two', 'vec three']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            for optr in [' == ', ' != ']:
+                query = 'vec one' + optr + 'a'
+                operatorAssertions(primaryAxis, query, optr)
+
+            offNames = ['<one>', '<two>', '<three>']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            for optr in [' == ', ' != ']:
+                query = '<one>' + optr + 'a'
+                operatorAssertions(primaryAxis, query, optr)
+
+                query = '<three>' + optr + '>=2'
+                operatorAssertions(primaryAxis, query, optr)
+
+            # Exceptions #
+            data = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
+            offNames = ['one', 'two', 'three']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            func = primaryAxis._axisQueryFunction
+            # bad whitespace padding on operator
+            assertExpectedException(InvalidArgumentValue, func,'one== 6',
+                                    messageIncludes='nor a valid query')
+            assertExpectedException(InvalidArgumentValue, func, 'two!=4',
+                                    messageIncludes='nor a valid query')
+            assertExpectedException(InvalidArgumentValue, func, 'three >7',
+                                    messageIncludes='nor a valid query')
+            # not a feature name
+            assertExpectedException(InvalidArgumentValue, func, 'four == 4',
+                                    messageIncludes='does not exist')
+            assertExpectedException(InvalidArgumentValue, func, ' == 4',
+                                    messageIncludes='does not exist')
+            # no operator
+            assertExpectedException(InvalidArgumentValue, func, 'two = 4',
+                                    messageIncludes='nor a valid query')
+            assertExpectedException(InvalidArgumentValue, func, 'hello',
+                                    messageIncludes='nor a valid query')
+
+            data = [[0, '> 250k', '== 2'], [3, '> 250k', '!= 2'], [6, '< 250k', '!= 2']]
+            offNames = ['one', 'two', 'three']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            func = primaryAxis._axisQueryFunction
+            # invalid query value
+            assertExpectedException(InvalidArgumentValue, func, 'two == > 250k',
+                                    messageIncludes='Multiple operators')
+            assertExpectedException(InvalidArgumentValue, func, 'three != == 2',
+                                    messageIncludes='Multiple operators')
+            # invalid query feature name
+            offNames = ['< one >', '< two >', '< three >']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            func = primaryAxis._axisQueryFunction
+            assertExpectedException(InvalidArgumentValue, func, '< one > < 4',
+                                    messageIncludes='Multiple operators')
+            assertExpectedException(InvalidArgumentValue, func, '< one > == 4',
+                                    messageIncludes='Multiple operators')
+            # invalid name and value
+            assertExpectedException(InvalidArgumentValue, func, '< two > == > 250k',
+                                    messageIncludes='Multiple operators')
+            assertExpectedException(InvalidArgumentValue, func, '< three > != == 2',
+                                    messageIncludes='Multiple operators')
 
 ###########
 # Helpers #
@@ -3170,6 +3304,80 @@ def checkToStringRet(ret, data, includeNames, maxWidth, maxHeight):
                     truncatedLen = len(fnames[cDataIndex]) - 3
                     fromIndexFname = fromIndexFname[:truncatedLen]
                 assert fromIndexFname == fnames[cDataIndex]
+
+
+def test_elementQueryFunction():
+    for optr in ['==', '!=', '<', '<=', '>', '>=']:
+        func1 = elementQueryFunction(optr + '0')
+        func2 = elementQueryFunction(optr + ' ' + '0')
+        if '=' in optr:
+            if '!' in optr:
+                assert not func1(0)
+                assert not func2(0)
+            else:
+                assert func1(0)
+                assert func2(0)
+        if '>' in optr:
+            assert func1(1)
+            assert func2(1)
+        if '<' in optr:
+            assert func1(-1)
+            assert func2(-1)
+
+        if optr in ['==', '!=']:
+            func3 = elementQueryFunction(optr + 'hi')
+            func4 = elementQueryFunction(optr + ' ' + 'hi')
+            if '!' in optr:
+                assert func3('hello')
+                assert not func3('hi')
+                assert func4('hello')
+                assert not func4('hi')
+            else:
+                assert func3('hi')
+                assert not func3('hello')
+                assert func4('hi')
+                assert not func4('hello')
+
+            func5 = elementQueryFunction(optr + 'hi hello')
+            func6 = elementQueryFunction(optr + ' ' + 'hi hello')
+            if '!' in optr:
+                assert func5('hello hi')
+                assert not func5('hi hello')
+                assert func6('hello hi')
+                assert not func6('hi hello')
+            else:
+                assert func5('hi hello')
+                assert not func5('hello hi')
+                assert func6('hi hello')
+                assert not func6('hello hi')
+
+        whitespace = ' ' * numpy.random.randint(3, 7)
+        query = whitespace + optr + whitespace + '0' + whitespace
+        func7 = elementQueryFunction(query)
+        if '=' in optr:
+            if '!' in optr:
+                assert not func7(0)
+            else:
+                assert func7(0)
+        if '>' in optr:
+            assert func7(1)
+        elif '<' in optr:
+            assert func7(-1)
+
+        if optr in ['==', '!=']:
+            query = whitespace + optr + whitespace + 'hi' + whitespace
+            func8 = elementQueryFunction(query)
+            if '!' in optr:
+                assert func8('hello')
+                assert not func8('hi')
+            else:
+                assert func8('hi')
+                assert not func8('hello')
+
+    # invalid query strings should return None
+    assert elementQueryFunction(lambda x: 5) is None
+    assert elementQueryFunction('=0') is None
+    assert elementQueryFunction('= 0') is None
 
 def convertFeatureReportValues(val):
     try:

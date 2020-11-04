@@ -269,14 +269,16 @@ class Features(object):
 
         Parameters
         ----------
-        toCopy : identifier, list of identifiers, function
+        toCopy : identifier, list of identifiers, function, query
             * identifier - a name or index
             * list of identifiers - an iterable container of identifiers
-            * function - may take two forms:
-              a) a function that when given a feature will return True
-              if it is to be copied
-              b) a filter function, as a string, containing a comparison
-              operator between a point name and a value (i.e "pt1<10")
+            * function - accepts a feature as its only argument and
+              returns a boolean value to indicate if the feature should
+              be copied
+            * query - string in the format 'POINTNAME OPERATOR VALUE'
+              (i.e "pt1 < 10") where OPERATOR is ==, !=, <, >, <=, or >=
+              and is separated from the POINTNAME and VALUE by
+              whitespace characters
         start, end : identifier
             Parameters indicating range based copying. Begin the copying
             at the location of ``start``. Finish copying at the
@@ -350,7 +352,7 @@ class Features(object):
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
             featureNames={'1':0, '2':1}
             )
-        >>> strFunc = data.features.copy("a>=3")
+        >>> strFunc = data.features.copy("a >= 3")
         >>> strFunc
         Matrix(
             [[3 4]
@@ -407,14 +409,16 @@ class Features(object):
 
         Parameters
         ----------
-        toExtract : identifier, list of identifiers, function
+        toExtract : identifier, list of identifiers, function, query
             * identifier - a name or index
             * list of identifiers - an iterable container of identifiers
-            * function - may take two forms:
-              a) a function that when given a feature will return True
-              if it is to be extracted
-              b) a filter function, as a string, containing a comparison
-              operator between a point name and a value (i.e "pt1<10")
+            * function - accepts a feature as its only argument and
+              returns a boolean value to indicate if the feature should
+              be extracted
+            * query - string in the format 'POINTNAME OPERATOR VALUE'
+              (i.e "pt1 < 10") where OPERATOR is ==, !=, <, >, <=, or >=
+              and is separated from the POINTNAME and VALUE by
+              whitespace characters
         start, end : identifier
             Parameters indicating range based extraction. Begin the
             extraction at the location of ``start``. Finish extracting
@@ -511,7 +515,7 @@ class Features(object):
             featureNames={'a':0, 'b':1}
             )
 
-        Extract feature when the string filter function returns True.
+        Extract feature when the query string returns True.
 
         >>> data = nimble.identity('List', 3,
         ...                        featureNames=['a', 'b', 'c'],
@@ -611,14 +615,16 @@ class Features(object):
 
         Parameters
         ----------
-        toDelete : identifier, list of identifiers, function
+        toDelete : identifier, list of identifiers, function, query
             * identifier - a name or index
             * list of identifiers - an iterable container of identifiers
-            * function - may take two forms:
-              a) a function that when given a feature will return True
-              if it is to be extracted
-              b) a filter function, as a string, containing a comparison
-              operator between a point name and a value (i.e "pt1<10")
+            * function - accepts a feature as its only argument and
+              returns a boolean value to indicate if the feature should
+              be deleted
+            * query - string in the format 'POINTNAME OPERATOR VALUE'
+              (i.e "pt1 < 10") where OPERATOR is ==, !=, <, >, <=, or >=
+              and is separated from the POINTNAME and VALUE by
+              whitespace characters
         start, end : identifier
             Parameters indicating range based deletion. Begin the
             deletion at the location of ``start``. Finish deleting at
@@ -690,7 +696,7 @@ class Features(object):
             featureNames={'a':0, 'b':1}
             )
 
-        Delete feature when the string filter function returns True.
+        Delete feature when the query string returns True.
 
         >>> data = nimble.identity('List', 3,
         ...                        featureNames=['a', 'b', 'c'],
@@ -760,14 +766,16 @@ class Features(object):
 
         Parameters
         ----------
-        toRetain : identifier, list of identifiers, function
+        toRetain : identifier, list of identifiers, function, query
             * identifier - a name or index
             * list of identifiers - an iterable container of identifiers
-            * function - may take two forms:
-              a) a function that when given a feature will return True
-              if it is to be extracted
-              b) a filter function, as a string, containing a comparison
-              operator between a point name and a value (i.e "pt1<10")
+            * function - accepts a feature as its only argument and
+              returns a boolean value to indicate if the feature should
+              be retained
+            * query - string in the format 'POINTNAME OPERATOR VALUE'
+              (i.e "pt1 < 10") where OPERATOR is ==, !=, <, >, <=, or >=
+              and is separated from the POINTNAME and VALUE by
+              whitespace characters
         start, end : identifier
             Parameters indicating range based retention. Begin the
             retention at the location of ``start``. Finish retaining at
@@ -839,7 +847,7 @@ class Features(object):
             featureNames={'c':0}
             )
 
-        Retain feature when the string filter function returns True.
+        Retain feature when the query string returns True.
 
         >>> data = nimble.identity('List', 3,
         ...                        featureNames=['a', 'b', 'c'],
@@ -903,13 +911,14 @@ class Features(object):
 
         Parameters
         ----------
-        condition : function
-            May take two forms:
-
-            * a function that when given a feature will return True if
-              it is to be counted
-            * a filter function, as a string, containing a comparison
-              operator and a value (i.e "pt1<10")
+        condition : function, query
+            * function - accepts a feature as its only argument and
+              returns a boolean value to indicate if the feature should
+              be counted
+            * query - string in the format 'POINTNAME OPERATOR VALUE'
+              (i.e "pt1 < 10") where OPERATOR is ==, !=, <, >, <=, or >=
+              and is separated from the POINTNAME and VALUE by
+              whitespace characters
 
         Returns
         -------
@@ -929,7 +938,7 @@ class Features(object):
         >>> data.features.count(sumIsOne)
         3
 
-        Count when the string filter function returns True.
+        Count when the query string returns True.
 
         >>> data = nimble.identity('Matrix', 3,
         ...                        pointNames=['pt1', 'pt2', 'pt3'])
