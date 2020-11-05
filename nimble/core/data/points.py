@@ -1545,41 +1545,22 @@ class Points(object):
                                   useLog, **kwarguments)
 
     @limitedTo2D
-    def normalize(self, subtract=None, divide=None, applyResultTo=None,
-                  useLog=None):
+    def normalize(self, function, points=None, useLog=None):
         """
-        Modify all points in this object using the given operations.
+        Modify all points in this object using the given function.
 
-        Normalize the data by applying subtraction and division
-        operations. A value of None for subtract or divide implies that
-        no change will be made to the data in regards to that operation.
+        Normalize the data by a function that adjusts each point
+        based on the provided function.
 
         Parameters
         ----------
-        subtract : number, str, nimble Base object
-            * number - a numerical denominator for dividing the data
-            * str -  a statistical function (all of the same ones
-              callable though points.statistics)
-            * nimble Base object - If a vector shaped object is given,
-              then the value associated with each point will be
-              subtracted from all values of that point. Otherwise, the
-              values in the object are used for elementwise subtraction
-        divide : number, str, nimble Base object
-            * number - a numerical denominator for dividing the data
-            * str -  a statistical function (all of the same ones
-              callable though pointStatistics)
-            * nimble Base object - If a vector shaped object is given,
-              then the value associated with each point will be used in
-              division of all values for that point. Otherwise, the
-              values in the object are used for elementwise division.
-        applyResultTo : nimble Base object, statistical method
-            If a nimble Base object is given, then perform the same
-            operations to it as are applied to the calling object.
-            However, if a statistical method is specified as subtract or
-            divide, then concrete values are first calculated only from
-            querying the calling object, and the operation is performed
-            on applyResultTo using the results; as if a nimble Base
-            object was given for the subtract or divide arguments.
+        function
+            The function applying the normalization. Functions must
+            accept a point view and output the normalized point data.
+        points : identifier, list of identifiers, None
+            Select specific points to apply the normalization to. If
+            points is None, the normalization will be applied to all
+            points.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1590,9 +1571,25 @@ class Points(object):
 
         Examples
         --------
-        TODO
+        Normalize each point to percentiles.
+
+        >>> raw = [[0, 21, 7, 6],
+        ...        [3, 13, 0, 34],
+        ...        [21, 3, 14, 14]]
+        >>> pts = ['game1', 'game2', 'game3']
+        >>> fts = ['q1', 'q2', 'q3', 'q4']
+        >>> games = nimble.data('Matrix', raw, pts, fts)
+        >>> games.points.normalize(nimble.calculate.percentileNormalize)
+        >>> games
+        Matrix(
+            [[0.000 1.000 0.667 0.333]
+             [0.333 0.667 0.000 1.000]
+             [1.000 0.000 0.500 0.500]]
+            pointNames={'game1':0, 'game2':1, 'game3':2}
+            featureNames={'q1':0, 'q2':1, 'q3':2, 'q4':3}
+            )
         """
-        self._normalize(subtract, divide, applyResultTo, useLog)
+        self._normalize(function, limitTo=points, useLog=useLog)
 
     @limitedTo2D
     def splitByCollapsingFeatures(self, featuresToCollapse, featureForNames,
@@ -2308,7 +2305,8 @@ class Points(object):
         pass
 
     @abstractmethod
-    def _normalize(self, subtract, divide, applyResultTo, useLog=None):
+    def _normalize(self, function, applyResultTo=None, limitTo=None,
+                   useLog=None):
         pass
 
     @abstractmethod

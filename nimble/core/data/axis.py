@@ -614,171 +614,45 @@ class Axis(object):
                       self._sigFunc('fillMatching'), fillWith,
                       matchingElements, limitTo, **kwarguments)
 
-
-    def _normalize(self, subtract, divide, applyResultTo, useLog=None):
-        # used to trigger later conditionals
-        alsoIsObj = isinstance(applyResultTo, nimble.core.data.Base)
-
-        # the operation is different when the input is a vector
-        # or produces a vector (ie when the input is a statistics
-        # string) so during the validation steps we check for
-        # those cases
-        subIsVec = False
-        divIsVec = False
-
-        # check it is within the desired types
-        allowedTypes = (int, float, str, nimble.core.data.Base)
-        if subtract is not None:
-            if not isinstance(subtract, allowedTypes):
-                msg = "The argument named subtract must have a value that is "
-                msg += "an int, float, string, or is a nimble data object"
-                raise InvalidArgumentType(msg)
-        if divide is not None:
-            if not isinstance(divide, allowedTypes):
-                msg = "The argument named divide must have a value that is "
-                msg += "an int, float, string, or is a nimble data object"
-                raise InvalidArgumentType(msg)
-
-        # check that if it is a string, it is one of the accepted values
-        accepted = [
-            'max', 'mean', 'median', 'min', 'unique count',
-            'proportion missing', 'proportion zero', 'standard deviation',
-            'std', 'population std', 'population standard deviation',
-            'sample std', 'sample standard deviation'
-            ]
-        if isinstance(subtract, str):
-            validateInputString(subtract, accepted, 'subtract')
-        if isinstance(divide, str):
-            validateInputString(divide, accepted, 'divide')
-
-        # arg generic helper to check that objects are of the
-        # correct shape/size
-        def validateInObjectSize(argname, argval):
-            inPC = len(argval.points)
-            inFC = len(argval.features)
-            objPC = self._base._pointCount
-            objFC = self._base._featureCount
-
-            inMainLen = inPC if self._axis == "point" else inFC
-            inOffLen = inFC if self._axis == "point" else inPC
-            objMainLen = objPC if self._axis == "point" else objFC
-            objOffLen = objFC if self._axis == 'point' else objPC
-
-            if inMainLen != objMainLen or inOffLen != objOffLen:
-                # valid vector
-                if inOffLen == 1 and inMainLen == objMainLen:
-                    return True
-                msg = ""
-                if inOffLen == 1 or inMainLen == 1:
-                    msg += "{argname} "
-                    offAxis = 'feature' if self._axis == 'point' else 'point'
-                    vecErr = 'is an invalid vector. The vector must be one-'
-                    vecErr += 'dimensional along the {offAxis} axis and '
-                    vecErr += 'contain the same number of {selfAxis}s as the '
-                    vecErr += 'calling object. '
-                    msg += vecErr.format(offAxis=offAxis, selfAxis=self._axis)
-                # mis-sized object
-                msg += "{argname} has a shape of ({inPC} x {inFC}), which "
-                msg += "does not align with the shape of the calling object "
-                msg += "({objPC} x {objFC})"
-                msg = msg.format(argname=argname, inPC=inPC, inFC=inFC,
-                                 objPC=objPC, objFC=objFC)
-                raise InvalidArgumentValue(msg)
-            return False
-
-        def checkAlsoShape(also, objIn):
-            """
-            Raises an exception if the normalized axis shape doesn't
-            match the calling object, or if when subtract of divide
-            takes an object, also doesn't match the shape of the caller
-            (this is to be called after) the check that the caller's
-            shape matches that of the subtract or divide argument.
-            """
-            offAxis = 'feature' if self._axis == 'point' else 'point'
-            callerP = len(self._base.points)
-            callerF = len(self._base.features)
-            alsoP = len(also.points)
-            alsoF = len(also.features)
-
-            callMainLen = callerP if self._axis == "point" else callerF
-            alsoMainLen = alsoP if self._axis == "point" else alsoF
-            callOffLen = callerF if self._axis == "point" else callerP
-            alsoOffLen = alsoF if self._axis == "point" else alsoP
-
-            if callMainLen != alsoMainLen:
-                msg = "applyResultTo must have the same number of "
-                msg += self._axis + "s (" + str(alsoMainLen) + ") as the "
-                msg += "calling object (" + str(callMainLen) + ")"
-                raise InvalidArgumentValue(msg)
-            if objIn and callOffLen != alsoOffLen:
-                msg = "When a non-vector nimble object is given for the "
-                msg += "subtract or divide arguments, then applyResultTo "
-                msg += "must have the same number of " + offAxis
-                msg += "s (" + str(alsoOffLen) + ") as the calling object "
-                msg += "(" + str(callOffLen) + ")"
-                raise InvalidArgumentValueCombination(msg)
-
-        # actually check that objects are the correct shape/size
-        objArg = False
-        if isinstance(subtract, nimble.core.data.Base):
-            subIsVec = validateInObjectSize("subtract", subtract)
-            objArg = True
-        if isinstance(divide, nimble.core.data.Base):
-            divIsVec = validateInObjectSize("divide", divide)
-            objArg = True
-
-        # preserve names in case any of the operations modify them
-        if self._isPoint:
-            origPtNames = self._getNamesNoGeneration()
-            origFtNames = self._base.features._getNamesNoGeneration()
+    def _normalize(self, function, applyResultTo=None, limitTo=None,
+                   useLog=None):
+        if not callable(function):
+            raise InvalidArgumentType('function must be callable')
+        if applyResultTo is None:
+            self._transform(function, limitTo=limitTo, useLog=False)
+        elif isinstance(applyResultTo, nimble.core.data.Base):
+            # points does not have applyResultTo parameter but will double
+            # check in case this backend used directly elsewhere
+            if self._isPoint:
+                msg = 'point axis does not support the applyResultTo argument'
+                raise ImproperObjectAction(msg)
+            applyToAxis = getattr(applyResultTo, self._axis + 's')
+            if len(self) != len(applyToAxis):
+                msg = 'applyResultTo must have the same number of {0}s as '
+                msg += 'the calling object'
+                raise InvalidArgumentValue(msg.format(self._axis))
+            selfNames = self._getNamesNoGeneration()
+            applyToNames = applyToAxis._getNamesNoGeneration()
+            if ((selfNames is not None and applyToNames is not None)
+                    and selfNames != applyToNames):
+                msg = 'applyResultTo {0}Names do not match the {0}Names of '
+                msg += 'the calling object'
+                raise InvalidArgumentValue(msg.format(self._axis))
+            if limitTo is not None:
+                limitTo = list(map(self._getIndex, limitTo))
+            for i, (vec1, vec2) in enumerate(zip(self, applyToAxis)):
+                if limitTo is None or i in limitTo:
+                    norm1, norm2 = function(vec1, vec2)
+                    self._transform(lambda _: norm1, limitTo=i, useLog=False)
+                    applyToAxis._transform(lambda _: norm2, limitTo=i,
+                                           useLog=False)
         else:
-            origFtNames = self._getNamesNoGeneration()
-            origPtNames = self._base.points._getNamesNoGeneration()
-        # check the shape of applyResultTo and preserve p/f names
-        if alsoIsObj:
-            checkAlsoShape(applyResultTo, objArg)
-            alsoPtNames = applyResultTo.points._getNamesNoGeneration()
-            alsoFtNames = applyResultTo.features._getNamesNoGeneration()
-
-        if isinstance(subtract, str):
-            subtract = self._statistics(subtract)
-            subIsVec = True
-        if isinstance(divide, str):
-            divide = self._statistics(divide)
-            divIsVec = True
-
-        # first perform the subtraction operation
-        if subtract is not None and subtract != 0:
-            if subIsVec:
-                subtract = subtract.stretch
-            self._base.referenceDataFrom(self._base - subtract, useLog=False)
-            if alsoIsObj:
-                applyResultTo.referenceDataFrom(applyResultTo - subtract,
-                                                useLog=False)
-
-        # then perform the division operation
-        if divide is not None and divide != 1:
-            if divIsVec:
-                divide = divide.stretch
-
-            self._base.referenceDataFrom(self._base / divide, useLog=False)
-            if alsoIsObj:
-                applyResultTo.referenceDataFrom(applyResultTo / divide,
-                                                useLog=False)
-
-        if self._isPoint:
-            self._setNames(origPtNames, useLog=False)
-            self._base.features.setNames(origFtNames, useLog=False)
-        else:
-            self._setNames(origFtNames, useLog=False)
-            self._base.points.setNames(origPtNames, useLog=False)
-        if alsoIsObj:
-            applyResultTo.points.setNames(alsoPtNames, useLog=False)
-            applyResultTo.features.setNames(alsoFtNames, useLog=False)
+            msg = 'applyResultTo must be None or an instance of Base'
+            raise InvalidArgumentType(msg)
 
         handleLogging(useLog, 'prep', '{ax}s.normalize'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('normalize'),
-                      subtract, divide, applyResultTo)
+                      function, applyResultTo, limitTo)
 
     def _repeat(self, totalCopies, copyVectorByVector):
         if not isinstance(totalCopies, (int, numpy.int)) or totalCopies < 1:

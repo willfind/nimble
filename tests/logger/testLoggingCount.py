@@ -63,11 +63,13 @@ calculate_funcs = [
     'elementwisePower', 'f1Score', 'falseNegative', 'falsePositive',
     'fractionCorrect', 'fractionIncorrect', 'inverse', 'leastSquaresSolution',
     'maximum', 'mean', 'meanAbsoluteError',
-    'meanFeaturewiseRootMeanSquareError', 'median', 'medianAbsoluteDeviation',
-    'minimum', 'mode', 'precision', 'proportionMissing', 'proportionZero',
+    'meanFeaturewiseRootMeanSquareError', 'meanNormalize', 'median',
+    'medianAbsoluteDeviation', 'minimum', 'minMaxNormalize', 'mode',
+    'percentileNormalize', 'precision', 'proportionMissing', 'proportionZero',
     'pseudoInverse', 'quartiles', 'recall', 'residuals', 'rootMeanSquareError',
     'rSquared', 'solve', 'specificity', 'standardDeviation', 'sum',
     'trueNegative', 'truePositive', 'uniqueCount', 'varianceFractionRemaining',
+    'zScoreNormalize'
     ]
 calculate_tested = list(map(prefixAdder('nimble.calculate'), calculate_funcs))
 

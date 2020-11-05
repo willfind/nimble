@@ -502,15 +502,18 @@ def testPrepTypeFunctionsUseLog():
     dataObj.features.permute()
     checkLogContents('features.permute', "Matrix")
 
+    def noChange(vec):
+        return vec
+
     # points.normalize
     dataObj = nimble.data("Matrix", data, useLog=False)
-    dataObj.points.normalize(subtract=0, divide=1)
-    checkLogContents('points.normalize', "Matrix", {'subtract': 0, 'divide': 1})
+    dataObj.points.normalize(noChange)
+    checkLogContents('points.normalize', "Matrix", {'function': 'noChange'})
 
     # features.normalize
     dataObj = nimble.data("Matrix", data, useLog=False)
-    dataObj.features.normalize(subtract=0, divide=1)
-    checkLogContents('features.normalize', "Matrix", {'subtract': 0, 'divide': 1})
+    dataObj.features.normalize(noChange)
+    checkLogContents('features.normalize', "Matrix", {'function': 'noChange'})
 
     # points.sort
     dataObj = nimble.data("Matrix", data, useLog=False)

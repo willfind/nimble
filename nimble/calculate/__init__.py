@@ -55,6 +55,10 @@ from .binary import precision
 from .binary import specificity
 from .binary import balancedAccuracy
 from .binary import f1Score
+from .normalize import meanNormalize
+from .normalize import zScoreNormalize
+from .normalize import minMaxNormalize
+from .normalize import percentileNormalize
 
 
 __all__ = ['balancedAccuracy', 'confusionMatrix', 'correlation',
@@ -63,8 +67,10 @@ __all__ = ['balancedAccuracy', 'confusionMatrix', 'correlation',
            'falseNegative', 'falsePositive', 'fractionCorrect',
            'fractionIncorrect', 'inverse', 'leastSquaresSolution', 'maximum',
            'mean', 'meanAbsoluteError', 'meanFeaturewiseRootMeanSquareError',
-           'median', 'minimum', 'mode', 'precision', 'proportionMissing',
+           'meanNormalize', 'median', 'minimum', 'minMaxNormalize', 'mode',
+           'percentileNormalize', 'precision', 'proportionMissing',
            'proportionZero', 'pseudoInverse', 'quartiles', 'rSquared',
            'recall', 'residuals', 'rootMeanSquareError', 'solve',
            'specificity', 'standardDeviation', 'sum', 'trueNegative',
-           'truePositive', 'uniqueCount', 'varianceFractionRemaining']
+           'truePositive', 'uniqueCount', 'varianceFractionRemaining',
+           'zScoreNormalize']
