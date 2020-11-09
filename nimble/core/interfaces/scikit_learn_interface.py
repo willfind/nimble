@@ -15,12 +15,12 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble._utility import inspectArguments
 from nimble._utility import inheritDocstringsFactory
-from nimble.random import _generateSubsidiarySeed
 from .universal_interface import PredefinedInterface
 from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import collectAttributes
 from ._interface_helpers import removeFromTailMatchedLists
 from ._interface_helpers import noLeading__, notCallable, notABCAssociated
+from ._interface_helpers import validInitParams
 
 
 @inheritDocstringsFactory(PredefinedInterface)
@@ -40,7 +40,8 @@ class _SciKitLearnAPI(PredefinedInterface):
         return [objArgs]
 
     def _getLearnerParameterNamesBackend(self, learnerName):
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T', 'raw_documents']
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T', 'raw_documents',
+                  self.randomParam]
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
         predict = self._paramQuery('predict', learnerName, ignore)
@@ -75,7 +76,8 @@ class _SciKitLearnAPI(PredefinedInterface):
         return [ret]
 
     def _getLearnerDefaultValuesBackend(self, learnerName):
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'raw_documents']
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'raw_documents',
+                  self.randomParam]
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
         predict = self._paramQuery('predict', learnerName, ignore)
@@ -131,9 +133,11 @@ class _SciKitLearnAPI(PredefinedInterface):
         return learner.UIgetScoreOrder
 
 
-    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
+    def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
+                 customDict):
         # init learner
-        learner = self._initLearner(learnerName, trainX, trainY, arguments)
+        learner = self._initLearner(learnerName, trainX, trainY, arguments,
+                                    randomSeed)
         # fit learner
         self._fitLearner(learner, learnerName, trainX, trainY, arguments)
 
@@ -256,11 +260,6 @@ class _SciKitLearnAPI(PredefinedInterface):
             initDefaults = obj.get_params()
             initParams = list(initDefaults.keys())
             initValues = list(initDefaults.values())
-            if self.randomParam in initParams:
-                index = initParams.index(self.randomParam)
-                negdex = index - len(initParams)
-                seed = _generateSubsidiarySeed()
-                initValues[negdex] = seed
             return (initParams, initValues)
         if not hasattr(namedModule, name):
             return None
@@ -551,13 +550,10 @@ To install scikit-learn
             outputType = customDict['match']
         return nimble.data(outputType, outputValue, useLog=False)
 
-    def _initLearner(self, learnerName, trainX, trainY, arguments):
+    def _initLearner(self, learnerName, trainX, trainY, arguments, randomSeed):
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
-        initParams = {name: arguments[name] for name in initNames
-                      if name in arguments}
-        defaults = self.getLearnerDefaultValues(learnerName)[0]
-        if self.randomParam in defaults and self.randomParam not in arguments:
-            initParams[self.randomParam] = defaults[self.randomParam]
+        initParams = validInitParams(initNames, arguments, randomSeed,
+                                     self.randomParam)
         learner = self.findCallable(learnerName)(**initParams)
 
         return learner

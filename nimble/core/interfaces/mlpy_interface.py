@@ -15,11 +15,11 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble._utility import inspectArguments
 from nimble._utility import inheritDocstringsFactory, dtypeConvert
-from nimble.random import _generateSubsidiarySeed
 from .universal_interface import PredefinedInterface
 from ._interface_helpers import PythonSearcher
 from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import removeFromTailMatchedLists
+from ._interface_helpers import validInitParams
 
 
 @inheritDocstringsFactory(PredefinedInterface)
@@ -34,7 +34,6 @@ class Mlpy(PredefinedInterface):
 
     def __init__(self):
         # modify path if another directory provided
-
 
         self.mlpy = modifyImportPathAndImport('mlpy', 'mlpy')
 
@@ -76,7 +75,6 @@ To install mlpy
     Installation instructions for mlpy can be found at:
     https://github.com/richardARPANET/mlpy/blob/master/README.md"""
         return msg
-
 
     def _listLearnersBackend(self):
         possibilities = self._searcher.allLearners()
@@ -123,7 +121,7 @@ To install mlpy
 
 
     def _getLearnerParameterNamesBackend(self, learnerName):
-        ignore = self._DataAliases + ['self']
+        ignore = self._DataAliases + ['self', 'seed']
         if learnerName == 'MFastHCluster':
             ignore.remove('t')
         init = self._paramQuery('__init__', learnerName, ignore)
@@ -156,7 +154,7 @@ To install mlpy
 
 
     def _getLearnerDefaultValuesBackend(self, learnerName):
-        ignore = self._DataAliases + ['self']
+        ignore = self._DataAliases + ['self', 'seed']
         init = self._paramQuery('__init__', learnerName, ignore)
         learn = self._paramQuery('learn', learnerName, ignore)
         pred = self._paramQuery('pred', learnerName, ignore)
@@ -276,7 +274,8 @@ To install mlpy
         return nimble.data(outputType, outputValue, useLog=False)
 
 
-    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
+    def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
+                 customDict):
         # get parameter names
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         learnNames = self._paramQuery('learn', learnerName, ['self'])[0]
@@ -288,8 +287,7 @@ To install mlpy
             customDict['transNames'] = transNames[0]
 
         # pack parameter sets
-        initParams = {name: arguments[name] for name in initNames
-                      if name in arguments}
+        initParams = validInitParams(initNames, arguments, randomSeed, 'seed')
         learnParams = {}
         for name in learnNames:
             if name in self._XDataAliases:
@@ -413,19 +411,11 @@ To install mlpy
             try:
                 (args, v, k, d) = inspectArguments(namedModule)
                 (args, d) = removeFromTailMatchedLists(args, d, ignore)
-                if 'seed' in args:
-                    index = args.index('seed')
-                    negdex = index - len(args)
-                    d[negdex] = _generateSubsidiarySeed()
                 return (args, v, k, d)
             except TypeError:
                 try:
                     (args, v, k, d) = inspectArguments(namedModule.__init__)
                     (args, d) = removeFromTailMatchedLists(args, d, ignore)
-                    if 'seed' in args:
-                        index = args.index('seed')
-                        negdex = index - len(args)
-                        d[negdex] = _generateSubsidiarySeed()
                     return (args, v, k, d)
                 except TypeError:
                     pass
@@ -524,7 +514,7 @@ To install mlpy
         elif parent.lower() == 'kmeans'.lower():
             if name == '__init__':
                 pnames = ['k', 'plus', 'seed']
-                pdefaults = [False, _generateSubsidiarySeed()]
+                pdefaults = [False, None]
             elif name == 'learn':
                 pnames = ['x']
             elif name == 'pred':

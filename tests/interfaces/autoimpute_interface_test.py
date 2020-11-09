@@ -143,7 +143,7 @@ def test_autoimpute_MiLogisticRegression():
                             strategy='mean')
 
         exp = nimble.trainAndTest('skl.LogisticRegression', trainX, trainY,
-                                  testX, testY, fractionCorrect, random_state=0)
+                                  testX, testY, fractionCorrect, randomSeed=0)
 
         numpy.testing.assert_almost_equal(fc, exp)
 

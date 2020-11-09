@@ -18,29 +18,7 @@ from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import collectAttributes
 from ._interface_helpers import removeFromTailMatchedLists
 from ._interface_helpers import noLeading__, notCallable, notABCAssociated
-
-
-class _TensorFlowRandom:
-    """
-    Wrap tensorflow's randomness module to make adjustments that allow
-    it to work with nimble randomness control.
-    """
-    def __init__(self, tensorflowRandom):
-        self.tensorflowRandom = tensorflowRandom
-        self.setSeed(42)
-        self.state = self.tensorflowRandom.create_rng_state(42, 1)
-
-    def setSeed(self, seed):
-        if seed is None:
-            seed = int(numpy.random.randint(2 ** 32))
-        self.tensorflowRandom.set_seed(seed)
-        self.state = self.tensorflowRandom.create_rng_state(seed, 1)
-
-    def getState(self):
-        return self.state
-
-    def setState(self, state):
-        self.setSeed(int(state[0]))
+from ._interface_helpers import checkArgsForRandomParam
 
 
 @inheritDocstringsFactory(PredefinedInterface)
@@ -50,25 +28,23 @@ class Keras(PredefinedInterface):
     """
     def __init__(self):
         # modify path if another directory provided
+        self._tfVersion2 = False
         try:
             # keras recommends using tensorflow.keras when possible
             # need to set tensorflow random seed before importing keras
-            tensorflow = modifyImportPathAndImport('tensorflow', 'tensorflow')
+            self.tensorflow = modifyImportPathAndImport('tensorflow',
+                                                        'tensorflow')
             # tensorflow has a tremendous quantity of informational outputs
             # that drown out anything else on standard out
             logging.getLogger('tensorflow').disabled = True
             # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-            if tensorflow.__version__[:2] == '1.':
+            if self.tensorflow.__version__[:2] == '1.':
                 msg = "Randomness is outside of Nimble's control for version "
                 msg += "1 of Tensorflow. Reproducible results cannot be "
                 msg += "guaranteed"
                 warnings.warn(msg, UserWarning)
             else:
-                randomObj = _TensorFlowRandom(tensorflow.random)
-                randomInfo = {'state': None,
-                              'methods': ('setSeed', 'getState', 'setState')}
-                nimble.random._saved[randomObj] =  randomInfo
-
+                self._tfVersion2 = True
             self.keras = modifyImportPathAndImport('keras', 'tensorflow.keras')
         except ImportError:
             self.keras = modifyImportPathAndImport('keras', 'keras')
@@ -173,7 +149,7 @@ To install keras
         return [objArgs]
 
     def _getLearnerParameterNamesBackend(self, learnerName):
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T']
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T', 'seed']
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
         fitGenerator = self._paramQuery('fit_generator', learnerName, ignore)
@@ -200,7 +176,7 @@ To install keras
         return [ret]
 
     def _getLearnerDefaultValuesBackend(self, learnerName):
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'T']
+        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'seed']
         init = self._paramQuery('__init__', learnerName, ignore)
         fit = self._paramQuery('fit', learnerName, ignore)
         fitGenerator = self._paramQuery('fit_generator', learnerName, ignore)
@@ -328,10 +304,15 @@ To install keras
         return nimble.data(outputType, outputValue, useLog=False)
 
 
-    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
+    def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
+                 customDict):
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         compileNames = self._paramQuery('compile', learnerName, ['self'])[0]
         isSparse = isinstance(trainX, nimble.core.data.Sparse)
+
+        if self._tfVersion2:
+            checkArgsForRandomParam(arguments, 'seed')
+            self.tensorflow.random.set_seed(randomSeed)
         # keras 2.2.5+ fit_generator functionality merged into fit.
         # fit_generator may be removed, but will be used when possible
         # to support earlier versions.
