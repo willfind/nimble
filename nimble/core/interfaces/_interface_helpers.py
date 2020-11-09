@@ -129,7 +129,7 @@ class PythonSearcher(object):
         return None
 
 
-def checkClassificationStrategy(interface, learnerName, algArgs):
+def checkClassificationStrategy(interface, learnerName, algArgs, seed):
     """
     Helper to determine the classification strategy used for a given
     learner called using the given interface with the given args. Runs a
@@ -145,7 +145,8 @@ def checkClassificationStrategy(interface, learnerName, algArgs):
     dataTest = [[0, 0], [-100, 0], [100, 0], [0, -100], [0, 100]]
     testObj = nimble.data("Matrix", dataTest, useLog=False)
 
-    tlObj = interface.train(learnerName, xObj, yObj, arguments=algArgs)
+    tlObj = interface.train(learnerName, xObj, yObj, arguments=algArgs,
+                            randomSeed=seed)
     applyResults = tlObj.apply(testObj, arguments=algArgs, useLog=False)
     (_, _, testTrans, _) = interface._inputTransformation(
         learnerName, None, None, testObj, algArgs, tlObj._customDict)
@@ -620,3 +621,44 @@ def extractConfidenceScores(predictionScores, featureNamesItoN):
         scoreMap[label] = score
 
     return scoreMap
+
+def checkArgsForRandomParam(arguments, randomParam):
+    if randomParam in arguments:
+        msg = 'Nimble disallows the {0} parameter and provides the '
+        msg += 'randomSeed parameter for randomness control. Provide '
+        msg += '{1} as the value of the randomSeed parameter instead.'
+        value = arguments[randomParam]
+        raise InvalidArgumentValue(msg.format(randomParam, value))
+
+def validInitParams(initNames, arguments, randomSeed, randomParam):
+    """
+    Generate a seed when the learner parameter controls randomness.
+
+    Only applies if the interface's random parameter has not been
+    specified and the learner uses the random parameter. The
+    generated seed will be added to the initParams dictionary so
+    that the learner is always instantiated with a set state.
+    """
+    checkArgsForRandomParam(arguments, randomParam)
+    initParams = {name: arguments[name] for name in initNames
+                  if name in arguments}
+    if randomParam in initNames:
+        initParams[randomParam] = randomSeed
+
+    return initParams
+
+def getValidSeed(seed, interface):
+    if seed is None:
+        seed = nimble.random._generateSubsidiarySeed()
+    elif not isinstance(seed, int):
+        raise InvalidArgumentType('seed must be an integer')
+    elif interface.lower() == 'shogun' and seed == 0:
+        msg = "The seed 0 does not generate reproducible results in shogun. "
+        msg += "Set randomSeed such that 1<=randomSeed<=4294967295."
+        raise InvalidArgumentValue(msg)
+    elif not 0 <= seed <= (2 ** 32) - 1:
+        msg = 'randomSeed is required to be an unsigned 32 bit integer. '
+        msg += 'Set randomSeed such that 0<=randomSeed<=4294967295.'
+        raise InvalidArgumentValue(msg)
+
+    return seed

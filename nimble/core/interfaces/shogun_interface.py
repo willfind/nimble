@@ -4,11 +4,6 @@ for Shogun ML.
 
 """
 
-# TODO?
-# * online learning
-# * different feature types (streaming, for other problem types)
-# *
-
 import importlib
 import multiprocessing
 import warnings
@@ -19,10 +14,14 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._utility import inheritDocstringsFactory, dtypeConvert
-from .universal_interface import UniversalInterface
 from .universal_interface import PredefinedInterface
 from ._interface_helpers import PythonSearcher
 from ._interface_helpers import modifyImportPathAndImport
+
+# TODO?
+# * online learning
+# * different feature types (streaming, for other problem types)
+# *
 
 # Interesting alias cases:
 # * DomainAdaptionMulticlassLibLinear  -- or probably any nested machine
@@ -32,41 +31,15 @@ trainXAliases = ['traindat', 'f', 'features', 'feats', 'feat', 'training_data',
 trainYAliases = ['trainlab', 'lab', 'labs', 'labels', 'training_labels',
                  'train_labels']
 
-# kernel : k, kernel
-# distance : d
 
-class _ShogunRandom:
-    """
-    Wrap shogun's randomness object to make adjustments that allow it
-    to work with nimble randomness control.
-    """
-    def __init__(self, shogunRandom):
-        self.shogunRandom = shogunRandom
-        self.setSeed(42)
-
-    def setSeed(self, seed):
-        if seed is None:
-            self.shogunRandom.init_random(int(numpy.random.randint(2 ** 32)))
-        else:
-            self.shogunRandom.init_random(seed)
-
-    def getSeed(self):
-        return self.shogunRandom.get_seed()
-
-
-@inheritDocstringsFactory(UniversalInterface)
-class Shogun(PredefinedInterface, UniversalInterface):
+@inheritDocstringsFactory(PredefinedInterface)
+class Shogun(PredefinedInterface):
     """
     This class is an interface to shogun.
     """
 
     def __init__(self):
         self.shogun = modifyImportPathAndImport('shogun', 'shogun')
-        # setup handling for shogun randomness
-        shogunRandom = _ShogunRandom(self.shogun.Math)
-        randomInfo = {'state': None,
-                      'methods': ('setSeed', 'getSeed', 'setSeed')}
-        nimble.random._saved[shogunRandom] = randomInfo
 
         self.versionString = None
 
@@ -161,7 +134,6 @@ To install shogun
     Further installation instructions for shogun can be found at:
     https://www.shogun-toolbox.org/install"""
         return msg
-
 
     def _listLearnersBackend(self):
         return self._searcher.allLearners()
@@ -382,10 +354,12 @@ To install shogun
         return ret
 
 
-    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
+    def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
+                 customDict):
         toCall = self.findCallable(learnerName)
         learnerDefaults = self._getDefaultValuesBackend(learnerName)[0]
 
+        self.shogun.Math.init_random(randomSeed)
         # Figure out which argument values are needed for training
         setterArgs = {}
         for name, arg in arguments.items():

@@ -284,16 +284,14 @@ def testSciKitLearnClassificationLearners():
         skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
-        seed = _generateSubsidiarySeed()
-        arguments = {}
-        if 'random_state' in sciKitLearnObj.get_params():
-            arguments['random_state'] = seed
-            sciKitLearnObj.set_params(**arguments)
+        arguments = setupSKLArguments(sciKitLearnObj)
         sciKitLearnObj.fit(Xtrain, Ytrain)
         predSKL = sciKitLearnObj.predict(Xtest)
         predSKL = nimble.data('Matrix', predSKL.reshape(-1,1), useLog=False)
 
-        TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments)
+        seed = adjustRandomParamForNimble(arguments)
+        TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments,
+                          randomSeed=seed)
         predNimble = TL.apply(testX)
         predSL = _apply_saveLoad(TL, testX)
 
@@ -324,15 +322,14 @@ def testSciKitLearnRegressionLearners():
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
         seed = _generateSubsidiarySeed()
-        arguments = {}
-        if 'random_state' in sciKitLearnObj.get_params():
-            arguments['random_state'] = seed
-            sciKitLearnObj.set_params(**arguments)
+        arguments = setupSKLArguments(sciKitLearnObj)
         sciKitLearnObj.fit(Xtrain, Ytrain)
         predSKL = sciKitLearnObj.predict(Xtest)
         predSKL = nimble.data('Matrix', predSKL.reshape(-1,1), useLog=False)
 
-        TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments)
+        seed = adjustRandomParamForNimble(arguments)
+        TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments,
+                          randomSeed=seed)
         predNimble = TL.apply(testX)
         predSL = _apply_saveLoad(TL, testX)
 
@@ -398,11 +395,7 @@ def testSciKitLearnClusterLearners():
         skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
-        seed = _generateSubsidiarySeed()
-        arguments = {}
-        if 'random_state' in sciKitLearnObj.get_params():
-            arguments['random_state'] = seed
-            sciKitLearnObj.set_params(**arguments)
+        arguments = setupSKLArguments(sciKitLearnObj)
         try:
             sciKitLearnObj.fit(Xtrain)
             predSKL = sciKitLearnObj.predict(Xtest)
@@ -410,7 +403,9 @@ def testSciKitLearnClusterLearners():
             predSKL = sciKitLearnObj.fit_predict(Xtrain, Xtest)
         predSKL = nimble.data('Matrix', predSKL.reshape(-1,1), useLog=False)
 
-        TL = nimble.train(toCall(learner), trainX, arguments=arguments)
+        seed = adjustRandomParamForNimble(arguments)
+        TL = nimble.train(toCall(learner), trainX, arguments=arguments,
+                          randomSeed=seed)
         predNimble = TL.apply(testX)
         predSL = _apply_saveLoad(TL, testX)
 
@@ -440,17 +435,14 @@ def testSciKitLearnOtherPredictLearners():
     def compareOutputs(learner):
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
-        seed = _generateSubsidiarySeed()
-        arguments = {}
-        if 'random_state' in sciKitLearnObj.get_params():
-            arguments['random_state'] = seed
-            sciKitLearnObj.set_params(**arguments)
-
+        arguments = setupSKLArguments(sciKitLearnObj)
         sciKitLearnObj.fit(Xtrain, Ytrain)
         predSKL = sciKitLearnObj.predict(Xtest)
         predSKL = nimble.data('Matrix', predSKL.reshape(-1,1), useLog=False)
 
-        TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments)
+        seed = adjustRandomParamForNimble(arguments)
+        TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments,
+                          randomSeed=seed)
         predNimble = TL.apply(testX)
         predSL = _apply_saveLoad(TL, testX)
 
@@ -471,16 +463,14 @@ def testSciKitLearnTransformationLearners():
         skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
-        seed = _generateSubsidiarySeed()
-        arguments = {}
-        if 'random_state' in sciKitLearnObj.get_params():
-            arguments['random_state'] = seed
-            sciKitLearnObj.set_params(**arguments)
+        arguments = setupSKLArguments(sciKitLearnObj)
         sciKitLearnObj.fit(Xtrain, Ytrain)
         transSKL = sciKitLearnObj.transform(Xtrain)
         transSKL = nimble.data('Matrix', transSKL, useLog=False)
 
-        TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments)
+        seed = adjustRandomParamForNimble(arguments)
+        TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments,
+                          randomSeed=seed)
         transSL = _apply_saveLoad(TL, trainX)
         transNimble = TL.apply(trainX)
 
@@ -492,16 +482,14 @@ def testSciKitLearnTransformationLearners():
         skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
-        seed = _generateSubsidiarySeed()
-        arguments = {}
-        if 'random_state' in sciKitLearnObj.get_params():
-            arguments['random_state'] = seed
-            sciKitLearnObj.set_params(**arguments)
+        arguments = setupSKLArguments(sciKitLearnObj)
 
         transSKL = sciKitLearnObj.fit_transform(Xtrain)
         transSKL = nimble.data('Matrix', transSKL, useLog=False)
 
-        TL = nimble.train(toCall(learner), trainX, arguments=arguments)
+        seed = adjustRandomParamForNimble(arguments)
+        TL = nimble.train(toCall(learner), trainX, arguments=arguments,
+                          randomSeed=seed)
         transNimble = TL.apply(trainX)
         transSL = _apply_saveLoad(TL, trainX)
 
@@ -540,19 +528,17 @@ def testSciKitLearnSparsePCATransformation():
     def compareOutputs(learner):
         skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
-        sciKitLearnObj = sklObj()
-        seed = _generateSubsidiarySeed()
-        arguments = {}
         #TODO explore why ridge_alpha defaults to 'deprecated'
-        arguments['ridge_alpha'] = 0.1
-        if 'random_state' in sciKitLearnObj.get_params():
-            arguments['random_state'] = seed
-            sciKitLearnObj.set_params(**arguments)
+        sciKitLearnObj = sklObj(ridge_alpha=0.1)
+        arguments = setupSKLArguments(sciKitLearnObj)
         sciKitLearnObj.fit(Xtrain)
         transSKL = sciKitLearnObj.transform(Xtrain)
         transSKL = nimble.data('Matrix', transSKL, useLog=False)
 
-        TL = nimble.train(toCall(learner), trainX, arguments=arguments)
+        arguments['ridge_alpha'] = 0.1
+        seed = adjustRandomParamForNimble(arguments)
+        TL = nimble.train(toCall(learner), trainX, arguments=arguments,
+                          randomSeed=seed)
         transNimble = TL.apply(trainX)
         transSL = _apply_saveLoad(TL, trainX)
 
@@ -580,16 +566,14 @@ def testSciKitLearnOtherFitTransformLearners():
     def compareOutputs(learner):
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
-        seed = _generateSubsidiarySeed()
-        arguments = {}
-        if 'random_state' in sciKitLearnObj.get_params():
-            arguments['random_state'] = seed
-            sciKitLearnObj.set_params(**arguments)
+        arguments = setupSKLArguments(sciKitLearnObj)
 
         transSKL = sciKitLearnObj.fit_transform(Xtrain)
         transSKL = nimble.data('Matrix', transSKL, useLog=False)
 
-        TL = nimble.train(toCall(learner), trainX, arguments=arguments)
+        seed = adjustRandomParamForNimble(arguments)
+        TL = nimble.train(toCall(learner), trainX, arguments=arguments,
+                          randomSeed=seed)
         transNimble = TL.apply(trainX)
         transSL = _apply_saveLoad(TL, trainX)
 
@@ -874,3 +858,19 @@ def equalityAssertHelper(ret1, ret2, ret3=None):
     if ret3 is not None:
         identicalThenApprox(ret1, ret3)
         identicalThenApprox(ret2, ret3)
+
+def setupSKLArguments(sciKitLearnObj):
+    arguments = {}
+    if 'random_state' in sciKitLearnObj.get_params():
+        arguments['random_state'] = _generateSubsidiarySeed()
+        sciKitLearnObj.set_params(**arguments)
+    return arguments
+
+def adjustRandomParamForNimble(arguments):
+    # nimble uses randomSeed parameter
+    if 'random_state' in arguments:
+        seed = arguments['random_state']
+        del arguments['random_state']
+    else:
+        seed = None
+    return seed

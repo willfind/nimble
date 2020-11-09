@@ -31,7 +31,7 @@ if __name__ == "__main__":
     print(trained.getAttributes()['w'])
 
     # Two ways of getting predictions
-    pred1 = trained.apply(testX, arguments={'lamb': 0})
+    pred1 = trained.apply(testX)
     pred2 = nimble.trainAndApply("nimble.RidgeRegression", trainX, trainY, testX, arguments={'lamb': 0})
     assert pred1.isIdentical(pred2)
 

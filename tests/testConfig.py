@@ -14,14 +14,19 @@ import configparser
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
-from nimble.core.interfaces.universal_interface import UniversalInterface
-from nimble.core.interfaces.universal_interface import PredefinedInterface
 from tests.helpers import configSafetyWrapper
 
 
 ###############
 ### Helpers ###
 ###############
+
+def getInterfaces(ignoreCustomInterfaces=False):
+    interfaces = list(nimble.core.interfaces.available.values())
+    if ignoreCustomInterfaces:
+        interfaces = [int for int in interfaces
+                      if int.getCanonicalName() not in ['nimble', 'custom']]
+    return interfaces
 
 class OptionNamedLookalike(object):
     def __init__(self, name, optNames):
@@ -51,42 +56,6 @@ class FailedPredefined(object):
     def provideInitExceptionInfo(cls):
         raise PackageException("failed to load interface")
 
-
-def fileEqualObjOutput(fp, obj):
-    """
-    fp must be readable
-    """
-    with tempfile.NamedTemporaryFile('w+') as resultFile:
-        obj.write(resultFile)
-
-        fp.seek(0)
-        resultFile.seek(0)
-
-        origRet = fp.read()
-        objRet = resultFile.read()
-
-        assert origRet == objRet
-
-
-def makeDefaultTemplate():
-    lines = [None] * 11
-    # Note: the formatting and ordering must be the same as how the
-    # ConfigParser outputs them normally
-    lines[0] = "#Now, defaults:\n"
-    lines[1] = "[DEFAULT]\n"
-    lines[2] = "superkey = 44\n"
-    lines[3] = "\n"
-    lines[4] = "#section comment\n"
-    lines[5] = "[SectionName]\n"
-    lines[6] = "#option comment\n"
-    lines[7] = "option1 = 5\n"
-    lines[8] = "#between 1 and 3 originally\n"
-    lines[9] = "option3 = 3\n"
-    lines[10] = "\n"  # ConfigParser always writes two newlines at the end
-
-    return lines
-
-
 #############
 ### Tests ###
 #############
@@ -98,8 +67,10 @@ def test_settings_GetSet():
     origChangeSet = copy.deepcopy(nimble.settings.changes)
 
     # for available interfaces
-    for interface in nimble.core.interfaces.available.values():
+    for interface in getInterfaces(ignoreCustomInterfaces=True):
         name = interface.getCanonicalName()
+        if name in ['nimble', 'custom']:
+            continue # custom learners do not have options
         for option in interface.optionNames:
             # get values of options
             origValue = nimble.settings.get(name, option)
@@ -113,7 +84,7 @@ def test_settings_GetSet():
 
             # change it back
             interface.setOption(option, origValue)
-            # check again; taking into acount default value substitution by
+            # check again; taking into account default value substitution by
             # the interface
             if origValue != "":
                 assert interface.getOption(option) == origValue
@@ -171,6 +142,35 @@ def test_settings_Hooks():
 
     assert history == [5, 4, 1, "Bang"]
 
+@configSafetyWrapper
+def test_settings_GetFullConfig():
+    """ Test nimble.settings.get when only specifying a section """
+    startConfig = nimble.settings.get()
+    assert 'logger' in startConfig
+    loggerOptions = ['name', 'location', 'enabledByDefault',
+                     'enableCrossValidationDeepLogging']
+    assert all(opt in startConfig['logger'] for opt in loggerOptions)
+
+    nimble.settings.setDefault("TestSec1", "op1", '1')
+    nimble.settings.setDefault("TestSec1", "op2", '2')
+    nimble.settings.set("TestSec1", "op1", '11')
+    nimble.settings.set("TestSec2", "op1", '3')
+    nimble.settings.set("TestSec2", "op2", '4')
+
+    newConfig = nimble.settings.get()
+
+    # everything in config from start should still be included
+    for key, options in startConfig.items():
+        for name, value in options.items():
+            assert newConfig[key][name] == value
+
+    assert "TestSec1" in newConfig
+    assert 'TestSec2' in newConfig
+    assert newConfig['TestSec1']["op1"] == '11'
+    assert newConfig['TestSec1']["op2"] == '2'
+    assert newConfig['TestSec2']["op1"] == '3'
+    assert newConfig['TestSec2']["op2"] == '4'
+
 
 @configSafetyWrapper
 def test_settings_GetSectionOnly():
@@ -178,20 +178,9 @@ def test_settings_GetSectionOnly():
     nimble.settings.set("TestSec1", "op1", '1')
     nimble.settings.set("TestSec1", "op2", '2')
 
-    allSec1 = nimble.settings.get("TestSec1", None)
+    allSec1 = nimble.settings.get("TestSec1")
     assert allSec1["op1"] == '1'
     assert allSec1['op2'] == '2'
-
-
-#@configSafetyWrapper
-#def test_settings_getFormatting():
-#	""" Test the format flags  """
-#	nimble.settings.set("FormatTest", "numOp", 1)
-#	asInt = nimble.settings.get("FormatTest", "numOp", asFormat='int')
-#	asFloat = nimble.settings.get("FormatTest", "numOp", asFormat='float')
-
-#	assert asInt == 1
-#	assert asFloat == 1.0
 
 
 @configSafetyWrapper
@@ -203,6 +192,7 @@ def test_settings_saving():
 
     # reload it with the starup function, make sure settings saved.
     nimble.settings = nimble.core.configuration.loadSettings()
+    assert nimble.settings.changes == {}
     assert nimble.settings.get("newSectionName", 'new.Option.Name') == '1'
 
 
@@ -264,25 +254,41 @@ def test_settings_savingOption():
     except configparser.NoOptionError:
         pass
 
-def setAndSaveAvailableInterfaceOptions():
+def setAvailableInterfaceOptions(save=False):
     """
     Set and save the options for each available interface.
     """
-    for interface in nimble.core.interfaces.available.values():
-        nimble.core.configuration.setInterfaceOptions(interface, save=True)
+    for interface in getInterfaces(ignoreCustomInterfaces=True):
+        nimble.core.configuration.setInterfaceOptions(interface, save)
 
 @configSafetyWrapper
 def test_settings_addingNewInterface():
-    """ Test nimble.core.configuration.setInterfaceOptions correctly modifies file """
+    """ Test nimble.core.configuration.setInterfaceOptions correctly sets options """
     tempInterface = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
     nimble.core.interfaces.available[tempInterface.name] = tempInterface
     ignoreInterface = OptionNamedLookalike("ig", [])
     nimble.core.interfaces.available[ignoreInterface.name] = ignoreInterface
 
     # set options for all interfaces
-    setAndSaveAvailableInterfaceOptions()
+    setAvailableInterfaceOptions()
 
-    # reload settings - to make sure the options setting was recorded
+    # make sure there is no section associated with the optionless
+    # interface
+    assert not nimble.settings.cp.has_section('ig')
+
+    # make sure new section and name was correctly added
+    # '' is default value when adding options from interfaces
+    assert nimble.settings.get('Test', 'Temp0') == ''
+    assert nimble.settings.get('Test', 'Temp1') == ''
+
+    # reload settings - options should not be recorded
+    nimble.settings = nimble.core.configuration.loadSettings()
+
+    assert not nimble.settings.cp.has_section('ig')
+    assert not nimble.settings.cp.has_section('Test')
+
+    # save options for all interfaces and reload
+    setAvailableInterfaceOptions(True)
     nimble.settings = nimble.core.configuration.loadSettings()
 
     # make sure there is no section associated with the optionless
@@ -299,25 +305,31 @@ def test_settings_setInterfaceOptionsSafety():
     """ Test that setting options preserves values already in the config file """
     tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
     nimble.core.interfaces.available[tempInterface1.name] = tempInterface1
+    tempInterface2 = OptionNamedLookalike("TestOther", ['Temp0'])
+    nimble.core.interfaces.available[tempInterface2.name] = tempInterface2
 
-    # set options for all interfaces, then reload
-    setAndSaveAvailableInterfaceOptions()
-    nimble.settings = nimble.core.configuration.loadSettings()
+    # set options for all interfaces
+    setAvailableInterfaceOptions()
 
+    assert nimble.settings.get("Test", 'Temp0') == ''
+    assert nimble.settings.get("Test", 'Temp1') == ''
+    assert nimble.settings.get("TestOther", 'Temp0') == ''
+
+    # save options for Test, but not for TestOther
     nimble.settings.set('Test', 'Temp0', '0')
     nimble.settings.set('Test', 'Temp1', '1')
     nimble.settings.saveChanges()
 
-    # now set up another trigger to set options for
-    tempInterface2 = OptionNamedLookalike("TestOther", ['Temp0'])
-    nimble.core.interfaces.available[tempInterface2.name] = tempInterface2
+    nimble.settings.set('TestOther', 'Temp0', '0')
 
-    # set options for all interfaces, then reload
-    setAndSaveAvailableInterfaceOptions()
+    assert nimble.settings.get("TestOther", 'Temp0') == '0'
+
+    # reload - TestOther should revert to default ''
     nimble.settings = nimble.core.configuration.loadSettings()
 
     assert nimble.settings.get("Test", 'Temp0') == '0'
     assert nimble.settings.get("Test", 'Temp1') == '1'
+    assert nimble.settings.get("TestOther", 'Temp0') == ''
 
 
 @configSafetyWrapper
@@ -328,9 +340,8 @@ def test_settings_setInterfaceOptionsChanges():
     nimble.core.interfaces.available[tempInterface1.name] = tempInterface1
     nimble.core.interfaces.available[tempInterface2.name] = tempInterface2
 
-    # set options for all interfaces, then reload
-    setAndSaveAvailableInterfaceOptions()
-    nimble.settings = nimble.core.configuration.loadSettings()
+    # set with new interfaces
+    setAvailableInterfaceOptions()
 
     nimble.settings.set('Test', 'Temp0', '0')
     nimble.settings.set('Test', 'Temp1', '1')
@@ -340,27 +351,60 @@ def test_settings_setInterfaceOptionsChanges():
 
     # change Test option names and reset options for all interfaces
     tempInterface1.optionNames[1] = 'NotTemp1'
-    setAndSaveAvailableInterfaceOptions()
+    setAvailableInterfaceOptions()
 
-    # check values of both changed and unchanged names
+    # NOTE: our interfaces do not currently allow for option names to be
+    # changed, but in that case we would want the following behavior
+
+    # check value of unchanged option
     assert nimble.settings.get('Test', 'Temp0') == '0'
-    try:
-        nimble.settings.get('Test', 'Temp1')
-        assert False
-    except configparser.NoOptionError:
-        pass
+    # previous option and value are available and unchanged
+    # we do not delete as this could become a valid option again later
+    assert nimble.settings.get('Test', 'Temp1') == '1'
+    # new option now available
     assert nimble.settings.get('Test', 'NotTemp1') == ''
-
-    # check that the temp value for testOther is unaffected
+    # check that the temp value for TestOther is unaffected
     assert nimble.settings.get('TestOther', 'Temp0') == 'unchanged'
+    # set should only allow setting for new option
+    nimble.settings.set('Test', 'NotTemp1', '2')
+    try:
+        nimble.settings.set('Test', 'Temp1', '2')
+        assert False
+    except InvalidArgumentValue:
+        pass
+
+    # now change the option back to the original
+    tempInterface1.optionNames[1] = 'Temp1'
+    setAvailableInterfaceOptions()
+
+    nimble.settings.set('Test', 'Temp1', '2')
+    try:
+        nimble.settings.set('Test', 'NotTemp1', '2')
+        assert False
+    except InvalidArgumentValue:
+        pass
 
 @configSafetyWrapper
-@raises(InvalidArgumentValue)
 def test_settings_allowedNames():
     """ Test that you can only set allowed names in interface sections """
+    for interface in getInterfaces(ignoreCustomInterfaces=True):
+        name = interface.getCanonicalName()
+        try:
+            nimble.settings.set(name, 'foo', "bar")
+            assert False
+        except InvalidArgumentValue:
+            pass
 
-    nimble.settings.set('nimble', 'Hello', "Goodbye")
+@configSafetyWrapper
+def test_settings_customLearnerOptionsException():
+    """ Test that you cannot set options for custom learner interfaces """
 
+    for name in ['nimble', 'custom']:
+        try:
+            nimble.settings.set(name, 'foo', "bar")
+            assert False # expected InvalidArgumentValue
+        except InvalidArgumentValue:
+            pass
 
 @configSafetyWrapper
 @raises(configparser.NoSectionError)
@@ -374,155 +418,6 @@ def test_settings_set_without_save():
     # shouldn't be there
     nimble.settings = nimble.core.configuration.loadSettings()
     nimble.settings.get("tempSectionName", 'temp.Option.Name')
-
-
-@configSafetyWrapper
-# test that delete then save will change file - value
-def test_settings_deleteThenSaveAValue():
-    nimble.settings.set("tempSectionName", "temp.Option.Name1", '1')
-    nimble.settings.set("tempSectionName", "temp.Option.Name2", '2')
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
-
-    nimble.settings.saveChanges()
-
-    # change reflected in memory
-    nimble.settings.delete("tempSectionName", "temp.Option.Name1")
-    try:
-        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
-        assert False  # expected ConfigParser.NoOptionError
-    except configparser.NoOptionError:
-        pass
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
-
-    # change isn't reflected in file
-    nimble.settings = nimble.core.configuration.loadSettings()
-    # previous delete wasn't saved, so this should still work
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
-    nimble.settings.delete("tempSectionName", "temp.Option.Name1")
-    try:
-        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
-        assert False  # expected ConfigParser.NoOptionError
-    except configparser.NoOptionError:
-        pass
-
-    nimble.settings.saveChanges()
-
-    # change should now be reflected in file
-    nimble.settings = nimble.core.configuration.loadSettings()
-    try:
-        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
-        assert False  # expected ConfigParser.NoOptionError
-    except configparser.NoOptionError:
-        pass
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
-
-
-@configSafetyWrapper
-# test that delete then save will change file - section
-def test_settings_deleteThenSaveASection():
-    nimble.settings.set("tempSectionName", "temp.Option.Name1", '1')
-    nimble.settings.set("tempSectionName", "temp.Option.Name2", '2')
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
-    nimble.settings.saveChanges()
-
-    # change reflected in memory
-    nimble.settings.delete("tempSectionName", None)
-    try:
-        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
-        assert False  # expected ConfigParser.NoSectionError
-    except configparser.NoSectionError:
-        pass
-    try:
-        nimble.settings.get("tempSectionName", 'temp.Option.Name2')
-        assert False  # expected ConfigParser.NoSectionError
-    except configparser.NoSectionError:
-        pass
-
-    # change isn't reflected in file
-    nimble.settings = nimble.core.configuration.loadSettings()
-    # previous delete wasn't saved, so this should still work
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
-    nimble.settings.delete("tempSectionName", None)
-    try:
-        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
-        assert False  # expected ConfigParser.NoSectionError
-    except configparser.NoSectionError:
-        pass
-    try:
-        nimble.settings.get("tempSectionName", 'temp.Option.Name2')
-        assert False  # expected ConfigParser.NoSectionError
-    except configparser.NoSectionError:
-        pass
-
-    nimble.settings.saveChanges()
-
-    # change should now be reflected in file
-    nimble.settings = nimble.core.configuration.loadSettings()
-    try:
-        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
-        assert False  # expected ConfigParser.NoSectionError
-    except configparser.NoSectionError:
-        pass
-    try:
-        nimble.settings.get("tempSectionName", 'temp.Option.Name2')
-        assert False  # expected ConfigParser.NoSectionError
-    except configparser.NoSectionError:
-        pass
-
-
-@configSafetyWrapper
-# test that deleteing an unsaved set is a cycle - value
-def test_settings_setThenDeleteCycle_value():
-    nimble.settings.set("tempSectionName", "temp.Option.Name1", '1')
-    nimble.settings.set("tempSectionName", "temp.Option.Name2", '2')
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
-
-    # change reflected in memory
-    nimble.settings.delete("tempSectionName", "temp.Option.Name1")
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
-    try:
-        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
-        assert False  # expected ConfigParser.NoOptionError
-    except configparser.NoOptionError:
-        pass
-
-    # change should now be reflected in file
-    nimble.settings = nimble.core.configuration.loadSettings()
-    try:
-        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
-        assert False  # expected ConfigParser.NoSectionError
-    except configparser.NoSectionError:
-        pass
-
-
-@configSafetyWrapper
-# test that deleteing an unsaved set is a cycle - section
-def test_settings_setThenDeleteCycle_section():
-    nimble.settings.set("tempSectionName", "temp.Option.Name1", '1')
-    nimble.settings.set("tempSectionName", "temp.Option.Name2", '2')
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
-
-    # change reflected in memory
-    nimble.settings.delete("tempSectionName", None)
-    try:
-        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
-        assert False  # expected ConfigParser.NoSectionError
-    except configparser.NoSectionError:
-        pass
-
-    # change never saved, shouldn't be in file
-    nimble.settings = nimble.core.configuration.loadSettings()
-    try:
-        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
-        assert False  # expected ConfigParser.NoSectionError
-    except configparser.NoSectionError:
-        pass
-
 
 @configSafetyWrapper
 def test_settings_setDefault():
@@ -546,48 +441,6 @@ def test_settings_setDefault():
         pass
 
     assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
-
-
-@configSafetyWrapper
-def test_settings_deleteDefault():
-    nimble.settings.setDefault("tempSectionName", "temp.Option.Name1", '1')
-    nimble.settings.setDefault("tempSectionName", "temp.Option.Name2", '2')
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
-
-    # Establish a baseline
-    nimble.settings = nimble.core.configuration.loadSettings()
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name1') == '1'
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
-
-    nimble.settings.deleteDefault("tempSectionName", 'temp.Option.Name1')
-
-    nimble.settings = nimble.core.configuration.loadSettings()
-    try:
-        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
-        assert False  # expected ConfigParser.NoOptionError
-    except configparser.NoOptionError:
-        pass
-
-    assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
-
-    nimble.settings.deleteDefault("tempSectionName", None)
-    nimble.settings = nimble.core.configuration.loadSettings()
-    try:
-        nimble.settings.get("tempSectionName", 'temp.Option.Name1')
-        assert False  # expected ConfigParser.NoSectionError
-    except configparser.NoSectionError:
-        pass
-
-
-def testToDeleteSentinalObject():
-    val = nimble.core.configuration.ToDelete()
-
-    assert isinstance(val, nimble.core.configuration.ToDelete)
-
-    val2 = nimble.core.configuration.ToDelete()
-
-    assert val == val2
 
 
 @configSafetyWrapper

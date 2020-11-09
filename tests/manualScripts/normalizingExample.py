@@ -30,14 +30,15 @@ if __name__ == "__main__":
 
     # use normalize to modify our data; we call a dimentionality reduction algorithm to
     # simply our mostly redundant points. k is the desired number of dimensions in the output
-    normalizeData('skl.PCA', trainObj, testX=testObj, arguments={'n_components': 1})
+    normTrain, normTest = normalizeData('skl.PCA', trainObj, testX=testObj,
+                                        arguments={'n_components': 1})
 
     # assert that we actually do have fewer dimensions
-    assert len(trainObj.features) == 1
-    assert len(testObj.features) == 1
+    assert len(normTest.features) == 1
+    assert len(normTest.features) == 1
 
     # assert we can predict the correct classes
-    ret = trainAndApply('nimble.KNNClassifier', trainObj, trainObjY, testObj,
+    ret = trainAndApply('nimble.KNNClassifier', normTrain, trainObjY, normTest,
                         arguments={'k': 1})
     assert ret[0, 0] == 1
     assert ret[1, 0] == 1

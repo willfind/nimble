@@ -10,7 +10,6 @@ import os
 import copy
 
 import nimble
-from nimble.core.data import BaseView
 from nimble.core._learnHelpers import generateClusteredPoints
 from nimble.core.configuration import SessionConfiguration
 
@@ -41,7 +40,6 @@ def configSafetyWrapper(toWrap):
         # CustomLearnerInterface attributes are not copied above
         clInterface = nimble.core.interfaces.available['custom']
         clReg = copy.copy(clInterface.registeredLearners)
-        clOpt = copy.copy(clInterface._configurableOptionNamesAvailable)
 
         nimble.settings = loadSettingsFromTempFile()
         nimble.settings.changes = copyChanges
@@ -56,7 +54,6 @@ def configSafetyWrapper(toWrap):
             nimble.core.configuration.loadSettings = backupLoadSettings
             nimble.core.interfaces.available = availableBackup
             clInterface.registeredLearners = clReg
-            clInterface._configurableOptionNamesAvailable = clOpt
 
     return wrapped
 
@@ -143,3 +140,19 @@ def generateRegressionData(labels, pointsPer, featuresPer):
         addLabelColumn=False)
 
     return ((regressorTrainData, trainLabels), (regressorTestData, testLabels))
+
+def assertExpectedException(exception, func, *args, messageIncludes=None,
+                            **kwargs):
+    """
+    Assert that a given exception is raised when a function is called.
+
+    Optionally can include an exception message or portion of an
+    exception message to validate that the exception raised includes
+    the correct message.
+    """
+    try:
+        func(*args, **kwargs)
+        assert False
+    except exception as e:
+        if messageIncludes is not None:
+            assert messageIncludes in str(e)
