@@ -14,13 +14,14 @@ Note: the bdist_conda and bdist_wheel commands cannot be run together.
 
 import os
 import glob
-import shutil
 import textwrap
 
-from setuptools import setup, find_packages, Command, Distribution
+from setuptools import setup, find_packages, Distribution
 from setuptools.extension import Extension
 from setuptools.command.build_ext import build_ext
-from distutils.errors import DistutilsArgError
+from distutils import log
+from distutils.command.clean import clean
+from distutils.dir_util import remove_tree
 
 try:
     from Cython.Build import cythonize
@@ -81,17 +82,17 @@ class NimbleDistribution(distclass):
     """
     def __init__(self, attrs=None):
         super().__init__(attrs)
-        self.parse_command_line()
-        if commandUsesExtensions(self.commands):
-            if CYTHON_AVAILABLE:
-                try:
+        try:
+            self.parse_command_line()
+            if commandUsesExtensions(self.commands):
+                if CYTHON_AVAILABLE:
                     cythonizeFiles()
-                except Exception:
-                    raise ExtensionsFailed()
-            extensions = getExtensions()
-            attrs['ext_modules'] = extensions
-            # re-init with ext_modules
-            super().__init__(attrs)
+                extensions = getExtensions()
+                attrs['ext_modules'] = extensions
+                # re-init with ext_modules
+                super().__init__(attrs)
+        except Exception:
+            raise ExtensionsFailed()
 
 class _build_ext(build_ext):
     """
@@ -109,21 +110,19 @@ class _build_ext(build_ext):
         except Exception:
             raise ExtensionsFailed()
 
-class CleanCommand(Command):
-    """Custom clean command to tidy up the project root."""
-    user_options = []
-    def initialize_options(self):
-        pass
-    def finalize_options(self):
-        pass
+class CleanCommand(clean):
+    """
+    Custom clean command to tidy up the project root.
+    """
     def run(self):
-        for directory in ['build', 'nimble.egg-info']:
-            if os.path.exists(directory):
-                shutil.rmtree(directory)
-                print('removed', os.path.relpath(directory))
-        for f in getCFiles():
-            os.remove(f)
-            print('removed', os.path.relpath(f))
+        super().run()
+        if self.all:
+            if os.path.exists('nimble.egg-info'):
+                remove_tree('nimble.egg-info', dry_run=self.dry_run)
+            for f in getCFiles():
+                if not self.dry_run:
+                    os.remove(f)
+                log.info('removing %s', os.path.relpath(f))
 
 class EmptyConfigFile:
     """
