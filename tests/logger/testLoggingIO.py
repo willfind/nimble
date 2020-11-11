@@ -69,7 +69,7 @@ def prepopulatedLogSafetyWrapper(testFunc):
             # run and crossVal
             results = nimble.trainAndTest('nimble.KNNClassifier', trainX=trainObj,
                                        trainY=trainYObj, testX=testObj, testY=testYObj,
-                                       performanceFunction=RMSE, folds=5,
+                                       performanceFunction=RMSE, folds=5, randomSeed=5,
                                        arguments={"k": nimble.CV([3, 5])})
         # edit log sessionNumbers and timestamps
         location = nimble.settings.get("logger", "location")
@@ -260,19 +260,22 @@ def testRunTypeFunctionsUseLog():
     testYObj = nimble.data("Matrix", testY, useLog=False)
 
     timePattern = re.compile(r"'time': [0-9]+\.[0-9]+")
+    randomSeedPattern = re.compile(r"'randomSeed': [0-9]+")
 
     # train
-    tl = nimble.train("sciKitLearn.SVC", trainXObj, trainYObj, performanceFunction=RMSE)
+    tl = nimble.train("sciKitLearn.SVC", trainXObj, trainYObj)
     logInfo = getLastLogData()
     assert "'function': 'train'" in logInfo
     assert re.search(timePattern, logInfo)
+    assert re.search(randomSeedPattern, logInfo)
 
     # trainAndApply
     predictions = nimble.trainAndApply("sciKitLearn.SVC", trainXObj, trainYObj,
-                                    testXObj, performanceFunction=RMSE)
+                                       testXObj)
     logInfo = getLastLogData()
     assert "'function': 'trainAndApply'" in logInfo
     assert re.search(timePattern, logInfo)
+    assert re.search(randomSeedPattern, logInfo)
 
     # trainAndTest
     performance = nimble.trainAndTest("sciKitLearn.SVC", trainXObj, trainYObj,
@@ -283,6 +286,7 @@ def testRunTypeFunctionsUseLog():
     # ensure that metrics is storing performanceFunction and result
     assert "'metrics': {'rootMeanSquareError': 0.0}" in logInfo
     assert re.search(timePattern, logInfo)
+    assert re.search(randomSeedPattern, logInfo)
 
     # normalizeData
     # copy to avoid modifying original data
@@ -290,22 +294,66 @@ def testRunTypeFunctionsUseLog():
     logInfo = getLastLogData()
     assert "'function': 'normalizeData'" in logInfo
     assert re.search(timePattern, logInfo)
+    assert re.search(randomSeedPattern, logInfo)
 
     # trainAndTestOnTrainingData
-    results = nimble.trainAndTestOnTrainingData("sciKitLearn.SVC", trainXObj,
-                                             trainYObj,
-                                             performanceFunction=RMSE)
+    results = nimble.trainAndTestOnTrainingData(
+        "sciKitLearn.SVC", trainXObj, trainYObj, performanceFunction=RMSE)
     logInfo = getLastLogData()
     assert "'function': 'trainAndTestOnTrainingData'" in logInfo
     # ensure that metrics is storing performanceFunction and result
     assert "'metrics': {'rootMeanSquareError': 0.0}" in logInfo
     assert re.search(timePattern, logInfo)
+    assert re.search(randomSeedPattern, logInfo)
+
+    # crossValidate
+    top = nimble.crossValidate('nimble.KNNClassifier', trainXObj, trainYObj,
+                               performanceFunction=RMSE)
+    logInfo = getLastLogData()
+    assert "'learner': 'nimble.KNNClassifier'" in logInfo
+    assert re.search(randomSeedPattern, logInfo)
+
+    # randomSeed for top level functions
+    tl = nimble.train("sciKitLearn.SVC", trainXObj, trainYObj, randomSeed=123)
+    logInfo = getLastLogData()
+    assert "'randomSeed': 123" in logInfo
+
+    pred = nimble.trainAndApply("sciKitLearn.SVC", trainXObj, trainYObj,
+                                testXObj, randomSeed=123)
+    logInfo = getLastLogData()
+    assert "'randomSeed': 123" in logInfo
+
+    res = nimble.trainAndTest("sciKitLearn.SVC", trainXObj, trainYObj,
+                              testXObj, testYObj, performanceFunction=RMSE,
+                              randomSeed=123)
+    logInfo = getLastLogData()
+    assert "'randomSeed': 123" in logInfo
+
+    trainXNormalize = trainXObj.copy()
+    testXNormalize = testXObj.copy()
+    nimble.normalizeData('sciKitLearn.PCA', trainXNormalize, testX=testXNormalize,
+                         randomSeed=123)
+    logInfo = getLastLogData()
+    assert "'randomSeed': 123" in logInfo
+
+    results = nimble.trainAndTestOnTrainingData(
+        "sciKitLearn.SVC", trainXObj, trainYObj,  performanceFunction=RMSE,
+        randomSeed=123)
+    logInfo = getLastLogData()
+    assert "'randomSeed': 123" in logInfo
+
+    top = nimble.crossValidate('nimble.KNNClassifier', trainXObj, trainYObj,
+                               performanceFunction=RMSE, randomSeed=123)
+    logInfo = getLastLogData()
+    assert "'randomSeed': 123" in logInfo
 
     # TrainedLearner.apply
     predictions = tl.apply(testXObj)
     logInfo = getLastLogData()
     assert "'function': 'TrainedLearner.apply'" in logInfo
     assert re.search(timePattern, logInfo)
+    # randomSeed recorded during training
+    assert re.search(randomSeedPattern, logInfo) is None
 
     # TrainedLearner.test
     performance = tl.test(testXObj, testYObj, performanceFunction=RMSE)
@@ -314,15 +362,10 @@ def testRunTypeFunctionsUseLog():
     # ensure that metrics is storing performanceFunction and result
     assert "'metrics': {'rootMeanSquareError': 0.0}" in logInfo
     assert re.search(timePattern, logInfo)
+    # randomSeed recorded during training
+    assert re.search(randomSeedPattern, logInfo) is None
 
     nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
-
-    # crossValidate
-    top = nimble.crossValidate('nimble.KNNClassifier', trainXObj, trainYObj,
-                            performanceFunction=RMSE)
-    logInfo = getLastLogData()
-    assert "'learner': 'nimble.KNNClassifier'" in logInfo
-
 
 def checkLogContents(funcName, objectID, arguments=None):
     lastLog = getLastLogData()
@@ -919,7 +962,7 @@ def testShowLogSearchFilters():
     pathToFile = os.path.join(location, name)
     nimble.showLog(levelOfDetail=3, leastSessionsAgo=0, mostSessionsAgo=5, maximumEntries=100, saveToFileName=pathToFile)
     fullShowLogSize = os.path.getsize(pathToFile)
-    nimble.showLog(levelOfDetail=3, leastSessionsAgo=0, mostSessionsAgo=5, maximumEntries=100)
+    # nimble.showLog(levelOfDetail=3, leastSessionsAgo=0, mostSessionsAgo=5, maximumEntries=100)
     # level of detail
     nimble.showLog(levelOfDetail=3, saveToFileName=pathToFile)
     mostDetailedSize = os.path.getsize(pathToFile)

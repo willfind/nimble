@@ -11,6 +11,7 @@ from nimble._utility import inheritDocstringsFactory
 from .scikit_learn_interface import _SciKitLearnAPI
 from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import PythonSearcher
+from ._interface_helpers import validInitParams
 
 logging.getLogger('theano.configdefaults').setLevel(logging.ERROR)
 
@@ -159,14 +160,11 @@ To install autoimpute
             outputType = customDict['match']
         return nimble.data(outputType, outputValue, useLog=False)
 
-
-    def _initLearner(self, learnerName, trainX, trainY, arguments):
+    def _initLearner(self, learnerName, trainX, trainY, arguments, randomSeed):
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
-        initParams = {name: arguments[name] for name in initNames
-                      if name in arguments}
+        initParams = validInitParams(initNames, arguments, randomSeed,
+                                     self.randomParam)
         defaults = self.getLearnerDefaultValues(learnerName)[0]
-        if self.randomParam in defaults and self.randomParam not in arguments:
-            initParams[self.randomParam] = defaults[self.randomParam]
         learner = self.findCallable(learnerName)(**initParams)
 
         # need to enforce strategy as a required parameter for the imputer

@@ -392,8 +392,8 @@ class SessionLogger(object):
             self.log(logType, logInfo)
 
     def _logRun(self, logType, useLog, nimbleFunction, trainData, trainLabels,
-                testData, testLabels, learnerFunction, arguments, metrics,
-                extraInfo, time):
+                testData, testLabels, learnerFunction, arguments, randomSeed,
+                metrics, extraInfo, time):
         if loggingEnabled(useLog):
             logInfo = {}
             logInfo["function"] = nimbleFunction
@@ -451,6 +451,9 @@ class SessionLogger(object):
                         arguments[name] = repr(value)
                 logInfo['arguments'] = arguments
 
+            if randomSeed is not None and randomSeed:
+                logInfo['randomSeed'] = randomSeed
+
             if metrics is not None and metrics:
                 logInfo["metrics"] = metrics
 
@@ -463,8 +466,8 @@ class SessionLogger(object):
             self.log(logType, logInfo)
 
     def logRun(self, useLog, nimbleFunction, trainData, trainLabels, testData,
-               testLabels, learnerFunction, arguments, metrics=None,
-               extraInfo=None, time=None):
+               testLabels, learnerFunction, arguments, randomSeed=None,
+               metrics=None, extraInfo=None, time=None):
         """
         Log information about each run.
 
@@ -499,12 +502,12 @@ class SessionLogger(object):
             The time to run the function. None if function is not timed.
         """
         self._logRun("run", useLog, nimbleFunction, trainData, trainLabels,
-                     testData, testLabels, learnerFunction, arguments, metrics,
-                     extraInfo, time)
+                     testData, testLabels, learnerFunction, arguments,
+                     randomSeed, metrics, extraInfo, time)
 
     def logRunCV(self, useLog, nimbleFunction, trainData, trainLabels,
                  testData, testLabels, learnerFunction, arguments,
-                 metrics=None, extraInfo=None, time=None):
+                 randomSeed, metrics=None, extraInfo=None, time=None):
         """
         Log information about each run during cross-validation.
 
@@ -539,12 +542,12 @@ class SessionLogger(object):
             The time to run the function. None if function is not timed.
         """
         self._logRun("runCV", useLog, nimbleFunction, trainData, trainLabels,
-                     testData, testLabels, learnerFunction, arguments, metrics,
-                     extraInfo, time)
+                     testData, testLabels, learnerFunction, arguments,
+                     randomSeed, metrics, extraInfo, time)
 
     def logCrossValidation(self, useLog, trainData, trainLabels,
                            learnerFunction, arguments, metric, performance,
-                           folds=None):
+                           folds, randomSeed):
         """
         Log the results of cross validation.
 
@@ -582,6 +585,7 @@ class SessionLogger(object):
                     arguments[name] = repr(value)
             logInfo["learnerArgs"] = arguments
             logInfo["folds"] = folds
+            logInfo["randomSeed"] = randomSeed
             logInfo["metric"] = (metric.__name__, metric.optimal)
             logInfo["performance"] = performance
 
@@ -967,6 +971,7 @@ def _buildRunLogString(timestamp, entry):
                                           entry["testLabelsPoints"],
                                           entry["testLabelsFeatures"])
     fullLog += "\n"
+
     # parameter data
     if entry.get("arguments", False):
         argString = "Arguments: "
@@ -974,6 +979,9 @@ def _buildRunLogString(timestamp, entry):
         for string in wrap(argString, 79, subsequent_indent=" "*11):
             fullLog += string
             fullLog += "\n"
+    # randomSeed
+    fullLog += "randomSeed: " + str(entry["randomSeed"])
+    fullLog += "\n"
     # metric data
     if entry.get("metrics", False):
         fullLog += "Metrics: "
@@ -994,14 +1002,14 @@ def _buildCVLogString(timestamp, entry):
     crossVal = "Cross Validating for {0}".format(entry["learner"])
     fullLog = _logHeader(crossVal, timestamp)
     fullLog += "\n"
-    if isinstance(entry["learnerArgs"], dict):
-        fullLog += "Variable Arguments: "
-        fullLog += _dictToKeywordString(entry["learnerArgs"])
-        fullLog += "\n\n"
     folds = entry["folds"]
     metricName, metricOptimal = entry["metric"]
     fullLog += "{0}-folding using {1} ".format(folds, metricName)
     fullLog += "optimizing for {0} values\n\n".format(metricOptimal)
+    if entry["learnerArgs"]:
+        fullLog += "Variable Arguments: "
+        fullLog += _dictToKeywordString(entry["learnerArgs"])
+        fullLog += "\n\n"
     fullLog += "{0:<20s}{1:20s}\n".format("Results", "Arguments")
     for arguments, result in entry["performance"]:
         argString = _dictToKeywordString(arguments)

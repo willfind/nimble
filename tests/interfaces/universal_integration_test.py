@@ -207,36 +207,64 @@ def testRandomnessControl():
                 continue
             currType = nimble.learnerType(interfaceName + '.' + learner)
             if currType == 'regression':
-                ((trainData, trainLabels), (testData, testLabels)) = generateRegressionData(5, 10, 5)
+                ((trainData, trainLabels), (testData, _)) = generateRegressionData(5, 10, 9)
             elif currType == 'classification':
-                ((trainData, trainLabels), (testData, testLabels)) = generateClassificationData(2, 10, 5)
+                ((trainData, trainLabels), (testData, _)) = generateClassificationData(2, 10, 9)
             else:
                 continue
 
-            result1 = None
+            fullName = interfaceName + '.' + learner
             try:
+                # using global random seed
                 nimble.random.setSeed(50)
-                result1 = nimble.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
+                result1 = nimble.trainAndApply(fullName, trainData, trainLabels, testData)
 
                 nimble.random.setSeed(50)
-                result2 = nimble.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
+                result2 = nimble.trainAndApply(fullName, trainData, trainLabels, testData)
 
                 nimble.random.setSeed(None)
-                result3 = nimble.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
+                result3 = nimble.trainAndApply(fullName, trainData, trainLabels, testData)
 
                 nimble.random.setSeed(13)
-                result4 = nimble.trainAndApply(interfaceName + '.' + learner, trainData, trainLabels, testData)
+                result4 = nimble.trainAndApply(fullName, trainData, trainLabels, testData)
+
+                # using parameter level seed
+                nimble.random.setSeed(12)
+                result5 = nimble.trainAndApply(fullName, trainData, trainLabels,
+                                               testData, randomSeed=50)
+
+                nimble.random.setSeed(1)
+                result6 = nimble.trainAndApply(fullName, trainData, trainLabels,
+                                               testData, randomSeed=50)
+
+                nimble.random.setSeed(12)
+                result7 = nimble.trainAndApply(fullName, trainData, trainLabels,
+                                               testData, randomSeed=None)
+
+                nimble.random.setSeed(12)
+                result8 = nimble.trainAndApply(fullName, trainData, trainLabels,
+                                               testData, randomSeed=15)
 
             except Exception as e:
                 print(interfaceName + '.' + learner + ' BANG: ' + str(e))
                 continue
 
-            if result1 is not None:
-                assert result1 == result2
-                if result1 != result3:
-                    assert result1 != result4
-                    assert result3 != result4
-
+            assert result1 == result2
+            # different random state still generates same results occassionally
+            # so check against two different objects.
+            if result1 != result3 or result1 != result4:
+                # if appears that randomness is involved, check that we can
+                # replicate result4.
+                nimble.random.setSeed(13)
+                assert result4 == nimble.trainAndApply(fullName, trainData,
+                                                       trainLabels, testData)
+            assert result5 == result6 # different global, same param
+            if result5 != result7 or result5 != result8:
+                # if appears that randomness is involved, check that we can
+                # replicate result8.
+                nimble.random.setSeed(13)
+                assert result8 == nimble.trainAndApply(fullName, trainData, trainLabels,
+                                                       testData, randomSeed=15)
 
 def getCanonicalNameAndPossibleAliases(interface):
     if interface.__name__ == 'SciKitLearn':
