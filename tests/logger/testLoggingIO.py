@@ -498,11 +498,6 @@ def testPrepTypeFunctionsUseLog():
     def noChange(vec):
         return vec
 
-    # points.normalize
-    dataObj = nimble.data("Matrix", data, useLog=False)
-    dataObj.points.normalize(noChange)
-    checkLogContents('points.normalize', "Matrix", {'function': 'noChange'})
-
     # features.normalize
     dataObj = nimble.data("Matrix", data, useLog=False)
     dataObj.features.normalize(noChange)

@@ -615,45 +615,6 @@ class Axis(object):
                       self._sigFunc('fillMatching'), fillWith,
                       matchingElements, limitTo, **kwarguments)
 
-    def _normalize(self, function, applyResultTo=None, limitTo=None,
-                   useLog=None):
-        if not callable(function):
-            raise InvalidArgumentType('function must be callable')
-        if applyResultTo is None:
-            self._transform(function, limitTo=limitTo, useLog=False)
-        elif isinstance(applyResultTo, nimble.core.data.Base):
-            # points does not have applyResultTo parameter but will double
-            # check in case this backend used directly elsewhere
-            if self._isPoint:
-                msg = 'point axis does not support the applyResultTo argument'
-                raise ImproperObjectAction(msg)
-            applyToAxis = getattr(applyResultTo, self._axis + 's')
-            if len(self) != len(applyToAxis):
-                msg = 'applyResultTo must have the same number of {0}s as '
-                msg += 'the calling object'
-                raise InvalidArgumentValue(msg.format(self._axis))
-            selfNames = self._getNamesNoGeneration()
-            applyToNames = applyToAxis._getNamesNoGeneration()
-            if ((selfNames is not None and applyToNames is not None)
-                    and selfNames != applyToNames):
-                msg = 'applyResultTo {0}Names do not match the {0}Names of '
-                msg += 'the calling object'
-                raise InvalidArgumentValue(msg.format(self._axis))
-            if limitTo is not None:
-                limitTo = list(map(self._getIndex, limitTo))
-            for i, (vec1, vec2) in enumerate(zip(self, applyToAxis)):
-                if limitTo is None or i in limitTo:
-                    norm1, norm2 = function(vec1, vec2)
-                    self._transform(lambda _: norm1, limitTo=i, useLog=False)
-                    applyToAxis._transform(lambda _: norm2, limitTo=i,
-                                           useLog=False)
-        else:
-            msg = 'applyResultTo must be None or an instance of Base'
-            raise InvalidArgumentType(msg)
-
-        handleLogging(useLog, 'prep', '{ax}s.normalize'.format(ax=self._axis),
-                      self._base.getTypeString(), self._sigFunc('normalize'),
-                      function, applyResultTo, limitTo)
 
     def _repeat(self, totalCopies, copyVectorByVector):
         if not isinstance(totalCopies, (int, numpy.int)) or totalCopies < 1:

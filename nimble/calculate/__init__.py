@@ -56,8 +56,8 @@ from .binary import specificity
 from .binary import balancedAccuracy
 from .binary import f1Score
 from .normalize import meanNormalize
-from .normalize import zScoreNormalize
-from .normalize import minMaxNormalize
+from .normalize import meanStandardDeviationNormalize
+from .normalize import range0to1Normalize
 from .normalize import percentileNormalize
 
 
@@ -67,10 +67,11 @@ __all__ = ['balancedAccuracy', 'confusionMatrix', 'correlation',
            'falseNegative', 'falsePositive', 'fractionCorrect',
            'fractionIncorrect', 'inverse', 'leastSquaresSolution', 'maximum',
            'mean', 'meanAbsoluteError', 'meanFeaturewiseRootMeanSquareError',
-           'meanNormalize', 'median', 'minimum', 'minMaxNormalize', 'mode',
-           'percentileNormalize', 'precision', 'proportionMissing',
-           'proportionZero', 'pseudoInverse', 'quartiles', 'rSquared',
-           'recall', 'residuals', 'rootMeanSquareError', 'solve',
-           'specificity', 'standardDeviation', 'sum', 'trueNegative',
-           'truePositive', 'uniqueCount', 'varianceFractionRemaining',
-           'zScoreNormalize']
+           'meanNormalize', 'meanStandardDeviationNormalize', 'median',
+           'minimum', 'mode', 'percentileNormalize', 'precision',
+           'proportionMissing', 'proportionZero', 'pseudoInverse', 'quartiles',
+           'range0to1Normalize', 'rSquared', 'recall', 'residuals',
+           'rootMeanSquareError', 'solve', 'specificity', 'standardDeviation',
+           'sum', 'trueNegative', 'truePositive', 'uniqueCount',
+           'varianceFractionRemaining',
+           ]

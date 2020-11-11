@@ -1554,53 +1554,6 @@ class Points(object):
                                   useLog, **kwarguments)
 
     @limitedTo2D
-    def normalize(self, function, points=None, useLog=None):
-        """
-        Modify all points in this object using the given function.
-
-        Normalize the data by a function that adjusts each point
-        based on the provided function.
-
-        Parameters
-        ----------
-        function
-            The function applying the normalization. Functions must
-            accept a point view and output the normalized point data.
-        points : identifier, list of identifiers, None
-            Select specific points to apply the normalization to. If
-            points is None, the normalization will be applied to all
-            points.
-        useLog : bool, None
-            Local control for whether to send object creation to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-
-        Examples
-        --------
-        Normalize each point to percentiles.
-
-        >>> raw = [[0, 21, 7, 6],
-        ...        [3, 13, 0, 34],
-        ...        [21, 3, 14, 14]]
-        >>> pts = ['game1', 'game2', 'game3']
-        >>> fts = ['q1', 'q2', 'q3', 'q4']
-        >>> games = nimble.data('Matrix', raw, pts, fts)
-        >>> games.points.normalize(nimble.calculate.percentileNormalize)
-        >>> games
-        Matrix(
-            [[0.000 1.000 0.667 0.333]
-             [0.333 0.667 0.000 1.000]
-             [1.000 0.000 0.500 0.500]]
-            pointNames={'game1':0, 'game2':1, 'game3':2}
-            featureNames={'q1':0, 'q2':1, 'q3':2, 'q4':3}
-            )
-        """
-        self._normalize(function, limitTo=points, useLog=useLog)
-
-    @limitedTo2D
     def splitByCollapsingFeatures(self, featuresToCollapse, featureForNames,
                                   featureForValues, useLog=None):
         """
@@ -2311,11 +2264,6 @@ class Points(object):
 
     @abstractmethod
     def _fillMatching(self, match, fill, limitTo, useLog=None, **kwarguments):
-        pass
-
-    @abstractmethod
-    def _normalize(self, function, applyResultTo=None, limitTo=None,
-                   useLog=None):
         pass
 
     @abstractmethod

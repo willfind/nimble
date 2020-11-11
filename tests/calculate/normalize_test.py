@@ -2,8 +2,8 @@
 import numpy
 
 import nimble
-from nimble.calculate import meanNormalize, zScoreNormalize
-from nimble.calculate import minMaxNormalize
+from nimble.calculate import meanNormalize, meanStandardDeviationNormalize
+from nimble.calculate import range0to1Normalize
 from nimble.calculate import percentileNormalize
 from nimble.calculate.normalize import rangeNormalize
 from tests.helpers import noLogEntryExpected
@@ -50,7 +50,7 @@ def test_meanNormalize_withNan():
 
     assertExpected(meanNormalize, data1, data2, exp1, exp2)
 
-def test_zScoreNormalize():
+def test_meanStandardDeviationNormalize():
     data1 = [0, 1, -3, 5, 4, 5]
     data2 = [-2, 0, 1, 2, 6]
     mean = numpy.mean(data1)
@@ -62,9 +62,9 @@ def test_zScoreNormalize():
     exp1 = list(map(zScore, data1))
     exp2 = list(map(zScore, data2))
 
-    assertExpected(zScoreNormalize, data1, data2, exp1, exp2)
+    assertExpected(meanStandardDeviationNormalize, data1, data2, exp1, exp2)
 
-def test_zScoreNormalize_withNan():
+def test_meanStandardDeviationNormalize_withNan():
     data1 = [-3, 0, 1, numpy.nan, 5, 5]
     data2 = [0, numpy.nan, 2, -2, 6]
     mean = numpy.nanmean(data1)
@@ -78,9 +78,9 @@ def test_zScoreNormalize_withNan():
     exp1 = list(map(zScoreNan, data1))
     exp2 = list(map(zScoreNan, data2))
 
-    assertExpected(zScoreNormalize, data1, data2, exp1, exp2)
+    assertExpected(meanStandardDeviationNormalize, data1, data2, exp1, exp2)
 
-def test_zScoreNormalize_allEqual():
+def test_meanStandardDeviationNormalize_allEqual():
     data1 = [7, 7, 7, 7, 7]
     data2 = [7, 7, 6, 9]
     mean = numpy.mean(data1)
@@ -93,34 +93,34 @@ def test_zScoreNormalize_allEqual():
     exp1 = list(map(zScoreStdZero, data1))
     exp2 = list(map(zScoreStdZero, data2))
 
-    assertExpected(zScoreNormalize, data1, data2, exp1, exp2)
+    assertExpected(meanStandardDeviationNormalize, data1, data2, exp1, exp2)
 
-def test_minMaxNormalize():
+def test_range0to1Normalize():
     data1 = [-4, 3, -1, 1, 6]
     data2 = [1, -5, -3, 7]
 
     exp1 = [0, 0.7, 0.3, 0.5, 1]
     exp2 = [0.5, -0.1, 0.1, 1.1]
 
-    assertExpected(minMaxNormalize, data1, data2, exp1, exp2)
+    assertExpected(range0to1Normalize, data1, data2, exp1, exp2)
 
-def test_minMaxNormalize_withNan():
+def test_range0to1Normalize_withNan():
     data1 = [-4, -1, 1, 6, numpy.nan]
     data2 = [-5, -3, numpy.nan, 7]
 
     exp1 = [0, 0.3, 0.5, 1, numpy.nan]
     exp2 = [-0.1, 0.1, numpy.nan, 1.1]
 
-    assertExpected(minMaxNormalize, data1, data2, exp1, exp2)
+    assertExpected(range0to1Normalize, data1, data2, exp1, exp2)
 
-def test_minMaxNormalize_allEqual():
+def test_range0to1Normalize_allEqual():
     data1 = [-1, -1, -1, -1, -1]
     data2 = [3, -1, -2, -1]
 
     exp1 = [0, 0, 0, 0, 0]
     exp2 = [4, 0, -1, 0]
 
-    assertExpected(minMaxNormalize, data1, data2, exp1, exp2)
+    assertExpected(range0to1Normalize, data1, data2, exp1, exp2)
 
 def test_rangeNormalize():
     data1 = [-4, 3, -1, 2, 6, 1]

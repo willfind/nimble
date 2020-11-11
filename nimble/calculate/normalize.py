@@ -13,7 +13,8 @@ def meanNormalize(values1, values2=None):
 
     Normalization of ``values1`` is calculated by subtracting the mean
     of ``values1`` from each element. The mean of ``values1`` is also
-    subtracted from each element in ``values2``, when applicable.
+    subtracted from each element in ``values2``, when applicable. This
+    normalization is also known as "Centered" or "Centering".
 
     Examples
     --------
@@ -47,21 +48,21 @@ def meanNormalize(values1, values2=None):
 
     return meanNorm1, meanNorm2
 
-def zScoreNormalize(values1, values2=None):
+def meanStandardDeviationNormalize(values1, values2=None):
     """
-    Convert vector elements to a z-score.
+    Subtract the mean and divide by standard deviation for each element.
 
-    The z-score normalization of ``values1`` is calculated by
-    subtracting the mean of ``values1`` from each element and dividing
-    by the standard deviation of ``values1``. The mean and standard
-    deviation of ``values1`` are also used to calculate the z-score for
-    each element in ``values2``, when applicable.
+    The normalization of ``values1`` is calculated by subtracting its
+    mean and dividing by its standard deviation. The mean and standard
+    deviation of ``values1`` are also used for the calculation on each
+    element in ``values2``, when applicable. This normalization is also
+    known as "Standardization" and "Z-score normalization".
 
     Examples
     --------
     >>> raw1 = [[1], [2], [3], [4], [5]]
     >>> data1 = nimble.data('Matrix', raw1)
-    >>> zScoreNormalize(data1)
+    >>> meanStandardDeviationNormalize(data1)
     Matrix(
         [[-1.414]
          [-0.707]
@@ -71,7 +72,7 @@ def zScoreNormalize(values1, values2=None):
         )
     >>> raw2 = [[3], [2], [6]]
     >>> data2 = nimble.data('Matrix', raw2)
-    >>> norm1, norm2 = zScoreNormalize(data1, data2)
+    >>> norm1, norm2 = meanStandardDeviationNormalize(data1, data2)
     >>> norm2
     Matrix(
         [[0.000 ]
@@ -120,21 +121,22 @@ def rangeNormalize(values1, values2=None, *, start, end):
     return range1, range2
 
 
-def minMaxNormalize(values1, values2=None):
+def range0to1Normalize(values1, values2=None):
     """
     Convert values to range of 0 to 1.
 
     For ``values1``, the formula ``(element - min) / (max - min)``
-    will be applied to each element, where ``min`` is the minimum value
-    in ``values1`` and ``max`` is the maximum value in ``values1``.
-    The minimum and maximum values from ``values1`` are also applied to
-    the calculation for ``values2``, when applicable.
+    will be applied to each element, where ``min`` is its minimum value
+    and ``max`` is its maximum value. The minimum and maximum values
+    from ``values1`` are also applied to the calculation for
+    ``values2``, when applicable. This normalization is often referred
+    to simply as "Normalization".
 
     Examples
     --------
     >>> raw1 = [[1], [2], [3], [4], [5]]
     >>> data1 = nimble.data('Matrix', raw1)
-    >>> minMaxNormalize(data1)
+    >>> range0to1Normalize(data1)
     Matrix(
         [[0.000]
          [0.250]
@@ -144,7 +146,7 @@ def minMaxNormalize(values1, values2=None):
         )
     >>> raw2 = [[3], [2], [6]]
     >>> data2 = nimble.data('Matrix', raw2)
-    >>> norm1, norm2 = minMaxNormalize(data1, data2)
+    >>> norm1, norm2 = range0to1Normalize(data1, data2)
     >>> norm2
     Matrix(
         [[0.500]

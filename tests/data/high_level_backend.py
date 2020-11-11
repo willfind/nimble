@@ -16,9 +16,9 @@ features.repeat, points.matching, features.matching, matchingElements
 
 In object HighLevelModifying:
 replaceFeatureWithBinaryFeatures, points.permute, features.permute,
-points.normalize, features.normalize, points.fill, features.fill,
-fillMatching, points.splitByCollapsingFeatures,
-points.combineByExpandingFeatures, features.splitByParsing
+features.normalize, points.fill, features.fill, fillMatching,
+points.splitByCollapsingFeatures, points.combineByExpandingFeatures,
+features.splitByParsing
 """
 
 from copy import deepcopy
@@ -2848,59 +2848,10 @@ class HighLevelModifying(DataTestObject):
         toTest = self.constructor(data)
         toTest.features.permute([1, 1, 0])
 
-    ####################
-    # points.normalize #
-    ####################
-    def test_points_normalize_parameterCount(self):
-        obj = self.constructor([[1, 2], [3, 4]])
-        a, _, _, d = nimble._utility.inspectArguments(obj.points.normalize)
-        assert len(a) == 4 # self, function, points, useLog
-        assert d == (None, None)
-
-    def test_points_normalize_exception_unexpectedInputType(self):
-        obj = self.constructor([[1, 2], [3, 4]])
-        try:
-            obj.points.normalize({})
-            assert False  # Expected InvalidArgumentType
-        except InvalidArgumentType:
-            pass
-
-        try:
-            obj.points.normalize(set([1]))
-            assert False  # Expected InvalidArgumentType
-        except InvalidArgumentType:
-            pass
-
-    @oneLogEntryExpected
-    def test_points_normalize_success_singleInputFunction(self):
-        obj = self.constructor([[1, 3, 7], [2, 3, 7], [3, 3, 7]])
-        expObj = self.constructor([[0, 2, 6], [0, 1, 5], [0, 0, 4]])
-
-        def subMin(pt):
-            return pt - nimble.calculate.minimum(pt)
-
-        ret = obj.points.normalize(subMin)
-        assert ret is None
-        assert expObj == obj
-        assertNoNamesGenerated(obj)
-
-
-    def test_points_normalize_success_limited(self):
-        obj = self.constructor([[1, 3, 7], [2, 3, 7], [3, 3, 7]])
-        expObj = self.constructor([[0, 2, 6], [2, 3, 7], [0, 0, 4]])
-
-        def subMin(pt):
-            return pt - nimble.calculate.minimum(pt)
-
-        ret = obj.points.normalize(subMin, points=[0, 2])
-        assert ret is None
-        assert expObj == obj
-        assertNoNamesGenerated(obj)
-
-
     ########################
     # features.normalize() #
     ########################
+
     def test_features_normalize_parameterCount(self):
         obj = self.constructor([[1, 2], [3, 4]])
         a, _, _, d = nimble._utility.inspectArguments(obj.features.normalize)

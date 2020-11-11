@@ -16,7 +16,7 @@ import numpy
 
 import nimble
 from nimble.core.logger import handleLogging
-from nimble.exceptions import InvalidArgumentType
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from ._dataHelpers import limitedTo2D
 
@@ -1640,13 +1640,14 @@ class Features(object):
         --------
         Calling object only.
 
+        >>> from nimble.calculate import range0to1Normalize
         >>> rawTrain = [[5, 9.8, 92],
         ...             [3, 6.2, 58],
         ...             [2, 3.0, 29]]
         >>> pts = ['movie1', 'movie2', 'movie3']
         >>> fts = ['review1', 'review2', 'review3']
         >>> train = nimble.data('Matrix', rawTrain, pts, fts)
-        >>> train.features.normalize(nimble.calculate.minMaxNormalize)
+        >>> train.features.normalize(range0to1Normalize)
         >>> train
         Matrix(
             [[1.000 1.000 1.000]
@@ -1658,6 +1659,7 @@ class Features(object):
 
         With applyResultTo.
 
+        >>> from nimble.calculate import meanStandardDeviationNormalize
         >>> rawTrain = [[5, 9.8, 92],
         ...             [3, 6.2, 58],
         ...             [2, 3.0, 10]]
@@ -1668,7 +1670,7 @@ class Features(object):
         >>> train = nimble.data('Matrix', rawTrain, trainPts, fts)
         >>> testPts = ['movie4', 'movie5']
         >>> test = nimble.data('Matrix', rawTest, testPts, fts)
-        >>> train.features.normalize(nimble.calculate.zScoreNormalize,
+        >>> train.features.normalize(meanStandardDeviationNormalize,
         ...                          applyResultTo=test)
         >>> train
         Matrix(
@@ -1686,7 +1688,39 @@ class Features(object):
             featureNames={'review1':0, 'review2':1, 'review3':2}
             )
         """
-        self._normalize(function, applyResultTo, features, useLog)
+        if not callable(function):
+            raise InvalidArgumentType('function must be callable')
+        if applyResultTo is None:
+            self.transform(function, features=features, useLog=False)
+        elif isinstance(applyResultTo, nimble.core.data.Base):
+            if len(self) != len(applyResultTo.features):
+                msg = 'applyResultTo must have the same number of features as '
+                msg += 'the calling object'
+                raise InvalidArgumentValue(msg)
+            selfNames = self._getNamesNoGeneration()
+            applyToNames = applyResultTo.features._getNamesNoGeneration()
+            if ((selfNames is not None and applyToNames is not None)
+                    and selfNames != applyToNames):
+                msg = 'applyResultTo featureNames do not match the '
+                msg += 'featureNames of the calling object'
+                raise InvalidArgumentValue(msg)
+            if features is not None:
+                features = list(map(self._getIndex, features))
+            zipFeatures = zip(self, applyResultTo.features)
+            for i, (ft1, ft2) in enumerate(zipFeatures):
+                if features is None or i in features:
+                    norm1, norm2 = function(ft1, ft2)
+                    self.transform(lambda _: norm1, features=i, useLog=False)
+                    applyResultTo.features.transform(lambda _: norm2,
+                                                     features=i,
+                                                     useLog=False)
+        else:
+            msg = 'applyResultTo must be None or an instance of Base'
+            raise InvalidArgumentType(msg)
+
+        handleLogging(useLog, 'prep', 'features.normalize',
+                      self._base.getTypeString(), Features.normalize,
+                      function, applyResultTo, features)
 
     @limitedTo2D
     def splitByParsing(self, feature, rule, resultingNames, useLog=None):
@@ -2271,11 +2305,6 @@ class Features(object):
 
     @abstractmethod
     def _fillMatching(self, match, fill, limitTo, useLog=None, **kwarguments):
-        pass
-
-    @abstractmethod
-    def _normalize(self, function, applyResultTo=None, limitTo=None,
-                   useLog=None):
         pass
 
     @abstractmethod
