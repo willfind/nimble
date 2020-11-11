@@ -7,7 +7,10 @@ bdist_wheel - binary distribution (if extensions are available builds
                                    platform wheel otherwise pure python)
 bdist_conda - binary conda distribution (requires conda-build)
 install - install nimble (not recommended as install method)
-clean - remove setup generated directories and files (except dist/)
+clean - remove setup generated directories and files. By default, clean
+        only removes the "temporary" files in the build/ directory.
+        Using the --all flag will fully remove the build/ and
+        nimble.egg-info/ directores as well as any C extension files.
 
 Note: the bdist_conda and bdist_wheel commands cannot be run together.
 """
@@ -67,10 +70,15 @@ def cythonizeFiles():
               exclude_failures=True,)
 
 class ExtensionsFailed(Exception):
-    pass
+    """
+    Raised when any process related to the C extensions is unsuccessful.
+    """
 
 
 def commandUsesExtensions(commands):
+    """
+    Identify any command that should try to generate the C extensions.
+    """
     for cmd in commands:
         if 'build' in cmd or 'dist' in cmd or 'install' in cmd:
             return True
@@ -78,7 +86,8 @@ def commandUsesExtensions(commands):
 
 class NimbleDistribution(distclass):
     """
-    Distribution that installs and
+    Extend the Distribution class to attempt to use Cython to generate
+    the C extension files for certain command line commands.
     """
     def __init__(self, attrs=None):
         super().__init__(attrs)
