@@ -352,13 +352,6 @@ def test_groupByFeature():
     for rType in nimble.core.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
-def test_referenceDataFrom():
-    def wrapped(obj, useLog):
-        obj.referenceDataFrom(obj, useLog=useLog)
-
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
-
 def test_transpose():
     def wrapped(obj, useLog):
         obj.transpose(useLog=useLog)

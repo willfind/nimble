@@ -4,7 +4,6 @@ Collect the interfaces that will be accessible to the user.
 
 import os
 import importlib
-import abc
 
 import nimble
 from .universal_interface import PredefinedInterface
@@ -35,11 +34,14 @@ def initInterfaceSetup():
         # subclass of the PredefinedInterface
         for valueName in contents:
             value = getattr(importedModule, valueName)
-            if (isinstance(value, abc.ABCMeta)
-                    and issubclass(value, PredefinedInterface)):
-                if not valueName in seen:
+            try:
+                if (issubclass(value, PredefinedInterface)
+                        and not valueName in seen
+                        and not valueName.startswith('_')):
                     seen.add(valueName)
                     predefined.append(value)
+            except TypeError:
+                pass
 
     nimble.core.interfaces.predefined = predefined
 

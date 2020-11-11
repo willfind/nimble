@@ -286,9 +286,7 @@ def testRunTypeFunctionsUseLog():
 
     # normalizeData
     # copy to avoid modifying original data
-    trainXNormalize = trainXObj.copy()
-    testXNormalize = testXObj.copy()
-    nimble.normalizeData('sciKitLearn.PCA', trainXNormalize, testX=testXNormalize)
+    _ = nimble.normalizeData('sciKitLearn.PCA', trainXObj, testX=testXObj)
     logInfo = getLastLogData()
     assert "'function': 'normalizeData'" in logInfo
     assert re.search(timePattern, logInfo)
@@ -377,11 +375,6 @@ def testPrepTypeFunctionsUseLog():
     dataObj = nimble.data("Sparse", data, useLog=False)
     calculated = dataObj.groupByFeature(by=0)
     checkLogContents('groupByFeature', 'Sparse', {'by': 0})
-
-    # referenceDataFrom
-    dataObj = nimble.data("Matrix", data, useLog=False, name='refData')
-    dataObj.referenceDataFrom(dataObj)
-    checkLogContents('referenceDataFrom', 'Matrix', {'other': 'refData'})
 
     # transpose
     dataObj = nimble.data("List", data, useLog=False)

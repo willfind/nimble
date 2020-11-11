@@ -1182,7 +1182,7 @@ class HighLevelDataSafe(DataTestObject):
         ret = toTest.countElements('   >=   5   ')
         assert ret == 5
 
-        ret = toTest.countElements('=5')
+        ret = toTest.countElements('==5')
         assert ret == 1
 
         ret = toTest.countElements(lambda x: x % 2 == 1)
@@ -1194,8 +1194,9 @@ class HighLevelDataSafe(DataTestObject):
     @noLogEntryExpected
     def test_points_count(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data, pointNames=['one', 'two', 'three'], featureNames=['a', 'b', 'c'])
-        ret = toTest.points.count('b>=5')
+        toTest = self.constructor(data, pointNames=['one', 'two', 'three'],
+                                  featureNames=['a', 'b', 'c'])
+        ret = toTest.points.count('b >= 5')
         assert ret == 2
 
         ret = toTest.points.count(lambda x: x['b'] >= 5)
@@ -1207,8 +1208,9 @@ class HighLevelDataSafe(DataTestObject):
     @noLogEntryExpected
     def test_features_count(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data, pointNames=['one', 'two', 'three'], featureNames=['a', 'b', 'c'])
-        ret = toTest.features.count('two>=5')
+        toTest = self.constructor(data, pointNames=['one', 'two', 'three'],
+                                  featureNames=['a', 'b', 'c'])
+        ret = toTest.features.count('two >= 5')
         assert ret == 2
 
         ret = toTest.features.count(lambda x: x['two'] >= 5)
@@ -2099,16 +2101,11 @@ class HighLevelDataSafe(DataTestObject):
     def test_matchingElements_comparisonStringInput(self):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
         obj = self.constructor(raw)
-        ['==', '=', '!=', '>', '<', '>=', '<=']
+
         match1 = obj.matchingElements(lambda x: x == 0)
         match2 = obj.matchingElements('==0')
         ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
         match3 = obj.matchingElements(ws1 + '==' + ws2 + '0' + ws3)
-        assert match1 == match2 == match3
-
-        match2 = obj.matchingElements('=0')
-        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
-        match3 = obj.matchingElements(ws1 + '=' + ws2 + '0' + ws3)
         assert match1 == match2 == match3
 
         match1 = obj.matchingElements(lambda x: x != 0)

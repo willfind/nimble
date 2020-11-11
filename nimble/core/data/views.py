@@ -195,10 +195,6 @@ class BaseView(Base):
         readOnlyException("transpose")
 
     @baseExceptionDoc
-    def referenceDataFrom(self, other, useLog=None):
-        readOnlyException("referenceDataFrom")
-
-    @baseExceptionDoc
     def replaceRectangle(self, replaceWith, pointStart, featureStart, pointEnd,
                          featureEnd, useLog=None):
         readOnlyException("replaceRectangle")
@@ -399,7 +395,7 @@ class PointsView(Points):
 
     @pointsExceptionDoc
     def combineByExpandingFeatures(self, featureWithFeatureNames,
-                                   featureWithValues, useLog=None):
+                                   featuresWithValues, useLog=None):
         readOnlyException('combineByExpandingFeatures')
 
 
