@@ -431,10 +431,6 @@ To install shogun
         return ['location', 'sourceLocation', 'libclangLocation']
 
 
-    def _exposedFunctions(self):
-
-        return []
-
     def version(self):
         if self.versionString is None:
             accessVersion = self._access('Version', 'get_version_release')()

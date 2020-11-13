@@ -85,31 +85,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             msg += "a string"
             raise TypeError(msg)
 
-        # _exposedFunctions
-        exposedFunctions = self._exposedFunctions()
-        if exposedFunctions is None or not isinstance(exposedFunctions, list):
-            msg = "Improper implementation of _exposedFunctions(), must "
-            msg += "return a list of methods to be bundled with TrainedLearner"
-            raise TypeError(msg)
-        for exposed in exposedFunctions:
-            # is callable
-            if not hasattr(exposed, '__call__'):
-                msg = "Improper implementation of _exposedFunctions, each "
-                msg += "member of the return must have __call__ attribute"
-                raise TypeError(msg)
-            # has name attribute
-            if not hasattr(exposed, '__name__'):
-                msg = "Improper implementation of _exposedFunctions, each "
-                msg += "member of the return must have __name__ attribute"
-                raise TypeError(msg)
-            # takes self as attribute
-            (args, _, _, _) = inspectArguments(exposed)
-            if args[0] != 'self':
-                msg = "Improper implementation of _exposedFunctions each "
-                msg += "member's first argument must be 'self', interpreted "
-                msg += "as a TrainedLearner"
-                raise TypeError(msg)
-
     @property
     def optionNames(self):
         """
@@ -862,20 +837,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def _exposedFunctions(self):
-        """
-        Returns a list of references to functions which are to be
-        wrapped in I/O transformation, and exposed as attributes of all
-        TrainedLearner objects returned by this interface's train()
-        function. If None, or an empty list is returned, no functions
-        will be exposed. Each function in this list should be a python
-        function, the inspect module will be used to retrieve argument
-        names, and the value of the function's __name__ attribute will
-        be its name in TrainedLearner.
-        """
-        pass
-
-    @abc.abstractmethod
     def version(self):
         """
         The version of the package accessible to the interface.
@@ -967,22 +928,6 @@ class TrainedLearner(object):
         self._has2dOutput = has2dOutput
         self._trainXShape = trainXShape
         self._trainYNames = trainYNames
-
-        exposedFunctions = self._interface._exposedFunctions()
-        for exposed in exposedFunctions:
-            methodName = getattr(exposed, '__name__')
-            (args, _, _, _) = inspectArguments(exposed)
-            doc = 'Wrapped version of the ' + methodName + ' function where '
-            if 'trainedLearner' in args:
-                wrapped = functools.partial(exposed, trainedLearner=self)
-                doc += 'the "trainedLearner" parameter has been fixed as this '
-                doc += 'object, and '
-            else:
-                wrapped = functools.partial(exposed)
-            doc += 'the "self" parameter has been fixed to be '
-            doc += str(interfaceObject)
-            wrapped.__doc__ = doc
-            setattr(self, methodName, wrapped)
 
     @captureOutput
     def test(self, testX, testY, performanceFunction, arguments=None,
