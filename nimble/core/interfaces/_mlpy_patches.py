@@ -14,7 +14,15 @@
 ## You should have received a copy of the GNU General Public License
 ## along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# pylint: disable-all
+
 import numpy as np
+
+try:
+    import mlpy
+    MLPY_AVAILABLE = True
+except ImportError as mlpyImportError:
+    MLPY_AVAILABLE = False
 
 ########
 # DLDA #
@@ -602,3 +610,40 @@ class ElasticNetC(ElasticNet):
         """
 
         return self._labels
+
+def getMlpy():
+    if MLPY_AVAILABLE:
+        return mlpy
+    raise mlpyImportError
+
+class kmeans(object):
+    def __init__(self, k, plus=False, seed=0):
+        self.k = k
+        self.plus = plus
+        self.seed = seed
+
+    def learn(self, x):
+        self.x = x
+
+    def labels(self):
+        return None
+
+    def pred(self):
+        mlpy = getMlpy()
+
+        (self.clusters, _, _) = mlpy.kmeans(self.x, self.k, self.plus,
+                                            self.seed)
+        return self.clusters
+
+
+class MFastHCluster(object):
+    def __init__(self, method='single'):
+        mlpy = getMlpy()
+
+        self.obj = mlpy.MFastHCluster(method)
+
+    def learn(self, x):
+        self.obj.linkage(x)
+
+    def pred(self, t):
+        return self.obj.cut(t)

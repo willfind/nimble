@@ -3,7 +3,7 @@ Implementations and helpers specific to performing axis-generic
 operations on a nimble DataFrame object.
 """
 
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
 import numpy
 
@@ -20,7 +20,7 @@ from ._dataHelpers import fillArrayWithCollapsedFeatures
 from ._dataHelpers import fillArrayWithExpandedFeatures
 
 
-class DataFrameAxis(Axis):
+class DataFrameAxis(Axis, metaclass=ABCMeta):
     """
     Differentiate how DataFrame methods act dependent on the axis.
 
@@ -47,23 +47,23 @@ class DataFrameAxis(Axis):
         each function handles the returned value, these are managed
         separately by each frontend function.
         """
-        df = self._base.data
+        dataframe = self._base.data
 
         pointNames, featureNames = self._getStructuralNames(targetList)
         if self._isPoint:
-            ret = df.values[targetList, :]
+            ret = dataframe.values[targetList, :]
             axis = 0
         else:
-            ret = df.values[:, targetList]
+            ret = dataframe.values[:, targetList]
             axis = 1
 
         if structure.lower() != "copy":
-            df.drop(targetList, axis=axis, inplace=True)
+            dataframe.drop(targetList, axis=axis, inplace=True)
 
         if axis == 0:
-            df.index = pd.RangeIndex(len(df.index))
+            dataframe.index = pd.RangeIndex(len(dataframe.index))
         else:
-            df.columns = pd.RangeIndex(len(df.columns))
+            dataframe.columns = pd.RangeIndex(len(dataframe.columns))
 
         return nimble.core.data.DataFrame(
             pd.DataFrame(ret), pointNames=pointNames,
@@ -95,9 +95,9 @@ class DataFrameAxis(Axis):
         if self._isPoint:
             return nimble.data('DataFrame', uniqueData, pointNames=axisNames,
                                featureNames=offAxisNames, useLog=False)
-        else:
-            return nimble.data('DataFrame', uniqueData, featureNames=axisNames,
-                               pointNames=offAxisNames, useLog=False)
+
+        return nimble.data('DataFrame', uniqueData, featureNames=axisNames,
+                           pointNames=offAxisNames, useLog=False)
 
     def _repeat_implementation(self, totalCopies, copyVectorByVector):
         if self._isPoint:
@@ -154,10 +154,10 @@ class DataFramePoints(DataFrameAxis, Points):
                                     axis=0, ignore_index=True)
 
     def _transform_implementation(self, function, limitTo):
-        for i, p in enumerate(self):
+        for i, pt in enumerate(self):
             if limitTo is not None and i not in limitTo:
                 continue
-            currRet = function(p)
+            currRet = function(pt)
 
             self._base.data.iloc[i, :] = currRet
 
@@ -196,7 +196,6 @@ class DataFramePointsView(PointsView, AxisView, DataFramePoints):
     base : DataFrameView
         The DataFrameView instance that will be queried.
     """
-    pass
 
 
 class DataFrameFeatures(DataFrameAxis, Features):
@@ -263,4 +262,3 @@ class DataFrameFeaturesView(FeaturesView, AxisView, DataFrameFeatures):
     base : DataFrameView
         The DataFrameView instance that will be queried.
     """
-    pass

@@ -110,13 +110,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                 msg += "as a TrainedLearner"
                 raise TypeError(msg)
 
-    @property
-    def optionNames(self):
-        """
-        TODO
-        """
-        return copy.copy(self._configurableOptionNames())
-
 
     def isAlias(self, name):
         """
@@ -199,7 +192,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                 for label in labelSet:
 
                     def relabeler(val):
-                        if val == label:
+                        if val == label: # pylint: disable=cell-var-from-loop
                             return 1
                         return 0
 
@@ -238,6 +231,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                 for pair in labelPairs:
                     # get all points that have one of the labels in pair
                     pairData = trainX.points.extract(
+                        # pylint: disable=cell-var-from-loop
                         lambda point: point[trainY] in pair, useLog=False)
                     pairTrueLabels = pairData.features.extract(trainY,
                                                                useLog=False)
@@ -333,9 +327,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                                                  possibleDefaults, arguments)
         neededParams = possibleParams[bestIndex]
         availableDefaults = possibleDefaults[bestIndex]
-        self._argumentValueValidation(name, possibleParams, possibleDefaults,
-                                      arguments, neededParams,
-                                      availableDefaults)
+        self._argumentValueValidation(name, possibleParams, arguments,
+                                      neededParams, availableDefaults)
 
     def _validateLearnerArgumentValues(self, name, arguments):
 
@@ -345,12 +338,11 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                                                  possibleDefaults, arguments)
         neededParams = possibleParams[bestIndex]
         availableDefaults = possibleDefaults[bestIndex]
-        self._argumentValueValidation(name, possibleParams, possibleDefaults,
-                                      arguments, neededParams,
-                                      availableDefaults)
+        self._argumentValueValidation(name, possibleParams, arguments,
+                                      neededParams, availableDefaults)
 
-    def _argumentValueValidation(self, name, possibleParams, possibleDefaults,
-                                 arguments, neededParams, availableDefaults):
+    def _argumentValueValidation(self, name, possibleParams, arguments,
+                                 neededParams, availableDefaults):
         if arguments is None:
             arguments = {}
         check = arguments.copy()
@@ -436,42 +428,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         self._validateArgumentValues(toInit.name, initArgs)
 
         return initObject(**initArgs)
-
-
-    def setOption(self, option, value):
-        """
-        TODO
-        """
-        if option not in self.optionNames:
-            msg = str(option)
-            msg += " is not one of the accepted configurable option names"
-            raise InvalidArgumentValue(msg)
-
-        nimble.settings.set(self.getCanonicalName(), option, value)
-
-
-    def getOption(self, option):
-        """
-        TODO
-        """
-        if option not in self.optionNames:
-            msg = str(option)
-            msg += " is not one of the accepted configurable option names"
-            raise InvalidArgumentValue(msg)
-
-        # empty string is the sentinal value indicating that the configuration
-        # file has an option of that name, but the nimble user hasn't set a
-        # value for it.
-        ret = ''
-        try:
-            ret = nimble.settings.get(self.getCanonicalName(), option)
-        except configErrors:
-            # it is possible that the config file doesn't have an option of
-            # this name yet. Just pass through and grab the hardcoded default
-            pass
-        if ret == '':
-            ret = self._optionDefaults(option)
-        return ret
 
 
     def _chooseBestParameterSet(self, possibleParamsSets, matchingDefaults,
@@ -676,7 +632,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         bool
             True if the package currently accessible, False otherwise.
         """
-        pass
 
     @abc.abstractmethod
     def getCanonicalName(self):
@@ -688,7 +643,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         str
             The canonical name for this interface.
         """
-        pass
 
     @abc.abstractmethod
     def _listLearnersBackend(self):
@@ -723,7 +677,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         dimensionalityReduction
         TODO
         """
-        pass
 
     @abc.abstractmethod
     def _getScores(self, learnerName, learner, testX, newArguments,
@@ -732,7 +685,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         If the learner is a classifier, then return the scores for each
         class on each data point, otherwise raise an exception.
         """
-        pass
 
     @abc.abstractmethod
     def _getScoresOrder(self, learner):
@@ -741,7 +693,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         labels corresponding to each column of the return from
         getScores.
         """
-        pass
 
     @abc.abstractmethod
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
@@ -763,7 +714,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         the transformed versions of trainX, trainY, testX, and arguments
         in that specific order.
         """
-        pass
 
     @abc.abstractmethod
     def _outputTransformation(self, learnerName, outputValue,
@@ -773,7 +723,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         Method called before any package level function which transforms
         the returned value into a format appropriate for a nimble user.
         """
-        pass
 
     @abc.abstractmethod
     def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
@@ -799,7 +748,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         -------
         An in package object to be wrapped by a TrainedLearner object.
         """
-        pass
 
     @abc.abstractmethod
     def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
@@ -825,7 +773,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         -------
         The learner after this batch of training.
         """
-        pass
 
 
     @abc.abstractmethod
@@ -850,7 +797,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         -------
         nimble friendly results.
         """
-        pass
 
 
     @abc.abstractmethod
@@ -859,7 +805,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         Returns whatever attributes might be available for the given
         learner. For example, in the case of linear regression, TODO
         """
-        pass
 
     @abc.abstractmethod
     def _exposedFunctions(self):
@@ -873,7 +818,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         names, and the value of the function's __name__ attribute will
         be its name in TrainedLearner.
         """
-        pass
 
     @abc.abstractmethod
     def version(self):
@@ -885,7 +829,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         str
             The version of this interface as a string.
         """
-        pass
 
 ##################
 # TrainedLearner #
@@ -967,6 +910,8 @@ class TrainedLearner(object):
         self._has2dOutput = has2dOutput
         self._trainXShape = trainXShape
         self._trainYNames = trainYNames
+        # Set if using TrainedLearners
+        self.label = None
 
         exposedFunctions = self._interface._exposedFunctions()
         for exposed in exposedFunctions:
@@ -1565,8 +1510,7 @@ class TrainedLearner(object):
         if numpy.array_equal(naturalOrder, internalOrder):
             return formatedRawOrder
         desiredDict = {}
-        for i in range(len(naturalOrder)):
-            label = naturalOrder[i]
+        for i, label in enumerate(naturalOrder):
             desiredDict[label] = i
 
         def sortScorer(feature):
@@ -1653,10 +1597,10 @@ class TrainedLearners(TrainedLearner):
         trainXShape = trainedLearnerAttrs._trainXShape
         trainYNames = trainedLearnerAttrs._trainYNames
 
-        super(TrainedLearners, self).__init__(
-            learnerName, arguments, transformedArguments, customDict, backend,
-            interfaceObject, has2dOutput, crossValidationResults, trainXShape,
-            trainYNames, randomSeed)
+        super().__init__(learnerName, arguments, transformedArguments,
+                         customDict, backend, interfaceObject, has2dOutput,
+                         crossValidationResults, trainXShape, trainYNames,
+                         randomSeed)
 
     @captureOutput
     def apply(self, testX, arguments=None, output='match', scoreMode='label',
@@ -1898,7 +1842,7 @@ If {name} installed
     replacing '/path/to/package/' with the actual path to the directory
     containing the package."""
 
-def formatPathMessage(name):
+def _formatPathMessage(name):
     underline = '-' * (len(name) + 13)
     return pathMessage.format(name=name, underline=underline)
 
@@ -1913,6 +1857,7 @@ class PredefinedInterface(UniversalInterface):
     """
 
     def __init__(self):
+        super().__init__()
         # _configurableOptionNames and _optionDefaults
         optionNames = self._configurableOptionNames()
         if not isinstance(optionNames, list):
@@ -1926,8 +1871,6 @@ class PredefinedInterface(UniversalInterface):
                 raise TypeError(msg)
             # call _optionDefaults to make sure it doesn't throw an exception
             self._optionDefaults(optionName)
-
-        super(PredefinedInterface, self).__init__()
 
     @classmethod
     @abc.abstractmethod
@@ -1954,8 +1897,50 @@ class PredefinedInterface(UniversalInterface):
             if isinstance(e, ImportError):
                 msg += cls._installInstructions()
                 # instructions for providing path to package
-                msg += formatPathMessage(name)
+                msg += _formatPathMessage(name)
             raise PackageException(msg).with_traceback(origTraceback)
+
+    @property
+    def optionNames(self):
+        """
+        TODO
+        """
+        return copy.copy(self._configurableOptionNames())
+
+    def setOption(self, option, value):
+        """
+        TODO
+        """
+        if option not in self.optionNames:
+            msg = str(option)
+            msg += " is not one of the accepted configurable option names"
+            raise InvalidArgumentValue(msg)
+
+        nimble.settings.set(self.getCanonicalName(), option, value)
+
+
+    def getOption(self, option):
+        """
+        TODO
+        """
+        if option not in self.optionNames:
+            msg = str(option)
+            msg += " is not one of the accepted configurable option names"
+            raise InvalidArgumentValue(msg)
+
+        # empty string is the sentinal value indicating that the configuration
+        # file has an option of that name, but the nimble user hasn't set a
+        # value for it.
+        ret = ''
+        try:
+            ret = nimble.settings.get(self.getCanonicalName(), option)
+        except configErrors:
+            # it is possible that the config file doesn't have an option of
+            # this name yet. Just pass through and grab the hardcoded default
+            pass
+        if ret == '':
+            ret = self._optionDefaults(option)
+        return ret
 
     @abc.abstractmethod
     def _optionDefaults(self, option):
@@ -1965,7 +1950,6 @@ class PredefinedInterface(UniversalInterface):
         file. For example, these values will always be used the first
         time an interface is instantiated.
         """
-        pass
 
 
     @abc.abstractmethod
@@ -1975,7 +1959,6 @@ class PredefinedInterface(UniversalInterface):
         configurable option of this interface whose value will be stored
         in nimble's configuration file.
         """
-        pass
 
     @classmethod
     @abc.abstractmethod
@@ -1984,22 +1967,22 @@ class PredefinedInterface(UniversalInterface):
 
     @cacheWrapper
     def findCallable(self, name):
-        return super(PredefinedInterface, self).findCallable(name)
+        return super().findCallable(name)
 
     @cacheWrapper
     def _getParameterNames(self, name):
-        return super(PredefinedInterface, self)._getParameterNames(name)
+        return super()._getParameterNames(name)
 
     @cacheWrapper
     def getLearnerParameterNames(self, learnerName):
-        return super(PredefinedInterface, self).getLearnerParameterNames(
+        return super().getLearnerParameterNames(
             learnerName)
 
     @cacheWrapper
     def _getDefaultValues(self, name):
-        return super(PredefinedInterface, self)._getDefaultValues(name)
+        return super()._getDefaultValues(name)
 
     @cacheWrapper
     def getLearnerDefaultValues(self, learnerName):
-        return super(PredefinedInterface, self).getLearnerDefaultValues(
+        return super().getLearnerDefaultValues(
             learnerName)

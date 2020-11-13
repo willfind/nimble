@@ -469,7 +469,7 @@ def statsBackend(vector, match, funcString, statisticsFunction):
     toFill = _booleanElementMatch(vector, match)
 
     def toStat(vec):
-        return [val for val, fill in zip(vector, toFill) if not fill]
+        return [val for val, fill in zip(vec, toFill) if not fill]
 
     if len(vector.points) == 1:
         unmatched = vector.points.calculate(toStat, useLog=False)
@@ -483,7 +483,7 @@ def statsBackend(vector, match, funcString, statisticsFunction):
         raise InvalidArgumentValue(msg)
 
     stat = statisticsFunction(unmatched)
-    if stat != stat:
+    if stat != stat: # pylint: disable=comparison-with-itself
         msg = statsExceptionInvalidInput(funcString, vector)
         raise InvalidArgumentValue(msg)
 

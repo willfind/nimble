@@ -55,7 +55,7 @@ class Matrix(Base):
         shape = kwds.get('shape', None)
         if shape is None:
             kwds['shape'] = self.data.shape
-        super(Matrix, self).__init__(**kwds)
+        super().__init__(**kwds)
 
     def _getPoints(self):
         return MatrixPoints(self)
@@ -64,9 +64,9 @@ class Matrix(Base):
         return MatrixFeatures(self)
 
     def _transform_implementation(self, toTransform, points, features):
-        IDs = itertools.product(range(len(self.points)),
+        ids = itertools.product(range(len(self.points)),
                                 range(len(self.features)))
-        for i, j in IDs:
+        for i, j in ids:
             currVal = self.data[i, j]
 
             if points is not None and i not in points:
@@ -81,6 +81,7 @@ class Matrix(Base):
 
             self.data[i, j] = currRet
             # numpy modified data due to int dtype
+            # pylint: disable=comparison-with-itself
             if self.data[i, j] != currRet and currRet == currRet:
                 if match.nonNumeric(currRet) and currRet is not None:
                     self.data = self.data.astype(numpy.object_)
@@ -88,10 +89,10 @@ class Matrix(Base):
                     self.data = self.data.astype(numpy.float)
                 self.data[i, j] = currRet
 
+    # pylint: disable=unused-argument
     def _calculate_implementation(self, function, points, features,
-                                  preserveZeros, outputType):
-        return self._calculate_genericVectorized(
-            function, points, features, outputType)
+                                  preserveZeros):
+        return self._calculate_genericVectorized(function, points, features)
 
     def _countUnique_implementation(self, points, features):
         return denseCountUnique(self, points, features)
@@ -201,20 +202,20 @@ class Matrix(Base):
                 return scipy.sparse.coo_matrix(data)
             try:
                 ret = data.astype(numpy.float)
-            except ValueError:
+            except ValueError as e:
                 msg = 'Can only create scipy {0} matrix from numeric data'
-                raise ValueError(msg.format(to[-3:]))
+                raise ValueError(msg.format(to[-3:])) from e
             if to == 'scipycsc':
                 return scipy.sparse.csc_matrix(ret)
             if to == 'scipycsr':
                 return scipy.sparse.csr_matrix(ret)
-        if to == 'pandasdataframe':
-            if not pd.nimbleAccessible():
-                msg = "pandas is not available"
-                raise PackageException(msg)
-            pnames = self.points._getNamesNoGeneration()
-            fnames = self.features._getNamesNoGeneration()
-            return pd.DataFrame(data.copy(), index=pnames, columns=fnames)
+        # pandasdataframe
+        if not pd.nimbleAccessible():
+            msg = "pandas is not available"
+            raise PackageException(msg)
+        pnames = self.points._getNamesNoGeneration()
+        fnames = self.features._getNamesNoGeneration()
+        return pd.DataFrame(data.copy(), index=pnames, columns=fnames)
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):
@@ -328,9 +329,9 @@ class Matrix(Base):
         unmatchedPtCountR = right.shape[1] - len(matchingFtIdx[1])
         matchMapper = {}
         for pt in left:
-            match = right[right[:, onIdxR] == pt[onIdxL]]
-            if len(match) > 0:
-                matchMapper[pt[onIdxL]] = match
+            matches = right[right[:, onIdxR] == pt[onIdxL]]
+            if len(matches) > 0:
+                matchMapper[pt[onIdxL]] = matches
         for ptL in left:
             target = ptL[onIdxL]
             if target in matchMapper:
@@ -338,9 +339,9 @@ class Matrix(Base):
                 for ptR in matchesR:
                     # check for conflicts between matching features
                     matches = ptL[matchingFtIdx[0]] == ptR[matchingFtIdx[1]]
-                    nansL = numpy.array([x != x for x
+                    nansL = numpy.array([x != x for x # pylint: disable=comparison-with-itself
                                          in ptL[matchingFtIdx[0]]])
-                    nansR = numpy.array([x != x for x
+                    nansR = numpy.array([x != x for x # pylint: disable=comparison-with-itself
                                          in ptR[matchingFtIdx[1]]])
                     acceptableValues = matches + nansL + nansR
                     if not all(acceptableValues):
@@ -351,7 +352,7 @@ class Matrix(Base):
                         # fill any nan values in left with the corresponding
                         # right value
                         for i, value in enumerate(ptL[matchingFtIdx[0]]):
-                            if value != value:
+                            if value != value: # pylint: disable=comparison-with-itself
                                 fill = ptR[matchingFtIdx[1]][i]
                                 ptL[matchingFtIdx[0]][i] = fill
                     ptR = numpy.delete(ptR, matchingFtIdx[1])
@@ -477,7 +478,7 @@ class Matrix(Base):
         """
         if isinstance(other, Matrix):
             return Matrix(numpy.matmul(self.data, other.data))
-        elif isinstance(other, nimble.core.data.Sparse):
+        if isinstance(other, nimble.core.data.Sparse):
             # '*' is matrix multiplication in scipy
             return Matrix(self.data * other.data)
         return Matrix(numpy.matmul(self.data, other.copy(to="numpyarray")))
@@ -494,8 +495,6 @@ class MatrixView(BaseView, Matrix):
     """
     Read only access to a Matrix object.
     """
-    def __init__(self, **kwds):
-        super(MatrixView, self).__init__(**kwds)
 
     def _getPoints(self):
         return MatrixPointsView(self)

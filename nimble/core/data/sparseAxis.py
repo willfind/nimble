@@ -2,6 +2,7 @@
 Implementations and helpers specific to performing axis-generic
 operations on a nimble Sparse object.
 """
+from abc import ABCMeta
 
 import numpy
 
@@ -14,7 +15,7 @@ from .views import PointsView
 from .features import Features
 from .views import FeaturesView
 
-class SparseAxis(Axis):
+class SparseAxis(Axis, metaclass=ABCMeta):
     """
     Differentiate how Sparse methods act dependent on the axis.
 
@@ -347,12 +348,12 @@ class SparseAxis(Axis):
                 (uniqueData, (uniqueAxis, uniqueOffAxis)), shape=shape)
             return nimble.data('Sparse', uniqueCoo, pointNames=axisNames,
                                featureNames=offAxisNames, useLog=False)
-        else:
-            shape = (len(self._base.points), axisCount)
-            uniqueCoo = scipy.sparse.coo_matrix(
-                (uniqueData, (uniqueOffAxis, uniqueAxis)), shape=shape)
-            return nimble.data('Sparse', uniqueCoo, pointNames=offAxisNames,
-                               featureNames=axisNames, useLog=False)
+
+        shape = (len(self._base.points), axisCount)
+        uniqueCoo = scipy.sparse.coo_matrix(
+            (uniqueData, (uniqueOffAxis, uniqueAxis)), shape=shape)
+        return nimble.data('Sparse', uniqueCoo, pointNames=offAxisNames,
+                           featureNames=axisNames, useLog=False)
 
 
 class SparsePoints(SparseAxis, Points):
@@ -393,7 +394,7 @@ class SparsePoints(SparseAxis, Points):
                 tmpData.extend(retainData)
                 tmpRow.extend([ptIdx * len(featuresToCollapse) + idx]
                               * len(retainData))
-                tmpCol.extend([i for i in range(len(retainCol))])
+                tmpCol.extend(list(range(len(retainCol))))
                 tmpData.append(collapseNames[idx])
                 tmpRow.append(ptIdx * len(featuresToCollapse) + idx)
                 tmpCol.append(numRetFeatures - 2)
@@ -423,7 +424,7 @@ class SparsePoints(SparseAxis, Points):
             tmpPoint.extend(point[namesIdx:])
             tmpData.extend(tmpPoint)
             tmpRow.extend([idx for _ in range(len(point) + numNewFts)])
-            tmpCol.extend([i for i in range(numRetFeatures)])
+            tmpCol.extend(list(range(numRetFeatures)))
 
         tmpData = numpy.array(tmpData, dtype=numpy.object_)
         shape = (len(uniqueDict), numRetFeatures)
@@ -485,7 +486,7 @@ class SparseFeatures(SparseAxis, Features):
             for lst in splitList:
                 newFeat.append(lst[idx])
             tmpData = numpy.concatenate((tmpData, newFeat))
-            newRows = [i for i in range(len(self._base.points))]
+            newRows = list(range(len(self._base.points)))
             tmpRow = numpy.concatenate((tmpRow, newRows))
             newCols = [featureIndex + idx for _
                        in range(len(self._base.points))]

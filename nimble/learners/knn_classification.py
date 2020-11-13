@@ -14,7 +14,7 @@ from nimble import CustomLearner
 from nimble.core._createHelpers import initDataObject
 from nimble._utility import dtypeConvert
 
-
+# pylint: disable=attribute-defined-outside-init, arguments-differ
 class KNNClassifier(CustomLearner):
     """
     K-Nearest Neighbors Classifier using euclidean distance.
@@ -98,7 +98,7 @@ class KNNClassifier(CustomLearner):
         that label occurred.
         """
         labelVotes = {}
-        idxDists = [(i, d) for i, d in enumerate(point)]
+        idxDists = list(enumerate(point))
         idxDists.sort(key=lambda x: x[1])
         orderedLabels = [self._trainY[i] for i, _ in idxDists[:self.k]]
         for label in orderedLabels:

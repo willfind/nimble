@@ -11,6 +11,9 @@ from .custom_learner import CustomLearnerInterface
 
 
 def initInterfaceSetup():
+    """
+    Setup the list of predefined interfaces during nimble init.
+    """
     ##############
     # predefined #
     ##############

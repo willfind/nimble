@@ -5,6 +5,7 @@ the top level in this package are the functions necessary to
 create data objects, call machine learning algorithms on that
 data, and do package level configuration and information querying.
 """
+# pylint: disable=cyclic-import
 
 # Import those functions that we want to be accessible in the
 # top level

@@ -4,7 +4,7 @@ Variety of functions to determine if data matches given conditions
 
 import numpy
 
-import nimble
+import nimble # pylint: disable=unused-import
 
 def missing(value):
     """
@@ -36,7 +36,7 @@ def missing(value):
     >>> missing('nan')
     False
     """
-    return value is None or value != value
+    return value is None or value != value # pylint: disable=comparison-with-itself
 
 def numeric(value):
     """
@@ -203,9 +203,6 @@ def positive(value):
     False
     """
     try:
-        # py2 inteprets strings as greater than 0, trying to add zero
-        # will raise exception for strings
-        value + 0
         return value > 0
     except TypeError:
         return False
@@ -241,9 +238,6 @@ def negative(value):
     False
     """
     try:
-        # py2 inteprets None as less than 0, trying to add zero will
-        # raise exception for None
-        value + 0
         return value < 0
     except TypeError:
         return False
@@ -1358,8 +1352,8 @@ def _convertMatchToFunction(match):
                 and not isinstance(match, str)):
             matchList = match
             # if nans in the list, need to include separate check in function
-            if not all([val == val for val in matchList]):
-                match = lambda x: x != x or x in matchList
+            if not all([val == val for val in matchList]): # pylint: disable=comparison-with-itself
+                match = lambda x: x != x or x in matchList # pylint: disable=comparison-with-itself
             else:
                 match = lambda x: x in matchList
         # case2: constant
@@ -1367,8 +1361,8 @@ def _convertMatchToFunction(match):
             matchConstant = match
             if matchConstant is None:
                 match = lambda x: x is None
-            elif matchConstant != matchConstant:
-                match = lambda x: x != x
+            elif matchConstant != matchConstant: # pylint: disable=comparison-with-itself
+                match = lambda x: x != x # pylint: disable=comparison-with-itself
             else:
                 match = lambda x: x == matchConstant
     return match

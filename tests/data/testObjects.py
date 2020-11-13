@@ -89,21 +89,42 @@ class TestDataFrame(BaseChildTests):
     def __init__(self):
         super(TestDataFrame, self).__init__('DataFrame')
 
+def concreter(name, *abclasses):
+    class concreteCls(*abclasses):
+        pass
+    concreteCls.__abstractmethods__ = frozenset()
+    return type(name, (concreteCls,), {})
+
+def makeAndDefine(shape=None, pointNames=None, featureNames=None,
+                  psize=0, fsize=0):
+    """
+    Make a Base data object with no actual data but has a shape
+    and can have pointNames and featureNames.
+    """
+    rows = psize if pointNames is None else len(pointNames)
+    cols = fsize if featureNames is None else len(featureNames)
+    if shape is None:
+        shape = [rows, cols]
+    # Base, Points, and Features are abstract so they cannot be instantiated,
+    # however we can create Dummy concrete classes to test the base
+    # functionality.
+    BaseDummy = concreter('BaseDummy', nimble.core.data.Base)
+    PointsDummy = concreter('PointsDummy', nimble.core.data.Axis,
+                            nimble.core.data.Points)
+    FeaturesDummy = concreter('FeaturesDummy', nimble.core.data.Axis,
+                              nimble.core.data.Features)
+    # need to override _getPoints and _getFeatures to use dummies
+    class BaseConcreteDummy(BaseDummy):
+        def _getPoints(self):
+            return PointsDummy(self)
+        def _getFeatures(self):
+            return FeaturesDummy(self)
+
+    return BaseConcreteDummy(shape, pointNames=pointNames,
+                             featureNames=featureNames)
 
 class TestBaseOnly(LowLevelBackend):
     def __init__(self):
-
-        def makeAndDefine(shape=None, pointNames=None, featureNames=None,
-                          psize=0, fsize=0):
-            """ Make a base data object that will think it has as many features as it has featureNames,
-            even though it has no actual data """
-            rows = psize if pointNames is None else len(pointNames)
-            cols = fsize if featureNames is None else len(featureNames)
-            if shape is None:
-                shape = [rows, cols]
-            ret = nimble.core.data.Base(shape, pointNames=pointNames, featureNames=featureNames)
-            return ret
-
         self.constructor = makeAndDefine
 
     def setUp(self):

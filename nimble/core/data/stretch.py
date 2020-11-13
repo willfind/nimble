@@ -233,6 +233,9 @@ class Stretch(object):
                                                                  rhsBool)
 
 class StretchSparse(Stretch):
+    """
+    Stretch object optimized for Sparse operations.
+    """
     def _stretchArithmetic_implementation(self, opName, other):
         if not isinstance(other, Stretch):
             if self._source.shape[0] == 1 and other.shape[0] > 1:

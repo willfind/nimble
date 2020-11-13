@@ -265,7 +265,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         )
     """
     timer = startTimer(useLog)
-    interface, trueLearnerName = _unpackLearnerName(learnerName)
+    _, trueLearnerName = _unpackLearnerName(learnerName)
 
     merged = mergeArguments(arguments, kwarguments)
 
@@ -1262,9 +1262,9 @@ class CV(object):
     def __init__(self, argumentList):
         try:
             self.argumentTuple = tuple(argumentList)
-        except TypeError:
+        except TypeError as e:
             msg = "argumentList must be iterable."
-            raise InvalidArgumentValue(msg)
+            raise InvalidArgumentValue(msg) from e
 
     def __getitem__(self, key):
         return self.argumentTuple[key]
@@ -1393,7 +1393,6 @@ class KFoldCrossValidator(object):
         self.folds = folds
         self.scoreMode = scoreMode
         self.arguments = mergeArguments(arguments, kwarguments)
-        interface, _ = _unpackLearnerName(learnerName)
         self.randomSeed = randomSeed
         self._allResults = None
         self._bestArguments = None
@@ -1539,10 +1538,9 @@ class KFoldCrossValidator(object):
         # store results
         self._allResults = performanceOfEachCombination
 
-        handleLogging(useLog, 'crossVal', X, Y, self.learnerName,
-                      self.arguments, self.performanceFunction,
-                      performanceOfEachCombination, self.folds,
-                      self.randomSeed)
+        handleLogging(useLog, 'crossVal', self.learnerName, self.arguments,
+                      self.performanceFunction, performanceOfEachCombination,
+                      self.folds, self.randomSeed)
 
     @property
     def allResults(self):

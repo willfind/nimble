@@ -68,8 +68,7 @@ def produceFeaturewiseInfoTable(dataContainer, funcsToApply):
 
 
 def produceFeaturewiseReport(dataContainer, supplementalFunctions=None,
-                             maxFeaturesToCover=50, displayDigits=2,
-                             useLog=None):
+                             maxFeaturesToCover=50, displayDigits=2):
     """
     Produce a string formatted as a table.
 
@@ -239,8 +238,8 @@ def transposeRow(row):
     Example: [1, 2, 3, 4] -> [[1], [2], [3], [4]]
     TODO: make more general (just transpose, rather than transposeRow)
     """
-    for i in range(len(row)):
-        row[i] = [row[i]]
+    for i, val in enumerate(row):
+        row[i] = [val]
 
 
 def appendColumns(appendTo, appendFrom):
@@ -257,11 +256,9 @@ def appendColumns(appendTo, appendFrom):
         msg += str(len(appendTo)) + " != " + str(len(appendFrom))
         raise InvalidArgumentValue(msg)
 
-    for i in range(len(appendTo)):
-        appendFromRow = appendFrom[i]
-        for j in range(len(appendFromRow)):
-            appendTo[i].append(appendFromRow[j])
-
+    for i, (_, appFrom) in enumerate(zip(appendTo, appendFrom)):
+        for val in appFrom:
+            appendTo[i].append(val)
 
 def computeShape(dataContainer):
     """

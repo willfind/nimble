@@ -30,11 +30,11 @@ class Stopwatch(object):
                 and self.isRunningStatus[taskName]):
             msg = "Task: " + taskName + " has already been started."
             raise TypeError(msg)
-        else:
-            self.startTimes[taskName] = time.process_time()
-            if taskName not in self.cumulativeTimes:
-                self.cumulativeTimes[taskName] = 0.0
-            self.isRunningStatus[taskName] = True
+
+        self.startTimes[taskName] = time.process_time()
+        if taskName not in self.cumulativeTimes:
+            self.cumulativeTimes[taskName] = 0.0
+        self.isRunningStatus[taskName] = True
 
     def stop(self, taskName):
         """
@@ -49,7 +49,7 @@ class Stopwatch(object):
             msg = "Tried to stop task '" + taskName
             msg += "' that was not started in Stopwatch.stop()"
             raise TypeError(msg)
-        elif not self.isRunningStatus[taskName]:
+        if not self.isRunningStatus[taskName]:
             raise TypeError("Unable to stop task that has already stopped")
 
         self.stopTimes[taskName] = time.process_time()
@@ -106,9 +106,9 @@ class Stopwatch(object):
             msg = "Missing entry when trying to calculate total task "
             msg += "run time: " + str(taskName)
             raise TypeError(msg)
-        elif self.isRunningStatus[taskName]:
+        if self.isRunningStatus[taskName]:
             msg = 'Can\'t calculate total running time for ' + taskName
             msg += ', as it is still running'
             raise TypeError(msg)
-        else:
-            return self.cumulativeTimes[taskName]
+
+        return self.cumulativeTimes[taskName]

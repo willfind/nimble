@@ -37,7 +37,7 @@ def findBestInterface(package):
         if interface.isAlias(package):
             try:
                 interfaceObj = interface()
-            except Exception:
+            except Exception: # pylint: disable=broad-except
                 # interface is a predefined one, but instantiation failed
                 return interface.provideInitExceptionInfo()
             # add successful instantiations to interfaces.available and
@@ -65,7 +65,7 @@ def initAvailablePredefinedInterfaces():
                 interfaceName = interfaceObj.getCanonicalName()
                 nimble.core.interfaces.available[interfaceName] = interfaceObj
                 setInterfaceOptions(interfaceObj, False)
-            except Exception:
+            except Exception: # pylint: disable=broad-except
                 # if fails for any reason, it's not available
                 pass
 
@@ -174,10 +174,7 @@ class FoldIterator(object):
     def __iter__(self):
         return self
 
-    def next(self):
-        """
-        Get next item.
-        """
+    def __next__(self):
         if self.index >= len(self.foldList):
             raise StopIteration
         # we're going to be separating training and testing sets through
@@ -212,9 +209,6 @@ class FoldIterator(object):
                 resultsList.append((currTrain, currTest))
         self.index = self.index + 1
         return resultsList
-
-    def __next__(self):
-        return self.next()
 
     def _makeFoldList(self):
         if self.dataList is None:
@@ -309,19 +303,13 @@ class ArgumentIterator(object):
     def __iter__(self):
         return self
 
-    def next(self):
-        """
-        Get next item.
-        """
+    def __next__(self):
         if self.index >= self.numPermutations:
             self.index = 0
             raise StopIteration
         permutation = self.permutationsList[self.index]
         self.index += 1
         return permutation
-
-    def __next__(self):
-        return self.next()
 
     def reset(self):
         """
@@ -617,7 +605,7 @@ class LearnerInspector:
             runResults = nimble.trainAndApply(
                 learnerName, trainX=regressorTrainData, trainY=trainLabels,
                 testX=regressorTestData)
-        except Exception:
+        except Exception: # pylint: disable=broad-except
             return 'other'
 
         try:
@@ -645,8 +633,8 @@ class LearnerInspector:
 
         if sumError > self.NEAR_THRESHHOLD:
             return 'other'
-        else:
-            return 'near'
+
+        return 'near'
 
 
     def _classifierTrial(self, learnerName):
@@ -662,7 +650,7 @@ class LearnerInspector:
             runResults = nimble.trainAndApply(learnerName, trainX=trainData,
                                               trainY=trainLabels,
                                               testX=testData)
-        except Exception:
+        except Exception: # pylint: disable=broad-except
             return 'other'
 
         try:
@@ -673,10 +661,10 @@ class LearnerInspector:
 
         if sumError > self.NEAR_THRESHHOLD:
             return 'other'
-        elif sumError > self.EXACT_THRESHHOLD:
+        if sumError > self.EXACT_THRESHHOLD:
             return 'near'
-        else:
-            return 'exact'
+
+        return 'exact'
 
 
 def _validScoreMode(scoreMode):

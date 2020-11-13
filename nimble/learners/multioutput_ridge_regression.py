@@ -5,7 +5,7 @@ Contains the MultiOutputRidgeRegression custom learner class.
 import nimble
 from nimble import CustomLearner
 
-
+# pylint: disable=attribute-defined-outside-init, arguments-differ
 class MultiOutputRidgeRegression(CustomLearner):
     """
     Learner which will train a version of 'nimble.RidgeRegression' on

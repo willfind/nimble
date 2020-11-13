@@ -49,10 +49,10 @@ class SessionConfiguration(object):
         changes to that configuration set and gives the user control
         over which changes should be saved and when.
         """
-        self.cp = configparser.ConfigParser()
+        self.parser = configparser.ConfigParser()
         # Needs to be set if you want option names to be case sensitive
-        self.cp.optionxform = str
-        self.cp.read(path)
+        self.parser.optionxform = str
+        self.parser.read(path)
         self.path = path
 
         # dict of section name to dict of option name to value
@@ -70,14 +70,14 @@ class SessionConfiguration(object):
             if option is not None:
                 if section in self.changes and option in self.changes[section]:
                     return self.changes[section][option]
-                return self.cp.get(section, option)
+                return self.parser.get(section, option)
 
             if section in self.changes:
                 ret = self.changes[section].copy()
             else:
                 ret = {}
-            if section in self.cp.sections():
-                for optName, optVal in self.cp[section].items():
+            if section in self.parser.sections():
+                for optName, optVal in self.parser[section].items():
                     # bypass names already set in self.changes
                     if optName not in ret:
                         ret[optName] = optVal
@@ -89,10 +89,10 @@ class SessionConfiguration(object):
             raise configparser.NoSectionError(section)
 
         ret = self.changes.copy()
-        for cpSection in self.cp.sections():
+        for cpSection in self.parser.sections():
             if cpSection not in ret:
                 ret[cpSection] = {}
-            for optName, optVal in self.cp[cpSection].items():
+            for optName, optVal in self.parser[cpSection].items():
                 # bypass names already set in self.changes and invalid names
                 if optName not in ret[cpSection]:
                     ret[cpSection][optName] = optVal
@@ -150,7 +150,7 @@ class SessionConfiguration(object):
         # value in file, we should adjust the changes
         # dict accordingly
         try:
-            inFile = self.cp.get(section, option)
+            inFile = self.parser.get(section, option)
             if (inFile == value and section in self.changes
                     and option in self.changes[section]):
                 del self.changes[section][option]
@@ -186,12 +186,12 @@ class SessionConfiguration(object):
         # a PackageException is the result of a possible interface being
         # unavailable, we will allow setting a location for possible interfaces
         # as this may aid in loading them in the future.
-        except PackageException:
+        except PackageException as e:
             if option != 'location':
                 msg = section + "is an interface which is not currently "
                 msg += "available. Only a 'location' option is permitted "
                 msg += "for unavailable interfaces."
-                raise InvalidArgumentValue(msg)
+                raise InvalidArgumentValue(msg) from e
 
         if not section in self.changes:
             self.changes[section] = {}
@@ -219,9 +219,9 @@ class SessionConfiguration(object):
             return
 
         def changeIndividual(changeSec, changeOpt, changeVal):
-            if not self.cp.has_section(changeSec):
-                self.cp.add_section(changeSec)
-            self.cp.set(changeSec, changeOpt, changeVal)
+            if not self.parser.has_section(changeSec):
+                self.parser.add_section(changeSec)
+            self.parser.set(changeSec, changeOpt, changeVal)
 
 
         if section is None:
@@ -251,9 +251,8 @@ class SessionConfiguration(object):
             if len(self.changes[section]) == 0:
                 del self.changes[section]
 
-        fp = open(self.path, 'w')
-        self.cp.write(fp)
-        fp.close()
+        with open(self.path, 'w') as configFile:
+            self.parser.write(configFile)
 
 
 def loadSettings():
@@ -265,8 +264,8 @@ def loadSettings():
     target = os.path.join(nimble.nimblePath, 'configuration.ini')
 
     if not os.path.exists(target):
-        fp = open(target, 'w')
-        fp.close()
+        with open(target, 'w'):
+            pass
 
     ret = SessionConfiguration(target)
     return ret

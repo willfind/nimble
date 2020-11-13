@@ -9,7 +9,7 @@ import copy
 import numpy
 
 import nimble
-from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble._utility import inheritDocstringsFactory
 from nimble._utility import inspectArguments
 from nimble._utility import dtypeConvert
@@ -28,7 +28,7 @@ class CustomLearnerInterface(UniversalInterface):
     def __init__(self, packageName):
         self.name = packageName
         self.registeredLearners = {}
-        super(CustomLearnerInterface, self).__init__()
+        super().__init__()
 
     def registerLearnerClass(self, learnerClass):
         """
@@ -245,7 +245,7 @@ class CustomLearner(metaclass=abc.ABCMeta):
                 ret[objArgs[-(i + 1)]] = d[-(i + 1)]
         return ret
 
-    def getScores(self, testX):
+    def getScores(self, testX): # pylint: disable=unused-argument
         """
         If this learner is a classifier, then return the scores for each
         class on each data point, otherwise raise an exception. The
@@ -254,9 +254,12 @@ class CustomLearner(metaclass=abc.ABCMeta):
         This method may be optionally overridden by a concrete subclass.
         """
         msg = "This custom learner has not implemented the getScores method"
-        raise NotImplementedError(msg)
+        raise ImproperObjectAction(msg)
 
     def trainForInterface(self, trainX, trainY, arguments):
+        """
+        Used in _trainer for the CustomLearnerInterface.
+        """
         if self.__class__.learnerType == 'classification':
             labels = dtypeConvert(trainY.copy(to='numpyarray'))
             self.labelList = numpy.unique(labels)
@@ -266,6 +269,9 @@ class CustomLearner(metaclass=abc.ABCMeta):
         return self
 
     def incrementalTrainForInterface(self, trainX, trainY, arguments):
+        """
+        Used in _incrementalTrainer for the CustomLearnerInterface.
+        """
         if self.__class__.learnerType == 'classification':
             flattenedY = dtypeConvert(trainY.copy(to='numpyarray').flatten())
             if self.labelList is None: # no previous training
@@ -275,19 +281,29 @@ class CustomLearner(metaclass=abc.ABCMeta):
         return self
 
     def applyForInterface(self, testX, arguments):
+        """
+        Used in _applier for the CustomLearnerInterface.
+        """
         return self.apply(testX, **arguments)
 
-    def incrementalTrain(self, trainX, trainY):
+    def incrementalTrain(self, trainX, trainY): # pylint: disable=unused-argument
+        """
+        Train or continue training the learner on new training data.
+        """
         msg = "This learner does not support incremental training"
-        raise RuntimeError(msg)
+        raise ImproperObjectAction(msg)
 
     @abc.abstractmethod
     def train(self, trainX, trainY):
-        pass
+        """
+        Train the learner on the training data.
+        """
 
     @abc.abstractmethod
     def apply(self, testX):
-        pass
+        """
+        Apply the learner to the testing data.
+        """
 
 
 def validateCustomLearnerSubclass(check):

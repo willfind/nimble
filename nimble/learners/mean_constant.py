@@ -7,7 +7,6 @@ import numpy
 import nimble
 from nimble import CustomLearner
 
-
 class MeanConstant(CustomLearner):
     learnerType = 'regression'
 

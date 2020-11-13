@@ -411,7 +411,7 @@ class SessionLogger(object):
                 # the above should cover all expected cases, but for safety we
                 # will catch any exceptions to prevent a successful operation
                 # from failing here due to a logging issue
-                except Exception:
+                except Exception: # pylint: disable=broad-except
                     functionCall = "Unable to determine learner name"
             logInfo["learner"] = functionCall
             # integers or strings passed for Y values, convert if necessary
@@ -545,9 +545,8 @@ class SessionLogger(object):
                      testData, testLabels, learnerFunction, arguments,
                      randomSeed, metrics, extraInfo, time)
 
-    def logCrossValidation(self, useLog, trainData, trainLabels,
-                           learnerFunction, arguments, metric, performance,
-                           folds, randomSeed):
+    def logCrossValidation(self, useLog, learnerFunction, arguments, metric,
+                           performance, folds, randomSeed):
         """
         Log the results of cross validation.
 
@@ -560,11 +559,6 @@ class SessionLogger(object):
 
         Parameters
         ----------
-        trainData : nimble data object
-            The object containing the training data.
-        trainLabels : nimble data object, int
-            The object or feature in ``trainData`` containing the
-            training labels.
         learnerFunction : str
             The name of the learner function.
         arguments : dict
@@ -756,7 +750,7 @@ def stringToDatetime(string):
             datetimeArgs.append(string[17:])
 
     try:
-        assert len(datetimeArgs)
+        assert datetimeArgs
         assert all(div == "-" for div in dateDividers)
         if dateTimeDivider is not None:
             assert dateTimeDivider == " "
@@ -766,10 +760,10 @@ def stringToDatetime(string):
 
         return datetime.datetime(*datetimeArgs)
 
-    except (AssertionError, ValueError):
+    except (AssertionError, ValueError) as e:
         msg = "Invalid datetime format. The accepted formats are: "
         msg += "'YYYY-MM-DD', 'YYYY-MM-DD HH:MM', or 'YYYY-MM-DD HH:MM:SS'"
-        raise InvalidArgumentValue(msg)
+        raise InvalidArgumentValue(msg) from e
 
 def _showLogQueryAndValues(leastSessionsAgo, mostSessionsAgo, startDate,
                            endDate, maximumEntries, searchForText, regex):
@@ -1129,10 +1123,9 @@ def _extractFunctionString(function):
     """
     try:
         functionName = function.__name__
-        if functionName != "<lambda>":
-            return functionName
-        else:
+        if functionName == "<lambda>":
             return _lambdaFunctionString(function)
+        return functionName
     except AttributeError:
         return str(function)
 
@@ -1168,8 +1161,7 @@ def _lambdaFunctionString(function):
                 return lambdaString
             if isOpen == 0:
                 return lambdaString
-            else:
-                lambdaString += letter
+            lambdaString += letter
     except OSError:
         lambdaString = "<lambda>"
     return lambdaString
@@ -1213,7 +1205,7 @@ def initLoggerAndLogConfig():
         nimble.settings.set("logger", "location", location)
         nimble.settings.saveChanges("logger", "location")
     finally:
-        nimble.settings.hook("logger", "location", cleanThenReInit_Loc)
+        nimble.settings.hook("logger", "location", cleanThenReInitLoc)
 
     try:
         name = nimble.settings.get("logger", "name")
@@ -1222,7 +1214,7 @@ def initLoggerAndLogConfig():
         nimble.settings.set("logger", "name", name)
         nimble.settings.saveChanges("logger", "name")
     finally:
-        nimble.settings.hook("logger", "name", cleanThenReInit_Name)
+        nimble.settings.hook("logger", "name", cleanThenReInitName)
 
     try:
         _ = nimble.settings.get("logger", "enabledByDefault")
@@ -1241,7 +1233,7 @@ def initLoggerAndLogConfig():
     nimble.core.logger.active = SessionLogger(location, name)
 
 
-def cleanThenReInit_Loc(newLocation):
+def cleanThenReInitLoc(newLocation):
     """
     Hook for setting a new location of the active logger.
     """
@@ -1250,7 +1242,7 @@ def cleanThenReInit_Loc(newLocation):
     nimble.core.logger.active = SessionLogger(newLocation, currName)
 
 
-def cleanThenReInit_Name(newName):
+def cleanThenReInitName(newName):
     """
     Hook for setting a new name of the active logger.
     """

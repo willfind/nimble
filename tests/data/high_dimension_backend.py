@@ -628,7 +628,8 @@ class HighDimensionModifying(DataTestObject):
 
         def getNimbleDefined(cls):
             nimbleDefined = set()
-            ignore = ['__init__', '__init_subclass__', '__subclasshook__']
+            ignore = ['__init__', '__init_subclass__', '__subclasshook__',
+                      '__class__']
             objectDir = dir(object)
             for attr in dir(cls):
                 if attr in ignore:

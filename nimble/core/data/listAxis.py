@@ -4,7 +4,7 @@ operations on a nimble List object.
 """
 
 import copy
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
 import numpy
 
@@ -19,7 +19,7 @@ from ._dataHelpers import denseAxisUniqueArray, uniqueNameGetter
 from ._dataHelpers import fillArrayWithCollapsedFeatures
 from ._dataHelpers import fillArrayWithExpandedFeatures
 
-class ListAxis(Axis):
+class ListAxis(Axis, metaclass=ABCMeta):
     """
     Differentiate how List methods act dependent on the axis.
 
@@ -87,8 +87,8 @@ class ListAxis(Axis):
             for i in range(len(self._base.data)):
                 currPoint = self._base.data[i]
                 temp = copy.copy(currPoint)
-                for j in range(len(indexPosition)):
-                    currPoint[j] = temp[indexPosition[j]]
+                for j, idxPos in enumerate(indexPosition):
+                    currPoint[j] = temp[idxPos]
 
     ##############################
     # High Level implementations #
@@ -106,9 +106,9 @@ class ListAxis(Axis):
         if self._isPoint:
             return nimble.data('List', uniqueData, pointNames=axisNames,
                                featureNames=offAxisNames, useLog=False)
-        else:
-            return nimble.data('List', uniqueData, pointNames=offAxisNames,
-                               featureNames=axisNames, useLog=False)
+
+        return nimble.data('List', uniqueData, pointNames=offAxisNames,
+                           featureNames=axisNames, useLog=False)
 
     def _repeat_implementation(self, totalCopies, copyVectorByVector):
         if self._isPoint:
@@ -178,10 +178,10 @@ class ListPoints(ListAxis, Points):
         self._base.data = allData
 
     def _transform_implementation(self, function, limitTo):
-        for i, p in enumerate(self):
+        for i, pt in enumerate(self):
             if limitTo is not None and i not in limitTo:
                 continue
-            currRet = function(p)
+            currRet = function(pt)
 
             self._base.data[i] = list(currRet)
 
@@ -231,7 +231,6 @@ class ListPointsView(PointsView, AxisView, ListPoints):
     base : ListView
         The ListView instance that will be queried.
     """
-    pass
 
 
 class ListFeatures(ListAxis, Features):
@@ -313,4 +312,3 @@ class ListFeaturesView(FeaturesView, AxisView, ListFeatures):
     base : ListView
         The ListView instance that will be queried.
     """
-    pass

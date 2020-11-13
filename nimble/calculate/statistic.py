@@ -1,3 +1,7 @@
+"""
+Statistics calculations.
+"""
+
 import collections
 import functools
 
@@ -137,10 +141,10 @@ def _minmax(values, minmax):
 
     if isinstance(ret, str):
         return numpy.nan
-    else:
-        return ret
 
-def _mean_sparseBackend(nonZeroVals, lenData, numNan):
+    return ret
+
+def _meanSparseBackend(nonZeroVals, lenData, numNan):
     """
     Backend helper for sparse mean calculation. The number of nan values
     is needed for standard deviation calculations so this helper avoids
@@ -176,7 +180,7 @@ def mean(values):
     if values.getTypeString() == 'Sparse':
         nonZero = values.data.data.astype(numpy.float)
         numNan = numpy.sum(numpy.isnan(nonZero))
-        return _mean_sparseBackend(nonZero, len(values), numNan)
+        return _meanSparseBackend(nonZero, len(values), numNan)
     arr = values.copy('numpyarray', outputAs1D=True).astype(numpy.float)
     return numpy.nanmean(arr)
 
@@ -270,7 +274,7 @@ def standardDeviation(values, sample=True):
     if values.getTypeString() == 'Sparse':
         nonZero = values.data.data.astype(numpy.float)
         numNan = numpy.sum(numpy.isnan(nonZero))
-        meanRet = _mean_sparseBackend(nonZero, len(values), numNan)
+        meanRet = _meanSparseBackend(nonZero, len(values), numNan)
 
         dataSumSquared = numpy.nansum((nonZero - meanRet) ** 2)
         zeroSumSquared = meanRet ** 2 * (len(values) - values.data.nnz)
@@ -354,10 +358,16 @@ def quartiles(values):
     return tuple(ret)
 
 def nonMissing(elem):
+    """
+    True for any non-missing element, otherwise False.
+    """
     return not match.missing(elem)
 
-def nonMissingNonZero(e):
-    return nonMissing(e) and match.nonZero(e)
+def nonMissingNonZero(elem):
+    """
+    True for any non-missing and non-zero element, otherwise False.
+    """
+    return nonMissing(elem) and match.nonZero(elem)
 
 def residuals(toPredict, controlVars):
     """
@@ -423,7 +433,7 @@ def count(values):
     """
     return _sum(1 for _ in values.iterateElements(only=nonMissing))
 
-def sum(values):
+def sum(values): # pylint: disable=redefined-builtin
     """
     The sum of the values in the vector.
 

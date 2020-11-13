@@ -1,24 +1,20 @@
+"""
+Similarity calculations.
+"""
 
 import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.calculate import fractionIncorrect
-from nimble.calculate import varianceFractionRemaining
+from nimble.calculate.loss import _validatePredictedAsLabels
+from nimble.calculate.loss import fractionIncorrect
+from nimble.calculate.loss import varianceFractionRemaining
 from nimble.core.data._dataHelpers import createDataNoValidation
 
-
-def _validatePredictedAsLabels(predictedValues):
-    if not isinstance(predictedValues, nimble.core.data.Base):
-        msg = "predictedValues must be derived class of nimble.core.data.Base"
-        raise InvalidArgumentType(msg)
-    if len(predictedValues.features) > 1:
-        msg = "predictedValues must be labels only; this has more than "
-        msg += "one feature"
-        raise InvalidArgumentValue(msg)
-
-
 def cosineSimilarity(knownValues, predictedValues):
+    """
+    Calculate the cosine similarity between known and predicted values.
+    """
     _validatePredictedAsLabels(predictedValues)
     if not isinstance(knownValues, nimble.core.data.Base):
         msg = "knownValues must be derived class of nimble.core.data.Base"
@@ -40,8 +36,8 @@ def correlation(X, X_T=None):
     """
     Calculate the correlation between points in X. If X_T is not
     provided, a copy of X will be made in this function.
-
     """
+    # pylint: disable=invalid-name
     if X_T is None:
         X_T = X.T
     stdVector = X.points.statistics('populationstd')
@@ -58,8 +54,8 @@ def covariance(X, X_T=None, sample=True):
     """
     Calculate the covariance between points in X. If X_T is not
     provided, a copy of X will be made in this function.
-
     """
+    # pylint: disable=invalid-name
     if X_T is None:
         X_T = X.T
     pointMeansVector = X.points.statistics('mean')
@@ -86,7 +82,6 @@ def fractionCorrect(knownValues, predictedValues):
     Calculate how many values in predictedValues are equal to the
     values in the corresponding positions in knownValues. The return
     will be a float between 0 and 1 inclusive.
-
     """
     return 1 - fractionIncorrect(knownValues, predictedValues)
 
@@ -260,7 +255,7 @@ def _validateIndex(idx, numLabels, sourceArg):
     errorType = None
     if not isinstance(idx, int):
         errorType = InvalidArgumentValue
-    elif not (0 <= idx < numLabels):
+    elif not 0 <= idx < numLabels:
         errorType = IndexError
     if errorType is not None:
         msg = '{arg} contains an invalid value: {val}. All values must be '

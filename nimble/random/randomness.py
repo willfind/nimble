@@ -7,7 +7,7 @@ import random
 
 import numpy
 
-import nimble
+import nimble # pylint: disable=unused-import
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble._utility import scipy
@@ -15,7 +15,7 @@ from nimble.core.logger import handleLogging
 from nimble.core._createHelpers import validateReturnType, initDataObject
 
 pythonRandom = random.Random(42)
-numpyRandom = numpy.random.RandomState(42)
+numpyRandom = numpy.random.RandomState(42) # pylint: disable=no-member
 
 # We use None to signal that we are outside of a section of
 # uncontrolled randomness
