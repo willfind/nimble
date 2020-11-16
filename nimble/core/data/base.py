@@ -904,8 +904,7 @@ class Base(ABC):
                                              'toCalculate')
 
         ret = self._calculate_backend(calculator, points, features,
-                                      preserveZeros, skipNoneReturnValues,
-                                      outputType)
+                                      preserveZeros, outputType)
 
         handleLogging(useLog, 'prep', 'calculateOnElements',
                       self.getTypeString(), Base.calculateOnElements,
@@ -1015,8 +1014,8 @@ class Base(ABC):
         return ret
 
     def _calculate_backend(self, calculator, points=None, features=None,
-                           preserveZeros=False, skipNoneReturnValues=False,
-                           outputType=None, allowBoolOutput=False):
+                           preserveZeros=False, outputType=None,
+                           allowBoolOutput=False):
         if points is not None:
             points = constructIndicesList(self, 'point', points)
         if features is not None:
@@ -1682,7 +1681,7 @@ class Base(ABC):
             userblockSize = 0
         with h5py.File(outPath, 'w', userblock_size=userblockSize) as hdf:
             for name, point in zip(pnames, self.points):
-                point._convertUnusableTypes(float, (int, float, bool), False)
+                point._convertToNumericTypes()
                 asArray = point.copy('numpy array')
                 _ = hdf.create_dataset(name, data=asArray)
                 hdf.flush()
@@ -2392,13 +2391,13 @@ class Base(ABC):
     @pyplotRequired
     def _plot(self, includeColorbar, outPath, show, title, xAxisLabel,
               yAxisLabel, **kwargs):
-        toPlot = self._convertUnusableTypes(float, usableTypes=(int, float))
+        self._convertToNumericTypes(allowBool=False)
 
         if 'cmap' not in kwargs:
             kwargs['cmap'] = "gray"
 
         # matshow generates a new figure b/c existing axes are an issue.
-        plt.matshow(toPlot, **kwargs)
+        plt.matshow(self.copy('numpyarray'), **kwargs)
 
         if includeColorbar:
             plt.colorbar()
@@ -4199,11 +4198,11 @@ class Base(ABC):
             raise ImproperObjectAction(msg)
 
         try:
-            self._convertUnusableTypes(float, (int, float, bool), False)
+            self._convertToNumericTypes()
         except ImproperObjectAction:
             self._numericValidation()
         try:
-            other._convertUnusableTypes(float, (int, float, bool), False)
+            other._convertToNumericTypes()
         except ImproperObjectAction:
             other._numericValidation(right=True)
 
@@ -4430,7 +4429,7 @@ class Base(ABC):
         return self._genericBinaryOperations('__imod__', other)
 
     @to2args
-    def __pow__(self, other, z): # pylint: disable=invalid-name
+    def __pow__(self, other, z): # pylint: disable=unused-argument
         """
         Perform exponentiation (iterated __mul__) using the elements of
         this object as the bases, elementwise if ``other`` is a nimble
@@ -4576,7 +4575,7 @@ class Base(ABC):
         if 'div' in opName or 'mod' in opName:
             self._validateDivMod(opName, other)
 
-    def _genericBinary_axisNames(self, opName, other, usableTypes):
+    def _genericBinary_axisNames(self, opName, other, conversionKwargs):
         """
         Determines axis names for operations between two Base objects.
 
@@ -4614,7 +4613,7 @@ class Base(ABC):
 
         # determine axis names for returned object
         try:
-            other._convertUnusableTypes(float, usableTypes, False)
+            other._convertToNumericTypes(**conversionKwargs)
         except ImproperObjectAction:
             other._numericValidation(right=True)
         # everything else that uses this helper is a binary scalar op
@@ -4656,33 +4655,33 @@ class Base(ABC):
             msg = msg.format(opName, equalAxis, axis, matches)
             raise InvalidArgumentValue(msg)
 
-    def _convertUnusableTypes(self, convertTo, usableTypes, returnCopy=True):
+    def _convertToNumericTypes(self, allowInt=True, allowBool=True):
         """
-        Convert the data if necessary.
-
-        Convert any type not in usableTypes to the convertTo type.
-        Conversion is done inplace if returnCopy is set to False
+        Convert the data, inplace, to numeric type if necessary.
         """
+        usableTypes = [float]
+        if not all(isinstance(a, bool) for a in (allowInt, allowBool)):
+            msg = 'all arguments for _convertToNumericTypes must be bools'
+            raise InvalidArgumentValue(msg)
+        if allowInt:
+            usableTypes.append(int)
+        if allowBool:
+            usableTypes.append(bool)
+        usableTypes = tuple(usableTypes)
         try:
-            ret = self._convertUnusableTypes_implementation(convertTo,
-                                                            usableTypes)
-        except (ValueError, TypeError):
+            return self._convertToNumericTypes_implementation(usableTypes)
+        except (ValueError, TypeError) as e:
             msg = 'Unable to coerce the data to the type required for this '
             msg += 'operation.'
-            raise ImproperObjectAction(msg)
-        if returnCopy:
-            return ret
-
-        self.data = ret
-        return None
+            raise ImproperObjectAction(msg) from e
 
     def _genericBinaryOperations(self, opName, other):
+        conversionKwargs = {}
         if 'pow' in opName:
-            usableTypes = (float,)
-        else:
-            usableTypes = (int, float, bool)
+            conversionKwargs['allowInt'] = False
+            conversionKwargs['allowBool'] = False
         try:
-            self._convertUnusableTypes(float, usableTypes, False)
+            self._convertToNumericTypes(**conversionKwargs)
         except ImproperObjectAction:
             self._numericValidation()
         if isinstance(other, Stretch):
@@ -4696,8 +4695,8 @@ class Base(ABC):
         # figure out return obj's point / feature names
         otherBase = isinstance(other, Base)
         if otherBase:
-            retPNames, retFNames = self._genericBinary_axisNames(opName, other,
-                                                                 usableTypes)
+            retPNames, retFNames = self._genericBinary_axisNames(
+                opName, other, conversionKwargs)
         else:
             retPNames = self.points._getNamesNoGeneration()
             retFNames = self.features._getNamesNoGeneration()
@@ -4776,9 +4775,11 @@ class Base(ABC):
 
         return lhsBool._genericBinaryOperations(opName, rhsBool)
 
+    def _isBooleanData(self):
+        return False
+
     def _logicalValidationAndConversion(self):
-        if (not hasattr(self.data, 'dtype')
-                or self.data.dtype not in [bool, numpy.bool_]):
+        if not self._isBooleanData():
             validValues = match.allValues([True, False, 0, 1])
             if not validValues(self):
                 msg = 'logical operations can only be performed on data '
@@ -5398,7 +5399,7 @@ class Base(ABC):
         pass
 
     @abstractmethod
-    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
+    def _convertToNumericTypes_implementation(self, usableTypes):
         pass
 
     @abstractmethod

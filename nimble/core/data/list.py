@@ -9,7 +9,7 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.exceptions import ImproperObjectAction, PackageException
+from nimble.exceptions import PackageException
 from nimble._utility import inheritDocstringsFactory, numpy2DArray, is2DArray
 from nimble._utility import scipy, pd
 from .base import Base
@@ -622,18 +622,17 @@ class List(Base):
             ret.append(retP)
         return List(ret)
 
-    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
+    def _convertToNumericTypes_implementation(self, usableTypes):
         def needConversion(val):
             return type(val) not in usableTypes
 
         def convertType(val):
             if type(val) in usableTypes:
                 return val
-            return convertTo(val)
+            return float(val)
 
         if any(any(needConversion(v) for v in pt) for pt in self.data):
-            return [list(map(convertType, pt)) for pt in self.data]
-        return self.data
+            self.data = [list(map(convertType, pt)) for pt in self.data]
 
     def _iterateElements_implementation(self, order, only):
         array = numpy.array(self.data, dtype=numpy.object_)
@@ -680,24 +679,8 @@ class ListView(BaseView, List):
 
         return listForm
 
-    def _convertUnusableTypes(self, convertTo, usableTypes, returnCopy=True):
-        # need to override the Base level function because self.data is a
-        # ListPassThrough. If returnCopy, can return a list otherwise need to
-        # modify the self._source.data the ListPassThrough references
-        try:
-            ret = self._convertUnusableTypes_implementation(convertTo,
-                                                            usableTypes)
-        except (ValueError, TypeError) as e:
-            msg = 'Unable to coerce the data to the type required for this '
-            msg += 'operation.'
-            raise ImproperObjectAction(msg) from e
-        if returnCopy:
-            return ret
-        pRange = slice(self._pStart, self._pEnd)
-        fRange = slice(self._fStart, self._fEnd)
-        for i, pt in enumerate(self._source.data[pRange]):
-            pt[fRange] = ret[i]
-        return None
+    def _convertToNumericTypes_implementation(self, usableTypes):
+        self._source._convertToNumericTypes_implementation(usableTypes)
 
 class FeatureViewer(object):
     """

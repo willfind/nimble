@@ -432,10 +432,9 @@ class DataFrame(Base):
             ret = numpy.matmul(self.data.values, other.copy('numpyarray'))
         return DataFrame(ret)
 
-    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
+    def _convertToNumericTypes_implementation(self, usableTypes):
         if not all(dtype in usableTypes for dtype in self.data.dtypes):
-            return self.data.astype(convertTo)
-        return self.data
+            self.data = self.data.astype(float)
 
     def _iterateElements_implementation(self, order, only):
         return NimbleElementIterator(self.data.values, order, only)

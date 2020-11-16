@@ -170,12 +170,12 @@ class Stretch(object):
                 self._source._validateDivMod(opName, other)
 
     def _stretchArithmetic(self, opName, other):
+        conversionKwargs = {}
         if 'pow' in opName:
-            usableTypes = (float,)
-        else:
-            usableTypes = (int, float, bool)
+            conversionKwargs['allowInt'] = False
+            conversionKwargs['allowBool'] = False
         try:
-            self._source._convertUnusableTypes(float, usableTypes, False)
+            self._source._convertToNumericTypes(**conversionKwargs)
         except ImproperObjectAction:
             self._source._numericValidation()
         if isinstance(other, Stretch):
@@ -183,7 +183,7 @@ class Stretch(object):
         else:
             otherSource = other
         try:
-            otherSource._convertUnusableTypes(float, usableTypes, False)
+            otherSource._convertToNumericTypes(**conversionKwargs)
         except ImproperObjectAction:
             otherSource._numericValidation(right=True)
 
@@ -195,6 +195,7 @@ class Stretch(object):
         except (TypeError, ValueError, FloatingPointError) as error:
             self._source._diagnoseFailureAndRaiseException(opName, otherSource,
                                                            error)
+            raise # bakckup should be diagnosed and raised above
 
         if (opName.startswith('__r')
                 and ret.getTypeString() != other.getTypeString()):

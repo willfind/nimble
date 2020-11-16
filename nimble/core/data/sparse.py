@@ -9,7 +9,7 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.exceptions import PackageException, ImproperObjectAction
+from nimble.exceptions import PackageException
 from nimble._utility import inheritDocstringsFactory, is2DArray
 from nimble._utility import scipy, pd
 from nimble._utility import sparseMatrixToArray
@@ -1204,10 +1204,10 @@ class Sparse(Base):
             selfData = self.data
         return selfData
 
-    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
+    def _convertToNumericTypes_implementation(self, usableTypes):
         if self.data.dtype not in usableTypes:
-            self.data.data = self.data.data.astype(convertTo)
-        return self.data
+            self.data = self.data.astype(float)
+            self._resetSorted()
 
     def _iterateElements_implementation(self, order, only):
         if only is not None and not only(0): # we can ignore zeros
@@ -1216,6 +1216,9 @@ class Sparse(Base):
         else:
             array = sparseMatrixToArray(self.data)
         return NimbleElementIterator(array, order, only)
+
+    def _isBooleanData(self):
+        return self.data.dtype in [bool, numpy.bool_]
 
     def _resetSorted(self):
         self._sorted['axis'] = None
@@ -1429,23 +1432,12 @@ class SparseView(BaseView, Sparse):
         selfConv._writeFileMTX_implementation(outPath, includePointNames,
                                               includeFeatureNames)
 
-    def _convertUnusableTypes(self, convertTo, usableTypes, returnCopy=True):
-        # We do not want to change the data attribute for SparseView!
-        # This converts the data types of the source object's data attribute
-        # Note: Though this is a view object, we allow this modification since
-        # all the values remain equal and only the types change.
-        try:
-            ret = self._source._convertUnusableTypes_implementation(
-                convertTo, usableTypes)
-        except (ValueError, TypeError):
-            msg = 'Unable to coerce the data to the type required for this '
-            msg += 'operation.'
-            raise ImproperObjectAction(msg)
-        if returnCopy:
-            return ret
-        self._source.data = ret
-        return None
+    def _convertToNumericTypes_implementation(self, usableTypes):
+        self._source._convertToNumericTypes_implementation(usableTypes)
 
     def _iterateElements_implementation(self, order, only):
         selfConv = self.copy(to="Sparse")
         return selfConv._iterateElements_implementation(order, only)
+
+    def _isBooleanData(self):
+        return self._source.data.dtype in [bool, numpy.bool_]

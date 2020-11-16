@@ -483,13 +483,15 @@ class Matrix(Base):
             return Matrix(self.data * other.data)
         return Matrix(numpy.matmul(self.data, other.copy(to="numpyarray")))
 
-    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
+    def _convertToNumericTypes_implementation(self, usableTypes):
         if self.data.dtype not in usableTypes:
-            return self.data.astype(convertTo)
-        return self.data
+            self.data = self.data.astype(float)
 
     def _iterateElements_implementation(self, order, only):
         return NimbleElementIterator(self.data, order, only)
+
+    def _isBooleanData(self):
+        return self.data.dtype in [bool, numpy.bool_]
 
 class MatrixView(BaseView, Matrix):
     """

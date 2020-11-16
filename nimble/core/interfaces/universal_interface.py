@@ -1281,25 +1281,25 @@ class TrainedLearner(object):
 
         >>> rawTrainX1 = [[1, 1], [2, 2], [3, 3]]
         >>> trainX1 = nimble.data('Matrix', rawTrainX1)
-        >>> rawTrainY1 = [[1], [2], [3]] # mean of 2
+        >>> rawTrainY1 = [[1], [2], [3]]
         >>> trainY1 = nimble.data('Matrix', rawTrainY1)
         >>> rawTestX = [[8, 8], [-3, -3]]
         >>> testX = nimble.data('Matrix', rawTestX)
-        >>> tl = nimble.train('nimble.MeanConstant', trainX1, trainY1)
+        >>> tl = nimble.train('nimble.KNNClassifier', trainX1, trainY1)
         >>> tl.apply(testX)
         Matrix(
-            [[2.000]
-             [2.000]]
+            [[3]
+             [1]]
             )
         >>> rawTrainX2 = [[4, 4], [5, 5], [6, 6]]
         >>> trainX2 = nimble.data('Matrix', rawTrainX2)
-        >>> rawTrainY2 = [[4], [5], [6]] # mean of 5
+        >>> rawTrainY2 = [[4], [5], [6]]
         >>> trainY2 = nimble.data('Matrix', rawTrainY2)
         >>> tl.retrain(trainX2, trainY2)
         >>> tl.apply(testX)
         Matrix(
-            [[5.000]
-             [5.000]]
+            [[6]
+             [4]]
             )
 
         Changing the learner arguments.

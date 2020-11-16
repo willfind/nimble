@@ -9,7 +9,6 @@ from .randomness import setSeed
 from .randomness import _generateSubsidiarySeed
 from .randomness import _startAlternateControl
 from .randomness import _endAlternateControl
-from .randomness import _saved
 
 
 __all__ = ['data', 'numpyRandom', 'pythonRandom', 'setSeed']
