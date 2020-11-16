@@ -62,7 +62,7 @@ def testMlpyHandmadeLogisticRegression():
     expected = [[1.]]
     expectedObj = nimble.data('Matrix', expected, useLog=False)
 
-    numpy.testing.assert_approx_equal(ret.data[0, 0], 1.)
+    numpy.testing.assert_approx_equal(ret._data[0, 0], 1.)
 
 @mlpySkipDec
 @oneLogEntryExpected
@@ -81,8 +81,8 @@ def testMlpyHandmadeKNN():
 
     assert ret is not None
 
-    numpy.testing.assert_approx_equal(ret.data[0, 0], 1.)
-    numpy.testing.assert_approx_equal(ret.data[1, 0], 0.)
+    numpy.testing.assert_approx_equal(ret._data[0, 0], 1.)
+    numpy.testing.assert_approx_equal(ret._data[1, 0], 0.)
 
 @mlpySkipDec
 @oneLogEntryExpected
@@ -98,7 +98,7 @@ def testMlpyHandmadePCA():
 
     assert ret is not None
     # check return has the right dimension
-    assert len(ret.data[0]) == 1
+    assert len(ret._data[0]) == 1
 
 @mlpySkipDec
 @oneLogEntryExpected
@@ -116,7 +116,7 @@ def testMlpyHandmadeKernelPCA():
 
     assert ret is not None
     # check return has the right dimension
-    assert len(ret.data[0]) == 1
+    assert len(ret._data[0]) == 1
 
 @mlpySkipDec
 @raises(InvalidArgumentValue)

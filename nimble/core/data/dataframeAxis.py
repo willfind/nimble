@@ -47,7 +47,7 @@ class DataFrameAxis(Axis, metaclass=ABCMeta):
         each function handles the returned value, these are managed
         separately by each frontend function.
         """
-        dataframe = self._base.data
+        dataframe = self._base._data
 
         pointNames, featureNames = self._getStructuralNames(targetList)
         if self._isPoint:
@@ -72,11 +72,11 @@ class DataFrameAxis(Axis, metaclass=ABCMeta):
     def _permute_implementation(self, indexPosition):
         # use numpy indexing to change the ordering
         if self._isPoint:
-            self._base.data = self._base.data.iloc[indexPosition, :]
-            self._base.data.index = pd.RangeIndex(len(self))
+            self._base._data = self._base._data.iloc[indexPosition, :]
+            self._base._data.index = pd.RangeIndex(len(self))
         else:
-            self._base.data = self._base.data.iloc[:, indexPosition]
-            self._base.data.columns = pd.RangeIndex(len(self))
+            self._base._data = self._base._data.iloc[:, indexPosition]
+            self._base._data.columns = pd.RangeIndex(len(self))
 
 
     ##############################
@@ -87,7 +87,7 @@ class DataFrameAxis(Axis, metaclass=ABCMeta):
         uniqueData, uniqueIndices = denseAxisUniqueArray(self._base,
                                                          self._axis)
         uniqueData = pd.DataFrame(uniqueData)
-        if numpy.array_equal(self._base.data.values, uniqueData):
+        if numpy.array_equal(self._base._data.values, uniqueData):
             return self._base.copy()
         axisNames, offAxisNames = uniqueNameGetter(self._base, self._axis,
                                                    uniqueIndices)
@@ -109,10 +109,10 @@ class DataFrameAxis(Axis, metaclass=ABCMeta):
             ptDim = 1
             ftDim = totalCopies
         if copyVectorByVector:
-            repeated = numpy.repeat(self._base.data.values, totalCopies,
+            repeated = numpy.repeat(self._base._data.values, totalCopies,
                                     axis)
         else:
-            repeated = numpy.tile(self._base.data.values, (ptDim, ftDim))
+            repeated = numpy.tile(self._base._data.values, (ptDim, ftDim))
         return pd.DataFrame(repeated)
 
     ####################
@@ -148,10 +148,10 @@ class DataFramePoints(DataFrameAxis, Points):
         index in this object, the remaining points from this object will
         continue below the inserted points.
         """
-        startData = self._base.data.iloc[:insertBefore, :]
-        endData = self._base.data.iloc[insertBefore:, :]
-        self._base.data = pd.concat((startData, toInsert.data, endData),
-                                    axis=0, ignore_index=True)
+        startData = self._base._data.iloc[:insertBefore, :]
+        endData = self._base._data.iloc[insertBefore:, :]
+        self._base._data = pd.concat((startData, toInsert._data, endData),
+                                     axis=0, ignore_index=True)
 
     def _transform_implementation(self, function, limitTo):
         for i, pt in enumerate(self):
@@ -159,7 +159,7 @@ class DataFramePoints(DataFrameAxis, Points):
                 continue
             currRet = function(pt)
 
-            self._base.data.iloc[i, :] = currRet
+            self._base._data.iloc[i, :] = currRet
 
     ################################
     # Higher Order implementations #
@@ -168,14 +168,14 @@ class DataFramePoints(DataFrameAxis, Points):
     def _splitByCollapsingFeatures_implementation(
             self, featuresToCollapse, collapseIndices, retainIndices,
             currNumPoints, currFtNames, numRetPoints, numRetFeatures):
-        collapseData = self._base.data.values[:, collapseIndices]
-        retainData = self._base.data.values[:, retainIndices]
+        collapseData = self._base._data.values[:, collapseIndices]
+        retainData = self._base._data.values[:, retainIndices]
 
         tmpData = fillArrayWithCollapsedFeatures(
             featuresToCollapse, retainData, numpy.array(collapseData),
             currNumPoints, currFtNames, numRetPoints, numRetFeatures)
 
-        self._base.data = pd.DataFrame(tmpData)
+        self._base._data = pd.DataFrame(tmpData)
 
     def _combineByExpandingFeatures_implementation(self, uniqueDict, namesIdx,
                                                    uniqueNames, numRetFeatures,
@@ -184,7 +184,7 @@ class DataFramePoints(DataFrameAxis, Points):
                                                 uniqueNames, numRetFeatures,
                                                 numExpanded)
 
-        self._base.data = pd.DataFrame(tmpData)
+        self._base._data = pd.DataFrame(tmpData)
 
 
 class DataFramePointsView(PointsView, AxisView, DataFramePoints):
@@ -218,10 +218,10 @@ class DataFrameFeatures(DataFrameAxis, Features):
         provided index in this object, the remaining points from this
         object will continue to the right of the inserted points.
         """
-        startData = self._base.data.iloc[:, :insertBefore]
-        endData = self._base.data.iloc[:, insertBefore:]
-        self._base.data = pd.concat((startData, toInsert.data, endData),
-                                    axis=1, ignore_index=True)
+        startData = self._base._data.iloc[:, :insertBefore]
+        endData = self._base._data.iloc[:, insertBefore:]
+        self._base._data = pd.concat((startData, toInsert._data, endData),
+                                     axis=1, ignore_index=True)
 
     def _transform_implementation(self, function, limitTo):
         for j, f in enumerate(self):
@@ -229,7 +229,7 @@ class DataFrameFeatures(DataFrameAxis, Features):
                 continue
             currRet = function(f)
 
-            self._base.data.iloc[:, j] = currRet
+            self._base._data.iloc[:, j] = currRet
 
 
     ################################
@@ -241,16 +241,16 @@ class DataFrameFeatures(DataFrameAxis, Features):
         tmpData = numpy.empty(shape=(len(self._base.points), numRetFeatures),
                               dtype=numpy.object_)
 
-        tmpData[:, :featureIndex] = self._base.data.values[:, :featureIndex]
+        tmpData[:, :featureIndex] = self._base._data.values[:, :featureIndex]
         for i in range(numResultingFts):
             newFeat = []
             for lst in splitList:
                 newFeat.append(lst[i])
             tmpData[:, featureIndex + i] = newFeat
-        existingData = self._base.data.values[:, featureIndex + 1:]
+        existingData = self._base._data.values[:, featureIndex + 1:]
         tmpData[:, featureIndex + numResultingFts:] = existingData
 
-        self._base.data = pd.DataFrame(tmpData)
+        self._base._data = pd.DataFrame(tmpData)
 
 
 class DataFrameFeaturesView(FeaturesView, AxisView, DataFrameFeatures):

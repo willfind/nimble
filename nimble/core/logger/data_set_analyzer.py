@@ -269,8 +269,8 @@ def computeShape(dataContainer):
         (numRows, numColumns)
     """
     try:
-        shape = dataContainer.data.shape
+        shape = dataContainer._data.shape
     except AttributeError:
-        shape = (len(dataContainer.data), len(dataContainer.data[0]))
+        shape = (len(dataContainer._data), len(dataContainer._data[0]))
 
     return shape

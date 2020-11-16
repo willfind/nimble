@@ -156,9 +156,9 @@ def testShogunKNN():
                                testX=testObj, output=None, arguments=args)
 
     assert ret is not None
-    assert ret.data[0, 0] == 0
-    assert ret.data[1, 0] == 1
-    assert ret.data[2, 0] == 2
+    assert ret._data[0, 0] == 0
+    assert ret._data[1, 0] == 1
+    assert ret._data[2, 0] == 2
 
 
 @shogunSkipDec
@@ -181,9 +181,9 @@ def testShogunMulticlassSVM():
 
     assert ret is not None
 
-    assert ret.data[0, 0] == 0
-    assert ret.data[1, 0] == 1
-    assert ret.data[2, 0] == 2
+    assert ret._data[0, 0] == 0
+    assert ret._data[1, 0] == 1
+    assert ret._data[2, 0] == 2
 
 
 @shogunSkipDec
@@ -284,7 +284,7 @@ def testShogunEmbeddedRossData():
     ret = nimble.trainAndApply("shogun.MulticlassOCAS", trainingObj, trainY=0, testX=testObj, output=None, arguments=args)
     assert ret is not None
 
-    for value in ret.data:
+    for value in ret._data:
         assert value == 2 or value == 3
 
 

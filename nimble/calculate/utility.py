@@ -271,7 +271,7 @@ def _generatePredicted(knowns, predictionType):
         currConfidences = [None, None]
         winner = numpyRandom.randint(10) + 10 + 2
         loser = numpyRandom.randint(winner - 2) + 2
-        if knowns.data[i][0] == 0:
+        if knowns._data[i][0] == 0:
             currConfidences[0] = winner
             currConfidences[1] = loser
         else:
@@ -286,11 +286,11 @@ def _generatePredicted(knowns, predictionType):
 
 def _makeIncorrect(predicted, predictionType, index):
     if predictionType in [0, 1]:
-        predicted.data[index][0] = math.fabs(predicted.data[index][0] - 1)
+        predicted._data[index][0] = math.fabs(predicted._data[index][0] - 1)
     else:
-        temp = predicted.data[index][0]
-        predicted.data[index][0] = predicted.data[index][1]
-        predicted.data[index][1] = temp
+        temp = predicted._data[index][0]
+        predicted._data[index][0] = predicted._data[index][1]
+        predicted._data[index][1] = temp
 
 
 class _NonMonotonicResultsException(Exception):

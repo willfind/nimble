@@ -52,15 +52,15 @@ class DataFrame(Base):
 
         if isinstance(data, pd.DataFrame):
             if reuseData:
-                self.data = data
+                self._data = data
             else:
-                self.data = data.copy()
+                self._data = data.copy()
         else:
-            self.data = pd.DataFrame(data, copy=True)
+            self._data = pd.DataFrame(data, copy=True)
 
         shape = kwds.get('shape', None)
         if shape is None:
-            kwds['shape'] = self.data.shape
+            kwds['shape'] = self._data.shape
         super().__init__(**kwds)
 
     def _getPoints(self):
@@ -73,7 +73,7 @@ class DataFrame(Base):
         ids = itertools.product(range(len(self.points)),
                                 range(len(self.features)))
         for i, j in ids:
-            currVal = self.data.iat[i, j]
+            currVal = self._data.iat[i, j]
 
             if points is not None and i not in points:
                 continue
@@ -85,8 +85,7 @@ class DataFrame(Base):
             else:
                 currRet = toTransform(currVal, i, j)
 
-            # iat setter does not support type changes, use iloc instead
-            self.data.iloc[i, j] = currRet
+            self._data.iloc[i, j] = currRet
 
     # pylint: disable=unused-argument
     def _calculate_implementation(self, function, points, features,
@@ -96,9 +95,9 @@ class DataFrame(Base):
                 points = slice(None)
             if features is None:
                 features = slice(None)
-            toCalculate = self.data.iloc[points, features]
+            toCalculate = self._data.iloc[points, features]
         else:
-            toCalculate = self.data
+            toCalculate = self._data
 
         ret = toCalculate.applymap(function)
 
@@ -118,7 +117,7 @@ class DataFrame(Base):
         This is not an in place operation, a new pandas DataFrame is
         constructed.
         """
-        self.data = self.data.T
+        self._data = self._data.T
 
     def _getTypeString_implementation(self):
         return 'DataFrame'
@@ -127,8 +126,8 @@ class DataFrame(Base):
         if not isinstance(other, DataFrame):
             return False
 
-        return allDataIdentical(self.data.astype(numpy.object_).values,
-                                other.data.astype(numpy.object_).values)
+        return allDataIdentical(self._data.astype(numpy.object_).values,
+                                other._data.astype(numpy.object_).values)
 
     def _writeFileCSV_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
@@ -138,20 +137,20 @@ class DataFrame(Base):
         """
         with open(outPath, 'w') as outFile:
             if includeFeatureNames:
-                self.data.columns = self.features.getNames()
+                self._data.columns = self.features.getNames()
                 if includePointNames:
                     outFile.write('pointNames')
 
             if includePointNames:
-                self.data.index = self.points.getNames()
+                self._data.index = self.points.getNames()
 
-        self.data.to_csv(outPath, mode='a', index=includePointNames,
-                         header=includeFeatureNames)
+        self._data.to_csv(outPath, mode='a', index=includePointNames,
+                          header=includeFeatureNames)
 
         if includePointNames:
-            self.data.index = pd.RangeIndex(len(self.data.index))
+            self._data.index = pd.RangeIndex(len(self._data.index))
         if includeFeatureNames:
-            self.data.columns = pd.RangeIndex(len(self.data.columns))
+            self._data.columns = pd.RangeIndex(len(self._data.columns))
 
     def _writeFileMTX_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
@@ -168,7 +167,7 @@ class DataFrame(Base):
             comment += ','.join(self.points.getNames())
         if includeFeatureNames:
             comment += '\n#' + ','.join(self.features.getNames())
-        scipy.io.mmwrite(outPath, self.data.astype(numpy.float),
+        scipy.io.mmwrite(outPath, self._data.astype(numpy.float),
                          comment=comment)
 
     def _referenceDataFrom_implementation(self, other):
@@ -176,7 +175,7 @@ class DataFrame(Base):
             msg = "Other must be the same type as this object"
             raise InvalidArgumentType(msg)
 
-        self.data = other.data
+        self._data = other._data
 
     def _copy_implementation(self, to):
         """
@@ -190,12 +189,12 @@ class DataFrame(Base):
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
             if to == 'DataFrame':
-                data = self.data.copy()
-            elif self.data.empty:
-                data = self.data.values.copy()
+                data = self._data.copy()
+            elif self._data.empty:
+                data = self._data.values.copy()
             else:
                 # convert to list because it preserves data types
-                data = pandasDataFrameToList(self.data)
+                data = pandasDataFrameToList(self._data)
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
@@ -203,14 +202,14 @@ class DataFrame(Base):
         needsReshape = len(self._shape) > 2
         if to in ['pythonlist', 'numpyarray']:
             # convert pandas Timestamp type if necessary
-            timestamp = [d.type == numpy.datetime64 for d in self.data.dtypes]
+            timestamp = [d.type == numpy.datetime64 for d in self._data.dtypes]
             if any(timestamp):
-                arr = self.data.astype(numpy.object_).values
+                arr = self._data.astype(numpy.object_).values
                 attr = 'to_pydatetime' if to == 'pythonlist' else 'to_numpy'
                 convTimestamp = numpy.vectorize(lambda v: getattr(v, attr)())
                 arr[:, timestamp] = convTimestamp(arr[:, timestamp])
             else:
-                arr = self.data.values
+                arr = self._data.values
             if needsReshape:
                 arr = arr.reshape(self._shape)
             if to == 'pythonlist':
@@ -224,9 +223,9 @@ class DataFrame(Base):
             for i in range(self.shape[0]):
                 data[i] = self.points[i].copy('pythonlist')
         elif to == 'pandasdataframe':
-            data = self.data.copy()
+            data = self._data.copy()
         else:
-            data = self.data
+            data = self._data
         if to == 'numpymatrix':
             return numpy.matrix(data)
         if 'scipy' in to:
@@ -236,7 +235,7 @@ class DataFrame(Base):
             if to == 'scipycoo':
                 return scipy.sparse.coo_matrix(data)
             try:
-                ret = self.data.values.astype(numpy.float)
+                ret = self._data.values.astype(numpy.float)
             except ValueError as e:
                 msg = 'Can only create scipy {0} matrix from numeric data'
                 raise ValueError(msg.format(to[-3:])) from e
@@ -263,23 +262,23 @@ class DataFrame(Base):
                                                featureEnd - featureStart + 1))
         else:
             #convert values to be array or matrix, instead of pandas DataFrame
-            values = replaceWith.data.values
+            values = replaceWith._data.values
 
         # pandas is exclusive
         pointEnd += 1
         featureEnd += 1
-        self.data.iloc[pointStart:pointEnd, featureStart:featureEnd] = values
+        self._data.iloc[pointStart:pointEnd, featureStart:featureEnd] = values
 
     def _flatten_implementation(self, order):
         numElements = len(self.points) * len(self.features)
         order = convertToNumpyOrder(order)
-        self.data = pd.DataFrame(self.data.values.reshape((1, numElements),
-                                                          order=order))
+        self._data = pd.DataFrame(self._data.values.reshape((1, numElements),
+                                                            order=order))
 
     def _unflatten_implementation(self, reshape, order):
         order = convertToNumpyOrder(order)
-        self.data = pd.DataFrame(self.data.values.reshape(reshape,
-                                                          order=order))
+        self._data = pd.DataFrame(self._data.values.reshape(reshape,
+                                                            order=order))
 
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):
@@ -288,31 +287,31 @@ class DataFrame(Base):
         elif point == 'intersection':
             point = 'inner'
         if self._featureNamesCreated():
-            self.data.columns = self.features.getNames()
-        tmpDfR = other.data.copy()
+            self._data.columns = self.features.getNames()
+        tmpDfR = other._data.copy()
         if other._featureNamesCreated():
             tmpDfR.columns = other.features.getNames()
 
         if feature == 'intersection':
-            self.data = self.data.iloc[:, matchingFtIdx[0]]
+            self._data = self._data.iloc[:, matchingFtIdx[0]]
             tmpDfR = tmpDfR.iloc[:, matchingFtIdx[1]]
-            matchingFtIdx[0] = list(range(self.data.shape[1]))
+            matchingFtIdx[0] = list(range(self._data.shape[1]))
             matchingFtIdx[1] = list(range(tmpDfR.shape[1]))
         elif feature == "left":
             tmpDfR = tmpDfR.iloc[:, matchingFtIdx[1]]
             matchingFtIdx[1] = list(range(tmpDfR.shape[1]))
 
-        numColsL = len(self.data.columns)
+        numColsL = len(self._data.columns)
         if onFeature is None:
             if self._pointNamesCreated() and other._pointNamesCreated():
                 # differentiate default names between objects
-                self.data.index = [n + '_l' if n.startswith(DEFAULT_PREFIX)
-                                   else n for n in self.points.getNames()]
+                self._data.index = [n + '_l' if n.startswith(DEFAULT_PREFIX)
+                                    else n for n in self.points.getNames()]
                 tmpDfR.index = [n + '_r' if n.startswith(DEFAULT_PREFIX)
                                 else n for n in other.points.getNames()]
             elif self._pointNamesCreated() or other._pointNamesCreated():
                 # there will be no matches, need left points ordered first
-                self.data.index = list(range(len(self.points)))
+                self._data.index = list(range(len(self.points)))
                 idxRange = range(self.shape[0], self.shape[0] + other.shape[0])
                 tmpDfR.index = list(idxRange)
             else:
@@ -320,15 +319,15 @@ class DataFrame(Base):
                 idxRange = range(self.shape[0], self.shape[0] + other.shape[0])
                 tmpDfR.index = list(idxRange)
 
-            self.data = self.data.merge(tmpDfR, how=point, left_index=True,
-                                        right_index=True)
+            self._data = self._data.merge(tmpDfR, how=point, left_index=True,
+                                          right_index=True)
         else:
-            onIdxL = self.data.columns.get_loc(onFeature)
-            self.data = self.data.merge(tmpDfR, how=point, on=onFeature)
+            onIdxL = self._data.columns.get_loc(onFeature)
+            self._data = self._data.merge(tmpDfR, how=point, on=onFeature)
 
         # return labels to default after we've executed the merge
-        self.data.index = pd.RangeIndex(self.data.shape[0])
-        self.data.columns = pd.RangeIndex(self.data.shape[1])
+        self._data.index = pd.RangeIndex(self._data.shape[0])
+        self._data.columns = pd.RangeIndex(self._data.shape[1])
 
         toDrop = []
         for left, right in zip(matchingFtIdx[0], matchingFtIdx[1]):
@@ -340,44 +339,44 @@ class DataFrame(Base):
                 right = right + numColsL - 1
             else:
                 right = right + numColsL
-            matches = self.data.iloc[:, left] == self.data.iloc[:, right]
+            matches = self._data.iloc[:, left] == self._data.iloc[:, right]
             # pylint: disable=comparison-with-itself
-            nansL = numpy.array([x != x for x in self.data.iloc[:, left]])
-            nansR = numpy.array([x != x for x in self.data.iloc[:, right]])
+            nansL = numpy.array([x != x for x in self._data.iloc[:, left]])
+            nansR = numpy.array([x != x for x in self._data.iloc[:, right]])
             acceptableValues = matches + nansL + nansR
             if not all(acceptableValues):
                 msg = "The objects contain different values for the same "
                 msg += "feature"
                 raise InvalidArgumentValue(msg)
             if nansL.any():
-                leftNansLocInRight = self.data.iloc[:, right][nansL]
-                self.data.iloc[:, left][nansL] = leftNansLocInRight
+                leftNansLocInRight = self._data.iloc[:, right][nansL]
+                self._data.iloc[:, left][nansL] = leftNansLocInRight
             toDrop.append(right)
 
         if toDrop:
-            self.data.drop(toDrop, axis=1, inplace=True)
-            self.data.columns = pd.RangeIndex(self.data.shape[1])
+            self._data.drop(toDrop, axis=1, inplace=True)
+            self._data.columns = pd.RangeIndex(self._data.shape[1])
 
         self._featureCount = (numColsL + len(tmpDfR.columns)
                               - len(matchingFtIdx[1]))
-        self._pointCount = len(self.data.index)
+        self._pointCount = len(self._data.index)
 
     def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueIdx):
         toFill = numpy.zeros((len(self.points), len(uniqueIdx)))
-        for ptIdx, val in self.data.iterrows():
+        for ptIdx, val in self._data.iterrows():
             ftIdx = uniqueIdx[val[0]]
             toFill[ptIdx, ftIdx] = 1
         return DataFrame(pd.DataFrame(toFill))
 
     def _getitem_implementation(self, x, y):
         # .iat should be used for accessing scalar values in pandas
-        return self.data.iat[x, y]
+        return self._data.iat[x, y]
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd, dropDimension):
         kwds = {}
-        kwds['data'] = self.data.iloc[pointStart:pointEnd,
-                                      featureStart:featureEnd]
+        kwds['data'] = self._data.iloc[pointStart:pointEnd,
+                                       featureStart:featureEnd]
         kwds['source'] = self
         pRange = pointEnd - pointStart
         fRange = featureEnd - featureStart
@@ -386,7 +385,7 @@ class DataFrame(Base):
                 shape = self._shape[1:]
                 source = self._createNestedObject(pointStart)
                 kwds['source'] = source
-                kwds['data'] = source.data
+                kwds['data'] = source._data
                 pointStart, pointEnd = 0, source.shape[0]
                 featureStart, featureEnd = 0, source.shape[1]
                 pRange = source.shape[0]
@@ -405,8 +404,8 @@ class DataFrame(Base):
 
         # Reassign labels as to match the positions in the view object,
         # not the positions in the source object.
-        ret.data.index = pd.RangeIndex(pRange)
-        ret.data.columns = pd.RangeIndex(fRange)
+        ret._data.index = pd.RangeIndex(pRange)
+        ret._data.columns = pd.RangeIndex(fRange)
 
         return ret
 
@@ -415,22 +414,22 @@ class DataFrame(Base):
         Create an object of one less dimension
         """
         reshape = (self._shape[1], int(numpy.prod(self._shape[2:])))
-        data = self.data.values[pointIndex].reshape(reshape)
+        data = self._data.values[pointIndex].reshape(reshape)
         return DataFrame(data, shape=self._shape[1:], reuseData=True)
 
     def _validate_implementation(self, level):
-        shape = self.data.shape
+        shape = self._data.shape
         assert shape[0] == len(self.points)
         assert shape[1] == len(self.features)
-        assert all(self.data.index == pd.RangeIndex(len(self.points)))
-        assert all(self.data.columns == pd.RangeIndex(len(self.features)))
+        assert all(self._data.index == pd.RangeIndex(len(self.points)))
+        assert all(self._data.columns == pd.RangeIndex(len(self.features)))
 
     def _containsZero_implementation(self):
         """
         Returns True if there is a value that is equal to integer 0
         contained in this object. False otherwise.
         """
-        return 0 in self.data.values
+        return 0 in self._data.values
 
 
     def _binaryOperations_implementation(self, opName, other):
@@ -444,7 +443,7 @@ class DataFrame(Base):
             # rhs may return array of sparse matrices so use default
             return self._defaultBinaryOperations_implementation(opName, other)
         try:
-            ret = getattr(self.data.values, opName)(other.data)
+            ret = getattr(self._data.values, opName)(other._data)
             return DataFrame(ret)
         except (AttributeError, InvalidArgumentType, ValueError):
             return self._defaultBinaryOperations_implementation(opName, other)
@@ -460,17 +459,17 @@ class DataFrame(Base):
         according to efficiency constraints.
         """
         if isinstance(other, nimble.core.data.Sparse):
-            ret = self.data.values * other.data
+            ret = self._data.values * other._data
         else:
-            ret = numpy.matmul(self.data.values, other.copy('numpyarray'))
+            ret = numpy.matmul(self._data.values, other.copy('numpyarray'))
         return DataFrame(ret)
 
     def _convertToNumericTypes_implementation(self, usableTypes):
-        if not all(dtype in usableTypes for dtype in self.data.dtypes):
-            self.data = self.data.astype(float)
+        if not all(dtype in usableTypes for dtype in self._data.dtypes):
+            self._data = self._data.astype(float)
 
     def _iterateElements_implementation(self, order, only):
-        return NimbleElementIterator(self.data.astype(numpy.object_).values,
+        return NimbleElementIterator(self._data.astype(numpy.object_).values,
                                      order, only)
 
 class DataFrameView(BaseView, DataFrame):

@@ -55,7 +55,7 @@ class List(Base):
             raise InvalidArgumentType(msg)
 
         if isinstance(data, list):
-            #case1: data=[]. self.data will be [], shape will be (0, shape[1])
+            #case1: data=[]. self._data will be [], shape will be (0, shape[1])
             # or (0, len(featureNames)) or (0, 0)
             if len(data) == 0:
                 if shape and len(shape) == 2:
@@ -63,7 +63,7 @@ class List(Base):
                 elif shape is None:
                     shape = (0, len(featureNames) if featureNames else 0)
             elif isAllowedSingleElement(data[0]):
-            #case2: data=['a', 'b', 'c'] or [1,2,3]. self.data will be
+            #case2: data=['a', 'b', 'c'] or [1,2,3]. self._data will be
             # [[1,2,3]], shape will be (1, 3)
                 if checkAll:#check all items
                     for i in data:
@@ -75,7 +75,7 @@ class List(Base):
                 data = [data]
             elif isinstance(data[0], (list, FeatureViewer)):
             #case3: data=[[1,2,3], ['a', 'b', 'c']] or [[]] or [[], []].
-            # self.data will be = data, shape will be (len(data), len(data[0]))
+            # self._data will be data, shape will be (len(data), len(data[0]))
             #case4: data=[FeatureViewer]
                 numFeatures = len(data[0])
                 if checkAll:#check all items
@@ -108,7 +108,7 @@ class List(Base):
             data = []
 
         self._numFeatures = int(numpy.prod(shape[1:]))
-        self.data = data
+        self._data = data
 
         kwds['featureNames'] = featureNames
         kwds['shape'] = shape
@@ -124,7 +124,7 @@ class List(Base):
         ids = itertools.product(range(len(self.points)),
                                 range(len(self.features)))
         for i, j in ids:
-            currVal = self.data[i][j]
+            currVal = self._data[i][j]
 
             if points is not None and i not in points:
                 continue
@@ -136,7 +136,7 @@ class List(Base):
             else:
                 currRet = toTransform(currVal, i, j)
 
-            self.data[i][j] = currRet
+            self._data[i][j] = currRet
 
     # pylint: disable=unused-argument
     def _calculate_implementation(self, function, points, features,
@@ -154,16 +154,16 @@ class List(Base):
         This is not an in place operation, a new list of lists is
         constructed.
         """
-        tempFeatures = len(self.data)
+        tempFeatures = len(self._data)
         transposed = []
         #load the new data with an empty point for each feature in the original
         for i in range(len(self.features)):
             transposed.append([])
-        for point in self.data:
+        for point in self._data:
             for i, val in enumerate(point):
                 transposed[i].append(val)
 
-        self.data = transposed
+        self._data = transposed
         self._numFeatures = tempFeatures
 
     def _getTypeString_implementation(self):
@@ -174,8 +174,8 @@ class List(Base):
             return False
 
         for index in range(len(self.points)):
-            sPoint = self.data[index]
-            oPoint = other.data[index]
+            sPoint = self._data[index]
+            oPoint = other._data[index]
             if sPoint != oPoint:
                 for sVal, oVal in zip(sPoint, oPoint):
                     # pylint: disable=comparison-with-itself
@@ -239,7 +239,7 @@ class List(Base):
 
             for j in range(len(self.features)):
                 for i in range(len(self.points)):
-                    value = self.data[i][j]
+                    value = self._data[i][j]
                     outFile.write(str(value) + '\n')
 
     def _referenceDataFrom_implementation(self, other):
@@ -247,7 +247,7 @@ class List(Base):
             msg = "Other must be the same type as this object"
             raise InvalidArgumentType(msg)
 
-        self.data = other.data
+        self._data = other._data
         self._numFeatures = other._numFeatures
 
     def _copy_implementation(self, to):
@@ -257,7 +257,7 @@ class List(Base):
             emptyData = numpy.empty(shape=self.shape)
 
         if to == 'pythonlist':
-            return [pt.copy() for pt in self.data]
+            return [pt.copy() for pt in self._data]
 
         if to in nimble.core.data.available:
             ptNames = self.points._getNamesNoGeneration()
@@ -265,9 +265,9 @@ class List(Base):
             if isEmpty:
                 data = numpy2DArray(emptyData)
             elif to == 'List':
-                data = [pt.copy() for pt in self.data]
+                data = [pt.copy() for pt in self._data]
             else:
-                data = _convertList(numpy2DArray, self.data)
+                data = _convertList(numpy2DArray, self._data)
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
@@ -277,7 +277,7 @@ class List(Base):
             if isEmpty:
                 ret = emptyData
             else:
-                ret = _convertList(numpy2DArray, self.data)
+                ret = _convertList(numpy2DArray, self._data)
             if needsReshape:
                 return ret.reshape(self._shape)
             return ret
@@ -288,7 +288,7 @@ class List(Base):
             if isEmpty:
                 emptyData = data
         else:
-            data = _convertList(numpy2DArray, self.data)
+            data = _convertList(numpy2DArray, self._data)
         if to == 'numpymatrix':
             if isEmpty:
                 return numpy.matrix(emptyData)
@@ -324,24 +324,24 @@ class List(Base):
         if not isinstance(replaceWith, Base):
             values = [replaceWith] * (featureEnd - featureStart + 1)
             for pIdx in range(pointStart, pointEnd + 1):
-                self.data[pIdx][featureStart:featureEnd + 1] = values
+                self._data[pIdx][featureStart:featureEnd + 1] = values
         else:
             for pIdx in range(pointStart, pointEnd + 1):
-                fill = replaceWith.data[pIdx - pointStart]
-                self.data[pIdx][featureStart:featureEnd + 1] = fill
+                fill = replaceWith._data[pIdx - pointStart]
+                self._data[pIdx][featureStart:featureEnd + 1] = fill
 
 
     def _flatten_implementation(self, order):
         if order == 'point':
-            onto = self.data[0]
+            onto = self._data[0]
             for _ in range(1, len(self.points)):
-                onto += self.data[1]
-                del self.data[1]
+                onto += self._data[1]
+                del self._data[1]
         else:
             result = [[]]
             for i in range(len(self.features)):
-                result[0].extend(p[i] for p in self.data)
-            self.data = result
+                result[0].extend(p[i] for p in self._data)
+            self._data = result
         self._numFeatures = self.shape[0] * self.shape[1]
 
     def _unflatten_implementation(self, reshape, order):
@@ -358,7 +358,7 @@ class List(Base):
                 temp = data[i::numPoints]
                 result.append(temp)
 
-        self.data = result
+        self._data = result
         self._numFeatures = numFeatures
 
     def _merge_implementation(self, other, point, feature, onFeature,
@@ -370,24 +370,24 @@ class List(Base):
                 onIdxL = onIdxLoc
                 onIdxR = onIdxLoc
                 right = [[row[i] for i in matchingFtIdx[1]]
-                         for row in other.data]
+                         for row in other._data]
                 # matching indices in right were sorted when slicing above
                 if len(right) > 0:
                     matchingFtIdx[1] = list(range(len(right[0])))
                 else:
                     matchingFtIdx[1] = []
                 if feature == "intersection":
-                    self.data = [[row[i] for i in matchingFtIdx[0]]
-                                 for row in self.data]
+                    self._data = [[row[i] for i in matchingFtIdx[0]]
+                                  for row in self._data]
                     # matching indices in left were sorted when slicing above
-                    if len(self.data) > 0:
-                        matchingFtIdx[0] = list(range(len(self.data[0])))
+                    if len(self._data) > 0:
+                        matchingFtIdx[0] = list(range(len(self._data[0])))
                     else:
                         matchingFtIdx[0] = []
             else:
                 onIdxL = self.features.getIndex(onFeature)
                 onIdxR = other.features.getIndex(onFeature)
-                right = copy.copy(other.data)
+                right = copy.copy(other._data)
         else:
             # using pointNames, prepend pointNames to left and right lists
             onIdxL = 0
@@ -407,27 +407,27 @@ class List(Base):
                 return DEFAULT_PREFIX + str(idx) + suffix
 
             if feature == "intersection":
-                for i, pt in enumerate(self.data):
+                for i, pt in enumerate(self._data):
                     ptL = [ptNameGetter(self, i, '_l')]
                     intersect = [val for idx, val in enumerate(pt)
                                  if idx in matchingFtIdx[0]]
-                    self.data[i] = ptL + intersect
-                for i, pt in enumerate(other.data):
+                    self._data[i] = ptL + intersect
+                for i, pt in enumerate(other._data):
                     ptR = [ptNameGetter(other, i, '_r')]
                     ptR.extend([pt[i] for i in matchingFtIdx[1]])
                     right.append(ptR)
                 # matching indices were sorted above
                 # this also accounts for prepended column
-                if len(self.data) > 0:
-                    matchingFtIdx[0] = list(range(len(self.data[0])))
+                if len(self._data) > 0:
+                    matchingFtIdx[0] = list(range(len(self._data[0])))
                 else:
                     matchingFtIdx[0] = []
                 matchingFtIdx[1] = matchingFtIdx[0]
             elif feature == "left":
-                for i, pt in enumerate(self.data):
+                for i, pt in enumerate(self._data):
                     ptL = [ptNameGetter(self, i, '_l')]
-                    self.data[i] = ptL + pt
-                for i, pt in enumerate(other.data):
+                    self._data[i] = ptL + pt
+                for i, pt in enumerate(other._data):
                     ptR = [ptNameGetter(other, i, '_r')]
                     ptR.extend([pt[i] for i in matchingFtIdx[1]])
                     right.append(ptR)
@@ -438,10 +438,10 @@ class List(Base):
                 # this also accounts for prepended column
                 matchingFtIdx[1] = list(range(len(right[0])))
             else:
-                for i, pt in enumerate(self.data):
+                for i, pt in enumerate(self._data):
                     ptL = [ptNameGetter(self, i, '_l')]
-                    self.data[i] = ptL + pt
-                for i, pt in enumerate(other.data):
+                    self._data[i] = ptL + pt
+                for i, pt in enumerate(other._data):
                     ptR = [ptNameGetter(other, i, '_r')]
                     ptR.extend(pt)
                     right.append(ptR)
@@ -449,7 +449,7 @@ class List(Base):
                 matchingFtIdx[0].insert(0, 0)
                 matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
                 matchingFtIdx[1].insert(0, 0)
-        left = self.data
+        left = self._data
 
         matched = []
         merged = []
@@ -514,17 +514,17 @@ class List(Base):
             self._featureCount -= 1
         self._numFeatures = self._featureCount
 
-        self.data = merged
+        self._data = merged
 
     def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueIdx):
         toFill = numpy.zeros((len(self.points), len(uniqueIdx)))
-        for ptIdx, val in enumerate(self.data):
+        for ptIdx, val in enumerate(self._data):
             ftIdx = uniqueIdx[val[0]]
             toFill[ptIdx, ftIdx] = 1
         return List(toFill.tolist())
 
     def _getitem_implementation(self, x, y):
-        return self.data[x][y]
+        return self._data[x][y]
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd, dropDimension):
@@ -538,7 +538,7 @@ class List(Base):
                 shape = self._shape[1:]
                 source = self._createNestedObject(pointStart)
                 kwds['source'] = source
-                kwds['data'] = source.data
+                kwds['data'] = source._data
                 pointStart, pointEnd = 0, source.shape[0]
                 featureStart, featureEnd = 0, source.shape[1]
             else:
@@ -559,7 +559,7 @@ class List(Base):
         """
         reshape = (self._shape[1], int(numpy.prod(self._shape[2:])))
         data = []
-        point = self.data[pointIndex]
+        point = self._data[pointIndex]
         for i in range(reshape[0]):
             start = i * reshape[1]
             end = start + reshape[1]
@@ -568,13 +568,13 @@ class List(Base):
         return List(data, shape=self._shape[1:], reuseData=True)
 
     def _validate_implementation(self, level):
-        assert len(self.data) == len(self.points)
+        assert len(self._data) == len(self.points)
         assert self._numFeatures == len(self.features)
 
         if level > 0:
-            if len(self.data) > 0:
-                expectedLength = len(self.data[0])
-            for point in self.data:
+            if len(self._data) > 0:
+                expectedLength = len(self._data[0])
+            for point in self._data:
             #				assert isinstance(point, list)
                 assert len(point) == expectedLength
 
@@ -631,11 +631,11 @@ class List(Base):
                 return val
             return float(val)
 
-        if any(any(needConversion(v) for v in pt) for pt in self.data):
-            self.data = [list(map(convertType, pt)) for pt in self.data]
+        if any(any(needConversion(v) for v in pt) for pt in self._data):
+            self._data = [list(map(convertType, pt)) for pt in self._data]
 
     def _iterateElements_implementation(self, order, only):
-        array = numpy.array(self.data, dtype=numpy.object_)
+        array = numpy.array(self._data, dtype=numpy.object_)
         return NimbleElementIterator(array, order, only)
 
 
@@ -652,7 +652,7 @@ class ListView(BaseView, List):
 
     def _copy_implementation(self, to):
         # we only want to change how List and pythonlist copying is
-        # done we also temporarily convert self.data to a python list
+        # done we also temporarily convert self._data to a python list
         # for copy
         if ((len(self.points) == 0 or len(self.features) == 0)
                 and to != 'List'):
@@ -661,14 +661,14 @@ class ListView(BaseView, List):
             return intermediate.copy(to=to)
 
         # fastest way to generate list of view data
-        listForm = [self._source.data[i][self._fStart:self._fEnd]
+        listForm = [self._source._data[i][self._fStart:self._fEnd]
                     for i in range(self._pStart, self._pEnd)]
 
         if to not in ['List', 'pythonlist']:
-            origData = self.data
-            self.data = listForm
+            origData = self._data
+            self._data = listForm
             res = super()._copy_implementation(to)
-            self.data = origData
+            self._data = origData
             return res
 
         if to == 'List':
@@ -699,7 +699,7 @@ class FeatureViewer(object):
             msg += "to " + str(self.fRange - 1) + ")."
             raise IndexError(msg)
 
-        return self.source.data[self.limit][key + self.fStart]
+        return self.source._data[self.limit][key + self.fStart]
 
     def __len__(self):
         return self.fRange
@@ -746,7 +746,7 @@ class ListPassThrough(object):
         return self.pRange
 
     def __array__(self, dtype=None):
-        tmpArray = numpy.array(self.source.data, dtype=dtype)
+        tmpArray = numpy.array(self.source._data, dtype=dtype)
         return tmpArray[self.pStart:self.pEnd, self.fStart:self.fEnd]
 
 ###########

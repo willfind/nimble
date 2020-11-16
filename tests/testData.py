@@ -2093,7 +2093,7 @@ def test_data_keepPF_AllPossibleNatOrder():
                 ret = nimble.data(
                     t, tmpF.name, keepPoints=pSel, keepFeatures=fSel)
                 fromOrig = nimble.data(
-                    t, orig.data, keepPoints=pSel, keepFeatures=fSel)
+                    t, orig._data, keepPoints=pSel, keepFeatures=fSel)
 
                 assert ret == fromOrig
 
@@ -2112,7 +2112,7 @@ def test_data_keepPF_AllPossibleReverseOrder():
                 ret = nimble.data(
                     t, tmpF.name, keepPoints=pSel, keepFeatures=fSel)
                 fromOrig = nimble.data(
-                    t, orig.data, keepPoints=pSel, keepFeatures=fSel)
+                    t, orig._data, keepPoints=pSel, keepFeatures=fSel)
 
                 assert ret == fromOrig
 
@@ -2124,7 +2124,7 @@ def test_data_keepPF_AllPossibleReverseOrder():
                 retT = nimble.data(
                     t, tmpF.name, keepPoints=pSelR, keepFeatures=fSelR)
                 fromOrigT = nimble.data(
-                    t, orig.data, keepPoints=pSelR, keepFeatures=fSelR)
+                    t, orig._data, keepPoints=pSelR, keepFeatures=fSelR)
 
                 assert retT != ret
                 assert retT == fromOrigT
@@ -3157,19 +3157,19 @@ def test_DataOutputWithMissingDataTypes1D():
 
         for orig in originals:
             if orig.getTypeString() == "List":
-                assert orig.data[0][0] == expListOutput[0][0]
-                assert orig.data[0][1] == expListOutput[0][1]
-                assert numpy.isnan(orig.data[0][2])
+                assert orig._data[0][0] == expListOutput[0][0]
+                assert orig._data[0][1] == expListOutput[0][1]
+                assert numpy.isnan(orig._data[0][2])
             elif orig.getTypeString() == "Matrix":
-                assert numpy.array_equal(orig.data[0, :2], expMatrixOutput[0, :2])
-                assert numpy.isnan(orig.data[0, 2])
+                assert numpy.array_equal(orig._data[0, :2], expMatrixOutput[0, :2])
+                assert numpy.isnan(orig._data[0, 2])
             elif orig.getTypeString() == "DataFrame":
-                assert numpy.array_equal(orig.data.values[0, :2], expDataFrameOutput.values[0, :2])
-                assert numpy.isnan(orig.data.values[0, 2])
+                assert numpy.array_equal(orig._data.values[0, :2], expDataFrameOutput.values[0, :2])
+                assert numpy.isnan(orig._data.values[0, 2])
             else:
                 orig._sortInternal('point')
-                assert numpy.array_equal(orig.data.data[:2], expSparseOutput.data[:2])
-                assert numpy.isnan(orig.data.data[2])
+                assert numpy.array_equal(orig._data.data[:2], expSparseOutput.data[:2])
+                assert numpy.isnan(orig._data.data[2])
 
 def test_DataOutputWithMissingDataTypes2D():
     for t in returnTypes:
@@ -3198,23 +3198,23 @@ def test_DataOutputWithMissingDataTypes2D():
 
         for orig in originals:
             if orig.getTypeString() == "List":
-                assert orig.data[0][0] == expListOutput[0][0]
-                assert orig.data[0][1] == expListOutput[0][1]
-                assert numpy.isnan(orig.data[0][2])
-                assert orig.data[1] == expListOutput[1]
+                assert orig._data[0][0] == expListOutput[0][0]
+                assert orig._data[0][1] == expListOutput[0][1]
+                assert numpy.isnan(orig._data[0][2])
+                assert orig._data[1] == expListOutput[1]
             elif orig.getTypeString() == "Matrix":
-                assert numpy.array_equal(orig.data[0, :2], expMatrixOutput[0, :2])
-                assert numpy.isnan(orig.data[0, 2])
-                assert numpy.array_equal(orig.data[1,:], expMatrixOutput[1,:])
+                assert numpy.array_equal(orig._data[0, :2], expMatrixOutput[0, :2])
+                assert numpy.isnan(orig._data[0, 2])
+                assert numpy.array_equal(orig._data[1,:], expMatrixOutput[1,:])
             elif orig.getTypeString() == "DataFrame":
-                assert numpy.array_equal(orig.data.values[0, :2], expDataFrameOutput.values[0, :2])
-                assert numpy.isnan(orig.data.values[0, 2])
-                assert numpy.array_equal(orig.data.values[1,:], expDataFrameOutput.values[1,:])
+                assert numpy.array_equal(orig._data.values[0, :2], expDataFrameOutput.values[0, :2])
+                assert numpy.isnan(orig._data.values[0, 2])
+                assert numpy.array_equal(orig._data.values[1,:], expDataFrameOutput.values[1,:])
             else:
                 orig._sortInternal('point')
-                assert numpy.array_equal(orig.data.data[:2], expSparseOutput.data[:2])
-                assert numpy.isnan(orig.data.data[2])
-                assert numpy.array_equal(orig.data.data[3:], expSparseOutput.data[3:])
+                assert numpy.array_equal(orig._data.data[:2], expSparseOutput.data[:2])
+                assert numpy.isnan(orig._data.data[2])
+                assert numpy.array_equal(orig._data.data[3:], expSparseOutput.data[3:])
 
 def test_replaceNumpyValues_dtypePreservation():
     for t in returnTypes:
@@ -3222,8 +3222,8 @@ def test_replaceNumpyValues_dtypePreservation():
         toTest = nimble.data(t, data, replaceMissingWith=2,
                              treatAsMissing=[False])
         # should upcast to int, since replaceMissingWith is int
-        if hasattr(toTest.data, 'dtype'):
-            assert toTest.data.dtype == int
+        if hasattr(toTest._data, 'dtype'):
+            assert toTest._data.dtype == int
         assert toTest[0, 0] == True # could be 1 or True depending on type
         assert toTest[0, 1] == 2
 
@@ -3231,16 +3231,16 @@ def test_replaceNumpyValues_dtypePreservation():
         toTest = nimble.data(t, data, replaceMissingWith=numpy.nan,
                              treatAsMissing=[None])
         # should skip attempted replacement because no treatAsMissing values
-        if hasattr(toTest.data, 'dtype'):
-            assert toTest.data.dtype == int
+        if hasattr(toTest._data, 'dtype'):
+            assert toTest._data.dtype == int
         ints = (int, numpy.integer)
         assert all(isinstance(val, ints) for val in toTest.iterateElements())
 
         toTest = nimble.data(t, data, replaceMissingWith=numpy.nan,
                              treatAsMissing=[0])
         # should upcast to float, since replaceMissingWith is float
-        if hasattr(toTest.data, 'dtype'):
-            assert toTest.data.dtype == float
+        if hasattr(toTest._data, 'dtype'):
+            assert toTest._data.dtype == float
         assert toTest[0, 0] == True # could be 1.0 or True depending on type
         assert numpy.isnan(toTest[0, 1])
 
@@ -3248,8 +3248,8 @@ def test_replaceNumpyValues_dtypePreservation():
         toTest = nimble.data(t, data, replaceMissingWith='x',
                              treatAsMissing=[0])
         # should upcast to object, since replaceMissingWith is a string
-        if hasattr(toTest.data, 'dtype'):
-            assert toTest.data.dtype == numpy.object_
+        if hasattr(toTest._data, 'dtype'):
+            assert toTest._data.dtype == numpy.object_
         assert toTest[0, 0] == True
         assert toTest[0, 1] == 'x'
 
@@ -3371,7 +3371,7 @@ def test_data_multidimensionalData_listsOfMultiDimensionalObjects():
         fromListNim1D = nimble.data(rType2, [nim1D, nim1D, nim1D])
         assert fromListNim1D._shape == [3, 4]
 
-        arr2D = fromListArr1D.data
+        arr2D = fromListArr1D._data
         coo2D = scipy.sparse.coo_matrix([[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 3, 0]])
         df2D = pd.DataFrame([[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 3, 0]])
         nim2D = fromListNim1D

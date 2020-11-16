@@ -48,10 +48,10 @@ class ListAxis(Axis, metaclass=ABCMeta):
         """
         pointNames, featureNames = self._getStructuralNames(targetList)
         if self._isPoint:
-            satisfying = [self._base.data[pt] for pt in targetList]
+            satisfying = [self._base._data[pt] for pt in targetList]
             if structure != 'copy':
                 keepList = [i for i in range(len(self)) if i not in targetList]
-                self._base.data = [self._base.data[pt] for pt in keepList]
+                self._base._data = [self._base._data[pt] for pt in keepList]
             if satisfying == []:
                 return nimble.core.data.List(satisfying, pointNames=pointNames,
                                              featureNames=featureNames,
@@ -59,17 +59,19 @@ class ListAxis(Axis, metaclass=ABCMeta):
                                              checkAll=False, reuseData=True)
 
         else:
-            if self._base.data == []:
+            if self._base._data == []:
                 # create empty matrix with correct shape
                 shape = (len(self._base.points), len(targetList))
                 satisfying = numpy.empty(shape, dtype=numpy.object_)
             else:
-                satisfying = [[self._base.data[pt][ft] for ft in targetList]
+                satisfying = [[self._base._data[pt][ft] for ft in targetList]
                               for pt in range(len(self._base.points))]
             if structure != 'copy':
                 keepList = [i for i in range(len(self)) if i not in targetList]
-                self._base.data = [[self._base.data[pt][ft] for ft in keepList]
-                                   for pt in range(len(self._base.points))]
+                self._base._data = [
+                    [self._base._data[pt][ft] for ft in keepList]
+                    for pt in range(len(self._base.points))
+                    ]
                 remainingFts = self._base._numFeatures - len(targetList)
                 self._base._numFeatures = remainingFts
 
@@ -80,12 +82,12 @@ class ListAxis(Axis, metaclass=ABCMeta):
     def _permute_implementation(self, indexPosition):
         # run through target axis and change indices
         if self._isPoint:
-            source = copy.copy(self._base.data)
-            for i in range(len(self._base.data)):
-                self._base.data[i] = source[indexPosition[i]]
+            source = copy.copy(self._base._data)
+            for i in range(len(self._base._data)):
+                self._base._data[i] = source[indexPosition[i]]
         else:
-            for i in range(len(self._base.data)):
-                currPoint = self._base.data[i]
+            for i in range(len(self._base._data)):
+                currPoint = self._base._data[i]
                 temp = copy.copy(currPoint)
                 for j, idxPos in enumerate(indexPosition):
                     currPoint[j] = temp[idxPos]
@@ -98,7 +100,7 @@ class ListAxis(Axis, metaclass=ABCMeta):
         uniqueData, uniqueIndices = denseAxisUniqueArray(self._base,
                                                          self._axis)
         uniqueData = uniqueData.tolist()
-        if self._base.data == uniqueData:
+        if self._base._data == uniqueData:
             return self._base.copy()
 
         axisNames, offAxisNames = uniqueNameGetter(self._base, self._axis,
@@ -113,14 +115,14 @@ class ListAxis(Axis, metaclass=ABCMeta):
     def _repeat_implementation(self, totalCopies, copyVectorByVector):
         if self._isPoint:
             if copyVectorByVector:
-                repeated = [list(lst) for lst in self._base.data
+                repeated = [list(lst) for lst in self._base._data
                             for _ in range(totalCopies)]
             else:
                 repeated = [list(lst) for _ in range(totalCopies)
-                            for lst in self._base.data]
+                            for lst in self._base._data]
         else:
             repeated = []
-            for lst in self._base.data:
+            for lst in self._base._data:
                 if not isinstance(lst, list): # FeatureViewer
                     lst = list(lst)
                 if copyVectorByVector:
@@ -165,17 +167,17 @@ class ListPoints(ListAxis, Points):
         index in this object, the remaining points from this object will
         continue below the inserted points.
         """
-        insert = toInsert.copy('List').data
+        insert = toInsert.copy('List')._data
         if insertBefore != 0 and insertBefore != len(self):
-            start = self._base.data[:insertBefore]
-            end = self._base.data[insertBefore:]
+            start = self._base._data[:insertBefore]
+            end = self._base._data[insertBefore:]
             allData = start + insert + end
         elif insertBefore == 0:
-            allData = insert + self._base.data
+            allData = insert + self._base._data
         else:
-            allData = self._base.data + insert
+            allData = self._base._data + insert
 
-        self._base.data = allData
+        self._base._data = allData
 
     def _transform_implementation(self, function, limitTo):
         for i, pt in enumerate(self):
@@ -183,7 +185,7 @@ class ListPoints(ListAxis, Points):
                 continue
             currRet = function(pt)
 
-            self._base.data[i] = list(currRet)
+            self._base._data[i] = list(currRet)
 
     ################################
     # Higher Order implementations #
@@ -194,7 +196,7 @@ class ListPoints(ListAxis, Points):
             currNumPoints, currFtNames, numRetPoints, numRetFeatures):
         collapseData = []
         retainData = []
-        for pt in self._base.data:
+        for pt in self._base._data:
             collapseFeatures = []
             retainFeatures = []
             for idx in collapseIndices:
@@ -208,7 +210,7 @@ class ListPoints(ListAxis, Points):
             featuresToCollapse, retainData, numpy.array(collapseData),
             currNumPoints, currFtNames, numRetPoints, numRetFeatures)
 
-        self._base.data = tmpData.tolist()
+        self._base._data = tmpData.tolist()
         self._base._numFeatures = numRetFeatures
 
     def _combineByExpandingFeatures_implementation(self, uniqueDict, namesIdx,
@@ -218,7 +220,7 @@ class ListPoints(ListAxis, Points):
                                                 uniqueNames, numRetFeatures,
                                                 numExpanded)
 
-        self._base.data = tmpData.tolist()
+        self._base._data = tmpData.tolist()
         self._base._numFeatures = numRetFeatures
 
 
@@ -268,7 +270,7 @@ class ListFeatures(ListAxis, Features):
             start = self._base.copy('pythonlist')
             allData = list(map(lambda pt: pt[0] + pt[1], zip(start, insert)))
 
-        self._base.data = allData
+        self._base._data = allData
         self._base._numFeatures += len(toInsert.features)
 
     def _transform_implementation(self, function, limitTo):
@@ -278,7 +280,7 @@ class ListFeatures(ListAxis, Features):
             currRet = function(f)
 
             for i in range(len(self._base.points)):
-                self._base.data[i][j] = currRet[i]
+                self._base._data[i][j] = currRet[i]
 
     ################################
     # Higher Order implementations #
@@ -290,16 +292,16 @@ class ListFeatures(ListAxis, Features):
                               dtype=numpy.object_)
 
         tmpData[:, :featureIndex] = [ft[:featureIndex] for ft
-                                     in self._base.data]
+                                     in self._base._data]
         for i in range(numResultingFts):
             newFeat = []
             for lst in splitList:
                 newFeat.append(lst[i])
             tmpData[:, featureIndex + i] = newFeat
-        existingData = [ft[featureIndex + 1:] for ft in self._base.data]
+        existingData = [ft[featureIndex + 1:] for ft in self._base._data]
         tmpData[:, featureIndex + numResultingFts:] = existingData
 
-        self._base.data = tmpData.tolist()
+        self._base._data = tmpData.tolist()
         self._base._numFeatures = numRetFeatures
 
 

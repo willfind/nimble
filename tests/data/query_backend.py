@@ -1053,7 +1053,7 @@ class QueryBackend(DataTestObject):
         for pNum in [3, 9]:
             for fNum in [2, 5, 8, 15]:
                 randGen = nimble.random.data("List", pNum, fNum, 0)
-                raw = randGen.data
+                raw = randGen._data
 
                 fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6', 'fn7', 'fn8', 'fn9', 'fna', 'fnb', 'fnc',
                           'fnd', 'fne']
@@ -1082,7 +1082,7 @@ class QueryBackend(DataTestObject):
     def test_toString_nameAndValRecreation_randomized_longNames(self):
         """ Test long point and feature names do not exceed max width"""
         randGen = nimble.random.data("List", 9, 9, 0)
-        raw = randGen.data
+        raw = randGen._data
 
         suffix = [1, 22, 333, 4444, 55555, 666666, 7777777, 88888888, 999999999]
         fnames = ['feature_' + str(x) for x in suffix]
@@ -1152,7 +1152,7 @@ class QueryBackend(DataTestObject):
         """ Test max string height reaches but does not exceed max height """
         randGen = nimble.random.data("List", 9, 3, 0)
 
-        data = self.constructor(randGen.data)
+        data = self.constructor(randGen._data)
 
         # for height in range 3 to 8, row separator should be present
         for mh in range(3, 9):
@@ -1325,7 +1325,7 @@ class QueryBackend(DataTestObject):
         randGen = nimble.random.data("List", numPts, numFts, 0)
         pNames = ['pt' + str(i) for i in range(numPts)]
         fNames = ['ft' + str(i) for i in range(numFts)]
-        data = self.constructor(randGen.data, pointNames=pNames, featureNames=fNames)
+        data = self.constructor(randGen._data, pointNames=pNames, featureNames=fNames)
         ret = repr(data)
         retSplit = ret.split('\n')
 

@@ -52,13 +52,13 @@ class Matrix(Base):
         elif isinstance(data, list):
             data = numpyArrayFromList(data)
         if reuseData:
-            self.data = data
+            self._data = data
         else:
-            self.data = data.copy()
+            self._data = data.copy()
 
         shape = kwds.get('shape', None)
         if shape is None:
-            kwds['shape'] = self.data.shape
+            kwds['shape'] = self._data.shape
         super().__init__(**kwds)
 
     def _getPoints(self):
@@ -71,7 +71,7 @@ class Matrix(Base):
         ids = itertools.product(range(len(self.points)),
                                 range(len(self.features)))
         for i, j in ids:
-            currVal = self.data[i, j]
+            currVal = self._data[i, j]
 
             if points is not None and i not in points:
                 continue
@@ -83,7 +83,7 @@ class Matrix(Base):
             else:
                 currRet = toTransform(currVal, i, j)
 
-            self.data = modifyNumpyArrayValue(self.data, (i, j), currRet)
+            self._data = modifyNumpyArrayValue(self._data, (i, j), currRet)
 
     # pylint: disable=unused-argument
     def _calculate_implementation(self, function, points, features,
@@ -101,7 +101,7 @@ class Matrix(Base):
         This is not an in place operation, a new list of lists is
         constructed.
         """
-        self.data = self.data.transpose()
+        self._data = self._data.transpose()
 
     def _getTypeString_implementation(self):
         return 'Matrix'
@@ -109,7 +109,7 @@ class Matrix(Base):
     def _isIdentical_implementation(self, other):
         if not isinstance(other, Matrix):
             return False
-        return allDataIdentical(self.data, other.data)
+        return allDataIdentical(self._data, other._data)
 
 
     def _writeFileCSV_implementation(self, outPath, includePointNames,
@@ -121,12 +121,12 @@ class Matrix(Base):
         with open(outPath, 'w') as outFile:
             if includeFeatureNames:
                 self._writeFeatureNamesToCSV(outFile, includePointNames)
-            if not numpy.issubdtype(self.data.dtype, numpy.number):
+            if not numpy.issubdtype(self._data.dtype, numpy.number):
                 vectorizeCommas = numpy.vectorize(csvCommaFormat,
                                                   otypes=[object])
-                viewData = vectorizeCommas(self.data).view()
+                viewData = vectorizeCommas(self._data).view()
             else:
-                viewData = self.data.view()
+                viewData = self._data.view()
             if includePointNames:
                 pnames = list(map(csvCommaFormat, self.points.getNames()))
                 pnames = numpy2DArray(pnames).transpose()
@@ -159,7 +159,7 @@ class Matrix(Base):
         else:
             header += '#\n'
 
-        scipy.io.mmwrite(target=outPath, a=self.data.astype(numpy.float),
+        scipy.io.mmwrite(target=outPath, a=self._data.astype(numpy.float),
                          comment=header)
 
     def _referenceDataFrom_implementation(self, other):
@@ -167,27 +167,27 @@ class Matrix(Base):
             msg = "Other must be the same type as this object"
             raise InvalidArgumentType(msg)
 
-        self.data = other.data
+        self._data = other._data
 
     def _copy_implementation(self, to):
         if to in nimble.core.data.available:
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
             # reuseData=False since using original data
-            return createDataNoValidation(to, self.data, ptNames, ftNames)
+            return createDataNoValidation(to, self._data, ptNames, ftNames)
         if to == 'pythonlist':
-            return self.data.tolist()
+            return self._data.tolist()
         needsReshape = len(self._shape) > 2
         if to == 'numpyarray':
             if needsReshape:
-                return self.data.reshape(self._shape)
-            return self.data.copy()
+                return self._data.reshape(self._shape)
+            return self._data.copy()
         if needsReshape:
             data = numpy.empty(self._shape[:2], dtype=numpy.object_)
             for i in range(self.shape[0]):
                 data[i] = self.points[i].copy('pythonlist')
         else:
-            data = self.data
+            data = self._data
         if to == 'numpymatrix':
             return numpy.matrix(data)
         if 'scipy' in to:
@@ -219,26 +219,26 @@ class Matrix(Base):
             values = replaceWith * numpy.ones((pointEnd - pointStart + 1,
                                                featureEnd - featureStart + 1))
         else:
-            values = replaceWith.data
+            values = replaceWith._data
 
         # numpy is exclusive
         pointEnd += 1
         featureEnd += 1
-        self.data[pointStart:pointEnd, featureStart:featureEnd] = values
+        self._data[pointStart:pointEnd, featureStart:featureEnd] = values
 
     def _flatten_implementation(self, order):
         numElements = len(self.points) * len(self.features)
         order = convertToNumpyOrder(order)
-        self.data = self.data.reshape((1, numElements), order=order)
+        self._data = self._data.reshape((1, numElements), order=order)
 
     def _unflatten_implementation(self, reshape, order):
         order = convertToNumpyOrder(order)
-        self.data = self.data.reshape(reshape, order=order)
+        self._data = self._data.reshape(reshape, order=order)
 
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):
-        self.data = numpy.array(self.data, dtype=numpy.object_)
-        otherArr = numpy.array(other.data, dtype=numpy.object_)
+        self._data = numpy.array(self._data, dtype=numpy.object_)
+        otherArr = numpy.array(other._data, dtype=numpy.object_)
         if onFeature:
             if feature in ["intersection", "left"]:
                 onFeatureIdx = self.features.getIndex(onFeature)
@@ -249,9 +249,9 @@ class Matrix(Base):
                 # matching indices in right were sorted when slicing above
                 matchingFtIdx[1] = list(range(right.shape[1]))
                 if feature == "intersection":
-                    self.data = self.data[:, matchingFtIdx[0]]
+                    self._data = self._data[:, matchingFtIdx[0]]
                     # matching indices in left were sorted when slicing above
-                    matchingFtIdx[0] = list(range(self.data.shape[1]))
+                    matchingFtIdx[0] = list(range(self._data.shape[1]))
             else:
                 onIdxL = self.features.getIndex(onFeature)
                 onIdxR = other.features.getIndex(onFeature)
@@ -292,16 +292,16 @@ class Matrix(Base):
                 ptsR = numpy.array(defNames, dtype=numpy.object_)
                 ptsR = ptsR.reshape(-1, 1)
             if feature == "intersection":
-                concatL = (ptsL, self.data[:, matchingFtIdx[0]])
-                self.data = numpy.concatenate(concatL, axis=1)
+                concatL = (ptsL, self._data[:, matchingFtIdx[0]])
+                self._data = numpy.concatenate(concatL, axis=1)
                 concatR = (ptsR, otherArr[:, matchingFtIdx[1]])
                 right = numpy.concatenate(concatR, axis=1)
                 # matching indices were sorted when slicing above
                 # this also accounts for prepended column
-                matchingFtIdx[0] = list(range(self.data.shape[1]))
+                matchingFtIdx[0] = list(range(self._data.shape[1]))
                 matchingFtIdx[1] = matchingFtIdx[0]
             elif feature == "left":
-                self.data = numpy.concatenate((ptsL, self.data), axis=1)
+                self._data = numpy.concatenate((ptsL, self._data), axis=1)
                 concatR = (ptsR, otherArr[:, matchingFtIdx[1]])
                 right = numpy.concatenate(concatR, axis=1)
                 # account for new column in matchingFtIdx
@@ -311,14 +311,14 @@ class Matrix(Base):
                 # this also accounts for prepended column
                 matchingFtIdx[1] = list(range(right.shape[1]))
             else:
-                self.data = numpy.concatenate((ptsL, self.data), axis=1)
+                self._data = numpy.concatenate((ptsL, self._data), axis=1)
                 right = numpy.concatenate((ptsR, otherArr), axis=1)
                 # account for new column in matchingFtIdx
                 matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
                 matchingFtIdx[0].insert(0, 0)
                 matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
                 matchingFtIdx[1].insert(0, 0)
-        left = self.data
+        left = self._data
 
         matched = []
         merged = []
@@ -387,29 +387,29 @@ class Matrix(Base):
             merged = [row[1:] for row in merged]
             self._featureCount -= 1
 
-        self.data = numpy2DArray(merged, dtype=numpy.object_)
+        self._data = numpy2DArray(merged, dtype=numpy.object_)
 
     def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueIdx):
         toFill = numpy.zeros((len(self.points), len(uniqueIdx)))
-        for ptIdx, val in enumerate(self.data):
+        for ptIdx, val in enumerate(self._data):
             ftIdx = uniqueIdx[val.item()]
             toFill[ptIdx, ftIdx] = 1
         return Matrix(toFill)
 
     def _getitem_implementation(self, x, y):
-        return self.data[x, y]
+        return self._data[x, y]
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd, dropDimension):
         kwds = {}
-        kwds['data'] = self.data[pointStart:pointEnd, featureStart:featureEnd]
+        kwds['data'] = self._data[pointStart:pointEnd, featureStart:featureEnd]
         kwds['source'] = self
         if len(self._shape) > 2:
             if dropDimension:
                 shape = self._shape[1:]
                 source = self._createNestedObject(pointStart)
                 kwds['source'] = source
-                kwds['data'] = source.data
+                kwds['data'] = source._data
                 pointStart, pointEnd = 0, source.shape[0]
                 featureStart, featureEnd = 0, source.shape[1]
             else:
@@ -429,11 +429,11 @@ class Matrix(Base):
         Create an object of one less dimension
         """
         reshape = (self._shape[1], int(numpy.prod(self._shape[2:])))
-        data = self.data[pointIndex].reshape(reshape)
+        data = self._data[pointIndex].reshape(reshape)
         return Matrix(data, shape=self._shape[1:], reuseData=True)
 
     def _validate_implementation(self, level):
-        shape = numpy.shape(self.data)
+        shape = numpy.shape(self._data)
         assert shape[0] == len(self.points)
         assert shape[1] == len(self.features)
 
@@ -443,7 +443,7 @@ class Matrix(Base):
         Returns True if there is a value that is equal to integer 0
         contained in this object. False otherwise
         """
-        return 0 in self.data
+        return 0 in self._data
 
 
     def _binaryOperations_implementation(self, opName, other):
@@ -457,7 +457,7 @@ class Matrix(Base):
             # rhs may return array of sparse matrices so use default
             return self._defaultBinaryOperations_implementation(opName, other)
         try:
-            ret = getattr(self.data, opName)(other.data)
+            ret = getattr(self._data, opName)(other._data)
             return Matrix(ret)
         except (AttributeError, InvalidArgumentType, ValueError):
             return self._defaultBinaryOperations_implementation(opName, other)
@@ -473,21 +473,21 @@ class Matrix(Base):
         according to efficiency constraints.
         """
         if isinstance(other, Matrix):
-            return Matrix(numpy.matmul(self.data, other.data))
+            return Matrix(numpy.matmul(self._data, other._data))
         if isinstance(other, nimble.core.data.Sparse):
             # '*' is matrix multiplication in scipy
-            return Matrix(self.data * other.data)
-        return Matrix(numpy.matmul(self.data, other.copy(to="numpyarray")))
+            return Matrix(self._data * other._data)
+        return Matrix(numpy.matmul(self._data, other.copy(to="numpyarray")))
 
     def _convertToNumericTypes_implementation(self, usableTypes):
-        if self.data.dtype not in usableTypes:
-            self.data = self.data.astype(float)
+        if self._data.dtype not in usableTypes:
+            self._data = self._data.astype(float)
 
     def _iterateElements_implementation(self, order, only):
-        return NimbleElementIterator(self.data, order, only)
+        return NimbleElementIterator(self._data, order, only)
 
     def _isBooleanData(self):
-        return self.data.dtype in [bool, numpy.bool_]
+        return self._data.dtype in [bool, numpy.bool_]
 
 class MatrixView(BaseView, Matrix):
     """
