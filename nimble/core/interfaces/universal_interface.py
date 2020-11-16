@@ -780,6 +780,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         learner. For example, in the case of linear regression, TODO
         """
 
+
     @abc.abstractmethod
     def version(self):
         """
