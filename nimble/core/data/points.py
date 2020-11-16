@@ -30,7 +30,7 @@ class Points(ABC):
             The Base instance that will be queried and modified.
         """
         self._base = base
-        super(Points, self).__init__()
+        super().__init__()
 
     def __iter__(self):
         return self._iter()

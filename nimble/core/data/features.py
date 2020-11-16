@@ -32,7 +32,7 @@ class Features(ABC):
             The Base instance that will be queried and modified.
         """
         self._base = base
-        super(Features, self).__init__()
+        super().__init__()
 
     @limitedTo2D
     def __iter__(self):

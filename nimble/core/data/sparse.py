@@ -95,7 +95,7 @@ class Sparse(Base):
         shape = kwds.get('shape', None)
         if shape is None:
             kwds['shape'] = self.data.shape
-        super(Sparse, self).__init__(**kwds)
+        super().__init__(**kwds)
 
     def _getPoints(self):
         return SparsePoints(self)
@@ -363,9 +363,9 @@ class Sparse(Base):
                 return data.copy()
             try:
                 ret = data.astype(numpy.float)
-            except ValueError:
+            except ValueError as e:
                 msg = 'Can only create scipy {0} matrix from numeric data'
-                raise ValueError(msg.format(to[-3:]))
+                raise ValueError(msg.format(to[-3:])) from e
             if to == 'scipycsc':
                 return ret.tocsc()
             if to == 'scipycsr':
@@ -1258,11 +1258,11 @@ def removeDuplicatesNative(coo_obj):
         else:
             try:
                 seen[(i, j)] += float(v)
-            except ValueError:
+            except ValueError as e:
                 msg = 'Unable to represent this configuration of data in '
                 msg += 'Sparse object. At least one removeDuplicatesNativeof '
                 msg += 'the duplicate entries is a non-numerical type'
-                raise ValueError(msg)
+                raise ValueError(msg) from e
 
     rows = []
     cols = []

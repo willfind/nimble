@@ -203,7 +203,7 @@ class Base(ABC):
         self._relPath = paths[1]
 
         # call for safety
-        super(Base, self).__init__(**kwds)
+        super().__init__(**kwds)
 
     #######################
     # Property Attributes #
@@ -1478,9 +1478,9 @@ class Base(ABC):
                     raise InvalidArgumentValue(msg)
                 try:
                     self._validateEqualNames('point', 'point', '', labels)
-                except InvalidArgumentValue:
+                except InvalidArgumentValue as e:
                     msg = 'labels and calling object pointNames must be equal'
-                    raise InvalidArgumentValue(msg)
+                    raise InvalidArgumentValue(msg) from e
                 trainY = labels.points.copy(order[:splitIndex], useLog=False)
                 testY = labels.points.copy(order[splitIndex:], useLog=False)
             else:
@@ -3932,10 +3932,10 @@ class Base(ABC):
                     msg = "When point='strict', onFeature must have a unique, "
                     msg += "matching value in each object"
                     raise InvalidArgumentValueCombination(msg)
-            except KeyError:
+            except KeyError as e:
                 msg = "could not locate feature '{0}' ".format(onFeature)
                 msg += "in both objects"
-                raise InvalidArgumentValue(msg)
+                raise InvalidArgumentValue(msg) from e
 
 
         self._genericMergeFrontend(tmpOther, point, feature, onFeature, axis)
@@ -3965,10 +3965,10 @@ class Base(ABC):
                     msg = "nimble only supports joining on a feature which "
                     msg += "contains only unique values in one or both objects"
                     raise InvalidArgumentValue(msg)
-            except KeyError:
+            except KeyError as e:
                 msg = "could not locate feature '{0}' ".format(onFeature)
                 msg += "in both objects"
-                raise InvalidArgumentValue(msg)
+                raise InvalidArgumentValue(msg) from e
 
         matchingFts = self._getMatchingNames('feature', other)
         matchingFtIdx = [[], []]
@@ -4279,7 +4279,7 @@ class Base(ABC):
                 msg += "matrixPower does not attempt to use pseudoInverse but "
                 msg += "it is available to users in nimble.calculate. "
                 msg += "The inverse operation failed because: " + e.message
-                raise exceptionType(msg)
+                raise exceptionType(msg) from e
 
         ret = operand
         # loop only applies when abs(power) > 1
@@ -4500,14 +4500,14 @@ class Base(ABC):
         """
         try:
             self.calculateOnElements(_dataHelpers._checkNumeric, useLog=False)
-        except ValueError:
+        except ValueError as e:
             msg = "The object on the {0} contains non numeric data, "
             msg += "cannot do this operation"
             if right:
                 msg = msg.format('right')
-                raise InvalidArgumentValue(msg)
+                raise InvalidArgumentValue(msg) from e
             msg = msg.format('left')
-            raise ImproperObjectAction(msg)
+            raise ImproperObjectAction(msg) from e
 
     def _genericBinary_sizeValidation(self, opName, other):
         if self._shape != other._shape:
