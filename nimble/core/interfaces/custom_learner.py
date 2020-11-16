@@ -156,9 +156,6 @@ class CustomLearnerInterface(UniversalInterface):
 
         return ret
 
-    def _exposedFunctions(self):
-        return []
-
     def version(self):
         pass
 

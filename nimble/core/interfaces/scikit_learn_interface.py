@@ -211,10 +211,6 @@ class _SciKitLearnAPI(PredefinedInterface):
     def _configurableOptionNames(self):
         return ['location']
 
-
-    def _exposedFunctions(self):
-        return [self._predict, self._transform]
-
     # fit_transform
 
     def _predict(self, learner, testX, arguments, customDict):

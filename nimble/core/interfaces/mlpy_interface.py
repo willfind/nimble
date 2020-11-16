@@ -340,10 +340,6 @@ To install mlpy
         return ['location']
 
 
-    def _exposedFunctions(self):
-        return [self._pred, self._transform]
-
-
     def version(self):
         return self.mlpy.__version__
 
