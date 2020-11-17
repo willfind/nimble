@@ -34,7 +34,7 @@ from ._interface_helpers import (
     ovaNotOvOFormatted, checkClassificationStrategy, cacheWrapper,
     generateAllPairs, countWins, extractWinningPredictionIndex,
     extractWinningPredictionLabel, extractWinningPredictionIndexAndScore,
-    extractConfidenceScores, validateTestingArguments)
+    extractConfidenceScores, validateTestingArguments, getValidSeed)
 
 
 def captureOutput(toWrap):
@@ -87,45 +87,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             msg += "a string"
             raise TypeError(msg)
 
-        # _configurableOptionNames and _optionDefaults
-        optionNames = self._configurableOptionNames()
-        if not isinstance(optionNames, list):
-            msg = "Improper implementation of _configurableOptionNames(), "
-            msg += "must return a list of strings"
-            raise TypeError(msg)
-        for optionName in optionNames:
-            if not isinstance(optionName, str):
-                msg = "Improper implementation of _configurableOptionNames(), "
-                msg += "must return a list of strings"
-                raise TypeError(msg)
-            # call _optionDefaults to make sure it doesn't throw an exception
-            self._optionDefaults(optionName)
-
-        # _exposedFunctions
-        exposedFunctions = self._exposedFunctions()
-        if exposedFunctions is None or not isinstance(exposedFunctions, list):
-            msg = "Improper implementation of _exposedFunctions(), must "
-            msg += "return a list of methods to be bundled with TrainedLearner"
-            raise TypeError(msg)
-        for exposed in exposedFunctions:
-            # is callable
-            if not hasattr(exposed, '__call__'):
-                msg = "Improper implementation of _exposedFunctions, each "
-                msg += "member of the return must have __call__ attribute"
-                raise TypeError(msg)
-            # has name attribute
-            if not hasattr(exposed, '__name__'):
-                msg = "Improper implementation of _exposedFunctions, each "
-                msg += "member of the return must have __name__ attribute"
-                raise TypeError(msg)
-            # takes self as attribute
-            (args, _, _, _) = inspectArguments(exposed)
-            if args[0] != 'self':
-                msg = "Improper implementation of _exposedFunctions each "
-                msg += "member's first argument must be 'self', interpreted "
-                msg += "as a TrainedLearner"
-                raise TypeError(msg)
-
     @property
     def optionNames(self):
         """
@@ -153,7 +114,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
 
     @captureOutput
     def train(self, learnerName, trainX, trainY=None, arguments=None,
-              multiClassStrategy='default', crossValidationResults=None):
+              multiClassStrategy='default', randomSeed=None,
+              crossValidationResults=None):
         """
         Fit the learner model using training data.
 
@@ -175,14 +137,15 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             values for a parameter as a tuple. eg. {'k': (1,3,5)} will
             generate an error score for  the learner when the learner
             was passed all three values of ``k``, separately.
-        useLog : bool, None
-            Local control for whether to send results/timing to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If False,
-            do **NOT** send to the logger, regardless of the global
-            option.
+        randomSeed : int
+           Set a random seed for the operation. When not None, allows for
+           reproducible results for each function call. Ignored if learner
+           does not depend on randomness.
+        crossValidationResults : KFoldCrossValidator
+            The results of any cross-validation performed prior to
+            training.
         """
+        randomSeed = getValidSeed(randomSeed, self.getCanonicalName())
         if multiClassStrategy != 'default':
             # TODO reevaluate use of checkClassificationStrategy, the if
             # statements below expect a string output but it looks to output
@@ -220,7 +183,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                     trainLabels = trainY.calculateOnElements(relabeler,
                                                              useLog=False)
                     trainedLearner = self._train(
-                        learnerName, trainX, trainLabels, arguments=arguments)
+                        learnerName, trainX, trainLabels, arguments,
+                        randomSeed, crossValidationResults)
                     trainedLearner.label = label
                     trainedLearners.append(trainedLearner)
 
@@ -249,7 +213,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                 # the data object
                 trainedLearners = []
                 for pair in labelPairs:
-                    #get all points that have one of the labels in pair
+                    # get all points that have one of the labels in pair
                     pairData = trainX.points.extract(
                         lambda point: point[trainY] in pair, useLog=False)
                     pairTrueLabels = pairData.features.extract(trainY,
@@ -257,7 +221,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                     trainedLearners.append(
                         self._train(
                             learnerName, pairData.copy(),
-                            pairTrueLabels.copy(), arguments=arguments)
+                            pairTrueLabels.copy(), arguments, randomSeed,
+                            crossValidationResults)
                         )
                     pairData.features.append(pairTrueLabels, useLog=False)
                     trainX.points.append(pairData, useLog=False)
@@ -269,14 +234,14 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             trainX = trainX.copy()
             trainY = trainX.features.extract(toExtract=trainY, useLog=False)
         return self._train(learnerName, trainX, trainY, arguments,
-                           crossValidationResults)
+                           randomSeed, crossValidationResults)
 
 
     @captureOutput
-    def _train(self, learnerName, trainX, trainY=None, arguments=None,
-               crossValidationResults=None):
+    def _train(self, learnerName, trainX, trainY, arguments, randomSeed,
+               crossValidationResults):
         packedBackend = self._trainBackend(learnerName, trainX, trainY,
-                                           arguments)
+                                           arguments, randomSeed)
         trainedBackend, transformedInputs, customDict = packedBackend
 
         has2dOutput = False
@@ -293,7 +258,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         # encapsulate into TrainedLearner object
         return TrainedLearner(learnerName, arguments, transformedArguments,
                               customDict, trainedBackend, self, has2dOutput,
-                              crossValidationResults, trainXShape, trainYNames)
+                              crossValidationResults, trainXShape, trainYNames,
+                              randomSeed)
 
 
     def _confirmValidLearner(self, learnerName):
@@ -308,7 +274,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             raise InvalidArgumentValue(msg)
 
 
-    def _trainBackend(self, learnerName, trainX, trainY, arguments):
+    def _trainBackend(self, learnerName, trainX, trainY, arguments,
+                      randomSeed):
         ### PLANNING ###
 
         # verify the learner is available
@@ -332,7 +299,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
 
         # train the instantiated learner
         trainedBackend = self._trainer(learnerName, transTrainX, transTrainY,
-                                       transArguments, customDict)
+                                       transArguments, randomSeed, customDict)
 
         return (trainedBackend, transformedInputs, customDict)
 
@@ -580,7 +547,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         return ret
 
     @captureOutput
-    @cacheWrapper
     def findCallable(self, name):
         """
         Find reference to the callable with the given name.
@@ -596,7 +562,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         """
         return self._findCallableBackend(name)
 
-    @cacheWrapper
     def _getParameterNames(self, name):
         """
         Find params for instantiation and function calls.
@@ -620,7 +585,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         return ret
 
     @captureOutput
-    @cacheWrapper
     def getLearnerParameterNames(self, learnerName):
         """
         Find learner parameter names for a trainAndApply() call.
@@ -643,7 +607,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
 
         return ret
 
-    @cacheWrapper
     def _getDefaultValues(self, name):
         """
         Find default values.
@@ -660,7 +623,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         return self._getDefaultValuesBackend(name)
 
     @captureOutput
-    @cacheWrapper
     def getLearnerDefaultValues(self, learnerName):
         """
         Find learner default parameter values for trainAndApply() call.
@@ -675,6 +637,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         List of dict of param names to default values
         """
         return self._getLearnerDefaultValuesBackend(learnerName)
+
 
     ########################
     ### ABSTRACT METHODS ###
@@ -790,7 +753,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
+    def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
+                 customDict):
         """
         Build a learner and perform training with the given data.
 
@@ -875,40 +839,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def _optionDefaults(self, option):
-        """
-        Define package default values that will be used for as long as a
-        default value hasn't been registered in the nimble configuration
-        file. For example, these values will always be used the first
-        time an interface is instantiated.
-        """
-        pass
-
-
-    @abc.abstractmethod
-    def _configurableOptionNames(self):
-        """
-        Returns a list of strings, where each string is the name of a
-        configurable option of this interface whose value will be stored
-        in nimble's configuration file.
-        """
-        pass
-
-    @abc.abstractmethod
-    def _exposedFunctions(self):
-        """
-        Returns a list of references to functions which are to be
-        wrapped in I/O transformation, and exposed as attributes of all
-        TrainedLearner objects returned by this interface's train()
-        function. If None, or an empty list is returned, no functions
-        will be exposed. Each function in this list should be a python
-        function, the inspect module will be used to retrieve argument
-        names, and the value of the function's __name__ attribute will
-        be its name in TrainedLearner.
-        """
-        pass
-
-    @abc.abstractmethod
     def version(self):
         """
         The version of the package accessible to the interface.
@@ -936,6 +866,9 @@ class TrainedLearner(object):
         The name of the learner used for training.
     arguments : dict
         The original arguments passed to the learner.
+    randomSeed : int
+        The random seed used for the learner. Only applicable if the
+        learner utilizes randomness.
     crossValidation : KFoldCrossValidator
         The object containing the cross-validation results, provided
         cross-validation occurred.  See the Attributes section in
@@ -945,7 +878,8 @@ class TrainedLearner(object):
     """
     def __init__(self, learnerName, arguments, transformedArguments,
                  customDict, backend, interfaceObject, has2dOutput,
-                 crossValidationResults, trainXShape, trainYNames):
+                 crossValidationResults, trainXShape, trainYNames,
+                 randomSeed):
         """
         Initialize the object wrapping the trained learner stored in
         backend, and setting up the object methods that may be used to
@@ -980,33 +914,22 @@ class TrainedLearner(object):
             otherwise None.
         trainXShape : tuple
             The shape, (numPts, numFts), of the trainX object.
+        randomSeed : int
+           The random seed to use (when applicable). Also supports
+           logging the randomSeed for top-level functions.
         """
         self.learnerName = learnerName
         self.arguments = arguments
+        self.randomSeed = randomSeed
+        self.crossValidation = crossValidationResults
+
         self._transformedArguments = transformedArguments
         self._customDict = customDict
         self._backend = backend
         self._interface = interfaceObject
         self._has2dOutput = has2dOutput
-        self.crossValidation = crossValidationResults
         self._trainXShape = trainXShape
         self._trainYNames = trainYNames
-
-        exposedFunctions = self._interface._exposedFunctions()
-        for exposed in exposedFunctions:
-            methodName = getattr(exposed, '__name__')
-            (args, _, _, _) = inspectArguments(exposed)
-            doc = 'Wrapped version of the ' + methodName + ' function where '
-            if 'trainedLearner' in args:
-                wrapped = functools.partial(exposed, trainedLearner=self)
-                doc += 'the "trainedLearner" parameter has been fixed as this '
-                doc += 'object, and '
-            else:
-                wrapped = functools.partial(exposed)
-            doc += 'the "self" parameter has been fixed to be '
-            doc += str(interfaceObject)
-            wrapped.__doc__ = doc
-            setattr(self, methodName, wrapped)
 
     @captureOutput
     @trackEntry
@@ -1431,7 +1354,8 @@ class TrainedLearner(object):
             trainY = trainX.features.extract(toExtract=trainY, useLog=False)
 
         trainedBackend = self._interface._trainBackend(
-            self.learnerName, trainX, trainY, self._transformedArguments)
+            self.learnerName, trainX, trainY, self._transformedArguments,
+            self.randomSeed)
 
         newBackend = trainedBackend[0]
         transformedInputs = trainedBackend[1]
@@ -1486,7 +1410,7 @@ class TrainedLearner(object):
 
         handleLogging(useLog, 'run', 'TrainedLearner.incrementalTrain', trainX,
                       trainY, None, None, self.learnerName, self.arguments,
-                      None)
+                      None, None)
 
     @captureOutput
     def getAttributes(self):
@@ -1543,7 +1467,7 @@ class TrainedLearner(object):
             strategy = ovaNotOvOFormatted(rawScores, applyResults, numLabels)
         else:
             strategy = checkClassificationStrategy(
-                self._interface, self.learnerName, arguments)
+                self._interface, self.learnerName, arguments, self.randomSeed)
         # want the scores to be per label, regardless of the original format,
         # so we check the strategy, and modify it if necessary
         if not strategy:
@@ -1554,8 +1478,8 @@ class TrainedLearner(object):
                 scores.append(combinedScores)
             scores = numpy.array(scores)
             return nimble.data("Matrix", scores, useLog=False)
-        else:
-            return rawScores
+
+        return rawScores
 
 
     @captureOutput
@@ -1670,6 +1594,7 @@ class TrainedLearners(TrainedLearner):
         trainedLearnerAttrs = trainedLearners[0]
         learnerName = trainedLearnerAttrs.learnerName
         arguments = trainedLearnerAttrs.arguments
+        randomSeed = trainedLearnerAttrs.randomSeed
         transformedArguments = trainedLearnerAttrs._transformedArguments
         customDict = trainedLearnerAttrs._customDict
         backend = trainedLearnerAttrs._backend
@@ -1682,7 +1607,7 @@ class TrainedLearners(TrainedLearner):
         super(TrainedLearners, self).__init__(
             learnerName, arguments, transformedArguments, customDict, backend,
             interfaceObject, has2dOutput, crossValidationResults, trainXShape,
-            trainYNames)
+            trainYNames, randomSeed)
 
     @captureOutput
     def apply(self, testX, arguments=None, output='match', scoreMode='label',
@@ -1797,7 +1722,7 @@ class TrainedLearners(TrainedLearner):
                     rawPredictions.getTypeString(), winningLabels,
                     featureNames=['winningLabel'], useLog=False)
 
-            elif scoreMode.lower() == 'bestScore'.lower():
+            if scoreMode.lower() == 'bestScore'.lower():
                 #construct a list of lists, with each row in the list
                 # containing the predicted label and score of that label for
                 # the corresponding row in rawPredictions
@@ -1816,7 +1741,7 @@ class TrainedLearners(TrainedLearner):
                                                useLog=False)
                 return resultsContainer
 
-            elif scoreMode.lower() == 'allScores'.lower():
+            if scoreMode.lower() == 'allScores'.lower():
                 # create list of Feature Names/Column Headers for final
                 # return object
                 colHeaders = sorted([str(i) for i in self._labelSet])
@@ -1841,12 +1766,12 @@ class TrainedLearners(TrainedLearner):
                 return nimble.data(rawPredictions.getTypeString(),
                                    resultsContainer, featureNames=colHeaders,
                                    useLog=False)
-            else:
-                msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
-                raise InvalidArgumentValue(msg)
+
+            msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
+            raise InvalidArgumentValue(msg)
 
         #1 VS 1
-        elif self.method == 'OneVsOne':
+        if self.method == 'OneVsOne':
             predictionFeatureID = 0
             for trainedLearner in self._trainedLearnersList:
                 # train classifier on that data; apply it to the test set
@@ -1868,7 +1793,7 @@ class TrainedLearners(TrainedLearner):
                     extractWinningPredictionLabel, useLog=False)
                 ret.features.setName(0, "winningLabel", useLog=False)
                 return ret
-            elif scoreMode.lower() == 'bestScore'.lower():
+            if scoreMode.lower() == 'bestScore'.lower():
                 # construct a list of lists, with each row in the list
                 # containing the predicted label and score of that label for
                 # the corresponding row in rawPredictions
@@ -1886,7 +1811,7 @@ class TrainedLearners(TrainedLearner):
                                                featureNames=featureNames,
                                                useLog=False)
                 return resultsContainer
-            elif scoreMode.lower() == 'allScores'.lower():
+            if scoreMode.lower() == 'allScores'.lower():
                 colHeaders = sorted([str(float(i)) for i in self._labelSet])
                 colIndices = list(range(len(colHeaders)))
                 labelIndexDict = {v: k for k, v in zip(colIndices, colHeaders)}
@@ -1903,11 +1828,11 @@ class TrainedLearners(TrainedLearner):
                 return nimble.data(rawPredictions.getTypeString(),
                                    resultsContainer, featureNames=colHeaders,
                                    useLog=False)
-            else:
-                msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
-                raise InvalidArgumentValue(msg)
-        else:
-            raise ImproperObjectAction('Wrong multiclassification method.')
+
+            msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
+            raise InvalidArgumentValue(msg)
+
+        raise ImproperObjectAction('Wrong multiclassification method.')
 
 
 #######################
@@ -1928,15 +1853,33 @@ def formatPathMessage(name):
     underline = '-' * (len(name) + 13)
     return pathMessage.format(name=name, underline=underline)
 
-
-class PredefinedInterface(abc.ABC):
+@inheritDocstringsFactory(UniversalInterface)
+class PredefinedInterface(UniversalInterface):
     """
-    Abstract base class of classmethods for predefined interfaces.
+    Interfaces to third party packages.
 
-    For predefined interfaces, we need class methods to access certain
-    information about the class and provide a detailed exception if the
-    user attempts to use the interface, but it failed instantiation.
+    For predefined interfaces, additional validation is necessary during
+    init, some methods must be class methods, a custom failure message
+    is required and learner details are cached.
     """
+
+    def __init__(self):
+        # _configurableOptionNames and _optionDefaults
+        optionNames = self._configurableOptionNames()
+        if not isinstance(optionNames, list):
+            msg = "Improper implementation of _configurableOptionNames(), "
+            msg += "must return a list of strings"
+            raise TypeError(msg)
+        for optionName in optionNames:
+            if not isinstance(optionName, str):
+                msg = "Improper implementation of _configurableOptionNames(), "
+                msg += "must return a list of strings"
+                raise TypeError(msg)
+            # call _optionDefaults to make sure it doesn't throw an exception
+            self._optionDefaults(optionName)
+
+        super(PredefinedInterface, self).__init__()
+
     @classmethod
     @abc.abstractmethod
     def getCanonicalName(cls):
@@ -1965,7 +1908,49 @@ class PredefinedInterface(abc.ABC):
                 msg += formatPathMessage(name)
             raise PackageException(msg).with_traceback(origTraceback)
 
+    @abc.abstractmethod
+    def _optionDefaults(self, option):
+        """
+        Define package default values that will be used for as long as a
+        default value hasn't been registered in the nimble configuration
+        file. For example, these values will always be used the first
+        time an interface is instantiated.
+        """
+        pass
+
+
+    @abc.abstractmethod
+    def _configurableOptionNames(self):
+        """
+        Returns a list of strings, where each string is the name of a
+        configurable option of this interface whose value will be stored
+        in nimble's configuration file.
+        """
+        pass
+
     @classmethod
     @abc.abstractmethod
     def _installInstructions(cls):
         pass
+
+    @cacheWrapper
+    def findCallable(self, name):
+        return super(PredefinedInterface, self).findCallable(name)
+
+    @cacheWrapper
+    def _getParameterNames(self, name):
+        return super(PredefinedInterface, self)._getParameterNames(name)
+
+    @cacheWrapper
+    def getLearnerParameterNames(self, learnerName):
+        return super(PredefinedInterface, self).getLearnerParameterNames(
+            learnerName)
+
+    @cacheWrapper
+    def _getDefaultValues(self, name):
+        return super(PredefinedInterface, self)._getDefaultValues(name)
+
+    @cacheWrapper
+    def getLearnerDefaultValues(self, learnerName):
+        return super(PredefinedInterface, self).getLearnerDefaultValues(
+            learnerName)

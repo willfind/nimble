@@ -19,10 +19,7 @@ numpyRandom = numpy.random.RandomState(42)
 
 # We use None to signal that we are outside of a section of
 # uncontrolled randomness
-_saved = {pythonRandom: {'state': None,
-                         'methods': ('seed', 'getstate', 'setstate')},
-          numpyRandom: {'state': None,
-                        'methods': ('seed', 'get_state', 'set_state')},}
+_saved = [None, None]
 _stillDefault = True
 
 
@@ -39,11 +36,10 @@ def setSeed(seed, useLog=None):
     """
     global _stillDefault
 
-    for randomObj, savedInfo in _saved.items():
-        seeder = getattr(randomObj, savedInfo['methods'][0])
-        seeder(seed)
-        if _stillDefault and savedInfo['state'] is not None:
-            _stillDefault = False
+    pythonRandom.seed(seed)
+    numpyRandom.seed(seed)
+    if _stillDefault and not all(state is None for state in _saved):
+        _stillDefault = False
 
     handleLogging(useLog, 'setSeed', seed=seed)
 
@@ -264,9 +260,8 @@ def _startAlternateControl(seed=None):
         integer for compliance with numpy. If seed is None, then we use
         os system time.
     """
-    for randomObj, savedInfo in _saved.items():
-        getter = getattr(randomObj, savedInfo['methods'][1])
-        _saved[randomObj]['state'] = getter()
+    _saved[0] = pythonRandom.getstate()
+    _saved[1] = numpyRandom.get_state()
 
     setSeed(seed, useLog=False)
 
@@ -281,8 +276,9 @@ def _endAlternateControl():
     section. This will restore the state saved by
     `_startAlternateControl``.
     """
-    for randomObj, savedInfo in _saved.items():
-        if savedInfo['state'] is not None:
-            setter = getattr(randomObj, savedInfo['methods'][2])
-            setter(savedInfo['state'])
-            _saved[randomObj]['state'] = None
+    if _saved[0] is not None:
+        pythonRandom.setstate(_saved[0])
+        _saved[0] = None
+    if _saved[1] is not None:
+        numpyRandom.set_state(_saved[1])
+        _saved[1] = None

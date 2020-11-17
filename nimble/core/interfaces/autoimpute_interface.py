@@ -8,16 +8,16 @@ import logging
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble._utility import inheritDocstringsFactory
-from .universal_interface import UniversalInterface
-from .universal_interface import PredefinedInterface
 from .scikit_learn_interface import _SciKitLearnAPI
 from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import PythonSearcher
+from ._interface_helpers import validInitParams
 
 logging.getLogger('theano.configdefaults').setLevel(logging.ERROR)
 
-@inheritDocstringsFactory(UniversalInterface)
-class Autoimpute(_SciKitLearnAPI, PredefinedInterface, UniversalInterface):
+
+@inheritDocstringsFactory(_SciKitLearnAPI)
+class Autoimpute(_SciKitLearnAPI):
     """
     This class is an interface to autoimpute.
 
@@ -160,18 +160,11 @@ To install autoimpute
             outputType = customDict['match']
         return nimble.data(outputType, outputValue, useLog=False)
 
-
-    def _trainer(self, learnerName, trainX, trainY, arguments, customDict):
-        return super(Autoimpute, self)._trainer(learnerName, trainX, trainY,
-                                                arguments, customDict)
-
-    def _initLearner(self, learnerName, trainX, trainY, arguments):
+    def _initLearner(self, learnerName, trainX, trainY, arguments, randomSeed):
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
-        initParams = {name: arguments[name] for name in initNames
-                      if name in arguments}
+        initParams = validInitParams(initNames, arguments, randomSeed,
+                                     self.randomParam)
         defaults = self.getLearnerDefaultValues(learnerName)[0]
-        if self.randomParam in defaults and self.randomParam not in arguments:
-            initParams[self.randomParam] = defaults[self.randomParam]
         learner = self.findCallable(learnerName)(**initParams)
 
         # need to enforce strategy as a required parameter for the imputer
@@ -185,10 +178,10 @@ To install autoimpute
             raise InvalidArgumentValue(msg)
         # for regressors, also need to check that MultipleImputer strategy is
         # defined if the user did not provide a MultipleImputer directly
-        elif (isinstance(learner, self.autoimpute.analysis.MiBaseRegressor)
-              and ('mi' not in initParams or initParams['mi'] is None)
-              and ('mi_kwgs' not in initParams
-                   or 'strategy' not in initParams['mi_kwgs'])):
+        if (isinstance(learner, self.autoimpute.analysis.MiBaseRegressor)
+                and ('mi' not in initParams or initParams['mi'] is None)
+                and ('mi_kwgs' not in initParams
+                     or 'strategy' not in initParams['mi_kwgs'])):
             strategies = list(learner.mi.strategies.keys())
             msg = "Due to the level of complexity of {learnerName}'s "
             msg += "default arguments, nimble requires the MultipleImputer "
@@ -228,13 +221,6 @@ To install autoimpute
             learner.fit(*fitArgs, **fitKwargs)
         except ValueError as ve:
             raise InvalidArgumentValue(str(ve))
-
-
-    def _applier(self, learnerName, learner, testX, newArguments,
-                 storedArguments, customDict):
-        return super(Autoimpute, self)._applier(
-            learnerName, learner, testX, newArguments, storedArguments,
-            customDict)
 
     def version(self):
         return self.autoimpute.__version__

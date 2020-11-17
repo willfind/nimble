@@ -235,9 +235,11 @@ class FoldIterator(object):
                     msg += "number of points and features"
                     raise InvalidArgumentValueCombination(msg)
 
-        # note: we want truncation here
-        numInFold = int(points / self.folds)
-        if numInFold == 0:
+        # When number of points does not divide evenly by number of folds
+        # some folds will need one more point than minNumInFold.
+        # Ex. 10 folds and 98 points, we make 8 folds of 10 then 2 folds of 9
+        minNumInFold, numFoldsToAddPoint = divmod(points, self.folds)
+        if minNumInFold == 0:
             msg = "Must specify few enough folds so there is a point in each"
             raise InvalidArgumentValue(msg)
 
@@ -245,13 +247,16 @@ class FoldIterator(object):
         indices = list(range(points))
         pythonRandom.shuffle(indices)
         foldList = []
+        end = 0
         for fold in range(self.folds):
-            start = fold * numInFold
-            if fold == self.folds - 1:
-                end = points
+            start = end
+            end = (fold + 1) * minNumInFold
+            if fold < numFoldsToAddPoint:
+                end += fold + 1
             else:
-                end = (fold + 1) * numInFold
+                end += numFoldsToAddPoint
             foldList.append(indices[start:end])
+
         return foldList
 
 class ArgumentIterator(object):
@@ -698,8 +703,7 @@ def _unpackLearnerName(learnerName):
                 and package != 'nimble'):
             package = 'custom'
             customInterface = nimble.core.interfaces.available['custom']
-            if name not in customInterface.registeredLearners:
-                customInterface.registerLearnerClass(learnerName)
+            customInterface.registerLearnerClass(learnerName)
     interface = findBestInterface(package)
 
     return interface, name

@@ -510,7 +510,7 @@ def test_KFoldCrossValidator():
     # we have mocked the object so it will not actually perform crossValidation
     # instead we will pass our own dummy data to the backend so we can check
     # the outputs match our expectations
-    learnerName = 'Dummy.learner'
+    learnerName = 'nimble.KNNClassifier'
     X, Y = None, None # not actually used when not crossValidating
     performanceFunction = rootMeanSquareError
     aVals = nimble.CV([1, 2])
