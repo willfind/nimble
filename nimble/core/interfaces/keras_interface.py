@@ -9,7 +9,7 @@ import warnings
 import numpy
 
 import nimble
-from nimble._utility import inspectArguments
+from nimble._utility import inspectArguments, dtypeConvert
 from nimble._utility import inheritDocstringsFactory, numpy2DArray
 from nimble.exceptions import InvalidArgumentValue, _prettyListString
 from .universal_interface import PredefinedInterface
@@ -258,23 +258,25 @@ To install keras
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
                              arguments, customDict):
-
         if trainX is not None:
             dataType = trainX.getTypeString()
             self._validateFitArguments(dataType, learnerName, arguments)
             if dataType != 'Sparse':
             #for sparse cases, keep it untouched here.
                 trainX = trainX.copy(to='numpy array')
+                trainX = dtypeConvert(trainX)
         if trainY is not None:
             if len(trainY.features) > 1:
                 trainY = (trainY.copy(to='numpy array'))
             else:
                 trainY = trainY.copy(to='numpy array', outputAs1D=True)
+            trainY = dtypeConvert(trainY)
 
         if testX is not None:
             if testX.getTypeString() != 'Sparse':
             #for sparse cases, keep it untouched here.
                 testX = testX.copy(to='numpy array')
+                testX = dtypeConvert(testX)
 
         instantiatedArgs = {}
         for arg, val in arguments.items():

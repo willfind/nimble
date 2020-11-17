@@ -603,7 +603,7 @@ class SessionLogger(object):
             The random seed value.
         """
         if loggingEnabled(useLog):
-            logType = 'setSeed'
+            logType = 'random.setSeed'
             logInfo = {'seed': seed}
             self.log(logType, logInfo)
 

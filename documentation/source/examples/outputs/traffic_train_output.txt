@@ -1,0 +1,37 @@
+REGEX: sklearn.LinearRegression root mean square error: 1795\.95030555802[0-9]+
+REGEX: sklearn.Ridge root mean square error: 1795\.953098977253[0-9]+
+REGEX: sklearn.Lasso root mean square error: 1795\.95957561255[0-9]+
+REGEX: sklearn.KNeighborsRegressor root mean square error: 799\.34429543600[0-9]+
+REGEX: sklearn.RandomForestRegressor root mean square error: 325\.081475103503[0-9]+
+REGEX: \{'n_neighbors': 1, 'rootMeanSquareError': 1031\.576793691927[0-9]+\}
+REGEX: \{'n_neighbors': 5, 'rootMeanSquareError': 895\.282042701293[0-9]+\}
+REGEX: \{'n_neighbors': 11, 'rootMeanSquareError': 941\.509826812224[0-9]+\}
+REGEX: \{'min_samples_leaf': 2\} 348\.97648149497[0-9]+
+REGEX: 175\.9459400937417[0-9]+
+ volume  hour
+
+717.866   0
+379.320   1
+309.199   2
+418.300   3
+855.535   4
+2704.859  5
+5016.907  6
+6012.217  7
+5513.003  8
+4811.872  9
+4377.587  10
+4707.656  11
+4989.449  12
+5000.251  13
+5263.686  14
+5717.933  15
+6557.752  16
+5860.630  17
+4587.346  18
+3300.857  19
+2868.523  20
+2830.315  21
+2264.992  22
+1843.025  23
+
