@@ -364,11 +364,11 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     ...                     mode='classification', k=3)
     >>> data
     Matrix(
-        [[  1   3.000 6.000]
-         [  1     3     6  ]
-         [  2     1     6  ]
-         [  1     3     7  ]
-         [1.000   3   6.000]]
+        [[1.000 3.000 6.000]
+         [1.000 3.000 6.000]
+         [2.000 1.000 6.000]
+         [1.000 3.000 7.000]
+         [1.000 3.000 6.000]]
         )
 
     Fill last feature zeros based on k-nearest neighbors regressor.
@@ -847,9 +847,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     ...                             arguments={'C': 0.1}, kernel='linear')
     >>> pred
     Matrix(
-        [[1.000]
-         [2.000]
-         [3.000]]
+        [[1]
+         [2]
+         [3]]
         )
     """
     timer = startTimer(useLog)

@@ -8,11 +8,13 @@ without risk of circular imports.
 
 import inspect
 import importlib
+import numbers
+import datetime
 
 import numpy
 
 # nimble.exceptions may be imported
-from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
 
 
@@ -115,6 +117,11 @@ def inheritDocstringsFactory(toInherit):
         return cls
     return inheritDocstring
 
+def allowedNumpyDType(dtype):
+    return (dtype in [int, float, bool, object]
+            or numpy.issubdtype(dtype, numpy.number)
+            or numpy.issubdtype(dtype, numpy.datetime64))
+
 def numpy2DArray(obj, dtype=None, copy=True, order='K', subok=False):
     """
     Mirror numpy.array() but require the data be two-dimensional.
@@ -123,6 +130,11 @@ def numpy2DArray(obj, dtype=None, copy=True, order='K', subok=False):
                       ndmin=2)
     if len(ret.shape) > 2:
         raise InvalidArgumentValue('obj cannot be more than two-dimensional')
+
+    if not allowedNumpyDType(ret.dtype):
+        ret = numpy.array(obj, dtype=numpy.object_, copy=copy, order=order,
+                          subok=subok, ndmin=2)
+
     return ret
 
 def is2DArray(arr):
@@ -133,6 +145,7 @@ def is2DArray(arr):
     return True.
     """
     return isinstance(arr, numpy.ndarray) and len(arr.shape) == 2
+
 
 class DeferredModuleImport(object):
     """
@@ -194,6 +207,7 @@ plt = DeferredModuleImport('matplotlib.pyplot')
 requests = DeferredModuleImport('requests')
 cloudpickle = DeferredModuleImport('cloudpickle')
 h5py = DeferredModuleImport('h5py')
+dateutil = DeferredModuleImport('dateutil')
 
 def sparseMatrixToArray(sparseMatrix):
     """
@@ -233,3 +247,93 @@ def dtypeConvert(obj):
         except ValueError:
             pass
     return obj
+
+def isDatetime(x):
+    datetimeTypes = [datetime.datetime, numpy.datetime64]
+    if pd.nimbleAccessible():
+        datetimeTypes.append(pd.Timestamp)
+    return isinstance(x, tuple(datetimeTypes))
+
+def isAllowedSingleElement(x):
+    """
+    Determine if an element is an allowed single element.
+    """
+    if isinstance(x, (numbers.Number, str, numpy.bool_)):
+        return True
+
+    if isDatetime(x):
+        return True
+
+    if hasattr(x, '__len__'):#not a single element
+        return False
+
+    if x is None or x != x:#None and np.NaN are allowed
+        return True
+
+    return False
+
+def validateAllAllowedElements(data):
+    if not all(map(isAllowedSingleElement, data)):
+        msg = "Number, string, None, nan, and datetime objects are "
+        msg += "the only elements allowed in nimble data objects"
+        raise ImproperObjectAction(msg)
+
+def pandasDataFrameToList(pdDataFrame):
+    return list(map(list, zip(*(col for _, col in pdDataFrame.iteritems()))))
+
+def removeDuplicatesNative(coo_obj):
+    """
+    Creates a new coo_matrix, using summation for numeric data to remove
+    duplicates. If there are duplicate entires involving non-numeric
+    data, an exception is raised.
+
+    coo_obj : the coo_matrix from which the data of the return object
+    originates from. It will not be modified by the function.
+
+    Returns : a new coo_matrix with the same data as in the input
+    matrix, except with duplicate numerical entries summed to a single
+    value. This operation is NOT stable - the row / col attributes are
+    not guaranteed to have an ordering related to those from the input
+    object. This operation is guaranteed to not introduce any 0 values
+    to the data attribute.
+    """
+    if coo_obj.data is None:
+        #When coo_obj data is not iterable: Empty
+        #It will throw TypeError: zip argument #3 must support iteration.
+        #Decided just to do this quick check instead of duck typing.
+        return coo_obj
+
+    seen = {}
+    for i, j, v in zip(coo_obj.row, coo_obj.col, coo_obj.data):
+        if (i, j) not in seen:
+            # all types are allows to be present once
+            seen[(i, j)] = v
+        else:
+            try:
+                seen[(i, j)] += float(v)
+            except ValueError:
+                msg = 'Unable to represent this configuration of data in '
+                msg += 'Sparse object. At least one removeDuplicatesNativeof '
+                msg += 'the duplicate entries is a non-numerical type'
+                raise ValueError(msg)
+
+    rows = []
+    cols = []
+    data = []
+
+    for (i, j) in seen:
+        if seen[(i, j)] != 0:
+            rows.append(i)
+            cols.append(j)
+            data.append(seen[(i, j)])
+
+    dataNP = numpy.array(data)
+    # if there are mixed strings and numeric values numpy will automatically
+    # turn everything into strings. This will check to see if that has
+    # happened and use the object dtype instead.
+    if len(dataNP) > 0 and isinstance(dataNP[0], numpy.flexible):
+        dataNP = numpy.array(data, dtype='O')
+    new_coo = scipy.sparse.coo_matrix((dataNP, (rows, cols)),
+                                      shape=coo_obj.shape)
+
+    return new_coo

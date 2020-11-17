@@ -198,18 +198,20 @@ def run_setup():
     autoimpute = 'autoimpute>=0.12'
     requests = 'requests>2.12'
     h5py = 'h5py>=2.10'
+    dateutil = 'dateutil>=2.3'
     nose = 'nose>=1.3'
     data = [pandas, scipy]
     interfaces = [mlpy, scikitlearn, keras, autoimpute]
-    userAll = [matplotlib, cloudpickle, cython, requests, h5py]
+    userAll = [matplotlib, cloudpickle, cython, requests, h5py, dateutil]
     userAll.extend(data)
     userAll.extend(interfaces)
     setupKwargs['extras_require'] = {
         'all': userAll, 'data': data, 'interfaces': interfaces,
         'pandas': pandas, 'scipy': scipy, 'matplotlib': matplotlib,
         'cloudpickle': cloudpickle, 'cython': cython, 'requests': requests,
-        'h5py': h5py, 'mlpy': mlpy,  'scikit-learn': scikitlearn,
-        'keras': keras, 'autoimpute': autoimpute, 'nose': nose,
+        'h5py': h5py, 'dateutil': dateutil, 'mlpy': mlpy,
+        'scikit-learn': scikitlearn, 'keras': keras, 'autoimpute': autoimpute,
+        'nose': nose,
         }
 
     # TODO

@@ -3026,14 +3026,16 @@ class QueryBackend(DataTestObject):
                                featureNames=fnames)
 
         ret = obj.featureReport()
-        line1 = "featureName   minimum   maximum   mean   median   standardDeviation   uniqueCount"
-        line2 = "        one      1         3      2.00    2.00           1.00              3     "
-        line3 = "        two      0         4      2.00    2.00           2.00              3     "
-        line4 = "      three     8.80      9.20    9.00    9.00           0.20              3     "
+        line1 = ['featureName', 'minimum', 'maximum', 'mean', 'median',
+                 'standardDeviation', 'uniqueCount']
+        line2 = ['one', 1, 3, 2, 2, 1, 3]
+        line3 = ['two', 0, 4, 2, 2, 2, 3]
+        line4 = ['three', 8.8, 9.2, 9, 9, .2, 3]
         expLines = [line1, line2, line3, line4]
 
         for retLine, expLine in zip(ret.split('\n'), expLines):
-            assert retLine == expLine
+            converted = list(map(convertFeatureReportValues, retLine.split()))
+            assert converted == expLine
 
     def test_featureReport_withNonNumeric(self):
         fnames = ['one', 'two', 'three']
@@ -3041,14 +3043,16 @@ class QueryBackend(DataTestObject):
                                featureNames=fnames)
 
         ret = obj.featureReport()
-        line1 = "featureName   minimum   maximum   mean   median   standardDeviation   uniqueCount"
-        line2 = "        one      1         3      2.00    2.00           1.00              3     "
-        line3 = "        two      1         3      2.00    2.00           1.00              3     "
-        line4 = "      three     nan       nan     nan     nan            nan               3     "
+        line1 = ['featureName', 'minimum', 'maximum', 'mean', 'median',
+                 'standardDeviation', 'uniqueCount']
+        line2 = ['one', 1, 3, 2, 2, 1, 3]
+        line3 = ['two', 1, 3, 2, 2, 1, 3]
+        line4 = ['three', 'nan', 'nan', 'nan', 'nan', 'nan', 3]
         expLines = [line1, line2, line3, line4]
 
         for retLine, expLine in zip(ret.split('\n'), expLines):
-            assert retLine == expLine
+            converted = list(map(convertFeatureReportValues, retLine.split()))
+            assert converted == expLine
 
 
     #################
@@ -3374,3 +3378,18 @@ def test_elementQueryFunction():
     assert elementQueryFunction(lambda x: 5) is None
     assert elementQueryFunction('=0') is None
     assert elementQueryFunction('= 0') is None
+
+def convertFeatureReportValues(val):
+    try:
+        flt = float(val)
+        try:
+            itgr = int(val)
+            if flt != itgr:
+                return flt
+            return itgr
+        except ValueError:
+            if flt != flt:
+                return val
+            return flt
+    except ValueError:
+        return val
