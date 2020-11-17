@@ -17,6 +17,8 @@ import sys
 import os
 import shlex
 import inspect
+import re
+import json
 from datetime import datetime
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -25,6 +27,8 @@ from datetime import datetime
 confFilePath = os.path.abspath(inspect.getfile(inspect.currentframe()))
 NimbleParentDirPath = os.path.dirname(os.path.dirname(os.path.dirname(confFilePath)))
 sys.path.insert(0, NimbleParentDirPath)
+
+os.environ['PYTHONPATH'] = NimbleParentDirPath
 
 # -- General configuration ------------------------------------------------
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -53,7 +57,8 @@ def setup(app):
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
-    'numpydoc'#,
+    'numpydoc',
+    'nbsphinx',
     #    'sphinx.ext.coverage',
     #    'sphinx.ext.ifconfig',
 ]
@@ -177,7 +182,7 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-# html_static_path = ['_static']
+html_static_path = ['_static']
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -322,3 +327,100 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+# -- Options for nbsphinx -------------------------------------------------
+
+# suffix for source files, by default is .txt
+html_sourcelink_suffix = ''
+
+# input and output prompts
+# nbsphinx_input_prompt = 'In [%s]:'
+# nbsphinx_output_prompt = 'Out [%s]:'
+
+# removes input and output prompts
+nbsphinx_prolog = """
+.. raw:: html
+
+    <style>
+        .nbinput .prompt,
+        .nboutput .prompt {
+            display: none;
+        }
+    </style>
+"""
+
+# -- IPython Notebook conversion ------------------------------------------
+
+class PYtoIPYNB:
+
+    def __init__(self, file, metadata=None, nbformat=4, nbformat_minor=4):
+        self.file = file
+        self.name = os.path.splitext(file)[0]
+        self.notebook = {}
+        self.notebook['cells'] = []
+        if metadata is None:
+            self.notebook['metadata'] = {}
+        else:
+            self.notebook['metadata'] = metadata
+        self.notebook['nbformat'] = nbformat
+        self.notebook['nbformat_minor'] = nbformat_minor
+        self.celltype = None
+        self.multiline = False
+
+    def convertToNotebook(self):
+        with open(self.file, 'r') as f:
+            for line in f.readlines():
+                if re.match(r'["\']{3}\n?', line):
+                    self.multiline = not self.multiline
+                    self.celltype = None
+                    continue
+                self._createCells(line)
+            self._trimPreviousCellNewlines()
+
+        ipynb = self.name + '.ipynb'
+        with open(ipynb, 'w+') as notebookFile:
+            json.dump(self.notebook, notebookFile, indent=1)
+
+    def _createCells(self, line):
+        pattern = r'(##\s)(.*?)(#*)(\n)'
+        markdownLine = re.match(pattern, line)
+        isMarkdown = (self.multiline or markdownLine)
+        if markdownLine and not self.multiline:
+            groups = markdownLine.groups()
+            line = groups[1] + groups[3]
+            if groups[2]:
+                line = groups[2] + ' ' + line
+        isNewline = line == '\n'
+        if not isNewline and isMarkdown and self.celltype != 'markdown':
+            self.celltype = 'markdown'
+            cellInfo = dict(cell_type=self.celltype, metadata={}, source=[])
+            self._addNewCell(line, cellInfo)
+        elif not (isNewline or isMarkdown) and self.celltype != 'code':
+            self.celltype = 'code'
+            cellInfo = dict(cell_type=self.celltype, execution_count= None,
+                            metadata={}, outputs=[], source=[])
+            self._addNewCell(line, cellInfo)
+
+        self.notebook['cells'][-1]['source'].append(line)
+
+    def _addNewCell(self, line, cellInfo):
+        self._trimPreviousCellNewlines()
+        self.notebook['cells'].append(cellInfo)
+
+    def _trimPreviousCellNewlines(self):
+        if self.notebook['cells'] and self.notebook['cells'][-1]['source']:
+            if self.notebook['cells'][-1]['source'][-1] == '\n':
+                 _ = self.notebook['cells'][-1]['source'].pop()
+            if self.notebook['cells'][-1]['source'][-1].endswith('\n'):
+                trimmed = self.notebook['cells'][-1]['source'][-1][:-1]
+                self.notebook['cells'][-1]['source'][-1] = trimmed
+
+exampleNames = ['digits_train.py', 'shoppers_explore.py', 'shoppers_train.py',
+                'tidy_data.py', 'traffic_clean.py', 'traffic_train.py',
+                'wifi_support.py']
+confDir = os.path.dirname(confFilePath)
+exampleFiles = [os.path.join(confDir, 'examples', name)
+                for name in exampleNames]
+
+for file in exampleFiles:
+    PYtoIPYNB(file).convertToNotebook()

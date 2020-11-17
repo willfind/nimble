@@ -597,7 +597,7 @@ class SessionLogger(object):
             The random seed value.
         """
         if loggingEnabled(useLog):
-            logType = 'setSeed'
+            logType = 'random.setSeed'
             logInfo = {'seed': seed}
             self.log(logType, logInfo)
 
@@ -974,7 +974,7 @@ def _buildRunLogString(timestamp, entry):
             fullLog += string
             fullLog += "\n"
     # randomSeed
-    fullLog += "randomSeed: " + str(entry["randomSeed"])
+    fullLog += "Random Seed: " + str(entry["randomSeed"])
     fullLog += "\n"
     # metric data
     if entry.get("metrics", False):

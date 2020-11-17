@@ -102,13 +102,13 @@ def produceFeaturewiseReport(dataContainer, supplementalFunctions=None,
     #extract a subset of features from the data set and
     if shape[1] > maxFeaturesToCover:
         if maxFeaturesToCover % 2 == 0:
-            leftIndicesToSelect = list(range(maxFeaturesToCover / 2))
-            rightStart = shape[1] - (maxFeaturesToCover / 2)
+            leftIndicesToSelect = list(range(maxFeaturesToCover // 2))
+            rightStart = shape[1] - (maxFeaturesToCover // 2)
             rightIndicesToSelect = list(range(rightStart, shape[1]))
         else:
-            leftStop = math.floor(maxFeaturesToCover / 2)
+            leftStop = maxFeaturesToCover // 2
             leftIndicesToSelect = list(range(leftStop))
-            rightStart = shape[1] - ((maxFeaturesToCover / 2) + 1)
+            rightStart = shape[1] - ((maxFeaturesToCover // 2) + 1)
             rightIndicesToSelect = list(range(rightStart, shape[1]))
         subsetIndices = []
         subsetIndices.extend(leftIndicesToSelect)

@@ -25,6 +25,7 @@ from copy import deepcopy
 import os.path
 import tempfile
 import inspect
+import datetime
 
 import numpy
 from nose.tools import *
@@ -414,6 +415,41 @@ class HighLevelDataSafe(DataTestObject):
         ret = orig.points.calculate(reshape5D)
         assert ret == exp5D
 
+    def test_points_calculate_toDatetime(self):
+        data = [[1, 1, 2020], [1, 2, 2020], [1, 3, 2020]]
+        fnames = ['month', 'day', 'year']
+        toTest = self.constructor(data, featureNames=fnames)
+
+        def toDatetime(pt):
+            return datetime.datetime(pt['year'], pt['month'], pt['day'])
+
+        expData = [[datetime.datetime(2020, 1, 1)],
+                   [datetime.datetime(2020, 1, 2)],
+                   [datetime.datetime(2020, 1, 3)]]
+
+        exp = self.constructor(expData)
+
+        datetimes = toTest.points.calculate(toDatetime)
+
+        assert datetimes == exp
+
+    def test_points_calculate_fromDatetime(self):
+        data = [[datetime.datetime(2020, 1, 1)],
+                [datetime.datetime(2020, 1, 2)],
+                [datetime.datetime(2020, 1, 3)]]
+        toTest = self.constructor(data)
+
+        def fromDatetime(pt):
+            return [pt[0].month, pt[0].day, pt[0].year]
+
+        expData = [[1, 1, 2020], [1, 2, 2020], [1, 3, 2020]]
+
+        exp = self.constructor(expData)
+
+        datetimes = toTest.points.calculate(fromDatetime)
+
+        assert datetimes == exp
+
     ##########################
     # .features.calculate() #
     #########################
@@ -736,6 +772,40 @@ class HighLevelDataSafe(DataTestObject):
         orig = self.constructor([[1, 5, 0], [2, 6, 0], [3, 7, 0], [4, 8, 0]])
         ret = orig.features.calculate(reshape3D)
 
+    def test_features_calculate_toDatetime(self):
+        data = [['2020-01-01'], ['2020-01-02'], ['2020-01-03']]
+        toTest = self.constructor(data)
+
+        def toDatetime(ft):
+            return [datetime.datetime.strptime(dt, '%Y-%m-%d') for dt in ft]
+
+        expData = [[datetime.datetime(2020, 1, 1)],
+                   [datetime.datetime(2020, 1, 2)],
+                   [datetime.datetime(2020, 1, 3)]]
+
+        exp = self.constructor(expData)
+
+        datetimes = toTest.features.calculate(toDatetime)
+
+        assert datetimes == exp
+
+    def test_features_calculate_fromDatetime(self):
+        data = [[datetime.datetime(2020, 1, 1)],
+                [datetime.datetime(2020, 1, 2)],
+                [datetime.datetime(2020, 1, 3)]]
+        toTest = self.constructor(data)
+
+        def fromDatetime(ft):
+            return ['-'.join(map(str, [d.year, d.month, d.day])) for d in ft]
+
+        expData = [['2020-1-1'], ['2020-1-2'], ['2020-1-3']]
+
+        exp = self.constructor(expData)
+
+        datetimes = toTest.features.calculate(fromDatetime)
+
+        assert datetimes == exp
+
     #######################
     # calculateOnElements #
     #######################
@@ -952,6 +1022,44 @@ class HighLevelDataSafe(DataTestObject):
 
         ret = orig.calculateOnElements(toString)
         assert ret == exp
+
+    def test_calculateOnElements_toDatetime(self):
+        data = [['2019-01-01', '2019-12-31'],
+                ['2020-01-01', '2020-12-31'],
+                ['2021-01-01', '2021-12-31']]
+        toTest = self.constructor(data)
+
+        def toDatetime(elem):
+            return datetime.datetime.strptime(elem, '%Y-%m-%d')
+
+        expData = [[datetime.datetime(2019, 1, 1), datetime.datetime(2019, 12, 31)],
+                   [datetime.datetime(2020, 1, 1), datetime.datetime(2020, 12, 31)],
+                   [datetime.datetime(2021, 1, 1), datetime.datetime(2021, 12, 31)]]
+
+        exp = self.constructor(expData)
+
+        datetimes = toTest.calculateOnElements(toDatetime)
+
+        assert datetimes == exp
+
+    def test_calculateOnElements_fromDatetime(self):
+        data = [[datetime.datetime(2019, 1, 1), datetime.datetime(2019, 12, 31)],
+                [datetime.datetime(2020, 1, 1), datetime.datetime(2020, 12, 31)],
+                [datetime.datetime(2021, 1, 1), datetime.datetime(2021, 12, 31)]]
+        toTest = self.constructor(data)
+
+        def fromDatetime(elem):
+            return '-'.join(map(str, [elem.year, elem.month, elem.day]))
+
+        expData = [['2019-1-1', '2019-12-31'],
+                   ['2020-1-1', '2020-12-31'],
+                   ['2021-1-1', '2021-12-31']]
+
+        exp = self.constructor(expData)
+
+        datetimes = toTest.calculateOnElements(fromDatetime)
+
+        assert datetimes == exp
 
     ######################
     # points.mapReduce() #

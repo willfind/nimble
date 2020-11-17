@@ -26,6 +26,7 @@ from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
+from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
 from nimble.core.logger import handleLogging
 from nimble._utility import inspectArguments
 from .points import Points
@@ -463,8 +464,8 @@ class Axis(ABC):
             # only point axis can handle multidimensional data
             if not self._isPoint:
                 try:
-                    assert all(isAllowedSingleElement(v) for v in currOut)
-                except (AssertionError, ImproperObjectAction) as e:
+                    validateAllAllowedElements(currOut)
+                except ImproperObjectAction as e:
                     msg = "function must return a one-dimensional object "
                     raise ImproperObjectAction(msg) from e
                 except TypeError as e:

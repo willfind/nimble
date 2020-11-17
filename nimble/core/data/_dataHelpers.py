@@ -4,7 +4,6 @@ the main data wrapper objects defined in this module.
 """
 
 import math
-import numbers
 import re
 import operator
 from functools import wraps
@@ -13,7 +12,11 @@ import os.path
 import numpy
 
 import nimble
+from nimble import match
 from nimble._utility import pd, plt, scipy
+from nimble._utility import inspectArguments
+from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
+from nimble._utility import is2DArray, numpy2DArray
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction, PackageException
@@ -31,22 +34,6 @@ class _DefaultNumber:
     """
     number = 0
 
-
-def isAllowedSingleElement(x):
-    """
-    Determine if an element is an allowed single element.
-    """
-    if isinstance(x, (numbers.Number, str)):
-        return True
-
-    if hasattr(x, '__len__'):#not a single element
-        return False
-
-    # pylint: disable=comparison-with-itself
-    if x is None or x != x:#None and np.NaN are allowed
-        return True
-
-    return False
 
 def nextDefaultObjectName():
     """
@@ -146,7 +133,7 @@ def mergeNonDefaultNames(baseSource, otherSource):
     return ptNames, ftNames
 
 
-def _looksNumeric(val):
+def looksNumeric(val):
     # div is a good check of your standard numeric objects, and excludes things
     # list python lists. We must still explicitly exclude strings because of
     # the numpy string implementation.
@@ -159,7 +146,7 @@ def _checkNumeric(val):
     """
     Check if value looks numeric. Raise ValueError if not.
     """
-    if not _looksNumeric(val):
+    if not looksNumeric(val):
         raise ValueError("Value '{}' does not seem to be numeric".format(val))
 
 
@@ -676,22 +663,26 @@ def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
 
     if isinstance(func, dict):
         func = _getDictionaryMappingFunction(func)
-    try:
-        func(0, 0, 0)
+
+    a, _, _, d = inspectArguments(func)
+    numRequiredArgs = len(a) - len(d)
+    if numRequiredArgs == 3:
         oneArg = False
 
         @wraps(func)
         def wrappedElementFunction(value, i, j):
             return elementValidated(value, i, j)
 
-    except TypeError:
+    else:
         oneArg = True
         # see if we can preserve zeros even if not explicitly set
-        try:
-            if not preserveZeros and func(0) == 0:
-                preserveZeros = True
-        except TypeError:
-            pass
+        if not preserveZeros:
+            try:
+                if func(0) == 0:
+                    preserveZeros = True
+            # since it is a user function we cannot predict the exception type
+            except Exception:
+                pass
 
         @wraps(func)
         def wrappedElementFunction(value):
@@ -847,8 +838,8 @@ class NimbleElementIterator(object):
     def __next__(self):
         while True:
             # numpy.nditer returns value as an array type,
-            # item() extracts the actual object we want to return
-            val = next(self.iterator).item()
+            # [()] extracts the actual object we want to return
+            val = next(self.iterator)[()]
             if self.only is None or self.only(val):
                 return val
 
@@ -1246,3 +1237,46 @@ def plotMultiBarChart(ax, heights, horizontal, legendTitle, **kwargs):
                    **kwargs)
 
     ax.legend(title=legendTitle)
+
+def is2DList(lst):
+    """
+    Determine if a python list is two-dimensional.
+    """
+    if not isinstance(lst, list):
+        return False
+    try:
+        return lst[0] == [] or isAllowedSingleElement(lst[0][0])
+    except IndexError:
+        return lst == []
+
+def isValid2DObject(data):
+    """
+    Determine validity of object for nimble data object instantiation.
+    """
+    return is2DArray(data) or is2DList(data)
+
+def numpyArrayFromList(data):
+    """
+    Use object dtype when all data is not int or float.
+    """
+    ret = numpy2DArray(data)
+    if ret.dtype not in (bool, numpy.bool_, numpy.object_):
+        # numpy will autoconvert bool values, we want to keep them as bools
+        for point in data:
+            if any(isinstance(val, bool) for val in point):
+                return numpy2DArray(data, dtype=numpy.object_)
+
+    return ret
+
+
+def modifyNumpyArrayValue(arr, index, newVal):
+    nonNumericNewVal = match.nonNumeric(newVal) and newVal is not None
+    floatNewVal = isinstance(newVal, (float, numpy.floating)) or newVal is None
+    if nonNumericNewVal and arr.dtype != numpy.object_:
+        arr = arr.astype(numpy.object_)
+    elif floatNewVal and arr.dtype not in (numpy.floating, numpy.object_):
+        arr = arr.astype(numpy.float)
+
+    arr[index] = newVal
+
+    return arr

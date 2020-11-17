@@ -7,3 +7,6 @@ documentation/doctrees
 documentation/html
 .coverage
 coverage_html
+*.ipynb
+.ipynb_checkpoints
+dist

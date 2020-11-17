@@ -13,6 +13,7 @@ import itertools
 import os.path
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
+import datetime
 
 import numpy
 
@@ -25,6 +26,7 @@ from nimble.core.logger import handleLogging
 from nimble.core.logger import produceFeaturewiseReport
 from nimble.core.logger import produceAggregateReport
 from nimble._utility import cloudpickle, h5py, plt
+from nimble._utility import isDatetime
 from .stretch import Stretch
 from . import _dataHelpers
 # the prefix for default point and feature names
@@ -47,6 +49,7 @@ from ._dataHelpers import plotUpdateAxisLimits, plotAxisLimits
 from ._dataHelpers import plotAxisLabels, plotXTickLabels
 from ._dataHelpers import plotConfidenceIntervalMeanAndError, plotErrorBars
 from ._dataHelpers import plotSingleBarChart, plotMultiBarChart
+from ._dataHelpers import looksNumeric
 
 
 def to2args(f):
@@ -749,9 +752,9 @@ class Base(ABC):
         >>> dontSkip.transformElements(addTenToEvens)
         >>> dontSkip
         Matrix(
-            [[None  12  None]
-             [ 14  None  16 ]
-             [None  18  None]]
+            [[ nan   12.000  nan  ]
+             [14.000  nan   16.000]
+             [ nan   18.000  nan  ]]
             )
         >>> skip = nimble.data('Matrix', raw)
         >>> skip.transformElements(addTenToEvens,
@@ -3188,15 +3191,15 @@ class Base(ABC):
         return ret
 
     def _copy_outputAs1D(self, to):
-        if self._pointCount == 0 or self._featureCount == 0:
-            if to == 'numpyarray':
+        if to == 'numpyarray':
+            if self._pointCount == 0 or self._featureCount == 0:
                 return numpy.array([])
-            if to == 'pythonlist':
+            return self._copy_implementation('numpyarray').flatten()
+        else:
+            if self._pointCount == 0 or self._featureCount == 0:
                 return []
-        raw = self._copy_implementation('numpyarray').flatten()
-        if to != 'numpyarray':
-            raw = raw.tolist()
-        return raw
+            list2d = self._copy_implementation('pythonlist')
+            return list(itertools.chain.from_iterable(list2d))
 
     def _copy_pythonList(self, rowsArePoints):
         ret = self._copy_implementation('pythonlist')
@@ -3326,10 +3329,7 @@ class Base(ABC):
             if replaceWith.getTypeString() != self.getTypeString():
                 replaceWith = replaceWith.copy(to=self.getTypeString())
 
-        elif (_dataHelpers._looksNumeric(replaceWith)
-              or isinstance(replaceWith, str)):
-            pass  # no modifications needed
-        else:
+        elif not (looksNumeric(replaceWith) or isinstance(replaceWith, str)):
             msg = "replaceWith may only be a nimble Base object, or a single "
             msg += "numeric value, yet we received something of "
             msg += str(type(replaceWith))
@@ -3757,11 +3757,11 @@ class Base(ABC):
         ...            onFeature="id")
         >>> left
         DataFrame(
-            [[ a   1  id1 nan nan]
-             [ b   2  id2 nan nan]
-             [ c   3  id3  x   7 ]
-             [nan nan id4  y   8 ]
-             [nan nan id5  z   9 ]]
+            [[ a  1.000 id1 nan  nan ]
+             [ b  2.000 id2 nan  nan ]
+             [ c  3.000 id3  x  7.000]
+             [nan  nan  id4  y  8.000]
+             [nan  nan  id5  z  9.000]]
             featureNames={'f1':0, 'f2':1, 'id':2, 'f4':3, 'f5':4}
             )
         >>> left = nimble.data("DataFrame", dataL, featureNames=fNamesL)
@@ -3781,11 +3781,11 @@ class Base(ABC):
         ...            onFeature="id")
         >>> left
         DataFrame(
-            [[ a   1  id1]
-             [ b   2  id2]
-             [ c   3  id3]
-             [nan nan id4]
-             [nan nan id5]]
+            [[ a  1.000 id1]
+             [ b  2.000 id2]
+             [ c  3.000 id3]
+             [nan  nan  id4]
+             [nan  nan  id5]]
             featureNames={'f1':0, 'f2':1, 'id':2}
             )
         >>> left = nimble.data("DataFrame", dataL, featureNames=fNamesL)
@@ -3817,11 +3817,12 @@ class Base(ABC):
         ...            onFeature="id")
         >>> left
         DataFrame(
-            [[a 1 id1 nan nan]
-             [b 2 id2 nan nan]
-             [c 3 id3  x   7 ]]
+            [[a 1 id1 nan  nan ]
+             [b 2 id2 nan  nan ]
+             [c 3 id3  x  7.000]]
             featureNames={'f1':0, 'f2':1, 'id':2, 'f4':3, 'f5':4}
             )
+
         >>> left = nimble.data("DataFrame", dataL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='intersection',
         ...            onFeature="id")
@@ -4564,12 +4565,12 @@ class Base(ABC):
 
     def _genericBinary_validation(self, opName, other):
         otherBase = isinstance(other, Base)
-        if not otherBase and not _dataHelpers._looksNumeric(other):
+        if otherBase:
+            self._genericBinary_sizeValidation(opName, other)
+        elif not (looksNumeric(other) or isDatetime(other)):
             msg = "'other' must be an instance of a nimble Base object or a "
             msg += "scalar"
             raise InvalidArgumentType(msg)
-        if otherBase:
-            self._genericBinary_sizeValidation(opName, other)
         # divmod operations inconsistently raise exceptions for zero division
         # it is more efficient to validate now than validate after operation
         if 'div' in opName or 'mod' in opName:
@@ -4820,9 +4821,9 @@ class Base(ABC):
         >>> pointObj = nimble.data('List', rawPt)
         >>> baseObj * pointObj.stretch
         Matrix(
-            [[1.000 4.000  9.000 ]
-             [4.000 10.000 18.000]
-             [0.000 -2.000 -6.000]]
+            [[1 4  9 ]
+             [4 10 18]
+             [0 -2 -6]]
             )
 
         Stretched feature with nimble Base object.
@@ -4833,9 +4834,9 @@ class Base(ABC):
         >>> featObj = nimble.data('List', rawFt)
         >>> featObj.stretch + baseObj
         List(
-            [[2.000 3.000 4.000]
-             [6.000 7.000 8.000]
-             [3.000 2.000 1.000]]
+            [[2 3 4]
+             [6 7 8]
+             [3 2 1]]
             )
 
         Two stretched objects.
@@ -4846,15 +4847,15 @@ class Base(ABC):
         >>> featObj = nimble.data('List', rawFt)
         >>> pointObj.stretch - featObj.stretch
         Matrix(
-            [[0.000  1.000  2.000]
-             [-1.000 0.000  1.000]
-             [-2.000 -1.000 0.000]]
+            [[0  1  2]
+             [-1 0  1]
+             [-2 -1 0]]
             )
         >>> featObj.stretch - pointObj.stretch
         List(
-            [[0.000 -1.000 -2.000]
-             [1.000 0.000  -1.000]
-             [2.000 1.000  0.000 ]]
+            [[0 -1 -2]
+             [1 0  -1]
+             [2 1  0 ]]
             )
         """
         return Stretch(self)

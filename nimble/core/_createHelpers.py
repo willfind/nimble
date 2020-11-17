@@ -10,38 +10,90 @@ from io import StringIO, BytesIO
 import os.path
 import copy
 import sys
+import warnings
+import datetime
 
 import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
+from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
-from nimble.exceptions import ImproperObjectAction
-from nimble.exceptions import FileFormatException
-from nimble.core.data import Base
-from nimble.core.data._dataHelpers import isAllowedSingleElement
-from nimble.core.data.sparse import removeDuplicatesNative
-from nimble._utility import numpy2DArray, is2DArray
-from nimble._utility import sparseMatrixToArray
-from nimble._utility import scipy, pd, requests, h5py
-#
+from nimble.exceptions import ImproperObjectAction, FileFormatException
+from nimble._utility import removeDuplicatesNative
+from nimble._utility import numpy2DArray
+from nimble._utility import sparseMatrixToArray, pandasDataFrameToList
+from nimble._utility import scipy, pd, requests, h5py, dateutil
+from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
+from nimble._utility import allowedNumpyDType
+
+###########
+# Helpers #
+###########
+
+def isBase(data):
+    return isinstance(data, nimble.core.data.Base)
+
+def isNumpyArray(data):
+    return isinstance(data, numpy.ndarray)
+
+def isNumpyMatrix(data):
+    return isinstance(data, numpy.matrix)
+
+def isPandasObject(data, dataframe=True, series=True, sparse=None):
+    if pd.nimbleAccessible():
+        if dataframe and series:
+            pandasTypes = (pd.DataFrame, pd.Series)
+        elif dataframe:
+            pandasTypes = pd.DataFrame
+        elif series:
+            pandasTypes = pd.Series
+        if isinstance(data, pandasTypes):
+            if sparse is None:
+                return True
+            sparseAccessor = hasattr(data, 'sparse')
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                # SparseDataFrame deprecated in pandas >= 1.0
+                sparseDF = (hasattr(pd, 'SparseDataFrame')
+                            and isinstance(data, pd.SparseDataFrame))
+            if not data.empty and sparse and (sparseAccessor or sparseDF):
+                return True
+            if not sparse and not (sparseAccessor or sparseDF):
+                return True
+    return False
+
+def isPandasSparse(data):
+    return isPandasObject(data, sparse=True)
+
+def isPandasDense(data):
+    return isPandasObject(data, sparse=False)
+
+def isPandasDataFrame(data):
+    return isPandasObject(data, series=False)
+
+def isPandasSeries(data):
+    return isPandasObject(data, dataframe=False)
+
+def isScipySparse(data):
+    if scipy.nimbleAccessible():
+        return scipy.sparse.isspmatrix(data)
+    return False
 
 def isAllowedRaw(data, allowLPT=False):
     """
     Verify raw data is one of the accepted types.
     """
-    if isinstance(data, Base):
+    if isBase(data):
         return True
     if allowLPT and 'PassThrough' in str(type(data)):
         return True
-    if scipy.nimbleAccessible() and scipy.sparse.issparse(data):
-        return True
     if isinstance(data, (tuple, list, dict, numpy.ndarray)):
         return True
-
-    if pd.nimbleAccessible():
-        if isinstance(data, (pd.DataFrame, pd.Series)):
-            return True
+    if isScipySparse(data):
+        return True
+    if isPandasObject(data):
+        return True
 
     return False
 
@@ -63,9 +115,10 @@ def isEmptyRaw(raw):
     """
     if raw is None:
         return True
-    if raw == []:
-        return True
-    if hasattr(raw, 'shape') and raw.shape[0] == 0:
+    if hasattr(raw, 'shape'):
+        if raw.shape[0] == 0:
+            return True
+    elif raw == []:
         return True
 
     return False
@@ -158,30 +211,27 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
     secondRow = rawData[1] if len(rawData) > 1 else None
     pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow,
                                                 secondRow)
-    pnamesID = 0 if pnamesID is True else None
-    fnamesID = 0 if fnamesID is True else None
-
     retPNames = None
-    if pnamesID is not None:
+    if pnamesID is True:
         temp = []
+
         for i, ft in enumerate(rawData):
             # grab and remove each value in the feature associated
             # with point names
-            currVal = ft.pop(pnamesID)
-            # have to skip the index of the feature names, if they are also
-            # in the data
-            if fnamesID is not None and i != fnamesID:
+            currVal = ft.pop(0)
+            # if feature names are also in the data, skip index 0
+            if fnamesID is not True or (fnamesID is True and i != 0):
             # we wrap it with the string constructor in case the
                 # values in question AREN'T strings
                 temp.append(str(currVal))
         retPNames = temp
 
     retFNames = None
-    if fnamesID is not None:
+    if fnamesID is True:
         # don't have to worry about an overlap entry with point names;
         # if they existed we had already removed those values.
         # Therefore: just pop that entire point
-        temp = rawData.pop(fnamesID)
+        temp = rawData.pop(0)
         for i, val in enumerate(temp):
             temp[i] = str(val)
         retFNames = temp
@@ -208,27 +258,25 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID):
         data = data.reshape(1, data.shape[0])
         addedDim = True
 
-    def cleanRow(npRow):
-        return list(map(_intFloatOrString, list(numpy.array(npRow).flatten())))
-    firstRow = cleanRow(data[0]) if len(data) > 0 else None
-    secondRow = cleanRow(data[1]) if len(data) > 1 else None
+    # def cleanRow(npRow):
+    #     return list(map(_intFloatOrString, list(numpy.array(npRow).flatten())))
+    firstRow = data[0] if len(data) > 0 else None
+    secondRow = data[1] if len(data) > 1 else None
     pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow,
                                                 secondRow)
-    pnamesID = 0 if pnamesID is True else None
-    fnamesID = 0 if fnamesID is True else None
 
     retPNames = None
     retFNames = None
-    if pnamesID is not None:
-        retPNames = numpy.array(data[:, pnamesID]).flatten()
-        data = numpy.delete(data, pnamesID, 1)
-        if isinstance(fnamesID, int):
-            retPNames = numpy.delete(retPNames, fnamesID)
+    if pnamesID is True:
+        retPNames = numpy.array(data[:, 0]).flatten()
+        data = numpy.delete(data, 0, 1)
+        if fnamesID is True:
+            retPNames = numpy.delete(retPNames, 0)
         retPNames = numpy.vectorize(str)(retPNames)
         retPNames = list(retPNames)
-    if fnamesID is not None:
-        retFNames = numpy.array(data[fnamesID]).flatten()
-        data = numpy.delete(data, fnamesID, 0)
+    if fnamesID is True:
+        retFNames = numpy.array(data[0]).flatten()
+        data = numpy.delete(data, 0, 0)
         retFNames = numpy.vectorize(str)(retFNames)
         retFNames = list(retFNames)
 
@@ -262,6 +310,9 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
     """
     Extract names from a scipy sparse coo matrix.
     """
+    if not scipy.nimbleAccessible():
+        msg = "scipy is not available"
+        raise PackageException(msg)
     if not scipy.sparse.isspmatrix_coo(data):
         data = scipy.sparse.coo_matrix(data)
     # gather up the first two rows of entries, to check for automatic name
@@ -280,9 +331,6 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
         pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID,
                                                     firstRow, secondRow)
 
-    fnamesID = 0 if fnamesID is True else None
-    pnamesID = 0 if pnamesID is True else None
-
     # run through the entries in the returned coo_matrix to get
     # point / feature Names.
 
@@ -292,18 +340,15 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
     # of the present data.
 
     # these will be ID -> name mappings
-    if not scipy.nimbleAccessible():
-        msg = "scipy is not available"
-        raise PackageException(msg)
     tempPointNames = {}
     tempFeatureNames = {}
 
     newLen = len(data.data)
-    if pnamesID is not None:
+    if pnamesID is True:
         newLen -= data.shape[0]
-    if fnamesID is not None:
+    if fnamesID is True:
         newLen -= data.shape[1]
-    if (pnamesID is not None) and (fnamesID is not None):
+    if (pnamesID is True) and (fnamesID is True):
         newLen += 1
 
     newRows = numpy.empty(newLen, dtype=data.row.dtype)
@@ -311,8 +356,8 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
     newData = numpy.empty(newLen, dtype=data.dtype)
     writeIndex = 0
     # adjust the sentinal value for easier index modification
-    pnamesID = sys.maxsize if pnamesID is None else pnamesID
-    fnamesID = sys.maxsize if fnamesID is None else fnamesID
+    pnamesID = 0 if pnamesID is True else sys.maxsize
+    fnamesID = 0 if fnamesID is True else sys.maxsize
     for i in range(len(data.data)):
         row = data.row[i]
         setRow = row if row < fnamesID else row - 1
@@ -394,19 +439,17 @@ def extractNamesFromPdDataFrame(rawData, pnamesID, fnamesID):
     Output the index of rawData as pointNames.
     Output the columns of rawData as featureNames.
     """
-    firstRow = rawData.values[0] if len(rawData) > 0 else None
-    secondRow = rawData.values[1] if len(rawData) > 1 else None
+    firstRow = rawData.iloc[0] if len(rawData) > 0 else None
+    secondRow = rawData.iloc[1] if len(rawData) > 1 else None
     pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow,
                                                 secondRow)
-    pnamesID = 0 if pnamesID is True else None
-    fnamesID = 0 if fnamesID is True else None
 
     retPNames = None
-    if pnamesID is not None:
+    if pnamesID is True:
         retPNames = [str(i) for i in rawData.index.tolist()]
 
     retFNames = None
-    if fnamesID is not None:
+    if fnamesID is True:
         retFNames = [str(i) for i in rawData.columns.tolist()]
 
     return (rawData, retPNames, retFNames)
@@ -511,17 +554,17 @@ def extractNames(rawData, pointNames, featureNames):
         elif isinstance(rawData, tuple):
             rawData = list(rawData)
             func = extractNamesFromRawList
-        elif isinstance(rawData, numpy.ndarray):
+        elif isNumpyArray(rawData):
             func = extractNamesFromNumpy
-        elif scipy.nimbleAccessible() and scipy.sparse.issparse(rawData):
+        elif isScipySparse(rawData):
             # all input coo_matrices must have their duplicates removed; all
             # helpers past this point rely on there being single entires only.
             if isinstance(rawData, scipy.sparse.coo_matrix):
                 rawData = removeDuplicatesNative(rawData)
             func = extractNamesFromScipySparse
-        elif pd.nimbleAccessible() and isinstance(rawData, pd.DataFrame):
+        elif isPandasDataFrame(rawData):
             func = extractNamesFromPdDataFrame
-        elif pd.nimbleAccessible() and isinstance(rawData, pd.Series):
+        elif isPandasSeries(rawData):
             func = extractNamesFromPdSeries
 
         rawData, tempPointNames, tempFeatureNames = func(rawData, pointNames,
@@ -570,14 +613,10 @@ def extractNames(rawData, pointNames, featureNames):
     return rawData, pointNames, featureNames
 
 
-def convertData(returnType, rawData, pointNames, featureNames,
-                convertToType):
+def convertData(returnType, rawData, pointNames, featureNames):
     """
     Convert data to an object type which is compliant with the
-    initializion for the given returnType. Additionally, ensure the data
-    is converted to the convertToType. If convertToType is None an
-    attempt will be made to convert all the data to floats, if
-    unsuccessful, the data will remain the same object type.
+    initializion for the given returnType.
     """
     typeMatch = {'List': list,
                  'Matrix': numpy.ndarray}
@@ -586,9 +625,6 @@ def convertData(returnType, rawData, pointNames, featureNames,
     if pd.nimbleAccessible():
         typeMatch['DataFrame'] = pd.DataFrame
 
-    # perform type conversion if necessary
-    # this also guarantees data is in an acceptable format
-    rawData = elementTypeConvert(rawData, convertToType)
     try:
         typeMatchesReturn = isinstance(rawData, typeMatch[returnType])
     except KeyError as e:
@@ -600,7 +636,8 @@ def convertData(returnType, rawData, pointNames, featureNames,
         raise PackageException(msg.format(package, returnType)) from e
 
     # if the data can be used to instantiate the object we pass it as-is
-    # otherwise a 2D array is needed as they are accepted by all init methods
+    # otherwise choose the best option, a 2D list or numpy array, based on
+    # data type preservation. Both are accepted by all init methods.
     if typeMatchesReturn:
         if returnType == 'List':
             lenFts = len(featureNames) if featureNames else 0
@@ -609,90 +646,153 @@ def convertData(returnType, rawData, pointNames, featureNames,
                 return numpy.empty([lenPts, lenFts])
             if hasattr(rawData[0], '__len__') and len(rawData[0]) == 0:
                 return numpy.empty([len(rawData), lenFts])
-        if returnType == 'Matrix' and len(rawData.shape) == 1:
+        elif returnType == 'Matrix' and len(rawData.shape) == 1:
             rawData = numpy2DArray(rawData)
         return rawData
-    ret = convertToArray(rawData, convertToType, pointNames, featureNames)
-    if returnType == 'Sparse' and ret.dtype == numpy.object_:
-        # Sparse will convert None to 0 so we need to use numpy.nan instead
-        ret[ret == None] = numpy.nan # pylint: disable=singleton-comparison
+    ret = convertToBest(rawData, pointNames, featureNames)
+
     return ret
 
-def convertToArray(rawData, convertToType, pointNames, featureNames):
+
+def convertToBest(rawData, pointNames, featureNames):
     """
-    Convert various raw types to a numpy array.
+    Convert to best object for instantiation. All objects accept python
+    lists and numpy arrays for instantiation. Since numpy and scipy
+    objects only have a single data type, we use an array. Otherwise, we
+    use a list to preserve the data types of the raw values. Arrays are
+    also used for any empty objects.
     """
-    if pd.nimbleAccessible() and isinstance(rawData, pd.DataFrame):
-        return rawData.values
-    if pd.nimbleAccessible() and isinstance(rawData, pd.Series):
+    if isPandasDataFrame(rawData):
+        if rawData.empty:
+            return rawData.values
+        return pandasDataFrameToList(rawData)
+    if isPandasSeries(rawData):
         if rawData.empty:
             return numpy.empty((0, rawData.shape[0]))
-        return numpy2DArray(rawData.values)
-    if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(rawData):
+        return [rawData.to_list()]
+    if isScipySparse(rawData):
         return sparseMatrixToArray(rawData)
-    if isinstance(rawData, numpy.ndarray):
-        if not is2DArray(rawData):
-            rawData = numpy2DArray(rawData)
-        return rawData
-    # lists (or other similar objects)
-    lenFts = len(featureNames) if featureNames else 0
-    if len(rawData) == 0:
+    if isNumpyArray(rawData):
+        if rawData.size == 0:
+            return rawData
+        return numpy2DArray(rawData)
+    # list objects
+    if not isinstance(rawData, list):
+        rawData = list(rawData)
+    if not rawData: # empty
+        lenFts = len(featureNames) if featureNames else 0
         lenPts = len(pointNames) if pointNames else 0
-        return numpy.empty([lenPts, lenFts])
-    if hasattr(rawData[0], '__len__') and len(rawData[0]) == 0:
-        return numpy.empty([len(rawData), lenFts])
-    if convertToType is not None:
-        arr = numpy2DArray(rawData, dtype=convertToType)
-        # run through elementType to convert to object if not accepted type
-        return elementTypeConvert(arr, None)
+        return numpy.empty((lenPts, lenFts))
+    if rawData and isAllowedSingleElement(rawData[0]):
+        return [rawData]
+    if not all(isinstance(point, list) for point in rawData):
+        return [list(point) for point in rawData]
 
-    arr = numpy2DArray(rawData)
-    # The bool dtype is acceptable, but others run the risk of transforming the
-    # data so we default to object dtype.
-    if arr.dtype == bool:
-        return arr
-    return numpy2DArray(rawData, dtype=numpy.object_)
+    return rawData
 
-def elementTypeConvert(rawData, convertToType):
+def parseDatetime(elemType):
+    isDatetime = elemType in [datetime.datetime, numpy.datetime64]
+    if pd.nimbleAccessible():
+        isDatetime = isDatetime or elemType == pd.Timestamp
+    if isDatetime and not dateutil.nimbleAccessible():
+        msg = 'dateutil package must be installed for datetime conversions'
+        raise PackageException(msg)
+
+    return isDatetime
+
+def numpyArrayDatetimeParse(data, datetimeType):
+    data = numpy.vectorize(dateutil.parser.parse)(data)
+    if datetimeType is not datetime.datetime:
+        data = numpy.vectorize(datetimeType)(data)
+        data = data.astype(datetimeType)
+    return data
+
+def valueDatetimeParse(datetimeType):
+    def valueParser(value):
+        if datetimeType is datetime.datetime:
+            return dateutil.parser.parse(value)
+        return datetimeType(dateutil.parser.parse(value))
+    return valueParser
+
+def elementTypeConvert(data, convertToType):
     """
-    Attempt to convert rawData to the specified convertToType.
+    Attempt to convert data to the specified convertToType.
     """
+    singleType = not isinstance(convertToType, list)
+    objectTypes = (object, numpy.object_)
+    try:
+        if singleType and isNumpyArray(data):
+            if parseDatetime(convertToType):
+                data = numpyArrayDatetimeParse(data, convertToType)
+            else:
+                data = data.astype(convertToType)
+            if not allowedNumpyDType(data.dtype):
+                data = data.astype(numpy.object_)
+        elif singleType and isScipySparse(data):
+            if parseDatetime(convertToType):
+                data.data = numpyArrayDatetimeParse(data.data, convertToType)
+            else:
+                data.data = data.data.astype(convertToType)
+            if not allowedNumpyDType(data.data.dtype):
+                data.data = data.data.astype(numpy.object_)
+        elif singleType and isPandasDataFrame(data):
+            if parseDatetime(convertToType):
+                data = data.applymap(dateutil.parser.parse)
+            else:
+                data = data.astype(convertToType)
+        elif singleType and len(data): # 2D list
+            # only need to convert if not object type
+            if convertToType not in objectTypes:
+                if parseDatetime(convertToType):
+                    convertToType = valueDatetimeParse(convertToType)
+                convertedData = []
+                for point in data:
+                    convertedData.append(list(map(convertToType, point)))
+                data = convertedData
 
-    def allowedElemType(elemType):
-        return (elemType in [int, float, bool, object]
-                or numpy.issubdtype(elemType, numpy.number))
+        # convertToType is a list of differing types
+        elif isNumpyArray(data):
+            for j, feature in enumerate(data.T):
+                convType = convertToType[j]
+                if convType is None:
+                    continue
+                data = data.astype(numpy.object_)
+                if parseDatetime(convType):
+                    feature = numpyArrayDatetimeParse(feature, convType)
+                data[:, j] = feature.astype(convType)
+        elif isScipySparse(data):
+            for col, convType in enumerate(convertToType):
+                if convType is None:
+                    continue
+                data = data.astype(numpy.object_)
+                colMask = data.col == col
+                if parseDatetime(convType):
+                    feature = numpyArrayDatetimeParse(data.data[colMask],
+                                                      convType)
+                    data.data[colMask] = feature
+                data.data[colMask] = data.data[colMask].astype(convType)
+        elif isPandasDataFrame(data):
+            for i, (idx, ft) in enumerate(data.iteritems()):
+                convType = convertToType[i]
+                if convType is None:
+                    continue
+                if parseDatetime(convType):
+                    data[idx] = data[idx].apply(dateutil.parser.parse)
+                else:
+                    data[idx] = ft.astype(convType)
+        elif len(data): # 2D list
+            convertToType = [valueDatetimeParse(ctype) if parseDatetime(ctype)
+                             else ctype for ctype in convertToType]
+            for i, point in enumerate(data):
+                zippedConvert = zip(point, convertToType)
+                data[i] = [val if (ctype is None or ctype in objectTypes)
+                           else ctype(val) for val, ctype in zippedConvert]
+        return data
 
-    if convertToType is None:
-        if hasattr(rawData, 'dtype') and not allowedElemType(rawData.dtype):
-            rawData = rawData.astype(numpy.object_)
-        return rawData
-    if (isinstance(rawData, numpy.ndarray)
-            or (scipy and isinstance(rawData, scipy.sparse.spmatrix))
-            or (pd and isinstance(rawData, (pd.DataFrame, pd.Series)))):
-        try:
-            converted = rawData.astype(convertToType)
-            if not allowedElemType(converted.dtype):
-                converted = rawData.astype(numpy.object_)
-            return converted
-        except (TypeError, ValueError) as err:
-            error = err
-    # otherwise we assume data follows conventions of a list
-    if convertToType not in [object, numpy.object_] and len(rawData) > 0:
-        if not hasattr(rawData[0], '__len__'):
-            rawData = [rawData] # make 2D
-        try:
-            convertedData = []
-            for point in rawData:
-                convertedData.append(list(map(convertToType, point)))
-            return convertedData
-        except (ValueError, TypeError) as err:
-            error = err
-    else:
-        return rawData
-    # if nothing has been returned, we cannot convert to the convertToType
-    msg = 'Unable to convert the data to convertToType '
-    msg += "'{0}'. ".format(convertToType) + str(error)
-    raise InvalidArgumentValue(msg)
+    except (ValueError, TypeError) as error:
+        msg = 'Unable to convert the data to convertToType '
+        msg += "'{0}'. {1}".format(convertToType, repr(error))
+        raise InvalidArgumentValue(msg)
 
 def replaceNumpyValues(data, toReplace, replaceWith):
     """
@@ -736,7 +836,7 @@ def replaceNumpyValues(data, toReplace, replaceWith):
                 data[nanLocs] = replaceWith
     except ValueError:
         dtype = type(replaceWith)
-        if dtype not in [int, float, bool, numpy.bool_]:
+        if not allowedNumpyDType(dtype):
             dtype = numpy.object_
 
         data = data.astype(dtype)
@@ -751,19 +851,11 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
     Convert any values in rawData found in treatAsMissing with
     replaceMissingWith value.
     """
-    if (pd.nimbleAccessible()
-            and isinstance(rawData, (pd.DataFrame, pd.Series))):
-        # pandas 1.0: SparseDataFrame still in pd namespace but does not work
-        # Sparse functionality now determined by presence of .sparse accessor
-        # need to convert sparse objects to coo matrix before handling missing
-        if hasattr(rawData, 'sparse') and not rawData.empty:
-            rawData = rawData.sparse.to_coo()
-        else:
-            try:
-                if isinstance(rawData, pd.SparseDataFrame):
-                    rawData = scipy.sparse.coo_matrix(rawData)
-            except AttributeError:
-                pass
+    # pandas 1.0: SparseDataFrame still in pd namespace but does not work
+    # Sparse functionality now determined by presence of .sparse accessor
+    # need to convert sparse objects to coo matrix before handling missing
+    if isPandasSparse(rawData):
+        rawData = scipy.sparse.coo_matrix(rawData)
 
     if isinstance(rawData, (list, tuple)):
         handleMissing = numpy.array(rawData, dtype=numpy.object_)
@@ -771,7 +863,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
                                            replaceMissingWith)
         rawData = handleMissing.tolist()
 
-    elif isinstance(rawData, numpy.ndarray):
+    elif isNumpyArray(rawData):
         rawData = replaceNumpyValues(rawData, treatAsMissing,
                                      replaceMissingWith)
 
@@ -780,8 +872,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
                                            replaceMissingWith)
         rawData.data = handleMissing
 
-    elif (pd.nimbleAccessible()
-          and isinstance(rawData, (pd.DataFrame, pd.Series))):
+    elif isPandasDense(rawData):
         if len(rawData.values) > 0:
             # .where keeps the values that return True, use ~ to replace those
             # values instead
@@ -830,16 +921,15 @@ class GenericPointIterator:
     the same as using iter()
     """
     def __init__(self, data):
-        if isinstance(data, Base) and data.shape[0] > 1:
+        if isBase(data) and data.shape[0] > 1:
             self.iterator = data.points
-        elif isinstance(data, numpy.matrix):
+        elif isNumpyMatrix(data):
             self.iterator = iter(numpy.array(data))
         elif isinstance(data, dict):
             self.iterator = iter(data.values())
-        elif (pd.nimbleAccessible()
-              and isinstance(data, (pd.DataFrame, pd.Series))):
+        elif isPandasObject(data):
             self.iterator = iter(data.values)
-        elif scipy.nimbleAccessible() and scipy.sparse.isspmatrix(data):
+        elif isScipySparse(data):
             self.iterator = SparseCOORowIterator(data.tocoo(False))
         else:
             self.iterator = iter(data)
@@ -849,17 +939,17 @@ class GenericPointIterator:
 
     def __next__(self):
         val = next(self.iterator)
-        if isinstance(val, Base) and 1 not in val.shape:
+        if isBase(val) and 1 not in val.shape:
             return val.copy('python list')
         return val
 
 
 def _getFirstIndex(data):
-    if scipy.nimbleAccessible() and scipy.sparse.isspmatrix_coo(data):
+    if isScipySparse(data):
         first = data.data[data.row == 0]
-    elif pd.nimbleAccessible() and isinstance(data, (pd.DataFrame, pd.Series)):
+    elif isPandasObject(data):
         first = data.iloc[0]
-    elif isinstance(data, Base) and 1 not in data.shape:
+    elif isBase(data) and 1 not in data.shape:
         first = data.points[0]
     elif isinstance(data, dict):
         first = data[list(data.keys())[0]]
@@ -872,24 +962,23 @@ def isHighDimensionData(rawData, skipDataProcessing):
     """
     Identify data with more than two-dimensions.
     """
-    if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(rawData):
+    if isScipySparse(rawData):
         if not rawData.data.size:
             return False
         rawData = [rawData.data]
     try:
         indexZero = _getFirstIndex(rawData)
         if isAllowedSingleElement(indexZero):
-            if (not skipDataProcessing and
-                    not all(map(isAllowedSingleElement, rawData))):
-                msg = "Numbers, strings, None, and nan are the only values "
-                msg += "allowed in nimble data objects"
-                raise InvalidArgumentValue(msg)
+            if not skipDataProcessing:
+                validateAllAllowedElements(rawData)
             return False
         indexZeroZero = _getFirstIndex(indexZero)
         if isAllowedSingleElement(indexZeroZero):
             if not skipDataProcessing:
                 toIter = GenericPointIterator(rawData)
-                firstLength = len(next(toIter))
+                first = next(toIter)
+                validateAllAllowedElements(first)
+                firstLength = len(first)
                 for i, point in enumerate(toIter):
                     if not len(point) == firstLength:
                         msg = "All points in the data do not have the same "
@@ -898,10 +987,7 @@ def isHighDimensionData(rawData, skipDataProcessing):
                         msg += "features"
                         msg = msg.format(firstLength, i, len(point))
                         raise InvalidArgumentValue(msg)
-                    if not all(map(isAllowedSingleElement, point)):
-                        msg = "Numbers, strings, None, and nan are the only "
-                        msg += "values allowed in nimble data objects"
-                        raise InvalidArgumentValue(msg)
+                    validateAllAllowedElements(point)
             return False
         return True
     except IndexError: # rawData or rawData[0] is empty
@@ -942,7 +1028,7 @@ def highDimensionNames(pointNames, featureNames):
 
 
 def _getPointCount(data):
-    if isinstance(data, Base):
+    if isBase(data):
         return len(data.points)
     if hasattr(data, 'shape'):
         return data.shape[0]
@@ -959,7 +1045,7 @@ def flattenToOneDimension(data, toFill=None, dimensions=None):
     flattened point by point.
     """
     # if Base and not a vector, use points attribute for __len__ and __iter__
-    if isinstance(data, Base) and (len(data._shape) > 2 or data.shape[0] > 1):
+    if isBase(data) and (len(data._shape) > 2 or data.shape[0] > 1):
         data = data.points
     if toFill is None:
         toFill = []
@@ -989,7 +1075,7 @@ def flattenHighDimensionFeatures(rawData):
     Features are flattened point by point whether numpy.reshape or
     flattenToOneDimension are used.
     """
-    if isinstance(rawData, numpy.ndarray) and rawData.dtype != numpy.object_:
+    if isNumpyArray(rawData) and rawData.dtype != numpy.object_:
         origDims = rawData.shape
         newShape = (rawData.shape[0], numpy.prod(rawData.shape[1:]))
         rawData = numpy.reshape(rawData, newShape)
@@ -1016,6 +1102,69 @@ def flattenHighDimensionFeatures(rawData):
 
     return rawData, origDims
 
+def getKeepIndexValues(axisObj, keepList):
+    """
+    Get only the index values from a list that could contain axis names.
+
+    Additionally validates that there is not an index and name that
+    represent the same point/feature.
+    """
+    cleaned = []
+    for val in keepList:
+        converted = axisObj.getIndex(val)
+        if converted not in cleaned:
+            cleaned.append(converted)
+        else:
+            # we know no duplicates present so an index and name must match
+            msg = "Values in {keep} must represent unique {axis}s. "
+            msg += "'{name}' and {idx} represent the same {axis}. "
+            axis = axisObj._axis
+            keep = 'keepPoints' if axis == 'point' else 'keepFeatures'
+            name = axisObj.getName(converted)
+            msg = msg.format(axis=axis, keep=keep, name=name, idx=converted)
+            raise InvalidArgumentValue(msg)
+
+    return cleaned
+
+def convertToTypeDictToList(convertToType, featuresObj, featureNames):
+    retFNames = featuresObj._getNamesNoGeneration()
+    convertList = [None] * len(featuresObj)
+    # if no feature names, we will use the list of None values as the
+    # featureNames to allow us to use the same process in either case
+    if retFNames is None:
+        retFNames = convertList
+    for i, ftName in enumerate(retFNames):
+        if i in convertToType and ftName in convertToType:
+            if convertToType[i] == convertToType[ftName]:
+                convertList[i] = convertToType[i]
+                del convertToType[i]
+                del convertToType[ftName]
+            else:
+                msg = "The keys '{name}' and {idx} represent the same "
+                msg += "feature but have different values"
+                raise InvalidArgumentValue(msg.format(name=ftName, idx=i))
+        if i in convertToType:
+            convertList[i] = convertToType[i]
+            del convertToType[i]
+        elif ftName in convertToType:
+            convertList[i] = convertToType[ftName]
+            del convertToType[ftName]
+    # if there are any unused values, they must correspond with full data
+    if convertToType:
+        fail = []
+        if featureNames is None:
+            fail = list(convertToType.keys())
+        else:
+            for key in convertToType:
+                if not ((isinstance(key, int) and key < len(featureNames))
+                        or key in featureNames):
+                    fail.append(key)
+        if fail:
+            msg = 'The key(s) {keys} in convertToType are not valid for '
+            msg += 'this object'
+            raise InvalidArgumentValue(msg.format(keys=fail))
+
+    return convertList
 
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name=None, path=None,
@@ -1025,27 +1174,41 @@ def initDataObject(
         replaceMissingWith=numpy.nan, skipDataProcessing=False,
         extracted=(None, None)):
     """
-    1. Setup autoType
-    2. Extract Names
-    3. Convert to 2D representation
-    4. Handle Missing data
-    5. Convert to acceptable form for returnType init
+    1. Argument Validation
+    2. Setup autoType
+    3. Extract Names
+    4. Convert to 2D representation
+    5. Handle Missing data
+    6. Convert to acceptable form for returnType init
+    7. init returnType object
+    8. Limit to keepPoints / keepFeatures
+    9. Perform any convertToType conversions
     """
+    limitPoints = keepPoints != 'all'
+    limitFeatures = keepFeatures != 'all'
+    if limitPoints:
+        _checkForDuplicates(keepPoints, 'keepPoints')
+    if limitFeatures:
+        _checkForDuplicates(keepFeatures, 'keepFeatures')
+    if (limitFeatures and isinstance(convertToType, dict)
+            and not all(isinstance(t, str) for t in convertToType.keys())):
+        msg = "When limiting the features using keepFeatures, the keys in a "
+        msg += "convertToType dict cannot be index values because it is "
+        msg += "ambiguous as to whether they reference the full dataset or "
+        msg += "limited dataset. Use featureNames as keys or a list to "
+        msg += "eliminate the ambiguity. None may be used in the list for "
+        msg += "features that do not require conversion."
+        raise InvalidArgumentTypeCombination(msg)
+
+
     if returnType is None:
         # scipy sparse matrix or a pandas sparse object
-        if ((scipy.nimbleAccessible() and scipy.sparse.issparse(rawData))
-                or (pd.nimbleAccessible()
-                    and isinstance(rawData, (pd.Series, pd.DataFrame))
-                    # latest pandas versions use pd.DataFrame.sparse accessor,
-                    # previous versions used pd.SparseDataFrame
-                    and ((hasattr(rawData, 'sparse'))
-                         or (hasattr(pd, 'SparseDataFrame')
-                             and isinstance(rawData, pd.SparseDataFrame))))):
+        if isScipySparse(rawData) or isPandasSparse(rawData):
             returnType = 'Sparse'
         else:
             returnType = 'Matrix'
 
-    if isinstance(rawData, Base):
+    if isBase(rawData):
         # point/featureNames, treatAsMissing, etc. may vary
         rawData = rawData.data
     if not reuseData:
@@ -1059,9 +1222,9 @@ def initDataObject(
     # to the data, so we can skip name extraction and missing replacement.
     kwargs = {}
     # convert these types as indexing may cause dimensionality confusion
-    if isinstance(rawData, numpy.matrix):
+    if isNumpyMatrix(rawData):
         rawData = numpy.array(rawData)
-    if scipy.nimbleAccessible() and scipy.sparse.isspmatrix(rawData):
+    if isScipySparse(rawData):
         rawData = rawData.tocoo()
 
     if isHighDimensionData(rawData, skipDataProcessing):
@@ -1082,9 +1245,8 @@ def initDataObject(
         if treatAsMissing is not None:
             rawData = replaceMissingData(rawData, treatAsMissing,
                                          replaceMissingWith)
-    # convert to convertToType, if necessary
-    rawData = convertData(returnType, rawData, pointNames, featureNames,
-                          convertToType)
+    # convert data to a type compatible with the returnType init method
+    rawData = convertData(returnType, rawData, pointNames, featureNames)
 
     pathsToPass = (None, None)
     if path is not None:
@@ -1143,23 +1305,19 @@ def initDataObject(
         return retCmp
 
     # keep points and features if still needed
-    if keepPoints != 'all':
-        if not ptsExtracted and len(keepPoints) == len(ret.points):
+    if limitPoints:
+        numPts = len(ret.points)
+        if not ptsExtracted and len(keepPoints) == numPts:
             _raiseKeepLengthConflict('point')
         # if we have all pointNames, set them now
-        if (isinstance(pointNames, (list, dict))
-                and len(pointNames) == len(ret.points)):
+        if isinstance(pointNames, (list, dict)) and len(pointNames) == numPts:
             ret.points.setNames(pointNames, useLog=False)
             setPtNamesAfter = False
         else:
             _keepIndexValuesValidation('point', keepPoints, pointNames)
             setPtNamesAfter = True
-        cleaned = []
-        for val in keepPoints:
-            converted = ret.points.getIndex(val)
-            if converted not in cleaned:
-                cleaned.append(converted)
-        if len(cleaned) == len(ret.points):
+        cleaned = getKeepIndexValues(ret.points, keepPoints)
+        if len(cleaned) == numPts:
             pCmp = makeCmp(cleaned, ret, 'point')
             ret.points.sort(by=pCmp)
         else:
@@ -1167,25 +1325,32 @@ def initDataObject(
         # if we had a subset of pointNames can set now on the cleaned data
         if setPtNamesAfter:
             ret.points.setNames(pointNames, useLog=False)
-    if keepFeatures != 'all':
-        if not ftsExtracted and len(keepFeatures) == len(ret.features):
+    if limitFeatures:
+        numFts = len(ret.features)
+        if not ftsExtracted and len(keepFeatures) == numFts:
             _raiseKeepLengthConflict('feature')
         # if we have all featureNames, set them now
         if (isinstance(featureNames, (list, dict))
-                and len(featureNames) == len(ret.features)):
+                and len(featureNames) == numFts):
             ret.features.setNames(featureNames, useLog=False)
             setFtNamesAfter = False
         # otherwise we require keepFeatures to be index and set names later
         else:
             _keepIndexValuesValidation('feature', keepFeatures, featureNames)
             setFtNamesAfter = True
-        cleaned = []
-        for val in keepFeatures:
-            converted = ret.features.getIndex(val)
-            if converted not in cleaned:
-                cleaned.append(converted)
-
-        if len(cleaned) == len(ret.features):
+        cleaned = getKeepIndexValues(ret.features, keepFeatures)
+        if isinstance(convertToType, list):
+            if len(convertToType) == numFts:
+                convertToType = [convertToType[i] for i in cleaned]
+            elif len(convertToType) != len(cleaned):
+                msg = "Invalid length of convertToType. convertToType must "
+                msg += "be either the length of the full dataset ({full}) "
+                msg += "or the length of the limited dataset ({limited}), but "
+                msg += "was length {actual}."
+                msg = msg.format(full=numFts, limited=len(cleaned),
+                                 actual=len(convertToType))
+                raise InvalidArgumentValue(msg)
+        if len(cleaned) == numFts:
             fCmp = makeCmp(cleaned, ret, 'feature')
             ret.features.sort(by=fCmp)
         else:
@@ -1194,13 +1359,31 @@ def initDataObject(
         if setFtNamesAfter:
             ret.features.setNames(featureNames, useLog=False)
 
+    # To simplify, we will make convertToType dicts into lists of types
+    if isinstance(convertToType, dict):
+        convertToType = convertToTypeDictToList(convertToType, ret.features,
+                                                featureNames)
+    elif isinstance(convertToType, list):
+        if len(convertToType) != len(ret.features):
+            msg = 'A list for convertToType must have many elements as '
+            msg += 'features in the data. The object contains {numFts} '
+            msg += 'features, but convertToType has {numElems} elements.'
+            msg = msg.format(numFts=len(ret.features),
+                             numElems=len(convertToType))
+            raise InvalidArgumentValue(msg)
+        if all(v == convertToType[0] for v in convertToType[1:]):
+            convertToType = convertToType[0]
+
+    if convertToType is not None:
+        ret.data = elementTypeConvert(ret.data, convertToType)
+
     return ret
 
 
 def createDataFromFile(
         returnType, data, pointNames, featureNames, name,
-        ignoreNonNumericalFeatures, keepPoints, keepFeatures, inputSeparator,
-        treatAsMissing, replaceMissingWith):
+        ignoreNonNumericalFeatures, keepPoints, keepFeatures, convertToType,
+        inputSeparator, treatAsMissing, replaceMissingWith):
     """
     Helper for nimble.data which deals with the case of loading data
     from a file. Returns a triple containing the raw data, pointNames,
@@ -1322,8 +1505,9 @@ def createDataFromFile(
 
     return initDataObject(
         returnType, retData, retPNames, retFNames, name, path,
-        keepPoints, keepFeatures, treatAsMissing=treatAsMissing,
-        replaceMissingWith=replaceMissingWith, extracted=extracted)
+        keepPoints, keepFeatures, convertToType=convertToType,
+        treatAsMissing=treatAsMissing, replaceMissingWith=replaceMissingWith,
+        extracted=extracted)
 
 
 def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,

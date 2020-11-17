@@ -1591,11 +1591,11 @@ class Features(ABC):
         >>> data.features.fillMatching(fill.mean, match.missing, features=0)
         >>> data
         Matrix(
-            [[1.000 1  1 ]
-             [1.000 1  1 ]
-             [1.000 1 nan]
-             [2.000 2  2 ]
-             [1.250 2  2 ]]
+            [[1.000 1.000 1.000]
+             [1.000 1.000 1.000]
+             [1.000 1.000  nan ]
+             [2.000 2.000 2.000]
+             [1.250 2.000 2.000]]
             )
         """
         return self._fillMatching(fillWith, matchingElements, features,

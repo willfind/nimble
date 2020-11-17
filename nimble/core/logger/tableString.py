@@ -69,7 +69,7 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None,
                 toString = str(val)
             table[i][j] = toString
             if len(toString) > colWidths[j]:
-                colWidths[j] = len(val)
+                colWidths[j] = len(toString)
 
     if headers is not None:
         if len(headers) != cols:

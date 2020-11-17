@@ -11,13 +11,13 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble._utility import inheritDocstringsFactory, numpy2DArray, is2DArray
+from nimble._utility import isAllowedSingleElement, allowedNumpyDType
 from nimble._utility import scipy, pd
 from .base import Base
 from .views import BaseView
 from .listAxis import ListPoints, ListPointsView
 from .listAxis import ListFeatures, ListFeaturesView
 from ._dataHelpers import DEFAULT_PREFIX
-from ._dataHelpers import isAllowedSingleElement
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
 from ._dataHelpers import denseCountUnique
@@ -755,6 +755,6 @@ class ListPassThrough(object):
 
 def _convertList(constructor, data):
     convert = constructor(data)
-    if not convert.dtype in [int, float, bool, object]:
+    if not allowedNumpyDType(convert.dtype):
         convert = constructor(data, dtype=object)
     return convert

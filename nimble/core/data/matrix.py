@@ -7,10 +7,10 @@ import itertools
 import numpy
 
 import nimble
-from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
-from nimble._utility import inheritDocstringsFactory, numpy2DArray, is2DArray
+from nimble._utility import inheritDocstringsFactory
+from nimble._utility import numpy2DArray
 from nimble._utility import scipy, pd
 from .base import Base
 from .views import BaseView
@@ -22,7 +22,8 @@ from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
 from ._dataHelpers import denseCountUnique
 from ._dataHelpers import NimbleElementIterator
-from ._dataHelpers import convertToNumpyOrder
+from ._dataHelpers import convertToNumpyOrder, modifyNumpyArrayValue
+from ._dataHelpers import isValid2DObject, numpyArrayFromList
 
 @inheritDocstringsFactory(Base)
 class Matrix(Base):
@@ -41,12 +42,15 @@ class Matrix(Base):
     """
 
     def __init__(self, data, reuseData=False, **kwds):
-        if not is2DArray(data):
-            msg = "the input data can only be a two-dimensional numpy array."
+        if not isValid2DObject(data):
+            msg = "the input data can only be a two-dimensional numpy array "
+            msg += "or python list."
             raise InvalidArgumentType(msg)
 
         if isinstance(data, numpy.matrix):
             data = numpy2DArray(data)
+        elif isinstance(data, list):
+            data = numpyArrayFromList(data)
         if reuseData:
             self.data = data
         else:
@@ -79,15 +83,7 @@ class Matrix(Base):
             else:
                 currRet = toTransform(currVal, i, j)
 
-            self.data[i, j] = currRet
-            # numpy modified data due to int dtype
-            # pylint: disable=comparison-with-itself
-            if self.data[i, j] != currRet and currRet == currRet:
-                if match.nonNumeric(currRet) and currRet is not None:
-                    self.data = self.data.astype(numpy.object_)
-                else:
-                    self.data = self.data.astype(numpy.float)
-                self.data[i, j] = currRet
+            self.data = modifyNumpyArrayValue(self.data, (i, j), currRet)
 
     # pylint: disable=unused-argument
     def _calculate_implementation(self, function, points, features,

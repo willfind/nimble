@@ -13,7 +13,7 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble._utility import inheritDocstringsFactory, dtypeConvert
+from nimble._utility import inheritDocstringsFactory
 from .universal_interface import PredefinedInterface
 from ._interface_helpers import PythonSearcher
 from ._interface_helpers import modifyImportPathAndImport
@@ -488,21 +488,18 @@ To install shogun
 
     def _inputTransDataHelper(self, dataObj, learnerName):
         typeString = dataObj.getTypeString()
+        dataObj._convertToNumericTypes(allowInt=False, allowBool=False)
         if typeString == 'Sparse':
-            #raw = dataObj.data.tocsc().astype(numpy.float)
-            #raw = raw.transpose()
             raw = dataObj.copy(to="scipy csc", rowsArePoints=False)
             trans = self._access('Features', 'SparseRealFeatures')()
-            trans.set_sparse_feature_matrix(dtypeConvert(raw))
+            trans.set_sparse_feature_matrix(raw)
             if 'Online' in learnerName:
                 sprf = self._access('Features', 'StreamingSparseRealFeatures')
                 trans = sprf(trans)
         else:
-            #raw = dataObj.copy(to='numpyarray').astype(numpy.float)
-            #raw = raw.transpose()
             raw = dataObj.copy(to='numpyarray', rowsArePoints=False)
             trans = self._access('Features', 'RealFeatures')()
-            trans.set_feature_matrix(dtypeConvert(raw))
+            trans.set_feature_matrix(raw)
             if 'Online' in learnerName:
                 trans = self._access('Features', 'StreamingRealFeatures')()
         return trans

@@ -16,7 +16,7 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble._utility import inspectArguments
-from nimble._utility import inheritDocstringsFactory
+from nimble._utility import inheritDocstringsFactory, dtypeConvert
 from .universal_interface import PredefinedInterface
 from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import collectAttributes
@@ -474,18 +474,6 @@ To install scikit-learn
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
                              arguments, customDict):
-
-        def dtypeConvert(obj):
-            """
-            Most learners need numeric dtypes so attempt to convert from
-            object dtype if possible, otherwise return object as-is.
-            """
-            if obj.dtype == numpy.object_:
-                try:
-                    obj = obj.astype(numpy.float)
-                except ValueError:
-                    pass
-            return obj
 
         mustCopyTrainX = ['PLSRegression']
         if trainX is not None:
