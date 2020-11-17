@@ -1163,7 +1163,7 @@ def anyTrue(data):
     >>> raw = [[0, -1.0, True],
     ...        [1, -2.0, False],
     ...        [2, -3.0, False]]
-    >>> data = nimble.data('Matrix', raw)
+    >>> data = nimble.data('Sparse', raw)
     >>> anyTrue(data)
     True
 

@@ -10,9 +10,9 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException, ImproperObjectAction
-from nimble._utility import inheritDocstringsFactory, is2DArray
+from nimble._utility import inheritDocstringsFactory
 from nimble._utility import scipy, pd
-from nimble._utility import sparseMatrixToArray
+from nimble._utility import sparseMatrixToArray, removeDuplicatesNative
 from . import _dataHelpers
 from .base import Base
 from .views import BaseView
@@ -25,7 +25,8 @@ from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
 from ._dataHelpers import denseCountUnique
 from ._dataHelpers import NimbleElementIterator
-from ._dataHelpers import convertToNumpyOrder
+from ._dataHelpers import convertToNumpyOrder, modifyNumpyArrayValue
+from ._dataHelpers import isValid2DObject, numpyArrayFromList
 
 @inheritDocstringsFactory(Base)
 class Sparse(Base):
@@ -49,9 +50,9 @@ class Sparse(Base):
             msg = 'To use class Sparse, scipy must be installed.'
             raise PackageException(msg)
 
-        if not is2DArray(data) and not scipy.sparse.isspmatrix(data):
+        if not (isValid2DObject(data) or scipy.sparse.isspmatrix(data)):
             msg = "the input data can only be a scipy sparse matrix or a "
-            msg += "two-dimensional numpy array"
+            msg += "two-dimensional numpy array or python list"
             raise InvalidArgumentType(msg)
 
         if scipy.sparse.isspmatrix_coo(data):
@@ -60,9 +61,17 @@ class Sparse(Base):
             else:
                 self.data = data.copy()
         elif scipy.sparse.isspmatrix(data):
-            #data is a spmatrix in other format instead of coo
+            # data is a spmatrix in other format instead of coo
             self.data = data.tocoo()
-        else:#data is numpy.array
+        else: # data is numpy.array or python list
+            if isinstance(data, list):
+                data = numpyArrayFromList(data)
+            # Sparse will convert None to 0 so we need to use numpy.nan instead
+            if data[data == None].size:
+                if data.dtype not in [float, numpy.floating, object]:
+                    data = data.astype(float)
+                data[data == None] = numpy.nan
+
             self.data = scipy.sparse.coo_matrix(data)
 
         # class attribute prevents repeated object creation for subsequent
@@ -164,7 +173,8 @@ class Sparse(Base):
             else:
                 currRet = toTransform(val, pID, fID)
 
-            self.data.data[index] = currRet
+            self.data.data = modifyNumpyArrayValue(self.data.data, index,
+                                                   currRet)
 
         self.data.eliminate_zeros()
 
@@ -1229,64 +1239,6 @@ class Sparse(Base):
 ###################
 # Generic Helpers #
 ###################
-
-def removeDuplicatesNative(coo_obj):
-    """
-    Creates a new coo_matrix, using summation for numeric data to remove
-    duplicates. If there are duplicate entires involving non-numeric
-    data, an exception is raised.
-
-    coo_obj : the coo_matrix from which the data of the return object
-    originates from. It will not be modified by the function.
-
-    Returns : a new coo_matrix with the same data as in the input
-    matrix, except with duplicate numerical entries summed to a single
-    value. This operation is NOT stable - the row / col attributes are
-    not guaranteed to have an ordering related to those from the input
-    object. This operation is guaranteed to not introduce any 0 values
-    to the data attribute.
-    """
-    if coo_obj.data is None:
-        #When coo_obj data is not iterable: Empty
-        #It will throw TypeError: zip argument #3 must support iteration.
-        #Decided just to do this quick check instead of duck typing.
-        return coo_obj
-
-    seen = {}
-    for i, j, v in zip(coo_obj.row, coo_obj.col, coo_obj.data):
-        if (i, j) not in seen:
-            # all types are allows to be present once
-            seen[(i, j)] = v
-        else:
-            try:
-                seen[(i, j)] += float(v)
-            except ValueError:
-                msg = 'Unable to represent this configuration of data in '
-                msg += 'Sparse object. At least one removeDuplicatesNativeof '
-                msg += 'the duplicate entries is a non-numerical type'
-                raise ValueError(msg)
-
-    rows = []
-    cols = []
-    data = []
-
-    for (i, j) in seen:
-        if seen[(i, j)] != 0:
-            rows.append(i)
-            cols.append(j)
-            data.append(seen[(i, j)])
-
-    dataNP = numpy.array(data)
-    # if there are mixed strings and numeric values numpy will automatically
-    # turn everything into strings. This will check to see if that has
-    # happened and use the object dtype instead.
-    if len(dataNP) > 0 and isinstance(dataNP[0], numpy.flexible):
-        dataNP = numpy.array(data, dtype='O')
-    new_coo = scipy.sparse.coo_matrix((dataNP, (rows, cols)),
-                                      shape=coo_obj.shape)
-
-    return new_coo
-
 
 class SparseVectorView(BaseView, Sparse):
     """

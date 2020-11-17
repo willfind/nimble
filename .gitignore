@@ -9,3 +9,4 @@ documentation/html
 coverage_html
 *.ipynb
 .ipynb_checkpoints
+dist

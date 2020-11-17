@@ -92,7 +92,7 @@ def minimum(values):
     >>> raw = [0, 1, 2, float('nan')]
     >>> vector = nimble.data('Matrix', raw)
     >>> minimum(vector)
-    0
+    0.0
     """
     return _minmax(values, 'min')
 
@@ -114,7 +114,7 @@ def maximum(values):
     >>> raw = [0, 1, 2, float('nan')]
     >>> vector = nimble.data('Matrix', raw)
     >>> maximum(vector)
-    2
+    2.0
     """
     return _minmax(values, 'max')
 
@@ -228,7 +228,7 @@ def mode(values):
     >>> raw = [0, 1, 2, float('nan'), float('nan'), float('nan'), 0, 6]
     >>> vector = nimble.data('Matrix', raw)
     >>> mode(vector)
-    0
+    0.0
     """
     if values.getTypeString() == 'Sparse':
         numZero = len(values) - values.data.nnz

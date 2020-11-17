@@ -232,7 +232,7 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
         ret = createDataFromFile(
             returnType=returnType, data=source, pointNames=pointNames,
             featureNames=featureNames, name=name, keepPoints=keepPoints,
-            keepFeatures=keepFeatures,
+            keepFeatures=keepFeatures, convertToType=convertToType,
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
             inputSeparator=inputSeparator, treatAsMissing=treatAsMissing,
             replaceMissingWith=replaceMissingWith)

@@ -4,6 +4,7 @@ import os
 import sys
 import copy
 import itertools
+import datetime
 try:
     from unittest import mock #python >=3.3
 except ImportError:
@@ -17,17 +18,20 @@ import h5py
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
+from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import FileFormatException
 from nimble.core.data._dataHelpers import DEFAULT_PREFIX
 from nimble.core._createHelpers import _intFloatOrString
 from nimble.core._createHelpers import replaceNumpyValues
-from nimble._utility import sparseMatrixToArray
+from nimble._utility import sparseMatrixToArray, isDatetime
 
 # from .. import logger
 from tests.helpers import oneLogEntryExpected
 
 returnTypes = copy.copy(nimble.core.data.available)
 returnTypes.append(None)
+
+datetimeTypes = (datetime.datetime, numpy.datetime64, pd.Timestamp)
 
 class NoIter(object):
     def __init__(self, vals):
@@ -58,42 +62,53 @@ class GetItemOnly(object):
     def __getitem__(self, key):
         return self.vals[key]
 
-###########################
-# Data values correctness #
-###########################
+###############################
+# Raw data values correctness #
+###############################
 
 def test_data_raw_stringConversion_float():
-    """
-    """
     for t in returnTypes:
-        values = []
         toTest = nimble.data(t, [['1','2','3'], ['4','5','6'], ['7','8','9']],
                              convertToType=float)
-        for i in range(len(toTest.points)):
-            for j in range(len(toTest.features)):
-                values.append(toTest[i,j])
-        assert all(isinstance(val, float) for val in values)
+        for elem in toTest.iterateElements():
+            assert isinstance(elem, float)
 
 def test_data_raw_stringConversion_int():
-    """
-    """
     for t in returnTypes:
-        values = []
         toTest = nimble.data(t, [['1','2','3'], ['4','5','6'], ['7','8','9']],
                              convertToType=int)
-        for i in range(len(toTest.points)):
-            for j in range(len(toTest.features)):
-                values.append(toTest[i,j])
-        assert all(isinstance(val, (int, numpy.integer)) for val in values)
+        for elem in toTest.iterateElements():
+            assert isinstance(elem, (int, numpy.integer))
+
+def test_data_raw_stringConversion_datetimeTypes():
+    for datetimeType in datetimeTypes:
+        for t in returnTypes:
+            dates = [['01-01-01','02-02-2002','03-13-1913'],
+                     ['01/01/1801','02/02/02','03-31-2031']]
+            toTest = nimble.data(t, dates, convertToType=datetimeType)
+            for elem in toTest.iterateElements():
+                if t == 'DataFrame':
+                    # pandas always converts to their Timestamp object
+                    assert isinstance(elem, pd.Timestamp)
+                else:
+                    assert isinstance(elem, datetimeType)
+
+def test_data_raw_stringConversion_datetimeParseError():
+    for datetimeType in datetimeTypes:
+        for t in returnTypes:
+            try:
+                dates = [['01-01-01','02-02-2002','unknown'],
+                         ['01/01/1801','02/02/02','03-31-2031']]
+                toTest = nimble.data(t, dates, convertToType=datetimeType)
+                assert False
+            except InvalidArgumentValue: # expected InvalidArgumentValue
+                pass
 
 def test_data_raw_noStringConversion():
     for t in returnTypes:
-        values = []
         toTest = nimble.data(t, [['1','2','3'], ['4','5','6'], ['7','8','9']])
-        for i in range(len(toTest.points)):
-            for j in range(len(toTest.features)):
-                values.append(toTest[i,j])
-        assert all(isinstance(val, str) for val in values)
+        for elem in toTest.iterateElements():
+            assert isinstance(elem, str)
 
 def test_data_raw_numericConversion_str():
     """
@@ -118,6 +133,168 @@ def test_data_raw_numericConversion_float():
             for j in range(len(toTest.features)):
                 values.append(toTest[i,j])
         assert all(isinstance(val, float) for val in values)
+
+def test_data_raw_conversionList():
+    for t in returnTypes:
+        toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                             convertToType=[int, float, str])
+        for i in range(len(toTest.points)):
+            assert isinstance(toTest[i, 0], (int, numpy.integer))
+            assert isinstance(toTest[i, 1], (float, numpy.floating))
+            assert isinstance(toTest[i, 2], str)
+
+def test_data_raw_conversionList_None():
+    for t in returnTypes:
+        toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                             convertToType=[int, float, None])
+        for i in range(len(toTest.points)):
+            assert isinstance(toTest[i, 0], (int, numpy.integer))
+            assert isinstance(toTest[i, 1], (float, numpy.floating))
+            assert isinstance(toTest[i, 2], (int, numpy.integer))
+
+def test_data_raw_conversionList_datetimeTypes():
+    dates = [[1, '3', '03-13-1913'],
+             [2, '4', '03-31-2031']]
+    for datetimeType in datetimeTypes:
+        convertToType = [float, int, datetimeType]
+        for t in returnTypes:
+            toTest = nimble.data(t, dates, convertToType=convertToType)
+            for i, ft in enumerate(toTest.features):
+                # numpy converts to datetime.datetime, pandas to pd.Timestamp
+                if convertToType[i] in datetimeTypes:
+                    assert all(isinstance(val, datetimeTypes) for val in ft)
+                else:
+                    assert all(isinstance(val, convertToType[i]) for val in ft)
+
+def test_data_raw_conversionList_exceptionTooLong():
+    for t in returnTypes:
+        try:
+            toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                                 convertToType=[int, float, None, float])
+            assert False
+        except InvalidArgumentValue: # expected InvalidArgumentValue
+            pass
+
+def test_data_raw_conversionList_exceptionTooShort():
+    for t in returnTypes:
+        try:
+            toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                                 convertToType=[int, float])
+            assert False
+        except InvalidArgumentValue: # expected InvalidArgumentValue
+            pass
+
+def test_data_raw_conversionList_keepFeatures_allData():
+    for t in returnTypes:
+        toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                             convertToType=[int, float, None],
+                             keepFeatures=[1, 0])
+        for i in range(len(toTest.points)):
+            assert isinstance(toTest[i, 0], (float, numpy.floating))
+            assert isinstance(toTest[i, 1], (int, numpy.integer))
+
+def test_data_raw_conversionList_keepFeatures_keptData():
+    for t in returnTypes:
+        toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                             convertToType=[int, float],
+                             keepFeatures=[1, 0])
+        for i in range(len(toTest.points)):
+            assert isinstance(toTest[i, 0], (int, numpy.integer))
+            assert isinstance(toTest[i, 1], (float, numpy.floating))
+
+def test_data_raw_conversionDict():
+    for t in returnTypes:
+        toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                             featureNames = ['a', 'b', 'c'],
+                             convertToType={'a': int, 1: float, 'c': str})
+        for i in range(len(toTest.points)):
+            assert isinstance(toTest[i, 0], (int, numpy.integer))
+            assert isinstance(toTest[i, 1], (float, numpy.floating))
+            assert isinstance(toTest[i, 2], str)
+
+def test_data_raw_conversionDict_limited():
+    for t in returnTypes:
+        toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                             featureNames = ['a', 'b', 'c'],
+                             convertToType={'b': float})
+        for i in range(len(toTest.points)):
+            assert isinstance(toTest[i, 0], (int, numpy.integer))
+            assert isinstance(toTest[i, 1], (float, numpy.floating))
+            assert isinstance(toTest[i, 0], (int, numpy.integer))
+
+def test_data_raw_conversionDict_validUnusedFtName():
+    for t in returnTypes:
+        toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                             featureNames = ['a', 'b', 'c'],
+                             convertToType={'c': float},
+                             keepFeatures=['a', 'b'])
+
+def test_data_raw_conversionDict_invalidFtName():
+    for t in returnTypes:
+        try:
+            toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                                 featureNames = ['a', 'b', 'c'],
+                                 convertToType={'d': float},
+                                 keepFeatures=['a', 'b'])
+            assert False
+        except InvalidArgumentValue: # expected InvalidArgumentValue
+            pass
+
+def test_data_raw_conversionDict_indexAndNameSameFt_match():
+    for t in returnTypes:
+        toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                             featureNames = ['a', 'b', 'c'],
+                             convertToType={'b': float, 1: float})
+        for i in range(len(toTest.points)):
+            assert isinstance(toTest[i, 0], (int, numpy.integer))
+            assert isinstance(toTest[i, 1], (float, numpy.floating))
+            assert isinstance(toTest[i, 0], (int, numpy.integer))
+
+def test_data_raw_conversionDict_datetimeTypes():
+    dates = [[1, '3', '03-13-1913'],
+             [2, '4', '03-31-2031']]
+    for datetimeType in datetimeTypes:
+        convertToType = {1: float, 2: datetimeType}
+        for t in returnTypes:
+            toTest = nimble.data(t, dates, convertToType=convertToType)
+            for key, ctype in convertToType.items():
+                ft = toTest[:, key]
+                # numpy converts to datetime.datetime, pandas to pd.Timestamp
+                if ctype in datetimeTypes:
+                    assert all(isinstance(val, datetimeTypes) for val in ft)
+                else:
+                    assert all(isinstance(val, ctype) for val in ft)
+
+def test_data_raw_conversionDict_indexAndNameSameFt_noMatch():
+    for t in returnTypes:
+        try:
+            toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                                 featureNames = ['a', 'b', 'c'],
+                                 convertToType={'a': float, 0: int})
+            assert False
+        except InvalidArgumentValue: # expected InvalidArgumentValue
+            pass
+
+def test_data_raw_conversionDict_keepFeatures_ftNames():
+    for t in returnTypes:
+        toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                             featureNames = ['a', 'b', 'c'],
+                             convertToType={'a': int, 'b': float},
+                             keepFeatures=[0, 1])
+        for i in range(len(toTest.points)):
+            assert isinstance(toTest[i, 0], (int, numpy.integer))
+            assert isinstance(toTest[i, 1], (float, numpy.floating))
+
+def test_data_raw_conversionDict_keepFeatures_index():
+    for t in returnTypes:
+        try:
+            toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
+                                 featureNames = ['a', 'b', 'c'],
+                                 convertToType={0: int, 1: float},
+                                 keepFeatures=[0, 2])
+            assert False
+        except InvalidArgumentTypeCombination: # expected InvalidArgumentTypeCombination
+            pass
 
 def test_data_raw_invalidPointOrFeatureNames():
     for t in returnTypes:
@@ -152,6 +329,18 @@ def test_data_raw_pointAndFeatureIterators():
         assert toTest2.points.getNames() == ['1', '4']
         assert toTest2.features.getNames() == ['a', 'b', 'c']
 
+def test_data_raw_datetime():
+    for t in returnTypes:
+        rawData = [[datetime.datetime(2020, 1, 1), -16, 2],
+                   [numpy.datetime64('2020-01-02'), -24, -6],
+                   [pd.Timestamp(year=2020, month=2, day=3), -30, -18]]
+        toTest = nimble.data(t, rawData)
+        for date in toTest.features[0].iterateElements():
+            assert isDatetime(date)
+
+################################
+# File data values correctness #
+################################
 
 def test_data_CSV_data():
     """ Test of data() loading a csv file, default params """
@@ -1109,94 +1298,189 @@ def test_hdf_roundtrip_autonames():
 
 def test_extractNames_pythonList():
     """ Test of data() given python list, extracting names """
-    pNames = ['pn1']
-    fNames = ['one', '2', 'three']
-
+    inDataRaw = [['foo', 'one', 2, 'three'], ['pn1', 1, -1, -3]]
     for t in returnTypes:
-        inDataRaw = [['foo', 'one', 2, 'three'], ['pn1', 1, -1, -3]]
         specRaw = [[1, -1, -3]]
+        pNames = ['pn1']
+        fNames = ['one', '2', 'three']
         inData = nimble.data(
             returnType=t, source=inDataRaw, pointNames=True, featureNames=True)
         specified = nimble.data(
             returnType=t, source=specRaw, pointNames=pNames, featureNames=fNames)
+        assert inData == specified
+
+        specRaw = [['one', 2, 'three'], [1, -1, -3]]
+        pNames = ['foo', 'pn1']
+        inData = nimble.data(
+            returnType=t, source=inDataRaw, pointNames=True, featureNames=False)
+        specified = nimble.data(
+            returnType=t, source=specRaw, pointNames=pNames)
+        assert inData == specified
+
+        specRaw = [['pn1', 1, -1, -3]]
+        fNames = ['foo', 'one', '2', 'three']
+        inData = nimble.data(
+            returnType=t, source=inDataRaw, pointNames=False, featureNames=True)
+        specified = nimble.data(
+            returnType=t, source=specRaw, featureNames=fNames)
         assert inData == specified
 
 
 def test_extractNames_NPArray():
     """ Test of data() given numpy array, extracting names """
-    pNames = ['11']
-    fNames = ['21', '22', '23']
-
+    inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
     for t in returnTypes:
-        inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
         specRaw = numpy.array([[1, -1, -3]])
+        pNames = ['11']
+        fNames = ['21', '22', '23']
         inData = nimble.data(
             returnType=t, source=inDataRaw, pointNames=True, featureNames=True)
         specified = nimble.data(
             returnType=t, source=specRaw, pointNames=pNames, featureNames=fNames)
+        assert inData == specified
+
+        specRaw = numpy.array([[21, 22, 23], [1, -1, -3]])
+        pNames = ['-111', '11']
+        inData = nimble.data(
+            returnType=t, source=inDataRaw, pointNames=True, featureNames=False)
+        specified = nimble.data(
+            returnType=t, source=specRaw, pointNames=pNames)
+        assert inData == specified
+
+        specRaw = numpy.array([[11, 1, -1, -3]])
+        fNames = ['-111', '21', '22', '23']
+        inData = nimble.data(
+            returnType=t, source=inDataRaw, pointNames=False, featureNames=True)
+        specified = nimble.data(
+            returnType=t, source=specRaw, featureNames=fNames)
         assert inData == specified
 
 
 def test_extractNames_NPMatrix():
     """ Test of data() given numpy matrix, extracting names """
-    pNames = ['11']
-    fNames = ['21', '22', '23']
-
+    inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
     for t in returnTypes:
-        inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
         specRaw = numpy.matrix([[1, -1, -3]])
+        pNames = ['11']
+        fNames = ['21', '22', '23']
         inData = nimble.data(
             returnType=t, source=inDataRaw, pointNames=True, featureNames=True)
         specified = nimble.data(
             returnType=t, source=specRaw, pointNames=pNames, featureNames=fNames)
+        assert inData == specified
+
+        specRaw = numpy.matrix([[21, 22, 23], [1, -1, -3]])
+        pNames = ['-111', '11']
+        inData = nimble.data(
+            returnType=t, source=inDataRaw, pointNames=True, featureNames=False)
+        specified = nimble.data(
+            returnType=t, source=specRaw, pointNames=pNames)
+        assert inData == specified
+
+        specRaw = numpy.matrix([[11, 1, -1, -3]])
+        fNames = ['-111', '21', '22', '23']
+        inData = nimble.data(
+            returnType=t, source=inDataRaw, pointNames=False, featureNames=True)
+        specified = nimble.data(
+            returnType=t, source=specRaw, featureNames=fNames)
         assert inData == specified
 
 
 def test_extractNames_CooSparse():
     """ Test of data() given scipy Coo matrix, extracting names """
-    pNames = ['11']
-    fNames = ['21', '22', '23']
-
+    inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
+    inDataRaw = scipy.sparse.coo_matrix(inDataRaw)
     for t in returnTypes:
-        inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
-        inDataRaw = scipy.sparse.coo_matrix(inDataRaw)
         specRaw = numpy.array([[1, -1, -3]])
-        specRaw = scipy.sparse.coo_matrix(specRaw)
+        specRaw = scipy.sparse.csc_matrix(specRaw)
+        pNames = ['11']
+        fNames = ['21', '22', '23']
         inData = nimble.data(
             returnType=t, source=inDataRaw, pointNames=True, featureNames=True)
         specified = nimble.data(
             returnType=t, source=specRaw, pointNames=pNames, featureNames=fNames)
+        assert inData == specified
+
+        specRaw = numpy.array([[21, 22, 23], [1, -1, -3]])
+        specRaw = scipy.sparse.csc_matrix(specRaw)
+        pNames = ['-111', '11']
+        inData = nimble.data(
+            returnType=t, source=inDataRaw, pointNames=True, featureNames=False)
+        specified = nimble.data(
+            returnType=t, source=specRaw, pointNames=pNames)
+        assert inData == specified
+
+        specRaw = numpy.array([[11, 1, -1, -3]])
+        specRaw = scipy.sparse.csc_matrix(specRaw)
+        fNames = ['-111', '21', '22', '23']
+        inData = nimble.data(
+            returnType=t, source=inDataRaw, pointNames=False, featureNames=True)
+        specified = nimble.data(
+            returnType=t, source=specRaw, featureNames=fNames)
         assert inData == specified
 
 
 def test_extractNames_CscSparse():
     """ Test of data() given scipy Csc matrix, extracting names """
-    pNames = ['11']
-    fNames = ['21', '22', '23']
-
+    inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
+    inDataRaw = scipy.sparse.csc_matrix(inDataRaw)
     for t in returnTypes:
-        inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
-        inDataRaw = scipy.sparse.csc_matrix(inDataRaw)
         specRaw = numpy.array([[1, -1, -3]])
         specRaw = scipy.sparse.csc_matrix(specRaw)
+        pNames = ['11']
+        fNames = ['21', '22', '23']
+        inData = nimble.data(
+            returnType=t, source=inDataRaw, pointNames=True, featureNames=True)
+        specified = nimble.data(
+            returnType=t, source=specRaw, pointNames=pNames, featureNames=fNames)
+
+        assert inData == specified
+
+        specRaw = numpy.array([[21, 22, 23], [1, -1, -3]])
+        specRaw = scipy.sparse.csc_matrix(specRaw)
+        pNames = ['-111', '11']
+        inData = nimble.data(
+            returnType=t, source=inDataRaw, pointNames=True, featureNames=False)
+        specified = nimble.data(
+            returnType=t, source=specRaw, pointNames=pNames)
+        assert inData == specified
+
+        specRaw = numpy.array([[11, 1, -1, -3]])
+        specRaw = scipy.sparse.csc_matrix(specRaw)
+        fNames = ['-111', '21', '22', '23']
+        inData = nimble.data(
+            returnType=t, source=inDataRaw, pointNames=False, featureNames=True)
+        specified = nimble.data(
+            returnType=t, source=specRaw, featureNames=fNames)
+        assert inData == specified
+
+
+def test_extractNames_pandasDataFrame():
+    inDataRaw = pd.DataFrame([[1, -1, -3]], index=[11], columns=[21, 22, 23])
+    for t in returnTypes:
+        specRaw = pd.DataFrame([[1, -1, -3]])
+        pNames = ['11']
+        fNames = ['21', '22', '23']
         inData = nimble.data(
             returnType=t, source=inDataRaw, pointNames=True, featureNames=True)
         specified = nimble.data(
             returnType=t, source=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
-
-def test_extractNames_pandasDataFrame():
-    pNames = ['11']
-    fNames = ['21', '22', '23']
-
-    for t in returnTypes:
-        inDataRaw = pd.DataFrame([[1, -1, -3]], index=[11], columns=[21, 22, 23])
         specRaw = pd.DataFrame([[1, -1, -3]])
+        pNames = ['11']
         inData = nimble.data(
-            returnType=t, source=inDataRaw, pointNames=True, featureNames=True)
+            returnType=t, source=inDataRaw, pointNames=True, featureNames=False)
         specified = nimble.data(
-            returnType=t, source=specRaw, pointNames=pNames, featureNames=fNames)
+            returnType=t, source=specRaw, pointNames=pNames)
+        assert inData == specified
+
+        specRaw = pd.DataFrame([[1, -1, -3]])
+        fNames = ['21', '22', '23']
+        inData = nimble.data(
+            returnType=t, source=inDataRaw, pointNames=False, featureNames=True)
+        specified = nimble.data(
+            returnType=t, source=specRaw, featureNames=fNames)
         assert inData == specified
 
 
@@ -2063,6 +2347,26 @@ def test_data_keepPF_AllCombosWithExactNamesProvided():
             except InvalidArgumentValue:
                 pass
 
+def test_data_keepPF_exception_sameNameAndIndex():
+    pnames = {"11.": 0, "111.": 1, "1111.": 2}
+    fnames = {"2.": 0, "3.": 1, "4.": 2}
+    data = [[22., 33., 44.], [222., 333., 444.], [2222., 3333., 4444.]]
+
+    for t in returnTypes:
+        try:
+            toTest = nimble.data(t, source=data, pointNames=pnames,
+                                 featureNames=fnames, keepPoints=[0, "11."])
+            assert False
+        except InvalidArgumentValue: # expected InvalidArgumentValue
+            pass
+
+        try:
+            toTest = nimble.data(t, source=data, pointNames=pnames,
+                                 featureNames=fnames, keepFeatures=[0, "2."])
+            assert False
+        except InvalidArgumentValue: # expected InvalidArgumentValue
+            pass
+
 
 def test_data_csv_keepPoints_IndexingGivenFeatureNames():
     data = [[111, 222, 333]]
@@ -2100,8 +2404,8 @@ def test_data_keepPF_csv_noUncessaryStorage():
     try:
         def fakeinitDataObject(
                 returnType, rawData, pointNames, featureNames, name, path,
-                keepPoints, keepFeatures, treatAsMissing, replaceMissingWith,
-                reuseData=False, extracted=(None, None)):
+                keepPoints, keepFeatures, convertToType, treatAsMissing,
+                replaceMissingWith, reuseData=False, extracted=(None, None)):
             assert len(rawData) == 2
             assert len(rawData[0]) == 1
             return nimble.core.data.List(rawData)
@@ -2929,7 +3233,8 @@ def test_replaceNumpyValues_dtypePreservation():
         # should skip attempted replacement because no treatAsMissing values
         if hasattr(toTest.data, 'dtype'):
             assert toTest.data.dtype == int
-        assert all(isinstance(val, int) for val in toTest.iterateElements())
+        ints = (int, numpy.integer)
+        assert all(isinstance(val, ints) for val in toTest.iterateElements())
 
         toTest = nimble.data(t, data, replaceMissingWith=numpy.nan,
                              treatAsMissing=[0])

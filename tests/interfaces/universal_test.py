@@ -102,9 +102,6 @@ class TestInterface(UniversalInterface):
     def _optionDefaults(self, option):
         return None
 
-    def _exposedFunctions(self):
-        return [self.exposedOne, self.exposedTwo, self.exposedThree]
-
     def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
                  customDict):
         return (learnerName, trainX, trainY, arguments)
@@ -141,16 +138,6 @@ class TestInterface(UniversalInterface):
 
     def version(self):
         return "0.0.0"
-
-    def exposedOne(self):
-        return 1
-
-    def exposedTwo(self):
-        return 2
-
-    def exposedThree(self, trainedLearner):
-        assert trainedLearner.learnerName == 'exposeTest'
-        return 3
 
 
 TestObject = TestInterface()
@@ -224,20 +211,6 @@ def test_setOptionGetOption():
     assert TestObject.getOption('option') is None
     TestObject.setOption('option', 'set')
     assert TestObject.getOption('option') == 'set'
-
-#########################
-### exposed functions ###
-#########################
-
-def test_eachExposedPresent():
-    dummyNimble = nimble.data('Matrix', [[1, 1], [2, 2]])
-    tl = TestObject.train('exposeTest', dummyNimble, dummyNimble)
-    assert hasattr(tl, 'exposedOne')
-    assert tl.exposedOne() == 1
-    assert hasattr(tl, 'exposedTwo')
-    assert tl.exposedTwo() == 2
-    assert hasattr(tl, 'exposedThree')
-    assert tl.exposedThree() == 3
 
 
 #####################
@@ -343,9 +316,6 @@ class AlwaysWarnInterface(UniversalInterface):
         return []
 
     def _configurableOptionNames(self):
-        return []
-
-    def _exposedFunctions(self):
         return []
 
     def version(self):

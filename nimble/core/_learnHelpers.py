@@ -6,6 +6,7 @@ functions are contained in learn.py without the distraction of helpers.
 """
 
 import itertools
+from functools import wraps
 
 import numpy
 
@@ -679,28 +680,6 @@ class LearnerInspector:
             return 'exact'
 
 
-def _validScoreMode(scoreMode):
-    """
-    Check that a scoreMode flag to train() trainAndApply(), etc. is an
-    accepted value.
-    """
-    scoreMode = scoreMode.lower()
-    if scoreMode not in ['label', 'bestscore', 'allscores']:
-        msg = "scoreMode may only be 'label' 'bestScore' or 'allScores'"
-        raise InvalidArgumentValue(msg)
-
-
-def _validMultiClassStrategy(multiClassStrategy):
-    """
-    Check that a multiClassStrategy flag to train() trainAndApply(),
-    etc. is an accepted value.
-    """
-    multiClassStrategy = multiClassStrategy.lower()
-    if multiClassStrategy not in ['default', 'onevsall', 'onevsone']:
-        msg = "multiClassStrategy may be 'default' 'OneVsAll' or 'OneVsOne'"
-        raise InvalidArgumentValue(msg)
-
-
 def _unpackLearnerName(learnerName):
     """
     Split a learnerName parameter into the portion defining the package,
@@ -730,17 +709,7 @@ def _unpackLearnerName(learnerName):
     return interface, name
 
 
-def _validArguments(arguments):
-    """
-    Check that an arguments parmeter to train() trainAndApply(), etc. is
-    an accepted format.
-    """
-    if not isinstance(arguments, dict) and arguments is not None:
-        msg = "The 'arguments' parameter must be a dictionary or None"
-        raise InvalidArgumentType(msg)
-
-
-def _validData(trainX, trainY, testX, testY, testRequired):
+def _validTrainData(trainX, trainY):
     """
     Check that the data parameters to train() trainAndApply(), etc. are
     in accepted formats.
@@ -755,15 +724,12 @@ def _validData(trainX, trainY, testX, testY, testRequired):
             msg += "ID of the feature containing labels in testX"
             raise InvalidArgumentType(msg)
         if isinstance(trainY, Base):
-        #			if not len(trainY.features) == 1:
-        #               msg = "If trainY is a Data object, then it may only "
-        #               msg += "have one feature"
-        #				raise ArgumentException(msg)
             if len(trainY.points) != len(trainX.points):
                 msg = "If trainY is a Data object, then it must have the same "
                 msg += "number of points as trainX"
                 raise InvalidArgumentValueCombination(msg)
 
+def _validTestData(testX, testY, testRequired):
     # testX is allowed to be None, sometimes it is appropriate to have it be
     # filled using the trainX argument (ie things which transform data, or
     # learn internal structure)
@@ -788,6 +754,41 @@ def _validData(trainX, trainY, testX, testY, testRequired):
                 raise InvalidArgumentValueCombination(msg)
 
 
+def _validArguments(arguments):
+    """
+    Check that an arguments parmeter to train() trainAndApply(), etc. is
+    an accepted format.
+    """
+    if not isinstance(arguments, dict) and arguments is not None:
+        msg = "The 'arguments' parameter must be a dictionary or None"
+        raise InvalidArgumentType(msg)
+
+
+def _validScoreMode(scoreMode):
+    """
+    Check that a scoreMode flag to train() trainAndApply(), etc. is an
+    accepted value.
+    """
+    if scoreMode is not None:
+        scoreMode = scoreMode.lower()
+        if scoreMode not in ['label', 'bestscore', 'allscores']:
+            msg = "scoreMode may only be 'label', 'bestScore', or 'allScores'"
+            raise InvalidArgumentValue(msg)
+
+
+def _validMultiClassStrategy(multiClassStrategy):
+    """
+    Check that a multiClassStrategy flag to train() trainAndApply(),
+    etc. is an accepted value.
+    """
+    if multiClassStrategy is not None:
+        multiClassStrategy = multiClassStrategy.lower()
+        if multiClassStrategy not in ['default', 'onevsall', 'onevsone']:
+            msg = "multiClassStrategy may be 'default', 'OneVsAll', or "
+            msg += "'OneVsOne'"
+            raise InvalidArgumentValue(msg)
+
+
 def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
     outputData = X if Y is None else Y
     if isinstance(outputData, Base):
@@ -809,3 +810,40 @@ def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
             msg += "the multiClassStrategy flag is required to be set to "
             msg += "'default'"
             raise InvalidArgumentValueCombination(msg)
+
+
+def validateLearningArguments(
+        trainX, trainY=None, testX=None, testXRequired=False, testY=None,
+        testYRequired=False, arguments=None, scoreMode=None,
+        multiClassStrategy=None):
+    """
+    Argument validation for learning functions.
+    """
+    _validTrainData(trainX, trainY)
+    _validTestData(testX, testY, [testXRequired, testYRequired])
+    _validArguments(arguments)
+    _validScoreMode(scoreMode)
+    _validMultiClassStrategy(multiClassStrategy)
+    _2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
+
+
+def trackEntry(func):
+    """
+    Determine if a function call is the user entry point.
+    """
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        if trackEntry.isEntryPoint is None: # entry point
+            trackEntry.isEntryPoint = True
+        elif trackEntry.isEntryPoint: # previous call was entry point
+            trackEntry.isEntryPoint = False
+        try:
+            ret = func(*args, **kwargs)
+        finally:
+            trackEntry.isEntryPoint = None # reset
+
+        return ret
+
+    return wrapped
+
+trackEntry.isEntryPoint = None

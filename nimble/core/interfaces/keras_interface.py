@@ -438,11 +438,6 @@ To install keras
     def _configurableOptionNames(self):
         return ['location']
 
-
-    def _exposedFunctions(self):
-        return [self._predict]
-
-
     def version(self):
         return self.keras.__version__
 

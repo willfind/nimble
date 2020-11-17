@@ -11,13 +11,13 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble._utility import inheritDocstringsFactory, numpy2DArray, is2DArray
+from nimble._utility import isAllowedSingleElement, allowedNumpyDType
 from nimble._utility import scipy, pd
 from .base import Base
 from .views import BaseView
 from .listAxis import ListPoints, ListPointsView
 from .listAxis import ListFeatures, ListFeaturesView
 from ._dataHelpers import DEFAULT_PREFIX
-from ._dataHelpers import isAllowedSingleElement
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
 from ._dataHelpers import denseCountUnique
@@ -90,9 +90,7 @@ class List(Base):
                 if shape is None:
                     shape = (len(data), numFeatures)
 
-            if reuseData:
-                data = data
-            else:
+            if not reuseData:
                 #this is to convert a list x=[[1,2,3]]*2 to a
                 # list y=[[1,2,3], [1,2,3]]
                 # the difference is that x[0] is x[1], but y[0] is not y[1]
@@ -772,6 +770,6 @@ class ListPassThrough(object):
 
 def convertList(constructor, data):
     convert = constructor(data)
-    if not convert.dtype in [int, float, bool, object]:
+    if not allowedNumpyDType(convert.dtype):
         convert = constructor(data, dtype=object)
     return convert

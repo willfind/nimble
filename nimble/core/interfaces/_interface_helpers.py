@@ -11,6 +11,8 @@ import inspect
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.random import pythonRandom
+from nimble.core._learnHelpers import _validTestData, _validArguments
+from nimble.core._learnHelpers import _validScoreMode, _2dOutputFlagCheck
 
 
 class PythonSearcher(object):
@@ -621,6 +623,17 @@ def extractConfidenceScores(predictionScores, featureNamesItoN):
         scoreMap[label] = score
 
     return scoreMap
+
+def validateTestingArguments(testX, testY=None, testYRequired=False,
+                             arguments=None, scoreMode=None,
+                             has2dOutput=False):
+    """
+    Argument validation for trained learner methods.
+    """
+    _validTestData(testX, testY, [True, testYRequired])
+    _validArguments(arguments)
+    _validScoreMode(scoreMode)
+    _2dOutputFlagCheck(has2dOutput, None, scoreMode, None)
 
 def checkArgsForRandomParam(arguments, randomParam):
     if randomParam in arguments:

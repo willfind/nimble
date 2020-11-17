@@ -26,13 +26,15 @@ from nimble.exceptions import _prettyListString
 from nimble.exceptions import _prettyDictString
 from nimble.core.logger import handleLogging, startTimer, stopTimer
 from nimble.core.configuration import configErrors
+from nimble.core._learnHelpers import computeMetrics
+from nimble.core._learnHelpers import validateLearningArguments, trackEntry
 from ._interface_helpers import (
     generateBinaryScoresFromHigherSortedLabelScores,
     calculateSingleLabelScoresFromOneVsOneScores,
     ovaNotOvOFormatted, checkClassificationStrategy, cacheWrapper,
     generateAllPairs, countWins, extractWinningPredictionIndex,
     extractWinningPredictionLabel, extractWinningPredictionIndexAndScore,
-    extractConfidenceScores, getValidSeed)
+    extractConfidenceScores, validateTestingArguments, getValidSeed)
 
 
 def captureOutput(toWrap):
@@ -84,31 +86,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             msg = "Improper implementation of getCanonicalName(), must return "
             msg += "a string"
             raise TypeError(msg)
-
-        # _exposedFunctions
-        exposedFunctions = self._exposedFunctions()
-        if exposedFunctions is None or not isinstance(exposedFunctions, list):
-            msg = "Improper implementation of _exposedFunctions(), must "
-            msg += "return a list of methods to be bundled with TrainedLearner"
-            raise TypeError(msg)
-        for exposed in exposedFunctions:
-            # is callable
-            if not hasattr(exposed, '__call__'):
-                msg = "Improper implementation of _exposedFunctions, each "
-                msg += "member of the return must have __call__ attribute"
-                raise TypeError(msg)
-            # has name attribute
-            if not hasattr(exposed, '__name__'):
-                msg = "Improper implementation of _exposedFunctions, each "
-                msg += "member of the return must have __name__ attribute"
-                raise TypeError(msg)
-            # takes self as attribute
-            (args, _, _, _) = inspectArguments(exposed)
-            if args[0] != 'self':
-                msg = "Improper implementation of _exposedFunctions each "
-                msg += "member's first argument must be 'self', interpreted "
-                msg += "as a TrainedLearner"
-                raise TypeError(msg)
 
     @property
     def optionNames(self):
@@ -862,20 +839,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def _exposedFunctions(self):
-        """
-        Returns a list of references to functions which are to be
-        wrapped in I/O transformation, and exposed as attributes of all
-        TrainedLearner objects returned by this interface's train()
-        function. If None, or an empty list is returned, no functions
-        will be exposed. Each function in this list should be a python
-        function, the inspect module will be used to retrieve argument
-        names, and the value of the function's __name__ attribute will
-        be its name in TrainedLearner.
-        """
-        pass
-
-    @abc.abstractmethod
     def version(self):
         """
         The version of the package accessible to the interface.
@@ -968,23 +931,8 @@ class TrainedLearner(object):
         self._trainXShape = trainXShape
         self._trainYNames = trainYNames
 
-        exposedFunctions = self._interface._exposedFunctions()
-        for exposed in exposedFunctions:
-            methodName = getattr(exposed, '__name__')
-            (args, _, _, _) = inspectArguments(exposed)
-            doc = 'Wrapped version of the ' + methodName + ' function where '
-            if 'trainedLearner' in args:
-                wrapped = functools.partial(exposed, trainedLearner=self)
-                doc += 'the "trainedLearner" parameter has been fixed as this '
-                doc += 'object, and '
-            else:
-                wrapped = functools.partial(exposed)
-            doc += 'the "self" parameter has been fixed to be '
-            doc += str(interfaceObject)
-            wrapped.__doc__ = doc
-            setattr(self, methodName, wrapped)
-
     @captureOutput
+    @trackEntry
     def test(self, testX, testY, performanceFunction, arguments=None,
              output='match', scoreMode='label', useLog=None, **kwarguments):
         """
@@ -1065,8 +1013,9 @@ class TrainedLearner(object):
         TODO
         """
         timer = startTimer(useLog)
-        nimble.core._learnHelpers._2dOutputFlagCheck(
-            self._has2dOutput, None, scoreMode, None)
+        if trackEntry.isEntryPoint:
+            validateTestingArguments(testX, testY, True, arguments, scoreMode,
+                                     self._has2dOutput)
 
         if not isinstance(testY, nimble.core.data.Base):
             testX = testX.copy()
@@ -1075,8 +1024,7 @@ class TrainedLearner(object):
         mergedArguments = mergeArguments(arguments, kwarguments)
         pred = self.apply(testX, mergedArguments, output, scoreMode,
                           useLog=False)
-        performance = nimble.core._learnHelpers.computeMetrics(
-            testY, None, pred, performanceFunction)
+        performance = computeMetrics(testY, None, pred, performanceFunction)
         time = stopTimer(timer)
 
         metrics = {}
@@ -1090,11 +1038,12 @@ class TrainedLearner(object):
         handleLogging(useLog, 'run', "TrainedLearner.test", trainData=None,
                       trainLabels=None, testData=testX, testLabels=testY,
                       learnerFunction=fullName, arguments=mergedArguments,
-                      metrics=metrics, extraInfo=None, time=time)
+                      metrics=metrics, time=time)
 
         return performance
 
     @captureOutput
+    @trackEntry
     def apply(self, testX, arguments=None, output='match', scoreMode='label',
               useLog=None, **kwarguments):
         """
@@ -1182,9 +1131,11 @@ class TrainedLearner(object):
             )
         """
         timer = startTimer(useLog)
+        if trackEntry.isEntryPoint:
+            validateTestingArguments(testX, arguments=arguments,
+                                     scoreMode=scoreMode,
+                                     has2dOutput=self._has2dOutput)
         self._validTestData(testX)
-        nimble.core._learnHelpers._2dOutputFlagCheck(
-            self._has2dOutput, None, scoreMode, None)
 
         mergedArguments = mergeArguments(arguments, kwarguments)
 
@@ -1248,13 +1199,10 @@ class TrainedLearner(object):
         time = stopTimer(timer)
 
         fullName = self._interface.getCanonicalName() + self.learnerName
-        # Signature:
-        # (self, nimbleFunction, trainData, trainLabels, testData, testLabels,
-        # learnerFunction, arguments, metrics, extraInfo=None, folds=None
         handleLogging(useLog, 'run', "TrainedLearner.apply", trainData=None,
                       trainLabels=None, testData=testX, testLabels=None,
                       learnerFunction=fullName, arguments=mergedArguments,
-                      metrics=None, extraInfo=None, time=time)
+                      time=time)
 
         return ret
 
@@ -1379,6 +1327,7 @@ class TrainedLearner(object):
              [3]]
             )
         """
+        validateLearningArguments(trainX, trainY, arguments=arguments)
         has2dOutput = False
         outputData = trainX if trainY is None else trainY
         if isinstance(outputData, nimble.core.data.Base):
@@ -1448,6 +1397,7 @@ class TrainedLearner(object):
             False, do **NOT** send to the logger, regardless of the
             global option.
         """
+        validateLearningArguments(trainX, trainY)
         transformed = self._interface._inputTransformation(
             self.learnerName, trainX, trainY, None, self.arguments,
             self._customDict)
@@ -1545,6 +1495,7 @@ class TrainedLearner(object):
         nimble.core.data.Matrix
             The label scores.
         """
+        validateTestingArguments(testX, arguments=arguments)
         self._validTestData(testX)
         usedArguments = mergeArguments(arguments, kwarguments)
         (_, _, testX, usedArguments) = self._interface._inputTransformation(

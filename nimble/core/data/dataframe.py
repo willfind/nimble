@@ -9,7 +9,8 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
-from nimble._utility import inheritDocstringsFactory, is2DArray
+from nimble._utility import inheritDocstringsFactory
+from nimble._utility import pandasDataFrameToList
 from nimble._utility import scipy, pd
 from .base import Base
 from .views import BaseView
@@ -20,7 +21,7 @@ from ._dataHelpers import DEFAULT_PREFIX
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import denseCountUnique
 from ._dataHelpers import NimbleElementIterator
-from ._dataHelpers import convertToNumpyOrder
+from ._dataHelpers import convertToNumpyOrder, isValid2DObject
 
 @inheritDocstringsFactory(Base)
 class DataFrame(Base):
@@ -44,9 +45,9 @@ class DataFrame(Base):
             msg = 'To use class DataFrame, pandas must be installed.'
             raise PackageException(msg)
 
-        if not isinstance(data, pd.DataFrame) and not is2DArray(data):
+        if not (isinstance(data, pd.DataFrame) or isValid2DObject(data)):
             msg = "the input data can only be a pandas DataFrame or a two-"
-            msg += "dimensional numpy array."
+            msg += "dimensional list or numpy array."
             raise InvalidArgumentType(msg)
 
         if isinstance(data, pd.DataFrame):
@@ -72,7 +73,8 @@ class DataFrame(Base):
         IDs = itertools.product(range(len(self.points)),
                                 range(len(self.features)))
         for i, j in IDs:
-            currVal = self.data.values[i, j]
+            # iat best for getting single value
+            currVal = self.data.iat[i, j]
 
             if points is not None and i not in points:
                 continue
@@ -84,12 +86,26 @@ class DataFrame(Base):
             else:
                 currRet = toTransform(currVal, i, j)
 
+            # iat setter does not support type changes, use iloc instead
             self.data.iloc[i, j] = currRet
 
     def _calculate_implementation(self, function, points, features,
                                   preserveZeros, outputType):
-        return self._calculate_genericVectorized(
-            function, points, features, outputType)
+        if points is not None or features is not None:
+            if points is None:
+                points = slice(None)
+            if features is None:
+                features = slice(None)
+            toCalculate = self.data.iloc[points, features]
+        else:
+            toCalculate = self.data
+
+        ret = toCalculate.applymap(function)
+
+        ret.index = pd.RangeIndex(ret.shape[0])
+        ret.columns = pd.RangeIndex(ret.shape[1])
+
+        return ret
 
     def _countUnique_implementation(self, points, features):
         return denseCountUnique(self, points, features)
@@ -111,7 +127,8 @@ class DataFrame(Base):
         if not isinstance(other, DataFrame):
             return False
 
-        return allDataIdentical(self.data.values, other.data.values)
+        return allDataIdentical(self.data.astype(numpy.object_).values,
+                                other.data.astype(numpy.object_).values)
 
     def _writeFileCSV_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
@@ -175,18 +192,34 @@ class DataFrame(Base):
             ftNames = self.features._getNamesNoGeneration()
             if to == 'DataFrame':
                 data = self.data.copy()
-            else:
+            elif self.data.empty:
                 data = self.data.values.copy()
+            else:
+                # convert to list because it preserves data types
+                data = pandasDataFrameToList(self.data)
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
-        if to == 'pythonlist':
-            return self.data.values.tolist()
+
         needsReshape = len(self._shape) > 2
-        if to == 'numpyarray':
+        if to in ['pythonlist', 'numpyarray']:
+            # convert pandas Timestamp type if necessary
+            timestamp = [d.type == numpy.datetime64 for d in self.data.dtypes]
+            if any(timestamp):
+                arr = self.data.astype(numpy.object_).values
+                attr = 'to_pydatetime' if to == 'pythonlist' else 'to_numpy'
+                convTimestamp = numpy.vectorize(lambda v: getattr(v, attr)())
+                arr[:, timestamp] = convTimestamp(arr[:, timestamp])
+            else:
+                arr = self.data.values
             if needsReshape:
-                return self.data.values.reshape(self._shape)
-            return self.data.values.copy()
+                arr = arr.reshape(self._shape)
+            if to == 'pythonlist':
+                return arr.tolist()
+            if needsReshape:
+                return arr
+            return arr.copy()
+
         if needsReshape:
             data = numpy.empty(self._shape[:2], dtype=numpy.object_)
             for i in range(self.shape[0]):
@@ -336,8 +369,8 @@ class DataFrame(Base):
         return DataFrame(pd.DataFrame(toFill))
 
     def _getitem_implementation(self, x, y):
-        #use self.data.values is much faster
-        return self.data.values[x, y]
+        # .iat should be used for accessing scalar values in pandas
+        return self.data.iat[x, y]
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd, dropDimension):
@@ -437,7 +470,8 @@ class DataFrame(Base):
         return self.data
 
     def _iterateElements_implementation(self, order, only):
-        return NimbleElementIterator(self.data.values, order, only)
+        return NimbleElementIterator(self.data.astype(numpy.object_).values,
+                                     order, only)
 
 class DataFrameView(BaseView, DataFrame):
     """
