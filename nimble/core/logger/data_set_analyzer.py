@@ -7,8 +7,6 @@ st. dev., # of unique values (for non-real valued features), # of
 missing values
 """
 
-import math
-
 import numpy
 
 import nimble

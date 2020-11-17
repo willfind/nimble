@@ -68,6 +68,7 @@ class Sparse(Base):
             if isinstance(data, list):
                 data = numpyArrayFromList(data)
             # Sparse will convert None to 0 so we need to use numpy.nan instead
+            # pylint: disable=singleton-comparison
             if data[data == None].size:
                 if data.dtype not in [float, numpy.floating, object]:
                     data = data.astype(float)

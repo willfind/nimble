@@ -118,6 +118,9 @@ def inheritDocstringsFactory(toInherit):
     return inheritDocstring
 
 def allowedNumpyDType(dtype):
+    """
+    Check if a dtype is one allowed for nimble data.
+    """
     return (dtype in [int, float, bool, object]
             or numpy.issubdtype(dtype, numpy.number)
             or numpy.issubdtype(dtype, numpy.datetime64))
@@ -231,8 +234,8 @@ def sparseMatrixToArray(sparseMatrix):
         if isinstance(retDType, numpy.flexible):
             retDType = object
         ret = numpy.zeros(sparseMatrix.shape, dtype=retDType)
-        nz = (sparseMatrix.row, sparseMatrix.col)
-        for (i, j), v in zip(zip(*nz), sparseMatrix.data):
+        nonzero = (sparseMatrix.row, sparseMatrix.col)
+        for (i, j), v in zip(zip(*nonzero), sparseMatrix.data):
             ret[i, j] = v
         return ret
 
@@ -249,6 +252,9 @@ def dtypeConvert(obj):
     return obj
 
 def isDatetime(x):
+    """
+    Determine if a value is a datetime object.
+    """
     datetimeTypes = [datetime.datetime, numpy.datetime64]
     if pd.nimbleAccessible():
         datetimeTypes.append(pd.Timestamp)
@@ -267,27 +273,34 @@ def isAllowedSingleElement(x):
     if hasattr(x, '__len__'):#not a single element
         return False
 
-    if x is None or x != x:#None and np.NaN are allowed
+    #None and np.NaN are allowed
+    if x is None or x != x: # pylint: disable=comparison-with-itself
         return True
 
     return False
 
 def validateAllAllowedElements(data):
+    """
+    Validate all values in the data are allowed types.
+    """
     if not all(map(isAllowedSingleElement, data)):
         msg = "Number, string, None, nan, and datetime objects are "
         msg += "the only elements allowed in nimble data objects"
         raise ImproperObjectAction(msg)
 
 def pandasDataFrameToList(pdDataFrame):
+    """
+    Transform a pandas DataFrame into a 2D list.
+    """
     return list(map(list, zip(*(col for _, col in pdDataFrame.iteritems()))))
 
-def removeDuplicatesNative(coo_obj):
+def removeDuplicatesNative(cooObj):
     """
     Creates a new coo_matrix, using summation for numeric data to remove
     duplicates. If there are duplicate entires involving non-numeric
     data, an exception is raised.
 
-    coo_obj : the coo_matrix from which the data of the return object
+    cooObj : the coo_matrix from which the data of the return object
     originates from. It will not be modified by the function.
 
     Returns : a new coo_matrix with the same data as in the input
@@ -297,25 +310,25 @@ def removeDuplicatesNative(coo_obj):
     object. This operation is guaranteed to not introduce any 0 values
     to the data attribute.
     """
-    if coo_obj.data is None:
-        #When coo_obj data is not iterable: Empty
+    if cooObj.data is None:
+        #When cooObj data is not iterable: Empty
         #It will throw TypeError: zip argument #3 must support iteration.
         #Decided just to do this quick check instead of duck typing.
-        return coo_obj
+        return cooObj
 
     seen = {}
-    for i, j, v in zip(coo_obj.row, coo_obj.col, coo_obj.data):
+    for i, j, v in zip(cooObj.row, cooObj.col, cooObj.data):
         if (i, j) not in seen:
             # all types are allows to be present once
             seen[(i, j)] = v
         else:
             try:
                 seen[(i, j)] += float(v)
-            except ValueError:
+            except ValueError as e:
                 msg = 'Unable to represent this configuration of data in '
                 msg += 'Sparse object. At least one removeDuplicatesNativeof '
                 msg += 'the duplicate entries is a non-numerical type'
-                raise ValueError(msg)
+                raise ValueError(msg) from e
 
     rows = []
     cols = []
@@ -334,7 +347,7 @@ def removeDuplicatesNative(coo_obj):
     # happened and use the object dtype instead.
     if len(dataNP) > 0 and isinstance(dataNP[0], numpy.flexible):
         dataNP = numpy.array(data, dtype='O')
-    new_coo = scipy.sparse.coo_matrix((dataNP, (rows, cols)),
-                                      shape=coo_obj.shape)
+    cooNew = scipy.sparse.coo_matrix((dataNP, (rows, cols)),
+                                      shape=cooObj.shape)
 
-    return new_coo
+    return cooNew

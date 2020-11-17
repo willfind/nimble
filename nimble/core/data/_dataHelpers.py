@@ -15,7 +15,7 @@ import nimble
 from nimble import match
 from nimble._utility import pd, plt, scipy
 from nimble._utility import inspectArguments
-from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
+from nimble._utility import isAllowedSingleElement
 from nimble._utility import is2DArray, numpy2DArray
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
@@ -134,9 +134,13 @@ def mergeNonDefaultNames(baseSource, otherSource):
 
 
 def looksNumeric(val):
-    # div is a good check of your standard numeric objects, and excludes things
-    # list python lists. We must still explicitly exclude strings because of
-    # the numpy string implementation.
+    """
+    Check if a value looks numeric.
+
+    div is a good check of your standard numeric objects, and excludes
+    things like python lists. Must still explicitly exclude strings
+    because of the numpy string implementation.
+    """
     if not hasattr(val, '__truediv__') or isinstance(val, str):
         return False
     return True
@@ -681,7 +685,7 @@ def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
                 if func(0) == 0:
                     preserveZeros = True
             # since it is a user function we cannot predict the exception type
-            except Exception:
+            except Exception: # pylint: disable=broad-except
                 pass
 
         @wraps(func)
@@ -864,10 +868,10 @@ def elementQueryFunction(value):
     if not isinstance(value, str):
         return None
 
-    match = re.match(r'(==|!=|>=|>|<=|<)(.+)', value.strip())
-    if match:
-        func = operatorDict[match.group(1)]
-        matchVal = match.group(2).strip()
+    reMatch = re.match(r'(==|!=|>=|>|<=|<)(.+)', value.strip())
+    if reMatch:
+        func = operatorDict[reMatch.group(1)]
+        matchVal = reMatch.group(2).strip()
         try:
             matchVal = float(matchVal)
         except ValueError:
@@ -1270,6 +1274,11 @@ def numpyArrayFromList(data):
 
 
 def modifyNumpyArrayValue(arr, index, newVal):
+    """
+    Change a single value in a numpy array.
+
+    Will cast to a new dtype if necessary.
+    """
     nonNumericNewVal = match.nonNumeric(newVal) and newVal is not None
     floatNewVal = isinstance(newVal, (float, numpy.floating)) or newVal is None
     if nonNumericNewVal and arr.dtype != numpy.object_:

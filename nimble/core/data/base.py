@@ -13,7 +13,6 @@ import itertools
 import os.path
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
-import datetime
 
 import numpy
 
@@ -3195,11 +3194,11 @@ class Base(ABC):
             if self._pointCount == 0 or self._featureCount == 0:
                 return numpy.array([])
             return self._copy_implementation('numpyarray').flatten()
-        else:
-            if self._pointCount == 0 or self._featureCount == 0:
-                return []
-            list2d = self._copy_implementation('pythonlist')
-            return list(itertools.chain.from_iterable(list2d))
+
+        if self._pointCount == 0 or self._featureCount == 0:
+            return []
+        list2d = self._copy_implementation('pythonlist')
+        return list(itertools.chain.from_iterable(list2d))
 
     def _copy_pythonList(self, rowsArePoints):
         ret = self._copy_implementation('pythonlist')

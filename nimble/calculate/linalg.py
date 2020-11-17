@@ -56,7 +56,7 @@ def inverse(aObj):
     if not isinstance(aObj, nimble.core.data.Base):
         raise InvalidArgumentType(
             "Object must be derived class of nimble.core.data.Base")
-    if not len(aObj.points) and not len(aObj.features): # pylint: disable=len-as-condition
+    if not aObj.points and not aObj.features:
         return aObj.copy()
     if len(aObj.points) != len(aObj.features):
         msg = 'Object has to be square \
@@ -153,7 +153,7 @@ def pseudoInverse(aObj, method='svd'):
     if not isinstance(aObj, nimble.core.data.Base):
         raise InvalidArgumentType(
             "Object must be derived class of nimble.core.data.Base.")
-    if not len(aObj.points) and not len(aObj.features): # pylint: disable=len-as-condition
+    if not aObj.points and not aObj.features:
         return aObj
     if method not in ['least-squares', 'svd']:
         raise InvalidArgumentValue(
