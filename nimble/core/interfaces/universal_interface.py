@@ -26,13 +26,15 @@ from nimble.exceptions import _prettyListString
 from nimble.exceptions import _prettyDictString
 from nimble.core.logger import handleLogging, startTimer, stopTimer
 from nimble.core.configuration import configErrors
+from nimble.core._learnHelpers import computeMetrics
+from nimble.core._learnHelpers import validateLearningArguments, trackEntry
 from ._interface_helpers import (
     generateBinaryScoresFromHigherSortedLabelScores,
     calculateSingleLabelScoresFromOneVsOneScores,
     ovaNotOvOFormatted, checkClassificationStrategy, cacheWrapper,
     generateAllPairs, countWins, extractWinningPredictionIndex,
     extractWinningPredictionLabel, extractWinningPredictionIndexAndScore,
-    extractConfidenceScores, getValidSeed)
+    extractConfidenceScores, validateTestingArguments, getValidSeed)
 
 
 def captureOutput(toWrap):
@@ -930,6 +932,7 @@ class TrainedLearner(object):
         self._trainYNames = trainYNames
 
     @captureOutput
+    @trackEntry
     def test(self, testX, testY, performanceFunction, arguments=None,
              output='match', scoreMode='label', useLog=None, **kwarguments):
         """
@@ -1010,8 +1013,9 @@ class TrainedLearner(object):
         TODO
         """
         timer = startTimer(useLog)
-        nimble.core._learnHelpers._2dOutputFlagCheck(
-            self._has2dOutput, None, scoreMode, None)
+        if trackEntry.isEntryPoint:
+            validateTestingArguments(testX, testY, True, arguments, scoreMode,
+                                     self._has2dOutput)
 
         if not isinstance(testY, nimble.core.data.Base):
             testX = testX.copy()
@@ -1020,8 +1024,7 @@ class TrainedLearner(object):
         mergedArguments = mergeArguments(arguments, kwarguments)
         pred = self.apply(testX, mergedArguments, output, scoreMode,
                           useLog=False)
-        performance = nimble.core._learnHelpers.computeMetrics(
-            testY, None, pred, performanceFunction)
+        performance = computeMetrics(testY, None, pred, performanceFunction)
         time = stopTimer(timer)
 
         metrics = {}
@@ -1035,11 +1038,12 @@ class TrainedLearner(object):
         handleLogging(useLog, 'run', "TrainedLearner.test", trainData=None,
                       trainLabels=None, testData=testX, testLabels=testY,
                       learnerFunction=fullName, arguments=mergedArguments,
-                      metrics=metrics, extraInfo=None, time=time)
+                      metrics=metrics, time=time)
 
         return performance
 
     @captureOutput
+    @trackEntry
     def apply(self, testX, arguments=None, output='match', scoreMode='label',
               useLog=None, **kwarguments):
         """
@@ -1127,9 +1131,11 @@ class TrainedLearner(object):
             )
         """
         timer = startTimer(useLog)
+        if trackEntry.isEntryPoint:
+            validateTestingArguments(testX, arguments=arguments,
+                                     scoreMode=scoreMode,
+                                     has2dOutput=self._has2dOutput)
         self._validTestData(testX)
-        nimble.core._learnHelpers._2dOutputFlagCheck(
-            self._has2dOutput, None, scoreMode, None)
 
         mergedArguments = mergeArguments(arguments, kwarguments)
 
@@ -1193,13 +1199,10 @@ class TrainedLearner(object):
         time = stopTimer(timer)
 
         fullName = self._interface.getCanonicalName() + self.learnerName
-        # Signature:
-        # (self, nimbleFunction, trainData, trainLabels, testData, testLabels,
-        # learnerFunction, arguments, metrics, extraInfo=None, folds=None
         handleLogging(useLog, 'run', "TrainedLearner.apply", trainData=None,
                       trainLabels=None, testData=testX, testLabels=None,
                       learnerFunction=fullName, arguments=mergedArguments,
-                      metrics=None, extraInfo=None, time=time)
+                      time=time)
 
         return ret
 
@@ -1324,6 +1327,7 @@ class TrainedLearner(object):
              [3]]
             )
         """
+        validateLearningArguments(trainX, trainY, arguments=arguments)
         has2dOutput = False
         outputData = trainX if trainY is None else trainY
         if isinstance(outputData, nimble.core.data.Base):
@@ -1393,6 +1397,7 @@ class TrainedLearner(object):
             False, do **NOT** send to the logger, regardless of the
             global option.
         """
+        validateLearningArguments(trainX, trainY)
         transformed = self._interface._inputTransformation(
             self.learnerName, trainX, trainY, None, self.arguments,
             self._customDict)
@@ -1490,6 +1495,7 @@ class TrainedLearner(object):
         nimble.core.data.Matrix
             The label scores.
         """
+        validateTestingArguments(testX, arguments=arguments)
         self._validTestData(testX)
         usedArguments = mergeArguments(arguments, kwarguments)
         (_, _, testX, usedArguments) = self._interface._inputTransformation(

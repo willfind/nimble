@@ -17,12 +17,9 @@ from nimble.core.logger import deepLoggingEnabled
 from nimble.core.logger import startTimer, stopTimer
 from nimble.core._learnHelpers import findBestInterface
 from nimble.core._learnHelpers import _learnerQuery
-from nimble.core._learnHelpers import _validScoreMode
-from nimble.core._learnHelpers import _validMultiClassStrategy
 from nimble.core._learnHelpers import _unpackLearnerName
-from nimble.core._learnHelpers import _validArguments
-from nimble.core._learnHelpers import _validData
-from nimble.core._learnHelpers import _2dOutputFlagCheck
+from nimble.core._learnHelpers import validateLearningArguments
+from nimble.core._learnHelpers import trackEntry
 from nimble.core._learnHelpers import LearnerInspector
 from nimble.core._learnHelpers import ArgumentIterator
 from nimble.core._learnHelpers import FoldIterator
@@ -173,7 +170,7 @@ def learnerDefaultValues(name):
     """
     return _learnerQuery(name, 'defaults')
 
-
+@trackEntry
 def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
                   randomSeed=None, useLog=None, **kwarguments):
     """
@@ -266,10 +263,11 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     """
     timer = startTimer(useLog)
     interface, trueLearnerName = _unpackLearnerName(learnerName)
-
+    if trackEntry.isEntryPoint:
+        validateLearningArguments(trainX, trainY, testX, False)
     merged = mergeArguments(arguments, kwarguments)
 
-    tl = nimble.train(learnerName, trainX, trainY, arguments=merged,
+    tl = train(learnerName, trainX, trainY, arguments=merged,
                       randomSeed=randomSeed, useLog=False)
     normalizedTrain = tl.apply(trainX, useLog=False)
 
@@ -304,6 +302,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     return ret
 
+@trackEntry
 def fillMatching(learnerName, matchingElements, trainX, arguments=None,
                  points=None, features=None, useLog=None, **kwarguments):
     """
@@ -392,6 +391,8 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
          [  0   3.000 6.333]]
         )
     """
+    if trackEntry.isEntryPoint:
+        validateLearningArguments(trainX, arguments=arguments)
     timer = startTimer(useLog)
     interface, objectName = _unpackLearnerName(learnerName)
     merged = mergeArguments(arguments, kwarguments)
@@ -535,17 +536,22 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     >>> crossValidator.allResults
     [{'k': 3, 'fractionIncorrect': 0.3333333333333333}]
     """
-    return KFoldCrossValidator(learnerName, X, Y, performanceFunction,
-                               arguments, folds, scoreMode, randomSeed,
+    if trackEntry.isEntryPoint:
+        validateLearningArguments(X, Y, arguments=arguments,
+                                  scoreMode=scoreMode)
+    kfcv = KFoldCrossValidator(learnerName, X, Y, performanceFunction,
+                               arguments, folds, scoreMode,randomSeed,
                                useLog, **kwarguments)
+    handleLogging(useLog, 'crossVal', X, Y, kfcv.learnerName, kfcv.arguments,
+                  kfcv.performanceFunction, kfcv._allResults, kfcv.folds,
+                  kfcv.randomSeed)
 
+    return kfcv
 
+@trackEntry
 def train(learnerName, trainX, trainY=None, performanceFunction=None,
           arguments=None, scoreMode='label', multiClassStrategy='default',
-          folds=10, doneValidData=False, doneValidArguments1=False,
-          doneValidArguments2=False, doneValidMultiClassStrategy=False,
-          done2dOutputFlagCheck=False, randomSeed=None, useLog=None,
-          storeLog='unset', **kwarguments):
+          folds=10, randomSeed=None, useLog=None, **kwarguments):
     """
     Train a specified learner using the provided data.
 
@@ -657,16 +663,13 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     0.1 linear
     """
     timer = startTimer(useLog)
-    if not doneValidData:
-        _validData(trainX, trainY, None, None, [False, False])
-    if not doneValidArguments1:
-        _validArguments(arguments)
-    if not doneValidArguments2:
-        _validArguments(kwarguments)
-    if not doneValidMultiClassStrategy:
-        _validMultiClassStrategy(multiClassStrategy)
-    if not done2dOutputFlagCheck:
-        _2dOutputFlagCheck(trainX, trainY, None, multiClassStrategy)
+    crossValLog = useLog
+    if trackEntry.isEntryPoint:
+        validateLearningArguments(trainX, trainY, arguments=arguments,
+                                  scoreMode=scoreMode,
+                                  multiClassStrategy=multiClassStrategy)
+    else:
+        useLog = False
 
     merged = mergeArguments(arguments, kwarguments)
     interface, trueLearnerName = _unpackLearnerName(learnerName)
@@ -688,16 +691,10 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
             msg += str(folds) + " and trainX only contains "
             msg += str(len(trainX.points)) + " points."
             raise InvalidArgumentValueCombination(msg)
-        # useLog value stored if call to train is from another function
-        if storeLog == 'unset':
-            storeLog = useLog
-        # sig (learnerName, X, Y, performanceFunction, arguments=None,
-        #      folds=10, scoreMode='label', useLog=None, maximize=False,
-        #      **kwarguments):
         crossValidationResults = crossValidate(
             learnerName, trainX, trainY, performanceFunction, merged,
             folds=folds, scoreMode=scoreMode, randomSeed=randomSeed,
-            useLog=storeLog)
+            useLog=crossValLog)
         bestArguments = crossValidationResults.bestArguments
     else:
         crossValidationResults = None
@@ -715,7 +712,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 
     return trainedLearner
 
-
+@trackEntry
 def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                   performanceFunction=None, arguments=None, output=None,
                   scoreMode='label', multiClassStrategy='default',
@@ -856,19 +853,16 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         )
     """
     timer = startTimer(useLog)
-    _validData(trainX, trainY, testX, None, [False, False])
-    _validScoreMode(scoreMode)
-    _2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
+    if trackEntry.isEntryPoint:
+        validateLearningArguments(trainX, trainY, testX, arguments=arguments,
+                                  scoreMode=scoreMode,
+                                  multiClassStrategy=multiClassStrategy)
     merged = mergeArguments(arguments, kwarguments)
 
-    trainedLearner = nimble.train(learnerName, trainX, trainY,
-                                  performanceFunction, merged,
-                                  scoreMode='label',
-                                  multiClassStrategy=multiClassStrategy,
-                                  folds=folds, randomSeed=randomSeed,
-                                  useLog=False, storeLog=useLog,
-                                  doneValidData=True,
-                                  done2dOutputFlagCheck=True, **kwarguments)
+    trainedLearner = train(learnerName, trainX, trainY, performanceFunction,
+                           merged, scoreMode='label',
+                           multiClassStrategy=multiClassStrategy, folds=folds,
+                           randomSeed=randomSeed, useLog=useLog, **kwarguments)
 
     if testX is None:
         if isinstance(trainY, (str, int, numpy.integer)):
@@ -889,7 +883,26 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
     return results
 
+def _trainAndTestBackend(learnerName, trainX, trainY, testX, testY,
+                         performanceFunction, arguments, output, scoreMode,
+                         multiClassStrategy, folds, randomSeed, useLog,
+                         **kwarguments):
+    merged = mergeArguments(arguments, kwarguments)
 
+    trainedLearner = train(learnerName, trainX, trainY, performanceFunction,
+                           merged, scoreMode='label',
+                           multiClassStrategy=multiClassStrategy, folds=folds,
+                           randomSeed=randomSeed, useLog=useLog)
+
+    if isinstance(testY, (str, int, numpy.integer)):
+        testX = testX.copy()
+        testY = testX.features.extract(testY, useLog=False)
+    performance = trainedLearner.test(testX, testY, performanceFunction, {},
+                                      output, scoreMode, useLog=False)
+
+    return performance, trainedLearner, merged
+
+@trackEntry
 def trainAndTest(learnerName, trainX, trainY, testX, testY,
                  performanceFunction, arguments=None, output=None,
                  scoreMode='label', multiClassStrategy='default',
@@ -1042,26 +1055,15 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     0.0
     """
     timer = startTimer(useLog)
-    _validData(trainX, trainY, testX, testY, [True, True])
-    _2dOutputFlagCheck(trainX, trainY, scoreMode, multiClassStrategy)
+    if trackEntry.isEntryPoint:
+        validateLearningArguments(trainX, trainY, testX, True, testY, True,
+                                  arguments, scoreMode, multiClassStrategy)
 
-    merged = mergeArguments(arguments, kwarguments)
+    performance, trainedLearner, merged = _trainAndTestBackend(
+        learnerName, trainX, trainY, testX, testY, performanceFunction,
+        arguments, output, scoreMode, multiClassStrategy, folds,
+        randomSeed, useLog, **kwarguments)
 
-    trainedLearner = nimble.train(learnerName, trainX, trainY,
-                                  performanceFunction, merged,
-                                  scoreMode='label',
-                                  multiClassStrategy=multiClassStrategy,
-                                  folds=folds, randomSeed=randomSeed,
-                                  useLog=False, storeLog=useLog,
-                                  doneValidData=True,
-                                  done2dOutputFlagCheck=True)
-
-    if isinstance(testY, (str, int, numpy.integer)):
-        testX = testX.copy()
-        testY = testX.features.extract(testY, useLog=False)
-    predictions = trainedLearner.apply(testX, {}, output, scoreMode,
-                                       useLog=False)
-    performance = computeMetrics(testY, None, predictions, performanceFunction)
     time = stopTimer(timer)
 
     metrics = {}
@@ -1070,19 +1072,14 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     extraInfo = None
     if merged != trainedLearner.arguments:
         extraInfo = {"bestParams": trainedLearner.arguments}
-    if trainX == testX:
-        name = "trainAndTestOnTrainingData"
-        testX = None
-        testY = None
-    else:
-        name = "trainAndTest"
-    handleLogging(useLog, "run", name, trainX, trainY, testX, testY,
+    handleLogging(useLog, "run", 'trainAndTest', trainX, trainY, testX, testY,
                   learnerName, merged, trainedLearner.randomSeed, metrics,
                   extraInfo, time)
 
     return performance
 
 
+@trackEntry
 def trainAndTestOnTrainingData(learnerName, trainX, trainY,
                                performanceFunction, crossValidationError=False,
                                folds=10, arguments=None, output=None,
@@ -1225,25 +1222,40 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     >>> perform
     0.0
     """
+    if trackEntry.isEntryPoint:
+        validateLearningArguments(trainX, trainY, arguments=arguments,
+                                  scoreMode=scoreMode,
+                                  multiClassStrategy=multiClassStrategy)
+
+    timer = startTimer(useLog)
     if crossValidationError:
         merged = mergeArguments(arguments, kwarguments)
         results = crossValidate(learnerName, trainX, trainY,
                                 performanceFunction, merged, folds,
                                 scoreMode, randomSeed, useLog)
         performance = results.bestResult
-        metrics = {}
-        for key, value in zip([performanceFunction], [performance]):
-            metrics[key.__name__] = value
-        handleLogging(useLog, "run", 'trainAndTestOnTrainingData', trainX,
-                      trainY, None, None, learnerName, merged,
-                      results.randomSeed, metrics,
-                      extraInfo={'crossValidationError': True})
-
+        logSeed = results.randomSeed
+        extraInfo = {'crossValidationError': True}
     else:
-        performance = trainAndTest(learnerName, trainX, trainY, trainX, trainY,
-                                   performanceFunction, arguments, output,
-                                   scoreMode, multiClassStrategy, folds,
-                                   randomSeed, useLog, **kwarguments)
+        performance, trainedLearner, merged = _trainAndTestBackend(
+            learnerName, trainX, trainY, trainX, trainY, performanceFunction,
+            arguments, output, scoreMode, multiClassStrategy, folds,
+            randomSeed, useLog, **kwarguments)
+
+        logSeed = trainedLearner.randomSeed
+        extraInfo = None
+        if merged != trainedLearner.arguments:
+            extraInfo = {"bestParams": trainedLearner.arguments}
+
+    time = stopTimer(timer)
+
+    metrics = {}
+    for key, value in zip([performanceFunction], [performance]):
+        metrics[key.__name__] = value
+    handleLogging(useLog, "run", 'trainAndTestOnTrainingData', trainX,
+                  trainY, None, None, learnerName, merged,
+                  logSeed, metrics, extraInfo, time)
+
     return performance
 
 
@@ -1474,7 +1486,7 @@ class KFoldCrossValidator(object):
             for curArgumentCombination in argumentCombinationIterator:
                 #run algorithm on the folds' training and testing sets
                 timer = startTimer(useLog)
-                curTL = nimble.train(
+                curTL = train(
                     self.learnerName, curTrainX, curTrainY,
                     arguments=curArgumentCombination, scoreMode=self.scoreMode,
                     randomSeed=self.randomSeed, useLog=False)
@@ -1538,11 +1550,6 @@ class KFoldCrossValidator(object):
 
         # store results
         self._allResults = performanceOfEachCombination
-
-        handleLogging(useLog, 'crossVal', X, Y, self.learnerName,
-                      self.arguments, self.performanceFunction,
-                      performanceOfEachCombination, self.folds,
-                      self.randomSeed)
 
     @property
     def allResults(self):
