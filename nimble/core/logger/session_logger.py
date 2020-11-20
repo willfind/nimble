@@ -32,7 +32,6 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.configuration import configErrors
-from .stopwatch import Stopwatch
 
 def log(heading, logInfo):
     """
@@ -1173,25 +1172,6 @@ def _lambdaFunctionString(function):
     except OSError:
         lambdaString = "<lambda>"
     return lambdaString
-
-def startTimer(useLog):
-    """
-    Start and return a timer object if this will be logged.
-    """
-    if loggingEnabled(useLog):
-        timer = Stopwatch()
-        timer.start("timer")
-        return timer
-    return None
-
-def stopTimer(timer):
-    """
-    Stop the timer and return the run time.
-    """
-    if timer is not None:
-        timer.stop("timer")
-        return timer.calcRunTime("timer")
-    return None
 
 #######################
 ### Initialization  ###
