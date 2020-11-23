@@ -220,7 +220,6 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     See Also
     --------
-    nimble.core.data.Points.normalize,
     nimble.core.data.Features.normalize
 
     Examples

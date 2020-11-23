@@ -63,11 +63,13 @@ calculate_funcs = [
     'elementwisePower', 'f1Score', 'falseNegative', 'falsePositive',
     'fractionCorrect', 'fractionIncorrect', 'inverse', 'leastSquaresSolution',
     'maximum', 'mean', 'meanAbsoluteError',
-    'meanFeaturewiseRootMeanSquareError', 'median', 'medianAbsoluteDeviation',
-    'minimum', 'mode', 'precision', 'proportionMissing', 'proportionZero',
-    'pseudoInverse', 'quartiles', 'recall', 'residuals', 'rootMeanSquareError',
-    'rSquared', 'solve', 'specificity', 'standardDeviation', 'sum',
-    'trueNegative', 'truePositive', 'uniqueCount', 'varianceFractionRemaining',
+    'meanFeaturewiseRootMeanSquareError', 'meanNormalize',
+    'meanStandardDeviationNormalize', 'median', 'medianAbsoluteDeviation',
+    'minimum', 'mode', 'percentileNormalize', 'precision', 'proportionMissing',
+    'proportionZero', 'pseudoInverse', 'quartiles', 'range0to1Normalize',
+    'recall', 'residuals', 'rootMeanSquareError', 'rSquared', 'solve',
+    'specificity', 'standardDeviation', 'sum', 'trueNegative', 'truePositive',
+    'uniqueCount', 'varianceFractionRemaining',
     ]
 calculate_tested = list(map(prefixAdder('nimble.calculate'), calculate_funcs))
 
@@ -145,8 +147,8 @@ features_tested = list(map(prefixAdder('Features'), features_funcs))
 
 points_logged = [
     'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
-    'insert', 'mapReduce', 'matching', 'normalize', 'permute', 'retain',
-    'setName', 'setNames', 'sort', 'transform', 'combineByExpandingFeatures',
+    'insert', 'mapReduce', 'matching', 'permute', 'retain', 'setName',
+    'setNames', 'sort', 'transform', 'combineByExpandingFeatures',
     'splitByCollapsingFeatures',
     ]
 points_notLogged = [

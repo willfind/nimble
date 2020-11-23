@@ -520,16 +520,9 @@ def test_features_permute():
     for rType in nimble.core.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
 
-def test_points_normalize():
-    def wrapped(obj, useLog):
-        return obj.points.normalize(subtract=0, divide=1, useLog=useLog)
-
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
-
 def test_features_normalize():
     def wrapped(obj, useLog):
-        return obj.features.normalize(subtract=0, divide=1, useLog=useLog)
+        return obj.features.normalize(lambda x: x, useLog=useLog)
 
     for rType in nimble.core.data.available:
         backend(wrapped, prepAndCheck, rType=rType)
