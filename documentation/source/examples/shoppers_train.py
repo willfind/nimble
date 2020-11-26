@@ -19,6 +19,7 @@ website.
 
 
 import nimble
+from nimble.calculate import meanStandardDeviationNormalize
 
 visits = nimble.data('Matrix', 'online_shoppers_intention_clean.csv',
                      featureNames=True)
@@ -36,8 +37,7 @@ revenueOnlyFtNames = revenueOnly.features.getNames()
 ## normalize our data. We will standardize each feature to have 0 mean and
 ## unit-variance.
 revenueNormalized = revenueOnly.copy()
-revenueNormalized.features.normalize(subtract='mean',
-                                     divide='standard deviation')
+revenueNormalized.features.normalize(meanStandardDeviationNormalize)
 
 ## Train a learner ##
 

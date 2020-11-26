@@ -385,11 +385,6 @@ class PointsView(Points, metaclass=ABCMeta):
         readOnlyException('fill')
 
     @pointsExceptionDoc
-    def normalize(self, subtract=None, divide=None, applyResultTo=None,
-                  useLog=None):
-        readOnlyException('normalize')
-
-    @pointsExceptionDoc
     def splitByCollapsingFeatures(self, featuresToCollapse, featureForNames,
                                   featureForValues, useLog=None):
         readOnlyException('splitByCollapsingFeatures')

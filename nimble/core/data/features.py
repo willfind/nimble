@@ -16,7 +16,7 @@ import numpy
 
 import nimble
 from nimble.core.logger import handleLogging
-from nimble.exceptions import InvalidArgumentType
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from ._dataHelpers import limitedTo2D
 
@@ -1602,41 +1602,32 @@ class Features(ABC):
                                   useLog, **kwarguments)
 
     @limitedTo2D
-    def normalize(self, subtract=None, divide=None, applyResultTo=None,
+    def normalize(self, function, applyResultTo=None, features=None,
                   useLog=None):
         """
-        Modify all features in this object using the given operations.
+        Modify all features in this object using the given function.
 
-        Normalize the data by applying subtraction and division
-        operations. A value of None for subtract or divide implies that
-        no change will be made to the data in regards to that operation.
+        Normalize the data by a function that adjusts each feature
+        based on the provided function. If the function allows, the
+        normalization can also be applied to a second object.
 
         Parameters
         ----------
-        subtract : number, str, nimble Base object
-            * number - a numerical denominator for dividing the data
-            * str -  a statistical function (all of the same ones
-              callable though featureStatistics)
-            * nimble Base object - If a vector shaped object is given,
-              then the value associated with each feature will be
-              subtracted from all values of that feature. Otherwise, the
-              values in the object are used for elementwise subtraction
-        divide : number, str, nimble Base object
-            * number - a numerical denominator for dividing the data
-            * str -  a statistical function (all of the same ones
-              callable though featureStatistics)
-            * nimble Base object - If a vector shaped object is given,
-              then the value associated with each feature will be used
-              in division of all values for that feature. Otherwise, the
-              values in the object are used for elementwise division.
-        applyResultTo : nimble Base object, statistical method
-            If a nimble Base object is given, then perform the same
-            operations to it as are applied to the calling object.
-            However, if a statistical method is specified as subtract or
-            divide, then concrete values are first calculated only from
-            querying the calling object, and the operation is performed
-            on applyResultTo using the results; as if a nimble Base
-            object was given for the subtract or divide arguments.
+        function
+            The function applying the normalization. Functions must
+            accept a feature view and output the normalized feature
+            data. When ``applyResultTo`` is not None, the function must
+            accept a second feature view and return a two-tuple
+            (normalized feature from the calling object,
+             normalized feature from applyResultTo).
+            Common normalizations can be found in nimble.calculate.
+        applyResultTo : nimble Base object, None
+            The secondary object to apply the the normalization to.
+            Must have the same number of features as the calling object.
+        features : identifier, list of identifiers, None
+            Select specific features to apply the normalization to. If
+            features is None, the normalization will be applied to all
+            features.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1647,17 +1638,17 @@ class Features(ABC):
 
         Examples
         --------
-        Using statistics functions.
+        Calling object only.
 
-        >>> raw = [[5, 9.8, 92],
-        ...        [3, 6.2, 58],
-        ...        [2, 3.0, 29]]
+        >>> from nimble.calculate import range0to1Normalize
+        >>> rawTrain = [[5, 9.8, 92],
+        ...             [3, 6.2, 58],
+        ...             [2, 3.0, 29]]
         >>> pts = ['movie1', 'movie2', 'movie3']
         >>> fts = ['review1', 'review2', 'review3']
-        >>> reviews = nimble.data('Matrix', raw, pts, fts)
-        >>> reviews.features.normalize(subtract='min')
-        >>> reviews.features.normalize(divide='max')
-        >>> reviews
+        >>> train = nimble.data('Matrix', rawTrain, pts, fts)
+        >>> train.features.normalize(range0to1Normalize)
+        >>> train
         Matrix(
             [[1.000 1.000 1.000]
              [0.333 0.471 0.460]
@@ -1666,27 +1657,70 @@ class Features(ABC):
             featureNames={'review1':0, 'review2':1, 'review3':2}
             )
 
-        Using nimble objects.
+        With applyResultTo.
 
-        >>> raw = [[5, 9.8, 92],
-        ...        [3, 6.2, 58],
-        ...        [2, 3.0, 29]]
-        >>> pts = ['movie1', 'movie2', 'movie3']
+        >>> from nimble.calculate import meanStandardDeviationNormalize
+        >>> rawTrain = [[5, 9.8, 92],
+        ...             [3, 6.2, 58],
+        ...             [2, 3.0, 10]]
+        >>> rawTest = [[4, 9.1, 43],
+        ...            [3, 5.1, 88]]
         >>> fts = ['review1', 'review2', 'review3']
-        >>> reviews = nimble.data('Matrix', raw, pts, fts)
-        >>> means = reviews.features.statistics('mean')
-        >>> stdDevs = reviews.features.statistics('standard deviation')
-        >>> reviews.features.normalize(subtract=means, divide=stdDevs)
-        >>> reviews
+        >>> trainPts = ['movie1', 'movie2', 'movie3']
+        >>> train = nimble.data('Matrix', rawTrain, trainPts, fts)
+        >>> testPts = ['movie4', 'movie5']
+        >>> test = nimble.data('Matrix', rawTest, testPts, fts)
+        >>> train.features.normalize(meanStandardDeviationNormalize,
+        ...                          applyResultTo=test)
+        >>> train
         Matrix(
-            [[1.091  1.019  1.025 ]
-             [-0.218 -0.039 -0.053]
-             [-0.873 -0.980 -0.973]]
+            [[1.336  1.248  1.149 ]
+             [-0.267 -0.048 0.139 ]
+             [-1.069 -1.200 -1.288]]
             pointNames={'movie1':0, 'movie2':1, 'movie3':2}
             featureNames={'review1':0, 'review2':1, 'review3':2}
             )
+        >>> test
+        Matrix(
+            [[0.535  0.996  -0.307]
+             [-0.267 -0.444 1.031 ]]
+            pointNames={'movie4':0, 'movie5':1}
+            featureNames={'review1':0, 'review2':1, 'review3':2}
+            )
         """
-        self._normalize(subtract, divide, applyResultTo, useLog)
+        if not callable(function):
+            raise InvalidArgumentType('function must be callable')
+        if applyResultTo is None:
+            self.transform(function, features=features, useLog=False)
+        elif isinstance(applyResultTo, nimble.core.data.Base):
+            if len(self) != len(applyResultTo.features):
+                msg = 'applyResultTo must have the same number of features as '
+                msg += 'the calling object'
+                raise InvalidArgumentValue(msg)
+            selfNames = self._getNamesNoGeneration()
+            applyToNames = applyResultTo.features._getNamesNoGeneration()
+            if ((selfNames is not None and applyToNames is not None)
+                    and selfNames != applyToNames):
+                msg = 'applyResultTo featureNames do not match the '
+                msg += 'featureNames of the calling object'
+                raise InvalidArgumentValue(msg)
+            if features is not None:
+                features = list(map(self._getIndex, features))
+            zipFeatures = zip(self, applyResultTo.features)
+            for i, (ft1, ft2) in enumerate(zipFeatures):
+                if features is None or i in features:
+                    norm1, norm2 = function(ft1, ft2)
+                    self.transform(lambda _: norm1, features=i, useLog=False)
+                    applyResultTo.features.transform(lambda _: norm2,
+                                                     features=i,
+                                                     useLog=False)
+        else:
+            msg = 'applyResultTo must be None or an instance of Base'
+            raise InvalidArgumentType(msg)
+
+        handleLogging(useLog, 'prep', 'features.normalize',
+                      self._base.getTypeString(), Features.normalize,
+                      function, applyResultTo, features)
 
     @limitedTo2D
     def splitByParsing(self, feature, rule, resultingNames, useLog=None):
@@ -2271,10 +2305,6 @@ class Features(ABC):
 
     @abstractmethod
     def _fillMatching(self, match, fill, limitTo, useLog=None, **kwarguments):
-        pass
-
-    @abstractmethod
-    def _normalize(self, subtract, divide, applyResultTo, useLog=None):
         pass
 
     @abstractmethod

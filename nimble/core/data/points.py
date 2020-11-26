@@ -1554,56 +1554,6 @@ class Points(ABC):
                                   useLog, **kwarguments)
 
     @limitedTo2D
-    def normalize(self, subtract=None, divide=None, applyResultTo=None,
-                  useLog=None):
-        """
-        Modify all points in this object using the given operations.
-
-        Normalize the data by applying subtraction and division
-        operations. A value of None for subtract or divide implies that
-        no change will be made to the data in regards to that operation.
-
-        Parameters
-        ----------
-        subtract : number, str, nimble Base object
-            * number - a numerical denominator for dividing the data
-            * str -  a statistical function (all of the same ones
-              callable though points.statistics)
-            * nimble Base object - If a vector shaped object is given,
-              then the value associated with each point will be
-              subtracted from all values of that point. Otherwise, the
-              values in the object are used for elementwise subtraction
-        divide : number, str, nimble Base object
-            * number - a numerical denominator for dividing the data
-            * str -  a statistical function (all of the same ones
-              callable though pointStatistics)
-            * nimble Base object - If a vector shaped object is given,
-              then the value associated with each point will be used in
-              division of all values for that point. Otherwise, the
-              values in the object are used for elementwise division.
-        applyResultTo : nimble Base object, statistical method
-            If a nimble Base object is given, then perform the same
-            operations to it as are applied to the calling object.
-            However, if a statistical method is specified as subtract or
-            divide, then concrete values are first calculated only from
-            querying the calling object, and the operation is performed
-            on applyResultTo using the results; as if a nimble Base
-            object was given for the subtract or divide arguments.
-        useLog : bool, None
-            Local control for whether to send object creation to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-
-        Examples
-        --------
-        TODO
-        """
-        self._normalize(subtract, divide, applyResultTo, useLog)
-
-    @limitedTo2D
     def splitByCollapsingFeatures(self, featuresToCollapse, featureForNames,
                                   featureForValues, useLog=None):
         """
@@ -2314,10 +2264,6 @@ class Points(ABC):
 
     @abstractmethod
     def _fillMatching(self, match, fill, limitTo, useLog=None, **kwarguments):
-        pass
-
-    @abstractmethod
-    def _normalize(self, subtract, divide, applyResultTo, useLog=None):
         pass
 
     @abstractmethod

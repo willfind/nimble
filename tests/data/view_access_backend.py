@@ -218,12 +218,6 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject.points.normalize(subtract=0, divide=1)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
-
-        try:
             testObject.points.splitByCollapsingFeatures([1, 2], 'names', 'values')
             assert False # expected TypeError
         except TypeError as e:

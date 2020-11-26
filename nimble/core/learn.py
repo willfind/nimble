@@ -6,6 +6,7 @@ nimble import.
 from types import ModuleType
 
 import numpy
+import time
 
 import nimble
 from nimble import match
@@ -14,7 +15,6 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._utility import mergeArguments
 from nimble.core.logger import handleLogging, loggingEnabled
 from nimble.core.logger import deepLoggingEnabled
-from nimble.core.logger import startTimer, stopTimer
 from nimble.core._learnHelpers import findBestInterface
 from nimble.core._learnHelpers import _learnerQuery
 from nimble.core._learnHelpers import _unpackLearnerName
@@ -220,7 +220,6 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     See Also
     --------
-    nimble.core.data.Points.normalize,
     nimble.core.data.Features.normalize
 
     Examples
@@ -261,7 +260,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         [[-1.739 2.588]]
         )
     """
-    timer = startTimer(useLog)
+    startTime = time.process_time()
     _, trueLearnerName = _unpackLearnerName(learnerName)
     if trackEntry.isEntryPoint:
         validateLearningArguments(trainX, trainY, testX, False)
@@ -296,9 +295,9 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
         ret = (normalizedTrain, normalizedTest)
 
-    time = stopTimer(timer)
+    totalTime = time.process_time() - startTime
     handleLogging(useLog, 'run', "normalizeData", trainX, trainY, testX, None,
-                  learnerName, merged, tl.randomSeed, time=time)
+                  learnerName, merged, tl.randomSeed, time=totalTime)
 
     return ret
 
@@ -393,7 +392,7 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     """
     if trackEntry.isEntryPoint:
         validateLearningArguments(trainX, arguments=arguments)
-    timer = startTimer(useLog)
+    startTime = time.process_time()
     interface, objectName = _unpackLearnerName(learnerName)
     merged = mergeArguments(arguments, kwarguments)
     if interface.isAlias('sklearn') and 'missing_values' in merged:
@@ -430,9 +429,9 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
 
     trainX.transformElements(transformer, points, features, useLog=False)
 
-    time = stopTimer(timer)
+    totalTime = time.process_time() - startTime
     handleLogging(useLog, 'run', "fillMatching", trainX, None, None, None,
-                  learnerName, merged, time=time)
+                  learnerName, merged, time=totalTime)
 
 
 def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
@@ -662,7 +661,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     >>> print(cValue, kernelValue)
     0.1 linear
     """
-    timer = startTimer(useLog)
+    startTime = time.process_time()
     crossValLog = useLog
     if trackEntry.isEntryPoint:
         validateLearningArguments(trainX, trainY, arguments=arguments,
@@ -703,12 +702,12 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     trainedLearner = interface.train(trueLearnerName, trainX, trainY,
                                      bestArguments, multiClassStrategy,
                                      randomSeed, crossValidationResults)
-    time = stopTimer(timer)
+    totalTime = time.process_time() - startTime
 
     funcString = interface.getCanonicalName() + '.' + trueLearnerName
     handleLogging(useLog, "run", "train", trainX, trainY, None, None,
                   funcString, bestArguments, trainedLearner.randomSeed,
-                  time=time)
+                  time=totalTime)
 
     return trainedLearner
 
@@ -852,7 +851,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
          [3]]
         )
     """
-    timer = startTimer(useLog)
+    startTime = time.process_time()
     if trackEntry.isEntryPoint:
         validateLearningArguments(trainX, trainY, testX, arguments=arguments,
                                   scoreMode=scoreMode,
@@ -872,14 +871,14 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
             testX = trainX
 
     results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=False)
-    time = stopTimer(timer)
+    totalTime = time.process_time() - startTime
 
     extraInfo = None
     if merged != trainedLearner.arguments:
         extraInfo = {"bestParams": trainedLearner.arguments}
     handleLogging(useLog, "run", "trainAndApply", trainX, trainY, testX, None,
                   learnerName, merged, trainedLearner.randomSeed,
-                  extraInfo=extraInfo, time=time)
+                  extraInfo=extraInfo, time=totalTime)
 
     return results
 
@@ -1054,7 +1053,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     >>> perform
     0.0
     """
-    timer = startTimer(useLog)
+    startTime = time.process_time()
     if trackEntry.isEntryPoint:
         validateLearningArguments(trainX, trainY, testX, True, testY, True,
                                   arguments, scoreMode, multiClassStrategy)
@@ -1064,7 +1063,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         arguments, output, scoreMode, multiClassStrategy, folds,
         randomSeed, useLog, **kwarguments)
 
-    time = stopTimer(timer)
+    totalTime = time.process_time() - startTime
 
     metrics = {}
     for key, value in zip([performanceFunction], [performance]):
@@ -1074,7 +1073,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         extraInfo = {"bestParams": trainedLearner.arguments}
     handleLogging(useLog, "run", 'trainAndTest', trainX, trainY, testX, testY,
                   learnerName, merged, trainedLearner.randomSeed, metrics,
-                  extraInfo, time)
+                  extraInfo, totalTime)
 
     return performance
 
@@ -1227,7 +1226,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
                                   scoreMode=scoreMode,
                                   multiClassStrategy=multiClassStrategy)
 
-    timer = startTimer(useLog)
+    startTime = time.process_time()
     if crossValidationError:
         merged = mergeArguments(arguments, kwarguments)
         results = crossValidate(learnerName, trainX, trainY,
@@ -1247,14 +1246,14 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         if merged != trainedLearner.arguments:
             extraInfo = {"bestParams": trainedLearner.arguments}
 
-    time = stopTimer(timer)
+    totalTime = time.process_time() - startTime
 
     metrics = {}
     for key, value in zip([performanceFunction], [performance]):
         metrics[key.__name__] = value
     handleLogging(useLog, "run", 'trainAndTestOnTrainingData', trainX,
                   trainY, None, None, learnerName, merged,
-                  logSeed, metrics, extraInfo, time)
+                  logSeed, metrics, extraInfo, totalTime)
 
     return performance
 
@@ -1484,7 +1483,7 @@ class KFoldCrossValidator(object):
             # given this fold, do a run for each argument combination
             for curArgumentCombination in argumentCombinationIterator:
                 #run algorithm on the folds' training and testing sets
-                timer = startTimer(useLog)
+                startTime = time.process_time()
                 curTL = train(
                     self.learnerName, curTrainX, curTrainY,
                     arguments=curArgumentCombination, scoreMode=self.scoreMode,
@@ -1492,11 +1491,11 @@ class KFoldCrossValidator(object):
                 if self.randomSeed is None: # use same random seed each time
                     self.randomSeed = curTL.randomSeed
                 curRunResult = curTL.apply(curTestingX, useLog=False)
-                time = stopTimer(timer)
+                totalTime = time.process_time() - startTime
                 handleLogging(deepLog, "runCV", "trainAndApply", curTrainX,
                               curTrainY, curTestingX, None, self.learnerName,
                               curArgumentCombination, self.randomSeed,
-                              time=time)
+                              time=totalTime)
                 performanceOfEachCombination[argSetIndex][0] = (
                     curArgumentCombination)
 
