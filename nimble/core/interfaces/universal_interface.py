@@ -10,6 +10,7 @@ import abc
 import functools
 import sys
 import numbers
+import time
 import warnings
 
 import numpy
@@ -24,7 +25,7 @@ from nimble._utility import cloudpickle
 from nimble._utility import mergeArguments
 from nimble.exceptions import _prettyListString
 from nimble.exceptions import _prettyDictString
-from nimble.core.logger import handleLogging, startTimer, stopTimer
+from nimble.core.logger import handleLogging
 from nimble.core.configuration import configErrors
 from nimble.core._learnHelpers import computeMetrics
 from nimble.core._learnHelpers import validateLearningArguments, trackEntry
@@ -1012,7 +1013,7 @@ class TrainedLearner(object):
         --------
         TODO
         """
-        timer = startTimer(useLog)
+        startTime = time.process_time()
         if trackEntry.isEntryPoint:
             validateTestingArguments(testX, testY, True, arguments, scoreMode,
                                      self._has2dOutput)
@@ -1025,7 +1026,7 @@ class TrainedLearner(object):
         pred = self.apply(testX, mergedArguments, output, scoreMode,
                           useLog=False)
         performance = computeMetrics(testY, None, pred, performanceFunction)
-        time = stopTimer(timer)
+        totalTime = time.process_time() - startTime
 
         metrics = {}
         for key, value in zip([performanceFunction], [performance]):
@@ -1038,7 +1039,7 @@ class TrainedLearner(object):
         handleLogging(useLog, 'run', "TrainedLearner.test", trainData=None,
                       trainLabels=None, testData=testX, testLabels=testY,
                       learnerFunction=fullName, arguments=mergedArguments,
-                      metrics=metrics, time=time)
+                      metrics=metrics, time=totalTime)
 
         return performance
 
@@ -1130,7 +1131,7 @@ class TrainedLearner(object):
              [3]]
             )
         """
-        timer = startTimer(useLog)
+        startTime = time.process_time()
         if trackEntry.isEntryPoint:
             validateTestingArguments(testX, arguments=arguments,
                                      scoreMode=scoreMode,
@@ -1196,13 +1197,13 @@ class TrainedLearner(object):
             ret.points.setNames(testX.points._getNamesNoGeneration(),
                                 useLog=False)
 
-        time = stopTimer(timer)
+        totalTime = time.process_time() - startTime
 
         fullName = self._interface.getCanonicalName() + self.learnerName
         handleLogging(useLog, 'run', "TrainedLearner.apply", trainData=None,
                       trainLabels=None, testData=testX, testLabels=None,
                       learnerFunction=fullName, arguments=mergedArguments,
-                      time=time)
+                      time=totalTime)
 
         return ret
 
