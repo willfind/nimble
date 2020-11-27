@@ -865,7 +865,11 @@ def elementQueryFunction(value):
             matchVal = float(matchVal)
         except ValueError:
             pass
-        return lambda elem: func(elem, matchVal)
+
+        def elementQuery(elem):
+            return func(elem, matchVal)
+
+        return elementQuery
 
     return None
 

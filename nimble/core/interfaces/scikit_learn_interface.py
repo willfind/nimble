@@ -314,7 +314,7 @@ class _SciKitLearnAPI(PredefinedInterface):
         pass
 
     @abc.abstractmethod
-    def _initLearner(self, learnerName, trainX, trainY, arguments):
+    def _initLearner(self, learnerName, trainX, trainY, arguments, randomSeed):
         pass
 
     @abc.abstractmethod

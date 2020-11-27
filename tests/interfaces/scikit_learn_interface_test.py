@@ -321,7 +321,6 @@ def testSciKitLearnRegressionLearners():
         skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
-        seed = _generateSubsidiarySeed()
         arguments = setupSKLArguments(sciKitLearnObj)
         sciKitLearnObj.fit(Xtrain, Ytrain)
         predSKL = sciKitLearnObj.predict(Xtest)
@@ -347,9 +346,9 @@ def testSciKitLearnMultiTaskRegressionLearners():
 
     skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
 
-    trainX = [[0,0], [1, 1], [2, 2], [0,0], [1, 1], [2, 2]]
+    trainX = [[0., 0.], [1., 1.], [2., 2.], [0., 0.], [1., 1.], [2., 2.]]
     trainY = [[0, 0], [1, 1], [2, 2], [0, 0], [1, 1], [2, 2]]
-    testX = [[2,2], [0,0], [1,1]]
+    testX = [[2., 2.], [0., 0.], [1., 1.]]
 
     trainXObj = nimble.data('Matrix', trainX, useLog=False)
     trainYObj = nimble.data('Matrix', trainY, useLog=False)
@@ -363,12 +362,16 @@ def testSciKitLearnMultiTaskRegressionLearners():
     def compareOutputs(learner):
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
+        arguments = setupSKLArguments(sciKitLearnObj)
         sciKitLearnObj.fit(trainX, trainY)
         predictionSciKit = sciKitLearnObj.predict(testX)
         # convert to nimble Base object for comparison
-        predictionSciKit = nimble.data('Matrix', predictionSciKit, useLog=False)
+        predictionSciKit = nimble.data('Matrix', predictionSciKit,
+                                       useLog=False)
 
-        TL = nimble.train(toCall(learner), trainXObj, trainYObj)
+        seed = adjustRandomParamForNimble(arguments)
+        TL = nimble.train(toCall(learner), trainXObj, trainYObj,
+                          randomSeed=seed)
         predNimble = TL.apply(testXObj)
         predSL = _apply_saveLoad(TL, testXObj)
 

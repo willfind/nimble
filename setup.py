@@ -5,14 +5,11 @@ build_ext - build extensions (requires Cython)
 sdist - Build source distribution
 bdist_wheel - binary distribution (if extensions are available builds
                                    platform wheel otherwise pure python)
-bdist_conda - binary conda distribution (requires conda-build)
 install - install nimble (not recommended as install method)
 clean - remove setup generated directories and files. By default, clean
         only removes the "temporary" files in the build/ directory.
         Using the --all flag will fully remove the build/ and
         nimble.egg-info/ directores as well as any C extension files.
-
-Note: the bdist_conda and bdist_wheel commands cannot be run together.
 """
 
 import os
@@ -31,13 +28,6 @@ try:
     CYTHON_AVAILABLE = True
 except ImportError:
     CYTHON_AVAILABLE = False
-
-# conda
-try:
-    import distutils.command.bdist_conda
-    distclass = distutils.command.bdist_conda.CondaDistribution
-except ImportError:
-    distclass = Distribution
 
 def getCFiles():
     return glob.glob(os.path.join('nimble', '**', '*.c'), recursive=True)
@@ -84,7 +74,7 @@ def commandUsesExtensions(commands):
             return True
     return False
 
-class NimbleDistribution(distclass):
+class NimbleDistribution(Distribution):
     """
     Extend the Distribution class to attempt to use Cython to generate
     the C extension files for certain command line commands.
@@ -126,8 +116,9 @@ class CleanCommand(clean):
     def run(self):
         super().run()
         if self.all:
-            if os.path.exists('nimble.egg-info'):
-                remove_tree('nimble.egg-info', dry_run=self.dry_run)
+            for directory in ['build', 'nimble.egg-info']:
+                if os.path.exists(directory):
+                    remove_tree(directory, dry_run=self.dry_run)
             for f in getCFiles():
                 if not self.dry_run:
                     os.remove(f)
@@ -198,7 +189,7 @@ def run_setup():
     autoimpute = 'autoimpute>=0.12'
     requests = 'requests>2.12'
     h5py = 'h5py>=2.10'
-    dateutil = 'dateutil>=2.3'
+    dateutil = 'python-dateutil>=2.3'
     nose = 'nose>=1.3'
     data = [pandas, scipy]
     interfaces = [mlpy, scikitlearn, keras, autoimpute]
@@ -233,7 +224,7 @@ def run_setup():
         dist = setup(**setupKwargs)
     except ExtensionsFailed:
         # The default Distribution without extensions added
-        setupKwargs['distclass'] = distclass
+        setupKwargs['distclass'] = Distribution
         dist = setup(**setupKwargs)
 
     # print if able to build nimble with extensions

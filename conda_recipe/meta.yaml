@@ -1,0 +1,28 @@
+package:
+  name: nimble
+  version: "0.0.0.dev1"
+
+source:
+  path: ../
+
+build:
+  number: 0
+
+
+requirements:
+  build:
+    - python
+    - setuptools
+    - numpy
+    - cython
+
+  run:
+    - python
+    - numpy
+
+test:
+  imports:
+    - nimble
+
+about:
+  home: https://github.com/willfind/nimble
