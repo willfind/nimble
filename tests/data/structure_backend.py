@@ -278,12 +278,12 @@ class StructureDataSafe(StructureShared):
         assert orig.isIdentical(dup1)
         assert dup1.isIdentical(orig)
 
-        assert orig.data is not dup1.data
+        assert orig._data is not dup1._data
 
         assert orig.isIdentical(dup2)
         assert dup2.isIdentical(orig)
 
-        assert orig.data is not dup2.data
+        assert orig._data is not dup2._data
 
     @noLogEntryExpected
     def test_copy_Pempty(self):
@@ -7150,7 +7150,7 @@ class StructureModifying(StructureShared):
 
         ret = orig._referenceDataFrom(other)  # RET CHECK
 
-        assert orig.data is other.data
+        assert orig._data is other._data
         assert '-1' in orig.points.getNames()
         assert '1' in orig.features.getNames()
         assert ret is None

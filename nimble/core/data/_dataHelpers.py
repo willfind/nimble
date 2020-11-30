@@ -345,10 +345,10 @@ def denseAxisUniqueArray(obj, axis):
     """
     validateAxis(axis)
     if obj.getTypeString() == 'DataFrame':
-        # faster than numpy.array(obj.data)
-        data = obj.data.values
+        # faster than numpy.array(obj._data)
+        data = obj._data.values
     else:
-        data = numpy.array(obj.data, dtype=numpy.object_)
+        data = numpy.array(obj._data, dtype=numpy.object_)
     if axis == 'feature':
         data = data.transpose()
 

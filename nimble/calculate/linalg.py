@@ -288,8 +288,8 @@ def _backendSolvers(aObj, bObj, solverFunction):
 
     # Solve
     if aObj.getTypeString() == 'Matrix':
-        aData = dtypeConvert(aObj.data)
-        bData = dtypeConvert(bObj.data)
+        aData = dtypeConvert(aObj._data)
+        bData = dtypeConvert(bObj._data)
         if solverFunction.__name__ == 'solve':
             solution = scipy.linalg.solve(aData, bData)
             solution = solution.T
@@ -299,8 +299,8 @@ def _backendSolvers(aObj, bObj, solverFunction):
 
     elif aObj.getTypeString() == 'Sparse':
         aCopy = aObj.copy()
-        aData = dtypeConvert(aCopy.data)
-        bData = dtypeConvert(numpy.asarray(bObj.data))
+        aData = dtypeConvert(aCopy._data)
+        bData = dtypeConvert(numpy.asarray(bObj._data))
         if solverFunction.__name__ == 'solve':
             solution = scipy.sparse.linalg.spsolve(aData, bData)
         else:

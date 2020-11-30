@@ -1213,7 +1213,7 @@ def initDataObject(
 
     if _isBase(rawData):
         # point/featureNames, treatAsMissing, etc. may vary
-        rawData = rawData.data
+        rawData = rawData._data
     if not reuseData:
         rawData = copy.deepcopy(rawData)
 
@@ -1378,7 +1378,7 @@ def initDataObject(
             convertToType = convertToType[0]
 
     if convertToType is not None:
-        ret.data = elementTypeConvert(ret.data, convertToType)
+        ret._data = elementTypeConvert(ret._data, convertToType)
 
     return ret
 

@@ -198,7 +198,7 @@ To install mlpy
         if trainX is not None:
             customDict['match'] = trainX.getTypeString()
             if trainX.getTypeString() == 'Matrix':
-                transTrainX = trainX.data
+                transTrainX = trainX._data
             else:
                 transTrainX = trainX.copy(to='numpy array')
             transTrainX = dtypeConvert(transTrainX)
@@ -213,7 +213,7 @@ To install mlpy
 
         if testX is not None:
             if testX.getTypeString() == 'Matrix':
-                transTestX = testX.data
+                transTestX = testX._data
             else:
                 transTestX = testX.copy(to='numpy array')
             transTestX = dtypeConvert(transTestX)

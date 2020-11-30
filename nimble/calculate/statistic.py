@@ -74,7 +74,7 @@ def proportionZero(values):
     """
     numVals = len(values)
     if values.getTypeString() == 'Sparse':
-        return (numVals - values.data.nnz) / numVals
+        return (numVals - values._data.nnz) / numVals
     numZero = _sum(1 for _ in values.iterateElements(only=match.zero))
     return numZero / numVals
 
@@ -129,8 +129,8 @@ def _minmax(values, minmax):
     """
     # convert to list not array b/c arrays won't error with non numeric data
     if values.getTypeString() == 'Sparse':
-        toProcess = values.data.data.tolist()
-        if len(values) > values.data.nnz:
+        toProcess = values._data.data.tolist()
+        if len(values) > values._data.nnz:
             toProcess.append(0) # if sparse object has zeros add zero to list
     else:
         toProcess = values.copy('numpyarray')
@@ -178,7 +178,7 @@ def mean(values):
     2.0
     """
     if values.getTypeString() == 'Sparse':
-        nonZero = values.data.data.astype(numpy.float)
+        nonZero = values._data.data.astype(numpy.float)
         numNan = numpy.sum(numpy.isnan(nonZero))
         return _meanSparseBackend(nonZero, len(values), numNan)
     arr = values.copy('numpyarray', outputAs1D=True).astype(numpy.float)
@@ -235,7 +235,7 @@ def mode(values):
     0.0
     """
     if values.getTypeString() == 'Sparse':
-        numZero = len(values) - values.data.nnz
+        numZero = len(values) - values._data.nnz
         toProcess = values.iterateElements(only=nonMissingNonZero)
         counter = collections.Counter(toProcess)
         mcVal, mcCount = counter.most_common()[0]
@@ -272,12 +272,12 @@ def standardDeviation(values, sample=True):
     1.707825127659933
     """
     if values.getTypeString() == 'Sparse':
-        nonZero = values.data.data.astype(numpy.float)
+        nonZero = values._data.data.astype(numpy.float)
         numNan = numpy.sum(numpy.isnan(nonZero))
         meanRet = _meanSparseBackend(nonZero, len(values), numNan)
 
         dataSumSquared = numpy.nansum((nonZero - meanRet) ** 2)
-        zeroSumSquared = meanRet ** 2 * (len(values) - values.data.nnz)
+        zeroSumSquared = meanRet ** 2 * (len(values) - values._data.nnz)
         divisor = len(values) - numNan
         if sample:
             divisor -= 1
@@ -320,7 +320,7 @@ def uniqueCount(values):
     if values.getTypeString() == 'Sparse':
         toProcess = values.iterateElements(only=nonMissingNonZero)
         valueSet = set(toProcess)
-        if len(values) > values.data.nnz:
+        if len(values) > values._data.nnz:
             valueSet.add(0)
     else:
         toProcess = values.iterateElements(only=nonMissing)

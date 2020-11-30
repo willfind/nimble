@@ -918,21 +918,21 @@ def test_trainAndApplyOneVsOne():
     results3 = trainAndApply('nimble.KNNClassifier', trainObj1, trainY=3,
                              testX=testObj1, scoreMode='allScores', multiClassStrategy='OneVsOne')
 
-    assert results1.data[0][0] == 1
-    assert results1.data[1][0] == 2
-    assert results1.data[2][0] == 3
-    assert len(results1.data) == 3
+    assert results1._data[0][0] == 1
+    assert results1._data[1][0] == 2
+    assert results1._data[2][0] == 3
+    assert len(results1._data) == 3
 
-    assert results2.data[0][0] == 1
-    assert results2.data[0][1] == 2
-    assert results2.data[1][0] == 2
-    assert results2.data[1][1] == 2
-    assert results2.data[2][0] == 3
-    assert results2.data[2][1] == 2
+    assert results2._data[0][0] == 1
+    assert results2._data[0][1] == 2
+    assert results2._data[1][0] == 2
+    assert results2._data[1][1] == 2
+    assert results2._data[2][0] == 3
+    assert results2._data[2][1] == 2
 
     results3FeatureMap = results3.features.getNames()
-    for i in range(len(results3.data)):
-        row = results3.data[i]
+    for i in range(len(results3._data)):
+        row = results3._data[i]
         for j in range(len(row)):
             score = row[j]
             # because our input data was matrix, we have to check feature names

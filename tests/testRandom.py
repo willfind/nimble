@@ -108,7 +108,7 @@ def testReturnsFundamentalsCorrect():
                 assert type(returned[0, 0] == curType)
 
 
-#note: makes calls to Base.data with assumptions about underlying datatstructure for sparse data
+#note: makes calls to Base._data with assumptions about underlying datatstructure for sparse data
 def testSparsityReturnedPlausible():
     """
     function that tests:
@@ -137,7 +137,7 @@ def testSparsityReturnedPlausible():
                                               curSparsity, elementType=curType)
 
                 if curReturnType.lower() == 'sparse':
-                    nonZerosCount = returned.data.nnz
+                    nonZerosCount = returned._data.nnz
                     actualSparsity = 1.0 - nonZerosCount / float(nPoints * nFeatures)
                     difference = abs(actualSparsity - curSparsity)
 

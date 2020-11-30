@@ -480,9 +480,9 @@ To install scikit-learn
             customDict['match'] = trainX.getTypeString()
             if (trainX.getTypeString() == 'Matrix'
                     and learnerName not in mustCopyTrainX):
-                trainX = trainX.data
+                trainX = trainX._data
             elif trainX.getTypeString() == 'Sparse':
-                trainX = trainX.copy().data
+                trainX = trainX.copy()._data
             else:
                 trainX = trainX.copy(to='numpy array')
             trainX = dtypeConvert(trainX)
@@ -498,9 +498,9 @@ To install scikit-learn
             mustCopyTestX = ['StandardScaler']
             if (testX.getTypeString() == 'Matrix'
                     and learnerName not in mustCopyTestX):
-                testX = testX.data
+                testX = testX._data
             elif testX.getTypeString() == 'Sparse':
-                testX = testX.copy().data
+                testX = testX.copy()._data
             else:
                 testX = testX.copy(to='numpy array')
             testX = dtypeConvert(testX)

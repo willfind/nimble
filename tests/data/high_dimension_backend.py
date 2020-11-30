@@ -86,7 +86,7 @@ class HighDimensionSafe(DataTestObject):
         stdoutBackup = sys.stdout
         for tensor in tensors:
             toTest = self.constructor(tensor, name='test')
-            expData = toTest.copy().data # get 2D data
+            expData = toTest.copy()._data # get 2D data
             exp = self.constructor(expData, name='test')
             assert len(exp._shape) == 2
             assert toTest.toString() == exp.toString()

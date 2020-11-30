@@ -308,9 +308,9 @@ def testSciKitLearnRegressionLearners():
     trainX = data[0][0]
     trainY = abs(data[0][1]) # all positive required for some learners
     testX = data[1][0]
-    Xtrain = trainX.data
-    Ytrain = trainY.data
-    Xtest = testX.data
+    Xtrain = trainX._data
+    Ytrain = trainY._data
+    Xtest = testX._data
 
     regressors = getLearnersByType('regression')
     learners = [r for r in regressors if 'MultiTask' not in r]
@@ -385,8 +385,8 @@ def testSciKitLearnClusterLearners():
     data = data[0]
     trainX = data[:50,:]
     testX = data[50:,:]
-    Xtrain = trainX.data
-    Xtest = testX.data
+    Xtrain = trainX._data
+    Xtest = testX._data
 
     learners = getLearnersByType('cluster')
 
@@ -422,9 +422,9 @@ def testSciKitLearnOtherPredictLearners():
     trainX = abs(data[0][0])
     trainY = abs(data[0][1])
     testX = abs(data[1][0])
-    Xtrain = trainX.data
-    Ytrain = trainY.data
-    Xtest = testX.data
+    Xtrain = trainX._data
+    Ytrain = trainY._data
+    Xtest = testX._data
 
     skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
     predictors = getLearnersByType('other')
@@ -499,8 +499,8 @@ def testSciKitLearnTransformationLearners():
     for learner in learners:
         trainX = abs(data[0][0])
         trainY = abs(data[0][1])
-        Xtrain = trainX.data
-        Ytrain = trainY.data
+        Xtrain = trainX._data
+        Ytrain = trainY._data
         try:
             # fit(X, y)
             compareDualInputOutputs(learner)
@@ -511,7 +511,7 @@ def testSciKitLearnTransformationLearners():
             except ValueError:
                 # GaussianRandomProjection, SparseRandomProjection,
                 trainX = nimble.random.data('Matrix', 10, 5000, 0.98)
-                Xtrain = trainX.data
+                Xtrain = trainX._data
                 compareSingleInputOutputs(learner)
 
 
@@ -520,7 +520,7 @@ def testSciKitLearnTransformationLearners():
 def testSciKitLearnSparsePCATransformation():
     # do not accept sparse matrices
     trainX = nimble.random.data('Matrix', 100, 10, sparsity=0.9)
-    Xtrain = trainX.data
+    Xtrain = trainX._data
 
     learners = ['MiniBatchSparsePCA', 'SparsePCA',]
 
@@ -553,7 +553,7 @@ def testSciKitLearnSparsePCATransformation():
 def testSciKitLearnOtherFitTransformLearners():
     data = generateClassificationData(2, 20, 10)
     trainX = abs(data[0][0])
-    Xtrain = trainX.data
+    Xtrain = trainX._data
 
 
     skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
@@ -723,12 +723,12 @@ def testConvertYTrainDType():
     testObj.features.retain([2,3,4,5], useLog=False)
 
     # case1 trainY passed as integer
-    assert trainObj[:,0].data.dtype == numpy.object_
+    assert trainObj[:,0]._data.dtype == numpy.object_
     pred = nimble.trainAndApply('SciKitLearn.LogisticRegression', trainObj, 0, testObj)
 
     #case2 trainY passed as nimble object
     trainY = trainObj.features.extract(0, useLog=False)
-    assert trainY.data.dtype == numpy.object_
+    assert trainY._data.dtype == numpy.object_
     pred = nimble.trainAndApply('SciKitLearn.LogisticRegression', trainObj, trainY, testObj)
 
 @sklSkipDec

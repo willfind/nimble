@@ -45,7 +45,7 @@ class SparseAxis(Axis, metaclass=ABCMeta):
         pointNames, featureNames = self._getStructuralNames(targetList)
         # SparseView or object dtype
         if (isinstance(self._base, nimble.core.data.BaseView)
-                or self._base.data.dtype == numpy.object_):
+                or self._base._data.dtype == numpy.object_):
             return self._structuralIterative_implementation(
                 structure, targetList, pointNames, featureNames)
         # nonview numeric objects
@@ -60,9 +60,9 @@ class SparseAxis(Axis, metaclass=ABCMeta):
             reverseIdxPosition[idxPos] = i
 
         if self._isPoint:
-            self._base.data.row[:] = reverseIdxPosition[self._base.data.row]
+            self._base._data.row[:] = reverseIdxPosition[self._base._data.row]
         else:
-            self._base.data.col[:] = reverseIdxPosition[self._base.data.col]
+            self._base._data.col[:] = reverseIdxPosition[self._base._data.col]
         self._base._resetSorted()
 
     def _transform_implementation(self, function, limitTo):
@@ -89,7 +89,7 @@ class SparseAxis(Axis, metaclass=ABCMeta):
                     modTarget.append(viewID)
                     modOther.append(i)
 
-        baseDtype = self._base.data.dtype
+        baseDtype = self._base._data.dtype
         retDtype = function.convertType
         # if applying transformation to a subset, need to be sure dtype is
         # still compatible with the data that was not transformed
@@ -102,7 +102,7 @@ class SparseAxis(Axis, metaclass=ABCMeta):
 
         modData = numpy.array(modData, dtype=retDtype)
         shape = (len(self._base.points), len(self._base.features))
-        self._base.data = scipy.sparse.coo_matrix(
+        self._base._data = scipy.sparse.coo_matrix(
             (modData, (modRow, modCol)), shape=shape)
         self._base._resetSorted()
 
@@ -113,21 +113,21 @@ class SparseAxis(Axis, metaclass=ABCMeta):
         from this object will continue below the inserted
         points/features.
         """
-        selfData = self._base.data.data
-        addData = toInsert.data.data
+        selfData = self._base._data.data
+        addData = toInsert._data.data
         newData = numpy.concatenate((selfData, addData))
         if self._isPoint:
-            selfAxis = self._base.data.row.copy()
-            selfOffAxis = self._base.data.col
-            addAxis = toInsert.data.row.copy()
-            addOffAxis = toInsert.data.col
+            selfAxis = self._base._data.row.copy()
+            selfOffAxis = self._base._data.col
+            addAxis = toInsert._data.row.copy()
+            addOffAxis = toInsert._data.col
             addLength = len(toInsert.points)
             shape = (len(self) + addLength, len(self._base.features))
         else:
-            selfAxis = self._base.data.col.copy()
-            selfOffAxis = self._base.data.row
-            addAxis = toInsert.data.col.copy()
-            addOffAxis = toInsert.data.row
+            selfAxis = self._base._data.col.copy()
+            selfOffAxis = self._base._data.row
+            addAxis = toInsert._data.col.copy()
+            addOffAxis = toInsert._data.row
             addLength = len(toInsert.features)
             shape = (len(self._base.points), len(self) + addLength)
 
@@ -142,8 +142,8 @@ class SparseAxis(Axis, metaclass=ABCMeta):
         else:
             rowColTuple = (newOffAxis, newAxis)
 
-        self._base.data = scipy.sparse.coo_matrix((newData, rowColTuple),
-                                                  shape=shape)
+        self._base._data = scipy.sparse.coo_matrix((newData, rowColTuple),
+                                                   shape=shape)
         self._base._resetSorted()
 
     def _repeat_implementation(self, totalCopies, copyVectorByVector):
@@ -151,19 +151,19 @@ class SparseAxis(Axis, metaclass=ABCMeta):
             numpyFunc = numpy.repeat
         else:
             numpyFunc = numpy.tile
-        repData = numpyFunc(self._base.data.data, totalCopies)
+        repData = numpyFunc(self._base._data.data, totalCopies)
         fillDup = numpy.empty_like(repData, dtype=numpy.int)
         if self._isPoint:
-            repCol = numpyFunc(self._base.data.col, totalCopies)
+            repCol = numpyFunc(self._base._data.col, totalCopies)
             repRow = fillDup
-            toRepeat = self._base.data.row
+            toRepeat = self._base._data.row
             numRepeatd = len(self)
             startIdx = 0
             shape = ((len(self) * totalCopies), len(self._base.features))
         else:
-            repRow = numpyFunc(self._base.data.row, totalCopies)
+            repRow = numpyFunc(self._base._data.row, totalCopies)
             repCol = fillDup
-            toRepeat = self._base.data.col
+            toRepeat = self._base._data.col
             numRepeatd = len(self)
             shape = (len(self._base.points), (len(self) * totalCopies))
 
@@ -202,18 +202,18 @@ class SparseAxis(Axis, metaclass=ABCMeta):
                     notTarget.append(idx)
 
         if self._isPoint:
-            data = self._base.data.tocsr()
+            data = self._base._data.tocsr()
             targeted = data[targetList, :]
             if structure != 'copy':
                 notTargeted = data[notTarget, :]
         else:
-            data = self._base.data.tocsc()
+            data = self._base._data.tocsc()
             targeted = data[:, targetList]
             if structure != 'copy':
                 notTargeted = data[:, notTarget]
 
         if structure != 'copy':
-            self._base.data = notTargeted.tocoo()
+            self._base._data = notTargeted.tocoo()
             self._base._resetSorted()
 
         ret = targeted.tocoo()
@@ -256,7 +256,7 @@ class SparseAxis(Axis, metaclass=ABCMeta):
 
 
         # instantiate return data
-        selfShape, targetShape = _calcShapes(self._base.data._shape,
+        selfShape, targetShape = _calcShapes(self._base._data._shape,
                                              targetLength, self._axis)
         if structure != 'copy':
             keepData = []
@@ -272,12 +272,12 @@ class SparseAxis(Axis, metaclass=ABCMeta):
             for i in range(len(self)):
                 if i not in targetList:
                     locs = targetAxisData == i
-                    keepData.extend(self._base.data.data[locs])
+                    keepData.extend(self._base._data.data[locs])
                     keepAxis.extend([keepIdx] * sum(locs))
                     keepIdx += 1
                     keepOffAxis.extend(offAxisData[locs])
             keepArr = numpy.array(keepData, dtype=dtype)
-            self._base.data = scipy.sparse.coo_matrix(
+            self._base._data = scipy.sparse.coo_matrix(
                 (keepArr, (keepRows, keepCols)), shape=selfShape)
             self._base._resetSorted()
 
@@ -297,9 +297,9 @@ class SparseAxis(Axis, metaclass=ABCMeta):
         hasAxisNames = self._namesCreated()
         getAxisName = self._getName
         getAxisNames = self._getNames
-        data = self._base.data.data
-        row = self._base.data.row
-        col = self._base.data.col
+        data = self._base._data.data
+        row = self._base._data.row
+        col = self._base._data.col
         if self._isPoint:
             axisLocator = row
             offAxisLocator = col
@@ -374,9 +374,9 @@ class SparsePoints(SparseAxis, Points):
             self, featuresToCollapse, collapseIndices, retainIndices,
             currNumPoints, currFtNames, numRetPoints, numRetFeatures):
         self._base._sortInternal(self._axis)
-        data = self._base.data.data
-        row = self._base.data.row
-        col = self._base.data.col
+        data = self._base._data.data
+        row = self._base._data.row
+        col = self._base._data.col
         tmpData = []
         tmpRow = []
         tmpCol = []
@@ -403,7 +403,7 @@ class SparsePoints(SparseAxis, Points):
                 tmpCol.append(numRetFeatures - 1)
 
         tmpData = numpy.array(tmpData, dtype=numpy.object_)
-        self._base.data = scipy.sparse.coo_matrix(
+        self._base._data = scipy.sparse.coo_matrix(
             (tmpData, (tmpRow, tmpCol)), shape=(numRetPoints, numRetFeatures))
         self._base._resetSorted()
 
@@ -428,8 +428,8 @@ class SparsePoints(SparseAxis, Points):
 
         tmpData = numpy.array(tmpData, dtype=numpy.object_)
         shape = (len(uniqueDict), numRetFeatures)
-        self._base.data = scipy.sparse.coo_matrix((tmpData, (tmpRow, tmpCol)),
-                                                  shape=shape)
+        self._base._data = scipy.sparse.coo_matrix((tmpData, (tmpRow, tmpCol)),
+                                                   shape=shape)
         self._base._resetSorted()
 
 
@@ -473,10 +473,10 @@ class SparseFeatures(SparseAxis, Features):
 
     def _splitByParsing_implementation(self, featureIndex, splitList,
                                        numRetFeatures, numResultingFts):
-        keep = self._base.data.col != featureIndex
-        tmpData = self._base.data.data[keep]
-        tmpRow = self._base.data.row[keep]
-        tmpCol = self._base.data.col[keep]
+        keep = self._base._data.col != featureIndex
+        tmpData = self._base._data.data[keep]
+        tmpRow = self._base._data.row[keep]
+        tmpCol = self._base._data.col[keep]
 
         shift = tmpCol > featureIndex
         tmpCol[shift] = tmpCol[shift] + numResultingFts - 1
@@ -494,8 +494,8 @@ class SparseFeatures(SparseAxis, Features):
 
         tmpData = numpy.array(tmpData, dtype=numpy.object_)
         shape = (len(self._base.points), numRetFeatures)
-        self._base.data = scipy.sparse.coo_matrix((tmpData, (tmpRow, tmpCol)),
-                                                  shape=shape)
+        self._base._data = scipy.sparse.coo_matrix((tmpData, (tmpRow, tmpCol)),
+                                                   shape=shape)
         self._base._resetSorted()
 
 

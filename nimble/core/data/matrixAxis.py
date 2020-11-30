@@ -49,14 +49,14 @@ class MatrixAxis(Axis, metaclass=ABCMeta):
         pointNames, featureNames = self._getStructuralNames(targetList)
         if self._isPoint:
             axisVal = 0
-            ret = self._base.data[targetList]
+            ret = self._base._data[targetList]
         else:
             axisVal = 1
-            ret = self._base.data[:, targetList]
+            ret = self._base._data[:, targetList]
 
         if structure != 'copy':
-            self._base.data = numpy.delete(self._base.data,
-                                           targetList, axisVal)
+            self._base._data = numpy.delete(self._base._data,
+                                            targetList, axisVal)
 
         return nimble.core.data.Matrix(ret, pointNames=pointNames,
                                        featureNames=featureNames,
@@ -65,9 +65,9 @@ class MatrixAxis(Axis, metaclass=ABCMeta):
     def _permute_implementation(self, indexPosition):
         # use numpy indexing to change the ordering
         if self._isPoint:
-            self._base.data = self._base.data[indexPosition, :]
+            self._base._data = self._base._data[indexPosition, :]
         else:
-            self._base.data = self._base.data[:, indexPosition]
+            self._base._data = self._base._data[:, indexPosition]
 
 
     ##############################
@@ -77,7 +77,7 @@ class MatrixAxis(Axis, metaclass=ABCMeta):
     def _unique_implementation(self):
         uniqueData, uniqueIndices = denseAxisUniqueArray(self._base,
                                                          self._axis)
-        if numpy.array_equal(self._base.data, uniqueData):
+        if numpy.array_equal(self._base._data, uniqueData):
             return self._base.copy()
 
         axisNames, offAxisNames = uniqueNameGetter(self._base, self._axis,
@@ -99,9 +99,9 @@ class MatrixAxis(Axis, metaclass=ABCMeta):
             ptDim = 1
             ftDim = totalCopies
         if copyVectorByVector:
-            repeated = numpy.repeat(self._base.data, totalCopies, axis)
+            repeated = numpy.repeat(self._base._data, totalCopies, axis)
         else:
-            repeated = numpy.tile(self._base.data, (ptDim, ftDim))
+            repeated = numpy.tile(self._base._data, (ptDim, ftDim))
         return repeated
 
     ###########
@@ -113,13 +113,13 @@ class MatrixAxis(Axis, metaclass=ABCMeta):
         Convert the dtype of the Base object if necessary to replace the
         current values with the transformed values.
         """
-        baseDtype = self._base.data.dtype
+        baseDtype = self._base._data.dtype
         if baseDtype != numpy.object_ and retDtype == numpy.object_:
-            self._base.data = self._base.data.astype(numpy.object_)
+            self._base._data = self._base._data.astype(numpy.object_)
         elif baseDtype == numpy.int and retDtype == numpy.float:
-            self._base.data = self._base.data.astype(numpy.float)
+            self._base._data = self._base._data.astype(numpy.float)
         elif baseDtype == numpy.bool_ and retDtype != numpy.bool_:
-            self._base.data = self._base.data.astype(retDtype)
+            self._base._data = self._base._data.astype(retDtype)
 
     ####################
     # Abstract Methods #
@@ -154,10 +154,10 @@ class MatrixPoints(MatrixAxis, Points):
         index in this object, the remaining points from this object will
         continue below the inserted points.
         """
-        startData = self._base.data[:insertBefore, :]
-        endData = self._base.data[insertBefore:, :]
-        self._base.data = numpy.concatenate(
-            (startData, toInsert.data, endData), 0)
+        startData = self._base._data[:insertBefore, :]
+        endData = self._base._data[insertBefore:, :]
+        self._base._data = numpy.concatenate(
+            (startData, toInsert._data, endData), 0)
 
     def _transform_implementation(self, function, limitTo):
         for i, pt in enumerate(self):
@@ -166,12 +166,12 @@ class MatrixPoints(MatrixAxis, Points):
             currRet = function(pt)
             retArray = numpy.array(currRet, dtype=function.convertType)
             self._convertBaseDtype(retArray.dtype)
-            self._base.data[i, :] = retArray
+            self._base._data[i, :] = retArray
         # if transformations applied to all data and function.convertType is
         # not object we can convert base with object dtype to a numeric dtype.
-        if (self._base.data.dtype == numpy.object_ and limitTo is None
+        if (self._base._data.dtype == numpy.object_ and limitTo is None
                 and function.convertType is not object):
-            self._base.data = self._base.data.astype(function.convertType)
+            self._base._data = self._base._data.astype(function.convertType)
 
     ################################
     # Higher Order implementations #
@@ -180,14 +180,14 @@ class MatrixPoints(MatrixAxis, Points):
     def _splitByCollapsingFeatures_implementation(
             self, featuresToCollapse, collapseIndices, retainIndices,
             currNumPoints, currFtNames, numRetPoints, numRetFeatures):
-        collapseData = self._base.data[:, collapseIndices]
-        retainData = self._base.data[:, retainIndices]
+        collapseData = self._base._data[:, collapseIndices]
+        retainData = self._base._data[:, retainIndices]
 
         tmpData = fillArrayWithCollapsedFeatures(
             featuresToCollapse, retainData, collapseData, currNumPoints,
             currFtNames, numRetPoints, numRetFeatures)
 
-        self._base.data = numpy2DArray(tmpData)
+        self._base._data = numpy2DArray(tmpData)
 
     def _combineByExpandingFeatures_implementation(self, uniqueDict, namesIdx,
                                                    uniqueNames, numRetFeatures,
@@ -196,7 +196,7 @@ class MatrixPoints(MatrixAxis, Points):
                                                 uniqueNames, numRetFeatures,
                                                 numExpanded)
 
-        self._base.data = numpy2DArray(tmpData)
+        self._base._data = numpy2DArray(tmpData)
 
 
 class MatrixPointsView(PointsView, AxisView, MatrixPoints):
@@ -230,10 +230,10 @@ class MatrixFeatures(MatrixAxis, Features):
         provided index in this object, the remaining points from this
         object will continue to the right of the inserted points.
         """
-        startData = self._base.data[:, :insertBefore]
-        endData = self._base.data[:, insertBefore:]
-        self._base.data = numpy.concatenate(
-            (startData, toInsert.data, endData), 1)
+        startData = self._base._data[:, :insertBefore]
+        endData = self._base._data[:, insertBefore:]
+        self._base._data = numpy.concatenate(
+            (startData, toInsert._data, endData), 1)
 
     def _transform_implementation(self, function, limitTo):
         for j, f in enumerate(self):
@@ -242,12 +242,12 @@ class MatrixFeatures(MatrixAxis, Features):
             currRet = function(f)
             retArray = numpy.array(currRet, dtype=function.convertType)
             self._convertBaseDtype(retArray.dtype)
-            self._base.data[:, j] = retArray
+            self._base._data[:, j] = retArray
         # if transformations applied to all data and function.convertType is
         # not object we can convert base object dtype to a numeric dtype.
-        if (self._base.data.dtype == numpy.object_ and limitTo is None
+        if (self._base._data.dtype == numpy.object_ and limitTo is None
                 and function.convertType is not object):
-            self._base.data = self._base.data.astype(function.convertType)
+            self._base._data = self._base._data.astype(function.convertType)
 
     ################################
     # Higher Order implementations #
@@ -258,16 +258,16 @@ class MatrixFeatures(MatrixAxis, Features):
         tmpData = numpy.empty(shape=(len(self._base.points), numRetFeatures),
                               dtype=numpy.object_)
 
-        tmpData[:, :featureIndex] = self._base.data[:, :featureIndex]
+        tmpData[:, :featureIndex] = self._base._data[:, :featureIndex]
         for i in range(numResultingFts):
             newFeat = []
             for lst in splitList:
                 newFeat.append(lst[i])
             tmpData[:, featureIndex + i] = newFeat
-        existingData = self._base.data[:, featureIndex + 1:]
+        existingData = self._base._data[:, featureIndex + 1:]
         tmpData[:, featureIndex + numResultingFts:] = existingData
 
-        self._base.data = numpy2DArray(tmpData)
+        self._base._data = numpy2DArray(tmpData)
 
 
 class MatrixFeaturesView(FeaturesView, AxisView, MatrixFeatures):

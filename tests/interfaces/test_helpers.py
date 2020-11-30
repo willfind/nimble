@@ -29,9 +29,9 @@ def checkLabelOrderingAndScoreAssociations(allLabels, bestScores, allScores):
 
     """
     if isinstance(bestScores, Base):
-        bestScores = bestScores.data
+        bestScores = bestScores._data
     if isinstance(allScores, Base):
-        allScores = allScores.data
+        allScores = allScores._data
 
     assert len(bestScores) == len(allScores)
     for i in range(len(bestScores)):

@@ -1132,7 +1132,7 @@ class Base(ABC):
 
         ret = self.calculateOnElements(condition, outputType='Matrix',
                                        useLog=False)
-        return int(numpy.sum(ret.data))
+        return int(numpy.sum(ret._data))
 
     @limitedTo2D
     def countUniqueElements(self, points=None, features=None):
@@ -2241,7 +2241,7 @@ class Base(ABC):
         # toString ends with a \n, so we get rid of the empty line produced by
         # the split
         byLine = byLine[:-1]
-        # convert self.data into a string with nice format
+        # convert self._data into a string with nice format
         newLines = (']\n' + indent + ' [').join(byLine)
         ret += (indent + '[[%s]]\n') % newLines
 
