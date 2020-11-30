@@ -7,7 +7,6 @@ import math
 import re
 import operator
 from functools import wraps
-from multiprocessing import Process
 import os.path
 
 import numpy
@@ -16,9 +15,10 @@ import nimble
 from nimble import match
 from nimble._utility import pd, plt, scipy
 from nimble._utility import inspectArguments
-from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
+from nimble._utility import isAllowedSingleElement
 from nimble._utility import is2DArray, numpy2DArray
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction, PackageException
 
 # the prefix for default featureNames
@@ -28,16 +28,19 @@ DEFAULT_PREFIX_LENGTH = len(DEFAULT_PREFIX)
 
 DEFAULT_NAME_PREFIX = "OBJECT_#"
 
-defaultObjectNumber = 0
+class _DefaultNumber:
+    """
+    For storing the next available number for a default name.
+    """
+    number = 0
+
 
 def nextDefaultObjectName():
     """
     Get the next available default name for an object.
     """
-    global defaultObjectNumber
-    ret = DEFAULT_NAME_PREFIX + str(defaultObjectNumber)
-    defaultObjectNumber = defaultObjectNumber + 1
-    return ret
+    _DefaultNumber.number += 1
+    return DEFAULT_NAME_PREFIX + str(_DefaultNumber.number - 1)
 
 
 def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
@@ -131,9 +134,13 @@ def mergeNonDefaultNames(baseSource, otherSource):
 
 
 def looksNumeric(val):
-    # div is a good check of your standard numeric objects, and excludes things
-    # list python lists. We must still explicitly exclude strings because of
-    # the numpy string implementation.
+    """
+    Check if a value looks numeric.
+
+    div is a good check of your standard numeric objects, and excludes
+    things like python lists. Must still explicitly exclude strings
+    because of the numpy string implementation.
+    """
     if not hasattr(val, '__truediv__') or isinstance(val, str):
         return False
     return True
@@ -178,8 +185,8 @@ def indicesSplit(allowed, total):
     fIndices = list(range(forward))
     bIndices = list(range(-backward, 0))
 
-    for i in range(len(bIndices)):
-        bIndices[i] = bIndices[i] + total
+    for i, bIdx in enumerate(bIndices):
+        bIndices[i] = bIdx + total
 
     if fIndices[len(fIndices) - 1] == bIndices[0]:
         bIndices = bIndices[1:]
@@ -231,8 +238,7 @@ def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
     currNamesString = indent + nameType + '={'
     newStartString = indent * 2
     prevIndex = -1
-    for i in range(len(possibleIndices)):
-        currIndex = possibleIndices[i]
+    for i, currIndex in enumerate(possibleIndices):
         # means there was a gap, need to insert elipses
         if currIndex - prevIndex > 1:
             addition = '..., '
@@ -265,15 +271,16 @@ def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
     return namesString
 
 
-def cleanKeywordInput(s):
+def cleanKeywordInput(string):
     """
     Processes the input string such that it is in lower case, and all
     whitespace is removed. Such a string is then considered 'cleaned'
-    and ready for comparison against lists of accepted values of keywords.
+    and ready for comparison against lists of accepted values of
+    keywords.
     """
-    s = s.lower()
-    s = "".join(s.split())
-    return s
+    string = string.lower()
+    string = "".join(string.split())
+    return string
 
 def validateInputString(string, accepted, paramName):
     """
@@ -336,7 +343,7 @@ def denseAxisUniqueArray(obj, axis):
     List, Matrix and Dataframe all utilize this helper in the
     _unique_implementation().
     """
-    obj._validateAxis(axis)
+    validateAxis(axis)
     if obj.getTypeString() == 'DataFrame':
         # faster than numpy.array(obj.data)
         data = obj.data.values
@@ -362,7 +369,7 @@ def uniqueNameGetter(obj, axis, uniqueIndices):
     """
     Get the first point or feature names of the object's unique values.
     """
-    obj._validateAxis(axis)
+    validateAxis(axis)
     if axis == 'point':
         hasAxisNames = obj._pointNamesCreated()
         hasOffAxisNames = obj._featureNamesCreated()
@@ -396,10 +403,10 @@ def valuesToPythonList(values, argName):
     try:
         for val in values:
             valuesList.append(val)
-    except TypeError:
+    except TypeError as e:
         msg = "The argument '{0}' is not an integer ".format(argName)
         msg += "(python or numpy), string, or an iterable container object."
-        raise InvalidArgumentType(msg)
+        raise InvalidArgumentType(msg) from e
 
     return valuesList
 
@@ -430,7 +437,7 @@ def constructIndicesList(obj, axis, values, argName=None):
         msg = "Invalid value for the argument '{0}'. ".format(argName)
         # add more detail to msg; slicing to exclude quotes
         msg += str(iav)[1:-1]
-        raise InvalidArgumentValue(msg)
+        raise InvalidArgumentValue(msg) from iav
 
     return indicesList
 
@@ -506,11 +513,11 @@ def createListOfDict(data, featureNames):
     """
     listofdict = []
     for point in data:
-        feature_dict = {}
+        featureDict = {}
         for i, value in enumerate(point):
             feature = featureNames[i]
-            feature_dict[feature] = value
-        listofdict.append(feature_dict)
+            featureDict[feature] = value
+        listofdict.append(featureDict)
     return listofdict
 
 def createDictOfList(data, featureNames, nFeatures):
@@ -522,8 +529,8 @@ def createDictOfList(data, featureNames, nFeatures):
     dictoflist = {}
     for i in range(nFeatures):
         feature = featureNames[i]
-        values_list = data[:, i].tolist()
-        dictoflist[feature] = values_list
+        valuesList = data[:, i].tolist()
+        dictoflist[feature] = valuesList
     return dictoflist
 
 
@@ -554,7 +561,7 @@ def createDataNoValidation(returnType, data, pointNames=None,
                       reuseData=reuseData)
 
 
-def limitAndConvertToArray(obj, points, features):
+def _limitAndConvertToArray(obj, points, features):
     if points is None and features is None:
         return obj.copy(to='numpyarray')
     pWanted = points if points is not None else slice(None)
@@ -574,24 +581,25 @@ def denseCountUnique(obj, points=None, features=None):
     unique values from the original data.
     """
     if isinstance(obj, nimble.core.data.Base):
-        array = limitAndConvertToArray(obj, points, features)
+        array = _limitAndConvertToArray(obj, points, features)
     elif isinstance(obj, numpy.ndarray):
         array = obj
     else:
         raise InvalidArgumentValue("obj must be nimble object or numpy array")
     if issubclass(array.dtype.type, numpy.number):
         vals, counts = numpy.unique(array, return_counts=True)
-        return {val: count for val, count in zip(vals, counts)}
+        return dict(zip(vals, counts))
 
     mapping = {}
     nextIdx = [0]
     def mapper(val):
         if val in mapping:
             return mapping[val]
-        else:
-            mapping[val] = nextIdx[0]
-            nextIdx[0] += 1
-            return mapping[val]
+
+        mapping[val] = nextIdx[0]
+        nextIdx[0] += 1
+        return mapping[val]
+
     vectorMap = numpy.vectorize(mapper)
     array = vectorMap(array)
     intMap = {v: k for k, v in mapping.items()}
@@ -658,7 +666,7 @@ def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
         return ret
 
     if isinstance(func, dict):
-        func = getDictionaryMappingFunction(func)
+        func = _getDictionaryMappingFunction(func)
 
     a, _, _, d = inspectArguments(func)
     numRequiredArgs = len(a) - len(d)
@@ -677,7 +685,7 @@ def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
                 if func(0) == 0:
                     preserveZeros = True
             # since it is a user function we cannot predict the exception type
-            except Exception:
+            except Exception: # pylint: disable=broad-except
                 pass
 
         @wraps(func)
@@ -735,11 +743,11 @@ def validateAxisFunction(func, axis, allowedLength=None):
                         msg += "was " + str(type(value))
                         raise InvalidArgumentValue(msg)
                     wrappedAxisFunc.updateConvertType(type(value))
-            except TypeError:
+            except TypeError as e:
                 msg = "'function' must return a single valid value "
                 msg += "(number, string, None, or nan) or an iterable "
                 msg += "container of valid values"
-                raise InvalidArgumentValue(msg)
+                raise InvalidArgumentValue(msg) from e
 
         return ret
 
@@ -769,7 +777,7 @@ def validateAxisFunction(func, axis, allowedLength=None):
 
     return wrappedAxisFunc
 
-def getDictionaryMappingFunction(dictionary):
+def _getDictionaryMappingFunction(dictionary):
     def valueMappingFunction(value):
         if value in dictionary:
             return dictionary[value]
@@ -840,6 +848,9 @@ class NimbleElementIterator(object):
                 return val
 
 def csvCommaFormat(name):
+    """
+    Prevent the name from being interpreted as two different csv values.
+    """
     if isinstance(name, str) and ',' in name:
         return '"{0}"'.format(name)
     return name
@@ -857,10 +868,10 @@ def elementQueryFunction(value):
     if not isinstance(value, str):
         return None
 
-    match = re.match(r'(==|!=|>=|>|<=|<)(.+)', value.strip())
-    if match:
-        func = operatorDict[match.group(1)]
-        matchVal = match.group(2).strip()
+    reMatch = re.match(r'(==|!=|>=|>|<=|<)(.+)', value.strip())
+    if reMatch:
+        func = operatorDict[reMatch.group(1)]
+        matchVal = reMatch.group(2).strip()
         try:
             matchVal = float(matchVal)
         except ValueError:
@@ -870,6 +881,9 @@ def elementQueryFunction(value):
     return None
 
 def limitedTo2D(method):
+    """
+    Wrapper for operations only allowed in two-dimensions.
+    """
     @wraps(method)
     def wrapped(self, *args, **kwargs):
         if hasattr(self, '_base'):
@@ -884,7 +898,158 @@ def limitedTo2D(method):
     return wrapped
 
 def convertToNumpyOrder(order):
+    """
+    Convert 'point' and 'feature' to the string equivalent in numpy.
+    """
     return 'C' if order == 'point' else 'F'
+
+def arrangeFinalTable(pnames, pnamesWidth, dataTable, dataWidths, fnames,
+                      pnameSep):
+    """
+    Arrange the final table of values for Base string representation.
+    """
+    if fnames is not None:
+        fnamesWidth = list(map(len, fnames))
+    else:
+        fnamesWidth = []
+
+    # We make extensive use of list addition in this helper in order
+    # to prepend single values onto lists.
+
+    # glue point names onto the left of the data
+    if pnames is not None:
+        for i, data in enumerate(dataTable):
+            dataTable[i] = [pnames[i], pnameSep] + data
+        dataWidths = [pnamesWidth, len(pnameSep)] + dataWidths
+
+    # glue feature names onto the top of the data
+    if fnames is not None:
+        # adjust with the empty space in the upper left corner, if needed
+        if pnames is not None:
+            fnames = ["", ""] + fnames
+            fnamesWidth = [0, 0] + fnamesWidth
+
+        # make gap row:
+        gapRow = [""] * len(fnames)
+
+        dataTable = [fnames, gapRow] + dataTable
+        # finalize widths by taking the largest of the two possibilities
+        for i in range(len(fnames)):
+            nameWidth = fnamesWidth[i]
+            valWidth = dataWidths[i]
+            dataWidths[i] = max(nameWidth, valWidth)
+
+    return dataTable, dataWidths
+
+def inconsistentNames(selfNames, otherNames):
+    """Private function to find and return all name inconsistencies
+    between the given two sets. It ignores equality of default
+    values, considering only whether non default names consistent
+    (position by position) and uniquely positioned (if a non default
+    name is present in both, then it is in the same position in
+    both). The return value is a dict between integer IDs and the
+    pair of offending names at that position in both objects.
+
+    Assumptions: the size of the two name sets is equal.
+    """
+    inconsistencies = {}
+
+    def checkFromLeftKeys(ret, leftNames, rightNames):
+        for index, lname in enumerate(leftNames):
+            rname = rightNames[index]
+            if lname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+                if rname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+                    if lname != rname:
+                        ret[index] = (lname, rname)
+                else:
+                    # if a name in one is mirrored by a default name,
+                    # then it must not appear in any other index;
+                    # and therefore, must not appear at all.
+                    if rightNames.count(lname) > 0:
+                        ret[index] = (lname, rname)
+                        ret[rightNames.index(lname)] = (lname, rname)
+
+
+    # check both name directions
+    checkFromLeftKeys(inconsistencies, selfNames, otherNames)
+    checkFromLeftKeys(inconsistencies, otherNames, selfNames)
+
+    return inconsistencies
+
+def unequalNames(selfNames, otherNames):
+    """Private function to find and return all name inconsistencies
+    between the given two sets. It ignores equality of default
+    values, considering only whether non default names consistent
+    (position by position) and uniquely positioned (if a non default
+    name is present in both, then it is in the same position in
+    both). The return value is a dict between integer IDs and the
+    pair of offending names at that position in both objects.
+
+    Assumptions: the size of the two name sets is equal.
+    """
+    inconsistencies = {}
+
+    def checkFromLeftKeys(ret, leftNames, rightNames):
+        for index, lname in enumerate(leftNames):
+            rname = rightNames[index]
+            if lname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+                if rname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+                    if lname != rname:
+                        ret[index] = (lname, rname)
+                else:
+                    ret[index] = (lname, rname)
+
+    # check both name directions
+    checkFromLeftKeys(inconsistencies, selfNames, otherNames)
+    checkFromLeftKeys(inconsistencies, otherNames, selfNames)
+
+    return inconsistencies
+
+def equalNames(selfNames, otherNames):
+    """
+    Private function to determine equality of either pointNames of
+    featureNames. It ignores equality of default values, considering
+    only whether non default names consistent (position by position)
+    and uniquely positioned (if a non default name is present in
+    both, then it is in the same position in both).
+    """
+    if selfNames is None and otherNames is None:
+        return True
+    if (selfNames is None
+            and all(n.startswith(DEFAULT_PREFIX) for n in otherNames)):
+        return True
+    if (otherNames is None
+            and all(n.startswith(DEFAULT_PREFIX) for n in selfNames)):
+        return True
+    if selfNames is None or otherNames is None:
+        return False
+    if len(selfNames) != len(otherNames):
+        return False
+
+    namesUnequal = unequalNames(selfNames, otherNames)
+    return namesUnequal == {}
+
+def validateAxis(axis):
+    """
+    Check the string value for axis is valid.
+    """
+    if axis not in ('point', 'feature'):
+        msg = 'axis parameter may only be "point" or "feature"'
+        raise InvalidArgumentValue(msg)
+
+def validateRangeOrder(startName, startVal, endName, endVal):
+    """
+    Validate a range where both values are inclusive.
+    """
+    if startVal > endVal:
+        msg = "When specifying a range, the arguments were resolved to "
+        msg += "having the values " + startName
+        msg += "=" + str(startVal) + " and " + endName + "=" + str(endVal)
+        msg += ", yet the starting value is not allowed to be greater "
+        msg += "than the ending value (" + str(startVal) + ">"
+        msg += str(endVal) + ")"
+
+        raise InvalidArgumentValueCombination(msg)
 
 ####################
 # Plotting Helpers #
@@ -1030,9 +1195,9 @@ def plotErrorBars(ax, axisRange, means, errors, horizontal, **kwargs):
     Helper for plotting an error bar chart.
     """
     if 'fmt' not in kwargs:
-        kwargs['fmt'] ='o'
+        kwargs['fmt'] = 'o'
     if 'capsize' not in kwargs:
-         kwargs['capsize'] = 8
+        kwargs['capsize'] = 8
 
     if horizontal:
         ax.errorbar(y=axisRange, x=means, xerr=errors, **kwargs)
@@ -1109,6 +1274,11 @@ def numpyArrayFromList(data):
 
 
 def modifyNumpyArrayValue(arr, index, newVal):
+    """
+    Change a single value in a numpy array.
+
+    Will cast to a new dtype if necessary.
+    """
     nonNumericNewVal = match.nonNumeric(newVal) and newVal is not None
     floatNewVal = isinstance(newVal, (float, numpy.floating)) or newVal is None
     if nonNumericNewVal and arr.dtype != numpy.object_:

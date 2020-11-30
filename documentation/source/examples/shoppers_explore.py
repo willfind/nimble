@@ -59,7 +59,7 @@ print('Proportion of visits that generated revenue:', revenueGen)
 ## The SpecialDay feature ranges from 0 to 1 indicating proximity to a special
 ## day (such as Mother's Day), where increased visits might be expected.
 ## What proportion of visits occur in proximity to a special day?
-special = visits.points.count('SpecialDay>0') / len(visits.points)
+special = visits.points.count('SpecialDay > 0') / len(visits.points)
 print('Proportion of visits near a special day:', special)
 
 ## Exploring data through Nimble's calculate module ##

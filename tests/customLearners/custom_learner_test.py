@@ -360,7 +360,6 @@ def test_learnersAvailableOnImport():
     nimbleLearners = nimble.listLearners('nimble')
     assert 'KNNClassifier' in nimbleLearners
     assert 'RidgeRegression' in nimbleLearners
-    assert 'MeanConstant' in nimbleLearners
     assert 'MultiOutputRidgeRegression' in nimbleLearners
     assert 'MultiOutputLinearRegression' in nimbleLearners
 
@@ -386,7 +385,6 @@ def test_listLearnersDirectFromModule():
     nimbleLearners = nimble.listLearners(nimble)
     assert 'KNNClassifier' in nimbleLearners
     assert 'RidgeRegression' in nimbleLearners
-    assert 'MeanConstant' in nimbleLearners
     assert 'MultiOutputRidgeRegression' in nimbleLearners
     assert 'MultiOutputLinearRegression' in nimbleLearners
 
@@ -445,3 +443,43 @@ def test_redefinedLearner():
         assert False # expected InvalidArgumentType
     except InvalidArgumentType:
         pass
+
+class MeanConstant(CustomLearner):
+    learnerType = 'regression'
+
+    def train(self, trainX, trainY):
+        self.mean = trainY.features.statistics('mean')[0, 0]
+
+    def apply(self, testX):
+        raw = numpy.zeros(len(testX.points))
+        numpy.ndarray.fill(raw, self.mean)
+
+        ret = nimble.data("Matrix", raw, useLog=False)
+        ret.transpose(useLog=False)
+        return ret
+
+
+def testMeanConstantSimple():
+    """ Test MeanConstant by checking the ouput given simple hand made inputs """
+
+    dataX = [[0, 0, 0], [1, 10, 10], [0, -1, 4], [1, 0, 20], [0, 1, 0], [1, 2, 3]]
+    trainX = nimble.data('Matrix', dataX)
+
+    dataY = [[0], [1], [0], [1], [0], [1]]
+    trainY = nimble.data('Matrix', dataY)
+
+    for value in [MeanConstant, 'custom.MeanConstant']:
+        ret = nimble.trainAndApply(value, trainX=trainX, trainY=trainY, testX=trainX)
+
+        assert len(ret.points) == 6
+        assert len(ret.features) == 1
+
+        assert ret[0] == .5
+        assert ret[1] == .5
+        assert ret[2] == .5
+        assert ret[3] == .5
+        assert ret[4] == .5
+        assert ret[5] == .5
+
+        customLearners = nimble.listLearners('custom')
+        assert 'MeanConstant' in customLearners

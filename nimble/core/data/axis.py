@@ -11,7 +11,7 @@ methods defined for axis and object subtype specific implementations.
 """
 
 import copy
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 import inspect
 import sys
 from operator import itemgetter
@@ -40,12 +40,13 @@ from ._dataHelpers import isAllowedSingleElement
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import wrapMatchFunctionFactory
 from ._dataHelpers import validateAxisFunction
+from ._dataHelpers import inconsistentNames
 from ._dataHelpers import pyplotRequired, plotOutput, plotFigureHandling
 from ._dataHelpers import plotAxisLabels, plotXTickLabels
 from ._dataHelpers import plotConfidenceIntervalMeanAndError, plotErrorBars
 from ._dataHelpers import plotSingleBarChart, plotMultiBarChart
 
-class Axis(object):
+class Axis(ABC):
     """
     Differentiate how methods act dependent on the axis.
 
@@ -68,13 +69,13 @@ class Axis(object):
         else:
             self._axis = 'feature'
             self._isPoint = False
-        super(Axis, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def __len__(self):
         if self._isPoint:
             return self._base._pointCount
-        else:
-            return self._base._featureCount
+
+        return self._base._featureCount
 
     def __bool__(self):
         return len(self) > 0
@@ -91,8 +92,8 @@ class Axis(object):
             self._setAllDefault()
         if self._isPoint:
             return self._base.pointNamesInverse[index]
-        else:
-            return self._base.featureNamesInverse[index]
+
+        return self._base.featureNamesInverse[index]
 
     def _getNames(self):
         if not self._namesCreated():
@@ -464,9 +465,13 @@ class Axis(object):
             if not self._isPoint:
                 try:
                     validateAllAllowedElements(currOut)
-                except TypeError:
+                except ImproperObjectAction as e:
+                    msg = "function must return a one-dimensional object "
+                    raise ImproperObjectAction(msg) from e
+                except TypeError as e:
                     msg = "function must return a valid single element or "
-                    msg = "an iterable, but got type " + str(type(currOut))
+                    msg += "an iterable, but got type " + str(type(currOut))
+                    raise InvalidArgumentValue(msg) from e
             retData.append(currOut)
 
         return retData, offAxisNames
@@ -572,7 +577,7 @@ class Axis(object):
         if not callable(fillWith):
             value = fillWith
             # for consistency use numpy.nan for None and nans
-            if value is None or value != value:
+            if value is None or value != value: # pylint: disable=comparison-with-itself
                 value = numpy.nan
             fillFunc = fill.constant
             kwarguments['constantValue'] = value
@@ -682,11 +687,13 @@ class Axis(object):
         elif cleanFuncName in ['covariance', 'samplecovariance']:
             toCall = nimble.calculate.covariance
         elif cleanFuncName == 'populationcovariance':
+            # pylint: disable=invalid-name
             def populationCovariance(X, X_T):
                 return nimble.calculate.covariance(X, X_T, False)
 
             toCall = populationCovariance
         elif cleanFuncName == 'dotproduct':
+            # pylint: disable=invalid-name
             def dotProd(X, X_T):
                 return X.matrixMultiply(X_T)
 
@@ -742,13 +749,12 @@ class Axis(object):
 
         if self._axis == 'point' or groupByFeature is None:
             return self._statisticsBackend(cleanFuncName, toCall)
-        else:
-            # groupByFeature is only a parameter for .features
-            res = self._base.groupByFeature(groupByFeature, useLog=False)
-            for k in res:
-                res[k] = res[k].features._statisticsBackend(cleanFuncName,
-                                                            toCall)
-            return res
+        # groupByFeature is only a parameter for .features
+        res = self._base.groupByFeature(groupByFeature, useLog=False)
+        for k in res:
+            res[k] = res[k].features._statisticsBackend(cleanFuncName,
+                                                        toCall)
+        return res
 
     def _statisticsBackend(self, cleanFuncName, toCall):
         ret = self._calculate(toCall, limitTo=None, useLog=False)
@@ -849,8 +855,8 @@ class Axis(object):
     def _namesCreated(self):
         if self._isPoint:
             return not self._base.pointNames is None
-        else:
-            return not self._base.featureNames is None
+
+        return not self._base.featureNames is None
 
     def _nextDefaultName(self):
         if self._isPoint:
@@ -1021,28 +1027,28 @@ class Axis(object):
             else:
                 stop -= 1
             return list(range(start, stop, step))
-        else:
-            numBool = sum(isinstance(val, (bool, numpy.bool_)) for val in key)
-            # contains all boolean values
-            if numBool == length:
-                return [i for i, v in enumerate(key) if v]
-            if numBool > 0:
-                msg = 'The key provided for {ax}s contains boolean values. '
-                msg += 'Booleans are only permitted if the key contains only '
-                msg += 'boolean type values for every {ax} in this object.'
-                raise KeyError(msg.format(ax=self._axis))
-            key = [self._getIndex(i, allowFloats=True) for i in key]
-            if key == list(range(length)):  # full slice
-                return None
-            if len(set(key)) != len(key):
-                duplicates = set(val for val in key if key.count(val) > 1)
-                msg = 'Duplicate values in the key are not allowed. The '
-                msg += 'following values were duplicated: {dup}. Duplicate '
-                msg += '{ax}s can be generated using the repeat() method of '
-                msg += "this object's {ax}s attribute"
-                msg = msg.format(dup=duplicates, ax=self._axis)
-                raise KeyError(msg)
-            return key
+
+        numBool = sum(isinstance(val, (bool, numpy.bool_)) for val in key)
+        # contains all boolean values
+        if numBool == length:
+            return [i for i, v in enumerate(key) if v]
+        if numBool > 0:
+            msg = 'The key provided for {ax}s contains boolean values. '
+            msg += 'Booleans are only permitted if the key contains only '
+            msg += 'boolean type values for every {ax} in this object.'
+            raise KeyError(msg.format(ax=self._axis))
+        key = [self._getIndex(i, allowFloats=True) for i in key]
+        if key == list(range(length)):  # full slice
+            return None
+        if len(set(key)) != len(key):
+            duplicates = set(val for val in key if key.count(val) > 1)
+            msg = 'Duplicate values in the key are not allowed. The '
+            msg += 'following values were duplicated: {dup}. Duplicate '
+            msg += '{ax}s can be generated using the repeat() method of '
+            msg += "this object's {ax}s attribute"
+            msg = msg.format(dup=duplicates, ax=self._axis)
+            raise KeyError(msg)
+        return key
 
     ########################
     #  Structural Helpers  #
@@ -1084,15 +1090,15 @@ class Axis(object):
         except ValueError:
             pass
         #convert query string to a function
-        def target_f(vector):
+        def targetFunc(vector):
             return operatorFunc(vector[name], value)
 
-        target_f.vectorized = True
-        target_f.name = name
-        target_f.value = value
-        target_f.operator = operatorFunc
+        targetFunc.vectorized = True
+        targetFunc.name = name
+        targetFunc.value = value
+        targetFunc.operator = operatorFunc
 
-        return target_f
+        return targetFunc
 
     def _genericStructuralFrontend(self, structure, target=None,
                                    start=None, end=None, number=None,
@@ -1184,8 +1190,8 @@ class Axis(object):
             nameList = [self._getName(i) for i in targetList]
         if self._isPoint:
             return nameList, self._base.features._getNamesNoGeneration()
-        else:
-            return self._base.points._getNamesNoGeneration(), nameList
+
+        return self._base.points._getNamesNoGeneration(), nameList
 
     def _adjustCountAndNames(self, other):
         """
@@ -1353,9 +1359,9 @@ class Axis(object):
         if axis == 'point':
             return (self._base.pointNames.keys()
                     & other.pointNames.keys())
-        else:
-            return (self._base.featureNames.keys()
-                    & other.featureNames.keys())
+
+        return (self._base.featureNames.keys()
+                & other.featureNames.keys())
 
     def _validateReorderedNames(self, axis, callSym, other):
         """
@@ -1375,7 +1381,7 @@ class Axis(object):
             lGetter = self._base.features.getIndex
             rGetter = other.features.getIndex
 
-        inconsistencies = self._base._inconsistentNames(lnames, rnames)
+        inconsistencies = inconsistentNames(lnames, rnames)
 
         if len(inconsistencies) != 0:
             # check for the presence of default names; we don't allow
@@ -1592,5 +1598,5 @@ class AxisIterator(object):
             value = self.viewer(self._position)
             self._position += 1
             return value
-        else:
-            raise StopIteration
+
+        raise StopIteration

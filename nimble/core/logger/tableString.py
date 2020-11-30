@@ -11,7 +11,6 @@ class TableError(Exception):
     """
     Raise when a table cannot be created.
     """
-    pass
 
 
 def objectClass(obj):
@@ -27,7 +26,7 @@ def objectClass(obj):
 
 
 def tableString(table, rowHeader=True, headers=None, roundDigits=None,
-                columnSeperator="", maxRowsToShow=None, snipIndex=None,
+                columnSeparator="", maxRowsToShow=None, snipIndex=None,
                 useSpaces=True, includeTrailingNewLine=True):
     """
     Take a table (rows and columns of strings) and return a string
@@ -59,17 +58,18 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None,
         if len(row) > cols:
             cols = len(row)
 
-    for c in range(cols):
+    for _ in range(cols):
         colWidths.append(1)
 
-    for r in range(len(table)):
-        for c in range(len(table[r])):
-            if roundDigits is not None and isinstance(table[r][c], float):
-                table[r][c] = format(table[r][c], roundDigits)
+    for i, row in enumerate(table):
+        for j, val in enumerate(row):
+            if roundDigits is not None and isinstance(val, float):
+                toString = format(val, roundDigits)
             else:
-                table[r][c] = str(table[r][c])
-            if len(table[r][c]) > colWidths[c]:
-                colWidths[c] = len(table[r][c])
+                toString = str(val)
+            table[i][j] = toString
+            if len(toString) > colWidths[j]:
+                colWidths[j] = len(toString)
 
     if headers is not None:
         if len(headers) != cols:
@@ -77,9 +77,9 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None,
             msg += ")  does not match number of header columns ("
             msg += str(len(headers)) + ")!"
             raise TableError(msg)
-        for c in range(len(headers)):
-            if colWidths[c] < len(headers[c]):
-                colWidths[c] = len(headers[c])
+        for j, header in enumerate(headers):
+            if colWidths[j] < len(header):
+                colWidths[j] = len(header)
 
     # if there is a limit to how many rows we can show, delete the middle rows
     # and replace them with a "..." row
@@ -100,29 +100,28 @@ def tableString(table, rowHeader=True, headers=None, roundDigits=None,
         table += table[snipIndex + 1:]
 
     #modify the text in each column to give it the right length
-    for r in range(len(table)):
-        for c in range(len(table[r])):
-            v = table[r][c]
-            if (r > 0 and c > 0):
-                table[r][c] = v.center(colWidths[c])
-            elif r == 0:
-                table[r][c] = v.center(colWidths[c])
-            elif c == 0:
+    for i, row in enumerate(table):
+        for j, val in enumerate(row):
+            if (i > 0 and j > 0):
+                table[i][j] = val.center(colWidths[j])
+            elif i == 0:
+                table[i][j] = val.center(colWidths[j])
+            elif j == 0:
                 if rowHeader:
-                    table[r][c] = v.rjust(colWidths[c])
+                    table[i][j] = val.rjust(colWidths[j])
                 else:
-                    table[r][c] = v.center(colWidths[c])
-            if c != len(table[r]) - 1 and columnSeperator != "":
-                table[r][c] += columnSeperator
+                    table[i][j] = val.center(colWidths[j])
+            if j != len(table[i]) - 1 and columnSeparator != "":
+                table[i][j] += columnSeparator
 
     out = ""
-    for r in range(len(table)):
+    for val in table:
         if useSpaces:
-            out += "   ".join(table[r]) + "\n"
+            out += "   ".join(val) + "\n"
         else:
-            out += "".join(table[r]) + "\n"
+            out += "".join(val) + "\n"
 
     if includeTrailingNewLine:
         return out
-    else:
-        return out.rstrip("\n")
+
+    return out.rstrip("\n")

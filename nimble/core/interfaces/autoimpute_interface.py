@@ -2,6 +2,8 @@
 Interface to autoimpute package.
 """
 
+# pylint: disable=unused-argument
+
 import types
 import logging
 
@@ -47,11 +49,9 @@ class Autoimpute(_SciKitLearnAPI):
 
             return hasPred or hasTrans or hasFitPred or hasFitTrans
 
-        self.randomParam = 'seed'
-
         self._searcher = PythonSearcher(self.autoimpute, isLearner, 1)
 
-        super(Autoimpute, self).__init__()
+        super().__init__('seed')
 
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
@@ -101,10 +101,10 @@ To install autoimpute
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
                              arguments, customDict):
 
-        def dtypeConvert(df):
-            for idx, ser in df.iteritems():
+        def dtypeConvert(dataframe):
+            for idx, ser in dataframe.iteritems():
                 try:
-                    df.loc[:, idx] = ser.astype(float)
+                    dataframe.loc[:, idx] = ser.astype(float)
                 except ValueError:
                     pass
 
@@ -142,12 +142,14 @@ To install autoimpute
         # we will average the predictions together for our final fill values
         if isinstance(outputValue, (list, types.GeneratorType)):
             finalDF = None
-            for i, df in outputValue:
+            iMax = 0
+            for i, dataframe in outputValue:
                 if finalDF is None:
-                    finalDF = df
+                    finalDF = dataframe
                 else:
-                    finalDF += df
-            outputValue = finalDF / i
+                    finalDF += dataframe
+                iMax = max(iMax, i)
+            outputValue = finalDF / iMax
 
         # In the case of prediction we are given a row vector,
         # yet we want a column vector
@@ -164,7 +166,6 @@ To install autoimpute
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         initParams = validInitParams(initNames, arguments, randomSeed,
                                      self.randomParam)
-        defaults = self.getLearnerDefaultValues(learnerName)[0]
         learner = self.findCallable(learnerName)(**initParams)
 
         # need to enforce strategy as a required parameter for the imputer
@@ -219,15 +220,15 @@ To install autoimpute
 
         try:
             learner.fit(*fitArgs, **fitKwargs)
-        except ValueError as ve:
-            raise InvalidArgumentValue(str(ve))
+        except ValueError as e:
+            raise InvalidArgumentValue(str(e)) from e
 
     def version(self):
         return self.autoimpute.__version__
 
     def _argumentInit(self, toInit):
         # override universal method to require strategy param for imputers
-        initObj = super(Autoimpute, self)._argumentInit(toInit)
+        initObj = super()._argumentInit(toInit)
         if 'Imputer' in toInit.name and 'strategy' not in toInit.kwargs:
             strategies = list(initObj.strategies.keys())
             msg = "Due to the complexity of the default arguments, nimble "

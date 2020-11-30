@@ -78,18 +78,18 @@ def _computeError(knownValues, predictedValues, loopFunction,
     # Go through all values in known and predicted values, and pass those
     # values to loopFunction
     for i in range(len(predictedValues.points)):
-        pV = predictedValues[i, 0]
-        aV = knownValues[i, 0]
-        runningTotal = loopFunction(aV, pV, runningTotal)
+        pVal = predictedValues[i, 0]
+        aVal = knownValues[i, 0]
+        runningTotal = loopFunction(aVal, pVal, runningTotal)
         n += 1
     if n > 0:
         try:
             #provide the final value from loopFunction to compressionFunction,
             #along with the number of values looped over
             runningTotal = compressionFunction(runningTotal, n)
-        except ZeroDivisionError:
+        except ZeroDivisionError as e:
             msg = 'Tried to divide by zero when calculating performance metric'
-            raise ZeroDivisionError(msg)
+            raise ZeroDivisionError(msg) from e
 
     else:
         raise InvalidArgumentValue("Empty argument(s) in error calculator")

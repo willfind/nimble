@@ -16,11 +16,11 @@ holiday   temp  rain_1h snow_1h clouds_all weather_main weather_description     
                temp     0.00     310.07    281.21    282.45         13.34             5843
             rain_1h     0.00    9831.30     0.33      0.00          44.79             372
             snow_1h     0.00      0.51      0.00      0.00           0.01              12
-         clouds_all      0        100      49.36     64.00          39.02              60
+         clouds_all     0.00     100.00    49.36     64.00          39.02              60
        weather_main     nan       nan       nan       nan            nan               11
 weather_description     nan       nan       nan       nan            nan               38
           date_time     nan       nan       nan       nan            nan             40575
-     traffic_volume      0        7280    3259.82   3380.00        1986.86            6704
+     traffic_volume     0.00    7280.00   3259.82   3380.00        1986.86            6704
 
 featureName   minimum   maximum    mean    median   standardDeviation   uniqueCount
        temp    243.39    310.07   281.26   282.46         12.71             5842

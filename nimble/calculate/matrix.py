@@ -1,3 +1,7 @@
+"""
+Matrix calculations.
+"""
+
 from nimble.core.data import Base
 from nimble.exceptions import InvalidArgumentType
 

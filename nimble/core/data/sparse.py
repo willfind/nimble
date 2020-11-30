@@ -9,7 +9,7 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.exceptions import PackageException, ImproperObjectAction
+from nimble.exceptions import PackageException
 from nimble._utility import inheritDocstringsFactory
 from nimble._utility import scipy, pd
 from nimble._utility import sparseMatrixToArray, removeDuplicatesNative
@@ -27,6 +27,7 @@ from ._dataHelpers import denseCountUnique
 from ._dataHelpers import NimbleElementIterator
 from ._dataHelpers import convertToNumpyOrder, modifyNumpyArrayValue
 from ._dataHelpers import isValid2DObject, numpyArrayFromList
+from ._dataHelpers import validateAxis
 
 @inheritDocstringsFactory(Base)
 class Sparse(Base):
@@ -67,6 +68,7 @@ class Sparse(Base):
             if isinstance(data, list):
                 data = numpyArrayFromList(data)
             # Sparse will convert None to 0 so we need to use numpy.nan instead
+            # pylint: disable=singleton-comparison
             if data[data == None].size:
                 if data.dtype not in [float, numpy.floating, object]:
                     data = data.astype(float)
@@ -87,12 +89,12 @@ class Sparse(Base):
                 we are confident _check is unnecessary.
                 """
                 def __init__(self, *args, **kwargs):
-                    backup = self._check
+                    backup = scipy.sparse.coo_matrix._check
                     try:
                         self._check = self._check_override
-                        super(coo_matrix_skipcheck, self).__init__(*args, **kwargs)
+                        super().__init__(*args, **kwargs)
                     finally:
-                        self._check = backup
+                        scipy.sparse.coo_matrix._check = backup
 
                 def _check_override(self):
                     pass
@@ -103,7 +105,7 @@ class Sparse(Base):
         shape = kwds.get('shape', None)
         if shape is None:
             kwds['shape'] = self.data.shape
-        super(Sparse, self).__init__(**kwds)
+        super().__init__(**kwds)
 
     def _getPoints(self):
         return SparsePoints(self)
@@ -142,8 +144,8 @@ class Sparse(Base):
 
             if toTransform.oneArg:
                 return toTransform(value)
-            else:
-                return toTransform(value, pID, fID)
+
+            return toTransform(value, pID, fID)
 
         # perserveZeros is always False in this helper, skipNoneReturnValues
         # is being hijacked by the wrapper: even if it was False, Sparse can't
@@ -179,7 +181,7 @@ class Sparse(Base):
         self.data.eliminate_zeros()
 
     def _calculate_implementation(self, function, points, features,
-                                  preserveZeros, outputType):
+                                  preserveZeros):
         if not isinstance(self, nimble.core.data.BaseView):
             data = self.data.data
             row = self.data.row
@@ -191,7 +193,7 @@ class Sparse(Base):
         if preserveZeros and points is None and features is None:
             try:
                 data = function(data)
-            except Exception:
+            except Exception: # pylint: disable=broad-except
                 function.otypes = [numpy.object_]
                 data = function(data)
             shape = self.data.shape
@@ -216,8 +218,7 @@ class Sparse(Base):
             # our init methods will filter them out from the data attribute
             return values
         # zeros not preserved
-        return self._calculate_genericVectorized(
-            function, points, features, outputType)
+        return self._calculate_genericVectorized(function, points, features)
 
     def _countUnique_implementation(self, points, features):
         uniqueCount = {}
@@ -250,22 +251,22 @@ class Sparse(Base):
         if isinstance(other, SparseView):
             return other._isIdentical_implementation(self)
         # not equal if number of non zero values differs
-        elif self.data.nnz != other.data.nnz:
+        if self.data.nnz != other.data.nnz:
             return False
-        else:
-            selfAxis = self._sorted['axis']
-            otherAxis = other._sorted['axis']
-            # make sure sorted internally the same way then compare
-            if selfAxis != otherAxis or selfAxis is None:
-                if selfAxis is None:
-                    self._sortInternal('feature')
-                    selfAxis = 'feature'
-                if otherAxis != selfAxis:
-                    other._sortInternal(selfAxis)
 
-            return (allDataIdentical(self.data.data, other.data.data)
-                    and allDataIdentical(self.data.row, other.data.row)
-                    and allDataIdentical(self.data.col, other.data.col))
+        selfAxis = self._sorted['axis']
+        otherAxis = other._sorted['axis']
+        # make sure sorted internally the same way then compare
+        if selfAxis != otherAxis or selfAxis is None:
+            if selfAxis is None:
+                self._sortInternal('feature')
+                selfAxis = 'feature'
+            if otherAxis != selfAxis:
+                other._sortInternal(selfAxis)
+
+        return (allDataIdentical(self.data.data, other.data.data)
+                and allDataIdentical(self.data.row, other.data.row)
+                and allDataIdentical(self.data.col, other.data.col))
 
     def _getTypeString_implementation(self):
         return 'Sparse'
@@ -373,20 +374,20 @@ class Sparse(Base):
                 return data.copy()
             try:
                 ret = data.astype(numpy.float)
-            except ValueError:
+            except ValueError as e:
                 msg = 'Can only create scipy {0} matrix from numeric data'
-                raise ValueError(msg.format(to[-3:]))
+                raise ValueError(msg.format(to[-3:])) from e
             if to == 'scipycsc':
                 return ret.tocsc()
             if to == 'scipycsr':
                 return ret.tocsr()
-        if to == 'pandasdataframe':
-            if not pd.nimbleAccessible():
-                msg = "pandas is not available"
-                raise PackageException(msg)
-            pnames = self.points._getNamesNoGeneration()
-            fnames = self.features._getNamesNoGeneration()
-            return pd.DataFrame(data, index=pnames, columns=fnames)
+        # pandasdataframe
+        if not pd.nimbleAccessible():
+            msg = "pandas is not available"
+            raise PackageException(msg)
+        pnames = self.points._getNamesNoGeneration()
+        fnames = self.features._getNamesNoGeneration()
+        return pd.DataFrame(data, index=pnames, columns=fnames)
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):
@@ -404,8 +405,8 @@ class Sparse(Base):
         # _replaceRectangle_zeros_implementation; unnecessary for that helper
         self._sortInternal('point', setIndices=True)
 
-        self_i = 0
-        vals_i = 0
+        selfIdx = 0
+        valsIdx = 0
         copyIndex = 0
         toAddData = []
         toAddRow = []
@@ -417,40 +418,40 @@ class Sparse(Base):
         else:
             valsEnd = len(replaceWith.data.data)
 
-        # Adjust self_i so that it begins at the values that might need to be
-        # replaced, or, if no such values exist, set self_i such that the main
+        # Adjust selfIdx so that it begins at the values that might need to be
+        # replaced, or, if no such values exist, set selfIdx such that the main
         # loop will ignore the contents of self.
         if len(self.data.data) > 0:
-            self_i = self._sorted['indices'][pointStart]
+            selfIdx = self._sorted['indices'][pointStart]
 
-            pcheck = self.data.row[self_i]
-            fcheck = self.data.col[self_i]
+            pcheck = self.data.row[selfIdx]
+            fcheck = self.data.col[selfIdx]
             # the condition in the while loop is a natural break, if it isn't
-            # satisfied then self_i will be exactly where we want it
+            # satisfied then selfIdx will be exactly where we want it
             while fcheck < featureStart or fcheck > featureEnd:
                 # this condition is an unatural break, when it is satisfied,
-                # that means no value of self_i will point into the desired
+                # that means no value of selfIdx will point into the desired
                 # values
-                if pcheck > pointEnd or self_i == len(self.data.data) - 1:
-                    self_i = selfEnd
+                if pcheck > pointEnd or selfIdx == len(self.data.data) - 1:
+                    selfIdx = selfEnd
                     break
 
-                self_i += 1
-                pcheck = self.data.row[self_i]
-                fcheck = self.data.col[self_i]
+                selfIdx += 1
+                pcheck = self.data.row[selfIdx]
+                fcheck = self.data.col[selfIdx]
 
-            copyIndex = self_i
+            copyIndex = selfIdx
 
         # Walk full contents of both, modifying, shifing, or setting aside
-        # values as needed. We will only ever increment one of self_i or vals_i
-        # at a time, meaning if there are matching entries, we will encounter
-        # them. Due to the sorted precondition, if the location in one object
-        # is less than the location in the other object, the lower one CANNOT
-        # have a match.
-        while self_i < selfEnd or vals_i < valsEnd:
-            if self_i < selfEnd:
-                locationSP = self.data.row[self_i]
-                locationSF = self.data.col[self_i]
+        # values as needed. We will only ever increment one of selfIdx or
+        # valsIdx at a time, meaning if there are matching entries, we will
+        # encounter them. Due to the sorted precondition, if the location in
+        # one object is less than the location in the other object, the lower
+        # one CANNOT have a match.
+        while selfIdx < selfEnd or valsIdx < valsEnd:
+            if selfIdx < selfEnd:
+                locationSP = self.data.row[selfIdx]
+                locationSF = self.data.col[selfIdx]
             else:
                 # we want to use unreachable values as sentials, so we + 1
                 # since we're using inclusive endpoints
@@ -463,15 +464,15 @@ class Sparse(Base):
             if constant:
                 vData = replaceWith
                 # uses truncation of int division
-                locationVP += vals_i / (featureEnd - featureStart + 1)
-                locationVF += vals_i % (featureEnd - featureStart + 1)
-            elif vals_i >= valsEnd:
+                locationVP += valsIdx / (featureEnd - featureStart + 1)
+                locationVF += valsIdx % (featureEnd - featureStart + 1)
+            elif valsIdx >= valsEnd:
                 locationVP += pointEnd + 1
                 locationVF += featureEnd + 1
             else:
-                vData = replaceWith.data.data[vals_i]
-                locationVP += replaceWith.data.row[vals_i]
-                locationVF += replaceWith.data.col[vals_i]
+                vData = replaceWith.data.data[valsIdx]
+                locationVP += replaceWith.data.row[valsIdx]
+                locationVF += replaceWith.data.col[valsIdx]
 
             pCmp = locationSP - locationVP
             fCmp = locationSF - locationVF
@@ -482,7 +483,7 @@ class Sparse(Base):
             # copy if space, or record to be added at end.
             if trueCmp > 0:
                 # can only copy into self if there is open space
-                if copyIndex < self_i:
+                if copyIndex < selfIdx:
                     self.data.data[copyIndex] = vData
                     self.data.row[copyIndex] = locationVP
                     self.data.col[copyIndex] = locationVF
@@ -492,19 +493,19 @@ class Sparse(Base):
                     toAddRow.append(locationVP)
                     toAddCol.append(locationVF)
 
-                #increment vals_i
-                vals_i += 1
+                #increment valsIdx
+                valsIdx += 1
             # Case: location at index into other is higher than location at
             # index into self. no matching entry in values - fill this entry
             # in self with zero (by shifting past it)
             elif trueCmp < 0:
                 # need to do cleanup if we're outside of the relevant bounds
                 if locationSF < featureStart or locationSF > featureEnd:
-                    self.data.data[copyIndex] = self.data.data[self_i]
-                    self.data.row[copyIndex] = self.data.row[self_i]
-                    self.data.col[copyIndex] = self.data.col[self_i]
+                    self.data.data[copyIndex] = self.data.data[selfIdx]
+                    self.data.row[copyIndex] = self.data.row[selfIdx]
+                    self.data.col[copyIndex] = self.data.col[selfIdx]
                     copyIndex += 1
-                self_i += 1
+                selfIdx += 1
             # Case: indices point to equal locations.
             else:
                 self.data.data[copyIndex] = vData
@@ -513,17 +514,17 @@ class Sparse(Base):
                 copyIndex += 1
 
                 # increment both??? or just one?
-                self_i += 1
-                vals_i += 1
+                selfIdx += 1
+                valsIdx += 1
 
         # Now we have to walk through the rest of self, finishing the copying
         # shift if necessary
-        if copyIndex != self_i:
-            while self_i < len(self.data.data):
-                self.data.data[copyIndex] = self.data.data[self_i]
-                self.data.row[copyIndex] = self.data.row[self_i]
-                self.data.col[copyIndex] = self.data.col[self_i]
-                self_i += 1
+        if copyIndex != selfIdx:
+            while selfIdx < len(self.data.data):
+                self.data.data[copyIndex] = self.data.data[selfIdx]
+                self.data.row[copyIndex] = self.data.row[selfIdx]
+                self.data.col[copyIndex] = self.data.col[selfIdx]
+                selfIdx += 1
                 copyIndex += 1
         else:
             copyIndex = len(self.data.data)
@@ -621,7 +622,7 @@ class Sparse(Base):
                 leftNames = [DEFAULT_PREFIX + str(i) for i
                              in range(len(self.points))]
                 leftData = numpy.append(leftNames, leftData)
-            leftRow = numpy.append([i for i in range(len(self.points))],
+            leftRow = numpy.append(list(range(len(self.points))),
                                    self.data.row)
             leftCol = numpy.append([0 for _ in range(len(self.points))],
                                    self.data.col + 1)
@@ -638,7 +639,7 @@ class Sparse(Base):
                 rtRange = range(self.shape[0], self.shape[0] + other.shape[0])
                 rightNames = [DEFAULT_PREFIX + str(i) for i in rtRange]
                 rightData = numpy.append(rightNames, rightData)
-            rightRow = numpy.append([i for i in range(len(other.points))],
+            rightRow = numpy.append(list(range(len(other.points))),
                                     other.data.row.copy())
             rightCol = numpy.append([0 for i in range(len(other.points))],
                                     other.data.col.copy() + 1)
@@ -672,6 +673,7 @@ class Sparse(Base):
                         # fill any nan values in left with the corresponding
                         # right value
                         for i, value in enumerate(ptL[matchingFtIdx[0]]):
+                            # pylint: disable=comparison-with-itself
                             if value != value:
                                 fill = ptR[matchingFtIdx[1]][i]
                                 ptL[matchingFtIdx[0]][i] = fill
@@ -690,7 +692,7 @@ class Sparse(Base):
                     matched.append(target)
                     mergedData = numpy.append(mergedData, pt)
                     mergedRow.extend([nextPt] * len(pt))
-                    mergedCol.extend([i for i in range(len(pt))])
+                    mergedCol.extend(list(range(len(pt))))
                     nextPt += 1
                     numPts += 1
             elif point in ["union", "left"]:
@@ -712,7 +714,7 @@ class Sparse(Base):
                     pt = pt[1:]
                 mergedData = numpy.append(mergedData, pt)
                 mergedRow.extend([nextPt] * len(pt))
-                mergedCol.extend([i for i in range(len(pt))])
+                mergedCol.extend(list(range(len(pt))))
                 nextPt += 1
                 numPts += 1
 
@@ -743,7 +745,7 @@ class Sparse(Base):
                         pt = pt[1:]
                     mergedData = numpy.append(mergedData, pt)
                     mergedRow.extend([nextPt] * len(pt))
-                    mergedCol.extend([i for i in range(len(pt))])
+                    mergedCol.extend(list(range(len(pt))))
                     nextPt += 1
                     numPts += 1
 
@@ -839,17 +841,13 @@ class Sparse(Base):
             self._sortInternal(axis, setIndices=True)
 
             if singlePoint:
-                sortedPrimary = self.data.row
                 primaryStart = pointStart
-                primaryEnd = pointEnd
                 allOtherAxis = allFeats
                 sortedSecondary = self.data.col
                 secondaryStart = featureStart
                 secondaryEnd = featureEnd
             else:
-                sortedPrimary = self.data.col
                 primaryStart = featureStart
-                primaryEnd = featureEnd
                 allOtherAxis = allPoints
                 sortedSecondary = self.data.row
                 secondaryStart = pointStart
@@ -903,20 +901,20 @@ class Sparse(Base):
 
             return SparseVectorView(**kwds)
 
-        else:  # window shaped View
-            # the data should be dummy data, but data.shape must
-            # be = (pointEnd - pointStart, featureEnd - featureStart)
-            newInternal = scipy.sparse.coo_matrix([])
-            newInternal._shape = (pointEnd - pointStart,
-                                  featureEnd - featureStart)
-            newInternal.data = None
-            kwds['data'] = newInternal
-            if len(self._shape) > 2:
-                shape = self._shape.copy()
-                shape[0] = pointEnd - pointStart
-                kwds['shape'] = shape
+        # window shaped View
+        # the data should be dummy data, but data.shape must
+        # be = (pointEnd - pointStart, featureEnd - featureStart)
+        newInternal = scipy.sparse.coo_matrix([])
+        newInternal._shape = (pointEnd - pointStart,
+                              featureEnd - featureStart)
+        newInternal.data = None
+        kwds['data'] = newInternal
+        if len(self._shape) > 2:
+            shape = self._shape.copy()
+            shape[0] = pointEnd - pointStart
+            kwds['shape'] = shape
 
-            return SparseView(**kwds)
+        return SparseView(**kwds)
 
     def _validate_implementation(self, level):
         assert self.data.shape[0] == len(self.points)
@@ -994,7 +992,7 @@ class Sparse(Base):
                 # most NotImplemented are inplace operations
                 if opName.startswith('__i'):
                     return self._inplaceBinary_implementation(opName, other)
-                elif opName == '__rsub__':
+                if opName == '__rsub__':
                     return self._rsub__implementation(other)
                 return self._defaultBinaryOperations_implementation(opName,
                                                                     other)
@@ -1023,10 +1021,10 @@ class Sparse(Base):
         if zeroPreserved:
             return self._scalarZeroPreservingBinary_implementation(
                 opName, other)
-        else:
-            # scalar operations apply to all elements; use dense
-            return self._defaultBinaryOperations_implementation(opName,
-                                                                other)
+
+        # scalar operations apply to all elements; use dense
+        return self._defaultBinaryOperations_implementation(opName,
+                                                            other)
 
     def _matmul__implementation(self, other):
         """
@@ -1176,15 +1174,13 @@ class Sparse(Base):
             if not setIndices or self._sorted['indices'] is not None:
                 return
         else:
-            self._validateAxis(axis)
+            validateAxis(axis)
             if axis == "point":
                 sortPrime = self.data.row
                 sortOff = self.data.col
-                primeLength = len(self.points)
             else:
                 sortPrime = self.data.col
                 sortOff = self.data.row
-                primeLength = len(self.features)
             # sort least significant axis first
             sortKeys = numpy.lexsort((sortOff, sortPrime))
 
@@ -1219,10 +1215,10 @@ class Sparse(Base):
             selfData = self.data
         return selfData
 
-    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
+    def _convertToNumericTypes_implementation(self, usableTypes):
         if self.data.dtype not in usableTypes:
-            self.data.data = self.data.data.astype(convertTo)
-        return self.data
+            self.data = self.data.astype(float)
+            self._resetSorted()
 
     def _iterateElements_implementation(self, order, only):
         if only is not None and not only(0): # we can ignore zeros
@@ -1231,6 +1227,9 @@ class Sparse(Base):
         else:
             array = sparseMatrixToArray(self.data)
         return NimbleElementIterator(array, order, only)
+
+    def _isBooleanData(self):
+        return self.data.dtype in [bool, numpy.bool_]
 
     def _resetSorted(self):
         self._sorted['axis'] = None
@@ -1246,9 +1245,6 @@ class SparseVectorView(BaseView, Sparse):
     feature.
     """
 
-    def __init__(self, **kwds):
-        super(SparseVectorView, self).__init__(**kwds)
-
     def _getPoints(self):
         return SparsePointsView(self)
 
@@ -1259,8 +1255,6 @@ class SparseView(BaseView, Sparse):
     """
     Read only access to a Sparse object.
     """
-    def __init__(self, **kwds):
-        super(SparseView, self).__init__(**kwds)
 
     def _getPoints(self):
         return SparsePointsView(self)
@@ -1341,6 +1335,7 @@ class SparseView(BaseView, Sparse):
         sIt = self.points
         oIt = other.points
         for sPoint, oPoint in zip(sIt, oIt):
+            # pylint: disable=comparison-with-itself
             if sPoint != oPoint:
                 return False
             if sPoint != sPoint and oPoint == oPoint:
@@ -1389,22 +1384,12 @@ class SparseView(BaseView, Sparse):
         selfConv._writeFileMTX_implementation(outPath, includePointNames,
                                               includeFeatureNames)
 
-    def _convertUnusableTypes(self, convertTo, usableTypes, returnCopy=True):
-        # We do not want to change the data attribute for SparseView!
-        # This converts the data types of the source object's data attribute
-        # Note: Though this is a view object, we allow this modification since
-        # all the values remain equal and only the types change.
-        try:
-            ret = self._source._convertUnusableTypes_implementation(
-                convertTo, usableTypes)
-        except (ValueError, TypeError):
-            msg = 'Unable to coerce the data to the type required for this '
-            msg += 'operation.'
-            raise ImproperObjectAction(msg)
-        if returnCopy:
-            return ret
-        self._source.data = ret
+    def _convertToNumericTypes_implementation(self, usableTypes):
+        self._source._convertToNumericTypes_implementation(usableTypes)
 
     def _iterateElements_implementation(self, order, only):
         selfConv = self.copy(to="Sparse")
         return selfConv._iterateElements_implementation(order, only)
+
+    def _isBooleanData(self):
+        return self._source.data.dtype in [bool, numpy.bool_]

@@ -61,7 +61,7 @@ class DataFrame(Base):
         shape = kwds.get('shape', None)
         if shape is None:
             kwds['shape'] = self.data.shape
-        super(DataFrame, self).__init__(**kwds)
+        super().__init__(**kwds)
 
     def _getPoints(self):
         return DataFramePoints(self)
@@ -70,10 +70,9 @@ class DataFrame(Base):
         return DataFrameFeatures(self)
 
     def _transform_implementation(self, toTransform, points, features):
-        IDs = itertools.product(range(len(self.points)),
+        ids = itertools.product(range(len(self.points)),
                                 range(len(self.features)))
-        for i, j in IDs:
-            # iat best for getting single value
+        for i, j in ids:
             currVal = self.data.iat[i, j]
 
             if points is not None and i not in points:
@@ -89,8 +88,9 @@ class DataFrame(Base):
             # iat setter does not support type changes, use iloc instead
             self.data.iloc[i, j] = currRet
 
+    # pylint: disable=unused-argument
     def _calculate_implementation(self, function, points, features,
-                                  preserveZeros, outputType):
+                                  preserveZeros):
         if points is not None or features is not None:
             if points is None:
                 points = slice(None)
@@ -163,14 +163,13 @@ class DataFrame(Base):
             msg = "scipy is not available"
             raise PackageException(msg)
 
-        from scipy.io import mmwrite
-
         comment = '#'
         if includePointNames:
             comment += ','.join(self.points.getNames())
         if includeFeatureNames:
             comment += '\n#' + ','.join(self.features.getNames())
-        mmwrite(outPath, self.data.astype(numpy.float), comment=comment)
+        scipy.io.mmwrite(outPath, self.data.astype(numpy.float),
+                         comment=comment)
 
     def _referenceDataFrom_implementation(self, other):
         if not isinstance(other, DataFrame):
@@ -238,22 +237,22 @@ class DataFrame(Base):
                 return scipy.sparse.coo_matrix(data)
             try:
                 ret = self.data.values.astype(numpy.float)
-            except ValueError:
+            except ValueError as e:
                 msg = 'Can only create scipy {0} matrix from numeric data'
-                raise ValueError(msg.format(to[-3:]))
+                raise ValueError(msg.format(to[-3:])) from e
             if to == 'scipycsc':
                 return scipy.sparse.csc_matrix(ret)
             if to == 'scipycsr':
                 return scipy.sparse.csr_matrix(ret)
-        if to == 'pandasdataframe':
-            pnames = self.points._getNamesNoGeneration()
-            fnames = self.features._getNamesNoGeneration()
-            df = pd.DataFrame(data)
-            if pnames is not None:
-                df.index = pnames
-            if fnames is not None:
-                df.columns = fnames
-            return df
+        # pandasdataframe
+        pnames = self.points._getNamesNoGeneration()
+        fnames = self.features._getNamesNoGeneration()
+        dataframe = pd.DataFrame(data)
+        if pnames is not None:
+            dataframe.index = pnames
+        if fnames is not None:
+            dataframe.columns = fnames
+        return dataframe
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):
@@ -313,13 +312,13 @@ class DataFrame(Base):
                                 else n for n in other.points.getNames()]
             elif self._pointNamesCreated() or other._pointNamesCreated():
                 # there will be no matches, need left points ordered first
-                self.data.index = [i for i in range(len(self.points))]
+                self.data.index = list(range(len(self.points)))
                 idxRange = range(self.shape[0], self.shape[0] + other.shape[0])
-                tmpDfR.index = [i for i in idxRange]
+                tmpDfR.index = list(idxRange)
             else:
                 # left already has index set to range(len(self.points))
                 idxRange = range(self.shape[0], self.shape[0] + other.shape[0])
-                tmpDfR.index = [i for i in idxRange]
+                tmpDfR.index = list(idxRange)
 
             self.data = self.data.merge(tmpDfR, how=point, left_index=True,
                                         right_index=True)
@@ -332,26 +331,28 @@ class DataFrame(Base):
         self.data.columns = pd.RangeIndex(self.data.shape[1])
 
         toDrop = []
-        for l, r in zip(matchingFtIdx[0], matchingFtIdx[1]):
-            if onFeature and l == onIdxL:
+        for left, right in zip(matchingFtIdx[0], matchingFtIdx[1]):
+            if onFeature and left == onIdxL:
                 # onFeature column has already been merged
                 continue
-            elif onFeature and l > onIdxL:
+            if onFeature and left > onIdxL:
                 # one less to account for merged onFeature
-                r = r + numColsL - 1
+                right = right + numColsL - 1
             else:
-                r = r + numColsL
-            matches = self.data.iloc[:, l] == self.data.iloc[:, r]
-            nansL = numpy.array([x != x for x in self.data.iloc[:, l]])
-            nansR = numpy.array([x != x for x in self.data.iloc[:, r]])
+                right = right + numColsL
+            matches = self.data.iloc[:, left] == self.data.iloc[:, right]
+            # pylint: disable=comparison-with-itself
+            nansL = numpy.array([x != x for x in self.data.iloc[:, left]])
+            nansR = numpy.array([x != x for x in self.data.iloc[:, right]])
             acceptableValues = matches + nansL + nansR
             if not all(acceptableValues):
                 msg = "The objects contain different values for the same "
                 msg += "feature"
                 raise InvalidArgumentValue(msg)
             if nansL.any():
-                self.data.iloc[:, l][nansL] = self.data.iloc[:, r][nansL]
-            toDrop.append(r)
+                leftNansLocInRight = self.data.iloc[:, right][nansL]
+                self.data.iloc[:, left][nansL] = leftNansLocInRight
+            toDrop.append(right)
 
         if toDrop:
             self.data.drop(toDrop, axis=1, inplace=True)
@@ -464,10 +465,9 @@ class DataFrame(Base):
             ret = numpy.matmul(self.data.values, other.copy('numpyarray'))
         return DataFrame(ret)
 
-    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
+    def _convertToNumericTypes_implementation(self, usableTypes):
         if not all(dtype in usableTypes for dtype in self.data.dtypes):
-            return self.data.astype(convertTo)
-        return self.data
+            self.data = self.data.astype(float)
 
     def _iterateElements_implementation(self, order, only):
         return NimbleElementIterator(self.data.astype(numpy.object_).values,
@@ -477,8 +477,6 @@ class DataFrameView(BaseView, DataFrame):
     """
     Read only access to a DataFrame object.
     """
-    def __init__(self, **kwds):
-        super(DataFrameView, self).__init__(**kwds)
 
     def _getPoints(self):
         return DataFramePointsView(self)

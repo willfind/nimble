@@ -31,16 +31,16 @@ from nimble._utility import allowedNumpyDType
 # Helpers #
 ###########
 
-def isBase(data):
+def _isBase(data):
     return isinstance(data, nimble.core.data.Base)
 
-def isNumpyArray(data):
+def _isNumpyArray(data):
     return isinstance(data, numpy.ndarray)
 
-def isNumpyMatrix(data):
+def _isNumpyMatrix(data):
     return isinstance(data, numpy.matrix)
 
-def isPandasObject(data, dataframe=True, series=True, sparse=None):
+def _isPandasObject(data, dataframe=True, series=True, sparse=None):
     if pd.nimbleAccessible():
         if dataframe and series:
             pandasTypes = (pd.DataFrame, pd.Series)
@@ -63,19 +63,19 @@ def isPandasObject(data, dataframe=True, series=True, sparse=None):
                 return True
     return False
 
-def isPandasSparse(data):
-    return isPandasObject(data, sparse=True)
+def _isPandasSparse(data):
+    return _isPandasObject(data, sparse=True)
 
-def isPandasDense(data):
-    return isPandasObject(data, sparse=False)
+def _isPandasDense(data):
+    return _isPandasObject(data, sparse=False)
 
-def isPandasDataFrame(data):
-    return isPandasObject(data, series=False)
+def _isPandasDataFrame(data):
+    return _isPandasObject(data, series=False)
 
-def isPandasSeries(data):
-    return isPandasObject(data, dataframe=False)
+def _isPandasSeries(data):
+    return _isPandasObject(data, dataframe=False)
 
-def isScipySparse(data):
+def _isScipySparse(data):
     if scipy.nimbleAccessible():
         return scipy.sparse.isspmatrix(data)
     return False
@@ -84,21 +84,24 @@ def isAllowedRaw(data, allowLPT=False):
     """
     Verify raw data is one of the accepted types.
     """
-    if isBase(data):
+    if _isBase(data):
         return True
     if allowLPT and 'PassThrough' in str(type(data)):
         return True
     if isinstance(data, (tuple, list, dict, numpy.ndarray)):
         return True
-    if isScipySparse(data):
+    if _isScipySparse(data):
         return True
-    if isPandasObject(data):
+    if _isPandasObject(data):
         return True
 
     return False
 
 
 def validateReturnType(returnType):
+    """
+    Check returnType argument is valid.
+    """
     retAllowed = copy.copy(nimble.core.data.available)
     retAllowed.append(None)
     if returnType not in retAllowed:
@@ -112,9 +115,10 @@ def isEmptyRaw(raw):
     """
     if raw is None:
         return True
-    if raw == []:
-        return True
-    if hasattr(raw, 'shape') and raw.shape[0] == 0:
+    if hasattr(raw, 'shape'):
+        if raw.shape[0] == 0:
+            return True
+    elif raw == []:
         return True
 
     return False
@@ -210,9 +214,11 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
     retPNames = None
     if pnamesID is True:
         temp = []
-        for i in range(len(rawData)):
-            # grab and remove each value at index 0
-            currVal = rawData[i].pop(0)
+
+        for i, ft in enumerate(rawData):
+            # grab and remove each value in the feature associated
+            # with point names
+            currVal = ft.pop(0)
             # if feature names are also in the data, skip index 0
             if fnamesID is not True or (fnamesID is True and i != 0):
             # we wrap it with the string constructor in case the
@@ -226,8 +232,8 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
         # if they existed we had already removed those values.
         # Therefore: just pop that entire point
         temp = rawData.pop(0)
-        for i in range(len(temp)):
-            temp[i] = str(temp[i])
+        for i, val in enumerate(temp):
+            temp[i] = str(val)
         retFNames = temp
 
     if addedDim:
@@ -252,10 +258,8 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID):
         data = data.reshape(1, data.shape[0])
         addedDim = True
 
-    def cleanRow(npRow):
-        return list(map(_intFloatOrString, list(numpy.array(npRow).flatten())))
-    firstRow = cleanRow(data[0]) if len(data) > 0 else None
-    secondRow = cleanRow(data[1]) if len(data) > 1 else None
+    firstRow = data[0] if len(data) > 0 else None
+    secondRow = data[1] if len(data) > 1 else None
     pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow,
                                                 secondRow)
 
@@ -433,8 +437,8 @@ def extractNamesFromPdDataFrame(rawData, pnamesID, fnamesID):
     Output the index of rawData as pointNames.
     Output the columns of rawData as featureNames.
     """
-    firstRow = rawData.values[0] if len(rawData) > 0 else None
-    secondRow = rawData.values[1] if len(rawData) > 1 else None
+    firstRow = rawData.iloc[0] if len(rawData) > 0 else None
+    secondRow = rawData.iloc[1] if len(rawData) > 1 else None
     pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow,
                                                 secondRow)
 
@@ -483,18 +487,18 @@ def extractNames(rawData, pointNames, featureNames):
     acceptedNameTypes = (str, bool, type(None), list, dict)
     if not isinstance(pointNames, acceptedNameTypes):
         try:
-            pointNames = [val for val in pointNames]
-        except TypeError:
+            pointNames = list(pointNames)
+        except TypeError as e:
             msg = "if pointNames are not 'bool' or a 'str', "
             msg += "they should be other 'iterable' object"
-            raise InvalidArgumentType(msg)
+            raise InvalidArgumentType(msg) from e
     if not isinstance(featureNames, acceptedNameTypes):
         try:
-            featureNames = [val for val in featureNames]
-        except TypeError:
+            featureNames = list(featureNames)
+        except TypeError as e:
             msg = "if featureNames are not 'bool' or a 'str', "
             msg += "they should be other 'iterable' object"
-            raise InvalidArgumentType(msg)
+            raise InvalidArgumentType(msg) from e
     # 1. convert dict like {'a':[1,2], 'b':[3,4]} to np.array
     # featureNames must be those keys
     # pointNames must be False or automatic
@@ -548,17 +552,17 @@ def extractNames(rawData, pointNames, featureNames):
         elif isinstance(rawData, tuple):
             rawData = list(rawData)
             func = extractNamesFromRawList
-        elif isNumpyArray(rawData):
+        elif _isNumpyArray(rawData):
             func = extractNamesFromNumpy
-        elif isScipySparse(rawData):
+        elif _isScipySparse(rawData):
             # all input coo_matrices must have their duplicates removed; all
             # helpers past this point rely on there being single entires only.
             if isinstance(rawData, scipy.sparse.coo_matrix):
                 rawData = removeDuplicatesNative(rawData)
             func = extractNamesFromScipySparse
-        elif isPandasDataFrame(rawData):
+        elif _isPandasDataFrame(rawData):
             func = extractNamesFromPdDataFrame
-        elif isPandasSeries(rawData):
+        elif _isPandasSeries(rawData):
             func = extractNamesFromPdSeries
 
         rawData, tempPointNames, tempFeatureNames = func(rawData, pointNames,
@@ -585,7 +589,6 @@ def extractNames(rawData, pointNames, featureNames):
         # Point names were provided by user
         else:
             assert tempPointNames is None
-            pointNames = pointNames
 
         # User explicitly did not want names extracted
         if featureNames is False or featureNames is None:
@@ -604,7 +607,6 @@ def extractNames(rawData, pointNames, featureNames):
         # Feature names were provided by user
         else:
             assert tempFeatureNames is None
-            featureNames = featureNames
 
     return rawData, pointNames, featureNames
 
@@ -623,13 +625,13 @@ def convertData(returnType, rawData, pointNames, featureNames):
 
     try:
         typeMatchesReturn = isinstance(rawData, typeMatch[returnType])
-    except KeyError:
+    except KeyError as e:
         if returnType == 'Sparse':
             package = 'scipy'
         if returnType == 'DataFrame':
             package = 'pandas'
         msg = "{0} must be installed to create a {1} object"
-        raise PackageException(msg.format(package, returnType))
+        raise PackageException(msg.format(package, returnType)) from e
 
     # if the data can be used to instantiate the object we pass it as-is
     # otherwise choose the best option, a 2D list or numpy array, based on
@@ -658,17 +660,17 @@ def convertToBest(rawData, pointNames, featureNames):
     use a list to preserve the data types of the raw values. Arrays are
     also used for any empty objects.
     """
-    if isPandasDataFrame(rawData):
+    if _isPandasDataFrame(rawData):
         if rawData.empty:
             return rawData.values
         return pandasDataFrameToList(rawData)
-    if isPandasSeries(rawData):
+    if _isPandasSeries(rawData):
         if rawData.empty:
             return numpy.empty((0, rawData.shape[0]))
         return [rawData.to_list()]
-    if isScipySparse(rawData):
+    if _isScipySparse(rawData):
         return sparseMatrixToArray(rawData)
-    if isNumpyArray(rawData):
+    if _isNumpyArray(rawData):
         if rawData.size == 0:
             return rawData
         return numpy2DArray(rawData)
@@ -686,7 +688,7 @@ def convertToBest(rawData, pointNames, featureNames):
 
     return rawData
 
-def parseDatetime(elemType):
+def _parseDatetime(elemType):
     isDatetime = elemType in [datetime.datetime, numpy.datetime64]
     if pd.nimbleAccessible():
         isDatetime = isDatetime or elemType == pd.Timestamp
@@ -696,14 +698,14 @@ def parseDatetime(elemType):
 
     return isDatetime
 
-def numpyArrayDatetimeParse(data, datetimeType):
+def _numpyArrayDatetimeParse(data, datetimeType):
     data = numpy.vectorize(dateutil.parser.parse)(data)
     if datetimeType is not datetime.datetime:
         data = numpy.vectorize(datetimeType)(data)
         data = data.astype(datetimeType)
     return data
 
-def valueDatetimeParse(datetimeType):
+def _valueDatetimeParse(datetimeType):
     def valueParser(value):
         if datetimeType is datetime.datetime:
             return dateutil.parser.parse(value)
@@ -717,68 +719,68 @@ def elementTypeConvert(data, convertToType):
     singleType = not isinstance(convertToType, list)
     objectTypes = (object, numpy.object_)
     try:
-        if singleType and isNumpyArray(data):
-            if parseDatetime(convertToType):
-                data = numpyArrayDatetimeParse(data, convertToType)
+        if singleType and _isNumpyArray(data):
+            if _parseDatetime(convertToType):
+                data = _numpyArrayDatetimeParse(data, convertToType)
             else:
                 data = data.astype(convertToType)
             if not allowedNumpyDType(data.dtype):
                 data = data.astype(numpy.object_)
-        elif singleType and isScipySparse(data):
-            if parseDatetime(convertToType):
-                data.data = numpyArrayDatetimeParse(data.data, convertToType)
+        elif singleType and _isScipySparse(data):
+            if _parseDatetime(convertToType):
+                data.data = _numpyArrayDatetimeParse(data.data, convertToType)
             else:
                 data.data = data.data.astype(convertToType)
             if not allowedNumpyDType(data.data.dtype):
                 data.data = data.data.astype(numpy.object_)
-        elif singleType and isPandasDataFrame(data):
-            if parseDatetime(convertToType):
+        elif singleType and _isPandasDataFrame(data):
+            if _parseDatetime(convertToType):
                 data = data.applymap(dateutil.parser.parse)
             else:
                 data = data.astype(convertToType)
-        elif singleType and len(data): # 2D list
+        elif singleType and data: # 2D list
             # only need to convert if not object type
             if convertToType not in objectTypes:
-                if parseDatetime(convertToType):
-                    convertToType = valueDatetimeParse(convertToType)
+                if _parseDatetime(convertToType):
+                    convertToType = _valueDatetimeParse(convertToType)
                 convertedData = []
                 for point in data:
                     convertedData.append(list(map(convertToType, point)))
                 data = convertedData
 
         # convertToType is a list of differing types
-        elif isNumpyArray(data):
+        elif _isNumpyArray(data):
             for j, feature in enumerate(data.T):
                 convType = convertToType[j]
                 if convType is None:
                     continue
                 data = data.astype(numpy.object_)
-                if parseDatetime(convType):
-                    feature = numpyArrayDatetimeParse(feature, convType)
+                if _parseDatetime(convType):
+                    feature = _numpyArrayDatetimeParse(feature, convType)
                 data[:, j] = feature.astype(convType)
-        elif isScipySparse(data):
+        elif _isScipySparse(data):
             for col, convType in enumerate(convertToType):
                 if convType is None:
                     continue
                 data = data.astype(numpy.object_)
                 colMask = data.col == col
-                if parseDatetime(convType):
-                    feature = numpyArrayDatetimeParse(data.data[colMask],
+                if _parseDatetime(convType):
+                    feature = _numpyArrayDatetimeParse(data.data[colMask],
                                                       convType)
                     data.data[colMask] = feature
                 data.data[colMask] = data.data[colMask].astype(convType)
-        elif isPandasDataFrame(data):
+        elif _isPandasDataFrame(data):
             for i, (idx, ft) in enumerate(data.iteritems()):
                 convType = convertToType[i]
                 if convType is None:
                     continue
-                if parseDatetime(convType):
+                if _parseDatetime(convType):
                     data[idx] = data[idx].apply(dateutil.parser.parse)
                 else:
                     data[idx] = ft.astype(convType)
-        elif len(data): # 2D list
-            convertToType = [valueDatetimeParse(ctype) if parseDatetime(ctype)
-                             else ctype for ctype in convertToType]
+        elif data: # 2D list
+            convertToType = [_valueDatetimeParse(ctt) if _parseDatetime(ctt)
+                             else ctt for ctt in convertToType]
             for i, point in enumerate(data):
                 zippedConvert = zip(point, convertToType)
                 data[i] = [val if (ctype is None or ctype in objectTypes)
@@ -788,7 +790,7 @@ def elementTypeConvert(data, convertToType):
     except (ValueError, TypeError) as error:
         msg = 'Unable to convert the data to convertToType '
         msg += "'{0}'. {1}".format(convertToType, repr(error))
-        raise InvalidArgumentValue(msg)
+        raise InvalidArgumentValue(msg) from error
 
 def replaceNumpyValues(data, toReplace, replaceWith):
     """
@@ -827,7 +829,7 @@ def replaceNumpyValues(data, toReplace, replaceWith):
                 raise ValueError('replaceWith is not a bool type')
             data[replaceLocs] = replaceWith
         if replaceNan:
-            nanLocs = data != data
+            nanLocs = data != data # pylint: disable=comparison-with-itself
             if nanLocs.any():
                 data[nanLocs] = replaceWith
     except ValueError:
@@ -838,7 +840,7 @@ def replaceNumpyValues(data, toReplace, replaceWith):
         data = data.astype(dtype)
         data[numpy.isin(data, toReplace)] = replaceWith
         if replaceNan:
-            data[data != data] = replaceWith
+            data[data != data] = replaceWith # pylint: disable=comparison-with-itself
     return data
 
 
@@ -850,7 +852,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
     # pandas 1.0: SparseDataFrame still in pd namespace but does not work
     # Sparse functionality now determined by presence of .sparse accessor
     # need to convert sparse objects to coo matrix before handling missing
-    if isPandasSparse(rawData):
+    if _isPandasSparse(rawData):
         rawData = scipy.sparse.coo_matrix(rawData)
 
     if isinstance(rawData, (list, tuple)):
@@ -859,7 +861,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
                                            replaceMissingWith)
         rawData = handleMissing.tolist()
 
-    elif isNumpyArray(rawData):
+    elif _isNumpyArray(rawData):
         rawData = replaceNumpyValues(rawData, treatAsMissing,
                                      replaceMissingWith)
 
@@ -868,7 +870,7 @@ def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
                                            replaceMissingWith)
         rawData.data = handleMissing
 
-    elif isPandasDense(rawData):
+    elif _isPandasDense(rawData):
         if len(rawData.values) > 0:
             # .where keeps the values that return True, use ~ to replace those
             # values instead
@@ -902,8 +904,8 @@ class SparseCOORowIterator:
 
             self.rowIdx += 1
             return point
-        else:
-            raise StopIteration
+
+        raise StopIteration
 
 
 class GenericPointIterator:
@@ -917,15 +919,15 @@ class GenericPointIterator:
     the same as using iter()
     """
     def __init__(self, data):
-        if isBase(data) and data.shape[0] > 1:
+        if _isBase(data) and data.shape[0] > 1:
             self.iterator = data.points
-        elif isNumpyMatrix(data):
+        elif _isNumpyMatrix(data):
             self.iterator = iter(numpy.array(data))
         elif isinstance(data, dict):
             self.iterator = iter(data.values())
-        elif isPandasObject(data):
+        elif _isPandasObject(data):
             self.iterator = iter(data.values)
-        elif isScipySparse(data):
+        elif _isScipySparse(data):
             self.iterator = SparseCOORowIterator(data.tocoo(False))
         else:
             self.iterator = iter(data)
@@ -935,17 +937,17 @@ class GenericPointIterator:
 
     def __next__(self):
         val = next(self.iterator)
-        if isBase(val) and 1 not in val.shape:
+        if _isBase(val) and 1 not in val.shape:
             return val.copy('python list')
         return val
 
 
-def getFirstIndex(data):
-    if isScipySparse(data):
+def _getFirstIndex(data):
+    if _isScipySparse(data):
         first = data.data[data.row == 0]
-    elif isPandasObject(data):
+    elif _isPandasObject(data):
         first = data.iloc[0]
-    elif isBase(data) and 1 not in data.shape:
+    elif _isBase(data) and 1 not in data.shape:
         first = data.points[0]
     elif isinstance(data, dict):
         first = data[list(data.keys())[0]]
@@ -958,17 +960,17 @@ def isHighDimensionData(rawData, skipDataProcessing):
     """
     Identify data with more than two-dimensions.
     """
-    if isScipySparse(rawData):
+    if _isScipySparse(rawData):
         if not rawData.data.size:
             return False
         rawData = [rawData.data]
     try:
-        indexZero = getFirstIndex(rawData)
+        indexZero = _getFirstIndex(rawData)
         if isAllowedSingleElement(indexZero):
             if not skipDataProcessing:
                 validateAllAllowedElements(rawData)
             return False
-        indexZeroZero = getFirstIndex(indexZero)
+        indexZeroZero = _getFirstIndex(indexZero)
         if isAllowedSingleElement(indexZeroZero):
             if not skipDataProcessing:
                 toIter = GenericPointIterator(rawData)
@@ -985,19 +987,18 @@ def isHighDimensionData(rawData, skipDataProcessing):
                         raise InvalidArgumentValue(msg)
                     validateAllAllowedElements(point)
             return False
-        else:
-            return True
+        return True
     except IndexError: # rawData or rawData[0] is empty
         return False
     except (ImproperObjectAction, InvalidArgumentType): # high dimension Base
         return True
-    except TypeError: # invalid non-subscriptable object
+    except TypeError as e: # invalid non-subscriptable object
         msg = "Numbers, strings, None, and nan are the only "
         msg += "values allowed in nimble data objects"
-        raise InvalidArgumentValue(msg)
+        raise InvalidArgumentValue(msg) from e
 
 
-def highDimensionNames(rawData, pointNames, featureNames):
+def highDimensionNames(pointNames, featureNames):
     """
     Names cannot be extracted at higher dimensions because the elements
     are not strings. If 'automatic' we can set to False, if True an
@@ -1024,16 +1025,8 @@ def highDimensionNames(rawData, pointNames, featureNames):
     return pointNames, featureNames
 
 
-def validateDataLength(actual, expected):
-    if actual != expected:
-        msg = 'Inconsistent data lengths in object. Expected lengths of '
-        msg += '{0} based on the first available object at '.format(expected)
-        msg += 'dimension, but found length {0}'.format(actual)
-        raise InvalidArgumentValue(msg)
-
-
-def getPointCount(data):
-    if isBase(data):
+def _getPointCount(data):
+    if _isBase(data):
         return len(data.points)
     if hasattr(data, 'shape'):
         return data.shape[0]
@@ -1050,14 +1043,14 @@ def flattenToOneDimension(data, toFill=None, dimensions=None):
     flattened point by point.
     """
     # if Base and not a vector, use points attribute for __len__ and __iter__
-    if isBase(data) and (len(data._shape) > 2 or data.shape[0] > 1):
+    if _isBase(data) and (len(data._shape) > 2 or data.shape[0] > 1):
         data = data.points
     if toFill is None:
         toFill = []
     if dimensions is None:
-        dimensions = [True, [getPointCount(data)]]
+        dimensions = [True, [_getPointCount(data)]]
     elif dimensions[0]:
-        dimensions[1].append(getPointCount(data))
+        dimensions[1].append(_getPointCount(data))
     try:
         if all(map(isAllowedSingleElement, GenericPointIterator(data))):
             toFill.extend(data)
@@ -1065,10 +1058,10 @@ def flattenToOneDimension(data, toFill=None, dimensions=None):
             for obj in GenericPointIterator(data):
                 flattenToOneDimension(obj, toFill, dimensions)
                 dimensions[0] = False
-    except TypeError:
+    except TypeError as e:
         msg = "Numbers, strings, None, and nan are the only "
         msg += "values allowed in nimble data objects"
-        raise InvalidArgumentValue(msg)
+        raise InvalidArgumentValue(msg) from e
 
     return toFill, tuple(dimensions[1])
 
@@ -1080,7 +1073,7 @@ def flattenHighDimensionFeatures(rawData):
     Features are flattened point by point whether numpy.reshape or
     flattenToOneDimension are used.
     """
-    if isNumpyArray(rawData) and rawData.dtype != numpy.object_:
+    if _isNumpyArray(rawData) and rawData.dtype != numpy.object_:
         origDims = rawData.shape
         newShape = (rawData.shape[0], numpy.prod(rawData.shape[1:]))
         rawData = numpy.reshape(rawData, newShape)
@@ -1132,6 +1125,11 @@ def getKeepIndexValues(axisObj, keepList):
     return cleaned
 
 def convertToTypeDictToList(convertToType, featuresObj, featureNames):
+    """
+    Convert the dict containing convertToType values to a list where
+    the index indicates the type of that feature. None indicates no
+    conversion.
+    """
     retFNames = featuresObj._getNamesNoGeneration()
     convertList = [None] * len(featuresObj)
     # if no feature names, we will use the list of None values as the
@@ -1208,12 +1206,12 @@ def initDataObject(
 
     if returnType is None:
         # scipy sparse matrix or a pandas sparse object
-        if isScipySparse(rawData) or isPandasSparse(rawData):
+        if _isScipySparse(rawData) or _isPandasSparse(rawData):
             returnType = 'Sparse'
         else:
             returnType = 'Matrix'
 
-    if isBase(rawData):
+    if _isBase(rawData):
         # point/featureNames, treatAsMissing, etc. may vary
         rawData = rawData.data
     if not reuseData:
@@ -1227,14 +1225,14 @@ def initDataObject(
     # to the data, so we can skip name extraction and missing replacement.
     kwargs = {}
     # convert these types as indexing may cause dimensionality confusion
-    if isNumpyMatrix(rawData):
+    if _isNumpyMatrix(rawData):
         rawData = numpy.array(rawData)
-    if isScipySparse(rawData):
+    if _isScipySparse(rawData):
         rawData = rawData.tocoo()
 
     if isHighDimensionData(rawData, skipDataProcessing):
         # additional name validation / processing before extractNames
-        pointNames, featureNames = highDimensionNames(rawData, pointNames,
+        pointNames, featureNames = highDimensionNames(pointNames,
                                                       featureNames)
         rawData, tensorShape = flattenHighDimensionFeatures(rawData)
         kwargs['shape'] = tensorShape
@@ -1294,18 +1292,18 @@ def initDataObject(
             def indexGetter(x):
                 return outerObj.features.getIndex(x.features.getName(0))
         positions = {}
-        for i in range(len(keepList)):
-            positions[keepList[i]] = i
+        for i, keep in enumerate(keepList):
+            positions[keep] = i
 
         def retCmp(view1, view2):
-            i1 = indexGetter(view1)
-            i2 = indexGetter(view2)
-            if positions[i1] < positions[i2]:
+            idx1 = indexGetter(view1)
+            idx2 = indexGetter(view2)
+            if positions[idx1] < positions[idx2]:
                 return -1
-            elif positions[i1] > positions[i2]:
+            if positions[idx1] > positions[idx2]:
                 return 1
-            else:
-                return 0
+
+            return 0
 
         return retCmp
 
@@ -1468,22 +1466,22 @@ def createDataFromFile(
             if extension == 'h5':
                 extension = 'hdf5' # h5 and hdf5 are synonymous
 
-    if extension == 'csv':
-        loader = _loadcsvUsingPython
-    elif extension == 'mtx':
-        loader = _loadmtxForAuto
-    elif extension == 'hdf5':
-        loader = _loadhdf5ForAuto
-
-    # want to make sure we close the file if loading fails
     try:
-        loaded = loader(
-            toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
-            keepPoints, keepFeatures, inputSeparator=inputSeparator)
+        selectSuccess = False
+        if extension == 'csv':
+            loaded = _loadcsvUsingPython(
+                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+                keepPoints, keepFeatures, inputSeparator)
+            selectSuccess = True
+        elif extension == 'mtx':
+            loaded = _loadmtxForAuto(toPass, pointNames, featureNames)
+        elif extension == 'hdf5':
+            loaded = _loadhdf5ForAuto(toPass, pointNames, featureNames)
+    # want to make sure we close the file if loading fails
     finally:
         toPass.close()
 
-    retData, retPNames, retFNames, selectSuccess = loaded
+    retData, retPNames, retFNames = loaded
 
     # auto set name if unspecified, and is possible
     if isinstance(data, str):
@@ -1551,10 +1549,10 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
             rawSparse = scipy.sparse.coo_matrix((numPoints, numFeatures))
         return nimble.data(returnType, rawSparse, pointNames=pointNames,
                            featureNames=featureNames, name=name, useLog=False)
-    else:
-        raw = numpyMaker((numPoints, numFeatures))
-        return nimble.data(returnType, raw, pointNames=pointNames,
-                           featureNames=featureNames, name=name, useLog=False)
+
+    raw = numpyMaker((numPoints, numFeatures))
+    return nimble.data(returnType, raw, pointNames=pointNames,
+                       featureNames=featureNames, name=name, useLog=False)
 
 
 def _intFloatOrString(inString):
@@ -1562,15 +1560,15 @@ def _intFloatOrString(inString):
     Try to convert strings to numeric types or empty strings to None.
     """
     ret = inString
+    if not inString:
+        return None
     try:
-        ret = int(inString)
+        return int(inString)
     except ValueError:
-        ret = float(inString)
-    # this will return an int or float if either of the above are successful
-    finally:
-        if ret == "":
-            return None
-        return ret
+        try:
+            return float(inString)
+        except ValueError:
+            return ret
 
 def _intFloatBoolOrString(inString):
     """
@@ -1634,7 +1632,7 @@ def _colTypeConversion(row, convertCols):
             row[idx] = cType(val)
 
 
-def _checkCSV_for_Names(openFile, pointNames, featureNames, dialect):
+def _checkCSVForNames(openFile, pointNames, featureNames, dialect):
     """
     Will check for triggers to automatically determine the positions of
     the point or feature names if they have not been specified by the
@@ -1885,9 +1883,7 @@ def _limitToKeptFeatures(keepFeatures, retFNames):
     return keepIndices, keepNames
 
 
-def _loadmtxForAuto(
-        openFile, pointNames, featureNames, ignoreNonNumericalFeatures,
-        keepPoints, keepFeatures, **kwargs):
+def _loadmtxForAuto(openFile, pointNames, featureNames):
     """
     Uses scipy helpers to read a matrix market file; returning whatever
     is most appropriate for the file. If it is a matrix market array
@@ -1950,12 +1946,10 @@ def _loadmtxForAuto(
     retPNames = extPNames if retPNames is None else retPNames
     retFNames = extFNames if retFNames is None else retFNames
 
-    return (data, retPNames, retFNames, False)
+    return data, retPNames, retFNames
 
 
-def _loadhdf5ForAuto(
-        openFile, pointNames, featureNames, ignoreNonNumericalFeatures,
-        keepPoints, keepFeatures, **kwargs):
+def _loadhdf5ForAuto(openFile, pointNames, featureNames):
     """
     Use h5py module to load high dimension data. The openFile is used
     to create a h5py.File object. Each Group and Dataset in the object
@@ -1972,9 +1966,9 @@ def _loadhdf5ForAuto(
         if isinstance(obj, h5py.Dataset):
             # Ellipsis extracts the numpy array
             return obj[...]
-        else:
-            for value in obj.values():
-                arrays.append(extractArray(value))
+
+        for value in obj.values():
+            arrays.append(extractArray(value))
         return arrays
 
     with h5py.File(openFile, 'r') as hdf:
@@ -2025,12 +2019,12 @@ def _loadhdf5ForAuto(
     if pointNames is True or (includePtNames and pointNames is None):
         pointNames = pnames
 
-    return (data, pointNames, featureNames, False)
+    return data, pointNames, featureNames
 
 
 def _loadcsvUsingPython(openFile, pointNames, featureNames,
                         ignoreNonNumericalFeatures, keepPoints, keepFeatures,
-                        **kwargs):
+                        inputSeparator):
     """
     Loads a csv file using a reader from python's csv module.
 
@@ -2083,10 +2077,9 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
         the keepPoints and keepFeatures parameters were applied in this
         function call.
     """
-    inputSeparator = kwargs['inputSeparator']
     dialect = _detectDialectFromSeparator(openFile, inputSeparator)
 
-    (pointNames, featureNames) = _checkCSV_for_Names(
+    (pointNames, featureNames) = _checkCSVForNames(
         openFile, pointNames, featureNames, dialect)
 
     pointNames = _namesDictToList(pointNames, 'point', 'pointNames')
@@ -2268,4 +2261,4 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
     else:
         retPNames = pointNames
 
-    return (retData, retPNames, retFNames, True)
+    return retData, retPNames, retFNames

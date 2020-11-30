@@ -1,4 +1,6 @@
-
+"""
+Contains the KNNImputation learner class.
+"""
 import numpy
 
 import nimble
@@ -7,13 +9,14 @@ from nimble.core._learnHelpers import findBestInterface
 from nimble.match import anyTrue, _convertMatchToFunction
 from nimble.exceptions import InvalidArgumentValue
 
-def sklPresent():
+def _sklPresent():
     try:
         findBestInterface("skl")
     except InvalidArgumentValue:
         return False
     return True
 
+# pylint: disable=attribute-defined-outside-init, arguments-differ
 class KNNImputation(CustomLearner):
     """
     Imputation using K-Nearest Neighbors algorithms.
@@ -24,7 +27,7 @@ class KNNImputation(CustomLearner):
         if mode not in ['classification', 'regression']:
             msg = "mode must be set to 'classification' or 'regression'"
             raise InvalidArgumentValue(msg)
-        if sklPresent():
+        if _sklPresent():
             self.kwargs = {'n_neighbors': k}
             if mode == 'classification':
                 self.learner = 'sciKitLearn.KNeighborsClassifier'

@@ -13,7 +13,7 @@ import numpy
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble._utility import inheritDocstringsFactory, dtypeConvert
+from nimble._utility import inheritDocstringsFactory
 from .universal_interface import PredefinedInterface
 from ._interface_helpers import PythonSearcher
 from ._interface_helpers import modifyImportPathAndImport
@@ -74,7 +74,7 @@ class Shogun(PredefinedInterface):
         self._hasAll = hasattr(self.shogun, '__all__')
         self._searcher = PythonSearcher(self.shogun, isLearner, 2)
 
-        super(Shogun, self).__init__()
+        super().__init__()
 
     def _access(self, module, target):
         """
@@ -168,8 +168,8 @@ To install shogun
         return 'UNKNOWN'
 
 
-    def _getLearnerParameterNamesBackend(self, name):
-        base = self._getParameterNamesBackend(name)
+    def _getLearnerParameterNamesBackend(self, learnerName):
+        base = self._getParameterNamesBackend(learnerName)
 
         #remove aliases
         ret = []
@@ -183,9 +183,9 @@ To install shogun
         return ret
 
 
-    def _getLearnerDefaultValuesBackend(self, name):
-        allNames = self._getLearnerParameterNamesBackend(name)
-        return self._setupDefaultsGivenBaseNames(name, allNames)
+    def _getLearnerDefaultValuesBackend(self, learnerName):
+        allNames = self._getLearnerParameterNamesBackend(learnerName)
+        return self._setupDefaultsGivenBaseNames(allNames)
 
 
     def _getParameterNamesBackend(self, name):
@@ -200,9 +200,9 @@ To install shogun
 
     def _getDefaultValuesBackend(self, name):
         allNames = self._getParameterNamesBackend(name)
-        return self._setupDefaultsGivenBaseNames(name, allNames)
+        return self._setupDefaultsGivenBaseNames(allNames)
 
-    def _setupDefaultsGivenBaseNames(self, name, allNames):
+    def _setupDefaultsGivenBaseNames(self, allNames):
         allValues = []
         for group in allNames:
             curr = {}
@@ -247,8 +247,11 @@ To install shogun
         def shogunToPython(cls):
 
             class WrappedShogun(cls):
+                """
+                Set only non-default arguments for the class.
+                """
                 def __init__(self, **kwargs):
-                    super(WrappedShogun, self).__init__()
+                    super().__init__()
 
                     for name, arg in kwargs.items():
                         if not isinstance(arg, ShogunDefault):
@@ -476,7 +479,7 @@ To install shogun
                 raise InvalidArgumentValue(msg)
             labels = labeler(flattened.astype(float))
         except ImportError:
-            from shogun.Features import Labels
+            from shogun.Features import Labels # pylint: disable=import-outside-toplevel
 
             flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
             labels = Labels(labelsObj.astype(float))
@@ -485,26 +488,26 @@ To install shogun
 
     def _inputTransDataHelper(self, dataObj, learnerName):
         typeString = dataObj.getTypeString()
+        dataObj._convertToNumericTypes(allowInt=False, allowBool=False)
         if typeString == 'Sparse':
-            #raw = dataObj.data.tocsc().astype(numpy.float)
-            #raw = raw.transpose()
             raw = dataObj.copy(to="scipy csc", rowsArePoints=False)
             trans = self._access('Features', 'SparseRealFeatures')()
-            trans.set_sparse_feature_matrix(dtypeConvert(raw))
+            trans.set_sparse_feature_matrix(raw)
             if 'Online' in learnerName:
                 sprf = self._access('Features', 'StreamingSparseRealFeatures')
                 trans = sprf(trans)
         else:
-            #raw = dataObj.copy(to='numpyarray').astype(numpy.float)
-            #raw = raw.transpose()
             raw = dataObj.copy(to='numpyarray', rowsArePoints=False)
             trans = self._access('Features', 'RealFeatures')()
-            trans.set_feature_matrix(dtypeConvert(raw))
+            trans.set_feature_matrix(raw)
             if 'Online' in learnerName:
                 trans = self._access('Features', 'StreamingRealFeatures')()
         return trans
 
 class ShogunDefault(object):
+    """
+    Sentinel value to take the place of default arguments in shogun.
+    """
     def __init__(self, name, typeString='UNKNOWN'):
         self.name = name
         self.typeString = typeString
@@ -553,7 +556,7 @@ def _remapLabels(toRemap, space=None):
     uniqueVals = list(toRemap.countUniqueElements().keys())
     if space is None:
         space = range(len(uniqueVals))
-    remap = {orig: mapped for orig, mapped in zip(uniqueVals, space)}
+    remap = dict(zip(uniqueVals, space))
     if len(remap) == 1:
         msg = "Cannot train a classifier with data containing only one label"
         raise InvalidArgumentValue(msg)
@@ -579,7 +582,7 @@ def catchSignals(target, args, kwargs):
     try:
         target(*args, **kwargs)
     # Exceptions are acceptable, we are only concerned with signals
-    except Exception:
+    except Exception: # pylint: disable=broad-except
         pass
 
 
@@ -594,11 +597,11 @@ def checkProcessFailure(process, target, *args, **kwargs):
     (SystemError for consistency with shogun) if the process exits.
     """
     allArgs = (target, args, kwargs)
-    p = multiprocessing.Process(target=catchSignals, args=allArgs)
-    p.start()
-    p.join(timeout=0.2)
-    exitcode = p.exitcode
-    p.terminate()
+    proc = multiprocessing.Process(target=catchSignals, args=allArgs)
+    proc.start()
+    proc.join(timeout=0.2)
+    exitcode = proc.exitcode
+    proc.terminate()
     if exitcode:
         msg = "shogun encountered an error while attempting "
         if process == 'labels':

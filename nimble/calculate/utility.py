@@ -63,7 +63,7 @@ def detectBestResult(functionToCheck):
         try:
             result = _runTrialGivenParameters(functionToCheck, knowns,
                                               predictionType)
-        except Exception as e:
+        except Exception as e: # pylint: disable=broad-except
             result = e
 
         # If the trial ends successfully, then we do further trials for
@@ -78,14 +78,14 @@ def detectBestResult(functionToCheck):
             # funciton is only considering subsets of the data, then it is
             # possible for us to generate numbers cause weirdness or outright
             # failures. We allow for one such result
-            freebieAvailable = False if predictionType == 0 else True
+            freebieAvailable = not predictionType
             for _ in range(confidenceTrials):
                 knownsMixed = _generateMixedRandom(trialSize)
                 try:
                     resultMixed = _runTrialGivenParameters(functionToCheck,
                                                            knownsMixed,
                                                            predictionType)
-                except Exception as e:
+                except Exception as e: # pylint: disable=broad-except
                     resultMixed = e
 
                 if resultMixed != result:
@@ -112,14 +112,14 @@ def detectBestResult(functionToCheck):
                     resultZeros = _runTrialGivenParameters(functionToCheck,
                                                            knownsZeros,
                                                            predictionType)
-                except Exception as e:
+                except Exception as e: # pylint: disable=broad-except
                     resultZeros = e
                 knownsOnes = _generateAllOnes(trialSize)
                 try:
                     resultOnes = _runTrialGivenParameters(functionToCheck,
                                                           knownsOnes,
                                                           predictionType)
-                except Exception as e:
+                except Exception as e: # pylint: disable=broad-except
                     resultOnes = e
 
                 # check knownsZeros results same as knowns ones results
@@ -146,22 +146,25 @@ def detectBestResult(functionToCheck):
             if best is not None and result != best:
                 reason = "Trials were run with all possible formats for "
                 reason += "predicted values, but gave inconsistent results. "
-                raiseException(reason, resultsByType)
+                detectBestException(reason, resultsByType)
             best = result
 
     # No valid results / all trials resulted in exceptions
     if best is None:
         reason = "Trials were run with all possible formats for predicted "
         reason += "values, but none gave valid results. "
-        raiseException(reason, resultsByType)
+        detectBestException(reason, resultsByType)
 
     return best
 
 
-def raiseException(preface, outputs):
+def detectBestException(preface, outputs):
+    """
+    Exception generator when detectBestResult is unsuccessful.
+    """
     msg = "Either functionToCheck has bugs, is not a performance function, "
     msg += "or is incompatible with these trials. These trials can be avoided "
-    msg += "if the user manulally declares which kinds of values are "
+    msg += "if the user manually declares which kinds of values are "
     msg += "associated with correct predictions (either 'min' or 'max') "
     msg += "by adding an attribute named 'optimal' to functionToCheck. For "
     msg += "debugging purposes, the trial results per format are given:"
@@ -204,7 +207,7 @@ def _runTrialGivenParameters(toCheck, knowns, predictionType):
                 raise _NonMonotonicResultsException(msg)
             prevScore = score
         return "max"
-    elif allWrongScore > allCorrectScore:
+    if allWrongScore > allCorrectScore:
         prevScore = allCorrectScore - 1
         for score in scoreList:
             if (score > allWrongScore
@@ -218,10 +221,9 @@ def _runTrialGivenParameters(toCheck, knowns, predictionType):
         return "min"
     # allWrong and allCorrect must not be equal, otherwise it cannot be a
     # measure of correct performance
-    else:
-        msg = "functionToCheck produced the same values for trials "
-        msg += "including all-correct and all-incorrect predictions."
-        raise _NoDifferenceResultsException(msg)
+    msg = "functionToCheck produced the same values for trials "
+    msg += "including all-correct and all-incorrect predictions."
+    raise _NoDifferenceResultsException(msg)
 
 
 def _generateAllZeros(length):
@@ -257,30 +259,29 @@ def _generatePredicted(knowns, predictionType):
     if predictionType == 0:
         return workingCopy
     # Labels and the score for that label (aka 'bestScores')
-    elif predictionType == 1:
+    if predictionType == 1:
         scores = numpyRandom.randint(2, size=[len(workingCopy.points), 1])
         scores = nimble.data(returnType="List", source=scores,
                              featureNames=['LabelScore'], useLog=False)
         workingCopy.features.append(scores, useLog=False)
         return workingCopy
     # Labels, and scores for all possible labels (aka 'allScores')
-    else:
-        dataToFill = []
-        for i in range(len(workingCopy.points)):
-            currConfidences = [None, None]
-            winner = numpyRandom.randint(10) + 10 + 2
-            loser = numpyRandom.randint(winner - 2) + 2
-            if knowns.data[i][0] == 0:
-                currConfidences[0] = winner
-                currConfidences[1] = loser
-            else:
-                currConfidences[0] = loser
-                currConfidences[1] = winner
-            dataToFill.append(currConfidences)
+    dataToFill = []
+    for i in range(len(workingCopy.points)):
+        currConfidences = [None, None]
+        winner = numpyRandom.randint(10) + 10 + 2
+        loser = numpyRandom.randint(winner - 2) + 2
+        if knowns.data[i][0] == 0:
+            currConfidences[0] = winner
+            currConfidences[1] = loser
+        else:
+            currConfidences[0] = loser
+            currConfidences[1] = winner
+        dataToFill.append(currConfidences)
 
-        scores = nimble.data(returnType="List", source=dataToFill,
-                             featureNames=['0', '1'], useLog=False)
-        return scores
+    scores = nimble.data(returnType="List", source=dataToFill,
+                         featureNames=['0', '1'], useLog=False)
+    return scores
 
 
 def _makeIncorrect(predicted, predictionType, index):
@@ -294,13 +295,14 @@ def _makeIncorrect(predicted, predictionType, index):
 
 class _NonMonotonicResultsException(Exception):
     """
-        Exception to be thrown if the results returned by a performance
-        function do not trend monotoniclly up or down as predicted
-        data approach known values.
+    Exception to be thrown if the results returned by a performance
+    function do not trend monotoniclly up or down as predicted
+    data approach known values.
     """
 
     def __init__(self, value):
         self.value = value
+        super().__init__()
 
     def __str__(self):
         return repr(self.value)
@@ -308,14 +310,15 @@ class _NonMonotonicResultsException(Exception):
 
 class _NoDifferenceResultsException(Exception):
     """
-        Exception to be thrown if the result returned by a performance
-        function when given all-incorrect predicted data exactly match
-        the result when the performance function is given all-correct
-        prediction data.
+    Exception to be thrown if the result returned by a performance
+    function when given all-incorrect predicted data exactly match
+    the result when the performance function is given all-correct
+    prediction data.
     """
 
     def __init__(self, value):
         self.value = value
+        super().__init__()
 
     def __str__(self):
         return repr(self.value)

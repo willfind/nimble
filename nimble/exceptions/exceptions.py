@@ -10,7 +10,7 @@ class NimbleException(Exception):
         if not isinstance(message, str):
             raise TypeError("message must be a string")
         self.message = message
-        super(NimbleException, self).__init__(message)
+        super().__init__(message)
 
     def __str__(self):
         return self.message
@@ -27,7 +27,6 @@ class InvalidArgumentType(NimbleException, TypeError):
     This operation does not accept this type for this argument. This is
     a subclass of Python's TypeError.
     """
-    pass
 
 class InvalidArgumentValue(NimbleException, ValueError):
     """
@@ -39,7 +38,6 @@ class InvalidArgumentValue(NimbleException, ValueError):
     the value may be disallowed for this operation. This is a subclass
     of Python's ValueError.
     """
-    pass
 
 class InvalidArgumentTypeCombination(NimbleException, TypeError):
     """
@@ -50,7 +48,6 @@ class InvalidArgumentTypeCombination(NimbleException, TypeError):
     other instances but not in this specific case. This is a subclass of
     Python's TypeError.
     """
-    pass
 
 class InvalidArgumentValueCombination(NimbleException, ValueError):
     """
@@ -61,7 +58,6 @@ class InvalidArgumentValueCombination(NimbleException, ValueError):
     other instances but not in this specific case. This is a subclass of
     Python's ValueError.
     """
-    pass
 
 class ImproperObjectAction(NimbleException, TypeError):
     """
@@ -71,7 +67,6 @@ class ImproperObjectAction(NimbleException, TypeError):
     the object's attribute value or an invalid value in the object's
     data.
     """
-    pass
 
 class PackageException(NimbleException, ImportError):
     """
@@ -79,7 +74,6 @@ class PackageException(NimbleException, ImportError):
 
     This is a subclass of Python's ImportError.
     """
-    pass
 
 class FileFormatException(NimbleException, ValueError):
     """
@@ -87,7 +81,6 @@ class FileFormatException(NimbleException, ValueError):
 
     This is a subclass of Python's ValueError.
     """
-    pass
 
 
 def _prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):

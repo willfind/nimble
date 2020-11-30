@@ -20,30 +20,20 @@ def notRequired(warning):
     """
     Classify a warning as not required.
 
-    Warnings regarding 'too-many-*' or 'too-few-*', warnings that state
-    'consider-*' and any warnings in the reqIgnore list will return
-    True, meaning they are NOT required.
+    Warnings regarding 'too-many-*' or 'too-few-*' and any warnings in
+    the reqIgnore list will return True, meaning they are NOT required.
     """
     reqIgnore = [
-        'broad-except',
         'chained-comparison',
-        'comparison-with-itself',
         'duplicate-code',
         'eval-used',
         'exec-used',
         'fixme',
         'invalid-name',
-        'len-as-condition',
-        'no-else-return',
         'no-self-use',
-        'pointless-statement',
-        'protected-access',
-        'protected-member',
-        'unnecessary-pass',
-        'unused-argument',
+        'anomalous-backslash-in-string'
     ]
     return (warning.startswith('too')
-            or warning.startswith('consider')
             or warning in reqIgnore)
 
 

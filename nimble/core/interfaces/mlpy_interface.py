@@ -7,8 +7,6 @@ not allowed as a Kernel.
 TODO: multinomialHMM requires special input processing for obs param
 """
 
-import importlib
-
 import numpy
 
 import nimble
@@ -20,6 +18,7 @@ from ._interface_helpers import PythonSearcher
 from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import removeFromTailMatchedLists
 from ._interface_helpers import validInitParams
+from . import _mlpy_patches
 
 
 @inheritDocstringsFactory(PredefinedInterface)
@@ -48,7 +47,7 @@ class Mlpy(PredefinedInterface):
 
         self._searcher = PythonSearcher(self.mlpy, isLearner, 1)
 
-        super(Mlpy, self).__init__()
+        super().__init__()
 
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
@@ -102,11 +101,8 @@ To install mlpy
 
 
     def _findCallableBackend(self, name):
-        if name == 'kmeans':
-            return _Kmeans
-        if name == 'MFastHCluster':
-            return _MFastHCluster
-
+        if hasattr(_mlpy_patches, name):
+            return getattr(_mlpy_patches, name)
         return self._searcher.findInPackage(None, name)
 
 
@@ -189,8 +185,8 @@ To install mlpy
             scoreArgs = self._getMethodArguments(backendArgs, newArguments,
                                                  storedArguments)
             return learner.pred_values(testX, **scoreArgs)
-        else:
-            raise NotImplementedError('Cannot get scores for this learner')
+
+        raise NotImplementedError('Cannot get scores for this learner')
 
 
     def _getScoresOrder(self, learner):
@@ -231,10 +227,7 @@ To install mlpy
                 val = self._argumentInit(val)
 
             if arg == 'kernel':
-                if val is None:
-                    validate = True
-                else:
-                    validate = False
+                validate = val is None
 
                 if isinstance(val, self.mlpy.KernelExponential):
                     msg = "This interface disallows KernelExponential; "
@@ -301,13 +294,7 @@ To install mlpy
             learnParams[name] = value
 
         # use patch if necessary
-        patchedLearners = ["DLDA", "Parzen", "ElasticNet", "ElasticNetC"]
-        if learnerName in patchedLearners:
-            patchLoc = "nimble.core.interfaces._mlpy_patches"
-            patchModule = importlib.import_module(patchLoc)
-            initLearner = getattr(patchModule, learnerName)
-        else:
-            initLearner = self.findCallable(learnerName)
+        initLearner = self.findCallable(learnerName)
         learner = initLearner(**initParams)
         learner.learn(**learnParams)
 
@@ -368,10 +355,10 @@ To install mlpy
                 testX = arguments['t']
                 del arguments['t']
             return learner.pred(testX, **arguments)
-        else:
-            return learner.pred(**arguments)
 
-    def _transform(self, learner, testX, arguments, customDict):
+        return learner.pred(**arguments)
+
+    def _transform(self, learner, testX, arguments, customDict): # pylint: disable=unused-argument
         """
         Wrapper for the underlying transform function of a mlpy learner
         object.
@@ -445,7 +432,7 @@ To install mlpy
                              0.1, 100, True, False, {}]
             elif name == 'learn':
                 pnames = ['x', 'y']
-            elif name == 'pred' or name == 'pred_values':
+            elif name in ['pred', 'pred_values']:
                 pnames = ['t']
             else:
                 return None
@@ -464,7 +451,7 @@ To install mlpy
                 pdefaults = ['l2r_lr', 1, 0.01, {}]
             elif name == 'learn':
                 pnames = ['x', 'y']
-            elif name == 'pred' or name == 'pred_values':
+            elif name in ['pred', 'pred_values']:
                 pnames = ['t']
             else:
                 return None
@@ -525,36 +512,3 @@ To install mlpy
         (newArgs, newDefaults) = removeFromTailMatchedLists(ret[0], ret[3],
                                                             ignore)
         return (newArgs, ret[1], ret[2], newDefaults)
-
-
-class _Kmeans(object):
-    def __init__(self, k, plus=False, seed=0):
-        self.k = k
-        self.plus = plus
-        self.seed = seed
-
-    def learn(self, x):
-        self.x = x
-
-    def labels(self):
-        return None
-
-    def pred(self):
-        import mlpy
-
-        (self.clusters, _, _) = mlpy.kmeans(self.x, self.k, self.plus,
-                                            self.seed)
-        return self.clusters
-
-
-class _MFastHCluster(object):
-    def __init__(self, method='single'):
-        import mlpy
-
-        self.obj = mlpy.MFastHCluster(method)
-
-    def learn(self, x):
-        self.obj.linkage(x)
-
-    def pred(self, t):
-        return self.obj.cut(t)

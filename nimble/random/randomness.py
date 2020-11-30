@@ -7,7 +7,7 @@ import random
 
 import numpy
 
-import nimble
+import nimble # pylint: disable=unused-import
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble._utility import scipy
@@ -15,13 +15,16 @@ from nimble.core.logger import handleLogging
 from nimble.core._createHelpers import validateReturnType, initDataObject
 
 pythonRandom = random.Random(42)
-numpyRandom = numpy.random.RandomState(42)
+numpyRandom = numpy.random.RandomState(42) # pylint: disable=no-member
 
-# We use None to signal that we are outside of a section of
-# uncontrolled randomness
-_saved = [None, None]
-_stillDefault = True
-
+class _RandomControl:
+    """
+    Track the random states controlled by Nimble.
+    """
+    # We use None to signal that we are within a section of
+    # controlled randomness
+    pythonState = None
+    numpyState = None
 
 def setSeed(seed, useLog=None):
     """
@@ -34,12 +37,9 @@ def setSeed(seed, useLog=None):
         integer for compliance with numpy. If seed is None, then we use
         os system time.
     """
-    global _stillDefault
 
     pythonRandom.seed(seed)
     numpyRandom.seed(seed)
-    if _stillDefault and not all(state is None for state in _saved):
-        _stillDefault = False
 
     handleLogging(useLog, 'setSeed', seed=seed)
 
@@ -260,8 +260,8 @@ def _startAlternateControl(seed=None):
         integer for compliance with numpy. If seed is None, then we use
         os system time.
     """
-    _saved[0] = pythonRandom.getstate()
-    _saved[1] = numpyRandom.get_state()
+    _RandomControl.pythonState = pythonRandom.getstate()
+    _RandomControl.numpyState = numpyRandom.get_state()
 
     setSeed(seed, useLog=False)
 
@@ -274,11 +274,11 @@ def _endAlternateControl():
     different kind of randomness than the current default without
     changing the reproducibility of later random calls outside of the
     section. This will restore the state saved by
-    `_startAlternateControl``.
+    ``_startAlternateControl``.
     """
-    if _saved[0] is not None:
-        pythonRandom.setstate(_saved[0])
-        _saved[0] = None
-    if _saved[1] is not None:
-        numpyRandom.set_state(_saved[1])
-        _saved[1] = None
+    if _RandomControl.pythonState is not None:
+        pythonRandom.setstate(_RandomControl.pythonState)
+        _RandomControl.pythonState = None
+    if _RandomControl.numpyState is not None:
+        numpyRandom.set_state(_RandomControl.numpyState)
+        _RandomControl.numpyState = None

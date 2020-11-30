@@ -141,7 +141,9 @@ disable=print-statement,
         deprecated-sys-function,
         exception-escape,
         comprehension-escape,
-        useless-object-inheritance
+        useless-object-inheritance,
+        protected-access,
+        protected-member
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -323,7 +325,7 @@ indent-string='    '
 max-line-length=79
 
 # Maximum number of lines in a module.
-max-module-lines=1000
+max-module-lines=2500
 
 # List of optional constructs for which whitespace checking is disabled. `dict-
 # separator` is used to allow tabulation in dicts, etc.: {1  : 1,\n222: 2}.
@@ -370,7 +372,7 @@ attr-naming-style=camelCase
 
 # Regular expression matching correct attribute names. Overrides attr-naming-
 # style.
-#attr-rgx=
+attr-rgx=_{,2}[a-z][a-zA-Z0-9]{2,}_{,2}$|[A-Z_]{3,}$
 
 # Bad variable names which should always be refused, separated by a comma.
 bad-names=foo,
@@ -413,16 +415,7 @@ function-naming-style=camelCase
 # function-rgx=
 
 # Good variable names which should always be accepted, separated by a comma.
-good-names=i,
-           j,
-           k,
-           _,
-           x,
-           y,
-           X,
-           Y,
-           pt,
-           ft
+good-names=_, a, d, e, f, i, j, k, n, v, x, y, X, Y, pt, ft, tl, ax, by, to
 
 # Include a hint for the correct naming format with invalid-name.
 include-naming-hint=no
@@ -442,7 +435,7 @@ method-naming-style=camelCase
 method-rgx=[a-z][a-zA-Z0-9]+$|_{1,2}[a-z][a-zA-Z0-9_]+$
 
 # Naming style matching correct module names.
-module-naming-style=camelCase
+module-naming-style=any
 
 # Regular expression matching correct module names. Overrides module-naming-
 # style.
@@ -466,7 +459,7 @@ variable-naming-style=camelCase
 
 # Regular expression matching correct variable names. Overrides variable-
 # naming-style.
-#variable-rgx=
+variable-rgx=_{,2}[a-z][a-zA-Z0-9]{2,}_?$|[A-Z_]{3,}$
 
 
 [IMPORTS]

@@ -4,6 +4,8 @@ Relies on being scikit-learn 0.19 or above
 TODO: multinomialHMM requires special input processing for obs param
 """
 
+# pylint: disable=unused-argument
+
 import warnings
 from unittest import mock
 import pkgutil
@@ -12,7 +14,7 @@ import abc
 import numpy
 
 import nimble
-from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble._utility import inspectArguments
 from nimble._utility import inheritDocstringsFactory, dtypeConvert
 from .universal_interface import PredefinedInterface
@@ -28,6 +30,10 @@ class _SciKitLearnAPI(PredefinedInterface):
     """
     Base class for interfaces following the scikit-learn api.
     """
+    def __init__(self, randomParam):
+        self.randomParam = randomParam
+        super().__init__()
+
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
     #######################################
@@ -156,7 +162,8 @@ class _SciKitLearnAPI(PredefinedInterface):
     def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
                             arguments, customDict):
         # see partial_fit(X, y[, classes, sample_weight])
-        raise NotImplementedError
+        msg = 'this interface does not implement incremental training'
+        raise ImproperObjectAction(msg)
 
     def _applier(self, learnerName, learner, testX, newArguments,
                  storedArguments, customDict):
@@ -266,9 +273,6 @@ class _SciKitLearnAPI(PredefinedInterface):
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
     #######################################
-    @abc.abstractmethod
-    def __init__(self):
-        pass
 
     @abc.abstractmethod
     def accessible(self):
@@ -314,7 +318,7 @@ class _SciKitLearnAPI(PredefinedInterface):
         pass
 
     @abc.abstractmethod
-    def _initLearner(self, learnerName, trainX, trainY, arguments):
+    def _initLearner(self, learnerName, trainX, trainY, arguments, randomSeed):
         pass
 
     @abc.abstractmethod
@@ -343,7 +347,6 @@ class SciKitLearn(_SciKitLearnAPI):
             msg += "be sure of success for version {0}".format(version)
             warnings.warn(msg)
 
-        self.randomParam = 'random_state'
         walkPackages = pkgutil.walk_packages
         def mockWalkPackages(*args, **kwargs):
             packages = walkPackages(*args, **kwargs)
@@ -367,13 +370,13 @@ class SciKitLearn(_SciKitLearnAPI):
             with mock.patch('pkgutil.walk_packages', mockWalkPackages):
                 try:
                     kwargs = {'include_dont_test': True}
-                    all_estimators = testUtils.all_estimators(**kwargs)
+                    estimatorDict = testUtils.all_estimators(**kwargs)
                 except TypeError:
                     # include_dont_test will be removed in later versions
-                    all_estimators = testUtils.all_estimators()
+                    estimatorDict = testUtils.all_estimators()
 
             self.allEstimators = {}
-            for name, obj in all_estimators:
+            for name, obj in estimatorDict:
                 if name.startswith('_'):
                     continue
                 try:
@@ -392,7 +395,7 @@ class SciKitLearn(_SciKitLearnAPI):
                 if hasPred or hasTrans or hasFitPred or hasFitTrans:
                     self.allEstimators[name] = obj
 
-        super(SciKitLearn, self).__init__()
+        super().__init__('random_state')
 
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
@@ -436,7 +439,7 @@ To install scikit-learn
             'IsotonicRegression', # requires 1D input data
             ]
 
-        for name in self.allEstimators.keys():
+        for name in self.allEstimators:
             if name not in exclude:
                 possibilities.append(name)
 
@@ -560,10 +563,10 @@ To install scikit-learn
 
         try:
             learner.fit(**fitParams)
-        except ValueError as ve:
+        except ValueError as e:
             # these occur when the learner requires different input data
             # (multi-dimensional, non-negative)
-            raise InvalidArgumentValue(str(ve))
+            raise InvalidArgumentValue(str(e)) from e
 
     def version(self):
         return self.skl.__version__

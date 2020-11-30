@@ -56,7 +56,7 @@ def inverse(aObj):
     if not isinstance(aObj, nimble.core.data.Base):
         raise InvalidArgumentType(
             "Object must be derived class of nimble.core.data.Base")
-    if not len(aObj.points) and not len(aObj.features):
+    if not aObj.points and not aObj.features:
         return aObj.copy()
     if len(aObj.points) != len(aObj.features):
         msg = 'Object has to be square \
@@ -78,10 +78,10 @@ def inverse(aObj):
         except ValueError as exception:
             if re.match('.*object arrays.*', str(exception), re.I):
                 msg = 'Elements types in object data are not supported.'
-                raise InvalidArgumentType(msg)
+                raise InvalidArgumentType(msg) from exception
             if re.match('(.*infs.*)|(.*nans.*)', str(exception), re.I):
                 msg = 'Infs or NaNs values are not supported.'
-                raise InvalidArgumentValue(msg)
+                raise InvalidArgumentValue(msg) from exception
             raise exception
 
     else:
@@ -93,7 +93,7 @@ def inverse(aObj):
         except TypeError as exception:
             if re.match('.*no supported conversion*', str(exception), re.I):
                 msg = 'Elements types in object data are not supported.'
-                raise InvalidArgumentType(msg)
+                raise InvalidArgumentType(msg) from exception
             raise exception
 
     return nimble.data(aObj.getTypeString(), invData, useLog=False)
@@ -153,7 +153,7 @@ def pseudoInverse(aObj, method='svd'):
     if not isinstance(aObj, nimble.core.data.Base):
         raise InvalidArgumentType(
             "Object must be derived class of nimble.core.data.Base.")
-    if not len(aObj.points) and not len(aObj.features):
+    if not aObj.points and not aObj.features:
         return aObj
     if method not in ['least-squares', 'svd']:
         raise InvalidArgumentValue(
@@ -162,12 +162,11 @@ def pseudoInverse(aObj, method='svd'):
     def _handleNonSupportedTypes(exception):
         if re.match('.*object arrays*', str(exception), re.I):
             msg = 'Elements types in object data are not supported.'
-            raise InvalidArgumentType(msg)
-        elif re.match('(.*infs.*)|(.*nans.*)', str(exception), re.I):
+            raise InvalidArgumentType(msg) from exception
+        if re.match('(.*infs.*)|(.*nans.*)', str(exception), re.I):
             msg = 'Infs or NaNs values are not supported.'
-            raise InvalidArgumentValue(msg)
-        else:
-            raise exception
+            raise InvalidArgumentValue(msg) from exception
+        raise exception
 
     pinvObj = dtypeConvert(aObj.copy(to='numpy array'))
     if method == 'svd':
@@ -304,7 +303,6 @@ def _backendSolvers(aObj, bObj, solverFunction):
         bData = dtypeConvert(numpy.asarray(bObj.data))
         if solverFunction.__name__ == 'solve':
             solution = scipy.sparse.linalg.spsolve(aData, bData)
-            solution = solution
         else:
             solution = scipy.sparse.linalg.lsqr(aData, bData)
             solution = solution[0]
@@ -333,13 +331,12 @@ def _backendSolversValidation(aObj, bObj, solverFunction):
 
     if len(bObj.points) != 1 and len(bObj.features) != 1:
         raise InvalidArgumentValue("b should be a vector")
-    elif len(bObj.points) == 1 and len(bObj.features) > 1:
+    if len(bObj.points) == 1 and len(bObj.features) > 1:
         if len(aObj.points) != len(bObj.features):
             raise InvalidArgumentValueCombination(
                 'A and b have incompatible dimensions.')
-        else:
-            bObj = bObj.T
-    elif len(bObj.points) > 1 and len(bObj.features) == 1:
+        bObj = bObj.T
+    if len(bObj.points) > 1 and len(bObj.features) == 1:
         if len(aObj.points) != len(bObj.points):
             raise InvalidArgumentValueCombination(
                 'A and b have incompatible dimensions.')

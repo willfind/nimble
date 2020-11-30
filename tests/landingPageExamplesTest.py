@@ -67,7 +67,7 @@ def test_callExamplesAsMain():
         expOut = os.path.join(examplesDir, 'outputs', outputFile)
         if cp.returncode != 0:
             failures.append(key)
-            print(key + " : " + str(cp.stderr))
+            print(key + " : ", cp.stderr.decode('utf-8'))
             print("")
         else:
             outLines = cp.stdout.split(b'\n')

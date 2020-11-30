@@ -11,9 +11,8 @@ import math
 import numbers
 import itertools
 import os.path
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from contextlib import contextmanager
-import datetime
 
 import numpy
 
@@ -27,9 +26,6 @@ from nimble.core.logger import produceFeaturewiseReport
 from nimble.core.logger import produceAggregateReport
 from nimble._utility import cloudpickle, h5py, plt
 from nimble._utility import isDatetime
-from .points import Points
-from .features import Features
-from .axis import Axis
 from .stretch import Stretch
 from . import _dataHelpers
 # the prefix for default point and feature names
@@ -44,6 +40,9 @@ from ._dataHelpers import validateElementFunction, wrapMatchFunctionFactory
 from ._dataHelpers import ElementIterator1D
 from ._dataHelpers import elementQueryFunction
 from ._dataHelpers import limitedTo2D
+from ._dataHelpers import arrangeFinalTable
+from ._dataHelpers import inconsistentNames, equalNames
+from ._dataHelpers import validateAxis, validateRangeOrder
 from ._dataHelpers import pyplotRequired, plotOutput, plotFigureHandling
 from ._dataHelpers import plotUpdateAxisLimits, plotAxisLimits
 from ._dataHelpers import plotAxisLabels, plotXTickLabels
@@ -69,7 +68,7 @@ def hashCodeFunc(elementValue, pointNum, featureNum):
     """
     return ((math.sin(pointNum) + math.cos(featureNum)) / 2.0) * elementValue
 
-class Base(object):
+class Base(ABC):
     """
     The base class for all nimble data objects.
 
@@ -206,7 +205,7 @@ class Base(object):
         self._relPath = paths[1]
 
         # call for safety
-        super(Base, self).__init__(**kwds)
+        super().__init__(**kwds)
 
     #######################
     # Property Attributes #
@@ -246,12 +245,6 @@ class Base(object):
         """
         return tuple(self._shape)
 
-    def _getPoints(self):
-        """
-        Get the object containing point-based methods for this object.
-        """
-        return BasePoints(base=self)
-
     @property
     def points(self):
         """
@@ -262,12 +255,6 @@ class Base(object):
         Points
         """
         return self._points
-
-    def _getFeatures(self):
-        """
-        Get the object containing feature-based methods for this object.
-        """
-        return BaseFeatures(base=self)
 
     @property
     def features(self):
@@ -347,8 +334,8 @@ class Base(object):
         """
         if self.pointNamesInverse is None:
             return False
-        else:
-            return True
+
+        return True
 
     def _featureNamesCreated(self):
         """
@@ -358,8 +345,8 @@ class Base(object):
         """
         if self.featureNamesInverse is None:
             return False
-        else:
-            return True
+
+        return True
 
     def _anyDefaultPointNames(self):
         """
@@ -369,8 +356,8 @@ class Base(object):
         if self._pointNamesCreated():
             return any([name.startswith(DEFAULT_PREFIX) for name
                         in self.points.getNames()])
-        else:
-            return True
+
+        return True
 
     def _anyDefaultFeatureNames(self):
         """
@@ -380,8 +367,8 @@ class Base(object):
         if self._featureNamesCreated():
             return any([name.startswith(DEFAULT_PREFIX) for name
                         in self.features.getNames()])
-        else:
-            return True
+
+        return True
 
     def _allDefaultPointNames(self):
         """
@@ -391,8 +378,8 @@ class Base(object):
         if self._pointNamesCreated():
             return all([name.startswith(DEFAULT_PREFIX) for name
                         in self.points.getNames()])
-        else:
-            return True
+
+        return True
 
     def _allDefaultFeatureNames(self):
         """
@@ -402,8 +389,8 @@ class Base(object):
         if self._featureNamesCreated():
             return all([name.startswith(DEFAULT_PREFIX) for name
                         in self.features.getNames()])
-        else:
-            return True
+
+        return True
 
     @contextmanager
     def _treatAs2D(self):
@@ -919,8 +906,7 @@ class Base(object):
                                              'toCalculate')
 
         ret = self._calculate_backend(calculator, points, features,
-                                      preserveZeros, skipNoneReturnValues,
-                                      outputType)
+                                      preserveZeros, outputType)
 
         handleLogging(useLog, 'prep', 'calculateOnElements',
                       self.getTypeString(), Base.calculateOnElements,
@@ -1030,8 +1016,8 @@ class Base(object):
         return ret
 
     def _calculate_backend(self, calculator, points=None, features=None,
-                           preserveZeros=False, skipNoneReturnValues=False,
-                           outputType=None, allowBoolOutput=False):
+                           preserveZeros=False, outputType=None,
+                           allowBoolOutput=False):
         if points is not None:
             points = constructIndicesList(self, 'point', points)
         if features is not None:
@@ -1045,7 +1031,7 @@ class Base(object):
         if calculator.oneArg:
             vectorized = numpy.vectorize(calculator)
             values = self._calculate_implementation(
-                vectorized, points, features, preserveZeros, optType)
+                vectorized, points, features, preserveZeros)
 
         else:
             if not points:
@@ -1056,18 +1042,18 @@ class Base(object):
             values = numpy.empty([len(points), len(features)])
             if allowBoolOutput:
                 values = values.astype(numpy.bool_)
-            p = 0
-            for pi in points:
-                f = 0
-                for fj in features:
-                    value = self[pi, fj]
-                    currRet = calculator(value, pi, fj)
+            pIdx = 0
+            for i in points:
+                fIdx = 0
+                for j in features:
+                    value = self[i, j]
+                    currRet = calculator(value, i, j)
                     if (match.nonNumeric(currRet) and currRet is not None
                             and values.dtype != numpy.object_):
                         values = values.astype(numpy.object_)
-                    values[p, f] = currRet
-                    f += 1
-                p += 1
+                    values[pIdx, fIdx] = currRet
+                    fIdx += 1
+                pIdx += 1
 
         ret = nimble.data(optType, values, treatAsMissing=[None], useLog=False)
 
@@ -1076,8 +1062,7 @@ class Base(object):
 
         return ret
 
-    def _calculate_genericVectorized(
-            self, function, points, features, outputType):
+    def _calculate_genericVectorized(self, function, points, features):
         # need points/features as arrays for indexing
         if points:
             points = numpy.array(points)
@@ -1092,7 +1077,7 @@ class Base(object):
         toCalculate = toCalculate[points[:, None], features]
         try:
             return function(toCalculate)
-        except Exception:
+        except Exception: # pylint: disable=broad-except
             # change output type of vectorized function to object to handle
             # nonnumeric data
             function.otypes = [numpy.object_]
@@ -1495,9 +1480,9 @@ class Base(object):
                     raise InvalidArgumentValue(msg)
                 try:
                     self._validateEqualNames('point', 'point', '', labels)
-                except InvalidArgumentValue:
+                except InvalidArgumentValue as e:
                     msg = 'labels and calling object pointNames must be equal'
-                    raise InvalidArgumentValue(msg)
+                    raise InvalidArgumentValue(msg) from e
                 trainY = labels.points.copy(order[:splitIndex], useLog=False)
                 testY = labels.points.copy(order[splitIndex:], useLog=False)
             else:
@@ -1665,8 +1650,7 @@ class Base(object):
 
 
         if fileFormat.lower() in ['hdf5', 'h5']:
-            self._writeFileHDF_implementation(outPath, includePointNames,
-                                              includeFeatureNames)
+            self._writeFileHDF_implementation(outPath, includePointNames)
         elif len(self._shape) > 2:
             msg = 'Data with more than two dimensions can only be written '
             msg += 'to .hdf5 or .h5 formats otherwise the dimensionality '
@@ -1687,8 +1671,7 @@ class Base(object):
         fnamesLine += '\n'
         openFile.write(fnamesLine)
 
-    def _writeFileHDF_implementation(self, outPath, includePointNames,
-                                     includeFeatureNames):
+    def _writeFileHDF_implementation(self, outPath, includePointNames):
         if not h5py.nimbleAccessible():
             msg = 'h5py must be installed to write to an hdf file'
             raise PackageException(msg)
@@ -1700,7 +1683,7 @@ class Base(object):
             userblockSize = 0
         with h5py.File(outPath, 'w', userblock_size=userblockSize) as hdf:
             for name, point in zip(pnames, self.points):
-                point._convertUnusableTypes(float, (int, float, bool), False)
+                point._convertToNumericTypes()
                 asArray = point.copy('numpy array')
                 _ = hdf.create_dataset(name, data=asArray)
                 hdf.flush()
@@ -1942,15 +1925,16 @@ class Base(object):
             ret = ret.features._structuralBackend_implementation('copy', y)
         return ret
 
-    def pointView(self, ID):
+    def pointView(self, identifier):
         """
         A read-only view of a single point.
 
-        A BaseView object into the data of the point with the given ID.
-        See BaseView object comments for its capabilities. This view is
-        only valid until the next modification to the shape or ordering
-        of this object's internal data. After such a modification, there
-        is no guarantee to the validity of the results.
+        A BaseView object into the data of the point with the given
+        identifier. See BaseView object comments for its capabilities.
+        This view is only valid until the next modification to the shape
+        or ordering of this object's internal data. After such a
+        modification, there is no guarantee to the validity of the
+        results.
 
         Returns
         -------
@@ -1958,22 +1942,22 @@ class Base(object):
             The read-only object for this point.
         """
         if self._pointCount == 0:
-            msg = "ID is invalid, This object contains no points"
+            msg = "identifier is invalid, This object contains no points"
             raise ImproperObjectAction(msg)
 
-        index = self.points.getIndex(ID)
+        index = self.points.getIndex(identifier)
         ret = self._view_backend(index, index, None, None, True)
         return ret
 
     @limitedTo2D
-    def featureView(self, ID):
+    def featureView(self, identifier):
         """
         A read-only view of a single feature.
 
         A BaseView object into the data of the feature with the given
-        ID. See BaseView object comments for its capabilities. This view
-        is only valid until the next modification to the shape or
-        ordering of this object's internal data. After such a
+        identifier. See BaseView object comments for its capabilities.
+        This view is only valid until the next modification to the shape
+        or ordering of this object's internal data. After such a
         modification, there is no guarantee to the validity of the
         results.
 
@@ -1983,10 +1967,10 @@ class Base(object):
             The read-only object for this feature.
         """
         if self._featureCount == 0:
-            msg = "ID is invalid, This object contains no features"
+            msg = "identifier is invalid, This object contains no features"
             raise ImproperObjectAction(msg)
 
-        index = self.features.getIndex(ID)
+        index = self.features.getIndex(identifier)
         return self._view_backend(None, None, index, index)
 
     def view(self, pointStart=None, pointEnd=None, featureStart=None,
@@ -2054,8 +2038,7 @@ class Base(object):
             pointEnd = self.points.getIndex(pointEnd)
             # this is the only case that could be problematic and needs
             # checking
-            self._validateRangeOrder("pointStart", pointStart,
-                                     "pointEnd", pointEnd)
+            validateRangeOrder("pointStart", pointStart, "pointEnd", pointEnd)
             # make exclusive now that it won't ruin the validation check
             pointEnd += 1
 
@@ -2070,8 +2053,8 @@ class Base(object):
             featureEnd = self.features.getIndex(featureEnd)
             # this is the only case that could be problematic and needs
             # checking
-            self._validateRangeOrder("featureStart", featureStart,
-                                     "featureEnd", featureEnd)
+            validateRangeOrder("featureStart", featureStart,
+                               "featureEnd", featureEnd)
             # make exclusive now that it won't ruin the validation check
             featureEnd += 1
 
@@ -2218,27 +2201,25 @@ class Base(object):
                 maxColumnWidth, colSep, colHold, rowHold, nameHolder)
 
         # combine names into finalized table
-        finalTable, finalWidths = self._arrangeFinalTable(
+        finalTable, finalWidths = arrangeFinalTable(
             pnames, pnamesWidth, dataTable, colWidths, fnames, pnameSep)
 
         # set up output string
         out = ""
-        for r in range(len(finalTable)):
-            row = finalTable[r]
-            for c in range(len(row)):
-                val = row[c]
-                if c == 0 and includePNames:
-                    padded = getattr(val, pNameOrientation)(finalWidths[c])
-                elif r == 0 and includeFNames:
-                    padded = getattr(val, fNameOrientation)(finalWidths[c])
+        for i, row in enumerate(finalTable):
+            for j, val in enumerate(row):
+                if j == 0 and includePNames:
+                    padded = getattr(val, pNameOrientation)(finalWidths[j])
+                elif i == 0 and includeFNames:
+                    padded = getattr(val, fNameOrientation)(finalWidths[j])
                 else:
-                    padded = getattr(val, dataOrientation)(finalWidths[c])
-                row[c] = padded
+                    padded = getattr(val, dataOrientation)(finalWidths[j])
+                row[j] = padded
             # for __repr__ output want to retain whitespace
             if keepTrailingWhitespace:
-                line = colSep.join(finalTable[r]) + "\n"
+                line = colSep.join(finalTable[i]) + "\n"
             else:
-                line = colSep.join(finalTable[r]).rstrip() + "\n"
+                line = colSep.join(finalTable[i]).rstrip() + "\n"
             out += line
 
         return out
@@ -2412,13 +2393,13 @@ class Base(object):
     @pyplotRequired
     def _plot(self, includeColorbar, outPath, show, title, xAxisLabel,
               yAxisLabel, **kwargs):
-        toPlot = self._convertUnusableTypes(float, usableTypes=(int, float))
+        self._convertToNumericTypes(allowBool=False)
 
         if 'cmap' not in kwargs:
             kwargs['cmap'] = "gray"
 
         # matshow generates a new figure b/c existing axes are an issue.
-        plt.matshow(toPlot, **kwargs)
+        plt.matshow(self.copy('numpyarray'), **kwargs)
 
         if includeColorbar:
             plt.colorbar()
@@ -2501,7 +2482,7 @@ class Base(object):
     @pyplotRequired
     def _plotDistribution(self, axis, identifier, outPath, show, figureName,
                           title, xAxisLabel, yAxisLabel, xMin, xMax, **kwargs):
-        fig, ax = plotFigureHandling(figureName)
+        _, ax = plotFigureHandling(figureName)
         plotUpdateAxisLimits(ax, xMin, xMax, None, None)
 
         axisObj = self._getAxis(axis)
@@ -2622,9 +2603,9 @@ class Base(object):
 
     @limitedTo2D
     def plotFeatureAgainstFeature(
-        self, x, y, trend=None, outPath=None, show=True, figureName=None,
-        title=True, xAxisLabel=True, yAxisLabel=True, xMin=None, xMax=None,
-        yMin=None, yMax=None, **kwargs):
+            self, x, y, trend=None, outPath=None, show=True, figureName=None,
+            title=True, xAxisLabel=True, yAxisLabel=True, xMin=None, xMax=None,
+            yMin=None, yMax=None, **kwargs):
         """
         A scatter plot of the pairwise combination of feature values.
 
@@ -2680,32 +2661,32 @@ class Base(object):
             yAxisLabel, xMin, xMax, yMin, yMax, **kwargs)
 
     def _plotFeatureAgainstFeature(
-            self, x, y, trend, sampleSizeForAverage, outPath, show, figureName,
+            self, x, y, sampleSizeForAverage, trend, outPath, show, figureName,
             title, xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax, **kwargs):
         return self._plotCross(
-            x, 'feature', y, 'feature', trend, sampleSizeForAverage, outPath,
+            x, 'feature', y, 'feature', sampleSizeForAverage, trend, outPath,
             show, figureName, title, xAxisLabel, yAxisLabel, xMin, xMax, yMin,
             yMax, **kwargs)
 
-    def _formattedStringID(self, axis, id):
+    def _formattedStringID(self, axis, identifier):
         if axis == 'point':
             namesAxis = self.points
         else:
             namesAxis = self.features
-        if not isinstance(id, str):
+        if not isinstance(identifier, str):
             names = namesAxis._getNamesNoGeneration()
-            if names is None or names[id].startswith(DEFAULT_PREFIX):
-                id = axis.capitalize() + ' #' + str(id)
+            if names is None or names[identifier].startswith(DEFAULT_PREFIX):
+                identifier = axis.capitalize() + ' #' + str(identifier)
             else:
-                id = names[id]
+                identifier = names[identifier]
 
-        return id
+        return identifier
 
     @pyplotRequired
     def _plotCross(self, x, xAxis, y, yAxis, sampleSizeForAverage, trend,
                    outPath, show, figureName, title, xAxisLabel, yAxisLabel,
                    xMin, xMax, yMin, yMax, **kwargs):
-        fig, ax = plotFigureHandling(figureName)
+        _, ax = plotFigureHandling(figureName)
         plotUpdateAxisLimits(ax, xMin, xMax, yMin, yMax)
 
         xAxisObj = self._getAxis(xAxis)
@@ -3032,7 +3013,7 @@ class Base(object):
 
     @property
     @limitedTo2D
-    def T(self):
+    def T(self): # pylint: disable=invalid-name
         """
         Invert the feature and point indices of the data.
 
@@ -3181,7 +3162,7 @@ class Base(object):
                 raise ImproperObjectAction(msg)
         # only 'numpyarray' and 'pythonlist' are allowed to use outputAs1D flag
         if outputAs1D:
-            if to not in ['numpyarray', 'pythonlist']:
+            if to not in ('numpyarray', 'pythonlist'):
                 msg = "Only 'numpy array' or 'python list' can output 1D"
                 raise InvalidArgumentValueCombination(msg)
             if self._pointCount != 1 and self._featureCount != 1:
@@ -3213,11 +3194,11 @@ class Base(object):
             if self._pointCount == 0 or self._featureCount == 0:
                 return numpy.array([])
             return self._copy_implementation('numpyarray').flatten()
-        else:
-            if self._pointCount == 0 or self._featureCount == 0:
-                return []
-            list2d = self._copy_implementation('pythonlist')
-            return list(itertools.chain.from_iterable(list2d))
+
+        if self._pointCount == 0 or self._featureCount == 0:
+            return []
+        list2d = self._copy_implementation('pythonlist')
+        return list(itertools.chain.from_iterable(list2d))
 
     def _copy_pythonList(self, rowsArePoints):
         ret = self._copy_implementation('pythonlist')
@@ -3231,15 +3212,14 @@ class Base(object):
         data = self._copy_implementation('numpyarray')
         if rowsArePoints:
             featureNames = self.features.getNames()
-            if to == 'listofdict':
-                return createListOfDict(data, featureNames)
-            return createDictOfList(data, featureNames, self._featureCount)
+            featureCount = self._featureCount
         else:
             data = data.transpose()
             featureNames = self.points.getNames()
-            if to == 'listofdict':
-                return createListOfDict(data, featureNames)
-            return createDictOfList(data, featureNames, self._pointCount)
+            featureCount = self._pointCount
+        if to == 'listofdict':
+            return createListOfDict(data, featureNames)
+        return createDictOfList(data, featureNames, featureCount)
 
     def __copy__(self):
         return self.copy()
@@ -3943,20 +3923,20 @@ class Base(object):
         # make sure each id has a unique match in the other object
         elif axis == 'point':
             try:
-                self[0, onFeature]
-                tmpOther[0, onFeature]
-            except KeyError:
+                feat = self[:, onFeature]
+                if len(set(feat)) != len(self.points):
+                    msg = "when point='strict', onFeature must contain only "
+                    msg += "unique values"
+                    raise InvalidArgumentValueCombination(msg)
+                if sorted(feat) != sorted(tmpOther[:, onFeature]):
+                    msg = "When point='strict', onFeature must have a unique, "
+                    msg += "matching value in each object"
+                    raise InvalidArgumentValueCombination(msg)
+            except KeyError as e:
                 msg = "could not locate feature '{0}' ".format(onFeature)
                 msg += "in both objects"
-                raise InvalidArgumentValue(msg)
-            if len(set(self[:, onFeature])) != len(self.points):
-                msg = "when point='strict', onFeature must contain only "
-                msg += "unique values"
-                raise InvalidArgumentValueCombination(msg)
-            if sorted(self[:, onFeature]) != sorted(tmpOther[:, onFeature]):
-                msg = "When point='strict', onFeature must have a unique, "
-                msg += "matching value in each object"
-                raise InvalidArgumentValueCombination(msg)
+                raise InvalidArgumentValue(msg) from e
+
 
         self._genericMergeFrontend(tmpOther, point, feature, onFeature, axis)
 
@@ -3979,18 +3959,16 @@ class Base(object):
 
         if onFeature is not None:
             try:
-                self[0, onFeature]
-                other[0, onFeature]
-            except KeyError:
+                uniqueFtL = len(set(self[:, onFeature])) == len(self.points)
+                uniqueFtR = len(set(other[:, onFeature])) == len(other.points)
+                if not (uniqueFtL or uniqueFtR):
+                    msg = "nimble only supports joining on a feature which "
+                    msg += "contains only unique values in one or both objects"
+                    raise InvalidArgumentValue(msg)
+            except KeyError as e:
                 msg = "could not locate feature '{0}' ".format(onFeature)
                 msg += "in both objects"
-                raise InvalidArgumentValue(msg)
-            uniqueFtL = len(set(self[:, onFeature])) == len(self.points)
-            uniqueFtR = len(set(other[:, onFeature])) == len(other.points)
-            if not (uniqueFtL or uniqueFtR):
-                msg = "nimble only supports joining on a feature which "
-                msg += "contains only unique values in one or both objects."
-                raise InvalidArgumentValue(msg)
+                raise InvalidArgumentValue(msg) from e
 
         matchingFts = self._getMatchingNames('feature', other)
         matchingFtIdx = [[], []]
@@ -4144,11 +4122,10 @@ class Base(object):
         Parameters
         ----------
         b : nimble Base object.
-        Vector shaped object.
+            Vector shaped object.
         solveFuction : str
 
             * 'solve' - assumes square matrix.
-
             * 'least squares' - Computes object x such that 2-norm
               determinant of b - A x is minimized.
         """
@@ -4160,12 +4137,12 @@ class Base(object):
 
         if not isinstance(solveFunction, str):
             raise InvalidArgumentType(msg)
-        elif solveFunction == 'solve':
+        if solveFunction == 'solve':
             return nimble.calculate.solve(self, b)
-        elif solveFunction == 'least squares':
+        if solveFunction == 'least squares':
             return nimble.calculate.leastSquaresSolution(self, b)
-        else:
-            raise InvalidArgumentValue(msg)
+
+        raise InvalidArgumentValue(msg)
 
 
 
@@ -4221,11 +4198,11 @@ class Base(object):
             raise ImproperObjectAction(msg)
 
         try:
-            self._convertUnusableTypes(float, (int, float, bool), False)
+            self._convertToNumericTypes()
         except ImproperObjectAction:
             self._numericValidation()
         try:
-            other._convertUnusableTypes(float, (int, float, bool), False)
+            other._convertToNumericTypes()
         except ImproperObjectAction:
             other._numericValidation(right=True)
 
@@ -4302,7 +4279,7 @@ class Base(object):
                 msg += "matrixPower does not attempt to use pseudoInverse but "
                 msg += "it is available to users in nimble.calculate. "
                 msg += "The inverse operation failed because: " + e.message
-                raise exceptionType(msg)
+                raise exceptionType(msg) from e
 
         ret = operand
         # loop only applies when abs(power) > 1
@@ -4452,7 +4429,7 @@ class Base(object):
         return self._genericBinaryOperations('__imod__', other)
 
     @to2args
-    def __pow__(self, other, z):
+    def __pow__(self, other, z): # pylint: disable=unused-argument
         """
         Perform exponentiation (iterated __mul__) using the elements of
         this object as the bases, elementwise if ``other`` is a nimble
@@ -4523,14 +4500,14 @@ class Base(object):
         """
         try:
             self.calculateOnElements(_dataHelpers._checkNumeric, useLog=False)
-        except ValueError:
+        except ValueError as e:
             msg = "The object on the {0} contains non numeric data, "
             msg += "cannot do this operation"
             if right:
                 msg = msg.format('right')
-                raise InvalidArgumentValue(msg)
+                raise InvalidArgumentValue(msg) from e
             msg = msg.format('left')
-            raise ImproperObjectAction(msg)
+            raise ImproperObjectAction(msg) from e
 
     def _genericBinary_sizeValidation(self, opName, other):
         if self._shape != other._shape:
@@ -4577,16 +4554,13 @@ class Base(object):
             if 'divide by zero' in str(error):
                 msg = 'Zeros cannot be raised to negative exponents'
                 raise ZeroDivisionError(msg)
-            else:
-                msg = "Complex number results are not allowed"
-                raise ImproperObjectAction(msg)
+            msg = "Complex number results are not allowed"
+            raise ImproperObjectAction(msg)
         # Test element type self
         self._numericValidation()
         # test element type other
         if isinstance(other, Base):
             other._numericValidation(right=True)
-
-        raise # backup; should be diagnosed in _numericValidation
 
     def _genericBinary_validation(self, opName, other):
         otherBase = isinstance(other, Base)
@@ -4601,7 +4575,7 @@ class Base(object):
         if 'div' in opName or 'mod' in opName:
             self._validateDivMod(opName, other)
 
-    def _genericBinary_axisNames(self, opName, other, usableTypes):
+    def _genericBinary_axisNames(self, opName, other, conversionKwargs):
         """
         Determines axis names for operations between two Base objects.
 
@@ -4639,12 +4613,12 @@ class Base(object):
 
         # determine axis names for returned object
         try:
-            other._convertUnusableTypes(float, usableTypes, False)
+            other._convertToNumericTypes(**conversionKwargs)
         except ImproperObjectAction:
             other._numericValidation(right=True)
         # everything else that uses this helper is a binary scalar op
         retPNames, retFNames = _dataHelpers.mergeNonDefaultNames(self,
-                                                                other)
+                                                                 other)
         # in these cases we cannot define names for the disjoint axis
         if ftNamesEqual and not ptNamesEqual:
             self._genericBinary_axisNamesDisjoint('point', other, opName)
@@ -4681,31 +4655,33 @@ class Base(object):
             msg = msg.format(opName, equalAxis, axis, matches)
             raise InvalidArgumentValue(msg)
 
-    def _convertUnusableTypes(self, convertTo, usableTypes, returnCopy=True):
+    def _convertToNumericTypes(self, allowInt=True, allowBool=True):
         """
-        Convert the data if necessary.
-
-        Convert any type not in usableTypes to the convertTo type.
-        Conversion is done inplace if returnCopy is set to False
+        Convert the data, inplace, to numeric type if necessary.
         """
+        usableTypes = [float]
+        if not all(isinstance(a, bool) for a in (allowInt, allowBool)):
+            msg = 'all arguments for _convertToNumericTypes must be bools'
+            raise InvalidArgumentValue(msg)
+        if allowInt:
+            usableTypes.append(int)
+        if allowBool:
+            usableTypes.append(bool)
+        usableTypes = tuple(usableTypes)
         try:
-            ret = self._convertUnusableTypes_implementation(convertTo,
-                                                            usableTypes)
-        except (ValueError, TypeError):
+            return self._convertToNumericTypes_implementation(usableTypes)
+        except (ValueError, TypeError) as e:
             msg = 'Unable to coerce the data to the type required for this '
             msg += 'operation.'
-            raise ImproperObjectAction(msg)
-        if returnCopy:
-            return ret
-        self.data = ret
+            raise ImproperObjectAction(msg) from e
 
     def _genericBinaryOperations(self, opName, other):
+        conversionKwargs = {}
         if 'pow' in opName:
-            usableTypes = (float,)
-        else:
-            usableTypes = (int, float, bool)
+            conversionKwargs['allowInt'] = False
+            conversionKwargs['allowBool'] = False
         try:
-            self._convertUnusableTypes(float, usableTypes, False)
+            self._convertToNumericTypes(**conversionKwargs)
         except ImproperObjectAction:
             self._numericValidation()
         if isinstance(other, Stretch):
@@ -4719,8 +4695,8 @@ class Base(object):
         # figure out return obj's point / feature names
         otherBase = isinstance(other, Base)
         if otherBase:
-            retPNames, retFNames = self._genericBinary_axisNames(opName, other,
-                                                                 usableTypes)
+            retPNames, retFNames = self._genericBinary_axisNames(
+                opName, other, conversionKwargs)
         else:
             retPNames = self.points._getNamesNoGeneration()
             retFNames = self.features._getNamesNoGeneration()
@@ -4735,6 +4711,7 @@ class Base(object):
                 ret = self._binaryOperations_implementation(useOp, other)
         except (TypeError, ValueError, FloatingPointError) as error:
             self._diagnoseFailureAndRaiseException(opName, other, error)
+            raise # backup; should be diagnosed and raised above
 
         ret._shape = self._shape
         if opName.startswith('__i'):
@@ -4798,16 +4775,18 @@ class Base(object):
 
         return lhsBool._genericBinaryOperations(opName, rhsBool)
 
+    def _isBooleanData(self):
+        return False
+
     def _logicalValidationAndConversion(self):
-        if (not hasattr(self.data, 'dtype')
-                or self.data.dtype not in [bool, numpy.bool_]):
+        if not self._isBooleanData():
             validValues = match.allValues([True, False, 0, 1])
             if not validValues(self):
                 msg = 'logical operations can only be performed on data '
                 msg += 'containing True, False, 0 and 1 values'
                 raise ImproperObjectAction(msg)
 
-            ret = self.matchingElements(lambda v: bool(v), useLog=False)
+            ret = self.matchingElements(bool, useLog=False)
             ret.points.setNames(self.points._getNamesNoGeneration(),
                                 useLog=False)
             ret.features.setNames(self.features._getNamesNoGeneration(),
@@ -4951,42 +4930,6 @@ class Base(object):
         self._nextDefaultValuePoint = other._nextDefaultValuePoint
         self._nextDefaultValueFeature = other._nextDefaultValueFeature
 
-    def _arrangeFinalTable(self, pnames, pnamesWidth, dataTable, dataWidths,
-                           fnames, pnameSep):
-
-        if fnames is not None:
-            fnamesWidth = list(map(len, fnames))
-        else:
-            fnamesWidth = []
-
-        # We make extensive use of list addition in this helper in order
-        # to prepend single values onto lists.
-
-        # glue point names onto the left of the data
-        if pnames is not None:
-            for i in range(len(dataTable)):
-                dataTable[i] = [pnames[i], pnameSep] + dataTable[i]
-            dataWidths = [pnamesWidth, len(pnameSep)] + dataWidths
-
-        # glue feature names onto the top of the data
-        if fnames is not None:
-            # adjust with the empty space in the upper left corner, if needed
-            if pnames is not None:
-                fnames = ["", ""] + fnames
-                fnamesWidth = [0, 0] + fnamesWidth
-
-            # make gap row:
-            gapRow = [""] * len(fnames)
-
-            dataTable = [fnames, gapRow] + dataTable
-            # finalize widths by taking the largest of the two possibilities
-            for i in range(len(fnames)):
-                nameWidth = fnamesWidth[i]
-                valWidth = dataWidths[i]
-                dataWidths[i] = max(nameWidth, valWidth)
-
-        return dataTable, dataWidths
-
     def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold):
         """
         Prepare point names for string output. Grab only those names
@@ -4999,7 +4942,7 @@ class Base(object):
         pnamesWidth = 0
         nameCutIndex = nameLength - len(nameHold)
         (tRowIDs, bRowIDs) = _dataHelpers.indicesSplit(maxRows,
-                                                      self._pointCount)
+                                                       self._pointCount)
 
         # we pull indices from two lists: tRowIDs and bRowIDs
         for sourceIndex in range(2):
@@ -5074,7 +5017,7 @@ class Base(object):
         maxDataRows = maxRows
 
         (tRowIDs, bRowIDs) = _dataHelpers.indicesSplit(maxDataRows,
-                                                      self._pointCount)
+                                                       self._pointCount)
         combinedRowIDs = tRowIDs + bRowIDs
         if len(combinedRowIDs) < self._pointCount:
             rowHolderIndex = len(tRowIDs)
@@ -5114,8 +5057,7 @@ class Base(object):
                 currWidth = fNameLen
 
             # check all values in this column (in the accepted rows)
-            for i in range(len(combinedRowIDs)):
-                rID = combinedRowIDs[i]
+            for i, rID in enumerate(combinedRowIDs):
                 val = self[rID, currIndex]
                 valFormed = formatIfNeeded(val, sigDigits)
                 if len(valFormed) <= maxStrLength:
@@ -5136,11 +5078,11 @@ class Base(object):
             # only add this column if it won't put us over the limit
             if totalWidth <= maxWidth:
                 numAdded += 1
-                for i in range(len(currCol)):
+                for i, val in enumerate(currCol):
                     if len(currTable) != len(currCol):
-                        currTable.append([currCol[i]])
+                        currTable.append([val])
                     else:
-                        currTable[i].append(currCol[i])
+                        currTable[i].append(val)
                 # the width value goes in different lists depending on index
                 if currIndex < 0:
                     if includeFNames:
@@ -5171,6 +5113,7 @@ class Base(object):
                 fNames = lFNames + [colHold] + rFNames
         # return None if fNames is [] (includeFNames=False)
         fNames = fNames if fNames else None
+        # pylint: disable=consider-using-enumerate
         for rowIndex in range(len(lTable)):
             if len(rTable) > 0:
                 rTable[rowIndex].reverse()
@@ -5303,40 +5246,25 @@ class Base(object):
                 | other.featureNames.keys())
 
     def _equalPointNames(self, other):
-        return self._equalNames(self.points._getNamesNoGeneration(),
-                                other.points._getNamesNoGeneration())
+        return equalNames(self.points._getNamesNoGeneration(),
+                          other.points._getNamesNoGeneration())
 
     def _equalFeatureNames(self, other):
-        return (self._equalNames(self.features._getNamesNoGeneration(),
-                                 other.features._getNamesNoGeneration()))
-
-    def _equalNames(self, selfNames, otherNames):
-        """
-        Private function to determine equality of either pointNames of
-        featureNames. It ignores equality of default values, considering
-        only whether non default names consistent (position by position)
-        and uniquely positioned (if a non default name is present in
-        both, then it is in the same position in both).
-        """
-        if selfNames is None and otherNames is None:
-            return True
-        if (selfNames is None
-                and all(n.startswith(DEFAULT_PREFIX) for n in otherNames)):
-            return True
-        if (otherNames is None
-                and all(n.startswith(DEFAULT_PREFIX) for n in selfNames)):
-            return True
-        if selfNames is None or otherNames is None:
-            return False
-        if len(selfNames) != len(otherNames):
-            return False
-
-        unequalNames = self._unequalNames(selfNames, otherNames)
-        return unequalNames == {}
+        return equalNames(self.features._getNamesNoGeneration(),
+                          other.features._getNamesNoGeneration())
 
     def _validateEqualNames(self, leftAxis, rightAxis, callSym, other):
 
-        def _validateEqualNames_implementation():
+        if leftAxis == 'point':
+            lnamesCreated = self._pointNamesCreated()
+        else:
+            lnamesCreated = self._featureNamesCreated()
+        if rightAxis == 'point':
+            rnamesCreated = self._pointNamesCreated()
+        else:
+            rnamesCreated = self._featureNamesCreated()
+
+        if lnamesCreated or rnamesCreated:
             if leftAxis == 'point':
                 lnames = self.points._getNamesNoGeneration()
             else:
@@ -5347,7 +5275,7 @@ class Base(object):
                 rnames = other.features._getNamesNoGeneration()
             if lnames is None or rnames is None:
                 return
-            inconsistencies = self._inconsistentNames(lnames, rnames)
+            inconsistencies = inconsistentNames(lnames, rnames)
 
             if inconsistencies != {}:
                 table = [['left', 'ID', 'right']]
@@ -5362,98 +5290,14 @@ class Base(object):
                 print(msg, file=sys.stderr)
                 raise InvalidArgumentValue(msg)
 
-        if leftAxis == 'point' and rightAxis == 'point':
-            if self._pointNamesCreated() or other._pointNamesCreated():
-                _validateEqualNames_implementation()
-        elif leftAxis == 'feature' and rightAxis == 'feature':
-            if self._featureNamesCreated() or other._featureNamesCreated():
-                _validateEqualNames_implementation()
-        elif leftAxis == 'point' and rightAxis == 'feature':
-            if self._pointNamesCreated() or other._featureNamesCreated():
-                _validateEqualNames_implementation()
-        elif leftAxis == 'feature' and rightAxis == 'point':
-            if self._featureNamesCreated() or other._pointNamesCreated():
-                _validateEqualNames_implementation()
-
-    def _inconsistentNames(self, selfNames, otherNames):
-        """Private function to find and return all name inconsistencies
-        between the given two sets. It ignores equality of default
-        values, considering only whether non default names consistent
-        (position by position) and uniquely positioned (if a non default
-        name is present in both, then it is in the same position in
-        both). The return value is a dict between integer IDs and the
-        pair of offending names at that position in both objects.
-
-        Assumptions: the size of the two name sets is equal.
-        """
-        inconsistencies = {}
-
-        def checkFromLeftKeys(ret, leftNames, rightNames):
-            for index in range(len(leftNames)):
-                lname = leftNames[index]
-                rname = rightNames[index]
-                if lname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
-                    if rname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
-                        if lname != rname:
-                            ret[index] = (lname, rname)
-                    else:
-                        # if a name in one is mirrored by a default name,
-                        # then it must not appear in any other index;
-                        # and therefore, must not appear at all.
-                        if rightNames.count(lname) > 0:
-                            ret[index] = (lname, rname)
-                            ret[rightNames.index(lname)] = (lname, rname)
-
-
-        # check both name directions
-        checkFromLeftKeys(inconsistencies, selfNames, otherNames)
-        checkFromLeftKeys(inconsistencies, otherNames, selfNames)
-
-        return inconsistencies
-
-    def _unequalNames(self, selfNames, otherNames):
-        """Private function to find and return all name inconsistencies
-        between the given two sets. It ignores equality of default
-        values, considering only whether non default names consistent
-        (position by position) and uniquely positioned (if a non default
-        name is present in both, then it is in the same position in
-        both). The return value is a dict between integer IDs and the
-        pair of offending names at that position in both objects.
-
-        Assumptions: the size of the two name sets is equal.
-        """
-        inconsistencies = {}
-
-        def checkFromLeftKeys(ret, leftNames, rightNames):
-            for index in range(len(leftNames)):
-                lname = leftNames[index]
-                rname = rightNames[index]
-                if lname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
-                    if rname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
-                        if lname != rname:
-                            ret[index] = (lname, rname)
-                    else:
-                        ret[index] = (lname, rname)
-
-        # check both name directions
-        checkFromLeftKeys(inconsistencies, selfNames, otherNames)
-        checkFromLeftKeys(inconsistencies, otherNames, selfNames)
-
-        return inconsistencies
-
     def _getAxis(self, axis):
         if axis == 'point':
             return self.points
-        else:
-            return self.features
 
-    def _validateAxis(self, axis):
-        if axis != 'point' and axis != 'feature':
-            msg = 'axis parameter may only be "point" or "feature"'
-            raise InvalidArgumentValue(msg)
+        return self.features
 
     def _incrementDefaultIfNeeded(self, name, axis):
-        self._validateAxis(axis)
+        validateAxis(axis)
         if name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
             intString = name[DEFAULT_PREFIX_LENGTH:]
             try:
@@ -5471,23 +5315,23 @@ class Base(object):
                     self._nextDefaultValueFeature = nameNum + 1
 
 
-    def _validateRangeOrder(self, startName, startVal, endName, endVal):
-        """
-        Validate a range where both values are inclusive.
-        """
-        if startVal > endVal:
-            msg = "When specifying a range, the arguments were resolved to "
-            msg += "having the values " + startName
-            msg += "=" + str(startVal) + " and " + endName + "=" + str(endVal)
-            msg += ", yet the starting value is not allowed to be greater "
-            msg += "than the ending value (" + str(startVal) + ">"
-            msg += str(endVal) + ")"
 
-            raise InvalidArgumentValueCombination(msg)
 
     ####################
     # Abstract Methods #
     ####################
+
+    @abstractmethod
+    def _getPoints(self):
+        """
+        Get the object containing point-based methods for this object.
+        """
+
+    @abstractmethod
+    def _getFeatures(self):
+        """
+        Get the object containing feature-based methods for this object.
+        """
 
     @abstractmethod
     def _isIdentical_implementation(self, other):
@@ -5513,7 +5357,7 @@ class Base(object):
 
     @abstractmethod
     def _view_implementation(self, pointStart, pointEnd, featureStart,
-                             featureEnd):
+                             featureEnd, dropDimension):
         pass
 
     @abstractmethod
@@ -5546,7 +5390,7 @@ class Base(object):
         pass
 
     @abstractmethod
-    def _unflatten_implementation(self, dataDimensions, order):
+    def _unflatten_implementation(self, reshape, order):
         pass
 
     @abstractmethod
@@ -5555,21 +5399,26 @@ class Base(object):
         pass
 
     @abstractmethod
-    def _mul__implementation(self, other):
+    def _convertToNumericTypes_implementation(self, usableTypes):
         pass
 
     @abstractmethod
-    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
+    def _iterateElements_implementation(self, order, only):
         pass
 
-class BasePoints(Axis, Points):
-    """
-    Access for point-based methods.
-    """
-    pass
+    @abstractmethod
+    def _transform_implementation(self, toTransform, points, features):
+        pass
 
-class BaseFeatures(Axis, Features):
-    """
-    Access for feature-based methods.
-    """
-    pass
+    @abstractmethod
+    def _calculate_implementation(self, function, points, features,
+                                  preserveZeros):
+        pass
+
+    @abstractmethod
+    def _countUnique_implementation(self, points, features):
+        pass
+
+    @abstractmethod
+    def _binaryOperations_implementation(self, opName, other):
+        pass

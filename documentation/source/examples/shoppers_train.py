@@ -19,6 +19,7 @@ website.
 
 
 import nimble
+from nimble.calculate import meanStandardDeviationNormalize
 
 visits = nimble.data('Matrix', 'online_shoppers_intention_clean.csv',
                      featureNames=True)
@@ -28,7 +29,7 @@ nimble.random.setSeed(42)
 ## so first we will extract any points with no revenue. Without these points,
 ## `Revenue` and some other features only contain one unique value so we can
 ## remove them.
-revenueOnly = visits.points.extract("Revenue=1")
+revenueOnly = visits.points.extract("Revenue == 1")
 revenueOnly.features.delete(lambda ft: len(ft.countUniqueElements()) < 2)
 revenueOnlyFtNames = revenueOnly.features.getNames()
 
@@ -36,8 +37,7 @@ revenueOnlyFtNames = revenueOnly.features.getNames()
 ## normalize our data. We will standardize each feature to have 0 mean and
 ## unit-variance.
 revenueNormalized = revenueOnly.copy()
-revenueNormalized.features.normalize(subtract='mean',
-                                     divide='standard deviation')
+revenueNormalized.features.normalize(meanStandardDeviationNormalize)
 
 ## Train a learner ##
 

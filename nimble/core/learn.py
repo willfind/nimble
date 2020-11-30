@@ -261,7 +261,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         )
     """
     startTime = time.process_time()
-    interface, trueLearnerName = _unpackLearnerName(learnerName)
+    _, trueLearnerName = _unpackLearnerName(learnerName)
     if trackEntry.isEntryPoint:
         validateLearningArguments(trainX, trainY, testX, False)
     merged = mergeArguments(arguments, kwarguments)
@@ -541,7 +541,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     kfcv = KFoldCrossValidator(learnerName, X, Y, performanceFunction,
                                arguments, folds, scoreMode,randomSeed,
                                useLog, **kwarguments)
-    handleLogging(useLog, 'crossVal', X, Y, kfcv.learnerName, kfcv.arguments,
+    handleLogging(useLog, 'crossVal', kfcv.learnerName, kfcv.arguments,
                   kfcv.performanceFunction, kfcv._allResults, kfcv.folds,
                   kfcv.randomSeed)
 
@@ -1273,9 +1273,9 @@ class CV(object):
     def __init__(self, argumentList):
         try:
             self.argumentTuple = tuple(argumentList)
-        except TypeError:
+        except TypeError as e:
             msg = "argumentList must be iterable."
-            raise InvalidArgumentValue(msg)
+            raise InvalidArgumentValue(msg) from e
 
     def __getitem__(self, key):
         return self.argumentTuple[key]
@@ -1404,7 +1404,6 @@ class KFoldCrossValidator(object):
         self.folds = folds
         self.scoreMode = scoreMode
         self.arguments = mergeArguments(arguments, kwarguments)
-        interface, _ = _unpackLearnerName(learnerName)
         self.randomSeed = randomSeed
         self._allResults = None
         self._bestArguments = None

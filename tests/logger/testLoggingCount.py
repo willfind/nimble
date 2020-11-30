@@ -312,7 +312,8 @@ def test_features_permute_logCount():
 ALL_DUNDER = []
 for call in classes:
     objectDir = dir(object)
-    ignore = ["__weakref__", "__module__", "__dict__", '__abstractmethods__']
+    ignore = ["__weakref__", "__module__", "__dict__", '__abstractmethods__',
+              "__slots__"]
     for attribute in dir(call):
         if (attribute.startswith('__')
                 and attribute not in objectDir

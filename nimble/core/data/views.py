@@ -2,8 +2,9 @@
 Defines subclasses that serve primary as the base classes for read only
 views Base, Axis, Points and Features objects.
 """
+from abc import ABCMeta
 
-import nimble
+import nimble # pylint: disable=unused-import
 from nimble._utility import inheritDocstringsFactory
 from nimble.exceptions import ImproperObjectAction
 from .base import Base
@@ -18,7 +19,7 @@ pointsExceptionDoc = exceptionDocstringFactory(Points)
 featuresExceptionDoc = exceptionDocstringFactory(Features)
 
 @inheritDocstringsFactory(Base)
-class BaseView(Base):
+class BaseView(Base, metaclass=ABCMeta):
     """
     Class limiting the Base class to read-only by disallowing methods
     which could change the data.
@@ -63,7 +64,7 @@ class BaseView(Base):
                 msg += "more than two dimensions."
                 raise ImproperObjectAction(msg)
 
-        super(BaseView, self).__init__(**kwds)
+        super().__init__(**kwds)
 
     # redefinition from Base, except without the setter, using source
     # object's attributes
@@ -104,14 +105,14 @@ class BaseView(Base):
     def _pointNamesCreated(self):
         if self._source.pointNamesInverse is None:
             return False
-        else:
-            return True
+
+        return True
 
     def _featureNamesCreated(self):
         if self._source.featureNamesInverse is None:
             return False
-        else:
-            return True
+
+        return True
 
     # TODO: retType
 
@@ -252,7 +253,7 @@ class BaseView(Base):
 
 
 @inheritDocstringsFactory(Axis)
-class AxisView(Axis):
+class AxisView(Axis, metaclass=ABCMeta):
     """
     Class limiting the Axis class to read-only by disallowing methods
     which could change the data.
@@ -300,19 +301,19 @@ class AxisView(Axis):
             possible = self._base._source.features.getIndex(name)
         if start <= possible < end:
             return possible - start
-        else:
-            raise KeyError(name)
+
+        raise KeyError(name)
 
     def _namesCreated(self):
         # _base is always a view object
-        if isinstance(self, Points):
+        if self._isPoint:
             return not self._base._source.pointNames is None
-        else:
-            return not self._base._source.featureNames is None
+
+        return not self._base._source.featureNames is None
 
 
 @inheritDocstringsFactory(Points)
-class PointsView(Points):
+class PointsView(Points, metaclass=ABCMeta):
     """
     Class limiting the Points class to read-only by disallowing methods
     which could change the data.
@@ -395,7 +396,7 @@ class PointsView(Points):
 
 
 @inheritDocstringsFactory(Features)
-class FeaturesView(Features):
+class FeaturesView(Features, metaclass=ABCMeta):
     """
     Class limiting the Features class to read-only by disallowing
     methods which could change the data.

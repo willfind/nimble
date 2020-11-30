@@ -10,7 +10,7 @@ with a leading underscore added to the method name. Additionally, the
 wrapping of function calls for the logger takes place in here.
 """
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 import numpy
 
@@ -20,7 +20,7 @@ from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from ._dataHelpers import limitedTo2D
 
-class Features(object):
+class Features(ABC):
     """
     Methods that can be called on a nimble Base objects feature axis.
     """
@@ -32,7 +32,7 @@ class Features(object):
             The Base instance that will be queried and modified.
         """
         self._base = base
-        super(Features, self).__init__()
+        super().__init__()
 
     @limitedTo2D
     def __iter__(self):

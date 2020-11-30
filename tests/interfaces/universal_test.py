@@ -12,6 +12,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.interfaces.universal_interface import UniversalInterface
+from nimble.core.interfaces.universal_interface import PredefinedInterface
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import generateClassificationData
 
@@ -40,9 +41,7 @@ class SubObj(object):
         return self.dup == other.dup
 
 
-class TestInterface(UniversalInterface):
-    def __init__(self):
-        super(TestInterface, self).__init__()
+class TestPredefinedInterface(PredefinedInterface):
 
     def accessible(self):
         return True
@@ -139,8 +138,10 @@ class TestInterface(UniversalInterface):
     def version(self):
         return "0.0.0"
 
+    def _installInstructions(self):
+        return ""
 
-TestObject = TestInterface()
+TestObject = TestPredefinedInterface()
 
 ###################
 ### nimble.Init ###

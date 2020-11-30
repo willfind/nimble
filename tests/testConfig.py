@@ -274,7 +274,7 @@ def test_settings_addingNewInterface():
 
     # make sure there is no section associated with the optionless
     # interface
-    assert not nimble.settings.cp.has_section('ig')
+    assert not nimble.settings.parser.has_section('ig')
 
     # make sure new section and name was correctly added
     # '' is default value when adding options from interfaces
@@ -284,8 +284,8 @@ def test_settings_addingNewInterface():
     # reload settings - options should not be recorded
     nimble.settings = nimble.core.configuration.loadSettings()
 
-    assert not nimble.settings.cp.has_section('ig')
-    assert not nimble.settings.cp.has_section('Test')
+    assert not nimble.settings.parser.has_section('ig')
+    assert not nimble.settings.parser.has_section('Test')
 
     # save options for all interfaces and reload
     setAvailableInterfaceOptions(True)
@@ -293,7 +293,7 @@ def test_settings_addingNewInterface():
 
     # make sure there is no section associated with the optionless
     # interface
-    assert not nimble.settings.cp.has_section('ig')
+    assert not nimble.settings.parser.has_section('ig')
 
     # make sure new section and name was correctly added
     # '' is default value when adding options from interfaces

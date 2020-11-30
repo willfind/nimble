@@ -10,7 +10,7 @@ leading underscore added to the method name. Additionally, the wrapping
 of function calls for the logger takes place in here.
 """
 
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from collections import OrderedDict
 
 import nimble
@@ -18,7 +18,7 @@ from nimble.core.logger import handleLogging
 from nimble.exceptions import ImproperObjectAction
 from ._dataHelpers import limitedTo2D
 
-class Points(object):
+class Points(ABC):
     """
     Methods that can be called on a nimble Base objects point axis.
     """
@@ -30,7 +30,7 @@ class Points(object):
             The Base instance that will be queried and modified.
         """
         self._base = base
-        super(Points, self).__init__()
+        super().__init__()
 
     def __iter__(self):
         return self._iter()
@@ -2274,7 +2274,8 @@ class Points(object):
 
     @abstractmethod
     def _combineByExpandingFeatures_implementation(
-            self, uniqueDict, namesIdx, uniqueNames, numRetFeatures):
+            self, uniqueDict, namesIdx, uniqueNames, numRetFeatures,
+            numExpanded):
         pass
 
     @abstractmethod

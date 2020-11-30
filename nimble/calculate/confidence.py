@@ -1,3 +1,7 @@
+"""
+Confidence calculations.
+"""
+
 import math
 
 import numpy
@@ -7,8 +11,10 @@ from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble._utility import scipy
 
 def confidenceIntervalHelper(errors, transform, confidence=0.95):
-    """Helper to calculate the confidence interval, given a vector of errors
-    and a monotonic transform to be applied after the calculation.
+    """
+    Helper to calculate the confidence interval, given a vector of
+    errors and a monotonic transform to be applied after the
+    calculation.
     """
     if not scipy.nimbleAccessible():
         msg = 'To call this function, scipy must be installed.'
@@ -35,6 +41,9 @@ def confidenceIntervalHelper(errors, transform, confidence=0.95):
 
 
 def rootMeanSquareErrorConfidenceInterval(known, predicted, confidence=0.95):
+    """
+    A confidence interval for the value of the root mean square error.
+    """
     errors = (known - predicted) ** 2
 
     def wrappedSqrt(value):
@@ -46,11 +55,17 @@ def rootMeanSquareErrorConfidenceInterval(known, predicted, confidence=0.95):
 
 
 def meanAbsoluteErrorConfidenceInterval(known, predicted, confidence=0.95):
+    """
+    A confidence interval for the value of the mean absolute error.
+    """
     errors = known - predicted
     return confidenceIntervalHelper(errors, None, confidence)
 
 
 def fractionIncorrectConfidenceInterval(known, predicted, confidence=0.95):
+    """
+    A confidence interval for the value of the fraction incorrect.
+    """
     rawErrors = known.copy(to='numpyarray') - predicted.copy(to='numpyarray')
     rawErrors = numpy.absolute(rawErrors)
     errors = nimble.data("Matrix", rawErrors)

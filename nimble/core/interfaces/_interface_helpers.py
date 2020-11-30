@@ -9,7 +9,7 @@ import warnings
 import inspect
 
 import nimble
-from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.random import pythonRandom
 from nimble.core._learnHelpers import _validTestData, _validArguments
 from nimble.core._learnHelpers import _validScoreMode, _2dOutputFlagCheck
@@ -56,8 +56,7 @@ class PythonSearcher(object):
 
         ret = []
         # the location cache holds names to object mappings
-        for name in self._locationCache.keys():
-            val = self._locationCache[name]
+        for name, val in self._locationCache.items():
             if self._isLearner(val):
                 ret.append(name)
 
@@ -206,14 +205,13 @@ def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels,
         msg += "classification, cannot verify one way or the other"
         raise InvalidArgumentValue(msg)
     # only definitive votes were ova
-    elif ovaVote > 0:
+    if ovaVote > 0:
         return True
     # only definitive votes were ovo
-    elif ovoVote > 0:
+    if ovoVote > 0:
         return False
     # no unambiguous cases: return None as a sentinal for unsure
-    else:
-        return None
+    return None
 
 
 def verifyOvANotOvOSingleList(scoreList, predictedLabelIndex, numLabels):
@@ -230,9 +228,9 @@ def verifyOvANotOvOSingleList(scoreList, predictedLabelIndex, numLabels):
     # simulate OvA prediction strategy
     maxScoreIndex = -1
     maxScore = -sys.maxsize - 1
-    for i in range(len(scoreList)):
-        if scoreList[i] > maxScore:
-            maxScore = scoreList[i]
+    for i, score in enumerate(scoreList):
+        if score > maxScore:
+            maxScore = score
             maxScoreIndex = i
 
     ovaConsistent = maxScoreIndex == predictedLabelIndex
@@ -242,23 +240,23 @@ def verifyOvANotOvOSingleList(scoreList, predictedLabelIndex, numLabels):
                                                                   numLabels)
     maxScoreIndex = -1
     maxScore = -sys.maxsize - 1
-    for i in range(len(combinedScores)):
-        if combinedScores[i] > maxScore:
-            maxScore = combinedScores[i]
+    for i, combinedScore in enumerate(combinedScores):
+        if combinedScore > maxScore:
+            maxScore = combinedScore
             maxScoreIndex = i
     ovoConsistent = maxScoreIndex == predictedLabelIndex
 
     if ovaConsistent and not ovoConsistent:
         return True
-    elif not ovaConsistent and ovoConsistent:
+    if not ovaConsistent and ovoConsistent:
         return False
-    elif ovaConsistent and ovoConsistent:
+    if ovaConsistent and ovoConsistent:
         return None
-    else:
-        msg = "The given scoreList does not produce the predicted label with "
-        msg += "either of our combination strategies. We therefore cannot "
-        msg += "verify the format of the scores"
-        raise InvalidArgumentValue(msg)
+
+    msg = "The given scoreList does not produce the predicted label with "
+    msg += "either of our combination strategies. We therefore cannot "
+    msg += "verify the format of the scores"
+    raise InvalidArgumentValue(msg)
 
 
 def calculateSingleLabelScoresFromOneVsOneScores(oneVOneData, numLabels):
@@ -290,17 +288,15 @@ def valueFromOneVOneData(oneVOneData, posLabel, negLabel, numLabels):
         return None
     if posLabel > negLabel:
         flagNegative = True
-        tempLabel = negLabel
-        negLabel = posLabel
-        posLabel = tempLabel
+        negLabel, posLabel = posLabel, negLabel
 
     start = (posLabel * numLabels) - ((posLabel * (posLabel + 1)) // 2)
     offset = negLabel - (posLabel + 1)
     value = oneVOneData[start + offset]
     if flagNegative:
         return 0 - value
-    else:
-        return value
+
+    return value
 
 
 def generateBinaryScoresFromHigherSortedLabelScores(scoresPerPoint):
@@ -334,15 +330,15 @@ def cacheWrapper(toWrap):
     def wrapped(*args):
         if args in cache:
             return cache[args]
-        else:
-            ret = toWrap(*args)
-            cache[args] = ret
+
+        ret = toWrap(*args)
+        cache[args] = ret
         return ret
 
     return wrapped
 
 
-def collectAttributes(obj, generators, checkers, recursive=True):
+def collectAttributes(obj, generators, checkers):
     """
     Helper to collect, validate, and return all (relevant) attributes
     associated with a python object (learner, kernel, etc.). The
@@ -401,7 +397,7 @@ def collectAttributes(obj, generators, checkers, recursive=True):
     return ret
 
 
-def noLeading__(obj, name, value):
+def noLeading__(obj, name, value): # pylint: disable=unused-argument, invalid-name
     """
     Determine if a name does NOT begin with two leading underscores.
     """
@@ -410,7 +406,7 @@ def noLeading__(obj, name, value):
     return True
 
 
-def notCallable(obj, name, value):
+def notCallable(obj, name, value): # pylint: disable=unused-argument
     """
     Determine if a value is NOT callable.
     """
@@ -419,7 +415,7 @@ def notCallable(obj, name, value):
     return True
 
 
-def notABCAssociated(obj, name, value):
+def notABCAssociated(obj, name, value): # pylint: disable=unused-argument
     """
     Determine if a name is NOT ABC associated.
     """
@@ -464,7 +460,7 @@ def removeFromTailMatchedLists(full, matched, toIgnore):
 
     retFull = []
     retMatched = []
-    for i in range(len(full)):
+    for i, name in enumerate(full):
         name = full[i]
         if name in temp:
             retFull.append(name)
@@ -523,8 +519,7 @@ def generateAllPairs(items):
         return None
 
     pairs = []
-    for i in range(len(items)):
-        firstItem = items[i]
+    for i, firstItem in enumerate(items):
         for j in range(i + 1, len(items)):
             secondItem = items[j]
             pair = (firstItem, secondItem)
@@ -573,16 +568,15 @@ def extractWinningPredictionIndex(predictionScores):
     """
     maxScore = float("-inf")
     maxScoreIndex = -1
-    for i in range(len(predictionScores)):
-        score = predictionScores[i]
+    for i, score in enumerate(predictionScores):
         if score > maxScore:
             maxScore = score
             maxScoreIndex = i
 
     if maxScoreIndex == -1:
         return None
-    else:
-        return maxScoreIndex
+
+    return maxScoreIndex
 
 
 def extractWinningPredictionIndexAndScore(predictionScores, featureNamesItoN):
@@ -596,15 +590,15 @@ def extractWinningPredictionIndexAndScore(predictionScores, featureNamesItoN):
 
     if allScores is None:
         return None
-    else:
-        bestScore = float("-inf")
-        bestLabel = None
-        for key in allScores:
-            value = allScores[key]
-            if value > bestScore:
-                bestScore = value
-                bestLabel = key
-        return (bestLabel, bestScore)
+
+    bestScore = float("-inf")
+    bestLabel = None
+    for key in allScores:
+        value = allScores[key]
+        if value > bestScore:
+            bestScore = value
+            bestLabel = key
+    return (bestLabel, bestScore)
 
 
 def extractConfidenceScores(predictionScores, featureNamesItoN):
@@ -617,8 +611,7 @@ def extractConfidenceScores(predictionScores, featureNamesItoN):
         return None
 
     scoreMap = {}
-    for i in range(len(predictionScores)):
-        score = predictionScores[i]
+    for i, score in enumerate(predictionScores):
         label = featureNamesItoN[i]
         scoreMap[label] = score
 
@@ -636,6 +629,10 @@ def validateTestingArguments(testX, testY=None, testYRequired=False,
     _2dOutputFlagCheck(has2dOutput, None, scoreMode, None)
 
 def checkArgsForRandomParam(arguments, randomParam):
+    """
+    Raise exception if user provides a value for the interface's
+    randomness parameter.
+    """
     if randomParam in arguments:
         msg = 'Nimble disallows the {0} parameter and provides the '
         msg += 'randomSeed parameter for randomness control. Provide '
@@ -661,6 +658,9 @@ def validInitParams(initNames, arguments, randomSeed, randomParam):
     return initParams
 
 def getValidSeed(seed, interface):
+    """
+    Validate the random seed value works for the interface.
+    """
     if seed is None:
         seed = nimble.random._generateSubsidiarySeed()
     elif not isinstance(seed, int):

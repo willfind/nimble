@@ -12,7 +12,7 @@ import nimble
 from nimble import CustomLearner
 from nimble._utility import numpy2DArray, dtypeConvert
 
-
+# pylint: disable=attribute-defined-outside-init
 class MultiOutputLinearRegression(CustomLearner):
     """
     Learner which trains a separate linear regeession model on each of

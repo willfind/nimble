@@ -8,8 +8,15 @@ import nimble
 from nimble import CustomLearner
 from nimble._utility import dtypeConvert
 
-
+# pylint: disable=attribute-defined-outside-init, arguments-differ
 class RidgeRegression(CustomLearner):
+    """
+    A least squares regression with a regularization penalty.
+
+    The ``lamb`` parameter determines how much to penalize the size of
+    the parameter estimates. When lamb is set to 0, this is the same as
+    Ordinary Least Squares (OLS) regression.
+    """
     learnerType = 'regression'
 
     def train(self, trainX, trainY, lamb=0):

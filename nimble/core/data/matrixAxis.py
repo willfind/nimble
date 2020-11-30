@@ -3,7 +3,7 @@ Implementations and helpers specific to performing axis-generic
 operations on a nimble Matrix object.
 """
 
-from abc import abstractmethod
+from abc import ABCMeta, abstractmethod
 
 import numpy
 
@@ -19,7 +19,7 @@ from ._dataHelpers import denseAxisUniqueArray, uniqueNameGetter
 from ._dataHelpers import fillArrayWithCollapsedFeatures
 from ._dataHelpers import fillArrayWithExpandedFeatures
 
-class MatrixAxis(Axis):
+class MatrixAxis(Axis, metaclass=ABCMeta):
     """
     Differentiate how Matrix methods act dependent on the axis.
 
@@ -85,9 +85,9 @@ class MatrixAxis(Axis):
         if self._isPoint:
             return nimble.data('Matrix', uniqueData, pointNames=axisNames,
                                featureNames=offAxisNames, useLog=False)
-        else:
-            return nimble.data('Matrix', uniqueData, pointNames=offAxisNames,
-                               featureNames=axisNames, useLog=False)
+
+        return nimble.data('Matrix', uniqueData, pointNames=offAxisNames,
+                           featureNames=axisNames, useLog=False)
 
     def _repeat_implementation(self, totalCopies, copyVectorByVector):
         if self._isPoint:
@@ -160,10 +160,10 @@ class MatrixPoints(MatrixAxis, Points):
             (startData, toInsert.data, endData), 0)
 
     def _transform_implementation(self, function, limitTo):
-        for i, p in enumerate(self):
+        for i, pt in enumerate(self):
             if limitTo is not None and i not in limitTo:
                 continue
-            currRet = function(p)
+            currRet = function(pt)
             retArray = numpy.array(currRet, dtype=function.convertType)
             self._convertBaseDtype(retArray.dtype)
             self._base.data[i, :] = retArray
@@ -208,7 +208,6 @@ class MatrixPointsView(PointsView, AxisView, MatrixPoints):
     base : MatrixView
         The MatrixView instance that will be queried.
     """
-    pass
 
 
 class MatrixFeatures(MatrixAxis, Features):
@@ -280,4 +279,3 @@ class MatrixFeaturesView(FeaturesView, AxisView, MatrixFeatures):
     base : MatrixView
         The MatrixView instance that will be queried.
     """
-    pass

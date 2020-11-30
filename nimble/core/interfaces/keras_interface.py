@@ -81,7 +81,7 @@ class Keras(PredefinedInterface):
 
         self._searcher = PythonSearcher(self.keras, isLearner, 2)
 
-        super(Keras, self).__init__()
+        super().__init__()
 
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
@@ -215,8 +215,8 @@ To install keras
         # in binary classification, we return a row vector. need to reshape
         if len(raw.shape) == 1:
             return raw.reshape(len(raw), 1)
-        else:
-            return raw
+
+        return raw
 
 
     def _getScoresOrder(self, learner):
@@ -458,7 +458,7 @@ To install keras
         if predGenerator and isSparse:
             arguments['generator'] = sparseGenerator()
             return learner.predict_generator(**arguments)
-        elif isSparse:
+        if isSparse:
             return learner.predict(sparseGenerator(), **arguments)
         return learner.predict(testX, **arguments)
 
@@ -482,7 +482,7 @@ To install keras
                      'initial_epoch'],
                     'args', 'kwargs',
                     [None, 1, 1, None, None, None, None, 10, 1, False, 0])
-        elif name == 'predict_generator':
+        if name == 'predict_generator':
             return (['steps', 'max_queue_size', 'workers',
                      'use_multiprocessing', 'verbose'],
                     'args', 'kwargs', [None, 10, 1, False, 0])
@@ -496,7 +496,6 @@ To install keras
             """
             Class with an empty __init__ (no parameters)
             """
-            pass
 
         if isinstance(namedModule,
                       type(getattr(InheritedEmptyInit, '__init__'))):
@@ -507,12 +506,4 @@ To install keras
             args, d = removeFromTailMatchedLists(args, d, ignore)
             return (args, v, k, d)
         except TypeError:
-            return self._paramQueryHardCoded(name, parent, ignore)
-
-    def _paramQueryHardCoded(self, name, parent, ignore):
-        """
-        Returns a list of parameters for in package entities that we
-        have hard coded, under the assumption that it is difficult or
-        impossible to find that data automatically.
-        """
-        return None
+            return None

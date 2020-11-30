@@ -9,7 +9,7 @@ import numpy
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.exceptions import ImproperObjectAction, PackageException
+from nimble.exceptions import PackageException
 from nimble._utility import inheritDocstringsFactory, numpy2DArray, is2DArray
 from nimble._utility import isAllowedSingleElement, allowedNumpyDType
 from nimble._utility import scipy, pd
@@ -112,7 +112,7 @@ class List(Base):
 
         kwds['featureNames'] = featureNames
         kwds['shape'] = shape
-        super(List, self).__init__(**kwds)
+        super().__init__(**kwds)
 
     def _getPoints(self):
         return ListPoints(self)
@@ -121,9 +121,9 @@ class List(Base):
         return ListFeatures(self)
 
     def _transform_implementation(self, toTransform, points, features):
-        IDs = itertools.product(range(len(self.points)),
+        ids = itertools.product(range(len(self.points)),
                                 range(len(self.features)))
-        for i, j in IDs:
+        for i, j in ids:
             currVal = self.data[i][j]
 
             if points is not None and i not in points:
@@ -138,10 +138,10 @@ class List(Base):
 
             self.data[i][j] = currRet
 
+    # pylint: disable=unused-argument
     def _calculate_implementation(self, function, points, features,
-                                  preserveZeros, outputType):
-        return self._calculate_genericVectorized(
-            function, points, features, outputType)
+                                  preserveZeros):
+        return self._calculate_genericVectorized(function, points, features)
 
     def _countUnique_implementation(self, points, features):
         return denseCountUnique(self, points, features)
@@ -160,8 +160,8 @@ class List(Base):
         for i in range(len(self.features)):
             transposed.append([])
         for point in self.data:
-            for i in range(len(point)):
-                transposed[i].append(point[i])
+            for i, val in enumerate(point):
+                transposed[i].append(val)
 
         self.data = transposed
         self._numFeatures = tempFeatures
@@ -178,6 +178,7 @@ class List(Base):
             oPoint = other.data[index]
             if sPoint != oPoint:
                 for sVal, oVal in zip(sPoint, oPoint):
+                    # pylint: disable=comparison-with-itself
                     if sVal != oVal and (sVal == sVal or oVal == oVal):
                         return False
         return True
@@ -266,7 +267,7 @@ class List(Base):
             elif to == 'List':
                 data = [pt.copy() for pt in self.data]
             else:
-                data = convertList(numpy2DArray, self.data)
+                data = _convertList(numpy2DArray, self.data)
             # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
@@ -276,7 +277,7 @@ class List(Base):
             if isEmpty:
                 ret = emptyData
             else:
-                ret = convertList(numpy2DArray, self.data)
+                ret = _convertList(numpy2DArray, self.data)
             if needsReshape:
                 return ret.reshape(self._shape)
             return ret
@@ -287,7 +288,7 @@ class List(Base):
             if isEmpty:
                 emptyData = data
         else:
-            data = convertList(numpy2DArray, self.data)
+            data = _convertList(numpy2DArray, self.data)
         if to == 'numpymatrix':
             if isEmpty:
                 return numpy.matrix(emptyData)
@@ -308,26 +309,26 @@ class List(Base):
                 if isEmpty:
                     return scipy.sparse.coo_matrix(emptyData)
                 return scipy.sparse.coo_matrix(data)
-        if to == 'pandasdataframe':
-            if not pd.nimbleAccessible():
-                msg = "pandas is not available"
-                raise PackageException(msg)
-            if isEmpty:
-                return pd.DataFrame(emptyData)
-            pnames = self.points._getNamesNoGeneration()
-            fnames = self.features._getNamesNoGeneration()
-            return pd.DataFrame(data, index=pnames, columns=fnames)
+        # pandasdataframe
+        if not pd.nimbleAccessible():
+            msg = "pandas is not available"
+            raise PackageException(msg)
+        if isEmpty:
+            return pd.DataFrame(emptyData)
+        pnames = self.points._getNamesNoGeneration()
+        fnames = self.features._getNamesNoGeneration()
+        return pd.DataFrame(data, index=pnames, columns=fnames)
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):
         if not isinstance(replaceWith, Base):
             values = [replaceWith] * (featureEnd - featureStart + 1)
-            for p in range(pointStart, pointEnd + 1):
-                self.data[p][featureStart:featureEnd + 1] = values
+            for pIdx in range(pointStart, pointEnd + 1):
+                self.data[pIdx][featureStart:featureEnd + 1] = values
         else:
-            for p in range(pointStart, pointEnd + 1):
-                fill = replaceWith.data[p - pointStart]
-                self.data[p][featureStart:featureEnd + 1] = fill
+            for pIdx in range(pointStart, pointEnd + 1):
+                fill = replaceWith.data[pIdx - pointStart]
+                self.data[pIdx][featureStart:featureEnd + 1] = fill
 
 
     def _flatten_implementation(self, order):
@@ -399,12 +400,11 @@ class List(Base):
                     name = obj.points.getName(idx)
                     if not name.startswith(DEFAULT_PREFIX):
                         return name
-                    else:
-                        # differentiate default names between objects;
-                        # note still start with DEFAULT_PREFIX
-                        return name + suffix
-                else:
-                    return DEFAULT_PREFIX + str(idx) + suffix
+                    # differentiate default names between objects;
+                    # note still start with DEFAULT_PREFIX
+                    return name + suffix
+
+                return DEFAULT_PREFIX + str(idx) + suffix
 
             if feature == "intersection":
                 for i, pt in enumerate(self.data):
@@ -481,6 +481,7 @@ class List(Base):
                         # fill any nan values in left with the corresponding
                         # right value
                         for i, value in enumerate(ptL):
+                            # pylint: disable=comparison-with-itself
                             if value != value and i in matchingFtIdx[0]:
                                 lIdx = matchingFtIdx[0].index(i)
                                 ptL[i] = ptR[matchingFtIdx[1][lIdx]]
@@ -584,8 +585,8 @@ class List(Base):
         """
         for point in self.points:
             if len(point._shape) == 2 and point._shape[0] == 1:
-                for i in range(len(point)):
-                    if point[i] == 0:
+                for val in point:
+                    if val == 0:
                         return True
             else:
                 return point.containsZero()
@@ -621,18 +622,17 @@ class List(Base):
             ret.append(retP)
         return List(ret)
 
-    def _convertUnusableTypes_implementation(self, convertTo, usableTypes):
+    def _convertToNumericTypes_implementation(self, usableTypes):
         def needConversion(val):
             return type(val) not in usableTypes
 
         def convertType(val):
             if type(val) in usableTypes:
                 return val
-            return convertTo(val)
+            return float(val)
 
         if any(any(needConversion(v) for v in pt) for pt in self.data):
-            return [list(map(convertType, pt)) for pt in self.data]
-        return self.data
+            self.data = [list(map(convertType, pt)) for pt in self.data]
 
     def _iterateElements_implementation(self, order, only):
         array = numpy.array(self.data, dtype=numpy.object_)
@@ -643,8 +643,6 @@ class ListView(BaseView, List):
     """
     Read only access to a List object.
     """
-    def __init__(self, **kwds):
-        super(ListView, self).__init__(**kwds)
 
     def _getPoints(self):
         return ListPointsView(self)
@@ -669,7 +667,7 @@ class ListView(BaseView, List):
         if to not in ['List', 'pythonlist']:
             origData = self.data
             self.data = listForm
-            res = super(ListView, self)._copy_implementation(to)
+            res = super()._copy_implementation(to)
             self.data = origData
             return res
 
@@ -678,26 +676,11 @@ class ListView(BaseView, List):
             ftNames = self.features._getNamesNoGeneration()
             return List(listForm, pointNames=ptNames,
                         featureNames=ftNames, shape=self.shape)
-        else:
-            return listForm
 
-    def _convertUnusableTypes(self, convertTo, usableTypes, returnCopy=True):
-        # need to override the Base level function because self.data is a
-        # ListPassThrough. If returnCopy, can return a list otherwise need to
-        # modify the self._source.data the ListPassThrough references
-        try:
-            ret = self._convertUnusableTypes_implementation(convertTo,
-                                                            usableTypes)
-        except (ValueError, TypeError):
-            msg = 'Unable to coerce the data to the type required for this '
-            msg += 'operation.'
-            raise ImproperObjectAction(msg)
-        if returnCopy:
-            return ret
-        pRange = slice(self._pStart, self._pEnd)
-        fRange = slice(self._fStart, self._fEnd)
-        for i, pt in enumerate(self._source.data[pRange]):
-            pt[fRange] = ret[i]
+        return listForm
+
+    def _convertToNumericTypes_implementation(self, usableTypes):
+        self._source._convertToNumericTypes_implementation(usableTypes)
 
 class FeatureViewer(object):
     """
@@ -727,6 +710,7 @@ class FeatureViewer(object):
         for sVal, oVal in zip(self, other):
             # check element equality - which is only relevant if one
             # of the elements is non-NaN
+            # pylint: disable=comparison-with-itself
             if sVal != oVal and (sVal == sVal or oVal == oVal):
                 return False
         return True
@@ -745,6 +729,7 @@ class ListPassThrough(object):
         self.pRange = pEnd - pStart
         self.fStart = fStart
         self.fEnd = fEnd
+        self.fviewer = None
 
     def __getitem__(self, key):
         if key < 0 or key >= self.pRange:
@@ -768,7 +753,7 @@ class ListPassThrough(object):
 # Helpers #
 ###########
 
-def convertList(constructor, data):
+def _convertList(constructor, data):
     convert = constructor(data)
     if not allowedNumpyDType(convert.dtype):
         convert = constructor(data, dtype=object)
