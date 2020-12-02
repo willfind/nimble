@@ -59,19 +59,24 @@ from .normalize import meanNormalize
 from .normalize import meanStandardDeviationNormalize
 from .normalize import range0to1Normalize
 from .normalize import percentileNormalize
+from .confidence import rootMeanSquareErrorConfidenceInterval
+from .confidence import meanAbsoluteErrorConfidenceInterval
+from .confidence import fractionIncorrectConfidenceInterval
 
 
 __all__ = ['balancedAccuracy', 'confusionMatrix', 'correlation',
            'cosineSimilarity', 'count', 'covariance', 'detectBestResult',
            'elementwiseMultiply', 'elementwisePower', 'f1Score',
            'falseNegative', 'falsePositive', 'fractionCorrect',
-           'fractionIncorrect', 'inverse', 'leastSquaresSolution', 'maximum',
-           'mean', 'meanAbsoluteError', 'meanFeaturewiseRootMeanSquareError',
-           'meanNormalize', 'meanStandardDeviationNormalize', 'median',
-           'minimum', 'mode', 'percentileNormalize', 'precision',
-           'proportionMissing', 'proportionZero', 'pseudoInverse', 'quartiles',
+           'fractionIncorrect', 'fractionIncorrectConfidenceInterval',
+           'inverse', 'leastSquaresSolution', 'maximum', 'mean',
+           'meanAbsoluteError', 'meanAbsoluteErrorConfidenceInterval',
+           'meanFeaturewiseRootMeanSquareError', 'meanNormalize',
+           'meanStandardDeviationNormalize', 'median', 'minimum', 'mode',
+           'percentileNormalize', 'precision', 'proportionMissing',
+           'proportionZero', 'pseudoInverse', 'quartiles',
            'range0to1Normalize', 'rSquared', 'recall', 'residuals',
-           'rootMeanSquareError', 'solve', 'specificity', 'standardDeviation',
-           'sum', 'trueNegative', 'truePositive', 'uniqueCount',
-           'varianceFractionRemaining',
+           'rootMeanSquareError', 'rootMeanSquareErrorConfidenceInterval',
+           'solve', 'specificity', 'standardDeviation', 'sum', 'trueNegative',
+           'truePositive', 'uniqueCount', 'varianceFractionRemaining',
            ]

@@ -4,51 +4,90 @@ except ImportError:
     import mock
 
 import numpy
-from nose.tools import *
+from nose.tools import raises
+from nose.plugins.attrib import attr
 
 import nimble
-from nimble.calculate.confidence import confidenceIntervalHelper
-from nimble.exceptions import PackageException, ImproperObjectAction
+from nimble.random import numpyRandom
+from nimble.exceptions import PackageException
 from tests.helpers import noLogEntryExpected
+from nimble.calculate.confidence import _confidenceIntervalHelper
+from nimble.calculate import (
+    rootMeanSquareErrorConfidenceInterval,
+    meanAbsoluteErrorConfidenceInterval,
+    fractionIncorrectConfidenceInterval,
+    )
 
-def getPredictions():
-    predRaw = [252.7, 247.7] * 12
-    predRaw.append(250.2)
-    pred = nimble.data("Matrix", predRaw, useLog=False)
-    pred.transpose(useLog=False)
+def fractionOfTimeInCI(getActual, getPredictions, ciFunc, expError):
+    confidence = numpyRandom.randint(90, 99) / 100
+    results = []
+    for _ in range(1000):
+        actual = getActual(300)
+        predicted = getPredictions(actual)
+        lower, upper = ciFunc(actual, predicted, confidence)
+        isInCI = expError > lower and expError < upper
+        results.append(isInCI)
 
-    assert len(pred.points) == 25
-    assert len(pred.features) == 1
-    mean = pred.features.statistics('mean')[0, 0]
-    numpy.testing.assert_approx_equal(mean, 250.2)
-    std = pred.features.statistics('samplestandarddeviation')[0, 0]
-    numpy.testing.assert_approx_equal(std, 2.5)
-
-    return pred
-
-######################
-# confidenceInterval #
-######################
-@noLogEntryExpected
-def testSimpleConfidenceInverval():
-    """Test of confidenceInterval using example from wikipedia """
-    pred = getPredictions()
-    (low, high) = confidenceIntervalHelper(pred, None, 0.95)
-
-    numpy.testing.assert_approx_equal(low, 249.22)
-    numpy.testing.assert_approx_equal(high, 251.18)
+    assert abs(numpy.mean(results) - confidence) <= 0.01
 
 @raises(PackageException)
 @mock.patch('nimble.calculate.confidence.scipy.nimbleAccessible', new=lambda: False)
 def testCannotImportSciPy():
-    pred = getPredictions()
-    (low, high) = confidenceIntervalHelper(pred, None, 0.95)
+    _ = _confidenceIntervalHelper(None, None, None, None)
 
-@raises(ImproperObjectAction)
-def testPredictionsInvalidShape():
-    pred = getPredictions()
-    toAdd = nimble.data('Matrix', numpy.ones((len(pred.points), 1)))
-    pred.features.append(toAdd)
-    assert len(pred.features) == 2
+#########################################
+# rootMeanSquareErrorConfidenceInterval #
+#########################################
+@attr('slow')
+@noLogEntryExpected
+def test_rootMeanSquareErrorConfidenceInterval():
+    def getActual(n):
+        return nimble.data('Matrix', numpyRandom.normal(size=(n, 1)),
+                           useLog=False)
 
-    (low, high) = confidenceIntervalHelper(pred, None, 0.95)
+    def getPredictions(actual):
+        return actual + 0.1 * getActual(len(actual))
+
+    fractionOfTimeInCI(getActual, getPredictions,
+                       rootMeanSquareErrorConfidenceInterval, 0.1)
+
+#######################################
+# meanAbsoluteErrorConfidenceInterval #
+#######################################
+@attr('slow')
+@noLogEntryExpected
+def test_meanAbsoluteErrorConfidenceInterval():
+    def getActual(n):
+        return nimble.data('Matrix', numpyRandom.normal(size=(n,1)),
+                           useLog=False)
+
+    def getPredictions(actual):
+        return actual + 0.1 * getActual(len(actual))
+
+    expectedError = numpy.mean(abs(0.1 * getActual(1000000)))
+
+    fractionOfTimeInCI(getActual, getPredictions,
+                       meanAbsoluteErrorConfidenceInterval, expectedError)
+
+#######################################
+# fractionIncorrectConfidenceInterval #
+#######################################
+@attr('slow')
+@noLogEntryExpected
+def test_fractionIncorrectConfidenceInterval():
+    def getActual(n):
+        return nimble.data('Matrix',
+                           numpyRandom.binomial(1, 0.5, size=(n,1)),
+                           useLog=False)
+
+    def getPredictions(actual):
+        def predict(pt):
+            rand = numpyRandom.random()
+            if rand < 0.8:
+                return pt[0]
+            return int(not pt[0])
+
+        return actual.points.calculate(predict, useLog=False)
+
+    fractionOfTimeInCI(getActual, getPredictions,
+                       fractionIncorrectConfidenceInterval, 0.2)
