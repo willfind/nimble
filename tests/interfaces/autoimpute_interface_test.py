@@ -157,13 +157,21 @@ def test_autoimpute_MiLogisticRegression_directMultipleImputer():
         trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels='y')
         # test data cannot have missing values
         testX.features.fillMatching(fill.mean, match.missing)
-        fc = nimble.trainAndTest('autoimpute.MiLogisticRegression', trainX,
-                                 trainY, testX, testY, fractionCorrect,
-                                 model_lib='sklearn',
-                                 mi=nimble.Init('MultipleImputer', n=1,
-                                            strategy='interpolate'))
+        trainArgs = ['autoimpute.MiLogisticRegression', trainX, trainY, testX,
+                     testY, fractionCorrect,]
+        try:
+            fc = nimble.trainAndTest(*trainArgs, model_lib='sklearn',
+                                     mi=nimble.Init('MultipleImputer', n=1,
+                                                strategy='interpolate'))
+            imputer = 'autoimpute.MultipleImputer'
+        # learners in version >=0.12 require MiceImputer
+        except ValueError:
+            fc = nimble.trainAndTest(*trainArgs, model_lib='sklearn',
+                                     mi=nimble.Init('MiceImputer', n=1,
+                                                strategy='interpolate'))
+            imputer = 'autoimpute.MiceImputer'
 
-        nimble.fillMatching('autoimpute.MultipleImputer', match.missing, trainX,
+        nimble.fillMatching(imputer, match.missing, trainX,
                             n=1, strategy='interpolate')
 
         exp = nimble.trainAndTest('skl.LogisticRegression', trainX, trainY,
