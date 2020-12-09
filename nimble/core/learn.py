@@ -4,9 +4,9 @@ nimble import.
 """
 
 from types import ModuleType
+import time
 
 import numpy
-import time
 
 import nimble
 from nimble import match
