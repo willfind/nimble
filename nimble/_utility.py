@@ -274,7 +274,7 @@ def isAllowedSingleElement(x):
         return False
 
     #None and np.NaN are allowed
-    if x is None or x != x: # pylint: disable=comparison-with-itself
+    if x is None or x != x:
         return True
 
     return False

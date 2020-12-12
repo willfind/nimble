@@ -468,7 +468,7 @@ class FeaturesView(Features, metaclass=ABCMeta):
         readOnlyException('fill')
 
     @featuresExceptionDoc
-    def normalize(self, subtract=None, divide=None, applyResultTo=None,
+    def normalize(self, function, applyResultTo=None, features=None,
                   useLog=None):
         readOnlyException('normalize')
 

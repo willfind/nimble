@@ -12,6 +12,7 @@ import copy
 import sys
 import warnings
 import datetime
+from contextlib import contextmanager
 
 import numpy
 
@@ -829,7 +830,7 @@ def replaceNumpyValues(data, toReplace, replaceWith):
                 raise ValueError('replaceWith is not a bool type')
             data[replaceLocs] = replaceWith
         if replaceNan:
-            nanLocs = data != data # pylint: disable=comparison-with-itself
+            nanLocs = data != data
             if nanLocs.any():
                 data[nanLocs] = replaceWith
     except ValueError:
@@ -840,7 +841,7 @@ def replaceNumpyValues(data, toReplace, replaceWith):
         data = data.astype(dtype)
         data[numpy.isin(data, toReplace)] = replaceWith
         if replaceNan:
-            data[data != data] = replaceWith # pylint: disable=comparison-with-itself
+            data[data != data] = replaceWith
     return data
 
 
@@ -1382,6 +1383,32 @@ def initDataObject(
 
     return ret
 
+def _autoFileTypeChecker(ioStream):
+    # find first non empty line to check header
+    startPosition = ioStream.tell()
+    currLine = ioStream.readline()
+    while currLine == ['', b'']:
+        currLine = ioStream.readline()
+    header = currLine
+    ioStream.seek(startPosition)
+
+    # check beginning of header for sentinel on string or binary stream
+    if isinstance(header, bytes):
+        if header[:14] == b"%%MatrixMarket":
+            return 'mtx'
+        if header.strip().endswith(b'\x89HDF'):
+            return 'hdf5'
+    if header[:14] == "%%MatrixMarket":
+        return 'mtx'
+    # we default to csv otherwise
+    return 'csv'
+
+@contextmanager
+def _openFileIO(openFile):
+    """
+    Context manager that prevents an open file from closing on exit.
+    """
+    yield openFile
 
 def createDataFromFile(
         returnType, data, pointNames, featureNames, name,
@@ -1393,32 +1420,10 @@ def createDataFromFile(
     and featureNames (the later two following the same semantics as
     nimble.data's parameters with the same names).
     """
-
-    def autoFileTypeChecker(ioStream):
-        # find first non empty line to check header
-        startPosition = ioStream.tell()
-        currLine = ioStream.readline()
-        while currLine == ['', b'']:
-            currLine = ioStream.readline()
-        header = currLine
-        ioStream.seek(startPosition)
-
-        # check beginning of header for sentinel on string or binary stream
-        if isinstance(header, bytes):
-            if header[:14] == b"%%MatrixMarket":
-                return 'mtx'
-            if header.strip().endswith(b'\x89HDF'):
-                return 'hdf5'
-        if header[:14] == "%%MatrixMarket":
-            return 'mtx'
-        # we default to csv otherwise
-        return 'csv'
-
-    toPass = data
     # Case: string value means we need to open the file, either directly or
     # through an http request
-    if isinstance(toPass, str):
-        if toPass[:4] == 'http':
+    if isinstance(data, str):
+        if data[:4] == 'http': # webpage
             if not requests.nimbleAccessible():
                 msg = "To load data from a webpage, the requests module must "
                 msg += "be installed"
@@ -1431,55 +1436,52 @@ def createDataFromFile(
                 raise InvalidArgumentValue(msg)
 
             # start with BytesIO since mtx and hdf5 need them
-            toPass = BytesIO(response.content)
-            extension = autoFileTypeChecker(toPass)
-            if extension == 'csv':
-                toPass.close()
-                toPass = StringIO(response.text, newline=None)
-        else:
-            toPass = open(data, 'r', newline=None)
+            with BytesIO(response.content) as toCheck:
+                extension = _autoFileTypeChecker(toCheck)
+            if extension != 'csv':
+                ioStream = BytesIO(response.content)
+            else:
+                ioStream = StringIO(response.text, newline=None)
+        else: # path to file
             try:
-                extension = autoFileTypeChecker(toPass)
+                with open(data, 'r', newline=None) as toCheck:
+                    extension = _autoFileTypeChecker(toCheck)
+                ioStream = open(data, 'r', newline=None)
             except UnicodeDecodeError:
-                toPass.close()
-                toPass = open(data, 'rb', newline=None)
-                extension = autoFileTypeChecker(toPass)
+                with open(data, 'rb', newline=None) as toCheck:
+                    extension = _autoFileTypeChecker(toCheck)
+                ioStream = open(data, 'rb', newline=None)
+        path = data
     # Case: we are given an open file already
     else:
-        extension = autoFileTypeChecker(toPass)
-
-    # if the file has a different, valid extension from the one we determined
-    # we will defer to the file's extension
-    if isinstance(data, str):
-        path = data
-    else:
+        with _openFileIO(data) as toCheck:
+            extension = _autoFileTypeChecker(toCheck)
+        ioStream = _openFileIO(data)
         # try getting name attribute from file
         try:
             path = data.name
         except AttributeError:
             path = None
+
+    # if the file has a different, valid extension from the one we determined
+    # we will defer to the file's extension
     if path is not None:
         split = path.rsplit('.', 1)
         supportedExtensions = ['csv', 'mtx', 'hdf5', 'h5']
         if len(split) > 1 and split[1].lower() in supportedExtensions:
             extension = split[1].lower()
-            if extension == 'h5':
-                extension = 'hdf5' # h5 and hdf5 are synonymous
 
-    try:
+    with ioStream as toLoad:
         selectSuccess = False
         if extension == 'csv':
             loaded = _loadcsvUsingPython(
-                toPass, pointNames, featureNames, ignoreNonNumericalFeatures,
+                toLoad, pointNames, featureNames, ignoreNonNumericalFeatures,
                 keepPoints, keepFeatures, inputSeparator)
             selectSuccess = True
         elif extension == 'mtx':
-            loaded = _loadmtxForAuto(toPass, pointNames, featureNames)
-        elif extension == 'hdf5':
-            loaded = _loadhdf5ForAuto(toPass, pointNames, featureNames)
-    # want to make sure we close the file if loading fails
-    finally:
-        toPass.close()
+            loaded = _loadmtxForAuto(toLoad, pointNames, featureNames)
+        elif extension in ['hdf5', 'h5']: # h5 and hdf5 are synonymous
+            loaded = _loadhdf5ForAuto(toLoad, pointNames, featureNames)
 
     retData, retPNames, retFNames = loaded
 

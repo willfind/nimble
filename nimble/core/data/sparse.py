@@ -675,7 +675,7 @@ class Sparse(Base):
                         # fill any nan values in left with the corresponding
                         # right value
                         for i, value in enumerate(ptL[matchingFtIdx[0]]):
-                            # pylint: disable=comparison-with-itself
+
                             if value != value:
                                 fill = ptR[matchingFtIdx[1]][i]
                                 ptL[matchingFtIdx[0]][i] = fill
@@ -1337,7 +1337,7 @@ class SparseView(BaseView, Sparse):
         sIt = self.points
         oIt = other.points
         for sPoint, oPoint in zip(sIt, oIt):
-            # pylint: disable=comparison-with-itself
+
             if sPoint != oPoint:
                 return False
             if sPoint != sPoint and oPoint == oPoint:

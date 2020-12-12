@@ -296,7 +296,7 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject.features.normalize(subtract=0, divide=1)
+            testObject.features.normalize(lambda x: x)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)

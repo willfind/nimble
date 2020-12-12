@@ -36,7 +36,7 @@ def missing(value):
     >>> missing('nan')
     False
     """
-    return value is None or value != value # pylint: disable=comparison-with-itself
+    return value is None or value != value
 
 def numeric(value):
     """
@@ -1352,8 +1352,8 @@ def _convertMatchToFunction(match):
                 and not isinstance(match, str)):
             matchList = match
             # if nans in the list, need to include separate check in function
-            if not all([val == val for val in matchList]): # pylint: disable=comparison-with-itself
-                match = lambda x: x != x or x in matchList # pylint: disable=comparison-with-itself
+            if not all([val == val for val in matchList]):
+                match = lambda x: x != x or x in matchList
             else:
                 match = lambda x: x in matchList
         # case2: constant
@@ -1361,8 +1361,8 @@ def _convertMatchToFunction(match):
             matchConstant = match
             if matchConstant is None:
                 match = lambda x: x is None
-            elif matchConstant != matchConstant: # pylint: disable=comparison-with-itself
-                match = lambda x: x != x # pylint: disable=comparison-with-itself
+            elif matchConstant != matchConstant:
+                match = lambda x: x != x
             else:
                 match = lambda x: x == matchConstant
     return match
