@@ -10,6 +10,7 @@ import inspect
 import importlib
 import numbers
 import datetime
+from types import ModuleType
 
 import numpy
 
@@ -351,3 +352,20 @@ def removeDuplicatesNative(cooObj):
                                       shape=cooObj.shape)
 
     return cooNew
+
+def _setAll(variables, includeModules=False, ignore=()):
+    """
+    Will add any attribute in the directory without a leading underscore
+    to the list for __all__, except modules when includeModules is False.
+
+    Note: Does not follow standard nimble leading underscore conventions
+    because it should not be included in __all__.
+    """
+    inAll = []
+    for name, obj in variables.items():
+        if name.startswith('_') or name in ignore:
+            continue
+        isMod = isinstance(obj, ModuleType)
+        if (isMod and includeModules) or not isMod:
+            inAll.append(name)
+    return sorted(inAll)

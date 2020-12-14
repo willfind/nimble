@@ -1,6 +1,6 @@
 """
 Tests to check the loading, writing, and usage of nimble.settings, along
-with the undlying structures being used.
+with the underlying structures being used.
 """
 
 import tempfile

@@ -39,13 +39,6 @@ from .match import anyTrue
 from .match import allTrue
 from .match import anyFalse
 from .match import allFalse
+from .._utility import _setAll
 
-
-__all__ = ['allBoolean', 'allFalse', 'allInfinity', 'allMissing',
-           'allNegative', 'allNonNumeric', 'allNonZero', 'allNumeric',
-           'allPositive', 'allTrue', 'allValues', 'allZero', 'anyBoolean',
-           'anyFalse', 'anyInfinity', 'anyMissing', 'anyNegative',
-           'anyNonNumeric', 'anyNonZero', 'anyNumeric', 'anyPositive',
-           'anyTrue', 'anyValues', 'anyZero', 'boolean', 'false', 'infinity',
-           'missing', 'negative', 'nonNumeric', 'nonZero', 'numeric',
-           'positive', 'true', 'zero']
+__all__ = _setAll(vars())

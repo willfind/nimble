@@ -10,7 +10,6 @@ from .fill import mode
 from .fill import forwardFill
 from .fill import backwardFill
 from .fill import interpolate
+from .._utility import _setAll
 
-
-__all__ = ['backwardFill', 'constant', 'forwardFill', 'interpolate', 'mean',
-           'median', 'mode',]
+__all__ = _setAll(vars())
