@@ -599,7 +599,7 @@ class Sparse(Base):
         other._sortInternal('feature')
         leftFtCount = len(self.features)
         rightFtCount = len(other.features) - len(matchingFtIdx[0])
-        if onFeature:
+        if onFeature is not None:
             onIdxL = self.features.getIndex(onFeature)
             onIdxR = other.features.getIndex(onFeature)
             leftData = self._data.data
@@ -685,7 +685,7 @@ class Sparse(Base):
                     if feature == "intersection":
                         pt = pt[matchingFtIdx[0]]
                         leftFtCount = len(matchingFtIdx[0])
-                    elif onFeature and feature == "left":
+                    elif onFeature is not None and feature == "left":
                         pt = pt[:len(self.features)]
                     elif feature == "left":
                         pt = pt[:len(self.features) + 1]
@@ -699,7 +699,7 @@ class Sparse(Base):
                     numPts += 1
             elif point in ["union", "left"]:
                 ptL = leftData[leftRow == ptIdxL]
-                if onFeature:
+                if onFeature is not None:
                     numNaN = len(other.features) - len(matchingFtIdx[1])
                     ptR = [numpy.nan] * numNaN
                 else:
@@ -708,7 +708,7 @@ class Sparse(Base):
                 pt = numpy.append(ptL, ptR)
                 if feature == "intersection":
                     pt = pt[matchingFtIdx[0]]
-                elif onFeature and feature == "left":
+                elif onFeature is not None and feature == "left":
                     pt = pt[:len(self.features)]
                 elif feature == "left":
                     pt = pt[:len(self.features) + 1]
@@ -723,7 +723,7 @@ class Sparse(Base):
         if point == 'union':
             for ptIdxR, target in enumerate(rightData[rightCol == onIdxR]):
                 if target not in matched:
-                    if onFeature:
+                    if onFeature is not None:
                         nanList = [numpy.nan] * len(self.features)
                         ptL = numpy.array(nanList, dtype=numpy.object_)
                     else:
@@ -738,7 +738,7 @@ class Sparse(Base):
                     pt = numpy.append(ptL, ptR)
                     if feature == "intersection":
                         pt = pt[matchingFtIdx[0]]
-                    elif onFeature and feature == "left":
+                    elif onFeature is not None and feature == "left":
                         pt = pt[:len(self.features)]
                     elif feature == "left":
                         pt = pt[:len(self.features) + 1]
@@ -752,7 +752,7 @@ class Sparse(Base):
                     numPts += 1
 
         numFts = leftFtCount + rightFtCount
-        if onFeature and feature == "intersection":
+        if onFeature is not None and feature == "intersection":
             numFts = len(matchingFtIdx[0])
         elif feature == "intersection":
             numFts = len(matchingFtIdx[0]) - 1

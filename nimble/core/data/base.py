@@ -3937,7 +3937,6 @@ class Base(ABC):
                 msg += "in both objects"
                 raise InvalidArgumentValue(msg) from e
 
-
         self._genericMergeFrontend(tmpOther, point, feature, onFeature, axis)
 
     def _genericMergeFrontend(self, other, point, feature, onFeature,
@@ -3948,16 +3947,29 @@ class Base(ABC):
         if ((onFeature is None and point == "intersection")
                 and not bothNamesCreated):
             msg = "Point names are required in both objects when "
-            msg += "point='intersection'"
+            msg += "point='intersection' and onFeature is None"
             raise InvalidArgumentValueCombination(msg)
         bothNamesCreated = (self._featureNamesCreated()
                             and other._featureNamesCreated())
         if feature == "intersection" and not bothNamesCreated:
+            featArg = 'strict' if strict == 'feature' else feature
             msg = "Feature names are required in both objects when "
-            msg += "feature='intersection'"
+            msg += "feature='{0}'".format(featArg)
             raise InvalidArgumentValueCombination(msg)
 
         if onFeature is not None:
+            if not isinstance(onFeature, str):
+                # index allowed only if we can verify feature names match
+                if not bothNamesCreated:
+                    msg = 'Feature names are required for merges when '
+                    msg += 'onFeature is not None'
+                    raise InvalidArgumentValue(msg)
+                ftName = self.features.getName(onFeature)
+                if ftName != other.features.getName(onFeature):
+                    msg = 'The feature names at index {0} '.format(onFeature)
+                    msg += 'do not match in each object'
+                    raise InvalidArgumentValue(msg)
+                onFeature = ftName
             try:
                 uniqueFtL = len(set(self[:, onFeature])) == len(self.points)
                 uniqueFtR = len(set(other[:, onFeature])) == len(other.points)
@@ -4081,19 +4093,16 @@ class Base(ABC):
             selfNames = self.features.getNames()
             otherNames = other.features.getNames()
         allNames = selfNames + otherNames
-        hasMatching = len(set(allNames)) != len(allNames)
-        if hasMatching:
+        if len(set(allNames)) != len(allNames):
             for name in selfNames:
-                if name in otherNames:
+                if not name.startswith(DEFAULT_PREFIX) and name in otherNames:
                     matches.append(name)
         return matches
 
 
-    ###################################
-    ###################################
-    ###   Linear Algebra functions   ###
-    ###################################
-    ###################################
+    #############################
+    #  Linear Algebra functions #
+    #############################
     @limitedTo2D
     def inverse(self, pseudoInverse=False):
         """

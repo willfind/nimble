@@ -331,10 +331,10 @@ class DataFrame(Base):
 
         toDrop = []
         for left, right in zip(matchingFtIdx[0], matchingFtIdx[1]):
-            if onFeature and left == onIdxL:
+            if onFeature is not None and left == onIdxL:
                 # onFeature column has already been merged
                 continue
-            if onFeature and left > onIdxL:
+            if onFeature is not None and left > onIdxL:
                 # one less to account for merged onFeature
                 right = right + numColsL - 1
             else:

@@ -363,7 +363,7 @@ class List(Base):
 
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):
-        if onFeature:
+        if onFeature is not None:
             if feature in ["intersection", "left"]:
                 onFeatureIdx = self.features.getIndex(onFeature)
                 onIdxLoc = matchingFtIdx[0].index(onFeatureIdx)
