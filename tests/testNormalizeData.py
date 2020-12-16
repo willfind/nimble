@@ -66,9 +66,6 @@ def test_normalizeData_namesChanged():
     norms = nimble.normalizeData('scikitlearn.PCA', trainX, testX=testX,
                                  n_components=2)
 
-    assert norms[0].name == 'trainX PCA'
-    assert norms[1].name == 'testX PCA'
-
 @logCountAssertionFactory(2)
 def test_normalizeData_logCount():
     data1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]

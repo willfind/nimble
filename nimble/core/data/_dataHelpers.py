@@ -26,22 +26,6 @@ DEFAULT_PREFIX = "_DEFAULT_#"
 DEFAULT_PREFIX2 = DEFAULT_PREFIX+'%s'
 DEFAULT_PREFIX_LENGTH = len(DEFAULT_PREFIX)
 
-DEFAULT_NAME_PREFIX = "OBJECT_#"
-
-class _DefaultNumber:
-    """
-    For storing the next available number for a default name.
-    """
-    number = 0
-
-
-def nextDefaultObjectName():
-    """
-    Get the next available default name for an object.
-    """
-    _DefaultNumber.number += 1
-    return DEFAULT_NAME_PREFIX + str(_DefaultNumber.number - 1)
-
 
 def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
     """
@@ -58,7 +42,7 @@ def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
     if nameSource == 'self':
         ret._name = caller._name
     else:
-        ret._name = nextDefaultObjectName()
+        ret._name = None
 
     if pathSource == 'self':
         ret._absPath = caller.absolutePath

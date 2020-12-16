@@ -802,7 +802,7 @@ class StructureDataSafe(StructureShared):
 
         ext1 = toTest.points.copy(0)
 
-        assert ext1.nameIsDefault()
+        assert ext1.name is None
         assert ext1.path == 'testAbsPath'
         assert ext1.absolutePath == 'testAbsPath'
         assert ext1.relativePath == 'testRelPath'
@@ -942,7 +942,7 @@ class StructureDataSafe(StructureShared):
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-        assert ext.nameIsDefault()
+        assert ext.name is None
         assert ext.absolutePath == 'testAbsPath'
         assert ext.relativePath == 'testRelPath'
 
@@ -1027,7 +1027,7 @@ class StructureDataSafe(StructureShared):
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-        assert ret.nameIsDefault()
+        assert ret.name is None
         assert ret.absolutePath == 'testAbsPath'
         assert ret.relativePath == 'testRelPath'
 
@@ -1543,7 +1543,7 @@ class StructureDataSafe(StructureShared):
         assert toTest.absolutePath == 'testAbsPath'
         assert toTest.relativePath == 'testRelPath'
 
-        assert ext1.nameIsDefault()
+        assert ext1.name is None
         assert ext1.absolutePath == 'testAbsPath'
         assert ext1.relativePath == 'testRelPath'
 
@@ -1716,7 +1716,7 @@ class StructureDataSafe(StructureShared):
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-        assert ext.nameIsDefault()
+        assert ext.name is None
         assert ext.absolutePath == 'testAbsPath'
         assert ext.relativePath == 'testRelPath'
 
@@ -1830,7 +1830,7 @@ class StructureDataSafe(StructureShared):
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-        assert ret.nameIsDefault()
+        assert ret.name is None
         assert ret.absolutePath == 'testAbsPath'
         assert ret.relativePath == 'testRelPath'
 
@@ -3748,7 +3748,7 @@ class StructureModifying(StructureShared):
 
         ext1 = toTest.points.extract(0)
 
-        assert ext1.nameIsDefault()
+        assert ext1.name is None
         assert ext1.path == 'testAbsPath'
         assert ext1.absolutePath == 'testAbsPath'
         assert ext1.relativePath == 'testRelPath'
@@ -3896,7 +3896,7 @@ class StructureModifying(StructureShared):
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-        assert ext.nameIsDefault()
+        assert ext.name is None
         assert ext.absolutePath == 'testAbsPath'
         assert ext.relativePath == 'testRelPath'
 
@@ -3978,7 +3978,7 @@ class StructureModifying(StructureShared):
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-        assert ret.nameIsDefault()
+        assert ret.name is None
         assert ret.absolutePath == 'testAbsPath'
         assert ret.relativePath == 'testRelPath'
 
@@ -4456,7 +4456,7 @@ class StructureModifying(StructureShared):
         assert toTest.absolutePath == 'testAbsPath'
         assert toTest.relativePath == 'testRelPath'
 
-        assert ext1.nameIsDefault()
+        assert ext1.name is None
         assert ext1.absolutePath == 'testAbsPath'
         assert ext1.relativePath == 'testRelPath'
 
@@ -4642,7 +4642,7 @@ class StructureModifying(StructureShared):
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-        assert ext.nameIsDefault()
+        assert ext.name is None
         assert ext.absolutePath == 'testAbsPath'
         assert ext.relativePath == 'testRelPath'
 
@@ -4756,7 +4756,7 @@ class StructureModifying(StructureShared):
         assert toTest.absolutePath == "testAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
-        assert ret.nameIsDefault()
+        assert ret.name is None
         assert ret.absolutePath == 'testAbsPath'
         assert ret.relativePath == 'testRelPath'
 

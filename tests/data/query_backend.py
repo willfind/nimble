@@ -792,7 +792,7 @@ class QueryBackend(DataTestObject):
         pView = toTest.pointView(0)
 
         assert isinstance(pView, BaseView)
-        assert pView.name != toTest.name
+        assert pView.name is None
         assert len(pView.points) == 1
         assert len(pView.features) == 3
         assert len(pView) == len(toTest.features)
@@ -825,7 +825,7 @@ class QueryBackend(DataTestObject):
         fView = toTest.featureView('one')
 
         assert isinstance(fView, BaseView)
-        assert fView.name != toTest.name
+        assert fView.name is None
         assert len(fView.points) == 3
         assert len(fView.features) == 1
         assert len(fView) == len(toTest.points)
@@ -1794,7 +1794,7 @@ class QueryBackend(DataTestObject):
             assert orig.absolutePath == preserveAPath
             assert orig.relativePath == preserveRPath
 
-            assert ret.nameIsDefault()
+            assert ret.name is None
             assert ret.absolutePath == preserveAPath
             assert ret.relativePath == preserveRPath
 
@@ -2243,7 +2243,7 @@ class QueryBackend(DataTestObject):
             assert orig.absolutePath == preserveAPath
             assert orig.relativePath == preserveRPath
 
-            assert ret.nameIsDefault()
+            assert ret.name is None
             assert ret.absolutePath == preserveAPath
             assert ret.relativePath == preserveRPath
 

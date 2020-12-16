@@ -676,10 +676,10 @@ class HighDimensionModifying(DataTestObject):
             '__floordiv__', '__rfloordiv__', '__ifloordiv__', '__mod__',
             '__rmod__', '__imod__', '__pow__', '__rpow__', '__ipow__',
             '__str__', '__repr__', '__pos__', '__neg__', '__abs__', '__copy__',
-            '__deepcopy__', 'nameIsDefault', 'isApproximatelyEqual',
-            'trainAndTestSets', 'summaryReport', 'isIdentical', 'writeFile',
-            'getTypeString', 'pointView', 'view', 'validate', 'containsZero',
-            'save', 'toString', 'show', 'copy', 'flatten', 'unflatten',))
+            '__deepcopy__', 'isApproximatelyEqual', 'trainAndTestSets',
+            'summaryReport', 'isIdentical', 'writeFile', 'getTypeString',
+            'pointView', 'view', 'validate', 'containsZero', 'save',
+            'toString', 'show', 'copy', 'flatten', 'unflatten',))
         baseDisallowed = baseUser.difference(baseAllowed)
 
         for method in baseDisallowed:

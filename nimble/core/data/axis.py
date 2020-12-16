@@ -32,7 +32,7 @@ from nimble._utility import inspectArguments
 from .points import Points
 from .features import Features
 from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2
-from ._dataHelpers import DEFAULT_PREFIX_LENGTH, DEFAULT_NAME_PREFIX
+from ._dataHelpers import DEFAULT_PREFIX_LENGTH
 from ._dataHelpers import valuesToPythonList, constructIndicesList
 from ._dataHelpers import validateInputString
 from ._dataHelpers import operatorDict
@@ -826,7 +826,7 @@ class Axis(ABC):
             if title is True:
                 title = ''
                 objName = False if self._base.name is None else self._base.name
-                if objName and not objName.startswith(DEFAULT_NAME_PREFIX):
+                if objName is not None:
                     title += "{}: ".format(objName)
                 title += "Feature Comparison"
 
