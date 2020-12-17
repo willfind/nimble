@@ -267,7 +267,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     merged = mergeArguments(arguments, kwarguments)
 
     tl = train(learnerName, trainX, trainY, arguments=merged,
-                      randomSeed=randomSeed, useLog=False)
+               randomSeed=randomSeed, useLog=False)
     normalizedTrain = tl.apply(trainX, useLog=False)
 
     if normalizedTrain.getTypeString() != trainX.getTypeString():
@@ -539,7 +539,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
         validateLearningArguments(X, Y, arguments=arguments,
                                   scoreMode=scoreMode)
     kfcv = KFoldCrossValidator(learnerName, X, Y, performanceFunction,
-                               arguments, folds, scoreMode,randomSeed,
+                               arguments, folds, scoreMode, randomSeed,
                                useLog, **kwarguments)
     handleLogging(useLog, 'crossVal', kfcv.learnerName, kfcv.arguments,
                   kfcv.performanceFunction, kfcv._allResults, kfcv.folds,

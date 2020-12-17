@@ -767,7 +767,7 @@ def elementTypeConvert(data, convertToType):
                 colMask = data.col == col
                 if _parseDatetime(convType):
                     feature = _numpyArrayDatetimeParse(data.data[colMask],
-                                                      convType)
+                                                       convType)
                     data.data[colMask] = feature
                 data.data[colMask] = data.data[colMask].astype(convType)
         elif _isPandasDataFrame(data):

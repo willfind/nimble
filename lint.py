@@ -12,30 +12,9 @@ format and provide pylint's output.
 import os
 import sys
 import json
+
 from pylint.lint import Run
 from pylint import epylint as lint
-
-# pylint symbols that can be ignored for minimum linter requirements
-def notRequired(warning):
-    """
-    Classify a warning as not required.
-
-    Warnings regarding 'too-many-*' or 'too-few-*' and any warnings in
-    the reqIgnore list will return True, meaning they are NOT required.
-    """
-    reqIgnore = [
-        'chained-comparison',
-        'duplicate-code',
-        'eval-used',
-        'exec-used',
-        'fixme',
-        'invalid-name',
-        'no-self-use',
-        'anomalous-backslash-in-string'
-    ]
-    return (warning.startswith('too')
-            or warning in reqIgnore)
-
 
 def getOutputs(commandString):
     """
@@ -48,8 +27,7 @@ def getOutputs(commandString):
     """
     pylint_stdout, pylint_stderr = lint.py_run(commandString, return_std=True)
     stderr = pylint_stderr.readlines()
-    # python2 is writing the config file location to stderr, so ignore that
-    if stderr and not stderr[0].startswith('Using config file'):
+    if stderr:
         print("FAILURE: The following error occurred:")
         print("".join(stderr), file=sys.stderr)
         sys.exit()
@@ -82,68 +60,74 @@ def analyzeWarnings(commandString):
 
     return outDict
 
+def notRequired(warning):
+    """
+    Classify a warning as not required.
+
+    Warnings regarding 'too-many-*' or 'too-few-*' and any warnings in
+    the reqIgnore list will return True, meaning they are NOT required.
+    """
+    reqIgnore = [
+        'chained-comparison',
+        'duplicate-code',
+        'eval-used',
+        'exec-used',
+        'fixme',
+        'invalid-name',
+        'no-self-use',
+        'anomalous-backslash-in-string'
+    ]
+    return (warning.startswith('too')
+            or warning in reqIgnore)
+
+def sortWarnings(warnings):
+    errors = []
+    required = []
+    consider = []
+    for w in warnings:
+        if notRequired(w['symbol']):
+            consider.append(w)
+        elif w['type'] in ['error', 'fatal']:
+            errors.append(w)
+        else:
+            required.append(w)
+    return errors, required, consider
+
+def printWarnings(warnings, heading):
+    warning = "{module}:{line}: {message} ({symbol})"
+    if warnings:
+        print(heading)
+        print('-' * len(heading))
+        for w in warnings:
+            print(warning.format(module=w['module'], line=w['line'],
+                                 symbol=w['symbol'], message=w['message']))
+        print("\n")
+
 def printWarningSummary(warnings):
     """
     Parse and organize warnings then print a summary.
     """
-    consider = []
-    required = []
-    for w in warnings:
-        if notRequired(w['symbol']):
-            consider.append(w)
-        else:
-            required.append(w)
-
-    warning = "{module}:{line}: {message} ({symbol})"
-    if consider:
-        print('CONSIDER CHANGES')
-        print('----------------')
-        for warn in consider:
-            print(warning.format(module=warn['module'], line=warn['line'],
-                                 symbol=warn['symbol'],
-                                 message=warn['message']))
-        print("\n")
-    reqOnly = []
-    errors = []
-    if required:
-        for req in required:
-            if req['type'] in ['error', 'fatal']:
-                errors.append(req)
-            else:
-                reqOnly.append(req)
-
-    if reqOnly:
-        print('REQUIRED CHANGES')
-        print('----------------')
-        for req in reqOnly:
-            print(warning.format(module=req['module'], line=req['line'],
-                                 symbol=req['symbol'], message=req['message']))
-        print("\n")
-
-    if errors:
-        print('ERRORS')
-        print('------')
-        for err in errors:
-            print(warning.format(module=err['module'], line=err['line'],
-                                 symbol=err['symbol'], message=err['message']))
-        print("\n")
+    errors, required, consider = sortWarnings(warnings)
+    printWarnings(consider, 'CONSIDER CHANGES')
+    printWarnings(required, 'REQUIRED CHANGES')
+    printWarnings(errors, 'ERRORS')
 
     print('SUMMARY')
     print('-------')
-    total = len(consider) + len(reqOnly) + len(errors)
+    total = len(consider) + len(required) + len(errors)
     print('{} total warnings and errors'.format(total))
     if consider:
         msg = '{} of the warnings should be reviewed; '.format(len(consider))
         msg += 'they may or may not require correction.'
         print(msg)
         print('    See CONSIDER CHANGES section above.')
-    if reqOnly:
-        print('{} of the warnings require correction.'.format(len(reqOnly)))
+    if required:
+        print('{} of the warnings require correction.'.format(len(required)))
         print('    See REQUIRED CHANGES section above.')
     if errors:
         print('{} are errors which must be corrected.'.format(len(errors)))
         print('    See ERRORS section above.')
-    if not reqOnly and not errors:
+    if not required and not errors:
         msg = '* This code satisfies the nimble minimum linter requirements *'
         print('*' * len(msg))
         print(msg)

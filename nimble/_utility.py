@@ -348,6 +348,6 @@ def removeDuplicatesNative(cooObj):
     if len(dataNP) > 0 and isinstance(dataNP[0], numpy.flexible):
         dataNP = numpy.array(data, dtype='O')
     cooNew = scipy.sparse.coo_matrix((dataNP, (rows, cols)),
-                                      shape=cooObj.shape)
+                                     shape=cooObj.shape)
 
     return cooNew

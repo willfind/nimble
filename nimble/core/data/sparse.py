@@ -176,7 +176,7 @@ class Sparse(Base):
                 currRet = toTransform(val, pID, fID)
 
             self._data.data = modifyNumpyArrayValue(self._data.data, index,
-                                                   currRet)
+                                                    currRet)
 
         self._data.eliminate_zeros()
 
