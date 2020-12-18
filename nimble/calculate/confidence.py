@@ -1,16 +1,14 @@
 """
-Confidence calculations.
+Confidence Intervals for error metrics.
 """
-
-import math
-
 import numpy
 
 import nimble
-from nimble.exceptions import ImproperObjectAction, PackageException
+from nimble.exceptions import PackageException
 from nimble._utility import scipy
 
-def confidenceIntervalHelper(errors, transform, confidence=0.95):
+def _confidenceIntervalHelper(mean, standardDeviation, sampleSize,
+                              confidence, transform=None):
     """
     Helper to calculate the confidence interval, given a vector of
     errors and a monotonic transform to be applied after the
@@ -20,54 +18,65 @@ def confidenceIntervalHelper(errors, transform, confidence=0.95):
         msg = 'To call this function, scipy must be installed.'
         raise PackageException(msg)
 
-    if len(errors.features) != 1:
-        msg = "The errors vector may only have one feature"
-        raise ImproperObjectAction(msg)
-
-    if transform is None:
-        transform = lambda x: x
-
     halfConfidence = 1 - ((1 - confidence) / 2.0)
-    boundaryOnNormalScale = scipy.stats.norm.ppf(halfConfidence)
+    boundaryOnNormalScale = scipy.stats.t.ppf(halfConfidence, sampleSize - 1)
+    sqrtN = numpy.sqrt(sampleSize)
 
-    sqrtN = float(math.sqrt(len(errors.points)))
-    mean = errors.features.statistics('mean')[0, 0]
-    std = errors.features.statistics('SampleStandardDeviation')[0, 0]
+    low = mean - (boundaryOnNormalScale * (standardDeviation / sqrtN))
+    high = mean + (boundaryOnNormalScale * (standardDeviation / sqrtN))
+    if transform is not None:
+        low, high = transform(low), transform(high)
 
-    low = transform(mean - (boundaryOnNormalScale * (std / sqrtN)))
-    high = transform(mean + (boundaryOnNormalScale * (std / sqrtN)))
-
-    return (low, high)
-
+    return low, high
 
 def rootMeanSquareErrorConfidenceInterval(known, predicted, confidence=0.95):
     """
-    A confidence interval for the value of the root mean square error.
+    Estimate a confidence interval for the root mean square error.
+
+    This is an estimation that relies on the Central Limit Theorem and
+    may be inaccurate for smaller samples. A minimum sample size of 100
+    is recommended.
     """
     errors = (known - predicted) ** 2
+    numSamples = len(errors)
+    mean = nimble.calculate.mean(errors)
+    standardDeviation = nimble.calculate.standardDeviation(errors)
 
-    def wrappedSqrt(value):
-        if value < 0:
-            return 0
-        return math.sqrt(value)
-
-    return confidenceIntervalHelper(errors, wrappedSqrt, confidence)
+    return _confidenceIntervalHelper(mean, standardDeviation, numSamples,
+                                     confidence, numpy.sqrt)
 
 
 def meanAbsoluteErrorConfidenceInterval(known, predicted, confidence=0.95):
     """
-    A confidence interval for the value of the mean absolute error.
+    Estimate a confidence interval for the mean absolute error.
+
+    This is an estimation that relies on the Central Limit Theorem and
+    may be inaccurate for smaller samples. A minimum sample size of 100
+    is recommended.
     """
-    errors = known - predicted
-    return confidenceIntervalHelper(errors, None, confidence)
+    errors = abs(known - predicted)
+    numSamples = len(errors)
+    mean = nimble.calculate.mean(errors)
+    standardDeviation = nimble.calculate.standardDeviation(errors)
+
+    return _confidenceIntervalHelper(mean, standardDeviation, numSamples,
+                                     confidence)
 
 
 def fractionIncorrectConfidenceInterval(known, predicted, confidence=0.95):
     """
-    A confidence interval for the value of the fraction incorrect.
-    """
-    rawErrors = known.copy(to='numpyarray') - predicted.copy(to='numpyarray')
-    rawErrors = numpy.absolute(rawErrors)
-    errors = nimble.data("Matrix", rawErrors)
+    Estimate a confidence interval for the fraction incorrect.
 
-    return confidenceIntervalHelper(errors, None, confidence)
+    This is an estimation that relies on the Central Limit Theorem and
+    may be inaccurate for smaller samples. A minimum sample size of 100
+    is recommended.
+    """
+    rawKnown = known.copy(to='numpyarray')
+    rawPredicted = predicted.copy(to='numpyarray')
+    errors = rawKnown[:] != rawPredicted[:]
+    numSamples = len(errors)
+    fracIncorrect = numpy.mean(errors)
+    standardDeviation = numpy.sqrt((fracIncorrect) * (1 - fracIncorrect))
+
+    return _confidenceIntervalHelper(fracIncorrect, standardDeviation,
+                                     numSamples, confidence)

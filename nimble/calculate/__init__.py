@@ -59,6 +59,9 @@ from .normalize import meanNormalize
 from .normalize import meanStandardDeviationNormalize
 from .normalize import range0to1Normalize
 from .normalize import percentileNormalize
+from .confidence import rootMeanSquareErrorConfidenceInterval
+from .confidence import meanAbsoluteErrorConfidenceInterval
+from .confidence import fractionIncorrectConfidenceInterval
 from .._utility import _setAll
 
 __all__ = _setAll(vars())
