@@ -28,7 +28,7 @@ def fractionOfTimeInCI(getActual, getPredictions, ciFunc, expError):
         isInCI = expError > lower and expError < upper
         results.append(isInCI)
 
-    assert abs(numpy.mean(results) - confidence) <= 0.01
+    assert abs(numpy.mean(results) - confidence) <= 0.015
 
 @raises(PackageException)
 @mock.patch('nimble.calculate.confidence.scipy.nimbleAccessible', new=lambda: False)
