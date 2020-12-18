@@ -1550,9 +1550,9 @@ def test_data_CSV_passedOpen():
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             objName = 'fromCSV'
-            openFile = open(tmpCSV.name, 'r')
-            fromCSV = nimble.data(returnType=t, source=openFile, name=objName)
-            openFile.close()
+            with open(tmpCSV.name, 'r') as openFile:
+                fromCSV = nimble.data(returnType=t, source=openFile, name=objName)
+                assert not openFile.closed
 
             assert fromList == fromCSV
 
@@ -1560,12 +1560,14 @@ def test_data_CSV_passedOpen():
             assert fromCSV.absolutePath == openFile.name
             assert fromCSV.relativePath == os.path.relpath(openFile.name)
 
-            openFile = open(openFile.name, 'r')
-            namelessOpenFile = NamelessFile(openFile)
-            fromCSV = nimble.data(
-                returnType=t, source=namelessOpenFile)
-            openFile.close()
-            namelessOpenFile.close()
+            with open(openFile.name, 'r') as openFile:
+                namelessOpenFile = NamelessFile(openFile)
+                fromCSV = nimble.data(returnType=t, source=namelessOpenFile)
+                assert not openFile.closed
+                assert not namelessOpenFile.closed
+            # just to verify that closing openFile also closes namelessOpenFile
+            assert namelessOpenFile.closed
+
             assert fromCSV.name.startswith(nimble.core.data._dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromCSV.path is None
             assert fromCSV.absolutePath is None
@@ -1585,9 +1587,9 @@ def test_data_MTXArr_passedOpen():
             tmpMTXArr.write("3\n")
             tmpMTXArr.flush()
             objName = 'fromMTXArr'
-            openFile = open(tmpMTXArr.name, 'r')
-            fromMTXArr = nimble.data(returnType=t, source=openFile, name=objName)
-            openFile.close()
+            with open(tmpMTXArr.name, 'r') as openFile:
+                fromMTXArr = nimble.data(returnType=t, source=openFile, name=objName)
+                assert not openFile.closed
 
             if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
                 assert fromList.isApproximatelyEqual(fromMTXArr)
@@ -1598,12 +1600,12 @@ def test_data_MTXArr_passedOpen():
             assert fromMTXArr.absolutePath == openFile.name
             assert fromMTXArr.relativePath == os.path.relpath(openFile.name)
 
-            openFile = open(tmpMTXArr.name, 'r')
-            namelessOpenFile = NamelessFile(openFile)
-            fromMTXArr = nimble.data(
-                returnType=t, source=namelessOpenFile)
-            openFile.close()
-            namelessOpenFile.close()
+            with open(tmpMTXArr.name, 'r') as openFile:
+                namelessOpenFile = NamelessFile(openFile)
+                fromMTXArr = nimble.data(returnType=t, source=namelessOpenFile)
+                assert not openFile.closed
+                assert not namelessOpenFile.closed
+
             assert fromMTXArr.name.startswith(
                 nimble.core.data._dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromMTXArr.path is None
@@ -1624,9 +1626,8 @@ def test_data_MTXCoo_passedOpen():
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.flush()
             objName = 'fromMTXCoo'
-            openFile = open(tmpMTXCoo.name, 'r')
-            fromMTXCoo = nimble.data(returnType=t, source=openFile, name=objName)
-            openFile.close()
+            with open(tmpMTXCoo.name, 'r') as openFile:
+                fromMTXCoo = nimble.data(returnType=t, source=openFile, name=objName)
 
             if t is None and fromList.getTypeString() != fromMTXCoo.getTypeString():
                 assert fromList.isApproximatelyEqual(fromMTXCoo)
@@ -1637,12 +1638,12 @@ def test_data_MTXCoo_passedOpen():
             assert fromMTXCoo.absolutePath == openFile.name
             assert fromMTXCoo.relativePath == os.path.relpath(openFile.name)
 
-            openFile = open(tmpMTXCoo.name, 'r')
-            namelessOpenFile = NamelessFile(openFile)
-            fromMTXCoo = nimble.data(
-                returnType=t, source=namelessOpenFile)
-            openFile.close()
-            namelessOpenFile.close()
+            with open(tmpMTXCoo.name, 'r') as openFile:
+                namelessOpenFile = NamelessFile(openFile)
+                fromMTXCoo = nimble.data(returnType=t, source=namelessOpenFile)
+                assert not openFile.closed
+                assert not namelessOpenFile.closed
+
             assert fromMTXCoo.name.startswith(
                 nimble.core.data._dataHelpers.DEFAULT_NAME_PREFIX)
             assert fromMTXCoo.path is None

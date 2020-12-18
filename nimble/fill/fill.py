@@ -353,6 +353,7 @@ def backwardFill(vector, match):
     def filler(vec):
         ret = numpy.empty_like(vector, dtype=numpy.object_)
         numValues = len(vec)
+        # pylint: disable=unsupported-assignment-operation
         for i, (val, fill) in enumerate(zip(reversed(vector),
                                             reversed(toFill))):
             idx = numValues - i - 1
@@ -483,7 +484,7 @@ def statsBackend(vector, match, funcString, statisticsFunction):
         raise InvalidArgumentValue(msg)
 
     stat = statisticsFunction(unmatched)
-    if stat != stat: # pylint: disable=comparison-with-itself
+    if stat != stat:
         msg = statsExceptionInvalidInput(funcString, vector)
         raise InvalidArgumentValue(msg)
 

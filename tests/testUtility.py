@@ -11,6 +11,7 @@ from nimble._utility import DeferredModuleImport
 from nimble._utility import mergeArguments
 from nimble._utility import inspectArguments
 from nimble._utility import numpy2DArray, is2DArray
+from nimble._utility import _setAll
 
 def test_DeferredModuleImport_numpy():
     optNumpy = DeferredModuleImport('numpy')
@@ -164,3 +165,28 @@ def test_is2DArray():
     raw3D = [[[1, 2, 3]]]
     arr3D = numpy.array(raw3D)
     assert not is2DArray(arr3D)
+
+def test_setAll():
+    import sys as _sys # always ignored module
+    from os import path # module
+    from re import search, match, findall, compile # functions
+
+    _variable = '_variable' # always ignored local variable
+    variable = 'variable'
+
+    variables = vars().copy()
+
+    all1 = _setAll(variables)
+    assert all1 == ['compile', 'findall', 'match', 'search', 'variable']
+
+    all2 = _setAll(variables, includeModules=True)
+    assert all2 == ['compile', 'findall', 'match', 'path', 'search',
+                    'variable']
+
+    all3 = _setAll(variables, ignore=['match'])
+    assert all3 == ['compile', 'findall', 'search', 'variable']
+
+    # ignore takes precedence over includeModules
+    all4 = _setAll(variables, ignore=['variable', 'path'],
+                   includeModules=True)
+    assert all4 == ['compile', 'findall', 'match', 'search']

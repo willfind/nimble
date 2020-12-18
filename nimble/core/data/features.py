@@ -1709,6 +1709,7 @@ class Features(ABC):
             zipFeatures = zip(self, applyResultTo.features)
             for i, (ft1, ft2) in enumerate(zipFeatures):
                 if features is None or i in features:
+                    # pylint: disable=cell-var-from-loop
                     norm1, norm2 = function(ft1, ft2)
                     self.transform(lambda _: norm1, features=i, useLog=False)
                     applyResultTo.features.transform(lambda _: norm2,
@@ -2332,4 +2333,8 @@ class Features(ABC):
     def _plotComparison(self, statistic, identifiers, confidenceIntervals,
                         horizontal, outPath, show, figureName, title,
                         xAxisLabel, yAxisLabel, legendTitle, **kwargs):
+        pass
+
+    @abstractmethod
+    def _getNamesNoGeneration(self):
         pass

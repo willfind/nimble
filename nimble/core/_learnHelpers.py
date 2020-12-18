@@ -444,6 +444,53 @@ def sumAbsoluteDifference(dataOne, dataTwo):
     return sumAbsoluteDifferences
 
 
+def _regressorDataset():
+    """
+    Generates clustered points, where the labels of the points
+    within a single cluster are all very similar, but non-identical.
+    """
+
+    clusterCount = 3
+    pointsPer = 10
+    featuresPer = 5
+
+    #add noise to both the features and the labels
+    regressorTrainData, trainLabels, noiselessTrainLabels = (
+        generateClusteredPoints(clusterCount, pointsPer, featuresPer,
+                                addFeatureNoise=True, addLabelNoise=True,
+                                addLabelColumn=False))
+    regressorTestData, testLabels, noiselessTestLabels = (
+        generateClusteredPoints(clusterCount, 1, featuresPer,
+                                addFeatureNoise=True, addLabelNoise=True,
+                                addLabelColumn=False))
+
+    return ((regressorTrainData, trainLabels, noiselessTrainLabels),
+            (regressorTestData, testLabels, noiselessTestLabels))
+
+def _classifierDataset():
+    """
+    Generates clustered points, hwere the labels of the points
+    within each cluster are all identical.
+    """
+
+    clusterCount = 3
+    pointsPer = 10
+    featuresPer = 5
+
+    #add noise to the features only
+    trainData, trainLabels, noiselessTrainLabels = (
+        generateClusteredPoints(clusterCount, pointsPer, featuresPer,
+                                addFeatureNoise=True, addLabelNoise=False,
+                                addLabelColumn=False))
+    testData, testLabels, noiselessTestLabels = (
+        generateClusteredPoints(clusterCount, 1, featuresPer,
+                                addFeatureNoise=True, addLabelNoise=False,
+                                addLabelColumn=False))
+
+    return ((trainData, trainLabels, noiselessTrainLabels),
+            (testData, testLabels, noiselessTestLabels))
+
+
 class LearnerInspector:
     """
     Class using heirustics to classify the 'type' of problem an
@@ -473,11 +520,10 @@ class LearnerInspector:
         self.EXACT_THRESHHOLD = .00000001
 
         #initialize datasets for tests
-        self.regressorDataTrain, self.regressorDataTest = (
-            self._regressorDataset())
+        self.regressorDataTrain, self.regressorDataTest = _regressorDataset()
         #todo use classifier
         self.classifierDataTrain, self.classifierDataTest = (
-            self._classifierDataset())
+            _classifierDataset())
 
     def learnerType(self, learnerName):
         """
@@ -546,52 +592,6 @@ class LearnerInspector:
         # algorithms, but currently we can only resolve classifiers,
         # regressors, and other.
         return 'other'
-
-    def _regressorDataset(self):
-        """
-        Generates clustered points, where the labels of the points
-        within a single cluster are all very similar, but non-identical.
-        """
-
-        clusterCount = 3
-        pointsPer = 10
-        featuresPer = 5
-
-        #add noise to both the features and the labels
-        regressorTrainData, trainLabels, noiselessTrainLabels = (
-            generateClusteredPoints(clusterCount, pointsPer, featuresPer,
-                                    addFeatureNoise=True, addLabelNoise=True,
-                                    addLabelColumn=False))
-        regressorTestData, testLabels, noiselessTestLabels = (
-            generateClusteredPoints(clusterCount, 1, featuresPer,
-                                    addFeatureNoise=True, addLabelNoise=True,
-                                    addLabelColumn=False))
-
-        return ((regressorTrainData, trainLabels, noiselessTrainLabels),
-                (regressorTestData, testLabels, noiselessTestLabels))
-
-    def _classifierDataset(self):
-        """
-        Generates clustered points, hwere the labels of the points
-        within each cluster are all identical.
-        """
-
-        clusterCount = 3
-        pointsPer = 10
-        featuresPer = 5
-
-        #add noise to the features only
-        trainData, trainLabels, noiselessTrainLabels = (
-            generateClusteredPoints(clusterCount, pointsPer, featuresPer,
-                                    addFeatureNoise=True, addLabelNoise=False,
-                                    addLabelColumn=False))
-        testData, testLabels, noiselessTestLabels = (
-            generateClusteredPoints(clusterCount, 1, featuresPer,
-                                    addFeatureNoise=True, addLabelNoise=False,
-                                    addLabelColumn=False))
-
-        return ((trainData, trainLabels, noiselessTrainLabels),
-                (testData, testLabels, noiselessTestLabels))
 
     def _regressorTrial(self, learnerName):
         """

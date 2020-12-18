@@ -335,9 +335,9 @@ class Matrix(Base):
                 for ptR in matchesR:
                     # check for conflicts between matching features
                     matches = ptL[matchingFtIdx[0]] == ptR[matchingFtIdx[1]]
-                    nansL = numpy.array([x != x for x # pylint: disable=comparison-with-itself
+                    nansL = numpy.array([x != x for x
                                          in ptL[matchingFtIdx[0]]])
-                    nansR = numpy.array([x != x for x # pylint: disable=comparison-with-itself
+                    nansR = numpy.array([x != x for x
                                          in ptR[matchingFtIdx[1]]])
                     acceptableValues = matches + nansL + nansR
                     if not all(acceptableValues):
@@ -348,7 +348,7 @@ class Matrix(Base):
                         # fill any nan values in left with the corresponding
                         # right value
                         for i, value in enumerate(ptL[matchingFtIdx[0]]):
-                            if value != value: # pylint: disable=comparison-with-itself
+                            if value != value:
                                 fill = ptR[matchingFtIdx[1]][i]
                                 ptL[matchingFtIdx[0]][i] = fill
                     ptR = numpy.delete(ptR, matchingFtIdx[1])

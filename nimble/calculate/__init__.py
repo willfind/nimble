@@ -62,21 +62,6 @@ from .normalize import percentileNormalize
 from .confidence import rootMeanSquareErrorConfidenceInterval
 from .confidence import meanAbsoluteErrorConfidenceInterval
 from .confidence import fractionIncorrectConfidenceInterval
+from .._utility import _setAll
 
-
-__all__ = ['balancedAccuracy', 'confusionMatrix', 'correlation',
-           'cosineSimilarity', 'count', 'covariance', 'detectBestResult',
-           'elementwiseMultiply', 'elementwisePower', 'f1Score',
-           'falseNegative', 'falsePositive', 'fractionCorrect',
-           'fractionIncorrect', 'fractionIncorrectConfidenceInterval',
-           'inverse', 'leastSquaresSolution', 'maximum', 'mean',
-           'meanAbsoluteError', 'meanAbsoluteErrorConfidenceInterval',
-           'meanFeaturewiseRootMeanSquareError', 'meanNormalize',
-           'meanStandardDeviationNormalize', 'median', 'minimum', 'mode',
-           'percentileNormalize', 'precision', 'proportionMissing',
-           'proportionZero', 'pseudoInverse', 'quartiles',
-           'range0to1Normalize', 'rSquared', 'recall', 'residuals',
-           'rootMeanSquareError', 'rootMeanSquareErrorConfidenceInterval',
-           'solve', 'specificity', 'standardDeviation', 'sum', 'trueNegative',
-           'truePositive', 'uniqueCount', 'varianceFractionRemaining',
-           ]
+__all__ = _setAll(vars())

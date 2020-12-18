@@ -577,7 +577,7 @@ class Axis(ABC):
         if not callable(fillWith):
             value = fillWith
             # for consistency use numpy.nan for None and nans
-            if value is None or value != value: # pylint: disable=comparison-with-itself
+            if value is None or value != value:
                 value = numpy.nan
             fillFunc = fill.constant
             kwarguments['constantValue'] = value

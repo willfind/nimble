@@ -178,7 +178,7 @@ class List(Base):
             oPoint = other._data[index]
             if sPoint != oPoint:
                 for sVal, oVal in zip(sPoint, oPoint):
-                    # pylint: disable=comparison-with-itself
+
                     if sVal != oVal and (sVal == sVal or oVal == oVal):
                         return False
         return True
@@ -481,7 +481,7 @@ class List(Base):
                         # fill any nan values in left with the corresponding
                         # right value
                         for i, value in enumerate(ptL):
-                            # pylint: disable=comparison-with-itself
+
                             if value != value and i in matchingFtIdx[0]:
                                 lIdx = matchingFtIdx[0].index(i)
                                 ptL[i] = ptR[matchingFtIdx[1][lIdx]]
@@ -710,7 +710,7 @@ class FeatureViewer(object):
         for sVal, oVal in zip(self, other):
             # check element equality - which is only relevant if one
             # of the elements is non-NaN
-            # pylint: disable=comparison-with-itself
+
             if sVal != oVal and (sVal == sVal or oVal == oVal):
                 return False
         return True

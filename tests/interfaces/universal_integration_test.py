@@ -365,8 +365,8 @@ def reload(module):
     Reload the module so that the returned module is the one from the
     first available location on sys.path.
     """
-    # reloading a module like tensorflow.keras requires reloading tensorflow
-    # first, then reloading tensorflow.keras
+    # reloading a module like tensorflow.keras requires reloading
+    # tensorflow first, then reloading tensorflow.keras
     split = module.split('.')
     modules = ['.'.join(split[:i + 1]) for i in range(len(split))]
     for module in modules:
@@ -375,7 +375,20 @@ def reload(module):
         mod = importlib.import_module_(module)
         # if the module loaded successfully on init, need to reload so
         # it checks the new sys.path and should raise exception here
-        mod = importlib.reload(mod)
+        try:
+            mod = importlib.reload(mod)
+        except ImportError:
+            # the reload failed because our previous reloads of higher
+            # level packages affected this submodule loading. So instead of
+            # reloading we must delete the module and import again.
+            modulesBackup = sys.modules
+            try:
+                del mod
+                del sys.modules[module]
+                mod = importlib.import_module_(module)
+            finally:
+                sys.modules = modulesBackup
+
     return mod
 
 def makeMockedModule(mockDirectory, packageName, mockedMsg):

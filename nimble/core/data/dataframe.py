@@ -340,7 +340,7 @@ class DataFrame(Base):
             else:
                 right = right + numColsL
             matches = self._data.iloc[:, left] == self._data.iloc[:, right]
-            # pylint: disable=comparison-with-itself
+
             nansL = numpy.array([x != x for x in self._data.iloc[:, left]])
             nansR = numpy.array([x != x for x in self._data.iloc[:, right]])
             acceptableValues = matches + nansL + nansR
