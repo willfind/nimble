@@ -32,6 +32,7 @@ from nimble.core.learn import Init
 from nimble.core.logger import log
 from nimble.core.logger import showLog
 from nimble.core.interfaces import CustomLearner
+from nimble._utility import _setAll
 
 # import core (not in __all__)
 from nimble import core
@@ -44,7 +45,7 @@ from nimble import match
 from nimble import fill
 from nimble import exceptions
 
-# load settings from configuration file
+# load settings from configuration file (comments below for Sphinx docstring)
 #: User control over configurable options
 #:
 #: See Also
@@ -58,10 +59,4 @@ core.interfaces.initInterfaceSetup()
 # initialize the logging file
 core.logger.initLoggerAndLogConfig()
 
-__all__ = ['calculate', 'crossValidate', 'CustomLearner', 'CV', 'data',
-           'exceptions', 'fill', 'fillMatching', 'identity', 'Init',
-           'learnerDefaultValues', 'learnerParameters', 'learners',
-           'learnerType', 'listLearners', 'loadData', 'loadTrainedLearner',
-           'log', 'match', 'nimblePath', 'normalizeData', 'ones',
-           'settings', 'showLog', 'random', 'train', 'trainAndApply',
-           'trainAndTest', 'trainAndTestOnTrainingData', 'zeros']
+__all__ = _setAll(vars(), includeModules=True, ignore=['core'])

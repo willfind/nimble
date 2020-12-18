@@ -8,6 +8,6 @@ from .multioutput_ridge_regression import MultiOutputRidgeRegression
 from .multioutput_linear_regression import MultiOutputLinearRegression
 from .ridge_regression import RidgeRegression
 from .knn_imputation import KNNImputation
+from .._utility import _setAll
 
-__all__ = ['KNNClassifier', 'KNNImputation', 'MultiOutputLinearRegression',
-           'MultiOutputRidgeRegression', 'RidgeRegression']
+__all__ = _setAll(vars())

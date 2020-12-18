@@ -12,7 +12,6 @@ from .exceptions import PackageException
 from .exceptions import FileFormatException
 from .exceptions import _prettyListString
 from .exceptions import _prettyDictString
+from .._utility import _setAll
 
-__all__ = ['NimbleException', 'InvalidArgumentType', 'InvalidArgumentValue',
-           'InvalidArgumentTypeCombination', 'InvalidArgumentValueCombination',
-           'ImproperObjectAction', 'PackageException', 'FileFormatException']
+__all__ = _setAll(vars())
