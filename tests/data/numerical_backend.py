@@ -82,7 +82,7 @@ def back_unary_NamePath_preservations(callerCon, op):
     ret = toCall()
 
     assert ret.name != preserveName
-    assert ret.nameIsDefault()
+    assert ret.name is None
     assert caller.name == preserveName
     assert ret.absolutePath == preserveAPath
     assert caller.absolutePath == preserveAPath
@@ -135,7 +135,7 @@ def back_binaryscalar_NamePath_preservations(callerCon, op):
         assert ret.name == preserveName
     else:
         assert ret.name != preserveName
-        assert ret.nameIsDefault()
+        assert ret.name is None
     assert ret.absolutePath == preserveAPath
     assert ret.path == preserveAPath
     assert ret.relativePath == preserveRPath
@@ -389,7 +389,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, att
     caller = callerCon(data)
     other = callerCon(data, name=preserveNameOther, path=preservePairOther)
 
-    assert caller.nameIsDefault()
+    assert caller.name is None
     assert caller.absolutePath is None
     assert caller.relativePath is None
 
@@ -403,14 +403,14 @@ def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, att
     # name should be default, path should be pulled from other
     if ret is not None and ret != NotImplemented:
         assert ret.name != preserveNameOther
-        assert ret.nameIsDefault()
+        assert ret.name is None
         assert ret.absolutePath == preserveAPathOther
         assert ret.path == preserveAPathOther
         assert ret.relativePath == preserveRPathOther
 
     # if in place, ret == caller. if not, then values should be unchanged
     if not inplace:
-        assert caller.nameIsDefault()
+        assert caller.name is None
         assert caller.absolutePath is None
         assert caller.path is None
         assert caller.relativePath is None
@@ -439,7 +439,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, att
             assert ret.name == preserveName
         else:
             assert ret.name != preserveName
-            assert ret.nameIsDefault()
+            assert ret.name is None
 
         assert ret.absolutePath == preserveAPath
         assert ret.path == preserveAPath
@@ -453,7 +453,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, att
         assert caller.relativePath == preserveRPath
 
     # confirm that othe remains unchanged
-    assert other.nameIsDefault()
+    assert other.name is None
     assert other.absolutePath is None
     assert other.path is None
     assert other.relativePath is None
@@ -479,7 +479,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, att
         #			assert ret.path == "TestAbsPathOther"
         #			assert ret.relativePath == "TestRelPathOther"
         else:
-            assert ret.nameIsDefault()
+            assert ret.name is None
         assert ret.absolutePath is None
         assert ret.path is None
         assert ret.relativePath is None
@@ -1831,7 +1831,7 @@ class NumericalDataSafe(DataTestObject):
         assert boolsInvert.absolutePath == preserveAPath
         assert boolsInvert.relativePath == preserveRPath
         assert boolsInvert.name != preserveName
-        assert boolsInvert.nameIsDefault()
+        assert boolsInvert.name is None
 
 
 class NumericalModifying(DataTestObject):

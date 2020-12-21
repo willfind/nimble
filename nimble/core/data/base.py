@@ -30,7 +30,6 @@ from .stretch import Stretch
 from . import _dataHelpers
 # the prefix for default point and feature names
 from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
-from ._dataHelpers import DEFAULT_NAME_PREFIX
 from ._dataHelpers import formatIfNeeded
 from ._dataHelpers import valuesToPythonList, constructIndicesList
 from ._dataHelpers import createListOfDict, createDictOfList
@@ -101,6 +100,7 @@ class Base(ABC):
     path : str
         The path to the data file.
     """
+    _id = 0
 
     def __init__(self, shape, pointNames=None, featureNames=None, name=None,
                  paths=(None, None), **kwds):
@@ -139,6 +139,9 @@ class Base(ABC):
             Note, however, that this class is the root of the object
             hierarchy as statically defined.
         """
+        self._id = Base._id
+        Base._id += 1
+
         self._shape = list(shape)
         if pointNames is not None and len(pointNames) != self._pointCount:
             msg = "The length of the pointNames (" + str(len(pointNames))
@@ -181,11 +184,7 @@ class Base(ABC):
             self._nextDefaultValueFeature = self._featureCount
             self.features.setNames(featureNames, useLog=False)
 
-        # Set up object name
-        if name is None:
-            self._name = _dataHelpers.nextDefaultObjectName()
-        else:
-            self._name = name
+        self._name = name
 
         # Set up paths
         if paths[0] is not None and not isinstance(paths[0], str):
@@ -267,64 +266,40 @@ class Base(ABC):
         """
         return self._features
 
-    def _setpointCount(self, value):
-        self._pointCount = value
-
-    def _setfeatureCount(self, value):
-        self._featureCount = value
-
-    def _getObjName(self):
-        return self._name
-
-    def _setObjName(self, value):
-        if value is None:
-            self._name = _dataHelpers.nextDefaultObjectName()
-        else:
-            if not isinstance(value, str):
-                msg = "The name of an object may only be a string or None"
-                raise ValueError(msg)
-            self._name = value
-
     @property
     def name(self):
         """
         A name to be displayed when printing or logging this object
         """
-        return self._getObjName()
+        return self._name
 
     @name.setter
     def name(self, value):
-        self._setObjName(value)
-
-    def _getAbsPath(self):
-        return self._absPath
+        if not isinstance(value, str) and value is not None:
+            msg = "The name of an object may only be a string or None"
+            raise ValueError(msg)
+        self._name = value
 
     @property
     def absolutePath(self):
         """
         The path to the file this data originated from in absolute form.
         """
-        return self._getAbsPath()
-
-    def _getRelPath(self):
-        return self._relPath
+        return self._absPath
 
     @property
     def relativePath(self):
         """
         The path to the file this data originated from in relative form.
         """
-        return self._getRelPath()
-
-    def _getPath(self):
-        return self.absolutePath
+        return self._relPath
 
     @property
     def path(self):
         """
         The path to the file this data originated from.
         """
-        return self._getPath()
+        return self.absolutePath
 
     def _pointNamesCreated(self):
         """
@@ -489,11 +464,6 @@ class Base(ABC):
             raise InvalidArgumentType('if not None, only must be callable')
         return self._iterateElements_implementation(order, only)
 
-    def nameIsDefault(self):
-        """
-        Returns True if self.name has a default value
-        """
-        return self.name.startswith(DEFAULT_NAME_PREFIX)
 
     ###########################
     # Higher Order Operations #
@@ -1397,12 +1367,14 @@ class Base(ABC):
              [0 0 1]
              [0 0 1]]
             pointNames={'a':0, 'b':1, 'f':2, 'c':3}
+            name="train"
             )
         >>> testData
         Matrix(
             [[0 1 0]
              [1 0 0]]
             pointNames={'e':0, 'd':1}
+            name="test"
             )
 
         Returning a 4-tuple.
@@ -1426,6 +1398,7 @@ class Base(ABC):
              [0 0 1]
              [0 0 1]]
             pointNames={'a':0, 'b':1, 'f':2, 'c':3}
+            name="trainX"
             )
         >>> trainY
         Matrix(
@@ -1434,18 +1407,21 @@ class Base(ABC):
              [3]
              [3]]
             pointNames={'a':0, 'b':1, 'f':2, 'c':3}
+            name="trainY"
             )
         >>> testX
         Matrix(
             [[0 1 0]
              [1 0 0]]
             pointNames={'e':0, 'd':1}
+            name="testX"
             )
         >>> testY
         Matrix(
             [[2]
              [1]]
             pointNames={'e':0, 'd':1}
+            name="testY"
             )
         """
         order = list(range(len(self.points)))
@@ -1462,11 +1438,14 @@ class Base(ABC):
         trainX = self.points.copy(order[:splitIndex], useLog=False)
         testX = self.points.copy(order[splitIndex:], useLog=False)
 
-        trainX.name = self.name + " trainX"
-        testX.name = self.name + " testX"
-
         if labels is None:
             ret = trainX, testX
+            if self.name is not None:
+                trainX.name = self.name + " train"
+                testX.name = self.name + " test"
+            else:
+                trainX.name = "train"
+                testX.name = "test"
         elif len(self._shape) > 2:
             msg = "labels parameter must be None when the data has more "
             msg += "than two dimensions"
@@ -1494,8 +1473,16 @@ class Base(ABC):
                 trainY = trainX.features.extract(toExtract, useLog=False)
                 testY = testX.features.extract(toExtract, useLog=False)
 
-            trainY.name = self.name + " trainY"
-            testY.name = self.name + " testY"
+            if self.name is not None:
+                trainX.name = self.name + " trainX"
+                testX.name = self.name + " testX"
+                trainY.name = self.name + " trainY"
+                testY.name = self.name + " testY"
+            else:
+                trainX.name = "trainX"
+                testX.name = "testX"
+                trainY.name = "trainY"
+                testY.name = "testY"
 
             ret = trainX, trainY, testX, testY
 
@@ -2280,7 +2267,7 @@ class Base(ABC):
             self.features._getNamesNoGeneration(), 'featureNames')
 
         # if name not None, print
-        if not self.name.startswith(DEFAULT_NAME_PREFIX):
+        if self.name is not None:
             prep = indent + 'name="'
             toUse = self.name
             nonNameLen = len(prep) + 1
@@ -2346,7 +2333,7 @@ class Base(ABC):
         if description is not None:
             print(description)
 
-        if includeObjectName:
+        if includeObjectName and self.name is not None:
             context = self.name + " : "
         else:
             context = ""
@@ -2404,7 +2391,7 @@ class Base(ABC):
         if includeColorbar:
             plt.colorbar()
 
-        if title is True and not self.name.startswith(DEFAULT_NAME_PREFIX):
+        if title is True and self.name is not None:
             title = self.name
         elif title is True:
             title = None
@@ -2749,7 +2736,7 @@ class Base(ABC):
             msg += 'at this time'
             raise InvalidArgumentValue(msg)
 
-        if title is True and self.name.startswith(DEFAULT_NAME_PREFIX):
+        if title is True and self.name is None:
             title = ('%s vs. %s') % (xName, yName)
         elif title is True:
             title = ('%s: %s vs. %s') % (self.name, xName, yName)
@@ -4459,7 +4446,7 @@ class Base(ABC):
         Return this object.
         """
         ret = self.copy()
-        ret._name = _dataHelpers.nextDefaultObjectName()
+        ret._name = None
 
         return ret
 
@@ -4469,7 +4456,7 @@ class Base(ABC):
         """
         ret = self.copy()
         ret *= -1
-        ret._name = _dataHelpers.nextDefaultObjectName()
+        ret._name = None
 
         return ret
 
@@ -4489,7 +4476,7 @@ class Base(ABC):
         else:
             ret.points.setNames(None, useLog=False)
 
-        ret._name = _dataHelpers.nextDefaultObjectName()
+        ret._name = None
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
         return ret

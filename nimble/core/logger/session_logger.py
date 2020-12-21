@@ -931,32 +931,32 @@ def _buildRunLogString(timestamp, entry):
     fullLog += '\n{0}("{1}")\n'.format(entry['function'], entry["learner"])
     # train and test data
     fullLog += _formatSessionLine("Data", "# points", "# features")
-    if entry.get("trainData", False):
-        if entry["trainData"].startswith("OBJECT_#"):
+    if "trainData" in entry:
+        if entry["trainData"] is None:
             fullLog += _formatSessionLine("trainX", entry["trainDataPoints"],
                                           entry["trainDataFeatures"])
         else:
             fullLog += _formatSessionLine(entry["trainData"],
                                           entry["trainDataPoints"],
                                           entry["trainDataFeatures"])
-    if entry.get("trainLabels", False):
-        if entry["trainLabels"].startswith("OBJECT_#"):
+    if "trainLabels" in entry:
+        if entry["trainLabels"] is None:
             fullLog += _formatSessionLine("trainY", entry["trainLabelsPoints"],
                                           entry["trainLabelsFeatures"])
         else:
             fullLog += _formatSessionLine(entry["trainLabels"],
                                           entry["trainLabelsPoints"],
                                           entry["trainLabelsFeatures"])
-    if entry.get("testData", False):
-        if entry["testData"].startswith("OBJECT_#"):
+    if "testData" in entry:
+        if entry["testData"] is None:
             fullLog += _formatSessionLine("testX", entry["testDataPoints"],
                                           entry["testDataFeatures"])
         else:
             fullLog += _formatSessionLine(entry["testData"],
                                           entry["testDataPoints"],
                                           entry["testDataFeatures"])
-    if entry.get("testLabels", False):
-        if entry["testLabels"].startswith("OBJECT_#"):
+    if "testLabels" in entry:
+        if entry["testLabels"] is None:
             fullLog += _formatSessionLine("testY", entry["testLabelsPoints"],
                                           entry["testLabelsFeatures"])
         else:
@@ -1088,7 +1088,10 @@ def _buildArgDict(func, *args, **kwargs):
         if callable(arg):
             nameArgMap[name] = _extractFunctionString(arg)
         elif isinstance(arg, nimble.core.data.Base):
-            nameArgMap[name] = arg.name
+            if arg.name is not None:
+                nameArgMap[name] = arg.name
+            else:
+                nameArgMap[name] = arg.getTypeString()
         else:
             nameArgMap[name] = str(arg)
 

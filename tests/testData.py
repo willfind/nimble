@@ -1568,7 +1568,7 @@ def test_data_CSV_passedOpen():
             # just to verify that closing openFile also closes namelessOpenFile
             assert namelessOpenFile.closed
 
-            assert fromCSV.name.startswith(nimble.core.data._dataHelpers.DEFAULT_NAME_PREFIX)
+            assert fromCSV.name is None
             assert fromCSV.path is None
             assert fromCSV.absolutePath is None
             assert fromCSV.relativePath is None
@@ -1606,8 +1606,7 @@ def test_data_MTXArr_passedOpen():
                 assert not openFile.closed
                 assert not namelessOpenFile.closed
 
-            assert fromMTXArr.name.startswith(
-                nimble.core.data._dataHelpers.DEFAULT_NAME_PREFIX)
+            assert fromMTXArr.name is None
             assert fromMTXArr.path is None
             assert fromMTXArr.absolutePath is None
             assert fromMTXArr.relativePath is None
@@ -1644,8 +1643,7 @@ def test_data_MTXCoo_passedOpen():
                 assert not openFile.closed
                 assert not namelessOpenFile.closed
 
-            assert fromMTXCoo.name.startswith(
-                nimble.core.data._dataHelpers.DEFAULT_NAME_PREFIX)
+            assert fromMTXCoo.name is None
             assert fromMTXCoo.path is None
             assert fromMTXCoo.absolutePath is None
             assert fromMTXCoo.relativePath is None

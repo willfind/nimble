@@ -114,7 +114,7 @@ random_tested = list(map(prefixAdder('nimble.random'), random_funcs))
 #  The functionality of these functions is untested, but a test of their
 #  expected log count can be found in this script:
 #      copy, featureReport, summaryReport, getTypeString, groupByFeature,
-#      hashCode, nameIsDefault, show, validate
+#      hashCode, show, validate
 base_logged = [
     'calculateOnElements', 'featureReport', 'flatten', 'groupByFeature',
     'matchingElements', 'merge', 'replaceFeatureWithBinaryFeatures',
@@ -126,7 +126,7 @@ base_notLogged = [
     'containsZero', 'copy', 'countElements', 'countUniqueElements',
     'featureView', 'getTypeString', 'hashCode', 'inverse',
     'isApproximatelyEqual', 'isIdentical', 'iterateElements', 'matrixMultiply',
-    'matrixPower', 'nameIsDefault', 'plotHeatMap', 'plotFeatureAgainstFeature',
+    'matrixPower', 'plotHeatMap', 'plotFeatureAgainstFeature',
     'plotFeatureAgainstFeatureRollingAverage', 'plotFeatureDistribution',
     'plotFeatureGroupMeans', 'plotFeatureGroupStatistics', 'pointView',
     'save', 'show', 'solveLinearSystem', 'toString', 'validate', 'view',
@@ -261,12 +261,6 @@ def test_hashCode_logCount():
     for rType in nimble.core.data.available:
         obj = nimble.data(rType, [[1,2,3],[4,5,6]], useLog=False)
         hash = obj.hashCode()
-
-@noLogEntryExpected
-def test_nameIsDefault_logCount():
-    for rType in nimble.core.data.available:
-        obj = nimble.data(rType, [[1,2,3],[4,5,6]], useLog=False)
-        isDefault = obj.nameIsDefault()
 
 @noLogEntryExpected
 def test_show_logCount():

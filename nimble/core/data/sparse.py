@@ -13,7 +13,6 @@ from nimble.exceptions import PackageException
 from nimble._utility import inheritDocstringsFactory
 from nimble._utility import scipy, pd
 from nimble._utility import sparseMatrixToArray, removeDuplicatesNative
-from . import _dataHelpers
 from .base import Base
 from .views import BaseView
 from .sparseAxis import SparsePoints, SparsePointsView
@@ -1364,7 +1363,7 @@ class SparseView(BaseView, Sparse):
         """ Perform element wise absolute value on this object """
         ret = self.copy(to="Sparse")
         numpy.absolute(ret._data.data, out=ret._data.data)
-        ret._name = _dataHelpers.nextDefaultObjectName()
+        ret._name = None
 
         return ret
 

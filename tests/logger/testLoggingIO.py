@@ -462,7 +462,7 @@ def testPrepTypeFunctionsUseLog():
     mergeObj = nimble.data('Matrix', mData, pointNames=mPtNames,
                            featureNames=mFtNames, useLog=False)
     dataObj.merge(mergeObj, point='intersection', feature='union')
-    checkLogContents('merge', "Matrix", {"other": mergeObj.name,
+    checkLogContents('merge', "Matrix", {"other": 'Matrix',
                                          "point": 'intersection'})
 
     # transformElements
@@ -620,12 +620,12 @@ def testPrepTypeFunctionsUseLog():
     toInsert = nimble.data("Matrix", insertData, useLog=False)
     dataObj.points.insert(0, toInsert)
     checkLogContents('points.insert', "Matrix", {'insertBefore': 0,
-                                                 'toInsert': toInsert.name})
+                                                 'toInsert': 'Matrix'})
 
     # features.insert
     dataObj = nimble.data("Matrix", data, useLog=False)
     insertData = numpy.zeros((18,1))
-    toInsert = nimble.data("Matrix", insertData, useLog=False)
+    toInsert = nimble.data("Matrix", insertData, name='insert', useLog=False)
     dataObj.features.insert(0, toInsert)
     checkLogContents('features.insert', "Matrix", {'insertBefore': 0,
                                                    'toInsert': toInsert.name})
@@ -635,12 +635,12 @@ def testPrepTypeFunctionsUseLog():
     appendData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
     toAppend = nimble.data("Matrix", appendData, useLog=False)
     dataObj.points.append(toAppend)
-    checkLogContents('points.append', "Matrix", {'toAppend': toAppend.name})
+    checkLogContents('points.append', "Matrix", {'toAppend': 'Matrix'})
 
     # features.append
     dataObj = nimble.data("Matrix", data, useLog=False)
     appendData = numpy.zeros((18,1))
-    toAppend = nimble.data("Matrix", appendData, useLog=False)
+    toAppend = nimble.data("Matrix", appendData, name='append', useLog=False)
     dataObj.features.append(toAppend)
     checkLogContents('features.append', "Matrix", {'toAppend': toAppend.name})
 

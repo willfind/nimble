@@ -246,7 +246,7 @@ class HighLevelDataSafe(DataTestObject):
         assert toTest.absolutePath == preserveAPath
         assert toTest.relativePath == preserveRPath
 
-        assert ret.nameIsDefault()
+        assert ret.name is None
         assert ret.absolutePath == preserveAPath
         assert ret.relativePath == preserveRPath
 
@@ -615,7 +615,7 @@ class HighLevelDataSafe(DataTestObject):
         assert toTest.absolutePath == preserveAPath
         assert toTest.relativePath == preserveRPath
 
-        assert ret.nameIsDefault()
+        assert ret.name is None
         assert ret.absolutePath == preserveAPath
         assert ret.relativePath == preserveRPath
 
@@ -851,7 +851,7 @@ class HighLevelDataSafe(DataTestObject):
         assert toTest.absolutePath == preserveAPath
         assert toTest.relativePath == preserveRPath
 
-        assert ret.nameIsDefault()
+        assert ret.name is None
         assert ret.absolutePath == preserveAPath
         assert ret.relativePath == preserveRPath
 
@@ -1155,7 +1155,7 @@ class HighLevelDataSafe(DataTestObject):
         assert toTest.absolutePath == preserveAPath
         assert toTest.relativePath == preserveRPath
 
-        assert ret.nameIsDefault()
+        assert ret.name is None
         assert ret.absolutePath == preserveAPath
         assert ret.relativePath == preserveRPath
 
@@ -1261,7 +1261,7 @@ class HighLevelDataSafe(DataTestObject):
         assert toTest.absolutePath == preserveAPath
         assert toTest.relativePath == preserveRPath
 
-        assert ret.nameIsDefault()
+        assert ret.name is None
         assert ret.absolutePath == preserveAPath
         assert ret.relativePath == preserveRPath
 
@@ -1587,6 +1587,18 @@ class HighLevelDataSafe(DataTestObject):
 
         assert trX == trY
         assert teX == teY
+
+    def test_trainAndTestSets_objectNameCreation(self):
+        data = [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]
+
+        toTest = self.constructor(data)
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0)
+
+        assert trX.name == 'trainX'
+        assert trY.name == 'trainY'
+        assert teX.name == 'testX'
+        assert teY.name == 'testY'
 
     def test_trainAndTestSets_nameAppend_PathPreserve(self):
         data = [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]
@@ -2320,7 +2332,7 @@ class HighLevelDataSafe(DataTestObject):
         assert matchPositive.absolutePath == preserveAPath
         assert matchPositive.relativePath == preserveRPath
         assert matchPositive.name != preserveName
-        assert matchPositive.nameIsDefault()
+        assert matchPositive.name is None
 
     #####################################
     # points/features matching backends #
@@ -2441,7 +2453,7 @@ class HighLevelDataSafe(DataTestObject):
         assert allNeg.absolutePath == preserveAPath
         assert allNeg.relativePath == preserveRPath
         assert allNeg.name != preserveName
-        assert allNeg.nameIsDefault()
+        assert allNeg.name is None
 
     #####################
     # features.matching #
@@ -2490,7 +2502,7 @@ class HighLevelDataSafe(DataTestObject):
         assert allZeros.absolutePath == preserveAPath
         assert allZeros.relativePath == preserveRPath
         assert allZeros.name != preserveName
-        assert allZeros.nameIsDefault()
+        assert allZeros.name is None
 
 
 class HighLevelModifying(DataTestObject):

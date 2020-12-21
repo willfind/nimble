@@ -8,7 +8,7 @@ of directly instantiating a Base object. This function temporarily fills in
 that missing implementation.
 
 Methods tested in this file (none modify the data):
-_pointNameDifference, _featureNameDifference, points._nameIntersection,
+ID, _pointNameDifference, _featureNameDifference, points._nameIntersection,
 features._nameIntersection, _pointNameSymmetricDifference,
 _featureNameSymmetricDifference, _pointNameUnion, _featureNameUnion,
 points.setName, features.setName, points.setNames, features.setNames,
@@ -33,7 +33,6 @@ from nimble.core.data import available
 from nimble._utility import inheritDocstringsFactory, numpy2DArray
 from nimble._utility import pd
 from nimble.core.data._dataHelpers import DEFAULT_PREFIX
-from nimble.core.data._dataHelpers import DEFAULT_NAME_PREFIX
 from nimble.core.data._dataHelpers import constructIndicesList
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
@@ -94,6 +93,21 @@ class LowLevelBackend(object):
     def test_objectValidationSetup(self):
         """ Test that object validation has been setup """
         assert hasattr(Base, 'objectValidation')
+
+    #######
+    # _id #
+    #######
+    def test_id_allUnique(self):
+        a = self.constructor()
+        b = self.constructor()
+        c = self.constructor()
+        d = self.constructor()
+        # The _id for returned objects will not always increment by one, but
+        # no additional internal objects are created during a call to
+        # constructor() so here each new object _id will increment by one
+        assert b._id == a._id + 1
+        assert c._id == b._id + 1
+        assert d._id == c._id + 1
 
     ##########################
     # _pointNameDifference() #
@@ -880,23 +894,6 @@ class LowLevelBackend(object):
         assert not toTest2._equalFeatureNames(toTest1)
 
 
-    ########################
-    # default Object names #
-    ########################
-
-    def test_default_object_names(self):
-        """ Test that default object names increment correctly """
-        toTest0 = self.constructor(featureNames=['a', '2'])
-        toTest1 = self.constructor(pointNames=['1b', '2'])
-        toTest2 = self.constructor(featureNames=['c', '2'])
-
-        firstNumber = int(toTest0.name[len(DEFAULT_NAME_PREFIX):])
-        second = firstNumber + 1
-        third = second + 1
-
-        assert toTest1.name == DEFAULT_NAME_PREFIX + str(second)
-        assert toTest2.name == DEFAULT_NAME_PREFIX + str(third)
-
     ###################
     # points.getNames #
     ###################
@@ -1347,7 +1344,7 @@ class LowLevelBackend(object):
         fNames = ['f' + str(i) for i in range(1, 16)]
         toTest3D = self.constructor(shape=(3, 3, 5), pointNames=pNames,
                                     featureNames=fNames)
-        assert toTest3D.nameIsDefault()
+        assert toTest3D.name is None
         assert toTest3D.points.getNames() == pNames
         assert toTest3D.features.getNames() == fNames
 

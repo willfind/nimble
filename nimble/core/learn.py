@@ -261,7 +261,6 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         )
     """
     startTime = time.process_time()
-    _, trueLearnerName = _unpackLearnerName(learnerName)
     if trackEntry.isEntryPoint:
         validateLearningArguments(trainX, trainY, testX, False)
     merged = mergeArguments(arguments, kwarguments)
@@ -277,8 +276,6 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         trainXFtNames = trainX.features._getNamesNoGeneration()
         normalizedTrain.features.setNames(trainXFtNames, useLog=False)
 
-    normalizedTrain.name = trainX.name + " " + trueLearnerName
-
     # return normalized trainX when testX is not included otherwise return will
     # be a tuple (normalizedTrain, normalizedTest)
     if testX is None:
@@ -290,8 +287,6 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         if len(normalizedTest.features) == len(testX.features):
             testXFtNames = testX.features._getNamesNoGeneration()
             normalizedTest.features.setNames(testXFtNames, useLog=False)
-
-        normalizedTest.name = testX.name + " " + trueLearnerName
 
         ret = (normalizedTrain, normalizedTest)
 
