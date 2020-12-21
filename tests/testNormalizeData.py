@@ -55,8 +55,7 @@ def test_normalizeData_successTest_BothDataSets():
         else:
             assert normTestX.features.getNames() == testX.features.getNames()
 
-# names changed
-def test_normalizeData_namesChanged():
+def test_normalizeData_returnNamesDefault():
     data1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
     trainX = nimble.data("Matrix", data1, name='trainX')
 
@@ -65,6 +64,9 @@ def test_normalizeData_namesChanged():
 
     norms = nimble.normalizeData('scikitlearn.PCA', trainX, testX=testX,
                                  n_components=2)
+
+    assert norms[0].name is None
+    assert norms[1].name is None
 
 @logCountAssertionFactory(2)
 def test_normalizeData_logCount():
