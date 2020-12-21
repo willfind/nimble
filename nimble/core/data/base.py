@@ -100,7 +100,7 @@ class Base(ABC):
     path : str
         The path to the data file.
     """
-    _id = 0
+    _nextID = 0
 
     def __init__(self, shape, pointNames=None, featureNames=None, name=None,
                  paths=(None, None), **kwds):
@@ -139,8 +139,8 @@ class Base(ABC):
             Note, however, that this class is the root of the object
             hierarchy as statically defined.
         """
-        self._id = Base._id
-        Base._id += 1
+        self._id = Base._nextID
+        Base._nextID += 1
 
         self._shape = list(shape)
         if pointNames is not None and len(pointNames) != self._pointCount:
