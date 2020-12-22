@@ -3965,7 +3965,8 @@ class Base(ABC):
                     msg += 'onFeature is not None'
                     raise InvalidArgumentValue(msg)
                 ftName = self.features.getName(onFeature)
-                if ftName != other.features.getName(onFeature):
+                if (ftName != other.features.getName(onFeature)
+                        or ftName.startswith(DEFAULT_PREFIX)):
                     msg = 'The feature names at index {0} '.format(onFeature)
                     msg += 'do not match in each object'
                     raise InvalidArgumentValue(msg)
