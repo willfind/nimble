@@ -239,7 +239,7 @@ class Matrix(Base):
                               matchingFtIdx):
         self._data = numpy.array(self._data, dtype=numpy.object_)
         otherArr = numpy.array(other._data, dtype=numpy.object_)
-        if onFeature:
+        if onFeature is not None:
             if feature in ["intersection", "left"]:
                 onFeatureIdx = self.features.getIndex(onFeature)
                 onIdxLoc = matchingFtIdx[0].index(onFeatureIdx)

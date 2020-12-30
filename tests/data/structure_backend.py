@@ -47,7 +47,7 @@ from nimble._utility import scipy, pd
 from .baseObject import DataTestObject
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
-from tests.helpers import assertNoNamesGenerated
+from tests.helpers import assertNoNamesGenerated, assertExpectedException
 from tests.helpers import CalledFunctionException, calledException
 
 preserveName = "PreserveTestName"
@@ -8733,6 +8733,43 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
         leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
 
+    def test_merge_exception_onFeatureIndexNoNames(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
+        leftObj = self.constructor(dataL)
+        rightObj = self.constructor(dataR)
+
+        expInMsg = 'Feature names are required for merges'
+
+        assertExpectedException(InvalidArgumentValue, leftObj.merge, rightObj,
+                                point='strict', feature='union', onFeature=0,
+                                messageIncludes=expInMsg)
+
+        leftObj.features.setName(0, 'id')
+        assertExpectedException(InvalidArgumentValue, leftObj.merge, rightObj,
+                                point='strict', feature='union', onFeature=0,
+                                messageIncludes=expInMsg)
+
+        leftObj.features.setNames(None)
+        rightObj.features.setName(0, 'id')
+        assertExpectedException(InvalidArgumentValue, leftObj.merge, rightObj,
+                                point='strict', feature='union', onFeature=0,
+                                messageIncludes=expInMsg)
+
+    def test_merge_exception_onFeatureIndexFtNameMismatch(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[3, 'a', 4], [7, 'b' ,8], [ -3, 'c', -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'id', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+
+        expInMsg = 'feature names at index 0 do not match'
+        assertExpectedException(InvalidArgumentValue, leftObj.merge, rightObj,
+                                point='intersection', feature='union', onFeature=0,
+                                messageIncludes=expInMsg)
+
     def merge_backend(self, left, right, expected, on=None, includeStrict=False):
         combinations = [
             ('union', 'union'), ('union', 'intersection'), ('union', 'left'),
@@ -9968,6 +10005,34 @@ class StructureModifying(StructureShared):
         fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
         exp = self.constructor(expData, featureNames=fNamesExp)
         leftObj.merge(rightObj, point='union', feature='union', onFeature='id')
+        assert leftObj == exp
+
+    def test_merge_ptUnion_ftUnion_onFeature_exactMatch_indexOnFeature(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['id', 'f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, featureNames=fNamesExp)
+        leftObj.merge(rightObj, point='union', feature='union', onFeature=0)
+        assert leftObj == exp
+
+    def test_merge_ptUnion_ftUnion_onFeature_exactMatch_withDefaultFtNames(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [['a', 3, 4], ['b', 7, 8], ['c', -3, -4]]
+        pNames = ['a', 'b', 'c']
+        leftObj = self.constructor(dataL, pointNames=pNames)
+        rightObj = self.constructor(dataR, pointNames=pNames)
+        leftObj.features.setName(0, 'id')
+        rightObj.features.setName(0, 'id')
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
+        exp = self.constructor(expData)
+        exp.features.setName(0, 'id')
+        leftObj.merge(rightObj, point='union', feature='union', onFeature=0)
         assert leftObj == exp
 
     def test_merge_ptUnion_ftUnion_onFeature_exactMatch_sharedFt(self):
