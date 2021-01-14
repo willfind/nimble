@@ -12,6 +12,7 @@ from .exceptions import PackageException
 from .exceptions import FileFormatException
 from .exceptions import _prettyListString
 from .exceptions import _prettyDictString
-from .._utility import _setAll
 
-__all__ = _setAll(vars())
+# dont't use _utility._setAll here due to circular import
+__all__ = [v for v in vars()
+           if not v.startswith('_') and v != 'exceptions']

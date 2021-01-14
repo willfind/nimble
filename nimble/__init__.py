@@ -16,6 +16,8 @@ from nimble.core.create import zeros
 from nimble.core.create import identity
 from nimble.core.create import loadData
 from nimble.core.create import loadTrainedLearner
+from nimble.core.create import fetchFile
+from nimble.core.create import fetchFiles
 from nimble.core.learn import learnerType
 from nimble.core.learn import listLearners
 from nimble.core.learn import learnerParameters
@@ -52,6 +54,8 @@ from nimble import exceptions
 #: --------
 #: nimble.core.configuration.SessionConfiguration
 settings = core.configuration.loadSettings()
+
+core.configuration.setFetchPath(settings)
 
 # initialize the interfaces
 core.interfaces.initInterfaceSetup()

@@ -7,12 +7,16 @@ functions are contained in create.py without the distraction of helpers.
 
 import csv
 from io import StringIO, BytesIO
-import os.path
+import os
 import copy
 import sys
 import warnings
 import datetime
 from contextlib import contextmanager
+import re
+import zipfile
+import tarfile
+import urllib.parse
 
 import numpy
 
@@ -2264,3 +2268,179 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
         retPNames = pointNames
 
     return retData, retPNames, retFNames
+
+def _isDownloadable(url):
+    """
+    Does the url contain a downloadable resource.
+    """
+    headers = requests.head(url, allow_redirects=True).headers
+    contentType = headers.get('content-type').lower()
+    return not 'html' in contentType
+
+def _extractArchive(fileObj, nameGetter, filename, update, allowMultiple):
+    """
+    Extract contents of an archive file.
+
+    Return a list of paths to the extracted files. If the file contains
+    multiple files and allowMultiple is False, the archive file will be
+    returned and no extraction will occur.
+    """
+    names = getattr(fileObj, nameGetter)()
+    if any(os.path.isabs(name) or '..' in name for name in names):
+        # potential security risk will not perform extraction
+        return [filename]
+
+    if not allowMultiple and len(names) > 1:
+        return [filename]
+
+    location = os.path.dirname(filename)
+    paths = [os.path.join(location, name) for name in names]
+    # only need to extract if update or any expected files don't exist
+    if update or not all(os.path.exists(path) for path in paths):
+        fileObj.extractall(location)
+
+    files = []
+    for path in paths:
+        if os.path.isfile(path):
+            files.append(path)
+
+    return files
+
+def _processArchiveFile(filename, update, allowMultiple):
+    """
+    Attempt extraction for an archive file.
+    """
+    try:
+        if zipfile.is_zipfile(filename):
+            with zipfile.ZipFile(filename, 'r') as ref:
+                return _extractArchive(ref, 'namelist', filename,
+                                       update, allowMultiple)
+        if tarfile.is_tarfile(filename):
+            with tarfile.TarFile(filename, 'r') as ref:
+                return _extractArchive(ref, 'getnames', filename,
+                                       update, allowMultiple)
+    except Exception: # pylint: disable=broad-except
+        pass
+
+    return [filename] # will return the archive file if extraction fails
+
+def _isArchive(filename):
+    return zipfile.is_zipfile(filename) or tarfile.is_tarfile(filename)
+
+def _findData(url, filename, update, allowMultiple):
+    """
+    Find data locally or download and store.
+
+    Assumes that url is downloadable. The data may be available locally
+    if previously stored, but if not found the data will be downloaded
+    and stored.
+
+    Return a list of data file paths.
+    """
+    if not update and os.path.exists(filename) and not _isArchive(filename):
+        return [filename]
+
+    if os.path.exists(filename) and _isArchive(filename):
+        return _processArchiveFile(filename, update, allowMultiple)
+
+    directory = os.path.split(filename)[0]
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    response = requests.get(url, allow_redirects=True)
+    with open(filename, 'w+b') as f:
+        f.write(response.content)
+
+    if _isArchive(filename):
+        return _processArchiveFile(filename, update, allowMultiple)
+
+    return [filename]
+
+
+def _findUCIData(source, path, currPaths, update, allowMultiple):
+    """
+    Recursive download for files from a UCI repository.
+    """
+    response = requests.get(source)
+    # ignore Parent Directory at index 0 in every repository
+    # Index file and .names files contain dataset details, not data
+    hrefs = [href for href in re.findall('href="(.+)"', response.text)[1:]
+             if href != 'Index' and not href.endswith('.names')]
+    if not allowMultiple and len(hrefs) > 1:
+        msg = 'This source contains multiple files. Use nimble.fetchFiles '
+        msg += 'or provide the url to a specific file.'
+        raise InvalidArgumentValue(msg)
+    for href in hrefs:
+        url = source + href
+        if _isDownloadable(url):
+            urlInfo = urllib.parse.urlparse(url)
+            name = os.path.split(urlInfo.path)[1]
+            filename = os.path.join(path, name)
+            currPaths.extend(_findData(url, filename, update, allowMultiple))
+        else:
+            newSource = url
+            newPath = os.path.join(path, href)
+            currPaths = _findUCIData(newSource, newPath, currPaths, update,
+                                     allowMultiple)
+
+    return currPaths
+
+
+def fileFetcher(source, update, allowMultiple=True):
+    """
+    Download data from the web and store at a specified location. Files
+    are stored in a directory named 'nimbleData' that is placed, by
+    default, in the home directory (pathlib.Path.home()). The location
+    can be changed in configuration.ini. The dataset is only downloaded
+    once. Any subsequent calls for the same source will identify that
+    the data is locally available unless update is True.
+
+    The storage location is based on parsing the url. Within the
+    nimbleData directory, a directory is created for the domain. A
+    directory based on the url path is added to the domain directory and
+    the file or extracted archive contents are placed in the path
+    directory.
+    """
+    if not requests.nimbleAccessible():
+        raise PackageException('requests must be installed')
+    srcLow = source.lower()
+    # support for finding downloadable files from the UCI dataset pages
+    isUCI = 'archive.ics.uci.edu' in srcLow or srcLow.startswith('uci:')
+    if isUCI:
+        subDirectories = ''
+        if srcLow.startswith('uci:'):
+            prefix = 'https://archive.ics.uci.edu/ml/datasets/'
+            # sanitize for url. uci replaces whitespace with + character
+            toFind = urllib.parse.quote_plus(source[4:].strip(), safe='/')
+            # allow for path to subdirectory, ie uci:heart disease/costs
+            # split to find the source of the main data page, and store the
+            # subDirectories to add back in once the main data page is located
+            toFind = toFind.split('/', 1)
+            source = prefix + toFind[0].strip()
+            srcLow = source.lower()
+            if len(toFind) > 1:
+                subDirectories = toFind[1].strip()
+        if 'ml/datasets/' in srcLow:
+            response = requests.get(source)
+            archive = 'https://archive.ics.uci.edu/ml/'
+            database = r'machine-learning-databases/.+?/'
+            data = re.search(database, response.text).group()
+            source = archive + data + subDirectories
+            if not source.endswith('/'):
+                source += '/'
+
+    configLoc = nimble.settings.get('fetch', 'location')
+    homepath = os.path.join(configLoc, 'nimbleData')
+    urlInfo = urllib.parse.urlparse(source)
+    netLoc = urlInfo.netloc
+    if netLoc.startswith('www.'):
+        netLoc = netLoc[4:]
+    directory = os.path.join(*urlInfo.path.split('/'))
+    dirPath = os.path.join(homepath, netLoc, directory)
+    if _isDownloadable(source):
+        return _findData(source, dirPath, update, allowMultiple)
+    if isUCI:
+        return _findUCIData(source, dirPath, [], update, allowMultiple)
+
+    msg = 'source did not provide downloadable data'
+    raise InvalidArgumentValue(msg)
