@@ -18,7 +18,7 @@ from .views import BaseView
 from .sparseAxis import SparsePoints, SparsePointsView
 from .sparseAxis import SparseFeatures, SparseFeaturesView
 from .stretch import StretchSparse
-from ._dataHelpers import DEFAULT_PREFIX
+from ._dataHelpers import DEFAULT_PREFIX, isDefaultName
 from ._dataHelpers import allDataIdentical
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
@@ -616,7 +616,7 @@ class Sparse(Base):
             elif self._pointNamesCreated():
                 # differentiate default names between objects;
                 # note still start with DEFAULT_PREFIX
-                leftNames = [n + '_l' if n.startswith(DEFAULT_PREFIX) else n
+                leftNames = [n + '_l' if isDefaultName(n) else n
                              for n in self.points.getNames()]
                 leftData = numpy.append([leftNames], leftData)
             else:
@@ -633,7 +633,7 @@ class Sparse(Base):
             elif other._pointNamesCreated():
                 # differentiate default names between objects;
                 # note still start with DEFAULT_PREFIX
-                rightNames = [n + '_r' if n.startswith(DEFAULT_PREFIX) else n
+                rightNames = [n + '_r' if isDefaultName(n) else n
                               for n in other.points.getNames()]
                 rightData = numpy.append([rightNames], rightData)
             else:

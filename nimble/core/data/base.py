@@ -30,6 +30,7 @@ from .stretch import Stretch
 from . import _dataHelpers
 # the prefix for default point and feature names
 from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
+from ._dataHelpers import isDefaultName
 from ._dataHelpers import formatIfNeeded
 from ._dataHelpers import valuesToPythonList, constructIndicesList
 from ._dataHelpers import createListOfDict, createDictOfList
@@ -329,8 +330,7 @@ class Base(ABC):
         have not been created.
         """
         if self._pointNamesCreated():
-            return any([name.startswith(DEFAULT_PREFIX) for name
-                        in self.points.getNames()])
+            return any(isDefaultName(name) for name in self.points.getNames())
 
         return True
 
@@ -340,8 +340,8 @@ class Base(ABC):
         featureNames have not been created.
         """
         if self._featureNamesCreated():
-            return any([name.startswith(DEFAULT_PREFIX) for name
-                        in self.features.getNames()])
+            return any(isDefaultName(name) for name
+                       in self.features.getNames())
 
         return True
 
@@ -351,8 +351,7 @@ class Base(ABC):
         created.
         """
         if self._pointNamesCreated():
-            return all([name.startswith(DEFAULT_PREFIX) for name
-                        in self.points.getNames()])
+            return all(isDefaultName(name) for name in self.points.getNames())
 
         return True
 
@@ -362,8 +361,8 @@ class Base(ABC):
         created.
         """
         if self._featureNamesCreated():
-            return all([name.startswith(DEFAULT_PREFIX) for name
-                        in self.features.getNames()])
+            return all(isDefaultName(name) for name
+                       in self.features.getNames())
 
         return True
 
@@ -2662,7 +2661,7 @@ class Base(ABC):
             namesAxis = self.features
         if not isinstance(identifier, str):
             names = namesAxis._getNamesNoGeneration()
-            if names is None or names[identifier].startswith(DEFAULT_PREFIX):
+            if names is None or isDefaultName(names[identifier]):
                 identifier = axis.capitalize() + ' #' + str(identifier)
             else:
                 identifier = names[identifier]
@@ -3462,12 +3461,12 @@ class Base(ABC):
         for pName, fName in splitNames:
             if pName not in pNames:
                 pNames.append(pName)
-            if allPtDefault and not pName.startswith(DEFAULT_PREFIX):
+            if allPtDefault and not isDefaultName(pName):
                 allPtDefault = False
             if fNames is not None:
                 if fName not in fNames:
                     fNames.append(fName)
-            if allFtDefault and not fName.startswith(DEFAULT_PREFIX):
+            if allFtDefault and not isDefaultName(fName):
                 allFtDefault = False
 
         if allPtDefault:
@@ -3953,7 +3952,7 @@ class Base(ABC):
                     raise InvalidArgumentValue(msg)
                 ftName = self.features.getName(onFeature)
                 if (ftName != other.features.getName(onFeature)
-                        or ftName.startswith(DEFAULT_PREFIX)):
+                        or isDefaultName(ftName)):
                     msg = 'The feature names at index {0} '.format(onFeature)
                     msg += 'do not match in each object'
                     raise InvalidArgumentValue(msg)
@@ -4034,7 +4033,7 @@ class Base(ABC):
             # default names cannot be included in intersection
             ptNames = [name for name in self.points.getNames()
                        if name in other.points.getNames()
-                       and not name.startswith(DEFAULT_PREFIX)]
+                       and not isDefaultName(name)]
             self.points.setNames(ptNames, useLog=False)
         elif onFeature is None:
             # union cases
@@ -4043,7 +4042,7 @@ class Base(ABC):
                 if other._anyDefaultPointNames():
                     # handle default name conflicts
                     ptNamesR = [self.points._nextDefaultName() if
-                                n.startswith(DEFAULT_PREFIX) else n
+                                isDefaultName(n) else n
                                 for n in self.points.getNames()]
                 else:
                     ptNamesR = other.points.getNames()
@@ -4083,7 +4082,7 @@ class Base(ABC):
         allNames = selfNames + otherNames
         if len(set(allNames)) != len(allNames):
             for name in selfNames:
-                if not name.startswith(DEFAULT_PREFIX) and name in otherNames:
+                if not isDefaultName(name) and name in otherNames:
                     matches.append(name)
         return matches
 
@@ -4633,7 +4632,7 @@ class Base(ABC):
         feature, so default names are ignored.
         """
         def nonDefaultNames(names):
-            return (n for n in names if not n.startswith(DEFAULT_PREFIX))
+            return (n for n in names if not isDefaultName(n))
 
         if axis == 'point':
             sNames = nonDefaultNames(self.points.getNames())

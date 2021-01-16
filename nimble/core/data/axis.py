@@ -32,7 +32,7 @@ from nimble._utility import inspectArguments
 from .points import Points
 from .features import Features
 from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2
-from ._dataHelpers import DEFAULT_PREFIX_LENGTH
+from ._dataHelpers import DEFAULT_PREFIX_LENGTH, isDefaultName
 from ._dataHelpers import valuesToPythonList, constructIndicesList
 from ._dataHelpers import validateInputString
 from ._dataHelpers import operatorDict
@@ -951,7 +951,7 @@ class Axis(ABC):
                 if not isinstance(name, str):
                     msg = 'assignments must contain only string values'
                     raise InvalidArgumentValue(msg)
-                if name.startswith(DEFAULT_PREFIX) and name in temp:
+                if isDefaultName(name) and name in temp:
                     name = self._nextDefaultName()
                 if name in temp:
                     msg = "Cannot input duplicate names: " + str(name)
@@ -1227,7 +1227,7 @@ class Axis(ABC):
 
     def _sortByNames(self, reverse):
         names = self._getNamesNoGeneration()
-        if names is None or any(n.startswith(DEFAULT_PREFIX) for n in names):
+        if names is None or any(isDefaultName(n) for n in names):
             msg = "When by=None, all {0} names must be defined (non-default). "
             msg += "Either set the {0} names of this object or provide "
             msg += "another argument for by"
@@ -1443,10 +1443,8 @@ class Axis(ABC):
         # _validateInsertableData before this helper, most of the toInsert
         # cases will have already caused an exception
         if objNamesCreated and toInsertNamesCreated:
-            objAllDefault = all(n.startswith(DEFAULT_PREFIX)
-                                for n in objNames())
-            toInsertAllDefault = all(n.startswith(DEFAULT_PREFIX)
-                                     for n in toInsertNames())
+            objAllDefault = all(isDefaultName(n) for n in objNames())
+            toInsertAllDefault = all(isDefaultName(n) for n in toInsertNames())
             reorder = objNames() != toInsertNames()
             if not (objAllDefault or toInsertAllDefault) and reorder:
                 # use copy when reordering so toInsert object is not modified
@@ -1488,7 +1486,7 @@ class Axis(ABC):
         # ensure no collision with default names
         adjustedNames = []
         for name in insertedNames:
-            if name.startswith(DEFAULT_PREFIX):
+            if isDefaultName(name):
                 adjustedNames.append(self._nextDefaultName())
             else:
                 adjustedNames.append(name)

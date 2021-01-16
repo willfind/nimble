@@ -35,7 +35,7 @@ from nimble.core.data import Matrix
 from nimble.core.data import DataFrame
 from nimble.core.data import Sparse
 from nimble.core.data import BaseView
-from nimble.core.data._dataHelpers import DEFAULT_PREFIX
+from nimble.core.data._dataHelpers import DEFAULT_PREFIX, isDefaultName
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
@@ -338,7 +338,7 @@ class StructureDataSafe(StructureShared):
         assert listOfDict == []
 
         dictOfList = orig.copy(to='dict of list')
-        assert all(key.startswith(DEFAULT_PREFIX) for key in dictOfList.keys())
+        assert all(isDefaultName(key) for key in dictOfList.keys())
         assert all(val == [] for val in dictOfList.values())
 
     @noLogEntryExpected
@@ -8551,7 +8551,7 @@ class StructureModifying(StructureShared):
         # check that the name conforms to the standards of how nimble objects assign
         # default names
         def checkName(n):
-            assert n.startswith(DEFAULT_PREFIX)
+            assert isDefaultName(n)
             assert int(n[len(DEFAULT_PREFIX):]) >= 0
 
         list(map(checkName, toTest.points.getNames()))
@@ -9932,8 +9932,8 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, featureNames=fNamesR)
         leftObj.points.setName(0, 'a')
         rightObj.points.setName(0, 'a')
-        assert leftObj.points.getName(1).startswith(DEFAULT_PREFIX)
-        assert rightObj.points.getName(1).startswith(DEFAULT_PREFIX)
+        assert isDefaultName(leftObj.points.getName(1))
+        assert isDefaultName(rightObj.points.getName(1))
 
 
         leftObj.merge(rightObj, point='union', feature='union')
@@ -10238,8 +10238,8 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, featureNames=fNamesR)
         leftObj.points.setName(0, 'a')
         rightObj.points.setName(0, 'a')
-        assert leftObj.points.getName(1).startswith(DEFAULT_PREFIX)
-        assert rightObj.points.getName(1).startswith(DEFAULT_PREFIX)
+        assert isDefaultName(leftObj.points.getName(1))
+        assert isDefaultName(rightObj.points.getName(1))
         expData = [['a', 1, 2, 3, 4]]
         exp = self.constructor(expData, pointNames=['a'], featureNames=fNamesL+fNamesR)
         leftObj.merge(rightObj, point='intersection', feature='union')
