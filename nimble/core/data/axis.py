@@ -205,6 +205,18 @@ class Axis(ABC):
             return self._base.pointView(key[0]).copy()
         return self._structuralBackend_implementation('copy', key)
 
+    def _anyDefaultNames(self):
+        if self._namesCreated():
+            return any(isDefaultName(name) for name in self._getNames())
+
+        return True
+
+    def _allDefaultNames(self):
+        if self._namesCreated():
+            return all(isDefaultName(name) for name in self._getNames())
+
+        return True
+
     #########################
     # Structural Operations #
     #########################

@@ -10643,7 +10643,35 @@ class StructureModifying(StructureShared):
         leftObj = self.constructor(dataL)
         rightObj = self.constructor(dataR)
 
-        leftObj.merge(rightObj, point='strict', feature='intersection', onFeature="id")
+        leftObj.merge(rightObj, point='strict', feature='intersection',
+                      onFeature="id")
+
+    def test_merge_pointStrict_featureUnion_ptNames_mixedPtNames(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[2, 3], [6, 7], [-2, -3]]
+        fNamesL = ['a','b','c']
+        fNamesR = ['c', 'd']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        leftObj.points.setName(0, 'id')
+        rightObj.points.setName(0, 'id')
+        expData = [['a', 1, 2, 3], ['b', 5, 6, 7], ['c', -1, -2, -3]]
+        exp = self.constructor(expData, featureNames=['a', 'b', 'c', 'd'])
+        exp.points.setName(0, 'id')
+        leftObj.merge(rightObj, point='strict', feature='union')
+        assert leftObj == exp
+
+    @raises(InvalidArgumentValue)
+    def test_merge_pointStrict_featureUnion_ptNames_mixedPtNames_exc(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[2, 3], [6, 7], [-2, -3]]
+        fNamesL = ['a','b','c']
+        fNamesR = ['c', 'd']
+        leftObj = self.constructor(dataL, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, featureNames=fNamesR)
+        leftObj.points.setName(0, 'id')
+        rightObj.points.setName(1, 'id')
+        leftObj.merge(rightObj, point='strict', feature='union')
 
         #################
         # featureStrict #
@@ -10744,7 +10772,67 @@ class StructureModifying(StructureShared):
         leftObj = self.constructor(dataL, pointNames=pNamesL)
         rightObj = self.constructor(dataR, pointNames=pNamesR)
 
-        leftObj.merge(rightObj, point='intersection', feature='strict', onFeature=None)
+        leftObj.merge(rightObj, point='intersection', feature='strict',
+                      onFeature=None)
+
+    def test_merge_featureStrict_pointUnion_ptNames_mixedFtNames(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [['c', -1, -2], ['d', 3, 4]]
+        pNamesL = ['a','b','c']
+        pNamesR = ['c', 'd']
+        leftObj = self.constructor(dataL, pointNames=pNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNamesR)
+        leftObj.features.setName(0, 'id')
+        rightObj.features.setName(0, 'id')
+        expData = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', 3, 4]]
+        exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd'])
+        exp.features.setName(0, 'id')
+        leftObj.merge(rightObj, point='union', feature='strict')
+        assert leftObj == exp
+
+    @raises(InvalidArgumentValue)
+    def test_merge_featureStrict_pointUnion_ptNames_mixedFtNames_exc(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [['d', 3, 4]]
+        pNamesL = ['a','b','c']
+        pNamesR = ['d']
+        leftObj = self.constructor(dataL, pointNames=pNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNamesR)
+        leftObj.features.setName(0, 'id')
+        rightObj.features.setName(1, 'id')
+
+        leftObj.merge(rightObj, point='union', feature='strict')
+
+    def test_merge_featureStrict_pointUnion_onFeature_mixedFtNames(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [['c', -1, -2], ['d', 3, 4]]
+        pNamesL = ['a','b','c']
+        pNamesR = ['f', 'd']
+        leftObj = self.constructor(dataL, pointNames=pNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNamesR)
+        leftObj.features.setName(0, 'id')
+        rightObj.features.setName(0, 'id')
+        expData = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', 3, 4]]
+        exp = self.constructor(expData) # no pointNames
+        exp.features.setName(0, 'id')
+        leftObj.merge(rightObj, point='union', feature='strict',
+                      onFeature='id')
+        assert leftObj == exp
+
+    @raises(InvalidArgumentValue)
+    def test_merge_featureStrict_pointUnion_onFeature_mixedFtNames_exc(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[3, 'd', 4]]
+        pNamesL = ['a','b','c']
+        pNamesR = ['d']
+        leftObj = self.constructor(dataL, pointNames=pNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNamesR)
+        leftObj.features.setName(0, 'id')
+        rightObj.features.setName(0, 'id')
+        leftObj.features.setName(1, 'one')
+        rightObj.features.setName(2, 'one')
+        leftObj.merge(rightObj, point='union', feature='strict',
+                      onFeature='id')
 
 def exceptionHelper(testObj, target, args, wanted, checkMsg):
     try:

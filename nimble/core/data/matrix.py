@@ -260,7 +260,7 @@ class Matrix(Base):
             # using pointNames, prepend pointNames to left and right arrays
             onIdxL = 0
             onIdxR = 0
-            if not self._anyDefaultPointNames():
+            if not self.points._anyDefaultNames():
                 ptsL = numpy.array(self.points.getNames(), dtype=numpy.object_)
                 ptsL = ptsL.reshape(-1, 1)
             elif self._pointNamesCreated():
@@ -275,7 +275,7 @@ class Matrix(Base):
                             in range(len(self.points))]
                 ptsL = numpy.array(defNames, dtype=numpy.object_)
                 ptsL = ptsL.reshape(-1, 1)
-            if not other._anyDefaultPointNames():
+            if not other.points._anyDefaultNames():
                 ptsR = numpy.array(other.points.getNames(),
                                    dtype=numpy.object_)
                 ptsR = ptsR.reshape(-1, 1)

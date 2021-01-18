@@ -611,7 +611,7 @@ class Sparse(Base):
             onIdxL = 0
             onIdxR = 0
             leftData = self._data.data.astype(numpy.object_)
-            if not self._anyDefaultPointNames():
+            if not self.points._anyDefaultNames():
                 leftData = numpy.append([self.points.getNames()], leftData)
             elif self._pointNamesCreated():
                 # differentiate default names between objects;
@@ -628,7 +628,7 @@ class Sparse(Base):
             leftCol = numpy.append([0 for _ in range(len(self.points))],
                                    self._data.col + 1)
             rightData = other._data.data.copy().astype(numpy.object_)
-            if not other._anyDefaultPointNames():
+            if not other.points._anyDefaultNames():
                 rightData = numpy.append([other.points.getNames()], rightData)
             elif other._pointNamesCreated():
                 # differentiate default names between objects;
