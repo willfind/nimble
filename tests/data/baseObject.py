@@ -122,7 +122,7 @@ def viewConstructorMaker(concreteType):
             full.features.setNames(None, useLog=False)
 
         ret = full.view(pStart, pEnd, fStart, fEnd)
-        ret._name = orig.name
+        ret.name = orig.name
 
         return ret
 

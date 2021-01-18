@@ -1451,3 +1451,17 @@ class LowLevelBackend(object):
             except TypeError:
                 assert len(tensor._shape) > 2
                 assert tensor._shape == origShape
+
+    ########
+    # Name #
+    ########
+
+    def test_name_change_and_lookup(self):
+        origName = 'one'
+        changeName = 'two'
+
+        test = self.constructor(name=origName)
+        assert test.name == origName
+
+        test.name = changeName
+        assert test.name == changeName

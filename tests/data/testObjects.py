@@ -96,7 +96,7 @@ def concreter(name, *abclasses):
     return type(name, (concreteCls,), {})
 
 def makeAndDefine(shape=None, pointNames=None, featureNames=None,
-                  psize=0, fsize=0):
+                  psize=0, fsize=0, name=None):
     """
     Make a Base data object with no actual data but has a shape
     and can have pointNames and featureNames.
@@ -121,7 +121,7 @@ def makeAndDefine(shape=None, pointNames=None, featureNames=None,
             return FeaturesDummy(self)
 
     return BaseConcreteDummy(shape, pointNames=pointNames,
-                             featureNames=featureNames)
+                             featureNames=featureNames, name=name)
 
 class TestBaseOnly(LowLevelBackend):
     def __init__(self):
