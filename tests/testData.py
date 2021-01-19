@@ -1730,8 +1730,8 @@ def mocked_requests_get(url, *args, **kwargs):
             if 'data+multiple' in url and 'more' not in url:
                 content += 'href="more/"\n'
             if 'data+ignored' in url:
-                content += 'href="Index"'
-                content += 'href="data.names"'
+                content += 'href="Index"\n'
+                content += 'href="data.names"\n'
 
         return MockResponse(bytes(content, 'utf-8'), 200)
 
@@ -2002,7 +2002,7 @@ def test_data_fetch_uciPathHandling():
             and pagePaths[0].endswith(multiFile1)
             and pagePaths[1].endswith(multiFile2))
 
-    # contains href to Index and .names files we want to ignore
+    # contains href to Index and .names files we want to ignore in fetchFile
     ignoreFile = os.path.join(fileBasePath, 'data+ignored', 'data.csv')
     urlToIgnoreFile = urlBasePath + 'data+ignored'
 
@@ -2010,12 +2010,14 @@ def test_data_fetch_uciPathHandling():
     assert shortIgFile.endswith(ignoreFile)
 
     shortIgFiles = nimble.fetchFiles('uci: data ignored ')
-    assert len(shortIgFiles) == 1 and shortIgFiles[0].endswith(ignoreFile)
+    assert len(shortIgFiles) == 3
+    assert sum(f.endswith(ignoreFile) for f in shortIgFiles) == 1
 
     pageIgFile = nimble.fetchFile(urlToIgnoreFile)
     assert pageIgFile.endswith(ignoreFile)
     pageIgFiles = nimble.fetchFiles(urlToIgnoreFile)
-    assert len(pageIgFiles) == 1 and pageIgFiles[0].endswith(ignoreFile)
+    assert len(pageIgFiles) == 3
+    assert sum(f.endswith(ignoreFile) for f in pageIgFiles) == 1
 
 @mockIsDownloadable
 @mock.patch('nimble.core._createHelpers.requests.get', calledException)

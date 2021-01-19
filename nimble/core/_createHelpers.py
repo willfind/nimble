@@ -2356,6 +2356,13 @@ def _findData(url, filename, update, allowMultiple):
 
     return [filename]
 
+def _isUCIDataFile(name):
+    """
+    UCI convention is that Index file and files ending with .names
+    contain dataset details. All other files will be considered data
+    files.
+    """
+    return name != 'Index' and not name.endswith('.names')
 
 def _findUCIData(source, path, currPaths, update, allowMultiple):
     """
@@ -2363,20 +2370,25 @@ def _findUCIData(source, path, currPaths, update, allowMultiple):
     """
     response = requests.get(source)
     # ignore Parent Directory at index 0 in every repository
-    # Index file and .names files contain dataset details, not data
-    hrefs = [href for href in re.findall('href="(.+)"', response.text)[1:]
-             if href != 'Index' and not href.endswith('.names')]
+    hrefs = re.findall('href="(.+)"', response.text)[1:]
+    # Index file and .names files contain dataset details, not data so they
+    # will be downloaded but ignored for return with fetchFile.
+    ignore = False
     if not allowMultiple and len(hrefs) > 1:
-        msg = 'This source contains multiple files. Use nimble.fetchFiles '
-        msg += 'or provide the url to a specific file.'
-        raise InvalidArgumentValue(msg)
+        if len([href for href in hrefs if _isUCIDataFile(href)]) > 1:
+            msg = 'The source contains multiple files. Use nimble.fetchFiles '
+            msg += 'or provide the url to a specific file.'
+            raise InvalidArgumentValue(msg)
+        ignore = True
     for href in hrefs:
         url = source + href
         if _isDownloadable(url):
             urlInfo = urllib.parse.urlparse(url)
             name = os.path.split(urlInfo.path)[1]
             filename = os.path.join(path, name)
-            currPaths.extend(_findData(url, filename, update, allowMultiple))
+            paths = _findData(url, filename, update, allowMultiple)
+            if not ignore or _isUCIDataFile(href):
+                currPaths.extend(paths)
         else:
             newSource = url
             newPath = os.path.join(path, href)

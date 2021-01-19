@@ -584,10 +584,14 @@ def fetchFile(source, update=False):
     location, except when the file was extracted from an archive.
 
     Special support for the UCI repository is included. The ``source``
-    can be 'uci:<Name of Dataset>' or the url to the main page for a
-    specific dataset. Files named 'Index' or ending in '.names' are
-    ignored as they are not expected to contain data suited for Nimble
-    data objects, by convention.
+    can be ``'uci:<Name of Dataset>'`` or the url to the main page for a
+    specific dataset. This function requires that the UCI repository
+    contain only a single file. An exception is made if all other files
+    in the repository are named 'Index' or end in '.names'. By
+    convention, these files are expected to contain information about
+    the dataset not data suited for Nimble data objects. All files
+    are downloaded and stored but only the path to the data file is
+    returned.
 
     Parameters
     ----------
@@ -644,9 +648,7 @@ def fetchFiles(source, update=False): # pylint: disable=line-too-long
 
     Special support for the UCI repository is included. The ``source``
     can be 'uci:<Name of Dataset>' or the url to the main page for a
-    specific dataset. Files named 'Index' or ending in '.names' are
-    ignored as they are not expected to contain data suited for Nimble
-    data objects, by convention.
+    specific dataset.
 
     Parameters
     ----------
