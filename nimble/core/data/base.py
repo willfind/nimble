@@ -3850,70 +3850,71 @@ class Base(ABC):
                 msg = "could not locate feature '{0}' ".format(onFeature)
                 msg += "in both objects"
                 raise InvalidArgumentValue(msg) from e
-        # since strict implies that the points or features are the same,
-        # will assume equality if names are missing but the length matches
-        lNames = lAxis._getNamesNoGeneration()
-        rNames = rAxis._getNamesNoGeneration()
-        lAllNames = not lAxis._anyDefaultNames()
-        rAllNames = not rAxis._anyDefaultNames()
-        if lAllNames and rAllNames:
-            if sorted(lNames) != sorted(rNames):
-                msg = "When {0}='strict', the {0} names may ".format(axis)
-                msg += "be in a different order but must match exactly"
-                raise InvalidArgumentValue(msg)
-            endNames = lNames
-        elif lAllNames and rNames is None:
-            if onFeature is None:
+
+            self._genericMergeFrontend(tmpOther, point, feature, onFeature)
+        else:
+            lNames = lAxis._getNamesNoGeneration()
+            rNames = rAxis._getNamesNoGeneration()
+            lAllNames = not lAxis._anyDefaultNames()
+            rAllNames = not rAxis._anyDefaultNames()
+            # strict implies that the points or features are the same
+            # with all names reordering can occur otherwise each index
+            # is treated as equal.
+            if lAllNames and rAllNames:
+                if sorted(lNames) != sorted(rNames):
+                    msg = "When {0}='strict', the {0} names may ".format(axis)
+                    msg += "be in a different order but must match exactly"
+                    raise InvalidArgumentValue(msg)
+                endNames = lNames
+            elif lAllNames and rNames is None:
                 rAxis.setNames(lNames, useLog=False)
-            endNames = lNames
-        elif lNames is None and rAllNames:
-            if onFeature is None:
+                endNames = lNames
+            elif lNames is None and rAllNames:
                 lAxis.setNames(rNames, useLog=False)
-            endNames = rNames
-        else: # default names present
-            # may generate names here, will be removed after merge
-            endNames = mergeNames(lAxis.getNames(), rAxis.getNames())
-            try:
-                strictNames = ['_STRICT' + n if isDefaultName(n) else n
-                               for n in endNames]
-                lAxis.setNames(strictNames, useLog=False)
-                rAxis.setNames(strictNames, useLog=False)
-            except InvalidArgumentValue as e:
-                msg = "When {axis}='strict' and default {axis} names "
-                msg += "exist, names cannot be reordered. So, {axis} "
-                msg += "names must match at any index where both objects "
-                msg += "have non-default {axis} names."
-                msg = msg.format(axis=axis)
-                raise InvalidArgumentValue(msg) from e
+                endNames = rNames
+            else: # default names present
+                endNames = mergeNames(lAxis.getNames(), rAxis.getNames())
+                # need to alter default names so that _genericMergeFrontend
+                # treats them as non-default and equal. After the data is
+                # merged, the names are reset to their default state.
+                try:
+                    strictNames = ['_STRICT' + n if isDefaultName(n) else n
+                                   for n in endNames]
+                    lAxis.setNames(strictNames, useLog=False)
+                    rAxis.setNames(strictNames, useLog=False)
+                except InvalidArgumentValue as e:
+                    msg = "When {axis}='strict' and default {axis} names "
+                    msg += "exist, names cannot be reordered. The {axis} "
+                    msg += "names do not match at each index where both  "
+                    msg += "objects have non-default {axis} names."
+                    msg = msg.format(axis=axis)
+                    raise InvalidArgumentValue(msg) from e
 
-        self._genericMergeFrontend(tmpOther, point, feature, onFeature)
+            self._genericMergeFrontend(tmpOther, point, feature, onFeature)
 
-        if endNames is not None:
-            lAxis.setNames(endNames, useLog=False)
+            # only reset names if we did not generate them
+            if lNames is None and rNames is None:
+                lAxis.setNames(None, useLog=False)
+            else:
+                lAxis.setNames(endNames, useLog=False)
 
     def _genericMergeFrontend(self, other, point, feature, onFeature):
         # validation
         bothPtNamesCreated = (self.points._namesCreated()
                               and other.points._namesCreated())
-        if ((onFeature is None and point == "intersection")
-                and not bothPtNamesCreated):
+        if onFeature is None and not bothPtNamesCreated:
             msg = "Point names are required in both objects when "
-            msg += "point='intersection' and onFeature is None"
+            msg += "onFeature is None"
             raise InvalidArgumentValueCombination(msg)
         bothFtNamesCreated = (self.features._namesCreated()
                               and other.features._namesCreated())
-        if feature == "intersection" and not bothFtNamesCreated:
-            msg = "Feature names are required in both objects when "
-            msg += "feature='intersection'"
+        if not bothFtNamesCreated:
+            msg = "Feature names are required in both objects"
             raise InvalidArgumentValueCombination(msg)
 
         if onFeature is not None:
             if not isinstance(onFeature, str):
                 # index allowed only if we can verify feature names match
-                if not bothFtNamesCreated:
-                    msg = 'Feature names are required for merges when '
-                    msg += 'onFeature is not None'
-                    raise InvalidArgumentValue(msg)
                 ftName = self.features.getName(onFeature)
                 if (ftName != other.features.getName(onFeature)
                         or isDefaultName(ftName)):
