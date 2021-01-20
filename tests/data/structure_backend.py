@@ -8651,7 +8651,7 @@ class StructureModifying(StructureShared):
         fNamesR = ['id', 'f3', 'f4']
         leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
         rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
-        leftObj.merge(rightObj, point='strict', feature='union')
+        leftObj.merge(rightObj, point='strict', feature='union', force=True)
 
     @raises(InvalidArgumentValue)
     def test_merge_exception_featureStrictNameMismatch(self):
@@ -8663,7 +8663,7 @@ class StructureModifying(StructureShared):
         fNamesR = ['id', 'f1', 'f99']
         leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
         rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
-        leftObj.merge(rightObj, point='union', feature='strict')
+        leftObj.merge(rightObj, point='union', feature='strict', force=True)
 
     @raises(InvalidArgumentValue)
     def test_merge_exception_pointStrictMissingOnFeature(self):
@@ -8757,7 +8757,7 @@ class StructureModifying(StructureShared):
                    ['a', 3, 4], ['c', -3, -4]]
         exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd', 'e'])
 
-        leftObj.merge(rightObj, point='union', feature='strict')
+        leftObj.merge(rightObj, point='union', feature='strict', force=True)
 
     def merge_backend(self, left, right, expected, on=None, includeStrict=False):
         combinations = [
@@ -8774,7 +8774,7 @@ class StructureModifying(StructureShared):
 
         @oneLogEntryExpected
         def performMerge():
-            test.merge(tRight, point=pt, feature=ft, onFeature=on)
+            test.merge(tRight, point=pt, feature=ft, onFeature=on, force=True)
 
         for i, exp in enumerate(expected):
             pt = combinations[i][0]
@@ -10559,7 +10559,7 @@ class StructureModifying(StructureShared):
         leftObj = self.constructor(dataL)
         rightObj = self.constructor(dataR)
 
-        leftObj.merge(rightObj, point='strict', feature='union', onFeature=None)
+        leftObj.merge(rightObj, point='strict', feature='union', force=True)
 
     def test_merge_pointStrict_featureUnion_ptNames_mixedPtNames(self):
         dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
@@ -10573,7 +10573,7 @@ class StructureModifying(StructureShared):
         expData = [['a', 1, 2, 3], ['b', 5, 6, 7], ['c', -1, -2, -3]]
         exp = self.constructor(expData, featureNames=['a', 'b', 'c', 'd'])
         exp.points.setName(0, 'id')
-        leftObj.merge(rightObj, point='strict', feature='union')
+        leftObj.merge(rightObj, point='strict', feature='union', force=True)
         assert leftObj == exp
 
     @raises(InvalidArgumentValue)
@@ -10652,7 +10652,8 @@ class StructureModifying(StructureShared):
         expPNames = ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8"]
         exp = self.constructor(expData, pointNames=expPNames)
 
-        leftObj.merge(rightObj, point='union', feature='strict', onFeature=None)
+        leftObj.merge(rightObj, point='union', feature='strict', onFeature=None,
+                      force=True)
         assert leftObj == exp
         assert leftObj.features._getNamesNoGeneration() is None
 
@@ -10665,7 +10666,7 @@ class StructureModifying(StructureShared):
         leftObj = self.constructor(dataL, pointNames=pNamesL)
         rightObj = self.constructor(dataR, pointNames=pNamesR)
 
-        leftObj.merge(rightObj, point='union', feature='strict', onFeature=None)
+        leftObj.merge(rightObj, point='union', feature='strict', force=True)
 
     def test_merge_featureStrict_pointIntersection_ptNames_ptNamesOnly(self):
         dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
@@ -10676,7 +10677,7 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNamesR)
         expData = numpy.array([[],[],[]]).T
         exp = self.constructor(expData)
-        leftObj.merge(rightObj, point='intersection', feature='strict', onFeature=None)
+        leftObj.merge(rightObj, point='intersection', feature='strict', force=True)
         assert leftObj == exp
 
     @raises(InvalidArgumentValue)
@@ -10689,7 +10690,7 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNamesR)
 
         leftObj.merge(rightObj, point='intersection', feature='strict',
-                      onFeature=None)
+                      force=True)
 
     @raises(InvalidArgumentValueCombination)
     def test_merge_featureStrict_pointUnion_ptNames_noNames(self):
@@ -10698,7 +10699,7 @@ class StructureModifying(StructureShared):
         leftObj = self.constructor(dataL)
         rightObj = self.constructor(dataR)
 
-        leftObj.merge(rightObj, point='union', feature='strict', onFeature=None)
+        leftObj.merge(rightObj, point='union', feature='strict', force=True)
 
     def test_merge_featureStrict_pointUnion_ptNames_mixedFtNames(self):
         dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
@@ -10712,7 +10713,7 @@ class StructureModifying(StructureShared):
         expData = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', 3, 4]]
         exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd'])
         exp.features.setName(0, 'id')
-        leftObj.merge(rightObj, point='union', feature='strict')
+        leftObj.merge(rightObj, point='union', feature='strict', force=True)
         assert leftObj == exp
 
     @raises(InvalidArgumentValue)
@@ -10741,7 +10742,7 @@ class StructureModifying(StructureShared):
         exp = self.constructor(expData) # no pointNames
         exp.features.setName(0, 'id')
         leftObj.merge(rightObj, point='union', feature='strict',
-                      onFeature='id')
+                      onFeature='id', force=True)
         assert leftObj == exp
 
     @raises(InvalidArgumentValue)
@@ -10772,7 +10773,7 @@ class StructureModifying(StructureShared):
         exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd'])
         exp.features.setName(0, 'str')
         exp.features.setName(2, 'float')
-        leftObj.merge(rightObj, point='union', feature='strict')
+        leftObj.merge(rightObj, point='union', feature='strict', force=True)
         assert leftObj == exp
 
 def exceptionHelper(testObj, target, args, wanted, checkMsg):

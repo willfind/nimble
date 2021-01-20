@@ -3590,7 +3590,7 @@ class Base(ABC):
 
     @limitedTo2D
     def merge(self, other, point='strict', feature='union', onFeature=None,
-              useLog=None):
+              force=False, useLog=None):
         """
         Merge data from another object into this object.
 
@@ -3629,6 +3629,12 @@ class Base(ABC):
         onFeature : identifier, None
             The name or index of the feature present in both objects to
             merge on.  If None, the merge will be based on point names.
+        force : bool
+            When True, the ``point`` or ``feature`` parameter set to
+            'strict' does not require names along that axis. The merge
+            is forced to continue as True acknowledges that each index
+            along that axis is equal between the two objects. Has no
+            effect if neither parameter is set to 'strict'.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -3800,15 +3806,15 @@ class Base(ABC):
 
         if point == 'strict' or feature == 'strict':
             self._genericStrictMerge_implementation(other, point, feature,
-                                                    onFeature)
+                                                    onFeature, force)
         else:
             self._genericMergeFrontend(other, point, feature, onFeature)
 
         handleLogging(useLog, 'prep', "merge", self.getTypeString(),
-                      Base.merge, other, point, feature, onFeature)
+                      Base.merge, other, point, feature, onFeature, force)
 
     def _genericStrictMerge_implementation(self, other, point, feature,
-                                           onFeature):
+                                           onFeature, force):
         """
         Validation and helper function when point or feature is set to
         strict.
@@ -3866,13 +3872,13 @@ class Base(ABC):
                     msg += "be in a different order but must match exactly"
                     raise InvalidArgumentValue(msg)
                 endNames = lNames
-            elif lAllNames and rNames is None:
+            elif force and lAllNames and rNames is None:
                 rAxis.setNames(lNames, useLog=False)
                 endNames = lNames
-            elif lNames is None and rAllNames:
+            elif force and lNames is None and rAllNames:
                 lAxis.setNames(rNames, useLog=False)
                 endNames = rNames
-            else: # default names present
+            elif force: # default names present
                 endNames = mergeNames(lAxis.getNames(), rAxis.getNames())
                 # need to alter default names so that _genericMergeFrontend
                 # treats them as non-default and equal. After the data is
@@ -3889,6 +3895,11 @@ class Base(ABC):
                     msg += "objects have non-default {axis} names."
                     msg = msg.format(axis=axis)
                     raise InvalidArgumentValue(msg) from e
+            else: # default names and not force
+                msg = 'Non-default {axis} names are required in both objects '
+                msg += 'unless the force parameter is set to True to indicate '
+                msg += 'that each {axis} is equal between the two objects'
+                raise InvalidArgumentValue(msg.format(axis=axis))
 
             self._genericMergeFrontend(tmpOther, point, feature, onFeature)
 
