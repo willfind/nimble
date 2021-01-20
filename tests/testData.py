@@ -8,6 +8,7 @@ import datetime
 import io
 import zipfile
 import tarfile
+import gzip
 import shutil
 try:
     from unittest import mock #python >=3.3
@@ -1702,6 +1703,11 @@ def mocked_requests_get(url, *args, **kwargs):
             hdfFile.close()
             tmpHDF.seek(0)
             return MockResponse(tmpHDF.read(), 200)
+    if 'GZIP' in url:
+        with io.BytesIO() as bio:
+            with gzip.GzipFile(fileobj=bio, mode='wb') as mygzip:
+                mygzip.write(b'1,2,3\n4,5,6')
+            return MockResponse(bio.getvalue(), 200)
     if 'ZIP' in url:
         with io.BytesIO() as bio:
             with zipfile.ZipFile(bio, 'w') as myzip:
@@ -1958,6 +1964,10 @@ def test_data_fetchFiles_TAR_multiple():
     backend_fetch('http://mockrequests.nimble/TAR_multiple.tar',
                   multiple=True)
 
+def test_data_fetchFiles_GZIP():
+    backend_fetch('http://mockrequests.nimble/GZIP_data.csv.gz',
+                  exp='mockrequests.nimble/GZIP_data.csv')
+
 def test_data_fetchFiles_urlSpaceFormatting():
     backend_fetch('http://mockrequests.nimble/hexEncode%20dir/CSV%20hexEncode.csv')
     backend_fetch('http://mockrequests.nimble/plusEncode+dir/CSV+plusEncode.csv')
@@ -2060,6 +2070,29 @@ def test_data_fetch_getFromLocal_zip():
         path = nimble.fetchFile('http://mockrequests.nimble/ZIP.zip')
         paths = nimble.fetchFiles('http://mockrequests.nimble/ZIP.zip')
         assert extractAll.call_count == 0
+
+@mockIsDownloadable
+@mock.patch('nimble.core._createHelpers.requests.get', calledException)
+@clearNimbleData
+def test_data_fetch_getFromLocal_gzip():
+    if not os.path.exists(mockReqBasePath):
+        os.makedirs(mockReqBasePath)
+
+    exp = os.path.join(mockReqBasePath, 'GZIP_data.csv')
+    if not os.path.exists(exp):
+        with open(exp, 'wb') as f:
+            f.write(b'1,2,3/n4,5,6')
+        with open(exp, 'rb') as fIn:
+            with gzip.open(exp + '.gz', 'wb') as fOut:
+                shutil.copyfileobj(fIn, fOut)
+
+    assert os.path.exists(exp)
+    assert os.path.exists(exp + '.gz')
+    # requests should not be used
+    path = nimble.fetchFile('http://mockrequests.nimble/GZIP_data.csv.gz')
+    paths = nimble.fetchFiles('http://mockrequests.nimble/GZIP_data.csv.gz')
+    assert path == exp
+    assert len(paths) == 1 and paths[0] == exp
 
 @mockIsDownloadable
 @mock.patch('nimble.core._createHelpers.requests.get', calledException)
