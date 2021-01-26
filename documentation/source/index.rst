@@ -29,7 +29,7 @@ Resources
 .. toctree::
    :maxdepth: 1
 
-   API Documentation <documentation/index>
+   API Documentation <docs/index>
    datasets
 
 Indices and tables
