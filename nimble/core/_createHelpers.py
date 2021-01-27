@@ -2081,8 +2081,8 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
     """
     dialect = _detectDialectFromSeparator(openFile, inputSeparator)
 
-    (pointNames, featureNames) = _checkCSVForNames(
-        openFile, pointNames, featureNames, dialect)
+    (pointNames, featureNames) = _checkCSVForNames(openFile, pointNames,
+                                                   featureNames, dialect)
 
     pointNames = _namesDictToList(pointNames, 'point', 'pointNames')
     featureNames = _namesDictToList(featureNames, 'feature', 'featureNames')
@@ -2120,7 +2120,7 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
         _checkForDuplicates(keepFeatures, 'keepFeatures')
     if (limitFeatures and retFNames
             and (len(retFNames) != len(keepFeatures) or featureNames is True)):
-        # have all featureNames
+        # have all featureNames but not keeping all features
         keepFeatures, retFNames = _limitToKeptFeatures(keepFeatures, retFNames)
     elif limitFeatures:
         # none or a subset of the featureNames provided
@@ -2146,6 +2146,7 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
 
     convertCols = None
     nonNumericFeatures = []
+    lastFtAllMissing = not limitFeatures
     # lineReader is now at the first line of data
     for i, row in enumerate(lineReader):
         if pointNames is True:
@@ -2218,6 +2219,8 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
                 retData[location] = row
                 if pointNames is True:
                     extractedPointNames[location] = ptName
+        if lastFtAllMissing and row[-1] != '':
+            lastFtAllMissing = False
         totalPoints = i + 1
 
     if (keepPoints != 'all' and pointNames
@@ -2247,6 +2250,15 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
             removeNonNumeric.append([row[i] for i in range(len(row))
                                      if i not in nonNumericFeatures])
         retData = removeNonNumeric
+
+    # when the last value in every row is '' and all columns are kept,
+    # that column will be ignored unless a featureName is provided
+    if (lastFtAllMissing and
+            (not retFNames or len(retFNames) == firstRowLength - 1
+             or (featureNames is True and retFNames[-1] == ''))):
+        retData = [row[:-1] for row in retData]
+        if featureNames is True:
+            retFNames = retFNames[:-1]
 
     if pointNames is True:
         retPNames = extractedPointNames
