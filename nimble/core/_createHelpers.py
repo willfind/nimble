@@ -1474,9 +1474,10 @@ def createDataFromFile(
     with ioStream as toLoad:
         selectSuccess = False
         if extension == 'csv':
+            emptyIsMissing = '' in treatAsMissing
             loaded = _loadcsvUsingPython(
                 toLoad, pointNames, featureNames, ignoreNonNumericalFeatures,
-                keepPoints, keepFeatures, inputSeparator)
+                keepPoints, keepFeatures, inputSeparator, emptyIsMissing)
             selectSuccess = True
         elif extension == 'mtx':
             loaded = _loadmtxForAuto(toLoad, pointNames, featureNames)
@@ -2026,7 +2027,7 @@ def _loadhdf5ForAuto(openFile, pointNames, featureNames):
 
 def _loadcsvUsingPython(openFile, pointNames, featureNames,
                         ignoreNonNumericalFeatures, keepPoints, keepFeatures,
-                        inputSeparator):
+                        inputSeparator, emptyIsMissing):
     """
     Loads a csv file using a reader from python's csv module.
 
@@ -2146,7 +2147,8 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
 
     convertCols = None
     nonNumericFeatures = []
-    lastFtAllMissing = not limitFeatures
+    # possibly remove last feature if all values are '' and '' is missing value
+    lastFtRemovable = not limitFeatures and emptyIsMissing
     # lineReader is now at the first line of data
     for i, row in enumerate(lineReader):
         if pointNames is True:
@@ -2219,8 +2221,8 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
                 retData[location] = row
                 if pointNames is True:
                     extractedPointNames[location] = ptName
-        if lastFtAllMissing and row[-1] != '':
-            lastFtAllMissing = False
+        if lastFtRemovable and row[-1] != '':
+            lastFtRemovable = False
         totalPoints = i + 1
 
     if (keepPoints != 'all' and pointNames
@@ -2251,9 +2253,8 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
                                      if i not in nonNumericFeatures])
         retData = removeNonNumeric
 
-    # when the last value in every row is '' and all columns are kept,
-    # that column will be ignored unless a featureName is provided
-    if (lastFtAllMissing and
+    # remove last feature of all missing values if no feature name is provided
+    if (lastFtRemovable and
             (not retFNames or len(retFNames) == firstRowLength - 1
              or (featureNames is True and retFNames[-1] == ''))):
         retData = [row[:-1] for row in retData]
