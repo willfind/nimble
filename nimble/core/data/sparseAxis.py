@@ -220,7 +220,7 @@ class SparseAxis(Axis, metaclass=ABCMeta):
 
         return nimble.core.data.Sparse(ret, pointNames=pointNames,
                                        featureNames=featureNames,
-                                       reuseData=True)
+                                       copyData=True)
 
     def _structuralIterative_implementation(self, structure, targetList,
                                             pointNames, featureNames):
@@ -289,7 +289,7 @@ class SparseAxis(Axis, metaclass=ABCMeta):
                                       shape=targetShape)
         return nimble.core.data.Sparse(ret, pointNames=pointNames,
                                        featureNames=featureNames,
-                                       reuseData=True)
+                                       copyData=True)
 
     def _unique_implementation(self):
         self._base._sortInternal(self._axis)

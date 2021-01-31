@@ -68,7 +68,7 @@ class DataFrameAxis(Axis, metaclass=ABCMeta):
 
         return nimble.core.data.DataFrame(
             pd.DataFrame(ret), pointNames=pointNames,
-            featureNames=featureNames, reuseData=True)
+            featureNames=featureNames, copyData=True)
 
     def _permute_implementation(self, indexPosition):
         # use numpy indexing to change the ordering

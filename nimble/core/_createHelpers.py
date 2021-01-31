@@ -1173,7 +1173,7 @@ def convertToTypeDictToList(convertToType, featuresObj, featureNames):
 def initDataObject(
         returnType, rawData, pointNames, featureNames, name=None, path=None,
         keepPoints='all', keepFeatures='all', convertToType=None,
-        reuseData=False, treatAsMissing=(float('nan'), numpy.nan, None, '',
+        copyData=False, treatAsMissing=(float('nan'), numpy.nan, None, '',
                                          'None', 'nan', 'NULL', 'NA'),
         replaceMissingWith=numpy.nan, skipDataProcessing=False,
         extracted=(None, None)):
@@ -1215,7 +1215,7 @@ def initDataObject(
     if _isBase(rawData):
         # point/featureNames, treatAsMissing, etc. may vary
         rawData = rawData._data
-    if not reuseData:
+    if copyData:
         rawData = copy.deepcopy(rawData)
 
     # record if extraction occurred before we possibly modify *Names parameters
@@ -1283,7 +1283,7 @@ def initDataObject(
 
     ret = initMethod(rawData, pointNames=usePNames,
                      featureNames=useFNames, name=name, paths=pathsToPass,
-                     reuseData=reuseData, **kwargs)
+                     copyData=True, **kwargs)
 
     def makeCmp(keepList, outerObj, axis):
         if axis == 'point':
@@ -1512,7 +1512,7 @@ def createDataFromFile(
         returnType, retData, retPNames, retFNames, name, path,
         keepPoints, keepFeatures, convertToType=convertToType,
         treatAsMissing=treatAsMissing, replaceMissingWith=replaceMissingWith,
-        extracted=extracted)
+        copyData=False, extracted=extracted)
 
 
 def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,

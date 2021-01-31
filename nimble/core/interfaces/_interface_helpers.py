@@ -169,11 +169,11 @@ def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels,
     different strategies.
     """
     if not isinstance(scoresPerPoint, nimble.core.data.Base):
-        scoresPerPoint = nimble.data('Matrix', scoresPerPoint, reuseData=True,
+        scoresPerPoint = nimble.data('Matrix', scoresPerPoint, copyData=True,
                                      useLog=False)
     if not isinstance(predictedLabels, nimble.core.data.Base):
         predictedLabels = nimble.data('Matrix', predictedLabels,
-                                      reuseData=True, useLog=False)
+                                      copyData=True, useLog=False)
     length = len(scoresPerPoint.points)
     scoreLength = len(scoresPerPoint.features)
 

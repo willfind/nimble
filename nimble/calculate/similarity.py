@@ -232,7 +232,7 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
     pNames = ['predicted_' + str(label) for label in knownLabels]
 
     return createDataNoValidation(asType, confusionMtx, pNames, fNames,
-                                  reuseData=True)
+                                  copyData=True)
 
 ###########
 # Helpers #

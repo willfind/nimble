@@ -38,14 +38,14 @@ class Sparse(Base):
     ----------
     data : object
         A scipy sparse matrix or two-dimensional numpy array.
-    reuseData : bool
+    copyData : bool
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
     _cooMatrixSkipCheck = None
 
-    def __init__(self, data, reuseData=False, **kwds):
+    def __init__(self, data, copyData=False, **kwds):
         if not scipy.nimbleAccessible():
             msg = 'To use class Sparse, scipy must be installed.'
             raise PackageException(msg)
@@ -56,7 +56,7 @@ class Sparse(Base):
             raise InvalidArgumentType(msg)
 
         if scipy.sparse.isspmatrix_coo(data):
-            if reuseData:
+            if copyData:
                 self._data = data
             else:
                 self._data = data.copy()
@@ -345,9 +345,9 @@ class Sparse(Base):
                 data = self._data.copy()
             else:
                 data = sparseMatrixToArray(self._data)
-            # reuseData=True since we already made copies here
+            # copyData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
-                                          reuseData=True)
+                                          copyData=True)
         if to == 'pythonlist':
             return sparseMatrixToArray(self._data).tolist()
         needsReshape = len(self._shape) > 2
@@ -827,7 +827,7 @@ class Sparse(Base):
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
-        kwds['reuseData'] = True
+        kwds['copyData'] = True
 
         allPoints = pointStart == 0 and pointEnd == len(self.points)
         singlePoint = pointEnd - pointStart == 1
@@ -898,7 +898,7 @@ class Sparse(Base):
             kwds['data'] = newInternal
             if singlePoint and len(self._shape) > 2 and dropDimension:
                 kwds['source'] = Sparse(newInternal, shape=kwds['shape'],
-                                        reuseData=True)
+                                        copyData=True)
 
             return SparseVectorView(**kwds)
 

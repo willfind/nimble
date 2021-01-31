@@ -60,7 +60,7 @@ class MatrixAxis(Axis, metaclass=ABCMeta):
 
         return nimble.core.data.Matrix(ret, pointNames=pointNames,
                                        featureNames=featureNames,
-                                       reuseData=True)
+                                       copyData=True)
 
     def _permute_implementation(self, indexPosition):
         # use numpy indexing to change the ordering

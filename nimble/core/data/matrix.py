@@ -35,13 +35,13 @@ class Matrix(Base):
     ----------
     data : object
         Must be a two-dimensional numpy array.
-    reuseData : bool
+    copyData : bool
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
 
-    def __init__(self, data, reuseData=False, **kwds):
+    def __init__(self, data, copyData=False, **kwds):
         if not isValid2DObject(data):
             msg = "the input data can only be a two-dimensional numpy array "
             msg += "or python list."
@@ -51,7 +51,7 @@ class Matrix(Base):
             data = numpy2DArray(data)
         elif isinstance(data, list):
             data = numpyArrayFromList(data)
-        if reuseData:
+        if copyData:
             self._data = data
         else:
             self._data = data.copy()
@@ -173,7 +173,7 @@ class Matrix(Base):
         if to in nimble.core.data.available:
             ptNames = self.points._getNamesNoGeneration()
             ftNames = self.features._getNamesNoGeneration()
-            # reuseData=False since using original data
+            # copyData=False since using original data
             return createDataNoValidation(to, self._data, ptNames, ftNames)
         if to == 'pythonlist':
             return self._data.tolist()
@@ -420,7 +420,7 @@ class Matrix(Base):
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
-        kwds['reuseData'] = True
+        kwds['copyData'] = True
 
         return MatrixView(**kwds)
 
@@ -430,7 +430,7 @@ class Matrix(Base):
         """
         reshape = (self._shape[1], int(numpy.prod(self._shape[2:])))
         data = self._data[pointIndex].reshape(reshape)
-        return Matrix(data, shape=self._shape[1:], reuseData=True)
+        return Matrix(data, shape=self._shape[1:], copyData=True)
 
     def _validate_implementation(self, level):
         shape = numpy.shape(self._data)
