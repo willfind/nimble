@@ -318,18 +318,28 @@ def removeDuplicatesNative(cooObj):
         return cooObj
 
     seen = {}
+    duplicates = False
+    zeroInData = False
     for i, j, v in zip(cooObj.row, cooObj.col, cooObj.data):
+        if not zeroInData and v == 0:
+            zeroInData = True
         if (i, j) not in seen:
-            # all types are allows to be present once
+            # all types are allowed to be present once
             seen[(i, j)] = v
         else:
+            duplicates = True
             try:
                 seen[(i, j)] += float(v)
             except ValueError as e:
                 msg = 'Unable to represent this configuration of data in '
-                msg += 'Sparse object. At least one removeDuplicatesNativeof '
-                msg += 'the duplicate entries is a non-numerical type'
+                msg += 'Sparse object. At least one of the duplicate entries '
+                msg += 'is a non-numerical type'
                 raise ValueError(msg) from e
+
+    if not duplicates and not zeroInData:
+        if not allowedNumpyDType(cooObj.data.dtype):
+            cooObj.data = cooObj.data.astype(numpy.object_)
+        return cooObj
 
     rows = []
     cols = []

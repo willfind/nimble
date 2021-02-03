@@ -22,7 +22,6 @@ from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import FileFormatException
 from nimble.core.data._dataHelpers import DEFAULT_PREFIX
 from nimble.core._createHelpers import _intFloatOrString
-from nimble.core._createHelpers import replaceNumpyValues
 from nimble._utility import sparseMatrixToArray, isDatetime
 
 # from .. import logger
@@ -3082,14 +3081,16 @@ def test_numericalReplaceMissingWithNonNumeric():
         assert toTest == expRet
 
 def test_handmadeTreatAsMissing():
+    nan = numpy.nan
+    data = [[1, 2, ""], [nan, 5, 6], [7, "", 9], [nan, "nan", "None"]]
+    missingList = [nan, "", 5]
+    assert numpy.array(missingList).dtype != numpy.object_
     for t in returnTypes:
-        nan = numpy.nan
-        data = [[1, 2, ""], [nan, 5, 6], [7, "", 9], [nan, "nan", "None"]]
-        missingList = [nan, "", 5]
-        assert numpy.array(missingList).dtype != numpy.object_
         toTest = nimble.data(t, data, treatAsMissing=missingList)
         expData = [[1, 2, nan], [nan, nan, 6], [7, nan, 9], [nan, "nan", "None"]]
         expRet = nimble.data(t, expData, treatAsMissing=None)
+        print(toTest, type(toTest))
+        print(expRet, type(expRet))
         assert toTest == expRet
 
 def test_handmadeConsiderAndReplaceMissingWith():
@@ -3388,6 +3389,91 @@ def test_data_multidimensionalData_listsOfMultiDimensionalObjects():
         nim3D = fromListNim2D
         fromListNim3D = nimble.data(rType2, [nim3D, nim3D])
         assert fromListNim3D._shape == [2, 3, 3, 4]
+
+# Tests when input data matches the backend data type
+
+nimbleRawMap = {'List': list,
+                'Matrix': numpy.array,
+                'Sparse': scipy.sparse.coo_matrix,
+                'DataFrame': pd.DataFrame}
+
+def test_data_copyData_True():
+    data = [[0, 1, 2], [3, 4, 5]]
+    for rType in nimble.core.data.available:
+        raw = nimbleRawMap[rType](data)
+        nim = nimble.data(rType, raw)
+
+        assert id(raw) != id(nim._data)
+
+def test_data_copyData_False():
+    data = [[0, 1, 2], [3, 4, 5]]
+    for rType in nimble.core.data.available:
+        raw = nimbleRawMap[rType](data)
+        nim = nimble.data(rType, raw, copyData=False)
+
+        assert id(raw) == id(nim._data)
+
+def test_data_copyData_False_replaceMissing_containsMissing():
+    data = [[0, 1, 2], [3, 4, 5]]
+    for rType in nimble.core.data.available:
+        raw = nimbleRawMap[rType](data)
+        nim = nimble.data(rType, raw, copyData=False,
+                          treatAsMissing=[1, 4], replaceMissingWith=0)
+
+        assert id(raw) != id(nim._data)
+
+def test_data_copyData_False_replaceMissing_noMissing():
+    data = [[0, 1, 2], [3, 4, 5]]
+    for rType in nimble.core.data.available:
+        raw = nimbleRawMap[rType](data)
+        nim = nimble.data(rType, raw, copyData=False,
+                          treatAsMissing=[8, -1], replaceMissingWith=0)
+
+        assert id(raw) == id(nim._data)
+
+def test_data_copyData_False_copyMadeWhenNamesExtracted():
+    getArray = {'List': lambda x: x, 'Matrix': lambda x: x,
+                'Sparse': lambda x: x.todense()}
+    data = [[1, 0, 2], [3, 4, 5], [-1, -2, -3]]
+    for rType in nimble.core.data.available:
+        if rType != 'DataFrame':
+            # names will be extracted from data, copy was made if original
+            # data object is not modified
+            raw = nimbleRawMap[rType](data)
+            rawCopy = raw.copy()
+            rawArrCopy = getArray[rType](rawCopy)
+
+            nim = nimble.data(rType, raw, pointNames=True, copyData=False)
+            rawArr = getArray[rType](raw)
+            assert not numpy.array_equal(rawArr, getArray[rType](nim._data))
+            assert numpy.array_equal(rawArr, rawArrCopy)
+
+            nim = nimble.data(rType, raw, featureNames=True, copyData=False)
+            rawArr = getArray[rType](raw)
+            assert not numpy.array_equal(rawArr, getArray[rType](nim._data))
+            assert numpy.array_equal(rawArr, rawArrCopy)
+
+            nim = nimble.data(rType, raw, pointNames=True, featureNames=True,
+                              copyData=False)
+            rawArr = getArray[rType](raw)
+            assert not numpy.array_equal(rawArr, getArray[rType](nim._data))
+            assert numpy.array_equal(rawArr, rawArrCopy)
+        else:
+            # DataFrame extracts from columns & index attributes, not data
+            # copy was made if backend data has different id
+            raw = nimbleRawMap[rType]([d[1:] for d in data[1:]])
+            raw.columns = data[0][1:]
+            raw.index = [d[0] for d in data[1:]]
+
+            nim = nimble.data(rType, raw, pointNames=True, copyData=False)
+            assert id(raw) != id(nim._data)
+
+            nim = nimble.data(rType, raw, featureNames=True, copyData=False)
+            assert id(raw) != id(nim._data)
+
+            nim = nimble.data(rType, raw, pointNames=True, featureNames=True,
+                              copyData=False)
+            assert id(raw) != id(nim._data)
 
 # tests for combination of one name set being specified and one set being
 # in data.
