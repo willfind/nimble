@@ -18,12 +18,11 @@ from nimble.core._createHelpers import createConstantHelper
 
 
 def data(returnType, source, pointNames='automatic', featureNames='automatic',
-         convertToType=None, name=None, path=None, keepPoints='all',
-         keepFeatures='all', ignoreNonNumericalFeatures=False,
-         copyData=True, inputSeparator='automatic',
+         name=None, convertToType=None, keepPoints='all', keepFeatures='all',
          treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan',
                          'NULL', 'NA'),
-         replaceMissingWith=numpy.nan, useLog=None):
+         replaceMissingWith=numpy.nan, ignoreNonNumericalFeatures=False,
+         inputSeparator='automatic', copyData=True, useLog=None):
     """
     Function to instantiate one of the Nimble data container types.
 
@@ -81,6 +80,9 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
           and the names for each feature must be unique. As a list, the
           index of the name will define the feature index. As a dict,
           the value mapped to each name will define the feature index.
+    name : str
+        When not None, this value is set as the name attribute of the
+        returned object.
     convertToType : type, dict, list
         A one-time conversion of the data to the type or types
         specified. A single type will convert all the data to that type.
@@ -91,9 +93,6 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
         to the given type, an exception will be raised. Note: This only
         applies during the creation process, Nimble will modify types on
         the backend as necessary.
-    name : str
-        When not None, this value is set as the name attribute of the
-        returned object.
     keepPoints : 'all', list
         Allows the user to select which points will be kept in the
         returned object, those not selected will be discarded. By
@@ -118,28 +117,6 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
         into memory. Additionally, ``ignoreNonNumericalFeatures`` takes
         precedent and, when set to True, will remove features included
         in this selection if they contain non-numeric values.
-    ignoreNonNumericalFeatures : bool
-        **This only applies when ``source`` is a file.**
-        Indicate whether features containing non-numeric data should not
-        be loaded into the final object. If there is point or feature
-        selection occurring, then only those values within selected
-        points and features are considered when determining whether to
-        apply this operation.
-    copyData : bool
-        **This only applies when ``source`` is an in-python data type.**
-        When True (the default) the backend data container is guaranteed
-        to be a different object than ``source`` because a copy is made
-        before processing the data. When False, the initial copy is not
-        performed so it is possible that the ``source`` data object is
-        used as the backend data container for the returned object. In
-        that case, later modifications to either object would affect the
-        other object.
-    inputSeparator : str
-        **This only applies when ``source`` is a delimited file.**
-        The character that is used to separate fields in the input file,
-        if necessary. By default, a value of 'automatic' will attempt to
-        determine the appropriate separator. Otherwise, a single
-        character string of the separator in the file can be passed.
     treatAsMissing : list
         Values that will be treated as missing values in the data. These
         values will be replaced with value from ``replaceMissingWith``
@@ -149,6 +126,28 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     replaceMissingWith
         A single value with which to replace any value in
         ``treatAsMissing``. By default this value is numpy.nan.
+    ignoreNonNumericalFeatures : bool
+        **This only applies when ``source`` is a file.**
+        Indicate whether features containing non-numeric data should not
+        be loaded into the final object. If there is point or feature
+        selection occurring, then only those values within selected
+        points and features are considered when determining whether to
+        apply this operation.
+    inputSeparator : str
+        **This only applies when ``source`` is a delimited file.**
+        The character that is used to separate fields in the input file,
+        if necessary. By default, a value of 'automatic' will attempt to
+        determine the appropriate separator. Otherwise, a single
+        character string of the separator in the file can be passed.
+    copyData : bool
+        **This only applies when ``source`` is an in-python data type.**
+        When True (the default) the backend data container is guaranteed
+        to be a different object than ``source`` because a copy is made
+        before processing the data. When False, the initial copy is not
+        performed so it is possible (NOT guaranteed) that the ``source``
+        data object is used as the backend data container for the
+        returned object. In that case, any modifications to either
+        object would affect the other object.
     useLog : bool, None
         Local control for whether to send object creation to the logger.
         If None (default), use the value as specified in the "logger"
@@ -228,19 +227,20 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     if isAllowedRaw(source, allowLPT=True):
         ret = initDataObject(
             returnType=returnType, rawData=source, pointNames=pointNames,
-            featureNames=featureNames, convertToType=convertToType, name=name,
-            path=path, keepPoints=keepPoints, keepFeatures=keepFeatures,
-            copyData=copyData, treatAsMissing=treatAsMissing,
-            replaceMissingWith=replaceMissingWith)
+            featureNames=featureNames, name=name, convertToType=convertToType,
+            keepPoints=keepPoints, keepFeatures=keepFeatures,
+            treatAsMissing=treatAsMissing,
+            replaceMissingWith=replaceMissingWith, copyData=copyData)
     # input is an open file or a path to a file
     elif isinstance(source, str) or looksFileLike(source):
         ret = createDataFromFile(
             returnType=returnType, data=source, pointNames=pointNames,
-            featureNames=featureNames, name=name, keepPoints=keepPoints,
-            keepFeatures=keepFeatures, convertToType=convertToType,
+            featureNames=featureNames, name=name, convertToType=convertToType,
+            keepPoints=keepPoints, keepFeatures=keepFeatures,
+            treatAsMissing=treatAsMissing,
+            replaceMissingWith=replaceMissingWith,
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
-            inputSeparator=inputSeparator, treatAsMissing=treatAsMissing,
-            replaceMissingWith=replaceMissingWith)
+            inputSeparator=inputSeparator)
     # no other allowed inputs
     else:
         msg = "source must contain either raw data or the path to a file to "
@@ -248,7 +248,7 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
         raise InvalidArgumentType(msg)
 
     handleLogging(useLog, 'load', returnType, len(ret.points),
-                  len(ret.features), name, path)
+                  len(ret.features), ret.name, ret.path)
     return ret
 
 

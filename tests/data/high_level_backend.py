@@ -235,7 +235,7 @@ class HighLevelDataSafe(DataTestObject):
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
         toTest = self.constructor(deepcopy(origData), pointNames=pointNames,
-                                  featureNames=featureNames, name=preserveName, path=preservePair)
+                                  featureNames=featureNames, name=preserveName, paths=preservePair)
 
         def emitLower(point):
             return point[toTest.features.getIndex('deci')]
@@ -600,7 +600,7 @@ class HighLevelDataSafe(DataTestObject):
         pointNames = {'zero': 0, 'one': 1, 'two': 2, 'three': 3}
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
         toTest = self.constructor(origData, pointNames=pointNames,
-                                  featureNames=featureNames, name=preserveName, path=preservePair)
+                                  featureNames=featureNames, name=preserveName, paths=preservePair)
 
         def emitAllEqual(feature):
             first = feature['zero']
@@ -843,7 +843,7 @@ class HighLevelDataSafe(DataTestObject):
 
     def test_calculateOnElements_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data, name=preserveName, path=preservePair)
+        toTest = self.constructor(data, name=preserveName, paths=preservePair)
 
         ret = toTest.calculateOnElements(passThrough)
 
@@ -1147,7 +1147,7 @@ class HighLevelDataSafe(DataTestObject):
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames,
-                                  name=preserveName, path=preservePair)
+                                  name=preserveName, paths=preservePair)
 
         ret = toTest.points.mapReduce(simpleMapper, simpleReducer)
 
@@ -1253,7 +1253,7 @@ class HighLevelDataSafe(DataTestObject):
         featureNames = ["one", "two", "three"]
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=featureNames,
-                                  name=preserveName, path=preservePair)
+                                  name=preserveName, paths=preservePair)
 
         ret = toTest.features.mapReduce(simpleMapper, simpleReducer)
 
@@ -2326,7 +2326,7 @@ class HighLevelDataSafe(DataTestObject):
         preserveRPath = os.path.relpath(preserveAPath)
         preservePair = (preserveAPath, preserveRPath)
 
-        obj = self.constructor(raw, name=preserveName, path=preservePair)
+        obj = self.constructor(raw, name=preserveName, paths=preservePair)
         matchPositive = obj.matchingElements(match.positive)
 
         assert matchPositive.absolutePath == preserveAPath
@@ -2447,7 +2447,7 @@ class HighLevelDataSafe(DataTestObject):
         preserveRPath = os.path.relpath(preserveAPath)
         preservePair = (preserveAPath, preserveRPath)
 
-        obj = self.constructor(raw, name=preserveName, path=preservePair)
+        obj = self.constructor(raw, name=preserveName, paths=preservePair)
         allNeg = obj.points.matching(match.allNegative)
 
         assert allNeg.absolutePath == preserveAPath
@@ -2496,7 +2496,7 @@ class HighLevelDataSafe(DataTestObject):
         preserveRPath = os.path.relpath(preserveAPath)
         preservePair = (preserveAPath, preserveRPath)
 
-        obj = self.constructor(raw, name=preserveName, path=preservePair)
+        obj = self.constructor(raw, name=preserveName, paths=preservePair)
         allZeros = obj.points.matching(match.allZero)
 
         assert allZeros.absolutePath == preserveAPath

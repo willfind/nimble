@@ -1130,12 +1130,12 @@ def convertToTypeDictToList(convertToType, featuresObj, featureNames):
     return convertList
 
 def initDataObject(
-        returnType, rawData, pointNames, featureNames, name=None, path=None,
-        keepPoints='all', keepFeatures='all', convertToType=None,
-        copyData=False, treatAsMissing=(float('nan'), numpy.nan, None, '',
-                                         'None', 'nan', 'NULL', 'NA'),
-        replaceMissingWith=numpy.nan, skipDataProcessing=False,
-        extracted=(None, None)):
+        returnType, rawData, pointNames, featureNames, name=None,
+        convertToType=None, keepPoints='all', keepFeatures='all',
+        treatAsMissing=(float('nan'), numpy.nan, None, '',
+                                 'None', 'nan', 'NULL', 'NA'),
+        replaceMissingWith=numpy.nan, copyData=True,
+        skipDataProcessing=False, paths=(None, None), extracted=(None, None)):
     """
     1. Argument Validation
     2. Setup autoType
@@ -1162,7 +1162,6 @@ def initDataObject(
         msg += "eliminate the ambiguity. None may be used in the list for "
         msg += "features that do not require conversion."
         raise InvalidArgumentTypeCombination(msg)
-
 
     if returnType is None:
         # scipy sparse matrix or a pandas sparse object
@@ -1219,23 +1218,6 @@ def initDataObject(
     rawData = convertData(returnType, rawData, pointNames, featureNames,
                           copied)
 
-    pathsToPass = (None, None)
-    if path is not None:
-        # used in data type unit testing, need a way to specify path values
-        if isinstance(path, tuple):
-            pathsToPass = path
-        else:
-            if path.startswith('http'):
-                pathsToPass = (path, None)
-            elif os.path.isabs(path):
-                absPath = path
-                relPath = os.path.relpath(path)
-                pathsToPass = (absPath, relPath)
-            else:
-                absPath = os.path.abspath(path)
-                relPath = path
-                pathsToPass = (absPath, relPath)
-
     initMethod = getattr(nimble.core.data, returnType)
     # if limiting data based on keepPoints or keepFeatures,
     # delay name setting because names may be a subset
@@ -1248,9 +1230,8 @@ def initDataObject(
     else:
         useFNames = True if featureNames is True else None
 
-    ret = initMethod(rawData, pointNames=usePNames,
-                     featureNames=useFNames, name=name, paths=pathsToPass,
-                     copyData=True, **kwargs)
+    ret = initMethod(rawData, pointNames=usePNames, featureNames=useFNames,
+                     name=name, paths=paths, copyData=True, **kwargs)
 
     def makeCmp(keepList, outerObj, axis):
         if axis == 'point':
@@ -1378,9 +1359,9 @@ def _openFileIO(openFile):
     yield openFile
 
 def createDataFromFile(
-        returnType, data, pointNames, featureNames, name,
-        ignoreNonNumericalFeatures, keepPoints, keepFeatures, convertToType,
-        inputSeparator, treatAsMissing, replaceMissingWith):
+        returnType, data, pointNames, featureNames, name, convertToType,
+        keepPoints, keepFeatures, treatAsMissing, replaceMissingWith,
+        ignoreNonNumericalFeatures, inputSeparator):
     """
     Helper for nimble.data which deals with the case of loading data
     from a file. Returns a triple containing the raw data, pointNames,
@@ -1452,17 +1433,23 @@ def createDataFromFile(
 
     retData, retPNames, retFNames = loaded
 
-    # auto set name if unspecified, and is possible
-    if isinstance(data, str):
-        path = data
-    elif hasattr(data, 'name'):
-        path = data.name
+    if path is None:
+        pathsToPass = (None, None)
     else:
-        path = None
+        if path.startswith('http'):
+            pathsToPass = (path, None)
+        elif os.path.isabs(path):
+            absPath = path
+            relPath = os.path.relpath(path)
+            pathsToPass = (absPath, relPath)
+        else:
+            absPath = os.path.abspath(path)
+            relPath = path
+            pathsToPass = (absPath, relPath)
 
     if path is not None and name is None:
         tokens = path.rsplit(os.path.sep)
-        name = tokens[len(tokens) - 1]
+        name = tokens[-1]
 
     extracted = (pointNames is True, featureNames is True)
     if selectSuccess:
@@ -1476,10 +1463,10 @@ def createDataFromFile(
             retFNames = featureNames
 
     return initDataObject(
-        returnType, retData, retPNames, retFNames, name, path,
-        keepPoints, keepFeatures, convertToType=convertToType,
-        treatAsMissing=treatAsMissing, replaceMissingWith=replaceMissingWith,
-        copyData=False, extracted=extracted)
+        returnType, retData, retPNames, retFNames, name, convertToType,
+        keepPoints, keepFeatures, treatAsMissing=treatAsMissing,
+        replaceMissingWith=replaceMissingWith, copyData=False,
+        paths=pathsToPass, extracted=extracted)
 
 
 def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,

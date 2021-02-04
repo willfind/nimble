@@ -196,12 +196,14 @@ def data(
             randData = binarySparsityMatrix * randData
     _endAlternateControl()
 
+    ret = initDataObject(returnType, rawData=randData, pointNames=pointNames,
+                         featureNames=featureNames, name=name, copyData=False,
+                         skipDataProcessing=True)
+
     handleLogging(useLog, 'load', "Random " + returnType, numPoints,
                   numFeatures, name, sparsity=sparsity, seed=seed)
 
-    return initDataObject(returnType, rawData=randData, pointNames=pointNames,
-                          featureNames=featureNames, name=name,
-                          skipDataProcessing=True)
+    return ret
 
 
 def _generateSubsidiarySeed():

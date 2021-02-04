@@ -19,8 +19,11 @@ wifi_localization.txt : 2000pt x 8ft
 .                                  SESSION 0                                  .
 ...............................................................................
 REGEX: Matrix Loaded                                               \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
-# of points                            2000
-# of features                          8
+# of points    2000
+# of features  8
+name           wifi_localization.txt
+REGEX: path           \S+
+REGEX:                \S+
 ...............................................................................
 45 59 54 51 69 77 85 2
 51 55 50 53 62 78 84 3
@@ -32,8 +35,11 @@ REGEX: Matrix Loaded                                               \d{4}-\d\d-\d
 .                                  SESSION 0                                  .
 ...............................................................................
 REGEX: Matrix Loaded                                               \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
-# of points                            2000
-# of features                          8
+# of points    2000
+# of features  8
+name           wifi_localization.txt
+REGEX: path           \S+
+REGEX:                \S+
 ...............................................................................
 REGEX: Matrix.points.transform                                     \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 Arguments: function=lambda pt: abs(pt)
@@ -71,10 +77,10 @@ REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 
 trainAndTest("nimble.KNNClassifier")
 Data                      # points                  # features
-wifi trainX               1400                      7
-wifi trainY               1400                      1
-wifi testX                600                       7
-wifi testY                600                       1
+wifiData trainX           1400                      7
+wifiData trainY           1400                      1
+wifiData testX            600                       7
+wifiData testY            600                       1
 
 Arguments: k=CV([1, 3])
 Random Seed: 1099030356
@@ -86,18 +92,20 @@ Extra Info: bestParams={'k': 3}
 .                                  SESSION 0                                  .
 ...............................................................................
 REGEX: Matrix Loaded                                               \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
-# of points                            2000
-# of features                          8
-name                                   wifi
+# of points    2000
+# of features  8
+name           wifiData
+REGEX: path           \S+
+REGEX:                \S+
 ...............................................................................
 REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 
 trainAndTest("custom.LeastFeatureMedianDeviation")
 Data                      # points                  # features
-wifi trainX               1400                      7
-wifi trainY               1400                      1
-wifi testX                600                       7
-wifi testY                600                       1
+wifiData trainX           1400                      7
+wifiData trainY           1400                      1
+wifiData testX            600                       7
+wifiData testY            600                       1
 
 Random Seed: 4150886330
 Metrics: fractionCorrect=0.965
@@ -106,10 +114,10 @@ REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 
 trainAndTest("nimble.KNNClassifier")
 Data                      # points                  # features
-wifi trainX               1400                      7
-wifi trainY               1400                      1
-wifi testX                600                       7
-wifi testY                600                       1
+wifiData trainX           1400                      7
+wifiData trainY           1400                      1
+wifiData testX            600                       7
+wifiData testY            600                       1
 
 Arguments: k=CV([1, 3])
 Random Seed: 1099030356
