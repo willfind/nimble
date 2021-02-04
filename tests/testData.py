@@ -3090,8 +3090,6 @@ def test_handmadeTreatAsMissing():
         toTest = nimble.data(t, data, treatAsMissing=missingList)
         expData = [[1, 2, nan], [nan, nan, 6], [7, nan, 9], [nan, "nan", "None"]]
         expRet = nimble.data(t, expData, treatAsMissing=None)
-        print(toTest, type(toTest))
-        print(expRet, type(expRet))
         assert toTest == expRet
 
 def test_handmadeConsiderAndReplaceMissingWith():

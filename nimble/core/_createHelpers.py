@@ -1173,9 +1173,14 @@ def initDataObject(
     if _isBase(rawData):
         # point/featureNames, treatAsMissing, etc. may vary
         rawData = rawData._data
-    if copyData:
+
+    if copyData is None:
+        # signals data was constructed internally and can be modified so it
+        # can be considered copied for the purposes of this function
         copied = True
+    elif copyData:
         rawData = copy.deepcopy(rawData)
+        copied = True
     else:
         copied = False
 
@@ -1231,7 +1236,7 @@ def initDataObject(
         useFNames = True if featureNames is True else None
 
     ret = initMethod(rawData, pointNames=usePNames, featureNames=useFNames,
-                     name=name, paths=paths, copyData=True, **kwargs)
+                     name=name, paths=paths, reuseData=True, **kwargs)
 
     def makeCmp(keepList, outerObj, axis):
         if axis == 'point':
@@ -1465,7 +1470,7 @@ def createDataFromFile(
     return initDataObject(
         returnType, retData, retPNames, retFNames, name, convertToType,
         keepPoints, keepFeatures, treatAsMissing=treatAsMissing,
-        replaceMissingWith=replaceMissingWith, copyData=False,
+        replaceMissingWith=replaceMissingWith, copyData=None,
         paths=pathsToPass, extracted=extracted)
 
 

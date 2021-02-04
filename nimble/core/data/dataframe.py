@@ -33,14 +33,14 @@ class DataFrame(Base):
     ----------
     data : object
         pandas DataFrame or two-dimensional numpy array.
-    copyData : bool
+    reuseData : bool
         Only used when data is a pandas DataFrame.
     kwds
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
 
-    def __init__(self, data, copyData=False, **kwds):
+    def __init__(self, data, reuseData=False, **kwds):
         if not pd.nimbleAccessible():
             msg = 'To use class DataFrame, pandas must be installed.'
             raise PackageException(msg)
@@ -51,7 +51,7 @@ class DataFrame(Base):
             raise InvalidArgumentType(msg)
 
         if isinstance(data, pd.DataFrame):
-            if copyData:
+            if reuseData:
                 self._data = data
             else:
                 self._data = data.copy()
@@ -195,9 +195,9 @@ class DataFrame(Base):
             else:
                 # convert to list because it preserves data types
                 data = pandasDataFrameToList(self._data)
-            # copyData=True since we already made copies here
+            # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
-                                          copyData=True)
+                                          reuseData=True)
 
         needsReshape = len(self._shape) > 2
         if to in ['pythonlist', 'numpyarray']:
@@ -398,7 +398,7 @@ class DataFrame(Base):
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
-        kwds['copyData'] = True
+        kwds['reuseData'] = True
 
         ret = DataFrameView(**kwds)
 
@@ -415,7 +415,7 @@ class DataFrame(Base):
         """
         reshape = (self._shape[1], int(numpy.prod(self._shape[2:])))
         data = self._data.values[pointIndex].reshape(reshape)
-        return DataFrame(data, shape=self._shape[1:], copyData=True)
+        return DataFrame(data, shape=self._shape[1:], reuseData=True)
 
     def _validate_implementation(self, level):
         shape = self._data.shape

@@ -519,7 +519,7 @@ def createDictOfList(data, featureNames, nFeatures):
 
 
 def createDataNoValidation(returnType, data, pointNames=None,
-                           featureNames=None, copyData=False):
+                           featureNames=None, reuseData=False):
     """
     Instantiate a new object without validating the data.
 
@@ -539,10 +539,10 @@ def createDataNoValidation(returnType, data, pointNames=None,
     initMethod = getattr(nimble.core.data, returnType)
     if returnType == 'List':
         return initMethod(data, pointNames=pointNames,
-                          featureNames=featureNames, copyData=copyData,
+                          featureNames=featureNames, reuseData=reuseData,
                           checkAll=False)
     return initMethod(data, pointNames=pointNames, featureNames=featureNames,
-                      copyData=copyData)
+                      reuseData=reuseData)
 
 
 def _limitAndConvertToArray(obj, points, features):

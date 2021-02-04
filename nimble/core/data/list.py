@@ -35,7 +35,7 @@ class List(Base):
     ----------
     data : object
         A list, two-dimensional numpy array, or a ListPassThrough.
-    copyData : bool
+    reuseData : bool
         Only works when input data is a list.
     shape : tuple
         The number of points and features in the object in the format
@@ -47,7 +47,7 @@ class List(Base):
         passed further up into the hierarchy if needed.
     """
 
-    def __init__(self, data, featureNames=None, copyData=False, shape=None,
+    def __init__(self, data, featureNames=None, reuseData=False, shape=None,
                  checkAll=True, **kwds):
         if not (isinstance(data, (list, ListPassThrough)) or is2DArray(data)):
             msg = "the input data can only be a list, a two-dimensional numpy "
@@ -90,7 +90,7 @@ class List(Base):
                 if shape is None:
                     shape = (len(data), numFeatures)
 
-            if not copyData:
+            if not reuseData:
                 #this is to convert a list x=[[1,2,3]]*2 to a
                 # list y=[[1,2,3], [1,2,3]]
                 # the difference is that x[0] is x[1], but y[0] is not y[1]
@@ -268,9 +268,9 @@ class List(Base):
                 data = [pt.copy() for pt in self._data]
             else:
                 data = _convertList(numpy2DArray, self._data)
-            # copyData=True since we already made copies here
+            # reuseData=True since we already made copies here
             return createDataNoValidation(to, data, ptNames, ftNames,
-                                          copyData=True)
+                                          reuseData=True)
 
         needsReshape = len(self._shape) > 2
         if to == 'numpyarray':
@@ -549,7 +549,7 @@ class List(Base):
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
-        kwds['copyData'] = True
+        kwds['reuseData'] = True
 
         return ListView(**kwds)
 
@@ -565,7 +565,7 @@ class List(Base):
             end = start + reshape[1]
             data.append(point[start:end])
 
-        return List(data, shape=self._shape[1:], copyData=True)
+        return List(data, shape=self._shape[1:], reuseData=True)
 
     def _validate_implementation(self, level):
         assert len(self._data) == len(self.points)

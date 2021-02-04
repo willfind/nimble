@@ -223,6 +223,11 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
         hasWrite = hasattr(toCheck, 'write')
         return hasRead and hasWrite
 
+    # None is an acceptable value for copyData in initDataObject but that
+    # is reserved for internal use
+    if copyData not in [True, False]:
+        raise InvalidArgumentValue('copyData must be True or False')
+
     # input is raw data
     if isAllowedRaw(source, allowLPT=True):
         ret = initDataObject(

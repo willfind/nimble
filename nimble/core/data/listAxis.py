@@ -56,7 +56,7 @@ class ListAxis(Axis, metaclass=ABCMeta):
                 return nimble.core.data.List(satisfying, pointNames=pointNames,
                                              featureNames=featureNames,
                                              shape=((0, self._base.shape[1])),
-                                             checkAll=False, copyData=True)
+                                             checkAll=False, reuseData=True)
 
         else:
             if self._base._data == []:
@@ -77,7 +77,7 @@ class ListAxis(Axis, metaclass=ABCMeta):
 
         return nimble.core.data.List(satisfying, pointNames=pointNames,
                                      featureNames=featureNames,
-                                     checkAll=False, copyData=True)
+                                     checkAll=False, reuseData=True)
 
     def _permute_implementation(self, indexPosition):
         # run through target axis and change indices

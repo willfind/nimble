@@ -1053,7 +1053,7 @@ def _formatSessionLine(*args):
         if len(arg) < equalSpace:
             lineLog += arg + " " * whitespace
         else:
-            lineLog += "..." + arg[-equalSpace + 4:]
+            lineLog += arg[:equalSpace - 4] + "... "
     lineLog += "\n"
 
     return lineLog
