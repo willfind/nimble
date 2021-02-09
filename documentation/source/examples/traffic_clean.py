@@ -11,10 +11,13 @@ affect the traffic volume on an interstate highway and the current
 traffic volume. A new point is recorded each time a change occurs in one
 of the weather forecast features.
 
+[Open this example in Google Colab][colab]
+
 [Download this example as a script or notebook][files]
 
 [Download the dataset for this example][datasets]
 
+[colab]: https://colab.research.google.com/drive/1TBeGjU7Jzt2XNzD9X_WFtmos4MvnrOje?usp=sharing
 [files]: files.rst#cleaning-data-example
 [datasets]: ../datasets.rst#cleaning-data-example
 """
