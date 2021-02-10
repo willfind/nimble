@@ -12,10 +12,13 @@ we will use to build our supervised learning models.
 "forecast" data that we will use to simulate making traffic volume
 predictions using our supervised learning model.
 
+[Open this example in Google Colab][colab]
+
 [Download this example as a script or notebook][files]
 
 [Download the dataset for this example][datasets]
 
+[colab]: https://colab.research.google.com/drive/1XAqGkVFdI7UbJiegabkx5PynKZU-za3W?usp=sharing
 [files]: files.rst#supervised-learning-example
 [datasets]: ../datasets.rst#supervised-learning-example
 """

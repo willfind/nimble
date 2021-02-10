@@ -9,10 +9,13 @@ represent pixel values for a flattened 16x16 grayscale image. The final
 image. Our goal is to correctly identify handwritten digits using neural
 networks.
 
+[Open this example in Google Colab][colab]
+
 [Download this example as a script or notebook][files]
 
 [Download the dataset for this example][datasets]
 
+[colab]: https://colab.research.google.com/drive/1o-1M9MWiqPdgXeAZ0RUDBN-ilx4J_rh1?usp=sharing
 [files]: files.rst#neural-network-example
 [datasets]: ../datasets.rst#neural-network-example
 """

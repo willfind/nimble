@@ -8,10 +8,13 @@ behaviors for visitors to an online shopping website. Our goal is to
 gather information about the visitors to this site using a variety of
 the functionality Nimble has available for digging deeper into a dataset.
 
+[Open this example in Google Colab][colab]
+
 [Download this example as a script or notebook][files]
 
 [Download the dataset for this example][datasets]
 
+[colab]: https://colab.research.google.com/drive/1QwTiHODLKlZp94pOGJCcnvNKA903uov1?usp=sharing
 [files]: files.rst#exploring-data-example
 [datasets]: ../datasets.rst#exploring-data-example
 """
