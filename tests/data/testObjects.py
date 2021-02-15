@@ -38,6 +38,8 @@ from .high_dimension_backend import HighDimensionAll
 from .high_dimension_backend import HighDimensionSafe
 
 from .data_specific_backend import SparseSpecific
+from .data_specific_backend import DataFrameSpecificAll
+from .data_specific_backend import DataFrameSpecificDataSafe
 
 class BaseViewChildTests(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
                    StructureDataSafe, ViewAccess, StretchDataSafe,
@@ -65,7 +67,7 @@ class TestSparseView(BaseViewChildTests):
         super(TestSparseView, self).__init__('SparseView')
 
 
-class TestDataFrameView(BaseViewChildTests):
+class TestDataFrameView(BaseViewChildTests, DataFrameSpecificDataSafe):
     def __init__(self):
         super(TestDataFrameView, self).__init__('DataFrameView')
 
@@ -85,7 +87,7 @@ class TestSparse(BaseChildTests, SparseSpecific):
         super(TestSparse, self).__init__('Sparse')
 
 
-class TestDataFrame(BaseChildTests):
+class TestDataFrame(BaseChildTests, DataFrameSpecificAll):
     def __init__(self):
         super(TestDataFrame, self).__init__('DataFrame')
 

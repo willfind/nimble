@@ -709,8 +709,8 @@ def makeAllData(constructor, rhsCons, numPts, numFts, sparsity):
     randomrf = nimble.random.data('Matrix', numPts, numFts, sparsity, useLog=False)
     lhsf = randomlf.copy(to="numpyarray")
     rhsf = randomrf.copy(to="numpyarray")
-    lhsi = numpy.array(numpyRandom.random_integers(1, 10, (numPts, numFts)), dtype=float)
-    rhsi = numpy.array(numpyRandom.random_integers(1, 10, (numPts, numFts)), dtype=float)
+    lhsi = numpy.array(numpyRandom.random_integers(1, 10, (numPts, numFts)))
+    rhsi = numpy.array(numpyRandom.random_integers(1, 10, (numPts, numFts)))
 
     lhsfObj = constructor(lhsf)
     lhsiObj = constructor(lhsi)
@@ -746,6 +746,8 @@ def back_autoVsNumpyObjCallee(constructor, opName, nimbleinplace, sparsity):
             npOp = opName
 
         resultf = getattr(lhsf, npOp)(rhsf)
+        if 'itruediv' in opName: # can't do inplace truediv with int dtype
+            lhsi = lhsi.astype(float)
         resulti = getattr(lhsi, npOp)(rhsi)
         resfObj = getattr(lhsfObj, opName)(rhsfObj)
         resiObj = getattr(lhsiObj, opName)(rhsiObj)
@@ -759,6 +761,11 @@ def back_autoVsNumpyObjCallee(constructor, opName, nimbleinplace, sparsity):
         else:
             assert expfObj.isApproximatelyEqual(resfObj)
             assert expiObj.isIdentical(resiObj)
+            # data type in object should not change unless required or inplace
+            if not ('truediv' in opName or 'pow' in opName):
+                assert isinstance(lhsiObj[0, 0], (int, numpy.integer))
+                assert isinstance(rhsiObj[0, 0], (int, numpy.integer))
+
         assertNoNamesGenerated(lhsfObj)
         assertNoNamesGenerated(lhsiObj)
         assertNoNamesGenerated(rhsfObj)
@@ -780,6 +787,8 @@ def back_autoVsNumpyScalar(constructor, opName, nimbleinplace, sparsity):
         (lhsf, rhsf, lhsi, rhsi, lhsfObj, rhsfObj, lhsiObj, rhsiObj) = datas
 
         resultf = getattr(lhsf, opName)(scalar)
+        if 'itruediv' in opName: # can't do inplace truediv with int dtype
+            lhsi = lhsi.astype(float)
         resulti = getattr(lhsi, opName)(scalar)
         resfObj = getattr(lhsfObj, opName)(scalar)
         resiObj = getattr(lhsiObj, opName)(scalar)
@@ -793,6 +802,10 @@ def back_autoVsNumpyScalar(constructor, opName, nimbleinplace, sparsity):
         else:
             assert expfObj.isApproximatelyEqual(resfObj)
             assert expiObj.isIdentical(resiObj)
+            # data type in object should not change unless required or inplace
+            if not ('truediv' in opName or 'pow' in opName):
+                assert isinstance(lhsiObj[0, 0], (int, numpy.integer))
+
         assertNoNamesGenerated(lhsfObj)
         assertNoNamesGenerated(lhsiObj)
         assertNoNamesGenerated(resfObj)
@@ -823,6 +836,8 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, opName, nimbleinplace, spars
         else:
             npOp = opName
         resultf = getattr(lhsf, npOp)(rhsf)
+        if 'itruediv' in opName: # can't do inplace truediv with int dtype
+            lhsi = lhsi.astype(float)
         resulti = getattr(lhsi, npOp)(rhsi)
         resfObj = getattr(lhsfObj, opName)(rhsfObj)
         resiObj = getattr(lhsiObj, opName)(rhsiObj)
@@ -841,6 +856,11 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, opName, nimbleinplace, spars
                 assert isinstance(resfObj, nimble.core.data.Base)
             if type(resiObj) != type(lhsiObj):
                 assert isinstance(resiObj, nimble.core.data.Base)
+
+            # data type in object should not change unless required or inplace
+            if not ('truediv' in opName or 'pow' in opName):
+                assert isinstance(lhsiObj[0, 0], (int, numpy.integer))
+                assert isinstance(rhsiObj[0, 0], (int, numpy.integer))
 
         assertNoNamesGenerated(lhsfObj)
         assertNoNamesGenerated(lhsiObj)
