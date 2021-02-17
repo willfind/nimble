@@ -91,7 +91,7 @@ def backend_match_anyAll(anyOrAll, func, data):
             else:
                 assert func(feature)
         # test by point
-        toTest = nimble.data(t, data.T, useLog=False)
+        toTest.transpose(useLog=False)
         for i, point in enumerate(toTest.points):
             # index 0 never contains any matching values
             if i == 0:

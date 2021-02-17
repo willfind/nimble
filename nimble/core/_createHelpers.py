@@ -139,9 +139,8 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
     if featureNames is False:
         return (failPN, failFN)
 
-    def typeEqual(double):
-        x, y = double
-        return not isinstance(x, type(y))
+    def isNum(value):
+        return isinstance(value, (bool, int, float, numpy.number))
 
     def noDuplicates(row):
         return len(row) == len(set(row))
@@ -151,14 +150,14 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
         allText = (all(map(lambda x: isinstance(x, str),
                            firstValues[1:]))
                    and noDuplicates(firstValues[1:]))
-        allDiff = all(map(typeEqual, zip(firstValues[1:], secondValues[1:])))
+        anyNum = any(map(isNum, secondValues[1:]))
     else:
         allText = (all(map(lambda x: isinstance(x, str),
                            firstValues))
                    and noDuplicates(firstValues[1:]))
-        allDiff = all(map(typeEqual, zip(firstValues, secondValues)))
+        anyNum = any(map(isNum, secondValues))
 
-    if featureNames == 'automatic' and allText and allDiff:
+    if featureNames == 'automatic' and allText and anyNum:
         featureNames = True
     # At this point, there is no chance to resolve 'automatic' to True
     if featureNames == 'automatic':

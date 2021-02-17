@@ -978,19 +978,28 @@ def test_automaticByType_fnames_rawAndCSV():
     availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix', 'scipycoo']
     for (rawT, retT) in itertools.product(availableRaw, returnTypes):
         # example which triggers automatic removal
-        correctRaw = "fname0,fname1,fname2\n1,2,3\n"
-        correct = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames='automatic')
-        assert correct.features.getNames() == ['fname0','fname1','fname2']
+        simpleRaw = "fname0,fname1,fname2\n1,2,3\n"
+        simple = helper_auto(simpleRaw, rawT, retT, pointNames='automatic',
+                              featureNames='automatic')
+        assert simple.features.getNames() == ['fname0','fname1','fname2']
 
-        # example where first line contains a non-string interpretable value
-        nonStringFail1Raw = "fname0,1.0,fname2\n1,2,3"
-        fail1 = helper_auto(nonStringFail1Raw, rawT, retT, pointNames='automatic', featureNames='automatic')
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), fail1.features.getNames()))
+        # first line contains all strings, second line contains only one number
+        oneNumRaw = "fname0,fname1,fname2\ndata1,2,data3"
+        oneNum = helper_auto(oneNumRaw, rawT, retT,
+                             pointNames='automatic', featureNames='automatic')
+        assert oneNum.features.getNames() == ['fname0','fname1','fname2']
 
-        # example where the first line contains all strings, but second line also contains strings
-        sameTypeFail2Raw = "fname0,fname1,fname2\n1,data2,3"
-        fail2 = helper_auto(sameTypeFail2Raw, rawT, retT, pointNames='automatic', featureNames='automatic')
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), fail2.features.getNames()))
+        # first line contains a non-string interpretable value
+        nonStringHeadRaw = "fname0,1.0,fname2\n1,2,3"
+        fail1 = helper_auto(nonStringHeadRaw, rawT, retT,
+                           pointNames='automatic', featureNames='automatic')
+        assert fail1.features._getNamesNoGeneration() is None
+
+        # first line contains a non-string interpretable value
+        allStringRaw = "fname0,1.0,fname2\nf1,f2,f3"
+        fail2 = helper_auto(allStringRaw, rawT, retT,
+                            pointNames='automatic', featureNames='automatic')
+        assert fail2.features._getNamesNoGeneration() is None
 
 
 def test_userOverrideOfAutomaticByType_fnames_rawAndCSV():
