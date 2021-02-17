@@ -3,6 +3,7 @@ import numpy
 import os
 import sys
 import copy
+import functools
 import itertools
 import datetime
 import io
@@ -1909,6 +1910,7 @@ mockReqBasePath = os.path.join(nimble.settings.get('fetch', 'location'),
                                'nimbleData', 'mockrequests.nimble')
 
 def clearNimbleData(func):
+    @functools.wraps(func)
     def wrapped(*args, **kwargs):
         if os.path.exists(mockReqBasePath):
             shutil.rmtree(mockReqBasePath)
@@ -2043,9 +2045,6 @@ def test_data_fetch_getFromLocal_csv():
     # if requests is not used, it was retrieved locally
     path = nimble.fetchFile('http://mockrequests.nimble/CSV.csv')
     paths = nimble.fetchFiles('http://mockrequests.nimble/CSV.csv')
-
-class mockZipFile(zipfile.ZipFile):
-    pass
 
 @mockIsDownloadable
 @mock.patch('nimble.core._createHelpers.requests.get', calledException)
