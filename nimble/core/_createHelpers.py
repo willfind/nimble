@@ -2353,15 +2353,15 @@ def _findData(url, filename, update, allowMultiple):
 
     Return a list of data file paths.
     """
-    if not update and os.path.exists(filename):
-        isGZip = _isGZip(filename)
-        if isGZip and os.path.exists(filename[:-3]):
-            return [filename[:-3]]
-        if not isGZip and not _isArchive(filename):
-            return [filename]
-
-    if os.path.exists(filename) and _isArchive(filename):
-        return _processArchiveFile(filename, update, allowMultiple)
+    if os.path.exists(filename):
+        if _isArchive(filename):
+            return _processArchiveFile(filename, update, allowMultiple)
+        if not update:
+            isGZip = _isGZip(filename)
+            if isGZip and os.path.exists(filename[:-3]):
+                return [filename[:-3]]
+            if not isGZip:
+                return [filename]
 
     directory = os.path.split(filename)[0]
     if not os.path.exists(directory):
