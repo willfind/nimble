@@ -2287,52 +2287,46 @@ def _processArchiveFile(filename, update, allowMultiple):
     multiple files and allowMultiple is False, the archive file will be
     returned and no extraction will occur.
     """
-    try:
-        if zipfile.is_zipfile(filename):
-            archiveObj = zipfile.ZipFile
-            nameGetter = 'namelist'
-        else:
-            archiveObj = tarfile.TarFile
-            nameGetter = 'getnames'
-        with archiveObj(filename, 'r') as fileObj:
-            names = getattr(fileObj, nameGetter)()
-            if any(os.path.isabs(name) or '..' in name for name in names):
-                # potential security risk will not perform extraction
-                return [filename]
+    if zipfile.is_zipfile(filename):
+        archiveObj = zipfile.ZipFile
+        nameGetter = 'namelist'
+    else:
+        archiveObj = tarfile.TarFile
+        nameGetter = 'getnames'
+    with archiveObj(filename, 'r') as fileObj:
+        names = getattr(fileObj, nameGetter)()
+        if any(os.path.isabs(name) or '..' in name for name in names):
+            # potential security risk will not perform extraction
+            return [filename]
 
-            if not allowMultiple and len(names) > 1:
-                return [filename]
+        if not allowMultiple and len(names) > 1:
+            return [filename]
 
-            location = os.path.dirname(filename)
-            paths = [os.path.join(location, name) for name in names]
-            # only need to extract if update or any expected files don't exist
-            if update or not all(os.path.exists(path) for path in paths):
-                fileObj.extractall(location)
+        location = os.path.dirname(filename)
+        paths = [os.path.join(location, name) for name in names]
+        # only need to extract if update or any expected files don't exist
+        if update or not all(os.path.exists(path) for path in paths):
+            fileObj.extractall(location)
 
-            files = []
-            for path in paths:
-                if os.path.isfile(path):
-                    files.append(path)
+        files = []
+        for path in paths:
+            if os.path.isfile(path):
+                files.append(path)
 
-            return files
-    except Exception: # pylint: disable=broad-except
-        return [filename] # return the archive file on failure
+        return files
 
 def _processCompressedFile(filename):
     """
-    Attempt to decompress a gzip file.
+    Decompress a gzip file.
     """
-    try:
-        with gzip.open(filename, 'rb') as fIn:
-            if filename.endswith('.gz'):
-                unzipped = filename[:-3]
-            else:
-                unzipped = filename
-            with open(unzipped, 'wb') as fOut:
-                shutil.copyfileobj(fIn, fOut)
-            return [unzipped]
-    except Exception: # pylint: disable=broad-except
-        return [filename] # return the compressed file on failure
+    with gzip.open(filename, 'rb') as fIn:
+        if filename.endswith('.gz'):
+            unzipped = filename[:-3]
+        else:
+            unzipped = filename
+        with open(unzipped, 'wb') as fOut:
+            shutil.copyfileobj(fIn, fOut)
+        return [unzipped]
 
 def _isArchive(filename):
     return zipfile.is_zipfile(filename) or tarfile.is_tarfile(filename)
@@ -2371,11 +2365,13 @@ def _findData(url, filename, update, allowMultiple):
     with open(filename, 'w+b') as f:
         f.write(response.content)
 
-    if _isArchive(filename):
-        return _processArchiveFile(filename, update, allowMultiple)
-
-    if _isGZip(filename):
-        return _processCompressedFile(filename)
+    try:
+        if _isArchive(filename):
+            return _processArchiveFile(filename, update, allowMultiple)
+        if _isGZip(filename):
+            return _processCompressedFile(filename)
+    except Exception: # pylint: disable=broad-except
+        pass # return the archive file on failure
 
     return [filename]
 
