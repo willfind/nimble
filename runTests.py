@@ -169,24 +169,26 @@ class FileRemover(Plugin):
                 os.remove(fullPath)
 
 
-class LoggerControl(object):
+class ConfigControl(object):
     """
     Set logging configuration state while testing.
 
     Restores the original state upon completion.
     """
     def __init__(self):
-        self._backupLoc = nimble.settings.get('logger', 'location')
-        self._backupName = nimble.settings.get('logger', 'name')
-        self._backupEnabled = nimble.settings.get('logger', 'enabledByDefault')
+        self._backupFetchLoc = nimble.settings.get('fetch', 'location')
+        self._backupLogLoc = nimble.settings.get('logger', 'location')
+        self._backupLogName = nimble.settings.get('logger', 'name')
+        self._backupLogEnabled = nimble.settings.get('logger', 'enabledByDefault')
         self._crossValBackupEnabled = nimble.settings.get(
             'logger', 'enableCrossValidationDeepLogging')
-        self.logDir = tempfile.TemporaryDirectory()
+        self.tempdir = tempfile.TemporaryDirectory()
 
     def __enter__(self):
         # change name of log file (settings hook will init new log
         # files after .set())
-        nimble.settings.set('logger', 'location', self.logDir.name)
+        nimble.settings.set('fetch', 'location', self.tempdir.name)
+        nimble.settings.set('logger', 'location', self.tempdir.name)
         nimble.settings.set("logger", 'name', "tmpLogs")
         nimble.settings.set("logger", "enabledByDefault", "False")
         nimble.settings.set("logger", "enableCrossValidationDeepLogging",
@@ -194,13 +196,14 @@ class LoggerControl(object):
         nimble.settings.saveChanges("logger")
 
     def __exit__(self, type, value, traceback):
-        nimble.settings.set("logger", 'location', self._backupLoc)
-        nimble.settings.set("logger", 'name', self._backupName)
-        nimble.settings.set("logger", "enabledByDefault", self._backupEnabled)
+        nimble.settings.set("fetch", 'location', self._backupFetchLoc)
+        nimble.settings.set("logger", 'location', self._backupLogLoc)
+        nimble.settings.set("logger", 'name', self._backupLogName)
+        nimble.settings.set("logger", "enabledByDefault", self._backupLogEnabled)
         nimble.settings.set("logger", "enableCrossValidationDeepLogging",
                             self._crossValBackupEnabled)
         nimble.settings.saveChanges("logger")
-        self.logDir.cleanup()
+        self.tempdir.cleanup()
 
 if __name__ == '__main__':
     # any args passed to this script will be passed down into nose
@@ -214,7 +217,7 @@ if __name__ == '__main__':
     args.extend(workingDirDef)
 
     plugins = [ExtensionPlugin(), CaptureError(), FileRemover()]
-    with LoggerControl():
+    with ConfigControl():
         # suppress all warnings -- nosetests only captures std out, not stderr,
         # and there are some tests that call learners in unfortunate ways,
         # causing ALOT of annoying warnings.

@@ -15,6 +15,7 @@ from nimble.core._createHelpers import isAllowedRaw
 from nimble.core._createHelpers import initDataObject
 from nimble.core._createHelpers import createDataFromFile
 from nimble.core._createHelpers import createConstantHelper
+from nimble.core._createHelpers import fileFetcher
 
 
 def data(returnType, source, pointNames='automatic', featureNames='automatic',
@@ -564,3 +565,122 @@ def loadTrainedLearner(inputPath, useLog=None):
     handleLogging(useLog, 'load', "TrainedLearner",
                   learnerName=ret.learnerName, learnerArgs=ret.arguments)
     return ret
+
+def fetchFile(source, update=False):
+    """
+    Get a data file from the web or local storage.
+
+    Download a data file from the web and store at a specified location.
+    The file is stored in a directory named 'nimbleData' that is placed,
+    by default, in the home directory (pathlib.Path.home()). The
+    location can be changed in configuration.ini. Any subsequent calls
+    for the same source will identify that the data is locally
+    available. For zip and tar files, extraction will be attempted. If
+    successful, the path to the extracted file will be returned,
+    otherwise the path to the archive file is returned.
+
+    The paths within the nimbleData directory mirror each url structure.
+    So the exact url to the data source can be determine from the file's
+    location, except when the file was extracted from an archive.
+
+    Special support for the UCI repository is included. The ``source``
+    can be ``'uci:<Name of Dataset>'`` or the url to the main page for a
+    specific dataset. This function requires that the UCI repository
+    contain only a single file. An exception is made if all other files
+    in the repository are named 'Index' or end in '.names'. By
+    convention, these files are expected to contain information about
+    the dataset not data suited for Nimble data objects. All files
+    are downloaded and stored but only the path to the data file is
+    returned.
+
+    Parameters
+    ----------
+    source : str
+        Downloadable url or valid string to UCI database (see above).
+    update : bool
+        If True, will update the file stored locally with the data
+        currently available from the source.
+
+    Returns
+    -------
+    str
+        The path to the available file.
+
+    Examples
+    --------
+    A downloadable url.
+
+    >>> url = 'https://openml.org/data/get_csv/16826755/phpMYEkMl'
+    >>> titanic = nimble.fetchFile(url) # doctest: +SKIP
+
+    Replacing the path to the root storage location with an ellipsis and
+    using a Unix operating system, the ``titanic`` return looks like:
+    '.../nimbleData/openml-org/data/get_csv/16826755/phpMYEkMl'
+    Note how the directory structure mirrors the url.
+
+    For the UCI database, two additional options are available. A string
+    starting with 'uci:' followed by the name of a UCI dataset or the
+    url to the main page of the dataset.
+
+    >>> wine = nimble.fetchFile('uci:wine') # doctest: +SKIP
+    >>> url = 'https://archive.ics.uci.edu/ml/datasets/Abalone'
+    >>> abalone = nimble.fetchFile(url) # doctest: +SKIP
+    """
+    return fileFetcher(source, update, allowMultiple=False)[0]
+
+def fetchFiles(source, update=False): # pylint: disable=line-too-long
+    """
+    Get data files from the web or local storage.
+
+    Download data from the web and store at a specified location. Files
+    are stored in a directory named 'nimbleData' that is placed, by
+    default, in the home directory (pathlib.Path.home()). The location
+    can be changed in configuration.ini. Any subsequent calls for the
+    same source will identify that the data is locally available.
+
+    For zip and tar files, extraction will be attempted. If successful,
+    paths to the extracted files will be returned, otherwise the path to
+    the archive file is returned.
+
+    The paths within the nimbleData directory mirror each url structure.
+    So the exact url to the data source can be determine from the file's
+    location, except when the file was extracted from an archive.
+
+    Special support for the UCI repository is included. The ``source``
+    can be 'uci:<Name of Dataset>' or the url to the main page for a
+    specific dataset.
+
+    Parameters
+    ----------
+    source : str
+        Downloadable url or valid string to UCI database (see above).
+    update : bool
+        If True, will update any files stored locally with the data
+        currently available from the source.
+
+    Returns
+    -------
+    list
+        The paths to the available files.
+
+    Examples
+    --------
+    A single dataset from a downloadable url.
+
+    >>> url = 'https://openml.org/data/get_csv/16826755/phpMYEkMl'
+    >>> titanic = nimble.fetchFiles(url) # doctest: +SKIP
+
+    Replacing the path to the root storage location with an ellipsis and
+    using a Unix operating system, the ``titanic`` return is
+    ['.../nimbleData/openml.org/data/get_csv/16826755/phpMYEkMl'].
+    Note how the directory structure mirrors the url.
+
+    For the UCI database, two additional options are available. A string
+    starting with 'uci:' followed by the name of a UCI dataset or the
+    url to the main page of the dataset.
+
+    >>> iris = nimble.fetchFiles('uci:Iris') # doctest: +SKIP
+    >>> url = 'https://archive.ics.uci.edu/ml/datasets/Wine+Quality'
+    >>> wineQuality = fetchFiles(url) # doctest: +SKIP
+    """
+    return fileFetcher(source, update)
