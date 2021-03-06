@@ -2257,9 +2257,10 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
     if (lastFtRemovable and
             (not retFNames or len(retFNames) == firstRowLength - 1
              or (featureNames is True and retFNames[-1] == ''))):
-        retData = [row[:-1] for row in retData]
+        for row in retData:
+            row.pop()
         if featureNames is True:
-            retFNames = retFNames[:-1]
+            retFNames.pop()
 
     if pointNames is True:
         retPNames = extractedPointNames
