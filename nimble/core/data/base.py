@@ -4677,26 +4677,33 @@ class Base(ABC):
         if 'pow' in opName:
             conversionKwargs['allowInt'] = False
             conversionKwargs['allowBool'] = False
+
+        if opName.startswith('__i'):
+            obj = self
+        else:
+            obj = self.copy()
+
         try:
-            self._convertToNumericTypes(**conversionKwargs)
+            obj._convertToNumericTypes(**conversionKwargs)
         except ImproperObjectAction:
-            self._numericValidation()
+            obj._numericValidation()
         if isinstance(other, Stretch):
             # __ipow__ does not work if return NotImplemented
             if opName == '__ipow__':
                 return pow(self, other)
             return NotImplemented
 
-        self._genericBinary_validation(opName, other)
+        obj._genericBinary_validation(opName, other)
 
         # figure out return obj's point / feature names
         otherBase = isinstance(other, Base)
         if otherBase:
-            retPNames, retFNames = self._genericBinary_axisNames(
+            other = other.copy()
+            retPNames, retFNames = obj._genericBinary_axisNames(
                 opName, other, conversionKwargs)
         else:
-            retPNames = self.points._getNamesNoGeneration()
-            retFNames = self.features._getNamesNoGeneration()
+            retPNames = obj.points._getNamesNoGeneration()
+            retFNames = obj.features._getNamesNoGeneration()
 
         try:
             useOp = opName
@@ -4705,9 +4712,9 @@ class Base(ABC):
                 # use not inplace operation, setting to inplace occurs after
                 useOp = opName[:2] + opName[3:]
             with numpy.errstate(divide='raise', invalid='raise'):
-                ret = self._binaryOperations_implementation(useOp, other)
+                ret = obj._binaryOperations_implementation(useOp, other)
         except (TypeError, ValueError, FloatingPointError) as error:
-            self._diagnoseFailureAndRaiseException(opName, other, error)
+            obj._diagnoseFailureAndRaiseException(opName, other, error)
             raise # backup; should be diagnosed and raised above
 
         ret._shape = self._shape
@@ -4721,8 +4728,8 @@ class Base(ABC):
 
         nameSource = 'self' if opName.startswith('__i') else None
         pathSource = 'merge' if otherBase else 'self'
-        _dataHelpers.binaryOpNamePathMerge(
-            self, other, ret, nameSource, pathSource)
+        _dataHelpers.binaryOpNamePathMerge(obj, other, ret, nameSource,
+                                           pathSource)
         return ret
 
 

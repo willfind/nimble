@@ -49,14 +49,17 @@ class DataFrameAxis(Axis, metaclass=ABCMeta):
         separately by each frontend function.
         """
         dataframe = self._base._data
+        array = self._base._asNumpyArray()
 
         pointNames, featureNames = self._getStructuralNames(targetList)
         if self._isPoint:
-            ret = dataframe.values[targetList, :]
+            ret = array[targetList, :]
             axis = 0
+            dtypes = tuple(dataframe.dtypes)
         else:
-            ret = dataframe.values[:, targetList]
+            ret = array[:, targetList]
             axis = 1
+            dtypes = tuple(dataframe.dtypes[i] for i in targetList)
 
         if structure.lower() != "copy":
             dataframe.drop(targetList, axis=axis, inplace=True)
@@ -66,9 +69,12 @@ class DataFrameAxis(Axis, metaclass=ABCMeta):
         else:
             dataframe.columns = pd.RangeIndex(len(dataframe.columns))
 
-        return nimble.core.data.DataFrame(
+        ret = nimble.core.data.DataFrame(
             pd.DataFrame(ret), pointNames=pointNames,
             featureNames=featureNames, reuseData=True)
+        ret._setDtypes(dtypes)
+
+        return ret
 
     def _permute_implementation(self, indexPosition):
         # use numpy indexing to change the ordering
@@ -88,7 +94,7 @@ class DataFrameAxis(Axis, metaclass=ABCMeta):
         uniqueData, uniqueIndices = denseAxisUniqueArray(self._base,
                                                          self._axis)
         uniqueData = pd.DataFrame(uniqueData)
-        if numpy.array_equal(self._base._data.values, uniqueData):
+        if numpy.array_equal(self._base._asNumpyArray(), uniqueData):
             return self._base.copy()
         axisNames, offAxisNames = uniqueNameGetter(self._base, self._axis,
                                                    uniqueIndices)
@@ -101,20 +107,26 @@ class DataFrameAxis(Axis, metaclass=ABCMeta):
                            pointNames=offAxisNames, useLog=False)
 
     def _repeat_implementation(self, totalCopies, copyVectorByVector):
+        repeated = {}
         if self._isPoint:
-            axis = 0
-            ptDim = totalCopies
-            ftDim = 1
+            for i, series in self._base._data.iteritems():
+                if copyVectorByVector:
+                    repeated[i] = numpy.repeat(series, totalCopies)
+                else:
+                    repeated[i] = numpy.tile(series, totalCopies)
+            ret = pd.DataFrame(repeated).reset_index(drop=True)
         else:
-            axis = 1
-            ptDim = 1
-            ftDim = totalCopies
-        if copyVectorByVector:
-            repeated = numpy.repeat(self._base._data.values, totalCopies,
-                                    axis)
-        else:
-            repeated = numpy.tile(self._base._data.values, (ptDim, ftDim))
-        return pd.DataFrame(repeated)
+            for i, series in self._base._data.iteritems():
+                if copyVectorByVector:
+                    for idx in range(totalCopies):
+                        repeated[i * totalCopies + idx] = series
+                else:
+                    numFts = len(self._base.features)
+                    for idx in range(totalCopies):
+                        repeated[i + numFts * idx] = series
+            ret = pd.DataFrame(repeated).sort_index(axis=1)
+
+        return ret
 
     ####################
     # Abstract Methods #
@@ -174,23 +186,42 @@ class DataFramePoints(DataFrameAxis, Points):
     def _splitByCollapsingFeatures_implementation(
             self, featuresToCollapse, collapseIndices, retainIndices,
             currNumPoints, currFtNames, numRetPoints, numRetFeatures):
-        collapseData = self._base._data.values[:, collapseIndices]
-        retainData = self._base._data.values[:, retainIndices]
+        collapseData = self._base._asNumpyArray()[:, collapseIndices]
+        retainData = self._base._asNumpyArray()[:, retainIndices]
+
+        collapseDtypes = (numpy.dtype(object), max(self._base._data.dtypes))
+        dtypes = []
+        for i in range(len(self._base.features)):
+            if i in retainIndices:
+                dtypes.append(self._base._data.dtypes.iloc[i])
+            elif i == collapseIndices[0]:
+                dtypes.extend(collapseDtypes)
 
         tmpData = fillArrayWithCollapsedFeatures(
-            featuresToCollapse, retainData, numpy.array(collapseData),
-            currNumPoints, currFtNames, numRetPoints, numRetFeatures)
+            featuresToCollapse, retainData, collapseData, currNumPoints,
+            currFtNames, numRetPoints, numRetFeatures)
 
         self._base._data = pd.DataFrame(tmpData)
+        self._base._setDtypes(dtypes)
 
-    def _combineByExpandingFeatures_implementation(self, uniqueDict, namesIdx,
-                                                   uniqueNames, numRetFeatures,
-                                                   numExpanded):
+    def _combineByExpandingFeatures_implementation(
+        self, uniqueDict, namesIdx, valuesIdx, uniqueNames, numRetFeatures):
+        uncombined = [dtype for i, dtype in self._base._data.dtypes.iteritems()
+                      if i not in valuesIdx + [namesIdx]]
+        combined = list(self._base._data.dtypes.iloc[valuesIdx])
+        dtypes = (uncombined[:namesIdx]
+                  + combined * len(uniqueNames)
+                  + uncombined[namesIdx:])
+
         tmpData = fillArrayWithExpandedFeatures(uniqueDict, namesIdx,
                                                 uniqueNames, numRetFeatures,
-                                                numExpanded)
+                                                len(valuesIdx))
 
         self._base._data = pd.DataFrame(tmpData)
+        if tuple(self._base._data.dtypes) != tuple(dtypes):
+            for (i, col), dtype in zip(self._base._data.iteritems(), dtypes):
+                if col.dtype !=  dtype:
+                    self._base._data[i] = col.astype(dtype)
 
 
 class DataFramePointsView(PointsView, AxisView, DataFramePoints):
@@ -244,19 +275,19 @@ class DataFrameFeatures(DataFrameAxis, Features):
 
     def _splitByParsing_implementation(self, featureIndex, splitList,
                                        numRetFeatures, numResultingFts):
-        tmpData = numpy.empty(shape=(len(self._base.points), numRetFeatures),
-                              dtype=numpy.object_)
-
-        tmpData[:, :featureIndex] = self._base._data.values[:, :featureIndex]
+        before = self._base._data.iloc[:, :featureIndex]
+        new = []
         for i in range(numResultingFts):
             newFeat = []
             for lst in splitList:
                 newFeat.append(lst[i])
-            tmpData[:, featureIndex + i] = newFeat
-        existingData = self._base._data.values[:, featureIndex + 1:]
-        tmpData[:, featureIndex + numResultingFts:] = existingData
 
-        self._base._data = pd.DataFrame(tmpData)
+            new.append(pd.Series(newFeat, name=featureIndex + i))
+
+        after = self._base._data.iloc[:, featureIndex + 1:]
+        after.columns = [i + numResultingFts - 1 for i in after.columns]
+
+        self._base._data = pd.concat((before, *new, after), axis=1)
 
 
 class DataFrameFeaturesView(FeaturesView, AxisView, DataFrameFeatures):

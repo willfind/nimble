@@ -22,6 +22,7 @@ from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import denseCountUnique
 from ._dataHelpers import NimbleElementIterator
 from ._dataHelpers import convertToNumpyOrder, isValid2DObject
+from ._dataHelpers import getFeatureDtypes
 
 @inheritDocstringsFactory(Base)
 class DataFrame(Base):
@@ -126,8 +127,7 @@ class DataFrame(Base):
         if not isinstance(other, DataFrame):
             return False
 
-        return allDataIdentical(self._data.astype(numpy.object_).values,
-                                other._data.astype(numpy.object_).values)
+        return allDataIdentical(self._asNumpyArray(), other._asNumpyArray())
 
     def _writeFileCSV_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
@@ -191,7 +191,7 @@ class DataFrame(Base):
             if to == 'DataFrame':
                 data = self._data.copy()
             elif self._data.empty:
-                data = self._data.values.copy()
+                data = self._asNumpyArray()
             else:
                 # convert to list because it preserves data types
                 data = pandasDataFrameToList(self._data)
@@ -203,13 +203,12 @@ class DataFrame(Base):
         if to in ['pythonlist', 'numpyarray']:
             # convert pandas Timestamp type if necessary
             timestamp = [d.type == numpy.datetime64 for d in self._data.dtypes]
+            arr = self._asNumpyArray()
             if any(timestamp):
-                arr = self._data.astype(numpy.object_).values
                 attr = 'to_pydatetime' if to == 'pythonlist' else 'to_numpy'
                 convTimestamp = numpy.vectorize(lambda v: getattr(v, attr)())
                 arr[:, timestamp] = convTimestamp(arr[:, timestamp])
-            else:
-                arr = self._data.values
+
             if needsReshape:
                 arr = arr.reshape(self._shape)
             if to == 'pythonlist':
@@ -235,7 +234,7 @@ class DataFrame(Base):
             if to == 'scipycoo':
                 return scipy.sparse.coo_matrix(data)
             try:
-                ret = self._data.values.astype(numpy.float)
+                ret = self._asNumpyArray(numericRequired=True)
             except ValueError as e:
                 msg = 'Can only create scipy {0} matrix from numeric data'
                 raise ValueError(msg.format(to[-3:])) from e
@@ -255,30 +254,59 @@ class DataFrame(Base):
 
     def _replaceRectangle_implementation(self, replaceWith, pointStart,
                                          featureStart, pointEnd, featureEnd):
-        """
-        """
+        dtypes = self._data.dtypes
+        ftRange = range(featureStart, featureEnd + 1)
+        if isinstance(replaceWith, DataFrame):
+            replaceDtypes = replaceWith._data.dtypes
+        else:
+            replaceDtypes = (numpy.dtype(type(replaceWith)),) * len(ftRange)
+        for i, rdt in zip(ftRange, replaceDtypes):
+            dtypes.iloc[i] = max(dtypes.iloc[i], rdt)
         if not isinstance(replaceWith, Base):
             values = replaceWith * numpy.ones((pointEnd - pointStart + 1,
                                                featureEnd - featureStart + 1))
         else:
             #convert values to be array or matrix, instead of pandas DataFrame
-            values = replaceWith._data.values
+            values = replaceWith._asNumpyArray()
 
         # pandas is exclusive
         pointEnd += 1
         featureEnd += 1
         self._data.iloc[pointStart:pointEnd, featureStart:featureEnd] = values
 
+        self._setDtypes(dtypes)
+
     def _flatten_implementation(self, order):
         numElements = len(self.points) * len(self.features)
+        dtypes = self._data.dtypes
+        if order == 'point':
+            newDtypes = tuple(numpy.tile(dtypes, len(self.points)))
+        else:
+            newDtypes = tuple(numpy.repeat(dtypes, len(self.points)))
         order = convertToNumpyOrder(order)
-        self._data = pd.DataFrame(self._data.values.reshape((1, numElements),
-                                                            order=order))
+        array = self._asNumpyArray()
+        values = array.reshape((1, numElements), order=order)
+
+        self._data = pd.DataFrame(values)
+        self._setDtypes(newDtypes)
 
     def _unflatten_implementation(self, reshape, order):
+        dtypes = tuple(self._data.dtypes)
+        if len(dtypes) == 1 and reshape[1] > 1: # feature shaped
+            dtypes = (dtypes[0],) * reshape[0] * reshape[1]
+
+        if order == 'point':
+            jumps = range(reshape[1])
+            newDtypes = tuple(max(dtypes[i::reshape[1]]) for i in jumps)
+        else:
+            jumps = range(0, numpy.prod(reshape), reshape[0])
+            newDtypes = tuple(max(dtypes[i:i+reshape[1]]) for i in jumps)
         order = convertToNumpyOrder(order)
-        self._data = pd.DataFrame(self._data.values.reshape(reshape,
-                                                            order=order))
+        array = self._asNumpyArray()
+        values = array.reshape(reshape, order=order)
+
+        self._data = pd.DataFrame(values)
+        self._setDtypes(newDtypes)
 
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):
@@ -411,10 +439,10 @@ class DataFrame(Base):
 
     def _createNestedObject(self, pointIndex):
         """
-        Create an object of one less dimension
+        Create an object of one less dimension.
         """
         reshape = (self._shape[1], int(numpy.prod(self._shape[2:])))
-        data = self._data.values[pointIndex].reshape(reshape)
+        data = self._asNumpyArray()[pointIndex].reshape(reshape)
         return DataFrame(data, shape=self._shape[1:], reuseData=True)
 
     def _validate_implementation(self, level):
@@ -429,7 +457,7 @@ class DataFrame(Base):
         Returns True if there is a value that is equal to integer 0
         contained in this object. False otherwise.
         """
-        return 0 in self._data.values
+        return 0 in self._asNumpyArray()
 
 
     def _binaryOperations_implementation(self, opName, other):
@@ -438,15 +466,48 @@ class DataFrame(Base):
         representations if possible. Otherwise, uses the generic
         implementation.
         """
-        if (isinstance(other, nimble.core.data.Sparse)
+        initialDtypes = tuple(self._data.dtypes)
+        if isinstance(other, Base):
+            otherDtypes = getFeatureDtypes(other)
+            if len(self.features) != len(other.features): # for stretch
+                if len(initialDtypes) == 1:
+                    initialDtypes = (initialDtypes[0],) * len(other.features)
+                if len(otherDtypes) == 1:
+                    otherDtypes = (otherDtypes[0],) * len(self.features)
+        else:
+            dtype = numpy.dtype(type(other))
+            if dtype > numpy.dtype(float):
+                dtype = numpy.object_
+            otherDtypes = tuple(dtype for _ in initialDtypes)
+
+        dtypes = []
+        # truediv will return floats given two ints
+        # pow for negative ints will be floats but the data has already
+        # been converted to floats in that case
+        alwaysFloat = 'truediv' in opName
+        for dtype1, dtype2 in zip(initialDtypes, otherDtypes):
+            useType = max(dtype1, dtype2)
+            if alwaysFloat and useType < numpy.dtype(float):
+                dtypes.append(numpy.dtype(float))
+            else:
+                dtypes.append(useType)
+
+        # rhs may return array of sparse matrices so use default
+        if not (isinstance(other, nimble.core.data.Sparse)
                 and opName.startswith('__r')):
-            # rhs may return array of sparse matrices so use default
-            return self._defaultBinaryOperations_implementation(opName, other)
-        try:
-            ret = getattr(self._data.values, opName)(other._data)
-            return DataFrame(ret)
-        except (AttributeError, InvalidArgumentType, ValueError):
-            return self._defaultBinaryOperations_implementation(opName, other)
+            try:
+                array = self._asNumpyArray(numericRequired=True)
+                values = getattr(array, opName)(other._data)
+                ret = DataFrame(values)
+                ret._setDtypes(dtypes)
+                return ret
+            except (AttributeError, InvalidArgumentType, ValueError):
+                pass
+
+        ret = self._defaultBinaryOperations_implementation(opName, other)
+        ret._setDtypes(dtypes)
+
+        return ret
 
     def _matmul__implementation(self, other):
         """
@@ -458,19 +519,64 @@ class DataFrame(Base):
         as at least one out of the two, to be automatically determined
         according to efficiency constraints.
         """
+        # need the max dtype of this object since multiplying rows of this
+        # object by features of other object
+        rowDtype = max(self._data.dtypes)
+        otherDtypes = getFeatureDtypes(other)
+        dtypes = tuple(map(lambda dtype: max(dtype, rowDtype), otherDtypes))
+
         if isinstance(other, nimble.core.data.Sparse):
-            ret = self._data.values * other._data
+            values = self._asNumpyArray(numericRequired=True) * other._data
         else:
-            ret = numpy.matmul(self._data.values, other.copy('numpyarray'))
-        return DataFrame(ret)
+            values = numpy.matmul(self._asNumpyArray(numericRequired=True),
+                                  other.copy('numpyarray'))
+        ret = DataFrame(values)
+        ret._setDtypes(dtypes)
+
+        return ret
 
     def _convertToNumericTypes_implementation(self, usableTypes):
         if not all(dtype in usableTypes for dtype in self._data.dtypes):
             self._data = self._data.astype(float)
 
     def _iterateElements_implementation(self, order, only):
-        return NimbleElementIterator(self._data.astype(numpy.object_).values,
-                                     order, only)
+        return NimbleElementIterator(self._asNumpyArray(), order, only)
+
+    def _setDtypes(self, dtypes):
+        """
+        Set each feature to the dtype from a list of dtypes.
+        """
+        if tuple(self._data.dtypes) != tuple(dtypes):
+            if len(self._data.dtypes) != len(tuple(dtypes)):
+                msg = 'A dtype must be specified for each feature'
+                raise InvalidArgumentValue(msg)
+            for (i, col), dtype in zip(self._data.iteritems(), dtypes):
+                if col.dtype !=  dtype:
+                    self._data[i] = col.astype(dtype)
+
+    def _asNumpyArray(self, numericRequired=False):
+        """
+        Convert the dataframe to a numpy array with appropriate dtype.
+
+        Object dtype is used whenever more than one dtype is present.
+        If numericRequired is True, the data will be all be converted to
+        floats if the dtypes are not already all the same numeric dtype.
+        """
+        dtypes = self._data.dtypes
+        allowedDtypes = set((numpy.dtype(bool), numpy.dtype(int),
+                            numpy.dtype(float)))
+        if not numericRequired:
+            allowedDtypes.add(numpy.dtype(numpy.object_))
+
+        if len(dtypes) > 0:
+            floatDtype = numpy.dtype(float)
+            if all(d in allowedDtypes and d <= floatDtype for d in dtypes):
+                return self._data.values
+        if numericRequired:
+            return self._data.values.astype(float)
+
+        return self._data.astype(numpy.object_).values
+
 
 class DataFrameView(BaseView, DataFrame):
     """
