@@ -1479,9 +1479,10 @@ def createDataFromFile(
     with ioStream as toLoad:
         selectSuccess = False
         if extension == 'csv':
+            emptyIsMissing = '' in treatAsMissing
             loaded = _loadcsvUsingPython(
                 toLoad, pointNames, featureNames, ignoreNonNumericalFeatures,
-                keepPoints, keepFeatures, inputSeparator)
+                keepPoints, keepFeatures, inputSeparator, emptyIsMissing)
             selectSuccess = True
         elif extension == 'mtx':
             loaded = _loadmtxForAuto(toLoad, pointNames, featureNames)
@@ -2031,7 +2032,7 @@ def _loadhdf5ForAuto(openFile, pointNames, featureNames):
 
 def _loadcsvUsingPython(openFile, pointNames, featureNames,
                         ignoreNonNumericalFeatures, keepPoints, keepFeatures,
-                        inputSeparator):
+                        inputSeparator, emptyIsMissing):
     """
     Loads a csv file using a reader from python's csv module.
 
@@ -2086,8 +2087,8 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
     """
     dialect = _detectDialectFromSeparator(openFile, inputSeparator)
 
-    (pointNames, featureNames) = _checkCSVForNames(
-        openFile, pointNames, featureNames, dialect)
+    (pointNames, featureNames) = _checkCSVForNames(openFile, pointNames,
+                                                   featureNames, dialect)
 
     pointNames = _namesDictToList(pointNames, 'point', 'pointNames')
     featureNames = _namesDictToList(featureNames, 'feature', 'featureNames')
@@ -2125,7 +2126,7 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
         _checkForDuplicates(keepFeatures, 'keepFeatures')
     if (limitFeatures and retFNames
             and (len(retFNames) != len(keepFeatures) or featureNames is True)):
-        # have all featureNames
+        # have all featureNames but not keeping all features
         keepFeatures, retFNames = _limitToKeptFeatures(keepFeatures, retFNames)
     elif limitFeatures:
         # none or a subset of the featureNames provided
@@ -2151,6 +2152,8 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
 
     convertCols = None
     nonNumericFeatures = []
+    # possibly remove last feature if all values are '' and '' is missing value
+    lastFtRemovable = not limitFeatures and emptyIsMissing
     # lineReader is now at the first line of data
     for i, row in enumerate(lineReader):
         if pointNames is True:
@@ -2223,6 +2226,8 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
                 retData[location] = row
                 if pointNames is True:
                     extractedPointNames[location] = ptName
+        if lastFtRemovable and row[-1] != '':
+            lastFtRemovable = False
         totalPoints = i + 1
 
     if (keepPoints != 'all' and pointNames
@@ -2252,6 +2257,15 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
             removeNonNumeric.append([row[i] for i in range(len(row))
                                      if i not in nonNumericFeatures])
         retData = removeNonNumeric
+
+    # remove last feature of all missing values if no feature name is provided
+    if (lastFtRemovable and
+            (not retFNames or len(retFNames) == firstRowLength - 1
+             or (featureNames is True and retFNames[-1] == ''))):
+        for row in retData:
+            row.pop()
+        if featureNames is True:
+            retFNames.pop()
 
     if pointNames is True:
         retPNames = extractedPointNames

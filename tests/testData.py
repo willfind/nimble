@@ -519,6 +519,63 @@ def test_data_CSV_data_emptyStringsNotMissing():
 
             assert fromList == fromCSV
 
+def test_data_CSV_lastFeatureAllMissing():
+    """ Test of data() loading a csv file, default params """
+    dataSkip = [[1, 2, 'three'], [4, 5, 'six'], [0, -1, 'negativeTwo']]
+    dataKeep = [[1, 2, 'three', None], [4, 5, 'six', None], [0, -1, 'negativeTwo', None]]
+    dataEmpty = [[1, 2, 'three', ''], [4, 5, 'six', ''], [0, -1, 'negativeTwo', '']]
+    ftSkip = ['a', 'b', 'c']
+    ftKeep = ['a', 'b', 'c', '']
+    ptNames = ['1', '4', '0']
+    for t in returnTypes:
+        fromList1 = nimble.data(returnType=t, source=dataSkip)
+        fromList2 = nimble.data(returnType=t, source=dataSkip, featureNames=ftSkip)
+        fromList3 = nimble.data(returnType=t, source=dataSkip,
+                                pointNames=ptNames, featureNames=ftSkip)
+        fromList4 = nimble.data(returnType=t, source=dataKeep, featureNames=ftKeep)
+        fromList5 = nimble.data(returnType=t, source=dataEmpty, featureNames=ftKeep,
+                                treatAsMissing=[])
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write("1,2,three,\n")
+            tmpCSV.write("4,5,six,\n")
+            tmpCSV.write("0,-1,negativeTwo,\n")
+            tmpCSV.flush()
+            fromCSV1 = nimble.data(returnType=t, source=tmpCSV.name)
+            assert fromList1 == fromCSV1
+
+            fromCSV2 = nimble.data(returnType=t, source=tmpCSV.name,
+                                   featureNames=ftSkip)
+            assert fromList2 == fromCSV2
+
+            fromCSV3 = nimble.data(returnType=t, source=tmpCSV.name,
+                                   pointNames=ptNames, featureNames=ftSkip)
+            assert fromList3 == fromCSV3
+
+            fromCSV4 = nimble.data(returnType=t, source=tmpCSV.name,
+                                   featureNames=ftKeep)
+            assert fromList4 == fromCSV4
+
+            fromCSV5 = nimble.data(returnType=t, source=tmpCSV.name,
+                                   featureNames=ftKeep, treatAsMissing=[])
+            assert fromList5 == fromCSV5
+
+            fromCSV6 = nimble.data(returnType=t, source=tmpCSV.name,
+                                   keepFeatures=[1, 3])
+            assert len(fromCSV6.features) == 2
+            assert all(v != v for v in fromCSV6.features[1])
+
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write('a,b,c,\n')
+            tmpCSV.write("1,2,three,\n")
+            tmpCSV.write("4,5,six,\n")
+            tmpCSV.write("0,-1,negativeTwo,\n")
+            tmpCSV.flush()
+            fromCSV7 = nimble.data(returnType=t, source=tmpCSV.name,
+                                   featureNames=True)
+
+            assert fromList2 == fromCSV7
+
+
 def test_data_MTXArr_data():
     """ Test of data() loading a mtx (arr format) file, default params """
     for t in returnTypes:
