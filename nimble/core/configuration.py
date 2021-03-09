@@ -35,7 +35,16 @@ configErrors = (configparser.NoSectionError, configparser.NoOptionError)
 
 class SessionConfiguration(object):
     """
-    Manage settings during a Session.
+    Manage configurable settings.
+
+    Settings can be changed for the current session only or saved to
+    become the new default settings. Default settings are saved to a
+    file (configuration.ini) and loaded on import.
+
+    Settings are divided into sections and options. Options are the
+    configurable variables and sections define groups of options used
+    for a similar purpose. To see the current settings call
+    ``nimble.settings.get()``.
     """
 
     def __init__(self, path):
@@ -62,7 +71,10 @@ class SessionConfiguration(object):
 
     def get(self, section=None, option=None):
         """
-        Query the contents of a section, or a specific option.
+        Query the current settings.
+
+        Query can be the entire settings object, contents of a section,
+        or the value of a specific option.
         """
         if section is None and option is not None:
             msg = "Must specify a section if specifying an option"
@@ -269,6 +281,10 @@ def loadSettings():
             pass
 
     ret = SessionConfiguration(target)
+    sections = ret.get()
+    if 'fetch' not in sections or 'location' not in sections['fetch']:
+        ret.setDefault('fetch', 'location', str(pathlib.Path.home()))
+
     return ret
 
 
@@ -291,13 +307,3 @@ def setInterfaceOptions(interface, save):
             nimble.settings.set(interfaceName, opName, "")
     if save:
         nimble.settings.saveChanges(interfaceName)
-
-def setFetchPath(settings):
-    """
-    Set a default path for nimble.fetchFiles, if necessary.
-    """
-    try:
-        _ = settings.get('fetch', 'location')
-    except configErrors:
-        settings.setDefault('fetch', 'location',
-                            str(pathlib.Path.home()))
