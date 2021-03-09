@@ -34,7 +34,7 @@ from ._interface_helpers import (
     ovaNotOvOFormatted, checkClassificationStrategy, cacheWrapper,
     generateAllPairs, countWins, extractWinningPredictionIndex,
     extractWinningPredictionLabel, extractWinningPredictionIndexAndScore,
-    extractConfidenceScores, validateTestingArguments, getValidSeed)
+    extractConfidenceScores, validateTestingArguments)
 
 
 def captureOutput(toWrap):
@@ -138,7 +138,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             The results of any cross-validation performed prior to
             training.
         """
-        randomSeed = getValidSeed(randomSeed, self.getCanonicalName())
+        forShogun = self.getCanonicalName() == 'shogun'
+        randomSeed = nimble.random._getValidSeed(randomSeed, forShogun)
         if multiClassStrategy != 'default':
             # TODO reevaluate use of checkClassificationStrategy, the if
             # statements below expect a string output but it looks to output

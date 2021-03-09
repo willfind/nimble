@@ -95,17 +95,26 @@ def testReturnsFundamentalsCorrect():
     nFeatures = 200
     #sparsity = .5
 
+    expected = {}
     for curType in supportedFundamentalTypes:
         for curReturnType in returnTypes:
             for curSparsity in sparsities:
+                nimble.random.setSeed(1)
                 returned = nimble.random.data(curReturnType, nPoints, nFeatures,
                                               curSparsity, elementType=curType)
 
                 assert (len(returned.points) == nPoints)
                 assert (len(returned.features) == nFeatures)
 
-                #assert that the requested numerical type was returned
+                # assert that the requested numerical type was returned
                 assert type(returned[0, 0] == curType)
+
+                if curType not in expected:
+                    expected[curType] = {}
+                if curSparsity not in expected[curType]:
+                    expected[curType][curSparsity] = returned.copy('pythonlist')
+                else:
+                    assert returned.copy('pythonlist') == expected[curType][curSparsity]
 
 
 #note: makes calls to Base._data with assumptions about underlying datatstructure for sparse data

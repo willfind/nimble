@@ -44,10 +44,10 @@ def setSeed(seed, useLog=None):
     handleLogging(useLog, 'setSeed', seed=seed)
 
 
-
 def data(
         returnType, numPoints, numFeatures, sparsity, pointNames='automatic',
-        featureNames='automatic', elementType='float', name=None, useLog=None):
+        featureNames='automatic', elementType='float', name=None,
+        randomSeed=None, useLog=None):
     """
     Generate a data object with random contents.
 
@@ -86,6 +86,9 @@ def data(
     name : str
         When not None, this value is set as the name attribute of the
         returned object.
+    randomSeed : int
+       Provide a randomSeed for generating the random data. When None,
+       the randomness is controlled by Nimble's random seed.
     useLog : bool, None
         Local control for whether to send object creation to the logger.
         If None (default), use the value as specified in the "logger"
@@ -146,58 +149,50 @@ def data(
     if elementType not in ["int", "float"]:
         raise InvalidArgumentValue("elementType may only be 'int' or 'float'")
 
-    seed = _generateSubsidiarySeed()
-    _startAlternateControl(seed=seed)
+    randomSeed = _getValidSeed(randomSeed)
+    _startAlternateControl(seed=randomSeed)
     #note: sparse is not stochastic sparsity, it uses rigid density measures
-    if returnType == 'Sparse':
-        if not scipy.nimbleAccessible():
-            msg = "scipy is not available"
-            raise PackageException(msg)
-
+    size = (numPoints, numFeatures)
+    if sparsity > 0:
         density = 1.0 - float(sparsity)
-        numNonZeroValues = int(numPoints * numFeatures * density)
+        gridSize = numPoints * numFeatures
+        numNonZeroValues = int(gridSize * density)
         # We want to sample over positions, not point/feature indices, so
         # we consider the possible positions as numbered in a row-major
         # order on a grid, and sample that without replacement
-        gridSize = numPoints * numFeatures
         nzLocation = numpyRandom.choice(gridSize, size=numNonZeroValues,
                                         replace=False)
-        # The point value is determined by counting how many groups of
-        # numFeatures fit into the position number
-        pointIndices = numpy.floor(nzLocation / numFeatures)
-        # The feature value is determined by counting the offset from each
-        # point edge.
-        featureIndices = nzLocation % numFeatures
-
         if elementType == 'int':
             dataVector = numpyRandom.randint(low=1, high=100,
                                              size=numNonZeroValues)
-        #numeric type is float; distribution is normal
-        else:
+        else: #numeric type is float; distribution is normal
             dataVector = numpyRandom.normal(0, 1, size=numNonZeroValues)
-
-        #pointIndices and featureIndices are
-        randData = scipy.sparse.coo.coo_matrix(
-            (dataVector, (pointIndices, featureIndices)),
-            (numPoints, numFeatures))
-
-    # non-sparse matrices, generate matrices with sparsity characterics
+        if returnType == 'Sparse':
+            if not scipy.nimbleAccessible():
+                msg = "scipy is not available"
+                raise PackageException(msg)
+            # The point value is determined by counting how many groups of
+            # numFeatures fit into the position number
+            pointIndices = numpy.floor(nzLocation / numFeatures)
+            # The feature value is determined by counting the offset from each
+            # point edge.
+            featureIndices = nzLocation % numFeatures
+            randData = scipy.sparse.coo.coo_matrix(
+                (dataVector, (pointIndices, featureIndices)),
+                (numPoints, numFeatures))
+        else:
+            randData = numpy.zeros(size)
+            # numpy.put indexes as if flat so can use nzLocation
+            numpy.put(randData, nzLocation, dataVector)
     else:
-        size = (numPoints, numFeatures)
         if elementType == 'int':
             randData = numpyRandom.randint(1, 100, size=size)
         else:
             randData = numpyRandom.normal(loc=0.0, scale=1.0, size=size)
-
-        #if sparsity is zero
-        if sparsity > 0:
-            binarySparsityMatrix = numpyRandom.binomial(1, 1.0 - sparsity,
-                                                        size=size)
-            randData = binarySparsityMatrix * randData
     _endAlternateControl()
 
     handleLogging(useLog, 'load', "Random " + returnType, numPoints,
-                  numFeatures, name, sparsity=sparsity, seed=seed)
+                  numFeatures, name, sparsity=sparsity, seed=randomSeed)
 
     return initDataObject(returnType, rawData=randData, pointNames=pointNames,
                           featureNames=featureNames, name=name,
@@ -218,6 +213,25 @@ def _generateSubsidiarySeed():
     # control in shogun so start at 1.
     maxSeed = (2 ** 32) - 1
     return pythonRandom.randint(1, maxSeed)
+
+def _getValidSeed(seed, forShogun=False):
+    """
+    Validate the random seed value.
+    """
+    if seed is None:
+        seed = _generateSubsidiarySeed()
+    elif not isinstance(seed, int):
+        raise InvalidArgumentType('seed must be an integer')
+    elif forShogun and seed == 0:
+        msg = "The seed 0 does not generate reproducible results in shogun. "
+        msg += "Set randomSeed such that 1<=randomSeed<=4294967295."
+        raise InvalidArgumentValue(msg)
+    elif not 0 <= seed <= (2 ** 32) - 1:
+        msg = 'randomSeed is required to be an unsigned 32 bit integer. '
+        msg += 'Set randomSeed such that 0<=randomSeed<=4294967295.'
+        raise InvalidArgumentValue(msg)
+
+    return seed
 
 
 def _stillDefaultState():
