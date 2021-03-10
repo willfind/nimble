@@ -274,7 +274,7 @@ def loadSettings():
     into a SessionConfiguration. The SessionConfiguration object is then
     returned.
     """
-    target = os.path.join(nimble.nimblePath, 'configuration.ini')
+    target = os.path.join(nimblePath, 'configuration.ini')
 
     if not os.path.exists(target):
         with open(target, 'w'):

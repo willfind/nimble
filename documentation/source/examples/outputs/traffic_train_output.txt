@@ -1,22 +1,26 @@
-REGEX: sklearn.LinearRegression root mean square error: 1[78][0-9]{2}\.[0-9]+
-REGEX: sklearn.Ridge root mean square error: 1[78][0-9]{2}\.[0-9]+
-REGEX: sklearn.Lasso root mean square error: 1[78][0-9]{2}\.[0-9]+
-REGEX: sklearn.KNeighborsRegressor root mean square error: [78][0-9]{2}\.[0-9]+
-REGEX: sklearn.RandomForestRegressor root mean square error: 3[1-5][0-9]\.[0-9]+
-REGEX: \{'n_neighbors': 1, 'rootMeanSquareError': 10[0-9]{2}\.[0-9]+\}
-REGEX: \{'n_neighbors': 5, 'rootMeanSquareError': 89[0-9]\.[0-9]+\}
-REGEX: \{'n_neighbors': 11, 'rootMeanSquareError': 9[0-9]{2}\.[0-9]+\}
-REGEX: \{'min_samples_leaf': 2\} 3[0-9]{2}\.[0-9]+
-REGEX: 17[0-9]\.[0-9]+
+REGEX: sklearn.LinearRegression error: 1[78][0-9]{2}\.[0-9]+
+REGEX: sklearn.Ridge error: 1[78][0-9]{2}\.[0-9]+
+REGEX: sklearn.Lasso error: 1[78][0-9]{2}\.[0-9]+
+REGEX: sklearn.KNeighborsRegressor error: [78][0-9]{2}\.[0-9]+
+REGEX: sklearn.GradientBoostingRegressor error: 5[1-5][0-9]\.[0-9]+
+REGEX: \{'n_neighbors': 3, 'rootMeanSquareError': 9[0-9]{2}\.[0-9]+\}
+REGEX: \{'n_neighbors': 5, 'rootMeanSquareError': 9[0-9]{2}\.[0-9]+\}
+REGEX: \{'n_neighbors': 7, 'rootMeanSquareError': 9[0-9]{2}\.[0-9]+\}
+REGEX: \{'learning_rate': 1\}
+REGEX: 4[0-9]{2}\.[0-9]+
+REGEX: sklearn.GradientBoostingRegressor learning_rate=1 error 3[567][0-9]\.[0-9]+
+Traffic Volume Predictions
+24pt x 2ft
+
  volume   hour
 
-REGEX: 6[0-9]{2}\.[0-9]{3}  0.000
-REGEX: 3[0-9]{2}\.[0-9]{3}  1.000
+REGEX: 8[0-9]{2}\.[0-9]{3}  0.000
+REGEX: 5[0-9]{2}\.[0-9]{3}  1.000
 REGEX: 3[0-9]{2}\.[0-9]{3}  2.000
-REGEX: 4[0-9]{2}\.[0-9]{3}  3.000
-REGEX: 8[0-9]{2}\.[0-9]{3}  4.000
+REGEX: 3[0-9]{2}\.[0-9]{3}  3.000
+REGEX: [67][0-9]{2}\.[0-9]{3}  4.000
 REGEX: 2[0-9]{3}\.[0-9]{3} 5.000
-REGEX: [45][0-9]{3}\.[0-9]{3} 6.000
+REGEX: 5[0-9]{3}\.[0-9]{3} 6.000
 REGEX: [56][0-9]{3}\.[0-9]{3} 7.000
 REGEX: 5[0-9]{3}\.[0-9]{3} 8.000
 REGEX: 4[0-9]{3}\.[0-9]{3} 9.000
@@ -25,13 +29,13 @@ REGEX: 4[0-9]{3}\.[0-9]{3} 11.000
 REGEX: [45][0-9]{3}\.[0-9]{3} 12.000
 REGEX: [45][0-9]{3}\.[0-9]{3} 13.000
 REGEX: 5[0-9]{3}\.[0-9]{3} 14.000
-REGEX: 5[0-9]{3}\.[0-9]{3} 15.000
-REGEX: 6[0-9]{3}\.[0-9]{3} 16.000
+REGEX: [56][0-9]{3}\.[0-9]{3} 15.000
+REGEX: [56][0-9]{3}\.[0-9]{3} 16.000
 REGEX: 5[0-9]{3}\.[0-9]{3} 17.000
 REGEX: 4[0-9]{3}\.[0-9]{3} 18.000
 REGEX: 3[0-9]{3}\.[0-9]{3} 19.000
-REGEX: 2[0-9]{3}\.[0-9]{3} 20.000
+REGEX: [23][0-9]{3}\.[0-9]{3} 20.000
 REGEX: 2[0-9]{3}\.[0-9]{3} 21.000
 REGEX: 2[0-9]{3}\.[0-9]{3} 22.000
-REGEX: 1[0-9]{3}\.[0-9]{3} 23.000
+REGEX: [12][0-9]{3}\.[0-9]{3} 23.000
 

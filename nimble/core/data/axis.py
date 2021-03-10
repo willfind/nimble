@@ -825,9 +825,8 @@ class Axis(ABC):
 
             if title is True:
                 title = ''
-                objName = False if self._base.name is None else self._base.name
-                if objName is not None:
-                    title += "{}: ".format(objName)
+                if self._base.name is not None:
+                    title += "{}: ".format(self._base.name)
                 title += "Feature Comparison"
 
         if title is False:

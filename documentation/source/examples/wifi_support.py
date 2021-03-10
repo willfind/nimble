@@ -5,9 +5,13 @@
 
 Our data for this example contains 2000 points and 8 features. The first
 7 features are wifi signal strength values picked up by a mobile phone
-from seven different wifi sources . The final feature records which of
-four rooms the mobile device was in. This dataset will help highlight
-additional functionality included in the nimble library.
+from seven different wifi sources (one feature per source). The final
+feature stores which of four rooms the mobile device was in. This
+dataset will help highlight functionality included in the nimble library
+such as logging, randomness, and the design of "custom learners" for
+making your own machine learning algorithms that are supported by
+Nimble. This functionality will be highlighted as we use the wifi signal
+strength data to predict which room the phone is in.
 
 [Open this example in Google Colab][colab]
 
@@ -22,153 +26,371 @@ additional functionality included in the nimble library.
 
 ## Getting Started ##
 
+## One highlight of this example is Nimble's logging. Since the log contents
+## can be affected by prior uses of Nimble, we want to ensure that the behavior
+## of this example is consistent for everyone. To achieve this consistency, we
+## will be storing our log in a temporary directory created by Python's
+## `tempfile` module. This will ensure that only information from this example
+## is logged. It also allows us to quickly remove the directory and its
+## contents when we finish.
 import tempfile
 
 import nimble
 
+tempDir = tempfile.TemporaryDirectory('nimble-logs')
+
 ## Configuration ##
 
-## Nimble allows for user control of certain aspects of our library through
-## a configuration file name configuration.ini. If configuration.ini does
-## not exist when Nimble is imported (as is expected on the first ever call to
-## `import nimble`) Nimble generates configuration.ini. On import,
-## configuration.ini is used to establish the settings for the
-## session. Through `nimble.settings`, we can access the current settings
-## as well as modify settings for this session or all future sessions.
-## To start our session, let's make sure our logging output settings are set
-## to the defaults used when Nimble is first installed.
+## Nimble allows for user configuration of certain aspects of our library
+## through `nimble.settings`. The default settings are written to a file and
+## loaded each time Nimble is imported. To see the current configuration
+## settings, we can use `nimble.settings.get()`. We can also change the
+## default settings using `nimble.settings.setDefault()` or
+## `nimble.settings.set()` to make changes for only the current session.
+
+## Next, we will be exploring Nimble's logging feature. We want to start with
+## an empty log file and make sure that our logger behavior is the same. Let's
+## configure our logging settings so we can ensure that your log entries match
+## ours throughout this example.
+
+# a new log file is generated when a new location is set
+nimble.settings.set('logger', 'location', tempDir.name)
+# enable log unless explicitly overridden by a local setting
 nimble.settings.set('logger', 'enabledByDefault', 'True')
-nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
+
+## Now that we have our new (temporary) logging file established, we can load
+## our data for this example. The `nimble.fetchFile` function stores and
+## retrieves data based on a configurable location that defaults to your home
+## directory.  Everyone's fetch location is different so we will not print ours
+## but if you are running this code and would like to see yours, uncomment the
+## line below.
+
+# print(nimble.settings.get('fetch', 'location'))
+
+## Within that configured directory location, `fetchFile` creates a
+## "nimbleData" directory to store downloaded data.  `fetchFile` returns the
+## path to the requested data, downloading it if it is not already available
+## locally. Usually, `fetchFile` requires a url string, but Nimble has a built
+## in shorthand for datasets in the UCI repository that we use to get our
+## dataset for this example.
+path = nimble.fetchFile('uci::Wireless Indoor Localization')
+wifi = nimble.data('Matrix', path, name='wifi')
+
+## As a reminder, this data used a mobile phone to collect wifi signal strength
+## values from seven different wifi sources in four different rooms. Imagine
+## you live in an apartment with four rooms (kitchen, living room, bedroom, and
+## bathroom) and your phone picks up 7 wifi signals from your neighbors. As you
+## move your phone from room to room, it will be closer to certain wifi sources
+## and farther from others, changing the signal strength. This data is a matrix
+## of integers collected from an experiment similar to our hypothetical
+## situation above. Since our data does not contain a header row, it is a good
+## practice to add features names manually so that the contents of our data is
+## more clear.
+headers = ['source' + str(i) for i in range(7)] + ['room']
+wifi.features.setNames(headers)
+wifi.show('wifi signal strengths', maxHeight=9)
 
 ## Logging ##
 
-## Nimble keeps an ongoing log of each session, by default. The logging
-## settings are configurable. Let's take a look at the default settings.
-print(nimble.settings.get('logger', 'location'))
-print(nimble.settings.get('logger', 'name'))
-print(nimble.settings.get('logger', 'enabledByDefault'))
-print(nimble.settings.get('logger', 'enableCrossValidationDeepLogging'))
+## One helpful feature of Nimble is the ability to log each session. While
+## running a script or during an interactive session, actions and results are
+## stored and can be queried later. This information is a great resource for
+## reviewing sessions without needing to rerun the code. Depending on the
+## settings, the log can also provide many additional details regarding a
+## machine learning algorithms performance. As we go through this example, we
+## will demonstrate how the logger is recording our actions. All logged
+## functions and methods have a `useLog` parameter. This parameter provides
+## local control of logging, which can override the global settings. A value of
+## `True` will always add a log entry, `False` will never add a log entry and
+## `None` (the default) will use the global "enabledByDefault" setting . Thus
+## far, our calls to `nimble.data` and `wifi.features.setNames` contained
+## `useLog` parameters. Since we set `enabledByDefault` to "True", these two
+## calls were logged.
 
-## Let's use tempfile to create a new directory for our logs in this example.
-## This will ensure log output in this example is consistent for everyone
-## following along.
-tempDir = tempfile.TemporaryDirectory('nimble-logs')
-nimble.settings.set('logger', 'location', tempDir.name)
-
-## All logged functions and methods have a `useLog` parameter. The default,
-## value for `useLog` is `None`, meaning Nimble will use the value stored in
-## configuration.ini. The `nimble.data` method has a `useLog` parameter, but
-## `show` does not. Since `enabledByDefault` is True in our configuration file,
-## `showLog` should have one entry showing we loaded our data as a Matrix.
-wifi = nimble.data('Matrix', 'wifi_localization.txt')
-wifi.show(None, maxHeight=9)
+## We can also make our own entries into the log using `nimble.log`. Let's add
+## an entry to remind ourselves about the details of our data. Then we can use
+## `nimble.showLog` to view our current log.
+description = 'Wifi signal strength data from 7 sources in 4 possible rooms'
+nimble.log('Data Description', description)
 nimble.showLog()
 
-## Object methods like permute and transform can be logged. We can always
-## override the configured setting `useLog` to `True` or `False` .
-wifi.points.permute(useLog=False)
-wifi.points.transform(lambda pt: abs(pt), useLog=True)
-print(wifi[:3, :])
-nimble.showLog()
+## We can always override the global logging configuration by setting `useLog`
+## to `True` or `False`. Setting `useLog` to `True` or `False` has the
+## advantage of ensuring that everything in the code is logged as desired
+## regardless of the global setting. When "enabledByDefault" is set to "False",
+## using `useLog=True` is perfect for logging only things we explicitly want to
+## log. We set "enabledByDefault" to "True" earlier, but we still may want to
+## avoid logging certain things. For example, below we decide to check the mean
+## and median signal strength for each source because large differences would
+## indicate outliers. Remembering that we ran this check is not overly helpful
+## so we can skip logging it, but if we find outliers we will want to log any
+## actions we take.
+sourceData = wifi[:, 'source0':'source6']
+print(sourceData.features.calculate(nimble.calculate.mean, useLog=False))
+print(sourceData.features.calculate(nimble.calculate.median, useLog=False))
 
-## We only see a new log entry for `transform`, not `permute`, which is what we
-## expected.
+## It looks like our mean and median values are similar, so our data does not
+## have outliers that we need to worry about. We don't have to make any
+## modifications to our data, but let's verify that our calculations were
+## **not** added to the log.
+nimble.showLog()
 
 ## Randomness ##
 
-## For those following along, you may have not expected that `permute` would
-## yield the same matrix for you as we displayed above. This is because
-## Nimble strives for reproducible results so we control for randomness. Of
-## course, this can be disabled or you can choose your own random seed.
-nimble.random.setSeed(None) # disable consistent results
+## If you revisit our data above, we can see that the points appear to be
+## sorted by room. For our machine learning, we will want to randomize the
+## order. When we call `wifi.points.permute()` with no arguments, a random
+## permutation is used to reorder our points. However, Nimble wants each run of
+## a script to produce consistent results, so the random seed is controlled by
+## default. This means that the points in our randomly permuted object shown
+## below are always in the same order every time for everyone running this
+## script.
 wifi.points.permute()
-print(wifi[:3, :])
+wifi.show('randomly permuted', maxHeight=9)
 
-## Everything we just did (except printing) was also logged. Let's check that
-## our last 2 log entries show that a new random seed was assigned and that we
-## permuted our object's points.
-nimble.showLog(maximumEntries=2)
+## Nimble uses its `nimble.random.setSeed` function on import to control the
+## random state, but this function is also publicly available to set a new seed
+## or disable Nimble's randomness control using `nimble.random.setSeed(None)`.
+## To demonstrate below, we view 5 random points from our data with and without
+## a set seed. Setting the seed to `None` means that `uncontrolled` will be a
+## truly random selection of points each time the code is run. Using an integer
+## to set the seed restores control so the random selection of points for
+## `controlled` will always be the same for each run.
+nimble.random.setSeed(None)
+uncontrolled = wifi.points.copy(number=5, randomize=True)
+uncontrolled.show('uncontrolled randomness sample')
+nimble.random.setSeed(1)
+controlled = wifi.points.copy(number=5, randomize=True)
+controlled.show('controlled randomness sample')
+
+## Since we last set the seed to `1` above, we will continue to get consistent
+## results for the remainder of this example. Nimble's `random` module also
+## contains the `nimble.random.data` function for generating an object filled
+## with random values. We will use this later to test that our custom learner
+## is working as expected.
 
 ## Custom Learners ##
 
-## Now we want to perform some machine learning. First, let's make our results
-## reproducible again by setting a new random seed and reloading our data.
-## This will ensure that everyone's data is divided into the same training and
-## testing sets.
-nimble.random.setSeed(1234)
-wifi = nimble.data('Matrix', 'wifi_localization.txt', name='wifi')
-trainX, trainY, testX, testY = wifi.trainAndTestSets(testFraction=0.3,
-                                                     labels=7)
+## Now it is time to perform our machine learning. For this example, we will
+## first design our own custom machine learning algorithm for use with Nimble
+## rather than using one of Nimble's built-in `CustomLearners` or an algorithm
+## from another package supported by Nimble (like `sklearn` or `keras`). One
+## theory is that we could identify the center of each room by calculating the
+## mean signal strengths of all known observations in that room. Once we have
+## identified each room's center, we can measure the distance of any unknown
+## observations to the four room centers. The shortest of the four distances
+## could indicate that the phone is closest to the center of that room so that
+## will be the room that we predict.
 
-## Rather than use an algorithm from another package, let's create a simple
-## `CustomLearner`. At a minimum, any `CustomLearner` must define a
-## `learnerType` attribute and `train` and `apply` methods. In `train`, our
-## learner will store the feature medians for each room. `apply` will examine
-## the deviations in the test point from each room's feature medians and
-## predict the room with the least deviation.
-class LeastFeatureMedianDeviation(nimble.CustomLearner):
+## We will be creating a learner named `LeastFeatureMeanDistance` that
+## classifies points by measuring the euclidean distance to the feature means
+## for each label and selecting the label where the distance is minimized. To
+## create our own custom machine learning algorithm for Nimble, we inherit from
+## `nimble.CustomLearner`. Every `CustomLearner` must minimally define a
+## `learnerType` attribute and `train` and `apply` methods. Our `learnerType`
+## is `'classification'` because it assigns label predictions based on a
+## predefined set of labels.  The `train` method uses the `trainX` and `trainY`
+## data to learn a relationship that can be applied to other data. For our
+## learner, the `train` method groups our data based on label and calculates
+## the feature means for data with the same label. It uses a dictionary to
+## store the feature means that we "learn" from our training data so that they
+## can be used for `apply`. The `apply` method uses the information learned
+## from training to make predictions on new (unseen) data. For `apply` in our
+## learner, we compare the euclidean distance between a point and each label's
+## feature means (learned in `train`) and predict the label with the shortest
+## distance.
+class LeastFeatureMeanDistance(nimble.CustomLearner):
     learnerType = 'classification'
 
-    def train(self, trainX, trainY):
+    def incrementalTrain(self, trainX, trainY):
+        """
+        Calculate the feature means by label group.
+        """
         allData = trainY.copy()
         allData.features.append(trainX, useLog=False)
         self.featureMeans = {}
         byLabel = allData.groupByFeature(0, useLog=False)
         for label, group in byLabel.items():
-            means = group.features.statistics('median')
+            means = group.features.statistics('mean')
             self.featureMeans[label] = means
 
     def apply(self, testX):
-
-        def leastDeviation(point):
+        """
+        Predict labels based on least distance from known label means.
+        """
+        def leastDistance(point):
             least = None
+            prediction = None
             for label, means in self.featureMeans.items():
                 sumSquaredDiffs = sum((point - means) ** 2)
-                if least is None or sumSquaredDiffs < least[1]:
-                    least = (label, sumSquaredDiffs)
-            return least[0]
+                if least is None or sumSquaredDiffs < least:
+                    least = sumSquaredDiffs
+                    prediction = label
+            return prediction
 
-        return testX.points.calculate(leastDeviation)
+        return testX.points.calculate(leastDistance)
 
-performance = nimble.trainAndTest(LeastFeatureMedianDeviation,
+## Before we apply this learner to our data, let's make sure it is working as
+## expected. The success of our learner depends on the room centers providing
+## an accurate prediction of the actual room. This depends highly on the
+## configuration of the rooms, which is unknown to us. Below we see two figures
+## describing two possible layouts of four rooms. In Figure 1, our algorithm
+## should be very effective because the walls bisect the room centers, but in
+## Figure 2 closeness to a room center is often not a good indication of the
+## correct room.
+##
+## ![room figures](roomfigures.png "Room Figures")
+
+## For testing, let's generate some random data and label it based on Figure 2.
+## The image below shows the room in Figure 2 on a coordinate plane with each
+## axis ranging from 0 to 100. Since we have defined the actual room locations
+## and centers, we can calculate a good approximation of how accurate our model
+## should be. For our training data, we can use `nimble.random.data` to pick
+## random (x, y) coordinates representing a location on the grid. By setting
+## `elementType='int'` we get random integer values from 1 to 99 (inclusive)
+## which will allow our learner to learn a good approximation of the room
+## centers. For each (x, y) coordinate, we can determine the room label and the
+## room center that is closest to the coordinate. We expect our learner's
+## predictions to be correct when the room label and the closest coordinate are
+## the same.
+##
+## ![figure 2](figure2.png "Figure 2")
+
+# Since this is only for testing purposes, we won't log this part.
+
+rTrainX = nimble.random.data('Matrix', numPoints=2000, numFeatures=2,
+                             sparsity=0, elementType='int', useLog=False)
+rTrainX.features.setNames(['x', 'y'], useLog=False)
+
+def roomIdentifier(pt):
+    """
+    Return two-tuple (actual room, room center closest to point).
+    """
+    if pt['y'] >= 90:
+        actualRoom = 4
+    elif pt['y'] >= 20:
+        actualRoom = 3
+    elif pt['x'] >= 20:
+        actualRoom = 2
+    else:
+        actualRoom = 1
+
+    knownCenters = {1: (10, 10), 2: (60, 10), 3: (50, 55), 4: (50, 95)}
+    distances = {}
+    for room, (x, y) in knownCenters.items():
+        distances[room] = ((pt['x'] - x) ** 2 + (pt['y'] - y) ** 2) ** 0.5
+    # find the key for the minimum value in distances
+    closestCenter = min(distances, key=distances.get)
+
+    return (actualRoom, closestCenter)
+
+rTrainY = rTrainX.points.calculate(roomIdentifier, useLog=False)
+# extract 25% of our raondom data (first 500 points) for testing.
+rTestX = rTrainX.points.extract(number=500, useLog=False)
+rTestY = rTrainY.points.extract(number=500, useLog=False)
+
+# Expected accuracy is the number of points in the test labels where the
+# actual room (index 0) is the same as the closest center room (index 1)
+# divided by total number of test labels.
+expAcc = rTestY.points.count(lambda pt: pt[0] == pt[1]) / len(rTestY.points)
+print('LeastFeatureMeanDistance test expected accuracy', expAcc)
+
+actAcc = nimble.trainAndTest(LeastFeatureMeanDistance, rTrainX, rTrainY[:, 0],
+                             rTestX, rTestY[:, 0],
+                             nimble.calculate.fractionCorrect, useLog=False)
+print('LeastFeatureMeanDistance test actual accuracy', actAcc)
+
+## Our actual prediction accuracy is very similar to our expected accuracy so
+## we can be confident that our learner is working as expected. The accuracies
+## differ slightly because our learner calculates the room centers from the
+## training data so they won't perfectly match the known centers. Now, let's
+## use our `LeastFeatureMeanDistance` learner to see if we can make accurate
+## predictions using our wifi signal strength data.
+
+# randomOrder is False because we used permute earlier to randomize the data
+trainX, trainY, testX, testY = wifi.trainAndTestSets(testFraction=0.3,
+                                                     labels='room',
+                                                     randomOrder=False)
+performance = nimble.trainAndTest(LeastFeatureMeanDistance,
                                   trainX, trainY, testX, testY,
                                   nimble.calculate.fractionCorrect)
-print(performance)
+print('LeastFeatureMeanDistance accuracy:', performance)
 
 ## Our simple custom learner worked quite well, predicting the correct room in
-## the test set over 96% of the time.
+## the test set over 97% of the time. Given our high level of accuracy, we can
+## assume that the walls bisect our room centers. Our error is about 3% and
+## likely occurs when the distance to the closest center is similar between two
+## or more centers. Let's see if an algorithm like K-Nearest Neighbors can
+## provide better performance because it can compare each unknown observation
+## to multiple known observations.
 
 ## Cross Validation Deep Logging ##
 
-## Nimble also has a few builtin custom learners, which are registered under
-## the package name 'nimble', let's try `KNNClassifier`. We will cross validate
-## for two values of `k`, so let's also set `enableCrossValidationDeepLogging`
-## to `'True'`.
+## Nimble also has a few built-in custom learners, which are registered under
+## the package name ‘nimble’. The `KNNClassifier` learner performs K-Nearest
+## Neighbors classification. Comparing each point to its nearest neighbors
+## makes this algorithm robust against varying room sizes and shapes, which was
+## a major drawback of our `LeastFeatureMeanDistance` learner. It also provides
+## multiple points of comparison which could help improve prediction accuracy
+## for points near other rooms. However, we usually do not know the best value
+## for `k` (the number of nearest neighbors) so we will cross validate for
+## three different values of `k`. Logging has another configurable option name
+## "enableCrossValidationDeepLogging". By default it is set to "False" because
+## logging cross validation can increase the size of the log file much more
+## quickly. However, we can learn a lot of useful information from these cross
+## validation logs so let's set the value to True for the remainder of this
+## session.
 nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
+
+## Enabling deep logging for cross-validation, will generate log entries for
+## each fold during our k-fold cross validation. Below `trainAndTest` with
+## `folds=3` and `k=nimble.CV([3, 5, 7])` will perform 3-fold cross validation
+## on each of our 3 `k` values and use the `k` value that performed the best
+## during cross validation.
 performance = nimble.trainAndTest('nimble.KNNClassifier', trainX, trainY,
                                   testX, testY,
                                   nimble.calculate.fractionCorrect,
-                                  folds=5, k=nimble.CV([1, 3]))
+                                  folds=3, k=nimble.CV([3, 5, 7]))
 
-## Another way to check a learner's performance is to look at the log, let's
-## see how `KNNClassifier` performed. By default, `showLog` does not display
-## cross validation logs, so we need to increase the `levelOfDetail` to 3.
-nimble.showLog(levelOfDetail=3, maximumEntries=2)
+## With deep logging for cross validation enabled, we just created 11 new log
+## entries. We get 9 cross validation logs (3-fold cross validation for 3
+## different `k` values). These entries would not be added to the logger
+## without deep logging being enabled and `showLog` filters these entries out
+## unless `levelOfDetail` is set to 3 (the highest level). The 10th entry is a
+## summary of the cross validation results and the last entry is the results of
+## our call to `trainAndTest`. The last two entries are logged as long as
+## regular logging is enabled and will be displayed if `levelOfDetail` is 2
+## (the default) or greater. A `levelOfDetail` of 1 (the lowest) filters out
+## all but logs for data loading and data reports. Our 9 cross validation log
+## entries look similar so we will only show the last two cross validation
+## entries, the cross validation summary entry and our `trainAndTest` log entry
+## by setting `maximumEntries=4`.
+nimble.showLog(levelOfDetail=3, maximumEntries=4)
 
-## We can see that k=3 just slightly outperformed k=1 and the learner correctly
-## identified the room in 98% of the test points.
+## We can see that `k=5` slightly outperformed `k=7` on the last fold and
+## outperformed both `k=3` and `k=7` on average during cross validation. When
+## the learner trained with `k=5` was applied to our test data, it correctly
+## identified the room in 98.5% of the test points. This outperformed our own
+## custom learner, so predicting the room based on other similar observations
+## is a more effective strategy than prediction based on feature means.
 
-## Also note that showLog has many other parameters to query the log. Right now
-## our log is small, but as it grows these can be very useful to find past
-## information stored in the log file. For now, let's search try searching for
-## our object's name, 'wifi'.
+## Viewing existing logs ##
+
+## Now that we have completed our machine learning, let's dive a little deeper
+## into how we can take advantage of the `showLog` to find certain information
+## about our data. Right now our log is small, but as it grows we will not want
+## to look through the entire log. A log file can quickly contain data from
+## multiple sessions, multiple days and contain tons of different information
+## To make the log easy to query, `showLog` has parameters to filter the log by
+## sessions, dates, and text. For now, let’s try a text search for our object’s
+## name, ‘wifi’, and see all log records containing that word.
 nimble.showLog(searchForText='wifi')
 
-## While not required to do data science with Nimble, configuration, logging,
-## randomness and custom learners add a lot of helpful functionality to Nimble
-## and we expect you'll find yourself using some or all of it to support your
-## data science work. That wraps it up for this example, so now is a good time
-## to cleanup the temporary directory containing our log file.
+## While not required for using Nimble, features such as configuration,
+## logging, randomness and custom learners add a lot of helpful functionality.
+## We expect you’ll find yourself using some or all of it to support your data
+## science work. That wraps it up for this example, so now is a good time to
+## cleanup the temporary directory containing our log file.
 tempDir.cleanup()
 
 ## **References:**

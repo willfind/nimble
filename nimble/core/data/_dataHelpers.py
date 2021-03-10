@@ -684,10 +684,10 @@ def validateAxisFunction(func, axis, allowedLength=None):
     """
     Wrap axis transform and calculate functions to validate types.
 
-    Transform defines oppositeAxisInfo because the function return must
+    Transform defines allowedLength because the function return must
     have the same length of the axis opposite the one calling transform.
     Calculate allows for objects of varying lengths or single values to
-    be returned so oppositeAxisInfo is None. For both, the return value
+    be returned so allowedLength is None. For both, the return value
     types are validated.
     """
     if func is None:
@@ -1051,6 +1051,8 @@ def pyplotRequired(func):
         if not plt.nimbleAccessible():
             msg = 'matplotlib.pyplot is required for plotting'
             raise PackageException(msg)
+        # prevent interactive plots from showing until .show() called
+        plt.ioff()
         return func(*args, **kwargs)
     return wrapped
 
@@ -1214,6 +1216,11 @@ def plotMultiBarChart(ax, heights, horizontal, legendTitle, **kwargs):
         # sets color array to apply to subgroup bars not group bars
         ax.set_prop_cycle(color=kwargs['color'])
         del kwargs['color']
+    elif len(heights) > 10:
+        # matplotlib default will repeat colors, need broader colormap
+        colormap = plt.cm.nipy_spectral
+        colors = [colormap(i) for i in numpy.linspace(0, 1, len(heights))]
+        ax.set_prop_cycle(color=colors)
     singleWidth = width / len(heights)
     start = 1 - (width / 2) + (singleWidth / 2)
 

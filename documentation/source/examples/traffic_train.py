@@ -1,16 +1,16 @@
 """
 # Supervised Learning
 
-### Training interstate traffic data to make future predictions
+### Training on interstate traffic data to make predictions about the future
 
-This example will use two datasets that contain data on interstate
-traffic volumes and features that may contribute to changes in traffic
-volume. `Metro_Interstate_Traffic_Volume_Cleaned.csv`, was generated in
-our [Data Cleaning example](traffic_clean.ipynb) and is the cleaned data
-we will use to build our supervised learning models.
+In this example, we will use two datasets that contain data on
+interstate traffic volumes and features that may contribute to changes
+in traffic volume. `Metro_Interstate_Traffic_Volume_Cleaned.csv`, was
+generated in our [Data Cleaning example](traffic_clean.ipynb) and is the
+cleaned data we will use to build our supervised learning models.
 `Metro_Interstate_Traffic_Volume_Predict.csv`, contains fictional
 "forecast" data that we will use to simulate making traffic volume
-predictions using our supervised learning model.
+predictions using our supervised machine learning model.
 
 [Open this example in Google Colab][colab]
 
@@ -27,83 +27,99 @@ predictions using our supervised learning model.
 
 import nimble
 
-traffic = nimble.data('Matrix', 'Metro_Interstate_Traffic_Volume_Cleaned.csv',
-                      featureNames=True)
-forecast = nimble.data('Matrix', 'Metro_Interstate_Traffic_Volume_Predict.csv',
-                       featureNames=True)
-nimble.random.setSeed(23)
+# Using shortened URLs for example data files hosted on Nimble site
+traffic = nimble.data('Matrix', 'https://bit.ly/38kxLWL')
+forecast = nimble.data('Matrix', 'https://bit.ly/3qkZOeN')
 
-## Test five different learners ##
+## Test five different machine learning algorithms ##
 
-## We'll divide our `traffic` data into training and testing sets. Using
-## `nimble.trainAndTest`, we can quickly test the performance of five different
-## regressors from the sci-kit learn package, using default arguments. We will
-## analyze the performance by comparing each learner's root mean square error.
+## We’ll divide our `traffic` data into training and testing sets. The test
+## set (used to measure the out-of-sample performance) will contain 25% of our
+## data and the remaining 75% will be used to train each machine learning
+## algorithm.
 testFraction = 0.25
 yFeature = 'traffic_volume'
 trainX, trainY, testX, testY = traffic.trainAndTestSets(testFraction, yFeature)
 
+## Using `nimble.trainAndTest`, we can quickly test the performance of five
+## different regression algorithms from the sci-kit learn package (initially,
+## we'll use default arguments to keep things simple). We can then analyze the
+## performance by checking each learning algorithm's root mean square error.
+
 learners = ['sklearn.LinearRegression', 'sklearn.Ridge', 'sklearn.Lasso',
-            'sklearn.KNeighborsRegressor', 'sklearn.RandomForestRegressor']
+            'sklearn.KNeighborsRegressor', 'sklearn.GradientBoostingRegressor']
 performanceFunction = nimble.calculate.rootMeanSquareError
 for learner in learners:
     performance = nimble.trainAndTest(learner, trainX, trainY, testX, testY,
                                       performanceFunction)
-    print(learner, 'root mean square error:', performance)
+    print(learner, 'error:', performance)
 
-## `'sklearn.KNeighborsRegressor'` and `'sklearn.RandomForestRegressor'`
-## had better performance for predicting traffic volume with this data than
-## the linear regression learners, so let's focus on optimizing those two.
+## `'sklearn.KNeighborsRegressor'` and `'sklearn.GradientBoostingRegressor'`
+## had better performance for predicting traffic volume with this data than the
+## linear regression based learners, so let's focus on optimizing those two.
 
 ## Cross-validate arguments to improve performance ##
 
-## Additional arguments for a learner can be supplied through `arguments` as a
-## dict or via keyword arguments and `nimble.CV` allows for multiple potential
-## arguments to be passed for the same parameter. The presence of `CV` will
-## trigger k-fold cross validation where k is the value of the `folds`
-## argument. Each combination of arguments will be  trained and tested using
-## the `performanceFunction` to determine the best parameter set to use.
-knnArgs = {'n_neighbors': nimble.CV([1, 5, 11])}
-knnTL = nimble.train('skl.KNeighborsRegressor', trainX, trainY,
-                     performanceFunction, folds=3, arguments=knnArgs)
-rfTL = nimble.train('skl.RandomForestRegressor', trainX, trainY,
-                    performanceFunction, folds=3,
-                    min_samples_leaf=nimble.CV([1, 2]))
+## The default arguments are unlikely to yield the best performance, so now we
+## will adjust some parameter values for our two best learners. These
+## adjustments can be made through `arguments` as a python `dict` or as keyword
+## arguments. Furthermore, we can test multiple values for the same parameter
+## by using the `nimble.CV` object. The presence of `nimble.CV` will trigger
+## k-fold cross validation where k is the value of the `folds` argument.
+## Nimble's training functions will find the argument combination with the best
+## average `performanceFunction` result from the k-fold cross validation and
+## use that model.
 
-## We used `nimble.train` above because it returns a `TrainedLearner`. A
-## `TrainedLearner` allows us to `apply` and `test`, but also provides many
-## additional methods and attributes. As an example, we can access all of our
-## cross validation results through our `TrainedLearner`.
+## For KNeighborsRegressor, we will use `nimble.CV` to try 3, 5, and 7 for the
+## number of nearest neighbors and for `GradientBoostingRegressor` we will try
+## different learning rate values.
+knnArgs = {'n_neighbors': nimble.CV([3, 5, 7])}
+knnTL = nimble.train('skl.KNeighborsRegressor', trainX, trainY,
+                     performanceFunction, folds=2, arguments=knnArgs)
+gbTL = nimble.train('skl.GradientBoostingRegressor', trainX, trainY,
+                    performanceFunction, folds=2,
+                    learning_rate=nimble.CV([0.01, 0.1, 1]))
+
+## The `nimble.train` function returns a `TrainedLearner`. With a
+## `TrainedLearner` we can `apply` (make predictions on a test set), `test`
+## (measure the performance on a test set with known labels) and it provides
+## many other additional methods and attributes. The `knnTL` object was trained
+## with the `n_neighbors` value that performed best during 2-fold cross
+## validation. `TrainedLearner` objects store the cross validation results,
+## let's see all of the results for `knnTL`.
 for result in knnTL.crossValidation.allResults:
     print(result)
 
-## Or we could access the best arguments and results.  Note, the returned
-## `TrainedLearner` is always trained using the best argument set if cross
-## validation occurred.
-print(rfTL.crossValidation.bestArguments, rfTL.crossValidation.bestResult)
+## Similarly `gbTL` was trained with the best of our three possible learning
+## rates. Instead of seeing all the results, let's just see the best argument
+## and best result this time.
+print(gbTL.crossValidation.bestArguments)
+print(gbTL.crossValidation.bestResult)
 
-## `knnTL` found `n_neighbors` of 5 to be the best argument.  This is the same
-## as the default value so we already know how it performs on the testing data.
-## However, `rfTL` found `min_samples_leaf` of 2 outperformed the default, 1.
-## Let's see how it performs on our testing data.
-rfPerf = rfTL.test(trainX, trainY, performanceFunction)
-print(rfPerf)
+## `knnTL` found `n_neighbors` of 5 to be the best setting.  This is the same
+## as the default value so we already know how it performs on our testing data.
+## However, `gbTL` found `learning_rate` of 1 outperformed the default, 0.1.
+## Let's see how it performs on our testing (out-of-sample) data.
+gbPerf = gbTL.test(trainX, trainY, performanceFunction)
+print('sklearn.GradientBoostingRegressor', 'learning_rate=1', 'error', gbPerf)
 
 ## Applying our learner ##
 
-## We see a further improvement in the performance so now we will apply our
-## `rfTL` trained learner to our `forecast` data to predict traffic volumes
-## for a future day. Before printing, we will append the `hour` feature from
-## `forecasts` to get a better visual of the traffic throughout the day.
-predictedTraffic = rfTL.apply(forecast)
+## We see a further improvement in the performance so the
+## GradientBoostingRegressor with a learning rate of 1 is our best model. Now
+## we will apply our `gbTL` trained learner to our `forecast` data set to
+## predict traffic volumes for a future day.
+predictedTraffic = gbTL.apply(forecast)
 predictedTraffic.features.setName(0, 'volume')
-predictedTraffic.features.append(forecast.features['hour'])
-print(predictedTraffic)
 
-## Based on our forecasted data, our learner is predicting heavy traffic
-## starting in the morning and continuing throughout the day. Traffic volumes
-## are expected to peak during the 7am hour for the morning commute and again
-## at 4pm for the afternoon commute.
+## Before printing, we will append the `hour` feature from `forecasts` to get
+## a better visual of the traffic throughout the day.
+predictedTraffic.features.append(forecast.features['hour'])
+predictedTraffic.show('Traffic Volume Predictions')
+
+## Based on our forecasted data, our learner is predicting heavier traffic
+## volumes between 6 am and 6 pm with peak congestion expected around the 7 am
+## hour for the morning commute and the 4 pm hour for the afternoon commute.
 
 ## **Reference:**
 

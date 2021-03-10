@@ -5,11 +5,12 @@
 
 The goal here is to address several issues present in the
 `Metro_Interstate_Traffic_Volume.csv` dataset to make it suitable for
-supervised learning. Each point in this dataset represents a point in
-time where 9 features are recorded. The features are variables which may
-affect the traffic volume on an interstate highway and the current
-traffic volume. A new point is recorded each time a change occurs in one
-of the weather forecast features.
+supervised machine learning (i.e., predicting one of the columns in the
+data using other columns). Each data point in this dataset represents a
+moment in time where 9 features are recorded. The features are variables
+which may affect the traffic volume on an interstate highway as well as
+the current traffic volume. A new data point is recorded each time a
+change occurs in one of the weather forecast features.
 
 [Open this example in Google Colab][colab]
 
@@ -24,108 +25,148 @@ of the weather forecast features.
 
 ## Getting started ##
 
-## The second argument for `nimble.data`, `source`, can be an in-python data
-## object, a path to a file, an open file, or a link to a webpage containing
-## the data. Our data file is in the current directory so we will use a
-## relative path to our dataset.
+## We first use `nimble.fetchFile` to retrieve our dataset. This will return
+## the path to our dataset, downloading it from the web if it is not already
+## available locally. Nimble has built in a shorthand for datasets in the
+## [UCI repository](https://archive.ics.uci.edu/ml) that we use below. The
+## second argument for `nimble.data` (`source`) can be a regular python data
+## object, a path to a file, an open file, or URL pointing to the location on a
+## website where the data resides. Here, we use the path returned by
+## `nimble.fetchFile`.
 
 from datetime import datetime
 
 import nimble
 
-traffic = nimble.data('Matrix', 'Metro_Interstate_Traffic_Volume.csv',
-                      featureNames=True)
-# view all data by optimizing show parameters
-showKwargs = {'includeObjectName': False, 'maxHeight': 9, 'maxWidth': 120}
-traffic.show("Raw traffic data", **showKwargs)
+path = nimble.fetchFile('uci::Metro Interstate Traffic Volume')
+traffic = nimble.data('Matrix', path, name='Metro Interstate Traffic Volume')
 
-## Our data contains 48,204 points and 9 features, but some points and features
-## will need to be addressed before machine learning algorithms can be applied
-## to this data. The machine learning algorithms we plan to use require numeric
-## data and can be sensitive to outliers. Running `featureReport` can provide
-## a good starting point for cleaning the data.
+## The `show` method provides control over the printed output for an object.
+## It prints a description, the object name and shape and the object data
+## (truncating if necessary) given the parameters. The settings below allow us
+## to see a good selection of our data throughout this example.
+settingsForShow = {'maxWidth': 120, 'maxHeight': 9}
+traffic.show("Raw traffic data", **settingsForShow)
+
+## The machine learning algorithms we plan to use require numeric data and can
+## be sensitive to outliers. Our data contains 48,204 points and 9 features,
+## but some points and features will require cleaning before these machine
+## learning algorithms can be applied to the data. Running `featureReport` can
+## provide a good starting point for cleaning the data because it shows basic
+## statistics about each column.
 print(traffic.featureReport())
 
 ## Statistics could not be calculated for all features, indicating some are
-## non-numeric. The statistics for the numeric features also indicate that
-## some physically impossible values are present.
+## non-numeric. 0 Kelvin in `temp` and 9831.3 mm in `rain_1h` are also possible
+## recording errors so we will also perform cleaning on some numeric features.
 
 ## Cleaning numeric data ##
 
-## 0 Kelvin in `temp` and 9831.3 mm in `rain_1h` indicate some erroneous values
-## in these features. Let's extract those values to decide how to proceed.
+## Let's extract (i.e., separate from the rest of the data) any rows with the
+## value 0 in `temp` or 9831.3 in `rain_1h` since they seem very unlikely to be
+## accurate, then we can reevaluate the statistics without those values.
 
-def errorIdentifier(pt):
-    if pt['temp'] == 0 or pt['rain_1h'] == 9831.3:
-        return True
-    return False
+def badPointIdentifier(pt):
+    return pt['temp'] == 0 or pt['rain_1h'] == 9831.3
 
-extracted = traffic.points.extract(errorIdentifier)
+extracted = traffic.points.extract(badPointIdentifier)
 
 print(traffic[:, ['temp', 'rain_1h']].featureReport())
 print('Number of points with errors:', len(extracted.points))
 
 ## After extracting those values, our `featureReport` statistics look much more
-## reasonable for those features. We can assume that the 11 extracted points
-## contain recording errors so we will ignore `extracted` and continue with
-## the 48,193 points still remaining in `traffic`.
+## reasonable for those features. Since the values for those "bad" data points
+## were implausible, we can assume that the 11 extracted points contain
+## recording errors so we will ignore `extracted` and continue with the 48,193
+## points still remaining in `traffic`.
 
 ## Cleaning non-numeric data ##
 
-## The values in the `date_time` feature are strings, but we can parse each
-## string to generate five new numeric features to replace this feature.
-def dateTimeSplit(value):
+## The values in the `date_time` feature are strings, so we will parse each
+## string to generate five new numeric features ('year', 'month', 'day',
+## 'hour', 'weekday') to replace this feature.
+def dateTimeSplitter(value):
     dt = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
     return [dt.year, dt.month, dt.day, dt.hour, dt.weekday()]
 
-traffic.features.splitByParsing('date_time', dateTimeSplit,
+traffic.features.splitByParsing('date_time', dateTimeSplitter,
                                 ['year', 'month', 'day', 'hour', 'weekday'])
 
-traffic.show('New parsed features in traffic data', **showKwargs)
+## Now let's take a look at our data again after splitting a single feature
+## of text into 5 numeric features.
+traffic.show('New parsed features in traffic data', **settingsForShow)
 
-## The `holiday` feature only identifies the holiday for the first hour of each
-## holiday and every other value is missing. We want to transform this feature
-## to use boolean values that identify every point that falls on a holiday.
+## Above, we also see that the `holiday` feature has many `nan` values. Let's
+## take a look at a selection of points that include a holiday to get a better
+## understanding of this feature.
+pointsWithHoliday = slice(1368, 1372)
+dateInfoFeatures = ['holiday', 'year', 'month', 'day', 'hour']
+sample = traffic[pointsWithHoliday, dateInfoFeatures]
+sample.show('Data sample with a holiday', **settingsForShow)
+
+## Now we can see that this feature records the holiday name for the first data
+## point recorded on a holiday, otherwise the value is `nan`. This means most
+## data points falling on a holiday still have `nan` as the holiday value. It
+## would be more helpful if this feature identified **every** point that
+## occurred on a holiday.
+
+## We need a more complex custom function to differentiate between missing
+## values that fall on a holiday and those that don't. The `holidayToBoolean`
+## function relies on the fact that our data points are chronological. As
+## `points.transform` iterates through each data point, each point with a
+## string value in the `holiday` feature indicates the start of a holiday.
+## `currentHoliday` stores the year, month and day of that holiday so that
+## subsequent points occurring on the same date can also be identified as
+## holidays. Ultimately, every value in `holiday` is replaced with a boolean
+## value.
+holidayIndex = traffic.features.getIndex('holiday')
 currentHoliday = {'date': None}
 def holidayToBoolean(point):
-    filledPt = []
+    newPt = list(point)
     dateTuple = (point['year'], point['month'], point['day'])
     if isinstance(point['holiday'], str):
         currentHoliday['date'] = dateTuple
     if currentHoliday['date'] == dateTuple:
-        filledPt.append(True)
+        newPt[holidayIndex] = True
     else:
-        filledPt.append(False)
-        currentHoliday['date'] = None
+        newPt[holidayIndex] = False
 
-    filledPt.extend(point[1:])
+    return newPt
 
-    return filledPt
-
-samplePts = slice(1368,1372) # a slice that includes a holiday
 traffic.points.transform(holidayToBoolean)
-print(traffic[samplePts, ['holiday', 'year', 'month', 'day', 'hour']])
+sample = traffic[pointsWithHoliday, dateInfoFeatures]
+sample.show('Data sample with converted holiday feature', **settingsForShow)
 
-## While `weather_description` is more detailed, many of its unique values
-## represent a very small proportion of the data. So, we will utilize the more
-## general `weather_main` and remove `weather_description`. To make the string
-## values in `weather_main` suitable for machine learning, we will represent
-## each of the 11 unique values as 11 new binary features.
+## We have two features related to categorizing the weather conditions. We saw
+## in our first look at the data that the `weather_description` feature is more
+## detailed than the `weather_main` feature. "Clouds" in the `weather_main`
+## feature could be "scattered clouds", "broken clouds" or "overcast clouds" in
+## `weather_description`. Since these features are very similar, we will use
+## only one of them. The `weather_main` feature provides a good general idea of
+## the current weather so let's delete `weather_description` from our data.
 traffic.features.delete('weather_description')
+
+## To make the string values in `weather_main` suitable for machine learning,
+## we will represent each of the 11 unique values contained in this column as
+## 11 new binary features.
 newCols = traffic.replaceFeatureWithBinaryFeatures('weather_main')
 sampleFts = ['weather_main=Clouds', 'weather_main=Clear', 'weather_main=Mist']
-print(traffic[samplePts, sampleFts])
+traffic[pointsWithHoliday, sampleFts].show('Sample of binary weather features',
+                                           **settingsForShow)
 
-## Our dataset is now ready for machine learning.
-traffic.show('Cleaned traffic data', **showKwargs)
+## Now that we have removed any bad points and transformed all of our data to
+## numeric values, our data is ready for machine learning. We will be using
+## this data to predict the `traffic_volume` feature from the other features.
+traffic.show('Cleaned traffic data', **settingsForShow)
 
 ## Writing to a file ##
 
-## So that we can load the cleaned data for our supervised learning example, we
+## We'd like to be able to load the cleaned data for our
+## [Supervised Learning example](traffic_train.ipynb) any time we want, so we
 ## will write it to a new csv file.
 traffic.writeFile('Metro_Interstate_Traffic_Volume_Cleaned.csv')
 
-## **Reference:**
+## **References:**
 
 ## Dua, D. and Graff, C. (2019).
 ## UCI Machine Learning Repository [http://archive.ics.uci.edu/ml].

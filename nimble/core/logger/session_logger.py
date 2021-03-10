@@ -495,8 +495,8 @@ class SessionLogger(object):
         metrics : dict
             The results of the testing on a run.
         extraInfo: dict
-            Any extra information to add to the log. Typically provides
-            the best parameters from cross validation.
+            Any extra information to add to the log. Here provides the
+            best parameters from cross validation.
         time : float, None
             The time to run the function. None if function is not timed.
         """
@@ -535,8 +535,8 @@ class SessionLogger(object):
         metrics : dict
             The results of the testing on a run.
         extraInfo: dict
-            Any extra information to add to the log. Typically provides
-            the best parameters from cross validation.
+            Any extra information to add to the log. Here provides the
+            fold number.
         time : float, None
             The time to run the function. None if function is not timed.
         """
@@ -975,15 +975,15 @@ def _buildRunLogString(timestamp, entry):
     # randomSeed
     fullLog += "Random Seed: " + str(entry["randomSeed"])
     fullLog += "\n"
-    # metric data
-    if entry.get("metrics", False):
-        fullLog += "Metrics: "
-        fullLog += _dictToKeywordString(entry["metrics"])
-        fullLog += "\n"
     # extraInfo
     if entry.get("extraInfo", False):
         fullLog += "Extra Info: "
         fullLog += _dictToKeywordString(entry["extraInfo"])
+        fullLog += "\n"
+    # metric data
+    if entry.get("metrics", False):
+        fullLog += "Metrics: "
+        fullLog += _dictToKeywordString(entry["metrics"])
         fullLog += "\n"
 
     return fullLog

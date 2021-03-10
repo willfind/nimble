@@ -1321,10 +1321,11 @@ class Base(ABC):
             The fraction of the data to be placed in the testing sets.
             If ``randomOrder`` is False, then the points are taken from
             the end of this object.
-        labels : identifier or list of identifiers
-            The name(s) or index(es) of the data labels, a value of None
-            implies this data does not contain labels. This parameter
-            will affect the shape of the returned tuple.
+        labels : Base object, identifier, list of identifiers, None
+            A separate Base object containing the labels for this data
+            or the name(s) or index(es) of the data labels within this object.
+            A value of None implies this data does not contain labels. This
+            parameter will affect the shape of the returned tuple.
         randomOrder : bool
             Control whether the order of the points in the returns sets
             matches that of the original object, or if their order is
@@ -2582,7 +2583,7 @@ class Base(ABC):
             The maximum value shown on the y axis of the resultant plot.
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
-            ``scatter`` function.
+            ``plot`` function.
         """
         self._plotFeatureAgainstFeature(
             x, y, sampleSizeForAverage, trend, outPath, show, figureName,
@@ -2641,7 +2642,7 @@ class Base(ABC):
             The maximum value shown on the y axis of the resultant plot.
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
-            ``scatter`` function.
+            ``plot`` function.
         """
         self._plotFeatureAgainstFeature(
             x, y, None, trend, outPath, show, figureName, title, xAxisLabel,
@@ -2712,8 +2713,10 @@ class Base(ABC):
 
         if 'marker' not in kwargs:
             kwargs['marker'] = '.'
+        if 'linestyle' not in kwargs:
+            kwargs['linestyle'] = ''
 
-        ax.scatter(xToPlot, yToPlot, **kwargs)
+        ax.plot(xToPlot, yToPlot, **kwargs)
         if 'label' in kwargs:
             ax.legend()
 
@@ -2826,7 +2829,8 @@ class Base(ABC):
             An optional subgrouping feature. When not None, the bar for
             each group defined by ``groupFeature`` will be subdivided
             based on this feature with a unique colored bar for each
-            subgroup.
+            subgroup. This may be the same as ``feature`` if its values
+            define the subgroups.
         horizontal : bool
             False, the default, draws plot bars vertically. True will
             draw bars horizontally.
@@ -2870,11 +2874,13 @@ class Base(ABC):
             statName = statistic.__name__
         else:
             statName = ''
+
+        toGroup = self.features[[groupFeature, feature]]
         if subgroupFeature:
-            target = [groupFeature, subgroupFeature, feature]
-        else:
-            target = [groupFeature, feature]
-        toGroup = self.features[target]
+            subgroupFt = self.features[subgroupFeature]
+            # remove name in case is same as feature
+            subgroupFt.features.setName(0, None)
+            toGroup.features.insert(1, subgroupFt)
         grouped = toGroup.groupByFeature(0, useLog=False)
 
         axisRange = range(1, len(grouped) + 1)
@@ -2895,15 +2901,13 @@ class Base(ABC):
 
         elif subgroupFeature:
             heights = {}
-            for name, group in grouped.items():
-                names.append(name)
+            for i, (name, group) in enumerate(grouped.items()):
+                names.append(str(name))
                 subgrouped = group.groupByFeature(0, useLog=False)
                 for subname, subgroup in subgrouped.items():
-                    if subname in heights:
-                        heights[subname].append(statistic(subgroup))
-                    else:
-                        heights[subname] = [statistic(subgroup)]
-
+                    if subname not in heights:
+                        heights[subname] = [0] * len(grouped)
+                    heights[subname][i] = statistic(subgroup)
             subgroup = self._formattedStringID('feature', subgroupFeature)
             if title is True:
                 title = "{feat} {stat} by {group}"

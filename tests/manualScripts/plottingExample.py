@@ -175,15 +175,31 @@ if __name__ == "__main__":
                                       xAxisLabel=False,  yAxisLabel=False,
                                       outPath=outPath, show=givenShow)
 
-    def plotGroupCounts(plotObj, outDir, givenShow):
+    def plotGroupStats(plotObj, outDir, givenShow):
         outPath = getOutPath(outDir, "groupCounts")
 
+        plotObj.plotFeatureGroupStatistics(
+            nimble.calculate.sum, feature=2, groupFeature=0, show=False,
+            figureName='count', color='y', alpha=0.6)
+        plotObj.plotFeatureGroupStatistics(
+            nimble.calculate.sum, feature=2, groupFeature=0,
+            subgroupFeature=1, outPath=outPath, show=givenShow,
+            figureName='count', edgecolor='k')
+
+        plotObj.plotFeatureGroupStatistics(
+            nimble.calculate.count, feature=1, groupFeature=0,
+            subgroupFeature=1, outPath=outPath, show=givenShow,
+            figureName='count', color=['black', 'yellow'])
+        # Strange example with given data but used to highlight two things:
+        # 1) Proper bar spacing when the subgroup does not contain all of the
+        # unique values in the in the subgroup feature
+        # 2) The color spectrum does not repeat with more than 10 subgroup bars
         plotObj.plotFeatureGroupStatistics(
             nimble.calculate.count, feature=2, groupFeature=0, show=False,
             figureName='count', color='y', alpha=0.6)
         plotObj.plotFeatureGroupStatistics(
             nimble.calculate.count, feature=2, groupFeature=0,
-            subgroupFeature=1, outPath=outPath, show=givenShow,
+            subgroupFeature=2, outPath=outPath, show=givenShow,
             figureName='count', edgecolor='k')
 
     def plotFeatureSumsManual(plotObj, outDir, givenShow):
@@ -260,7 +276,7 @@ if __name__ == "__main__":
     plotCheckerboad(checkObj, givenOutDir, givenShow)
     plotCheckeredGradient(checkGradObj, givenOutDir, givenShow)
     plotGroupMeans(groupObj, givenOutDir, givenShow)
-    plotGroupCounts(groupObj, givenOutDir, givenShow)
+    plotGroupStats(groupObj, givenOutDir, givenShow)
     plotFeatureSumsManual(groupObj, givenOutDir, givenShow)
     plotFeatureComparisons(givenOutDir, givenShow)
     plotPointComparison(givenOutDir, givenShow)

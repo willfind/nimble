@@ -78,13 +78,17 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
           and the names for each feature must be unique. As a list, the
           index of the name will define the feature index. As a dict,
           the value mapped to each name will define the feature index.
-    convertToType : type
-        A one-time conversion of all the data to this type. If unable to
-        convert every value to the given type, an exception will be
-        raised. The default, None, will retain the object types as is
-        when creating the object. Note: This only applies during the
-        creation process, nimble will modify types on the backend as
-        necessary.
+    convertToType : type, dict, list, None
+        A one-time conversion of features to the provided type or types.
+        By default, object types within ``source`` are not modified,
+        except for features detected to be numeric in a data file.
+        Setting this parameter to a single type will convert all of the
+        data to that type. For feature-by-feature type setting, a dict
+        or list can be used. Dicts map feature identifiers (names and
+        indexes) to conversion types. Any feature not included in the
+        dict will remain as-is. A list must provide a type or None for
+        each feature. Note: The setting of types only applies during the
+        creation process, object methods will modify types if necessary.
     name : str
         When not None, this value is set as the name attribute of the
         returned object.

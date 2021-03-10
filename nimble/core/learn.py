@@ -1472,7 +1472,7 @@ class KFoldCrossValidator(object):
         # Folding should be the same for each argset (and is expensive) so
         # iterate over folds first
         deepLog = loggingEnabled(useLog) and deepLoggingEnabled()
-        for fold in foldIter:
+        for foldNum, fold in enumerate(foldIter):
             [(curTrainX, curTestingX), (curTrainY, curTestingY)] = fold
             argSetIndex = 0
             # given this fold, do a run for each argument combination
@@ -1487,10 +1487,6 @@ class KFoldCrossValidator(object):
                     self.randomSeed = curTL.randomSeed
                 curRunResult = curTL.apply(curTestingX, useLog=False)
                 totalTime = time.process_time() - startTime
-                handleLogging(deepLog, "runCV", "trainAndApply", curTrainX,
-                              curTrainY, curTestingX, None, self.learnerName,
-                              curArgumentCombination, self.randomSeed,
-                              time=totalTime)
                 performanceOfEachCombination[argSetIndex][0] = (
                     curArgumentCombination)
 
@@ -1508,6 +1504,14 @@ class KFoldCrossValidator(object):
                 else:
                     performanceOfEachCombination[argSetIndex][1].append(
                         curRunResult)
+
+                metrics = {self.performanceFunction.__name__: curPerformance}
+                extraInfo = {'Fold': '{}/{}'.format(foldNum + 1, self.folds)}
+                handleLogging(deepLog, "runCV", "KFoldCrossValidation",
+                              curTrainX, curTrainY, curTestingX, curTestingY,
+                              self.learnerName, curArgumentCombination,
+                              self.randomSeed, metrics=metrics,
+                              extraInfo=extraInfo, time=totalTime)
 
                 argSetIndex += 1
 

@@ -1,28 +1,54 @@
+Page activity features
+12212pt x 6ft
+
 Administrative Admin_Duration Informational Info_Duration ProductRelated Product_Duration
 
       0            0.000            0           0.000           1             0.000
       0            0.000            0           0.000           2             64.000
       0            0.000            0           0.000           1             0.000
-      0            0.000            0           0.000           2             2.667
-      0            0.000            0           0.000           10           627.500
+      |              |              |             |             |               |
+      0            0.000            0           0.000           6            184.250
+      4            75.000           0           0.000           15           346.000
+      0            0.000            0           0.000           3             21.250
+
+Website analytic features
+12212pt x 3ft
 
 BounceRates ExitRates PageValues
 
    0.200      0.200     0.000
    0.000      0.100     0.000
    0.200      0.200     0.000
-   0.050      0.140     0.000
-   0.020      0.050     0.000
+     |          |         |
+   0.083      0.087     0.000
+   0.000      0.021     0.000
+   0.000      0.067     0.000
 
-SpecialDay Month OperatingSystems Browser Region TrafficType NewVisitor Weekend Revenue
+Visit detail features
+12212pt x 9ft
+
+SpecialDay Month OperatingSystems Browser Region TrafficType NewVisitor Weekend Purchase
 
   0.000      0          1            1      1         1        False     False   False
   0.000      0          2            2      1         2        False     False   False
   0.000      0          4            1      9         3        False     False   False
-  0.000      0          3            2      2         4        False     False   False
-  0.000      0          3            3      1         4        False      True   False
+    |        |          |            |      |         |          |         |       |
+  0.000      7          3            2      1         13       False      True   False
+  0.000      7          2            2      3         11       False     False   False
+  0.000      7          3            2      1         2         True      True   False
 
-                   Revenue
+Mean Administrative hits per visit 2.27104487389453
+Median Administrative hits per visit 1.0
+Mean Informational hits per visit 0.4758434326891582
+Median Informational hits per visit 0.0
+Mean ProductRelated hits per visit 30.687684245004913
+Median ProductRelated hits per visit 18.0
+Proportion of visitors that view a product page: 0.9968883065836882
+Proportion of visits with a purchase: 0.15263675073698002
+Feature correlations with Purchase
+18pt x 1ft
+
+                   Purchase
 
   Administrative    0.139
   Admin_Duration    0.106
@@ -41,12 +67,8 @@ OperatingSystems    -0.017
      TrafficType    -0.006
       NewVisitor    0.103
          Weekend    0.030
-         Revenue    1.000
+        Purchase    1.000
 
-Proportion of visits that generated revenue: 0.15263675073698002
-Proportion of visits near a special day: 0.10194890271863741
-Administrative average hits per visit 2.27104487389453
-Informational average hits per visit 0.4758434326891582
-ProductRelated average hits per visit 30.687684245004913
-Proportion of visitors that view a product page: 0.9968883065836882
+10.19% of all visits were near a special day
+4.08% of all purchases were near a special day
 
