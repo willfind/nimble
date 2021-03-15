@@ -120,7 +120,7 @@ def testSparsityReturnedPlausible():
         points (zeros and non zeros) is within 1 percent of the 1 - sparsity.
     -These tests are run for all combinations of the paramaters:
         supportedFundamentalTypes = ['int', 'float']
-        returnTypes = ['Matrix','Sparse','List']
+        returnTypes = ['Matrix', 'Sparse', 'List', 'DataFrame']
         sparsities = [0.0, 0.5, .99]
     """
     supportedFundamentalTypes = ['int', 'float']

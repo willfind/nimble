@@ -20,6 +20,7 @@ import numpy
 import os
 import os.path
 from unittest.mock import patch
+from functools import partial
 
 from nose.tools import *
 
@@ -34,7 +35,7 @@ from .baseObject import DataTestObject
 from tests.helpers import logCountAssertionFactory, noLogEntryExpected
 from tests.helpers import assertNoNamesGenerated
 from tests.helpers import CalledFunctionException, calledException
-
+from tests.helpers import getDataConstructors
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
@@ -814,10 +815,9 @@ def back_autoVsNumpyScalar(constructor, opName, nimbleinplace, sparsity):
 
 def back_autoVsNumpyObjCalleeDiffTypes(constructor, opName, nimbleinplace, sparsity):
     """ Test operation on handmade data with different types of data objects"""
-    makers = [getattr(nimble.core.data, retType) for retType in nimble.core.data.available]
+    makers = [partial(con, useLog=False) for con in getDataConstructors()]
 
-    for i in range(len(makers)):
-        maker = makers[i]
+    for maker in makers:
         numPts = pythonRandom.randint(1, 10)
         # use square for matmul so shapes are compatible, otherwise randomize
         if 'matmul' in opName:
@@ -1714,7 +1714,7 @@ class NumericalDataSafe(DataTestObject):
         assert expObj == getattr(lhsObj, logicOp)(rhsObj)
 
     @noLogEntryExpected
-    def back_logical_diffObjectTypes(self, logicOp):
+    def back_logical_allObjectTypes(self, logicOp):
         lhs = [[True, True], [True, False]]
         rhs = [[False, True], [False, False]]
 
@@ -1722,8 +1722,8 @@ class NumericalDataSafe(DataTestObject):
 
         exp = self.getLogicalExpectedOutput(logicOp)
         expObj = self.constructor(exp)
-        for rType in [t for t in nimble.core.data.available if t != lhsObj.getTypeString()]:
-            rhsObj = nimble.data(rType, rhs, useLog=False)
+        for constructor in getDataConstructors():
+            rhsObj = constructor(rhs, useLog=False)
 
             assert expObj == getattr(lhsObj, logicOp)(rhsObj)
 
@@ -1737,7 +1737,7 @@ class NumericalDataSafe(DataTestObject):
         self.back_logical_allCombinations(logicOp, inputType='bool')
         self.back_logical_allCombinations(logicOp, inputType='int')
         self.back_logical_allCombinations(logicOp, inputType='float')
-        self.back_logical_diffObjectTypes(logicOp)
+        self.back_logical_allObjectTypes(logicOp)
 
     ###########
     # __and__ #

@@ -12,27 +12,25 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.calculate import inverse, pseudoInverse, leastSquaresSolution, solve
 
-
+from tests.helpers import getDataConstructors
 ###########
 # inverse #
 ###########
 
 def testInverseSquareObject():
     """
-        Test success of inverse for a square object and
-        test that input object is not modified.mm
+    Test success of inverse for a square object and
+    test that input object is not modified.
     """
     data = [[1, 1, 0], [1, 0, 1], [1, 1, 1]]
     pnames = ['p1', 'p2', 'p3']
     fnames = ['f1', 'f2', 'f3']
 
-    for dataType in nimble.core.data.available:
-        identityObj = nimble.identity(dataType, 3)
-        origObj = nimble.data(
-            dataType, data, pointNames=pnames, featureNames=fnames)
-        obj = nimble.data(dataType, data, pointNames=pnames,
-                          featureNames=fnames)
-        objNoNames = nimble.data(dataType, data)
+    for constructor in getDataConstructors():
+        identityObj = constructor(nimble.identity('Matrix', 3))
+        origObj = constructor(data, pointNames=pnames, featureNames=fnames)
+        obj = constructor(data, pointNames=pnames, featureNames=fnames)
+        objNoNames = constructor(data)
 
         objInv = inverse(obj)
 
@@ -46,8 +44,8 @@ def testInverseEmptyObject():
     """
     data = []
 
-    for dataType in nimble.core.data.available:
-        obj = nimble.data(dataType, data)
+    for constructor in getDataConstructors():
+        obj = constructor(data)
         objInv = inverse(obj)
         assert objInv == obj
 
@@ -58,8 +56,8 @@ def testInverseNonSquareObject():
     """
     data = [[1, 2, 3], [4, 5, 6]]
 
-    for dataType in nimble.core.data.available:
-        obj = nimble.data(dataType, data)
+    for constructor in getDataConstructors():
+        obj = constructor(data)
         try:
             inverse(obj)
             assert False # expected InvalidArgumentValue
@@ -73,8 +71,8 @@ def testNonInvertibleObject():
     """
     data = [[1, 1], [1, 1]]
 
-    for dataType in nimble.core.data.available:
-        obj = nimble.data(dataType, data)
+    for constructor in getDataConstructors():
+        obj = constructor(data)
 
         try:
             inverse(obj)
@@ -90,41 +88,38 @@ def testNonInvertibleObject():
 
 def testPseudoInverseObject():
     """
-        Test success of pseudoInverse for valid objects cases.
-        This includes, square objects, non-square objects and
-        singular objects.
+    Test success of pseudoInverse for valid objects cases.
+    This includes, square objects, non-square objects and
+    singular objects.
     """
-    def _testPseudoInverseCreateObjects(dataType):
+    def _testPseudoInverseCreateObjects(constructor):
 
         objsList = []
 
         data = [[1, 1, 0], [1, 0, 1], [1, 1, 1]]
         pnames = ['p1', 'p2', 'p3']
         fnames = ['f1', 'f2', 'f3']
-        obj = nimble.data(dataType, data, pointNames=pnames,
-                          featureNames=fnames)
+        obj = constructor(data, pointNames=pnames, featureNames=fnames)
         objsList.append(obj)
 
         data = [[1, 2, 3], [3, 4, 5]]
         pnames = ['p1', 'p2']
         fnames = ['f1', 'f2', 'f3']
-        obj = nimble.data(dataType, data, pointNames=pnames,
-                          featureNames=fnames)
+        obj = constructor(data, pointNames=pnames, featureNames=fnames)
         objsList.append(obj)
 
         data = [[1, 2], [3, 4], [5, 6]]
         pnames = ['p1', 'p2', 'p3']
         fnames = ['f1', 'f2']
-        obj = nimble.data(dataType, data, pointNames=pnames,
-                          featureNames=fnames)
+        obj = constructor(data, pointNames=pnames, featureNames=fnames)
         objsList.append(obj)
 
         data = [[1, 1], [1, 1]]
-        obj = nimble.data(dataType, data)
+        obj = constructor(data)
         objsList.append(obj)
 
         data = [[1, 2]]
-        obj = nimble.data(dataType, data)
+        obj = constructor(data)
         objsList.append(obj)
 
         return objsList
@@ -142,21 +137,21 @@ def testPseudoInverseObject():
         assert identityFromPinv.isApproximatelyEqual(identity)
         assert origObj == obj
 
-    for dataType in nimble.core.data.available:
+    for constructor in getDataConstructors():
         for method in ['least-squares', 'svd']:
-            objList = _testPseudoInverseCreateObjects(dataType)
+            objList = _testPseudoInverseCreateObjects(constructor)
             for obj in objList:
                 _pseudoInverseTestImplementation(obj, method)
 
 
 def testPseudoInverseEmptyObject():
     """
-        Test pseudoInverse for an empty object.
+    Test pseudoInverse for an empty object.
     """
     data = []
 
-    for dataType in nimble.core.data.available:
-        obj = nimble.data(dataType, data)
+    for constructor in getDataConstructors():
+        obj = constructor(data)
         objInv = pseudoInverse(obj)
         assert objInv == obj
 
@@ -167,7 +162,7 @@ def testPseudoInverseEmptyObject():
 
 def testSolveSuccess():
     """
-        Test success for solve
+    Test success for solve
     """
     _backendSolverSuccess(solve)
 
@@ -178,14 +173,14 @@ def testSolveSuccess():
 
 def testLeastSquareSolutionExact():
     """
-        Test success for leastSquareSolution exact case.
+    Test success for leastSquareSolution exact case.
     """
     _backendSolverSuccess(leastSquaresSolution)
 
 
 def testLeastSquareSolutionOverdetermined():
     """
-        Test success for leastSquareSolution overdetermined system.
+    Test success for leastSquareSolution overdetermined system.
     """
     aArray = numpy.array([[1, 2], [4, 5], [3, 4]])
     bArrays = [numpy.array([1, 2, 3]), numpy.array([[1], [2], [3]])]
@@ -196,7 +191,7 @@ def testLeastSquareSolutionOverdetermined():
 
 def testLeastSquareSolutionUnderdetermined():
     """
-        Test success for leastSquareSolution under-determined system.
+    Test success for leastSquareSolution under-determined system.
     """
     aArray = numpy.array([[1, 2, 3], [4, 5, 6]])
     bArrays = [numpy.array([1, 2]), numpy.array([[1], [2]])]
@@ -209,16 +204,17 @@ def _backendSolverSuccess(solverFunction):
     aArray = numpy.array([[1, 20], [-30, 4]])
     bArrays = [numpy.array([-30, 4]), numpy.array([[-30], [4]])]
 
-    for dataType in nimble.core.data.available:
-        for dataTypeB in nimble.core.data.available:
+    for constructor in getDataConstructors():
+        for constructorB in getDataConstructors():
             for bArray in bArrays:
-                A = nimble.data(dataType, aArray, featureNames=['f1', 'f2'])
-                b = nimble.data(dataTypeB, bArray)
+                A = constructor(aArray, featureNames=['f1', 'f2'])
+                b = constructorB(bArray)
                 sol = solverFunction(A, b)
                 aInv = inverse(A)
                 if len(b.features) > 1:
-                    b.transpose()
-                reference = (aInv @ b)
+                    reference = (aInv @ b.T)
+                else:
+                    reference = (aInv @ b)
                 reference.transpose()
                 # reference.points.setNames(['b'])
                 assert sol.isApproximatelyEqual(reference)
@@ -227,15 +223,13 @@ def _backendSolverSuccess(solverFunction):
                 assert sol.getTypeString() == A.getTypeString()
 
 def _backendNonSquareSolverSucces(aArray,  bArrays, featureNames):
-    for dataType in nimble.core.data.available:
-        for dataTypeB in nimble.core.data.available:
+    for constructor in getDataConstructors():
+        for constructorB in getDataConstructors():
             for bArray in bArrays:
-                aOrig = nimble.data(
-                    dataType, aArray, featureNames=featureNames)
-                A = nimble.data(dataType, aArray,
-                                featureNames=featureNames)
-                bOrig = nimble.data(dataTypeB, bArray)
-                b = nimble.data(dataTypeB, bArray)
+                aOrig = constructor(aArray, featureNames=featureNames)
+                A = constructor(aArray, featureNames=featureNames)
+                bOrig = constructorB(bArray)
+                b = constructorB(bArray)
                 sol = leastSquaresSolution(A, b)
 
                 assert A == aOrig
@@ -243,8 +237,9 @@ def _backendNonSquareSolverSucces(aArray,  bArrays, featureNames):
 
                 aPinv = pseudoInverse(A)
                 if len(b.features) > 1:
-                    b.transpose()
-                reference = (aPinv @ b)
+                    reference = (aPinv @ b.T)
+                else:
+                    reference = (aPinv @ b)
                 reference.transpose()
                 assert sol.isApproximatelyEqual(reference)
                 assert A.features.getNames() == sol.features.getNames()

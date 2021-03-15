@@ -49,6 +49,7 @@ from tests.helpers import logCountAssertionFactory
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import assertNoNamesGenerated, assertExpectedException
 from tests.helpers import CalledFunctionException, calledException
+from tests.helpers import getDataConstructors
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
@@ -3007,21 +3008,18 @@ class StructureModifying(StructureShared):
     def backend_insert_allPossibleNimbleDataType(self, axis):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
 
-        currType = self.constructor([]).getTypeString()
-        availableTypes = nimble.core.data.available
-        otherTypes = [retType for retType in availableTypes if retType != currType]
         inserted = []
-        for other in otherTypes:
+        for constructor in getDataConstructors():
             toTest = self.constructor(data)
             if axis == 'point':
                 insertData = [[-1, -2, -3]]
-                otherTest = nimble.data(other, insertData)
+                otherTest = constructor(insertData)
                 exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
                 toTest.points.insert(len(toTest.points), otherTest)
                 inserted.append(toTest)
             else:
                 insertData = [[-1], [-2], [-3]]
-                otherTest = nimble.data(other, insertData)
+                otherTest = constructor(insertData)
                 exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
                 toTest.features.insert(len(toTest.features), otherTest)
                 inserted.append(toTest)
@@ -8227,9 +8225,9 @@ class StructureModifying(StructureShared):
         fill = [[0, 0], [0, 0]]
         exp = [[0, 0, 13], [0, 0, 23], [31, 32, 33]]
         exp = self.constructor(exp)
-        for t in nimble.core.data.available:
+        for constructor in getDataConstructors():
             toTest = self.constructor(raw)
-            arg = nimble.data(t, fill)
+            arg = constructor(fill)
             toTest.replaceRectangle(arg, 0, 0, 1, 1)
             assert toTest == exp
 

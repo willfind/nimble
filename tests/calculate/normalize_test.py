@@ -7,8 +7,7 @@ from nimble.calculate import range0to1Normalize
 from nimble.calculate import percentileNormalize
 from nimble.calculate.normalize import rangeNormalize
 from tests.helpers import noLogEntryExpected
-
-retTypes = nimble.core.data.available
+from tests.helpers import getDataConstructors
 
 @noLogEntryExpected
 def assertExpected(func, raw1, raw2, exp1, exp2):
@@ -17,12 +16,12 @@ def assertExpected(func, raw1, raw2, exp1, exp2):
         raw2 = numpy.array(raw2).reshape(shape)
         exp1 = numpy.array(exp1).reshape(shape)
         exp2 = numpy.array(exp2).reshape(shape)
-        for type1 in retTypes:
-            for type2 in retTypes:
-                data1 = nimble.data(type1, raw1, useLog=False)
-                expData1 = nimble.data(type1, exp1, useLog=False)
-                data2 = nimble.data(type2, raw2, useLog=False)
-                expData2 = nimble.data(type2, exp2, useLog=False)
+        for con1 in getDataConstructors():
+            for con2 in getDataConstructors():
+                data1 = con1(raw1, useLog=False)
+                expData1 = con1(exp1, useLog=False)
+                data2 = con2(raw2, useLog=False)
+                expData2 = con2(exp2, useLog=False)
 
                 out1 = func(data1)
                 assert out1 == expData1

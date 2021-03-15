@@ -476,7 +476,7 @@ class Matrix(Base):
             return Matrix(numpy.matmul(self._data, other._data))
         if isinstance(other, nimble.core.data.Sparse):
             # '*' is matrix multiplication in scipy
-            return Matrix(self._data * other._data)
+            return Matrix(self._data * other._getSparseData())
         return Matrix(numpy.matmul(self._data, other.copy(to="numpyarray")))
 
     def _convertToNumericTypes_implementation(self, usableTypes):

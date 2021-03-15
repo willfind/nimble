@@ -557,9 +557,8 @@ def loadTrainedLearner(inputPath, useLog=None):
         raise InvalidArgumentValue(msg)
     with open(inputPath, 'rb') as file:
         ret = cloudpickle.load(file)
-    if not isinstance(ret,
-                      nimble.core.interfaces.TrainedLearner):
-        msg = 'File does not contain a nimble valid trainedLearner Object.'
+    if not isinstance(ret, nimble.core.interfaces.TrainedLearner):
+        msg = 'File does not contain a valid Nimble TrainedLearner object.'
         raise InvalidArgumentType(msg)
 
     handleLogging(useLog, 'load', "TrainedLearner",

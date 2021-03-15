@@ -14,7 +14,6 @@ from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from tests.helpers import noLogEntryExpected
 
-
 returnTypes = copy.copy(nimble.core.data.available)
 
 #######################

@@ -9,6 +9,7 @@ from nimble.calculate import rSquared
 from nimble.calculate import confusionMatrix
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from tests.helpers import noLogEntryExpected
+from tests.helpers import getDataConstructors
 
 ####################
 # cosineSimilarity #
@@ -178,9 +179,9 @@ def test_confusionMatrix_noLabels():
             [1], [2], [3], [4],
             [4], [3], [2], [1]]
 
-    for t in nimble.core.data.available:
-        knownObj = nimble.data(t, known, useLog=False)
-        predObj = nimble.data(t, pred, useLog=False)
+    for constructor in getDataConstructors():
+        knownObj = constructor(known, useLog=False)
+        predObj = constructor(pred, useLog=False)
 
         cm = confusionMatrix(knownObj, predObj)
 
@@ -191,7 +192,7 @@ def test_confusionMatrix_noLabels():
 
         featureNames = ['known_' + str(i) for i in range(1, 5)]
         pointNames = ['predicted_' + str(i) for i in range(1, 5)]
-        expObj = nimble.data(t, expData, pointNames, featureNames,
+        expObj = constructor(expData, pointNames, featureNames,
                              useLog=False)
 
         assert cm.isIdentical(expObj)
@@ -216,13 +217,13 @@ def test_confusionMatrix_noLabels_consistentOutput():
              [4], [3], [2], [1],
              [1], [2], [3], [4],]
 
-    for t in nimble.core.data.available:
-        knownObj1 = nimble.data(t, known1, useLog=False)
-        predObj1 = nimble.data(t, pred1, useLog=False)
+    for constructor in getDataConstructors():
+        knownObj1 = constructor(known1, useLog=False)
+        predObj1 = constructor(pred1, useLog=False)
         cm1 = confusionMatrix(knownObj1, predObj1)
 
-        knownObj2 = nimble.data(t, known2, useLog=False)
-        predObj2 = nimble.data(t, pred2, useLog=False)
+        knownObj2 = constructor(known2, useLog=False)
+        predObj2 = constructor(pred2, useLog=False)
         cm2 = confusionMatrix(knownObj2, predObj2)
 
         assert cm1 == cm2
@@ -238,9 +239,9 @@ def test_confusionMatrix_withLabelsDict():
             [1], [2], [3], [4],
             [4], [3], [2], [1]]
 
-    for t in nimble.core.data.available:
-        knownObj = nimble.data(t, known, useLog=False)
-        predObj = nimble.data(t, pred, useLog=False)
+    for constructor in getDataConstructors():
+        knownObj = constructor(known, useLog=False)
+        predObj = constructor(pred, useLog=False)
 
         labels = {1: 'one', 2: 'two', 3: 'three', 4: 'four'}
         cm = confusionMatrix(knownObj, predObj, labels=labels)
@@ -253,7 +254,7 @@ def test_confusionMatrix_withLabelsDict():
         sortedLabels = [labels[i] for i in range(1, 5)]
         featureNames = ['known_' + l for l in sortedLabels]
         pointNames = ['predicted_' + l for l in sortedLabels]
-        expObj = nimble.data(t, expData, pointNames, featureNames,
+        expObj = constructor(expData, pointNames, featureNames,
                              useLog=False)
 
         assert cm.isIdentical(expObj)
@@ -278,14 +279,14 @@ def test_confusionMatrix_withLabelsDict_consistentOutput():
              [4], [3], [2], [1],
              [1], [2], [3], [4],]
 
-    for t in nimble.core.data.available:
-        knownObj1 = nimble.data(t, known1, useLog=False)
-        predObj1 = nimble.data(t, pred1, useLog=False)
+    for constructor in getDataConstructors():
+        knownObj1 = constructor(known1, useLog=False)
+        predObj1 = constructor(pred1, useLog=False)
         labels1 = {1: 'one', 2: 'two', 3: 'three', 4: 'four'}
         cm1 = confusionMatrix(knownObj1, predObj1, labels=labels1)
 
-        knownObj2 = nimble.data(t, known2, useLog=False)
-        predObj2 = nimble.data(t, pred2, useLog=False)
+        knownObj2 = constructor(known2, useLog=False)
+        predObj2 = constructor(pred2, useLog=False)
         labels2 = {4: 'four', 3: 'three', 2: 'two', 1: 'one'}
         cm2 = confusionMatrix(knownObj2, predObj2, labels=labels2)
 
@@ -302,9 +303,9 @@ def test_confusionMatrix_withLabelsList():
             [3], [2], [1], [0],
             [0], [1], [2], [3]]
 
-    for t in nimble.core.data.available:
-        knownObj = nimble.data(t, known, useLog=False)
-        predObj = nimble.data(t, pred, useLog=False)
+    for constructor in getDataConstructors():
+        knownObj = constructor(known, useLog=False)
+        predObj = constructor(pred, useLog=False)
 
         labels = ['three', 'two', 'one', 'zero']
         cm = confusionMatrix(knownObj, predObj, labels=labels)
@@ -316,7 +317,7 @@ def test_confusionMatrix_withLabelsList():
 
         featureNames = ['known_' + l for l in labels]
         pointNames = ['predicted_' + l for l in labels]
-        expObj = nimble.data(t, expData, pointNames, featureNames,
+        expObj = constructor(expData, pointNames, featureNames,
                              useLog=False)
 
         assert cm.isIdentical(expObj)
@@ -334,9 +335,9 @@ def test_confusionMatrix_additionalLabelsProvided():
             [0], [1], [2], [4],
             [4], [2], [1], [0]]
 
-    for t in nimble.core.data.available:
-        knownObj = nimble.data(t, known, useLog=False)
-        predObj = nimble.data(t, pred, useLog=False)
+    for constructor in getDataConstructors():
+        knownObj = constructor(known, useLog=False)
+        predObj = constructor(pred, useLog=False)
 
         labelsList = ['zero', 'one', 'two', 'three', 'four']
         cm1 = confusionMatrix(knownObj, predObj, labels=labelsList)
@@ -352,7 +353,7 @@ def test_confusionMatrix_additionalLabelsProvided():
 
         featureNames = ['known_' + lbl for lbl in labelsList]
         pointNames = ['predicted_' + lbl for lbl in labelsList]
-        expObj = nimble.data(t, expData, pointNames, featureNames,
+        expObj = constructor(expData, pointNames, featureNames,
                              useLog=False)
 
         assert cm1 == expObj
@@ -369,9 +370,9 @@ def test_confusionMatrix_convertCountsToFractions():
             [3], [2], [1],
             [3], [2], [1]]
 
-    for t in nimble.core.data.available:
-        knownObj = nimble.data(t, known, useLog=False)
-        predObj = nimble.data(t, pred, useLog=False)
+    for constructor in getDataConstructors():
+        knownObj = constructor(known, useLog=False)
+        predObj = constructor(pred, useLog=False)
 
         cm = confusionMatrix(knownObj, predObj, convertCountsToFractions=True)
 
@@ -381,7 +382,7 @@ def test_confusionMatrix_convertCountsToFractions():
 
         featureNames = ['known_' + str(i) for i in range(1, 4)]
         pointNames = ['predicted_' + str(i) for i in range(1, 4)]
-        expObj = nimble.data(t, expData, pointNames, featureNames, useLog=False)
+        expObj = constructor(expData, pointNames, featureNames, useLog=False)
 
         assert cm.isIdentical(expObj)
 
@@ -396,9 +397,9 @@ def test_confusionMatrix_strings():
             ['dog'], ['cat'], ['fish'], ['bear'],
             ['cat'], ['dog'], ['bear'], ['fish']]
 
-    for t in nimble.core.data.available:
-        knownObj = nimble.data(t, known, useLog=False)
-        predObj = nimble.data(t, pred, useLog=False)
+    for constructor in getDataConstructors():
+        knownObj = constructor(known, useLog=False)
+        predObj = constructor(pred, useLog=False)
 
         cm = confusionMatrix(knownObj, predObj)
 
@@ -409,6 +410,6 @@ def test_confusionMatrix_strings():
 
         featureNames = ['known_' + lab for lab in ['bear', 'cat', 'dog', 'fish']]
         pointNames = ['predicted_' + lab for lab in ['bear', 'cat', 'dog', 'fish']]
-        expObj = nimble.data(t, expData, pointNames, featureNames, useLog=False)
+        expObj = constructor(expData, pointNames, featureNames, useLog=False)
 
         assert cm.isIdentical(expObj)

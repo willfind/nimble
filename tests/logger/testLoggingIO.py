@@ -25,6 +25,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import InvalidArgumentType
 from tests.helpers import generateClassificationData
 from tests.helpers import configSafetyWrapper
+from tests.helpers import getDataConstructors
 
 #####################
 # Helpers for tests #
@@ -804,8 +805,9 @@ def testLambdaStringConversionCommas():
     data = [["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1],
             ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
             ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
-    for retType in nimble.core.data.available:
-        dataObj = nimble.data(retType, data, useLog=False)
+    for constructor in getDataConstructors():
+        retType = constructor.args[0]
+        dataObj = constructor(data, useLog=False)
         calculated1 = dataObj.points.calculate(lambda x: [x[0], x[2]], points=0)
         checkLogContents('points.calculate', retType, {'function': "lambda x: [x[0], x[2]]",
                                                         'points': 0})

@@ -27,6 +27,7 @@ from nimble.core.data import Features
 from nimble.core.interfaces.universal_interface import UniversalInterface
 from nimble.core.interfaces.universal_interface import TrainedLearner
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
+from tests.helpers import getDataConstructors
 
 ALL_USER_FACING = []
 modules = [nimble, calculate, exceptions, fill, match, random]
@@ -225,8 +226,8 @@ def test_Init_logCount():
 
 @noLogEntryExpected
 def test_copy_logCount():
-    for rType in nimble.core.data.available:
-        obj = nimble.data(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for constructor in getDataConstructors():
+        obj = constructor([[1,2,3],[4,5,6]], useLog=False)
         copy = obj.copy()
 
 def test_featureReport_logCount():
@@ -245,21 +246,21 @@ def test_groupByFeature_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
         return obj.groupByFeature(0)
-    for rType in nimble.core.data.available:
-        obj = nimble.data(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
+    for constructor in getDataConstructors():
+        obj = constructor([[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                           useLog=False)
         grouped = wrapped(obj)
 
 @noLogEntryExpected
 def test_getTypeString_logCount():
-    for rType in nimble.core.data.available:
-        obj = nimble.data(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for constructor in getDataConstructors():
+        obj = constructor([[1,2,3],[4,5,6]], useLog=False)
         ts = obj.getTypeString()
 
 @noLogEntryExpected
 def test_hashCode_logCount():
-    for rType in nimble.core.data.available:
-        obj = nimble.data(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for constructor in getDataConstructors():
+        obj = constructor([[1,2,3],[4,5,6]], useLog=False)
         hash = obj.hashCode()
 
 @noLogEntryExpected
@@ -276,8 +277,8 @@ def test_toString_logCount():
 
 @noLogEntryExpected
 def test_validate_logCount():
-    for rType in nimble.core.data.available:
-        obj = nimble.data(rType, [[1,2,3],[4,5,6]], useLog=False)
+    for constructor in getDataConstructors():
+        obj = constructor([[1,2,3],[4,5,6]], useLog=False)
         isDefault = obj.validate()
 
 ############################
@@ -288,8 +289,8 @@ def test_points_permute_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
         return obj.points.permute()
-    for rType in nimble.core.data.available:
-        obj = nimble.data(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
+    for constructor in getDataConstructors(includeViews=False):
+        obj = constructor([[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                           useLog=False)
         grouped = wrapped(obj)
 
@@ -297,8 +298,8 @@ def test_features_permute_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
         return obj.features.permute()
-    for rType in nimble.core.data.available:
-        obj = nimble.data(rType, [[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
+    for constructor in getDataConstructors(includeViews=False):
+        obj = constructor([[1,2,3],[1,4,5],[2,2,3],[2,4,5]],
                              useLog=False)
         grouped = wrapped(obj)
 
@@ -348,8 +349,8 @@ def captureOutput(toCall):
         backupOut = sys.stdout
         sys.stdout = tmpFile
         try:
-            for rType in nimble.core.data.available:
-                obj = nimble.data(rType, [[1,2,3],[4,5,6]], useLog=False)
+            for constructor in getDataConstructors():
+                obj = constructor([[1,2,3],[4,5,6]], useLog=False)
                 ret = toCall(obj)
         finally:
             sys.stdout = backupOut

@@ -526,7 +526,9 @@ class DataFrame(Base):
         dtypes = tuple(map(lambda dtype: max(dtype, rowDtype), otherDtypes))
 
         if isinstance(other, nimble.core.data.Sparse):
-            values = self._asNumpyArray(numericRequired=True) * other._data
+            # scipy performs mat mul with * operator
+            array = self._asNumpyArray(numericRequired=True)
+            values = array * other._getSparseData()
         else:
             values = numpy.matmul(self._asNumpyArray(numericRequired=True),
                                   other.copy('numpyarray'))
