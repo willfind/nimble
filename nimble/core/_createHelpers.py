@@ -484,6 +484,32 @@ def transposeMatrix(matrixObj):
     """
     return numpy2DArray(list(zip(*matrixObj.tolist())), dtype=matrixObj.dtype)
 
+def _dictFeatureNames(featureNames, foundFtNames, data):
+    """
+    Checks that feature names are consistent with dict keys and reorders
+    data, if necessary.
+    """
+    if isinstance(featureNames, (list, dict)):
+        if isinstance(featureNames, dict):
+            featureNames = sorted(featureNames, key=featureNames.get)
+        if featureNames != foundFtNames:
+            if sorted(featureNames) != sorted(foundFtNames):
+                msg = 'Since dictionaries are unordered, featureNames can '
+                msg += 'only be provided if they are a reordering of the '
+                msg += 'keys in the dictionary'
+                raise InvalidArgumentValue(msg)
+            # reordering of features is necessary
+            newOrder = [foundFtNames.index(f) for f in featureNames]
+            if isinstance(data, numpy.ndarray):
+                data = data[newOrder]
+            else:
+                data = [data[i] for i in newOrder]
+    elif featureNames is False:
+        featureNames = None
+    elif featureNames is not None: # 'automatic' or True
+        featureNames = foundFtNames
+
+    return featureNames, data
 
 
 def extractNames(rawData, pointNames, featureNames):
@@ -505,14 +531,20 @@ def extractNames(rawData, pointNames, featureNames):
             msg = "if featureNames are not 'bool' or a 'str', "
             msg += "they should be other 'iterable' object"
             raise InvalidArgumentType(msg) from e
+
     # 1. convert dict like {'a':[1,2], 'b':[3,4]} to np.array
-    # featureNames must be those keys
-    # pointNames must be False or automatic
+    # featureNames can be same as the keys to define feature order
+    # pointNames cannot be True
     if isinstance(rawData, dict):
+        if pointNames is True:
+            msg = 'pointNames cannot be True when data is a dict'
+            raise InvalidArgumentValue(msg)
         if rawData:
-            featureNames = list(rawData.keys())
+            ftNames = list(rawData.keys())
             rawData = numpy2DArray(list(rawData.values()), dtype=numpy.object_)
-            if len(featureNames) == len(rawData):
+            featureNames, rawData = _dictFeatureNames(featureNames, ftNames,
+                                                      rawData)
+            if len(ftNames) == len(rawData):
                 # {'a':[1,3],'b':[2,4],'c':['a','b']} -> keys = ['a', 'c', 'b']
                 # np.matrix(values()) = [[1,3], ['a', 'b'], [2,4]]
                 # thus transpose is needed
@@ -520,34 +552,56 @@ def extractNames(rawData, pointNames, featureNames):
                 # np.matrix(values()) = [[1,3,2]]
                 # transpose is not needed
                 rawData = transposeMatrix(rawData)
-            pointNames = None
-
         else: # rawData={}
-            featureNames = None
             rawData = numpy.empty([0, 0])
-            pointNames = None
+            if featureNames is True:
+                msg = 'featureNames cannot be True when data is an empty dict'
+                raise InvalidArgumentValue(msg)
+            featureNames = None
 
-    # 2. convert list of dict ie. [{'a':1, 'b':3}, {'a':2, 'b':4}] to np.array
-    # featureNames must be those keys
-    # pointNames must be False or automatic
+        if pointNames == 'automatic' or pointNames is False:
+            pointNames = None
+        if featureNames is False:
+            featureNames = None
+
+    # 2. convert list of dict ie. [{'a':1, 'b':3}, {'a':2, 'b':4}] to list
+    # featureNames may be same as the keys to define feature order
+    # pointNames cannot be True
     elif (isinstance(rawData, list)
           and len(rawData) > 0
           and isinstance(rawData[0], dict)):
+        if pointNames is True:
+            msg = 'pointNames cannot be True when data is a dict'
+            raise InvalidArgumentValue(msg)
         # double nested list contained list-type forced values from first row
-        values = [list(rawData[0].values())]
+        values = []
         # in py3 keys() returns a dict_keys object comparing equality of these
         # objects is valid, but converting to lists for comparison can fail
         keys = rawData[0].keys()
+        if not keys: # empty dict
+            if featureNames is True:
+                msg = 'featureNames cannot be True when data is an empty dict'
+                raise InvalidArgumentValue(msg)
+            featureNames = None
+        ftNames = list(keys)
+        featureNames, firstPt = _dictFeatureNames(featureNames, ftNames,
+                                                  list(rawData[0].values()))
+        values.append(firstPt)
+        if featureNames is not None:
+            ftNames = featureNames # names may have been reorderd
         for i, row in enumerate(rawData[1:]):
             if row.keys() != keys:
-                msg = "The keys at index {i} do not match ".format(i=i)
+                msg = "The keys at index {} do not match ".format(i + 1)
                 msg += "the keys at index 0. Each dictionary in the list must "
-                msg += "contain the same key values."
+                msg += "contain the same keys."
                 raise InvalidArgumentValue(msg)
-            values.append(list(row.values()))
+            values.append([row[name] for name in ftNames])
         rawData = values
-        featureNames = keys
-        pointNames = None
+
+        if pointNames == 'automatic' or pointNames is False:
+            pointNames = None
+        if featureNames is False:
+            featureNames = None
 
     else:
         # 3. for rawData of other data types
