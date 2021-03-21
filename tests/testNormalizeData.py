@@ -3,8 +3,6 @@ Tests for the top level function nimble.normalizeData
 """
 
 import nimble
-from nimble import CustomLearner
-from tests.helpers import configSafetyWrapper
 from tests.helpers import logCountAssertionFactory
 
 # successful run no testX

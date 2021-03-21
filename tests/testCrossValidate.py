@@ -26,7 +26,6 @@ from nimble.random import pythonRandom
 from nimble.learners import KNNClassifier
 from nimble.core._learnHelpers import computeMetrics
 from nimble.core.learn import KFoldCrossValidator
-from tests.helpers import configSafetyWrapper
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import generateClassificationData
 
@@ -309,7 +308,6 @@ def test_crossValidateResults():
 
 
 @attr('slow')
-@configSafetyWrapper
 @nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
 def test_crossValidateBestArguments():
     """Check that the best / fittest argument set is returned.
@@ -465,7 +463,6 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected():
     assert abs(nonAvgResult - avgResult) < .0000001
 
 
-@configSafetyWrapper
 def test_crossValidate_sameResults_avgfold_vs_allcollected_orderReliant():
     # To dispel concerns relating to correctly collecting the Y data with
     # respect to the ordering of the X data in the non-average CV code.

@@ -1,5 +1,5 @@
-REGEX: .*tmp.*
-tmpLogs
+REGEX: .*
+REGEX: .*
 True
 False
 wifi_localization.txt : 2000pt x 8ft

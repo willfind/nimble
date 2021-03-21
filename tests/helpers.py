@@ -4,58 +4,10 @@ Common assertions helpers to be used in multiple test files.
 Custom assertion types can be helpful if the assertion can be added to
 existing tests which are also testing other functionality.
 """
-import tempfile
 from functools import wraps
-import os
-import copy
 
 import nimble
 from nimble.core._learnHelpers import generateClusteredPoints
-from nimble.core.configuration import SessionConfiguration
-
-def configSafetyWrapper(toWrap):
-    """
-    Decorator which ensures the safety of nimble.settings, the
-    configuration file, and associated global nimble state. To be used
-    to wrap unit tests which intersect with configuration functionality.
-    """
-    @wraps(toWrap)
-    def wrapped(*args, **kwargs):
-        configCopy = tempfile.NamedTemporaryFile('w+', delete=False)
-        configFilePath = os.path.join(nimble.nimblePath, 'configuration.ini')
-        configurationFile = open(configFilePath, 'r')
-        configCopy.write(configurationFile.read())
-        configurationFile.close()
-        configCopy.seek(0)
-
-        def loadSettingsFromTempFile():
-            return SessionConfiguration(configCopy.name)
-
-        copyChanges = copy.copy(nimble.settings.changes)
-        copyHooks = copy.copy(nimble.settings.hooks)
-        backupSettings = nimble.settings
-        backupLoadSettings = nimble.core.configuration.loadSettings
-        backupLogger = nimble.core.logger.active
-        availableBackup = copy.copy(nimble.core.interfaces.available)
-        # CustomLearnerInterface attributes are not copied above
-        clInterface = nimble.core.interfaces.available['custom']
-        clReg = copy.copy(clInterface.registeredLearners)
-
-        nimble.settings = loadSettingsFromTempFile()
-        nimble.settings.changes = copyChanges
-        nimble.settings.hooks = copyHooks
-        nimble.core.configuration.loadSettings = loadSettingsFromTempFile
-
-        try:
-            toWrap(*args, **kwargs)
-        finally:
-            nimble.settings = backupSettings
-            nimble.core.logger.active = backupLogger
-            nimble.core.configuration.loadSettings = backupLoadSettings
-            nimble.core.interfaces.available = availableBackup
-            clInterface.registeredLearners = clReg
-
-    return wrapped
 
 class LogCountAssertionError(AssertionError):
     pass
@@ -66,7 +18,6 @@ def logCountAssertionFactory(count):
     """
     def logCountAssertion(function):
         @wraps(function)
-        @configSafetyWrapper
         def wrapped(*args, **kwargs):
             nimble.settings.set('logger', 'enabledByDefault', 'True')
             nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
