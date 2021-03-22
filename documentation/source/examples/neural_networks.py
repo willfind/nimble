@@ -20,8 +20,8 @@ example, [0,0,0,1,0,0,0,0,0,0] is a 3 and [0,0,0,0,0,0,0,0,0,1] is a 9.
 [Download the dataset for this example][datasets]
 
 [colab]: https://colab.research.google.com/drive/1o-1M9MWiqPdgXeAZ0RUDBN-ilx4J_rh1?usp=sharing
-[files]: files.rst#neural-network-example
-[datasets]: ../datasets.rst#neural-network-example
+[files]: files.rst#neural-networks
+[datasets]: ../datasets.rst#neural-networks
 """
 
 ## Getting Started ##

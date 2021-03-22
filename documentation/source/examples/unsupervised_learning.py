@@ -3,7 +3,7 @@
 
 ### Classifying online shoppers
 
-In our [Exploring Data example](shoppers_explore.ipynb), we began
+In our [Exploring Data example](exploring_data.ipynb), we began
 exploring visitor behavior data from an ecommerce website. We will use
 that same data for this example, but a version that has been prepared
 for machine learning, `online_shoppers_intention_clean.csv`. Our goal
@@ -18,8 +18,8 @@ visit.
 [Download the dataset for this example][datasets]
 
 [colab]: https://colab.research.google.com/drive/10KZjKMnrrahHbOmDQa-dne44FmMMPePS?usp=sharing
-[files]: files.rst#unsupervised-learning-example
-[datasets]: ../datasets.rst#unsupervised-learning-example
+[files]: files.rst#unsupervised-learning
+[datasets]: ../datasets.rst#unsupervised-learning
 """
 ## Getting Started ##
 
@@ -169,7 +169,7 @@ clusterMeans = nimble.data('Matrix', means, featureNames=purchaseOnlyFtNames,
 
 ## For this example, a good visual way to analyze differences in feature means
 ## between clusters is to use plots. We examined the mean of all visits by page
-## type in [Exploring Data](shoppers_explore.ipynb), so now let's see how many
+## type in [Exploring Data](exploring_data.ipynb), so now let's see how many
 ## times our average purchaser **in each cluster** visits the various page
 ## types.
 pageTypes = ['Administrative', 'Informational', 'ProductRelated']

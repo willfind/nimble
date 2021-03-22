@@ -6,7 +6,7 @@
 In this example, we will use two datasets that contain data on
 interstate traffic volumes and features that may contribute to changes
 in traffic volume. `Metro_Interstate_Traffic_Volume_Cleaned.csv`, was
-generated in our [Data Cleaning example](traffic_clean.ipynb) and is the
+generated in our [Data Cleaning example](cleaning_data.ipynb) and is the
 cleaned data we will use to build our supervised learning models.
 `Metro_Interstate_Traffic_Volume_Predict.csv`, contains fictional
 "forecast" data that we will use to simulate making traffic volume
@@ -19,8 +19,8 @@ predictions using our supervised machine learning model.
 [Download the dataset for this example][datasets]
 
 [colab]: https://colab.research.google.com/drive/1XAqGkVFdI7UbJiegabkx5PynKZU-za3W?usp=sharing
-[files]: files.rst#supervised-learning-example
-[datasets]: ../datasets.rst#supervised-learning-example
+[files]: files.rst#supervised-learning
+[datasets]: ../datasets.rst#supervised-learning
 """
 
 ## Getting Started ##

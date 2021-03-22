@@ -19,8 +19,8 @@ change occurs in one of the weather forecast features.
 [Download the dataset for this example][datasets]
 
 [colab]: https://colab.research.google.com/drive/1TBeGjU7Jzt2XNzD9X_WFtmos4MvnrOje?usp=sharing
-[files]: files.rst#cleaning-data-example
-[datasets]: ../datasets.rst#cleaning-data-example
+[files]: files.rst#cleaning-data
+[datasets]: ../datasets.rst#cleaning-data
 """
 
 ## Getting started ##
@@ -162,7 +162,7 @@ traffic.show('Cleaned traffic data', **settingsForShow)
 ## Writing to a file ##
 
 ## We'd like to be able to load the cleaned data for our
-## [Supervised Learning example](traffic_train.ipynb) any time we want, so we
+## [Supervised Learning example](supervised_learning.ipynb) any time we want, so we
 ## will write it to a new csv file.
 traffic.writeFile('Metro_Interstate_Traffic_Volume_Cleaned.csv')
 

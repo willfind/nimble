@@ -15,8 +15,8 @@ extract useful insights.
 [Download the dataset for this example][datasets]
 
 [colab]: https://colab.research.google.com/drive/1QwTiHODLKlZp94pOGJCcnvNKA903uov1?usp=sharing
-[files]: files.rst#exploring-data-example
-[datasets]: ../datasets.rst#exploring-data-example
+[files]: files.rst#exploring-data
+[datasets]: ../datasets.rst#exploring-data
 """
 
 ## Getting Started ##
@@ -134,7 +134,7 @@ visits.plotFeatureGroupStatistics(nimble.calculate.count, 'Purchase', 'Region',
 ## purchases than the others. We have learned a lot about our website data
 ## through this exploration. Next, see how we can use Nimble to extract more
 ## insight from this data set using machine learning in our
-## [Unsupervised Learning example](shoppers_train.ipynb).
+## [Unsupervised Learning example](unsupervised_learning.ipynb).
 
 ## **References:**
 

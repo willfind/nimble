@@ -23,8 +23,8 @@ all of the data from our 8 original files.
 
 [wickham]: http://dx.doi.org/10.18637/jss.v059.i10
 [colab]: https://colab.research.google.com/drive/1v6bayDRsovOnzFnjRDYRaJ-PRSN7DIlE?usp=sharing
-[files]: files.rst#merging-and-tidying-example
-[datasets]: ../datasets.rst#merging-and-tidying-example
+[files]: files.rst#merging-and-tidying-data
+[datasets]: ../datasets.rst#merging-and-tidying-data
 """
 
 ## Getting Started ##

@@ -15,13 +15,13 @@ data science easier.
 .. toctree::
    :maxdepth: 1
 
-   examples/traffic_clean
-   examples/traffic_train
-   examples/shoppers_explore
-   examples/shoppers_train
-   examples/digits_train
-   examples/tidy_data
-   examples/wifi_support
+   examples/cleaning_data
+   examples/supervised_learning
+   examples/exploring_data
+   examples/unsupervised_learning
+   examples/neural_networks
+   examples/merging_and_tidying_data
+   examples/additional_functionality
 
 Resources
 ---------

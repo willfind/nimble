@@ -425,12 +425,9 @@ class PYtoIPYNB:
                 trimmed = self.notebook['cells'][-1]['source'][-1][:-1]
                 self.notebook['cells'][-1]['source'][-1] = trimmed
 
-exampleNames = ['digits_train.py', 'shoppers_explore.py', 'shoppers_train.py',
-                'tidy_data.py', 'traffic_clean.py', 'traffic_train.py',
-                'wifi_support.py']
-confDir = os.path.dirname(confFilePath)
-exampleFiles = [os.path.join(confDir, 'examples', name)
-                for name in exampleNames]
+examplesDir = os.path.join(os.path.dirname(confFilePath), 'examples')
+exampleFiles = [os.path.join(examplesDir, f) for f in os.listdir(examplesDir)
+                if f.endswith('.py')]
 
 for file in exampleFiles:
     PYtoIPYNB(file).convertToNotebook()

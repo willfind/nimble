@@ -1,17 +1,17 @@
 """
-# Configuration, Logging, Randomness and Custom Learners
+# Additional Functionality
 
-### Additional nimble functionality designed to support users.
+### Nimble functionality designed to support users.
 
-Our data for this example contains 2000 points and 8 features. The first
-7 features are wifi signal strength values picked up by a mobile phone
-from seven different wifi sources (one feature per source). The final
-feature stores which of four rooms the mobile device was in. This
-dataset will help highlight functionality included in the nimble library
-such as logging, randomness, and the design of "custom learners" for
-making your own machine learning algorithms that are supported by
-Nimble. This functionality will be highlighted as we use the wifi signal
-strength data to predict which room the phone is in.
+Our data in this example will help highlight functionality included in
+the Nimble library such as logging, randomness, and the design of
+"custom learners" for making your own machine learning algorithms that
+are supported by Nimble. Our data contains 2000 points and 8 features.
+The first 7 features are wifi signal strength values detected by a
+mobile phone from seven different wifi sources (one feature per source).
+The final feature identifies which of four rooms the mobile device was
+in. Our goal will be to predict the room that the phone is in based on
+wifi signal strength data.
 
 [Open this example in Google Colab][colab]
 
@@ -20,8 +20,8 @@ strength data to predict which room the phone is in.
 [Download the dataset for this example][datasets]
 
 [colab]: https://colab.research.google.com/drive/1CZecbz9Z2xR3auR7lj97cVWGIVTXKZmk?usp=sharing
-[files]: files.rst#support-functionality-example
-[datasets]: ../datasets.rst#support-functionality-example
+[files]: files.rst#additional-functionality
+[datasets]: ../datasets.rst#additional-functionality
 """
 
 ## Getting Started ##
@@ -30,9 +30,9 @@ strength data to predict which room the phone is in.
 ## can be affected by prior uses of Nimble, we want to ensure that the behavior
 ## of this example is consistent for everyone. To achieve this consistency, we
 ## will be storing our log in a temporary directory created by Python's
-## `tempfile` module. This will ensure that only information from this example
-## is logged. It also allows us to quickly remove the directory and its
-## contents when we finish.
+## `tempfile` module. This will ensure that our log queries only return
+## information logged in this example. It also allows us to quickly remove the
+## directory and its contents when we finish.
 import tempfile
 
 import nimble
@@ -45,7 +45,7 @@ tempDir = tempfile.TemporaryDirectory('nimble-logs')
 ## through `nimble.settings`. The default settings are written to a file and
 ## loaded each time Nimble is imported. To see the current configuration
 ## settings, we can use `nimble.settings.get()`. We can also change the
-## default settings using `nimble.settings.setDefault()` or
+## default settings using `nimble.settings.setDefault()` or use
 ## `nimble.settings.set()` to make changes for only the current session.
 
 ## Next, we will be exploring Nimble's logging feature. We want to start with
@@ -55,7 +55,7 @@ tempDir = tempfile.TemporaryDirectory('nimble-logs')
 
 # a new log file is generated when a new location is set
 nimble.settings.set('logger', 'location', tempDir.name)
-# enable log unless explicitly overridden by a local setting
+# enable logging unless explicitly overridden by a local setting
 nimble.settings.set('logger', 'enabledByDefault', 'True')
 
 ## Now that we have our new (temporary) logging file established, we can load
