@@ -15,7 +15,6 @@
 from __future__ import absolute_import
 import sys
 import os
-import shlex
 import inspect
 import re
 import json
@@ -410,7 +409,7 @@ class PYtoIPYNB:
     def _trimPreviousCellNewlines(self):
         if self.notebook['cells'] and self.notebook['cells'][-1]['source']:
             if self.notebook['cells'][-1]['source'][-1] == '\n':
-                 _ = self.notebook['cells'][-1]['source'].pop()
+                _ = self.notebook['cells'][-1]['source'].pop()
             if self.notebook['cells'][-1]['source'][-1].endswith('\n'):
                 trimmed = self.notebook['cells'][-1]['source'][-1][:-1]
                 self.notebook['cells'][-1]['source'][-1] = trimmed
