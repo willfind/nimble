@@ -205,9 +205,9 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         use a nimble.Init object.
         Example: {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
     randomSeed : int
-       Set a random seed for the operation. When not None, allows for
-       reproducible results for each function call. Ignored if learner
-       does not depend on randomness.
+       Set a random seed for the operation. When None, the randomness is
+       controlled by Nimble's random seed. Ignored if learner does not
+       depend on randomness.
     useLog : bool, None
         Local control for whether to send object creation to the logger.
         If None (default), use the value as specified in the "logger"
@@ -470,9 +470,9 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     scoreMode : str
         Used by computeMetrics.
     randomSeed : int
-       Set a random seed for the operation. When not None, allows for
-       reproducible results for each function call. Ignored if learner
-       does not depend on randomness.
+       Set a random seed for the operation. When None, the randomness is
+       controlled by Nimble's random seed. Ignored if learner does not
+       depend on randomness.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -590,9 +590,9 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         The number of folds used in the cross validation. Cannot exceed
         the number of points in ``trainX``. Default 10.
     randomSeed : int
-       Set a random seed for the operation. When not None, allows for
-       reproducible results for each function call. Ignored if learner
-       does not depend on randomness.
+       Set a random seed for the operation. When None, the randomness is
+       controlled by Nimble's random seed. Ignored if learner does not
+       depend on randomness.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -769,9 +769,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         The number of folds used in the cross validation. Cannot exceed
         the number of points in ``trainX``. Default 10.
     randomSeed : int
-       Set a random seed for the operation. When not None, allows for
-       reproducible results for each function call. Ignored if learner
-       does not depend on randomness.
+       Set a random seed for the operation. When None, the randomness is
+       controlled by Nimble's random seed. Ignored if learner does not
+       depend on randomness.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -971,9 +971,9 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         The number of folds used in the cross validation. Cannot exceed
         the number of points in ``trainX``. Default 10.
     randomSeed : int
-       Set a random seed for the operation. When not None, allows for
-       reproducible results for each function call. Ignored if learner
-       does not depend on randomness.
+       Set a random seed for the operation. When None, the randomness is
+       controlled by Nimble's random seed. Ignored if learner does not
+       depend on randomness.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1149,9 +1149,9 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     multiClassStrategy : str
         May only be 'default', 'OneVsAll' or 'OneVsOne'.
     randomSeed : int
-       Set a random seed for the operation. When not None, allows for
-       reproducible results for each function call. Ignored if learner
-       does not depend on randomness.
+       Set a random seed for the operation. When None, the randomness is
+       controlled by Nimble's random seed. Ignored if learner does not
+       depend on randomness.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
