@@ -16,7 +16,7 @@ from .base import Base
 from .views import BaseView
 from .matrixAxis import MatrixPoints, MatrixPointsView
 from .matrixAxis import MatrixFeatures, MatrixFeaturesView
-from ._dataHelpers import DEFAULT_PREFIX
+from ._dataHelpers import DEFAULT_PREFIX, isDefaultName
 from ._dataHelpers import allDataIdentical
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
@@ -260,13 +260,13 @@ class Matrix(Base):
             # using pointNames, prepend pointNames to left and right arrays
             onIdxL = 0
             onIdxR = 0
-            if not self._anyDefaultPointNames():
+            if not self.points._anyDefaultNames():
                 ptsL = numpy.array(self.points.getNames(), dtype=numpy.object_)
                 ptsL = ptsL.reshape(-1, 1)
             elif self._pointNamesCreated():
                 # differentiate default names between objects;
                 # note still start with DEFAULT_PREFIX
-                namesL = [n + '_l' if n.startswith(DEFAULT_PREFIX) else n
+                namesL = [n + '_l' if isDefaultName(n) else n
                           for n in self.points.getNames()]
                 ptsL = numpy.array(namesL, dtype=numpy.object_)
                 ptsL = ptsL.reshape(-1, 1)
@@ -275,14 +275,14 @@ class Matrix(Base):
                             in range(len(self.points))]
                 ptsL = numpy.array(defNames, dtype=numpy.object_)
                 ptsL = ptsL.reshape(-1, 1)
-            if not other._anyDefaultPointNames():
+            if not other.points._anyDefaultNames():
                 ptsR = numpy.array(other.points.getNames(),
                                    dtype=numpy.object_)
                 ptsR = ptsR.reshape(-1, 1)
             elif other._pointNamesCreated():
                 # differentiate default names between objects;
                 # note still start with DEFAULT_PREFIX
-                namesR = [n + '_r' if n.startswith(DEFAULT_PREFIX) else n
+                namesR = [n + '_r' if isDefaultName(n) else n
                           for n in other.points.getNames()]
                 ptsR = numpy.array(namesR, dtype=numpy.object_)
                 ptsR = ptsR.reshape(-1, 1)

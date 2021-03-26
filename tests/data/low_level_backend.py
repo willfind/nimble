@@ -32,7 +32,7 @@ from nimble.core.data import Base
 from nimble.core.data import available
 from nimble._utility import inheritDocstringsFactory, numpy2DArray
 from nimble._utility import pd
-from nimble.core.data._dataHelpers import DEFAULT_PREFIX
+from nimble.core.data._dataHelpers import DEFAULT_PREFIX, isDefaultName
 from nimble.core.data._dataHelpers import constructIndicesList
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
@@ -73,7 +73,7 @@ def confirmExpectedNames(toTest, axis, expected):
     if isinstance(expected, list):
         for i in range(len(expected)):
             expectedFeatureName = expected[i]
-            if not expectedFeatureName.startswith(DEFAULT_PREFIX):
+            if not isDefaultName(expectedFeatureName):
                 actualIndex = names[expectedFeatureName]
                 actualFeatureName = namesInv[i]
                 assert (actualIndex == i)
@@ -587,7 +587,7 @@ class LowLevelBackend(object):
         assert toTest.points.getName(0) == DEFAULT_PREFIX + str(nextNum)
         assert toTest.points.getName(1) == DEFAULT_PREFIX + str(nextNum + 1)
         assert toTest.points.getName(2) == DEFAULT_PREFIX + str(nextNum - 1)
-        assert toTest.points.getName(3).startswith(DEFAULT_PREFIX)
+        assert isDefaultName(toTest.points.getName(3))
         assert ret is None
 
 
@@ -719,7 +719,7 @@ class LowLevelBackend(object):
         assert toTest.features.getName(0) == DEFAULT_PREFIX + str(nextNum)
         assert toTest.features.getName(1) == DEFAULT_PREFIX + str(nextNum + 1)
         assert toTest.features.getName(2) == DEFAULT_PREFIX + str(nextNum - 1)
-        assert toTest.features.getName(3).startswith(DEFAULT_PREFIX)
+        assert isDefaultName(toTest.features.getName(3))
         assert ret is None
 
     ##################################################################
@@ -917,7 +917,7 @@ class LowLevelBackend(object):
         toTest.points.setName(0, None)
 
         ret = toTest.points.getNames()
-        assert ret[0].startswith(DEFAULT_PREFIX)
+        assert isDefaultName(ret[0])
         assert ret[1] == 'one'
         assert ret[2] == 'hello'
 
@@ -958,7 +958,7 @@ class LowLevelBackend(object):
         toTest.features.setName(0, None)
 
         ret = toTest.features.getNames()
-        assert ret[0].startswith(DEFAULT_PREFIX)
+        assert isDefaultName(ret[0])
         assert ret[1] == 'one'
         assert ret[2] == 'hello'
 

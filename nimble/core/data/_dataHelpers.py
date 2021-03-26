@@ -26,6 +26,12 @@ DEFAULT_PREFIX = "_DEFAULT_#"
 DEFAULT_PREFIX2 = DEFAULT_PREFIX+'%s'
 DEFAULT_PREFIX_LENGTH = len(DEFAULT_PREFIX)
 
+def isDefaultName(name):
+    """
+    Determine if name is a default name.
+    """
+    return name.startswith(DEFAULT_PREFIX)
+
 
 def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
     """
@@ -86,8 +92,8 @@ def mergeNames(baseNames, otherNames):
     ret = {}
     for i, baseName in enumerate(baseNames):
         otherName = otherNames[i]
-        baseIsDefault = baseName.startswith(DEFAULT_PREFIX)
-        otherIsDefault = otherName.startswith(DEFAULT_PREFIX)
+        baseIsDefault = isDefaultName(baseName)
+        otherIsDefault = isDefaultName(otherName)
 
         if baseIsDefault and not otherIsDefault:
             ret[otherName] = i
@@ -194,7 +200,7 @@ def hasNonDefault(obj, axis):
     getter = obj.points.getName if axis == 'point' else obj.features.getName
 
     for index in possibleIndices:
-        if not getter(index).startswith(DEFAULT_PREFIX):
+        if not isDefaultName(getter(index)):
             return True
 
     return False
@@ -213,8 +219,7 @@ def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
     if namesList is None:
         allDefault = True
     else:
-        allDefault = all([namesList[i].startswith(DEFAULT_PREFIX)
-                          for i in possibleIndices])
+        allDefault = all(isDefaultName(namesList[i]) for i in possibleIndices)
 
     if allDefault:
         return ""
@@ -1003,10 +1008,10 @@ def equalNames(selfNames, otherNames):
     if selfNames is None and otherNames is None:
         return True
     if (selfNames is None
-            and all(n.startswith(DEFAULT_PREFIX) for n in otherNames)):
+            and all(isDefaultName(n) for n in otherNames)):
         return True
     if (otherNames is None
-            and all(n.startswith(DEFAULT_PREFIX) for n in selfNames)):
+            and all(isDefaultName(n) for n in selfNames)):
         return True
     if selfNames is None or otherNames is None:
         return False

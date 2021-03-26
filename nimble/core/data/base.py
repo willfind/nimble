@@ -30,6 +30,7 @@ from .stretch import Stretch
 from . import _dataHelpers
 # the prefix for default point and feature names
 from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
+from ._dataHelpers import isDefaultName
 from ._dataHelpers import formatIfNeeded
 from ._dataHelpers import valuesToPythonList, constructIndicesList
 from ._dataHelpers import createListOfDict, createDictOfList
@@ -48,7 +49,7 @@ from ._dataHelpers import plotAxisLabels, plotXTickLabels
 from ._dataHelpers import plotConfidenceIntervalMeanAndError, plotErrorBars
 from ._dataHelpers import plotSingleBarChart, plotMultiBarChart
 from ._dataHelpers import looksNumeric
-
+from ._dataHelpers import mergeNames
 
 def to2args(f):
     """
@@ -320,50 +321,6 @@ class Base(ABC):
         """
         if self.featureNamesInverse is None:
             return False
-
-        return True
-
-    def _anyDefaultPointNames(self):
-        """
-        Returns True if any default point names exists or if pointNames
-        have not been created.
-        """
-        if self._pointNamesCreated():
-            return any([name.startswith(DEFAULT_PREFIX) for name
-                        in self.points.getNames()])
-
-        return True
-
-    def _anyDefaultFeatureNames(self):
-        """
-        Returns True if any default feature names exists or if
-        featureNames have not been created.
-        """
-        if self._featureNamesCreated():
-            return any([name.startswith(DEFAULT_PREFIX) for name
-                        in self.features.getNames()])
-
-        return True
-
-    def _allDefaultPointNames(self):
-        """
-        Returns True if all point names are default or have not been
-        created.
-        """
-        if self._pointNamesCreated():
-            return all([name.startswith(DEFAULT_PREFIX) for name
-                        in self.points.getNames()])
-
-        return True
-
-    def _allDefaultFeatureNames(self):
-        """
-        Returns True if all feature names are default or have not been
-        created.
-        """
-        if self._featureNamesCreated():
-            return all([name.startswith(DEFAULT_PREFIX) for name
-                        in self.features.getNames()])
 
         return True
 
@@ -2662,7 +2619,7 @@ class Base(ABC):
             namesAxis = self.features
         if not isinstance(identifier, str):
             names = namesAxis._getNamesNoGeneration()
-            if names is None or names[identifier].startswith(DEFAULT_PREFIX):
+            if names is None or isDefaultName(names[identifier]):
                 identifier = axis.capitalize() + ' #' + str(identifier)
             else:
                 identifier = names[identifier]
@@ -3462,12 +3419,12 @@ class Base(ABC):
         for pName, fName in splitNames:
             if pName not in pNames:
                 pNames.append(pName)
-            if allPtDefault and not pName.startswith(DEFAULT_PREFIX):
+            if allPtDefault and not isDefaultName(pName):
                 allPtDefault = False
             if fNames is not None:
                 if fName not in fNames:
                     fNames.append(fName)
-            if allFtDefault and not fName.startswith(DEFAULT_PREFIX):
+            if allFtDefault and not isDefaultName(fName):
                 allFtDefault = False
 
         if allPtDefault:
@@ -3633,7 +3590,7 @@ class Base(ABC):
 
     @limitedTo2D
     def merge(self, other, point='strict', feature='union', onFeature=None,
-              useLog=None):
+              force=False, useLog=None):
         """
         Merge data from another object into this object.
 
@@ -3672,6 +3629,12 @@ class Base(ABC):
         onFeature : identifier, None
             The name or index of the feature present in both objects to
             merge on.  If None, the merge will be based on point names.
+        force : bool
+            When True, the ``point`` or ``feature`` parameter set to
+            'strict' does not require names along that axis. The merge
+            is forced to continue as True acknowledges that each index
+            along that axis is equal between the two objects. Has no
+            effect if neither parameter is set to 'strict'.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -3843,15 +3806,15 @@ class Base(ABC):
 
         if point == 'strict' or feature == 'strict':
             self._genericStrictMerge_implementation(other, point, feature,
-                                                    onFeature)
+                                                    onFeature, force)
         else:
             self._genericMergeFrontend(other, point, feature, onFeature)
 
         handleLogging(useLog, 'prep', "merge", self.getTypeString(),
-                      Base.merge, other, point, feature, onFeature)
+                      Base.merge, other, point, feature, onFeature, force)
 
     def _genericStrictMerge_implementation(self, other, point, feature,
-                                           onFeature):
+                                           onFeature, force):
         """
         Validation and helper function when point or feature is set to
         strict.
@@ -3863,52 +3826,22 @@ class Base(ABC):
         tmpOther = other.copy()
         if point == 'strict':
             axis = 'point'
-            countL = len(self.points)
-            countR = len(tmpOther.points)
-            hasNamesL = not self._allDefaultPointNames()
-            hasNamesR = not tmpOther._allDefaultPointNames()
-            namesL = self.points.getNames
-            namesR = tmpOther.points.getNames
-            setNamesL = self.points.setNames
-            setNamesR = tmpOther.points.setNames
+            lAxis = self.points
+            rAxis = tmpOther.points
             point = "intersection"
         else:
             axis = 'feature'
-            countL = len(self.features)
-            countR = len(tmpOther.features)
-            hasNamesL = not self._allDefaultFeatureNames()
-            hasNamesR = not tmpOther._allDefaultFeatureNames()
-            namesL = self.features.getNames
-            namesR = tmpOther.features.getNames
-            setNamesL = self.features.setNames
-            setNamesR = tmpOther.features.setNames
+            lAxis = self.features
+            rAxis = tmpOther.features
             feature = "intersection"
 
-        if countL != countR:
+        if len(lAxis) != len(rAxis):
             msg = "Both objects must have the same number of "
             msg += "{0}s when {0}='strict'".format(axis)
             raise InvalidArgumentValue(msg)
-        if hasNamesL and hasNamesR:
-            if sorted(namesL()) != sorted(namesR()):
-                msg = "When {0}='strict', the {0}s names ".format(axis)
-                msg += "may be in a different order but must match exactly"
-                raise InvalidArgumentValue(msg)
-        # since strict implies that the points or features are the same,
-        # if one object does not have names along the axis, but the length
-        # matches, we will assume that the unnamed should have the same names
-        if onFeature is None:
-            if hasNamesL and not hasNamesR:
-                setNamesR(namesL(), useLog=False)
-            elif not hasNamesL and hasNamesR:
-                setNamesL(namesR(), useLog=False)
-            elif not hasNamesL and not hasNamesR:
-                strictPrefix = '_STRICT' + DEFAULT_PREFIX
-                strictNames = [strictPrefix + str(i) for i in range(countL)]
-                setNamesL(strictNames, useLog=False)
-                setNamesR(strictNames, useLog=False)
         # if using strict with onFeature instead of point names, we need to
         # make sure each id has a unique match in the other object
-        elif axis == 'point':
+        if onFeature is not None and axis == 'point':
             try:
                 feat = self[:, onFeature]
                 if len(set(feat)) != len(self.points):
@@ -3924,36 +3857,78 @@ class Base(ABC):
                 msg += "in both objects"
                 raise InvalidArgumentValue(msg) from e
 
-        self._genericMergeFrontend(tmpOther, point, feature, onFeature, axis)
+            self._genericMergeFrontend(tmpOther, point, feature, onFeature)
+        else:
+            lNames = lAxis._getNamesNoGeneration()
+            rNames = rAxis._getNamesNoGeneration()
+            lAllNames = not lAxis._anyDefaultNames()
+            rAllNames = not rAxis._anyDefaultNames()
+            # strict implies that the points or features are the same
+            # with all names reordering can occur otherwise each index
+            # is treated as equal.
+            if lAllNames and rAllNames:
+                if sorted(lNames) != sorted(rNames):
+                    msg = "When {0}='strict', the {0} names may ".format(axis)
+                    msg += "be in a different order but must match exactly"
+                    raise InvalidArgumentValue(msg)
+                endNames = lNames
+            elif force and lAllNames and rNames is None:
+                rAxis.setNames(lNames, useLog=False)
+                endNames = lNames
+            elif force and lNames is None and rAllNames:
+                lAxis.setNames(rNames, useLog=False)
+                endNames = rNames
+            elif force: # default names present
+                endNames = mergeNames(lAxis.getNames(), rAxis.getNames())
+                # need to alter default names so that _genericMergeFrontend
+                # treats them as non-default and equal. After the data is
+                # merged, the names are reset to their default state.
+                try:
+                    strictNames = ['_STRICT' + n if isDefaultName(n) else n
+                                   for n in endNames]
+                    lAxis.setNames(strictNames, useLog=False)
+                    rAxis.setNames(strictNames, useLog=False)
+                except InvalidArgumentValue as e:
+                    msg = "When {axis}='strict' and default {axis} names "
+                    msg += "exist, names cannot be reordered. The {axis} "
+                    msg += "names do not match at each index where both  "
+                    msg += "objects have non-default {axis} names."
+                    msg = msg.format(axis=axis)
+                    raise InvalidArgumentValue(msg) from e
+            else: # default names and not force
+                msg = 'Non-default {axis} names are required in both objects '
+                msg += 'unless the force parameter is set to True to indicate '
+                msg += 'that each {axis} is equal between the two objects'
+                raise InvalidArgumentValue(msg.format(axis=axis))
 
-    def _genericMergeFrontend(self, other, point, feature, onFeature,
-                              strict=None):
+            self._genericMergeFrontend(tmpOther, point, feature, onFeature)
+
+            # only reset names if we did not generate them
+            if lNames is None and rNames is None:
+                lAxis.setNames(None, useLog=False)
+            else:
+                lAxis.setNames(endNames, useLog=False)
+
+    def _genericMergeFrontend(self, other, point, feature, onFeature):
         # validation
-        bothNamesCreated = (self._pointNamesCreated()
-                            and other._pointNamesCreated())
-        if ((onFeature is None and point == "intersection")
-                and not bothNamesCreated):
+        bothPtNamesCreated = (self.points._namesCreated()
+                              and other.points._namesCreated())
+        if onFeature is None and not bothPtNamesCreated:
             msg = "Point names are required in both objects when "
-            msg += "point='intersection' and onFeature is None"
+            msg += "onFeature is None"
             raise InvalidArgumentValueCombination(msg)
-        bothNamesCreated = (self._featureNamesCreated()
-                            and other._featureNamesCreated())
-        if feature == "intersection" and not bothNamesCreated:
-            featArg = 'strict' if strict == 'feature' else feature
-            msg = "Feature names are required in both objects when "
-            msg += "feature='{0}'".format(featArg)
+        bothFtNamesCreated = (self.features._namesCreated()
+                              and other.features._namesCreated())
+        if not bothFtNamesCreated:
+            msg = "Feature names are required in both objects"
             raise InvalidArgumentValueCombination(msg)
 
         if onFeature is not None:
             if not isinstance(onFeature, str):
                 # index allowed only if we can verify feature names match
-                if not bothNamesCreated:
-                    msg = 'Feature names are required for merges when '
-                    msg += 'onFeature is not None'
-                    raise InvalidArgumentValue(msg)
                 ftName = self.features.getName(onFeature)
                 if (ftName != other.features.getName(onFeature)
-                        or ftName.startswith(DEFAULT_PREFIX)):
+                        or isDefaultName(ftName)):
                     msg = 'The feature names at index {0} '.format(onFeature)
                     msg += 'do not match in each object'
                     raise InvalidArgumentValue(msg)
@@ -3983,34 +3958,27 @@ class Base(ABC):
         self._merge_implementation(other, point, feature, onFeature,
                                    matchingFtIdx)
 
-        if strict == 'feature':
-            if ('_STRICT' in self.features.getName(0)
-                    and '_STRICT' in other.features.getName(0)):
-                # objects did not have feature names
-                self.featureNames = None
-                self.featureNamesInverse = None
-            elif '_STRICT' in self.features.getName(0):
-                # use feature names from other object
-                self.features.setNames(other.features.getNames(), useLog=False)
-        elif feature == "intersection":
-            if self._featureNamesCreated():
+        lFtNames = self.features._namesCreated()
+        rFtNames = other.features._namesCreated()
+        if feature == "intersection":
+            if lFtNames:
                 ftNames = [n for n in self.features.getNames()
                            if n in matchingFts]
                 self.features.setNames(ftNames, useLog=False)
         elif feature == "union":
-            if self._featureNamesCreated() and other._featureNamesCreated():
+            if lFtNames and rFtNames:
                 ftNamesL = self.features.getNames()
                 ftNamesR = [name for name in other.features.getNames()
                             if name not in matchingFts]
                 ftNames = ftNamesL + ftNamesR
                 self.features.setNames(ftNames, useLog=False)
-            elif self._featureNamesCreated():
+            elif lFtNames:
                 ftNamesL = self.features.getNames()
                 ftNamesR = [DEFAULT_PREFIX + str(i) for i
                             in range(len(other.features))]
                 ftNames = ftNamesL + ftNamesR
                 self.features.setNames(ftNames, useLog=False)
-            elif other._featureNamesCreated():
+            elif rFtNames:
                 ftNamesL = [DEFAULT_PREFIX + str(i) for i
                             in range(len(self.features))]
                 ftNamesR = other.features.getNames()
@@ -4018,45 +3986,38 @@ class Base(ABC):
                 self.features.setNames(ftNames, useLog=False)
         # no name setting needed for left
 
-        if strict == 'point':
-            if ('_STRICT' in self.points.getName(0)
-                    and '_STRICT' in other.points.getName(0)):
-                # objects did not have point names
-                self.pointNames = None
-                self.pointNamesInverse = None
-            elif '_STRICT' in self.points.getName(0):
-                # use point names from other object
-                self.points.setNames(other.points.getNames(), useLog=False)
-        elif onFeature is None and point == 'left':
-            if self._pointNamesCreated():
+        lPtNames = self.points._namesCreated()
+        rPtNames = other.points._namesCreated()
+        if onFeature is None and point == 'left':
+            if lPtNames:
                 self.points.setNames(self.points.getNames(), useLog=False)
         elif onFeature is None and point == 'intersection':
             # default names cannot be included in intersection
             ptNames = [name for name in self.points.getNames()
                        if name in other.points.getNames()
-                       and not name.startswith(DEFAULT_PREFIX)]
+                       and not isDefaultName(name)]
             self.points.setNames(ptNames, useLog=False)
         elif onFeature is None:
             # union cases
-            if self._pointNamesCreated() and other._pointNamesCreated():
+            if lPtNames and rPtNames:
                 ptNamesL = self.points.getNames()
-                if other._anyDefaultPointNames():
+                if other.points._anyDefaultNames():
                     # handle default name conflicts
                     ptNamesR = [self.points._nextDefaultName() if
-                                n.startswith(DEFAULT_PREFIX) else n
+                                isDefaultName(n) else n
                                 for n in self.points.getNames()]
                 else:
                     ptNamesR = other.points.getNames()
                 ptNames = ptNamesL + [name for name in ptNamesR
                                       if name not in ptNamesL]
                 self.points.setNames(ptNames, useLog=False)
-            elif self._pointNamesCreated():
+            elif lPtNames:
                 ptNamesL = self.points.getNames()
                 ptNamesR = [self.points._nextDefaultName() for _
                             in range(len(other.points))]
                 ptNames = ptNamesL + ptNamesR
                 self.points.setNames(ptNames, useLog=False)
-            elif other._pointNamesCreated():
+            elif rPtNames:
                 ptNamesL = [other.points._nextDefaultName() for _
                             in range(len(self.points))]
                 ptNamesR = other.points.getNames()
@@ -4083,7 +4044,7 @@ class Base(ABC):
         allNames = selfNames + otherNames
         if len(set(allNames)) != len(allNames):
             for name in selfNames:
-                if not name.startswith(DEFAULT_PREFIX) and name in otherNames:
+                if not isDefaultName(name) and name in otherNames:
                     matches.append(name)
         return matches
 
@@ -4633,7 +4594,7 @@ class Base(ABC):
         feature, so default names are ignored.
         """
         def nonDefaultNames(names):
-            return (n for n in names if not n.startswith(DEFAULT_PREFIX))
+            return (n for n in names if not isDefaultName(n))
 
         if axis == 'point':
             sNames = nonDefaultNames(self.points.getNames())
