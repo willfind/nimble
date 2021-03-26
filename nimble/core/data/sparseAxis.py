@@ -407,12 +407,12 @@ class SparsePoints(SparseAxis, Points):
             (tmpData, (tmpRow, tmpCol)), shape=(numRetPoints, numRetFeatures))
         self._base._resetSorted()
 
-    def _combineByExpandingFeatures_implementation(self, uniqueDict, namesIdx,
-                                                   uniqueNames, numRetFeatures,
-                                                   numExpanded):
+    def _combineByExpandingFeatures_implementation(
+        self, uniqueDict, namesIdx, valuesIdx, uniqueNames, numRetFeatures):
         tmpData = []
         tmpRow = []
         tmpCol = []
+        numExpanded = len(valuesIdx)
         numNewFts = len(uniqueNames) * numExpanded
         for idx, point in enumerate(uniqueDict):
             tmpPoint = list(point[:namesIdx])

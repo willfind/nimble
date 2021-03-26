@@ -8,15 +8,17 @@ behaviors for visitors to an ecommerce website. Our goal will be to use
 an unsupervised learner to classify and understand visitors to the
 website.
 
+[Open this example in Google Colab][colab]
+
 [Download this example as a script or notebook][files]
 
 [Download the dataset for this example][datasets]
 
+[colab]: https://colab.research.google.com/drive/10KZjKMnrrahHbOmDQa-dne44FmMMPePS?usp=sharing
 [files]: files.rst#unsupervised-learning-example
 [datasets]: ../datasets.rst#unsupervised-learning-example
 """
 ## Getting Started ##
-
 
 import nimble
 from nimble.calculate import meanStandardDeviationNormalize

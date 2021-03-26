@@ -9,10 +9,13 @@ from seven different wifi sources . The final feature records which of
 four rooms the mobile device was in. This dataset will help highlight
 additional functionality included in the nimble library.
 
+[Open this example in Google Colab][colab]
+
 [Download this example as a script or notebook][files]
 
 [Download the dataset for this example][datasets]
 
+[colab]: https://colab.research.google.com/drive/1CZecbz9Z2xR3auR7lj97cVWGIVTXKZmk?usp=sharing
 [files]: files.rst#support-functionality-example
 [datasets]: ../datasets.rst#support-functionality-example
 """

@@ -334,8 +334,7 @@ def denseAxisUniqueArray(obj, axis):
     """
     validateAxis(axis)
     if obj.getTypeString() == 'DataFrame':
-        # faster than numpy.array(obj._data)
-        data = obj._data.values
+        data = obj._asNumpyArray()
     else:
         data = numpy.array(obj._data, dtype=numpy.object_)
     if axis == 'feature':
@@ -1265,7 +1264,6 @@ def numpyArrayFromList(data):
 
     return ret
 
-
 def modifyNumpyArrayValue(arr, index, newVal):
     """
     Change a single value in a numpy array.
@@ -1282,3 +1280,27 @@ def modifyNumpyArrayValue(arr, index, newVal):
     arr[index] = newVal
 
     return arr
+
+def getFeatureDtypes(obj):
+    """
+    Get a dtype for each feature in the object.
+
+    DataFrames and Lists can return a tuple of heterogeneous types,
+    Matrix and Sparse will be homogeneous.
+    """
+    if hasattr(obj._data, 'dtypes'):
+        return tuple(obj._data.dtypes)
+    if hasattr(obj._data, 'dtype'):
+        return (obj._data.dtype,) * len(obj.features)
+
+    dtypeList = []
+    floatDtype = numpy.dtype(float)
+    # _data is list or ListPassThrough
+    for ft in zip(*obj._data):
+        dtype = max(map(numpy.dtype, map(type, ft)))
+        if dtype > floatDtype:
+            dtypeList.append(numpy.object_)
+        else:
+            dtypeList.append(dtype)
+
+    return tuple(dtypeList)

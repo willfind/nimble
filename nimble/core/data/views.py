@@ -66,33 +66,13 @@ class BaseView(Base, metaclass=ABCMeta):
 
         super().__init__(**kwds)
 
-    # redefinition from Base, except without the setter, using source
-    # object's attributes
-    def _getObjName(self):
-        return self._name
-
-    @property
-    def name(self):
-        """
-        A name to be displayed when printing or logging this object.
-        """
-        return self._getObjName()
-
-    # redefinition from Base, using source object's attributes
-    def _getAbsPath(self):
-        return self._source._absPath
-
     @property
     def absolutePath(self):
         """
         The path to the file this data originated from, in absolute
         form.
         """
-        return self._getAbsPath()
-
-    # redefinition from Base, using source object's attributes
-    def _getRelPath(self):
-        return self._source._relPath
+        return self._source._absPath
 
     @property
     def relativePath(self):
@@ -100,7 +80,7 @@ class BaseView(Base, metaclass=ABCMeta):
         The path to the file this data originated from, in relative
         form.
         """
-        return self._getRelPath()
+        return self._source._relPath
 
     def _pointNamesCreated(self):
         if self._source.pointNamesInverse is None:

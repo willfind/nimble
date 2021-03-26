@@ -21,6 +21,7 @@ configuration file reflects all available options.
 import os
 import inspect
 import configparser
+import pathlib
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -290,3 +291,13 @@ def setInterfaceOptions(interface, save):
             nimble.settings.set(interfaceName, opName, "")
     if save:
         nimble.settings.saveChanges(interfaceName)
+
+def setFetchPath(settings):
+    """
+    Set a default path for nimble.fetchFiles, if necessary.
+    """
+    try:
+        _ = settings.get('fetch', 'location')
+    except configErrors:
+        settings.setDefault('fetch', 'location',
+                            str(pathlib.Path.home()))

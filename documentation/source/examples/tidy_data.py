@@ -11,10 +11,13 @@ to optimize for machine learning, often called "data tidying" (Wickham).
 Our goal is to create a single, tidy, Nimble object where each point has
 five features: 'date', 'hour', 'location', 'min' and 'max'.
 
+[Open this example in Google Colab][colab]
+
 [Download this example as a script or notebook][files]
 
 [Download the dataset for this example][datasets]
 
+[colab]: https://colab.research.google.com/drive/1v6bayDRsovOnzFnjRDYRaJ-PRSN7DIlE?usp=sharing
 [files]: files.rst#merging-and-tidying-example
 [datasets]: ../datasets.rst#merging-and-tidying-example
 """

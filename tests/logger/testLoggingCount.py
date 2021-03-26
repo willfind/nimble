@@ -49,9 +49,9 @@ nimble_logged = [
     'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 nimble_notLogged = [
-    'CustomLearner', 'CV', 'Init', 'identity', 'listLearners',
-    'learnerParameters', 'learnerDefaultValues', 'learnerType', 'ones',
-    'showLog', 'zeros',
+    'CustomLearner', 'CV', 'Init', 'fetchFile', 'fetchFiles', 'identity',
+    'listLearners', 'learnerParameters', 'learnerDefaultValues', 'learnerType',
+    'ones', 'showLog', 'zeros',
     ]
 nimble_funcs = nimble_logged + nimble_notLogged
 nimble_tested = list(map(prefixAdder('nimble'), nimble_funcs))

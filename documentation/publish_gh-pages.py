@@ -104,6 +104,10 @@ if __name__ == '__main__':
         printAndCall("git add ../*.js")
         printAndCall("git add ../_static/")
         printAndCall("git add ../_sources")
+        printAndCall("git add ../_downloads/ -f") # -f to include .ipynb
+        printAndCall("git add ../_images")
+        printAndCall("git add ../examples")
+        printAndCall("git add ../docs")
         printAndCall("git commit -m 'Publish html documentation for Nimble to gh-pages'")
 
         printAndCall("git push origin HEAD --force")

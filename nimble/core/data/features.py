@@ -1619,7 +1619,7 @@ class Features(ABC):
             data. When ``applyResultTo`` is not None, the function must
             accept a second feature view and return a two-tuple
             (normalized feature from the calling object,
-             normalized feature from applyResultTo).
+            normalized feature from applyResultTo).
             Common normalizations can be found in nimble.calculate.
         applyResultTo : nimble Base object, None
             The secondary object to apply the the normalization to.

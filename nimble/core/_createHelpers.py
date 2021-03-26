@@ -7,12 +7,18 @@ functions are contained in create.py without the distraction of helpers.
 
 import csv
 from io import StringIO, BytesIO
-import os.path
+import os
 import copy
 import sys
 import warnings
 import datetime
 from contextlib import contextmanager
+import re
+import zipfile
+import tarfile
+import gzip
+import shutil
+import urllib.parse
 
 import numpy
 
@@ -139,9 +145,8 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
     if featureNames is False:
         return (failPN, failFN)
 
-    def typeEqual(double):
-        x, y = double
-        return not isinstance(x, type(y))
+    def isNum(value):
+        return isinstance(value, (bool, int, float, numpy.number))
 
     def noDuplicates(row):
         return len(row) == len(set(row))
@@ -151,14 +156,14 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
         allText = (all(map(lambda x: isinstance(x, str),
                            firstValues[1:]))
                    and noDuplicates(firstValues[1:]))
-        allDiff = all(map(typeEqual, zip(firstValues[1:], secondValues[1:])))
+        anyNum = any(map(isNum, secondValues[1:]))
     else:
         allText = (all(map(lambda x: isinstance(x, str),
                            firstValues))
                    and noDuplicates(firstValues[1:]))
-        allDiff = all(map(typeEqual, zip(firstValues, secondValues)))
+        anyNum = any(map(isNum, secondValues))
 
-    if featureNames == 'automatic' and allText and allDiff:
+    if featureNames == 'automatic' and allText and anyNum:
         featureNames = True
     # At this point, there is no chance to resolve 'automatic' to True
     if featureNames == 'automatic':
@@ -1474,9 +1479,10 @@ def createDataFromFile(
     with ioStream as toLoad:
         selectSuccess = False
         if extension == 'csv':
+            emptyIsMissing = '' in treatAsMissing
             loaded = _loadcsvUsingPython(
                 toLoad, pointNames, featureNames, ignoreNonNumericalFeatures,
-                keepPoints, keepFeatures, inputSeparator)
+                keepPoints, keepFeatures, inputSeparator, emptyIsMissing)
             selectSuccess = True
         elif extension == 'mtx':
             loaded = _loadmtxForAuto(toLoad, pointNames, featureNames)
@@ -2026,7 +2032,7 @@ def _loadhdf5ForAuto(openFile, pointNames, featureNames):
 
 def _loadcsvUsingPython(openFile, pointNames, featureNames,
                         ignoreNonNumericalFeatures, keepPoints, keepFeatures,
-                        inputSeparator):
+                        inputSeparator, emptyIsMissing):
     """
     Loads a csv file using a reader from python's csv module.
 
@@ -2081,8 +2087,8 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
     """
     dialect = _detectDialectFromSeparator(openFile, inputSeparator)
 
-    (pointNames, featureNames) = _checkCSVForNames(
-        openFile, pointNames, featureNames, dialect)
+    (pointNames, featureNames) = _checkCSVForNames(openFile, pointNames,
+                                                   featureNames, dialect)
 
     pointNames = _namesDictToList(pointNames, 'point', 'pointNames')
     featureNames = _namesDictToList(featureNames, 'feature', 'featureNames')
@@ -2120,7 +2126,7 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
         _checkForDuplicates(keepFeatures, 'keepFeatures')
     if (limitFeatures and retFNames
             and (len(retFNames) != len(keepFeatures) or featureNames is True)):
-        # have all featureNames
+        # have all featureNames but not keeping all features
         keepFeatures, retFNames = _limitToKeptFeatures(keepFeatures, retFNames)
     elif limitFeatures:
         # none or a subset of the featureNames provided
@@ -2146,6 +2152,8 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
 
     convertCols = None
     nonNumericFeatures = []
+    # possibly remove last feature if all values are '' and '' is missing value
+    lastFtRemovable = not limitFeatures and emptyIsMissing
     # lineReader is now at the first line of data
     for i, row in enumerate(lineReader):
         if pointNames is True:
@@ -2218,6 +2226,8 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
                 retData[location] = row
                 if pointNames is True:
                     extractedPointNames[location] = ptName
+        if lastFtRemovable and row[-1] != '':
+            lastFtRemovable = False
         totalPoints = i + 1
 
     if (keepPoints != 'all' and pointNames
@@ -2248,6 +2258,15 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
                                      if i not in nonNumericFeatures])
         retData = removeNonNumeric
 
+    # remove last feature of all missing values if no feature name is provided
+    if (lastFtRemovable and
+            (not retFNames or len(retFNames) == firstRowLength - 1
+             or (featureNames is True and retFNames[-1] == ''))):
+        for row in retData:
+            row.pop()
+        if featureNames is True:
+            retFNames.pop()
+
     if pointNames is True:
         retPNames = extractedPointNames
     elif pointNames and len(retData) == len(pointNames):
@@ -2264,3 +2283,208 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
         retPNames = pointNames
 
     return retData, retPNames, retFNames
+
+def _isDownloadable(url):
+    """
+    Does the url contain a downloadable resource.
+    """
+    headers = requests.head(url, allow_redirects=True).headers
+    contentType = headers.get('content-type').lower()
+    return not 'html' in contentType
+
+def _processArchiveFile(filename, update, allowMultiple):
+    """
+    Extract contents of an archive file.
+
+    Return a list of paths to the extracted files. If the file contains
+    multiple files and allowMultiple is False, the archive file will be
+    returned and no extraction will occur.
+    """
+    if zipfile.is_zipfile(filename):
+        archiveObj = zipfile.ZipFile
+        nameGetter = 'namelist'
+    else:
+        archiveObj = tarfile.TarFile
+        nameGetter = 'getnames'
+    with archiveObj(filename, 'r') as fileObj:
+        names = getattr(fileObj, nameGetter)()
+        if any(os.path.isabs(name) or '..' in name for name in names):
+            # potential security risk will not perform extraction
+            return [filename]
+
+        if not allowMultiple and len(names) > 1:
+            return [filename]
+
+        location = os.path.dirname(filename)
+        paths = [os.path.join(location, name) for name in names]
+        # only need to extract if update or any expected files don't exist
+        if update or not all(os.path.exists(path) for path in paths):
+            fileObj.extractall(location)
+
+        files = []
+        for path in paths:
+            if os.path.isfile(path):
+                files.append(path)
+
+        return files
+
+def _processCompressedFile(filename):
+    """
+    Decompress a gzip file.
+    """
+    with gzip.open(filename, 'rb') as fIn:
+        if filename.endswith('.gz'):
+            unzipped = filename[:-3]
+        else:
+            unzipped = filename
+        with open(unzipped, 'wb') as fOut:
+            shutil.copyfileobj(fIn, fOut)
+        return [unzipped]
+
+def _isArchive(filename):
+    return zipfile.is_zipfile(filename) or tarfile.is_tarfile(filename)
+
+def _isGZip(filename):
+    with open(filename, 'rb') as f:
+        if f.read(2) == b'\x1f\x8b':
+            return True
+        return False
+
+def _findData(url, filename, update, allowMultiple):
+    """
+    Find data locally or download and store.
+
+    Assumes that url is downloadable. The data may be available locally
+    if previously stored, but if not found the data will be downloaded
+    and stored.
+
+    Return a list of data file paths.
+    """
+    if os.path.exists(filename):
+        if _isArchive(filename):
+            return _processArchiveFile(filename, update, allowMultiple)
+        if not update:
+            isGZip = _isGZip(filename)
+            if isGZip and os.path.exists(filename[:-3]):
+                return [filename[:-3]]
+            if not isGZip:
+                return [filename]
+
+    directory = os.path.split(filename)[0]
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    response = requests.get(url, allow_redirects=True)
+    with open(filename, 'w+b') as f:
+        f.write(response.content)
+
+    try:
+        if _isArchive(filename):
+            return _processArchiveFile(filename, update, allowMultiple)
+        if _isGZip(filename):
+            return _processCompressedFile(filename)
+    except Exception: # pylint: disable=broad-except
+        pass # return the archive file on failure
+
+    return [filename]
+
+def _isUCIDataFile(name):
+    """
+    UCI convention is that Index file and files ending with .names
+    contain dataset details. All other files will be considered data
+    files.
+    """
+    return name != 'Index' and not name.endswith('.names')
+
+def _findUCIData(source, path, currPaths, update, allowMultiple):
+    """
+    Recursive download for files from a UCI repository.
+    """
+    response = requests.get(source)
+    # ignore Parent Directory at index 0 in every repository
+    hrefs = re.findall('href="(.+)"', response.text)[1:]
+    # Index file and .names files contain dataset details, not data so they
+    # will be downloaded but ignored for return with fetchFile.
+    ignore = False
+    if not allowMultiple and len(hrefs) > 1:
+        if len([href for href in hrefs if _isUCIDataFile(href)]) > 1:
+            msg = 'The source contains multiple files. Use nimble.fetchFiles '
+            msg += 'or provide the url to a specific file.'
+            raise InvalidArgumentValue(msg)
+        ignore = True
+    for href in hrefs:
+        url = source + href
+        if _isDownloadable(url):
+            urlInfo = urllib.parse.urlparse(url)
+            name = os.path.split(urlInfo.path)[1]
+            filename = os.path.join(path, name)
+            paths = _findData(url, filename, update, allowMultiple)
+            if not ignore or _isUCIDataFile(href):
+                currPaths.extend(paths)
+        else:
+            newSource = url
+            newPath = os.path.join(path, href)
+            currPaths = _findUCIData(newSource, newPath, currPaths, update,
+                                     allowMultiple)
+
+    return currPaths
+
+
+def fileFetcher(source, update, allowMultiple=True):
+    """
+    Download data from the web and store at a specified location. Files
+    are stored in a directory named 'nimbleData' that is placed, by
+    default, in the home directory (pathlib.Path.home()). The location
+    can be changed in configuration.ini. The dataset is only downloaded
+    once. Any subsequent calls for the same source will identify that
+    the data is locally available unless update is True.
+
+    The storage location is based on parsing the url. Within the
+    nimbleData directory, a directory is created for the domain. A
+    directory based on the url path is added to the domain directory and
+    the file or extracted archive contents are placed in the path
+    directory.
+    """
+    if not requests.nimbleAccessible():
+        raise PackageException('requests must be installed')
+    srcLow = source.lower()
+    # support for finding downloadable files from the UCI dataset pages
+    isUCI = 'archive.ics.uci.edu' in srcLow or srcLow.startswith('uci:')
+    if isUCI:
+        subDirectories = ''
+        if srcLow.startswith('uci:'):
+            prefix = 'https://archive.ics.uci.edu/ml/datasets/'
+            # sanitize for url. uci replaces whitespace with + character
+            toFind = urllib.parse.quote_plus(source[4:].strip(), safe='/')
+            # allow for path to subdirectory, ie uci:heart disease/costs
+            # split to find the source of the main data page, and store the
+            # subDirectories to add back in once the main data page is located
+            toFind = toFind.split('/', 1)
+            source = prefix + toFind[0].strip()
+            srcLow = source.lower()
+            if len(toFind) > 1:
+                subDirectories = toFind[1].strip()
+        if 'ml/datasets/' in srcLow:
+            response = requests.get(source)
+            archive = 'https://archive.ics.uci.edu/ml/'
+            database = r'machine-learning-databases/.+?/'
+            data = re.search(database, response.text).group()
+            source = archive + data + subDirectories
+            if not source.endswith('/'):
+                source += '/'
+
+    configLoc = nimble.settings.get('fetch', 'location')
+    homepath = os.path.join(configLoc, 'nimbleData')
+    urlInfo = urllib.parse.urlparse(source)
+    netLoc = urlInfo.netloc
+    if netLoc.startswith('www.'):
+        netLoc = netLoc[4:]
+    directory = os.path.join(*urlInfo.path.split('/'))
+    dirPath = os.path.join(homepath, netLoc, directory)
+    if _isDownloadable(source):
+        return _findData(source, dirPath, update, allowMultiple)
+    if isUCI:
+        return _findUCIData(source, dirPath, [], update, allowMultiple)
+
+    msg = 'source did not provide downloadable data'
+    raise InvalidArgumentValue(msg)

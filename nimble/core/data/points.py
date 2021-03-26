@@ -1819,10 +1819,8 @@ class Points(ABC):
                           + (len(uniqueNames) * numExpanded)
                           - (1 + numExpanded))
 
-        self._combineByExpandingFeatures_implementation(unique, namesIdx,
-                                                        uniqueNames,
-                                                        numRetFeatures,
-                                                        numExpanded)
+        self._combineByExpandingFeatures_implementation(
+            unique, namesIdx, valuesIdx, uniqueNames, numRetFeatures)
 
         self._base._featureCount = numRetFeatures
         self._base._pointCount = len(unique)
@@ -2274,8 +2272,7 @@ class Points(ABC):
 
     @abstractmethod
     def _combineByExpandingFeatures_implementation(
-            self, uniqueDict, namesIdx, uniqueNames, numRetFeatures,
-            numExpanded):
+        self, uniqueDict, namesIdx, valuesIdx, uniqueNames, numRetFeatures):
         pass
 
     @abstractmethod
