@@ -76,7 +76,7 @@ def back_unary_NamePath_preservations(callerCon, op):
     """ Test that object names and pathes are preserved when calling a unary op """
     data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
 
-    caller = callerCon(data, name=preserveName, path=preservePair)
+    caller = callerCon(data, name=preserveName, paths=preservePair)
 
     toCall = getattr(caller, op)
     ret = toCall()
@@ -126,7 +126,7 @@ def back_binaryscalar_pfname_preservations(callerCon, op, inplace):
 def back_binaryscalar_NamePath_preservations(callerCon, op):
     data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
 
-    caller = callerCon(data, name=preserveName, path=preservePair)
+    caller = callerCon(data, name=preserveName, paths=preservePair)
 
     toCall = getattr(caller, op)
     ret = toCall(1)
@@ -387,7 +387,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, att
 
     ### emptry caller, full other ###
     caller = callerCon(data)
-    other = callerCon(data, name=preserveNameOther, path=preservePairOther)
+    other = callerCon(data, name=preserveNameOther, paths=preservePairOther)
 
     assert caller.name is None
     assert caller.absolutePath is None
@@ -422,7 +422,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, att
     assert other.relativePath == preserveRPathOther
 
     ### full caller, empty other ###
-    caller = callerCon(data, name=preserveName, path=preservePair)
+    caller = callerCon(data, name=preserveName, paths=preservePair)
     other = callerCon(data)
 
     toCall = getattr(caller, attr1)
@@ -459,8 +459,8 @@ def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, att
     assert other.relativePath is None
 
     ### full caller, full other ###
-    caller = callerCon(data, name=preserveName, path=preservePair)
-    other = callerCon(data, name=preserveNameOther, path=preservePairOther)
+    caller = callerCon(data, name=preserveName, paths=preservePair)
+    other = callerCon(data, name=preserveNameOther, paths=preservePairOther)
 
     toCall = getattr(caller, attr1)
     if attr2 is not None:
@@ -1824,7 +1824,7 @@ class NumericalDataSafe(DataTestObject):
     def test_invert_namePath_preservation(self):
         bools = [[True, True], [False, False]]
 
-        boolsObj = self.constructor(bools, name=preserveName, path=preservePair)
+        boolsObj = self.constructor(bools, name=preserveName, paths=preservePair)
 
         boolsInvert = ~boolsObj
 

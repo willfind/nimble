@@ -77,6 +77,9 @@ class KNNImputation(CustomLearner):
 
         pnames = testX.points._getNamesNoGeneration()
         fnames = testX.features._getNamesNoGeneration()
-        paths = (testX._absPath, testX._relPath)
-        return nimble.data(testX.getTypeString(), result, pointNames=pnames,
-                           featureNames=fnames, path=paths, useLog=False)
+        ret = nimble.data(testX.getTypeString(), result, pointNames=pnames,
+                           featureNames=fnames, useLog=False)
+        ret._absPath = testX._absPath
+        ret._relPath = testX._relPath
+
+        return ret

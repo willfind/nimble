@@ -12,79 +12,64 @@ def objConstructorMaker(returnType):
 
     def constructor(
             source, pointNames='automatic', featureNames='automatic',
-            convertToType=None, name=None, path=(None, None),
-            treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
-            replaceMissingWith=numpy.nan):
+            name=None, convertToType=None,
+            treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan',
+                            'NULL', 'NA'),
+            replaceMissingWith=numpy.nan, paths=(None, None)):
         # Case: source is a path to a file
         if isinstance(source, str):
             return nimble.data(
                 returnType, source=source, pointNames=pointNames,
                 featureNames=featureNames, name=name,
-                treatAsMissing=treatAsMissing,
-                replaceMissingWith=replaceMissingWith, convertToType=convertToType,
-                useLog=False)
+                convertToType=convertToType, treatAsMissing=treatAsMissing,
+                replaceMissingWith=replaceMissingWith, useLog=False)
         # Case: source is some in-python format. We must call initDataObject
         # instead of nimble.data because we sometimes need to specify a
         # particular path attribute.
-        else:
-            return nimble.data(
-                returnType, source=source, pointNames=pointNames,
-                featureNames=featureNames, convertToType=convertToType, name=name,
-                path=path, keepPoints='all', keepFeatures='all',
-                treatAsMissing=treatAsMissing,
-                replaceMissingWith=replaceMissingWith, useLog=False)
+        return nimble.core._createHelpers.initDataObject(
+            returnType, source, pointNames=pointNames,
+            featureNames=featureNames, name=name,
+            convertToType=convertToType, treatAsMissing=treatAsMissing,
+            replaceMissingWith=replaceMissingWith, paths=paths)
 
     return constructor
 
 
 def viewConstructorMaker(concreteType):
     """
-    Creates the constructor method for a View test object, given a concrete return type.
-    The constructor will create an object with more data than is provided to it,
-    and then will take a view which contains the expected values.
-
+    Creates the constructor method for a View test object, given a concrete
+    return type. The constructor will create an object with more data than is
+    provided to it, and then will take a view which contains the expected
+    values.
     """
 
     def constructor(
             source, pointNames='automatic', featureNames='automatic',
-            name=None, path=(None, None), convertToType=None,
-            treatAsMissing=[float('nan'), numpy.nan, None, '', 'None', 'nan'],
-            replaceMissingWith=numpy.nan):
-        # Case: source is a path to a file
-        if isinstance(source, str):
-            orig = nimble.data(
-                concreteType, source=source, pointNames=pointNames,
-                featureNames=featureNames, name=name,
-                treatAsMissing=treatAsMissing,
-                replaceMissingWith=replaceMissingWith, convertToType=convertToType,
-                useLog=False)
-        # Case: source is some in-python format. We must call initDataObject
-        # instead of nimble.data because we sometimes need to specify a
-        # particular path attribute.
-        else:
-            orig = nimble.core._createHelpers.initDataObject(
-                concreteType, rawData=source, pointNames=pointNames,
-                featureNames=featureNames, name=name, path=path,
-                convertToType=convertToType, keepPoints='all', keepFeatures='all',
-                treatAsMissing=treatAsMissing,
-                replaceMissingWith=replaceMissingWith)
+            name=None, convertToType=None,
+            treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan',
+                            'NULL', 'NA'),
+            replaceMissingWith=numpy.nan, paths=(None, None)):
+        construct = objConstructorMaker(concreteType)
+        orig = construct(source, pointNames, featureNames, name, convertToType,
+                         treatAsMissing, replaceMissingWith, paths)
         origHasPts = orig.points._namesCreated()
         origHasFts = orig.features._namesCreated()
         # generate points of data to be present before and after the viewable
         # data in the concrete object
+        origPaths = (orig.absolutePath, orig.relativePath)
         if len(orig.points) != 0:
             firstPRaw = numpy.zeros([1] + orig._shape[1:], dtype=int).tolist()
             fNamesParam = orig.features._getNamesNoGeneration()
             firstPoint = nimble.core._createHelpers.initDataObject(
                 concreteType, rawData=firstPRaw, pointNames=['firstPNonView'],
-                featureNames=fNamesParam, name=name, path=orig.path,
-                keepPoints='all', keepFeatures='all', convertToType=convertToType)
+                featureNames=fNamesParam, name=name,
+                convertToType=convertToType, paths=origPaths)
 
             lastPRaw = (numpy.ones([1] + orig._shape[1:], dtype=int) * 3).tolist()
             lastPoint = nimble.core._createHelpers.initDataObject(
                 concreteType, rawData=lastPRaw, pointNames=['lastPNonView'],
-                featureNames=fNamesParam, name=name, path=orig.path,
-                keepPoints='all', keepFeatures='all', convertToType=convertToType)
+                featureNames=fNamesParam, name=name,
+                convertToType=convertToType, paths=origPaths)
 
             firstPoint.points.append(orig, useLog=False)
             full = firstPoint
@@ -104,8 +89,8 @@ def viewConstructorMaker(concreteType):
             fNames = full.points._getNamesNoGeneration()
             lastFeature = nimble.core._createHelpers.initDataObject(
                 concreteType, rawData=lastFRaw, featureNames=fNames,
-                pointNames=['lastFNonView'], name=name, path=orig.path,
-                keepPoints='all', keepFeatures='all', convertToType=convertToType)
+                pointNames=['lastFNonView'], name=name,
+                convertToType=convertToType, paths=origPaths)
 
             lastFeature.transpose(useLog=False)
 

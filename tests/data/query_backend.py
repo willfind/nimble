@@ -1776,8 +1776,8 @@ class QueryBackend(DataTestObject):
     def backend_Sim_NamePath_Preservation(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
         dataT = numpy.array(data).T.tolist()
-        orig = self.constructor(data, name=preserveName, path=preservePair)
-        trans = self.constructor(dataT, name=preserveName, path=preservePair)
+        orig = self.constructor(data, name=preserveName, paths=preservePair)
+        trans = self.constructor(dataT, name=preserveName, paths=preservePair)
 
         possible = [
             'correlation', 'covariance', 'dotproduct', 'samplecovariance',
@@ -2224,7 +2224,7 @@ class QueryBackend(DataTestObject):
 
     def backend_Stat_NamePath_preservation(self, axis):
         data = [[1, 2, 1], [-10, -1, -21], [-1, 0, 0]]
-        orig = self.constructor(data, name=preserveName, path=preservePair)
+        orig = self.constructor(data, name=preserveName, paths=preservePair)
 
         accepted = [
             'max', 'mean', 'median', 'min', 'uniquecount', 'proportionmissing',

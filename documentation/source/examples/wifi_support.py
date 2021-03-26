@@ -96,7 +96,7 @@ nimble.showLog(maximumEntries=2)
 ## This will ensure that everyone's data is divided into the same training and
 ## testing sets.
 nimble.random.setSeed(1234)
-wifi = nimble.data('Matrix', 'wifi_localization.txt', name='wifi')
+wifi = nimble.data('Matrix', 'wifi_localization.txt', name='wifiData')
 trainX, trainY, testX, testY = wifi.trainAndTestSets(testFraction=0.3,
                                                      labels=7)
 
@@ -162,7 +162,7 @@ nimble.showLog(levelOfDetail=3, maximumEntries=2)
 ## our log is small, but as it grows these can be very useful to find past
 ## information stored in the log file. For now, let's search try searching for
 ## our object's name, 'wifi'.
-nimble.showLog(searchForText='wifi')
+nimble.showLog(searchForText='wifiData')
 
 ## While not required to do data science with Nimble, configuration, logging,
 ## randomness and custom learners add a lot of helpful functionality to Nimble
