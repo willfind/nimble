@@ -1,44 +1,44 @@
 Example Scripts and Notebooks
 =============================
 
-Cleaning Data Example
+Cleaning Data
+-------------
+
+*  :download:`Script <cleaning_data.py>`
+*  :download:`Notebook <cleaning_data.ipynb>`
+
+Supervised Learning
+-------------------
+
+*  :download:`Script <supervised_learning.py>`
+*  :download:`Notebook <supervised_learning.ipynb>`
+
+Exploring Data
+--------------
+
+*  :download:`Script <exploring_data.py>`
+*  :download:`Notebook <exploring_data.ipynb>`
+
+Unsupervised Learning
 ---------------------
 
-*  :download:`Script <traffic_clean.py>`
-*  :download:`Notebook <traffic_clean.ipynb>`
+*  :download:`Script <unsupervised_learning.py>`
+*  :download:`Notebook <unsupervised_learning.ipynb>`
 
-Supervised Learning Example
----------------------------
+Neural Networks
+---------------
 
-*  :download:`Script <traffic_train.py>`
-*  :download:`Notebook <traffic_train.ipynb>`
+*  :download:`Script <neural_networks.py>`
+*  :download:`Notebook <neural_networks.ipynb>`
 
-Exploring Data Example
-----------------------
+Merging and Tidying Data
+------------------------
 
-*  :download:`Script <shoppers_explore.py>`
-*  :download:`Notebook <shoppers_explore.ipynb>`
+*  :download:`Script <merging_and_tidying_data.py>`
+*  :download:`Notebook <merging_and_tidying_data.ipynb>`
 
-Unsupervised Learning Example
------------------------------
+Additional Functionality
+------------------------
 
-*  :download:`Script <shoppers_train.py>`
-*  :download:`Notebook <shoppers_train.ipynb>`
-
-Neural Network Example
-----------------------
-
-*  :download:`Script <digits_train.py>`
-*  :download:`Notebook <digits_train.ipynb>`
-
-Merging and Tidying Example
----------------------------
-
-*  :download:`Script <tidy_data.py>`
-*  :download:`Notebook <tidy_data.ipynb>`
-
-Support Functionality Example
------------------------------
-
-*  :download:`Script <wifi_support.py>`
-*  :download:`Notebook <wifi_support.ipynb>`
+*  :download:`Script <additional_functionality.py>`
+*  :download:`Notebook <additional_functionality.ipynb>`

@@ -15,7 +15,6 @@
 from __future__ import absolute_import
 import sys
 import os
-import shlex
 import inspect
 import re
 import json
@@ -35,11 +34,20 @@ os.environ['PYTHONPATH'] = NimbleParentDirPath
 needs_sphinx = '2.2'
 
 def process_docstring(app, what, name, obj, options, lines):
+    """
+    This is a workaround to allow sphinx to show functions from their __init__
+    module location, not their exact source. For example, nimble.calculate.mean
+    instead of nimble.calculate.statistic.mean.
+    """
     if what == 'module' and options.get('noindex', False):
         del lines[:]
 
 def process_signature(app, what, name, obj, options, signature,
                       return_annotation):
+    """
+    Prevents Sphinx from showing the signature for classes that are not
+    designed to be constructed by the user.
+    """
     keepSignatures = ['nimble.CV', 'nimble.Init']
     if what == 'class' and name not in keepSignatures:
         signature = ''
@@ -390,37 +398,36 @@ class PYtoIPYNB:
             line = groups[1] + groups[3]
             if groups[2]:
                 line = groups[2] + ' ' + line
+        if line == '##\n':
+            line = '\n'
         isNewline = line == '\n'
         if not isNewline and isMarkdown and self.celltype != 'markdown':
             self.celltype = 'markdown'
             cellInfo = dict(cell_type=self.celltype, metadata={}, source=[])
-            self._addNewCell(line, cellInfo)
+            self._addNewCell(cellInfo)
         elif not (isNewline or isMarkdown) and self.celltype != 'code':
             self.celltype = 'code'
             cellInfo = dict(cell_type=self.celltype, execution_count= None,
                             metadata={}, outputs=[], source=[])
-            self._addNewCell(line, cellInfo)
+            self._addNewCell(cellInfo)
 
         self.notebook['cells'][-1]['source'].append(line)
 
-    def _addNewCell(self, line, cellInfo):
+    def _addNewCell(self, cellInfo):
         self._trimPreviousCellNewlines()
         self.notebook['cells'].append(cellInfo)
 
     def _trimPreviousCellNewlines(self):
         if self.notebook['cells'] and self.notebook['cells'][-1]['source']:
             if self.notebook['cells'][-1]['source'][-1] == '\n':
-                 _ = self.notebook['cells'][-1]['source'].pop()
+                _ = self.notebook['cells'][-1]['source'].pop()
             if self.notebook['cells'][-1]['source'][-1].endswith('\n'):
                 trimmed = self.notebook['cells'][-1]['source'][-1][:-1]
                 self.notebook['cells'][-1]['source'][-1] = trimmed
 
-exampleNames = ['digits_train.py', 'shoppers_explore.py', 'shoppers_train.py',
-                'tidy_data.py', 'traffic_clean.py', 'traffic_train.py',
-                'wifi_support.py']
-confDir = os.path.dirname(confFilePath)
-exampleFiles = [os.path.join(confDir, 'examples', name)
-                for name in exampleNames]
+examplesDir = os.path.join(os.path.dirname(confFilePath), 'examples')
+exampleFiles = [os.path.join(examplesDir, f) for f in os.listdir(examplesDir)
+                if f.endswith('.py')]
 
 for file in exampleFiles:
     PYtoIPYNB(file).convertToNotebook()

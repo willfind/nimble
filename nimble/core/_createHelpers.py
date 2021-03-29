@@ -18,6 +18,7 @@ import tarfile
 import gzip
 import shutil
 import urllib.parse
+from types import GeneratorType
 import locale
 
 import numpy
@@ -95,7 +96,8 @@ def isAllowedRaw(data, allowLPT=False):
         return True
     if allowLPT and 'PassThrough' in str(type(data)):
         return True
-    if isinstance(data, (tuple, list, dict, numpy.ndarray)):
+    if isinstance(data, (tuple, list, dict, numpy.ndarray, range,
+                         GeneratorType)):
         return True
     if _isScipySparse(data):
         return True
@@ -1220,6 +1222,8 @@ def initDataObject(
     if _isBase(rawData):
         # point/featureNames, treatAsMissing, etc. may vary
         rawData = rawData._data
+    elif isinstance(rawData, (range, GeneratorType)):
+        rawData = list(rawData)
     if not reuseData:
         rawData = copy.deepcopy(rawData)
 
@@ -2224,9 +2228,8 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
         function call.
     """
     dialect = _detectDialectFromSeparator(ioStream, inputSeparator)
-
-    (pointNames, featureNames) = _checkCSVForNames(ioStream, pointNames,
-                                                   featureNames, dialect)
+    pointNames, featureNames = _checkCSVForNames(ioStream, pointNames,
+                                                 featureNames, dialect)
 
     pointNames = _namesDictToList(pointNames, 'point', 'pointNames')
     featureNames = _namesDictToList(featureNames, 'feature', 'featureNames')

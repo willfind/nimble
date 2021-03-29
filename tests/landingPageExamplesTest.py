@@ -17,7 +17,7 @@ def test_callExamplesAsMain():
                                'examples')
     examplesFiles = [f for f in os.listdir(examplesDir) if f.endswith('.py')]
     results = {}
-    scriptsWithPlots = ['shoppers_train.py', 'shoppers_explore.py']
+    scriptsWithPlots = ['unsupervised_learning.py', 'exploring_data.py']
 
     for script in examplesFiles:
         scriptLoc = os.path.join(examplesDir, script)
@@ -71,7 +71,7 @@ def test_callExamplesAsMain():
             print("")
         else:
             outLines = cp.stdout.split(b'\n')
-            if key == 'digits_train.py':
+            if key == 'neural_networks.py':
                 # check only final line output, ignore intermediate updates
                 outLines = [l.split(b'\r')[-1] for l in outLines]
             with open(expOut, 'rb') as exp:
