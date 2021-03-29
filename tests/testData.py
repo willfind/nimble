@@ -73,6 +73,141 @@ class GetItemOnly(object):
 ###############################
 # Raw data values correctness #
 ###############################
+def test_data_dictOfList():
+    dataDict = {'c': [3, 6, 9], 'a': [1, 4, 7], 'b': [2, 5, 8]}
+    for t in returnTypes:
+        fromList = nimble.data(t, [[1,2,3], [4,5,6], [7,8,9]],
+                               featureNames=['a', 'b', 'c'])
+
+        fromDictOfList = nimble.data(t, dataDict)
+        # order of features is not consistent for dict
+        fromList.features.permute(fromDictOfList.features.getNames())
+        assert fromDictOfList == fromList
+
+        fromList.features.permute(['a', 'b', 'c'])
+        fromDictOfList = nimble.data(t, dataDict,
+                                     featureNames=['b', 'c', 'a'])
+
+        assert fromDictOfList.features.getNames() == ['b', 'c', 'a']
+        assert fromDictOfList.features[0] == fromList.features[1]
+        assert fromDictOfList.features[1] == fromList.features[2]
+        assert fromDictOfList.features[2] == fromList.features[0]
+
+        fromDictOfList2 = nimble.data(t, dataDict,
+                                      featureNames={'a': 2, 'b': 0, 'c': 1})
+
+        assert fromDictOfList == fromDictOfList2
+
+        fromList.points.setNames(['1', '4', '7'])
+        fromDictOfList = nimble.data(t, dataDict, pointNames=['1', '4', '7'],
+                                     featureNames=['a', 'b', 'c'])
+
+        assert fromDictOfList == fromList
+
+        fromDictOfList = nimble.data(t, dataDict,
+                                     pointNames={'1': 0, '7': 2, '4': 1},
+                                     featureNames=['a', 'b', 'c'])
+
+        assert fromDictOfList == fromList
+
+        fromList.points.setNames(None)
+        fromDictOfList = nimble.data(t, dataDict, pointNames=False)
+        # order of features is not consistent for dict
+        fromList.features.permute(fromDictOfList.features.getNames())
+
+        assert fromDictOfList == fromList
+        assert not fromDictOfList.points._namesCreated()
+
+        fromList.features.permute(['a', 'b', 'c'])
+        fromList.features.setNames(None)
+        fromDictOfList = nimble.data(t, dataDict, featureNames=False)
+        fromDictOfList.features.sort(0) # sort by pt 0 values b/c no ft names
+
+        assert fromDictOfList == fromList
+        assert not fromDictOfList.features._namesCreated()
+
+        assertExpectedException(InvalidArgumentValue, nimble.data, t, dataDict,
+                                pointNames=True,
+                                messageIncludes='pointNames cannot be True')
+
+        fromDictOfListEmpty = nimble.data(t, {})
+        assert not fromDictOfListEmpty.points._namesCreated()
+        assert not fromDictOfListEmpty.features._namesCreated()
+
+        assertExpectedException(InvalidArgumentValue, nimble.data, t, {},
+                                featureNames=True,
+                                messageIncludes='featureNames cannot be True')
+
+def test_data_listOfDict():
+    dataList = [{'b': 2, 'c': 3, 'a': 1},
+                {'a': 4, 'c': 6, 'b': 5},
+                {'c': 9, 'a':7, 'b': 8}]
+    for t in returnTypes:
+        fromList = nimble.data(t, [[1,2,3], [4,5,6], [7,8,9]],
+                               featureNames=['a', 'b', 'c'])
+
+        fromListOfDict = nimble.data(t, dataList)
+        # order of features is not consistent for dict
+        fromList.features.permute(fromListOfDict.features.getNames())
+        assert fromListOfDict == fromList
+
+        fromList.features.permute(['a', 'b', 'c'])
+        fromListOfDict = nimble.data(t, dataList,
+                                     featureNames=['b', 'c', 'a'])
+
+        assert fromListOfDict.features.getNames() == ['b', 'c', 'a']
+        assert fromListOfDict.features[0] == fromList.features[1]
+        assert fromListOfDict.features[1] == fromList.features[2]
+        assert fromListOfDict.features[2] == fromList.features[0]
+
+        fromListOfDict2 = nimble.data(t, dataList,
+                                      featureNames={'a': 2, 'b': 0, 'c': 1})
+
+        assert fromListOfDict == fromListOfDict2
+
+        fromList.points.setNames(['1', '4', '7'])
+        fromListOfDict = nimble.data(t, dataList, pointNames=['1', '4', '7'],
+                                     featureNames=['a', 'b', 'c'])
+
+        assert fromListOfDict == fromList
+
+        fromListOfDict = nimble.data(t, dataList,
+                                     pointNames={'1': 0, '7': 2, '4': 1},
+                                     featureNames=['a', 'b', 'c'])
+
+        assert fromListOfDict == fromList
+
+        fromList.points.setNames(None)
+        fromListOfDict = nimble.data(t, dataList, pointNames=False)
+        # order of features is not consistent for dict
+        fromList.features.permute(fromListOfDict.features.getNames())
+
+        assert fromListOfDict == fromList
+        assert not fromListOfDict.points._namesCreated()
+
+        fromList.features.permute(['a', 'b', 'c'])
+        fromList.features.setNames(None)
+        fromListOfDict = nimble.data(t, dataList, featureNames=False)
+        fromListOfDict.features.sort(0) # sort by pt 0 values b/c no ft names
+
+        assert fromListOfDict == fromList
+        assert not fromListOfDict.features._namesCreated()
+
+        assertExpectedException(InvalidArgumentValue, nimble.data, t, dataList,
+                                pointNames=True,
+                                messageIncludes='pointNames cannot be True')
+
+        fromListOfDictEmpty = nimble.data(t, [{}, {}])
+        assert not fromListOfDictEmpty.points._namesCreated()
+        assert not fromListOfDictEmpty.features._namesCreated()
+
+        assertExpectedException(InvalidArgumentValue, nimble.data, t, [{}, {}],
+                                featureNames=True,
+                                messageIncludes='featureNames cannot be True')
+
+        assertExpectedException(InvalidArgumentValue, nimble.data, t,
+                                [{'a': 1, 'b': 2}, {'a': 3, 'c': 4}],
+                                messageIncludes='must contain the same keys')
 
 def test_data_raw_stringConversion_float():
     for t in returnTypes:
