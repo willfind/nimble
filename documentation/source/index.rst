@@ -29,6 +29,7 @@ Resources
 .. toctree::
    :maxdepth: 1
 
+   install
    API Documentation <docs/index>
    datasets
 

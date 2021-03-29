@@ -5,7 +5,6 @@ Relies on being keras 2.0.8
 import os
 import logging
 import warnings
-from packaging.version import parse as versionParse
 
 import numpy
 
@@ -39,9 +38,9 @@ class Keras(PredefinedInterface):
             # that drown out anything else on standard out
             logging.getLogger('tensorflow').disabled = True
             # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-            if versionParse(self.tensorflow.__version__) < versionParse('2'):
+            if int(self.tensorflow.__version__.split('.')[0]) < 2:
                 msg = "Randomness is outside of Nimble's control for version "
-                msg += "1 of Tensorflow. Reproducible results cannot be "
+                msg += "1.x of Tensorflow. Reproducible results cannot be "
                 msg += "guaranteed"
                 warnings.warn(msg, UserWarning)
             else:
