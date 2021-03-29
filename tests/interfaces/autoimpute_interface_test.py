@@ -1,6 +1,7 @@
 """
 Tests for autoimpute interface.
 """
+import functools
 
 import numpy
 from nose.plugins.attrib import attr
@@ -11,12 +12,18 @@ from nimble import match
 from nimble import fill
 from nimble.exceptions import InvalidArgumentValue
 from nimble.calculate import rootMeanSquareError, fractionCorrect
+from tests.helpers import getDataConstructors
 
 from .skipTestDecorator import SkipMissing
 
 autoimputeSkipDec = SkipMissing('autoimpute')
 
-def getDataWithMissing(retType, assignNames=True):
+# fillMatching is inplace so no views
+constructors = getDataConstructors(includeViews=False)
+
+def getDataWithMissing(constructor, assignNames=True, yBinary=False):
+    if isinstance(constructor, str):
+        constructor = functools.partial(nimble.data, constructor)
     mu = numpy.array([5.0, 0.0])
     r = numpy.array([
             [  3.40, -2.75],
@@ -25,25 +32,23 @@ def getDataWithMissing(retType, assignNames=True):
     # Generate the random samples.
     num = 100
     d = numpy.random.multivariate_normal(mu, r, size=num)
-    x = d[:, 0]
-    y = d[:, 1]
     # insert missing values
     rm1 = numpy.random.random_sample(num) > 0.85
-    x[rm1] = numpy.nan
+    d[rm1, 1] = numpy.nan
+    if yBinary:
+        d[:, 0] = numpy.random.choice(2, 100)
 
-    data = nimble.data(retType, {"y": y, "x": x})
-    if not assignNames:
-        data.points.setNames(None)
-        data.features.setNames(None)
-    # remove points with only missing values
-    data.points.delete(match.allMissing)
+    if assignNames:
+        data = constructor(d, featureNames=['y', 'x'])
+    else:
+        data = constructor(d)
 
     return data
 
 @autoimputeSkipDec
 def backend_imputation(learnerName, **kwargs):
-    for t in nimble.core.data.available:
-        data = getDataWithMissing(t)
+    for constructor in constructors:
+        data = getDataWithMissing(constructor)
         orig = data.copy()
         matches = data.matchingElements(match.missing)
         nimble.fillMatching(learnerName, matches, data, **kwargs)
@@ -51,6 +56,7 @@ def backend_imputation(learnerName, **kwargs):
         for dFt, mFt, oFt in zip(data.features, matches.features, orig.features):
             for i in range(len(dFt)):
                 if mFt[i]:
+                    assert dFt[i] == dFt[i] # not nan
                     assert dFt[i] != oFt[i]
                 else:
                     assert dFt[i] == oFt[i]
@@ -76,8 +82,8 @@ def test_autoimpute_MultipleImputer_exception_noStrategy():
 
 @autoimputeSkipDec
 def test_autoimpute_MiLinearRegression():
-    for t in nimble.core.data.available:
-        data = getDataWithMissing(t)
+    for constructor in constructors:
+        data = getDataWithMissing(constructor)
         trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels='y')
         # test data cannot have missing values
         testX.features.fillMatching(fill.mean, match.missing)
@@ -96,8 +102,8 @@ def test_autoimpute_MiLinearRegression():
 
 @autoimputeSkipDec
 def test_autoimpute_MiLinearRegression_noNames():
-    for t in nimble.core.data.available:
-        data = getDataWithMissing(t, False)
+    for constructor in constructors:
+        data = getDataWithMissing(constructor, False)
         trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels=0)
         testX.features.fillMatching(fill.mean, match.missing)
 
@@ -125,11 +131,8 @@ def test_autoimpute_MiLinearRegression_exception_noStrategy():
 
 @autoimputeSkipDec
 def test_autoimpute_MiLogisticRegression():
-    for t in nimble.core.data.available:
-        data = getDataWithMissing(t)
-        # make y binary
-        data.features.transform(lambda ft: numpy.random.choice(2, len(ft.points)),
-                                features='y')
+    for constructor in constructors:
+        data = getDataWithMissing(constructor, yBinary=True)
         trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels='y')
         # test data cannot have missing values
         testX.features.fillMatching(fill.mean, match.missing)
@@ -149,11 +152,8 @@ def test_autoimpute_MiLogisticRegression():
 
 @autoimputeSkipDec
 def test_autoimpute_MiLogisticRegression_directMultipleImputer():
-    for t in nimble.core.data.available:
-        data = getDataWithMissing(t)
-        # make y binary
-        data.features.transform(lambda ft: numpy.random.choice(2, len(ft.points)),
-                                features='y')
+    for constructor in constructors:
+        data = getDataWithMissing(constructor, yBinary=True)
         trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels='y')
         # test data cannot have missing values
         testX.features.fillMatching(fill.mean, match.missing)
@@ -181,10 +181,8 @@ def test_autoimpute_MiLogisticRegression_directMultipleImputer():
 
 @autoimputeSkipDec
 def test_autoimpute_MiLogisticRegression_noNames():
-    for t in nimble.core.data.available:
-        data = getDataWithMissing(t, False)
-        data.features.transform(lambda ft: numpy.random.choice(2, len(ft.points)),
-                                features=0)
+    for constructor in constructors:
+        data = getDataWithMissing(constructor, assignNames=False, yBinary=True)
         trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels=0)
 
         testX.features.fillMatching(fill.mean, match.missing)
@@ -204,9 +202,7 @@ def test_autoimpute_MiLogisticRegression_noNames():
 @autoimputeSkipDec
 @raises(InvalidArgumentValue)
 def test_autoimpute_MiLogisticRegression_exception_noStrategy():
-    data = getDataWithMissing('Matrix')
-    data.features.transform(lambda ft: numpy.random.choice(2, len(ft.points)),
-                            features='y')
+    data = getDataWithMissing('Matrix', yBinary=True)
     trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels='y')
     testX.features.fillMatching(fill.mean, match.missing)
     nimble.trainAndTest('autoimpute.MiLogisticRegression', trainX, trainY,
@@ -215,9 +211,7 @@ def test_autoimpute_MiLogisticRegression_exception_noStrategy():
 @autoimputeSkipDec
 @raises(InvalidArgumentValue)
 def test_autoimpute_MiLogisticRegression_exception_directMultipleImputerNoStrategy():
-    data = getDataWithMissing('Matrix')
-    data.features.transform(lambda ft: numpy.random.choice(2, len(ft.points)),
-                            features='y')
+    data = getDataWithMissing('Matrix', yBinary=True)
     trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels='y')
 
     testX.features.fillMatching(fill.mean, match.missing)
