@@ -55,8 +55,6 @@ from nimble import exceptions
 #: nimble.core.configuration.SessionConfiguration
 settings = core.configuration.loadSettings()
 
-core.configuration.setFetchPath(settings)
-
 # initialize the interfaces
 core.interfaces.initInterfaceSetup()
 

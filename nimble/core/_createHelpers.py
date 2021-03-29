@@ -12,13 +12,13 @@ import copy
 import sys
 import warnings
 import datetime
-from contextlib import contextmanager
 import re
 import zipfile
 import tarfile
 import gzip
 import shutil
 import urllib.parse
+import locale
 
 import numpy
 
@@ -1408,15 +1408,124 @@ def _autoFileTypeChecker(ioStream):
     # we default to csv otherwise
     return 'csv'
 
-@contextmanager
-def _openFileIO(openFile):
+def _isDownloadable(url):
     """
-    Context manager that prevents an open file from closing on exit.
+    Does the url contain a downloadable resource.
     """
-    yield openFile
+    headers = requests.head(url, allow_redirects=True).headers
+    contentType = headers.get('content-type').lower()
+    return not 'html' in contentType
+
+def _isArchive(filename):
+    if not hasattr(filename, 'read'):
+        return zipfile.is_zipfile(filename) or tarfile.is_tarfile(filename)
+    seekLoc = filename.tell()
+    # is_zipfile does not seek back to start
+    if zipfile.is_zipfile(filename):
+        filename.seek(seekLoc)
+        return True
+
+    filename.seek(0)
+    # is_tarfile does not support file objects until python 3.9
+    try:
+        tar = tarfile.open(fileobj=filename)
+        tar.close()
+        return True
+    except tarfile.TarError:
+        return False
+    finally:
+        filename.seek(seekLoc)
+
+def _isGZip(filename):
+    if hasattr(filename, 'read'):
+        saveLoc = filename.tell()
+        ret = filename.read(2) == b'\x1f\x8b'
+        filename.seek(saveLoc)
+        return ret
+
+    with open(filename, 'rb') as f:
+        return f.read(2) == b'\x1f\x8b'
+
+def _isUCI(source):
+    """
+    Check if source is a url from UCI or uses UCI shorthand.
+    """
+    return 'archive.ics.uci.edu' in source or source.startswith('uci::')
+
+def _isUCIDataFile(name):
+    """
+    UCI convention is that Index file and files ending with .names
+    contain dataset details. All other files will be considered data
+    files.
+    """
+    return name != 'Index' and not name.endswith('.names')
+
+def _processUCISource(source):
+    """
+    UCI source can be UCI shorthand ('uci::<Dataset name>'), a URL to
+    UCI main page, or URL to UCI data page. For the first two, the
+    source needs to be transformed to point to the data page.
+    """
+    subDirectories = ''
+    if source.startswith('uci::'):
+        prefix = 'https://archive.ics.uci.edu/ml/datasets/'
+        # sanitize for url. uci replaces whitespace with + character
+        toFind = urllib.parse.quote_plus(source[5:].strip(), safe='/')
+        # allow for path to subdirectory, ie uci::heart disease/costs
+        # split to find the source of the main data page, and store the
+        # subDirectories to add back in once the main data page is located
+        toFind = toFind.split('/', 1)
+        source = prefix + toFind[0].strip()
+        if len(toFind) > 1:
+            subDirectories = toFind[1].strip()
+    if 'ml/datasets/' in source:
+        response = requests.get(source)
+        archive = 'https://archive.ics.uci.edu/ml/'
+        database = r'machine-learning-databases/.+?/'
+        data = re.search(database, response.text).group()
+        source = archive + data + subDirectories
+        if not source.endswith('/'):
+            source += '/'
+
+    return source
+
+def _extractFromArchive(ioStream, fromUCI):
+    """
+    Extract contents of an archive file.
+    """
+    if zipfile.is_zipfile(ioStream):
+        archiveOpen = zipfile.ZipFile
+        nameGetter = 'namelist'
+        def extractor(fileObj, name):
+            return getattr(fileObj, 'open')(name)
+    else:
+        archiveOpen = lambda f, mode: tarfile.open(mode=mode, fileobj=f)
+        nameGetter = 'getnames'
+        def extractor(fileObj, name):
+            member = getattr(fileObj, 'getmember')(name)
+            return getattr(fileObj, 'extractfile')(member)
+
+    ioStream.seek(0)
+    with archiveOpen(ioStream, 'r') as fileObj:
+        names = getattr(fileObj, nameGetter)()
+        if fromUCI:
+            # limit only to files containing data
+            names = [n for n in names if _isUCIDataFile(n)]
+        if len(names) > 1:
+            msg = 'Multiple files found in source'
+            raise InvalidArgumentValue(msg)
+        extracted = extractor(fileObj, names[0])
+        return BytesIO(extracted.read())
+
+def _decompressGZip(ioStream):
+    """
+    Decompress a gzip file.
+    """
+    with gzip.open(ioStream, 'rb') as unzipped:
+        return BytesIO(unzipped.read())
 
 def createDataFromFile(
-        returnType, data, pointNames, featureNames, name,
+        returnType, source, pointNames, featureNames, name,
         ignoreNonNumericalFeatures, keepPoints, keepFeatures, convertToType,
         inputSeparator, treatAsMissing, replaceMissingWith):
     """
@@ -1425,48 +1534,86 @@ def createDataFromFile(
     and featureNames (the later two following the same semantics as
     nimble.data's parameters with the same names).
     """
+    encoding = locale.getpreferredencoding() # default encoding for open()
+    isUCI = False
     # Case: string value means we need to open the file, either directly or
     # through an http request
-    if isinstance(data, str):
-        if data[:4] == 'http': # webpage
+    if isinstance(source, str):
+        if os.path.exists(source):
+            content = open(source, 'rb', newline=None).read()
+            path = source
+        else: # webpage
+            isUCI = _isUCI(source.lower())
+            if not isUCI and source[:4].lower() != 'http':
+                msg = 'The source is not a path to an existing file and does '
+                msg += 'not start with "http" so it cannot be processed as a '
+                msg += 'url'
+                raise InvalidArgumentValue(msg)
             if not requests.nimbleAccessible():
-                msg = "To load data from a webpage, the requests module must "
-                msg += "be installed"
+                msg = "To load data from a webpage, the requests module "
+                msg += "must be installed"
                 raise PackageException(msg)
-            response = requests.get(data, stream=True)
+            if isUCI:
+                source = _processUCISource(source.lower())
+            response = requests.get(source, stream=True)
             if not response.ok:
                 msg = "The data could not be accessed from the webpage. "
                 msg += "HTTP Status: {0}, ".format(response.status_code)
                 msg += "Reason: {0}".format(response.reason)
                 raise InvalidArgumentValue(msg)
+            if isUCI and not _isDownloadable(source):
+                # ignore Parent Directory at index 0 in every repository
+                hrefs = re.findall('href="(.+)"', response.text)[1:]
+                dataFiles = [href for href in hrefs if _isUCIDataFile(href)]
+                if len(dataFiles) > 1:
+                    msg = 'This UCI source contains multiple data files. '
+                    msg += 'Provide a url to a specific file.'
+                    raise InvalidArgumentValue(msg)
+                source += dataFiles[0]
+                response = requests.get(source, stream=True)
 
-            # start with BytesIO since mtx and hdf5 need them
-            with BytesIO(response.content) as toCheck:
-                extension = _autoFileTypeChecker(toCheck)
-            if extension != 'csv':
-                ioStream = BytesIO(response.content)
-            else:
-                ioStream = StringIO(response.text, newline=None)
-        else: # path to file
-            try:
-                with open(data, 'r', newline=None) as toCheck:
-                    extension = _autoFileTypeChecker(toCheck)
-                ioStream = open(data, 'r', newline=None)
-            except UnicodeDecodeError:
-                with open(data, 'rb', newline=None) as toCheck:
-                    extension = _autoFileTypeChecker(toCheck)
-                ioStream = open(data, 'rb', newline=None)
-        path = data
+            path = source
+            if name is None:
+                if "Content-Disposition" in response.headers:
+                    contentDisp = response.headers["Content-Disposition"][0]
+                    name = contentDisp.split('filename=')[1]
+                else:
+                    name = source.split("/")[-1]
+
+            content = response.content
+            if response.apparent_encoding is not None:
+                encoding = response.apparent_encoding
+
     # Case: we are given an open file already
     else:
-        with _openFileIO(data) as toCheck:
-            extension = _autoFileTypeChecker(toCheck)
-        ioStream = _openFileIO(data)
+        saved = source.tell()
+        content = source.read()
+        source.seek(saved)
+
+        if not isinstance(content, bytes):
+            encoding = source.encoding
+            content = bytes(content, encoding=encoding)
+
         # try getting name attribute from file
-        try:
-            path = data.name
-        except AttributeError:
+        if hasattr(source, 'name'):
+            path = source.name
+        else:
             path = None
+
+    # check if need to decompress or extract file
+    with BytesIO(content) as toCheck:
+        if _isGZip(toCheck):
+            content = _decompressGZip(toCheck).read()
+        elif _isArchive(toCheck):
+            content = _extractFromArchive(toCheck, isUCI).read()
+
+    with BytesIO(content) as toCheck:
+        extension = _autoFileTypeChecker(toCheck)
+
+    if extension != 'csv':
+        ioStream = BytesIO(content)
+    else:
+        ioStream = StringIO(content.decode(encoding), newline=None)
 
     # if the file has a different, valid extension from the one we determined
     # we will defer to the file's extension
@@ -1485,19 +1632,12 @@ def createDataFromFile(
                 keepPoints, keepFeatures, inputSeparator, emptyIsMissing)
             selectSuccess = True
         elif extension == 'mtx':
-            loaded = _loadmtxForAuto(toLoad, pointNames, featureNames)
+            loaded = _loadmtxForAuto(toLoad, pointNames, featureNames,
+                                     encoding)
         elif extension in ['hdf5', 'h5']: # h5 and hdf5 are synonymous
             loaded = _loadhdf5ForAuto(toLoad, pointNames, featureNames)
 
     retData, retPNames, retFNames = loaded
-
-    # auto set name if unspecified, and is possible
-    if isinstance(data, str):
-        path = data
-    elif hasattr(data, 'name'):
-        path = data.name
-    else:
-        path = None
 
     if path is not None and name is None:
         tokens = path.rsplit(os.path.sep)
@@ -1640,7 +1780,7 @@ def _colTypeConversion(row, convertCols):
             row[idx] = cType(val)
 
 
-def _checkCSVForNames(openFile, pointNames, featureNames, dialect):
+def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
     """
     Will check for triggers to automatically determine the positions of
     the point or feature names if they have not been specified by the
@@ -1649,17 +1789,17 @@ def _checkCSVForNames(openFile, pointNames, featureNames, dialect):
     line of data contains the feature names, and the first value of that
     line is 'pointNames'
     """
-    startPosition = openFile.tell()
+    startPosition = ioStream.tell()
 
     # walk past all the comments
     currLine = "#"
     while currLine.startswith('#'):
-        currLine = openFile.readline()
+        currLine = ioStream.readline()
 
     # check for two empty lines in a row to denote that first
     # data line contains feature names
     if currLine.strip() == '':
-        currLine = openFile.readline()
+        currLine = ioStream.readline()
         if currLine.strip() == '':
             # only change set value if we allow detection
             if featureNames == 'automatic':
@@ -1668,8 +1808,8 @@ def _checkCSVForNames(openFile, pointNames, featureNames, dialect):
 
     # Use the robust csv reader to read the first two lines (if available)
     # these are saved to used in further autodection
-    openFile.seek(startPosition)
-    rowReader = csv.reader(openFile, dialect)
+    ioStream.seek(startPosition)
+    rowReader = csv.reader(ioStream, dialect)
     try:
         firstDataRow = next(rowReader)
         while firstDataRow == []:
@@ -1689,7 +1829,7 @@ def _checkCSVForNames(openFile, pointNames, featureNames, dialect):
         pointNames, featureNames, firstDataRow, secondDataRow)
 
     # reset everything to make the loop easier
-    openFile.seek(startPosition)
+    ioStream.seek(startPosition)
 
     return (pointNames, featureNames)
 
@@ -1702,7 +1842,7 @@ def _filterCSVRow(row):
     return True
 
 
-def _advancePastComments(openFile):
+def _advancePastComments(ioStream):
     """
     Take an open file and advance until we find a line that isn't empty
     and doesn't start with the comment character. Returns the number
@@ -1712,9 +1852,9 @@ def _advancePastComments(openFile):
     while True:
         # If we read a row that isn't a comment line, we
         # have to undo our read
-        startPosition = openFile.tell()
+        startPosition = ioStream.tell()
 
-        row = openFile.readline()
+        row = ioStream.readline()
         if len(row) == 0:
             numSkipped += 1
             continue
@@ -1725,7 +1865,7 @@ def _advancePastComments(openFile):
             numSkipped += 1
             continue
 
-        openFile.seek(startPosition)
+        ioStream.seek(startPosition)
         break
 
     return numSkipped
@@ -1756,14 +1896,14 @@ def _namesDictToList(names, kind, paramName):
 
     return ret
 
-def _detectDialectFromSeparator(openFile, inputSeparator):
+def _detectDialectFromSeparator(ioStream, inputSeparator):
     "find the dialect to pass to csv.reader based on inputSeparator"
-    startPosition = openFile.tell()
+    startPosition = ioStream.tell()
     # skip commented lines
-    _ = _advancePastComments(openFile)
+    _ = _advancePastComments(ioStream)
     if inputSeparator == 'automatic':
         # detect the delimiter from the first line of data
-        dialect = csv.Sniffer().sniff(openFile.readline())
+        dialect = csv.Sniffer().sniff(ioStream.readline())
     elif len(inputSeparator) > 1:
         msg = "inputSeparator must be a single character"
         raise InvalidArgumentValue(msg)
@@ -1774,7 +1914,7 @@ def _detectDialectFromSeparator(openFile, inputSeparator):
         dialect.delimiter = inputSeparator
 
     # reset everything to make the loop easier
-    openFile.seek(startPosition)
+    ioStream.seek(startPosition)
 
     return dialect
 
@@ -1891,7 +2031,7 @@ def _limitToKeptFeatures(keepFeatures, retFNames):
     return keepIndices, keepNames
 
 
-def _loadmtxForAuto(openFile, pointNames, featureNames):
+def _loadmtxForAuto(ioStream, pointNames, featureNames, encoding):
     """
     Uses scipy helpers to read a matrix market file; returning whatever
     is most appropriate for the file. If it is a matrix market array
@@ -1902,37 +2042,35 @@ def _loadmtxForAuto(openFile, pointNames, featureNames):
     if not scipy.nimbleAccessible():
         msg = "scipy is not available"
         raise PackageException(msg)
-    startPosition = openFile.tell()
+    startPosition = ioStream.tell()
     seenPNames = False
     retPNames = None
     retFNames = None
 
     # read through the comment lines
     while True:
-        currLine = openFile.readline()
-        if currLine[0] != '%':
+        currLine = ioStream.readline()
+        # need slice not index for bytes comparison
+        if currLine[:1] != b'%':
             break
-        if len(currLine) > 1 and currLine[1] == "#":
+        if len(currLine) > 1 and currLine[1:2] in [b"#", '#']:
             # strip '%#' from the begining of the line
             scrubbedLine = currLine[2:]
             # strip newline from end of line
             scrubbedLine = scrubbedLine.rstrip()
-            names = scrubbedLine.split(',')
+            if isinstance(scrubbedLine, str):
+                names = scrubbedLine.split(',')
+            else:
+                names = list(map(lambda s: s.decode(encoding),
+                                 scrubbedLine.split(b',')))
             if not seenPNames:
                 retPNames = names if names != [''] else None
                 seenPNames = True
             else:
                 retFNames = names if names != [''] else None
 
-    openFile.seek(startPosition)
-    try:
-        data = scipy.io.mmread(openFile)
-    except TypeError:
-        if hasattr(openFile, 'name'):
-            tempName = openFile.name
-        else:
-            tempName = openFile.inner.name
-        data = scipy.io.mmread(tempName)
+    ioStream.seek(startPosition)
+    data = scipy.io.mmread(ioStream)
 
     temp = (data, None, None)
 
@@ -1957,9 +2095,9 @@ def _loadmtxForAuto(openFile, pointNames, featureNames):
     return data, retPNames, retFNames
 
 
-def _loadhdf5ForAuto(openFile, pointNames, featureNames):
+def _loadhdf5ForAuto(ioStream, pointNames, featureNames):
     """
-    Use h5py module to load high dimension data. The openFile is used
+    Use h5py module to load high dimension data. The ioStream is used
     to create a h5py.File object. Each Group and Dataset in the object
     are considered a deeper dimension. If pointNames is True, the keys
     of the initial file object will be used as points, otherwise, the
@@ -1979,7 +2117,7 @@ def _loadhdf5ForAuto(openFile, pointNames, featureNames):
             arrays.append(extractArray(value))
         return arrays
 
-    with h5py.File(openFile, 'r') as hdf:
+    with h5py.File(ioStream, 'r') as hdf:
         data = []
         pnames = []
         expShape = None
@@ -1999,8 +2137,8 @@ def _loadhdf5ForAuto(openFile, pointNames, featureNames):
 
     # by default 'automatic' will only assign point names if we identify
     # this was a file generated by nimble where includeNames was True.
-    openFile.seek(0)
-    includePtNames = openFile.readline().startswith(b'includePointNames')
+    ioStream.seek(0)
+    includePtNames = ioStream.readline().startswith(b'includePointNames')
     if pointNames == 'automatic' and includePtNames:
         pointNames = pnames
     elif pointNames == 'automatic':
@@ -2017,9 +2155,9 @@ def _loadhdf5ForAuto(openFile, pointNames, featureNames):
         elif numNames > 1:
             msg = 'This file contains a single Dataset. The length of '
             msg += 'pointNames can either be 1, indicating the data in the '
-            msg += 'Dataset will be loaded as a single point, or '
-            msg += '{0} the data in the Dataset will be loaded directly, but '
-            msg += 'pointNames contained {1} names'
+            msg += 'Dataset will be loaded as a single point, or {0} '
+            msg += 'indicating the data in the Dataset will be loaded '
+            msg += 'directly, but pointNames contained {1} names'
             raise InvalidArgumentValue(msg.format(innerShape, numNames))
     elif len(data) == 1 and not pointNames:
         data = data[0]
@@ -2030,7 +2168,7 @@ def _loadhdf5ForAuto(openFile, pointNames, featureNames):
     return data, pointNames, featureNames
 
 
-def _loadcsvUsingPython(openFile, pointNames, featureNames,
+def _loadcsvUsingPython(ioStream, pointNames, featureNames,
                         ignoreNonNumericalFeatures, keepPoints, keepFeatures,
                         inputSeparator, emptyIsMissing):
     """
@@ -2038,7 +2176,7 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
 
     Parameters
     ----------
-    openFile : open file like object
+    ioStream : open file like object
         The data will be read from where the file currently points to.
     pointNames : 'automatic', bool, list, dict
         May be 'automatic', True, False, a list or a dict. The first
@@ -2085,9 +2223,9 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
         the keepPoints and keepFeatures parameters were applied in this
         function call.
     """
-    dialect = _detectDialectFromSeparator(openFile, inputSeparator)
+    dialect = _detectDialectFromSeparator(ioStream, inputSeparator)
 
-    (pointNames, featureNames) = _checkCSVForNames(openFile, pointNames,
+    (pointNames, featureNames) = _checkCSVForNames(ioStream, pointNames,
                                                    featureNames, dialect)
 
     pointNames = _namesDictToList(pointNames, 'point', 'pointNames')
@@ -2095,9 +2233,9 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
 
     # Advance the file past any beginning of file comments, record
     # how many are skipped
-    skippedLines = _advancePastComments(openFile)
+    skippedLines = _advancePastComments(ioStream)
     # remake the file iterator to ignore empty lines
-    filtered = filter(_filterCSVRow, openFile)
+    filtered = filter(_filterCSVRow, ioStream)
     # send that line iterator to the csv reader
     lineReader = csv.reader(filtered, dialect)
 
@@ -2284,15 +2422,7 @@ def _loadcsvUsingPython(openFile, pointNames, featureNames,
 
     return retData, retPNames, retFNames
 
-def _isDownloadable(url):
-    """
-    Does the url contain a downloadable resource.
-    """
-    headers = requests.head(url, allow_redirects=True).headers
-    contentType = headers.get('content-type').lower()
-    return not 'html' in contentType
-
-def _processArchiveFile(filename, update, allowMultiple):
+def _processArchiveFile(filename, overwrite, allowMultiple):
     """
     Extract contents of an archive file.
 
@@ -2317,8 +2447,8 @@ def _processArchiveFile(filename, update, allowMultiple):
 
         location = os.path.dirname(filename)
         paths = [os.path.join(location, name) for name in names]
-        # only need to extract if update or any expected files don't exist
-        if update or not all(os.path.exists(path) for path in paths):
+        # only need to extract if overwrite or any expected files don't exist
+        if overwrite or not all(os.path.exists(path) for path in paths):
             fileObj.extractall(location)
 
         files = []
@@ -2341,16 +2471,7 @@ def _processCompressedFile(filename):
             shutil.copyfileobj(fIn, fOut)
         return [unzipped]
 
-def _isArchive(filename):
-    return zipfile.is_zipfile(filename) or tarfile.is_tarfile(filename)
-
-def _isGZip(filename):
-    with open(filename, 'rb') as f:
-        if f.read(2) == b'\x1f\x8b':
-            return True
-        return False
-
-def _findData(url, filename, update, allowMultiple):
+def _findData(url, filename, overwrite, allowMultiple):
     """
     Find data locally or download and store.
 
@@ -2362,8 +2483,8 @@ def _findData(url, filename, update, allowMultiple):
     """
     if os.path.exists(filename):
         if _isArchive(filename):
-            return _processArchiveFile(filename, update, allowMultiple)
-        if not update:
+            return _processArchiveFile(filename, overwrite, allowMultiple)
+        if not overwrite:
             isGZip = _isGZip(filename)
             if isGZip and os.path.exists(filename[:-3]):
                 return [filename[:-3]]
@@ -2380,7 +2501,7 @@ def _findData(url, filename, update, allowMultiple):
 
     try:
         if _isArchive(filename):
-            return _processArchiveFile(filename, update, allowMultiple)
+            return _processArchiveFile(filename, overwrite, allowMultiple)
         if _isGZip(filename):
             return _processCompressedFile(filename)
     except Exception: # pylint: disable=broad-except
@@ -2388,15 +2509,7 @@ def _findData(url, filename, update, allowMultiple):
 
     return [filename]
 
-def _isUCIDataFile(name):
-    """
-    UCI convention is that Index file and files ending with .names
-    contain dataset details. All other files will be considered data
-    files.
-    """
-    return name != 'Index' and not name.endswith('.names')
-
-def _findUCIData(source, path, currPaths, update, allowMultiple):
+def _findUCIData(source, path, currPaths, overwrite, allowMultiple):
     """
     Recursive download for files from a UCI repository.
     """
@@ -2418,26 +2531,25 @@ def _findUCIData(source, path, currPaths, update, allowMultiple):
             urlInfo = urllib.parse.urlparse(url)
             name = os.path.split(urlInfo.path)[1]
             filename = os.path.join(path, name)
-            paths = _findData(url, filename, update, allowMultiple)
+            paths = _findData(url, filename, overwrite, allowMultiple)
             if not ignore or _isUCIDataFile(href):
                 currPaths.extend(paths)
         else:
             newSource = url
             newPath = os.path.join(path, href)
-            currPaths = _findUCIData(newSource, newPath, currPaths, update,
+            currPaths = _findUCIData(newSource, newPath, currPaths, overwrite,
                                      allowMultiple)
 
     return currPaths
 
-
-def fileFetcher(source, update, allowMultiple=True):
+def fileFetcher(source, overwrite, allowMultiple=True):
     """
     Download data from the web and store at a specified location. Files
     are stored in a directory named 'nimbleData' that is placed, by
     default, in the home directory (pathlib.Path.home()). The location
     can be changed in configuration.ini. The dataset is only downloaded
     once. Any subsequent calls for the same source will identify that
-    the data is locally available unless update is True.
+    the data is locally available unless overwrite is True.
 
     The storage location is based on parsing the url. Within the
     nimbleData directory, a directory is created for the domain. A
@@ -2447,32 +2559,9 @@ def fileFetcher(source, update, allowMultiple=True):
     """
     if not requests.nimbleAccessible():
         raise PackageException('requests must be installed')
-    srcLow = source.lower()
-    # support for finding downloadable files from the UCI dataset pages
-    isUCI = 'archive.ics.uci.edu' in srcLow or srcLow.startswith('uci:')
+    isUCI = _isUCI(source.lower())
     if isUCI:
-        subDirectories = ''
-        if srcLow.startswith('uci:'):
-            prefix = 'https://archive.ics.uci.edu/ml/datasets/'
-            # sanitize for url. uci replaces whitespace with + character
-            toFind = urllib.parse.quote_plus(source[4:].strip(), safe='/')
-            # allow for path to subdirectory, ie uci:heart disease/costs
-            # split to find the source of the main data page, and store the
-            # subDirectories to add back in once the main data page is located
-            toFind = toFind.split('/', 1)
-            source = prefix + toFind[0].strip()
-            srcLow = source.lower()
-            if len(toFind) > 1:
-                subDirectories = toFind[1].strip()
-        if 'ml/datasets/' in srcLow:
-            response = requests.get(source)
-            archive = 'https://archive.ics.uci.edu/ml/'
-            database = r'machine-learning-databases/.+?/'
-            data = re.search(database, response.text).group()
-            source = archive + data + subDirectories
-            if not source.endswith('/'):
-                source += '/'
-
+        source = _processUCISource(source.lower())
     configLoc = nimble.settings.get('fetch', 'location')
     homepath = os.path.join(configLoc, 'nimbleData')
     urlInfo = urllib.parse.urlparse(source)
@@ -2482,9 +2571,9 @@ def fileFetcher(source, update, allowMultiple=True):
     directory = os.path.join(*urlInfo.path.split('/'))
     dirPath = os.path.join(homepath, netLoc, directory)
     if _isDownloadable(source):
-        return _findData(source, dirPath, update, allowMultiple)
+        return _findData(source, dirPath, overwrite, allowMultiple)
     if isUCI:
-        return _findUCIData(source, dirPath, [], update, allowMultiple)
+        return _findUCIData(source, dirPath, [], overwrite, allowMultiple)
 
     msg = 'source did not provide downloadable data'
     raise InvalidArgumentValue(msg)

@@ -105,21 +105,54 @@ machine learning.
 .. autoclass:: nimble.CustomLearner
    :members:
 
-Logging and Configuration
--------------------------
+.. _configuration:
 
-By default, Nimble keeps a running log of the actions taken each session. The
-log can be added to and queried using ``nimble.log`` and ``nimble.showLog``,
-respectively. ``nimble.settings`` allows for querying and changing configuration
-options. These options include the logger settings as well as any options
-related to available interfaces. The settings can be changed temporarily during
-a session, or permanently by saving them to the configuration file.
+Configuration
+-------------
 
-.. autofunction:: nimble.log
-
-.. autofunction:: nimble.showLog
+Nimble has certain settings that can be configured. The default settings load
+when the package is imported and can be changed during the session. Changes to
+configurable settings are made through `nimble.settings`, a
+`SessionConfiguration` object that provides methods for getting and setting
+configurable options. Changes to options can apply to the current session or be
+saved as the new default settings. Currently, :ref:`logging` and :ref:`fetch`
+have sections that can be configured.
 
 .. autodata:: nimble.settings
 
 .. autoclass:: nimble.core.configuration.SessionConfiguration
    :members:
+
+.. _logging:
+
+Logging
+-------
+
+By default, Nimble keeps a running log of the actions taken each session. The
+log can be added to and queried using ``nimble.log`` and ``nimble.showLog``,
+respectively. There are four :ref:`configurable <configuration>` options in the
+"logger" section. By default, the "location" is the current directory and the
+file "name" is "log-nimble". The "enabledByDefault" option is set to "True" and
+"enableCrossValidationDeepLogging" is set to "False".
+
+.. autofunction:: nimble.log
+
+.. autofunction:: nimble.showLog
+
+.. _fetch:
+
+Fetching Files
+--------------
+
+Nimble's `fetchFile` and `fetchFiles` provide efficient means for accessing
+online data sets. When a fetch function downloads a dataset, it stores it
+locally. Once downloaded, future calls to a fetch function for the same data
+will identify that the data is already available locally, avoiding a repeated
+download. The downloaded files are placed in a directory named "nimbleData" in
+a :ref:`configurable <configuration>` local location. The local storage
+location is identified by the "location" option in the "fetch" section and is
+set to the home directory by default.
+
+.. autofunction:: nimble.fetchFile
+
+.. autofunction:: nimble.fetchFiles

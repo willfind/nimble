@@ -1627,7 +1627,11 @@ def test_data_CSV_passedOpen():
             with open(tmpCSV.name, 'r') as openFile:
                 fromCSV = nimble.data(returnType=t, source=openFile, name=objName)
                 assert not openFile.closed
+            with open(tmpCSV.name, 'rb') as openFileB:
+                fromCSVB = nimble.data(returnType=t, source=openFileB, name=objName)
+                assert not openFileB.closed
 
+            assert fromCSV == fromCSVB
             assert fromList == fromCSV
 
             assert fromCSV.path == openFile.name
@@ -1664,7 +1668,11 @@ def test_data_MTXArr_passedOpen():
             with open(tmpMTXArr.name, 'r') as openFile:
                 fromMTXArr = nimble.data(returnType=t, source=openFile, name=objName)
                 assert not openFile.closed
+            with open(tmpMTXArr.name, 'rb') as openFileB:
+                fromMTXArrB = nimble.data(returnType=t, source=openFileB, name=objName)
+                assert not openFileB.closed
 
+            assert fromMTXArr == fromMTXArrB
             if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
                 assert fromList.isApproximatelyEqual(fromMTXArr)
             else:
@@ -1722,6 +1730,51 @@ def test_data_MTXCoo_passedOpen():
             assert fromMTXCoo.absolutePath is None
             assert fromMTXCoo.relativePath is None
 
+def test_data_GZIP_passedOpen():
+    for t in returnTypes:
+        fromList = nimble.data(returnType=t, source=[[1, 2, 3], [4, 5, 6]])
+        with tempfile.NamedTemporaryFile('w+b', suffix='.gz') as tempGZIP:
+            with gzip.GzipFile(tempGZIP.name, mode='wb') as mygzip:
+                mygzip.write(b'1,2,3\n4,5,6')
+            tempGZIP.seek(0)
+            fromGZIP = nimble.data(t, tempGZIP)
+            assert fromList == fromGZIP
+            assert fromGZIP.name == os.path.basename(tempGZIP.name)
+            assert fromGZIP.path  == tempGZIP.name
+            assert fromGZIP.absolutePath == tempGZIP.name
+            assert fromGZIP.relativePath == os.path.relpath(tempGZIP.name)
+
+def test_data_ZIP_passedOpen():
+    for t in returnTypes:
+        fromList = nimble.data(returnType=t, source=[[1, 2, 3], [4, 5, 6]])
+        with tempfile.NamedTemporaryFile('w+b', suffix='.zip') as tempZIP:
+            with zipfile.ZipFile(tempZIP, 'w') as myzip:
+                myzip.writestr('data.csv', '1,2,3\n4,5,6')
+            tempZIP.seek(0)
+            fromZIP = nimble.data(t, tempZIP)
+            assert fromList == fromZIP
+            assert fromZIP.name == os.path.basename(tempZIP.name)
+            assert fromZIP.path  == tempZIP.name
+            assert fromZIP.absolutePath == tempZIP.name
+            assert fromZIP.relativePath == os.path.relpath(tempZIP.name)
+
+def test_data_TAR_passedOpen():
+    for t in returnTypes:
+        fromList = nimble.data(returnType=t, source=[[1, 2, 3], [4, 5, 6]])
+        with tempfile.NamedTemporaryFile('w+b', suffix='.tar') as tempTAR:
+            with tarfile.TarFile(fileobj=tempTAR, mode='w') as tar:
+                with io.BytesIO(b'1,2,3\n4,5,6') as data1:
+                    file1 = tarfile.TarInfo('data.csv')
+                    file1.size = data1.getbuffer().nbytes
+                    tar.addfile(file1, data1)
+            tempTAR.seek(0)
+            fromZIP = nimble.data(t, tempTAR)
+            assert fromList == fromZIP
+            assert fromZIP.name == os.path.basename(tempTAR.name)
+            assert fromZIP.path  == tempTAR.name
+            assert fromZIP.absolutePath == tempTAR.name
+            assert fromZIP.relativePath == os.path.relpath(tempTAR.name)
+
 ###########################
 # url as a source of data #
 ###########################
@@ -1746,6 +1799,7 @@ class MockResponse:
             self.text = None
             self.encoding = None
         self.apparent_encoding = encoding
+        self.headers = {}
 
 def mocked_requests_get(url, *args, **kwargs):
     if 'CSV' in url:
@@ -1785,9 +1839,15 @@ def mocked_requests_get(url, *args, **kwargs):
     if 'TAR' in url:
         with io.BytesIO() as bio:
             with tarfile.TarFile(fileobj=bio, mode='w') as tar:
-                tar.addfile(tarfile.TarInfo('data.csv'))
-                if 'multiple' in url:
-                    tar.addfile(tarfile.TarInfo('old.csv'))
+                with io.BytesIO(b'1,2,3\n4,5,6') as data1:
+                    file1 = tarfile.TarInfo('data.csv')
+                    file1.size = data1.getbuffer().nbytes
+                    tar.addfile(file1, data1)
+                    if 'multiple' in url:
+                        with io.BytesIO(b'1,2,3\n4,5,6') as data2:
+                            file2 = tarfile.TarInfo('old.csv')
+                            file2.size = data2.getbuffer().nbytes
+                            tar.addfile(file2, data2)
             return MockResponse(bio.getvalue(), 200)
     if 'archive.ics.uci.edu/' in url:
         if 'ml/datasets' in url:
@@ -1795,16 +1855,20 @@ def mocked_requests_get(url, *args, **kwargs):
             # page containing the data files, so we will provide a mock href
             content = 'href="https://archive.ics.uci.edu/ml/machine-learning-databases/{}/"'
             content = content.format(url.split('/')[-1])
-        else:
+        elif url.endswith('/'):
             # in this case we return the hrefs that refer to the data files and
             # directories. First href is always a Parent Directory that we ignore.
             content = 'href="/ml/machine-learning-databases/"\n'
-            content += 'href="data.csv"\n'
+            content += 'href="CSV.csv"\n'
             if 'data+multiple' in url and 'more' not in url:
                 content += 'href="more/"\n'
             if 'data+ignored' in url:
                 content += 'href="Index"\n'
                 content += 'href="data.names"\n'
+        elif 'Index' or 'data.names' in url:
+            return MockResponse(bytes('ignore', 'utf-8'), 200)
+        else:
+            return mocked_requests_get(url)
 
         return MockResponse(bytes(content, 'utf-8'), 200)
 
@@ -1950,6 +2014,60 @@ def test_data_http_HDFPathsWithUrl():
         assert fromWeb.relativePath == None
 
 @mockRequestsGet
+def test_data_http_ZIP_single():
+    for t in returnTypes:
+        data = [[1,2,3],[4,5,6]]
+        exp = nimble.data(returnType=t, source=data)
+        url = 'http://mockrequests.nimble/ZIP.zip'
+        fromWeb = nimble.data(returnType=t, source=url)
+        assert fromWeb == exp
+
+@mockRequestsGet
+def test_data_http_ZIP_multiple():
+    for t in returnTypes:
+        url = 'http://mockrequests.nimble/ZIP_multiple.zip'
+        assertExpectedException(
+            InvalidArgumentValue, nimble.data, returnType=t, source=url,
+            messageIncludes='Multiple files found in source')
+
+@mockRequestsGet
+def test_data_http_TAR_single():
+    for t in returnTypes:
+        data = [[1,2,3],[4,5,6]]
+        exp = nimble.data(returnType=t, source=data)
+        url = 'http://mockrequests.nimble/TAR.tar'
+        fromWeb = nimble.data(returnType=t, source=url)
+        assert fromWeb == exp
+
+@mockRequestsGet
+def test_data_http_TAR_multiple_exception():
+    for t in returnTypes:
+        url = 'http://mockrequests.nimble/TAR_multiple.tar'
+        assertExpectedException(
+            InvalidArgumentValue, nimble.data, returnType=t, source=url,
+            messageIncludes='Multiple files found in source')
+
+@mockRequestsGet
+def test_data_http_GZIP():
+    for t in returnTypes:
+        data = [[1,2,3],[4,5,6]]
+        exp = nimble.data(returnType=t, source=data)
+        url = 'http://mockrequests.nimble/GZIP_data.csv.gz'
+        fromWeb = nimble.data(returnType=t, source=url)
+        assert fromWeb == exp
+
+@mockRequestsGet
+def test_data_http_uciPathHandling():
+    for t in returnTypes:
+        data = [[1,2,3],[4,5,6]]
+        exp = nimble.data(returnType=t, source=data)
+        fromWeb = nimble.data(returnType=t, source="uci::data")
+        assert fromWeb == exp
+
+        fromWeb = nimble.data(returnType=t, source="uci::data+ignored")
+        assert fromWeb == exp
+
+@mockRequestsGet
 def test_data_http_linkError():
     for t in returnTypes:
         try:
@@ -2049,12 +2167,12 @@ def test_data_fetch_uciPathHandling():
     fileBasePath = os.path.join('nimbleData','archive.ics.uci.edu','ml',
                                 'machine-learning-databases')
     urlToSingleFile = urlBasePath + 'data'
-    singleFile = os.path.join(fileBasePath, 'data', 'data.csv')
+    singleFile = os.path.join(fileBasePath, 'data', 'CSV.csv')
 
-    shortFile = nimble.fetchFile('uci:data')
+    shortFile = nimble.fetchFile('uci::data')
     assert shortFile.endswith(singleFile)
 
-    shortFiles = nimble.fetchFiles('uci: data ')
+    shortFiles = nimble.fetchFiles('uci:: data ')
     assert len(shortFiles) == 1 and shortFiles[0].endswith(singleFile)
 
     pageFile = nimble.fetchFile(urlToSingleFile)
@@ -2063,14 +2181,14 @@ def test_data_fetch_uciPathHandling():
     assert len(pageFiles) == 1 and pageFiles[0].endswith(singleFile)
 
     assertExpectedException(InvalidArgumentValue, nimble.fetchFile,
-                            'uci:data multiple')
+                            'uci::data multiple')
     assertExpectedException(InvalidArgumentValue, nimble.fetchFile,
                             'https://archive.ics.uci.edu/ml/datasets/my+data+multiple')
 
-    multiFile1 = os.path.join(fileBasePath, 'data+multiple', 'data.csv')
-    multiFile2 = os.path.join(fileBasePath, 'data+multiple', 'more', 'data.csv')
+    multiFile1 = os.path.join(fileBasePath, 'data+multiple', 'CSV.csv')
+    multiFile2 = os.path.join(fileBasePath, 'data+multiple', 'more', 'CSV.csv')
 
-    shortPaths = nimble.fetchFiles('uci: data multiple')
+    shortPaths = nimble.fetchFiles('uci:: data multiple')
     assert (len(shortPaths) == 2
             and shortPaths[0].endswith(multiFile1)
             and shortPaths[1].endswith(multiFile2))
@@ -2081,13 +2199,13 @@ def test_data_fetch_uciPathHandling():
             and pagePaths[1].endswith(multiFile2))
 
     # contains href to Index and .names files we want to ignore in fetchFile
-    ignoreFile = os.path.join(fileBasePath, 'data+ignored', 'data.csv')
+    ignoreFile = os.path.join(fileBasePath, 'data+ignored', 'CSV.csv')
     urlToIgnoreFile = urlBasePath + 'data+ignored'
 
-    shortIgFile = nimble.fetchFile('uci:data ignored')
+    shortIgFile = nimble.fetchFile('uci::data ignored')
     assert shortIgFile.endswith(ignoreFile)
 
-    shortIgFiles = nimble.fetchFiles('uci: data ignored ')
+    shortIgFiles = nimble.fetchFiles('uci:: data ignored ')
     assert len(shortIgFiles) == 3
     assert sum(f.endswith(ignoreFile) for f in shortIgFiles) == 1
 
@@ -2175,9 +2293,9 @@ def test_data_fetch_forceDownload():
     assert os.path.exists(local)
     # if requests is used, we downloaded the data again
     assertExpectedException(CalledFunctionException, nimble.fetchFile,
-                            'http://mockrequests.nimble/CSV.csv', update=True)
+                            'http://mockrequests.nimble/CSV.csv', overwrite=True)
     assertExpectedException(CalledFunctionException, nimble.fetchFiles,
-                            'http://mockrequests.nimble/CSV.csv', update=True)
+                            'http://mockrequests.nimble/CSV.csv', overwrite=True)
 
 
 ###################################
