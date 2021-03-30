@@ -250,7 +250,6 @@ def test_crossValidate_2d_Non_label_scoremodes_disallowed():
 
 
 @attr('slow')
-@nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
 def test_crossValidate_foldingRandomness():
     """Assert that for a dataset, the same algorithm will generate the same model
     (and have the same accuracy) when presented with identical random state (and
@@ -269,7 +268,6 @@ def test_crossValidate_foldingRandomness():
         assert resultOne.bestResult == resultTwo.bestResult
 
 @attr('slow')
-@nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
 def test_crossValidateResults():
     """Check basic properties of crossValidate.allResults
 
@@ -318,7 +316,6 @@ def test_crossValidateResults():
 
 @attr('slow')
 @configSafetyWrapper
-@nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
 def test_crossValidateBestArguments():
     """Check that the best / fittest argument set is returned.
 

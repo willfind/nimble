@@ -239,11 +239,19 @@ def testLoadTypeFunctionsUseLog():
 @configSafetyWrapper
 def test_setSeed():
     nimble.settings.set('logger', 'enabledByDefault', 'True')
-    nimble.random._startAlternateControl()
     nimble.random.setSeed(1337)
-    nimble.random._endAlternateControl()
     logInfo = getLastLogData()
-    assert "{'seed': 1337}" in logInfo
+
+    assert "'action': 'random.setSeed'" in logInfo
+    assert "'seed': 1337" in logInfo
+
+    with nimble.random.alternateControl(123):
+        logInfo = getLastLogData()
+        assert "'action': 'entered random.alternateControl'" in logInfo
+        assert "'seed': 123" in logInfo
+    logInfo = getLastLogData()
+    assert "'action': 'exited random.alternateControl'" in logInfo
+    assert "'seed': 123" in logInfo
 
 @emptyLogSafetyWrapper
 @configSafetyWrapper

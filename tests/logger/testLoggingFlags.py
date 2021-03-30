@@ -88,9 +88,7 @@ def test_loadTrainedLearner():
             back_load(nimble.loadTrainedLearner, tmpFile.name)
 
 def test_setSeed():
-    nimble.random._startAlternateControl()
     back_load(nimble.random.setSeed, 1337)
-    nimble.random._endAlternateControl()
 
 # helper function which checks log status for runs
 def runAndCheck(toCall, useLog):
