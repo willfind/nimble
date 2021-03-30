@@ -27,7 +27,7 @@ predictions using our supervised machine learning model.
 
 import nimble
 
-# Using shortened URLs for example data files hosted on Nimble site
+# Using shortened URLs for example data files hosted on Nimble's website
 traffic = nimble.data('Matrix', 'https://bit.ly/38kxLWL')
 forecast = nimble.data('Matrix', 'https://bit.ly/3qkZOeN')
 

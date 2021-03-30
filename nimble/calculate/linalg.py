@@ -129,21 +129,17 @@ def pseudoInverse(aObj, method='svd'):
 
     Examples
     --------
-    >>> nimble.random.setSeed(42)
-    >>> data = nimble.random.data('Matrix', numPoints=4, numFeatures=3,
-    ...                           sparsity=0.5)
+    >>> raw = [[1, 2], [3, 4]]
+    >>> data = nimble.data('Matrix', raw)
     >>> data
     Matrix(
-        [[-0.307 -0.275 -2.115]
-         [0.462  0.000  0.000 ]
-         [-0.047 0.000  0.000 ]
-         [0.000  1.145  0.000 ]]
+        [[1 2]
+         [3 4]]
         )
     >>> pseudoInverse(data)
     Matrix(
-        [[-0.000 2.144  -0.220 -0.000]
-         [-0.000 0.000  0.000  0.873 ]
-         [-0.473 -0.312 0.032  -0.113]]
+        [[-2.000 1.000 ]
+         [1.500  -0.500]]
         )
     """
     if not scipy.nimbleAccessible():
@@ -213,7 +209,6 @@ def solve(aObj, bObj):
 
     Examples
     --------
-    >>> from nimble.calculate import solve
     >>> aData = [[3,2,0],[1,-1,0],[0,5,1]]
     >>> aObj = nimble.data('Matrix', aData)
     >>> bData = [2,4,-1]
