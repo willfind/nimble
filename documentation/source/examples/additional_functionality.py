@@ -74,7 +74,7 @@ nimble.settings.set('logger', 'enabledByDefault', 'True')
 ## in shorthand for datasets in the UCI repository that we use to get our
 ## dataset for this example.
 path = nimble.fetchFile('uci::Wireless Indoor Localization')
-wifi = nimble.data('Matrix', path, name='wifi')
+wifi = nimble.data('Matrix', path, name='wifiData')
 
 ## As a reminder, this data used a mobile phone to collect wifi signal strength
 ## values from seven different wifi sources in four different rooms. Imagine
@@ -383,8 +383,8 @@ nimble.showLog(levelOfDetail=3, maximumEntries=4)
 ## multiple sessions, multiple days and contain tons of different information
 ## To make the log easy to query, `showLog` has parameters to filter the log by
 ## sessions, dates, and text. For now, let’s try a text search for our object’s
-## name, ‘wifi’, and see all log records containing that word.
-nimble.showLog(searchForText='wifi')
+## name, ‘wifiData’, and see all log records containing that word.
+nimble.showLog(searchForText='wifiData')
 
 ## While not required for using Nimble, features such as configuration,
 ## logging, randomness and custom learners add a lot of helpful functionality.

@@ -423,10 +423,10 @@ class Axis(ABC):
         retData, offAxisNames = self._calculate_implementation(function,
                                                                limitTo)
 
-        pathPass = (self._base.absolutePath, self._base.relativePath)
+        ret = nimble.data(self._base.getTypeString(), retData, useLog=False)
 
-        ret = nimble.data(self._base.getTypeString(), retData,
-                          path=pathPass, useLog=False)
+        ret._absPath = self._base.absolutePath
+        ret._relPath = self._base.relativePath
 
         if self._isPoint:
             axisNameSetter = ret.points.setNames
