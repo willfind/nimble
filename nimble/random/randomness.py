@@ -191,12 +191,14 @@ def data(
             randData = numpyRandom.normal(loc=0.0, scale=1.0, size=size)
     _endAlternateControl()
 
+    ret = initDataObject(returnType, rawData=randData, pointNames=pointNames,
+                         featureNames=featureNames, name=name, copyData=False,
+                         skipDataProcessing=True)
+
     handleLogging(useLog, 'load', "Random " + returnType, numPoints,
                   numFeatures, name, sparsity=sparsity, seed=randomSeed)
 
-    return initDataObject(returnType, rawData=randData, pointNames=pointNames,
-                          featureNames=featureNames, name=name,
-                          skipDataProcessing=True)
+    return ret
 
 
 def _generateSubsidiarySeed():

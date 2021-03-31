@@ -19,28 +19,31 @@ from nimble.core._createHelpers import fileFetcher
 
 
 def data(returnType, source, pointNames='automatic', featureNames='automatic',
-         convertToType=None, name=None, path=None, keepPoints='all',
-         keepFeatures='all', ignoreNonNumericalFeatures=False,
-         reuseData=False, inputSeparator='automatic',
+         name=None, convertToType=None, keepPoints='all', keepFeatures='all',
          treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan',
                          'NULL', 'NA'),
-         replaceMissingWith=numpy.nan, useLog=None):
+         replaceMissingWith=numpy.nan, ignoreNonNumericalFeatures=False,
+         inputSeparator='automatic', copyData=True, useLog=None):
     """
-    Function to instantiate one of the nimble data container types.
+    Function to instantiate one of the Nimble data container types.
 
-    Creates a nimble data object based on the ``returnType``.  Data can
-    be loaded in a raw form, from a file or from a web page.  Some
-    preprocessing of the data can also be done when creating the object
-    through the passing various arguments.
+    All Nimble data objects offer the same methods but offer unique
+    implementations based on how each stores data on the backend. This
+    creates consistency regardless of ``returnType``, but efficiencies
+    can be gained by choosing the best ``returnType`` for the ``source``
+    data. For example, highly sparse data would benefit most from
+    choosing ``returnType='Sparse'``. Nimble data objects are also
+    consistent in that they all allow for point and feature names.
+    Additional parameters allow some data preprocessing to be performed
+    during object creation.
 
     Parameters
     ----------
     returnType : str, None
-        Indicates which kind of nimble data type to return. Currently
-        accepted are the strings "List", "Matrix", "Sparse" and
-        "DataFrame" -- which are **case sensitive**. If None is given,
-        nimble will attempt to detect the type most appropriate for the
-        data.
+        Indicates which Nimble data object to return. Options are the
+        **case sensitive** strings "List", "Matrix", "Sparse" and
+        "DataFrame". If None is given, Nimble will attempt to detect the
+        type most appropriate for the data.
     source : object, str
         The source of the data to be loaded into the returned object.
 
@@ -49,7 +52,7 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
         * open file-like object
         * str - A path or url to the data file.
     pointNames : 'automatic', bool, list, dict
-        Specifices the source for point names in the returned object.
+        Specifies the source for point names in the returned object.
 
         * 'automatic' - the default, indicates that this function should
           attempt to detect the presence of pointNames in the data which
@@ -64,7 +67,7 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
           index of the name will define the point index. As a dict,
           the value mapped to each name will define the point index.
     featureNames : 'automatic', bool, list, dict
-        Specifices the source for feature names in the returned object.
+        Specifies the source for feature names in the returned object.
 
         * 'automatic' - the default, indicates that this function should
           attempt to detect the presence of featureNames in the data
@@ -92,63 +95,71 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     name : str
         When not None, this value is set as the name attribute of the
         returned object.
-    keepPoints : bool
+    convertToType : type, dict, list
+        A one-time conversion of the data to the type or types
+        specified. A single type will convert all the data to that type.
+        A dict maps a feature name or index to the conversion type and
+        only features requiring conversion need be included. A lists
+        must include a type or None for every feature. None will always
+        retain the object types as is. If unable to convert every value
+        to the given type, an exception will be raised. Note: This only
+        applies during the creation process, Nimble will modify types on
+        the backend as necessary.
+    keepPoints : 'all', list
         Allows the user to select which points will be kept in the
         returned object, those not selected will be discarded. By
         default, the value 'all' indicates that all possible points in
-        the raw data will be kept. Alternatively, the user may provide a
+        the data will be kept. Alternatively, the user may provide a
         list containing either names or indices (or a mix) of those
-        points they want to be kept from the raw data. The order of this
+        points they want to be kept from the data. The order of this
         list will determine the order of points in the resultant object.
         In the case of reading data from a file, the selection will be
         done at read time, thus limiting the amount of data read into
         memory.
-    keepFeatures : bool
+    keepFeatures : 'all', list
         Allows the user to select which features will be kept in the
         returned object, those not selected will be discarded. By
         default, the value 'all' indicates that all possible features in
-        the raw data will be kept. Alternatively, the user may provide a
+        the data will be kept. Alternatively, the user may provide a
         list containing either names or indices (or a mix) of those
-        features they want to be kept from the raw data. The order of
-        this list will determine the order of features in the resultant
+        features they want to be kept from the data. The order of this
+        list will determine the order of features in the resultant
         object. In the case of reading data from a file, the selection
         will be done at read time, thus limiting the amount of data read
-        into memory. Names and indices are defined with respect to the
-        data regardless of filtering by the ignoreNonNumericalFeatures
-        flag; just because a feature is removed, the indices of
-        subsequent features will not be shifted. The
-        ``ignoreNonNumericalFeatures`` flag is only consdered after
-        selection: if a selected feature has non-numerical values and
-        ignoreNonNumericalFeatures is True valued, then that feature
-        will **NOT** be included in the output. Similarly, if a feature
-        has only numerical values in points that were selected, then
-        even if there are non-numerical values in the points that were
-        not selected, then that feature will be included
-    ignoreNonNumericalFeatures : bool
-        Indicate whether, when loading from a file, features containing
-        non-numeric data shouldn't be loaded into the final object. For
-        example, you may be loading a file which has a column of
-        strings; setting this flag to true will allow you to load that
-        file into a Matrix object (which may contain floats only).
-        Currently only has an effect on csv files, as the matrix market
-        format does not support non numerical values. Also, if there is
-        point or feature selection occurring, then only those values
-        within selected points and features are considered when
-        determining whether to apply this operation.
-    inputSeparator : str
-        The character that is used to separate fields in the input file,
-        if necessary. By default, a value of 'automatic' will attempt to
-        determine the appropriate separator. Otherwise, a single
-        character string of the separator in the file can be passed.
+        into memory. Additionally, ``ignoreNonNumericalFeatures`` takes
+        precedent and, when set to True, will remove features included
+        in this selection if they contain non-numeric values.
     treatAsMissing : list
         Values that will be treated as missing values in the data. These
-        values will be replaced with value from replaceMissingWith
+        values will be replaced with value from ``replaceMissingWith``
         By default this list is [float('nan'), numpy.nan, None, '',
         'None', 'nan']. Set to None or [] to disable replacing missing
         values.
     replaceMissingWith
         A single value with which to replace any value in
-        treatAsMissing. By default this value is numpy.nan.
+        ``treatAsMissing``. By default this value is numpy.nan.
+    ignoreNonNumericalFeatures : bool
+        **This only applies when ``source`` is a file.**
+        Indicate whether features containing non-numeric data should not
+        be loaded into the final object. If there is point or feature
+        selection occurring, then only those values within selected
+        points and features are considered when determining whether to
+        apply this operation.
+    inputSeparator : str
+        **This only applies when ``source`` is a delimited file.**
+        The character that is used to separate fields in the input file,
+        if necessary. By default, a value of 'automatic' will attempt to
+        determine the appropriate separator. Otherwise, a single
+        character string of the separator in the file can be passed.
+    copyData : bool
+        **This only applies when ``source`` is an in-python data type.**
+        When True (the default) the backend data container is guaranteed
+        to be a different object than ``source`` because a copy is made
+        before processing the data. When False, the initial copy is not
+        performed so it is possible (NOT guaranteed) that the ``source``
+        data object is used as the backend data container for the
+        returned object. In that case, any modifications to either
+        object would affect the other object.
     useLog : bool, None
         Local control for whether to send object creation to the logger.
         If None (default), use the value as specified in the "logger"
@@ -224,23 +235,29 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
         hasWrite = hasattr(toCheck, 'write')
         return hasRead and hasWrite
 
+    # None is an acceptable value for copyData in initDataObject but that
+    # is reserved for internal use
+    if copyData not in [True, False]:
+        raise InvalidArgumentValue('copyData must be True or False')
+
     # input is raw data
     if isAllowedRaw(source, allowLPT=True):
         ret = initDataObject(
             returnType=returnType, rawData=source, pointNames=pointNames,
-            featureNames=featureNames, convertToType=convertToType, name=name,
-            path=path, keepPoints=keepPoints, keepFeatures=keepFeatures,
-            reuseData=reuseData, treatAsMissing=treatAsMissing,
-            replaceMissingWith=replaceMissingWith)
+            featureNames=featureNames, name=name, convertToType=convertToType,
+            keepPoints=keepPoints, keepFeatures=keepFeatures,
+            treatAsMissing=treatAsMissing,
+            replaceMissingWith=replaceMissingWith, copyData=copyData)
     # input is an open file or a path to a file
     elif isinstance(source, str) or looksFileLike(source):
         ret = createDataFromFile(
             returnType=returnType, source=source, pointNames=pointNames,
-            featureNames=featureNames, name=name, keepPoints=keepPoints,
-            keepFeatures=keepFeatures, convertToType=convertToType,
+            featureNames=featureNames, name=name, convertToType=convertToType,
+            keepPoints=keepPoints, keepFeatures=keepFeatures,
+            treatAsMissing=treatAsMissing,
+            replaceMissingWith=replaceMissingWith,
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
-            inputSeparator=inputSeparator, treatAsMissing=treatAsMissing,
-            replaceMissingWith=replaceMissingWith)
+            inputSeparator=inputSeparator)
     # no other allowed inputs
     else:
         msg = "source must contain either raw data or the path to a file to "
@@ -248,7 +265,7 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
         raise InvalidArgumentType(msg)
 
     handleLogging(useLog, 'load', returnType, len(ret.points),
-                  len(ret.features), name, path)
+                  len(ret.features), ret.name, ret.path)
     return ret
 
 
