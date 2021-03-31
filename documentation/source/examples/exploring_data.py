@@ -22,8 +22,9 @@ extract useful insights.
 ## Getting Started ##
 
 import nimble
-# TODO: use url once changes to data set are available online
-visits = nimble.data('DataFrame', 'online_shoppers_intention_explore.csv')
+
+# Using shortened URLs for example data file hosted on Nimble's website
+visits = nimble.data('DataFrame', 'https://bit.ly/38gx1BY')
 featureNames = visits.features.getNames()
 settingsForShow = {'maxWidth': 120, 'maxHeight': 9}
 

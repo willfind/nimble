@@ -31,7 +31,7 @@ all of the data from our 8 original files.
 
 import nimble
 
-# Using shortened URLs for example data files hosted on Nimble site
+# Using shortened URLs for example data files hosted on Nimble's website
 dwtnMinAM = nimble.data('Matrix', 'https://bit.ly/3boeYfa', name='dtwnMinAM')
 dwtnMaxAM = nimble.data('Matrix', 'https://bit.ly/3rql9VG', name='dtwnMaxAM')
 dwtnMinPM = nimble.data('Matrix', 'https://bit.ly/30l85ox', name='dtwnMinPM')
