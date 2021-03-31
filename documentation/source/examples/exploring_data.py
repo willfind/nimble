@@ -23,8 +23,10 @@ extract useful insights.
 
 import nimble
 
-# Using shortened URLs for example data file hosted on Nimble's website
-visits = nimble.data('DataFrame', 'https://bit.ly/38gx1BY')
+bucket = 'https://storage.googleapis.com/nimble/datasets/'
+url = bucket + 'online_shoppers_intention_explore.csv'
+visits = nimble.data('Matrix', url)
+
 featureNames = visits.features.getNames()
 settingsForShow = {'maxWidth': 120, 'maxHeight': 9}
 
