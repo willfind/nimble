@@ -48,14 +48,14 @@ from nimble import fill
 from nimble import exceptions
 
 # load settings from configuration file (comments below for Sphinx docstring)
-#: User control over configurable options
+#: User control over configurable options.
+#:
+#: Use nimble.settings.get() to see all sections and options.
 #:
 #: See Also
 #: --------
 #: nimble.core.configuration.SessionConfiguration
 settings = core.configuration.loadSettings()
-
-core.configuration.setFetchPath(settings)
 
 # initialize the interfaces
 core.interfaces.initInterfaceSetup()

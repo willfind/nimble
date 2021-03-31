@@ -176,33 +176,37 @@ def run_setup():
 
     setupKwargs['include_package_data'] = True
     setupKwargs['convert_2to3_doctests'] = []
-    setupKwargs['install_requires'] = ['numpy>=1.10.4']
+    setupKwargs['install_requires'] = ['numpy>=1.14']
     # extras
     pandas = 'pandas>=0.20'
     scipy = 'scipy>=1.0'
     matplotlib = 'matplotlib>=3.0'
     cloudpickle = 'cloudpickle>=1.0'
-    cython = 'cython>=0.29'
-    mlpy = 'machine-learning-py>=3.5;python_version<"3.7"'
-    scikitlearn = 'scikit-learn>=0.19'
-    keras = 'keras>=2.0'
-    autoimpute = 'autoimpute>=0.12'
     requests = 'requests>2.12'
     h5py = 'h5py>=2.10'
     dateutil = 'python-dateutil>=2.3'
+    mlpy = 'machine-learning-py>=3.5;python_version<"3.7"'
+    scikitlearn = 'scikit-learn>=0.19'
+    tensorflow = 'tensorflow>=1.14'
+    keras = 'keras>=2.0'
+    autoimpute = 'autoimpute>=0.12'
     nose = 'nose>=1.3'
+    pylint = 'pylint>=2.5'
+    cython = 'cython>=0.29'
     data = [pandas, scipy]
-    interfaces = [mlpy, scikitlearn, keras, autoimpute]
-    userAll = [matplotlib, cloudpickle, cython, requests, h5py, dateutil]
-    userAll.extend(data)
-    userAll.extend(interfaces)
+    operation = [matplotlib, cloudpickle, requests, h5py, dateutil]
+    interfaces = [scikitlearn, tensorflow, autoimpute, mlpy]
+    quickstart = data + operation + [scikitlearn]
+    userAll = data + operation + interfaces
+    development = [nose, pylint, cython]
     setupKwargs['extras_require'] = {
-        'all': userAll, 'data': data, 'interfaces': interfaces,
+        'quickstart': quickstart, 'all': userAll, 'data': data,
         'pandas': pandas, 'scipy': scipy, 'matplotlib': matplotlib,
-        'cloudpickle': cloudpickle, 'cython': cython, 'requests': requests,
-        'h5py': h5py, 'dateutil': dateutil, 'mlpy': mlpy,
-        'scikit-learn': scikitlearn, 'keras': keras, 'autoimpute': autoimpute,
-        'nose': nose,
+        'cloudpickle': cloudpickle, 'requests': requests, 'h5py': h5py,
+        'dateutil': dateutil, 'machine-learning-py': mlpy,
+        'scikit-learn': scikitlearn, 'keras': keras, 'tensorflow': tensorflow,
+        'autoimpute': autoimpute, 'development': development, 'nose': nose,
+        'pylint': pylint, 'cython': cython
         }
 
     # TODO

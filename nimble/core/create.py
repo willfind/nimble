@@ -78,13 +78,17 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
           and the names for each feature must be unique. As a list, the
           index of the name will define the feature index. As a dict,
           the value mapped to each name will define the feature index.
-    convertToType : type
-        A one-time conversion of all the data to this type. If unable to
-        convert every value to the given type, an exception will be
-        raised. The default, None, will retain the object types as is
-        when creating the object. Note: This only applies during the
-        creation process, nimble will modify types on the backend as
-        necessary.
+    convertToType : type, dict, list, None
+        A one-time conversion of features to the provided type or types.
+        By default, object types within ``source`` are not modified,
+        except for features detected to be numeric in a data file.
+        Setting this parameter to a single type will convert all of the
+        data to that type. For feature-by-feature type setting, a dict
+        or list can be used. Dicts map feature identifiers (names and
+        indexes) to conversion types. Any feature not included in the
+        dict will remain as-is. A list must provide a type or None for
+        each feature. Note: The setting of types only applies during the
+        creation process, object methods will modify types if necessary.
     name : str
         When not None, this value is set as the name attribute of the
         returned object.
@@ -231,7 +235,7 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     # input is an open file or a path to a file
     elif isinstance(source, str) or looksFileLike(source):
         ret = createDataFromFile(
-            returnType=returnType, data=source, pointNames=pointNames,
+            returnType=returnType, source=source, pointNames=pointNames,
             featureNames=featureNames, name=name, keepPoints=keepPoints,
             keepFeatures=keepFeatures, convertToType=convertToType,
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
@@ -557,35 +561,36 @@ def loadTrainedLearner(inputPath, useLog=None):
         raise InvalidArgumentValue(msg)
     with open(inputPath, 'rb') as file:
         ret = cloudpickle.load(file)
-    if not isinstance(ret,
-                      nimble.core.interfaces.TrainedLearner):
-        msg = 'File does not contain a nimble valid trainedLearner Object.'
+    if not isinstance(ret, nimble.core.interfaces.TrainedLearner):
+        msg = 'File does not contain a valid Nimble TrainedLearner object.'
         raise InvalidArgumentType(msg)
 
     handleLogging(useLog, 'load', "TrainedLearner",
                   learnerName=ret.learnerName, learnerArgs=ret.arguments)
     return ret
 
-def fetchFile(source, update=False):
+def fetchFile(source, overwrite=False):
     """
     Get a data file from the web or local storage.
 
-    Download a data file from the web and store at a specified location.
-    The file is stored in a directory named 'nimbleData' that is placed,
-    by default, in the home directory (pathlib.Path.home()). The
-    location can be changed in configuration.ini. Any subsequent calls
-    for the same source will identify that the data is locally
-    available. For zip and tar files, extraction will be attempted. If
-    successful, the path to the extracted file will be returned,
-    otherwise the path to the archive file is returned.
+    Downloads a new data file from the web and stores it in a
+    "nimbleData" directory placed in a configurable location (see next
+    paragraph). Once stored, any subsequent calls to fetch the same
+    data will identify that the data is already available locally,
+    avoiding repeated downloads. For zip and tar files, extraction
+    will be attempted. If successful, the path to the extracted file
+    will be returned, otherwise the path to the archive file is
+    returned.
 
-    The paths within the nimbleData directory mirror each url structure.
-    So the exact url to the data source can be determine from the file's
-    location, except when the file was extracted from an archive.
+    The location to place the "nimbleData" directory is configurable
+    through nimble.settings by setting the "location" option in the
+    "fetch" section. By default, the location is the home directory
+    (pathlib.Path.home()). The file path within "nimbleData" matches the
+    the download url, except for files extracted from zip and tar files.
 
     Special support for the UCI repository is included. The ``source``
-    can be ``'uci:<Name of Dataset>'`` or the url to the main page for a
-    specific dataset. This function requires that the UCI repository
+    can be ``'uci::<Name of Dataset>'`` or the url to the main page for
+    a specific dataset. This function requires that the UCI repository
     contain only a single file. An exception is made if all other files
     in the repository are named 'Index' or end in '.names'. By
     convention, these files are expected to contain information about
@@ -597,14 +602,18 @@ def fetchFile(source, update=False):
     ----------
     source : str
         Downloadable url or valid string to UCI database (see above).
-    update : bool
-        If True, will update the file stored locally with the data
+    overwrite : bool
+        If True, will overwrite the file stored locally with the data
         currently available from the source.
 
     Returns
     -------
     str
         The path to the available file.
+
+    See Also
+    --------
+    fetchFiles
 
     Examples
     --------
@@ -615,53 +624,58 @@ def fetchFile(source, update=False):
 
     Replacing the path to the root storage location with an ellipsis and
     using a Unix operating system, the ``titanic`` return looks like:
-    '.../nimbleData/openml-org/data/get_csv/16826755/phpMYEkMl'
+    '.../nimbleData/openml.org/data/get_csv/16826755/phpMYEkMl'
     Note how the directory structure mirrors the url.
 
     For the UCI database, two additional options are available. A string
     starting with 'uci:' followed by the name of a UCI dataset or the
     url to the main page of the dataset.
 
-    >>> wine = nimble.fetchFile('uci:wine') # doctest: +SKIP
+    >>> wine = nimble.fetchFile('uci::wine') # doctest: +SKIP
     >>> url = 'https://archive.ics.uci.edu/ml/datasets/Abalone'
     >>> abalone = nimble.fetchFile(url) # doctest: +SKIP
     """
-    return fileFetcher(source, update, allowMultiple=False)[0]
+    return fileFetcher(source, overwrite, allowMultiple=False)[0]
 
-def fetchFiles(source, update=False): # pylint: disable=line-too-long
+def fetchFiles(source, overwrite=False):
     """
     Get data files from the web or local storage.
 
-    Download data from the web and store at a specified location. Files
-    are stored in a directory named 'nimbleData' that is placed, by
-    default, in the home directory (pathlib.Path.home()). The location
-    can be changed in configuration.ini. Any subsequent calls for the
-    same source will identify that the data is locally available.
+    Downloads new data files from the web and stores them in a
+    "nimbleData" directory placed in a configurable location (see next
+    paragraph). Once stored, any subsequent calls to fetch the same
+    data will identify that the data is already available locally,
+    avoiding repeated downloads. For zip and tar files, extraction
+    will be attempted. If successful, the returned list paths will
+    include the extracted files, otherwise it will include the archive
+    file.
 
-    For zip and tar files, extraction will be attempted. If successful,
-    paths to the extracted files will be returned, otherwise the path to
-    the archive file is returned.
-
-    The paths within the nimbleData directory mirror each url structure.
-    So the exact url to the data source can be determine from the file's
-    location, except when the file was extracted from an archive.
+    The location to place the "nimbleData" directory is configurable
+    through nimble.settings by setting the "location" option in the
+    "fetch" section. By default, the location is the home directory
+    (pathlib.Path.home()). The file path within "nimbleData" matches the
+    the download url, except for files extracted from zip and tar files.
 
     Special support for the UCI repository is included. The ``source``
-    can be 'uci:<Name of Dataset>' or the url to the main page for a
+    can be 'uci::<Name of Dataset>' or the url to the main page for a
     specific dataset.
 
     Parameters
     ----------
     source : str
         Downloadable url or valid string to UCI database (see above).
-    update : bool
-        If True, will update any files stored locally with the data
+    overwrite : bool
+        If True, will overwrite any files stored locally with the data
         currently available from the source.
 
     Returns
     -------
     list
         The paths to the available files.
+
+    See Also
+    --------
+    fetchFile
 
     Examples
     --------
@@ -679,8 +693,8 @@ def fetchFiles(source, update=False): # pylint: disable=line-too-long
     starting with 'uci:' followed by the name of a UCI dataset or the
     url to the main page of the dataset.
 
-    >>> iris = nimble.fetchFiles('uci:Iris') # doctest: +SKIP
+    >>> iris = nimble.fetchFiles('uci::Iris') # doctest: +SKIP
     >>> url = 'https://archive.ics.uci.edu/ml/datasets/Wine+Quality'
     >>> wineQuality = fetchFiles(url) # doctest: +SKIP
     """
-    return fileFetcher(source, update)
+    return fileFetcher(source, overwrite)

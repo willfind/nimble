@@ -47,6 +47,7 @@ from tests.helpers import logCountAssertionFactory
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import assertNoNamesGenerated
 from tests.helpers import CalledFunctionException, calledException
+from tests.helpers import getDataConstructors
 
 
 preserveName = "PreserveTestName"
@@ -1344,8 +1345,8 @@ class HighLevelDataSafe(DataTestObject):
 
             toTest = self.constructor(data)
 
-            for retType in nimble.core.data.available:
-                currObj = nimble.data(retType, data, useLog=False)
+            for constructor in getDataConstructors():
+                currObj = constructor(data, useLog=False)
                 assert toTest.isApproximatelyEqual(currObj)
                 assert toTest.hashCode() == currObj.hashCode()
                 assertNoNamesGenerated(toTest)

@@ -14,6 +14,7 @@ from nimble.random import pythonRandom
 from .baseObject import DataTestObject
 from tests.helpers import assertNoNamesGenerated
 from tests.helpers import noLogEntryExpected
+from tests.helpers import getDataConstructors
 
 class StretchDataSafe(DataTestObject):
 
@@ -691,18 +692,17 @@ class StretchDataSafe(DataTestObject):
         assert ret2.isIdentical(exp)
 
     @noLogEntryExpected
-    def test_stretch_differentObjectTypes(self):
+    def test_stretch_allObjectTypes(self):
         matrixObj = self.constructor([[1, 2, 3], [4, 5, 6]])
         pointVect = self.constructor([9, 8, 7])
         featureVect = self.constructor([[8], [9]])
-        otherTypes = [t for t in nimble.core.data.available if t != matrixObj.getTypeString()]
-        for oType in otherTypes:
+        for constructor in getDataConstructors():
             possibleOps = [operator.add, operator.sub, operator.mul, operator.truediv,
                            operator.floordiv, operator.mod, operator.pow]
             randOp = possibleOps[pythonRandom.randint(0, 6)]
-            matDiff = matrixObj.copy(oType)
-            pvDiff = pointVect.copy(oType)
-            fvDiff = featureVect.copy(oType)
+            matDiff = constructor(matrixObj.copy(), useLog=False)
+            pvDiff = constructor(pointVect.copy(), useLog=False)
+            fvDiff = constructor(featureVect.copy(), useLog=False)
 
             out1 = randOp(matrixObj, pvDiff.stretch)
             assert out1.getTypeString() == matrixObj.getTypeString()
@@ -720,7 +720,7 @@ class StretchDataSafe(DataTestObject):
             assert out5.getTypeString() == pointVect.getTypeString()
 
             out6 = randOp(featureVect.stretch, pvDiff.stretch)
-            assert out5.getTypeString() == pointVect.getTypeString()
+            assert out6.getTypeString() == pointVect.getTypeString()
 
     @noLogEntryExpected
     def back_stretchSetNames(self, obj1, obj2, expPts, expFts):

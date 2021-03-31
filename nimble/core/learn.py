@@ -205,9 +205,9 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         use a nimble.Init object.
         Example: {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
     randomSeed : int
-       Set a random seed for the operation. When not None, allows for
-       reproducible results for each function call. Ignored if learner
-       does not depend on randomness.
+       Set a random seed for the operation. When None, the randomness is
+       controlled by Nimble's random seed. Ignored if learner does not
+       depend on randomness.
     useLog : bool, None
         Local control for whether to send object creation to the logger.
         If None (default), use the value as specified in the "logger"
@@ -470,9 +470,9 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     scoreMode : str
         Used by computeMetrics.
     randomSeed : int
-       Set a random seed for the operation. When not None, allows for
-       reproducible results for each function call. Ignored if learner
-       does not depend on randomness.
+       Set a random seed for the operation. When None, the randomness is
+       controlled by Nimble's random seed. Ignored if learner does not
+       depend on randomness.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -590,9 +590,9 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         The number of folds used in the cross validation. Cannot exceed
         the number of points in ``trainX``. Default 10.
     randomSeed : int
-       Set a random seed for the operation. When not None, allows for
-       reproducible results for each function call. Ignored if learner
-       does not depend on randomness.
+       Set a random seed for the operation. When None, the randomness is
+       controlled by Nimble's random seed. Ignored if learner does not
+       depend on randomness.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -769,9 +769,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         The number of folds used in the cross validation. Cannot exceed
         the number of points in ``trainX``. Default 10.
     randomSeed : int
-       Set a random seed for the operation. When not None, allows for
-       reproducible results for each function call. Ignored if learner
-       does not depend on randomness.
+       Set a random seed for the operation. When None, the randomness is
+       controlled by Nimble's random seed. Ignored if learner does not
+       depend on randomness.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -971,9 +971,9 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         The number of folds used in the cross validation. Cannot exceed
         the number of points in ``trainX``. Default 10.
     randomSeed : int
-       Set a random seed for the operation. When not None, allows for
-       reproducible results for each function call. Ignored if learner
-       does not depend on randomness.
+       Set a random seed for the operation. When None, the randomness is
+       controlled by Nimble's random seed. Ignored if learner does not
+       depend on randomness.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1149,9 +1149,9 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     multiClassStrategy : str
         May only be 'default', 'OneVsAll' or 'OneVsOne'.
     randomSeed : int
-       Set a random seed for the operation. When not None, allows for
-       reproducible results for each function call. Ignored if learner
-       does not depend on randomness.
+       Set a random seed for the operation. When None, the randomness is
+       controlled by Nimble's random seed. Ignored if learner does not
+       depend on randomness.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1472,7 +1472,7 @@ class KFoldCrossValidator(object):
         # Folding should be the same for each argset (and is expensive) so
         # iterate over folds first
         deepLog = loggingEnabled(useLog) and deepLoggingEnabled()
-        for fold in foldIter:
+        for foldNum, fold in enumerate(foldIter):
             [(curTrainX, curTestingX), (curTrainY, curTestingY)] = fold
             argSetIndex = 0
             # given this fold, do a run for each argument combination
@@ -1487,10 +1487,6 @@ class KFoldCrossValidator(object):
                     self.randomSeed = curTL.randomSeed
                 curRunResult = curTL.apply(curTestingX, useLog=False)
                 totalTime = time.process_time() - startTime
-                handleLogging(deepLog, "runCV", "trainAndApply", curTrainX,
-                              curTrainY, curTestingX, None, self.learnerName,
-                              curArgumentCombination, self.randomSeed,
-                              time=totalTime)
                 performanceOfEachCombination[argSetIndex][0] = (
                     curArgumentCombination)
 
@@ -1508,6 +1504,14 @@ class KFoldCrossValidator(object):
                 else:
                     performanceOfEachCombination[argSetIndex][1].append(
                         curRunResult)
+
+                metrics = {self.performanceFunction.__name__: curPerformance}
+                extraInfo = {'Fold': '{}/{}'.format(foldNum + 1, self.folds)}
+                handleLogging(deepLog, "runCV", "KFoldCrossValidation",
+                              curTrainX, curTrainY, curTestingX, curTestingY,
+                              self.learnerName, curArgumentCombination,
+                              self.randomSeed, metrics=metrics,
+                              extraInfo=extraInfo, time=totalTime)
 
                 argSetIndex += 1
 

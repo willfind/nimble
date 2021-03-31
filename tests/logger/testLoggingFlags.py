@@ -12,6 +12,10 @@ import numpy
 import nimble
 from nimble.calculate import fractionIncorrect
 from tests.helpers import generateClassificationData
+from tests.helpers import getDataConstructors
+
+constructors = getDataConstructors()
+nonViewConstructors = getDataConstructors(includeViews=False)
 
 learnerName = 'nimble.KNNClassifier'
 
@@ -64,17 +68,19 @@ def test_random_data():
         back_load(nimble.random.data, rType, 5, 5, 0.99)
 
 def test_loadData():
-    for rType in nimble.core.data.available:
-        obj = nimble.data(rType, [[1, 2, 3], [4, 5, 6]], useLog=False)
+    for constructor in constructors:
+        obj = constructor([[1, 2, 3], [4, 5, 6]], useLog=False)
         with tempfile.NamedTemporaryFile(suffix='.nimd') as tmpFile:
             obj.save(tmpFile.name)
             back_load(nimble.loadData, tmpFile.name)
 
 def test_loadTrainedLearner():
-    for rType in nimble.core.data.available:
-        train = nimble.data(rType, [[0, 0, 1], [0, 1, 0], [1, 0, 0]], useLog=False)
-        test = nimble.data(rType, [[3], [2], [1]], useLog=False)
-        tl = nimble.train('nimble.KNNClassifier', train, test)
+    # Weird failure for SparseView (something to do with __getstate__ attribute
+    # lookup for scipy by cloudpickle?)
+    for constructor in constructors:
+        trainX = constructor([[0, 0, 1], [0, 1, 0], [1, 0, 0]], useLog=False)
+        trainY = constructor([[3], [2], [1]], useLog=False)
+        tl = nimble.train('nimble.KNNClassifier', trainX, trainY)
         with tempfile.NamedTemporaryFile(suffix='.nimm') as tmpFile:
             tl.save(tmpFile.name)
             back_load(nimble.loadTrainedLearner, tmpFile.name)
@@ -296,14 +302,14 @@ def test_Deep_trainAndTestOnTrainingData_CVError():
     wrapped.__name__ = 'trainAndTestOnTrainingData'
     backendDeep(wrapped, runAndCheck)
 
-def prepAndCheck(toCall, rType, useLog):
+def prepAndCheck(toCall, constructor, useLog):
     data = [["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1],
             ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
             ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
     pNames = ['p' + str(i) for i in range(18)]
     fNames = ['f0', 'f1', 'f2']
     # nimble.data not logged
-    dataObj = nimble.data(rType, data, pointNames=pNames,
+    dataObj = constructor(data, pointNames=pNames,
                           featureNames=fNames, useLog=False)
 
     logger = nimble.core.logger.active
@@ -324,57 +330,57 @@ def test_replaceFeatureWithBinaryFeatures():
     def wrapped(obj, useLog):
         return obj.replaceFeatureWithBinaryFeatures(0, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_transformFeatureToIntegers():
     def wrapped(obj, useLog):
         return obj.transformFeatureToIntegers(0, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_trainAndTestSets():
     def wrapped(obj, useLog):
         return obj.trainAndTestSets(testFraction=0.5, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in constructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_groupByFeature():
     def wrapped(obj, useLog):
         return obj.groupByFeature(by=0, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in constructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_transpose():
     def wrapped(obj, useLog):
         obj.transpose(useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_replaceRectangle():
     def wrapped(obj, useLog):
         obj.replaceRectangle(1, 2, 0, 4, 0, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_featureReport():
     def wrapped(obj, useLog):
         obj[:, 1].featureReport(useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in constructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_summaryReport():
     def wrapped(obj, useLog):
         obj.summaryReport(useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in constructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def flattenUnflattenBackend(toCall, validator, **kwargs):
     # for each combination of local and global, call and check
@@ -406,16 +412,18 @@ def test_flattenUnflatten_pointAxis():
         obj.flatten(useLog=useLog)
         obj.unflatten((18, 3), useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        flattenUnflattenBackend(wrapped_Flatten_UnFlatten, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        flattenUnflattenBackend(wrapped_Flatten_UnFlatten, prepAndCheck,
+                                constructor=constructor)
 
 def test_flattenUnflatten_featureAxis():
     def wrapped_Flatten_UnFlatten(obj, useLog):
         obj.flatten(order='feature', useLog=useLog)
         obj.unflatten((18, 3), order='feature', useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        flattenUnflattenBackend(wrapped_Flatten_UnFlatten, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        flattenUnflattenBackend(wrapped_Flatten_UnFlatten, prepAndCheck,
+                                constructor=constructor)
 
 def test_merge():
     mData = [[1, 4], [2, 5], [3, 6]]
@@ -426,30 +434,30 @@ def test_merge():
     def wrapped(obj, useLog):
         obj.merge(mergeObj, point='intersection', feature='union', useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_transformElements():
     def wrapped(obj, useLog):
         ret = obj.transformElements(lambda elm: elm, features=0, useLog=useLog)
         return ret
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_calculateOnElements():
     def wrapped(obj, useLog):
         return obj.calculateOnElements(lambda x: len(x), features=0, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in constructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_matchingElements():
     def wrapped(obj, useLog):
         return obj.matchingElements(lambda x: True, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in constructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 ###################
 # Points/Features #
@@ -475,151 +483,150 @@ def test_point_mapReduce():
     def wrapped(obj, useLog):
         return obj.points.mapReduce(simpleMapper, simpleReducer, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in constructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_features_mapReduce():
     def wrapped(obj, useLog):
         # transpose data to make use of same mapper and reducer
-        obj.transpose(useLog=False)
-        return obj.features.mapReduce(simpleMapper, simpleReducer, useLog=useLog)
+        return obj.T.features.mapReduce(simpleMapper, simpleReducer, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in constructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_calculate():
     def wrapped(obj, useLog):
         return obj.points.calculate(lambda x: len(x), useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in constructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_features_calculate():
     def wrapped(obj, useLog):
         return obj.features.calculate(lambda x: len(x), features=0, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in constructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_permute():
     def wrapped(obj, useLog):
         return obj.points.permute(useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_features_permute():
     def wrapped(obj, useLog):
         return obj.features.permute(useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_features_normalize():
     def wrapped(obj, useLog):
         return obj.features.normalize(lambda x: x, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_sort():
     def wrapped(obj, useLog):
         return obj.points.sort(by="f0", useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_features_sort():
     def wrapped(obj, useLog):
         return obj.features.sort(by=nimble.match.allNumeric, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_extract():
     def wrapped(obj, useLog):
         return obj.points.extract(toExtract=0, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_features_extract():
     def wrapped(obj, useLog):
         return obj.features.extract(toExtract=0, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_delete():
     def wrapped(obj, useLog):
         return obj.points.delete(toDelete=0, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_features_delete():
     def wrapped(obj, useLog):
         return obj.features.delete(toDelete=0, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_retain():
     def wrapped(obj, useLog):
         return obj.points.retain(toRetain=0, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_features_retain():
     def wrapped(obj, useLog):
         return obj.features.retain(toRetain=0, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_copy():
     def wrapped(obj, useLog):
         return obj.points.copy(toCopy=0, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in constructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_features_copy():
     def wrapped(obj, useLog):
         return obj.features.copy(toCopy=0, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in constructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_fillMatching():
     def wrapped(obj, useLog):
         return obj.points.fillMatching(fillWith=11, matchingElements=1, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_features_fillMatching():
     def wrapped(obj, useLog):
         return obj.features.fillMatching(fillWith=11, matchingElements=1, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 
 def test_points_transform():
     def wrapped(obj, useLog):
         return obj.points.transform(lambda pt: [val for val in pt], useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_features_transform():
     def wrapped(obj, useLog):
         return obj.features.transform(lambda ft: [val for val in ft], features=0, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_insert():
     def wrapped(obj, useLog):
@@ -627,8 +634,8 @@ def test_points_insert():
         toInsert = nimble.data("Matrix", insertData, useLog=False)
         return obj.points.insert(0, toInsert, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_features_insert():
     def wrapped(obj, useLog):
@@ -636,8 +643,8 @@ def test_features_insert():
         toInsert = nimble.data("Matrix", insertData, useLog=False)
         return obj.features.insert(0, toInsert, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_append():
 
@@ -646,8 +653,8 @@ def test_points_append():
         toAppend = nimble.data("Matrix", appendData, useLog=False)
         return obj.points.append(toAppend, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_features_append():
     def wrapped(obj, useLog):
@@ -655,8 +662,8 @@ def test_features_append():
         toAppend = nimble.data("Matrix", appendData, useLog=False)
         return obj.features.append(toAppend, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_features_splitByParsing():
     def customParser(val):
@@ -669,16 +676,16 @@ def test_features_splitByParsing():
     def wrapped(obj, useLog):
         return obj.features.splitByParsing(1, customParser, ['str', 'int'], useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_splitByCollapsingFeatures():
     def wrapped(obj, useLog):
         return obj.points.splitByCollapsingFeatures(['f0', 'f1', 'f2'],
                                                     'featureNames', 'values',
                                                     useLog = useLog)
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_combineByExpandingFeatures():
     def wrapped(obj, useLog):
@@ -691,35 +698,35 @@ def test_points_combineByExpandingFeatures():
         newObj = nimble.data('Matrix', newData, featureNames=fNames, useLog=False)
         return newObj.points.combineByExpandingFeatures('dist', 'time', useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_setName():
     def wrapped(obj, useLog):
         return obj.points.setName(0, 'newPointName', useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_features_setName():
     def wrapped(obj, useLog):
         return obj.features.setName(0, 'newFeatureName', useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_setNames():
     def wrapped(obj, useLog):
         newNames = ['new_pt' + str(i) for i in range(18)]
         return obj.points.setNames(newNames, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_features_setNames():
     def wrapped(obj, useLog):
         newNames = ['new_ft' + str(i) for i in range(3)]
         return obj.features.setNames(newNames, useLog=useLog)
 
-    for rType in nimble.core.data.available:
-        backend(wrapped, prepAndCheck, rType=rType)
+    for constructor in nonViewConstructors:
+        backend(wrapped, prepAndCheck, constructor=constructor)

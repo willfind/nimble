@@ -190,7 +190,7 @@ class BaseView(Base, metaclass=ABCMeta):
 
     @baseExceptionDoc
     def merge(self, other, point='strict', feature='union', onFeature=None,
-              useLog=None):
+              force=False, useLog=None):
         readOnlyException('merge')
 
     ###############################################################

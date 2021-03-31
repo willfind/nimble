@@ -26,6 +26,12 @@ DEFAULT_PREFIX = "_DEFAULT_#"
 DEFAULT_PREFIX2 = DEFAULT_PREFIX+'%s'
 DEFAULT_PREFIX_LENGTH = len(DEFAULT_PREFIX)
 
+def isDefaultName(name):
+    """
+    Determine if name is a default name.
+    """
+    return name.startswith(DEFAULT_PREFIX)
+
 
 def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
     """
@@ -86,8 +92,8 @@ def mergeNames(baseNames, otherNames):
     ret = {}
     for i, baseName in enumerate(baseNames):
         otherName = otherNames[i]
-        baseIsDefault = baseName.startswith(DEFAULT_PREFIX)
-        otherIsDefault = otherName.startswith(DEFAULT_PREFIX)
+        baseIsDefault = isDefaultName(baseName)
+        otherIsDefault = isDefaultName(otherName)
 
         if baseIsDefault and not otherIsDefault:
             ret[otherName] = i
@@ -194,7 +200,7 @@ def hasNonDefault(obj, axis):
     getter = obj.points.getName if axis == 'point' else obj.features.getName
 
     for index in possibleIndices:
-        if not getter(index).startswith(DEFAULT_PREFIX):
+        if not isDefaultName(getter(index)):
             return True
 
     return False
@@ -213,8 +219,7 @@ def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
     if namesList is None:
         allDefault = True
     else:
-        allDefault = all([namesList[i].startswith(DEFAULT_PREFIX)
-                          for i in possibleIndices])
+        allDefault = all(isDefaultName(namesList[i]) for i in possibleIndices)
 
     if allDefault:
         return ""
@@ -684,10 +689,10 @@ def validateAxisFunction(func, axis, allowedLength=None):
     """
     Wrap axis transform and calculate functions to validate types.
 
-    Transform defines oppositeAxisInfo because the function return must
+    Transform defines allowedLength because the function return must
     have the same length of the axis opposite the one calling transform.
     Calculate allows for objects of varying lengths or single values to
-    be returned so oppositeAxisInfo is None. For both, the return value
+    be returned so allowedLength is None. For both, the return value
     types are validated.
     """
     if func is None:
@@ -1003,10 +1008,10 @@ def equalNames(selfNames, otherNames):
     if selfNames is None and otherNames is None:
         return True
     if (selfNames is None
-            and all(n.startswith(DEFAULT_PREFIX) for n in otherNames)):
+            and all(isDefaultName(n) for n in otherNames)):
         return True
     if (otherNames is None
-            and all(n.startswith(DEFAULT_PREFIX) for n in selfNames)):
+            and all(isDefaultName(n) for n in selfNames)):
         return True
     if selfNames is None or otherNames is None:
         return False
@@ -1051,6 +1056,8 @@ def pyplotRequired(func):
         if not plt.nimbleAccessible():
             msg = 'matplotlib.pyplot is required for plotting'
             raise PackageException(msg)
+        # prevent interactive plots from showing until .show() called
+        plt.ioff()
         return func(*args, **kwargs)
     return wrapped
 
@@ -1214,6 +1221,11 @@ def plotMultiBarChart(ax, heights, horizontal, legendTitle, **kwargs):
         # sets color array to apply to subgroup bars not group bars
         ax.set_prop_cycle(color=kwargs['color'])
         del kwargs['color']
+    elif len(heights) > 10:
+        # matplotlib default will repeat colors, need broader colormap
+        colormap = plt.cm.nipy_spectral
+        colors = [colormap(i) for i in numpy.linspace(0, 1, len(heights))]
+        ax.set_prop_cycle(color=colors)
     singleWidth = width / len(heights)
     start = 1 - (width / 2) + (singleWidth / 2)
 

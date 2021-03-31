@@ -32,7 +32,7 @@ from nimble._utility import inspectArguments
 from .points import Points
 from .features import Features
 from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2
-from ._dataHelpers import DEFAULT_PREFIX_LENGTH
+from ._dataHelpers import DEFAULT_PREFIX_LENGTH, isDefaultName
 from ._dataHelpers import valuesToPythonList, constructIndicesList
 from ._dataHelpers import validateInputString
 from ._dataHelpers import operatorDict
@@ -204,6 +204,18 @@ class Axis(ABC):
         if singleKey and len(self._base._shape) > 2:
             return self._base.pointView(key[0]).copy()
         return self._structuralBackend_implementation('copy', key)
+
+    def _anyDefaultNames(self):
+        if self._namesCreated():
+            return any(isDefaultName(name) for name in self._getNames())
+
+        return True
+
+    def _allDefaultNames(self):
+        if self._namesCreated():
+            return all(isDefaultName(name) for name in self._getNames())
+
+        return True
 
     #########################
     # Structural Operations #
@@ -825,9 +837,8 @@ class Axis(ABC):
 
             if title is True:
                 title = ''
-                objName = False if self._base.name is None else self._base.name
-                if objName is not None:
-                    title += "{}: ".format(objName)
+                if self._base.name is not None:
+                    title += "{}: ".format(self._base.name)
                 title += "Feature Comparison"
 
         if title is False:
@@ -951,7 +962,7 @@ class Axis(ABC):
                 if not isinstance(name, str):
                     msg = 'assignments must contain only string values'
                     raise InvalidArgumentValue(msg)
-                if name.startswith(DEFAULT_PREFIX) and name in temp:
+                if isDefaultName(name) and name in temp:
                     name = self._nextDefaultName()
                 if name in temp:
                     msg = "Cannot input duplicate names: " + str(name)
@@ -1227,7 +1238,7 @@ class Axis(ABC):
 
     def _sortByNames(self, reverse):
         names = self._getNamesNoGeneration()
-        if names is None or any(n.startswith(DEFAULT_PREFIX) for n in names):
+        if names is None or any(isDefaultName(n) for n in names):
             msg = "When by=None, all {0} names must be defined (non-default). "
             msg += "Either set the {0} names of this object or provide "
             msg += "another argument for by"
@@ -1443,10 +1454,8 @@ class Axis(ABC):
         # _validateInsertableData before this helper, most of the toInsert
         # cases will have already caused an exception
         if objNamesCreated and toInsertNamesCreated:
-            objAllDefault = all(n.startswith(DEFAULT_PREFIX)
-                                for n in objNames())
-            toInsertAllDefault = all(n.startswith(DEFAULT_PREFIX)
-                                     for n in toInsertNames())
+            objAllDefault = all(isDefaultName(n) for n in objNames())
+            toInsertAllDefault = all(isDefaultName(n) for n in toInsertNames())
             reorder = objNames() != toInsertNames()
             if not (objAllDefault or toInsertAllDefault) and reorder:
                 # use copy when reordering so toInsert object is not modified
@@ -1488,7 +1497,7 @@ class Axis(ABC):
         # ensure no collision with default names
         adjustedNames = []
         for name in insertedNames:
-            if name.startswith(DEFAULT_PREFIX):
+            if isDefaultName(name):
                 adjustedNames.append(self._nextDefaultName())
             else:
                 adjustedNames.append(name)

@@ -203,6 +203,7 @@ class FoldIterator(object):
             if copied is None:
                 resultsList.append((None, None))
             else:
+                copied.name = None
                 currTest = copied.points.extract(self.foldList[self.index],
                                                  useLog=False)
                 currTrain = copied

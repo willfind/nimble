@@ -156,7 +156,9 @@ class DeferredModuleImport(object):
     Defer import of third-party modules.
 
     Module must first be determined to accessible to nimble by calling
-    the ``nimbleAccessible`` method.
+    the ``nimbleAccessible`` method. For pickling, __getstate__ and
+    __setstate__ were defined due to issues loading trained learners
+    trained using SparseView objects.
     """
     def __init__(self, name):
         self.name = name
@@ -200,6 +202,12 @@ class DeferredModuleImport(object):
         ret = getattr(self.imported, name)
         setattr(self, name, ret)
         return ret
+
+    def __getstate__(self):
+        return self.__dict__.copy()
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
 
 ####################
 # Optional modules #

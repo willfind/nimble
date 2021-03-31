@@ -9,7 +9,7 @@ import warnings
 import inspect
 
 import nimble
-from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValue
 from nimble.random import pythonRandom
 from nimble.core._learnHelpers import _validTestData, _validArguments
 from nimble.core._learnHelpers import _validScoreMode, _2dOutputFlagCheck
@@ -656,22 +656,3 @@ def validInitParams(initNames, arguments, randomSeed, randomParam):
         initParams[randomParam] = randomSeed
 
     return initParams
-
-def getValidSeed(seed, interface):
-    """
-    Validate the random seed value works for the interface.
-    """
-    if seed is None:
-        seed = nimble.random._generateSubsidiarySeed()
-    elif not isinstance(seed, int):
-        raise InvalidArgumentType('seed must be an integer')
-    elif interface.lower() == 'shogun' and seed == 0:
-        msg = "The seed 0 does not generate reproducible results in shogun. "
-        msg += "Set randomSeed such that 1<=randomSeed<=4294967295."
-        raise InvalidArgumentValue(msg)
-    elif not 0 <= seed <= (2 ** 32) - 1:
-        msg = 'randomSeed is required to be an unsigned 32 bit integer. '
-        msg += 'Set randomSeed such that 0<=randomSeed<=4294967295.'
-        raise InvalidArgumentValue(msg)
-
-    return seed

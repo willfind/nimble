@@ -17,7 +17,7 @@ from .base import Base
 from .views import BaseView
 from .listAxis import ListPoints, ListPointsView
 from .listAxis import ListFeatures, ListFeaturesView
-from ._dataHelpers import DEFAULT_PREFIX
+from ._dataHelpers import DEFAULT_PREFIX, isDefaultName
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
 from ._dataHelpers import denseCountUnique
@@ -398,7 +398,7 @@ class List(Base):
             def ptNameGetter(obj, idx, suffix):
                 if obj._pointNamesCreated():
                     name = obj.points.getName(idx)
-                    if not name.startswith(DEFAULT_PREFIX):
+                    if not isDefaultName(name):
                         return name
                     # differentiate default names between objects;
                     # note still start with DEFAULT_PREFIX

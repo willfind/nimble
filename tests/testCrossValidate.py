@@ -6,6 +6,7 @@ the backend helpers they rely on.
 import math
 import sys
 from unittest import mock
+import functools
 
 import numpy
 import nose
@@ -28,13 +29,17 @@ from nimble.core._learnHelpers import computeMetrics
 from nimble.core.learn import KFoldCrossValidator
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import generateClassificationData
+from tests.helpers import getDataConstructors
 
 
-def _randomLabeledDataSet(dataType='Matrix', numPoints=50, numFeatures=5, numLabels=3):
+def _randomLabeledDataSet(numPoints=50, numFeatures=5, numLabels=3,
+                          constructor=None):
     """returns a tuple of two data objects of type dataType
     the first object in the tuple contains the feature information ('X' in nimble language)
     the second object in the tuple contains the labels for each feature ('Y' in nimble language)
     """
+    if constructor is None:
+        constructor = functools.partial(nimble.data, 'Matrix')
     if numLabels is None:
         labelsRaw = [[pythonRandom.random()] for _x in range(numPoints)]
     else:  # labels data set
@@ -42,7 +47,8 @@ def _randomLabeledDataSet(dataType='Matrix', numPoints=50, numFeatures=5, numLab
 
     rawFeatures = [[pythonRandom.random() for _x in range(numFeatures)] for _y in range(numPoints)]
 
-    return (nimble.data(dataType, rawFeatures, useLog=False), nimble.data(dataType, labelsRaw, useLog=False))
+    return (constructor(rawFeatures, useLog=False),
+            constructor(labelsRaw, useLog=False))
 
 
 def test_crossValidate_XY_unchanged():
@@ -68,8 +74,9 @@ def test_crossValidate_callable():
     numLabels = 3
     numPoints = 10
 
-    for dType in nimble.core.data.available:
-        X, Y = _randomLabeledDataSet(numPoints=numPoints, numLabels=numLabels, dataType=dType)
+    for constructor in getDataConstructors():
+        X, Y = _randomLabeledDataSet(numPoints=numPoints, numLabels=numLabels,
+                                     constructor=constructor)
 
         classifierAlgos = ['nimble.KNNClassifier']
         for curAlgo in classifierAlgos:
@@ -77,7 +84,8 @@ def test_crossValidate_callable():
             assert isinstance(crossValidator.bestResult, float)
 
             #With regression dataset (no repeated labels)
-            X, Y = _randomLabeledDataSet(numPoints=numPoints, numLabels=None, dataType=dType)
+            X, Y = _randomLabeledDataSet(numPoints=numPoints, numLabels=None,
+                                         constructor=constructor)
             classifierAlgos = ['nimble.RidgeRegression']
             for curAlgo in classifierAlgos:
                 crossValidator = crossValidate(curAlgo, X, Y, meanAbsoluteError, {}, folds=3)

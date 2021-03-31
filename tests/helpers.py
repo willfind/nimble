@@ -4,7 +4,7 @@ Common assertions helpers to be used in multiple test files.
 Custom assertion types can be helpful if the assertion can be added to
 existing tests which are also testing other functionality.
 """
-from functools import wraps
+from functools import wraps, partial
 
 import nimble
 from nimble.core._learnHelpers import generateClusteredPoints
@@ -107,3 +107,29 @@ def assertExpectedException(exception, func, *args, messageIncludes=None,
     except exception as e:
         if messageIncludes is not None:
             assert messageIncludes in str(e)
+
+def _getViewFunc(returnType):
+    """
+    Return function creating a view of the given returnType.
+    Helper for dataConstructors.
+    """
+    def getView(*args, **kwargs):
+        obj = nimble.data(returnType, *args, **kwargs)
+        return obj.view()
+    # mirror attributes of functools.partial
+    getView.func = nimble.data
+    getView.args = [returnType]
+    getView.kwargs = {}
+    return getView
+
+def getDataConstructors(includeViews=True):
+    """
+    Create data object constructors for tests iterating through each
+    concrete data type. By default includes constructors for views.
+    """
+    constructors = []
+    for returnType in nimble.core.data.available:
+        constructors.append(partial(nimble.data, returnType))
+        if includeViews:
+            constructors.append(_getViewFunc(returnType))
+    return constructors

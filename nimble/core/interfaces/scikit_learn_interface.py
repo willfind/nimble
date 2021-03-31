@@ -10,7 +10,6 @@ import warnings
 from unittest import mock
 import pkgutil
 import abc
-from packaging.version import parse as versionParse
 
 import numpy
 
@@ -342,7 +341,8 @@ class SciKitLearn(_SciKitLearnAPI):
                                               'sklearn.utils.testing')
 
         version = self.version()
-        if versionParse(version) < versionParse("0.19"):
+        epoch, release = version.split('.')[:2]
+        if int(epoch) == 0 and int(release) < 19:
             msg = "nimble was tested using sklearn 0.19 and above, we cannot "
             msg += "be sure of success for version {0}".format(version)
             warnings.warn(msg)

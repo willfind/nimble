@@ -17,7 +17,7 @@ from .views import BaseView
 from .dataframeAxis import DataFramePoints, DataFramePointsView
 from .dataframeAxis import DataFrameFeatures, DataFrameFeaturesView
 from ._dataHelpers import allDataIdentical
-from ._dataHelpers import DEFAULT_PREFIX
+from ._dataHelpers import isDefaultName
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import denseCountUnique
 from ._dataHelpers import NimbleElementIterator
@@ -333,9 +333,9 @@ class DataFrame(Base):
         if onFeature is None:
             if self._pointNamesCreated() and other._pointNamesCreated():
                 # differentiate default names between objects
-                self._data.index = [n + '_l' if n.startswith(DEFAULT_PREFIX)
+                self._data.index = [n + '_l' if isDefaultName(n)
                                     else n for n in self.points.getNames()]
-                tmpDfR.index = [n + '_r' if n.startswith(DEFAULT_PREFIX)
+                tmpDfR.index = [n + '_r' if isDefaultName(n)
                                 else n for n in other.points.getNames()]
             elif self._pointNamesCreated() or other._pointNamesCreated():
                 # there will be no matches, need left points ordered first
@@ -526,7 +526,9 @@ class DataFrame(Base):
         dtypes = tuple(map(lambda dtype: max(dtype, rowDtype), otherDtypes))
 
         if isinstance(other, nimble.core.data.Sparse):
-            values = self._asNumpyArray(numericRequired=True) * other._data
+            # scipy performs mat mul with * operator
+            array = self._asNumpyArray(numericRequired=True)
+            values = array * other._getSparseData()
         else:
             values = numpy.matmul(self._asNumpyArray(numericRequired=True),
                                   other.copy('numpyarray'))

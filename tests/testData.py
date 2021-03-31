@@ -26,7 +26,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import FileFormatException
-from nimble.core.data._dataHelpers import DEFAULT_PREFIX
+from nimble.core.data._dataHelpers import DEFAULT_PREFIX, isDefaultName
 from nimble.core._createHelpers import _intFloatOrString
 from nimble.core._createHelpers import replaceNumpyValues
 from nimble._utility import sparseMatrixToArray, isDatetime, requests
@@ -73,6 +73,141 @@ class GetItemOnly(object):
 ###############################
 # Raw data values correctness #
 ###############################
+def test_data_dictOfList():
+    dataDict = {'c': [3, 6, 9], 'a': [1, 4, 7], 'b': [2, 5, 8]}
+    for t in returnTypes:
+        fromList = nimble.data(t, [[1,2,3], [4,5,6], [7,8,9]],
+                               featureNames=['a', 'b', 'c'])
+
+        fromDictOfList = nimble.data(t, dataDict)
+        # order of features is not consistent for dict
+        fromList.features.permute(fromDictOfList.features.getNames())
+        assert fromDictOfList == fromList
+
+        fromList.features.permute(['a', 'b', 'c'])
+        fromDictOfList = nimble.data(t, dataDict,
+                                     featureNames=['b', 'c', 'a'])
+
+        assert fromDictOfList.features.getNames() == ['b', 'c', 'a']
+        assert fromDictOfList.features[0] == fromList.features[1]
+        assert fromDictOfList.features[1] == fromList.features[2]
+        assert fromDictOfList.features[2] == fromList.features[0]
+
+        fromDictOfList2 = nimble.data(t, dataDict,
+                                      featureNames={'a': 2, 'b': 0, 'c': 1})
+
+        assert fromDictOfList == fromDictOfList2
+
+        fromList.points.setNames(['1', '4', '7'])
+        fromDictOfList = nimble.data(t, dataDict, pointNames=['1', '4', '7'],
+                                     featureNames=['a', 'b', 'c'])
+
+        assert fromDictOfList == fromList
+
+        fromDictOfList = nimble.data(t, dataDict,
+                                     pointNames={'1': 0, '7': 2, '4': 1},
+                                     featureNames=['a', 'b', 'c'])
+
+        assert fromDictOfList == fromList
+
+        fromList.points.setNames(None)
+        fromDictOfList = nimble.data(t, dataDict, pointNames=False)
+        # order of features is not consistent for dict
+        fromList.features.permute(fromDictOfList.features.getNames())
+
+        assert fromDictOfList == fromList
+        assert not fromDictOfList.points._namesCreated()
+
+        fromList.features.permute(['a', 'b', 'c'])
+        fromList.features.setNames(None)
+        fromDictOfList = nimble.data(t, dataDict, featureNames=False)
+        fromDictOfList.features.sort(0) # sort by pt 0 values b/c no ft names
+
+        assert fromDictOfList == fromList
+        assert not fromDictOfList.features._namesCreated()
+
+        assertExpectedException(InvalidArgumentValue, nimble.data, t, dataDict,
+                                pointNames=True,
+                                messageIncludes='pointNames cannot be True')
+
+        fromDictOfListEmpty = nimble.data(t, {})
+        assert not fromDictOfListEmpty.points._namesCreated()
+        assert not fromDictOfListEmpty.features._namesCreated()
+
+        assertExpectedException(InvalidArgumentValue, nimble.data, t, {},
+                                featureNames=True,
+                                messageIncludes='featureNames cannot be True')
+
+def test_data_listOfDict():
+    dataList = [{'b': 2, 'c': 3, 'a': 1},
+                {'a': 4, 'c': 6, 'b': 5},
+                {'c': 9, 'a':7, 'b': 8}]
+    for t in returnTypes:
+        fromList = nimble.data(t, [[1,2,3], [4,5,6], [7,8,9]],
+                               featureNames=['a', 'b', 'c'])
+
+        fromListOfDict = nimble.data(t, dataList)
+        # order of features is not consistent for dict
+        fromList.features.permute(fromListOfDict.features.getNames())
+        assert fromListOfDict == fromList
+
+        fromList.features.permute(['a', 'b', 'c'])
+        fromListOfDict = nimble.data(t, dataList,
+                                     featureNames=['b', 'c', 'a'])
+
+        assert fromListOfDict.features.getNames() == ['b', 'c', 'a']
+        assert fromListOfDict.features[0] == fromList.features[1]
+        assert fromListOfDict.features[1] == fromList.features[2]
+        assert fromListOfDict.features[2] == fromList.features[0]
+
+        fromListOfDict2 = nimble.data(t, dataList,
+                                      featureNames={'a': 2, 'b': 0, 'c': 1})
+
+        assert fromListOfDict == fromListOfDict2
+
+        fromList.points.setNames(['1', '4', '7'])
+        fromListOfDict = nimble.data(t, dataList, pointNames=['1', '4', '7'],
+                                     featureNames=['a', 'b', 'c'])
+
+        assert fromListOfDict == fromList
+
+        fromListOfDict = nimble.data(t, dataList,
+                                     pointNames={'1': 0, '7': 2, '4': 1},
+                                     featureNames=['a', 'b', 'c'])
+
+        assert fromListOfDict == fromList
+
+        fromList.points.setNames(None)
+        fromListOfDict = nimble.data(t, dataList, pointNames=False)
+        # order of features is not consistent for dict
+        fromList.features.permute(fromListOfDict.features.getNames())
+
+        assert fromListOfDict == fromList
+        assert not fromListOfDict.points._namesCreated()
+
+        fromList.features.permute(['a', 'b', 'c'])
+        fromList.features.setNames(None)
+        fromListOfDict = nimble.data(t, dataList, featureNames=False)
+        fromListOfDict.features.sort(0) # sort by pt 0 values b/c no ft names
+
+        assert fromListOfDict == fromList
+        assert not fromListOfDict.features._namesCreated()
+
+        assertExpectedException(InvalidArgumentValue, nimble.data, t, dataList,
+                                pointNames=True,
+                                messageIncludes='pointNames cannot be True')
+
+        fromListOfDictEmpty = nimble.data(t, [{}, {}])
+        assert not fromListOfDictEmpty.points._namesCreated()
+        assert not fromListOfDictEmpty.features._namesCreated()
+
+        assertExpectedException(InvalidArgumentValue, nimble.data, t, [{}, {}],
+                                featureNames=True,
+                                messageIncludes='featureNames cannot be True')
+
+        assertExpectedException(InvalidArgumentValue, nimble.data, t,
+                                [{'a': 1, 'b': 2}, {'a': 3, 'c': 4}],
+                                messageIncludes='must contain the same keys')
 
 def test_data_raw_stringConversion_float():
     for t in returnTypes:
@@ -1074,8 +1209,8 @@ def test_userOverrideOfAutomaticByType_fnames_rawAndCSV():
         correctRaw = "fname0,fname1,fname2\n1,2,3\n"
         overide1a = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames=False)
         overide1b = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames=None)
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), overide1a.features.getNames()))
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), overide1b.features.getNames()))
+        assert all(map(lambda x: isDefaultName(x), overide1a.features.getNames()))
+        assert all(map(lambda x: isDefaultName(x), overide1b.features.getNames()))
 
         # example where user provided True extracts non-detectable first line
         nonStringFail1Raw = "fname0,1.0,fname2\n1,2,3"
@@ -1106,26 +1241,26 @@ def test_automaticByType_pname_interaction_with_fname():
         #pnames not triggered given 'pointNames' at [0,0] when fnames auto trigger fails CASE1
         raw = "pointNames,fname0,1.0,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.features.getNames()))
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.points.getNames()))
+        assert all(map(lambda x: isDefaultName(x), testObj.features.getNames()))
+        assert all(map(lambda x: isDefaultName(x), testObj.points.getNames()))
 
         #pnames not triggered given 'pointNames' at [0,0] when fnames auto trigger fails CASE2
         raw = "pointNames,fname0,fname1,fname2\npname0,data1,data2,data3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.features.getNames()))
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.points.getNames()))
+        assert all(map(lambda x: isDefaultName(x), testObj.features.getNames()))
+        assert all(map(lambda x: isDefaultName(x), testObj.points.getNames()))
 
         #pnames not triggered given 'pointNames' at [0,0] when fnames explicit False
         raw = "pointNames,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames=False)
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.features.getNames()))
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.points.getNames()))
+        assert all(map(lambda x: isDefaultName(x), testObj.features.getNames()))
+        assert all(map(lambda x: isDefaultName(x), testObj.points.getNames()))
 
         #pnames explicit False given 'pointNames' at [0,0] and fname auto extraction
         raw = "pointNames,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames=False, featureNames=True)
         assert testObj.features.getNames() == ['pointNames', 'fname0', 'fname1', 'fname2']
-        assert all(map(lambda x: x.startswith(DEFAULT_PREFIX), testObj.points.getNames()))
+        assert all(map(lambda x: isDefaultName(x), testObj.points.getNames()))
 
 
 def test_names_AutomaticVsTrueVsFalseVsNone():
@@ -1627,7 +1762,11 @@ def test_data_CSV_passedOpen():
             with open(tmpCSV.name, 'r') as openFile:
                 fromCSV = nimble.data(returnType=t, source=openFile, name=objName)
                 assert not openFile.closed
+            with open(tmpCSV.name, 'rb') as openFileB:
+                fromCSVB = nimble.data(returnType=t, source=openFileB, name=objName)
+                assert not openFileB.closed
 
+            assert fromCSV == fromCSVB
             assert fromList == fromCSV
 
             assert fromCSV.path == openFile.name
@@ -1664,7 +1803,11 @@ def test_data_MTXArr_passedOpen():
             with open(tmpMTXArr.name, 'r') as openFile:
                 fromMTXArr = nimble.data(returnType=t, source=openFile, name=objName)
                 assert not openFile.closed
+            with open(tmpMTXArr.name, 'rb') as openFileB:
+                fromMTXArrB = nimble.data(returnType=t, source=openFileB, name=objName)
+                assert not openFileB.closed
 
+            assert fromMTXArr == fromMTXArrB
             if t is None and fromList.getTypeString() != fromMTXArr.getTypeString():
                 assert fromList.isApproximatelyEqual(fromMTXArr)
             else:
@@ -1722,6 +1865,51 @@ def test_data_MTXCoo_passedOpen():
             assert fromMTXCoo.absolutePath is None
             assert fromMTXCoo.relativePath is None
 
+def test_data_GZIP_passedOpen():
+    for t in returnTypes:
+        fromList = nimble.data(returnType=t, source=[[1, 2, 3], [4, 5, 6]])
+        with tempfile.NamedTemporaryFile('w+b', suffix='.gz') as tempGZIP:
+            with gzip.GzipFile(tempGZIP.name, mode='wb') as mygzip:
+                mygzip.write(b'1,2,3\n4,5,6')
+            tempGZIP.seek(0)
+            fromGZIP = nimble.data(t, tempGZIP)
+            assert fromList == fromGZIP
+            assert fromGZIP.name == os.path.basename(tempGZIP.name)
+            assert fromGZIP.path  == tempGZIP.name
+            assert fromGZIP.absolutePath == tempGZIP.name
+            assert fromGZIP.relativePath == os.path.relpath(tempGZIP.name)
+
+def test_data_ZIP_passedOpen():
+    for t in returnTypes:
+        fromList = nimble.data(returnType=t, source=[[1, 2, 3], [4, 5, 6]])
+        with tempfile.NamedTemporaryFile('w+b', suffix='.zip') as tempZIP:
+            with zipfile.ZipFile(tempZIP, 'w') as myzip:
+                myzip.writestr('data.csv', '1,2,3\n4,5,6')
+            tempZIP.seek(0)
+            fromZIP = nimble.data(t, tempZIP)
+            assert fromList == fromZIP
+            assert fromZIP.name == os.path.basename(tempZIP.name)
+            assert fromZIP.path  == tempZIP.name
+            assert fromZIP.absolutePath == tempZIP.name
+            assert fromZIP.relativePath == os.path.relpath(tempZIP.name)
+
+def test_data_TAR_passedOpen():
+    for t in returnTypes:
+        fromList = nimble.data(returnType=t, source=[[1, 2, 3], [4, 5, 6]])
+        with tempfile.NamedTemporaryFile('w+b', suffix='.tar') as tempTAR:
+            with tarfile.TarFile(fileobj=tempTAR, mode='w') as tar:
+                with io.BytesIO(b'1,2,3\n4,5,6') as data1:
+                    file1 = tarfile.TarInfo('data.csv')
+                    file1.size = data1.getbuffer().nbytes
+                    tar.addfile(file1, data1)
+            tempTAR.seek(0)
+            fromZIP = nimble.data(t, tempTAR)
+            assert fromList == fromZIP
+            assert fromZIP.name == os.path.basename(tempTAR.name)
+            assert fromZIP.path  == tempTAR.name
+            assert fromZIP.absolutePath == tempTAR.name
+            assert fromZIP.relativePath == os.path.relpath(tempTAR.name)
+
 ###########################
 # url as a source of data #
 ###########################
@@ -1746,6 +1934,7 @@ class MockResponse:
             self.text = None
             self.encoding = None
         self.apparent_encoding = encoding
+        self.headers = {}
 
 def mocked_requests_get(url, *args, **kwargs):
     if 'CSV' in url:
@@ -1785,9 +1974,15 @@ def mocked_requests_get(url, *args, **kwargs):
     if 'TAR' in url:
         with io.BytesIO() as bio:
             with tarfile.TarFile(fileobj=bio, mode='w') as tar:
-                tar.addfile(tarfile.TarInfo('data.csv'))
-                if 'multiple' in url:
-                    tar.addfile(tarfile.TarInfo('old.csv'))
+                with io.BytesIO(b'1,2,3\n4,5,6') as data1:
+                    file1 = tarfile.TarInfo('data.csv')
+                    file1.size = data1.getbuffer().nbytes
+                    tar.addfile(file1, data1)
+                    if 'multiple' in url:
+                        with io.BytesIO(b'1,2,3\n4,5,6') as data2:
+                            file2 = tarfile.TarInfo('old.csv')
+                            file2.size = data2.getbuffer().nbytes
+                            tar.addfile(file2, data2)
             return MockResponse(bio.getvalue(), 200)
     if 'archive.ics.uci.edu/' in url:
         if 'ml/datasets' in url:
@@ -1795,16 +1990,20 @@ def mocked_requests_get(url, *args, **kwargs):
             # page containing the data files, so we will provide a mock href
             content = 'href="https://archive.ics.uci.edu/ml/machine-learning-databases/{}/"'
             content = content.format(url.split('/')[-1])
-        else:
+        elif url.endswith('/'):
             # in this case we return the hrefs that refer to the data files and
             # directories. First href is always a Parent Directory that we ignore.
             content = 'href="/ml/machine-learning-databases/"\n'
-            content += 'href="data.csv"\n'
+            content += 'href="CSV.csv"\n'
             if 'data+multiple' in url and 'more' not in url:
                 content += 'href="more/"\n'
             if 'data+ignored' in url:
                 content += 'href="Index"\n'
                 content += 'href="data.names"\n'
+        elif 'Index' or 'data.names' in url:
+            return MockResponse(bytes('ignore', 'utf-8'), 200)
+        else:
+            return mocked_requests_get(url)
 
         return MockResponse(bytes(content, 'utf-8'), 200)
 
@@ -1950,6 +2149,60 @@ def test_data_http_HDFPathsWithUrl():
         assert fromWeb.relativePath == None
 
 @mockRequestsGet
+def test_data_http_ZIP_single():
+    for t in returnTypes:
+        data = [[1,2,3],[4,5,6]]
+        exp = nimble.data(returnType=t, source=data)
+        url = 'http://mockrequests.nimble/ZIP.zip'
+        fromWeb = nimble.data(returnType=t, source=url)
+        assert fromWeb == exp
+
+@mockRequestsGet
+def test_data_http_ZIP_multiple():
+    for t in returnTypes:
+        url = 'http://mockrequests.nimble/ZIP_multiple.zip'
+        assertExpectedException(
+            InvalidArgumentValue, nimble.data, returnType=t, source=url,
+            messageIncludes='Multiple files found in source')
+
+@mockRequestsGet
+def test_data_http_TAR_single():
+    for t in returnTypes:
+        data = [[1,2,3],[4,5,6]]
+        exp = nimble.data(returnType=t, source=data)
+        url = 'http://mockrequests.nimble/TAR.tar'
+        fromWeb = nimble.data(returnType=t, source=url)
+        assert fromWeb == exp
+
+@mockRequestsGet
+def test_data_http_TAR_multiple_exception():
+    for t in returnTypes:
+        url = 'http://mockrequests.nimble/TAR_multiple.tar'
+        assertExpectedException(
+            InvalidArgumentValue, nimble.data, returnType=t, source=url,
+            messageIncludes='Multiple files found in source')
+
+@mockRequestsGet
+def test_data_http_GZIP():
+    for t in returnTypes:
+        data = [[1,2,3],[4,5,6]]
+        exp = nimble.data(returnType=t, source=data)
+        url = 'http://mockrequests.nimble/GZIP_data.csv.gz'
+        fromWeb = nimble.data(returnType=t, source=url)
+        assert fromWeb == exp
+
+@mockRequestsGet
+def test_data_http_uciPathHandling():
+    for t in returnTypes:
+        data = [[1,2,3],[4,5,6]]
+        exp = nimble.data(returnType=t, source=data)
+        fromWeb = nimble.data(returnType=t, source="uci::data")
+        assert fromWeb == exp
+
+        fromWeb = nimble.data(returnType=t, source="uci::data+ignored")
+        assert fromWeb == exp
+
+@mockRequestsGet
 def test_data_http_linkError():
     for t in returnTypes:
         try:
@@ -2049,12 +2302,12 @@ def test_data_fetch_uciPathHandling():
     fileBasePath = os.path.join('nimbleData','archive.ics.uci.edu','ml',
                                 'machine-learning-databases')
     urlToSingleFile = urlBasePath + 'data'
-    singleFile = os.path.join(fileBasePath, 'data', 'data.csv')
+    singleFile = os.path.join(fileBasePath, 'data', 'CSV.csv')
 
-    shortFile = nimble.fetchFile('uci:data')
+    shortFile = nimble.fetchFile('uci::data')
     assert shortFile.endswith(singleFile)
 
-    shortFiles = nimble.fetchFiles('uci: data ')
+    shortFiles = nimble.fetchFiles('uci:: data ')
     assert len(shortFiles) == 1 and shortFiles[0].endswith(singleFile)
 
     pageFile = nimble.fetchFile(urlToSingleFile)
@@ -2063,14 +2316,14 @@ def test_data_fetch_uciPathHandling():
     assert len(pageFiles) == 1 and pageFiles[0].endswith(singleFile)
 
     assertExpectedException(InvalidArgumentValue, nimble.fetchFile,
-                            'uci:data multiple')
+                            'uci::data multiple')
     assertExpectedException(InvalidArgumentValue, nimble.fetchFile,
                             'https://archive.ics.uci.edu/ml/datasets/my+data+multiple')
 
-    multiFile1 = os.path.join(fileBasePath, 'data+multiple', 'data.csv')
-    multiFile2 = os.path.join(fileBasePath, 'data+multiple', 'more', 'data.csv')
+    multiFile1 = os.path.join(fileBasePath, 'data+multiple', 'CSV.csv')
+    multiFile2 = os.path.join(fileBasePath, 'data+multiple', 'more', 'CSV.csv')
 
-    shortPaths = nimble.fetchFiles('uci: data multiple')
+    shortPaths = nimble.fetchFiles('uci:: data multiple')
     assert (len(shortPaths) == 2
             and shortPaths[0].endswith(multiFile1)
             and shortPaths[1].endswith(multiFile2))
@@ -2081,13 +2334,13 @@ def test_data_fetch_uciPathHandling():
             and pagePaths[1].endswith(multiFile2))
 
     # contains href to Index and .names files we want to ignore in fetchFile
-    ignoreFile = os.path.join(fileBasePath, 'data+ignored', 'data.csv')
+    ignoreFile = os.path.join(fileBasePath, 'data+ignored', 'CSV.csv')
     urlToIgnoreFile = urlBasePath + 'data+ignored'
 
-    shortIgFile = nimble.fetchFile('uci:data ignored')
+    shortIgFile = nimble.fetchFile('uci::data ignored')
     assert shortIgFile.endswith(ignoreFile)
 
-    shortIgFiles = nimble.fetchFiles('uci: data ignored ')
+    shortIgFiles = nimble.fetchFiles('uci:: data ignored ')
     assert len(shortIgFiles) == 3
     assert sum(f.endswith(ignoreFile) for f in shortIgFiles) == 1
 
@@ -2175,9 +2428,9 @@ def test_data_fetch_forceDownload():
     assert os.path.exists(local)
     # if requests is used, we downloaded the data again
     assertExpectedException(CalledFunctionException, nimble.fetchFile,
-                            'http://mockrequests.nimble/CSV.csv', update=True)
+                            'http://mockrequests.nimble/CSV.csv', overwrite=True)
     assertExpectedException(CalledFunctionException, nimble.fetchFiles,
-                            'http://mockrequests.nimble/CSV.csv', update=True)
+                            'http://mockrequests.nimble/CSV.csv', overwrite=True)
 
 
 ###################################
