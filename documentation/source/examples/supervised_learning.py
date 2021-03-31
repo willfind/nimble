@@ -27,9 +27,11 @@ predictions using our supervised machine learning model.
 
 import nimble
 
-# Using shortened URLs for example data files hosted on Nimble's website
-traffic = nimble.data('Matrix', 'https://bit.ly/38kxLWL')
-forecast = nimble.data('Matrix', 'https://bit.ly/3qkZOeN')
+bucket = 'https://storage.googleapis.com/nimble/datasets/'
+traffic = nimble.data('Matrix',
+                      bucket + 'Metro_Interstate_Traffic_Volume_Cleaned.csv')
+forecast = nimble.data('Matrix',
+                       bucket + 'Metro_Interstate_Traffic_Volume_Predict.csv')
 
 ## Test five different machine learning algorithms ##
 
