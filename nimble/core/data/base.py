@@ -14,7 +14,7 @@ import os.path
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble import match
@@ -222,7 +222,7 @@ class Base(ABC):
     @property
     def _featureCount(self):
         if len(self._shape) > 2:
-            return int(numpy.prod(self._shape[1:]))
+            return int(np.prod(self._shape[1:]))
         return self._shape[1]
 
     @_featureCount.setter
@@ -956,7 +956,7 @@ class Base(ABC):
             optType = self.getTypeString()
         # Use vectorized for functions with oneArg
         if calculator.oneArg:
-            vectorized = numpy.vectorize(calculator)
+            vectorized = np.vectorize(calculator)
             values = self._calculate_implementation(
                 vectorized, points, features, preserveZeros)
 
@@ -966,9 +966,9 @@ class Base(ABC):
             if not features:
                 features = list(range(len(self.features)))
             # if unable to vectorize, iterate over each point
-            values = numpy.empty([len(points), len(features)])
+            values = np.empty([len(points), len(features)])
             if allowBoolOutput:
-                values = values.astype(numpy.bool_)
+                values = values.astype(np.bool_)
             pIdx = 0
             for i in points:
                 fIdx = 0
@@ -976,8 +976,8 @@ class Base(ABC):
                     value = self[i, j]
                     currRet = calculator(value, i, j)
                     if (match.nonNumeric(currRet) and currRet is not None
-                            and values.dtype != numpy.object_):
-                        values = values.astype(numpy.object_)
+                            and values.dtype != np.object_):
+                        values = values.astype(np.object_)
                     values[pIdx, fIdx] = currRet
                     fIdx += 1
                 pIdx += 1
@@ -992,13 +992,13 @@ class Base(ABC):
     def _calculate_genericVectorized(self, function, points, features):
         # need points/features as arrays for indexing
         if points:
-            points = numpy.array(points)
+            points = np.array(points)
         else:
-            points = numpy.array(range(len(self.points)))
+            points = np.array(range(len(self.points)))
         if features:
-            features = numpy.array(features)
+            features = np.array(features)
         else:
-            features = numpy.array(range(len(self.features)))
+            features = np.array(range(len(self.features)))
         toCalculate = self.copy(to='numpyarray')
         # array with only desired points and features
         toCalculate = toCalculate[points[:, None], features]
@@ -1007,7 +1007,7 @@ class Base(ABC):
         except Exception: # pylint: disable=broad-except
             # change output type of vectorized function to object to handle
             # nonnumeric data
-            function.otypes = [numpy.object_]
+            function.otypes = [np.object_]
             return function(toCalculate)
 
     @limitedTo2D
@@ -1059,7 +1059,7 @@ class Base(ABC):
 
         ret = self.calculateOnElements(condition, outputType='Matrix',
                                        useLog=False)
-        return int(numpy.sum(ret._data))
+        return int(np.sum(ret._data))
 
     @limitedTo2D
     def countUniqueElements(self, points=None, features=None):
@@ -1169,7 +1169,7 @@ class Base(ABC):
             return point[by]
 
         def findKey2(point, by):#if by is a list of string or a list of int
-            return tuple([point[i] for i in by])
+            return tuple(point[i] for i in by)
 
         #if by is a list, then use findKey2; o.w. use findKey1
         if isinstance(by, (str, numbers.Number)):
@@ -1833,12 +1833,12 @@ class Base(ABC):
 
         #process x
         singleX = False
-        if isinstance(x, (int, float, str, numpy.integer)):
+        if isinstance(x, (int, float, str, np.integer)):
             x = self.points._getIndex(x, allowFloats=True)
             singleX = True
         #process y
         singleY = False
-        if isinstance(y, (int, float, str, numpy.integer)):
+        if isinstance(y, (int, float, str, np.integer)):
             y = self.features._getIndex(y, allowFloats=True)
             singleY = True
         #if it is the simplest data retrieval such as X[1,2],
@@ -2656,11 +2656,11 @@ class Base(ABC):
             #do rolling average
             xToPlot, yToPlot = list(zip(*sorted(zip(xToPlot, yToPlot),
                                                 key=lambda x: x[0])))
-            convShape = (numpy.ones(sampleSizeForAverage)
+            convShape = (np.ones(sampleSizeForAverage)
                          / float(sampleSizeForAverage))
             startIdx = sampleSizeForAverage-1
-            xToPlot = numpy.convolve(xToPlot, convShape)[startIdx:-startIdx]
-            yToPlot = numpy.convolve(yToPlot, convShape)[startIdx:-startIdx]
+            xToPlot = np.convolve(xToPlot, convShape)[startIdx:-startIdx]
+            yToPlot = np.convolve(yToPlot, convShape)[startIdx:-startIdx]
 
             tmpStr = ' (%s sample average)' % sampleSizeForAverage
             xlabel += tmpStr
@@ -2680,8 +2680,8 @@ class Base(ABC):
         plotAxisLimits(ax)
 
         if trend is not None and trend.lower() == 'linear':
-            meanX = numpy.mean(xToPlot)
-            meanY = numpy.mean(yToPlot)
+            meanX = np.mean(xToPlot)
+            meanY = np.mean(yToPlot)
             errorX = meanX - xToPlot
             sumSquareErrorX = sum((errorX) ** 2)
             sumErrorXY = sum(errorX * (meanY - yToPlot))
@@ -3140,7 +3140,7 @@ class Base(ABC):
     def _copy_outputAs1D(self, to):
         if to == 'numpyarray':
             if self._pointCount == 0 or self._featureCount == 0:
-                return numpy.array([])
+                return np.array([])
             return self._copy_implementation('numpyarray').flatten()
 
         if self._pointCount == 0 or self._featureCount == 0:
@@ -3151,9 +3151,9 @@ class Base(ABC):
     def _copy_pythonList(self, rowsArePoints):
         ret = self._copy_implementation('pythonlist')
         if len(self._shape) > 2:
-            ret = numpy.reshape(ret, self._shape).tolist()
+            ret = np.reshape(ret, self._shape).tolist()
         if not rowsArePoints:
-            ret = numpy.transpose(ret).tolist()
+            ret = np.transpose(ret).tolist()
         return ret
 
     def _copy_nestedPythonTypes(self, to, rowsArePoints):
@@ -3559,7 +3559,7 @@ class Base(ABC):
         if len(dataDimensions) < 2:
             msg = "dataDimensions must contain a minimum of 2 values"
             raise InvalidArgumentValue(msg)
-        if self.shape[0] * self.shape[1] != numpy.prod(dataDimensions):
+        if self.shape[0] * self.shape[1] != np.prod(dataDimensions):
             msg = "The product of the dimensions must be equal to the number "
             msg += "of values in this object"
             raise InvalidArgumentValue(msg)
@@ -3569,7 +3569,7 @@ class Base(ABC):
                 msg = "order='feature' is not allowed when unflattening to "
                 msg += 'more than two dimensions'
                 raise ImproperObjectAction(msg)
-            shape2D = (dataDimensions[0], numpy.prod(dataDimensions[1:]))
+            shape2D = (dataDimensions[0], np.prod(dataDimensions[1:]))
         else:
             shape2D = dataDimensions
 
@@ -3623,13 +3623,13 @@ class Base(ABC):
             * 'union' - Return all points/features from the caller and
               callee. If ``onFeature`` is None, unnamed points/features
               will be assumed to be unique. Any missing data from the
-              caller and callee will be filled with numpy.NaN.
+              caller and callee will be filled with np.NaN.
             * 'intersection': Return only points/features shared between
               the caller  and callee. If ``onFeature`` is None,
               point / feature names are required.
             * 'left': Return only the points/features from the caller.
               Any missing data from the callee will be filled with
-              numpy.NaN.
+              np.NaN.
         onFeature : identifier, None
             The name or index of the feature present in both objects to
             merge on.  If None, the merge will be based on point names.
@@ -4216,7 +4216,7 @@ class Base(ABC):
         provided the object can be inverted using
         nimble.calculate.inverse.
         """
-        if not isinstance(power, (int, numpy.int)):
+        if not isinstance(power, (int, np.int)):
             msg = 'power must be an integer'
             raise InvalidArgumentType(msg)
         if not len(self.points) == len(self.features):
@@ -4676,7 +4676,7 @@ class Base(ABC):
                 # inplace operations will modify the data even if op fails
                 # use not inplace operation, setting to inplace occurs after
                 useOp = opName[:2] + opName[3:]
-            with numpy.errstate(divide='raise', invalid='raise'):
+            with np.errstate(divide='raise', invalid='raise'):
                 ret = obj._binaryOperations_implementation(useOp, other)
         except (TypeError, ValueError, FloatingPointError) as error:
             obj._diagnoseFailureAndRaiseException(opName, other, error)

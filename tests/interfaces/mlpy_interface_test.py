@@ -3,7 +3,7 @@ Unit tests for mlpy_interface.py
 """
 
 from nose.tools import *
-import numpy.testing
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
@@ -62,7 +62,7 @@ def testMlpyHandmadeLogisticRegression():
     expected = [[1.]]
     expectedObj = nimble.data('Matrix', expected, useLog=False)
 
-    numpy.testing.assert_approx_equal(ret._data[0, 0], 1.)
+    np.testing.assert_approx_equal(ret._data[0, 0], 1.)
 
 @mlpySkipDec
 @oneLogEntryExpected
@@ -81,8 +81,8 @@ def testMlpyHandmadeKNN():
 
     assert ret is not None
 
-    numpy.testing.assert_approx_equal(ret._data[0, 0], 1.)
-    numpy.testing.assert_approx_equal(ret._data[1, 0], 0.)
+    np.testing.assert_approx_equal(ret._data[0, 0], 1.)
+    np.testing.assert_approx_equal(ret._data[1, 0], 0.)
 
 @mlpySkipDec
 @oneLogEntryExpected
@@ -439,4 +439,3 @@ def test_getScores_exception():
         assert False # expected InvalidArgumentValue
     except InvalidArgumentValue:
         pass
-

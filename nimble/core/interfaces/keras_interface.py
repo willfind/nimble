@@ -6,7 +6,7 @@ import os
 import logging
 import warnings
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble._utility import inspectArguments, dtypeConvert
@@ -61,7 +61,7 @@ class Keras(PredefinedInterface):
                         and not splitList[0].startswith('_')):
                     possibilities.append(splitList[0])
 
-        possibilities = numpy.unique(possibilities).tolist()
+        possibilities = np.unique(possibilities).tolist()
         if 'utils' in possibilities:
             possibilities.remove('utils')
         self.keras.__all__.extend(possibilities)
@@ -369,10 +369,10 @@ To install keras
         if (hasattr(learner, 'decision_function')
                 or hasattr(learner, 'predict_proba')):
             if trainY is not None:
-                labelOrder = numpy.unique(trainY)
+                labelOrder = np.unique(trainY)
             else:
                 allLabels = learner.predict(trainX)
-                labelOrder = numpy.unique(allLabels)
+                labelOrder = np.unique(allLabels)
 
             learner.UIgetScoreOrder = labelOrder
 

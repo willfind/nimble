@@ -6,7 +6,7 @@ operations on a nimble List object.
 import copy
 from abc import ABCMeta, abstractmethod
 
-import numpy
+import numpy as np
 
 import nimble
 from .axis import Axis
@@ -62,7 +62,7 @@ class ListAxis(Axis, metaclass=ABCMeta):
             if self._base._data == []:
                 # create empty matrix with correct shape
                 shape = (len(self._base.points), len(targetList))
-                satisfying = numpy.empty(shape, dtype=numpy.object_)
+                satisfying = np.empty(shape, dtype=np.object_)
             else:
                 satisfying = [[self._base._data[pt][ft] for ft in targetList]
                               for pt in range(len(self._base.points))]
@@ -207,7 +207,7 @@ class ListPoints(ListAxis, Points):
             retainData.append(retainFeatures)
 
         tmpData = fillArrayWithCollapsedFeatures(
-            featuresToCollapse, retainData, numpy.array(collapseData),
+            featuresToCollapse, retainData, np.array(collapseData),
             currNumPoints, currFtNames, numRetPoints, numRetFeatures)
 
         self._base._data = tmpData.tolist()
@@ -287,8 +287,8 @@ class ListFeatures(ListAxis, Features):
 
     def _splitByParsing_implementation(self, featureIndex, splitList,
                                        numRetFeatures, numResultingFts):
-        tmpData = numpy.empty(shape=(len(self._base.points), numRetFeatures),
-                              dtype=numpy.object_)
+        tmpData = np.empty(shape=(len(self._base.points), numRetFeatures),
+                           dtype=np.object_)
 
         tmpData[:, :featureIndex] = [ft[:featureIndex] for ft
                                      in self._base._data]

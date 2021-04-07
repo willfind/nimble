@@ -7,7 +7,7 @@ st. dev., # of unique values (for non-real valued features), # of
 missing values
 """
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
@@ -147,7 +147,7 @@ def produceAggregateTable(dataContainer):
     """
     shape = dataContainer._shape
     results = []
-    results.append(('Values', numpy.prod(shape)))
+    results.append(('Values', np.prod(shape)))
     if len(shape) > 2:
         results.append(('Dimensions', ' x '.join(map(str, shape))))
         # use as 2D to allow calculations of aggregate functions

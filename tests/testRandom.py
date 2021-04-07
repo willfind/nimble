@@ -5,7 +5,7 @@ Tests for the nimble.random submodule
 import random
 import copy
 
-import numpy
+import numpy as np
 import nose
 
 import nimble
@@ -18,7 +18,7 @@ from tests.helpers import oneLogEntryExpected, logCountAssertionFactory
 def testSetRandomSeedExplicit():
     """ Test nimble.random.setSeed yields Nimble accessible random objects with the correct random behavior """
     expPy = random.Random(1333)
-    expNp = numpy.random.RandomState(1333)
+    expNp = np.random.RandomState(1333)
     nimble.random.setSeed(1333)
 
     for i in range(50):
@@ -35,7 +35,7 @@ def testSetRandomSeedNone():
 
     origPy = random.Random()
     origPy.setstate(pyState)
-    origNp = numpy.random.RandomState()
+    origNp = np.random.RandomState()
     origNp.set_state(npState)
 
     nimble.random.setSeed(None)
@@ -152,7 +152,7 @@ def testSparsityReturnedPlausible():
 
                     assert (difference < .01)
                 else:
-                    nonZerosCount = numpy.count_nonzero(returned.copy(to='numpyarray'))
+                    nonZerosCount = np.count_nonzero(returned.copy(to='numpyarray'))
                     actualSparsity = 1.0 - nonZerosCount / float(nPoints * nFeatures)
                     difference = abs(actualSparsity - curSparsity)
 

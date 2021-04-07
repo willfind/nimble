@@ -4,7 +4,7 @@ Linear algebra functions that can be used with nimble base objects.
 
 import re
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -295,7 +295,7 @@ def _backendSolvers(aObj, bObj, solverFunction):
     elif aObj.getTypeString() == 'Sparse':
         aCopy = aObj.copy()
         aData = dtypeConvert(aCopy._data)
-        bData = dtypeConvert(numpy.asarray(bObj._data))
+        bData = dtypeConvert(np.asarray(bObj._data))
         if solverFunction.__name__ == 'solve':
             solution = scipy.sparse.linalg.spsolve(aData, bData)
         else:

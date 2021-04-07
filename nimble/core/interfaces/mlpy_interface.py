@@ -7,7 +7,7 @@ not allowed as a Kernel.
 TODO: multinomialHMM requires special input processing for obs param
 """
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
@@ -255,7 +255,7 @@ To install mlpy
                               customDict):
         if outputFormat == "label" and len(outputValue.shape) == 1:
             # we are sometimes given a matrix, this will take care of that
-            outputValue = numpy.array(outputValue).flatten()
+            outputValue = np.array(outputValue).flatten()
             # In the case of prediction we are given a row vector,
             # yet we want a column vector
             outputValue = outputValue.reshape(len(outputValue), 1)

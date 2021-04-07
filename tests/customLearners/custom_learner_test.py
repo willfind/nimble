@@ -1,7 +1,5 @@
 from nose.tools import raises
-
-import numpy
-import numpy.testing
+import numpy as np
 
 import nimble
 from nimble import CustomLearner
@@ -147,9 +145,9 @@ class LoveAtFirstSightClassifier(CustomLearner):
 
     def incrementalTrain(self, trainX, trainY):
         if hasattr(self, 'scope'):
-            self.scope = numpy.union1d(self.scope, trainY.copy(to='numpyarray').flatten())
+            self.scope = np.union1d(self.scope, trainY.copy(to='numpyarray').flatten())
         else:
-            self.scope = numpy.unique(trainY.copy(to='numpyarray'))
+            self.scope = np.unique(trainY.copy(to='numpyarray'))
         self.prediction = trainY[0, 0]
 
     def apply(self, testX):
@@ -451,8 +449,8 @@ class MeanConstant(CustomLearner):
         self.mean = trainY.features.statistics('mean')[0, 0]
 
     def apply(self, testX):
-        raw = numpy.zeros(len(testX.points))
-        numpy.ndarray.fill(raw, self.mean)
+        raw = np.zeros(len(testX.points))
+        np.ndarray.fill(raw, self.mean)
 
         ret = nimble.data("Matrix", raw, useLog=False)
         ret.transpose(useLog=False)

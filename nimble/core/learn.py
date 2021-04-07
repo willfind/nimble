@@ -6,7 +6,7 @@ nimble import.
 from types import ModuleType
 import time
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble import match
@@ -404,7 +404,7 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     else:
         matchingElements = match._convertMatchToFunction(matchingElements)
         matchMatrix = trainX.matchingElements(matchingElements, useLog=False)
-        if matchingElements(numpy.nan):
+        if matchingElements(np.nan):
             checkNans = False
     if checkNans:
         nanLocs = trainX.matchingElements(match.missing, useLog=False)
@@ -414,7 +414,7 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
 
     # do not fill actual trainX with nans in case trainAndApply fails
     toFill = trainX.copy()
-    toFill.features.fillMatching(numpy.nan, matchMatrix, useLog=False)
+    toFill.features.fillMatching(np.nan, matchMatrix, useLog=False)
     filled = trainAndApply(learnerName, toFill, arguments=merged, useLog=False)
 
     def transformer(elem, i, j):
@@ -859,7 +859,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                            randomSeed=randomSeed, useLog=useLog, **kwarguments)
 
     if testX is None:
-        if isinstance(trainY, (str, int, numpy.integer)):
+        if isinstance(trainY, (str, int, np.integer)):
             testX = trainX.copy()
             testX.features.delete(trainY, useLog=False)
         else:
@@ -888,7 +888,7 @@ def _trainAndTestBackend(learnerName, trainX, trainY, testX, testY,
                            multiClassStrategy=multiClassStrategy, folds=folds,
                            randomSeed=randomSeed, useLog=useLog)
 
-    if isinstance(testY, (str, int, numpy.integer)):
+    if isinstance(testY, (str, int, np.integer)):
         testX = testX.copy()
         testY = testX.features.extract(testY, useLog=False)
     performance = trainedLearner.test(testX, testY, performanceFunction, {},

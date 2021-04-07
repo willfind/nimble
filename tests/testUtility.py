@@ -3,7 +3,7 @@ Tests for nimble._utility submodule
 """
 
 from nose.tools import raises
-import numpy
+import numpy as np
 
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
@@ -35,10 +35,10 @@ def test_DeferredModuleImport_numpy():
     assert numpy == np
     assert numpy != optNumpy
 
-    numpy_arr = numpy.array(arr_data)
-    assert numpy.array_equal(numpy_arr, opt_arr)
+    numpy_arr = np.array(arr_data)
+    assert np.array_equal(numpy_arr, opt_arr)
     assert type(numpy_arr) == type(opt_arr)
-    assert numpy.array_equal(inverse, opt_arr)
+    assert np.array_equal(inverse, opt_arr)
 
 
 def test_DeferredModuleImport_numpy_nimbleAccessibleSuccess():
@@ -49,10 +49,10 @@ def test_DeferredModuleImport_numpy_nimbleAccessibleSuccess():
 
 @raises(AttributeError)
 def test_DeferredModuleImport_numpy_noAccessibleCheck():
-    numpy = DeferredModuleImport('numpy')
+    np = DeferredModuleImport('numpy')
     # random is a valid numpy module but will get an AttributeError since
-    # we never verified numpy is accessible using numpy.nimbleAccessible()
-    numpy.random
+    # we never verified numpy is accessible using np.nimbleAccessible()
+    np.random
 
 
 @raises(AttributeError)
@@ -142,9 +142,9 @@ def test_inspectArguments():
 def test_numpy2DArray_converts1D():
     raw = [1, 2, 3, 4]
     ret = numpy2DArray(raw)
-    fromNumpy = numpy.array(raw)
+    fromNumpy = np.array(raw)
     assert len(ret.shape) == 2
-    assert not numpy.array_equal(ret,fromNumpy)
+    assert not np.array_equal(ret,fromNumpy)
 
 @raises(InvalidArgumentValue)
 def test_numpy2DArray_dimensionException():
@@ -153,17 +153,17 @@ def test_numpy2DArray_dimensionException():
 
 def test_is2DArray():
     raw1D = [1, 2, 3]
-    arr1D = numpy.array(raw1D)
-    mat1D = numpy.matrix(raw1D)
+    arr1D = np.array(raw1D)
+    mat1D = np.matrix(raw1D)
     assert not is2DArray(arr1D)
     assert is2DArray(mat1D)
     raw2D = [[1, 2, 3]]
-    arr2D = numpy.array(raw2D)
-    mat2D = numpy.matrix(raw2D)
+    arr2D = np.array(raw2D)
+    mat2D = np.matrix(raw2D)
     assert is2DArray(arr2D)
     assert is2DArray(mat2D)
     raw3D = [[[1, 2, 3]]]
-    arr3D = numpy.array(raw3D)
+    arr3D = np.array(raw3D)
     assert not is2DArray(arr3D)
 
 def test_setAll():

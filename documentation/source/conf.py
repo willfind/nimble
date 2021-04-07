@@ -31,7 +31,7 @@ os.environ['PYTHONPATH'] = NimbleParentDirPath
 
 # -- General configuration ------------------------------------------------
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '2.2'
+needs_sphinx = '3.3'
 
 def process_docstring(app, what, name, obj, options, lines):
     """

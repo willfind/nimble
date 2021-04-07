@@ -12,7 +12,7 @@ import numbers
 import datetime
 from types import ModuleType
 
-import numpy
+import numpy as np
 
 # nimble.exceptions may be imported
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
@@ -123,21 +123,21 @@ def allowedNumpyDType(dtype):
     Check if a dtype is one allowed for nimble data.
     """
     return (dtype in [int, float, bool, object]
-            or numpy.issubdtype(dtype, numpy.number)
-            or numpy.issubdtype(dtype, numpy.datetime64))
+            or np.issubdtype(dtype, np.number)
+            or np.issubdtype(dtype, np.datetime64))
 
 def numpy2DArray(obj, dtype=None, copy=True, order='K', subok=False):
     """
-    Mirror numpy.array() but require the data be two-dimensional.
+    Mirror np.array() but require the data be two-dimensional.
     """
-    ret = numpy.array(obj, dtype=dtype, copy=copy, order=order, subok=subok,
-                      ndmin=2)
+    ret = np.array(obj, dtype=dtype, copy=copy, order=order, subok=subok,
+                   ndmin=2)
     if len(ret.shape) > 2:
         raise InvalidArgumentValue('obj cannot be more than two-dimensional')
 
     if not allowedNumpyDType(ret.dtype):
-        ret = numpy.array(obj, dtype=numpy.object_, copy=copy, order=order,
-                          subok=subok, ndmin=2)
+        ret = np.array(obj, dtype=np.object_, copy=copy, order=order,
+                       subok=subok, ndmin=2)
 
     return ret
 
@@ -145,10 +145,10 @@ def is2DArray(arr):
     """
     Determine if a numpy ndarray object is two-dimensional.
 
-    Since numpy.matrix inherits from numpy.ndarray, they will always
+    Since np.matrix inherits from np.ndarray, they will always
     return True.
     """
-    return isinstance(arr, numpy.ndarray) and len(arr.shape) == 2
+    return isinstance(arr, np.ndarray) and len(arr.shape) == 2
 
 
 class DeferredModuleImport(object):
@@ -240,9 +240,9 @@ def sparseMatrixToArray(sparseMatrix):
                 and not scipy.sparse.isspmatrix_coo(sparseMatrix)):
             sparseMatrix = sparseMatrix.tocoo()
         retDType = sparseMatrix.dtype
-        if isinstance(retDType, numpy.flexible):
+        if isinstance(retDType, np.flexible):
             retDType = object
-        ret = numpy.zeros(sparseMatrix.shape, dtype=retDType)
+        ret = np.zeros(sparseMatrix.shape, dtype=retDType)
         nonzero = (sparseMatrix.row, sparseMatrix.col)
         for (i, j), v in zip(zip(*nonzero), sparseMatrix.data):
             ret[i, j] = v
@@ -253,9 +253,9 @@ def dtypeConvert(obj):
     Most learners need numeric dtypes so attempt to convert from
     object dtype if possible, otherwise return object as-is.
     """
-    if hasattr(obj, 'dtype') and obj.dtype == numpy.object_:
+    if hasattr(obj, 'dtype') and obj.dtype == np.object_:
         try:
-            obj = obj.astype(numpy.float)
+            obj = obj.astype(np.float)
         except ValueError:
             pass
     return obj
@@ -264,7 +264,7 @@ def isDatetime(x):
     """
     Determine if a value is a datetime object.
     """
-    datetimeTypes = [datetime.datetime, numpy.datetime64]
+    datetimeTypes = [datetime.datetime, np.datetime64]
     if pd.nimbleAccessible():
         datetimeTypes.append(pd.Timestamp)
     return isinstance(x, tuple(datetimeTypes))
@@ -273,7 +273,7 @@ def isAllowedSingleElement(x):
     """
     Determine if an element is an allowed single element.
     """
-    if isinstance(x, (numbers.Number, str, numpy.bool_)):
+    if isinstance(x, (numbers.Number, str, np.bool_)):
         return True
 
     if isDatetime(x):
@@ -346,7 +346,7 @@ def removeDuplicatesNative(cooObj):
 
     if not duplicates and not zeroInData:
         if not allowedNumpyDType(cooObj.data.dtype):
-            cooObj.data = cooObj.data.astype(numpy.object_)
+            cooObj.data = cooObj.data.astype(np.object_)
         return cooObj
 
     rows = []
@@ -360,12 +360,12 @@ def removeDuplicatesNative(cooObj):
             cols.append(j)
             data.append(value)
 
-    dataNP = numpy.array(data)
+    dataNP = np.array(data)
     # if there are mixed strings and numeric values numpy will automatically
     # turn everything into strings. This will check to see if that has
     # happened and use the object dtype instead.
-    if len(dataNP) > 0 and isinstance(dataNP[0], numpy.flexible):
-        dataNP = numpy.array(data, dtype='O')
+    if len(dataNP) > 0 and isinstance(dataNP[0], np.flexible):
+        dataNP = np.array(data, dtype='O')
     cooNew = scipy.sparse.coo_matrix((dataNP, (rows, cols)),
                                      shape=cooObj.shape)
 

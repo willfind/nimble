@@ -8,7 +8,7 @@ be written as files in that directory
 import os
 import sys
 
-import numpy
+import numpy as np
 
 import nimble
 
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         givenShow = True if sys.argv[2].lower() != "false" else False
 
-    rawNorm = numpy.random.normal(loc=0, scale=1, size=(1000, 1))
+    rawNorm = np.random.normal(loc=0, scale=1, size=(1000, 1))
     objNorm = nimble.data("Matrix", rawNorm, featureNames=["N(0,1)"])
 
     # 1000 samples of N(0,1)
@@ -64,8 +64,8 @@ if __name__ == "__main__":
 
     #compare two columns: col1= rand noise, col2 =3* col1 + noise
     def plotComparisonNoiseVsScaled(outDir, givenShow):
-        raw1 = numpy.random.rand(50, 1)
-        raw2 = numpy.random.rand(50, 1)
+        raw1 = np.random.rand(50, 1)
+        raw2 = np.random.rand(50, 1)
         scaled = (raw1 * 3) + raw2
         obj1 = nimble.data("Matrix", raw1)
         obj2 = nimble.data("Matrix", scaled)
@@ -81,7 +81,7 @@ if __name__ == "__main__":
                                        yMin=-0.2, yMax=5.2)
 
     def plotComparisonMultipleNoiseVsScaled(outDir, givenShow):
-        raw1 = numpy.random.rand(50, 3)
+        raw1 = np.random.rand(50, 3)
         raw1[:, 1] = raw1[:, 0] + raw1[:, 1]
         raw1[:, 2] = raw1[:, 0] + raw1[:, 2]
         obj1 = nimble.data("Matrix", raw1)
@@ -95,12 +95,12 @@ if __name__ == "__main__":
             0, 2, 10, outPath=outPath, show=givenShow, figureName='noise',
             label='2', title=title, yAxisLabel='')
 
-    checkObj = nimble.data("Matrix", numpy.zeros((15, 12)), name="Checkerboard")
+    checkObj = nimble.data("Matrix", np.zeros((15, 12)), name="Checkerboard")
 
     def plotClusters(outDir, givenShow):
         centers = nimble.data('Matrix', [[0, 0], [1, 1], [2, 2], [3, 3]])
 
-        obj = nimble.data("Matrix", numpy.random.rand(25, 2))
+        obj = nimble.data("Matrix", np.random.rand(25, 2))
 
         label = 'cluster0'
         # by setting yMin=0.5, it will trigger yMax to be set to ~1 for
@@ -118,7 +118,7 @@ if __name__ == "__main__":
                 show = givenShow
                 outPath = getOutPath(outDir, "Clusters")
 
-            obj = nimble.data("Matrix", numpy.random.rand(25, 2))
+            obj = nimble.data("Matrix", np.random.rand(25, 2))
             scaled = obj + centers.points[i].stretch
 
             label = 'cluster' + str(i)
@@ -224,7 +224,7 @@ if __name__ == "__main__":
                                legendTitle='Gender')
 
     def plotFeatureComparisons(outDir, givenShow):
-        d = numpy.random.rand(500, 6) * 2
+        d = np.random.rand(500, 6) * 2
         d[:, 1] /= 2
         d[:, 2] *= 2
         d[:, 3] += 0.5
@@ -244,7 +244,7 @@ if __name__ == "__main__":
             show=givenShow, yAxisLabel='MAD', color='orange')
 
     def plotPointComparison(outDir, givenShow):
-        d = numpy.random.rand(5, 10)
+        d = np.random.rand(5, 10)
         d[d < 0.5] = d[d < 0.5] + 0.5 # value range (0.5 - 1)
         d[0, 0] = 0.1
         d[1, :] = 0.75

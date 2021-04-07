@@ -3,7 +3,7 @@ try:
 except ImportError:
     import mock
 
-import numpy
+import numpy as np
 from nose.tools import raises
 from nose.plugins.attrib import attr
 
@@ -28,7 +28,7 @@ def fractionOfTimeInCI(getActual, getPredictions, ciFunc, expError):
         isInCI = expError > lower and expError < upper
         results.append(isInCI)
 
-    assert abs(numpy.mean(results) - confidence) <= 0.015
+    assert abs(np.mean(results) - confidence) <= 0.015
 
 @raises(PackageException)
 @mock.patch('nimble.calculate.confidence.scipy.nimbleAccessible', new=lambda: False)
@@ -64,7 +64,7 @@ def test_meanAbsoluteErrorConfidenceInterval():
     def getPredictions(actual):
         return actual + 0.1 * getActual(len(actual))
 
-    expectedError = numpy.mean(abs(0.1 * getActual(1000000)))
+    expectedError = np.mean(abs(0.1 * getActual(1000000)))
 
     fractionOfTimeInCI(getActual, getPredictions,
                        meanAbsoluteErrorConfidenceInterval, expectedError)

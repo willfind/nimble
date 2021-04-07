@@ -1,7 +1,7 @@
 """
 Contains the KNNImputation learner class.
 """
-import numpy
+import numpy as np
 
 import nimble
 from nimble import CustomLearner
@@ -44,7 +44,7 @@ class KNNImputation(CustomLearner):
                 msg += 'regression mode.'
                 raise InvalidArgumentValue(msg)
 
-        match = _convertMatchToFunction(numpy.nan)
+        match = _convertMatchToFunction(np.nan)
         self.match = trainX.matchingElements(match, useLog=False)
 
     def apply(self, testX):

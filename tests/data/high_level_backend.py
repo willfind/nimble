@@ -27,7 +27,7 @@ import tempfile
 import inspect
 import datetime
 
-import numpy
+import numpy as np
 from nose.tools import *
 from nose.plugins.attrib import attr
 try:
@@ -119,7 +119,7 @@ class HighLevelDataSafe(DataTestObject):
     @raises(ImproperObjectAction)
     def test_points_calculate_exceptionPEmpty(self):
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         origObj = self.constructor(data)
 
         def emitLower(point):
@@ -130,7 +130,7 @@ class HighLevelDataSafe(DataTestObject):
     @raises(ImproperObjectAction)
     def test_points_calculate_exceptionFEmpty(self):
         data = [[], []]
-        data = numpy.array(data)
+        data = np.array(data)
         origObj = self.constructor(data)
 
         def emitLower(point):
@@ -463,7 +463,7 @@ class HighLevelDataSafe(DataTestObject):
     @raises(ImproperObjectAction)
     def test_features_calculate_exceptionPEmpty(self):
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         origObj = self.constructor(data)
 
         def emitAllEqual(feature):
@@ -478,7 +478,7 @@ class HighLevelDataSafe(DataTestObject):
     @raises(ImproperObjectAction)
     def test_features_calculate_exceptionFEmpty(self):
         data = [[], []]
-        data = numpy.array(data)
+        data = np.array(data)
         origObj = self.constructor(data)
 
         def emitAllEqual(feature):
@@ -1075,18 +1075,18 @@ class HighLevelDataSafe(DataTestObject):
     def test_points_mapReduce_ExceptionNoFeatures(self):
         """ Test points.mapReduce() for ImproperObjectAction when there are no features  """
         data = [[], []]
-        data = numpy.array(data)
+        data = np.array(data)
         toTest = self.constructor(data)
         toTest.points.mapReduce(simpleMapper, simpleReducer)
 
     def test_points_mapReduce_emptyResultNoPoints(self):
         """ Test points.mapReduce() when given point empty data """
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         toTest = self.constructor(data)
         ret = toTest.points.mapReduce(simpleMapper, simpleReducer)
 
-        data = numpy.empty(shape=(0, 0))
+        data = np.empty(shape=(0, 0))
         exp = self.constructor(data)
         assert ret.isIdentical(exp)
 
@@ -1181,18 +1181,18 @@ class HighLevelDataSafe(DataTestObject):
     def test_features_mapReduce_ExceptionNoPoints(self):
         """ Test features.mapReduce() for ImproperObjectAction when there are no points  """
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         toTest = self.constructor(data)
         toTest.features.mapReduce(simpleMapper, simpleReducer)
 
     def test_features_mapReduce_emptyResultNoFeatures(self):
         """ Test features.mapReduce() when given feature empty data """
         data = [[], []]
-        data = numpy.array(data)
+        data = np.array(data)
         toTest = self.constructor(data)
         ret = toTest.features.mapReduce(simpleMapper, simpleReducer)
 
-        data = numpy.empty(shape=(0, 0))
+        data = np.empty(shape=(0, 0))
         exp = self.constructor(data)
         assert ret.isIdentical(exp)
 
@@ -1337,7 +1337,7 @@ class HighLevelDataSafe(DataTestObject):
         for x in range(2):
             points = 100
             features = 40
-            data = numpy.zeros((points, features))
+            data = np.zeros((points, features))
 
             for i in range(points):
                 for j in range(features):
@@ -2201,12 +2201,12 @@ class HighLevelDataSafe(DataTestObject):
         obj = self.constructor(raw)
         matches = obj.matchingElements(lambda x: x > 0)
 
-        assert matches[0, 0] is True or matches[0, 0] is numpy.bool_(True)
-        assert matches[0, 1] is True or matches[0, 1] is numpy.bool_(True)
-        assert matches[0, 2] is True or matches[0, 2] is numpy.bool_(True)
-        assert matches[1, 0] is False or matches[1, 0] is numpy.bool_(False)
-        assert matches[1, 1] is False or matches[1, 1] is numpy.bool_(False)
-        assert matches[1, 2] is False or matches[1, 2] is numpy.bool_(False)
+        assert matches[0, 0] is True or matches[0, 0] is np.bool_(True)
+        assert matches[0, 1] is True or matches[0, 1] is np.bool_(True)
+        assert matches[0, 2] is True or matches[0, 2] is np.bool_(True)
+        assert matches[1, 0] is False or matches[1, 0] is np.bool_(False)
+        assert matches[1, 1] is False or matches[1, 1] is np.bool_(False)
+        assert matches[1, 2] is False or matches[1, 2] is np.bool_(False)
 
     def test_matchingElements_valueInput(self):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 'a', 0]]
@@ -2225,37 +2225,37 @@ class HighLevelDataSafe(DataTestObject):
 
         match1 = obj.matchingElements(lambda x: x == 0)
         match2 = obj.matchingElements('==0')
-        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        ws1, ws2, ws3 = [' ' * np.random.randint(1, 5) for _ in range(3)]
         match3 = obj.matchingElements(ws1 + '==' + ws2 + '0' + ws3)
         assert match1 == match2 == match3
 
         match1 = obj.matchingElements(lambda x: x != 0)
         match2 = obj.matchingElements('!=0')
-        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        ws1, ws2, ws3 = [' ' * np.random.randint(1, 5) for _ in range(3)]
         match3 = obj.matchingElements(ws1 + '!=' + ws2 + '0' + ws3)
         assert match1 == match2 == match3
 
         match1 = obj.matchingElements(lambda x: x > 0)
         match2 = obj.matchingElements('>0')
-        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        ws1, ws2, ws3 = [' ' * np.random.randint(1, 5) for _ in range(3)]
         match3 = obj.matchingElements(ws1 + '>' + ws2 + '0' + ws3)
         assert match1 == match2 == match3
 
         match1 = obj.matchingElements(lambda x: x < 0)
         match2 = obj.matchingElements('<0')
-        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        ws1, ws2, ws3 = [' ' * np.random.randint(1, 5) for _ in range(3)]
         match3 = obj.matchingElements(ws1 + '<' + ws2 + '0' + ws3)
         assert match1 == match2 == match3
 
         match1 = obj.matchingElements(lambda x: x >= 0)
         match2 = obj.matchingElements('>=0')
-        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        ws1, ws2, ws3 = [' ' * np.random.randint(1, 5) for _ in range(3)]
         match3 = obj.matchingElements(ws1 + '>=' + ws2 + '0' + ws3)
         assert match1 == match2 == match3
 
         match1 = obj.matchingElements(lambda x: x <= 0)
         match2 = obj.matchingElements('<=0')
-        ws1, ws2, ws3 = [' ' * numpy.random.randint(1, 5) for _ in range(3)]
+        ws1, ws2, ws3 = [' ' * np.random.randint(1, 5) for _ in range(3)]
         match3 = obj.matchingElements(ws1 + '<=' + ws2 + '0' + ws3)
         assert match1 == match2 == match3
 
@@ -2287,7 +2287,7 @@ class HighLevelDataSafe(DataTestObject):
 
         assert greaterEqualToNeg1 == expObj
 
-        raw = [['a', None, 'c'], [numpy.nan, None, -3], [0, 'zero', None]]
+        raw = [['a', None, 'c'], [np.nan, None, -3], [0, 'zero', None]]
         obj = self.constructor(raw)
 
         exp = [[False, True, False], [True, True, False], [False, False, True]]
@@ -2299,7 +2299,7 @@ class HighLevelDataSafe(DataTestObject):
         # None is converted to nan by nimble.data, here we explicitly pass the
         # value the underlying representation uses, so we avoid making it
         # look like None is considered a numeric
-        raw = [['a', numpy.nan, 'c'], [numpy.nan, numpy.nan, -3], [0, 'zero', numpy.nan]]
+        raw = [['a', np.nan, 'c'], [np.nan, np.nan, -3], [0, 'zero', np.nan]]
         obj = self.constructor(raw)
         exp = [[True, False, True], [False, False, False], [False, True, False]]
 
@@ -2376,7 +2376,7 @@ class HighLevelDataSafe(DataTestObject):
 
         assert anyGreaterNeg1 == expObj
 
-        raw = [[None, None, numpy.nan], [numpy.nan, None, -3], [0, 'zero', None]]
+        raw = [[None, None, np.nan], [np.nan, None, -3], [0, 'zero', None]]
         obj = self.constructor(raw)
 
         exp = [[True], [False], [False]]
@@ -2393,7 +2393,7 @@ class HighLevelDataSafe(DataTestObject):
         # None is converted to nan by nimble.data, here we explicitly pass the
         # value the underlying representation uses, so we avoid making it
         # look like None is considered a numeric
-        raw = [['a', numpy.nan, 'c'], [numpy.nan, numpy.nan, -3], [0, 'zero', numpy.nan]]
+        raw = [['a', np.nan, 'c'], [np.nan, np.nan, -3], [0, 'zero', np.nan]]
         obj = self.constructor(raw)
 
         exp = [[True], [False], [True]]
@@ -2422,9 +2422,9 @@ class HighLevelDataSafe(DataTestObject):
 
         assert len(matches.features) == 1
         assert len(matches.points) == 3
-        assert matches[0, 0] is True or matches[0, 0] is numpy.bool_(True)
-        assert matches[1, 0] is False or matches[1, 0] is numpy.bool_(False)
-        assert matches[2, 0] is False or matches[2, 0] is numpy.bool_(False)
+        assert matches[0, 0] is True or matches[0, 0] is np.bool_(True)
+        assert matches[1, 0] is False or matches[1, 0] is np.bool_(False)
+        assert matches[2, 0] is False or matches[2, 0] is np.bool_(False)
 
     def test_points_matching_varietyOfFuncs(self):
         self.back_pointsfeatures_matching_varietyOfFuncs('point')
@@ -2471,9 +2471,9 @@ class HighLevelDataSafe(DataTestObject):
 
         assert len(matches.points) == 1
         assert len(matches.features) == 3
-        assert matches[0, 0] is True or matches[0, 0] is numpy.bool_(True)
-        assert matches[0, 1] is False or matches[0, 1] is numpy.bool_(False)
-        assert matches[0, 2] is False or matches[0, 2] is numpy.bool_(False)
+        assert matches[0, 0] is True or matches[0, 0] is np.bool_(True)
+        assert matches[0, 1] is False or matches[0, 1] is np.bool_(False)
+        assert matches[0, 2] is False or matches[0, 2] is np.bool_(False)
 
     def test_features_matching_varietyOfFuncs(self):
         self.back_pointsfeatures_matching_varietyOfFuncs('feature')
@@ -2516,7 +2516,7 @@ class HighLevelModifying(DataTestObject):
     def test_replaceFeatureWithBinaryFeatures_PemptyException(self):
         """ Test replaceFeatureWithBinaryFeatures() with a point empty object """
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         toTest = self.constructor(data)
         toTest.replaceFeatureWithBinaryFeatures(0)
 
@@ -2524,7 +2524,7 @@ class HighLevelModifying(DataTestObject):
     def test_replaceFeatureWithBinaryFeatures_FemptyException(self):
         """ Test replaceFeatureWithBinaryFeatures() with a feature empty object """
         data = [[], []]
-        data = numpy.array(data)
+        data = np.array(data)
         toTest = self.constructor(data)
         toTest.replaceFeatureWithBinaryFeatures(0)
 
@@ -2590,7 +2590,7 @@ class HighLevelModifying(DataTestObject):
     def test_transformFeatureToIntegers_PemptyException(self):
         """ Test transformFeatureToIntegers() with an point empty object """
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         toTest = self.constructor(data)
         toTest.transformFeatureToIntegers(0)
 
@@ -2598,7 +2598,7 @@ class HighLevelModifying(DataTestObject):
     def test_transformFeatureToIntegers_FemptyException(self):
         """ Test transformFeatureToIntegers() with an feature empty object """
         data = [[], []]
-        data = numpy.array(data)
+        data = np.array(data)
         toTest = self.constructor(data)
         toTest.transformFeatureToIntegers(0)
 
@@ -2618,7 +2618,7 @@ class HighLevelModifying(DataTestObject):
         # ensure data was transformed to a numeric type.
         for i in range(len(toTest.points)):
             # Matrix and Sparse might store values as floats or numpy types
-            assert isinstance(toTest[i, 0], (int, float, numpy.number))
+            assert isinstance(toTest[i, 0], (int, float, np.number))
 
         # check ret
         assert len(ret) == 3
@@ -2651,7 +2651,7 @@ class HighLevelModifying(DataTestObject):
         # ensure data was transformed to a numeric type.
         for i in range(len(toTest.points)):
             # Matrix and Sparse might store values as floats or numpy types
-            assert isinstance(toTest[i, 0], (int, float, numpy.number))
+            assert isinstance(toTest[i, 0], (int, float, np.number))
 
         # check ret
         assert len(ret) == 3
@@ -2681,7 +2681,7 @@ class HighLevelModifying(DataTestObject):
         # ensure data was transformed to a numeric type.
         for i in range(len(toTest.points)):
             # Matrix and Sparse might store values as floats or numpy types
-            assert isinstance(toTest[i, 0], (int, float, numpy.number))
+            assert isinstance(toTest[i, 0], (int, float, np.number))
 
         # check ret
         assert len(ret) == 3
@@ -2822,7 +2822,7 @@ class HighLevelModifying(DataTestObject):
     def test_points_permute_exceptionIndicesPEmpty(self):
         """ tests points.permute() throws an IndexError when given invalid indices """
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         toTest = self.constructor(data)
         toTest.points.permute([1, 3])
 
@@ -2947,7 +2947,7 @@ class HighLevelModifying(DataTestObject):
     def test_features_permute_exceptionIndicesFEmpty(self):
         """ tests features.permute() throws an IndexError when given invalid indices """
         data = [[], []]
-        data = numpy.array(data)
+        data = np.array(data)
         toTest = self.constructor(data)
         toTest.features.permute([1, 3])
 
@@ -2965,7 +2965,7 @@ class HighLevelModifying(DataTestObject):
     def test_features_permute_exceptionNotUniqueIds(self):
         """ tests features.permute() throws an InvalidArgumentValue when given duplicate indices """
         data = [[3, 2, 1], [6, 5, 4],[9, 8, 7]]
-        data = numpy.array(data)
+        data = np.array(data)
         toTest = self.constructor(data)
         toTest.features.permute([1, 1, 0])
 
@@ -3307,9 +3307,9 @@ class HighLevelModifying(DataTestObject):
         obj3 = self.constructor(data)
         obj1.features.fillMatching(float('nan'), 999)
         obj2.features.fillMatching(None, 999)
-        obj3.features.fillMatching(numpy.nan, 999)
-        obj1.features.fillMatching(0, numpy.nan)
-        obj2.features.fillMatching(0, numpy.nan)
+        obj3.features.fillMatching(np.nan, 999)
+        obj1.features.fillMatching(0, np.nan)
+        obj2.features.fillMatching(0, np.nan)
         obj3.features.fillMatching(0, float('nan'))
 
         exp = self.constructor([[1, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
@@ -3321,7 +3321,7 @@ class HighLevelModifying(DataTestObject):
         data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
         obj = self.constructor(data)
         obj.features.fillMatching(None, 999)
-        obj.features.fillMatching(0, [1, numpy.nan])
+        obj.features.fillMatching(0, [1, np.nan])
 
         exp = self.constructor([[0, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
         assert obj == exp
@@ -3559,9 +3559,9 @@ class HighLevelModifying(DataTestObject):
         obj3 = self.constructor(data)
         obj1.points.fillMatching(float('nan'), 999)
         obj2.points.fillMatching(None, 999)
-        obj3.points.fillMatching(numpy.nan, 999)
-        obj1.points.fillMatching(0, numpy.nan)
-        obj2.points.fillMatching(0, numpy.nan)
+        obj3.points.fillMatching(np.nan, 999)
+        obj1.points.fillMatching(0, np.nan)
+        obj2.points.fillMatching(0, np.nan)
         obj3.points.fillMatching(0, float('nan'))
 
         exp = self.constructor([[1, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
@@ -3573,7 +3573,7 @@ class HighLevelModifying(DataTestObject):
         data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
         obj = self.constructor(data)
         obj.points.fillMatching(None, 999)
-        obj.points.fillMatching(0, [1, numpy.nan])
+        obj.points.fillMatching(0, [1, np.nan])
 
         exp = self.constructor([[0, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
         assert obj == exp

@@ -5,7 +5,7 @@ Tests for using stretch attribute to trigger broadcasting operations
 import operator
 
 from nose.tools import raises
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import ImproperObjectAction, InvalidArgumentValue
@@ -24,13 +24,13 @@ class StretchDataSafe(DataTestObject):
 
     @raises(ImproperObjectAction)
     def test_stretch_exception_ptEmpty(self):
-        empty = numpy.empty((0, 3))
+        empty = np.empty((0, 3))
         emptyObj = self.constructor(empty)
         emptyObj.stretch
 
     @raises(ImproperObjectAction)
     def test_stretch_exception_ftEmpty(self):
-        empty = numpy.empty((3, 0))
+        empty = np.empty((3, 0))
         emptyObj = self.constructor(empty)
         emptyObj.stretch
 

@@ -3,7 +3,7 @@ Module the user-facing data creation functions for the top level
 nimble import.
 """
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -16,14 +16,14 @@ from nimble.core._createHelpers import initDataObject
 from nimble.core._createHelpers import createDataFromFile
 from nimble.core._createHelpers import createConstantHelper
 from nimble.core._createHelpers import fileFetcher
+from nimble.core._createHelpers import DEFAULT_MISSING
 
 
 def data(returnType, source, pointNames='automatic', featureNames='automatic',
          name=None, convertToType=None, keepPoints='all', keepFeatures='all',
-         treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan',
-                         'NULL', 'NA'),
-         replaceMissingWith=numpy.nan, ignoreNonNumericalFeatures=False,
-         inputSeparator='automatic', copyData=True, useLog=None):
+         treatAsMissing=DEFAULT_MISSING, replaceMissingWith=np.nan,
+         ignoreNonNumericalFeatures=False, inputSeparator='automatic',
+         copyData=True, useLog=None):
     """
     Function to instantiate one of the Nimble data container types.
 
@@ -132,12 +132,12 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     treatAsMissing : list
         Values that will be treated as missing values in the data. These
         values will be replaced with value from ``replaceMissingWith``
-        By default this list is [float('nan'), numpy.nan, None, '',
+        By default this list is [float('nan'), np.nan, None, '',
         'None', 'nan']. Set to None or [] to disable replacing missing
         values.
     replaceMissingWith
         A single value with which to replace any value in
-        ``treatAsMissing``. By default this value is numpy.nan.
+        ``treatAsMissing``. By default this value is np.nan.
     ignoreNonNumericalFeatures : bool
         **This only applies when ``source`` is a file.**
         Indicate whether features containing non-numeric data should not
@@ -339,7 +339,7 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
         name="ones DataFrame"
         )
     """
-    return createConstantHelper(numpy.ones, returnType, numPoints, numFeatures,
+    return createConstantHelper(np.ones, returnType, numPoints, numFeatures,
                                 pointNames, featureNames, name)
 
 
@@ -413,8 +413,8 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
         name="Sparse all-zeros"
         )
     """
-    return createConstantHelper(numpy.zeros, returnType, numPoints,
-                                numFeatures, pointNames, featureNames, name)
+    return createConstantHelper(np.zeros, returnType, numPoints, numFeatures,
+                                pointNames, featureNames, name)
 
 
 def identity(returnType, size, pointNames='automatic',
@@ -501,7 +501,7 @@ def identity(returnType, size, pointNames='automatic',
         return nimble.data(returnType, rawCoo, pointNames=pointNames,
                            featureNames=featureNames, name=name, useLog=False)
 
-    raw = numpy.identity(size)
+    raw = np.identity(size)
     return nimble.data(returnType, raw, pointNames=pointNames,
                        featureNames=featureNames, name=name, useLog=False)
 

@@ -8,7 +8,7 @@ functions are contained in learn.py without the distraction of helpers.
 import itertools
 from functools import wraps
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
@@ -194,7 +194,7 @@ class FoldIterator(object):
             #		indices = range(0, len(copiedList[0].points)
             #                              - len(self.foldList[self.index])))
             #		pythonRandom.shuffle(indices)
-        indices = numpy.arange(0, (len(copiedList[0].points)
+        indices = np.arange(0, (len(copiedList[0].points)
                                    - len(self.foldList[self.index])))
         numpyRandom.shuffle(indices)
 
@@ -382,10 +382,10 @@ def generateClusteredPoints(numClusters, numPointsPerCluster,
             pointsList.append(curFeatureVector)
             clusterNoiselessLabelList.append([float(curCluster)])
 
-    pointsArray = numpy.array(pointsList, dtype=numpy.float)
-    labelsArray = numpy.array(labelsList, dtype=numpy.float)
-    clusterNoiselessLabelArray = numpy.array(clusterNoiselessLabelList,
-                                             dtype=numpy.float)
+    pointsArray = np.array(pointsList, dtype=np.float)
+    labelsArray = np.array(labelsList, dtype=np.float)
+    clusterNoiselessLabelArray = np.array(clusterNoiselessLabelList,
+                                          dtype=np.float)
     # todo verify that your list of lists is valid initializer for all
     # datatypes, not just matrix
     # then convert
@@ -438,9 +438,9 @@ def sumAbsoluteDifference(dataOne, dataTwo):
 
     differences = numpyOne - numpyTwo
 
-    absoluteDifferences = numpy.abs(differences)
+    absoluteDifferences = np.abs(differences)
 
-    sumAbsoluteDifferences = numpy.sum(absoluteDifferences)
+    sumAbsoluteDifferences = np.sum(absoluteDifferences)
 
     return sumAbsoluteDifferences
 
@@ -708,7 +708,7 @@ def _validTrainData(trainX, trainY):
         raise InvalidArgumentType(msg)
 
     if trainY is not None:
-        if not isinstance(trainY, (Base, str, int, numpy.int64)):
+        if not isinstance(trainY, (Base, str, int, np.int64)):
             msg = "trainY may only be an object derived from Base, or an "
             msg += "ID of the feature containing labels in testX"
             raise InvalidArgumentType(msg)

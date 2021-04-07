@@ -3,7 +3,7 @@ Normalize
 """
 import functools
 
-import numpy
+import numpy as np
 
 import nimble
 
@@ -200,18 +200,18 @@ def percentileNormalize(values1, values2=None):
     percentiles = arr1.copy()
 
     # index locations of sorted values
-    argsort = numpy.argsort(arr1)
-    anyNan = any(map(numpy.isnan, arr1))
+    argsort = np.argsort(arr1)
+    anyNan = any(map(np.isnan, arr1))
     if anyNan: # ignore index for nan
         epsilon = 1 / (len(arr1) - 2)
     else:
         epsilon = 1 / (len(arr1) - 1)
     for i, idx in enumerate(argsort):
-        if not numpy.isnan(percentiles[idx]):
+        if not np.isnan(percentiles[idx]):
             percentiles[idx] = i * epsilon
 
     # adjust percentiles for duplicate values
-    for v in numpy.unique(arr1):
+    for v in np.unique(arr1):
         sameVal = arr1 == v
         samePercs = percentiles[sameVal]
         if len(samePercs) > 1:
@@ -230,12 +230,12 @@ def percentileNormalize(values1, values2=None):
 
     sortedArr1 = arr1[argsort]
     sortedPercs = percentiles[argsort]
-    minimum = numpy.nanmin(sortedArr1)
-    maximum = numpy.nanmax(sortedArr1)
+    minimum = np.nanmin(sortedArr1)
+    maximum = np.nanmax(sortedArr1)
 
     interpVal = functools.partial(_interpPercentile, minimum, maximum,
                                   sortedArr1, sortedPercs)
-    interpVector = numpy.vectorize(interpVal)
+    interpVector = np.vectorize(interpVal)
     values2Percentiles = values2.copy()
     if len(values2.points) == 1:
         values2Percentiles.points.transform(interpVector, useLog=False)
@@ -245,7 +245,7 @@ def percentileNormalize(values1, values2=None):
     return values1Percentiles, values2Percentiles
 
 def _interpPercentile(minimum, maximum, sortedValues, sortedPercentiles, val):
-    if numpy.isnan(val):
+    if np.isnan(val):
         return val
     if val == minimum == maximum:
         return 0.5 # all values were equal
@@ -253,7 +253,7 @@ def _interpPercentile(minimum, maximum, sortedValues, sortedPercentiles, val):
         return 0.0
     if val >= maximum:
         return 1.0
-    idx = numpy.searchsorted(sortedValues, val) # binary search
+    idx = np.searchsorted(sortedValues, val) # binary search
     leftVal, rightVal = sortedValues[idx - 1:idx + 1]
     leftPerc, rightPerc = sortedPercentiles[idx - 1:idx + 1]
     if val == rightVal:

@@ -6,7 +6,7 @@ import importlib
 import inspect
 import tempfile
 
-import numpy.testing
+import numpy as np
 from nose.plugins.attrib import attr
 from nose.tools import raises
 
@@ -81,7 +81,7 @@ def testSciKitLearnHandmadeRegression():
     expected = [[1.]]
     expectedObj = nimble.data('Matrix', expected, useLog=False)
 
-    numpy.testing.assert_approx_equal(ret[0, 0], 1.)
+    np.testing.assert_approx_equal(ret[0, 0], 1.)
 
 
 @sklSkipDec
@@ -726,12 +726,12 @@ def testConvertYTrainDType():
     testObj.features.retain([2,3,4,5], useLog=False)
 
     # case1 trainY passed as integer
-    assert trainObj[:,0]._data.dtype == numpy.object_
+    assert trainObj[:,0]._data.dtype == np.object_
     pred = nimble.trainAndApply('SciKitLearn.LogisticRegression', trainObj, 0, testObj)
 
     #case2 trainY passed as nimble object
     trainY = trainObj.features.extract(0, useLog=False)
-    assert trainY._data.dtype == numpy.object_
+    assert trainY._data.dtype == np.object_
     pred = nimble.trainAndApply('SciKitLearn.LogisticRegression', trainObj, trainY, testObj)
 
 @sklSkipDec
@@ -789,8 +789,8 @@ def test_getScores_acceptsNewArguments():
     testX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
     # Need to set convertToType b/c conversion will not be done when check_input=False
-    trainObj = nimble.data('Matrix', train, convertToType=numpy.float32, useLog=False)
-    testObj = nimble.data('Matrix', testX, convertToType=numpy.float32, useLog=False)
+    trainObj = nimble.data('Matrix', train, convertToType=np.float32, useLog=False)
+    testObj = nimble.data('Matrix', testX, convertToType=np.float32, useLog=False)
 
     # DecisionTreeClassifier.predict_proba takes a 'check_input' argument. Default is True.
     tl = nimble.train('SciKitLearn.DecisionTreeClassifier', trainObj, 0)
@@ -808,8 +808,8 @@ def test_getScores_exception():
              [1, 1, 0, 0], [2, 0, 1, 0], [3, 0, 0, 1]]
     testX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
-    trainObj = nimble.data('Matrix', train, convertToType=numpy.float32)
-    testObj = nimble.data('Matrix', testX, convertToType=numpy.float32)
+    trainObj = nimble.data('Matrix', train, convertToType=np.float32)
+    testObj = nimble.data('Matrix', testX, convertToType=np.float32)
 
     # DecisionTreeClassifier.predict_proba does not take a 'foo' argument.
     tl = nimble.train('SciKitLearn.DecisionTreeClassifier', trainObj, 0)

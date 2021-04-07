@@ -2,7 +2,7 @@
 Similarity calculations.
 """
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -23,8 +23,8 @@ def cosineSimilarity(knownValues, predictedValues):
     known = knownValues.copy(to="numpy array").flatten()
     predicted = predictedValues.copy(to="numpy array").flatten()
 
-    numerator = (numpy.dot(known, predicted))
-    denominator = (numpy.linalg.norm(known) * numpy.linalg.norm(predicted))
+    numerator = (np.dot(known, predicted))
+    denominator = (np.linalg.norm(known) * np.linalg.norm(predicted))
 
     return numerator / denominator
 
@@ -266,7 +266,7 @@ def _validateIndex(idx, numLabels, sourceArg):
 
 def _confusionMatrixWithLabelsList(knownValues, predictedValues, labels):
     numLabels = len(labels)
-    toFill = numpy.zeros((numLabels, numLabels), dtype=int)
+    toFill = np.zeros((numLabels, numLabels), dtype=int)
     validLabels = set() # to prevent repeated validation of same label
     for kVal, pVal in zip(knownValues, predictedValues):
         kVal = _mapInt(kVal)
@@ -289,7 +289,7 @@ def _validateKey(key, labels, sourceArg):
 def _confusionMatrixWithLabelsDict(knownValues, predictedValues, labels):
     sortedLabels = sorted(labels)
     numLabels = len(labels)
-    toFill = numpy.zeros((numLabels, numLabels), dtype=int)
+    toFill = np.zeros((numLabels, numLabels), dtype=int)
     labelsIdx = {}
     for kVal, pVal in zip(knownValues, predictedValues):
         # trigger KeyError if label not present
@@ -319,7 +319,7 @@ def _confusionMatrixNoLabels(knownValues, predictedValues):
     knownLabels = sorted(list(map(_mapInt, knownLabels)))
     labelsIdx = {}
     length = len(knownLabels)
-    toFill = numpy.zeros((length, length), dtype=int)
+    toFill = np.zeros((length, length), dtype=int)
 
     for (kVal, pVal), count in confusionDict.items():
         if kVal not in labelsIdx:

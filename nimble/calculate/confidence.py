@@ -1,7 +1,7 @@
 """
 Confidence Intervals for error metrics.
 """
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import PackageException
@@ -20,7 +20,7 @@ def _confidenceIntervalHelper(mean, standardDeviation, sampleSize,
 
     halfConfidence = 1 - ((1 - confidence) / 2.0)
     boundaryOnNormalScale = scipy.stats.t.ppf(halfConfidence, sampleSize - 1)
-    sqrtN = numpy.sqrt(sampleSize)
+    sqrtN = np.sqrt(sampleSize)
 
     low = mean - (boundaryOnNormalScale * (standardDeviation / sqrtN))
     high = mean + (boundaryOnNormalScale * (standardDeviation / sqrtN))
@@ -43,7 +43,7 @@ def rootMeanSquareErrorConfidenceInterval(known, predicted, confidence=0.95):
     standardDeviation = nimble.calculate.standardDeviation(errors)
 
     return _confidenceIntervalHelper(mean, standardDeviation, numSamples,
-                                     confidence, numpy.sqrt)
+                                     confidence, np.sqrt)
 
 
 def meanAbsoluteErrorConfidenceInterval(known, predicted, confidence=0.95):
@@ -75,8 +75,8 @@ def fractionIncorrectConfidenceInterval(known, predicted, confidence=0.95):
     rawPredicted = predicted.copy(to='numpyarray')
     errors = rawKnown[:] != rawPredicted[:]
     numSamples = len(errors)
-    fracIncorrect = numpy.mean(errors)
-    standardDeviation = numpy.sqrt((fracIncorrect) * (1 - fracIncorrect))
+    fracIncorrect = np.mean(errors)
+    standardDeviation = np.sqrt((fracIncorrect) * (1 - fracIncorrect))
 
     return _confidenceIntervalHelper(fracIncorrect, standardDeviation,
                                      numSamples, confidence)

@@ -11,7 +11,7 @@ from unittest import mock
 import pkgutil
 import abc
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
@@ -150,10 +150,10 @@ class _SciKitLearnAPI(PredefinedInterface):
         if (hasattr(learner, 'decision_function')
                 or hasattr(learner, 'predict_proba')):
             if trainY is not None:
-                labelOrder = numpy.unique(trainY)
+                labelOrder = np.unique(trainY)
             else:
                 allLabels = learner.predict(trainX)
-                labelOrder = numpy.unique(allLabels)
+                labelOrder = np.unique(allLabels)
 
             learner.UIgetScoreOrder = labelOrder
 
@@ -508,11 +508,11 @@ To install scikit-learn
         # this particular learner requires integer inputs
         if learnerName == 'MultinomialHMM':
             if trainX is not None:
-                trainX = numpy.array(trainX, numpy.int32)
+                trainX = np.array(trainX, np.int32)
             if trainY is not None:
-                trainY = numpy.array(trainY, numpy.int32)
+                trainY = np.array(trainY, np.int32)
             if testX is not None:
-                testX = numpy.array(testX, numpy.int32)
+                testX = np.array(testX, np.int32)
 
         instantiatedArgs = {}
         for arg, val in arguments.items():
