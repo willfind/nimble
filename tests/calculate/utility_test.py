@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 from nose.tools import *
 
 import nimble
@@ -24,25 +24,25 @@ from tests.helpers import noLogEntryExpected
 def test_detectBestResult_labels_inconsistentForDifferentKnowns():
     def foo(knowns, predicted):
         rawKnowns = knowns.copy(to="numpyarray")
-        rawPred = predicted.copy(to="numpy.array")
+        rawPred = predicted.copy(to="np.array")
 
         # case: knowns all zeros
-        if not numpy.any(rawKnowns):
+        if not np.any(rawKnowns):
             # case: predictd all right
-            if not numpy.any(rawPred):
+            if not np.any(rawPred):
                 return 0
             # case: predicted all wrong
-            elif numpy.all(rawPred):
+            elif np.all(rawPred):
                 return 1
             else:
                 return nimble.calculate.meanAbsoluteError(knowns, predicted)
         # case: knowns all ones
-        elif numpy.all(rawKnowns):
+        elif np.all(rawKnowns):
             # case: predicted all wrong
-            if not numpy.any(rawPred):
+            if not np.any(rawPred):
                 return 0
             # case: predictd all right
-            elif numpy.all(rawPred):
+            elif np.all(rawPred):
                 return 1
             else:
                 return 1 - nimble.calculate.meanAbsoluteError(knowns, predicted)

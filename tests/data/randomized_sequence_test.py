@@ -15,7 +15,7 @@ import pdb
 import functools
 import random
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.core.data import Base
@@ -251,7 +251,7 @@ def genObj(dataObj, seed, matchType=True, matchPoints=False, matchFeatures=False
         features = shape[1]
 
     if points == 0 or features == 0:
-        rawData = numpy.empty((points, features))
+        rawData = np.empty((points, features))
         ret = nimble.data('Matrix', rawData)
         ret = ret.copy(to=dataType)
     else:

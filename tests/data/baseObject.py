@@ -1,9 +1,10 @@
 import inspect
 from functools import wraps
 
-import numpy
+import numpy as np
 
 import nimble
+from nimble.core._createHelpers import DEFAULT_MISSING
 
 def objConstructorMaker(returnType):
     """
@@ -12,10 +13,8 @@ def objConstructorMaker(returnType):
 
     def constructor(
             source, pointNames='automatic', featureNames='automatic',
-            name=None, convertToType=None,
-            treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan',
-                            'NULL', 'NA'),
-            replaceMissingWith=numpy.nan, paths=(None, None)):
+            name=None, convertToType=None, treatAsMissing=DEFAULT_MISSING,
+            replaceMissingWith=np.nan, paths=(None, None)):
         # Case: source is a path to a file
         if isinstance(source, str):
             return nimble.data(
@@ -45,10 +44,8 @@ def viewConstructorMaker(concreteType):
 
     def constructor(
             source, pointNames='automatic', featureNames='automatic',
-            name=None, convertToType=None,
-            treatAsMissing=(float('nan'), numpy.nan, None, '', 'None', 'nan',
-                            'NULL', 'NA'),
-            replaceMissingWith=numpy.nan, paths=(None, None)):
+            name=None, convertToType=None, treatAsMissing=DEFAULT_MISSING,
+            replaceMissingWith=np.nan, paths=(None, None)):
         construct = objConstructorMaker(concreteType)
         orig = construct(source, pointNames, featureNames, name, convertToType,
                          treatAsMissing, replaceMissingWith, paths)
@@ -58,14 +55,14 @@ def viewConstructorMaker(concreteType):
         # data in the concrete object
         origPaths = (orig.absolutePath, orig.relativePath)
         if len(orig.points) != 0:
-            firstPRaw = numpy.zeros([1] + orig._shape[1:], dtype=int).tolist()
+            firstPRaw = np.zeros([1] + orig._shape[1:], dtype=int).tolist()
             fNamesParam = orig.features._getNamesNoGeneration()
             firstPoint = nimble.core._createHelpers.initDataObject(
                 concreteType, rawData=firstPRaw, pointNames=['firstPNonView'],
                 featureNames=fNamesParam, name=name,
                 convertToType=convertToType, paths=origPaths)
 
-            lastPRaw = (numpy.ones([1] + orig._shape[1:], dtype=int) * 3).tolist()
+            lastPRaw = (np.ones([1] + orig._shape[1:], dtype=int) * 3).tolist()
             lastPoint = nimble.core._createHelpers.initDataObject(
                 concreteType, rawData=lastPRaw, pointNames=['lastPNonView'],
                 featureNames=fNamesParam, name=name,

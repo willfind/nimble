@@ -10,7 +10,7 @@ import time
 import multiprocessing
 import signal
 
-import numpy
+import numpy as np
 from nose.tools import *
 from nose.plugins.attrib import attr
 try:
@@ -262,7 +262,7 @@ def testShogunEmbeddedRossData():
 
     data = [p0, p1, p2, p3, p4, p5, p6, p7]
 
-    numpyData = numpy.zeros((50, 10))
+    numpyData = np.zeros((50, 10))
 
     for i in range(50):
         for j in range(10):
@@ -550,7 +550,7 @@ def testShogunClassificationLearners():
         compareOutputs(learner)
 
 def trainCHAIDTree(data, toSet):
-    ft = numpy.array([1] * 20, dtype='int32')
+    ft = np.array([1] * 20, dtype='int32')
     toSet['feature_types'] = ft
     return shogunTrainBackend('CHAIDTree', data, toSet)
 

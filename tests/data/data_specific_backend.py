@@ -4,7 +4,7 @@ Define data test objects for methods of properties specific to the type
 """
 from unittest.mock import patch
 
-import numpy
+import numpy as np
 
 from tests.helpers import CalledFunctionException, calledException
 from .baseObject import DataTestObject
@@ -43,11 +43,11 @@ class DataFrameSpecificDataSafe(DataTestObject):
         obj = self.constructor(data)
         startDtypes = tuple(obj._data.dtypes)
 
-        assert startDtypes == (numpy.dtype(int), numpy.dtype(int),
-                               numpy.dtype(float))
+        assert startDtypes == (np.dtype(int), np.dtype(int),
+                               np.dtype(float))
 
         # truediv and pow will always convert to floats
-        floatDtypes = (numpy.dtype(float),) * 3
+        floatDtypes = (np.dtype(float),) * 3
 
         ret = obj + 2
         assert tuple(obj._data.dtypes) == startDtypes
@@ -123,11 +123,11 @@ class DataFrameSpecificDataModifying(DataTestObject):
         obj = self.constructor(data)
         startDtypes = tuple(obj._data.dtypes)
 
-        assert startDtypes == (numpy.dtype(int), numpy.dtype(int),
-                               numpy.dtype(float))
+        assert startDtypes == (np.dtype(int), np.dtype(int),
+                               np.dtype(float))
 
         # truediv and pow will always convert to floats
-        floatDtypes = (numpy.dtype(float),) * 3
+        floatDtypes = (np.dtype(float),) * 3
 
         toTest = obj.copy()
         toTest += 2
@@ -194,7 +194,7 @@ class DataFrameSpecificDataModifying(DataTestObject):
         replace = self.constructor([[11., 22], [-11., -22]])
 
         obj.replaceRectangle(replace, 0, 0, 1, 1)
-        expDtypes = (numpy.dtype(float), numpy.dtype(int), numpy.dtype(float))
+        expDtypes = (np.dtype(float), np.dtype(int), np.dtype(float))
         assert tuple(obj._data.dtypes) == expDtypes
 
     def test_dtypes_flattenUnflatten(self):
@@ -221,7 +221,7 @@ class DataFrameSpecificDataModifying(DataTestObject):
                 [9, 8, 7., 6.], [-9, -8, -7., -6.]]
         obj = self.constructor(data)
         startDtypes = tuple(obj._data.dtypes)
-        ftExpDtypes = (numpy.dtype(int), numpy.dtype(float))
+        ftExpDtypes = (np.dtype(int), np.dtype(float))
 
         ptCp = obj.points.copy([1, 2])
         assert tuple(ptCp._data.dtypes) == startDtypes
@@ -271,7 +271,7 @@ class DataFrameSpecificDataModifying(DataTestObject):
         assert tuple(rep._data.dtypes) == startDtypes * 2
 
         rep = obj.features.repeat(2, True)
-        expDtypes = (numpy.dtype(int),) * 4 + (numpy.dtype(float),) * 2
+        expDtypes = (np.dtype(int),) * 4 + (np.dtype(float),) * 2
         assert tuple(rep._data.dtypes) == expDtypes
 
     def test_dtypes_splitByCollapsingFeatures(self):
@@ -284,8 +284,8 @@ class DataFrameSpecificDataModifying(DataTestObject):
         toCollapse = ["coll0", "coll1", "coll2", "coll3"]
         toTest.points.splitByCollapsingFeatures(toCollapse, "ftNames",
                                                 "ftValues")
-        expDtypes = (numpy.dtype(int), numpy.dtype(int), numpy.dtype(object),
-                     numpy.dtype(int))
+        expDtypes = (np.dtype(int), np.dtype(int), np.dtype(object),
+                     np.dtype(int))
         assert tuple(toTest._data.dtypes) == expDtypes
 
     def test_dtypes_combineByExpandingFeatures(self):
@@ -297,8 +297,8 @@ class DataFrameSpecificDataModifying(DataTestObject):
         fNames = ['type', 'dist', 'run', 'time']
         toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
 
-        expDtypes = (numpy.dtype(object), numpy.dtype(int), numpy.dtype(float),
-                     numpy.dtype(float))
+        expDtypes = (np.dtype(object), np.dtype(int), np.dtype(float),
+                     np.dtype(float))
         toTest.points.combineByExpandingFeatures('run', 'time')
         assert tuple(toTest._data.dtypes) == expDtypes
 
@@ -309,8 +309,8 @@ class DataFrameSpecificDataModifying(DataTestObject):
         toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
 
         toTest.features.splitByParsing(1, 1, ["split0", "split1"])
-        expDtypes = (numpy.dtype(int), numpy.dtype(object),
-                     numpy.dtype(object), numpy.dtype(float))
+        expDtypes = (np.dtype(int), np.dtype(object),
+                     np.dtype(object), np.dtype(float))
         assert tuple(toTest._data.dtypes) == expDtypes
 
 class DataFrameSpecificAll(DataFrameSpecificDataSafe,

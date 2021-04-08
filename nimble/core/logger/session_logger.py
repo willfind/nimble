@@ -26,7 +26,7 @@ from ast import literal_eval
 import textwrap
 import datetime
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -414,11 +414,11 @@ class SessionLogger(object):
                     functionCall = "Unable to determine learner name"
             logInfo["learner"] = functionCall
             # integers or strings passed for Y values, convert if necessary
-            if isinstance(trainLabels, (str, int, numpy.int64)):
+            if isinstance(trainLabels, (str, int, np.int64)):
                 trainData = trainData.copy()
                 trainLabels = trainData.features.extract(trainLabels,
                                                          useLog=False)
-            if isinstance(testLabels, (str, int, numpy.int64)):
+            if isinstance(testLabels, (str, int, np.int64)):
                 testData = testData.copy()
                 testLabels = testData.features.extract(testLabels,
                                                        useLog=False)

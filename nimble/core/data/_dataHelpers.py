@@ -9,7 +9,7 @@ import operator
 from functools import wraps
 import os.path
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble import match
@@ -149,7 +149,7 @@ def formatIfNeeded(value, sigDigits):
     Format the value into a string, and in the case of a float typed value,
     limit the output to the given number of significant digits.
     """
-    if isinstance(value, (float, numpy.float)) and sigDigits is not None:
+    if isinstance(value, (float, np.float)) and sigDigits is not None:
         return format(value, '.' + str(int(sigDigits)) + 'f')
     return str(value)
 
@@ -336,7 +336,7 @@ def denseAxisUniqueArray(obj, axis):
     if obj.getTypeString() == 'DataFrame':
         data = obj._asNumpyArray()
     else:
-        data = numpy.array(obj._data, dtype=numpy.object_)
+        data = np.array(obj._data, dtype=np.object_)
     if axis == 'feature':
         data = data.transpose()
 
@@ -385,7 +385,7 @@ def valuesToPythonList(values, argName):
     """
     if isinstance(values, list):
         return values
-    if isinstance(values, (int, numpy.integer, str)):
+    if isinstance(values, (int, np.integer, str)):
         return [values]
     valuesList = []
     try:
@@ -418,7 +418,7 @@ def constructIndicesList(obj, axis, values, argName=None):
         axisObj = obj._getAxis(axis)
         axisLen = len(axisObj)
         # faster to bypass getIndex if value is already a valid index
-        indicesList = [v if (isinstance(v, (int, numpy.integer))
+        indicesList = [v if (isinstance(v, (int, np.integer))
                              and 0 <= v < axisLen)
                        else axisObj.getIndex(v) for v in valuesList]
     except InvalidArgumentValue as iav:
@@ -437,11 +437,11 @@ def fillArrayWithCollapsedFeatures(featuresToCollapse, retainData,
     points.splitByCollapsingFeatures. Used in all non-sparse
     implementations.
     """
-    fill = numpy.empty((numRetPoints, numRetFeatures), dtype=numpy.object_)
-    fill[:, :-2] = numpy.repeat(retainData, len(featuresToCollapse), axis=0)
+    fill = np.empty((numRetPoints, numRetFeatures), dtype=np.object_)
+    fill[:, :-2] = np.repeat(retainData, len(featuresToCollapse), axis=0)
 
     # stack feature names repeatedly to create new feature
-    namesAsFeature = numpy.tile(currFtNames, (1, currNumPoints))
+    namesAsFeature = np.tile(currFtNames, (1, currNumPoints))
     fill[:, -2] = namesAsFeature
     # flatten values by row then reshape into new feature
     valuesAsFeature = collapseData.flatten()
@@ -456,8 +456,7 @@ def fillArrayWithExpandedFeatures(uniqueDict, namesIdx, uniqueNames,
     combinePointsByExpandingFeatures. Used in all non-sparse
     implementations.
     """
-    fill = numpy.empty(shape=(len(uniqueDict), numRetFeatures),
-                       dtype=numpy.object_)
+    fill = np.empty(shape=(len(uniqueDict), numRetFeatures), dtype=np.object_)
 
     endSlice = slice(namesIdx + (len(uniqueNames) * numExpanded), None)
     for i, point in enumerate(uniqueDict):
@@ -469,7 +468,7 @@ def fillArrayWithExpandedFeatures(uniqueDict, namesIdx, uniqueNames,
             if name in uniqueDict[point]:
                 fill[i, fillSlice] = uniqueDict[point][name]
             else:
-                fill[i, fillSlice] = [numpy.nan] * numExpanded
+                fill[i, fillSlice] = [np.nan] * numExpanded
         fill[i, endSlice] = point[namesIdx:]
 
     return fill
@@ -487,9 +486,9 @@ def allDataIdentical(arr1, arr2):
         # check the values that are not equal
         checkPos = arr1 != arr2
         # if values are nan, conversion to float dtype will be successful
-        test1 = numpy.array(arr1[checkPos], dtype=numpy.float_)
-        test2 = numpy.array(arr2[checkPos], dtype=numpy.float_)
-        return numpy.isnan(test1).all() and numpy.isnan(test2).all()
+        test1 = np.array(arr1[checkPos], dtype=np.float_)
+        test2 = np.array(arr2[checkPos], dtype=np.float_)
+        return np.isnan(test1).all() and np.isnan(test2).all()
     except ValueError:
         return False
 
@@ -536,7 +535,7 @@ def createDataNoValidation(returnType, data, pointNames=None,
     to default values.
     """
     if hasattr(data, 'dtype'):
-        accepted = (numpy.number, numpy.object_, numpy.bool_)
+        accepted = (np.number, np.object_, np.bool_)
         if not issubclass(data.dtype.type, accepted):
             msg = "data must have numeric, boolean, or object dtype"
             raise InvalidArgumentType(msg)
@@ -563,19 +562,19 @@ def denseCountUnique(obj, points=None, features=None):
     Return dictionary of the unique elements and their values for dense
     data representations.
 
-    numpy.unique is most efficient but needs data to be numeric, when
+    np.unique is most efficient but needs data to be numeric, when
     non-numeric data is present we replace every unique value with a
     unique integer and the generated mapping is used to return the
     unique values from the original data.
     """
     if isinstance(obj, nimble.core.data.Base):
         array = _limitAndConvertToArray(obj, points, features)
-    elif isinstance(obj, numpy.ndarray):
+    elif isinstance(obj, np.ndarray):
         array = obj
     else:
         raise InvalidArgumentValue("obj must be nimble object or numpy array")
-    if issubclass(array.dtype.type, numpy.number):
-        vals, counts = numpy.unique(array, return_counts=True)
+    if issubclass(array.dtype.type, np.number):
+        vals, counts = np.unique(array, return_counts=True)
         return dict(zip(vals, counts))
 
     mapping = {}
@@ -588,10 +587,10 @@ def denseCountUnique(obj, points=None, features=None):
         nextIdx[0] += 1
         return mapping[val]
 
-    vectorMap = numpy.vectorize(mapper)
+    vectorMap = np.vectorize(mapper)
     array = vectorMap(array)
     intMap = {v: k for k, v in mapping.items()}
-    vals, counts = numpy.unique(array, return_counts=True)
+    vals, counts = np.unique(array, return_counts=True)
     return {intMap[val]: count for val, count in zip(vals, counts)}
 
 
@@ -748,11 +747,11 @@ def validateAxisFunction(func, axis, allowedLength=None):
         if valueType == type(None):
             valueType = float
         if hasattr(valueType, 'dtype'):
-            if numpy.issubdtype(valueType, numpy.floating):
+            if np.issubdtype(valueType, np.floating):
                 valueType = float
-            elif numpy.issubdtype(valueType, numpy.integer):
+            elif np.issubdtype(valueType, np.integer):
                 valueType = int
-            elif numpy.issubdtype(valueType, numpy.bool_):
+            elif np.issubdtype(valueType, np.bool_):
                 valueType = bool
         currLevel = typeHierarchy[wrappedAxisFunc.convertType]
         if valueType not in typeHierarchy:
@@ -801,7 +800,7 @@ class NimbleElementIterator(object):
 
     Parameters
     ----------
-    array : numpy.ndarray
+    array : np.ndarray
         A numpy array used to construct the iterator.
     order: str
         'point' or 'feature' indicating how the iterator will navigate
@@ -811,7 +810,7 @@ class NimbleElementIterator(object):
         value. If None, every value is returned.
     """
     def __init__(self, array, order, only):
-        if not isinstance(array, numpy.ndarray):
+        if not isinstance(array, np.ndarray):
             msg = 'a numpy array is required to build the iterator'
             raise InvalidArgumentType(msg)
         if order == 'point':
@@ -820,7 +819,7 @@ class NimbleElementIterator(object):
             iterOrder = 'F'
         # these flags allow for object dtypes and empty iterators
         flags = ["refs_ok", "zerosize_ok"]
-        iterator = numpy.nditer(array, order=iterOrder, flags=flags)
+        iterator = np.nditer(array, order=iterOrder, flags=flags)
         self.iterator = iterator
         self.only = only
 
@@ -829,7 +828,7 @@ class NimbleElementIterator(object):
 
     def __next__(self):
         while True:
-            # numpy.nditer returns value as an array type,
+            # np.nditer returns value as an array type,
             # [()] extracts the actual object we want to return
             val = next(self.iterator)[()]
             if self.only is None or self.only(val):
@@ -891,7 +890,7 @@ def limitedTo2D(method):
 
 def convertToNumpyOrder(order):
     """
-    Convert 'point' and 'feature' to the string equivalent in numpy.
+    Convert 'point' and 'feature' to the string equivalent in np.
     """
     return 'C' if order == 'point' else 'F'
 
@@ -1180,7 +1179,7 @@ def plotConfidenceIntervalMeanAndError(feature):
     std = nimble.calculate.standardDeviation(feature)
     # two tailed 95% CI with n -1 degrees of freedom
     tStat = scipy.stats.t.ppf(0.025, len(feature) - 1)
-    error = tStat * (std / numpy.sqrt(len(feature)))
+    error = tStat * (std / np.sqrt(len(feature)))
 
     return mean, error
 
@@ -1224,13 +1223,13 @@ def plotMultiBarChart(ax, heights, horizontal, legendTitle, **kwargs):
     elif len(heights) > 10:
         # matplotlib default will repeat colors, need broader colormap
         colormap = plt.cm.nipy_spectral
-        colors = [colormap(i) for i in numpy.linspace(0, 1, len(heights))]
+        colors = [colormap(i) for i in np.linspace(0, 1, len(heights))]
         ax.set_prop_cycle(color=colors)
     singleWidth = width / len(heights)
     start = 1 - (width / 2) + (singleWidth / 2)
 
     for i, (name, height) in enumerate(heights.items()):
-        widths = numpy.arange(start, len(height))
+        widths = np.arange(start, len(height))
         widths += i * singleWidth
         if horizontal:
             ax.barh(widths, height, height=singleWidth, label=name,
@@ -1263,11 +1262,11 @@ def numpyArrayFromList(data):
     Use object dtype when all data is not int or float.
     """
     ret = numpy2DArray(data)
-    if ret.dtype not in (bool, numpy.bool_, numpy.object_):
+    if ret.dtype not in (bool, np.bool_, np.object_):
         # numpy will autoconvert bool values, we want to keep them as bools
         for point in data:
             if any(isinstance(val, bool) for val in point):
-                return numpy2DArray(data, dtype=numpy.object_)
+                return numpy2DArray(data, dtype=np.object_)
 
     return ret
 
@@ -1278,11 +1277,11 @@ def modifyNumpyArrayValue(arr, index, newVal):
     Will cast to a new dtype if necessary.
     """
     nonNumericNewVal = match.nonNumeric(newVal) and newVal is not None
-    floatNewVal = isinstance(newVal, (float, numpy.floating)) or newVal is None
-    if nonNumericNewVal and arr.dtype != numpy.object_:
-        arr = arr.astype(numpy.object_)
-    elif floatNewVal and arr.dtype not in (numpy.floating, numpy.object_):
-        arr = arr.astype(numpy.float)
+    floatNewVal = isinstance(newVal, (float, np.floating)) or newVal is None
+    if nonNumericNewVal and arr.dtype != np.object_:
+        arr = arr.astype(np.object_)
+    elif floatNewVal and arr.dtype not in (np.floating, np.object_):
+        arr = arr.astype(np.float)
 
     arr[index] = newVal
 
@@ -1301,12 +1300,12 @@ def getFeatureDtypes(obj):
         return (obj._data.dtype,) * len(obj.features)
 
     dtypeList = []
-    floatDtype = numpy.dtype(float)
+    floatDtype = np.dtype(float)
     # _data is list or ListPassThrough
     for ft in zip(*obj._data):
-        dtype = max(map(numpy.dtype, map(type, ft)))
+        dtype = max(map(np.dtype, map(type, ft)))
         if dtype > floatDtype:
-            dtypeList.append(numpy.object_)
+            dtypeList.append(np.object_)
         else:
             dtypeList.append(dtype)
 

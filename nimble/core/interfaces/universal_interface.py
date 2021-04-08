@@ -13,7 +13,7 @@ import numbers
 import time
 import warnings
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
@@ -225,7 +225,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                 return TrainedLearners(trainedLearners, 'OneVsOne', labelSet)
 
         # separate training data / labels if needed
-        if isinstance(trainY, (str, int, numpy.integer)):
+        if isinstance(trainY, (str, int, np.integer)):
             trainX = trainX.copy()
             trainY = trainX.features.extract(toExtract=trainY, useLog=False)
         return self._train(learnerName, trainX, trainY, arguments,
@@ -1297,7 +1297,7 @@ class TrainedLearner(object):
             self._transformedArguments[arg] = value
 
         # separate training data / labels if needed
-        if isinstance(trainY, (str, int, numpy.integer)):
+        if isinstance(trainY, (str, int, np.integer)):
             trainX = trainX.copy()
             trainY = trainX.features.extract(toExtract=trainY, useLog=False)
 
@@ -1424,7 +1424,7 @@ class TrainedLearner(object):
                 combinedScores = calculateSingleLabelScoresFromOneVsOneScores(
                     rawScores.pointView(i), numLabels)
                 scores.append(combinedScores)
-            scores = numpy.array(scores)
+            scores = np.array(scores)
             return nimble.data("Matrix", scores, useLog=False)
 
         return rawScores
@@ -1461,7 +1461,7 @@ class TrainedLearner(object):
             testX, None, nimbleTypeRawScores, usedArguments)
         internalOrder = self._interface._getScoresOrder(self._backend)
         naturalOrder = sorted(internalOrder)
-        if numpy.array_equal(naturalOrder, internalOrder):
+        if np.array_equal(naturalOrder, internalOrder):
             return formatedRawOrder
         desiredDict = {}
         for i, label in enumerate(naturalOrder):

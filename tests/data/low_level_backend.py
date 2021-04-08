@@ -19,7 +19,7 @@ points.getIndices, features.getIndices, constructIndicesList, copy
 features.hasName, points.hasName, __bool__, _treatAs2D
 """
 
-import numpy
+import numpy as np
 try:
     from unittest import mock #python >=3.3
 except ImportError:
@@ -1176,7 +1176,7 @@ class LowLevelBackend(object):
                 lambda lst: nimble.data(retType, lst, convertToType=object))
 
     def testconstructIndicesList_numpyArray(self):
-        self.constructIndicesList_backend(lambda lst: numpy.array(lst,dtype=object))
+        self.constructIndicesList_backend(lambda lst: np.array(lst,dtype=object))
 
     def testconstructIndicesList_pandasSeries(self):
         self.constructIndicesList_backend(lambda lst: pd.Series(lst))
@@ -1299,7 +1299,7 @@ class LowLevelBackend(object):
         featureNames = ['f1', 'f2', 'f3']
         toTest = self.constructor(pointNames=pointNames, featureNames=featureNames)
 
-        array2D = numpy.array([[1,2,3],[4,5,6]])
+        array2D = np.array([[1,2,3],[4,5,6]])
 
         constructIndicesList(toTest, 'feature', array2D)
 

@@ -1,7 +1,7 @@
 import math
 from math import fabs
 
-import numpy
+import numpy as np
 from nose.tools import *
 from nose.plugins.attrib import attr
 
@@ -33,7 +33,7 @@ class FoldIteratorTester(object):
     def test_FoldIterator_exceptionPEmpty(self):
         """ Test FoldIterator() for InvalidArgumentValueCombination when object is point empty """
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         toTest = self.constructor(data)
         FoldIterator([toTest], 2)
 
@@ -41,7 +41,7 @@ class FoldIteratorTester(object):
     #	def test_FoldIterator_exceptionFEmpty(self):
     #		""" Test FoldIterator() for ImproperActionException when object is feature empty """
     #		data = [[],[]]
-    #		data = numpy.array(data)
+    #		data = np.array(data)
     #		toTest = self.constructor(data)
     #		FoldIterator([toTest],2)
 
@@ -160,8 +160,8 @@ class FoldIteratorTester(object):
 
     def test_FoldIterator_foldSizes(self):
         """ Test that the size of each fold created by FoldIterator matches expectations """
-        data1 = self.constructor(numpy.random.random((98, 10)))
-        data2 = self.constructor(numpy.ones((98, 1)))
+        data1 = self.constructor(np.random.random((98, 10)))
+        data2 = self.constructor(np.ones((98, 1)))
         folds = FoldIterator([data1, data2], 10)
 
         # first 8 folds should have 10, last 2 folds should have 9
@@ -388,8 +388,8 @@ def testSumDifferenceFunction():
 
 
 def test_computeMetrics_1d_2arg():
-    knownLabels = numpy.array([[1.0], [2.0], [3.0]])
-    predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
+    knownLabels = np.array([[1.0], [2.0], [3.0]])
+    predictedLabels = np.array([[1.0], [2.0], [3.0]])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -398,8 +398,8 @@ def test_computeMetrics_1d_2arg():
     result = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
     assert result == 0.0
 
-    knownLabels = numpy.array([[1.5], [2.5], [3.5]])
-    predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
+    knownLabels = np.array([[1.5], [2.5], [3.5]])
+    predictedLabels = np.array([[1.0], [2.0], [3.0]])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -411,8 +411,8 @@ def test_computeMetrics_1d_2arg():
 
 
 def test_computeMetrics_1d_labelsInData():
-    training = numpy.array([[1.0, 5], [2.0, 27], [3.0, 42]])
-    predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
+    training = np.array([[1.0, 5], [2.0, 27], [3.0, 42]])
+    predictedLabels = np.array([[1.0], [2.0], [3.0]])
 
     trainingObj = nimble.data('Matrix', source=training)
     predictedObj = nimble.data('Matrix', source=predictedLabels)
@@ -427,8 +427,8 @@ def test_computeMetrics_1d_labelsInData():
 
 # multi val, two arg metric
 def test_computeMetrics_2d_2arg():
-    knownLabels = numpy.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
-    predictedLabels = numpy.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
+    knownLabels = np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
+    predictedLabels = np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -440,8 +440,8 @@ def test_computeMetrics_2d_2arg():
 
 
 def test_computeMetrics_2d_labelsInData():
-    training = numpy.array([[1.0, 5, 1.0], [2.0, 27, 2.0], [3.0, 42, 3.0]])
-    predictedLabels = numpy.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
+    training = np.array([[1.0, 5, 1.0], [2.0, 27, 2.0], [3.0, 42, 3.0]])
+    predictedLabels = np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
 
     trainingObj = nimble.data('Matrix', source=training)
     predictedObj = nimble.data('Matrix', source=predictedLabels)
@@ -455,8 +455,8 @@ def test_computeMetrics_2d_labelsInData():
 
 # single val, symetric two arg metric (similarity)
 def test_computeMetrics_1d_2d_symmetric():
-    origData = numpy.array([[1.0], [2.0], [3.0]])
-    outputData = numpy.array([[1.0], [2.0], [3.0]])
+    origData = np.array([[1.0], [2.0], [3.0]])
+    outputData = np.array([[1.0], [2.0], [3.0]])
 
     origObj = nimble.data('Matrix', source=origData)
     outObj = nimble.data('Matrix', source=outputData)
@@ -468,8 +468,8 @@ def test_computeMetrics_1d_2d_symmetric():
 # multi metrics should not be allowed
 @raises(TypeError)
 def test_computeMetrics_multiple_metrics_disallowed():
-    origData = numpy.array([[1.0], [2.0], [3.0]])
-    outputData = numpy.array([[1.0], [2.0], [3.0]])
+    origData = np.array([[1.0], [2.0], [3.0]])
+    outputData = np.array([[1.0], [2.0], [3.0]])
 
     origObj = nimble.data('Matrix', source=origData)
     outObj = nimble.data('Matrix', source=outputData)

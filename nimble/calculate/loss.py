@@ -7,7 +7,7 @@ level of correctness in the predicted values.
 
 from math import sqrt
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.core.data import Base
@@ -185,8 +185,8 @@ def varianceFractionRemaining(knownValues, predictedValues):
     rawDiff = diffObject.copy(to="numpy array")
     rawKnowns = knownValues.copy(to="numpy array")
     assert rawDiff.shape[1] == 1
-    avgSqDif = numpy.dot(rawDiff.T, rawDiff)[0, 0] / float(len(rawDiff))
-    return avgSqDif / float(numpy.var(rawKnowns))
+    avgSqDif = np.dot(rawDiff.T, rawDiff)[0, 0] / float(len(rawDiff))
+    return avgSqDif / float(np.var(rawKnowns))
 
 
 varianceFractionRemaining.optimal = 'min'

@@ -5,7 +5,7 @@ Class extending Base, using a list of lists to store data.
 import copy
 import itertools
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -107,7 +107,7 @@ class List(Base):
             #case6: data is a ListPassThrough associated with empty list
             data = []
 
-        self._numFeatures = int(numpy.prod(shape[1:]))
+        self._numFeatures = int(np.prod(shape[1:]))
         self._data = data
 
         kwds['featureNames'] = featureNames
@@ -254,7 +254,7 @@ class List(Base):
         isEmpty = False
         if len(self.points) == 0 or len(self.features) == 0:
             isEmpty = True
-            emptyData = numpy.empty(shape=self.shape)
+            emptyData = np.empty(shape=self.shape)
 
         if to == 'pythonlist':
             return [pt.copy() for pt in self._data]
@@ -282,7 +282,7 @@ class List(Base):
                 return ret.reshape(self._shape)
             return ret
         if needsReshape:
-            data = numpy.empty(self._shape[:2], dtype=numpy.object_)
+            data = np.empty(self._shape[:2], dtype=np.object_)
             for i in range(self.shape[0]):
                 data[i] = self.points[i].copy('pythonlist')
             if isEmpty:
@@ -291,8 +291,8 @@ class List(Base):
             data = _convertList(numpy2DArray, self._data)
         if to == 'numpymatrix':
             if isEmpty:
-                return numpy.matrix(emptyData)
-            return numpy.matrix(data)
+                return np.matrix(emptyData)
+            return np.matrix(data)
         if 'scipy' in to:
             if not scipy.nimbleAccessible():
                 msg = "scipy is not available"
@@ -347,7 +347,7 @@ class List(Base):
     def _unflatten_implementation(self, reshape, order):
         result = []
         numPoints = reshape[0]
-        numFeatures = numpy.prod(reshape[1:])
+        numFeatures = np.prod(reshape[1:])
         data = self.copy('pythonlist', outputAs1D=True)
         if order == 'point':
             for i in range(numPoints):
@@ -491,7 +491,7 @@ class List(Base):
                     merged.append(pt)
                 matched.append(target)
             elif point in ['union', 'left']:
-                ptR = [numpy.nan] * (len(right[0]) - len(matchingFtIdx[1]))
+                ptR = [np.nan] * (len(right[0]) - len(matchingFtIdx[1]))
                 pt = ptL + ptR
                 merged.append(pt)
 
@@ -499,7 +499,7 @@ class List(Base):
             for row in right:
                 target = row[onIdxR]
                 if target not in matched:
-                    pt = [numpy.nan] * (len(left[0]) + unmatchedFtCountR)
+                    pt = [np.nan] * (len(left[0]) + unmatchedFtCountR)
                     for i, j in zip(matchingFtIdx[0], matchingFtIdx[1]):
                         pt[i] = row[j]
                     pt[len(left[0]):] = [row[i] for i in range(len(right[0]))
@@ -517,7 +517,7 @@ class List(Base):
         self._data = merged
 
     def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueIdx):
-        toFill = numpy.zeros((len(self.points), len(uniqueIdx)))
+        toFill = np.zeros((len(self.points), len(uniqueIdx)))
         for ptIdx, val in enumerate(self._data):
             ftIdx = uniqueIdx[val[0]]
             toFill[ptIdx, ftIdx] = 1
@@ -557,7 +557,7 @@ class List(Base):
         """
         Create an object of one less dimension
         """
-        reshape = (self._shape[1], int(numpy.prod(self._shape[2:])))
+        reshape = (self._shape[1], int(np.prod(self._shape[2:])))
         data = []
         point = self._data[pointIndex]
         for i in range(reshape[0]):
@@ -635,7 +635,7 @@ class List(Base):
             self._data = [list(map(convertType, pt)) for pt in self._data]
 
     def _iterateElements_implementation(self, order, only):
-        array = numpy.array(self._data, dtype=numpy.object_)
+        array = np.array(self._data, dtype=np.object_)
         return NimbleElementIterator(array, order, only)
 
 
@@ -656,7 +656,7 @@ class ListView(BaseView, List):
         # for copy
         if ((len(self.points) == 0 or len(self.features) == 0)
                 and to != 'List'):
-            emptyStandin = numpy.empty(self._shape)
+            emptyStandin = np.empty(self._shape)
             intermediate = nimble.data('Matrix', emptyStandin, useLog=False)
             return intermediate.copy(to=to)
 
@@ -746,7 +746,7 @@ class ListPassThrough(object):
         return self.pRange
 
     def __array__(self, dtype=None):
-        tmpArray = numpy.array(self.source._data, dtype=dtype)
+        tmpArray = np.array(self.source._data, dtype=dtype)
         return tmpArray[self.pStart:self.pEnd, self.fStart:self.fEnd]
 
 ###########

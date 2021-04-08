@@ -8,7 +8,7 @@ import importlib
 import multiprocessing
 import warnings
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
@@ -223,7 +223,7 @@ To install shogun
         if hasattr(predObj, 'get_multiclass_confidences'):
             # setup an array in the right shape, number of predicted labels
             # by number of possible labels
-            scoresPerPoint = numpy.empty((len(predLabels), numLabels))
+            scoresPerPoint = np.empty((len(predLabels), numLabels))
             for i in range(len(predLabels)):
                 currConfidences = predObj.get_multiclass_confidences(i)
                 if len(currConfidences) == 0:
@@ -339,7 +339,7 @@ To install shogun
             # with a function call
             retRaw = outputValue.get_labels()
             # prep for next call
-            retRaw = numpy.atleast_2d(retRaw)
+            retRaw = np.atleast_2d(retRaw)
             # we are given a column organized return, we want row first
             # organization, to match up with our input rows as points standard
             retRaw = retRaw.transpose()
@@ -381,7 +381,7 @@ To install shogun
         # TODO online training prep learner.start_train()
         # batch training if data is passed
         if trainY is not None:
-            labelOrder = numpy.unique(trainY.get_labels())
+            labelOrder = np.unique(trainY.get_labels())
             if customDict['remap'] is None:
                 learner.UIgetScoreOrder = labelOrder
             else:
@@ -455,7 +455,7 @@ To install shogun
             if problemType == self._access('Classifier', 'PT_CLASS'):
                 # could be either binary or multiclass
                 flattened = labelsObj.copy(to='numpyarray', outputAs1D=True)
-                if len(numpy.unique(flattened)) == 2:
+                if len(np.unique(flattened)) == 2:
                     problemType = self._access('Classifier', 'PT_BINARY')
                 else:
                     problemType = self._access('Classifier', 'PT_MULTICLASS')

@@ -6,7 +6,7 @@ nimble.random.data, nimble.ones, nimble.zeros, nimble.identity
 
 import copy
 
-import numpy
+import numpy as np
 from nose.tools import *
 
 import nimble
@@ -41,7 +41,7 @@ def back_constant_sizeChecking(toTest):
 
 
 def back_constant_emptyCreation(toTest):
-    fEmpty = numpy.array([[], []])
+    fEmpty = np.array([[], []])
     pEmpty = fEmpty.T
 
     for t in returnTypes:

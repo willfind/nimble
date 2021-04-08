@@ -18,7 +18,7 @@ import re
 import textwrap
 from unittest.mock import patch
 
-import numpy
+import numpy as np
 from nose.tools import *
 from nose.plugins.attrib import attr
 
@@ -69,8 +69,8 @@ class QueryBackend(DataTestObject):
     def test_pointCount_empty(self):
         """ test pointCount when given different kinds of emptiness """
         data = [[], []]
-        dataPEmpty = numpy.array(data).T
-        dataFEmpty = numpy.array(data)
+        dataPEmpty = np.array(data).T
+        dataFEmpty = np.array(data)
 
         objPEmpty = self.constructor(dataPEmpty)
         objFEmpty = self.constructor(dataFEmpty)
@@ -104,8 +104,8 @@ class QueryBackend(DataTestObject):
     def test_featureCount_empty(self):
         """ test featureCount when given different kinds of emptiness """
         data = [[], []]
-        dataPEmpty = numpy.array(data).T
-        dataFEmpty = numpy.array(data)
+        dataPEmpty = np.array(data).T
+        dataFEmpty = np.array(data)
 
         pEmpty = self.constructor(dataPEmpty)
         fEmpty = self.constructor(dataFEmpty)
@@ -147,7 +147,7 @@ class QueryBackend(DataTestObject):
     def test_isIdentical_FalseBozoTypes(self):
         """ Test isIdentical() against some non-equal input of crazy types """
         toTest = self.constructor([[4, 5]])
-        assert not toTest.isIdentical(numpy.array([[1, 1], [2, 2]]))
+        assert not toTest.isIdentical(np.array([[1, 1], [2, 2]]))
         assert not toTest.isIdentical('self.constructor([[1,2,3]])')
         assert not toTest.isIdentical(toTest.isIdentical)
         assertNoNamesGenerated(toTest)
@@ -164,8 +164,8 @@ class QueryBackend(DataTestObject):
 
     def test_isIdentical_FalseWithNaN(self):
         """ Test isIdentical() against some non-equal input with nan"""
-        toTest1 = self.constructor([[1, numpy.nan, 5]])
-        toTest2 = self.constructor(deepcopy([[1, numpy.nan, 3]]))
+        toTest1 = self.constructor([[1, np.nan, 5]])
+        toTest2 = self.constructor(deepcopy([[1, np.nan, 3]]))
         assert not toTest1.isIdentical(toTest2)
         assert not toTest2.isIdentical(toTest1)
         assertNoNamesGenerated(toTest1)
@@ -173,8 +173,8 @@ class QueryBackend(DataTestObject):
 
     def test_isIdentical_TrueWithNaN(self):
         """ Test isIdentical() against some actually equal input with nan """
-        toTest1 = self.constructor([[1, numpy.nan, 5]])
-        toTest2 = self.constructor(deepcopy([[1, numpy.nan, 5]]))
+        toTest1 = self.constructor([[1, np.nan, 5]])
+        toTest2 = self.constructor(deepcopy([[1, np.nan, 5]]))
         assert toTest1.isIdentical(toTest2)
         assert toTest2.isIdentical(toTest1)
         assertNoNamesGenerated(toTest1)
@@ -641,7 +641,7 @@ class QueryBackend(DataTestObject):
         obj = self.constructor(raw)
 
         idxObj = obj.points.matching(lambda pt: sum(pt) > 6)
-        assert isinstance(idxObj[0], (bool, numpy.bool_))
+        assert isinstance(idxObj[0], (bool, np.bool_))
         ret = obj[idxObj, :]
 
         expData = [[4, 5, 6], [7, 8, 9]]
@@ -654,7 +654,7 @@ class QueryBackend(DataTestObject):
         obj = self.constructor(raw)
 
         idxObj = obj.features.matching(lambda ft: sum(ft) < 18)
-        assert isinstance(idxObj[0], (bool, numpy.bool_))
+        assert isinstance(idxObj[0], (bool, np.bool_))
         ret = obj[:, idxObj]
 
         expData = [[1, 2], [4, 5], [7, 8]]
@@ -721,7 +721,7 @@ class QueryBackend(DataTestObject):
         obj = self.constructor(raw)
 
         idxObj = obj.points.matching(lambda pt: sum(pt) > 6)
-        assert isinstance(idxObj[0], (bool, numpy.bool_))
+        assert isinstance(idxObj[0], (bool, np.bool_))
         ret = obj.points[idxObj]
 
         expData = [[4, 5, 6], [7, 8, 9]]
@@ -734,7 +734,7 @@ class QueryBackend(DataTestObject):
         obj = self.constructor(raw)
 
         idxObj = obj.features.matching(lambda ft: sum(ft) < 18)
-        assert isinstance(idxObj[0], (bool, numpy.bool_))
+        assert isinstance(idxObj[0], (bool, np.bool_))
         ret = obj.points[idxObj]
 
         expData = [[1, 2, 3], [4, 5, 6]]
@@ -747,7 +747,7 @@ class QueryBackend(DataTestObject):
         obj = self.constructor(raw)
 
         idxObj = obj.points.matching(lambda pt: sum(pt) > 6)
-        assert isinstance(idxObj[0], (bool, numpy.bool_))
+        assert isinstance(idxObj[0], (bool, np.bool_))
         ret = obj.features[idxObj]
 
         expData = [[2, 3], [5, 6], [8, 9]]
@@ -760,7 +760,7 @@ class QueryBackend(DataTestObject):
         obj = self.constructor(raw)
 
         idxObj = obj.features.matching(lambda ft: sum(ft) < 18)
-        assert isinstance(idxObj[0], (bool, numpy.bool_))
+        assert isinstance(idxObj[0], (bool, np.bool_))
         ret = obj.features[idxObj]
 
         expData = [[1, 2], [4, 5], [7, 8]]
@@ -775,7 +775,7 @@ class QueryBackend(DataTestObject):
     def test_pointView_FEmpty(self):
         """ Test pointView() when accessing a feature empty object """
         data = [[], []]
-        data = numpy.array(data)
+        data = np.array(data)
         toTest = self.constructor(data)
 
         v = toTest.pointView(0)
@@ -807,7 +807,7 @@ class QueryBackend(DataTestObject):
     def test_featureView_FEmpty(self):
         """ Test featureView() when accessing a point empty object """
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         toTest = self.constructor(data)
 
         v = toTest.featureView(0)
@@ -1175,12 +1175,12 @@ class QueryBackend(DataTestObject):
         # no checks, but this at least confirms that it is runnable
         names = ['n1', 'n2', 'n3']
 
-        rawPEmpty = numpy.zeros((0, 3))
+        rawPEmpty = np.zeros((0, 3))
         objPEmpty = self.constructor(rawPEmpty, featureNames=names)
 
         assert objPEmpty.toString() == ""
 
-        rawFEmpty = numpy.zeros((3, 0))
+        rawFEmpty = np.zeros((3, 0))
         objFEmpty = self.constructor(rawFEmpty, pointNames=names)
 
         assert objFEmpty.toString() == ""
@@ -1505,7 +1505,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def backend_Sim_SampleCovarianceResult(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = np.array(data).T.tolist()
         orig = self.constructor(data)
         trans = self.constructor(dataT)
         sameAsOrig = self.constructor(data)
@@ -1525,7 +1525,7 @@ class QueryBackend(DataTestObject):
         expObj = self.constructor(expData)
 
         # numpy computted result -- bias=0 -> divisor of n-1
-        npExpRaw = numpy.cov(data, bias=0)
+        npExpRaw = np.cov(data, bias=0)
         npExpObj = self.constructor(npExpRaw)
         assert ret.isApproximatelyEqual(npExpObj)
 
@@ -1544,7 +1544,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def backend_Sim_populationCovarianceResult(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = np.array(data).T.tolist()
         orig = self.constructor(data)
         trans = self.constructor(dataT)
         sameAsOrig = self.constructor(data)
@@ -1564,7 +1564,7 @@ class QueryBackend(DataTestObject):
         expObj = self.constructor(expData)
 
         # numpy computted result -- bias=1 -> divisor of n
-        npExpRaw = numpy.cov(data, bias=1)
+        npExpRaw = np.cov(data, bias=1)
         npExpObj = self.constructor(npExpRaw)
         assert ret.isApproximatelyEqual(npExpObj)
 
@@ -1583,7 +1583,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def backend_Sim_STDandVarianceIdentity(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = np.array(data).T.tolist()
         orig = self.constructor(data)
         trans = self.constructor(dataT)
 
@@ -1595,9 +1595,9 @@ class QueryBackend(DataTestObject):
             stdVector = trans.features.statistics("\npopulationstd")
             ret.transpose(useLog=False)
 
-        numpy.testing.assert_approx_equal(ret[0, 0], stdVector[0] * stdVector[0])
-        numpy.testing.assert_approx_equal(ret[1, 1], stdVector[1] * stdVector[1])
-        numpy.testing.assert_approx_equal(ret[2, 2], stdVector[2] * stdVector[2])
+        np.testing.assert_approx_equal(ret[0, 0], stdVector[0] * stdVector[0])
+        np.testing.assert_approx_equal(ret[1, 1], stdVector[1] * stdVector[1])
+        np.testing.assert_approx_equal(ret[2, 2], stdVector[2] * stdVector[2])
 
 
     # test results correlation
@@ -1612,7 +1612,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def backend_Sim_CorrelationResult(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = np.array(data).T.tolist()
         orig = self.constructor(data)
         trans = self.constructor(dataT)
         sameAsOrig = self.constructor(data)
@@ -1630,7 +1630,7 @@ class QueryBackend(DataTestObject):
         expData = [expRow0, expRow1, expRow2]
         expObj = self.constructor(expData)
 
-        npExpRaw = numpy.corrcoef(data)
+        npExpRaw = np.corrcoef(data)
         npExpObj = self.constructor(npExpRaw)
 
         assert ret.isApproximatelyEqual(npExpObj)
@@ -1648,7 +1648,7 @@ class QueryBackend(DataTestObject):
 
     def backend_Sim_CorrelationHelpersEquiv(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = np.array(data).T.tolist()
         orig = self.constructor(data)
         trans = self.constructor(dataT)
         sameAsOrig = self.constructor(data)
@@ -1684,8 +1684,8 @@ class QueryBackend(DataTestObject):
             popRet = explicitCorr(orig, False)
             ret.transpose()
 
-        npExpRawB0 = numpy.corrcoef(data, bias=0)
-        npExpRawB1 = numpy.corrcoef(data, bias=1)
+        npExpRawB0 = np.corrcoef(data, bias=0)
+        npExpRawB1 = np.corrcoef(data, bias=1)
         npExpB0 = self.constructor(npExpRawB0)
         npExpB1 = self.constructor(npExpRawB1)
 
@@ -1708,7 +1708,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def backend_Sim_DotProductResult(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = np.array(data).T.tolist()
         orig = self.constructor(data)
         trans = self.constructor(dataT)
         sameAsOrig = self.constructor(data)
@@ -1775,7 +1775,7 @@ class QueryBackend(DataTestObject):
 
     def backend_Sim_NamePath_Preservation(self, axis):
         data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = np.array(data).T.tolist()
         orig = self.constructor(data, name=preserveName, paths=preservePair)
         trans = self.constructor(dataT, name=preserveName, paths=preservePair)
 
@@ -1863,7 +1863,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def backend_Stat_max(self, axis):
         data = [[1, 2, 1], [-10, -1, -21], [-1, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = np.array(data).T.tolist()
         fnames = _fnames(3)
         pnames = _pnames(3)
         orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
@@ -1911,7 +1911,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def backend_Stat_mean(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = np.array(data).T.tolist()
         fnames = _fnames(3)
         pnames = _pnames(3)
         orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
@@ -1946,7 +1946,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def backend_Stat_median(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = np.array(data).T.tolist()
         fnames = _fnames(3)
         pnames = _pnames(3)
         orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
@@ -1982,7 +1982,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def backend_Stat_min(self, axis):
         data = [[1, 2, 1], [-10, -1, -21], [-1, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = np.array(data).T.tolist()
         fnames = _fnames(3)
         pnames = _pnames(3)
         orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
@@ -2017,7 +2017,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def backend_Stat_uniqueCount(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, -1]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = np.array(data).T.tolist()
         fnames = _fnames(3)
         pnames = _pnames(3)
         orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
@@ -2052,7 +2052,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def backend_Stat_proportionMissing(self, axis):
         data = [[1, None, 1], [0, 1, float('nan')], [1, float('nan'), None]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = np.array(data).T.tolist()
         fnames = _fnames(3)
         pnames = _pnames(3)
         orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
@@ -2087,7 +2087,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def backend_Stat_proportionZero(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = np.array(data).T.tolist()
         fnames = _fnames(3)
         pnames = _pnames(3)
         orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
@@ -2124,7 +2124,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def backend_Stat_sampleStandardDeviation(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = np.array(data).T.tolist()
         fnames = _fnames(3)
         pnames = _pnames(3)
         orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
@@ -2141,7 +2141,7 @@ class QueryBackend(DataTestObject):
         assert len(ret.points) == 3
         assert len(ret.features) == 1
 
-        npExpRaw = numpy.std(data, axis=1, ddof=1, keepdims=True)
+        npExpRaw = np.std(data, axis=1, ddof=1, keepdims=True)
         npExpObj = self.constructor(npExpRaw)
 
         assert npExpObj.isApproximatelyEqual(ret)
@@ -2169,7 +2169,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def backend_Stat_populationStandardDeviation(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
-        dataT = numpy.array(data).T.tolist()
+        dataT = np.array(data).T.tolist()
         fnames = _fnames(3)
         pnames = _pnames(3)
         orig = self.constructor(data, featureNames=fnames, pointNames=pnames)
@@ -2186,7 +2186,7 @@ class QueryBackend(DataTestObject):
         assert len(ret.points) == 3
         assert len(ret.features) == 1
 
-        npExpRaw = numpy.std(data, axis=1, ddof=0, keepdims=True)
+        npExpRaw = np.std(data, axis=1, ddof=0, keepdims=True)
         npExpObj = self.constructor(npExpRaw)
 
         assert npExpObj.isApproximatelyEqual(ret)
@@ -2486,7 +2486,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def test_points_iter_FemptyCorrectness(self):
         data = [[], []]
-        data = numpy.array(data)
+        data = np.array(data)
         toTest = self.constructor(data)
         pIter = iter(toTest.points)
 
@@ -2504,7 +2504,7 @@ class QueryBackend(DataTestObject):
     def test_points_iter_noNextPempty(self):
         """ test .points() has no next value when object is point empty """
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         toTest = self.constructor(data)
         viewIter = iter(toTest.points)
         try:
@@ -2578,7 +2578,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def test_features_iter_PemptyCorrectness(self):
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         toTest = self.constructor(data)
         fIter = iter(toTest.features)
 
@@ -2596,7 +2596,7 @@ class QueryBackend(DataTestObject):
     def test_features_iter_noNextFempty(self):
         """ test .features() has no next value when object is feature empty """
         data = [[], []]
-        data = numpy.array(data)
+        data = np.array(data)
         toTest = self.constructor(data)
         viewIter = iter(toTest.features)
         try:
@@ -2678,7 +2678,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def test_iter_noNextPempty(self):
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         toTest = self.constructor(data)
         viewIter = iter(toTest)
         try:
@@ -2690,7 +2690,7 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def test_iter_noNextFempty(self):
         data = [[], []]
-        data = numpy.array(data)
+        data = np.array(data)
         toTest = self.constructor(data)
         viewIter = iter(toTest)
         try:
@@ -2737,7 +2737,7 @@ class QueryBackend(DataTestObject):
     def test_iterateElements_noNextPempty(self):
         """ test iterateElements() has no next value when object is point empty """
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         toTest = self.constructor(data)
         viewIter = iter(toTest.iterateElements())
         try:
@@ -2749,7 +2749,7 @@ class QueryBackend(DataTestObject):
     def test_iterateElements_noNextFempty(self):
         """ test iterateElements() has no next value when object is feature empty """
         data = [[], []]
-        data = numpy.array(data)
+        data = np.array(data)
         toTest = self.constructor(data)
         viewIter = iter(toTest.iterateElements())
         try:
@@ -2918,7 +2918,7 @@ class QueryBackend(DataTestObject):
     def test_inverse_multiplicative(self):
         """ Test computation of multiplicative inverse."""
         from scipy import linalg
-        data = numpy.array([[1, 1, 0], [1, 0, 1], [1, 1, 1]])
+        data = np.array([[1, 1, 0], [1, 0, 1], [1, 1, 1]])
         pointNames =  ['1', 'one', '2']
         featureNames = ['one', 'two', 'three']
 
@@ -2937,7 +2937,7 @@ class QueryBackend(DataTestObject):
     def test_inverse_pseudoInverse(self):
         """ Test computation of pseudo-inverse using singular-value decomposition. """
         from scipy import linalg
-        data = numpy.array([[3, 2, 1], [2, 2, 0], [1, 0, 1]])
+        data = np.array([[3, 2, 1], [2, 2, 0], [1, 0, 1]])
         pointNames =  ['1', 'one', '2']
         featureNames = ['one', 'two', 'three']
 
@@ -2967,10 +2967,10 @@ class QueryBackend(DataTestObject):
     @noLogEntryExpected
     def backend_solveLinearSystem(self, solveFunction):
         from scipy import linalg
-        A = numpy.array([[1, 20], [-30, 4]])
-        b = numpy.array([[-30], [4]])
+        A = np.array([[1, 20], [-30, 4]])
+        b = np.array([[-30], [4]])
 
-        x = numpy.transpose(linalg.solve(A, b))
+        x = np.transpose(linalg.solve(A, b))
 
         pointNames =  ['1', 'one']
         featureNames = ['one', 'two']
@@ -2989,16 +2989,16 @@ class QueryBackend(DataTestObject):
 
     @raises(InvalidArgumentType)
     def test_solveLinearSystem_b_InvalidType(self):
-        A = numpy.array([[1, 20], [-30, 4]])
-        b = numpy.array([[-30], [4]])
+        A = np.array([[1, 20], [-30, 4]])
+        b = np.array([[-30], [4]])
 
         Aobj = self.constructor(A)
         Aobj.solveLinearSystem(b)
 
     @raises(InvalidArgumentType)
     def test_solveLinearSystem_InvalidParamType(self):
-        A = numpy.array([[1, 20], [-30, 4]])
-        b = numpy.array([[-30], [4]])
+        A = np.array([[1, 20], [-30, 4]])
+        b = np.array([[-30], [4]])
 
         Aobj = self.constructor(A)
         bobj = self.constructor(b)
@@ -3007,8 +3007,8 @@ class QueryBackend(DataTestObject):
 
     @raises(InvalidArgumentValue)
     def test_solveLinearSystem_InvalidParamValue(self):
-        A = numpy.array([[1, 20], [-30, 4]])
-        b = numpy.array([[-30], [4]])
+        A = np.array([[1, 20], [-30, 4]])
+        b = np.array([[-30], [4]])
 
         Aobj = self.constructor(A)
         bobj = self.constructor(b)
@@ -3092,7 +3092,7 @@ class QueryBackend(DataTestObject):
             if axis == 'points':
                 obj = self.constructor(data, featureNames=offAxisNames)
             else:
-                obj = self.constructor(numpy.array(data).T,
+                obj = self.constructor(np.array(data).T,
                                        pointNames=offAxisNames)
             return getattr(obj, axis)
 
@@ -3351,7 +3351,7 @@ def test_elementQueryFunction():
                 assert func6('hi hello')
                 assert not func6('hello hi')
 
-        whitespace = ' ' * numpy.random.randint(3, 7)
+        whitespace = ' ' * np.random.randint(3, 7)
         query = whitespace + optr + whitespace + '0' + whitespace
         func7 = elementQueryFunction(query)
         if '=' in optr:

@@ -1,7 +1,7 @@
 """
 Stretch object to allow for broadcasting operations.
 """
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import ImproperObjectAction
@@ -190,7 +190,7 @@ class Stretch(object):
         self._stretchArithmetic_validation(opName, other)
 
         try:
-            with numpy.errstate(divide='raise', invalid='raise'):
+            with np.errstate(divide='raise', invalid='raise'):
                 ret = self._stretchArithmetic_implementation(opName, other)
         except (TypeError, ValueError, FloatingPointError) as error:
             self._source._diagnoseFailureAndRaiseException(opName, otherSource,
