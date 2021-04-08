@@ -107,7 +107,7 @@ def testReturnsFundamentalsCorrect():
                 assert (len(returned.features) == nFeatures)
 
                 # assert that the requested numerical type was returned
-                assert type(returned[0, 0] == curType)
+                assert curType in str(type(returned[0, 0]))
 
                 if curType not in expected:
                     expected[curType] = {}
