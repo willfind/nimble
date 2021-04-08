@@ -284,6 +284,8 @@ class Sparse(Base):
 
             pointer = 0
             pmax = len(self._data.data)
+            # write zero to file as same type as this data
+            zero = self._data.data.dtype.type(0)
             for i in range(len(self.points)):
                 if includePointNames:
                     currPname = csvCommaFormat(self.points.getName(i))
@@ -295,7 +297,7 @@ class Sparse(Base):
                         value = csvCommaFormat(self._data.data[pointer])
                         pointer = pointer + 1
                     else:
-                        value = 0
+                        value = zero
 
                     if j != 0:
                         outFile.write(',')
