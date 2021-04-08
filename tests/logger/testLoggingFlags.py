@@ -7,7 +7,7 @@ import os
 import tempfile
 
 from nose.plugins.attrib import attr
-import numpy
+import numpy as np
 
 import nimble
 from nimble.calculate import fractionIncorrect
@@ -642,7 +642,7 @@ def test_points_insert():
 
 def test_features_insert():
     def wrapped(obj, useLog):
-        insertData = numpy.zeros((18,1))
+        insertData = np.zeros((18,1))
         toInsert = nimble.data("Matrix", insertData, useLog=False)
         return obj.features.insert(0, toInsert, useLog=useLog)
 
@@ -661,7 +661,7 @@ def test_points_append():
 
 def test_features_append():
     def wrapped(obj, useLog):
-        appendData = numpy.zeros((18,1))
+        appendData = np.zeros((18,1))
         toAppend = nimble.data("Matrix", appendData, useLog=False)
         return obj.features.append(toAppend, useLog=useLog)
 

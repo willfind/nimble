@@ -1,4 +1,4 @@
-import numpy.testing
+import numpy as np
 
 import nimble
 from nimble.learners import RidgeRegression
@@ -19,6 +19,5 @@ def testRidgeRegressionShapes():
 
         assert len(ret.points) == 2
         assert len(ret.features) == 1
-        numpy.testing.assert_approx_equal(ret[0, 0], 10.5, significant=3)
-        numpy.testing.assert_approx_equal(ret[1, 0], 18, significant=2)
-
+        np.testing.assert_approx_equal(ret[0, 0], 10.5, significant=3)
+        np.testing.assert_approx_equal(ret[1, 0], 18, significant=2)

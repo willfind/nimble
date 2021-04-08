@@ -5,7 +5,7 @@ import sys
 from io import StringIO
 import tempfile
 
-import numpy
+import numpy as np
 import pandas as pd
 import scipy.sparse
 from nose.tools import raises
@@ -132,25 +132,25 @@ class HighDimensionSafe(DataTestObject):
                 assert listCopy == tensor
 
                 arrCopy = toTest.copy('numpy array')
-                assert numpy.array_equal(arrCopy, numpy.array(tensor))
+                assert np.array_equal(arrCopy, np.array(tensor))
                 assert arrCopy.shape == toTest.dimensions
 
-                objArr = numpy.empty(toTest._shape[:2], dtype=numpy.object_)
+                objArr = np.empty(toTest._shape[:2], dtype=np.object_)
                 for i, lst in enumerate(tensor):
                     objArr[i] = lst
 
                 matCopy = toTest.copy('numpy matrix')
-                assert numpy.array_equal(matCopy, numpy.matrix(objArr))
+                assert np.array_equal(matCopy, np.matrix(objArr))
 
                 cooCopy = toTest.copy('scipy coo')
                 expCoo = scipy.sparse.coo_matrix(objArr)
                 # coo __eq__ fails for object dtype b/c attempt conversion to csr
-                assert numpy.array_equal(cooCopy.data, expCoo.data)
-                assert numpy.array_equal(cooCopy.row, expCoo.row)
-                assert numpy.array_equal(cooCopy.col, expCoo.col)
+                assert np.array_equal(cooCopy.data, expCoo.data)
+                assert np.array_equal(cooCopy.row, expCoo.row)
+                assert np.array_equal(cooCopy.col, expCoo.col)
 
                 dfCopy = toTest.copy('pandas dataframe')
-                assert numpy.array_equal(dfCopy, pd.DataFrame(objArr))
+                assert np.array_equal(dfCopy, pd.DataFrame(objArr))
 
                 for cType in ['listofdict', 'dictoflist', 'scipycsc',
                               'scipycsr']:

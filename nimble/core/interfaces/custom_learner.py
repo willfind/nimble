@@ -6,7 +6,7 @@ import abc
 import inspect
 import copy
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
@@ -259,7 +259,7 @@ class CustomLearner(metaclass=abc.ABCMeta):
         """
         if self.__class__.learnerType == 'classification':
             labels = dtypeConvert(trainY.copy(to='numpyarray'))
-            self.labelList = numpy.unique(labels)
+            self.labelList = np.unique(labels)
 
         self.train(trainX, trainY, **arguments)
 
@@ -273,7 +273,7 @@ class CustomLearner(metaclass=abc.ABCMeta):
             flattenedY = dtypeConvert(trainY.copy(to='numpyarray').flatten())
             if self.labelList is None: # no previous training
                 self.labelList = []
-            self.labelList = numpy.union1d(self.labelList, flattenedY)
+            self.labelList = np.union1d(self.labelList, flattenedY)
         self.incrementalTrain(trainX, trainY, **arguments)
         return self
 

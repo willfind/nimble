@@ -18,7 +18,7 @@ from operator import itemgetter
 import functools
 import re
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble import fill
@@ -149,7 +149,7 @@ class Axis(ABC):
             msg = "There are no valid " + self._axis + " identifiers; "
             msg += "this object has 0 " + self._axis + "s"
             raise IndexError(msg)
-        if isinstance(identifier, (int, numpy.integer)):
+        if isinstance(identifier, (int, np.integer)):
             if identifier < 0:
                 identifier = num + identifier
             if identifier < 0 or identifier >= num:
@@ -159,7 +159,7 @@ class Axis(ABC):
                 raise IndexError(msg)
         elif isinstance(identifier, str):
             identifier = self._getIndexByName(identifier)
-        elif allowFloats and isinstance(identifier, (float, numpy.float)):
+        elif allowFloats and isinstance(identifier, (float, np.float)):
             if identifier % 1: # x!=int(x)
                 idVal = str(identifier)
                 msg = "A float valued key of value x is only accepted if x == "
@@ -193,7 +193,7 @@ class Axis(ABC):
             return False
 
     def _getitem(self, key):
-        singleKey = isinstance(key, (int, float, str, numpy.integer))
+        singleKey = isinstance(key, (int, float, str, np.integer))
         if singleKey:
             key = [self._getIndex(key, allowFloats=True)]
         else:
@@ -423,10 +423,10 @@ class Axis(ABC):
         retData, offAxisNames = self._calculate_implementation(function,
                                                                limitTo)
 
-        pathPass = (self._base.absolutePath, self._base.relativePath)
+        ret = nimble.data(self._base.getTypeString(), retData, useLog=False)
 
-        ret = nimble.data(self._base.getTypeString(), retData,
-                          path=pathPass, useLog=False)
+        ret._absPath = self._base.absolutePath
+        ret._relPath = self._base.relativePath
 
         if self._isPoint:
             axisNameSetter = ret.points.setNames
@@ -547,7 +547,7 @@ class Axis(ABC):
 
         if targetCount == 0:
             ret = nimble.data(self._base.getTypeString(),
-                              numpy.empty(shape=(0, 0)), useLog=False)
+                              np.empty(shape=(0, 0)), useLog=False)
         else:
             mapResults = {}
             # apply the mapper to each point in the data
@@ -588,9 +588,9 @@ class Axis(ABC):
         # use our fill.constant function with the fillWith value
         if not callable(fillWith):
             value = fillWith
-            # for consistency use numpy.nan for None and nans
+            # for consistency use np.nan for None and nans
             if value is None or value != value:
-                value = numpy.nan
+                value = np.nan
             fillFunc = fill.constant
             kwarguments['constantValue'] = value
             removeKwargs.append('constantValue')
@@ -632,7 +632,7 @@ class Axis(ABC):
 
 
     def _repeat(self, totalCopies, copyVectorByVector):
-        if not isinstance(totalCopies, (int, numpy.int)) or totalCopies < 1:
+        if not isinstance(totalCopies, (int, np.int)) or totalCopies < 1:
             raise InvalidArgumentType("totalCopies must be a positive integer")
         if totalCopies == 1:
             return self._base.copy()
@@ -982,7 +982,7 @@ class Axis(ABC):
         # at this point, the input must be a dict
         #check input before performing any action
         for name in assignments.keys():
-            if not None and not isinstance(name, str):
+            if not isinstance(name, str):
                 raise InvalidArgumentValue("Names must be strings")
             if not isinstance(assignments[name], int):
                 raise InvalidArgumentValue("Indices must be integers")
@@ -1039,7 +1039,7 @@ class Axis(ABC):
                 stop -= 1
             return list(range(start, stop, step))
 
-        numBool = sum(isinstance(val, (bool, numpy.bool_)) for val in key)
+        numBool = sum(isinstance(val, (bool, np.bool_)) for val in key)
         # contains all boolean values
         if numBool == length:
             return [i for i, v in enumerate(key) if v]
@@ -1410,10 +1410,10 @@ class Axis(ABC):
             if any(x[:len(DEFAULT_PREFIX)] == DEFAULT_PREFIX for x in rnames):
                 raise ImproperObjectAction(msg)
 
-            ldiff = numpy.setdiff1d(lnames, rnames, assume_unique=True)
+            ldiff = np.setdiff1d(lnames, rnames, assume_unique=True)
             # names are not the same.
             if len(ldiff) != 0:
-                rdiff = numpy.setdiff1d(rnames, lnames, assume_unique=True)
+                rdiff = np.setdiff1d(rnames, lnames, assume_unique=True)
                 msgBase += "Yet, the following names were unmatched (caller "
                 msgBase += "names on the left, callee names on the right):\n"
                 msg = copy.copy(msgBase)

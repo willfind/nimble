@@ -6,7 +6,7 @@ nimble functions and tests.
 import random
 from contextlib import contextmanager
 
-import numpy
+import numpy as np
 
 import nimble # pylint: disable=unused-import
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -16,7 +16,7 @@ from nimble.core.logger import handleLogging
 from nimble.core._createHelpers import validateReturnType, initDataObject
 
 pythonRandom = random.Random(42)
-numpyRandom = numpy.random.RandomState(42) # pylint: disable=no-member
+numpyRandom = np.random.RandomState(42) # pylint: disable=no-member
 
 def setSeed(seed, useLog=None):
     """
@@ -172,7 +172,7 @@ def data(
                     raise PackageException(msg)
                 # The point value is determined by counting how many groups of
                 # numFeatures fit into the position number
-                pointIndices = numpy.floor(nzLocation / numFeatures)
+                pointIndices = np.floor(nzLocation / numFeatures)
                 # The feature value is determined by counting the offset from
                 # each point edge.
                 featureIndices = nzLocation % numFeatures
@@ -180,21 +180,23 @@ def data(
                     (dataVector, (pointIndices, featureIndices)),
                     (numPoints, numFeatures))
             else:
-                randData = numpy.zeros(size)
-                # numpy.put indexes as if flat so can use nzLocation
-                numpy.put(randData, nzLocation, dataVector)
+                randData = np.zeros(size)
+                # np.put indexes as if flat so can use nzLocation
+                np.put(randData, nzLocation, dataVector)
         else:
             if elementType == 'int':
                 randData = numpyRandom.randint(1, 100, size=size)
             else:
                 randData = numpyRandom.normal(loc=0.0, scale=1.0, size=size)
 
+    ret = initDataObject(returnType, rawData=randData, pointNames=pointNames,
+                         featureNames=featureNames, name=name, copyData=False,
+                         skipDataProcessing=True)
+
     handleLogging(useLog, 'load', "Random " + returnType, numPoints,
                   numFeatures, name, sparsity=sparsity, seed=randomSeed)
 
-    return initDataObject(returnType, rawData=randData, pointNames=pointNames,
-                          featureNames=featureNames, name=name,
-                          skipDataProcessing=True)
+    return ret
 
 
 def _generateSubsidiarySeed():

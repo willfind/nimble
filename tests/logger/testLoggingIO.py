@@ -16,7 +16,7 @@ from io import StringIO
 
 from nose import with_setup
 from nose.tools import raises
-import numpy
+import numpy as np
 
 import nimble
 from nimble.calculate import rootMeanSquareError as RMSE
@@ -522,7 +522,7 @@ def testPrepTypeFunctionsUseLog():
                                                     "reducer": "simpleReducer"})
 
     # features.mapReduce
-    dataObj = nimble.data("Matrix", numpy.array(data, dtype=object).T,
+    dataObj = nimble.data("Matrix", np.array(data, dtype=object).T,
                           featureNames=False, useLog=False)
     calculated = dataObj.features.mapReduce(simpleMapper,simpleReducer)
     checkLogContents('features.mapReduce', "Matrix", {"mapper": "simpleMapper",
@@ -635,7 +635,7 @@ def testPrepTypeFunctionsUseLog():
 
     # features.insert
     dataObj = nimble.data("Matrix", data, useLog=False)
-    insertData = numpy.zeros((18,1))
+    insertData = np.zeros((18,1))
     toInsert = nimble.data("Matrix", insertData, name='insert', useLog=False)
     dataObj.features.insert(0, toInsert)
     checkLogContents('features.insert', "Matrix", {'insertBefore': 0,
@@ -650,7 +650,7 @@ def testPrepTypeFunctionsUseLog():
 
     # features.append
     dataObj = nimble.data("Matrix", data, useLog=False)
-    appendData = numpy.zeros((18,1))
+    appendData = np.zeros((18,1))
     toAppend = nimble.data("Matrix", appendData, name='append', useLog=False)
     dataObj.features.append(toAppend)
     checkLogContents('features.append', "Matrix", {'toAppend': toAppend.name})

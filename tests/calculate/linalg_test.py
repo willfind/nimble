@@ -5,7 +5,7 @@ Functions tested in this file:
 inverse, pseudoInverse, solve, leastSquaresSolution.
 """
 
-import numpy
+import numpy as np
 from nose.tools import raises
 
 import nimble
@@ -182,8 +182,8 @@ def testLeastSquareSolutionOverdetermined():
     """
     Test success for leastSquareSolution overdetermined system.
     """
-    aArray = numpy.array([[1, 2], [4, 5], [3, 4]])
-    bArrays = [numpy.array([1, 2, 3]), numpy.array([[1], [2], [3]])]
+    aArray = np.array([[1, 2], [4, 5], [3, 4]])
+    bArrays = [np.array([1, 2, 3]), np.array([[1], [2], [3]])]
     featureNames = ['f1', 'f2']
 
     _backendNonSquareSolverSucces(aArray, bArrays, featureNames)
@@ -193,16 +193,16 @@ def testLeastSquareSolutionUnderdetermined():
     """
     Test success for leastSquareSolution under-determined system.
     """
-    aArray = numpy.array([[1, 2, 3], [4, 5, 6]])
-    bArrays = [numpy.array([1, 2]), numpy.array([[1], [2]])]
+    aArray = np.array([[1, 2, 3], [4, 5, 6]])
+    bArrays = [np.array([1, 2]), np.array([[1], [2]])]
     featureNames = ['f1', 'f2', 'f3']
 
     _backendNonSquareSolverSucces(aArray, bArrays, featureNames)
 
 
 def _backendSolverSuccess(solverFunction):
-    aArray = numpy.array([[1, 20], [-30, 4]])
-    bArrays = [numpy.array([-30, 4]), numpy.array([[-30], [4]])]
+    aArray = np.array([[1, 20], [-30, 4]])
+    bArrays = [np.array([-30, 4]), np.array([[-30], [4]])]
 
     for constructor in getDataConstructors():
         for constructorB in getDataConstructors():

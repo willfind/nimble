@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 
 import nimble
 from nimble import match
@@ -13,14 +13,14 @@ def backend_match_value(toMatch, true, false):
     for f in false:
         assert not toMatch(f)
 
-missingValues = [None, float('nan'), numpy.nan]
+missingValues = [None, float('nan'), np.nan]
 stringValues = ['a', str(1)]
-zeroValues = [0, float(0), numpy.int(0), numpy.float(0)]
-positiveValues = [3, float(3), numpy.int(3), numpy.float(3)]
-negativeValues = [-3, float(-3), numpy.int(-3), numpy.float(-3)]
-infinityValues = [float('inf'), -float('inf'), numpy.inf, -numpy.inf]
-trueValues = [True, numpy.bool(True), numpy.bool_(True)]
-falseValues = [False, numpy.bool(False), numpy.bool_(False)]
+zeroValues = [0, float(0), np.int(0), np.float(0)]
+positiveValues = [3, float(3), np.int(3), np.float(3)]
+negativeValues = [-3, float(-3), np.int(-3), np.float(-3)]
+infinityValues = [float('inf'), -float('inf'), np.inf, -np.inf]
+trueValues = [True, np.bool(True), np.bool_(True)]
+falseValues = [False, np.bool(False), np.bool_(False)]
 boolValues = trueValues + falseValues
 
 numericValues = (positiveValues + negativeValues + zeroValues
@@ -68,7 +68,7 @@ def test_match_infinity():
 @noLogEntryExpected
 def backend_match_anyAll(anyOrAll, func, data):
     """backend for match functions accepting 1D and 2D data and testing for any or all"""
-    data = numpy.array(data, dtype=numpy.object_)
+    data = np.array(data, dtype=np.object_)
     for constructor in getDataConstructors():
         toTest = constructor(data, useLog=False)
         # test whole matrix
@@ -108,12 +108,12 @@ def backend_match_anyAll(anyOrAll, func, data):
 
 
 def test_match_anyMissing():
-    fill = numpy.nan
+    fill = np.nan
     data = [[1,2,fill], [4,5,fill], [7,fill,fill]]
     backend_match_anyAll('any', match.anyMissing, data)
 
 def test_match_allMissing():
-    fill = numpy.nan
+    fill = np.nan
     data = [[1,2,fill], [4,5,fill], [7,fill,fill]]
     backend_match_anyAll('all', match.allMissing, data)
 

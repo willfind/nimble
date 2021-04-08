@@ -8,7 +8,7 @@ import sys
 from unittest import mock
 import functools
 
-import numpy
+import numpy as np
 import nose
 from nose.tools import *
 from nose.plugins.attrib import attr

@@ -2,7 +2,7 @@
 Functions that could be useful accross multple interface test suites
 """
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.core.data import Base
@@ -19,7 +19,7 @@ def test_OvOTournament():
     ret = calculateSingleLabelScoresFromOneVsOneScores(scores, 4)
     desired = [2.0 / 3.0, 2.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0]
 
-    assert numpy.allclose(ret, desired)
+    assert np.allclose(ret, desired)
 
 
 def checkLabelOrderingAndScoreAssociations(allLabels, bestScores, allScores):
@@ -35,8 +35,8 @@ def checkLabelOrderingAndScoreAssociations(allLabels, bestScores, allScores):
 
     assert len(bestScores) == len(allScores)
     for i in range(len(bestScores)):
-        currBest = numpy.array(bestScores[i]).flatten()
-        currAll = numpy.array(allScores[i]).flatten()
+        currBest = np.array(bestScores[i]).flatten()
+        currAll = np.array(allScores[i]).flatten()
         #score in bestScore matches winning score's slot in allScores
         for j in range(len(allLabels)):
             if currBest[0] == allLabels[j]:

@@ -2,7 +2,7 @@
 Variety of functions to replace values in data with other values
 """
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.match import _convertMatchToFunction
@@ -351,7 +351,7 @@ def backwardFill(vector, match):
         raise InvalidArgumentValue(msg)
 
     def filler(vec):
-        ret = numpy.empty_like(vector, dtype=numpy.object_)
+        ret = np.empty_like(vector, dtype=np.object_)
         numValues = len(vec)
         # pylint: disable=unsupported-assignment-operation
         for i, (val, fill) in enumerate(zip(reversed(vector),
@@ -372,9 +372,9 @@ def interpolate(vector, match, **kwarguments):
     Fill matched values with the interpolated value
 
     The fill value is determined by the piecewise linear interpolant
-    returned by numpy.interp. By default, the unmatched values will be
+    returned by np.interp. By default, the unmatched values will be
     used as the discrete data points, but additional arguments for
-    numpy.interp can be passed as keyword arguments.
+    np.interp can be passed as keyword arguments.
 
     Parameters
     ----------
@@ -388,7 +388,7 @@ def interpolate(vector, match, **kwarguments):
           match module.
     kwarguments
         Collection of extra key:value argument pairs to pass to
-        numpy.interp.
+        np.interp.
 
     Returns
     -------
@@ -398,7 +398,7 @@ def interpolate(vector, match, **kwarguments):
 
     See Also
     --------
-    nimble.match, numpy.interp
+    nimble.match, np.interp
 
     Examples
     --------
@@ -442,7 +442,7 @@ def interpolate(vector, match, **kwarguments):
     if 'fp' not in kwarguments:
         kwarguments['fp'] = unmatchedVals
 
-    tmpV = numpy.interp(**kwarguments)
+    tmpV = np.interp(**kwarguments)
 
     def filler(vec):
         ret = []

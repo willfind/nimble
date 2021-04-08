@@ -5,9 +5,8 @@ Relies on being keras 2.0.8
 import os
 import logging
 import warnings
-from packaging.version import parse as versionParse
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble._utility import inspectArguments, dtypeConvert
@@ -39,9 +38,9 @@ class Keras(PredefinedInterface):
             # that drown out anything else on standard out
             logging.getLogger('tensorflow').disabled = True
             # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-            if versionParse(self.tensorflow.__version__) < versionParse('2'):
+            if int(self.tensorflow.__version__.split('.')[0]) < 2:
                 msg = "Randomness is outside of Nimble's control for version "
-                msg += "1 of Tensorflow. Reproducible results cannot be "
+                msg += "1.x of Tensorflow. Reproducible results cannot be "
                 msg += "guaranteed"
                 warnings.warn(msg, UserWarning)
             else:
@@ -62,7 +61,7 @@ class Keras(PredefinedInterface):
                         and not splitList[0].startswith('_')):
                     possibilities.append(splitList[0])
 
-        possibilities = numpy.unique(possibilities).tolist()
+        possibilities = np.unique(possibilities).tolist()
         if 'utils' in possibilities:
             possibilities.remove('utils')
         self.keras.__all__.extend(possibilities)
@@ -370,10 +369,10 @@ To install keras
         if (hasattr(learner, 'decision_function')
                 or hasattr(learner, 'predict_proba')):
             if trainY is not None:
-                labelOrder = numpy.unique(trainY)
+                labelOrder = np.unique(trainY)
             else:
                 allLabels = learner.predict(trainX)
-                labelOrder = numpy.unique(allLabels)
+                labelOrder = np.unique(allLabels)
 
             learner.UIgetScoreOrder = labelOrder
 

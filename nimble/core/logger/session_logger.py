@@ -23,10 +23,10 @@ import inspect
 import re
 import sqlite3
 from ast import literal_eval
-from textwrap import wrap
+import textwrap
 import datetime
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -414,11 +414,11 @@ class SessionLogger(object):
                     functionCall = "Unable to determine learner name"
             logInfo["learner"] = functionCall
             # integers or strings passed for Y values, convert if necessary
-            if isinstance(trainLabels, (str, int, numpy.int64)):
+            if isinstance(trainLabels, (str, int, np.int64)):
                 trainData = trainData.copy()
                 trainLabels = trainData.features.extract(trainLabels,
                                                          useLog=False)
-            if isinstance(testLabels, (str, int, numpy.int64)):
+            if isinstance(testLabels, (str, int, np.int64)):
                 testData = testData.copy()
                 testLabels = testData.features.extract(testLabels,
                                                        useLog=False)
@@ -878,19 +878,22 @@ def _buildLoadLogString(timestamp, entry):
     dataCol = "{0} Loaded".format(entry["returnType"])
     fullLog = _logHeader(dataCol, timestamp)
     if entry["returnType"] != "TrainedLearner":
-        fullLog += _formatSessionLine("# of points", entry["numPoints"])
-        fullLog += _formatSessionLine("# of features", entry["numFeatures"])
+        line = '{:<14} {}\n'
+        fullLog += line.format("# of points", entry["numPoints"])
+        fullLog += line.format("# of features", entry["numFeatures"])
         for title in ['sparsity', 'name', 'path', 'seed']:
             if entry[title] is not None:
-                fullLog += _formatSessionLine(title, entry[title])
+                fullLog += title + ' ' * (15 - len(title))
+                fullLog += textwrap.fill(entry[title], 64,
+                                         subsequent_indent=" "*15)
+                fullLog += '\n'
     else:
         fullLog += _formatSessionLine("Learner name", entry["learnerName"])
         if entry['learnerArgs'] is not None and entry['learnerArgs']:
             argString = "Arguments: "
             argString += _dictToKeywordString(entry["learnerArgs"])
-            for string in wrap(argString, 79, subsequent_indent=" "*11):
-                fullLog += string
-                fullLog += "\n"
+            fullLog += textwrap.fill(argString, 79, subsequent_indent=" "*11)
+            fullLog += "\n"
     return fullLog
 
 def _buildPrepLogString(timestamp, entry):
@@ -902,9 +905,8 @@ def _buildPrepLogString(timestamp, entry):
     if entry['arguments']:
         argString = "Arguments: "
         argString += _dictToKeywordString(entry["arguments"])
-        for string in wrap(argString, 79, subsequent_indent=" "*11):
-            fullLog += string
-            fullLog += "\n"
+        fullLog += textwrap.fill(argString, 79, subsequent_indent=" "*11)
+        fullLog += "\n"
     return fullLog
 
 def _buildDataLogString(timestamp, entry):
@@ -967,9 +969,8 @@ def _buildRunLogString(timestamp, entry):
     if entry.get("arguments", False):
         argString = "Arguments: "
         argString += _dictToKeywordString(entry["arguments"])
-        for string in wrap(argString, 79, subsequent_indent=" "*11):
-            fullLog += string
-            fullLog += "\n"
+        fullLog += textwrap.fill(argString, 79, subsequent_indent=" "*11)
+        fullLog += "\n"
     # randomSeed
     fullLog += "Random Seed: " + str(entry["randomSeed"])
     fullLog += "\n"
@@ -1024,19 +1025,16 @@ def _buildDefaultLogString(timestamp, logType, entry):
     """
     fullLog = _logHeader(logType, timestamp)
     if isinstance(entry, str):
-        for string in wrap(entry, 79):
-            fullLog += string
-            fullLog += "\n"
+        fullLog += textwrap.fill(entry, 79)
+        fullLog += "\n"
     elif isinstance(entry, list):
         listString = _formatSessionLine(entry)
-        for string in wrap(listString, 79):
-            fullLog += string
-            fullLog += "\n"
+        fullLog += textwrap.fill(listString, 79)
+        fullLog += "\n"
     else:
         dictString = _dictToKeywordString(entry)
-        for string in wrap(dictString, 79):
-            fullLog += string
-            fullLog += "\n"
+        fullLog += textwrap.fill(dictString, 79)
+        fullLog += "\n"
     return fullLog
 
 def _dictToKeywordString(dictionary):

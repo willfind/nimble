@@ -31,15 +31,15 @@ all of the data from our 8 original files.
 
 import nimble
 
-# Using shortened URLs for example data files hosted on Nimble site
-dwtnMinAM = nimble.data('Matrix', 'https://bit.ly/3boeYfa', name='dtwnMinAM')
-dwtnMaxAM = nimble.data('Matrix', 'https://bit.ly/3rql9VG', name='dtwnMaxAM')
-dwtnMinPM = nimble.data('Matrix', 'https://bit.ly/30l85ox', name='dtwnMinPM')
-dwtnMaxPM = nimble.data('Matrix', 'https://bit.ly/3btoVbr', name='dtwnMaxPM')
-airptMinAM = nimble.data('Matrix', 'https://bit.ly/3sY0DMt', name='airptMinAM')
-airptMaxAM = nimble.data('Matrix', 'https://bit.ly/3v4HR7S', name='airptMaxAM')
-airptMinPM = nimble.data('Matrix', 'https://bit.ly/38hXOy2', name='airptMinPM')
-airptMaxPM = nimble.data('Matrix', 'https://bit.ly/3rrMlTR', name='airptMaxPM')
+bucket = 'https://storage.googleapis.com/nimble/datasets/tidy/'
+dwtnMinAM = nimble.data('Matrix', bucket + 'downtown_am_min.csv')
+dwtnMaxAM = nimble.data('Matrix', bucket + 'downtown_am_max.csv')
+dwtnMinPM = nimble.data('Matrix', bucket + 'downtown_pm_min.csv')
+dwtnMaxPM = nimble.data('Matrix', bucket + 'downtown_pm_max.csv')
+airptMinAM = nimble.data('Matrix', bucket + 'airport_am_min.csv')
+airptMaxAM = nimble.data('Matrix', bucket + 'airport_am_max.csv')
+airptMinPM = nimble.data('Matrix', bucket + 'airport_pm_min.csv')
+airptMaxPM = nimble.data('Matrix', bucket + 'airport_pm_max.csv')
 
 ## To begin, we create 8 objects from 8 different files. The variable names
 ## and object names for each object represent the weather station location
@@ -82,7 +82,7 @@ dwtnMinAM.show('Downtown data merged on date', maxWidth=120, maxHeight=9)
 ## the combined objects. Once our new feature is added, we can `append` our
 ## objects from the same weather station.
 for obj in [dwtnMinAM, dwtnMaxAM, airptMinAM, airptMaxAM]:
-    extreme = 'min' if 'Min' in obj.name else 'max'
+    extreme = 'min' if 'min' in obj.name else 'max'
     ftData = [[extreme] for _ in range(len(obj.points))]
     newFt = nimble.data('Matrix', ftData, featureNames=['extreme'])
     # New feature will be added at index position 1 (after "date" feature)
@@ -98,7 +98,7 @@ dwtnMinAM.show('Downtown combined extreme data', maxWidth=120, maxHeight=9)
 ## to create a new 'station' feature for each object based on which weather
 ## station location (downtown vs. airport) recorded the data.
 for obj in [dwtnMinAM, airptMinAM]:
-    station = 'downtown' if 'dtwn' in obj.name else 'airport'
+    station = 'downtown' if 'downtown' in obj.name else 'airport'
     stationData = [[station] for _ in range(len(obj.points))]
     newFt = nimble.data('Matrix', stationData, featureNames=['station'])
     obj.features.insert(1, newFt)

@@ -1,5 +1,5 @@
 wifi signal strengths
-wifi : 2000pt x 8ft
+wifiData : 2000pt x 8ft
 
 source0 source1 source2 source3 source4 source5 source6 room
 
@@ -16,9 +16,11 @@ source0 source1 source2 source3 source4 source5 source6 room
 .                                  SESSION 0                                  .
 ...............................................................................
 REGEX: Matrix Loaded                                               \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
-# of points                            2000
-# of features                          8
-name                                   wifi
+# of points    2000
+# of features  8
+name           wifiData
+REGEX: path           \S+
+REGEX:                \S+
 ...............................................................................
 REGEX: Matrix.features.setNames                                    \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 Arguments: assignments=['source0', 'source1', 'source2', 'source3', 'source4',
@@ -40,9 +42,11 @@ source0 source1 source2 source3 source4 source5 source6
 .                                  SESSION 0                                  .
 ...............................................................................
 REGEX: Matrix Loaded                                               \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
-# of points                            2000
-# of features                          8
-name                                   wifi
+# of points    2000
+# of features  8
+name           wifiData
+REGEX: path           \S+
+REGEX:                \S+
 ...............................................................................
 REGEX: Matrix.features.setNames                                    \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 Arguments: assignments=['source0', 'source1', 'source2', 'source3', 'source4',
@@ -52,7 +56,7 @@ REGEX: User - Data Description                                     \d{4}-\d\d-\d
 Wifi signal strength data from 7 sources in 4 possible rooms
 ...............................................................................
 randomly permuted
-wifi : 2000pt x 8ft
+wifiData : 2000pt x 8ft
 
 source0 source1 source2 source3 source4 source5 source6 room
 
@@ -136,10 +140,10 @@ REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 
 trainAndTest("nimble.KNNClassifier")
 Data                      # points                  # features
-wifi trainX               1400                      7
-wifi trainY               1400                      1
-wifi testX                600                       7
-wifi testY                600                       1
+wifiData trainX           1400                      7
+wifiData trainY           1400                      1
+wifiData testX            600                       7
+wifiData testY            600                       1
 
 Arguments: k=CV([3, 5, 7])
 Random Seed: 522510084
@@ -151,21 +155,20 @@ Metrics: fractionCorrect=0.985
 .                                  SESSION 0                                  .
 ...............................................................................
 REGEX: Matrix Loaded                                               \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
-# of points                            2000
-# of features                          8
-name                                   wifi
-...............................................................................
-REGEX: User - Data Description                                     \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
-Wifi signal strength data from 7 sources in 4 possible rooms
+# of points    2000
+# of features  8
+name           wifiData
+REGEX: path           \S+
+REGEX:                \S+
 ...............................................................................
 REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 
 trainAndTest("custom.LeastFeatureMeanDistance")
 Data                      # points                  # features
-wifi trainX               1400                      7
-wifi trainY               1400                      1
-wifi testX                600                       7
-wifi testY                600                       1
+wifiData trainX           1400                      7
+wifiData trainY           1400                      1
+wifiData testX            600                       7
+wifiData testY            600                       1
 
 Random Seed: 506456970
 Metrics: fractionCorrect=0.9716666666666667
@@ -174,10 +177,10 @@ REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 
 trainAndTest("nimble.KNNClassifier")
 Data                      # points                  # features
-wifi trainX               1400                      7
-wifi trainY               1400                      1
-wifi testX                600                       7
-wifi testY                600                       1
+wifiData trainX           1400                      7
+wifiData trainY           1400                      1
+wifiData testX            600                       7
+wifiData testY            600                       1
 
 Arguments: k=CV([3, 5, 7])
 Random Seed: 522510084

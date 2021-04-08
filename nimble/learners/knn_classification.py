@@ -8,7 +8,7 @@ training points with lowest distances to the point you are predicting).
 If there is a tie, use k=1
 """
 
-import numpy
+import numpy as np
 
 from nimble import CustomLearner
 from nimble.core._createHelpers import initDataObject
@@ -85,9 +85,9 @@ class KNNClassifier(CustomLearner):
         trainArray = dtypeConvert(self._trainX.copy('numpy array'))
         testArray = dtypeConvert(testX.copy('numpy array'))
         # euclidean distance for each point in test
-        dists = numpy.sqrt(-2 * numpy.dot(testArray, trainArray.T)
-                           + numpy.sum(trainArray**2, axis=1)
-                           + numpy.sum(testArray**2, axis=1)[:, numpy.newaxis])
+        dists = np.sqrt(-2 * np.dot(testArray, trainArray.T)
+                           + np.sum(trainArray**2, axis=1)
+                           + np.sum(testArray**2, axis=1)[:, np.newaxis])
         return dists
 
 

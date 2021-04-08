@@ -12,7 +12,7 @@ wrapping of function calls for the logger takes place in here.
 
 from abc import ABC, abstractmethod
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.core.logger import handleLogging
@@ -1578,7 +1578,7 @@ class Features(ABC):
             )
 
         Fill using nimble's match and fill modules; limit to first
-        feature. Note: None is converted to numpy.nan in nimble.
+        feature. Note: None is converted to np.nan in nimble.
 
         >>> from nimble import match
         >>> from nimble import fill
@@ -1838,7 +1838,7 @@ class Features(ABC):
             featureNames={'category':0, 'id':1, 'quantity':2}
             )
         """
-        if not (isinstance(rule, (int, numpy.integer, str))
+        if not (isinstance(rule, (int, np.integer, str))
                 or hasattr(rule, '__iter__')
                 or hasattr(rule, '__call__')):
             msg = "rule must be an integer, string, iterable of integers "
@@ -1850,7 +1850,7 @@ class Features(ABC):
         for i, value in enumerate(self._base[:, feature]):
             if isinstance(rule, str):
                 splitList.append(value.split(rule))
-            elif isinstance(rule, (int, numpy.number)):
+            elif isinstance(rule, (int, np.number)):
                 splitList.append([value[:rule], value[rule:]])
             elif hasattr(rule, '__iter__'):
                 split = []
@@ -1864,7 +1864,7 @@ class Features(ABC):
                         # item in next iteration
                         startIdx = (value[startIdx:].index(item) +
                                     len(value[:startIdx]) + 1)
-                    elif isinstance(item, (int, numpy.integer)):
+                    elif isinstance(item, (int, np.integer)):
                         split.append(value[startIdx:item])
                         startIdx = item
                     else:

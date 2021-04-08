@@ -8,17 +8,46 @@ source:
 build:
   number: 0
 
-
 requirements:
-  build:
-    - python
+  host:
+    - python {{ python }}
     - setuptools
-    - numpy
-    - cython
+    - numpy >=1.14
 
   run:
-    - python
+    - python {{ python }}
     - numpy
+
+outputs:
+  - name: nimble
+
+  - name: nimble-quickstart
+    requirements:
+      build:
+      host:
+        - python
+        - pandas
+        - scipy
+        - matplotlib
+        - cloudpickle
+        - requests
+        - h5py
+        - python-dateutil
+        - scikit-learn
+      run:
+        - python
+        - pandas
+        - scipy
+        - matplotlib
+        - cloudpickle
+        - requests
+        - h5py
+        - python-dateutil
+        - scikit-learn
+        - {{ pin_subpackage('nimble', max_pin="x.x.x.x") }}
+    test:
+      imports:
+        - nimble
 
 test:
   imports:

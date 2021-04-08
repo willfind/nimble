@@ -1,5 +1,5 @@
 Example of data file structure
-dtwnMinAM : 712pt x 13ft
+downtown_am_min.csv : 712pt x 13ft
 
    date     hr0    hr1    hr2    hr3    hr4    hr5    hr6    hr7    hr8    hr9    hr10   hr11
 
@@ -12,7 +12,7 @@ dtwnMinAM : 712pt x 13ft
 2012-12-31 0.380  0.379  -0.440 -0.441 -1.261 -0.441 -0.440 -0.440 -1.260 0.379  1.199  2.020
 
 Downtown data merged on date
-dtwnMinAM : 717pt x 25ft
+downtown_am_min.csv : 717pt x 25ft
 
    date     hr0    hr1    hr2    hr3   hr4    hr5    hr6   --  hr16   hr17   hr18   hr19   hr20   hr21   hr22   hr23
 
@@ -25,7 +25,7 @@ dtwnMinAM : 717pt x 25ft
 2012-04-16  nan    nan    nan    nan   nan    nan    nan   -- 25.800 25.798 25.799 24.159 23.339 20.878 20.880 21.699
 
 Downtown combined extreme data
-dtwnMinAM : 1430pt x 26ft
+downtown_am_min.csv : 1430pt x 26ft
 
    date    extreme  hr0    hr1    hr2    hr3   hr4    hr5   --  hr16   hr17   hr18   hr19   hr20   hr21   hr22   hr23
 

@@ -9,7 +9,6 @@ import csv
 from io import StringIO, BytesIO
 import os
 import copy
-import sys
 import warnings
 import datetime
 import re
@@ -21,7 +20,7 @@ import urllib.parse
 from types import GeneratorType
 import locale
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
@@ -35,6 +34,10 @@ from nimble._utility import scipy, pd, requests, h5py, dateutil
 from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
 from nimble._utility import allowedNumpyDType
 
+
+# The values that will be considered missing in data by default
+DEFAULT_MISSING = (float('nan'), np.nan, None, '', 'None', 'nan', 'NULL', 'NA')
+
 ###########
 # Helpers #
 ###########
@@ -43,10 +46,10 @@ def _isBase(data):
     return isinstance(data, nimble.core.data.Base)
 
 def _isNumpyArray(data):
-    return isinstance(data, numpy.ndarray)
+    return isinstance(data, np.ndarray)
 
 def _isNumpyMatrix(data):
-    return isinstance(data, numpy.matrix)
+    return isinstance(data, np.matrix)
 
 def _isPandasObject(data, dataframe=True, series=True, sparse=None):
     if pd.nimbleAccessible():
@@ -96,7 +99,7 @@ def isAllowedRaw(data, allowLPT=False):
         return True
     if allowLPT and 'PassThrough' in str(type(data)):
         return True
-    if isinstance(data, (tuple, list, dict, numpy.ndarray, range,
+    if isinstance(data, (tuple, list, dict, np.ndarray, range,
                          GeneratorType)):
         return True
     if _isScipySparse(data):
@@ -148,7 +151,7 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
         return (failPN, failFN)
 
     def isNum(value):
-        return isinstance(value, (bool, int, float, numpy.number))
+        return isinstance(value, (bool, int, float, np.number))
 
     def noDuplicates(row):
         return len(row) == len(set(row))
@@ -181,7 +184,7 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
     return (pointNames, featureNames)
 
 
-def extractNamesFromRawList(rawData, pnamesID, fnamesID):
+def extractNamesFromRawList(rawData, pnamesID, fnamesID, copied):
     """
     Remove name data from a python list.
 
@@ -207,18 +210,15 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
         msg += "the only accepted list formats, yet the (0,0)th element was "
         msg += str(type(rawData[0][0]))
         raise TypeError(msg)
-    mustCopy = ['automatic', True]
-    if pnamesID in mustCopy or fnamesID is mustCopy:
-        # copy rawData to avoid modifying the original user data
-        if isinstance(rawData[0], tuple):
-            rawData = [list(row) for row in rawData]
-        else:
-            rawData = [row.copy() for row in rawData]
 
     firstRow = rawData[0] if len(rawData) > 0 else None
     secondRow = rawData[1] if len(rawData) > 1 else None
     pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow,
                                                 secondRow)
+
+    if not copied and (pnamesID is True or fnamesID is True):
+        rawData = [lst.copy() for lst in rawData]
+        copied = True
     retPNames = None
     if pnamesID is True:
         temp = []
@@ -247,17 +247,17 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID):
     if addedDim:
         rawData = rawData[0]
 
-    return (rawData, retPNames, retFNames)
+    return rawData, retPNames, retFNames, copied
 
 
-def extractNamesFromNumpy(data, pnamesID, fnamesID):
+def extractNamesFromNumpy(data, pnamesID, fnamesID, copied):
     """
     Extract name values from a numpy array.
     """
     # if there are no elements, extraction cannot happen. We return correct
     # results for this case so it is excluded from the subsequent code
     if 0 in data.shape:
-        return data, None, None
+        return data, None, None, copied
 
     # we allow single dimension arrays as input, but we assume 2d from here
     # forward; reshape so that the values constitute a single row.
@@ -274,25 +274,27 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID):
     retPNames = None
     retFNames = None
     if pnamesID is True:
-        retPNames = numpy.array(data[:, 0]).flatten()
-        data = numpy.delete(data, 0, 1)
+        retPNames = np.array(data[:, 0]).flatten()
+        data = np.delete(data, 0, 1)
+        copied = True
         if fnamesID is True:
-            retPNames = numpy.delete(retPNames, 0)
-        retPNames = numpy.vectorize(str)(retPNames)
+            retPNames = np.delete(retPNames, 0)
+        retPNames = np.vectorize(str)(retPNames)
         retPNames = list(retPNames)
     if fnamesID is True:
-        retFNames = numpy.array(data[0]).flatten()
-        data = numpy.delete(data, 0, 0)
-        retFNames = numpy.vectorize(str)(retFNames)
+        retFNames = np.array(data[0]).flatten()
+        data = np.delete(data, 0, 0)
+        copied = True
+        retFNames = np.vectorize(str)(retFNames)
         retFNames = list(retFNames)
 
     if addedDim:
         data = data.reshape(data.shape[1])
 
-    return (data, retPNames, retFNames)
+    return data, retPNames, retFNames, copied
 
 
-def extractNamesFromScipySparse(rawData, pointNames, featureNames):
+def extractNamesFromScipySparse(data, pnamesID, fnamesID, copied):
     """
     Takes a scipy sparse data object, extracts names if needed, and
     returns a coo_matrix of the remaining data and names (if they were
@@ -308,19 +310,12 @@ def extractNamesFromScipySparse(rawData, pointNames, featureNames):
     -------
     a triple : coo_matrix; None or a pointnames; None or featureNames
     """
-    ret = extractNamesFromCooDirect(rawData, pointNames, featureNames)
-
-    return ret
-
-def extractNamesFromCooDirect(data, pnamesID, fnamesID):
-    """
-    Extract names from a scipy sparse coo matrix.
-    """
     if not scipy.nimbleAccessible():
         msg = "scipy is not available"
         raise PackageException(msg)
     if not scipy.sparse.isspmatrix_coo(data):
         data = scipy.sparse.coo_matrix(data)
+        copied = True
     # gather up the first two rows of entries, to check for automatic name
     # extraction.
 #    import pdb
@@ -337,110 +332,70 @@ def extractNamesFromCooDirect(data, pnamesID, fnamesID):
         pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID,
                                                     firstRow, secondRow)
 
-    # run through the entries in the returned coo_matrix to get
-    # point / feature Names.
+    if not pnamesID is True and not fnamesID is True:
+        return data, None, None, copied
 
-    # We justify this time expense by noting that unless this
-    # matrix has an inappropriate number of non-zero entries,
-    # the names we find will likely be a significant proportion
-    # of the present data.
-
-    # these will be ID -> name mappings
-    tempPointNames = {}
-    tempFeatureNames = {}
-
-    newLen = len(data.data)
-    if pnamesID is True:
-        newLen -= data.shape[0]
-    if fnamesID is True:
-        newLen -= data.shape[1]
-    if (pnamesID is True) and (fnamesID is True):
-        newLen += 1
-
-    newRows = numpy.empty(newLen, dtype=data.row.dtype)
-    newCols = numpy.empty(newLen, dtype=data.col.dtype)
-    newData = numpy.empty(newLen, dtype=data.dtype)
-    writeIndex = 0
-    # adjust the sentinal value for easier index modification
-    pnamesID = 0 if pnamesID is True else sys.maxsize
-    fnamesID = 0 if fnamesID is True else sys.maxsize
-    for i in range(len(data.data)):
-        row = data.row[i]
-        setRow = row if row < fnamesID else row - 1
-        col = data.col[i]
-        setCol = col if col < pnamesID else col - 1
-        val = data.data[i]
-
-        colEq = col == pnamesID
-        rowEq = row == fnamesID
-
-        # a true value entry, copy it over
-        if not colEq and not rowEq:
-            # need to adjust the row/col values if we are past the
-            # vector of names
-            newRows[writeIndex] = setRow
-            newCols[writeIndex] = setCol
-            newData[writeIndex] = val
-            writeIndex += 1
-        # inidicates a point name
-        elif colEq and not rowEq:
-            if str(val) in tempPointNames:
-                msg = "The point name " + str(val) + " was given more "
-                msg += "than once in this file"
-                raise InvalidArgumentValue(msg)
-            tempPointNames[setRow] = str(val)
-        # indicates a feature name
-        elif rowEq and not colEq:
-            if str(val) in tempFeatureNames:
-                msg = "The feature name " + str(val) + " was given more "
-                msg += "than once in this file"
-                raise InvalidArgumentValue(msg)
-            tempFeatureNames[setCol] = str(val)
-        # intersection of point and feature names. ignore
-        else:
-            pass
-
-    inTup = (newData, (newRows, newCols))
-    rshape = data.shape[0] if fnamesID == sys.maxsize else data.shape[0] - 1
-    cshape = data.shape[1] if pnamesID == sys.maxsize else data.shape[1] - 1
-    data = scipy.sparse.coo_matrix(inTup, shape=(rshape, cshape))
-
-    # process our results: fill in a zero entry if missing on
-    # each axis and validate
-    def processTempNames(temp, axisName, axisNum):
-        retNames = []
-        zeroPlaced = None
-        for i in range(data.shape[axisNum]):
-            if i not in temp:
-                if zeroPlaced is not None:
-                    msg = axisName + " names not fully specified in the "
-                    msg += "data, at least one of the rows "
-                    msg += str(zeroPlaced) + " and " + str(i) + " must "
-                    msg += "have a non zero value"
-                    raise InvalidArgumentValue(msg)
-                # make a zero of the same dtype as the data
-                name = str(numpy.array([0], dtype=data.dtype)[0])
-                zeroPlaced = i
-            else:
-                name = temp[i]
-            if name in retNames:
-                msg = "The " + axisName + " name " + name + " was "
-                msg += "given more than once in this file"
-                raise InvalidArgumentValue(msg)
-            retNames.append(name)
-        return retNames
-
+    numPts = data.shape[0]
+    numFts = data.shape[1]
+    newData = data.data
+    newRow = data.row
+    newCol = data.col
     retPNames = None
-    if tempPointNames != {}:
-        retPNames = processTempNames(tempPointNames, 'point', 0)
     retFNames = None
-    if tempFeatureNames != {}:
-        retFNames = processTempNames(tempFeatureNames, 'feature', 1)
+    if pnamesID is True:
+        nameCol = newCol == 0
+        index = newRow[nameCol]
+        names = newData[nameCol]
+        idxNameMap = dict(zip( map(int, index), map(str, names)))
+        # retPNames = dict(zip(map(str, names), map(int, index)))
+        if fnamesID is not True and len(idxNameMap) < numPts:
+            # 0 is one of the names, need to find missing index:
+            missing = set(range(numPts)) - idxNameMap.keys()
+            if len(missing) > 1:
+                msg = 'pointNames must be unique. Found multiple zero values '
+                msg += 'in column containing pointNames'
+                raise InvalidArgumentValue(msg)
+            retPNames = {v:k for k, v in idxNameMap.items()}
+            retPNames['0'] = missing.pop()
+        elif fnamesID is True:
+            if 0 in idxNameMap:
+                del idxNameMap[0]
+            retPNames = {}
+            for key, val in idxNameMap.items():
+                retPNames[val] = key - 1
+        else:
+            retPNames = {v:k for k, v in idxNameMap.items()}
 
-    return (data, retPNames, retFNames)
+        numFts -= 1
+        newData = newData[~nameCol]
+        newRow = newRow[~nameCol]
+        newCol = newCol[~nameCol] - 1
+
+    if fnamesID is True:
+        nameRow = newRow == 0
+        index = newCol[nameRow]
+        names = newData[nameRow]
+        retFNames = dict(zip(map(str, names), map(int, index)))
+        if len(retFNames) < numFts:
+            # 0 is one of the names, need to find missing index:
+            missing = set(range(numFts)) - set(retFNames.values())
+            if len(missing) > 1:
+                msg = 'featureNames must be unique. Found multiple zero '
+                msg += 'values in column containing featureNames'
+                raise InvalidArgumentValue(msg)
+            retFNames['0'] = missing.pop()
+        numPts -= 1
+        newData = newData[~nameRow]
+        newRow = newRow[~nameRow] - 1
+        newCol = newCol[~nameRow]
+
+    data = scipy.sparse.coo_matrix((newData, (newRow, newCol)),
+                                   shape=(numPts, numFts))
+
+    return data, retPNames, retFNames, True
 
 
-def extractNamesFromPdDataFrame(rawData, pnamesID, fnamesID):
+def extractNamesFromPdDataFrame(rawData, pnamesID, fnamesID, copied):
     """
     Output the index of rawData as pointNames.
     Output the columns of rawData as featureNames.
@@ -450,6 +405,9 @@ def extractNamesFromPdDataFrame(rawData, pnamesID, fnamesID):
     pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow,
                                                 secondRow)
 
+    if not copied and (pnamesID is True or fnamesID is True):
+        rawData = rawData.copy()
+        copied = True
     retPNames = None
     if pnamesID is True:
         retPNames = [str(i) for i in rawData.index.tolist()]
@@ -458,13 +416,16 @@ def extractNamesFromPdDataFrame(rawData, pnamesID, fnamesID):
     if fnamesID is True:
         retFNames = [str(i) for i in rawData.columns.tolist()]
 
-    return (rawData, retPNames, retFNames)
+    return rawData, retPNames, retFNames, copied
 
 
-def extractNamesFromPdSeries(rawData, pnamesID, fnamesID):
+def extractNamesFromPdSeries(rawData, pnamesID, fnamesID, copied):
     """
     Output the index of rawData as featureNames.
     """
+    if not copied and (pnamesID is True or fnamesID is True):
+        rawData = rawData.copy()
+        copied = True
     retPNames = None
     if pnamesID is True:
         retPNames = [rawData.index[0]]
@@ -473,9 +434,9 @@ def extractNamesFromPdSeries(rawData, pnamesID, fnamesID):
     retFNames = None
     if fnamesID is True:
         retFNames = [str(i) for i in rawData.index.tolist()]
-        rawData = numpy.empty((0, len(retFNames)))
+        rawData = np.empty((0, len(retFNames)))
 
-    return (rawData, retPNames, retFNames)
+    return rawData, retPNames, retFNames, copied
 
 
 def transposeMatrix(matrixObj):
@@ -502,7 +463,7 @@ def _dictFeatureNames(featureNames, foundFtNames, data):
                 raise InvalidArgumentValue(msg)
             # reordering of features is necessary
             newOrder = [foundFtNames.index(f) for f in featureNames]
-            if isinstance(data, numpy.ndarray):
+            if isinstance(data, np.ndarray):
                 data = data[newOrder]
             else:
                 data = [data[i] for i in newOrder]
@@ -514,7 +475,7 @@ def _dictFeatureNames(featureNames, foundFtNames, data):
     return featureNames, data
 
 
-def extractNames(rawData, pointNames, featureNames):
+def extractNames(rawData, pointNames, featureNames, copied):
     """
     Extract the point and feature names from the raw data, if necessary.
     """
@@ -543,7 +504,7 @@ def extractNames(rawData, pointNames, featureNames):
             raise InvalidArgumentValue(msg)
         if rawData:
             ftNames = list(rawData.keys())
-            rawData = numpy2DArray(list(rawData.values()), dtype=numpy.object_)
+            rawData = numpy2DArray(list(rawData.values()), dtype=np.object_)
             featureNames, rawData = _dictFeatureNames(featureNames, ftNames,
                                                       rawData)
             if len(ftNames) == len(rawData):
@@ -555,7 +516,7 @@ def extractNames(rawData, pointNames, featureNames):
                 # transpose is not needed
                 rawData = transposeMatrix(rawData)
         else: # rawData={}
-            rawData = numpy.empty([0, 0])
+            rawData = np.empty([0, 0])
             if featureNames is True:
                 msg = 'featureNames cannot be True when data is an empty dict'
                 raise InvalidArgumentValue(msg)
@@ -618,7 +579,7 @@ def extractNames(rawData, pointNames, featureNames):
             func = extractNamesFromNumpy
         elif _isScipySparse(rawData):
             # all input coo_matrices must have their duplicates removed; all
-            # helpers past this point rely on there being single entires only.
+            # helpers past this point rely on there being single entries only.
             if isinstance(rawData, scipy.sparse.coo_matrix):
                 rawData = removeDuplicatesNative(rawData)
             func = extractNamesFromScipySparse
@@ -627,8 +588,8 @@ def extractNames(rawData, pointNames, featureNames):
         elif _isPandasSeries(rawData):
             func = extractNamesFromPdSeries
 
-        rawData, tempPointNames, tempFeatureNames = func(rawData, pointNames,
-                                                         featureNames)
+        rawData, tempPointNames, tempFeatureNames, copied = func(
+            rawData, pointNames, featureNames, copied)
 
         # tempPointNames and tempFeatures may either be None or explicit names.
         # pointNames and featureNames may be True, False, None, 'automatic', or
@@ -670,16 +631,16 @@ def extractNames(rawData, pointNames, featureNames):
         else:
             assert tempFeatureNames is None
 
-    return rawData, pointNames, featureNames
+    return rawData, pointNames, featureNames, copied
 
 
-def convertData(returnType, rawData, pointNames, featureNames):
+def convertData(returnType, rawData, pointNames, featureNames, copied):
     """
     Convert data to an object type which is compliant with the
     initializion for the given returnType.
     """
     typeMatch = {'List': list,
-                 'Matrix': numpy.ndarray}
+                 'Matrix': np.ndarray}
     if scipy.nimbleAccessible():
         typeMatch['Sparse'] = scipy.sparse.spmatrix
     if pd.nimbleAccessible():
@@ -703,9 +664,17 @@ def convertData(returnType, rawData, pointNames, featureNames):
             lenFts = len(featureNames) if featureNames else 0
             if len(rawData) == 0:
                 lenPts = len(pointNames) if pointNames else 0
-                return numpy.empty([lenPts, lenFts])
-            if hasattr(rawData[0], '__len__') and len(rawData[0]) == 0:
-                return numpy.empty([len(rawData), lenFts])
+                return np.empty([lenPts, lenFts])
+            if (hasattr(rawData[0], '__len__') and
+                    not isinstance(rawData[0], str)):
+                if len(rawData[0]) == 0:
+                    return np.empty([len(rawData), lenFts])
+                # list of other iterators
+                if not all(isinstance(pt, list) for pt in rawData):
+                    if not copied:
+                        rawData = rawData.copy()
+                    for i, iterator in enumerate(rawData):
+                        rawData[i] = list(iterator)
         elif returnType == 'Matrix' and len(rawData.shape) == 1:
             rawData = numpy2DArray(rawData)
         return rawData
@@ -728,7 +697,7 @@ def convertToBest(rawData, pointNames, featureNames):
         return pandasDataFrameToList(rawData)
     if _isPandasSeries(rawData):
         if rawData.empty:
-            return numpy.empty((0, rawData.shape[0]))
+            return np.empty((0, rawData.shape[0]))
         return [rawData.to_list()]
     if _isScipySparse(rawData):
         return sparseMatrixToArray(rawData)
@@ -742,7 +711,7 @@ def convertToBest(rawData, pointNames, featureNames):
     if not rawData: # empty
         lenFts = len(featureNames) if featureNames else 0
         lenPts = len(pointNames) if pointNames else 0
-        return numpy.empty((lenPts, lenFts))
+        return np.empty((lenPts, lenFts))
     if rawData and isAllowedSingleElement(rawData[0]):
         return [rawData]
     if not all(isinstance(point, list) for point in rawData):
@@ -751,7 +720,7 @@ def convertToBest(rawData, pointNames, featureNames):
     return rawData
 
 def _parseDatetime(elemType):
-    isDatetime = elemType in [datetime.datetime, numpy.datetime64]
+    isDatetime = elemType in [datetime.datetime, np.datetime64]
     if pd.nimbleAccessible():
         isDatetime = isDatetime or elemType == pd.Timestamp
     if isDatetime and not dateutil.nimbleAccessible():
@@ -761,9 +730,9 @@ def _parseDatetime(elemType):
     return isDatetime
 
 def _numpyArrayDatetimeParse(data, datetimeType):
-    data = numpy.vectorize(dateutil.parser.parse)(data)
+    data = np.vectorize(dateutil.parser.parse)(data)
     if datetimeType is not datetime.datetime:
-        data = numpy.vectorize(datetimeType)(data)
+        data = np.vectorize(datetimeType)(data)
         data = data.astype(datetimeType)
     return data
 
@@ -779,7 +748,7 @@ def elementTypeConvert(data, convertToType):
     Attempt to convert data to the specified convertToType.
     """
     singleType = not isinstance(convertToType, list)
-    objectTypes = (object, numpy.object_)
+    objectTypes = (object, np.object_)
     try:
         if singleType and _isNumpyArray(data):
             if _parseDatetime(convertToType):
@@ -787,14 +756,14 @@ def elementTypeConvert(data, convertToType):
             else:
                 data = data.astype(convertToType)
             if not allowedNumpyDType(data.dtype):
-                data = data.astype(numpy.object_)
+                data = data.astype(np.object_)
         elif singleType and _isScipySparse(data):
             if _parseDatetime(convertToType):
                 data.data = _numpyArrayDatetimeParse(data.data, convertToType)
             else:
                 data.data = data.data.astype(convertToType)
             if not allowedNumpyDType(data.data.dtype):
-                data.data = data.data.astype(numpy.object_)
+                data.data = data.data.astype(np.object_)
         elif singleType and _isPandasDataFrame(data):
             if _parseDatetime(convertToType):
                 data = data.applymap(dateutil.parser.parse)
@@ -816,7 +785,7 @@ def elementTypeConvert(data, convertToType):
                 convType = convertToType[j]
                 if convType is None:
                     continue
-                data = data.astype(numpy.object_)
+                data = data.astype(np.object_)
                 if _parseDatetime(convType):
                     feature = _numpyArrayDatetimeParse(feature, convType)
                 data[:, j] = feature.astype(convType)
@@ -824,7 +793,7 @@ def elementTypeConvert(data, convertToType):
             for col, convType in enumerate(convertToType):
                 if convType is None:
                     continue
-                data = data.astype(numpy.object_)
+                data = data.astype(np.object_)
                 colMask = data.col == col
                 if _parseDatetime(convType):
                     feature = _numpyArrayDatetimeParse(data.data[colMask],
@@ -854,92 +823,86 @@ def elementTypeConvert(data, convertToType):
         msg += "'{0}'. {1}".format(convertToType, repr(error))
         raise InvalidArgumentValue(msg) from error
 
-def replaceNumpyValues(data, toReplace, replaceWith):
-    """
-    Replace values in a numpy array.
-
-    Parameters
-    ----------
-    data : numpy.ndarray
-        A numpy array of data.
-    toReplace : list
-        A list of values to search and replace in the data.
-    replaceWith : value
-        The value which will replace any values in ``toReplace``.
-    """
-    # if data has numeric dtype and replacing with a numeric value, do not
-    # process any non-numeric values since it can only contain numeric values
-    if (numpy.issubclass_(data.dtype.type, numpy.number)
-            and isinstance(replaceWith, (int, float, numpy.number))):
-        toReplace = [val for val in toReplace
-                     if isinstance(val, (int, float, numpy.number))]
-        toReplace = numpy.array(toReplace)
-    else:
-        toReplace = numpy.array(toReplace, dtype=numpy.object_)
-
-    # numpy.isin cannot handle nan replacement, so if nan is in
-    # toReplace we instead set the flag to trigger nan replacement
-    replaceNan = any(isinstance(val, float) and numpy.isnan(val)
-                     for val in toReplace)
-
-    # try to avoid converting dtype if possible for efficiency.
-    try:
-        replaceLocs = numpy.isin(data, toReplace)
-        if replaceLocs.any():
-            if data.dtype == bool and not isinstance(replaceWith, bool):
-                # numpy will replace with bool(replaceWith) instead
-                raise ValueError('replaceWith is not a bool type')
-            data[replaceLocs] = replaceWith
-        if replaceNan:
-            nanLocs = data != data
-            if nanLocs.any():
-                data[nanLocs] = replaceWith
-    except ValueError:
-        dtype = type(replaceWith)
-        if not allowedNumpyDType(dtype):
-            dtype = numpy.object_
-
-        data = data.astype(dtype)
-        data[numpy.isin(data, toReplace)] = replaceWith
-        if replaceNan:
-            data[data != data] = replaceWith
-    return data
-
-
-def replaceMissingData(rawData, treatAsMissing, replaceMissingWith):
+def _replaceMissingData(rawData, treatAsMissing, replaceMissingWith, copied):
     """
     Convert any values in rawData found in treatAsMissing with
     replaceMissingWith value.
     """
+    def getNumpyReplaceLocations(data):
+        # if data has numeric dtype and replacing with a numeric value,
+        # non-numeric values can be removed possible values to replace
+        numeric = (int, float, np.number)
+        if (np.issubclass_(data.dtype.type, np.number)
+                and isinstance(replaceMissingWith, numeric)):
+            toReplace = np.array([val for val in treatAsMissing
+                                     if isinstance(val, numeric)])
+        else:
+            toReplace = np.array(treatAsMissing, dtype=np.object_)
+
+        replaceLocs = np.isin(data, toReplace)
+        # np.isin cannot handle nan replacement, so if nan is in
+        # toReplace we instead set the flag to trigger nan replacement
+        replaceNan = any(isinstance(val, float) and np.isnan(val)
+                         for val in toReplace)
+        if replaceNan:
+            nanLocs = data != data
+            replaceLocs = replaceLocs | nanLocs
+
+        return replaceLocs
+
+    def replaceNumpyValues(data, replaceLocs):
+        # try to avoid converting dtype if possible for efficiency.
+        try:
+            if data.dtype == bool and not isinstance(replaceMissingWith, bool):
+                # numpy will replace with bool(replaceWith) instead
+                raise ValueError('replaceWith is not a bool type')
+            data[replaceLocs] = replaceMissingWith
+        except ValueError:
+            dtype = type(replaceMissingWith)
+            if not allowedNumpyDType(dtype):
+                dtype = np.object_
+            data = data.astype(dtype)
+            data[replaceLocs] = replaceMissingWith
+
+        return data
+
     # pandas 1.0: SparseDataFrame still in pd namespace but does not work
     # Sparse functionality now determined by presence of .sparse accessor
     # need to convert sparse objects to coo matrix before handling missing
     if _isPandasSparse(rawData):
         rawData = scipy.sparse.coo_matrix(rawData)
+        copied = True
 
-    if isinstance(rawData, (list, tuple)):
-        handleMissing = numpy.array(rawData, dtype=numpy.object_)
-        handleMissing = replaceNumpyValues(handleMissing, treatAsMissing,
-                                           replaceMissingWith)
-        rawData = handleMissing.tolist()
-
-    elif _isNumpyArray(rawData):
-        rawData = replaceNumpyValues(rawData, treatAsMissing,
-                                     replaceMissingWith)
-
+    if _isNumpyArray(rawData):
+        replaceLocs = getNumpyReplaceLocations(rawData)
+        if replaceLocs.any():
+            if not copied:
+                rawData = rawData.copy()
+                copied = True
+            rawData = replaceNumpyValues(rawData, replaceLocs)
     elif scipy.sparse.issparse(rawData):
-        handleMissing = replaceNumpyValues(rawData.data, treatAsMissing,
-                                           replaceMissingWith)
-        rawData.data = handleMissing
-
+        replaceLocs = getNumpyReplaceLocations(rawData.data)
+        if replaceLocs.any():
+            if not copied:
+                rawData = rawData.copy()
+                copied = True
+            rawData.data = replaceNumpyValues(rawData.data, replaceLocs)
     elif _isPandasDense(rawData):
         if len(rawData.values) > 0:
-            # .where keeps the values that return True, use ~ to replace those
-            # values instead
-            rawData = rawData.where(~rawData.isin(treatAsMissing),
-                                    replaceMissingWith)
+            replaceLocs = getNumpyReplaceLocations(rawData.values)
+            if replaceLocs.any():
+                # .where keeps the True values, use ~ to replace instead
+                rawData = rawData.where(~replaceLocs, replaceMissingWith)
+                copied = True
+    else:
+        array = np.array(rawData, dtype=np.object_)
+        replaceLocs = getNumpyReplaceLocations(array)
+        if replaceLocs.any():
+            replaced = replaceNumpyValues(array, replaceLocs)
+            rawData = replaced.tolist()
+            copied = True
 
-    return rawData
+    return rawData, copied
 
 
 class SparseCOORowIterator:
@@ -955,13 +918,13 @@ class SparseCOORowIterator:
 
     def __next__(self):
         if self.rowIdx < self.data.shape[0]:
-            point = numpy.zeros((self.data.shape[1],))
+            point = np.zeros((self.data.shape[1],))
             row = self.data.row == self.rowIdx
             for val, col in zip(self.data.data[row], self.data.col[row]):
                 try:
                     point[col] = val
                 except ValueError:
-                    point = point.astype(numpy.object_)
+                    point = point.astype(np.object_)
                     point[col] = val
 
             self.rowIdx += 1
@@ -984,7 +947,7 @@ class GenericPointIterator:
         if _isBase(data) and data.shape[0] > 1:
             self.iterator = data.points
         elif _isNumpyMatrix(data):
-            self.iterator = iter(numpy.array(data))
+            self.iterator = iter(np.array(data))
         elif isinstance(data, dict):
             self.iterator = iter(data.values())
         elif _isPandasObject(data):
@@ -1132,13 +1095,13 @@ def flattenHighDimensionFeatures(rawData):
     """
     Flatten data with multi-dimensional features to vectors.
 
-    Features are flattened point by point whether numpy.reshape or
+    Features are flattened point by point whether np.reshape or
     flattenToOneDimension are used.
     """
-    if _isNumpyArray(rawData) and rawData.dtype != numpy.object_:
+    if _isNumpyArray(rawData) and rawData.dtype != np.object_:
         origDims = rawData.shape
-        newShape = (rawData.shape[0], numpy.prod(rawData.shape[1:]))
-        rawData = numpy.reshape(rawData, newShape)
+        newShape = (rawData.shape[0], np.prod(rawData.shape[1:]))
+        rawData = np.reshape(rawData, newShape)
     else:
         if hasattr(rawData, 'shape'):
             numPts = rawData.shape[0]
@@ -1149,7 +1112,7 @@ def flattenHighDimensionFeatures(rawData):
         firstPointFlat, ptDims = flattenToOneDimension(firstPoint)
         origDims = tuple([numPts] + list(ptDims))
         numFts = len(firstPointFlat)
-        rawData = numpy.empty((numPts, numFts), dtype=numpy.object_)
+        rawData = np.empty((numPts, numFts), dtype=np.object_)
         rawData[0] = firstPointFlat
         for i, point in enumerate(points):
             flat, dims = flattenToOneDimension(point)
@@ -1232,11 +1195,10 @@ def convertToTypeDictToList(convertToType, featuresObj, featureNames):
     return convertList
 
 def initDataObject(
-        returnType, rawData, pointNames, featureNames, name=None, path=None,
-        keepPoints='all', keepFeatures='all', convertToType=None,
-        reuseData=False, treatAsMissing=(float('nan'), numpy.nan, None, '',
-                                         'None', 'nan', 'NULL', 'NA'),
-        replaceMissingWith=numpy.nan, skipDataProcessing=False,
+        returnType, rawData, pointNames, featureNames, name=None,
+        convertToType=None, keepPoints='all', keepFeatures='all',
+        treatAsMissing=DEFAULT_MISSING, replaceMissingWith=np.nan,
+        copyData=True, skipDataProcessing=False, paths=(None, None),
         extracted=(None, None)):
     """
     1. Argument Validation
@@ -1265,7 +1227,6 @@ def initDataObject(
         msg += "features that do not require conversion."
         raise InvalidArgumentTypeCombination(msg)
 
-
     if returnType is None:
         # scipy sparse matrix or a pandas sparse object
         if _isScipySparse(rawData) or _isPandasSparse(rawData):
@@ -1278,8 +1239,16 @@ def initDataObject(
         rawData = rawData._data
     elif isinstance(rawData, (range, GeneratorType)):
         rawData = list(rawData)
-    if not reuseData:
+
+    if copyData is None:
+        # signals data was constructed internally and can be modified so it
+        # can be considered copied for the purposes of this function
+        copied = True
+    elif copyData:
         rawData = copy.deepcopy(rawData)
+        copied = True
+    else:
+        copied = False
 
     # record if extraction occurred before we possibly modify *Names parameters
     ptsExtracted = extracted[0] if extracted[0] else pointNames is True
@@ -1290,9 +1259,12 @@ def initDataObject(
     kwargs = {}
     # convert these types as indexing may cause dimensionality confusion
     if _isNumpyMatrix(rawData):
-        rawData = numpy.array(rawData)
-    if _isScipySparse(rawData):
+        rawData = np.array(rawData)
+        copied = True
+    if _isScipySparse(rawData) and not scipy.sparse.isspmatrix_coo(rawData):
         rawData = rawData.tocoo()
+        copied = True
+        copied = True
 
     if isHighDimensionData(rawData, skipDataProcessing):
         # additional name validation / processing before extractNames
@@ -1300,6 +1272,7 @@ def initDataObject(
                                                       featureNames)
         rawData, tensorShape = flattenHighDimensionFeatures(rawData)
         kwargs['shape'] = tensorShape
+        copied = True
 
     if skipDataProcessing:
         if returnType == 'List':
@@ -1307,30 +1280,14 @@ def initDataObject(
         pointNames = pointNames if pointNames != 'automatic' else None
         featureNames = featureNames if featureNames != 'automatic' else None
     else:
-        rawData, pointNames, featureNames = extractNames(rawData, pointNames,
-                                                         featureNames)
+        rawData, pointNames, featureNames, copied = extractNames(
+            rawData, pointNames, featureNames, copied)
         if treatAsMissing is not None:
-            rawData = replaceMissingData(rawData, treatAsMissing,
-                                         replaceMissingWith)
+            rawData, copied = _replaceMissingData(rawData, treatAsMissing,
+                                                 replaceMissingWith, copied)
     # convert data to a type compatible with the returnType init method
-    rawData = convertData(returnType, rawData, pointNames, featureNames)
-
-    pathsToPass = (None, None)
-    if path is not None:
-        # used in data type unit testing, need a way to specify path values
-        if isinstance(path, tuple):
-            pathsToPass = path
-        else:
-            if path.startswith('http'):
-                pathsToPass = (path, None)
-            elif os.path.isabs(path):
-                absPath = path
-                relPath = os.path.relpath(path)
-                pathsToPass = (absPath, relPath)
-            else:
-                absPath = os.path.abspath(path)
-                relPath = path
-                pathsToPass = (absPath, relPath)
+    rawData = convertData(returnType, rawData, pointNames, featureNames,
+                          copied)
 
     initMethod = getattr(nimble.core.data, returnType)
     # if limiting data based on keepPoints or keepFeatures,
@@ -1344,9 +1301,8 @@ def initDataObject(
     else:
         useFNames = True if featureNames is True else None
 
-    ret = initMethod(rawData, pointNames=usePNames,
-                     featureNames=useFNames, name=name, paths=pathsToPass,
-                     reuseData=reuseData, **kwargs)
+    ret = initMethod(rawData, pointNames=usePNames, featureNames=useFNames,
+                     name=name, paths=paths, reuseData=True, **kwargs)
 
     def makeCmp(keepList, outerObj, axis):
         if axis == 'point':
@@ -1583,9 +1539,9 @@ def _decompressGZip(ioStream):
         return BytesIO(unzipped.read())
 
 def createDataFromFile(
-        returnType, source, pointNames, featureNames, name,
-        ignoreNonNumericalFeatures, keepPoints, keepFeatures, convertToType,
-        inputSeparator, treatAsMissing, replaceMissingWith):
+        returnType, source, pointNames, featureNames, name, convertToType,
+        keepPoints, keepFeatures, treatAsMissing, replaceMissingWith,
+        ignoreNonNumericalFeatures, inputSeparator):
     """
     Helper for nimble.data which deals with the case of loading data
     from a file. Returns a triple containing the raw data, pointNames,
@@ -1697,9 +1653,23 @@ def createDataFromFile(
 
     retData, retPNames, retFNames = loaded
 
+    if path is None:
+        pathsToPass = (None, None)
+    else:
+        if path.startswith('http'):
+            pathsToPass = (path, None)
+        elif os.path.isabs(path):
+            absPath = path
+            relPath = os.path.relpath(path)
+            pathsToPass = (absPath, relPath)
+        else:
+            absPath = os.path.abspath(path)
+            relPath = path
+            pathsToPass = (absPath, relPath)
+
     if path is not None and name is None:
         tokens = path.rsplit(os.path.sep)
-        name = tokens[len(tokens) - 1]
+        name = tokens[-1]
 
     extracted = (pointNames is True, featureNames is True)
     if selectSuccess:
@@ -1713,10 +1683,10 @@ def createDataFromFile(
             retFNames = featureNames
 
     return initDataObject(
-        returnType, retData, retPNames, retFNames, name, path,
-        keepPoints, keepFeatures, convertToType=convertToType,
-        treatAsMissing=treatAsMissing, replaceMissingWith=replaceMissingWith,
-        extracted=extracted)
+        returnType, retData, retPNames, retFNames, name, convertToType,
+        keepPoints, keepFeatures, treatAsMissing=treatAsMissing,
+        replaceMissingWith=replaceMissingWith, copyData=None,
+        paths=pathsToPass, extracted=extracted)
 
 
 def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
@@ -1724,7 +1694,7 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
     """
     Create nimble data objects containing constant values.
 
-    Use numpy.ones or numpy.zeros to create constant nimble objects of
+    Use np.ones or np.zeros to create constant nimble objects of
     the designated returnType.
     """
     validateReturnType(returnType)
@@ -1747,12 +1717,13 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
         if not scipy.nimbleAccessible():
             msg = "scipy is not available"
             raise PackageException(msg)
-        if numpyMaker == numpy.ones:
+        if numpyMaker is np.ones:
             rawDense = numpyMaker((numPoints, numFeatures))
             rawSparse = scipy.sparse.coo_matrix(rawDense)
-        else:  # case: numpyMaker == numpy.zeros
-            assert numpyMaker == numpy.zeros
+        elif numpyMaker is np.zeros:
             rawSparse = scipy.sparse.coo_matrix((numPoints, numFeatures))
+        else:
+            raise ValueError('numpyMaker must be np.ones or np.zeros')
         return nimble.data(returnType, rawSparse, pointNames=pointNames,
                            featureNames=featureNames, name=name, useLog=False)
 
@@ -2130,8 +2101,6 @@ def _loadmtxForAuto(ioStream, pointNames, featureNames, encoding):
     ioStream.seek(startPosition)
     data = scipy.io.mmread(ioStream)
 
-    temp = (data, None, None)
-
     if pointNames is True or featureNames is True:
         # the helpers operate based on positional inputs with a None
         # sentinal indicating no extration. So we need to convert from
@@ -2139,14 +2108,20 @@ def _loadmtxForAuto(ioStream, pointNames, featureNames, encoding):
 #        pNameID = 0 if pointNames is True else None
 #        fNameID = 0 if featureNames is True else None
         if scipy.sparse.issparse(data):
-            temp = extractNamesFromScipySparse(data, pointNames, featureNames)
+            extractor = extractNamesFromScipySparse
         else:
-            temp = extractNamesFromNumpy(data, pointNames, featureNames)
+            extractor = extractNamesFromNumpy
+
+        data, extPNames, extFNames, _ = extractor(data, pointNames,
+                                                  featureNames, True)
+
+    else:
+        extPNames = None
+        extFNames = None
 
     # choose between names extracted automatically from comments
     # (retPNames) vs names extracted explicitly from the data
     # (extPNames). extPNames has priority.
-    (data, extPNames, extFNames) = temp
     retPNames = extPNames if retPNames is None else retPNames
     retFNames = extFNames if retFNames is None else retFNames
 
@@ -2181,7 +2156,7 @@ def _loadhdf5ForAuto(ioStream, pointNames, featureNames):
         expShape = None
         for key, val in hdf.items():
             ptData = extractArray(val)
-            ptShape = numpy.array(ptData).shape
+            ptShape = np.array(ptData).shape
             if expShape is None:
                 expShape = ptShape
             elif expShape != ptShape:

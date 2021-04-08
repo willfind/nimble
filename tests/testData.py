@@ -1,5 +1,5 @@
 import tempfile
-import numpy
+import numpy as np
 import os
 import sys
 import copy
@@ -28,7 +28,6 @@ from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import FileFormatException
 from nimble.core.data._dataHelpers import DEFAULT_PREFIX, isDefaultName
 from nimble.core._createHelpers import _intFloatOrString
-from nimble.core._createHelpers import replaceNumpyValues
 from nimble._utility import sparseMatrixToArray, isDatetime, requests
 
 # from .. import logger
@@ -39,7 +38,7 @@ from tests.helpers import calledException, CalledFunctionException
 returnTypes = copy.copy(nimble.core.data.available)
 returnTypes.append(None)
 
-datetimeTypes = (datetime.datetime, numpy.datetime64, pd.Timestamp)
+datetimeTypes = (datetime.datetime, np.datetime64, pd.Timestamp)
 
 class NoIter(object):
     def __init__(self, vals):
@@ -221,7 +220,7 @@ def test_data_raw_stringConversion_int():
         toTest = nimble.data(t, [['1','2','3'], ['4','5','6'], ['7','8','9']],
                              convertToType=int)
         for elem in toTest.iterateElements():
-            assert isinstance(elem, (int, numpy.integer))
+            assert isinstance(elem, (int, np.integer))
 
 def test_data_raw_stringConversion_datetimeTypes():
     for datetimeType in datetimeTypes:
@@ -282,8 +281,8 @@ def test_data_raw_conversionList():
         toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
                              convertToType=[int, float, str])
         for i in range(len(toTest.points)):
-            assert isinstance(toTest[i, 0], (int, numpy.integer))
-            assert isinstance(toTest[i, 1], (float, numpy.floating))
+            assert isinstance(toTest[i, 0], (int, np.integer))
+            assert isinstance(toTest[i, 1], (float, np.floating))
             assert isinstance(toTest[i, 2], str)
 
 def test_data_raw_conversionList_None():
@@ -291,9 +290,9 @@ def test_data_raw_conversionList_None():
         toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
                              convertToType=[int, float, None])
         for i in range(len(toTest.points)):
-            assert isinstance(toTest[i, 0], (int, numpy.integer))
-            assert isinstance(toTest[i, 1], (float, numpy.floating))
-            assert isinstance(toTest[i, 2], (int, numpy.integer))
+            assert isinstance(toTest[i, 0], (int, np.integer))
+            assert isinstance(toTest[i, 1], (float, np.floating))
+            assert isinstance(toTest[i, 2], (int, np.integer))
 
 def test_data_raw_conversionList_datetimeTypes():
     dates = [[1, '3', '03-13-1913'],
@@ -333,8 +332,8 @@ def test_data_raw_conversionList_keepFeatures_allData():
                              convertToType=[int, float, None],
                              keepFeatures=[1, 0])
         for i in range(len(toTest.points)):
-            assert isinstance(toTest[i, 0], (float, numpy.floating))
-            assert isinstance(toTest[i, 1], (int, numpy.integer))
+            assert isinstance(toTest[i, 0], (float, np.floating))
+            assert isinstance(toTest[i, 1], (int, np.integer))
 
 def test_data_raw_conversionList_keepFeatures_keptData():
     for t in returnTypes:
@@ -342,8 +341,8 @@ def test_data_raw_conversionList_keepFeatures_keptData():
                              convertToType=[int, float],
                              keepFeatures=[1, 0])
         for i in range(len(toTest.points)):
-            assert isinstance(toTest[i, 0], (int, numpy.integer))
-            assert isinstance(toTest[i, 1], (float, numpy.floating))
+            assert isinstance(toTest[i, 0], (int, np.integer))
+            assert isinstance(toTest[i, 1], (float, np.floating))
 
 def test_data_raw_conversionDict():
     for t in returnTypes:
@@ -351,8 +350,8 @@ def test_data_raw_conversionDict():
                              featureNames = ['a', 'b', 'c'],
                              convertToType={'a': int, 1: float, 'c': str})
         for i in range(len(toTest.points)):
-            assert isinstance(toTest[i, 0], (int, numpy.integer))
-            assert isinstance(toTest[i, 1], (float, numpy.floating))
+            assert isinstance(toTest[i, 0], (int, np.integer))
+            assert isinstance(toTest[i, 1], (float, np.floating))
             assert isinstance(toTest[i, 2], str)
 
 def test_data_raw_conversionDict_limited():
@@ -361,9 +360,9 @@ def test_data_raw_conversionDict_limited():
                              featureNames = ['a', 'b', 'c'],
                              convertToType={'b': float})
         for i in range(len(toTest.points)):
-            assert isinstance(toTest[i, 0], (int, numpy.integer))
-            assert isinstance(toTest[i, 1], (float, numpy.floating))
-            assert isinstance(toTest[i, 0], (int, numpy.integer))
+            assert isinstance(toTest[i, 0], (int, np.integer))
+            assert isinstance(toTest[i, 1], (float, np.floating))
+            assert isinstance(toTest[i, 0], (int, np.integer))
 
 def test_data_raw_conversionDict_validUnusedFtName():
     for t in returnTypes:
@@ -389,9 +388,9 @@ def test_data_raw_conversionDict_indexAndNameSameFt_match():
                              featureNames = ['a', 'b', 'c'],
                              convertToType={'b': float, 1: float})
         for i in range(len(toTest.points)):
-            assert isinstance(toTest[i, 0], (int, numpy.integer))
-            assert isinstance(toTest[i, 1], (float, numpy.floating))
-            assert isinstance(toTest[i, 0], (int, numpy.integer))
+            assert isinstance(toTest[i, 0], (int, np.integer))
+            assert isinstance(toTest[i, 1], (float, np.floating))
+            assert isinstance(toTest[i, 0], (int, np.integer))
 
 def test_data_raw_conversionDict_datetimeTypes():
     dates = [[1, '3', '03-13-1913'],
@@ -425,8 +424,8 @@ def test_data_raw_conversionDict_keepFeatures_ftNames():
                              convertToType={'a': int, 'b': float},
                              keepFeatures=[0, 1])
         for i in range(len(toTest.points)):
-            assert isinstance(toTest[i, 0], (int, numpy.integer))
-            assert isinstance(toTest[i, 1], (float, numpy.floating))
+            assert isinstance(toTest[i, 0], (int, np.integer))
+            assert isinstance(toTest[i, 1], (float, np.floating))
 
 def test_data_raw_conversionDict_keepFeatures_index():
     for t in returnTypes:
@@ -475,7 +474,7 @@ def test_data_raw_pointAndFeatureIterators():
 def test_data_raw_datetime():
     for t in returnTypes:
         rawData = [[datetime.datetime(2020, 1, 1), -16, 2],
-                   [numpy.datetime64('2020-01-02'), -24, -6],
+                   [np.datetime64('2020-01-02'), -24, -6],
                    [pd.Timestamp(year=2020, month=2, day=3), -30, -18]]
         toTest = nimble.data(t, rawData)
         for date in toTest.features[0].iterateElements():
@@ -865,7 +864,7 @@ def test_data_HDF5_data():
         # HDF5 commonly uses two extensions .hdf5 and .h5
         for suffix in ['.hdf5', '.h5']:
             with tempfile.NamedTemporaryFile(suffix=suffix) as tmpHDF:
-                arr = numpy.array([[1, 2], [3, 4]])
+                arr = np.array([[1, 2], [3, 4]])
                 hdfFile = h5py.File(tmpHDF, 'w')
                 one = hdfFile.create_group('one')
                 one.create_dataset('mtx1', data=arr)
@@ -891,7 +890,7 @@ def test_data_HDF5_dataRandomExtension():
                                                     [[1, 2], [3, 4]]]])
 
         with tempfile.NamedTemporaryFile(suffix=".data") as tmpHDF:
-            arr = numpy.array([[1, 2], [3, 4]])
+            arr = np.array([[1, 2], [3, 4]])
             hdfFile = h5py.File(tmpHDF, 'w')
             one = hdfFile.create_group('one')
             one.create_dataset('mtx1', data=arr)
@@ -920,7 +919,7 @@ def test_data_HDF5_dataDifferentStructures():
         # Case 1: file contains single Dataset with all data
         with tempfile.NamedTemporaryFile(suffix=".h5") as tmpHDF:
             hdfFile = h5py.File(tmpHDF, 'w')
-            ds1 = hdfFile.create_dataset('data', data=numpy.array(data))
+            ds1 = hdfFile.create_dataset('data', data=np.array(data))
             hdfFile.flush()
             hdfFile.close()
             tmpHDF.seek(0)
@@ -934,8 +933,8 @@ def test_data_HDF5_dataDifferentStructures():
         # Case 2: Two Datasets
         with tempfile.NamedTemporaryFile(suffix=".h5") as tmpHDF:
             hdfFile = h5py.File(tmpHDF, 'w')
-            hdfFile.create_dataset('mtx1', data=numpy.array(data)[0])
-            hdfFile.create_dataset('mtx2', data=numpy.array(data)[1])
+            hdfFile.create_dataset('mtx1', data=np.array(data)[0])
+            hdfFile.create_dataset('mtx2', data=np.array(data)[1])
             hdfFile.flush()
             hdfFile.close()
             tmpHDF.seek(0)
@@ -954,18 +953,18 @@ def test_data_HDF5_dataDifferentStructures():
             hdfFile = h5py.File(tmpHDF, 'w')
             zero = hdfFile.create_group('index0')
             zeroZero = zero.create_group('index0')
-            zeroZero.create_dataset('index0', data=numpy.array(data)[0, 0, 0])
-            zeroZero.create_dataset('index1', data=numpy.array(data)[0, 0, 1])
+            zeroZero.create_dataset('index0', data=np.array(data)[0, 0, 0])
+            zeroZero.create_dataset('index1', data=np.array(data)[0, 0, 1])
             zeroOne = zero.create_group('index1')
-            zeroOne.create_dataset('index0', data=numpy.array(data)[0, 1, 0])
-            zeroOne.create_dataset('index1', data=numpy.array(data)[0, 1, 1])
+            zeroOne.create_dataset('index0', data=np.array(data)[0, 1, 0])
+            zeroOne.create_dataset('index1', data=np.array(data)[0, 1, 1])
             one = hdfFile.create_group('index1')
             oneZero = one.create_group('index0')
-            oneZero.create_dataset('index0', data=numpy.array(data)[1, 0, 0])
-            oneZero.create_dataset('index1', data=numpy.array(data)[1, 0, 1])
+            oneZero.create_dataset('index0', data=np.array(data)[1, 0, 0])
+            oneZero.create_dataset('index1', data=np.array(data)[1, 0, 1])
             oneOne = one.create_group('index1')
-            oneOne.create_dataset('index0', data=numpy.array(data)[1, 1, 0])
-            oneOne.create_dataset('index1', data=numpy.array(data)[1, 1, 1])
+            oneOne.create_dataset('index0', data=np.array(data)[1, 1, 0])
+            oneOne.create_dataset('index1', data=np.array(data)[1, 1, 1])
             hdfFile.flush()
             hdfFile.close()
             tmpHDF.seek(0)
@@ -1425,7 +1424,7 @@ def test_extractNames_HDF():
                                pointNames=pNames)
 
         with tempfile.NamedTemporaryFile(suffix=".data") as tmpHDF:
-            arr = numpy.array([[1, 2], [3, 4]])
+            arr = np.array([[1, 2], [3, 4]])
             hdfFile = h5py.File(tmpHDF, 'w')
             one = hdfFile.create_group('one')
             one.create_dataset('mtx1', data=arr)
@@ -1537,9 +1536,9 @@ def test_extractNames_pythonList():
 
 def test_extractNames_NPArray():
     """ Test of data() given numpy array, extracting names """
-    inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
+    inDataRaw = np.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
     for t in returnTypes:
-        specRaw = numpy.array([[1, -1, -3]])
+        specRaw = np.array([[1, -1, -3]])
         pNames = ['11']
         fNames = ['21', '22', '23']
         inData = nimble.data(
@@ -1548,7 +1547,7 @@ def test_extractNames_NPArray():
             returnType=t, source=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
-        specRaw = numpy.array([[21, 22, 23], [1, -1, -3]])
+        specRaw = np.array([[21, 22, 23], [1, -1, -3]])
         pNames = ['-111', '11']
         inData = nimble.data(
             returnType=t, source=inDataRaw, pointNames=True, featureNames=False)
@@ -1556,7 +1555,7 @@ def test_extractNames_NPArray():
             returnType=t, source=specRaw, pointNames=pNames)
         assert inData == specified
 
-        specRaw = numpy.array([[11, 1, -1, -3]])
+        specRaw = np.array([[11, 1, -1, -3]])
         fNames = ['-111', '21', '22', '23']
         inData = nimble.data(
             returnType=t, source=inDataRaw, pointNames=False, featureNames=True)
@@ -1567,9 +1566,9 @@ def test_extractNames_NPArray():
 
 def test_extractNames_NPMatrix():
     """ Test of data() given numpy matrix, extracting names """
-    inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
+    inDataRaw = np.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
     for t in returnTypes:
-        specRaw = numpy.matrix([[1, -1, -3]])
+        specRaw = np.matrix([[1, -1, -3]])
         pNames = ['11']
         fNames = ['21', '22', '23']
         inData = nimble.data(
@@ -1578,7 +1577,7 @@ def test_extractNames_NPMatrix():
             returnType=t, source=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
-        specRaw = numpy.matrix([[21, 22, 23], [1, -1, -3]])
+        specRaw = np.matrix([[21, 22, 23], [1, -1, -3]])
         pNames = ['-111', '11']
         inData = nimble.data(
             returnType=t, source=inDataRaw, pointNames=True, featureNames=False)
@@ -1586,7 +1585,7 @@ def test_extractNames_NPMatrix():
             returnType=t, source=specRaw, pointNames=pNames)
         assert inData == specified
 
-        specRaw = numpy.matrix([[11, 1, -1, -3]])
+        specRaw = np.matrix([[11, 1, -1, -3]])
         fNames = ['-111', '21', '22', '23']
         inData = nimble.data(
             returnType=t, source=inDataRaw, pointNames=False, featureNames=True)
@@ -1597,10 +1596,10 @@ def test_extractNames_NPMatrix():
 
 def test_extractNames_CooSparse():
     """ Test of data() given scipy Coo matrix, extracting names """
-    inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
+    inDataRaw = np.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
     inDataRaw = scipy.sparse.coo_matrix(inDataRaw)
     for t in returnTypes:
-        specRaw = numpy.array([[1, -1, -3]])
+        specRaw = np.array([[1, -1, -3]])
         specRaw = scipy.sparse.csc_matrix(specRaw)
         pNames = ['11']
         fNames = ['21', '22', '23']
@@ -1610,7 +1609,7 @@ def test_extractNames_CooSparse():
             returnType=t, source=specRaw, pointNames=pNames, featureNames=fNames)
         assert inData == specified
 
-        specRaw = numpy.array([[21, 22, 23], [1, -1, -3]])
+        specRaw = np.array([[21, 22, 23], [1, -1, -3]])
         specRaw = scipy.sparse.csc_matrix(specRaw)
         pNames = ['-111', '11']
         inData = nimble.data(
@@ -1619,7 +1618,7 @@ def test_extractNames_CooSparse():
             returnType=t, source=specRaw, pointNames=pNames)
         assert inData == specified
 
-        specRaw = numpy.array([[11, 1, -1, -3]])
+        specRaw = np.array([[11, 1, -1, -3]])
         specRaw = scipy.sparse.csc_matrix(specRaw)
         fNames = ['-111', '21', '22', '23']
         inData = nimble.data(
@@ -1631,10 +1630,10 @@ def test_extractNames_CooSparse():
 
 def test_extractNames_CscSparse():
     """ Test of data() given scipy Csc matrix, extracting names """
-    inDataRaw = numpy.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
+    inDataRaw = np.array([[-111, 21, 22, 23], [11, 1, -1, -3]])
     inDataRaw = scipy.sparse.csc_matrix(inDataRaw)
     for t in returnTypes:
-        specRaw = numpy.array([[1, -1, -3]])
+        specRaw = np.array([[1, -1, -3]])
         specRaw = scipy.sparse.csc_matrix(specRaw)
         pNames = ['11']
         fNames = ['21', '22', '23']
@@ -1645,7 +1644,7 @@ def test_extractNames_CscSparse():
 
         assert inData == specified
 
-        specRaw = numpy.array([[21, 22, 23], [1, -1, -3]])
+        specRaw = np.array([[21, 22, 23], [1, -1, -3]])
         specRaw = scipy.sparse.csc_matrix(specRaw)
         pNames = ['-111', '11']
         inData = nimble.data(
@@ -1654,7 +1653,7 @@ def test_extractNames_CscSparse():
             returnType=t, source=specRaw, pointNames=pNames)
         assert inData == specified
 
-        specRaw = numpy.array([[11, 1, -1, -3]])
+        specRaw = np.array([[11, 1, -1, -3]])
         specRaw = scipy.sparse.csc_matrix(specRaw)
         fNames = ['-111', '21', '22', '23']
         inData = nimble.data(
@@ -1696,7 +1695,7 @@ def test_extractNames_pandasDataFrame():
 def test_names_dataUnmodified():
     """ Test original data unmodifed when names set to 'automatic' or True """
     autoData = [['pointNames', 'fname0', 'fname1', 'fname2'], ['pt', 1, -1, -3]]
-    autoArray = numpy.array(autoData, dtype=numpy.object_)
+    autoArray = np.array(autoData, dtype=np.object_)
     trueData = [[-111, 21, 22, 23], [11, 1, -1, -3]]
 
     def assertUnmodified(rawData, names):
@@ -1710,19 +1709,19 @@ def test_names_dataUnmodified():
         if isinstance(rawData, list):
             rawData == rawDataCopy
         elif scipy.sparse.isspmatrix(rawData):
-            numpy.testing.assert_array_equal(sparseMatrixToArray(rawData),
+            np.testing.assert_array_equal(sparseMatrixToArray(rawData),
                                              sparseMatrixToArray(rawDataCopy))
         else:
-            numpy.testing.assert_array_equal(rawData, rawDataCopy)
+            np.testing.assert_array_equal(rawData, rawDataCopy)
 
 
     for t in returnTypes:
         assertUnmodified(autoData, 'automatic')
         assertUnmodified(trueData, True)
         assertUnmodified(autoArray, 'automatic')
-        assertUnmodified(numpy.array(trueData), True)
-        assertUnmodified(numpy.matrix(autoArray), 'automatic')
-        assertUnmodified(numpy.matrix(trueData), True)
+        assertUnmodified(np.array(trueData), True)
+        assertUnmodified(np.matrix(autoArray), 'automatic')
+        assertUnmodified(np.matrix(trueData), True)
         assertUnmodified(scipy.sparse.coo_matrix(autoArray), 'automatic')
         assertUnmodified(scipy.sparse.coo_matrix(trueData), True)
         assertUnmodified(pd.DataFrame([[1, -1, -3]], index=['pt'],
@@ -1954,7 +1953,7 @@ def mocked_requests_get(url, *args, **kwargs):
         data = [[[[1, 2], [3, 4]]], [[[-1, -2], [-3, -4]]]]
         with tempfile.NamedTemporaryFile(suffix=".data") as tmpHDF:
             hdfFile = h5py.File(tmpHDF, 'w')
-            ds1 = hdfFile.create_dataset('data', data=numpy.array(data))
+            ds1 = hdfFile.create_dataset('data', data=np.array(data))
             hdfFile.flush()
             hdfFile.close()
             tmpHDF.seek(0)
@@ -2989,9 +2988,10 @@ def test_data_keepPF_csv_noUncessaryStorage():
 
     try:
         def fakeinitDataObject(
-                returnType, rawData, pointNames, featureNames, name, path,
-                keepPoints, keepFeatures, convertToType, treatAsMissing,
-                replaceMissingWith, reuseData=False, extracted=(None, None)):
+                returnType, rawData, pointNames, featureNames, name,
+                convertToType, keepPoints, keepFeatures, treatAsMissing,
+                replaceMissingWith, copyData=False, paths=(None, None),
+                extracted=(None, None)):
             assert len(rawData) == 2
             assert len(rawData[0]) == 1
             return nimble.core.data.List(rawData)
@@ -3141,7 +3141,7 @@ def test_data_keepPF_pythonList_simple():
 def test_data_keepPF_npArray_simple():
     wanted = nimble.data("Matrix", source=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
-    raw = numpy.array(rawList)
+    raw = np.array(rawList)
 
     fromNPArr = nimble.data(
         "Matrix", source=raw, keepPoints=[1, 2], keepFeatures=[1, 2])
@@ -3156,7 +3156,7 @@ def test_data_keepPF_npArray_simple():
 def test_data_keepPF_npMatrix_simple():
     wanted = nimble.data("Matrix", source=[[22, 33], [222, 333]])
     rawList = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
-    raw = numpy.matrix(rawList)
+    raw = np.matrix(rawList)
 
     fromList = nimble.data(
         "Matrix", source=raw, keepPoints=[1, 2], keepFeatures=[1, 2])
@@ -3645,8 +3645,8 @@ def test_data_csv_inputSeparatorNot1Character():
 
 def test_missingDefaults():
     for t in returnTypes:
-        nan = numpy.nan
-        data = [[1, 2, float('nan')], [numpy.nan, 5, 6], [7, None, 9], ["", "nan", "None"]]
+        nan = np.nan
+        data = [[1, 2, float('nan')], [np.nan, 5, 6], [7, None, 9], ["", "nan", "None"]]
         toTest = nimble.data(t, data)
         expData = [[1, 2, nan], [nan, 5, 6], [7, nan, 9], [nan, nan, nan]]
         expRet = nimble.data(t, expData)
@@ -3654,7 +3654,7 @@ def test_missingDefaults():
 
 def test_handmadeReplaceMissingWith():
     for t in returnTypes:
-        data = [[1, 2, float('nan')], [numpy.nan, 5, 6], [7, None, 9], ["", "nan", "None"]]
+        data = [[1, 2, float('nan')], [np.nan, 5, 6], [7, None, 9], ["", "nan", "None"]]
         toTest = nimble.data(t, data, replaceMissingWith=0)
         expData = [[1, 2, 0], [0, 5, 6], [7, 0, 9], [0, 0, 0]]
         expRet = nimble.data(t, expData)
@@ -3669,11 +3669,11 @@ def test_numericalReplaceMissingWithNonNumeric():
         assert toTest == expRet
 
 def test_handmadeTreatAsMissing():
+    nan = np.nan
+    data = [[1, 2, ""], [nan, 5, 6], [7, "", 9], [nan, "nan", "None"]]
+    missingList = [nan, "", 5]
+    assert np.array(missingList).dtype != np.object_
     for t in returnTypes:
-        nan = numpy.nan
-        data = [[1, 2, ""], [nan, 5, 6], [7, "", 9], [nan, "nan", "None"]]
-        missingList = [nan, "", 5]
-        assert numpy.array(missingList).dtype != numpy.object_
         toTest = nimble.data(t, data, treatAsMissing=missingList)
         expData = [[1, 2, nan], [nan, nan, 6], [7, nan, 9], [nan, "nan", "None"]]
         expRet = nimble.data(t, expData, treatAsMissing=None)
@@ -3697,8 +3697,8 @@ def test_replaceDataTypeMismatch():
 
 def test_keepNanAndReplaceAlternateMissing():
     for t in returnTypes:
-        nan = numpy.nan
-        data = [[1, 2, "NA"], [numpy.nan, 5, 6], [7, "NA", 9], ["NA", numpy.nan, "NA"]]
+        nan = np.nan
+        data = [[1, 2, "NA"], [np.nan, 5, 6], [7, "NA", 9], ["NA", np.nan, "NA"]]
         toTest = nimble.data(t, data, treatAsMissing=["NA"], replaceMissingWith=-1)
         expData = [[1, 2, -1], [nan, 5, 6], [7, -1, 9], [-1, nan, -1]]
         expRet = nimble.data(t, expData, treatAsMissing=None)
@@ -3706,8 +3706,8 @@ def test_keepNanAndReplaceAlternateMissing():
 
 def test_treatAsMissingIsNone():
     for t in returnTypes:
-        nan = numpy.nan
-        data = [[1, 2, None], [None, 5, 6], [7, None, 9], ["", numpy.nan, ""]]
+        nan = np.nan
+        data = [[1, 2, None], [None, 5, 6], [7, None, 9], ["", np.nan, ""]]
         toTest = nimble.data(t, data, treatAsMissing=None)
         notExpData = [[1,2, nan], [nan, 5, 6], [7, nan, 9], [nan, nan, nan]]
         notExpRet = nimble.data(t, notExpData, treatAsMissing=None)
@@ -3715,9 +3715,9 @@ def test_treatAsMissingIsNone():
 
 def test_DataOutputWithMissingDataTypes1D():
     for t in returnTypes:
-        nan = numpy.nan
+        nan = np.nan
         expListOutput = [[1.0, 2.0, nan]]
-        expMatrixOutput = numpy.array(expListOutput)
+        expMatrixOutput = np.array(expListOutput)
         expDataFrameOutput = pd.DataFrame(expListOutput)
         expSparseOutput = scipy.sparse.coo_matrix(expListOutput)
 
@@ -3727,13 +3727,13 @@ def test_DataOutputWithMissingDataTypes1D():
         orig3.features.sort()
         orig4 = nimble.data(t, [{'a':1, 'b':2, 'c':"None"}])
         orig4.features.sort()
-        orig5 = nimble.data(t, numpy.array([1,2,"None"], dtype=object))
-        orig6 = nimble.data(t, numpy.matrix([1,2,"None"], dtype=object))
+        orig5 = nimble.data(t, np.array([1,2,"None"], dtype=object))
+        orig6 = nimble.data(t, np.matrix([1,2,"None"], dtype=object))
         orig7 = nimble.data(t, pd.DataFrame([[1,2,"None"]]))
         orig8 = nimble.data(t, pd.Series([1,2,"None"]))
-        orig9 = nimble.data(t, scipy.sparse.coo_matrix(numpy.array([1,2,"None"], dtype=object)))
-        orig10 = nimble.data(t, scipy.sparse.csc_matrix(numpy.array([1,2,float('nan')])))
-        orig11 = nimble.data(t, scipy.sparse.csr_matrix(numpy.array([1,2,float('nan')])))
+        orig9 = nimble.data(t, scipy.sparse.coo_matrix(np.array([1,2,"None"], dtype=object)))
+        orig10 = nimble.data(t, scipy.sparse.csc_matrix(np.array([1,2,float('nan')])))
+        orig11 = nimble.data(t, scipy.sparse.csr_matrix(np.array([1,2,float('nan')])))
         try:
             orig12 = nimble.data(t, pd.DataFrame([[1,2,"None"]], dtype='Sparse[object]'))
         except TypeError:
@@ -3745,23 +3745,23 @@ def test_DataOutputWithMissingDataTypes1D():
             if orig.getTypeString() == "List":
                 assert orig._data[0][0] == expListOutput[0][0]
                 assert orig._data[0][1] == expListOutput[0][1]
-                assert numpy.isnan(orig._data[0][2])
+                assert np.isnan(orig._data[0][2])
             elif orig.getTypeString() == "Matrix":
-                assert numpy.array_equal(orig._data[0, :2], expMatrixOutput[0, :2])
-                assert numpy.isnan(orig._data[0, 2])
+                assert np.array_equal(orig._data[0, :2], expMatrixOutput[0, :2])
+                assert np.isnan(orig._data[0, 2])
             elif orig.getTypeString() == "DataFrame":
-                assert numpy.array_equal(orig._data.values[0, :2], expDataFrameOutput.values[0, :2])
-                assert numpy.isnan(orig._data.values[0, 2])
+                assert np.array_equal(orig._data.values[0, :2], expDataFrameOutput.values[0, :2])
+                assert np.isnan(orig._data.values[0, 2])
             else:
                 orig._sortInternal('point')
-                assert numpy.array_equal(orig._data.data[:2], expSparseOutput.data[:2])
-                assert numpy.isnan(orig._data.data[2])
+                assert np.array_equal(orig._data.data[:2], expSparseOutput.data[:2])
+                assert np.isnan(orig._data.data[2])
 
 def test_DataOutputWithMissingDataTypes2D():
     for t in returnTypes:
-        nan = numpy.nan
+        nan = np.nan
         expListOutput = [[1, 2, nan], [3,4,'b']]
-        expMatrixOutput = numpy.array(expListOutput, dtype=object)
+        expMatrixOutput = np.array(expListOutput, dtype=object)
         expDataFrameOutput = pd.DataFrame(expMatrixOutput)
         expSparseOutput = scipy.sparse.coo_matrix(expMatrixOutput)
 
@@ -3771,10 +3771,10 @@ def test_DataOutputWithMissingDataTypes2D():
         orig3.features.sort()
         orig4 = nimble.data(t, [{'a':1, 'b':2, 'c':'None'}, {'a':3, 'b':4, 'c':'b'}])
         orig4.features.sort()
-        orig5 = nimble.data(t, numpy.array([[1,2,'None'], [3,4,'b']], dtype=object))
-        orig6 = nimble.data(t, numpy.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
+        orig5 = nimble.data(t, np.array([[1,2,'None'], [3,4,'b']], dtype=object))
+        orig6 = nimble.data(t, np.matrix([[1,2,'None'], [3,4,'b']], dtype=object))
         orig7 = nimble.data(t, pd.DataFrame([[1,2,'None'], [3,4,'b']]))
-        orig8 = nimble.data(t, scipy.sparse.coo_matrix(numpy.array([[1,2,'None'], [3,4,'b']], dtype=object)))
+        orig8 = nimble.data(t, scipy.sparse.coo_matrix(np.array([[1,2,'None'], [3,4,'b']], dtype=object)))
         try:
             orig9 = nimble.data(t, pd.DataFrame([[1,2,'None'], [3,4,'b']], dtype='Sparse[object]'))
         except TypeError:
@@ -3786,25 +3786,25 @@ def test_DataOutputWithMissingDataTypes2D():
             if orig.getTypeString() == "List":
                 assert orig._data[0][0] == expListOutput[0][0]
                 assert orig._data[0][1] == expListOutput[0][1]
-                assert numpy.isnan(orig._data[0][2])
+                assert np.isnan(orig._data[0][2])
                 assert orig._data[1] == expListOutput[1]
             elif orig.getTypeString() == "Matrix":
-                assert numpy.array_equal(orig._data[0, :2], expMatrixOutput[0, :2])
-                assert numpy.isnan(orig._data[0, 2])
-                assert numpy.array_equal(orig._data[1,:], expMatrixOutput[1,:])
+                assert np.array_equal(orig._data[0, :2], expMatrixOutput[0, :2])
+                assert np.isnan(orig._data[0, 2])
+                assert np.array_equal(orig._data[1,:], expMatrixOutput[1,:])
             elif orig.getTypeString() == "DataFrame":
-                assert numpy.array_equal(orig._data.values[0, :2], expDataFrameOutput.values[0, :2])
-                assert numpy.isnan(orig._data.values[0, 2])
-                assert numpy.array_equal(orig._data.values[1,:], expDataFrameOutput.values[1,:])
+                assert np.array_equal(orig._data.values[0, :2], expDataFrameOutput.values[0, :2])
+                assert np.isnan(orig._data.values[0, 2])
+                assert np.array_equal(orig._data.values[1,:], expDataFrameOutput.values[1,:])
             else:
                 orig._sortInternal('point')
-                assert numpy.array_equal(orig._data.data[:2], expSparseOutput.data[:2])
-                assert numpy.isnan(orig._data.data[2])
-                assert numpy.array_equal(orig._data.data[3:], expSparseOutput.data[3:])
+                assert np.array_equal(orig._data.data[:2], expSparseOutput.data[:2])
+                assert np.isnan(orig._data.data[2])
+                assert np.array_equal(orig._data.data[3:], expSparseOutput.data[3:])
 
 def test_replaceNumpyValues_dtypePreservation():
     for t in returnTypes:
-        data = numpy.array([[True, False, True], [False, True, False]])
+        data = np.array([[True, False, True], [False, True, False]])
         toTest = nimble.data(t, data, replaceMissingWith=2,
                              treatAsMissing=[False])
         # should upcast to int, since replaceMissingWith is int
@@ -3813,29 +3813,29 @@ def test_replaceNumpyValues_dtypePreservation():
         assert toTest[0, 0] == True # could be 1 or True depending on type
         assert toTest[0, 1] == 2
 
-        data = numpy.array([[1, 0, 1], [0, 1, 0]])
-        toTest = nimble.data(t, data, replaceMissingWith=numpy.nan,
+        data = np.array([[1, 0, 1], [0, 1, 0]])
+        toTest = nimble.data(t, data, replaceMissingWith=np.nan,
                              treatAsMissing=[None])
         # should skip attempted replacement because no treatAsMissing values
         if hasattr(toTest._data, 'dtype'):
             assert toTest._data.dtype == int
-        ints = (int, numpy.integer)
+        ints = (int, np.integer)
         assert all(isinstance(val, ints) for val in toTest.iterateElements())
 
-        toTest = nimble.data(t, data, replaceMissingWith=numpy.nan,
+        toTest = nimble.data(t, data, replaceMissingWith=np.nan,
                              treatAsMissing=[0])
         # should upcast to float, since replaceMissingWith is float
         if hasattr(toTest._data, 'dtype'):
             assert toTest._data.dtype == float
         assert toTest[0, 0] == True # could be 1.0 or True depending on type
-        assert numpy.isnan(toTest[0, 1])
+        assert np.isnan(toTest[0, 1])
 
 
         toTest = nimble.data(t, data, replaceMissingWith='x',
                              treatAsMissing=[0])
         # should upcast to object, since replaceMissingWith is a string
         if hasattr(toTest._data, 'dtype'):
-            assert toTest._data.dtype == numpy.object_
+            assert toTest._data.dtype == np.object_
         assert toTest[0, 0] == True
         assert toTest[0, 1] == 'x'
 
@@ -3856,16 +3856,16 @@ def makeTensorData(matrix):
     rank3List = [matrix, matrix, matrix]
     rank4List = [rank3List, rank3List, rank3List]
     rank5List = [rank4List, rank4List, rank4List]
-    rank3Array = numpy.array(rank3List)
-    rank4Array = numpy.array(rank4List)
-    rank5Array = numpy.array(rank5List)
-    rank3Array2D = numpy.empty((3, 3), dtype='O')
+    rank3Array = np.array(rank3List)
+    rank4Array = np.array(rank4List)
+    rank5Array = np.array(rank5List)
+    rank3Array2D = np.empty((3, 3), dtype='O')
     for i, lst in enumerate(rank3List):
         rank3Array2D[i] = lst
-    rank4Array2D = numpy.empty((3, 3), dtype='O')
+    rank4Array2D = np.empty((3, 3), dtype='O')
     for i, lst in enumerate(rank4List):
         rank4Array2D[i] = lst
-    rank5Array2D = numpy.empty((3, 3), dtype='O')
+    rank5Array2D = np.empty((3, 3), dtype='O')
     for i, lst in enumerate(rank5List):
         rank5Array2D[i] = lst
     rank3DF = pd.DataFrame(rank3Array2D)
@@ -3901,7 +3901,7 @@ def test_data_multidimensionalData():
             expShape = [3, 3, 5]
             for i in range(idx % 3):
                 expShape.insert(0, 3)
-            expFeatures = numpy.prod(expShape[1:])
+            expFeatures = np.prod(expShape[1:])
             assert toTest._shape == expShape
             assert toTest._pointCount == expPoints
             assert toTest._featureCount == expFeatures
@@ -3911,7 +3911,7 @@ def test_data_multidimensionalData():
             expShape = [3, 3, 0]
             for i in range(idx % 3):
                 expShape.insert(0, 3)
-            expFeatures = numpy.prod(expShape[1:])
+            expFeatures = np.prod(expShape[1:])
             assert toTest._shape == expShape
             assert toTest._pointCount == expPoints
             assert toTest._featureCount == expFeatures
@@ -3949,7 +3949,7 @@ def test_data_multidimensionalData_featureNames():
 
 def test_data_multidimensionalData_listsOfMultiDimensionalObjects():
     for (rType1, rType2) in itertools.product(returnTypes, returnTypes):
-        arr1D = numpy.array([1, 2, 3, 0])
+        arr1D = np.array([1, 2, 3, 0])
         nim1D = nimble.data(rType1, [1, 2, 3, 0])
 
         fromListArr1D = nimble.data(rType2, [arr1D, arr1D, arr1D])
@@ -3975,6 +3975,91 @@ def test_data_multidimensionalData_listsOfMultiDimensionalObjects():
         nim3D = fromListNim2D
         fromListNim3D = nimble.data(rType2, [nim3D, nim3D])
         assert fromListNim3D._shape == [2, 3, 3, 4]
+
+# Tests when input data matches the backend data type
+
+nimbleRawMap = {'List': list,
+                'Matrix': np.array,
+                'Sparse': scipy.sparse.coo_matrix,
+                'DataFrame': pd.DataFrame}
+
+def test_data_copyData_True():
+    data = [[0, 1, 2], [3, 4, 5]]
+    for rType in nimble.core.data.available:
+        raw = nimbleRawMap[rType](data)
+        nim = nimble.data(rType, raw)
+
+        assert id(raw) != id(nim._data)
+
+def test_data_copyData_False():
+    data = [[0, 1, 2], [3, 4, 5]]
+    for rType in nimble.core.data.available:
+        raw = nimbleRawMap[rType](data)
+        nim = nimble.data(rType, raw, copyData=False)
+
+        assert id(raw) == id(nim._data)
+
+def test_data_copyData_False_replaceMissing_containsMissing():
+    data = [[0, 1, 2], [3, 4, 5]]
+    for rType in nimble.core.data.available:
+        raw = nimbleRawMap[rType](data)
+        nim = nimble.data(rType, raw, copyData=False,
+                          treatAsMissing=[1, 4], replaceMissingWith=0)
+
+        assert id(raw) != id(nim._data)
+
+def test_data_copyData_False_replaceMissing_noMissing():
+    data = [[0, 1, 2], [3, 4, 5]]
+    for rType in nimble.core.data.available:
+        raw = nimbleRawMap[rType](data)
+        nim = nimble.data(rType, raw, copyData=False,
+                          treatAsMissing=[8, -1], replaceMissingWith=0)
+
+        assert id(raw) == id(nim._data)
+
+def test_data_copyData_False_copyMadeWhenNamesExtracted():
+    getArray = {'List': lambda x: x, 'Matrix': lambda x: x,
+                'Sparse': lambda x: x.todense()}
+    data = [[1, 0, 2], [3, 4, 5], [-1, -2, -3]]
+    for rType in nimble.core.data.available:
+        if rType != 'DataFrame':
+            # names will be extracted from data, copy was made if original
+            # data object is not modified
+            raw = nimbleRawMap[rType](data)
+            rawCopy = raw.copy()
+            rawArrCopy = getArray[rType](rawCopy)
+
+            nim = nimble.data(rType, raw, pointNames=True, copyData=False)
+            rawArr = getArray[rType](raw)
+            assert not np.array_equal(rawArr, getArray[rType](nim._data))
+            assert np.array_equal(rawArr, rawArrCopy)
+
+            nim = nimble.data(rType, raw, featureNames=True, copyData=False)
+            rawArr = getArray[rType](raw)
+            assert not np.array_equal(rawArr, getArray[rType](nim._data))
+            assert np.array_equal(rawArr, rawArrCopy)
+
+            nim = nimble.data(rType, raw, pointNames=True, featureNames=True,
+                              copyData=False)
+            rawArr = getArray[rType](raw)
+            assert not np.array_equal(rawArr, getArray[rType](nim._data))
+            assert np.array_equal(rawArr, rawArrCopy)
+        else:
+            # DataFrame extracts from columns & index attributes, not data
+            # copy was made if backend data has different id
+            raw = nimbleRawMap[rType]([d[1:] for d in data[1:]])
+            raw.columns = data[0][1:]
+            raw.index = [d[0] for d in data[1:]]
+
+            nim = nimble.data(rType, raw, pointNames=True, copyData=False)
+            assert id(raw) != id(nim._data)
+
+            nim = nimble.data(rType, raw, featureNames=True, copyData=False)
+            assert id(raw) != id(nim._data)
+
+            nim = nimble.data(rType, raw, pointNames=True, featureNames=True,
+                              copyData=False)
+            assert id(raw) != id(nim._data)
 
 # tests for combination of one name set being specified and one set being
 # in data.

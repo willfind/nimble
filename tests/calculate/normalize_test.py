@@ -1,5 +1,5 @@
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.calculate import meanNormalize, meanStandardDeviationNormalize
@@ -12,10 +12,10 @@ from tests.helpers import getDataConstructors
 @noLogEntryExpected
 def assertExpected(func, raw1, raw2, exp1, exp2):
     for shape in [(1, -1), (-1, 1)]:
-        raw1 = numpy.array(raw1).reshape(shape)
-        raw2 = numpy.array(raw2).reshape(shape)
-        exp1 = numpy.array(exp1).reshape(shape)
-        exp2 = numpy.array(exp2).reshape(shape)
+        raw1 = np.array(raw1).reshape(shape)
+        raw2 = np.array(raw2).reshape(shape)
+        exp1 = np.array(exp1).reshape(shape)
+        exp2 = np.array(exp2).reshape(shape)
         for con1 in getDataConstructors():
             for con2 in getDataConstructors():
                 data1 = con1(raw1, useLog=False)
@@ -41,19 +41,19 @@ def test_meanNormalize():
     assertExpected(meanNormalize, data1, data2, exp1, exp2)
 
 def test_meanNormalize_withNan():
-    data1 = [3, -1, numpy.nan, 3, -1]
-    data2 = [-2, 0, numpy.nan, 6]
+    data1 = [3, -1, np.nan, 3, -1]
+    data2 = [-2, 0, np.nan, 6]
 
-    exp1 = [2, -2, numpy.nan, 2, -2]
-    exp2 = [-3, -1, numpy.nan, 5]
+    exp1 = [2, -2, np.nan, 2, -2]
+    exp2 = [-3, -1, np.nan, 5]
 
     assertExpected(meanNormalize, data1, data2, exp1, exp2)
 
 def test_meanStandardDeviationNormalize():
     data1 = [0, 1, -3, 5, 4, 5]
     data2 = [-2, 0, 1, 2, 6]
-    mean = numpy.mean(data1)
-    std = numpy.std(data1)
+    mean = np.mean(data1)
+    std = np.std(data1)
 
     def zScore(v):
         return (v - mean) / std
@@ -64,13 +64,13 @@ def test_meanStandardDeviationNormalize():
     assertExpected(meanStandardDeviationNormalize, data1, data2, exp1, exp2)
 
 def test_meanStandardDeviationNormalize_withNan():
-    data1 = [-3, 0, 1, numpy.nan, 5, 5]
-    data2 = [0, numpy.nan, 2, -2, 6]
-    mean = numpy.nanmean(data1)
-    std = numpy.nanstd(data1)
+    data1 = [-3, 0, 1, np.nan, 5, 5]
+    data2 = [0, np.nan, 2, -2, 6]
+    mean = np.nanmean(data1)
+    std = np.nanstd(data1)
 
     def zScoreNan(v):
-        if numpy.isnan(v):
+        if np.isnan(v):
             return v
         return (v - mean) / std
 
@@ -82,8 +82,8 @@ def test_meanStandardDeviationNormalize_withNan():
 def test_meanStandardDeviationNormalize_allEqual():
     data1 = [7, 7, 7, 7, 7]
     data2 = [7, 7, 6, 9]
-    mean = numpy.mean(data1)
-    std = numpy.std(data1)
+    mean = np.mean(data1)
+    std = np.std(data1)
 
     def zScoreStdZero(v):
         assert std == 0
@@ -104,11 +104,11 @@ def test_range0to1Normalize():
     assertExpected(range0to1Normalize, data1, data2, exp1, exp2)
 
 def test_range0to1Normalize_withNan():
-    data1 = [-4, -1, 1, 6, numpy.nan]
-    data2 = [-5, -3, numpy.nan, 7]
+    data1 = [-4, -1, 1, 6, np.nan]
+    data2 = [-5, -3, np.nan, 7]
 
-    exp1 = [0, 0.3, 0.5, 1, numpy.nan]
-    exp2 = [-0.1, 0.1, numpy.nan, 1.1]
+    exp1 = [0, 0.3, 0.5, 1, np.nan]
+    exp2 = [-0.1, 0.1, np.nan, 1.1]
 
     assertExpected(range0to1Normalize, data1, data2, exp1, exp2)
 
@@ -134,11 +134,11 @@ def test_rangeNormalize():
     assertExpected(range1To5, data1, data2, exp1, exp2)
 
 def test_rangeNormalize_withNan():
-    data1 = [-4, 3, -1, numpy.nan, 6, 1]
-    data2 = [7, -5, numpy.nan, 1, 2]
+    data1 = [-4, 3, -1, np.nan, 6, 1]
+    data2 = [7, -5, np.nan, 1, 2]
 
-    exp1 = [1, 1.7, 1.3, numpy.nan, 2, 1.5]
-    exp2 = [2.1, 0.9, numpy.nan, 1.5, 1.6]
+    exp1 = [1, 1.7, 1.3, np.nan, 2, 1.5]
+    exp2 = [2.1, 0.9, np.nan, 1.5, 1.6]
 
     def range1To2(values1, values2=None):
         return rangeNormalize(values1, values2, start=1, end=2)
@@ -172,16 +172,16 @@ def test_percentileNormalize():
     assertExpected(percentileNormalize, data1, data2, exp1, exp2)
 
 def test_percentileNormalize_withNan():
-    data1 = [-4, 3, -1, numpy.nan, 6, 1, 1]
-    data2 = [7, -5, -3, 1, 0, numpy.nan]
+    data1 = [-4, 3, -1, np.nan, 6, 1, 1]
+    data2 = [7, -5, -3, 1, 0, np.nan]
 
     # both 1's should be same percentile
-    exp1 = [0.0, 0.8, 0.2, numpy.nan, 1.0, 0.5, 0.5]
+    exp1 = [0.0, 0.8, 0.2, np.nan, 1.0, 0.5, 0.5]
     # -3 is 1/3 of the way to covering distance between -4 (0) and -1 (0.2)
     expNeg3Percentile = 0 + (1/3) * (0.2 - 0)
     # 0 is 1/2 of the way to covering distance between -1 (0.2) and 1 (0.5)
     expZeroPercentile = 0.2 + (1/2) * (0.5 - 0.2)
-    exp2 = [1, 0, expNeg3Percentile, 0.5, expZeroPercentile, numpy.nan]
+    exp2 = [1, 0, expNeg3Percentile, 0.5, expZeroPercentile, np.nan]
     assertExpected(percentileNormalize, data1, data2, exp1, exp2)
 
 def test_percentileNormalize_allEqual():
