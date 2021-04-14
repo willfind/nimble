@@ -271,7 +271,7 @@ class Axis(ABC):
                                               number, randomize)
 
         paths = (self._base.absolutePath, self._base.relativePath)
-        self._base._referenceDataFrom(ref, paths=paths)
+        self._base._referenceFrom(ref, paths=paths)
 
         handleLogging(useLog, 'prep', '{ax}s.retain'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('retain'),

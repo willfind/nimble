@@ -66,7 +66,7 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
-            testObject._referenceDataFrom(testObject)
+            testObject._referenceFrom(testObject)
             assert False # expected TypeError
         except TypeError as e:
             assert "disallowed for View objects" in str(e)

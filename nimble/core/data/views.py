@@ -146,8 +146,8 @@ class BaseView(Base, metaclass=ABCMeta):
         readOnlyException("transformFeatureToIntegers")
 
     @baseExceptionDoc
-    def _referenceDataFrom(self, other, **kwargs):
-        readOnlyException('_referenceDataFrom')
+    def _referenceFrom(self, other, **kwargs):
+        readOnlyException('_referenceFrom')
 
     ########################################
     ########################################

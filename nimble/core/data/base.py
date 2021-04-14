@@ -4141,7 +4141,7 @@ class Base(ABC):
         """
         ret = self.__matmul__(other)
         if ret is not NotImplemented:
-            self._referenceDataFrom(ret)
+            self._referenceFrom(ret)
             ret = self
         return ret
 
@@ -4684,7 +4684,7 @@ class Base(ABC):
 
         ret._shape = self._shape
         if opName.startswith('__i'):
-            self._referenceDataFrom(ret, paths=(self._absPath, self._relPath))
+            self._referenceFrom(ret, paths=(self._absPath, self._relPath))
             ret = self
         ret.points.setNames(retPNames, useLog=False)
         ret.features.setNames(retFNames, useLog=False)
@@ -4832,7 +4832,7 @@ class Base(ABC):
     ############################
     ############################
 
-    def _referenceDataFrom(self, other, **kwargs):
+    def _referenceFrom(self, other, **kwargs):
         """
         Reference data and metadata data from another object.
 
@@ -4868,9 +4868,9 @@ class Base(ABC):
         kwargs.setdefault('featureNames', other.featureNames)
         kwargs.setdefault('reuseData', True)
 
-        self._referenceDataFrom_implementation(other, kwargs)
+        self._referenceFrom_implementation(other, kwargs)
 
-    def _referenceDataFrom_implementation(self, other, kwargs):
+    def _referenceFrom_implementation(self, other, kwargs):
         """
         Reinitialize the object with the new keyword arguments.
 

@@ -242,9 +242,9 @@ class List(Base):
                     value = self._data[i][j]
                     outFile.write(str(value) + '\n')
 
-    def _referenceDataFrom_implementation(self, other, kwargs):
+    def _referenceFrom_implementation(self, other, kwargs):
         kwargs.setdefault('checkAll', False)
-        super()._referenceDataFrom_implementation(other, kwargs)
+        super()._referenceFrom_implementation(other, kwargs)
 
     def _copy_implementation(self, to):
         isEmpty = False

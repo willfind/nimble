@@ -8,7 +8,7 @@ copy, points.copy, features.copy
 In object StructureModifying:
 __init__,  transpose, T, points.insert, features.insert, points.sort,
 features.sort, points.extract, features.extract, points.delete,
-features.delete, points.retain, features.retain, _referenceDataFrom,
+features.delete, points.retain, features.retain, _referenceFrom,
 points.transform, features.transform, transformElements, replaceRectangle,
 flatten, merge, unflatten, points.append, features.append,
 """
@@ -7110,12 +7110,12 @@ class StructureModifying(StructureShared):
         assert toTest == expTest
 
     ######################
-    # _referenceDataFrom #
+    # _referenceFrom #
     ######################
 
     @raises(InvalidArgumentType)
-    def test_referenceDataFrom_exceptionWrongType(self):
-        """ Test _referenceDataFrom() throws exception when other is not the same type """
+    def test_referenceFrom_exceptionWrongType(self):
+        """ Test _referenceFrom() throws exception when other is not the same type """
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
         pNames = ['1', 'one', '2', '0']
@@ -7128,11 +7128,11 @@ class StructureModifying(StructureShared):
         objType1 = nimble.data(retType1, data1, pointNames=pNames, featureNames=featureNames)
 
         # at least one of these two will be the wrong type
-        orig._referenceDataFrom(objType0)
-        orig._referenceDataFrom(objType1)
+        orig._referenceFrom(objType0)
+        orig._referenceFrom(objType1)
 
     @noLogEntryExpected
-    def test_referenceDataFrom_data_axisNames(self):
+    def test_referenceFrom_data_axisNames(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
         pNames = ['1', 'one', '2', '0']
@@ -7145,7 +7145,7 @@ class StructureModifying(StructureShared):
         pNames = ['-1']
         other = self.constructor(data2, pointNames=pNames, featureNames=featureNames)
 
-        ret = orig._referenceDataFrom(other)  # RET CHECK
+        ret = orig._referenceFrom(other)  # RET CHECK
 
         assert orig._id == origID
         assert id(orig) == idOrig
@@ -7154,7 +7154,7 @@ class StructureModifying(StructureShared):
         assert '1' in orig.features.getNames()
         assert ret is None
 
-    def test_referenceDataFrom_view(self):
+    def test_referenceFrom_view(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
         pNames = ['1', 'one', '2', '0']
@@ -7169,7 +7169,7 @@ class StructureModifying(StructureShared):
         other = self.constructor(data2, name='other', pointNames=pNames,
                                  featureNames=featureNames)
 
-        orig._referenceDataFrom(other.view())
+        orig._referenceFrom(other.view())
 
         assert orig._id == origID
         assert id(orig) == idOrig
@@ -7179,7 +7179,7 @@ class StructureModifying(StructureShared):
         assert '1' in orig.features.getNames()
         assert orig.name == 'orig' 
 
-    def test_referenceDataFrom_kwargChanges(self):
+    def test_referenceFrom_kwargChanges(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         fNames = ['one', 'two', 'three']
         pNames = ['1', 'one', '2', '0']
@@ -7188,27 +7188,27 @@ class StructureModifying(StructureShared):
         data2 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         other = self.constructor(data2)
 
-        orig._referenceDataFrom(other, pointNames=pNames, featureNames=fNames)
+        orig._referenceFrom(other, pointNames=pNames, featureNames=fNames)
 
         assert orig._data is other._data
         assert '2' in orig.points.getNames()
         assert 'two' in orig.features.getNames()
 
     @noLogEntryExpected
-    def test_referenceDataFrom_lazyNameGeneration(self):
+    def test_referenceFrom_lazyNameGeneration(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         orig = self.constructor(data1)
 
         data2 = [[-1, -2, -3, -4]]
         other = self.constructor(data2)
 
-        orig._referenceDataFrom(other)
+        orig._referenceFrom(other)
 
         assertNoNamesGenerated(orig)
         assertNoNamesGenerated(other)
 
     @noLogEntryExpected
-    def test_referenceDataFrom_ObjName_Paths(self):
+    def test_referenceFrom_ObjName_Paths(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
         pNames = ['1', 'one', '2', '0']
@@ -7227,7 +7227,7 @@ class StructureModifying(StructureShared):
         other._absPath = TEST_ABS_PATH + "Other"
         other._relPath = TEST_REL_PATH + "Other"
 
-        orig._referenceDataFrom(other)
+        orig._referenceFrom(other)
 
         assert orig.name == "testName"
         assert orig.absolutePath == TEST_ABS_PATH + "Other"
@@ -7238,7 +7238,7 @@ class StructureModifying(StructureShared):
         assert other.relativePath == TEST_REL_PATH + "Other"
 
     @noLogEntryExpected
-    def test_referenceDataFrom_allMetadataAttributes(self):
+    def test_referenceFrom_allMetadataAttributes(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
         pNames = ['1', 'one', '2', '0']
@@ -7247,7 +7247,7 @@ class StructureModifying(StructureShared):
         data2 = [[-1, -2, -3, 4, 5, 3, ], [-1, -2, -3, 4, 5, 3, ]]
         other = self.constructor(data2, )
 
-        orig._referenceDataFrom(other)
+        orig._referenceFrom(other)
 
         assert orig._pointCount == len(other.points)
         assert orig._featureCount == len(other.features)
