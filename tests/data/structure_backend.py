@@ -51,15 +51,12 @@ from tests.helpers import assertNoNamesGenerated, assertExpectedException
 from tests.helpers import CalledFunctionException, calledException
 from tests.helpers import getDataConstructors
 
-preserveName = "PreserveTestName"
-preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
-preserveRPath = os.path.relpath(preserveAPath)
-preservePair = (preserveAPath, preserveRPath)
-
-
 ### Helpers used by tests in the test class ###
 
 twoLogEntriesExpected = logCountAssertionFactory(2)
+
+TEST_REL_PATH = 'testPath'
+TEST_ABS_PATH = os.path.abspath(TEST_REL_PATH)
 
 def passThrough(value):
     return value
@@ -794,23 +791,23 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data)
         # need to set source paths for view objects
         if isinstance(toTest, nimble.core.data.BaseView):
-            toTest._source._absPath = 'testAbsPath'
-            toTest._source._relPath = 'testRelPath'
+            toTest._source._absPath = TEST_ABS_PATH
+            toTest._source._relPath = TEST_REL_PATH
         else:
-            toTest._absPath = 'testAbsPath'
-            toTest._relPath = 'testRelPath'
+            toTest._absPath = TEST_ABS_PATH
+            toTest._relPath = TEST_REL_PATH
         toTest._name = 'testName'
 
         ext1 = toTest.points.copy(0)
 
         assert ext1.name is None
-        assert ext1.path == 'testAbsPath'
-        assert ext1.absolutePath == 'testAbsPath'
-        assert ext1.relativePath == 'testRelPath'
+        assert ext1.path == TEST_ABS_PATH
+        assert ext1.absolutePath == TEST_ABS_PATH
+        assert ext1.relativePath == TEST_REL_PATH
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
     def test_points_copy_ListIntoPEmpty(self):
         """ Test points.copy() by copying a list of all points """
@@ -930,22 +927,22 @@ class StructureDataSafe(StructureShared):
 
         # need to set source paths for view objects
         if isinstance(toTest, nimble.core.data.BaseView):
-            toTest._source._absPath = 'testAbsPath'
-            toTest._source._relPath = 'testRelPath'
+            toTest._source._absPath = TEST_ABS_PATH
+            toTest._source._relPath = TEST_REL_PATH
         else:
-            toTest._absPath = 'testAbsPath'
-            toTest._relPath = 'testRelPath'
+            toTest._absPath = TEST_ABS_PATH
+            toTest._relPath = TEST_REL_PATH
         toTest._name = 'testName'
 
         ext = toTest.points.copy(oneOrFour)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ext.name is None
-        assert ext.absolutePath == 'testAbsPath'
-        assert ext.relativePath == 'testRelPath'
+        assert ext.absolutePath == TEST_ABS_PATH
+        assert ext.relativePath == TEST_REL_PATH
 
     def test_points_copy_handmadeFuncionWithFeatureNames(self):
         """ Test points.copy() against handmade output for function copying with featureNames"""
@@ -1015,22 +1012,22 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data)
         # need to set source paths for view objects
         if isinstance(toTest, nimble.core.data.BaseView):
-            toTest._source._absPath = 'testAbsPath'
-            toTest._source._relPath = 'testRelPath'
+            toTest._source._absPath = TEST_ABS_PATH
+            toTest._source._relPath = TEST_REL_PATH
         else:
-            toTest._absPath = 'testAbsPath'
-            toTest._relPath = 'testRelPath'
+            toTest._absPath = TEST_ABS_PATH
+            toTest._relPath = TEST_REL_PATH
         toTest._name = 'testName'
 
         ret = toTest.points.copy(start=1, end=2)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ret.name is None
-        assert ret.absolutePath == 'testAbsPath'
-        assert ret.relativePath == 'testRelPath'
+        assert ret.absolutePath == TEST_ABS_PATH
+        assert ret.relativePath == TEST_REL_PATH
 
 
     def test_points_copy_rangeIntoPEmpty(self):
@@ -1531,22 +1528,22 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data)
         # need to set source paths for view objects
         if isinstance(toTest, nimble.core.data.BaseView):
-            toTest._source._absPath = 'testAbsPath'
-            toTest._source._relPath = 'testRelPath'
+            toTest._source._absPath = TEST_ABS_PATH
+            toTest._source._relPath = TEST_REL_PATH
         else:
-            toTest._absPath = 'testAbsPath'
-            toTest._relPath = 'testRelPath'
+            toTest._absPath = TEST_ABS_PATH
+            toTest._relPath = TEST_REL_PATH
         toTest._name = 'testName'
 
         ext1 = toTest.features.copy(0)
 
-        assert toTest.path == 'testAbsPath'
-        assert toTest.absolutePath == 'testAbsPath'
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.path == TEST_ABS_PATH
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ext1.name is None
-        assert ext1.absolutePath == 'testAbsPath'
-        assert ext1.relativePath == 'testRelPath'
+        assert ext1.absolutePath == TEST_ABS_PATH
+        assert ext1.relativePath == TEST_REL_PATH
 
     def test_features_copy_ListIntoFEmpty(self):
         """ Test features.copy() by copying a list of all features """
@@ -1704,22 +1701,22 @@ class StructureDataSafe(StructureShared):
 
         # need to set source paths for view objects
         if isinstance(toTest, nimble.core.data.BaseView):
-            toTest._source._absPath = 'testAbsPath'
-            toTest._source._relPath = 'testRelPath'
+            toTest._source._absPath = TEST_ABS_PATH
+            toTest._source._relPath = TEST_REL_PATH
         else:
-            toTest._absPath = 'testAbsPath'
-            toTest._relPath = 'testRelPath'
+            toTest._absPath = TEST_ABS_PATH
+            toTest._relPath = TEST_REL_PATH
         toTest._name = 'testName'
 
         ext = toTest.features.copy(absoluteOne)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ext.name is None
-        assert ext.absolutePath == 'testAbsPath'
-        assert ext.relativePath == 'testRelPath'
+        assert ext.absolutePath == TEST_ABS_PATH
+        assert ext.relativePath == TEST_REL_PATH
 
     def test_features_copy_handmadeFunctionWithFeatureName(self):
         """ Test features.copy() against handmade output for function copies with featureNames """
@@ -1818,22 +1815,22 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data)
         # need to set source paths for view objects
         if isinstance(toTest, nimble.core.data.BaseView):
-            toTest._source._absPath = 'testAbsPath'
-            toTest._source._relPath = 'testRelPath'
+            toTest._source._absPath = TEST_ABS_PATH
+            toTest._source._relPath = TEST_REL_PATH
         else:
-            toTest._absPath = 'testAbsPath'
-            toTest._relPath = 'testRelPath'
+            toTest._absPath = TEST_ABS_PATH
+            toTest._relPath = TEST_REL_PATH
         toTest._name = 'testName'
 
         ret = toTest.features.copy(start=1, end=2)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ret.name is None
-        assert ret.absolutePath == 'testAbsPath'
-        assert ret.relativePath == 'testRelPath'
+        assert ret.absolutePath == TEST_ABS_PATH
+        assert ret.relativePath == TEST_REL_PATH
 
 
     def test_features_copy_handmadeWithFeatureNames(self):
@@ -2500,13 +2497,13 @@ class StructureModifying(StructureShared):
 
         dataObj1._name = "TestName"
         dataObj1._absPath = "TestAbsPath"
-        dataObj1._relPath = "testRelPath"
+        dataObj1._relPath = TEST_REL_PATH
 
         dataObj1.transpose()
 
         assert dataObj1.name == "TestName"
         assert dataObj1.absolutePath == "TestAbsPath"
-        assert dataObj1.relativePath == 'testRelPath'
+        assert dataObj1.relativePath == TEST_REL_PATH
 
     ##################################
     # common backends insert/append #
@@ -3141,11 +3138,11 @@ class StructureModifying(StructureShared):
 
         toTest._name = "TestName"
         toTest._absPath = "TestAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._relPath = TEST_REL_PATH
 
         toInsert._name = "TestNameOther"
-        toInsert._absPath = "TestAbsPathOther"
-        toInsert._relPath = "testRelPathOther"
+        toInsert._absPath = TEST_ABS_PATH + "Other"
+        toInsert._relPath = TEST_REL_PATH + "Other"
 
         if axis == 'point':
             toTest.points.insert(len(toTest.points), toInsert)
@@ -3154,7 +3151,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.relativePath == TEST_REL_PATH
 
     def test_points_insert_NamePath_preservation(self):
         self.backend_insert_NamePath_preservation('point')
@@ -3741,19 +3738,19 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = 'testName'
-        toTest._absPath = 'testAbsPath'
-        toTest._relPath = 'testRelPath'
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         ext1 = toTest.points.extract(0)
 
         assert ext1.name is None
-        assert ext1.path == 'testAbsPath'
-        assert ext1.absolutePath == 'testAbsPath'
-        assert ext1.relativePath == 'testRelPath'
+        assert ext1.path == TEST_ABS_PATH
+        assert ext1.absolutePath == TEST_ABS_PATH
+        assert ext1.relativePath == TEST_REL_PATH
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
     def test_points_extract_ListIntoPEmpty(self):
         """ Test points.extract() by removing a list of all points """
@@ -3885,18 +3882,18 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         ext = toTest.points.extract(oneOrFour)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ext.name is None
-        assert ext.absolutePath == 'testAbsPath'
-        assert ext.relativePath == 'testRelPath'
+        assert ext.absolutePath == TEST_ABS_PATH
+        assert ext.relativePath == TEST_REL_PATH
 
     def test_points_extract_handmadeFuncionWithFeatureNames(self):
         """ Test points.extract() against handmade output for function extraction with featureNames"""
@@ -3967,18 +3964,18 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         ret = toTest.points.extract(start=1, end=2)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ret.name is None
-        assert ret.absolutePath == 'testAbsPath'
-        assert ret.relativePath == 'testRelPath'
+        assert ret.absolutePath == TEST_ABS_PATH
+        assert ret.relativePath == TEST_REL_PATH
 
 
     def test_points_extract_rangeIntoPEmpty(self):
@@ -4445,18 +4442,18 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         ext1 = toTest.features.extract(0)
 
-        assert toTest.path == 'testAbsPath'
-        assert toTest.absolutePath == 'testAbsPath'
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.path == TEST_ABS_PATH
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ext1.name is None
-        assert ext1.absolutePath == 'testAbsPath'
-        assert ext1.relativePath == 'testRelPath'
+        assert ext1.absolutePath == TEST_ABS_PATH
+        assert ext1.relativePath == TEST_REL_PATH
 
     def test_features_extract_ListIntoFEmpty(self):
         """ Test features.extract() by removing a list of all features """
@@ -4631,18 +4628,18 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         ext = toTest.features.extract(absoluteOne)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ext.name is None
-        assert ext.absolutePath == 'testAbsPath'
-        assert ext.relativePath == 'testRelPath'
+        assert ext.absolutePath == TEST_ABS_PATH
+        assert ext.relativePath == TEST_REL_PATH
 
     def test_features_extract_handmadeFunctionWithFeatureName(self):
         """ Test features.extract() against handmade output for function extraction with featureNames """
@@ -4745,18 +4742,18 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         ret = toTest.features.extract(start=1, end=2)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ret.name is None
-        assert ret.absolutePath == 'testAbsPath'
-        assert ret.relativePath == 'testRelPath'
+        assert ret.absolutePath == TEST_ABS_PATH
+        assert ret.relativePath == TEST_REL_PATH
 
 
     def test_features_extract_handmadeWithFeatureNames(self):
@@ -4956,14 +4953,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = 'testName'
-        toTest._absPath = 'testAbsPath'
-        toTest._relPath = 'testRelPath'
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.points.delete(0)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_points_delete_ListIntoPEmpty(self):
@@ -5071,14 +5068,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.points.delete(oneOrFour)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_points_delete_handmadeFuncionWithFeatureNames(self):
@@ -5146,14 +5143,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.points.delete(start=1, end=2)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_points_delete_rangeIntoPEmpty(self):
@@ -5539,14 +5536,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.features.delete(0)
 
-        assert toTest.path == 'testAbsPath'
-        assert toTest.absolutePath == 'testAbsPath'
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.path == TEST_ABS_PATH
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_features_delete_ListIntoFEmpty(self):
@@ -5687,14 +5684,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.features.delete(absoluteOne)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_features_delete_handmadeFunctionWithFeatureName(self):
@@ -5791,14 +5788,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.features.delete(start=1, end=2)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_features_delete_handmadeWithFeatureNames(self):
@@ -6019,14 +6016,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = 'testName'
-        toTest._absPath = 'testAbsPath'
-        toTest._relPath = 'testRelPath'
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.points.retain(0)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_points_retain_list_retain_all(self):
@@ -6171,14 +6168,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.points.retain(oneOrFour)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_points_retain_handmadeFunctionWithFeatureNames(self):
@@ -6246,14 +6243,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.points.retain(start=1, end=2)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_points_retain_rangeIntoPEmpty(self):
@@ -6636,14 +6633,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.features.retain(0)
 
-        assert toTest.path == 'testAbsPath'
-        assert toTest.absolutePath == 'testAbsPath'
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.path == TEST_ABS_PATH
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
     def test_features_retain_list_retain_all(self):
         """ Test features.retain() by retaining a list of all features """
@@ -6811,14 +6808,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.features.retain(absoluteOne)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_features_retain_handmadeFunctionWithFeatureName(self):
@@ -6913,14 +6910,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.features.retain(start=1, end=2)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_features_retain_handmadeWithFeatureNames(self):
@@ -7140,6 +7137,8 @@ class StructureModifying(StructureShared):
         featureNames = ['one', 'two', 'three']
         pNames = ['1', 'one', '2', '0']
         orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
+        origID = orig._id
+        idOrig = id(orig)
 
         data2 = [[-1, -2, -3, -4]]
         featureNames = ['1', '2', '3', '4']
@@ -7148,10 +7147,52 @@ class StructureModifying(StructureShared):
 
         ret = orig._referenceDataFrom(other)  # RET CHECK
 
+        assert orig._id == origID
+        assert id(orig) == idOrig
         assert orig._data is other._data
         assert '-1' in orig.points.getNames()
         assert '1' in orig.features.getNames()
         assert ret is None
+
+    def test_referenceDataFrom_view(self):
+        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pNames = ['1', 'one', '2', '0']
+        orig = self.constructor(data1, name='orig', pointNames=pNames,
+                                featureNames=featureNames)
+        origID = orig._id
+        idOrig = id(orig)
+
+        data2 = [[-1, -2, -3, -4]]
+        featureNames = ['1', '2', '3', '4']
+        pNames = ['-1']
+        other = self.constructor(data2, name='other', pointNames=pNames,
+                                 featureNames=featureNames)
+
+        orig._referenceDataFrom(other.view())
+
+        assert orig._id == origID
+        assert id(orig) == idOrig
+        assert orig._data is not other._data # copy must be made for view
+        assert orig == other
+        assert '-1' in orig.points.getNames()
+        assert '1' in orig.features.getNames()
+        assert orig.name == 'orig' 
+
+    def test_referenceDataFrom_kwargChanges(self):
+        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        fNames = ['one', 'two', 'three']
+        pNames = ['1', 'one', '2', '0']
+        orig = self.constructor(data1, pointNames=pNames, featureNames=fNames)
+
+        data2 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        other = self.constructor(data2)
+
+        orig._referenceDataFrom(other, pointNames=pNames, featureNames=fNames)
+
+        assert orig._data is other._data
+        assert '2' in orig.points.getNames()
+        assert 'two' in orig.features.getNames()
 
     @noLogEntryExpected
     def test_referenceDataFrom_lazyNameGeneration(self):
@@ -7179,22 +7220,22 @@ class StructureModifying(StructureShared):
         other = self.constructor(data2, pointNames=pNames, featureNames=featureNames)
 
         orig._name = "testName"
-        orig._absPath = "testAbsPath"
-        orig._relPath = "testRelPath"
+        orig._absPath = TEST_ABS_PATH
+        orig._relPath = TEST_REL_PATH
 
         other._name = "testNameother"
-        other._absPath = "testAbsPathother"
-        other._relPath = "testRelPathother"
+        other._absPath = TEST_ABS_PATH + "Other"
+        other._relPath = TEST_REL_PATH + "Other"
 
         orig._referenceDataFrom(other)
 
         assert orig.name == "testName"
-        assert orig.absolutePath == "testAbsPathother"
-        assert orig.relativePath == 'testRelPathother'
+        assert orig.absolutePath == TEST_ABS_PATH + "Other"
+        assert orig.relativePath == TEST_REL_PATH + "Other"
 
         assert other.name == "testNameother"
-        assert other.absolutePath == "testAbsPathother"
-        assert other.relativePath == 'testRelPathother'
+        assert other.absolutePath == TEST_ABS_PATH + "Other"
+        assert other.relativePath == TEST_REL_PATH + "Other"
 
     @noLogEntryExpected
     def test_referenceDataFrom_allMetadataAttributes(self):
@@ -7333,13 +7374,13 @@ class StructureModifying(StructureShared):
 
         toTest._name = "TestName"
         toTest._absPath = "TestAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._relPath = TEST_REL_PATH
 
         toTest.points.transform(emitAllDeci)
 
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.relativePath == TEST_REL_PATH
 
     @oneLogEntryExpected
     def test_points_transform_HandmadeLimited(self):
@@ -7591,13 +7632,13 @@ class StructureModifying(StructureShared):
 
         toTest._name = "TestName"
         toTest._absPath = "TestAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._relPath = TEST_REL_PATH
 
         toTest.features.transform(emitAllEqual)
 
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.relativePath == TEST_REL_PATH
 
     @oneLogEntryExpected
     def test_features_transform_HandmadeLimited(self):
@@ -7766,13 +7807,13 @@ class StructureModifying(StructureShared):
 
         toTest._name = "TestName"
         toTest._absPath = "TestAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._relPath = TEST_REL_PATH
 
         toTest.transformElements(passThrough)
 
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.relativePath == TEST_REL_PATH
 
     @oneLogEntryExpected
     def test_transformElements_plusOnePreserve(self):

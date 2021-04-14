@@ -4684,9 +4684,7 @@ class Base(ABC):
 
         ret._shape = self._shape
         if opName.startswith('__i'):
-            absPath, relPath = self._absPath, self._relPath
-            self._referenceDataFrom(ret)
-            self._absPath, self._relPath = absPath, relPath
+            self._referenceDataFrom(ret, paths=(self._absPath, self._relPath))
             ret = self
         ret.points.setNames(retPNames, useLog=False)
         ret.features.setNames(retFNames, useLog=False)
@@ -4834,70 +4832,56 @@ class Base(ABC):
     ############################
     ############################
 
-    def _referenceDataFrom(self, other):
+    def _referenceDataFrom(self, other, **kwargs):
         """
-        Redefine the object data using the data from another object.
+        Reference data and metadata data from another object.
 
-        Modify the internal data of this object to refer to the same
-        data as other. In other words, the data wrapped by both the self
-        and ``other`` objects resides in the same place in memory.
-        Attributes descrbing this object, not its data, will remain the
-        same. For example the object's ``name`` attribute will remain.
+        This method use the following defaults:
+            name=self.name, paths=(other._absPath, other._relPath),
+            pointNames=other.pointNames, featureNames=other.featureNames,
+            reuseData=True
+        These can be modified through the keyword arguments.
 
-        Parameters
-        ----------
-        other : nimble Base object
-            Must be of the same type as the calling object. Also, the
-            shape of other should be consistent with the shape of this
-            object.
-        useLog : bool, None
-            Local control for whether to send object creation to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-
-        Examples
-        --------
-        Reference data from an object of all zero values.
-
-        >>> data = nimble.ones('List', 2, 3, name='data')
-        >>> data
-        List(
-            [[1.000 1.000 1.000]
-             [1.000 1.000 1.000]]
-            name="data"
-            )
-        >>> ptNames = ['1', '4']
-        >>> ftNames = ['a', 'b', 'c']
-        >>> toReference = nimble.zeros('List', 2, 3, pointNames=ptNames,
-        ...                            featureNames=ftNames,
-        ...                            name='reference')
-        >>> data._referenceDataFrom(toReference)
-        >>> data
-        List(
-            [[0.000 0.000 0.000]
-             [0.000 0.000 0.000]]
-            pointNames={'1':0, '4':1}
-            featureNames={'a':0, 'b':1, 'c':2}
-            name="data"
-            )
+        When not a view, the default reuseData=True means that the _data
+        attribute for this object and the other object will be the same in
+        memory.
         """
-        # this is called first because it checks the data type
-        self._referenceDataFrom_implementation(other)
-        self.pointNames = other.pointNames
-        self.pointNamesInverse = other.pointNamesInverse
-        self.featureNames = other.featureNames
-        self.featureNamesInverse = other.featureNamesInverse
+        if not self.getTypeString() == other.getTypeString():
+            msg = 'to reference another object, they must be the same type'
+            raise InvalidArgumentType(msg)
+        if 'data' in kwargs:
+            msg = 'Cannot provide "data" keyword, the data will be other._data'
+            raise InvalidArgumentValue(msg)
+        if 'shape' in kwargs:
+            msg = 'Cannot provide "shape" keyword, the shape is determined by '
+            msg = 'other._shape'
+            raise InvalidArgumentValue(msg)
+        if hasattr(other, '_source'): # view
+            other = other.copy()
 
-        self._shape = other._shape
+        kwargs['data'] = other._data
+        kwargs['shape'] = other._shape
+        # setdefault only sets if the key is not already present
+        kwargs.setdefault('name', self.name)
+        kwargs.setdefault('paths', (other._absPath, other._relPath))
+        kwargs.setdefault('pointNames', other.pointNames)
+        kwargs.setdefault('featureNames', other.featureNames)
+        kwargs.setdefault('reuseData', True)
 
-        self._absPath = other.absolutePath
-        self._relPath = other.relativePath
+        self._referenceDataFrom_implementation(other, kwargs)
 
-        self._nextDefaultValuePoint = other._nextDefaultValuePoint
-        self._nextDefaultValueFeature = other._nextDefaultValueFeature
+    def _referenceDataFrom_implementation(self, other, kwargs):
+        """
+        Reinitialize the object with the new keyword arguments.
+
+        __init__ affects _id for this object and Base. self._id should stay
+        the same and Base._id should be not increment.
+        """
+        # pylint: disable=unused-argument
+        idVal = self._id
+        self.__init__(**kwargs)
+        self._id = idVal
+        Base._id -= 1
 
     def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold):
         """
@@ -5339,10 +5323,6 @@ class Base(ABC):
 
     @abstractmethod
     def _transpose_implementation(self):
-        pass
-
-    @abstractmethod
-    def _referenceDataFrom_implementation(self, other):
         pass
 
     @abstractmethod

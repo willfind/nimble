@@ -66,6 +66,12 @@ class ViewAccess(DataTestObject):
             assert "disallowed for View objects" in str(e)
 
         try:
+            testObject._referenceDataFrom(testObject)
+            assert False # expected TypeError
+        except TypeError as e:
+            assert "disallowed for View objects" in str(e)
+
+        try:
             testObject.transformElements(lambda elem: elem + 1)
             assert False # expected TypeError
         except TypeError as e:
