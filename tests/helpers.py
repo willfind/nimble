@@ -167,7 +167,7 @@ def _getViewFunc(returnType):
         return obj.view()
     # mirror attributes of functools.partial
     getView.func = nimble.data
-    getView.args = [returnType]
+    getView.args = (returnType,)
     getView.kwargs = {}
     return getView
 

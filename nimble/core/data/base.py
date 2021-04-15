@@ -153,7 +153,7 @@ class Base(ABC):
                 and len(featureNames) != self._featureCount):
             msg = "The length of the featureNames (" + str(len(featureNames))
             msg += ") must match the features given in shape ("
-            msg += str(shape[1]) + ")"
+            msg += str(np.prod(shape[1:])) + ")"
             raise InvalidArgumentValue(msg)
 
         self._points = self._getPoints()
