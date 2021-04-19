@@ -7,6 +7,7 @@ SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = ./
 PUBLISHDIR    = ../
+EXAMPLESDIR   = ./source/examples/
 
 # User-friendly check for sphinx-build
 ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
@@ -84,6 +85,9 @@ clean:
 	rm -fr $(PUBLISHDIR)/*.js
 	rm -fr $(PUBLISHDIR)/_sources
 	rm -fr $(PUBLISHDIR)/_static
+	rm -fr $(EXAMPLESDIR)/logs-nimble
+	rm -fr $(EXAMPLESDIR)/*.ipynb
+	rm -f $(EXAMPLESDIR)/Metro_Interstate_Traffic_Volume_Cleaned.csv
 
 publish:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(PUBLISHDIR)
