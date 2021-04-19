@@ -161,13 +161,6 @@ class Matrix(Base):
         scipy.io.mmwrite(target=outPath, a=self._data.astype(np.float),
                          comment=header)
 
-    def _referenceDataFrom_implementation(self, other):
-        if not isinstance(other, Matrix):
-            msg = "Other must be the same type as this object"
-            raise InvalidArgumentType(msg)
-
-        self._data = other._data
-
     def _copy_implementation(self, to):
         if to in nimble.core.data.available:
             ptNames = self.points._getNamesNoGeneration()

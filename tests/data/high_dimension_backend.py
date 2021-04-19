@@ -368,7 +368,7 @@ class HighDimensionSafe(DataTestObject):
 
 class HighDimensionModifying(DataTestObject):
 
-    def test_highDimension_referenceDataFrom(self):
+    def test_highDimension_referenceFrom(self):
         toTest3D = self.constructor(tensors[0])
         toTest4D = self.constructor(tensors[1])
         toTest5D = self.constructor(tensors[2])
@@ -378,7 +378,7 @@ class HighDimensionModifying(DataTestObject):
                 testTensor = self.constructor(tensor1)
                 refTensor = self.constructor(tensor2)
                 if testTensor != refTensor:
-                    testTensor._referenceDataFrom(refTensor)
+                    testTensor._referenceFrom(refTensor)
                     assert testTensor == refTensor
 
     def test_highDimension_inplaceBinaryOperations(self):

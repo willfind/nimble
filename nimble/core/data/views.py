@@ -145,6 +145,10 @@ class BaseView(Base, metaclass=ABCMeta):
     def transformFeatureToIntegers(self, featureToConvert, useLog=None):
         readOnlyException("transformFeatureToIntegers")
 
+    @baseExceptionDoc
+    def _referenceFrom(self, other, **kwargs):
+        readOnlyException('_referenceFrom')
+
     ########################################
     ########################################
     ###   Functions related to logging   ###

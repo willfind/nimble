@@ -242,13 +242,9 @@ class List(Base):
                     value = self._data[i][j]
                     outFile.write(str(value) + '\n')
 
-    def _referenceDataFrom_implementation(self, other):
-        if not isinstance(other, List):
-            msg = "Other must be the same type as this object"
-            raise InvalidArgumentType(msg)
-
-        self._data = other._data
-        self._numFeatures = other._numFeatures
+    def _referenceFrom_implementation(self, other, kwargs):
+        kwargs.setdefault('checkAll', False)
+        super()._referenceFrom_implementation(other, kwargs)
 
     def _copy_implementation(self, to):
         isEmpty = False

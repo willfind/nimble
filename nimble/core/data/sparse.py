@@ -155,9 +155,7 @@ class Sparse(Base):
 
         pnames = self.points._getNamesNoGeneration()
         fnames = self.features._getNamesNoGeneration()
-        self._referenceDataFrom(ret)
-        self.points.setNames(pnames, useLog=False)
-        self.features.setNames(fnames, useLog=False)
+        self._referenceFrom(ret, pointNames=pnames, featureNames=fnames)
 
     def _transformEachElement_zeroPreserve_implementation(
             self, toTransform, points, features):
@@ -329,12 +327,8 @@ class Sparse(Base):
         scipy.io.mmwrite(target=outPath, a=self._data.astype(np.float),
                          comment=header)
 
-    def _referenceDataFrom_implementation(self, other):
-        if not isinstance(other, Sparse):
-            msg = "Other must be the same type as this object"
-            raise InvalidArgumentType(msg)
-
-        self._data = other._data
+    def _referenceFrom_implementation(self, other, kwargs):
+        super()._referenceFrom_implementation(other, kwargs)
         self._sorted = other._sorted
 
     def _copy_implementation(self, to):
@@ -1048,9 +1042,7 @@ class Sparse(Base):
     def _inplaceBinary_implementation(self, opName, other):
         notInplace = '__' + opName[3:]
         ret = self._binaryOperations_implementation(notInplace, other)
-        absPath, relPath = self._absPath, self._relPath
-        self._referenceDataFrom(ret)
-        self._absPath, self._relPath = absPath, relPath
+        self._referenceFrom(ret, paths=(self._absPath, self._relPath))
         return self
 
     def _rsub__implementation(self, other):

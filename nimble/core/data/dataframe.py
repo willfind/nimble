@@ -170,13 +170,6 @@ class DataFrame(Base):
         scipy.io.mmwrite(outPath, self._data.astype(np.float),
                          comment=comment)
 
-    def _referenceDataFrom_implementation(self, other):
-        if not isinstance(other, DataFrame):
-            msg = "Other must be the same type as this object"
-            raise InvalidArgumentType(msg)
-
-        self._data = other._data
-
     def _copy_implementation(self, to):
         """
         Copy the current DataFrame object to one in a specified format.
