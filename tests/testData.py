@@ -3903,8 +3903,8 @@ def test_data_multidimensionalData():
                 expShape.insert(0, 3)
             expFeatures = np.prod(expShape[1:])
             assert toTest._shape == expShape
-            assert toTest._pointCount == expPoints
-            assert toTest._featureCount == expFeatures
+            assert len(toTest.points) == expPoints
+            assert len(toTest.features) == expFeatures
 
         for idx, tensor in enumerate(emptyTensors):
             toTest = nimble.data(retType, tensor)
@@ -3913,8 +3913,8 @@ def test_data_multidimensionalData():
                 expShape.insert(0, 3)
             expFeatures = np.prod(expShape[1:])
             assert toTest._shape == expShape
-            assert toTest._pointCount == expPoints
-            assert toTest._featureCount == expFeatures
+            assert len(toTest.points) == expPoints
+            assert len(toTest.features) == expFeatures
 
 def test_data_multidimensionalData_pointNames():
     vector1 = [0, 1, 2, 3, 0]

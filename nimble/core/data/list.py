@@ -502,13 +502,12 @@ class List(Base):
                                          if i not in matchingFtIdx[1]]
                     merged.append(pt)
 
-        self._featureCount = len(left[0]) + unmatchedFtCountR
-        self._pointCount = len(merged)
+        self._shape = [len(merged), len(left[0]) + unmatchedFtCountR]
         if onFeature is None:
             # remove point names feature
             merged = [row[1:] for row in merged]
-            self._featureCount -= 1
-        self._numFeatures = self._featureCount
+            self._shape[1] -= 1
+        self._numFeatures = self._shape[1]
 
         self._data = merged
 

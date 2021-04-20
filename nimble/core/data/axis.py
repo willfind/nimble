@@ -62,20 +62,18 @@ class Axis(ABC):
     """
     def __init__(self, base, **kwargs):
         self._base = base
-        kwargs['base'] = base
         if isinstance(self, Points):
             self._axis = 'point'
             self._isPoint = True
         else:
             self._axis = 'feature'
             self._isPoint = False
-        super().__init__(**kwargs)
+        super().__init__(base, **kwargs)
 
     def __len__(self):
         if self._isPoint:
-            return self._base._pointCount
-
-        return self._base._featureCount
+            return self._base.shape[0]
+        return self._base.shape[1]
 
     def __bool__(self):
         return len(self) > 0
@@ -354,10 +352,10 @@ class Axis(ABC):
 
 
     def _transform(self, function, limitTo, useLog=None):
-        if self._base._pointCount == 0:
+        if self._base._shape[0] == 0:
             msg = "We disallow this function when there are 0 points"
             raise ImproperObjectAction(msg)
-        if self._base._featureCount == 0:
+        if self._base._shape[1] == 0:
             msg = "We disallow this function when there are 0 features"
             raise ImproperObjectAction(msg)
 
@@ -1209,7 +1207,7 @@ class Axis(ABC):
         other object.
         """
         if self._isPoint:
-            self._base._pointCount -= len(other.points)
+            self._base._shape[0] -= len(other.points)
             if self._base._pointNamesCreated():
                 idxList = []
                 for name in other.points.getNames():
@@ -1222,7 +1220,7 @@ class Axis(ABC):
                     self._base.pointNames[pt] = idx
 
         else:
-            self._base._featureCount -= len(other.features)
+            self._base._shape[1] -= len(other.features)
             if self._base._featureNamesCreated():
                 idxList = []
                 for name in other.features.getNames():
@@ -1285,7 +1283,7 @@ class Axis(ABC):
             raise InvalidArgumentType(msg.format(arg=argName))
 
         if self._isPoint:
-            objOffAxisLen = self._base._featureCount
+            objOffAxisLen = self._base.shape[1]
             insertOffAxisLen = len(toInsert.features)
             objHasAxisNames = self._base._pointNamesCreated()
             insertHasAxisNames = toInsert._pointNamesCreated()
@@ -1294,7 +1292,7 @@ class Axis(ABC):
             offAxis = 'feature'
             funcName = 'points.' + func
         else:
-            objOffAxisLen = self._base._pointCount
+            objOffAxisLen = self._base.shape[0]
             insertOffAxisLen = len(toInsert.points)
             objHasAxisNames = self._base._featureNamesCreated()
             insertHasAxisNames = toInsert._featureNamesCreated()
@@ -1472,12 +1470,12 @@ class Axis(ABC):
             # only need to adjust names if names are present
             if not (self._namesCreated()
                     or insertedObj.points._namesCreated()):
-                self._base._pointCount = newPtCount
+                self._base._shape[0] = newPtCount
                 return
             objNames = self._getNames()
             insertedNames = insertedObj.points.getNames()
             # must change point count AFTER getting names
-            self._base._pointCount = newPtCount
+            self._base._shape[0] = newPtCount
             setObjNames = self._setNames
             self._base._shape[0] = newPtCount
         else:
@@ -1485,12 +1483,12 @@ class Axis(ABC):
             # only need to adjust names if names are present
             if not (self._base._featureNamesCreated()
                     or insertedObj._featureNamesCreated()):
-                self._base._featureCount = newFtCount
+                self._base._shape[1] = newFtCount
                 return
             objNames = self._getNames()
             insertedNames = insertedObj.features.getNames()
             # must change point count AFTER getting names
-            self._base._featureCount = newFtCount
+            self._base._shape[1] = newFtCount
             setObjNames = self._setNames
         # ensure no collision with default names
         adjustedNames = []

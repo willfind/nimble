@@ -59,7 +59,7 @@ class BaseView(Base, metaclass=ABCMeta):
         self._fStart = featureStart
         self._fEnd = featureEnd
         if len(source._shape) > 2:
-            if self._fStart != 0 or self._fEnd != source._featureCount:
+            if self._fStart != 0 or self._fEnd != len(source.features):
                 msg = "feature limited views are not allowed for data with "
                 msg += "more than two dimensions."
                 raise ImproperObjectAction(msg)

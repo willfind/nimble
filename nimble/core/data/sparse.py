@@ -753,8 +753,7 @@ class Sparse(Base):
         if len(mergedData) == 0:
             mergedData = []
 
-        self._featureCount = numFts
-        self._pointCount = numPts
+        self._shape = [numPts, numFts]
 
         self._data = scipy.sparse.coo_matrix(
             (mergedData, (mergedRow, mergedCol)), shape=(numPts, numFts))
@@ -1306,7 +1305,7 @@ class SparseView(BaseView, Sparse):
 
         limited = self._source.points.copy(start=self._pStart,
                                            end=self._pEnd - 1, useLog=False)
-        if self._fEnd - self._fStart < self._source._featureCount:
+        if self._fEnd - self._fStart < len(self._source.features):
             limited = limited.features.copy(start=self._fStart,
                                             end=self._fEnd - 1, useLog=False)
 

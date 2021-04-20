@@ -1667,8 +1667,7 @@ class Points(ABC):
             featuresToCollapse, collapseIndices, retainIndices,
             currNumPoints, currFtNames, numRetPoints, numRetFeatures)
 
-        self._base._pointCount = numRetPoints
-        self._base._featureCount = numRetFeatures
+        self._base._shape = [numRetPoints, numRetFeatures]
         ftNames = [features.getName(idx) for idx in retainIndices]
         ftNames.extend([featureForNames, featureForValues])
         features.setNames(ftNames, useLog=False)
@@ -1822,8 +1821,7 @@ class Points(ABC):
         self._combineByExpandingFeatures_implementation(
             unique, namesIdx, valuesIdx, uniqueNames, numRetFeatures)
 
-        self._base._featureCount = numRetFeatures
-        self._base._pointCount = len(unique)
+        self._base._shape = [len(unique), numRetFeatures]
 
         newFtNames = []
         for prefix in map(str, uniqueNames):

@@ -365,18 +365,16 @@ class Matrix(Base):
                     pt[left.shape[1]:] = row[notMatchingR]
                     merged.append(pt)
 
-
-        self._featureCount = left.shape[1] + unmatchedPtCountR
-        self._pointCount = len(merged)
+        self._shape = [len(merged), left.shape[1] + unmatchedPtCountR]
         if len(merged) == 0 and onFeature is None:
             merged = np.empty((0, left.shape[1] + unmatchedPtCountR - 1))
-            self._featureCount -= 1
+            self._shape[1] -= 1
         elif len(merged) == 0:
             merged = np.empty((0, left.shape[1] + unmatchedPtCountR))
         elif onFeature is None:
             # remove point names feature
             merged = [row[1:] for row in merged]
-            self._featureCount -= 1
+            self._shape[1] -= 1
 
         self._data = numpy2DArray(merged, dtype=np.object_)
 

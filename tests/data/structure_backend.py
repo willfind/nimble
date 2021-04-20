@@ -2300,20 +2300,20 @@ class StructureModifying(StructureShared):
         elem = [1, 2, 3]
         ret = self.constructor([[elem, elem], [elem, elem]])
         assert ret._shape == [2, 2, 3]
-        assert ret._pointCount == 2
-        assert ret._featureCount == 6
+        assert len(ret.points) == 2
+        assert len(ret.features) == 6
 
         data1 = [elem, elem, elem]
         ret = self.constructor([[data1, data1], [data1, data1]])
         assert ret._shape == [2, 2, 3, 3]
-        assert ret._pointCount == 2
-        assert ret._featureCount == 18
+        assert len(ret.points) == 2
+        assert len(ret.features) == 18
 
         data2 = [data1, data1, data1]
         ret = self.constructor([[data2, data2], [data2, data2]])
         assert ret._shape == [2, 2, 3, 3, 3]
-        assert ret._pointCount == 2
-        assert ret._featureCount == 54
+        assert len(ret.points) == 2
+        assert len(ret.features) == 54
 
 
     def test_init_coo_matrix_duplicates(self):
@@ -7177,7 +7177,7 @@ class StructureModifying(StructureShared):
         assert orig == other
         assert '-1' in orig.points.getNames()
         assert '1' in orig.features.getNames()
-        assert orig.name == 'orig' 
+        assert orig.name == 'orig'
 
     def test_referenceFrom_kwargChanges(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
@@ -7249,8 +7249,8 @@ class StructureModifying(StructureShared):
 
         orig._referenceFrom(other)
 
-        assert orig._pointCount == len(other.points)
-        assert orig._featureCount == len(other.features)
+        assert len(orig.points) == len(other.points)
+        assert len(orig.features) == len(other.features)
 
         assert orig._nextDefaultValuePoint == other._nextDefaultValuePoint
         assert orig._nextDefaultValueFeature == other._nextDefaultValueFeature

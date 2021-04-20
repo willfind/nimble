@@ -378,9 +378,10 @@ class DataFrame(Base):
             self._data.drop(toDrop, axis=1, inplace=True)
             self._data.columns = pd.RangeIndex(self._data.shape[1])
 
-        self._featureCount = (numColsL + len(tmpDfR.columns)
-                              - len(matchingFtIdx[1]))
-        self._pointCount = len(self._data.index)
+        numFeatures = (numColsL + len(tmpDfR.columns) - len(matchingFtIdx[1]))
+        numPoints = len(self._data.index)
+
+        self._shape = [numPoints, numFeatures]
 
     def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueIdx):
         toFill = np.zeros((len(self.points), len(uniqueIdx)))
