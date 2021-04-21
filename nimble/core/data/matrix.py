@@ -61,11 +61,11 @@ class Matrix(Base):
             kwds['shape'] = self._data.shape
         super().__init__(**kwds)
 
-    def _getPoints(self):
-        return MatrixPoints(self)
+    def _getPoints(self, names):
+        return MatrixPoints(self, names)
 
-    def _getFeatures(self):
-        return MatrixFeatures(self)
+    def _getFeatures(self, names):
+        return MatrixFeatures(self, names)
 
     def _transform_implementation(self, toTransform, points, features):
         ids = itertools.product(range(len(self.points)),
@@ -255,7 +255,7 @@ class Matrix(Base):
             if not self.points._anyDefaultNames():
                 ptsL = np.array(self.points.getNames(), dtype=np.object_)
                 ptsL = ptsL.reshape(-1, 1)
-            elif self._pointNamesCreated():
+            elif self.points._namesCreated():
                 # differentiate default names between objects;
                 # note still start with DEFAULT_PREFIX
                 namesL = [n + '_l' if isDefaultName(n) else n
@@ -270,7 +270,7 @@ class Matrix(Base):
             if not other.points._anyDefaultNames():
                 ptsR = np.array(other.points.getNames(), dtype=np.object_)
                 ptsR = ptsR.reshape(-1, 1)
-            elif other._pointNamesCreated():
+            elif other.points._namesCreated():
                 # differentiate default names between objects;
                 # note still start with DEFAULT_PREFIX
                 namesR = [n + '_r' if isDefaultName(n) else n
@@ -483,8 +483,8 @@ class MatrixView(BaseView, Matrix):
     Read only access to a Matrix object.
     """
 
-    def _getPoints(self):
-        return MatrixPointsView(self)
+    def _getPoints(self, names):
+        return MatrixPointsView(self, names)
 
-    def _getFeatures(self):
-        return MatrixFeaturesView(self)
+    def _getFeatures(self, names):
+        return MatrixFeaturesView(self, names)

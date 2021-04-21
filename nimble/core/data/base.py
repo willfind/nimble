@@ -32,7 +32,7 @@ from . import _dataHelpers
 from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
 from ._dataHelpers import isDefaultName
 from ._dataHelpers import formatIfNeeded
-from ._dataHelpers import valuesToPythonList, constructIndicesList
+from ._dataHelpers import constructIndicesList
 from ._dataHelpers import createListOfDict, createDictOfList
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
@@ -42,7 +42,7 @@ from ._dataHelpers import elementQueryFunction
 from ._dataHelpers import limitedTo2D
 from ._dataHelpers import arrangeFinalTable
 from ._dataHelpers import inconsistentNames, equalNames
-from ._dataHelpers import validateAxis, validateRangeOrder
+from ._dataHelpers import validateRangeOrder
 from ._dataHelpers import pyplotRequired, plotOutput, plotFigureHandling
 from ._dataHelpers import plotUpdateAxisLimits, plotAxisLimits
 from ._dataHelpers import plotAxisLabels, plotXTickLabels
@@ -143,49 +143,11 @@ class Base(ABC):
         self._id = Base._id
         Base._id += 1
 
-        self._points = self._getPoints()
-        self._features = self._getFeatures()
-
         self._shape = list(shape)
-        if pointNames is not None and len(pointNames) != len(self.points):
-            msg = "The length of the pointNames (" + str(len(pointNames))
-            msg += ") must match the points given in shape (" + str(shape[0])
-            msg += ")"
-            raise InvalidArgumentValue(msg)
-        if (featureNames is not None
-                and len(featureNames) != len(self.features)):
-            msg = "The length of the featureNames (" + str(len(featureNames))
-            msg += ") must match the features given in shape ("
-            msg += str(shape[1]) + ")"
-            raise InvalidArgumentValue(msg)
-
-        # Set up point names
-        self._nextDefaultValuePoint = 0
-        if pointNames is None:
-            self.pointNamesInverse = None
-            self.pointNames = None
-        elif isinstance(pointNames, dict):
-            self._nextDefaultValuePoint = len(self.points)
-            self.points.setNames(pointNames, useLog=False)
-        else:
-            pointNames = valuesToPythonList(pointNames, 'pointNames')
-            self._nextDefaultValuePoint = len(self.points)
-            self.points.setNames(pointNames, useLog=False)
-
-        # Set up feature names
-        self._nextDefaultValueFeature = 0
-        if featureNames is None:
-            self.featureNamesInverse = None
-            self.featureNames = None
-        elif isinstance(featureNames, dict):
-            self._nextDefaultValueFeature = len(self.features)
-            self.features.setNames(featureNames, useLog=False)
-        else:
-            featureNames = valuesToPythonList(featureNames, 'featureNames')
-            self._nextDefaultValueFeature = len(self.features)
-            self.features.setNames(featureNames, useLog=False)
-
         self._name = name
+
+        self._points = self._getPoints(pointNames)
+        self._features = self._getFeatures(featureNames)
 
         # Set up paths
         if paths[0] is not None and not isinstance(paths[0], str):
@@ -284,28 +246,6 @@ class Base(ABC):
         The path to the file this data originated from.
         """
         return self.absolutePath
-
-    def _pointNamesCreated(self):
-        """
-        Returns True if point names have been created/assigned
-        to the object.
-        If the object does not have points it returns False.
-        """
-        if self.pointNamesInverse is None:
-            return False
-
-        return True
-
-    def _featureNamesCreated(self):
-        """
-        Returns True if feature names have been created/assigned
-        to the object.
-        If the object does not have features it returns False.
-        """
-        if self.featureNamesInverse is None:
-            return False
-
-        return True
 
     @contextmanager
     def _treatAs2D(self):
@@ -3930,7 +3870,7 @@ class Base(ABC):
                 msg += "in both objects"
                 raise InvalidArgumentValue(msg) from e
 
-        matchingFts = self._getMatchingNames('feature', other)
+        matchingFts = self.features._getMatchingNames(other)
         matchingFtIdx = [[], []]
         for name in matchingFts:
             idxL = self.features.getIndex(name)
@@ -4009,30 +3949,8 @@ class Base(ABC):
                 ptNames = ptNamesL + ptNamesR
                 self.points.setNames(ptNames, useLog=False)
         else:
-            self.pointNamesInverse = None
-            self.pointNames = None
-
-
-    def _getMatchingNames(self, axis, other):
-        matches = []
-        if axis == 'point':
-            if not self._pointNamesCreated() or not other._pointNamesCreated():
-                return matches
-            selfNames = self.points.getNames()
-            otherNames = other.points.getNames()
-        else:
-            if (not self._featureNamesCreated()
-                    or not other._featureNamesCreated()):
-                return matches
-            selfNames = self.features.getNames()
-            otherNames = other.features.getNames()
-        allNames = selfNames + otherNames
-        if len(set(allNames)) != len(allNames):
-            for name in selfNames:
-                if not isDefaultName(name) and name in otherNames:
-                    matches.append(name)
-        return matches
-
+            self.points.namesInverse = None
+            self.points.names = None
 
     #############################
     #  Linear Algebra functions #
@@ -4176,9 +4094,9 @@ class Base(ABC):
             other._numericValidation(right=True)
             raise # exception should be raised above, but just in case
 
-        if caller._pointNamesCreated():
+        if caller.points._namesCreated():
             ret.points.setNames(caller.points.getNames(), useLog=False)
-        if callee._featureNamesCreated():
+        if callee.features._namesCreated():
             ret.features.setNames(callee.features.getNames(), useLog=False)
 
         _dataHelpers.binaryOpNamePathMerge(caller, callee, ret, None, 'merge')
@@ -4423,11 +4341,11 @@ class Base(ABC):
         with self._treatAs2D():
             ret = self.calculateOnElements(abs, useLog=False)
         ret._shape = self._shape.copy()
-        if self._pointNamesCreated():
+        if self.points._namesCreated():
             ret.points.setNames(self.points.getNames(), useLog=False)
         else:
             ret.points.setNames(None, useLog=False)
-        if self._featureNamesCreated():
+        if self.features._namesCreated():
             ret.features.setNames(self.features.getNames(), useLog=False)
         else:
             ret.points.setNames(None, useLog=False)
@@ -4819,7 +4737,7 @@ class Base(ABC):
 
         This method use the following defaults:
             name=self.name, paths=(other._absPath, other._relPath),
-            pointNames=other.pointNames, featureNames=other.featureNames,
+            pointNames=other.points.names, featureNames=other.features.names,
             reuseData=True
         These can be modified through the keyword arguments.
 
@@ -4845,8 +4763,8 @@ class Base(ABC):
         # setdefault only sets if the key is not already present
         kwargs.setdefault('name', self.name)
         kwargs.setdefault('paths', (other._absPath, other._relPath))
-        kwargs.setdefault('pointNames', other.pointNames)
-        kwargs.setdefault('featureNames', other.featureNames)
+        kwargs.setdefault('pointNames', other.points.names)
+        kwargs.setdefault('featureNames', other.features.names)
         kwargs.setdefault('reuseData', True)
 
         self._referenceFrom_implementation(other, kwargs)
@@ -5062,123 +4980,6 @@ class Base(ABC):
 
         return lTable, lColWidths, fNames
 
-    def _defaultNamesGeneration_NamesSetOperations(self, other, axis):
-        """
-        TODO: Find a shorter descriptive name.
-        TODO: Should we place this function in _dataHelpers.py?
-        """
-        if axis == 'point':
-            if self.pointNames is None:
-                self.points._setAllDefault()
-            if other.pointNames is None:
-                other.points._setAllDefault()
-        elif axis == 'feature':
-            if self.featureNames is None:
-                self.features._setAllDefault()
-            if other.featureNames is None:
-                other.features._setAllDefault()
-        else:
-            raise InvalidArgumentValue("invalid axis")
-
-    def _pointNameDifference(self, other):
-        """
-        Returns a set containing those pointNames in this object that
-        are not also in the input object.
-        """
-        if other is None:
-            raise InvalidArgumentType("The other object cannot be None")
-        if not isinstance(other, Base):
-            msg = "Must provide another representation type to determine "
-            msg += "pointName difference"
-            raise InvalidArgumentType(msg)
-
-        self._defaultNamesGeneration_NamesSetOperations(other, 'point')
-
-        return self.pointNames.keys() - other.pointNames.keys()
-
-    def _featureNameDifference(self, other):
-        """
-        Returns a set containing those featureNames in this object that
-        are not also in the input object.
-        """
-        if other is None:
-            raise InvalidArgumentType("The other object cannot be None")
-        if not isinstance(other, Base):
-            msg = "Must provide another representation type to determine "
-            msg += "featureName difference"
-            raise InvalidArgumentType(msg)
-
-        self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
-
-        return (self.featureNames.keys()
-                - other.featureNames.keys())
-
-    def _pointNameSymmetricDifference(self, other):
-        """
-        Returns a set containing only those pointNames not shared
-        between this object and the input object.
-        """
-        if other is None:
-            raise InvalidArgumentType("The other object cannot be None")
-        if not isinstance(other, Base):
-            msg = "Must provide another representation type to determine "
-            msg += "pointName difference"
-            raise InvalidArgumentType(msg)
-
-        self._defaultNamesGeneration_NamesSetOperations(other, 'point')
-
-        return self.pointNames.keys() ^ other.pointNames.keys()
-
-    def _featureNameSymmetricDifference(self, other):
-        """
-        Returns a set containing only those featureNames not shared
-        between this object and the input object.
-        """
-        if other is None:
-            raise InvalidArgumentType("The other object cannot be None")
-        if not isinstance(other, Base):
-            msg = "Must provide another representation type to determine "
-            msg += "featureName difference"
-            raise InvalidArgumentType(msg)
-
-        self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
-
-        return (self.featureNames.keys()
-                ^ other.featureNames.keys())
-
-    def _pointNameUnion(self, other):
-        """
-        Returns a set containing all pointNames in either this object or
-        the input object.
-        """
-        if other is None:
-            raise InvalidArgumentType("The other object cannot be None")
-        if not isinstance(other, Base):
-            msg = "Must provide another representation type to determine "
-            msg += "pointNames union"
-            raise InvalidArgumentType(msg)
-
-        self._defaultNamesGeneration_NamesSetOperations(other, 'point')
-
-        return self.pointNames.keys() | other.pointNames.keys()
-
-    def _featureNameUnion(self, other):
-        """
-        Returns a set containing all featureNames in either this object
-        or the input object.
-        """
-        if other is None:
-            raise InvalidArgumentType("The other object cannot be None")
-        if not isinstance(other, Base):
-            msg = "Must provide another representation type to determine "
-            msg += "featureName union"
-            raise InvalidArgumentType(msg)
-
-        self._defaultNamesGeneration_NamesSetOperations(other, 'feature')
-
-        return (self.featureNames.keys()
-                | other.featureNames.keys())
-
     def _equalPointNames(self, other):
         return equalNames(self.points._getNamesNoGeneration(),
                           other.points._getNamesNoGeneration())
@@ -5190,13 +4991,13 @@ class Base(ABC):
     def _validateEqualNames(self, leftAxis, rightAxis, callSym, other):
 
         if leftAxis == 'point':
-            lnamesCreated = self._pointNamesCreated()
+            lnamesCreated = self.points._namesCreated()
         else:
-            lnamesCreated = self._featureNamesCreated()
+            lnamesCreated = self.features._namesCreated()
         if rightAxis == 'point':
-            rnamesCreated = self._pointNamesCreated()
+            rnamesCreated = self.points._namesCreated()
         else:
-            rnamesCreated = self._featureNamesCreated()
+            rnamesCreated = self.features._namesCreated()
 
         if lnamesCreated or rnamesCreated:
             if leftAxis == 'point':
@@ -5230,39 +5031,18 @@ class Base(ABC):
 
         return self.features
 
-    def _incrementDefaultIfNeeded(self, name, axis):
-        validateAxis(axis)
-        if name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
-            intString = name[DEFAULT_PREFIX_LENGTH:]
-            try:
-                nameNum = int(intString)
-            # Case: default prefix with non-integer suffix. This cannot
-            # cause a future integer suffix naming collision, so we
-            # return without making any chagnes.
-            except ValueError:
-                return
-            if axis == 'point':
-                if nameNum >= self._nextDefaultValuePoint:
-                    self._nextDefaultValuePoint = nameNum + 1
-            else:
-                if nameNum >= self._nextDefaultValueFeature:
-                    self._nextDefaultValueFeature = nameNum + 1
-
-
-
-
     ####################
     # Abstract Methods #
     ####################
 
     @abstractmethod
-    def _getPoints(self):
+    def _getPoints(self, names):
         """
         Get the object containing point-based methods for this object.
         """
 
     @abstractmethod
-    def _getFeatures(self):
+    def _getFeatures(self, names):
         """
         Get the object containing feature-based methods for this object.
         """

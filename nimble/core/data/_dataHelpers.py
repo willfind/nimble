@@ -353,31 +353,6 @@ def denseAxisUniqueArray(obj, axis):
 
     return uniqueData, uniqueIndices
 
-def uniqueNameGetter(obj, axis, uniqueIndices):
-    """
-    Get the first point or feature names of the object's unique values.
-    """
-    validateAxis(axis)
-    if axis == 'point':
-        hasAxisNames = obj._pointNamesCreated()
-        hasOffAxisNames = obj._featureNamesCreated()
-        getAxisName = obj.points.getName
-        getOffAxisNames = obj.features.getNames
-    else:
-        hasAxisNames = obj._featureNamesCreated()
-        hasOffAxisNames = obj._pointNamesCreated()
-        getAxisName = obj.features.getName
-        getOffAxisNames = obj.points.getNames
-
-    axisNames = False
-    offAxisNames = False
-    if hasAxisNames:
-        axisNames = [getAxisName(i) for i in uniqueIndices]
-    if hasOffAxisNames:
-        offAxisNames = getOffAxisNames()
-
-    return axisNames, offAxisNames
-
 def valuesToPythonList(values, argName):
     """
     Create a python list of values from an integer (python or numpy),

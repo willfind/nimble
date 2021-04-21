@@ -16,7 +16,7 @@ from .points import Points
 from .views import PointsView
 from .features import Features
 from .views import FeaturesView
-from ._dataHelpers import denseAxisUniqueArray, uniqueNameGetter
+from ._dataHelpers import denseAxisUniqueArray
 from ._dataHelpers import fillArrayWithCollapsedFeatures
 from ._dataHelpers import fillArrayWithExpandedFeatures
 
@@ -96,8 +96,7 @@ class DataFrameAxis(Axis, metaclass=ABCMeta):
         uniqueData = pd.DataFrame(uniqueData)
         if np.array_equal(self._base._asNumpyArray(), uniqueData):
             return self._base.copy()
-        axisNames, offAxisNames = uniqueNameGetter(self._base, self._axis,
-                                                   uniqueIndices)
+        axisNames, offAxisNames = self._uniqueNameGetter(uniqueIndices)
 
         if self._isPoint:
             return nimble.data('DataFrame', uniqueData, pointNames=axisNames,

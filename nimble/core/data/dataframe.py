@@ -64,11 +64,11 @@ class DataFrame(Base):
             kwds['shape'] = self._data.shape
         super().__init__(**kwds)
 
-    def _getPoints(self):
-        return DataFramePoints(self)
+    def _getPoints(self, names):
+        return DataFramePoints(self, names)
 
-    def _getFeatures(self):
-        return DataFrameFeatures(self)
+    def _getFeatures(self, names):
+        return DataFrameFeatures(self, names)
 
     def _transform_implementation(self, toTransform, points, features):
         ids = itertools.product(range(len(self.points)),
@@ -307,10 +307,10 @@ class DataFrame(Base):
             point = 'outer'
         elif point == 'intersection':
             point = 'inner'
-        if self._featureNamesCreated():
+        if self.features._namesCreated():
             self._data.columns = self.features.getNames()
         tmpDfR = other._data.copy()
-        if other._featureNamesCreated():
+        if other.features._namesCreated():
             tmpDfR.columns = other.features.getNames()
 
         if feature == 'intersection':
@@ -324,13 +324,15 @@ class DataFrame(Base):
 
         numColsL = len(self._data.columns)
         if onFeature is None:
-            if self._pointNamesCreated() and other._pointNamesCreated():
+            if (self.features._namesCreated()
+                    and other.features._namesCreated()):
                 # differentiate default names between objects
                 self._data.index = [n + '_l' if isDefaultName(n)
                                     else n for n in self.points.getNames()]
                 tmpDfR.index = [n + '_r' if isDefaultName(n)
                                 else n for n in other.points.getNames()]
-            elif self._pointNamesCreated() or other._pointNamesCreated():
+            elif (self.features._namesCreated()
+                    or other.features._namesCreated()):
                 # there will be no matches, need left points ordered first
                 self._data.index = list(range(len(self.points)))
                 idxRange = range(self.shape[0], self.shape[0] + other.shape[0])
@@ -579,8 +581,8 @@ class DataFrameView(BaseView, DataFrame):
     Read only access to a DataFrame object.
     """
 
-    def _getPoints(self):
-        return DataFramePointsView(self)
+    def _getPoints(self, names):
+        return DataFramePointsView(self, names)
 
-    def _getFeatures(self):
-        return DataFrameFeaturesView(self)
+    def _getFeatures(self, names):
+        return DataFrameFeaturesView(self, names)

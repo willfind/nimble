@@ -82,18 +82,6 @@ class BaseView(Base, metaclass=ABCMeta):
         """
         return self._source._relPath
 
-    def _pointNamesCreated(self):
-        if self._source.pointNamesInverse is None:
-            return False
-
-        return True
-
-    def _featureNamesCreated(self):
-        if self._source.featureNamesInverse is None:
-            return False
-
-        return True
-
     # TODO: retType
 
     ############################
@@ -257,13 +245,13 @@ class AxisView(Axis, metaclass=ABCMeta):
             end = self._base._pEnd
             if not self._namesCreated():
                 self._base._source.points._setAllDefault()
-            namesList = self._base._source.pointNamesInverse
+            namesList = self._base._source.points.namesInverse
         else:
             start = self._base._fStart
             end = self._base._fEnd
             if not self._namesCreated():
                 self._base._source.features._setAllDefault()
-            namesList = self._base._source.featureNamesInverse
+            namesList = self._base._source.features.namesInverse
 
         return namesList[start:end]
 
@@ -291,9 +279,9 @@ class AxisView(Axis, metaclass=ABCMeta):
     def _namesCreated(self):
         # _base is always a view object
         if self._isPoint:
-            return not self._base._source.pointNames is None
+            return not self._base._source.points.names is None
 
-        return not self._base._source.featureNames is None
+        return not self._base._source.features.names is None
 
 
 @inheritDocstringsFactory(Points)

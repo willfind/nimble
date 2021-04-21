@@ -114,11 +114,11 @@ class List(Base):
         kwds['shape'] = shape
         super().__init__(**kwds)
 
-    def _getPoints(self):
-        return ListPoints(self)
+    def _getPoints(self, names):
+        return ListPoints(self, names)
 
-    def _getFeatures(self):
-        return ListFeatures(self)
+    def _getFeatures(self, names):
+        return ListFeatures(self, names)
 
     def _transform_implementation(self, toTransform, points, features):
         ids = itertools.product(range(len(self.points)),
@@ -392,7 +392,7 @@ class List(Base):
             right = []
 
             def ptNameGetter(obj, idx, suffix):
-                if obj._pointNamesCreated():
+                if obj.points._namesCreated():
                     name = obj.points.getName(idx)
                     if not isDefaultName(name):
                         return name
@@ -639,11 +639,11 @@ class ListView(BaseView, List):
     Read only access to a List object.
     """
 
-    def _getPoints(self):
-        return ListPointsView(self)
+    def _getPoints(self, names):
+        return ListPointsView(self, names)
 
-    def _getFeatures(self):
-        return ListFeaturesView(self)
+    def _getFeatures(self, names):
+        return ListFeaturesView(self, names)
 
     def _copy_implementation(self, to):
         # we only want to change how List and pythonlist copying is

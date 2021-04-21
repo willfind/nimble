@@ -1415,8 +1415,8 @@ class QueryBackend(DataTestObject):
             empty.features.setNames(None, useLog=False)
         except TypeError:
             # need to change names in views manually
-            empty._source.featureNames = None
-            empty._source.featureNamesInverse = None
+            empty._source.features.names = None
+            empty._source.features.namesInverse = None
         repr(data)
         assertNoNamesGenerated(empty)
 

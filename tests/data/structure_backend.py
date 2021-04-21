@@ -2388,12 +2388,12 @@ class StructureModifying(StructureShared):
         ret = self.constructor(coo_str)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.base.valuesToPythonList', calledException)
+    @mock.patch('nimble.core.data.axis.valuesToPythonList', calledException)
     def test_init_pointNames_calls_valuesToPythonList(self):
         self.constructor([1,2,3], pointNames=['one'])
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.base.valuesToPythonList', calledException)
+    @mock.patch('nimble.core.data.axis.valuesToPythonList', calledException)
     def test_init_featureNames_calls_valuesToPythonList(self):
         self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
 
@@ -3165,8 +3165,8 @@ class StructureModifying(StructureShared):
         toInsert = self.constructor([[-1, -2, -3]])
         toTest.points.insert(len(toTest.points), toInsert)
 
-        assert not toTest._pointNamesCreated()
-        assert not toTest._featureNamesCreated()
+        assert not toTest.points._namesCreated()
+        assert not toTest.points._namesCreated()
 
     def test_features_insert_noNamesCreated(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -3174,8 +3174,8 @@ class StructureModifying(StructureShared):
         toInsert = self.constructor([[-1], [-2], [-3]])
         toTest.features.insert(len(toTest.features), toInsert)
 
-        assert not toTest._featureNamesCreated()
-        assert not toTest._pointNamesCreated()
+        assert not toTest.points._namesCreated()
+        assert not toTest.points._namesCreated()
 
 
     #######################################
@@ -7252,8 +7252,8 @@ class StructureModifying(StructureShared):
         assert len(orig.points) == len(other.points)
         assert len(orig.features) == len(other.features)
 
-        assert orig._nextDefaultValuePoint == other._nextDefaultValuePoint
-        assert orig._nextDefaultValueFeature == other._nextDefaultValueFeature
+        assert orig.points._nextDefaultValue == other.points._nextDefaultValue
+        assert orig.features._nextDefaultValue == other.features._nextDefaultValue
 
     ######################
     # points.transform() #

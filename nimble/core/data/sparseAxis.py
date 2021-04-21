@@ -303,12 +303,12 @@ class SparseAxis(Axis, metaclass=ABCMeta):
         if self._isPoint:
             axisLocator = row
             offAxisLocator = col
-            hasOffAxisNames = self._base._featureNamesCreated()
+            hasOffAxisNames = self._base.features._namesCreated()
             getOffAxisNames = self._base.features.getNames
         else:
             axisLocator = col
             offAxisLocator = row
-            hasOffAxisNames = self._base._pointNamesCreated()
+            hasOffAxisNames = self._base.points._namesCreated()
             getOffAxisNames = self._base.points.getNames
 
         unique = set()
