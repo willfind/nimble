@@ -10,7 +10,6 @@ import numpy as np
 import nimble
 from nimble._utility import numpy2DArray
 from .axis import Axis
-from .views import AxisView
 from .points import Points
 from .views import PointsView
 from .features import Features
@@ -196,7 +195,7 @@ class MatrixPoints(MatrixAxis, Points):
         self._base._data = numpy2DArray(tmpData)
 
 
-class MatrixPointsView(PointsView, AxisView, MatrixPoints):
+class MatrixPointsView(PointsView, MatrixPoints):
     """
     Limit functionality of MatrixPoints to read-only.
 
@@ -267,7 +266,7 @@ class MatrixFeatures(MatrixAxis, Features):
         self._base._data = numpy2DArray(tmpData)
 
 
-class MatrixFeaturesView(FeaturesView, AxisView, MatrixFeatures):
+class MatrixFeaturesView(FeaturesView, MatrixFeatures):
     """
     Limit functionality of MatrixFeatures to read-only.
 

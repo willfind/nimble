@@ -49,8 +49,6 @@ class KNNImputation(CustomLearner):
 
     def apply(self, testX):
         testData = testX.copy()
-        testNames = testData.points.getNames()
-        self.match.points.setNames(testNames, useLog=False)
         result = []
         for pt, fill in zip(testData.points, self.match.points):
             newPt = list(pt)
@@ -65,9 +63,9 @@ class KNNImputation(CustomLearner):
                 toPredict = pt[keepIdx]
                 for ftIdx in fillIdx:
                     keepIdx.append(ftIdx)
-                    canTrain = self.match[:, keepIdx]
-                    canTrain.points.delete(anyTrue, useLog=False)
-                    toTrain = testData[canTrain.points.getNames(), keepIdx]
+                    cannotTrain = map(anyTrue, self.match[:, keepIdx].points)
+                    trainIdx = [i for i, v in enumerate(cannotTrain) if not v]
+                    toTrain = testData[trainIdx, keepIdx]
                     pred = nimble.trainAndApply(
                         self.learner, toTrain, -1, toPredict, useLog=False,
                         **self.kwargs)

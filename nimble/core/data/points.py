@@ -1659,7 +1659,13 @@ class Points(ABC):
         retainIndices = [idx for idx in range(len(features))
                          if idx not in collapseIndices]
         currNumPoints = len(self)
-        currFtNames = [features.getName(idx) for idx in collapseIndices]
+        currFtNames = []
+        for idx in collapseIndices:
+            currName = features.getName(idx)
+            if currName is None:
+                currName = idx
+            currFtNames.append(currName)
+
         numRetPoints = len(self) * numCollapsed
         numRetFeatures = len(features) - numCollapsed + 2
 

@@ -10,7 +10,6 @@ import numpy as np
 
 import nimble
 from .axis import Axis
-from .views import AxisView
 from .points import Points
 from .views import PointsView
 from .features import Features
@@ -222,7 +221,7 @@ class ListPoints(ListAxis, Points):
         self._base._numFeatures = numRetFeatures
 
 
-class ListPointsView(PointsView, AxisView, ListPoints):
+class ListPointsView(PointsView, ListPoints):
     """
     Limit functionality of ListPoints to read-only.
 
@@ -303,7 +302,7 @@ class ListFeatures(ListAxis, Features):
         self._base._numFeatures = numRetFeatures
 
 
-class ListFeaturesView(FeaturesView, AxisView, ListFeatures):
+class ListFeaturesView(FeaturesView, ListFeatures):
     """
     Limit functionality of ListFeatures to read-only.
 

@@ -32,7 +32,6 @@ from nimble.core.data import Base
 from nimble.core.data import available
 from nimble._utility import inheritDocstringsFactory, numpy2DArray
 from nimble._utility import pd
-from nimble.core.data._dataHelpers import DEFAULT_PREFIX, isDefaultName
 from nimble.core.data._dataHelpers import constructIndicesList
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
@@ -73,7 +72,7 @@ def confirmExpectedNames(toTest, axis, expected):
     if isinstance(expected, list):
         for i in range(len(expected)):
             expectedFeatureName = expected[i]
-            if not isDefaultName(expectedFeatureName):
+            if not expectedFeatureName is None:
                 actualIndex = names[expectedFeatureName]
                 actualFeatureName = namesInv[i]
                 assert (actualIndex == i)
@@ -497,7 +496,7 @@ class LowLevelBackend(object):
         # need to use mock.patch as context manager after object creation
         # because Axis.__init__ also calls valuesToPythonList
         with mock.patch('nimble.core.data.axis.valuesToPythonList', calledException):
-            toTest.points.setNames(['a', 'b', 'c'])
+            toTest.points.setNames(('a', 'b', 'c'))
 
     def test_points_setNames_emptyDataAndList(self):
         """ Test points.setNames() when both the data and the list are empty """
@@ -509,9 +508,10 @@ class LowLevelBackend(object):
     def test_points_setNames_addDefault(self):
         """ Test points.setNames() when given a default pointName """
         toTest = self.constructor(pointNames=["blank", "none", "gone", "hey"])
-        newNames = ["zero", "one", "two", DEFAULT_PREFIX + "17"]
+        newNames = ["zero", "one", "two", None]
         toTest.points.setNames(newNames)
-        assert toTest.points._nextDefaultValue > 17
+        assert toTest.points.getName(3) is None
+        assert toTest.points.getNames()[3] is None
 
     @oneLogEntryExpected
     def test_points_setNames_handmadeList(self):
@@ -576,18 +576,15 @@ class LowLevelBackend(object):
     def test_points_setNames_list_mixedSpecifiedUnspecified_defaults(self):
         toTest = self.constructor(pointNames=([None] * 4))
 
-        nextNum = toTest.points._nextDefaultValue
-
         toAssign = [None] * 4
-        toAssign[0] = DEFAULT_PREFIX + str(nextNum)
-        toAssign[2] = DEFAULT_PREFIX + str(nextNum - 1)
-
+        toAssign[1] = 'one'
+        toAssign[3] = 'three'
         ret = toTest.points.setNames(toAssign)
 
-        assert toTest.points.getName(0) == DEFAULT_PREFIX + str(nextNum)
-        assert toTest.points.getName(1) == DEFAULT_PREFIX + str(nextNum + 1)
-        assert toTest.points.getName(2) == DEFAULT_PREFIX + str(nextNum - 1)
-        assert isDefaultName(toTest.points.getName(3))
+        assert toTest.points.getName(0) is None
+        assert toTest.points.getName(1) == 'one'
+        assert toTest.points.getName(2) is None
+        assert toTest.points.getName(3) == 'three'
         assert ret is None
 
 
@@ -629,7 +626,7 @@ class LowLevelBackend(object):
         # need to use mock.patch as context manager after object creation
         # because Axis.__init__ also calls valuesToPythonList
         with mock.patch('nimble.core.data.axis.valuesToPythonList', calledException):
-            toTest.features.setNames(['a', 'b', 'c'])
+            toTest.features.setNames(('a', 'b', 'c'))
 
     def test_features_setNames_emptyDataAndDict(self):
         """ Test features.setNames() when both the data and the dict are empty """
@@ -685,9 +682,10 @@ class LowLevelBackend(object):
     def test_features_setNames_addDefault(self):
         """ Test features.setNames() when given a default featureName """
         toTest = self.constructor(featureNames=["blank", "none", "gone", "hey"])
-        newFeatureNames = ["zero", "one", "two", DEFAULT_PREFIX + "17"]
+        newFeatureNames = ["zero", "one", "two", None]
         toTest.features.setNames(newFeatureNames)
-        assert toTest.features._nextDefaultValue > 17
+        assert toTest.features.getName(3) is None
+        assert toTest.features.getNames()[3] is None
 
     @oneLogEntryExpected
     def test_features_setNames_handmadeList(self):
@@ -708,43 +706,17 @@ class LowLevelBackend(object):
     def test_features_setNames_list_mixedSpecifiedUnspecified_defaults(self):
         toTest = self.constructor(featureNames=([None] * 4))
 
-        nextNum = toTest.features._nextDefaultValue
-
         toAssign = [None] * 4
-        toAssign[0] = DEFAULT_PREFIX + str(nextNum)
-        toAssign[2] = DEFAULT_PREFIX + str(nextNum - 1)
+        toAssign[0] = 'zero'
+        toAssign[2] = 'two'
 
         ret = toTest.features.setNames(toAssign)
 
-        assert toTest.features.getName(0) == DEFAULT_PREFIX + str(nextNum)
-        assert toTest.features.getName(1) == DEFAULT_PREFIX + str(nextNum + 1)
-        assert toTest.features.getName(2) == DEFAULT_PREFIX + str(nextNum - 1)
-        assert isDefaultName(toTest.features.getName(3))
+        assert toTest.features.getName(0) == 'zero'
+        assert toTest.features.getName(1) is None
+        assert toTest.features.getName(2) == 'two'
+        assert toTest.features.getName(3) is None
         assert ret is None
-
-    ##################################################################
-    # points._adjustCountAndNames() / features._adjustCountAndNames()#
-    ##################################################################
-
-    def test_adjustCountAndNames_pointCountAndNames(self):
-        origNames = ["zero", "one", "two", "three"]
-        orig = self.constructor(pointNames=origNames)
-        other = self.constructor(pointNames=["one", "two"])
-        expNames = ["zero", "three"]
-        orig.points._adjustCountAndNames(other)
-
-        assert len(orig.points) == 2
-        assert orig.points.getNames() == expNames
-
-    def test_adjustCountAndNames_featureCountAndNames(self):
-        origNames = ["zero", "one", "two", "three"]
-        orig = self.constructor(featureNames=origNames)
-        other = self.constructor(featureNames=["one", "two"])
-        expNames = ["zero", "three"]
-        orig.features._adjustCountAndNames(other)
-
-        assert len(orig.features) == 2
-        assert orig.features.getNames() == expNames
 
     ######################
     # _equalPointNames() #
@@ -917,7 +889,7 @@ class LowLevelBackend(object):
         toTest.points.setName(0, None)
 
         ret = toTest.points.getNames()
-        assert isDefaultName(ret[0])
+        assert ret[0] is None
         assert ret[1] == 'one'
         assert ret[2] == 'hello'
 
@@ -958,7 +930,7 @@ class LowLevelBackend(object):
         toTest.features.setName(0, None)
 
         ret = toTest.features.getNames()
-        assert isDefaultName(ret[0])
+        assert ret[0] is None
         assert ret[1] == 'one'
         assert ret[2] == 'hello'
 

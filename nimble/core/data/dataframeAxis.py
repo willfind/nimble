@@ -11,7 +11,6 @@ import nimble
 from nimble._utility import pd
 from .axis import Axis
 from .base import Base
-from .views import AxisView
 from .points import Points
 from .views import PointsView
 from .features import Features
@@ -223,7 +222,7 @@ class DataFramePoints(DataFrameAxis, Points):
                     self._base._data[i] = col.astype(dtype)
 
 
-class DataFramePointsView(PointsView, AxisView, DataFramePoints):
+class DataFramePointsView(PointsView, DataFramePoints):
     """
     Limit functionality of DataFramePoints to read-only.
 
@@ -289,7 +288,7 @@ class DataFrameFeatures(DataFrameAxis, Features):
         self._base._data = pd.concat((before, *new, after), axis=1)
 
 
-class DataFrameFeaturesView(FeaturesView, AxisView, DataFrameFeatures):
+class DataFrameFeaturesView(FeaturesView, DataFrameFeatures):
     """
     Limit functionality of DataFrameFeatures to read-only.
 

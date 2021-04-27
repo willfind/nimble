@@ -550,7 +550,7 @@ def testPrepTypeFunctionsUseLog():
     checkLogContents('features.normalize', "Matrix", {'function': 'noChange'})
 
     # points.sort
-    dataObj = nimble.data("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, featureNames=['a', 'b', 'c'], useLog=False)
     dataObj.points.sort(by=dataObj.features.getName(0))
     checkLogContents('points.sort', "Matrix", {'by': dataObj.features.getName(0)})
 

@@ -17,7 +17,6 @@ from .views import BaseView
 from .dataframeAxis import DataFramePoints, DataFramePointsView
 from .dataframeAxis import DataFrameFeatures, DataFrameFeaturesView
 from ._dataHelpers import allDataIdentical
-from ._dataHelpers import isDefaultName
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import denseCountUnique
 from ._dataHelpers import NimbleElementIterator
@@ -326,11 +325,12 @@ class DataFrame(Base):
         if onFeature is None:
             if (self.features._namesCreated()
                     and other.features._namesCreated()):
-                # differentiate default names between objects
-                self._data.index = [n + '_l' if isDefaultName(n)
-                                    else n for n in self.points.getNames()]
-                tmpDfR.index = [n + '_r' if isDefaultName(n)
-                                else n for n in other.points.getNames()]
+                # differentiate default names between objects using integers
+                self._data.index = [i if n is None else n for i, n
+                                    in enumerate(self.points.getNames())]
+                maxL = len(self.points)
+                tmpDfR.index = [i + maxL if n is None else n for i, n
+                                in enumerate(other.points.getNames())]
             elif (self.features._namesCreated()
                     or other.features._namesCreated()):
                 # there will be no matches, need left points ordered first
@@ -422,7 +422,6 @@ class DataFrame(Base):
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
-        kwds['reuseData'] = True
 
         ret = DataFrameView(**kwds)
 

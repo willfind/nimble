@@ -18,7 +18,6 @@ from .views import BaseView
 from .sparseAxis import SparsePoints, SparsePointsView
 from .sparseAxis import SparseFeatures, SparseFeaturesView
 from .stretch import StretchSparse
-from ._dataHelpers import DEFAULT_PREFIX, isDefaultName
 from ._dataHelpers import allDataIdentical
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
@@ -608,14 +607,12 @@ class Sparse(Base):
             if not self.points._anyDefaultNames():
                 leftData = np.append([self.points.getNames()], leftData)
             elif self.points._namesCreated():
-                # differentiate default names between objects;
-                # note still start with DEFAULT_PREFIX
-                leftNames = [n + '_l' if isDefaultName(n) else n
-                             for n in self.points.getNames()]
+                # differentiate default names between objects
+                leftNames = [i if n is None else n for i, n
+                             in enumerate(self.points.getNames())]
                 leftData = np.append([leftNames], leftData)
             else:
-                leftNames = [DEFAULT_PREFIX + str(i) for i
-                             in range(len(self.points))]
+                leftNames = list(range(len(self.points)))
                 leftData = np.append(leftNames, leftData)
             leftRow = np.append(list(range(len(self.points))), self._data.row)
             leftCol = np.append([0 for _ in range(len(self.points))],
@@ -624,14 +621,14 @@ class Sparse(Base):
             if not other.points._anyDefaultNames():
                 rightData = np.append([other.points.getNames()], rightData)
             elif other.points._namesCreated():
-                # differentiate default names between objects;
-                # note still start with DEFAULT_PREFIX
-                rightNames = [n + '_r' if isDefaultName(n) else n
-                              for n in other.points.getNames()]
+                maxL = len(self.points)
+                # differentiate default names between objects
+                rightNames = [i + maxL if n is None else n for i, n in
+                              enumerate(other.points.getNames())]
                 rightData = np.append([rightNames], rightData)
             else:
                 rtRange = range(self.shape[0], self.shape[0] + other.shape[0])
-                rightNames = [DEFAULT_PREFIX + str(i) for i in rtRange]
+                rightNames = list(rtRange)
                 rightData = np.append(rightNames, rightData)
             rightRow = np.append(list(range(len(other.points))),
                                  other._data.row.copy())
@@ -819,7 +816,6 @@ class Sparse(Base):
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
-        kwds['reuseData'] = True
 
         allPoints = pointStart == 0 and pointEnd == len(self.points)
         singlePoint = pointEnd - pointStart == 1

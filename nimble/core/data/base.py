@@ -27,10 +27,6 @@ from nimble.core.logger import produceAggregateReport
 from nimble._utility import cloudpickle, h5py, plt
 from nimble._utility import isDatetime
 from .stretch import Stretch
-from . import _dataHelpers
-# the prefix for default point and feature names
-from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX_LENGTH
-from ._dataHelpers import isDefaultName
 from ._dataHelpers import formatIfNeeded
 from ._dataHelpers import constructIndicesList
 from ._dataHelpers import createListOfDict, createDictOfList
@@ -48,8 +44,11 @@ from ._dataHelpers import plotUpdateAxisLimits, plotAxisLimits
 from ._dataHelpers import plotAxisLabels, plotXTickLabels
 from ._dataHelpers import plotConfidenceIntervalMeanAndError, plotErrorBars
 from ._dataHelpers import plotSingleBarChart, plotMultiBarChart
-from ._dataHelpers import looksNumeric
-from ._dataHelpers import mergeNames
+from ._dataHelpers import looksNumeric, checkNumeric
+from ._dataHelpers import mergeNames, mergeNonDefaultNames
+from ._dataHelpers import makeNamesLines
+from ._dataHelpers import binaryOpNamePathMerge
+from ._dataHelpers import indicesSplit
 
 def to2args(f):
     """
@@ -106,16 +105,12 @@ class Base(ABC):
     def __init__(self, shape, pointNames=None, featureNames=None, name=None,
                  paths=(None, None), **kwds):
         """
-        Class defining important data manipulation operations and giving
-        functionality for the naming the points and features of that
-        data. A mapping from names to indices is given by the
-        [point/feature]Names attribute, the inverse of that mapping is
-        given by [point/feature]NamesInverse.
+        Class defining important data manipulation operations.
 
-        Specifically, this includes point and feature names, an object
-        name, and originating pathes for the data in this object. Note:
-        this method (as should all other __init__ methods in this
-        hierarchy) makes use of super().
+        Specifically, this includes setting the object _id, name, shape,
+        originating paths for the data, and sets the point and feature axis
+        objects. Note: this method (as should all other __init__ methods in
+        this hierarchy) makes use of super().
 
         Parameters
         ----------
@@ -406,7 +401,11 @@ class Base(ABC):
         binaryObj.points.setNames(self.points._getNamesNoGeneration(),
                                   useLog=False)
         ftNames = []
-        prefix = replace.features.getName(0) + "="
+
+        if replace.features._namesCreated():
+            prefix = replace.features.getName(0) + "="
+        else:
+            prefix = str(index) + '='
         for val in uniqueVals:
             ftNames.append(prefix + str(val))
         binaryObj.features.setNames(ftNames, useLog=False)
@@ -1112,14 +1111,12 @@ class Base(ABC):
             for point in self.points:
                 k = findKey(point, by)
                 if k not in res:
-                    res[k] = point.points.getNames()
+                    res[k] = point.copy()
                 else:
-                    res[k].extend(point.points.getNames())
+                    res[k].points.append(point.copy(), useLog=False)
 
             for k in res:
-                tmp = self.points.copy(toCopy=res[k], useLog=False)
-                tmp.features.delete(by, useLog=False)
-                res[k] = tmp
+                res[k].features.delete(by, useLog=False)
 
         handleLogging(useLog, 'prep', "groupByFeature",
                       self.getTypeString(), Base.groupByFeature, by,
@@ -1501,7 +1498,7 @@ class Base(ABC):
             seen = False
             if self.points._getNamesNoGeneration() is not None:
                 for name in self.points.getNames():
-                    if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+                    if name is not None:
                         seen = True
             if not seen:
                 includePointNames = False
@@ -1511,7 +1508,7 @@ class Base(ABC):
             seen = False
             if self.features._getNamesNoGeneration() is not None:
                 for name in self.features.getNames():
-                    if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+                    if name is not None:
                         seen = True
             if not seen:
                 includeFeatureNames = False
@@ -1955,13 +1952,19 @@ class Base(ABC):
 
         if level > 0:
             if self.points._namesCreated():
-                for key in self.points.getNames():
-                    index = self.points.getIndex(key)
-                    assert self.points.getName(index) == key
+                for i, key in enumerate(self.points.getNames()):
+                    if key is not None:
+                        assert self.points.getIndex(key) == i
+                        assert self.points.getName(i) == key
+                    else:
+                        assert self.points.getName(i) is None
             if self.features._namesCreated():
-                for key in self.features.getNames():
-                    index = self.features.getIndex(key)
-                    assert self.features.getName(index) == key
+                for i, key in enumerate(self.features.getNames()):
+                    if key is not None:
+                        assert self.features.getIndex(key) == i
+                        assert self.features.getName(i) == key
+                    else:
+                        assert self.features.getName(i) is None
 
         self._validate_implementation(level)
 
@@ -2039,8 +2042,9 @@ class Base(ABC):
         includeFNames = False
 
         if includeNames:
-            includePNames = _dataHelpers.hasNonDefault(self, 'point')
-            includeFNames = _dataHelpers.hasNonDefault(self, 'feature')
+            includePNames = not self.points._allDefaultNames()
+            includeFNames = not self.features._allDefaultNames()
+
             if includeFNames:
                 # plus or minus 2 because we will be dealing with both
                 # feature names and a gap row
@@ -2115,9 +2119,9 @@ class Base(ABC):
 
         numRows = min(len(self.points), maxH)
         # if non default point names, print all (truncated) point names
-        ret += _dataHelpers.makeNamesLines(
-            indent, maxW, numRows, len(self.points),
-            self.points._getNamesNoGeneration(), 'pointNames')
+        ret += makeNamesLines(indent, maxW, numRows, len(self.points),
+                              self.points._getNamesNoGeneration(),
+                              'pointNames')
         # if non default feature names, print all (truncated) feature names
         numCols = 0
         if byLine:
@@ -2131,7 +2135,7 @@ class Base(ABC):
             ftNames = self.features._getNamesNoGeneration()
             if ftNames is None:
                 # mock up default looking names to avoid name generation
-                ftNames = [DEFAULT_PREFIX + '#'] * len(self.features)
+                ftNames = [None] * len(self.features)
             strLength = (len("___".join(ftNames))
                          + len(''.join([str(i) for i
                                         in range(len(self.features))])))
@@ -2143,9 +2147,9 @@ class Base(ABC):
             numCols += 1
         elif numCols > len(self.features):
             numCols = len(self.features)
-        ret += _dataHelpers.makeNamesLines(
-            indent, maxW, numCols, len(self.features),
-            self.features._getNamesNoGeneration(), 'featureNames')
+        ret += makeNamesLines(indent, maxW, numCols, len(self.features),
+                              self.features._getNamesNoGeneration(),
+                              'featureNames')
 
         # if name not None, print
         if self.name is not None:
@@ -2367,7 +2371,7 @@ class Base(ABC):
 
         if title is True:
             title = "Distribution of " + axis + " "
-            if not name or name[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+            if not name:
                 title += '#' + str(index)
             else:
                 title += "named: " + name
@@ -2543,7 +2547,7 @@ class Base(ABC):
             namesAxis = self.features
         if not isinstance(identifier, str):
             names = namesAxis._getNamesNoGeneration()
-            if names is None or isDefaultName(names[identifier]):
+            if names is None or names[identifier] is None:
                 identifier = axis.capitalize() + ' #' + str(identifier)
             else:
                 identifier = names[identifier]
@@ -3220,11 +3224,26 @@ class Base(ABC):
         pNames = self.points.getNames()
         fNames = self.features.getNames()
 
+        ret = []
+        pointNumber = '_PT#{}'
+        featureNumber = '_FT#{}'
         if order == 'point':
-            ret = (a + ' | ' + b for a, b in itertools.product(pNames, fNames))
+            for (i, p), (j, f) in itertools.product(enumerate(pNames),
+                                                    enumerate(fNames)):
+                if p is None:
+                    p = pointNumber.format(i)
+                if f is None:
+                    f = featureNumber.format(j)
+                ret.append(' | '.join([p, f]))
         else:
-            ret = (b + ' | ' + a for a, b in itertools.product(fNames, pNames))
-        return list(ret)
+            for (j, f), (i, p) in itertools.product(enumerate(fNames),
+                                                    enumerate(pNames)):
+                if f is None:
+                    f = featureNumber.format(j)
+                if p is None:
+                    p = pointNumber.format(i)
+                ret.append(' | '.join([p, f]))
+        return ret
 
     def flatten(self, order='point', useLog=None):
         """
@@ -3333,9 +3352,15 @@ class Base(ABC):
             possibleNames = self.features.getNames()
         if not possibleNames:
             return (None, None)
-        splitNames = [name.split(' | ') for name in possibleNames]
-        if not all(len(split) == 2 for split in splitNames):
-            return (None, None)
+        splitNames = []
+        for name in possibleNames:
+            if name is None:
+                return (None, None)
+            splitName = name.split(' | ')
+            if len(splitName) == 2:
+                splitNames.append(splitName)
+            else:
+                return (None, None)
 
         pNames = []
         fNames = []
@@ -3343,14 +3368,19 @@ class Base(ABC):
         allFtDefault = True
         for pName, fName in splitNames:
             if pName not in pNames:
-                pNames.append(pName)
-            if allPtDefault and not isDefaultName(pName):
-                allPtDefault = False
-            if fNames is not None:
-                if fName not in fNames:
+                if pName.startswith('_PT#'):
+                    pNames.append(None)
+                else:
+                    pNames.append(pName)
+                    if allPtDefault:
+                        allPtDefault = False
+            if fName not in fNames:
+                if fName.startswith('_FT#'):
+                    fNames.append(None)
+                else:
                     fNames.append(fName)
-            if allFtDefault and not isDefaultName(fName):
-                allFtDefault = False
+                    if allFtDefault:
+                        allFtDefault = False
 
         if allPtDefault:
             pNames = None
@@ -3809,8 +3839,8 @@ class Base(ABC):
                 # treats them as non-default and equal. After the data is
                 # merged, the names are reset to their default state.
                 try:
-                    strictNames = ['_STRICT' + n if isDefaultName(n) else n
-                                   for n in endNames]
+                    strictNames = ['_STRICT' + str(i) if n is None else n
+                                   for i, n in enumerate(endNames)]
                     lAxis.setNames(strictNames, useLog=False)
                     rAxis.setNames(strictNames, useLog=False)
                 except InvalidArgumentValue as e:
@@ -3853,7 +3883,7 @@ class Base(ABC):
                 # index allowed only if we can verify feature names match
                 ftName = self.features.getName(onFeature)
                 if (ftName != other.features.getName(onFeature)
-                        or isDefaultName(ftName)):
+                        or ftName is None):
                     msg = 'The feature names at index {0} '.format(onFeature)
                     msg += 'do not match in each object'
                     raise InvalidArgumentValue(msg)
@@ -3899,13 +3929,11 @@ class Base(ABC):
                 self.features.setNames(ftNames, useLog=False)
             elif lFtNames:
                 ftNamesL = self.features.getNames()
-                ftNamesR = [DEFAULT_PREFIX + str(i) for i
-                            in range(len(other.features))]
+                ftNamesR = [None] * len(other.features)
                 ftNames = ftNamesL + ftNamesR
                 self.features.setNames(ftNames, useLog=False)
             elif rFtNames:
-                ftNamesL = [DEFAULT_PREFIX + str(i) for i
-                            in range(len(self.features))]
+                ftNamesL = [None] * len(self.features)
                 ftNamesR = other.features.getNames()
                 ftNames = ftNamesL + ftNamesR
                 self.features.setNames(ftNames, useLog=False)
@@ -3920,31 +3948,23 @@ class Base(ABC):
             # default names cannot be included in intersection
             ptNames = [name for name in self.points.getNames()
                        if name in other.points.getNames()
-                       and not isDefaultName(name)]
+                       and name is not None]
             self.points.setNames(ptNames, useLog=False)
         elif onFeature is None:
             # union cases
             if lPtNames and rPtNames:
                 ptNamesL = self.points.getNames()
-                if other.points._anyDefaultNames():
-                    # handle default name conflicts
-                    ptNamesR = [self.points._nextDefaultName() if
-                                isDefaultName(n) else n
-                                for n in self.points.getNames()]
-                else:
-                    ptNamesR = other.points.getNames()
+                ptNamesR = other.points.getNames()
                 ptNames = ptNamesL + [name for name in ptNamesR
-                                      if name not in ptNamesL]
+                                      if name is None or name not in ptNamesL]
                 self.points.setNames(ptNames, useLog=False)
             elif lPtNames:
                 ptNamesL = self.points.getNames()
-                ptNamesR = [self.points._nextDefaultName() for _
-                            in range(len(other.points))]
+                ptNamesR = [None] * len(other.points)
                 ptNames = ptNamesL + ptNamesR
                 self.points.setNames(ptNames, useLog=False)
             elif rPtNames:
-                ptNamesL = [other.points._nextDefaultName() for _
-                            in range(len(self.points))]
+                ptNamesL = [None] * len(self.points)
                 ptNamesR = other.points.getNames()
                 ptNames = ptNamesL + ptNamesR
                 self.points.setNames(ptNames, useLog=False)
@@ -4099,7 +4119,7 @@ class Base(ABC):
         if callee.features._namesCreated():
             ret.features.setNames(callee.features.getNames(), useLog=False)
 
-        _dataHelpers.binaryOpNamePathMerge(caller, callee, ret, None, 'merge')
+        binaryOpNamePathMerge(caller, callee, ret, None, 'merge')
 
         return ret
 
@@ -4360,7 +4380,7 @@ class Base(ABC):
         Validate the object elements are all numeric.
         """
         try:
-            self.calculateOnElements(_dataHelpers._checkNumeric, useLog=False)
+            self.calculateOnElements(checkNumeric, useLog=False)
         except ValueError as e:
             msg = "The object on the {0} contains non numeric data, "
             msg += "cannot do this operation"
@@ -4478,8 +4498,7 @@ class Base(ABC):
         except ImproperObjectAction:
             other._numericValidation(right=True)
         # everything else that uses this helper is a binary scalar op
-        retPNames, retFNames = _dataHelpers.mergeNonDefaultNames(self,
-                                                                 other)
+        retPNames, retFNames = mergeNonDefaultNames(self, other)
         # in these cases we cannot define names for the disjoint axis
         if ftNamesEqual and not ptNamesEqual:
             self._genericBinary_axisNamesDisjoint('point', other, opName)
@@ -4497,7 +4516,7 @@ class Base(ABC):
         feature, so default names are ignored.
         """
         def nonDefaultNames(names):
-            return (n for n in names if not isDefaultName(n))
+            return (n for n in names if n is not None)
 
         if axis == 'point':
             sNames = nonDefaultNames(self.points.getNames())
@@ -4590,8 +4609,7 @@ class Base(ABC):
 
         nameSource = 'self' if opName.startswith('__i') else None
         pathSource = 'merge' if otherBase else 'self'
-        _dataHelpers.binaryOpNamePathMerge(obj, other, ret, nameSource,
-                                           pathSource)
+        binaryOpNamePathMerge(obj, other, ret, nameSource, pathSource)
         return ret
 
 
@@ -4763,8 +4781,8 @@ class Base(ABC):
         # setdefault only sets if the key is not already present
         kwargs.setdefault('name', self.name)
         kwargs.setdefault('paths', (other._absPath, other._relPath))
-        kwargs.setdefault('pointNames', other.points.names)
-        kwargs.setdefault('featureNames', other.features.names)
+        kwargs.setdefault('pointNames', other.points.namesInverse)
+        kwargs.setdefault('featureNames', other.features.namesInverse)
         kwargs.setdefault('reuseData', True)
 
         self._referenceFrom_implementation(other, kwargs)
@@ -4793,8 +4811,7 @@ class Base(ABC):
         names = []
         pnamesWidth = 0
         nameCutIndex = nameLength - len(nameHold)
-        (tRowIDs, bRowIDs) = _dataHelpers.indicesSplit(maxRows,
-                                                       len(self.points))
+        (tRowIDs, bRowIDs) = indicesSplit(maxRows, len(self.points))
 
         # we pull indices from two lists: tRowIDs and bRowIDs
         for sourceIndex in range(2):
@@ -4808,7 +4825,7 @@ class Base(ABC):
             for i in source:
                 pname = self.points.getName(i)
                 # omit default valued names
-                if pname[:DEFAULT_PREFIX_LENGTH] == DEFAULT_PREFIX:
+                if pname is None:
                     pname = ""
 
                 # truncate names which extend past the given length
@@ -4868,8 +4885,7 @@ class Base(ABC):
         maxRows = min(maxHeight, len(self.points))
         maxDataRows = maxRows
 
-        (tRowIDs, bRowIDs) = _dataHelpers.indicesSplit(maxDataRows,
-                                                       len(self.points))
+        (tRowIDs, bRowIDs) = indicesSplit(maxDataRows, len(self.points))
         combinedRowIDs = tRowIDs + bRowIDs
         if len(combinedRowIDs) < len(self.points):
             rowHolderIndex = len(tRowIDs)
@@ -4902,6 +4918,8 @@ class Base(ABC):
             currWidth = 0
             if includeFNames:
                 currFName = self.features.getName(currIndex)
+                if currFName is None:
+                    currFName = ''
                 fNameLen = len(currFName)
                 if fNameLen > maxStrLength:
                     currFName = currFName[:nameCutIndex] + strHold
@@ -5015,8 +5033,10 @@ class Base(ABC):
             if inconsistencies != {}:
                 table = [['left', 'ID', 'right']]
                 for i in sorted(inconsistencies.keys()):
-                    lname = '"' + lnames[i] + '"'
-                    rname = '"' + rnames[i] + '"'
+                    lname = lnames[i]
+                    rname = rnames[i]
+                    lname = str(None) if lname is None else '"' + lname + '"'
+                    rname = str(None) if rname is None else '"' + rname + '"'
                     table.append([lname, str(i), rname])
 
                 msg = leftAxis + " to " + rightAxis + " name inconsistencies "

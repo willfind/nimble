@@ -16,7 +16,6 @@ from .base import Base
 from .views import BaseView
 from .matrixAxis import MatrixPoints, MatrixPointsView
 from .matrixAxis import MatrixFeatures, MatrixFeaturesView
-from ._dataHelpers import DEFAULT_PREFIX, isDefaultName
 from ._dataHelpers import allDataIdentical
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
@@ -256,31 +255,26 @@ class Matrix(Base):
                 ptsL = np.array(self.points.getNames(), dtype=np.object_)
                 ptsL = ptsL.reshape(-1, 1)
             elif self.points._namesCreated():
-                # differentiate default names between objects;
-                # note still start with DEFAULT_PREFIX
-                namesL = [n + '_l' if isDefaultName(n) else n
-                          for n in self.points.getNames()]
+                # differentiate default names between objects
+                namesL = [i if n is None else n for i, n
+                          in enumerate(self.points.getNames())]
                 ptsL = np.array(namesL, dtype=np.object_)
                 ptsL = ptsL.reshape(-1, 1)
             else:
-                defNames = [DEFAULT_PREFIX + '_l' for _
-                            in range(len(self.points))]
-                ptsL = np.array(defNames, dtype=np.object_)
+                ptsL = np.array(range(len(self.points)), dtype=np.object_)
                 ptsL = ptsL.reshape(-1, 1)
             if not other.points._anyDefaultNames():
                 ptsR = np.array(other.points.getNames(), dtype=np.object_)
                 ptsR = ptsR.reshape(-1, 1)
             elif other.points._namesCreated():
-                # differentiate default names between objects;
-                # note still start with DEFAULT_PREFIX
-                namesR = [n + '_r' if isDefaultName(n) else n
-                          for n in other.points.getNames()]
+                maxL = len(self.points)
+                # differentiate default names between objects
+                namesR = [i + maxL if n is None else n for i, n in
+                          enumerate(other.points.getNames())]
                 ptsR = np.array(namesR, dtype=np.object_)
                 ptsR = ptsR.reshape(-1, 1)
             else:
-                defNames = [DEFAULT_PREFIX + '_r' for _
-                            in range(len(other.points))]
-                ptsR = np.array(defNames, dtype=np.object_)
+                ptsR = np.array(range(len(other.points)), dtype=np.object_)
                 ptsR = ptsR.reshape(-1, 1)
             if feature == "intersection":
                 concatL = (ptsL, self._data[:, matchingFtIdx[0]])
@@ -409,7 +403,6 @@ class Matrix(Base):
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
-        kwds['reuseData'] = True
 
         return MatrixView(**kwds)
 

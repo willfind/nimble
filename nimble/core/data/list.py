@@ -17,7 +17,6 @@ from .base import Base
 from .views import BaseView
 from .listAxis import ListPoints, ListPointsView
 from .listAxis import ListFeatures, ListFeaturesView
-from ._dataHelpers import DEFAULT_PREFIX, isDefaultName
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
 from ._dataHelpers import denseCountUnique
@@ -391,25 +390,22 @@ class List(Base):
             left = []
             right = []
 
-            def ptNameGetter(obj, idx, suffix):
+            def ptNameGetter(obj, idx, add=0):
                 if obj.points._namesCreated():
                     name = obj.points.getName(idx)
-                    if not isDefaultName(name):
+                    if name is not None:
                         return name
-                    # differentiate default names between objects;
-                    # note still start with DEFAULT_PREFIX
-                    return name + suffix
-
-                return DEFAULT_PREFIX + str(idx) + suffix
+                return idx + add
 
             if feature == "intersection":
                 for i, pt in enumerate(self._data):
-                    ptL = [ptNameGetter(self, i, '_l')]
+                    ptL = [ptNameGetter(self, i)]
                     intersect = [val for idx, val in enumerate(pt)
                                  if idx in matchingFtIdx[0]]
                     self._data[i] = ptL + intersect
                 for i, pt in enumerate(other._data):
-                    ptR = [ptNameGetter(other, i, '_r')]
+                    maxL = len(self.points)
+                    ptR = [ptNameGetter(other, i, maxL)]
                     ptR.extend([pt[i] for i in matchingFtIdx[1]])
                     right.append(ptR)
                 # matching indices were sorted above
@@ -421,10 +417,11 @@ class List(Base):
                 matchingFtIdx[1] = matchingFtIdx[0]
             elif feature == "left":
                 for i, pt in enumerate(self._data):
-                    ptL = [ptNameGetter(self, i, '_l')]
+                    ptL = [ptNameGetter(self, i)]
                     self._data[i] = ptL + pt
                 for i, pt in enumerate(other._data):
-                    ptR = [ptNameGetter(other, i, '_r')]
+                    maxL = len(self.points)
+                    ptR = [ptNameGetter(other, i, maxL)]
                     ptR.extend([pt[i] for i in matchingFtIdx[1]])
                     right.append(ptR)
                 # account for new column in matchingFtIdx
@@ -435,10 +432,11 @@ class List(Base):
                 matchingFtIdx[1] = list(range(len(right[0])))
             else:
                 for i, pt in enumerate(self._data):
-                    ptL = [ptNameGetter(self, i, '_l')]
+                    ptL = [ptNameGetter(self, i)]
                     self._data[i] = ptL + pt
                 for i, pt in enumerate(other._data):
-                    ptR = [ptNameGetter(other, i, '_r')]
+                    maxL = len(self.points)
+                    ptR = [ptNameGetter(other, i, maxL)]
                     ptR.extend(pt)
                     right.append(ptR)
                 matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
@@ -544,7 +542,6 @@ class List(Base):
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
-        kwds['reuseData'] = True
 
         return ListView(**kwds)
 

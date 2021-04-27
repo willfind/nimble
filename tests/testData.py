@@ -26,7 +26,6 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import FileFormatException
-from nimble.core.data._dataHelpers import DEFAULT_PREFIX, isDefaultName
 from nimble.core._createHelpers import _intFloatOrString
 from nimble._utility import sparseMatrixToArray, isDatetime, requests
 
@@ -1208,8 +1207,8 @@ def test_userOverrideOfAutomaticByType_fnames_rawAndCSV():
         correctRaw = "fname0,fname1,fname2\n1,2,3\n"
         overide1a = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames=False)
         overide1b = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames=None)
-        assert all(map(lambda x: isDefaultName(x), overide1a.features.getNames()))
-        assert all(map(lambda x: isDefaultName(x), overide1b.features.getNames()))
+        assert all(n is None for n in overide1a.features.getNames())
+        assert all(n is None for n in overide1b.features.getNames())
 
         # example where user provided True extracts non-detectable first line
         nonStringFail1Raw = "fname0,1.0,fname2\n1,2,3"
@@ -1240,26 +1239,26 @@ def test_automaticByType_pname_interaction_with_fname():
         #pnames not triggered given 'pointNames' at [0,0] when fnames auto trigger fails CASE1
         raw = "pointNames,fname0,1.0,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
-        assert all(map(lambda x: isDefaultName(x), testObj.features.getNames()))
-        assert all(map(lambda x: isDefaultName(x), testObj.points.getNames()))
+        assert all(n is None for n in testObj.features.getNames())
+        assert all(n is None for n in testObj.points.getNames())
 
         #pnames not triggered given 'pointNames' at [0,0] when fnames auto trigger fails CASE2
         raw = "pointNames,fname0,fname1,fname2\npname0,data1,data2,data3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')
-        assert all(map(lambda x: isDefaultName(x), testObj.features.getNames()))
-        assert all(map(lambda x: isDefaultName(x), testObj.points.getNames()))
+        assert all(n is None for n in testObj.features.getNames())
+        assert all(n is None for n in testObj.points.getNames())
 
         #pnames not triggered given 'pointNames' at [0,0] when fnames explicit False
         raw = "pointNames,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames=False)
-        assert all(map(lambda x: isDefaultName(x), testObj.features.getNames()))
-        assert all(map(lambda x: isDefaultName(x), testObj.points.getNames()))
+        assert all(n is None for n in testObj.features.getNames())
+        assert all(n is None for n in testObj.points.getNames())
 
         #pnames explicit False given 'pointNames' at [0,0] and fname auto extraction
         raw = "pointNames,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames=False, featureNames=True)
         assert testObj.features.getNames() == ['pointNames', 'fname0', 'fname1', 'fname2']
-        assert all(map(lambda x: isDefaultName(x), testObj.points.getNames()))
+        assert all(n is None for n in testObj.points.getNames())
 
 
 def test_names_AutomaticVsTrueVsFalseVsNone():
