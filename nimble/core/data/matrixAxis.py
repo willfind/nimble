@@ -5,7 +5,7 @@ operations on a nimble Matrix object.
 
 from abc import ABCMeta, abstractmethod
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble._utility import numpy2DArray
@@ -55,8 +55,7 @@ class MatrixAxis(Axis, metaclass=ABCMeta):
             ret = self._base._data[:, targetList]
 
         if structure != 'copy':
-            self._base._data = numpy.delete(self._base._data,
-                                            targetList, axisVal)
+            self._base._data = np.delete(self._base._data, targetList, axisVal)
 
         return nimble.core.data.Matrix(ret, pointNames=pointNames,
                                        featureNames=featureNames,
@@ -77,7 +76,7 @@ class MatrixAxis(Axis, metaclass=ABCMeta):
     def _unique_implementation(self):
         uniqueData, uniqueIndices = denseAxisUniqueArray(self._base,
                                                          self._axis)
-        if numpy.array_equal(self._base._data, uniqueData):
+        if np.array_equal(self._base._data, uniqueData):
             return self._base.copy()
 
         axisNames, offAxisNames = uniqueNameGetter(self._base, self._axis,
@@ -99,9 +98,9 @@ class MatrixAxis(Axis, metaclass=ABCMeta):
             ptDim = 1
             ftDim = totalCopies
         if copyVectorByVector:
-            repeated = numpy.repeat(self._base._data, totalCopies, axis)
+            repeated = np.repeat(self._base._data, totalCopies, axis)
         else:
-            repeated = numpy.tile(self._base._data, (ptDim, ftDim))
+            repeated = np.tile(self._base._data, (ptDim, ftDim))
         return repeated
 
     ###########
@@ -114,11 +113,11 @@ class MatrixAxis(Axis, metaclass=ABCMeta):
         current values with the transformed values.
         """
         baseDtype = self._base._data.dtype
-        if baseDtype != numpy.object_ and retDtype == numpy.object_:
-            self._base._data = self._base._data.astype(numpy.object_)
-        elif baseDtype == numpy.int and retDtype == numpy.float:
-            self._base._data = self._base._data.astype(numpy.float)
-        elif baseDtype == numpy.bool_ and retDtype != numpy.bool_:
+        if baseDtype != np.object_ and retDtype == np.object_:
+            self._base._data = self._base._data.astype(np.object_)
+        elif baseDtype == np.int and retDtype == np.float:
+            self._base._data = self._base._data.astype(np.float)
+        elif baseDtype == np.bool_ and retDtype != np.bool_:
             self._base._data = self._base._data.astype(retDtype)
 
     ####################
@@ -156,7 +155,7 @@ class MatrixPoints(MatrixAxis, Points):
         """
         startData = self._base._data[:insertBefore, :]
         endData = self._base._data[insertBefore:, :]
-        self._base._data = numpy.concatenate(
+        self._base._data = np.concatenate(
             (startData, toInsert._data, endData), 0)
 
     def _transform_implementation(self, function, limitTo):
@@ -164,12 +163,12 @@ class MatrixPoints(MatrixAxis, Points):
             if limitTo is not None and i not in limitTo:
                 continue
             currRet = function(pt)
-            retArray = numpy.array(currRet, dtype=function.convertType)
+            retArray = np.array(currRet, dtype=function.convertType)
             self._convertBaseDtype(retArray.dtype)
             self._base._data[i, :] = retArray
         # if transformations applied to all data and function.convertType is
         # not object we can convert base with object dtype to a numeric dtype.
-        if (self._base._data.dtype == numpy.object_ and limitTo is None
+        if (self._base._data.dtype == np.object_ and limitTo is None
                 and function.convertType is not object):
             self._base._data = self._base._data.astype(function.convertType)
 
@@ -231,7 +230,7 @@ class MatrixFeatures(MatrixAxis, Features):
         """
         startData = self._base._data[:, :insertBefore]
         endData = self._base._data[:, insertBefore:]
-        self._base._data = numpy.concatenate(
+        self._base._data = np.concatenate(
             (startData, toInsert._data, endData), 1)
 
     def _transform_implementation(self, function, limitTo):
@@ -239,12 +238,12 @@ class MatrixFeatures(MatrixAxis, Features):
             if limitTo is not None and j not in limitTo:
                 continue
             currRet = function(f)
-            retArray = numpy.array(currRet, dtype=function.convertType)
+            retArray = np.array(currRet, dtype=function.convertType)
             self._convertBaseDtype(retArray.dtype)
             self._base._data[:, j] = retArray
         # if transformations applied to all data and function.convertType is
         # not object we can convert base object dtype to a numeric dtype.
-        if (self._base._data.dtype == numpy.object_ and limitTo is None
+        if (self._base._data.dtype == np.object_ and limitTo is None
                 and function.convertType is not object):
             self._base._data = self._base._data.astype(function.convertType)
 
@@ -254,8 +253,8 @@ class MatrixFeatures(MatrixAxis, Features):
 
     def _splitByParsing_implementation(self, featureIndex, splitList,
                                        numRetFeatures, numResultingFts):
-        tmpData = numpy.empty(shape=(len(self._base.points), numRetFeatures),
-                              dtype=numpy.object_)
+        tmpData = np.empty(shape=(len(self._base.points), numRetFeatures),
+                           dtype=np.object_)
 
         tmpData[:, :featureIndex] = self._base._data[:, :featureIndex]
         for i in range(numResultingFts):

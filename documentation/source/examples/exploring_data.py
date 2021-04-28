@@ -22,8 +22,11 @@ extract useful insights.
 ## Getting Started ##
 
 import nimble
-# TODO: use url once changes to data set are available online
-visits = nimble.data('DataFrame', 'online_shoppers_intention_explore.csv')
+
+bucket = 'https://storage.googleapis.com/nimble/datasets/'
+url = bucket + 'online_shoppers_intention_explore.csv'
+visits = nimble.data('Matrix', url)
+
 featureNames = visits.features.getNames()
 settingsForShow = {'maxWidth': 120, 'maxHeight': 9}
 

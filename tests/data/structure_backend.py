@@ -8,7 +8,7 @@ copy, points.copy, features.copy
 In object StructureModifying:
 __init__,  transpose, T, points.insert, features.insert, points.sort,
 features.sort, points.extract, features.extract, points.delete,
-features.delete, points.retain, features.retain, _referenceDataFrom,
+features.delete, points.retain, features.retain, _referenceFrom,
 points.transform, features.transform, transformElements, replaceRectangle,
 flatten, merge, unflatten, points.append, features.append,
 """
@@ -25,7 +25,7 @@ try:
 except ImportError:
     import mock
 
-import numpy
+import numpy as np
 from nose.tools import *
 
 import nimble
@@ -51,15 +51,12 @@ from tests.helpers import assertNoNamesGenerated, assertExpectedException
 from tests.helpers import CalledFunctionException, calledException
 from tests.helpers import getDataConstructors
 
-preserveName = "PreserveTestName"
-preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
-preserveRPath = os.path.relpath(preserveAPath)
-preservePair = (preserveAPath, preserveRPath)
-
-
 ### Helpers used by tests in the test class ###
 
 twoLogEntriesExpected = logCountAssertionFactory(2)
+
+TEST_REL_PATH = 'testPath'
+TEST_ABS_PATH = os.path.abspath(TEST_REL_PATH)
 
 def passThrough(value):
     return value
@@ -183,12 +180,12 @@ class StructureDataSafe(StructureShared):
     def test_T_empty(self):
         """ Test T property on different kinds of emptiness """
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         toTest = self.constructor(data)
         orig = toTest.copy()
 
         exp1 = [[], []]
-        exp1 = numpy.array(exp1)
+        exp1 = np.array(exp1)
         ret1 = self.constructor(exp1)
         assert ret1.isIdentical(toTest.T)
         assert toTest.isIdentical(orig)
@@ -290,7 +287,7 @@ class StructureDataSafe(StructureShared):
     def test_copy_Pempty(self):
         """ test copy() produces the correct outputs when given an point empty object """
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
 
         orig = self.constructor(data)
         sparseObj = nimble.data(returnType="Sparse", source=data, useLog=False)
@@ -318,22 +315,22 @@ class StructureDataSafe(StructureShared):
         assert pyList == []
 
         numpyArray = orig.copy(to='numpy array')
-        assert numpy.array_equal(numpyArray, data)
+        assert np.array_equal(numpyArray, data)
 
         numpyMatrix = orig.copy(to='numpy matrix')
-        assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
+        assert np.array_equal(numpyMatrix, np.matrix(data))
 
         scipyCsr = orig.copy(to='scipy csr')
-        assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
+        assert np.array_equal(sparseMatrixToArray(scipyCsr), data)
 
         scipyCsc = orig.copy(to='scipy csc')
-        assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
+        assert np.array_equal(sparseMatrixToArray(scipyCsc), data)
 
         scipyCoo = orig.copy(to='scipy coo')
-        assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
+        assert np.array_equal(sparseMatrixToArray(scipyCoo), data)
 
         pandasDF = orig.copy(to='pandas dataframe')
-        assert numpy.array_equal(pandasDF, data)
+        assert np.array_equal(pandasDF, data)
 
         listOfDict = orig.copy(to='list of dict')
         assert listOfDict == []
@@ -346,7 +343,7 @@ class StructureDataSafe(StructureShared):
     def test_copy_Fempty(self):
         """ test copy() produces the correct outputs when given an feature empty object """
         data = [[], []]
-        data = numpy.array(data)
+        data = np.array(data)
 
         orig = self.constructor(data)
         sparseObj = nimble.data(returnType="Sparse", source=data, useLog=False)
@@ -374,23 +371,23 @@ class StructureDataSafe(StructureShared):
         assert pyList == [[], []]
 
         numpyArray = orig.copy(to='numpy array')
-        assert numpy.array_equal(numpyArray, data)
+        assert np.array_equal(numpyArray, data)
 
         numpyMatrix = orig.copy(to='numpy matrix')
-        assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
+        assert np.array_equal(numpyMatrix, np.matrix(data))
 
         scipyCsr = orig.copy(to='scipy csr')
-        assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
+        assert np.array_equal(sparseMatrixToArray(scipyCsr), data)
 
         scipyCsc = orig.copy(to='scipy csc')
-        assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
+        assert np.array_equal(sparseMatrixToArray(scipyCsc), data)
 
         scipyCoo = orig.copy(to='scipy coo')
-        assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
+        assert np.array_equal(sparseMatrixToArray(scipyCoo), data)
 
 
         pandasDF = orig.copy(to='pandas dataframe')
-        assert numpy.array_equal(pandasDF, data)
+        assert np.array_equal(pandasDF, data)
 
         listOfDict = orig.copy(to='list of dict')
         assert listOfDict == [{}, {}]
@@ -401,7 +398,7 @@ class StructureDataSafe(StructureShared):
     @noLogEntryExpected
     def test_copy_Trueempty(self):
         """ test copy() produces the correct outputs when given a point and feature empty object """
-        data = numpy.empty(shape=(0, 0))
+        data = np.empty(shape=(0, 0))
 
         orig = self.constructor(data)
         sparseObj = nimble.data(returnType="Sparse", source=data, useLog=False)
@@ -429,22 +426,22 @@ class StructureDataSafe(StructureShared):
         assert pyList == []
 
         numpyArray = orig.copy(to='numpy array')
-        assert numpy.array_equal(numpyArray, data)
+        assert np.array_equal(numpyArray, data)
 
         numpyMatrix = orig.copy(to='numpy matrix')
-        assert numpy.array_equal(numpyMatrix, numpy.matrix(data))
+        assert np.array_equal(numpyMatrix, np.matrix(data))
 
         scipyCsr = orig.copy(to='scipy csr')
-        assert numpy.array_equal(sparseMatrixToArray(scipyCsr), data)
+        assert np.array_equal(sparseMatrixToArray(scipyCsr), data)
 
         scipyCsc = orig.copy(to='scipy csc')
-        assert numpy.array_equal(sparseMatrixToArray(scipyCsc), data)
+        assert np.array_equal(sparseMatrixToArray(scipyCsc), data)
 
         scipyCoo = orig.copy(to='scipy coo')
-        assert numpy.array_equal(sparseMatrixToArray(scipyCoo), data)
+        assert np.array_equal(sparseMatrixToArray(scipyCoo), data)
 
         pandasDF = orig.copy(to='pandas dataframe')
-        assert numpy.array_equal(pandasDF, data)
+        assert np.array_equal(pandasDF, data)
 
         listOfDict = orig.copy(to='list of dict')
         assert listOfDict == []
@@ -527,12 +524,12 @@ class StructureDataSafe(StructureShared):
         assert orig[0, 0] == 1
 
         numpyArray = orig.copy(to='numpy array')
-        assert type(numpyArray) == type(numpy.array([]))
+        assert type(numpyArray) == type(np.array([]))
         numpyArray[0, 0] = 5
         assert orig[0, 0] == 1
 
         numpyMatrix = orig.copy(to='numpy matrix')
-        assert type(numpyMatrix) == type(numpy.matrix([]))
+        assert type(numpyMatrix) == type(np.matrix([]))
         numpyMatrix[0, 0] = 5
         assert orig[0, 0] == 1
 
@@ -556,8 +553,8 @@ class StructureDataSafe(StructureShared):
 
         pandasDF = orig.copy(to='pandas dataframe')
         assert type(pandasDF) == type(pd.DataFrame([]))
-        assert numpy.array_equal(pandasDF.columns, featureNames)
-        assert numpy.array_equal(pandasDF.index, pointNames)
+        assert np.array_equal(pandasDF.columns, featureNames)
+        assert np.array_equal(pandasDF.index, pointNames)
         pandasDF.iloc[0, 0] = 5
         assert orig[0, 0] == 1
 
@@ -577,7 +574,7 @@ class StructureDataSafe(StructureShared):
     def test_copy_rowsArePointsFalse(self):
         """ Test copy() will return data in the right places when rowsArePoints is False"""
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
-        dataT = numpy.array(data).T
+        dataT = np.array(data).T
 
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0']
@@ -594,24 +591,24 @@ class StructureDataSafe(StructureShared):
         assert out == dataT.tolist()
 
         out = orig.copy(to='numpyarray', rowsArePoints=False)
-        assert numpy.array_equal(out, dataT)
+        assert np.array_equal(out, dataT)
 
         out = orig.copy(to='numpymatrix', rowsArePoints=False)
-        assert numpy.array_equal(out, dataT)
+        assert np.array_equal(out, dataT)
 
         out = orig.copy(to='scipycsr', rowsArePoints=False)
-        assert numpy.array_equal(sparseMatrixToArray(out), dataT)
+        assert np.array_equal(sparseMatrixToArray(out), dataT)
 
         out = orig.copy(to='scipycsc', rowsArePoints=False)
-        assert numpy.array_equal(sparseMatrixToArray(out), dataT)
+        assert np.array_equal(sparseMatrixToArray(out), dataT)
 
         out = out = orig.copy(to='scipycoo', rowsArePoints=False)
-        assert numpy.array_equal(sparseMatrixToArray(out), dataT)
+        assert np.array_equal(sparseMatrixToArray(out), dataT)
 
         out = orig.copy(to='pandasdataframe', rowsArePoints=False)
-        assert numpy.array_equal(out, dataT)
-        assert numpy.array_equal(out.columns, pointNames)
-        assert numpy.array_equal(out.index, featureNames)
+        assert np.array_equal(out, dataT)
+        assert np.array_equal(out.columns, pointNames)
+        assert np.array_equal(out.index, featureNames)
 
         out = orig.copy(to='list of dict', rowsArePoints=False)
 
@@ -709,7 +706,7 @@ class StructureDataSafe(StructureShared):
         assert outPV == [1, 2, 0, 3]
 
         outFV = origFV.copy(to='numpy array', outputAs1D=True)
-        assert numpy.array_equal(outFV, numpy.array([1, 2, 3, 0]))
+        assert np.array_equal(outFV, np.array([1, 2, 3, 0]))
 
     def test_copy_NameAndPath(self):
         """ Test copy() will preserve name and path attributes"""
@@ -794,23 +791,23 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data)
         # need to set source paths for view objects
         if isinstance(toTest, nimble.core.data.BaseView):
-            toTest._source._absPath = 'testAbsPath'
-            toTest._source._relPath = 'testRelPath'
+            toTest._source._absPath = TEST_ABS_PATH
+            toTest._source._relPath = TEST_REL_PATH
         else:
-            toTest._absPath = 'testAbsPath'
-            toTest._relPath = 'testRelPath'
+            toTest._absPath = TEST_ABS_PATH
+            toTest._relPath = TEST_REL_PATH
         toTest._name = 'testName'
 
         ext1 = toTest.points.copy(0)
 
         assert ext1.name is None
-        assert ext1.path == 'testAbsPath'
-        assert ext1.absolutePath == 'testAbsPath'
-        assert ext1.relativePath == 'testRelPath'
+        assert ext1.path == TEST_ABS_PATH
+        assert ext1.absolutePath == TEST_ABS_PATH
+        assert ext1.relativePath == TEST_REL_PATH
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
     def test_points_copy_ListIntoPEmpty(self):
         """ Test points.copy() by copying a list of all points """
@@ -907,7 +904,7 @@ class StructureDataSafe(StructureShared):
         ret = toTest.points.copy(allFalse)
 
         data = [[], [], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         expRet = self.constructor(data)
 
         assert ret.isIdentical(expRet)
@@ -930,22 +927,22 @@ class StructureDataSafe(StructureShared):
 
         # need to set source paths for view objects
         if isinstance(toTest, nimble.core.data.BaseView):
-            toTest._source._absPath = 'testAbsPath'
-            toTest._source._relPath = 'testRelPath'
+            toTest._source._absPath = TEST_ABS_PATH
+            toTest._source._relPath = TEST_REL_PATH
         else:
-            toTest._absPath = 'testAbsPath'
-            toTest._relPath = 'testRelPath'
+            toTest._absPath = TEST_ABS_PATH
+            toTest._relPath = TEST_REL_PATH
         toTest._name = 'testName'
 
         ext = toTest.points.copy(oneOrFour)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ext.name is None
-        assert ext.absolutePath == 'testAbsPath'
-        assert ext.relativePath == 'testRelPath'
+        assert ext.absolutePath == TEST_ABS_PATH
+        assert ext.relativePath == TEST_REL_PATH
 
     def test_points_copy_handmadeFuncionWithFeatureNames(self):
         """ Test points.copy() against handmade output for function copying with featureNames"""
@@ -1015,22 +1012,22 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data)
         # need to set source paths for view objects
         if isinstance(toTest, nimble.core.data.BaseView):
-            toTest._source._absPath = 'testAbsPath'
-            toTest._source._relPath = 'testRelPath'
+            toTest._source._absPath = TEST_ABS_PATH
+            toTest._source._relPath = TEST_REL_PATH
         else:
-            toTest._absPath = 'testAbsPath'
-            toTest._relPath = 'testRelPath'
+            toTest._absPath = TEST_ABS_PATH
+            toTest._relPath = TEST_REL_PATH
         toTest._name = 'testName'
 
         ret = toTest.points.copy(start=1, end=2)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ret.name is None
-        assert ret.absolutePath == 'testAbsPath'
-        assert ret.relativePath == 'testRelPath'
+        assert ret.absolutePath == TEST_ABS_PATH
+        assert ret.relativePath == TEST_REL_PATH
 
 
     def test_points_copy_rangeIntoPEmpty(self):
@@ -1531,22 +1528,22 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data)
         # need to set source paths for view objects
         if isinstance(toTest, nimble.core.data.BaseView):
-            toTest._source._absPath = 'testAbsPath'
-            toTest._source._relPath = 'testRelPath'
+            toTest._source._absPath = TEST_ABS_PATH
+            toTest._source._relPath = TEST_REL_PATH
         else:
-            toTest._absPath = 'testAbsPath'
-            toTest._relPath = 'testRelPath'
+            toTest._absPath = TEST_ABS_PATH
+            toTest._relPath = TEST_REL_PATH
         toTest._name = 'testName'
 
         ext1 = toTest.features.copy(0)
 
-        assert toTest.path == 'testAbsPath'
-        assert toTest.absolutePath == 'testAbsPath'
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.path == TEST_ABS_PATH
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ext1.name is None
-        assert ext1.absolutePath == 'testAbsPath'
-        assert ext1.relativePath == 'testRelPath'
+        assert ext1.absolutePath == TEST_ABS_PATH
+        assert ext1.relativePath == TEST_REL_PATH
 
     def test_features_copy_ListIntoFEmpty(self):
         """ Test features.copy() by copying a list of all features """
@@ -1704,22 +1701,22 @@ class StructureDataSafe(StructureShared):
 
         # need to set source paths for view objects
         if isinstance(toTest, nimble.core.data.BaseView):
-            toTest._source._absPath = 'testAbsPath'
-            toTest._source._relPath = 'testRelPath'
+            toTest._source._absPath = TEST_ABS_PATH
+            toTest._source._relPath = TEST_REL_PATH
         else:
-            toTest._absPath = 'testAbsPath'
-            toTest._relPath = 'testRelPath'
+            toTest._absPath = TEST_ABS_PATH
+            toTest._relPath = TEST_REL_PATH
         toTest._name = 'testName'
 
         ext = toTest.features.copy(absoluteOne)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ext.name is None
-        assert ext.absolutePath == 'testAbsPath'
-        assert ext.relativePath == 'testRelPath'
+        assert ext.absolutePath == TEST_ABS_PATH
+        assert ext.relativePath == TEST_REL_PATH
 
     def test_features_copy_handmadeFunctionWithFeatureName(self):
         """ Test features.copy() against handmade output for function copies with featureNames """
@@ -1818,22 +1815,22 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data)
         # need to set source paths for view objects
         if isinstance(toTest, nimble.core.data.BaseView):
-            toTest._source._absPath = 'testAbsPath'
-            toTest._source._relPath = 'testRelPath'
+            toTest._source._absPath = TEST_ABS_PATH
+            toTest._source._relPath = TEST_REL_PATH
         else:
-            toTest._absPath = 'testAbsPath'
-            toTest._relPath = 'testRelPath'
+            toTest._absPath = TEST_ABS_PATH
+            toTest._relPath = TEST_REL_PATH
         toTest._name = 'testName'
 
         ret = toTest.features.copy(start=1, end=2)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ret.name is None
-        assert ret.absolutePath == 'testAbsPath'
-        assert ret.relativePath == 'testRelPath'
+        assert ret.absolutePath == TEST_ABS_PATH
+        assert ret.relativePath == TEST_REL_PATH
 
 
     def test_features_copy_handmadeWithFeatureNames(self):
@@ -2065,15 +2062,15 @@ class StructureModifying(StructureShared):
     def test_createEmptyData1(self):
         """
         create data object using tuple, list,
-        dict, numpy.ndarray, numpy.matrix, pd.DataFrame,
+        dict, np.ndarray, np.matrix, pd.DataFrame,
         pd.Series, pd.SparseDataFrame, scipy sparse matrix
         as input type.
         """
         orig1 = self.constructor([])
         orig2 = self.constructor(())
         orig3 = self.constructor({})
-        orig4 = self.constructor(numpy.empty([0, 0]))
-        orig5 = self.constructor(numpy.matrix(numpy.empty([0, 0])))
+        orig4 = self.constructor(np.empty([0, 0]))
+        orig5 = self.constructor(np.matrix(np.empty([0, 0])))
         orig6 = self.constructor(pd.DataFrame())
         orig7 = self.constructor(pd.Series())
         try: # SparseDataFrame removed in 1.0 in favor of using SparseDType
@@ -2092,14 +2089,14 @@ class StructureModifying(StructureShared):
     def test_createEmptyData2(self):
         """
         create data object using tuple, list,
-        dict, numpy.ndarray, numpy.matrix, pd.DataFrame,
+        dict, np.ndarray, np.matrix, pd.DataFrame,
         pd.Series, pd.SparseDataFrame, scipy sparse matrix
         as input type.
         """
         orig1 = self.constructor([[]])
         orig2 = self.constructor([{}])
-        orig3 = self.constructor(numpy.empty([1, 0]))
-        orig4 = self.constructor(numpy.matrix(numpy.empty([1, 0])))
+        orig3 = self.constructor(np.empty([1, 0]))
+        orig4 = self.constructor(np.matrix(np.empty([1, 0])))
         orig5 = self.constructor(pd.DataFrame([[]]))
         orig6 = self.constructor(scipy.sparse.coo_matrix([[]]))
         try: # SparseDataFrame removed in 1.0 in favor of using SparseDType
@@ -2117,14 +2114,14 @@ class StructureModifying(StructureShared):
     def test_createEmptyData3(self):
         """
         create data object using tuple, list,
-        dict, numpy.ndarray, numpy.matrix, pd.DataFrame,
+        dict, np.ndarray, np.matrix, pd.DataFrame,
         pd.Series, pd.SparseDataFrame, scipy sparse matrix
         as input type.
         """
         orig1 = self.constructor([[], []])
         orig2 = self.constructor([{}, {}])
-        orig3 = self.constructor(numpy.empty([2, 0]))
-        orig4 = self.constructor(numpy.matrix(numpy.empty([2, 0])))
+        orig3 = self.constructor(np.empty([2, 0]))
+        orig4 = self.constructor(np.matrix(np.empty([2, 0])))
         orig5 = self.constructor(pd.DataFrame([[], []]))
         orig6 = self.constructor(scipy.sparse.coo_matrix([[], []]))
         try: # SparseDataFrame removed in 1.0 in favor of using SparseDType
@@ -2142,7 +2139,7 @@ class StructureModifying(StructureShared):
     def test_create1DData(self):
         """
         create data object using tuple, list,
-        dict, numpy.ndarray, numpy.matrix, pd.DataFrame,
+        dict, np.ndarray, np.matrix, pd.DataFrame,
         pd.Series, pd.SparseDataFrame, scipy sparse matrix
         as input type.
         """
@@ -2152,8 +2149,8 @@ class StructureModifying(StructureShared):
         orig3.features.sort()
         orig4 = self.constructor([{'a':1, 'b':2, 'c':3}])
         orig4.features.sort()
-        orig5 = self.constructor(numpy.array([1,2,3]), featureNames=['a', 'b', 'c'])
-        orig6 = self.constructor(numpy.matrix([1,2,3]), featureNames=['a', 'b', 'c'])
+        orig5 = self.constructor(np.array([1,2,3]), featureNames=['a', 'b', 'c'])
+        orig6 = self.constructor(np.matrix([1,2,3]), featureNames=['a', 'b', 'c'])
         orig7 = self.constructor(pd.DataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
         orig8 = self.constructor(pd.Series([1,2,3]), featureNames=['a', 'b', 'c'])
         orig9 = self.constructor(scipy.sparse.coo_matrix([1,2,3]), featureNames=['a', 'b', 'c'])
@@ -2177,7 +2174,7 @@ class StructureModifying(StructureShared):
     def test_create2DData(self):
         """
         create data object using tuple, list,
-        dict, numpy.ndarray, numpy.matrix, pd.DataFrame,
+        dict, np.ndarray, np.matrix, pd.DataFrame,
         pd.Series, pd.SparseDataFrame, scipy sparse matrix
         as input type.
         """
@@ -2187,10 +2184,10 @@ class StructureModifying(StructureShared):
         orig3.features.sort()
         orig4 = self.constructor([{'a':1, 'b':2, 'c':'a'}, {'a':3, 'b':4, 'c':'b'}])
         orig4.features.sort()
-        orig5 = self.constructor(numpy.array([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
-        orig6 = self.constructor(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
+        orig5 = self.constructor(np.array([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
+        orig6 = self.constructor(np.matrix([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
         orig7 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']]), featureNames=['a', 'b', 'c'])
-        orig8 = self.constructor(scipy.sparse.coo_matrix(numpy.matrix([[1,2,'a'], [3,4,'b']], dtype=object)),
+        orig8 = self.constructor(scipy.sparse.coo_matrix(np.matrix([[1,2,'a'], [3,4,'b']], dtype=object)),
                                  featureNames=['a', 'b', 'c'])
         try: # SparseDataFrame removed in 1.0 in favor of using SparseDType
             orig9 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']], dtype='Sparse[object]'),
@@ -2321,15 +2318,15 @@ class StructureModifying(StructureShared):
 
     def test_init_coo_matrix_duplicates(self):
         # Constructing a matrix with duplicate indices
-        row  = numpy.array([0, 0, 1, 3, 1, 0, 0])
-        col  = numpy.array([0, 2, 1, 3, 1, 0, 0])
-        data = numpy.array([1, 7, 1, 6, 4, 2, 1])
+        row  = np.array([0, 0, 1, 3, 1, 0, 0])
+        col  = np.array([0, 2, 1, 3, 1, 0, 0])
+        data = np.array([1, 7, 1, 6, 4, 2, 1])
         coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
         ret = self.constructor(coo)
         # Expected coo_matrix duplicates sum
-        row  = numpy.array([0, 0, 1, 3])
-        col  = numpy.array([0, 2, 1, 3])
-        data = numpy.array([4, 7, 5, 6])
+        row  = np.array([0, 0, 1, 3])
+        col  = np.array([0, 2, 1, 3])
+        data = np.array([4, 7, 5, 6])
         coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
         exp = self.constructor(coo)
 
@@ -2340,15 +2337,15 @@ class StructureModifying(StructureShared):
 
     def test_init_coo_matrix_duplicates_introduces_zero(self):
         # Constructing a matrix with duplicate indices
-        row  = numpy.array([0, 0, 1, 3, 1, 0, 0])
-        col  = numpy.array([0, 2, 1, 3, 1, 0, 0])
-        data = numpy.array([1, 7, 1, 6, -1, 2, 1])
+        row  = np.array([0, 0, 1, 3, 1, 0, 0])
+        col  = np.array([0, 2, 1, 3, 1, 0, 0])
+        data = np.array([1, 7, 1, 6, -1, 2, 1])
         coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
         ret = self.constructor(coo)
         # Expected coo_matrix duplicates sum
-        row  = numpy.array([0, 0, 3])
-        col  = numpy.array([0, 2, 3])
-        data = numpy.array([4, 7, 6])
+        row  = np.array([0, 0, 3])
+        col  = np.array([0, 2, 3])
+        data = np.array([4, 7, 6])
         coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
         exp = self.constructor(coo)
 
@@ -2361,17 +2358,17 @@ class StructureModifying(StructureShared):
     def test_init_coo_matrix_duplicateswithNoDupStrings(self):
         # Constructing a matrix with duplicate indices
         # with String, but not in duplicate entry
-        row  = numpy.array([0, 0, 1, 3, 1, 0, 0])
-        col  = numpy.array([0, 2, 1, 3, 1, 0, 0])
+        row  = np.array([0, 0, 1, 3, 1, 0, 0])
+        col  = np.array([0, 2, 1, 3, 1, 0, 0])
         # need to specify object dtype, otherwise it will generate a all string object
-        data = numpy.array([1, 7, 1, 'AAA', 4, 2, 1], dtype='O')
+        data = np.array([1, 7, 1, 'AAA', 4, 2, 1], dtype='O')
         coo_str = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
         ret = self.constructor(coo_str)
         # Expected coo_matrix duplicates sum
         # with String, but not in duplicate entry
-        row  = numpy.array([0, 0, 1, 3])
-        col  = numpy.array([0, 2, 1, 3])
-        data = numpy.array([4, 7, 5, 'AAA'], dtype='O')
+        row  = np.array([0, 0, 1, 3])
+        col  = np.array([0, 2, 1, 3])
+        data = np.array([4, 7, 5, 'AAA'], dtype='O')
         coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
         exp = self.constructor(coo_str)
 
@@ -2384,9 +2381,9 @@ class StructureModifying(StructureShared):
     def test_init_coo_matrix_duplicateswithDupStrings(self):
         # Constructing a matrix with duplicate indices
         # # with String, in a duplicate entry
-        row  = numpy.array([0, 0, 1, 3, 1, 0, 0])
-        col  = numpy.array([0, 2, 1, 3, 1, 0, 0])
-        data = numpy.array([1, 7, 1, 'AAA', 4, 2, 'BBB'], dtype='O')
+        row  = np.array([0, 0, 1, 3, 1, 0, 0])
+        col  = np.array([0, 2, 1, 3, 1, 0, 0])
+        data = np.array([1, 7, 1, 'AAA', 4, 2, 'BBB'], dtype='O')
         coo_str = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
         ret = self.constructor(coo_str)
 
@@ -2407,20 +2404,20 @@ class StructureModifying(StructureShared):
     def test_transpose_empty(self):
         """ Test transpose() on different kinds of emptiness """
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         toTest = self.constructor(data)
 
         toTest.transpose()
 
         exp1 = [[], []]
-        exp1 = numpy.array(exp1)
+        exp1 = np.array(exp1)
         ret1 = self.constructor(exp1)
         assert ret1.isIdentical(toTest)
 
         toTest.transpose()
 
         exp2 = [[], []]
-        exp2 = numpy.array(exp2).T
+        exp2 = np.array(exp2).T
         ret2 = self.constructor(exp2)
         assert ret2.isIdentical(toTest)
 
@@ -2500,13 +2497,13 @@ class StructureModifying(StructureShared):
 
         dataObj1._name = "TestName"
         dataObj1._absPath = "TestAbsPath"
-        dataObj1._relPath = "testRelPath"
+        dataObj1._relPath = TEST_REL_PATH
 
         dataObj1.transpose()
 
         assert dataObj1.name == "TestName"
         assert dataObj1.absolutePath == "TestAbsPath"
-        assert dataObj1.relativePath == 'testRelPath'
+        assert dataObj1.relativePath == TEST_REL_PATH
 
     ##################################
     # common backends insert/append #
@@ -2517,10 +2514,10 @@ class StructureModifying(StructureShared):
         empty = [[], []]
 
         if axis == 'point':
-            empty = numpy.array(empty).T
+            empty = np.array(empty).T
             data = [[1, 2]]
         else:
-            empty = numpy.array(empty)
+            empty = np.array(empty)
             data = [[1], [2]]
 
         toTest = self.constructor(empty)
@@ -3141,11 +3138,11 @@ class StructureModifying(StructureShared):
 
         toTest._name = "TestName"
         toTest._absPath = "TestAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._relPath = TEST_REL_PATH
 
         toInsert._name = "TestNameOther"
-        toInsert._absPath = "TestAbsPathOther"
-        toInsert._relPath = "testRelPathOther"
+        toInsert._absPath = TEST_ABS_PATH + "Other"
+        toInsert._relPath = TEST_REL_PATH + "Other"
 
         if axis == 'point':
             toTest.points.insert(len(toTest.points), toInsert)
@@ -3154,7 +3151,7 @@ class StructureModifying(StructureShared):
 
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.relativePath == TEST_REL_PATH
 
     def test_points_insert_NamePath_preservation(self):
         self.backend_insert_NamePath_preservation('point')
@@ -3741,19 +3738,19 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = 'testName'
-        toTest._absPath = 'testAbsPath'
-        toTest._relPath = 'testRelPath'
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         ext1 = toTest.points.extract(0)
 
         assert ext1.name is None
-        assert ext1.path == 'testAbsPath'
-        assert ext1.absolutePath == 'testAbsPath'
-        assert ext1.relativePath == 'testRelPath'
+        assert ext1.path == TEST_ABS_PATH
+        assert ext1.absolutePath == TEST_ABS_PATH
+        assert ext1.relativePath == TEST_REL_PATH
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
     def test_points_extract_ListIntoPEmpty(self):
         """ Test points.extract() by removing a list of all points """
@@ -3765,7 +3762,7 @@ class StructureModifying(StructureShared):
         assert ret.isIdentical(expRet)
 
         data = [[], [], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         exp = self.constructor(data)
 
         assert toTest.isIdentical(exp)
@@ -3850,7 +3847,7 @@ class StructureModifying(StructureShared):
         assert ret.isIdentical(expRet)
 
         data = [[], [], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         exp = self.constructor(data)
 
         assert toTest.isIdentical(exp)
@@ -3863,7 +3860,7 @@ class StructureModifying(StructureShared):
         ret = toTest.points.extract(allFalse)
 
         data = [[], [], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         expRet = self.constructor(data)
 
         assert ret.isIdentical(expRet)
@@ -3885,18 +3882,18 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         ext = toTest.points.extract(oneOrFour)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ext.name is None
-        assert ext.absolutePath == 'testAbsPath'
-        assert ext.relativePath == 'testRelPath'
+        assert ext.absolutePath == TEST_ABS_PATH
+        assert ext.relativePath == TEST_REL_PATH
 
     def test_points_extract_handmadeFuncionWithFeatureNames(self):
         """ Test points.extract() against handmade output for function extraction with featureNames"""
@@ -3967,18 +3964,18 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         ret = toTest.points.extract(start=1, end=2)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ret.name is None
-        assert ret.absolutePath == 'testAbsPath'
-        assert ret.relativePath == 'testRelPath'
+        assert ret.absolutePath == TEST_ABS_PATH
+        assert ret.relativePath == TEST_REL_PATH
 
 
     def test_points_extract_rangeIntoPEmpty(self):
@@ -3993,7 +3990,7 @@ class StructureModifying(StructureShared):
         assert ret.isIdentical(expRet)
 
         data = [[], [], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         exp = self.constructor(data, featureNames=featureNames)
 
         assert toTest.isIdentical(exp)
@@ -4445,18 +4442,18 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         ext1 = toTest.features.extract(0)
 
-        assert toTest.path == 'testAbsPath'
-        assert toTest.absolutePath == 'testAbsPath'
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.path == TEST_ABS_PATH
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ext1.name is None
-        assert ext1.absolutePath == 'testAbsPath'
-        assert ext1.relativePath == 'testRelPath'
+        assert ext1.absolutePath == TEST_ABS_PATH
+        assert ext1.relativePath == TEST_REL_PATH
 
     def test_features_extract_ListIntoFEmpty(self):
         """ Test features.extract() by removing a list of all features """
@@ -4468,7 +4465,7 @@ class StructureModifying(StructureShared):
         assert ret.isIdentical(expRet)
 
         data = [[], [], [], []]
-        data = numpy.array(data)
+        data = np.array(data)
         exp = self.constructor(data)
 
         assert toTest.isIdentical(exp)
@@ -4484,7 +4481,7 @@ class StructureModifying(StructureShared):
         assert ret.isIdentical(expRet)
 
         data = [[], [], [], []]
-        data = numpy.array(data)
+        data = np.array(data)
         exp = self.constructor(data)
 
         assert toTest.isIdentical(exp)
@@ -4594,7 +4591,7 @@ class StructureModifying(StructureShared):
         assert ret.isIdentical(expRet)
 
         data = [[], [], []]
-        data = numpy.array(data)
+        data = np.array(data)
         exp = self.constructor(data)
 
         assert toTest.isIdentical(exp)
@@ -4607,7 +4604,7 @@ class StructureModifying(StructureShared):
         ret = toTest.features.extract(allFalse)
 
         data = [[], [], []]
-        data = numpy.array(data)
+        data = np.array(data)
         expRet = self.constructor(data)
 
         assert ret.isIdentical(expRet)
@@ -4631,18 +4628,18 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         ext = toTest.features.extract(absoluteOne)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ext.name is None
-        assert ext.absolutePath == 'testAbsPath'
-        assert ext.relativePath == 'testRelPath'
+        assert ext.absolutePath == TEST_ABS_PATH
+        assert ext.relativePath == TEST_REL_PATH
 
     def test_features_extract_handmadeFunctionWithFeatureName(self):
         """ Test features.extract() against handmade output for function extraction with featureNames """
@@ -4723,7 +4720,7 @@ class StructureModifying(StructureShared):
         assert ret.isIdentical(expRet)
 
         data = [[], [], []]
-        data = numpy.array(data)
+        data = np.array(data)
         exp = self.constructor(data)
 
         assert toTest.isIdentical(exp)
@@ -4745,18 +4742,18 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         ret = toTest.features.extract(start=1, end=2)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
         assert ret.name is None
-        assert ret.absolutePath == 'testAbsPath'
-        assert ret.relativePath == 'testRelPath'
+        assert ret.absolutePath == TEST_ABS_PATH
+        assert ret.relativePath == TEST_REL_PATH
 
 
     def test_features_extract_handmadeWithFeatureNames(self):
@@ -4956,14 +4953,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = 'testName'
-        toTest._absPath = 'testAbsPath'
-        toTest._relPath = 'testRelPath'
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.points.delete(0)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_points_delete_ListIntoPEmpty(self):
@@ -4973,7 +4970,7 @@ class StructureModifying(StructureShared):
         toTest.points.delete([0, 1, 2, 3])
 
         data = [[], [], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         exp = self.constructor(data)
 
         assert toTest.isIdentical(exp)
@@ -5043,7 +5040,7 @@ class StructureModifying(StructureShared):
         toTest.points.delete(allTrue)
 
         data = [[], [], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         exp = self.constructor(data)
 
         assert toTest.isIdentical(exp)
@@ -5071,14 +5068,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.points.delete(oneOrFour)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_points_delete_handmadeFuncionWithFeatureNames(self):
@@ -5146,14 +5143,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.points.delete(start=1, end=2)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_points_delete_rangeIntoPEmpty(self):
@@ -5165,7 +5162,7 @@ class StructureModifying(StructureShared):
         toTest.points.delete(start=0, end=2)
 
         data = [[], [], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         exp = self.constructor(data, featureNames=featureNames)
 
         assert toTest.isIdentical(exp)
@@ -5539,14 +5536,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.features.delete(0)
 
-        assert toTest.path == 'testAbsPath'
-        assert toTest.absolutePath == 'testAbsPath'
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.path == TEST_ABS_PATH
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_features_delete_ListIntoFEmpty(self):
@@ -5556,7 +5553,7 @@ class StructureModifying(StructureShared):
         toTest.features.delete([0, 1, 2])
 
         data = [[], [], [], []]
-        data = numpy.array(data)
+        data = np.array(data)
         exp = self.constructor(data)
 
         assert toTest.isIdentical(exp)
@@ -5568,7 +5565,7 @@ class StructureModifying(StructureShared):
         toTest.features.delete([2, 0, 1])
 
         data = [[], [], [], []]
-        data = numpy.array(data)
+        data = np.array(data)
         exp = self.constructor(data)
 
         assert toTest.isIdentical(exp)
@@ -5656,7 +5653,7 @@ class StructureModifying(StructureShared):
         toTest.features.delete(allTrue)
 
         data = [[], [], []]
-        data = numpy.array(data)
+        data = np.array(data)
         exp = self.constructor(data)
 
         assert toTest.isIdentical(exp)
@@ -5687,14 +5684,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.features.delete(absoluteOne)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_features_delete_handmadeFunctionWithFeatureName(self):
@@ -5771,7 +5768,7 @@ class StructureModifying(StructureShared):
         toTest.features.delete(start=0, end=2)
 
         data = [[], [], []]
-        data = numpy.array(data)
+        data = np.array(data)
         exp = self.constructor(data)
 
         assert toTest.isIdentical(exp)
@@ -5791,14 +5788,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.features.delete(start=1, end=2)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_features_delete_handmadeWithFeatureNames(self):
@@ -6019,14 +6016,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = 'testName'
-        toTest._absPath = 'testAbsPath'
-        toTest._relPath = 'testRelPath'
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.points.retain(0)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_points_retain_list_retain_all(self):
@@ -6045,7 +6042,7 @@ class StructureModifying(StructureShared):
         toTest.points.retain([])
 
         expData = [[], [], []]
-        expData = numpy.array(expData).T
+        expData = np.array(expData).T
         expTest = self.constructor(expData)
         assert toTest.isIdentical(expTest)
 
@@ -6143,7 +6140,7 @@ class StructureModifying(StructureShared):
 
         toTest.points.retain(allFalse)
 
-        expData = numpy.array([[], [], []])
+        expData = np.array([[], [], []])
         expData = expData.T
         expTest = self.constructor(expData)
 
@@ -6171,14 +6168,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.points.retain(oneOrFour)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_points_retain_handmadeFunctionWithFeatureNames(self):
@@ -6246,14 +6243,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.points.retain(start=1, end=2)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_points_retain_rangeIntoPEmpty(self):
@@ -6636,14 +6633,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.features.retain(0)
 
-        assert toTest.path == 'testAbsPath'
-        assert toTest.absolutePath == 'testAbsPath'
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.path == TEST_ABS_PATH
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
     def test_features_retain_list_retain_all(self):
         """ Test features.retain() by retaining a list of all features """
@@ -6661,7 +6658,7 @@ class StructureModifying(StructureShared):
         toTest.features.retain([])
 
         expData = [[], [], [], []]
-        expData = numpy.array(expData)
+        expData = np.array(expData)
         expTest = self.constructor(expData)
         assert toTest.isIdentical(expTest)
 
@@ -6785,7 +6782,7 @@ class StructureModifying(StructureShared):
         toTest.features.retain(allFalse)
 
         data = [[], [], []]
-        data = numpy.array(data)
+        data = np.array(data)
         expTest = self.constructor(data)
 
         assert toTest.isIdentical(expTest)
@@ -6811,14 +6808,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.features.retain(absoluteOne)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_features_retain_handmadeFunctionWithFeatureName(self):
@@ -6913,14 +6910,14 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
 
         toTest._name = "testName"
-        toTest._absPath = "testAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._absPath = TEST_ABS_PATH
+        toTest._relPath = TEST_REL_PATH
 
         toTest.features.retain(start=1, end=2)
 
         assert toTest.name == "testName"
-        assert toTest.absolutePath == "testAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.absolutePath == TEST_ABS_PATH
+        assert toTest.relativePath == TEST_REL_PATH
 
 
     def test_features_retain_handmadeWithFeatureNames(self):
@@ -7113,12 +7110,12 @@ class StructureModifying(StructureShared):
         assert toTest == expTest
 
     ######################
-    # _referenceDataFrom #
+    # _referenceFrom #
     ######################
 
     @raises(InvalidArgumentType)
-    def test_referenceDataFrom_exceptionWrongType(self):
-        """ Test _referenceDataFrom() throws exception when other is not the same type """
+    def test_referenceFrom_exceptionWrongType(self):
+        """ Test _referenceFrom() throws exception when other is not the same type """
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
         pNames = ['1', 'one', '2', '0']
@@ -7131,43 +7128,87 @@ class StructureModifying(StructureShared):
         objType1 = nimble.data(retType1, data1, pointNames=pNames, featureNames=featureNames)
 
         # at least one of these two will be the wrong type
-        orig._referenceDataFrom(objType0)
-        orig._referenceDataFrom(objType1)
+        orig._referenceFrom(objType0)
+        orig._referenceFrom(objType1)
 
     @noLogEntryExpected
-    def test_referenceDataFrom_data_axisNames(self):
+    def test_referenceFrom_data_axisNames(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
         pNames = ['1', 'one', '2', '0']
         orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
+        origID = orig._id
+        idOrig = id(orig)
 
         data2 = [[-1, -2, -3, -4]]
         featureNames = ['1', '2', '3', '4']
         pNames = ['-1']
         other = self.constructor(data2, pointNames=pNames, featureNames=featureNames)
 
-        ret = orig._referenceDataFrom(other)  # RET CHECK
+        ret = orig._referenceFrom(other)  # RET CHECK
 
+        assert orig._id == origID
+        assert id(orig) == idOrig
         assert orig._data is other._data
         assert '-1' in orig.points.getNames()
         assert '1' in orig.features.getNames()
         assert ret is None
 
+    def test_referenceFrom_view(self):
+        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        featureNames = ['one', 'two', 'three']
+        pNames = ['1', 'one', '2', '0']
+        orig = self.constructor(data1, name='orig', pointNames=pNames,
+                                featureNames=featureNames)
+        origID = orig._id
+        idOrig = id(orig)
+
+        data2 = [[-1, -2, -3, -4]]
+        featureNames = ['1', '2', '3', '4']
+        pNames = ['-1']
+        other = self.constructor(data2, name='other', pointNames=pNames,
+                                 featureNames=featureNames)
+
+        orig._referenceFrom(other.view())
+
+        assert orig._id == origID
+        assert id(orig) == idOrig
+        assert orig._data is not other._data # copy must be made for view
+        assert orig == other
+        assert '-1' in orig.points.getNames()
+        assert '1' in orig.features.getNames()
+        assert orig.name == 'orig' 
+
+    def test_referenceFrom_kwargChanges(self):
+        data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        fNames = ['one', 'two', 'three']
+        pNames = ['1', 'one', '2', '0']
+        orig = self.constructor(data1, pointNames=pNames, featureNames=fNames)
+
+        data2 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
+        other = self.constructor(data2)
+
+        orig._referenceFrom(other, pointNames=pNames, featureNames=fNames)
+
+        assert orig._data is other._data
+        assert '2' in orig.points.getNames()
+        assert 'two' in orig.features.getNames()
+
     @noLogEntryExpected
-    def test_referenceDataFrom_lazyNameGeneration(self):
+    def test_referenceFrom_lazyNameGeneration(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         orig = self.constructor(data1)
 
         data2 = [[-1, -2, -3, -4]]
         other = self.constructor(data2)
 
-        orig._referenceDataFrom(other)
+        orig._referenceFrom(other)
 
         assertNoNamesGenerated(orig)
         assertNoNamesGenerated(other)
 
     @noLogEntryExpected
-    def test_referenceDataFrom_ObjName_Paths(self):
+    def test_referenceFrom_ObjName_Paths(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
         pNames = ['1', 'one', '2', '0']
@@ -7179,25 +7220,25 @@ class StructureModifying(StructureShared):
         other = self.constructor(data2, pointNames=pNames, featureNames=featureNames)
 
         orig._name = "testName"
-        orig._absPath = "testAbsPath"
-        orig._relPath = "testRelPath"
+        orig._absPath = TEST_ABS_PATH
+        orig._relPath = TEST_REL_PATH
 
         other._name = "testNameother"
-        other._absPath = "testAbsPathother"
-        other._relPath = "testRelPathother"
+        other._absPath = TEST_ABS_PATH + "Other"
+        other._relPath = TEST_REL_PATH + "Other"
 
-        orig._referenceDataFrom(other)
+        orig._referenceFrom(other)
 
         assert orig.name == "testName"
-        assert orig.absolutePath == "testAbsPathother"
-        assert orig.relativePath == 'testRelPathother'
+        assert orig.absolutePath == TEST_ABS_PATH + "Other"
+        assert orig.relativePath == TEST_REL_PATH + "Other"
 
         assert other.name == "testNameother"
-        assert other.absolutePath == "testAbsPathother"
-        assert other.relativePath == 'testRelPathother'
+        assert other.absolutePath == TEST_ABS_PATH + "Other"
+        assert other.relativePath == TEST_REL_PATH + "Other"
 
     @noLogEntryExpected
-    def test_referenceDataFrom_allMetadataAttributes(self):
+    def test_referenceFrom_allMetadataAttributes(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
         pNames = ['1', 'one', '2', '0']
@@ -7206,7 +7247,7 @@ class StructureModifying(StructureShared):
         data2 = [[-1, -2, -3, 4, 5, 3, ], [-1, -2, -3, 4, 5, 3, ]]
         other = self.constructor(data2, )
 
-        orig._referenceDataFrom(other)
+        orig._referenceFrom(other)
 
         assert orig._pointCount == len(other.points)
         assert orig._featureCount == len(other.features)
@@ -7228,7 +7269,7 @@ class StructureModifying(StructureShared):
     @raises(ImproperObjectAction)
     def test_points_transform_exceptionPEmpty(self):
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         origObj = self.constructor(data)
 
         def emitLower(point):
@@ -7239,7 +7280,7 @@ class StructureModifying(StructureShared):
     @raises(ImproperObjectAction)
     def test_points_transform_exceptionFEmpty(self):
         data = [[], []]
-        data = numpy.array(data)
+        data = np.array(data)
         origObj = self.constructor(data)
 
         def emitLower(point):
@@ -7333,13 +7374,13 @@ class StructureModifying(StructureShared):
 
         toTest._name = "TestName"
         toTest._absPath = "TestAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._relPath = TEST_REL_PATH
 
         toTest.points.transform(emitAllDeci)
 
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.relativePath == TEST_REL_PATH
 
     @oneLogEntryExpected
     def test_points_transform_HandmadeLimited(self):
@@ -7463,7 +7504,7 @@ class StructureModifying(StructureShared):
     @raises(ImproperObjectAction)
     def test_features_transform_exceptionPEmpty(self):
         data = [[], []]
-        data = numpy.array(data).T
+        data = np.array(data).T
         origObj = self.constructor(data)
 
         def emitAllEqual(feature):
@@ -7478,7 +7519,7 @@ class StructureModifying(StructureShared):
     @raises(ImproperObjectAction)
     def test_features_transform_exceptionFEmpty(self):
         data = [[], []]
-        data = numpy.array(data)
+        data = np.array(data)
         origObj = self.constructor(data)
 
         def emitAllEqual(feature):
@@ -7591,13 +7632,13 @@ class StructureModifying(StructureShared):
 
         toTest._name = "TestName"
         toTest._absPath = "TestAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._relPath = TEST_REL_PATH
 
         toTest.features.transform(emitAllEqual)
 
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.relativePath == TEST_REL_PATH
 
     @oneLogEntryExpected
     def test_features_transform_HandmadeLimited(self):
@@ -7766,13 +7807,13 @@ class StructureModifying(StructureShared):
 
         toTest._name = "TestName"
         toTest._absPath = "TestAbsPath"
-        toTest._relPath = "testRelPath"
+        toTest._relPath = TEST_REL_PATH
 
         toTest.transformElements(passThrough)
 
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
-        assert toTest.relativePath == 'testRelPath'
+        assert toTest.relativePath == TEST_REL_PATH
 
     @oneLogEntryExpected
     def test_transformElements_plusOnePreserve(self):
@@ -8245,13 +8286,13 @@ class StructureModifying(StructureShared):
     def back_flatten_empty(self, order):
         checkMsg = False
 
-        pempty = self.constructor(numpy.empty((0,2)))
+        pempty = self.constructor(np.empty((0,2)))
         exceptionHelper(pempty, 'flatten', [order], ImproperObjectAction, checkMsg)
 
-        fempty = self.constructor(numpy.empty((4,0)))
+        fempty = self.constructor(np.empty((4,0)))
         exceptionHelper(fempty, 'flatten', [order], ImproperObjectAction, checkMsg)
 
-        trueEmpty = self.constructor(numpy.empty((0,0)))
+        trueEmpty = self.constructor(np.empty((0,0)))
         exceptionHelper(trueEmpty, 'flatten', [order], ImproperObjectAction, checkMsg)
 
 
@@ -8318,7 +8359,7 @@ class StructureModifying(StructureShared):
     def back_flatten_rectangleRandom(self, order):
         origRaw = numpyRandom.randint(0, 2, (30, 50))  # array of ones and zeroes
         npOrder = 'C' if order == 'point' else 'F'  # controls row or column major flattening
-        expRaw = numpy.reshape(origRaw,  (1, 1500), npOrder)
+        expRaw = np.reshape(origRaw,  (1, 1500), npOrder)
         expObj = self.constructor(expRaw, pointNames=['Flattened'])
 
         # No point or feature names
@@ -8406,13 +8447,13 @@ class StructureModifying(StructureShared):
     def back_unflatten_empty(self, order):
         checkMsg = False
 
-        ptEmpty = self.constructor(numpy.empty((0, 2)))
+        ptEmpty = self.constructor(np.empty((0, 2)))
         exceptionHelper(ptEmpty, 'unflatten', [2], ImproperObjectAction, checkMsg)
 
-        ftEmpty = self.constructor(numpy.empty((2, 0)))
+        ftEmpty = self.constructor(np.empty((2, 0)))
         exceptionHelper(ftEmpty, 'unflatten', [2], ImproperObjectAction, checkMsg)
 
-        trueEmpty = self.constructor(numpy.empty((0,0)))
+        trueEmpty = self.constructor(np.empty((0,0)))
         exceptionHelper(trueEmpty, 'unflatten', [2], ImproperObjectAction, checkMsg)
 
 
@@ -8512,10 +8553,10 @@ class StructureModifying(StructureShared):
         namesF = ["1", "2", "3"]
 
         if order == 'point':
-             expData = numpy.array([["el0", "el1", "el2"], ["el3", "el4", "el5"]])
+             expData = np.array([["el0", "el1", "el2"], ["el3", "el4", "el5"]])
              exp = self.constructor(expData, pointNames=namesP, featureNames=namesF)
         else:
-            expData = numpy.array([["el0", "el2", "el4"], ["el1", "el3", "el5"]])
+            expData = np.array([["el0", "el2", "el4"], ["el1", "el3", "el5"]])
             exp = self.constructor(expData, pointNames=namesP, featureNames=namesF)
 
         toTestPt.unflatten((2, 3), order)
@@ -8535,7 +8576,7 @@ class StructureModifying(StructureShared):
     def back_unflatten_handmadeDefaultNames(self, order):
         raw = [[1, 10, 20, 2]]
         toTest = self.constructor(raw)
-        expData = numpy.array([[1,10],[20,2]])
+        expData = np.array([[1,10],[20,2]])
 
         if order == 'point':
             exp = self.constructor(expData)
@@ -10673,7 +10714,7 @@ class StructureModifying(StructureShared):
         pNamesR = ["p5", "p6", "p7", "p8"]
         leftObj = self.constructor(dataL, pointNames=pNamesL)
         rightObj = self.constructor(dataR, pointNames=pNamesR)
-        expData = numpy.array([[],[],[]]).T
+        expData = np.array([[],[],[]]).T
         exp = self.constructor(expData)
         leftObj.merge(rightObj, point='intersection', feature='strict', force=True)
         assert leftObj == exp

@@ -5,7 +5,7 @@ Statistics calculations.
 import collections
 import functools
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble import match
@@ -14,7 +14,7 @@ from nimble.exceptions import InvalidArgumentValueCombination, PackageException
 from nimble._utility import scipy
 from nimble._utility import dtypeConvert
 
-numericalTypes = (int, float, numpy.number)
+numericalTypes = (int, float, np.number)
 
 # alias for python sum since we define our own sum function here
 _sum = sum
@@ -28,7 +28,7 @@ def numericRequired(func):
         try:
             return func(*args, **kwargs)
         except (TypeError, ValueError):
-            nan = numpy.nan
+            nan = np.nan
             if func.__name__ == 'quartiles':
                 return (nan, nan, nan)
             return nan
@@ -135,12 +135,12 @@ def _minmax(values, minmax):
     else:
         toProcess = values.copy('numpyarray')
     if minmax == 'min':
-        ret = numpy.nanmin(toProcess)
+        ret = np.nanmin(toProcess)
     else:
-        ret = numpy.nanmax(toProcess)
+        ret = np.nanmax(toProcess)
 
     if isinstance(ret, str):
-        return numpy.nan
+        return np.nan
 
     return ret
 
@@ -150,7 +150,7 @@ def _meanSparseBackend(nonZeroVals, lenData, numNan):
     is needed for standard deviation calculations so this helper avoids
     repeated attempts to determine the number of nan values in the data.
     """
-    dataSum = numpy.nansum(nonZeroVals)
+    dataSum = np.nansum(nonZeroVals)
     return dataSum / (lenData - numNan)
 
 @numericRequired
@@ -178,11 +178,11 @@ def mean(values):
     2.0
     """
     if values.getTypeString() == 'Sparse':
-        nonZero = values._data.data.astype(numpy.float)
-        numNan = numpy.sum(numpy.isnan(nonZero))
+        nonZero = values._data.data.astype(np.float)
+        numNan = np.sum(np.isnan(nonZero))
         return _meanSparseBackend(nonZero, len(values), numNan)
-    arr = values.copy('numpyarray', outputAs1D=True).astype(numpy.float)
-    return numpy.nanmean(arr)
+    arr = values.copy('numpyarray', outputAs1D=True).astype(np.float)
+    return np.nanmean(arr)
 
 @numericRequired
 def median(values):
@@ -208,8 +208,8 @@ def median(values):
     >>> median(vector)
     2.0
     """
-    arr = values.copy('numpyarray', outputAs1D=True).astype(numpy.float)
-    return numpy.nanmedian(arr, overwrite_input=True)
+    arr = values.copy('numpyarray', outputAs1D=True).astype(np.float)
+    return np.nanmedian(arr, overwrite_input=True)
 
 def mode(values):
     """
@@ -272,22 +272,22 @@ def standardDeviation(values, sample=True):
     1.707825127659933
     """
     if values.getTypeString() == 'Sparse':
-        nonZero = values._data.data.astype(numpy.float)
-        numNan = numpy.sum(numpy.isnan(nonZero))
+        nonZero = values._data.data.astype(np.float)
+        numNan = np.sum(np.isnan(nonZero))
         meanRet = _meanSparseBackend(nonZero, len(values), numNan)
 
-        dataSumSquared = numpy.nansum((nonZero - meanRet) ** 2)
+        dataSumSquared = np.nansum((nonZero - meanRet) ** 2)
         zeroSumSquared = meanRet ** 2 * (len(values) - values._data.nnz)
         divisor = len(values) - numNan
         if sample:
             divisor -= 1
         var = (dataSumSquared + zeroSumSquared) / divisor
-        return numpy.sqrt(var)
+        return np.sqrt(var)
 
-    arr = values.copy('numpyarray', outputAs1D=True).astype(numpy.float)
+    arr = values.copy('numpyarray', outputAs1D=True).astype(np.float)
     if sample:
-        return numpy.nanstd(arr, ddof=1)
-    return numpy.nanstd(arr)
+        return np.nanstd(arr, ddof=1)
+    return np.nanstd(arr)
 
 @numericRequired
 def medianAbsoluteDeviation(values):
@@ -309,8 +309,8 @@ def medianAbsoluteDeviation(values):
     >>> medianAbsoluteDeviation(vector)
     1.5
     """
-    arr = values.copy('numpy array', outputAs1D=True).astype(numpy.float)
-    mad = numpy.nanmedian(numpy.abs(arr - numpy.nanmedian(arr)))
+    arr = values.copy('numpy array', outputAs1D=True).astype(np.float)
+    mad = np.nanmedian(np.abs(arr - np.nanmedian(arr)))
     return mad
 
 def uniqueCount(values):
@@ -354,7 +354,7 @@ def quartiles(values):
     """
     # copy as horizontal array to use for intermediate calculations
     values = dtypeConvert(values.copy(to="numpyarray", outputAs1D=True))
-    ret = numpy.nanpercentile(values, (25, 50, 75), overwrite_input=True)
+    ret = np.nanpercentile(values, (25, 50, 75), overwrite_input=True)
     return tuple(ret)
 
 def nonMissing(elem):
@@ -420,7 +420,7 @@ def residuals(toPredict, controlVars):
     workingTP = dtypeConvert(toPredict.copy(to="numpy array"))
 
     x, _, _, _ = scipy.linalg.lstsq(workingCV, workingTP)
-    pred = numpy.matmul(workingCV, x)
+    pred = np.matmul(workingCV, x)
     ret = toPredict - pred
     return ret
 

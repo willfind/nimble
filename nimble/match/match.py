@@ -2,7 +2,7 @@
 Variety of functions to determine if data matches given conditions
 """
 
-import numpy
+import numpy as np
 
 import nimble # pylint: disable=unused-import
 
@@ -61,7 +61,7 @@ def numeric(value):
     --------
     >>> numeric(0)
     True
-    >>> numeric(numpy.float32(8))
+    >>> numeric(np.float32(8))
     True
     >>> numeric(float('nan'))
     True
@@ -70,7 +70,7 @@ def numeric(value):
     >>> numeric(None)
     False
     """
-    return (isinstance(value, (int, float, complex, numpy.number))
+    return (isinstance(value, (int, float, complex, np.number))
             and not boolean(value))
 
 def nonNumeric(value):
@@ -271,7 +271,7 @@ def infinity(value):
     False
     """
     try:
-        return numpy.isinf(value)
+        return np.isinf(value)
     except TypeError:
         return False
 
@@ -304,7 +304,7 @@ def boolean(value):
     >>> boolean('False')
     False
     """
-    return isinstance(value, (bool, numpy.bool_))
+    return isinstance(value, (bool, np.bool_))
 
 def true(value):
     """
@@ -1352,7 +1352,7 @@ def _convertMatchToFunction(match):
                 and not isinstance(match, str)):
             matchList = match
             # if nans in the list, need to include separate check in function
-            if not all([val == val for val in matchList]):
+            if not all(val == val for val in matchList):
                 match = lambda x: x != x or x in matchList
             else:
                 match = lambda x: x in matchList

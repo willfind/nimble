@@ -1530,7 +1530,7 @@ class Points(ABC):
             )
 
         Fill using nimble's match and fill modules; limit to last point.
-        Note: None is converted to numpy.nan in nimble.
+        Note: None is converted to np.nan in nimble.
 
         >>> from nimble import match
         >>> from nimble import fill
@@ -1700,7 +1700,7 @@ class Points(ABC):
         ``featureWithFeatureNames`` and ``featuresWithValues`` in each
         point will become the values for the expanded features for the
         combined points. If a combined point lacks a featureName/value
-        pair for any given feature(s), numpy.nan will be assigned as the
+        pair for any given feature(s), np.nan will be assigned as the
         value(s) at that feature(s). The resulting featureNames depends
         on the number of features with values. For a single feature with
         values, the new feature names are the unique values in

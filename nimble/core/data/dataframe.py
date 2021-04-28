@@ -4,7 +4,7 @@ Class extending Base, using a pandas DataFrame to store data.
 
 import itertools
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -167,15 +167,8 @@ class DataFrame(Base):
             comment += ','.join(self.points.getNames())
         if includeFeatureNames:
             comment += '\n#' + ','.join(self.features.getNames())
-        scipy.io.mmwrite(outPath, self._data.astype(numpy.float),
+        scipy.io.mmwrite(outPath, self._data.astype(np.float),
                          comment=comment)
-
-    def _referenceDataFrom_implementation(self, other):
-        if not isinstance(other, DataFrame):
-            msg = "Other must be the same type as this object"
-            raise InvalidArgumentType(msg)
-
-        self._data = other._data
 
     def _copy_implementation(self, to):
         """
@@ -202,11 +195,11 @@ class DataFrame(Base):
         needsReshape = len(self._shape) > 2
         if to in ['pythonlist', 'numpyarray']:
             # convert pandas Timestamp type if necessary
-            timestamp = [d.type == numpy.datetime64 for d in self._data.dtypes]
+            timestamp = [d.type == np.datetime64 for d in self._data.dtypes]
             arr = self._asNumpyArray()
             if any(timestamp):
                 attr = 'to_pydatetime' if to == 'pythonlist' else 'to_numpy'
-                convTimestamp = numpy.vectorize(lambda v: getattr(v, attr)())
+                convTimestamp = np.vectorize(lambda v: getattr(v, attr)())
                 arr[:, timestamp] = convTimestamp(arr[:, timestamp])
 
             if needsReshape:
@@ -218,7 +211,7 @@ class DataFrame(Base):
             return arr.copy()
 
         if needsReshape:
-            data = numpy.empty(self._shape[:2], dtype=numpy.object_)
+            data = np.empty(self._shape[:2], dtype=np.object_)
             for i in range(self.shape[0]):
                 data[i] = self.points[i].copy('pythonlist')
         elif to == 'pandasdataframe':
@@ -226,7 +219,7 @@ class DataFrame(Base):
         else:
             data = self._data
         if to == 'numpymatrix':
-            return numpy.matrix(data)
+            return np.matrix(data)
         if 'scipy' in to:
             if not scipy.nimbleAccessible():
                 msg = "scipy is not available"
@@ -259,12 +252,12 @@ class DataFrame(Base):
         if isinstance(replaceWith, DataFrame):
             replaceDtypes = replaceWith._data.dtypes
         else:
-            replaceDtypes = (numpy.dtype(type(replaceWith)),) * len(ftRange)
+            replaceDtypes = (np.dtype(type(replaceWith)),) * len(ftRange)
         for i, rdt in zip(ftRange, replaceDtypes):
             dtypes.iloc[i] = max(dtypes.iloc[i], rdt)
         if not isinstance(replaceWith, Base):
-            values = replaceWith * numpy.ones((pointEnd - pointStart + 1,
-                                               featureEnd - featureStart + 1))
+            values = replaceWith * np.ones((pointEnd - pointStart + 1,
+                                            featureEnd - featureStart + 1))
         else:
             #convert values to be array or matrix, instead of pandas DataFrame
             values = replaceWith._asNumpyArray()
@@ -280,9 +273,9 @@ class DataFrame(Base):
         numElements = len(self.points) * len(self.features)
         dtypes = self._data.dtypes
         if order == 'point':
-            newDtypes = tuple(numpy.tile(dtypes, len(self.points)))
+            newDtypes = tuple(np.tile(dtypes, len(self.points)))
         else:
-            newDtypes = tuple(numpy.repeat(dtypes, len(self.points)))
+            newDtypes = tuple(np.repeat(dtypes, len(self.points)))
         order = convertToNumpyOrder(order)
         array = self._asNumpyArray()
         values = array.reshape((1, numElements), order=order)
@@ -299,7 +292,7 @@ class DataFrame(Base):
             jumps = range(reshape[1])
             newDtypes = tuple(max(dtypes[i::reshape[1]]) for i in jumps)
         else:
-            jumps = range(0, numpy.prod(reshape), reshape[0])
+            jumps = range(0, np.prod(reshape), reshape[0])
             newDtypes = tuple(max(dtypes[i:i+reshape[1]]) for i in jumps)
         order = convertToNumpyOrder(order)
         array = self._asNumpyArray()
@@ -369,8 +362,8 @@ class DataFrame(Base):
                 right = right + numColsL
             matches = self._data.iloc[:, left] == self._data.iloc[:, right]
 
-            nansL = numpy.array([x != x for x in self._data.iloc[:, left]])
-            nansR = numpy.array([x != x for x in self._data.iloc[:, right]])
+            nansL = np.array([x != x for x in self._data.iloc[:, left]])
+            nansR = np.array([x != x for x in self._data.iloc[:, right]])
             acceptableValues = matches + nansL + nansR
             if not all(acceptableValues):
                 msg = "The objects contain different values for the same "
@@ -390,7 +383,7 @@ class DataFrame(Base):
         self._pointCount = len(self._data.index)
 
     def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueIdx):
-        toFill = numpy.zeros((len(self.points), len(uniqueIdx)))
+        toFill = np.zeros((len(self.points), len(uniqueIdx)))
         for ptIdx, val in self._data.iterrows():
             ftIdx = uniqueIdx[val[0]]
             toFill[ptIdx, ftIdx] = 1
@@ -441,7 +434,7 @@ class DataFrame(Base):
         """
         Create an object of one less dimension.
         """
-        reshape = (self._shape[1], int(numpy.prod(self._shape[2:])))
+        reshape = (self._shape[1], int(np.prod(self._shape[2:])))
         data = self._asNumpyArray()[pointIndex].reshape(reshape)
         return DataFrame(data, shape=self._shape[1:], reuseData=True)
 
@@ -475,9 +468,9 @@ class DataFrame(Base):
                 if len(otherDtypes) == 1:
                     otherDtypes = (otherDtypes[0],) * len(self.features)
         else:
-            dtype = numpy.dtype(type(other))
-            if dtype > numpy.dtype(float):
-                dtype = numpy.object_
+            dtype = np.dtype(type(other))
+            if dtype > np.dtype(float):
+                dtype = np.object_
             otherDtypes = tuple(dtype for _ in initialDtypes)
 
         dtypes = []
@@ -487,8 +480,8 @@ class DataFrame(Base):
         alwaysFloat = 'truediv' in opName
         for dtype1, dtype2 in zip(initialDtypes, otherDtypes):
             useType = max(dtype1, dtype2)
-            if alwaysFloat and useType < numpy.dtype(float):
-                dtypes.append(numpy.dtype(float))
+            if alwaysFloat and useType < np.dtype(float):
+                dtypes.append(np.dtype(float))
             else:
                 dtypes.append(useType)
 
@@ -530,8 +523,8 @@ class DataFrame(Base):
             array = self._asNumpyArray(numericRequired=True)
             values = array * other._getSparseData()
         else:
-            values = numpy.matmul(self._asNumpyArray(numericRequired=True),
-                                  other.copy('numpyarray'))
+            values = np.matmul(self._asNumpyArray(numericRequired=True),
+                               other.copy('numpyarray'))
         ret = DataFrame(values)
         ret._setDtypes(dtypes)
 
@@ -565,19 +558,19 @@ class DataFrame(Base):
         floats if the dtypes are not already all the same numeric dtype.
         """
         dtypes = self._data.dtypes
-        allowedDtypes = set((numpy.dtype(bool), numpy.dtype(int),
-                            numpy.dtype(float)))
+        allowedDtypes = set((np.dtype(bool), np.dtype(int),
+                            np.dtype(float)))
         if not numericRequired:
-            allowedDtypes.add(numpy.dtype(numpy.object_))
+            allowedDtypes.add(np.dtype(np.object_))
 
         if len(dtypes) > 0:
-            floatDtype = numpy.dtype(float)
+            floatDtype = np.dtype(float)
             if all(d in allowedDtypes and d <= floatDtype for d in dtypes):
                 return self._data.values
         if numericRequired:
             return self._data.values.astype(float)
 
-        return self._data.astype(numpy.object_).values
+        return self._data.astype(np.object_).values
 
 
 class DataFrameView(BaseView, DataFrame):

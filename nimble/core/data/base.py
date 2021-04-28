@@ -14,7 +14,7 @@ import os.path
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble import match
@@ -222,7 +222,7 @@ class Base(ABC):
     @property
     def _featureCount(self):
         if len(self._shape) > 2:
-            return int(numpy.prod(self._shape[1:]))
+            return int(np.prod(self._shape[1:]))
         return self._shape[1]
 
     @_featureCount.setter
@@ -956,7 +956,7 @@ class Base(ABC):
             optType = self.getTypeString()
         # Use vectorized for functions with oneArg
         if calculator.oneArg:
-            vectorized = numpy.vectorize(calculator)
+            vectorized = np.vectorize(calculator)
             values = self._calculate_implementation(
                 vectorized, points, features, preserveZeros)
 
@@ -966,9 +966,9 @@ class Base(ABC):
             if not features:
                 features = list(range(len(self.features)))
             # if unable to vectorize, iterate over each point
-            values = numpy.empty([len(points), len(features)])
+            values = np.empty([len(points), len(features)])
             if allowBoolOutput:
-                values = values.astype(numpy.bool_)
+                values = values.astype(np.bool_)
             pIdx = 0
             for i in points:
                 fIdx = 0
@@ -976,8 +976,8 @@ class Base(ABC):
                     value = self[i, j]
                     currRet = calculator(value, i, j)
                     if (match.nonNumeric(currRet) and currRet is not None
-                            and values.dtype != numpy.object_):
-                        values = values.astype(numpy.object_)
+                            and values.dtype != np.object_):
+                        values = values.astype(np.object_)
                     values[pIdx, fIdx] = currRet
                     fIdx += 1
                 pIdx += 1
@@ -992,13 +992,13 @@ class Base(ABC):
     def _calculate_genericVectorized(self, function, points, features):
         # need points/features as arrays for indexing
         if points:
-            points = numpy.array(points)
+            points = np.array(points)
         else:
-            points = numpy.array(range(len(self.points)))
+            points = np.array(range(len(self.points)))
         if features:
-            features = numpy.array(features)
+            features = np.array(features)
         else:
-            features = numpy.array(range(len(self.features)))
+            features = np.array(range(len(self.features)))
         toCalculate = self.copy(to='numpyarray')
         # array with only desired points and features
         toCalculate = toCalculate[points[:, None], features]
@@ -1007,7 +1007,7 @@ class Base(ABC):
         except Exception: # pylint: disable=broad-except
             # change output type of vectorized function to object to handle
             # nonnumeric data
-            function.otypes = [numpy.object_]
+            function.otypes = [np.object_]
             return function(toCalculate)
 
     @limitedTo2D
@@ -1059,7 +1059,7 @@ class Base(ABC):
 
         ret = self.calculateOnElements(condition, outputType='Matrix',
                                        useLog=False)
-        return int(numpy.sum(ret._data))
+        return int(np.sum(ret._data))
 
     @limitedTo2D
     def countUniqueElements(self, points=None, features=None):
@@ -1169,7 +1169,7 @@ class Base(ABC):
             return point[by]
 
         def findKey2(point, by):#if by is a list of string or a list of int
-            return tuple([point[i] for i in by])
+            return tuple(point[i] for i in by)
 
         #if by is a list, then use findKey2; o.w. use findKey1
         if isinstance(by, (str, numbers.Number)):
@@ -1833,12 +1833,12 @@ class Base(ABC):
 
         #process x
         singleX = False
-        if isinstance(x, (int, float, str, numpy.integer)):
+        if isinstance(x, (int, float, str, np.integer)):
             x = self.points._getIndex(x, allowFloats=True)
             singleX = True
         #process y
         singleY = False
-        if isinstance(y, (int, float, str, numpy.integer)):
+        if isinstance(y, (int, float, str, np.integer)):
             y = self.features._getIndex(y, allowFloats=True)
             singleY = True
         #if it is the simplest data retrieval such as X[1,2],
@@ -2656,11 +2656,11 @@ class Base(ABC):
             #do rolling average
             xToPlot, yToPlot = list(zip(*sorted(zip(xToPlot, yToPlot),
                                                 key=lambda x: x[0])))
-            convShape = (numpy.ones(sampleSizeForAverage)
+            convShape = (np.ones(sampleSizeForAverage)
                          / float(sampleSizeForAverage))
             startIdx = sampleSizeForAverage-1
-            xToPlot = numpy.convolve(xToPlot, convShape)[startIdx:-startIdx]
-            yToPlot = numpy.convolve(yToPlot, convShape)[startIdx:-startIdx]
+            xToPlot = np.convolve(xToPlot, convShape)[startIdx:-startIdx]
+            yToPlot = np.convolve(yToPlot, convShape)[startIdx:-startIdx]
 
             tmpStr = ' (%s sample average)' % sampleSizeForAverage
             xlabel += tmpStr
@@ -2680,8 +2680,8 @@ class Base(ABC):
         plotAxisLimits(ax)
 
         if trend is not None and trend.lower() == 'linear':
-            meanX = numpy.mean(xToPlot)
-            meanY = numpy.mean(yToPlot)
+            meanX = np.mean(xToPlot)
+            meanY = np.mean(yToPlot)
             errorX = meanX - xToPlot
             sumSquareErrorX = sum((errorX) ** 2)
             sumErrorXY = sum(errorX * (meanY - yToPlot))
@@ -3140,7 +3140,7 @@ class Base(ABC):
     def _copy_outputAs1D(self, to):
         if to == 'numpyarray':
             if self._pointCount == 0 or self._featureCount == 0:
-                return numpy.array([])
+                return np.array([])
             return self._copy_implementation('numpyarray').flatten()
 
         if self._pointCount == 0 or self._featureCount == 0:
@@ -3151,9 +3151,9 @@ class Base(ABC):
     def _copy_pythonList(self, rowsArePoints):
         ret = self._copy_implementation('pythonlist')
         if len(self._shape) > 2:
-            ret = numpy.reshape(ret, self._shape).tolist()
+            ret = np.reshape(ret, self._shape).tolist()
         if not rowsArePoints:
-            ret = numpy.transpose(ret).tolist()
+            ret = np.transpose(ret).tolist()
         return ret
 
     def _copy_nestedPythonTypes(self, to, rowsArePoints):
@@ -3559,7 +3559,7 @@ class Base(ABC):
         if len(dataDimensions) < 2:
             msg = "dataDimensions must contain a minimum of 2 values"
             raise InvalidArgumentValue(msg)
-        if self.shape[0] * self.shape[1] != numpy.prod(dataDimensions):
+        if self.shape[0] * self.shape[1] != np.prod(dataDimensions):
             msg = "The product of the dimensions must be equal to the number "
             msg += "of values in this object"
             raise InvalidArgumentValue(msg)
@@ -3569,7 +3569,7 @@ class Base(ABC):
                 msg = "order='feature' is not allowed when unflattening to "
                 msg += 'more than two dimensions'
                 raise ImproperObjectAction(msg)
-            shape2D = (dataDimensions[0], numpy.prod(dataDimensions[1:]))
+            shape2D = (dataDimensions[0], np.prod(dataDimensions[1:]))
         else:
             shape2D = dataDimensions
 
@@ -3623,13 +3623,13 @@ class Base(ABC):
             * 'union' - Return all points/features from the caller and
               callee. If ``onFeature`` is None, unnamed points/features
               will be assumed to be unique. Any missing data from the
-              caller and callee will be filled with numpy.NaN.
+              caller and callee will be filled with np.NaN.
             * 'intersection': Return only points/features shared between
               the caller  and callee. If ``onFeature`` is None,
               point / feature names are required.
             * 'left': Return only the points/features from the caller.
               Any missing data from the callee will be filled with
-              numpy.NaN.
+              np.NaN.
         onFeature : identifier, None
             The name or index of the feature present in both objects to
             merge on.  If None, the merge will be based on point names.
@@ -4141,7 +4141,7 @@ class Base(ABC):
         """
         ret = self.__matmul__(other)
         if ret is not NotImplemented:
-            self._referenceDataFrom(ret)
+            self._referenceFrom(ret)
             ret = self
         return ret
 
@@ -4216,7 +4216,7 @@ class Base(ABC):
         provided the object can be inverted using
         nimble.calculate.inverse.
         """
-        if not isinstance(power, (int, numpy.int)):
+        if not isinstance(power, (int, np.int)):
             msg = 'power must be an integer'
             raise InvalidArgumentType(msg)
         if not len(self.points) == len(self.features):
@@ -4676,7 +4676,7 @@ class Base(ABC):
                 # inplace operations will modify the data even if op fails
                 # use not inplace operation, setting to inplace occurs after
                 useOp = opName[:2] + opName[3:]
-            with numpy.errstate(divide='raise', invalid='raise'):
+            with np.errstate(divide='raise', invalid='raise'):
                 ret = obj._binaryOperations_implementation(useOp, other)
         except (TypeError, ValueError, FloatingPointError) as error:
             obj._diagnoseFailureAndRaiseException(opName, other, error)
@@ -4684,9 +4684,7 @@ class Base(ABC):
 
         ret._shape = self._shape
         if opName.startswith('__i'):
-            absPath, relPath = self._absPath, self._relPath
-            self._referenceDataFrom(ret)
-            self._absPath, self._relPath = absPath, relPath
+            self._referenceFrom(ret, paths=(self._absPath, self._relPath))
             ret = self
         ret.points.setNames(retPNames, useLog=False)
         ret.features.setNames(retFNames, useLog=False)
@@ -4834,70 +4832,56 @@ class Base(ABC):
     ############################
     ############################
 
-    def _referenceDataFrom(self, other):
+    def _referenceFrom(self, other, **kwargs):
         """
-        Redefine the object data using the data from another object.
+        Reference data and metadata data from another object.
 
-        Modify the internal data of this object to refer to the same
-        data as other. In other words, the data wrapped by both the self
-        and ``other`` objects resides in the same place in memory.
-        Attributes descrbing this object, not its data, will remain the
-        same. For example the object's ``name`` attribute will remain.
+        This method use the following defaults:
+            name=self.name, paths=(other._absPath, other._relPath),
+            pointNames=other.pointNames, featureNames=other.featureNames,
+            reuseData=True
+        These can be modified through the keyword arguments.
 
-        Parameters
-        ----------
-        other : nimble Base object
-            Must be of the same type as the calling object. Also, the
-            shape of other should be consistent with the shape of this
-            object.
-        useLog : bool, None
-            Local control for whether to send object creation to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-
-        Examples
-        --------
-        Reference data from an object of all zero values.
-
-        >>> data = nimble.ones('List', 2, 3, name='data')
-        >>> data
-        List(
-            [[1.000 1.000 1.000]
-             [1.000 1.000 1.000]]
-            name="data"
-            )
-        >>> ptNames = ['1', '4']
-        >>> ftNames = ['a', 'b', 'c']
-        >>> toReference = nimble.zeros('List', 2, 3, pointNames=ptNames,
-        ...                            featureNames=ftNames,
-        ...                            name='reference')
-        >>> data._referenceDataFrom(toReference)
-        >>> data
-        List(
-            [[0.000 0.000 0.000]
-             [0.000 0.000 0.000]]
-            pointNames={'1':0, '4':1}
-            featureNames={'a':0, 'b':1, 'c':2}
-            name="data"
-            )
+        When not a view, the default reuseData=True means that the _data
+        attribute for this object and the other object will be the same in
+        memory.
         """
-        # this is called first because it checks the data type
-        self._referenceDataFrom_implementation(other)
-        self.pointNames = other.pointNames
-        self.pointNamesInverse = other.pointNamesInverse
-        self.featureNames = other.featureNames
-        self.featureNamesInverse = other.featureNamesInverse
+        if not self.getTypeString() == other.getTypeString():
+            msg = 'to reference another object, they must be the same type'
+            raise InvalidArgumentType(msg)
+        if 'data' in kwargs:
+            msg = 'Cannot provide "data" keyword, the data will be other._data'
+            raise InvalidArgumentValue(msg)
+        if 'shape' in kwargs:
+            msg = 'Cannot provide "shape" keyword, the shape is determined by '
+            msg = 'other._shape'
+            raise InvalidArgumentValue(msg)
+        if hasattr(other, '_source'): # view
+            other = other.copy()
 
-        self._shape = other._shape
+        kwargs['data'] = other._data
+        kwargs['shape'] = other._shape
+        # setdefault only sets if the key is not already present
+        kwargs.setdefault('name', self.name)
+        kwargs.setdefault('paths', (other._absPath, other._relPath))
+        kwargs.setdefault('pointNames', other.pointNames)
+        kwargs.setdefault('featureNames', other.featureNames)
+        kwargs.setdefault('reuseData', True)
 
-        self._absPath = other.absolutePath
-        self._relPath = other.relativePath
+        self._referenceFrom_implementation(other, kwargs)
 
-        self._nextDefaultValuePoint = other._nextDefaultValuePoint
-        self._nextDefaultValueFeature = other._nextDefaultValueFeature
+    def _referenceFrom_implementation(self, other, kwargs):
+        """
+        Reinitialize the object with the new keyword arguments.
+
+        __init__ affects _id for this object and Base. self._id should stay
+        the same and Base._id should be not increment.
+        """
+        # pylint: disable=unused-argument
+        idVal = self._id
+        self.__init__(**kwargs)
+        self._id = idVal
+        Base._id -= 1
 
     def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold):
         """
@@ -5339,10 +5323,6 @@ class Base(ABC):
 
     @abstractmethod
     def _transpose_implementation(self):
-        pass
-
-    @abstractmethod
-    def _referenceDataFrom_implementation(self, other):
         pass
 
     @abstractmethod

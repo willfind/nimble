@@ -5,7 +5,7 @@ coo_matrix.
 
 import warnings
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -63,15 +63,15 @@ class Sparse(Base):
         elif scipy.sparse.isspmatrix(data):
             # data is a spmatrix in other format instead of coo
             self._data = data.tocoo()
-        else: # data is numpy.array or python list
+        else: # data is np.array or python list
             if isinstance(data, list):
                 data = numpyArrayFromList(data)
-            # Sparse will convert None to 0 so we need to use numpy.nan instead
+            # Sparse will convert None to 0 so we need to use np.nan instead
             # pylint: disable=singleton-comparison
             if data[data == None].size:
-                if data.dtype not in [float, numpy.floating, object]:
+                if data.dtype not in [float, np.floating, object]:
                     data = data.astype(float)
-                data[data == None] = numpy.nan
+                data[data == None] = np.nan
 
             self._data = scipy.sparse.coo_matrix(data)
 
@@ -155,9 +155,7 @@ class Sparse(Base):
 
         pnames = self.points._getNamesNoGeneration()
         fnames = self.features._getNamesNoGeneration()
-        self._referenceDataFrom(ret)
-        self.points.setNames(pnames, useLog=False)
-        self.features.setNames(fnames, useLog=False)
+        self._referenceFrom(ret, pointNames=pnames, featureNames=fnames)
 
     def _transformEachElement_zeroPreserve_implementation(
             self, toTransform, points, features):
@@ -193,7 +191,7 @@ class Sparse(Base):
             try:
                 data = function(data)
             except Exception: # pylint: disable=broad-except
-                function.otypes = [numpy.object_]
+                function.otypes = [np.object_]
                 data = function(data)
             shape = self._data.shape
             values = scipy.sparse.coo_matrix((data, (row, col)), shape=shape)
@@ -326,15 +324,11 @@ class Sparse(Base):
         else:
             header += '#\n'
 
-        scipy.io.mmwrite(target=outPath, a=self._data.astype(numpy.float),
+        scipy.io.mmwrite(target=outPath, a=self._data.astype(np.float),
                          comment=header)
 
-    def _referenceDataFrom_implementation(self, other):
-        if not isinstance(other, Sparse):
-            msg = "Other must be the same type as this object"
-            raise InvalidArgumentType(msg)
-
-        self._data = other._data
+    def _referenceFrom_implementation(self, other, kwargs):
+        super()._referenceFrom_implementation(other, kwargs)
         self._sorted = other._sorted
 
     def _copy_implementation(self, to):
@@ -357,7 +351,7 @@ class Sparse(Base):
                 return ret.reshape(self._shape)
             return ret
         if needsReshape:
-            data = numpy.empty(self._shape[:2], dtype=numpy.object_)
+            data = np.empty(self._shape[:2], dtype=np.object_)
             for i in range(self.shape[0]):
                 data[i] = self.points[i].copy('pythonlist')
         elif 'scipy' in to:
@@ -365,14 +359,14 @@ class Sparse(Base):
         else:
             data = sparseMatrixToArray(self._data)
         if to == 'numpymatrix':
-            return numpy.matrix(data)
+            return np.matrix(data)
         if 'scipy' in to:
             if to == 'scipycoo':
                 if needsReshape:
                     return scipy.sparse.coo_matrix(data)
                 return data.copy()
             try:
-                ret = data.astype(numpy.float)
+                ret = data.astype(np.float)
             except ValueError as e:
                 msg = 'Can only create scipy {0} matrix from numeric data'
                 raise ValueError(msg.format(to[-3:])) from e
@@ -528,14 +522,14 @@ class Sparse(Base):
         else:
             copyIndex = len(self._data.data)
 
-        newData = numpy.empty(copyIndex + len(toAddData),
-                              dtype=self._data.data.dtype)
+        newData = np.empty(copyIndex + len(toAddData),
+                           dtype=self._data.data.dtype)
         newData[:copyIndex] = self._data.data[:copyIndex]
         newData[copyIndex:] = toAddData
-        newRow = numpy.empty(copyIndex + len(toAddRow))
+        newRow = np.empty(copyIndex + len(toAddRow))
         newRow[:copyIndex] = self._data.row[:copyIndex]
         newRow[copyIndex:] = toAddRow
-        newCol = numpy.empty(copyIndex + len(toAddCol))
+        newCol = np.empty(copyIndex + len(toAddCol))
         newCol[:copyIndex] = self._data.col[:copyIndex]
         newCol[copyIndex:] = toAddCol
         shape = (len(self.points), len(self.features))
@@ -610,46 +604,45 @@ class Sparse(Base):
         else:
             onIdxL = 0
             onIdxR = 0
-            leftData = self._data.data.astype(numpy.object_)
+            leftData = self._data.data.astype(np.object_)
             if not self.points._anyDefaultNames():
-                leftData = numpy.append([self.points.getNames()], leftData)
+                leftData = np.append([self.points.getNames()], leftData)
             elif self._pointNamesCreated():
                 # differentiate default names between objects;
                 # note still start with DEFAULT_PREFIX
                 leftNames = [n + '_l' if isDefaultName(n) else n
                              for n in self.points.getNames()]
-                leftData = numpy.append([leftNames], leftData)
+                leftData = np.append([leftNames], leftData)
             else:
                 leftNames = [DEFAULT_PREFIX + str(i) for i
                              in range(len(self.points))]
-                leftData = numpy.append(leftNames, leftData)
-            leftRow = numpy.append(list(range(len(self.points))),
-                                   self._data.row)
-            leftCol = numpy.append([0 for _ in range(len(self.points))],
-                                   self._data.col + 1)
-            rightData = other._data.data.copy().astype(numpy.object_)
+                leftData = np.append(leftNames, leftData)
+            leftRow = np.append(list(range(len(self.points))), self._data.row)
+            leftCol = np.append([0 for _ in range(len(self.points))],
+                                self._data.col + 1)
+            rightData = other._data.data.copy().astype(np.object_)
             if not other.points._anyDefaultNames():
-                rightData = numpy.append([other.points.getNames()], rightData)
+                rightData = np.append([other.points.getNames()], rightData)
             elif other._pointNamesCreated():
                 # differentiate default names between objects;
                 # note still start with DEFAULT_PREFIX
                 rightNames = [n + '_r' if isDefaultName(n) else n
                               for n in other.points.getNames()]
-                rightData = numpy.append([rightNames], rightData)
+                rightData = np.append([rightNames], rightData)
             else:
                 rtRange = range(self.shape[0], self.shape[0] + other.shape[0])
                 rightNames = [DEFAULT_PREFIX + str(i) for i in rtRange]
-                rightData = numpy.append(rightNames, rightData)
-            rightRow = numpy.append(list(range(len(other.points))),
-                                    other._data.row.copy())
-            rightCol = numpy.append([0 for i in range(len(other.points))],
-                                    other._data.col.copy() + 1)
+                rightData = np.append(rightNames, rightData)
+            rightRow = np.append(list(range(len(other.points))),
+                                 other._data.row.copy())
+            rightCol = np.append([0 for i in range(len(other.points))],
+                                 other._data.col.copy() + 1)
             matchingFtIdx[0] = list(map(lambda x: x + 1, matchingFtIdx[0]))
             matchingFtIdx[0].insert(0, 0)
             matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
             matchingFtIdx[1].insert(0, 0)
 
-        mergedData = numpy.empty((0, 0), dtype=numpy.object_)
+        mergedData = np.empty((0, 0), dtype=np.object_)
         mergedRow = []
         mergedCol = []
         matched = []
@@ -657,7 +650,7 @@ class Sparse(Base):
         numPts = 0
 
         for ptIdxL, target in enumerate(leftData[leftCol == onIdxL]):
-            rowIdxR = numpy.where(rightData[rightCol == onIdxR] == target)[0]
+            rowIdxR = np.where(rightData[rightCol == onIdxR] == target)[0]
             if len(rowIdxR) > 0:
                 for ptIdxR in rowIdxR:
                     ptL = leftData[leftRow == ptIdxL]
@@ -680,7 +673,7 @@ class Sparse(Base):
                                 ptL[matchingFtIdx[0]][i] = fill
                     ptR = ptR[[i for i in range(len(ptR))
                                if i not in matchingFtIdx[1]]]
-                    pt = numpy.append(ptL, ptR)
+                    pt = np.append(ptL, ptR)
                     if feature == "intersection":
                         pt = pt[matchingFtIdx[0]]
                         leftFtCount = len(matchingFtIdx[0])
@@ -691,7 +684,7 @@ class Sparse(Base):
                     if onFeature is None:
                         pt = pt[1:]
                     matched.append(target)
-                    mergedData = numpy.append(mergedData, pt)
+                    mergedData = np.append(mergedData, pt)
                     mergedRow.extend([nextPt] * len(pt))
                     mergedCol.extend(list(range(len(pt))))
                     nextPt += 1
@@ -700,11 +693,11 @@ class Sparse(Base):
                 ptL = leftData[leftRow == ptIdxL]
                 if onFeature is not None:
                     numNaN = len(other.features) - len(matchingFtIdx[1])
-                    ptR = [numpy.nan] * numNaN
+                    ptR = [np.nan] * numNaN
                 else:
                     numNaN = len(other.features) - len(matchingFtIdx[1]) + 1
-                    ptR = [numpy.nan] * numNaN
-                pt = numpy.append(ptL, ptR)
+                    ptR = [np.nan] * numNaN
+                pt = np.append(ptL, ptR)
                 if feature == "intersection":
                     pt = pt[matchingFtIdx[0]]
                 elif onFeature is not None and feature == "left":
@@ -713,7 +706,7 @@ class Sparse(Base):
                     pt = pt[:len(self.features) + 1]
                 if onFeature is None:
                     pt = pt[1:]
-                mergedData = numpy.append(mergedData, pt)
+                mergedData = np.append(mergedData, pt)
                 mergedRow.extend([nextPt] * len(pt))
                 mergedCol.extend(list(range(len(pt))))
                 nextPt += 1
@@ -723,18 +716,18 @@ class Sparse(Base):
             for ptIdxR, target in enumerate(rightData[rightCol == onIdxR]):
                 if target not in matched:
                     if onFeature is not None:
-                        nanList = [numpy.nan] * len(self.features)
-                        ptL = numpy.array(nanList, dtype=numpy.object_)
+                        nanList = [np.nan] * len(self.features)
+                        ptL = np.array(nanList, dtype=np.object_)
                     else:
-                        nanList = [numpy.nan] * (len(self.features) + 1)
-                        ptL = numpy.array(nanList, dtype=numpy.object_)
+                        nanList = [np.nan] * (len(self.features) + 1)
+                        ptL = np.array(nanList, dtype=np.object_)
                     fill = rightData[(rightRow == ptIdxR)][matchingFtIdx[1]]
                     ptL[matchingFtIdx[0]] = fill
                     # only unmatched points from right
-                    notMatchedR = numpy.in1d(rightCol, matchingFtIdx[1],
-                                             invert=True)
+                    notMatchedR = np.in1d(rightCol, matchingFtIdx[1],
+                                          invert=True)
                     ptR = rightData[(rightRow == ptIdxR) & (notMatchedR)]
-                    pt = numpy.append(ptL, ptR)
+                    pt = np.append(ptL, ptR)
                     if feature == "intersection":
                         pt = pt[matchingFtIdx[0]]
                     elif onFeature is not None and feature == "left":
@@ -744,7 +737,7 @@ class Sparse(Base):
                     if onFeature is None:
                         # remove pointNames column added
                         pt = pt[1:]
-                    mergedData = numpy.append(mergedData, pt)
+                    mergedData = np.append(mergedData, pt)
                     mergedRow.extend([nextPt] * len(pt))
                     mergedCol.extend(list(range(len(pt))))
                     nextPt += 1
@@ -803,13 +796,13 @@ class Sparse(Base):
         #binary search
         start, end = self._sorted['indices'][axisVal:axisVal + 2]
         if start == end: # axisVal is not in self._data.row
-            if numpy.issubdtype(self._data.dtype, numpy.bool_):
+            if np.issubdtype(self._data.dtype, np.bool_):
                 return False
             return 0
-        k = numpy.searchsorted(offAxis[start:end], offAxisVal) + start
+        k = np.searchsorted(offAxis[start:end], offAxisVal) + start
         if k < end and offAxis[k] == offAxisVal:
             return self._data.data[k]
-        if numpy.issubdtype(self._data.dtype, numpy.bool_):
+        if np.issubdtype(self._data.dtype, np.bool_):
             return False
         return 0
 
@@ -860,8 +853,8 @@ class Sparse(Base):
             if not allOtherAxis:
                 secondaryLimited = sortedSecondary[start:end]
                 targetSecondary = [secondaryStart, secondaryEnd]
-                innerStart, innerEnd = numpy.searchsorted(secondaryLimited,
-                                                          targetSecondary)
+                innerStart, innerEnd = np.searchsorted(secondaryLimited,
+                                                       targetSecondary)
                 outerStart = start
                 start = start + innerStart
                 end = outerStart + innerEnd
@@ -870,18 +863,18 @@ class Sparse(Base):
                 if dropDimension:
                     firstIdx = 1
                     pshape = self._shape[firstIdx]
-                    fshape = int(numpy.prod(self._shape[firstIdx + 1:]))
+                    fshape = int(np.prod(self._shape[firstIdx + 1:]))
                     kwds['pointStart'] = 0
                     kwds['pointEnd'] = self._shape[1]
                     kwds['featureStart'] = 0
-                    kwds['featureEnd'] = int(numpy.prod(self._shape[2:]))
+                    kwds['featureEnd'] = int(np.prod(self._shape[2:]))
                 else:
                     firstIdx = 0
                 primary = sortedSecondary[start:end] // fshape
                 secondary = sortedSecondary[start:end] % fshape
                 kwds['shape'] = [pshape] + self._shape[firstIdx + 1:]
             else:
-                primary = numpy.zeros((end - start,), dtype=int)
+                primary = np.zeros((end - start,), dtype=int)
                 secondary = sortedSecondary[start:end] - secondaryStart
 
             if singlePoint:
@@ -932,7 +925,7 @@ class Sparse(Base):
                 noZerosInData = all(i != 0 for i in self._data.data)
             assert noZerosInData
 
-            assert self._data.dtype.type is not numpy.string_
+            assert self._data.dtype.type is not np.string_
 
             sortedAxis = self._sorted['axis']
             sortedIndices = self._sorted['indices']
@@ -1049,9 +1042,7 @@ class Sparse(Base):
     def _inplaceBinary_implementation(self, opName, other):
         notInplace = '__' + opName[3:]
         ret = self._binaryOperations_implementation(notInplace, other)
-        absPath, relPath = self._absPath, self._relPath
-        self._referenceDataFrom(ret)
-        self._absPath, self._relPath = absPath, relPath
+        self._referenceFrom(ret, paths=(self._absPath, self._relPath))
         return self
 
     def _rsub__implementation(self, other):
@@ -1117,13 +1108,13 @@ class Sparse(Base):
         trueDiv = opSplit[0] + 'truediv__'
         # ret is self for inplace operation
         ret = self._binaryOperations_implementation(trueDiv, other)
-        ret._data.data = numpy.floor(ret._data.data)
+        ret._data.data = np.floor(ret._data.data)
         ret._data.eliminate_zeros()
         return ret
 
     def _genericMod_implementation(self, opName, other):
         """
-        Uses numpy.mod on the nonzero values in the coo matrix.
+        Uses np.mod on the nonzero values in the coo matrix.
 
         Since 0 % any value is 0, the zero values can be ignored for
         this operation.
@@ -1137,9 +1128,9 @@ class Sparse(Base):
         other._sortInternal(sort)
         otherData = other._getSparseData()
         if opName == '__rmod__':
-            ret = numpy.mod(otherData.data, selfData.data)
+            ret = np.mod(otherData.data, selfData.data)
         else:
-            ret = numpy.mod(selfData.data, otherData.data)
+            ret = np.mod(selfData.data, otherData.data)
         coo = scipy.sparse.coo_matrix((ret, (selfData.row, selfData.col)),
                                       shape=self.shape)
         coo.eliminate_zeros() # remove any zeros introduced into data
@@ -1183,7 +1174,7 @@ class Sparse(Base):
                 sortPrime = self._data.col
                 sortOff = self._data.row
             # sort least significant axis first
-            sortKeys = numpy.lexsort((sortOff, sortPrime))
+            sortKeys = np.lexsort((sortOff, sortPrime))
 
             self._data.data = self._data.data[sortKeys]
             self._data.row = self._data.row[sortKeys]
@@ -1200,7 +1191,7 @@ class Sparse(Base):
                 sortedAxis = self._data.col
                 sortedLength = len(self.features)
 
-            indices = numpy.searchsorted(sortedAxis, range(sortedLength + 1))
+            indices = np.searchsorted(sortedAxis, range(sortedLength + 1))
             self._sorted['indices'] = indices
 
     def _getSparseData(self):
@@ -1230,7 +1221,7 @@ class Sparse(Base):
         return NimbleElementIterator(array, order, only)
 
     def _isBooleanData(self):
-        return self._data.dtype in [bool, numpy.bool_]
+        return self._data.dtype in [bool, np.bool_]
 
     def _resetSorted(self):
         self._sorted['axis'] = None
@@ -1300,7 +1291,7 @@ class SparseView(BaseView, Sparse):
             return Sparse(coo, pointNames=pNames, featureNames=fNames)
 
         if len(self.points) == 0 or len(self.features) == 0:
-            emptyStandin = numpy.empty(self._shape)
+            emptyStandin = np.empty(self._shape)
             intermediate = nimble.data('Matrix', emptyStandin, useLog=False)
             return intermediate.copy(to=to)
 
@@ -1362,7 +1353,7 @@ class SparseView(BaseView, Sparse):
     def __abs__(self):
         """ Perform element wise absolute value on this object """
         ret = self.copy(to="Sparse")
-        numpy.absolute(ret._data.data, out=ret._data.data)
+        np.absolute(ret._data.data, out=ret._data.data)
         ret._name = None
 
         return ret
@@ -1393,4 +1384,4 @@ class SparseView(BaseView, Sparse):
         return selfConv._iterateElements_implementation(order, only)
 
     def _isBooleanData(self):
-        return self._source._data.dtype in [bool, numpy.bool_]
+        return self._source._data.dtype in [bool, np.bool_]

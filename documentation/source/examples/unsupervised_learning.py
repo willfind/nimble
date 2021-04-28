@@ -25,8 +25,9 @@ visit.
 
 import nimble
 from nimble.calculate import meanStandardDeviationNormalize
-# TODO: use url once changes to data set are available online
-visits = nimble.data('Matrix', 'online_shoppers_intention_clean.csv')
+
+bucket = 'https://storage.googleapis.com/nimble/datasets/'
+visits = nimble.data('Matrix', bucket + 'online_shoppers_intention_clean.csv')
 
 ## We are going to focus on categorizing our visitors that made a purchase.
 ## First, we will copy any data points for visits that resulted in a purchase

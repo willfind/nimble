@@ -3,7 +3,7 @@ Tests for autoimpute interface.
 """
 import functools
 
-import numpy
+import numpy as np
 from nose.plugins.attrib import attr
 from nose.tools import raises
 
@@ -24,19 +24,19 @@ constructors = getDataConstructors(includeViews=False)
 def getDataWithMissing(constructor, assignNames=True, yBinary=False):
     if isinstance(constructor, str):
         constructor = functools.partial(nimble.data, constructor)
-    mu = numpy.array([5.0, 0.0])
-    r = numpy.array([
+    mu = np.array([5.0, 0.0])
+    r = np.array([
             [  3.40, -2.75],
             [ -2.75,  5.50],])
 
     # Generate the random samples.
     num = 100
-    d = numpy.random.multivariate_normal(mu, r, size=num)
+    d = np.random.multivariate_normal(mu, r, size=num)
     # insert missing values
-    rm1 = numpy.random.random_sample(num) > 0.85
-    d[rm1, 1] = numpy.nan
+    rm1 = np.random.random_sample(num) > 0.85
+    d[rm1, 1] = np.nan
     if yBinary:
-        d[:, 0] = numpy.random.choice(2, 100)
+        d[:, 0] = np.random.choice(2, 100)
 
     if assignNames:
         data = constructor(d, featureNames=['y', 'x'])
@@ -98,7 +98,7 @@ def test_autoimpute_MiLinearRegression():
         exp = nimble.trainAndTest('skl.LinearRegression', trainX, trainY,
                                   testX, testY, rootMeanSquareError)
 
-        numpy.testing.assert_almost_equal(rmse, exp)
+        np.testing.assert_almost_equal(rmse, exp)
 
 @autoimputeSkipDec
 def test_autoimpute_MiLinearRegression_noNames():
@@ -117,7 +117,7 @@ def test_autoimpute_MiLinearRegression_noNames():
         exp = nimble.trainAndTest('skl.LinearRegression', trainX, trainY,
                                   testX, testY, rootMeanSquareError)
 
-        numpy.testing.assert_almost_equal(rmse, exp)
+        np.testing.assert_almost_equal(rmse, exp)
 
 @autoimputeSkipDec
 @raises(InvalidArgumentValue)
@@ -148,7 +148,7 @@ def test_autoimpute_MiLogisticRegression():
         exp = nimble.trainAndTest('skl.LogisticRegression', trainX, trainY,
                                   testX, testY, fractionCorrect, randomSeed=0)
 
-        numpy.testing.assert_almost_equal(fc, exp)
+        np.testing.assert_almost_equal(fc, exp)
 
 @autoimputeSkipDec
 def test_autoimpute_MiLogisticRegression_directMultipleImputer():
@@ -177,7 +177,7 @@ def test_autoimpute_MiLogisticRegression_directMultipleImputer():
         exp = nimble.trainAndTest('skl.LogisticRegression', trainX, trainY,
                                   testX, testY, fractionCorrect)
 
-        numpy.testing.assert_almost_equal(fc, exp)
+        np.testing.assert_almost_equal(fc, exp)
 
 @autoimputeSkipDec
 def test_autoimpute_MiLogisticRegression_noNames():
@@ -197,7 +197,7 @@ def test_autoimpute_MiLogisticRegression_noNames():
         exp = nimble.trainAndTest('skl.LogisticRegression', trainX, trainY,
                                   testX, testY, fractionCorrect)
 
-        numpy.testing.assert_almost_equal(fc, exp)
+        np.testing.assert_almost_equal(fc, exp)
 
 @autoimputeSkipDec
 @raises(InvalidArgumentValue)

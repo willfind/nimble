@@ -14,7 +14,6 @@ import configparser
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
-from tests.helpers import configSafetyWrapper
 
 
 ###############
@@ -60,7 +59,6 @@ class FailedPredefined(object):
 ### Tests ###
 #############
 
-@configSafetyWrapper
 def test_settings_GetSet():
     """ Test nimble.settings getters and setters """
     #orig changes
@@ -97,14 +95,12 @@ def test_settings_GetSet():
 
 
 @raises(InvalidArgumentType)
-@configSafetyWrapper
 def test_settings_HooksException_unCallable():
     """ Test SessionConfiguration.hook() throws exception on bad input """
     nimble.settings.hook("TestS", "TestOp", 5)
 
 
 @raises(ImproperObjectAction)
-@configSafetyWrapper
 def test_settings_HooksException_unHookable():
     """ Test SessionConfiguration.hook() throws exception for unhookable combo """
     nimble.settings.hook("TestS", "TestOp", None)
@@ -116,7 +112,6 @@ def test_settings_HooksException_unHookable():
 
 
 @raises(InvalidArgumentValue)
-@configSafetyWrapper
 def test_settings_HooksException_wrongSig():
     """ Test SessionConfiguration.hook() throws exception on incorrect signature """
     def twoArg(value, value2):
@@ -125,7 +120,6 @@ def test_settings_HooksException_wrongSig():
     nimble.settings.hook("TestS", "TestOp", twoArg)
 
 
-@configSafetyWrapper
 def test_settings_Hooks():
     """ Test the on-change hooks for a SessionConfiguration object """
     history = []
@@ -142,7 +136,6 @@ def test_settings_Hooks():
 
     assert history == [5, 4, 1, "Bang"]
 
-@configSafetyWrapper
 def test_settings_GetFullConfig():
     """ Test nimble.settings.get when only specifying a section """
     startConfig = nimble.settings.get()
@@ -172,7 +165,6 @@ def test_settings_GetFullConfig():
     assert newConfig['TestSec2']["op2"] == '4'
 
 
-@configSafetyWrapper
 def test_settings_GetSectionOnly():
     """ Test nimble.settings.get when only specifying a section """
     nimble.settings.set("TestSec1", "op1", '1')
@@ -183,7 +175,6 @@ def test_settings_GetSectionOnly():
     assert allSec1['op2'] == '2'
 
 
-@configSafetyWrapper
 def test_settings_saving():
     """ Test nimble.settings will save its in memory changes """
     # make some change via nimble.settings. save it,
@@ -196,7 +187,6 @@ def test_settings_saving():
     assert nimble.settings.get("newSectionName", 'new.Option.Name') == '1'
 
 
-@configSafetyWrapper
 def test_settings_savingSection():
     """ Test nimble.settings.saveChanges when specifying a section """
     nimble.settings.changes = {}
@@ -222,7 +212,6 @@ def test_settings_savingSection():
         pass
 
 
-@configSafetyWrapper
 def test_settings_savingOption():
     """ Test nimble.settings.saveChanges when specifying a section and option """
     nimble.settings.changes = {}
@@ -261,7 +250,6 @@ def setAvailableInterfaceOptions(save=False):
     for interface in getInterfaces(ignoreCustomInterfaces=True):
         nimble.core.configuration.setInterfaceOptions(interface, save)
 
-@configSafetyWrapper
 def test_settings_addingNewInterface():
     """ Test nimble.core.configuration.setInterfaceOptions correctly sets options """
     tempInterface = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
@@ -300,7 +288,6 @@ def test_settings_addingNewInterface():
     assert nimble.settings.get('Test', 'Temp0') == ''
     assert nimble.settings.get('Test', 'Temp1') == ''
 
-@configSafetyWrapper
 def test_settings_setInterfaceOptionsSafety():
     """ Test that setting options preserves values already in the config file """
     tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
@@ -332,7 +319,6 @@ def test_settings_setInterfaceOptionsSafety():
     assert nimble.settings.get("TestOther", 'Temp0') == ''
 
 
-@configSafetyWrapper
 def test_settings_setInterfaceOptionsChanges():
     """ Test that setting interface options properly saves current changes """
     tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
@@ -384,7 +370,6 @@ def test_settings_setInterfaceOptionsChanges():
     except InvalidArgumentValue:
         pass
 
-@configSafetyWrapper
 def test_settings_allowedNames():
     """ Test that you can only set allowed names in interface sections """
     for interface in getInterfaces(ignoreCustomInterfaces=True):
@@ -395,7 +380,6 @@ def test_settings_allowedNames():
         except InvalidArgumentValue:
             pass
 
-@configSafetyWrapper
 def test_settings_customLearnerOptionsException():
     """ Test that you cannot set options for custom learner interfaces """
 
@@ -406,7 +390,6 @@ def test_settings_customLearnerOptionsException():
         except InvalidArgumentValue:
             pass
 
-@configSafetyWrapper
 @raises(configparser.NoSectionError)
 # test that set without save is temporary
 def test_settings_set_without_save():
@@ -419,7 +402,6 @@ def test_settings_set_without_save():
     nimble.settings = nimble.core.configuration.loadSettings()
     nimble.settings.get("tempSectionName", 'temp.Option.Name')
 
-@configSafetyWrapper
 def test_settings_setDefault():
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name2')
@@ -443,13 +425,11 @@ def test_settings_setDefault():
     assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
 
 
-@configSafetyWrapper
 @mock.patch('nimble.core.interfaces.predefined', [FailedPredefined])
 def testSetLocationForFailedPredefinedInterface():
     nimble.settings.set('FailedPredefined', 'location', 'path/to/mock')
 
 
-@configSafetyWrapper
 @raises(InvalidArgumentValue)
 @mock.patch('nimble.core.interfaces.predefined', [FailedPredefined])
 def testExceptionSetOptionForFailedPredefinedInterface():

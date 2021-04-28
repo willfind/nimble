@@ -12,6 +12,8 @@ import sys
 import tempfile
 from io import StringIO#python 3
 import logging
+import configparser
+import copy
 
 import nose
 from nose.plugins.base import Plugin
@@ -19,6 +21,8 @@ import nose.pyversion
 from nose.util import ln
 
 import nimble
+from nimble.core.configuration import SessionConfiguration
+from nimble.core._learnHelpers import initAvailablePredefinedInterfaces
 
 currPath = os.path.abspath(inspect.getfile(inspect.currentframe()))
 nimblePath = os.path.dirname(currPath)
@@ -168,41 +172,105 @@ class FileRemover(Plugin):
             if os.path.exists(fullPath):
                 os.remove(fullPath)
 
-
-class ConfigControl(object):
+class DictSessionConfig(SessionConfiguration):
     """
-    Set logging configuration state while testing.
-
-    Restores the original state upon completion.
+    Use a dictionary instead of configuration file for config settings.
     """
-    def __init__(self):
-        self._backupFetchLoc = nimble.settings.get('fetch', 'location')
-        self._backupLogLoc = nimble.settings.get('logger', 'location')
-        self._backupLogName = nimble.settings.get('logger', 'name')
-        self._backupLogEnabled = nimble.settings.get('logger', 'enabledByDefault')
-        self._crossValBackupEnabled = nimble.settings.get(
-            'logger', 'enableCrossValidationDeepLogging')
+    def __init__(self, dictionary):
+        self.parser = configparser.ConfigParser()
+        # Needs to be set if you want option names to be case sensitive
+        self.parser.optionxform = str
+        self.parser.read_dict(dictionary)
+        self.dictionary = dictionary
+
+        # dict of section name to dict of option name to value
+        self.changes = {}
+        self.hooks = {}
+
+    def saveChanges(self, section=None, option=None):
+        if section is not None:
+            sectionInChanges = section in self.changes
+            if sectionInChanges and section not in self.dictionary:
+                self.dictionary[section] = {}
+                self.parser.add_section(section)
+            if sectionInChanges and option is not None:
+                newOption = self.changes[section][option]
+                del self.changes[section][option]
+                self.dictionary[section][option] = newOption
+                self.parser.set(section, option, newOption)
+            elif sectionInChanges:
+                self.dictionary[section].update(self.changes[section])
+                for opt, value in self.changes[section].items():
+                    self.parser.set(section, opt, value)
+                del self.changes[section]
+        else:
+            self.dictionary.update(self.changes)
+            for sect in self.changes:
+                if not self.parser.has_section(sect):
+                    self.parser.add_section(sect)
+                for opt, value in self.changes[sect].items():
+                    self.parser.set(sect, opt, value)
+            self.changes = {}
+
+class ConfigPlugin(Plugin):
+    """
+    Setup configuration settings for testing and restore settings before
+    each test.
+    """
+    def options(self, parser, env):
+        super().options(parser, env)
+
+    def configure(self, options, config):
+        super().configure(options, config)
+        self.enabled = True
+
+    def begin(self):
+        """
+        Setup so each test can start in the same state.
+        """
         self.tempdir = tempfile.TemporaryDirectory()
+        self.configuration = {
+            'logger': {'location': self.tempdir.name,
+                       'name': "tmpLogs",
+                       'enabledByDefault': "False",
+                       'enableCrossValidationDeepLogging': "False"},
+            'fetch': {'location': self.tempdir.name}
+            }
+        # Predefined interfaces were previously loaded on nimble import but
+        # are now loaded as requested. Some tests operate under the assumption
+        # that all these interfaces have already been loaded, but since that
+        # is no longer the case we need to load them now to ensure that those
+        # tests continue to test all interfaces.
+        initAvailablePredefinedInterfaces()
+        self.interfaces = nimble.core.interfaces.available
+        # loading interfaces adds changes (interface options) to settings
+        self.changes = nimble.settings.changes
 
-    def __enter__(self):
-        # change name of log file (settings hook will init new log
-        # files after .set())
-        nimble.settings.set('fetch', 'location', self.tempdir.name)
-        nimble.settings.set('logger', 'location', self.tempdir.name)
-        nimble.settings.set("logger", 'name', "tmpLogs")
-        nimble.settings.set("logger", "enabledByDefault", "False")
-        nimble.settings.set("logger", "enableCrossValidationDeepLogging",
-                            "False")
-        nimble.settings.saveChanges("logger")
+    def beforeTest(self, test):
+        """
+        Ensure nimble is in the same state at the start of each test.
+        """
+        # copying interfaces does not copy registeredLearners attribute and
+        # deepcopy cannot be used so we reset it to have no custom learners
+        self.interfaces['custom'].registeredLearners = {}
+        nimble.core.interfaces.available = copy.copy(self.interfaces)
 
-    def __exit__(self, type, value, traceback):
-        nimble.settings.set("fetch", 'location', self._backupFetchLoc)
-        nimble.settings.set("logger", 'location', self._backupLogLoc)
-        nimble.settings.set("logger", 'name', self._backupLogName)
-        nimble.settings.set("logger", "enabledByDefault", self._backupLogEnabled)
-        nimble.settings.set("logger", "enableCrossValidationDeepLogging",
-                            self._crossValBackupEnabled)
-        nimble.settings.saveChanges("logger")
+        # replace nimble.settings with DictSessionConfig using default testing
+        # settings. This avoids any need to interact with the config file.
+        currSettings = copy.deepcopy(self.configuration)
+
+        def loadSavedSettings():
+            return DictSessionConfig(currSettings)
+
+        nimble.settings = loadSavedSettings()
+        # include any changes made during call to begin()
+        nimble.settings.changes = copy.deepcopy(self.changes)
+        # for tests that load settings during the test
+        nimble.core.configuration.loadSettings = loadSavedSettings
+        # setup logger to use new settings and set logging hooks in settings
+        nimble.core.logger.initLoggerAndLogConfig()
+
+    def finalize(self, result):
         self.tempdir.cleanup()
 
 if __name__ == '__main__':
@@ -216,15 +284,15 @@ if __name__ == '__main__':
     workingDirDef = ["-w", nimblePath, '--with-doctest']
     args.extend(workingDirDef)
 
-    plugins = [ExtensionPlugin(), CaptureError(), FileRemover()]
-    with ConfigControl():
-        # suppress all warnings -- nosetests only captures std out, not stderr,
-        # and there are some tests that call learners in unfortunate ways,
-        # causing ALOT of annoying warnings.
-        with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            # need to turn on warnings for tests/interfaces/universal_test
-            warnings.filterwarnings('always', module=r'.*universal_test')
-            warnings.filterwarnings('always', module=r'.*keras_interface')
-            nose.run(addplugins=plugins, argv=args)
+    plugins = [ExtensionPlugin(), CaptureError(), FileRemover(),
+               ConfigPlugin()]
+    # suppress all warnings -- nosetests only captures std out, not stderr,
+    # and there are some tests that call learners in unfortunate ways,
+    # causing ALOT of annoying warnings.
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        # need to turn on warnings for tests/interfaces/universal_test
+        warnings.filterwarnings('always', module=r'.*universal_test')
+        warnings.filterwarnings('always', module=r'.*keras_interface')
+        nose.run(addplugins=plugins, argv=args)
     exit(0)

@@ -5,7 +5,7 @@ functions.
 
 import math
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
@@ -227,12 +227,12 @@ def _runTrialGivenParameters(toCheck, knowns, predictionType):
 
 
 def _generateAllZeros(length):
-    return nimble.data("List", numpy.zeros([length, 1], dtype=int),
+    return nimble.data("List", np.zeros([length, 1], dtype=int),
                        useLog=False)
 
 
 def _generateAllOnes(length):
-    return nimble.data("List", numpy.ones([length, 1], dtype=int),
+    return nimble.data("List", np.ones([length, 1], dtype=int),
                        useLog=False)
 
 
@@ -240,7 +240,7 @@ def _generateMixedRandom(length):
     while True:
         correct = numpyRandom.randint(2, size=[length, 1])
         # we don't want all zeros or all ones
-        if numpy.any(correct) and not numpy.all(correct):
+        if np.any(correct) and not np.all(correct):
             break
     correct = nimble.data(returnType="List", source=correct, useLog=False)
     return correct

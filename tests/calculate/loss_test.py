@@ -1,4 +1,4 @@
-import numpy
+import numpy as np
 from nose.tools import *
 
 import nimble
@@ -22,8 +22,8 @@ def testGenericErrorCalculatorEmptyKnownInput():
     """
     Test that _computeError raises an exception if knownLabels is empty
     """
-    knownLabels = numpy.array([])
-    predictedLabels = numpy.array([1, 2, 3])
+    knownLabels = np.array([])
+    predictedLabels = np.array([1, 2, 3])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -36,8 +36,8 @@ def testGenericErrorCalculatorEmptyPredictedInput():
     """
     Test that _computeError raises an exception if predictedLabels is empty
     """
-    knownLabels = numpy.array([1, 2, 3])
-    predictedLabels = numpy.array([])
+    knownLabels = np.array([1, 2, 3])
+    predictedLabels = np.array([])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -51,8 +51,8 @@ def testGenericErrorCalculatorDivideByZero():
     Test that _computeError raises a divide by zero exception if the
     outerFunction argument would lead to division by zero.
     """
-    knownLabels = numpy.array([1, 2, 3])
-    predictedLabels = numpy.array([1, 2, 3])
+    knownLabels = np.array([1, 2, 3])
+    predictedLabels = np.array([1, 2, 3])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -61,8 +61,8 @@ def testGenericErrorCalculatorDivideByZero():
 
 
 def testGenericErrorCalculator():
-    knownLabels = numpy.array([1.0, 2.0, 3.0])
-    predictedLabels = numpy.array([1.0, 2.0, 3.0])
+    knownLabels = np.array([1.0, 2.0, 3.0])
+    predictedLabels = np.array([1.0, 2.0, 3.0])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -82,8 +82,8 @@ def testMeanAbsoluteErrorEmptyKnownValues():
     Check that the mean absolute error calculator correctly throws an
     exception if knownLabels vector is empty
     """
-    knownLabels = numpy.array([])
-    predictedLabels = numpy.array([1, 2, 3])
+    knownLabels = np.array([])
+    predictedLabels = np.array([1, 2, 3])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -97,8 +97,8 @@ def testMeanAbsoluteErrorEmptyPredictedValues():
     Check that the mean absolute error calculator correctly throws an
     exception if predictedLabels vector is empty
     """
-    predictedLabels = numpy.array([])
-    knownLabels = numpy.array([1, 2, 3])
+    predictedLabels = np.array([])
+    knownLabels = np.array([1, 2, 3])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -112,8 +112,8 @@ def testMeanAbsoluteError():
     all inputs are zero, or predictions are exactly the same as all known
     values, and are non-zero
     """
-    predictedLabels = numpy.array([0, 0, 0])
-    knownLabels = numpy.array([0, 0, 0])
+    predictedLabels = np.array([0, 0, 0])
+    knownLabels = np.array([0, 0, 0])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
@@ -124,8 +124,8 @@ def testMeanAbsoluteError():
     maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
     assert maeRate == 0.0
 
-    predictedLabels = numpy.array([1.0, 2.0, 3.0])
-    knownLabels = numpy.array([1.0, 2.0, 3.0])
+    predictedLabels = np.array([1.0, 2.0, 3.0])
+    knownLabels = np.array([1.0, 2.0, 3.0])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
     knownLabelsMatrix.transpose(useLog=False)
@@ -136,8 +136,8 @@ def testMeanAbsoluteError():
     maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
     assert maeRate == 0.0
 
-    predictedLabels = numpy.array([1.0, 2.0, 3.0])
-    knownLabels = numpy.array([1.5, 2.5, 3.5])
+    predictedLabels = np.array([1.0, 2.0, 3.0])
+    knownLabels = np.array([1.5, 2.5, 3.5])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
     knownLabelsMatrix.transpose(useLog=False)
@@ -158,8 +158,8 @@ def testRmseEmptyKnownValues():
     """
     rootMeanSquareError calculator throws exception if knownLabels is empty
     """
-    knownLabels = numpy.array([])
-    predictedLabels = numpy.array([1, 2, 3])
+    knownLabels = np.array([])
+    predictedLabels = np.array([1, 2, 3])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -173,8 +173,8 @@ def testRmseEmptyPredictedValues():
     rootMeanSquareError calculator throws exception if predictedLabels is empty
     """
 
-    predictedLabels = numpy.array([])
-    knownLabels = numpy.array([1, 2, 3])
+    predictedLabels = np.array([])
+    knownLabels = np.array([1, 2, 3])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -188,8 +188,8 @@ def testRmse():
     all inputs are zero, and when all known values are
     the same as predicted values.
     """
-    predictedLabels = numpy.array([[0], [0], [0]])
-    knownLabels = numpy.array([[0], [0], [0]])
+    predictedLabels = np.array([[0], [0], [0]])
+    knownLabels = np.array([[0], [0], [0]])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
@@ -198,8 +198,8 @@ def testRmse():
     rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
     assert rmseRate == 0.0
 
-    predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
-    knownLabels = numpy.array([[1.0], [2.0], [3.0]])
+    predictedLabels = np.array([[1.0], [2.0], [3.0]])
+    knownLabels = np.array([[1.0], [2.0], [3.0]])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
@@ -208,8 +208,8 @@ def testRmse():
     rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
     assert rmseRate == 0.0
 
-    predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
-    knownLabels = numpy.array([[1.5], [2.5], [3.5]])
+    predictedLabels = np.array([[1.0], [2.0], [3.0]])
+    knownLabels = np.array([[1.5], [2.5], [3.5]])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
@@ -226,8 +226,8 @@ def testRmse():
 
 @raises(InvalidArgumentValueCombination)
 def testMFRMSE_badshapePoints():
-    predictedLabels = numpy.array([[0, 2], [0, 2], [0, 2], [0, 2]])
-    knownLabels = numpy.array([[0, 0], [0, 0], [0, 0]])
+    predictedLabels = np.array([[0, 2], [0, 2], [0, 2], [0, 2]])
+    knownLabels = np.array([[0, 0], [0, 0], [0, 0]])
 
     knowns = nimble.data('Matrix', source=knownLabels)
     predicted = nimble.data('Matrix', source=predictedLabels)
@@ -237,8 +237,8 @@ def testMFRMSE_badshapePoints():
 
 @raises(InvalidArgumentValueCombination)
 def testMFRMSE_badshapeFeatures():
-    predictedLabels = numpy.array([[0], [0], [0], [0]])
-    knownLabels = numpy.array([[0, 0], [0, 0], [0, 0], [0, 0]])
+    predictedLabels = np.array([[0], [0], [0], [0]])
+    knownLabels = np.array([[0, 0], [0, 0], [0, 0], [0, 0]])
 
     knowns = nimble.data('Matrix', source=knownLabels)
     predicted = nimble.data('Matrix', source=predictedLabels)
@@ -247,8 +247,8 @@ def testMFRMSE_badshapeFeatures():
 
 @noLogEntryExpected
 def testMFRMSE_simpleSuccess():
-    predictedLabels = numpy.array([[0, 2], [0, 2], [0, 2], [0, 2]])
-    knownLabels = numpy.array([[0, 0], [0, 0], [0, 0], [0, 0]])
+    predictedLabels = np.array([[0, 2], [0, 2], [0, 2], [0, 2]])
+    knownLabels = np.array([[0, 0], [0, 0], [0, 0], [0, 0]])
 
     knowns = nimble.data('Matrix', source=knownLabels, useLog=False)
     predicted = nimble.data('Matrix', source=predictedLabels, useLog=False)
@@ -265,8 +265,8 @@ def testFractionCorrectEmptyKnownValues():
     """
     fractionCorrect calculator throws exception if knownLabels is empty
     """
-    knownLabels = numpy.array([])
-    predictedLabels = numpy.array([1, 2, 3])
+    knownLabels = np.array([])
+    predictedLabels = np.array([1, 2, 3])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -280,8 +280,8 @@ def testFractionCorrectEmptyPredictedValues():
     fractionCorrect calculator throws exception if predictedLabels is empty
     """
 
-    predictedLabels = numpy.array([])
-    knownLabels = numpy.array([1, 2, 3])
+    predictedLabels = np.array([])
+    knownLabels = np.array([1, 2, 3])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -295,8 +295,8 @@ def testFractionCorrect():
     all inputs are zero, and when all known values are
     the same as predicted values.
     """
-    predictedLabels = numpy.array([[0], [0], [0]])
-    knownLabels = numpy.array([[0], [0], [0]])
+    predictedLabels = np.array([[0], [0], [0]])
+    knownLabels = np.array([[0], [0], [0]])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
@@ -305,8 +305,8 @@ def testFractionCorrect():
     fc = fractionCorrect(knownLabelsMatrix, predictedLabelsMatrix)
     assert fc == 1.0
 
-    predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
-    knownLabels = numpy.array([[1.0], [2.0], [3.0]])
+    predictedLabels = np.array([[1.0], [2.0], [3.0]])
+    knownLabels = np.array([[1.0], [2.0], [3.0]])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
@@ -315,8 +315,8 @@ def testFractionCorrect():
     fc = fractionCorrect(knownLabelsMatrix, predictedLabelsMatrix)
     assert fc == 1.0
 
-    predictedLabels = numpy.array([[1.0], [2.0], [3.0], [4.0]])
-    knownLabels = numpy.array([[1.0], [2.0], [1.0], [2.0]])
+    predictedLabels = np.array([[1.0], [2.0], [3.0], [4.0]])
+    knownLabels = np.array([[1.0], [2.0], [1.0], [2.0]])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
@@ -334,8 +334,8 @@ def testFractionIncorrectEmptyKnownValues():
     """
     fractionIncorrect calculator throws exception if knownLabels is empty
     """
-    knownLabels = numpy.array([])
-    predictedLabels = numpy.array([1, 2, 3])
+    knownLabels = np.array([])
+    predictedLabels = np.array([1, 2, 3])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -349,8 +349,8 @@ def testFractionIncorrectEmptyPredictedValues():
     fractionIncorrect calculator throws exception if predictedLabels is empty
     """
 
-    predictedLabels = numpy.array([])
-    knownLabels = numpy.array([1, 2, 3])
+    predictedLabels = np.array([])
+    knownLabels = np.array([1, 2, 3])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -364,8 +364,8 @@ def testFractionIncorrect():
     all inputs are zero, and when all known values are
     the same as predicted values.
     """
-    predictedLabels = numpy.array([[0], [0], [0]])
-    knownLabels = numpy.array([[0], [0], [0]])
+    predictedLabels = np.array([[0], [0], [0]])
+    knownLabels = np.array([[0], [0], [0]])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
@@ -374,8 +374,8 @@ def testFractionIncorrect():
     fi = fractionIncorrect(knownLabelsMatrix, predictedLabelsMatrix)
     assert fi == 0.0
 
-    predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
-    knownLabels = numpy.array([[1.0], [2.0], [3.0]])
+    predictedLabels = np.array([[1.0], [2.0], [3.0]])
+    knownLabels = np.array([[1.0], [2.0], [3.0]])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
@@ -384,8 +384,8 @@ def testFractionIncorrect():
     fi = fractionIncorrect(knownLabelsMatrix, predictedLabelsMatrix)
     assert fi == 0.0
 
-    predictedLabels = numpy.array([[1.0], [2.0], [3.0], [4.0]])
-    knownLabels = numpy.array([[1.0], [2.0], [1.0], [2.0]])
+    predictedLabels = np.array([[1.0], [2.0], [3.0], [4.0]])
+    knownLabels = np.array([[1.0], [2.0], [1.0], [2.0]])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
@@ -403,8 +403,8 @@ def testVarianceFractionRemainingEmptyKnownValues():
     """
     varianceFractionRemaining calculator throws exception if knownLabels is empty
     """
-    knownLabels = numpy.array([])
-    predictedLabels = numpy.array([1, 2, 3])
+    knownLabels = np.array([])
+    predictedLabels = np.array([1, 2, 3])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -418,8 +418,8 @@ def testVarianceFractionRemainingEmptyPredictedValues():
     varianceFractionRemaining calculator throws exception if predictedLabels is empty
     """
 
-    predictedLabels = numpy.array([])
-    knownLabels = numpy.array([1, 2, 3])
+    predictedLabels = np.array([])
+    knownLabels = np.array([1, 2, 3])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -431,8 +431,8 @@ def testVarianceFractionRemaining():
     """
     Check that the varianceFractionRemaining calculator works correctly.
     """
-    predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
-    knownLabels = numpy.array([[1.0], [2.0], [3.0]])
+    predictedLabels = np.array([[1.0], [2.0], [3.0]])
+    knownLabels = np.array([[1.0], [2.0], [3.0]])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
@@ -441,8 +441,8 @@ def testVarianceFractionRemaining():
     vfr = varianceFractionRemaining(knownLabelsMatrix, predictedLabelsMatrix)
     assert vfr == 0.0
 
-    predictedLabels = numpy.array([[1.0], [2.0], [3.0], [4.0]])
-    knownLabels = numpy.array([[1.0], [2.0], [4.0], [3.0]])
+    predictedLabels = np.array([[1.0], [2.0], [3.0], [4.0]])
+    knownLabels = np.array([[1.0], [2.0], [4.0], [3.0]])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
@@ -460,8 +460,8 @@ def testRSquaredEmptyKnownValues():
     """
     rSquared calculator throws exception if knownLabels is empty
     """
-    knownLabels = numpy.array([])
-    predictedLabels = numpy.array([1, 2, 3])
+    knownLabels = np.array([])
+    predictedLabels = np.array([1, 2, 3])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -475,8 +475,8 @@ def testRSquaredEmptyPredictedValues():
     rSquared calculator throws exception if predictedLabels is empty
     """
 
-    predictedLabels = numpy.array([])
-    knownLabels = numpy.array([1, 2, 3])
+    predictedLabels = np.array([])
+    knownLabels = np.array([1, 2, 3])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -488,8 +488,8 @@ def testRSquared():
     """
     Check that the rSquared calculator works correctly.
     """
-    predictedLabels = numpy.array([[1.0], [2.0], [3.0]])
-    knownLabels = numpy.array([[1.0], [2.0], [3.0]])
+    predictedLabels = np.array([[1.0], [2.0], [3.0]])
+    knownLabels = np.array([[1.0], [2.0], [3.0]])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
@@ -498,8 +498,8 @@ def testRSquared():
     rsq = rSquared(knownLabelsMatrix, predictedLabelsMatrix)
     assert rsq == 1.0
 
-    predictedLabels = numpy.array([[1.0], [2.0], [3.0], [4.0]])
-    knownLabels = numpy.array([[1.0], [2.0], [4.0], [3.0]])
+    predictedLabels = np.array([[1.0], [2.0], [3.0], [4.0]])
+    knownLabels = np.array([[1.0], [2.0], [4.0], [3.0]])
 
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,

@@ -16,7 +16,7 @@ __or__, __xor__
 """
 
 import sys
-import numpy
+import numpy as np
 import os
 import os.path
 from unittest.mock import patch
@@ -77,7 +77,7 @@ def back_unary_NamePath_preservations(callerCon, op):
     """ Test that object names and pathes are preserved when calling a unary op """
     data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
 
-    caller = callerCon(data, name=preserveName, path=preservePair)
+    caller = callerCon(data, name=preserveName, paths=preservePair)
 
     toCall = getattr(caller, op)
     ret = toCall()
@@ -127,7 +127,7 @@ def back_binaryscalar_pfname_preservations(callerCon, op, inplace):
 def back_binaryscalar_NamePath_preservations(callerCon, op):
     data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
 
-    caller = callerCon(data, name=preserveName, path=preservePair)
+    caller = callerCon(data, name=preserveName, paths=preservePair)
 
     toCall = getattr(caller, op)
     ret = toCall(1)
@@ -388,7 +388,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, att
 
     ### emptry caller, full other ###
     caller = callerCon(data)
-    other = callerCon(data, name=preserveNameOther, path=preservePairOther)
+    other = callerCon(data, name=preserveNameOther, paths=preservePairOther)
 
     assert caller.name is None
     assert caller.absolutePath is None
@@ -423,7 +423,7 @@ def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, att
     assert other.relativePath == preserveRPathOther
 
     ### full caller, empty other ###
-    caller = callerCon(data, name=preserveName, path=preservePair)
+    caller = callerCon(data, name=preserveName, paths=preservePair)
     other = callerCon(data)
 
     toCall = getattr(caller, attr1)
@@ -460,8 +460,8 @@ def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, att
     assert other.relativePath is None
 
     ### full caller, full other ###
-    caller = callerCon(data, name=preserveName, path=preservePair)
-    other = callerCon(data, name=preserveNameOther, path=preservePairOther)
+    caller = callerCon(data, name=preserveName, paths=preservePair)
+    other = callerCon(data, name=preserveNameOther, paths=preservePairOther)
 
     toCall = getattr(caller, attr1)
     if attr2 is not None:
@@ -631,7 +631,7 @@ def back_fShapeException(callerCon, calleeCon, attr1, attr2=None):
 
 def back_pEmptyException(callerCon, calleeCon, attr1, attr2=None):
     """ Test operation raises exception for point empty data """
-    data = numpy.zeros((0, 2))
+    data = np.zeros((0, 2))
     caller = callerCon(data)
     callee = calleeConstructor(data, calleeCon)
 
@@ -673,7 +673,7 @@ def back_byZeroException(callerCon, calleeCon, opName):
 
 def back_byInf(callerCon, calleeCon, opName):
     """ Test operation when other data contains zero """
-    inf = numpy.inf
+    inf = np.inf
     data1 = [[1, 2, 6], [4, 5, 3], [7, 8, 6]]
     data2 = [[inf, inf, inf], [inf, inf, inf], [inf, inf, inf]]
     if opName.startswith('__r'):
@@ -691,7 +691,7 @@ def back_byInf(callerCon, calleeCon, opName):
     ret = toCall(callee)
 
     if 'div' in opName:
-        exp = callerCon(numpy.zeros((3, 3)))
+        exp = callerCon(np.zeros((3, 3)))
     elif opName == '__rmod__' and calleeCon is None:
         exp = callerCon([[callee] * 3] * 3)
     elif opName == '__rmod__':
@@ -710,8 +710,8 @@ def makeAllData(constructor, rhsCons, numPts, numFts, sparsity):
     randomrf = nimble.random.data('Matrix', numPts, numFts, sparsity, useLog=False)
     lhsf = randomlf.copy(to="numpyarray")
     rhsf = randomrf.copy(to="numpyarray")
-    lhsi = numpy.array(numpyRandom.random_integers(1, 10, (numPts, numFts)))
-    rhsi = numpy.array(numpyRandom.random_integers(1, 10, (numPts, numFts)))
+    lhsi = np.array(numpyRandom.random_integers(1, 10, (numPts, numFts)))
+    rhsi = np.array(numpyRandom.random_integers(1, 10, (numPts, numFts)))
 
     lhsfObj = constructor(lhsf)
     lhsiObj = constructor(lhsi)
@@ -764,8 +764,8 @@ def back_autoVsNumpyObjCallee(constructor, opName, nimbleinplace, sparsity):
             assert expiObj.isIdentical(resiObj)
             # data type in object should not change unless required or inplace
             if not ('truediv' in opName or 'pow' in opName):
-                assert isinstance(lhsiObj[0, 0], (int, numpy.integer))
-                assert isinstance(rhsiObj[0, 0], (int, numpy.integer))
+                assert isinstance(lhsiObj[0, 0], (int, np.integer))
+                assert isinstance(rhsiObj[0, 0], (int, np.integer))
 
         assertNoNamesGenerated(lhsfObj)
         assertNoNamesGenerated(lhsiObj)
@@ -805,7 +805,7 @@ def back_autoVsNumpyScalar(constructor, opName, nimbleinplace, sparsity):
             assert expiObj.isIdentical(resiObj)
             # data type in object should not change unless required or inplace
             if not ('truediv' in opName or 'pow' in opName):
-                assert isinstance(lhsiObj[0, 0], (int, numpy.integer))
+                assert isinstance(lhsiObj[0, 0], (int, np.integer))
 
         assertNoNamesGenerated(lhsfObj)
         assertNoNamesGenerated(lhsiObj)
@@ -859,8 +859,8 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, opName, nimbleinplace, spars
 
             # data type in object should not change unless required or inplace
             if not ('truediv' in opName or 'pow' in opName):
-                assert isinstance(lhsiObj[0, 0], (int, numpy.integer))
-                assert isinstance(rhsiObj[0, 0], (int, numpy.integer))
+                assert isinstance(lhsiObj[0, 0], (int, np.integer))
+                assert isinstance(rhsiObj[0, 0], (int, np.integer))
 
         assertNoNamesGenerated(lhsfObj)
         assertNoNamesGenerated(lhsiObj)
@@ -1485,23 +1485,23 @@ class NumericalDataSafe(DataTestObject):
         lhsObj ** rhs
 
     def test_pow_nimbleObj_inf(self):
-        inf = numpy.inf
+        inf = np.inf
         lhs = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]]
         rhs = [[inf, inf, inf], [inf, inf, inf], [inf, inf, inf]]
         lhsObj = self.constructor(lhs)
         rhsObj = self.constructor(rhs)
 
         ret = lhsObj ** rhsObj
-        exp = self.constructor(numpy.zeros((3, 3)))
+        exp = self.constructor(np.zeros((3, 3)))
         assert ret == exp
 
     def test_pow_scalar_inf(self):
         lhs = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]]
-        rhs = numpy.inf
+        rhs = np.inf
         lhsObj = self.constructor(lhs)
 
         ret = lhsObj ** rhs
-        exp = self.constructor(numpy.zeros((3, 3)))
+        exp = self.constructor(np.zeros((3, 3)))
         assert ret == exp
 
     def test_pow_binaryscalar_pfname_preservations(self):
@@ -1541,13 +1541,13 @@ class NumericalDataSafe(DataTestObject):
         num ** obj
 
     def test_rpow_scalar_inf(self):
-        inf = numpy.inf
+        inf = np.inf
         lhs = [[inf, inf, inf], [inf, inf, inf], [inf, inf, inf]]
         num = 0.1
         lhsObj = self.constructor(lhs)
 
         ret = num ** lhsObj
-        exp = self.constructor(numpy.zeros((3, 3)))
+        exp = self.constructor(np.zeros((3, 3)))
         assert ret == exp
 
     def test_rpow_binaryscalar_pfname_preservations(self):
@@ -1666,8 +1666,8 @@ class NumericalDataSafe(DataTestObject):
 
     @raises(ImproperObjectAction)
     def back_logical_exception_pEmpty(self, logicOp):
-        lhs = numpy.empty((0, 3))
-        rhs = numpy.empty((0, 3))
+        lhs = np.empty((0, 3))
+        rhs = np.empty((0, 3))
 
         lhsObj = self.constructor(lhs)
         rhsObj = self.constructor(rhs)
@@ -1676,8 +1676,8 @@ class NumericalDataSafe(DataTestObject):
 
     @raises(ImproperObjectAction)
     def back_logical_exception_fEmpty(self, logicOp):
-        lhs = numpy.empty((3, 0))
-        rhs = numpy.empty((3, 0))
+        lhs = np.empty((3, 0))
+        rhs = np.empty((3, 0))
 
         lhsObj = self.constructor(lhs)
         rhsObj = self.constructor(rhs)
@@ -1797,10 +1797,10 @@ class NumericalDataSafe(DataTestObject):
         boolsObj = self.constructor(bools)
         boolsInvert = ~boolsObj
 
-        assert boolsInvert[0, 0] is False or boolsInvert[0, 0] is numpy.bool_(False)
-        assert boolsInvert[0, 1] is False or boolsInvert[0, 1] is numpy.bool_(False)
-        assert boolsInvert[1, 0] is True or boolsInvert[1, 0] is numpy.bool_(True)
-        assert boolsInvert[1, 1] is True or boolsInvert[1, 1] is numpy.bool_(True)
+        assert boolsInvert[0, 0] is False or boolsInvert[0, 0] is np.bool_(False)
+        assert boolsInvert[0, 1] is False or boolsInvert[0, 1] is np.bool_(False)
+        assert boolsInvert[1, 0] is True or boolsInvert[1, 0] is np.bool_(True)
+        assert boolsInvert[1, 1] is True or boolsInvert[1, 1] is np.bool_(True)
 
     @noLogEntryExpected
     def test_invert_TrueFalse(self):
@@ -1844,7 +1844,7 @@ class NumericalDataSafe(DataTestObject):
     def test_invert_namePath_preservation(self):
         bools = [[True, True], [False, False]]
 
-        boolsObj = self.constructor(bools, name=preserveName, path=preservePair)
+        boolsObj = self.constructor(bools, name=preserveName, paths=preservePair)
 
         boolsInvert = ~boolsObj
 
@@ -2113,23 +2113,23 @@ class NumericalModifying(DataTestObject):
         lhsObj **= rhs
 
     def test_ipow_nimbleObj_inf(self):
-        inf = numpy.inf
+        inf = np.inf
         lhs = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]]
         rhs = [[inf, inf, inf], [inf, inf, inf], [inf, inf, inf]]
         lhsObj = self.constructor(lhs)
         rhsObj = self.constructor(rhs)
 
         lhsObj **= rhsObj
-        exp = self.constructor(numpy.zeros((3, 3)))
+        exp = self.constructor(np.zeros((3, 3)))
         assert lhsObj == exp
 
     def test_ipow_scalar_inf(self):
         lhs = [[0.1, 0.1, 0.1], [0.1, 0.1, 0.1], [0.1, 0.1, 0.1]]
-        rhs = numpy.inf
+        rhs = np.inf
         lhsObj = self.constructor(lhs)
 
         lhsObj **= rhs
-        exp = self.constructor(numpy.zeros((3, 3)))
+        exp = self.constructor(np.zeros((3, 3)))
         assert lhsObj == exp
 
     def test_ipow_binaryscalar_pfname_preservations(self):

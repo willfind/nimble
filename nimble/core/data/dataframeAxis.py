@@ -5,7 +5,7 @@ operations on a nimble DataFrame object.
 
 from abc import ABCMeta, abstractmethod
 
-import numpy
+import numpy as np
 
 import nimble
 from nimble._utility import pd
@@ -94,7 +94,7 @@ class DataFrameAxis(Axis, metaclass=ABCMeta):
         uniqueData, uniqueIndices = denseAxisUniqueArray(self._base,
                                                          self._axis)
         uniqueData = pd.DataFrame(uniqueData)
-        if numpy.array_equal(self._base._asNumpyArray(), uniqueData):
+        if np.array_equal(self._base._asNumpyArray(), uniqueData):
             return self._base.copy()
         axisNames, offAxisNames = uniqueNameGetter(self._base, self._axis,
                                                    uniqueIndices)
@@ -111,9 +111,9 @@ class DataFrameAxis(Axis, metaclass=ABCMeta):
         if self._isPoint:
             for i, series in self._base._data.iteritems():
                 if copyVectorByVector:
-                    repeated[i] = numpy.repeat(series, totalCopies)
+                    repeated[i] = np.repeat(series, totalCopies)
                 else:
-                    repeated[i] = numpy.tile(series, totalCopies)
+                    repeated[i] = np.tile(series, totalCopies)
             ret = pd.DataFrame(repeated).reset_index(drop=True)
         else:
             for i, series in self._base._data.iteritems():
@@ -189,7 +189,7 @@ class DataFramePoints(DataFrameAxis, Points):
         collapseData = self._base._asNumpyArray()[:, collapseIndices]
         retainData = self._base._asNumpyArray()[:, retainIndices]
 
-        collapseDtypes = (numpy.dtype(object), max(self._base._data.dtypes))
+        collapseDtypes = (np.dtype(object), max(self._base._data.dtypes))
         dtypes = []
         for i in range(len(self._base.features)):
             if i in retainIndices:

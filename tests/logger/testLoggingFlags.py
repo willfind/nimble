@@ -7,11 +7,10 @@ import os
 import tempfile
 
 from nose.plugins.attrib import attr
-import numpy
+import numpy as np
 
 import nimble
 from nimble.calculate import fractionIncorrect
-from tests.helpers import configSafetyWrapper
 from tests.helpers import generateClassificationData
 from tests.helpers import getDataConstructors
 
@@ -24,7 +23,6 @@ def logEntryCount(logger):
     entryCount = logger.extractFromLog("SELECT COUNT(entry) FROM logger;")
     return entryCount[0][0]
 
-@configSafetyWrapper
 def back_load(toCall, *args, **kwargs):
     logger = nimble.core.logger.active
 
@@ -108,7 +106,6 @@ def runAndCheck(toCall, useLog):
 
     return (startCount, endCount)
 
-@configSafetyWrapper
 def backend(toCall, validator, **kwargs):
     # for each combination of local and global, call and check
 
@@ -192,7 +189,6 @@ def test_TrainedLearner_test():
 
     backend(wrapped, runAndCheck)
 
-@configSafetyWrapper
 def backendDeep(toCall, validator):
     if toCall.__name__ == "crossValidate":
         entriesWithoutDeep = 1
@@ -386,7 +382,6 @@ def test_summaryReport():
     for constructor in constructors:
         backend(wrapped, prepAndCheck, constructor=constructor)
 
-@configSafetyWrapper
 def flattenUnflattenBackend(toCall, validator, **kwargs):
     # for each combination of local and global, call and check
 
@@ -644,7 +639,7 @@ def test_points_insert():
 
 def test_features_insert():
     def wrapped(obj, useLog):
-        insertData = numpy.zeros((18,1))
+        insertData = np.zeros((18,1))
         toInsert = nimble.data("Matrix", insertData, useLog=False)
         return obj.features.insert(0, toInsert, useLog=useLog)
 
@@ -663,7 +658,7 @@ def test_points_append():
 
 def test_features_append():
     def wrapped(obj, useLog):
-        appendData = numpy.zeros((18,1))
+        appendData = np.zeros((18,1))
         toAppend = nimble.data("Matrix", appendData, useLog=False)
         return obj.features.append(toAppend, useLog=useLog)
 
