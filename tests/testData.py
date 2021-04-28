@@ -2290,14 +2290,16 @@ def test_data_http_linkError():
 # fetchFile / fetchFiles #
 ##########################
 
-mockReqBasePath = os.path.join(nimble.settings.get('fetch', 'location'),
+def getReqBasePath():
+    # need to get in test so config is correct
+    return os.path.join(nimble.settings.get('fetch', 'location'),
                                'nimbleData', 'mockrequests.nimble')
 
 def clearNimbleData(func):
     @functools.wraps(func)
     def wrapped(*args, **kwargs):
-        if os.path.exists(mockReqBasePath):
-            shutil.rmtree(mockReqBasePath)
+        if os.path.exists(getReqBasePath()):
+            shutil.rmtree(getReqBasePath())
         return func(*args, **kwargs)
     return wrapped
 
@@ -2460,7 +2462,7 @@ def test_data_fetch_nimblePathHandling():
 @mock.patch('nimble.core._createHelpers.requests.get', calledException)
 @clearNimbleData
 def test_data_fetch_getFromLocal_csv():
-    exp = os.path.join(mockReqBasePath, 'CSV.csv')
+    exp = os.path.join(getReqBasePath(), 'CSV.csv')
     if not os.path.exists(exp):
         os.makedirs(os.path.split(exp)[0])
         with open(exp, 'w') as f:
@@ -2475,20 +2477,20 @@ def test_data_fetch_getFromLocal_csv():
 @mock.patch('nimble.core._createHelpers.requests.get', calledException)
 @clearNimbleData
 def test_data_fetch_getFromLocal_zip():
-    if not os.path.exists(mockReqBasePath):
-        os.makedirs(mockReqBasePath)
+    if not os.path.exists(getReqBasePath()):
+        os.makedirs(getReqBasePath())
 
-    exp = os.path.join(mockReqBasePath, 'ZIP.zip')
+    exp = os.path.join(getReqBasePath(), 'ZIP.zip')
     if not os.path.exists(exp):
         with zipfile.ZipFile(exp, 'w') as myzip:
             myzip.writestr('data.csv', '1,2,3\n4,5,6')
             myzip.writestr(os.path.join('archive', 'old.csv'), '1,2,3\n4,5,6')
         with zipfile.ZipFile(exp, 'r') as myzip:
-            myzip.extractall(mockReqBasePath)
+            myzip.extractall(getReqBasePath())
 
     assert os.path.exists(exp)
-    assert os.path.exists(os.path.join(mockReqBasePath, 'data.csv'))
-    assert os.path.exists(os.path.join(mockReqBasePath, 'archive', 'old.csv'))
+    assert os.path.exists(os.path.join(getReqBasePath(), 'data.csv'))
+    assert os.path.exists(os.path.join(getReqBasePath(), 'archive', 'old.csv'))
     with mock.patch.object(zipfile.ZipFile, 'extractall') as extractAll:
         # requests and extractall should not be used
         path = nimble.fetchFile('http://mockrequests.nimble/ZIP.zip')
@@ -2499,10 +2501,10 @@ def test_data_fetch_getFromLocal_zip():
 @mock.patch('nimble.core._createHelpers.requests.get', calledException)
 @clearNimbleData
 def test_data_fetch_getFromLocal_gzip():
-    if not os.path.exists(mockReqBasePath):
-        os.makedirs(mockReqBasePath)
+    if not os.path.exists(getReqBasePath()):
+        os.makedirs(getReqBasePath())
 
-    exp = os.path.join(mockReqBasePath, 'GZIP_data.csv')
+    exp = os.path.join(getReqBasePath(), 'GZIP_data.csv')
     if not os.path.exists(exp):
         with open(exp, 'wb') as f:
             f.write(b'1,2,3/n4,5,6')
@@ -2522,7 +2524,7 @@ def test_data_fetch_getFromLocal_gzip():
 @mock.patch('nimble.core._createHelpers.requests.get', calledException)
 @clearNimbleData
 def test_data_fetch_forceDownload():
-    local = os.path.join(mockReqBasePath, 'CSV.csv')
+    local = os.path.join(getReqBasePath(), 'CSV.csv')
     if not os.path.exists(local):
         try:
             os.makedirs(os.path.split(local)[0])
