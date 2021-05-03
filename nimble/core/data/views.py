@@ -375,7 +375,9 @@ class PointsView(Points, metaclass=ABCMeta):
 
     @pointsExceptionDoc
     def combineByExpandingFeatures(self, featureWithFeatureNames,
-                                   featuresWithValues, useLog=None):
+                                   featuresWithValues,
+                                   modifyDuplicateFeatureNames=False,
+                                   useLog=None):
         readOnlyException('combineByExpandingFeatures')
 
 
