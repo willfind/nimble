@@ -8,7 +8,6 @@ import nimble # pylint: disable=unused-import
 from nimble._utility import inheritDocstringsFactory
 from nimble.exceptions import ImproperObjectAction
 from .base import Base
-from .axis import Axis
 from .points import Points
 from .features import Features
 from ._dataHelpers import readOnlyException
@@ -59,10 +58,17 @@ class BaseView(Base, metaclass=ABCMeta):
         self._fStart = featureStart
         self._fEnd = featureEnd
         if len(source._shape) > 2:
-            if self._fStart != 0 or self._fEnd != source._featureCount:
+            if self._fStart != 0 or self._fEnd != len(source.features):
                 msg = "feature limited views are not allowed for data with "
                 msg += "more than two dimensions."
                 raise ImproperObjectAction(msg)
+        if source.points.names is not None:
+            nameSlice = slice(self._pStart, self._pEnd)
+            kwds['pointNames'] = source.points.namesInverse[nameSlice]
+        if source.features.names is not None:
+            nameSlice = slice(self._fStart, self._fEnd)
+            kwds['featureNames'] = source.features.namesInverse[nameSlice]
+        kwds['reuseData'] = True
 
         super().__init__(**kwds)
 
@@ -81,18 +87,6 @@ class BaseView(Base, metaclass=ABCMeta):
         form.
         """
         return self._source._relPath
-
-    def _pointNamesCreated(self):
-        if self._source.pointNamesInverse is None:
-            return False
-
-        return True
-
-    def _featureNamesCreated(self):
-        if self._source.featureNamesInverse is None:
-            return False
-
-        return True
 
     # TODO: retType
 
@@ -234,66 +228,6 @@ class BaseView(Base, metaclass=ABCMeta):
     @baseExceptionDoc
     def __ipow__(self, other):
         readOnlyException("__ipow__")
-
-
-@inheritDocstringsFactory(Axis)
-class AxisView(Axis, metaclass=ABCMeta):
-    """
-    Class limiting the Axis class to read-only by disallowing methods
-    which could change the data.
-
-    Parameters
-    ----------
-    base : BaseView
-        The BaseView instance that will be queried.
-    kwds
-        Included due to best practices so args may automatically be
-        passed further up into the hierarchy if needed.
-    """
-    def _getNames(self):
-        # _base is always a view object
-        if isinstance(self, Points):
-            start = self._base._pStart
-            end = self._base._pEnd
-            if not self._namesCreated():
-                self._base._source.points._setAllDefault()
-            namesList = self._base._source.pointNamesInverse
-        else:
-            start = self._base._fStart
-            end = self._base._fEnd
-            if not self._namesCreated():
-                self._base._source.features._setAllDefault()
-            namesList = self._base._source.featureNamesInverse
-
-        return namesList[start:end]
-
-    def _getName(self, index):
-        return self._getNames()[index]
-
-    def _getIndices(self, names):
-        return [self._getIndex(n) for n in names]
-
-    def _getIndexByName(self, name):
-        # _base is always a view object
-        if isinstance(self, Points):
-            start = self._base._pStart
-            end = self._base._pEnd
-            possible = self._base._source.points.getIndex(name)
-        else:
-            start = self._base._fStart
-            end = self._base._fEnd
-            possible = self._base._source.features.getIndex(name)
-        if start <= possible < end:
-            return possible - start
-
-        raise KeyError(name)
-
-    def _namesCreated(self):
-        # _base is always a view object
-        if self._isPoint:
-            return not self._base._source.pointNames is None
-
-        return not self._base._source.featureNames is None
 
 
 @inheritDocstringsFactory(Points)

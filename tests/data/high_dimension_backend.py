@@ -71,9 +71,9 @@ class HighDimensionSafe(DataTestObject):
         for tensor in tensors:
             toTest = self.constructor(tensor)
             train, test = toTest.trainAndTestSets(0.33)
-            assert train._pointCount == 2
+            assert len(train.points) == 2
             assert len(train._shape) > 2
-            assert test._pointCount == 1
+            assert len(test.points) == 1
             assert len(train._shape) > 2
 
             try:
@@ -110,7 +110,7 @@ class HighDimensionSafe(DataTestObject):
                 for l1, l2 in zip(testLines, expLines):
                     if l1.startswith('test :'):
                         stringHD = ' x '.join(map(str, toTest._shape)) + ' \n'
-                        string2D = '3pt x {0}ft \n'.format(exp._featureCount)
+                        string2D = '3pt x {0}ft \n'.format(len(exp.features))
                         assert l1.endswith(stringHD)
                         assert l2.endswith(string2D)
                     else:

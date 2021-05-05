@@ -1659,7 +1659,13 @@ class Points(ABC):
         retainIndices = [idx for idx in range(len(features))
                          if idx not in collapseIndices]
         currNumPoints = len(self)
-        currFtNames = [features.getName(idx) for idx in collapseIndices]
+        currFtNames = []
+        for idx in collapseIndices:
+            currName = features.getName(idx)
+            if currName is None:
+                currName = idx
+            currFtNames.append(currName)
+
         numRetPoints = len(self) * numCollapsed
         numRetFeatures = len(features) - numCollapsed + 2
 
@@ -1667,12 +1673,11 @@ class Points(ABC):
             featuresToCollapse, collapseIndices, retainIndices,
             currNumPoints, currFtNames, numRetPoints, numRetFeatures)
 
-        self._base._pointCount = numRetPoints
-        self._base._featureCount = numRetFeatures
+        self._base._shape = [numRetPoints, numRetFeatures]
         ftNames = [features.getName(idx) for idx in retainIndices]
         ftNames.extend([featureForNames, featureForValues])
         features.setNames(ftNames, useLog=False)
-        if self._base._pointNamesCreated():
+        if self._base.points._namesCreated():
             appendedPts = []
             for name in self.getNames():
                 for i in range(numCollapsed):
@@ -1800,7 +1805,7 @@ class Points(ABC):
             uncombined = tuple(row[uncombinedIdx])
             if uncombined not in unique:
                 unique[uncombined] = {}
-                if self._base._pointNamesCreated():
+                if self._base.points._namesCreated():
                     pNames.append(self.getName(idx))
             nameIdxVal = row[namesIdx]
             if nameIdxVal in unique[uncombined]:
@@ -1822,8 +1827,7 @@ class Points(ABC):
         self._combineByExpandingFeatures_implementation(
             unique, namesIdx, valuesIdx, uniqueNames, numRetFeatures)
 
-        self._base._featureCount = numRetFeatures
-        self._base._pointCount = len(unique)
+        self._base._shape = [len(unique), numRetFeatures]
 
         newFtNames = []
         for prefix in map(str, uniqueNames):
@@ -1850,7 +1854,7 @@ class Points(ABC):
         else:
             for i, name in enumerate(newFtNames):
                 self._base.features.setName(namesIdx + i, name, useLog=False)
-        if self._base._pointNamesCreated():
+        if self._base.points._namesCreated():
             self.setNames(pNames, useLog=False)
 
         handleLogging(useLog, 'prep', 'points.combineByExpandingFeatures',

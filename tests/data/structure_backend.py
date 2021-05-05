@@ -35,7 +35,6 @@ from nimble.core.data import Matrix
 from nimble.core.data import DataFrame
 from nimble.core.data import Sparse
 from nimble.core.data import BaseView
-from nimble.core.data._dataHelpers import DEFAULT_PREFIX, isDefaultName
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
@@ -336,7 +335,7 @@ class StructureDataSafe(StructureShared):
         assert listOfDict == []
 
         dictOfList = orig.copy(to='dict of list')
-        assert all(isDefaultName(key) for key in dictOfList.keys())
+        assert all(key is None for key in dictOfList.keys())
         assert all(val == [] for val in dictOfList.values())
 
     @noLogEntryExpected
@@ -2300,20 +2299,20 @@ class StructureModifying(StructureShared):
         elem = [1, 2, 3]
         ret = self.constructor([[elem, elem], [elem, elem]])
         assert ret._shape == [2, 2, 3]
-        assert ret._pointCount == 2
-        assert ret._featureCount == 6
+        assert len(ret.points) == 2
+        assert len(ret.features) == 6
 
         data1 = [elem, elem, elem]
         ret = self.constructor([[data1, data1], [data1, data1]])
         assert ret._shape == [2, 2, 3, 3]
-        assert ret._pointCount == 2
-        assert ret._featureCount == 18
+        assert len(ret.points) == 2
+        assert len(ret.features) == 18
 
         data2 = [data1, data1, data1]
         ret = self.constructor([[data2, data2], [data2, data2]])
         assert ret._shape == [2, 2, 3, 3, 3]
-        assert ret._pointCount == 2
-        assert ret._featureCount == 54
+        assert len(ret.points) == 2
+        assert len(ret.features) == 54
 
 
     def test_init_coo_matrix_duplicates(self):
@@ -2388,12 +2387,12 @@ class StructureModifying(StructureShared):
         ret = self.constructor(coo_str)
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.base.valuesToPythonList', calledException)
+    @mock.patch('nimble.core.data.axis.valuesToPythonList', calledException)
     def test_init_pointNames_calls_valuesToPythonList(self):
         self.constructor([1,2,3], pointNames=['one'])
 
     @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.base.valuesToPythonList', calledException)
+    @mock.patch('nimble.core.data.axis.valuesToPythonList', calledException)
     def test_init_featureNames_calls_valuesToPythonList(self):
         self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
 
@@ -2683,7 +2682,6 @@ class StructureModifying(StructureShared):
         assert orig == expected
 
         checkNames = orig.points.getNames() if axis == 'point' else orig.features.getNames()
-        lastDefIndex = int(dupNames[2][-1])
         if insertBefore in [3, None]:
             assert checkNames[:3] == dupNames
             # indexes of inserted data
@@ -2697,9 +2695,9 @@ class StructureModifying(StructureShared):
             # indexes of inserted data
             idx1, idx2, idx3 = 1, 2, 3
 
-        assert checkNames[idx1] == DEFAULT_PREFIX + str(lastDefIndex + 1)
-        assert checkNames[idx2] == DEFAULT_PREFIX + str(lastDefIndex + 2)
-        assert checkNames[idx3] == DEFAULT_PREFIX + str(lastDefIndex + 3)
+        assert checkNames[idx1] is None
+        assert checkNames[idx2] is None
+        assert checkNames[idx3] is None
 
     def backend_insert_automaticReorder(self, axis, defPrimaryNames, insertBefore):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -3035,20 +3033,16 @@ class StructureModifying(StructureShared):
         toTest = self.constructor(data)
         if axis == 'point':
             insertData = [[-1, -2, -3]]
-            # assign names to be the reverse of toTest's default names
-            fNames = list(reversed(toTest.features.getNames()))
+            fNames = [None] * len(toTest.features)
             toInsert = self.constructor(insertData, featureNames=fNames)
-            assert toTest.features.getNames() != toInsert.features.getNames()
 
             exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
             toTest.points.insert(len(toTest.points), toInsert)
 
         else:
             insertData = [[-1], [-2], [-3]]
-            # assign names to be the reverse of toTest's default names
-            pNames = list(reversed(toTest.points.getNames()))
+            pNames = [None] * len(toTest.points)
             toInsert = self.constructor(insertData, pointNames=pNames)
-            assert toTest.points.getNames() != toInsert.points.getNames()
 
             exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
             toTest.features.insert(len(toTest.features), toInsert)
@@ -3165,8 +3159,8 @@ class StructureModifying(StructureShared):
         toInsert = self.constructor([[-1, -2, -3]])
         toTest.points.insert(len(toTest.points), toInsert)
 
-        assert not toTest._pointNamesCreated()
-        assert not toTest._featureNamesCreated()
+        assert not toTest.points._namesCreated()
+        assert not toTest.points._namesCreated()
 
     def test_features_insert_noNamesCreated(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -3174,8 +3168,8 @@ class StructureModifying(StructureShared):
         toInsert = self.constructor([[-1], [-2], [-3]])
         toTest.features.insert(len(toTest.features), toInsert)
 
-        assert not toTest._featureNamesCreated()
-        assert not toTest._pointNamesCreated()
+        assert not toTest.points._namesCreated()
+        assert not toTest.points._namesCreated()
 
 
     #######################################
@@ -7177,7 +7171,7 @@ class StructureModifying(StructureShared):
         assert orig == other
         assert '-1' in orig.points.getNames()
         assert '1' in orig.features.getNames()
-        assert orig.name == 'orig' 
+        assert orig.name == 'orig'
 
     def test_referenceFrom_kwargChanges(self):
         data1 = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
@@ -7249,11 +7243,8 @@ class StructureModifying(StructureShared):
 
         orig._referenceFrom(other)
 
-        assert orig._pointCount == len(other.points)
-        assert orig._featureCount == len(other.features)
-
-        assert orig._nextDefaultValuePoint == other._nextDefaultValuePoint
-        assert orig._nextDefaultValueFeature == other._nextDefaultValueFeature
+        assert len(orig.points) == len(other.points)
+        assert len(orig.features) == len(other.features)
 
     ######################
     # points.transform() #
@@ -8377,11 +8368,11 @@ class StructureModifying(StructureShared):
         if order == 'point':
             for i in range(30):
                 for j in range(50):
-                    flatNames.append('{0}{1} | {2}'.format(DEFAULT_PREFIX, i, j))
+                    flatNames.append('{0}{1} | {2}'.format('_PT#', i, j))
         else:
             for j in range(50):
                 for i in range(30):
-                    flatNames.append('{0}{1} | {2}'.format(DEFAULT_PREFIX, i, j))
+                    flatNames.append('{0}{1} | {2}'.format('_PT#', i, j))
 
         expObj = self.constructor(expRaw, pointNames=['Flattened'],
                                   featureNames=flatNames)
@@ -8398,11 +8389,11 @@ class StructureModifying(StructureShared):
         if order == 'point':
             for i in range(30):
                 for j in range(50):
-                    flatNames.append('{0} | {1}{2}'.format(i, DEFAULT_PREFIX, j))
+                    flatNames.append('{0} | {1}{2}'.format(i, '_FT#', j))
         else:
             for j in range(50):
                 for i in range(30):
-                    flatNames.append('{0} | {1}{2}'.format(i, DEFAULT_PREFIX, j))
+                    flatNames.append('{0} | {1}{2}'.format(i, '_FT#', j))
 
         expObj = self.constructor(expRaw, pointNames=['Flattened'],
                                   featureNames=flatNames)
@@ -8590,8 +8581,7 @@ class StructureModifying(StructureShared):
         # check that the name conforms to the standards of how nimble objects assign
         # default names
         def checkName(n):
-            assert isDefaultName(n)
-            assert int(n[len(DEFAULT_PREFIX):]) >= 0
+            assert n is None
 
         list(map(checkName, toTest.points.getNames()))
         list(map(checkName, toTest.features.getNames()))
@@ -9911,8 +9901,8 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, featureNames=fNamesR)
         leftObj.points.setName(0, 'a')
         rightObj.points.setName(0, 'a')
-        assert isDefaultName(leftObj.points.getName(1))
-        assert isDefaultName(rightObj.points.getName(1))
+        assert leftObj.points.getName(1) is None
+        assert rightObj.points.getName(1) is None
 
 
         leftObj.merge(rightObj, point='union', feature='union')
@@ -10214,8 +10204,8 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, featureNames=fNamesR)
         leftObj.points.setName(0, 'a')
         rightObj.points.setName(0, 'a')
-        assert isDefaultName(leftObj.points.getName(1))
-        assert isDefaultName(rightObj.points.getName(1))
+        assert leftObj.points.getName(1) is None
+        assert rightObj.points.getName(1) is None
         expData = [['a', 1, 2, 3, 4]]
         exp = self.constructor(expData, pointNames=['a'], featureNames=fNamesL+fNamesR)
         leftObj.merge(rightObj, point='intersection', feature='union')
