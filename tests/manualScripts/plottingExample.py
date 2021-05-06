@@ -217,7 +217,7 @@ if __name__ == "__main__":
                     count[1] = sum(subgroup)
             counts[name] = count
 
-        countObj = nimble.data('Matrix', counts)
+        countObj = nimble.data('Matrix', counts, rowsArePoints=False)
         countObj.points.setNames(['W', 'M'])
         countObj.features.plot(outPath=outPath, show=givenShow,
                                yAxisLabel='sum', title='Score sum by GroupID',

@@ -145,7 +145,7 @@ class HighLevelDataSafe(DataTestObject):
                                   featureNames=featureNames)
 
         def return2D(point):
-            return [[val for val in point]]
+            return [list(point)]
 
         calc = toTest.points.calculate(return2D)
         assert calc._shape == [4, 1, 3]

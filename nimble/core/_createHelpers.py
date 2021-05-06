@@ -17,7 +17,6 @@ import tarfile
 import gzip
 import shutil
 import urllib.parse
-from types import GeneratorType
 import locale
 
 import numpy as np
@@ -91,20 +90,21 @@ def _isScipySparse(data):
         return scipy.sparse.isspmatrix(data)
     return False
 
-def isAllowedRaw(data, allowLPT=False):
+def looksFileLike(toCheck):
+    """
+    Determine if object appears to be a file object.
+    """
+    hasRead = hasattr(toCheck, 'read')
+    hasWrite = hasattr(toCheck, 'write')
+    return hasRead and hasWrite
+
+def isAllowedRaw(data):
     """
     Verify raw data is one of the accepted types.
     """
-    if _isBase(data):
-        return True
-    if allowLPT and 'PassThrough' in str(type(data)):
-        return True
-    if isinstance(data, (tuple, list, dict, np.ndarray, range,
-                         GeneratorType)):
-        return True
-    if _isScipySparse(data):
-        return True
-    if _isPandasObject(data):
+    if isinstance(data, str) or looksFileLike(data):
+        return False
+    if hasattr(data, '__iter__') or hasattr(data, '__getitem__'):
         return True
 
     return False
@@ -193,7 +193,7 @@ def extractNamesFromRawList(rawData, pnamesID, fnamesID, copied):
     data, and the two name objects (or None in their place if they were
     not specified for extraction). pnamesID may either be None, or an
     integer ID corresponding to the column of point names. fnamesID
-    may eith rbe None, or an integer ID corresponding to the row of
+    may either be None, or an integer ID corresponding to the row of
     feature names.
     """
     # we allow a list of values as input, but we assume a list of lists type
@@ -438,6 +438,140 @@ def extractNamesFromPdSeries(rawData, pnamesID, fnamesID, copied):
 
     return rawData, retPNames, retFNames, copied
 
+def _extractNamesFromDict(rawData, pointNames, featureNames, copied):
+    if rawData:
+        ptNames = list(rawData.keys())
+        rawData = list(rawData.values())
+        if isinstance(rawData[0], dict):
+            # pointNames were keys and rawData is now a list of dicts
+            return extractNames(rawData, ptNames, featureNames, copied,
+                                False)
+        if featureNames is True:
+            msg = 'featureNames cannot be True when source is a dict'
+            raise InvalidArgumentValue(msg)
+        rawData = numpy2DArray(rawData, dtype=np.object_)
+        copied = True
+        pointNames, rawData = _dictNames('point', pointNames, ptNames,
+                                         rawData)
+        if len(ptNames) != len(rawData):
+            # {'a':[1,3],'b':[2,4],'c':['a','b']} -> keys = ['a', 'c', 'b']
+            # np.matrix(values()) = [[1,3], ['a', 'b'], [2,4]]
+            # transpose is not needed
+            # {'a':1, 'b':2, 'c':3} --> keys = ['a', 'c', 'b']
+            # np.matrix(values()) = [[1,3,2]]
+            # thus transpose is needed
+            rawData = transposeMatrix(rawData)
+    else: # rawData={}
+        rawData = np.empty([0, 0])
+        copied = True
+        if pointNames is True:
+            msg = 'pointNames cannot be True when data is an empty dict'
+            raise InvalidArgumentValue(msg)
+        pointNames = None
+
+    if featureNames == 'automatic' or featureNames is False:
+        featureNames = None
+    if pointNames is False:
+        pointNames = None
+
+    return rawData, pointNames, featureNames, copied
+
+def _extractNamesFromListOfDict(rawData, pointNames, featureNames, copied):
+    if pointNames is True:
+        msg = 'pointNames cannot be True when data is a dict'
+        raise InvalidArgumentValue(msg)
+    # double nested list contained list-type forced values from first row
+    values = []
+    # in py3 keys() returns a dict_keys object comparing equality of these
+    # objects is valid, but converting to lists for comparison can fail
+    keys = rawData[0].keys()
+    if not keys: # empty dict
+        if featureNames is True:
+            msg = 'featureNames cannot be True when data is an empty dict'
+            raise InvalidArgumentValue(msg)
+        if featureNames is False or featureNames == 'automatic':
+            featureNames = None
+    ftNames = list(keys)
+    featureNames, firstPt = _dictNames('feature', featureNames, ftNames,
+                                       list(rawData[0].values()))
+    values.append(firstPt)
+    if featureNames is not None:
+        ftNames = featureNames # names may have been reorderd
+    for i, row in enumerate(rawData[1:]):
+        if row.keys() != keys:
+            msg = "The keys at index {} do not match ".format(i + 1)
+            msg += "the keys at index 0. Each dictionary in the list must "
+            msg += "contain the same keys."
+            raise InvalidArgumentValue(msg)
+        values.append([row[name] for name in ftNames])
+    rawData = values
+    copied = True
+
+    if pointNames == 'automatic' or pointNames is False:
+        pointNames = None
+    if featureNames is False:
+        featureNames = None
+
+    return rawData, pointNames, featureNames, copied
+
+def _extractNamesFromListOfBase(rawData, pointNames, featureNames, copied):
+    first = rawData[0]
+    transpose = first.shape[1] == 1 and first.shape[0] > 1 # feature vector
+    if transpose:
+        first = first.T
+    ftNames = first.features._getNamesNoGeneration()
+    if featureNames is True and ftNames is None:
+        msg = 'All objects must have feature names when featureNames=True'
+        raise InvalidArgumentValue(msg)
+    if featureNames == 'automatic':
+        featureNames = ftNames is not None
+    if featureNames is True or pointNames is True or pointNames == 'automatic':
+        ptNames = []
+        numNoPtName = 0
+        for i, base in enumerate(rawData):
+            if transpose:
+                base = base.T
+            if pointNames is True or pointNames == 'automatic':
+                if base.points._namesCreated():
+                    ptNames.append(base.points.getName(0))
+                else:
+                    ptNames.append(None)
+                    numNoPtName += 1
+            fNames = base.features._getNamesNoGeneration()
+            if featureNames is True and ftNames != fNames:
+                msg = 'All objects must have identical feature names. '
+                if ftNames is None:
+                    msg += 'No feature names were detected in the first  '
+                    msg += 'object but the object at index {} has names'
+                elif fNames is None:
+                    msg += 'No feature names were detected in the object at '
+                    msg += 'index {}'
+                else:
+                    msg += 'The feature names at index {} are different than '
+                    msg += 'those in the first feature'
+                    raise InvalidArgumentValue(msg.format(i))
+
+        if pointNames is True and ptNames and len(ptNames) == numNoPtName:
+            msg = 'pointNames cannot be True when none of the objects '
+            msg += 'have point names'
+            raise InvalidArgumentValue(msg)
+        if pointNames is True:
+            pointNames = ptNames
+        elif pointNames == 'automatic':
+            if len(ptNames) > numNoPtName:
+                pointNames = ptNames
+            else:
+                pointNames = None
+
+        if featureNames is True:
+            featureNames = ftNames
+
+    if pointNames is False:
+        pointNames = None
+    if featureNames is False:
+        featureNames = None
+
+    return rawData, pointNames, featureNames, copied
 
 def transposeMatrix(matrixObj):
     """
@@ -447,135 +581,84 @@ def transposeMatrix(matrixObj):
     """
     return numpy2DArray(list(zip(*matrixObj.tolist())), dtype=matrixObj.dtype)
 
-def _dictFeatureNames(featureNames, foundFtNames, data):
+def _dictNames(axis, names, foundNames, data):
     """
-    Checks that feature names are consistent with dict keys and reorders
-    data, if necessary.
+    Checks that point or feature names are consistent with dict keys and
+    reorders data, if necessary.
     """
-    if isinstance(featureNames, (list, dict)):
-        if isinstance(featureNames, dict):
-            featureNames = sorted(featureNames, key=featureNames.get)
-        if featureNames != foundFtNames:
-            if sorted(featureNames) != sorted(foundFtNames):
-                msg = 'Since dictionaries are unordered, featureNames can '
-                msg += 'only be provided if they are a reordering of the '
+    if isinstance(names, (list, dict)):
+        if isinstance(names, dict):
+            names = sorted(names, key=names.get)
+        if names != foundNames:
+            if sorted(names) != sorted(foundNames):
+                msg = 'Since dictionaries are unordered, ' + axis + 'Names '
+                msg += 'can only be provided if they are a reordering of the '
                 msg += 'keys in the dictionary'
                 raise InvalidArgumentValue(msg)
             # reordering of features is necessary
-            newOrder = [foundFtNames.index(f) for f in featureNames]
+            newOrder = [foundNames.index(f) for f in names]
             if isinstance(data, np.ndarray):
                 data = data[newOrder]
             else:
                 data = [data[i] for i in newOrder]
-    elif featureNames is False:
-        featureNames = None
-    elif featureNames is not None: # 'automatic' or True
-        featureNames = foundFtNames
+    elif names is False:
+        names = None
+    elif names is not None: # 'automatic' or True
+        names = foundNames
 
-    return featureNames, data
+    return names, data
 
 
-def extractNames(rawData, pointNames, featureNames, copied):
+def extractNames(rawData, pointNames, featureNames, copied, checkNames=True):
     """
     Extract the point and feature names from the raw data, if necessary.
     """
-    acceptedNameTypes = (str, bool, type(None), list, dict)
-    if not isinstance(pointNames, acceptedNameTypes):
-        try:
-            pointNames = list(pointNames)
-        except TypeError as e:
-            msg = "if pointNames are not 'bool' or a 'str', "
-            msg += "they should be other 'iterable' object"
-            raise InvalidArgumentType(msg) from e
-    if not isinstance(featureNames, acceptedNameTypes):
-        try:
-            featureNames = list(featureNames)
-        except TypeError as e:
-            msg = "if featureNames are not 'bool' or a 'str', "
-            msg += "they should be other 'iterable' object"
-            raise InvalidArgumentType(msg) from e
+    if checkNames: # can be used recursively and don't need to check again
+        acceptedNameTypes = (str, bool, type(None), list, dict)
+        if not isinstance(pointNames, acceptedNameTypes):
+            try:
+                pointNames = list(pointNames)
+            except TypeError as e:
+                msg = "if pointNames are not 'bool' or a 'str', "
+                msg += "they should be other 'iterable' object"
+                raise InvalidArgumentType(msg) from e
+        if not isinstance(featureNames, acceptedNameTypes):
+            try:
+                featureNames = list(featureNames)
+            except TypeError as e:
+                msg = "if featureNames are not 'bool' or a 'str', "
+                msg += "they should be other 'iterable' object"
+                raise InvalidArgumentType(msg) from e
 
     # 1. convert dict like {'a':[1,2], 'b':[3,4]} to np.array
-    # featureNames can be same as the keys to define feature order
-    # pointNames cannot be True
+    # pointNames can be same as the keys to define point order
+    # featureNames cannot be True
     if isinstance(rawData, dict):
-        if pointNames is True:
-            msg = 'pointNames cannot be True when data is a dict'
-            raise InvalidArgumentValue(msg)
-        if rawData:
-            ftNames = list(rawData.keys())
-            rawData = numpy2DArray(list(rawData.values()), dtype=np.object_)
-            featureNames, rawData = _dictFeatureNames(featureNames, ftNames,
-                                                      rawData)
-            if len(ftNames) == len(rawData):
-                # {'a':[1,3],'b':[2,4],'c':['a','b']} -> keys = ['a', 'c', 'b']
-                # np.matrix(values()) = [[1,3], ['a', 'b'], [2,4]]
-                # thus transpose is needed
-                # {'a':1, 'b':2, 'c':3} --> keys = ['a', 'c', 'b']
-                # np.matrix(values()) = [[1,3,2]]
-                # transpose is not needed
-                rawData = transposeMatrix(rawData)
-        else: # rawData={}
-            rawData = np.empty([0, 0])
-            if featureNames is True:
-                msg = 'featureNames cannot be True when data is an empty dict'
-                raise InvalidArgumentValue(msg)
-            featureNames = None
-
-        if pointNames == 'automatic' or pointNames is False:
-            pointNames = None
-        if featureNames is False:
-            featureNames = None
-
+        rawData, pointNames, featureNames, copied = _extractNamesFromDict(
+            rawData, pointNames, featureNames, copied)
     # 2. convert list of dict ie. [{'a':1, 'b':3}, {'a':2, 'b':4}] to list
     # featureNames may be same as the keys to define feature order
     # pointNames cannot be True
     elif (isinstance(rawData, list)
           and len(rawData) > 0
           and isinstance(rawData[0], dict)):
-        if pointNames is True:
-            msg = 'pointNames cannot be True when data is a dict'
-            raise InvalidArgumentValue(msg)
-        # double nested list contained list-type forced values from first row
-        values = []
-        # in py3 keys() returns a dict_keys object comparing equality of these
-        # objects is valid, but converting to lists for comparison can fail
-        keys = rawData[0].keys()
-        if not keys: # empty dict
-            if featureNames is True:
-                msg = 'featureNames cannot be True when data is an empty dict'
-                raise InvalidArgumentValue(msg)
-            featureNames = None
-        ftNames = list(keys)
-        featureNames, firstPt = _dictFeatureNames(featureNames, ftNames,
-                                                  list(rawData[0].values()))
-        values.append(firstPt)
-        if featureNames is not None:
-            ftNames = featureNames # names may have been reorderd
-        for i, row in enumerate(rawData[1:]):
-            if row.keys() != keys:
-                msg = "The keys at index {} do not match ".format(i + 1)
-                msg += "the keys at index 0. Each dictionary in the list must "
-                msg += "contain the same keys."
-                raise InvalidArgumentValue(msg)
-            values.append([row[name] for name in ftNames])
-        rawData = values
-
-        if pointNames == 'automatic' or pointNames is False:
-            pointNames = None
-        if featureNames is False:
-            featureNames = None
-
+        rawData, pointNames, featureNames, copied = (
+            _extractNamesFromListOfDict(rawData, pointNames, featureNames,
+                                        copied))
+    # 3. extract names from a list of Base objects
+    # will treat all as point vectors so pointNames must be unique
+    # featureNames must be consistent
+    elif (isinstance(rawData, list)
+          and len(rawData) > 0
+          and _isBase(rawData[0])):
+        rawData, pointNames, featureNames, copied = (
+            _extractNamesFromListOfBase(rawData, pointNames, featureNames,
+                                        copied))
+    # 4. for rawData of other data types
+    # check if we need to do name extraction, setup new variables,
+    # or modify values for subsequent call to data init method.
     else:
-        # 3. for rawData of other data types
-        # check if we need to do name extraction, setup new variables,
-        # or modify values for subsequent call to data init method.
-        if isinstance(rawData, list):
-            func = extractNamesFromRawList
-        elif isinstance(rawData, tuple):
-            rawData = list(rawData)
-            func = extractNamesFromRawList
-        elif _isNumpyArray(rawData):
+        if _isNumpyArray(rawData):
             func = extractNamesFromNumpy
         elif _isScipySparse(rawData):
             # all input coo_matrices must have their duplicates removed; all
@@ -587,6 +670,8 @@ def extractNames(rawData, pointNames, featureNames, copied):
             func = extractNamesFromPdDataFrame
         elif _isPandasSeries(rawData):
             func = extractNamesFromPdSeries
+        else:
+            func = extractNamesFromRawList
 
         rawData, tempPointNames, tempFeatureNames, copied = func(
             rawData, pointNames, featureNames, copied)
@@ -933,7 +1018,7 @@ class SparseCOORowIterator:
         raise StopIteration
 
 
-class GenericPointIterator:
+class GenericRowIterator:
     """
     Iterate through all objects in the same manner.
 
@@ -980,58 +1065,114 @@ def _getFirstIndex(data):
         first = data[0]
     return first
 
+def _setFlattenedRow(data, row, location):
+    # first index is only index because this is a feature vector
+    if isinstance(row, dict):
+        flat = {k: _getFirstIndex(v) for k, v in row.items()}
+    else:
+        flat = [_getFirstIndex(v) for v in GenericRowIterator(row)]
+    if _isScipySparse(data):
+        data.data[data.row == location] = flat
+    elif _isPandasObject(data):
+        data.iloc[location] = flat
+    else:
+        data[location] = flat
 
-def isHighDimensionData(rawData, skipDataProcessing):
+def isHighDimensionData(rawData, rowsArePoints, skipDataProcessing, copied):
     """
     Identify data with more than two-dimensions.
+
+    If the shape of the data container is not defined, 3D data containers are
+    are checked and a dimension is dropped if the 2D objects within the
+    container are a vector shape that aligns with the rowsArePoints argument.
     """
-    if _isScipySparse(rawData):
-        if not rawData.data.size:
-            return False
-        rawData = [rawData.data]
+    if _isScipySparse(rawData) and not rawData.data.size:
+        return rawData, False, copied
     try:
         indexZero = _getFirstIndex(rawData)
         if isAllowedSingleElement(indexZero):
             if not skipDataProcessing:
                 validateAllAllowedElements(rawData)
-            return False
+            return rawData, False, copied
         indexZeroZero = _getFirstIndex(indexZero)
-        if isAllowedSingleElement(indexZeroZero):
-            if not skipDataProcessing:
-                toIter = GenericPointIterator(rawData)
-                first = next(toIter)
+        if not isAllowedSingleElement(indexZeroZero):
+            if hasattr(indexZeroZero, '__len__'):
+                objLen = len(indexZeroZero)
+            else:
+                objLen = sum(1 for _ in GenericRowIterator(indexZeroZero))
+            # not feature shaped so must be high dimension
+            if (rowsArePoints or objLen > 1 or
+                    (objLen == 1 and not
+                     isAllowedSingleElement(_getFirstIndex(indexZeroZero)))):
+                return rawData, True, copied
+            # feature shaped (including empty feature) and rowsArePoints=False
+            # so replace with flattened and will be transposed later
+            if objLen == 0: # empty need to calculate shape
+                toIter = GenericRowIterator(rawData)
+                cols = sum(1 for _ in next(toIter))
+                rows = sum(1 for _ in toIter) + 1
+                return np.empty((rows, cols)), False, True
+            if _isNumpyArray(rawData):
+                rawData = rawData.squeeze()
+                copied = True
+            else:
+                if not copied:
+                    rawData = copy.deepcopy(rawData)
+                    copied = True
+                if isinstance(rawData, dict): # don't lose keys for names
+                    toIter = rawData.items()
+                else:
+                    toIter = enumerate(GenericRowIterator(rawData))
+                for loc, row in toIter:
+                    _setFlattenedRow(rawData, row, loc)
+                if _isScipySparse(rawData):
+                    rawData.eliminate_zeros()
+
+        if not skipDataProcessing:
+            toIter = GenericRowIterator(rawData)
+            first = next(toIter)
+            # if an invalid value is found at this stage, need to use TypeError
+            # to raise exception because ImproperObjectAction will continue
+            try:
                 validateAllAllowedElements(first)
-                firstLength = len(first)
-                for i, point in enumerate(toIter):
-                    if not len(point) == firstLength:
-                        msg = "All points in the data do not have the same "
-                        msg += "number of features. The first point had {0} "
-                        msg += "features but the point at index {1} had {2} "
-                        msg += "features"
-                        msg = msg.format(firstLength, i, len(point))
-                        raise InvalidArgumentValue(msg)
-                    validateAllAllowedElements(point)
-            return False
-        return True
+            except ImproperObjectAction as e:
+                raise TypeError(str(e)) from e
+            firstLength = len(first)
+            for i, row in enumerate(toIter):
+                if not len(row) == firstLength:
+                    msg = "All rows in the data do not have the same "
+                    msg += "number of columns. The first row had {0} "
+                    msg += "columns but the row at index {1} had {2} "
+                    msg += "columns"
+                    msg = msg.format(firstLength, i + 1, len(row))
+                    raise InvalidArgumentValue(msg)
+                try:
+                    validateAllAllowedElements(row)
+                except ImproperObjectAction as e:
+                    raise TypeError(str(e)) from e
+
+        return rawData, False, copied
+
     except IndexError: # rawData or rawData[0] is empty
-        return False
+        return rawData, False, copied
     except (ImproperObjectAction, InvalidArgumentType): # high dimension Base
-        return True
+        return rawData, True, copied
     except TypeError as e: # invalid non-subscriptable object
         msg = "Numbers, strings, None, and nan are the only "
         msg += "values allowed in nimble data objects"
         raise InvalidArgumentValue(msg) from e
 
-
-def highDimensionNames(pointNames, featureNames):
+def highDimensionNames(rawData, pointNames, featureNames):
     """
     Names cannot be extracted at higher dimensions because the elements
     are not strings. If 'automatic' we can set to False, if True an
     exception must be raised. If a list, the length must align with
     the dimensions.
-    are not strings so 'automatic' must be set to False and an exception
-    must be raised if either is set to True.
     """
+    if isinstance(rawData, dict) and (pointNames is True
+                                      or pointNames == 'automatic'):
+        pointNames = list(rawData.keys())
+
     if any(param is True for param in (pointNames, featureNames)):
         failedAxis = []
         if pointNames is True:
@@ -1048,7 +1189,6 @@ def highDimensionNames(pointNames, featureNames):
     featureNames = False if featureNames == 'automatic' else featureNames
 
     return pointNames, featureNames
-
 
 def _getPointCount(data):
     if _isBase(data):
@@ -1077,10 +1217,15 @@ def flattenToOneDimension(data, toFill=None, dimensions=None):
     elif dimensions[0]:
         dimensions[1].append(_getPointCount(data))
     try:
-        if all(map(isAllowedSingleElement, GenericPointIterator(data))):
+        if dimensions[1] and isinstance(data, dict):
+            msg = 'A dict was found nested beyond the first dimension. This '
+            msg += 'is not permitted because it is unclear what the keys '
+            msg += 'represent for high dimension data'
+            raise InvalidArgumentValue(msg)
+        if all(map(isAllowedSingleElement, GenericRowIterator(data))):
             toFill.extend(data)
         else:
-            for obj in GenericPointIterator(data):
+            for obj in GenericRowIterator(data):
                 flattenToOneDimension(obj, toFill, dimensions)
                 dimensions[0] = False
     except TypeError as e:
@@ -1107,7 +1252,7 @@ def flattenHighDimensionFeatures(rawData):
             numPts = rawData.shape[0]
         else:
             numPts = len(rawData)
-        points = GenericPointIterator(rawData)
+        points = GenericRowIterator(rawData)
         firstPoint = next(points)
         firstPointFlat, ptDims = flattenToOneDimension(firstPoint)
         origDims = tuple([numPts] + list(ptDims))
@@ -1198,8 +1343,8 @@ def initDataObject(
         returnType, rawData, pointNames, featureNames, name=None,
         convertToType=None, keepPoints='all', keepFeatures='all',
         treatAsMissing=DEFAULT_MISSING, replaceMissingWith=np.nan,
-        copyData=True, skipDataProcessing=False, paths=(None, None),
-        extracted=(None, None)):
+        rowsArePoints=True, copyData=True, skipDataProcessing=False,
+        paths=(None, None), extracted=(None, None)):
     """
     1. Argument Validation
     2. Setup autoType
@@ -1234,57 +1379,79 @@ def initDataObject(
         else:
             returnType = 'Matrix'
 
+    # record if extraction occurred before we possibly modify *Names parameters
+    ptsExtracted = extracted[0] if extracted[0] else pointNames is True
+    ftsExtracted = extracted[1] if extracted[1] else featureNames is True
+
+    copied = False
+
+    # point/featureNames, treatAsMissing, etc. may vary so only use the data
     if _isBase(rawData):
-        # point/featureNames, treatAsMissing, etc. may vary
         rawData = rawData._data
-    elif isinstance(rawData, (range, GeneratorType)):
+    # convert these types as indexing may cause dimensionality confusion
+    elif _isNumpyMatrix(rawData):
+        rawData = np.array(rawData)
+        copied = True
+    elif _isScipySparse(rawData) and not scipy.sparse.isspmatrix_coo(rawData):
+        rawData = rawData.tocoo()
+        copied = True
+    # anything we do not recognize turn into a list, this allows for source to
+    # be range, generator, map, iter, etc., and other list-like data structures
+    elif not (isinstance(rawData, (list, dict)) or
+              _isNumpyArray(rawData) or _isPandasObject(rawData) or
+              _isScipySparse(rawData)):
         rawData = list(rawData)
+        copied = True
+
+    rawData, highDim, copied = isHighDimensionData(rawData, rowsArePoints,
+                                                   skipDataProcessing, copied)
 
     if copyData is None:
         # signals data was constructed internally and can be modified so it
         # can be considered copied for the purposes of this function
         copied = True
-    elif copyData:
+    elif copyData and not copied:
         rawData = copy.deepcopy(rawData)
         copied = True
-    else:
-        copied = False
 
-    # record if extraction occurred before we possibly modify *Names parameters
-    ptsExtracted = extracted[0] if extracted[0] else pointNames is True
-    ftsExtracted = extracted[1] if extracted[1] else featureNames is True
-
-    # If skipping data processing, no modification needs to be made
-    # to the data, so we can skip name extraction and missing replacement.
     kwargs = {}
-    # convert these types as indexing may cause dimensionality confusion
-    if _isNumpyMatrix(rawData):
-        rawData = np.array(rawData)
-        copied = True
-    if _isScipySparse(rawData) and not scipy.sparse.isspmatrix_coo(rawData):
-        rawData = rawData.tocoo()
-        copied = True
-        copied = True
-
-    if isHighDimensionData(rawData, skipDataProcessing):
+    if not rowsArePoints:
+        pointNames, featureNames = featureNames, pointNames
+    if highDim:
+        if not rowsArePoints:
+            msg = 'rowsArePoints cannot be False. Features are ambiguous for '
+            msg += 'data with more than two dimensions so rows cannot be '
+            msg += 'processed as features.'
+            raise ImproperObjectAction(msg)
         # additional name validation / processing before extractNames
-        pointNames, featureNames = highDimensionNames(pointNames,
+        pointNames, featureNames = highDimensionNames(rawData, pointNames,
                                                       featureNames)
         rawData, tensorShape = flattenHighDimensionFeatures(rawData)
         kwargs['shape'] = tensorShape
         copied = True
-
+    # If skipping data processing, no modification needs to be made
+    # to the data, so we can skip name extraction and missing replacement.
     if skipDataProcessing:
         if returnType == 'List':
             kwargs['checkAll'] = False
         pointNames = pointNames if pointNames != 'automatic' else None
         featureNames = featureNames if featureNames != 'automatic' else None
     else:
-        rawData, pointNames, featureNames, copied = extractNames(
-            rawData, pointNames, featureNames, copied)
+        try:
+            rawData, pointNames, featureNames, copied = extractNames(
+                rawData, pointNames, featureNames, copied)
+        except InvalidArgumentValue as e:
+            if not rowsArePoints:
+                def swapAxis(match):
+                    return 'feature' if match.group(1) == 'point' else 'point'
+                msg = re.sub(r'(point|feature)', swapAxis, str(e))
+                msg = re.sub(r'rowsArePoints=True', 'rowsArePoints=False', msg)
+                # swap axis when rowsArePoints=False
+                raise InvalidArgumentValue(msg) from e
+            raise
         if treatAsMissing is not None:
             rawData, copied = _replaceMissingData(rawData, treatAsMissing,
-                                                 replaceMissingWith, copied)
+                                                  replaceMissingWith, copied)
     # convert data to a type compatible with the returnType init method
     rawData = convertData(returnType, rawData, pointNames, featureNames,
                           copied)
@@ -1399,6 +1566,9 @@ def initDataObject(
 
     if convertToType is not None:
         ret._data = elementTypeConvert(ret._data, convertToType)
+
+    if not rowsArePoints:
+        ret.transpose(useLog=False)
 
     return ret
 
@@ -1541,7 +1711,7 @@ def _decompressGZip(ioStream):
 def createDataFromFile(
         returnType, source, pointNames, featureNames, name, convertToType,
         keepPoints, keepFeatures, treatAsMissing, replaceMissingWith,
-        ignoreNonNumericalFeatures, inputSeparator):
+        rowsArePoints, ignoreNonNumericalFeatures, inputSeparator):
     """
     Helper for nimble.data which deals with the case of loading data
     from a file. Returns a triple containing the raw data, pointNames,
@@ -1685,8 +1855,8 @@ def createDataFromFile(
     return initDataObject(
         returnType, retData, retPNames, retFNames, name, convertToType,
         keepPoints, keepFeatures, treatAsMissing=treatAsMissing,
-        replaceMissingWith=replaceMissingWith, copyData=None,
-        paths=pathsToPass, extracted=extracted)
+        replaceMissingWith=replaceMissingWith, rowsArePoints=rowsArePoints,
+        copyData=None, paths=pathsToPass, extracted=extracted)
 
 
 def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,

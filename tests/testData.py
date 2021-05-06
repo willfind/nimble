@@ -74,67 +74,67 @@ class GetItemOnly(object):
 def test_data_dictOfList():
     dataDict = {'c': [3, 6, 9], 'a': [1, 4, 7], 'b': [2, 5, 8]}
     for t in returnTypes:
-        fromList = nimble.data(t, [[1,2,3], [4,5,6], [7,8,9]],
-                               featureNames=['a', 'b', 'c'])
+        fromList = nimble.data(t, [[1,4,7], [2,5,8], [3,6,9]],
+                               pointNames=['a', 'b', 'c'])
 
         fromDictOfList = nimble.data(t, dataDict)
         # order of features is not consistent for dict
-        fromList.features.permute(fromDictOfList.features.getNames())
+        fromList.points.permute(fromDictOfList.points.getNames())
         assert fromDictOfList == fromList
 
-        fromList.features.permute(['a', 'b', 'c'])
+        fromList.points.permute(['a', 'b', 'c'])
         fromDictOfList = nimble.data(t, dataDict,
-                                     featureNames=['b', 'c', 'a'])
+                                     pointNames=['b', 'c', 'a'])
 
-        assert fromDictOfList.features.getNames() == ['b', 'c', 'a']
-        assert fromDictOfList.features[0] == fromList.features[1]
-        assert fromDictOfList.features[1] == fromList.features[2]
-        assert fromDictOfList.features[2] == fromList.features[0]
+        assert fromDictOfList.points.getNames() == ['b', 'c', 'a']
+        assert fromDictOfList.points[0] == fromList.points[1]
+        assert fromDictOfList.points[1] == fromList.points[2]
+        assert fromDictOfList.points[2] == fromList.points[0]
 
         fromDictOfList2 = nimble.data(t, dataDict,
-                                      featureNames={'a': 2, 'b': 0, 'c': 1})
+                                      pointNames={'a': 2, 'b': 0, 'c': 1})
 
         assert fromDictOfList == fromDictOfList2
 
-        fromList.points.setNames(['1', '4', '7'])
-        fromDictOfList = nimble.data(t, dataDict, pointNames=['1', '4', '7'],
-                                     featureNames=['a', 'b', 'c'])
+        fromList.features.setNames(['1', '4', '7'])
+        fromDictOfList = nimble.data(t, dataDict, featureNames=['1', '4', '7'],
+                                     pointNames=['a', 'b', 'c'])
 
         assert fromDictOfList == fromList
 
         fromDictOfList = nimble.data(t, dataDict,
-                                     pointNames={'1': 0, '7': 2, '4': 1},
-                                     featureNames=['a', 'b', 'c'])
+                                     featureNames={'1': 0, '7': 2, '4': 1},
+                                     pointNames=['a', 'b', 'c'])
 
         assert fromDictOfList == fromList
 
-        fromList.points.setNames(None)
-        fromDictOfList = nimble.data(t, dataDict, pointNames=False)
-        # order of features is not consistent for dict
-        fromList.features.permute(fromDictOfList.features.getNames())
-
-        assert fromDictOfList == fromList
-        assert not fromDictOfList.points._namesCreated()
-
-        fromList.features.permute(['a', 'b', 'c'])
         fromList.features.setNames(None)
         fromDictOfList = nimble.data(t, dataDict, featureNames=False)
-        fromDictOfList.features.sort(0) # sort by pt 0 values b/c no ft names
+        # order of features is not consistent for dict
+        fromList.points.permute(fromDictOfList.points.getNames())
 
         assert fromDictOfList == fromList
         assert not fromDictOfList.features._namesCreated()
 
+        fromList.points.permute(['a', 'b', 'c'])
+        fromList.points.setNames(None)
+        fromDictOfList = nimble.data(t, dataDict, pointNames=False)
+        fromDictOfList.points.sort(0) # sort by pt 0 values b/c no ft names
+
+        assert fromDictOfList == fromList
+        assert not fromDictOfList.points._namesCreated()
+
         assertExpectedException(InvalidArgumentValue, nimble.data, t, dataDict,
-                                pointNames=True,
-                                messageIncludes='pointNames cannot be True')
-
-        fromDictOfListEmpty = nimble.data(t, {})
-        assert not fromDictOfListEmpty.points._namesCreated()
-        assert not fromDictOfListEmpty.features._namesCreated()
-
-        assertExpectedException(InvalidArgumentValue, nimble.data, t, {},
                                 featureNames=True,
                                 messageIncludes='featureNames cannot be True')
+
+        fromDictOfListEmpty = nimble.data(t, {})
+        assert not fromDictOfListEmpty.features._namesCreated()
+        assert not fromDictOfListEmpty.points._namesCreated()
+
+        assertExpectedException(InvalidArgumentValue, nimble.data, t, {},
+                                pointNames=True,
+                                messageIncludes='pointNames cannot be True')
 
 def test_data_listOfDict():
     dataList = [{'b': 2, 'c': 3, 'a': 1},
@@ -207,6 +207,10 @@ def test_data_listOfDict():
                                 [{'a': 1, 'b': 2}, {'a': 3, 'c': 4}],
                                 messageIncludes='must contain the same keys')
 
+        assertExpectedException(InvalidArgumentValue, nimble.data, t,
+                                [{'a': 1, 'b': 2}, {'a': {}, 'b': 4}],
+                                messageIncludes='Numbers, strings, None, and nan')
+
 def test_data_raw_stringConversion_float():
     for t in returnTypes:
         toTest = nimble.data(t, [['1','2','3'], ['4','5','6'], ['7','8','9']],
@@ -252,8 +256,6 @@ def test_data_raw_noStringConversion():
             assert isinstance(elem, str)
 
 def test_data_raw_numericConversion_str():
-    """
-    """
     for t in returnTypes:
         values = []
         toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
@@ -264,8 +266,6 @@ def test_data_raw_numericConversion_str():
         assert all(isinstance(val, str) for val in values)
 
 def test_data_raw_numericConversion_float():
-    """
-    """
     for t in returnTypes:
         values = []
         toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
@@ -478,6 +478,26 @@ def test_data_raw_datetime():
         toTest = nimble.data(t, rawData)
         for date in toTest.features[0].iterateElements():
             assert isDatetime(date)
+
+def test_data_raw_listlikeObjects():
+    exp1DData = [-3, -2, -1, 0, 1, 2, 3]
+    exp2DData = [[1, 2, 3], [0, 0, 0], [-1, -2, -3]]
+
+    for t in returnTypes:
+        exp1D = nimble.data(t, exp1DData)
+        testRange1D = nimble.data(t, range(-3, 4))
+        testGenerator1D = nimble.data(t, (v for v in exp1DData))
+        testMap1D = nimble.data(t, map(lambda v: v, exp1DData))
+        testIter1D = nimble.data(t, iter(exp1DData))
+
+        assert testRange1D == testGenerator1D == testMap1D == testIter1D == exp1D
+
+        exp2D = nimble.data(t, exp2DData)
+        testGenerator2D = nimble.data(t, (v for v in exp2DData))
+        testMap2D = nimble.data(t, map(lambda v: v, exp2DData))
+        testIter2D = nimble.data(t, iter(exp2DData))
+
+        assert testGenerator2D == testMap2D == testIter2D == exp2D
 
 ################################
 # File data values correctness #
@@ -2989,8 +3009,8 @@ def test_data_keepPF_csv_noUncessaryStorage():
         def fakeinitDataObject(
                 returnType, rawData, pointNames, featureNames, name,
                 convertToType, keepPoints, keepFeatures, treatAsMissing,
-                replaceMissingWith, copyData=False, paths=(None, None),
-                extracted=(None, None)):
+                replaceMissingWith, rowsArePoints, copyData=False,
+                paths=(None, None), extracted=(None, None)):
             assert len(rawData) == 2
             assert len(rawData[0]) == 1
             return nimble.core.data.List(rawData)
@@ -3722,7 +3742,7 @@ def test_DataOutputWithMissingDataTypes1D():
 
         orig1 = nimble.data(t, [1,2,"None"])
         orig2 = nimble.data(t, (1,2,"None"))
-        orig3 = nimble.data(t, {'a':1, 'b':2, 'c':"None"})
+        orig3 = nimble.data(t, {'a':1, 'b':2, 'c':"None"}, rowsArePoints=False)
         orig3.features.sort()
         orig4 = nimble.data(t, [{'a':1, 'b':2, 'c':"None"}])
         orig4.features.sort()
@@ -3766,8 +3786,8 @@ def test_DataOutputWithMissingDataTypes2D():
 
         orig1 = nimble.data(t, [[1,2,'None'], [3,4,'b']])
         orig2 = nimble.data(t, ((1,2,'None'), (3,4,'b')))
-        orig3 = nimble.data(t, {'a':[1,3], 'b':[2,4], 'c':['None', 'b']})
-        orig3.features.sort()
+        orig3 = nimble.data(t, {'a':[1,2,'None'], 'b':[3,4,'b']})
+        orig3.points.sort()
         orig4 = nimble.data(t, [{'a':1, 'b':2, 'c':'None'}, {'a':3, 'b':4, 'c':'b'}])
         orig4.features.sort()
         orig5 = nimble.data(t, np.array([[1,2,'None'], [3,4,'b']], dtype=object))
@@ -4059,6 +4079,200 @@ def test_data_copyData_False_copyMadeWhenNamesExtracted():
             nim = nimble.data(rType, raw, pointNames=True, featureNames=True,
                               copyData=False)
             assert id(raw) != id(nim._data)
+
+#################
+# rowsArePoints #
+#################
+
+def test_rowsArePoints_numpyArrays():
+    ptData = np.array([[1, 2, 3], [0, 0, 0], [-1, -2, -3]])
+    ftData = np.array([[1, 0, -1], [2, 0, -2], [3, 0, -3]])
+    ftData2 = np.array([[[1], [0], [-1]], [[2], [0], [-2]], [[3], [0], [-3]]])
+    pNames = ['a', 'b', 'c']
+    fNames = ['x', 'y', 'z']
+    for t in returnTypes:
+        rowsPts = nimble.data(t, ptData, pointNames=pNames,
+                              featureNames=fNames)
+        rowsFts = nimble.data(t, ftData, pointNames=pNames,
+                              featureNames=fNames, rowsArePoints=False)
+        rowsFts2 = nimble.data(t, ftData2, pointNames=pNames,
+                               featureNames=fNames, rowsArePoints=False)
+
+        assert rowsPts == rowsFts == rowsFts2
+
+def test_rowsArePoints_pandasDataFrames():
+    ptData = pd.DataFrame([[1, 2, 3], [0, 0, 0], [-1, -2, -3]])
+    ftData = pd.DataFrame([[1, 0, -1], [2, 0, -2], [3, 0, -3]])
+    ftData2 = pd.DataFrame([[[1], [0], [-1]],
+                            [[2], [0], [-2]],
+                            [[3], [0], [-3]]])
+    pNames = ['a', 'b', 'c']
+    fNames = ['x', 'y', 'z']
+    for t in returnTypes:
+        rowsPts = nimble.data(t, ptData, pointNames=pNames,
+                              featureNames=fNames)
+        rowsFts = nimble.data(t, ftData, pointNames=pNames,
+                              featureNames=fNames, rowsArePoints=False)
+        rowsFts2 = nimble.data(t, ftData2, pointNames=pNames,
+                               featureNames=fNames, rowsArePoints=False)
+
+        assert rowsPts == rowsFts == rowsFts2
+
+def test_rowsArePoints_scipySparse():
+    ptData = scipy.sparse.coo_matrix([[1, 2, 3], [0, 0, 0], [-1, -2, -3]])
+    ftData = scipy.sparse.coo_matrix([[1, 0, -1], [2, 0, -2], [3, 0, -3]])
+    arrayOfLists = np.empty((3, 3), dtype=np.object_)
+    arrayOfLists[0] = [[1], [0], [-1]]
+    arrayOfLists[1] = [[2], [0], [-2]]
+    arrayOfLists[2] = [[3], [0], [-3]]
+    ftData2 = scipy.sparse.coo_matrix(arrayOfLists)
+    pNames = ['a', 'b', 'c']
+    fNames = ['x', 'y', 'z']
+    for t in returnTypes:
+        rowsPts = nimble.data(t, ptData, pointNames=pNames,
+                              featureNames=fNames)
+        rowsFts = nimble.data(t, ftData, pointNames=pNames,
+                              featureNames=fNames, rowsArePoints=False)
+        rowsFts2 = nimble.data(t, ftData2, pointNames=pNames,
+                               featureNames=fNames, rowsArePoints=False)
+
+        assert rowsPts == rowsFts == rowsFts2
+
+def test_rowsArePoints_containerOfLists():
+    ptData = tuple([[1, 2, 3], [0, 0, 0], [-1, -2, -3]])
+    ftData = GetItemOnly([[1, 0, -1], [2, 0, -2], [3, 0, -3]])
+    ftData2 = [[[1], [0], [-1]], [[2], [0], [-2]], [[3], [0], [-3]]]
+    pNames = ['a', 'b', 'c']
+    fNames = ['x', 'y', 'z']
+    for t in returnTypes:
+        rowsPts = nimble.data(t, ptData, pointNames=pNames,
+                              featureNames=fNames)
+        rowsFts = nimble.data(t, ftData, pointNames=pNames,
+                              featureNames=fNames, rowsArePoints=False)
+        rowsFts2 = nimble.data(t, ftData2, pointNames=pNames,
+                               featureNames=fNames, rowsArePoints=False)
+
+        assert rowsPts == rowsFts == rowsFts2
+
+def test_rowsArePoints_containerOfNpArray():
+    ptData = (np.array([1, 2, 3]), np.array([0, 0, 0]), np.array([-1, -2, -3]))
+    ftData = (np.array([1, 0, -1]), np.array([2, 0, -2]), np.array([3, 0, -3]))
+    ftData2 = [arr.reshape(3, 1) for arr in ftData]
+    pNames = ['a', 'b', 'c']
+    fNames = ['x', 'y', 'z']
+    for t in returnTypes:
+        rowsPts = nimble.data(t, ptData, pointNames=pNames,
+                              featureNames=fNames)
+        rowsFts = nimble.data(t, ftData, pointNames=pNames,
+                              featureNames=fNames, rowsArePoints=False)
+        rowsFts2 = nimble.data(t, ftData2, pointNames=pNames,
+                               featureNames=fNames, rowsArePoints=False)
+
+        assert rowsPts == rowsFts == rowsFts2
+
+def test_rowsArePoints_containerOfScipySparse():
+    ftList = [[[1], [0], [-1]], [[2], [0], [-2]], [[3], [0], [-3]]]
+    pNames = ['a', 'b', 'c']
+    fNames = ['x', 'y', 'z']
+
+    expData = [[1, 2, 3], [0, 0, 0], [-1, -2, -3]]
+    for t in returnTypes:
+        # COO matrices are always 2D
+        ftData = map(scipy.sparse.coo_matrix, ftList)
+        rowsFts = nimble.data(t, ftData, pointNames=pNames,
+                              featureNames=fNames, rowsArePoints=False)
+        exp = nimble.data(t, expData, pointNames=pNames, featureNames=fNames)
+        assert rowsFts == exp
+
+def test_rowsArePoints_containerOfPandas():
+    pNames = ['a', 'b', 'c']
+    fNames = ['x', 'y', 'z']
+    for t in returnTypes:
+        ptData = IterNext([pd.Series(x) for x in [[1, 2, 3], [0, 0, 0], [-1, -2, -3]]])
+        ftData = tuple(pd.Series(x) for x in [[1, 0, -1], [2, 0, -2], [3, 0, -3]])
+        ftData2 = iter([ser.to_frame() for ser in ftData]) # to pd.DataFrame
+        rowsPts = nimble.data(t, ptData, pointNames=pNames,
+                              featureNames=fNames)
+        rowsFts = nimble.data(t, ftData, pointNames=pNames,
+                              featureNames=fNames, rowsArePoints=False)
+        rowsFts2 = nimble.data(t, ftData2, pointNames=pNames,
+                               featureNames=fNames, rowsArePoints=False)
+
+        assert rowsPts == rowsFts == rowsFts2
+
+def test_rowsArePoints_containerOfNimbleBase():
+    ptData = [[1, 2, 3], [0, 0, 0], [-1, -2, -3]]
+    ftData = [[1, 0, -1], [2, 0, -2], [3, 0, -3]]
+    pNames = ['a', 'b', 'c']
+    fNames = ['x', 'y', 'z']
+    for t in returnTypes:
+        nimPtData = []
+        for i, pt in enumerate(ptData):
+            nimPtData.append(nimble.data(t, pt, pointNames=pNames[i],
+                                         featureNames=fNames))
+        rowsPts = nimble.data(t, nimPtData)
+        nimFtData = []
+        for i, ft in enumerate(ftData):
+            nimFtData.append(nimble.data(t, [[v] for v in ft],
+                                         pointNames=pNames,
+                                         featureNames=fNames[i]))
+        rowsFts = nimble.data(t, nimFtData, rowsArePoints=False)
+
+        assert rowsPts == rowsFts
+        assert rowsPts.points.getNames() == rowsFts.points.getNames() == pNames
+        assert rowsPts.features.getNames() == rowsFts.features.getNames() == fNames
+
+def test_rowsArePoints_dictOfContainers():
+    ptData = {'a': [1, 2, 3], 'b': [0, 0, 0], 'c': [-1, -2, -3]}
+    ptData2 = {'a': {'x': 1, 'y': 2, 'z': 3}, 'b': {'x': 0, 'y': 0, 'z': 0},
+               'c': {'x': -1, 'y': -2, 'z': -3}}
+    ftData = {'x': (1, 0, -1), 'y': (2, 0, -2), 'z': (3, 0, -3)}
+    ftData2 = {'x': [[1], [0], [-1]], 'y': [[2], [0], [-2]], 'z': [[3], [0], [-3]]}
+    pNames = ['a', 'b', 'c']
+    fNames = ['x', 'y', 'z']
+    for t in returnTypes:
+        rowsPts = nimble.data(t, ptData, featureNames=fNames)
+        rowsPts2 = nimble.data(t, ptData2)
+        rowsFts = nimble.data(t, ftData, pointNames=pNames,
+                              rowsArePoints=False)
+        rowsFts2 = nimble.data(t, ftData2, pointNames=pNames,
+                               rowsArePoints=False)
+
+        assert rowsPts == rowsPts2 == rowsFts == rowsFts2
+
+def test_rowsArePoints_containerOfDicts():
+    ptData = [{'x': 1, 'y': 2, 'z': 3},
+              {'x': 0, 'y': 0, 'z': 0},
+              {'x': -1, 'y': -2, 'z': -3}]
+    ftData = [{'a': 1, 'b': 0, 'c': -1},
+              {'a': 2, 'b': 0, 'c': -2},
+              {'a': 3, 'b': 0, 'c': -3}]
+    ftData2 = [{'a': [1], 'b': [0], 'c': [-1]},
+               {'a': [2], 'b': [0], 'c': [-2]},
+               {'a': [3], 'b': [0], 'c': [-3]}]
+    pNames = ['a', 'b', 'c']
+    fNames = ['x', 'y', 'z']
+    for t in returnTypes:
+        rowsPts = nimble.data(t, ptData, pointNames=pNames)
+        rowsFts = nimble.data(t, ftData, featureNames=fNames,
+                              rowsArePoints=False)
+        rowsFts2 = nimble.data(t, ftData2, featureNames=fNames,
+                               rowsArePoints=False)
+
+        assert rowsPts == rowsFts == rowsFts2
+
+def test_rowsArePoints_containerOfEmpty():
+    ftData = [[[], []], [[], []], [[], []]]
+    pNames = ['a', 'b']
+    fNames = ['x', 'y', 'z']
+
+    for t in returnTypes:
+        rowsFts = nimble.data(t, ftData, pointNames=pNames,
+                              featureNames=fNames, rowsArePoints=False)
+
+        assert rowsFts.shape == (2, 3)
+        assert rowsFts.points.getNames() == pNames
+        assert rowsFts.features.getNames() == fNames
 
 # tests for combination of one name set being specified and one set being
 # in data.
