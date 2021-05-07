@@ -224,6 +224,24 @@ class ConfigPlugin(Plugin):
         super().configure(options, config)
         self.enabled = True
 
+    def overrideSettings(self):
+        """
+        Replace nimble.settings with DictSessionConfig using default testing
+        settings. This avoids any need to interact with the config file.
+        """
+        currSettings = copy.deepcopy(self.configuration)
+
+        def loadSavedSettings():
+            return DictSessionConfig(currSettings)
+
+        nimble.settings = loadSavedSettings()
+        # include changes made during call to begin()
+        nimble.settings.changes = copy.deepcopy(self.changes)
+        # for tests that load settings during the test
+        nimble.core.configuration.loadSettings = loadSavedSettings
+        # setup logger to use new settings and set logging hooks in settings
+        nimble.core.logger.initLoggerAndLogConfig()
+
     def begin(self):
         """
         Setup so each test can start in the same state.
@@ -246,6 +264,8 @@ class ConfigPlugin(Plugin):
         # loading interfaces adds changes (interface options) to settings
         self.changes = nimble.settings.changes
 
+        self.overrideSettings()
+
     def beforeTest(self, test):
         """
         Ensure nimble is in the same state at the start of each test.
@@ -255,20 +275,7 @@ class ConfigPlugin(Plugin):
         self.interfaces['custom'].registeredLearners = {}
         nimble.core.interfaces.available = copy.copy(self.interfaces)
 
-        # replace nimble.settings with DictSessionConfig using default testing
-        # settings. This avoids any need to interact with the config file.
-        currSettings = copy.deepcopy(self.configuration)
-
-        def loadSavedSettings():
-            return DictSessionConfig(currSettings)
-
-        nimble.settings = loadSavedSettings()
-        # include any changes made during call to begin()
-        nimble.settings.changes = copy.deepcopy(self.changes)
-        # for tests that load settings during the test
-        nimble.core.configuration.loadSettings = loadSavedSettings
-        # setup logger to use new settings and set logging hooks in settings
-        nimble.core.logger.initLoggerAndLogConfig()
+        self.overrideSettings()
 
     def finalize(self, result):
         self.tempdir.cleanup()

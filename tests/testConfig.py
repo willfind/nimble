@@ -6,15 +6,16 @@ with the underlying structures being used.
 import tempfile
 import copy
 import os
+from functools import wraps
 
 from nose.tools import raises
 from unittest import mock
 import configparser
 
 import nimble
+from nimble.core.configuration import SessionConfiguration
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
-
 
 ###############
 ### Helpers ###
@@ -54,6 +55,43 @@ class FailedPredefined(object):
     @classmethod
     def provideInitExceptionInfo(cls):
         raise PackageException("failed to load interface")
+
+def useSessionConfiguration(test):
+    """
+    Wrapper for tests that use saveChanges or setDefault.
+
+    All tests override nimble.settings so that they can be run without using a
+    file. This override redefines saveChanges, so here we want to reinstate the
+    use of SessionConfiguration for nimble.settings so that we can test that
+    changes are being saved to the configuration file as expected.
+    """
+    @wraps(test)
+    def wrapped():
+        with tempfile.NamedTemporaryFile('w+', suffix='.ini') as tmp:
+            # can reuse the settings established when test began
+            # will copy everything not in changes to the temporary config file
+            # and store changes to apply to new nimble.settings object
+            changes = nimble.settings.changes
+            for section, options in nimble.settings.get().items():
+                if section not in changes:
+                    tmp.write('[{}]\n'.format(section))
+                    for option in options.items():
+                        tmp.write('{}\n'.format(' = '.join(option)))
+
+            def loadSavedSettings():
+                tmp.seek(0)
+                return SessionConfiguration(tmp.name)
+
+            nimble.settings = loadSavedSettings()
+            nimble.settings.changes = copy.deepcopy(changes)
+            # for tests that load settings during the test
+            nimble.core.configuration.loadSettings = loadSavedSettings
+
+            test()
+            # nimble.settings is reset at the beginning of each test so there
+            # is no need to restore anything after the test completes.
+
+    return wrapped
 
 #############
 ### Tests ###
@@ -136,6 +174,7 @@ def test_settings_Hooks():
 
     assert history == [5, 4, 1, "Bang"]
 
+@useSessionConfiguration
 def test_settings_GetFullConfig():
     """ Test nimble.settings.get when only specifying a section """
     startConfig = nimble.settings.get()
@@ -174,7 +213,7 @@ def test_settings_GetSectionOnly():
     assert allSec1["op1"] == '1'
     assert allSec1['op2'] == '2'
 
-
+@useSessionConfiguration
 def test_settings_saving():
     """ Test nimble.settings will save its in memory changes """
     # make some change via nimble.settings. save it,
@@ -186,7 +225,7 @@ def test_settings_saving():
     assert nimble.settings.changes == {}
     assert nimble.settings.get("newSectionName", 'new.Option.Name') == '1'
 
-
+@useSessionConfiguration
 def test_settings_savingSection():
     """ Test nimble.settings.saveChanges when specifying a section """
     nimble.settings.changes = {}
@@ -211,7 +250,7 @@ def test_settings_savingSection():
     except configparser.NoSectionError:
         pass
 
-
+@useSessionConfiguration
 def test_settings_savingOption():
     """ Test nimble.settings.saveChanges when specifying a section and option """
     nimble.settings.changes = {}
@@ -288,6 +327,7 @@ def test_settings_addingNewInterface():
     assert nimble.settings.get('Test', 'Temp0') == ''
     assert nimble.settings.get('Test', 'Temp1') == ''
 
+@useSessionConfiguration
 def test_settings_setInterfaceOptionsSafety():
     """ Test that setting options preserves values already in the config file """
     tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
@@ -402,6 +442,7 @@ def test_settings_set_without_save():
     nimble.settings = nimble.core.configuration.loadSettings()
     nimble.settings.get("tempSectionName", 'temp.Option.Name')
 
+@useSessionConfiguration
 def test_settings_setDefault():
     try:
         nimble.settings.get("tempSectionName", 'temp.Option.Name2')
