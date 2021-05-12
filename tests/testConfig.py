@@ -7,6 +7,7 @@ import tempfile
 import copy
 import os
 from functools import wraps
+import pathlib
 
 from nose.tools import raises
 from unittest import mock
@@ -475,3 +476,49 @@ def testSetLocationForFailedPredefinedInterface():
 @mock.patch('nimble.core.interfaces.predefined', [FailedPredefined])
 def testExceptionSetOptionForFailedPredefinedInterface():
     nimble.settings.set('FailedPredefined', 'foo', 'path/to/mock')
+
+# copied from nimble.core.configuration
+def loadSettings():
+    """
+    Function which reads the configuration file and loads the values
+    into a SessionConfiguration. The SessionConfiguration object is then
+    returned.
+    """
+    configFile = '.nimble.ini'
+    currPath = os.path.join(os.getcwd(), configFile)
+    homeLoc = str(pathlib.Path.home())
+    homePath = os.path.join(homeLoc, configFile)
+
+    if not os.path.exists(currPath):
+        if not os.path.exists(homePath):
+            with open(homePath, 'w'):
+                pass
+        target = homePath
+    else:
+        target = currPath
+
+    ret = SessionConfiguration(target)
+
+    sections = ret.get()
+    if 'fetch' not in sections or 'location' not in sections['fetch']:
+        ret.setDefault('fetch', 'location', homeLoc)
+
+    return ret
+
+def test_settings_initUsesHomeOrCWDFile():
+    cwd = os.getcwd()
+    tempDir = nimble.settings.get('logger', 'location')
+    try:
+        os.chdir(tempDir)
+        assert cwd != os.getcwd()
+        currConfigPath = os.path.join(os.getcwd(), '.nimble.ini')
+        assert not os.path.exists(currConfigPath)
+        nimble.settings = loadSettings()
+        home = str(pathlib.Path.home())
+        assert nimble.settings.path == os.path.join(home, '.nimble.ini')
+        with open('.nimble.ini', 'w'):
+            pass
+        nimble.settings = loadSettings()
+        assert nimble.settings.path == currConfigPath
+    finally:
+        os.chdir(cwd)

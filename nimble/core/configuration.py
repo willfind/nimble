@@ -274,16 +274,24 @@ def loadSettings():
     into a SessionConfiguration. The SessionConfiguration object is then
     returned.
     """
-    target = os.path.join(nimblePath, 'configuration.ini')
+    configFile = '.nimble.ini'
+    currPath = os.path.join(os.getcwd(), configFile)
+    homeLoc = str(pathlib.Path.home())
+    homePath = os.path.join(homeLoc, configFile)
 
-    if not os.path.exists(target):
-        with open(target, 'w'):
-            pass
+    if not os.path.exists(currPath):
+        if not os.path.exists(homePath):
+            with open(homePath, 'w'):
+                pass
+        target = homePath
+    else:
+        target = currPath
 
     ret = SessionConfiguration(target)
+
     sections = ret.get()
     if 'fetch' not in sections or 'location' not in sections['fetch']:
-        ret.setDefault('fetch', 'location', str(pathlib.Path.home()))
+        ret.setDefault('fetch', 'location', homeLoc)
 
     return ret
 

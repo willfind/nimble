@@ -25,13 +25,13 @@ import sqlite3
 from ast import literal_eval
 import textwrap
 import datetime
+from configparser import NoSectionError
 
 import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.core.configuration import configErrors
 
 def log(heading, logInfo):
     """
@@ -1176,40 +1176,28 @@ def initLoggerAndLogConfig():
     initializes the currently active logger object using those options.
     """
     try:
-        location = nimble.settings.get("logger", "location")
-        if location == "":
-            location = './logs-nimble'
-            nimble.settings.set("logger", "location", location)
-            nimble.settings.saveChanges("logger", "location")
-    except configErrors:
+        logSettings = nimble.settings.get('logger')
+    except NoSectionError:
+        logSettings = {}
+
+    location = logSettings.get('location', "")
+    if not location:
         location = './logs-nimble'
-        nimble.settings.set("logger", "location", location)
-        nimble.settings.saveChanges("logger", "location")
-    finally:
-        nimble.settings.hook("logger", "location", cleanThenReInitLoc)
+        nimble.settings.setDefault("logger", "location", location)
+    nimble.settings.hook("logger", "location", cleanThenReInitLoc)
 
-    try:
-        name = nimble.settings.get("logger", "name")
-    except configErrors:
+    name = logSettings.get('name', "")
+    if not name:
         name = "log-nimble"
-        nimble.settings.set("logger", "name", name)
-        nimble.settings.saveChanges("logger", "name")
-    finally:
-        nimble.settings.hook("logger", "name", cleanThenReInitName)
+        nimble.settings.setDefault("logger", "name", name)
+    nimble.settings.hook("logger", "name", cleanThenReInitName)
 
-    try:
-        _ = nimble.settings.get("logger", "enabledByDefault")
-    except configErrors:
-        nimble.settings.set("logger", "enabledByDefault", 'True')
-        nimble.settings.saveChanges("logger", "enabledByDefault")
+    if not logSettings.get('enabledByDefault', ""):
+        nimble.settings.setDefault("logger", "enabledByDefault", 'True')
 
-    try:
-        _ = nimble.settings.get("logger", 'enableCrossValidationDeepLogging')
-    except configErrors:
-        nimble.settings.set("logger", 'enableCrossValidationDeepLogging',
-                            'False')
-        nimble.settings.saveChanges("logger",
-                                    'enableCrossValidationDeepLogging')
+    if not logSettings.get('enableCrossValidationDeepLogging', ""):
+        nimble.settings.setDefault("logger",
+                                   'enableCrossValidationDeepLogging', 'False')
 
     nimble.core.logger.active = SessionLogger(location, name)
 
