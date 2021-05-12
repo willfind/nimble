@@ -507,12 +507,12 @@ def getNameAndIndex(axis, vector):
     name = None
     index = 0
     if axis == 'point':
-        if vector._pointNamesCreated():
+        if vector.points._namesCreated():
             name = vector.points.getName(0)
         if isinstance(vector, nimble.core.data.BaseView):
             index = vector._pStart
     else:
-        if vector._featureNamesCreated():
+        if vector.features._namesCreated():
             name = vector.features.getName(0)
         if isinstance(vector, nimble.core.data.BaseView):
             index = vector._fStart

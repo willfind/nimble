@@ -8,9 +8,9 @@ of directly instantiating a Base object. This function temporarily fills in
 that missing implementation.
 
 Methods tested in this file (none modify the data):
-ID, _pointNameDifference, _featureNameDifference, points._nameIntersection,
-features._nameIntersection, _pointNameSymmetricDifference,
-_featureNameSymmetricDifference, _pointNameUnion, _featureNameUnion,
+ID, points._nameDifference, features._nameDifference, points._nameIntersection,
+features._nameIntersection, points._nameSymmetricDifference,
+features._nameSymmetricDifference, points._nameUnion, features._nameUnion,
 points.setName, features.setName, points.setNames, features.setNames,
 _removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
 _equalFeatureNames, points.getNames, features.getNames, __len__,
@@ -32,7 +32,6 @@ from nimble.core.data import Base
 from nimble.core.data import available
 from nimble._utility import inheritDocstringsFactory, numpy2DArray
 from nimble._utility import pd
-from nimble.core.data._dataHelpers import DEFAULT_PREFIX, isDefaultName
 from nimble.core.data._dataHelpers import constructIndicesList
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
@@ -65,15 +64,15 @@ class NotIterable(object):
 
 def confirmExpectedNames(toTest, axis, expected):
     if axis == 'point':
-        names = toTest.pointNames
-        namesInv = toTest.pointNamesInverse
+        names = toTest.points.names
+        namesInv = toTest.points.namesInverse
     else:
-        names = toTest.featureNames
-        namesInv = toTest.featureNamesInverse
+        names = toTest.features.names
+        namesInv = toTest.features.namesInverse
     if isinstance(expected, list):
         for i in range(len(expected)):
             expectedFeatureName = expected[i]
-            if not isDefaultName(expectedFeatureName):
+            if not expectedFeatureName is None:
                 actualIndex = names[expectedFeatureName]
                 actualFeatureName = namesInv[i]
                 assert (actualIndex == i)
@@ -109,53 +108,53 @@ class LowLevelBackend(object):
         assert c._id == b._id + 1
         assert d._id == c._id + 1
 
-    ##########################
-    # _pointNameDifference() #
-    ##########################
+    ############################
+    # points._nameDifference() #
+    ############################
 
     @raises(InvalidArgumentType)
-    def test__pointNameDifference_exceptionOtherNone(self):
-        """ Test _pointNameDifference() for InvalidArgumentType when the other object is None """
+    def test_points_nameDifference_exceptionOtherNone(self):
+        """ Test points._nameDifference() for InvalidArgumentType when the other object is None """
         toTest = self.constructor(pointNames=["hello"])
-        toTest._pointNameDifference(None)
+        toTest.points._nameDifference(None)
 
     @raises(InvalidArgumentType)
-    def test__pointNameDifference_exceptionWrongType(self):
-        """ Test _pointNameDifference() for InvalidArgumentType when the other object is not the right type """
+    def test_points_nameDifference_exceptionWrongType(self):
+        """ Test points._nameDifference() for InvalidArgumentType when the other object is not the right type """
         toTest = self.constructor(pointNames=["hello"])
-        toTest._pointNameDifference("wrong")
+        toTest.points._nameDifference("wrong")
 
-    def test__pointNameDifference_handmade(self):
-        """ Test _pointNameDifference() against handmade output """
+    def test_points_nameDifference_handmade(self):
+        """ Test points._nameDifference() against handmade output """
         toTest1 = self.constructor(pointNames=["one", "two", "three"])
         toTest2 = self.constructor(pointNames=["two", "four"])
-        results = toTest1._pointNameDifference(toTest2)
+        results = toTest1.points._nameDifference(toTest2)
         assert "one" in results
         assert "two" not in results
         assert "three" in results
         assert "four" not in results
 
-    #####################
-    # _featureNameDifference() #
-    #####################
+    ##############################
+    # features._nameDifference() #
+    ##############################
 
     @raises(InvalidArgumentType)
-    def test_featureNameDifference_exceptionOtherNone(self):
-        """ Test _featureNameDifference() for InvalidArgumentType when the other object is None """
+    def testfeatures_nameDifference_exceptionOtherNone(self):
+        """ Test features._nameDifference() for InvalidArgumentType when the other object is None """
         toTest = self.constructor(featureNames=["hello"])
-        toTest._featureNameDifference(None)
+        toTest.features._nameDifference(None)
 
     @raises(InvalidArgumentType)
-    def test_featureNameDifference_exceptionWrongType(self):
-        """ Test _featureNameDifference() for InvalidArgumentType when the other object is not the right type """
+    def testfeatures_nameDifference_exceptionWrongType(self):
+        """ Test features._nameDifference() for InvalidArgumentType when the other object is not the right type """
         toTest = self.constructor(featureNames=["hello"])
-        toTest._featureNameDifference("wrong")
+        toTest.features._nameDifference("wrong")
 
-    def test_featureNameDifference_handmade(self):
-        """ Test _featureNameDifference() against handmade output """
+    def testfeatures_nameDifference_handmade(self):
+        """ Test features._nameDifference() against handmade output """
         toTest1 = self.constructor(featureNames=["one", "two", "three"])
         toTest2 = self.constructor(featureNames=["two", "four"])
-        results = toTest1._featureNameDifference(toTest2)
+        results = toTest1.features._nameDifference(toTest2)
         assert "one" in results
         assert "two" not in results
         assert "three" in results
@@ -214,105 +213,105 @@ class LowLevelBackend(object):
         assert "three" not in results
         assert "four" not in results
 
-    ##############################
-    # _pointNameSymmetricDifference() #
-    ##############################
+    #####################################
+    # points._nameSymmetricDifference() #
+    #####################################
 
     @raises(InvalidArgumentType)
-    def test__pointNameSymmetricDifference_exceptionOtherNone(self):
-        """ Test _pointNameSymmetricDifference() for InvalidArgumentType when the other object is None """
+    def test_points_nameSymmetricDifference_exceptionOtherNone(self):
+        """ Test points._nameSymmetricDifference() for InvalidArgumentType when the other object is None """
         toTest = self.constructor(pointNames=["hello"])
-        toTest._pointNameSymmetricDifference(None)
+        toTest.points._nameSymmetricDifference(None)
 
     @raises(InvalidArgumentType)
-    def test__pointNameSymmetricDifference_exceptionWrongType(self):
-        """ Test _pointNameSymmetricDifference() for InvalidArgumentType when the other object is not the right type """
+    def test_points_nameSymmetricDifference_exceptionWrongType(self):
+        """ Test points._nameSymmetricDifference() for InvalidArgumentType when the other object is not the right type """
         toTest = self.constructor(pointNames=["hello"])
-        toTest._pointNameSymmetricDifference("wrong")
+        toTest.points._nameSymmetricDifference("wrong")
 
-    def test__pointNameSymmetricDifference_handmade(self):
-        """ Test _pointNameSymmetricDifference() against handmade output """
+    def test_points_nameSymmetricDifference_handmade(self):
+        """ Test points._nameSymmetricDifference() against handmade output """
         toTest1 = self.constructor(pointNames=["one", "two", "three"])
         toTest2 = self.constructor(pointNames=["two", "four"])
-        results = toTest1._pointNameSymmetricDifference(toTest2)
+        results = toTest1.points._nameSymmetricDifference(toTest2)
         assert "one" in results
         assert "two" not in results
         assert "three" in results
         assert "four" in results
 
-    ##############################
-    # _featureNameSymmetricDifference() #
-    ##############################
+    #######################################
+    # features._nameSymmetricDifference() #
+    #######################################
 
     @raises(InvalidArgumentType)
-    def test_featureNameSymmetricDifference_exceptionOtherNone(self):
-        """ Test _featureNameSymmetricDifference() for InvalidArgumentType when the other object is None """
+    def testfeatures_nameSymmetricDifference_exceptionOtherNone(self):
+        """ Test features._nameSymmetricDifference() for InvalidArgumentType when the other object is None """
         toTest = self.constructor(featureNames=["hello"])
-        toTest._featureNameSymmetricDifference(None)
+        toTest.features._nameSymmetricDifference(None)
 
     @raises(InvalidArgumentType)
-    def test_featureNameSymmetricDifference_exceptionWrongType(self):
-        """ Test _featureNameSymmetricDifference() for InvalidArgumentType when the other object is not the right type """
+    def testfeatures_nameSymmetricDifference_exceptionWrongType(self):
+        """ Test features._nameSymmetricDifference() for InvalidArgumentType when the other object is not the right type """
         toTest = self.constructor(featureNames=["hello"])
-        toTest._featureNameSymmetricDifference("wrong")
+        toTest.features._nameSymmetricDifference("wrong")
 
-    def test_featureNameSymmetricDifference_handmade(self):
-        """ Test _featureNameSymmetricDifference() against handmade output """
+    def testfeatures_nameSymmetricDifference_handmade(self):
+        """ Test features._nameSymmetricDifference() against handmade output """
         toTest1 = self.constructor(featureNames=["one", "two", "three"])
         toTest2 = self.constructor(featureNames=["two", "four"])
-        results = toTest1._featureNameSymmetricDifference(toTest2)
+        results = toTest1.features._nameSymmetricDifference(toTest2)
         assert "one" in results
         assert "two" not in results
         assert "three" in results
         assert "four" in results
 
-    ################
-    # _pointNameUnion() #
-    ################
+    #######################
+    # points._nameUnion() #
+    #######################
 
     @raises(InvalidArgumentType)
-    def test__pointNameUnion_exceptionOtherNone(self):
-        """ Test _pointNameUnion() for InvalidArgumentType when the other object is None """
+    def test_points_nameUnion_exceptionOtherNone(self):
+        """ Test points._nameUnion() for InvalidArgumentType when the other object is None """
         toTest = self.constructor(pointNames=["hello"])
-        toTest._pointNameUnion(None)
+        toTest.points._nameUnion(None)
 
     @raises(InvalidArgumentType)
-    def test__pointNameUnion_exceptionWrongType(self):
-        """ Test _pointNameUnion() for InvalidArgumentType when the other object is not the right type """
+    def test_points_nameUnion_exceptionWrongType(self):
+        """ Test points._nameUnion() for InvalidArgumentType when the other object is not the right type """
         toTest = self.constructor(pointNames=["hello"])
-        toTest._pointNameUnion("wrong")
+        toTest.points._nameUnion("wrong")
 
-    def test__pointNameUnion_handmade(self):
-        """ Test _pointNameUnion() against handmade output """
+    def test_points_nameUnion_handmade(self):
+        """ Test points._nameUnion() against handmade output """
         toTest1 = self.constructor(pointNames=["one", "two", "three"])
         toTest2 = self.constructor(pointNames=["two", "four"])
-        results = toTest1._pointNameUnion(toTest2)
+        results = toTest1.points._nameUnion(toTest2)
         assert "one" in results
         assert "two" in results
         assert "three" in results
         assert "four" in results
 
-    ################
-    # _featureNameUnion() #
-    ################
+    #########################
+    # features._nameUnion() #
+    #########################
 
     @raises(InvalidArgumentType)
-    def test_featureNameUnion_exceptionOtherNone(self):
-        """ Test _featureNameUnion() for InvalidArgumentType when the other object is None """
+    def testfeatures_nameUnion_exceptionOtherNone(self):
+        """ Test features._nameUnion() for InvalidArgumentType when the other object is None """
         toTest = self.constructor(featureNames=["hello"])
-        toTest._featureNameUnion(None)
+        toTest.features._nameUnion(None)
 
     @raises(InvalidArgumentType)
-    def test_featureNameUnion_exceptionWrongType(self):
-        """ Test _featureNameUnion() for InvalidArgumentType when the other object is not the right type """
+    def testfeatures_nameUnion_exceptionWrongType(self):
+        """ Test features._nameUnion() for InvalidArgumentType when the other object is not the right type """
         toTest = self.constructor(featureNames=["hello"])
-        toTest._featureNameUnion("wrong")
+        toTest.features._nameUnion("wrong")
 
-    def test_featureNameUnion_handmade(self):
-        """ Test _featureNameUnion() against handmade output """
+    def testfeatures_nameUnion_handmade(self):
+        """ Test features._nameUnion() against handmade output """
         toTest1 = self.constructor(featureNames=["one", "two", "three"])
         toTest2 = self.constructor(featureNames=["two", "four"])
-        results = toTest1._featureNameUnion(toTest2)
+        results = toTest1.features._nameUnion(toTest2)
         assert "one" in results
         assert "two" in results
         assert "three" in results
@@ -495,9 +494,9 @@ class LowLevelBackend(object):
     def test_points_setNames_calls_valuesToPythonList(self):
         toTest = self.constructor(pointNames=['one', 'two', 'three'])
         # need to use mock.patch as context manager after object creation
-        # because Base.__init__ also calls valuesToPythonList
+        # because Axis.__init__ also calls valuesToPythonList
         with mock.patch('nimble.core.data.axis.valuesToPythonList', calledException):
-            toTest.points.setNames(['a', 'b', 'c'])
+            toTest.points.setNames(('a', 'b', 'c'))
 
     def test_points_setNames_emptyDataAndList(self):
         """ Test points.setNames() when both the data and the list are empty """
@@ -509,9 +508,10 @@ class LowLevelBackend(object):
     def test_points_setNames_addDefault(self):
         """ Test points.setNames() when given a default pointName """
         toTest = self.constructor(pointNames=["blank", "none", "gone", "hey"])
-        newNames = ["zero", "one", "two", DEFAULT_PREFIX + "17"]
+        newNames = ["zero", "one", "two", None]
         toTest.points.setNames(newNames)
-        assert toTest._nextDefaultValuePoint > 17
+        assert toTest.points.getName(3) is None
+        assert toTest.points.getNames()[3] is None
 
     @oneLogEntryExpected
     def test_points_setNames_handmadeList(self):
@@ -576,18 +576,15 @@ class LowLevelBackend(object):
     def test_points_setNames_list_mixedSpecifiedUnspecified_defaults(self):
         toTest = self.constructor(pointNames=([None] * 4))
 
-        nextNum = toTest._nextDefaultValuePoint
-
         toAssign = [None] * 4
-        toAssign[0] = DEFAULT_PREFIX + str(nextNum)
-        toAssign[2] = DEFAULT_PREFIX + str(nextNum - 1)
-
+        toAssign[1] = 'one'
+        toAssign[3] = 'three'
         ret = toTest.points.setNames(toAssign)
 
-        assert toTest.points.getName(0) == DEFAULT_PREFIX + str(nextNum)
-        assert toTest.points.getName(1) == DEFAULT_PREFIX + str(nextNum + 1)
-        assert toTest.points.getName(2) == DEFAULT_PREFIX + str(nextNum - 1)
-        assert isDefaultName(toTest.points.getName(3))
+        assert toTest.points.getName(0) is None
+        assert toTest.points.getName(1) == 'one'
+        assert toTest.points.getName(2) is None
+        assert toTest.points.getName(3) == 'three'
         assert ret is None
 
 
@@ -627,9 +624,9 @@ class LowLevelBackend(object):
     def test_features_setNames_calls_valuesToPythonList(self):
         toTest = self.constructor(featureNames=['one', 'two', 'three'])
         # need to use mock.patch as context manager after object creation
-        # because Base.__init__ also calls valuesToPythonList
+        # because Axis.__init__ also calls valuesToPythonList
         with mock.patch('nimble.core.data.axis.valuesToPythonList', calledException):
-            toTest.features.setNames(['a', 'b', 'c'])
+            toTest.features.setNames(('a', 'b', 'c'))
 
     def test_features_setNames_emptyDataAndDict(self):
         """ Test features.setNames() when both the data and the dict are empty """
@@ -685,9 +682,10 @@ class LowLevelBackend(object):
     def test_features_setNames_addDefault(self):
         """ Test features.setNames() when given a default featureName """
         toTest = self.constructor(featureNames=["blank", "none", "gone", "hey"])
-        newFeatureNames = ["zero", "one", "two", DEFAULT_PREFIX + "17"]
+        newFeatureNames = ["zero", "one", "two", None]
         toTest.features.setNames(newFeatureNames)
-        assert toTest._nextDefaultValueFeature > 17
+        assert toTest.features.getName(3) is None
+        assert toTest.features.getNames()[3] is None
 
     @oneLogEntryExpected
     def test_features_setNames_handmadeList(self):
@@ -708,43 +706,17 @@ class LowLevelBackend(object):
     def test_features_setNames_list_mixedSpecifiedUnspecified_defaults(self):
         toTest = self.constructor(featureNames=([None] * 4))
 
-        nextNum = toTest._nextDefaultValueFeature
-
         toAssign = [None] * 4
-        toAssign[0] = DEFAULT_PREFIX + str(nextNum)
-        toAssign[2] = DEFAULT_PREFIX + str(nextNum - 1)
+        toAssign[0] = 'zero'
+        toAssign[2] = 'two'
 
         ret = toTest.features.setNames(toAssign)
 
-        assert toTest.features.getName(0) == DEFAULT_PREFIX + str(nextNum)
-        assert toTest.features.getName(1) == DEFAULT_PREFIX + str(nextNum + 1)
-        assert toTest.features.getName(2) == DEFAULT_PREFIX + str(nextNum - 1)
-        assert isDefaultName(toTest.features.getName(3))
+        assert toTest.features.getName(0) == 'zero'
+        assert toTest.features.getName(1) is None
+        assert toTest.features.getName(2) == 'two'
+        assert toTest.features.getName(3) is None
         assert ret is None
-
-    ##################################################################
-    # points._adjustCountAndNames() / features._adjustCountAndNames()#
-    ##################################################################
-
-    def test_adjustCountAndNames_pointCountAndNames(self):
-        origNames = ["zero", "one", "two", "three"]
-        orig = self.constructor(pointNames=origNames)
-        other = self.constructor(pointNames=["one", "two"])
-        expNames = ["zero", "three"]
-        orig.points._adjustCountAndNames(other)
-
-        assert len(orig.points) == 2
-        assert orig.points.getNames() == expNames
-
-    def test_adjustCountAndNames_featureCountAndNames(self):
-        origNames = ["zero", "one", "two", "three"]
-        orig = self.constructor(featureNames=origNames)
-        other = self.constructor(featureNames=["one", "two"])
-        expNames = ["zero", "three"]
-        orig.features._adjustCountAndNames(other)
-
-        assert len(orig.features) == 2
-        assert orig.features.getNames() == expNames
 
     ######################
     # _equalPointNames() #
@@ -917,7 +889,7 @@ class LowLevelBackend(object):
         toTest.points.setName(0, None)
 
         ret = toTest.points.getNames()
-        assert isDefaultName(ret[0])
+        assert ret[0] is None
         assert ret[1] == 'one'
         assert ret[2] == 'hello'
 
@@ -958,7 +930,7 @@ class LowLevelBackend(object):
         toTest.features.setName(0, None)
 
         ret = toTest.features.getNames()
-        assert isDefaultName(ret[0])
+        assert ret[0] is None
         assert ret[1] == 'one'
         assert ret[2] == 'hello'
 
@@ -1157,7 +1129,7 @@ class LowLevelBackend(object):
         pointNames = ['p1','p2','p3']
         toTest = self.constructor(pointNames=pointNames)
         # need to use mock.patch as context manager after object creation
-        # because Base.__init__ also calls valuesToPythonList
+        # because Axis.__init__ also calls valuesToPythonList
         with mock.patch('nimble.core.data._dataHelpers.valuesToPythonList', calledException):
             constructIndicesList(toTest, 'point', pointNames)
 

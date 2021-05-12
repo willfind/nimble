@@ -29,7 +29,6 @@ from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
 from nimble.random import numpyRandom
 from nimble.random import pythonRandom
-from nimble.core.data._dataHelpers import DEFAULT_PREFIX, isDefaultName
 
 from .baseObject import DataTestObject
 from tests.helpers import logCountAssertionFactory, noLogEntryExpected
@@ -260,8 +259,8 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     ofnames[0] = 'f3'
     other = callerCon(otherRaw, pnames, ofnames)
     assert other.features.getName(0) in caller.features.getNames()
-    assert isDefaultName(other.features.getName(1))
-    assert isDefaultName(other.features.getName(2))
+    assert other.features.getName(1) is None
+    assert other.features.getName(2) is None
     toCall = getattr(caller, op)
     try:
         ret = toCall(other)
@@ -275,8 +274,8 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     ofnames[0] = '3f'
     other = callerCon(otherRaw, pnames, ofnames)
     assert other.features.getName(0) not in caller.features.getNames()
-    assert isDefaultName(other.features.getName(1))
-    assert isDefaultName(other.features.getName(2))
+    assert other.features.getName(1) is None
+    assert other.features.getName(2) is None
     toCall = getattr(caller, op)
     # inplace requires feature names to match, otherwise not required
     try:
@@ -336,8 +335,8 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     opnames[0] = 'p3'
     other = callerCon(otherRaw, opnames, fnames)
     assert other.points.getName(0) in caller.points.getNames()
-    assert isDefaultName(other.points.getName(1))
-    assert isDefaultName(other.points.getName(2))
+    assert other.points.getName(1) is None
+    assert other.points.getName(2) is None
     toCall = getattr(caller, op)
     try:
         ret = toCall(other)
@@ -351,8 +350,8 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     opnames[0] = '3p'
     other = callerCon(otherRaw, opnames, fnames)
     assert other.points.getName(0) not in caller.points.getNames()
-    assert isDefaultName(other.points.getName(1))
-    assert isDefaultName(other.points.getName(2))
+    assert other.points.getName(1) is None
+    assert other.points.getName(2) is None
     # inplace requires point names to match, otherwise not required
     toCall = getattr(caller, op)
     try:

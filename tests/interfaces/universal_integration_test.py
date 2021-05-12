@@ -22,7 +22,6 @@ from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import PackageException
 from nimble.core.interfaces.universal_interface import UniversalInterface
 from nimble.core._learnHelpers import generateClusteredPoints
-from tests.helpers import configSafetyWrapper
 from tests.helpers import generateClassificationData
 from tests.helpers import generateRegressionData
 
@@ -405,7 +404,6 @@ def makeMockedModule(mockDirectory, packageName, mockedMsg):
         with open(initPath, 'w+') as initFile:
             initFile.write(toWrite)
 
-@configSafetyWrapper
 def test_loadModulesFromConfigLocation():
     for interface in nimble.core.interfaces.predefined:
         sysPathBackup = sys.path.copy()

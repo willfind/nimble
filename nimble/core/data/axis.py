@@ -14,7 +14,7 @@ import copy
 from abc import ABC, abstractmethod
 import inspect
 import sys
-from operator import itemgetter
+import operator
 import functools
 import re
 
@@ -31,8 +31,6 @@ from nimble.core.logger import handleLogging
 from nimble._utility import inspectArguments
 from .points import Points
 from .features import Features
-from ._dataHelpers import DEFAULT_PREFIX, DEFAULT_PREFIX2
-from ._dataHelpers import DEFAULT_PREFIX_LENGTH, isDefaultName
 from ._dataHelpers import valuesToPythonList, constructIndicesList
 from ._dataHelpers import validateInputString
 from ._dataHelpers import operatorDict
@@ -60,22 +58,41 @@ class Axis(ABC):
     base : Base
         The Base instance that will be queried or modified.
     """
-    def __init__(self, base, **kwargs):
+    def __init__(self, base, names, **kwargs):
         self._base = base
-        kwargs['base'] = base
         if isinstance(self, Points):
             self._axis = 'point'
             self._isPoint = True
-        else:
+        elif isinstance(self, Features):
             self._axis = 'feature'
             self._isPoint = False
-        super().__init__(**kwargs)
+        else:
+            msg = 'Axis objects must also inherit from Points or Features'
+            raise TypeError(msg)
+
+        if names is not None and len(names) != len(self):
+            msg = "The length of the {axis}Names ({lenNames}) must match the "
+            msg += "{axis}s given in shape ({lenAxis})"
+            msg = msg.format(axis=self._axis, lenNames=len(names),
+                             lenAxis=len(self))
+            raise InvalidArgumentValue(msg)
+
+        # Set up point names
+        if names is None:
+            self.namesInverse = None
+            self.names = None
+        elif isinstance(names, dict):
+            self._setNames(names, useLog=False)
+        else:
+            names = valuesToPythonList(names, self._axis + 'Names')
+            self._setNames(names, useLog=False)
+
+        super().__init__(base, **kwargs)
 
     def __len__(self):
         if self._isPoint:
-            return self._base._pointCount
-
-        return self._base._featureCount
+            return self._base.shape[0]
+        return self._base.shape[1]
 
     def __bool__(self):
         return len(self) > 0
@@ -90,34 +107,47 @@ class Axis(ABC):
     def _getName(self, index):
         if not self._namesCreated():
             self._setAllDefault()
-        if self._isPoint:
-            return self._base.pointNamesInverse[index]
 
-        return self._base.featureNamesInverse[index]
+        return self.namesInverse[index]
 
     def _getNames(self):
         if not self._namesCreated():
             self._setAllDefault()
-        if self._isPoint:
-            namesList = self._base.pointNamesInverse
-        else:
-            namesList = self._base.featureNamesInverse
 
-        return copy.copy(namesList)
+        return copy.copy(self.namesInverse)
 
 
     def _setName(self, oldIdentifier, newName, useLog=None):
-        if self._isPoint:
-            namesDict = self._base.pointNames
-        else:
-            namesDict = self._base.featureNames
         if len(self) == 0:
             msg = "Cannot set any {0} names; this object has no {0}s"
             msg = msg.format(self._axis)
             raise ImproperObjectAction(msg)
-        if namesDict is None:
+        if not isinstance(newName, (str, type(None))):
+            msg = "The new name must be either None or a string"
+            raise InvalidArgumentType(msg)
+        if self.names is None:
             self._setAllDefault()
-        self._setName_implementation(oldIdentifier, newName)
+
+        index = self._getIndex(oldIdentifier)
+        if oldIdentifier in self.names:
+            oldName = oldIdentifier
+        else:
+            oldName = self.namesInverse[index]
+
+        if newName in self.names:
+            if self.namesInverse[index] == newName:
+                return
+            msg = "This name '" + newName + "' is already in use"
+            raise InvalidArgumentValue(msg)
+
+        #remove the current name
+        if oldName is not None:
+            del self.names[oldName]
+
+        # setup the new name
+        self.namesInverse[index] = newName
+        if newName is not None:
+            self.names[newName] = index
 
         handleLogging(useLog, 'prep', '{ax}s.setName'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('setName'),
@@ -125,23 +155,61 @@ class Axis(ABC):
 
 
     def _setNames(self, assignments, useLog=None):
-        if self._isPoint:
-            names = 'pointNames'
-            namesInverse = 'pointNamesInverse'
-        else:
-            names = 'featureNames'
-            namesInverse = 'featureNamesInverse'
-        if assignments is None:
-            setattr(self._base, names, None)
-            setattr(self._base, namesInverse, None)
-        else:
-            if not isinstance(assignments, dict):
-                assignments = valuesToPythonList(assignments, 'assignments')
-            self._setNamesBackend(assignments)
+        self._setNamesBackend(assignments)
 
         handleLogging(useLog, 'prep', '{ax}s.setNames'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('setNames'),
                       assignments)
+
+    def _setNamesBackend(self, assignments):
+        if assignments is None:
+            self.names = None
+            self.namesInverse = None
+            return
+        if not isinstance(assignments, (list, dict)):
+            assignments = valuesToPythonList(assignments, 'assignments')
+        count = len(self)
+        if len(assignments) != count:
+            msg = "assignments may only be an ordered container type, with as "
+            msg += "many entries (" + str(len(assignments)) + ") as this axis "
+            msg += "is long (" + str(count) + ")"
+            raise InvalidArgumentValue(msg)
+        if count == 0:
+            self.names = {}
+            self.namesInverse = []
+            return
+        if not isinstance(assignments, dict):
+            # convert to dict so we only write the checking code once
+            # validation will occur when generating the inverse list
+            names = {}
+            for i, name in enumerate(assignments):
+                if name in names:
+                    msg = "Cannot input duplicate names: " + str(name)
+                    raise InvalidArgumentValue(msg)
+                if name is not None:
+                    names[name] = i
+        else:
+            # have to copy the input, could be from another object
+            names = copy.deepcopy(assignments)
+            if None in names:
+                del names[None]
+        # at this point, the input must be a dict
+        # check input before assigning to attributes
+        reverseMap = [None] * len(self)
+        for name, value in names.items():
+            if not isinstance(name, str):
+                raise InvalidArgumentValue("Names must be strings")
+            if not isinstance(value, int):
+                raise InvalidArgumentValue("Indices must be integers")
+            if value < 0 or value >= count:
+                msg = "Indices must be within 0 to "
+                msg += "len(self." + self._axis + "s) - 1"
+                raise InvalidArgumentValue(msg)
+
+            reverseMap[value] = name
+
+        self.names = names
+        self.namesInverse = reverseMap
 
     def _getIndex(self, identifier, allowFloats=False):
         num = len(self)
@@ -176,14 +244,7 @@ class Axis(ABC):
         return identifier
 
     def _getIndices(self, names):
-        if not self._namesCreated():
-            self._setAllDefault()
-        if self._isPoint:
-            namesDict = self._base.pointNames
-        else:
-            namesDict = self._base.featureNames
-
-        return [namesDict[n] for n in names]
+        return [self.names[n] for n in names]
 
     def _hasName(self, name):
         try:
@@ -206,16 +267,10 @@ class Axis(ABC):
         return self._structuralBackend_implementation('copy', key)
 
     def _anyDefaultNames(self):
-        if self._namesCreated():
-            return any(isDefaultName(name) for name in self._getNames())
-
-        return True
+        return self.names is None or len(self.names) < len(self)
 
     def _allDefaultNames(self):
-        if self._namesCreated():
-            return all(isDefaultName(name) for name in self._getNames())
-
-        return True
+        return not self.names
 
     #########################
     # Structural Operations #
@@ -244,8 +299,6 @@ class Axis(ABC):
         ret = self._genericStructuralFrontend('extract', toExtract, start, end,
                                               number, randomize)
 
-        self._adjustCountAndNames(ret)
-
         ret._relPath = self._base.relativePath
         ret._absPath = self._base.absolutePath
 
@@ -257,9 +310,8 @@ class Axis(ABC):
 
 
     def _delete(self, toDelete, start, end, number, randomize, useLog=None):
-        ret = self._genericStructuralFrontend('delete', toDelete, start, end,
+        _ = self._genericStructuralFrontend('delete', toDelete, start, end,
                                               number, randomize)
-        self._adjustCountAndNames(ret)
 
         handleLogging(useLog, 'prep', '{ax}s.delete'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('delete'),
@@ -270,10 +322,8 @@ class Axis(ABC):
         ref = self._genericStructuralFrontend('retain', toRetain, start, end,
                                               number, randomize)
 
-        ref._relPath = self._base.relativePath
-        ref._absPath = self._base.absolutePath
-
-        self._base._referenceDataFrom(ref)
+        paths = (self._base.absolutePath, self._base.relativePath)
+        self._base._referenceFrom(ref, paths=paths)
 
         handleLogging(useLog, 'prep', '{ax}s.retain'.format(ax=self._axis),
                       self._base.getTypeString(), self._sigFunc('retain'),
@@ -297,7 +347,7 @@ class Axis(ABC):
                     raise ImproperObjectAction(msg)
             self._sortByIdentifier(by, reverse)
         # functions
-        elif isinstance(by, itemgetter):
+        elif isinstance(by, operator.itemgetter):
             # extract the items and use the faster _sortByIdentifier
             indices = list(by.__reduce__()[1])
             self._sortByIdentifier(indices, reverse)
@@ -356,10 +406,10 @@ class Axis(ABC):
 
 
     def _transform(self, function, limitTo, useLog=None):
-        if self._base._pointCount == 0:
+        if self._base._shape[0] == 0:
             msg = "We disallow this function when there are 0 points"
             raise ImproperObjectAction(msg)
-        if self._base._featureCount == 0:
+        if self._base._shape[1] == 0:
             msg = "We disallow this function when there are 0 features"
             raise ImproperObjectAction(msg)
 
@@ -503,8 +553,7 @@ class Axis(ABC):
         if self._base.getTypeString() != toInsert.getTypeString():
             toInsert = toInsert.copy(to=self._base.getTypeString())
 
-        offAxis = 'feature' if self._axis == 'point' else 'point'
-        toInsert = self._alignNames(offAxis, toInsert)
+        toInsert = self._alignNames(toInsert)
         self._insert_implementation(insertBefore, toInsert)
 
         self._setInsertedCountAndNames(toInsert, insertBefore)
@@ -864,35 +913,11 @@ class Axis(ABC):
     #####################
 
     def _namesCreated(self):
-        if self._isPoint:
-            return not self._base.pointNames is None
-
-        return not self._base.featureNames is None
-
-    def _nextDefaultName(self):
-        if self._isPoint:
-            ret = DEFAULT_PREFIX2%self._base._nextDefaultValuePoint
-            self._base._nextDefaultValuePoint += 1
-        else:
-            ret = DEFAULT_PREFIX2%self._base._nextDefaultValueFeature
-            self._base._nextDefaultValueFeature += 1
-        return ret
+        return self.names is not None
 
     def _setAllDefault(self):
-        if self._isPoint:
-            self._base.pointNames = {}
-            self._base.pointNamesInverse = []
-            names = self._base.pointNames
-            invNames = self._base.pointNamesInverse
-        else:
-            self._base.featureNames = {}
-            self._base.featureNamesInverse = []
-            names = self._base.featureNames
-            invNames = self._base.featureNamesInverse
-        for i in range(len(self)):
-            defaultName = self._nextDefaultName()
-            invNames.append(defaultName)
-            names[defaultName] = i
+        self.namesInverse = [None] * len(self)
+        self.names = {}
 
     def _getNamesNoGeneration(self):
         if not self._namesCreated():
@@ -902,111 +927,12 @@ class Axis(ABC):
     def _getIndexByName(self, name):
         if not self._namesCreated():
             self._setAllDefault()
-        if self._isPoint:
-            namesDict = self._base.pointNames
-        else:
-            namesDict = self._base.featureNames
 
-        if name not in namesDict:
+        if name not in self.names:
             msg = "The " + self._axis + " name '" + name
             msg += "' cannot be found."
             raise KeyError(msg)
-        return namesDict[name]
-
-    def _setName_implementation(self, oldIdentifier, newName):
-        if self._isPoint:
-            names = self._base.pointNames
-            invNames = self._base.pointNamesInverse
-        else:
-            names = self._base.featureNames
-            invNames = self._base.featureNamesInverse
-
-        index = self._getIndex(oldIdentifier)
-        if newName is not None:
-            if not isinstance(newName, str):
-                msg = "The new name must be either None or a string"
-                raise InvalidArgumentType(msg)
-
-        if newName in names:
-            if invNames[index] == newName:
-                return
-            msg = "This name '" + newName + "' is already in use"
-            raise InvalidArgumentValue(msg)
-
-        if newName is None:
-            newName = self._nextDefaultName()
-
-        #remove the current featureName
-        oldName = invNames[index]
-        del names[oldName]
-
-        # setup the new featureName
-        invNames[index] = newName
-        names[newName] = index
-        self._base._incrementDefaultIfNeeded(newName, self._axis)
-
-    def _setNamesBackend(self, assignments):
-        count = len(self)
-        if len(assignments) != count:
-            msg = "assignments may only be an ordered container type, with as "
-            msg += "many entries (" + str(len(assignments)) + ") as this axis "
-            msg += "is long (" + str(count) + ")"
-            raise InvalidArgumentValue(msg)
-        if not isinstance(assignments, dict):
-            #convert to dict so we only write the checking code once
-            temp = {}
-            for index, name in enumerate(assignments):
-                # take this to mean fill it in with a default name
-                if name is None:
-                    name = self._nextDefaultName()
-                if not isinstance(name, str):
-                    msg = 'assignments must contain only string values'
-                    raise InvalidArgumentValue(msg)
-                if isDefaultName(name) and name in temp:
-                    name = self._nextDefaultName()
-                if name in temp:
-                    msg = "Cannot input duplicate names: " + str(name)
-                    raise InvalidArgumentValue(msg)
-                temp[name] = index
-            assignments = temp
-
-        if count == 0:
-            if self._isPoint:
-                self._base.pointNames = {}
-                self._base.pointNamesInverse = []
-            else:
-                self._base.featureNames = {}
-                self._base.featureNamesInverse = []
-            return
-
-        # at this point, the input must be a dict
-        #check input before performing any action
-        for name in assignments.keys():
-            if not isinstance(name, str):
-                raise InvalidArgumentValue("Names must be strings")
-            if not isinstance(assignments[name], int):
-                raise InvalidArgumentValue("Indices must be integers")
-            if assignments[name] < 0 or assignments[name] >= count:
-                if self._isPoint:
-                    countName = 'points'
-                else:
-                    countName = 'features'
-                msg = "Indices must be within 0 to "
-                msg += "len(self." + countName + ") - 1"
-                raise InvalidArgumentValue(msg)
-
-        reverseMap = [None] * len(assignments)
-        for name in assignments.keys():
-            self._base._incrementDefaultIfNeeded(name, self._axis)
-            reverseMap[assignments[name]] = name
-
-        # have to copy the input, could be from another object
-        if self._isPoint:
-            self._base.pointNames = copy.deepcopy(assignments)
-            self._base.pointNamesInverse = reverseMap
-        else:
-            self._base.featureNames = copy.deepcopy(assignments)
-            self._base.featureNamesInverse = reverseMap
+        return self.names[name]
 
     def _processMultiple(self, key):
         """
@@ -1089,7 +1015,7 @@ class Axis(ABC):
         name = name.strip()
         value = value.strip()
 
-        hasName = getattr(self._base, offAxis + 's')._hasName
+        hasName = self._base._getAxis(offAxis)._hasName
         if not hasName(name):
             msg = "the {0} '{1}' does not exist".format(offAxis, name)
             raise InvalidArgumentValue(msg)
@@ -1193,6 +1119,19 @@ class Axis(ABC):
             # retain internal dimensions
             ret._shape[1:] = self._base._shape[1:]
 
+        # remove names that are no longer in the object
+        if structure in ['extract', 'delete']:
+            shapeIdx = 0 if self._isPoint else 1
+            retAxis = ret._getAxis(self._axis)
+            self._base._shape[shapeIdx] -= len(retAxis)
+            if self._namesCreated():
+                for index in sorted(targetList, reverse=True):
+                    del self.namesInverse[index]
+                self.names = {}
+                for idx, value in enumerate(self.namesInverse):
+                    if value is not None:
+                        self.names[value] = idx
+
         return ret
 
     def _getStructuralNames(self, targetList):
@@ -1204,41 +1143,8 @@ class Axis(ABC):
 
         return self._base.points._getNamesNoGeneration(), nameList
 
-    def _adjustCountAndNames(self, other):
-        """
-        Adjust the count and names (when names have been generated) for
-        this object, removing the names that have been extracted to the
-        other object.
-        """
-        if self._isPoint:
-            self._base._pointCount -= len(other.points)
-            if self._base._pointNamesCreated():
-                idxList = []
-                for name in other.points.getNames():
-                    idxList.append(self._base.pointNames[name])
-                idxList = sorted(idxList)
-                for i, val in enumerate(idxList):
-                    del self._base.pointNamesInverse[val - i]
-                self._base.pointNames = {}
-                for idx, pt in enumerate(self._base.pointNamesInverse):
-                    self._base.pointNames[pt] = idx
-
-        else:
-            self._base._featureCount -= len(other.features)
-            if self._base._featureNamesCreated():
-                idxList = []
-                for name in other.features.getNames():
-                    idxList.append(self._base.featureNames[name])
-                idxList = sorted(idxList)
-                for i, val in enumerate(idxList):
-                    del self._base.featureNamesInverse[val - i]
-                self._base.featureNames = {}
-                for idx, ft in enumerate(self._base.featureNamesInverse):
-                    self._base.featureNames[ft] = idx
-
     def _sortByNames(self, reverse):
-        names = self._getNamesNoGeneration()
-        if names is None or any(isDefaultName(n) for n in names):
+        if self.names is None or self._anyDefaultNames():
             msg = "When by=None, all {0} names must be defined (non-default). "
             msg += "Either set the {0} names of this object or provide "
             msg += "another argument for by"
@@ -1255,7 +1161,7 @@ class Axis(ABC):
                 data = self._base.features[index]
             else:
                 data = self._base.points[index]
-            sortedIndex = sorted(enumerate(data), key=itemgetter(1),
+            sortedIndex = sorted(enumerate(data), key=operator.itemgetter(1),
                                  reverse=reverse)
             self._permute((val[0] for val in sortedIndex), useLog=False)
 
@@ -1286,24 +1192,19 @@ class Axis(ABC):
             msg += str(inspect.getmro(toInsert.__class__))
             raise InvalidArgumentType(msg.format(arg=argName))
 
-        if self._isPoint:
-            objOffAxisLen = self._base._featureCount
-            insertOffAxisLen = len(toInsert.features)
-            objHasAxisNames = self._base._pointNamesCreated()
-            insertHasAxisNames = toInsert._pointNamesCreated()
-            objHasOffAxisNames = self._base._featureNamesCreated()
-            insertHasOffAxisNames = toInsert._featureNamesCreated()
-            offAxis = 'feature'
-            funcName = 'points.' + func
-        else:
-            objOffAxisLen = self._base._pointCount
-            insertOffAxisLen = len(toInsert.points)
-            objHasAxisNames = self._base._featureNamesCreated()
-            insertHasAxisNames = toInsert._featureNamesCreated()
-            objHasOffAxisNames = self._base._pointNamesCreated()
-            insertHasOffAxisNames = toInsert._pointNamesCreated()
-            offAxis = 'point'
-            funcName = 'features.' + func
+        shapeIdx = 1 if self._isPoint else 0
+        offAxis = 'feature' if self._isPoint else 'point'
+        objOffAxis = self._base._getAxis(offAxis)
+        toInsertAxis = toInsert._getAxis(self._axis)
+        toInsertOffAxis = toInsert._getAxis(offAxis)
+
+        objOffAxisLen = self._base.shape[shapeIdx]
+        insertOffAxisLen = len(toInsertOffAxis)
+        objHasAxisNames = self._namesCreated()
+        insertHasAxisNames = toInsertAxis._namesCreated()
+        objHasOffAxisNames = objOffAxis._namesCreated()
+        insertHasOffAxisNames = toInsertOffAxis._namesCreated()
+        funcName = self._axis + 's.' + func
 
         if objOffAxisLen != insertOffAxisLen:
             if len(self._base._shape) > 2:
@@ -1335,7 +1236,7 @@ class Axis(ABC):
         shared = []
         if intersection:
             for name in intersection:
-                if name[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+                if name is not None:
                     shared.append(name)
 
         if shared != []:
@@ -1354,25 +1255,51 @@ class Axis(ABC):
                 msg += " total)"
             raise InvalidArgumentValue(msg)
 
-    def _nameIntersection(self, other):
+    def _namesSetOperations(self, other, operation):
         """
-        Returns a set containing only names that are shared along the
-        axis between the two objects.
+
         """
         if other is None:
             raise InvalidArgumentType("The other object cannot be None")
         if not isinstance(other, nimble.core.data.Base):
-            msg = "The other object must be an instance of base"
+            msg = "The other object must be an instance of Base"
             raise InvalidArgumentType(msg)
 
-        axis = self._axis
-        self._base._defaultNamesGeneration_NamesSetOperations(other, axis)
-        if axis == 'point':
-            return (self._base.pointNames.keys()
-                    & other.pointNames.keys())
+        otherAxis = other._getAxis(self._axis)
+        if self.names is None:
+            self._setAllDefault()
+        if otherAxis.names is None:
+            otherAxis._setAllDefault()
 
-        return (self._base.featureNames.keys()
-                & other.featureNames.keys())
+        return operation(self.names.keys(), otherAxis.names.keys())
+
+    def _nameIntersection(self, other):
+        """
+        Returns a set containing only names that are shared along the axis
+        between the two objects.
+        """
+        return self._namesSetOperations(other, operator.and_)
+
+    def _nameDifference(self, other):
+        """
+        Returns a set containing those names in this object that are not also
+        in the input object.
+        """
+        return self._namesSetOperations(other, operator.sub)
+
+    def _nameSymmetricDifference(self, other):
+        """
+        Returns a set containing only those names not shared between this
+        object and the input object.
+        """
+        return self._namesSetOperations(other, operator.xor)
+
+    def _nameUnion(self, other):
+        """
+        Returns a set containing all names in either this object or the input
+        object.
+        """
+        return self._namesSetOperations(other, operator.or_)
 
     def _validateReorderedNames(self, axis, callSym, other):
         """
@@ -1382,16 +1309,14 @@ class Axis(ABC):
         default names.
         """
         if axis == 'point':
-            lnames = self._base.points.getNames()
-            rnames = other.points.getNames()
-            lGetter = self._base.points.getIndex
-            rGetter = other.points.getIndex
+            lAxis = self._base.points
+            rAxis = other.points
         else:
-            lnames = self._base.features.getNames()
-            rnames = other.features.getNames()
-            lGetter = self._base.features.getIndex
-            rGetter = other.features.getIndex
+            lAxis = self._base.features
+            rAxis = other.features
 
+        lnames = lAxis.getNames()
+        rnames = rAxis.getNames()
         inconsistencies = inconsistentNames(lnames, rnames)
 
         if len(inconsistencies) != 0:
@@ -1400,14 +1325,12 @@ class Axis(ABC):
             msgBase = "When calling caller." + callSym + "(callee) we require "
             msgBase += "that the " + axis + " names all contain the same "
             msgBase += "names, regardless of order. "
-            msg = copy.copy(msgBase)
-            msg += "However, when default names are present, we don't allow "
-            msg += "reordering to occur: either all names must be specified, "
-            msg += "or the order must be the same."
 
-            if any(x[:len(DEFAULT_PREFIX)] == DEFAULT_PREFIX for x in lnames):
-                raise ImproperObjectAction(msg)
-            if any(x[:len(DEFAULT_PREFIX)] == DEFAULT_PREFIX for x in rnames):
+            if lAxis._anyDefaultNames() or rAxis._anyDefaultNames():
+                msg = copy.copy(msgBase)
+                msg += "However, when default names are present, we don't "
+                msg += "allow reordering to occur: either all names must be "
+                msg += "specified, or the order must be the same."
                 raise ImproperObjectAction(msg)
 
             ldiff = np.setdiff1d(lnames, rnames, assume_unique=True)
@@ -1419,15 +1342,15 @@ class Axis(ABC):
                 msg = copy.copy(msgBase)
                 table = [['ID', 'name', '', 'ID', 'name']]
                 for lname, rname in zip(ldiff, rdiff):
-                    table.append([lGetter(lname), lname, "   ",
-                                  rGetter(rname), rname])
+                    table.append([lAxis.getIndex(lname), lname, "   ",
+                                  rAxis.getIndex(rname), rname])
 
                 msg += nimble.core.logger.tableString.tableString(table)
                 print(msg, file=sys.stderr)
 
                 raise InvalidArgumentValue(msg)
 
-    def _alignNames(self, axis, toInsert):
+    def _alignNames(self, toInsert):
         """
         Sort the point or feature names of the passed object to match
         this object. If sorting is necessary, a copy will be returned to
@@ -1435,32 +1358,20 @@ class Axis(ABC):
         original object will be returned. Assumes validation of the
         names has already occurred.
         """
-        if axis == 'point':
-            objNamesCreated = self._base._pointNamesCreated()
-            toInsertNamesCreated = toInsert._pointNamesCreated()
-            objNames = self._base.points.getNames
-            toInsertNames = toInsert.points.getNames
-            def sorter(obj, names):
-                obj.points.permute(names)
-        else:
-            objNamesCreated = self._base._featureNamesCreated()
-            toInsertNamesCreated = toInsert._featureNamesCreated()
-            objNames = self._base.features.getNames
-            toInsertNames = toInsert.features.getNames
-            def sorter(obj, names):
-                obj.features.permute(names)
-
+        offAxis = 'feature' if self._isPoint else 'point'
+        offAxisObj = self._base._getAxis(offAxis)
+        toInsertAxis = toInsert._getAxis(offAxis)
         # This may not look exhaustive, but because of the previous call to
         # _validateInsertableData before this helper, most of the toInsert
         # cases will have already caused an exception
-        if objNamesCreated and toInsertNamesCreated:
-            objAllDefault = all(isDefaultName(n) for n in objNames())
-            toInsertAllDefault = all(isDefaultName(n) for n in toInsertNames())
-            reorder = objNames() != toInsertNames()
+        if offAxisObj._namesCreated() and toInsertAxis._namesCreated():
+            objAllDefault = offAxisObj._allDefaultNames()
+            toInsertAllDefault = toInsertAxis._allDefaultNames()
+            reorder = offAxisObj.getNames() != toInsertAxis.getNames()
             if not (objAllDefault or toInsertAllDefault) and reorder:
                 # use copy when reordering so toInsert object is not modified
                 toInsert = toInsert.copy()
-                sorter(toInsert, objNames())
+                toInsert._getAxis(offAxis).permute(offAxisObj.getNames())
 
         return toInsert
 
@@ -1469,43 +1380,50 @@ class Axis(ABC):
         Modify the point or feature count to include the insertedObj. If
         one or both objects have names, names will be set as well.
         """
-        if self._isPoint:
-            newPtCount = len(self) + len(insertedObj.points)
-            # only need to adjust names if names are present
-            if not (self._namesCreated()
-                    or insertedObj.points._namesCreated()):
-                self._base._pointCount = newPtCount
-                return
-            objNames = self._getNames()
-            insertedNames = insertedObj.points.getNames()
-            # must change point count AFTER getting names
-            self._base._pointCount = newPtCount
-            setObjNames = self._setNames
-            self._base._shape[0] = newPtCount
-        else:
-            newFtCount = len(self) + len(insertedObj.features)
-            # only need to adjust names if names are present
-            if not (self._base._featureNamesCreated()
-                    or insertedObj._featureNamesCreated()):
-                self._base._featureCount = newFtCount
-                return
-            objNames = self._getNames()
-            insertedNames = insertedObj.features.getNames()
-            # must change point count AFTER getting names
-            self._base._featureCount = newFtCount
-            setObjNames = self._setNames
-        # ensure no collision with default names
-        adjustedNames = []
-        for name in insertedNames:
-            if isDefaultName(name):
-                adjustedNames.append(self._nextDefaultName())
-            else:
-                adjustedNames.append(name)
+        shapeIdx = 0 if self._isPoint else 1
+        insertedAxis = insertedObj._getAxis(self._axis)
+        newCount = len(self) + len(insertedAxis)
+        # only need to adjust names if names are present
+        if not (self._namesCreated() or insertedAxis._namesCreated()):
+            self._base._shape[shapeIdx] = newCount
+            return
+        objNames = self._getNames()
+        insertedNames = insertedAxis.getNames()
+        # must change point count AFTER getting names
+        self._base._shape[shapeIdx] = newCount
+
         startNames = objNames[:insertedBefore]
         endNames = objNames[insertedBefore:]
 
-        newNames = startNames + adjustedNames + endNames
-        setObjNames(newNames, useLog=False)
+        newNames = startNames + insertedNames + endNames
+        self._setNames(newNames, useLog=False)
+
+    def _uniqueNameGetter(self, uniqueIndices):
+        """
+        Get the first point or feature names of the object's unique values.
+        """
+        offAxis = 'feature' if self._isPoint else 'point'
+        offAxisObj = self._base._getAxis(offAxis)
+        axisNames = False
+        offAxisNames = False
+        if self._namesCreated():
+            axisNames = [self._getName(i) for i in uniqueIndices]
+        if offAxisObj._namesCreated():
+            offAxisNames = offAxisObj.getNames()
+
+        return axisNames, offAxisNames
+
+    def _getMatchingNames(self, other):
+        matches = []
+        otherAxis = other._getAxis(self._axis)
+        if not self._namesCreated() and otherAxis._namesCreated():
+            return matches
+        allNames = self._getNames() + otherAxis.getNames()
+        if len(set(allNames)) != len(allNames):
+            for name in self.names:
+                if name in otherAxis.names:
+                    matches.append(name)
+        return matches
 
     def _sigFunc(self, funcName):
         """

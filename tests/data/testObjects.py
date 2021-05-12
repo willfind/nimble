@@ -117,10 +117,10 @@ def makeAndDefine(shape=None, pointNames=None, featureNames=None,
                               nimble.core.data.Features)
     # need to override _getPoints and _getFeatures to use dummies
     class BaseConcreteDummy(BaseDummy):
-        def _getPoints(self):
-            return PointsDummy(self)
-        def _getFeatures(self):
-            return FeaturesDummy(self)
+        def _getPoints(self, names):
+            return PointsDummy(self, names)
+        def _getFeatures(self, names):
+            return FeaturesDummy(self, names)
 
     return BaseConcreteDummy(shape, pointNames=pointNames,
                              featureNames=featureNames, name=name)

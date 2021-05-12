@@ -10,12 +10,11 @@ import numpy as np
 
 import nimble
 from .axis import Axis
-from .views import AxisView
 from .points import Points
 from .views import PointsView
 from .features import Features
 from .views import FeaturesView
-from ._dataHelpers import denseAxisUniqueArray, uniqueNameGetter
+from ._dataHelpers import denseAxisUniqueArray
 from ._dataHelpers import fillArrayWithCollapsedFeatures
 from ._dataHelpers import fillArrayWithExpandedFeatures
 
@@ -103,8 +102,7 @@ class ListAxis(Axis, metaclass=ABCMeta):
         if self._base._data == uniqueData:
             return self._base.copy()
 
-        axisNames, offAxisNames = uniqueNameGetter(self._base, self._axis,
-                                                   uniqueIndices)
+        axisNames, offAxisNames = self._uniqueNameGetter(uniqueIndices)
         if self._isPoint:
             return nimble.data('List', uniqueData, pointNames=axisNames,
                                featureNames=offAxisNames, useLog=False)
@@ -223,7 +221,7 @@ class ListPoints(ListAxis, Points):
         self._base._numFeatures = numRetFeatures
 
 
-class ListPointsView(PointsView, AxisView, ListPoints):
+class ListPointsView(PointsView, ListPoints):
     """
     Limit functionality of ListPoints to read-only.
 
@@ -304,7 +302,7 @@ class ListFeatures(ListAxis, Features):
         self._base._numFeatures = numRetFeatures
 
 
-class ListFeaturesView(FeaturesView, AxisView, ListFeatures):
+class ListFeaturesView(FeaturesView, ListFeatures):
     """
     Limit functionality of ListFeatures to read-only.
 

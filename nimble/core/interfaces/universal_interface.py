@@ -1122,13 +1122,10 @@ class TrainedLearner(object):
         elif scoreMode == 'bestScore':
             scoreOrder = self._interface._getScoresOrder(self._backend)
             scoreOrder = list(scoreOrder)
-            # find scores matching predicted labels
-            def grabValue(row):
-                pointIndex = scores.points.getIndex(row.points.getName(0))
-                rowIndex = scoreOrder.index(labels[pointIndex, 0])
-                return row[rowIndex]
-
-            scoreVector = scores.points.calculate(grabValue, useLog=False)
+            scores.features.append(labels, useLog=False)
+            # labels at index -1, need value at score order index of the label
+            scoreVector = scores.points.calculate(
+                lambda row: row[scoreOrder.index(row[-1])], useLog=False)
             labels.features.append(scoreVector, useLog=False)
 
             ret = labels
@@ -1457,24 +1454,23 @@ class TrainedLearner(object):
         nimbleTypeRawScores = self._interface._outputTransformation(
             self.learnerName, rawScores, usedArguments, "Matrix", "allScores",
             self._customDict)
-        formatedRawOrder = self._formatScoresToOvA(
+        formattedRawOrder = self._formatScoresToOvA(
             testX, None, nimbleTypeRawScores, usedArguments)
         internalOrder = self._interface._getScoresOrder(self._backend)
         naturalOrder = sorted(internalOrder)
         if np.array_equal(naturalOrder, internalOrder):
-            return formatedRawOrder
+            return formattedRawOrder
+
         desiredDict = {}
         for i, label in enumerate(naturalOrder):
             desiredDict[label] = i
+        sortOrder = []
+        for label in internalOrder:
+            sortOrder.append(desiredDict[label])
 
-        def sortScorer(feature):
-            name = feature.features.getName(0)
-            index = formatedRawOrder.features.getIndex(name)
-            label = internalOrder[index]
-            return desiredDict[label]
+        formattedRawOrder.features.permute(sortOrder, useLog=False)
 
-        formatedRawOrder.features.sort(by=sortScorer, useLog=False)
-        return formatedRawOrder
+        return formattedRawOrder
 
 
     def _validTestData(self, testX):

@@ -16,7 +16,6 @@ from .base import Base
 from .views import BaseView
 from .matrixAxis import MatrixPoints, MatrixPointsView
 from .matrixAxis import MatrixFeatures, MatrixFeaturesView
-from ._dataHelpers import DEFAULT_PREFIX, isDefaultName
 from ._dataHelpers import allDataIdentical
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
@@ -61,11 +60,11 @@ class Matrix(Base):
             kwds['shape'] = self._data.shape
         super().__init__(**kwds)
 
-    def _getPoints(self):
-        return MatrixPoints(self)
+    def _getPoints(self, names):
+        return MatrixPoints(self, names)
 
-    def _getFeatures(self):
-        return MatrixFeatures(self)
+    def _getFeatures(self, names):
+        return MatrixFeatures(self, names)
 
     def _transform_implementation(self, toTransform, points, features):
         ids = itertools.product(range(len(self.points)),
@@ -161,13 +160,6 @@ class Matrix(Base):
         scipy.io.mmwrite(target=outPath, a=self._data.astype(np.float),
                          comment=header)
 
-    def _referenceDataFrom_implementation(self, other):
-        if not isinstance(other, Matrix):
-            msg = "Other must be the same type as this object"
-            raise InvalidArgumentType(msg)
-
-        self._data = other._data
-
     def _copy_implementation(self, to):
         if to in nimble.core.data.available:
             ptNames = self.points._getNamesNoGeneration()
@@ -262,32 +254,27 @@ class Matrix(Base):
             if not self.points._anyDefaultNames():
                 ptsL = np.array(self.points.getNames(), dtype=np.object_)
                 ptsL = ptsL.reshape(-1, 1)
-            elif self._pointNamesCreated():
-                # differentiate default names between objects;
-                # note still start with DEFAULT_PREFIX
-                namesL = [n + '_l' if isDefaultName(n) else n
-                          for n in self.points.getNames()]
+            elif self.points._namesCreated():
+                # differentiate default names between objects
+                namesL = [i if n is None else n for i, n
+                          in enumerate(self.points.getNames())]
                 ptsL = np.array(namesL, dtype=np.object_)
                 ptsL = ptsL.reshape(-1, 1)
             else:
-                defNames = [DEFAULT_PREFIX + '_l' for _
-                            in range(len(self.points))]
-                ptsL = np.array(defNames, dtype=np.object_)
+                ptsL = np.array(range(len(self.points)), dtype=np.object_)
                 ptsL = ptsL.reshape(-1, 1)
             if not other.points._anyDefaultNames():
                 ptsR = np.array(other.points.getNames(), dtype=np.object_)
                 ptsR = ptsR.reshape(-1, 1)
-            elif other._pointNamesCreated():
-                # differentiate default names between objects;
-                # note still start with DEFAULT_PREFIX
-                namesR = [n + '_r' if isDefaultName(n) else n
-                          for n in other.points.getNames()]
+            elif other.points._namesCreated():
+                maxL = len(self.points)
+                # differentiate default names between objects
+                namesR = [i + maxL if n is None else n for i, n in
+                          enumerate(other.points.getNames())]
                 ptsR = np.array(namesR, dtype=np.object_)
                 ptsR = ptsR.reshape(-1, 1)
             else:
-                defNames = [DEFAULT_PREFIX + '_r' for _
-                            in range(len(other.points))]
-                ptsR = np.array(defNames, dtype=np.object_)
+                ptsR = np.array(range(len(other.points)), dtype=np.object_)
                 ptsR = ptsR.reshape(-1, 1)
             if feature == "intersection":
                 concatL = (ptsL, self._data[:, matchingFtIdx[0]])
@@ -372,18 +359,16 @@ class Matrix(Base):
                     pt[left.shape[1]:] = row[notMatchingR]
                     merged.append(pt)
 
-
-        self._featureCount = left.shape[1] + unmatchedPtCountR
-        self._pointCount = len(merged)
+        self._shape = [len(merged), left.shape[1] + unmatchedPtCountR]
         if len(merged) == 0 and onFeature is None:
             merged = np.empty((0, left.shape[1] + unmatchedPtCountR - 1))
-            self._featureCount -= 1
+            self._shape[1] -= 1
         elif len(merged) == 0:
             merged = np.empty((0, left.shape[1] + unmatchedPtCountR))
         elif onFeature is None:
             # remove point names feature
             merged = [row[1:] for row in merged]
-            self._featureCount -= 1
+            self._shape[1] -= 1
 
         self._data = numpy2DArray(merged, dtype=np.object_)
 
@@ -418,7 +403,6 @@ class Matrix(Base):
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
-        kwds['reuseData'] = True
 
         return MatrixView(**kwds)
 
@@ -492,8 +476,8 @@ class MatrixView(BaseView, Matrix):
     Read only access to a Matrix object.
     """
 
-    def _getPoints(self):
-        return MatrixPointsView(self)
+    def _getPoints(self, names):
+        return MatrixPointsView(self, names)
 
-    def _getFeatures(self):
-        return MatrixFeaturesView(self)
+    def _getFeatures(self, names):
+        return MatrixFeaturesView(self, names)

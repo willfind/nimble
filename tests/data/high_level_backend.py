@@ -40,7 +40,6 @@ from nimble import match
 from nimble import fill
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
-from nimble.core.data._dataHelpers import DEFAULT_PREFIX
 from nimble.random import numpyRandom
 from .baseObject import DataTestObject
 from tests.helpers import logCountAssertionFactory
@@ -1478,8 +1477,8 @@ class HighLevelDataSafe(DataTestObject):
         # Only testing that the default names do not generate an error
         data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
         featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
-        pointNamesX = ['pt0', 'pt1', DEFAULT_PREFIX + '0', 'pt3']
-        pointNamesY = ['pt0', 'pt1', DEFAULT_PREFIX + '4', 'pt3']
+        pointNamesX = ['pt0', 'pt1', None, 'pt3']
+        pointNamesY = ['pt0', 'pt1', None, 'pt3']
         toTest = self.constructor(data, pointNames=pointNamesX,
                                   featureNames=featureNames)
         toTestLabels = self.constructor([[4], [3], [2], [1]],
@@ -1487,8 +1486,8 @@ class HighLevelDataSafe(DataTestObject):
 
         trX, trY, teX, teY = toTest.trainAndTestSets(.5, toTestLabels)
 
-        pointNamesX = [DEFAULT_PREFIX + '0', 'pt1', 'pt2', 'pt3']
-        pointNamesY = ['pt0', 'pt1', 'pt2', DEFAULT_PREFIX + '3']
+        pointNamesX = [None, 'pt1', 'pt2', 'pt3']
+        pointNamesY = ['pt0', 'pt1', 'pt2', None]
         toTest = self.constructor(data, pointNames=pointNamesX,
                                   featureNames=featureNames)
         toTestLabels = self.constructor([[4], [3], [2], [1]],
@@ -1496,8 +1495,8 @@ class HighLevelDataSafe(DataTestObject):
 
         trX, trY, teX, teY = toTest.trainAndTestSets(.5, toTestLabels)
 
-        pointNamesX = [DEFAULT_PREFIX + '0', 'pt0', 'pt2' , 'pt3']
-        pointNamesY = [DEFAULT_PREFIX + '4', 'pt0', DEFAULT_PREFIX + '8', 'pt3']
+        pointNamesX = [None, 'pt0', 'pt2' , 'pt3']
+        pointNamesY = [None, 'pt0', None, 'pt3']
         toTest = self.constructor(data, pointNames=pointNamesX,
                                   featureNames=featureNames)
         toTestLabels = self.constructor([[4], [3], [2], [1]],
@@ -3703,21 +3702,18 @@ class HighLevelModifying(DataTestObject):
         data = [[0,0,1,2,3,4], [1,1,5,6,7,8], [2,2,-1,-2,-3,-4]]
 
         toTest = self.constructor(data)
-        coll0 = DEFAULT_PREFIX + str(2)
-        coll1 = DEFAULT_PREFIX + str(3)
-        coll2 = DEFAULT_PREFIX + str(4)
-        coll3 = DEFAULT_PREFIX + str(5)
 
-        expData = [[0,0,coll0,1], [0,0,coll1,2], [0,0,coll2,3], [0,0,coll3,4],
-                   [1,1,coll0,5], [1,1,coll1,6], [1,1,coll2,7], [1,1,coll3,8],
-                   [2,2,coll0,-1], [2,2,coll1,-2], [2,2,coll2,-3], [2,2,coll3,-4]]
+        expData = [[0,0,2,1], [0,0,3,2], [0,0,4,3], [0,0,5,4],
+                   [1,1,2,5], [1,1,3,6], [1,1,4,7], [1,1,5,8],
+                   [2,2,2,-1], [2,2,3,-2], [2,2,4,-3], [2,2,5,-4]]
 
         exp = self.constructor(expData)
-        exp.features.setName(2, "ftNames")
+        exp.features.setName(2, "ftIndex")
         exp.features.setName(3, "ftValues")
 
         toCollapse = [2, 3, 4, 5]
-        toTest.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        toTest.points.splitByCollapsingFeatures(toCollapse, "ftIndex", "ftValues")
+
         assert toTest == exp
 
     #####################################

@@ -27,7 +27,6 @@ from nimble import match
 from nimble import loadData
 from nimble.core.data import BaseView
 from nimble.core.data._dataHelpers import formatIfNeeded
-from nimble.core.data._dataHelpers import DEFAULT_PREFIX
 from nimble.core.data._dataHelpers import elementQueryFunction
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
@@ -219,9 +218,6 @@ class QueryBackend(DataTestObject):
             assertNoNamesGenerated(toWrite)
 
     def test_writeFile_CSV_excludeDefaultNames(self):
-        def getDefNameIndex(name):
-            return int(name[len(DEFAULT_PREFIX):])
-
         data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         pointNames = ['1', 'one', '2', '0']
         featureNames = ['one', 'two', 'three']
@@ -245,8 +241,6 @@ class QueryBackend(DataTestObject):
             # increase the index of the default point name so that it will be
             # recognizable when we read in from the file.
             axisExclude = getattr(exclude, axis + 's')
-            while (getDefNameIndex(getattr(axisExclude, 'getName')(0)) <= 100):
-                setter(None)
 
             with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
                 exclude.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
@@ -261,12 +255,7 @@ class QueryBackend(DataTestObject):
             # ensure everything else is a match
             assert readObj.isIdentical(exclude)
             assert exclude.isIdentical(readObj)
-
-            for i in range(count):
-                origName = getattr(axisExclude, 'getName')(i)
-                readName = getattr(axisRead, 'getName')(i)
-                assert getDefNameIndex(origName) > 100
-                assert getDefNameIndex(readName) < 10
+            assert axisRead.names is None
 
         excludeAxis('point')
         excludeAxis('feature')
@@ -1101,7 +1090,6 @@ class QueryBackend(DataTestObject):
         ftNames = ['fa', 'fb', 'fc']
 
         data = self.constructor(raw, featureNames=ftNames)
-
         # width of 5 to 7 will return first feature and colHold ('a  --')
         for mw in range(5, 8):
             ret = data.toString(maxWidth=mw, includeNames=True)
@@ -1415,8 +1403,8 @@ class QueryBackend(DataTestObject):
             empty.features.setNames(None, useLog=False)
         except TypeError:
             # need to change names in views manually
-            empty._source.featureNames = None
-            empty._source.featureNamesInverse = None
+            empty.features.names = None
+            empty.features.namesInverse = None
         repr(data)
         assertNoNamesGenerated(empty)
 
