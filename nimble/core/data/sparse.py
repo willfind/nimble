@@ -18,7 +18,6 @@ from .views import BaseView
 from .sparseAxis import SparsePoints, SparsePointsView
 from .sparseAxis import SparseFeatures, SparseFeaturesView
 from .stretch import StretchSparse
-from ._dataHelpers import DEFAULT_PREFIX, isDefaultName
 from ._dataHelpers import allDataIdentical
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
@@ -106,11 +105,11 @@ class Sparse(Base):
             kwds['shape'] = self._data.shape
         super().__init__(**kwds)
 
-    def _getPoints(self):
-        return SparsePoints(self)
+    def _getPoints(self, names):
+        return SparsePoints(self, names)
 
-    def _getFeatures(self):
-        return SparseFeatures(self)
+    def _getFeatures(self, names):
+        return SparseFeatures(self, names)
 
     @property
     def stretch(self):
@@ -155,9 +154,7 @@ class Sparse(Base):
 
         pnames = self.points._getNamesNoGeneration()
         fnames = self.features._getNamesNoGeneration()
-        self._referenceDataFrom(ret)
-        self.points.setNames(pnames, useLog=False)
-        self.features.setNames(fnames, useLog=False)
+        self._referenceFrom(ret, pointNames=pnames, featureNames=fnames)
 
     def _transformEachElement_zeroPreserve_implementation(
             self, toTransform, points, features):
@@ -329,12 +326,8 @@ class Sparse(Base):
         scipy.io.mmwrite(target=outPath, a=self._data.astype(np.float),
                          comment=header)
 
-    def _referenceDataFrom_implementation(self, other):
-        if not isinstance(other, Sparse):
-            msg = "Other must be the same type as this object"
-            raise InvalidArgumentType(msg)
-
-        self._data = other._data
+    def _referenceFrom_implementation(self, other, kwargs):
+        super()._referenceFrom_implementation(other, kwargs)
         self._sorted = other._sorted
 
     def _copy_implementation(self, to):
@@ -613,15 +606,13 @@ class Sparse(Base):
             leftData = self._data.data.astype(np.object_)
             if not self.points._anyDefaultNames():
                 leftData = np.append([self.points.getNames()], leftData)
-            elif self._pointNamesCreated():
-                # differentiate default names between objects;
-                # note still start with DEFAULT_PREFIX
-                leftNames = [n + '_l' if isDefaultName(n) else n
-                             for n in self.points.getNames()]
+            elif self.points._namesCreated():
+                # differentiate default names between objects
+                leftNames = [i if n is None else n for i, n
+                             in enumerate(self.points.getNames())]
                 leftData = np.append([leftNames], leftData)
             else:
-                leftNames = [DEFAULT_PREFIX + str(i) for i
-                             in range(len(self.points))]
+                leftNames = list(range(len(self.points)))
                 leftData = np.append(leftNames, leftData)
             leftRow = np.append(list(range(len(self.points))), self._data.row)
             leftCol = np.append([0 for _ in range(len(self.points))],
@@ -629,15 +620,15 @@ class Sparse(Base):
             rightData = other._data.data.copy().astype(np.object_)
             if not other.points._anyDefaultNames():
                 rightData = np.append([other.points.getNames()], rightData)
-            elif other._pointNamesCreated():
-                # differentiate default names between objects;
-                # note still start with DEFAULT_PREFIX
-                rightNames = [n + '_r' if isDefaultName(n) else n
-                              for n in other.points.getNames()]
+            elif other.points._namesCreated():
+                maxL = len(self.points)
+                # differentiate default names between objects
+                rightNames = [i + maxL if n is None else n for i, n in
+                              enumerate(other.points.getNames())]
                 rightData = np.append([rightNames], rightData)
             else:
                 rtRange = range(self.shape[0], self.shape[0] + other.shape[0])
-                rightNames = [DEFAULT_PREFIX + str(i) for i in rtRange]
+                rightNames = list(rtRange)
                 rightData = np.append(rightNames, rightData)
             rightRow = np.append(list(range(len(other.points))),
                                  other._data.row.copy())
@@ -759,8 +750,7 @@ class Sparse(Base):
         if len(mergedData) == 0:
             mergedData = []
 
-        self._featureCount = numFts
-        self._pointCount = numPts
+        self._shape = [numPts, numFts]
 
         self._data = scipy.sparse.coo_matrix(
             (mergedData, (mergedRow, mergedCol)), shape=(numPts, numFts))
@@ -826,7 +816,6 @@ class Sparse(Base):
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
-        kwds['reuseData'] = True
 
         allPoints = pointStart == 0 and pointEnd == len(self.points)
         singlePoint = pointEnd - pointStart == 1
@@ -1048,9 +1037,7 @@ class Sparse(Base):
     def _inplaceBinary_implementation(self, opName, other):
         notInplace = '__' + opName[3:]
         ret = self._binaryOperations_implementation(notInplace, other)
-        absPath, relPath = self._absPath, self._relPath
-        self._referenceDataFrom(ret)
-        self._absPath, self._relPath = absPath, relPath
+        self._referenceFrom(ret, paths=(self._absPath, self._relPath))
         return self
 
     def _rsub__implementation(self, other):
@@ -1245,22 +1232,22 @@ class SparseVectorView(BaseView, Sparse):
     feature.
     """
 
-    def _getPoints(self):
-        return SparsePointsView(self)
+    def _getPoints(self, names):
+        return SparsePointsView(self, names)
 
-    def _getFeatures(self):
-        return SparseFeaturesView(self)
+    def _getFeatures(self, names):
+        return SparseFeaturesView(self, names)
 
 class SparseView(BaseView, Sparse):
     """
     Read only access to a Sparse object.
     """
 
-    def _getPoints(self):
-        return SparsePointsView(self)
+    def _getPoints(self, names):
+        return SparsePointsView(self, names)
 
-    def _getFeatures(self):
-        return SparseFeaturesView(self)
+    def _getFeatures(self, names):
+        return SparseFeaturesView(self, names)
 
     def _validate_implementation(self, level):
         self._source.validate(level)
@@ -1292,9 +1279,9 @@ class SparseView(BaseView, Sparse):
                                           shape=shape)
             pNames = None
             fNames = None
-            if self._pointNamesCreated():
+            if self.points._namesCreated():
                 pNames = self.points.getNames()
-            if self._featureNamesCreated():
+            if self.features._namesCreated():
                 fNames = self.features.getNames()
             return Sparse(coo, pointNames=pNames, featureNames=fNames)
 
@@ -1314,7 +1301,7 @@ class SparseView(BaseView, Sparse):
 
         limited = self._source.points.copy(start=self._pStart,
                                            end=self._pEnd - 1, useLog=False)
-        if self._fEnd - self._fStart < self._source._featureCount:
+        if self._fEnd - self._fStart < len(self._source.features):
             limited = limited.features.copy(start=self._fStart,
                                             end=self._fEnd - 1, useLog=False)
 

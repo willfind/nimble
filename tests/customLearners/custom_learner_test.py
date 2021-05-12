@@ -6,7 +6,6 @@ from nimble import CustomLearner
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.learners import RidgeRegression, KNNClassifier
 from nimble.core.interfaces.custom_learner import validateCustomLearnerSubclass
-from tests.helpers import configSafetyWrapper
 from tests.helpers import noLogEntryExpected
 
 
@@ -169,7 +168,6 @@ class LoveAtFirstSightClassifier(CustomLearner):
         return nimble.data("Matrix", ret)
 
 
-@configSafetyWrapper
 def testCustomLearnerGetScores():
     """ Test that a CustomLearner with getScores can actually call that method """
     data = [[1, 3], [2, -5], [1, 44]]
@@ -193,7 +191,6 @@ def testCustomLearnerGetScores():
     assert len(allScores.features) == 3
 
 
-@configSafetyWrapper
 def testCustomLearnerIncTrainCheck():
     """ Test that a CustomLearner with incrementalTrain() but no train() works as expected """
     data = [[1, 3], [2, -5], [1, 44]]
@@ -262,7 +259,6 @@ class OneOrZeroClassifier(CustomLearner):
         preds = [[self.prediction] for _ in range(len(testX.points))]
         return nimble.data("Matrix", preds)
 
-@configSafetyWrapper
 def test_retrain_withArg():
     trainObj = nimble.random.data('Matrix', 4, 3, 0)
     testObj = nimble.data('Matrix', [[0, 0], [1, 1]])
@@ -278,7 +274,6 @@ def test_retrain_withArg():
     assert predZeros1 == expZeros
 
 @raises(InvalidArgumentValue)
-@configSafetyWrapper
 def test_retrain_invalidArg():
     trainObj = nimble.random.data('Matrix', 4, 3, 0)
     testObj = nimble.data('Matrix', [[0, 0], [1, 1]])
@@ -292,7 +287,6 @@ def test_retrain_invalidArg():
     tl.retrain(trainObj, 0, foo=True)
 
 @raises(InvalidArgumentValue)
-@configSafetyWrapper
 def test_retrain_CVArg():
     trainObj = nimble.random.data('Matrix', 4, 3, 0)
     testObj = nimble.data('Matrix', [[0, 0], [1, 1]])
@@ -316,7 +310,6 @@ class UncallableLearner(CustomLearner):
         return None
 
 
-@configSafetyWrapper
 def testCustomPackage():
     """ Test learner registration 'custom' CustomLearnerInterface """
 
@@ -334,7 +327,6 @@ def testCustomPackage():
     assert nimble.learnerParameters("custom.LoveAtFirstSightClassifier") == []
     assert nimble.learnerParameters("custom.UncallableLearner") == ['bar', 'foo']
 
-@configSafetyWrapper
 def testNimblePackage():
     """ Test learner registration 'nimble' CustomLearnerInterface """
 
@@ -352,7 +344,6 @@ def testNimblePackage():
     assert nimble.learnerParameters("nimble.RidgeRegression") == ['lamb']
     assert nimble.learnerParameters("nimble.KNNClassifier") == ['k']
 
-@configSafetyWrapper
 def test_learnersAvailableOnImport():
     """ Test that the auto registration helper correctly registers learners """
     nimbleLearners = nimble.listLearners('nimble')
@@ -364,7 +355,6 @@ def test_learnersAvailableOnImport():
     customLearners = nimble.listLearners('custom')
     assert not customLearners
 
-@configSafetyWrapper
 @noLogEntryExpected
 def test_logCount():
 
@@ -395,7 +385,6 @@ def test_listLearnersDirectFromModule():
     except ImportError:
         pass
 
-@configSafetyWrapper
 def test_learnerQueries():
     params = nimble.learnerParameters(UncallableLearner)
     defaults = nimble.learnerDefaultValues(UncallableLearner)
@@ -415,7 +404,6 @@ def test_learnerQueries():
     assert defaults == {'k': 5}
     assert lType == 'classification'
 
-@configSafetyWrapper
 def test_redefinedLearner():
     data = [[1, 2, 3], [4, 5, 6], [0, 0, 0]]
     labels = [[1], [2], [0]]

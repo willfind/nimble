@@ -11,7 +11,6 @@ import numpy as np
 
 import nimble
 from nimble.calculate import fractionIncorrect
-from tests.helpers import configSafetyWrapper
 from tests.helpers import generateClassificationData
 from tests.helpers import getDataConstructors
 
@@ -24,7 +23,6 @@ def logEntryCount(logger):
     entryCount = logger.extractFromLog("SELECT COUNT(entry) FROM logger;")
     return entryCount[0][0]
 
-@configSafetyWrapper
 def back_load(toCall, *args, **kwargs):
     logger = nimble.core.logger.active
 
@@ -106,7 +104,6 @@ def runAndCheck(toCall, useLog):
 
     return (startCount, endCount)
 
-@configSafetyWrapper
 def backend(toCall, validator, **kwargs):
     # for each combination of local and global, call and check
 
@@ -190,7 +187,6 @@ def test_TrainedLearner_test():
 
     backend(wrapped, runAndCheck)
 
-@configSafetyWrapper
 def backendDeep(toCall, validator):
     if toCall.__name__ == "crossValidate":
         entriesWithoutDeep = 1
@@ -384,7 +380,6 @@ def test_summaryReport():
     for constructor in constructors:
         backend(wrapped, prepAndCheck, constructor=constructor)
 
-@configSafetyWrapper
 def flattenUnflattenBackend(toCall, validator, **kwargs):
     # for each combination of local and global, call and check
 

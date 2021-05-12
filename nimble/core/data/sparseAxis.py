@@ -9,7 +9,6 @@ import numpy as np
 import nimble
 from nimble._utility import scipy
 from .axis import Axis
-from .views import AxisView
 from .points import Points
 from .views import PointsView
 from .features import Features
@@ -303,12 +302,12 @@ class SparseAxis(Axis, metaclass=ABCMeta):
         if self._isPoint:
             axisLocator = row
             offAxisLocator = col
-            hasOffAxisNames = self._base._featureNamesCreated()
+            hasOffAxisNames = self._base.features._namesCreated()
             getOffAxisNames = self._base.features.getNames
         else:
             axisLocator = col
             offAxisLocator = row
-            hasOffAxisNames = self._base._pointNamesCreated()
+            hasOffAxisNames = self._base.points._namesCreated()
             getOffAxisNames = self._base.points.getNames
 
         unique = set()
@@ -380,8 +379,6 @@ class SparsePoints(SparseAxis, Points):
         tmpData = []
         tmpRow = []
         tmpCol = []
-        collapseNames = [self._base.features.getName(idx)
-                         for idx in collapseIndices]
         for ptIdx in range(len(self)):
             inRetain = [val in retainIndices for val in col]
             inCollapse = [val in collapseIndices for val in col]
@@ -395,7 +392,7 @@ class SparsePoints(SparseAxis, Points):
                 tmpRow.extend([ptIdx * len(featuresToCollapse) + idx]
                               * len(retainData))
                 tmpCol.extend(list(range(len(retainCol))))
-                tmpData.append(collapseNames[idx])
+                tmpData.append(currFtNames[idx])
                 tmpRow.append(ptIdx * len(featuresToCollapse) + idx)
                 tmpCol.append(numRetFeatures - 2)
                 tmpData.append(value)
@@ -433,7 +430,7 @@ class SparsePoints(SparseAxis, Points):
         self._base._resetSorted()
 
 
-class SparsePointsView(PointsView, AxisView, SparsePoints):
+class SparsePointsView(PointsView, SparsePoints):
     """
     Limit functionality of SparsePoints to read-only.
 
@@ -499,7 +496,7 @@ class SparseFeatures(SparseAxis, Features):
         self._base._resetSorted()
 
 
-class SparseFeaturesView(FeaturesView, AxisView, SparseFeatures):
+class SparseFeaturesView(FeaturesView, SparseFeatures):
     """
     Limit functionality of SparseFeatures to read-only.
 

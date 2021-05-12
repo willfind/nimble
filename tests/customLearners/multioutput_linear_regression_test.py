@@ -1,10 +1,8 @@
 import nimble
 from nimble.learners import MultiOutputLinearRegression
-from tests.helpers import configSafetyWrapper
 
 # test for failure to import?
 
-@configSafetyWrapper
 def test_MultiOutputLinearRegression_simple():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2]]
     trainX = nimble.data('Matrix', data)

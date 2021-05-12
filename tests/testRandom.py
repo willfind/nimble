@@ -206,9 +206,9 @@ def test_random_data_logCount():
 def testalternateControlExplicit():
     """ Test nimble.random.alternateControl yields Nimble accessible random objects with the correct random behavior """
     expPy1333 = random.Random(1333)
-    expNp1333 = numpy.random.RandomState(1333)
+    expNp1333 = np.random.RandomState(1333)
     expPy1334 = random.Random(1334)
-    expNp1334 = numpy.random.RandomState(1334)
+    expNp1334 = np.random.RandomState(1334)
 
     nimble.random.setSeed(1333)
     for i in range(25):
@@ -232,7 +232,7 @@ def testalternateControlNone():
 
         origPy = random.Random()
         origPy.setstate(pyState)
-        origNp = numpy.random.RandomState()
+        origNp = np.random.RandomState()
         origNp.set_state(npState)
 
     with nimble.random.alternateControl(None):
@@ -241,9 +241,9 @@ def testalternateControlNone():
 
 def testalternateControlNested():
     expPy1333 = random.Random(1333)
-    expNp1333 = numpy.random.RandomState(1333)
+    expNp1333 = np.random.RandomState(1333)
     expPy1334 = random.Random(1334)
-    expNp1334 = numpy.random.RandomState(1334)
+    expNp1334 = np.random.RandomState(1334)
 
     with nimble.random.alternateControl(1333):
         for i in range(10):

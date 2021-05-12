@@ -24,7 +24,6 @@ from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import InvalidArgumentType
 from tests.helpers import generateClassificationData
-from tests.helpers import configSafetyWrapper
 from tests.helpers import getDataConstructors
 
 #####################
@@ -117,7 +116,6 @@ def getLastLogData():
 #############
 
 @emptyLogSafetyWrapper
-@configSafetyWrapper
 def testLogDirectoryAndFileSetup():
     """assert a new directory and log file are created with first attempt to log"""
     newDirectory = os.path.join(nimble.nimblePath, "notCreatedDirectory")
@@ -138,7 +136,6 @@ def testLogDirectoryAndFileSetup():
 #############
 
 @emptyLogSafetyWrapper
-@configSafetyWrapper
 def testTopLevelInputFunction():
     """assert the nimble.log function correctly inserts data into the log"""
     header = "input"
@@ -155,7 +152,6 @@ def testTopLevelInputFunction():
     assert lastLog[4] == str(logInfo)
 
 @emptyLogSafetyWrapper
-@configSafetyWrapper
 def testNewSessionNumberEachSetup():
     """assert that a new, sequential sessionNumber is generated each time the log file is reopened"""
     nimble.settings.set('logger', 'enabledByDefault', 'True')
@@ -172,7 +168,6 @@ def testNewSessionNumberEachSetup():
         assert log[0] == entry
 
 @emptyLogSafetyWrapper
-@configSafetyWrapper
 def testLoadTypeFunctionsUseLog():
     """tests that nimble.data is being logged"""
     nimble.settings.set('logger', 'enabledByDefault', 'True')
@@ -236,7 +231,6 @@ def testLoadTypeFunctionsUseLog():
     assert "'numFeatures': 5" in logInfo
 
 @emptyLogSafetyWrapper
-@configSafetyWrapper
 def test_setSeed():
     nimble.settings.set('logger', 'enabledByDefault', 'True')
     nimble.random.setSeed(1337)
@@ -254,7 +248,6 @@ def test_setSeed():
     assert "'seed': 123" in logInfo
 
 @emptyLogSafetyWrapper
-@configSafetyWrapper
 def testRunTypeFunctionsUseLog():
     """tests that top level and TrainedLearner functions are being logged"""
     nimble.settings.set('logger', 'enabledByDefault', 'True')
@@ -397,7 +390,6 @@ def checkLogContents(funcName, objectID, arguments=None):
 
 
 @emptyLogSafetyWrapper
-@configSafetyWrapper
 def testPrepTypeFunctionsUseLog():
     """Test that the functions in base using useLog are being logged"""
     nimble.settings.set('logger', 'enabledByDefault', 'True')
@@ -558,7 +550,7 @@ def testPrepTypeFunctionsUseLog():
     checkLogContents('features.normalize', "Matrix", {'function': 'noChange'})
 
     # points.sort
-    dataObj = nimble.data("Matrix", data, useLog=False)
+    dataObj = nimble.data("Matrix", data, featureNames=['a', 'b', 'c'], useLog=False)
     dataObj.points.sort(by=dataObj.features.getName(0))
     checkLogContents('points.sort', "Matrix", {'by': dataObj.features.getName(0)})
 
@@ -726,7 +718,6 @@ def testPrepTypeFunctionsUseLog():
     checkLogContents('features.setNames', 'Matrix', {'assignments': None})
 
 @emptyLogSafetyWrapper
-@configSafetyWrapper
 def testDataTypeFunctionsUseLog():
     """Test that the data type functions are being logged"""
     nimble.settings.set('logger', 'enabledByDefault', 'True')
@@ -749,7 +740,6 @@ def testDataTypeFunctionsUseLog():
     assert "'reportType': 'summary'" in logInfo
 
 @emptyLogSafetyWrapper
-@configSafetyWrapper
 def testHandmadeLogEntriesInput():
     typeQuery = "SELECT logType FROM logger ORDER BY entry DESC LIMIT 1"
     # custom string
@@ -793,7 +783,6 @@ def testHandmadeLogEntriesInput():
 def raisesOSError(*args, **kwargs):
     raise OSError
 
-@configSafetyWrapper
 @emptyLogSafetyWrapper
 @patch('inspect.getsourcelines', raisesOSError)
 def testFailedLambdaStringConversion():
@@ -807,7 +796,6 @@ def testFailedLambdaStringConversion():
     checkLogContents('calculateOnElements', "Matrix",
                      {'toCalculate': "<lambda>", 'features': 0})
 
-@configSafetyWrapper
 @emptyLogSafetyWrapper
 def testLambdaStringConversionCommas():
     nimble.settings.set('logger', 'enabledByDefault', 'True')
@@ -847,7 +835,6 @@ def testLogHeadingTooLong():
 ##############
 
 @emptyLogSafetyWrapper
-@configSafetyWrapper
 def testShowLogToFile():
     nimble.data("Matrix", [[1], [2], [3]], useLog=True)
     nimble.data("Matrix", [[4, 5], [6, 7], [8, 9]], useLog=True)
@@ -888,7 +875,6 @@ def testShowLogToFile():
                     sessionHeadingCount += 1
         assert sessionHeadingCount == 2
 
-@configSafetyWrapper
 @prepopulatedLogSafetyWrapper
 def testShowLogToStdOut():
     saved_stdout = sys.stdout
@@ -925,7 +911,6 @@ def testShowLogToStdOut():
     finally:
         sys.stdout = saved_stdout
 
-@configSafetyWrapper
 @emptyLogSafetyWrapper
 def testShowLogWithSubobject():
     class Int_(object):
@@ -965,7 +950,6 @@ def testShowLogWithSubobject():
     finally:
         sys.stdout = saved_stdout
 
-@configSafetyWrapper
 @prepopulatedLogSafetyWrapper
 def testShowLogSearchFilters():
     """test the level of detail, sessionNumber, date, text, maxEntries search filters"""

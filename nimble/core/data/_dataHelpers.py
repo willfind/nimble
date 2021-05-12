@@ -21,18 +21,6 @@ from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction, PackageException
 
-# the prefix for default featureNames
-DEFAULT_PREFIX = "_DEFAULT_#"
-DEFAULT_PREFIX2 = DEFAULT_PREFIX+'%s'
-DEFAULT_PREFIX_LENGTH = len(DEFAULT_PREFIX)
-
-def isDefaultName(name):
-    """
-    Determine if name is a default name.
-    """
-    return name.startswith(DEFAULT_PREFIX)
-
-
 def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
     """
     Helper to set names and pathes of a return object when dealing
@@ -78,7 +66,7 @@ def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
 
 def mergeNames(baseNames, otherNames):
     """
-    Combine two lists or dicts of names (point or feature) giving
+    Combine two lists of names (point or feature) giving
     priority to non-default names. Names may also be None, the non-None
     names are returned or None if both are None.
 
@@ -89,16 +77,12 @@ def mergeNames(baseNames, otherNames):
         return baseNames
     if baseNames is None:
         return otherNames
-    ret = {}
-    for i, baseName in enumerate(baseNames):
-        otherName = otherNames[i]
-        baseIsDefault = isDefaultName(baseName)
-        otherIsDefault = isDefaultName(otherName)
-
-        if baseIsDefault and not otherIsDefault:
-            ret[otherName] = i
-        else:
-            ret[baseName] = i
+    ret = [None] * len(baseNames)
+    for i, (baseName, otherName) in enumerate(zip(baseNames, otherNames)):
+        if baseName is None and otherName is not None:
+            ret[i] = otherName
+        elif baseName is not None:
+            ret[i] = baseName
 
     return ret
 
@@ -136,7 +120,7 @@ def looksNumeric(val):
     return True
 
 
-def _checkNumeric(val):
+def checkNumeric(val):
     """
     Check if value looks numeric. Raise ValueError if not.
     """
@@ -183,29 +167,6 @@ def indicesSplit(allowed, total):
 
     return (fIndices, bIndices)
 
-
-def hasNonDefault(obj, axis):
-    """
-    Determine if an axis has non default names.
-    """
-    if axis == 'point':
-        if not obj.points._namesCreated():
-            return False
-        possibleIndices = range(len(obj.points))
-    else:
-        if not obj.features._namesCreated():
-            return False
-        possibleIndices = range(len(obj.features))
-
-    getter = obj.points.getName if axis == 'point' else obj.features.getName
-
-    for index in possibleIndices:
-        if not isDefaultName(getter(index)):
-            return True
-
-    return False
-
-
 def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
     """
     Helper for __repr__ in Base.
@@ -219,7 +180,7 @@ def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
     if namesList is None:
         allDefault = True
     else:
-        allDefault = all(isDefaultName(namesList[i]) for i in possibleIndices)
+        allDefault = all(namesList[i] is None for i in possibleIndices)
 
     if allDefault:
         return ""
@@ -352,31 +313,6 @@ def denseAxisUniqueArray(obj, axis):
         uniqueData = uniqueData.transpose()
 
     return uniqueData, uniqueIndices
-
-def uniqueNameGetter(obj, axis, uniqueIndices):
-    """
-    Get the first point or feature names of the object's unique values.
-    """
-    validateAxis(axis)
-    if axis == 'point':
-        hasAxisNames = obj._pointNamesCreated()
-        hasOffAxisNames = obj._featureNamesCreated()
-        getAxisName = obj.points.getName
-        getOffAxisNames = obj.features.getNames
-    else:
-        hasAxisNames = obj._featureNamesCreated()
-        hasOffAxisNames = obj._pointNamesCreated()
-        getAxisName = obj.features.getName
-        getOffAxisNames = obj.points.getNames
-
-    axisNames = False
-    offAxisNames = False
-    if hasAxisNames:
-        axisNames = [getAxisName(i) for i in uniqueIndices]
-    if hasOffAxisNames:
-        offAxisNames = getOffAxisNames()
-
-    return axisNames, offAxisNames
 
 def valuesToPythonList(values, argName):
     """
@@ -948,8 +884,8 @@ def inconsistentNames(selfNames, otherNames):
     def checkFromLeftKeys(ret, leftNames, rightNames):
         for index, lname in enumerate(leftNames):
             rname = rightNames[index]
-            if lname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
-                if rname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+            if lname is not None:
+                if rname is not None:
                     if lname != rname:
                         ret[index] = (lname, rname)
                 else:
@@ -983,8 +919,8 @@ def unequalNames(selfNames, otherNames):
     def checkFromLeftKeys(ret, leftNames, rightNames):
         for index, lname in enumerate(leftNames):
             rname = rightNames[index]
-            if lname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
-                if rname[:DEFAULT_PREFIX_LENGTH] != DEFAULT_PREFIX:
+            if lname is not None:
+                if rname is not None:
                     if lname != rname:
                         ret[index] = (lname, rname)
                 else:
@@ -1007,10 +943,10 @@ def equalNames(selfNames, otherNames):
     if selfNames is None and otherNames is None:
         return True
     if (selfNames is None
-            and all(isDefaultName(n) for n in otherNames)):
+            and all(n is None for n in otherNames)):
         return True
     if (otherNames is None
-            and all(isDefaultName(n) for n in selfNames)):
+            and all(n is None for n in selfNames)):
         return True
     if selfNames is None or otherNames is None:
         return False
