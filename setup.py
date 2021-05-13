@@ -166,8 +166,6 @@ def run_setup():
     setupKwargs['classifiers'] = [
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
@@ -178,27 +176,28 @@ def run_setup():
     setupKwargs['convert_2to3_doctests'] = []
     setupKwargs['install_requires'] = ['numpy>=1.14']
     # extras
-    pandas = 'pandas>=0.20'
-    scipy = 'scipy>=1.0'
-    matplotlib = 'matplotlib>=3.0'
+    pandas = 'pandas>=0.24'
+    scipy = 'scipy>=1.1'
+    matplotlib = 'matplotlib>=3.1'
     cloudpickle = 'cloudpickle>=1.0'
     requests = 'requests>2.12'
     h5py = 'h5py>=2.10'
-    dateutil = 'python-dateutil>=2.3'
-    mlpy = 'machine-learning-py>=3.5;python_version<"3.7"'
+    dateutil = 'python-dateutil>=2.6'
     scikitlearn = 'scikit-learn>=0.19'
     tensorflow = 'tensorflow>=1.14'
     keras = 'keras>=2.0'
     autoimpute = 'autoimpute>=0.12'
+    mlpy = 'machine-learning-py>=3.5;python_version<"3.7"'
     nose = 'nose>=1.3'
-    pylint = 'pylint>=2.5'
+    pylint = 'pylint>=2.7.4'
     cython = 'cython>=0.29'
+    sphinx = 'sphinx>=2.2'
     data = [pandas, scipy]
     operation = [matplotlib, cloudpickle, requests, h5py, dateutil]
     interfaces = [scikitlearn, tensorflow, autoimpute, mlpy]
     quickstart = data + operation + [scikitlearn]
     userAll = data + operation + interfaces
-    development = [nose, pylint, cython]
+    development = [nose, pylint, cython, sphinx]
     setupKwargs['extras_require'] = {
         'quickstart': quickstart, 'all': userAll, 'data': data,
         'pandas': pandas, 'scipy': scipy, 'matplotlib': matplotlib,
@@ -206,7 +205,7 @@ def run_setup():
         'dateutil': dateutil, 'machine-learning-py': mlpy,
         'scikit-learn': scikitlearn, 'keras': keras, 'tensorflow': tensorflow,
         'autoimpute': autoimpute, 'development': development, 'nose': nose,
-        'pylint': pylint, 'cython': cython
+        'pylint': pylint, 'cython': cython, 'sphinx': sphinx,
         }
 
     # TODO
