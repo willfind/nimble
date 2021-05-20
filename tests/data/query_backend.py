@@ -205,6 +205,22 @@ class QueryBackend(DataTestObject):
 
         assert toWrite == orig
 
+    def test_writeFile_CSVhandmade_output(self):
+        # instantiate object
+        data = [[1., 2., 3.], [0., 2., 4.], [0., 0., 0.]]
+        pointNames = ['one', '2', '0']
+        featureNames = ['one', 'two', 'three']
+        toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+        # should be no leading blank lines and data values should be floats
+        exp = "pointNames,one,two,three\none,1.0,2.0,3.0\n2,0.0,2.0,4.0\n0,0.0,0.0,0.0\n"
+        with tempfile.NamedTemporaryFile(mode='w+', suffix=".csv") as tmpFile:
+            toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
+            tmpFile.seek(0)
+            assert tmpFile.read() == exp
+
+
     def test_writeFile_CSVhandmade_lazyNameGeneration(self):
         # instantiate object
         data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
