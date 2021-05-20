@@ -9,9 +9,6 @@ TODO not updated for api rework
 
 """
 
-import inspect
-import sys
-import pdb
 import functools
 import random
 
@@ -21,7 +18,6 @@ import nimble
 from nimble.core.data import Base
 from nimble.core.data import BaseView
 from nimble._utility import inspectArguments
-from nimble.random import pythonRandom
 
 numberOperations = 100
 numPoints = 4
@@ -184,14 +180,12 @@ def equalityWrapper(left, right):
         rightIter = right.__iter__()
         leftList = []
         rightList = []
-        try:
-            while (True): leftList.append(next(leftIter))
-        except StopIteration:
-            pass
-        try:
-            while (True): rightList.append(next(rightIter))
-        except StopIteration:
-            pass
+        with raises(StopIteration):
+            while (True):
+                leftList.append(next(leftIter))
+        with raises(StopIteration):
+            while (True):
+                rightList.append(next(rightIter))
 
         assert len(leftList) == len(rightList)
         for i in range(len(leftList)):
@@ -697,4 +691,3 @@ def TODO_MakeParamsExclusivity():
                     # to be callable
                     # WRONG! sometimes defaults are acceptable.
                     #assert seenNonDefault
-

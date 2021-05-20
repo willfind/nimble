@@ -20,10 +20,6 @@ import copy
 from operator import itemgetter
 from functools import cmp_to_key
 import datetime
-try:
-    from unittest import mock #python >=3.3
-except ImportError:
-    import mock
 
 import numpy as np
 
@@ -41,13 +37,13 @@ from nimble.random import numpyRandom
 from nimble._utility import sparseMatrixToArray
 from nimble._utility import scipy, pd
 
-from .baseObject import DataTestObject
 from tests.helpers import raises
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
-from tests.helpers import assertNoNamesGenerated, assertExpectedException
-from tests.helpers import CalledFunctionException, calledException
+from tests.helpers import assertNoNamesGenerated
+from tests.helpers import assertCalled
 from tests.helpers import getDataConstructors
+from .baseObject import DataTestObject
 
 ### Helpers used by tests in the test class ###
 
@@ -629,58 +625,29 @@ class StructureDataSafe(StructureShared):
         pointNames = ['1', 'one', '2', '0']
         orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        try:
+        with raises(InvalidArgumentValueCombination):
             orig.copy(to="List", outputAs1D=True)
-            assert False
-        except InvalidArgumentValueCombination as ivc:
-            pass
-        try:
+        with raises(InvalidArgumentValueCombination):
             orig.copy(to="Matrix", outputAs1D=True)
-            assert False
-        except InvalidArgumentValueCombination as ivc:
-            pass
-        try:
+        with raises(InvalidArgumentValueCombination):
             orig.copy(to="Sparse", outputAs1D=True)
-            assert False
-        except InvalidArgumentValueCombination as ivc:
-            pass
-        try:
+        with raises(InvalidArgumentValueCombination):
             orig.copy(to="numpy matrix", outputAs1D=True)
-            assert False
-        except InvalidArgumentValueCombination as ivc:
-            pass
 
-        try:
+        with raises(InvalidArgumentValueCombination):
             orig.copy(to="scipy csr", outputAs1D=True)
-            assert False
-        except InvalidArgumentValueCombination as ivc:
-            pass
-        try:
+        with raises(InvalidArgumentValueCombination):
             orig.copy(to="scipy csc", outputAs1D=True)
-            assert False
-        except InvalidArgumentValueCombination as ivc:
-            pass
-        try:
+        with raises(InvalidArgumentValueCombination):
             orig.copy(to="scipy coo", outputAs1D=True)
-            assert False
-        except InvalidArgumentValueCombination as ivc:
-            pass
 
-        try:
+        with raises(InvalidArgumentValueCombination):
             orig.copy(to='pandas dataframe', outputAs1D=True)
-        except InvalidArgumentValueCombination as ivc:
-            pass
 
-        try:
+        with raises(InvalidArgumentValueCombination):
             orig.copy(to="list of dict", outputAs1D=True)
-            assert False
-        except InvalidArgumentValueCombination as ivc:
-            pass
-        try:
+        with raises(InvalidArgumentValueCombination):
             orig.copy(to="dict of list", outputAs1D=True)
-            assert False
-        except InvalidArgumentValueCombination as ivc:
-            pass
 
     @raises(ImproperObjectAction)
     def test_copy_outputAs1DWrongShape(self):
@@ -746,14 +713,12 @@ class StructureDataSafe(StructureShared):
         assert copyDataFrame.absolutePath == path
         assert copyDataFrame.relativePath == os.path.relpath(path)
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.Base.copy', calledException)
+    @assertCalled(nimble.core.data.Base, 'copy')
     def test_copy__copy__(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
         ret = copy.copy(toTest)
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.Base.copy', calledException)
+    @assertCalled(nimble.core.data.Base, 'copy')
     def test_copy__deepcopy__(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
         ret = copy.deepcopy(toTest)
@@ -762,8 +727,7 @@ class StructureDataSafe(StructureShared):
     # points.copy #
     ###############
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
+    @assertCalled(nimble.core.data.axis, 'constructIndicesList')
     def test_points_copy_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -1498,8 +1462,7 @@ class StructureDataSafe(StructureShared):
     # features_copy #
     #####################
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
+    @assertCalled(nimble.core.data.axis, 'constructIndicesList')
     def test_features_copy_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -2385,13 +2348,11 @@ class StructureModifying(StructureShared):
         coo_str = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
         ret = self.constructor(coo_str)
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.axis.valuesToPythonList', calledException)
+    @assertCalled(nimble.core.data.axis, 'valuesToPythonList')
     def test_init_pointNames_calls_valuesToPythonList(self):
         self.constructor([1,2,3], pointNames=['one'])
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.axis.valuesToPythonList', calledException)
+    @assertCalled(nimble.core.data.axis, 'valuesToPythonList')
     def test_init_featureNames_calls_valuesToPythonList(self):
         self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
 
@@ -3175,22 +3136,16 @@ class StructureModifying(StructureShared):
     # points.append() / features.append() #
     #######################################
 
-    @mock.patch('nimble.core.data.axis.Axis._insert', calledException)
     def test_append_callsInsertBackend(self):
+        insertCalled = assertCalled(nimble.core.data.axis.Axis, '_insert')
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
         toAppend = self.constructor([[-1], [-2], [-3]])
-        try:
+        with insertCalled:
             toTest.points.append(toAppend)
-            assert False
-        except CalledFunctionException:
-            pass
 
-        try:
+        with insertCalled:
             toTest.features.append(toAppend)
-            assert False
-        except CalledFunctionException:
-            pass
 
     def test_points_append_fromEmpty(self):
         """ Test points.append() to bottom when the calling object is point empty """
@@ -3704,8 +3659,7 @@ class StructureModifying(StructureShared):
     # points.extract #
     ##################
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
+    @assertCalled(nimble.core.data.axis, 'constructIndicesList')
     def test_points_extract_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -4407,8 +4361,7 @@ class StructureModifying(StructureShared):
     # features.extract() #
     ######################
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
+    @assertCalled(nimble.core.data.axis, 'constructIndicesList')
     def test_features_extract_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -4922,8 +4875,7 @@ class StructureModifying(StructureShared):
     # points.delete #
     #################
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
+    @assertCalled(nimble.core.data.axis, 'constructIndicesList')
     def test_points_delete_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -5504,8 +5456,7 @@ class StructureModifying(StructureShared):
     # features.delete #
     ###################
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
+    @assertCalled(nimble.core.data.axis, 'constructIndicesList')
     def test_features_delete_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -5985,8 +5936,7 @@ class StructureModifying(StructureShared):
     # points.retain #
     #################
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
+    @assertCalled(nimble.core.data.axis, 'constructIndicesList')
     def test_points_retain_calls_constructIndicesList(self):
         """ Test points.retain calls constructIndicesList before calling _genericStructuralFrontend"""
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
@@ -6601,8 +6551,7 @@ class StructureModifying(StructureShared):
     # features.retain #
     ###################
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
+    @assertCalled(nimble.core.data.axis, 'constructIndicesList')
     def test_features_retain_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -7314,8 +7263,7 @@ class StructureModifying(StructureShared):
 
         toTrans.points.transform(stringOfPointLength)
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
+    @assertCalled(nimble.core.data.axis, 'constructIndicesList')
     def test_points_transform_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -7564,8 +7512,7 @@ class StructureModifying(StructureShared):
 
         toTrans.points.transform(stringOfFeatureLength)
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
+    @assertCalled(nimble.core.data.axis, 'constructIndicesList')
     def test_features_transform_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], featureNames=['a', 'b'])
 
@@ -7750,8 +7697,7 @@ class StructureModifying(StructureShared):
     # transformElements() #
     #######################
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.base.constructIndicesList', calledException)
+    @assertCalled(nimble.core.data.base, 'constructIndicesList')
     def test_transformElements_calls_constructIndicesList1(self):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
@@ -7760,8 +7706,7 @@ class StructureModifying(StructureShared):
 
         toTest.transformElements(noChange, points=['a', 'b'])
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.base.constructIndicesList', calledException)
+    @assertCalled(nimble.core.data.base, 'constructIndicesList')
     def test_transformElements_calls_constructIndicesList2(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
@@ -8093,17 +8038,11 @@ class StructureModifying(StructureShared):
         raw = [[1, 2], [3, 4]]
         toTest = self.constructor(raw)
 
-        try:
+        with raises(InvalidArgumentType):
             toTest.replaceRectangle(set([1, 3]), 0, 0, 0, 1)
-            assert False  # expected InvalidArgumentType
-        except InvalidArgumentType as iat:
-            pass
 
-        try:
+        with raises(InvalidArgumentType):
             toTest.replaceRectangle(lambda x: x * x, 0, 0, 0, 1)
-            assert False  # expected InvalidArgumentType
-        except InvalidArgumentType as iat:
-            pass
 
 
     def test_replaceRectangle_sizeMismatch(self):
@@ -8113,19 +8052,13 @@ class StructureModifying(StructureShared):
         raw = [[-1, -2]]
         val = self.constructor(raw)
 
-        try:
+        with raises(InvalidArgumentValueCombination):
             toTest.replaceRectangle(val, 0, 0, 1, 1)
-            assert False  # expected InvalidArgumentValueCombination
-        except InvalidArgumentValueCombination as ivc:
-            pass
 
         val.transpose()
 
-        try:
+        with raises(InvalidArgumentValueCombination):
             toTest.replaceRectangle(val, 0, 0, 1, 1)
-            assert False  # expected InvalidArgumentValueCombination
-        except InvalidArgumentValueCombination as ivc:
-            pass
 
 
     def test_replaceRectangle_invalidID(self):
@@ -8134,26 +8067,14 @@ class StructureModifying(StructureShared):
 
         val = 1
 
-        try:
+        with raises(KeyError):
             toTest.replaceRectangle(val, "hello", 0, 1, 1)
-            assert False  # expected KeyError
-        except KeyError:
-            pass
-        try:
+        with raises(KeyError):
             toTest.replaceRectangle(val, 0, "Wrong", 1, 1)
-            assert False  # expected KeyError
-        except KeyError:
-            pass
-        try:
+        with raises(IndexError):
             toTest.replaceRectangle(val, 0, 0, 2, 1)
-            assert False  # expected IndexError
-        except IndexError:
-            pass
-        try:
+        with raises(IndexError):
             toTest.replaceRectangle(val, 0, 0, 1, -12)
-            assert False  # expected IndexError
-        except IndexError as iav:
-            pass
 
 
     def test_replaceRectangle_start_lessThan_end(self):
@@ -8162,16 +8083,10 @@ class StructureModifying(StructureShared):
 
         val = 1
 
-        try:
+        with raises(InvalidArgumentValueCombination):
             toTest.replaceRectangle(val, 1, 0, 0, 1)
-            assert False  # expected InvalidArgumentValueCombination
-        except InvalidArgumentValueCombination as ivc:
-            pass
-        try:
+        with raises(InvalidArgumentValueCombination):
             toTest.replaceRectangle(val, 0, 1, 1, 0)
-            assert False  # expected InvalidArgumentValueCombination
-        except InvalidArgumentValueCombination as ivc:
-            pass
 
     @oneLogEntryExpected
     def test_replaceRectangle_fullObjectFill(self):
@@ -8274,7 +8189,7 @@ class StructureModifying(StructureShared):
         self.back_flatten_empty('feature')
 
     def back_flatten_empty(self, order):
-        checkMsg = False
+        checkMsg = True
 
         pempty = self.constructor(np.empty((0,2)))
         exceptionHelper(pempty, 'flatten', [order], ImproperObjectAction, checkMsg)
@@ -8771,9 +8686,9 @@ class StructureModifying(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
 
         expInMsg = 'feature names at index 0 do not match'
-        assertExpectedException(InvalidArgumentValue, leftObj.merge, rightObj,
-                                point='intersection', feature='union', onFeature=0,
-                                messageIncludes=expInMsg)
+        with raises(InvalidArgumentValue, match=expInMsg):
+            leftObj.merge(rightObj, point='intersection', feature='union',
+                          onFeature=0)
 
     def test_merge_onFeatureIndex_ftStrictNoFtNames(self):
         dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
@@ -10805,12 +10720,10 @@ class StructureModifying(StructureShared):
         assert leftObj == exp
 
 def exceptionHelper(testObj, target, args, wanted, checkMsg):
-    try:
+    with raises(wanted) as exc:
         getattr(testObj, target)(*args)
-        assert False  # expected an exception
-    except wanted as check:
-        if checkMsg:
-            print(check)
+    if checkMsg:
+        print(exc)
 
 class StructureAll(StructureDataSafe, StructureModifying):
     pass

@@ -6,8 +6,6 @@ import os
 import time
 import multiprocessing
 import signal
-import io
-import sys
 
 import numpy as np
 import pytest
@@ -21,7 +19,6 @@ except ImportError:
 import nimble
 from nimble import Init
 from nimble.random import numpyRandom
-from nimble.random import _startAlternateControl, _endAlternateControl
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core._learnHelpers import generateClusteredPoints
@@ -33,9 +30,9 @@ from tests.helpers import logCountAssertionFactory
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import generateClassificationData
 from tests.helpers import generateRegressionData
-from .skipTestDecorator import SkipMissing
+from tests.helpers import skipMissingPackage
 
-shogunSkipDec = SkipMissing('shogun')
+shogunSkipDec = skipMissingPackage('shogun')
 
 @shogunSkipDec
 def test_Shogun_findCallable_nameAndDocPreservation():
@@ -731,10 +728,8 @@ def test_checkProcessFailure_maxTime():
 
     # failed process due to segfault signal
     start = time.time()
-    try:
+    with raises(SystemError):
         failedProcessCheck(exitSignal)
-        assert False # expected SystemError
-    except SystemError:
-        pass
+
     end = time.time()
     assert end - start < 0.1

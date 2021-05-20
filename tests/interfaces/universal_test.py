@@ -456,31 +456,22 @@ def test_warningscapture_TL_exceptions_featureMismatch():
     def prep(AWObject):
         return AWObject.train('foo', trainX, trainY)
 
-    try:
+    with raises(InvalidArgumentValueCombination):
         def wrapped(tl):
             tl.apply(testX)
         backend_warningscapture(wrapped, prep)
-        assert False # expected InvalidArgumentValueCombination
-    except InvalidArgumentValueCombination:
-        pass
 
-    try:
+    with raises(InvalidArgumentValueCombination):
         def metric(x, y):
             pass
         def wrapped(tl):
             tl.test(testX, testY, metric)
         backend_warningscapture(wrapped, prep)
-        assert False # expected InvalidArgumentValueCombination
-    except InvalidArgumentValueCombination:
-        pass
 
-    try:
+    with raises(InvalidArgumentValueCombination):
         def wrapped(tl):
             tl.getScores(testX)
         backend_warningscapture(wrapped, prep)
-        assert False # expected InvalidArgumentValueCombination
-    except InvalidArgumentValueCombination:
-        pass
 
 
 def test_warningscapture_listLearners():

@@ -9,8 +9,8 @@ import sqlite3
 import tempfile
 import re
 import functools
-from unittest.mock import patch
 from io import StringIO
+import inspect
 
 import numpy as np
 
@@ -19,7 +19,7 @@ from nimble.calculate import rootMeanSquareError as RMSE
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import InvalidArgumentType
-from tests.helpers import raises
+from tests.helpers import raises, patch
 from tests.helpers import getDataConstructors
 
 #####################
@@ -772,7 +772,7 @@ def raisesOSError(*args, **kwargs):
     raise OSError
 
 @emptyLogSafetyWrapper
-@patch('inspect.getsourcelines', raisesOSError)
+@patch(inspect, 'getsourcelines', raisesOSError)
 def testFailedLambdaStringConversion():
     nimble.settings.set('logger', 'enabledByDefault', 'True')
 
@@ -1054,47 +1054,26 @@ def testStartGreaterThanEndDate():
 @emptyLogSafetyWrapper
 def testInvalidDateTimeFormats():
     # year invalid format
-    try:
+    with raises(InvalidArgumentValue):
         nimble.showLog(startDate="18-03-24")
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
     # month invalid format
-    try:
+    with raises(InvalidArgumentValue):
         nimble.showLog(startDate="2018-3-24")
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
     # day invalid format
-    try:
+    with raises(InvalidArgumentValue):
         nimble.showLog(startDate="2018-04-1")
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
     # date format ok but invalid date
-    try:
+    with raises(InvalidArgumentValue):
         nimble.showLog(startDate="2018-02-31")
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
     # hour invalid format
-    try:
+    with raises(InvalidArgumentValue):
         nimble.showLog(startDate="2018-03-24 1:00")
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
     # minute invalid format
-    try:
+    with raises(InvalidArgumentValue):
         nimble.showLog(startDate="2018-03-24 01:19.22")
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
     # second invalid
-    try:
+    with raises(InvalidArgumentValue):
         nimble.showLog(startDate="2018-03-24 01:19:0.2")
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
 
 @emptyLogSafetyWrapper
 @raises(InvalidArgumentValue)

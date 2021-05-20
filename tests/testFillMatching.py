@@ -22,11 +22,8 @@ def test_fillMatching_exception_nansUnmatched():
            [2, 2, 2, 4], [2, 2, 2, 4]]
     for constructor in constructors:
         data = constructor(raw)
-        try:
+        with raises(ImproperObjectAction):
             nimble.fillMatching('nimble.KNNImputation', 1, data, mode='classification')
-            assert False # expected ImproperObjectAction
-        except ImproperObjectAction:
-            pass
 
 def test_fillMatching_trainXUnaffectedByFailure():
     raw = [[2, 2, 2, 4], [2, 2, 2, 4], [2, 2, 2, 0], [2, 2, 2, 3],
@@ -35,11 +32,8 @@ def test_fillMatching_trainXUnaffectedByFailure():
         data = constructor(raw)
         dataCopy = data.copy()
         # trying to fill 2 will fail because the training data will be empty
-        try:
+        with raises(InvalidArgumentValue):
             nimble.fillMatching('nimble.KNNImputation', 2, data, mode='classification')
-            assert False # expected InvalidArgumentValue
-        except InvalidArgumentValue:
-            assert data == dataCopy
 
 @logCountAssertionFactory(len(nimble.core.data.available) * 2)
 def backend_fillMatching(matchingElements, raw, expRaw):

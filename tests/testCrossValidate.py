@@ -4,7 +4,6 @@ the backend helpers they rely on.
 """
 
 import math
-from unittest import mock
 import functools
 
 import pytest
@@ -231,17 +230,13 @@ def test_crossValidate_2d_Non_label_scoremodes_disallowed():
 
     #run in crossValidate
     metric = meanFeaturewiseRootMeanSquareError
-    try:
-        crossValidate(regressionAlgo, X, Y, metric, {}, folds=5, scoreMode='bestScore')
-        assert False
-    except InvalidArgumentValueCombination:
-        pass
+    with raises(InvalidArgumentValueCombination):
+        crossValidate(regressionAlgo, X, Y, metric, {}, folds=5,
+                      scoreMode='bestScore')
 
-    try:
-        crossValidate(regressionAlgo, X, Y, metric, {}, folds=5, scoreMode='allScores')
-        assert False
-    except InvalidArgumentValueCombination:
-        pass
+    with raises(InvalidArgumentValueCombination):
+        crossValidate(regressionAlgo, X, Y, metric, {}, folds=5,
+                      scoreMode='allScores')
 
 
 @pytest.mark.slow
@@ -503,7 +498,6 @@ class MockedKFoldCrossValidator(KFoldCrossValidator):
     def _crossValidate(self, X, Y, useLog):
         pass
 
-@mock.patch('tests.testCrossValidate.KFoldCrossValidator', MockedKFoldCrossValidator)
 def test_KFoldCrossValidator():
     # we have mocked the object so it will not actually perform crossValidation
     # instead we will pass our own dummy data to the backend so we can check
@@ -516,8 +510,7 @@ def test_KFoldCrossValidator():
     bVals = nimble.CV([1, 2]) # will be passed as kwarguments
     folds = 3
     scoreMode = 'label'
-
-    crossValidator = KFoldCrossValidator(
+    crossValidator = MockedKFoldCrossValidator(
         learnerName, X, Y, performanceFunction, arguments, folds, scoreMode,
         useLog=False, b=bVals)
     assert crossValidator.learnerName == learnerName

@@ -6,15 +6,15 @@ import operator
 
 import numpy as np
 
-import nimble
 from nimble.exceptions import ImproperObjectAction, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.random import pythonRandom
-from .baseObject import DataTestObject
+
 from tests.helpers import raises
 from tests.helpers import assertNoNamesGenerated
 from tests.helpers import noLogEntryExpected
 from tests.helpers import getDataConstructors
+from .baseObject import DataTestObject
 
 class StretchDataSafe(DataTestObject):
 
@@ -140,17 +140,11 @@ class StretchDataSafe(DataTestObject):
         assert ret2.isIdentical(exp_r)
         assertNoNamesGenerated(base1)
 
-        try:
+        with raises(ZeroDivisionError):
             base2 / stretch2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
-        try:
+        with raises(ZeroDivisionError):
             stretch2.stretch / base2
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     @noLogEntryExpected
     def test_handmade_Base_Stretch_floordiv_point(self):
@@ -167,17 +161,11 @@ class StretchDataSafe(DataTestObject):
         assert ret2.isIdentical(exp_r)
         assertNoNamesGenerated(base1)
 
-        try:
+        with raises(ZeroDivisionError):
             base2 // stretch2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
-        try:
+        with raises(ZeroDivisionError):
             stretch2.stretch // base2
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     @noLogEntryExpected
     def test_handmade_Base_Stretch_mod_point(self):
@@ -194,17 +182,11 @@ class StretchDataSafe(DataTestObject):
         assert ret2.isIdentical(exp_r)
         assertNoNamesGenerated(base1)
 
-        try:
+        with raises(ZeroDivisionError):
             base2 % stretch2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
-        try:
+        with raises(ZeroDivisionError):
             stretch2.stretch % base2
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     @noLogEntryExpected
     def test_handmade_Base_Stretch_pow_point(self):
@@ -221,17 +203,11 @@ class StretchDataSafe(DataTestObject):
         assert ret2.isIdentical(exp_r)
         assertNoNamesGenerated(base1)
 
-        try:
+        with raises(ZeroDivisionError):
             base2 ** stretch2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
-        try:
+        with raises(ZeroDivisionError):
             stretch2.stretch ** base2
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     # logical
 
@@ -341,17 +317,11 @@ class StretchDataSafe(DataTestObject):
         assert ret2.isIdentical(exp_r)
         assertNoNamesGenerated(base1)
 
-        try:
+        with raises(ZeroDivisionError):
             base2 / stretch2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
-        try:
+        with raises(ZeroDivisionError):
             stretch2.stretch / base2
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     @noLogEntryExpected
     def test_handmade_Base_Stretch_floordiv_feature(self):
@@ -368,17 +338,11 @@ class StretchDataSafe(DataTestObject):
         assert ret2.isIdentical(exp_r)
         assertNoNamesGenerated(base1)
 
-        try:
+        with raises(ZeroDivisionError):
             base2 // stretch2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
-        try:
+        with raises(ZeroDivisionError):
             stretch2.stretch // base2
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     @noLogEntryExpected
     def test_handmade_Base_Stretch_mod_feature(self):
@@ -395,17 +359,11 @@ class StretchDataSafe(DataTestObject):
         assert ret2.isIdentical(exp_r)
         assertNoNamesGenerated(base1)
 
-        try:
+        with raises(ZeroDivisionError):
             base2 % stretch2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
-        try:
+        with raises(ZeroDivisionError):
             stretch2.stretch % base2
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     @noLogEntryExpected
     def test_handmade_Base_Stretch_pow_feature(self):
@@ -422,17 +380,11 @@ class StretchDataSafe(DataTestObject):
         assert ret2.isIdentical(exp_r)
         assertNoNamesGenerated(base1)
 
-        try:
+        with raises(ZeroDivisionError):
             base2 ** stretch2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
-        try:
+        with raises(ZeroDivisionError):
             stretch2.stretch ** base2
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     # logical
 
@@ -557,17 +509,11 @@ class StretchDataSafe(DataTestObject):
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
 
-        try:
+        with raises(ZeroDivisionError):
             ft2.stretch / pt2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
-        try:
+        with raises(ZeroDivisionError):
             pt2.stretch / ft2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     @noLogEntryExpected
     def test_handmade_Stretch_Stretch_floordiv(self):
@@ -583,17 +529,11 @@ class StretchDataSafe(DataTestObject):
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
 
-        try:
+        with raises(ZeroDivisionError):
             ft2.stretch // pt2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
-        try:
+        with raises(ZeroDivisionError):
             pt2.stretch // ft2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     @noLogEntryExpected
     def test_handmade_Stretch_Stretch_mod(self):
@@ -609,17 +549,11 @@ class StretchDataSafe(DataTestObject):
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
 
-        try:
+        with raises(ZeroDivisionError):
             ft2.stretch % pt2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
-        try:
+        with raises(ZeroDivisionError):
             pt2.stretch % ft2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     @noLogEntryExpected
     def test_handmade_Stretch_Stretch_pow(self):
@@ -635,17 +569,11 @@ class StretchDataSafe(DataTestObject):
         assert ret1.isIdentical(exp_l)
         assert ret2.isIdentical(exp_r)
 
-        try:
+        with raises(ZeroDivisionError):
             ft2.stretch ** pt2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
-        try:
+        with raises(ZeroDivisionError):
             pt2.stretch ** ft2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     # logical
 
@@ -753,17 +681,11 @@ class StretchDataSafe(DataTestObject):
         op1 = possibleOps[pythonRandom.randint(0, 6)]
         op2 = possibleOps[pythonRandom.randint(0, 6)]
 
-        try:
+        with raises(InvalidArgumentValue):
             ret1 = op1(obj1, obj2)
-            assert False # expected InvalidArgumentValue
-        except InvalidArgumentValue:
-            pass
 
-        try:
+        with raises(InvalidArgumentValue):
             ret2 = op2(obj2, obj1)
-            assert False # expected InvalidArgumentValue
-        except InvalidArgumentValue:
-            pass
 
     @noLogEntryExpected
     def test_stretchSetNames(self):
@@ -932,11 +854,8 @@ class StretchDataModifying(DataTestObject):
         base = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, -1, -2, -3]])
         toStretch = self.constructor([[1, 2, 0, -1]])
 
-        try:
+        with raises(AttributeError):
             toStretch.stretch += base
-            assert False # expected AttributeError
-        except AttributeError:
-            pass
 
         exp = self.constructor([[2, 4, 3, 3], [6, 8, 7, 7], [1, 1, -2, -4]])
         base += toStretch.stretch
@@ -949,11 +868,8 @@ class StretchDataModifying(DataTestObject):
         base = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, -1, -2, -3]])
         toStretch = self.constructor([[1, 2, 0, -1]])
 
-        try:
+        with raises(AttributeError):
             toStretch.stretch -= base
-            assert False # expected AttributeError
-        except AttributeError:
-            pass
 
         exp = self.constructor([[0, 0, 3, 5], [4, 4, 7, 9], [-1, -3, -2, -2]])
         base -= toStretch.stretch
@@ -966,11 +882,8 @@ class StretchDataModifying(DataTestObject):
         base = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, -1, -2, -3]])
         toStretch = self.constructor([[1, 2, 0, -1]])
 
-        try:
+        with raises(AttributeError):
             toStretch.stretch *= base
-            assert False # expected AttributeError
-        except AttributeError:
-            pass
 
         exp = self.constructor([[1, 4, 0, -4], [5, 12, 0, -8], [0, -2, 0, 3]])
         base *= toStretch.stretch
@@ -985,11 +898,8 @@ class StretchDataModifying(DataTestObject):
         base1 = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [-1, -2, -3, -4]])
         stretch1 = self.constructor([[1, 2, -1, -2]])
 
-        try:
+        with raises(AttributeError):
             stretch1.stretch /= base1
-            assert False # expected AttributeError
-        except AttributeError:
-            pass
 
         exp = self.constructor([[1, 1, -3, -2], [5, 3, -7, -4], [-1, -1, 3, 2]])
         base1 /= stretch1.stretch
@@ -1000,22 +910,16 @@ class StretchDataModifying(DataTestObject):
         base2 = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, -1, -2, -3]])
         stretch2 = self.constructor([[1, 2, 0, -1]])
 
-        try:
+        with raises(ZeroDivisionError):
             base2 /= stretch2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     @noLogEntryExpected
     def test_handmade_Base_Stretch_ifloordiv_point(self):
         base1 = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [-1, -2, -3, -4]])
         stretch1 = self.constructor([[1, 2, -1, -2]])
 
-        try:
+        with raises(AttributeError):
             stretch1.stretch //= base1
-            assert False # expected AttributeError
-        except AttributeError:
-            pass
 
         exp = self.constructor([[1, 1, -3, -2], [5, 3, -7, -4], [-1, -1, 3, 2]])
         base1 //= stretch1.stretch
@@ -1026,22 +930,16 @@ class StretchDataModifying(DataTestObject):
         base2 = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, -1, -2, -3]])
         stretch2 = self.constructor([[1, 2, 0, -1]])
 
-        try:
+        with raises(ZeroDivisionError):
             base2 //= stretch2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     @noLogEntryExpected
     def test_handmade_Base_Stretch_imod_point(self):
         base1 = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [-1, -2, -3, -4]])
         stretch1 = self.constructor([[1, 2, -1, -2]])
 
-        try:
+        with raises(AttributeError):
             stretch1.stretch %= base1
-            assert False # expected AttributeError
-        except AttributeError:
-            pass
 
         exp = self.constructor([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
         base1 %= stretch1.stretch
@@ -1052,22 +950,16 @@ class StretchDataModifying(DataTestObject):
         base2 = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, -1, -2, -3]])
         stretch2 = self.constructor([[1, 2, 0, -1]])
 
-        try:
+        with raises(ZeroDivisionError):
             base2 %= stretch2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     @noLogEntryExpected
     def test_handmade_Base_Stretch_ipow_point(self):
         base1 = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [-1, -2, -3, -4]])
         stretch1 = self.constructor([[1, 2, -1, -2]])
 
-        try:
+        with raises(AttributeError):
             stretch1.stretch **= base1
-            assert False # expected AttributeError
-        except AttributeError:
-            pass
 
         exp = self.constructor([[1, 4, (1/3), (1/16)], [5, 36, (1/7), (1/64)], [-1, 4, (-1/3), (1/16)]])
         base1 **= stretch1.stretch
@@ -1078,11 +970,8 @@ class StretchDataModifying(DataTestObject):
         base2 = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [-1, -2, -3, 0]])
         stretch2 = self.constructor([[1, 2, 0, -1]])
 
-        try:
+        with raises(ZeroDivisionError):
             base2 **= stretch2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     ##########################
     # Base / Stretch Feature #
@@ -1095,11 +984,8 @@ class StretchDataModifying(DataTestObject):
         base = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, -1, -2]])
         toStretch = self.constructor([[1], [2], [0], [-1]])
 
-        try:
+        with raises(AttributeError):
             toStretch.stretch += base
-            assert False # expected AttributeError
-        except AttributeError:
-            pass
 
         exp = self.constructor([[2, 3, 4], [6, 7, 8], [7, 8, 9], [-1, -2, -3]])
         base += toStretch.stretch
@@ -1112,11 +998,8 @@ class StretchDataModifying(DataTestObject):
         base = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, -1, -2]])
         toStretch = self.constructor([[1], [2], [0], [-1]])
 
-        try:
+        with raises(AttributeError):
             toStretch.stretch -= base
-            assert False # expected AttributeError
-        except AttributeError:
-            pass
 
         exp = self.constructor([[0, 1, 2], [2, 3, 4], [7, 8, 9], [1, 0, -1]])
         base -= toStretch.stretch
@@ -1129,11 +1012,8 @@ class StretchDataModifying(DataTestObject):
         base = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, -1, -2]])
         toStretch = self.constructor([[1], [2], [0], [-1]])
 
-        try:
+        with raises(AttributeError):
             toStretch.stretch *= base
-            assert False # expected AttributeError
-        except AttributeError:
-            pass
 
         exp = self.constructor([[1, 2, 3], [8, 10, 12], [0, 0, 0], [0, 1, 2]])
         base *= toStretch.stretch
@@ -1148,11 +1028,8 @@ class StretchDataModifying(DataTestObject):
         base1 = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
         stretch1 = self.constructor([[1], [2], [-1], [-2]])
 
-        try:
+        with raises(AttributeError):
             stretch1.stretch /= base1
-            assert False # expected AttributeError
-        except AttributeError:
-            pass
 
         exp = self.constructor([[1, 2, 3], [2, (5/2), 3], [-7, -8, -9], [(1/2), 1, (3/2)]])
         base1 /= stretch1.stretch
@@ -1163,22 +1040,16 @@ class StretchDataModifying(DataTestObject):
         base2 = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, -1, -2]])
         stretch2 = self.constructor([[1], [2], [0], [-1]])
 
-        try:
+        with raises(ZeroDivisionError):
             base2 /= stretch2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     @noLogEntryExpected
     def test_handmade_Base_Stretch_ifloordiv_feature(self):
         base1 = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
         stretch1 = self.constructor([[1], [2], [-1], [-2]])
 
-        try:
+        with raises(AttributeError):
             stretch1.stretch //= base1
-            assert False # expected AttributeError
-        except AttributeError:
-            pass
 
         exp = self.constructor([[1, 2, 3], [2, 2, 3], [-7, -8, -9], [0, 1, 1]])
         base1 //= stretch1.stretch
@@ -1189,22 +1060,16 @@ class StretchDataModifying(DataTestObject):
         base2 = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, -1, -2]])
         stretch2 = self.constructor([[1], [2], [0], [-1]])
 
-        try:
+        with raises(ZeroDivisionError):
             base2 //= stretch2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     @noLogEntryExpected
     def test_handmade_Base_Stretch_imod_feature(self):
         base1 = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
         stretch1 = self.constructor([[1], [2], [-1], [-2]])
 
-        try:
+        with raises(AttributeError):
             stretch1.stretch %= base1
-            assert False # expected AttributeError
-        except AttributeError:
-            pass
 
         base1 %= stretch1.stretch
         exp = self.constructor([[0, 0, 0], [0, 1, 0], [0, 0, 0], [-1, 0, -1]])
@@ -1215,22 +1080,16 @@ class StretchDataModifying(DataTestObject):
         base2 = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [0, -1, -2]])
         stretch2 = self.constructor([[1], [2], [0], [-1]])
 
-        try:
+        with raises(ZeroDivisionError):
             base2 %= stretch2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
     @noLogEntryExpected
     def test_handmade_Base_Stretch_ipow_feature(self):
         base1 = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
         stretch1 = self.constructor([[1], [2], [-1], [-2]])
 
-        try:
+        with raises(AttributeError):
             stretch1.stretch **= base1
-            assert False # expected AttributeError
-        except AttributeError:
-            pass
 
         base1 **= stretch1.stretch
         exp = self.constructor([[1, 2, 3], [16, 25, 36], [(1/7), (1/8), (1/9)], [1, (1/4), (1/9)]])
@@ -1241,11 +1100,8 @@ class StretchDataModifying(DataTestObject):
         base2 = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, -1], [0, -1, -2]])
         stretch2 = self.constructor([[1], [2], [0], [-1]])
 
-        try:
+        with raises(ZeroDivisionError):
             base2 **= stretch2.stretch
-            assert False # expected ZeroDivisionError
-        except ZeroDivisionError:
-            pass
 
 class StretchAll(StretchDataSafe, StretchDataModifying):
     pass

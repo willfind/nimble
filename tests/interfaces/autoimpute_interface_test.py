@@ -12,10 +12,9 @@ from nimble.exceptions import InvalidArgumentValue
 from nimble.calculate import rootMeanSquareError, fractionCorrect
 from tests.helpers import raises
 from tests.helpers import getDataConstructors
+from tests.helpers import skipMissingPackage
 
-from .skipTestDecorator import SkipMissing
-
-autoimputeSkipDec = SkipMissing('autoimpute')
+autoimputeSkipDec = skipMissingPackage('autoimpute')
 
 # fillMatching is inplace so no views
 constructors = getDataConstructors(includeViews=False)

@@ -1,7 +1,7 @@
 """
 Common assertions helpers to be used in multiple test files.
 
-Custom assertion types can be helpful if the assertion can be added to
+Custom assertion exc_types can be helpful if the assertion can be added to
 existing tests which are also testing other functionality.
 """
 from functools import wraps, partial
@@ -9,6 +9,7 @@ from functools import wraps, partial
 import pytest
 
 import nimble
+from nimble.exceptions import PackageException
 from nimble.core._learnHelpers import generateClusteredPoints
 
 class LogCountAssertionError(AssertionError):
@@ -94,22 +95,6 @@ def generateRegressionData(labels, pointsPer, featuresPer):
 
     return ((regressorTrainData, trainLabels), (regressorTestData, testLabels))
 
-def assertExpectedException(exception, func, *args, messageIncludes=None,
-                            **kwargs):
-    """
-    Assert that a given exception is raised when a function is called.
-
-    Optionally can include an exception message or portion of an
-    exception message to validate that the exception raised includes
-    the correct message.
-    """
-    try:
-        func(*args, **kwargs)
-        assert False
-    except exception as e:
-        if messageIncludes is not None:
-            assert messageIncludes in str(e)
-
 def _getViewFunc(returnType):
     """
     Return function creating a view of the given returnType.
@@ -127,7 +112,7 @@ def _getViewFunc(returnType):
 def getDataConstructors(includeViews=True):
     """
     Create data object constructors for tests iterating through each
-    concrete data type. By default includes constructors for views.
+    concrete data exc_type. By default includes constructors for views.
     """
     constructors = []
     for returnType in nimble.core.data.available:
@@ -136,11 +121,79 @@ def getDataConstructors(includeViews=True):
             constructors.append(_getViewFunc(returnType))
     return constructors
 
-def raises(exception):
-    def decorator(test):
-        @wraps(test)
+class raises:
+    def __init__(self, exception, *args, **kwargs):
+        self.raiser = pytest.raises(exception, *args, **kwargs)
+
+    # as decorator
+    def __call__(self, func):
+        @wraps(func)
         def wrapped(*args, **kwargs):
-            with pytest.raises(exception):
-                test(*args, **kwargs)
+            with self.raiser:
+                return func(*args, **kwargs)
         return wrapped
-    return decorator
+
+    # as context manager
+    def __enter__(self):
+        return self.raiser.__enter__()
+
+    def __exit__(self, exc_type, value, traceback):
+        return self.raiser.__exit__(exc_type, value, traceback)
+
+class patch:
+    def __init__(self, obj, name, value):
+        self.obj = obj
+        self.name = name
+        self.value = value
+        self.patch = pytest.MonkeyPatch()
+
+    # as decorator
+    def __call__(self, func):
+        @wraps(func)
+        def wrapped(*args, **kwargs):
+            self.patch.setattr(self.obj, self.name, self.value)
+            try:
+                return func(*args, **kwargs)
+            finally:
+                self.patch.undo()
+        return wrapped
+
+    # as context manager
+    def __enter__(self):
+        self.patch.setattr(self.obj, self.name, self.value)
+
+    def __exit__(self, exc_type, value, traceback):
+        self.patch.undo()
+
+def patchCalled(obj, name):
+    return patch(obj, name, calledException)
+
+class assertCalled:
+    def __init__(self, obj, name):
+        self.patch = patchCalled(obj, name)
+        self.raises = raises(CalledFunctionException)
+
+    def __call__(self, func):
+        @wraps(func)
+        def wrapped(*args, **kwargs):
+            function = self.patch(func)
+            function = self.raises(function)
+            return function(*args, **kwargs)
+        return wrapped
+
+    def __enter__(self):
+        self.patch.__enter__()
+        return self.raises.__enter__()
+
+    def __exit__(self, exc_type, value, traceback):
+        self.patch.__exit__(None, None, None)
+        return self.raises.__exit__(exc_type, value, traceback)
+
+def skipMissingPackage(package):
+    try:
+        nimble.core._learnHelpers.findBestInterface(package)
+        missing = False
+    except PackageException:
+        missing = True
+    reason = package + ' package is not available'
+    return pytest.mark.skipif(missing, reason=reason)

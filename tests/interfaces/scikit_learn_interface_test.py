@@ -20,11 +20,11 @@ from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import generateClassificationData
 from tests.helpers import generateRegressionData
 from .test_helpers import checkLabelOrderingAndScoreAssociations
-from .skipTestDecorator import SkipMissing
+from tests.helpers import skipMissingPackage
 
 packageName = 'sciKitLearn'
 
-sklSkipDec = SkipMissing(packageName)
+sklSkipDec = skipMissingPackage(packageName)
 
 @sklSkipDec
 @noLogEntryExpected
@@ -763,18 +763,12 @@ def test_applier_exception():
     # StandardScaler.transform does not takes a 'foo' argument
     tl = nimble.train('SciKitLearn.StandardScaler', dataObj)
     assert 'foo' not in tl._transformedArguments
-    try:
+    with raises(InvalidArgumentValue):
         # using arguments parameter
         transformed = tl.apply(dataObj, arguments={'foo': True})
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
-    try:
+    with raises(InvalidArgumentValue):
         # using kwarguments
         transformed = tl.apply(dataObj, foo=True)
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
 
 @sklSkipDec
 @logCountAssertionFactory(3)
@@ -810,18 +804,12 @@ def test_getScores_exception():
     # DecisionTreeClassifier.predict_proba does not take a 'foo' argument.
     tl = nimble.train('SciKitLearn.DecisionTreeClassifier', trainObj, 0)
     assert 'foo' not in tl._transformedArguments
-    try:
+    with raises(InvalidArgumentValue):
         # using arguments parameter
         transformed = tl.getScores(testObj, arguments={'foo': True})
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
-    try:
+    with raises(InvalidArgumentValue):
         # using kwarguments
         transformed = tl.getScores(testObj, foo=True)
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
 
 def _apply_saveLoad(trainerLearnerObj, givenTestX):
     """

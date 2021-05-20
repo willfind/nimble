@@ -7,7 +7,6 @@ the UniversalInterface api.
 import os
 import sys
 import importlib
-from unittest import mock
 import tempfile
 
 import pytest
@@ -17,6 +16,7 @@ from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import PackageException
 from tests.helpers import generateClassificationData
 from tests.helpers import generateRegressionData
+from tests.helpers import patch, raises
 
 
 def checkFormat(scores, numLabels):
@@ -425,27 +425,22 @@ def test_loadModulesFromConfigLocation():
                     # first, check that it loads from the path of the first
                     # directory which raises FirstImportedModule
                     sys.path.insert(0, mockDirectory1)
-                    try:
+                    with raises(FirstImportedModule):
                         # patch import_module to reload from settings location
-                        with mock.patch('importlib.import_module', reload):
+                        with patch(importlib, 'import_module', reload):
                             interface()
-                        assert False # expected FirstImportedModule
-                    except FirstImportedModule as e:
-                        pass
                     # next, set a location in settings to check that this
                     # takes priority over mockDirectory1. Also check that
                     # the change to the path is temporary
                     nimble.settings.set(canonicalName, 'location',
                                         mockDirectory2)
-                    try:
+                    with raises(SecondImportedModule):
                         # patch import_module to reload from settings location
-                        with mock.patch('importlib.import_module', reload):
+                        with patch(importlib, 'import_module', reload):
                             interface()
-                        assert False # expected SecondImportedModule
-                    except SecondImportedModule:
-                        # check that the modifications made to the path during
-                        # __init__ are no longer present
-                        assert not mockDirectory2 in sys.path
+                    # check that the modifications made to the path during
+                    # __init__ are no longer present
+                    assert not mockDirectory2 in sys.path
         finally:
             sys.path = sysPathBackup
 

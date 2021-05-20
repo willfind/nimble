@@ -7,11 +7,6 @@ Tests for nimble.calculate.statistics
 # in nimble.core.logger.tests.data_set_analyzier_tests and in the data
 # hierarchy in nimble.core.data.tests.query_backend
 
-try:
-    from unittest import mock #python >=3.3
-except ImportError:
-    import mock
-
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 import pytest
@@ -21,10 +16,11 @@ from nimble.calculate import standardDeviation
 from nimble.calculate import quartiles
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
-from tests.helpers import raises
+from tests.helpers import raises, patch
 from tests.helpers import generateRegressionData
 from tests.helpers import noLogEntryExpected
 from tests.helpers import getDataConstructors
+from tests.helpers import skipMissingPackage
 
 def testStDev():
     dataArr = np.array([[1], [1], [3], [4], [2], [6], [12], [0]])
@@ -242,7 +238,7 @@ def testNonMissingNonZero():
 # residuals #
 #############
 @raises(PackageException)
-@mock.patch('nimble.calculate.statistic.scipy.nimbleAccessible', new=lambda: False)
+@patch(nimble.calculate.statistic.scipy, 'nimbleAccessible', lambda: False)
 def test_residuals_exception_sciPyNotInstalled():
     pred = nimble.data("Matrix", [[2],[3],[4]])
     control = nimble.data("Matrix", [[2],[3],[4]])
@@ -274,38 +270,24 @@ def test_residuals_exception_zeroAxisOnParam():
     predOrig = nimble.data("Matrix", [[2],[3],[4]])
     controlOrig = nimble.data("Matrix", [[2,2],[3,3],[4,4]])
 
-    try:
+    with raises(InvalidArgumentValue):
         pred = predOrig.copy().points.extract(lambda x: False)
         control = controlOrig.copy().points.extract(lambda x: False)
         nimble.calculate.residuals(pred, control)
-        assert False  # expected InvalidArgumentValue
-    except InvalidArgumentValue as ae:
-#        print ae
-        pass
 
-    try:
+    with raises(InvalidArgumentValue):
         pred = predOrig.copy().features.extract(lambda x: False)
         nimble.calculate.residuals(pred, controlOrig)
-        assert False  # expected InvalidArgumentValue
-    except InvalidArgumentValue as ae:
-#        print ae
-        pass
 
-    try:
+    with raises(InvalidArgumentValue):
         control = controlOrig.copy().features.extract(lambda x: False)
         nimble.calculate.residuals(predOrig, control)
-        assert False  # expected InvalidArgumentValue
-    except InvalidArgumentValue as ae:
-#        print ae
-        pass
 
 #compare to same func in scikitlearn
+@skipMissingPackage('sklearn')
 @noLogEntryExpected
 def test_residuals_matches_SKL():
-    try:
-        nimble.core._learnHelpers.findBestInterface("scikitlearn")
-    except InvalidArgumentValue:
-        return
+    nimble.core._learnHelpers.findBestInterface("scikitlearn")
 
     # with handmade data
     pred = nimble.data("Matrix", [[0],[2],[4]], useLog=False)

@@ -2,16 +2,13 @@
 Test matrix operations
 """
 
-from unittest.mock import patch
-
 import nimble
 from nimble.calculate import elementwiseMultiply
 from nimble.calculate import elementwisePower
 from tests.helpers import noLogEntryExpected
-from tests.helpers import CalledFunctionException, calledException
 from tests.helpers import getDataConstructors
+from tests.helpers import assertCalled
 
-@patch('nimble.core.data.Base.__mul__', calledException)
 def test_elementwiseMultiply_callsObjElementsMultiply():
     left = [[1, 2, 3], [4, 5, 6]]
     right = [[6, 5, 4], [3, 2, 1]]
@@ -19,11 +16,8 @@ def test_elementwiseMultiply_callsObjElementsMultiply():
         leftObj = lCon(left)
         for rCon in getDataConstructors():
             rightObj = rCon(right)
-            try:
+            with assertCalled(nimble.core.data.Base, '__mul__'):
                 mult = elementwiseMultiply(leftObj, rightObj)
-                assert False # expected CalledFunctionException
-            except CalledFunctionException:
-                pass
 
 def test_elementwiseMultiply():
     left = [[1, 2, 3], [4, 5, 6]]
@@ -50,7 +44,6 @@ def test_elementwiseMultiply_logCount():
     mult = elementwiseMultiply(leftObj, rightObj)
 
 
-@patch('nimble.core.data.Base.__pow__', calledException)
 def test_elementwisePower_callsObjElementsMultiply():
     left = [[1, 2, 3], [4, 5, 6]]
     right = [[6, 5, 4], [3, 2, 1]]
@@ -58,11 +51,8 @@ def test_elementwisePower_callsObjElementsMultiply():
         leftObj = lCon(left)
         for rCon in getDataConstructors():
             rightObj = rCon(right)
-            try:
+            with assertCalled(nimble.core.data.Base, '__pow__'):
                 pow = elementwisePower(leftObj, rightObj)
-                assert False # expected CalledFunctionException
-            except CalledFunctionException:
-                pass
 
 def test_elementwisePower():
     left = [[1, 2, 3], [4, 5, 6]]

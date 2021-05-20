@@ -103,11 +103,8 @@ def test_detectBestResult_exceptionsAreReported():
     def neverWorks(knowns, predicted):
         raise InvalidArgumentValue(wanted)
 
-    try:
+    with raises(InvalidArgumentValue, match=wanted):
         detectBestResult(neverWorks)
-        assert False  # we expected an exception in this test
-    except InvalidArgumentValue as iav:
-        assert wanted in iav.message
 
 @noLogEntryExpected
 def _backend(performanceFunction, optimality):

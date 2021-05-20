@@ -9,14 +9,13 @@ import pathlib
 from functools import wraps
 import tempfile
 
-from unittest import mock
 import configparser
 
 import nimble
 from nimble.core.configuration import SessionConfiguration
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
-from tests.helpers import raises
+from tests.helpers import raises, patch
 
 
 ###############
@@ -246,11 +245,8 @@ def test_settings_savingSection():
     assert temp.get('TestSec1', "op1") == '1'
     assert temp.get('TestSec1', "op2") == '2'
     # confirm that the change outside the section was not saved
-    try:
+    with raises(configparser.NoSectionError):
         val = temp.get('TestSec2', "op1")
-        assert False
-    except configparser.NoSectionError:
-        pass
 
 @useSessionConfiguration
 def test_settings_savingOption():
@@ -273,16 +269,10 @@ def test_settings_savingOption():
     temp = nimble.core.configuration.loadSettings()
     assert temp.get('TestSec1', "op2") == '2'
     # confirm that the other changes were not saved
-    try:
+    with raises(configparser.NoSectionError):
         val = temp.get('TestSec2', "op1")
-        assert False
-    except configparser.NoSectionError:
-        pass
-    try:
+    with raises(configparser.NoOptionError):
         val = temp.get('TestSec1', "op1") == '1'
-        assert False
-    except configparser.NoOptionError:
-        pass
 
 def setAvailableInterfaceOptions(save=False):
     """
@@ -395,42 +385,30 @@ def test_settings_setInterfaceOptionsChanges():
     assert nimble.settings.get('TestOther', 'Temp0') == 'unchanged'
     # set should only allow setting for new option
     nimble.settings.set('Test', 'NotTemp1', '2')
-    try:
+    with raises(InvalidArgumentValue):
         nimble.settings.set('Test', 'Temp1', '2')
-        assert False
-    except InvalidArgumentValue:
-        pass
 
     # now change the option back to the original
     tempInterface1.optionNames[1] = 'Temp1'
     setAvailableInterfaceOptions()
 
     nimble.settings.set('Test', 'Temp1', '2')
-    try:
+    with raises(InvalidArgumentValue):
         nimble.settings.set('Test', 'NotTemp1', '2')
-        assert False
-    except InvalidArgumentValue:
-        pass
 
 def test_settings_allowedNames():
     """ Test that you can only set allowed names in interface sections """
     for interface in getInterfaces(ignoreCustomInterfaces=True):
         name = interface.getCanonicalName()
-        try:
+        with raises(InvalidArgumentValue):
             nimble.settings.set(name, 'foo', "bar")
-            assert False
-        except InvalidArgumentValue:
-            pass
 
 def test_settings_customLearnerOptionsException():
     """ Test that you cannot set options for custom learner interfaces """
 
     for name in ['nimble', 'custom']:
-        try:
+        with raises(InvalidArgumentValue):
             nimble.settings.set(name, 'foo', "bar")
-            assert False # expected InvalidArgumentValue
-        except InvalidArgumentValue:
-            pass
 
 @raises(configparser.NoSectionError)
 # test that set without save is temporary
@@ -446,11 +424,8 @@ def test_settings_set_without_save():
 
 @useSessionConfiguration
 def test_settings_setDefault():
-    try:
+    with raises(configparser.NoSectionError):
         nimble.settings.get("tempSectionName", 'temp.Option.Name2')
-        assert False  # expected ConfigParser.NoSectionError
-    except configparser.NoSectionError:
-        pass
 
     nimble.settings.set("tempSectionName", "temp.Option.Name1", '1')
     nimble.settings.setDefault("tempSectionName", "temp.Option.Name2", '2')
@@ -459,22 +434,19 @@ def test_settings_setDefault():
 
     # Name2 should be reflected in file, but not Name1
     nimble.settings = nimble.core.configuration.loadSettings()
-    try:
+    with raises(configparser.NoOptionError):
         nimble.settings.get("tempSectionName", 'temp.Option.Name1')
-        assert False  # expected ConfigParser.NoOptionError
-    except configparser.NoOptionError:
-        pass
 
     assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
 
 
-@mock.patch('nimble.core.interfaces.predefined', [FailedPredefined])
+@patch(nimble.core.interfaces, 'predefined', [FailedPredefined])
 def testSetLocationForFailedPredefinedInterface():
     nimble.settings.set('FailedPredefined', 'location', 'path/to/mock')
 
 
 @raises(InvalidArgumentValue)
-@mock.patch('nimble.core.interfaces.predefined', [FailedPredefined])
+@patch(nimble.core.interfaces, 'predefined', [FailedPredefined])
 def testExceptionSetOptionForFailedPredefinedInterface():
     nimble.settings.set('FailedPredefined', 'foo', 'path/to/mock')
 
