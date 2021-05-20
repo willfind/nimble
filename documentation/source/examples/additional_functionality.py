@@ -150,21 +150,30 @@ wifi.show('randomly permuted', maxHeight=9)
 
 ## Nimble uses its `nimble.random.setSeed` function on import to control the
 ## random state, but this function is also publicly available to set a new seed
-## or disable Nimble's randomness control using `nimble.random.setSeed(None)`.
-## To demonstrate below, we view 5 random points from our data with and without
-## a set seed. Setting the seed to `None` means that `uncontrolled` will be a
-## truly random selection of points each time the code is run. Using an integer
-## to set the seed restores control so the random selection of points for
-## `controlled` will always be the same for each run.
-nimble.random.setSeed(None)
-uncontrolled = wifi.points.copy(number=5, randomize=True)
-uncontrolled.show('uncontrolled randomness sample')
+## or disable Nimble's randomness control by setting the seed to `None`. We can
+## either change the seed for the remainder of the script, or temporarily using
+## the context manager `nimble.random.alternateControl`. Even when Nimble is
+## already controlling the randomness, sometimes it can be helpful to reseed it
+## manually so that the current random state is known. This could allow us to
+## do something like recreate the same "random" object in another script.
+## Alternatively, we might want to temporarily use an uncontrolled state of
+## randomness to create an object that is different for each run of this
+## script. Below, we view five random points from our data with and without
+## a set seed. The `controlled` object will always be a copy of the same 5
+## points but `uncontrolled` will copy a random selection of points each time
+## the code is run.
 nimble.random.setSeed(1)
 controlled = wifi.points.copy(number=5, randomize=True)
 controlled.show('controlled randomness sample')
 
-## Since we last set the seed to `1` above, we will continue to get consistent
-## results for the remainder of this example. Nimble's `random` module also
+with nimble.random.alternateControl(seed=None):
+    uncontrolled = wifi.points.copy(number=5, randomize=True)
+uncontrolled.show('uncontrolled randomness sample')
+
+## The randomness within our `alternateControl` context manager was not
+## controlled but once we exited the context manager, we returned to the
+## current controlled random state. This means that all of our results will be
+## consistent for the remainder of this example. Nimble's `random` module also
 ## contains the `nimble.random.data` function for generating an object filled
 ## with random values. We will use this later to test that our custom learner
 ## is working as expected.

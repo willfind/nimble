@@ -23,7 +23,6 @@ except ImportError:
 import nimble
 from nimble import Init
 from nimble.random import numpyRandom
-from nimble.random import _startAlternateControl, _endAlternateControl
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.interfaces._interface_helpers import PythonSearcher
@@ -455,7 +454,6 @@ def shogunApplyBackend(obj, toTest, applier):
     predSG = nimble.data('Matrix', predArray, useLog=False)
     return predSG
 
-@with_setup(_startAlternateControl, _endAlternateControl)
 def trainAndApplyBackend(learner, data, applier, needKernel, needDistance,
                          extraTrainSetup):
     seed = nimble.random._generateSubsidiarySeed()
@@ -469,12 +467,10 @@ def trainAndApplyBackend(learner, data, applier, needKernel, needDistance,
         toSet['kernel'] = Init('GaussianKernel')
     if learner in needDistance:
         toSet['distance'] = Init('EuclideanDistance')
-    trainShogun = data[3:5]
     if learner in extraTrainSetup:
         shogunObj, args = extraTrainSetup[learner](shogunTraining, toSet)
     else:
         shogunObj, args = shogunTrainBackend(learner, shogunTraining, toSet)
-    testShogun = data[5]
     predSG = shogunApplyBackend(shogunObj, shogunTesting, applier)
 
     nimble.random.setSeed(seed, useLog=False)

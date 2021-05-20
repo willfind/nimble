@@ -275,16 +275,18 @@ def test_multioutput_learners_callable_from_all():
                                                 lamb=1)
 
     # Control randomness for each cross-validation so folds are consistent
-    nimble.random._startAlternateControl(seed=0)
-    ret_TTTD_multi_cv = nimble.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY, performanceFunction=metric,
-                                                       lamb=1, crossValidationError=True)
-    nimble.random.setSeed(0)
-    ret_TTTD_0_cv = nimble.trainAndTestOnTrainingData(wrappedName, trainX=trainX, trainY=trainY0, performanceFunction=metric,
-                                                   lamb=1, crossValidationError=True)
-    nimble.random.setSeed(0)
-    ret_TTTD_1_cv = nimble.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY1, performanceFunction=metric,
-                                                   lamb=1, crossValidationError=True)
-    nimble.random._endAlternateControl()
+    with nimble.random.alternateControl(seed=0):
+        ret_TTTD_multi_cv = nimble.trainAndTestOnTrainingData(
+            testName, trainX=trainX, trainY=trainY, performanceFunction=metric,
+            lamb=1, crossValidationError=True)
+    with nimble.random.alternateControl(seed=0):
+        ret_TTTD_0_cv = nimble.trainAndTestOnTrainingData(
+            wrappedName, trainX=trainX, trainY=trainY0,
+            performanceFunction=metric, lamb=1, crossValidationError=True)
+    with nimble.random.alternateControl(seed=0):
+        ret_TTTD_1_cv = nimble.trainAndTestOnTrainingData(
+            testName, trainX=trainX, trainY=trainY1,
+            performanceFunction=metric, lamb=1, crossValidationError=True)
 
     # tl.test()
     ret_TLT_multi = TLmulti.test(testX, testY, metric)

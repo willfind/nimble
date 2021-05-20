@@ -8,13 +8,12 @@ import functools
 import warnings
 
 import numpy as np
-from nose.tools import raises, with_setup
+from nose.tools import raises
 
 import nimble
 from nimble.core.interfaces.keras_interface import Keras
 from nimble.exceptions import InvalidArgumentValue
 from nimble._utility import DeferredModuleImport
-from nimble.random import _startAlternateControl, _endAlternateControl
 from .skipTestDecorator import SkipMissing
 from tests.helpers import logCountAssertionFactory, noLogEntryExpected
 
@@ -254,8 +253,6 @@ def testKeras_fitOnlyParametersDisallowedForSparse(optimizer):
                        loss='binary_crossentropy', metrics=['accuracy'],
                        epochs=2, steps_per_epoch=20, shuffle=True)
 
-
-@with_setup(_startAlternateControl, _endAlternateControl)
 @keraSkipDec
 @noLogEntryExpected
 @chooseOptimizer

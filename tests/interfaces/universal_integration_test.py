@@ -186,7 +186,6 @@ def testApplyFeatureNames():
     assert success
 
 @attr('slow')
-@nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
 def testRandomnessControl():
     """ Test that nimble takes over the control of randomness of each interface """
 
