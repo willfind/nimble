@@ -1125,12 +1125,13 @@ class Axis(ABC):
             retAxis = ret._getAxis(self._axis)
             self._base._shape[shapeIdx] -= len(retAxis)
             if self._namesCreated():
-                for index in sorted(targetList, reverse=True):
-                    del self.namesInverse[index]
-                self.names = {}
+                targetSet = set(targetList)
+                reindexedInverse = []
                 for idx, value in enumerate(self.namesInverse):
-                    if value is not None:
-                        self.names[value] = idx
+                    if value is not None and idx not in targetSet:
+                        self.names[value] = len(reindexedInverse)
+                        reindexedInverse.append(value)
+                self.namesInverse = reindexedInverse
 
         return ret
 
