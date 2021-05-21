@@ -1234,12 +1234,6 @@ def initDataObject(
         else:
             returnType = 'Matrix'
 
-    if _isBase(rawData):
-        # point/featureNames, treatAsMissing, etc. may vary
-        rawData = rawData._data
-    elif isinstance(rawData, (range, GeneratorType)):
-        rawData = list(rawData)
-
     if copyData is None:
         # signals data was constructed internally and can be modified so it
         # can be considered copied for the purposes of this function
@@ -1250,13 +1244,18 @@ def initDataObject(
     else:
         copied = False
 
-    # record if extraction occurred before we possibly modify *Names parameters
-    ptsExtracted = extracted[0] if extracted[0] else pointNames is True
-    ftsExtracted = extracted[1] if extracted[1] else featureNames is True
-
-    # If skipping data processing, no modification needs to be made
-    # to the data, so we can skip name extraction and missing replacement.
     kwargs = {}
+    if _isBase(rawData):
+        # only use data; point/featureNames, treatAsMissing, etc. may vary
+        # _data is always 2D, but _shape could be higher dimension
+        kwargs['shape'] = rawData._shape
+        if isinstance(rawData, nimble.core.data.BaseView):
+            rawData = rawData.copy()
+            copied = True
+        rawData = rawData._data
+    elif isinstance(rawData, (range, GeneratorType)):
+        rawData = list(rawData)
+        copied = True
     # convert these types as indexing may cause dimensionality confusion
     if _isNumpyMatrix(rawData):
         rawData = np.array(rawData)
@@ -1264,7 +1263,10 @@ def initDataObject(
     if _isScipySparse(rawData) and not scipy.sparse.isspmatrix_coo(rawData):
         rawData = rawData.tocoo()
         copied = True
-        copied = True
+
+    # record if extraction occurred before we possibly modify *Names parameters
+    ptsExtracted = extracted[0] if extracted[0] else pointNames is True
+    ftsExtracted = extracted[1] if extracted[1] else featureNames is True
 
     if isHighDimensionData(rawData, skipDataProcessing):
         # additional name validation / processing before extractNames
@@ -1274,6 +1276,8 @@ def initDataObject(
         kwargs['shape'] = tensorShape
         copied = True
 
+    # If skipping data processing, no modification needs to be made
+    # to the data, so we can skip name extraction and missing replacement.
     if skipDataProcessing:
         if returnType == 'List':
             kwargs['checkAll'] = False
