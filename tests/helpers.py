@@ -122,6 +122,20 @@ def getDataConstructors(includeViews=True):
     return constructors
 
 class raises:
+    """
+    Ensure that a given operation raises the expected exception.
+
+    Can be used as a decorator or a context manager. The context manager
+    returns a pytest.ExceptionInfo object for further exception analysis.
+
+    Parameters
+    ----------
+    exception
+        The exception object expected to be raised.
+    match
+        An optional string or regex object to further test that the string
+        representation of the exception is as expected.
+    """
     def __init__(self, exception, *args, **kwargs):
         self.raiser = pytest.raises(exception, *args, **kwargs)
 
@@ -141,6 +155,20 @@ class raises:
         return self.raiser.__exit__(exc_type, value, traceback)
 
 class patch:
+    """
+    Patch an object to do something different than it was designed to do.
+
+    Can be used as a decorator or a context manager.
+
+    Parameters
+    ----------
+    obj
+        The object containing the attribute that will be patched.
+    name : str
+        The name of the attribute to apply the patch to.
+    value
+        The object that will replace the attribute.
+    """
     def __init__(self, obj, name, value):
         self.obj = obj
         self.name = name
@@ -166,9 +194,23 @@ class patch:
         self.patch.undo()
 
 def patchCalled(obj, name):
+    """
+    Patch the object to raise a CalledFunctionException.
+
+    Can be used as a decorator or a context manager. This is primarily useful
+    when not expecting the mocked object to be used. If wanting to test that
+    a given object is utilized, it is simpler to use assertCalled.
+    """
     return patch(obj, name, calledException)
 
 class assertCalled:
+    """
+    For testing that a given object is utilized during the test.
+
+    Can be used as a decorator or a context manager. The object will be patched
+    to return a CalledFunctionException and the test passes if that exception
+    occurs. The return of the context manager is a pytest.ExceptionInfo object.
+    """
     def __init__(self, obj, name):
         self.patch = patchCalled(obj, name)
         self.raises = raises(CalledFunctionException)
@@ -176,9 +218,7 @@ class assertCalled:
     def __call__(self, func):
         @wraps(func)
         def wrapped(*args, **kwargs):
-            function = self.patch(func)
-            function = self.raises(function)
-            return function(*args, **kwargs)
+            return self.raises(self.patch(func))(*args, **kwargs)
         return wrapped
 
     def __enter__(self):
@@ -190,6 +230,9 @@ class assertCalled:
         return self.raises.__exit__(exc_type, value, traceback)
 
 def skipMissingPackage(package):
+    """
+    Return a decorator to skip a test if the package required is missing.
+    """
     try:
         nimble.core._learnHelpers.findBestInterface(package)
         missing = False

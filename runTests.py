@@ -21,7 +21,7 @@ if __name__ == '__main__':
     args.append('--doctest-modules')
     # disable faulthandler and warnings by default
     if 'faulthandler' not in args:
-        # do not dump segfaults from shogun tests
+        # do not output segfault info from shogun tests
         args.extend(['-p', 'no:faulthandler'])
     if 'warnings' not in args:
         # ignore all warnings unless turned on in test

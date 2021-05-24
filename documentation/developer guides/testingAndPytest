@@ -35,8 +35,8 @@ requirements for testing.
 Firstly, nimble.core.interfaces defines interfaces to packages which may not be
 present on the host machine. Therefore tests of those interfaces, which
 rely on those packages, must be conditionally skipped if the package
-is not present. Therefore, all tests for interfaces must be wrapped using an
-instance of the skipMissing decorator in tests/interfaces/skipTestDecorator.py.
+is not present. Therefore, all tests for interfaces must be wrapped using the
+skipMissingPackage decorator factory in tests/helpers.py.
 
 Secondly, nimble.core.data defines a class hierarchy of objects which share
 exactly the same user facing API. It is inconvenient to have to define new
