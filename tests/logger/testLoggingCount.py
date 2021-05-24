@@ -105,7 +105,7 @@ match_funcs = [
 match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 
 random_logged = [
-    'data', 'setSeed',
+    'data', 'setSeed', 'alternateControl',
     ]
 random_funcs = random_logged
 random_tested = list(map(prefixAdder('nimble.random'), random_funcs))

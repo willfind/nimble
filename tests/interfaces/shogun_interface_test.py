@@ -463,12 +463,10 @@ def trainAndApplyBackend(learner, data, applier, needKernel, needDistance,
         toSet['kernel'] = Init('GaussianKernel')
     if learner in needDistance:
         toSet['distance'] = Init('EuclideanDistance')
-    trainShogun = data[3:5]
     if learner in extraTrainSetup:
         shogunObj, args = extraTrainSetup[learner](shogunTraining, toSet)
     else:
         shogunObj, args = shogunTrainBackend(learner, shogunTraining, toSet)
-    testShogun = data[5]
     predSG = shogunApplyBackend(shogunObj, shogunTesting, applier)
 
     nimble.random.setSeed(seed, useLog=False)

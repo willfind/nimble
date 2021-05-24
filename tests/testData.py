@@ -23,6 +23,7 @@ from nimble.core._createHelpers import _intFloatOrString
 from nimble._utility import sparseMatrixToArray, isDatetime, requests
 
 from tests.helpers import raises
+from tests.helpers import getDataConstructors
 from tests.helpers import oneLogEntryExpected, noLogEntryExpected
 from tests.helpers import patch, patchCalled, assertCalled
 
@@ -3767,8 +3768,15 @@ def makeTensorData(matrix):
     tensors = [rank3List, rank4List, rank5List, rank3Array, rank4Array, rank5Array,
                rank3Array2D, rank4Array2D, rank5Array2D, rank3DF, rank4DF, rank5DF]
     # cannot construct high dimension empty tensors for sparse
-    if rank3Array.shape[-1] > 0:
+    notEmpty = rank3Array.shape[-1] > 0
+    if notEmpty:
         tensors.extend([rank3COO, rank4COO, rank5COO])
+
+    for constructor in getDataConstructors():
+        if notEmpty or 'Sparse' not in constructor.args:
+            tensors.append(constructor(rank3List))
+            tensors.append(constructor(rank4List))
+            tensors.append(constructor(rank5List))
 
     return tensors
 

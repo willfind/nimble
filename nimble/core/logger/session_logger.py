@@ -584,20 +584,21 @@ class SessionLogger(object):
 
             self.log(logType, logInfo)
 
-    def logRandomSeed(self, useLog, seed):
+    def logRandomSeed(self, useLog, action, seed):
         """
         Log the random seed value.
 
-        If this will be logged, store an entry in the database with
-        "setSeed" as the logType and a dictionary (stored as a string)
-        of the seed value as the logInfo.
+        If this will be logged, this uses the default log settings .
 
+        action : str
+            A description of the action that is changing the state of
+            the random seed.
         seed : int
             The random seed value.
         """
         if loggingEnabled(useLog):
-            logType = 'random.setSeed'
-            logInfo = {'seed': seed}
+            logType = 'setSeed'
+            logInfo = {'action': action, 'seed': seed}
             self.log(logType, logInfo)
 
     ###################
@@ -849,25 +850,22 @@ def _showLogOutputString(listOfLogs, levelOfDetail, append):
             fullLog += "." * 79
             previousLogSessionNumber = sessionNumber
         try:
-            if logType not in nimble.core.logger.active.logTypes:
-                fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
-                fullLog += '.' * 79
-            elif logType == 'load':
+            if logType == 'load':
                 fullLog += _buildLoadLogString(timestamp, logInfo)
-                fullLog += '.' * 79
             elif logType == 'data':
                 fullLog += _buildDataLogString(timestamp, logInfo)
-                fullLog += '.' * 79
             elif logType == 'prep' and levelOfDetail > 1:
                 fullLog += _buildPrepLogString(timestamp, logInfo)
-                fullLog += '.' * 79
             elif ((logType == 'run' and levelOfDetail > 1)
                   or (logType == 'runCV' and levelOfDetail > 2)):
                 fullLog += _buildRunLogString(timestamp, logInfo)
-                fullLog += '.' * 79
             elif logType == 'crossVal' and levelOfDetail > 1:
                 fullLog += _buildCVLogString(timestamp, logInfo)
-                fullLog += '.' * 79
+            elif logType == 'setSeed':
+                fullLog += _buildSetSeedLogString(timestamp, logInfo)
+            else:
+                fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
+            fullLog += '.' * 79
         except (TypeError, KeyError):
             fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
             fullLog += '.' * 79
@@ -1009,6 +1007,14 @@ def _buildCVLogString(timestamp, entry):
         argString = _dictToKeywordString(arguments)
         fullLog += "{0:<20.3f}{1:20s}".format(result, argString)
         fullLog += "\n"
+    return fullLog
+
+def _buildSetSeedLogString(timestamp, entry):
+    """
+    Constructs the string that will be output for setSeed logTypes.
+    """
+    asHeader = entry['action'] + '(seed={})'.format(entry['seed'])
+    fullLog = _logHeader(asHeader, timestamp)
     return fullLog
 
 def _buildDefaultLogString(timestamp, logType, entry):

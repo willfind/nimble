@@ -254,7 +254,6 @@ def testKeras_fitOnlyParametersDisallowedForSparse(optimizer):
                        loss='binary_crossentropy', metrics=['accuracy'],
                        epochs=2, steps_per_epoch=20, shuffle=True)
 
-
 @keraSkipDec
 @noLogEntryExpected
 @chooseOptimizer
