@@ -155,13 +155,6 @@ class Axis(ABC):
 
 
     def _setNames(self, assignments, useLog=None):
-        self._setNamesBackend(assignments)
-
-        handleLogging(useLog, 'prep', '{ax}s.setNames'.format(ax=self._axis),
-                      self._base.getTypeString(), self._sigFunc('setNames'),
-                      assignments)
-
-    def _setNamesBackend(self, assignments):
         if assignments is None:
             self.names = None
             self.namesInverse = None
@@ -210,6 +203,10 @@ class Axis(ABC):
 
         self.names = names
         self.namesInverse = reverseMap
+
+        handleLogging(useLog, 'prep', '{ax}s.setNames'.format(ax=self._axis),
+                      self._base.getTypeString(), self._sigFunc('setNames'),
+                      assignments)
 
     def _getIndex(self, identifier, allowFloats=False):
         num = len(self)

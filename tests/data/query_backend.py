@@ -254,8 +254,6 @@ class QueryBackend(DataTestObject):
                     setter = exclude.features.setNames
                 count = len(exclude.features)
 
-            # increase the index of the default point name so that it will be
-            # recognizable when we read in from the file.
             axisExclude = getattr(exclude, axis + 's')
 
             with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
