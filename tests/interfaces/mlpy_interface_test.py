@@ -2,16 +2,16 @@
 Unit tests for mlpy_interface.py
 """
 
-from nose.tools import *
 import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.core.interfaces.mlpy_interface import Mlpy
-from .test_helpers import checkLabelOrderingAndScoreAssociations
-from .skipTestDecorator import SkipMissing
+from tests.helpers import raises
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
+from .test_helpers import checkLabelOrderingAndScoreAssociations
+from .skipTestDecorator import SkipMissing
 
 mlpySkipDec = SkipMissing('mlpy')
 

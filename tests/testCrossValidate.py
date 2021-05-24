@@ -4,14 +4,10 @@ the backend helpers they rely on.
 """
 
 import math
-import sys
 from unittest import mock
 import functools
 
-import numpy as np
-import nose
-from nose.tools import *
-from nose.plugins.attrib import attr
+import pytest
 
 import nimble
 from nimble import crossValidate
@@ -25,8 +21,8 @@ from nimble.calculate import rootMeanSquareError, meanAbsoluteError
 from nimble.calculate import meanFeaturewiseRootMeanSquareError
 from nimble.random import pythonRandom
 from nimble.learners import KNNClassifier
-from nimble.core._learnHelpers import computeMetrics
 from nimble.core.learn import KFoldCrossValidator
+from tests.helpers import raises
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import generateClassificationData
 from tests.helpers import getDataConstructors
@@ -101,7 +97,7 @@ def _assertClassifierErrorOnRandomDataPlausible(actualError, numLabels, toleranc
     assert error <= tolerance
 
 
-@attr('slow')
+@pytest.mark.slow
 def test_crossValidate_reasonable_results():
     """Assert that crossValidate returns reasonable errors for known algorithms
     on cooked data sets:
@@ -248,8 +244,7 @@ def test_crossValidate_2d_Non_label_scoremodes_disallowed():
         pass
 
 
-@attr('slow')
-@nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
+@pytest.mark.slow
 def test_crossValidate_foldingRandomness():
     """Assert that for a dataset, the same algorithm will generate the same model
     (and have the same accuracy) when presented with identical random state (and
@@ -267,8 +262,7 @@ def test_crossValidate_foldingRandomness():
         resultTwo = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, {}, folds=3)
         assert resultOne.bestResult == resultTwo.bestResult
 
-@attr('slow')
-@nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
+@pytest.mark.slow
 def test_crossValidateResults():
     """Check basic properties of crossValidate.allResults
 
@@ -315,8 +309,7 @@ def test_crossValidateResults():
         assert isinstance(curResult['fractionIncorrect'], float)
 
 
-@attr('slow')
-@nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
+@pytest.mark.slow
 def test_crossValidateBestArguments():
     """Check that the best / fittest argument set is returned.
 
@@ -413,7 +406,7 @@ def test_crossValidate_attributes_withDefaultArgs():
     assert len(allResultsList[0]) == 1 and 'fractionIncorrect' in allResultsList[0]
 
 
-@attr('slow')
+@pytest.mark.slow
 def test_crossValidate_sameResults_avgfold_vs_allcollected():
     # When whole dataset has the same label, crossValidated score
     #reflects 100% accruacy (with a classifier)

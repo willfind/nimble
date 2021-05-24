@@ -14,14 +14,14 @@ except ImportError:
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal
-from nose.tools import raises
-from nose.tools import assert_almost_equal
+import pytest
 
 import nimble
 from nimble.calculate import standardDeviation
 from nimble.calculate import quartiles
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination, PackageException
+from tests.helpers import raises
 from tests.helpers import generateRegressionData
 from tests.helpers import noLogEntryExpected
 from tests.helpers import getDataConstructors
@@ -31,7 +31,7 @@ def testStDev():
     testRowList = nimble.data('List', source=dataArr, featureNames=['nums'])
     stDevContainer = testRowList.features.calculate(standardDeviation)
     stDev = stDevContainer[0, 0]
-    assert_almost_equal(stDev, 3.8891, 3)
+    assert stDev == pytest.approx(3.8891, abs=1e-4)
 
 @noLogEntryExpected
 def testQuartilesAPI():

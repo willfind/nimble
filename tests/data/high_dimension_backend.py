@@ -8,7 +8,6 @@ import tempfile
 import numpy as np
 import pandas as pd
 import scipy.sparse
-from nose.tools import raises
 
 import nimble
 from nimble.exceptions import ImproperObjectAction

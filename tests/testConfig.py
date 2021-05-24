@@ -3,13 +3,12 @@ Tests to check the loading, writing, and usage of nimble.settings, along
 with the underlying structures being used.
 """
 
-import tempfile
-import copy
 import os
-from functools import wraps
+import copy
 import pathlib
+from functools import wraps
+import tempfile
 
-from nose.tools import raises
 from unittest import mock
 import configparser
 
@@ -17,6 +16,8 @@ import nimble
 from nimble.core.configuration import SessionConfiguration
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
+from tests.helpers import raises
+
 
 ###############
 ### Helpers ###

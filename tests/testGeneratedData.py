@@ -7,7 +7,6 @@ nimble.random.data, nimble.ones, nimble.zeros, nimble.identity
 import copy
 
 import numpy as np
-from nose.tools import *
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue

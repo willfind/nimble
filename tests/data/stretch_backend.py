@@ -4,7 +4,6 @@ Tests for using stretch attribute to trigger broadcasting operations
 
 import operator
 
-from nose.tools import raises
 import numpy as np
 
 import nimble
@@ -12,6 +11,7 @@ from nimble.exceptions import ImproperObjectAction, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.random import pythonRandom
 from .baseObject import DataTestObject
+from tests.helpers import raises
 from tests.helpers import assertNoNamesGenerated
 from tests.helpers import noLogEntryExpected
 from tests.helpers import getDataConstructors

@@ -1,13 +1,12 @@
 import math
 
 import numpy as np
-from nose.tools import raises
 
 import nimble
 from nimble.calculate import cosineSimilarity
-from nimble.calculate import rSquared
 from nimble.calculate import confusionMatrix
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from tests.helpers import raises
 from tests.helpers import noLogEntryExpected
 from tests.helpers import getDataConstructors
 

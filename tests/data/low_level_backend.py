@@ -25,17 +25,16 @@ try:
 except ImportError:
     import mock
 
-from nose.tools import *
-
 import nimble
 from nimble.core.data import Base
 from nimble.core.data import available
-from nimble._utility import inheritDocstringsFactory, numpy2DArray
+from nimble._utility import numpy2DArray
 from nimble._utility import pd
 from nimble.core.data._dataHelpers import constructIndicesList
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
+from nimble.exceptions import ImproperObjectAction
 from nimble.random import pythonRandom
+from tests.helpers import raises
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import CalledFunctionException, calledException

@@ -6,15 +6,11 @@ import random
 import copy
 
 import numpy as np
-import nose
 
 import nimble
-from nimble.exceptions import InvalidArgumentValue
-from nimble.random import _startAlternateControl, _endAlternateControl
 from tests.helpers import oneLogEntryExpected, logCountAssertionFactory
 
 
-@nose.with_setup(_startAlternateControl, _endAlternateControl)
 def testSetRandomSeedExplicit():
     """ Test nimble.random.setSeed yields Nimble accessible random objects with the correct random behavior """
     expPy = random.Random(1333)
@@ -26,7 +22,6 @@ def testSetRandomSeedExplicit():
         assert nimble.random.numpyRandom.rand() == expNp.rand()
 
 
-@nose.with_setup(_startAlternateControl, _endAlternateControl)
 def testSetRandomSeedNone():
     """ Test nimble.random.setSeed operates as expected when passed None (-- use system time as seed) """
     nimble.random.setSeed(None)
@@ -44,7 +39,6 @@ def testSetRandomSeedNone():
     assert origNp.rand() != nimble.random.numpyRandom.rand()
 
 
-@nose.with_setup(_startAlternateControl, _endAlternateControl)
 @logCountAssertionFactory(3)
 def testSetRandomSeedPropagate():
     """ Test that nimble.random.setSeed will correctly control how randomized methods in nimble perform """

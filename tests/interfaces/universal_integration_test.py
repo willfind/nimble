@@ -7,21 +7,14 @@ the UniversalInterface api.
 import os
 import sys
 import importlib
-import copy
 from unittest import mock
 import tempfile
-from types import ModuleType
 
-import nose
-from nose.tools import raises
-from nose.plugins.attrib import attr
-#@attr('slow')
+import pytest
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import PackageException
-from nimble.core.interfaces.universal_interface import UniversalInterface
-from nimble.core._learnHelpers import generateClusteredPoints
 from tests.helpers import generateClassificationData
 from tests.helpers import generateRegressionData
 
@@ -43,7 +36,7 @@ def checkFormatRaw(scores, numLabels):
     assert (scores.shape[1] == numLabels
             or scores.shape[1] == (numLabels * (numLabels - 1)) / 2)
 
-@attr('slow')
+@pytest.mark.slow
 def test__getScoresFormat():
     """
     Automatically checks the _getScores() format for as many classifiers
@@ -86,7 +79,7 @@ def test__getScoresFormat():
                         continue
                     checkFormatRaw(scores, i)
 
-@attr('slow')
+@pytest.mark.slow
 def testGetScoresFormat():
     """
     Automatically checks the TrainedLearner getScores() format for as many classifiers we
@@ -125,7 +118,7 @@ def testGetScoresFormat():
                     checkFormat(scores, i)
 
 
-@attr('slow')
+@pytest.mark.slow
 def testApplyFeatureNames():
     """ Check train label feature name is set during apply for regression and classification """
     regressionData = generateRegressionData(5, 10, 5)
@@ -185,8 +178,7 @@ def testApplyFeatureNames():
     # ensure not passing because except Exception is catching all cases
     assert success
 
-@attr('slow')
-@nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
+@pytest.mark.slow
 def testRandomnessControl():
     """ Test that nimble takes over the control of randomness of each interface """
 

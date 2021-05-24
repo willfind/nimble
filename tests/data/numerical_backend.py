@@ -22,8 +22,6 @@ import os.path
 from unittest.mock import patch
 from functools import partial
 
-from nose.tools import *
-
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
@@ -31,6 +29,7 @@ from nimble.random import numpyRandom
 from nimble.random import pythonRandom
 
 from .baseObject import DataTestObject
+from tests.helpers import raises
 from tests.helpers import logCountAssertionFactory, noLogEntryExpected
 from tests.helpers import assertNoNamesGenerated
 from tests.helpers import CalledFunctionException, calledException

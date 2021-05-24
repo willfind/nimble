@@ -1,10 +1,13 @@
 
 import numpy as np
-from nose.tools import assert_almost_equal, assert_equal
+import pytest
 
 import nimble
 from nimble._utility import scipy
-from nimble.core.logger.data_set_analyzer import *
+from nimble.core.logger.data_set_analyzer import featurewiseFunctionGenerator
+from nimble.core.logger.data_set_analyzer import produceFeaturewiseInfoTable
+from nimble.core.logger.data_set_analyzer import appendColumns
+from nimble.core.logger.data_set_analyzer import produceAggregateTable
 from tests.helpers import getDataConstructors
 
 
@@ -23,35 +26,35 @@ def testProduceInfoTable_denseData():
         for i in range(len(funcNames)):
             funcName = funcNames[i]
             if funcName == "mean":
-                assert_almost_equal(rawTable[1][i], 1.6667, 3)
-                assert_almost_equal(rawTable[2][i], 2.000, 3)
-                assert_almost_equal(rawTable[3][i], 3.000, 3)
-                assert_almost_equal(rawTable[4][i], 2.6667, 3)
+                assert rawTable[1][i] == pytest.approx(1.6667, abs=1e-4)
+                assert rawTable[2][i] == pytest.approx(2.000, abs=1e-4)
+                assert rawTable[3][i] == pytest.approx(3.000, abs=1e-4)
+                assert rawTable[4][i] == pytest.approx(2.6667, abs=1e-4)
             elif funcName == "minimum":
-                assert_equal(rawTable[1][i], 1)
-                assert_equal(rawTable[2][i], 1)
-                assert_equal(rawTable[3][i], 1)
-                assert_equal(rawTable[4][i], 1)
+                assert rawTable[1][i] == 1
+                assert rawTable[2][i] == 1
+                assert rawTable[3][i] == 1
+                assert rawTable[4][i] == 1
             elif funcName == "maximum":
-                assert_equal(rawTable[1][i], 3)
-                assert_equal(rawTable[2][i], 3)
-                assert_equal(rawTable[3][i], 5)
-                assert_equal(rawTable[4][i], 5)
+                assert rawTable[1][i] == 3
+                assert rawTable[2][i] == 3
+                assert rawTable[3][i] == 5
+                assert rawTable[4][i] == 5
             elif funcName == "uniqueCount":
-                assert_equal(rawTable[1][i], 2)
-                assert_equal(rawTable[2][i], 3)
-                assert_equal(rawTable[3][i], 3)
-                assert_equal(rawTable[4][i], 3)
+                assert rawTable[1][i] == 2
+                assert rawTable[2][i] == 3
+                assert rawTable[3][i] == 3
+                assert rawTable[4][i] == 3
             elif funcName == "standardDeviation":
-                assert_almost_equal(rawTable[1][i], 1.1547, 3)
-                assert_almost_equal(rawTable[2][i], 1.0000, 3)
-                assert_almost_equal(rawTable[3][i], 2.0000, 3)
-                assert_almost_equal(rawTable[4][i], 2.0816, 3)
+                assert rawTable[1][i] == pytest.approx(1.1547, abs=1e-4)
+                assert rawTable[2][i] == pytest.approx(1.0000, abs=1e-4)
+                assert rawTable[3][i] == pytest.approx(2.0000, abs=1e-4)
+                assert rawTable[4][i] == pytest.approx(2.0816, abs=1e-4)
             elif funcName == "median":
-                assert_equal(rawTable[1][i], 1.0)
-                assert_equal(rawTable[2][i], 2.0)
-                assert_equal(rawTable[3][i], 3.0)
-                assert_equal(rawTable[4][i], 2.0)
+                assert rawTable[1][i] == 1.0
+                assert rawTable[2][i] == 2.0
+                assert rawTable[3][i] == 3.0
+                assert rawTable[4][i] == 2.0
 
 
 def testProduceInfoTable_sparseData():
@@ -72,52 +75,51 @@ def testProduceInfoTable_sparseData():
         testObj = constructor(source=raw)
         funcs = featurewiseFunctionGenerator()
         rawTable = produceFeaturewiseInfoTable(testObj, funcs)
-        print(rawTable)
         funcNames = rawTable[0]
         for i in range(len(funcNames)):
             funcName = funcNames[i]
             if funcName == "mean":
-                assert_almost_equal(rawTable[1][i], 0.3333, 3)
-                assert_almost_equal(rawTable[2][i], 0.3333, 3)
-                assert_almost_equal(rawTable[3][i], 0.1667, 3)
-                assert_almost_equal(rawTable[4][i], 0.4000, 3)
-                assert_almost_equal(rawTable[5][i], 0.5000, 3)
-                assert_almost_equal(rawTable[6][i], 0.1667, 3)
+                assert rawTable[1][i] == pytest.approx(0.3333, abs=1e-4)
+                assert rawTable[2][i] == pytest.approx(0.3333, abs=1e-4)
+                assert rawTable[3][i] == pytest.approx(0.1667, abs=1e-4)
+                assert rawTable[4][i] == pytest.approx(0.4000, abs=1e-4)
+                assert rawTable[5][i] == pytest.approx(0.5000, abs=1e-4)
+                assert rawTable[6][i] == pytest.approx(0.1667, abs=1e-4)
             elif funcName == "minimum":
-                assert_equal(rawTable[1][i], 0)
-                assert_equal(rawTable[2][i], 0)
-                assert_equal(rawTable[3][i], 0)
-                assert_equal(rawTable[4][i], 0)
-                assert_equal(rawTable[5][i], 0)
-                assert_equal(rawTable[6][i], 0)
+                assert rawTable[1][i] == 0
+                assert rawTable[2][i] == 0
+                assert rawTable[3][i] == 0
+                assert rawTable[4][i] == 0
+                assert rawTable[5][i] == 0
+                assert rawTable[6][i] == 0
             elif funcName == "maximum":
-                assert_equal(rawTable[1][i], 1)
-                assert_equal(rawTable[2][i], 1)
-                assert_equal(rawTable[3][i], 1)
-                assert_equal(rawTable[4][i], 1)
-                assert_equal(rawTable[5][i], 1)
-                assert_equal(rawTable[6][i], 1)
+                assert rawTable[1][i] == 1
+                assert rawTable[2][i] == 1
+                assert rawTable[3][i] == 1
+                assert rawTable[4][i] == 1
+                assert rawTable[5][i] == 1
+                assert rawTable[6][i] == 1
             elif funcName == "uniqueCount":
-                assert_equal(rawTable[1][i], 2)
-                assert_equal(rawTable[2][i], 2)
-                assert_equal(rawTable[3][i], 2)
-                assert_equal(rawTable[4][i], 2)
-                assert_equal(rawTable[5][i], 2)
-                assert_equal(rawTable[6][i], 2)
+                assert rawTable[1][i] == 2
+                assert rawTable[2][i] == 2
+                assert rawTable[3][i] == 2
+                assert rawTable[4][i] == 2
+                assert rawTable[5][i] == 2
+                assert rawTable[6][i] == 2
             elif funcName == "standardDeviation":
-                assert_almost_equal(rawTable[1][i], 0.5164, 3)
-                assert_almost_equal(rawTable[2][i], 0.5164, 3)
-                assert_almost_equal(rawTable[3][i], 0.4082, 3)
-                assert_almost_equal(rawTable[4][i], 0.5477, 3)
-                assert_almost_equal(rawTable[5][i], 0.5477, 3)
-                assert_almost_equal(rawTable[6][i], 0.4082, 3)
+                assert rawTable[1][i] == pytest.approx(0.5164, abs=1e-4)
+                assert rawTable[2][i] == pytest.approx(0.5164, abs=1e-4)
+                assert rawTable[3][i] == pytest.approx(0.4082, abs=1e-4)
+                assert rawTable[4][i] == pytest.approx(0.5477, abs=1e-4)
+                assert rawTable[5][i] == pytest.approx(0.5477, abs=1e-4)
+                assert rawTable[6][i] == pytest.approx(0.4082, abs=1e-4)
             elif funcName == "median":
-                assert_equal(rawTable[1][i], 0)
-                assert_equal(rawTable[2][i], 0)
-                assert_equal(rawTable[3][i], 0)
-                assert_equal(rawTable[4][i], 0)
-                assert_equal(rawTable[5][i], 0.5)
-                assert_equal(rawTable[6][i], 0)
+                assert rawTable[1][i] == 0
+                assert rawTable[2][i] == 0
+                assert rawTable[3][i] == 0
+                assert rawTable[4][i] == 0
+                assert rawTable[5][i] == 0.5
+                assert rawTable[6][i] == 0
 
 
 def testAppendColumns():

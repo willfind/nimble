@@ -11,8 +11,12 @@ defined in this file.
 
 """
 
+import pytest
+
 import nimble
 
+from .baseObject import objConstructorMaker
+from .baseObject import viewConstructorMaker
 from .baseObject import startObjectValidation
 from .baseObject import stopObjectValidation
 
@@ -41,61 +45,91 @@ from .data_specific_backend import SparseSpecific
 from .data_specific_backend import DataFrameSpecificAll
 from .data_specific_backend import DataFrameSpecificDataSafe
 
+listViewConstructor = viewConstructorMaker('List')
+matrixViewConstructor = viewConstructorMaker('Matrix')
+sparseViewConstructor = viewConstructorMaker('Sparse')
+dataframeViewConstructor = viewConstructorMaker('DataFrame')
+listConstructor = objConstructorMaker('List')
+matrixConstructor = objConstructorMaker('Matrix')
+sparseConstructor = objConstructorMaker('Sparse')
+dataframeConstructor = objConstructorMaker('DataFrame')
+
 class BaseViewChildTests(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
                    StructureDataSafe, ViewAccess, StretchDataSafe,
                    HighDimensionSafe):
-    def __init__(self, returnType):
-        super(BaseViewChildTests, self).__init__(returnType)
+    pass
 
 class BaseChildTests(HighLevelAll, AllNumerical, QueryBackend, StructureAll,
                  StretchAll, HighDimensionAll):
-    def __init__(self, returnType):
-        super(BaseChildTests, self).__init__(returnType)
+    pass
 
 class TestListView(BaseViewChildTests):
-    def __init__(self):
-        super(TestListView, self).__init__('ListView')
+    def constructor(self, *args, **kwargs):
+        listViewConstructor = viewConstructorMaker('List')
+        return listViewConstructor(*args, **kwargs)
 
 
 class TestMatrixView(BaseViewChildTests):
-    def __init__(self):
-        super(TestMatrixView, self).__init__('MatrixView')
+    def constructor(self, *args, **kwargs):
+        matrixViewConstructor = viewConstructorMaker('Matrix')
+        return matrixViewConstructor(*args, **kwargs)
 
 
 class TestSparseView(BaseViewChildTests):
-    def __init__(self):
-        super(TestSparseView, self).__init__('SparseView')
+    def constructor(self, *args, **kwargs):
+        sparseViewConstructor = viewConstructorMaker('Sparse')
+        return sparseViewConstructor(*args, **kwargs)
 
 
 class TestDataFrameView(BaseViewChildTests, DataFrameSpecificDataSafe):
-    def __init__(self):
-        super(TestDataFrameView, self).__init__('DataFrameView')
+    def constructor(self, *args, **kwargs):
+        dataframeViewConstructor = viewConstructorMaker('DataFrame')
+        return dataframeViewConstructor(*args, **kwargs)
 
 
 class TestList(BaseChildTests):
-    def __init__(self):
-        super(TestList, self).__init__('List')
+    def constructor(self, *args, **kwargs):
+        listConstructor = objConstructorMaker('List')
+        return listConstructor(*args, **kwargs)
 
 
 class TestMatrix(BaseChildTests):
-    def __init__(self):
-        super(TestMatrix, self).__init__('Matrix')
+    def constructor(self, *args, **kwargs):
+        matrixConstructor = objConstructorMaker('Matrix')
+        return matrixConstructor(*args, **kwargs)
 
 
 class TestSparse(BaseChildTests, SparseSpecific):
-    def __init__(self):
-        super(TestSparse, self).__init__('Sparse')
+    def constructor(self, *args, **kwargs):
+        sparseConstructor = objConstructorMaker('Sparse')
+        return sparseConstructor(*args, **kwargs)
 
 
 class TestDataFrame(BaseChildTests, DataFrameSpecificAll):
-    def __init__(self):
-        super(TestDataFrame, self).__init__('DataFrame')
+    def constructor(self, *args, **kwargs):
+        dataframeConstructor = objConstructorMaker('DataFrame')
+        return dataframeConstructor(*args, **kwargs)
 
 def concreter(name, *abclasses):
     class concreteCls(*abclasses):
         pass
     concreteCls.__abstractmethods__ = frozenset()
     return type(name, (concreteCls,), {})
+
+# Base, Points, and Features are abstract so they cannot be instantiated,
+# however we can create Dummy concrete classes to test the base
+# functionality.
+BaseDummy = concreter('BaseDummy', nimble.core.data.Base)
+PointsDummy = concreter('PointsDummy', nimble.core.data.Axis,
+                        nimble.core.data.Points)
+FeaturesDummy = concreter('FeaturesDummy', nimble.core.data.Axis,
+                          nimble.core.data.Features)
+# need to override _getPoints and _getFeatures to use dummies
+class BaseConcreteDummy(BaseDummy):
+    def _getPoints(self, names):
+        return PointsDummy(self, names)
+    def _getFeatures(self, names):
+        return FeaturesDummy(self, names)
 
 def makeAndDefine(shape=None, pointNames=None, featureNames=None,
                   psize=0, fsize=0, name=None):
@@ -107,30 +141,16 @@ def makeAndDefine(shape=None, pointNames=None, featureNames=None,
     cols = fsize if featureNames is None else len(featureNames)
     if shape is None:
         shape = [rows, cols]
-    # Base, Points, and Features are abstract so they cannot be instantiated,
-    # however we can create Dummy concrete classes to test the base
-    # functionality.
-    BaseDummy = concreter('BaseDummy', nimble.core.data.Base)
-    PointsDummy = concreter('PointsDummy', nimble.core.data.Axis,
-                            nimble.core.data.Points)
-    FeaturesDummy = concreter('FeaturesDummy', nimble.core.data.Axis,
-                              nimble.core.data.Features)
-    # need to override _getPoints and _getFeatures to use dummies
-    class BaseConcreteDummy(BaseDummy):
-        def _getPoints(self, names):
-            return PointsDummy(self, names)
-        def _getFeatures(self, names):
-            return FeaturesDummy(self, names)
 
     return BaseConcreteDummy(shape, pointNames=pointNames,
                              featureNames=featureNames, name=name)
 
 class TestBaseOnly(LowLevelBackend):
-    def __init__(self):
-        self.constructor = makeAndDefine
+    def constructor(self, *args, **kwargs):
+        return makeAndDefine(*args, **kwargs)
 
-    def setUp(self):
+    def setup_method(self):
         startObjectValidation()
 
-    def tearDown(self):
+    def teardown_method(self):
         stopObjectValidation()

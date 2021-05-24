@@ -1,7 +1,4 @@
-import sys
 from unittest import mock
-
-from nose.tools import raises
 
 import nimble
 from nimble import train
@@ -12,6 +9,7 @@ from nimble.random import pythonRandom
 from nimble.learners import KNNClassifier
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
+from tests.helpers import raises
 from tests.helpers import logCountAssertionFactory, oneLogEntryExpected
 from tests.helpers import CalledFunctionException, calledException
 

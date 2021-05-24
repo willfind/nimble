@@ -6,6 +6,8 @@ existing tests which are also testing other functionality.
 """
 from functools import wraps, partial
 
+import pytest
+
 import nimble
 from nimble.core._learnHelpers import generateClusteredPoints
 
@@ -133,3 +135,12 @@ def getDataConstructors(includeViews=True):
         if includeViews:
             constructors.append(_getViewFunc(returnType))
     return constructors
+
+def raises(exception):
+    def decorator(test):
+        @wraps(test)
+        def wrapped(*args, **kwargs):
+            with pytest.raises(exception):
+                test(*args, **kwargs)
+        return wrapped
+    return decorator

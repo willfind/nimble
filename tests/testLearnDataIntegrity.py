@@ -6,12 +6,12 @@ operation with as many learners as possible.
 """
 from unittest import mock
 
-from nose.plugins.attrib import attr
-from nose.tools import raises
+import pytest
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.random import pythonRandom
+from tests.helpers import raises
 from tests.helpers import calledException, CalledFunctionException
 from tests.helpers import generateClassificationData
 from tests.helpers import generateRegressionData
@@ -223,55 +223,55 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
                 continue
 
 
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityTrain():
     backend(wrappedTrain, 1)
 
 
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityTrainAndApply():
     backend(wrappedTrainAndApply, 1)
 
 
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityTLApply():
     backend(wrappedTLApply, 1)
 
 # we can test smaller portions here because the backends are all being tested by
 # the previous tests. We only care about the trainAndApply One vs One and One vs
 # all code.
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityTrainAndApplyMulticlassStrategies():
     backend(wrappedTrainAndApplyOvO, .1, False)
     backend(wrappedTrainAndApplyOvA, .1, False)
 
 
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityTrainAndTest():
     backend(wrappedTrainAndTest, 1)
 
 
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityTLTest():
     backend(wrappedTLTest, 1)
 
 # we can test smaller portions here because the backends are all being tested by
 # the previous tests. We only care about the trainAndTest One vs One and One vs
 # all code.
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityTrainAndTestMulticlassStrategies():
     backend(wrappedTrainAndTestOvO, .1, False)
     backend(wrappedTrainAndTestOvA, .1, False)
 
 # test crossValidate x3
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityCrossValidate():
     backend(wrappedCrossValidate, 1)
 
 # test TrainedLearner methods
 # only those that the top level trainers, appliers, and testers are not reliant on.
 # Exclusions for above reason: apply(), test()
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityTrainedLearner():
 #	backend(setupAndCallIncrementalTrain, 1) TODO
     backend(setupAndCallRetrain, 1)

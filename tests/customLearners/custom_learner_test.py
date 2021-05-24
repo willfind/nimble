@@ -1,4 +1,3 @@
-from nose.tools import raises
 import numpy as np
 
 import nimble
@@ -6,6 +5,7 @@ from nimble import CustomLearner
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.learners import RidgeRegression, KNNClassifier
 from nimble.core.interfaces.custom_learner import validateCustomLearnerSubclass
+from tests.helpers import raises
 from tests.helpers import noLogEntryExpected
 
 

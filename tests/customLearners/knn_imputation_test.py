@@ -5,12 +5,11 @@ KNNImputation tests.
 import os
 from unittest import mock
 
-from nose.tools import raises
-
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.learners import KNNImputation
 
+from tests.helpers import raises
 from tests.helpers import assertNoNamesGenerated
 from tests.helpers import getDataConstructors
 

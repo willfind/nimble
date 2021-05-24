@@ -24,12 +24,10 @@ features.splitByParsing
 from copy import deepcopy
 import os.path
 import tempfile
-import inspect
 import datetime
 
 import numpy as np
-from nose.tools import *
-from nose.plugins.attrib import attr
+import pytest
 try:
     from unittest import mock #python >=3.3
 except ImportError:
@@ -39,14 +37,16 @@ import nimble
 from nimble import match
 from nimble import fill
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
+from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.exceptions import ImproperObjectAction
 from nimble.random import numpyRandom
-from .baseObject import DataTestObject
+from tests.helpers import raises
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import assertNoNamesGenerated
 from tests.helpers import CalledFunctionException, calledException
 from tests.helpers import getDataConstructors
+from .baseObject import DataTestObject
 
 
 preserveName = "PreserveTestName"
@@ -1328,7 +1328,7 @@ class HighLevelDataSafe(DataTestObject):
     # isApproximatelyEqual() #
     ##########################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_isApproximatelyEqual_randomTest(self):
         """ Test isApproximatelyEqual() using randomly generated data """

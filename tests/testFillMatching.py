@@ -4,13 +4,12 @@ fillMatching tests.
 
 import os
 
-from nose.tools import raises
-
 import nimble
 from nimble import match
 from nimble.learners import KNNImputation
 from nimble.exceptions import ImproperObjectAction, InvalidArgumentValue
 
+from tests.helpers import raises
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import assertNoNamesGenerated
 from tests.helpers import getDataConstructors
@@ -115,7 +114,6 @@ def test_fillMatching_sklDisallowedArgument():
     toTest = nimble.data('Matrix', data, pointNames=pNames, featureNames=fNames)
     nimble.fillMatching('skl.SimpleImputer', match.zero, toTest,
                         missing_values=0)
-    assert toTest == expTest
 
 def test_fillMatching_featuresLimited():
     fNames = ['a', 'b', 'c']

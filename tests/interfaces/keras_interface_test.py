@@ -8,27 +8,33 @@ import functools
 import warnings
 
 import numpy as np
-from nose.tools import raises, with_setup
+import pytest
 
 import nimble
 from nimble.core.interfaces.keras_interface import Keras
 from nimble.exceptions import InvalidArgumentValue
 from nimble._utility import DeferredModuleImport
-from nimble.random import _startAlternateControl, _endAlternateControl
-from .skipTestDecorator import SkipMissing
+from tests.helpers import raises
 from tests.helpers import logCountAssertionFactory, noLogEntryExpected
+from .skipTestDecorator import SkipMissing
 
 keras = DeferredModuleImport("keras")
 tfKeras = DeferredModuleImport('tensorflow.keras')
 
 keraSkipDec = SkipMissing('Keras')
 
+@pytest.fixture
+def optimizer():
+    """
+    Need fixture for parameter but value chosen by chooseOptimizer decorator.
+    """
+
 def chooseOptimizer(func):
     """
     Optimizer objects and/or parameters vary by keras API being used.
     """
     @functools.wraps(func)
-    def wrapped():
+    def wrapped(optimizer):
         kwOld = {'lr': 0.1, 'decay': 1e-6, 'momentum': 0.9, 'nesterov': True}
         # keras 2.3+ decay deprecated and lr changed to learning_rate
         kwNew =  {'learning_rate': 0.1, 'momentum': 0.9, 'nesterov': True}
@@ -255,7 +261,6 @@ def testKeras_fitOnlyParametersDisallowedForSparse(optimizer):
                        epochs=2, steps_per_epoch=20, shuffle=True)
 
 
-@with_setup(_startAlternateControl, _endAlternateControl)
 @keraSkipDec
 @noLogEntryExpected
 @chooseOptimizer
@@ -273,6 +278,7 @@ def testKerasReproducibility(optimizer):
         # already been loaded, but by instantiating a new Keras instance we can
         # check that the warning will be displayed when users first use keras
         with warnings.catch_warnings(record=True) as rec:
+            warnings.filterwarnings('always', module=r'.*keras_interface')
             _ = nimble.core.interfaces.keras_interface.Keras()
             start = "Randomness is outside of Nimble's control"
             assert rec and str(rec[0].message).startswith(start)

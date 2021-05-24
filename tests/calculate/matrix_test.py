@@ -4,12 +4,9 @@ Test matrix operations
 
 from unittest.mock import patch
 
-from nose.tools import raises
-
 import nimble
 from nimble.calculate import elementwiseMultiply
 from nimble.calculate import elementwisePower
-from nimble.exceptions import InvalidArgumentType
 from tests.helpers import noLogEntryExpected
 from tests.helpers import CalledFunctionException, calledException
 from tests.helpers import getDataConstructors

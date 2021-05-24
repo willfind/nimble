@@ -26,7 +26,6 @@ except ImportError:
     import mock
 
 import numpy as np
-from nose.tools import *
 
 import nimble
 from nimble import match
@@ -36,7 +35,6 @@ from nimble.core.data import DataFrame
 from nimble.core.data import Sparse
 from nimble.core.data import BaseView
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 from nimble.random import numpyRandom
@@ -44,6 +42,7 @@ from nimble._utility import sparseMatrixToArray
 from nimble._utility import scipy, pd
 
 from .baseObject import DataTestObject
+from tests.helpers import raises
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import assertNoNamesGenerated, assertExpectedException

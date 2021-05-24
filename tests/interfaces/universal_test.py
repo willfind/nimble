@@ -2,17 +2,14 @@
 Unit tests for the universal interface object.
 """
 
-import sys
-import os
 import warnings
-
-from nose.tools import raises
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.interfaces.universal_interface import UniversalInterface
 from nimble.core.interfaces.universal_interface import PredefinedInterface
+from tests.helpers import raises
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import generateClassificationData
 
@@ -42,6 +39,7 @@ class SubObj(object):
 
 
 class TestPredefinedInterface(PredefinedInterface):
+    __test__ = False
 
     def accessible(self):
         return True
@@ -338,6 +336,7 @@ def backend_warningscapture(toCall, prepCall=None):
         arg = AlwaysWarnInterface()
 
     with warnings.catch_warnings(record=True) as warnCall:
+        warnings.simplefilter('always')
         toCall(arg)
 
     ignored = [DeprecationWarning, PendingDeprecationWarning, FutureWarning,

@@ -1,7 +1,5 @@
 import tempfile
-import numpy as np
 import os
-import sys
 import copy
 import functools
 import itertools
@@ -16,8 +14,7 @@ try:
 except ImportError:
     import mock
 
-from nose.tools import raises
-from nose.plugins.attrib import attr
+import numpy as np
 import scipy.sparse
 import pandas as pd
 import h5py
@@ -30,6 +27,7 @@ from nimble.core._createHelpers import _intFloatOrString
 from nimble._utility import sparseMatrixToArray, isDatetime, requests
 
 # from .. import logger
+from tests.helpers import raises
 from tests.helpers import oneLogEntryExpected, noLogEntryExpected
 from tests.helpers import assertExpectedException
 from tests.helpers import calledException, CalledFunctionException

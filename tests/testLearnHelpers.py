@@ -2,14 +2,11 @@ import math
 from math import fabs
 
 import numpy as np
-from nose.tools import *
-from nose.plugins.attrib import attr
+import pytest
 
 import nimble
-from nimble import learnerType
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import PackageException
 from nimble.core._learnHelpers import findBestInterface
 from nimble.core._learnHelpers import FoldIterator
@@ -18,8 +15,8 @@ from nimble.core._learnHelpers import generateClusteredPoints
 from nimble.core._learnHelpers import computeMetrics
 from nimble.calculate import rootMeanSquareError
 from nimble.calculate import meanAbsoluteError
-from nimble.calculate import fractionIncorrect
 from nimble.random import pythonRandom
+from tests.helpers import raises
 
 ##########
 # TESTER #
@@ -178,6 +175,7 @@ class FoldIteratorTester(object):
             assert len(testY.points) == exp
 
 class TestList(FoldIteratorTester):
+    __test__ = False
     def __init__(self):
         def maker(data=None, featureNames=False):
             return nimble.data("List", source=data, featureNames=featureNames)
@@ -186,6 +184,7 @@ class TestList(FoldIteratorTester):
 
 
 class TestMatrix(FoldIteratorTester):
+    __test__ = False
     def __init__(self):
         def maker(data, featureNames=False):
             return nimble.data("Matrix", source=data, featureNames=featureNames)
@@ -194,6 +193,7 @@ class TestMatrix(FoldIteratorTester):
 
 
 class TestSparse(FoldIteratorTester):
+    __test__ = False
     def __init__(self):
         def maker(data, featureNames=False):
             return nimble.data("Sparse", source=data, featureNames=featureNames)
@@ -202,6 +202,7 @@ class TestSparse(FoldIteratorTester):
 
 
 class TestRand(FoldIteratorTester):
+    __test__ = False
     def __init__(self):
         def maker(data, featureNames=False):
             possible = ['List', 'Matrix', 'Sparse']
@@ -211,7 +212,7 @@ class TestRand(FoldIteratorTester):
         super(TestRand, self).__init__(maker)
 
 
-@attr('slow')
+@pytest.mark.slow
 def testClassifyAlgorithms(printResultsDontThrow=False):
     """tries the algorithm names (which are keys in knownAlgorithmToTypeHash) with learnerType().
     Next, compares the result to the algorithm's associated value in knownAlgorithmToTypeHash.

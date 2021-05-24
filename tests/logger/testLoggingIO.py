@@ -4,8 +4,6 @@ Unit tests for functionality of the SessionLogger
 
 import os
 import shutil
-import time
-import ast
 import sys
 import sqlite3
 import tempfile
@@ -14,8 +12,6 @@ import functools
 from unittest.mock import patch
 from io import StringIO
 
-from nose import with_setup
-from nose.tools import raises
 import numpy as np
 
 import nimble
@@ -23,7 +19,7 @@ from nimble.calculate import rootMeanSquareError as RMSE
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import InvalidArgumentType
-from tests.helpers import generateClassificationData
+from tests.helpers import raises
 from tests.helpers import getDataConstructors
 
 #####################

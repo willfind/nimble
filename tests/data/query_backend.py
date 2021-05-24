@@ -19,8 +19,7 @@ import textwrap
 from unittest.mock import patch
 
 import numpy as np
-from nose.tools import *
-from nose.plugins.attrib import attr
+import pytest
 
 import nimble
 from nimble import match
@@ -32,11 +31,12 @@ from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 
-from .baseObject import DataTestObject
+from tests.helpers import raises
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import assertNoNamesGenerated
 from tests.helpers import CalledFunctionException, calledException
 from tests.helpers import assertExpectedException
+from .baseObject import DataTestObject
 
 
 preserveName = "PreserveTestName"
@@ -1036,7 +1036,7 @@ class QueryBackend(DataTestObject):
     # toString #
     ############
 
-    @attr('slow')
+    @pytest.mark.slow
     def test_toString_nameAndValRecreation_randomized(self):
         """ Regression test with random data and limits. Recreates expected results """
         for pNum in [3, 9]:
@@ -1230,7 +1230,7 @@ class QueryBackend(DataTestObject):
         randGen = nimble.random.data("List", 5, 5, 0, elementType='int')
         randGen._arrangeDataWithLimits(maxHeight=1, maxWidth=120)
 
-    @attr('slow')
+    @pytest.mark.slow
     def test_arrangeDataWithLimits(self):
         def makeUniformLength(rType, p, f, l):
             raw = []
@@ -2246,7 +2246,7 @@ class QueryBackend(DataTestObject):
     # plot #
     ########
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_plot_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2267,7 +2267,7 @@ class QueryBackend(DataTestObject):
     # plotFeatureDistribution #
     ###########################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_plotFeatureDistribution_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2289,7 +2289,7 @@ class QueryBackend(DataTestObject):
     # plotFeatureAgainstFeature #
     #############################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_plotFeatureAgainstFeature_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2310,7 +2310,7 @@ class QueryBackend(DataTestObject):
     # features.plot #
     #################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_features_plot_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2329,7 +2329,7 @@ class QueryBackend(DataTestObject):
     # features.plotMeans #
     ######################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_features_plotMeans_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2348,7 +2348,7 @@ class QueryBackend(DataTestObject):
     # features.plotStatistics #
     ###########################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_features_plotStatistics_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2367,7 +2367,7 @@ class QueryBackend(DataTestObject):
     # plotFeatureGroupMeans #
     #########################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_plotFeatureGroupMeans_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2391,7 +2391,7 @@ class QueryBackend(DataTestObject):
     # plotFeatureGroupStatistics #
     ##############################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_plotGroupStatistics_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2415,7 +2415,7 @@ class QueryBackend(DataTestObject):
     # points.plot #
     ###############
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_points_plot_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2434,7 +2434,7 @@ class QueryBackend(DataTestObject):
     # points.plotMeans #
     ####################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_points_plotMeans_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2453,7 +2453,7 @@ class QueryBackend(DataTestObject):
     # points.plotStatistics #
     #########################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_points_plotStatistics_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:

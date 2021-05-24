@@ -4,8 +4,7 @@ except ImportError:
     import mock
 
 import numpy as np
-from nose.tools import raises
-from nose.plugins.attrib import attr
+import pytest
 
 import nimble
 from nimble.random import numpyRandom
@@ -17,6 +16,7 @@ from nimble.calculate import (
     meanAbsoluteErrorConfidenceInterval,
     fractionIncorrectConfidenceInterval,
     )
+from tests.helpers import raises
 
 def fractionOfTimeInCI(getActual, getPredictions, ciFunc, expError):
     confidence = numpyRandom.randint(90, 99) / 100
@@ -38,7 +38,7 @@ def testCannotImportSciPy():
 #########################################
 # rootMeanSquareErrorConfidenceInterval #
 #########################################
-@attr('slow')
+@pytest.mark.slow
 @noLogEntryExpected
 def test_rootMeanSquareErrorConfidenceInterval():
     def getActual(n):
@@ -54,7 +54,7 @@ def test_rootMeanSquareErrorConfidenceInterval():
 #######################################
 # meanAbsoluteErrorConfidenceInterval #
 #######################################
-@attr('slow')
+@pytest.mark.slow
 @noLogEntryExpected
 def test_meanAbsoluteErrorConfidenceInterval():
     def getActual(n):
@@ -72,7 +72,7 @@ def test_meanAbsoluteErrorConfidenceInterval():
 #######################################
 # fractionIncorrectConfidenceInterval #
 #######################################
-@attr('slow')
+@pytest.mark.slow
 @noLogEntryExpected
 def test_fractionIncorrectConfidenceInterval():
     def getActual(n):
