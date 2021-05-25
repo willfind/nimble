@@ -1128,8 +1128,9 @@ class Axis(ABC):
                 targetSet = set(targetList)
                 reindexedInverse = []
                 for idx, value in enumerate(self.namesInverse):
-                    if value is not None and idx not in targetSet:
-                        self.names[value] = len(reindexedInverse)
+                    if idx not in targetSet:
+                        if value is not None:
+                            self.names[value] = len(reindexedInverse)
                         reindexedInverse.append(value)
                 self.namesInverse = reindexedInverse
 
