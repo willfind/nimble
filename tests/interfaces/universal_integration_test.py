@@ -476,6 +476,15 @@ def test_getParametersAndDefaultsReturnTypes():
                 assert all(isinstance(option, dict) for option in defaultsFromTop)
             else:
                 assert isinstance(defaultsFromTop, dict)
+
+def test_getParametersAndDefaultsException():
+    for interface in nimble.core.interfaces.available.keys():
+        fullName = interface + '.wrong'
+        expMsg = 'is not the name of a learner exposed by this interface'
+        with raises(InvalidArgumentValue, match=expMsg):
+            nimble.learnerParameters(fullName)
+        with raises(InvalidArgumentValue, match=expMsg):
+            nimble.learnerDefaultValues(fullName)
 # TODO
 #def testGetParamsOverListLearners():
 #def testGetParamDefaultsOverListLearners():
