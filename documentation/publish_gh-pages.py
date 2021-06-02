@@ -96,7 +96,8 @@ if __name__ == '__main__':
         printAndCall("git checkout --orphan gh-pages")
         printAndCall("git rm -rf --cached ../.")
 
-        printAndCall("make publish")
+        printAndCall("make html") # make publish fails to use custom.css
+        printAndCall("mv html/* ..")
 
         printAndCall("git add ../.gitignore")
         printAndCall("git add ../.nojekyll")
@@ -121,6 +122,7 @@ if __name__ == '__main__':
     if not checkMasterUpToDate():
         msg = "During the publishing process, remote master was updated. The published docs "
         msg += "are therefore no longer current."
+        print(msg)
         sys.exit(2)
 
     print("Successfully published")
