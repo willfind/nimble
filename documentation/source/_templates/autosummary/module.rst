@@ -5,8 +5,8 @@
 .. autosummary::
    :toctree:
    :recursive:
-   {% if attributes %}
 
+   {% if attributes %}
    {% for item in attributes %}
       {{ item }}
    {%- endfor %}

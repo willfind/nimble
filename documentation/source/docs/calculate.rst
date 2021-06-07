@@ -11,12 +11,15 @@ nimble.calculate
 .. automodule:: nimble.calculate.binary
    :no-members:
 
+.. currentmodule:: nimble.calculate
+
 .. autosummary::
    :toctree: generated/
 
    balancedAccuracy
    f1Score
    falseNegative
+   falsePositive
    precision
    recall
    specificity
@@ -27,6 +30,8 @@ nimble.calculate
 
 .. automodule:: nimble.calculate.confidence
    :no-members:
+
+.. currentmodule:: nimble.calculate
 
 .. autosummary::
    :toctree: generated/
@@ -40,6 +45,8 @@ nimble.calculate
 .. automodule:: nimble.calculate.linalg
    :no-members:
 
+.. currentmodule:: nimble.calculate
+
 .. autosummary::
    :toctree: generated/
 
@@ -52,6 +59,8 @@ nimble.calculate
 
 .. automodule:: nimble.calculate.loss
    :no-members:
+
+.. currentmodule:: nimble.calculate
 
 .. autosummary::
    :toctree: generated/
@@ -67,16 +76,35 @@ nimble.calculate
 .. automodule:: nimble.calculate.matrix
    :no-members:
 
+.. currentmodule:: nimble.calculate
+
 .. autosummary::
    :toctree: generated/
 
    elementwiseMultiply
    elementwisePower
 
+.. rubric:: Normalize
+
+.. automodule:: nimble.calculate.normalize
+   :no-members:
+
+.. currentmodule:: nimble.calculate
+
+.. autosummary::
+   :toctree: generated/
+
+   meanNormalize
+   meanStandardDeviationNormalize
+   range0to1Normalize
+   percentileNormalize
+
 .. rubric:: Similarity
 
 .. automodule:: nimble.calculate.similarity
    :no-members:
+
+.. currentmodule:: nimble.calculate
 
 .. autosummary::
    :toctree: generated/
@@ -93,12 +121,16 @@ nimble.calculate
 .. automodule:: nimble.calculate.statistic
    :no-members:
 
+.. currentmodule:: nimble.calculate
+
 .. autosummary::
    :toctree: generated/
 
+   count
    maximum
    mean
    median
+   medianAbsoluteDeviation
    minimum
    mode
    proportionMissing
@@ -106,12 +138,15 @@ nimble.calculate
    quartiles
    residuals
    standardDeviation
+   sum
    uniqueCount
 
 .. rubric:: Utility
 
 .. automodule:: nimble.calculate.utility
    :no-members:
+
+.. currentmodule:: nimble.calculate
 
 .. autosummary::
    :toctree: generated/

@@ -15,7 +15,7 @@ unnecessary for normal operations.
 .. rubric:: Submodules
 
 ..
-   * this will create the stubs but will not show the summary *
+   below will create all stubs but commented to not show the autosummary table
 
    .. autosummary::
       :toctree: generated/
