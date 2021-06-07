@@ -92,6 +92,7 @@ if __name__ == '__main__':
         print("We require the master branch to be up to date before publishing docs to gh-pages")
         sys.exit(1)
 
+    committed = False
     try:
         printAndCall("git checkout --orphan gh-pages")
         printAndCall("git rm -rf --cached ../.")
@@ -108,16 +109,16 @@ if __name__ == '__main__':
         printAndCall("git add ../_downloads/ -f") # -f to include .ipynb
         printAndCall("git add ../_images")
         printAndCall("git add ../examples")
-        printAndCall("git add ../docs")
+        printAndCall("git add ../docs -f") # -f to include generated
         printAndCall("git commit -m 'Publish html documentation for Nimble to gh-pages'")
-
+        committed = True
         printAndCall("git push origin HEAD --force")
 
     finally:
         printAndCall("make clean")
         printAndCall("git checkout master --force")
-        # add conditional to check if gh-pages exists? (if aborted before commit it won't)
-        printAndCall("git branch -D gh-pages")
+        if committed:
+            printAndCall("git branch -D gh-pages")
 
     if not checkMasterUpToDate():
         msg = "During the publishing process, remote master was updated. The published docs "

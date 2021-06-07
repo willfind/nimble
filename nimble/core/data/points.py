@@ -20,7 +20,7 @@ from ._dataHelpers import limitedTo2D
 
 class Points(ABC):
     """
-    Methods that can be called on a nimble Base objects point axis.
+    Methods that apply to the points axis of a Base object.
     """
     def __init__(self, base):
         """

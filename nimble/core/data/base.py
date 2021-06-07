@@ -77,28 +77,6 @@ class Base(ABC):
     and its ``points`` and ``features`` attributes provide addtional
     methods that apply point-by-point and feature-by-feature,
     respectively.
-
-    Attributes
-    ----------
-    points
-        Access to methods applying to points.
-    features
-        Access to methods applying to features.
-    shape : tuple
-        The number of points and features in the object in the format
-        (points, features).
-    dimensions : tuple
-        The actual dimensions of the data in the object. All data is
-        stored two-dimensionally, so for objects with more than two-
-        dimensions this value will differ from the ``shape`` attribute.
-    name : str
-        A name to call this object when printing or logging.
-    absolutePath : str
-        The absolute path to the data file.
-    relativePath : str
-        The relative path to the data file.
-    path : str
-        The path to the data file.
     """
     _id = 0
 

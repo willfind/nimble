@@ -14,12 +14,27 @@ unnecessary for normal operations.
 
 .. rubric:: Submodules
 
+..
+   * this will create the stubs but will not show the summary *
+
+   .. autosummary::
+      :toctree: generated/
+      :recursive:
+
+      nimble
+      nimble.calculate
+      nimble.exceptions
+      nimble.fill
+      nimble.learners
+      nimble.match
+      nimble.random
+
 .. toctree::
    :maxdepth: 1
 
    calculate
-   exceptions
-   fill
-   learners
-   match
-   random
+   generated/nimble.exceptions
+   generated/nimble.fill
+   generated/nimble.learners
+   generated/nimble.match
+   generated/nimble.random
