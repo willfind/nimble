@@ -1,8 +1,3 @@
-import sys
-from unittest import mock
-
-from nose.tools import raises
-
 import nimble
 from nimble import train
 from nimble import trainAndApply
@@ -12,8 +7,8 @@ from nimble.random import pythonRandom
 from nimble.learners import KNNClassifier
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
+from tests.helpers import raises, assertCalled
 from tests.helpers import logCountAssertionFactory, oneLogEntryExpected
-from tests.helpers import CalledFunctionException, calledException
 
 def test_trainAndApply_dataInputs():
     variables = ["x1", "x2", "x3", "label"]
@@ -45,28 +40,16 @@ def test_trainAndApply_dataInputs():
         out = nimble.trainAndApply(learner, trainObj, 3, None)
         assert out == expSelf
         # Exception trainY is ID; testX contains labels
-        try:
+        with raises(ValueError):
             out = nimble.trainAndApply(learner, trainObj, 3, testObj)
-            assert False # expected ValueError
-        except ValueError:
-            pass
-        try:
+        with raises(ValueError):
             out = nimble.trainAndApply(learner, trainObj, 'label', testObj)
-            assert False # expected ValueError
-        except ValueError:
-            pass
         # Exception trainY is Base; testX contains labels
-        try:
+        with raises(ValueError):
             out = nimble.trainAndApply(learner, trainObjData, trainObjLabels, testObj)
-            assert False # expected ValueError
-        except ValueError:
-            pass
         # Exception trainY is ID; testX bad shape
-        try:
+        with raises(ValueError):
             out = nimble.trainAndApply(learner, trainObj, 3, testObj[:, 2:])
-            assert False # expected ValueError
-        except ValueError:
-            pass
 
 def test_trainAndTest_dataInputs():
     variables = ["x1", "x2", "x3", "label"]
@@ -275,16 +258,18 @@ def test_multioutput_learners_callable_from_all():
                                                 lamb=1)
 
     # Control randomness for each cross-validation so folds are consistent
-    nimble.random._startAlternateControl(seed=0)
-    ret_TTTD_multi_cv = nimble.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY, performanceFunction=metric,
-                                                       lamb=1, crossValidationError=True)
-    nimble.random.setSeed(0)
-    ret_TTTD_0_cv = nimble.trainAndTestOnTrainingData(wrappedName, trainX=trainX, trainY=trainY0, performanceFunction=metric,
-                                                   lamb=1, crossValidationError=True)
-    nimble.random.setSeed(0)
-    ret_TTTD_1_cv = nimble.trainAndTestOnTrainingData(testName, trainX=trainX, trainY=trainY1, performanceFunction=metric,
-                                                   lamb=1, crossValidationError=True)
-    nimble.random._endAlternateControl()
+    with nimble.random.alternateControl(seed=0):
+        ret_TTTD_multi_cv = nimble.trainAndTestOnTrainingData(
+            testName, trainX=trainX, trainY=trainY, performanceFunction=metric,
+            lamb=1, crossValidationError=True)
+    with nimble.random.alternateControl(seed=0):
+        ret_TTTD_0_cv = nimble.trainAndTestOnTrainingData(
+            wrappedName, trainX=trainX, trainY=trainY0,
+            performanceFunction=metric, lamb=1, crossValidationError=True)
+    with nimble.random.alternateControl(seed=0):
+        ret_TTTD_1_cv = nimble.trainAndTestOnTrainingData(
+            testName, trainX=trainX, trainY=trainY1,
+            performanceFunction=metric, lamb=1, crossValidationError=True)
 
     # tl.test()
     ret_TLT_multi = TLmulti.test(testX, testY, metric)
@@ -482,57 +467,36 @@ def test_trainFunctions_cv_triggered_errors():
 
     learner = 'nimble.KNNClassifier'
     # no performanceFunction (only train and trainAndApply; required in Test functions)
-    try:
+    with raises(InvalidArgumentValueCombination, match="performanceFunction"):
         nimble.train(learner, trainObjData, trainObjLabels, k=nimble.CV([1, 3]))
-        assert False # expect InvalidArgumentValueCombination
-    except InvalidArgumentValueCombination as iavc:
-        assert "performanceFunction" in str(iavc)
-    try:
+    with raises(InvalidArgumentValueCombination, match="performanceFunction"):
         nimble.trainAndApply(learner, trainObjData, trainObjLabels, testObjData,
                              k=nimble.CV([1, 3]))
-        assert False # expect InvalidArgumentValueCombination
-    except InvalidArgumentValueCombination as iavc:
-        assert "performanceFunction" in str(iavc)
 
     # folds too large
-    try:
+    with raises(InvalidArgumentValueCombination, match="folds"):
         nimble.train(learner, trainObjData, trainObjLabels,
-                     performanceFunction=fractionIncorrect, k=nimble.CV([1, 3]), folds=11)
-        assert False # expect InvalidArgumentValueCombination
-    except InvalidArgumentValueCombination as iavc:
-        assert "folds" in str(iavc)
-    try:
+                     performanceFunction=fractionIncorrect,
+                     k=nimble.CV([1, 3]), folds=11)
+    with raises(InvalidArgumentValueCombination, match="folds"):
         nimble.trainAndApply(learner, trainObjData, trainObjLabels, testObjData,
-                             performanceFunction=fractionIncorrect, k=nimble.CV([1, 3]), folds=11)
-        assert False # expect InvalidArgumentValueCombination
-    except InvalidArgumentValueCombination as iavc:
-        assert "folds" in str(iavc)
-    try:
+                             performanceFunction=fractionIncorrect,
+                             k=nimble.CV([1, 3]), folds=11)
+    with raises(InvalidArgumentValueCombination, match="folds"):
         nimble.trainAndTest(learner, trainObjData, trainObjLabels, testObjData,
                             testObjLabels, performanceFunction=fractionIncorrect,
                             k=nimble.CV([1, 3]), folds=11)
-        assert False # expect InvalidArgumentValueCombination
-    except InvalidArgumentValueCombination as iavc:
-        assert "folds" in str(iavc)
-    try:
+    with raises(InvalidArgumentValueCombination, match="folds"):
         # training error
         nimble.trainAndTestOnTrainingData(learner, trainObjData, trainObjLabels,
                                           performanceFunction=fractionIncorrect,
                                           k=nimble.CV([1, 3]), folds=11)
-        assert False # expect InvalidArgumentValueCombination
-    except InvalidArgumentValueCombination as iavc:
-        assert "folds" in str(iavc)
-    try:
+    with raises(InvalidArgumentValue, match="folds"):
         # cross-validation error
         nimble.trainAndTestOnTrainingData(learner, trainObjData, trainObjLabels,
                                           performanceFunction=fractionIncorrect,
                                           crossValidationError=True, folds=11)
-        assert False # expect InvalidArgumentValue
-    except InvalidArgumentValue as iav:
-        # different exception since this triggers crossValidation directly
-        assert "folds" in str(iav)
 
-@mock.patch('nimble.core.learn.crossValidate', calledException)
 def test_frontend_CV_triggering():
     #with small data set
     variables = ["x1", "x2", "x3"]
@@ -541,29 +505,22 @@ def test_frontend_CV_triggering():
     trainObj = nimble.data('Matrix', source=data, featureNames=variables)
     labelsObj = nimble.data("Matrix", source=labels)
 
+    calledCrossValidate = assertCalled(nimble.core.learn, 'crossValidate')
     # confirm that the calls are being made
-    try:
+    with calledCrossValidate:
         train('nimble.KNNClassifier', trainX=trainObj, trainY=labelsObj,
               performanceFunction=fractionIncorrect, k=nimble.CV([1, 2]), folds=5)
-        assert False # expected CalledFunctionException
-    except CalledFunctionException:
-        pass
 
-    try:
+    with calledCrossValidate:
         trainAndApply('nimble.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                       performanceFunction=fractionIncorrect, testX=trainObj,
                       k=nimble.CV([1, 2]), folds=5)
-        assert False # expected CalledFunctionException
-    except CalledFunctionException:
-        pass
 
-    try:
+    with calledCrossValidate:
         trainAndTest('nimble.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                     testX=trainObj, testY=labelsObj, performanceFunction=fractionIncorrect,
+                     testX=trainObj, testY=labelsObj,
+                     performanceFunction=fractionIncorrect,
                      k=nimble.CV([1, 2]), folds=5)
-        assert False # expected CalledFunctionException
-    except CalledFunctionException:
-        pass
 
 def test_frontend_CV_triggering_success():
     #with small data set
@@ -600,19 +557,15 @@ def test_train_trainAndApply_perfFunc_reqForCV():
     labelsObj = nimble.data("Matrix", source=labels)
 
     # Default value of performanceFunction is None, which since we're doing
-    # CV should fail
-    try:
-        tl = train('nimble.KNNClassifier', trainX=trainObj, trainY=labelsObj, k=nimble.CV([1, 2]))
-        assert False
-    except InvalidArgumentValueCombination:
-        pass
+    # CV should InvalidArgumentValueCombination
+    with raises(InvalidArgumentValueCombination):
+        tl = train('nimble.KNNClassifier', trainX=trainObj, trainY=labelsObj,
+                   k=nimble.CV([1, 2]))
 
-    try:
-        result = trainAndApply('nimble.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                               testX=trainObj, k=nimble.CV([1, 2]))
-        assert False
-    except InvalidArgumentValueCombination:
-        pass
+    with raises(InvalidArgumentValueCombination):
+        result = trainAndApply('nimble.KNNClassifier', trainX=trainObj,
+                               trainY=labelsObj, testX=trainObj,
+                               k=nimble.CV([1, 2]))
 
 def back_logCount(toCall):
     variables = ["x1", "x2", "x3", "label"]
@@ -707,8 +660,7 @@ def test_trainAndTestOnTrainingData_logCount_withCV_noDeep():
         return nimble.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction, k=nimble.CV([1, 2]))
     back_logCount(wrapped)
 
-@raises(CalledFunctionException)
-@mock.patch('nimble.core.interfaces.TrainedLearner._validTestData', calledException)
+@assertCalled(nimble.core.interfaces.TrainedLearner, '_validTestData')
 def test_trainAndApply_testXValidation():
     variables = ["x1", "x2", "x3", "label"]
     numPoints = 20
@@ -727,8 +679,7 @@ def test_trainAndApply_testXValidation():
     # trainY is ID, testX does not contain labels; test int
     out = nimble.trainAndApply(learner, trainObj, 3, testObjNoLabels)
 
-@raises(CalledFunctionException)
-@mock.patch('nimble.core.interfaces.TrainedLearner._validTestData', calledException)
+@assertCalled(nimble.core.interfaces.TrainedLearner, '_validTestData')
 def test_trainAndTest_testXValidation():
     variables = ["x1", "x2", "x3", "label"]
     numPoints = 20
@@ -750,8 +701,7 @@ def test_trainAndTest_testXValidation():
     out = nimble.trainAndTest(learner, trainObj, trainObjLabels, testObjData,
                               testObjLabels, perfFunc)
 
-@raises(CalledFunctionException)
-@mock.patch('nimble.core.interfaces.TrainedLearner._validTestData', calledException)
+@assertCalled(nimble.core.interfaces.TrainedLearner, '_validTestData')
 def test_TL_apply_testXValidation():
     variables = ["x1", "x2", "x3", "label"]
     numPoints = 20
@@ -771,8 +721,7 @@ def test_TL_apply_testXValidation():
     tl = nimble.train(learner, trainObj, 3)
     out = tl.apply(testObjNoLabels)
 
-@raises(CalledFunctionException)
-@mock.patch('nimble.core.interfaces.TrainedLearner._validTestData', calledException)
+@assertCalled(nimble.core.interfaces.TrainedLearner, '_validTestData')
 def test_TL_test_testXValidation():
     variables = ["x1", "x2", "x3", "label"]
     numPoints = 20
@@ -794,8 +743,7 @@ def test_TL_test_testXValidation():
     tl = nimble.train(learner, trainObj, trainObjLabels)
     out = tl.test(testObjData, testObjLabels, perfFunc)
 
-@raises(CalledFunctionException)
-@mock.patch('nimble.core.interfaces.TrainedLearner._validTestData', calledException)
+@assertCalled(nimble.core.interfaces.TrainedLearner, '_validTestData')
 def test_TL_getScores_testXValidation():
     variables = ["x1", "x2", "x3", "label"]
     numPoints = 20

@@ -188,23 +188,23 @@ def run_setup():
     keras = 'keras>=2.0'
     autoimpute = 'autoimpute>=0.12'
     mlpy = 'machine-learning-py>=3.5;python_version<"3.7"'
-    nose = 'nose>=1.3'
     pylint = 'pylint>=2.7.4'
+    pytest = 'pytest>=6.2'
     cython = 'cython>=0.29'
-    sphinx = 'sphinx>=2.2'
+    sphinx = 'sphinx>=3.3'
     data = [pandas, scipy]
     operation = [matplotlib, cloudpickle, requests, h5py, dateutil]
     interfaces = [scikitlearn, tensorflow, autoimpute, mlpy]
     quickstart = data + operation + [scikitlearn]
     userAll = data + operation + interfaces
-    development = [nose, pylint, cython, sphinx]
+    development = [pytest, pylint, cython, sphinx]
     setupKwargs['extras_require'] = {
         'quickstart': quickstart, 'all': userAll, 'data': data,
         'pandas': pandas, 'scipy': scipy, 'matplotlib': matplotlib,
         'cloudpickle': cloudpickle, 'requests': requests, 'h5py': h5py,
         'dateutil': dateutil, 'machine-learning-py': mlpy,
         'scikit-learn': scikitlearn, 'keras': keras, 'tensorflow': tensorflow,
-        'autoimpute': autoimpute, 'development': development, 'nose': nose,
+        'autoimpute': autoimpute, 'development': development, 'pylint': pylint,
         'pylint': pylint, 'cython': cython, 'sphinx': sphinx,
         }
 

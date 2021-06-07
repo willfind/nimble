@@ -2,14 +2,12 @@
 tests for functions relating to ArgumentIterator class
 """
 
-import sys
 import copy
 from functools import reduce
 
-sys.path.append('../..')
-
 from nimble import CV
 from nimble.core._learnHelpers import ArgumentIterator
+from tests.helpers import raises
 
 # example call to _buildArgPermutationsList:
 # if rawArgInput is {'a':(1,2,3), 'b':(4,5)}
@@ -49,12 +47,9 @@ def test_ArgumentIterator():
     returned = ArgumentIterator({})
     assert {} == next(returned)
     #should be out of iterations after popping the empty list
-    try:
-        next(returned)
+    with raises(StopIteration):
         #if next works a second time, then ArgumentIterator has too many iterations
-        assert False
-    except StopIteration:
-        pass
+        next(returned)
 
     argumentDict = {'a': CV([1, 2, 3]), 'b': CV([4, 5])}
     argIter = ArgumentIterator(argumentDict)

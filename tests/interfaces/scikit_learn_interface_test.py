@@ -2,13 +2,10 @@
 Unit tests for scikit_learn_interface.py
 """
 
-import importlib
-import inspect
 import tempfile
 
 import numpy as np
-from nose.plugins.attrib import attr
-from nose.tools import raises
+import pytest
 
 import nimble
 from nimble import loadTrainedLearner
@@ -16,19 +13,18 @@ from nimble.random import numpyRandom
 from nimble.random import _generateSubsidiarySeed
 from nimble.exceptions import InvalidArgumentValue
 from nimble.core._learnHelpers import generateClusteredPoints
-from nimble.calculate.loss import rootMeanSquareError
-from nimble._utility import inspectArguments
 from nimble._utility import scipy
-from .test_helpers import checkLabelOrderingAndScoreAssociations
-from .skipTestDecorator import SkipMissing
+from tests.helpers import raises
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import generateClassificationData
 from tests.helpers import generateRegressionData
+from .test_helpers import checkLabelOrderingAndScoreAssociations
+from tests.helpers import skipMissingPackage
 
 packageName = 'sciKitLearn'
 
-sklSkipDec = SkipMissing(packageName)
+sklSkipDec = skipMissingPackage(packageName)
 
 @sklSkipDec
 @noLogEntryExpected
@@ -266,7 +262,7 @@ def getLearnersByType(lType=None, ignore=[]):
 
 
 @sklSkipDec
-@attr('slow')
+@pytest.mark.slow
 def testSciKitLearnClassificationLearners():
     data = generateClassificationData(2, 20, 10)
     # some classification learners require non-negative data
@@ -302,7 +298,7 @@ def testSciKitLearnClassificationLearners():
 
 
 @sklSkipDec
-@attr('slow')
+@pytest.mark.slow
 def testSciKitLearnRegressionLearners():
     data = generateRegressionData(2, 20, 10)
     trainX = data[0][0]
@@ -339,7 +335,7 @@ def testSciKitLearnRegressionLearners():
 
 
 @sklSkipDec
-@attr('slow')
+@pytest.mark.slow
 def testSciKitLearnMultiTaskRegressionLearners():
     """ Test that predictions for from nimble.trainAndApply match predictions from scikitlearn
     multitask learners with predict method"""
@@ -382,7 +378,7 @@ def testSciKitLearnMultiTaskRegressionLearners():
 
 
 @sklSkipDec
-@attr('slow')
+@pytest.mark.slow
 def testSciKitLearnClusterLearners():
     data = generateClusteredPoints(3, 60, 8)
     data = data[0]
@@ -419,7 +415,7 @@ def testSciKitLearnClusterLearners():
 
 
 @sklSkipDec
-@attr('slow')
+@pytest.mark.slow
 def testSciKitLearnOtherPredictLearners():
     data = generateClassificationData(2, 20, 10)
     trainX = abs(data[0][0])
@@ -456,7 +452,7 @@ def testSciKitLearnOtherPredictLearners():
 
 
 @sklSkipDec
-@attr('slow')
+@pytest.mark.slow
 def testSciKitLearnTransformationLearners():
     ignore = ['MiniBatchSparsePCA', 'SparsePCA'] # tested elsewhere
     learners = getLearnersByType('transformation', ignore)
@@ -519,7 +515,7 @@ def testSciKitLearnTransformationLearners():
 
 
 @sklSkipDec
-@attr('slow')
+@pytest.mark.slow
 def testSciKitLearnSparsePCATransformation():
     # do not accept sparse matrices
     trainX = nimble.random.data('Matrix', 100, 10, sparsity=0.9)
@@ -552,7 +548,7 @@ def testSciKitLearnSparsePCATransformation():
 
 
 @sklSkipDec
-@attr('slow')
+@pytest.mark.slow
 def testSciKitLearnOtherFitTransformLearners():
     data = generateClassificationData(2, 20, 10)
     trainX = abs(data[0][0])
@@ -656,7 +652,7 @@ def testCustomRidgeRegressionCompareRandomized():
 
 
 @sklSkipDec
-@attr('slow')
+@pytest.mark.slow
 @logCountAssertionFactory(4)
 def testCustomKNNClassficationCompareRandomized():
     """ Sanity check on custom KNNClassifier, compare to SKL's KNeighborsClassifier on random data"""
@@ -676,7 +672,7 @@ def testCustomKNNClassficationCompareRandomized():
 
 
 @sklSkipDec
-@attr('slow')
+@pytest.mark.slow
 def testGetAttributesCallable():
     """ Demonstrate getAttributes will work for each learner (with default params) """
     cData = generateClassificationData(2, 10, 5)
@@ -767,18 +763,12 @@ def test_applier_exception():
     # StandardScaler.transform does not takes a 'foo' argument
     tl = nimble.train('SciKitLearn.StandardScaler', dataObj)
     assert 'foo' not in tl._transformedArguments
-    try:
+    with raises(InvalidArgumentValue):
         # using arguments parameter
         transformed = tl.apply(dataObj, arguments={'foo': True})
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
-    try:
+    with raises(InvalidArgumentValue):
         # using kwarguments
         transformed = tl.apply(dataObj, foo=True)
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
 
 @sklSkipDec
 @logCountAssertionFactory(3)
@@ -814,18 +804,12 @@ def test_getScores_exception():
     # DecisionTreeClassifier.predict_proba does not take a 'foo' argument.
     tl = nimble.train('SciKitLearn.DecisionTreeClassifier', trainObj, 0)
     assert 'foo' not in tl._transformedArguments
-    try:
+    with raises(InvalidArgumentValue):
         # using arguments parameter
         transformed = tl.getScores(testObj, arguments={'foo': True})
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
-    try:
+    with raises(InvalidArgumentValue):
         # using kwarguments
         transformed = tl.getScores(testObj, foo=True)
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
 
 def _apply_saveLoad(trainerLearnerObj, givenTestX):
     """

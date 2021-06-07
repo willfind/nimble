@@ -1,8 +1,7 @@
 import numpy as np
-from nose.tools import *
 
 import nimble
-from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.calculate import meanAbsoluteError
 from nimble.calculate import rootMeanSquareError
@@ -11,6 +10,7 @@ from nimble.calculate import fractionCorrect
 from nimble.calculate import fractionIncorrect
 from nimble.calculate import rSquared
 from nimble.calculate import varianceFractionRemaining
+from tests.helpers import raises
 from tests.helpers import noLogEntryExpected
 
 #################

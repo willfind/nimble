@@ -1,13 +1,12 @@
 import math
 
 import numpy as np
-from nose.tools import raises
 
 import nimble
 from nimble.calculate import cosineSimilarity
-from nimble.calculate import rSquared
 from nimble.calculate import confusionMatrix
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from tests.helpers import raises
 from tests.helpers import noLogEntryExpected
 from tests.helpers import getDataConstructors
 
@@ -77,17 +76,11 @@ def test_confusionMatrix_exception_wrongType():
     knownObj = nimble.data('Matrix', known, useLog=False)
     predObj = nimble.data('Matrix', pred, useLog=False)
 
-    try:
+    with raises(InvalidArgumentType):
         cm = confusionMatrix(known, predObj)
-        assert False # expected InvalidArgumentType
-    except InvalidArgumentType:
-        pass
 
-    try:
+    with raises(InvalidArgumentType):
         cm = confusionMatrix(knownObj, pred)
-        assert False # expected InvalidArgumentType
-    except InvalidArgumentType:
-        pass
 
 def test_confusionMatrix_exception_labelsMissingKnown():
     known = [[0], [1], [2], [3],
@@ -103,19 +96,13 @@ def test_confusionMatrix_exception_labelsMissingKnown():
     predObj = nimble.data('Matrix', pred, useLog=False)
 
     # short
-    try:
+    with raises(IndexError):
         labels = ['zero', 'one', 'two']
         cm = confusionMatrix(knownObj, predObj, labels=labels)
-        assert False # expected IndexError
-    except IndexError:
-        pass
 
-    try:
+    with raises(KeyError):
         labels = {0:'zero', 1:'one', 2:'two'}
         cm = confusionMatrix(knownObj, predObj, labels=labels)
-        assert False # expected KeyError
-    except KeyError:
-        pass
 
 @raises(InvalidArgumentValue)
 def test_confusionMatrix_exception_labelListInvalid_wrongType():
