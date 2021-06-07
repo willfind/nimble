@@ -7,12 +7,12 @@ nimble.random.data, nimble.ones, nimble.zeros, nimble.identity
 import copy
 
 import numpy as np
-from nose.tools import *
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from tests.helpers import noLogEntryExpected
+from tests.helpers import raises
 
 returnTypes = copy.copy(nimble.core.data.available)
 
@@ -21,23 +21,14 @@ returnTypes = copy.copy(nimble.core.data.available)
 #######################
 
 def back_constant_sizeChecking(toTest):
-    try:
+    with raises(InvalidArgumentValue):
         toTest("Matrix", -1, 5)
-        assert False  # expected InvalidArgumentValue for negative numPoints
-    except InvalidArgumentValue:
-        pass
 
-    try:
+    with raises(InvalidArgumentValue):
         toTest("Matrix", 4, -3)
-        assert False  # expected InvalidArgumentValue for negative numFeatures
-    except InvalidArgumentValue:
-        pass
 
-    try:
+    with raises(InvalidArgumentValueCombination):
         toTest("Matrix", 0, 0)
-        assert False  # expected InvalidArgumentValueCombination for 0 by 0 sized object
-    except InvalidArgumentValueCombination:
-        pass
 
 
 def back_constant_emptyCreation(toTest):
@@ -188,17 +179,11 @@ def test_zeros_logCount():
 
 
 def test_identity_sizeChecking():
-    try:
+    with raises(InvalidArgumentValue):
         nimble.identity("Matrix", -1)
-        assert False  # expected InvalidArgumentValue for negative size
-    except InvalidArgumentValue:
-        pass
 
-    try:
+    with raises(InvalidArgumentValue):
         nimble.identity("Matrix", 0)
-        assert False  # expected InvalidArgumentValue for 0 valued size
-    except InvalidArgumentValue:
-        pass
 
 
 def test_identity_correctSizeAndContents():

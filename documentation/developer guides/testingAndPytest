@@ -1,0 +1,52 @@
+
+Unit and integration testing in nimble is done with pytest. The expected
+method of testing is by calling the script nimble/runTests.py as main. During
+development, one may wish to call pytest directly on some subsection of the
+nimble code, for that reason, and the purpose of organization, there are some
+guidelines in place about where and how tests are placed and named, and a
+couple of exceptions (discussed below) where organization is strictly enforced.
+
+When running the canonical testing script runTests, every python source file
+in the nimble directory tree is checked for test functions or objects, with
+the exception of documentation. However, a quick description of pytest test
+discovery is included for developers looking to test portions of the code only.
+Pytest will recursively search through everything in the working directory,
+looking for objects which have names that look like tests according to
+hardcoded glob patterns. These glob patterns can be found the pytest.ini file,
+and include any .py file name starting or ending with 'test' or ending with
+'Test', 'tests' or 'Tests' is test related. For a test function to be run
+according to test discovery, it must have a test related name. Alternatively,
+it may have a test related name and be in an object with a test related name.
+Note that pytest does not permit test classes to define an '__init__' method.
+If a test function or object is in a module whose name is not recognized during
+test discovery by the glob patterns (for example a test in the hypothetical
+file foo/bar.py), then it is still possible to call it by executing pytest on
+that particular file (pytest foo/bar.py).
+
+All test files are placed in the tests directory. Modules in core that are not
+in a subdirectory can be tested directly in nimble/tests/. For example,
+nimble/core/configuration.py is tested in tests/testConfig.py. Subdirectories
+in core and nimble's other submodules are tested in subdirectories within
+tests/. For example, nimble/core/data is tested in tests/data and
+nimble/calculate is tested in tests/calculate. Other, more general, tests can
+be placed directly in the tests directory as well. There are two organizational
+requirements for testing.
+
+Firstly, nimble.core.interfaces defines interfaces to packages which may not be
+present on the host machine. Therefore tests of those interfaces, which
+rely on those packages, must be conditionally skipped if the package
+is not present. Therefore, all tests for interfaces must be wrapped using the
+skipMissingPackage decorator factory in tests/helpers.py.
+
+Secondly, nimble.core.data defines a class hierarchy of objects which share
+exactly the same user facing API. It is inconvenient to have to define new
+tests for each class, we want instead to write tests for each forward facing
+function, and have it run once for each subclass. This is accomplished by
+grouping all tests of forward facing methods into objects, each of which are
+subclasses of DataTestObject defined in nimble.core.data.tests.baseObject. Any
+subclass of nimble.core.data.Base must have a corresponding test object placed
+in nimble.core.data.tests.testObjects and subclass from all of the method
+grouping objects (StructureBackend, QueryBackend, etc.). Each test object must
+define a constructor() method decorated with pytest.fixture to provide the
+correct object constructor to each test method. We disallow all other ways of
+testing nimble.core.data.Base subclasses.

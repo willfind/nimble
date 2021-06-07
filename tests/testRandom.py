@@ -6,10 +6,8 @@ import random
 import copy
 
 import numpy as np
-import nose
 
 import nimble
-from nimble.exceptions import InvalidArgumentValue
 from tests.helpers import oneLogEntryExpected, logCountAssertionFactory
 
 

@@ -8,9 +8,9 @@ import subprocess
 import tempfile
 import re
 
-from nose.plugins.attrib import attr
+import pytest
 
-@attr('slow')
+@pytest.mark.slow
 def test_callExamplesAsMain():
     # collect the filenames of the scripts we want to run
     examplesDir = os.path.join(os.getcwd(), 'documentation', 'source',

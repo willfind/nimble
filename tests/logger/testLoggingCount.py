@@ -24,7 +24,6 @@ from nimble.core.data import Base
 from nimble.core.data import Axis
 from nimble.core.data import Points
 from nimble.core.data import Features
-from nimble.core.interfaces.universal_interface import UniversalInterface
 from nimble.core.interfaces.universal_interface import TrainedLearner
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import getDataConstructors

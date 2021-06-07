@@ -1,12 +1,15 @@
 """
 Common assertions helpers to be used in multiple test files.
 
-Custom assertion types can be helpful if the assertion can be added to
+Custom assertion exc_types can be helpful if the assertion can be added to
 existing tests which are also testing other functionality.
 """
 from functools import wraps, partial
 
+import pytest
+
 import nimble
+from nimble.exceptions import PackageException
 from nimble.core._learnHelpers import generateClusteredPoints
 
 class LogCountAssertionError(AssertionError):
@@ -92,22 +95,6 @@ def generateRegressionData(labels, pointsPer, featuresPer):
 
     return ((regressorTrainData, trainLabels), (regressorTestData, testLabels))
 
-def assertExpectedException(exception, func, *args, messageIncludes=None,
-                            **kwargs):
-    """
-    Assert that a given exception is raised when a function is called.
-
-    Optionally can include an exception message or portion of an
-    exception message to validate that the exception raised includes
-    the correct message.
-    """
-    try:
-        func(*args, **kwargs)
-        assert False
-    except exception as e:
-        if messageIncludes is not None:
-            assert messageIncludes in str(e)
-
 def _getViewFunc(returnType):
     """
     Return function creating a view of the given returnType.
@@ -125,7 +112,7 @@ def _getViewFunc(returnType):
 def getDataConstructors(includeViews=True):
     """
     Create data object constructors for tests iterating through each
-    concrete data type. By default includes constructors for views.
+    concrete data exc_type. By default includes constructors for views.
     """
     constructors = []
     for returnType in nimble.core.data.available:
@@ -133,3 +120,123 @@ def getDataConstructors(includeViews=True):
         if includeViews:
             constructors.append(_getViewFunc(returnType))
     return constructors
+
+class raises:
+    """
+    Ensure that a given operation raises the expected exception.
+
+    Can be used as a decorator or a context manager. The context manager
+    returns a pytest.ExceptionInfo object for further exception analysis.
+
+    Parameters
+    ----------
+    exception
+        The exception object expected to be raised.
+    match
+        An optional string or regex object to further test that the string
+        representation of the exception is as expected.
+    """
+    def __init__(self, exception, *args, **kwargs):
+        self.raiser = pytest.raises(exception, *args, **kwargs)
+
+    # as decorator
+    def __call__(self, func):
+        @wraps(func)
+        def wrapped(*args, **kwargs):
+            with self.raiser:
+                return func(*args, **kwargs)
+        return wrapped
+
+    # as context manager
+    def __enter__(self):
+        return self.raiser.__enter__()
+
+    def __exit__(self, exc_type, value, traceback):
+        return self.raiser.__exit__(exc_type, value, traceback)
+
+class patch:
+    """
+    Patch an object to do something different than it was designed to do.
+
+    Can be used as a decorator or a context manager.
+
+    Parameters
+    ----------
+    obj
+        The object containing the attribute that will be patched.
+    name : str
+        The name of the attribute to apply the patch to.
+    value
+        The object that will replace the attribute.
+    """
+    def __init__(self, obj, name, value):
+        self.obj = obj
+        self.name = name
+        self.value = value
+        self.patch = pytest.MonkeyPatch()
+
+    # as decorator
+    def __call__(self, func):
+        @wraps(func)
+        def wrapped(*args, **kwargs):
+            self.patch.setattr(self.obj, self.name, self.value)
+            try:
+                return func(*args, **kwargs)
+            finally:
+                self.patch.undo()
+        return wrapped
+
+    # as context manager
+    def __enter__(self):
+        self.patch.setattr(self.obj, self.name, self.value)
+
+    def __exit__(self, exc_type, value, traceback):
+        self.patch.undo()
+
+def patchCalled(obj, name):
+    """
+    Patch the object to raise a CalledFunctionException.
+
+    Can be used as a decorator or a context manager. This is primarily useful
+    when not expecting the mocked object to be used. If wanting to test that
+    a given object is utilized, it is simpler to use assertCalled.
+    """
+    return patch(obj, name, calledException)
+
+class assertCalled:
+    """
+    For testing that a given object is utilized during the test.
+
+    Can be used as a decorator or a context manager. The object will be patched
+    to return a CalledFunctionException and the test passes if that exception
+    occurs. The return of the context manager is a pytest.ExceptionInfo object.
+    """
+    def __init__(self, obj, name):
+        self.patch = patchCalled(obj, name)
+        self.raises = raises(CalledFunctionException)
+
+    def __call__(self, func):
+        @wraps(func)
+        def wrapped(*args, **kwargs):
+            return self.raises(self.patch(func))(*args, **kwargs)
+        return wrapped
+
+    def __enter__(self):
+        self.patch.__enter__()
+        return self.raises.__enter__()
+
+    def __exit__(self, exc_type, value, traceback):
+        self.patch.__exit__(None, None, None)
+        return self.raises.__exit__(exc_type, value, traceback)
+
+def skipMissingPackage(package):
+    """
+    Return a decorator to skip a test if the package required is missing.
+    """
+    try:
+        nimble.core._learnHelpers.findBestInterface(package)
+        missing = False
+    except PackageException:
+        missing = True
+    reason = package + ' package is not available'
+    return pytest.mark.skipif(missing, reason=reason)

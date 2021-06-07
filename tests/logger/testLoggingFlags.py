@@ -3,10 +3,8 @@ Group of tests which checks that use controlled local and global
 mechanisms for controlling logging are functioning as expected.
 """
 
-import os
 import tempfile
 
-from nose.plugins.attrib import attr
 import numpy as np
 
 import nimble

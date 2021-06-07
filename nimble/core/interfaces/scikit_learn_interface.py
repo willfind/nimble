@@ -354,8 +354,12 @@ class SciKitLearn(_SciKitLearnAPI):
             # ignore anything that imports libraries that are not installed
             # each pkg is a tuple (importer, moduleName, isPackage)
             for pkg in packages:
+                module = pkg[1]
+                # no need to search tests and can fail in unexpected ways
+                if 'tests' in module.split('.'):
+                    continue
                 try:
-                    _ = importlib.import_module(pkg[1])
+                    _ = importlib.import_module(module)
                     ret.append(pkg)
                 except ImportError:
                     pass
