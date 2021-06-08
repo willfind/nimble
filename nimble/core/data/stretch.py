@@ -6,7 +6,7 @@ import numpy as np
 import nimble
 from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
-from . import _dataHelpers
+from ._dataHelpers import mergeNames
 
 class Stretch(object):
     """
@@ -79,50 +79,47 @@ class Stretch(object):
         """
         Set names of objects output from stretch operations.
         """
-        sPtNames = self._source.points._getNamesNoGeneration()
-        sFtNames = self._source.features._getNamesNoGeneration()
+        sPtAxis = self._source.points
+        sFtAxis = self._source.features
         oStretch = isinstance(other, Stretch)
         if oStretch:
-            oPtNames = other._source.points._getNamesNoGeneration()
-            oFtNames = other._source.features._getNamesNoGeneration()
+            oPtAxis = other._source.points
+            oFtAxis = other._source.features
             oNumPts = other._numPts
             oNumFts = other._numFts
         else:
-            oPtNames = other.points._getNamesNoGeneration()
-            oFtNames = other.features._getNamesNoGeneration()
+            oPtAxis = other.points
+            oFtAxis = other.features
             oNumPts = len(other.points)
             oNumFts = len(other.features)
         setNumPts = max(self._numPts, oNumPts)
         setNumFts = max(self._numFts, oNumFts)
 
-        def defaultNames(names):
-            if names is None:
-                return True
-            if all(n.startswith(_dataHelpers.DEFAULT_PREFIX) for n in names):
-                return True
-            return False
-
-        def getNames(sNames, oNames, sNum, oNum, setNum):
+        def getNames(sAxis, oAxis, sNum, oNum, setNum):
+            sNames = sAxis._getNamesNoGeneration()
+            oNames = oAxis._getNamesNoGeneration()
+            sDefault = sAxis._allDefaultNames()
+            oDefault = oAxis._allDefaultNames()
             if sNames == oNames: # includes both names are None
                 return sNames
-            if defaultNames(sNames) and oStretch and oNum != setNum and oNames:
+            if sDefault and oStretch and oNum != setNum and oNames:
                 oName = oNames[0]
                 return [oName + '_' + str(i + 1) for i in range(setNum)]
-            if sNames and defaultNames(sNames) and not oNames:
+            if sNames and sDefault and not oNames:
                 return sNames
-            if defaultNames(sNames):
+            if sDefault:
                 return oNames
-            if defaultNames(oNames) and (sNum > 1 or setNum == 1):
+            if oDefault and (sNum > 1 or setNum == 1):
                 return sNames
-            if defaultNames(oNames):
+            if oDefault:
                 sName = sNames[0]
                 return [sName + '_' + str(i + 1) for i in range(setNum)]
             if len(sNames) == len(oNames): # some default names present
-                return _dataHelpers.mergeNames(sNames, oNames)
+                return mergeNames(sNames, oNames)
             return None
 
-        setPts = getNames(sPtNames, oPtNames, self._numPts, oNumPts, setNumPts)
-        setFts = getNames(sFtNames, oFtNames, self._numFts, oNumFts, setNumFts)
+        setPts = getNames(sPtAxis, oPtAxis, self._numPts, oNumPts, setNumPts)
+        setFts = getNames(sFtAxis, oFtAxis, self._numFts, oNumFts, setNumFts)
 
         return setPts, setFts
 

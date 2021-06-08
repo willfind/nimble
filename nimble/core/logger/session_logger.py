@@ -25,13 +25,13 @@ import sqlite3
 from ast import literal_eval
 import textwrap
 import datetime
+from configparser import NoSectionError
 
 import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.core.configuration import configErrors
 
 def log(heading, logInfo):
     """
@@ -584,20 +584,21 @@ class SessionLogger(object):
 
             self.log(logType, logInfo)
 
-    def logRandomSeed(self, useLog, seed):
+    def logRandomSeed(self, useLog, action, seed):
         """
         Log the random seed value.
 
-        If this will be logged, store an entry in the database with
-        "setSeed" as the logType and a dictionary (stored as a string)
-        of the seed value as the logInfo.
+        If this will be logged, this uses the default log settings .
 
+        action : str
+            A description of the action that is changing the state of
+            the random seed.
         seed : int
             The random seed value.
         """
         if loggingEnabled(useLog):
-            logType = 'random.setSeed'
-            logInfo = {'seed': seed}
+            logType = 'setSeed'
+            logInfo = {'action': action, 'seed': seed}
             self.log(logType, logInfo)
 
     ###################
@@ -849,25 +850,22 @@ def _showLogOutputString(listOfLogs, levelOfDetail, append):
             fullLog += "." * 79
             previousLogSessionNumber = sessionNumber
         try:
-            if logType not in nimble.core.logger.active.logTypes:
-                fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
-                fullLog += '.' * 79
-            elif logType == 'load':
+            if logType == 'load':
                 fullLog += _buildLoadLogString(timestamp, logInfo)
-                fullLog += '.' * 79
             elif logType == 'data':
                 fullLog += _buildDataLogString(timestamp, logInfo)
-                fullLog += '.' * 79
             elif logType == 'prep' and levelOfDetail > 1:
                 fullLog += _buildPrepLogString(timestamp, logInfo)
-                fullLog += '.' * 79
             elif ((logType == 'run' and levelOfDetail > 1)
                   or (logType == 'runCV' and levelOfDetail > 2)):
                 fullLog += _buildRunLogString(timestamp, logInfo)
-                fullLog += '.' * 79
             elif logType == 'crossVal' and levelOfDetail > 1:
                 fullLog += _buildCVLogString(timestamp, logInfo)
-                fullLog += '.' * 79
+            elif logType == 'setSeed':
+                fullLog += _buildSetSeedLogString(timestamp, logInfo)
+            else:
+                fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
+            fullLog += '.' * 79
         except (TypeError, KeyError):
             fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
             fullLog += '.' * 79
@@ -1009,6 +1007,14 @@ def _buildCVLogString(timestamp, entry):
         argString = _dictToKeywordString(arguments)
         fullLog += "{0:<20.3f}{1:20s}".format(result, argString)
         fullLog += "\n"
+    return fullLog
+
+def _buildSetSeedLogString(timestamp, entry):
+    """
+    Constructs the string that will be output for setSeed logTypes.
+    """
+    asHeader = entry['action'] + '(seed={})'.format(entry['seed'])
+    fullLog = _logHeader(asHeader, timestamp)
     return fullLog
 
 def _buildDefaultLogString(timestamp, logType, entry):
@@ -1176,40 +1182,28 @@ def initLoggerAndLogConfig():
     initializes the currently active logger object using those options.
     """
     try:
-        location = nimble.settings.get("logger", "location")
-        if location == "":
-            location = './logs-nimble'
-            nimble.settings.set("logger", "location", location)
-            nimble.settings.saveChanges("logger", "location")
-    except configErrors:
+        logSettings = nimble.settings.get('logger')
+    except NoSectionError:
+        logSettings = {}
+
+    location = logSettings.get('location', "")
+    if not location:
         location = './logs-nimble'
-        nimble.settings.set("logger", "location", location)
-        nimble.settings.saveChanges("logger", "location")
-    finally:
-        nimble.settings.hook("logger", "location", cleanThenReInitLoc)
+        nimble.settings.setDefault("logger", "location", location)
+    nimble.settings.hook("logger", "location", cleanThenReInitLoc)
 
-    try:
-        name = nimble.settings.get("logger", "name")
-    except configErrors:
+    name = logSettings.get('name', "")
+    if not name:
         name = "log-nimble"
-        nimble.settings.set("logger", "name", name)
-        nimble.settings.saveChanges("logger", "name")
-    finally:
-        nimble.settings.hook("logger", "name", cleanThenReInitName)
+        nimble.settings.setDefault("logger", "name", name)
+    nimble.settings.hook("logger", "name", cleanThenReInitName)
 
-    try:
-        _ = nimble.settings.get("logger", "enabledByDefault")
-    except configErrors:
-        nimble.settings.set("logger", "enabledByDefault", 'True')
-        nimble.settings.saveChanges("logger", "enabledByDefault")
+    if not logSettings.get('enabledByDefault', ""):
+        nimble.settings.setDefault("logger", "enabledByDefault", 'True')
 
-    try:
-        _ = nimble.settings.get("logger", 'enableCrossValidationDeepLogging')
-    except configErrors:
-        nimble.settings.set("logger", 'enableCrossValidationDeepLogging',
-                            'False')
-        nimble.settings.saveChanges("logger",
-                                    'enableCrossValidationDeepLogging')
+    if not logSettings.get('enableCrossValidationDeepLogging', ""):
+        nimble.settings.setDefault("logger",
+                                   'enableCrossValidationDeepLogging', 'False')
 
     nimble.core.logger.active = SessionLogger(location, name)
 

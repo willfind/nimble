@@ -10,6 +10,7 @@ import warnings
 from unittest import mock
 import pkgutil
 import abc
+import importlib
 
 import numpy as np
 
@@ -337,8 +338,6 @@ class SciKitLearn(_SciKitLearnAPI):
 
     def __init__(self):
         self.skl = modifyImportPathAndImport('sklearn', 'sklearn')
-        testUtils = modifyImportPathAndImport('sklearn',
-                                              'sklearn.utils.testing')
 
         version = self.version()
         epoch, release = version.split('.')[:2]
@@ -348,19 +347,22 @@ class SciKitLearn(_SciKitLearnAPI):
             warnings.warn(msg)
 
         walkPackages = pkgutil.walk_packages
+
         def mockWalkPackages(*args, **kwargs):
             packages = walkPackages(*args, **kwargs)
-            sklAll = self.skl.__all__
             ret = []
+            # ignore anything that imports libraries that are not installed
             # each pkg is a tuple (importer, moduleName, isPackage)
-            # we want to ignore anything not in __all__ and any private
-            # modules to prevent trying to import libraries outside of
-            # scikit-learn dependencies
             for pkg in packages:
-                nameSplit = pkg[1].split('.')
-                allPublic = all(not n.startswith('_') for n in nameSplit)
-                if nameSplit[1] in sklAll and allPublic:
+                module = pkg[1]
+                # no need to search tests and can fail in unexpected ways
+                if 'tests' in module.split('.'):
+                    continue
+                try:
+                    _ = importlib.import_module(module)
                     ret.append(pkg)
+                except ImportError:
+                    pass
 
             return ret
 
@@ -369,11 +371,14 @@ class SciKitLearn(_SciKitLearnAPI):
                                              FutureWarning))
             with mock.patch('pkgutil.walk_packages', mockWalkPackages):
                 try:
-                    kwargs = {'include_dont_test': True}
-                    estimatorDict = testUtils.all_estimators(**kwargs)
-                except TypeError:
-                    # include_dont_test will be removed in later versions
-                    estimatorDict = testUtils.all_estimators()
+                    utils = modifyImportPathAndImport('sklearn',
+                                                      'sklearn.utils')
+                    estimatorDict = utils.all_estimators()
+                except AttributeError: # version < 0.22
+                    utils = modifyImportPathAndImport('sklearn',
+                                                      'sklearn.utils.testing')
+                    estimatorDict = utils.all_estimators(
+                        include_dont_test=True)
 
             self.allEstimators = {}
             for name, obj in estimatorDict:

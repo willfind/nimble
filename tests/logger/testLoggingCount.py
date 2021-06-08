@@ -24,7 +24,6 @@ from nimble.core.data import Base
 from nimble.core.data import Axis
 from nimble.core.data import Points
 from nimble.core.data import Features
-from nimble.core.interfaces.universal_interface import UniversalInterface
 from nimble.core.interfaces.universal_interface import TrainedLearner
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import getDataConstructors
@@ -106,7 +105,7 @@ match_funcs = [
 match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 
 random_logged = [
-    'data', 'setSeed',
+    'data', 'setSeed', 'alternateControl',
     ]
 random_funcs = random_logged
 random_tested = list(map(prefixAdder('nimble.random'), random_funcs))

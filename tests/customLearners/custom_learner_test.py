@@ -1,4 +1,3 @@
-from nose.tools import raises
 import numpy as np
 
 import nimble
@@ -6,7 +5,9 @@ from nimble import CustomLearner
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.learners import RidgeRegression, KNNClassifier
 from nimble.core.interfaces.custom_learner import validateCustomLearnerSubclass
+from tests.helpers import raises
 from tests.helpers import noLogEntryExpected
+from tests.helpers import skipMissingPackage
 
 
 @raises(TypeError)
@@ -369,6 +370,7 @@ def test_logCount():
     defaults = nimble.learnerDefaultValues("custom.LoveAtFirstSightClassifier")
     lType = nimble.learnerType("custom.LoveAtFirstSightClassifier")
 
+@skipMissingPackage('sklearn')
 def test_listLearnersDirectFromModule():
     nimbleLearners = nimble.listLearners(nimble)
     assert 'KNNClassifier' in nimbleLearners
@@ -376,14 +378,11 @@ def test_listLearnersDirectFromModule():
     assert 'MultiOutputRidgeRegression' in nimbleLearners
     assert 'MultiOutputLinearRegression' in nimbleLearners
 
-    try:
-        import sklearn
-        sklearnLearners = nimble.listLearners(sklearn)
-        assert 'LinearRegression' in sklearnLearners
-        assert 'LogisticRegression' in sklearnLearners
-        assert 'KNeighborsClassifier' in sklearnLearners
-    except ImportError:
-        pass
+    import sklearn
+    sklearnLearners = nimble.listLearners(sklearn)
+    assert 'LinearRegression' in sklearnLearners
+    assert 'LogisticRegression' in sklearnLearners
+    assert 'KNeighborsClassifier' in sklearnLearners
 
 def test_learnerQueries():
     params = nimble.learnerParameters(UncallableLearner)
@@ -424,11 +423,8 @@ def test_redefinedLearner():
     # we should now be able to train this learner with a foo argument
     tl2 = nimble.train(Redefine, trainX, trainY, foo='foo')
     # we should not be able to apply the learner because it returns None
-    try:
+    with raises(InvalidArgumentType):
         tl2.apply(testX)
-        assert False # expected InvalidArgumentType
-    except InvalidArgumentType:
-        pass
 
 class MeanConstant(CustomLearner):
     learnerType = 'regression'

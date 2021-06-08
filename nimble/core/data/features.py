@@ -1891,7 +1891,7 @@ class Features(ABC):
         fNames = self.getNames()[:featureIndex]
         fNames.extend(resultingNames)
         fNames.extend(self.getNames()[featureIndex + 1:])
-        self._base._featureCount = numRetFeatures
+        self._base._shape[1] = numRetFeatures
         self.setNames(fNames, useLog=False)
 
         handleLogging(useLog, 'prep', 'features.splitByParsing',

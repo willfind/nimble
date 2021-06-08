@@ -3,12 +3,12 @@ Test that the code meets the minimum linter requirements.
 """
 import os
 
-from nose.plugins.attrib import attr
+import pytest
 
 import nimble
 from lint import analyzeWarnings, sortWarnings, printWarnings
 
-@attr('slow')
+@pytest.mark.slow
 def testLinterPasses():
     """Test minimum linter requirements are met."""
     configOptions = [nimble.nimblePath]

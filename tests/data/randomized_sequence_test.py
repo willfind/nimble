@@ -9,9 +9,6 @@ TODO not updated for api rework
 
 """
 
-import inspect
-import sys
-import pdb
 import functools
 import random
 
@@ -21,7 +18,6 @@ import nimble
 from nimble.core.data import Base
 from nimble.core.data import BaseView
 from nimble._utility import inspectArguments
-from nimble.random import pythonRandom
 
 numberOperations = 100
 numPoints = 4
@@ -141,9 +137,8 @@ def runSequence(objectList):
         results = []
         for i in range(len(objectList)):
             funcToCall = getattr(objectList[i], currFunc) #eval('objectList[i].' + currFunc)
-            nimble.random._startAlternateControl(randomseed)
-            currResult = funcToCall(*paramsPerObj[i])
-            nimble.random._endAlternateControl()
+            with nimble.random.alternateControl(randomseed):
+                currResult = funcToCall(*paramsPerObj[i])
             results.append(currResult)
 
         # need to check equality of results
@@ -184,14 +179,12 @@ def equalityWrapper(left, right):
         rightIter = right.__iter__()
         leftList = []
         rightList = []
-        try:
-            while (True): leftList.append(next(leftIter))
-        except StopIteration:
-            pass
-        try:
-            while (True): rightList.append(next(rightIter))
-        except StopIteration:
-            pass
+        with raises(StopIteration):
+            while (True):
+                leftList.append(next(leftIter))
+        with raises(StopIteration):
+            while (True):
+                rightList.append(next(rightIter))
 
         assert len(leftList) == len(rightList)
         for i in range(len(leftList)):
@@ -255,11 +248,11 @@ def genObj(dataObj, seed, matchType=True, matchPoints=False, matchFeatures=False
         ret = nimble.data('Matrix', rawData)
         ret = ret.copy(to=dataType)
     else:
-        nimble.random._startAlternateControl()
-        nimble.random.setSeed(random.randint(0, 2**32 - 1))
-        ret = nimble.random.data("Matrix", points, features, .5, elementType='int')
-        ret = ret.copy(to=dataType)
-        nimble.random._endAlternateControl()
+        with nimble.random.alternateControl():
+            nimble.random.setSeed(random.randint(0, 2**32 - 1))
+            ret = nimble.random.data("Matrix", points, features, .5, elementType='int')
+            ret = ret.copy(to=dataType)
+
     return ret
 
 
@@ -697,4 +690,3 @@ def TODO_MakeParamsExclusivity():
                     # to be callable
                     # WRONG! sometimes defaults are acceptable.
                     #assert seenNonDefault
-

@@ -190,7 +190,7 @@ def run_setup():
     tensorflow = 'tensorflow>=1.14'
     keras = 'keras>=2.0'
     autoimpute = 'autoimpute>=0.12'
-    nose = 'nose>=1.3'
+    pytest = 'pytest>=6.2'
     pylint = 'pylint>=2.5'
     cython = 'cython>=0.29'
     data = [pandas, scipy]
@@ -198,14 +198,14 @@ def run_setup():
     interfaces = [scikitlearn, tensorflow, autoimpute, mlpy]
     quickstart = data + operation + [scikitlearn]
     userAll = data + operation + interfaces
-    development = [nose, pylint, cython]
+    development = [pytest, pylint, cython]
     setupKwargs['extras_require'] = {
         'quickstart': quickstart, 'all': userAll, 'data': data,
         'pandas': pandas, 'scipy': scipy, 'matplotlib': matplotlib,
         'cloudpickle': cloudpickle, 'requests': requests, 'h5py': h5py,
         'dateutil': dateutil, 'machine-learning-py': mlpy,
         'scikit-learn': scikitlearn, 'keras': keras, 'tensorflow': tensorflow,
-        'autoimpute': autoimpute, 'development': development, 'nose': nose,
+        'autoimpute': autoimpute, 'development': development, 'pytest': pytest,
         'pylint': pylint, 'cython': cython
         }
 
