@@ -2,18 +2,18 @@
 Unit tests for mlpy_interface.py
 """
 
-from nose.tools import *
 import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.core.interfaces.mlpy_interface import Mlpy
-from .test_helpers import checkLabelOrderingAndScoreAssociations
-from .skipTestDecorator import SkipMissing
+from tests.helpers import raises
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
+from .test_helpers import checkLabelOrderingAndScoreAssociations
+from tests.helpers import skipMissingPackage
 
-mlpySkipDec = SkipMissing('mlpy')
+mlpySkipDec = skipMissingPackage('mlpy')
 
 @mlpySkipDec
 @noLogEntryExpected
@@ -402,19 +402,13 @@ def test_applier_exception():
     dataObj = nimble.data('Matrix', data)
     # MFastHCluster.pred does not take a 'foo' argument
     tl = nimble.train('mlpy.MFastHCluster', dataObj, t=1)
-    try:
+    with raises(InvalidArgumentValue):
         newArgs = tl.apply(dataObj, arguments={'foo': 1})
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
 
     # PCA.transform does not take a 'foo' argument
     tl = nimble.train('mlpy.PCA', dataObj)
-    try:
+    with raises(InvalidArgumentValue):
         newArgs = tl.apply(dataObj, foo=1)
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
 
 @mlpySkipDec
 def test_getScores_exception():
@@ -428,14 +422,8 @@ def test_getScores_exception():
     # LibLinear.pred_values does not take a 'foo' argument.
     tl = nimble.train('mlpy.LibLinear', trainingObj, 0)
     # in arguments parameter
-    try:
+    with raises(InvalidArgumentValue):
         newArgs = tl.getScores(testObj, arguments={'foo': 1})
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
     # as keyword argument
-    try:
+    with raises(InvalidArgumentValue):
         newArgs = tl.getScores(testObj, foo=1)
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass

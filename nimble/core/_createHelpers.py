@@ -1234,12 +1234,6 @@ def initDataObject(
         else:
             returnType = 'Matrix'
 
-    if _isBase(rawData):
-        # point/featureNames, treatAsMissing, etc. may vary
-        rawData = rawData._data
-    elif isinstance(rawData, (range, GeneratorType)):
-        rawData = list(rawData)
-
     if copyData is None:
         # signals data was constructed internally and can be modified so it
         # can be considered copied for the purposes of this function
@@ -1250,13 +1244,18 @@ def initDataObject(
     else:
         copied = False
 
-    # record if extraction occurred before we possibly modify *Names parameters
-    ptsExtracted = extracted[0] if extracted[0] else pointNames is True
-    ftsExtracted = extracted[1] if extracted[1] else featureNames is True
-
-    # If skipping data processing, no modification needs to be made
-    # to the data, so we can skip name extraction and missing replacement.
     kwargs = {}
+    if _isBase(rawData):
+        # only use data; point/featureNames, treatAsMissing, etc. may vary
+        # _data is always 2D, but _shape could be higher dimension
+        kwargs['shape'] = rawData._shape
+        if isinstance(rawData, nimble.core.data.BaseView):
+            rawData = rawData.copy()
+            copied = True
+        rawData = rawData._data
+    elif isinstance(rawData, (range, GeneratorType)):
+        rawData = list(rawData)
+        copied = True
     # convert these types as indexing may cause dimensionality confusion
     if _isNumpyMatrix(rawData):
         rawData = np.array(rawData)
@@ -1264,7 +1263,10 @@ def initDataObject(
     if _isScipySparse(rawData) and not scipy.sparse.isspmatrix_coo(rawData):
         rawData = rawData.tocoo()
         copied = True
-        copied = True
+
+    # record if extraction occurred before we possibly modify *Names parameters
+    ptsExtracted = extracted[0] if extracted[0] else pointNames is True
+    ftsExtracted = extracted[1] if extracted[1] else featureNames is True
 
     if isHighDimensionData(rawData, skipDataProcessing):
         # additional name validation / processing before extractNames
@@ -1274,6 +1276,8 @@ def initDataObject(
         kwargs['shape'] = tensorShape
         copied = True
 
+    # If skipping data processing, no modification needs to be made
+    # to the data, so we can skip name extraction and missing replacement.
     if skipDataProcessing:
         if returnType == 'List':
             kwargs['checkAll'] = False
@@ -2067,12 +2071,8 @@ def _colTypeConversion(row, convertCols):
 
 def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
     """
-    Will check for triggers to automatically determine the positions of
-    the point or feature names if they have not been specified by the
-    user. For feature names the trigger is two empty lines prior to
-    the first line of data. For point names the trigger is the first
-    line of data contains the feature names, and the first value of that
-    line is 'pointNames'
+    Finds the first two lines of data (ignoring comments) to determine whether
+    point and/or feature names will be extracted from the data.
     """
     startPosition = ioStream.tell()
 
@@ -2081,18 +2081,8 @@ def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
     while currLine.startswith('#'):
         currLine = ioStream.readline()
 
-    # check for two empty lines in a row to denote that first
-    # data line contains feature names
-    if currLine.strip() == '':
-        currLine = ioStream.readline()
-        if currLine.strip() == '':
-            # only change set value if we allow detection
-            if featureNames == 'automatic':
-                # we set this so the names are extracted later
-                featureNames = True
-
     # Use the robust csv reader to read the first two lines (if available)
-    # these are saved to used in further autodection
+    # these are saved to use in further autodetection
     ioStream.seek(startPosition)
     rowReader = csv.reader(ioStream, dialect)
     try:
@@ -2332,6 +2322,7 @@ def _loadmtxForAuto(ioStream, pointNames, featureNames, encoding):
     retPNames = None
     retFNames = None
 
+    # ioStream will always be bytes
     # read through the comment lines
     while True:
         currLine = ioStream.readline()
@@ -2343,11 +2334,8 @@ def _loadmtxForAuto(ioStream, pointNames, featureNames, encoding):
             scrubbedLine = currLine[2:]
             # strip newline from end of line
             scrubbedLine = scrubbedLine.rstrip()
-            if isinstance(scrubbedLine, str):
-                names = scrubbedLine.split(',')
-            else:
-                names = list(map(lambda s: s.decode(encoding),
-                                 scrubbedLine.split(b',')))
+            names = list(map(lambda s: s.decode(encoding),
+                             scrubbedLine.split(b',')))
             if not seenPNames:
                 retPNames = names if names != [''] else None
                 seenPNames = True

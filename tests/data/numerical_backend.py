@@ -15,27 +15,24 @@ __or__, __xor__
 
 """
 
-import sys
-import numpy as np
 import os
 import os.path
-from unittest.mock import patch
 from functools import partial
 
-from nose.tools import *
+import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction
 from nimble.random import numpyRandom
 from nimble.random import pythonRandom
-from nimble.core.data._dataHelpers import DEFAULT_PREFIX, isDefaultName
 
-from .baseObject import DataTestObject
-from tests.helpers import logCountAssertionFactory, noLogEntryExpected
+from tests.helpers import raises, patchCalled, assertCalled
+from tests.helpers import noLogEntryExpected
 from tests.helpers import assertNoNamesGenerated
-from tests.helpers import CalledFunctionException, calledException
+from tests.helpers import CalledFunctionException
 from tests.helpers import getDataConstructors
+from .baseObject import DataTestObject
 
 preserveName = "PreserveTestName"
 preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
@@ -185,11 +182,8 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
     other = callerCon(otherRaw, opnames, ofnames)
     toCall = getattr(caller, op)
-    try:
+    with raises(InvalidArgumentValue):
         ret = toCall(other)
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
 
     # names interwoven
     other = callerCon(otherRaw, pnames, defaultNames)
@@ -232,11 +226,8 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     ofnames = {'f0': 0, 'f1': 1, 'f2': 2}
     other = callerCon(otherRaw, opnames, ofnames)
     toCall = getattr(caller, op)
-    try:
+    with raises(InvalidArgumentValue):
         ret = toCall(other)
-        assert False
-    except InvalidArgumentValue:
-        pass
 
     # pt names equal; ft names disjoint
     caller = callerCon(data, pnames, fnames)
@@ -260,14 +251,11 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     ofnames[0] = 'f3'
     other = callerCon(otherRaw, pnames, ofnames)
     assert other.features.getName(0) in caller.features.getNames()
-    assert isDefaultName(other.features.getName(1))
-    assert isDefaultName(other.features.getName(2))
+    assert other.features.getName(1) is None
+    assert other.features.getName(2) is None
     toCall = getattr(caller, op)
-    try:
+    with raises(InvalidArgumentValue):
         ret = toCall(other)
-        assert False
-    except InvalidArgumentValue:
-        pass
 
     # pt names equal; ft names + mixed ft names disjoint
     caller = callerCon(data, pnames, fnames)
@@ -275,8 +263,8 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     ofnames[0] = '3f'
     other = callerCon(otherRaw, pnames, ofnames)
     assert other.features.getName(0) not in caller.features.getNames()
-    assert isDefaultName(other.features.getName(1))
-    assert isDefaultName(other.features.getName(2))
+    assert other.features.getName(1) is None
+    assert other.features.getName(2) is None
     toCall = getattr(caller, op)
     # inplace requires feature names to match, otherwise not required
     try:
@@ -296,11 +284,8 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     ofnames[2] = 'f1'
     other = callerCon(otherRaw, pnames, ofnames)
     toCall = getattr(caller, op)
-    try:
+    with raises(InvalidArgumentValue):
         ret = toCall(other)
-        assert False
-    except InvalidArgumentValue:
-        pass
 
     # ft names equal; pt names intersect
     caller = callerCon(data, pnames, fnames)
@@ -308,11 +293,8 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     opnames = {'p0': 0, 'p1': 1, 'p2': 2}
     other = callerCon(otherRaw, opnames, ofnames)
     toCall = getattr(caller, op)
-    try:
+    with raises(InvalidArgumentValue):
         ret = toCall(other)
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
 
     # ft names equal; pt names disjoint
     caller = callerCon(data, pnames, fnames)
@@ -336,14 +318,11 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     opnames[0] = 'p3'
     other = callerCon(otherRaw, opnames, fnames)
     assert other.points.getName(0) in caller.points.getNames()
-    assert isDefaultName(other.points.getName(1))
-    assert isDefaultName(other.points.getName(2))
+    assert other.points.getName(1) is None
+    assert other.points.getName(2) is None
     toCall = getattr(caller, op)
-    try:
+    with raises(InvalidArgumentValue):
         ret = toCall(other)
-        assert False # expected InvalidArgumentValue
-    except InvalidArgumentValue:
-        pass
 
     # ft names equal; pt names + mixed pt names disjoint
     caller = callerCon(data, pnames, fnames)
@@ -351,8 +330,8 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     opnames[0] = '3p'
     other = callerCon(otherRaw, opnames, fnames)
     assert other.points.getName(0) not in caller.points.getNames()
-    assert isDefaultName(other.points.getName(1))
-    assert isDefaultName(other.points.getName(2))
+    assert other.points.getName(1) is None
+    assert other.points.getName(2) is None
     # inplace requires point names to match, otherwise not required
     toCall = getattr(caller, op)
     try:
@@ -372,11 +351,8 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     opnames[2] = 'p1'
     other = callerCon(otherRaw, opnames, fnames)
     toCall = getattr(caller, op)
-    try:
+    with raises(InvalidArgumentValue):
         ret = toCall(other)
-        assert False
-    except InvalidArgumentValue:
-        pass
 
 def back_binaryelementwise_NamePath_preservations(callerCon, attr1, inplace, attr2=None):
     data = [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
@@ -870,11 +846,8 @@ def back_autoVsNumpyObjCalleeDiffTypes(constructor, opName, nimbleinplace, spars
         assertNoNamesGenerated(resiObj)
 
 def wrapAndCall(toWrap, expected, *args):
-    try:
-        toWrap(*args)
-        assert False # expected exception was not raised
-    except expected:
-        pass
+    with raises(expected):
+        toWrap(*args) # expected exception was not raised
 
 def run_full_backendDivMod(constructor, opName, inplace, sparsity):
     wrapAndCall(back_byZeroException, ZeroDivisionError, *(constructor, constructor, opName))
@@ -898,7 +871,7 @@ def run_full_backend(constructor, opName, inplace, sparsity):
     back_autoVsNumpyObjCalleeDiffTypes(constructor, opName, inplace, sparsity)
 
 
-@patch('nimble.core.data.Sparse._scalarZeroPreservingBinary_implementation', calledException)
+@patchCalled(nimble.core.data.Sparse, '_scalarZeroPreservingBinary_implementation')
 def back_sparseScalarZeroPreserving(constructor, nimbleOp):
     data = [[1, 2, 3], [0, 0, 0]]
     toTest = constructor(data)
@@ -912,8 +885,8 @@ def back_sparseScalarZeroPreserving(constructor, nimbleOp):
     except ZeroDivisionError:
         assert nimbleOp.startswith('__r')
 
-@patch('nimble.core.data.Sparse._defaultBinaryOperations_implementation', calledException)
-@patch('nimble.core.data.Sparse._scalarZeroPreservingBinary_implementation', calledException)
+@patchCalled(nimble.core.data.Sparse, '_defaultBinaryOperations_implementation')
+@patchCalled(nimble.core.data.Sparse, '_scalarZeroPreservingBinary_implementation')
 def back_sparseScalarOfOne(constructor, nimbleOp):
     """Test Sparse does not call helper functions for these scalar ops """
     data = [[1, 2, 3], [0, 0, 0]]
@@ -921,11 +894,7 @@ def back_sparseScalarOfOne(constructor, nimbleOp):
     rint = 1.0
     # Sparse should use a copy of toTest when exponent is 1, so neither
     # helper function should be called
-    try:
-        ret = getattr(toTest, nimbleOp)(rint)
-    except CalledFunctionException:
-        assert False # this function should not be used for this operation
-
+    ret = getattr(toTest, nimbleOp)(rint)
 
 class NumericalDataSafe(DataTestObject):
 
@@ -990,8 +959,7 @@ class NumericalDataSafe(DataTestObject):
         # can be small differences due to inverse calculation
         assert ret.isApproximatelyEqual(exp)
 
-    @raises(CalledFunctionException)
-    @patch('nimble.calculate.inverse', calledException)
+    @assertCalled(nimble.calculate, 'inverse')
     def test_matrixPower_callsNimbleCalculateInverse(self):
         raw = [[1, 2], [3, 4]]
         pNames = ['p1', 'p2']
@@ -1013,8 +981,7 @@ class NumericalDataSafe(DataTestObject):
     # __matmul__ / matrixMultiply #
     ###############################
 
-    @raises(CalledFunctionException)
-    @patch('nimble.core.data.Base.__matmul__', calledException)
+    @assertCalled(nimble.core.data.Base, '__matmul__')
     def test_matrixMultiply_uses__matmul__backend(self):
         data1 = [[1, 2], [4, 5], [7, 8]]
         data2 = [[1, 2, 3], [4, 5, 6]]

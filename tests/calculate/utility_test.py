@@ -1,5 +1,4 @@
 import numpy as np
-from nose.tools import *
 
 import nimble
 from nimble.calculate import cosineSimilarity
@@ -11,6 +10,7 @@ from nimble.calculate import rootMeanSquareError
 from nimble.calculate import rSquared
 from nimble.calculate import varianceFractionRemaining
 from nimble.exceptions import InvalidArgumentValue
+from tests.helpers import raises
 from tests.helpers import noLogEntryExpected
 
 ####################
@@ -103,11 +103,8 @@ def test_detectBestResult_exceptionsAreReported():
     def neverWorks(knowns, predicted):
         raise InvalidArgumentValue(wanted)
 
-    try:
+    with raises(InvalidArgumentValue, match=wanted):
         detectBestResult(neverWorks)
-        assert False  # we expected an exception in this test
-    except InvalidArgumentValue as iav:
-        assert wanted in iav.message
 
 @noLogEntryExpected
 def _backend(performanceFunction, optimality):

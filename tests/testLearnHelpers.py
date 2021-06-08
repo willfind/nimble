@@ -2,14 +2,11 @@ import math
 from math import fabs
 
 import numpy as np
-from nose.tools import *
-from nose.plugins.attrib import attr
+import pytest
 
 import nimble
-from nimble import learnerType
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import PackageException
 from nimble.core._learnHelpers import findBestInterface
 from nimble.core._learnHelpers import FoldIterator
@@ -18,8 +15,8 @@ from nimble.core._learnHelpers import generateClusteredPoints
 from nimble.core._learnHelpers import computeMetrics
 from nimble.calculate import rootMeanSquareError
 from nimble.calculate import meanAbsoluteError
-from nimble.calculate import fractionIncorrect
 from nimble.random import pythonRandom
+from tests.helpers import raises
 
 ##########
 # TESTER #
@@ -65,11 +62,8 @@ class FoldIteratorTester(object):
         [(fold1Train, fold1Test)] = next(folds)
         [(fold2Train, fold2Test)] = next(folds)
 
-        try:
+        with raises(StopIteration):
             next(folds)
-            assert False
-        except StopIteration:
-            pass
 
         assert len(fold1Train.points) + len(fold1Test.points) == 5
         assert len(fold2Train.points) + len(fold2Test.points) == 5
@@ -87,11 +81,8 @@ class FoldIteratorTester(object):
         [(fold1Train, fold1Test), (fold1NoneTrain, fold1NoneTest)] = next(folds)
         [(fold2Train, fold2Test), (fold2NoneTrain, fold2NoneTest)] = next(folds)
 
-        try:
+        with raises(StopIteration):
             next(folds)
-            assert False
-        except StopIteration:
-            pass
 
         assert len(fold1Train.points) + len(fold1Test.points) == 5
         assert len(fold2Train.points) + len(fold2Test.points) == 5
@@ -123,11 +114,8 @@ class FoldIteratorTester(object):
         [(fold0Train0, fold0Test0), (fold0Train1, fold0Test1), (fold0Train2, fold0Test2)] = fold0
         [(fold1Train0, fold1Test0), (fold1Train1, fold1Test1), (fold1Train2, fold1Test2)] = fold1
 
-        try:
+        with raises(StopIteration):
             next(folds)
-            assert False
-        except StopIteration:
-            pass
 
         # check that the partitions are the right size (ie, no overlap in training and testing)
         assert len(fold0Train0.points) + len(fold0Test0.points) == 7
@@ -178,6 +166,7 @@ class FoldIteratorTester(object):
             assert len(testY.points) == exp
 
 class TestList(FoldIteratorTester):
+    __test__ = False
     def __init__(self):
         def maker(data=None, featureNames=False):
             return nimble.data("List", source=data, featureNames=featureNames)
@@ -186,6 +175,7 @@ class TestList(FoldIteratorTester):
 
 
 class TestMatrix(FoldIteratorTester):
+    __test__ = False
     def __init__(self):
         def maker(data, featureNames=False):
             return nimble.data("Matrix", source=data, featureNames=featureNames)
@@ -194,6 +184,7 @@ class TestMatrix(FoldIteratorTester):
 
 
 class TestSparse(FoldIteratorTester):
+    __test__ = False
     def __init__(self):
         def maker(data, featureNames=False):
             return nimble.data("Sparse", source=data, featureNames=featureNames)
@@ -202,6 +193,7 @@ class TestSparse(FoldIteratorTester):
 
 
 class TestRand(FoldIteratorTester):
+    __test__ = False
     def __init__(self):
         def maker(data, featureNames=False):
             possible = ['List', 'Matrix', 'Sparse']
@@ -211,7 +203,7 @@ class TestRand(FoldIteratorTester):
         super(TestRand, self).__init__(maker)
 
 
-@attr('slow')
+@pytest.mark.slow
 def testClassifyAlgorithms(printResultsDontThrow=False):
     """tries the algorithm names (which are keys in knownAlgorithmToTypeHash) with learnerType().
     Next, compares the result to the algorithm's associated value in knownAlgorithmToTypeHash.
@@ -330,12 +322,9 @@ def testSumDifferenceFunction():
              [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2], [0, 0, 0, 0]]
     matrix1 = nimble.data('Matrix', data1)
     matrix2 = nimble.data('Matrix', data2)
-    failedShape = False
-    try:
+
+    with raises(InvalidArgumentValueCombination):
         result = sumAbsoluteDifference(matrix1, matrix2)
-    except InvalidArgumentValueCombination:
-        failedShape = True
-    assert (failedShape)
 
     data1 = [[0, 0, 1], [1, 0, 2], [0, 1, 3], [0, 0, 1], [1, 0, 2], [0, 1, 3], [0, 0, 1], [1, 0, 2], [0, 1, 3],
              [0, 0, 1], [1, 0, 2], [0, 1, 3], [0, 0, 1], [1, 0, 2], [0, 1, 3], [0, 0, 3], [1, 0, 1], [0, 1, 2]]
@@ -344,12 +333,9 @@ def testSumDifferenceFunction():
              [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
     matrix1 = nimble.data('Matrix', data1)
     matrix2 = nimble.data('Matrix', data2)
-    failedShape = False
-    try:
+
+    with raises(InvalidArgumentValueCombination):
         result = sumAbsoluteDifference(matrix1, matrix2)
-    except InvalidArgumentValueCombination:
-        failedShape = True
-    assert (failedShape)
 
     data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
              [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
@@ -359,12 +345,9 @@ def testSumDifferenceFunction():
              [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
     matrix1 = nimble.data('Matrix', data1)
     matrix2 = nimble.data('Matrix', data2)
-    failedShape = False
-    try:
-        result = sumAbsoluteDifference(matrix1, matrix2)
-    except InvalidArgumentValueCombination:
-        failedShape = True
-    assert (failedShape is False)
+
+    # this should work
+    result = sumAbsoluteDifference(matrix1, matrix2)
 
     #asserts differece function gets absolute difference correct (18 * 0.1 * 2)
     #18 rows

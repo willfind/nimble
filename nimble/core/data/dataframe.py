@@ -17,7 +17,6 @@ from .views import BaseView
 from .dataframeAxis import DataFramePoints, DataFramePointsView
 from .dataframeAxis import DataFrameFeatures, DataFrameFeaturesView
 from ._dataHelpers import allDataIdentical
-from ._dataHelpers import isDefaultName
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import denseCountUnique
 from ._dataHelpers import NimbleElementIterator
@@ -64,11 +63,11 @@ class DataFrame(Base):
             kwds['shape'] = self._data.shape
         super().__init__(**kwds)
 
-    def _getPoints(self):
-        return DataFramePoints(self)
+    def _getPoints(self, names):
+        return DataFramePoints(self, names)
 
-    def _getFeatures(self):
-        return DataFrameFeatures(self)
+    def _getFeatures(self, names):
+        return DataFrameFeatures(self, names)
 
     def _transform_implementation(self, toTransform, points, features):
         ids = itertools.product(range(len(self.points)),
@@ -307,10 +306,10 @@ class DataFrame(Base):
             point = 'outer'
         elif point == 'intersection':
             point = 'inner'
-        if self._featureNamesCreated():
+        if self.features._namesCreated():
             self._data.columns = self.features.getNames()
         tmpDfR = other._data.copy()
-        if other._featureNamesCreated():
+        if other.features._namesCreated():
             tmpDfR.columns = other.features.getNames()
 
         if feature == 'intersection':
@@ -324,13 +323,16 @@ class DataFrame(Base):
 
         numColsL = len(self._data.columns)
         if onFeature is None:
-            if self._pointNamesCreated() and other._pointNamesCreated():
-                # differentiate default names between objects
-                self._data.index = [n + '_l' if isDefaultName(n)
-                                    else n for n in self.points.getNames()]
-                tmpDfR.index = [n + '_r' if isDefaultName(n)
-                                else n for n in other.points.getNames()]
-            elif self._pointNamesCreated() or other._pointNamesCreated():
+            if (self.features._namesCreated()
+                    and other.features._namesCreated()):
+                # differentiate default names between objects using integers
+                self._data.index = [i if n is None else n for i, n
+                                    in enumerate(self.points.getNames())]
+                maxL = len(self.points)
+                tmpDfR.index = [i + maxL if n is None else n for i, n
+                                in enumerate(other.points.getNames())]
+            elif (self.features._namesCreated()
+                    or other.features._namesCreated()):
                 # there will be no matches, need left points ordered first
                 self._data.index = list(range(len(self.points)))
                 idxRange = range(self.shape[0], self.shape[0] + other.shape[0])
@@ -378,9 +380,10 @@ class DataFrame(Base):
             self._data.drop(toDrop, axis=1, inplace=True)
             self._data.columns = pd.RangeIndex(self._data.shape[1])
 
-        self._featureCount = (numColsL + len(tmpDfR.columns)
-                              - len(matchingFtIdx[1]))
-        self._pointCount = len(self._data.index)
+        numFeatures = (numColsL + len(tmpDfR.columns) - len(matchingFtIdx[1]))
+        numPoints = len(self._data.index)
+
+        self._shape = [numPoints, numFeatures]
 
     def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueIdx):
         toFill = np.zeros((len(self.points), len(uniqueIdx)))
@@ -419,7 +422,6 @@ class DataFrame(Base):
         kwds['pointEnd'] = pointEnd
         kwds['featureStart'] = featureStart
         kwds['featureEnd'] = featureEnd
-        kwds['reuseData'] = True
 
         ret = DataFrameView(**kwds)
 
@@ -578,8 +580,8 @@ class DataFrameView(BaseView, DataFrame):
     Read only access to a DataFrame object.
     """
 
-    def _getPoints(self):
-        return DataFramePointsView(self)
+    def _getPoints(self, names):
+        return DataFramePointsView(self, names)
 
-    def _getFeatures(self):
-        return DataFrameFeaturesView(self)
+    def _getFeatures(self, names):
+        return DataFrameFeaturesView(self, names)
