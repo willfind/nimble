@@ -16,28 +16,25 @@ from functools import reduce
 from copy import deepcopy
 import re
 import textwrap
-from unittest.mock import patch
 
 import numpy as np
-from nose.tools import *
-from nose.plugins.attrib import attr
+import pytest
 
 import nimble
 from nimble import match
 from nimble import loadData
 from nimble.core.data import BaseView
 from nimble.core.data._dataHelpers import formatIfNeeded
-from nimble.core.data._dataHelpers import DEFAULT_PREFIX
 from nimble.core.data._dataHelpers import elementQueryFunction
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
 
-from .baseObject import DataTestObject
+from tests.helpers import raises
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import assertNoNamesGenerated
-from tests.helpers import CalledFunctionException, calledException
-from tests.helpers import assertExpectedException
+from tests.helpers import assertCalled
+from .baseObject import DataTestObject
 
 
 preserveName = "PreserveTestName"
@@ -206,6 +203,22 @@ class QueryBackend(DataTestObject):
 
         assert toWrite == orig
 
+    def test_writeFile_CSVhandmade_output(self):
+        # instantiate object
+        data = [[1., 2., 3.], [0., 2., 4.], [0., 0., 0.]]
+        pointNames = ['one', '2', '0']
+        featureNames = ['one', 'two', 'three']
+        toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+        # should be no leading blank lines and data values should be floats
+        exp = "pointNames,one,two,three\none,1.0,2.0,3.0\n2,0.0,2.0,4.0\n0,0.0,0.0,0.0\n"
+        with tempfile.NamedTemporaryFile(mode='w+', suffix=".csv") as tmpFile:
+            toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
+            tmpFile.seek(0)
+            assert tmpFile.read() == exp
+
+
     def test_writeFile_CSVhandmade_lazyNameGeneration(self):
         # instantiate object
         data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
@@ -219,9 +232,6 @@ class QueryBackend(DataTestObject):
             assertNoNamesGenerated(toWrite)
 
     def test_writeFile_CSV_excludeDefaultNames(self):
-        def getDefNameIndex(name):
-            return int(name[len(DEFAULT_PREFIX):])
-
         data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         pointNames = ['1', 'one', '2', '0']
         featureNames = ['one', 'two', 'three']
@@ -245,8 +255,6 @@ class QueryBackend(DataTestObject):
             # increase the index of the default point name so that it will be
             # recognizable when we read in from the file.
             axisExclude = getattr(exclude, axis + 's')
-            while (getDefNameIndex(getattr(axisExclude, 'getName')(0)) <= 100):
-                setter(None)
 
             with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
                 exclude.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
@@ -261,12 +269,7 @@ class QueryBackend(DataTestObject):
             # ensure everything else is a match
             assert readObj.isIdentical(exclude)
             assert exclude.isIdentical(readObj)
-
-            for i in range(count):
-                origName = getattr(axisExclude, 'getName')(i)
-                readName = getattr(axisRead, 'getName')(i)
-                assert getDefNameIndex(origName) > 100
-                assert getDefNameIndex(readName) < 10
+            assert axisRead.names is None
 
         excludeAxis('point')
         excludeAxis('feature')
@@ -365,13 +368,8 @@ class QueryBackend(DataTestObject):
             LoadObj = loadData(tmpFile.name)
             assert isinstance(LoadObj, nimble.core.data.Base)
 
-            try:
+            with raises(InvalidArgumentValue):
                 LoadObj = loadData(fileNameWithoutExtension)
-                assert False
-            except InvalidArgumentValue:
-                assert True
-            else:
-                assert False
 
     @oneLogEntryExpected
     def test_saveAndLoad_logCount(self):
@@ -868,34 +866,29 @@ class QueryBackend(DataTestObject):
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
         textCheck = False
-
-        try:
+        with raises(InvalidArgumentType) as exc:
+            # pointStart is non-ID didn't raise exception
             toTest.view(pointStart=1.5)
-            assert False  # pointStart is non-ID didn't raise exception
-        except InvalidArgumentType as iat:
-            if textCheck:
-                print(iat)
+        if textCheck:
+            print(exc)
 
-        try:
+        with raises(IndexError) as exc:
+            # pointEnd > pointCount didn't raise exception
             toTest.view(pointEnd=5)
-            assert False  # pointEnd > pointCount didn't raise exception
-        except IndexError as ie:
-            if textCheck:
-                print(ie)
+        if textCheck:
+            print(exc)
 
-        try:
+        with raises(InvalidArgumentType) as exc:
+            # pointEnd is non-ID didn't raise exception
             toTest.view(pointEnd=1.4)
-            assert False  # pointEnd is non-ID didn't raise exception
-        except InvalidArgumentType as iat:
-            if textCheck:
-                print(iat)
+        if textCheck:
+            print(exc)
 
-        try:
+        with raises(InvalidArgumentValueCombination) as exc:
+            # pointStart > pointEnd didn't raise exception
             toTest.view(pointStart='7', pointEnd='4')
-            assert False  # pointStart > pointEnd didn't raise exception
-        except InvalidArgumentValueCombination as ivc:
-            if textCheck:
-                print(ivc)
+        if textCheck:
+            print(exc)
 
     def test_view_featureStart_featureEnd_validation(self):
         pointNames = ['1', '4', '7']
@@ -904,34 +897,29 @@ class QueryBackend(DataTestObject):
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
         textCheck = False
-
-        try:
+        with raises(InvalidArgumentType) as exc:
+            # featureStart is non-ID didn't raise exception
             toTest.view(featureStart=1.5)
-            assert False  # featureStart is non-ID didn't raise exception
-        except InvalidArgumentType as iat:
-            if textCheck:
-                print(iat)
+        if textCheck:
+            print(exc)
 
-        try:
+        with raises(IndexError) as exc:
+            # featureEnd > featureCount didn't raise exception
             toTest.view(featureEnd=4)
-            assert False  # featureEnd > featureCount didn't raise exception
-        except IndexError as ie:
-            if textCheck:
-                print(ie)
+        if textCheck:
+            print(exc)
 
-        try:
+        with raises(InvalidArgumentType) as exc:
+            # featureEnd is non-ID didn't raise exception
             toTest.view(featureEnd=1.4)
-            assert False  # featureEnd is non-ID didn't raise exception
-        except InvalidArgumentType as iat:
-            if textCheck:
-                print(iat)
+        if textCheck:
+            print(exc)
 
-        try:
+        with raises(InvalidArgumentValueCombination) as exc:
+            # featureStart > featureEnd didn't raise exception
             toTest.view(featureStart='three', featureEnd='two')
-            assert False  # featureStart > featureEnd didn't raise exception
-        except InvalidArgumentValueCombination as ivc:
-            if textCheck:
-                print(ivc)
+        if textCheck:
+            print(exc)
 
     @noLogEntryExpected
     def test_ViewAccess_AllLimits(self):
@@ -1066,7 +1054,7 @@ class QueryBackend(DataTestObject):
     # toString #
     ############
 
-    @attr('slow')
+    @pytest.mark.slow
     def test_toString_nameAndValRecreation_randomized(self):
         """ Regression test with random data and limits. Recreates expected results """
         for pNum in [3, 9]:
@@ -1120,7 +1108,6 @@ class QueryBackend(DataTestObject):
         ftNames = ['fa', 'fb', 'fc']
 
         data = self.constructor(raw, featureNames=ftNames)
-
         # width of 5 to 7 will return first feature and colHold ('a  --')
         for mw in range(5, 8):
             ret = data.toString(maxWidth=mw, includeNames=True)
@@ -1261,7 +1248,7 @@ class QueryBackend(DataTestObject):
         randGen = nimble.random.data("List", 5, 5, 0, elementType='int')
         randGen._arrangeDataWithLimits(maxHeight=1, maxWidth=120)
 
-    @attr('slow')
+    @pytest.mark.slow
     def test_arrangeDataWithLimits(self):
         def makeUniformLength(rType, p, f, l):
             raw = []
@@ -1434,8 +1421,8 @@ class QueryBackend(DataTestObject):
             empty.features.setNames(None, useLog=False)
         except TypeError:
             # need to change names in views manually
-            empty._source.featureNames = None
-            empty._source.featureNamesInverse = None
+            empty.features.names = None
+            empty.features.namesInverse = None
         repr(data)
         assertNoNamesGenerated(empty)
 
@@ -1461,10 +1448,8 @@ class QueryBackend(DataTestObject):
             calcFunc = simFuncs[simFunc]
             self.backend_sim_callsFunctions(simFunc, calcFunc, 'feature')
 
-    @raises(CalledFunctionException)
     def backend_sim_callsFunctions(self, objFunc, calcFunc, axis):
-        toPatch = 'nimble.calculate.' + calcFunc
-        with patch(toPatch, calledException):
+        with assertCalled(nimble.calculate, calcFunc):
             if axis == 'point':
                 data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
                 obj = self.constructor(data)
@@ -1858,10 +1843,8 @@ class QueryBackend(DataTestObject):
             calcFunc = statFuncs[statFunc]
             self.backend_stat_callsFunctions(statFunc, calcFunc, 'feature')
 
-    @raises(CalledFunctionException)
     def backend_stat_callsFunctions(self, objFunc, calcFunc, axis):
-        toPatch = 'nimble.calculate.' + calcFunc
-        with patch(toPatch, calledException):
+        with assertCalled(nimble.calculate, calcFunc):
             if axis == 'point':
                 data = [[3, 0, 3], [0, 0, 3], [3, 0, 0]]
                 obj = self.constructor(data)
@@ -2277,7 +2260,7 @@ class QueryBackend(DataTestObject):
     # plot #
     ########
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_plot_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2298,7 +2281,7 @@ class QueryBackend(DataTestObject):
     # plotFeatureDistribution #
     ###########################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_plotFeatureDistribution_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2320,7 +2303,7 @@ class QueryBackend(DataTestObject):
     # plotFeatureAgainstFeature #
     #############################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_plotFeatureAgainstFeature_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2341,7 +2324,7 @@ class QueryBackend(DataTestObject):
     # features.plot #
     #################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_features_plot_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2360,7 +2343,7 @@ class QueryBackend(DataTestObject):
     # features.plotMeans #
     ######################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_features_plotMeans_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2379,7 +2362,7 @@ class QueryBackend(DataTestObject):
     # features.plotStatistics #
     ###########################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_features_plotStatistics_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2398,7 +2381,7 @@ class QueryBackend(DataTestObject):
     # plotFeatureGroupMeans #
     #########################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_plotFeatureGroupMeans_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2422,7 +2405,7 @@ class QueryBackend(DataTestObject):
     # plotFeatureGroupStatistics #
     ##############################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_plotGroupStatistics_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2446,7 +2429,7 @@ class QueryBackend(DataTestObject):
     # points.plot #
     ###############
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_points_plot_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2465,7 +2448,7 @@ class QueryBackend(DataTestObject):
     # points.plotMeans #
     ####################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_points_plotMeans_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2484,7 +2467,7 @@ class QueryBackend(DataTestObject):
     # points.plotStatistics #
     #########################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_points_plotStatistics_fileOutput(self):
         with tempfile.NamedTemporaryFile(suffix='.png') as outFile:
@@ -2514,11 +2497,8 @@ class QueryBackend(DataTestObject):
         pView = next(pIter)
         assert len(pView) == 0
 
-        try:
+        with raises(StopIteration):
             next(pIter)
-            assert False  # expected StopIteration from prev statement
-        except StopIteration:
-            pass
 
     def test_points_iter_noNextPempty(self):
         """ test .points() has no next value when object is point empty """
@@ -2526,11 +2506,8 @@ class QueryBackend(DataTestObject):
         data = np.array(data).T
         toTest = self.constructor(data)
         viewIter = iter(toTest.points)
-        try:
+        with raises(StopIteration):
             next(viewIter)
-        except StopIteration:
-            return
-        assert False
 
     @noLogEntryExpected
     def test_points_iter_exactValueViaFor(self):
@@ -2606,11 +2583,8 @@ class QueryBackend(DataTestObject):
         fView = next(fIter)
         assert len(fView) == 0
 
-        try:
+        with raises(StopIteration):
             next(fIter)
-            assert False  # expected StopIteration from prev statement
-        except StopIteration:
-            pass
 
     def test_features_iter_noNextFempty(self):
         """ test .features() has no next value when object is feature empty """
@@ -2618,11 +2592,8 @@ class QueryBackend(DataTestObject):
         data = np.array(data)
         toTest = self.constructor(data)
         viewIter = iter(toTest.features)
-        try:
+        with raises(StopIteration):
             next(viewIter)
-        except StopIteration:
-            return
-        assert False
 
     @noLogEntryExpected
     def test_features_iter_exactValueViaFor(self):
@@ -2700,11 +2671,8 @@ class QueryBackend(DataTestObject):
         data = np.array(data).T
         toTest = self.constructor(data)
         viewIter = iter(toTest)
-        try:
+        with raises(StopIteration):
             next(viewIter)
-        except StopIteration:
-            return
-        assert False
 
     @noLogEntryExpected
     def test_iter_noNextFempty(self):
@@ -2712,11 +2680,8 @@ class QueryBackend(DataTestObject):
         data = np.array(data)
         toTest = self.constructor(data)
         viewIter = iter(toTest)
-        try:
+        with raises(StopIteration):
             next(viewIter)
-        except StopIteration:
-            return
-        assert False
 
     @noLogEntryExpected
     def test_iter_exactValueViaFor_pt(self):
@@ -2759,11 +2724,8 @@ class QueryBackend(DataTestObject):
         data = np.array(data).T
         toTest = self.constructor(data)
         viewIter = iter(toTest.iterateElements())
-        try:
+        with raises(StopIteration):
             next(viewIter)
-        except StopIteration:
-            return
-        assert False
 
     def test_iterateElements_noNextFempty(self):
         """ test iterateElements() has no next value when object is feature empty """
@@ -2771,11 +2733,8 @@ class QueryBackend(DataTestObject):
         data = np.array(data)
         toTest = self.constructor(data)
         viewIter = iter(toTest.iterateElements())
-        try:
+        with raises(StopIteration):
             next(viewIter)
-        except StopIteration:
-            return
-        assert False
 
     @raises(InvalidArgumentValue)
     def test_iterateElements_exception_orderInvalidString(self):
@@ -3194,45 +3153,45 @@ class QueryBackend(DataTestObject):
             primaryAxis = constructObjAndGetAxis(axis, data, offNames)
             func = primaryAxis._axisQueryFunction
             # bad whitespace padding on operator
-            assertExpectedException(InvalidArgumentValue, func,'one== 6',
-                                    messageIncludes='nor a valid query')
-            assertExpectedException(InvalidArgumentValue, func, 'two!=4',
-                                    messageIncludes='nor a valid query')
-            assertExpectedException(InvalidArgumentValue, func, 'three >7',
-                                    messageIncludes='nor a valid query')
+            with raises(InvalidArgumentValue, match='nor a valid query'):
+                func('one== 6')
+            with raises(InvalidArgumentValue, match='nor a valid query'):
+                func('two!=4')
+            with raises(InvalidArgumentValue, match='nor a valid query'):
+                func('three >7')
             # not a feature name
-            assertExpectedException(InvalidArgumentValue, func, 'four == 4',
-                                    messageIncludes='does not exist')
-            assertExpectedException(InvalidArgumentValue, func, ' == 4',
-                                    messageIncludes='does not exist')
+            with raises(InvalidArgumentValue, match='does not exist'):
+                func('four == 4')
+            with raises(InvalidArgumentValue, match='does not exist'):
+                func(' == 4')
             # no operator
-            assertExpectedException(InvalidArgumentValue, func, 'two = 4',
-                                    messageIncludes='nor a valid query')
-            assertExpectedException(InvalidArgumentValue, func, 'hello',
-                                    messageIncludes='nor a valid query')
+            with raises(InvalidArgumentValue, match='nor a valid query'):
+                func('two = 4')
+            with raises(InvalidArgumentValue, match='nor a valid query'):
+                func('hello')
 
             data = [[0, '> 250k', '== 2'], [3, '> 250k', '!= 2'], [6, '< 250k', '!= 2']]
             offNames = ['one', 'two', 'three']
             primaryAxis = constructObjAndGetAxis(axis, data, offNames)
             func = primaryAxis._axisQueryFunction
             # invalid query value
-            assertExpectedException(InvalidArgumentValue, func, 'two == > 250k',
-                                    messageIncludes='Multiple operators')
-            assertExpectedException(InvalidArgumentValue, func, 'three != == 2',
-                                    messageIncludes='Multiple operators')
+            with raises(InvalidArgumentValue, match='Multiple operators'):
+                func('two == > 250k')
+            with raises(InvalidArgumentValue, match='Multiple operators'):
+                func('three != == 2')
             # invalid query feature name
             offNames = ['< one >', '< two >', '< three >']
             primaryAxis = constructObjAndGetAxis(axis, data, offNames)
             func = primaryAxis._axisQueryFunction
-            assertExpectedException(InvalidArgumentValue, func, '< one > < 4',
-                                    messageIncludes='Multiple operators')
-            assertExpectedException(InvalidArgumentValue, func, '< one > == 4',
-                                    messageIncludes='Multiple operators')
+            with raises(InvalidArgumentValue, match='Multiple operators'):
+                func('< one > < 4')
+            with raises(InvalidArgumentValue, match='Multiple operators'):
+                func('< one > == 4')
             # invalid name and value
-            assertExpectedException(InvalidArgumentValue, func, '< two > == > 250k',
-                                    messageIncludes='Multiple operators')
-            assertExpectedException(InvalidArgumentValue, func, '< three > != == 2',
-                                    messageIncludes='Multiple operators')
+            with raises(InvalidArgumentValue, match='Multiple operators'):
+                func('< two > == > 250k')
+            with raises(InvalidArgumentValue, match='Multiple operators'):
+                func('< three > != == 2')
 
 ###########
 # Helpers #

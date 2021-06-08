@@ -4,14 +4,9 @@ the backend helpers they rely on.
 """
 
 import math
-import sys
-from unittest import mock
 import functools
 
-import numpy as np
-import nose
-from nose.tools import *
-from nose.plugins.attrib import attr
+import pytest
 
 import nimble
 from nimble import crossValidate
@@ -25,9 +20,8 @@ from nimble.calculate import rootMeanSquareError, meanAbsoluteError
 from nimble.calculate import meanFeaturewiseRootMeanSquareError
 from nimble.random import pythonRandom
 from nimble.learners import KNNClassifier
-from nimble.core._learnHelpers import computeMetrics
 from nimble.core.learn import KFoldCrossValidator
-from tests.helpers import configSafetyWrapper
+from tests.helpers import raises
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import generateClassificationData
 from tests.helpers import getDataConstructors
@@ -102,7 +96,7 @@ def _assertClassifierErrorOnRandomDataPlausible(actualError, numLabels, toleranc
     assert error <= tolerance
 
 
-@attr('slow')
+@pytest.mark.slow
 def test_crossValidate_reasonable_results():
     """Assert that crossValidate returns reasonable errors for known algorithms
     on cooked data sets:
@@ -236,21 +230,16 @@ def test_crossValidate_2d_Non_label_scoremodes_disallowed():
 
     #run in crossValidate
     metric = meanFeaturewiseRootMeanSquareError
-    try:
-        crossValidate(regressionAlgo, X, Y, metric, {}, folds=5, scoreMode='bestScore')
-        assert False
-    except InvalidArgumentValueCombination:
-        pass
+    with raises(InvalidArgumentValueCombination):
+        crossValidate(regressionAlgo, X, Y, metric, {}, folds=5,
+                      scoreMode='bestScore')
 
-    try:
-        crossValidate(regressionAlgo, X, Y, metric, {}, folds=5, scoreMode='allScores')
-        assert False
-    except InvalidArgumentValueCombination:
-        pass
+    with raises(InvalidArgumentValueCombination):
+        crossValidate(regressionAlgo, X, Y, metric, {}, folds=5,
+                      scoreMode='allScores')
 
 
-@attr('slow')
-@nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
+@pytest.mark.slow
 def test_crossValidate_foldingRandomness():
     """Assert that for a dataset, the same algorithm will generate the same model
     (and have the same accuracy) when presented with identical random state (and
@@ -268,8 +257,7 @@ def test_crossValidate_foldingRandomness():
         resultTwo = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, {}, folds=3)
         assert resultOne.bestResult == resultTwo.bestResult
 
-@attr('slow')
-@nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
+@pytest.mark.slow
 def test_crossValidateResults():
     """Check basic properties of crossValidate.allResults
 
@@ -316,9 +304,7 @@ def test_crossValidateResults():
         assert isinstance(curResult['fractionIncorrect'], float)
 
 
-@attr('slow')
-@configSafetyWrapper
-@nose.with_setup(nimble.random._startAlternateControl, nimble.random._endAlternateControl)
+@pytest.mark.slow
 def test_crossValidateBestArguments():
     """Check that the best / fittest argument set is returned.
 
@@ -415,7 +401,7 @@ def test_crossValidate_attributes_withDefaultArgs():
     assert len(allResultsList[0]) == 1 and 'fractionIncorrect' in allResultsList[0]
 
 
-@attr('slow')
+@pytest.mark.slow
 def test_crossValidate_sameResults_avgfold_vs_allcollected():
     # When whole dataset has the same label, crossValidated score
     #reflects 100% accruacy (with a classifier)
@@ -473,7 +459,6 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected():
     assert abs(nonAvgResult - avgResult) < .0000001
 
 
-@configSafetyWrapper
 def test_crossValidate_sameResults_avgfold_vs_allcollected_orderReliant():
     # To dispel concerns relating to correctly collecting the Y data with
     # respect to the ordering of the X data in the non-average CV code.
@@ -513,7 +498,6 @@ class MockedKFoldCrossValidator(KFoldCrossValidator):
     def _crossValidate(self, X, Y, useLog):
         pass
 
-@mock.patch('tests.testCrossValidate.KFoldCrossValidator', MockedKFoldCrossValidator)
 def test_KFoldCrossValidator():
     # we have mocked the object so it will not actually perform crossValidation
     # instead we will pass our own dummy data to the backend so we can check
@@ -526,8 +510,7 @@ def test_KFoldCrossValidator():
     bVals = nimble.CV([1, 2]) # will be passed as kwarguments
     folds = 3
     scoreMode = 'label'
-
-    crossValidator = KFoldCrossValidator(
+    crossValidator = MockedKFoldCrossValidator(
         learnerName, X, Y, performanceFunction, arguments, folds, scoreMode,
         useLog=False, b=bVals)
     assert crossValidator.learnerName == learnerName

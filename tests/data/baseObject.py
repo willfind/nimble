@@ -112,19 +112,11 @@ def viewConstructorMaker(concreteType):
 
 
 class DataTestObject(object):
-    def __init__(self, returnType):
-        if returnType.endswith("View"):
-            self.constructor = viewConstructorMaker(returnType[:-len("View")])
-        else:
-            self.constructor = objConstructorMaker(returnType)
 
-        self.returnType = returnType
-
-
-    def setUp(self):
+    def setup_method(self):
         startObjectValidation()
 
-    def tearDown(self):
+    def teardown_method(self):
         stopObjectValidation()
 
 
@@ -181,9 +173,9 @@ def methodObjectValidation(func):
 
         finalAbsPath = startAbsPath
         finalRelPath = startRelPath
-        # _referenceDataFrom always gets path from other object, inplace numeric
+        # _referenceFrom always gets path from other object, inplace numeric
         # binary will follow _dataHelpers.binaryOpNamePathMerge logic
-        if funcName == '_referenceDataFrom':
+        if funcName == '_referenceFrom':
             finalAbsPath, finalRelPath = getOtherPaths(args, kwargs)
         elif funcName in inplaceNumeric:
             otherAbsPath, otherRelPath = getOtherPaths(args, kwargs)

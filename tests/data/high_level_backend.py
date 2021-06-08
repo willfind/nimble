@@ -24,30 +24,25 @@ features.splitByParsing
 from copy import deepcopy
 import os.path
 import tempfile
-import inspect
 import datetime
 
 import numpy as np
-from nose.tools import *
-from nose.plugins.attrib import attr
-try:
-    from unittest import mock #python >=3.3
-except ImportError:
-    import mock
+import pytest
 
 import nimble
 from nimble import match
 from nimble import fill
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.exceptions import InvalidArgumentValueCombination, ImproperObjectAction
-from nimble.core.data._dataHelpers import DEFAULT_PREFIX
+from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.exceptions import ImproperObjectAction
 from nimble.random import numpyRandom
-from .baseObject import DataTestObject
+from tests.helpers import raises
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import assertNoNamesGenerated
-from tests.helpers import CalledFunctionException, calledException
+from tests.helpers import assertCalled
 from tests.helpers import getDataConstructors
+from .baseObject import DataTestObject
 
 
 preserveName = "PreserveTestName"
@@ -173,8 +168,7 @@ class HighLevelDataSafe(DataTestObject):
         orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         ret = orig.points.calculate(dictReturn)
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
+    @assertCalled(nimble.core.data.axis, 'constructIndicesList')
     def test_points_calculate_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2,],[3,4]], pointNames=['a', 'b'])
 
@@ -532,8 +526,7 @@ class HighLevelDataSafe(DataTestObject):
         orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
         ret = orig.features.calculate(dictReturn)
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.axis.constructIndicesList', calledException)
+    @assertCalled(nimble.core.data.axis, 'constructIndicesList')
     def test_features_calculate_calls_constructIndicesList(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
@@ -816,8 +809,7 @@ class HighLevelDataSafe(DataTestObject):
     # calculateOnElements #
     #######################
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.base.constructIndicesList', calledException)
+    @assertCalled(nimble.core.data.base, 'constructIndicesList')
     def test_calculateOnElements_calls_constructIndicesList1(self):
         toTest = self.constructor([[1,2],[3,4]], pointNames=['a', 'b'])
 
@@ -826,8 +818,7 @@ class HighLevelDataSafe(DataTestObject):
 
         ret = toTest.calculateOnElements(noChange, points=['a', 'b'])
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.base.constructIndicesList', calledException)
+    @assertCalled(nimble.core.data.base, 'constructIndicesList')
     def test_calculateOnElements_calls_constructIndicesList2(self):
         toTest = self.constructor([[1,2],[3,4]], featureNames=['a', 'b'])
 
@@ -1329,7 +1320,7 @@ class HighLevelDataSafe(DataTestObject):
     # isApproximatelyEqual() #
     ##########################
 
-    @attr('slow')
+    @pytest.mark.slow
     @noLogEntryExpected
     def test_isApproximatelyEqual_randomTest(self):
         """ Test isApproximatelyEqual() using randomly generated data """
@@ -1478,8 +1469,8 @@ class HighLevelDataSafe(DataTestObject):
         # Only testing that the default names do not generate an error
         data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
         featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
-        pointNamesX = ['pt0', 'pt1', DEFAULT_PREFIX + '0', 'pt3']
-        pointNamesY = ['pt0', 'pt1', DEFAULT_PREFIX + '4', 'pt3']
+        pointNamesX = ['pt0', 'pt1', None, 'pt3']
+        pointNamesY = ['pt0', 'pt1', None, 'pt3']
         toTest = self.constructor(data, pointNames=pointNamesX,
                                   featureNames=featureNames)
         toTestLabels = self.constructor([[4], [3], [2], [1]],
@@ -1487,8 +1478,8 @@ class HighLevelDataSafe(DataTestObject):
 
         trX, trY, teX, teY = toTest.trainAndTestSets(.5, toTestLabels)
 
-        pointNamesX = [DEFAULT_PREFIX + '0', 'pt1', 'pt2', 'pt3']
-        pointNamesY = ['pt0', 'pt1', 'pt2', DEFAULT_PREFIX + '3']
+        pointNamesX = [None, 'pt1', 'pt2', 'pt3']
+        pointNamesY = ['pt0', 'pt1', 'pt2', None]
         toTest = self.constructor(data, pointNames=pointNamesX,
                                   featureNames=featureNames)
         toTestLabels = self.constructor([[4], [3], [2], [1]],
@@ -1496,8 +1487,8 @@ class HighLevelDataSafe(DataTestObject):
 
         trX, trY, teX, teY = toTest.trainAndTestSets(.5, toTestLabels)
 
-        pointNamesX = [DEFAULT_PREFIX + '0', 'pt0', 'pt2' , 'pt3']
-        pointNamesY = [DEFAULT_PREFIX + '4', 'pt0', DEFAULT_PREFIX + '8', 'pt3']
+        pointNamesX = [None, 'pt0', 'pt2' , 'pt3']
+        pointNamesY = [None, 'pt0', None, 'pt3']
         toTest = self.constructor(data, pointNames=pointNamesX,
                                   featureNames=featureNames)
         toTestLabels = self.constructor([[4], [3], [2], [1]],
@@ -2038,8 +2029,7 @@ class HighLevelDataSafe(DataTestObject):
     # points.repeat #
     ####################
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.Base.copy', calledException)
+    @assertCalled(nimble.core.data.Base, 'copy')
     def test_points_repeat_OneCopyCallsCopy(self):
         data = [0, 1, 2, 3]
         ptNames = ['pt']
@@ -2112,8 +2102,7 @@ class HighLevelDataSafe(DataTestObject):
     # features.repeat #
     ######################
 
-    @raises(CalledFunctionException)
-    @mock.patch('nimble.core.data.Base.copy', calledException)
+    @assertCalled(nimble.core.data.Base, 'copy')
     def test_features_repeat_OneCopyCallsCopy(self):
         data = [0, 1, 2, 3]
         ptNames = ['pt']
@@ -2981,40 +2970,25 @@ class HighLevelModifying(DataTestObject):
 
     def test_features_normalize_exception_unexpectedInputType(self):
         obj = self.constructor([[1, 2], [3, 4]])
-        try:
+        with raises(InvalidArgumentType):
             obj.features.normalize({})
-            assert False  # Expected InvalidArgumentType
-        except InvalidArgumentType:
-            pass
 
-        try:
+        with raises(InvalidArgumentType):
             obj.features.normalize(set([1]))
-            assert False  # Expected InvalidArgumentType
-        except InvalidArgumentType:
-            pass
 
-        try:
+        with raises(InvalidArgumentType):
             obj.features.normalize(noNormalize, applyResultTo={})
-            assert False  # Expected InvalidArgumentType
-        except InvalidArgumentType:
-            pass
 
     def test_features_normalize_exception_applyResultToWrongShape(self):
         obj = self.constructor([[1, 2], [3, 4]])
         alsoLong = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8,9]])
         alsoShort = self.constructor([[11], [12], [11]])
 
-        try:
+        with raises(InvalidArgumentValue):
             obj.features.normalize(noNormalize, applyResultTo=alsoLong)
-            assert False  # Expected InvalidArgumentValue
-        except InvalidArgumentValue:
-            pass
 
-        try:
+        with raises(InvalidArgumentValue):
             obj.features.normalize(noNormalize, applyResultTo=alsoShort)
-            assert False  # Expected InvalidArgumentValue
-        except InvalidArgumentValue:
-            pass
 
     def test_features_normalize_nameCompatibility(self):
         obj = self.constructor([[1, 2], [3, 4]])
@@ -3044,11 +3018,8 @@ class HighLevelModifying(DataTestObject):
 
         obj.features.setNames(['1', '2'])
 
-        try:
+        with raises(InvalidArgumentValue):
             obj.features.normalize(noNormalize, applyResultTo=also)
-            assert False  # Expected InvalidArgumentValue
-        except InvalidArgumentValue:
-            pass
 
     @oneLogEntryExpected
     def test_features_normalize_success_singleInputFunction(self):
@@ -3703,21 +3674,18 @@ class HighLevelModifying(DataTestObject):
         data = [[0,0,1,2,3,4], [1,1,5,6,7,8], [2,2,-1,-2,-3,-4]]
 
         toTest = self.constructor(data)
-        coll0 = DEFAULT_PREFIX + str(2)
-        coll1 = DEFAULT_PREFIX + str(3)
-        coll2 = DEFAULT_PREFIX + str(4)
-        coll3 = DEFAULT_PREFIX + str(5)
 
-        expData = [[0,0,coll0,1], [0,0,coll1,2], [0,0,coll2,3], [0,0,coll3,4],
-                   [1,1,coll0,5], [1,1,coll1,6], [1,1,coll2,7], [1,1,coll3,8],
-                   [2,2,coll0,-1], [2,2,coll1,-2], [2,2,coll2,-3], [2,2,coll3,-4]]
+        expData = [[0,0,2,1], [0,0,3,2], [0,0,4,3], [0,0,5,4],
+                   [1,1,2,5], [1,1,3,6], [1,1,4,7], [1,1,5,8],
+                   [2,2,2,-1], [2,2,3,-2], [2,2,4,-3], [2,2,5,-4]]
 
         exp = self.constructor(expData)
-        exp.features.setName(2, "ftNames")
+        exp.features.setName(2, "ftIndex")
         exp.features.setName(3, "ftValues")
 
         toCollapse = [2, 3, 4, 5]
-        toTest.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        toTest.points.splitByCollapsingFeatures(toCollapse, "ftIndex", "ftValues")
+
         assert toTest == exp
 
     #####################################

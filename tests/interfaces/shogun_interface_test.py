@@ -2,17 +2,13 @@
 Unit tests for shogun_interface.py
 """
 
-import distutils
-import json
 import os
-import inspect
 import time
 import multiprocessing
 import signal
 
 import numpy as np
-from nose.tools import *
-from nose.plugins.attrib import attr
+import pytest
 try:
     import shogun
     from shogun import RealFeatures
@@ -23,21 +19,20 @@ except ImportError:
 import nimble
 from nimble import Init
 from nimble.random import numpyRandom
-from nimble.random import _startAlternateControl, _endAlternateControl
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.core.interfaces._interface_helpers import PythonSearcher
 from nimble.core._learnHelpers import generateClusteredPoints
 from nimble.core.interfaces.shogun_interface import checkProcessFailure
 from nimble._utility import scipy
 
-from .skipTestDecorator import SkipMissing
+from tests.helpers import raises
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import generateClassificationData
 from tests.helpers import generateRegressionData
+from tests.helpers import skipMissingPackage
 
-shogunSkipDec = SkipMissing('shogun')
+shogunSkipDec = skipMissingPackage('shogun')
 
 @shogunSkipDec
 def test_Shogun_findCallable_nameAndDocPreservation():
@@ -246,7 +241,7 @@ def testShogunRossData():
 
 
 @shogunSkipDec
-@attr('slow')
+@pytest.mark.slow
 @oneLogEntryExpected
 def testShogunEmbeddedRossData():
     """ Test shogun by MulticlassOCAS with the ross data embedded in random data """
@@ -371,7 +366,7 @@ def TODO_ShogunMultiClassStrategyMultiDataBinaryAlg():
 
 
 @shogunSkipDec
-@attr('slow')
+@pytest.mark.slow
 @noLogEntryExpected
 def testShogunListLearners():
     """ Test shogun's listShogunLearners() by checking the output for those learners we unit test """
@@ -455,7 +450,6 @@ def shogunApplyBackend(obj, toTest, applier):
     predSG = nimble.data('Matrix', predArray, useLog=False)
     return predSG
 
-@with_setup(_startAlternateControl, _endAlternateControl)
 def trainAndApplyBackend(learner, data, applier, needKernel, needDistance,
                          extraTrainSetup):
     seed = nimble.random._generateSubsidiarySeed()
@@ -469,12 +463,10 @@ def trainAndApplyBackend(learner, data, applier, needKernel, needDistance,
         toSet['kernel'] = Init('GaussianKernel')
     if learner in needDistance:
         toSet['distance'] = Init('EuclideanDistance')
-    trainShogun = data[3:5]
     if learner in extraTrainSetup:
         shogunObj, args = extraTrainSetup[learner](shogunTraining, toSet)
     else:
         shogunObj, args = shogunTrainBackend(learner, shogunTraining, toSet)
-    testShogun = data[5]
     predSG = shogunApplyBackend(shogunObj, shogunTesting, applier)
 
     nimble.random.setSeed(seed, useLog=False)
@@ -484,7 +476,7 @@ def trainAndApplyBackend(learner, data, applier, needKernel, needDistance,
     equalityAssertHelper(predSG, predNimble)
 
 @shogunSkipDec
-@attr('slow')
+@pytest.mark.slow
 def testShogunClassificationLearners():
     binaryData = generateClassificationData(2, 20, 20)
     multiclassData = generateClassificationData(3, 20, 20)
@@ -570,7 +562,7 @@ def trainRelaxedTree(data, toSet):
 
 
 @shogunSkipDec
-@attr('slow')
+@pytest.mark.slow
 def testShogunRegressionLearners():
     data = generateRegressionData(3, 10, 20)
     trainX = abs(data[0][0])
@@ -734,10 +726,8 @@ def test_checkProcessFailure_maxTime():
 
     # failed process due to segfault signal
     start = time.time()
-    try:
+    with raises(SystemError):
         failedProcessCheck(exitSignal)
-        assert False # expected SystemError
-    except SystemError:
-        pass
+
     end = time.time()
     assert end - start < 0.1

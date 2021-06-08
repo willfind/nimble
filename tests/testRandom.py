@@ -6,15 +6,11 @@ import random
 import copy
 
 import numpy as np
-import nose
 
 import nimble
-from nimble.exceptions import InvalidArgumentValue
-from nimble.random import _startAlternateControl, _endAlternateControl
 from tests.helpers import oneLogEntryExpected, logCountAssertionFactory
 
 
-@nose.with_setup(_startAlternateControl, _endAlternateControl)
 def testSetRandomSeedExplicit():
     """ Test nimble.random.setSeed yields Nimble accessible random objects with the correct random behavior """
     expPy = random.Random(1333)
@@ -26,7 +22,6 @@ def testSetRandomSeedExplicit():
         assert nimble.random.numpyRandom.rand() == expNp.rand()
 
 
-@nose.with_setup(_startAlternateControl, _endAlternateControl)
 def testSetRandomSeedNone():
     """ Test nimble.random.setSeed operates as expected when passed None (-- use system time as seed) """
     nimble.random.setSeed(None)
@@ -44,7 +39,6 @@ def testSetRandomSeedNone():
     assert origNp.rand() != nimble.random.numpyRandom.rand()
 
 
-@nose.with_setup(_startAlternateControl, _endAlternateControl)
 @logCountAssertionFactory(3)
 def testSetRandomSeedPropagate():
     """ Test that nimble.random.setSeed will correctly control how randomized methods in nimble perform """
@@ -202,5 +196,96 @@ def test_random_data_logCount():
 
     for t in returnTypes:
         byType(t)
+
+####################
+# alternateControl #
+####################
+
+def testalternateControlExplicit():
+    """ Test nimble.random.alternateControl yields Nimble accessible random objects with the correct random behavior """
+    expPy1333 = random.Random(1333)
+    expNp1333 = np.random.RandomState(1333)
+    expPy1334 = random.Random(1334)
+    expNp1334 = np.random.RandomState(1334)
+
+    nimble.random.setSeed(1333)
+    for i in range(25):
+        assert nimble.random.pythonRandom.random() == expPy1333.random()
+        assert nimble.random.numpyRandom.rand() == expNp1333.rand()
+    with nimble.random.alternateControl(1334):
+        for i in range(50):
+            assert nimble.random.pythonRandom.random() == expPy1334.random()
+            assert nimble.random.numpyRandom.rand() == expNp1334.rand()
+    for i in range(25):
+        assert nimble.random.pythonRandom.random() == expPy1333.random()
+        assert nimble.random.numpyRandom.rand() == expNp1333.rand()
+
+
+@logCountAssertionFactory(4)
+def testalternateControlNone():
+    """ Test nimble.random.alternateControl operates as expected when passed None (-- use system time as seed) """
+    with nimble.random.alternateControl(None):
+        pyState = nimble.random.pythonRandom.getstate()
+        npState = nimble.random.numpyRandom.get_state()
+
+        origPy = random.Random()
+        origPy.setstate(pyState)
+        origNp = np.random.RandomState()
+        origNp.set_state(npState)
+
+    with nimble.random.alternateControl(None):
+        assert origPy.random() != nimble.random.pythonRandom.random()
+        assert origNp.rand() != nimble.random.numpyRandom.rand()
+
+def testalternateControlNested():
+    expPy1333 = random.Random(1333)
+    expNp1333 = np.random.RandomState(1333)
+    expPy1334 = random.Random(1334)
+    expNp1334 = np.random.RandomState(1334)
+
+    with nimble.random.alternateControl(1333):
+        for i in range(10):
+            assert nimble.random.pythonRandom.random() == expPy1333.random()
+            assert nimble.random.numpyRandom.rand() == expNp1333.rand()
+        with nimble.random.alternateControl(1334):
+            for i in range(10):
+                assert nimble.random.pythonRandom.random() == expPy1334.random()
+                assert nimble.random.numpyRandom.rand() == expNp1334.rand()
+        for i in range(10):
+            assert nimble.random.pythonRandom.random() == expPy1333.random()
+            assert nimble.random.numpyRandom.rand() == expNp1333.rand()
+
+def testalternateControlSetSeedException():
+    from nimble.random import setSeed
+    try:
+        with nimble.random.alternateControl(1):
+            nimble.random.setSeed(2)
+        assert False # expected RuntimeError
+    except RuntimeError:
+        pass
+
+    try:
+        with nimble.random.alternateControl(1):
+            setSeed(2)
+        assert False # expected RuntimeError
+    except RuntimeError:
+        pass
+
+    try:
+        with nimble.random.alternateControl(1):
+            with nimble.random.alternateControl():
+                nimble.random.setSeed(2)
+        assert False # expected RuntimeError
+    except RuntimeError:
+        pass
+
+    try:
+        with nimble.random.alternateControl(1):
+            with nimble.random.alternateControl():
+                nimble.random.pythonRandom.random()
+            setSeed(2)
+        assert False # expected RuntimeError
+    except RuntimeError:
+        pass
 
 #todo check that sizes of returned objects are what you request via npoints and nfeatures

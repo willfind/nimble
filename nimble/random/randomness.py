@@ -4,6 +4,7 @@ nimble functions and tests.
 """
 
 import random
+from contextlib import contextmanager
 
 import numpy as np
 
@@ -17,15 +18,6 @@ from nimble.core._createHelpers import validateReturnType, initDataObject
 pythonRandom = random.Random(42)
 numpyRandom = np.random.RandomState(42) # pylint: disable=no-member
 
-class _RandomControl:
-    """
-    Track the random states controlled by Nimble.
-    """
-    # We use None to signal that we are within a section of
-    # controlled randomness
-    pythonState = None
-    numpyState = None
-
 def setSeed(seed, useLog=None):
     """
     Set the seeds on all sources of randomness in nimble.
@@ -34,15 +26,22 @@ def setSeed(seed, useLog=None):
     ----------
     seed : int
         Seed for random state. Must be convertible to 32 bit unsigned
-        integer for compliance with np. If seed is None, then we use
-        os system time.
+        integer for compliance with numpy. If seed is ``None``, the
+        operating system's randomness sources are used if available
+        otherwise the system time is used.
     """
+    if not setSeed._settable:
+        msg = 'The global random seed cannot be set while within an alternate '
+        msg += 'state of randomness'
+        raise RuntimeError(msg)
 
     pythonRandom.seed(seed)
     numpyRandom.seed(seed)
 
-    handleLogging(useLog, 'setSeed', seed=seed)
+    handleLogging(useLog, 'setSeed', 'random.setSeed', seed=seed)
 
+# When using alternateControl, using setSeed is not allowed.
+setSeed._settable = True
 
 def data(
         returnType, numPoints, numFeatures, sparsity, pointNames='automatic',
@@ -150,48 +149,47 @@ def data(
         raise InvalidArgumentValue("elementType may only be 'int' or 'float'")
 
     randomSeed = _getValidSeed(randomSeed)
-    _startAlternateControl(seed=randomSeed)
-    #note: sparse is not stochastic sparsity, it uses rigid density measures
-    size = (numPoints, numFeatures)
-    if sparsity > 0:
-        density = 1.0 - float(sparsity)
-        gridSize = numPoints * numFeatures
-        numNonZeroValues = int(gridSize * density)
-        # We want to sample over positions, not point/feature indices, so
-        # we consider the possible positions as numbered in a row-major
-        # order on a grid, and sample that without replacement
-        nzLocation = numpyRandom.choice(gridSize, size=numNonZeroValues,
-                                        replace=False)
-        if elementType == 'int':
-            dataVector = numpyRandom.randint(low=1, high=100,
-                                             size=numNonZeroValues)
-            dtype = np.dtype(int)
-        else: #numeric type is float; distribution is normal
-            dataVector = numpyRandom.normal(0, 1, size=numNonZeroValues)
-            dtype = np.dtype(float)
-        if returnType == 'Sparse':
-            if not scipy.nimbleAccessible():
-                msg = "scipy is not available"
-                raise PackageException(msg)
-            # The point value is determined by counting how many groups of
-            # numFeatures fit into the position number
-            pointIndices = np.floor(nzLocation / numFeatures)
-            # The feature value is determined by counting the offset from each
-            # point edge.
-            featureIndices = nzLocation % numFeatures
-            randData = scipy.sparse.coo.coo_matrix(
-                (dataVector, (pointIndices, featureIndices)),
-                (numPoints, numFeatures))
+    with alternateControl(seed=randomSeed, useLog=False):
+        #note: sparse uses rigid density measures, not stochastic sparsity
+        size = (numPoints, numFeatures)
+        if sparsity > 0:
+            density = 1.0 - float(sparsity)
+            gridSize = numPoints * numFeatures
+            numNonZeroValues = int(gridSize * density)
+            # We want to sample over positions, not point/feature indices, so
+            # we consider the possible positions as numbered in a row-major
+            # order on a grid, and sample that without replacement
+            nzLocation = numpyRandom.choice(gridSize, size=numNonZeroValues,
+                                            replace=False)
+            if elementType == 'int':
+                dataVector = numpyRandom.randint(low=1, high=100,
+                                                 size=numNonZeroValues)
+                dtype = np.dtype(int)
+            else: #numeric type is float; distribution is normal
+                dataVector = numpyRandom.normal(0, 1, size=numNonZeroValues)
+                dtype = np.dtype(float)
+            if returnType == 'Sparse':
+                if not scipy.nimbleAccessible():
+                    msg = "scipy is not available"
+                    raise PackageException(msg)
+                # The point value is determined by counting how many groups of
+                # numFeatures fit into the position number
+                pointIndices = np.floor(nzLocation / numFeatures)
+                # The feature value is determined by counting the offset from
+                # each point edge.
+                featureIndices = nzLocation % numFeatures
+                randData = scipy.sparse.coo.coo_matrix(
+                    (dataVector, (pointIndices, featureIndices)),
+                    (numPoints, numFeatures))
+            else:
+                randData = np.zeros(size, dtype=dtype)
+                # np.put indexes as if flat so can use nzLocation
+                np.put(randData, nzLocation, dataVector)
         else:
-            randData = np.zeros(size, dtype=dtype)
-            # np.put indexes as if flat so can use nzLocation
-            np.put(randData, nzLocation, dataVector)
-    else:
-        if elementType == 'int':
-            randData = numpyRandom.randint(1, 100, size=size)
-        else:
-            randData = numpyRandom.normal(loc=0.0, scale=1.0, size=size)
-    _endAlternateControl()
+            if elementType == 'int':
+                randData = numpyRandom.randint(1, 100, size=size)
+            else:
+                randData = numpyRandom.normal(loc=0.0, scale=1.0, size=size)
 
     ret = initDataObject(returnType, rawData=randData, pointNames=pointNames,
                          featureNames=featureNames, name=name, copyData=False,
@@ -257,46 +255,46 @@ def _stillDefaultState():
 
 #return _stillDefault
 
-def _startAlternateControl(seed=None):
+@contextmanager
+def alternateControl(seed=None, useLog=None):
     """
-    Begin using a temporary new seed for randomness.
+    Context manager to operate outside of the current random state.
 
-    Called to open a certain section of code that needs to a different
-    kind of randomness than the current default, without changing the
-    reproducibility of later random calls outside of the section. This
-    saves the state of the nimble internal random sources, and calls
-    setSeed using the given parameter. The saved state can then be
-    restored with a call to_endAlternateControl. Meant to be used in
-    unit tests, to either protect later calls from the modifications in
-    this section, or to ensure consistency regardless of the current
-    state of randomness in nimble.
+    Saves the state prior to entering, changes the state on entry, and
+    restores the original state on exit. The setSeed function is
+    disallowed while within the context manager as this would modify the
+    controlled state. However, these objects can be nested to achieve a
+    different state while already within a controlled state.
 
     Parameters
     ----------
     seed : int
         Seed for random state. Must be convertible to 32 bit unsigned
-        integer for compliance with np. If seed is None, then we use
-        os system time.
+        integer for compliance with numpy. If seed is ``None``, the
+        operating system's randomness sources are used if available
+        otherwise the system time is used.
+    useLog : bool, None
+        Local control for whether to send object creation to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
     """
-    _RandomControl.pythonState = pythonRandom.getstate()
-    _RandomControl.numpyState = numpyRandom.get_state()
+    pythonState = pythonRandom.getstate()
+    numpyState = numpyRandom.get_state()
+    savedSettable = setSeed._settable
+    try:
+        pythonRandom.seed(seed)
+        numpyRandom.seed(seed)
+        setSeed._settable = False
 
-    setSeed(seed, useLog=False)
+        action = 'entered random.alternateControl'
+        handleLogging(useLog, 'setSeed', action, seed=seed)
+        yield
+    finally:
+        pythonRandom.setstate(pythonState)
+        numpyRandom.set_state(numpyState)
+        setSeed._settable = savedSettable
 
-
-def _endAlternateControl():
-    """
-    Stop using the temporary seed created by `_startAlternateControl``.
-
-    Called to close a certain section of code that needs to have
-    different kind of randomness than the current default without
-    changing the reproducibility of later random calls outside of the
-    section. This will restore the state saved by
-    ``_startAlternateControl``.
-    """
-    if _RandomControl.pythonState is not None:
-        pythonRandom.setstate(_RandomControl.pythonState)
-        _RandomControl.pythonState = None
-    if _RandomControl.numpyState is not None:
-        numpyRandom.set_state(_RandomControl.numpyState)
-        _RandomControl.numpyState = None
+        action = 'exited random.alternateControl'
+        handleLogging(useLog, 'setSeed', action, seed=seed)

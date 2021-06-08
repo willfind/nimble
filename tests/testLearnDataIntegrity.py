@@ -4,15 +4,12 @@ trainAndTest, checking that after the call, the input data remains
 unmodified. It makes use of listLearners and learnerType to try this
 operation with as many learners as possible.
 """
-from unittest import mock
-
-from nose.plugins.attrib import attr
-from nose.tools import raises
+import pytest
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.random import pythonRandom
-from tests.helpers import calledException, CalledFunctionException
+from tests.helpers import assertCalled
 from tests.helpers import generateClassificationData
 from tests.helpers import generateRegressionData
 
@@ -223,55 +220,55 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
                 continue
 
 
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityTrain():
     backend(wrappedTrain, 1)
 
 
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityTrainAndApply():
     backend(wrappedTrainAndApply, 1)
 
 
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityTLApply():
     backend(wrappedTLApply, 1)
 
 # we can test smaller portions here because the backends are all being tested by
 # the previous tests. We only care about the trainAndApply One vs One and One vs
 # all code.
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityTrainAndApplyMulticlassStrategies():
     backend(wrappedTrainAndApplyOvO, .1, False)
     backend(wrappedTrainAndApplyOvA, .1, False)
 
 
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityTrainAndTest():
     backend(wrappedTrainAndTest, 1)
 
 
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityTLTest():
     backend(wrappedTLTest, 1)
 
 # we can test smaller portions here because the backends are all being tested by
 # the previous tests. We only care about the trainAndTest One vs One and One vs
 # all code.
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityTrainAndTestMulticlassStrategies():
     backend(wrappedTrainAndTestOvO, .1, False)
     backend(wrappedTrainAndTestOvA, .1, False)
 
 # test crossValidate x3
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityCrossValidate():
     backend(wrappedCrossValidate, 1)
 
 # test TrainedLearner methods
 # only those that the top level trainers, appliers, and testers are not reliant on.
 # Exclusions for above reason: apply(), test()
-@attr('slow')
+@pytest.mark.slow
 def testDataIntegrityTrainedLearner():
 #	backend(setupAndCallIncrementalTrain, 1) TODO
     backend(setupAndCallRetrain, 1)
@@ -285,26 +282,20 @@ def testDataIntegrityTrainedLearner():
 # mergeArguments calls indicate that the user arguments parameter will be not
 # be modified because it returns a new dictionary (verified in testHelpers)
 
-def patch_mergeArguments(source):
-    return mock.patch(source + '.mergeArguments', calledException)
-
-@raises(CalledFunctionException)
-@patch_mergeArguments('nimble.core.learn')
+@assertCalled(nimble.core.learn, 'mergeArguments')
 def testArgumentIntegrityTrain():
     arguments = {'k': 1}
     train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
     tl = nimble.train('nimble.KNNClassifier', train, 2, arguments=arguments)
 
-@raises(CalledFunctionException)
-@patch_mergeArguments('nimble.core.learn')
+@assertCalled(nimble.core.learn, 'mergeArguments')
 def testArgumentIntegrityTrainAndApply():
     arguments = {'k': 1}
     train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
     test = nimble.data('Matrix', [[0, 1], [1, 0]])
     pred = nimble.trainAndApply('nimble.KNNClassifier', train, 2, test, arguments=arguments)
 
-@raises(CalledFunctionException)
-@patch_mergeArguments('nimble.core.learn')
+@assertCalled(nimble.core.learn, 'mergeArguments')
 def testArgumentIntegrityTrainAndTest():
     arguments = {'k': 1}
     train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
@@ -313,28 +304,23 @@ def testArgumentIntegrityTrainAndTest():
                                performanceFunction=nimble.calculate.fractionIncorrect,
                                arguments=arguments)
 
-@patch_mergeArguments('nimble.core.learn')
 def testArgumentIntegrityTrainAndTestOnTrainingData():
     arguments = {'k': 1}
     train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
-    try:
+    mergeArgumentsCalled = assertCalled(nimble.core.learn, 'mergeArguments')
+    with mergeArgumentsCalled:
         perf = nimble.trainAndTestOnTrainingData(
             'nimble.KNNClassifier', train, 2, arguments=arguments,
             performanceFunction=nimble.calculate.fractionIncorrect)
-        assert False # expected CalledFunctionException
-    except CalledFunctionException:
-        pass
-    try:
+
+    with mergeArgumentsCalled:
         perf = nimble.trainAndTestOnTrainingData(
             'nimble.KNNClassifier', train, 2, folds=2, arguments=arguments,
             crossValidationError=True,
             performanceFunction=nimble.calculate.fractionIncorrect)
-        assert False # expected CalledFunctionException
-    except CalledFunctionException:
-        pass
 
-@raises(CalledFunctionException)
-@patch_mergeArguments('nimble.core.interfaces.universal_interface')
+
+@assertCalled(nimble.core.interfaces.universal_interface, 'mergeArguments')
 def testArgumentIntegrityTLApply():
     arguments = {'k': 1}
     train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]],
@@ -343,8 +329,7 @@ def testArgumentIntegrityTLApply():
     tl = nimble.train('nimble.KNNClassifier', train, 2, arguments=arguments)
     pred = tl.apply(test)
 
-@raises(CalledFunctionException)
-@patch_mergeArguments('nimble.core.interfaces.universal_interface')
+@assertCalled(nimble.core.interfaces.universal_interface, 'mergeArguments')
 def testArgumentIntegrityTLTest():
     arguments = {'k': 1}
     train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
