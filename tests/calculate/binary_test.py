@@ -8,7 +8,7 @@ from nimble.exceptions import InvalidArgumentValue
 from nimble.calculate import (
     truePositive, trueNegative, falsePositive, falseNegative, recall,
     precision, specificity, balancedAccuracy, f1Score, confusionMatrix)
-from tests.helpers import noLogEntryExpected
+from tests.helpers import noLogEntryExpected, raises
 
 def test_binary_confusionMatrix_nonBinary():
     known = [[1], [2], [1], [2],
@@ -28,20 +28,14 @@ def test_binary_confusionMatrix_nonBinary():
     # check that confusionMatrix raises IndexError but using the binary
     # functions raises InvalidArgumentValue because confusionMatrix error
     # would be confusing given the user did not provide the labels
-    try:
+    with raises(IndexError):
         confusionMatrix(knownObj, predObj, [False, True])
-        assert False # expected IndexError
-    except IndexError:
-        pass
 
     funcs = [truePositive, trueNegative, falsePositive, falseNegative,
              recall, precision, specificity, balancedAccuracy, f1Score]
     for func in funcs:
-        try:
+        with raises(InvalidArgumentValue):
             func(knownObj, predObj)
-            assert False # expected InvalidArgumentValue
-        except InvalidArgumentValue:
-            pass
 
 @noLogEntryExpected
 def test_binary_confusionMatrixValues():

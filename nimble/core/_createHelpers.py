@@ -1384,9 +1384,15 @@ def initDataObject(
     ftsExtracted = extracted[1] if extracted[1] else featureNames is True
 
     copied = False
-
+    kwargs = {}
     # point/featureNames, treatAsMissing, etc. may vary so only use the data
     if _isBase(rawData):
+        # only use data; point/featureNames, treatAsMissing, etc. may vary
+        # _data is always 2D, but _shape could be higher dimension
+        kwargs['shape'] = rawData._shape
+        if isinstance(rawData, nimble.core.data.BaseView):
+            rawData = rawData.copy()
+            copied = True
         rawData = rawData._data
     # convert these types as indexing may cause dimensionality confusion
     elif _isNumpyMatrix(rawData):
@@ -1414,7 +1420,6 @@ def initDataObject(
         rawData = copy.deepcopy(rawData)
         copied = True
 
-    kwargs = {}
     if not rowsArePoints:
         pointNames, featureNames = featureNames, pointNames
     if highDim:
@@ -1981,12 +1986,8 @@ def _colTypeConversion(row, convertCols):
 
 def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
     """
-    Will check for triggers to automatically determine the positions of
-    the point or feature names if they have not been specified by the
-    user. For feature names the trigger is two empty lines prior to
-    the first line of data. For point names the trigger is the first
-    line of data contains the feature names, and the first value of that
-    line is 'pointNames'
+    Finds the first two lines of data (ignoring comments) to determine whether
+    point and/or feature names will be extracted from the data.
     """
     startPosition = ioStream.tell()
 
@@ -1995,18 +1996,8 @@ def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
     while currLine.startswith('#'):
         currLine = ioStream.readline()
 
-    # check for two empty lines in a row to denote that first
-    # data line contains feature names
-    if currLine.strip() == '':
-        currLine = ioStream.readline()
-        if currLine.strip() == '':
-            # only change set value if we allow detection
-            if featureNames == 'automatic':
-                # we set this so the names are extracted later
-                featureNames = True
-
     # Use the robust csv reader to read the first two lines (if available)
-    # these are saved to used in further autodection
+    # these are saved to use in further autodetection
     ioStream.seek(startPosition)
     rowReader = csv.reader(ioStream, dialect)
     try:
@@ -2246,6 +2237,7 @@ def _loadmtxForAuto(ioStream, pointNames, featureNames, encoding):
     retPNames = None
     retFNames = None
 
+    # ioStream will always be bytes
     # read through the comment lines
     while True:
         currLine = ioStream.readline()
@@ -2257,11 +2249,8 @@ def _loadmtxForAuto(ioStream, pointNames, featureNames, encoding):
             scrubbedLine = currLine[2:]
             # strip newline from end of line
             scrubbedLine = scrubbedLine.rstrip()
-            if isinstance(scrubbedLine, str):
-                names = scrubbedLine.split(',')
-            else:
-                names = list(map(lambda s: s.decode(encoding),
-                                 scrubbedLine.split(b',')))
+            names = list(map(lambda s: s.decode(encoding),
+                             scrubbedLine.split(b',')))
             if not seenPNames:
                 retPNames = names if names != [''] else None
                 seenPNames = True

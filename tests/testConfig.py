@@ -3,17 +3,19 @@ Tests to check the loading, writing, and usage of nimble.settings, along
 with the underlying structures being used.
 """
 
-import tempfile
-import copy
 import os
+import copy
+import pathlib
+from functools import wraps
+import tempfile
 
-from nose.tools import raises
-from unittest import mock
 import configparser
 
 import nimble
+from nimble.core.configuration import SessionConfiguration
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
+from tests.helpers import raises, patch
 
 
 ###############
@@ -54,6 +56,43 @@ class FailedPredefined(object):
     @classmethod
     def provideInitExceptionInfo(cls):
         raise PackageException("failed to load interface")
+
+def useSessionConfiguration(test):
+    """
+    Wrapper for tests that use saveChanges or setDefault.
+
+    All tests override nimble.settings so that they can be run without using a
+    file. This override redefines saveChanges, so here we want to reinstate the
+    use of SessionConfiguration for nimble.settings so that we can test that
+    changes are being saved to the configuration file as expected.
+    """
+    @wraps(test)
+    def wrapped():
+        with tempfile.NamedTemporaryFile('w+', suffix='.ini') as tmp:
+            # can reuse the settings established when test began
+            # will copy everything not in changes to the temporary config file
+            # and store changes to apply to new nimble.settings object
+            changes = nimble.settings.changes
+            for section, options in nimble.settings.get().items():
+                if section not in changes:
+                    tmp.write('[{}]\n'.format(section))
+                    for option in options.items():
+                        tmp.write('{}\n'.format(' = '.join(option)))
+
+            def loadSavedSettings():
+                tmp.seek(0)
+                return SessionConfiguration(tmp.name)
+
+            nimble.settings = loadSavedSettings()
+            nimble.settings.changes = copy.deepcopy(changes)
+            # for tests that load settings during the test
+            nimble.core.configuration.loadSettings = loadSavedSettings
+
+            test()
+            # nimble.settings is reset at the beginning of each test so there
+            # is no need to restore anything after the test completes.
+
+    return wrapped
 
 #############
 ### Tests ###
@@ -136,6 +175,7 @@ def test_settings_Hooks():
 
     assert history == [5, 4, 1, "Bang"]
 
+@useSessionConfiguration
 def test_settings_GetFullConfig():
     """ Test nimble.settings.get when only specifying a section """
     startConfig = nimble.settings.get()
@@ -174,7 +214,7 @@ def test_settings_GetSectionOnly():
     assert allSec1["op1"] == '1'
     assert allSec1['op2'] == '2'
 
-
+@useSessionConfiguration
 def test_settings_saving():
     """ Test nimble.settings will save its in memory changes """
     # make some change via nimble.settings. save it,
@@ -186,7 +226,7 @@ def test_settings_saving():
     assert nimble.settings.changes == {}
     assert nimble.settings.get("newSectionName", 'new.Option.Name') == '1'
 
-
+@useSessionConfiguration
 def test_settings_savingSection():
     """ Test nimble.settings.saveChanges when specifying a section """
     nimble.settings.changes = {}
@@ -205,13 +245,10 @@ def test_settings_savingSection():
     assert temp.get('TestSec1', "op1") == '1'
     assert temp.get('TestSec1', "op2") == '2'
     # confirm that the change outside the section was not saved
-    try:
+    with raises(configparser.NoSectionError):
         val = temp.get('TestSec2', "op1")
-        assert False
-    except configparser.NoSectionError:
-        pass
 
-
+@useSessionConfiguration
 def test_settings_savingOption():
     """ Test nimble.settings.saveChanges when specifying a section and option """
     nimble.settings.changes = {}
@@ -232,16 +269,10 @@ def test_settings_savingOption():
     temp = nimble.core.configuration.loadSettings()
     assert temp.get('TestSec1', "op2") == '2'
     # confirm that the other changes were not saved
-    try:
+    with raises(configparser.NoSectionError):
         val = temp.get('TestSec2', "op1")
-        assert False
-    except configparser.NoSectionError:
-        pass
-    try:
+    with raises(configparser.NoOptionError):
         val = temp.get('TestSec1', "op1") == '1'
-        assert False
-    except configparser.NoOptionError:
-        pass
 
 def setAvailableInterfaceOptions(save=False):
     """
@@ -288,6 +319,7 @@ def test_settings_addingNewInterface():
     assert nimble.settings.get('Test', 'Temp0') == ''
     assert nimble.settings.get('Test', 'Temp1') == ''
 
+@useSessionConfiguration
 def test_settings_setInterfaceOptionsSafety():
     """ Test that setting options preserves values already in the config file """
     tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
@@ -353,42 +385,30 @@ def test_settings_setInterfaceOptionsChanges():
     assert nimble.settings.get('TestOther', 'Temp0') == 'unchanged'
     # set should only allow setting for new option
     nimble.settings.set('Test', 'NotTemp1', '2')
-    try:
+    with raises(InvalidArgumentValue):
         nimble.settings.set('Test', 'Temp1', '2')
-        assert False
-    except InvalidArgumentValue:
-        pass
 
     # now change the option back to the original
     tempInterface1.optionNames[1] = 'Temp1'
     setAvailableInterfaceOptions()
 
     nimble.settings.set('Test', 'Temp1', '2')
-    try:
+    with raises(InvalidArgumentValue):
         nimble.settings.set('Test', 'NotTemp1', '2')
-        assert False
-    except InvalidArgumentValue:
-        pass
 
 def test_settings_allowedNames():
     """ Test that you can only set allowed names in interface sections """
     for interface in getInterfaces(ignoreCustomInterfaces=True):
         name = interface.getCanonicalName()
-        try:
+        with raises(InvalidArgumentValue):
             nimble.settings.set(name, 'foo', "bar")
-            assert False
-        except InvalidArgumentValue:
-            pass
 
 def test_settings_customLearnerOptionsException():
     """ Test that you cannot set options for custom learner interfaces """
 
     for name in ['nimble', 'custom']:
-        try:
+        with raises(InvalidArgumentValue):
             nimble.settings.set(name, 'foo', "bar")
-            assert False # expected InvalidArgumentValue
-        except InvalidArgumentValue:
-            pass
 
 @raises(configparser.NoSectionError)
 # test that set without save is temporary
@@ -402,12 +422,10 @@ def test_settings_set_without_save():
     nimble.settings = nimble.core.configuration.loadSettings()
     nimble.settings.get("tempSectionName", 'temp.Option.Name')
 
+@useSessionConfiguration
 def test_settings_setDefault():
-    try:
+    with raises(configparser.NoSectionError):
         nimble.settings.get("tempSectionName", 'temp.Option.Name2')
-        assert False  # expected ConfigParser.NoSectionError
-    except configparser.NoSectionError:
-        pass
 
     nimble.settings.set("tempSectionName", "temp.Option.Name1", '1')
     nimble.settings.setDefault("tempSectionName", "temp.Option.Name2", '2')
@@ -416,21 +434,64 @@ def test_settings_setDefault():
 
     # Name2 should be reflected in file, but not Name1
     nimble.settings = nimble.core.configuration.loadSettings()
-    try:
+    with raises(configparser.NoOptionError):
         nimble.settings.get("tempSectionName", 'temp.Option.Name1')
-        assert False  # expected ConfigParser.NoOptionError
-    except configparser.NoOptionError:
-        pass
 
     assert nimble.settings.get("tempSectionName", 'temp.Option.Name2') == '2'
 
 
-@mock.patch('nimble.core.interfaces.predefined', [FailedPredefined])
+@patch(nimble.core.interfaces, 'predefined', [FailedPredefined])
 def testSetLocationForFailedPredefinedInterface():
     nimble.settings.set('FailedPredefined', 'location', 'path/to/mock')
 
 
 @raises(InvalidArgumentValue)
-@mock.patch('nimble.core.interfaces.predefined', [FailedPredefined])
+@patch(nimble.core.interfaces, 'predefined', [FailedPredefined])
 def testExceptionSetOptionForFailedPredefinedInterface():
     nimble.settings.set('FailedPredefined', 'foo', 'path/to/mock')
+
+# copied from nimble.core.configuration
+def loadSettings():
+    """
+    Function which reads the configuration file and loads the values
+    into a SessionConfiguration. The SessionConfiguration object is then
+    returned.
+    """
+    configFile = '.nimble.ini'
+    currPath = os.path.join(os.getcwd(), configFile)
+    homeLoc = str(pathlib.Path.home())
+    homePath = os.path.join(homeLoc, configFile)
+
+    if not os.path.exists(currPath):
+        if not os.path.exists(homePath):
+            with open(homePath, 'w'):
+                pass
+        target = homePath
+    else:
+        target = currPath
+
+    ret = SessionConfiguration(target)
+
+    sections = ret.get()
+    if 'fetch' not in sections or 'location' not in sections['fetch']:
+        ret.setDefault('fetch', 'location', homeLoc)
+
+    return ret
+
+def test_settings_initUsesHomeOrCWDFile():
+    cwd = os.getcwd()
+    tempDir = nimble.settings.get('logger', 'location')
+    try:
+        os.chdir(tempDir)
+        assert cwd != os.getcwd()
+        currConfigPath = os.path.join(os.getcwd(), '.nimble.ini')
+        assert not os.path.exists(currConfigPath)
+        nimble.settings = loadSettings()
+        home = str(pathlib.Path.home())
+        assert nimble.settings.path == os.path.join(home, '.nimble.ini')
+        with open('.nimble.ini', 'w'):
+            pass
+        nimble.settings = loadSettings()
+        assert nimble.settings.path == currConfigPath
+    finally:
+        os.chdir(cwd)

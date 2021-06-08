@@ -3,14 +3,12 @@ KNNImputation tests.
 """
 
 import os
-from unittest import mock
-
-from nose.tools import raises
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.learners import KNNImputation
 
+from tests.helpers import raises, patch
 from tests.helpers import assertNoNamesGenerated
 from tests.helpers import getDataConstructors
 
@@ -50,12 +48,12 @@ def test_KNNImputation_regression():
         assert ret == expTest
 
 @raises(InvalidArgumentValue)
+@patch(nimble.learners.knn_imputation, '_sklPresent', lambda: False)
 def test_KNNImputation_regression_exception_NoSKL():
-    with mock.patch('nimble.learners.knn_imputation._sklPresent', lambda: False):
-        data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
-        toTest = nimble.data('Matrix', data)
-        learner = KNNImputation()
-        learner.train(toTest, mode='regression')
+    data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
+    toTest = nimble.data('Matrix', data)
+    learner = KNNImputation()
+    learner.train(toTest, mode='regression')
 
 def test_KNNImputation_lazyNameGeneration():
     data = [[1, None, None], [1, 3, 6], [2, 1, 6], [1, 3, 7], [None, 3, None]]

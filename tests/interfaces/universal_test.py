@@ -2,17 +2,14 @@
 Unit tests for the universal interface object.
 """
 
-import sys
-import os
 import warnings
-
-from nose.tools import raises
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.interfaces.universal_interface import UniversalInterface
 from nimble.core.interfaces.universal_interface import PredefinedInterface
+from tests.helpers import raises
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import generateClassificationData
 
@@ -42,6 +39,7 @@ class SubObj(object):
 
 
 class TestPredefinedInterface(PredefinedInterface):
+    __test__ = False
 
     def accessible(self):
         return True
@@ -338,6 +336,7 @@ def backend_warningscapture(toCall, prepCall=None):
         arg = AlwaysWarnInterface()
 
     with warnings.catch_warnings(record=True) as warnCall:
+        warnings.simplefilter('always')
         toCall(arg)
 
     ignored = [DeprecationWarning, PendingDeprecationWarning, FutureWarning,
@@ -457,31 +456,22 @@ def test_warningscapture_TL_exceptions_featureMismatch():
     def prep(AWObject):
         return AWObject.train('foo', trainX, trainY)
 
-    try:
+    with raises(InvalidArgumentValueCombination):
         def wrapped(tl):
             tl.apply(testX)
         backend_warningscapture(wrapped, prep)
-        assert False # expected InvalidArgumentValueCombination
-    except InvalidArgumentValueCombination:
-        pass
 
-    try:
+    with raises(InvalidArgumentValueCombination):
         def metric(x, y):
             pass
         def wrapped(tl):
             tl.test(testX, testY, metric)
         backend_warningscapture(wrapped, prep)
-        assert False # expected InvalidArgumentValueCombination
-    except InvalidArgumentValueCombination:
-        pass
 
-    try:
+    with raises(InvalidArgumentValueCombination):
         def wrapped(tl):
             tl.getScores(testX)
         backend_warningscapture(wrapped, prep)
-        assert False # expected InvalidArgumentValueCombination
-    except InvalidArgumentValueCombination:
-        pass
 
 
 def test_warningscapture_listLearners():

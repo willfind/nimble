@@ -2,12 +2,13 @@
 Tests functionality that is limited only to View objects.
 """
 
-import nimble
 from nimble.core.data import Base, BaseView
 from nimble.core.data.points import Points
 from nimble.core.data.views import PointsView
 from nimble.core.data.features import Features
 from nimble.core.data.views import FeaturesView
+
+from tests.helpers import raises
 from .baseObject import DataTestObject
 
 
@@ -53,264 +54,141 @@ class ViewAccess(DataTestObject):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         testObject = self.constructor(data)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.replaceFeatureWithBinaryFeatures(0)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.transformFeatureToIntegers(0)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject._referenceFrom(testObject)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.transformElements(lambda elem: elem + 1)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.transpose()
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.replaceRectangle(self, [99, 99, 99], 0, 0, 0, 2)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.flatten()
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.unflatten((3, 3))
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             mergeData = [[3, 2, 1], [6, 5, 4], [9, 8, 7]]
             toMerge = self.constructor(mergeData)
             testObject.merge(toMerge, point='strict', feature='union')
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject @= 2
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject *= 2
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject += 1
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject -= 1
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject /= 1
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject //= 1
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject %= 1
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject **= 2
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
 
     def test_PointsView_exceptionsForModifying(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         testObject = self.constructor(data)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.points.setName(0, 'set')
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.points.setNames(None, useLog=False)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.points.extract(lambda pt: True)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.points.delete(lambda pt: False)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.points.retain(lambda pt: True)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             new = self.constructor([[0, 0, 0]])
             testObject.points.append(new)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.points.permute()
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.points.sort(by=0)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.points.transform(lambda pt: [v + 1 for v in pt])
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.points.fillMatching(99, 0)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.points.splitByCollapsingFeatures([1, 2], 'names', 'values')
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.points.combineByExpandingFeatures(1, 2)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
 
     def test_FeaturesView_exceptionsForModifying(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         testObject = self.constructor(data)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.features.setName(0, 'set')
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.features.setNames(None, useLog=False)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.features.extract(lambda pt: True)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.features.delete(lambda pt: False)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.features.retain(lambda pt: True)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             new = self.constructor([[0], [0], [0]])
             testObject.features.append(new)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.features.permute()
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.features.sort(by=0)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.features.transform(lambda ft: [v + 1 for v in ft])
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.features.fillMatching(99, 0)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.features.normalize(lambda x: x)
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
-        try:
+        with raises(TypeError, match="disallowed for View objects"):
             testObject.features.splitByParsing(0, lambda v: [1, 1], ['new1', 'new2'])
-            assert False # expected TypeError
-        except TypeError as e:
-            assert "disallowed for View objects" in str(e)
 
 # get retType TODO -- still not sure what is correct functionality.

@@ -1,7 +1,6 @@
 
 import numpy as np
 
-import nimble
 from nimble.calculate import meanNormalize, meanStandardDeviationNormalize
 from nimble.calculate import range0to1Normalize
 from nimble.calculate import percentileNormalize

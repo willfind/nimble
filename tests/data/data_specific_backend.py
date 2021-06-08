@@ -2,11 +2,9 @@
 Define data test objects for methods of properties specific to the type
 
 """
-from unittest.mock import patch
-
 import numpy as np
 
-from tests.helpers import CalledFunctionException, calledException
+from tests.helpers import patchCalled, assertCalled
 from .baseObject import DataTestObject
 
 class SparseSpecific(DataTestObject):
@@ -16,20 +14,16 @@ class SparseSpecific(DataTestObject):
         data = [[1, 0, 3], [0, 5, 0]]
         obj = self.constructor(data)
 
-        # ensure that our mock target is used
-        try:
-            with patch("numpy.lexsort", calledException):
-                obj._sortInternal('point')
-            assert False # expected CalledFunctionException
-        except CalledFunctionException:
-            pass
+        # ensure that our patched target is used
+        with assertCalled(np, "lexsort"):
+            obj._sortInternal('point')
 
         obj._sortInternal('point')
         assert obj._sorted['axis'] == 'point'
         assert obj._sorted['indices'] is None
 
         # call _sortInternal to generate indices on already sorted obj
-        with patch("numpy.lexsort", calledException):
+        with patchCalled(np, "lexsort"):
             obj._sortInternal('point', setIndices=True)
 
         # Confirm the desired action actually took place

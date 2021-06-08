@@ -1,9 +1,8 @@
-import nimble
 from nimble import fill
-from nimble import match
-from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValue
 from tests.helpers import noLogEntryExpected
 from tests.helpers import getDataConstructors
+from tests.helpers import raises
 
 
 @noLogEntryExpected
@@ -62,13 +61,9 @@ def backend_fill(func, data, match, expected=None):
 def backend_fill_exception(func, data, match, exceptionType):
     "backend for fill functions when testing exception raising"
     for constructor in getDataConstructors():
-        try:
+        with raises(exceptionType):
             toTest = constructor(data, useLog=False)
             func(toTest, match)
-            assert False  # Expected an exception
-        except exceptionType as et:
-#            print et
-            pass  # if we get the right thing, carry on.
 
 def test_mean_noMatches():
     data = [1, 2, 2, 9]
@@ -214,9 +209,6 @@ def test_interpolate_xKwargIncluded_exception():
     arguments['x'] = [1]  # disallowed argument
     match = lambda x: x == "na"
     for constructor in getDataConstructors():
-        try:
+        with raises(TypeError):
             toTest = constructor(data, useLog=False)
             ret = fill.interpolate(toTest, match, **arguments)
-            assert False  # expected TypeError
-        except TypeError:
-            pass

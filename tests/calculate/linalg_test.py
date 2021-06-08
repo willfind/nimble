@@ -6,13 +6,13 @@ inverse, pseudoInverse, solve, leastSquaresSolution.
 """
 
 import numpy as np
-from nose.tools import raises
 
 import nimble
-from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.calculate import inverse, pseudoInverse, leastSquaresSolution, solve
+from nimble.exceptions import InvalidArgumentValue
+from nimble.calculate import inverse, pseudoInverse, leastSquaresSolution
+from nimble.calculate import solve
 
-from tests.helpers import getDataConstructors
+from tests.helpers import getDataConstructors, raises
 ###########
 # inverse #
 ###########
@@ -58,11 +58,8 @@ def testInverseNonSquareObject():
 
     for constructor in getDataConstructors():
         obj = constructor(data)
-        try:
+        with raises(InvalidArgumentValue):
             inverse(obj)
-            assert False # expected InvalidArgumentValue
-        except InvalidArgumentValue:
-            pass
 
 
 def testNonInvertibleObject():
@@ -74,11 +71,8 @@ def testNonInvertibleObject():
     for constructor in getDataConstructors():
         obj = constructor(data)
 
-        try:
+        with raises(InvalidArgumentValue):
             inverse(obj)
-            assert False # expected InvalidArgumentValue
-        except InvalidArgumentValue:
-            pass
 
 
 #################

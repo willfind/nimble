@@ -1,7 +1,5 @@
 import tempfile
-import numpy as np
 import os
-import sys
 import copy
 import functools
 import itertools
@@ -11,13 +9,8 @@ import zipfile
 import tarfile
 import gzip
 import shutil
-try:
-    from unittest import mock #python >=3.3
-except ImportError:
-    import mock
 
-from nose.tools import raises
-from nose.plugins.attrib import attr
+import numpy as np
 import scipy.sparse
 import pandas as pd
 import h5py
@@ -29,10 +22,10 @@ from nimble.exceptions import FileFormatException
 from nimble.core._createHelpers import _intFloatOrString
 from nimble._utility import sparseMatrixToArray, isDatetime, requests
 
-# from .. import logger
+from tests.helpers import raises
+from tests.helpers import getDataConstructors
 from tests.helpers import oneLogEntryExpected, noLogEntryExpected
-from tests.helpers import assertExpectedException
-from tests.helpers import calledException, CalledFunctionException
+from tests.helpers import patch, patchCalled, assertCalled
 
 returnTypes = copy.copy(nimble.core.data.available)
 returnTypes.append(None)
@@ -124,17 +117,15 @@ def test_data_dictOfList():
         assert fromDictOfList == fromList
         assert not fromDictOfList.points._namesCreated()
 
-        assertExpectedException(InvalidArgumentValue, nimble.data, t, dataDict,
-                                featureNames=True,
-                                messageIncludes='featureNames cannot be True')
+        with raises(InvalidArgumentValue, match='featureNames cannot be True'):
+            nimble.data(t, dataDict, featureNames=True)
 
         fromDictOfListEmpty = nimble.data(t, {})
         assert not fromDictOfListEmpty.features._namesCreated()
         assert not fromDictOfListEmpty.points._namesCreated()
 
-        assertExpectedException(InvalidArgumentValue, nimble.data, t, {},
-                                pointNames=True,
-                                messageIncludes='pointNames cannot be True')
+        with raises(InvalidArgumentValue, match='pointNames cannot be True'):
+            nimble.data(t, {}, pointNames=True)
 
 def test_data_listOfDict():
     dataList = [{'b': 2, 'c': 3, 'a': 1},
@@ -191,25 +182,21 @@ def test_data_listOfDict():
         assert fromListOfDict == fromList
         assert not fromListOfDict.features._namesCreated()
 
-        assertExpectedException(InvalidArgumentValue, nimble.data, t, dataList,
-                                pointNames=True,
-                                messageIncludes='pointNames cannot be True')
+        with raises(InvalidArgumentValue, match='pointNames cannot be True'):
+            nimble.data(t, dataList, pointNames=True)
 
         fromListOfDictEmpty = nimble.data(t, [{}, {}])
         assert not fromListOfDictEmpty.points._namesCreated()
         assert not fromListOfDictEmpty.features._namesCreated()
 
-        assertExpectedException(InvalidArgumentValue, nimble.data, t, [{}, {}],
-                                featureNames=True,
-                                messageIncludes='featureNames cannot be True')
+        with raises(InvalidArgumentValue, match='featureNames cannot be True'):
+            nimble.data(t, [{}, {}], featureNames=True)
 
-        assertExpectedException(InvalidArgumentValue, nimble.data, t,
-                                [{'a': 1, 'b': 2}, {'a': 3, 'c': 4}],
-                                messageIncludes='must contain the same keys')
+        with raises(InvalidArgumentValue, match='must contain the same keys'):
+            nimble.data(t, [{'a': 1, 'b': 2}, {'a': 3, 'c': 4}])
 
-        assertExpectedException(InvalidArgumentValue, nimble.data, t,
-                                [{'a': 1, 'b': 2}, {'a': {}, 'b': 4}],
-                                messageIncludes='Numbers, strings, None, and nan')
+        with raises(InvalidArgumentValue, match='Numbers, strings, None, and nan'):
+            nimble.data(t, [{'a': 1, 'b': 2}, {'a': {}, 'c': 4}])
 
 def test_data_raw_stringConversion_float():
     for t in returnTypes:
@@ -241,13 +228,10 @@ def test_data_raw_stringConversion_datetimeTypes():
 def test_data_raw_stringConversion_datetimeParseError():
     for datetimeType in datetimeTypes:
         for t in returnTypes:
-            try:
+            with raises(InvalidArgumentValue):
                 dates = [['01-01-01','02-02-2002','unknown'],
                          ['01/01/1801','02/02/02','03-31-2031']]
                 toTest = nimble.data(t, dates, convertToType=datetimeType)
-                assert False
-            except InvalidArgumentValue: # expected InvalidArgumentValue
-                pass
 
 def test_data_raw_noStringConversion():
     for t in returnTypes:
@@ -309,21 +293,15 @@ def test_data_raw_conversionList_datetimeTypes():
 
 def test_data_raw_conversionList_exceptionTooLong():
     for t in returnTypes:
-        try:
+        with raises(InvalidArgumentValue):
             toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
                                  convertToType=[int, float, None, float])
-            assert False
-        except InvalidArgumentValue: # expected InvalidArgumentValue
-            pass
 
 def test_data_raw_conversionList_exceptionTooShort():
     for t in returnTypes:
-        try:
+        with raises(InvalidArgumentValue):
             toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
                                  convertToType=[int, float])
-            assert False
-        except InvalidArgumentValue: # expected InvalidArgumentValue
-            pass
 
 def test_data_raw_conversionList_keepFeatures_allData():
     for t in returnTypes:
@@ -372,14 +350,11 @@ def test_data_raw_conversionDict_validUnusedFtName():
 
 def test_data_raw_conversionDict_invalidFtName():
     for t in returnTypes:
-        try:
+        with raises(InvalidArgumentValue):
             toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
                                  featureNames = ['a', 'b', 'c'],
                                  convertToType={'d': float},
                                  keepFeatures=['a', 'b'])
-            assert False
-        except InvalidArgumentValue: # expected InvalidArgumentValue
-            pass
 
 def test_data_raw_conversionDict_indexAndNameSameFt_match():
     for t in returnTypes:
@@ -408,13 +383,10 @@ def test_data_raw_conversionDict_datetimeTypes():
 
 def test_data_raw_conversionDict_indexAndNameSameFt_noMatch():
     for t in returnTypes:
-        try:
+        with raises(InvalidArgumentValue):
             toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
                                  featureNames = ['a', 'b', 'c'],
                                  convertToType={'a': float, 0: int})
-            assert False
-        except InvalidArgumentValue: # expected InvalidArgumentValue
-            pass
 
 def test_data_raw_conversionDict_keepFeatures_ftNames():
     for t in returnTypes:
@@ -428,30 +400,21 @@ def test_data_raw_conversionDict_keepFeatures_ftNames():
 
 def test_data_raw_conversionDict_keepFeatures_index():
     for t in returnTypes:
-        try:
+        with raises(InvalidArgumentTypeCombination):
             toTest = nimble.data(t, [[1, 2, 3], [4, 5, 6], [7 , 8, 9]],
                                  featureNames = ['a', 'b', 'c'],
                                  convertToType={0: int, 1: float},
                                  keepFeatures=[0, 2])
-            assert False
-        except InvalidArgumentTypeCombination: # expected InvalidArgumentTypeCombination
-            pass
 
 def test_data_raw_invalidPointOrFeatureNames():
     for t in returnTypes:
-        try:
+        with raises(InvalidArgumentType):
             pNames = NoIter(['1', '4'])
             toTest = nimble.data(t, [[1,2,3], [4,5,6]], pointNames=pNames)
-            assert False # expected InvalidArgumentType
-        except InvalidArgumentType:
-            pass
 
-        try:
+        with raises(InvalidArgumentType):
             fNames = NoIter(['a', 'b', 'c'])
             toTest = nimble.data(t, [[1,2,3], [4,5,6]], featureNames=fNames)
-            assert False # expected InvalidArgumentType
-        except InvalidArgumentType:
-            pass
 
 def test_data_raw_pointAndFeatureIterators():
     for t in returnTypes:
@@ -855,23 +818,12 @@ def test_data_CSV_unequalRowLength_position():
         tmpCSV.write("4,5,6,0,0,0\n")
         tmpCSV.flush()
 
-        try:
-            nimble.data(returnType="List", source=tmpCSV.name, featureNames=True)
-            assert False  # the previous call should have raised an exception
-        except FileFormatException as ffe:
-            # print(ffe.message)
-
-            # We expect a message of the format:
-            #
-            assert '1' in ffe.message  # defining line
-            assert '4' in ffe.message  # offending line
-            # offending line number comes before defining line number
-            assert ffe.message.index('4') < ffe.message.index('1')
-
-            assert '8' in ffe.message  # expected length
-            assert '6' in ffe.message  # offending length
-            # offending length comes before expected length
-            assert ffe.message.index('6') < ffe.message.index('8')
+        expMsg = "The row on line 4 has length 6. We expected length 8. "
+        expMsg += "The expected row length was defined by looking at the row "
+        expMsg += "on line 1 and using ',' as the separator."
+        with raises(FileFormatException, match=expMsg):
+            nimble.data(returnType="List", source=tmpCSV.name,
+                        featureNames=True)
 
 def test_data_HDF5_data():
     """ """
@@ -2030,8 +1982,8 @@ def mocked_requests_get(url, *args, **kwargs):
 # need to check request accessibility before it can be mocked
 _ = requests.nimbleAccessible()
 
-mockRequestsGet = mock.patch('nimble.core._createHelpers.requests.get',
-                             mocked_requests_get)
+mockRequestsGet = patch(nimble.core._createHelpers.requests, 'get',
+                        mocked_requests_get)
 
 @mockRequestsGet
 def test_data_http_CSVNoExtension():
@@ -2179,9 +2131,8 @@ def test_data_http_ZIP_single():
 def test_data_http_ZIP_multiple():
     for t in returnTypes:
         url = 'http://mockrequests.nimble/ZIP_multiple.zip'
-        assertExpectedException(
-            InvalidArgumentValue, nimble.data, returnType=t, source=url,
-            messageIncludes='Multiple files found in source')
+        with raises(InvalidArgumentValue, match='Multiple files found in source'):
+            nimble.data(returnType=t, source=url)
 
 @mockRequestsGet
 def test_data_http_TAR_single():
@@ -2196,9 +2147,8 @@ def test_data_http_TAR_single():
 def test_data_http_TAR_multiple_exception():
     for t in returnTypes:
         url = 'http://mockrequests.nimble/TAR_multiple.tar'
-        assertExpectedException(
-            InvalidArgumentValue, nimble.data, returnType=t, source=url,
-            messageIncludes='Multiple files found in source')
+        with raises(InvalidArgumentValue, match='Multiple files found in source'):
+            nimble.data(returnType=t, source=url)
 
 @mockRequestsGet
 def test_data_http_GZIP():
@@ -2223,12 +2173,9 @@ def test_data_http_uciPathHandling():
 @mockRequestsGet
 def test_data_http_linkError():
     for t in returnTypes:
-        try:
+        with raises(InvalidArgumentValue):
             url = 'http://mockrequests.nimble/linknotfound.csv'
             fromWeb = nimble.data(returnType=t, source=url)
-            assert False # expected InvalidArgumentValue
-        except InvalidArgumentValue:
-            pass
 
 
 ##########################
@@ -2240,7 +2187,7 @@ def mocked_isDownloadable(url):
     # represents a downloadable file
     return not url.endswith('/')
 
-mockIsDownloadable = mock.patch('nimble.core._createHelpers._isDownloadable',
+mockIsDownloadable = patch(nimble.core._createHelpers, '_isDownloadable',
                                 mocked_isDownloadable)
 
 mockReqBasePath = os.path.join(nimble.settings.get('fetch', 'location'),
@@ -2333,11 +2280,10 @@ def test_data_fetch_uciPathHandling():
     pageFiles = nimble.fetchFiles(urlToSingleFile)
     assert len(pageFiles) == 1 and pageFiles[0].endswith(singleFile)
 
-    assertExpectedException(InvalidArgumentValue, nimble.fetchFile,
-                            'uci::data multiple')
-    assertExpectedException(InvalidArgumentValue, nimble.fetchFile,
-                            'https://archive.ics.uci.edu/ml/datasets/my+data+multiple')
-
+    with raises(InvalidArgumentValue):
+        nimble.fetchFile('uci::data multiple')
+    with raises(InvalidArgumentValue):
+        nimble.fetchFile('https://archive.ics.uci.edu/ml/datasets/my+data+multiple')
     multiFile1 = os.path.join(fileBasePath, 'data+multiple', 'CSV.csv')
     multiFile2 = os.path.join(fileBasePath, 'data+multiple', 'more', 'CSV.csv')
 
@@ -2369,7 +2315,7 @@ def test_data_fetch_uciPathHandling():
     assert sum(f.endswith(ignoreFile) for f in pageIgFiles) == 1
 
 @mockIsDownloadable
-@mock.patch('nimble.core._createHelpers.requests.get', calledException)
+@patchCalled(nimble.core._createHelpers.requests, 'get')
 @clearNimbleData
 def test_data_fetch_getFromLocal_csv():
     exp = os.path.join(mockReqBasePath, 'CSV.csv')
@@ -2384,7 +2330,7 @@ def test_data_fetch_getFromLocal_csv():
     paths = nimble.fetchFiles('http://mockrequests.nimble/CSV.csv')
 
 @mockIsDownloadable
-@mock.patch('nimble.core._createHelpers.requests.get', calledException)
+@patchCalled(nimble.core._createHelpers.requests, 'get')
 @clearNimbleData
 def test_data_fetch_getFromLocal_zip():
     if not os.path.exists(mockReqBasePath):
@@ -2401,14 +2347,13 @@ def test_data_fetch_getFromLocal_zip():
     assert os.path.exists(exp)
     assert os.path.exists(os.path.join(mockReqBasePath, 'data.csv'))
     assert os.path.exists(os.path.join(mockReqBasePath, 'archive', 'old.csv'))
-    with mock.patch.object(zipfile.ZipFile, 'extractall') as extractAll:
+    with patchCalled(zipfile.ZipFile, 'extractall'):
         # requests and extractall should not be used
         path = nimble.fetchFile('http://mockrequests.nimble/ZIP.zip')
         paths = nimble.fetchFiles('http://mockrequests.nimble/ZIP.zip')
-        assert extractAll.call_count == 0
 
 @mockIsDownloadable
-@mock.patch('nimble.core._createHelpers.requests.get', calledException)
+@patchCalled(nimble.core._createHelpers.requests, 'get')
 @clearNimbleData
 def test_data_fetch_getFromLocal_gzip():
     if not os.path.exists(mockReqBasePath):
@@ -2431,7 +2376,6 @@ def test_data_fetch_getFromLocal_gzip():
     assert len(paths) == 1 and paths[0] == exp
 
 @mockIsDownloadable
-@mock.patch('nimble.core._createHelpers.requests.get', calledException)
 @clearNimbleData
 def test_data_fetch_forceDownload():
     local = os.path.join(mockReqBasePath, 'CSV.csv')
@@ -2445,11 +2389,11 @@ def test_data_fetch_forceDownload():
 
     assert os.path.exists(local)
     # if requests is used, we downloaded the data again
-    assertExpectedException(CalledFunctionException, nimble.fetchFile,
-                            'http://mockrequests.nimble/CSV.csv', overwrite=True)
-    assertExpectedException(CalledFunctionException, nimble.fetchFiles,
-                            'http://mockrequests.nimble/CSV.csv', overwrite=True)
-
+    reqGetCalled = assertCalled(nimble.core._createHelpers.requests, 'get')
+    with reqGetCalled:
+        nimble.fetchFiles('http://mockrequests.nimble/CSV.csv', overwrite=True)
+    with reqGetCalled:
+        nimble.fetchFile('http://mockrequests.nimble/CSV.csv', overwrite=True)
 
 ###################################
 # ignoreNonNumericalFeatures flag #
@@ -2894,62 +2838,44 @@ def test_data_keepPF_AllCombosWithExactNamesProvided():
             pSel = ["11.", "111."]
             # using names should fail because we do not have full
             # access to the names for every data point
-            try:
+            with raises(InvalidArgumentValue):
                 retN = nimble.data(
                     t, tmpF.name, keepPoints=pSel, pointNames=pNameSel,
                     featureNames=fNameSel)
-                assert False # expected InvalidArgumentValue
-            except InvalidArgumentValue:
-                pass
 
             fSel = ["3.", "2."]
             # using names should fail because we do not have full
             # access to the names for every data point
-            try:
+            with raises(InvalidArgumentValue):
                 retN = nimble.data(
                     t, tmpF.name, keepFeatures=fSel, pointNames=pNameSel,
                     featureNames=fNameSel)
-                assert False # expected InvalidArgumentValue
-            except InvalidArgumentValue:
-                pass
 
             # keepPoints/Features is not permitted to be the same length
             # as its respective axis when names are not extracted
             pSel = [1, 0, 2]
-            try:
+            with raises(InvalidArgumentValue):
                 ret = nimble.data(
                     t, tmpF.name, keepPoints=pSel, pointNames=pnames,
                     featureNames=fnames)
-                assert False # expected InvalidArgumentValue
-            except InvalidArgumentValue:
-                pass
 
             pSel = ["111.", "11.", "1111."]
-            try:
+            with raises(InvalidArgumentValue):
                 retN = nimble.data(
                     t, tmpF.name, keepPoints=pSel, pointNames=pnames,
                     featureNames=fnames)
-                assert False # expected InvalidArgumentValue
-            except InvalidArgumentValue:
-                pass
 
             fSel = [2, 1, 0]
-            try:
+            with raises(InvalidArgumentValue):
                 ret = nimble.data(
                     t, tmpF.name, keepFeatures=fSel, pointNames=pnames,
                     featureNames=fnames)
-                assert False # expected InvalidArgumentValue
-            except InvalidArgumentValue:
-                pass
 
             fSel = ["3.", "2.", "4."]
-            try:
+            with raises(InvalidArgumentValue):
                 retN = nimble.data(
                     t, tmpF.name, keepFeatures=fSel, pointNames=pnames,
                     featureNames=fnames)
-                assert False # expected InvalidArgumentValue
-            except InvalidArgumentValue:
-                pass
 
 def test_data_keepPF_exception_sameNameAndIndex():
     pnames = {"11.": 0, "111.": 1, "1111.": 2}
@@ -2957,19 +2883,13 @@ def test_data_keepPF_exception_sameNameAndIndex():
     data = [[22., 33., 44.], [222., 333., 444.], [2222., 3333., 4444.]]
 
     for t in returnTypes:
-        try:
+        with raises(InvalidArgumentValue):
             toTest = nimble.data(t, source=data, pointNames=pnames,
                                  featureNames=fnames, keepPoints=[0, "11."])
-            assert False
-        except InvalidArgumentValue: # expected InvalidArgumentValue
-            pass
 
-        try:
+        with raises(InvalidArgumentValue):
             toTest = nimble.data(t, source=data, pointNames=pnames,
                                  featureNames=fnames, keepFeatures=[0, "2."])
-            assert False
-        except InvalidArgumentValue: # expected InvalidArgumentValue
-            pass
 
 
 def test_data_csv_keepPoints_IndexingGivenFeatureNames():
@@ -3339,42 +3259,27 @@ def test_csv_keepFeatures_duplicatesInList():
         tmpCSV.write("trips,111,222,333\n")
         tmpCSV.flush()
 
-        try:
+        with raises(InvalidArgumentValue):
             nimble.data(
                 returnType='List', source=tmpCSV.name, pointNames=True,
                 featureNames=True, keepFeatures=[1, 1])
-            assert False
-        except InvalidArgumentValue:
-            pass
-        try:
+        with raises(InvalidArgumentValue):
             nimble.data(
                 returnType='List', source=tmpCSV.name, pointNames=True,
                 featureNames=True, keepFeatures=[1, 'twos'])
-            assert False
-        except InvalidArgumentValue:
-            pass
-        try:
+        with raises(InvalidArgumentValue):
             nimble.data(
                 returnType='List', source=tmpCSV.name, pointNames=True,
                 featureNames=True, keepFeatures=['threes', 'threes'])
-            assert False
-        except InvalidArgumentValue:
-            pass
-        try:
+        with raises(InvalidArgumentValue):
             nimble.data(
                 returnType='List', source=tmpCSV.name, pointNames=True,
                 featureNames=['ones', 'twos', 'threes'], keepFeatures=[1, 'twos'])
-            assert False
-        except InvalidArgumentValue:
-            pass
-        try:
+        with raises(InvalidArgumentValue):
             nimble.data(
                 returnType='List', source=tmpCSV.name, pointNames=True,
                 featureNames=['ones', 'twos', 'threes'],
                 keepFeatures=['threes', 'threes'])
-            assert False
-        except InvalidArgumentValue:
-            pass
 
 
 def test_csv_keepPoints_duplicatesInList():
@@ -3385,43 +3290,28 @@ def test_csv_keepPoints_duplicatesInList():
         tmpCSV.write("trips,111,222,333\n")
         tmpCSV.flush()
 
-        try:
+        with raises(InvalidArgumentValue):
             nimble.data(
                 returnType='List', source=tmpCSV.name, pointNames=True,
                 featureNames=True, keepPoints=[1, 1])
-            assert False
-        except InvalidArgumentValue:
-            pass
-        try:
+        with raises(InvalidArgumentValue):
             nimble.data(
                 returnType='List', source=tmpCSV.name, pointNames=True,
                 featureNames=True, keepPoints=[1, 'dubs'])
-            assert False
-        except InvalidArgumentValue:
-            pass
-        try:
+        with raises(InvalidArgumentValue):
             nimble.data(
                 returnType='List', source=tmpCSV.name, pointNames=True,
                 featureNames=True, keepPoints=['trips', 'trips'])
-            assert False
-        except InvalidArgumentValue:
-            pass
-        try:
+        with raises(InvalidArgumentValue):
             nimble.data(
                 returnType='List', source=tmpCSV.name,
                 pointNames=['single', 'dubs', 'trips'], featureNames=True,
                 keepPoints=[1, 'dubs'])
-            assert False
-        except InvalidArgumentValue:
-            pass
-        try:
+        with raises(InvalidArgumentValue):
             nimble.data(
                 returnType='List', source=tmpCSV.name,
                 pointNames=['single', 'dubs', 'trips'], featureNames=True,
                 keepPoints=['trips', 'trips'])
-            assert False
-        except InvalidArgumentValue:
-            pass
 
 
 def test_data_csv_keepPF_and_ignoreFlag():
@@ -3897,8 +3787,15 @@ def makeTensorData(matrix):
     tensors = [rank3List, rank4List, rank5List, rank3Array, rank4Array, rank5Array,
                rank3Array2D, rank4Array2D, rank5Array2D, rank3DF, rank4DF, rank5DF]
     # cannot construct high dimension empty tensors for sparse
-    if rank3Array.shape[-1] > 0:
+    notEmpty = rank3Array.shape[-1] > 0
+    if notEmpty:
         tensors.extend([rank3COO, rank4COO, rank5COO])
+
+    for constructor in getDataConstructors():
+        if notEmpty or 'Sparse' not in constructor.args:
+            tensors.append(constructor(rank3List))
+            tensors.append(constructor(rank4List))
+            tensors.append(constructor(rank5List))
 
     return tensors
 
