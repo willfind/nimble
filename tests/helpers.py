@@ -193,13 +193,12 @@ class patch:
     def __exit__(self, exc_type, value, traceback):
         self.patch.undo()
 
-def patchCalled(obj, name):
+def assertNotCalled(obj, name):
     """
     Patch the object to raise a CalledFunctionException.
 
     Can be used as a decorator or a context manager. This is primarily useful
-    when not expecting the mocked object to be used. If wanting to test that
-    a given object is utilized, it is simpler to use assertCalled.
+    when not expecting the mocked object to be used.
     """
     return patch(obj, name, calledException)
 
@@ -212,7 +211,7 @@ class assertCalled:
     occurs. The return of the context manager is a pytest.ExceptionInfo object.
     """
     def __init__(self, obj, name):
-        self.patch = patchCalled(obj, name)
+        self.patch = assertNotCalled(obj, name)
         self.raises = raises(CalledFunctionException)
 
     def __call__(self, func):

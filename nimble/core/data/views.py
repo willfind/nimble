@@ -4,7 +4,6 @@ views Base, Axis, Points and Features objects.
 """
 from abc import ABCMeta
 
-import nimble # pylint: disable=unused-import
 from nimble._utility import inheritDocstringsFactory
 from nimble.exceptions import ImproperObjectAction
 from .base import Base

@@ -25,7 +25,7 @@ from nimble._utility import sparseMatrixToArray, isDatetime, requests
 from tests.helpers import raises
 from tests.helpers import getDataConstructors
 from tests.helpers import oneLogEntryExpected, noLogEntryExpected
-from tests.helpers import patch, patchCalled, assertCalled
+from tests.helpers import patch, assertCalled, assertNotCalled
 
 returnTypes = copy.copy(nimble.core.data.available)
 returnTypes.append(None)
@@ -2296,7 +2296,7 @@ def test_data_fetch_uciPathHandling():
     assert sum(f.endswith(ignoreFile) for f in pageIgFiles) == 1
 
 @mockIsDownloadable
-@patchCalled(nimble.core._createHelpers.requests, 'get')
+@assertNotCalled(nimble.core._createHelpers.requests, 'get')
 @clearNimbleData
 def test_data_fetch_getFromLocal_csv():
     exp = os.path.join(mockReqBasePath, 'CSV.csv')
@@ -2311,7 +2311,7 @@ def test_data_fetch_getFromLocal_csv():
     paths = nimble.fetchFiles('http://mockrequests.nimble/CSV.csv')
 
 @mockIsDownloadable
-@patchCalled(nimble.core._createHelpers.requests, 'get')
+@assertNotCalled(nimble.core._createHelpers.requests, 'get')
 @clearNimbleData
 def test_data_fetch_getFromLocal_zip():
     if not os.path.exists(mockReqBasePath):
@@ -2328,13 +2328,13 @@ def test_data_fetch_getFromLocal_zip():
     assert os.path.exists(exp)
     assert os.path.exists(os.path.join(mockReqBasePath, 'data.csv'))
     assert os.path.exists(os.path.join(mockReqBasePath, 'archive', 'old.csv'))
-    with patchCalled(zipfile.ZipFile, 'extractall'):
+    with assertNotCalled(zipfile.ZipFile, 'extractall'):
         # requests and extractall should not be used
         path = nimble.fetchFile('http://mockrequests.nimble/ZIP.zip')
         paths = nimble.fetchFiles('http://mockrequests.nimble/ZIP.zip')
 
 @mockIsDownloadable
-@patchCalled(nimble.core._createHelpers.requests, 'get')
+@assertNotCalled(nimble.core._createHelpers.requests, 'get')
 @clearNimbleData
 def test_data_fetch_getFromLocal_gzip():
     if not os.path.exists(mockReqBasePath):

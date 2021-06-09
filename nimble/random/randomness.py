@@ -8,7 +8,6 @@ from contextlib import contextmanager
 
 import numpy as np
 
-import nimble # pylint: disable=unused-import
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble._utility import scipy

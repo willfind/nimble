@@ -13,11 +13,14 @@ import pytest
 if __name__ == '__main__':
     # any args passed to this script will be passed down into pytest
     args = sys.argv
-    # search current directory for tests if none specified and run doctests
+    # if no path provided, discover tests in nimble/ and tests/ directories
     if len(args) == 1:
-        # will find doctests in documentation so ignore
-        args.extend(['.', '--ignore', 'documentation'])
-    # test doctests
+        args.append('nimble')
+        args.append('tests')
+    elif args[1].startswith('-'):
+        args.insert(1, 'tests')
+        args.insert(1, 'nimble')
+    # always run any doctests
     args.append('--doctest-modules')
     # disable faulthandler and warnings by default
     if 'faulthandler' not in args:
