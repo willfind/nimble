@@ -41,7 +41,8 @@ from .stretch_backend import StretchDataSafe
 from .high_dimension_backend import HighDimensionAll
 from .high_dimension_backend import HighDimensionSafe
 
-from .data_specific_backend import SparseSpecific
+from .data_specific_backend import SparseSpecificDataSafe
+from .data_specific_backend import SparseSpecificAll
 from .data_specific_backend import DataFrameSpecificAll
 from .data_specific_backend import DataFrameSpecificDataSafe
 
@@ -55,12 +56,12 @@ sparseConstructor = objConstructorMaker('Sparse')
 dataframeConstructor = objConstructorMaker('DataFrame')
 
 class BaseViewChildTests(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-                   StructureDataSafe, ViewAccess, StretchDataSafe,
-                   HighDimensionSafe):
+                         StructureDataSafe, ViewAccess, StretchDataSafe,
+                         HighDimensionSafe):
     pass
 
 class BaseChildTests(HighLevelAll, AllNumerical, QueryBackend, StructureAll,
-                 StretchAll, HighDimensionAll):
+                     StretchAll, HighDimensionAll):
     pass
 
 class TestListView(BaseViewChildTests):
@@ -75,7 +76,7 @@ class TestMatrixView(BaseViewChildTests):
         return matrixViewConstructor(*args, **kwargs)
 
 
-class TestSparseView(BaseViewChildTests):
+class TestSparseView(BaseViewChildTests, SparseSpecificDataSafe):
     def constructor(self, *args, **kwargs):
         sparseViewConstructor = viewConstructorMaker('Sparse')
         return sparseViewConstructor(*args, **kwargs)
@@ -99,7 +100,7 @@ class TestMatrix(BaseChildTests):
         return matrixConstructor(*args, **kwargs)
 
 
-class TestSparse(BaseChildTests, SparseSpecific):
+class TestSparse(BaseChildTests, SparseSpecificAll):
     def constructor(self, *args, **kwargs):
         sparseConstructor = objConstructorMaker('Sparse')
         return sparseConstructor(*args, **kwargs)

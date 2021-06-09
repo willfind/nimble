@@ -4,11 +4,77 @@ Define data test objects for methods of properties specific to the type
 """
 import numpy as np
 
-from tests.helpers import patchCalled, assertCalled
+import nimble
+from nimble.random import pythonRandom
+from tests.helpers import assertCalled, assertNotCalled
 from .baseObject import DataTestObject
 
-class SparseSpecific(DataTestObject):
-    """ Tests for Sparse (non-view) implementation details """
+
+def back_sparseScalarZeroPreserving(constructor, nimbleOp):
+    data = [[1, 2, 3], [0, 0, 0]]
+    toTest = constructor(data)
+    rint = pythonRandom.randint(2, 5)
+    try:
+        with assertCalled(nimble.core.data.Sparse,
+                          '_scalarZeroPreservingBinary_implementation'):
+            ret = getattr(toTest, nimbleOp)(rint)
+    except ZeroDivisionError:
+        assert nimbleOp.startswith('__r')
+
+@assertNotCalled(nimble.core.data.Sparse, '_defaultBinaryOperations_implementation')
+@assertNotCalled(nimble.core.data.Sparse, '_scalarZeroPreservingBinary_implementation')
+def back_sparseScalarOfOne(constructor, nimbleOp):
+    """Test Sparse does not call helper functions for these scalar ops """
+    data = [[1, 2, 3], [0, 0, 0]]
+    toTest = constructor(data)
+    rint = 1.0
+    # Sparse should use a copy of toTest when exponent is 1, so neither
+    # helper function should be called
+    ret = getattr(toTest, nimbleOp)(rint)
+
+class SparseSpecificDataSafe(DataTestObject):
+
+    def test_mul_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__mul__')
+
+    def test_mul_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__mul__')
+
+    def test_rmul_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__rmul__')
+
+    def test_rmul_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__rmul__')
+
+    def test_truediv_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__truediv__')
+
+    def test_truediv_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__truediv__')
+
+    def test_rtruediv_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__rtruediv__')
+
+    def test_floordiv_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__floordiv__')
+
+    def test_rfloordiv_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__rfloordiv__')
+
+    def test_mod_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__mod__')
+
+    def test_rmod_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__rmod__')
+
+    def test_pow_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__pow__')
+
+    def test_pow_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__pow__')
+
+
+class SparseSpecificDataModifying(DataTestObject):
 
     def test_sortInternal_avoidsUnecessary(self):
         data = [[1, 0, 3], [0, 5, 0]]
@@ -23,11 +89,39 @@ class SparseSpecific(DataTestObject):
         assert obj._sorted['indices'] is None
 
         # call _sortInternal to generate indices on already sorted obj
-        with patchCalled(np, "lexsort"):
+        with assertNotCalled(np, "lexsort"):
             obj._sortInternal('point', setIndices=True)
 
         # Confirm the desired action actually took place
         assert obj._sorted['indices'] is not None
+
+
+    def test_imul_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__imul__')
+
+    def test_imul_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__imul__')
+
+    def test_itruediv_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__itruediv__')
+
+    def test_itruediv_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__itruediv__')
+
+    def test_ifloordiv_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__ifloordiv__')
+
+    def test_imod_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__imod__')
+
+    def test_ipow_Sparse_calls_scalarZeroPreservingBinary(self):
+        back_sparseScalarZeroPreserving(self.constructor, '__ipow__')
+
+    def test_ipow_Sparse_scalarOfOne(self):
+        back_sparseScalarOfOne(self.constructor, '__ipow__')
+
+class SparseSpecificAll(SparseSpecificDataSafe, SparseSpecificDataModifying):
+    """Tests for Sparse implementation details """
 
 
 class DataFrameSpecificDataSafe(DataTestObject):

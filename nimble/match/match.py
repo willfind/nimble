@@ -4,8 +4,6 @@ Variety of functions to determine if data matches given conditions
 
 import numpy as np
 
-import nimble # pylint: disable=unused-import
-
 def missing(value):
     """
     Determine if a value is missing.

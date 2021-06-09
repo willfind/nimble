@@ -9,9 +9,18 @@ import copy
 import inspect
 import sys
 
+import pytest
+
 import nimble
 from nimble.core.configuration import SessionConfiguration
 from nimble.core._learnHelpers import initAvailablePredefinedInterfaces
+
+@pytest.fixture(autouse=True)
+def addNimble(doctest_namespace):
+    """
+    Adds nimble to doctest namespace so import is not required in the file.
+    """
+    doctest_namespace["nimble"] = nimble
 
 currPath = os.path.abspath(inspect.getfile(inspect.currentframe()))
 nimblePath = os.path.dirname(currPath)
