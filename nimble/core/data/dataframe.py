@@ -487,9 +487,11 @@ class DataFrame(Base):
             else:
                 dtypes.append(useType)
 
-        # rhs may return array of sparse matrices so use default
-        if not (isinstance(other, nimble.core.data.Sparse)
-                and opName.startswith('__r')):
+        # pow operations for DataFrame do not raise expected ZeroDivisionErrors
+        # and rhs Sparse may return array of sparse matrices, so use default
+        if not ((isinstance(other, DataFrame) and 'pow' in opName)
+                or (isinstance(other, nimble.core.data.Sparse)
+                    and (opName.startswith('__r')))):
             try:
                 array = self._asNumpyArray(numericRequired=True)
                 values = getattr(array, opName)(other._data)
