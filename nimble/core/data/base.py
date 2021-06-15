@@ -22,8 +22,6 @@ from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.logger import handleLogging
-from nimble.core.logger import produceFeaturewiseReport
-from nimble.core.logger import produceAggregateReport
 from nimble._utility import cloudpickle, h5py, plt
 from nimble._utility import isDatetime
 from .stretch import Stretch
@@ -49,6 +47,7 @@ from ._dataHelpers import mergeNames, mergeNonDefaultNames
 from ._dataHelpers import makeNamesLines
 from ._dataHelpers import binaryOpNamePathMerge
 from ._dataHelpers import indicesSplit
+from ._dataHelpers import appendColumns, tableString
 
 def to2args(f):
     """
@@ -1402,11 +1401,68 @@ class Base(ABC):
             False, do **NOT** send to the logger, regardless of the
             global option.
         """
-        ret = produceFeaturewiseReport(
-            self, maxFeaturesToCover=maxFeaturesToCover,
-            displayDigits=displayDigits)
-        handleLogging(useLog, 'data', "feature", ret)
-        return ret
+        functionsToApply = (
+            nimble.calculate.minimum, nimble.calculate.maximum,
+            nimble.calculate.mean, nimble.calculate.median,
+            nimble.calculate.standardDeviation, nimble.calculate.uniqueCount,
+            )
+
+        #If the data object is too big to print out info about each feature,
+        #extract a subset of features from the data set and
+        if self.shape[1] > maxFeaturesToCover:
+            if maxFeaturesToCover % 2 == 0:
+                leftIndicesToSelect = list(range(maxFeaturesToCover // 2))
+                rightStart = self.shape[1] - (maxFeaturesToCover // 2)
+                rightIndicesToSelect = list(range(rightStart, self.shape[1]))
+            else:
+                leftStop = maxFeaturesToCover // 2
+                leftIndicesToSelect = list(range(leftStop))
+                rightStart = self.shape[1] - ((maxFeaturesToCover // 2) + 1)
+                rightIndicesToSelect = list(range(rightStart, self.shape[1]))
+            subsetIndices = []
+            subsetIndices.extend(leftIndicesToSelect)
+            subsetIndices.extend(rightIndicesToSelect)
+            dataContainer = self.features.copy(subsetIndices, useLog=False)
+            isSubset = True
+        else:
+            isSubset = False
+            dataContainer = self
+
+        columnLabels = ['featureName']
+        for func in functionsToApply:
+            label = func.__name__.rstrip('_')
+            columnLabels.append(label)
+
+        infoTable = [None] * len(dataContainer.features)
+        for index in range(len(dataContainer.features)):
+            infoTable[index] = [dataContainer.features.getName(index)]
+
+        for func in functionsToApply:
+            oneFuncResults = dataContainer.features.calculate(func,
+                                                              useLog=False)
+            oneFuncResults.transpose(useLog=False)
+            oneFuncResultsList = oneFuncResults.copy(to="python list")
+            appendColumns(infoTable, oneFuncResultsList)
+
+        #add Function names as the first row in the results table
+        infoTable.insert(0, columnLabels)
+
+        if (displayDigits is not None
+                and isinstance(displayDigits, int)):
+            displayDigits = "." + str(displayDigits) + "f"
+
+        if isSubset:
+            printableTable = tableString(infoTable, True, headers=infoTable[0],
+                                         roundDigits=displayDigits,
+                                         snipIndex=leftIndicesToSelect[-1])
+        else:
+            printableTable = tableString(infoTable, True, headers=infoTable[0],
+                                         roundDigits=displayDigits)
+
+        handleLogging(useLog, 'data', "feature", printableTable)
+
+        return printableTable
+
 
     def summaryReport(self, displayDigits=2, useLog=None):
         """
@@ -1428,9 +1484,45 @@ class Base(ABC):
             False, do **NOT** send to the logger, regardless of the
             global option.
         """
-        ret = produceAggregateReport(self, displayDigits=displayDigits)
-        handleLogging(useLog, 'data', "summary", ret)
-        return ret
+        results = []
+        results.append(('Values', np.prod(self._shape)))
+        if len(self._shape) > 2:
+            results.append(('Dimensions', ' x '.join(map(str, self._shape))))
+            # use as 2D to allow calculations of aggregate functions
+            dataContainer = self.copy()
+            dataContainer._shape = list(dataContainer.shape)
+        else:
+            dataContainer = self
+            results.append(('Points', self.shape[0]))
+            results.append(('Features', self.shape[1]))
+
+        funcs = (nimble.calculate.proportionZero,
+                 nimble.calculate.proportionMissing)
+        for func in funcs:
+            funcResults = dataContainer.features.calculate(func, useLog=False)
+            funcResults.transpose(useLog=False)
+            aggregateResults = funcResults.features.calculate(
+                nimble.calculate.mean, useLog=False)
+            aggregateResults = aggregateResults.copy(to="python list")[0][0]
+            results.append((func.__name__, aggregateResults))
+
+        headers = []
+        stats = []
+        for header, value in results:
+            headers.append(header)
+            stats.append(value)
+
+        table = [headers, stats]
+
+        if (displayDigits is not None
+                and isinstance(displayDigits, int)):
+            displayDigits = "." + str(displayDigits) + "f"
+
+        printableTable = tableString(table, False, headers=table[0],
+                                     roundDigits=displayDigits)
+        handleLogging(useLog, 'data', "summary", printableTable)
+
+        return printableTable
 
     ###############################################################
     ###############################################################
@@ -5041,7 +5133,7 @@ class Base(ABC):
 
                 msg = leftAxis + " to " + rightAxis + " name inconsistencies "
                 msg += "when calling left." + callSym + "(right) \n"
-                msg += nimble.core.logger.tableString.tableString(table)
+                msg += tableString(table)
                 print(msg, file=sys.stderr)
                 raise InvalidArgumentValue(msg)
 

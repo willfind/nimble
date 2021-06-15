@@ -43,6 +43,7 @@ from ._dataHelpers import pyplotRequired, plotOutput, plotFigureHandling
 from ._dataHelpers import plotAxisLabels, plotXTickLabels
 from ._dataHelpers import plotConfidenceIntervalMeanAndError, plotErrorBars
 from ._dataHelpers import plotSingleBarChart, plotMultiBarChart
+from ._dataHelpers import tableString
 
 class Axis(ABC):
     """
@@ -1348,7 +1349,7 @@ class Axis(ABC):
                     table.append([lAxis.getIndex(lname), lname, "   ",
                                   rAxis.getIndex(rname), rname])
 
-                msg += nimble.core.logger.tableString.tableString(table)
+                msg += tableString(table)
                 print(msg, file=sys.stderr)
 
                 raise InvalidArgumentValue(msg)
