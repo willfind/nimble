@@ -519,6 +519,30 @@ def test_data_CSV_data_ListOnly_noComment():
 
         assert fromList == fromCSV
 
+def test_data_CSV_emptyFile():
+    """ Test of data() loading a csv file, default params """
+    for t in returnTypes:
+        fromList = nimble.data(returnType=t, source=[[1, 2, 3]])
+
+        # instantiate from csv file
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write("")
+            tmpCSV.flush()
+            objName = 'fromCSV'
+            with raises(FileFormatException, match='No data found in file'):
+                fromCSV = nimble.data(returnType=t, source=tmpCSV.name)
+
+def test_data_CSV_openToEndOfFile():
+    """ Test of data() loading a csv file, default params """
+    for t in returnTypes:
+        fromList = nimble.data(returnType=t, source=[[1, 2, 3]])
+
+        # instantiate from csv file
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w+') as tmpCSV:
+            tmpCSV.write("1,2,3\n")
+            with raises(FileFormatException, match='No data found in file'):
+                fromCSV = nimble.data(returnType=t, source=tmpCSV)
+
 def test_data_CSV_data_unicodeCharacters():
     """ Test of data() loading a csv file with unicode characters """
     for t in returnTypes:

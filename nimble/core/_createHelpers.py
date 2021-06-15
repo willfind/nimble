@@ -1870,8 +1870,10 @@ def _advancePastComments(ioStream):
     numSkipped = 0
     while True:
         startPosition = ioStream.tell()
-        row = ioStream.readline() # empty row indicates end of file
-        if not row or row[0] not in ['#', '\n']:
+        row = ioStream.readline()
+        if not row: # empty row indicates end of file
+            raise FileFormatException('No data found in file')
+        if row[0] not in ['#', '\n']:
             ioStream.seek(startPosition)
             break
 
@@ -1911,11 +1913,8 @@ def _detectDialectFromSeparator(ioStream, inputSeparator):
     # skip commented lines
     _ = _advancePastComments(ioStream)
     if inputSeparator == 'automatic':
-        firstLine = ioStream.readline()
-        if firstLine:
-            dialect = csv.Sniffer().sniff(firstLine)
-        else: # no data in file, use default dialect
-            dialect = None
+        # detect the delimiter from the first line of data
+        dialect = csv.Sniffer().sniff(ioStream.readline())
     elif len(inputSeparator) > 1:
         msg = "inputSeparator must be a single character"
         raise InvalidArgumentValue(msg)
