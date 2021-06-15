@@ -954,7 +954,7 @@ def testShowLogSearchFilters():
     pathToFile = os.path.join(location, name)
     nimble.showLog(levelOfDetail=3, leastSessionsAgo=0, mostSessionsAgo=5, maximumEntries=100, saveToFileName=pathToFile)
     fullShowLogSize = os.path.getsize(pathToFile)
-    # nimble.showLog(levelOfDetail=3, leastSessionsAgo=0, mostSessionsAgo=5, maximumEntries=100)
+
     # level of detail
     nimble.showLog(levelOfDetail=3, saveToFileName=pathToFile)
     mostDetailedSize = os.path.getsize(pathToFile)
@@ -962,10 +962,26 @@ def testShowLogSearchFilters():
     nimble.showLog(levelOfDetail=2, saveToFileName=pathToFile)
     lessDetailedSize = os.path.getsize(pathToFile)
     assert lessDetailedSize < mostDetailedSize
+    # logs above level 2 should not be present in formatted or default form
+    with open(pathToFile) as f:
+        output = f.read()
+        assert 'runCV' not in output
+        assert 'KFoldCrossValidation' not in output
 
     nimble.showLog(levelOfDetail=1, saveToFileName=pathToFile)
     leastDetailedSize = os.path.getsize(pathToFile)
     assert leastDetailedSize < lessDetailedSize
+    # logs above level 1 should not be present in formatted or default form
+    with open(pathToFile) as f:
+        output = f.read()
+        assert 'prep' not in output
+        assert 'features.extract ' not in output
+        assert 'runCV' not in output
+        assert 'KFoldCrossValidation' not in output
+        assert 'crossVal' not in output
+        assert 'Cross Validating' not in output
+        assert 'run' not in output
+        assert 'trainAndTest' not in output
 
     # sessionNumber
     nimble.showLog(levelOfDetail=3, mostSessionsAgo=4, saveToFileName=pathToFile)

@@ -820,57 +820,6 @@ def _showLogQueryAndValues(leastSessionsAgo, mostSessionsAgo, startDate,
 
     return fullQuery, includedValues
 
-def _showLogOutputString(listOfLogs, levelOfDetail, append):
-    """
-    Formats the string that will be output for calls to the showLog
-    function.
-    """
-    fullLog = ""
-    if not append:
-        fullLog = "{0:^79}\n".format("NIMBLE LOGS")
-        fullLog += "." * 79
-    previousLogSessionNumber = None
-    for entry in listOfLogs:
-        timestamp = entry[0]
-        sessionNumber = entry[1]
-        logType = entry[2]
-        logString = entry[3]
-        try:
-            logInfo = literal_eval(logString)
-        except (ValueError, SyntaxError):
-            # logString is a string (cannot eval)
-            logInfo = logString
-        if sessionNumber != previousLogSessionNumber:
-            # skip first new line if appending because append inserts newline
-            if not (previousLogSessionNumber is None and append):
-                fullLog += "\n"
-            logString = "SESSION {0}".format(sessionNumber)
-            fullLog += ".{0:^77}.".format(logString)
-            fullLog += "\n"
-            fullLog += "." * 79
-            previousLogSessionNumber = sessionNumber
-        try:
-            if logType == 'load':
-                fullLog += _buildLoadLogString(timestamp, logInfo)
-            elif logType == 'data':
-                fullLog += _buildDataLogString(timestamp, logInfo)
-            elif logType == 'prep' and levelOfDetail > 1:
-                fullLog += _buildPrepLogString(timestamp, logInfo)
-            elif ((logType == 'run' and levelOfDetail > 1)
-                  or (logType == 'runCV' and levelOfDetail > 2)):
-                fullLog += _buildRunLogString(timestamp, logInfo)
-            elif logType == 'crossVal' and levelOfDetail > 1:
-                fullLog += _buildCVLogString(timestamp, logInfo)
-            elif logType == 'setSeed':
-                fullLog += _buildSetSeedLogString(timestamp, logInfo)
-            else:
-                fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
-            fullLog += '.' * 79
-        except (TypeError, KeyError):
-            fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
-            fullLog += '.' * 79
-    return fullLog
-
 def _buildLoadLogString(timestamp, entry):
     """
     Constructs the string that will be output for load logTypes.
@@ -1171,6 +1120,58 @@ def _lambdaFunctionString(function):
     except OSError:
         lambdaString = "<lambda>"
     return lambdaString
+
+logBuilders = {'load': (_buildLoadLogString, 1),
+               'data': (_buildDataLogString, 1),
+               'prep': (_buildPrepLogString, 2),
+               'run': (_buildRunLogString, 2),
+               'runCV': (_buildRunLogString, 3),
+               'crossVal': (_buildCVLogString, 2),
+               'setSeed': (_buildSetSeedLogString, 1)}
+
+def _showLogOutputString(listOfLogs, levelOfDetail, append):
+    """
+    Formats the string that will be output for calls to the showLog
+    function.
+    """
+    fullLog = ""
+    if not append:
+        fullLog = "{0:^79}\n".format("NIMBLE LOGS")
+        fullLog += "." * 79
+    previousLogSessionNumber = None
+    for entry in listOfLogs:
+        timestamp = entry[0]
+        sessionNumber = entry[1]
+        logType = entry[2]
+        logString = entry[3]
+        try:
+            logInfo = literal_eval(logString)
+        except (ValueError, SyntaxError):
+            # logString is a string (cannot eval)
+            logInfo = logString
+        if sessionNumber != previousLogSessionNumber:
+            # skip first new line if appending because append inserts newline
+            if not (previousLogSessionNumber is None and append):
+                fullLog += "\n"
+            logString = "SESSION {0}".format(sessionNumber)
+            fullLog += ".{0:^77}.".format(logString)
+            fullLog += "\n"
+            fullLog += "." * 79
+            previousLogSessionNumber = sessionNumber
+        try:
+            if logType in logBuilders:
+                stringBuilder, level = logBuilders[logType]
+                if levelOfDetail >= level:
+                    fullLog += stringBuilder(timestamp, logInfo)
+                    fullLog += '.' * 79
+            else:
+                fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
+                fullLog += '.' * 79
+        except (TypeError, KeyError):
+            fullLog += _buildDefaultLogString(timestamp, logType, logInfo)
+            fullLog += '.' * 79
+
+    return fullLog
 
 #######################
 ### Initialization  ###
