@@ -13,6 +13,7 @@ import itertools
 import os.path
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
+from collections import Counter
 
 import numpy as np
 
@@ -21,9 +22,8 @@ from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.exceptions import _prettyListString
 from nimble.core.logger import handleLogging
-from nimble.core.logger import produceFeaturewiseReport
-from nimble.core.logger import produceAggregateReport
 from nimble._utility import cloudpickle, h5py, plt
 from nimble._utility import isDatetime
 from .stretch import Stretch
@@ -49,6 +49,7 @@ from ._dataHelpers import mergeNames, mergeNonDefaultNames
 from ._dataHelpers import makeNamesLines
 from ._dataHelpers import binaryOpNamePathMerge
 from ._dataHelpers import indicesSplit
+from ._dataHelpers import tableString
 
 def to2args(f):
     """
@@ -1371,29 +1372,34 @@ class Base(ABC):
 
     ########################################
     ########################################
-    ###   Functions related to logging   ###
+    ###   Functions related to reports   ###
     ########################################
     ########################################
+
     @limitedTo2D
-    def featureReport(self, maxFeaturesToCover=50, displayDigits=2,
+    def featureReport(self, basicStatistics=True, extraStatisticFunctions=(),
                       useLog=None):
         """
         Report containing a summary and statistics for each feature.
 
-        Produce a report, in a string formatted as a table, containing
-        summary and statistical information about each feature in the
-        data set, up to 50 features.  If there are more than 50
-        features, only information about 50 of those features will be
-        reported.
+        Produce a report, as a nimble List object, containing statistic
+        and summary information about each feature in this object. The
+        default will include mean, mode, minimum, Q1, median, Q3,
+        maximum, uniqueCount, count, and standardDeviation.
 
         Parameters
         ----------
-        maxFeaturesToCover : int
-            The maximum number of features to include in the report.
-            Default is 50, which is the maximum allowed for this value.
-        displayDigits : int
-            The number of digits to display after a decimal point.
-            Default is 2.
+        basicStatistics : bool, list
+            True will include mean, mode, minimum, Q1, median, Q3,
+            maximum, uniqueCount, count, and standardDeviation. False
+            will only use functions in ``extraStatisticFunctions``. To
+            limit the report to a selection of basic statistics, a list
+            of strings can be provided, e.g.
+            ['mean', 'standardDeviation', 'minimum', 'maximum']
+        extraStatisticFunctions : list
+            A list of functions to include in the report. Functions must
+            accept a feature view as the only input and output a single
+            value.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1402,24 +1408,77 @@ class Base(ABC):
             False, do **NOT** send to the logger, regardless of the
             global option.
         """
-        ret = produceFeaturewiseReport(
-            self, maxFeaturesToCover=maxFeaturesToCover,
-            displayDigits=displayDigits)
-        handleLogging(useLog, 'data', "feature", ret)
-        return ret
+        allow = ['mean', 'mode', 'minimum', 'Q1', 'median', 'Q3', 'maximum',
+                 'uniqueCount', 'count', 'standardDeviation']
+        if basicStatistics is True:
+            stats = allow
+        elif basicStatistics:
+            if any(stat not in allow for stat in basicStatistics):
+                allowed = _prettyListString(allow, True, itemStr="'{}'".format)
+                msg = 'Invalid value found in basicStatistics. Allowed '
+                msg += 'values are {}'.format(allowed)
+                raise InvalidArgumentValue(msg)
+            stats = basicStatistics
+        else:
+            stats = []
 
-    def summaryReport(self, displayDigits=2, useLog=None):
+        fnames = ['index']
+        for stat in stats:
+            fnames.append(stat)
+        fnames.extend(func.__name__ for func in extraStatisticFunctions)
+
+        counter = Counter(fnames)
+        remaining = dict(counter)
+        # extra function names could conflict
+        if len(set(fnames)) != len(fnames):
+            editedNames = []
+            # add a unique integer to any duplicate names
+            for val in fnames:
+                if counter[val] > 1:
+                    diff = counter[val] - remaining[val]
+                    editedNames.append('{} ({})'.format(val, diff))
+                    remaining[val] -= 1
+                else:
+                    editedNames.append(val)
+            fnames = editedNames
+
+        pnames = self.features._getNamesNoGeneration()
+
+        results = []
+        quartiles = {'Q1': 0, 'median': 1, 'Q3': 2}
+        for i, ft in enumerate(self.features):
+            row = [i]
+            quartileCalcs = None
+            for stat in stats:
+                if stat in quartiles:
+                    if quartileCalcs is None:
+                        quartileCalcs = nimble.calculate.quartiles(ft)
+                    row.append(quartileCalcs[quartiles[stat]])
+                else:
+                    func = getattr(nimble.calculate, stat)
+                    row.append(func(ft))
+
+            for func in extraStatisticFunctions:
+                row.append(func(ft))
+            results.append(row)
+
+        report = nimble.data('List', results, pnames, fnames, useLog=False)
+
+        handleLogging(useLog, 'data', "feature", str(report))
+
+        return report
+
+
+    def summaryReport(self, useLog=None):
         """
         Report containing information regarding the data in this object.
 
-        Produce a report, in a string formatted as a table, containing
-        summary information about the data set contained in this object.
-        Includes proportion of missing values, proportion of zero
-        values, total # of points, and number of features.
+        Produce a report, as a nimble List object, containing summary
+        information about the data in this object. Includes the total number of
+        values in the object, the number of points and number of features (or
+        dimensions for high dimension data), the proportion of missing values,
+        and the proportion of zero values.
 
-        displayDigits : int
-            The number of digits to display after a decimal point.
-            Default is 2.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1428,9 +1487,33 @@ class Base(ABC):
             False, do **NOT** send to the logger, regardless of the
             global option.
         """
-        ret = produceAggregateReport(self, displayDigits=displayDigits)
-        handleLogging(useLog, 'data', "summary", ret)
-        return ret
+        results = []
+        fnames = []
+        fnames.append('Values')
+        results.append(np.prod(self._shape))
+        if len(self._shape) > 2:
+            fnames.append('Dimensions')
+            results.append(' x '.join(map(str, self._shape)))
+        else:
+            fnames.extend(['Points', 'Features'])
+            results.extend([self.shape[0], self.shape[1]])
+
+        funcs = (nimble.calculate.proportionZero,
+                 nimble.calculate.proportionMissing)
+
+        with self._treatAs2D():
+            for func in funcs:
+                fnames.append(func.__name__)
+                calc = sum(self.features.calculate(func, useLog=False)
+                           / len(self.features))
+                results.append(calc)
+
+        report = nimble.data('List', results, featureNames=fnames,
+                             useLog=False)
+
+        handleLogging(useLog, 'data', "summary", str(report))
+
+        return report
 
     ###############################################################
     ###############################################################
@@ -5041,7 +5124,7 @@ class Base(ABC):
 
                 msg = leftAxis + " to " + rightAxis + " name inconsistencies "
                 msg += "when calling left." + callSym + "(right) \n"
-                msg += nimble.core.logger.tableString.tableString(table)
+                msg += tableString(table)
                 print(msg, file=sys.stderr)
                 raise InvalidArgumentValue(msg)
 

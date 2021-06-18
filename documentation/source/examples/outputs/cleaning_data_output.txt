@@ -11,20 +11,28 @@ holiday   temp  rain_1h snow_1h clouds_all weather_main weather_description     
   nan   282.090  0.000   0.000      90        Clouds      overcast clouds   2018-09-30 22:00:00      1450
   nan   282.120  0.000   0.000      90        Clouds      overcast clouds   2018-09-30 23:00:00      954
 
-    featureName       minimum   maximum     mean     median   standardDeviation   uniqueCount
-            holiday     nan       nan       nan       nan            nan               11
-               temp     0.00     310.07    281.21    282.45         13.34             5843
-            rain_1h     0.00    9831.30     0.33      0.00          44.79             372
-            snow_1h     0.00      0.51      0.00      0.00           0.01              12
-         clouds_all     0.00     100.00    49.36     64.00          39.02              60
-       weather_main     nan       nan       nan       nan            nan               11
-weather_description     nan       nan       nan       nan            nan               38
-          date_time     nan       nan       nan       nan            nan             40575
-     traffic_volume     0.00    7280.00   3259.82   3380.00        1986.86            6704
+Feature statistics
+9pt x 5ft
 
-featureName   minimum   maximum    mean    median   standardDeviation   uniqueCount
-       temp    243.39    310.07   281.26   282.46         12.71             5842
-    rain_1h     0.00     55.63     0.13     0.00           1.00             371
+                      index         mode        minimum maximum  count
+
+            holiday     0        Labor Day        nan     nan      61
+               temp     1         274.150        0.000  310.070  48204
+            rain_1h     2          0.000         0.000  9831.300 48204
+            snow_1h     3          0.000         0.000   0.510   48204
+         clouds_all     4            90            0      100    48204
+       weather_main     5          Clouds         nan     nan    48204
+weather_description     6       sky is clear      nan     nan    48204
+          date_time     7   2013-04-18 22:00:00   nan     nan    48204
+     traffic_volume     8           353            0      7280   48204
+
+Modified feature report
+2pt x 5ft
+
+          index   mode  minimum maximum count
+
+   temp     1   274.150 243.390 310.070 48193
+rain_1h     2    0.000   0.000   55.630 48193
 
 Number of points with errors: 11
 New parsed features in traffic data
@@ -85,4 +93,3 @@ holiday   temp  rain_1h snow_1h clouds_all weather_main=Clouds -- year month day
  False  282.730  0.000   0.000      90            0.000        -- 2018   9    30  21     6         2159
  False  282.090  0.000   0.000      90            1.000        -- 2018   9    30  22     6         1450
  False  282.120  0.000   0.000      90            1.000        -- 2018   9    30  23     6         954
-

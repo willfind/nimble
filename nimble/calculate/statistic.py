@@ -215,8 +215,10 @@ def mode(values):
     """
     The mode of the values in a vector.
 
-    This function requires numeric data and ignores any NaN values.
-    Non-numeric values will results in NaN being returned.
+    When the mode can be more than one value, those values are sorted
+    and the middle value (for an odd number of mode values) or first
+    value to the left of the middle (for an even number of mode values)
+    will be returned.
 
     Parameters
     ----------
@@ -238,13 +240,27 @@ def mode(values):
         numZero = len(values) - values._data.nnz
         toProcess = values.iterateElements(only=nonMissingNonZero)
         counter = collections.Counter(toProcess)
-        mcVal, mcCount = counter.most_common()[0]
-        mostCommon = 0 if numZero > mcCount else mcVal
+        counter.update({0: numZero})
     else:
         toProcess = values.iterateElements(only=nonMissing)
         counter = collections.Counter(toProcess)
-        mostCommon = counter.most_common()[0][0]
-    return mostCommon
+    mostCommon = counter.most_common()
+    first, modeCount = mostCommon[0]
+    modes = [first]
+    for val, cnt in mostCommon[1:]:
+        if cnt == modeCount:
+            modes.append(val)
+        else:
+            break
+
+    numModes = len(modes)
+    if numModes == 1:
+        return modes[0]
+    center = numModes // 2
+    if not numModes % 2:
+        center -= 1 # use left of the two center values
+
+    return sorted(modes)[center]
 
 @numericRequired
 def standardDeviation(values, sample=True):
