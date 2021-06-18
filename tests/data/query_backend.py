@@ -2985,16 +2985,17 @@ class QueryBackend(DataTestObject):
                                featureNames=fnames)
 
         ret = obj.featureReport()
-        line1 = ['featureName', 'minimum', 'maximum', 'mean', 'median',
-                 'standardDeviation', 'uniqueCount']
-        line2 = ['one', 1, 3, 2, 2, 1, 3]
-        line3 = ['two', 0, 4, 2, 2, 2, 3]
-        line4 = ['three', 8.8, 9.2, 9, 9, .2, 3]
-        expLines = [line1, line2, line3, line4]
 
-        for retLine, expLine in zip(ret.split('\n'), expLines):
-            converted = list(map(convertFeatureReportValues, retLine.split()))
-            assert converted == expLine
+        heads = ['index', 'mean', 'mode', 'minimum', 'Q1', 'median', 'Q3',
+                 'maximum', 'uniqueCount', 'count', 'standardDeviation']
+
+        rep = [[0, 2, 2, 1, 1.5, 2, 2.5, 3, 3, 3, 1],
+               [1, 2, 2, 0, 1, 2, 3, 4, 3, 3, 2],
+               [2, 9, 9, 8.8, 8.9, 9, 9.1, 9.2, 3, 3, 0.2]]
+
+        exp = nimble.data("List", rep, fnames, heads)
+
+        assert ret.isApproximatelyEqual(exp)
 
     def test_featureReport_withNonNumeric(self):
         fnames = ['one', 'two', 'three']
@@ -3002,17 +3003,69 @@ class QueryBackend(DataTestObject):
                                featureNames=fnames)
 
         ret = obj.featureReport()
-        line1 = ['featureName', 'minimum', 'maximum', 'mean', 'median',
-                 'standardDeviation', 'uniqueCount']
-        line2 = ['one', 1, 3, 2, 2, 1, 3]
-        line3 = ['two', 1, 3, 2, 2, 1, 3]
-        line4 = ['three', 'nan', 'nan', 'nan', 'nan', 'nan', 3]
-        expLines = [line1, line2, line3, line4]
 
-        for retLine, expLine in zip(ret.split('\n'), expLines):
-            converted = list(map(convertFeatureReportValues, retLine.split()))
-            assert converted == expLine
+        heads = ['index', 'mean', 'mode', 'minimum', 'Q1', 'median', 'Q3',
+                 'maximum', 'uniqueCount', 'count', 'standardDeviation']
+        rep = [[0, 2, 2, 1, 1.5, 2, 2.5, 3, 3, 3, 1],
+               [1, 2, 2, 1, 1.5, 2, 2.5, 3, 3, 3, 1],
+               [2, np.nan, 'b', np.nan, np.nan, np.nan, np.nan, np.nan, 3, 3, np.nan]]
+        exp = nimble.data("List", rep, fnames, heads)
 
+        assert ret == exp
+
+    def test_featureReport_limited(self):
+        fnames = ['one', 'two', 'three']
+        obj = self.constructor([[1, 4, 9], [2, 2, 9.2], [3, 0, 8.8]],
+                               featureNames=fnames)
+
+        selection = ['minimum', 'Q1', 'median', 'Q3', 'maximum', 'mean']
+
+        ret = obj.featureReport(selection)
+
+        heads = ['index'] + selection
+
+        rep = [[0, 1, 1.5, 2, 2.5, 3, 2],
+               [1, 0, 1, 2, 3, 4, 2],
+               [2, 8.8, 8.9, 9, 9.1, 9.2, 9]]
+
+        exp = nimble.data("List", rep, fnames, heads)
+
+        assert ret == exp
+
+    def test_featureReport_extraFunctions(self):
+        fnames = ['one', 'two', 'three']
+        obj = self.constructor([[1, 4, 9], [2, 2, 9.2], [3, 0, 8.8]],
+                               featureNames=fnames)
+
+        def minMaxAvg(ft):
+            max = nimble.calculate.maximum(ft)
+            min = nimble.calculate.minimum(ft)
+            return (min + max) / 2
+
+        funcs = [nimble.calculate.sum, minMaxAvg, lambda _: 1, lambda _: 42]
+
+        ret = obj.featureReport(basicStatistics=False,
+                                extraStatisticFunctions=funcs)
+
+        heads = ['index', 'sum', 'minMaxAvg', '<lambda> (0)', '<lambda> (1)']
+
+        rep = [[0, 6, 2, 1, 42],
+               [1, 6, 2, 1, 42],
+               [2, 27, 9, 1, 42]]
+
+        exp = nimble.data("List", rep, fnames, heads)
+
+        assert ret == exp
+
+    @raises(InvalidArgumentValue, match='Invalid value found in basicStatistics')
+    def test_featureReport_limited_exception(self):
+        fnames = ['one', 'two', 'three']
+        obj = self.constructor([[1, 4, 9], [2, 2, 9.2], [3, 0, 8.8]],
+                               featureNames=fnames)
+
+        selection = ['minimum', 'Q1', 'meedian', 'Q3', 'maximum', 'mean']
+
+        ret = obj.featureReport(selection)
 
     #################
     # summaryReport #
@@ -3024,22 +3077,20 @@ class QueryBackend(DataTestObject):
                                featureNames=fnames)
 
         ret = obj.summaryReport()
-        line1 = "Values   Points   Features   proportionZero   proportionMissing"
-        line2 = "  9        3         3            0.22               0.11      "
-        expLines = [line1, line2]
+        heads = ['Values', 'Points', 'Features', 'proportionZero', 'proportionMissing']
+        rep =  [9, 3, 3, (2 / 9), (1 / 9)]
+        exp = nimble.data("List", rep, featureNames=heads)
 
-        for retLine, expLine in zip(ret.split('\n'), expLines):
-            assert retLine == expLine
+        assert ret == exp
 
         obj = self.constructor([[[[0, 2, 'a']]], [[[2, None, 'b']]], [[[0, 3, 'c']]]])
 
         ret = obj.summaryReport()
-        line1 = "Values     Dimensions    proportionZero   proportionMissing"
-        line2 = "  9      3 x 1 x 1 x 3        0.22               0.11      "
-        expLines = [line1, line2]
+        heads = ['Values', 'Dimensions', 'proportionZero', 'proportionMissing']
+        rep = [9, '3 x 1 x 1 x 3', (2 / 9), (1 / 9)]
+        exp = nimble.data("List", rep, featureNames=heads)
 
-        for retLine, expLine in zip(ret.split('\n'), expLines):
-            assert retLine == expLine
+        assert ret == exp
 
     ######################
     # _axisQueryFunction #

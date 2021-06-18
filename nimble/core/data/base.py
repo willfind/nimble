@@ -13,6 +13,7 @@ import itertools
 import os.path
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
+from collections import Counter
 
 import numpy as np
 
@@ -21,6 +22,7 @@ from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.exceptions import _prettyListString
 from nimble.core.logger import handleLogging
 from nimble._utility import cloudpickle, h5py, plt
 from nimble._utility import isDatetime
@@ -47,7 +49,7 @@ from ._dataHelpers import mergeNames, mergeNonDefaultNames
 from ._dataHelpers import makeNamesLines
 from ._dataHelpers import binaryOpNamePathMerge
 from ._dataHelpers import indicesSplit
-from ._dataHelpers import appendColumns, tableString
+from ._dataHelpers import tableString
 
 def to2args(f):
     """
@@ -1370,29 +1372,34 @@ class Base(ABC):
 
     ########################################
     ########################################
-    ###   Functions related to logging   ###
+    ###   Functions related to reports   ###
     ########################################
     ########################################
+
     @limitedTo2D
-    def featureReport(self, maxFeaturesToCover=50, displayDigits=2,
+    def featureReport(self, basicStatistics=True, extraStatisticFunctions=(),
                       useLog=None):
         """
         Report containing a summary and statistics for each feature.
 
-        Produce a report, in a string formatted as a table, containing
-        summary and statistical information about each feature in the
-        data set, up to 50 features.  If there are more than 50
-        features, only information about 50 of those features will be
-        reported.
+        Produce a report, as a nimble List object, containing statistic
+        and summary information about each feature in this object. The
+        default will include mean, mode, minimum, Q1, median, Q3,
+        maximum, uniqueCount, count, and standardDeviation.
 
         Parameters
         ----------
-        maxFeaturesToCover : int
-            The maximum number of features to include in the report.
-            Default is 50, which is the maximum allowed for this value.
-        displayDigits : int
-            The number of digits to display after a decimal point.
-            Default is 2.
+        basicStatistics : bool, list
+            True will include mean, mode, minimum, Q1, median, Q3,
+            maximum, uniqueCount, count, and standardDeviation. False
+            will only use functions in ``extraStatisticFunctions``. To
+            limit the report to a selection of basic statistics, a list
+            of strings can be provided, e.g.
+            ['mean', 'standardDeviation', 'minimum', 'maximum']
+        extraStatisticFunctions : list
+            A list of functions to include in the report. Functions must
+            accept a feature view as the only input and output a single
+            value.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1401,81 +1408,77 @@ class Base(ABC):
             False, do **NOT** send to the logger, regardless of the
             global option.
         """
-        functionsToApply = (
-            nimble.calculate.minimum, nimble.calculate.maximum,
-            nimble.calculate.mean, nimble.calculate.median,
-            nimble.calculate.standardDeviation, nimble.calculate.uniqueCount,
-            )
-
-        #If the data object is too big to print out info about each feature,
-        #extract a subset of features from the data set and
-        if self.shape[1] > maxFeaturesToCover:
-            if maxFeaturesToCover % 2 == 0:
-                leftIndicesToSelect = list(range(maxFeaturesToCover // 2))
-                rightStart = self.shape[1] - (maxFeaturesToCover // 2)
-                rightIndicesToSelect = list(range(rightStart, self.shape[1]))
-            else:
-                leftStop = maxFeaturesToCover // 2
-                leftIndicesToSelect = list(range(leftStop))
-                rightStart = self.shape[1] - ((maxFeaturesToCover // 2) + 1)
-                rightIndicesToSelect = list(range(rightStart, self.shape[1]))
-            subsetIndices = []
-            subsetIndices.extend(leftIndicesToSelect)
-            subsetIndices.extend(rightIndicesToSelect)
-            dataContainer = self.features.copy(subsetIndices, useLog=False)
-            isSubset = True
+        allow = ['mean', 'mode', 'minimum', 'Q1', 'median', 'Q3', 'maximum',
+                 'uniqueCount', 'count', 'standardDeviation']
+        if basicStatistics is True:
+            stats = allow
+        elif basicStatistics:
+            if any(stat not in allow for stat in basicStatistics):
+                allowed = _prettyListString(allow, True, itemStr="'{}'".format)
+                msg = 'Invalid value found in basicStatistics. Allowed '
+                msg += 'values are {}'.format(allowed)
+                raise InvalidArgumentValue(msg)
+            stats = basicStatistics
         else:
-            isSubset = False
-            dataContainer = self
+            stats = []
 
-        columnLabels = ['featureName']
-        for func in functionsToApply:
-            label = func.__name__.rstrip('_')
-            columnLabels.append(label)
+        fnames = ['index']
+        for stat in stats:
+            fnames.append(stat)
+        fnames.extend(func.__name__ for func in extraStatisticFunctions)
 
-        infoTable = [None] * len(dataContainer.features)
-        for index in range(len(dataContainer.features)):
-            infoTable[index] = [dataContainer.features.getName(index)]
+        counter = Counter(fnames)
+        remaining = dict(counter)
+        # extra function names could conflict
+        if len(set(fnames)) != len(fnames):
+            editedNames = []
+            # add a unique integer to any duplicate names
+            for val in fnames:
+                if counter[val] > 1:
+                    diff = counter[val] - remaining[val]
+                    editedNames.append('{} ({})'.format(val, diff))
+                    remaining[val] -= 1
+                else:
+                    editedNames.append(val)
+            fnames = editedNames
 
-        for func in functionsToApply:
-            oneFuncResults = dataContainer.features.calculate(func,
-                                                              useLog=False)
-            oneFuncResults.transpose(useLog=False)
-            oneFuncResultsList = oneFuncResults.copy(to="python list")
-            appendColumns(infoTable, oneFuncResultsList)
+        pnames = self.features._getNamesNoGeneration()
 
-        #add Function names as the first row in the results table
-        infoTable.insert(0, columnLabels)
+        results = []
+        quartiles = {'Q1': 0, 'median': 1, 'Q3': 2}
+        for i, ft in enumerate(self.features):
+            row = [i]
+            quartileCalcs = None
+            for stat in stats:
+                if stat in quartiles:
+                    if quartileCalcs is None:
+                        quartileCalcs = nimble.calculate.quartiles(ft)
+                    row.append(quartileCalcs[quartiles[stat]])
+                else:
+                    func = getattr(nimble.calculate, stat)
+                    row.append(func(ft))
 
-        if (displayDigits is not None
-                and isinstance(displayDigits, int)):
-            displayDigits = "." + str(displayDigits) + "f"
+            for func in extraStatisticFunctions:
+                row.append(func(ft))
+            results.append(row)
 
-        if isSubset:
-            printableTable = tableString(infoTable, True, headers=infoTable[0],
-                                         roundDigits=displayDigits,
-                                         snipIndex=leftIndicesToSelect[-1])
-        else:
-            printableTable = tableString(infoTable, True, headers=infoTable[0],
-                                         roundDigits=displayDigits)
+        report = nimble.data('List', results, pnames, fnames, useLog=False)
 
-        handleLogging(useLog, 'data', "feature", printableTable)
+        handleLogging(useLog, 'data', "feature", str(report))
 
-        return printableTable
+        return report
 
 
-    def summaryReport(self, displayDigits=2, useLog=None):
+    def summaryReport(self, useLog=None):
         """
         Report containing information regarding the data in this object.
 
-        Produce a report, in a string formatted as a table, containing
-        summary information about the data set contained in this object.
-        Includes proportion of missing values, proportion of zero
-        values, total # of points, and number of features.
+        Produce a report, as a nimble List object, containing summary
+        information about the data in this object. Includes the total number of
+        values in the object, the number of points and number of features (or
+        dimensions for high dimension data), the proportion of missing values,
+        and the proportion of zero values.
 
-        displayDigits : int
-            The number of digits to display after a decimal point.
-            Default is 2.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1485,44 +1488,32 @@ class Base(ABC):
             global option.
         """
         results = []
-        results.append(('Values', np.prod(self._shape)))
+        fnames = []
+        fnames.append('Values')
+        results.append(np.prod(self._shape))
         if len(self._shape) > 2:
-            results.append(('Dimensions', ' x '.join(map(str, self._shape))))
-            # use as 2D to allow calculations of aggregate functions
-            dataContainer = self.copy()
-            dataContainer._shape = list(dataContainer.shape)
+            fnames.append('Dimensions')
+            results.append(' x '.join(map(str, self._shape)))
         else:
-            dataContainer = self
-            results.append(('Points', self.shape[0]))
-            results.append(('Features', self.shape[1]))
+            fnames.extend(['Points', 'Features'])
+            results.extend([self.shape[0], self.shape[1]])
 
         funcs = (nimble.calculate.proportionZero,
                  nimble.calculate.proportionMissing)
-        for func in funcs:
-            funcResults = dataContainer.features.calculate(func, useLog=False)
-            funcResults.transpose(useLog=False)
-            aggregateResults = funcResults.features.calculate(
-                nimble.calculate.mean, useLog=False)
-            aggregateResults = aggregateResults.copy(to="python list")[0][0]
-            results.append((func.__name__, aggregateResults))
 
-        headers = []
-        stats = []
-        for header, value in results:
-            headers.append(header)
-            stats.append(value)
+        with self._treatAs2D():
+            for func in funcs:
+                fnames.append(func.__name__)
+                calc = sum(self.features.calculate(func, useLog=False)
+                           / len(self.features))
+                results.append(calc)
 
-        table = [headers, stats]
+        report = nimble.data('List', results, featureNames=fnames,
+                             useLog=False)
 
-        if (displayDigits is not None
-                and isinstance(displayDigits, int)):
-            displayDigits = "." + str(displayDigits) + "f"
+        handleLogging(useLog, 'data', "summary", str(report))
 
-        printableTable = tableString(table, False, headers=table[0],
-                                     roundDigits=displayDigits)
-        handleLogging(useLog, 'data', "summary", printableTable)
-
-        return printableTable
+        return report
 
     ###############################################################
     ###############################################################

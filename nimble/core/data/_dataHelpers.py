@@ -1249,25 +1249,6 @@ def getFeatureDtypes(obj):
     return tuple(dtypeList)
 
 
-def appendColumns(appendTo, appendFrom):
-    """
-    Append the columns of one 2D matrix (lists of lists) into another.
-    They must have the same number of rows, but can have different
-    numbers of columns.  I.e. len(appendTo) == len(appendFrom), but
-    len(appendTo[0]) == len(appendFrom[0]) does not need to be true.
-    If they do not have the same number of rows, an InvalidArgumentValue
-    is raised.
-    """
-    if len(appendTo) != len(appendFrom):
-        msg = "Can't merge two matrices with different numbers of rows: "
-        msg += str(len(appendTo)) + " != " + str(len(appendFrom))
-        raise InvalidArgumentValue(msg)
-
-    for i, (_, appFrom) in enumerate(zip(appendTo, appendFrom)):
-        for val in appFrom:
-            appendTo[i].append(val)
-
-
 class TableError(Exception):
     """
     Raise when a table cannot be created.

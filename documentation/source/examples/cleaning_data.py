@@ -51,10 +51,12 @@ traffic.show("Raw traffic data", **settingsForShow)
 ## The machine learning algorithms we plan to use require numeric data and can
 ## be sensitive to outliers. Our data contains 48,204 points and 9 features,
 ## but some points and features will require cleaning before these machine
-## learning algorithms can be applied to the data. Running `featureReport` can
-## provide a good starting point for cleaning the data because it shows basic
-## statistics about each column.
-print(traffic.featureReport())
+## learning algorithms can be applied to the data. The default `featureReport`
+## contains the 10 statistics, but we will limit it to the following four to
+## help identify non-numeric data, missing data and outliers.
+stats = ['mode', 'minimum', 'maximum', 'count']
+report = traffic.featureReport(stats)
+report.show("Feature statistics")
 
 ## Statistics could not be calculated for all features, indicating some are
 ## non-numeric. 0 Kelvin in `temp` and 9831.3 mm in `rain_1h` are also possible
@@ -71,7 +73,8 @@ def badPointIdentifier(pt):
 
 extracted = traffic.points.extract(badPointIdentifier)
 
-print(traffic[:, ['temp', 'rain_1h']].featureReport())
+fixedReport = traffic.featureReport(stats)
+fixedReport[['temp', 'rain_1h'], :].show("Modified feature report")
 print('Number of points with errors:', len(extracted.points))
 
 ## After extracting those values, our `featureReport` statistics look much more

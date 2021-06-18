@@ -3,6 +3,7 @@ Defines subclasses that serve primary as the base classes for read only
 views Base, Axis, Points and Features objects.
 """
 from abc import ABCMeta
+from contextlib import contextmanager
 
 from nimble._utility import inheritDocstringsFactory
 from nimble.exceptions import ImproperObjectAction
@@ -125,6 +126,22 @@ class BaseView(Base, metaclass=ABCMeta):
 
         return self._source._view_backend(psAdj, peAdj, fsAdj, feAdj,
                                           dropDimension)
+
+    @contextmanager
+    def _treatAs2D(self):
+        if len(self._shape) > 2:
+            savedShape = self._shape
+            savedSource = self._source._shape
+            self._shape = [len(self.points), len(self.features)]
+            self._source._shape = [len(self._source.points),
+                                   len(self._source.features)]
+            try:
+                yield self
+            finally:
+                self._shape = savedShape
+                self._source._shape = savedSource
+        else:
+            yield self
 
     ###########################
     # Higher Order Operations #

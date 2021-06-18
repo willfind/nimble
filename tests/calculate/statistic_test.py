@@ -148,6 +148,26 @@ def testMedian():
         assert retlpCorrect.isIdentical(retlp)
 
 @noLogEntryExpected
+def testMode():
+    raw = [[3, 0, 2, 2],
+           [3, 3, 4, 0],
+           [0, 0, 4, 4]]
+    func = nimble.calculate.statistic.mode
+    for constructor in getDataConstructors():
+        objl = constructor(raw, useLog=False)
+        retlf = objl.features.calculate(func, useLog=False)
+        retlfData = [3, 0, 4, 2]
+        retlfCorrect = constructor(retlfData, useLog=False)
+        assert retlf.isIdentical(retlfCorrect)
+        assert retlfCorrect.isIdentical(retlf)
+
+        retlp = objl.points.calculate(func, useLog=False)
+        retlpData = [[2], [3], [0]]
+        retlpCorrect = constructor(retlpData, useLog=False)
+        assert retlp.isIdentical(retlpCorrect)
+        assert retlpCorrect.isIdentical(retlp)
+
+@noLogEntryExpected
 def testStandardDeviation():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
     func = nimble.calculate.statistic.standardDeviation
