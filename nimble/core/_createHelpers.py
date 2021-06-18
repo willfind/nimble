@@ -1869,23 +1869,15 @@ def _advancePastComments(ioStream):
     """
     numSkipped = 0
     while True:
-        # If we read a row that isn't a comment line, we
-        # have to undo our read
         startPosition = ioStream.tell()
-
         row = ioStream.readline()
-        if len(row) == 0:
-            numSkipped += 1
-            continue
-        if row[0] == '#':
-            numSkipped += 1
-            continue
-        if row[0] == '\n':
-            numSkipped += 1
-            continue
+        if not row: # empty row indicates end of file
+            raise FileFormatException('No data found in file')
+        if row[0] not in ['#', '\n']:
+            ioStream.seek(startPosition)
+            break
 
-        ioStream.seek(startPosition)
-        break
+        numSkipped += 1
 
     return numSkipped
 
