@@ -550,6 +550,29 @@ class HighDimensionModifying(DataTestObject):
             with raises(ImproperObjectAction):
                 repeated = toTest.features.repeat(2, True)
 
+    def test_highDimension_axis_replace(self):
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+            replacement = self.constructor([tensor[0]])
+
+            toTest.points.replace(replacement, 1)
+
+            assert toTest.points[0] == toTest.points[1]
+
+            toTest = self.constructor(tensor)
+
+            expShape = toTest._shape
+
+            exp0 = toTest.points[0]
+            exp1 = toTest.points[1]
+            replacement = self.constructor(tensor[:2])
+
+            toTest.points.replace(replacement, [1, 2])
+
+            assert toTest.points[1] == exp0
+            assert toTest.points[2] == exp1
+            assert toTest._shape == expShape
+
     def test_highDimension_disallowed(self):
         # Goal here is to make sure that all functions that we have not
         # explicitly allowed for high dimension data are wrapped in the
@@ -625,7 +648,8 @@ class HighDimensionModifying(DataTestObject):
         ptUser = getNimbleDefined(nimble.core.data.Points)
         ptAllowed = set((
             '__iter__', '__getitem__', 'copy', 'extract', 'delete', 'retain',
-            'sort', 'insert', 'append', 'permute', 'repeat', 'unique',))
+            'sort', 'insert', 'append', 'permute', 'repeat', 'replace',
+            'unique',))
         ptAllAllowed = axisAllowed.union(ptAllowed)
         ptDisallowed = ptUser.difference(ptAllAllowed)
 

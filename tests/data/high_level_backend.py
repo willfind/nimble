@@ -18,16 +18,20 @@ In object HighLevelModifying:
 replaceFeatureWithBinaryFeatures, points.permute, features.permute,
 features.normalize, points.fill, features.fill, fillMatching,
 points.splitByCollapsingFeatures, points.combineByExpandingFeatures,
-features.splitByParsing
+features.splitByParsing, points.replace, features.replace
 """
 
 from copy import deepcopy
 import os.path
 import tempfile
 import datetime
+import functools
+import copy
 
 import numpy as np
 import pytest
+import scipy.sparse
+import pandas as pd
 
 import nimble
 from nimble import match
@@ -3985,6 +3989,195 @@ class HighLevelModifying(DataTestObject):
         toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
 
         toTest.features.splitByParsing("merged", '-', ["split0", "split1"])
+
+    ###################
+    # replace helpers #
+    ###################
+
+    def replacements(self, axis, single):
+        replace = [list, tuple, np.array, np.matrix, scipy.sparse.coo_matrix,
+                   pd.DataFrame]
+
+        if single:
+            replace.append(pd.Series)
+
+        nimLst = functools.partial(nimble.data, "List", useLog=False)
+        nimMtx = functools.partial(nimble.data, "Matrix", useLog=False)
+        nimSp = functools.partial(nimble.data, "Sparse", useLog=False)
+        nimDF = functools.partial(nimble.data, "DataFrame", useLog=False)
+
+        if axis == 'point':
+            replace.extend([nimLst, nimMtx, nimSp, nimDF])
+        elif single:
+            replace.extend([lambda *args, **kwargs: nimLst(*args, **kwargs).T,
+                            lambda *args, **kwargs: nimMtx(*args, **kwargs).T,
+                            lambda *args, **kwargs: nimSp(*args, **kwargs).T,
+                            lambda *args, **kwargs: nimDF(*args, **kwargs).T])
+
+        return replace
+
+    @noLogEntryExpected
+    def back_replace(self, axis, data, expData, replace, replaceLocs):
+        toTest = self.constructor(data)
+
+        exp = self.constructor(expData)
+
+        replaceMap = {0: 'a', 1: 'b', 2: 'c'}
+        if axis == 'point':
+            kwarg = 'points'
+            opposite = 'features'
+        else:
+            kwarg = 'features'
+            opposite = 'points'
+
+        single = len(replaceLocs) == 1
+
+        test = toTest.copy()
+        with tempfile.NamedTemporaryFile('w+') as tmp:
+            if single:
+                tmp.write(','.join(map(str, replace)))
+                tmp.write('\n')
+            else:
+                for lst in replace:
+                    tmp.write(','.join(map(str, lst)))
+                    tmp.write('\n')
+            tmp.seek(0)
+            test._getAxis(axis).replace(tmp.name, useLog=False,
+                                        **{kwarg: replaceLocs})
+            assert test == exp
+
+        for rep in self.replacements(axis, single):
+            replacement = rep(replace)
+            required = "{}s argument is required".format(axis)
+            with raises(InvalidArgumentValue, match=required):
+                toTest._getAxis(axis).replace(replacement)
+
+            names = ['a', 'b', 'c', 'd'][:len(toTest._getAxis(axis))]
+            namedTest = toTest.copy()
+            namedTest._getAxis(axis).setNames(names, useLog=False)
+            exp._getAxis(axis).setNames(names, useLog=False)
+
+            needsNames = "data must have {}Names".format(axis)
+            with raises(InvalidArgumentValue, match=needsNames):
+                namedTest._getAxis(axis).replace(replacement)
+
+            replaceNames = [replaceMap[i] for i in replaceLocs]
+            # providing points/features argument
+            test = namedTest.copy()
+            test._getAxis(axis).replace(replacement, useLog=False,
+                                        **{kwarg: replaceNames})
+            assert test == exp
+
+            test = namedTest.copy()
+            if isinstance(replacement, nimble.core.data.Base):
+                # Base with axis name set
+                replacement._getAxis(axis).setNames(replaceNames, useLog=False)
+                test._getAxis(axis).replace(replacement, useLog=False)
+            else:
+                # providing point/featureNames keyword argument
+                axisNames = {axis + 'Names': replaceNames}
+                test._getAxis(axis).replace(replacement, useLog=False,
+                                            **axisNames)
+            assert test == exp
+
+            with raises(InvalidArgumentValue, match="The number of locations"):
+                tooManyLocs = replaceLocs.copy()
+                tooManyLocs.append(0)
+                test._getAxis(axis).replace(replacement, tooManyLocs)
+
+            wrongElemCount = 'as many elements as {}'.format(opposite)
+            with raises(InvalidArgumentValue, match=wrongElemCount):
+                badReplace = copy.deepcopy(replace)
+                if single:
+                    badReplace.append(99)
+                elif axis == 'point':
+                    for lst in badReplace:
+                        lst.append(99)
+                else:
+                    badReplace.append([99] * len(badReplace[0]))
+                replacement = rep(badReplace)
+                test._getAxis(axis).replace(replacement,
+                                            **{kwarg: replaceNames})
+
+    def back_replace_all(self, axis):
+        data = [['x', 'x', 'x'], ['y', 'y', 'y'], ['z', 'z', 'z']]
+        exp = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
+
+        toTest = self.constructor(data)
+        toTest._getAxis(axis).replace(exp)
+
+        assert toTest == self.constructor(exp)
+
+    ##################
+    # points.replace #
+    ##################
+
+    @oneLogEntryExpected
+    def test_points_replace_single(self):
+        data = [[0, 1, 2], ['x', 'x', 'x'], [6, 7, 8]]
+        exp = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
+        replace = [3, 4, 5]
+        replaceLocs = [1]
+        self.back_replace('point', data, exp, replace, replaceLocs)
+        # logging test
+        toTest = self.constructor(data)
+        toTest.points.replace([3, 4, 5], 1)
+
+    def test_points_replace_multiple(self):
+        data = [[0, 1, 2], ['x', 'x', 'x'], ['x', 'x', 'x'], [0, -1, -2]]
+        exp = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, -1, -2]]
+        replace = [[3, 4, 5], [6, 7, 8]]
+        replaceLocs = [1, 2]
+        self.back_replace('point', data, exp, replace, replaceLocs)
+
+    def test_points_replace_all(self):
+        self.back_replace_all('point')
+
+    def test_points_replace_order(self):
+        data = [['x', 'x', 'x'], ['y', 'y', 'y'], ['z', 'z', 'z']]
+        repl = [[0, 1, 2], [6, 7, 8]]
+        exp = [[6, 7, 8], ['y', 'y', 'y'], [0, 1, 2]]
+
+        toTest = self.constructor(data)
+        toTest.points.replace(repl, points=[2, 0])
+
+        assert toTest == self.constructor(exp)
+
+    ####################
+    # features.replace #
+    ####################
+
+    @oneLogEntryExpected
+    def test_features_replace_single(self):
+        data = [[0, 'x', 2], [3, 'x', 5], [6, 'x', 8]]
+        exp = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
+        replace = [1, 4, 7]
+        replaceLocs = [1]
+        self.back_replace('feature', data, exp, replace, replaceLocs)
+        # logging test
+        toTest = self.constructor(data)
+        toTest.features.replace([1, 4, 7], 1)
+
+    def test_features_replace_multiple(self):
+        data = [[0, 'x', 'x', 3], [4, 'x', 'x', 7], [8, 'x', 'x', -1]]
+        exp = [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 0, -1]]
+        replace = [[1, 2], [5, 6], [9, 0]]
+        replaceLocs = [1, 2]
+        self.back_replace('feature', data, exp, replace, replaceLocs)
+
+    def test_features_replace_all(self):
+        self.back_replace_all('feature')
+
+    def test_features_replace_order(self):
+        data = [['x', 'y', 'z'], ['x', 'y', 'z'], ['x', 'y', 'z']]
+        repl = [[0, 2], [3, 5], [6, 8]]
+        exp = [[2, 'y', 0], [5, 'y', 3], [8, 'y', 6]]
+
+        toTest = self.constructor(data)
+        toTest.features.replace(repl, features=[2, 0])
+
+        assert toTest == self.constructor(exp)
+
 
 class HighLevelAll(HighLevelDataSafe, HighLevelModifying):
     pass

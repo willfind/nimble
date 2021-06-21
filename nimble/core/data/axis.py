@@ -34,7 +34,6 @@ from .features import Features
 from ._dataHelpers import valuesToPythonList, constructIndicesList
 from ._dataHelpers import validateInputString
 from ._dataHelpers import operatorDict
-from ._dataHelpers import isAllowedSingleElement
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import wrapMatchFunctionFactory
 from ._dataHelpers import validateAxisFunction
@@ -560,16 +559,74 @@ class Axis(ABC):
         self._setInsertedCountAndNames(toInsert, insertBefore)
 
         if append:
-            handleLogging(useLog, 'prep',
-                          '{ax}s.append'.format(ax=self._axis),
+            handleLogging(useLog, 'prep', '{ax}s.append'.format(ax=self._axis),
                           self._base.getTypeString(), self._sigFunc('append'),
                           toInsert)
         else:
-            handleLogging(useLog, 'prep',
-                          '{ax}s.insert'.format(ax=self._axis),
+            handleLogging(useLog, 'prep', '{ax}s.insert'.format(ax=self._axis),
                           self._base.getTypeString(), self._sigFunc('insert'),
                           insertBefore, toInsert)
 
+    def _replace(self, data, locations, useLog=None, **dataKwds):
+        if isinstance(data, nimble.core.data.Base):
+            if dataKwds:
+                msg = 'dataKwds only apply when data is not an instance of '
+                msg += 'Base'
+                raise InvalidArgumentValue(msg)
+            dataObj = data.copy()
+        else:
+            dataKwds.setdefault('returnType', self._base.getTypeString())
+            dataKwds['source'] = data
+            dataKwds['useLog'] = False
+            # need to delay name setting in case the data requires a transpose
+            pnames = []
+            fnames = []
+            if 'pointNames' in dataKwds:
+                pnames.append(dataKwds.pop('pointNames'))
+            if 'featureNames' in dataKwds:
+                fnames.append(dataKwds.pop('featureNames'))
+            dataObj = nimble.data(**dataKwds)
+            ax, offAx = (1, 0) if self._isPoint else (0, 1)
+            if dataObj.shape[ax] == 1 and dataObj.shape[offAx] > 1:
+                # transpose if 1D and not expected vector shape
+                dataObj.transpose(useLog=False)
+            if pnames:
+                dataObj.points.setNames(pnames[0], useLog=False)
+            if fnames:
+                dataObj.features.setNames(fnames[0], useLog=False)
+
+        dataAxis = dataObj._getAxis(self._axis)
+        # locations will take priority over axis name matches
+        if locations is None and self._base._shape == dataObj._shape:
+            locations = range(len(self))
+        elif locations is None:
+            if not self._namesCreated():
+                msg = '{0}s argument is required when {0}Names do not exist'
+                raise InvalidArgumentValue(msg.format(self._axis))
+            if not dataAxis._namesCreated():
+                msg = 'data must have {0}Names if {0}s is None'
+                raise InvalidArgumentValue(msg.format(self._axis))
+            locations = dataAxis._getNames()
+
+        locations = constructIndicesList(self._base, self._axis, locations)
+        if len(locations) != len(dataAxis):
+            msg = 'The number of locations ({0}) must match the number of '
+            msg += '{1}s in data ({2})'
+            raise InvalidArgumentValue(msg.format(len(locations), self._axis,
+                                                  len(dataAxis)))
+        iterData = iter(dataAxis)
+        for i in locations:
+            replacement = next(iterData)
+            if len(self._base._shape) > 2:
+                replacement = replacement.copy()
+                replacement.flatten(useLog=False)
+            with self._base._treatAs2D():
+                # pylint: disable=cell-var-from-loop
+                self._transform(lambda _: replacement, i, useLog=False)
+
+        handleLogging(useLog, 'prep', '{ax}s.replace'.format(ax=self._axis),
+                      self._base.getTypeString(), self._sigFunc('replace'),
+                      data, locations)
 
     def _mapReduce(self, mapper, reducer, useLog=None):
         if self._isPoint:

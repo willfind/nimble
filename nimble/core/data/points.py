@@ -1349,6 +1349,75 @@ class Points(ABC):
         """
         self._insert(None, toAppend, True, useLog)
 
+    def replace(self, data, points=None, useLog=None, **dataKwds):
+        """
+        Replace the data in one or more of the points in this object.
+
+        If ``points=None``, the data must be a nimble data object with
+        matching pointNames, matching pointNames must be specified as a
+        ``dataKwds`` argument or the data must replace all points.
+        Otherwise, the shape of the ``data`` object must align with the
+        ``points`` parameter. Index values in ``points`` will take
+        priority over matching pointNames.
+
+        Parameters
+        ----------
+        data
+            The object containing the data to use as a replacement. This
+            can be any ``source`` accepted by ``nimble.data``.
+        points : identifier, list, None
+            The point (name or index) or list of points to replace with
+            the provided data.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+        dataKwds
+            Any keyword arguments accepted by ``nimble.data`` to use
+            to construct a nimble data object from ``data``. These only
+            apply when ``data`` is not already a nimble data object.
+
+        Examples
+        --------
+        >>> obj = nimble.zeros('Matrix', 3, 3,
+        ...                    pointNames=['a', 'b', 'c'])
+        >>> newPt = nimble.ones('Matrix', 1, 3, pointNames=['b'])
+        >>> obj.points.replace(newPt, points='b')
+        >>> obj
+        Matrix(
+            [[0.000 0.000 0.000]
+             [1.000 1.000 1.000]
+             [0.000 0.000 0.000]]
+            pointNames={'a':0, 'b':1, 'c':2}
+            )
+
+        >>> obj = nimble.zeros('Sparse', 4, 3)
+        >>> replacement = [[1, 2, 3], [9, 8, 7]]
+        >>> obj.points.replace(replacement, [1, 2])
+        >>> obj
+        Sparse(
+            [[  0     0     0  ]
+             [1.000 2.000 3.000]
+             [9.000 8.000 7.000]
+             [  0     0     0  ]]
+            )
+
+        >>> obj = nimble.zeros('DataFrame', 3, 3,
+        ...                    pointNames=['a', 'b', 'c'])
+        >>> obj.points.replace([2, 3, 2], pointNames=['b'])
+        >>> obj
+        DataFrame(
+            [[0.000 0.000 0.000]
+             [2.000 3.000 2.000]
+             [0.000 0.000 0.000]]
+            pointNames={'a':0, 'b':1, 'c':2}
+            )
+        """
+        return self._replace(data, points, useLog, **dataKwds)
+
     @limitedTo2D
     def mapReduce(self, mapper, reducer, useLog=None):
         """
@@ -2254,6 +2323,10 @@ class Points(ABC):
 
     @abstractmethod
     def _insert(self, insertBefore, toInsert, append=False, useLog=None):
+        pass
+
+    @limitedTo2D
+    def _replace(self, data, locations, useLog=None):
         pass
 
     @abstractmethod
