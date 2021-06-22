@@ -22,10 +22,10 @@ from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.exceptions import _prettyListString
 from nimble.core.logger import handleLogging
 from nimble._utility import cloudpickle, h5py, plt
 from nimble._utility import isDatetime
+from nimble._utility import prettyListString
 from .stretch import Stretch
 from ._dataHelpers import formatIfNeeded
 from ._dataHelpers import constructIndicesList
@@ -1392,7 +1392,7 @@ class Base(ABC):
             stats = allow
         elif basicStatistics:
             if any(stat not in allow for stat in basicStatistics):
-                allowed = _prettyListString(allow, True, itemStr="'{}'".format)
+                allowed = prettyListString(allow, True, itemStr="'{}'".format)
                 msg = 'Invalid value found in basicStatistics. Allowed '
                 msg += 'values are {}'.format(allowed)
                 raise InvalidArgumentValue(msg)

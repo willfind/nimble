@@ -27,6 +27,7 @@ from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
+from nimble._utility import prettyListString
 from nimble.core.logger import handleLogging
 from nimble._utility import inspectArguments
 from .points import Points
@@ -1253,7 +1254,7 @@ class Axis(ABC):
             msg = "The argument named " + argName + " must not share any "
             msg += self._axis + "Names with the calling object, yet the "
             msg += "following names occured in both: "
-            msg += nimble.exceptions._prettyListString(shared)
+            msg += prettyListString(shared)
             if truncated:
                 msg += "... (only first 10 entries out of " + str(full)
                 msg += " total)"
