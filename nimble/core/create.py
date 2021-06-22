@@ -641,7 +641,7 @@ def fetchFile(source, overwrite=False):
 
     Replacing the path to the root storage location with an ellipsis and
     using a Unix operating system, the ``titanic`` return looks like:
-    '.../nimbleData/openml.org/data/get_csv/16826755/phpMYEkMl'
+    ``'.../nimbleData/openml.org/data/get_csv/16826755/phpMYEkMl'``.
     Note how the directory structure mirrors the url.
 
     For the UCI database, two additional options are available. A string
@@ -703,7 +703,7 @@ def fetchFiles(source, overwrite=False):
 
     Replacing the path to the root storage location with an ellipsis and
     using a Unix operating system, the ``titanic`` return is
-    ['.../nimbleData/openml.org/data/get_csv/16826755/phpMYEkMl'].
+    ``['.../nimbleData/openml.org/data/get_csv/16826755/phpMYEkMl']``.
     Note how the directory structure mirrors the url.
 
     For the UCI database, two additional options are available. A string

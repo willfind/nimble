@@ -22,7 +22,7 @@ from ._dataHelpers import limitedTo2D
 
 class Features(ABC):
     """
-    Methods that can be called on a nimble Base objects feature axis.
+    Methods that apply to the features axis of a Base object.
     """
     def __init__(self, base):
         """

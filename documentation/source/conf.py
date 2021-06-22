@@ -65,6 +65,7 @@ def setup(app):
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
+    'sphinx.ext.autosummary',
     'numpydoc',
     'nbsphinx',
     #    'sphinx.ext.coverage',
@@ -76,6 +77,9 @@ intersphinx_mapping = {'numpy': ('http://docs.scipy.org/doc/numpy/', None),}
 autodoc_default_options = {
     'undoc-members': True,
 }
+
+autosummary_generate = True
+autosummary_imported_members = True
 
 # prevents autoclass from adding an autosummary table which leads to a warning
 numpydoc_show_class_members = False
@@ -123,7 +127,10 @@ language = None
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = []
+exclude_patterns = [
+    'docs/generated/nimble.rst',
+    'docs/generated/nimble.calculate.rst',
+    ]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.

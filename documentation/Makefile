@@ -85,6 +85,10 @@ clean:
 	rm -fr $(PUBLISHDIR)/*.js
 	rm -fr $(PUBLISHDIR)/_sources
 	rm -fr $(PUBLISHDIR)/_static
+	rm -fr $(PUBLISHDIR)/_downloads
+	rm -fr $(PUBLISHDIR)/_images
+	rm -fr $(PUBLISHDIR)/examples
+	rm -fr $(PUBLISHDIR)/docs
 	rm -fr $(EXAMPLESDIR)/logs-nimble
 	rm -fr $(EXAMPLESDIR)/*.ipynb
 	rm -f $(EXAMPLESDIR)/Metro_Interstate_Traffic_Volume_Cleaned.csv
