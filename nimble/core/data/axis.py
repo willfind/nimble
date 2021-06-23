@@ -13,7 +13,6 @@ methods defined for axis and object subtype specific implementations.
 import copy
 from abc import ABC, abstractmethod
 import inspect
-import sys
 import operator
 import functools
 import re
@@ -1350,7 +1349,6 @@ class Axis(ABC):
                                   rAxis.getIndex(rname), rname])
 
                 msg += tableString(table)
-                print(msg, file=sys.stderr)
 
                 raise InvalidArgumentValue(msg)
 
