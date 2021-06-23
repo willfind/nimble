@@ -60,7 +60,7 @@ def prepopulatedLogSafetyWrapper(testFunc):
             trainObj = nimble.data('Matrix', source=data1, featureNames=variables)
             testObj = nimble.data('Matrix', source=data2, featureNames=variables)
             # data
-            report = trainObj.summaryReport()
+            report = trainObj.report()
             # prep
             trainYObj = trainObj.features.extract(3)
             testYObj = testObj.features.extract(3)
@@ -721,16 +721,16 @@ def testDataTypeFunctionsUseLog():
             ["b", 2], ["b", 2], ["b", 2], ["b", 2], ["b", 2], ["b", 2],
             ["c", 3], ["c", 3], ["c", 3], ["c", 3], ["c", 3], ["c", 3]]
 
-    # featureReport
+    # features.report
     dataObj = nimble.data("Matrix", data, useLog=False)
-    fReport = dataObj[:,1].featureReport()
+    fReport = dataObj[:,1].features.report()
 
     logInfo = getLastLogData()
     assert "'reportType': 'feature'" in logInfo
 
-    # summaryReport
+    # report
     dataObj = nimble.data("Matrix", data, useLog=False)
-    sReport = dataObj.summaryReport()
+    sReport = dataObj.report()
 
     logInfo = getLastLogData()
     assert "'reportType': 'summary'" in logInfo

@@ -2,10 +2,8 @@
 Tests for nimble.calculate.statistics
 """
 
-# Many of the functions in nimble.calculate.statitic are tested not directly
-# in this module, but through the functions that call them: featureReport
-# in nimble.core.logger.tests.data_set_analyzier_tests and in the data
-# hierarchy in nimble.core.data.tests.query_backend
+# Many of the functions in nimble.calculate.statistic are tested not directly
+# in this module, but through the functions that call them.
 
 import numpy as np
 from numpy.testing import assert_array_almost_equal

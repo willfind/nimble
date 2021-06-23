@@ -364,16 +364,16 @@ def test_replaceRectangle():
     for constructor in nonViewConstructors:
         backend(wrapped, prepAndCheck, constructor=constructor)
 
-def test_featureReport():
+def test_features_report():
     def wrapped(obj, useLog):
-        obj[:, 1].featureReport(useLog=useLog)
+        obj[:, 1].features.report(useLog=useLog)
 
     for constructor in constructors:
         backend(wrapped, prepAndCheck, constructor=constructor)
 
-def test_summaryReport():
+def test_report():
     def wrapped(obj, useLog):
-        obj.summaryReport(useLog=useLog)
+        obj.report(useLog=useLog)
 
     for constructor in constructors:
         backend(wrapped, prepAndCheck, constructor=constructor)
