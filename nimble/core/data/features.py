@@ -19,7 +19,7 @@ import nimble
 from nimble.core.logger import handleLogging
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.exceptions import _prettyListString
+from nimble._utility import prettyListString
 from ._dataHelpers import limitedTo2D
 
 class Features(ABC):
@@ -2047,7 +2047,7 @@ class Features(ABC):
             stats = allow
         elif basicStatistics:
             if any(stat not in allow for stat in basicStatistics):
-                allowed = _prettyListString(allow, True, itemStr="'{}'".format)
+                allowed = prettyListString(allow, True, itemStr="'{}'".format)
                 msg = 'Invalid value found in basicStatistics. Allowed '
                 msg += 'values are {}'.format(allowed)
                 raise InvalidArgumentValue(msg)
