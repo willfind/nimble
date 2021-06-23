@@ -387,3 +387,37 @@ def _setAll(variables, includeModules=False, ignore=()):
         if (isMod and includeModules) or not isMod:
             inAll.append(name)
     return sorted(inAll)
+
+def _prettyString(obj, useAnd, numberItems, iterator, formatter):
+    ret = ""
+    length = len(obj)
+    for i, item in enumerate(iterator(obj)):
+        if i > 0:
+            if length > 2 or not useAnd:
+                ret += ','
+            ret += ' '
+            if useAnd and i == length - 1:
+                ret += 'and '
+        if numberItems:
+            ret += '(' + str(i) + ') '
+        ret += formatter(item)
+
+    return ret
+
+def prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
+    """
+    Display lists in a more appealing way than default.
+    """
+    return _prettyString(inList, useAnd, numberItems, iter, itemStr)
+
+def prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str,
+                     delimiter='=', valueStr=str):
+    """
+    Display dicts in a more appealing way than default.
+    """
+    def itemFormatter(item):
+        key, value = item
+        return '{0}{1}{2}'.format(keyStr(key), delimiter, valueStr(value))
+
+    return _prettyString(inDict, useAnd, numberItems,
+                         iterator=lambda d: d.items(), formatter=itemFormatter)

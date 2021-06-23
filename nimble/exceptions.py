@@ -81,38 +81,3 @@ class FileFormatException(NimbleException, ValueError):
 
     This is a subclass of Python's ValueError.
     """
-
-
-def _prettyListString(inList, useAnd=False, numberItems=False, itemStr=str):
-    """
-    Used in the creation of exception messages to display lists in a
-    more appealing way than default.
-    """
-    ret = ""
-    for i, value in enumerate(inList):
-        if i > 0:
-            ret += ', '
-            if useAnd and i == len(inList) - 1:
-                ret += 'and '
-        if numberItems:
-            ret += '(' + str(i) + ') '
-        ret += itemStr(value)
-    return ret
-
-
-def _prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str,
-                      delim='=', valueStr=str):
-    """
-    Used in the creation of exception messages to display dicts in a
-    more appealing way than default.
-    """
-    ret = ""
-    for i, (key, value) in enumerate(inDict.items()):
-        if i > 0:
-            ret += ', '
-            if useAnd and i == len(inDict) - 1:
-                ret += 'and '
-        if numberItems:
-            ret += '(' + str(i) + ') '
-        ret += keyStr(key) + delim + valueStr(value)
-    return ret
