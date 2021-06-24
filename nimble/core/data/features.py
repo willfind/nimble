@@ -11,6 +11,7 @@ wrapping of function calls for the logger takes place in here.
 """
 
 from abc import ABC, abstractmethod
+from collections import Counter
 
 import numpy as np
 
@@ -18,11 +19,12 @@ import nimble
 from nimble.core.logger import handleLogging
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
+from nimble._utility import prettyListString
 from ._dataHelpers import limitedTo2D
 
 class Features(ABC):
     """
-    Methods that can be called on a nimble Base objects feature axis.
+    Methods that apply to the features axis of a Base object.
     """
     def __init__(self, base):
         """
@@ -2075,6 +2077,98 @@ class Features(ABC):
             )
         """
         return self._unique()
+
+    @limitedTo2D
+    def report(self, basicStatistics=True, extraStatisticFunctions=(),
+               useLog=None):
+        """
+        Report containing a summary and statistics for each feature.
+
+        Produce a report, as a nimble List object, containing statistic
+        and summary information about each feature in this object. The
+        default will include mean, mode, minimum, Q1, median, Q3,
+        maximum, uniqueCount, count, and standardDeviation.
+
+        Parameters
+        ----------
+        basicStatistics : bool, list
+            True will include mean, mode, minimum, Q1, median, Q3,
+            maximum, uniqueCount, count, and standardDeviation. False
+            will only use functions in ``extraStatisticFunctions``. To
+            limit the report to a selection of basic statistics, a list
+            of strings can be provided, e.g.
+            ['mean', 'standardDeviation', 'minimum', 'maximum']
+        extraStatisticFunctions : list
+            A list of functions to include in the report. Functions must
+            accept a feature view as the only input and output a single
+            value.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+        """
+        allow = ['mean', 'mode', 'minimum', 'Q1', 'median', 'Q3', 'maximum',
+                 'uniqueCount', 'count', 'standardDeviation']
+        if basicStatistics is True:
+            stats = allow
+        elif basicStatistics:
+            if any(stat not in allow for stat in basicStatistics):
+                allowed = prettyListString(allow, True, itemStr="'{}'".format)
+                msg = 'Invalid value found in basicStatistics. Allowed '
+                msg += 'values are {}'.format(allowed)
+                raise InvalidArgumentValue(msg)
+            stats = basicStatistics
+        else:
+            stats = []
+
+        fnames = ['index']
+        for stat in stats:
+            fnames.append(stat)
+        fnames.extend(func.__name__ for func in extraStatisticFunctions)
+
+        counter = Counter(fnames)
+        remaining = dict(counter)
+        # extra function names could conflict
+        if len(set(fnames)) != len(fnames):
+            editedNames = []
+            # add a unique integer to any duplicate names
+            for val in fnames:
+                if counter[val] > 1:
+                    diff = counter[val] - remaining[val]
+                    editedNames.append('{} ({})'.format(val, diff))
+                    remaining[val] -= 1
+                else:
+                    editedNames.append(val)
+            fnames = editedNames
+
+        pnames = self._getNamesNoGeneration()
+
+        results = []
+        quartiles = {'Q1': 0, 'median': 1, 'Q3': 2}
+        for i, ft in enumerate(self):
+            row = [i]
+            quartileCalcs = None
+            for stat in stats:
+                if stat in quartiles:
+                    if quartileCalcs is None:
+                        quartileCalcs = nimble.calculate.quartiles(ft)
+                    row.append(quartileCalcs[quartiles[stat]])
+                else:
+                    func = getattr(nimble.calculate, stat)
+                    row.append(func(ft))
+
+            for func in extraStatisticFunctions:
+                row.append(func(ft))
+            results.append(row)
+
+        report = nimble.data('List', results, pnames, fnames, useLog=False)
+
+        handleLogging(useLog, 'data', "feature", str(report))
+
+        return report
 
     #########################
     # Statistical functions #

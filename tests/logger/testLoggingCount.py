@@ -113,14 +113,12 @@ random_tested = list(map(prefixAdder('nimble.random'), random_funcs))
 # NOTES:
 #  The functionality of these functions is untested, but a test of their
 #  expected log count can be found in this script:
-#      copy, featureReport, summaryReport, getTypeString, groupByFeature,
-#      hashCode, show, validate
+#      copy, report, getTypeString, groupByFeature, hashCode, show, validate
 base_logged = [
-    'calculateOnElements', 'featureReport', 'flatten', 'groupByFeature',
-    'matchingElements', 'merge', 'replaceFeatureWithBinaryFeatures',
-    'replaceRectangle', 'summaryReport', 'trainAndTestSets',
-    'transformElements', 'transformFeatureToIntegers', 'transpose',
-    'unflatten',
+    'calculateOnElements', 'flatten', 'groupByFeature', 'matchingElements',
+    'merge', 'replaceFeatureWithBinaryFeatures', 'replaceRectangle', 'report',
+    'trainAndTestSets', 'transformElements', 'transformFeatureToIntegers',
+    'transpose', 'unflatten',
     ]
 base_notLogged = [
     'containsZero', 'copy', 'countElements', 'countUniqueElements',
@@ -137,8 +135,9 @@ base_tested = list(map(prefixAdder('Base'), base_funcs))
 
 features_logged = [
     'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
-    'insert', 'mapReduce', 'matching', 'normalize', 'permute', 'replace',
-    'retain', 'setName', 'setNames', 'sort', 'transform', 'splitByParsing',
+    'insert', 'mapReduce', 'matching', 'normalize', 'permute', 'replace', 
+    'report', 'retain', 'setName', 'setNames', 'sort', 'transform',
+    'splitByParsing',
     ]
 features_notLogged = [
     'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
@@ -229,16 +228,16 @@ def test_copy_logCount():
         obj = constructor([[1,2,3],[4,5,6]], useLog=False)
         copy = obj.copy()
 
-def test_featureReport_logCount():
+def test_features_report_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
-        return obj.featureReport()
+        return obj.features.report()
     captureOutput(wrapped)
 
-def test_summaryReport_logCount():
+def test_report_logCount():
     @oneLogEntryExpected
     def wrapped(obj):
-        return obj.summaryReport()
+        return obj.report()
     captureOutput(wrapped)
 
 def test_groupByFeature_logCount():

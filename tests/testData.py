@@ -1969,12 +1969,15 @@ def mocked_requests_get(url, *args, **kwargs):
             # in this case we return the hrefs that refer to the data files and
             # directories. First href is always a Parent Directory that we ignore.
             content = 'href="/ml/machine-learning-databases/"\n'
-            content += 'href="CSV.csv"\n'
+            # put other hrefs before href to single data file so that we test
+            # that the data file is actually found, not just selected because
+            # it is the first href.
             if 'data+multiple' in url and 'more' not in url:
                 content += 'href="more/"\n'
             if 'data+ignored' in url:
                 content += 'href="Index"\n'
                 content += 'href="data.names"\n'
+            content += 'href="CSV.csv"\n'
         elif 'Index' or 'data.names' in url:
             return MockResponse(bytes('ignore', 'utf-8'), 200)
         else:
@@ -1982,15 +1985,44 @@ def mocked_requests_get(url, *args, **kwargs):
 
         return MockResponse(bytes(content, 'utf-8'), 200)
 
+    if 'willfind.github.io/nimble' in url:
+        permalink = url.split('#')
+        if len(permalink) > 1:
+            # nimble has a single page of data with permalinks defining which
+            # data to download
+            content = 'href="ignore"\n'
+            content += 'href="#data"\n'
+            content += 'href="_downloads/hash/CSV.csv"\n'
+            content += 'href="#data-multiple"\n'
+            content += 'href="_downloads/hash-multiple-1/CSV.csv"\n'
+            content += 'href="_downloads/hash-multiple-2/MTX.mtx"\n'
+            content += 'href="ignore"\n'
+            return MockResponse(bytes(content, 'utf-8'), 200)
+        if '_downloads/' in url:
+            return mocked_requests_get(url.split('_downloads/')[1])
+
+
     return MockResponse(None, 404, False, 'Not Found')
+
+def mocked_isDownloadable(url):
+    # for testing, any "html" files will end with a '/' anything else
+    # represents a downloadable file
+    return not (url.endswith('/')
+                or '::' in url
+                or 'ml/datasets' in url
+                or 'nimble/datasets.html' in url)
 
 # need to check request accessibility before it can be mocked
 _ = requests.nimbleAccessible()
+
+mockIsDownloadable = patch(nimble.core._createHelpers, '_isDownloadable',
+                           mocked_isDownloadable)
 
 mockRequestsGet = patch(nimble.core._createHelpers.requests, 'get',
                         mocked_requests_get)
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_CSVNoExtension():
     for t in returnTypes:
         exp = nimble.data(returnType=t, source=[[1,2,3],[4,5,6]])
@@ -1999,6 +2031,7 @@ def test_data_http_CSVNoExtension():
         assert fromWeb == exp
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_CSVAmbiguousExtension():
     for t in returnTypes:
         exp = nimble.data(returnType=t, source=[[1,2,3],[4,5,6]])
@@ -2007,6 +2040,7 @@ def test_data_http_CSVAmbiguousExtension():
         assert fromWeb == exp
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_CSVFileOK():
     for t in returnTypes:
         exp = nimble.data(returnType=t, source=[[1,2,3],[4,5,6]])
@@ -2015,6 +2049,7 @@ def test_data_http_CSVFileOK():
         assert fromWeb == exp
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_CSVCarriageReturn():
     for t in returnTypes:
         exp = nimble.data(returnType=t, source=[[1,2,3],[4,5,6]])
@@ -2023,6 +2058,7 @@ def test_data_http_CSVCarriageReturn():
         assert fromWeb == exp
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_CSVNonUnicodeValues():
     for t in returnTypes:
         exp = nimble.data(returnType=t, source=[[1,2,"\u00A1"],[4,5,'6']])
@@ -2031,6 +2067,7 @@ def test_data_http_CSVNonUnicodeValues():
         assert fromWeb == exp
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_CSVQuotedNewLine():
     for t in returnTypes:
         exp = nimble.data(returnType=t, source=[[1,2,"a/nb"],[4,5,'6']])
@@ -2039,6 +2076,7 @@ def test_data_http_CSVQuotedNewLine():
         assert fromWeb == exp
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_CSVPathsWithUrl():
     for t in returnTypes:
         url = 'http://mockrequests.nimble/CSVNoExtension'
@@ -2047,6 +2085,7 @@ def test_data_http_CSVPathsWithUrl():
         assert fromWeb.relativePath == None
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_MTXNoExtension():
     for t in returnTypes:
         # None returnType for url will default to Sparse so use coo_matrix for data
@@ -2057,6 +2096,7 @@ def test_data_http_MTXNoExtension():
         assert fromWeb == exp
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_MTXAmbiguousExtension():
     for t in returnTypes:
         # None returnType for url will default to Sparse so use coo_matrix for data
@@ -2067,6 +2107,7 @@ def test_data_http_MTXAmbiguousExtension():
         assert fromWeb == exp
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_MTXFileOK():
     for t in returnTypes:
         # None returnType for url will default to Sparse so use coo_matrix for data
@@ -2077,6 +2118,7 @@ def test_data_http_MTXFileOK():
         assert fromWeb == exp
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_MTXPathsWithUrl():
     for t in returnTypes:
         data = scipy.sparse.coo_matrix([[1,2,3],[4,5,6]])
@@ -2086,6 +2128,7 @@ def test_data_http_MTXPathsWithUrl():
         assert fromWeb.relativePath == None
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_HDFNoExtension():
     for t in returnTypes:
         data = [[[[1, 2], [3, 4]]], [[[-1, -2], [-3, -4]]]]
@@ -2095,6 +2138,7 @@ def test_data_http_HDFNoExtension():
         assert fromWeb == exp
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_HDFAmbiguousExtension():
     for t in returnTypes:
         data = [[[[1, 2], [3, 4]]], [[[-1, -2], [-3, -4]]]]
@@ -2104,6 +2148,7 @@ def test_data_http_HDFAmbiguousExtension():
         assert fromWeb == exp
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_HDFFileOK():
     for t in returnTypes:
         data = [[[[1, 2], [3, 4]]], [[[-1, -2], [-3, -4]]]]
@@ -2115,6 +2160,7 @@ def test_data_http_HDFFileOK():
         assert fromWeb1 == fromWeb2 == exp
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_HDFPathsWithUrl():
     for t in returnTypes:
         data = [[[[1, 2], [3, 4]]], [[[-1, -2], [-3, -4]]]]
@@ -2124,6 +2170,7 @@ def test_data_http_HDFPathsWithUrl():
         assert fromWeb.relativePath == None
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_ZIP_single():
     for t in returnTypes:
         data = [[1,2,3],[4,5,6]]
@@ -2133,6 +2180,7 @@ def test_data_http_ZIP_single():
         assert fromWeb == exp
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_ZIP_multiple():
     for t in returnTypes:
         url = 'http://mockrequests.nimble/ZIP_multiple.zip'
@@ -2140,6 +2188,7 @@ def test_data_http_ZIP_multiple():
             nimble.data(returnType=t, source=url)
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_TAR_single():
     for t in returnTypes:
         data = [[1,2,3],[4,5,6]]
@@ -2149,6 +2198,7 @@ def test_data_http_TAR_single():
         assert fromWeb == exp
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_TAR_multiple_exception():
     for t in returnTypes:
         url = 'http://mockrequests.nimble/TAR_multiple.tar'
@@ -2156,6 +2206,7 @@ def test_data_http_TAR_multiple_exception():
             nimble.data(returnType=t, source=url)
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_GZIP():
     for t in returnTypes:
         data = [[1,2,3],[4,5,6]]
@@ -2165,17 +2216,40 @@ def test_data_http_GZIP():
         assert fromWeb == exp
 
 @mockRequestsGet
+@mockIsDownloadable
 def test_data_http_uciPathHandling():
     for t in returnTypes:
         data = [[1,2,3],[4,5,6]]
         exp = nimble.data(returnType=t, source=data)
-        fromWeb = nimble.data(returnType=t, source="uci::data")
-        assert fromWeb == exp
+        fromShorthand = nimble.data(returnType=t, source="uci::data")
+        assert fromShorthand == exp
 
-        fromWeb = nimble.data(returnType=t, source="uci::data+ignored")
-        assert fromWeb == exp
+        url = "https://archive.ics.uci.edu/ml/datasets/data"
+        fromPage = nimble.data(returnType=t, source=url)
+        assert fromPage == exp
+
+        fromShorthand = nimble.data(returnType=t, source="uci::data ignored")
+        assert fromShorthand == exp
+
+        url = "https://archive.ics.uci.edu/ml/datasets/data+ignored"
+        fromPage = nimble.data(returnType=t, source=url)
+        assert fromPage == exp
 
 @mockRequestsGet
+@mockIsDownloadable
+def test_data_http_nimblePathHandling():
+    for t in returnTypes:
+        data = [[1,2,3],[4,5,6]]
+        exp = nimble.data(returnType=t, source=data)
+        fromShorthand = nimble.data(returnType=t, source="nimble::data")
+        assert fromShorthand == exp
+
+        url = 'willfind.github.io/nimble/examples/data'
+        fromPage = nimble.data(returnType=t, source=url)
+        assert fromPage == exp
+
+@mockRequestsGet
+@mockIsDownloadable
 def test_data_http_linkError():
     for t in returnTypes:
         with raises(InvalidArgumentValue):
@@ -2186,15 +2260,6 @@ def test_data_http_linkError():
 ##########################
 # fetchFile / fetchFiles #
 ##########################
-
-def mocked_isDownloadable(url):
-    # for testing, any "html" files will end with a '/' anything else
-    # represents a downloadable file
-    return not url.endswith('/')
-
-mockIsDownloadable = patch(nimble.core._createHelpers, '_isDownloadable',
-                                mocked_isDownloadable)
-
 mockReqBasePath = os.path.join(nimble.settings.get('fetch', 'location'),
                                'nimbleData', 'mockrequests.nimble')
 
@@ -2269,7 +2334,7 @@ def test_data_fetchFiles_urlSpaceFormatting():
 @clearNimbleData
 def test_data_fetch_uciPathHandling():
     urlBasePath = 'https://archive.ics.uci.edu/ml/datasets/'
-    fileBasePath = os.path.join('nimbleData','archive.ics.uci.edu','ml',
+    fileBasePath = os.path.join('nimbleData','archive.ics.uci.edu', 'ml',
                                 'machine-learning-databases')
     urlToSingleFile = urlBasePath + 'data'
     singleFile = os.path.join(fileBasePath, 'data', 'CSV.csv')
@@ -2277,7 +2342,7 @@ def test_data_fetch_uciPathHandling():
     shortFile = nimble.fetchFile('uci::data')
     assert shortFile.endswith(singleFile)
 
-    shortFiles = nimble.fetchFiles('uci:: data ')
+    shortFiles = nimble.fetchFiles('UCI:: data ')
     assert len(shortFiles) == 1 and shortFiles[0].endswith(singleFile)
 
     pageFile = nimble.fetchFile(urlToSingleFile)
@@ -2286,11 +2351,11 @@ def test_data_fetch_uciPathHandling():
     assert len(pageFiles) == 1 and pageFiles[0].endswith(singleFile)
 
     with raises(InvalidArgumentValue):
-        nimble.fetchFile('uci::data multiple')
+        nimble.fetchFile('UcI::data multiple')
     with raises(InvalidArgumentValue):
-        nimble.fetchFile('https://archive.ics.uci.edu/ml/datasets/my+data+multiple')
-    multiFile1 = os.path.join(fileBasePath, 'data+multiple', 'CSV.csv')
-    multiFile2 = os.path.join(fileBasePath, 'data+multiple', 'more', 'CSV.csv')
+        nimble.fetchFile(urlBasePath + 'data+multiple')
+    multiFile1 = os.path.join(fileBasePath, 'data+multiple', 'more', 'CSV.csv')
+    multiFile2 = os.path.join(fileBasePath, 'data+multiple', 'CSV.csv')
 
     shortPaths = nimble.fetchFiles('uci:: data multiple')
     assert (len(shortPaths) == 2
@@ -2298,15 +2363,16 @@ def test_data_fetch_uciPathHandling():
             and shortPaths[1].endswith(multiFile2))
 
     pagePaths = nimble.fetchFiles(urlBasePath + 'data+multiple')
+    # data available locally, return order is different than above
     assert (len(pagePaths) == 2
-            and pagePaths[0].endswith(multiFile1)
-            and pagePaths[1].endswith(multiFile2))
+            and pagePaths[0].endswith(multiFile2)
+            and pagePaths[1].endswith(multiFile1))
 
     # contains href to Index and .names files we want to ignore in fetchFile
     ignoreFile = os.path.join(fileBasePath, 'data+ignored', 'CSV.csv')
     urlToIgnoreFile = urlBasePath + 'data+ignored'
 
-    shortIgFile = nimble.fetchFile('uci::data ignored')
+    shortIgFile = nimble.fetchFile('Uci::data ignored')
     assert shortIgFile.endswith(ignoreFile)
 
     shortIgFiles = nimble.fetchFiles('uci:: data ignored ')
@@ -2318,6 +2384,46 @@ def test_data_fetch_uciPathHandling():
     pageIgFiles = nimble.fetchFiles(urlToIgnoreFile)
     assert len(pageIgFiles) == 3
     assert sum(f.endswith(ignoreFile) for f in pageIgFiles) == 1
+
+@noLogEntryExpected
+@mockIsDownloadable
+@mockRequestsGet
+@clearNimbleData
+def test_data_fetch_nimblePathHandling():
+    urlBasePath = 'https://willfind.github.io/nimble/examples/'
+    fileBasePath = os.path.join('nimbleData','willfind.github.io', 'nimble',
+                                '_downloads')
+    urlToSingleFile = urlBasePath + 'data'
+    singleFile = os.path.join(fileBasePath, 'hash', 'CSV.csv')
+
+    shortFile = nimble.fetchFile('nimble::data')
+    assert shortFile.endswith(singleFile)
+
+    shortFiles = nimble.fetchFiles('Nimble:: data ')
+    assert len(shortFiles) == 1 and shortFiles[0].endswith(singleFile)
+
+    pageFile = nimble.fetchFile(urlToSingleFile)
+    assert pageFile.endswith(singleFile)
+    pageFiles = nimble.fetchFiles(urlToSingleFile)
+    assert len(pageFiles) == 1 and pageFiles[0].endswith(singleFile)
+
+    with raises(InvalidArgumentValue):
+        nimble.fetchFile('NIMBLE::data multiple')
+    with raises(InvalidArgumentValue):
+        nimble.fetchFile(urlBasePath + 'data-multiple')
+
+    multiFile1 = os.path.join(fileBasePath, 'hash-multiple-1', 'CSV.csv')
+    multiFile2 = os.path.join(fileBasePath, 'hash-multiple-2', 'MTX.mtx')
+
+    shortPaths = nimble.fetchFiles('nimble:: data multiple')
+    assert (len(shortPaths) == 2
+            and shortPaths[0].endswith(multiFile1)
+            and shortPaths[1].endswith(multiFile2))
+
+    pagePaths = nimble.fetchFiles(urlBasePath + 'data-multiple')
+    assert (len(pagePaths) == 2
+            and pagePaths[0].endswith(multiFile1)
+            and pagePaths[1].endswith(multiFile2))
 
 @mockIsDownloadable
 @assertNotCalled(nimble.core._createHelpers.requests, 'get')

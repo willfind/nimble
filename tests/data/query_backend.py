@@ -5,7 +5,7 @@ pointCount, featureCount, isIdentical, writeFile, __getitem__,
 pointView, featureView, view, containsZero, __eq__, __ne__, toString,
 __repr__, points.similarities, features.similarities, points.statistics,
 features.statistics, points.__iter__, features.__iter__,
-iterateElements, inverse, solveLinearSystem, featureReport, summaryReport
+iterateElements, inverse, solveLinearSystem, report, features.report
 """
 
 import math
@@ -2975,16 +2975,16 @@ class QueryBackend(DataTestObject):
         Aobj.solveLinearSystem(bobj, solveFunction='foo')
 
 
-    #################
-    # featureReport #
-    #################
+    ###################
+    # features.report #
+    ###################
 
-    def test_featureReport_allNumeric(self):
+    def test_features_report_allNumeric(self):
         fnames = ['one', 'two', 'three']
         obj = self.constructor([[1, 4, 9], [2, 2, 9.2], [3, 0, 8.8]],
                                featureNames=fnames)
 
-        ret = obj.featureReport()
+        ret = obj.features.report()
 
         heads = ['index', 'mean', 'mode', 'minimum', 'Q1', 'median', 'Q3',
                  'maximum', 'uniqueCount', 'count', 'standardDeviation']
@@ -2997,12 +2997,12 @@ class QueryBackend(DataTestObject):
 
         assert ret.isApproximatelyEqual(exp)
 
-    def test_featureReport_withNonNumeric(self):
+    def test_features_report_withNonNumeric(self):
         fnames = ['one', 'two', 'three']
         obj = self.constructor([[1, 2, 'a'], [2, 1, 'b'], [3, 3, 'c']],
                                featureNames=fnames)
 
-        ret = obj.featureReport()
+        ret = obj.features.report()
 
         heads = ['index', 'mean', 'mode', 'minimum', 'Q1', 'median', 'Q3',
                  'maximum', 'uniqueCount', 'count', 'standardDeviation']
@@ -3013,14 +3013,14 @@ class QueryBackend(DataTestObject):
 
         assert ret == exp
 
-    def test_featureReport_limited(self):
+    def test_features_report_limited(self):
         fnames = ['one', 'two', 'three']
         obj = self.constructor([[1, 4, 9], [2, 2, 9.2], [3, 0, 8.8]],
                                featureNames=fnames)
 
         selection = ['minimum', 'Q1', 'median', 'Q3', 'maximum', 'mean']
 
-        ret = obj.featureReport(selection)
+        ret = obj.features.report(selection)
 
         heads = ['index'] + selection
 
@@ -3032,7 +3032,7 @@ class QueryBackend(DataTestObject):
 
         assert ret == exp
 
-    def test_featureReport_extraFunctions(self):
+    def test_features_report_extraFunctions(self):
         fnames = ['one', 'two', 'three']
         obj = self.constructor([[1, 4, 9], [2, 2, 9.2], [3, 0, 8.8]],
                                featureNames=fnames)
@@ -3044,8 +3044,8 @@ class QueryBackend(DataTestObject):
 
         funcs = [nimble.calculate.sum, minMaxAvg, lambda _: 1, lambda _: 42]
 
-        ret = obj.featureReport(basicStatistics=False,
-                                extraStatisticFunctions=funcs)
+        ret = obj.features.report(basicStatistics=False,
+                                  extraStatisticFunctions=funcs)
 
         heads = ['index', 'sum', 'minMaxAvg', '<lambda> (0)', '<lambda> (1)']
 
@@ -3058,25 +3058,25 @@ class QueryBackend(DataTestObject):
         assert ret == exp
 
     @raises(InvalidArgumentValue, match='Invalid value found in basicStatistics')
-    def test_featureReport_limited_exception(self):
+    def test_features_report_limited_exception(self):
         fnames = ['one', 'two', 'three']
         obj = self.constructor([[1, 4, 9], [2, 2, 9.2], [3, 0, 8.8]],
                                featureNames=fnames)
 
         selection = ['minimum', 'Q1', 'meedian', 'Q3', 'maximum', 'mean']
 
-        ret = obj.featureReport(selection)
+        ret = obj.features.report(selection)
 
-    #################
-    # summaryReport #
-    #################
+    ##########
+    # report #
+    ##########
 
-    def test_summaryReport(self):
+    def test_report(self):
         fnames = ['one', 'two', 'three']
         obj = self.constructor([[0, 2, 'a'], [2, None, 'b'], [0, 3, 'c']],
                                featureNames=fnames)
 
-        ret = obj.summaryReport()
+        ret = obj.report()
         heads = ['Values', 'Points', 'Features', 'proportionZero', 'proportionMissing']
         rep =  [9, 3, 3, (2 / 9), (1 / 9)]
         exp = nimble.data("List", rep, featureNames=heads)
@@ -3085,7 +3085,7 @@ class QueryBackend(DataTestObject):
 
         obj = self.constructor([[[[0, 2, 'a']]], [[[2, None, 'b']]], [[[0, 3, 'c']]]])
 
-        ret = obj.summaryReport()
+        ret = obj.report()
         heads = ['Values', 'Dimensions', 'proportionZero', 'proportionMissing']
         rep = [9, '3 x 1 x 1 x 3', (2 / 9), (1 / 9)]
         exp = nimble.data("List", rep, featureNames=heads)

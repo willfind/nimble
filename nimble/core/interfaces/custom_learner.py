@@ -164,13 +164,18 @@ class CustomLearner(metaclass=abc.ABCMeta):
     """
     Base class defining a hierarchy of objects which encapsulate what is
     needed to be a single learner callable through the Custom Universal
-    Interface. At minimum, a subclass must provide an implementation for
-    the method apply() and at least one out of train() or
-    incrementalTrain(). If incrementalTrain() is implemented yet train()
-    is not, then incremental train is used in place of calls to train().
-    Furthermore, a subclass must not require any arguments for its
-    __init__() method.
+    Interface. At minimum, a subclass must provide a ``learnerType`` attribute,
+    an implementation for the method ``apply`` and at least one out of
+    ``train`` or ``incrementalTrain``. If ``incrementalTrain`` is implemented
+    yet ``train`` is not, then ``incrementalTrain`` is used in place of calls
+    to ``train``. Furthermore, a subclass must not require any arguments for
+    its ``__init__`` method.
     """
+    # Sphinx docstring
+    #: Describe the type of the learner.
+    #:
+    #: Accepted values are 'regression', 'classification', 'featureselection',
+    #: 'dimensionalityreduction', or 'unknown'.
     learnerType = None
 
     def __init__(self):

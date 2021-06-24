@@ -1239,14 +1239,13 @@ def getFeatureDtypes(obj):
         return (obj._data.dtype,) * len(obj.features)
 
     dtypeList = []
-    floatDtype = np.dtype(float)
     # _data is list or ListPassThrough
     for ft in zip(*obj._data):
         dtype = max(map(np.dtype, map(type, ft)))
-        if dtype > floatDtype:
-            dtypeList.append(np.object_)
-        else:
+        if np.can_cast(dtype, float):
             dtypeList.append(dtype)
+        else:
+            dtypeList.append(np.object_)
 
     return tuple(dtypeList)
 

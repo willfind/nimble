@@ -1430,9 +1430,16 @@ def _isDownloadable(url):
     """
     Does the url contain a downloadable resource.
     """
-    headers = requests.head(url, allow_redirects=True).headers
-    contentType = headers.get('content-type').lower()
-    return not 'html' in contentType
+    if not requests.nimbleAccessible():
+        raise PackageException('requests must be installed')
+    try:
+        head = requests.head(url, allow_redirects=True)
+        head.raise_for_status()
+        headers = head.headers
+        contentType = headers.get('content-type').lower()
+        return 'html' not in contentType
+    except requests.exceptions.RequestException:
+        return False
 
 def _isArchive(filename):
     if not hasattr(filename, 'read'):
@@ -1464,11 +1471,54 @@ def _isGZip(filename):
     with open(filename, 'rb') as f:
         return f.read(2) == b'\x1f\x8b'
 
-def _isUCI(source):
+def _processArchiveFile(filename, allowMultiple, extract):
     """
-    Check if source is a url from UCI or uses UCI shorthand.
+    Extract contents of an archive file.
+
+    Return a list of paths to the extracted files. If the file contains
+    multiple files and allowMultiple is False, the archive file will be
+    returned and no extraction will occur.
     """
-    return 'archive.ics.uci.edu' in source or source.startswith('uci::')
+    if zipfile.is_zipfile(filename):
+        archiveObj = zipfile.ZipFile
+        nameGetter = 'namelist'
+    else:
+        archiveObj = tarfile.TarFile
+        nameGetter = 'getnames'
+    with archiveObj(filename, 'r') as fileObj:
+        names = getattr(fileObj, nameGetter)()
+        if any(os.path.isabs(name) or '..' in name for name in names):
+            # potential security risk will not perform extraction
+            return [filename]
+
+        if not allowMultiple and len(names) > 1:
+            return [filename]
+
+        location = os.path.dirname(filename)
+        paths = [os.path.join(location, name) for name in names]
+        # only need to extract if overwrite or any expected files don't exist
+        if extract or not all(os.path.exists(path) for path in paths):
+            fileObj.extractall(location)
+
+        files = []
+        for path in paths:
+            if os.path.isfile(path):
+                files.append(path)
+
+        return files
+
+def _processCompressedFile(filename):
+    """
+    Decompress a gzip file.
+    """
+    with gzip.open(filename, 'rb') as fIn:
+        if filename.endswith('.gz'):
+            unzipped = filename[:-3]
+        else:
+            unzipped = filename
+        with open(unzipped, 'wb') as fOut:
+            shutil.copyfileobj(fIn, fOut)
+        return [unzipped]
 
 def _isUCIDataFile(name):
     """
@@ -1485,7 +1535,7 @@ def _processUCISource(source):
     source needs to be transformed to point to the data page.
     """
     subDirectories = ''
-    if source.startswith('uci::'):
+    if source.lower().startswith('uci::'):
         prefix = 'https://archive.ics.uci.edu/ml/datasets/'
         # sanitize for url. uci replaces whitespace with + character
         toFind = urllib.parse.quote_plus(source[5:].strip(), safe='/')
@@ -1496,7 +1546,9 @@ def _processUCISource(source):
         source = prefix + toFind[0].strip()
         if len(toFind) > 1:
             subDirectories = toFind[1].strip()
-    if 'ml/datasets/' in source:
+    if 'ml/datasets/' in source.lower():
+        if not requests.nimbleAccessible():
+            raise PackageException('requests must be installed')
         response = requests.get(source)
         archive = 'https://archive.ics.uci.edu/ml/'
         database = r'machine-learning-databases/.+?/'
@@ -1507,7 +1559,224 @@ def _processUCISource(source):
 
     return source
 
-def _extractFromArchive(ioStream, fromUCI):
+def _processNimbleSource(source):
+    prefix = 'https://willfind.github.io/nimble/datasets.html'
+    if source.lower().startswith('nimble::'):
+        source = source[8:]
+        source = prefix + '#' + '-'.join(source.lower().split())
+    elif '/examples/' in source.lower():
+        example = source.split('/examples/')[1].split('.')[0]
+        source = prefix + '#' + example.lower()
+    return source
+
+def _urlSourceProcessor(source):
+    lower = source.lower()
+    if 'archive.ics.uci.edu' in lower or lower.startswith('uci::'):
+        source = _processUCISource(source)
+        database = 'uci'
+    elif 'willfind.github.io/nimble' in lower or lower.startswith('nimble::'):
+        source = _processNimbleSource(source)
+        database = 'nimble'
+    else:
+        database = None
+    return source, database
+
+def _getNimbleDataPath(source):
+    configLoc = nimble.settings.get('fetch', 'location')
+    homepath = os.path.join(configLoc, 'nimbleData')
+    urlInfo = urllib.parse.urlparse(source)
+    netLoc = urlInfo.netloc
+    if netLoc.startswith('www.'):
+        netLoc = netLoc[4:]
+    directory = os.path.join(*urlInfo.path.split('/'))
+    localPath = os.path.join(homepath, netLoc, directory)
+
+    return localPath
+
+def _getURLResponse(source):
+    if not requests.nimbleAccessible():
+        raise PackageException('requests must be installed')
+    response = requests.get(source, allow_redirects=True)
+    if not response.ok:
+        msg = "The data could not be accessed from the webpage. "
+        msg += "HTTP Status: {0}, ".format(response.status_code)
+        msg += "Reason: {0}".format(response.reason)
+        raise InvalidArgumentValue(msg)
+
+    return response
+
+
+class _DirectURLManager:
+    """
+    For handling URLs to downloadable files.
+
+    The source must be a single file that can be downloaded. If the file
+    is a zip, gzip or tar file, an attempt will be made to extract the
+    contents, when allowed.
+    """
+    def __init__(self, source, allowMultiple, checkLocal=True):
+        self.source = source
+        self.allowMultiple = allowMultiple
+        self.path = _getNimbleDataPath(self.source)
+        if checkLocal and os.path.exists(self.path):
+            if not os.path.isfile(self.path):
+                # need to use _IndirectURLManager
+                msg = 'source does not provide downloadable data'
+                raise InvalidArgumentValue(msg)
+            if _isArchive(self.path):
+                self.local = _processArchiveFile(self.path, self.allowMultiple,
+                                                 False)
+            else:
+                isGZip = _isGZip(self.path)
+                if isGZip and os.path.exists(self.path[:-3]):
+                    # already decompressed gzip file
+                    self.local = [self.path[:-3]]
+                elif isGZip:
+                    self.local = _processCompressedFile(self.path)
+                else:
+                    self.local = [self.path]
+        else:
+            self.local = None
+        if self.local is None and not _isDownloadable(self.source):
+            msg = 'source does not provide downloadable data'
+            raise InvalidArgumentValue(msg)
+
+    def fetch(self, overwrite=True):
+        """
+        Get from local storage or download.
+        """
+        # for calls from fileFetcher, overwrite is always True because
+        # local storage check has already been performed
+        if not overwrite and self.local is not None:
+            return self.local
+
+        response = _getURLResponse(self.source)
+
+        directory = os.path.split(self.path)[0]
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+
+        with open(self.path, 'w+b') as f:
+            f.write(response.content)
+
+        self.local = self.path
+
+        try:
+            if _isArchive(self.path):
+                return _processArchiveFile(self.path, self.allowMultiple,
+                                           overwrite)
+            if _isGZip(self.path):
+                return _processCompressedFile(self.path)
+        except Exception: # pylint: disable=broad-except
+            pass # return the archive file on failure
+
+        return [self.path]
+
+class _IndirectURLManager:
+    """
+    Support downloading from a page that indicates the data to load.
+
+    Base class for special cases where the URL does not provide a link
+    to a downloadable data set, but instead provides a page that relates
+    to a given data set.
+    """
+
+    def __init__(self, source, allowMultiple):
+        self.source = source
+        self.allowMultiple = allowMultiple
+        self.path = _getNimbleDataPath(self.source)
+        self.response = _getURLResponse(self.source)
+
+        self.hrefs = self.getHRefs()
+        self.hrefsData = [f for f in self.hrefs if self.isDataFile(f)]
+        if not self.allowMultiple and len(self.hrefsData) > 1:
+            msg = 'The source contains multiple files. Provide a source '
+            msg += 'with a single file or use nimble.fetchFiles.'
+            raise InvalidArgumentValue(msg)
+        if not self.hrefsData:
+            msg = 'The source did not provide any files to download'
+            raise InvalidArgumentValue(msg)
+
+    def getHRefs(self):
+        """
+        Get the hrefs on this page that point to the files to download.
+        """
+        return re.findall('href="(.+?)"', self.response.text)
+
+    def isDataFile(self, filename): # pylint: disable=unused-argument
+        """
+        Determine if, by convention, the file should contain data.
+        """
+        return True
+
+    def downloadPrefix(self):
+        """
+        The prefix to attach to an href.
+        """
+        return self.source
+
+    def fetch(self, overwrite=True):
+        """
+        Get local files or download and write to local storage.
+
+        The files may already be present, but this is not detectable
+        initially as the path is not to a specific file. During
+        iteration files already available will not be rewritten when
+        overwrite is False.
+        """
+        if not overwrite and os.path.exists(self.path):
+            # The path will be a directory
+            dataFiles = []
+            for root, _, files in os.walk(self.path):
+                for f in files:
+                    if self.allowMultiple or self.isDataFile(f):
+                        dataFiles.append(os.path.join(root, f))
+            return dataFiles
+
+        currPaths = []
+        for name in self.hrefs:
+            url = self.downloadPrefix() + name
+            paths = fileFetcher(url, overwrite, self.allowMultiple)
+            # When multiple are files are allowed we only return paths to all
+            # files, otherwise we only return the data file
+            if self.allowMultiple or self.isDataFile(name):
+                currPaths.extend(paths)
+
+        return currPaths
+
+class _IndirectURLManagerUCI(_IndirectURLManager):
+    """
+    For a url pointing to a data description page in the UCI database.
+    """
+    def getHRefs(self):
+        hrefs = super().getHRefs()
+        # ignore Parent Directory at index 0 in every repository
+        return hrefs[1:]
+
+    def isDataFile(self, filename):
+        return _isUCIDataFile(filename)
+
+class _IndirectURLManagerNimble(_IndirectURLManager):
+    """
+    For a url pointing to a Nimble example page.
+    """
+    def getHRefs(self):
+        hrefs = super().getHRefs()
+        permalink = '#' + self.source.rsplit('#', 1)[1]
+        start = hrefs.index(permalink)
+        # page contains hrefs for all examples, get files specific to source
+        sourceHRefs = []
+        for href in hrefs[start + 1:]:
+            if not '_downloads' in href:
+                break # end of downloads for this data
+            sourceHRefs.append(href)
+
+        return sourceHRefs
+
+    def downloadPrefix(self):
+        return 'https://willfind.github.io/nimble/'
+
+def _extractFromArchive(ioStream, dataFilter):
     """
     Extract contents of an archive file.
     """
@@ -1526,9 +1795,9 @@ def _extractFromArchive(ioStream, fromUCI):
     ioStream.seek(0)
     with archiveOpen(ioStream, 'r') as fileObj:
         names = getattr(fileObj, nameGetter)()
-        if fromUCI:
+        if dataFilter is not None:
             # limit only to files containing data
-            names = [n for n in names if _isUCIDataFile(n)]
+            names = [n for n in names if dataFilter(n)]
         if len(names) > 1:
             msg = 'Multiple files found in source'
             raise InvalidArgumentValue(msg)
@@ -1553,7 +1822,7 @@ def createDataFromFile(
     nimble.data's parameters with the same names).
     """
     encoding = locale.getpreferredencoding() # default encoding for open()
-    isUCI = False
+    dataFilter = None
     # Case: string value means we need to open the file, either directly or
     # through an http request
     if isinstance(source, str):
@@ -1561,35 +1830,22 @@ def createDataFromFile(
             content = open(source, 'rb', newline=None).read()
             path = source
         else: # webpage
-            isUCI = _isUCI(source.lower())
-            if not isUCI and source[:4].lower() != 'http':
-                msg = 'The source is not a path to an existing file and does '
-                msg += 'not start with "http" so it cannot be processed as a '
-                msg += 'url'
-                raise InvalidArgumentValue(msg)
-            if not requests.nimbleAccessible():
-                msg = "To load data from a webpage, the requests module "
-                msg += "must be installed"
-                raise PackageException(msg)
-            if isUCI:
-                source = _processUCISource(source.lower())
-            response = requests.get(source, stream=True)
-            if not response.ok:
-                msg = "The data could not be accessed from the webpage. "
-                msg += "HTTP Status: {0}, ".format(response.status_code)
-                msg += "Reason: {0}".format(response.reason)
-                raise InvalidArgumentValue(msg)
-            if isUCI and not _isDownloadable(source):
-                # ignore Parent Directory at index 0 in every repository
-                hrefs = re.findall('href="(.+)"', response.text)[1:]
-                dataFiles = [href for href in hrefs if _isUCIDataFile(href)]
-                if len(dataFiles) > 1:
-                    msg = 'This UCI source contains multiple data files. '
-                    msg += 'Provide a url to a specific file.'
-                    raise InvalidArgumentValue(msg)
-                source += dataFiles[0]
-                response = requests.get(source, stream=True)
+            source, database = _urlSourceProcessor(source)
+            try:
+                urlManager = _DirectURLManager(source, False)
+            except InvalidArgumentValue:
+                if database == 'uci':
+                    urlManager = _IndirectURLManagerUCI(source, False)
+                    dataFilter = _isUCIDataFile
+                elif database == 'nimble':
+                    urlManager = _IndirectURLManagerNimble(source, False)
+                else:
+                    raise
+                # only a source with a single data file reaches this point
+                source = urlManager.downloadPrefix() + urlManager.hrefsData[0]
+                urlManager = _DirectURLManager(source, False, checkLocal=False)
 
+            response = _getURLResponse(urlManager.source)
             path = source
             if name is None:
                 if "Content-Disposition" in response.headers:
@@ -1623,7 +1879,7 @@ def createDataFromFile(
         if _isGZip(toCheck):
             content = _decompressGZip(toCheck).read()
         elif _isArchive(toCheck):
-            content = _extractFromArchive(toCheck, isUCI).read()
+            content = _extractFromArchive(toCheck, dataFilter).read()
 
     with BytesIO(content) as toCheck:
         extension = _autoFileTypeChecker(toCheck)
@@ -2434,126 +2690,6 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
 
     return retData, retPNames, retFNames
 
-def _processArchiveFile(filename, overwrite, allowMultiple):
-    """
-    Extract contents of an archive file.
-
-    Return a list of paths to the extracted files. If the file contains
-    multiple files and allowMultiple is False, the archive file will be
-    returned and no extraction will occur.
-    """
-    if zipfile.is_zipfile(filename):
-        archiveObj = zipfile.ZipFile
-        nameGetter = 'namelist'
-    else:
-        archiveObj = tarfile.TarFile
-        nameGetter = 'getnames'
-    with archiveObj(filename, 'r') as fileObj:
-        names = getattr(fileObj, nameGetter)()
-        if any(os.path.isabs(name) or '..' in name for name in names):
-            # potential security risk will not perform extraction
-            return [filename]
-
-        if not allowMultiple and len(names) > 1:
-            return [filename]
-
-        location = os.path.dirname(filename)
-        paths = [os.path.join(location, name) for name in names]
-        # only need to extract if overwrite or any expected files don't exist
-        if overwrite or not all(os.path.exists(path) for path in paths):
-            fileObj.extractall(location)
-
-        files = []
-        for path in paths:
-            if os.path.isfile(path):
-                files.append(path)
-
-        return files
-
-def _processCompressedFile(filename):
-    """
-    Decompress a gzip file.
-    """
-    with gzip.open(filename, 'rb') as fIn:
-        if filename.endswith('.gz'):
-            unzipped = filename[:-3]
-        else:
-            unzipped = filename
-        with open(unzipped, 'wb') as fOut:
-            shutil.copyfileobj(fIn, fOut)
-        return [unzipped]
-
-def _findData(url, filename, overwrite, allowMultiple):
-    """
-    Find data locally or download and store.
-
-    Assumes that url is downloadable. The data may be available locally
-    if previously stored, but if not found the data will be downloaded
-    and stored.
-
-    Return a list of data file paths.
-    """
-    if os.path.exists(filename):
-        if _isArchive(filename):
-            return _processArchiveFile(filename, overwrite, allowMultiple)
-        if not overwrite:
-            isGZip = _isGZip(filename)
-            if isGZip and os.path.exists(filename[:-3]):
-                return [filename[:-3]]
-            if not isGZip:
-                return [filename]
-
-    directory = os.path.split(filename)[0]
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-    response = requests.get(url, allow_redirects=True)
-    with open(filename, 'w+b') as f:
-        f.write(response.content)
-
-    try:
-        if _isArchive(filename):
-            return _processArchiveFile(filename, overwrite, allowMultiple)
-        if _isGZip(filename):
-            return _processCompressedFile(filename)
-    except Exception: # pylint: disable=broad-except
-        pass # return the archive file on failure
-
-    return [filename]
-
-def _findUCIData(source, path, currPaths, overwrite, allowMultiple):
-    """
-    Recursive download for files from a UCI repository.
-    """
-    response = requests.get(source)
-    # ignore Parent Directory at index 0 in every repository
-    hrefs = re.findall('href="(.+)"', response.text)[1:]
-    # Index file and .names files contain dataset details, not data so they
-    # will be downloaded but ignored for return with fetchFile.
-    ignore = False
-    if not allowMultiple and len(hrefs) > 1:
-        if len([href for href in hrefs if _isUCIDataFile(href)]) > 1:
-            msg = 'The source contains multiple files. Use nimble.fetchFiles '
-            msg += 'or provide the url to a specific file.'
-            raise InvalidArgumentValue(msg)
-        ignore = True
-    for href in hrefs:
-        url = source + href
-        if _isDownloadable(url):
-            urlInfo = urllib.parse.urlparse(url)
-            name = os.path.split(urlInfo.path)[1]
-            filename = os.path.join(path, name)
-            paths = _findData(url, filename, overwrite, allowMultiple)
-            if not ignore or _isUCIDataFile(href):
-                currPaths.extend(paths)
-        else:
-            newSource = url
-            newPath = os.path.join(path, href)
-            currPaths = _findUCIData(newSource, newPath, currPaths, overwrite,
-                                     allowMultiple)
-
-    return currPaths
-
 def fileFetcher(source, overwrite, allowMultiple=True):
     """
     Download data from the web and store at a specified location. Files
@@ -2569,23 +2705,15 @@ def fileFetcher(source, overwrite, allowMultiple=True):
     the file or extracted archive contents are placed in the path
     directory.
     """
-    if not requests.nimbleAccessible():
-        raise PackageException('requests must be installed')
-    isUCI = _isUCI(source.lower())
-    if isUCI:
-        source = _processUCISource(source.lower())
-    configLoc = nimble.settings.get('fetch', 'location')
-    homepath = os.path.join(configLoc, 'nimbleData')
-    urlInfo = urllib.parse.urlparse(source)
-    netLoc = urlInfo.netloc
-    if netLoc.startswith('www.'):
-        netLoc = netLoc[4:]
-    directory = os.path.join(*urlInfo.path.split('/'))
-    dirPath = os.path.join(homepath, netLoc, directory)
-    if _isDownloadable(source):
-        return _findData(source, dirPath, overwrite, allowMultiple)
-    if isUCI:
-        return _findUCIData(source, dirPath, [], overwrite, allowMultiple)
+    source, database = _urlSourceProcessor(source)
+    try:
+        urlManager = _DirectURLManager(source, allowMultiple)
+    except InvalidArgumentValue:
+        if database == 'uci':
+            urlManager = _IndirectURLManagerUCI(source, allowMultiple)
+        elif database == 'nimble':
+            urlManager = _IndirectURLManagerNimble(source, allowMultiple)
+        else:
+            raise
 
-    msg = 'source did not provide downloadable data'
-    raise InvalidArgumentValue(msg)
+    return urlManager.fetch(overwrite)

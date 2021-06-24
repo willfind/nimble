@@ -1,3 +1,9 @@
-:target{
-    background-color:lightyellow;
+/* highlight headings for links */
+:target h2{
+    background-color: #FAF3E8;
+}
+
+/* autosummary table widths consistent */
+table.align-default {
+    width: 98%;
 }

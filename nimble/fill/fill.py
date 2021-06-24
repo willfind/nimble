@@ -16,7 +16,7 @@ def _booleanElementMatch(vector, match):
 
 def constant(vector, match, constantValue):
     """
-    Fill matched values with a constant value
+    Fill matched values with a constant value.
 
     Parameters
     ----------
@@ -369,7 +369,7 @@ def backwardFill(vector, match):
 
 def interpolate(vector, match, **kwarguments):
     """
-    Fill matched values with the interpolated value
+    Fill matched values with the interpolated value.
 
     The fill value is determined by the piecewise linear interpolant
     returned by np.interp. By default, the unmatched values will be
@@ -542,7 +542,7 @@ def errorMsgFormatter(msg, vector, **kwargs):
 
 def statsExceptionNoMatches(funcString, vector):
     """
-    Generic message when the statisitcs function recieves no values.
+    Generic message when the statistics function recieves no values.
     """
     msg = "Cannot calculate {funcString}. The {funcString} is calculated "
     msg += "using only unmatched values. All values for the {axis} {location} "

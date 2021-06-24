@@ -471,7 +471,7 @@ class DataFrame(Base):
                     otherDtypes = (otherDtypes[0],) * len(self.features)
         else:
             dtype = np.dtype(type(other))
-            if dtype > np.dtype(float):
+            if not np.can_cast(dtype, float):
                 dtype = np.object_
             otherDtypes = tuple(dtype for _ in initialDtypes)
 
@@ -482,7 +482,7 @@ class DataFrame(Base):
         alwaysFloat = 'truediv' in opName
         for dtype1, dtype2 in zip(initialDtypes, otherDtypes):
             useType = max(dtype1, dtype2)
-            if alwaysFloat and useType < np.dtype(float):
+            if alwaysFloat and np.can_cast(useType, float):
                 dtypes.append(np.dtype(float))
             else:
                 dtypes.append(useType)
@@ -562,14 +562,12 @@ class DataFrame(Base):
         floats if the dtypes are not already all the same numeric dtype.
         """
         dtypes = self._data.dtypes
-        allowedDtypes = set((np.dtype(bool), np.dtype(int),
-                            np.dtype(float)))
+        allowed = set((np.dtype(bool), np.dtype(int), np.dtype(float)))
         if not numericRequired:
-            allowedDtypes.add(np.dtype(np.object_))
+            allowed.add(np.dtype(np.object_))
 
         if len(dtypes) > 0:
-            floatDtype = np.dtype(float)
-            if all(d in allowedDtypes and d <= floatDtype for d in dtypes):
+            if all(d in allowed and np.can_cast(d, float) for d in dtypes):
                 return self._data.values
         if numericRequired:
             return self._data.values.astype(float)
