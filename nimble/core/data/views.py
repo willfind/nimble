@@ -328,6 +328,9 @@ class PointsView(Points, metaclass=ABCMeta):
                                    featuresWithValues, useLog=None):
         readOnlyException('combineByExpandingFeatures')
 
+    @pointsExceptionDoc
+    def replace(self, data, points=None, useLog=None, **dataKwds):
+        readOnlyException('replace')
 
 @inheritDocstringsFactory(Features)
 class FeaturesView(Features, metaclass=ABCMeta):
@@ -409,3 +412,7 @@ class FeaturesView(Features, metaclass=ABCMeta):
     @featuresExceptionDoc
     def splitByParsing(self, feature, rule, resultingNames, useLog=None):
         readOnlyException('splitByParsing')
+
+    @featuresExceptionDoc
+    def replace(self, data, features=None, useLog=None, **dataKwds):
+        readOnlyException('replace')

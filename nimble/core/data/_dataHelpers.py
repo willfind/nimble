@@ -658,9 +658,11 @@ def validateAxisFunction(func, axis, allowedLength=None):
             if isAllowedSingleElement(ret):
                 wrappedAxisFunc.updateConvertType(type(ret))
                 return ret
+            notBase = not isinstance(ret, nimble.core.data.Base)
             try:
                 for value in ret:
-                    if not isAllowedSingleElement(value):
+                    # values in Base have already been validated
+                    if notBase and not isAllowedSingleElement(value):
                         msg = "The return of 'function' contains an "
                         msg += "invalid value. Numbers, strings, None, or "
                         msg += "nan are the only valid values. This value "

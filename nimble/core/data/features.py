@@ -1400,6 +1400,75 @@ class Features(ABC):
         self._insert(None, toAppend, True, useLog)
 
     @limitedTo2D
+    def replace(self, data, features=None, useLog=None, **dataKwds):
+        """
+        Replace the data in one or more of the features in this object.
+
+        If ``features=None``, the data must be a nimble data object with
+        matching featureNames, matching featureNames must be specified
+        as a ``dataKwds`` argument or the data must replace all
+        features. Otherwise, the shape of the ``data`` object must align
+        with the ``features`` parameter. Index values in ``features``
+        will take priority over matching featureNames.
+
+        Parameters
+        ----------
+        data
+            The object containing the data to use as a replacement. This
+            can be any ``source`` accepted by ``nimble.data``.
+        features : identifier, list, None
+            The feature (name or index) or list of features to replace
+            with the provided data.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
+        dataKwds
+            Any keyword arguments accepted by ``nimble.data`` to use
+            to construct a nimble data object from ``data``. These only
+            apply when ``data`` is not already a nimble data object.
+
+        Examples
+        --------
+        >>> obj = nimble.zeros('Matrix', 3, 3,
+        ...                    featureNames=['a', 'b', 'c'])
+        >>> newFt = nimble.ones('Matrix', 3, 1, featureNames=['b'])
+        >>> obj.features.replace(newFt, features='b')
+        >>> obj
+        Matrix(
+            [[0.000 1.000 0.000]
+             [0.000 1.000 0.000]
+             [0.000 1.000 0.000]]
+            featureNames={'a':0, 'b':1, 'c':2}
+            )
+
+        >>> obj = nimble.zeros('Sparse', 3, 4)
+        >>> replacement = [[1, 9], [2, 8], [3, 7]]
+        >>> obj.features.replace(replacement, [1, 2])
+        >>> obj
+        Sparse(
+            [[0 1.000 9.000 0]
+             [0 2.000 8.000 0]
+             [0 3.000 7.000 0]]
+            )
+
+        >>> obj = nimble.zeros('DataFrame', 3, 3,
+        ...                    featureNames=['a', 'b', 'c'])
+        >>> obj.features.replace(['Y', 'N', 'Y'], featureNames=['b'])
+        >>> obj
+        DataFrame(
+            [[0.000 Y 0.000]
+             [0.000 N 0.000]
+             [0.000 Y 0.000]]
+            featureNames={'a':0, 'b':1, 'c':2}
+            )
+        """
+        return self._replace(data, features, useLog, **dataKwds)
+
+    @limitedTo2D
     def mapReduce(self, mapper, reducer, useLog=None):
         """
         Apply a mapper and reducer function to this object.
@@ -2388,6 +2457,10 @@ class Features(ABC):
 
     @abstractmethod
     def _insert(self, insertBefore, toInsert, append=False, useLog=None):
+        pass
+
+    @limitedTo2D
+    def _replace(self, data, locations, useLog=None):
         pass
 
     @abstractmethod
