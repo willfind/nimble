@@ -80,7 +80,7 @@ def test_fractionIncorrectConfidenceInterval():
 
     def getPredictions(actual):
         def predict(pt):
-            rand = numpyRandom.random()
+            rand = numpyRandom.rand()
             if rand < 0.8:
                 return pt[0]
             return int(not pt[0])
