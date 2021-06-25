@@ -104,6 +104,11 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         """
         return name.lower() == self.getCanonicalName().lower()
 
+    def _confirmValidLearner(self, learnerName):
+        if not learnerName in self.listLearners():
+            msg = learnerName
+            msg += " is not the name of a learner exposed by this interface"
+            raise InvalidArgumentValue(msg)
 
     @captureOutput
     def train(self, learnerName, trainX, trainY=None, arguments=None,
@@ -138,6 +143,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             The results of any cross-validation performed prior to
             training.
         """
+        self._confirmValidLearner(learnerName)
         forShogun = self.getCanonicalName() == 'shogun'
         randomSeed = nimble.random._getValidSeed(randomSeed, forShogun)
         if multiClassStrategy != 'default':
@@ -256,25 +262,9 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                               crossValidationResults, trainXShape, trainYNames,
                               randomSeed)
 
-
-    def _confirmValidLearner(self, learnerName):
-        allLearners = self.listLearners()
-        if not learnerName in allLearners:
-            msg = learnerName
-            msg += " is not the name of a learner exposed by this interface"
-            raise InvalidArgumentValue(msg)
-        learnerCall = self.findCallable(learnerName)
-        if learnerCall is None:
-            msg = learnerName + " was not found in this package"
-            raise InvalidArgumentValue(msg)
-
-
     def _trainBackend(self, learnerName, trainX, trainY, arguments,
                       randomSeed):
         ### PLANNING ###
-
-        # verify the learner is available
-        self._confirmValidLearner(learnerName)
 
         # the scratch space dictionary that the package implementor may use to
         # pass information between I/O transformation, the trainer and applier
@@ -555,6 +545,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         -------
         List of list of param names
         """
+        self._confirmValidLearner(learnerName)
         ret = self._getLearnerParameterNamesBackend(learnerName)
         if ret is not None:
             # Backend may contain duplicates but only one value can be assigned
@@ -593,6 +584,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         -------
         List of dict of param names to default values
         """
+        self._confirmValidLearner(learnerName)
         return self._getLearnerDefaultValuesBackend(learnerName)
 
 
