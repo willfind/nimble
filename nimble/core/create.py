@@ -404,10 +404,10 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
     ...                            name='Sparse all-zeros')
     >>> zerosSparse
     Sparse(
-        [[0 0 0 0]
-         [0 0 0 0]
-         [0 0 0 0]
-         [0 0 0 0]]
+        [[0.000 0.000 0.000 0.000]
+         [0.000 0.000 0.000 0.000]
+         [0.000 0.000 0.000 0.000]
+         [0.000 0.000 0.000 0.000]]
         pointNames={'1':0, '2':1, '3':2, '4':3}
         featureNames={'a':0, 'b':1, 'c':2, 'd':3}
         name="Sparse all-zeros"

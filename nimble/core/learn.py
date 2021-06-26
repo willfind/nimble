@@ -378,11 +378,11 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     ...                     features=-1, k=3, mode='regression')
     >>> data
     Sparse(
-        [[1.000   0   6.333]
+        [[1.000 0.000 6.333]
          [1.000 3.000 6.000]
          [2.000 1.000 6.000]
          [1.000 3.000 7.000]
-         [  0   3.000 6.333]]
+         [0.000 3.000 6.333]]
         )
     """
     if trackEntry.isEntryPoint:

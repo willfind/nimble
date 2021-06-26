@@ -127,11 +127,11 @@ def data(
     >>> sparse = nimble.random.data('Sparse', 5, 5, .9)
     >>> sparse
     Sparse(
-        [[0   0    0   0    0]
-         [0   0    0 -1.283 0]
-         [0 -0.298 0   0    0]
-         [0   0    0   0    0]
-         [0   0    0   0    0]]
+        [[0.000 0.000  0.000 0.000  0.000]
+         [0.000 0.000  0.000 -1.283 0.000]
+         [0.000 -0.298 0.000 0.000  0.000]
+         [0.000 0.000  0.000 0.000  0.000]
+         [0.000 0.000  0.000 0.000  0.000]]
         )
     """
     validateReturnType(returnType)
@@ -163,8 +163,10 @@ def data(
             if elementType == 'int':
                 dataVector = numpyRandom.randint(low=1, high=100,
                                                  size=numNonZeroValues)
+                dtype = np.dtype(int)
             else: #numeric type is float; distribution is normal
                 dataVector = numpyRandom.normal(0, 1, size=numNonZeroValues)
+                dtype = np.dtype(float)
             if returnType == 'Sparse':
                 if not scipy.nimbleAccessible():
                     msg = "scipy is not available"
@@ -179,7 +181,7 @@ def data(
                     (dataVector, (pointIndices, featureIndices)),
                     (numPoints, numFeatures))
             else:
-                randData = np.zeros(size)
+                randData = np.zeros(size, dtype=dtype)
                 # np.put indexes as if flat so can use nzLocation
                 np.put(randData, nzLocation, dataVector)
         else:

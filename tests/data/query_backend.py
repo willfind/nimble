@@ -461,14 +461,33 @@ class QueryBackend(DataTestObject):
         pnames = ['1', '4', '7', '0']
         data = [[1, 2, 3, 0], [4, 5, 0, 0], [7, 0, 9, 0], [0, 0, 0, 0]]
 
-        toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
+        toTestInt = self.constructor(data, pointNames=pnames, featureNames=featureNames)
 
-        assert toTest[0, 0] == 1
-        assert toTest[1, 3] == 0
-        assert toTest['7', 2] == 9
-        assert toTest[3, 'zero'] == 0
+        assert toTestInt[0, 0] == 1
+        assert isinstance(toTestInt[0, 0], (int, np.integer))
+        assert toTestInt[1, 3] == 0
+        assert isinstance(toTestInt[1, 3], (int, np.integer))
+        assert toTestInt['7', 2] == 9
+        assert isinstance(toTestInt['7', 2], (int, np.integer))
+        assert toTestInt[3, 'zero'] == 0
+        assert isinstance(toTestInt[3, 'zero'], (int, np.integer))
+        assert toTestInt[1, 'one'] == 4
+        assert isinstance(toTestInt[1, 'one'], (int, np.integer))
 
-        assert toTest[1, 'one'] == 4
+        data = [[1., 2., 3., 0.], [4., 5., 0., 0.], [7., 0., 9., 0.], [0., 0., 0., 0.]]
+
+        toTestFloat = self.constructor(data, pointNames=pnames, featureNames=featureNames)
+
+        assert toTestFloat[0, 0] == 1
+        assert isinstance(toTestFloat[0, 0], (float, np.floating))
+        assert toTestFloat[1, 3] == 0
+        assert isinstance(toTestFloat[1, 3], (float, np.floating))
+        assert toTestFloat['7', 2] == 9
+        assert isinstance(toTestFloat['7', 2], (float, np.floating))
+        assert toTestFloat[3, 'zero'] == 0
+        assert isinstance(toTestFloat[3, 'zero'], (float, np.floating))
+        assert toTestFloat[1, 'one'] == 4
+        assert isinstance(toTestFloat[1, 'one'], (float, np.floating))
 
     @raises(KeyError)
     def test_getitem_nonIntConvertableFloatSingleKey(self):

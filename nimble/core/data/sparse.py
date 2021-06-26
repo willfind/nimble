@@ -791,18 +791,15 @@ class Sparse(Base):
             axisVal = y
             offAxisVal = x
 
-        #binary search
+        # binary search
+        # if value is zero, return should be the same type as the nonzero data
         start, end = self._sorted['indices'][axisVal:axisVal + 2]
         if start == end: # axisVal is not in self._data.row
-            if np.issubdtype(self._data.dtype, np.bool_):
-                return False
-            return 0
+            return self._data.data.dtype.type(0)
         k = np.searchsorted(offAxis[start:end], offAxisVal) + start
         if k < end and offAxis[k] == offAxisVal:
             return self._data.data[k]
-        if np.issubdtype(self._data.dtype, np.bool_):
-            return False
-        return 0
+        return self._data.data.dtype.type(0)
 
     def _view_implementation(self, pointStart, pointEnd, featureStart,
                              featureEnd, dropDimension):
