@@ -3853,6 +3853,60 @@ class HighLevelModifying(DataTestObject):
 
         toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
 
+    def test_points_combineByExpandingFeatures_single_valuesMapToSameString(self):
+
+        data = [["p1", 100, 1, 9.5], ["p1", 100, 2, 9.9], ["p1", 100, '2', 9.8],
+                ["p2", 100, 1, 6.5], ["p2", 100, 2, 6.0], ["p2", 100, '2', 5.9],
+                ["p3", 100, 1, 11], ["p3", 100, 2, 11.2], ["p3", 100, '2', 11.0],
+                ["p1", 200, 1, 18.1], ["p1", 200, 2, 20.1], ["p1", 200, '2', 19.8]]
+        pNames = [str(i) for i in range(12)]
+        fNames = ['type', 'dist', 'run', 'time']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [["p1", 100, 9.5, 9.9, 9.8],
+                   ["p2", 100, 6.5, 6.0, 5.9],
+                   ["p3", 100, 11, 11.2, 11.0],
+                   ["p1", 200, 18.1, 20.1, 19.8]]
+        expFNames = ['type', 'dist', '1', '2(int)', '2(str)']
+        expPNames = ["0", "3", "6", "9"]
+        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
+
+        msg = 'Identical strings returned by classes that are unequal in '
+        msg += 'featureWithFeatureNames.'
+        with raises(ImproperObjectAction, match=msg):
+            toTest.points.combineByExpandingFeatures('run', 'time')
+
+        toTest.points.combineByExpandingFeatures('run', 'time',
+                                                 modifyDuplicateFeatureNames=True)
+        assert toTest == exp
+
+    def test_points_combineByExpandingFeatures_multiple_valuesMapToSameString(self):
+        data = [["p1", 100, '1', 9.5, 9.4], ["p1", 100, '2', 9.9, 9.7], ["p1", 100, 2, 9.8, 9.8],
+                ["p2", 100, '1', 6.5, 6.5], ["p2", 100, '2', 6.0, 6.2], ["p2", 100, 2, 5.9, 6.1],
+                ["p3", 100, '1', 11.0, 10.9], ["p3", 100, '2', 11.2, 11.1], ["p3", 100, 2, 11.0, 11.0],
+                ["p1", 200, '1', 18.1, 18.0], ["p1", 200, '2', 20.1, 20.2], ["p1", 200, 2, 19.8, 19.9]]
+        pNames = [str(i) for i in range(12)]
+        fNames = ['type', 'dist', 'run', 'timer1', 'timer2']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [["p1", 100, 9.5, 9.4, 9.9, 9.7, 9.8, 9.8],
+                   ["p2", 100, 6.5, 6.5, 6.0, 6.2, 5.9, 6.1],
+                   ["p3", 100, 11, 10.9, 11.2, 11.1, 11.0, 11.0],
+                   ["p1", 200, 18.1, 18.0, 20.1, 20.2, 19.8, 19.9]]
+        expFNames = ['type', 'dist', '1_timer1', '1_timer2', '2(str)_timer1',
+                     '2(str)_timer2', '2(int)_timer1', '2(int)_timer2']
+        expPNames = ["0", "3", "6", "9"]
+        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
+
+        msg = 'Identical strings returned by classes that are unequal in '
+        msg += 'featureWithFeatureNames.'
+        with raises(ImproperObjectAction, match=msg):
+            toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
+            
+        toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'],
+                                                 modifyDuplicateFeatureNames=True)
+        assert toTest == exp
+
     ###########################
     # features.splitByParsing #
     ###########################

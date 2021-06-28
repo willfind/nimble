@@ -1760,7 +1760,9 @@ class Points(ABC):
 
     @limitedTo2D
     def combineByExpandingFeatures(self, featureWithFeatureNames,
-                                   featuresWithValues, useLog=None):
+                                   featuresWithValues,
+                                   modifyDuplicateFeatureNames=False,
+                                   useLog=None):
         """
         Combine similar points based on a differentiating feature.
 
@@ -1800,6 +1802,13 @@ class Points(ABC):
         featuresWithValues : identifier, list of identifiers
             The names and/or indices of the features of values that
             correspond to the values in ``featureWithFeatureNames``.
+        modifyDuplicateFeatureNames : bool
+            Allow modifications featureName strings if two or more unique
+            values in ``featureWithFeatureNames`` return the same string.
+            Duplicate strings will have the type of the feature appended to the
+            string wrapped in parenthesis. For example, if 1 and '1' are both
+            in ``featureWithFeatureNames``, the featureNames will become
+            '1(int)' and '1(str)', respectively.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1892,6 +1901,23 @@ class Points(ABC):
         numRetFeatures = (len(self._base.features)
                           + (len(uniqueNames) * numExpanded)
                           - (1 + numExpanded))
+        # validate new feature names before modifying the object
+        prefixes = list(map(str, uniqueNames))
+        if len(set(prefixes)) != len(prefixes):
+            adjust = []
+            for i, n in enumerate(uniqueNames):
+                if prefixes.count(str(n)) > 1:
+                    adjust.append(i)
+            if not modifyDuplicateFeatureNames:
+                types = set(type(n) for n in (uniqueNames[i] for i in adjust))
+                msg = 'Identical strings returned by classes that are unequal '
+                msg += 'in featureWithFeatureNames. This was identified for '
+                msg += 'the following classes ' + str(types) + '. '
+                msg += 'If no changes to these values are necessary, '
+                msg += 'modifyDuplicateFeatureNames can be set to True.'
+                raise ImproperObjectAction(msg)
+            for i in adjust:
+                prefixes[i] += '(' + type(uniqueNames[i]).__name__ + ')'
 
         self._combineByExpandingFeatures_implementation(
             unique, namesIdx, valuesIdx, uniqueNames, numRetFeatures)
@@ -1899,7 +1925,7 @@ class Points(ABC):
         self._base._shape = [len(unique), numRetFeatures]
 
         newFtNames = []
-        for prefix in map(str, uniqueNames):
+        for prefix in prefixes:
             # if only one feature is expanded we will use the unique values
             # from the featureNames feature, otherwise we will concatenate
             # the feature name with the values feature name.
