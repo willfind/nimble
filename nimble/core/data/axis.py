@@ -472,19 +472,17 @@ class Axis(ABC):
 
         retData, offAxisNames = self._calculate_implementation(function,
                                                                limitTo)
-
-        ret = nimble.data(self._base.getTypeString(), retData, useLog=False)
-
-        ret._absPath = self._base.absolutePath
-        ret._relPath = self._base.relativePath
-
         if self._isPoint:
+            ret = nimble.data(self._base.getTypeString(), retData,
+                              useLog=False)
             axisNameSetter = ret.points.setNames
             offAxisNameSetter = ret.features.setNames
         else:
-            ret.transpose(useLog=False)
+            ret = nimble.data(self._base.getTypeString(), retData,
+                              rowsArePoints=False, useLog=False)
             axisNameSetter = ret.features.setNames
             offAxisNameSetter = ret.points.setNames
+
         if len(limitTo) < len(self) and self._namesCreated():
             names = []
             for index in limitTo:
@@ -494,6 +492,9 @@ class Axis(ABC):
             axisNameSetter(self._getNames(), useLog=False)
         if offAxisNames is not None:
             offAxisNameSetter(offAxisNames, useLog=False)
+
+        ret._absPath = self._base.absolutePath
+        ret._relPath = self._base.relativePath
 
         return ret
 

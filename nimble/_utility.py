@@ -292,6 +292,8 @@ def validateAllAllowedElements(data):
     """
     Validate all values in the data are allowed types.
     """
+    if isinstance(data, dict):
+        data = data.values()
     if not all(map(isAllowedSingleElement, data)):
         msg = "Number, string, None, nan, and datetime objects are "
         msg += "the only elements allowed in nimble data objects"

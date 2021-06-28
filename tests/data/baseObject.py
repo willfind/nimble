@@ -14,14 +14,15 @@ def objConstructorMaker(returnType):
     def constructor(
             source, pointNames='automatic', featureNames='automatic',
             name=None, convertToType=None, treatAsMissing=DEFAULT_MISSING,
-            replaceMissingWith=np.nan, paths=(None, None)):
+            replaceMissingWith=np.nan, rowsArePoints=True, paths=(None, None)):
         # Case: source is a path to a file
         if isinstance(source, str):
             return nimble.data(
                 returnType, source=source, pointNames=pointNames,
                 featureNames=featureNames, name=name,
                 convertToType=convertToType, treatAsMissing=treatAsMissing,
-                replaceMissingWith=replaceMissingWith, useLog=False)
+                replaceMissingWith=replaceMissingWith,
+                rowsArePoints=rowsArePoints, useLog=False)
         # Case: source is some in-python format. We must call initDataObject
         # instead of nimble.data because we sometimes need to specify a
         # particular path attribute.
@@ -29,7 +30,8 @@ def objConstructorMaker(returnType):
             returnType, source, pointNames=pointNames,
             featureNames=featureNames, name=name,
             convertToType=convertToType, treatAsMissing=treatAsMissing,
-            replaceMissingWith=replaceMissingWith, paths=paths)
+            replaceMissingWith=replaceMissingWith, rowsArePoints=rowsArePoints,
+            paths=paths)
 
     return constructor
 
@@ -45,10 +47,11 @@ def viewConstructorMaker(concreteType):
     def constructor(
             source, pointNames='automatic', featureNames='automatic',
             name=None, convertToType=None, treatAsMissing=DEFAULT_MISSING,
-            replaceMissingWith=np.nan, paths=(None, None)):
+            replaceMissingWith=np.nan, rowsArePoints=True, paths=(None, None)):
         construct = objConstructorMaker(concreteType)
         orig = construct(source, pointNames, featureNames, name, convertToType,
-                         treatAsMissing, replaceMissingWith, paths)
+                         treatAsMissing, replaceMissingWith, rowsArePoints,
+                         paths)
         origHasPts = orig.points._namesCreated()
         origHasFts = orig.features._namesCreated()
         # generate points of data to be present before and after the viewable

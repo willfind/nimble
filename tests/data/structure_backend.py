@@ -2105,7 +2105,7 @@ class StructureModifying(StructureShared):
         """
         orig1 = self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
         orig2 = self.constructor((1,2,3), featureNames=['a', 'b', 'c'])
-        orig3 = self.constructor({'a':1, 'b':2, 'c':3})
+        orig3 = self.constructor({'a':1, 'b':2, 'c':3}, rowsArePoints=False)
         orig3.features.sort()
         orig4 = self.constructor([{'a':1, 'b':2, 'c':3}])
         orig4.features.sort()
@@ -2140,7 +2140,7 @@ class StructureModifying(StructureShared):
         """
         orig1 = self.constructor([[1,2,'a'], [3,4,'b']], featureNames=['a', 'b', 'c'])
         orig2 = self.constructor(((1,2,'a'), (3,4,'b')), featureNames=['a', 'b', 'c'])
-        orig3 = self.constructor({'a':[1,3], 'b':[2,4], 'c':['a', 'b']})
+        orig3 = self.constructor({'a':[1,3], 'b':[2,4], 'c':['a', 'b']}, rowsArePoints=False)
         orig3.features.sort()
         orig4 = self.constructor([{'a':1, 'b':2, 'c':'a'}, {'a':3, 'b':4, 'c':'b'}])
         orig4.features.sort()

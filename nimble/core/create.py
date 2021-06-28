@@ -15,6 +15,7 @@ from nimble.core._createHelpers import isAllowedRaw
 from nimble.core._createHelpers import initDataObject
 from nimble.core._createHelpers import createDataFromFile
 from nimble.core._createHelpers import createConstantHelper
+from nimble.core._createHelpers import looksFileLike
 from nimble.core._createHelpers import fileFetcher
 from nimble.core._createHelpers import DEFAULT_MISSING
 
@@ -22,8 +23,8 @@ from nimble.core._createHelpers import DEFAULT_MISSING
 def data(returnType, source, pointNames='automatic', featureNames='automatic',
          name=None, convertToType=None, keepPoints='all', keepFeatures='all',
          treatAsMissing=DEFAULT_MISSING, replaceMissingWith=np.nan,
-         ignoreNonNumericalFeatures=False, inputSeparator='automatic',
-         copyData=True, useLog=None):
+         rowsArePoints=True, ignoreNonNumericalFeatures=False,
+         inputSeparator='automatic', copyData=True, useLog=None):
     """
     Function to instantiate one of the Nimble data container types.
 
@@ -81,6 +82,9 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
           and the names for each feature must be unique. As a list, the
           index of the name will define the feature index. As a dict,
           the value mapped to each name will define the feature index.
+    name : str
+        When not None, this value is set as the name attribute of the
+        returned object.
     convertToType : type, dict, list, None
         A one-time conversion of features to the provided type or types.
         By default, object types within ``source`` are not modified,
@@ -92,19 +96,6 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
         dict will remain as-is. A list must provide a type or None for
         each feature. Note: The setting of types only applies during the
         creation process, object methods will modify types if necessary.
-    name : str
-        When not None, this value is set as the name attribute of the
-        returned object.
-    convertToType : type, dict, list
-        A one-time conversion of the data to the type or types
-        specified. A single type will convert all the data to that type.
-        A dict maps a feature name or index to the conversion type and
-        only features requiring conversion need be included. A lists
-        must include a type or None for every feature. None will always
-        retain the object types as is. If unable to convert every value
-        to the given type, an exception will be raised. Note: This only
-        applies during the creation process, Nimble will modify types on
-        the backend as necessary.
     keepPoints : 'all', list
         Allows the user to select which points will be kept in the
         returned object, those not selected will be discarded. By
@@ -138,6 +129,15 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     replaceMissingWith
         A single value with which to replace any value in
         ``treatAsMissing``. By default this value is np.nan.
+    rowsArePoints : bool
+        For ``source`` objects with a ``shape`` attribute, shape[0] indicates
+        the rows. Otherwise, rows are defined as the objects returned when
+        iterating through ``source``. For one-dimensional rows, each row in
+        is processed as a point if True, otherwise rows are processed as
+        features. Two-dimensional rows will also be treated as one-dimensional
+        if this parameter is False and the row has a feature vector shape (e.g.
+        a list of 5 x 1 numpy arrays). This parameter must be True for any
+        higher dimension rows.
     ignoreNonNumericalFeatures : bool
         **This only applies when ``source`` is a file.**
         Indicate whether features containing non-numeric data should not
@@ -230,24 +230,20 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     """
     validateReturnType(returnType)
 
-    def looksFileLike(toCheck):
-        hasRead = hasattr(toCheck, 'read')
-        hasWrite = hasattr(toCheck, 'write')
-        return hasRead and hasWrite
-
     # None is an acceptable value for copyData in initDataObject but that
     # is reserved for internal use
     if copyData not in [True, False]:
         raise InvalidArgumentValue('copyData must be True or False')
 
     # input is raw data
-    if isAllowedRaw(source, allowLPT=True):
+    if isAllowedRaw(source):
         ret = initDataObject(
             returnType=returnType, rawData=source, pointNames=pointNames,
             featureNames=featureNames, name=name, convertToType=convertToType,
             keepPoints=keepPoints, keepFeatures=keepFeatures,
             treatAsMissing=treatAsMissing,
-            replaceMissingWith=replaceMissingWith, copyData=copyData)
+            replaceMissingWith=replaceMissingWith, rowsArePoints=rowsArePoints,
+            copyData=copyData)
     # input is an open file or a path to a file
     elif isinstance(source, str) or looksFileLike(source):
         ret = createDataFromFile(
@@ -255,7 +251,7 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
             featureNames=featureNames, name=name, convertToType=convertToType,
             keepPoints=keepPoints, keepFeatures=keepFeatures,
             treatAsMissing=treatAsMissing,
-            replaceMissingWith=replaceMissingWith,
+            replaceMissingWith=replaceMissingWith, rowsArePoints=rowsArePoints,
             ignoreNonNumericalFeatures=ignoreNonNumericalFeatures,
             inputSeparator=inputSeparator)
     # no other allowed inputs
