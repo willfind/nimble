@@ -24,7 +24,6 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.logger import handleLogging
 from nimble._utility import cloudpickle, h5py, plt
 from nimble._utility import isDatetime
-from nimble._utility import prettyListString
 from .stretch import Stretch
 from ._dataHelpers import formatIfNeeded
 from ._dataHelpers import constructIndicesList

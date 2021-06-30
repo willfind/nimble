@@ -1450,9 +1450,9 @@ class Features(ABC):
         >>> obj.features.replace(replacement, [1, 2])
         >>> obj
         Sparse(
-            [[0 1.000 9.000 0]
-             [0 2.000 8.000 0]
-             [0 3.000 7.000 0]]
+            [[0.000 1.000 9.000 0.000]
+             [0.000 2.000 8.000 0.000]
+             [0.000 3.000 7.000 0.000]]
             )
 
         >>> obj = nimble.zeros('DataFrame', 3, 3,

@@ -1399,10 +1399,10 @@ class Points(ABC):
         >>> obj.points.replace(replacement, [1, 2])
         >>> obj
         Sparse(
-            [[  0     0     0  ]
+            [[0.000 0.000 0.000]
              [1.000 2.000 3.000]
              [9.000 8.000 7.000]
-             [  0     0     0  ]]
+             [0.000 0.000 0.000]]
             )
 
         >>> obj = nimble.zeros('DataFrame', 3, 3,
