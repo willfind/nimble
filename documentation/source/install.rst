@@ -72,7 +72,7 @@ Machine-Learning Interfaces
    | `tensorflow`_/         | Neural Networks.                                 | |cm| | |cm|                       |
    | `keras`_               | See :ref:`install note <tensorflow-note>` below. |      |                            |
    +------------------------+--------------------------------------------------+------+----------------------------+
-   | `autoimpute`_          | Imputation. Machine Learning with missing data.  | |cm| | |cm| (nimble-data channel) |
+   | `autoimpute`_          | Imputation. Machine Learning with missing data.  | |cm| |                            |
    +------------------------+--------------------------------------------------+------+----------------------------+
    | `shogun`_              | Machine Learning.                                |      | |cm| (conda-forge channel) |
    +------------------------+--------------------------------------------------+------+----------------------------+
