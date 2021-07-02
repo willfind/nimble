@@ -7,13 +7,15 @@ import logging
 import warnings
 
 import numpy as np
+from packaging.version import parse
 
 import nimble
 from nimble._utility import inspectArguments, dtypeConvert
 from nimble._utility import inheritDocstringsFactory, numpy2DArray
 from nimble._utility import prettyListString
+from nimble._dependencies import checkVersion
 from nimble.exceptions import InvalidArgumentValue
-from .universal_interface import PredefinedInterface
+from .universal_interface import PredefinedInterfaceMixin
 from ._interface_helpers import PythonSearcher
 from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import collectAttributes
@@ -22,8 +24,8 @@ from ._interface_helpers import noLeading__, notCallable, notABCAssociated
 from ._interface_helpers import checkArgsForRandomParam
 
 
-@inheritDocstringsFactory(PredefinedInterface)
-class Keras(PredefinedInterface):
+@inheritDocstringsFactory(PredefinedInterfaceMixin)
+class Keras(PredefinedInterfaceMixin):
     """
     This class is an interface to keras.
     """
@@ -35,37 +37,40 @@ class Keras(PredefinedInterface):
             # need to set tensorflow random seed before importing keras
             self.tensorflow = modifyImportPathAndImport('tensorflow',
                                                         'tensorflow')
+            checkVersion(self.tensorflow)
             # tensorflow has a tremendous quantity of informational outputs
             # that drown out anything else on standard out
             logging.getLogger('tensorflow').disabled = True
-            # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-            if int(self.tensorflow.__version__.split('.')[0]) < 2:
+            if parse(self.tensorflow.__version__) < parse('2'):
                 msg = "Randomness is outside of Nimble's control for version "
                 msg += "1.x of Tensorflow. Reproducible results cannot be "
                 msg += "guaranteed"
                 warnings.warn(msg, UserWarning)
             else:
                 self._tfVersion2 = True
-            self.keras = modifyImportPathAndImport('keras', 'tensorflow.keras')
+            self.package = modifyImportPathAndImport('keras',
+                                                     'tensorflow.keras')
+
         except ImportError:
-            self.keras = modifyImportPathAndImport('keras', 'keras')
+            self.package = modifyImportPathAndImport('keras', 'keras')
+
 
         # keras 2.0.8 has no __all__
-        names = os.listdir(self.keras.__path__[0])
+        names = os.listdir(self.package.__path__[0])
         possibilities = []
-        if not hasattr(self.keras, '__all__'):
-            self.keras.__all__ = []
+        if not hasattr(self.package, '__all__'):
+            self.package.__all__ = []
         for name in names:
             splitList = name.split('.')
             if len(splitList) == 1 or splitList[1] in ['py', 'pyc']:
-                if (splitList[0] not in self.keras.__all__
+                if (splitList[0] not in self.package.__all__
                         and not splitList[0].startswith('_')):
                     possibilities.append(splitList[0])
 
         possibilities = np.unique(possibilities).tolist()
         if 'utils' in possibilities:
             possibilities.remove('utils')
-        self.keras.__all__.extend(possibilities)
+        self.package.__all__.extend(possibilities)
 
         def isLearner(obj):
             """
@@ -80,9 +85,20 @@ class Keras(PredefinedInterface):
 
             return True
 
-        self._searcher = PythonSearcher(self.keras, isLearner, 2)
+        self._searcher = PythonSearcher(self.package, isLearner, 2)
 
         super().__init__()
+
+    def _checkVersion(self):
+        savedName = self.package.__name__
+        if savedName != 'keras':
+            try:
+                self.package.__name__ = 'keras'
+                super()._checkVersion()
+            finally:
+                self.package.__name__ = savedName
+        else:
+            super()._checkVersion()
 
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
@@ -438,10 +454,6 @@ To install keras
 
     def _configurableOptionNames(self):
         return ['location']
-
-    def version(self):
-        return self.keras.__version__
-
 
     def _predict(self, learner, testX, arguments, customDict):
         """

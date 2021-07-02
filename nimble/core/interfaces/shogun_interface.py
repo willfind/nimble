@@ -14,7 +14,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._utility import inheritDocstringsFactory
-from .universal_interface import PredefinedInterface
+from .universal_interface import PredefinedInterfaceMixin
 from ._interface_helpers import PythonSearcher
 from ._interface_helpers import modifyImportPathAndImport
 
@@ -32,17 +32,17 @@ trainYAliases = ['trainlab', 'lab', 'labs', 'labels', 'training_labels',
                  'train_labels']
 
 
-@inheritDocstringsFactory(PredefinedInterface)
-class Shogun(PredefinedInterface):
+@inheritDocstringsFactory(PredefinedInterfaceMixin)
+class Shogun(PredefinedInterfaceMixin):
     """
     This class is an interface to shogun.
     """
 
     def __init__(self):
-        self.shogun = modifyImportPathAndImport('shogun', 'shogun')
-
-        self.versionString = None
-
+        self.package = modifyImportPathAndImport('shogun', 'shogun')
+        if not hasattr(self.package, '__version__'):
+            version = self._access('Version', 'get_version_release')()
+            self.package.__version__ = version
         def isLearner(obj):
             hasTrain = hasattr(obj, 'train')
             hasApply = hasattr(obj, 'apply')
@@ -71,8 +71,8 @@ class Shogun(PredefinedInterface):
 
             return True
 
-        self._hasAll = hasattr(self.shogun, '__all__')
-        self._searcher = PythonSearcher(self.shogun, isLearner, 2)
+        self._hasAll = hasattr(self.package, '__all__')
+        self._searcher = PythonSearcher(self.package, isLearner, 2)
 
         super().__init__()
 
@@ -88,8 +88,8 @@ class Shogun(PredefinedInterface):
         # organization, where things are separated into submodules. They need
         # to be loaded before access.
         if self._hasAll:
-            if hasattr(self.shogun, module):
-                submod = getattr(self.shogun, module)
+            if hasattr(self.package, module):
+                submod = getattr(self.package, module)
             else:
                 submod = importlib.import_module('shogun.' + module)
         # If there is no __all__ attribute, we're in the newer, flatter style
@@ -97,10 +97,10 @@ class Shogun(PredefinedInterface):
         # they were previously,others will up at the top level. This will check
         # both locations
         else:
-            if hasattr(self.shogun, target):
-                submod = self.shogun
+            if hasattr(self.package, target):
+                submod = self.package
             else:
-                submod = getattr(self.shogun, module)
+                submod = getattr(self.package, module)
 
         return getattr(submod, target)
 
@@ -362,7 +362,7 @@ To install shogun
         toCall = self.findCallable(learnerName)
         learnerDefaults = self._getDefaultValuesBackend(learnerName)[0]
 
-        self.shogun.Math.init_random(randomSeed)
+        self.package.Math.init_random(randomSeed)
         # Figure out which argument values are needed for training
         setterArgs = {}
         for name, arg in arguments.items():
@@ -432,14 +432,6 @@ To install shogun
 
     def _configurableOptionNames(self):
         return ['location', 'sourceLocation', 'libclangLocation']
-
-
-    def version(self):
-        if self.versionString is None:
-            accessVersion = self._access('Version', 'get_version_release')()
-            self.versionString = accessVersion
-
-        return self.versionString
 
     ######################
     ### METHOD HELPERS ###

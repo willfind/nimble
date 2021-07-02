@@ -24,6 +24,7 @@ from nimble._utility import cloudpickle
 from nimble._utility import mergeArguments
 from nimble._utility import prettyListString
 from nimble._utility import prettyDictString
+from nimble._dependencies import checkVersion
 from nimble.core.logger import handleLogging
 from nimble.core.configuration import configErrors
 from nimble.core._learnHelpers import computeMetrics
@@ -1770,9 +1771,9 @@ class TrainedLearners(TrainedLearner):
         raise ImproperObjectAction('Wrong multiclassification method.')
 
 
-#######################
-# PredefinedInterface #
-#######################
+############################
+# PredefinedInterfaceMixin #
+############################
 
 pathMessage = """
 If {name} installed
@@ -1789,7 +1790,7 @@ def _formatPathMessage(name):
     return pathMessage.format(name=name, underline=underline)
 
 @inheritDocstringsFactory(UniversalInterface)
-class PredefinedInterface(UniversalInterface):
+class PredefinedInterfaceMixin(UniversalInterface):
     """
     Interfaces to third party packages.
 
@@ -1814,6 +1815,8 @@ class PredefinedInterface(UniversalInterface):
             # call _optionDefaults to make sure it doesn't throw an exception
             self._optionDefaults(optionName)
 
+        self._checkVersion()
+
     @classmethod
     @abc.abstractmethod
     def getCanonicalName(cls):
@@ -1822,6 +1825,12 @@ class PredefinedInterface(UniversalInterface):
     @classmethod
     def isAlias(cls, name):
         return name.lower() == cls.getCanonicalName().lower()
+
+    def _checkVersion(self):
+        checkVersion(self.package)
+
+    def version(self):
+        return self.package.__version__
 
     @classmethod
     def provideInitExceptionInfo(cls):

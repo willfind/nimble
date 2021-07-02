@@ -29,6 +29,8 @@ try:
 except ImportError:
     CYTHON_AVAILABLE = False
 
+from nimble._dependencies import DEPENDENCIES
+
 def getCFiles():
     return glob.glob(os.path.join('nimble', '**', '*.c'), recursive=True)
 
@@ -162,51 +164,43 @@ def run_setup():
     setupKwargs['description'] = "Interfaces and tools for data science."
     setupKwargs['url'] = "https://nimbledata.org"
     setupKwargs['packages'] = find_packages(exclude=('tests', 'tests.*'))
-    setupKwargs['python_requires'] = '>=3.4'
+    setupKwargs['python_requires'] = '>=3.6'
     setupKwargs['classifiers'] = [
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Operating System :: OS Independent',
         ]
 
     setupKwargs['include_package_data'] = True
     setupKwargs['convert_2to3_doctests'] = []
-    setupKwargs['install_requires'] = ['numpy>=1.14']
+
+    setupKwargs['install_requires'] = list(DEPENDENCIES['required'].values())
     # extras
-    pandas = 'pandas>=0.24'
-    scipy = 'scipy>=1.1'
-    matplotlib = 'matplotlib>=3.1'
-    cloudpickle = 'cloudpickle>=1.0'
-    requests = 'requests>2.12'
-    h5py = 'h5py>=2.10'
-    dateutil = 'python-dateutil>=2.6'
-    scikitlearn = 'scikit-learn>=0.19'
-    tensorflow = 'tensorflow>=1.14'
-    keras = 'keras>=2.0'
-    autoimpute = 'autoimpute>=0.12'
-    mlpy = 'machine-learning-py>=3.5;python_version<"3.7"'
-    pylint = 'pylint>=2.7.4'
-    pytest = 'pytest>=6.2'
-    cython = 'cython>=0.29'
-    sphinx = 'sphinx>=3.3'
-    data = [pandas, scipy]
-    operation = [matplotlib, cloudpickle, requests, h5py, dateutil]
-    interfaces = [scikitlearn, tensorflow, autoimpute, mlpy]
-    quickstart = data + operation + [scikitlearn]
-    userAll = data + operation + interfaces
-    development = [pytest, pylint, cython, sphinx]
+    data = DEPENDENCIES['data']
+    operation = DEPENDENCIES['operation']
+    interfaces = DEPENDENCIES['interfaces']
+    development = DEPENDENCIES['development']
+
     setupKwargs['extras_require'] = {
-        'quickstart': quickstart, 'all': userAll, 'data': data,
-        'pandas': pandas, 'scipy': scipy, 'matplotlib': matplotlib,
-        'cloudpickle': cloudpickle, 'requests': requests, 'h5py': h5py,
-        'dateutil': dateutil, 'machine-learning-py': mlpy,
-        'scikit-learn': scikitlearn, 'keras': keras, 'tensorflow': tensorflow,
-        'autoimpute': autoimpute, 'development': development, 'pylint': pylint,
-        'pylint': pylint, 'cython': cython, 'sphinx': sphinx,
+        'data': list(data.values()), 'development': list(development.values()),
         }
+    setupKwargs['extras_require'].update(data)
+    setupKwargs['extras_require'].update(operation)
+    setupKwargs['extras_require'].update(interfaces)
+    setupKwargs['extras_require'].update(development)
+
+    quickstart = list(data.values()) + list(operation.values())
+    userAll = quickstart.copy()
+    quickstart.append(interfaces['sklearn'])
+    del interfaces['keras'] # tensorflow includes keras
+    userAll.extend(interfaces.values())
+
+    setupKwargs['extras_require']['quickstart'] = quickstart
+    setupKwargs['extras_require']['all'] = userAll
 
     # TODO
     # determine best version requirements for install_requires, extras_require

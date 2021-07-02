@@ -13,7 +13,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble._utility import inspectArguments
 from nimble._utility import inheritDocstringsFactory, dtypeConvert
-from .universal_interface import PredefinedInterface
+from .universal_interface import PredefinedInterfaceMixin
 from ._interface_helpers import PythonSearcher
 from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import removeFromTailMatchedLists
@@ -21,8 +21,8 @@ from ._interface_helpers import validInitParams
 from . import _mlpy_patches
 
 
-@inheritDocstringsFactory(PredefinedInterface)
-class Mlpy(PredefinedInterface):
+@inheritDocstringsFactory(PredefinedInterfaceMixin)
+class Mlpy(PredefinedInterfaceMixin):
     """
     This class is an interface to mlpy.
     """
@@ -33,8 +33,7 @@ class Mlpy(PredefinedInterface):
 
     def __init__(self):
         # modify path if another directory provided
-
-        self.mlpy = modifyImportPathAndImport('mlpy', 'mlpy')
+        self.package = modifyImportPathAndImport('mlpy', 'mlpy')
 
         def isLearner(obj):
             hasLearn = hasattr(obj, 'learn')
@@ -45,7 +44,7 @@ class Mlpy(PredefinedInterface):
                 return True
             return False
 
-        self._searcher = PythonSearcher(self.mlpy, isLearner, 1)
+        self._searcher = PythonSearcher(self.package, isLearner, 1)
 
         super().__init__()
 
@@ -229,7 +228,7 @@ To install mlpy
             if arg == 'kernel':
                 validate = val is None
 
-                if isinstance(val, self.mlpy.KernelExponential):
+                if isinstance(val, self.package.KernelExponential):
                     msg = "This interface disallows KernelExponential; "
                     msg = "it is bugged in some versions of mlpy"
                     raise InvalidArgumentValue(msg)
@@ -338,10 +337,6 @@ To install mlpy
 
     def _configurableOptionNames(self):
         return ['location']
-
-
-    def version(self):
-        return self.mlpy.__version__
 
 
     def _pred(self, learner, testX, arguments, customDict):

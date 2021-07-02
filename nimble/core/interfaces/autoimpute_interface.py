@@ -31,7 +31,7 @@ class Autoimpute(_SciKitLearnAPI):
         """
 
         """
-        self.autoimpute = modifyImportPathAndImport('autoimpute', 'autoimpute')
+        self.package = modifyImportPathAndImport('autoimpute', 'autoimpute')
 
         def isLearner(obj):
             try:
@@ -49,7 +49,7 @@ class Autoimpute(_SciKitLearnAPI):
 
             return hasPred or hasTrans or hasFitPred or hasFitTrans
 
-        self._searcher = PythonSearcher(self.autoimpute, isLearner, 1)
+        self._searcher = PythonSearcher(self.package, isLearner, 1)
 
         super().__init__('seed')
 
@@ -86,9 +86,9 @@ To install autoimpute
 
     def learnerType(self, name):
         obj = self.findCallable(name)
-        if issubclass(obj, self.autoimpute.imputations.BaseImputer):
+        if issubclass(obj, self.package.imputations.BaseImputer):
             return 'transformation'
-        if issubclass(obj, self.autoimpute.analysis.MiBaseRegressor):
+        if issubclass(obj, self.package.analysis.MiBaseRegressor):
             if 'LogisticRegression' in name:
                 return 'classification'
             return 'regression'
@@ -169,7 +169,7 @@ To install autoimpute
         learner = self.findCallable(learnerName)(**initParams)
 
         # need to enforce strategy as a required parameter for the imputer
-        if (isinstance(learner, self.autoimpute.imputations.BaseImputer)
+        if (isinstance(learner, self.package.imputations.BaseImputer)
                 and 'strategy' not in initParams):
             strategies = list(learner.strategies.keys())
             msg = "Due to the level of complexity of {learnerName}'s default "
@@ -179,7 +179,7 @@ To install autoimpute
             raise InvalidArgumentValue(msg)
         # for regressors, also need to check that MultipleImputer strategy is
         # defined if the user did not provide a MultipleImputer directly
-        if (isinstance(learner, self.autoimpute.analysis.MiBaseRegressor)
+        if (isinstance(learner, self.package.analysis.MiBaseRegressor)
                 and ('mi' not in initParams or initParams['mi'] is None)
                 and ('mi_kwgs' not in initParams
                      or 'strategy' not in initParams['mi_kwgs'])):
@@ -222,9 +222,6 @@ To install autoimpute
             learner.fit(*fitArgs, **fitKwargs)
         except ValueError as e:
             raise InvalidArgumentValue(str(e)) from e
-
-    def version(self):
-        return self.autoimpute.__version__
 
     def _argumentInit(self, toInit):
         # override universal method to require strategy param for imputers

@@ -1,16 +1,20 @@
 """
 Tests for nimble._utility submodule
 """
+import importlib
 
 import numpy as np
+from packaging.version import parse, Version, LegacyVersion
 
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.exceptions import PackageException
 from nimble._utility import DeferredModuleImport
 from nimble._utility import mergeArguments
 from nimble._utility import inspectArguments
 from nimble._utility import numpy2DArray, is2DArray
 from nimble._utility import _setAll
+from nimble._dependencies import DEPENDENCIES
 from tests.helpers import raises
 
 def test_DeferredModuleImport_numpy():
@@ -68,6 +72,28 @@ def test_DeferredModuleImport_bogus_nimbleAccessibleFailure():
     if bogus.nimbleAccessible():
         assert False
 
+def test_DeferredModuleImport_invalidVersion():
+    opt = []
+    for section in DEPENDENCIES:
+        if section not in ['required', 'interfaces']:
+            opt.extend(DEPENDENCIES[section].keys())
+    msg = 'does not meet the version requirements'
+    for pkg in opt:
+        mod = importlib.import_module(pkg)
+        saved = mod.__version__
+        try:
+            mod.__version__ = '0.0.0'
+            assert isinstance(parse(mod.__version__), Version)
+            defer = DeferredModuleImport(pkg)
+            with raises(PackageException, match=msg):
+                defer.nimbleAccessible()
+            mod.__version__ = '0.0.0-legacy'
+            assert isinstance(parse(mod.__version__), LegacyVersion)
+            defer = DeferredModuleImport(pkg)
+            with raises(PackageException, match=msg):
+                defer.nimbleAccessible()
+        finally:
+            mod.__version__ = saved
 
 @raises(InvalidArgumentValueCombination)
 def testMergeArgumentsException():
