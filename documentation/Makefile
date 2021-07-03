@@ -8,6 +8,7 @@ PAPER         =
 BUILDDIR      = ./
 PUBLISHDIR    = ../
 EXAMPLESDIR   = ./source/examples/
+SOURCEDIR     = ./source/
 
 # User-friendly check for sphinx-build
 ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
@@ -89,6 +90,7 @@ clean:
 	rm -fr $(PUBLISHDIR)/_images
 	rm -fr $(PUBLISHDIR)/examples
 	rm -fr $(PUBLISHDIR)/docs
+	rm -fr $(SOURCEDIR)/docs/generated
 	rm -fr $(EXAMPLESDIR)/logs-nimble
 	rm -fr $(EXAMPLESDIR)/*.ipynb
 	rm -f $(EXAMPLESDIR)/Metro_Interstate_Traffic_Volume_Cleaned.csv

@@ -52,7 +52,7 @@ labels.show('one-hot encoded labels', maxHeight=9)
 intLabels = labels @ nimble.data('Matrix', list(range(10))).T
 intLabels.show('integer labels', maxHeight=9)
 
-## Now that we have a single feature of labels. We can randomly partion our
+## Now that we have a single feature of labels. We can randomly partition our
 ## data into training and testing sets.
 trainX, trainY, testX, testY = images.trainAndTestSets(testFraction=0.25,
                                                        labels=intLabels)
@@ -124,10 +124,10 @@ testX = testX.points.calculate(reshapePoint)
 print('trainX.shape', trainX.shape, 'trainX.dimensions', trainX.dimensions)
 print('testX.shape', testX.shape, 'testX.dimensions', testX.dimensions)
 
-## For our 2D convolutional neural network, we wil need five different types of
-## Keras `Layers` objects. Just as we did with our simple neural network above,
-## we can use `nimble.Init` to instantiate these objects without directly
-## importing them from Keras.
+## For our 2D convolutional neural network, we will need five different types
+## of Keras `Layers` objects. Just as we did with our simple neural network
+## above, we can use `nimble.Init` to instantiate these objects without
+## directly importing them from Keras.
 layersCNN = []
 layersCNN.append(nimble.Init('Conv2D', filters=64, kernel_size=3,
                              activation='relu', input_shape=(16, 16, 1)))

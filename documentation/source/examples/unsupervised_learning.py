@@ -45,7 +45,7 @@ purchaseOnly = visits.points.copy(lambda pt: pt['Purchase'])
 purchaseOnly.features.delete(lambda ft: len(ft.countUniqueElements()) == 1)
 purchaseOnlyFtNames = purchaseOnly.features.getNames()
 
-## For both the PCA (Principle Component Analysis) and k-means algorithms that
+## For both the PCA (Principal Component Analysis) and k-means algorithms that
 ## we will be using, we want to normalize our data. We will make a copy of our
 ## data (we will still need our original data later), and then standardize each
 ## feature to have a mean of 0 and standard deviation of 1.
@@ -139,7 +139,7 @@ centers.plotFeatureAgainstFeature(0, 1, figureName='clusterAndCenters',
 ## Cluster Analysis ##
 
 ## We used PCA and k-means clustering to identify cluster numbers for each
-## point in our data. Now can group our original data, `purchaseOnly`, by
+## point in our data. Now we can group our original data, `purchaseOnly`, by
 ## cluster number to analyze the data in each cluster. As we iterate through
 ## each cluster group, we will analyze how many data points fall into each
 ## cluster and calculate the feature means in each cluster for further

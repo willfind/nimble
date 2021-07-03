@@ -192,7 +192,7 @@ uncontrolled.show('uncontrolled randomness sample')
 ## will be the room that we predict.
 
 ## We will be creating a learner named `LeastFeatureMeanDistance` that
-## classifies points by measuring the euclidean distance to the feature means
+## classifies points by measuring the Euclidean distance to the feature means
 ## for each label and selecting the label where the distance is minimized. To
 ## create our own custom machine learning algorithm for Nimble, we inherit from
 ## `nimble.CustomLearner`. Every `CustomLearner` must minimally define a
@@ -202,12 +202,12 @@ uncontrolled.show('uncontrolled randomness sample')
 ## data to learn a relationship that can be applied to other data. For our
 ## learner, the `train` method groups our data based on label and calculates
 ## the feature means for data with the same label. It uses a dictionary to
-## store the feature means that we "learn" from our training data so that they
-## can be used for `apply`. The `apply` method uses the information learned
-## from training to make predictions on new (unseen) data. For `apply` in our
-## learner, we compare the euclidean distance between a point and each label's
-## feature means (learned in `train`) and predict the label with the shortest
-## distance.
+## store the mean of each feature that we "learn" from our training data so
+## that they can be used for `apply`. The `apply` method uses the information
+## learned from training to make predictions on new (unseen) data. For `apply`
+## in our learner, we compare the Euclidean distance between a point and each
+## label's feature means (learned in `train`) and predict the label with the
+## shortest distance.
 class LeastFeatureMeanDistance(nimble.CustomLearner):
     learnerType = 'classification'
 
@@ -294,13 +294,13 @@ def roomIdentifier(pt):
     return (actualRoom, closestCenter)
 
 rTrainY = rTrainX.points.calculate(roomIdentifier, useLog=False)
-# extract 25% of our raondom data (first 500 points) for testing.
+# extract 25% of our random data (first 500 points) for testing.
 rTestX = rTrainX.points.extract(number=500, useLog=False)
 rTestY = rTrainY.points.extract(number=500, useLog=False)
 
 # Expected accuracy is the number of points in the test labels where the
 # actual room (index 0) is the same as the closest center room (index 1)
-# divided by total number of test labels.
+# divided by the total number of test labels.
 expAcc = rTestY.points.count(lambda pt: pt[0] == pt[1]) / len(rTestY.points)
 print('LeastFeatureMeanDistance test expected accuracy', expAcc)
 
@@ -343,7 +343,7 @@ print('LeastFeatureMeanDistance accuracy:', performance)
 ## multiple points of comparison which could help improve prediction accuracy
 ## for points near other rooms. However, we usually do not know the best value
 ## for `k` (the number of nearest neighbors) so we will cross validate for
-## three different values of `k`. Logging has another configurable option name
+## three different values of `k`. Logging has another configurable option named
 ## "enableCrossValidationDeepLogging". By default it is set to "False" because
 ## logging cross validation can increase the size of the log file much more
 ## quickly. However, we can learn a lot of useful information from these cross
@@ -352,7 +352,7 @@ print('LeastFeatureMeanDistance accuracy:', performance)
 nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
 
 ## Enabling deep logging for cross-validation, will generate log entries for
-## each fold during our k-fold cross validation. Below `trainAndTest` with
+## each fold during our k-fold cross validation. Below, `trainAndTest` with
 ## `folds=3` and `k=nimble.CV([3, 5, 7])` will perform 3-fold cross validation
 ## on each of our 3 `k` values and use the `k` value that performed the best
 ## during cross validation.
@@ -399,7 +399,7 @@ nimble.showLog(searchForText='wifiData')
 ## logging, randomness and custom learners add a lot of helpful functionality.
 ## We expect you’ll find yourself using some or all of it to support your data
 ## science work. That wraps it up for this example, so now is a good time to
-## cleanup the temporary directory containing our log file.
+## clean up the temporary directory containing our log file.
 tempDir.cleanup()
 
 ## **References:**
