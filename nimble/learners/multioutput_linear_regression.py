@@ -39,8 +39,8 @@ class MultiOutputLinearRegression(CustomLearner):
         results = []
         rawTestX = dtypeConvert(testX.copy(to='numpyarray'))
 
-        for i in range(len(self._models)):
-            curr = self._models[i].predict(rawTestX)
+        for model in self._models:
+            curr = model.predict(rawTestX)
             results.append(curr)
 
         results = numpy2DArray(results)

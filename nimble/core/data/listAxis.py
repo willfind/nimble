@@ -82,10 +82,10 @@ class ListAxis(Axis, metaclass=ABCMeta):
         # run through target axis and change indices
         if self._isPoint:
             source = copy.copy(self._base._data)
-            for i in range(len(self._base._data)):
+            for i, _ in enumerate(self._base._data):
                 self._base._data[i] = source[indexPosition[i]]
         else:
-            for i in range(len(self._base._data)):
+            for i, _ in enumerate(self._base._data):
                 currPoint = self._base._data[i]
                 temp = copy.copy(currPoint)
                 for j, idxPos in enumerate(indexPosition):

@@ -1092,8 +1092,8 @@ class Base(ABC):
                 else:
                     res[k].points.append(point.copy(), useLog=False)
 
-            for k in res:
-                res[k].features.delete(by, useLog=False)
+            for obj in res.values():
+                obj.features.delete(by, useLog=False)
 
         handleLogging(useLog, 'prep', "groupByFeature",
                       self.getTypeString(), Base.groupByFeature, by,

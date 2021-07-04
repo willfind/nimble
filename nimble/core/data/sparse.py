@@ -562,7 +562,7 @@ class Sparse(Base):
         # reusing the sparse matrix underlying structure to save space
         copyIndex = 0
 
-        for lookIndex in range(len(self._data.data)):
+        for lookIndex, lookData in enumerate(self._data.data):
             currP = self._data.row[lookIndex]
             currF = self._data.col[lookIndex]
             # if it is in range we want to obliterate the entry by just passing
@@ -573,7 +573,7 @@ class Sparse(Base):
                     and currF <= featureEnd):
                 pass
             else:
-                self._data.data[copyIndex] = self._data.data[lookIndex]
+                self._data.data[copyIndex] = lookData
                 self._data.row[copyIndex] = self._data.row[lookIndex]
                 self._data.col[copyIndex] = self._data.col[lookIndex]
                 copyIndex += 1

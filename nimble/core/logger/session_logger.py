@@ -1057,11 +1057,11 @@ def _buildArgDict(func, *args, **kwargs):
                 defaultDict[name] = str(value)
 
     argDict = {}
-    for name in nameArgMap:
+    for name, arg in nameArgMap.items():
         if name not in defaultDict:
-            argDict[name] = nameArgMap[name]
-        elif nameArgMap[name] != defaultDict[name]:
-            argDict[name] = nameArgMap[name]
+            argDict[name] = arg
+        elif arg != defaultDict[name]:
+            argDict[name] = arg
     for name, value in kwargs.items():
         value = str(value)
         if name in defaultDict and value != defaultDict[name]:

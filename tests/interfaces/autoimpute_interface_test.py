@@ -43,7 +43,6 @@ def getDataWithMissing(constructor, assignNames=True, yBinary=False):
 
     return data
 
-@autoimputeSkipDec
 def backend_imputation(learnerName, **kwargs):
     for constructor in constructors:
         data = getDataWithMissing(constructor)
@@ -59,20 +58,24 @@ def backend_imputation(learnerName, **kwargs):
                 else:
                     assert dFt[i] == oFt[i]
 
+@autoimputeSkipDec
 def test_autoimpute_SingleImputer():
     backend_imputation('autoimpute.SingleImputer', strategy='least squares')
     # check also that the object itself is a valid input
     from autoimpute.imputations import SingleImputer
     backend_imputation(SingleImputer, strategy='least squares')
 
+@autoimputeSkipDec
 @raises(InvalidArgumentValue)
 def test_autoimpute_SingleImputer_exception_noStrategy():
     # this would work by default, testing that we override to require strategy argument
     backend_imputation('autoimpute.SingleImputer')
 
+@autoimputeSkipDec
 def test_autoimpute_MultipleImputer():
     backend_imputation('autoimpute.MultipleImputer', strategy={'x': 'mean', 'y': 'random'})
 
+@autoimputeSkipDec
 @raises(InvalidArgumentValue)
 def test_autoimpute_MultipleImputer_exception_noStrategy():
     # this would work by default, testing that we override to require strategy argument

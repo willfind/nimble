@@ -28,8 +28,8 @@ class MultiOutputRidgeRegression(CustomLearner):
     def apply(self, testX):
         results = None
 
-        for i in range(len(self._learners)):
-            curr = self._learners[i].apply(testX, useLog=False)
+        for learner in self._learners:
+            curr = learner.apply(testX, useLog=False)
             if results is None:
                 results = curr
             else:
