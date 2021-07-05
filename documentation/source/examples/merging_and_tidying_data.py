@@ -78,8 +78,8 @@ dwtnMinAM.show('Downtown data merged on date', maxWidth=120, maxHeight=9)
 ## objects with different extremes (min vs. max) for the same location.
 ## Before combining, we will want to add an “extreme” feature to each object
 ## based on whether it contains min vs. max data. Without this step, we would
-## not be able to different between minimum and maximum temperature points in
-## the combined objects. Once our new feature is added, we can `append` our
+## not be able to differentiate between minimum and maximum temperature points
+## in the combined objects. Once our new feature is added, we can `append` our
 ## objects from the same weather station.
 for obj in [dwtnMinAM, dwtnMaxAM, airptMinAM, airptMaxAM]:
     extreme = 'min' if 'min' in obj.name else 'max'
@@ -183,7 +183,7 @@ tempData.show('Date and hour sorted', maxWidth=120, maxHeight=11)
 ## We see above that `hr0` on `2011-01-01` for the `downtown` station, for
 ## example, is still represented by two points. This is because each point
 ## identifies either the minimum or maximum temperature. Our second step is to
-## combine these two point pairss by expanding the features to include features
+## combine these two point pairs by expanding the features to include features
 ## for the minimum and maximum temperatures. Our `extreme` feature contains the
 ## values (min and max) that will become our new feature names and the `temp`
 ## feature contains the values that fill the new `min` and `max` features.
