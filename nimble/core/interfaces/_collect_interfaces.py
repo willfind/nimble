@@ -6,7 +6,7 @@ import os
 import importlib
 
 import nimble
-from .universal_interface import PredefinedInterface
+from .universal_interface import PredefinedInterfaceMixin
 from .custom_learner import CustomLearnerInterface
 
 
@@ -28,17 +28,17 @@ def initInterfaceSetup():
         if extension == 'py' and not name.startswith('_'):
             pythonModules.append(name)
     # setup seen with the interfaces we know we don't want to load/try to load
-    seen = set(["PredefinedInterface"])
+    seen = set(["PredefinedInterfaceMixin"])
     for toImport in pythonModules:
         importedModule = importlib.import_module('.' + toImport, __package__)
         contents = dir(importedModule)
 
         # for each attribute of the module, we will check to see if it is a
-        # subclass of the PredefinedInterface
+        # subclass of the PredefinedInterfaceMixin
         for valueName in contents:
             value = getattr(importedModule, valueName)
             try:
-                if (issubclass(value, PredefinedInterface)
+                if (issubclass(value, PredefinedInterfaceMixin)
                         and not valueName in seen
                         and not valueName.startswith('_')):
                     seen.add(valueName)

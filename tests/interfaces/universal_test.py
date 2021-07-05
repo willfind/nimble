@@ -7,9 +7,12 @@ import warnings
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.exceptions import PackageException
 from nimble.core.interfaces.universal_interface import UniversalInterface
-from nimble.core.interfaces.universal_interface import PredefinedInterface
-from tests.helpers import raises
+from nimble.core.interfaces.universal_interface import PredefinedInterfaceMixin
+
+import tests
+from tests.helpers import raises, patch
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import generateClassificationData
 
@@ -38,8 +41,14 @@ class SubObj(object):
         return self.dup == other.dup
 
 
-class TestPredefinedInterface(PredefinedInterface):
+class TestPredefinedInterface(PredefinedInterfaceMixin):
     __test__ = False
+
+    def __init__(self):
+        self.package = tests
+        if not hasattr(self.package, '__version__'):
+            self.package.__version__ = self.version()
+        super().__init__()
 
     def accessible(self):
         return True
@@ -133,8 +142,15 @@ class TestPredefinedInterface(PredefinedInterface):
                             arguments, customDict):
         pass
 
+    def _checkVersion(self):
+        p1 = patch(nimble._dependencies, 'DEPENDENCIES',
+                   {'interfaces': {'tests': 'tests>=1.0'}})
+        p2 = patch(nimble._dependencies, '_LOCATIONS', {'tests': 'interfaces'})
+        with p1, p2:
+            super()._checkVersion()
+
     def version(self):
-        return "0.0.0"
+        return "1.2.3"
 
     def _installInstructions(self):
         return ""
@@ -203,7 +219,13 @@ def test_isAlias():
 
 @noLogEntryExpected
 def test_version():
-    assert TestObject.version() == '0.0.0'
+    assert TestObject.version() == '1.2.3'
+
+@noLogEntryExpected
+@raises(PackageException, match='does not meet the version requirements')
+def test_version_invalid():
+    tests.__version__ = '0.0.0'
+    TestPredefinedInterface()
 
 @noLogEntryExpected
 def test_setOptionGetOption():

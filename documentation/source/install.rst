@@ -2,12 +2,13 @@ Installation
 ============
 
 Nimble can be installed in a variety of ways and strives for flexibility
-during the install process. The only install dependency is `NumPy`_  but much
-of Nimble's functionality is provided through third-party
-:ref:`optional-packages`. This ensures that Nimble does not install additional
-packages that will not be used, but Nimble's functionality is very limited with
-only NumPy installed. For this reason, we offer many ways to install optional
-packages while installing Nimble. We recommend the :ref:`quickstart-install`
+during the install process. To avoid requiring packages that may never be used,
+Nimble only has only two required dependencies, `Numpy`_ and `packaging`_.
+`NumPy`, provides access to a limited portion of the API and additional
+functionality is accessed by installing third-party :ref:`optional-packages`.
+The `packaging` dependency is used to validate the installed versions of any
+optional packages. For convenience, installing optional packages can also be
+triggered while installing Nimble. We recommend the :ref:`quickstart-install`
 to make much of Nimble's functionality available with a single install.
 
 Install Methods
@@ -64,20 +65,20 @@ Machine-Learning Interfaces
    :align: left
    :widths: auto
 
-   +------------------------+--------------------------------------------------+------+----------------------------+
-   | Package                | Provides                                         | pip  | conda                      |
-   +========================+==================================================+======+============================+
-   | `scikit-learn`_        | Machine Learning.                                | |cm| | |cm|                       |
-   +------------------------+--------------------------------------------------+------+----------------------------+
-   | `tensorflow`_/         | Neural Networks.                                 | |cm| | |cm|                       |
-   | `keras`_               | See :ref:`install note <tensorflow-note>` below. |      |                            |
-   +------------------------+--------------------------------------------------+------+----------------------------+
-   | `autoimpute`_          | Imputation. Machine Learning with missing data.  | |cm| |                            |
-   +------------------------+--------------------------------------------------+------+----------------------------+
-   | `shogun`_              | Machine Learning.                                |      | |cm| (conda-forge channel) |
-   +------------------------+--------------------------------------------------+------+----------------------------+
-   | `machine-learning-py`_ | Machine Learning.                                | |cm| | |cm| (conda-forge channel) |
-   +------------------------+--------------------------------------------------+------+----------------------------+
+   +----------------+--------------------------------------------------+------+----------------------------+
+   | Package        | Provides                                         | pip  | conda                      |
+   +================+==================================================+======+============================+
+   | `sklearn`_     | Machine Learning.                                | |cm| | |cm|                       |
+   +----------------+--------------------------------------------------+------+----------------------------+
+   | `tensorflow`_/ | Neural Networks.                                 | |cm| | |cm|                       |
+   | `keras`_       | See :ref:`install note <tensorflow-note>` below. |      |                            |
+   +----------------+--------------------------------------------------+------+----------------------------+
+   | `autoimpute`_  | Imputation. Machine Learning with missing data.  | |cm| |                            |
+   +----------------+--------------------------------------------------+------+----------------------------+
+   | `shogun`_      | Machine Learning.                                |      | |cm| (conda-forge channel) |
+   +----------------+--------------------------------------------------+------+----------------------------+
+   | `mlpy`_        | Machine Learning.                                | |cm| | |cm| (conda-forge channel) |
+   +----------------+--------------------------------------------------+------+----------------------------+
 
 .. _tensorflow-note:
 
@@ -145,13 +146,16 @@ install.
 
 .. code-block::
 
-  pip install nimble[dateutil]                         # single extra
+  pip install nimble[dateutil]                    # single extra
     or
-  pip install nimble[requests,matplotlib,scikit-learn] # multiple extras
+  pip install nimble[requests,matplotlib,sklearn] # multiple extras
     or
-  pip install nimble[data]                             # shortcut (scipy and pandas)
+  pip install nimble[data]                        # shortcut (scipy and pandas)
 
 .. note::
+   - The names of the extras match the names displayed in the "Package" columns
+     in :ref:`optional-packages`.
+
    - The brackets may need to be escaped in some shells.
 
 **With conda:**
@@ -164,6 +168,12 @@ available channels.
 .. code-block::
 
   conda install -c nimble-data nimble matplotlib scikit-learn
+
+.. note::
+   - The package names used for the installation do not always match the
+     names displayed in the "Package" columns in :ref:`optional-packages`,
+     for example, "scikit-learn" is used to install the ``sklearn`` package and
+     "python-dateutil" is used to install the ``dateutil`` package.
 
 .. _basic-install:
 
@@ -191,6 +201,7 @@ operations requiring an optional package that is not installed.
 .. |cm| unicode:: U+02713 .. check mark
 
 .. _NumPy: https://numpy.org/
+.. _packaging: https://packaging.pypa.io/
 .. _datetime: https://docs.python.org/3/library/datetime.html
 .. _scipy: https://www.scipy.org/install.html
 .. _pandas: https://pandas.pydata.org/pandas-docs/stable/getting_started/install.html
@@ -199,9 +210,9 @@ operations requiring an optional package that is not installed.
 .. _cloudpickle: https://github.com/cloudpipe/cloudpickle
 .. _dateutil: https://dateutil.readthedocs.io/en/stable/
 .. _h5py: https://docs.h5py.org/en/stable/build.html
-.. _scikit-learn: https://scikit-learn.org/stable/install.html
+.. _sklearn: https://scikit-learn.org/stable/install.html
 .. _tensorflow: https://www.tensorflow.org/install
 .. _autoimpute: https://autoimpute.readthedocs.io/en/latest/user_guide/getting_started.html
 .. _shogun: https://www.shogun.ml/install
 .. _keras: https://keras.io/getting_started/
-.. _machine-learning-py: https://github.com/richardARPANET/mlpy
+.. _mlpy: https://github.com/richardARPANET/mlpy

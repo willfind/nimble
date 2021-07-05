@@ -1,9 +1,9 @@
 """
 Helper functions that support multiple modules.
 
-Functions here do not import from nimble (except for Exceptions),
-allowing for each function to be imported into any file within nimble
-without risk of circular imports.
+Other than exceptions and _dependencies (because they do contain any
+nimble imports), this file should not import from nimble to avoid any
+risk of circular imports.
 """
 
 import inspect
@@ -14,10 +14,10 @@ from types import ModuleType
 
 import numpy as np
 
-# nimble.exceptions may be imported
+# only allowed imports from nimble are exceptions and _dependencies
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
-
+from nimble._dependencies import checkVersion
 
 def isFunction(func):
     """
@@ -163,6 +163,7 @@ class DeferredModuleImport(object):
     def __init__(self, name):
         self.name = name
         self.imported = None
+        self.validated = False
 
     def nimbleAccessible(self):
         """
@@ -173,8 +174,17 @@ class DeferredModuleImport(object):
                 mod = importlib.import_module(self.name)
                 self.imported = mod
             except ImportError:
-                pass
-        return self.imported is not None
+                return False
+        if not self.validated:
+            # may import submodules but need to check version of base module
+            if '.' in self.name:
+                base = self.name.split('.', 1)[0]
+                checkVersion(importlib.import_module(base))
+            else:
+                checkVersion(self.imported)
+            self.validated = True
+
+        return True
 
     def __getattr__(self, name):
         """

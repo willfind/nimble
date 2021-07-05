@@ -13,6 +13,7 @@ import numpy as np
 import nimble
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import InvalidArgumentValueCombination
+from nimble.exceptions import PackageException
 from nimble.core.data import Base
 from nimble.random import pythonRandom
 from nimble.random import numpyRandom
@@ -38,7 +39,9 @@ def findBestInterface(package):
         if interface.isAlias(package):
             try:
                 interfaceObj = interface()
-            except Exception: # pylint: disable=broad-except
+            except Exception as e: # pylint: disable=broad-except
+                if isinstance(e, PackageException):
+                    raise # interface version does not meet requirements
                 # interface is a predefined one, but instantiation failed
                 return interface.provideInitExceptionInfo()
             # add successful instantiations to interfaces.available and

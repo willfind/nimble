@@ -18,7 +18,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble._utility import inspectArguments
 from nimble._utility import inheritDocstringsFactory, dtypeConvert
-from .universal_interface import PredefinedInterface
+from .universal_interface import PredefinedInterfaceMixin
 from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import collectAttributes
 from ._interface_helpers import removeFromTailMatchedLists
@@ -26,8 +26,8 @@ from ._interface_helpers import noLeading__, notCallable, notABCAssociated
 from ._interface_helpers import validInitParams
 
 
-@inheritDocstringsFactory(PredefinedInterface)
-class _SciKitLearnAPI(PredefinedInterface):
+@inheritDocstringsFactory(PredefinedInterfaceMixin)
+class _SciKitLearnAPI(PredefinedInterfaceMixin):
     """
     Base class for interfaces following the scikit-learn api.
     """
@@ -326,10 +326,6 @@ class _SciKitLearnAPI(PredefinedInterface):
     def _fitLearner(self, learner, learnerName, trainX, trainY, arguments):
         pass
 
-    @abc.abstractmethod
-    def version(self):
-        pass
-
 @inheritDocstringsFactory(_SciKitLearnAPI)
 class SciKitLearn(_SciKitLearnAPI):
     """
@@ -337,14 +333,7 @@ class SciKitLearn(_SciKitLearnAPI):
     """
 
     def __init__(self):
-        self.skl = modifyImportPathAndImport('sklearn', 'sklearn')
-
-        version = self.version()
-        epoch, release = version.split('.')[:2]
-        if int(epoch) == 0 and int(release) < 19:
-            msg = "nimble was tested using sklearn 0.19 and above, we cannot "
-            msg += "be sure of success for version {0}".format(version)
-            warnings.warn(msg)
+        self.package = modifyImportPathAndImport('sklearn', 'sklearn')
 
         walkPackages = pkgutil.walk_packages
 
@@ -452,13 +441,13 @@ To install scikit-learn
 
     def learnerType(self, name):
         obj = self.findCallable(name)
-        if issubclass(obj, self.skl.base.ClassifierMixin):
+        if issubclass(obj, self.package.base.ClassifierMixin):
             return 'classification'
-        if issubclass(obj, self.skl.base.RegressorMixin):
+        if issubclass(obj, self.package.base.RegressorMixin):
             return 'regression'
-        if issubclass(obj, self.skl.base.ClusterMixin):
+        if issubclass(obj, self.package.base.ClusterMixin):
             return 'cluster'
-        if issubclass(obj, self.skl.base.TransformerMixin):
+        if issubclass(obj, self.package.base.TransformerMixin):
             return 'transformation'
         # if (hasattr(obj, 'classes_') or hasattr(obj, 'label_')
         #         or hasattr(obj, 'labels_')):
@@ -574,4 +563,4 @@ To install scikit-learn
             raise InvalidArgumentValue(str(e)) from e
 
     def version(self):
-        return self.skl.__version__
+        return self.package.__version__
