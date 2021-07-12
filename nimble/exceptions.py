@@ -1,5 +1,5 @@
 """
-Module defining exceptions used in nimble.
+Module defining exceptions used in Nimble.
 """
 
 class NimbleException(Exception):

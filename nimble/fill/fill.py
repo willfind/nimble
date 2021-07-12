@@ -372,9 +372,9 @@ def interpolate(vector, match, **kwarguments):
     Fill matched values with the interpolated value.
 
     The fill value is determined by the piecewise linear interpolant
-    returned by np.interp. By default, the unmatched values will be
+    returned by numpy.interp. By default, the unmatched values will be
     used as the discrete data points, but additional arguments for
-    np.interp can be passed as keyword arguments.
+    numpy.interp can be passed as keyword arguments.
 
     Parameters
     ----------
@@ -388,7 +388,7 @@ def interpolate(vector, match, **kwarguments):
           match module.
     kwarguments
         Collection of extra key:value argument pairs to pass to
-        np.interp.
+        numpy.interp.
 
     Returns
     -------
@@ -398,7 +398,7 @@ def interpolate(vector, match, **kwarguments):
 
     See Also
     --------
-    nimble.match, np.interp
+    nimble.match, numpy.interp
 
     Examples
     --------

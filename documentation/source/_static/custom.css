@@ -1,9 +1,26 @@
 /* highlight headings for links */
-:target h2{
+.section:target h2 {
     background-color: #FAF3E8;
+}
+
+/* prevent link to nimble.calculate page from highlighting all h2 */
+#module-nimble\.calculate:target h2 {
+  background-color: inherit;
 }
 
 /* autosummary table widths consistent */
 table.align-default {
     width: 98%;
+}
+
+/* change hyperlink color for autosummary tables and downloads */
+.py-obj, .download {
+  color: #004B6B;
+}
+
+/* underline and consistent coloring for hyperlinks on hover */
+.py-obj:hover , .download:hover {
+  text-decoration: underline;
+  color: #6D4100;
+  background-color: white;
 }

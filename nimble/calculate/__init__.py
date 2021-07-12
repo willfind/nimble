@@ -1,10 +1,10 @@
 """
-This module loosely groups together functions which perform calculations
-on data objects and other nimble defined objects, including functions
-which can be used as performance functions in the nimble testing and
-cross-validation API. Some similar functionality may be available as
-methods off of data objects; the versions here are functions, and take
-any inputs as arguments.
+Functions that perform calculations on Nimble-defined objects.
+
+This includes functions that can be used as performance functions in the
+Nimble testing and cross-validation API. Some similar functionality may
+be available as methods off of data objects; the versions here are
+functions, and take any inputs as arguments.
 """
 
 from .loss import fractionIncorrect

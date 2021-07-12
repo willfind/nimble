@@ -1,5 +1,5 @@
 """
-These out-of-the box learners are all registered during nimble initialization.
+These out-of-the box learners are all registered during Nimble initialization.
 
 They are registered under the name 'nimble' to allow access as a string,
 e.g. ``nimble.train('nimble.KNNClassifier', ...)``
