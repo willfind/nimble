@@ -83,15 +83,15 @@ learners.
    nimble.learnerParameters
    nimble.learnerDefaultValues
    nimble.train
+   ~nimble.core.interfaces.TrainedLearner
+   nimble.loadTrainedLearner
    nimble.trainAndApply
    nimble.trainAndTest
    nimble.trainAndTestOnTrainingData
    nimble.normalizeData
    nimble.fillMatching
    nimble.crossValidate
-   nimble.loadTrainedLearner
-   nimble.core.interfaces.TrainedLearner
-   nimble.core.learn.KFoldCrossValidator
+   ~nimble.core.learn.KFoldCrossValidator
    nimble.CV
    nimble.Init
 
