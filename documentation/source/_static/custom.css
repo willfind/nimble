@@ -19,8 +19,18 @@ table.align-default {
 }
 
 /* underline and consistent coloring for hyperlinks on hover */
-.py-obj:hover , .download:hover {
+.py-obj:hover, .download:hover {
   text-decoration: underline;
   color: #6D4100;
   background-color: white;
+}
+
+.nimble-hyperlink {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+.nimble-hyperlink:hover {
+  color: inherit;
+  text-decoration: underline;
 }
