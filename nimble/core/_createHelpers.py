@@ -778,7 +778,7 @@ def convertToBest(rawData, pointNames, featureNames):
     """
     if _isPandasDataFrame(rawData):
         if rawData.empty:
-            return rawData.values
+            return rawData.to_numpy()
         return pandasDataFrameToList(rawData)
     if _isPandasSeries(rawData):
         if rawData.empty:
@@ -973,8 +973,8 @@ def _replaceMissingData(rawData, treatAsMissing, replaceMissingWith, copied):
                 copied = True
             rawData.data = replaceNumpyValues(rawData.data, replaceLocs)
     elif _isPandasDense(rawData):
-        if len(rawData.values) > 0:
-            replaceLocs = getNumpyReplaceLocations(rawData.values)
+        if len(rawData.to_numpy()) > 0:
+            replaceLocs = getNumpyReplaceLocations(rawData.to_numpy())
             if replaceLocs.any():
                 # .where keeps the True values, use ~ to replace instead
                 rawData = rawData.where(~replaceLocs, replaceMissingWith)
@@ -1036,7 +1036,7 @@ class GenericRowIterator:
         elif isinstance(data, dict):
             self.iterator = iter(data.values())
         elif _isPandasObject(data):
-            self.iterator = iter(data.values)
+            self.iterator = iter(data.to_numpy())
         elif _isScipySparse(data):
             self.iterator = SparseCOORowIterator(data.tocoo(False))
         else:

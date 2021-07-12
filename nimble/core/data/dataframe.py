@@ -568,11 +568,11 @@ class DataFrame(Base):
 
         if len(dtypes) > 0:
             if all(d in allowed and np.can_cast(d, float) for d in dtypes):
-                return self._data.values
+                return self._data.to_numpy()
         if numericRequired:
-            return self._data.values.astype(float)
+            return self._data.to_numpy(float)
 
-        return self._data.astype(np.object_).values
+        return self._data.astype(np.object_).to_numpy()
 
 
 class DataFrameView(BaseView, DataFrame):
