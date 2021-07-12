@@ -81,3 +81,6 @@ class FileFormatException(NimbleException, ValueError):
 
     This is a subclass of Python's ValueError.
     """
+
+# can't use _utility._setAll here due to circular import
+__all__ = sorted(var for var in vars() if not var.startswith('_'))
