@@ -33,6 +33,7 @@ os.environ['PYTHONPATH'] = NimbleParentDirPath
 # If your documentation needs a minimal Sphinx version, state it here.
 needs_sphinx = '3.3'
 
+# Sphinx extension functions
 def process_docstring(app, what, name, obj, options, lines):
     """
     This is a workaround to allow sphinx to show functions from their __init__
@@ -98,6 +99,15 @@ def setHyperlinks(app):
 
     app.nimble_hyperlinks = hyperlinks
 
+    # It is not possible to tell object types when applying hyperlinks to the
+    # html code. So, we assume that any method names in the example code are
+    # referring to the Nimble objects. If the example uses another object type
+    # with a shared method name, it must be explicitly ignored. For example,
+    # myDict.copy() would link the Base copy() method unless 'myDict.copy' is
+    # added to the list below.
+    nolink = ['tempDir.name']
+    app.nimble_nolink = nolink
+
 def addStringReplacements(original, replacements):
     """
     Create a new string from original, replacing the span at index 0 of
@@ -127,19 +137,20 @@ def exampleHyperlinks(app, pagename, templatename, context, doctree):
     if pagename in examplePages:
         # each element of code block is wrapped in a span
         dotSpan = '<span class="o">\.</span>'
-        nameSpan = '<span class="nn?">{}</span>'
+        nameSpan = '<span class="nn?">{}</span>'.format
         # need most complex links first so regex prioritizes them
         sortedLinks = sorted(app.nimble_hyperlinks.keys(), reverse=True)
         htmlLinks = []
         for link in sortedLinks:
             if link.startswith('.'):
                 name = link[1:]
-                html = dotSpan
+                variable = '<span class="n">[_A-Za-z][_A-Za-z0-9]*</span>'
+                html = variable + dotSpan
             else:
-                htmlLinks.append(nameSpan.format(link))
+                htmlLinks.append(nameSpan(link))
                 name = link
                 html = ''
-            spannedName = list(map(nameSpan.format, name.split('.')))
+            spannedName = list(map(nameSpan, name.split('.')))
             html += dotSpan.join(spannedName)
             htmlLinks.append(html)
         linkPattern = '|'.join(htmlLinks)
@@ -156,14 +167,24 @@ def exampleHyperlinks(app, pagename, templatename, context, doctree):
                 for match in re.finditer(linkPattern, line):
                     htmlName = match.group()
                     name = re.sub(r'<.*?>', '', htmlName)
-                    href = app.nimble_hyperlinks[name]
-                    # if name starts with a dot, do not hyperlink the dot
-                    dotStart = re.match(dotSpan, htmlName)
-                    if dotStart:
-                        htmlName = htmlName[dotStart.end():]
-                        span = (match.start() + dotStart.end(), match.end())
+                    # Object type cannot be determined so all methods are
+                    # assumed to be nimble objects unless explicitly named in
+                    # app.nimble_nolink which is defined in setHyperlinks
+                    if name in app.nimble_nolink:
+                        continue
+                    # object methods
+                    if name not in app.nimble_hyperlinks:
+                        # drop variable name
+                        name = '.' + name.split('.', 1)[1]
+                        # ignore variable name and dot for hyperlinks
+                        var, dot, htmlName = htmlName.split('</span>', 2)
+                        # </span> missing from var and dot so adjust by 14 more
+                        span = (match.start() + len(var) + len(dot) + 14,
+                                match.end())
+                    # nimble functions
                     else:
                         span = match.span()
+                    href = app.nimble_hyperlinks[name]
                     linkedLines.append((span, anchor.format(href, htmlName)))
 
                 lines.append(addStringReplacements(line, linkedLines))
