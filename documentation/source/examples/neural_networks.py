@@ -3,7 +3,7 @@
 
 ### Using neural networks to identify handwritten digits.
 
-Our data set contains 1593 flattened 16x16 black and white images (each
+Our dataset contains 1593 flattened 16x16 black and white images (each
 pixel is represented by a 1 or 0) of handwritten digits (0-9).
 Approximately half of the digits were written neatly and the other half
 were written as quickly as possible. This provides some images that are

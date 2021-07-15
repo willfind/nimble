@@ -136,7 +136,7 @@ visits.plotFeatureGroupStatistics(nimble.calculate.count, 'Purchase', 'Region',
 ## It does not appear that any region is making disproportionately more or less
 ## purchases than the others. We have learned a lot about our website data
 ## through this exploration. Next, see how we can use Nimble to extract more
-## insight from this data set using machine learning in our
+## insight from this dataset using machine learning in our
 ## [Unsupervised Learning example](unsupervised_learning.ipynb).
 
 ## **References:**
