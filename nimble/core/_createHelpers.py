@@ -1615,24 +1615,27 @@ def _isDownloadable(url):
 def _isArchive(filename):
     seekLoc = filename.tell() if hasattr(filename, 'read') else None
     try:
-        if tarfile.is_tarfile(filename):
-            return True
         # is_zipfile does not seek back to start
         if zipfile.is_zipfile(filename):
             return True
-        return False
-    except tarfile.ReadError:
-        # is_tarfile does not support file objects until python 3.9
+    finally:
+        if seekLoc is not None:
+            filename.seek(seekLoc)
+
+    try:
+        if tarfile.is_tarfile(filename):
+            return True
+    except (TypeError, tarfile.ReadError):
         # filename is definitely a file object at this point
-        filename.seek(seekLoc)
+        # is_tarfile does not support file objects until python 3.9
         try:
             with tarfile.open(fileobj=filename):
                 return True
         except tarfile.TarError:
-            return False
-    finally:
-        if seekLoc is not None:
-            filename.seek(seekLoc)
+            pass
+
+    return False
+
 
 def _isGZip(filename):
     if hasattr(filename, 'read'):
