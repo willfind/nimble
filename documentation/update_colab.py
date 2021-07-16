@@ -10,30 +10,35 @@ import sys
 import os
 import json
 import argparse
+import inspect
+
+currFilePath = os.path.abspath(inspect.getfile(inspect.currentframe()))
+currDirPath = os.path.dirname(currFilePath)
 
 parser = argparse.ArgumentParser(description='Update Colab notebooks')
 parser.add_argument('colab_directory',
                     help=("local path to the Google Drive directory "
                           "containing the example Colab notebooks"))
 
-# name of wheel built for the colab notebooks in cloud storage
-WHEEL = 'nimble-0.0.0.dev1-cp37-cp37m-linux_x86_64.whl'
-
-# to install nimble, we download the wheel from cloud then pip install the file
-INSTALL = ('To use Nimble in Colab, we will need to copy the distribution '
-           'file from Google Cloud Storage and then install it using `pip`.')
-INSTALL_CODE = ['!gcloud config set project nimble-302717\n'
-                f'!gsutil cp gs://nimble/{WHEEL} .\n'
-                f'!pip install {WHEEL}']
-# all other dependencies for the examples are already installed in colab
-
 def main(colabPath):
-    examplesPath = os.path.join('source', 'examples')
+    examplesPath = os.path.join(currDirPath, 'source', 'examples')
     output = '{:.<40} {}'.format
     examples = (f for f in os.listdir(examplesPath) if f.endswith('.ipynb'))
     if not examples:
         raise FileNotFoundError('The .ipynb example files have not been '
                                 'generated.')
+
+    # name of wheel built for the colab notebooks in cloud storage
+    # update when a new wheel is built for a python version upgrade in Colab
+    wheel = 'nimble-0.0.0.dev1-cp37-cp37m-linux_x86_64.whl'
+
+    install = ('To use Nimble in Colab, we will need to copy the wheel file '
+               'from Google Cloud Storage and then install it using `pip`.')
+    installCode = ['!gcloud config set project nimble-302717\n'
+                   f'!gsutil cp gs://nimble/{wheel} .\n'
+                   f'!pip install {wheel}']
+    # all other dependencies for the examples are already installed in colab
+
     for file in examples:
         paddedFile = file + ' '
         try:
@@ -42,10 +47,10 @@ def main(colabPath):
             with open(os.path.join(colabPath, file), 'r') as cl:
                 colab = json.load(cl)
             # need to update the source in each cell in the colab notebook,
-            # but all other metadata should remain the same. Colab
-            # generates metadata for each cell, so we can only update if
-            # the structure is unchanged. If the structure does not align
-            # then a manual update is necessary.
+            # but all other metadata should remain the same. Colab generates
+            # metadata for each cell, so we can only update if the structure is
+            # unchanged. If the structure does not align then a manual update
+            # is necessary.
             exCells = example['cells']
             clCells = colab['cells']
             newCells = {}
@@ -63,10 +68,10 @@ def main(colabPath):
                         exCell['source'][0] += '\n'
                         exCell['source'].append('\n')
                     clCells[clIdx]['source'] = exCell['source'][:2]
-                    clCells[clIdx]['source'].append(INSTALL)
+                    clCells[clIdx]['source'].append(install)
                     # increment clIdx to account for extra code cell
                     clIdx += 1
-                    clCells[clIdx]['source'] = INSTALL_CODE
+                    clCells[clIdx]['source'] = installCode
                     if exCell['source'][2:]:
                         # remaining markdown is in the next cell
                         clIdx += 1
@@ -83,7 +88,7 @@ def main(colabPath):
             with open(os.path.join(colabPath, file), 'w+') as f:
                 json.dump(colab, f)
 
-            print(output(paddedFile, 'SUCCESS'))
+            print(output(paddedFile, 'SUCCESSFULLY UPDATED'))
         except FileNotFoundError:
             print(output(paddedFile, 'ERROR ** NO MATCHING COLAB FILE **'))
         except AssertionError:
