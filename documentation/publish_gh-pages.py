@@ -40,6 +40,7 @@ import subprocess
 import sys
 import os
 
+# TODO refactor into class with SUPPRESSOUTPUT as a class attribute
 global SUPPRESSOUTPUT
 SUPPRESSOUTPUT = False
 
@@ -82,31 +83,34 @@ def checkTargetUpToDate(target):
 
 def argIsSuppress(toCheck):
     check = toCheck.lower()
+    # TODO trim down to two (one abreviation, one long)
     valid = ["--suppress", "-q", '--quiet', '-s']
     return check in valid
 
-def argIsBranch(toCheck):
+def getBranchNames():
     # We omit the potential printing since it's unclear if the user wants the
     # output suppressed at this point
     cmd = "git branch"
     currP = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
     stringOutput = currP.stdout.read().decode("utf-8")
 
-    # Have to process, then check against each line in case of prefixes
+    # In case of prefixes, we need a list of exact branch names to check against
     branchNames = []
     for line in stringOutput.split("\n"):
         branchNames.append(line[2:].strip())
 
-    return toCheck in branchNames
+    return branchNames
 
 if __name__ == '__main__':
     targetBranch = "master"
+    availableBranches = getBranchNames()
 
+    # TODO use argparse to better handle this
     if len(sys.argv) > 1:
         for arg in sys.argv[1:]:
             if argIsSuppress(arg):
                 SUPPRESSOUTPUT = True
-            elif argIsBranch(arg):
+            elif arg in availableBranches:
                 targetBranch = arg
             else:
                 print("{} is neither a suppress flag nor a branch name".format(arg))
