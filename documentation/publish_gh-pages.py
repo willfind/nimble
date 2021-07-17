@@ -19,8 +19,13 @@ as a command line argument. Be warned, this will obscure output
 asking for your github credentials, or any queries for guidance by
 a pre-commit script.
 
+Alternate workflows make it occassionally helpful to update gh-pages
+using a branch other than master. As such, a branch name can
+be passed as an argument when calling this script, and execution will
+proceed using that branch instead.
+
 See published docs at:
-willfind.github.io/Nimble
+willfind.github.io/nimble
 
 Further reading for some of the techniques used in this script:
 http://stackoverflow.com/questions/3258243/check-if-pull-needed-in-git
@@ -35,6 +40,7 @@ import subprocess
 import sys
 import os
 
+# TODO refactor into class with SUPPRESSOUTPUT as a class attribute
 global SUPPRESSOUTPUT
 SUPPRESSOUTPUT = False
 
@@ -51,11 +57,11 @@ def printAndCall(cmd):
     return subprocess.check_call(cmd, shell=True, stdout=stdout, stderr=subprocess.STDOUT)
 
 
-def checkMasterUpToDate():
+def checkTargetUpToDate(target):
     printAndCall("git fetch origin")
 
-    # get SHA of current master
-    cmd = "git rev-parse --verify refs/heads/master"
+    # get SHA of current target
+    cmd = "git rev-parse --verify refs/heads/"  + target
     if not SUPPRESSOUTPUT:
         print(cmd)
     currP = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
@@ -63,8 +69,8 @@ def checkMasterUpToDate():
     if not SUPPRESSOUTPUT:
         print(localSHA)
 
-    # get SHA of origin master
-    cmd = "git rev-parse --verify refs/remotes/origin/master"
+    # get SHA of origin target
+    cmd = "git rev-parse --verify refs/remotes/origin/" + target
     if not SUPPRESSOUTPUT:
         print(cmd)
     currP = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
@@ -75,12 +81,40 @@ def checkMasterUpToDate():
     return localSHA == remoteSHA
 
 
+def argIsSuppress(toCheck):
+    check = toCheck.lower()
+    # TODO trim down to two (one abreviation, one long)
+    valid = ["--suppress", "-q", '--quiet', '-s']
+    return check in valid
+
+def getBranchNames():
+    # We omit the potential printing since it's unclear if the user wants the
+    # output suppressed at this point
+    cmd = "git branch"
+    currP = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    stringOutput = currP.stdout.read().decode("utf-8")
+
+    # In case of prefixes, we need a list of exact branch names to check against
+    branchNames = []
+    for line in stringOutput.split("\n"):
+        branchNames.append(line[2:].strip())
+
+    return branchNames
+
 if __name__ == '__main__':
+    targetBranch = "master"
+    availableBranches = getBranchNames()
+
+    # TODO use argparse to better handle this
     if len(sys.argv) > 1:
-        check = sys.argv[1].lower()
-        valid = ["--suppress", "-q", '--quiet', '-s']
-        if check in valid:
-            SUPPRESSOUTPUT = True
+        for arg in sys.argv[1:]:
+            if argIsSuppress(arg):
+                SUPPRESSOUTPUT = True
+            elif arg in availableBranches:
+                targetBranch = arg
+            else:
+                print("{} is neither a suppress flag nor a branch name".format(arg))
+                sys.exit(1)
 
     # Some commands are reliant on the current working directory being
     # the same as the location of this script.
@@ -88,8 +122,8 @@ if __name__ == '__main__':
         print("Changing to: " + currDirPath)
     os.chdir(currDirPath)
 
-    if not checkMasterUpToDate():
-        print("We require the master branch to be up to date before publishing docs to gh-pages")
+    if not checkTargetUpToDate(targetBranch):
+        print("We require the target branch to be up to date before publishing docs to gh-pages")
         sys.exit(1)
 
     committed = False
@@ -116,13 +150,13 @@ if __name__ == '__main__':
 
     finally:
         printAndCall("make clean")
-        printAndCall("git checkout master --force")
+        printAndCall("git checkout {} --force".format(targetBranch))
         if committed:
             printAndCall("git branch -D gh-pages")
 
-    if not checkMasterUpToDate():
-        msg = "During the publishing process, remote master was updated. The published docs "
-        msg += "are therefore no longer current."
+    if not checkTargetUpToDate(targetBranch):
+        msg = "While publishing, remote {} was updated. ".format(targetBranch)
+        msg += "The published docs are therefore no longer current."
         print(msg)
         sys.exit(2)
 
