@@ -543,7 +543,7 @@ def loadData(inputPath, useLog=None):
 
 def loadTrainedLearner(inputPath, useLog=None):
     """
-    Load nimble trainedLearner object.
+    Load nimble TrainedLearner object.
 
     Parameters
     ----------

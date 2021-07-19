@@ -2,36 +2,51 @@
 
 .. currentmodule:: {{ module }}
 
+
+
 .. autoclass:: {{ objname }}
    :no-members:
 
-   {% block attributes %}
+   {% set vars = {'attrs': False, 'methods': False} %}
+
+   {%- block attributes -%}
+
    {% if attributes %}
+   {# only want to add attributes section if public attributes exist #}
+   {% for item in attributes %}
+     {%- if not item.startswith('_') -%}
+       {%- if not vars.attrs -%}
+         {% if vars.update({'attrs': True}) %} {%- endif -%}
    .. rubric:: {{ _('Attributes') }}
 
    .. autosummary::
       :toctree:
       :recursive:
-   {% for item in attributes %}
-      {%- if not item.startswith('_') %}
+
+        {% endif %}
       ~{{ name }}.{{ item }}
       {%- endif -%}
    {%- endfor %}
-   {% endif %}
+   {%- endif %}
    {% endblock %}
 
-   {% block methods %}
+   {%- block methods -%}
 
    {% if methods %}
+   {# only want to add methods section if public methods exist #}
+   {% for item in methods %}
+      {%- if not item.startswith('_') -%}
+        {%- if not vars.methods -%}
+          {% if vars.update({'methods': True}) %} {%- endif -%}
    .. rubric:: {{ _('Methods') }}
 
    .. autosummary::
       :toctree:
       :recursive:
-   {% for item in methods %}
-      {%- if not item.startswith('_') %}
+
+        {% endif %}
       ~{{ name }}.{{ item }}
       {%- endif -%}
    {%- endfor %}
-   {% endif %}
+   {%- endif %}
    {% endblock %}

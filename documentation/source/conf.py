@@ -33,6 +33,7 @@ os.environ['PYTHONPATH'] = NimbleParentDirPath
 # If your documentation needs a minimal Sphinx version, state it here.
 needs_sphinx = '3.3'
 
+# Sphinx extension functions
 def process_docstring(app, what, name, obj, options, lines):
     """
     This is a workaround to allow sphinx to show functions from their __init__
@@ -54,10 +55,148 @@ def process_signature(app, what, name, obj, options, signature,
 
     return signature, return_annotation
 
+def setHyperlinks(app):
+    """
+    Use the generated stubs to determine hyperlinks for examples.
+    """
+    hyperlinks = {}
+    for _, _, files in os.walk(os.path.join('source', 'docs', 'generated')):
+        for rst in files:
+            path = rst[:-4]
+            # define hyperlinks to custom files
+            if path == 'nimble':
+                hyperlinks[path] = '../docs/index.html'
+                continue
+            if path == 'nimble.calculate':
+                hyperlinks[path] = '../docs/nimble.calculate.html'
+                continue
+            # any remaining paths are in docs/generated
+            pathSplit = path.split('.')
+            # classes
+            if (re.match(r'[A-Z]', pathSplit[-1][0])
+                    # hyperlink nimble.CV and nimble.Init, not just class name
+                    and pathSplit[-1] not in ['CV', 'Init']):
+                name = pathSplit[-1]
+            # class methods
+            elif re.search(r'[A-Z][a-z]+\..*', path):
+                if 'CustomLearner' in path or 'nimble.learners' in path:
+                    # methods conflict with TrainedLearner and only
+                    # TrainedLearner is required for current examples
+                    continue
+                isClass = list(map(lambda s: bool(re.match(r'[A-Z]', s[0])),
+                               pathSplit))
+                clsIdx = isClass.index(True)
+                if pathSplit[clsIdx] in ['Points', 'Features']:
+                    pathSplit[clsIdx] = pathSplit[clsIdx].lower()
+                else:
+                    clsIdx += 1
+                name = '.' + '.'.join(pathSplit[clsIdx:])
+            # functions
+            else:
+                name = path
+
+            hyperlinks[name] = '../docs/generated/' + path + '.html'
+
+    app.nimble_hyperlinks = hyperlinks
+
+    # It is not possible to tell object types when applying hyperlinks to the
+    # html code. So, we assume that any method names in the example code are
+    # referring to the Nimble objects. If the example uses another object type
+    # with a shared method name, it must be explicitly ignored. For example,
+    # myDict.copy() would link the Base copy() method unless 'myDict.copy' is
+    # added to the list below.
+    nolink = ['tempDir.name']
+    app.nimble_nolink = nolink
+
+def addStringReplacements(original, replacements):
+    """
+    Create a new string from original, replacing the span at index 0 of
+    replacements with the string at index 1 of replacements.
+    """
+    start = 0
+    newString = ''
+    for replacement in replacements:
+        end = replacement[0][0]
+        newString += original[start:end]
+        newString += replacement[1]
+        start = replacement[0][1]
+    newString += original[start:]
+
+    return newString
+
+
+examples = ('cleaning_data', 'supervised_learning', 'exploring_data',
+            'unsupervised_learning', 'neural_networks',
+            'merging_and_tidying_data', 'additional_functionality')
+examplePages = ['examples/' + example for example in examples]
+
+def exampleHyperlinks(app, pagename, templatename, context, doctree):
+    """
+    Wrap the nimble calls in an anchor tag linking to API Documentation.
+    """
+    if pagename in examplePages:
+        # each element of code block is wrapped in a span
+        dotSpan = '<span class="o">\.</span>'
+        nameSpan = '<span class="nn?">{}</span>'.format
+        # need most complex links first so regex prioritizes them
+        sortedLinks = sorted(app.nimble_hyperlinks.keys(), reverse=True)
+        htmlLinks = []
+        for link in sortedLinks:
+            if link.startswith('.'):
+                name = link[1:]
+                variable = '<span class="n">[_A-Za-z][_A-Za-z0-9]*</span>'
+                html = variable + dotSpan
+            else:
+                htmlLinks.append(nameSpan(link))
+                name = link
+                html = ''
+            spannedName = list(map(nameSpan, name.split('.')))
+            html += dotSpan.join(spannedName)
+            htmlLinks.append(html)
+        linkPattern = '|'.join(htmlLinks)
+        body = context['body']
+        anchor = '<a class="nimble-hyperlink" href="{}">{}</a>'
+        # we will replace the code (in the <pre> tags) with code that wraps
+        # nimble calls with anchor tags to their api documentation
+        replacements = []
+        for code in re.finditer(r'<pre>.*?</pre>', body, flags=re.DOTALL):
+            lines = []
+            splitCode = code.group().split('\n')
+            for line in splitCode:
+                linkedLines = []
+                for match in re.finditer(linkPattern, line):
+                    htmlName = match.group()
+                    name = re.sub(r'<.*?>', '', htmlName)
+                    # Object type cannot be determined so all methods are
+                    # assumed to be nimble objects unless explicitly named in
+                    # app.nimble_nolink which is defined in setHyperlinks
+                    if name in app.nimble_nolink:
+                        continue
+                    # object methods
+                    if name not in app.nimble_hyperlinks:
+                        # drop variable name
+                        name = '.' + name.split('.', 1)[1]
+                        # ignore variable name and dot for hyperlinks
+                        var, dot, htmlName = htmlName.split('</span>', 2)
+                        # </span> missing from var and dot so adjust by 14 more
+                        span = (match.start() + len(var) + len(dot) + 14,
+                                match.end())
+                    # nimble functions
+                    else:
+                        span = match.span()
+                    href = app.nimble_hyperlinks[name]
+                    linkedLines.append((span, anchor.format(href, htmlName)))
+
+                lines.append(addStringReplacements(line, linkedLines))
+            replacements.append((code.span(), '\n'.join(lines)))
+
+        context['body'] = addStringReplacements(context['body'], replacements)
 
 def setup(app):
     app.connect('autodoc-process-docstring', process_docstring)
     app.connect('autodoc-process-signature', process_signature)
+    app.connect('builder-inited', setHyperlinks)
+    app.connect('html-page-context', exampleHyperlinks)
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom

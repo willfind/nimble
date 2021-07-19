@@ -1,5 +1,5 @@
 """
-Module for random operations with nimble.
+Module for random operations with Nimble.
 """
 
 from .randomness import data

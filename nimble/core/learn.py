@@ -1318,7 +1318,10 @@ class Init(object):
 
 class KFoldCrossValidator(object):
     """
-    Full access to the results of cross-validation.
+    Returned by nimble.crossValidate to access cross-validation results.
+
+    Provides full access to the outcome of cross-validation including
+    results for each argument set and the best argument set and results.
 
     Attributes
     ----------

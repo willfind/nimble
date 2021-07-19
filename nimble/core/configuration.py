@@ -35,7 +35,7 @@ configErrors = (configparser.NoSectionError, configparser.NoOptionError)
 
 class SessionConfiguration(object):
     """
-    Manage configurable settings.
+    Returned by nimble.settings to manage configurable settings.
 
     Settings can be changed for the current session only or saved to
     become the new default settings. Default settings are saved to a

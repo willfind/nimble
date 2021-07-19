@@ -795,9 +795,11 @@ class UniversalInterface(metaclass=abc.ABCMeta):
 
 class TrainedLearner(object):
     """
-    Container for a learner model that has been trained.
+    Returned by nimble.train to access the learner trained model.
 
-    Provides methods for applying and testing the trained model.
+    Provides methods for interfacing with the trained model including
+    methods for applying, testing and accessing cross-validation
+    results and other learned attributes.
 
     Attributes
     ----------

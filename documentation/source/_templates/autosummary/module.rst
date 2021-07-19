@@ -6,26 +6,26 @@
    :toctree:
    :recursive:
 
-   {% if attributes %}
+   {%- if attributes %}
    {% for item in attributes %}
-      {{ item }}
+   {{ item }}
    {%- endfor %}
    {% endif %}
 
-   {% if functions %}
+   {%- if functions %}
    {% for item in functions %}
-      {{ item }}
+   {{ item }}
    {%- endfor %}
    {% endif %}
 
-   {% if classes %}
+   {%- if classes %}
    {% for item in classes %}
-      {{ item }}
+   {{ item }}
    {%- endfor %}
    {% endif %}
 
-   {% if exceptions %}
+   {%- if exceptions %}
    {% for item in exceptions %}
-      {{ item }}
+   {{ item }}
    {%- endfor %}
    {% endif %}

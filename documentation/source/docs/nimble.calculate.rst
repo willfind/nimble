@@ -4,9 +4,11 @@ nimble.calculate
 .. automodule:: nimble.calculate
    :no-members:
 
-.. currentmodule:: nimble.calculate
+.. contents::
+   :local:
 
-.. rubric:: Binary
+Binary
+------
 
 .. automodule:: nimble.calculate.binary
    :no-members:
@@ -26,7 +28,8 @@ nimble.calculate
    truePositive
    trueNegative
 
-.. rubric:: Confidence
+Confidence
+----------
 
 .. automodule:: nimble.calculate.confidence
    :no-members:
@@ -40,7 +43,8 @@ nimble.calculate
    meanAbsoluteErrorConfidenceInterval
    fractionIncorrectConfidenceInterval
 
-.. rubric:: Linear Algebra
+Linear Algebra
+--------------
 
 .. automodule:: nimble.calculate.linalg
    :no-members:
@@ -55,7 +59,8 @@ nimble.calculate
    pseudoInverse
    solve
 
-.. rubric:: Loss
+Loss
+----
 
 .. automodule:: nimble.calculate.loss
    :no-members:
@@ -71,7 +76,8 @@ nimble.calculate
    rootMeanSquareError
    varianceFractionRemaining
 
-.. rubric:: Matrix
+Matrix
+------
 
 .. automodule:: nimble.calculate.matrix
    :no-members:
@@ -84,7 +90,8 @@ nimble.calculate
    elementwiseMultiply
    elementwisePower
 
-.. rubric:: Normalize
+Normalize
+---------
 
 .. automodule:: nimble.calculate.normalize
    :no-members:
@@ -99,7 +106,8 @@ nimble.calculate
    range0to1Normalize
    percentileNormalize
 
-.. rubric:: Similarity
+Similarity
+----------
 
 .. automodule:: nimble.calculate.similarity
    :no-members:
@@ -116,7 +124,8 @@ nimble.calculate
    fractionCorrect
    rSquared
 
-.. rubric:: Statistic
+Statistic
+---------
 
 .. automodule:: nimble.calculate.statistic
    :no-members:
@@ -141,7 +150,8 @@ nimble.calculate
    sum
    uniqueCount
 
-.. rubric:: Utility
+Utility
+-------
 
 .. automodule:: nimble.calculate.utility
    :no-members:
