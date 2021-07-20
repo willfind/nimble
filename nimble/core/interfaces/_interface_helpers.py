@@ -385,8 +385,7 @@ def collectAttributes(obj, generators, checkers):
 
     for gen in generators:
         possibleDict = gen(obj)
-        for possibleName in possibleDict:
-            possibleValue = possibleDict[possibleName]
+        for possibleName, possibleValue in possibleDict.items():
             add = True
             for check in checkers:
                 if not check(obj, possibleName, possibleValue):

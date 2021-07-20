@@ -1613,24 +1613,29 @@ def _isDownloadable(url):
         return False
 
 def _isArchive(filename):
-    if not hasattr(filename, 'read'):
-        return zipfile.is_zipfile(filename) or tarfile.is_tarfile(filename)
-    seekLoc = filename.tell()
-    # is_zipfile does not seek back to start
-    if zipfile.is_zipfile(filename):
-        filename.seek(seekLoc)
-        return True
-
-    filename.seek(0)
-    # is_tarfile does not support file objects until python 3.9
+    seekLoc = filename.tell() if hasattr(filename, 'read') else None
     try:
-        tar = tarfile.open(fileobj=filename)
-        tar.close()
-        return True
-    except tarfile.TarError:
-        return False
+        # is_zipfile does not seek back to start
+        if zipfile.is_zipfile(filename):
+            return True
     finally:
-        filename.seek(seekLoc)
+        if seekLoc is not None:
+            filename.seek(seekLoc)
+
+    try:
+        if tarfile.is_tarfile(filename):
+            return True
+    except (TypeError, tarfile.ReadError):
+        # filename is definitely a file object at this point
+        # is_tarfile does not support file objects until python 3.9
+        try:
+            with tarfile.open(fileobj=filename):
+                return True
+        except tarfile.TarError:
+            pass
+
+    return False
+
 
 def _isGZip(filename):
     if hasattr(filename, 'read'):
@@ -1951,20 +1956,23 @@ def _extractFromArchive(ioStream, dataFilter):
     """
     Extract contents of an archive file.
     """
+    archiveKwargs = {'mode': 'r'}
     if zipfile.is_zipfile(ioStream):
         archiveOpen = zipfile.ZipFile
+        archiveKwargs['file'] = ioStream
         nameGetter = 'namelist'
         def extractor(fileObj, name):
             return getattr(fileObj, 'open')(name)
     else:
-        archiveOpen = lambda f, mode: tarfile.open(mode=mode, fileobj=f)
+        archiveOpen = tarfile.open
+        archiveKwargs['fileobj'] = ioStream
         nameGetter = 'getnames'
         def extractor(fileObj, name):
             member = getattr(fileObj, 'getmember')(name)
             return getattr(fileObj, 'extractfile')(member)
 
     ioStream.seek(0)
-    with archiveOpen(ioStream, 'r') as fileObj:
+    with archiveOpen(**archiveKwargs) as fileObj:
         names = getattr(fileObj, nameGetter)()
         if dataFilter is not None:
             # limit only to files containing data
@@ -1998,7 +2006,8 @@ def createDataFromFile(
     # through an http request
     if isinstance(source, str):
         if os.path.exists(source):
-            content = open(source, 'rb', newline=None).read()
+            with open(source, 'rb', newline=None) as f:
+                content = f.read()
             path = source
         else: # webpage
             source, database = _urlSourceProcessor(source)

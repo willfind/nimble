@@ -512,7 +512,7 @@ class ShogunDefault(object):
     def __copy__(self):
         return ShogunDefault(self.name, self.typeString)
 
-    def __deepcopy(self):
+    def __deepcopy__(self, memo):
         return self.__copy__()
 
     def __str__(self):

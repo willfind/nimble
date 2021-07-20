@@ -671,8 +671,7 @@ class Axis(ABC):
 
             # apply the reducer to the list of values associated with each key
             ret = []
-            for mapKey in mapResults:
-                mapValues = mapResults[mapKey]
+            for mapKey, mapValues in mapResults.items():
                 # the reducer will return a tuple of a key to a value
                 redRet = reducer(mapKey, mapValues)
                 if redRet is not None:
