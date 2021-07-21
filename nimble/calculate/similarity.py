@@ -34,8 +34,8 @@ cosineSimilarity.optimal = 'max'
 
 def correlation(X, X_T=None):
     """
-    Calculate the correlation between points in X. If X_T is not
-    provided, a copy of X will be made in this function.
+    Calculate the Pearson correlation coefficients between points in X.
+    If X_T is not provided, a copy of X will be made in this function.
     """
     # pylint: disable=invalid-name
     if X_T is None:

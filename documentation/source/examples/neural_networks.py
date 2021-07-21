@@ -3,7 +3,7 @@
 
 ### Using neural networks to identify handwritten digits.
 
-Our data set contains 1593 flattened 16x16 black and white images (each
+Our dataset contains 1593 flattened 16x16 black and white images (each
 pixel is represented by a 1 or 0) of handwritten digits (0-9).
 Approximately half of the digits were written neatly and the other half
 were written as quickly as possible. This provides some images that are
@@ -42,7 +42,7 @@ labels.show('one-hot encoded labels', maxHeight=9)
 
 ## Rather than 10 one-hot encoded features, we need our labels to be a single
 ## feature with the values 0-9 for our neural network. We can perform this
-## conversion by matrix multiplying (with the `@` matrix multiplication
+## conversion by matrix multiplying (with Python's `@` matrix multiplication
 ## operator) our `labels` object (1593 x 10) by a feature vector with the
 ## sequential values 0-9 (10 x 1). Since each label contains nine `0` values
 ## and a single `1`, the only non-zero product is between the `1` value in the
@@ -52,7 +52,7 @@ labels.show('one-hot encoded labels', maxHeight=9)
 intLabels = labels @ nimble.data('Matrix', list(range(10))).T
 intLabels.show('integer labels', maxHeight=9)
 
-## Now that we have a single feature of labels. We can randomly partition our
+## Now that we have a single feature of labels, we can randomly partition our
 ## data into training and testing sets.
 trainX, trainY, testX, testY = images.trainAndTestSets(testFraction=0.25,
                                                        labels=intLabels)
@@ -100,7 +100,7 @@ print('Accuracy of simple neural network:', accuracy)
 
 ## Convolutional Neural Network ##
 
-## Let's try to do better by increasing the complexity and create a 2D
+## Let's try to do better by increasing the complexity and creating a 2D
 ## convolutional neural network. This algorithm requires that our data be
 ## formatted so that it knows that each image is a 16 x 16 single channel
 ## (i.e., grayscale) image, so our flattened image data will not work. This

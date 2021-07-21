@@ -2078,8 +2078,9 @@ class Points(ABC):
         ----------
         similarityFunction: str
             The name of the function. The accepted strings include:
-            'correlation', 'covariance', 'dot product',
-            'sample covariance', and 'population covariance'
+            'correlation', 'covariance', 'sample covariance',
+            'population covariance' and, 'dot product'. Pearson
+            correlation coefficients are used for 'correlation'.
 
         Returns
         -------
@@ -2150,7 +2151,7 @@ class Points(ABC):
             A label for the x axis. If True, a label will automatically
             be generated.
         yAxisLabel : str, bool
-            A label for the x axis. If True, a label will automatically
+            A label for the y axis. If True, a label will automatically
             be generated.
         legendTitle : str, None
             A title for the legend. A legend is only added when multiple
@@ -2159,6 +2160,10 @@ class Points(ABC):
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
             ``bar`` function.
+
+        See Also
+        --------
+            matplotlib.pyplot.bar
         """
         self._plotComparison(
             None, points, None, horizontal, outPath, show, figureName, title,
@@ -2200,11 +2205,15 @@ class Points(ABC):
             A label for the x axis. If True, a label will automatically
             be generated.
         yAxisLabel : str, bool
-            A label for the x axis. If True, a label will automatically
+            A label for the y axis. If True, a label will automatically
             be generated.
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
             ``errorbar`` function.
+
+        See Also
+        --------
+            matplotlib.pyplot.errorbar
         """
         self._plotComparison(
             nimble.calculate.mean, points, True, horizontal, outPath,
@@ -2257,7 +2266,7 @@ class Points(ABC):
             A label for the x axis. If True, a label will automatically
             be generated.
         yAxisLabel : str, bool
-            A label for the x axis. If True, a label will automatically
+            A label for the y axis. If True, a label will automatically
             be generated.
         legendTitle : str, None
             A title for the legend. A legend is only added when multiple
@@ -2266,6 +2275,10 @@ class Points(ABC):
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
             ``bar`` function.
+
+        See Also
+        --------
+            matplotlib.pyplot.bar
         """
         self._plotComparison(
             statistic, points, False, horizontal, outPath, show, figureName,

@@ -52,6 +52,10 @@ def process_signature(app, what, name, obj, options, signature,
     keepSignatures = ['nimble.CV', 'nimble.Init']
     if what == 'class' and name not in keepSignatures:
         signature = ''
+    # all nan values display as "nan", so we need to be more specific.
+    if what == 'function' and name == 'nimble.data':
+        signature = re.sub('nan, nan', 'float("nan"), numpy.nan', signature)
+        signature = re.sub('=nan', '=numpy.nan', signature)
 
     return signature, return_annotation
 
@@ -211,7 +215,8 @@ extensions = [
     #    'sphinx.ext.ifconfig',
 ]
 
-intersphinx_mapping = {'numpy': ('http://docs.scipy.org/doc/numpy/', None),}
+intersphinx_mapping = {'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+                       'matplotlib': ('https://matplotlib.org/stable/', None)}
 
 autodoc_default_options = {
     'undoc-members': True,

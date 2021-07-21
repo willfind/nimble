@@ -2219,11 +2219,15 @@ class Base(ABC):
             A label for the x axis. If True, the label will be "Feature
             Values".
         yAxisLabel : str, bool
-            A label for the x axis. If True, the label will be "Point
+            A label for the y axis. If True, the label will be "Point
             Values".
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
             ``matshow`` function.
+
+        See Also
+        --------
+            matplotlib.pyplot.matshow
         """
         self._plot(includeColorbar, outPath, show, title, xAxisLabel,
                    yAxisLabel, **kwargs)
@@ -2296,7 +2300,7 @@ class Base(ABC):
         xAxisLabel : str
             A label for the x axis. If True, the label will be "Values".
         yAxisLabel : str
-            A label for the x axis. If True, the label will be "Number
+            A label for the y axis. If True, the label will be "Number
             of Values".
         xMin : int, float
             The minimum value shown on the x axis of the resultant plot.
@@ -2305,6 +2309,10 @@ class Base(ABC):
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
             ``hist`` function.
+
+        See Also
+        --------
+            matplotlib.pyplot.hist
         """
         self._plotFeatureDistribution(feature, outPath, show, figureName,
                                       title, xAxisLabel, yAxisLabel, xMin,
@@ -2421,7 +2429,7 @@ class Base(ABC):
         xAxisLabel : str
             A label for the x axis. If True, the label will be "Values".
         yAxisLabel : str
-            A label for the x axis. If True, the label will be "Number
+            A label for the y axis. If True, the label will be "Number
             of Values".
         xMin : int, float
             The minimum value shown on the x axis of the resultant plot.
@@ -2434,6 +2442,10 @@ class Base(ABC):
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
             ``plot`` function.
+
+        See Also
+        --------
+            matplotlib.pyplot.plot, matplotlib.colors, matplotlib.markers
         """
         self._plotFeatureAgainstFeature(
             x, y, sampleSizeForAverage, trend, outPath, show, figureName,
@@ -2480,7 +2492,7 @@ class Base(ABC):
             A label for the x axis. If True, the label will be the x
             feature name or index.
         yAxisLabel : str
-            A label for the x axis. If True, the label will be the y
+            A label for the y axis. If True, the label will be the y
             feature name or index.
         xMin : int, float
             The minimum value shown on the x axis of the resultant plot.
@@ -2493,6 +2505,10 @@ class Base(ABC):
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
             ``plot`` function.
+
+        See Also
+        --------
+            matplotlib.pyplot.plot, matplotlib.colors, matplotlib.markers
         """
         self._plotFeatureAgainstFeature(
             x, y, None, trend, outPath, show, figureName, title, xAxisLabel,
@@ -2641,11 +2657,15 @@ class Base(ABC):
             A label for the x axis. If True, a label will automatically
             be generated.
         yAxisLabel : str, bool
-            A label for the x axis. If True, a label will automatically
+            A label for the y axis. If True, a label will automatically
             be generated.
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
             ``errorbar`` function.
+
+        See Also
+        --------
+            matplotlib.pyplot.errorbar
         """
         self._plotFeatureGroupStatistics(
             nimble.calculate.mean, feature, groupFeature, None, True,
@@ -2702,11 +2722,15 @@ class Base(ABC):
             A label for the x axis. If True, a label will automatically
             be generated.
         yAxisLabel : str, bool
-            A label for the x axis. If True, a label will automatically
+            A label for the y axis. If True, a label will automatically
             be generated.
         kwargs
             Any keyword arguments accepted by matplotlib.pyplot's
             ``bar`` function.
+
+        See Also
+        --------
+            matplotlib.pyplot.bar
         """
         self._plotFeatureGroupStatistics(
             statistic, feature, groupFeature, subgroupFeature, False,
@@ -2809,9 +2833,9 @@ class Base(ABC):
         """
         Invert the feature and point indices of the data.
 
-        Transpose the data in this object, inplace by inverting the
-        feature and point indices. This operations also includes
-        inverting the point and feature names.
+        Transpose the data in this object, inplace, by inverting the
+        feature and point indices. This includes inverting the point and
+        feature names, when available.
 
         Parameters
         ----------
@@ -2822,6 +2846,10 @@ class Base(ABC):
             send to the logger regardless of the global option. If
             False, do **NOT** send to the logger, regardless of the
             global option.
+
+        See Also
+        --------
+        T : Return the transposed object as a new object.
 
         Examples
         --------
@@ -2857,8 +2885,13 @@ class Base(ABC):
         """
         Invert the feature and point indices of the data.
 
-        Return this object with inverted feature and point indices,
-        including inverting point and feature names, if available.
+        Return a new object that is the transpose of the calling object.
+        The feature and point indices will be inverted, including
+        inverting point and feature names, if available.
+
+        See Also
+        --------
+        transpose : transpose the object inplace.
 
         Examples
         --------
@@ -3519,11 +3552,8 @@ class Base(ABC):
         objects. How the data will be merged is based upon the string
         arguments provided to ``point`` and ``feature``. If
         ``onFeature`` is None, the objects will be merged on the point
-        names. Otherwise, the objects will be merged on the feature
-        provided. ``onFeature`` allows for duplicate values to be
-        present in the provided feature, however, one of the objects
-        must contain only unique values for each point when
-        ``onFeature`` is provided.
+        names. Otherwise, ``onFeature`` must contain only unique values
+        in one or both objects.
 
         Parameters
         ----------

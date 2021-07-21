@@ -23,7 +23,7 @@ Creating Data Objects
 ---------------------
 Most functions for creating data objects are found at the top-level of
 ``nimble``. Nimble provides four data object types: List, Matrix, Sparse, and
-DataFrame. Each object has the same functionality, but differ on how data is
+DataFrame. Each object has the same functionality, but differ on how data are
 stored and manipulated on the backend. List uses a Python list, Matrix uses a
 numpy array, Sparse uses a scipy COO Matrix and DataFrame uses a pandas
 DataFrame. While the functionality is the same, choosing the best type may
@@ -153,13 +153,12 @@ Fetching Files
 --------------
 
 Nimble's ``fetchFile`` and ``fetchFiles`` provide efficient means for accessing
-online data sets. When a fetch function downloads a dataset, it stores it
-locally. Once downloaded, future calls to a fetch function for the same data
-will identify that the data is already available locally, avoiding a repeated
-download. The downloaded files are placed in a directory named "nimbleData" in
-a :ref:`configurable <configuration>` local location. The local storage
-location is identified by the "location" option in the "fetch" section and is
-set to the home directory by default.
+online datasets. When a new ``source`` is passed to a fetch function, it
+downloads and stores the files in a directory named "nimbleData" in a
+:ref:`configurable <configuration>` local location. When a repeated ``source``
+is passed to a fetch function, no downloading occurs because the data can be
+fetched locally. The local storage location is identified by the "location"
+option in the "fetch" section and is set to the home directory by default.
 
 .. autosummary::
    :toctree: generated/
