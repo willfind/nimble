@@ -81,6 +81,17 @@ def checkTargetUpToDate(target):
     return localSHA == remoteSHA
 
 
+def checkTargetScriptUpToDate(target):
+    # get diff of HEAD vs target branch's publish script
+    cmd = "git diff {} -- publish_gh-pages.py".format(target)
+    if not SUPPRESSOUTPUT:
+        print(cmd)
+    currP = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+    diffOutput = currP.stdout.read().decode("utf-8")
+    if not SUPPRESSOUTPUT:
+        print(diffOutput)
+    return len(diffOutput) == 0
+
 def argIsSuppress(toCheck):
     check = toCheck.lower()
     # TODO trim down to two (one abreviation, one long)
@@ -126,8 +137,15 @@ if __name__ == '__main__':
         print("We require the target branch to be up to date before publishing docs to gh-pages")
         sys.exit(1)
 
+    if not checkTargetScriptUpToDate(targetBranch):
+        msg = "We require the {} branch's publish script to ".format(targetBranch)
+        msg += "match that of the calling branch's script."
+        print(msg)
+        sys.exit(1)
+
     committed = False
     try:
+        printAndCall("git checkout " + targetBranch)
         printAndCall("git checkout --orphan gh-pages")
         printAndCall("git rm -rf --cached ../.")
 
