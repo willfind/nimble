@@ -953,7 +953,24 @@ class TrainedLearner(object):
 
         Examples
         --------
-        TODO
+        >>> from nimble.calculate import fractionIncorrect
+        >>> rawTrain = [[1, 0, 0, 1],
+        ...             [0, 1, 0, 2],
+        ...             [0, 0, 1, 3],
+        ...             [1, 0, 0, 1],
+        ...             [0, 1, 0, 2],
+        ...             [0, 0, 1, 3]]
+        >>> rawTest = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+        >>> ftNames = ['a', 'b', 'c', 'label']
+        >>> trainData = nimble.data('Matrix', rawTrain,
+        ...                         featureNames=ftNames)
+        >>> testData = nimble.data('Matrix', rawTest,
+        ...                        featureNames=ftNames)
+        >>> knn = nimble.train('nimble.KNNClassifier', trainX=trainData,
+        ...                    trainY='label')
+        >>> knn.test(testX=testData, testY='label',
+        ...          performanceFunction=fractionIncorrect)
+        0.0
         """
         startTime = time.process_time()
         if trackEntry.isEntryPoint:
@@ -1159,10 +1176,6 @@ class TrainedLearner(object):
             we want to write the output file. If filename extension
             .nimm is not included in file name it would be added to the
             output file.
-
-        Examples
-        --------
-        TODO
         """
         if not cloudpickle.nimbleAccessible():
             msg = "To save nimble models, cloudpickle must be installed"

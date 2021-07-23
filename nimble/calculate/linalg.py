@@ -264,7 +264,18 @@ def leastSquaresSolution(aObj, bObj):
 
     Examples
     --------
-    TODO: Example comparable with scipy counterpart.
+    >>> a = [[0, 1],
+    ...      [1, 1],
+    ...      [2, 1],
+    ...      [3, 1],
+    ...      [4, 1]]
+    >>> b = [6, 9, 12, 15, 18]
+    >>> aObj = nimble.data('Matrix', a)
+    >>> bObj = nimble.data('Matrix', b)
+    >>> nimble.calculate.leastSquaresSolution(aObj, bObj)
+    Matrix(
+        [[3.000 6.000]]
+        )
     """
     return _backendSolvers(aObj, bObj, leastSquaresSolution)
 

@@ -121,12 +121,12 @@ tempData.show('Fully merged (untidy) data', maxWidth=120, maxHeight=13)
 
 ## Tidying the data ##
 
-## Our data is combined, but not in the format we want. To structure our data
+## Our dataset is combined but not in the format we want. To structure our data
 ## for analysis, we would like each point to be a single observation of the
 ## variables in our data. According to [Hadley Wickham's Tidy Data][wickham]
-## principles, our data is not tidy for two reasons. First, 24 observations are
-## made every day (one each hour). Points should represent observations so each
-## day should be represented by 24 points. Second, our minimum and maximum
+## principles, our dataset is not tidy for two reasons. First, 24 observations
+## are made every day (one each hour). Points should represent observations so
+## each day should be represented by 24 points. Second, our minimum and maximum
 ## temperatures are variables for the same observation. Variables should be
 ## represented as features.
 

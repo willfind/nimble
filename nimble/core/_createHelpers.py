@@ -2045,7 +2045,8 @@ def createDataFromFile(
         source.seek(saved)
 
         if not isinstance(content, bytes):
-            encoding = source.encoding
+            if source.encoding is not None:
+                encoding = source.encoding
             content = bytes(content, encoding=encoding)
 
         # try getting name attribute from file
@@ -2344,17 +2345,19 @@ def _namesDictToList(names, kind, paramName):
     return ret
 
 def _detectDialectFromSeparator(ioStream, inputSeparator):
-    "find the dialect to pass to csv.reader based on inputSeparator"
+    """
+    Find the dialect to pass to csv.reader based on inputSeparator.
+    """
     startPosition = ioStream.tell()
     # skip commented lines
     _ = _advancePastComments(ioStream)
     if inputSeparator == 'automatic':
         # detect the delimiter from the first line of data
-        dialect = csv.Sniffer().sniff(ioStream.readline())
+        inputSeparator = csv.Sniffer().sniff(ioStream.readline()).delimiter
     elif len(inputSeparator) > 1:
         msg = "inputSeparator must be a single character"
         raise InvalidArgumentValue(msg)
-    elif inputSeparator == '\t':
+    if inputSeparator == '\t':
         dialect = csv.excel_tab
     else:
         dialect = csv.excel

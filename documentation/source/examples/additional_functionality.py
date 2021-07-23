@@ -81,11 +81,11 @@ wifi = nimble.data('Matrix', path, name='wifiData')
 ## you live in an apartment with four rooms (kitchen, living room, bedroom, and
 ## bathroom) and your phone picks up 7 wifi signals from your neighbors. As you
 ## move your phone from room to room, it will be closer to certain wifi sources
-## and farther from others, changing the signal strength. This data is a matrix
-## of integers collected from an experiment similar to our hypothetical
+## and farther from others, changing the signal strength. This dataset is a
+## matrix of integers collected from an experiment similar to our hypothetical
 ## situation above. Since our data does not contain a header row, it is a good
-## practice to add features names manually so that the contents of our data is
-## more clear.
+## practice to add features names manually to clarify the contents of each
+## feature.
 headers = ['source' + str(i) for i in range(7)] + ['room']
 wifi.features.setNames(headers)
 wifi.show('wifi signal strengths', maxHeight=9)
@@ -97,7 +97,7 @@ wifi.show('wifi signal strengths', maxHeight=9)
 ## stored and can be queried later. This information is a great resource for
 ## reviewing sessions without needing to rerun the code. Depending on the
 ## settings, the log can also provide many additional details regarding a
-## machine learning algorithms performance. As we go through this example, we
+## machine learning algorithm's performance. As we go through this example, we
 ## will demonstrate how the logger is recording our actions. All logged
 ## functions and methods have a `useLog` parameter. This parameter provides
 ## local control of logging, which can override the global settings. A value of
@@ -211,7 +211,7 @@ uncontrolled.show('uncontrolled randomness sample')
 class LeastFeatureMeanDistance(nimble.CustomLearner):
     learnerType = 'classification'
 
-    def incrementalTrain(self, trainX, trainY):
+    def train(self, trainX, trainY):
         """
         Calculate the feature means by label group.
         """
@@ -388,8 +388,8 @@ nimble.showLog(levelOfDetail=3, maximumEntries=4)
 ## Now that we have completed our machine learning, let's dive a little deeper
 ## into how we can take advantage of the `showLog` to find certain information
 ## about our data. Right now our log is small, but as it grows we will not want
-## to look through the entire log. A log file can quickly contain data from
-## multiple sessions, multiple days and contain tons of different information
+## to look through the entire log. A log file can quickly contain tons of
+## very different textual information from various sessions on varying days.
 ## To make the log easy to query, `showLog` has parameters to filter the log by
 ## sessions, dates, and text. For now, let’s try a text search for our object’s
 ## name, ‘wifiData’, and see all log records containing that word.

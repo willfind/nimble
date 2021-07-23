@@ -102,14 +102,14 @@ print(gbTL.crossValidation.bestResult)
 ## as the default value so we already know how it performs on our testing data.
 ## However, `gbTL` found `learning_rate` of 1 outperformed the default, 0.1.
 ## Let's see how it performs on our testing (out-of-sample) data.
-gbPerf = gbTL.test(trainX, trainY, performanceFunction)
+gbPerf = gbTL.test(testX, testY, performanceFunction)
 print('sklearn.GradientBoostingRegressor', 'learning_rate=1', 'error', gbPerf)
 
 ## Applying our learner ##
 
 ## We see a further improvement in the performance so the
 ## GradientBoostingRegressor with a learning rate of 1 is our best model. Now
-## we will apply our `gbTL` trained learner to our `forecast` data set to
+## we will apply our `gbTL` trained learner to our `forecast` dataset to
 ## predict traffic volumes for a future day.
 predictedTraffic = gbTL.apply(forecast)
 predictedTraffic.features.setName(0, 'volume')
