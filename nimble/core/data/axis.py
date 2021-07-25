@@ -29,6 +29,7 @@ from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
 from nimble._utility import prettyListString
 from nimble.core.logger import handleLogging
 from nimble._utility import inspectArguments
+from nimble._utility import tableString
 from .points import Points
 from .features import Features
 from ._dataHelpers import valuesToPythonList, constructIndicesList
@@ -42,7 +43,6 @@ from ._dataHelpers import pyplotRequired, plotOutput, plotFigureHandling
 from ._dataHelpers import plotAxisLabels, plotXTickLabels
 from ._dataHelpers import plotConfidenceIntervalMeanAndError, plotErrorBars
 from ._dataHelpers import plotSingleBarChart, plotMultiBarChart
-from ._dataHelpers import tableString
 
 class Axis(ABC):
     """

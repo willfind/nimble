@@ -178,12 +178,17 @@ def run_setup():
     setupKwargs['include_package_data'] = True
     setupKwargs['convert_2to3_doctests'] = []
 
-    setupKwargs['install_requires'] = list(DEPENDENCIES['required'].values())
+    packages = {}
+    for dependency in DEPENDENCIES.values():
+        if dependency.section not in packages:
+            packages[dependency.section] = {}
+        packages[dependency.section][dependency.name] = dependency.requires
+    setupKwargs['install_requires'] = list(packages['required'].values())
     # extras
-    data = DEPENDENCIES['data']
-    operation = DEPENDENCIES['operation']
-    interfaces = DEPENDENCIES['interfaces']
-    development = DEPENDENCIES['development']
+    data = packages['data']
+    operation = packages['operation']
+    interfaces = packages['interfaces']
+    development = packages['development']
 
     setupKwargs['extras_require'] = {
         'data': list(data.values()), 'development': list(development.values()),

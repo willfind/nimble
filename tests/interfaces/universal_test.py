@@ -143,10 +143,9 @@ class TestPredefinedInterface(PredefinedInterfaceMixin):
         pass
 
     def _checkVersion(self):
-        p1 = patch(nimble._dependencies, 'DEPENDENCIES',
-                   {'interfaces': {'tests': 'tests>=1.0'}})
-        p2 = patch(nimble._dependencies, '_LOCATIONS', {'tests': 'interfaces'})
-        with p1, p2:
+        testDep = nimble._dependencies.Dependency('tests', 'tests>=1.0',
+                                                  'operation', 'test')
+        with patch(nimble._dependencies, 'DEPENDENCIES', {'tests': testDep}):
             super()._checkVersion()
 
     def version(self):

@@ -45,8 +45,8 @@ def prefixAdder(prefix):
 
 nimble_logged = [
     'crossValidate', 'data', 'fillMatching', 'log', 'loadData',
-    'loadTrainedLearner', 'normalizeData', 'train', 'trainAndApply',
-    'trainAndTest', 'trainAndTestOnTrainingData',
+    'loadTrainedLearner', 'normalizeData', 'showAvailablePackages', 'train',
+    'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 nimble_notLogged = [
     'CustomLearner', 'CV', 'Init', 'fetchFile', 'fetchFiles', 'identity',
@@ -135,7 +135,7 @@ base_tested = list(map(prefixAdder('Base'), base_funcs))
 
 features_logged = [
     'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
-    'insert', 'mapReduce', 'matching', 'normalize', 'permute', 'replace', 
+    'insert', 'mapReduce', 'matching', 'normalize', 'permute', 'replace',
     'report', 'retain', 'setName', 'setNames', 'sort', 'transform',
     'splitByParsing',
     ]
@@ -217,6 +217,10 @@ def test_CV_logCount():
 @noLogEntryExpected
 def test_Init_logCount():
     i = nimble.Init('foo', bar=1)
+
+@noLogEntryExpected
+def test_showAvailablePackages_logCount():
+    nimble.showAvailablePackages()
 
 ########
 # Base #

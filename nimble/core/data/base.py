@@ -24,6 +24,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.logger import handleLogging
 from nimble._utility import cloudpickle, h5py, plt
 from nimble._utility import isDatetime
+from nimble._utility import tableString
 from .stretch import Stretch
 from ._dataHelpers import formatIfNeeded
 from ._dataHelpers import constructIndicesList
@@ -47,7 +48,6 @@ from ._dataHelpers import mergeNames, mergeNonDefaultNames
 from ._dataHelpers import makeNamesLines
 from ._dataHelpers import binaryOpNamePathMerge
 from ._dataHelpers import indicesSplit
-from ._dataHelpers import tableString
 
 def to2args(f):
     """

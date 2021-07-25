@@ -11,6 +11,8 @@ import importlib
 import numbers
 import datetime
 from types import ModuleType
+from copy import deepcopy
+import math
 
 import numpy as np
 
@@ -433,3 +435,99 @@ def prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str,
 
     return _prettyString(inDict, useAnd, numberItems,
                          iterator=lambda d: d.items(), formatter=itemFormatter)
+
+def tableString(table, rowHeader=True, colHeaders=None, roundDigits=None,
+                columnSeparator="  ", maxRowsToShow=None, snipIndex=None,
+                includeTrailingNewLine=True,  rowHeadJustify='right',
+                colHeadJustify='center', colValueJustify='center'):
+    """
+    Take a table (rows and columns of strings) and return a string
+    representing a nice visual representation of that table. roundDigits
+    is the number of digits to round floats to.
+    """
+    if len(table) == 0:
+        return ""
+
+    justifiers = {'center': lambda s, w: s.center(w),
+                  'left': lambda s, w: s.ljust(w),
+                  'right': lambda s, w: s.rjust(w)}
+    for justify in [rowHeadJustify, colHeadJustify, colValueJustify]:
+        if justify not in justifiers:
+            msg = 'justifier values must be be "center", "left", or "right"'
+            raise ValueError(msg)
+
+    if isinstance(roundDigits, int):
+        roundDigits = "." + str(roundDigits) + "f"
+
+    # So that the table doesn't get destroyed in the process!
+    table = deepcopy(table)
+    colWidths = []
+    #rows = len(table)
+    cols = 0
+    for row in table:
+        if len(row) > cols:
+            cols = len(row)
+
+    for _ in range(cols):
+        colWidths.append(1)
+
+    for i, row in enumerate(table):
+        for j, val in enumerate(row):
+            if roundDigits is not None and isinstance(val, float):
+                toString = format(val, roundDigits)
+            else:
+                toString = str(val)
+            table[i][j] = toString
+            if len(toString) > colWidths[j]:
+                colWidths[j] = len(toString)
+
+    if colHeaders is not None:
+        for j, header in enumerate(colHeaders):
+            if colWidths[j] < len(header):
+                colWidths[j] = len(header)
+        table.insert(0, colHeaders)
+        colHeader = True
+    else:
+        colHeader = False
+
+    # if there is a limit to how many rows we can show, delete the middle rows
+    # and replace them with a "..." row
+    if maxRowsToShow is not None:
+        numToDelete = max(len(table) - maxRowsToShow, 0)
+        if numToDelete > 0:
+            firstToDelete = int(math.ceil((len(table) / 2.0)
+                                          - (numToDelete / 2.0)))
+            lastToDelete = firstToDelete + numToDelete - 1
+            table = table[:firstToDelete]
+            table += [["..."] * len(table[firstToDelete])]
+            table += table[lastToDelete + 1:]
+    # if we want to imply the existence of more rows, but they're not currently
+    # present in the table, we just add an elipses at the specified index
+    elif snipIndex is not None and snipIndex > 0:
+        table = table[:snipIndex]
+        table += [["..."] * len(table[0])]
+        table += table[snipIndex + 1:]
+
+    #modify the text in each column to give it the right length
+    for i, row in enumerate(table):
+        for j, val in enumerate(row):
+            if (i > 0 and j > 0):
+                table[i][j] = justifiers[colValueJustify](val, colWidths[j])
+            elif i == 0 and colHeader:
+                table[i][j] = justifiers[colHeadJustify](val, colWidths[j])
+            # first column
+            elif j == 0 and rowHeader:
+                table[i][j] = justifiers[rowHeadJustify](val, colWidths[j])
+            else:
+                table[i][j] = justifiers[colValueJustify](val, colWidths[j])
+            if j != len(table[i]) - 1 and columnSeparator:
+                table[i][j] += columnSeparator
+
+    out = ""
+    for val in table[:-1]:
+        out += "".join(val) + "\n"
+    out += "".join(table[-1])
+    if includeTrailingNewLine:
+        out += '\n'
+
+    return out

@@ -22,11 +22,14 @@ import os
 import inspect
 import configparser
 import pathlib
+import importlib
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction, PackageException
+from nimble._utility import DeferredModuleImport, tableString
+from nimble._dependencies import DEPENDENCIES, checkVersion
 
 # source file is __init__.py, we split to get the directory containing it
 nimblePath = os.path.dirname(inspect.getsourcefile(nimble))
@@ -315,3 +318,65 @@ def setInterfaceOptions(interface, save):
             nimble.settings.set(interfaceName, opName, "")
     if save:
         nimble.settings.saveChanges(interfaceName)
+
+def showAvailablePackages():
+    """
+    Display the availability of optional dependency packages.
+
+    Print a table identifying each optional dependency for Nimble,
+    whether or not is available in the current environment, and a short
+    description the package's use within Nimble.
+    """
+    statuses = {}
+    opPackages = {val.name: val for key, val in vars(nimble._utility).items()
+                  if isinstance(val, DeferredModuleImport)}
+    headers = ['PACKAGE', 'AVAILABLE', 'DESCRIPTION']
+    colSep = '  '
+    # format string to add version requirements on the next line, when needed
+    skipSpace = ' ' * (max(len(pkg) for pkg in DEPENDENCIES) + len(headers[1])
+                       + len(colSep) * 2)
+    invalidVersion = ('\n' + skipSpace + '{} is required').format
+    for name, dependency in DEPENDENCIES.items():
+        if dependency.section in ['required', 'development', 'interfaces']:
+            continue
+        badVersion = False
+        try:
+            if name in opPackages:
+                pkg = opPackages[name]
+                statuses[name] = ["Yes" if pkg.nimbleAccessible() else "No"]
+            else:
+                pkg = importlib.import_module(name)
+                checkVersion(pkg)
+                statuses[name] = ["Yes"]
+        except PackageException:
+            statuses[name] = ["No"]
+            badVersion = True
+        except ImportError:
+            statuses[name] = ["No"]
+        statuses[name].append(dependency.description)
+        if badVersion:
+            requires = dependency.requires
+            statuses[name][-1] += invalidVersion(requires)
+
+    nimble.core._learnHelpers.initAvailablePredefinedInterfaces()
+    interfaces = nimble.core.interfaces
+    for interface in interfaces.predefined:
+        name = interface.getCanonicalName()
+        dependency = DEPENDENCIES[name]
+        available = name in interfaces.available
+        statuses[name] = ["Yes" if available else "No"]
+        statuses[name].append(dependency.description)
+        if not available:
+            try:
+                interface()
+            except PackageException:
+                requires = dependency.requires
+                statuses[name][-1] += invalidVersion(requires)
+            except Exception: # pylint: disable=broad-except
+                pass
+
+    table = [[key, *vals] for key, vals in statuses.items()]
+
+    print(tableString(table, colHeaders=headers, columnSeparator=colSep,
+                      rowHeadJustify='left', colHeadJustify='left',
+                      colValueJustify='left'))

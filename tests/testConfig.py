@@ -8,13 +8,19 @@ import copy
 import pathlib
 from functools import wraps
 import tempfile
+import sys
+import io
+import re
+import importlib
 
 import configparser
 
 import nimble
 from nimble.core.configuration import SessionConfiguration
+from nimble.core.interfaces.universal_interface import PredefinedInterfaceMixin
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
+from nimble._dependencies import DEPENDENCIES
 from tests.helpers import raises, patch
 
 
@@ -495,3 +501,85 @@ def test_settings_initUsesHomeOrCWDFile():
         assert nimble.settings.path == currConfigPath
     finally:
         os.chdir(cwd)
+
+def back_checkStatus(availability, expectInvalid=False):
+    saved = sys.stdout
+    try:
+        stream = io.StringIO()
+        sys.stdout = stream
+        nimble.showAvailablePackages()
+    finally:
+        sys.stdout = saved
+
+    stream.seek(0)
+    lines = stream.readlines()
+    col1, col2, col3 = lines[0].split(maxsplit=2)
+    assert re.match('\s*PACKAGE\s*', col1)
+    assert re.match('\s*AVAILABLE\s*', col2)
+    assert re.match('\s*DESCRIPTION\s*', col3)
+    previousPackage = None
+    invalidCount = 0
+    for line in lines[1:]:
+        if not line or line == '\n':
+            continue
+        if line.startswith(' '):
+            assert DEPENDENCIES[previousPackage].requires in line
+            assert 'is required' in line
+            invalidCount += 1
+        else:
+            package, available, description = line.split(maxsplit=2)
+            assert package in DEPENDENCIES
+            assert available == availability[package]
+            assert description
+            previousPackage = package
+    if expectInvalid:
+        assert invalidCount
+
+def test_showAvailablePackages_current():
+    availability = {}
+    for pkg in DEPENDENCIES:
+        try:
+            importlib.import_module(pkg)
+            availability[pkg] = "Yes"
+        except ImportError:
+            availability[pkg] = "No"
+    if availability['keras'] == "No":
+        availability['keras'] = availability['tensorflow']
+    back_checkStatus(availability)
+
+# just need key to be present, value is not used
+mockInterfacesAvailable = {dep.name: None for dep in DEPENDENCIES.values()
+                           if dep.section == 'interfaces'}
+
+@patch(nimble._utility.DeferredModuleImport, 'nimbleAccessible', lambda self: True)
+@patch(nimble.core.interfaces, 'available', mockInterfacesAvailable)
+def test_showAvailablePackages_allYes():
+    availability = {pkg: "Yes" for pkg in DEPENDENCIES}
+    back_checkStatus(availability)
+
+def raiseImportError(package):
+    raise ImportError('no package')
+
+def noInterfacesAvailable():
+    nimble.core.interfaces.available = {}
+
+@patch(nimble.core.configuration, 'checkVersion', raiseImportError)
+@patch(nimble._utility.DeferredModuleImport, 'nimbleAccessible', lambda self: False)
+@patch(nimble.core._learnHelpers, 'initAvailablePredefinedInterfaces',
+       noInterfacesAvailable)
+def test_showAvailablePackages_allNo():
+    availability = {pkg: "No" for pkg in DEPENDENCIES}
+    back_checkStatus(availability)
+
+def raisePackageException(package):
+    raise PackageException('version error')
+
+@patch(nimble.core.configuration, 'checkVersion', raisePackageException)
+@patch(nimble._utility.DeferredModuleImport, 'nimbleAccessible', raisePackageException)
+@patch(nimble.core._learnHelpers, 'initAvailablePredefinedInterfaces',
+       noInterfacesAvailable)
+@patch(nimble.core.interfaces.universal_interface.PredefinedInterfaceMixin,
+       '__init__', raisePackageException)
+def test_showAvailablePackages_invalidIfInstalled():
+    availability = {pkg: "No" for pkg in DEPENDENCIES}
+    back_checkStatus(availability, expectInvalid=True)

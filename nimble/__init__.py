@@ -10,6 +10,7 @@ data, and do package level configuration and information querying.
 # Import those functions that we want to be accessible in the
 # top level
 from nimble.core.configuration import nimblePath
+from nimble.core.configuration import showAvailablePackages
 from nimble.core.create import data
 from nimble.core.create import ones
 from nimble.core.create import zeros
