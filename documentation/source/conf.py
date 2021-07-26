@@ -149,7 +149,9 @@ def exampleHyperlinks(app, pagename, templatename, context, doctree):
             if link.startswith('.'):
                 name = link[1:]
                 variable = '<span class="n">[_A-Za-z][_A-Za-z0-9]*</span>'
-                html = variable + dotSpan
+                # account for possible indexing before method call
+                optional = '(<span class="p">.*?</span>)?'
+                html = variable + optional + dotSpan
             else:
                 htmlLinks.append(nameSpan(link))
                 name = link
@@ -178,12 +180,18 @@ def exampleHyperlinks(app, pagename, templatename, context, doctree):
                         continue
                     # object methods
                     if name not in app.nimble_hyperlinks:
-                        # drop variable name
+                        # ignore everything before method call
                         name = '.' + name.split('.', 1)[1]
-                        # ignore variable name and dot for hyperlinks
-                        var, dot, htmlName = htmlName.split('</span>', 2)
-                        # </span> missing from var and dot so adjust by 14 more
-                        span = (match.start() + len(var) + len(dot) + 14,
+                        # keep features and points as part of hyperlink
+                        if '.features.' in name or '.points.' in name:
+                            rsplit = 4
+                        else:
+                            rsplit = 2
+                        # first component is everything we don't want to link
+                        components = htmlName.rsplit('</span>', rsplit)
+                        htmlName = '</span>'.join(components[1:])
+                        # first component is missing </span> so add 7
+                        span = (match.start() + len(components[0]) + 7,
                                 match.end())
                     # nimble functions
                     else:
