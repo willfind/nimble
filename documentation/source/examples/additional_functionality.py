@@ -44,9 +44,9 @@ tempDir = tempfile.TemporaryDirectory('nimble-logs')
 ## Nimble allows for user configuration of certain aspects of our library
 ## through `nimble.settings`. The default settings are written to a file and
 ## loaded each time Nimble is imported. To see the current configuration
-## settings, we can use `nimble.settings.get()`. We can also change the
-## default settings using `nimble.settings.setDefault()` or use
-## `nimble.settings.set()` to make changes for only the current session.
+## settings, we can use `nimble.settings.get`. We can also change the
+## default settings using `nimble.settings.setDefault` or use
+## `nimble.settings.set` to make changes for only the current session.
 
 ## Next, we will be exploring Nimble's logging feature. We want to start with
 ## an empty log file and make sure that our logger behavior is the same. Let's
@@ -103,7 +103,7 @@ wifi.show('wifi signal strengths', maxHeight=9)
 ## local control of logging, which can override the global settings. A value of
 ## `True` will always add a log entry, `False` will never add a log entry and
 ## `None` (the default) will use the global "enabledByDefault" setting . Thus
-## far, our calls to `nimble.data` and `wifi.features.setNames` contained
+## far, our previous calls to `nimble.data` and `features.setNames` contained
 ## `useLog` parameters. Since we set `enabledByDefault` to "True", these two
 ## calls were logged.
 
@@ -120,11 +120,11 @@ nimble.showLog()
 ## regardless of the global setting. When "enabledByDefault" is set to "False",
 ## using `useLog=True` is perfect for logging only things we explicitly want to
 ## log. We set "enabledByDefault" to "True" earlier, but we still may want to
-## avoid logging certain things. For example, below we decide to check the mean
-## and median signal strength for each source because large differences would
-## indicate outliers. Remembering that we ran this check is not overly helpful
-## so we can skip logging it, but if we find outliers we will want to log any
-## actions we take.
+## avoid logging certain things. For example, below we decide to check the
+## `mean` and `median` signal strength for each source because large
+## differences would indicate outliers. Remembering that we ran this check is
+## not overly helpful so we can skip logging it, but if we find outliers we
+## will want to log any actions we take.
 sourceData = wifi[:, 'source0':'source6']
 print(sourceData.features.calculate(nimble.calculate.mean, useLog=False))
 print(sourceData.features.calculate(nimble.calculate.median, useLog=False))
@@ -139,12 +139,11 @@ nimble.showLog()
 
 ## If you revisit our data above, we can see that the points appear to be
 ## sorted by room. For our machine learning, we will want to randomize the
-## order. When we call `wifi.points.permute()` with no arguments, a random
-## permutation is used to reorder our points. However, Nimble wants each run of
-## a script to produce consistent results, so the random seed is controlled by
-## default. This means that the points in our randomly permuted object shown
-## below are always in the same order every time for everyone running this
-## script.
+## order. When we call `points.permute` with no arguments, a random permutation
+## is used to reorder our points. However, Nimble wants each run of a script to
+## produce consistent results, so the random seed is controlled by default.
+## This means that the points in our randomly permuted object shown below are
+## always in the same order every time for everyone running this script.
 wifi.points.permute()
 wifi.show('randomly permuted', maxHeight=9)
 
@@ -182,7 +181,7 @@ uncontrolled.show('uncontrolled randomness sample')
 
 ## Now it is time to perform our machine learning. For this example, we will
 ## first design our own custom machine learning algorithm for use with Nimble
-## rather than using one of Nimble's built-in `CustomLearners` or an algorithm
+## rather than using one of Nimble's built-in `CustomLearner`s or an algorithm
 ## from another package supported by Nimble (like `sklearn` or `keras`). One
 ## theory is that we could identify the center of each room by calculating the
 ## mean signal strengths of all known observations in that room. Once we have

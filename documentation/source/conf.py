@@ -59,14 +59,30 @@ def process_signature(app, what, name, obj, options, signature,
 
     return signature, return_annotation
 
+def capitalizer(string):
+    if string in ['and']:
+        return string
+    return string.capitalize()
+
 def setHyperlinks(app):
     """
     Use the generated stubs to determine hyperlinks for examples.
     """
+    exampleLinks = {}
+    for file in os.listdir(os.path.join('source', 'examples')):
+        if file.endswith('.py'):
+            example = file[:-3]
+            key = ' '.join(map(capitalizer, example.split('_'))) + ' example'
+            exampleLinks[key] = "{}.html".format(example)
+
+    app.nimble_examples = exampleLinks
+
     hyperlinks = {}
+    markdownOnly = {}
     for _, _, files in os.walk(os.path.join('source', 'docs', 'generated')):
         for rst in files:
             path = rst[:-4]
+            name = None
             # define hyperlinks to custom files
             if path == 'nimble':
                 hyperlinks[path] = '../docs/index.html'
@@ -76,41 +92,52 @@ def setHyperlinks(app):
                 continue
             # any remaining paths are in docs/generated
             pathSplit = path.split('.')
+            link = '../docs/generated/{}.html'.format(path)
             # classes
-            if (re.match(r'[A-Z]', pathSplit[-1][0])
-                    # hyperlink nimble.CV and nimble.Init, not just class name
-                    and pathSplit[-1] not in ['CV', 'Init']):
-                name = pathSplit[-1]
+            if re.match(r'[A-Z]', pathSplit[-1][0]):
+                className = pathSplit[-1]
+                if className in ['CV', 'Init', 'CustomLearner']:
+                    # leave 'nimble.' prefix, class name for markdown only
+                    name = path
+                    markdownOnly[className] = link
+                else:
+                    name = className
             # class methods
             elif re.search(r'[A-Z][a-z]+\..*', path):
-                if 'CustomLearner' in path or 'nimble.learners' in path:
-                    # methods conflict with TrainedLearner and only
-                    # TrainedLearner is required for current examples
-                    continue
                 isClass = list(map(lambda s: bool(re.match(r'[A-Z]', s[0])),
                                pathSplit))
                 clsIdx = isClass.index(True)
-                if pathSplit[clsIdx] in ['Points', 'Features']:
-                    pathSplit[clsIdx] = pathSplit[clsIdx].lower()
+                className = pathSplit[clsIdx]
+                if className == 'SessionConfiguration':
+                    name = 'nimble.settings.' + pathSplit[-1]
                 else:
-                    clsIdx += 1
-                name = '.' + '.'.join(pathSplit[clsIdx:])
+                    if className in ['Points', 'Features']:
+                        pathSplit[clsIdx] = className.lower()
+                    else:
+                        clsIdx += 1
+                    name = '.' + '.'.join(pathSplit[clsIdx:])
             # functions
             else:
                 name = path
+                # add object without prefix for markdown
+                markdownOnly[name.split('.')[-1]] = link
 
-            hyperlinks[name] = '../docs/generated/' + path + '.html'
+            # sanity check
+            if name is None:
+                raise ValueError('name was not set for ' + path)
+
+            # conflicting name; will require custom mapping
+            if '.' + name in hyperlinks:
+                hyperlinks['.' + name] = None
+            elif name.startswith('.') and name[1:] in hyperlinks:
+                hyperlinks[name[1:]] = None
+            if name in hyperlinks:
+                hyperlinks[name] = None
+            else:
+                hyperlinks[name] = link
 
     app.nimble_hyperlinks = hyperlinks
-
-    # It is not possible to tell object types when applying hyperlinks to the
-    # html code. So, we assume that any method names in the example code are
-    # referring to the Nimble objects. If the example uses another object type
-    # with a shared method name, it must be explicitly ignored. For example,
-    # myDict.copy() would link the Base copy() method unless 'myDict.copy' is
-    # added to the list below.
-    nolink = ['tempDir.name']
-    app.nimble_nolink = nolink
+    app.nimble_markdown = markdownOnly
 
 def addStringReplacements(original, replacements):
     """
@@ -128,81 +155,132 @@ def addStringReplacements(original, replacements):
 
     return newString
 
+def getHyperlink(app, value):
+    if app.nimble_hyperlinks[value] is None:
+        return app.nimble_mapping[value]
+    return app.nimble_hyperlinks[value]
 
-examples = ('cleaning_data', 'supervised_learning', 'exploring_data',
-            'unsupervised_learning', 'neural_networks',
-            'merging_and_tidying_data', 'additional_functionality')
-examplePages = ['examples/' + example for example in examples]
+def addExampleLinks(app, string):
+    exampleReplacements = []
+    anchor = '<a href="{}">{}</a>'.format
+    for example, href in app.nimble_examples.items():
+        string = re.sub(example, anchor(href, example), string)
+
+    return string
+
+def addMarkdownLinks(app, string):
+    markdownReplacements = []
+    anchor = '<a class="nimble-hyperlink" href="{}">{}</a>'.format
+    for match in re.finditer(r'<span class="pre">(.*?)</span>', string):
+        variable = match.group(1)
+        if variable in app.nimble_nolink:
+            continue
+        href = None
+        if variable in app.nimble_hyperlinks:
+            href = getHyperlink(app, variable)
+        elif '.' + variable in app.nimble_hyperlinks:
+            href = getHyperlink(app, '.' + variable)
+        # nimble_markdown is last resort
+        elif variable in app.nimble_markdown:
+            href = app.nimble_markdown[variable]
+        if href is not None:
+            markdownReplacements.append((match.span(), anchor(href,
+                                                      match.group())))
+
+    return addStringReplacements(string, markdownReplacements)
+
+def addCodeLinks(app, string):
+    # each element of code block is wrapped in a span
+    dotSpan = '<span class="o">\.</span>'
+    nameSpan = '<span class="nn?">{}</span>'.format
+    # need most complex links first so regex prioritizes them
+    sortedLinks = sorted(app.nimble_hyperlinks.keys(), reverse=True)
+    htmlLinks = []
+    for link in sortedLinks:
+        if link.startswith('.'):
+            name = link[1:]
+            # may need to look at calling object so also find that if available
+            variable = '<span class="n">[_A-Za-z][_A-Za-z0-9]*</span>'
+            # account for possible indexing  before method call
+            optional = '(<span class="p">\[.*</span>)?'
+            html = variable + optional + dotSpan
+        else:
+            htmlLinks.append(nameSpan(link))
+            name = link
+            html = ''
+        spannedName = list(map(nameSpan, name.split('.')))
+        html += dotSpan.join(spannedName)
+        htmlLinks.append(html)
+    linkPattern = '|'.join(htmlLinks)
+    anchor = '<a class="nimble-hyperlink" href="{}">{}</a>'.format
+    # we will replace the code (in the <pre> tags) with code that wraps
+    # nimble calls with anchor tags to their api documentation
+    codeReplacements = []
+    for code in re.finditer(r'<pre>.*?</pre>', string, flags=re.DOTALL):
+        lines = []
+        splitCode = code.group().split('\n')
+        for line in splitCode:
+            linkedLines = []
+            for match in re.finditer(linkPattern, line):
+                htmlName = match.group()
+                name = re.sub(r'<.*?>', '', htmlName)
+                # Object type cannot be determined so all methods are
+                # assumed to be nimble objects unless explicitly named in
+                # app.nimble_nolink which is defined in setHyperlinks
+                if name in app.nimble_nolink:
+                    continue
+                # object methods
+                if name not in app.nimble_hyperlinks or name.startswith('.'):
+                    # ignore everything before method call
+                    name = '.' + name.split('.', 1)[1]
+                    # keep features and points as part of hyperlink
+                    if '.features.' in name or '.points.' in name:
+                        rsplit = 4
+                    else:
+                        rsplit = 2
+                    # first component is everything we don't want to link
+                    components = htmlName.rsplit('</span>', rsplit)
+                    htmlName = '</span>'.join(components[1:])
+                    # first component is missing </span> so add 7
+                    span = (match.start() + len(components[0]) + 7,
+                            match.end())
+                # nimble functions
+                else:
+                    span = match.span()
+                href = getHyperlink(app, name)
+                linkedLines.append((span, anchor(href, htmlName)))
+
+            lines.append(addStringReplacements(line, linkedLines))
+        codeReplacements.append((code.span(), '\n'.join(lines)))
+
+    return addStringReplacements(string, codeReplacements)
 
 def exampleHyperlinks(app, pagename, templatename, context, doctree):
     """
     Wrap the nimble calls in an anchor tag linking to API Documentation.
     """
-    if pagename in examplePages:
-        # each element of code block is wrapped in a span
-        dotSpan = '<span class="o">\.</span>'
-        nameSpan = '<span class="nn?">{}</span>'.format
-        # need most complex links first so regex prioritizes them
-        sortedLinks = sorted(app.nimble_hyperlinks.keys(), reverse=True)
-        htmlLinks = []
-        for link in sortedLinks:
-            if link.startswith('.'):
-                name = link[1:]
-                variable = '<span class="n">[_A-Za-z][_A-Za-z0-9]*</span>'
-                # account for possible indexing before method call
-                optional = '(<span class="p">.*?</span>)?'
-                html = variable + optional + dotSpan
-            else:
-                htmlLinks.append(nameSpan(link))
-                name = link
-                html = ''
-            spannedName = list(map(nameSpan, name.split('.')))
-            html += dotSpan.join(spannedName)
-            htmlLinks.append(html)
-        linkPattern = '|'.join(htmlLinks)
-        body = context['body']
-        anchor = '<a class="nimble-hyperlink" href="{}">{}</a>'
-        # we will replace the code (in the <pre> tags) with code that wraps
-        # nimble calls with anchor tags to their api documentation
-        replacements = []
-        for code in re.finditer(r'<pre>.*?</pre>', body, flags=re.DOTALL):
-            lines = []
-            splitCode = code.group().split('\n')
-            for line in splitCode:
-                linkedLines = []
-                for match in re.finditer(linkPattern, line):
-                    htmlName = match.group()
-                    name = re.sub(r'<.*?>', '', htmlName)
-                    # Object type cannot be determined so all methods are
-                    # assumed to be nimble objects unless explicitly named in
-                    # app.nimble_nolink which is defined in setHyperlinks
-                    if name in app.nimble_nolink:
-                        continue
-                    # object methods
-                    if name not in app.nimble_hyperlinks:
-                        # ignore everything before method call
-                        name = '.' + name.split('.', 1)[1]
-                        # keep features and points as part of hyperlink
-                        if '.features.' in name or '.points.' in name:
-                            rsplit = 4
-                        else:
-                            rsplit = 2
-                        # first component is everything we don't want to link
-                        components = htmlName.rsplit('</span>', rsplit)
-                        htmlName = '</span>'.join(components[1:])
-                        # first component is missing </span> so add 7
-                        span = (match.start() + len(components[0]) + 7,
-                                match.end())
-                    # nimble functions
-                    else:
-                        span = match.span()
-                    href = app.nimble_hyperlinks[name]
-                    linkedLines.append((span, anchor.format(href, htmlName)))
+    if pagename.startswith('examples/'):
+        path = '../docs/generated/{}.html'.format
+        # It is not possible to tell object types when applying hyperlinks to
+        # the html code. So, we assume that any method names in the example
+        # code are referring to the Nimble objects. If the example uses another
+        # object type with a shared method name, it must be explicitly ignored.
+        app.nimble_nolink = []
+        # define default mapping for names that currently have a conflict
+        app.nimble_mapping = {
+            'train': path('nimble.train'),
+            '.train': path('nimble.core.interfaces.TrainedLearner.train'),
+            '.apply': path('nimble.core.interfaces.TrainedLearner.apply'),}
+        if 'additional_functionality' in pagename:
+            app.nimble_nolink = ['tempDir.name', 'learnerType']
+            app.nimble_mapping['train'] = path('nimble.CustomLearner.train')
+            app.nimble_mapping['.train'] = path('nimble.CustomLearner.train')
+            app.nimble_mapping['.apply'] = path('nimble.CustomLearner.apply')
 
-                lines.append(addStringReplacements(line, linkedLines))
-            replacements.append((code.span(), '\n'.join(lines)))
+        context['body'] = addExampleLinks(app, context['body'])
+        context['body'] = addMarkdownLinks(app, context['body'])
+        context['body'] = addCodeLinks(app, context['body'])
 
-        context['body'] = addStringReplacements(context['body'], replacements)
 
 def setup(app):
     app.connect('autodoc-process-docstring', process_docstring)
