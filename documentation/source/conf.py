@@ -552,7 +552,10 @@ class PYtoIPYNB:
         if line == '##\n':
             line = '\n'
         isNewline = line == '\n'
-        if not isNewline and isMarkdown and self.celltype != 'markdown':
+        # new markdown cell if previous was code or this line is a heading
+        wasCode = self.celltype != 'markdown'
+        newHeading = line.startswith('## ') or line.startswith('**Reference')
+        if (not isNewline and isMarkdown and (wasCode or newHeading)):
             self.celltype = 'markdown'
             cellInfo = dict(cell_type=self.celltype, metadata={}, source=[])
             self._addNewCell(cellInfo)
