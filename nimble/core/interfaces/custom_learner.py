@@ -133,18 +133,32 @@ class CustomLearnerInterface(UniversalInterface):
     def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
                  customDict):
         ret = self.registeredLearners[learnerName]()
-        return ret.trainForInterface(trainX, trainY, arguments)
+
+        if ret.__class__.learnerType == 'classification':
+            labels = dtypeConvert(trainY.copy(to='numpyarray'))
+            ret.labelList = np.unique(labels)
+
+        ret.train(trainX, trainY, **arguments)
+
+        return ret
 
     def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
                             arguments, customDict):
-        return learner.incrementalTrainForInterface(trainX, trainY, arguments)
+        if learner.__class__.learnerType == 'classification':
+            flattenedY = dtypeConvert(trainY.copy(to='numpyarray').flatten())
+            if learner.labelList is None: # no previous training
+                learner.labelList = []
+            learner.labelList = np.union1d(learner.labelList, flattenedY)
+        learner.incrementalTrain(trainX, trainY, **arguments)
+
+        return learner
 
     def _applier(self, learnerName, learner, testX, newArguments,
                  storedArguments, customDict):
         backendArgs = learner.getApplyParameters()[1:] # ignore testX param
         applyArgs = self._getMethodArguments(backendArgs, newArguments,
                                              storedArguments)
-        return learner.applyForInterface(testX, applyArgs)
+        return learner.apply(testX, **applyArgs)
 
     def _getAttributes(self, learnerBackend):
         contents = dir(learnerBackend)
@@ -257,36 +271,6 @@ class CustomLearner(metaclass=abc.ABCMeta):
         """
         msg = "This custom learner has not implemented the getScores method"
         raise ImproperObjectAction(msg)
-
-    def trainForInterface(self, trainX, trainY, arguments):
-        """
-        Used in _trainer for the CustomLearnerInterface.
-        """
-        if self.__class__.learnerType == 'classification':
-            labels = dtypeConvert(trainY.copy(to='numpyarray'))
-            self.labelList = np.unique(labels)
-
-        self.train(trainX, trainY, **arguments)
-
-        return self
-
-    def incrementalTrainForInterface(self, trainX, trainY, arguments):
-        """
-        Used in _incrementalTrainer for the CustomLearnerInterface.
-        """
-        if self.__class__.learnerType == 'classification':
-            flattenedY = dtypeConvert(trainY.copy(to='numpyarray').flatten())
-            if self.labelList is None: # no previous training
-                self.labelList = []
-            self.labelList = np.union1d(self.labelList, flattenedY)
-        self.incrementalTrain(trainX, trainY, **arguments)
-        return self
-
-    def applyForInterface(self, testX, arguments):
-        """
-        Used in _applier for the CustomLearnerInterface.
-        """
-        return self.apply(testX, **arguments)
 
     def incrementalTrain(self, trainX, trainY): # pylint: disable=unused-argument
         """
