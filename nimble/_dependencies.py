@@ -10,51 +10,74 @@ from packaging.specifiers import LegacySpecifier
 
 from nimble.exceptions import PackageException
 
-DEPENDENCIES = {
-    'required': {
-        'numpy': 'numpy>=1.14',
-        'packaging': 'packaging>=20.0'
-    },
-    'data': {
-        'pandas': 'pandas>=0.24',
-        'scipy': 'scipy>=1.1'
-    },
-    'operation': {
-        'matplotlib': 'matplotlib>=3.1',
-        'cloudpickle': 'cloudpickle>=1.0',
-        'requests': 'requests>2.12',
-        'h5py': 'h5py>=2.10',
-        'dateutil': 'python-dateutil>=2.6'
-    },
-    'interfaces': {
-        'sklearn': 'scikit-learn>=0.19',
-        'tensorflow': 'tensorflow>=1.14',
-        'keras': 'keras>=2.0',
-        'autoimpute': 'autoimpute>=0.12',
-        'shogun': 'shogun>=3',
-        'mlpy': 'machine-learning-py>=3.5;python_version<"3.7"'
-    },
-    'development': {
-        'pytest': 'pytest>=2.7.4',
-        'pylint': 'pylint>=6.2',
-        'cython': 'cython>=0.29',
-        'sphinx': 'sphinx>=3.3'
-    }
-}
+class Dependency:
+    """
+    Store details of a Nimble dependency.
 
-_LOCATIONS = {}
-for key1, value in DEPENDENCIES.items():
-    for key2 in value:
-        _LOCATIONS[key2] = key1
+    Parameters
+    ----------
+    name : str
+        The name of the package.
+    requires : str
+        The version requirements for the package.
+    section : str
+        The category for setup.py to classify this dependency.
+    description : str, None
+        A description of the package's function within Nimble.
+    """
+    # each dependency must be categorized into a section for setup.py
+    # each section maps to a boolean value for whether it requires a
+    # descriptions to be used with nimble.showAvailablePackages
+    _sections = {'required': False, 'data': True, 'operation': True,
+                'interfaces': True, 'development': False}
+
+    def __init__(self, name, requires, section, description=None):
+        self.name = name
+        self.requires = requires
+        if section not in Dependency._sections:
+            raise ValueError('Invalid section name')
+        self.section = section
+        if description is None and Dependency._sections[section]:
+            msg = 'description is required for packages in this section'
+            raise ValueError(msg)
+        self.description = description
+
+# All dependencies, required and optional, must be included here
+_DEPENDENCIES = [
+    Dependency('numpy', 'numpy>=1.14', 'required'),
+    Dependency('packaging', 'packaging>=20.0', 'required'),
+    Dependency('pandas', 'pandas>=0.24', 'data', "Nimble's DataFrame object"),
+    Dependency('scipy', 'scipy>=1.1', 'data',
+               "Nimble's Sparse object and scientific calculations"),
+    Dependency('matplotlib', 'matplotlib>=3.1', 'operation', 'Plotting'),
+    Dependency('cloudpickle', 'cloudpickle>=1.0', 'operation',
+               'Saving and loading Nimble data objects'),
+    Dependency('requests', 'requests>2.12', 'operation',
+               'Retrieving data from the web'),
+    Dependency('h5py', 'h5py>=2.10', 'operation', 'Loading hdf5 files'),
+    Dependency('dateutil', 'python-dateutil>=2.6', 'operation',
+               'Parsing strings to datetime objects'),
+    Dependency('sklearn', 'scikit-learn>=0.19', 'interfaces',
+               'Machine Learning'),
+    Dependency('tensorflow', 'tensorflow>=1.14', 'interfaces',
+               'Neural Networks'),
+    Dependency('keras', 'keras>=2.0', 'interfaces', 'Neural Networks'),
+    Dependency('autoimpute', 'autoimpute>=0.12', 'interfaces',
+               'Imputation & machine learning with missing data'),
+    Dependency('shogun', 'shogun>=v3', 'interfaces', 'Machine Learning'),
+    Dependency('mlpy', 'machine-learning-py>=3.5;python_version<"3.7"',
+               'interfaces', 'Machine Learning'),
+    Dependency('pytest', 'pytest>=2.7.4', 'development'),
+    Dependency('pylint', 'pylint>=6.2', 'development'),
+    Dependency('cython', 'cython>=0.29', 'development'),
+    Dependency('sphinx', 'sphinx>=3.3', 'development'),
+    ]
+
+DEPENDENCIES = {dep.name: dep for dep in _DEPENDENCIES}
 
 def checkVersion(package):
     """
     Compare the package requirements to the available version.
-
-    Generally, the package name and version and can be extracted from
-    the package, but when that is not the case or the extracted value
-    does not align with DEPENDENCIES, then alternate values can be
-    provided.
     """
     version = package.__version__
     try:
@@ -64,8 +87,7 @@ def checkVersion(package):
         vers = LegacyVersion(version)
         legacy = True
     name = package.__name__
-    location = _LOCATIONS[name]
-    requirement = DEPENDENCIES[location][name]
+    requirement = DEPENDENCIES[name].requires
     req = Requirement(requirement)
     for specifier in req.specifier:
         # when vers is a LegacyVersion, need specifiers to be LegacySpecifier

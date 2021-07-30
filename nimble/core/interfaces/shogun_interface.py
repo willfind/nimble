@@ -40,6 +40,7 @@ class Shogun(PredefinedInterfaceMixin):
 
     def __init__(self):
         self.package = modifyImportPathAndImport('shogun', 'shogun')
+        self._hasAll = hasattr(self.package, '__all__')
         if not hasattr(self.package, '__version__'):
             version = self._access('Version', 'get_version_release')()
             self.package.__version__ = version
@@ -71,7 +72,6 @@ class Shogun(PredefinedInterfaceMixin):
 
             return True
 
-        self._hasAll = hasattr(self.package, '__all__')
         self._searcher = PythonSearcher(self.package, isLearner, 2)
 
         super().__init__()

@@ -74,9 +74,9 @@ def test_DeferredModuleImport_bogus_nimbleAccessibleFailure():
 
 def test_DeferredModuleImport_invalidVersion():
     opt = []
-    for section in DEPENDENCIES:
-        if section not in ['required', 'interfaces']:
-            opt.extend(DEPENDENCIES[section].keys())
+    for dependency in DEPENDENCIES.values():
+        if dependency.section not in ['required', 'interfaces', 'development']:
+            opt.append(dependency.name)
     msg = 'does not meet the version requirements'
     for pkg in opt:
         mod = importlib.import_module(pkg)
