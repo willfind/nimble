@@ -8682,14 +8682,14 @@ class StructureModifying(StructureShared):
             leftObj.merge(rightObj, point='intersection', feature='union',
                           onFeature=0)
 
-    def test_merge_onFeatureIndex_ftStrictNoFtNames(self):
-        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
-        dataR = [['a', 3, 4], ['b', 5, 6], ['c', -3, -4]]
+    def test_merge_onPtNames_ftStrictNoFtNames(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', 0, -2]]
+        dataR = [['b', 5, 6], ['a', 3, 0], ['c', -3, -4]]
         leftObj = self.constructor(dataL, pointNames=['a', 'b', 'c'])
-        rightObj = self.constructor(dataR, pointNames=['d', 'b', 'e'])
+        rightObj = self.constructor(dataR, pointNames=['b', 'd', 'e'])
 
-        expData = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2],
-                   ['a', 3, 4], ['c', -3, -4]]
+        expData = [['a', 1, 2], ['b', 5, 6], ['c', 0, -2],
+                   ['a', 3, 0], ['c', -3, -4]]
         exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd', 'e'])
 
         leftObj.merge(rightObj, point='union', feature='strict', force=True)
@@ -9422,7 +9422,7 @@ class StructureModifying(StructureShared):
         self.merge_backend(left, right, expected, on="id")
 
     def test_merge_onFeature_sharedIds_newFeatures_nonDuplicate(self):
-        dataL = [["id1", "a", 1], ["id2", "b", 2], ["id3", "c", 3]]
+        dataL = [["id1", "a", 0], ["id2", "b", 0], ["id3", "c", 0]]
         fNamesL = ["id", "f1", "f2"]
         pNamesL = ["p1", "p2", "p3"]
         left = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
@@ -9430,7 +9430,7 @@ class StructureModifying(StructureShared):
         fNamesR = ["id", "f3", "f4"]
         right = self.constructor(dataR, featureNames=fNamesR)
 
-        mData = [["id1", "a", 1, None, None], ["id2", "b", 2, "x", 9], ["id3", "c", 3, "y", 8],
+        mData = [["id1", "a", 0, None, None], ["id2", "b", 0, "x", 9], ["id3", "c", 0, "y", 8],
                  ["id4", None, None, "z", 7]]
         mFtNames = ["id", "f1", "f2", "f3", "f4"]
         mLargest = self.constructor(mData, featureNames=mFtNames)
@@ -9457,8 +9457,8 @@ class StructureModifying(StructureShared):
         fNamesL = ["id", "f1", "f2"]
         pNamesL = ["p1", "p2", "p3"]
         left = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
-        dataR = [["id4", 4, "x"], ["id5", 5, "y"], ["id6", 6, "z"]]
-        fNamesR = ["id", "f2", "f3"]
+        dataR = [[4, "id4", "x"], [5, "id5", "y"], [6, "id6", "z"]]
+        fNamesR = ["f2","id", "f3"]
         right = self.constructor(dataR, featureNames=fNamesR)
 
         mData = [["id1", "a", 1, None], ["id2", "b", 2, None], ["id3", "c", 3, None],
