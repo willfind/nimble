@@ -113,8 +113,10 @@ machine learning.
 Configuration
 -------------
 
-Nimble has certain settings that can be configured. The default settings load
-when the package is imported and can be changed during the session. Changes to
+Since most packages that support Nimble are optional, ``showAvailablePackages``
+is provided to display the available packages in the current environment.
+Nimble also has settings that can be configured. The default settings load when
+the package is imported and can be changed during the session. Changes to
 configurable settings are made through ``nimble.settings``, a
 ``SessionConfiguration`` object that provides methods for getting and setting
 configurable options. Changes to options can apply to the current session or be
@@ -125,6 +127,7 @@ saved as the new default settings. Currently, :ref:`logging` and
    :toctree: generated/
    :recursive:
 
+   nimble.showAvailablePackages
    nimble.settings
    ~nimble.core.configuration.SessionConfiguration
 
