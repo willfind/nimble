@@ -777,7 +777,9 @@ def csvCommaFormat(name):
     Prevent the name from being interpreted as two different csv values.
     """
     if isinstance(name, str) and ',' in name:
-        return '"{0}"'.format(name)
+        if '"' in name:
+            name = re.sub(r'"', '""', name)
+        name = '"{0}"'.format(name)
     return name
 
 operatorDict = {'!=': operator.ne, '==': operator.eq, '<=': operator.le,

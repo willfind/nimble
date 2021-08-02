@@ -297,6 +297,27 @@ class QueryBackend(DataTestObject):
         assert toWrite == orig
 
     @noLogEntryExpected
+    def test_writeFile_CSVhandmade_extraQuotes(self):
+        """ Test writeFile() when data and names contain commas """
+        # instantiate object
+        data = [[1, 2, 'with "quote"'], [1, 2, '"quotes","and", "commas"'],
+                [2, 4, 'includes"quote"'], [0, 0, 'd']]
+        pointNames = ['1', '1"quote"', '2', '0,zero']
+        featureNames = ['"quote",1', 'two', '3,three']
+        toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
+            toWrite.writeFile(tmpFile.name, fileFormat='csv', includeNames=True)
+            # read it back into a different object, then test equality
+            # must specify featureNames=True because 'automatic' will not detect
+            readObj = self.constructor(source=tmpFile.name, featureNames=True)
+        assert readObj.isIdentical(toWrite)
+        assert toWrite.isIdentical(readObj)
+
+        assert toWrite == orig
+
+    @noLogEntryExpected
     def test_writeFile_MTXhandmade(self):
         """ Test writeFile() for mtx extension with both data and featureNames """
         # instantiate object
