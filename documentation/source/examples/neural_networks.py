@@ -34,9 +34,9 @@ images = nimble.data('Matrix', path)
 ## Preparing the data ##
 
 ## We need to separate the features identifying the labels (the last 10
-## features) from the features containing our image data. Using `extract`
-## performs this separation. New labels are placed in the `labels` object and
-## our `images` object now only contains our image data.
+## features) from the features containing our image data. Using
+## `features.extract` performs this separation. New labels are placed in the
+## `labels` object and our `images` object now only contains our image data.
 labels = images.features.extract(range(256, len(images.features)))
 labels.show('one-hot encoded labels', maxHeight=9)
 

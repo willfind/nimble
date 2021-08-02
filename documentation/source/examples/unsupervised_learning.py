@@ -3,13 +3,12 @@
 
 ### Classifying online shoppers
 
-In our [Exploring Data example](exploring_data.ipynb), we began
-exploring visitor behavior data from an ecommerce website. We will use
-that same data for this example, but a version that has been prepared
-for machine learning, `online_shoppers_intention_clean.csv`. Our goal
-will be to use an unsupervised machine learning algorithm to gain a
-better understanding of visitors that made a purchase during their
-visit.
+In our Exploring Data example, we began exploring visitor behavior data
+from an ecommerce website. We will use that same data for this example,
+but a version that has been prepared for machine learning,
+`online_shoppers_intention_clean.csv`. Our goal will be to use an
+unsupervised machine learning algorithm to gain a better understanding
+of visitors that made a purchase during their visit.
 
 [Open this example in Google Colab][colab]
 
@@ -127,7 +126,7 @@ for i in range(numClusters):
 ## cluster. For this plot, values will be marked with a black "X" so the
 ## centers are clearly visible and we will add it to our same
 ## 'clusterAndCenters' figure. Now that all of our plots have been added to our
-## figure, the default `show` setting (`show=True`) will display the figure
+## figure, the default `show=True` will display the figure.
 centers = nimble.data('Matrix', kmeans.getAttributes()['cluster_centers_'],
                       featureNames=['component_1', 'component_2'])
 centers.points.setNames(['cluster' + str(i) for i in range(numClusters)])

@@ -167,9 +167,8 @@ traffic.show('Cleaned traffic data', **keywordsForShow)
 
 ## Writing to a file ##
 
-## We'd like to be able to load the cleaned data for our
-## [Supervised Learning example](supervised_learning.ipynb) any time we want,
-## so we will write it to a new csv file.
+## We'd like to be able to load the cleaned data for our Supervised Learning
+## example any time we want, so we will write it to a new csv file.
 traffic.writeFile('Metro_Interstate_Traffic_Volume_Cleaned.csv')
 
 ## **References:**

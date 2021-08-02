@@ -58,8 +58,8 @@ visits[:, visitDetailFts].show('Visit detail features', **settingsForShow)
 ## Reaching product-related pages is important for maximizing the chance that
 ## a purchase is made. This site categorizes their pages into three types
 ## ("Administrative", "Informational", and "ProductRelated"). Let's calculate
-## the mean and median counts for each page type and find out if most visitors
-## are reaching a product-related page.
+## the `mean` and `median` counts for each page type and find out if most
+## visitors are reaching a product-related page.
 for ft in ['Administrative', 'Informational', 'ProductRelated']:
     mean = nimble.calculate.mean(visits[:, ft])
     print('Mean', ft, 'hits per visit', mean)
@@ -124,7 +124,7 @@ visits.plotFeatureDistribution('Region')
 ## the Region feature, the regions on the x-axis will be in order of appearance
 ## in the data. To keep them in ascending numeric order, we will first sort our
 ## data by Region. Once sorted, `plotFeatureGroupStatistics` will find the
-## count of values in the purchase column for each Region. Then, it will
+## `count` of values in the purchase column for each Region. Then, it will
 ## further subdivide each count bar based on the values in Purchase (True or
 ## False). Now we can see if any regions are particularly better or worse at
 ## providing visits with a purchase.
@@ -136,8 +136,8 @@ visits.plotFeatureGroupStatistics(nimble.calculate.count, 'Purchase', 'Region',
 ## It does not appear that any region is making disproportionately more or less
 ## purchases than the others. We have learned a lot about our website data
 ## through this exploration. Next, see how we can use Nimble to extract more
-## insight from this dataset using machine learning in our
-## [Unsupervised Learning example](unsupervised_learning.ipynb).
+## insight from this dataset using machine learning in our Unsupervised
+## Learning example.
 
 ## **References:**
 
