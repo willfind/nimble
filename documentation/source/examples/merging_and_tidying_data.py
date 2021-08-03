@@ -53,8 +53,8 @@ dwtnMinAM.show('Example of data file structure', maxWidth=120, maxHeight=9)
 
 ## First, we can reduce our number of objects to 4 by combining AM and PM
 ## temperatures of objects at the same weather station (downtown or airport)
-## and with the same extreme (min or max). The featureNames for AM and PM are
-## currently the same, so we will need to modify the featureNames in the PM
+## and with the same extreme (min or max). The feature names for AM and PM are
+## currently the same, so we will need to modify the feature names in the PM
 ## objects so that they denote the hour according to a 24 hour clock.
 ftsPM = ['date', 'hr12', 'hr13', 'hr14', 'hr15', 'hr16', 'hr17',
          'hr18', 'hr19', 'hr20', 'hr21', 'hr22', 'hr23']
@@ -62,11 +62,11 @@ ftsPM = ['date', 'hr12', 'hr13', 'hr14', 'hr15', 'hr16', 'hr17',
 for obj in [dwtnMinPM, dwtnMaxPM, airptMinPM, airptMaxPM]:
     obj.features.setNames(ftsPM)
 
-## Now that we've differentiated our features, we can use a merge operation to
-## combine the data. We want to join these objects on the 'date' feature (i.e.,
-## we are combining data with the same date) and use point='union' (that is, we
-## want all the points from both files) so that we keep all possible dates,
-## even if a date is missing for the AM or PM data.
+## Now that we've differentiated our features, we can use a `merge` operation
+## to combine the data. We want to join these objects on the 'date' feature
+## (i.e., we are combining data with the same date) and use `point='union'`
+## (that is, we want all the points from both files) so that we keep all
+## possible dates, even if a date is missing for the AM or PM data.
 dwtnMinAM.merge(dwtnMinPM, onFeature='date', point='union')
 dwtnMaxAM.merge(dwtnMaxPM, onFeature='date', point='union')
 airptMinAM.merge(airptMinPM, onFeature='date', point='union')
@@ -79,8 +79,8 @@ dwtnMinAM.show('Downtown data merged on date', maxWidth=120, maxHeight=9)
 ## Before combining, we will want to add an “extreme” feature to each object
 ## based on whether it contains min vs. max data. Without this step, we would
 ## not be able to differentiate between minimum and maximum temperature points
-## in the combined objects. Once our new feature is added, we can `append` our
-## objects from the same weather station.
+## in the combined objects. Once our new feature is added, we can
+## `points.append` our objects from the same weather station.
 for obj in [dwtnMinAM, dwtnMaxAM, airptMinAM, airptMaxAM]:
     extreme = 'min' if 'min' in obj.name else 'max'
     ftData = [[extreme] for _ in range(len(obj.points))]
@@ -157,8 +157,8 @@ tempData.show('Fully merged (untidy) data', maxWidth=120, maxHeight=13)
 ## Tidying our data will take two steps. First, we need each point to represent
 ## a single hour of time. So we will take our 24 hour features (hr0, hr1, …,
 ## hr23) and collapse them to represent this same data using 24 points (one
-## point for each feature that is collapsed). The collapsed features become a
-## new feature named `hour` storing the featureName value and a new feature
+## point for each feature that is collapsed). The collapsed features become two
+## new features: one named `hour` storing each feature's name as a value and one
 ## named `temp` storing the temperature recorded during that hour.
 hourFts = ['hr' + str(i) for i in range(24)]
 tempData.points.splitByCollapsingFeatures(featuresToCollapse=hourFts,
@@ -172,8 +172,8 @@ tempData.show('Split points by collapsing the hour features', maxWidth=120,
 ## However, we still have separate points storing our maximum and minimum
 ## temperatures. This is not obvious in the output above, let's make a couple
 ## of modifications to see this more clearly. First, we can clean our `hour`
-## feature by transforming the former featureName strings into integers. Then,
-## we will `sort` our data so that `show()`` will clearly display point pairs
+## feature by transforming the former feature name strings into integers. Then,
+## we will sort our data so that `show` will clearly display point pairs
 ## that need to be combined for our data to be tidy.
 tempData.features.transform(lambda ft: [int(v[2:]) for v in ft],
                             features=['hour'])

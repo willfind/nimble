@@ -72,7 +72,7 @@ layer1 = nimble.Init('Dropout', rate=0.5)
 layer2 = nimble.Init('Dense', units=10, activation='softmax')
 layers = [layer0, layer1, layer2]
 
-## Now that we’ve taken advantage of nimble.Init to define our layers, we can
+## Now that we’ve taken advantage of `nimble.Init` to define our layers, we can
 ## train and apply our model in one step. `nimble.trainAndApply` will first
 ## train the model on our trainX data to predict our trainY data, then apply
 ## the resulting model to our testX data.
