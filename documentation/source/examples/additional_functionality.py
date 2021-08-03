@@ -84,7 +84,7 @@ wifi = nimble.data('Matrix', path, name='wifiData')
 ## and farther from others, changing the signal strength. This dataset is a
 ## matrix of integers collected from an experiment similar to our hypothetical
 ## situation above. Since our data does not contain a header row, it is a good
-## practice to add features names manually to clarify the contents of each
+## practice to add feature names manually to clarify the contents of each
 ## feature.
 headers = ['source' + str(i) for i in range(7)] + ['room']
 wifi.features.setNames(headers)

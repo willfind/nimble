@@ -42,9 +42,9 @@ path = nimble.fetchFile('uci::Metro Interstate Traffic Volume')
 traffic = nimble.data('Matrix', path, name='Metro Interstate Traffic Volume')
 
 ## The `show` method provides control over the printed output for an object.
-## It prints a description, the object name and shape and the object data
-## (truncating if necessary) given the parameters. To see a good selection of
-## our data throughout this example, we will want to adjust the ``maxWidth``
+## It prints a description, the `name` and `shape` of the object and the object
+## data (truncating if necessary) given the parameters. To see a good selection
+## of our data throughout this example, we will want to adjust the ``maxWidth``
 ## and ``maxHeight``. Since we will often want to use these same width and
 ## height settings in many of the calls to `show` in this example, it will be
 ## best to pack the values for these keyword arguments into a dictionary.

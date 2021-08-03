@@ -161,9 +161,9 @@ for i in range(numClusters):
 
 ## We see some imbalance in cluster sizes, but each cluster contains at least
 ## 20% of our purchaser visits so we feel confident to continue. To analyze the
-## feature means in each cluster, we will make a new Nimble object. This object
-## has three points (one for each cluster) containing our calculated feature
-## means.
+## feature means in each cluster, we will make a new Nimble data object. This
+## object has three points (one for each cluster) containing our calculated
+## feature means.
 clusterMeans = nimble.data('Matrix', means, featureNames=purchaseOnlyFtNames,
                            pointNames=meanPtNames)
 
