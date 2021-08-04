@@ -259,18 +259,18 @@ def exampleHyperlinks(app, pagename, templatename, context, doctree):
     """
     Wrap the nimble calls in an anchor tag linking to API Documentation.
     """
+    path = '../docs/generated/{}.html'.format
+    # It is not possible to tell object types when applying hyperlinks to
+    # the html code. So, we assume that any method names in the example
+    # code are referring to the Nimble objects. If the example uses another
+    # object type with a shared method name, it must be explicitly ignored.
+    app.nimble_nolink = []
+    # define default mapping for names that currently have a conflict
+    app.nimble_mapping = {
+        'train': path('nimble.train'),
+        '.train': path('nimble.core.interfaces.TrainedLearner.train'),
+        '.apply': path('nimble.core.interfaces.TrainedLearner.apply')}
     if pagename.startswith('examples/'):
-        path = '../docs/generated/{}.html'.format
-        # It is not possible to tell object types when applying hyperlinks to
-        # the html code. So, we assume that any method names in the example
-        # code are referring to the Nimble objects. If the example uses another
-        # object type with a shared method name, it must be explicitly ignored.
-        app.nimble_nolink = []
-        # define default mapping for names that currently have a conflict
-        app.nimble_mapping = {
-            'train': path('nimble.train'),
-            '.train': path('nimble.core.interfaces.TrainedLearner.train'),
-            '.apply': path('nimble.core.interfaces.TrainedLearner.apply'),}
         if 'additional_functionality' in pagename:
             app.nimble_nolink = ['tempDir.name', 'learnerType']
             app.nimble_mapping['train'] = path('nimble.CustomLearner.train')
@@ -280,7 +280,9 @@ def exampleHyperlinks(app, pagename, templatename, context, doctree):
         context['body'] = addExampleLinks(app, context['body'])
         context['body'] = addMarkdownLinks(app, context['body'])
         context['body'] = addCodeLinks(app, context['body'])
-
+    elif pagename.startswith('docs/index'):
+        app.nimble_nolink = ['nimble'] # no need to link to same page
+        context['body'] = addMarkdownLinks(app, context['body'])
 
 def setup(app):
     app.connect('autodoc-process-docstring', process_docstring)

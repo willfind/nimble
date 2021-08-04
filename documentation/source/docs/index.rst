@@ -48,15 +48,13 @@ Using Data Objects
 ------------------
 
 All four data objects, List, Matrix, Sparse, and DataFrame, have the same
-functionality because they inherit from Nimble's
-:class:`Base <nimble.core.data.Base>` object. The ``Base`` object methods
-handle operations that apply to the entire data object or the individual
-elements of the object. Each object also has ``points`` and ``features``
-attributes to connect the :class:`Base <nimble.core.data.Base>` object with the
-:class:`Features <nimble.core.data.Features>` and
-:class:`Points <nimble.core.data.Points>` objects, respectively. These provide
-many additional methods that apply when working specifically with the object's
-features and points.
+functionality because they inherit from Nimble's ``Base`` object. The ``Base``
+object methods handle operations that apply to the entire data object or the
+individual elements of the object. Each object also has ``features`` and
+``points`` attributes to connect the ``Base`` object with the ``Features``
+and ``Points`` objects, respectively. These provide many additional methods
+that apply when working specifically with the object's ``features`` and
+``points``.
 
 .. autosummary::
    :toctree: generated/
@@ -118,7 +116,7 @@ is provided to display the available packages in the current environment.
 Nimble also has settings that can be configured. The default settings load when
 the package is imported and can be changed during the session. Changes to
 configurable settings are made through ``nimble.settings``, a
-``SessionConfiguration`` object that provides methods for getting and setting
+``SessionConfiguration`` instance that provides methods for getting and setting
 configurable options. Changes to options can apply to the current session or be
 saved as the new default settings. Currently, :ref:`logging` and
 :ref:`fetching-files` have sections that can be configured.
