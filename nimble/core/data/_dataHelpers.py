@@ -177,15 +177,28 @@ def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
     (posL, posR) = indicesSplit(numDisplayNames, count)
     possibleIndices = posL + posR
 
-    if namesList is None:
-        allDefault = True
-    else:
-        allDefault = all(namesList[i] is None for i in possibleIndices)
 
-    if allDefault:
+    if namesList is None:
         return ""
 
-    currNamesString = indent + nameType + '={'
+    noneNames = [namesList[i] is None for i in possibleIndices]
+    if all(noneNames):
+        return ""
+
+    if any(noneNames): # names will be a list
+        start = '=['
+        end = ']'
+        def nameString(**kwargs):
+            if kwargs['name'] is None:
+                return 'None'
+            return "'{}'".format(kwargs['name'])
+    else: # names will be a dict
+        start = '={'
+        end = '}'
+        def nameString(**kwargs):
+            return "'{}':{}".format(kwargs['name'], kwargs['index'])
+
+    currNamesString = indent + nameType + start
     newStartString = indent * 2
     prevIndex = -1
     for i, currIndex in enumerate(possibleIndices):
@@ -201,13 +214,13 @@ def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
         # get name and truncate if needed
         fullName = namesList[currIndex]
         currName = fullName
-        if len(currName) > 11:
+        if currName is not None and len(currName) > 11:
             currName = currName[:8] + '...'
-        addition = "'" + currName + "':" + str(currIndex)
+        addition = nameString(name=currName, index=currIndex)
 
         # if it isn't the last entry, comma and space. if it is
         # the end-cbrace
-        addition += ', ' if i != (len(possibleIndices) - 1) else '}'
+        addition += ', ' if i != (len(possibleIndices) - 1) else end
 
         # if adding this would put us above the limit, add the line
         # to namesString before, and start a new line
