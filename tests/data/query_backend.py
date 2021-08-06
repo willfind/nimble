@@ -1327,11 +1327,17 @@ class QueryBackend(DataTestObject):
     # __repr__ #
     ############
 
-    def back_reprOutput(self, numPts, numFts, truncated=False):
+    def back_reprOutput(self, numPts, numFts, truncated=False, defaults='none'):
         randGen = nimble.random.data("List", numPts, numFts, 0)
-        pNames = ['pt' + str(i) for i in range(numPts)]
-        fNames = ['ft' + str(i) for i in range(numFts)]
-        data = self.constructor(randGen._data, pointNames=pNames, featureNames=fNames)
+        if defaults in ['some', 'none']:
+            pNames = ['pt' + str(i) for i in range(numPts)]
+            fNames = ['ft' + str(i) for i in range(numFts)]
+            if defaults == 'some':
+                pNames = [name if i % 2 != 0 else None for i, name in enumerate(pNames)]
+                fNames = [name if i % 2 != 0 else None for i, name in enumerate(fNames)]
+            data = self.constructor(randGen._data, pointNames=pNames, featureNames=fNames)
+        else:
+            data = self.constructor(randGen._data)
         ret = repr(data)
         retSplit = ret.split('\n')
 
@@ -1361,54 +1367,83 @@ class QueryBackend(DataTestObject):
             rowHoldPattern = re.compile(r'\s{5}\[[\s\|\-]+\]$')
             assert re.match(rowHoldPattern, retSplit[16])
 
-        # pointNames
-        if truncated:
-            pNames = pNames[:15] + ['...'] + pNames[-14:]
-        toJoin = [name if name == '...' else "'" + name + "'" + ':' + name[2:]
-                  for name in pNames]
-        pNamesString = "    pointNames={"
-        pNamesString += ", ".join(toJoin)
-        pNamesString += '}'
-        wrappedPNames = textwrap.wrap(pNamesString, width=79, subsequent_indent=' '*8)
-        fNameIndexStart = numPoints + len(wrappedPNames) + 1
-        for line, wrapped in zip(retSplit[numPoints + 1:fNameIndexStart], wrappedPNames):
-            # remove trailing whitespace which may differ between the two
-            line = line.rstrip()
-            wrapped = wrapped.rstrip()
-            assert line == wrapped
+        if defaults == 'all':
+            assert len(retSplit) == numPoints + 2
+        else:
+            # pointNames
+            if truncated:
+                pNames = pNames[:15] + ['...'] + pNames[-14:]
+            if defaults == 'some':
+                pNamesString = "    pointNames=["
+                toJoin = [name if name == '...' or name is None
+                          else "'{}'".format(name) for name in pNames]
+                pNamesString += ", ".join(map(str, toJoin))
+                pNamesString += ']'
+            else:
+                pNamesString = "    pointNames={"
+                toJoin = [name if name == '...'
+                          else "'{}':{}".format(name, name[2:]) for name in pNames]
+                pNamesString += ", ".join(toJoin)
+                pNamesString += '}'
+            wrappedPNames = textwrap.wrap(pNamesString, width=79, subsequent_indent=' '*8)
+            fNameIndexStart = numPoints + len(wrappedPNames) + 1
+            for line, wrapped in zip(retSplit[numPoints + 1:fNameIndexStart], wrappedPNames):
+                # remove trailing whitespace which may differ between the two
+                line = line.rstrip()
+                wrapped = wrapped.rstrip()
+                assert line == wrapped
 
-        # featureNames
-        if truncated:
-            # get only the data between brackets
-            firstDataLine = retSplit[1][6:-1]
-            # could still have trailing whitespace
-            firstDataLine = firstDataLine.rstrip()
-            # split at column separator
-            lCols, rCols = firstDataLine.split(' -- ')
+            # featureNames
+            if truncated:
+                # get only the data between brackets
+                firstDataLine = retSplit[1][6:-1]
+                # could still have trailing whitespace
+                firstDataLine = firstDataLine.rstrip()
+                # split at column separator
+                lCols, rCols = firstDataLine.split(' -- ')
 
-            # split at whitespace to find the number of cols on left and right
-            lColsLen = len(lCols.split())
-            rColsLen = len(rCols.split())
-            fNames = fNames[:lColsLen] + ['...'] + fNames[-rColsLen:]
+                # split at whitespace to find the number of cols on left and right
+                lColsLen = len(lCols.split())
+                rColsLen = len(rCols.split())
+                fNames = fNames[:lColsLen] + ['...'] + fNames[-rColsLen:]
 
-        fNamesString = "    featureNames={"
-        toJoin = [name if name == '...' else "'" + name + "'" + ':' + name[2:]
-                  for name in fNames]
-        fNamesString += ", ".join(toJoin)
-        fNamesString += '}'
-        wrappedFNames = textwrap.wrap(fNamesString, width=79, subsequent_indent=' '*8)
-        fNameIndexEnd = fNameIndexStart + len(wrappedFNames)
-        for line, wrapped in zip(retSplit[fNameIndexStart:fNameIndexEnd + 1], wrappedFNames):
-            # remove trailing whitespace which may differ between the two
-            line = line.rstrip()
-            wrapped = wrapped.rstrip()
-            assert line == wrapped
+            if defaults == 'some':
+                fNamesString = "    featureNames=["
+                toJoin = [name if name == '...' or name is None
+                          else "'{}'".format(name) for name in fNames]
+                fNamesString += ", ".join(map(str, toJoin))
+                fNamesString += ']'
+            else:
+                fNamesString = "    featureNames={"
+                toJoin = [name if name == '...'
+                          else "'{}':{}".format(name, name[2:]) for name in fNames]
+                fNamesString += ", ".join(toJoin)
+                fNamesString += '}'
+            wrappedFNames = textwrap.wrap(fNamesString, width=79, subsequent_indent=' '*8)
+            fNameIndexEnd = fNameIndexStart + len(wrappedFNames)
+            for line, wrapped in zip(retSplit[fNameIndexStart:fNameIndexEnd + 1], wrappedFNames):
+                # remove trailing whitespace which may differ between the two
+                line = line.rstrip()
+                wrapped = wrapped.rstrip()
+                assert line == wrapped
 
     def test_repr_notTruncated(self):
         self.back_reprOutput(9, 9)
 
     def test_repr_truncated(self):
         self.back_reprOutput(40, 20, truncated=True)
+
+    def test_repr_notTruncated_withDefaults(self):
+        self.back_reprOutput(9, 9, defaults='some')
+
+    def test_repr_truncated_withDefaults(self):
+        self.back_reprOutput(40, 20, truncated=True, defaults='some')
+
+    def test_repr_notTruncated_allDefaults(self):
+        self.back_reprOutput(9, 9, defaults='all')
+
+    def test_repr_truncated_allDefaults(self):
+        self.back_reprOutput(40, 20, truncated=True, defaults='all')
 
     def test_repr_lazyNameGeneration(self):
         data = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
