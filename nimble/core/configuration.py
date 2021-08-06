@@ -72,6 +72,20 @@ class SessionConfiguration(object):
         self.changes = {}
         self.hooks = {}
 
+    def __str__(self):
+        """
+        String of configuration settings.
+
+        Output uses the same INI syntax used for configuration files.
+        """
+        ret = ''
+        for section, options in self.get().items():
+            ret += '[{}]\n'.format(section)
+            for option, value in options.items():
+                ret += '{} = {}\n'.format(option, value)
+            ret += '\n'
+        return ret.rstrip()
+
     def get(self, section=None, option=None):
         """
         Query the current settings.
