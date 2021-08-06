@@ -659,6 +659,27 @@ def test_data_CSV_data_emptyStringsNotMissing():
 
             assert fromList == fromCSV
 
+def test_data_CSV_data_defaultFeatureNames():
+    """ Test of data() loading a csv file with default featureNames """
+    for t in returnTypes:
+        data = [[True,'False',1,'1'],
+                [False,'',2,'2'],
+                [True,'False',None,'three'],
+                [None,'TRUE',4,'']]
+        fromList = nimble.data(returnType=t, source=data)
+        fromList.features.setName(1, 'a')
+        fromList.features.setName(2, 'b')
+        # instantiate from csv file
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
+            tmpCSV.write(",a,b,\n")
+            tmpCSV.write("True,False,1,1\n")
+            tmpCSV.write("False,,2,2\n")
+            tmpCSV.write("True,False,,three\n")
+            tmpCSV.write(",TRUE,4,\n")
+            tmpCSV.flush()
+            fromCSV = nimble.data(returnType=t, source=tmpCSV.name)
+            assert fromList == fromCSV
+
 def test_data_CSV_lastFeatureAllMissing():
     """ Test of data() loading a csv file, default params """
     dataSkip = [[1, 2, 'three'], [4, 5, 'six'], [0, -1, 'negativeTwo']]
