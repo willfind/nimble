@@ -53,9 +53,14 @@ trainX, trainY, testX, testY = traffic.trainAndTestSets(testFraction, yFeature)
 # nimble.showAvailablePackages()
 # nimble.listLearners()
 
+## Nimble's training functions only need the package name and learner name to
+## be identified. There is no need to recall, for example, that
+## `LinearRegression` is in `sklearn.linear_model` or `KNeighborsRegressor` is
+## in `sklearn.neighbors`, all Nimble requires are the strings
+## 'sklearn.LinearRegression' and 'sklearn.KNeighborsRegressor', respectively.
 ## Using `nimble.trainAndTest`, we will quickly test the performance of five
 ## different regression algorithms (initially, we'll use default arguments to
-## keep things simple). We can then analyze the performance by checking each
+## keep things simple). We can then analyze the performance by comparing each
 ## learning algorithm's root mean square error.
 learners = ['sklearn.LinearRegression', 'sklearn.Ridge', 'sklearn.Lasso',
             'sklearn.KNeighborsRegressor', 'sklearn.GradientBoostingRegressor']
@@ -89,7 +94,8 @@ print(nimble.learnerDefaultValues('sklearn.KNeighborsRegressor'))
 
 ## For KNeighborsRegressor, we will use `nimble.CV` to try 3, 5, and 7 for the
 ## number of nearest neighbors and for `GradientBoostingRegressor` we will try
-## different learning rate values.
+## different learning rate values. Note, some interfaces have alias options for
+## the package name, below we use the alias 'skl' for the 'sklearn' package.
 knnArgs = {'n_neighbors': nimble.CV([3, 5, 7])}
 knnTL = nimble.train('skl.KNeighborsRegressor', trainX, trainY,
                      performanceFunction, folds=2, arguments=knnArgs)

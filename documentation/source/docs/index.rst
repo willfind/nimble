@@ -66,20 +66,39 @@ that apply when working specifically with the object's ``features`` and
 Machine Learning with Interfaces
 --------------------------------
 
-Nimble provides interfaces to use learners defined in popular machine learning
-packages, ``nimble.learners``, and user created custom learners. This makes a
-wide variety of machine learning algorithms available under the same api. The
-functions and classes below allow for querying and utilizing any of these
-learners.
+In Nimble, all algorithms used for machine learning or deep learning are
+referred to as "learners". Nimble provides interfaces to use learners defined
+in popular machine learning packages, ``nimble.learners``, and user created
+custom learners. This makes a wide variety of algorithms available under the
+same api.
+
+**Choosing a learner**
+
+These functions help provide more information about learners available for use
+within Nimble.
 
 .. autosummary::
    :toctree: generated/
    :recursive:
 
-   nimble.learnerType
    nimble.listLearners
+   nimble.learnerType
    nimble.learnerParameters
    nimble.learnerDefaultValues
+
+**Using a learner**
+
+The following support the learning process. Functions with a ``learnerName``
+parameter accept a string in the format "package.learner". This provides access
+to learners in Nimble without the need to import them manually or remember
+their exact location within the package. For example,
+``"nimble.KNNClassifier"``, ``"sklearn.LinearRegression"``, and
+``"keras.Sequential"`` are valid ``learnerName`` strings.
+
+.. autosummary::
+   :toctree: generated/
+   :recursive:
+
    nimble.train
    ~nimble.core.interfaces.TrainedLearner
    nimble.loadTrainedLearner
@@ -92,6 +111,29 @@ learners.
    ~nimble.core.learn.KFoldCrossValidator
    nimble.CV
    nimble.Init
+
+The table below shows the current interfaces built in to Nimble. As an added
+convenience, some interfaces have additional aliases that can be used as the
+package name in the ``learnerName`` string (i.e. ``"skl.LinearRegression"``
+instead of ``"sklearn.LinearRegression"``).
+
+.. table::
+   :align: left
+   :widths: auto
+
+   +----------------+--------------------------------+
+   | Package        | Aliases                        |
+   +================+================================+
+   | `sklearn`_     | skl, scikitlearn, scikit-learn |
+   +----------------+--------------------------------+
+   | `keras`_       | tf.keras, tensorflow.keras     |
+   +----------------+--------------------------------+
+   | `autoimpute`_  |                                |
+   +----------------+--------------------------------+
+   | `shogun`_      |                                |
+   +----------------+--------------------------------+
+   | `mlpy`_        |                                |
+   +----------------+--------------------------------+
 
 Custom Learner
 --------------
@@ -194,3 +236,10 @@ Submodules
    :hidden:
 
    nimble.calculate
+
+.. _sklearn: https://scikit-learn.org/stable/install.html
+.. _tensorflow: https://www.tensorflow.org/install
+.. _autoimpute: https://autoimpute.readthedocs.io/en/latest/user_guide/getting_started.html
+.. _shogun: https://www.shogun.ml/install
+.. _keras: https://keras.io/getting_started/
+.. _mlpy: https://github.com/richardARPANET/mlpy

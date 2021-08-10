@@ -188,7 +188,8 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     Parameters
     ----------
     learnerName : str
-        Name of the learner to be called, in the form 'package.learner'
+        The learner to be called. This can be a string in the form
+        'package.learner' or the learner class object.
     trainX: nimble Base object
         Data to be used for training.
     trainY: identifier, nimble Base object
@@ -308,7 +309,8 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     Parameters
     ----------
     learnerName : str
-        Name of the learner to be called, in the form 'package.learner'
+        The learner to be called. This can be a string in the form
+        'package.learner' or the learner class object.
     trainX: nimble Base object
         Data to be used for training.
     arguments : dict
@@ -443,8 +445,8 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     Parameters
     ----------
     learnerName : str
-        nimble compliant algorithm name in the form 'package.algorithm'
-        e.g. 'sciKitLearn.KNeighborsClassifier'
+        The learner to be called. This can be a string in the form
+        'package.learner' or the learner class object.
     X : nimble Base object
         points/features data
     Y : nimble Base object
@@ -552,7 +554,8 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     Parameters
     ----------
     learnerName : str
-        Name of the learner to be called, in the form 'package.learner'
+        The learner to be called. This can be a string in the form
+        'package.learner' or the learner class object.
     trainX: nimble Base object
         Data to be used for training.
     trainY: identifier, nimble Base object
@@ -721,7 +724,8 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     Parameters
     ----------
     learnerName : str
-        Name of the learner to be called, in the form 'package.learner'
+        The learner to be called. This can be a string in the form
+        'package.learner' or the learner class object.
     trainX: nimble Base object
         Data to be used for training.
     trainY: identifier, nimble Base object
@@ -919,7 +923,8 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     Parameters
     ----------
     learnerName : str
-        Name of the learner to be called, in the form 'package.learner'
+        The learner to be called. This can be a string in the form
+        'package.learner' or the learner class object.
     trainX: nimble Base object
         Data to be used for training.
     trainY : identifier, nimble Base object
@@ -1095,7 +1100,8 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     Parameters
     ----------
     learnerName : str
-        Name of the learner to be called, in the form 'package.learner'
+        The learner to be called. This can be a string in the form
+        'package.learner' or the learner class object.
     trainX: nimble Base object
         Data to be used for training.
     trainY: identifier, nimble Base object
@@ -1353,8 +1359,8 @@ class KFoldCrossValidator(object):
         Parameters
         ----------
         learnerName : str
-            nimble compliant algorithm name in the form
-            'package.algorithm' e.g. 'sciKitLearn.KNeighborsClassifier'
+            The learner to be called. This can be a string in the form
+            'package.learner' or the learner class object.
         X : nimble Base object
             points/features data
         Y : nimble Base object

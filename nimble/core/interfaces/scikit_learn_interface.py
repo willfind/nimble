@@ -408,7 +408,7 @@ class SciKitLearn(_SciKitLearnAPI):
 
     @classmethod
     def isAlias(cls, name):
-        if name.lower() in ['skl', 'scikitlearn']:
+        if name.lower() in ['skl', 'scikitlearn', 'scikit-learn']:
             return True
         return name.lower() == cls.getCanonicalName().lower()
 
