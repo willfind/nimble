@@ -12,7 +12,7 @@ import nimble
 from nimble import match
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble._utility import mergeArguments
+from nimble._utility import mergeArguments, tableString
 from nimble.core.logger import handleLogging, loggingEnabled
 from nimble.core.logger import deepLoggingEnabled
 from nimble.core._learnHelpers import findBestInterface
@@ -27,7 +27,7 @@ from nimble.core._learnHelpers import computeMetrics
 from nimble.core._learnHelpers import initAvailablePredefinedInterfaces
 
 
-def learnerType(learnerNames):
+def learnerType(learnerNames): # pylint: disable=redefined-outer-name
     """
     Attempt to determine learner types.
 
@@ -59,7 +59,7 @@ def learnerType(learnerNames):
     for name in learnerNames:
         splitTuple = _unpackLearnerName(name)
         currInterface = splitTuple[0]
-        allValidLearnerNames = currInterface.listLearners()
+        allValidLearnerNames = currInterface.learnerNames()
         if not splitTuple[1] in allValidLearnerNames:
             msg = name + " is not a valid learner on your machine."
             raise InvalidArgumentValue(msg)
@@ -86,11 +86,11 @@ def learnerType(learnerNames):
     return resultsList
 
 
-def listLearners(package=None):
+def learnerNames(package=None):
     """
     Get a list of learners available to nimble or a specific package.
 
-    Returns a list a list of learners that are callable through nimble's
+    Returns a list of learners that are callable through nimble's
     training, applying, and testing functions. If ``package`` is
     specified, the list will contain strings of each learner. If
     ``package`` is None, the list will contain strings in the form of
@@ -113,17 +113,36 @@ def listLearners(package=None):
     if package is None:
         initAvailablePredefinedInterfaces()
         for packageName, interface in nimble.core.interfaces.available.items():
-            currResults = interface.listLearners()
+            currResults = interface.learnerNames()
             for learnerName in currResults:
                 results.append(packageName + "." + learnerName)
     else:
         interface = findBestInterface(package)
-        currResults = interface.listLearners()
+        currResults = interface.learnerNames()
         for learnerName in currResults:
             results.append(learnerName)
 
     return results
 
+def showLearnerNames(package=None):
+    """
+    Print the learners available to nimble or a specific package.
+
+    Prints a list of learners that are callable through nimble's
+    training, applying, and testing functions. If ``package`` is
+    specified, the list will contain strings of each learner. If
+    ``package`` is None, the list will contain strings in the form of
+    'package.learner'. This will differ depending on the packages
+    currently available in nimble.core.interfaces.available.
+
+    Parameters
+    ----------
+    package : str
+        The name of the package to list the learners from. If None, each
+        learners available to each interface will be listed.
+    """
+    for name in learnerNames(package):
+        print(name)
 
 def learnerParameters(name):
     """
@@ -147,6 +166,25 @@ def learnerParameters(name):
     """
     return _learnerQuery(name, 'parameters')
 
+def showLearnerParameters(name):
+    """
+    Print a list of parameters for the learner.
+
+    Prints a list of strings which are the names of the parameters when
+    calling this learner. If the name cannot be found within the
+    package, then an exception will be thrown.
+
+    Parameters
+    ----------
+    name : str
+        Package and name in the form 'package.learnerName'.
+    """
+    params = learnerParameters(name)
+    if params is None:
+        print('learner parameters could not be determined')
+    elif params:
+        for param in params:
+            print(param)
 
 def learnerDefaultValues(name):
     """
@@ -169,6 +207,31 @@ def learnerDefaultValues(name):
     dict
     """
     return _learnerQuery(name, 'defaults')
+
+def showLearnerDefaultValues(name):
+    """
+    Get a dictionary mapping parameter names to their default values.
+
+    Returns a dictionary with strings of the parameter names as keys and
+    the parameter's default value as values. If the name cannot be found
+    within the package, then an exception will be thrown.
+
+    Parameters
+    ----------
+    name : str
+        Package and name in the form 'package.learnerName'.
+    """
+    defaultValues = learnerDefaultValues(name).items()
+    if defaultValues is None:
+        print('learner default values could not be determined')
+    elif defaultValues:
+        defaults = []
+        for param, default in defaultValues:
+            if isinstance(default, str):
+                default = "'{}'".format(default)
+            defaults.append([param, default])
+        print(tableString(defaults, rowHeadJustify='left',
+                          colValueJustify='left'))
 
 @trackEntry
 def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,

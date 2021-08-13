@@ -47,11 +47,11 @@ trainX, trainY, testX, testY = traffic.trainAndTestSets(testFraction, yFeature)
 ## it must be installed in the current envirnoment. To check if Nimble has
 ## access to Sci-kit Learn in your environment, you can use
 ## `nimble.showAvailablePackages`. Additionally, we can see a list of all of
-## the learners available to Nimble by using `nimble.listLearners`. Uncomment
-## the lines below if you would like to see the available packages and learners
-## in your environment.
+## the learners available to Nimble by using `nimble.showLearnerNames`.
+## Uncomment the lines below if you would like to see the available packages
+## and learners in your environment.
 # nimble.showAvailablePackages()
-# nimble.listLearners()
+# nimble.showLearnerNames()
 
 ## Nimble's training functions only need the package name and learner name to
 ## be identified. There is no need to recall, for example, that

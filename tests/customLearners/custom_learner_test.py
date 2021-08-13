@@ -322,8 +322,8 @@ def testCustomPackage():
     nimble.train(LoveAtFirstSightClassifier, trainX, trainY)
     nimble.train(UncallableLearner, trainX, trainY, foo='foo')
 
-    assert 'LoveAtFirstSightClassifier' in nimble.listLearners("custom")
-    assert 'UncallableLearner' in nimble.listLearners("custom")
+    assert 'LoveAtFirstSightClassifier' in nimble.learnerNames("custom")
+    assert 'UncallableLearner' in nimble.learnerNames("custom")
 
     assert nimble.learnerParameters("custom.LoveAtFirstSightClassifier") == []
     assert nimble.learnerParameters("custom.UncallableLearner") == ['bar', 'foo']
@@ -339,21 +339,21 @@ def testNimblePackage():
     nimble.train(RidgeRegression, trainX, trainY, lamb=1)
     nimble.train(KNNClassifier, trainX, trainY, k=1)
 
-    assert 'RidgeRegression' in nimble.listLearners("nimble")
-    assert 'KNNClassifier' in nimble.listLearners("nimble")
+    assert 'RidgeRegression' in nimble.learnerNames("nimble")
+    assert 'KNNClassifier' in nimble.learnerNames("nimble")
 
     assert nimble.learnerParameters("nimble.RidgeRegression") == ['lamb']
     assert nimble.learnerParameters("nimble.KNNClassifier") == ['k']
 
 def test_learnersAvailableOnImport():
     """ Test that the auto registration helper correctly registers learners """
-    nimbleLearners = nimble.listLearners('nimble')
+    nimbleLearners = nimble.learnerNames('nimble')
     assert 'KNNClassifier' in nimbleLearners
     assert 'RidgeRegression' in nimbleLearners
     assert 'MultiOutputRidgeRegression' in nimbleLearners
     assert 'MultiOutputLinearRegression' in nimbleLearners
 
-    customLearners = nimble.listLearners('custom')
+    customLearners = nimble.learnerNames('custom')
     assert not customLearners
 
 @noLogEntryExpected
@@ -365,21 +365,21 @@ def test_logCount():
     trainY = nimble.data('Matrix', labels, useLog=False)
 
     nimble.train(LoveAtFirstSightClassifier, trainX, trainY, useLog=False)
-    lst = nimble.listLearners("custom")
+    lst = nimble.learnerNames("custom")
     params = nimble.learnerParameters("custom.LoveAtFirstSightClassifier")
     defaults = nimble.learnerDefaultValues("custom.LoveAtFirstSightClassifier")
     lType = nimble.learnerType("custom.LoveAtFirstSightClassifier")
 
 @skipMissingPackage('sklearn')
-def test_listLearnersDirectFromModule():
-    nimbleLearners = nimble.listLearners(nimble)
+def test_learnerNamesDirectFromModule():
+    nimbleLearners = nimble.learnerNames(nimble)
     assert 'KNNClassifier' in nimbleLearners
     assert 'RidgeRegression' in nimbleLearners
     assert 'MultiOutputRidgeRegression' in nimbleLearners
     assert 'MultiOutputLinearRegression' in nimbleLearners
 
     import sklearn
-    sklearnLearners = nimble.listLearners(sklearn)
+    sklearnLearners = nimble.learnerNames(sklearn)
     assert 'LinearRegression' in sklearnLearners
     assert 'LogisticRegression' in sklearnLearners
     assert 'KNeighborsClassifier' in sklearnLearners
@@ -388,7 +388,7 @@ def test_learnerQueries():
     params = nimble.learnerParameters(UncallableLearner)
     defaults = nimble.learnerDefaultValues(UncallableLearner)
     lType = nimble.learnerType(UncallableLearner)
-    lst = nimble.listLearners("custom")
+    lst = nimble.learnerNames("custom")
 
     assert params == ['bar', 'foo']
     assert defaults == {'bar': None}
@@ -463,5 +463,5 @@ def testMeanConstantSimple():
         assert ret[4] == .5
         assert ret[5] == .5
 
-        customLearners = nimble.listLearners('custom')
+        customLearners = nimble.learnerNames('custom')
         assert 'MeanConstant' in customLearners

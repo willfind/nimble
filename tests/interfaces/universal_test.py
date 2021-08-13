@@ -53,7 +53,7 @@ class TestPredefinedInterface(PredefinedInterfaceMixin):
     def accessible(self):
         return True
 
-    def _listLearnersBackend(self):
+    def _learnerNamesBackend(self):
         return ['l0', 'l1', 'l2', 'exposeTest', 'foo']
 
     def _getLearnerParameterNamesBackend(self, name):
@@ -260,7 +260,7 @@ class AlwaysWarnInterface(UniversalInterface):
     def accessible(self):
         return True
 
-    def _listLearnersBackend(self):
+    def _learnerNamesBackend(self):
         self.issueWarnings()
         return ['foo']
 
@@ -495,10 +495,10 @@ def test_warningscapture_TL_exceptions_featureMismatch():
         backend_warningscapture(wrapped, prep)
 
 
-def test_warningscapture_listLearners():
+def test_warningscapture_learnerNames():
     @noLogEntryExpected
     def wrapped(AWObject):
-        AWObject.listLearners()
+        AWObject.learnerNames()
 
     backend_warningscapture(wrapped)
 

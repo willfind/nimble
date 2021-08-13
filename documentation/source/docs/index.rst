@@ -74,17 +74,22 @@ same api.
 
 **Choosing a learner**
 
-These functions help provide more information about learners available for use
-within Nimble.
+These functions help provide more information about the learners available for
+use within Nimble. The functions beginning with "learner" return an object.
+Often, a "learner" function has a corresponding function beginning with "show"
+that prints a more readable representation of the object to stdout.
 
 .. autosummary::
    :toctree: generated/
    :recursive:
 
-   nimble.listLearners
-   nimble.learnerType
+   nimble.learnerNames
+   nimble.showLearnerNames
    nimble.learnerParameters
+   nimble.showLearnerParameters
    nimble.learnerDefaultValues
+   nimble.showLearnerDefaultValues
+   nimble.learnerType
 
 **Using a learner**
 

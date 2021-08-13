@@ -357,7 +357,7 @@ def testMlpyClusteringLearners():
 def testMlpyListLearners():
     """ Test mlpy's listMlpyLearners() by checking the output for those learners we unit test """
 
-    ret = nimble.listLearners('mlpy')
+    ret = nimble.learnerNames('mlpy')
 
     assert 'KPCA' in ret
     assert 'PCA' in ret

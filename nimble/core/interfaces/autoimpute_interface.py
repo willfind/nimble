@@ -81,7 +81,7 @@ To install autoimpute
     https://autoimpute.readthedocs.io/en/latest/user_guide/getting_started.html"""
         return msg
 
-    def _listLearnersBackend(self):
+    def _learnerNamesBackend(self):
         return self._searcher.allLearners()
 
     def learnerType(self, name):

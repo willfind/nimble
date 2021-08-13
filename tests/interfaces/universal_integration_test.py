@@ -48,7 +48,7 @@ def test__getScoresFormat():
         for interface in nimble.core.interfaces.available.values():
             interfaceName = interface.getCanonicalName()
 
-            learners = interface.listLearners()
+            learners = interface.learnerNames()
             for lName in learners:
                 fullName = interfaceName + '.' + lName
                 if nimble.learnerType(fullName) == 'classification':
@@ -91,7 +91,7 @@ def testGetScoresFormat():
         ((trainX, trainY), (testX, _)) = data
         for interface in nimble.core.interfaces.available.values():
             interfaceName = interface.getCanonicalName()
-            learners = interface.listLearners()
+            learners = interface.learnerNames()
             for lName in learners:
                 fullName = interfaceName + '.' + lName
                 if nimble.learnerType(fullName) == 'classification':
@@ -126,7 +126,7 @@ def testApplyFeatureNames():
     success = 0
     for interface in nimble.core.interfaces.available.values():
         interfaceName = interface.getCanonicalName()
-        for learner in interface.listLearners():
+        for learner in interface.learnerNames():
             currType = interface.learnerType(learner)
             if currType == 'regression':
                 data = regressionData
@@ -182,14 +182,14 @@ def testApplyFeatureNames():
 def testRandomnessControl():
     """ Test that nimble takes over the control of randomness of each interface """
 
-    #	assert 'RanomizedLogisticRegression' in nimble.listLearners('sciKitLearn')
+    #	assert 'RanomizedLogisticRegression' in nimble.learnerNames('sciKitLearn')
 
     for interface in nimble.core.interfaces.available.values():
         interfaceName = interface.getCanonicalName()
         # if interfaceName != 'shogun':
         #     continue
 
-        listOf = nimble.listLearners(interfaceName)
+        listOf = nimble.learnerNames(interfaceName)
 
         shogunIgnore = ['LibLinearRegression', 'SGDQN']
 
@@ -447,7 +447,7 @@ def test_loadModulesFromConfigLocation():
 def test_getParametersAndDefaultsReturnTypes():
     for interface in nimble.core.interfaces.available.values():
         interfaceName = interface.getCanonicalName()
-        for learner in nimble.listLearners(interfaceName):
+        for learner in nimble.learnerNames(interfaceName):
             params = interface._getParameterNames(learner)
             defaults = interface._getDefaultValues(learner)
             learnerParams = interface.getLearnerParameterNames(learner)

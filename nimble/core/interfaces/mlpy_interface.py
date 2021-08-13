@@ -74,7 +74,7 @@ To install mlpy
     https://github.com/richardARPANET/mlpy/blob/master/README.md"""
         return msg
 
-    def _listLearnersBackend(self):
+    def _learnerNamesBackend(self):
         possibilities = self._searcher.allLearners()
 
         exclude = ['OLS', 'LARS']

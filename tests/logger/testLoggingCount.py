@@ -45,13 +45,14 @@ def prefixAdder(prefix):
 
 nimble_logged = [
     'crossValidate', 'data', 'fillMatching', 'log', 'loadData',
-    'loadTrainedLearner', 'normalizeData', 'showAvailablePackages', 'train',
-    'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
+    'loadTrainedLearner', 'normalizeData', 'train', 'trainAndApply',
+    'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 nimble_notLogged = [
     'CustomLearner', 'CV', 'Init', 'fetchFile', 'fetchFiles', 'identity',
-    'listLearners', 'learnerParameters', 'learnerDefaultValues', 'learnerType',
-    'ones', 'showLog', 'zeros',
+    'learnerDefaultValues', 'learnerNames', 'learnerParameters', 'learnerType',
+    'ones', 'showAvailablePackages', 'showLearnerDefaultValues',
+    'showLearnerNames', 'showLearnerParameters', 'showLog', 'zeros',
     ]
 nimble_funcs = nimble_logged + nimble_notLogged
 nimble_tested = list(map(prefixAdder('nimble'), nimble_funcs))

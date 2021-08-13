@@ -20,9 +20,12 @@ from nimble.core.create import loadTrainedLearner
 from nimble.core.create import fetchFile
 from nimble.core.create import fetchFiles
 from nimble.core.learn import learnerType
-from nimble.core.learn import listLearners
+from nimble.core.learn import learnerNames
+from nimble.core.learn import showLearnerNames
 from nimble.core.learn import learnerParameters
+from nimble.core.learn import showLearnerParameters
 from nimble.core.learn import learnerDefaultValues
+from nimble.core.learn import showLearnerDefaultValues
 from nimble.core.learn import train
 from nimble.core.learn import trainAndApply
 from nimble.core.learn import trainAndTest
