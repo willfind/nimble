@@ -1,5 +1,7 @@
 import math
 from math import fabs
+import builtins
+from io import StringIO
 
 import numpy as np
 import pytest
@@ -16,7 +18,7 @@ from nimble.core._learnHelpers import computeMetrics
 from nimble.calculate import rootMeanSquareError
 from nimble.calculate import meanAbsoluteError
 from nimble.random import pythonRandom
-from tests.helpers import raises
+from tests.helpers import raises, patch
 
 ##########
 # TESTER #
@@ -459,3 +461,45 @@ def test_computeMetrics_multiple_metrics_disallowed():
 
     metricFunctions = [nimble.calculate.cosineSimilarity, rootMeanSquareError]
     computeMetrics(origObj, None, outObj, metricFunctions)
+
+def back_show(func, *args):
+    output = StringIO()
+    printer = print
+
+    def mockPrint(*args, **kwargs):
+        kwargs['file'] = output
+        printer(*args, **kwargs)
+
+    with patch(builtins, 'print', mockPrint):
+        func(*args)
+
+    output.seek(0)
+    ret = output.readlines()
+    assert ret
+
+    return ret
+
+def test_showLearnerNames():
+    contents = back_show(nimble.showLearnerNames)
+    for line in contents:
+        assert '.' in line
+
+    contents = back_show(nimble.showLearnerNames, 'nimble')
+    for line in contents:
+        assert '.' not in line
+
+def test_showLearnerParameters():
+    contents = back_show(nimble.showLearnerParameters, 'nimble.KNNClassifier')
+    assert 'k\n' in contents
+
+    contents = back_show(nimble.showLearnerParameters, 'nimble.RidgeRegression')
+    assert 'lamb\n' in contents
+
+def test_showLearnerDefaultValues():
+    contents = back_show(nimble.showLearnerDefaultValues, 'nimble.KNNClassifier')
+    splits = [content.split() for content in contents]
+    assert ['k', '5'] in splits
+
+    contents = back_show(nimble.showLearnerDefaultValues, 'nimble.RidgeRegression')
+    splits = [content.split() for content in contents]
+    assert ['lamb', '0'] in splits
