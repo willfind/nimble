@@ -2267,27 +2267,34 @@ def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
     ioStream.seek(startPosition)
     rowReader = csv.reader(ioStream, dialect)
     try:
-        firstDataRow = next(rowReader)
-        while firstDataRow == []:
-            firstDataRow = next(rowReader)
-        secondDataRow = next(rowReader)
-        while secondDataRow == []:
-            secondDataRow = next(rowReader)
+        firstRow = next(rowReader)
+        while firstRow == []:
+            firstRow = next(rowReader)
+        secondRow = next(rowReader)
+        while secondRow == []:
+            secondRow = next(rowReader)
+        firstDataRow = []
+        secondDataRow = []
+        for first, second in zip(firstRow, secondRow):
+            first = _intFloatOrString(first)
+            second = _intFloatOrString(second)
+            # can treat missing first values as possible default names except
+            # when second is also missing so don't include possible defaults
+            # for autoDetectNamesFromRaw
+            if first is not None or second is None:
+                firstDataRow.append(first)
+                secondDataRow.append(second)
     except StopIteration:
         firstDataRow = None
         secondDataRow = None
 
-    if firstDataRow is not None:
-        firstDataRow = list(map(_intFloatOrString, firstDataRow))
-    if secondDataRow is not None:
-        secondDataRow = list(map(_intFloatOrString, secondDataRow))
-    (pointNames, featureNames) = autoDetectNamesFromRaw(
+    pointNames, featureNames = autoDetectNamesFromRaw(
         pointNames, featureNames, firstDataRow, secondDataRow)
 
     # reset everything to make the loop easier
     ioStream.seek(startPosition)
 
-    return (pointNames, featureNames)
+    return pointNames, featureNames
 
 
 def _filterCSVRow(row):
@@ -2692,7 +2699,7 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
 
     firstRowLength = None
     if featureNames is True:
-        retFNames = next(lineReader)
+        retFNames = [v if v else None for v in next(lineReader)]
         if pointNames is True:
             retFNames = retFNames[1:]
         firstRowLength = len(retFNames)
@@ -2850,7 +2857,7 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
     # remove last feature of all missing values if no feature name is provided
     if (lastFtRemovable and
             (not retFNames or len(retFNames) == firstRowLength - 1
-             or (featureNames is True and retFNames[-1] == ''))):
+             or (featureNames is True and retFNames[-1] is None))):
         for row in retData:
             row.pop()
         if featureNames is True:
