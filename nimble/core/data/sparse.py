@@ -591,8 +591,10 @@ class Sparse(Base):
                               matchingFtIdx):
         self._sortInternal('feature')
         other._sortInternal('feature')
-        leftFtCount = len(self.features)
-        rightFtCount = len(other.features) - len(matchingFtIdx[0])
+        tempFtsL = len(self.features)
+        leftFtCount = tempFtsL
+        tempFtsR = len(other.features)
+        rightFtCount = tempFtsR - len(matchingFtIdx[0])
         if onFeature is not None:
             onIdxL = self.features.getIndex(onFeature)
             onIdxR = other.features.getIndex(onFeature)
@@ -605,6 +607,8 @@ class Sparse(Base):
         else:
             onIdxL = 0
             onIdxR = 0
+            tempFtsL += 1
+            tempFtsR += 1
             leftData = self._data.data.astype(np.object_)
             if not self.points._anyDefaultNames():
                 leftData = np.append([self.points.getNames()], leftData)
@@ -652,8 +656,12 @@ class Sparse(Base):
             rowIdxR = np.where(rightData[rightCol == onIdxR] == target)[0]
             if len(rowIdxR) > 0:
                 for ptIdxR in rowIdxR:
-                    ptL = leftData[leftRow == ptIdxL]
-                    ptR = rightData[rightRow == ptIdxR]
+                    ptL = np.zeros((tempFtsL,), dtype=np.object_)
+                    inRowL = leftRow == ptIdxL
+                    ptL[leftCol[inRowL]] = leftData[inRowL]
+                    ptR = np.zeros((tempFtsR,), dtype=np.object_)
+                    inRowR = rightRow == ptIdxR
+                    ptR[rightCol[inRowR]] = rightData[inRowR]
                     matches = ptL[matchingFtIdx[0]] == ptR[matchingFtIdx[1]]
                     nansL = ptL[matchingFtIdx[0]] != ptL[matchingFtIdx[0]]
                     nansR = ptR[matchingFtIdx[1]] != ptR[matchingFtIdx[1]]
@@ -666,7 +674,6 @@ class Sparse(Base):
                         # fill any nan values in left with the corresponding
                         # right value
                         for i, value in enumerate(ptL[matchingFtIdx[0]]):
-
                             if value != value:
                                 fill = ptR[matchingFtIdx[1]][i]
                                 ptL[matchingFtIdx[0]][i] = fill
@@ -689,20 +696,15 @@ class Sparse(Base):
                     nextPt += 1
                     numPts += 1
             elif point in ["union", "left"]:
-                ptL = leftData[leftRow == ptIdxL]
-                if onFeature is not None:
-                    numNaN = len(other.features) - len(matchingFtIdx[1])
-                    ptR = [np.nan] * numNaN
-                else:
-                    numNaN = len(other.features) - len(matchingFtIdx[1]) + 1
-                    ptR = [np.nan] * numNaN
+                ptL = np.zeros((tempFtsL,), dtype=np.object_)
+                inRowL = leftRow == ptIdxL
+                ptL[leftCol[inRowL]] = leftData[inRowL]
+                ptR = [np.nan] * (tempFtsR - len(matchingFtIdx[1]))
                 pt = np.append(ptL, ptR)
                 if feature == "intersection":
                     pt = pt[matchingFtIdx[0]]
-                elif onFeature is not None and feature == "left":
-                    pt = pt[:len(self.features)]
                 elif feature == "left":
-                    pt = pt[:len(self.features) + 1]
+                    pt = pt[:tempFtsL]
                 if onFeature is None:
                     pt = pt[1:]
                 mergedData = np.append(mergedData, pt)
@@ -714,13 +716,12 @@ class Sparse(Base):
         if point == 'union':
             for ptIdxR, target in enumerate(rightData[rightCol == onIdxR]):
                 if target not in matched:
-                    if onFeature is not None:
-                        nanList = [np.nan] * len(self.features)
-                        ptL = np.array(nanList, dtype=np.object_)
-                    else:
-                        nanList = [np.nan] * (len(self.features) + 1)
-                        ptL = np.array(nanList, dtype=np.object_)
-                    fill = rightData[(rightRow == ptIdxR)][matchingFtIdx[1]]
+                    nanList = [np.nan] * tempFtsL
+                    ptL = np.array(nanList, dtype=np.object_)
+                    ptR = np.zeros((tempFtsR,), dtype=np.object_)
+                    inRowR = rightRow == ptIdxR
+                    ptR[rightCol[inRowR]] = rightData[inRowR]
+                    fill = ptR[matchingFtIdx[1]]
                     ptL[matchingFtIdx[0]] = fill
                     # only unmatched points from right
                     notMatchedR = np.in1d(rightCol, matchingFtIdx[1],
@@ -729,10 +730,8 @@ class Sparse(Base):
                     pt = np.append(ptL, ptR)
                     if feature == "intersection":
                         pt = pt[matchingFtIdx[0]]
-                    elif onFeature is not None and feature == "left":
-                        pt = pt[:len(self.features)]
                     elif feature == "left":
-                        pt = pt[:len(self.features) + 1]
+                        pt = pt[:tempFtsL]
                     if onFeature is None:
                         # remove pointNames column added
                         pt = pt[1:]
@@ -753,10 +752,10 @@ class Sparse(Base):
             mergedData = []
 
         self._shape = [numPts, numFts]
-
         self._data = scipy.sparse.coo_matrix(
             (mergedData, (mergedRow, mergedCol)), shape=(numPts, numFts))
 
+        self._data.eliminate_zeros()
         self._resetSorted()
 
     def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueIdx):

@@ -346,6 +346,7 @@ class DataFrame(Base):
                                           right_index=True)
         else:
             onIdxL = self._data.columns.get_loc(onFeature)
+            onIdxR = tmpDfR.columns.get_loc(onFeature) + numColsL
             self._data = self._data.merge(tmpDfR, how=point, on=onFeature)
 
         # return labels to default after we've executed the merge
@@ -357,16 +358,15 @@ class DataFrame(Base):
             if onFeature is not None and left == onIdxL:
                 # onFeature column has already been merged
                 continue
-            if onFeature is not None and left > onIdxL:
+            right += numColsL
+            if onFeature is not None and right > onIdxR:
                 # one less to account for merged onFeature
-                right = right + numColsL - 1
-            else:
-                right = right + numColsL
-            matches = self._data.iloc[:, left] == self._data.iloc[:, right]
+                right -= 1
 
+            matches = self._data.iloc[:, left] == self._data.iloc[:, right]
             nansL = np.array([x != x for x in self._data.iloc[:, left]])
             nansR = np.array([x != x for x in self._data.iloc[:, right]])
-            acceptableValues = matches + nansL + nansR
+            acceptableValues = matches | nansL | nansR
             if not all(acceptableValues):
                 msg = "The objects contain different values for the same "
                 msg += "feature"
