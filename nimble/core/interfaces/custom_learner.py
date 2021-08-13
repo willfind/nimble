@@ -138,7 +138,8 @@ class CustomLearnerInterface(UniversalInterface):
             labels = dtypeConvert(trainY.copy(to='numpyarray'))
             ret.labelList = np.unique(labels)
 
-        ret.train(trainX, trainY, **arguments)
+        with nimble.random.alternateControl(randomSeed, useLog=False):
+            ret.train(trainX, trainY, **arguments)
 
         return ret
 
