@@ -8,8 +8,8 @@ def missing(value):
     """
     Determine if a value is missing.
 
-    Return True if nimble considers the value to be missing. Missing
-    values in nimble are None and (python or numpy) nan values.
+    Return True if Nimble considers the value to be missing. Missing
+    values in Nimble are None and (python or numpy) nan values.
 
     Parameters
     ----------
@@ -21,7 +21,7 @@ def missing(value):
 
     See Also
     --------
-    anyMissing, allMissing
+    nonMissing, anyMissing, allMissing
 
     Examples
     --------
@@ -35,6 +35,38 @@ def missing(value):
     False
     """
     return value is None or value != value
+
+def nonMissing(value):
+    """
+    Determine if a value is not a missing value.
+
+    Return True if Nimble does not consider the value to be missing.
+    Missing values in Nimble are None and (python or numpy) nan values.
+
+    Parameters
+    ----------
+    value
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    missing, anyMissing, allMissing
+
+    Examples
+    --------
+    >>> nonMissing(0)
+    True
+    >>> nonMissing('nan')
+    True
+    >>> nonMissing(None)
+    False
+    >>> nonMissing(float('nan'))
+    False
+    """
+    return not missing(value)
 
 def numeric(value):
     """
@@ -304,6 +336,64 @@ def boolean(value):
     """
     return isinstance(value, (bool, np.bool_))
 
+def integer(value):
+    """
+    Determine if a value is an integer type.
+
+    Return True if the value is an integer type, otherwise return False.
+
+    Parameters
+    ----------
+    value
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    anyInteger, allInteger
+
+    Examples
+    --------
+    >>> integer(3)
+    True
+    >>> integer(3.0)
+    False
+    >>> integer(True)
+    True
+    """
+    return isinstance(value, (int, np.integer))
+
+def floating(value):
+    """
+    Determine if a value is a float type.
+
+    Return True if the value is a float type, otherwise return False.
+
+    Parameters
+    ----------
+    value
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    anyFloating, allFloating
+
+    Examples
+    --------
+    >>> floating(3.0)
+    True
+    >>> floating(3)
+    False
+    >>> floating(True)
+    False
+    """
+    return isinstance(value, (float, np.floating))
+
 def true(value):
     """
     Determine if a value is a boolean True value.
@@ -372,7 +462,7 @@ def anyValues(match):
     """
     Factory for functions which will determine if any values match.
 
-    The returned function is designed to input a nimble data object and
+    The returned function is designed to input a Nimble data object and
     output True if one or more values in that object contain a match,
     otherwise False.
 
@@ -421,7 +511,7 @@ def allValues(match):
     """
     Factory for functions which will determine if all values match.
 
-    The returned function is designed to input a nimble data object and
+    The returned function is designed to input a Nimble data object and
     output True if every value in that object is a match, otherwise
     False.
 
@@ -471,12 +561,12 @@ def anyMissing(data):
     Determine if any values in the data are missing.
 
     Return True if one or more values in the data are considered to be
-    missing. Missing values in nimble are None and (python or numpy) nan
+    missing. Missing values in Nimble are None and (python or numpy) nan
     values.
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -509,11 +599,11 @@ def allMissing(data):
     Determine if all values in the data are missing.
 
     Return True if every value in the data is considered to be missing.
-    Missing values in nimble are None and (python or numpy) nan values.
+    Missing values in Nimble are None and (python or numpy) nan values.
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -541,6 +631,81 @@ def allMissing(data):
     """
     return anyAllValuesBackend(all, data, missing)
 
+def anyNonMissing(data):
+    """
+    Determine if any values in the data are not missing.
+
+    Return True if one or more values in the data are not considered to
+    be missing. Missing values in Nimble are None and (python or numpy)
+    nan values.
+
+    Parameters
+    ----------
+    data : Nimble Base object
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    allNonMissing, nonMissing
+
+    Examples
+    --------
+    >>> raw = [[1, 1, None],
+    ...        [None, 1, 1],
+    ...        [1, None, 1]]
+    >>> data = nimble.data('Matrix', raw)
+    >>> anyNonMissing(data)
+    True
+
+    >>> raw = [[float('nan'), None, None],
+    ...        [float('nan'), None, None],
+    ...        [float('nan'), None, None]]
+    >>> data = nimble.data('List', raw)
+    >>> anyNonMissing(data)
+    False
+    """
+    return anyAllValuesBackend(any, data, nonMissing)
+
+def allNonMissing(data):
+    """
+    Determine if all values in the data are missing.
+
+    Return True if every value in the data is considered to be missing.
+    Missing values in Nimble are None and (python or numpy) nan values.
+
+    Parameters
+    ----------
+    data : Nimble Base object
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    anyNonMissing, nonMissing
+
+    Examples
+    --------
+    >>> raw = [[1, 1, 3.0],
+    ...        [2, 0, 2.0],
+    ...        [3, -1, 1.0]]
+    >>> data = nimble.data('Matrix', raw)
+    >>> allNonMissing(data)
+    True
+
+    >>> raw = [[1, 1, 3.0],
+    ...        [2, float('nan'), 2.0],
+    ...        [3, -1, 1.0]]
+    >>> data = nimble.data('List', raw)
+    >>> allNonMissing(data)
+    False
+    """
+    return anyAllValuesBackend(all, data, nonMissing)
+
 def anyNumeric(data):
     """
     Determine if any values in the data are numeric.
@@ -550,7 +715,7 @@ def anyNumeric(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -587,7 +752,7 @@ def allNumeric(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -625,7 +790,7 @@ def anyNonNumeric(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -662,7 +827,7 @@ def allNonNumeric(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -699,7 +864,7 @@ def anyZero(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -736,7 +901,7 @@ def allZero(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -773,7 +938,7 @@ def anyNonZero(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -810,7 +975,7 @@ def allNonZero(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -847,7 +1012,7 @@ def anyPositive(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -884,7 +1049,7 @@ def allPositive(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -921,7 +1086,7 @@ def anyNegative(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -958,7 +1123,7 @@ def allNegative(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -995,7 +1160,7 @@ def anyInfinity(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -1032,7 +1197,7 @@ def allInfinity(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -1068,7 +1233,7 @@ def anyBoolean(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -1104,7 +1269,7 @@ def allBoolean(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -1132,6 +1297,150 @@ def allBoolean(data):
     """
     return anyAllValuesBackend(all, data, boolean)
 
+def anyInteger(data):
+    """
+    Determine if any values in the data are an integer type.
+
+    Return True if one or more value in the data is an integer type.
+
+    Parameters
+    ----------
+    data : Nimble Base object
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    allInteger, integer
+
+    Examples
+    --------
+    >>> raw = [[0, -1.0, None],
+    ...        [1, -2.0, None],
+    ...        [2, -3.0, None]]
+    >>> data = nimble.data('DataFrame', raw)
+    >>> anyInteger(data)
+    True
+
+    >>> raw = [['a', -1.0, None],
+    ...        ['b', -2.0, None],
+    ...        ['c', -3.0, None]]
+    >>> data = nimble.data('List', raw)
+    >>> anyInteger(data)
+    False
+    """
+    return anyAllValuesBackend(any, data, integer)
+
+def allInteger(data):
+    """
+    Determine if all values in the data are an integer type.
+
+    Return True if every value in the data is an integer type.
+
+    Parameters
+    ----------
+    data : Nimble Base object
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    anyInteger, integer
+
+    Examples
+    --------
+    >>> raw = [[1, 9, True],
+    ...        [2, 8, False],
+    ...        [3, 7, True]]
+    >>> data = nimble.data('Matrix', raw)
+    >>> allInteger(data)
+    True
+
+    >>> raw = [[1, 9, -1.1],
+    ...        [2, 8, -2.2],
+    ...        [3, 7, -3.3]]
+    >>> data = nimble.data('List', raw)
+    >>> allInteger(data)
+    False
+    """
+    return anyAllValuesBackend(all, data, integer)
+
+def anyFloating(data):
+    """
+    Determine if any values in the data are a float type.
+
+    Return True if one or more value in the data is a float type.
+
+    Parameters
+    ----------
+    data : Nimble Base object
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    allFloating, floating
+
+    Examples
+    --------
+    >>> raw = [[0, -1.0, True],
+    ...        [1, -2.0, False],
+    ...        [2, -3.0, False]]
+    >>> data = nimble.data('DataFrame', raw)
+    >>> anyFloating(data)
+    True
+
+    >>> raw = [['a', -1, True],
+    ...        ['b', -2, False],
+    ...        ['c', -3, False]]
+    >>> data = nimble.data('List', raw)
+    >>> anyFloating(data)
+    False
+    """
+    return anyAllValuesBackend(any, data, floating)
+
+def allFloating(data):
+    """
+    Determine if all values in the data are a float type.
+
+    Return True if every value in the data is a float type.
+
+    Parameters
+    ----------
+    data : Nimble Base object
+
+    Returns
+    -------
+    bool
+
+    See Also
+    --------
+    anyFloating, floating
+
+    Examples
+    --------
+    >>> raw = [[1.1, 9.0, 0.1],
+    ...        [2.2, 8.0, 0.2],
+    ...        [3.3, 7.0, 0.3]]
+    >>> data = nimble.data('Matrix', raw)
+    >>> allFloating(data)
+    True
+
+    >>> raw = [[1.1, 9.0, 1],
+    ...        [2.2, 8.0, 2],
+    ...        [3.3, 7.0, 3]]
+    >>> data = nimble.data('List', raw)
+    >>> allFloating(data)
+    False
+    """
+    return anyAllValuesBackend(all, data, floating)
+
 def anyTrue(data):
     """
     Determine if any values in the data are a boolean True.
@@ -1140,7 +1449,7 @@ def anyTrue(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -1176,7 +1485,7 @@ def allTrue(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -1212,7 +1521,7 @@ def anyFalse(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------
@@ -1248,7 +1557,7 @@ def allFalse(data):
 
     Parameters
     ----------
-    data : nimble Base object
+    data : Nimble Base object
 
     Returns
     -------

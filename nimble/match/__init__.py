@@ -5,6 +5,7 @@ object satisfy a given condition.
 
 from .match import _convertMatchToFunction
 from .match import missing
+from .match import nonMissing
 from .match import numeric
 from .match import nonNumeric
 from .match import zero
@@ -13,12 +14,16 @@ from .match import positive
 from .match import negative
 from .match import infinity
 from .match import boolean
+from .match import integer
+from .match import floating
 from .match import true
 from .match import false
 from .match import anyValues
 from .match import allValues
 from .match import anyMissing
 from .match import allMissing
+from .match import anyNonMissing
+from .match import allNonMissing
 from .match import anyNumeric
 from .match import allNumeric
 from .match import anyNonNumeric
@@ -35,6 +40,10 @@ from .match import anyInfinity
 from .match import allInfinity
 from .match import anyBoolean
 from .match import allBoolean
+from .match import anyInteger
+from .match import allInteger
+from .match import anyFloating
+from .match import allFloating
 from .match import anyTrue
 from .match import allTrue
 from .match import anyFalse
