@@ -142,7 +142,7 @@ To install keras
     """
         return msg
 
-    def _listLearnersBackend(self):
+    def _learnerNamesBackend(self):
         possibilities = self._searcher.allLearners()
         exclude = []
         ret = []

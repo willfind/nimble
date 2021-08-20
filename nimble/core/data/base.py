@@ -150,6 +150,10 @@ class Base(ABC):
         """
         The number of points and features in the object in the format
         (points, features).
+
+        See Also
+        --------
+        dimensions
         """
         if len(self._shape) > 2:
             return self._shape[0], np.prod(self._shape[1:])
@@ -159,6 +163,10 @@ class Base(ABC):
     def dimensions(self):
         """
         The true dimensions of this object.
+
+        See Also
+        --------
+        shape
         """
         return tuple(self._shape)
 

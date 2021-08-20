@@ -228,7 +228,7 @@ def testSciKitLearnCrossDecomp():
 def testSciKitLearnListLearners():
     """ Test scikit learn's listSciKitLearnLearners() by checking the output for those learners we unit test """
 
-    ret = nimble.listLearners(packageName)
+    ret = nimble.learnerNames(packageName)
 
     assert 'KMeans' in ret
     assert 'LinearRegression' in ret
@@ -248,7 +248,7 @@ def testSciKitLearnExcludedLearners():
 
 
 def getLearnersByType(lType=None, ignore=[]):
-    learners = nimble.listLearners(packageName)
+    learners = nimble.learnerNames(packageName)
     typeMatch = []
     for learner in learners:
         if lType is not None:

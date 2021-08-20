@@ -50,14 +50,14 @@ class CustomLearnerInterface(UniversalInterface):
         return self.name
 
     @captureOutput
-    def listLearners(self):
+    def learnerNames(self):
         """
         Return a list of all learners callable through this interface.
         """
         # can't cache because new learners can be registered
-        return self._listLearnersBackend()
+        return self._learnerNamesBackend()
 
-    def _listLearnersBackend(self):
+    def _learnerNamesBackend(self):
         return list(self.registeredLearners.keys())
 
 

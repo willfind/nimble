@@ -135,7 +135,7 @@ To install shogun
     https://www.shogun-toolbox.org/install"""
         return msg
 
-    def _listLearnersBackend(self):
+    def _learnerNamesBackend(self):
         return self._searcher.allLearners()
 
 

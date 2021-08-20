@@ -1,7 +1,7 @@
 """
 A group of tests which passes data to train, trainAndApply, and
 trainAndTest, checking that after the call, the input data remains
-unmodified. It makes use of listLearners and learnerType to try this
+unmodified. It makes use of learnerNames and learnerType to try this
 operation with as many learners as possible.
 """
 import pytest
@@ -152,7 +152,7 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
     backRTrainCombined = rTrainCombined.copy()
     backRTestCombined = rTestCombined.copy()
 
-    allLearners = nimble.listLearners()
+    allLearners = nimble.learnerNames()
     numSamples = int(len(allLearners) * portionToTest)
     toTest = pythonRandom.sample(allLearners, numSamples)
 

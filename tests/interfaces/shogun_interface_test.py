@@ -371,7 +371,7 @@ def TODO_ShogunMultiClassStrategyMultiDataBinaryAlg():
 def testShogunListLearners():
     """ Test shogun's listShogunLearners() by checking the output for those learners we unit test """
 
-    ret = nimble.listLearners('shogun')
+    ret = nimble.learnerNames('shogun')
 
     assert 'LibLinear' in ret
     assert 'KNN' in ret
@@ -394,7 +394,7 @@ def toCall(learner):
     return "shogun." + learner
 
 def getLearnersByType(lType=None, ignore=[]):
-    learners = nimble.listLearners('shogun')
+    learners = nimble.learnerNames('shogun')
     typeMatch = []
     for learner in learners:
         if lType is not None:

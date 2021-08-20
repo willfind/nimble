@@ -43,11 +43,25 @@ testFraction = 0.25
 yFeature = 'traffic_volume'
 trainX, trainY, testX, testY = traffic.trainAndTestSets(testFraction, yFeature)
 
-## Using `nimble.trainAndTest`, we can quickly test the performance of five
-## different regression algorithms from the sci-kit learn package (initially,
-## we'll use default arguments to keep things simple). We can then analyze the
-## performance by checking each learning algorithm's root mean square error.
+## For this example, we will use algorithms from the Sci-kit Learn package so
+## it must be installed in the current envirnoment. To check if Nimble has
+## access to Sci-kit Learn in your environment, you can use
+## `nimble.showAvailablePackages`. Additionally, we can see a list of all of
+## the learners available to Nimble by using `nimble.showLearnerNames`.
+## Uncomment the lines below if you would like to see the available packages
+## and learners in your environment.
+# nimble.showAvailablePackages()
+# nimble.showLearnerNames()
 
+## Nimble's training functions only need the package name and learner name to
+## be identified. There is no need to recall, for example, that
+## `LinearRegression` is in `sklearn.linear_model` or `KNeighborsRegressor` is
+## in `sklearn.neighbors`, all Nimble requires are the strings
+## 'sklearn.LinearRegression' and 'sklearn.KNeighborsRegressor', respectively.
+## Using `nimble.trainAndTest`, we will quickly test the performance of five
+## different regression algorithms (initially, we'll use default arguments to
+## keep things simple). We can then analyze the performance by comparing each
+## learning algorithm's root mean square error.
 learners = ['sklearn.LinearRegression', 'sklearn.Ridge', 'sklearn.Lasso',
             'sklearn.KNeighborsRegressor', 'sklearn.GradientBoostingRegressor']
 performanceFunction = nimble.calculate.rootMeanSquareError
@@ -65,7 +79,13 @@ for learner in learners:
 ## The default arguments are unlikely to yield the best performance, so now we
 ## will adjust some parameter values for our two best learners. These
 ## adjustments can be made through `arguments` as a python `dict` or as keyword
-## arguments. Furthermore, we can test multiple values for the same parameter
+## arguments. If we need more information about a learner's parameters, we can
+## use `nimble.learnerParameters` and `nimble.learnerDefaultValues`. Let's try
+## it for KNeighborsRegressor.
+print(nimble.learnerParameters('sklearn.KNeighborsRegressor'))
+print(nimble.learnerDefaultValues('sklearn.KNeighborsRegressor'))
+
+## Furthermore, we can test multiple values for the same parameter
 ## by using the `nimble.CV` object. The presence of `nimble.CV` will trigger
 ## k-fold cross validation where k is the value of the `folds` argument.
 ## Nimble's training functions will find the argument combination with the best
@@ -74,7 +94,8 @@ for learner in learners:
 
 ## For KNeighborsRegressor, we will use `nimble.CV` to try 3, 5, and 7 for the
 ## number of nearest neighbors and for `GradientBoostingRegressor` we will try
-## different learning rate values.
+## different learning rate values. Note, some interfaces have alias options for
+## the package name, below we use the alias 'skl' for the 'sklearn' package.
 knnArgs = {'n_neighbors': nimble.CV([3, 5, 7])}
 knnTL = nimble.train('skl.KNeighborsRegressor', trainX, trainY,
                      performanceFunction, folds=2, arguments=knnArgs)

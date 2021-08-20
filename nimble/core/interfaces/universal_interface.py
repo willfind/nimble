@@ -70,7 +70,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
     Metaclass defining methods and abstract methods for specific
     package or custom interfaces.
     """
-    _listLearnersCached = None
+    _learnerNamesCached = None
 
     def __init__(self):
         ### Validate all the information from abstract functions ###
@@ -106,7 +106,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         return name.lower() == self.getCanonicalName().lower()
 
     def _confirmValidLearner(self, learnerName):
-        if not learnerName in self.listLearners():
+        if not learnerName in self.learnerNames():
             msg = learnerName
             msg += " is not the name of a learner exposed by this interface"
             raise InvalidArgumentValue(msg)
@@ -483,15 +483,15 @@ class UniversalInterface(metaclass=abc.ABCMeta):
     ##############################################
 
     @captureOutput
-    def listLearners(self):
+    def learnerNames(self):
         """
         Return a list of all learners callable through this interface.
         """
-        if self._listLearnersCached is None:
-            ret = self._listLearnersBackend()
-            self._listLearnersCached = ret
+        if self._learnerNamesCached is None:
+            ret = self._learnerNamesBackend()
+            self._learnerNamesCached = ret
         else:
-            ret = self._listLearnersCached
+            ret = self._learnerNamesCached
         return ret
 
     @captureOutput
@@ -616,7 +616,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def _listLearnersBackend(self):
+    def _learnerNamesBackend(self):
         pass
 
     @abc.abstractmethod

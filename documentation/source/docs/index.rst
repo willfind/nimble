@@ -48,15 +48,13 @@ Using Data Objects
 ------------------
 
 All four data objects, List, Matrix, Sparse, and DataFrame, have the same
-functionality because they inherit from Nimble's
-:class:`Base <nimble.core.data.Base>` object. The ``Base`` object methods
-handle operations that apply to the entire data object or the individual
-elements of the object. Each object also has ``points`` and ``features``
-attributes to connect the :class:`Base <nimble.core.data.Base>` object with the
-:class:`Features <nimble.core.data.Features>` and
-:class:`Points <nimble.core.data.Points>` objects, respectively. These provide
-many additional methods that apply when working specifically with the object's
-features and points.
+functionality because they inherit from Nimble's ``Base`` object. The ``Base``
+object methods handle operations that apply to the entire data object or the
+individual elements of the object. Each object also has ``features`` and
+``points`` attributes to connect the ``Base`` object with the ``Features``
+and ``Points`` objects, respectively. These provide many additional methods
+that apply when working specifically with the object's ``features`` and
+``points``.
 
 .. autosummary::
    :toctree: generated/
@@ -68,20 +66,44 @@ features and points.
 Machine Learning with Interfaces
 --------------------------------
 
-Nimble provides interfaces to use learners defined in popular machine learning
-packages, ``nimble.learners``, and user created custom learners. This makes a
-wide variety of machine learning algorithms available under the same api. The
-functions and classes below allow for querying and utilizing any of these
-learners.
+In Nimble, all algorithms used for machine learning or deep learning are
+referred to as "learners". Nimble provides interfaces to use learners defined
+in popular machine learning packages, ``nimble.learners``, and user created
+custom learners. This makes a wide variety of algorithms available under the
+same api.
+
+**Choosing a learner**
+
+These functions help provide more information about the learners available for
+use within Nimble. The functions beginning with "learner" return an object.
+Often, a "learner" function has a corresponding function beginning with "show"
+that prints a more readable representation of the object to stdout.
 
 .. autosummary::
    :toctree: generated/
    :recursive:
 
-   nimble.learnerType
-   nimble.listLearners
+   nimble.learnerNames
+   nimble.showLearnerNames
    nimble.learnerParameters
+   nimble.showLearnerParameters
    nimble.learnerDefaultValues
+   nimble.showLearnerDefaultValues
+   nimble.learnerType
+
+**Using a learner**
+
+The following support the learning process. Functions with a ``learnerName``
+parameter accept a string in the format "package.learner". This provides access
+to learners in Nimble without the need to import them manually or remember
+their exact location within the package. For example,
+``"nimble.KNNClassifier"``, ``"sklearn.LinearRegression"``, and
+``"keras.Sequential"`` are valid ``learnerName`` strings.
+
+.. autosummary::
+   :toctree: generated/
+   :recursive:
+
    nimble.train
    ~nimble.core.interfaces.TrainedLearner
    nimble.loadTrainedLearner
@@ -94,6 +116,29 @@ learners.
    ~nimble.core.learn.KFoldCrossValidator
    nimble.CV
    nimble.Init
+
+The table below shows the current interfaces built in to Nimble. As an added
+convenience, some interfaces have additional aliases that can be used as the
+package name in the ``learnerName`` string (i.e. ``"skl.LinearRegression"``
+instead of ``"sklearn.LinearRegression"``).
+
+.. table::
+   :align: left
+   :widths: auto
+
+   +----------------+--------------------------------+
+   | Package        | Aliases                        |
+   +================+================================+
+   | `sklearn`_     | skl, scikitlearn, scikit-learn |
+   +----------------+--------------------------------+
+   | `keras`_       | tf.keras, tensorflow.keras     |
+   +----------------+--------------------------------+
+   | `autoimpute`_  |                                |
+   +----------------+--------------------------------+
+   | `shogun`_      |                                |
+   +----------------+--------------------------------+
+   | `mlpy`_        |                                |
+   +----------------+--------------------------------+
 
 Custom Learner
 --------------
@@ -113,10 +158,12 @@ machine learning.
 Configuration
 -------------
 
-Nimble has certain settings that can be configured. The default settings load
-when the package is imported and can be changed during the session. Changes to
+Since most packages that support Nimble are optional, ``showAvailablePackages``
+is provided to display the available packages in the current environment.
+Nimble also has settings that can be configured. The default settings load when
+the package is imported and can be changed during the session. Changes to
 configurable settings are made through ``nimble.settings``, a
-``SessionConfiguration`` object that provides methods for getting and setting
+``SessionConfiguration`` instance that provides methods for getting and setting
 configurable options. Changes to options can apply to the current session or be
 saved as the new default settings. Currently, :ref:`logging` and
 :ref:`fetching-files` have sections that can be configured.
@@ -125,6 +172,7 @@ saved as the new default settings. Currently, :ref:`logging` and
    :toctree: generated/
    :recursive:
 
+   nimble.showAvailablePackages
    nimble.settings
    ~nimble.core.configuration.SessionConfiguration
 
@@ -193,3 +241,10 @@ Submodules
    :hidden:
 
    nimble.calculate
+
+.. _sklearn: https://scikit-learn.org/stable/install.html
+.. _tensorflow: https://www.tensorflow.org/install
+.. _autoimpute: https://autoimpute.readthedocs.io/en/latest/user_guide/getting_started.html
+.. _shogun: https://www.shogun.ml/install
+.. _keras: https://keras.io/getting_started/
+.. _mlpy: https://github.com/richardARPANET/mlpy
