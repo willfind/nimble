@@ -243,3 +243,9 @@ def test_match_anyValues_func():
 def test_match_allValues_func():
     data = [[0,0,1], [0,0,2], [0,3,3]]
     backend_match_anyAll('all', match.allValues(lambda x: x > 0), data)
+
+@noLogEntryExpected
+def test_match_QueryString():
+    match.QueryString("x == 0")
+    match.QueryString("is missing")
+    match.QueryString("> 3")

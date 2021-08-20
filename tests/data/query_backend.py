@@ -23,9 +23,9 @@ import pytest
 import nimble
 from nimble import match
 from nimble import loadData
+from nimble.match import QueryString
 from nimble.core.data import BaseView
 from nimble.core.data._dataHelpers import formatIfNeeded
-from nimble.core.data._dataHelpers import elementQueryFunction
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction
@@ -3149,8 +3149,8 @@ class QueryBackend(DataTestObject):
     ######################
     # _axisQueryFunction #
     ######################
-    def test__axisQueryFunction(self):
-        """tests both axes for the _axisQueryFunction helper"""
+    def test_axisQueryString(self):
+        """tests both axes for QueryString"""
 
         def constructObjAndGetAxis(axis, data, offAxisNames):
             if axis == 'points':
@@ -3164,7 +3164,8 @@ class QueryBackend(DataTestObject):
             equal = axisObj[0]
             notEqual1 = axisObj[1]
             notEqual2 = axisObj[2]
-
+            # axis uses _axisQueryFunction to support more specific exception
+            # messages when the QueryString will not work.
             func = axisObj._axisQueryFunction(query)
             if '=' in optr:
                 if '==' in optr:
@@ -3183,6 +3184,10 @@ class QueryBackend(DataTestObject):
             elif '>' in optr:
                 assert func(notEqual1)
                 assert not func(notEqual2)
+            if optr == 'is':
+                assert func(equal)
+                assert not func(notEqual2)
+                assert not func(notEqual1)
 
         for axis in ['points', 'features']:
             # Success #
@@ -3233,6 +3238,12 @@ class QueryBackend(DataTestObject):
                 query = '<three>' + optr + '>=2'
                 operatorAssertions(primaryAxis, query, optr)
 
+            data = [[None, 1, -2], [-3, -4, 5], [6, -7, 8]]
+            offNames = ['one', 'two', 'three']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            for query in ['one is missing', 'three is not positive', 'two is positive']:
+                operatorAssertions(primaryAxis, query, 'is')
+
             # Exceptions #
             data = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
             offNames = ['one', 'two', 'three']
@@ -3255,6 +3266,11 @@ class QueryBackend(DataTestObject):
                 func('two = 4')
             with raises(InvalidArgumentValue, match='nor a valid query'):
                 func('hello')
+            # invalid is
+            with raises(InvalidArgumentValue, match='nor a valid query'):
+                func('one is something')
+            with raises(InvalidArgumentValue, match='does not exist'):
+                func('two   is missing')
 
             data = [[0, '> 250k', '== 2'], [3, '> 250k', '!= 2'], [6, '< 250k', '!= 2']]
             offNames = ['one', 'two', 'three']
@@ -3370,10 +3386,10 @@ def checkToStringRet(ret, data, includeNames, maxWidth, maxHeight):
                 assert fromIndexFname == fnames[cDataIndex]
 
 
-def test_elementQueryFunction():
+def test_elementQueryString():
     for optr in ['==', '!=', '<', '<=', '>', '>=']:
-        func1 = elementQueryFunction(optr + '0')
-        func2 = elementQueryFunction(optr + ' ' + '0')
+        func1 = QueryString(optr + '0')
+        func2 = QueryString(optr + ' ' + '0')
         if '=' in optr:
             if '!' in optr:
                 assert not func1(0)
@@ -3389,8 +3405,8 @@ def test_elementQueryFunction():
             assert func2(-1)
 
         if optr in ['==', '!=']:
-            func3 = elementQueryFunction(optr + 'hi')
-            func4 = elementQueryFunction(optr + ' ' + 'hi')
+            func3 = QueryString(optr + 'hi')
+            func4 = QueryString(optr + ' ' + 'hi')
             if '!' in optr:
                 assert func3('hello')
                 assert not func3('hi')
@@ -3402,8 +3418,8 @@ def test_elementQueryFunction():
                 assert func4('hi')
                 assert not func4('hello')
 
-            func5 = elementQueryFunction(optr + 'hi hello')
-            func6 = elementQueryFunction(optr + ' ' + 'hi hello')
+            func5 = QueryString(optr + 'hi hello')
+            func6 = QueryString(optr + ' ' + 'hi hello')
             if '!' in optr:
                 assert func5('hello hi')
                 assert not func5('hi hello')
@@ -3415,33 +3431,34 @@ def test_elementQueryFunction():
                 assert func6('hi hello')
                 assert not func6('hello hi')
 
-        whitespace = ' ' * np.random.randint(3, 7)
-        query = whitespace + optr + whitespace + '0' + whitespace
-        func7 = elementQueryFunction(query)
-        if '=' in optr:
-            if '!' in optr:
-                assert not func7(0)
-            else:
-                assert func7(0)
-        if '>' in optr:
-            assert func7(1)
-        elif '<' in optr:
-            assert func7(-1)
 
-        if optr in ['==', '!=']:
-            query = whitespace + optr + whitespace + 'hi' + whitespace
-            func8 = elementQueryFunction(query)
-            if '!' in optr:
-                assert func8('hello')
-                assert not func8('hi')
-            else:
-                assert func8('hi')
-                assert not func8('hello')
+    func7 = QueryString('is missing')
+    assert func7(None)
+    assert func7(np.nan)
+    assert not func7(1)
+    assert not func7('None')
+
+    func8 = QueryString('is not negative')
+    assert func8(4.0)
+    assert func8(0)
+    assert not func8(-1)
+    assert not func8(-0.1)
+
+    func9 = QueryString('is None')
+    assert func9(None)
+    assert not func9(np.nan)
+    assert not func9(1)
+    assert not func9('None')
+
+    func10 = QueryString('is True')
+    assert func10(True)
+    assert not func10('True')
+    assert not func10(1)
 
     # invalid query strings should return None
-    assert elementQueryFunction(lambda x: 5) is None
-    assert elementQueryFunction('=0') is None
-    assert elementQueryFunction('= 0') is None
+    for invalid in [lambda x: 5, '= 0', '=0', 'is something']:
+        with raises(InvalidArgumentValue):
+            QueryString(invalid)
 
 def convertFeatureReportValues(val):
     try:

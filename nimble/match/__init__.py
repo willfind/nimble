@@ -48,6 +48,7 @@ from .match import anyTrue
 from .match import allTrue
 from .match import anyFalse
 from .match import allFalse
+from .query import QueryString
 from .._utility import _setAll
 
 __all__ = _setAll(vars())

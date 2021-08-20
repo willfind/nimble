@@ -1280,10 +1280,7 @@ class HighLevelDataSafe(DataTestObject):
     def test_countElements(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         toTest = self.constructor(data)
-        ret = toTest.countElements('>=5')
-        assert ret == 5
-
-        ret = toTest.countElements('   >=   5   ')
+        ret = toTest.countElements('>= 5')
         assert ret == 5
 
         ret = toTest.countElements('==5')
@@ -2218,38 +2215,32 @@ class HighLevelDataSafe(DataTestObject):
 
         match1 = obj.matchingElements(lambda x: x == 0)
         match2 = obj.matchingElements('==0')
-        ws1, ws2, ws3 = [' ' * np.random.randint(1, 5) for _ in range(3)]
-        match3 = obj.matchingElements(ws1 + '==' + ws2 + '0' + ws3)
+        match3 = obj.matchingElements('== 0')
         assert match1 == match2 == match3
 
         match1 = obj.matchingElements(lambda x: x != 0)
         match2 = obj.matchingElements('!=0')
-        ws1, ws2, ws3 = [' ' * np.random.randint(1, 5) for _ in range(3)]
-        match3 = obj.matchingElements(ws1 + '!=' + ws2 + '0' + ws3)
+        match3 = obj.matchingElements('!= 0')
         assert match1 == match2 == match3
 
         match1 = obj.matchingElements(lambda x: x > 0)
         match2 = obj.matchingElements('>0')
-        ws1, ws2, ws3 = [' ' * np.random.randint(1, 5) for _ in range(3)]
-        match3 = obj.matchingElements(ws1 + '>' + ws2 + '0' + ws3)
+        match3 = obj.matchingElements('> 0')
         assert match1 == match2 == match3
 
         match1 = obj.matchingElements(lambda x: x < 0)
         match2 = obj.matchingElements('<0')
-        ws1, ws2, ws3 = [' ' * np.random.randint(1, 5) for _ in range(3)]
-        match3 = obj.matchingElements(ws1 + '<' + ws2 + '0' + ws3)
+        match3 = obj.matchingElements('< 0')
         assert match1 == match2 == match3
 
         match1 = obj.matchingElements(lambda x: x >= 0)
         match2 = obj.matchingElements('>=0')
-        ws1, ws2, ws3 = [' ' * np.random.randint(1, 5) for _ in range(3)]
-        match3 = obj.matchingElements(ws1 + '>=' + ws2 + '0' + ws3)
+        match3 = obj.matchingElements('>= 0')
         assert match1 == match2 == match3
 
         match1 = obj.matchingElements(lambda x: x <= 0)
         match2 = obj.matchingElements('<=0')
-        ws1, ws2, ws3 = [' ' * np.random.randint(1, 5) for _ in range(3)]
-        match3 = obj.matchingElements(ws1 + '<=' + ws2 + '0' + ws3)
+        match3 = obj.matchingElements('<= 0')
         assert match1 == match2 == match3
 
     @oneLogEntryExpected
@@ -3902,7 +3893,7 @@ class HighLevelModifying(DataTestObject):
         msg += 'featureWithFeatureNames.'
         with raises(ImproperObjectAction, match=msg):
             toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
-            
+
         toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'],
                                                  modifyDuplicateFeatureNames=True)
         assert toTest == exp

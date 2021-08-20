@@ -1177,20 +1177,6 @@ class StructureDataSafe(StructureShared):
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         ret = toTest.points.copy('four == 1')
 
-    def test_points_copy_handmadeString_extraWhitespace(self):
-        featureNames = ["one", "two", "three"]
-        pointNames = ['1', '4', '7']
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-
-        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.points.copy('    one   ==    1    ')
-        expectedRet = self.constructor([[1, 2, 3]], pointNames=pointNames[:1],
-                                       featureNames=featureNames)
-        expectedTest = self.constructor(data, pointNames=pointNames,
-                                        featureNames=featureNames)
-        assert expectedRet.isIdentical(ret)
-        assert expectedTest.isIdentical(toTest)
-
     def test_points_copy_handmadeString_multipleOperators_success(self):
         featureNames = ["one", "two", "<three>"]
         pointNames = ['1', '4', '7']

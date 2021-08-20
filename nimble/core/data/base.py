@@ -22,6 +22,7 @@ from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.logger import handleLogging
+from nimble.match import QueryString
 from nimble._utility import cloudpickle, h5py, plt
 from nimble._utility import isDatetime
 from nimble._utility import tableString
@@ -33,7 +34,6 @@ from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import csvCommaFormat
 from ._dataHelpers import validateElementFunction, wrapMatchFunctionFactory
 from ._dataHelpers import ElementIterator1D
-from ._dataHelpers import elementQueryFunction
 from ._dataHelpers import limitedTo2D
 from ._dataHelpers import arrangeFinalTable
 from ._dataHelpers import inconsistentNames, equalNames
@@ -811,11 +811,10 @@ class Base(ABC):
         """
         matchArg = toMatch # preserve toMatch in original state for log
         if not callable(matchArg):
-            query = elementQueryFunction(matchArg)
-            if query is not None:
-                func = query
-            # if not a comparison string, element must equal matchArg
-            else:
+            try:
+                func = QueryString(matchArg, elementQuery=True)
+            except InvalidArgumentValue:
+                # if not a query string, element must equal matchArg
                 matchVal = matchArg
                 func = lambda elem: elem == matchVal
             matchArg = func
@@ -948,13 +947,13 @@ class Base(ABC):
         >>> numLessThanOne
         20
         """
-        query = elementQueryFunction(condition)
-        if query is not None:
-            condition = query
-        elif not hasattr(condition, '__call__'):
-            msg = 'condition can only be a function or string containing a '
-            msg += 'comparison operator and a value'
-            raise InvalidArgumentType(msg)
+        if not hasattr(condition, '__call__'):
+            try:
+                condition = QueryString(condition, elementQuery=True)
+            except InvalidArgumentValue as e:
+                msg = 'condition can only be a function or string containing '
+                msg += 'a comparison operator and a value'
+                raise InvalidArgumentType(msg) from e
 
         ret = self.calculateOnElements(condition, outputType='Matrix',
                                        useLog=False)

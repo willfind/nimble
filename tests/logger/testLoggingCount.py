@@ -93,14 +93,17 @@ fill_funcs = [
 fill_tested = list(map(prefixAdder('nimble.fill'), fill_funcs))
 
 # no match functions should be logged.
+
 match_funcs = [
-    'allBoolean', 'allFalse', 'allInfinity', 'allMissing', 'allNegative',
+    'QueryString', 'allBoolean', 'allFalse', 'allFloating', 'allInfinity',
+    'allInteger', 'allMissing', 'allNegative', 'allNonMissing',
     'allNonNumeric', 'allNonZero', 'allNumeric', 'allPositive', 'allTrue',
-    'allValues', 'allZero', 'anyBoolean', 'anyFalse', 'anyInfinity',
-    'anyMissing', 'anyNegative', 'anyNonNumeric', 'anyNonZero', 'anyNumeric',
-    'anyPositive', 'anyTrue', 'anyValues', 'anyZero', 'boolean', 'false',
-    'infinity', 'missing', 'negative', 'nonNumeric', 'nonZero', 'numeric',
-    'positive', 'true', 'zero',
+    'allValues', 'allZero', 'anyBoolean', 'anyFalse', 'anyFloating',
+    'anyInfinity', 'anyInteger', 'anyMissing', 'anyNegative', 'anyNonMissing',
+    'anyNonNumeric', 'anyNonZero', 'anyNumeric', 'anyPositive', 'anyTrue',
+    'anyValues', 'anyZero', 'boolean', 'false', 'floating', 'infinity',
+    'integer', 'missing', 'negative', 'nonMissing', 'nonNumeric', 'nonZero',
+    'numeric', 'positive', 'true', 'zero',
     ]
 match_tested = list(map(prefixAdder('nimble.match'), match_funcs))
 
