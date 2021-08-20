@@ -323,22 +323,16 @@ class DataFrame(Base):
 
         numColsL = len(self._data.columns)
         if onFeature is None:
-            if (self.features._namesCreated()
-                    and other.features._namesCreated()):
+            if (self.points._namesCreated()
+                    and other.points._namesCreated()):
                 # differentiate default names between objects using integers
                 self._data.index = [i if n is None else n for i, n
                                     in enumerate(self.points.getNames())]
                 maxL = len(self.points)
                 tmpDfR.index = [i + maxL if n is None else n for i, n
                                 in enumerate(other.points.getNames())]
-            elif (self.features._namesCreated()
-                    or other.features._namesCreated()):
-                # there will be no matches, need left points ordered first
-                self._data.index = list(range(len(self.points)))
-                idxRange = range(self.shape[0], self.shape[0] + other.shape[0])
-                tmpDfR.index = list(idxRange)
             else:
-                # left already has index set to range(len(self.points))
+                # left guaranteed equiv to pd.RangeIndex(self._data.shape[0])
                 idxRange = range(self.shape[0], self.shape[0] + other.shape[0])
                 tmpDfR.index = list(idxRange)
 
