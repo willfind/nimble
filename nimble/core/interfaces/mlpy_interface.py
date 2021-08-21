@@ -301,7 +301,7 @@ To install mlpy
 
 
     def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
-                            arguments, customDict):
+                            arguments, randomSeed, customDict):
         raise NotImplementedError
 
 

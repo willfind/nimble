@@ -144,13 +144,15 @@ class CustomLearnerInterface(UniversalInterface):
         return ret
 
     def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
-                            arguments, customDict):
+                            arguments, randomSeed, customDict):
         if learner.__class__.learnerType == 'classification':
             flattenedY = dtypeConvert(trainY.copy(to='numpyarray').flatten())
             if learner.labelList is None: # no previous training
                 learner.labelList = []
             learner.labelList = np.union1d(learner.labelList, flattenedY)
-        learner.incrementalTrain(trainX, trainY, **arguments)
+
+        with nimble.random.alternateControl(randomSeed, useLog=False):
+            learner.incrementalTrain(trainX, trainY, **arguments)
 
         return learner
 

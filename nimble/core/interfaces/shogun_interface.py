@@ -393,7 +393,7 @@ To install shogun
 
 
     def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
-                            arguments, customDict):
+                            arguments, randomSeed, customDict):
         # StreamingDotFeatures?
         raise NotImplementedError
 

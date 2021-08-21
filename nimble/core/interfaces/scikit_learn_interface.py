@@ -161,7 +161,7 @@ class _SciKitLearnAPI(PredefinedInterfaceMixin):
         return learner
 
     def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
-                            arguments, customDict):
+                            arguments, randomSeed, customDict):
         # see partial_fit(X, y[, classes, sample_weight])
         msg = 'this interface does not implement incremental training'
         raise ImproperObjectAction(msg)

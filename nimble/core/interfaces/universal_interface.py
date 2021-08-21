@@ -111,6 +111,10 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             msg += " is not the name of a learner exposed by this interface"
             raise InvalidArgumentValue(msg)
 
+    def _getValidSeed(self, randomSeed):
+        forShogun = self.getCanonicalName() == 'shogun'
+        return nimble.random._getValidSeed(randomSeed, forShogun)
+
     @captureOutput
     def train(self, learnerName, trainX, trainY=None, arguments=None,
               multiClassStrategy='default', randomSeed=None,
@@ -145,8 +149,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             training.
         """
         self._confirmValidLearner(learnerName)
-        forShogun = self.getCanonicalName() == 'shogun'
-        randomSeed = nimble.random._getValidSeed(randomSeed, forShogun)
+        randomSeed = self._getValidSeed(randomSeed)
+
         if multiClassStrategy != 'default':
             # TODO reevaluate use of checkClassificationStrategy, the if
             # statements below expect a string output but it looks to output
@@ -722,7 +726,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
-                            arguments, customDict):
+                            arguments, randomSeed, customDict):
         """
         Extend the training of an already trained online learner.
 
@@ -855,6 +859,8 @@ class TrainedLearner(object):
             otherwise None.
         trainXShape : tuple
             The shape, (numPts, numFts), of the trainX object.
+        trainYNames : list
+            The feature names of the trainY object.
         randomSeed : int
            The random seed to use (when applicable). Also supports
            logging the randomSeed for top-level functions.
@@ -1188,8 +1194,8 @@ class TrainedLearner(object):
             cloudpickle.dump(self, file)
 
     @captureOutput
-    def retrain(self, trainX, trainY=None, arguments=None, useLog=None,
-                **kwarguments):
+    def retrain(self, trainX, trainY=None, arguments=None, randomSeed=None,
+                useLog=None, **kwarguments):
         """
         Train the model on new data.
 
@@ -1214,6 +1220,10 @@ class TrainedLearner(object):
             during training.  These must be singular values, retrain
             does not implement cross-validation for multiple argument
             sets. Will be merged with kwarguments.
+        randomSeed : int
+           Set a random seed for the operation. When not None, allows
+           for reproducible results for each function call. Ignored if
+           learner does not depend on randomness.
         useLog : bool, None
             Local control for whether to send results/timing to the
             logger. If None (default), use the value as specified in the
@@ -1287,6 +1297,7 @@ class TrainedLearner(object):
             has2dOutput = len(outputData.features) > 1
         elif isinstance(outputData, (list, tuple)):
             has2dOutput = len(outputData) > 1
+        self.randomSeed = self._interface._getValidSeed(randomSeed)
 
         merged = mergeArguments(arguments, kwarguments)
         self._interface._validateLearnerArgumentValues(self.learnerName,
@@ -1323,10 +1334,12 @@ class TrainedLearner(object):
         self.crossValidation = None
 
         handleLogging(useLog, 'run', 'TrainedLearner.retrain', trainX, trainY,
-                      None, None, self.learnerName, self.arguments, None)
+                      None, None, self.learnerName, self.arguments,
+                      self.randomSeed)
 
     @captureOutput
-    def incrementalTrain(self, trainX, trainY=None, useLog=None):
+    def incrementalTrain(self, trainX, trainY=None, randomSeed=None,
+                         useLog=None):
         """
         Extend the training of this learner with additional data.
 
@@ -1342,6 +1355,10 @@ class TrainedLearner(object):
             A name or index of the feature in ``trainX`` containing the
             labels or another nimble Base object containing the labels
             that correspond to ``trainX``.
+        randomSeed : int
+           Set a random seed for the operation. When not None, allows
+           for reproducible results for each function call. Ignored if
+           learner does not depend on randomness.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1359,11 +1376,12 @@ class TrainedLearner(object):
         transformedArguments = transformed[3]
         self._backend = self._interface._incrementalTrainer(
             self.learnerName, self._backend, transformedTrainX,
-            transformedTrainY, transformedArguments, self._customDict)
+            transformedTrainY, transformedArguments, randomSeed,
+            self._customDict)
 
         handleLogging(useLog, 'run', 'TrainedLearner.incrementalTrain', trainX,
                       trainY, None, None, self.learnerName, self.arguments,
-                      None, None)
+                      self.randomSeed, None)
 
     @captureOutput
     def getAttributes(self):

@@ -139,7 +139,7 @@ class TestPredefinedInterface(PredefinedInterfaceMixin):
         pass
 
     def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
-                            arguments, customDict):
+                            arguments, randomSeed, customDict):
         pass
 
     def _checkVersion(self):
@@ -319,7 +319,7 @@ class AlwaysWarnInterface(UniversalInterface):
         return (learnerName, trainX, trainY, arguments)
 
     def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
-                            arguments, customDict):
+                            arguments, randomSeed, customDict):
         self.issueWarnings()
         pass
 
