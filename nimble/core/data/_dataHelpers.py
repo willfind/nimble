@@ -4,6 +4,7 @@ the main data wrapper objects defined in this module.
 """
 
 import math
+import re
 from functools import wraps
 import os.path
 
