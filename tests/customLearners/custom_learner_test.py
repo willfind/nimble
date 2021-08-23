@@ -465,3 +465,56 @@ def testMeanConstantSimple():
 
         customLearners = nimble.learnerNames('custom')
         assert 'MeanConstant' in customLearners
+
+
+class RandomControl(CustomLearner):
+    learnerType = 'unknown'
+
+    def train(self, trainX, trainY):
+        self.rand = nimble.random.pythonRandom.randint(0, 1e15)
+
+    def incrementalTrain(self, trainX, trainY):
+        self.rand = nimble.random.pythonRandom.randint(0, 1e15)
+
+    def apply(self, testX):
+        return [v * self.rand for v in testX]
+
+def test_customLearnerRandomControl():
+    trainX = nimble.data('Matrix', [[1], [2], [3]])
+    trainY = trainX.copy()
+    testX = trainX.copy()
+    a = nimble.trainAndApply(RandomControl, trainX, trainY, testX, randomSeed=1)
+    b = nimble.trainAndApply('custom.RandomControl', trainX, trainY, testX,
+                             randomSeed=1)
+    c = nimble.trainAndApply('custom.RandomControl', trainX, trainY, testX,
+                             randomSeed=2)
+    d = nimble.trainAndApply('custom.RandomControl', trainX, trainY, testX,
+                             randomSeed=3)
+
+    assert a == b
+    assert a != c
+    assert a != d
+    assert c != d
+
+    model = nimble.train(RandomControl, trainX, trainY)
+    model.incrementalTrain(trainX, trainY, randomSeed=2)
+    e = model.apply(testX)
+    model.incrementalTrain(trainX, trainY, randomSeed=3)
+    f = model.apply(testX)
+    model.incrementalTrain(trainX, trainY, randomSeed=2)
+    g = model.apply(testX)
+
+    assert e == g
+    assert e != f
+
+    model = nimble.train(RandomControl, trainX, trainY)
+    assert a != model.apply(testX)
+    model.retrain(trainX, trainY, randomSeed=1)
+    h = model.apply(testX)
+    assert a == h
+    model.retrain(trainX, trainY, randomSeed=2)
+    i = model.apply(testX)
+    assert c == i
+    model.retrain(trainX, trainY, randomSeed=3)
+    j = model.apply(testX)
+    assert d == j

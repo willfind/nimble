@@ -323,15 +323,19 @@ To install keras
         return nimble.data(outputType, outputValue, useLog=False)
 
 
+    def _setRandomness(self, arguments, randomSeed):
+        if self._tfVersion2:
+            checkArgsForRandomParam(arguments, 'seed')
+            self.tensorflow.random.set_seed(randomSeed)
+
+
     def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
                  customDict):
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         compileNames = self._paramQuery('compile', learnerName, ['self'])[0]
         isSparse = isinstance(trainX, nimble.core.data.Sparse)
 
-        if self._tfVersion2:
-            checkArgsForRandomParam(arguments, 'seed')
-            self.tensorflow.random.set_seed(randomSeed)
+        self._setRandomness(arguments, randomSeed)
         # keras 2.2.5+ fit_generator functionality merged into fit.
         # fit_generator may be removed, but will be used when possible
         # to support earlier versions.
@@ -397,7 +401,8 @@ To install keras
 
 
     def _incrementalTrainer(self, learnerName, learner, trainX, trainY,
-                            arguments, customDict):
+                            arguments, randomSeed, customDict):
+        self._setRandomness(arguments, randomSeed)
         param = 'train_on_batch'
         trainOnBatchNames = self._paramQuery(param, learnerName, ['self'])[0]
         trainOnBatchParams = {}
