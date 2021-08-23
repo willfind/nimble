@@ -31,6 +31,11 @@ def test_match_missing():
     false = numericValues[:-2] + stringValues + boolValues
     backend_match_value(match.missing, true, false)
 
+def test_match_nonMissing():
+    true = numericValues[:-2] + stringValues + boolValues
+    false = missingValues
+    backend_match_value(match.nonMissing, true, false)
+
 def test_match_numeric():
     true = numericValues
     false = stringValues + boolValues + [None]
@@ -64,6 +69,22 @@ def test_match_negative():
 def test_match_infinity():
     true = infinityValues
     false = [v for v in numericValues if v not in infinityValues] + stringValues + boolValues
+    backend_match_value(match.infinity, true, false)
+
+def test_match_boolean():
+    true = boolValues
+    false = [1, np.int(1), 0, np.int(0), 1.0, np.float(1), 0.0, np.float(0)]
+    backend_match_value(match.boolean, true, false)
+
+def test_match_integer():
+    true = [1, np.int(1), -1, np.int(-1), True, False]
+    false = [1.0, np.float(1), -1.0, np.float(-1)]
+    backend_match_value(match.integer, true, false)
+
+def test_match_floating():
+    true = [1.0, np.float(1), -1.0, np.float(-1)]
+    false = [True, False, 1, np.int(1), -1, np.int(-1)]
+    backend_match_value(match.floating, true, false)
 
 @noLogEntryExpected
 def backend_match_anyAll(anyOrAll, func, data):
@@ -116,6 +137,16 @@ def test_match_allMissing():
     fill = np.nan
     data = [[1,2,fill], [4,5,fill], [7,fill,fill]]
     backend_match_anyAll('all', match.allMissing, data)
+
+def test_match_anyNonMissing():
+    fill = np.nan
+    data = [[fill,fill,3], [fill,5,6], [fill,8,9]]
+    backend_match_anyAll('any', match.anyNonMissing, data)
+
+def test_match_allNonMissing():
+    fill = np.nan
+    data = [[fill,fill,3], [fill,5,6], [fill,8,9]]
+    backend_match_anyAll('all', match.allNonMissing, data)
 
 def test_match_anyNumeric():
     fill = 3
@@ -212,3 +243,9 @@ def test_match_anyValues_func():
 def test_match_allValues_func():
     data = [[0,0,1], [0,0,2], [0,3,3]]
     backend_match_anyAll('all', match.allValues(lambda x: x > 0), data)
+
+@noLogEntryExpected
+def test_match_QueryString():
+    match.QueryString("x == 0")
+    match.QueryString("is missing")
+    match.QueryString("> 3")

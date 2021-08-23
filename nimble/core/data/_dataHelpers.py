@@ -4,8 +4,6 @@ the main data wrapper objects defined in this module.
 """
 
 import math
-import re
-import operator
 from functools import wraps
 import os.path
 
@@ -794,35 +792,6 @@ def csvCommaFormat(name):
             name = re.sub(r'"', '""', name)
         name = '"{0}"'.format(name)
     return name
-
-operatorDict = {'!=': operator.ne, '==': operator.eq, '<=': operator.le,
-                '>=': operator.ge, '<': operator.lt, '>': operator.gt}
-
-def elementQueryFunction(value):
-    """
-    Convert the value to an element input function, if possible.
-
-    None is returned for all other cases as functions using this helper
-    vary in how they proceed when the value is not a query string.
-    """
-    if not isinstance(value, str):
-        return None
-
-    reMatch = re.match(r'(==|!=|>=|>|<=|<)(.+)', value.strip())
-    if reMatch:
-        func = operatorDict[reMatch.group(1)]
-        matchVal = reMatch.group(2).strip()
-        try:
-            matchVal = float(matchVal)
-        except ValueError:
-            pass
-
-        def elementQuery(elem):
-            return func(elem, matchVal)
-
-        return elementQuery
-
-    return None
 
 def limitedTo2D(method):
     """

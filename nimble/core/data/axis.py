@@ -21,6 +21,7 @@ import numpy as np
 
 import nimble
 from nimble import fill
+from nimble.match import QueryString
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import ImproperObjectAction
 from nimble.exceptions import InvalidArgumentTypeCombination
@@ -34,7 +35,6 @@ from .points import Points
 from .features import Features
 from ._dataHelpers import valuesToPythonList, constructIndicesList
 from ._dataHelpers import validateInputString
-from ._dataHelpers import operatorDict
 from ._dataHelpers import createDataNoValidation
 from ._dataHelpers import wrapMatchFunctionFactory
 from ._dataHelpers import validateAxisFunction
@@ -1054,46 +1054,32 @@ class Axis(ABC):
         Convert a query string to an axis input function.
         """
         offAxis = 'feature' if self._isPoint else 'point'
-        # positive lookahead catches all ambiguous cases (i.e age == > 20)
-        operatorCount = len(re.findall(r'(?=\s(==|!=|>=|>|<=|<)\s)', string))
-        if not operatorCount:
-            msg = "'{0}' is not a valid {1} name nor a valid query string. "
-            msg += "A query string must be in the format {2}NAME OPERATOR "
-            msg += "VALUE i.e '{1}3 != 0'"
-            offCaps = offAxis.upper()
-            raise InvalidArgumentValue(msg.format(string, offAxis, offCaps))
-        if operatorCount > 1:
-            msg = "Multiple operators in query string. Strings containing "
-            msg += "more than one whitespace padded operator cannot be "
-            msg += "parsed. Use a function instead or modify the {0}Name or "
-            msg += "values that includes a whitespace padded operator."
-            raise InvalidArgumentValue(msg.format(offAxis))
+        try:
+            query = QueryString(string, elementQuery=False)
+        except InvalidArgumentValue as e:
+            # positive lookahead catches all ambiguous cases (i.e age == > 20)
+            operatorCount = len(re.findall(r'(?=\s(==|!=|>=|>|<=|<)\s)',
+                                           string))
+            if operatorCount <= 1:
+                msg = "'{0}' is not a valid {1} name nor a valid query "
+                msg += "string. See help(nimble.match.QueryString) for query "
+                msg += "string requirements."
+                msg = msg.format(string, offAxis)
+            else:
+                msg = "Multiple operators in query string. Strings containing "
+                msg += "more than one whitespace padded operator cannot be "
+                msg += "parsed. Use a function instead or modify the {0}Name "
+                msg += "or values that includes a whitespace padded operator."
+                msg = msg.format(offAxis)
 
-        name, optr, value = re.split(r'\s(==|!=|>=|>|<=|<)\s', string)
-        name = name.strip()
-        value = value.strip()
+            raise InvalidArgumentValue(msg) from e
 
-        hasName = self._base._getAxis(offAxis)._hasName
-        if not hasName(name):
-            msg = "the {0} '{1}' does not exist".format(offAxis, name)
+        if not self._base._getAxis(offAxis)._hasName(query.identifier):
+            msg = "the {0} '{1}' does not exist".format(offAxis,
+                                                        query.identifier)
             raise InvalidArgumentValue(msg)
 
-        operatorFunc = operatorDict[optr]
-        # convert value from a string, if possible
-        try:
-            value = float(value)
-        except ValueError:
-            pass
-        #convert query string to a function
-        def targetFunc(vector):
-            return operatorFunc(vector[name], value)
-
-        targetFunc.vectorized = True
-        targetFunc.name = name
-        targetFunc.value = value
-        targetFunc.operator = operatorFunc
-
-        return targetFunc
+        return query
 
     def _genericStructuralFrontend(self, structure, target=None,
                                    start=None, end=None, number=None,
