@@ -3,8 +3,22 @@ REGEX: sklearn.Ridge error: 1[78][0-9]{2}\.[0-9]+
 REGEX: sklearn.Lasso error: 1[78][0-9]{2}\.[0-9]+
 REGEX: sklearn.KNeighborsRegressor error: [78][0-9]{2}\.[0-9]+
 REGEX: sklearn.GradientBoostingRegressor error: 5[1-5][0-9]\.[0-9]+
-['algorithm', 'leaf_size', 'metric', 'metric_params', 'n_jobs', 'n_neighbors', 'p', 'weights']
-{'weights': 'uniform', 'p': 2, 'n_neighbors': 5, 'n_jobs': None, 'metric_params': None, 'metric': 'minkowski', 'leaf_size': 30, 'algorithm': 'auto'}
+algorithm
+leaf_size
+metric
+metric_params
+n_jobs
+n_neighbors
+p
+weights
+REGEX: algorithm      '\w+'
+REGEX: leaf_size      \d+
+REGEX: metric         '\w+'
+REGEX: metric_params  .+
+REGEX: n_jobs         .+
+REGEX: n_neighbors    \d+
+REGEX: p              \d+
+REGEX: weights        '\w+'
 REGEX: \{'n_neighbors': 3, 'rootMeanSquareError': 9[0-9]{2}\.[0-9]+\}
 REGEX: \{'n_neighbors': 5, 'rootMeanSquareError': 9[0-9]{2}\.[0-9]+\}
 REGEX: \{'n_neighbors': 7, 'rootMeanSquareError': 9[0-9]{2}\.[0-9]+\}

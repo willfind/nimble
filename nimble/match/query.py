@@ -20,7 +20,8 @@ class QueryString:
     define a boolean function. Since queries can be elementwise or
     operate over points and features, the strings will differ sligtly,
     but all follow the same rules. All queries require an operator.
-    Valid operators are:
+    Valid operators are::
+
       ==  equal to
       !=  not equal to
       >=  greater than or equal to
@@ -36,7 +37,8 @@ class QueryString:
     For an elementwise query string, only an operator and value are
     required. The "is" operator must be separated from the value by a
     single space, but the space is optional for the other operators.
-    For example:
+    For example::
+
       "==3"         elements equal to 3
       "> 10"        elements greater than 10
       "is missing"  elements that are missing values
@@ -44,7 +46,8 @@ class QueryString:
     For a points or features query, the point or feature name must be
     included prior to the operator. The operator must be separated from
     the name and the value by single space characters.
-    For example:
+    For example::
+
       "pt3 <= 1"     elements in pt3 that are less than or equal to 1
       "ft1 == True"  elements in ft1 that are equal to the string "True"
       "ft2 is False" elements in ft2 that are the python False object
@@ -92,10 +95,10 @@ class QueryString:
         featureNames={'ft1':0, 'ft2':1, 'ft3':2}
         )
     """
-    accepted = {n: getattr(match, n) for n in _setAll(vars(match))}
-    accepted['True'] = lambda e: e is True
-    accepted['False'] = lambda e: e is False
-    accepted['None'] = lambda e: e is None
+    _accepted = {n: getattr(match, n) for n in _setAll(vars(match))}
+    _accepted['True'] = lambda e: e is True
+    _accepted['False'] = lambda e: e is False
+    _accepted['None'] = lambda e: e is None
 
     def __init__(self, string, elementQuery=None):
         if not isinstance(string, str):
@@ -147,17 +150,17 @@ class QueryString:
         # last "is" needs to be valid for remaining cases
         elif startsIs and not (containsIs or containsOp):
             funcName = startsIs.group(3)
-            if funcName in QueryString.accepted:
-                func = QueryString.accepted[funcName]
+            if funcName in QueryString._accepted:
+                func = QueryString._accepted[funcName]
                 if startsIs.group(2): # is not
                     self.function = lambda e: not func(e)
                 else:
                     self.function = func
         else:
             identifier, funcName = string.rsplit(containsIs[-1], 1)
-            if funcName in QueryString.accepted:
+            if funcName in QueryString._accepted:
                 self.identifier = identifier
-                func = QueryString.accepted[funcName]
+                func = QueryString._accepted[funcName]
                 if 'not' in containsIs[-1]:
                     self.function = lambda v: not func(v)
                 else:

@@ -43,13 +43,13 @@ testFraction = 0.25
 yFeature = 'traffic_volume'
 trainX, trainY, testX, testY = traffic.trainAndTestSets(testFraction, yFeature)
 
-## For this example, we will use algorithms from the Sci-kit Learn package so
-## it must be installed in the current envirnoment. To check if Nimble has
-## access to Sci-kit Learn in your environment, you can use
-## `nimble.showAvailablePackages`. Additionally, we can see a list of all of
-## the learners available to Nimble by using `nimble.showLearnerNames`.
-## Uncomment the lines below if you would like to see the available packages
-## and learners in your environment.
+## For this example, we will use algorithms from the
+## [Sci-kit Learn](https://scikit-learn.org/) package so it must be installed
+## in the current environment. To check if Nimble has access to Sci-kit Learn
+## in your environment, you can use `nimble.showAvailablePackages`.
+## Additionally, we can see a list of all of the learners available to Nimble
+## by using `nimble.showLearnerNames`. Uncomment the lines below if you would
+## like to see the available packages and learners in your environment.
 # nimble.showAvailablePackages()
 # nimble.showLearnerNames()
 
@@ -82,8 +82,8 @@ for learner in learners:
 ## arguments. If we need more information about a learner's parameters, we can
 ## use `nimble.learnerParameters` and `nimble.learnerDefaultValues`. Let's try
 ## it for KNeighborsRegressor.
-print(nimble.learnerParameters('sklearn.KNeighborsRegressor'))
-print(nimble.learnerDefaultValues('sklearn.KNeighborsRegressor'))
+nimble.showLearnerParameters('sklearn.KNeighborsRegressor')
+nimble.showLearnerDefaultValues('sklearn.KNeighborsRegressor')
 
 ## Furthermore, we can test multiple values for the same parameter
 ## by using the `nimble.CV` object. The presence of `nimble.CV` will trigger
