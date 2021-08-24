@@ -29,6 +29,7 @@ try:
 except ImportError:
     CYTHON_AVAILABLE = False
 
+from nimble import __version__
 from nimble._dependencies import DEPENDENCIES
 
 def getCFiles():
@@ -158,7 +159,7 @@ class EmptyConfigFile:
 def run_setup():
     setupKwargs = {}
     setupKwargs['name'] = 'nimble'
-    setupKwargs['version'] = '0.0.0.dev1'
+    setupKwargs['version'] = __version__
     setupKwargs['author'] = "Spark Wave"
     setupKwargs['author_email'] = "willfind@gmail.com"
     setupKwargs['description'] = "Interfaces and tools for data science."

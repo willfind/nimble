@@ -1,6 +1,6 @@
 package:
   name: nimble
-  version: "0.0.0.dev1"
+  version: "0.1.0"
 
 source:
   path: ../
@@ -13,10 +13,12 @@ requirements:
     - python {{ python }}
     - setuptools
     - numpy >=1.14
+    - packaging
 
   run:
     - python {{ python }}
     - numpy
+    - packaging
 
 outputs:
   - name: nimble
