@@ -58,24 +58,26 @@ trainX, trainY, testX, testY = images.trainAndTestSets(testFraction=0.25,
                                                        labels=intLabels)
 ## Simple neural network ##
 
-## To start, we can build a simple Sequential model using the
-## [Keras](https://keras.io) neural network package, directly from within
-## Nimble. The `layers` argument for a Sequential object requires a list of
-## Keras `Layer` objects. However, there is no need to import those directly
-## from Keras. As long as Keras is installed, `nimble.Init` can search the
-## interfaced package for the desired class and instantiate it with any keyword
-## arguments. So we can avoid extra imports (i.e., `from keras.layers import
-## Dense, Dropout`) and there is no need to recall the package's module names
-## that contain the objects we want to use.
+## For this example, we will be using the [Keras](https://keras.io) neural
+## network package so it must be installed in the current environment. Our
+## first task will be to build a simple Sequential model using Nimble's
+## interface with Keras. The `layers` argument for a Sequential object requires
+## a list of Keras `Layer` objects. However, there is no need to import the
+## objects directly from Keras. As long as Keras is installed, `nimble.Init`
+## can search the interfaced package for the desired objects and instantiate it
+## with any keyword arguments. So we can avoid extra imports (i.e., `from
+## keras.layers import  Dense, Dropout`) and there is no need to recall the
+## package's module names that contain the objects we want to use.
 layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=256)
 layer1 = nimble.Init('Dropout', rate=0.5)
 layer2 = nimble.Init('Dense', units=10, activation='softmax')
 layers = [layer0, layer1, layer2]
 
-## Now that we’ve taken advantage of `nimble.Init` to define our layers, we can
-## train and apply our model in one step. `nimble.trainAndApply` will first
-## train the model on our trainX data to predict our trainY data, then apply
-## the resulting model to our testX data.
+## Now that our layers are defined, we can use `nimble.trainAndApply` to train
+## the neural network with our trainX and trainY data and make predictions on
+## our testX data. Similar to above, the string 'keras.Sequential' informs
+## Nimble to use the Sequential object from Keras, so importing the object
+## manually is not necessary.
 digitProbability = nimble.trainAndApply(
     'keras.Sequential', trainX=trainX, trainY=trainY, testX=testX,
     layers=layers, optimizer='adam', loss='sparse_categorical_crossentropy',

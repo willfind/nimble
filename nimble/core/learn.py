@@ -5,6 +5,7 @@ nimble import.
 
 from types import ModuleType
 import time
+from operator import itemgetter
 
 import numpy as np
 
@@ -221,17 +222,17 @@ def showLearnerDefaultValues(name):
     name : str
         Package and name in the form 'package.learnerName'.
     """
-    defaultValues = learnerDefaultValues(name).items()
-    if defaultValues is None:
-        print('learner default values could not be determined')
-    elif defaultValues:
+    defaultValues = sorted(learnerDefaultValues(name).items(),
+                           key=itemgetter(0))
+    if defaultValues:
         defaults = []
         for param, default in defaultValues:
             if isinstance(default, str):
                 default = "'{}'".format(default)
             defaults.append([param, default])
         print(tableString(defaults, rowHeadJustify='left',
-                          colValueJustify='left'))
+                          colValueJustify='left',
+                          includeTrailingNewLine=False))
 
 @trackEntry
 def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,

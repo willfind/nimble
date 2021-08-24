@@ -44,10 +44,13 @@ purchaseOnly = visits.points.copy(lambda pt: pt['Purchase'])
 purchaseOnly.features.delete(lambda ft: len(ft.countUniqueElements()) == 1)
 purchaseOnlyFtNames = purchaseOnly.features.getNames()
 
-## For both the PCA (Principal Component Analysis) and k-means algorithms that
-## we will be using, we want to normalize our data. We will make a copy of our
-## data (we will still need our original data later), and then standardize each
-## feature to have a mean of 0 and standard deviation of 1.
+## For this example, we will use algorithms from the
+## [Sci-kit Learn](https://scikit-learn.org/) package so it must be installed
+## in the current environment. For both the PCA (Principal Component Analysis)
+## and k-means algorithms that we will be using, we want to normalize our data.
+## We will make a copy of our data (we will still need our original data
+## later), and then standardize each feature to have a mean of 0 and standard
+## deviation of 1.
 purchaseNormalized = purchaseOnly.copy()
 purchaseNormalized.features.normalize(meanStandardDeviationNormalize)
 
