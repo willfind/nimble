@@ -2335,7 +2335,7 @@ class HighLevelDataSafe(DataTestObject):
         else:
             obj.features.matching(returnInput)
 
-    @logCountAssertionFactory(4)
+    @logCountAssertionFactory(5)
     def back_pointsfeatures_matching_varietyOfFuncs(self, axis):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
         obj = self.constructor(raw)
@@ -2390,6 +2390,20 @@ class HighLevelDataSafe(DataTestObject):
             anyNonNumeric = obj.features.matching(match.anyNonNumeric)
 
         assert anyNonNumeric == expObj
+
+        raw = [['a', np.nan, 'c'], [np.nan, np.nan, -3], [0, 'zero', np.nan]]
+        obj = self.constructor(raw, featureNames=['a 1', 'a 2', 'a 3'])
+
+        exp = [[True], [True], [False]]
+        expObj = self.constructor(exp)
+        if axis == 'point':
+            a2Missing = obj.points.matching("a 2 is missing")
+        else:
+            obj = obj.T
+            expObj = expObj.T
+            a2Missing = obj.features.matching("a 2 is missing")
+
+        assert a2Missing == expObj
 
     ###################
     # points.matching #
@@ -3105,6 +3119,19 @@ class HighLevelModifying(DataTestObject):
         exp2.features.setNames(['a', 'b', 'c'])
         assert obj2 == exp2
 
+    def test_features_fillMatching_queryString(self):
+        obj0 = self.constructor([[1, 2, 3], ['na', 11, 'na'], [7, 11, 'na'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj0.features.fillMatching(fill.mean, "== na")
+        exp0 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
+        exp0.features.setNames(['a', 'b', 'c'])
+        assert obj0 == exp0
+
+        obj1 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj1.features.fillMatching(fill.mean, "is missing")
+        exp1 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
+        exp1.features.setNames(['a', 'b', 'c'], useLog=False)
+        assert obj1 == exp1
+
     @raises(InvalidArgumentValue)
     def test_features_fillMatching_mean_allMatches(self):
         obj = self.constructor([[1, None, 3], [4, None, 6], [7, None, 9]])
@@ -3357,6 +3384,19 @@ class HighLevelModifying(DataTestObject):
         exp2 = self.constructor([[1, 2, 3, 2], [6, 6, 6, 6], [9, 1, 11, 7]])
         exp2.points.setNames(['a', 'b', 'c'])
         assert obj2 == exp2
+
+    def test_points_fillMatching_queryString(self):
+        obj0 = self.constructor([[1, 2, 3, 4], ['na', 6, 'na', 8], [9, 1, 11, 'na']], pointNames=['a', 'b', 'c'])
+        obj0.points.fillMatching(fill.mean, "is not numeric")
+        exp0 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
+        exp0.points.setNames(['a', 'b', 'c'])
+        assert obj0 == exp0
+
+        obj1 = self.constructor([[1, 2, 3, 4], [None, 6, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
+        obj1.points.fillMatching(fill.mean, "is missing")
+        exp1 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
+        exp1.points.setNames(['a', 'b', 'c'], useLog=False)
+        assert obj1 == exp1
 
     @raises(InvalidArgumentValue)
     def test_points_fillMatching_mean_allMatches(self):

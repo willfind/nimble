@@ -764,8 +764,9 @@ class Base(ABC):
             * function - accepts an element as its only argument and
               returns a boolean value to indicate if the element is a
               match
-            * query - string in the format 'OPERATOR VALUE' (i.e "< 10")
-              where OPERATOR can be ==, !=, <, >, <=, or >=
+            * query - string in the format 'OPERATOR VALUE' representing
+              a function (i.e "< 10", "== yes", or "is missing"). See
+              help(nimble.match.QueryString) for string requirements.
         points : point, list of points
             The subset of points to limit the matching to. If None,
             the matching will apply to all points.
@@ -927,8 +928,9 @@ class Base(ABC):
             * function - accepts an element as its only argument and
               returns a boolean value to indicate if the element should
               be counted
-            * query - string in the format 'OPERATOR VALUE' (i.e "< 10")
-              where OPERATOR can be ==, !=, <, >, <=, or >=
+            * query - string in the format 'OPERATOR VALUE' representing
+              a function (i.e "< 10", "== yes", or "is missing"). See
+              help(nimble.match.QueryString) for string requirements.
 
         Returns
         -------
