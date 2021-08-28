@@ -81,7 +81,7 @@ if __name__ == "__main__":
                                        yMin=-0.2, yMax=5.2)
 
     def plotComparisonMultipleNoiseVsScaled(outDir, givenShow):
-        raw1 = np.random.rand(50, 3)
+        raw1 = np.random.rand(60, 3)
         raw1[:, 1] = raw1[:, 0] + raw1[:, 1]
         raw1[:, 2] = raw1[:, 0] + raw1[:, 2]
         obj1 = nimble.data("Matrix", raw1)
@@ -94,6 +94,12 @@ if __name__ == "__main__":
         obj1.plotFeatureAgainstFeatureRollingAverage(
             0, 2, 10, outPath=outPath, show=givenShow, figureName='noise',
             label='2', title=title, yAxisLabel='')
+
+        labels = nimble.data('List', ['ONE', 'TWO', 'THREE'] * 20).T
+        obj1.features.append(labels)
+        obj1.plotFeatureAgainstFeatureRollingAverage(
+            0, 1, 5, 3, show=givenShow, linestyle='-',
+            color={'ONE': 'green', 'TWO': 'red', 'THREE': 'blue'})
 
     checkObj = nimble.data("Matrix", np.zeros((15, 12)), name="Checkerboard")
 

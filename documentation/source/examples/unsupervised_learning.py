@@ -101,26 +101,19 @@ clusters.features.setName(0, 'cluster')
 
 ## Cluster Visualization ##
 
-## Now that we have our clusters, we can plot our clusters on the same figure
-## (canvas containing our plots) to help visualize how the k-means learner is
-## clustering our principal component data. First, we will append our
-## `clusters` feature to our principal component data so that we can use
-## `groupByFeature` to separate our principal component data based on cluster
-## number. `pcaByCluster` is a dictionary mapping cluster numbers to cluster
-## data, so we iterate through the cluster numbers to add a scatterplot of each
-## cluster's data to our figure. We provide a `figureName` so that each
-## scatterplot is added to the same figure and we add a `label` so each plot
-## uses a unique color. By default, figures will show after each function call
-## so we will set `show=False` until our figure is complete. We will show our
-## completed figure in the next step when we add the cluster centers.
+## Now that we have our clusters, we can plot them to help visualize how the
+## k-means learner is clustering our principal component data. First, we will
+## append our `clusters` feature to our principal component data so that we can
+## use the `groupByFeature` parameter to plot our principal component data
+## based on cluster number. In addition to the clusters, we are going to add
+## the cluster centers to our figure (the canvas containing our plots), so we
+## set `show` to `False` to prevent the figure from displaying after the
+## function call. We must also specify a `figureName` so our next plot can be
+## added to this same figure.
 purchasePCA.features.append(clusters)
-pcaByCluster = purchasePCA.groupByFeature('cluster')
-for i in range(numClusters):
-    cluster = pcaByCluster[i]
-    label = 'cluster' + str(i)
-    cluster.plotFeatureAgainstFeature('component_1', 'component_2',
-                                      figureName='clusterAndCenters',
-                                      label=label, show=False)
+purchasePCA.plotFeatureAgainstFeature(
+    'component_1', 'component_2', groupByFeature='cluster', show=False,
+    figureName='clustersWithCenters')
 
 ## Each cluster has a center that will help us see how close each data point
 ## lies to the center of the cluster in which it was placed. We use the cluster
@@ -128,14 +121,15 @@ for i in range(numClusters):
 ## represents a cluster and contains the principal component centers for that
 ## cluster. For this plot, values will be marked with a black "X" so the
 ## centers are clearly visible and we will add it to our same
-## 'clusterAndCenters' figure. Now that all of our plots have been added to our
-## figure, the default `show=True` will display the figure.
+## 'clustersWithCenters' figure. Now that all of our plots have been added to
+## our figure, the default `show=True` will display the figure.
 centers = nimble.data('Matrix', kmeans.getAttributes()['cluster_centers_'],
                       featureNames=['component_1', 'component_2'])
 centers.points.setNames(['cluster' + str(i) for i in range(numClusters)])
 
 title = 'k-means clustering of principal components'
-centers.plotFeatureAgainstFeature(0, 1, figureName='clusterAndCenters',
+centers.plotFeatureAgainstFeature('component_1', 'component_2',
+                                  figureName='clustersWithCenters',
                                   title=title, marker='x', color='k')
 
 ## Cluster Analysis ##
