@@ -177,7 +177,7 @@ def learnerParameters(name):
 
     See Also
     --------
-    learnerDefaults, showLearnerParameters
+    learnerDefaultValues, showLearnerParameters
     """
     return _learnerQuery(name, 'parameters')
 
@@ -196,7 +196,7 @@ def showLearnerParameters(name):
 
     See Also
     --------
-    learnerDefaults, learnerParameters
+    learnerDefaultValues, learnerParameters
     """
     params = learnerParameters(name)
     if params is None:
@@ -227,7 +227,7 @@ def learnerDefaultValues(name):
 
     See Also
     --------
-    learnerParameters, showLearnerDefaults
+    learnerParameters, showLearnerDefaultValues
     """
     return _learnerQuery(name, 'defaults')
 
@@ -246,7 +246,7 @@ def showLearnerDefaultValues(name):
 
     See Also
     --------
-    learnerDefaults, learnerParameters
+    learnerDefaultValues, learnerParameters
     """
     defaultValues = sorted(learnerDefaultValues(name).items(),
                            key=itemgetter(0))
