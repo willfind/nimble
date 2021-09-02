@@ -91,10 +91,10 @@ def learnerNames(package=None):
     """
     Get a list of learners available to nimble or a specific package.
 
-    Returns a list of learners that are callable through nimble's
-    training, applying, and testing functions. If ``package`` is
-    specified, the list will contain strings of each learner. If
-    ``package`` is None, the list will contain strings in the form of
+    Returns a list of strings that are allowed inputs to the ``learnerName``
+    parameter of nimble's training, applying, and testing functions. If
+    ``package`` is specified, the list will contain strings of each learner.
+    If ``package`` is None, the list will contain strings in the form of
     'package.learner'. This will differ depending on the packages
     currently available in nimble.core.interfaces.available.
 
@@ -107,6 +107,11 @@ def learnerNames(package=None):
     Returns
     -------
     list
+
+    See Also
+    --------
+    showLearnerNames, train, trainAndApply, trainAndTest,
+    trainAndTestOnTrainingData
     """
     if isinstance(package, ModuleType):
         package = package.__name__
@@ -141,6 +146,11 @@ def showLearnerNames(package=None):
     package : str
         The name of the package to list the learners from. If None, each
         learners available to each interface will be listed.
+
+    See Also
+    --------
+    learnerNames, train, trainAndApply, trainAndTest,
+    trainAndTestOnTrainingData
     """
     for name in learnerNames(package):
         print(name)
@@ -164,6 +174,10 @@ def learnerParameters(name):
     Returns
     -------
     list
+
+    See Also
+    --------
+    learnerDefaultValues, showLearnerParameters
     """
     return _learnerQuery(name, 'parameters')
 
@@ -179,6 +193,10 @@ def showLearnerParameters(name):
     ----------
     name : str
         Package and name in the form 'package.learnerName'.
+
+    See Also
+    --------
+    learnerDefaultValues, learnerParameters
     """
     params = learnerParameters(name)
     if params is None:
@@ -206,6 +224,10 @@ def learnerDefaultValues(name):
     Returns
     -------
     dict
+
+    See Also
+    --------
+    learnerParameters, showLearnerDefaultValues
     """
     return _learnerQuery(name, 'defaults')
 
@@ -221,6 +243,10 @@ def showLearnerDefaultValues(name):
     ----------
     name : str
         Package and name in the form 'package.learnerName'.
+
+    See Also
+    --------
+    learnerDefaultValues, learnerParameters
     """
     defaultValues = sorted(learnerDefaultValues(name).items(),
                            key=itemgetter(0))
@@ -683,7 +709,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     See Also
     --------
     trainAndApply, trainAndTest, trainAndTestOnTrainingData, CV,
-    nimble.interfaces.TrainedLearner
+    nimble.core.interfaces.TrainedLearner
 
     Examples
     --------

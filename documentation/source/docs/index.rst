@@ -52,9 +52,15 @@ functionality because they inherit from Nimble's ``Base`` object. The ``Base``
 object methods handle operations that apply to the entire data object or the
 individual elements of the object. Each object also has ``features`` and
 ``points`` attributes to connect the ``Base`` object with the ``Features``
-and ``Points`` objects, respectively. These provide many additional methods
-that apply when working specifically with the object's ``features`` and
-``points``.
+and ``Points`` objects, respectively. These provide methods that operate
+over the data not as a collection of elements, but as a collection of abstract
+slices: each point being those elements within some shared context, and each
+feature being all elements of the same kind across different contexts.
+
+Points and Features form the two axes along which a Base object is
+organized. Each element, being contained in exactly one of the object's
+points and exactly one of the object's features, has it's position
+referred to by the index or name of both the containing point and feature.
 
 .. autosummary::
    :toctree: generated/
@@ -75,9 +81,10 @@ same api.
 **Choosing a learner**
 
 These functions help provide more information about the learners available for
-use within Nimble. The functions beginning with "learner" return an object.
-Often, a "learner" function has a corresponding function beginning with "show"
-that prints a more readable representation of the object to stdout.
+use within Nimble. The functions beginning with "learner" return a Python
+container with the relevant information. Often, a "learner" function has a
+corresponding function beginning with "show" that prints a more readable
+representation of the information to stdout.
 
 .. autosummary::
    :toctree: generated/
