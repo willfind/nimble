@@ -22,7 +22,6 @@ import pytest
 
 import nimble
 from nimble import match
-from nimble import loadData
 from nimble.match import QueryString
 from nimble.core.data import BaseView
 from nimble.core.data._dataHelpers import formatIfNeeded
@@ -357,7 +356,7 @@ class QueryBackend(DataTestObject):
 
         with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
             toSave.save(tmpFile.name)
-            LoadObj = loadData(tmpFile.name)
+            LoadObj = nimble.data(None, tmpFile.name)
 
         assert toSave.isIdentical(LoadObj)
         assert LoadObj.isIdentical(toSave)
@@ -386,11 +385,11 @@ class QueryBackend(DataTestObject):
             assert fileNameWithoutExtension + '.nimd' == tmpFile.name
 
             toSave.save(fileNameWithoutExtension)
-            LoadObj = loadData(tmpFile.name)
+            LoadObj = nimble.data(None, tmpFile.name)
             assert isinstance(LoadObj, nimble.core.data.Base)
 
             with raises(InvalidArgumentValue):
-                LoadObj = loadData(fileNameWithoutExtension)
+                LoadObj = nimble.data(None, fileNameWithoutExtension)
 
     @oneLogEntryExpected
     def test_saveAndLoad_logCount(self):
@@ -401,7 +400,7 @@ class QueryBackend(DataTestObject):
 
         with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
             toSave.save(tmpFile.name)
-            LoadObj = loadData(tmpFile.name)
+            LoadObj = nimble.data(None, tmpFile.name)
 
     ##############
     # __getitem__#

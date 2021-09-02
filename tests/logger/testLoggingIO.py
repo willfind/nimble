@@ -199,6 +199,14 @@ def testLoadTypeFunctionsUseLog():
     assert "'numPoints': 4" in logInfo
     assert "'numFeatures': 1" in logInfo
 
+    with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
+        trainXObj.save(tmpFile.name)
+        load = nimble.data(None, tmpFile.name)
+    logInfo = getLastLogData()
+    assert "'returnType': None" in logInfo
+    assert "'numPoints': 12" in logInfo
+    assert "'numFeatures': 3" in logInfo
+
     # the sparsity and seed are also stored for random data
     randomObj = nimble.random.data("Matrix", 5, 5, 0)
     logInfo = getLastLogData()
@@ -216,15 +224,6 @@ def testLoadTypeFunctionsUseLog():
     assert "'learnerName': 'KNNClassifier'" in logInfo
     # all keys and values in learnerArgs are stored as strings
     assert "'learnerArgs': {'k': 1}" in logInfo
-
-    # loadData
-    with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
-        randomObj.save(tmpFile.name)
-        load = nimble.loadData(tmpFile.name)
-    logInfo = getLastLogData()
-    assert load.getTypeString() in logInfo
-    assert "'numPoints': 5" in logInfo
-    assert "'numFeatures': 5" in logInfo
 
 @emptyLogSafetyWrapper
 def test_setSeed():

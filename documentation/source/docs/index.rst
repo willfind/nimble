@@ -37,7 +37,6 @@ provide efficiencies over other types.
    nimble.zeros
    nimble.identity
    nimble.random.data
-   nimble.loadData
 
 .. note::
    List and Matrix are always available because ``numpy`` is a dependency.

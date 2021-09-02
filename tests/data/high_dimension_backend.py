@@ -185,7 +185,7 @@ class HighDimensionSafe(DataTestObject):
 
             with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
                 toSave.save(tmpFile.name)
-                loadObj = nimble.loadData(tmpFile.name)
+                loadObj = nimble.data(None, tmpFile.name)
 
             assert loadObj._shape == toSaveShape
             assert toSave.isIdentical(loadObj)

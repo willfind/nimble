@@ -18,6 +18,7 @@ import gzip
 import shutil
 import urllib.parse
 import locale
+import pickle
 
 import numpy as np
 
@@ -1372,13 +1373,6 @@ def initDataObject(
         msg += "features that do not require conversion."
         raise InvalidArgumentTypeCombination(msg)
 
-    if returnType is None:
-        # scipy sparse matrix or a pandas sparse object
-        if _isScipySparse(rawData) or _isPandasSparse(rawData):
-            returnType = 'Sparse'
-        else:
-            returnType = 'Matrix'
-
     # record if extraction occurred before we possibly modify *Names parameters
     ptsExtracted = extracted[0] if extracted[0] else pointNames is True
     ftsExtracted = extracted[1] if extracted[1] else featureNames is True
@@ -1393,6 +1387,12 @@ def initDataObject(
         if isinstance(rawData, nimble.core.data.BaseView):
             rawData = rawData.copy()
             copied = True
+        if pointNames == 'automatic' or pointNames is True:
+            pointNames = rawData.points._getNamesNoGeneration()
+        if featureNames == 'automatic' or featureNames is True:
+            featureNames = rawData.features._getNamesNoGeneration()
+        if returnType is None:
+            returnType = rawData.getTypeString()
         rawData = rawData._data
     # convert these types as indexing may cause dimensionality confusion
     elif _isNumpyMatrix(rawData):
@@ -1411,6 +1411,13 @@ def initDataObject(
 
     rawData, highDim, copied = isHighDimensionData(rawData, rowsArePoints,
                                                    skipDataProcessing, copied)
+
+    if returnType is None:
+        # scipy sparse matrix or a pandas sparse object
+        if _isScipySparse(rawData) or _isPandasSparse(rawData):
+            returnType = 'Sparse'
+        else:
+            returnType = 'Matrix'
 
     if copyData is None:
         # signals data was constructed internally and can be modified so it
@@ -2054,6 +2061,16 @@ def createDataFromFile(
             path = source.name
         else:
             path = None
+
+    try:
+        ret = pickle.loads(content)
+        return initDataObject(
+            returnType, ret, pointNames, featureNames, name, convertToType,
+            keepPoints, keepFeatures, treatAsMissing=treatAsMissing,
+            replaceMissingWith=replaceMissingWith, rowsArePoints=rowsArePoints,
+            copyData=None)
+    except Exception: # pylint: disable=broad-except
+        pass
 
     # check if need to decompress or extract file
     with BytesIO(content) as toCheck:

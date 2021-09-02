@@ -49,7 +49,7 @@ Operational Support
    +----------------+----------------------------------------------+------+-------+
    | `requests`_    | Retrieving data from the web.                | |cm| | |cm|  |
    +----------------+----------------------------------------------+------+-------+
-   | `cloudpickle`_ | Saving and loading Nimble data objects.      | |cm| | |cm|  |
+   | `cloudpickle`_ | Saving Nimble data objects.                  | |cm| | |cm|  |
    +----------------+----------------------------------------------+------+-------+
    | `dateutil`_    | Parsing strings to `datetime`_ objects.      | |cm| | |cm|  |
    +----------------+----------------------------------------------+------+-------+
