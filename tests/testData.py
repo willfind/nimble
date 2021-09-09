@@ -198,6 +198,50 @@ def test_data_listOfDict():
         with raises(InvalidArgumentValue, match='Numbers, strings, None, and nan'):
             nimble.data(t, [{'a': 1, 'b': 2}, {'a': {}, 'c': 4}])
 
+def test_data_raw_acceptedTypeSuccessWithNames():
+    for t in nimble.core.data.available:
+        rawData = [[1, 2.0, 'a'], [0, 0.0, np.nan], [-1, -2.0, 'c']]
+        pointNames = ['a', 'b', 'c']
+        featureNames = ['x', 'y', 'z']
+        exp = nimble.data(t, rawData, pointNames, featureNames)
+        array = np.array(rawData, dtype=np.object_)
+
+        test1 = nimble.data(t, tuple(tuple(l) for l in rawData), pointNames,
+                            featureNames)
+        assert test1 == exp
+        test2 = nimble.data(t, array, pointNames, featureNames)
+        assert test2 == exp
+        test3 = nimble.data(t, np.matrix(rawData, dtype=np.object_), pointNames,
+                            featureNames)
+        assert test3 == exp
+        test4 = nimble.data(t, pd.DataFrame(rawData), pointNames, featureNames)
+        assert test4 == exp
+        test5 = nimble.data(t, scipy.sparse.coo_matrix(array), pointNames,
+                            featureNames)
+        assert test5 == exp
+        try:
+            test6 = nimble.data(t, pd.DataFrame(rawData, dtype='Sparse[object]'),
+                                pointNames=pointNames, featureNames=featureNames)
+        except TypeError:
+            test6 = nimble.data(t, pd.SparseDataFrame(rawData),
+                                pointNames=pointNames, featureNames=featureNames)
+        assert test6 == exp
+        # csc and csr require numeric data
+        numeric = array[:2, :2].astype(float)
+        ptsNum, ftsNum = pointNames[:2], featureNames[:2]
+        expNum = nimble.data(t, [[1, 2.0], [0, 0.0]], ptsNum, ftsNum)
+        test7 = nimble.data(t, scipy.sparse.csc_matrix(numeric), ptsNum, ftsNum)
+        assert test7 == expNum
+        test8 = nimble.data(t, scipy.sparse.csr_matrix(numeric), ptsNum, ftsNum)
+        assert test8 == expNum
+        # Base object
+        test9 = nimble.data(t, exp)
+        assert test9 == exp
+        test10 = nimble.data(t, exp, pointNames, featureNames)
+        assert test10 == exp
+        test11 = nimble.data(t, exp, featureNames, pointNames)
+        assert test11 != exp
+
 def test_data_raw_stringConversion_float():
     for t in returnTypes:
         toTest = nimble.data(t, [['1','2','3'], ['4','5','6'], ['7','8','9']],

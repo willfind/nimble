@@ -44,9 +44,9 @@ def prefixAdder(prefix):
 
 
 nimble_logged = [
-    'crossValidate', 'data', 'fillMatching', 'log', 'loadData',
-    'loadTrainedLearner', 'normalizeData', 'train', 'trainAndApply',
-    'trainAndTest', 'trainAndTestOnTrainingData',
+    'crossValidate', 'data', 'fillMatching', 'log', 'loadTrainedLearner',
+    'normalizeData', 'train', 'trainAndApply', 'trainAndTest',
+    'trainAndTestOnTrainingData',
     ]
 nimble_notLogged = [
     'CustomLearner', 'CV', 'Init', 'fetchFile', 'fetchFiles', 'identity',

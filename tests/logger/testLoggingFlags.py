@@ -60,17 +60,16 @@ def loadAndCheck(toCall, useLog, *args):
 def test_data():
     for rType in nimble.core.data.available:
         back_load(nimble.data, rType, [[1, 2, 3], [4, 5, 6]])
-
-def test_random_data():
-    for rType in nimble.core.data.available:
-        back_load(nimble.random.data, rType, 5, 5, 0.99)
-
-def test_loadData():
+    
     for constructor in constructors:
         obj = constructor([[1, 2, 3], [4, 5, 6]], useLog=False)
         with tempfile.NamedTemporaryFile(suffix='.nimd') as tmpFile:
             obj.save(tmpFile.name)
-            back_load(nimble.loadData, tmpFile.name)
+            back_load(nimble.data, None, tmpFile.name)
+
+def test_random_data():
+    for rType in nimble.core.data.available:
+        back_load(nimble.random.data, rType, 5, 5, 0.99)
 
 def test_loadTrainedLearner():
     # Weird failure for SparseView (something to do with __getstate__ attribute
