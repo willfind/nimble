@@ -2389,10 +2389,10 @@ class Base(ABC):
 
     @limitedTo2D
     def plotFeatureAgainstFeatureRollingAverage(
-            self, x, y, sampleSizeForAverage=20, trend=None, outPath=None,
-            show=True, figureName=None, title=True, xAxisLabel=True,
-            yAxisLabel=True, xMin=None, xMax=None, yMin=None, yMax=None,
-            **kwargs):
+            self, x, y, sampleSizeForAverage=20, groupByFeature=None,
+            trend=None, outPath=None, show=True, figureName=None, title=True,
+            xAxisLabel=True, yAxisLabel=True, xMin=None, xMax=None, yMin=None,
+            yMax=None, **kwargs):
         """
         A rolling average of the pairwise combination of feature values.
 
@@ -2416,6 +2416,12 @@ class Base(ABC):
         sampleSizeForAverage : int
             The number of samples to use for the calculation of the
             rolling average.
+        groupByFeature : identifier, None
+            An optional index or name of the feature that divides the x
+            and y values into groups. Each group will be plotted with a
+            different color and a legend will be added. To use custom
+            colors provide a dictionary of labels mapped to matplotlib
+            color values as the 'color' keyword argument.
         trend : str, None
             Specify a trendline type. Currently "linear" is the only
             supported string option. None will not add a trendline.
@@ -2455,14 +2461,16 @@ class Base(ABC):
             matplotlib.pyplot.plot, matplotlib.colors, matplotlib.markers
         """
         self._plotFeatureAgainstFeature(
-            x, y, sampleSizeForAverage, trend, outPath, show, figureName,
-            title, xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax, **kwargs)
+            x, y, groupByFeature, sampleSizeForAverage, trend, outPath, show,
+            figureName, title, xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax,
+            **kwargs)
 
     @limitedTo2D
     def plotFeatureAgainstFeature(
-            self, x, y, trend=None, outPath=None, show=True, figureName=None,
-            title=True, xAxisLabel=True, yAxisLabel=True, xMin=None, xMax=None,
-            yMin=None, yMax=None, **kwargs):
+            self, x, y, groupByFeature=None, trend=None, outPath=None,
+            show=True, figureName=None, title=True, xAxisLabel=True,
+            yAxisLabel=True, xMin=None, xMax=None, yMin=None, yMax=None,
+            **kwargs):
         """
         A scatter plot of the pairwise combination of feature values.
 
@@ -2478,6 +2486,12 @@ class Base(ABC):
         y : identifier
             The index or name of the feature from which we draw y-axis
             coordinates.
+        groupByFeature : identifier, None
+            An optional index or name of the feature that divides the x
+            and y values into groups. Each group will be plotted with a
+            different color and a legend will be added. To use custom
+            colors provide a dictionary of labels mapped to matplotlib
+            color values as the 'color' keyword argument.
         trend : str, None
             Specify a trendline type. Currently "linear" is the only
             supported string option. None will not add a trendline.
@@ -2518,16 +2532,49 @@ class Base(ABC):
             matplotlib.pyplot.plot, matplotlib.colors, matplotlib.markers
         """
         self._plotFeatureAgainstFeature(
-            x, y, None, trend, outPath, show, figureName, title, xAxisLabel,
-            yAxisLabel, xMin, xMax, yMin, yMax, **kwargs)
+            x, y, groupByFeature, None, trend, outPath, show, figureName,
+            title, xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax, **kwargs)
+
 
     def _plotFeatureAgainstFeature(
-            self, x, y, sampleSizeForAverage, trend, outPath, show, figureName,
-            title, xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax, **kwargs):
-        return self._plotCross(
-            x, 'feature', y, 'feature', sampleSizeForAverage, trend, outPath,
+            self, x, y, groupByFeature, sampleSizeForAverage, trend, outPath,
             show, figureName, title, xAxisLabel, yAxisLabel, xMin, xMax, yMin,
-            yMax, **kwargs)
+            yMax, **kwargs):
+        if groupByFeature is None:
+            self._plotCross(
+                x, 'feature', y, 'feature', sampleSizeForAverage, trend,
+                outPath, show, figureName, title, xAxisLabel, yAxisLabel, xMin,
+                xMax, yMin, yMax, **kwargs)
+        else:
+            grouped = self.groupByFeature(groupByFeature)
+            labels = list(grouped.keys())
+            lastLabel = labels[-1]
+            if 'color' in kwargs:
+                # need dict of labels mapped to colors
+                if not isinstance(kwargs['color'], dict):
+                    msg = "When groupByFeature is used, the color argument "
+                    msg += "must be a dict mapping labels to colors"
+                    raise InvalidArgumentType(msg)
+                colors = kwargs['color'].copy()
+            else:
+                colors = None
+            del kwargs['color']
+            if show and not figureName:
+                # need a figure name for plotting loop
+                figureName = 'Nimble Figure'
+            for label in labels:
+                showFig = show and label == lastLabel
+                if colors:
+                    try:
+                        kwargs['color'] = colors[label]
+                    except KeyError as e:
+                        msg = "color did not contain a key for the label {}"
+                        raise KeyError(msg.format(label)) from e
+                grouped[label]._plotCross(
+                    x, 'feature', y, 'feature', sampleSizeForAverage, trend,
+                    outPath, showFig, figureName, title, xAxisLabel,
+                    yAxisLabel, xMin, xMax, yMin, yMax, label=label, **kwargs)
+
 
     def _formattedStringID(self, axis, identifier):
         if axis == 'point':
@@ -2687,7 +2734,7 @@ class Base(ABC):
         """
         Plot an aggregate statistic for each group of a feature.
 
-        A bar chart where each bar in the plot represent the output of
+        A bar chart where each bar in the plot represents the output of
         the statistic function applied to each group (or subgroup, when
         applicable).
 
