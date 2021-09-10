@@ -2489,7 +2489,7 @@ class Base(ABC):
         groupByFeature : identifier, None
             An optional index or name of the feature that divides the x
             and y values into groups. Each group will be plotted with a
-            different color and a legend will be added. To use custom 
+            different color and a legend will be added. To use custom
             colors provide a dictionary of labels mapped to matplotlib
             color values as the 'color' keyword argument.
         trend : str, None
