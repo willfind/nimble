@@ -2068,7 +2068,7 @@ class Base(ABC):
                                          featureStart, featureEnd,
                                          dropDimension)
 
-    def validate(self, level=1):
+    def validate(self, level=2):
         """
         Check the integrity of the data.
 

@@ -8,6 +8,7 @@ import nimble
 from nimble.random import pythonRandom
 from tests.helpers import assertCalled, assertNotCalled
 from .baseObject import DataTestObject
+from tests.helpers import raises
 
 
 def back_sparseScalarZeroPreserving(constructor, nimbleOp):
@@ -404,3 +405,16 @@ class DataFrameSpecificDataModifying(DataTestObject):
 class DataFrameSpecificAll(DataFrameSpecificDataSafe,
                            DataFrameSpecificDataModifying):
     """Tests for DataFrame implementation details """
+
+
+class ListSpecificDataModifying(DataTestObject):
+    """Tests for List implementation details which modify data """
+
+    @raises(AssertionError)
+    def test_validate_outOfNimble_badValue(self):
+        obj = self.constructor([1,2])
+        obj._data[0][0] = {'no':1}
+        obj.validate(2)
+
+class ListSpecificAll(ListSpecificDataModifying):
+    """Tests for List implementation details """

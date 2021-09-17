@@ -571,6 +571,10 @@ class List(Base):
                 if not isinstance(self, BaseView):
                     assert isinstance(point, list)
                 assert len(point) == expectedLength
+        if level > 1:
+            for ithList in self._data:
+                for jval in ithList:
+                    assert isAllowedSingleElement(jval)
 
     def _containsZero_implementation(self):
         """
