@@ -983,16 +983,16 @@ def pyplotRequired(func):
         return func(*args, **kwargs)
     return wrapped
 
-def plotFigureHandling(figureName):
+def plotFigureHandling(figureID):
     """
     Provide the figure and axis for the plot.
 
-    Use the stored figure and axis if the figureName exists, otherwise
+    Use the stored figure and axis if the figureID exists, otherwise
     generate a new figure and axis.
     """
     figures = nimble.core.data._plotFigures
-    if figureName and figureName in figures:
-        return figures[figureName]
+    if figureID is not None and figureID in figures:
+        return figures[figureID]
 
     fig, ax = plt.subplots()
     # tight_layout automatically adjusts margins to accommodate labels
@@ -1000,8 +1000,8 @@ def plotFigureHandling(figureName):
     # Setting a _nimbleAxisLimits attribute is a workaround for properly
     # setting figure axis limits. See plotUpdateAxisLimits docstring.
     ax._nimbleAxisLimits = [None, None, None, None]
-    if figureName is not None:
-        figures[figureName] = fig, ax
+    if figureID is not None:
+        figures[figureID] = fig, ax
     return fig, ax
 
 def plotOutput(outPath, show):

@@ -2222,7 +2222,7 @@ class Features(ABC):
 
     @limitedTo2D
     def plot(self, features=None, horizontal=False, outPath=None,
-             show=True, figureName=None, title=True, xAxisLabel=True,
+             show=True, figureID=None, title=True, xAxisLabel=True,
              yAxisLabel=True, legendTitle=None, **kwargs):
         """
         Bar chart comparing features.
@@ -2247,11 +2247,11 @@ class Features(ABC):
             If True, display the plot. If False, the figure will not
             display until a plotting function with show=True is called.
             This allows for future plots to placed on the figure with
-            the same ``figureName`` before being shown.
-        figureName : str, None
-            A new figure will be generated when None or a new name,
-            otherwise the figure with that name will be activated to
-            draw the plot on an existing figure.
+            the same ``figureID`` before being shown.
+        figureID : hashable, None
+            A new figure will be generated for None or a new id,
+            otherwise the figure with that id will be activated to draw
+            the plot on the existing figure.
         title : str, bool
             The title of the plot. If True, a title will automatically
             be generated.
@@ -2274,12 +2274,12 @@ class Features(ABC):
             matplotlib.pyplot.bar
         """
         self._plotComparison(
-            None, features, None, horizontal, outPath, show, figureName, title,
+            None, features, None, horizontal, outPath, show, figureID, title,
             xAxisLabel, yAxisLabel, legendTitle, **kwargs)
 
     @limitedTo2D
     def plotMeans(self, features=None, horizontal=False, outPath=None,
-                  show=True, figureName=None, title=True, xAxisLabel=True,
+                  show=True, figureID=None, title=True, xAxisLabel=True,
                   yAxisLabel=True, **kwargs):
         """
         Plot feature means with 95% confidence interval bars.
@@ -2301,11 +2301,11 @@ class Features(ABC):
             If True, display the plot. If False, the figure will not
             display until a plotting function with show=True is called.
             This allows for future plots to placed on the figure with
-            the same ``figureName`` before being shown.
-        figureName : str, None
-            A new figure will be generated when None or a new name,
-            otherwise the figure with that name will be activated to
-            draw the plot on an existing figure.
+            the same ``figureID`` before being shown.
+        figureID : hashable, None
+            A new figure will be generated for None or a new id,
+            otherwise the figure with that id will be activated to draw
+            the plot on the existing figure.
         title : str, bool
             The title of the plot. If True, a title will automatically
             be generated.
@@ -2325,12 +2325,12 @@ class Features(ABC):
         """
         self._plotComparison(
             nimble.calculate.mean, features, True, horizontal, outPath,
-            show, figureName, title, xAxisLabel, yAxisLabel, None, **kwargs)
+            show, figureID, title, xAxisLabel, yAxisLabel, None, **kwargs)
 
     @limitedTo2D
     def plotStatistics(
             self, statistic, features=None, horizontal=False, outPath=None,
-            show=True, figureName=None, title=True, xAxisLabel=True,
+            show=True, figureID=None, title=True, xAxisLabel=True,
             yAxisLabel=True, legendTitle=None, **kwargs):
         """
         Bar chart comparing an aggregate statistic between features.
@@ -2362,11 +2362,11 @@ class Features(ABC):
             If True, display the plot. If False, the figure will not
             display until a plotting function with show=True is called.
             This allows for future plots to placed on the figure with
-            the same ``figureName`` before being shown.
-        figureName : str, None
-            A new figure will be generated when None or a new name,
-            otherwise the figure with that name will be activated to
-            draw the plot on an existing figure.
+            the same ``figureID`` before being shown.
+        figureID : hashable, None
+            A new figure will be generated for None or a new id,
+            otherwise the figure with that id will be activated to draw
+            the plot on the existing figure.
         title : str, bool
             The title of the plot. If True, a title will automatically
             be generated.
@@ -2389,7 +2389,7 @@ class Features(ABC):
             matplotlib.pyplot.bar
         """
         self._plotComparison(
-            statistic, features, False, horizontal, outPath, show, figureName,
+            statistic, features, False, horizontal, outPath, show, figureID,
             title, xAxisLabel, yAxisLabel, legendTitle, **kwargs)
 
     ####################
@@ -2511,7 +2511,7 @@ class Features(ABC):
 
     @abstractmethod
     def _plotComparison(self, statistic, identifiers, confidenceIntervals,
-                        horizontal, outPath, show, figureName, title,
+                        horizontal, outPath, show, figureID, title,
                         xAxisLabel, yAxisLabel, legendTitle, **kwargs):
         pass
 

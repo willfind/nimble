@@ -47,10 +47,10 @@ if __name__ == "__main__":
         alpha = 0.5
         shiftLeft = plotObj - 1
         shiftRight = plotObj + 1
-        shiftLeft.plotFeatureDistribution(0, show=False, figureName='dists',
+        shiftLeft.plotFeatureDistribution(0, show=False, figureID=0,
                                           alpha=alpha, label='shiftLeft')
         shiftRight.plotFeatureDistribution(0, outPath=outPath, title=title,
-                                           show=False, figureName='dists',
+                                           show=False, figureID=0,
                                            label='shiftRight', alpha=alpha,
                                            color='g')
 
@@ -87,12 +87,12 @@ if __name__ == "__main__":
         obj1 = nimble.data("Matrix", raw1)
 
         obj1.plotFeatureAgainstFeatureRollingAverage(
-            0, 1, 10, outPath=None, show=False, figureName='noise', label='1')
+            0, 1, 10, outPath=None, show=False, figureID='noise', label='1')
 
         title = 'Feature 0 Vs Feature 0 + Noises 1 and 2'
         outPath = getOutPath(outDir, "NoiseVsMultipleScaled")
         obj1.plotFeatureAgainstFeatureRollingAverage(
-            0, 2, 10, outPath=outPath, show=givenShow, figureName='noise',
+            0, 2, 10, outPath=outPath, show=givenShow, figureID='noise',
             label='2', title=title, yAxisLabel='')
 
         labels = nimble.data('List', ['ONE', 'TWO', 'THREE'] * 20).T
@@ -114,7 +114,7 @@ if __name__ == "__main__":
         # our helpers allow the yMax value to remain dynamic (expanding to
         # ~4) when adding the plots below while keeping our defined yMin.
         obj.plotFeatureAgainstFeature(0, 1, yMin=0.5, show=False,
-                                      figureName='fig', label=label)
+                                      figureID='fig', label=label)
 
         for i in range(1, 4):
             if i < 3:
@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
             label = 'cluster' + str(i)
             scaled.plotFeatureAgainstFeature(0, 1, show=show, outPath=outPath,
-                                             figureName='fig', label=label)
+                                             figureID='fig', label=label)
 
     def makeCheckered(val, p, f):
         pParity = p % 2
@@ -186,27 +186,27 @@ if __name__ == "__main__":
 
         plotObj.plotFeatureGroupStatistics(
             nimble.calculate.sum, feature=2, groupFeature=0, show=False,
-            figureName='count', color='y', alpha=0.6)
+            figureID='count', color='y', alpha=0.6)
         plotObj.plotFeatureGroupStatistics(
             nimble.calculate.sum, feature=2, groupFeature=0,
             subgroupFeature=1, outPath=outPath, show=givenShow,
-            figureName='count', edgecolor='k')
+            figureID='count', edgecolor='k')
 
         plotObj.plotFeatureGroupStatistics(
             nimble.calculate.count, feature=1, groupFeature=0,
             subgroupFeature=1, outPath=outPath, show=givenShow,
-            figureName='count', color=['black', 'yellow'])
+            figureID='count', color=['black', 'yellow'])
         # Strange example with given data but used to highlight two things:
         # 1) Proper bar spacing when the subgroup does not contain all of the
         # unique values in the in the subgroup feature
         # 2) The color spectrum does not repeat with more than 10 subgroup bars
         plotObj.plotFeatureGroupStatistics(
             nimble.calculate.count, feature=2, groupFeature=0, show=False,
-            figureName='count', color='y', alpha=0.6)
+            figureID='count', color='y', alpha=0.6)
         plotObj.plotFeatureGroupStatistics(
             nimble.calculate.count, feature=2, groupFeature=0,
             subgroupFeature=2, outPath=outPath, show=givenShow,
-            figureName='count', edgecolor='k')
+            figureID='count', edgecolor='k')
 
     def plotFeatureSumsManual(plotObj, outDir, givenShow):
         outPath = getOutPath(outDir, "groupSumsManual")

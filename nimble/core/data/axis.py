@@ -893,9 +893,9 @@ class Axis(ABC):
     @pyplotRequired
     def _plotComparison(
             self, statistic, identifiers, confidenceIntervals, horizontal,
-            outPath, show, figureName, title, xAxisLabel, yAxisLabel,
+            outPath, show, figureID, title, xAxisLabel, yAxisLabel,
             legendTitle, **kwargs):
-        fig, ax = plotFigureHandling(figureName)
+        fig, ax = plotFigureHandling(figureID)
         if identifiers is None:
             identifiers = list(range(len(self)))
         axisRange = range(1, len(identifiers) + 1)
