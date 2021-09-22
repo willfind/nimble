@@ -717,7 +717,10 @@ class Axis(ABC):
         @functools.wraps(fillFunc)
         def fillFunction(vector):
             if isinstance(matchingElements, str):
-                matcher = QueryString(matchingElements)
+                try:
+                    matcher = QueryString(matchingElements)
+                except InvalidArgumentValue:
+                    matcher = matchingElements
             elif not isinstance(matchingElements, nimble.core.data.Base):
                 matcher = matchingElements
             elif self._axis == 'point':
