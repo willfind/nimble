@@ -274,8 +274,8 @@ class Points(ABC):
             * query - string in the format 'FEATURENAME OPERATOR VALUE'
               (i.e "ft1 < 10", "id4 == yes", or "col4 is nonZero") where
               OPERATOR is separated from the FEATURENAME and VALUE by
-              whitespace characters. See help(nimble.match.QueryString)
-              for string requirements
+              whitespace characters. See ``nimble.match.QueryString``
+              for string requirements.
         start, end : identifier
             Parameters indicating range based copying. Begin the copying
             at the location of ``start``. Finish copying at the
@@ -399,8 +399,8 @@ class Points(ABC):
             * query - string in the format 'FEATURENAME OPERATOR VALUE'
               (i.e "ft1 < 10", "id4 == yes", or "col4 is nonZero") where
               OPERATOR is separated from the FEATURENAME and VALUE by
-              whitespace characters. See help(nimble.match.QueryString)
-              for string requirements
+              whitespace characters. See ``nimble.match.QueryString``
+              for string requirements.
         start, end : identifier
             Parameters indicating range based extraction. Begin the
             extraction at the location of ``start``. Finish extracting
@@ -583,8 +583,8 @@ class Points(ABC):
             * query - string in the format 'FEATURENAME OPERATOR VALUE'
               (i.e "ft1 < 10", "id4 == yes", or "col4 is nonZero") where
               OPERATOR is separated from the FEATURENAME and VALUE by
-              whitespace characters. See help(nimble.match.QueryString)
-              for string requirements
+              whitespace characters. See ``nimble.match.QueryString``
+              for string requirements.
         start, end : identifier
             Parameters indicating range based deletion. Begin the
             deletion at the location of ``start``. Finish deleting at
@@ -723,8 +723,8 @@ class Points(ABC):
             * query - string in the format 'FEATURENAME OPERATOR VALUE'
               (i.e "ft1 < 10", "id4 == yes", or "col4 is nonZero") where
               OPERATOR is separated from the FEATURENAME and VALUE by
-              whitespace characters. See help(nimble.match.QueryString)
-              for string requirements
+              whitespace characters. See ``nimble.match.QueryString``
+              for string requirements.
         start, end : identifier
             Parameters indicating range based retention. Begin the
             retention at the location of ``start``. Finish retaining at
@@ -857,8 +857,8 @@ class Points(ABC):
             * query - string in the format 'FEATURENAME OPERATOR VALUE'
               (i.e "ft1 < 10", "id4 == yes", or "col4 is nonZero") where
               OPERATOR is separated from the FEATURENAME and VALUE by
-              whitespace characters. See help(nimble.match.QueryString)
-              for string requirements
+              whitespace characters. See ``nimble.match.QueryString``
+              for string requirements.
 
         Returns
         -------
@@ -1156,7 +1156,7 @@ class Points(ABC):
             * query - string in the format 'POINTNAME OPERATOR VALUE'
               (i.e "pt1 < 10", "id4 == yes", or "row4 is nonZero") where
               OPERATOR is separated from the POINTNAME and VALUE by
-              whitespace characters. See help(nimble.match.QueryString)
+              whitespace characters. See ``nimble.match.QueryString``
               for string requirements.
 
         Returns
@@ -1573,7 +1573,7 @@ class Points(ABC):
               from nimble's match module.
             * query - string in the format 'OPERATOR VALUE' representing
               a function (i.e "< 10", "== yes", or "is missing"). See
-              help(nimble.match.QueryString) for string requirements.
+              ``nimble.match.QueryString`` for string requirements.
         points : identifier, list of identifiers, None
             Select specific points to apply the fill to. If points is
             None, the fill will be applied to all points.
