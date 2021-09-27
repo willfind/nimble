@@ -454,7 +454,7 @@ def test_getParametersAndDefaultsReturnTypes():
             defaultParams = interface.getLearnerDefaultValues(learner)
             fullName = interfaceName + '.' + learner
             paramsFromTop = nimble.learnerParameters(fullName)
-            defaultsFromTop = nimble.learnerDefaultValues(fullName)
+            defaultsFromTop = nimble.learnerParameterDefaults(fullName)
 
             if params is not None:
                 assert isinstance(params, list)
@@ -484,7 +484,7 @@ def test_getParametersAndDefaultsException():
         with raises(InvalidArgumentValue, match=expMsg):
             nimble.learnerParameters(fullName)
         with raises(InvalidArgumentValue, match=expMsg):
-            nimble.learnerDefaultValues(fullName)
+            nimble.learnerParameterDefaults(fullName)
 # TODO
 #def testGetParamsOverListLearners():
 #def testGetParamDefaultsOverListLearners():

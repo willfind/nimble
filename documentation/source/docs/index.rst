@@ -93,8 +93,8 @@ representation of the information to stdout.
    nimble.showLearnerNames
    nimble.learnerParameters
    nimble.showLearnerParameters
-   nimble.learnerDefaultValues
-   nimble.showLearnerDefaultValues
+   nimble.learnerParameterDefaults
+   nimble.showLearnerParameterDefaults
    nimble.learnerType
 
 **Using a learner**

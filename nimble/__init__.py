@@ -23,8 +23,8 @@ from nimble.core.learn import learnerNames
 from nimble.core.learn import showLearnerNames
 from nimble.core.learn import learnerParameters
 from nimble.core.learn import showLearnerParameters
-from nimble.core.learn import learnerDefaultValues
-from nimble.core.learn import showLearnerDefaultValues
+from nimble.core.learn import learnerParameterDefaults
+from nimble.core.learn import showLearnerParameterDefaults
 from nimble.core.learn import train
 from nimble.core.learn import trainAndApply
 from nimble.core.learn import trainAndTest

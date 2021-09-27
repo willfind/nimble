@@ -192,7 +192,7 @@ def learnerParameters(name):
 
     See Also
     --------
-    learnerDefaultValues, showLearnerParameters
+    learnerParameterDefaults, showLearnerParameters
 
     Keywords
     --------
@@ -216,7 +216,7 @@ def showLearnerParameters(name):
 
     See Also
     --------
-    learnerDefaultValues, learnerParameters
+    learnerParameterDefaults, learnerParameters
 
     Keywords
     --------
@@ -230,7 +230,7 @@ def showLearnerParameters(name):
         for param in params:
             print(param)
 
-def learnerDefaultValues(name):
+def learnerParameterDefaults(name):
     """
     Get a dictionary mapping parameter names to their default values.
 
@@ -252,7 +252,7 @@ def learnerDefaultValues(name):
 
     See Also
     --------
-    learnerParameters, showLearnerDefaultValues
+    learnerParameters, showLearnerParameterDefaults
 
     Keywords
     --------
@@ -261,7 +261,7 @@ def learnerDefaultValues(name):
     """
     return _learnerQuery(name, 'defaults')
 
-def showLearnerDefaultValues(name):
+def showLearnerParameterDefaults(name):
     """
     Get a dictionary mapping parameter names to their default values.
 
@@ -276,14 +276,14 @@ def showLearnerDefaultValues(name):
 
     See Also
     --------
-    learnerDefaultValues, learnerParameters
+    learnerParameterDefaults, learnerParameters
 
     Keywords
     --------
     print, display, parameters, keywords, keyword arguments, settings,
     machine learning, setup, options, hyper parameters, hyperparameters
     """
-    defaultValues = sorted(learnerDefaultValues(name).items(),
+    defaultValues = sorted(learnerParameterDefaults(name).items(),
                            key=itemgetter(0))
     if defaultValues:
         defaults = []

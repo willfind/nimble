@@ -80,10 +80,10 @@ for learner in learners:
 ## will adjust some parameter values for our two best learners. These
 ## adjustments can be made through `arguments` as a python `dict` or as keyword
 ## arguments. If we need more information about a learner's parameters, we can
-## use `nimble.learnerParameters` and `nimble.learnerDefaultValues`. Let's try
-## it for KNeighborsRegressor.
+## use `nimble.learnerParameters` and `nimble.learnerParameterDefaults`. Let's
+## try it for KNeighborsRegressor.
 nimble.showLearnerParameters('sklearn.KNeighborsRegressor')
-nimble.showLearnerDefaultValues('sklearn.KNeighborsRegressor')
+nimble.showLearnerParameterDefaults('sklearn.KNeighborsRegressor')
 
 ## Furthermore, we can test multiple values for the same parameter
 ## by using the `nimble.CV` object. The presence of `nimble.CV` will trigger
