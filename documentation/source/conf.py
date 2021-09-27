@@ -42,6 +42,16 @@ def process_docstring(app, what, name, obj, options, lines):
     """
     if what == 'module' and options.get('noindex', False):
         del lines[:]
+    if what in ['function', 'method', 'attribute', 'property']:
+        # remove keywords header in documentation in favor of normal text
+        # all changes to lines must be in-place
+        for i, line in enumerate(lines):
+            if line == '.. rubric:: Keywords':
+                lines[i] = 'Keywords: '
+                if not lines[i + 1]:
+                    del lines[i + 1]
+                break
+
 
 def process_signature(app, what, name, obj, options, signature,
                       return_annotation):
@@ -297,7 +307,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.autosummary',
-    'numpydoc',
+    'sphinx.ext.napoleon',
     'nbsphinx',
     #    'sphinx.ext.coverage',
     #    'sphinx.ext.ifconfig',
@@ -315,6 +325,11 @@ autosummary_imported_members = True
 
 # prevents autoclass from adding an autosummary table which leads to a warning
 numpydoc_show_class_members = False
+
+# napoleon settings
+napoleon_google_docstring = False # only allow numpy style docstrings
+napoleon_use_rtype = False # Returns section formatted to match numpy style
+napoleon_custom_sections = ['Keywords'] # add a Keywords section for docstrings
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

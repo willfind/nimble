@@ -54,6 +54,10 @@ def log(heading, logInfo):
     See Also
     --------
     showLog
+
+    Keywords
+    --------
+    recorded, record, database, entry, message, history
     """
     if not isinstance(heading, str):
         raise InvalidArgumentType("heading must be a string")
@@ -126,6 +130,10 @@ def showLog(levelOfDetail=2, leastSessionsAgo=0, mostSessionsAgo=2,
     See Also
     --------
     log
+
+    Keywords
+    --------
+    sessions, entry, entries, database, query, record, history, display
     """
     if levelOfDetail < 1 or levelOfDetail > 3 or levelOfDetail is None:
         msg = "levelOfDetail must be 1, 2, or 3"

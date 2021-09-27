@@ -72,12 +72,12 @@ class QueryString:
 
     Examples
     --------
-    >>> raw = [[0, True, -1.0],
+    >>> lst = [[0, True, -1.0],
     ...        [-1, True, 2.0],
     ...        [2, True, -1.0],
     ...        [-1, False, 3.0]]
     >>> fnames = ['ft1', 'ft2', 'ft3']
-    >>> toQuery = nimble.data('DataFrame', raw, featureNames=fnames)
+    >>> toQuery = nimble.data('DataFrame', lst, featureNames=fnames)
     >>> missing = toQuery.matchingElements("is nonZero")
     >>> missing
     DataFrame(

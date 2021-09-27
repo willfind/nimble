@@ -960,17 +960,17 @@ class TrainedLearner(object):
         Examples
         --------
         >>> from nimble.calculate import fractionIncorrect
-        >>> rawTrain = [[1, 0, 0, 1],
+        >>> lstTrain = [[1, 0, 0, 1],
         ...             [0, 1, 0, 2],
         ...             [0, 0, 1, 3],
         ...             [1, 0, 0, 1],
         ...             [0, 1, 0, 2],
         ...             [0, 0, 1, 3]]
-        >>> rawTest = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+        >>> lstTest = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
         >>> ftNames = ['a', 'b', 'c', 'label']
-        >>> trainData = nimble.data('Matrix', rawTrain,
+        >>> trainData = nimble.data('Matrix', lstTrain,
         ...                         featureNames=ftNames)
-        >>> testData = nimble.data('Matrix', rawTest,
+        >>> testData = nimble.data('Matrix', lstTest,
         ...                        featureNames=ftNames)
         >>> knn = nimble.train('nimble.KNNClassifier', trainX=trainData,
         ...                    trainY='label')
@@ -1077,15 +1077,15 @@ class TrainedLearner(object):
 
         Examples
         --------
-        >>> rawTrain = [[1, 0, 0, 1],
+        >>> lstTrain = [[1, 0, 0, 1],
         ...             [0, 1, 0, 2],
         ...             [0, 0, 1, 3],
         ...             [1, 0, 0, 1],
         ...             [0, 1, 0, 2],
         ...             [0, 0, 1, 3]]
-        >>> rawTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-        >>> trainData = nimble.data('Matrix', rawTrain)
-        >>> testX = nimble.data('Matrix', rawTestX)
+        >>> lstTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+        >>> trainData = nimble.data('Matrix', lstTrain)
+        >>> testX = nimble.data('Matrix', lstTestX)
         >>> tl = nimble.train('nimble.KNNClassifier', trainX=trainData,
         ...                   trainY=3)
         >>> predict = tl.apply(testX)
@@ -1245,22 +1245,22 @@ class TrainedLearner(object):
         --------
         Changing the training data.
 
-        >>> rawTrainX1 = [[1, 1], [2, 2], [3, 3]]
-        >>> trainX1 = nimble.data('Matrix', rawTrainX1)
-        >>> rawTrainY1 = [[1], [2], [3]]
-        >>> trainY1 = nimble.data('Matrix', rawTrainY1)
-        >>> rawTestX = [[8, 8], [-3, -3]]
-        >>> testX = nimble.data('Matrix', rawTestX)
+        >>> lstTrainX1 = [[1, 1], [2, 2], [3, 3]]
+        >>> trainX1 = nimble.data('Matrix', lstTrainX1)
+        >>> lstTrainY1 = [[1], [2], [3]]
+        >>> trainY1 = nimble.data('Matrix', lstTrainY1)
+        >>> lstTestX = [[8, 8], [-3, -3]]
+        >>> testX = nimble.data('Matrix', lstTestX)
         >>> tl = nimble.train('nimble.KNNClassifier', trainX1, trainY1)
         >>> tl.apply(testX)
         Matrix(
             [[3]
              [1]]
             )
-        >>> rawTrainX2 = [[4, 4], [5, 5], [6, 6]]
-        >>> trainX2 = nimble.data('Matrix', rawTrainX2)
-        >>> rawTrainY2 = [[4], [5], [6]]
-        >>> trainY2 = nimble.data('Matrix', rawTrainY2)
+        >>> lstTrainX2 = [[4, 4], [5, 5], [6, 6]]
+        >>> trainX2 = nimble.data('Matrix', lstTrainX2)
+        >>> lstTrainY2 = [[4], [5], [6]]
+        >>> trainY2 = nimble.data('Matrix', lstTrainY2)
         >>> tl.retrain(trainX2, trainY2)
         >>> tl.apply(testX)
         Matrix(
@@ -1270,12 +1270,12 @@ class TrainedLearner(object):
 
         Changing the learner arguments.
 
-        >>> rawTrainX = [[1, 1], [3, 3], [3, 3]]
-        >>> trainX = nimble.data('Matrix', rawTrainX)
-        >>> rawTrainY = [[1], [3], [3]]
-        >>> trainY = nimble.data('Matrix', rawTrainY)
-        >>> rawTestX = [[1, 1], [3, 3]]
-        >>> testX = nimble.data('Matrix', rawTestX)
+        >>> lstTrainX = [[1, 1], [3, 3], [3, 3]]
+        >>> trainX = nimble.data('Matrix', lstTrainX)
+        >>> lstTrainY = [[1], [3], [3]]
+        >>> trainY = nimble.data('Matrix', lstTrainY)
+        >>> lstTestX = [[1, 1], [3, 3]]
+        >>> testX = nimble.data('Matrix', lstTestX)
         >>> tl = nimble.train('nimble.KNNClassifier', trainX, trainY,
         ...                   k=1)
         >>> tl.apply(testX)

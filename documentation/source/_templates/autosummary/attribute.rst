@@ -1,3 +1,3 @@
 {{ objname | escape | underline }}
 
-.. automethod:: {{ fullname }}
+.. autoattribute:: {{ fullname }}

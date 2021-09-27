@@ -50,6 +50,11 @@ def learnerType(learnerNames): # pylint: disable=redefined-outer-name
     -------
     str, list
         string for a single learner or a list for multiple learners.
+
+    Keywords
+    --------
+    classifier, regressor, regression, classification, clustering,
+    machine learning, preditor, model
     """
     #argument checking
     if not isinstance(learnerNames, list):
@@ -110,8 +115,13 @@ def learnerNames(package=None):
 
     See Also
     --------
-    showLearnerNames, train, trainAndApply, trainAndTest,
-    trainAndTestOnTrainingData
+    showLearnerNames, showAvailablePackages, train, trainAndApply,
+    trainAndTest, trainAndTestOnTrainingData,
+
+    Keywords
+    --------
+    algorithms, estimators, transformers, predictors, models, train,
+    apply, test, package, machine learning
     """
     if isinstance(package, ModuleType):
         package = package.__name__
@@ -151,6 +161,11 @@ def showLearnerNames(package=None):
     --------
     learnerNames, train, trainAndApply, trainAndTest,
     trainAndTestOnTrainingData
+
+    Keywords
+    --------
+    print, display, algorithms, estimators, transformers, predictors,
+    models, train, apply, test, package, machine learning
     """
     for name in learnerNames(package):
         print(name)
@@ -178,6 +193,11 @@ def learnerParameters(name):
     See Also
     --------
     learnerDefaultValues, showLearnerParameters
+
+    Keywords
+    --------
+    arguments, keyword arguments, machine learning, setup, settings,
+    options, hyper parameters, hyperparameters
     """
     return _learnerQuery(name, 'parameters')
 
@@ -197,6 +217,11 @@ def showLearnerParameters(name):
     See Also
     --------
     learnerDefaultValues, learnerParameters
+
+    Keywords
+    --------
+    print, display, arguments, keyword arguments, machine learning,
+    setup, settings, options, hyper parameters, hyperparameters
     """
     params = learnerParameters(name)
     if params is None:
@@ -228,6 +253,11 @@ def learnerDefaultValues(name):
     See Also
     --------
     learnerParameters, showLearnerDefaultValues
+
+    Keywords
+    --------
+    parameters, keywords, keyword arguments, settings, machine learning,
+    setup, options, hyper parameters, hyperparameters
     """
     return _learnerQuery(name, 'defaults')
 
@@ -247,6 +277,11 @@ def showLearnerDefaultValues(name):
     See Also
     --------
     learnerDefaultValues, learnerParameters
+
+    Keywords
+    --------
+    print, display, parameters, keywords, keyword arguments, settings,
+    machine learning, setup, options, hyper parameters, hyperparameters
     """
     defaultValues = sorted(learnerDefaultValues(name).items(),
                            key=itemgetter(0))
@@ -317,8 +352,8 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     --------
     Normalize a single data set.
 
-    >>> data = [[20, 1.97, 89], [28, 1.87, 75], [24, 1.91, 81]]
-    >>> trainX = nimble.data("Matrix", data, pointNames=['a', 'b', 'c'],
+    >>> lst = [[20, 1.97, 89], [28, 1.87, 75], [24, 1.91, 81]]
+    >>> trainX = nimble.data("Matrix", lst, pointNames=['a', 'b', 'c'],
     ...                      featureNames=['age', 'height', 'weight'])
     >>> normTrainX = nimble.normalizeData('scikitlearn.StandardScaler',
     ...                                   trainX)
@@ -333,10 +368,10 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     Normalize training and testing data.
 
-    >>> data1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
-    >>> trainX = nimble.data("Matrix", data1)
-    >>> data2 = [[-1, 0, 5]]
-    >>> testX = nimble.data("Matrix", data2)
+    >>> lst1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
+    >>> trainX = nimble.data("Matrix", lst1)
+    >>> lst2 = [[-1, 0, 5]]
+    >>> testX = nimble.data("Matrix", lst2)
     >>> pcaTrain, pcaTest = nimble.normalizeData('scikitlearn.PCA',
     ...                                          trainX, testX=testX,
     ...                                          n_components=2)
@@ -350,6 +385,11 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     Matrix(
         [[-1.739 2.588]]
         )
+
+    Keywords
+    --------
+    modify, apply, standardize, scale, rescale, encode, center, mean,
+    standard deviation, z-scores, z scores
     """
     startTime = time.process_time()
     if trackEntry.isEntryPoint:
@@ -439,16 +479,16 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     --------
     Fill missing values based on k-nearest neighbors classifier.
 
-    >>> raw = [[1, None, None],
+    >>> lst = [[1, None, None],
     ...        [1, 3, 6],
     ...        [2, 1, 6],
     ...        [1, 3, 7],
     ...        [None, 3, None]]
-    >>> data = nimble.data('Matrix', raw)
+    >>> X = nimble.data('Matrix', lst)
     >>> toMatch = nimble.match.missing
-    >>> nimble.fillMatching('nimble.KNNImputation', toMatch, data,
+    >>> nimble.fillMatching('nimble.KNNImputation', toMatch, X,
     ...                     mode='classification', k=3)
-    >>> data
+    >>> X
     Matrix(
         [[1.000 3.000 6.000]
          [1.000 3.000 6.000]
@@ -459,16 +499,16 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
 
     Fill last feature zeros based on k-nearest neighbors regressor.
 
-    >>> raw = [[1, 0, 0],
+    >>> lst = [[1, 0, 0],
     ...        [1, 3, 6],
     ...        [2, 1, 6],
     ...        [1, 3, 7],
     ...        [0, 3, 0]]
-    >>> data = nimble.data('Sparse', raw)
+    >>> X = nimble.data('Sparse', lst)
     >>> toMatch = nimble.match.zero
-    >>> nimble.fillMatching('nimble.KNNImputation', toMatch, data,
+    >>> nimble.fillMatching('nimble.KNNImputation', toMatch, X,
     ...                     features=-1, k=3, mode='regression')
-    >>> data
+    >>> X
     Sparse(
         [[1.000 0.000 6.333]
          [1.000 3.000 6.000]
@@ -476,6 +516,10 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
          [1.000 3.000 7.000]
          [0.000 3.000 6.333]]
         )
+
+    Keywords
+    --------
+    inputation, replace, missing, empty, NaN, nan, clean
     """
     if trackEntry.isEntryPoint:
         validateLearningArguments(trainX, arguments=arguments)
@@ -621,6 +665,12 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
     [0.3333333333333333, 0.6666666666666666, 0.0]
     >>> crossValidator.allResults
     [{'k': 3, 'fractionIncorrect': 0.3333333333333333}]
+
+    Keywords
+    --------
+    cross validation, k-fold, k fold, resampling, partition, rotation
+    estimation, out-of-sample, out of sample, model validation,
+    hyperparameters, tuning
     """
     if trackEntry.isEntryPoint:
         validateLearningArguments(X, Y, arguments=arguments,
@@ -715,14 +765,14 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     --------
     A single dataset which contains the labels.
 
-    >>> data = [[1, 0, 0, 1],
-    ...         [0, 1, 0, 2],
-    ...         [0, 0, 1, 3],
-    ...         [1, 0, 0, 1],
-    ...         [0, 1, 0, 2],
-    ...         [0, 0, 1, 3]]
+    >>> lst = [[1, 0, 0, 1],
+    ...        [0, 1, 0, 2],
+    ...        [0, 0, 1, 3],
+    ...        [1, 0, 0, 1],
+    ...        [0, 1, 0, 2],
+    ...        [0, 0, 1, 3]]
     >>> ftNames = ['a', 'b' ,'c', 'label']
-    >>> trainData = nimble.data('Matrix', data, featureNames=ftNames)
+    >>> trainData = nimble.data('Matrix', lst, featureNames=ftNames)
     >>> tl = nimble.train('nimble.KNNClassifier', trainX=trainData,
     ...                   trainY='label')
     >>> print(type(tl))
@@ -732,15 +782,15 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     kwarguments can be utilized, they will be merged. Below, ``C`` and
     ``kernel`` are parameters for scikit-learn's SVC learner.
 
-    >>> dataX = [[1, 0, 0],
-    ...          [0, 1, 0],
-    ...          [0, 0, 1],
-    ...          [1, 0, 0],
-    ...          [0, 1, 0],
-    ...          [0, 0, 1]]
-    >>> dataY = [[1], [2], [3], [1], [2], [3]]
-    >>> trainX = nimble.data('Matrix', dataX)
-    >>> trainY = nimble.data('Matrix', dataY)
+    >>> lstX = [[1, 0, 0],
+    ...         [0, 1, 0],
+    ...         [0, 0, 1],
+    ...         [1, 0, 0],
+    ...         [0, 1, 0],
+    ...         [0, 0, 1]]
+    >>> lstY = [[1], [2], [3], [1], [2], [3]]
+    >>> trainX = nimble.data('Matrix', lstX)
+    >>> trainY = nimble.data('Matrix', lstY)
     >>> tl = nimble.train('sciKitLearn.SVC', trainX=trainX, trainY=trainY,
     ...                   arguments={'C': 0.1}, kernel='linear')
     >>> tlAttributes = tl.getAttributes()
@@ -748,6 +798,12 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     >>> kernelValue = tlAttributes['kernel']
     >>> print(cValue, kernelValue)
     0.1 linear
+
+    Keywords
+    --------
+    learn, model, regression, classification, neural network,
+    clustering, supervised, unsupervised, deep learning, fit, training,
+    machine learning
     """
     startTime = time.process_time()
     crossValLog = useLog
@@ -896,15 +952,15 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     --------
     Train dataset which contains the labels.
 
-    >>> rawTrain = [[1, 0, 0, 1],
+    >>> lstTrain = [[1, 0, 0, 1],
     ...             [0, 1, 0, 2],
     ...             [0, 0, 1, 3],
     ...             [1, 0, 0, 1],
     ...             [0, 1, 0, 2],
     ...             [0, 0, 1, 3]]
-    >>> rawTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    >>> trainData = nimble.data('Matrix', rawTrain)
-    >>> testX = nimble.data('Matrix', rawTestX)
+    >>> lstTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    >>> trainData = nimble.data('Matrix', lstTrain)
+    >>> testX = nimble.data('Matrix', lstTestX)
     >>> predict = nimble.trainAndApply('nimble.KNNClassifier',
     ...                                trainX=trainData, trainY=3,
     ...                                testX=testX)
@@ -919,17 +975,17 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     kwarguments can be utilized, they will be merged. Below, ``C`` and
     ``kernel`` are parameters for scikit-learn's SVC learner.
 
-    >>> rawTrainX = [[1, 0, 0],
+    >>> lstTrainX = [[1, 0, 0],
     ...              [0, 1, 0],
     ...              [0, 0, 1],
     ...              [1, 0, 0],
     ...              [0, 1, 0],
     ...              [0, 0, 1]]
-    >>> rawTrainY = [[1], [2], [3], [1], [2], [3]]
-    >>> rawTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    >>> trainX = nimble.data('Matrix', rawTrainX)
-    >>> trainY = nimble.data('Matrix', rawTrainY)
-    >>> testX = nimble.data('Matrix', rawTestX)
+    >>> lstTrainY = [[1], [2], [3], [1], [2], [3]]
+    >>> lstTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    >>> trainX = nimble.data('Matrix', lstTrainX)
+    >>> trainY = nimble.data('Matrix', lstTrainY)
+    >>> testX = nimble.data('Matrix', lstTestX)
     >>> pred = nimble.trainAndApply('sciKitLearn.SVC', trainX=trainX,
     ...                             trainY=trainY, testX=testX,
     ...                             arguments={'C': 0.1}, kernel='linear')
@@ -939,6 +995,12 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
          [2]
          [3]]
         )
+
+    Keywords
+    --------
+    predict, prediction, transformation, encode, standardize, model,
+    supervised, unsupervised, pred, transform, fit_predict,
+    fit_transform, training, machine learning
     """
     startTime = time.process_time()
     if trackEntry.isEntryPoint:
@@ -1004,7 +1066,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     permutation. The argument permutation that performed best cross
     validating over the training data is then used as the lone argument
     for training on the whole training data set. Finally, the learned
-    model generates predictions for the testing set, an the performance
+    model generates predictions for the testing set, and the performance
     of those predictions is calculated and returned. If no additional
     arguments are supplied via arguments or kwarguments, then the
     result is the performance of the algorithm with default arguments on
@@ -1100,17 +1162,17 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     --------
     Train and test datasets which contains the labels.
 
-    >>> rawTrain = [[1, 0, 0, 1],
+    >>> lstTrain = [[1, 0, 0, 1],
     ...             [0, 1, 0, 2],
     ...             [0, 0, 1, 3],
     ...             [1, 0, 0, 1],
     ...             [0, 1, 0, 2],
     ...             [0, 0, 1, 3]]
-    >>> rawTest = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+    >>> lstTest = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
     >>> ftNames = ['a', 'b', 'c', 'label']
-    >>> trainData = nimble.data('Matrix', rawTrain,
+    >>> trainData = nimble.data('Matrix', lstTrain,
     ...                         featureNames=ftNames)
-    >>> testData = nimble.data('Matrix', rawTest, featureNames=ftNames)
+    >>> testData = nimble.data('Matrix', lstTest, featureNames=ftNames)
     >>> perform = nimble.trainAndTest(
     ...     'nimble.KNNClassifier', trainX=trainData, trainY='label',
     ...     testX=testData, testY='label',
@@ -1122,19 +1184,19 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     kwarguments can be utilized, they will be merged. Below, ``C`` and
     ``kernel`` are parameters for scikit-learn's SVC learner.
 
-    >>> rawTrainX = [[1, 0, 0],
+    >>> lstTrainX = [[1, 0, 0],
     ...              [0, 1, 0],
     ...              [0, 0, 1],
     ...              [1, 0, 0],
     ...              [0, 1, 0],
     ...              [0, 0, 1]]
-    >>> rawTrainY = [[1], [2], [3], [1], [2], [3]]
-    >>> rawTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    >>> rawTestY = [[1], [2], [3]]
-    >>> trainX = nimble.data('Matrix', rawTrainX)
-    >>> trainY = nimble.data('Matrix', rawTrainY)
-    >>> testX = nimble.data('Matrix', rawTestX)
-    >>> testY = nimble.data('Matrix', rawTestY)
+    >>> lstTrainY = [[1], [2], [3], [1], [2], [3]]
+    >>> lstTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    >>> lstTestY = [[1], [2], [3]]
+    >>> trainX = nimble.data('Matrix', lstTrainX)
+    >>> trainY = nimble.data('Matrix', lstTrainY)
+    >>> testX = nimble.data('Matrix', lstTestX)
+    >>> testY = nimble.data('Matrix', lstTestY)
     >>> perform = nimble.trainAndTest(
     ...     'sciKitLearn.SVC', trainX=trainX, trainY=trainY,
     ...     testX=testX, testY=testY,
@@ -1142,6 +1204,11 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     ...     arguments={'C': 0.1}, kernel='linear')
     >>> perform
     0.0
+
+    Keywords
+    --------
+    performance, testing, supervised, score, model, training,
+    machine learning, predict, error, measure, accuracy, performance
     """
     startTime = time.process_time()
     if trackEntry.isEntryPoint:
@@ -1277,14 +1344,14 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     --------
     Train and test datasets which contains the labels.
 
-    >>> rawTrain = [[1, 0, 0, 1],
+    >>> lstTrain = [[1, 0, 0, 1],
     ...             [0, 1, 0, 2],
     ...             [0, 0, 1, 3],
     ...             [1, 0, 0, 1],
     ...             [0, 1, 0, 2],
     ...             [0, 0, 1, 3]]
     >>> ftNames = ['a', 'b', 'c', 'label']
-    >>> trainData = nimble.data('Matrix', rawTrain,
+    >>> trainData = nimble.data('Matrix', lstTrain,
     ...                         featureNames=ftNames)
     >>> perform = nimble.trainAndTestOnTrainingData(
     ...     'nimble.KNNClassifier', trainX=trainData, trainY='label',
@@ -1296,21 +1363,27 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     kwarguments can be utilized, they will be merged. Below, ``C`` and
     ``kernel`` are parameters for scikit-learn's SVC learner.
 
-    >>> rawTrainX = [[1, 0, 0],
+    >>> lstTrainX = [[1, 0, 0],
     ...              [0, 1, 0],
     ...              [0, 0, 1],
     ...              [1, 0, 0],
     ...              [0, 1, 0],
     ...              [0, 0, 1]]
-    >>> rawTrainY = [[1], [2], [3], [1], [2], [3]]
-    >>> trainX = nimble.data('Matrix', rawTrainX)
-    >>> trainY = nimble.data('Matrix', rawTrainY)
+    >>> lstTrainY = [[1], [2], [3], [1], [2], [3]]
+    >>> trainX = nimble.data('Matrix', lstTrainX)
+    >>> trainY = nimble.data('Matrix', lstTrainY)
     >>> perform = nimble.trainAndTestOnTrainingData(
     ...     'sciKitLearn.SVC', trainX=trainX, trainY=trainY,
     ...     performanceFunction=nimble.calculate.fractionIncorrect,
     ...     arguments={'C': 0.1}, kernel='linear')
     >>> perform
     0.0
+
+    Keywords
+    --------
+    performance, in-sample, in sample, supervised, score, model,
+    training, machine learning, predict, error, measure, accuracy,
+    performance
     """
     if trackEntry.isEntryPoint:
         validateLearningArguments(trainX, trainY, arguments=arguments,
@@ -1360,6 +1433,12 @@ class CV(object):
     ----------
     argumentList : list
         A list of values for the argument.
+
+    Keywords
+    --------
+    cross-validation, parameter, argument, hyperparameters, tuning,
+    optimization, cross validate, learn, hyper parameters,
+    hyperparameters, choose, grid search, GridSearchCV
     """
     def __init__(self, argumentList):
         try:
@@ -1399,6 +1478,10 @@ class Init(object):
         The name of the object to find within the interface.
     kwargs
         Any keyword arguments will be used as instantiation parameters.
+
+    Keywords
+    --------
+    instantiate, argument, initialize, initialization, create
     """
     def __init__(self, name, **kwargs):
         self.name = name
@@ -1436,6 +1519,12 @@ class KFoldCrossValidator(object):
     randomSeed : int
         The random seed used for the learner. Only applicable if the
         learner utilizes randomness.
+
+    Keywords
+    --------
+    cross validation, k-fold, k fold, resampling, partition, rotation
+    estimation, out-of-sample, out of sample, model validation,
+    hyperparameters, tuning
     """
     def __init__(self, learnerName, X, Y, performanceFunction, arguments=None,
                  folds=10, scoreMode='label', randomSeed=None, useLog=None,

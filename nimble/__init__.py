@@ -58,6 +58,10 @@ from nimble import exceptions
 #: See Also
 #: --------
 #: nimble.core.configuration.SessionConfiguration
+#:
+#: Keywords
+#: --------
+#: configure, configuration, options
 settings = core.configuration.loadSettings()
 
 # initialize the interfaces
