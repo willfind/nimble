@@ -166,9 +166,9 @@ def addStringReplacements(original, replacements):
     return newString
 
 def getHyperlink(app, value):
-    if app.nimble_hyperlinks[value] is None:
+    if app.nimble_whitelist[value] is None:
         return app.nimble_mapping[value]
-    return app.nimble_hyperlinks[value]
+    return app.nimble_whitelist[value]
 
 def addExampleLinks(app, string):
     exampleReplacements = []
@@ -183,19 +183,19 @@ def addMarkdownLinks(app, string):
     anchor = '<a class="nimble-hyperlink" href="{}">{}</a>'.format
     for match in re.finditer(r'<span class="pre">(.*?)</span>', string):
         variable = match.group(1)
-        if variable in app.nimble_nolink:
+        if variable in app.nimble_blacklist:
             continue
         href = None
-        if variable in app.nimble_hyperlinks:
+        if variable in app.nimble_whitelist:
             href = getHyperlink(app, variable)
-        elif '.' + variable in app.nimble_hyperlinks:
+        elif '.' + variable in app.nimble_whitelist:
             href = getHyperlink(app, '.' + variable)
         # nimble_markdown is last resort
-        elif variable in app.nimble_markdown:
+        elif app.allow_markdown and variable in app.nimble_markdown:
             href = app.nimble_markdown[variable]
         if href is not None:
-            markdownReplacements.append((match.span(), anchor(href,
-                                                      match.group())))
+            markdownReplacements.append((match.span(),
+                                         anchor(href, match.group())))
 
     return addStringReplacements(string, markdownReplacements)
 
@@ -204,7 +204,7 @@ def addCodeLinks(app, string):
     dotSpan = '<span class="o">\.</span>'
     nameSpan = '<span class="nn?">{}</span>'.format
     # need most complex links first so regex prioritizes them
-    sortedLinks = sorted(app.nimble_hyperlinks.keys(), reverse=True)
+    sortedLinks = sorted(app.nimble_whitelist.keys(), reverse=True)
     htmlLinks = []
     for link in sortedLinks:
         if link.startswith('.'):
@@ -236,11 +236,11 @@ def addCodeLinks(app, string):
                 name = re.sub(r'<.*?>', '', htmlName)
                 # Object type cannot be determined so all methods are
                 # assumed to be nimble objects unless explicitly named in
-                # app.nimble_nolink which is defined in setHyperlinks
-                if name in app.nimble_nolink:
+                # app.nimble_blacklist which is defined in setHyperlinks
+                if name in app.nimble_blacklist:
                     continue
                 # object methods
-                if name not in app.nimble_hyperlinks or name.startswith('.'):
+                if name not in app.nimble_whitelist or name.startswith('.'):
                     # ignore everything before method call
                     name = '.' + name.split('.', 1)[1]
                     # keep features and points as part of hyperlink
@@ -270,11 +270,16 @@ def exampleHyperlinks(app, pagename, templatename, context, doctree):
     Wrap the nimble calls in an anchor tag linking to API Documentation.
     """
     path = '../docs/generated/{}.html'.format
-    # It is not possible to tell object types when applying hyperlinks to
-    # the html code. So, we assume that any method names in the example
-    # code are referring to the Nimble objects. If the example uses another
-    # object type with a shared method name, it must be explicitly ignored.
-    app.nimble_nolink = []
+    # Can use a whitelist and/or blacklist to manage hyperlinks in various
+    # documents. It is not possible to tell object types when applying
+    # hyperlinks to the html code. So, we assume that any method names in the
+    # code are referring to the Nimble objects. If another object type with a
+    # shared method name is used, it must be explicitly ignored.
+    app.nimble_whitelist = app.nimble_hyperlinks.copy() # dict: name: path
+    app.nimble_blacklist = set() # set: only need to know name to ignore
+    # sometimes we will want to explicitly disable the extra markdown links
+    # that are available
+    app.allow_markdown = True
     # define default mapping for names that currently have a conflict
     app.nimble_mapping = {
         'train': path('nimble.train'),
@@ -282,16 +287,21 @@ def exampleHyperlinks(app, pagename, templatename, context, doctree):
         '.apply': path('nimble.core.interfaces.TrainedLearner.apply')}
     if pagename.startswith('examples/'):
         if 'additional_functionality' in pagename:
-            app.nimble_nolink = ['tempDir.name', 'learnerType']
+            app.nimble_blacklist = {'tempDir.name', 'learnerType'}
             app.nimble_mapping['train'] = path('nimble.CustomLearner.train')
             app.nimble_mapping['.train'] = path('nimble.CustomLearner.train')
             app.nimble_mapping['.apply'] = path('nimble.CustomLearner.apply')
-
         context['body'] = addExampleLinks(app, context['body'])
         context['body'] = addMarkdownLinks(app, context['body'])
         context['body'] = addCodeLinks(app, context['body'])
     elif pagename.startswith('docs/index'):
-        app.nimble_nolink = ['nimble'] # no need to link to same page
+        app.nimble_blacklist = {'nimble',} # no need to link to same page
+        context['body'] = addMarkdownLinks(app, context['body'])
+    elif pagename.startswith('docs'):
+        # TODO: examine other functions that can be whitelisted for docstrings
+        querystring = './nimble.match.QueryString.html'
+        app.nimble_whitelist = {'nimble.match.QueryString': querystring}
+        app.allow_markdown = False
         context['body'] = addMarkdownLinks(app, context['body'])
     elif pagename.startswith('cheatsheet'):
         # remove header that sphinx adds
