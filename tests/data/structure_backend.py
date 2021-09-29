@@ -8010,9 +8010,7 @@ class StructureModifying(StructureShared):
     # replaceRectangle() #
     ######################
 
-    # replaceRectangle(self, values, pointStart, featureStart, pointEnd, featureEnd)
-
-    def test_replaceRectangle_acceptableValues(self):
+    def test_replaceRectangle_unacceptableValues(self):
         raw = [[1, 2], [3, 4]]
         toTest = self.constructor(raw)
 
@@ -8055,12 +8053,18 @@ class StructureModifying(StructureShared):
             toTest.replaceRectangle(val, 0, 0, 1, -12)
 
 
-    def test_replaceRectangle_start_lessThan_end(self):
+    def test_replaceRectangle_invalidEnd(self):
         raw = [[1, 2], [3, 4]]
         toTest = self.constructor(raw)
 
         val = 1
 
+        with raises(InvalidArgumentValue):
+            toTest.replaceRectangle(val, 0, 0)
+        with raises(InvalidArgumentValue):
+            toTest.replaceRectangle(val, 0, 0, 1, None)
+        with raises(InvalidArgumentValue):
+            toTest.replaceRectangle(val, 0, 0, None, 1)
         with raises(InvalidArgumentValueCombination):
             toTest.replaceRectangle(val, 1, 0, 0, 1)
         with raises(InvalidArgumentValueCombination):
@@ -8075,7 +8079,7 @@ class StructureModifying(StructureShared):
         arg = self.constructor(arg)
         exp = arg.copy()
 
-        ret = toTest.replaceRectangle(arg, 0, 0, len(toTest.points) - 1, len(toTest.features) - 1)
+        ret = toTest.replaceRectangle(arg, 0, 0)
         assert ret is None
 
         arg *= 10
@@ -8119,7 +8123,7 @@ class StructureModifying(StructureShared):
         for p, f in leftCorner:
             toTest = base.copy()
 
-            toTest.replaceRectangle(trial, p, f, p + 1, f + 1)
+            toTest.replaceRectangle(trial, p, f)
             assert toTest[p, f] == 0
             assert toTest[p + 1, f] == 0
             assert toTest[p, f + 1] == 0
@@ -8152,7 +8156,7 @@ class StructureModifying(StructureShared):
         for constructor in getDataConstructors():
             toTest = self.constructor(raw)
             arg = constructor(fill)
-            toTest.replaceRectangle(arg, 0, 0, 1, 1)
+            toTest.replaceRectangle(arg, 0, 0)
             assert toTest == exp
 
     ###########

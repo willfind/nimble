@@ -3155,19 +3155,25 @@ class Base(ABC):
         return self.copy()
 
     @limitedTo2D
-    def replaceRectangle(self, replaceWith, pointStart, featureStart, pointEnd,
-                         featureEnd, useLog=None):
+    def replaceRectangle(self, replaceWith, pointStart, featureStart,
+                         pointEnd=None, featureEnd=None, useLog=None):
         """
         Replace values in the data with other values.
 
         Revise the contents of the calling object so that it contains
-        the provided values in the given location.
+        the provided values in the given location. When ``replaceWith``
+        is a Nimble object, the rectangle shape is defined so only the
+        ``pointStart`` and ``featureStart`` are required to indicate
+        where the top-left corner of the new data is placed within this
+        object. When ``replaceWith`` is a constant, ``pointEnd`` and
+        ``featureEnd`` must also be set to define the bottom-right
+        corner location of the replacement rectangle within this object.
 
         Parameters
         ----------
-        values : constant or nimble Base object
-            * constant - a constant value with which to fill the data
-              seletion.
+        replaceWith : constant or nimble Base object
+            * constant - a constant numeric value with which to fill the
+              data selection.
             * nimble Base object - Size must be consistent with the
               given start and end indices.
         pointStart : int or str
@@ -3176,12 +3182,14 @@ class Base(ABC):
         featureStart : int or str
             The inclusive index or name of the first feature in the
             calling object whose contents will be modified.
-        pointEnd : int or str
+        pointEnd : int, str, None
             The inclusive index or name of the last point in the calling
-            object whose contents will be modified.
-        featureEnd : int or str
+            object whose contents will be modified. Required when
+            ``replaceWith`` is a constant.
+        featureEnd : int, str, None
             The inclusive index or name of the last feature in the
-            calling object whose contents will be modified.
+            calling object whose contents will be modified. Required
+            when ``replaceWith`` is a constant.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -3189,7 +3197,6 @@ class Base(ABC):
             send to the logger regardless of the global option. If
             False, do **NOT** send to the logger, regardless of the
             global option.
-
 
         See Also
         --------
@@ -3212,50 +3219,53 @@ class Base(ABC):
             )
         """
         psIndex = self.points.getIndex(pointStart)
-        peIndex = self.points.getIndex(pointEnd)
         fsIndex = self.features.getIndex(featureStart)
-        feIndex = self.features.getIndex(featureEnd)
-
-        if psIndex > peIndex:
-            msg = "pointStart (" + str(pointStart) + ") must be less than or "
-            msg += "equal to pointEnd (" + str(pointEnd) + ")."
-            raise InvalidArgumentValueCombination(msg)
-        if fsIndex > feIndex:
-            msg = "featureStart (" + str(featureStart) + ") must be less than "
-            msg += "or equal to featureEnd (" + str(featureEnd) + ")."
-            raise InvalidArgumentValueCombination(msg)
-
         if isinstance(replaceWith, Base):
-            prange = (peIndex - psIndex) + 1
-            frange = (feIndex - fsIndex) + 1
-            raiseException = False
-            if len(replaceWith.points) != prange:
-                raiseException = True
-                axis = 'point'
-                axisLen = len(replaceWith.points)
-                start = pointStart
-                end = pointEnd
-                rangeLen = prange
-            elif len(replaceWith.features) != frange:
-                raiseException = True
-                axis = 'feature'
-                axisLen = len(replaceWith.features)
-                start = featureStart
-                end = featureEnd
-                rangeLen = frange
-            if raiseException:
-                msg = "When the replaceWith argument is a nimble Base object, "
-                msg += "the size of replaceWith must match the range of "
-                msg += "modification. There are {axisLen} {axis}s in "
-                msg += "replaceWith, yet {axis}Start ({start}) and {axis}End "
-                msg += "({end}) define a range of length {rangeLen}"
-                msg = msg.format(axis=axis, axisLen=axisLen, start=start,
-                                 end=end, rangeLen=rangeLen)
-                raise InvalidArgumentValueCombination(msg)
+            excMsg =  "When the replaceWith argument is a nimble Base object, "
+            excMsg += "the size of replaceWith must match the range of "
+            excMsg += "modification. There are {axisLen} {axis}s in "
+            excMsg += "replaceWith, yet {axis}Start ({start}) and {axis}End "
+            excMsg += "({end}) define a range of length {rangeLen}"
+            if pointEnd is None:
+                peIndex = psIndex + len(replaceWith.points) - 1
+            else:
+                peIndex = self.points.getIndex(pointEnd)
+                prange = (peIndex - psIndex) + 1
+                if len(replaceWith.points) != prange:
+                    msg = excMsg.format(
+                        axis='point', axisLen=len(replaceWith.points),
+                        start=pointStart, end=pointEnd, rangeLen=prange)
+                    raise InvalidArgumentValueCombination(msg)
+            if featureEnd is None:
+                feIndex = fsIndex + len(replaceWith.points) - 1
+            else:
+                feIndex = self.features.getIndex(featureEnd)
+                frange = (feIndex - fsIndex) + 1
+                if len(replaceWith.features) != frange:
+                    msg = excMsg.format(
+                        axis='feature', axisLen=len(replaceWith.features),
+                        start=featureStart, end=featureEnd, rangeLen=frange)
+                    raise InvalidArgumentValueCombination(msg)
             if replaceWith.getTypeString() != self.getTypeString():
                 replaceWith = replaceWith.copy(to=self.getTypeString())
-
-        elif not (looksNumeric(replaceWith) or isinstance(replaceWith, str)):
+        elif looksNumeric(replaceWith):
+            if pointEnd is None:
+                msg = "pointEnd is required when replaceWith is a constant"
+                raise InvalidArgumentValue(msg)
+            if featureEnd is None:
+                msg = "featureEnd is required when replaceWith is a constant"
+                raise InvalidArgumentValue(msg)
+            peIndex = self.points.getIndex(pointEnd)
+            feIndex = self.features.getIndex(featureEnd)
+            if psIndex > peIndex:
+                msg = "pointStart (" + str(pointStart) + ") must be less than "
+                msg += "or equal to pointEnd (" + str(pointEnd) + ")."
+                raise InvalidArgumentValueCombination(msg)
+            if fsIndex > feIndex:
+                msg = "featureStart (" + str(featureStart) + ") must be less "
+                msg += "than or equal to featureEnd (" + str(featureEnd) + ")."
+                raise InvalidArgumentValueCombination(msg)
+        else:
             msg = "replaceWith may only be a nimble Base object, or a single "
             msg += "numeric value, yet we received something of "
             msg += str(type(replaceWith))

@@ -190,8 +190,8 @@ class BaseView(Base, metaclass=ABCMeta):
         readOnlyException("transpose")
 
     @baseExceptionDoc
-    def replaceRectangle(self, replaceWith, pointStart, featureStart, pointEnd,
-                         featureEnd, useLog=None):
+    def replaceRectangle(self, replaceWith, pointStart, featureStart,
+                         pointEnd=None, featureEnd=None, useLog=None):
         readOnlyException("replaceRectangle")
 
     @baseExceptionDoc
