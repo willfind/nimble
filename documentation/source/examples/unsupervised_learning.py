@@ -108,12 +108,12 @@ clusters.features.setName(0, 'cluster')
 ## based on cluster number. In addition to the clusters, we are going to add
 ## the cluster centers to our figure (the canvas containing our plots), so we
 ## set `show` to `False` to prevent the figure from displaying after the
-## function call. We must also specify a `figureName` so our next plot can be
+## function call. We must also specify a `figureID` so our next plot can be
 ## added to this same figure.
 purchasePCA.features.append(clusters)
 purchasePCA.plotFeatureAgainstFeature(
     'component_1', 'component_2', groupByFeature='cluster', show=False,
-    figureName='clustersWithCenters')
+    figureID=1)
 
 ## Each cluster has a center that will help us see how close each data point
 ## lies to the center of the cluster in which it was placed. We use the cluster
@@ -128,8 +128,7 @@ centers = nimble.data('Matrix', kmeans.getAttributes()['cluster_centers_'],
 centers.points.setNames(['cluster' + str(i) for i in range(numClusters)])
 
 title = 'k-means clustering of principal components'
-centers.plotFeatureAgainstFeature('component_1', 'component_2',
-                                  figureName='clustersWithCenters',
+centers.plotFeatureAgainstFeature('component_1', 'component_2', figureID=1,
                                   title=title, marker='x', color='k')
 
 ## Cluster Analysis ##

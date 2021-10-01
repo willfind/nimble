@@ -109,7 +109,6 @@ class QueryString:
         # to indicate whether the operation part of the string is expected at
         # the beginning (elementwise) or the middle (axiswise) to eliminate
         # ambiguity in some cases.
-        self.elementQuery = elementQuery
         self.function = None
         self.filter = None
         self.identifier = None
@@ -128,14 +127,18 @@ class QueryString:
                         or (len(containsIs) == 1 and len(containsOp) == 1
                         and not re.search(r'is( not)? ',
                                           string.split(containsOp[0])[1])))
+
+        wise = None
         if not (containsIs or startsIs) or isAsAxisName:
-            if startsOp and (not containsOp or self.elementQuery is True):
+            if startsOp and (not containsOp or elementQuery is True):
                 self.function = operatorDict[startsOp.group(1)]
                 try: # convert from a string, if possible
                     self.filter = float(startsOp.group(2))
                 except ValueError:
                     self.filter = startsOp.group(2)
-            elif len(containsOp) == 1:
+                wise = 'element'
+            elif (len(containsOp) == 1
+                    and (not startsOp or elementQuery is False)):
                 try: # must have single operator otherwise is ambiguous
                     name, optr, value = re.split(r' (==|!=|>=|>|<=|<) ',
                                                  string)
@@ -145,6 +148,7 @@ class QueryString:
                         self.filter = float(value)
                     except ValueError:
                         self.filter = value
+                    wise = 'axis'
                 except ValueError:
                     pass
         # last "is" needs to be valid for remaining cases
@@ -156,6 +160,7 @@ class QueryString:
                     self.function = lambda e: not func(e)
                 else:
                     self.function = func
+                wise = 'element'
         else:
             identifier, funcName = string.rsplit(containsIs[-1], 1)
             if funcName in QueryString._accepted:
@@ -165,12 +170,21 @@ class QueryString:
                     self.function = lambda v: not func(v)
                 else:
                     self.function = func
+                wise = 'axis'
 
+        queryHelp = 'See help(nimble.match.QueryString) for query string '
+        queryHelp += 'requirements'
+        if elementQuery is True and wise == 'axis':
+            msg = 'The query string is designated as elementwise but does not '
+            msg += 'begin with an operator. {}'
+            raise InvalidArgumentValue(msg.format(queryHelp))
+        if elementQuery is False and wise == 'element':
+            msg = 'The query string is designated for points/features but '
+            msg += 'appears to be elementwise. {}'
+            raise InvalidArgumentValue(msg.format(queryHelp))
         if self.function is None:
-            msg = 'QueryString was not able to parse the string. See '
-            msg += 'help(nimble.match.QueryString) for query string '
-            msg += 'requirements.'
-            raise InvalidArgumentValue(msg)
+            msg = 'QueryString was not able to parse the string. {}'
+            raise InvalidArgumentValue(msg.format(queryHelp))
 
     def __call__(self, value):
         args = []

@@ -858,8 +858,9 @@ class Base(ABC):
             * function - accepts an element as its only argument and
               returns a boolean value to indicate if the element is a
               match
-            * query - string in the format 'OPERATOR VALUE' (i.e "< 10")
-              where OPERATOR can be ==, !=, <, >, <=, or >=
+            * query - string in the format 'OPERATOR VALUE' representing
+              a function (i.e "< 10", "== yes", or "is missing"). See
+              ``nimble.match.QueryString`` for string requirements.
         points : point, list of points
             The subset of points to limit the matching to. If None,
             the matching will apply to all points.
@@ -1026,8 +1027,9 @@ class Base(ABC):
             * function - accepts an element as its only argument and
               returns a boolean value to indicate if the element should
               be counted
-            * query - string in the format 'OPERATOR VALUE' (i.e "< 10")
-              where OPERATOR can be ==, !=, <, >, <=, or >=
+            * query - string in the format 'OPERATOR VALUE' representing
+              a function (i.e "< 10", "== yes", or "is missing"). See
+              ``nimble.match.QueryString`` for string requirements.
 
         Returns
         -------
@@ -2449,7 +2451,7 @@ class Base(ABC):
 
     @limitedTo2D
     def plotFeatureDistribution(self, feature, outPath=None, show=True,
-                                figureName=None, title=True, xAxisLabel=True,
+                                figureID=None, title=True, xAxisLabel=True,
                                 yAxisLabel=True, xMin=None, xMax=None,
                                 **kwargs):
         """
@@ -2473,11 +2475,11 @@ class Base(ABC):
             If True, display the plot. If False, the figure will not
             display until a plotting function with show=True is called.
             This allows for future plots to placed on the figure with
-            the same ``figureName`` before being shown.
-        figureName : str, None
-            A new figure will be generated when None or a new name,
-            otherwise the figure with that name will be activated to
-            draw the plot on an existing figure.
+            the same ``figureID`` before being shown.
+        figureID : hashable, None
+            A new figure will be generated for None or a new id,
+            otherwise the figure with that id will be activated to draw
+            the plot on the existing figure.
         title : str, None
             The title of the plot. If True, the title will identify the
             feature presented in the distribution.
@@ -2503,21 +2505,21 @@ class Base(ABC):
         histogram, chart, figure, image, graphics, kde, density,
         probability density function, visualization
         """
-        self._plotFeatureDistribution(feature, outPath, show, figureName,
+        self._plotFeatureDistribution(feature, outPath, show, figureID,
                                       title, xAxisLabel, yAxisLabel, xMin,
                                       xMax, **kwargs)
 
-    def _plotFeatureDistribution(self, feature, outPath, show, figureName,
+    def _plotFeatureDistribution(self, feature, outPath, show, figureID,
                                  title, xAxisLabel, yAxisLabel, xMin, xMax,
                                  **kwargs):
         return self._plotDistribution('feature', feature, outPath, show,
-                                      figureName, title, xAxisLabel,
+                                      figureID, title, xAxisLabel,
                                       yAxisLabel, xMin, xMax, **kwargs)
 
     @pyplotRequired
-    def _plotDistribution(self, axis, identifier, outPath, show, figureName,
+    def _plotDistribution(self, axis, identifier, outPath, show, figureID,
                           title, xAxisLabel, yAxisLabel, xMin, xMax, **kwargs):
-        _, ax = plotFigureHandling(figureName)
+        _, ax = plotFigureHandling(figureID)
         plotUpdateAxisLimits(ax, xMin, xMax, None, None)
 
         axisObj = self._getAxis(axis)
@@ -2572,7 +2574,7 @@ class Base(ABC):
     @limitedTo2D
     def plotFeatureAgainstFeatureRollingAverage(
             self, x, y, sampleSizeForAverage=20, groupByFeature=None,
-            trend=None, outPath=None, show=True, figureName=None, title=True,
+            trend=None, outPath=None, show=True, figureID=None, title=True,
             xAxisLabel=True, yAxisLabel=True, xMin=None, xMax=None, yMin=None,
             yMax=None, **kwargs):
         """
@@ -2615,11 +2617,11 @@ class Base(ABC):
             If True, display the plot. If False, the figure will not
             display until a plotting function with show=True is called.
             This allows for future plots to placed on the figure with
-            the same ``figureName`` before being shown.
-        figureName : str, None
-            A new figure will be generated when None or a new name,
-            otherwise the figure with that name will be activated to
-            draw the plot on an existing figure.
+            the same ``figureID`` before being shown.
+        figureID : hashable, None
+            A new figure will be generated for None or a new id,
+            otherwise the figure with that id will be activated to draw
+            the plot on the existing figure.
         title : str, None
             The title of the plot. If True, the title will identify the
             two features presented in the plot.
@@ -2646,13 +2648,13 @@ class Base(ABC):
         """
         self._plotFeatureAgainstFeature(
             x, y, groupByFeature, sampleSizeForAverage, trend, outPath, show,
-            figureName, title, xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax,
+            figureID, title, xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax,
             **kwargs)
 
     @limitedTo2D
     def plotFeatureAgainstFeature(
             self, x, y, groupByFeature=None, trend=None, outPath=None,
-            show=True, figureName=None, title=True, xAxisLabel=True,
+            show=True, figureID=None, title=True, xAxisLabel=True,
             yAxisLabel=True, xMin=None, xMax=None, yMin=None, yMax=None,
             **kwargs):
         """
@@ -2687,11 +2689,11 @@ class Base(ABC):
             If True, display the plot. If False, the figure will not
             display until a plotting function with show=True is called.
             This allows for future plots to placed on the figure with
-            the same ``figureName`` before being shown.
-        figureName : str, None
-            A new figure will be generated when None or a new name,
-            otherwise the figure with that name will be activated to
-            draw the plot on an existing figure.
+            the same ``figureID`` before being shown.
+        figureID : hashable, None
+            A new figure will be generated for None or a new id,
+            otherwise the figure with that id will be activated to draw
+            the plot on the existing figure.
         title : str, None
             The title of the plot. If True, the title will identify the
             two features presented in the plot.
@@ -2723,18 +2725,18 @@ class Base(ABC):
         graphics, visualization
         """
         self._plotFeatureAgainstFeature(
-            x, y, groupByFeature, None, trend, outPath, show, figureName,
+            x, y, groupByFeature, None, trend, outPath, show, figureID,
             title, xAxisLabel, yAxisLabel, xMin, xMax, yMin, yMax, **kwargs)
 
 
     def _plotFeatureAgainstFeature(
             self, x, y, groupByFeature, sampleSizeForAverage, trend, outPath,
-            show, figureName, title, xAxisLabel, yAxisLabel, xMin, xMax, yMin,
+            show, figureID, title, xAxisLabel, yAxisLabel, xMin, xMax, yMin,
             yMax, **kwargs):
         if groupByFeature is None:
             self._plotCross(
                 x, 'feature', y, 'feature', sampleSizeForAverage, trend,
-                outPath, show, figureName, title, xAxisLabel, yAxisLabel, xMin,
+                outPath, show, figureID, title, xAxisLabel, yAxisLabel, xMin,
                 xMax, yMin, yMax, **kwargs)
         else:
             grouped = self.groupByFeature(groupByFeature)
@@ -2751,9 +2753,9 @@ class Base(ABC):
             else:
                 colors = None
 
-            if show and not figureName:
+            if show and not figureID:
                 # need a figure name for plotting loop
-                figureName = 'Nimble Figure'
+                figureID = 'Nimble Figure'
             for label in labels:
                 showFig = show and label == lastLabel
                 if colors:
@@ -2764,7 +2766,7 @@ class Base(ABC):
                         raise KeyError(msg.format(label)) from e
                 grouped[label]._plotCross(
                     x, 'feature', y, 'feature', sampleSizeForAverage, trend,
-                    outPath, showFig, figureName, title, xAxisLabel,
+                    outPath, showFig, figureID, title, xAxisLabel,
                     yAxisLabel, xMin, xMax, yMin, yMax, label=label, **kwargs)
 
 
@@ -2784,9 +2786,9 @@ class Base(ABC):
 
     @pyplotRequired
     def _plotCross(self, x, xAxis, y, yAxis, sampleSizeForAverage, trend,
-                   outPath, show, figureName, title, xAxisLabel, yAxisLabel,
+                   outPath, show, figureID, title, xAxisLabel, yAxisLabel,
                    xMin, xMax, yMin, yMax, **kwargs):
-        _, ax = plotFigureHandling(figureName)
+        _, ax = plotFigureHandling(figureID)
         plotUpdateAxisLimits(ax, xMin, xMax, yMin, yMax)
 
         xAxisObj = self._getAxis(xAxis)
@@ -2866,7 +2868,7 @@ class Base(ABC):
     @limitedTo2D
     def plotFeatureGroupMeans(
             self, feature, groupFeature, horizontal=False, outPath=None,
-            show=True, figureName=None, title=True, xAxisLabel=True,
+            show=True, figureID=None, title=True, xAxisLabel=True,
             yAxisLabel=True, **kwargs):
         """
         Plot the means of a feature grouped by another feature.
@@ -2891,11 +2893,11 @@ class Base(ABC):
             If True, display the plot. If False, the figure will not
             display until a plotting function with show=True is called.
             This allows for future plots to placed on the figure with
-            the same ``figureName`` before being shown.
-        figureName : str, None
-            A new figure will be generated when None or a new name,
-            otherwise the figure with that name will be activated to
-            draw the plot on an existing figure.
+            the same ``figureID`` before being shown.
+        figureID : hashable, None
+            A new figure will be generated for None or a new id,
+            otherwise the figure with that id will be activated to draw
+            the plot on the existing figure.
         title : str, bool
             The title of the plot. If True, a title will automatically
             be generated.
@@ -2921,13 +2923,13 @@ class Base(ABC):
         """
         self._plotFeatureGroupStatistics(
             nimble.calculate.mean, feature, groupFeature, None, True,
-            horizontal, outPath, show, figureName, title, xAxisLabel,
+            horizontal, outPath, show, figureID, title, xAxisLabel,
             yAxisLabel, **kwargs)
 
     @limitedTo2D
     def plotFeatureGroupStatistics(
             self, statistic, feature, groupFeature, subgroupFeature=None,
-            horizontal=False, outPath=None, show=True, figureName=None,
+            horizontal=False, outPath=None, show=True, figureID=None,
             title=True, xAxisLabel=True, yAxisLabel=True, **kwargs):
         """
         Plot an aggregate statistic for each group of a feature.
@@ -2962,11 +2964,11 @@ class Base(ABC):
             If True, display the plot. If False, the figure will not
             display until a plotting function with show=True is called.
             This allows for future plots to placed on the figure with
-            the same ``figureName`` before being shown.
-        figureName : str, None
-            A new figure will be generated when None or a new name,
-            otherwise the figure with that name will be activated to
-            draw the plot on an existing figure.
+            the same ``figureID`` before being shown.
+        figureID : hashable, None
+            A new figure will be generated for None or a new id,
+            otherwise the figure with that id will be activated to draw
+            the plot on the existing figure.
         title : str, bool
             The title of the plot. If True, a title will automatically
             be generated.
@@ -2992,15 +2994,15 @@ class Base(ABC):
         """
         self._plotFeatureGroupStatistics(
             statistic, feature, groupFeature, subgroupFeature, False,
-            horizontal, outPath, show, figureName, title, xAxisLabel,
+            horizontal, outPath, show, figureID, title, xAxisLabel,
             yAxisLabel, **kwargs)
 
     @pyplotRequired
     def _plotFeatureGroupStatistics(
             self, statistic, feature, groupFeature, subgroupFeature,
-            confidenceIntervals, horizontal, outPath, show, figureName, title,
+            confidenceIntervals, horizontal, outPath, show, figureID, title,
             xAxisLabel, yAxisLabel, **kwargs):
-        fig, ax = plotFigureHandling(figureName)
+        fig, ax = plotFigureHandling(figureID)
         featureName = self._formattedStringID('feature', feature)
         if hasattr(statistic, '__name__') and statistic.__name__ != '<lambda>':
             statName = statistic.__name__
