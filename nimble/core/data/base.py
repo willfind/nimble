@@ -2558,9 +2558,10 @@ class Base(ABC):
                     msg += "must be a dict mapping labels to colors"
                     raise InvalidArgumentType(msg)
                 colors = kwargs['color'].copy()
+                del kwargs['color']
             else:
                 colors = None
-            del kwargs['color']
+
             if show and not figureID:
                 # need a figure name for plotting loop
                 figureID = 'Nimble Figure'
