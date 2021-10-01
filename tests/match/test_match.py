@@ -2,8 +2,10 @@ import numpy as np
 
 import nimble
 from nimble import match
+from nimble.exceptions import InvalidArgumentValue
 from tests.helpers import noLogEntryExpected
 from tests.helpers import getDataConstructors
+from tests.helpers import raises
 
 @noLogEntryExpected
 def backend_match_value(toMatch, true, false):
@@ -247,5 +249,31 @@ def test_match_allValues_func():
 @noLogEntryExpected
 def test_match_QueryString():
     match.QueryString("x == 0")
-    match.QueryString("is missing")
+    match.QueryString("isAFeature is missing")
     match.QueryString("> 3")
+
+def test_match_QueryString_elementQueryIsSet():
+    elem = match.QueryString('== feature one > 3', elementQuery=True)
+    assert elem('feature one > 3')
+
+    axis = match.QueryString('== feature one > 3', elementQuery=False)
+    fnames = ['== feature one', '== feature two', '== feature three']
+    data = nimble.data('Matrix', [[1, 3, 5], [4, 6, 8]], featureNames=fnames)
+    assert axis(data.points[1])
+    assert not axis(data.points[0])
+
+    with raises(InvalidArgumentValue):
+        match.QueryString('> 3', elementQuery=False)
+
+    with raises(InvalidArgumentValue):
+        match.QueryString('ft2 > 3', elementQuery=True)
+
+def test_match_QueryString_invalid():
+    with raises(InvalidArgumentValue):
+        match.QueryString("x == 3 == 0")
+    with raises(InvalidArgumentValue):
+        match.QueryString("is not there")
+    with raises(InvalidArgumentValue):
+        match.QueryString("is 1")
+    with raises(InvalidArgumentValue):
+        match.QueryString("< feature > 3")

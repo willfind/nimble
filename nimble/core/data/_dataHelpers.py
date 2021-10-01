@@ -542,12 +542,14 @@ def denseCountUnique(obj, points=None, features=None):
     return {intMap[val]: count for val, count in zip(vals, counts)}
 
 
-def wrapMatchFunctionFactory(matchFunc):
+def wrapMatchFunctionFactory(matchFunc, elementwise=True):
     """
     Wrap functions for matchingElements to validate output.
 
     Function must output a boolean value (True, False, 0, 1).
     """
+    if isinstance(matchFunc, str):
+        matchFunc = match.QueryString(matchFunc, elementwise)
     try:
         matchFunc(0, 0, 0)
 
