@@ -441,7 +441,7 @@ class Axis(ABC):
         return ret
 
     def _matching(self, function, useLog=None):
-        wrappedMatch = wrapMatchFunctionFactory(function)
+        wrappedMatch = wrapMatchFunctionFactory(function, elementwise=False)
 
         ret = self._calculate_backend(wrappedMatch, None)
 
@@ -716,8 +716,12 @@ class Axis(ABC):
 
         @functools.wraps(fillFunc)
         def fillFunction(vector):
-            isBase = isinstance(matchingElements, nimble.core.data.Base)
-            if not isBase:
+            if isinstance(matchingElements, str):
+                try:
+                    matcher = QueryString(matchingElements)
+                except InvalidArgumentValue:
+                    matcher = matchingElements
+            elif not isinstance(matchingElements, nimble.core.data.Base):
                 matcher = matchingElements
             elif self._axis == 'point':
                 matcher = matchingElements[next(idxOrder), :]
@@ -893,9 +897,9 @@ class Axis(ABC):
     @pyplotRequired
     def _plotComparison(
             self, statistic, identifiers, confidenceIntervals, horizontal,
-            outPath, show, figureName, title, xAxisLabel, yAxisLabel,
+            outPath, show, figureID, title, xAxisLabel, yAxisLabel,
             legendTitle, **kwargs):
-        fig, ax = plotFigureHandling(figureName)
+        fig, ax = plotFigureHandling(figureID)
         if identifiers is None:
             identifiers = list(range(len(self)))
         axisRange = range(1, len(identifiers) + 1)
