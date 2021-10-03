@@ -10,85 +10,121 @@ import re
 
 import pytest
 
-@pytest.mark.slow
-def test_callExamplesAsMain():
-    # collect the filenames of the scripts we want to run
-    examplesDir = os.path.join(os.getcwd(), 'documentation', 'source',
-                               'examples')
-    examplesFiles = [f for f in os.listdir(examplesDir) if f.endswith('.py')]
-    results = {}
+EXDIR = os.path.join(os.getcwd(), 'documentation', 'source', 'examples')
+
+def back_singleExample(scriptLoc):
+    """
+    Execute the script at the given location, and return the CompletedProcess
+    """
+    cmd = ("python", scriptLoc)
+    out = subprocess.PIPE
+    err = subprocess.PIPE
+
+    # We want these scripts to run with the local copy of nimble, so we
+    # need the curren(t working directory as established by runTests) to be
+    # on the path variable in the subprocess. However, we also want the
+    # environment to otherwise be the same (because we know it works).
+    # Therefore we reuse the environment, except with a modification to
+    # PYTHONPATH
+    env = os.environ
+    env['PYTHONPATH'] = os.getcwd()
+    return subprocess.run(cmd, stdout=out, stderr=err, cwd=EXDIR, env=env)
+
+def back_singleExample_withPlots(scriptLoc):
+    """
+    Modify the script to write plots out to a temp file, then excute
+    """
+    tmpNTF = tempfile.NamedTemporaryFile
+    plotStart = re.compile(r'\.plot.*\(')
+
+    with open(scriptLoc) as f, tmpNTF('w+') as tSrc, tmpNTF('w+') as tPlot:
+        openParen = False
+        seenShow = False
+        for line in f.readlines():
+            if openParen or re.search(plotStart, line):
+                openParen = True
+                if 'show' in line:
+                    line.replace('show=True', 'show=False')
+                    seenShow = True
+                if ')' in line:
+                    useComma = line[line.index(')')-1] != '(' 
+                    changeTxt = "outPath='{}')".format(tPlot.name)
+                    if not seenShow:
+                        changeTxt = "show=False, " + changeTxt
+                    if useComma:
+                        changeTxt = ', ' + changeTxt
+                    line = line.replace(')', changeTxt)
+                    openParen = False
+                    seenShow = False
+            tSrc.write(line)
+
+        scriptLoc = tSrc.name
+        tSrc.seek(0)
+
+        return back_singleExample(tSrc.name)
+
+def back_callExampleAsMain(script):
+    # check which backend needed
     scriptsWithPlots = ['unsupervised_learning.py', 'exploring_data.py']
 
-    for script in examplesFiles:
-        scriptLoc = os.path.join(examplesDir, script)
-        # Copy the script, commenting out plotting functions
-        if script in scriptsWithPlots:
-            tempFile = tempfile.NamedTemporaryFile('w+')
-            with open(scriptLoc) as f:
-                plotStart = re.compile(r'\.plot.*\(')
-                openParen = 0
-                for line in f.readlines():
-                    if openParen or re.search(plotStart, line):
-                        tempFile.write('# ' + line)
-                        openParen += line.count('(')
-                        openParen -= line.count(')')
-                    else:
-                        tempFile.write(line)
+    scriptLoc = os.path.join(EXDIR, script)
+    if script in scriptsWithPlots:
+        cp = back_singleExample_withPlots(scriptLoc)
+    else:
+        cp = back_singleExample(scriptLoc)
 
-            scriptLoc = tempFile.name
-            tempFile.seek(0)
+    outputFile = script[:-3] + '_output.txt'
+    expOut = os.path.join(EXDIR, 'outputs', outputFile)
+    assert cp.returncode == 0
 
-        cmd = ("python", scriptLoc)
-        out = subprocess.PIPE
-        err = subprocess.PIPE
+    outLines = cp.stdout.split(b'\n')
+    if script == 'neural_networks.py':
+        # check only final line output, ignore intermediate updates
+        outLines = [l.split(b'\r')[-1] for l in outLines]
 
-        # We want these scripts to run with the local copy of nimble, so we
-        # need the current working directory (as established by runTests) to be
-        # on the path variable in the subprocess. However, we also want the
-        # environment to otherwise be the same (because we know it works).
-        # Therefore we reuse the environment, except with a modification to
-        # PYTHONPATH
-        env = os.environ
-        env['PYTHONPATH'] = os.getcwd()
-        cp = subprocess.run(cmd, stdout=out, stderr=err, cwd=examplesDir,
-                            env=env)
-        results[script] = cp
-        if script in scriptsWithPlots:
-            tempFile.close()
+    with open(expOut, 'rb') as exp:
+        expLines = exp.readlines()
+        for out, exp in zip(outLines, expLines):
+            # remove trailing whitespace
+            out = out.rstrip()
+            exp = exp.rstrip()
+            if exp.startswith(b'REGEX: '):
+                exp = exp[7:]
+                assert re.match(exp, out)
+            else:
+                assert exp == out
 
-    print("")
-    print("*** Results ***")
-    print("")
+@pytest.mark.slow
+def test_examples_additional_functionality():
+    script = 'additional_functionality.py'
+    back_callExampleAsMain(script)
 
-    failures = []
-    for key in results.keys():
-        cp = results[key]
-        outputFile = key[:-3] + '_output.txt'
-        expOut = os.path.join(examplesDir, 'outputs', outputFile)
-        if cp.returncode != 0:
-            failures.append(key)
-            print(key + " : ", cp.stderr.decode('utf-8'))
-            print("")
-        else:
-            outLines = cp.stdout.split(b'\n')
-            if key == 'neural_networks.py':
-                # check only final line output, ignore intermediate updates
-                outLines = [l.split(b'\r')[-1] for l in outLines]
-            with open(expOut, 'rb') as exp:
-                expLines = exp.readlines()
-                for i, (out, exp) in enumerate(zip(outLines, expLines)):
-                    # remove trailing whitespace
-                    out = out.rstrip()
-                    exp = exp.rstrip()
-                    if exp.startswith(b'REGEX: '):
-                        exp = exp[7:]
-                        match = re.match(exp, out)
-                    else:
-                        match = exp == out
-                    if not match:
-                        failures.append(key)
-                        print(key + " : Did not match output in " + outputFile)
-                        print('  Discrepancy found in line {i}'.format(i=i))
-                        break
+@pytest.mark.slow
+def test_examples_cleaning_data():
+    script = 'cleaning_data.py'
+    back_callExampleAsMain(script)
 
-    assert not failures
+@pytest.mark.slow
+def test_examples_exploring_data():
+    script = 'exploring_data.py'
+    back_callExampleAsMain(script)
+
+@pytest.mark.slow
+def test_examples_merging_and_tidying_data():
+    script = 'merging_and_tidying_data.py'
+    back_callExampleAsMain(script)
+
+@pytest.mark.slow
+def test_examples_neural_networks():
+    script = 'neural_networks.py'
+    back_callExampleAsMain(script)
+
+@pytest.mark.slow
+def test_examples_supervised_learning():
+    script = 'supervised_learning.py'
+    back_callExampleAsMain(script)
+
+@pytest.mark.slow
+def test_examples_unsupervised_learning():
+    script = 'unsupervised_learning.py'
+    back_callExampleAsMain(script)
