@@ -72,7 +72,7 @@ def prepopulatedLogSafetyWrapper(testFunc):
         # edit log sessionNumbers and timestamps
         location = nimble.settings.get("logger", "location")
         name = nimble.settings.get("logger", "name")
-        pathToFile = os.path.join(location, name + ".mr")
+        pathToFile = os.path.join(location, name + ".db")
         conn = sqlite3.connect(pathToFile)
         c = conn.cursor()
         c.execute("UPDATE logger SET timestamp = '2018-03-22 12:00:00' WHERE entry <= 18")
@@ -97,7 +97,7 @@ def removeLogFile():
     nimble.core.logger.active.cleanup()
     location = nimble.settings.get("logger", "location")
     name = nimble.settings.get("logger", "name")
-    pathToFile = os.path.join(location, name + ".mr")
+    pathToFile = os.path.join(location, name + ".db")
     if os.path.exists(pathToFile):
         os.remove(pathToFile)
 
@@ -117,7 +117,7 @@ def testLogDirectoryAndFileSetup():
     newDirectory = os.path.join(nimble.nimblePath, "notCreatedDirectory")
     nimble.settings.set("logger", "location", newDirectory)
     nimble.settings.set("logger", "name", 'notCreatedFile')
-    pathToFile = os.path.join(newDirectory, "notCreatedFile.mr")
+    pathToFile = os.path.join(newDirectory, "notCreatedFile.db")
     assert not os.path.exists(newDirectory)
     assert not os.path.exists(pathToFile)
 

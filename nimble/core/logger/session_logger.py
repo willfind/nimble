@@ -159,15 +159,15 @@ class SessionLogger(object):
     logLocation : str
         The path to the directory containing the log file
     logName : str
-        The name of the log file. The suffix '.mr' will be added to the
-        name, to indicate this is the 'machine-readable' version of the
-        logged information.
+        The name of the log file. The suffix '.db' will be added to the
+        name, to indicate this is a sqlite database file of the logged
+        information.
     """
     def __init__(self, logLocation, logName):
         fullLogDesignator = os.path.join(logLocation, logName)
         self.logLocation = logLocation
         self.logName = logName
-        self.logFileName = fullLogDesignator + ".mr"
+        self.logFileName = fullLogDesignator + ".db"
         self.sessionNumber = None
         self.connection = None
         self.cursor = None
