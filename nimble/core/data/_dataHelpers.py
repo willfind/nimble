@@ -15,7 +15,7 @@ from nimble import match
 from nimble._utility import pd, plt, scipy
 from nimble._utility import inspectArguments
 from nimble._utility import isAllowedSingleElement
-from nimble._utility import is2DArray, numpy2DArray
+from nimble._utility import is2DArray
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction, PackageException
@@ -1181,19 +1181,6 @@ def isValid2DObject(data):
     Determine validity of object for nimble data object instantiation.
     """
     return is2DArray(data) or is2DList(data)
-
-def numpyArrayFromList(data):
-    """
-    Use object dtype when all data is not int or float.
-    """
-    ret = numpy2DArray(data)
-    if ret.dtype not in (bool, np.bool_, np.object_):
-        # numpy will autoconvert bool values, we want to keep them as bools
-        for point in data:
-            if any(isinstance(val, bool) for val in point):
-                return numpy2DArray(data, dtype=np.object_)
-
-    return ret
 
 def modifyNumpyArrayValue(arr, index, newVal):
     """

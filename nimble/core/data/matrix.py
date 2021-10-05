@@ -22,7 +22,7 @@ from ._dataHelpers import csvCommaFormat
 from ._dataHelpers import denseCountUnique
 from ._dataHelpers import NimbleElementIterator
 from ._dataHelpers import convertToNumpyOrder, modifyNumpyArrayValue
-from ._dataHelpers import isValid2DObject, numpyArrayFromList
+from ._dataHelpers import isValid2DObject
 
 @inheritDocstringsFactory(Base)
 class Matrix(Base):
@@ -46,10 +46,8 @@ class Matrix(Base):
             msg += "or python list."
             raise InvalidArgumentType(msg)
 
-        if isinstance(data, np.matrix):
+        if isinstance(data, (np.matrix, list)):
             data = numpy2DArray(data)
-        elif isinstance(data, list):
-            data = numpyArrayFromList(data)
         if reuseData:
             self._data = data
         else:

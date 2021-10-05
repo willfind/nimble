@@ -13,6 +13,7 @@ from nimble.exceptions import PackageException
 from nimble._utility import inheritDocstringsFactory
 from nimble._utility import scipy, pd
 from nimble._utility import sparseMatrixToArray, removeDuplicatesNative
+from nimble._utility import numpy2DArray
 from .base import Base
 from .views import BaseView
 from .sparseAxis import SparsePoints, SparsePointsView
@@ -24,7 +25,7 @@ from ._dataHelpers import csvCommaFormat
 from ._dataHelpers import denseCountUnique
 from ._dataHelpers import NimbleElementIterator
 from ._dataHelpers import convertToNumpyOrder, modifyNumpyArrayValue
-from ._dataHelpers import isValid2DObject, numpyArrayFromList
+from ._dataHelpers import isValid2DObject
 from ._dataHelpers import validateAxis
 
 @inheritDocstringsFactory(Base)
@@ -64,7 +65,7 @@ class Sparse(Base):
             self._data = data.tocoo()
         else: # data is np.array or python list
             if isinstance(data, list):
-                data = numpyArrayFromList(data)
+                data = numpy2DArray(data)
             # Sparse will convert None to 0 so we need to use np.nan instead
             # pylint: disable=singleton-comparison
             if data[data == None].size:

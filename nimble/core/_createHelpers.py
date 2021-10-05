@@ -761,7 +761,9 @@ def convertData(returnType, rawData, pointNames, featureNames, copied):
                         rawData = rawData.copy()
                     for i, iterator in enumerate(rawData):
                         rawData[i] = list(iterator)
-        elif returnType == 'Matrix' and len(rawData.shape) == 1:
+        elif (returnType == 'Matrix' and
+              (len(rawData.shape) == 1 or
+              not allowedNumpyDType(rawData.dtype))):
             rawData = numpy2DArray(rawData)
         return rawData
     ret = convertToBest(rawData, pointNames, featureNames)
