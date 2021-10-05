@@ -131,15 +131,38 @@ def allowedNumpyDType(dtype):
 def numpy2DArray(obj, dtype=None, copy=True, order='K', subok=False):
     """
     Mirror np.array() but require the data be two-dimensional.
-    """
-    ret = np.array(obj, dtype=dtype, copy=copy, order=order, subok=subok,
-                   ndmin=2)
-    if len(ret.shape) > 2:
-        raise InvalidArgumentValue('obj cannot be more than two-dimensional')
 
-    if not allowedNumpyDType(ret.dtype):
+    There is a risk that a large string in an object will lead numpy to
+    allocate much more memory than necessary. So, if the object is not
+    already a numpy array, we need to load as object dtype first then
+    determine if a numeric dtype can be applied.
+    """
+    if dtype is not None:
+        dtype = np.dtype(dtype)
+        if not allowedNumpyDType(dtype):
+            raise ValueError("only numeric dtypes or object dtype are allowed")
+        ret = np.array(obj, dtype=dtype, copy=copy, order=order, subok=subok,
+                       ndmin=2)
+    elif isinstance(obj, np.ndarray):
+        if not allowedNumpyDType(obj.dtype):
+            dtype = np.object_
+        ret = np.array(obj, dtype=dtype, copy=copy, order=order, subok=subok,
+                       ndmin=2)
+    else:
         ret = np.array(obj, dtype=np.object_, copy=copy, order=order,
                        subok=subok, ndmin=2)
+        # check the unique element types to determine dtype
+        typed = np.vectorize(type, otypes=[object])(ret.ravel())
+        unique = set(typed)
+        if (all(issubclass(u, numbers.Number) for u in unique) and
+                (len(unique) == 1 or
+                 # stay with object dtype to avoid bools being converted
+                 not any(issubclass(u, (bool, np.bool_)) for u in unique))):
+            ret = np.array(obj, dtype=None, copy=copy, order=order,
+                           subok=subok, ndmin=2)
+
+    if len(ret.shape) > 2:
+        raise InvalidArgumentValue('obj cannot be more than two-dimensional')
 
     return ret
 
