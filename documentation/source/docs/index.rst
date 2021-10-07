@@ -49,17 +49,17 @@ Using Data Objects
 All four data objects, List, Matrix, Sparse, and DataFrame, have the same
 functionality because they inherit from Nimble's ``Base`` object. The ``Base``
 object methods handle operations that apply to the entire data object or the
-individual elements of the object. Each object also has ``features`` and
-``points`` attributes to connect the ``Base`` object with the ``Features``
-and ``Points`` objects, respectively. These provide methods that operate
-over the data not as a collection of elements, but as a collection of abstract
-slices: each point being those elements within some shared context, and each
-feature being all elements of the same kind across different contexts.
+individual elements of the object. Each object has ``features`` and ``points``
+attributes to connect the ``Base`` object with the ``Features`` and ``Points``
+objects, respectively. These provide methods that operate over the data not as
+a collection of elements, but as a collection of abstract slices: each point
+being those elements within some shared context, and each feature being all
+elements of the same kind across different contexts.
 
-Points and Features form the two axes along which a Base object is
-organized. Each element, being contained in exactly one of the object's
-points and exactly one of the object's features, has it's position
-referred to by the index or name of both the containing point and feature.
+Points and Features form the two axes along which a Base object is organized
+Each element, being contained in exactly one of the object's points and exactly
+one of the object's features, has its position referred to by the index or name
+of both the containing point and feature.
 
 .. autosummary::
    :toctree: generated/
@@ -93,8 +93,8 @@ representation of the information to stdout.
    nimble.showLearnerNames
    nimble.learnerParameters
    nimble.showLearnerParameters
-   nimble.learnerDefaultValues
-   nimble.showLearnerDefaultValues
+   nimble.learnerParameterDefaults
+   nimble.showLearnerParameterDefaults
    nimble.learnerType
 
 **Using a learner**

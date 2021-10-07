@@ -37,14 +37,14 @@ def inverse(aObj):
 
     Examples
     --------
-    >>> raw = [[1, 2], [3, 4]]
-    >>> data = nimble.data('Matrix', raw)
-    >>> data
+    >>> lst = [[1, 2], [3, 4]]
+    >>> X = nimble.data('Matrix', lst)
+    >>> X
     Matrix(
         [[1 2]
          [3 4]]
         )
-    >>> inverse(data)
+    >>> inverse(X)
     Matrix(
         [[-2.000 1.000 ]
          [1.500  -0.500]]
@@ -129,14 +129,14 @@ def pseudoInverse(aObj, method='svd'):
 
     Examples
     --------
-    >>> raw = [[1, 2], [3, 4]]
-    >>> data = nimble.data('Matrix', raw)
-    >>> data
+    >>> lst = [[1, 2], [3, 4]]
+    >>> X = nimble.data('Matrix', lst)
+    >>> X
     Matrix(
         [[1 2]
          [3 4]]
         )
-    >>> pseudoInverse(data)
+    >>> pseudoInverse(X)
     Matrix(
         [[-2.000 1.000 ]
          [1.500  -0.500]]

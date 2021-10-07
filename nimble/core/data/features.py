@@ -25,6 +25,16 @@ from ._dataHelpers import limitedTo2D
 class Features(ABC):
     """
     Methods that apply to the features axis of a Base object.
+
+    This object can be used to iterate over the features and contains
+    methods that operate over the data in the associated Base object
+    feature-by-feature.
+
+    A feature is an abstract slice of all data elements of the same kind
+    across different contexts. In a concrete sense, features can be
+    thought of as the data columns but a column can be organized in many
+    ways. To optimize for machine learning, each column should be
+    modified to meet the definition of a feature.
     """
     def __init__(self, base):
         """
@@ -66,10 +76,14 @@ class Features(ABC):
 
         Examples
         --------
-        >>> data = nimble.identity('Matrix', 4,
-        ...                        featureNames=['a', 'b', 'c', 'd'])
-        >>> data.features.getName(1)
+        >>> X = nimble.identity('Matrix', 4,
+        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> X.features.getName(1)
         'b'
+
+        Keywords
+        --------
+        column, title, header, heading, attribute, identifier
         """
         return self._getName(index)
 
@@ -87,10 +101,14 @@ class Features(ABC):
 
         Examples
         --------
-        >>> data = nimble.identity('Matrix', 4,
-        ...                        featureNames=['a', 'b', 'c', 'd'])
-        >>> data.features.getNames()
+        >>> X = nimble.identity('Matrix', 4,
+        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> X.features.getNames()
         ['a', 'b', 'c', 'd']
+
+        Keywords
+        --------
+        columns, titles, headers, headings, attributes, identifiers
         """
         return self._getNames()
 
@@ -124,11 +142,15 @@ class Features(ABC):
 
         Examples
         --------
-        >>> data = nimble.identity('Matrix', 4,
-        ...                        featureNames=['a', 'b', 'c', 'd'])
-        >>> data.features.setName('b', 'new')
-        >>> data.features.getNames()
+        >>> X = nimble.identity('Matrix', 4,
+        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> X.features.setName('b', 'new')
+        >>> X.features.getNames()
         ['a', 'new', 'c', 'd']
+
+        Keywords
+        --------
+        column, title, header, heading, attribute, identifier
         """
         self._setName(oldIdentifier, newName, useLog)
 
@@ -163,11 +185,15 @@ class Features(ABC):
 
         Examples
         --------
-        >>> data = nimble.identity('Matrix', 4,
-        ...                        featureNames=['a', 'b', 'c', 'd'])
-        >>> data.features.setNames(['1', '2', '3', '4'])
-        >>> data.features.getNames()
+        >>> X = nimble.identity('Matrix', 4,
+        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> X.features.setNames(['1', '2', '3', '4'])
+        >>> X.features.getNames()
         ['1', '2', '3', '4']
+
+        Keywords
+        --------
+        columns, titles, headers, headings, attributes, identifiers
         """
         self._setNames(assignments, useLog)
 
@@ -194,12 +220,16 @@ class Features(ABC):
 
         Examples
         --------
-        >>> data = nimble.identity('Matrix', 4,
-        ...                        featureNames=['a', 'b', 'c', 'd'])
-        >>> data.features.getIndex('c')
+        >>> X = nimble.identity('Matrix', 4,
+        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> X.features.getIndex('c')
         2
-        >>> data.features.getIndex(-1)
+        >>> X.features.getIndex(-1)
         3
+
+        Keywords
+        --------
+        position, spot, location, identifier
         """
         return self._getIndex(identifier)
 
@@ -225,10 +255,14 @@ class Features(ABC):
 
         Examples
         --------
-        >>> data = nimble.identity('Matrix', 4,
-        ...                        featureNames=['a', 'b', 'c', 'd'])
-        >>> data.features.getIndices(['c', 'a', 'd'])
+        >>> X = nimble.identity('Matrix', 4,
+        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> X.features.getIndices(['c', 'a', 'd'])
         [2, 0, 3]
+
+        Keywords
+        --------
+        positions, spots, locations, identifiers
         """
         return self._getIndices(names)
 
@@ -247,12 +281,16 @@ class Features(ABC):
 
         Examples
         --------
-        >>> data = nimble.identity('Matrix', 4,
-        ...                        featureNames=['a', 'b', 'c', 'd'])
-        >>> data.features.hasName('a')
+        >>> X = nimble.identity('Matrix', 4,
+        ...                     featureNames=['a', 'b', 'c', 'd'])
+        >>> X.features.hasName('a')
         True
-        >>> data.features.hasName('e')
+        >>> X.features.hasName('e')
         False
+
+        Keywords
+        --------
+        title, header, heading, named
         """
         return self._hasName(name)
 
@@ -263,7 +301,7 @@ class Features(ABC):
     def copy(self, toCopy=None, start=None, end=None, number=None,
              randomize=False, useLog=None):
         """
-        Return a copy of certain features of this object.
+        Copy certain features of this object.
 
         A variety of methods for specifying the features to copy based
         on the provided parameters. If toCopy is not None, start and end
@@ -318,14 +356,14 @@ class Features(ABC):
 
         Examples
         --------
-        >>> raw = [[1, 2, 3, 4],
+        >>> lst = [[1, 2, 3, 4],
         ...        [1, 2, 3, 4],
         ...        [1, 2, 3, 4],
         ...        [1, 2, 3, 4]]
-        >>> data = nimble.data('Matrix', raw,
-        ...                    pointNames=['a', 'b', 'c', 'd'],
-        ...                    featureNames=['1', '2', '3', '4'])
-        >>> single = data.features.copy('1')
+        >>> X = nimble.data('Matrix', lst,
+        ...                 pointNames=['a', 'b', 'c', 'd'],
+        ...                 featureNames=['1', '2', '3', '4'])
+        >>> single = X.features.copy('1')
         >>> single
         Matrix(
             [[1]
@@ -335,7 +373,7 @@ class Features(ABC):
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
             featureNames={'1':0}
             )
-        >>> multiple = data.features.copy(['1', 3])
+        >>> multiple = X.features.copy(['1', 3])
         >>> multiple
         Matrix(
             [[1 4]
@@ -345,7 +383,7 @@ class Features(ABC):
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
             featureNames={'1':0, '4':1}
             )
-        >>> func = data.features.copy(lambda ft: sum(ft) < 10)
+        >>> func = X.features.copy(lambda ft: sum(ft) < 10)
         >>> func
         Matrix(
             [[1 2]
@@ -355,7 +393,7 @@ class Features(ABC):
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
             featureNames={'1':0, '2':1}
             )
-        >>> strFunc = data.features.copy("a >= 3")
+        >>> strFunc = X.features.copy("a >= 3")
         >>> strFunc
         Matrix(
             [[3 4]
@@ -365,7 +403,7 @@ class Features(ABC):
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
             featureNames={'3':0, '4':1}
             )
-        >>> startEnd = data.features.copy(start=1, end=2)
+        >>> startEnd = X.features.copy(start=1, end=2)
         >>> startEnd
         Matrix(
             [[2 3]
@@ -375,7 +413,7 @@ class Features(ABC):
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
             featureNames={'2':0, '3':1}
             )
-        >>> numberNoRandom = data.features.copy(number=2)
+        >>> numberNoRandom = X.features.copy(number=2)
         >>> numberNoRandom
         Matrix(
             [[1 2]
@@ -386,7 +424,7 @@ class Features(ABC):
             featureNames={'1':0, '2':1}
             )
         >>> nimble.random.setSeed(42)
-        >>> numberRandom = data.features.copy(number=2, randomize=True)
+        >>> numberRandom = X.features.copy(number=2, randomize=True)
         >>> numberRandom
         Matrix(
             [[1 4]
@@ -396,6 +434,10 @@ class Features(ABC):
             pointNames={'a':0, 'b':1, 'c':2, 'd':3}
             featureNames={'1':0, '4':1}
             )
+
+        Keywords
+        --------
+        duplicate, replicate, clone
         """
         return self._copy(toCopy, start, end, number, randomize, useLog)
 
@@ -461,9 +503,9 @@ class Features(ABC):
         --------
         Extract a single feature.
 
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> single = data.features.extract('a')
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> single = X.features.extract('a')
         >>> single
         List(
             [[1.000]
@@ -471,7 +513,7 @@ class Features(ABC):
              [0.000]]
             featureNames={'a':0}
             )
-        >>> data
+        >>> X
         List(
             [[0.000 0.000]
              [1.000 0.000]
@@ -481,9 +523,9 @@ class Features(ABC):
 
         Extract multiple features.
 
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> multiple = data.features.extract(['a', 2])
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> multiple = X.features.extract(['a', 2])
         >>> multiple
         List(
             [[1.000 0.000]
@@ -491,7 +533,7 @@ class Features(ABC):
              [0.000 1.000]]
             featureNames={'a':0, 'c':1}
             )
-        >>> data
+        >>> X
         List(
             [[0.000]
              [1.000]
@@ -501,9 +543,9 @@ class Features(ABC):
 
         Extract feature when the function returns True.
 
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> func = data.features.extract(lambda ft: ft[2] == 1)
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> func = X.features.extract(lambda ft: ft[2] == 1)
         >>> func
         List(
             [[0.000]
@@ -511,7 +553,7 @@ class Features(ABC):
              [1.000]]
             featureNames={'c':0}
             )
-        >>> data
+        >>> X
         List(
             [[1.000 0.000]
              [0.000 1.000]
@@ -521,10 +563,9 @@ class Features(ABC):
 
         Extract feature when the query string returns True.
 
-        >>> data = nimble.identity('List', 3,
-        ...                        featureNames=['a', 'b', 'c'],
-        ...                        pointNames=['p1', 'p2', 'p3'])
-        >>> strFunc = data.features.extract("p2 != 0")
+        >>> X = nimble.identity('List', 3, featureNames=['a', 'b', 'c'],
+        ...                     pointNames=['p1', 'p2', 'p3'])
+        >>> strFunc = X.features.extract("p2 != 0")
         >>> strFunc
         List(
             [[0.000]
@@ -533,7 +574,7 @@ class Features(ABC):
             pointNames={'p1':0, 'p2':1, 'p3':2}
             featureNames={'b':0}
             )
-        >>> data
+        >>> X
         List(
             [[1.000 0.000]
              [0.000 0.000]
@@ -544,9 +585,9 @@ class Features(ABC):
 
         Extract features from the inclusive start to the inclusive end.
 
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> startEnd = data.features.extract(start=1, end=2)
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> startEnd = X.features.extract(start=1, end=2)
         >>> startEnd
         List(
             [[0.000 0.000]
@@ -554,7 +595,7 @@ class Features(ABC):
              [0.000 1.000]]
             featureNames={'b':0, 'c':1}
             )
-        >>> data
+        >>> X
         List(
             [[1.000]
              [0.000]
@@ -565,9 +606,9 @@ class Features(ABC):
         Select a set number to extract, starting from the first feature.
 
         >>> nimble.random.setSeed(42)
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> numberNoRandom = data.features.extract(number=2)
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> numberNoRandom = X.features.extract(number=2)
         >>> numberNoRandom
         List(
             [[1.000 0.000]
@@ -575,7 +616,7 @@ class Features(ABC):
              [0.000 0.000]]
             featureNames={'a':0, 'b':1}
             )
-        >>> data
+        >>> X
         List(
             [[0.000]
              [0.000]
@@ -585,10 +626,9 @@ class Features(ABC):
 
         Select a set number to extract, choosing features at random.
 
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> numberRandom = data.features.extract(number=2,
-        ...                                      randomize=True)
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> numberRandom = X.features.extract(number=2, randomize=True)
         >>> numberRandom
         List(
             [[0.000 1.000]
@@ -596,13 +636,17 @@ class Features(ABC):
              [1.000 0.000]]
             featureNames={'c':0, 'a':1}
             )
-        >>> data
+        >>> X
         List(
             [[0.000]
              [1.000]
              [0.000]]
             featureNames={'b':0}
             )
+
+        Keywords
+        --------
+        move, pull, separate, withdraw, cut, vsplit
         """
         return self._extract(toExtract, start, end, number, randomize, useLog)
 
@@ -664,10 +708,10 @@ class Features(ABC):
         --------
         Delete a single feature.
 
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> data.features.delete('a')
-        >>> data
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> X.features.delete('a')
+        >>> X
         List(
             [[0.000 0.000]
              [1.000 0.000]
@@ -677,10 +721,10 @@ class Features(ABC):
 
         Delete multiple features.
 
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> data.features.delete(['a', 2])
-        >>> data
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> X.features.delete(['a', 2])
+        >>> X
         List(
             [[0.000]
              [1.000]
@@ -690,10 +734,10 @@ class Features(ABC):
 
         Delete feature when the function returns True.
 
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> data.features.delete(lambda ft: ft[2] == 1)
-        >>> data
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> X.features.delete(lambda ft: ft[2] == 1)
+        >>> X
         List(
             [[1.000 0.000]
              [0.000 1.000]
@@ -703,11 +747,10 @@ class Features(ABC):
 
         Delete feature when the query string returns True.
 
-        >>> data = nimble.identity('List', 3,
-        ...                        featureNames=['a', 'b', 'c'],
-        ...                        pointNames=['p1', 'p2', 'p3'])
-        >>> data.features.delete("p2 != 0")
-        >>> data
+        >>> X = nimble.identity('List', 3, featureNames=['a', 'b', 'c'],
+        ...                     pointNames=['p1', 'p2', 'p3'])
+        >>> X.features.delete("p2 != 0")
+        >>> X
         List(
             [[1.000 0.000]
              [0.000 0.000]
@@ -718,10 +761,10 @@ class Features(ABC):
 
         Delete features from the inclusive start to the inclusive end.
 
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> data.features.delete(start=1, end=2)
-        >>> data
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> X.features.delete(start=1, end=2)
+        >>> X
         List(
             [[1.000]
              [0.000]
@@ -731,10 +774,10 @@ class Features(ABC):
 
         Select a set number to delete, starting from the first feature.
 
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> data.features.delete(number=2)
-        >>> data
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> X.features.delete(number=2)
+        >>> X
         List(
             [[0.000]
              [0.000]
@@ -745,16 +788,20 @@ class Features(ABC):
         Select a set number to delete, choosing features at random.
 
         >>> nimble.random.setSeed(42)
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> data.features.delete(number=2,  randomize=True)
-        >>> data
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> X.features.delete(number=2,  randomize=True)
+        >>> X
         List(
             [[0.000]
              [1.000]
              [0.000]]
             featureNames={'b':0}
             )
+
+        Keywords
+        --------
+        remove, drop, exclude, eliminate, destroy, cut
         """
         self._delete(toDelete, start, end, number, randomize, useLog)
 
@@ -764,7 +811,7 @@ class Features(ABC):
         """
         Keep only certain features of this object.
 
-        A variety of methods for specifying features to delete based on
+        A variety of methods for specifying features to keep based on
         the provided parameters. If toRetain is not None, start and end
         must be None. If start or end is not None, toRetain must be
         None.
@@ -816,10 +863,10 @@ class Features(ABC):
         --------
         Retain a single feature.
 
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> data.features.retain('a')
-        >>> data
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> X.features.retain('a')
+        >>> X
         List(
             [[1.000]
              [0.000]
@@ -829,10 +876,10 @@ class Features(ABC):
 
         Retain multiple features.
 
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> data.features.retain(['a', 2])
-        >>> data
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> X.features.retain(['a', 2])
+        >>> X
         List(
             [[1.000 0.000]
              [0.000 0.000]
@@ -842,10 +889,10 @@ class Features(ABC):
 
         Retain feature when the function returns True.
 
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> data.features.retain(lambda ft: ft[2] == 1)
-        >>> data
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> X.features.retain(lambda ft: ft[2] == 1)
+        >>> X
         List(
             [[0.000]
              [0.000]
@@ -855,11 +902,10 @@ class Features(ABC):
 
         Retain feature when the query string returns True.
 
-        >>> data = nimble.identity('List', 3,
-        ...                        featureNames=['a', 'b', 'c'],
-        ...                        pointNames=['p1', 'p2', 'p3'])
-        >>> data.features.retain("p2 != 0")
-        >>> data
+        >>> X = nimble.identity('List', 3, featureNames=['a', 'b', 'c'],
+        ...                     pointNames=['p1', 'p2', 'p3'])
+        >>> X.features.retain("p2 != 0")
+        >>> X
         List(
             [[0.000]
              [1.000]
@@ -870,10 +916,10 @@ class Features(ABC):
 
         Retain features from the inclusive start to the inclusive end.
 
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> data.features.retain(start=1, end=2)
-        >>> data
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> X.features.retain(start=1, end=2)
+        >>> X
         List(
             [[0.000 0.000]
              [1.000 0.000]
@@ -883,10 +929,10 @@ class Features(ABC):
 
         Select a set number to retain, starting from the first feature.
 
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> data.features.retain(number=2)
-        >>> data
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> X.features.retain(number=2)
+        >>> X
         List(
             [[1.000 0.000]
              [0.000 1.000]
@@ -897,16 +943,20 @@ class Features(ABC):
         Select a set number to retain, choosing features at random.
 
         >>> nimble.random.setSeed(42)
-        >>> data = nimble.identity('List', 3)
-        >>> data.features.setNames(['a', 'b', 'c'])
-        >>> data.features.retain(number=2, randomize=True)
-        >>> data
+        >>> X = nimble.identity('List', 3)
+        >>> X.features.setNames(['a', 'b', 'c'])
+        >>> X.features.retain(number=2, randomize=True)
+        >>> X
         List(
             [[0.000 1.000]
              [0.000 0.000]
              [1.000 0.000]]
             featureNames={'c':0, 'a':1}
             )
+
+        Keywords
+        --------
+        keep, hold, maintain, preserve, remove
         """
         self._retain(toRetain, start, end, number, randomize, useLog)
 
@@ -941,16 +991,20 @@ class Features(ABC):
 
         >>> def sumIsOne(ft):
         ...     return sum(ft) == 1
-        >>> data = nimble.identity('Matrix', 3)
-        >>> data.features.count(sumIsOne)
+        >>> X = nimble.identity('Matrix', 3)
+        >>> X.features.count(sumIsOne)
         3
 
         Count when the query string returns True.
 
-        >>> data = nimble.identity('Matrix', 3,
-        ...                        pointNames=['pt1', 'pt2', 'pt3'])
-        >>> data.features.count("pt1 == 0")
+        >>> X = nimble.identity('Matrix', 3,
+        ...                     pointNames=['pt1', 'pt2', 'pt3'])
+        >>> X.features.count("pt1 == 0")
         2
+
+        Keywords
+        --------
+        number, counts, tally
         """
         return self._count(condition)
 
@@ -990,12 +1044,12 @@ class Features(ABC):
         --------
         Sort by feature names.
 
-        >>> raw = [[64, 67, 64],
+        >>> lst = [[64, 67, 64],
         ...        [68, 71, 66],
         ...        [73, 71, 70],
         ...        [45, 40, 51]]
         >>> fts = ['Denver', 'Boulder', 'Fort Collins']
-        >>> highTemps = nimble.data('Matrix', raw, featureNames=fts)
+        >>> highTemps = nimble.data('Matrix', lst, featureNames=fts)
         >>> highTemps.features.sort()
         >>> highTemps
         Matrix(
@@ -1008,11 +1062,11 @@ class Features(ABC):
 
         Sort by points.
 
-        >>> raw = [[3, 1, 2, 0, 2],
+        >>> lst = [[3, 1, 2, 0, 2],
         ...        [100, 1, 10, 0, 11],
         ...        [200, 2, 20, 0, 21],
         ...        [300, 3, 30, 0, 31]]
-        >>> orders = nimble.data('Matrix', raw)
+        >>> orders = nimble.data('Matrix', lst)
         >>> orders.features.sort(0)
         >>> orders
         Matrix(
@@ -1024,12 +1078,12 @@ class Features(ABC):
 
         Sort using function.
 
-        >>> raw = [[64, 67, 64],
+        >>> lst = [[64, 67, 64],
         ...        [68, 71, 66],
         ...        [73, 71, 70],
         ...        [45, 40, 51]]
         >>> fts = ['Denver', 'Boulder', 'Fort Collins']
-        >>> highTemps = nimble.data('Matrix', raw, featureNames=fts)
+        >>> highTemps = nimble.data('Matrix', lst, featureNames=fts)
         >>> def averageHighTemp(ft):
         ...     return nimble.calculate.mean(ft)
         >>> highTemps.features.sort(averageHighTemp, reverse=True)
@@ -1041,6 +1095,10 @@ class Features(ABC):
              [51 45 40]]
             featureNames={'Fort Col...':0, 'Denver':1, 'Boulder':2}
             )
+
+        Keywords
+        --------
+        arrange, order
         """
         self._sort(by, reverse, useLog)
 
@@ -1077,9 +1135,9 @@ class Features(ABC):
         --------
         Transform all features; apply to all points.
 
-        >>> data = nimble.ones('Matrix', 3, 5)
-        >>> data.features.transform(lambda ft: ft + 2)
-        >>> data
+        >>> X = nimble.ones('Matrix', 3, 5)
+        >>> X.features.transform(lambda ft: ft + 2)
+        >>> X
         Matrix(
             [[3.000 3.000 3.000 3.000 3.000]
              [3.000 3.000 3.000 3.000 3.000]
@@ -1094,9 +1152,9 @@ class Features(ABC):
         ...     ftList = ft.copy(to='python list', outputAs1D=True)
         ...     ftList[1] += 4
         ...     return ftList
-        >>> data = nimble.ones('Matrix', 3, 5)
-        >>> data.features.transform(transformMiddlePoint)
-        >>> data
+        >>> X = nimble.ones('Matrix', 3, 5)
+        >>> X.features.transform(transformMiddlePoint)
+        >>> X
         Matrix(
             [[1.000 1.000 1.000 1.000 1.000]
              [5.000 5.000 5.000 5.000 5.000]
@@ -1105,14 +1163,18 @@ class Features(ABC):
 
         Transform a subset of features.
 
-        >>> data = nimble.ones('Matrix', 3, 5)
-        >>> data.features.transform(lambda ft: ft + 6, features=[1, 3])
-        >>> data
+        >>> X = nimble.ones('Matrix', 3, 5)
+        >>> X.features.transform(lambda ft: ft + 6, features=[1, 3])
+        >>> X
         Matrix(
             [[1.000 7.000 1.000 7.000 1.000]
              [1.000 7.000 1.000 7.000 1.000]
              [1.000 7.000 1.000 7.000 1.000]]
             )
+
+        Keywords
+        --------
+        apply, modify, alter, change, map, compute
         """
         self._transform(function, features, useLog)
 
@@ -1122,11 +1184,12 @@ class Features(ABC):
     @limitedTo2D
     def calculate(self, function, features=None, useLog=None):
         """
-        Return a new object with a calculation applied to each feature.
+        Apply a calculation to each feature.
 
-        Calculates the results of the given function on the specified
-        features in this object, with output values collected into a new
-        object that is returned upon completion.
+        Return a new object that calculates the results of the given
+        function on the specified features in this object, with output
+        values collected into a new object that is returned upon
+        completion.
 
         Parameters
         ----------
@@ -1156,8 +1219,8 @@ class Features(ABC):
         --------
         Apply calculation to all features; apply to all points.
 
-        >>> data = nimble.ones('Matrix', 3, 5)
-        >>> addTwo = data.features.calculate(lambda ft: ft + 2)
+        >>> X = nimble.ones('Matrix', 3, 5)
+        >>> addTwo = X.features.calculate(lambda ft: ft + 2)
         >>> addTwo
         Matrix(
             [[3.000 3.000 3.000 3.000 3.000]
@@ -1173,8 +1236,8 @@ class Features(ABC):
         ...     ftList = ft.copy(to='python list', outputAs1D=True)
         ...     ftList[1] += 4
         ...     return ftList
-        >>> data = nimble.ones('Matrix', 3, 5)
-        >>> middleChange = data.features.calculate(changeMiddlePoint)
+        >>> X = nimble.ones('Matrix', 3, 5)
+        >>> middleChange = X.features.calculate(changeMiddlePoint)
         >>> middleChange
         Matrix(
             [[1.000 1.000 1.000 1.000 1.000]
@@ -1185,9 +1248,9 @@ class Features(ABC):
         Apply calculation to a subset of features.
 
         >>> ftNames = ['f1', 'f2', 'f3']
-        >>> data = nimble.identity('Matrix', 3, featureNames=ftNames)
-        >>> calc = data.features.calculate(lambda ft: ft + 6,
-        ...                                features=[2, 0])
+        >>> X = nimble.identity('Matrix', 3, featureNames=ftNames)
+        >>> calc = X.features.calculate(lambda ft: ft + 6,
+        ...                             features=[2, 0])
         >>> calc
         Matrix(
             [[6.000 7.000]
@@ -1195,19 +1258,24 @@ class Features(ABC):
              [7.000 6.000]]
             featureNames={'f3':0, 'f1':1}
             )
+
+        Keywords
+        --------
+        apply, modify, alter, statistics, stats, compute
         """
         return self._calculate(function, features, useLog)
 
     @limitedTo2D
     def matching(self, function, useLog=None):
         """
-        Return a boolean value object identifying matching features.
+        Identifying features matching the given criteria.
 
-        Apply a function returning a boolean value for each feature in
-        this object. Common any/all matching functions can be found in
-        nimble's match module. Note that the pointName in the returned
-        object will be set to the ``__name__`` attribute of ``function``
-        unless it is a ``lambda`` function.
+        Return a boolean value object by apply a function returning a
+        boolean value for each feature in this object. Common any/all
+        matching functions can be found in nimble's match module. Note
+        that the pointName in the returned object will be set to the
+        ``__name__`` attribute of ``function`` unless it is a ``lambda``
+        function.
 
         Parameters
         ----------
@@ -1228,9 +1296,9 @@ class Features(ABC):
         Examples
         --------
         >>> from nimble import match
-        >>> raw = [[1, -1, 1], [-3, 3, 3]]
-        >>> data = nimble.data('Matrix', raw)
-        >>> allPositiveFts = data.features.matching(match.allPositive)
+        >>> lst = [[1, -1, 1], [-3, 3, 3]]
+        >>> X = nimble.data('Matrix', lst)
+        >>> allPositiveFts = X.features.matching(match.allPositive)
         >>> allPositiveFts
         Matrix(
             [[False False True]]
@@ -1238,14 +1306,19 @@ class Features(ABC):
             )
 
         >>> from nimble import match
-        >>> raw = [[1, float('nan'), 1], [-3, 3, 3]]
-        >>> data = nimble.data('Matrix', raw)
-        >>> ftHasMissing = data.features.matching(match.anyMissing)
+        >>> lst = [[1, float('nan'), 1], [-3, 3, 3]]
+        >>> X = nimble.data('Matrix', lst)
+        >>> ftHasMissing = X.features.matching(match.anyMissing)
         >>> ftHasMissing
         Matrix(
             [[False True False]]
             pointNames={'anyMissing':0}
             )
+
+        Keywords
+        --------
+        boolean, equivalent, identical, same, matches, equals, compare,
+        comparison, same
         """
         return self._matching(function, useLog)
 
@@ -1287,10 +1360,10 @@ class Features(ABC):
         --------
         Insert data; default names.
 
-        >>> data = nimble.zeros('Matrix', 3, 2)
+        >>> X = nimble.zeros('Matrix', 3, 2)
         >>> toInsert = nimble.ones('Matrix', 3, 2)
-        >>> data.features.insert(1, toInsert)
-        >>> data
+        >>> X.features.insert(1, toInsert)
+        >>> X
         Matrix(
             [[0.000 1.000 1.000 0.000]
              [0.000 1.000 1.000 0.000]
@@ -1299,14 +1372,13 @@ class Features(ABC):
 
         Insert before another point; mixed object types.
 
-        >>> rawData = [[1, 4], [5, 8]]
-        >>> data = nimble.data('Matrix', rawData,
-        ...                    featureNames=['1', '4'])
-        >>> rawInsert = [[2, 3], [6, 7]]
-        >>> toInsert = nimble.data('List', rawInsert,
+        >>> lstData = [[1, 4], [5, 8]]
+        >>> X = nimble.data('Matrix', lstData, featureNames=['1', '4'])
+        >>> lstInsert = [[2, 3], [6, 7]]
+        >>> toInsert = nimble.data('List', lstInsert,
         ...                        featureNames=['2', '3'])
-        >>> data.features.insert('4', toInsert)
-        >>> data
+        >>> X.features.insert('4', toInsert)
+        >>> X
         Matrix(
             [[1 2 3 4]
              [5 6 7 8]]
@@ -1315,18 +1387,22 @@ class Features(ABC):
 
         Reorder names.
 
-        >>> rawData = [[1, 2], [5, 6]]
-        >>> data = nimble.data('Matrix', rawData, pointNames=['a', 'b'])
-        >>> rawInsert = [[7, 8], [3, 4]]
-        >>> toInsert = nimble.data('Matrix', rawInsert,
+        >>> lstData = [[1, 2], [5, 6]]
+        >>> X = nimble.data('Matrix', lstData, pointNames=['a', 'b'])
+        >>> lstInsert = [[7, 8], [3, 4]]
+        >>> toInsert = nimble.data('Matrix', lstInsert,
         ...                        pointNames=['b', 'a'])
-        >>> data.features.insert(2, toInsert)
-        >>> data
+        >>> X.features.insert(2, toInsert)
+        >>> X
         Matrix(
             [[1 2 3 4]
              [5 6 7 8]]
             pointNames={'a':0, 'b':1}
             )
+
+        Keywords
+        --------
+        embed, include, inject, alter, position
         """
         self._insert(insertBefore, toInsert, False, useLog)
 
@@ -1365,10 +1441,10 @@ class Features(ABC):
         --------
         Append data; default names.
 
-        >>> data = nimble.zeros('Matrix', 3, 2)
+        >>> X = nimble.zeros('Matrix', 3, 2)
         >>> toAppend = nimble.ones('Matrix', 3, 2)
-        >>> data.features.append(toAppend)
-        >>> data
+        >>> X.features.append(toAppend)
+        >>> X
         Matrix(
             [[0.000 0.000 1.000 1.000]
              [0.000 0.000 1.000 1.000]
@@ -1377,14 +1453,13 @@ class Features(ABC):
 
         Append mixed object types.
 
-        >>> rawData = [[1, 2], [5, 6]]
-        >>> data = nimble.data('Matrix', rawData,
-        ...                    featureNames=['1', '2'])
-        >>> rawAppend = [[3, 4], [7, 8]]
-        >>> toAppend = nimble.data('List', rawAppend,
+        >>> lstData = [[1, 2], [5, 6]]
+        >>> X = nimble.data('Matrix', lstData, featureNames=['1', '2'])
+        >>> lstAppend = [[3, 4], [7, 8]]
+        >>> toAppend = nimble.data('List', lstAppend,
         ...                        featureNames=['3', '4'])
-        >>> data.features.append(toAppend)
-        >>> data
+        >>> X.features.append(toAppend)
+        >>> X
         Matrix(
             [[1 2 3 4]
              [5 6 7 8]]
@@ -1393,19 +1468,23 @@ class Features(ABC):
 
         Reorder names.
 
-        >>> rawData = [[1, 2], [5, 6]]
-        >>> data = nimble.data('Matrix', rawData,
-        ...                    pointNames=['a', 'b'])
-        >>> rawAppend = [[7, 8], [3, 4]]
-        >>> toAppend = nimble.data('Matrix', rawAppend,
+        >>> lstData = [[1, 2], [5, 6]]
+        >>> X = nimble.data('Matrix', lstData, pointNames=['a', 'b'])
+        >>> lstAppend = [[7, 8], [3, 4]]
+        >>> toAppend = nimble.data('Matrix', lstAppend,
         ...                        pointNames=['b', 'a'])
-        >>> data.features.append(toAppend)
-        >>> data
+        >>> X.features.append(toAppend)
+        >>> X
         Matrix(
             [[1 2 3 4]
              [5 6 7 8]]
             pointNames={'a':0, 'b':1}
             )
+
+        Keywords
+        --------
+        affix, adjoin, concatenate, concat, hstack, add, attach, join,
+        merge
         """
         self._insert(None, toAppend, True, useLog)
 
@@ -1475,6 +1554,10 @@ class Features(ABC):
              [0.000 Y 0.000]]
             featureNames={'a':0, 'b':1, 'c':2}
             )
+
+        Keywords
+        --------
+        change, substitute, alter, transform
         """
         return self._replace(data, features, useLog, **dataKwds)
 
@@ -1484,7 +1567,7 @@ class Features(ABC):
         Apply a mapper and reducer function to this object.
 
         Return a new object containing the results of the given mapper
-        and reducer functions
+        and reducer functions.
 
         Parameters
         ----------
@@ -1511,18 +1594,22 @@ class Features(ABC):
         ...     return [(ftType, 1)]
         >>> def typeReducer(ftType, totals):
         ...     return (ftType, sum(totals))
-        >>> raw = [[61500, 'Open', 'Chicago Bears'],
+        >>> lst = [[61500, 'Open', 'Chicago Bears'],
         ...        [71228, 'Dome', 'Atlanta Falcons'],
         ...        [77000, 'Open', 'Kansas City Chiefs'],
         ...        [72968, 'Dome', 'New Orleans Saints'],
         ...        [76500, 'Open', 'Miami Dolphins']]
         >>> ftNames = ['CAPACITY', 'ROOF_TYPE', 'TEAM']
-        >>> data = nimble.data('Matrix', raw, featureNames=ftNames)
-        >>> data.features.mapReduce(typeMapper, typeReducer)
+        >>> X = nimble.data('Matrix', lst, featureNames=ftNames)
+        >>> X.features.mapReduce(typeMapper, typeReducer)
         Matrix(
             [[<class 'int'> 1]
              [<class 'str'> 2]]
             )
+
+        Keywords
+        --------
+        map, reduce, apply
         """
         return self._mapReduce(mapper, reducer, useLog)
 
@@ -1558,13 +1645,13 @@ class Features(ABC):
         Examples
         --------
         >>> nimble.random.setSeed(42)
-        >>> raw = [[1, 2, 3, 4],
+        >>> lst = [[1, 2, 3, 4],
         ...        [1, 2, 3, 4],
         ...        [1, 2, 3, 4],
         ...        [1, 2, 3, 4]]
-        >>> data = nimble.data('DataFrame', raw)
-        >>> data.features.permute()
-        >>> data
+        >>> X = nimble.data('DataFrame', lst)
+        >>> X.features.permute()
+        >>> X
         DataFrame(
             [[3 2 4 1]
              [3 2 4 1]
@@ -1574,12 +1661,12 @@ class Features(ABC):
 
         Permute with a list of identifiers.
 
-        >>> raw = [['home', 81, 3],
+        >>> lst = [['home', 81, 3],
         ...        ['gard', 98, 10],
         ...        ['home', 14, 1],
         ...        ['home', 11, 3]]
         >>> cols = ['dept', 'ID', 'quantity']
-        >>> orders = nimble.data('DataFrame', raw, featureNames=cols)
+        >>> orders = nimble.data('DataFrame', lst, featureNames=cols)
         >>> orders.features.permute(['ID', 'quantity', 'dept'])
         >>> orders
         DataFrame(
@@ -1589,6 +1676,10 @@ class Features(ABC):
              [11 3  home]]
             featureNames={'ID':0, 'quantity':1, 'dept':2}
             )
+
+        Keywords
+        --------
+        reorder, rearrange, shuffle
         """
         self._permute(order, useLog)
 
@@ -1645,14 +1736,14 @@ class Features(ABC):
         --------
         Fill a value with another value.
 
-        >>> raw = [[1, 1, 1],
+        >>> lst = [[1, 1, 1],
         ...        [1, 1, 1],
         ...        [1, 1, 'na'],
         ...        [2, 2, 2],
         ...        ['na', 2, 2]]
-        >>> data = nimble.data('Matrix', raw)
-        >>> data.features.fillMatching(-1, 'na')
-        >>> data
+        >>> X = nimble.data('Matrix', lst)
+        >>> X.features.fillMatching(-1, 'na')
+        >>> X
         Matrix(
             [[1  1 1 ]
              [1  1 1 ]
@@ -1666,14 +1757,14 @@ class Features(ABC):
 
         >>> from nimble import match
         >>> from nimble import fill
-        >>> raw = [[1, 1, 1],
+        >>> lst = [[1, 1, 1],
         ...        [1, 1, 1],
         ...        [1, 1, None],
         ...        [2, 2, 2],
         ...        [None, 2, 2]]
-        >>> data = nimble.data('Matrix', raw)
-        >>> data.features.fillMatching(fill.mean, match.missing, features=0)
-        >>> data
+        >>> X = nimble.data('Matrix', lst)
+        >>> X.features.fillMatching(fill.mean, match.missing, features=0)
+        >>> X
         Matrix(
             [[1.000 1.000 1.000]
              [1.000 1.000 1.000]
@@ -1681,6 +1772,10 @@ class Features(ABC):
              [2.000 2.000 2.000]
              [1.250 2.000 2.000]]
             )
+
+        Keywords
+        --------
+        replace, substitute, replacement, pattern
         """
         return self._fillMatching(fillWith, matchingElements, features,
                                   useLog, **kwarguments)
@@ -1725,12 +1820,12 @@ class Features(ABC):
         Calling object only.
 
         >>> from nimble.calculate import range0to1Normalize
-        >>> rawTrain = [[5, 9.8, 92],
+        >>> lstTrain = [[5, 9.8, 92],
         ...             [3, 6.2, 58],
         ...             [2, 3.0, 29]]
         >>> pts = ['movie1', 'movie2', 'movie3']
         >>> fts = ['review1', 'review2', 'review3']
-        >>> train = nimble.data('Matrix', rawTrain, pts, fts)
+        >>> train = nimble.data('Matrix', lstTrain, pts, fts)
         >>> train.features.normalize(range0to1Normalize)
         >>> train
         Matrix(
@@ -1744,16 +1839,16 @@ class Features(ABC):
         With applyResultTo.
 
         >>> from nimble.calculate import meanStandardDeviationNormalize
-        >>> rawTrain = [[5, 9.8, 92],
+        >>> lstTrain = [[5, 9.8, 92],
         ...             [3, 6.2, 58],
         ...             [2, 3.0, 10]]
-        >>> rawTest = [[4, 9.1, 43],
+        >>> lstTest = [[4, 9.1, 43],
         ...            [3, 5.1, 88]]
         >>> fts = ['review1', 'review2', 'review3']
         >>> trainPts = ['movie1', 'movie2', 'movie3']
-        >>> train = nimble.data('Matrix', rawTrain, trainPts, fts)
+        >>> train = nimble.data('Matrix', lstTrain, trainPts, fts)
         >>> testPts = ['movie4', 'movie5']
-        >>> test = nimble.data('Matrix', rawTest, testPts, fts)
+        >>> test = nimble.data('Matrix', lstTest, testPts, fts)
         >>> train.features.normalize(meanStandardDeviationNormalize,
         ...                          applyResultTo=test)
         >>> train
@@ -1771,6 +1866,10 @@ class Features(ABC):
             pointNames={'movie4':0, 'movie5':1}
             featureNames={'review1':0, 'review2':1, 'review3':2}
             )
+
+        Keywords
+        --------
+        standardize, scale, rescale, divide, length
         """
         if not callable(function):
             raise InvalidArgumentType('function must be callable')
@@ -1889,11 +1988,11 @@ class Features(ABC):
         --------
         Split with a string for ``rule``.
 
-        >>> raw = [['Cape Town, South Africa'],
+        >>> lst = [['Cape Town, South Africa'],
         ...        ['Lima, Peru'],
         ...        ['Moscow, Russia']]
         >>> fts = ['location']
-        >>> locations = nimble.data('Matrix', raw, featureNames=fts)
+        >>> locations = nimble.data('Matrix', lst, featureNames=fts)
         >>> locations.features.splitByParsing('location', ', ',
         ...                                   ['city', 'country'])
         >>> locations
@@ -1906,12 +2005,12 @@ class Features(ABC):
 
         Split with an index for ``rule``.
 
-        >>> raw = [['AGG932', 44],
+        >>> lst = [['AGG932', 44],
         ...        ['AGG734', 11],
         ...        ['HEQ892', 1],
         ...        ['LEQ331', 2]]
         >>> fts = ['product', 'quantity']
-        >>> inventory = nimble.data('List', raw, featureNames=fts)
+        >>> inventory = nimble.data('List', lst, featureNames=fts)
         >>> inventory.features.splitByParsing(0, 3, ['category', 'id'])
         >>> inventory
         List(
@@ -1921,6 +2020,10 @@ class Features(ABC):
              [LEQ 331 2 ]]
             featureNames={'category':0, 'id':1, 'quantity':2}
             )
+
+        Keywords
+        --------
+        parse, separate, pattern, break, apart, detect, tidy, tidyr
         """
         if not (isinstance(rule, (int, np.integer, str))
                 or hasattr(rule, '__iter__')
@@ -2015,9 +2118,9 @@ class Features(ABC):
         --------
         Single feature
 
-        >>> data = nimble.data('Matrix', [[1], [2], [3]])
-        >>> data.features.setNames(['a'])
-        >>> data.features.repeat(totalCopies=3,
+        >>> X = nimble.data('Matrix', [[1], [2], [3]])
+        >>> X.features.setNames(['a'])
+        >>> X.features.repeat(totalCopies=3,
         ...                      copyFeatureByFeature=False)
         Matrix(
             [[1 1 1]
@@ -2028,9 +2131,9 @@ class Features(ABC):
 
         Two-dimensional, copyFeatureByFeature is False
 
-        >>> data = nimble.data('Matrix', [[1, 2], [3, 4], [5, 6]])
-        >>> data.features.setNames(['a', 'b'])
-        >>> data.features.repeat(totalCopies=2,
+        >>> X = nimble.data('Matrix', [[1, 2], [3, 4], [5, 6]])
+        >>> X.features.setNames(['a', 'b'])
+        >>> X.features.repeat(totalCopies=2,
         ...                      copyFeatureByFeature=False)
         Matrix(
             [[1 2 1 2]
@@ -2041,9 +2144,9 @@ class Features(ABC):
 
         Two-dimensional, copyFeatureByFeature is True
 
-        >>> data = nimble.data('Matrix', [[1, 2], [3, 4], [5, 6]])
-        >>> data.features.setNames(['a', 'b'])
-        >>> data.features.repeat(totalCopies=2,
+        >>> X = nimble.data('Matrix', [[1, 2], [3, 4], [5, 6]])
+        >>> X.features.setNames(['a', 'b'])
+        >>> X.features.repeat(totalCopies=2,
         ...                      copyFeatureByFeature=True)
         Matrix(
             [[1 1 2 2]
@@ -2051,6 +2154,10 @@ class Features(ABC):
              [5 5 6 6]]
             featureNames={'a_1':0, 'a_2':1, 'b_1':2, 'b_2':3}
             )
+
+        Keywords
+        --------
+        stack, horizontal, duplicate, replicate, hstack
         """
         return self._repeat(totalCopies, copyFeatureByFeature)
 
@@ -2073,13 +2180,13 @@ class Features(ABC):
 
         Examples
         --------
-        >>> raw = [['a', 1, 3, 'a'],
+        >>> lst = [['a', 1, 3, 'a'],
         ...        ['a', 5, 6, 'a'],
         ...        ['b', 7, 1, 'b'],
         ...        ['c', 2, 9, 'c']]
         >>> ftNames = ['f1', 'f2', 'f3', 'f1_copy']
-        >>> data = nimble.data('Matrix', raw, featureNames=ftNames)
-        >>> uniqueFeatures = data.features.unique()
+        >>> X = nimble.data('Matrix', lst, featureNames=ftNames)
+        >>> uniqueFeatures = X.features.unique()
         >>> uniqueFeatures
         Matrix(
             [[a 1 3]
@@ -2088,6 +2195,10 @@ class Features(ABC):
              [c 2 9]]
             featureNames={'f1':0, 'f2':1, 'f3':2}
             )
+
+        Keywords
+        --------
+        distinct, different
         """
         return self._unique()
 
@@ -2122,6 +2233,11 @@ class Features(ABC):
             send to the logger regardless of the global option. If
             False, do **NOT** send to the logger, regardless of the
             global option.
+
+        Keywords
+        --------
+        statistic, summary, information, analyze, statistics, stats,
+        columns, info, information, describe, about
         """
         allow = ['mean', 'mode', 'minimum', 'Q1', 'median', 'Q3', 'maximum',
                  'uniqueCount', 'count', 'standardDeviation']
@@ -2205,6 +2321,12 @@ class Features(ABC):
         Returns
         -------
         nimble Base object
+
+        Keywords
+        --------
+        correlation, covariance, sample covariance,
+        population covariance, dot product, similarity, relationship,
+        cor, pearson, spearman, correlation coefficient
         """
         return self._similarities(similarityFunction)
 
@@ -2225,6 +2347,13 @@ class Features(ABC):
         Returns
         -------
         nimble Base object
+
+        Keywords
+        --------
+        max, mean, median, min, population std, population standard
+        deviation, proportion missing, proportion zero, sample standard
+        deviation, sample std, standard deviation, std, unique count,
+        stats, compute, calculate
         """
         return self._statistics(statisticsFunction, groupByFeature)
 
@@ -2284,7 +2413,11 @@ class Features(ABC):
 
         See Also
         --------
-            matplotlib.pyplot.bar
+        matplotlib.pyplot.bar
+
+        Keywords
+        --------
+        bar chart, graph, visualize, graphics, show, display
         """
         self._plotComparison(
             None, features, None, horizontal, outPath, show, figureID, title,
@@ -2334,7 +2467,12 @@ class Features(ABC):
 
         See Also
         --------
-            matplotlib.pyplot.errorbar
+        matplotlib.pyplot.errorbar
+
+        Keywords
+        --------
+        confidence interval bars, student's t-distribution, t test,
+        bar chart, display visualize, graphics
         """
         self._plotComparison(
             nimble.calculate.mean, features, True, horizontal, outPath,
@@ -2399,7 +2537,11 @@ class Features(ABC):
 
         See Also
         --------
-            matplotlib.pyplot.bar
+        matplotlib.pyplot.bar
+
+        Keywords
+        --------
+        bar chart, display, visualize, graphics
         """
         self._plotComparison(
             statistic, features, False, horizontal, outPath, show, figureID,

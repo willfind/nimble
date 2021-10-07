@@ -228,6 +228,12 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
          [4 -1 6 ]]
         featureNames={'a':0, 'b':1, 'c':2}
         )
+
+    Keywords
+    --------
+    create, make, construct, new, matrix, read, load, open, file,
+    in-python data object, list, dictionary, numpy array, pandas
+    dataframe, scipy sparse, csv, mtx, hdf5, h5, url, pickle
     """
     validateReturnType(returnType)
 
@@ -335,6 +341,10 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
         featureNames={'a':0, 'b':1, 'c':2, 'd':3}
         name="ones DataFrame"
         )
+
+    Keywords
+    --------
+    matrix, 1, 1s
     """
     return createConstantHelper(np.ones, returnType, numPoints, numFeatures,
                                 pointNames, featureNames, name)
@@ -409,6 +419,10 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
         featureNames={'a':0, 'b':1, 'c':2, 'd':3}
         name="Sparse all-zeros"
         )
+
+    Keywords
+    --------
+    matrix, sparse, 0, 0s
     """
     return createConstantHelper(np.zeros, returnType, numPoints, numFeatures,
                                 pointNames, featureNames, name)
@@ -480,6 +494,10 @@ def identity(returnType, size, pointNames='automatic',
         featureNames={'a':0, 'b':1, 'c':2}
         name="identity matrix list"
         )
+
+    Keywords
+    --------
+    identity matrix, square, diagonal, one, eye
     """
     validateReturnType(returnType)
     if size <= 0:
@@ -526,6 +544,10 @@ def loadTrainedLearner(source, useLog=None):
     See Also
     --------
     nimble.core.interfaces.TrainedLearner
+
+    Keywords
+    --------
+    open, import, model, pretrained, transfer learning
     """
     if isinstance(source, str):
         with open(source, 'rb') as file:
@@ -606,6 +628,11 @@ def fetchFile(source, overwrite=False):
     >>> wine = nimble.fetchFile('uci::wine') # doctest: +SKIP
     >>> url = 'https://archive.ics.uci.edu/ml/datasets/Abalone'
     >>> abalone = nimble.fetchFile(url) # doctest: +SKIP
+
+    Keywords
+    --------
+    get, download, local, store, file, url, obtain, retrieve, get, open,
+    create
     """
     return fileFetcher(source, overwrite, allowMultiple=False)[0]
 
@@ -668,5 +695,10 @@ def fetchFiles(source, overwrite=False):
     >>> iris = nimble.fetchFiles('uci::Iris') # doctest: +SKIP
     >>> url = 'https://archive.ics.uci.edu/ml/datasets/Wine+Quality'
     >>> wineQuality = fetchFiles(url) # doctest: +SKIP
+
+    Keywords
+    --------
+    get, download, local, store, files, url, obtain, retrieve, get,
+    open, create, folder
     """
     return fileFetcher(source, overwrite)

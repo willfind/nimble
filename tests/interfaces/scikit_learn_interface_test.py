@@ -236,7 +236,7 @@ def testSciKitLearnListLearners():
     for name in ret:
         params = nimble.learnerParameters(toCall(name))
         assert params is not None
-        defaults = nimble.learnerDefaultValues(toCall(name))
+        defaults = nimble.learnerParameterDefaults(toCall(name))
         for key in defaults.keys():
             assert key in params
 

@@ -48,6 +48,10 @@ class SessionConfiguration(object):
     configurable variables and sections define groups of options used
     for a similar purpose. To see the current settings call
     ``nimble.settings.get()``.
+
+    Keywords
+    --------
+    configure, configuration, options
     """
 
     def __init__(self, path):
@@ -340,6 +344,11 @@ def showAvailablePackages():
     Print a table identifying each optional dependency for Nimble,
     whether or not is available in the current environment, and a short
     description the package's use within Nimble.
+
+    Keywords
+    --------
+    dependencies, environment, print, display, libraries, modules,
+    installed, display, imports
     """
     statuses = {}
     opPackages = {val.name: val for key, val in vars(nimble._utility).items()

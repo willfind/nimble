@@ -367,7 +367,7 @@ def test_logCount():
     nimble.train(LoveAtFirstSightClassifier, trainX, trainY, useLog=False)
     lst = nimble.learnerNames("custom")
     params = nimble.learnerParameters("custom.LoveAtFirstSightClassifier")
-    defaults = nimble.learnerDefaultValues("custom.LoveAtFirstSightClassifier")
+    defaults = nimble.learnerParameterDefaults("custom.LoveAtFirstSightClassifier")
     lType = nimble.learnerType("custom.LoveAtFirstSightClassifier")
 
 @skipMissingPackage('sklearn')
@@ -386,7 +386,7 @@ def test_learnerNamesDirectFromModule():
 
 def test_learnerQueries():
     params = nimble.learnerParameters(UncallableLearner)
-    defaults = nimble.learnerDefaultValues(UncallableLearner)
+    defaults = nimble.learnerParameterDefaults(UncallableLearner)
     lType = nimble.learnerType(UncallableLearner)
     lst = nimble.learnerNames("custom")
 
@@ -396,7 +396,7 @@ def test_learnerQueries():
     assert lst == ['UncallableLearner']
 
     params = nimble.learnerParameters(KNNClassifier)
-    defaults = nimble.learnerDefaultValues(KNNClassifier)
+    defaults = nimble.learnerParameterDefaults(KNNClassifier)
     lType = nimble.learnerType(KNNClassifier)
 
     assert params == ['k']

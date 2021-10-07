@@ -45,9 +45,9 @@ def constant(vector, match, constantValue):
     --------
     Match a value.
 
-    >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = nimble.data('Matrix', raw)
-    >>> constant(data, 'na', 0)
+    >>> lst = [1, 'na', 3, 'na', 5]
+    >>> X = nimble.data('Matrix', lst)
+    >>> constant(X, 'na', 0)
     Matrix(
         [[1 0 3 0 5]]
         )
@@ -55,9 +55,9 @@ def constant(vector, match, constantValue):
     Match using a function from nimble's match module.
 
     >>> from nimble import match
-    >>> raw = [1, 0, 3, 0, 5]
-    >>> data = nimble.data('Matrix', raw)
-    >>> constant(data, match.zero, 99)
+    >>> lst = [1, 0, 3, 0, 5]
+    >>> X = nimble.data('Matrix', lst)
+    >>> constant(X, match.zero, 99)
     Matrix(
         [[1 99 3 99 5]]
         )
@@ -104,9 +104,9 @@ def mean(vector, match):
     --------
     Match a value.
 
-    >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = nimble.data('Matrix', raw)
-    >>> mean(data, 'na')
+    >>> lst = [1, 'na', 3, 'na', 5]
+    >>> X = nimble.data('Matrix', lst)
+    >>> mean(X, 'na')
     Matrix(
         [[1.000 3.000 3.000 3.000 5.000]]
         )
@@ -114,9 +114,9 @@ def mean(vector, match):
     Match using a function from nimble's match module.
 
     >>> from nimble import match
-    >>> raw = [6, 0, 2, 0, 4]
-    >>> data = nimble.data('Matrix', raw)
-    >>> mean(data, match.zero)
+    >>> lst = [6, 0, 2, 0, 4]
+    >>> X = nimble.data('Matrix', lst)
+    >>> mean(X, match.zero)
     Matrix(
         [[6.000 4.000 2.000 4.000 4.000]]
         )
@@ -156,9 +156,9 @@ def median(vector, match):
     --------
     Match a value.
 
-    >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = nimble.data('Matrix', raw)
-    >>> median(data, 'na')
+    >>> lst = [1, 'na', 3, 'na', 5]
+    >>> X = nimble.data('Matrix', lst)
+    >>> median(X, 'na')
     Matrix(
         [[1.000 3.000 3.000 3.000 5.000]]
         )
@@ -166,9 +166,9 @@ def median(vector, match):
     Match using a function from nimble's match module.
 
     >>> from nimble import match
-    >>> raw = [6, 0, 2, 0, 4]
-    >>> data = nimble.data('Matrix', raw)
-    >>> median(data, match.zero)
+    >>> lst = [6, 0, 2, 0, 4]
+    >>> X = nimble.data('Matrix', lst)
+    >>> median(X, match.zero)
     Matrix(
         [[6.000 4.000 2.000 4.000 4.000]]
         )
@@ -206,9 +206,9 @@ def mode(vector, match):
     --------
     Match a value.
 
-    >>> raw = [1, 'na', 1, 'na', 5]
-    >>> data = nimble.data('Matrix', raw)
-    >>> mode(data, 'na')
+    >>> lst = [1, 'na', 1, 'na', 5]
+    >>> X = nimble.data('Matrix', lst)
+    >>> mode(X, 'na')
     Matrix(
         [[1 1 1 1 5]]
         )
@@ -216,9 +216,9 @@ def mode(vector, match):
     Match using a function from nimble's match module.
 
     >>> from nimble import match
-    >>> raw = [6, 6, 2, 0, 0]
-    >>> data = nimble.data('Matrix', raw)
-    >>> mode(data, match.zero)
+    >>> lst = [6, 6, 2, 0, 0]
+    >>> X = nimble.data('Matrix', lst)
+    >>> mode(X, match.zero)
     Matrix(
         [[6 6 2 6 6]]
         )
@@ -259,9 +259,9 @@ def forwardFill(vector, match):
     --------
     Match a value.
 
-    >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = nimble.data('Matrix', raw)
-    >>> forwardFill(data, 'na')
+    >>> lst = [1, 'na', 3, 'na', 5]
+    >>> X = nimble.data('Matrix', lst)
+    >>> forwardFill(X, 'na')
     Matrix(
         [[1 1 3 3 5]]
         )
@@ -269,9 +269,9 @@ def forwardFill(vector, match):
     Match using a function from nimble's match module.
 
     >>> from nimble import match
-    >>> raw = [6, 0, 2, 0, 4]
-    >>> data = nimble.data('Matrix', raw)
-    >>> forwardFill(data, match.zero)
+    >>> lst = [6, 0, 2, 0, 4]
+    >>> X = nimble.data('Matrix', lst)
+    >>> forwardFill(X, match.zero)
     Matrix(
         [[6 6 2 2 4]]
         )
@@ -328,9 +328,9 @@ def backwardFill(vector, match):
     --------
     Match a value.
 
-    >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = nimble.data('Matrix', raw)
-    >>> backwardFill(data, 'na')
+    >>> lst = [1, 'na', 3, 'na', 5]
+    >>> X = nimble.data('Matrix', lst)
+    >>> backwardFill(X, 'na')
     Matrix(
         [[1 3 3 5 5]]
         )
@@ -338,9 +338,9 @@ def backwardFill(vector, match):
     Match using a function from nimble's match module.
 
     >>> from nimble import match
-    >>> raw = [6, 0, 2, 0, 4]
-    >>> data = nimble.data('Matrix', raw)
-    >>> backwardFill(data, match.zero)
+    >>> lst = [6, 0, 2, 0, 4]
+    >>> X = nimble.data('Matrix', lst)
+    >>> backwardFill(X, match.zero)
     Matrix(
         [[6 2 2 4 4]]
         )
@@ -404,9 +404,9 @@ def interpolate(vector, match, **kwarguments):
     --------
     Match a value.
 
-    >>> raw = [1, 'na', 3, 'na', 5]
-    >>> data = nimble.data('Matrix', raw)
-    >>> interpolate(data, 'na')
+    >>> lst = [1, 'na', 3, 'na', 5]
+    >>> X = nimble.data('Matrix', lst)
+    >>> interpolate(X, 'na')
     Matrix(
         [[1.000 2.000 3.000 4.000 5.000]]
         )
@@ -414,9 +414,9 @@ def interpolate(vector, match, **kwarguments):
     Match using a function from nimble's match module.
 
     >>> from nimble import match
-    >>> raw = [6, 0, 4, 0, 2]
-    >>> data = nimble.data('Matrix', raw)
-    >>> interpolate(data, match.zero)
+    >>> lst = [6, 0, 4, 0, 2]
+    >>> X = nimble.data('Matrix', lst)
+    >>> interpolate(X, match.zero)
     Matrix(
         [[6.000 5.000 4.000 3.000 2.000]]
         )

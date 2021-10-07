@@ -368,7 +368,7 @@ def testMlpyListLearners():
     for name in ret:
         params = nimble.learnerParameters('mlpy.' + name)
         assert params is not None
-        defaults = nimble.learnerDefaultValues('mlpy.' + name)
+        defaults = nimble.learnerParameterDefaults('mlpy.' + name)
         for key in defaults.keys():
             assert key in params
 

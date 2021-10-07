@@ -495,11 +495,11 @@ def test_showLearnerParameters():
     contents = back_show(nimble.showLearnerParameters, 'nimble.RidgeRegression')
     assert 'lamb\n' in contents
 
-def test_showLearnerDefaultValues():
-    contents = back_show(nimble.showLearnerDefaultValues, 'nimble.KNNClassifier')
+def test_showLearnerParameterDefaults():
+    contents = back_show(nimble.showLearnerParameterDefaults, 'nimble.KNNClassifier')
     splits = [content.split() for content in contents]
     assert ['k', '5'] in splits
 
-    contents = back_show(nimble.showLearnerDefaultValues, 'nimble.RidgeRegression')
+    contents = back_show(nimble.showLearnerParameterDefaults, 'nimble.RidgeRegression')
     splits = [content.split() for content in contents]
     assert ['lamb', '0'] in splits
