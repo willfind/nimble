@@ -182,11 +182,12 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     >>> data = [[1, 2, 3], [4, 5, 6]]
     >>> asList = nimble.data('List', data, name='simple')
     >>> asList
-    List(
-        [[1 2 3]
-         [4 5 6]]
-        name="simple"
-        )
+    <List "simple" 2pt x 3ft
+         0 1 2
+       ┌──────
+     0 │ 1 2 3
+     1 │ 4 5 6
+     >
 
     Loading data from a file.
 
@@ -194,12 +195,12 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     ...     out = cd.write('1,2,3\\n4,5,6')
     >>> fromFile = nimble.data('Matrix', 'simpleData.csv')
     >>> fromFile # doctest: +ELLIPSIS
-    Matrix(
-        [[1 2 3]
-         [4 5 6]]
-        name="simpleData.csv"
-        path="...simpleData.csv"
-        )
+    <Matrix "simpleData.csv" 2pt x 3ft
+         0 1 2
+       ┌──────
+     0 │ 1 2 3
+     1 │ 4 5 6
+     path=...simpleData.csv>
 
     Adding point and feature names.
 
@@ -207,12 +208,12 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     >>> asSparse = nimble.data('Sparse', data, pointNames=['1', '2'],
     ...                        featureNames=True)
     >>> asSparse
-    Sparse(
-        [[0 0 1]
-         [1 0 0]]
-        pointNames={'1':0, '2':1}
-        featureNames={'a':0, 'b':1, 'c':2}
-        )
+    <Sparse 2pt x 3ft
+         a b c
+       ┌──────
+     1 │ 0 0 1
+     2 │ 1 0 0
+     >
 
     Replacing missing values.
 
@@ -223,11 +224,12 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     ...                           treatAsMissing=["Missing", 3],
     ...                           replaceMissingWith=-1)
     >>> asDataFrame
-    DataFrame(
-        [[1 -1 -1]
-         [4 -1 6 ]]
-        featureNames={'a':0, 'b':1, 'c':2}
-        )
+    <DataFrame 2pt x 3ft
+         a b  c
+       ┌────────
+     0 │ 1 -1 -1
+     1 │ 4 -1 6
+     >
 
     Keywords
     --------
@@ -317,13 +319,15 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
 
     >>> ones = nimble.ones('List', 5, 5)
     >>> ones
-    List(
-        [[1.000 1.000 1.000 1.000 1.000]
-         [1.000 1.000 1.000 1.000 1.000]
-         [1.000 1.000 1.000 1.000 1.000]
-         [1.000 1.000 1.000 1.000 1.000]
-         [1.000 1.000 1.000 1.000 1.000]]
-        )
+    <List 5pt x 5ft
+           0     1     2     3     4
+       ┌──────────────────────────────
+     0 │ 1.000 1.000 1.000 1.000 1.000
+     1 │ 1.000 1.000 1.000 1.000 1.000
+     2 │ 1.000 1.000 1.000 1.000 1.000
+     3 │ 1.000 1.000 1.000 1.000 1.000
+     4 │ 1.000 1.000 1.000 1.000 1.000
+     >
 
     Named object of ones with pointNames and featureNames.
 
@@ -332,15 +336,14 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
     ...                      featureNames=['a', 'b', 'c', 'd'],
     ...                      name='ones DataFrame')
     >>> onesDF
-    DataFrame(
-        [[1.000 1.000 1.000 1.000]
-         [1.000 1.000 1.000 1.000]
-         [1.000 1.000 1.000 1.000]
-         [1.000 1.000 1.000 1.000]]
-        pointNames={'1':0, '2':1, '3':2, '4':3}
-        featureNames={'a':0, 'b':1, 'c':2, 'd':3}
-        name="ones DataFrame"
-        )
+    <DataFrame "ones DataFrame" 4pt x 4ft
+           a     b     c     d
+       ┌────────────────────────
+     1 │ 1.000 1.000 1.000 1.000
+     2 │ 1.000 1.000 1.000 1.000
+     3 │ 1.000 1.000 1.000 1.000
+     4 │ 1.000 1.000 1.000 1.000
+     >
 
     Keywords
     --------
@@ -395,13 +398,15 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
 
     >>> zeros = nimble.zeros('Matrix', 5, 5)
     >>> zeros
-    Matrix(
-        [[0.000 0.000 0.000 0.000 0.000]
-         [0.000 0.000 0.000 0.000 0.000]
-         [0.000 0.000 0.000 0.000 0.000]
-         [0.000 0.000 0.000 0.000 0.000]
-         [0.000 0.000 0.000 0.000 0.000]]
-        )
+    <Matrix 5pt x 5ft
+           0     1     2     3     4
+       ┌──────────────────────────────
+     0 │ 0.000 0.000 0.000 0.000 0.000
+     1 │ 0.000 0.000 0.000 0.000 0.000
+     2 │ 0.000 0.000 0.000 0.000 0.000
+     3 │ 0.000 0.000 0.000 0.000 0.000
+     4 │ 0.000 0.000 0.000 0.000 0.000
+     >
 
     Named object of zeros with pointNames and featureNames.
 
@@ -410,15 +415,14 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
     ...                            featureNames=['a', 'b', 'c', 'd'],
     ...                            name='Sparse all-zeros')
     >>> zerosSparse
-    Sparse(
-        [[0.000 0.000 0.000 0.000]
-         [0.000 0.000 0.000 0.000]
-         [0.000 0.000 0.000 0.000]
-         [0.000 0.000 0.000 0.000]]
-        pointNames={'1':0, '2':1, '3':2, '4':3}
-        featureNames={'a':0, 'b':1, 'c':2, 'd':3}
-        name="Sparse all-zeros"
-        )
+    <Sparse "Sparse all-zeros" 4pt x 4ft
+           a     b     c     d
+       ┌────────────────────────
+     1 │ 0.000 0.000 0.000 0.000
+     2 │ 0.000 0.000 0.000 0.000
+     3 │ 0.000 0.000 0.000 0.000
+     4 │ 0.000 0.000 0.000 0.000
+     >
 
     Keywords
     --------
@@ -471,13 +475,15 @@ def identity(returnType, size, pointNames='automatic',
 
     >>> identity = nimble.identity('Matrix', 5)
     >>> identity
-    Matrix(
-        [[1.000 0.000 0.000 0.000 0.000]
-         [0.000 1.000 0.000 0.000 0.000]
-         [0.000 0.000 1.000 0.000 0.000]
-         [0.000 0.000 0.000 1.000 0.000]
-         [0.000 0.000 0.000 0.000 1.000]]
-        )
+    <Matrix 5pt x 5ft
+           0     1     2     3     4
+       ┌──────────────────────────────
+     0 │ 1.000 0.000 0.000 0.000 0.000
+     1 │ 0.000 1.000 0.000 0.000 0.000
+     2 │ 0.000 0.000 1.000 0.000 0.000
+     3 │ 0.000 0.000 0.000 1.000 0.000
+     4 │ 0.000 0.000 0.000 0.000 1.000
+     >
 
     Named object of zeros with pointNames and featureNames.
 
@@ -486,14 +492,13 @@ def identity(returnType, size, pointNames='automatic',
     ...                             featureNames=['a', 'b', 'c'],
     ...                             name='identity matrix list')
     >>> identityList
-    List(
-        [[1.000 0.000 0.000]
-         [0.000 1.000 0.000]
-         [0.000 0.000 1.000]]
-        pointNames={'1':0, '2':1, '3':2}
-        featureNames={'a':0, 'b':1, 'c':2}
-        name="identity matrix list"
-        )
+    <List "identity matrix list" 3pt x 3ft
+           a     b     c
+       ┌──────────────────
+     1 │ 1.000 0.000 0.000
+     2 │ 0.000 1.000 0.000
+     3 │ 0.000 0.000 1.000
+     >
 
     Keywords
     --------

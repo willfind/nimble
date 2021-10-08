@@ -40,15 +40,19 @@ def inverse(aObj):
     >>> lst = [[1, 2], [3, 4]]
     >>> X = nimble.data('Matrix', lst)
     >>> X
-    Matrix(
-        [[1 2]
-         [3 4]]
-        )
+    <Matrix 2pt x 2ft
+         0 1
+       ┌────
+     0 │ 1 2
+     1 │ 3 4
+     >
     >>> inverse(X)
-    Matrix(
-        [[-2.000 1.000 ]
-         [1.500  -0.500]]
-        )
+    <Matrix 2pt x 2ft
+           0      1
+       ┌──────────────
+     0 │ -2.000 1.000
+     1 │ 1.500  -0.500
+     >
     """
     if not scipy.nimbleAccessible():
         msg = "scipy must be installed in order to use the inverse function."
@@ -132,15 +136,19 @@ def pseudoInverse(aObj, method='svd'):
     >>> lst = [[1, 2], [3, 4]]
     >>> X = nimble.data('Matrix', lst)
     >>> X
-    Matrix(
-        [[1 2]
-         [3 4]]
-        )
+    <Matrix 2pt x 2ft
+         0 1
+       ┌────
+     0 │ 1 2
+     1 │ 3 4
+     >
     >>> pseudoInverse(X)
-    Matrix(
-        [[-2.000 1.000 ]
-         [1.500  -0.500]]
-        )
+    <Matrix 2pt x 2ft
+           0      1
+       ┌──────────────
+     0 │ -2.000 1.000
+     1 │ 1.500  -0.500
+     >
     """
     if not scipy.nimbleAccessible():
         msg = "scipy must be installed in order to use the pseudoInverse "
@@ -214,20 +222,26 @@ def solve(aObj, bObj):
     >>> bData = [2,4,-1]
     >>> bObj = nimble.data('Matrix', bData)
     >>> aObj
-    Matrix(
-        [[3 2  0]
-         [1 -1 0]
-         [0 5  1]]
-        )
+    <Matrix 3pt x 3ft
+         0 1  2
+       ┌───────
+     0 │ 3 2  0
+     1 │ 1 -1 0
+     2 │ 0 5  1
+     >
     >>> bObj
-    Matrix(
-        [[2 4 -1]]
-        )
+    <Matrix 1pt x 3ft
+         0 1 2
+       ┌───────
+     0 │ 2 4 -1
+     >
     >>> xObj = solve(aObj, bObj)
     >>> xObj
-    Matrix(
-        [[2.000 -2.000 9.000]]
-        )
+    <Matrix 1pt x 3ft
+           0     1      2
+       ┌───────────────────
+     0 │ 2.000 -2.000 9.000
+     >
     """
     return _backendSolvers(aObj, bObj, solve)
 
@@ -273,9 +287,11 @@ def leastSquaresSolution(aObj, bObj):
     >>> aObj = nimble.data('Matrix', a)
     >>> bObj = nimble.data('Matrix', b)
     >>> nimble.calculate.leastSquaresSolution(aObj, bObj)
-    Matrix(
-        [[3.000 6.000]]
-        )
+    <Matrix 1pt x 2ft
+           0     1
+       ┌────────────
+     0 │ 3.000 6.000
+     >
     """
     return _backendSolvers(aObj, bObj, leastSquaresSolution)
 

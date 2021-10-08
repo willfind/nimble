@@ -359,60 +359,60 @@ class Points(ABC):
         ...                 pointNames=['1', '2', '3', '4'])
         >>> single = X.points.copy('1')
         >>> single
-        Matrix(
-            [[1 1 1 1]]
-            pointNames={'1':0}
-            featureNames={'a':0, 'b':1, 'c':2, 'd':3}
-            )
+        <Matrix 1pt x 4ft
+             a b c d
+           ┌────────
+         1 │ 1 1 1 1
+         >
         >>> multiple = X.points.copy(['1', 3])
         >>> multiple
-        Matrix(
-            [[1 1 1 1]
-             [4 4 4 4]]
-            pointNames={'1':0, '4':1}
-            featureNames={'a':0, 'b':1, 'c':2, 'd':3}
-            )
+        <Matrix 2pt x 4ft
+             a b c d
+           ┌────────
+         1 │ 1 1 1 1
+         4 │ 4 4 4 4
+         >
         >>> func = X.points.copy(lambda pt: sum(pt) < 10)
         >>> func
-        Matrix(
-            [[1 1 1 1]
-             [2 2 2 2]]
-            pointNames={'1':0, '2':1}
-            featureNames={'a':0, 'b':1, 'c':2, 'd':3}
-            )
+        <Matrix 2pt x 4ft
+             a b c d
+           ┌────────
+         1 │ 1 1 1 1
+         2 │ 2 2 2 2
+         >
         >>> strFunc = X.points.copy("a >= 3")
         >>> strFunc
-        Matrix(
-            [[3 3 3 3]
-             [4 4 4 4]]
-            pointNames={'3':0, '4':1}
-            featureNames={'a':0, 'b':1, 'c':2, 'd':3}
-            )
+        <Matrix 2pt x 4ft
+             a b c d
+           ┌────────
+         3 │ 3 3 3 3
+         4 │ 4 4 4 4
+         >
         >>> startEnd = X.points.copy(start=1, end=2)
         >>> startEnd
-        Matrix(
-            [[2 2 2 2]
-             [3 3 3 3]]
-            pointNames={'2':0, '3':1}
-            featureNames={'a':0, 'b':1, 'c':2, 'd':3}
-            )
+        <Matrix 2pt x 4ft
+             a b c d
+           ┌────────
+         2 │ 2 2 2 2
+         3 │ 3 3 3 3
+         >
         >>> numberNoRandom = X.points.copy(number=2)
         >>> numberNoRandom
-        Matrix(
-            [[1 1 1 1]
-             [2 2 2 2]]
-            pointNames={'1':0, '2':1}
-            featureNames={'a':0, 'b':1, 'c':2, 'd':3}
-            )
+        <Matrix 2pt x 4ft
+             a b c d
+           ┌────────
+         1 │ 1 1 1 1
+         2 │ 2 2 2 2
+         >
         >>> nimble.random.setSeed(42)
         >>> numberRandom = X.points.copy(number=2, randomize=True)
         >>> numberRandom
-        Matrix(
-            [[1 1 1 1]
-             [4 4 4 4]]
-            pointNames={'1':0, '4':1}
-            featureNames={'a':0, 'b':1, 'c':2, 'd':3}
-            )
+        <Matrix 2pt x 4ft
+             a b c d
+           ┌────────
+         1 │ 1 1 1 1
+         4 │ 4 4 4 4
+         >
 
         Keywords
         --------
@@ -485,16 +485,18 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> single = X.points.extract('a')
         >>> single
-        Matrix(
-            [[1.000 0.000 0.000]]
-            pointNames={'a':0}
-            )
+        <Matrix 1pt x 3ft
+               0     1     2
+           ┌──────────────────
+         a │ 1.000 0.000 0.000
+         >
         >>> X
-        Matrix(
-            [[0.000 1.000 0.000]
-             [0.000 0.000 1.000]]
-            pointNames={'b':0, 'c':1}
-            )
+        <Matrix 2pt x 3ft
+               0     1     2
+           ┌──────────────────
+         b │ 0.000 1.000 0.000
+         c │ 0.000 0.000 1.000
+         >
 
         Extract multiple points.
 
@@ -502,16 +504,18 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> multiple = X.points.extract(['a', 2])
         >>> multiple
-        Matrix(
-            [[1.000 0.000 0.000]
-             [0.000 0.000 1.000]]
-            pointNames={'a':0, 'c':1}
-            )
+        <Matrix 2pt x 3ft
+               0     1     2
+           ┌──────────────────
+         a │ 1.000 0.000 0.000
+         c │ 0.000 0.000 1.000
+         >
         >>> X
-        Matrix(
-            [[0.000 1.000 0.000]]
-            pointNames={'b':0}
-            )
+        <Matrix 1pt x 3ft
+               0     1     2
+           ┌──────────────────
+         b │ 0.000 1.000 0.000
+         >
 
         Extract point when the function returns True.
 
@@ -519,16 +523,18 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> func = X.points.extract(lambda pt: pt[2] == 1)
         >>> func
-        Matrix(
-            [[0.000 0.000 1.000]]
-            pointNames={'c':0}
-            )
+        <Matrix 1pt x 3ft
+               0     1     2
+           ┌──────────────────
+         c │ 0.000 0.000 1.000
+         >
         >>> X
-        Matrix(
-            [[1.000 0.000 0.000]
-             [0.000 1.000 0.000]]
-            pointNames={'a':0, 'b':1}
-            )
+        <Matrix 2pt x 3ft
+               0     1     2
+           ┌──────────────────
+         a │ 1.000 0.000 0.000
+         b │ 0.000 1.000 0.000
+         >
 
         Extract point when the query string returns True.
 
@@ -537,18 +543,18 @@ class Points(ABC):
         ...                     featureNames=['f1', 'f2', 'f3'])
         >>> strFunc = X.points.extract("f2 != 0")
         >>> strFunc
-        Matrix(
-            [[0.000 1.000 0.000]]
-            pointNames={'b':0}
-            featureNames={'f1':0, 'f2':1, 'f3':2}
-            )
+        <Matrix 1pt x 3ft
+               f1    f2    f3
+           ┌──────────────────
+         b │ 0.000 1.000 0.000
+         >
         >>> X
-        Matrix(
-            [[1.000 0.000 0.000]
-             [0.000 0.000 1.000]]
-            pointNames={'a':0, 'c':1}
-            featureNames={'f1':0, 'f2':1, 'f3':2}
-            )
+        <Matrix 2pt x 3ft
+               f1    f2    f3
+           ┌──────────────────
+         a │ 1.000 0.000 0.000
+         c │ 0.000 0.000 1.000
+         >
 
         Extract points from the inclusive start to the inclusive end.
 
@@ -556,16 +562,18 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> startEnd = X.points.extract(start=1, end=2)
         >>> startEnd
-        Matrix(
-            [[0.000 1.000 0.000]
-             [0.000 0.000 1.000]]
-            pointNames={'b':0, 'c':1}
-            )
+        <Matrix 2pt x 3ft
+               0     1     2
+           ┌──────────────────
+         b │ 0.000 1.000 0.000
+         c │ 0.000 0.000 1.000
+         >
         >>> X
-        Matrix(
-            [[1.000 0.000 0.000]]
-            pointNames={'a':0}
-            )
+        <Matrix 1pt x 3ft
+               0     1     2
+           ┌──────────────────
+         a │ 1.000 0.000 0.000
+         >
 
         Select a set number to extract, starting from the first point.
 
@@ -573,16 +581,18 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> numberNoRandom = X.points.extract(number=2)
         >>> numberNoRandom
-        Matrix(
-            [[1.000 0.000 0.000]
-             [0.000 1.000 0.000]]
-            pointNames={'a':0, 'b':1}
-            )
+        <Matrix 2pt x 3ft
+               0     1     2
+           ┌──────────────────
+         a │ 1.000 0.000 0.000
+         b │ 0.000 1.000 0.000
+         >
         >>> X
-        Matrix(
-            [[0.000 0.000 1.000]]
-            pointNames={'c':0}
-            )
+        <Matrix 1pt x 3ft
+               0     1     2
+           ┌──────────────────
+         c │ 0.000 0.000 1.000
+         >
 
         Select a set number to extract, choosing points at random.
 
@@ -591,16 +601,18 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> numberRandom = X.points.extract(number=2, randomize=True)
         >>> numberRandom
-        Matrix(
-            [[0.000 0.000 1.000]
-             [1.000 0.000 0.000]]
-            pointNames={'c':0, 'a':1}
-            )
+        <Matrix 2pt x 3ft
+               0     1     2
+           ┌──────────────────
+         c │ 0.000 0.000 1.000
+         a │ 1.000 0.000 0.000
+         >
         >>> X
-        Matrix(
-            [[0.000 1.000 0.000]]
-            pointNames={'b':0}
-            )
+        <Matrix 1pt x 3ft
+               0     1     2
+           ┌──────────────────
+         b │ 0.000 1.000 0.000
+         >
 
         Keywords
         --------
@@ -669,11 +681,12 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> X.points.delete('a')
         >>> X
-        Matrix(
-            [[0.000 1.000 0.000]
-             [0.000 0.000 1.000]]
-            pointNames={'b':0, 'c':1}
-            )
+        <Matrix 2pt x 3ft
+               0     1     2
+           ┌──────────────────
+         b │ 0.000 1.000 0.000
+         c │ 0.000 0.000 1.000
+         >
 
         Delete multiple points.
 
@@ -681,10 +694,11 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> X.points.delete(['a', 2])
         >>> X
-        Matrix(
-            [[0.000 1.000 0.000]]
-            pointNames={'b':0}
-            )
+        <Matrix 1pt x 3ft
+               0     1     2
+           ┌──────────────────
+         b │ 0.000 1.000 0.000
+         >
 
         Delete point when the function returns True.
 
@@ -692,24 +706,26 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> X.points.delete(lambda pt: pt[2] == 1)
         >>> X
-        Matrix(
-            [[1.000 0.000 0.000]
-             [0.000 1.000 0.000]]
-            pointNames={'a':0, 'b':1}
-            )
+        <Matrix 2pt x 3ft
+               0     1     2
+           ┌──────────────────
+         a │ 1.000 0.000 0.000
+         b │ 0.000 1.000 0.000
+         >
 
         Delete point when the query string returns True.
 
-        >>> X = nimble.identity('Matrix', 3, pointNames=['a', 'b', 'c'],
-        ...                     featureNames=['f1', 'f2', 'f3'])
+        >>> X = nimble.identity('Matrix', 3,
+        ...                        pointNames=['a', 'b', 'c'],
+        ...                        featureNames=['f1', 'f2', 'f3'])
         >>> X.points.delete("f2 != 0")
         >>> X
-        Matrix(
-            [[1.000 0.000 0.000]
-             [0.000 0.000 1.000]]
-            pointNames={'a':0, 'c':1}
-            featureNames={'f1':0, 'f2':1, 'f3':2}
-            )
+        <Matrix 2pt x 3ft
+               f1    f2    f3
+           ┌──────────────────
+         a │ 1.000 0.000 0.000
+         c │ 0.000 0.000 1.000
+         >
 
         Delete points from the inclusive start to the inclusive end.
 
@@ -717,10 +733,11 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> X.points.delete(start=1, end=2)
         >>> X
-        Matrix(
-            [[1.000 0.000 0.000]]
-            pointNames={'a':0}
-            )
+        <Matrix 1pt x 3ft
+               0     1     2
+           ┌──────────────────
+         a │ 1.000 0.000 0.000
+         >
 
         Select a set number to delete, starting from the first point.
 
@@ -728,10 +745,11 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> X.points.delete(number=2)
         >>> X
-        Matrix(
-            [[0.000 0.000 1.000]]
-            pointNames={'c':0}
-            )
+        <Matrix 1pt x 3ft
+               0     1     2
+           ┌──────────────────
+         c │ 0.000 0.000 1.000
+         >
 
         Select a set number to delete, choosing points at random.
 
@@ -740,10 +758,11 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> X.points.delete(number=2, randomize=True)
         >>> X
-        Matrix(
-            [[0.000 1.000 0.000]]
-            pointNames={'b':0}
-            )
+        <Matrix 1pt x 3ft
+               0     1     2
+           ┌──────────────────
+         b │ 0.000 1.000 0.000
+         >
 
         Keywords
         --------
@@ -812,10 +831,11 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> X.points.retain('a')
         >>> X
-        Matrix(
-            [[1.000 0.000 0.000]]
-            pointNames={'a':0}
-            )
+        <Matrix 1pt x 3ft
+               0     1     2
+           ┌──────────────────
+         a │ 1.000 0.000 0.000
+         >
 
         Retain multiple points.
 
@@ -823,11 +843,12 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> X.points.retain(['a', 2])
         >>> X
-        Matrix(
-            [[1.000 0.000 0.000]
-             [0.000 0.000 1.000]]
-            pointNames={'a':0, 'c':1}
-            )
+        <Matrix 2pt x 3ft
+               0     1     2
+           ┌──────────────────
+         a │ 1.000 0.000 0.000
+         c │ 0.000 0.000 1.000
+         >
 
         Retain point when the function returns True.
 
@@ -835,22 +856,24 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> X.points.retain(lambda pt: pt[2] == 1)
         >>> X
-        Matrix(
-            [[0.000 0.000 1.000]]
-            pointNames={'c':0}
-            )
+        <Matrix 1pt x 3ft
+               0     1     2
+           ┌──────────────────
+         c │ 0.000 0.000 1.000
+         >
 
         Retain point when the query string returns True.
 
-        >>> X = nimble.identity('Matrix', 3, pointNames=['a', 'b', 'c'],
-        ...                     featureNames=['f1', 'f2', 'f3'])
+        >>> X = nimble.identity('Matrix', 3,
+        ...                        pointNames=['a', 'b', 'c'],
+        ...                        featureNames=['f1', 'f2', 'f3'])
         >>> X.points.retain("f2 != 0")
         >>> X
-        Matrix(
-            [[0.000 1.000 0.000]]
-            pointNames={'b':0}
-            featureNames={'f1':0, 'f2':1, 'f3':2}
-            )
+        <Matrix 1pt x 3ft
+               f1    f2    f3
+           ┌──────────────────
+         b │ 0.000 1.000 0.000
+         >
 
         Retain points from the inclusive start to the inclusive end.
 
@@ -858,11 +881,12 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> X.points.retain(start=1, end=2)
         >>> X
-        Matrix(
-            [[0.000 1.000 0.000]
-             [0.000 0.000 1.000]]
-            pointNames={'b':0, 'c':1}
-            )
+        <Matrix 2pt x 3ft
+               0     1     2
+           ┌──────────────────
+         b │ 0.000 1.000 0.000
+         c │ 0.000 0.000 1.000
+         >
 
         Select a set number to retain, starting from the first point.
 
@@ -870,11 +894,12 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> X.points.retain(number=2)
         >>> X
-        Matrix(
-            [[1.000 0.000 0.000]
-             [0.000 1.000 0.000]]
-            pointNames={'a':0, 'b':1}
-            )
+        <Matrix 2pt x 3ft
+               0     1     2
+           ┌──────────────────
+         a │ 1.000 0.000 0.000
+         b │ 0.000 1.000 0.000
+         >
 
         Select a set number to retain, choosing points at random.
 
@@ -883,15 +908,12 @@ class Points(ABC):
         >>> X.points.setNames(['a', 'b', 'c'])
         >>> X.points.retain(number=2, randomize=True)
         >>> X
-        Matrix(
-            [[0.000 0.000 1.000]
-             [1.000 0.000 0.000]]
-            pointNames={'c':0, 'a':1}
-            )
-
-        Keywords
-        --------
-        keep, hold, maintain, preserve, remove
+        <Matrix 2pt x 3ft
+               0     1     2
+           ┌──────────────────
+         c │ 0.000 0.000 1.000
+         a │ 1.000 0.000 0.000
+         >
         """
         self._retain(toRetain, start, end, number, randomize, useLog)
 
@@ -986,13 +1008,14 @@ class Points(ABC):
         >>> orders = nimble.data('DataFrame', lst, featureNames=fts)
         >>> orders.points.sort(['quantity', 'dept'])
         >>> orders
-        DataFrame(
-            [[home 14 1  8.990]
-             [home 81 3  2.490]
-             [home 11 3  3.890]
-             [gard 98 10 0.990]]
-            featureNames={'dept':0, 'ID':1, 'quantity':2, 'price':3}
-            )
+        <DataFrame 4pt x 4ft
+             dept ID quantity price
+           ┌───────────────────────
+         0 │ home 14    1     8.990
+         1 │ home 81    3     2.490
+         2 │ home 11    3     3.890
+         3 │ gard 98    10    0.990
+         >
 
         Sort using a comparator function.
 
@@ -1008,13 +1031,14 @@ class Points(ABC):
         ...     return pt2Income - pt1Income
         >>> orders.points.sort(incomeDifference)
         >>> orders
-        DataFrame(
-            [[home 11 3  3.890]
-             [gard 98 10 0.990]
-             [home 14 1  8.990]
-             [home 81 3  2.490]]
-            featureNames={'dept':0, 'ID':1, 'quantity':2, 'price':3}
-            )
+        <DataFrame 4pt x 4ft
+             dept ID quantity price
+           ┌───────────────────────
+         0 │ home 11    3     3.890
+         1 │ gard 98    10    0.990
+         2 │ home 14    1     8.990
+         3 │ home 81    3     2.490
+         >
 
         Sort using a scoring function.
 
@@ -1030,13 +1054,14 @@ class Points(ABC):
         ...     return score
         >>> orders.points.sort(weightedQuantity, reverse=True)
         >>> orders
-        DataFrame(
-            [[home 81 3  2.490]
-             [home 11 3  3.890]
-             [gard 98 10 0.990]
-             [home 14 1  8.990]]
-            featureNames={'dept':0, 'ID':1, 'quantity':2, 'price':3}
-            )
+        <DataFrame 4pt x 4ft
+             dept ID quantity price
+           ┌───────────────────────
+         0 │ home 81    3     2.490
+         1 │ home 11    3     3.890
+         2 │ gard 98    10    0.990
+         3 │ home 14    1     8.990
+         >
 
         Keywords
         --------
@@ -1080,11 +1105,13 @@ class Points(ABC):
         >>> X = nimble.ones('Matrix', 3, 5)
         >>> X.points.transform(lambda pt: pt + 2)
         >>> X
-        Matrix(
-            [[3.000 3.000 3.000 3.000 3.000]
-             [3.000 3.000 3.000 3.000 3.000]
-             [3.000 3.000 3.000 3.000 3.000]]
-            )
+        <Matrix 3pt x 5ft
+               0     1     2     3     4
+           ┌──────────────────────────────
+         0 │ 3.000 3.000 3.000 3.000 3.000
+         1 │ 3.000 3.000 3.000 3.000 3.000
+         2 │ 3.000 3.000 3.000 3.000 3.000
+         >
 
         Transform all points; apply to certain features. Note that the
         function recieves a read-only view of each point, so we need to
@@ -1097,26 +1124,26 @@ class Points(ABC):
         >>> X = nimble.ones('Matrix', 3, 5)
         >>> X.points.transform(transformMiddleFeature)
         >>> X
-        Matrix(
-            [[1.000 1.000 5.000 1.000 1.000]
-             [1.000 1.000 5.000 1.000 1.000]
-             [1.000 1.000 5.000 1.000 1.000]]
-            )
+        <Matrix 3pt x 5ft
+               0     1     2     3     4
+           ┌──────────────────────────────
+         0 │ 1.000 1.000 5.000 1.000 1.000
+         1 │ 1.000 1.000 5.000 1.000 1.000
+         2 │ 1.000 1.000 5.000 1.000 1.000
+         >
 
         Transform a subset of points.
 
         >>> X = nimble.ones('Matrix', 3, 5)
         >>> X.points.transform(lambda pt: pt + 6, points=[0, 2])
         >>> X
-        Matrix(
-            [[7.000 7.000 7.000 7.000 7.000]
-             [1.000 1.000 1.000 1.000 1.000]
-             [7.000 7.000 7.000 7.000 7.000]]
-            )
-
-        Keywords
-        --------
-        apply, modify, alter, change, map, compute
+        <Matrix 3pt x 5ft
+               0     1     2     3     4
+           ┌──────────────────────────────
+         0 │ 7.000 7.000 7.000 7.000 7.000
+         1 │ 1.000 1.000 1.000 1.000 1.000
+         2 │ 7.000 7.000 7.000 7.000 7.000
+         >
         """
         self._transform(function, points, useLog)
 
@@ -1164,11 +1191,13 @@ class Points(ABC):
         >>> X = nimble.ones('Matrix', 3, 5)
         >>> addTwo = X.points.calculate(lambda pt: pt + 2)
         >>> addTwo
-        Matrix(
-            [[3.000 3.000 3.000 3.000 3.000]
-             [3.000 3.000 3.000 3.000 3.000]
-             [3.000 3.000 3.000 3.000 3.000]]
-            )
+        <Matrix 3pt x 5ft
+               0     1     2     3     4
+           ┌──────────────────────────────
+         0 │ 3.000 3.000 3.000 3.000 3.000
+         1 │ 3.000 3.000 3.000 3.000 3.000
+         2 │ 3.000 3.000 3.000 3.000 3.000
+         >
 
         Apply calculation to all points; function modifies a specific
         feature. Note that the function recieves a read-only view of
@@ -1181,11 +1210,13 @@ class Points(ABC):
         >>> X = nimble.ones('Matrix', 3, 5)
         >>> changeMiddle = X.points.calculate(changeMiddleFeature)
         >>> changeMiddle
-        Matrix(
-            [[1.000 1.000 5.000 1.000 1.000]
-             [1.000 1.000 5.000 1.000 1.000]
-             [1.000 1.000 5.000 1.000 1.000]]
-            )
+        <Matrix 3pt x 5ft
+               0     1     2     3     4
+           ┌──────────────────────────────
+         0 │ 1.000 1.000 5.000 1.000 1.000
+         1 │ 1.000 1.000 5.000 1.000 1.000
+         2 │ 1.000 1.000 5.000 1.000 1.000
+         >
 
         Apply calculation to a subset of points.
 
@@ -1194,11 +1225,12 @@ class Points(ABC):
         >>> calc = X.points.calculate(lambda pt: pt + 6,
         ...                              points=[2, 0])
         >>> calc
-        Matrix(
-            [[6.000 6.000 7.000]
-             [7.000 6.000 6.000]]
-            pointNames={'p3':0, 'p1':1}
-            )
+        <Matrix 2pt x 3ft
+                0     1     2
+            ┌──────────────────
+         p3 │ 6.000 6.000 7.000
+         p1 │ 7.000 6.000 6.000
+         >
 
         Keywords: apply, modify, alter
         """
@@ -1239,24 +1271,26 @@ class Points(ABC):
         >>> X = nimble.data('Matrix', lst)
         >>> allPositivePts = X.points.matching(match.allPositive)
         >>> allPositivePts
-        Matrix(
-            [[False]
-             [False]
-             [ True]]
-            featureNames={'allPositive':0}
-            )
+        <Matrix 3pt x 1ft
+             allPositive
+           ┌────────────
+         0 │    False
+         1 │    False
+         2 │     True
+         >
 
         >>> from nimble import match
         >>> lst = [[1, -1, float('nan')], [-3, 3, 3], [5, 5, 5]]
         >>> X = nimble.data('Matrix', lst)
         >>> ptHasMissing = X.points.matching(match.anyMissing)
         >>> ptHasMissing
-        Matrix(
-            [[ True]
-             [False]
-             [False]]
-            featureNames={'anyMissing':0}
-            )
+        <Matrix 3pt x 1ft
+             anyMissing
+           ┌───────────
+         0 │    True
+         1 │   False
+         2 │   False
+         >
 
         Keywords
         --------
@@ -1306,12 +1340,14 @@ class Points(ABC):
         >>> toInsert = nimble.ones('Matrix', 2, 3)
         >>> X.points.insert(1, toInsert)
         >>> X
-        Matrix(
-            [[0.000 0.000 0.000]
-             [1.000 1.000 1.000]
-             [1.000 1.000 1.000]
-             [0.000 0.000 0.000]]
-            )
+        <Matrix 4pt x 3ft
+               0     1     2
+           ┌──────────────────
+         0 │ 0.000 0.000 0.000
+         1 │ 1.000 1.000 1.000
+         2 │ 1.000 1.000 1.000
+         3 │ 0.000 0.000 0.000
+         >
 
         Insert before another point; mixed object types.
 
@@ -1322,13 +1358,14 @@ class Points(ABC):
         ...                        pointNames=['2', '3'])
         >>> X.points.insert('4', toInsert)
         >>> X
-        Matrix(
-            [[1 1 1]
-             [2 2 2]
-             [3 3 3]
-             [4 4 4]]
-            pointNames={'1':0, '2':1, '3':2, '4':3}
-            )
+        <Matrix 4pt x 3ft
+             0 1 2
+           ┌──────
+         1 │ 1 1 1
+         2 │ 2 2 2
+         3 │ 3 3 3
+         4 │ 4 4 4
+         >
 
         Reorder names.
 
@@ -1340,17 +1377,14 @@ class Points(ABC):
         ...                        featureNames=['c', 'b', 'a'])
         >>> X.points.insert(0, toInsert)
         >>> X
-        Matrix(
-            [[1 2 3]
-             [1 2 3]
-             [1 2 3]
-             [1 2 3]]
-            featureNames={'a':0, 'b':1, 'c':2}
-            )
-
-        Keywords
-        --------
-        embed, include, inject, alter, position
+        <Matrix 4pt x 3ft
+             a b c
+           ┌──────
+         0 │ 1 2 3
+         1 │ 1 2 3
+         2 │ 1 2 3
+         3 │ 1 2 3
+         >
         """
         self._insert(insertBefore, toInsert, False, useLog)
 
@@ -1392,12 +1426,14 @@ class Points(ABC):
         >>> toAppend = nimble.ones('Matrix', 2, 3)
         >>> X.points.append(toAppend)
         >>> X
-        Matrix(
-            [[0.000 0.000 0.000]
-             [0.000 0.000 0.000]
-             [1.000 1.000 1.000]
-             [1.000 1.000 1.000]]
-            )
+        <Matrix 4pt x 3ft
+               0     1     2
+           ┌──────────────────
+         0 │ 0.000 0.000 0.000
+         1 │ 0.000 0.000 0.000
+         2 │ 1.000 1.000 1.000
+         3 │ 1.000 1.000 1.000
+         >
 
         Append mixed object types.
 
@@ -1408,13 +1444,14 @@ class Points(ABC):
         ...                        pointNames=['3', '4'])
         >>> X.points.append(toAppend)
         >>> X
-        Matrix(
-            [[1 1 1]
-             [2 2 2]
-             [3 3 3]
-             [4 4 4]]
-            pointNames={'1':0, '2':1, '3':2, '4':3}
-            )
+        <Matrix 4pt x 3ft
+             0 1 2
+           ┌──────
+         1 │ 1 1 1
+         2 │ 2 2 2
+         3 │ 3 3 3
+         4 │ 4 4 4
+         >
 
         Reorder names.
 
@@ -1426,13 +1463,14 @@ class Points(ABC):
         ...                        featureNames=['c', 'b', 'a'])
         >>> X.points.append(toAppend)
         >>> X
-        Matrix(
-            [[1 2 3]
-             [1 2 3]
-             [1 2 3]
-             [1 2 3]]
-            featureNames={'a':0, 'b':1, 'c':2}
-            )
+        <Matrix 4pt x 3ft
+             a b c
+           ┌──────
+         0 │ 1 2 3
+         1 │ 1 2 3
+         2 │ 1 2 3
+         3 │ 1 2 3
+         >
 
         Keywords
         --------
@@ -1479,34 +1517,38 @@ class Points(ABC):
         >>> newPt = nimble.ones('Matrix', 1, 3, pointNames=['b'])
         >>> obj.points.replace(newPt, points='b')
         >>> obj
-        Matrix(
-            [[0.000 0.000 0.000]
-             [1.000 1.000 1.000]
-             [0.000 0.000 0.000]]
-            pointNames={'a':0, 'b':1, 'c':2}
-            )
+        <Matrix 3pt x 3ft
+               0     1     2
+           ┌──────────────────
+         a │ 0.000 0.000 0.000
+         b │ 1.000 1.000 1.000
+         c │ 0.000 0.000 0.000
+         >
 
         >>> obj = nimble.zeros('Sparse', 4, 3)
         >>> replacement = [[1, 2, 3], [9, 8, 7]]
         >>> obj.points.replace(replacement, [1, 2])
         >>> obj
-        Sparse(
-            [[0.000 0.000 0.000]
-             [1.000 2.000 3.000]
-             [9.000 8.000 7.000]
-             [0.000 0.000 0.000]]
-            )
+        <Sparse 4pt x 3ft
+               0     1     2
+           ┌──────────────────
+         0 │ 0.000 0.000 0.000
+         1 │ 1.000 2.000 3.000
+         2 │ 9.000 8.000 7.000
+         3 │ 0.000 0.000 0.000
+         >
 
         >>> obj = nimble.zeros('DataFrame', 3, 3,
         ...                    pointNames=['a', 'b', 'c'])
         >>> obj.points.replace([2, 3, 2], pointNames=['b'])
         >>> obj
-        DataFrame(
-            [[0.000 0.000 0.000]
-             [2.000 3.000 2.000]
-             [0.000 0.000 0.000]]
-            pointNames={'a':0, 'b':1, 'c':2}
-            )
+        <DataFrame 3pt x 3ft
+               0     1     2
+           ┌──────────────────
+         a │ 0.000 0.000 0.000
+         b │ 2.000 3.000 2.000
+         c │ 0.000 0.000 0.000
+         >
 
         Keywords
         --------
@@ -1557,10 +1599,12 @@ class Points(ABC):
         >>> fts = ['CAPACITY', 'ROOF_TYPE', 'TEAM']
         >>> X = nimble.data('Matrix', stadiums, featureNames=fts)
         >>> X.points.mapReduce(roofMapper, roofReducer)
-        Matrix(
-            [[Open 3]
-             [Dome 2]]
-            )
+        <Matrix 2pt x 2ft
+              0   1
+           ┌───────
+         0 │ Open 3
+         1 │ Dome 2
+         >
 
         Keywords
         --------
@@ -1606,12 +1650,14 @@ class Points(ABC):
         >>> X = nimble.data('DataFrame', lst)
         >>> X.points.permute()
         >>> X
-        DataFrame(
-            [[3 3 3 3]
-             [2 2 2 2]
-             [4 4 4 4]
-             [1 1 1 1]]
-            )
+        <DataFrame 4pt x 4ft
+             0 1 2 3
+           ┌────────
+         0 │ 3 3 3 3
+         1 │ 2 2 2 2
+         2 │ 4 4 4 4
+         3 │ 1 1 1 1
+         >
 
         Permute with a list of identifiers.
 
@@ -1623,13 +1669,14 @@ class Points(ABC):
         >>> orders = nimble.data('DataFrame', lst, pointNames=pts)
         >>> orders.points.permute(['o_1', 'o_2', 'o_3', 'o_4'])
         >>> orders
-        DataFrame(
-            [[home 11 3 ]
-             [home 14 1 ]
-             [gard 98 10]
-             [home 81 3 ]]
-            pointNames={'o_1':0, 'o_2':1, 'o_3':2, 'o_4':3}
-            )
+        <DataFrame 4pt x 3ft
+                0   1  2
+             ┌───────────
+         o_1 │ home 11 3
+         o_2 │ home 14 1
+         o_3 │ gard 98 10
+         o_4 │ home 81 3
+         >
 
         Keywords
         --------
@@ -1697,13 +1744,15 @@ class Points(ABC):
         >>> X = nimble.data('Matrix', lst)
         >>> X.points.fillMatching(-1, 'na')
         >>> X
-        Matrix(
-            [[1  1 1 ]
-             [1  1 1 ]
-             [1  1 -1]
-             [2  2 2 ]
-             [-1 2 2 ]]
-            )
+        <Matrix 5pt x 3ft
+             0  1 2
+           ┌────────
+         0 │ 1  1 1
+         1 │ 1  1 1
+         2 │ 1  1 -1
+         3 │ 2  2 2
+         4 │ -1 2 2
+         >
 
         Fill using nimble's match and fill modules; limit to last point.
         Note: None is converted to np.nan in nimble.
@@ -1718,17 +1767,15 @@ class Points(ABC):
         >>> X = nimble.data('Matrix', lst)
         >>> X.points.fillMatching(fill.mode, match.missing, points=4)
         >>> X
-        Matrix(
-            [[1.000 1.000 1.000]
-             [1.000 1.000 1.000]
-             [1.000 1.000  nan ]
-             [2.000 2.000 2.000]
-             [2.000 2.000 2.000]]
-            )
-
-        Keywords
-        --------
-        replace, substitute, replacement, pattern
+        <Matrix 5pt x 3ft
+               0     1     2
+           ┌──────────────────
+         0 │ 1.000 1.000 1.000
+         1 │ 1.000 1.000 1.000
+         2 │ 1.000 1.000  nan
+         3 │ 2.000 2.000 2.000
+         4 │ 2.000 2.000 2.000
+         >
         """
         return self._fillMatching(fillWith, matchingElements, points,
                                   useLog, **kwarguments)
@@ -1819,18 +1866,19 @@ class Points(ABC):
         >>> temp.points.splitByCollapsingFeatures(['jan', 'feb', 'mar'],
         ...                                       'month', 'temp')
         >>> temp
-        Matrix(
-            [[NYC jan 4 ]
-             [NYC feb 5 ]
-             [NYC mar 10]
-             [ LA jan 20]
-             [ LA feb 21]
-             [ LA mar 21]
-             [CHI jan 0 ]
-             [CHI feb 2 ]
-             [CHI mar 7 ]]
-            featureNames={'city':0, 'month':1, 'temp':2}
-            )
+        <Matrix 9pt x 3ft
+             city month temp
+           ┌────────────────
+         0 │ NYC   jan   4
+         1 │ NYC   feb   5
+         2 │ NYC   mar   10
+         3 │  LA   jan   20
+         4 │  LA   feb   21
+         5 │  LA   mar   21
+         6 │ CHI   jan   0
+         7 │ CHI   feb   2
+         8 │ CHI   mar   7
+         >
 
         Keywords
         --------
@@ -1974,12 +2022,13 @@ class Points(ABC):
         >>> sprinters = nimble.data('Matrix', lst, featureNames=fts)
         >>> sprinters.points.combineByExpandingFeatures('dist', 'time')
         >>> sprinters
-        Matrix(
-            [[   Bolt   9.810 19.780]
-             [  Gatlin  9.890  nan  ]
-             [de Grasse 9.910 20.020]]
-            featureNames={'athlete':0, '100m':1, '200m':2}
-            )
+        <Matrix 3pt x 3ft
+              athlete   100m  200m
+           ┌───────────────────────
+         0 │    Bolt   9.810 19.780
+         1 │   Gatlin  9.890  nan
+         2 │ de Grasse 9.910 20.020
+         >
 
         Keywords
         --------
@@ -2111,42 +2160,41 @@ class Points(ABC):
         >>> X = nimble.data('Matrix', [[1, 2, 3]])
         >>> X.points.setNames(['a'])
         >>> X.points.repeat(totalCopies=3, copyPointByPoint=False)
-        Matrix(
-            [[1 2 3]
-             [1 2 3]
-             [1 2 3]]
-            pointNames={'a_1':0, 'a_2':1, 'a_3':2}
-            )
+        <Matrix 3pt x 3ft
+               0 1 2
+             ┌──────
+         a_1 │ 1 2 3
+         a_2 │ 1 2 3
+         a_3 │ 1 2 3
+         >
 
         Two-dimensional, copyPointByPoint is False
 
         >>> X = nimble.data('Matrix', [[1, 2, 3], [4, 5, 6]])
         >>> X.points.setNames(['a', 'b'])
         >>> X.points.repeat(totalCopies=2, copyPointByPoint=False)
-        Matrix(
-            [[1 2 3]
-             [4 5 6]
-             [1 2 3]
-             [4 5 6]]
-            pointNames={'a_1':0, 'b_1':1, 'a_2':2, 'b_2':3}
-            )
+        <Matrix 4pt x 3ft
+               0 1 2
+             ┌──────
+         a_1 │ 1 2 3
+         b_1 │ 4 5 6
+         a_2 │ 1 2 3
+         b_2 │ 4 5 6
+         >
 
         Two-dimensional, copyPointByPoint is True
 
         >>> X = nimble.data('Matrix', [[1, 2, 3], [4, 5, 6]])
         >>> X.points.setNames(['a', 'b'])
         >>> X.points.repeat(totalCopies=2, copyPointByPoint=True)
-        Matrix(
-            [[1 2 3]
-             [1 2 3]
-             [4 5 6]
-             [4 5 6]]
-            pointNames={'a_1':0, 'a_2':1, 'b_1':2, 'b_2':3}
-            )
-
-        Keywords
-        --------
-        stack, vertical, duplicate, replicate, vstack
+        <Matrix 4pt x 3ft
+               0 1 2
+             ┌──────
+         a_1 │ 1 2 3
+         a_2 │ 1 2 3
+         b_1 │ 4 5 6
+         b_2 │ 4 5 6
+         >
         """
         return self._repeat(totalCopies, copyPointByPoint)
 
@@ -2177,12 +2225,13 @@ class Points(ABC):
         >>> X = nimble.data('Matrix', lst, pointNames=ptNames)
         >>> uniquePoints = X.points.unique()
         >>> uniquePoints
-        Matrix(
-            [[a 1 3]
-             [b 5 6]
-             [b 7 1]]
-            pointNames={'p1':0, 'p2':1, 'p3':2}
-            )
+        <Matrix 3pt x 3ft
+              0 1 2
+            ┌──────
+         p1 │ a 1 3
+         p2 │ b 5 6
+         p3 │ b 7 1
+         >
 
         Keywords
         --------

@@ -158,22 +158,24 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
     >>> knownObj = nimble.data('Matrix', known)
     >>> predObj = nimble.data('Matrix', pred)
     >>> cm = confusionMatrix(knownObj, predObj)
-    >>> print(cm)
-                  known_0 known_1 known_2
-    <BLANKLINE>
-    predicted_0      3       1       0
-    predicted_1      1       3       0
-    predicted_2      0       0       4
-    <BLANKLINE>
+    >>> cm
+    <Matrix 3pt x 3ft
+                   known_0 known_1 known_2
+                 ┌────────────────────────
+     predicted_0 │    3       1       0
+     predicted_1 │    1       3       0
+     predicted_2 │    0       0       4
+     >
     >>> labels = {0: 'cat', 1: 'dog', 2: 'fish'}
     >>> cm = confusionMatrix(knownObj, predObj, labels=labels)
-    >>> print(cm)
-                     known_cat known_dog known_fish
-    <BLANKLINE>
-     predicted_cat       3         1         0
-     predicted_dog       1         3         0
-    predicted_fish       0         0         4
-    <BLANKLINE>
+    >>> cm
+    <Matrix 3pt x 3ft
+                      known_cat known_dog known_fish
+                    ┌───────────────────────────────
+      predicted_cat │     3         1         0
+      predicted_dog │     1         3         0
+     predicted_fish │     0         0         4
+     >
 
     Label objects can have string values and here we output fractions.
 
@@ -189,13 +191,14 @@ def confusionMatrix(knownValues, predictedValues, labels=None,
     >>> predObj = nimble.data('Matrix', pred)
     >>> cm = confusionMatrix(knownObj, predObj,
     ...                      convertCountsToFractions=True)
-    >>> print(cm)
-                     known_cat known_dog known_fish
-    <BLANKLINE>
-     predicted_cat     0.250     0.083     0.000
-     predicted_dog     0.083     0.250     0.000
-    predicted_fish     0.000     0.000     0.333
-    <BLANKLINE>
+    >>> cm
+    <Matrix 3pt x 3ft
+                      known_cat known_dog known_fish
+                    ┌───────────────────────────────
+      predicted_cat │   0.250     0.083     0.000
+      predicted_dog │   0.083     0.250     0.000
+     predicted_fish │   0.000     0.000     0.333
+     >
     """
     if not (isinstance(knownValues, nimble.core.data.Base)
             and isinstance(predictedValues, nimble.core.data.Base)):

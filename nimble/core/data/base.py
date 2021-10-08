@@ -199,11 +199,13 @@ class Base(ABC):
         3
         >>> X.points.permute([2, 1, 0])
         >>> X
-        Matrix(
-            [[0 0 0 0]
-             [5 6 7 8]
-             [1 2 3 4]]
-            )
+        <Matrix 3pt x 4ft
+             0 1 2 3
+           ┌────────
+         0 │ 0 0 0 0
+         1 │ 5 6 7 8
+         2 │ 1 2 3 4
+         >
 
         Keywords
         --------
@@ -239,11 +241,13 @@ class Base(ABC):
         4
         >>> X.features.permute([3, 2, 1, 0])
         >>> X
-        Matrix(
-            [[4 3 2 1]
-             [8 7 6 5]
-             [0 0 0 0]]
-            )
+        <Matrix 3pt x 4ft
+             0 1 2 3
+           ┌────────
+         0 │ 4 3 2 1
+         1 │ 8 7 6 5
+         2 │ 0 0 0 0
+         >
 
         Keywords
         --------
@@ -434,12 +438,13 @@ class Base(ABC):
         >>> replaced
         ['replace=a', 'replace=b', 'replace=c']
         >>> X
-        Matrix(
-            [[1.000 0.000 0.000]
-             [0.000 1.000 0.000]
-             [0.000 0.000 1.000]]
-            featureNames={'replace=a':0, 'replace=b':1, 'replace=c':2}
-            )
+        <Matrix 3pt x 3ft
+             replace=a replace=b replace=c
+           ┌──────────────────────────────
+         0 │   1.000     0.000     0.000
+         1 │   0.000     1.000     0.000
+         2 │   0.000     0.000     1.000
+         >
 
         Keywords
         --------
@@ -516,12 +521,13 @@ class Base(ABC):
         >>> mapping
         {0: 'a', 1: 'b', 2: 'c'}
         >>> X
-        Matrix(
-            [[1 0 1]
-             [2 1 2]
-             [3 2 3]]
-            featureNames={'keep1':0, 'transform':1, 'keep2':2}
-            )
+        <Matrix 3pt x 3ft
+             keep1 transform keep2
+           ┌──────────────────────
+         0 │   1       0       1
+         1 │   2       1       2
+         2 │   3       2       3
+         >
 
         Keywords
         --------
@@ -611,30 +617,30 @@ class Base(ABC):
         --------
         Simple transformation to all elements.
 
-        >>> X = nimble.ones('Matrix', 5, 5)
+        >>> X = nimble.ones('Matrix', 3, 3)
         >>> X.transformElements(lambda elem: elem + 1)
         >>> X
-        Matrix(
-            [[2.000 2.000 2.000 2.000 2.000]
-             [2.000 2.000 2.000 2.000 2.000]
-             [2.000 2.000 2.000 2.000 2.000]
-             [2.000 2.000 2.000 2.000 2.000]
-             [2.000 2.000 2.000 2.000 2.000]]
-            )
+        <Matrix 3pt x 3ft
+               0     1     2
+           ┌──────────────────
+         0 │ 2.000 2.000 2.000
+         1 │ 2.000 2.000 2.000
+         2 │ 2.000 2.000 2.000
+         >
 
         Transform while preserving zero values.
 
-        >>> X = nimble.identity('Sparse', 5)
+        >>> X = nimble.identity('Sparse', 3)
         >>> X.transformElements(lambda elem: elem + 10,
         ...                     preserveZeros=True)
         >>> X
-        Sparse(
-            [[11.000 0.000  0.000  0.000  0.000 ]
-             [0.000  11.000 0.000  0.000  0.000 ]
-             [0.000  0.000  11.000 0.000  0.000 ]
-             [0.000  0.000  0.000  11.000 0.000 ]
-             [0.000  0.000  0.000  0.000  11.000]]
-            )
+        <Sparse 3pt x 3ft
+               0      1      2
+           ┌─────────────────────
+         0 │ 11.000 0.000  0.000
+         1 │ 0.000  11.000 0.000
+         2 │ 0.000  0.000  11.000
+         >
 
         Transforming a subset of points and features.
 
@@ -642,12 +648,14 @@ class Base(ABC):
         >>> X.transformElements(lambda elem: elem + 1, points=[0, 1],
         ...                     features=[0, 2])
         >>> X
-        List(
-            [[2.000 1.000 2.000 1.000]
-             [2.000 1.000 2.000 1.000]
-             [1.000 1.000 1.000 1.000]
-             [1.000 1.000 1.000 1.000]]
-            )
+        <List 4pt x 4ft
+               0     1     2     3
+           ┌────────────────────────
+         0 │ 2.000 1.000 2.000 1.000
+         1 │ 2.000 1.000 2.000 1.000
+         2 │ 1.000 1.000 1.000 1.000
+         3 │ 1.000 1.000 1.000 1.000
+         >
 
         Transforming with None return values. With the ``addTenToEvens``
         function defined below, An even values will be return a value,
@@ -666,20 +674,24 @@ class Base(ABC):
         >>> dontSkip = nimble.data('Matrix', lst)
         >>> dontSkip.transformElements(addTenToEvens)
         >>> dontSkip
-        Matrix(
-            [[ nan   12.000  nan  ]
-             [14.000  nan   16.000]
-             [ nan   18.000  nan  ]]
-            )
+        <Matrix 3pt x 3ft
+               0      1      2
+           ┌─────────────────────
+         0 │  nan   12.000  nan
+         1 │ 14.000  nan   16.000
+         2 │  nan   18.000  nan
+         >
         >>> skip = nimble.data('Matrix', lst)
         >>> skip.transformElements(addTenToEvens,
         ...                        skipNoneReturnValues=True)
         >>> skip
-        Matrix(
-            [[1  12 3 ]
-             [14 5  16]
-             [7  18 9 ]]
-            )
+        <Matrix 3pt x 3ft
+             0  1  2
+           ┌─────────
+         0 │ 1  12 3
+         1 │ 14 5  16
+         2 │ 7  18 9
+         >
 
         Keywords
         --------
@@ -755,30 +767,30 @@ class Base(ABC):
         --------
         Simple calculation on all elements.
 
-        >>> X = nimble.ones('Matrix', 5, 5)
+        >>> X = nimble.ones('Matrix', 3, 3)
         >>> twos = X.calculateOnElements(lambda elem: elem + 1)
         >>> twos
-        Matrix(
-            [[2.000 2.000 2.000 2.000 2.000]
-             [2.000 2.000 2.000 2.000 2.000]
-             [2.000 2.000 2.000 2.000 2.000]
-             [2.000 2.000 2.000 2.000 2.000]
-             [2.000 2.000 2.000 2.000 2.000]]
-            )
+        <Matrix 3pt x 3ft
+               0     1     2
+           ┌──────────────────
+         0 │ 2.000 2.000 2.000
+         1 │ 2.000 2.000 2.000
+         2 │ 2.000 2.000 2.000
+         >
 
         Calculate while preserving zero values.
 
-        >>> X = nimble.identity('Sparse', 5)
+        >>> X = nimble.identity('Sparse', 3)
         >>> addTen = X.calculateOnElements(lambda x: x + 10,
         ...                                preserveZeros=True)
         >>> addTen
-        Sparse(
-            [[11.000 0.000  0.000  0.000  0.000 ]
-             [0.000  11.000 0.000  0.000  0.000 ]
-             [0.000  0.000  11.000 0.000  0.000 ]
-             [0.000  0.000  0.000  11.000 0.000 ]
-             [0.000  0.000  0.000  0.000  11.000]]
-            )
+        <Sparse 3pt x 3ft
+               0      1      2
+           ┌─────────────────────
+         0 │ 11.000 0.000  0.000
+         1 │ 0.000  11.000 0.000
+         2 │ 0.000  0.000  11.000
+         >
 
         Calculate on a subset of points and features.
 
@@ -787,10 +799,12 @@ class Base(ABC):
         ...                              points=[0, 1],
         ...                              features=[0, 2])
         >>> calc
-        List(
-            [[2.000 2.000]
-             [2.000 2.000]]
-            )
+        <List 2pt x 2ft
+               0     1
+           ┌────────────
+         0 │ 2.000 2.000
+         1 │ 2.000 2.000
+         >
 
         Calculating with None return values. With the ``addTenToEvens``
         function defined below, An even values will be return a value,
@@ -809,19 +823,23 @@ class Base(ABC):
         >>> X = nimble.data('Matrix', lst)
         >>> dontSkip = X.calculateOnElements(addTenToEvens)
         >>> dontSkip
-        Matrix(
-            [[nan  12 nan]
-             [ 14 nan  16]
-             [nan  18 nan]]
-            )
+        <Matrix 3pt x 3ft
+              0   1   2
+           ┌────────────
+         0 │ nan  12 nan
+         1 │  14 nan  16
+         2 │ nan  18 nan
+         >
         >>> skip = X.calculateOnElements(addTenToEvens,
         ...                              skipNoneReturnValues=True)
         >>> skip
-        Matrix(
-            [[1  12 3 ]
-             [14 5  16]
-             [7  18 9 ]]
-            )
+        <Matrix 3pt x 3ft
+             0  1  2
+           ┌─────────
+         0 │ 1  12 3
+         1 │ 14 5  16
+         2 │ 7  18 9
+         >
 
         Keywords
         --------
@@ -888,30 +906,36 @@ class Base(ABC):
         >>> X = nimble.data('Matrix', lst)
         >>> isNegativeOne = X.matchingElements(-1)
         >>> isNegativeOne
-        Matrix(
-            [[False  True False]
-             [False False False]]
-            )
+        <Matrix 2pt x 3ft
+               0     1     2
+           ┌──────────────────
+         0 │ False  True False
+         1 │ False False False
+         >
 
         >>> from nimble import match
         >>> lst = [[1, -1, None], [None, 3, -3]]
         >>> X = nimble.data('Matrix', lst)
         >>> isMissing = X.matchingElements(match.missing)
         >>> isMissing
-        Matrix(
-            [[False False  True]
-             [ True False False]]
-            )
+        <Matrix 2pt x 3ft
+               0     1     2
+           ┌──────────────────
+         0 │ False False  True
+         1 │  True False False
+         >
 
         >>> from nimble import match
         >>> lst = [[1, -1, 1], [-3, 3, -3]]
         >>> X = nimble.data('Matrix', lst)
         >>> isPositive = X.matchingElements(">0")
         >>> isPositive
-        Matrix(
-            [[ True False  True]
-             [False  True False]]
-            )
+        <Matrix 2pt x 3ft
+               0     1     2
+           ┌──────────────────
+         0 │  True False  True
+         1 │ False  True False
+         >
 
         Keywords
         --------
@@ -1167,19 +1191,21 @@ class Base(ABC):
         >>> list(groupByLosses.keys())
         [0, 1, 2, 3]
         >>> groupByLosses[1]
-        DataFrame(
-            [[    SEC      Alabama   14]
-             [   Big 10   Ohio State 13]
-             [Independent Notre Dame 12]]
-            featureNames={'conference':0, 'team':1, 'wins':2}
-            )
+        <DataFrame 3pt x 3ft
+              conference    team    wins
+           ┌────────────────────────────
+         0 │     SEC      Alabama    14
+         1 │    Big 10   Ohio State  13
+         2 │ Independent Notre Dame  12
+         >
         >>> groupByLosses[3]
-        DataFrame(
-            [[SEC   LSU   10]
-             [SEC Florida 10]
-             [SEC Georgia 11]]
-            featureNames={'conference':0, 'team':1, 'wins':2}
-            )
+        <DataFrame 3pt x 3ft
+             conference   team  wins
+           ┌────────────────────────
+         0 │    SEC       LSU    10
+         1 │    SEC     Florida  10
+         2 │    SEC     Georgia  11
+         >
 
         Keywords
         --------
@@ -1346,21 +1372,21 @@ class Base(ABC):
         >>> X = nimble.data('Matrix', lst, pointNames=ptNames)
         >>> trainData, testData = X.trainAndTestSets(.34)
         >>> trainData
-        Matrix(
-            [[1 0 0]
-             [0 1 0]
-             [0 0 1]
-             [0 0 1]]
-            pointNames={'a':0, 'b':1, 'f':2, 'c':3}
-            name="train"
-            )
+        <Matrix "train" 4pt x 3ft
+             0 1 2
+           ┌──────
+         a │ 1 0 0
+         b │ 0 1 0
+         f │ 0 0 1
+         c │ 0 0 1
+         >
         >>> testData
-        Matrix(
-            [[0 1 0]
-             [1 0 0]]
-            pointNames={'e':0, 'd':1}
-            name="test"
-            )
+        <Matrix "test" 2pt x 3ft
+             0 1 2
+           ┌──────
+         e │ 0 1 0
+         d │ 1 0 0
+         >
 
         Returning a 4-tuple.
 
@@ -1377,37 +1403,37 @@ class Base(ABC):
         >>> trainX, trainY = fourTuple[0], fourTuple[1]
         >>> testX, testY = fourTuple[2], fourTuple[3]
         >>> trainX
-        Matrix(
-            [[1 0 0]
-             [0 1 0]
-             [0 0 1]
-             [0 0 1]]
-            pointNames={'a':0, 'b':1, 'f':2, 'c':3}
-            name="trainX"
-            )
+        <Matrix "trainX" 4pt x 3ft
+             0 1 2
+           ┌──────
+         a │ 1 0 0
+         b │ 0 1 0
+         f │ 0 0 1
+         c │ 0 0 1
+         >
         >>> trainY
-        Matrix(
-            [[1]
-             [2]
-             [3]
-             [3]]
-            pointNames={'a':0, 'b':1, 'f':2, 'c':3}
-            name="trainY"
-            )
+        <Matrix "trainY" 4pt x 1ft
+             0
+           ┌──
+         a │ 1
+         b │ 2
+         f │ 3
+         c │ 3
+         >
         >>> testX
-        Matrix(
-            [[0 1 0]
-             [1 0 0]]
-            pointNames={'e':0, 'd':1}
-            name="testX"
-            )
+        <Matrix "testX" 2pt x 3ft
+             0 1 2
+           ┌──────
+         e │ 0 1 0
+         d │ 1 0 0
+         >
         >>> testY
-        Matrix(
-            [[2]
-             [1]]
-            pointNames={'e':0, 'd':1}
-            name="testY"
-            )
+        <Matrix "testY" 2pt x 1ft
+             0
+           ┌──
+         e │ 2
+         d │ 1
+         >
 
         Keywords
         --------
@@ -1766,94 +1792,93 @@ class Base(ABC):
 
         Get based on points only.
 
-        >>> pam = office['pam', :]
-        >>> print(pam)
-               id  age   department   salary gender
-        <BLANKLINE>
-        pam   4331  26 administration 28000    f
-        <BLANKLINE>
-        >>> sales = office[[3, 1], :]
-        >>> print(sales)
-                  id  age department salary gender
-        <BLANKLINE>
-        dwight   4211  45   sales    33000    m
-           jim   4434  26   sales    26000    m
-        <BLANKLINE>
+        >>> office['pam', :]
+        <Matrix 1pt x 5ft
+                id  age   department   salary gender
+             ┌──────────────────────────────────────
+         pam │ 4331  26 administration 28000    f
+         >
+        >>> office[[3, 1], :]
+        <Matrix 2pt x 5ft
+                   id  age department salary gender
+                ┌──────────────────────────────────
+         dwight │ 4211  45   sales    33000    m
+            jim │ 4434  26   sales    26000    m
+         >
 
         *Note: retains list order; index 3 placed before index 1*
 
-        >>> nonManagement = office[1:4, :]
-        >>> print(nonManagement)
-                  id  age   department   salary gender
-        <BLANKLINE>
-           jim   4434  26     sales      26000    m
-           pam   4331  26 administration 28000    f
-        dwight   4211  45     sales      33000    m
-        angela   4344  45   accounting   43500    f
-        <BLANKLINE>
+        >>> office[1:4, :]
+        <Matrix 4pt x 5ft
+                   id  age   department   salary gender
+                ┌──────────────────────────────────────
+            jim │ 4434  26     sales      26000    m
+            pam │ 4331  26 administration 28000    f
+         dwight │ 4211  45     sales      33000    m
+         angela │ 4344  45   accounting   43500    f
+         >
 
         *Note: slices are inclusive; index 4 ('gender') was included*
 
         Get based on features only.
 
-        >>> departments = office[:, 2]
-        >>> print(departments)
-                    department
-        <BLANKLINE>
-        michael     management
-            jim       sales
-            pam   administration
-         dwight       sales
-         angela     accounting
-        <BLANKLINE>
-
-        >>> genderAndAge = office[:, ['gender', 'age']]
-        >>> print(genderAndAge)
-                  gender age
-        <BLANKLINE>
-        michael     m     41
-            jim     m     26
-            pam     f     26
-         dwight     m     45
-         angela     f     45
-        <BLANKLINE>
+        >>> office[:, 2]
+        <Matrix 5pt x 1ft
+                     department
+                 ┌───────────────
+         michael │   management
+             jim │     sales
+             pam │ administration
+          dwight │     sales
+          angela │   accounting
+         >
+        >>> office[:, ['gender', 'age']]
+        <Matrix 5pt x 2ft
+                   gender age
+                 ┌───────────
+         michael │   m     41
+             jim │   m     26
+             pam │   f     26
+          dwight │   m     45
+          angela │   f     45
+         >
 
         *Note: retains list order; 'gender' placed before 'age'*
 
-        >>> deptSalary = office[:, 'department':'salary']
-        >>> print(deptSalary)
-                    department   salary
-        <BLANKLINE>
-        michael     management   50000
-            jim       sales      26000
-            pam   administration 28000
-         dwight       sales      33000
-         angela     accounting   43500
-        <BLANKLINE>
+        >>> office[:, 'department':'salary']
+        <Matrix 5pt x 2ft
+                     department   salary
+                 ┌──────────────────────
+         michael │   management   50000
+             jim │     sales      26000
+             pam │ administration 28000
+          dwight │     sales      33000
+          angela │   accounting   43500
+         >
 
         *Note: slices are inclusive; 'salary' was included*
 
         Get based on points and features.
 
-        >>> femaleSalaryAndDept = office[['pam', 'angela'], [3,2]]
-        >>> print(femaleSalaryAndDept)
-                 salary   department
-        <BLANKLINE>
-           pam   28000  administration
-        angela   43500    accounting
-        <BLANKLINE>
+        >>> office[['pam', 'angela'], [3,2]]
+        <Matrix 2pt x 2ft
+                  salary   department
+                ┌──────────────────────
+            pam │ 28000  administration
+         angela │ 43500    accounting
+         >
 
         *Note: list orders retained; 'pam' precedes 'angela' and index 3
         ('salary') precedes index 2 ('department')*
 
-        >>> first3Ages = office[:2, 'age']
-        >>> print(first3Ages)
-                  age
-        <BLANKLINE>
-        michael    41
-            jim    26
-            pam    26
-        <BLANKLINE>
+        >>> office[:2, 'age']
+        <Matrix 3pt x 1ft
+                   age
+                 ┌────
+         michael │  41
+             jim │  26
+             pam │  26
+         >
 
         *Note: slices are inclusive; index 2 ('pam') was included*
         """
@@ -3053,17 +3078,21 @@ class Base(ABC):
         >>> lst = [[1, 2, 3], [4, 5, 6]]
         >>> X = nimble.data('List', lst)
         >>> X
-        List(
-            [[1 2 3]
-             [4 5 6]]
-            )
+        <List 2pt x 3ft
+             0 1 2
+           ┌──────
+         0 │ 1 2 3
+         1 │ 4 5 6
+         >
         >>> X.transpose()
         >>> X
-        List(
-            [[1 4]
-             [2 5]
-             [3 6]]
-            )
+        <List 3pt x 2ft
+             0 1
+           ┌────
+         0 │ 1 4
+         1 │ 2 5
+         2 │ 3 6
+         >
 
         Keywords
         --------
@@ -3099,20 +3128,20 @@ class Base(ABC):
         >>> lst = [[1, 2, 3], [4, 5, 6]]
         >>> X = nimble.data('List', lst)
         >>> X
-        List(
-            [[1 2 3]
-             [4 5 6]]
-            )
+        <List 2pt x 3ft
+             0 1 2
+           ┌──────
+         0 │ 1 2 3
+         1 │ 4 5 6
+         >
         >>> X.T
-        List(
-            [[1 4]
-             [2 5]
-             [3 6]]
-            )
-
-        Keywords
-        --------
-        transpose, invert, reflect, inverse
+        <List 3pt x 2ft
+             0 1
+           ┌────
+         0 │ 1 4
+         1 │ 2 5
+         2 │ 3 6
+         >
         """
         ret = self.copy()
         ret.transpose(useLog=False)
@@ -3161,20 +3190,20 @@ class Base(ABC):
         >>> X = nimble.data('List', lst, pointNames=ptNames,
         ...                 name="odd&even")
         >>> X
-        List(
-            [[1 3 5]
-             [2 4 6]]
-            pointNames={'odd':0, 'even':1}
-            name="odd&even"
-            )
+        <List "odd&even" 2pt x 3ft
+                0 1 2
+              ┌──────
+          odd │ 1 3 5
+         even │ 2 4 6
+         >
         >>> XCopy = X.copy()
         >>> XCopy
-        List(
-            [[1 3 5]
-             [2 4 6]]
-            pointNames={'odd':0, 'even':1}
-            name="odd&even"
-            )
+        <List "odd&even" 2pt x 3ft
+                0 1 2
+              ┌──────
+          odd │ 1 3 5
+         even │ 2 4 6
+         >
 
         Copy to other formats.
 
@@ -3184,12 +3213,12 @@ class Base(ABC):
         ...                     featureNames=ftNames)
         >>> asDataFrame = X.copy(to='DataFrame')
         >>> asDataFrame
-        DataFrame(
-            [[1.000 0.000]
-             [0.000 1.000]]
-            pointNames={'0':0, '1':1}
-            featureNames={'a':0, 'b':1}
-            )
+        <DataFrame 2pt x 2ft
+               a     b
+           ┌────────────
+         0 │ 1.000 0.000
+         1 │ 0.000 1.000
+         >
         >>> asNumpyArray = X.copy(to='numpy array')
         >>> asNumpyArray
         array([[1., 0.],
@@ -3361,17 +3390,18 @@ class Base(ABC):
         --------
         An object of ones filled with zeros from (0, 0) to (2, 2).
 
-        >>> X = nimble.ones('Matrix', 5, 5)
-        >>> filler = nimble.zeros('Matrix', 3, 3)
-        >>> X.replaceRectangle(filler, 0, 0, 2, 2)
+        >>> X = nimble.ones('Matrix', 4, 4)
+        >>> filler = nimble.zeros('Matrix', 2, 2)
+        >>> X.replaceRectangle(filler, 0, 0, 1, 1)
         >>> X
-        Matrix(
-            [[0.000 0.000 0.000 1.000 1.000]
-             [0.000 0.000 0.000 1.000 1.000]
-             [0.000 0.000 0.000 1.000 1.000]
-             [1.000 1.000 1.000 1.000 1.000]
-             [1.000 1.000 1.000 1.000 1.000]]
-            )
+        <Matrix 4pt x 4ft
+               0     1     2     3
+           ┌────────────────────────
+         0 │ 0.000 0.000 1.000 1.000
+         1 │ 0.000 0.000 1.000 1.000
+         2 │ 1.000 1.000 1.000 1.000
+         3 │ 1.000 1.000 1.000 1.000
+         >
 
         Keywords
         --------
@@ -3510,11 +3540,11 @@ class Base(ABC):
         ...                 featureNames=ftNames)
         >>> X.flatten()
         >>> X
-        Matrix(
-            [[1 2 3 4]]
-            pointNames={'Flattened':0}
-            featureNames={'1 | a':0, '1 | b':1, '3 | a':2, '3 | b':3}
-            )
+        <Matrix 1pt x 4ft
+                     1 | a 1 | b 3 | a 3 | b
+                   ┌────────────────────────
+         Flattened │   1     2     3     4
+         >
 
         >>> lst = [[1, 2],
         ...        [3, 4]]
@@ -3524,11 +3554,11 @@ class Base(ABC):
         ...                 featureNames=ftNames)
         >>> X.flatten(order='feature')
         >>> X
-        Matrix(
-            [[1 3 2 4]]
-            pointNames={'Flattened':0}
-            featureNames={'1 | a':0, '3 | a':1, '1 | b':2, '3 | b':3}
-            )
+        <Matrix 1pt x 4ft
+                     1 | a 3 | a 1 | b 3 | b
+                   ┌────────────────────────
+         Flattened │   1     3     2     4
+         >
 
         Keywords
         --------
@@ -3661,11 +3691,13 @@ class Base(ABC):
         >>> X = nimble.data('Matrix', lst)
         >>> X.unflatten((3, 3))
         >>> X
-        Matrix(
-            [[1 2 3]
-             [4 5 6]
-             [7 8 9]]
-            )
+        <Matrix 3pt x 3ft
+             0 1 2
+           ┌──────
+         0 │ 1 2 3
+         1 │ 4 5 6
+         2 │ 7 8 9
+         >
 
         Unflatten a point in feature order with default names.
 
@@ -3673,11 +3705,13 @@ class Base(ABC):
         >>> X = nimble.data('Matrix', lst)
         >>> X.unflatten((3, 3), order='feature')
         >>> X
-        Matrix(
-            [[1 4 7]
-             [2 5 8]
-             [3 6 9]]
-            )
+        <Matrix 3pt x 3ft
+             0 1 2
+           ┌──────
+         0 │ 1 4 7
+         1 │ 2 5 8
+         2 │ 3 6 9
+         >
 
         Unflatten a feature in feature order with default names.
 
@@ -3685,11 +3719,13 @@ class Base(ABC):
         >>> X = nimble.data('Matrix', lst)
         >>> X.unflatten((3, 3), order='feature')
         >>> X
-        Matrix(
-            [[1 2 3]
-             [4 5 6]
-             [7 8 9]]
-            )
+        <Matrix 3pt x 3ft
+             0 1 2
+           ┌──────
+         0 │ 1 2 3
+         1 │ 4 5 6
+         2 │ 7 8 9
+         >
 
         Unflatten a feature in point order with default names.
 
@@ -3697,11 +3733,13 @@ class Base(ABC):
         >>> X = nimble.data('Matrix', lst)
         >>> X.unflatten((3, 3), order='point')
         >>> X
-        Matrix(
-            [[1 4 7]
-             [2 5 8]
-             [3 6 9]]
-            )
+        <Matrix 3pt x 3ft
+             0 1 2
+           ┌──────
+         0 │ 1 4 7
+         1 │ 2 5 8
+         2 │ 3 6 9
+         >
 
         Unflatten a point with names that can be unflattened.
 
@@ -3712,13 +3750,13 @@ class Base(ABC):
         >>> X = nimble.data('Matrix', lst, featureNames=ftNames)
         >>> X.unflatten((3, 3))
         >>> X
-        Matrix(
-            [[1 2 3]
-             [4 5 6]
-             [7 8 9]]
-            pointNames={'1':0, '4':1, '7':2}
-            featureNames={'a':0, 'b':1, 'c':2}
-            )
+        <Matrix 3pt x 3ft
+             a b c
+           ┌──────
+         1 │ 1 2 3
+         4 │ 4 5 6
+         7 │ 7 8 9
+         >
 
         Keywords
         --------
@@ -3854,24 +3892,24 @@ class Base(ABC):
         ...                     featureNames=fNamesR)
         >>> left.merge(right, point='strict', feature='union')
         >>> left
-        Matrix(
-            [[a 1 X d 4]
-             [b 2 Y e 5]
-             [c 3 Z f 6]]
-            pointNames={'p1':0, 'p2':1, 'p3':2}
-            featureNames={'f1':0, 'f2':1, 'f3':2, 'f4':3, 'f5':4}
-            )
+        <Matrix 3pt x 5ft
+              f1 f2 f3 f4 f5
+            ┌───────────────
+         p1 │ a  1  X  d  4
+         p2 │ b  2  Y  e  5
+         p3 │ c  3  Z  f  6
+         >
         >>> left = nimble.data('Matrix', lstL, pointNames=pNamesL,
         ...                    featureNames=fNamesL)
         >>> left.merge(right, point='strict', feature='intersection')
         >>> left
-        Matrix(
-            [[X]
-             [Y]
-             [Z]]
-            pointNames={'p1':0, 'p2':1, 'p3':2}
-            featureNames={'f3':0}
-            )
+        <Matrix 3pt x 1ft
+              f3
+            ┌───
+         p1 │ X
+         p2 │ Y
+         p3 │ Z
+         >
 
         Additional merge combinations. In this example, the feature
         ``"id"`` contains a unique value for each point (just as point
@@ -3887,93 +3925,102 @@ class Base(ABC):
         >>> left.merge(right, point='union', feature='union',
         ...            onFeature="id")
         >>> left
-        DataFrame(
-            [[ a  1.000 id1 nan  nan ]
-             [ b  2.000 id2 nan  nan ]
-             [ c  3.000 id3  x  7.000]
-             [nan  nan  id4  y  8.000]
-             [nan  nan  id5  z  9.000]]
-            featureNames={'f1':0, 'f2':1, 'id':2, 'f4':3, 'f5':4}
-            )
+        <DataFrame 5pt x 5ft
+              f1   f2   id  f4   f5
+           ┌────────────────────────
+         0 │  a  1.000 id1 nan  nan
+         1 │  b  2.000 id2 nan  nan
+         2 │  c  3.000 id3  x  7.000
+         3 │ nan  nan  id4  y  8.000
+         4 │ nan  nan  id5  z  9.000
+         >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='union', feature='intersection',
         ...            onFeature="id")
         >>> left
-        DataFrame(
-            [[id1]
-             [id2]
-             [id3]
-             [id4]
-             [id5]]
-            featureNames={'id':0}
-            )
+        <DataFrame 5pt x 1ft
+              id
+           ┌────
+         0 │ id1
+         1 │ id2
+         2 │ id3
+         3 │ id4
+         4 │ id5
+         >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='union', feature='left',
         ...            onFeature="id")
         >>> left
-        DataFrame(
-            [[ a  1.000 id1]
-             [ b  2.000 id2]
-             [ c  3.000 id3]
-             [nan  nan  id4]
-             [nan  nan  id5]]
-            featureNames={'f1':0, 'f2':1, 'id':2}
-            )
+        <DataFrame 5pt x 3ft
+              f1   f2   id
+           ┌──────────────
+         0 │  a  1.000 id1
+         1 │  b  2.000 id2
+         2 │  c  3.000 id3
+         3 │ nan  nan  id4
+         4 │ nan  nan  id5
+         >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='intersection', feature='union',
         ...            onFeature="id")
         >>> left
-        DataFrame(
-            [[c 3 id3 x 7]]
-            featureNames={'f1':0, 'f2':1, 'id':2, 'f4':3, 'f5':4}
-            )
+        <DataFrame 1pt x 5ft
+             f1 f2  id f4 f5
+           ┌────────────────
+         0 │ c  3  id3 x  7
+         >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='intersection',
         ...            feature='intersection', onFeature="id")
         >>> left
-        DataFrame(
-            [[id3]]
-            featureNames={'id':0}
-            )
+        <DataFrame 1pt x 1ft
+              id
+           ┌────
+         0 │ id3
+         >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='intersection', feature='left',
         ...            onFeature="id")
         >>> left
-        DataFrame(
-            [[c 3 id3]]
-            featureNames={'f1':0, 'f2':1, 'id':2}
-            )
+        <DataFrame 1pt x 3ft
+             f1 f2  id
+           ┌──────────
+         0 │ c  3  id3
+         >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='union',
         ...            onFeature="id")
         >>> left
-        DataFrame(
-            [[a 1 id1 nan  nan ]
-             [b 2 id2 nan  nan ]
-             [c 3 id3  x  7.000]]
-            featureNames={'f1':0, 'f2':1, 'id':2, 'f4':3, 'f5':4}
-            )
+        <DataFrame 3pt x 5ft
+             f1 f2  id  f4   f5
+           ┌────────────────────
+         0 │ a  1  id1 nan  nan
+         1 │ b  2  id2 nan  nan
+         2 │ c  3  id3  x  7.000
+         >
 
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='intersection',
         ...            onFeature="id")
         >>> left
-        DataFrame(
-            [[id1]
-             [id2]
-             [id3]]
-            featureNames={'id':0}
-            )
+        <DataFrame 3pt x 1ft
+              id
+           ┌────
+         0 │ id1
+         1 │ id2
+         2 │ id3
+         >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='left',
         ...            onFeature="id")
         >>> left
-        DataFrame(
-            [[a 1 id1]
-             [b 2 id2]
-             [c 3 id3]]
-            featureNames={'f1':0, 'f2':1, 'id':2}
-            )
+        <DataFrame 3pt x 3ft
+             f1 f2  id
+           ┌──────────
+         0 │ a  1  id1
+         1 │ b  2  id2
+         2 │ c  3  id3
+         >
 
         Keywords
         --------
@@ -4953,11 +5000,13 @@ class Base(ABC):
         >>> baseObj = nimble.data('Matrix', lst3x3)
         >>> pointObj = nimble.data('List', lst1x3)
         >>> baseObj * pointObj.stretch
-        Matrix(
-            [[1 4  9 ]
-             [4 10 18]
-             [0 -2 -6]]
-            )
+        <Matrix 3pt x 3ft
+             0 1  2
+           ┌────────
+         0 │ 1 4  9
+         1 │ 4 10 18
+         2 │ 0 -2 -6
+         >
 
         Stretched feature with nimble Base object.
 
@@ -4966,11 +5015,13 @@ class Base(ABC):
         >>> baseObj = nimble.data('Matrix', lst3x3)
         >>> featObj = nimble.data('List', lst1x3)
         >>> featObj.stretch + baseObj
-        List(
-            [[2 3 4]
-             [6 7 8]
-             [3 2 1]]
-            )
+        <List 3pt x 3ft
+             0 1 2
+           ┌──────
+         0 │ 2 3 4
+         1 │ 6 7 8
+         2 │ 3 2 1
+         >
 
         Two stretched objects.
 
@@ -4979,17 +5030,21 @@ class Base(ABC):
         >>> pointObj = nimble.data('Matrix', lst1x3)
         >>> featObj = nimble.data('List', lst3x1)
         >>> pointObj.stretch - featObj.stretch
-        Matrix(
-            [[0  1  2]
-             [-1 0  1]
-             [-2 -1 0]]
-            )
+        <Matrix 3pt x 3ft
+             0  1  2
+           ┌────────
+         0 │ 0  1  2
+         1 │ -1 0  1
+         2 │ -2 -1 0
+         >
         >>> featObj.stretch - pointObj.stretch
-        List(
-            [[0 -1 -2]
-             [1 0  -1]
-             [2 1  0 ]]
-            )
+        <List 3pt x 3ft
+             0 1  2
+           ┌────────
+         0 │ 0 -1 -2
+         1 │ 1 0  -1
+         2 │ 2 1  0
+         >
 
         Keywords
         --------
