@@ -824,19 +824,15 @@ def arrangeFinalTable(pnames, pnamesWidth, dataTable, dataWidths, fnames,
     """
     Arrange the final table of values for Base string representation.
     """
-    if fnames is not None:
-        fnamesWidth = list(map(len, fnames))
-    else:
-        fnamesWidth = []
+    fnamesWidth = list(map(len, fnames))
 
     # We make extensive use of list addition in this helper in order
     # to prepend single values onto lists.
 
     # glue point names onto the left of the data
-    if pnames is not None:
-        for i, data in enumerate(dataTable):
-            dataTable[i] = [pnames[i], pnameSep] + data
-        dataWidths = [pnamesWidth, len(pnameSep)] + dataWidths
+    for i, data in enumerate(dataTable):
+        dataTable[i] = [pnames[i], pnameSep] + data
+    dataWidths = [pnamesWidth, len(pnameSep)] + dataWidths
 
     # glue feature names onto the top of the data
     if fnames is not None:
@@ -845,10 +841,7 @@ def arrangeFinalTable(pnames, pnamesWidth, dataTable, dataWidths, fnames,
             fnames = ["", ""] + fnames
             fnamesWidth = [0, 0] + fnamesWidth
 
-        # make gap row:
-        gapRow = [""] * len(fnames)
-
-        dataTable = [fnames, gapRow] + dataTable
+        dataTable = [fnames] + dataTable
         # finalize widths by taking the largest of the two possibilities
         for i in range(len(fnames)):
             nameWidth = fnamesWidth[i]

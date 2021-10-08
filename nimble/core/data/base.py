@@ -13,6 +13,7 @@ import itertools
 import os.path
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
+import shutil
 
 import numpy as np
 
@@ -2130,8 +2131,8 @@ class Base(ABC):
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def toString(self, includeNames=True, maxWidth=79, maxHeight=30,
-                 sigDigits=3, maxColumnWidth=19, keepTrailingWhitespace=False):
+    def toString(self, maxWidth=79, maxHeight=30, sigDigits=3,
+                 maxColumnWidth=19, indent=''):
         """
         A string representation of this object.
 
@@ -2143,10 +2144,6 @@ class Base(ABC):
 
         Parameters
         ----------
-        includeNames : bool
-            Whether of not to include point and feature names in the
-            printed output. True, the default, indidcates names will be
-            included. False will not include names in the output.
         maxWidth : int
             A bound on the maximum number of characters allowed on each
             line of the output.
@@ -2158,6 +2155,8 @@ class Base(ABC):
         maxColumnWidth : int
             A bound on the maximum number of characters allowed for the
             width of single column (feature) in each line.
+        indent : str
+            The string to use as indentation.
 
         Keywords
         --------
@@ -2170,50 +2169,33 @@ class Base(ABC):
         colSep = ' '
         colHold = '--'
         rowHold = '|'
-        pnameSep = ' '
+        pnameSep = '\u2502'
+        fnameSep = '\u2500'
+        corner = '\u250C'
         nameHolder = '...'
         dataOrientation = 'center'
         pNameOrientation = 'rjust'
         fNameOrientation = 'center'
 
-        #setup a bundle of default values
-        maxHeight = len(self.points) + 2 if maxHeight is None else maxHeight
+        # setup a bundle of default values
+        if maxHeight is None:
+            maxHeight = len(self.points) + 2
         maxWidth = float('inf') if maxWidth is None else maxWidth
-        maxRows = min(maxHeight, len(self.points))
-        maxDataRows = maxRows
-        includePNames = False
-        includeFNames = False
+        maxDataWidth = maxWidth - len(indent)
+        maxDataRows = min(maxHeight, len(self.points))
 
-        if includeNames:
-            includePNames = not self.points._allDefaultNames()
-            includeFNames = not self.features._allDefaultNames()
+        pnames, pnamesWidth = self._arrangePointNames(
+            maxDataRows, maxColumnWidth, rowHold, nameHolder)
+        # The available space for the data is reduced by the width of the
+        # pnames, a column separator, the pnames separator, and another
+        # column separator
+        maxDataWidth -= pnamesWidth + 2 * len(colSep) + len(pnameSep)
 
-            if includeFNames:
-                # plus or minus 2 because we will be dealing with both
-                # feature names and a gap row
-                maxRows = min(maxHeight, len(self.points) + 2)
-                maxDataRows = maxRows - 2
-
-        # Set up point Names and determine how much space they take up
-        pnames = None
-        pnamesWidth = None
-        maxDataWidth = maxWidth
-        if includePNames:
-            pnames, pnamesWidth = self._arrangePointNames(
-                maxDataRows, maxColumnWidth, rowHold, nameHolder)
-            # The available space for the data is reduced by the width of the
-            # pnames, a column separator, the pnames separator, and another
-            # column separator
-            maxDataWidth = (maxWidth
-                            - (pnamesWidth + 2 * len(colSep) + len(pnameSep)))
-
-
-        # Set up data values to fit in the available space including
-        # featureNames if includeFNames=True
+        # Set up data values to fit in the available space
         with self._treatAs2D():
             dataTable, colWidths, fnames = self._arrangeDataWithLimits(
-                maxDataWidth, maxDataRows, includeFNames, sigDigits,
-                maxColumnWidth, colSep, colHold, rowHold, nameHolder)
+                maxDataWidth, maxDataRows, sigDigits, maxColumnWidth, colSep,
+                colHold, rowHold, nameHolder)
 
         # combine names into finalized table
         finalTable, finalWidths = arrangeFinalTable(
@@ -2223,122 +2205,87 @@ class Base(ABC):
         out = ""
         for i, row in enumerate(finalTable):
             for j, val in enumerate(row):
-                if j == 0 and includePNames:
+                if j == 0:
                     padded = getattr(val, pNameOrientation)(finalWidths[j])
-                elif i == 0 and includeFNames:
+                elif i == 0:
                     padded = getattr(val, fNameOrientation)(finalWidths[j])
                 else:
                     padded = getattr(val, dataOrientation)(finalWidths[j])
                 row[j] = padded
-            # for __repr__ output want to retain whitespace
-            if keepTrailingWhitespace:
-                line = colSep.join(finalTable[i]) + "\n"
-            else:
-                line = colSep.join(finalTable[i]).rstrip() + "\n"
-            out += line
+                line = indent + colSep.join(finalTable[i])
+            out += line.rstrip() + "\n"
+            if i == 0: # add separator row
+                out += indent
+                blank =  ' '.join(' ' * w for w in finalWidths[:1]) + ' '
+                sepStr = fnameSep.join([fnameSep * w for w in finalWidths[2:]])
+                out += blank + corner + fnameSep + sepStr + '\n'
 
         return out
 
-    def __repr__(self):
-        indent = '    '
-        maxW = 79
-        maxH = 30
+    def _show(self, description=None, includeObjectName=True,
+              maxWidth='automatic', maxHeight='automatic', sigDigits=3,
+              maxColumnWidth=19, indent='', forRepr=False):
+        # when dynamically sizing, fit within current window
+        terminalSize = shutil.get_terminal_size((80, 24))
+        if maxWidth == 'automatic':
+            maxWidth = max(79, terminalSize[0] - 1)
+        if maxHeight == 'automatic':
+            maxHeight = max(30, terminalSize[1])
+        if maxHeight is not None:
+            # subtract lines for description, header and separator rows, and
+            # closing line for repr
+            maxHeight -= 4 if forRepr else 3
 
-        # setup type call
-        ret = self.getTypeString() + "(\n"
+        ret = ''
+        if description is not None:
+            ret += indent + description + '\n'
+            if maxHeight is not None:
+                maxHeight -= 1
 
-        # setup data
-        # decrease max width for indentation (4) and nested list padding (4)
-        stringWidth = maxW - 8
-        dataStr = self.toString(includeNames=False, maxWidth=stringWidth,
-                                maxHeight=maxH, keepTrailingWhitespace=True)
-        byLine = dataStr.split('\n')
-        # toString ends with a \n, so we get rid of the empty line produced by
-        # the split
-        byLine = byLine[:-1]
-        # convert self._data into a string with nice format
-        newLines = (']\n' + indent + ' [').join(byLine)
-        ret += (indent + '[[%s]]\n') % newLines
+        if includeObjectName and self.name is not None:
+            ret += '"{}" '.format(self._name)
+        if len(self._shape) > 2:
+            ret += " x ".join(map(str, self._shape))
+        else:
+            ret += str(len(self.points)) + "pt x "
+            ret += str(len(self.features)) + "ft"
+        ret += '\n'
 
-        numRows = min(len(self.points), maxH)
-        # if non default point names, print all (truncated) point names
-        ret += makeNamesLines(indent, maxW, numRows, len(self.points),
-                              self.points._getNamesNoGeneration(),
-                              'pointNames')
-        # if non default feature names, print all (truncated) feature names
-        numCols = 0
-        if byLine:
-            splited = byLine[0].split(' ')
-            for val in splited:
-                if val not in ['', '...', '--']:
-                    numCols += 1
-        elif len(self.features) > 0:
-            # if the container is empty, then roughly compute length of
-            # the string of feature names, and then calculate numCols
-            ftNames = self.features._getNamesNoGeneration()
-            if ftNames is None:
-                # mock up default looking names to avoid name generation
-                ftNames = [None] * len(self.features)
-            strLength = (len("___".join(ftNames))
-                         + len(''.join([str(i) for i
-                                        in range(len(self.features))])))
-            numCols = int(min(1, maxW / float(strLength)) * len(self.features))
-        # because of how _dataHelpers.indicesSplit works, we need this to be
-        # +1 in some cases this means one extra feature name is displayed. But
-        # that's acceptable
-        if numCols <= len(self.features):
-            numCols += 1
-        elif numCols > len(self.features):
-            numCols = len(self.features)
-        ret += makeNamesLines(indent, maxW, numCols, len(self.features),
-                              self.features._getNamesNoGeneration(),
-                              'featureNames')
-
-        # if name not None, print
-        if self.name is not None:
-            prep = indent + 'name="'
-            toUse = self.name
-            nonNameLen = len(prep) + 1
-            if nonNameLen + len(toUse) > 80:
-                toUse = toUse[:(80 - nonNameLen - 3)]
-                toUse += '...'
-
-            ret += prep + toUse + '"\n'
-
-        # if path not None, print
-        if self.path is not None:
-            prep = indent + 'path="'
-            toUse = self.path
-            nonPathLen = len(prep) + 1
-            if nonPathLen + len(toUse) > 80:
-                toUse = toUse[:(80 - nonPathLen - 3)]
-                toUse += '...'
-
-            ret += prep + toUse + '"\n'
-
-        ret += indent + ')'
+        ret += self.toString(maxWidth, maxHeight, sigDigits, maxColumnWidth,
+                             indent=indent)
 
         return ret
 
     def __str__(self):
-        return self.toString()
+        return self._show()
 
-    def show(self, description, includeObjectName=True, includeAxisNames=True,
-             maxWidth=79, maxHeight=30, sigDigits=3, maxColumnWidth=19):
+    def __repr__(self):
+        ret = "<{} ".format(self.__class__.__name__)
+        indent = ' '
+        # remove leading and trailing newlines
+        ret += self._show(indent=indent, forRepr=True)
+        if self.path is not None:
+            ret += indent + "path=" + self.path + '>'
+        else:
+            ret += indent + '>'
+
+        return ret
+
+    def show(self, description=None, includeObjectName=True,
+             includeAxisNames=True, maxWidth='automatic',
+             maxHeight='automatic', sigDigits=3, maxColumnWidth=19):
         """
         A printed representation of the data.
 
         Method to simplify printing a representation of this data
-        object, with some context. The backend is the ``toString()``
-        method, and this method includes control over all of the same
-        functionality via arguments. Prior to the names and data, it
+        object, with some context. Prior to the names and data, it
         additionally prints a description provided by the user,
         (optionally) this object's name attribute, and the number of
         points and features that are in the data.
 
         Parameters
         ----------
-        description : str
+        description : str, None
             Printed as-is before the rest of the output, unless None.
         includeObjectName : bool
             True will include printing of the object's ``name``
@@ -2346,12 +2293,15 @@ class Base(ABC):
         includeAxisNames : bool
             True will include printing of the object's point and feature
             names, False will not print the point or feature names.
-        maxWidth : int
+        maxWidth : int, None
             A bound on the maximum number of characters allowed on each
-            line of the output.
-        maxHeight : int
+            line of the output. If None, an attempt will be made to
+            determine the terminal width but will default to 79 if
+            unsuccessful.
+        maxHeight : int, None
             A bound on the maximum number of lines allowed for the
-            output.
+            output.  If None, an attempt will be made to determine the
+            terminal height but will default to 79 if unsuccessful.
         sigDigits : int
             The number of significant digits to display in the output.
         maxColumnWidth : int
@@ -2363,21 +2313,8 @@ class Base(ABC):
         print, representation, visualize, out, stdio, visualize, output,
         write, text, repr, represent, display, terminal
         """
-        if description is not None:
-            print(description)
-
-        if includeObjectName and self.name is not None:
-            context = self.name + " : "
-        else:
-            context = ""
-        if len(self._shape) > 2:
-            context += " x ".join(map(str, self._shape))
-        else:
-            context += str(len(self.points)) + "pt x "
-            context += str(len(self.features)) + "ft"
-        print(context, '\n')
-        print(self.toString(includeAxisNames, maxWidth, maxHeight, sigDigits,
-                            maxColumnWidth))
+        print(self._show(description, includeObjectName, maxWidth, maxHeight,
+                         sigDigits, maxColumnWidth))
 
     @limitedTo2D
     def plotHeatMap(self, includeColorbar=False, outPath=None, show=True,
@@ -5131,36 +5068,27 @@ class Base(ABC):
         nameCutIndex = nameLength - len(nameHold)
         (tRowIDs, bRowIDs) = indicesSplit(maxRows, len(self.points))
 
-        # we pull indices from two lists: tRowIDs and bRowIDs
-        for sourceIndex in range(2):
-            source = list([tRowIDs, bRowIDs])[sourceIndex]
+        if self.points._allDefaultNames():
+            pnames = list(map(str, range(len(self.points))))
+        else:
+            pnames = self.points.getNames()
 
-            # add in the rowHolder, if needed
-            if (sourceIndex == 1
-                    and len(bRowIDs) + len(tRowIDs) < len(self.points)):
-                names.append(rowHolder)
-
-            for i in source:
-                pname = self.points.getName(i)
-                # omit default valued names
-                if pname is None:
-                    pname = ""
-
-                # truncate names which extend past the given length
-                if len(pname) > nameLength:
-                    pname = pname[:nameCutIndex] + nameHold
-
-                names.append(pname)
-
-                # keep track of bound.
-                if len(pname) > pnamesWidth:
-                    pnamesWidth = len(pname)
+        topNames = [pnames[i] for i in tRowIDs]
+        bottomNames = [pnames[i] for i in bRowIDs]
+        maxWidth = max(map(len, topNames))
+        if bottomNames:
+            maxWidth = max(maxWidth, max(map(len, bottomNames)))
+        pnamesWidth = min(nameLength, maxWidth)
+        names = topNames
+        if len(topNames) + len(bottomNames) < len(self.points):
+            names.append(rowHolder)
+        names.extend(bottomNames)
 
         return names, pnamesWidth
 
-    def _arrangeDataWithLimits(self, maxWidth, maxHeight, includeFNames=False,
-                               sigDigits=3, maxStrLength=19, colSep=' ',
-                               colHold='--', rowHold='|', strHold='...'):
+    def _arrangeDataWithLimits(self, maxWidth, maxHeight, sigDigits=3,
+                               maxStrLength=19, colSep=' ', colHold='--',
+                               rowHold='|', strHold='...'):
         """
         Arrange the data in this object into a table structure, while
         respecting the given boundaries. If there is more data than
@@ -5179,9 +5107,7 @@ class Base(ABC):
         represented in the first return value.
         """
         if len(self.points) == 0 or len(self.features) == 0:
-            fNames = None
-            if includeFNames:
-                fNames = []
+            fNames = []
             return [[]], [], fNames
 
         if maxHeight < 2 and maxHeight != len(self.points):
@@ -5230,19 +5156,24 @@ class Base(ABC):
         currIndex = 0
         numAdded = 0
 
+        if self.features._allDefaultNames():
+            fnames = list(map(str, range(len(self.features))))
+        else:
+            fnames = self.features.getNames()
+
         while totalWidth < maxWidth and currIndex != endIndex:
             currTable = lTable if currIndex >= 0 else rTable
             currCol = []
             currWidth = 0
-            if includeFNames:
-                currFName = self.features.getName(currIndex)
-                if currFName is None:
-                    currFName = ''
-                fNameLen = len(currFName)
-                if fNameLen > maxStrLength:
-                    currFName = currFName[:nameCutIndex] + strHold
-                    fNameLen = maxStrLength
-                currWidth = fNameLen
+
+            currFName = fnames[currIndex]
+            if currFName is None:
+                currFName = ''
+            fNameLen = len(currFName)
+            if fNameLen > maxStrLength:
+                currFName = currFName[:nameCutIndex] + strHold
+                fNameLen = maxStrLength
+            currWidth = fNameLen
 
             # check all values in this column (in the accepted rows)
             for i, rID in enumerate(combinedRowIDs):
@@ -5273,13 +5204,11 @@ class Base(ABC):
                         currTable[i].append(val)
                 # the width value goes in different lists depending on index
                 if currIndex < 0:
-                    if includeFNames:
-                        rFNames.append(currFName)
+                    rFNames.append(currFName)
                     currIndex = abs(currIndex)
                     rColWidths.append(currWidth)
                 else:
-                    if includeFNames:
-                        lFNames.append(currFName)
+                    lFNames.append(currFName)
                     currIndex = (-1 * currIndex) - 1
                     lColWidths.append(currWidth)
 
@@ -5297,9 +5226,8 @@ class Base(ABC):
             lColWidths += rColWidths
         else:
             lColWidths += [cHoldWidth] + rColWidths
-            if includeFNames:
-                fNames = lFNames + [colHold] + rFNames
-        # return None if fNames is [] (includeFNames=False)
+            fNames = lFNames + [colHold] + rFNames
+        # return None if fNames is []
         fNames = fNames if fNames else None
         # pylint: disable=consider-using-enumerate
         for rowIndex in range(len(lTable)):
