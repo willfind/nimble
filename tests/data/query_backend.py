@@ -1082,24 +1082,21 @@ class QueryBackend(DataTestObject):
                 randGen = nimble.random.data("List", pNum, fNum, 0)
                 raw = randGen._data
 
-                fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6', 'fn7', 'fn8', 'fn9', 'fna', 'fnb', 'fnc',
-                          'fnd', 'fne']
-                #				fnames = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e']
-                pnames = ['pn0', 'pn1', 'pn2', 'pn3', 'pn4', 'pn5', 'pn6', 'pn7', 'pn8', 'pn9', 'pna', 'pnb', 'pnc',
-                          'pnd', 'pne']
-                data = self.constructor(raw, pointNames=pnames[:pNum], featureNames=fnames[:fNum])
+                fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6',
+                          'fn7', 'fn8', 'fn9', 'fna', 'fnb', 'fnc', 'fnd', 'fne']
+                pnames = ['pn0', 'pn1', 'pn2', 'pn3', 'pn4', 'pn5', 'pn6',
+                          'pn7', 'pn8', 'pn9', 'pna', 'pnb', 'pnc', 'pnd', 'pne']
+                data = self.constructor(raw, pointNames=pnames[:pNum],
+                                        featureNames=fnames[:fNum])
 
                 for mw in [40, 60, 80, None]:
                     for mh in [5, 7, 10, None]:
-                        for inc in [False, True]:
-                            ret = data.toString(includeNames=inc, maxWidth=mw, maxHeight=mh)
-                            checkToStringRet(ret, data, inc, mw, mh)
+                        ret = data.toString(maxWidth=mw, maxHeight=mh)
+                        checkToStringRet(ret, data, mw, mh)
 
     def test_toString_lazyNameGeneration(self):
         data = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-        ret = data.toString(includeNames=False)
-        assertNoNamesGenerated(data)
-        ret = data.toString(includeNames=True)
+        ret = data.toString()
         assertNoNamesGenerated(data)
 
         empty = self.constructor([])
@@ -1118,9 +1115,8 @@ class QueryBackend(DataTestObject):
 
         for mw in [40, 60, 80, None]:
             for mh in [5, 7, 10, None]:
-                for inc in [False, True]:
-                    ret = data.toString(includeNames=inc, maxWidth=mw, maxHeight=mh)
-                    checkToStringRet(ret, data, inc, mw, mh)
+                ret = data.toString(maxWidth=mw, maxHeight=mh)
+                checkToStringRet(ret, data, mw, mh)
 
     def test_toString_knownWidths(self):
         """ Test max string length reaches but does not exceed max width """
@@ -1128,51 +1124,51 @@ class QueryBackend(DataTestObject):
         ftNames = ['fa', 'fb', 'fc']
 
         data = self.constructor(raw, featureNames=ftNames)
-        # width of 5 to 7 will return first feature and colHold ('a  --')
-        for mw in range(5, 8):
-            ret = data.toString(maxWidth=mw, includeNames=True)
+        # width of 9 to 11 will return first feature and colHold ('a  --')
+        for mw in range(9, 12):
+            ret = data.toString(maxWidth=mw)
             # ignore last index since ret always ends with \n
             retSplit = ret.split('\n')[:-1]
             for i, line in enumerate(retSplit):
                 if i == 0:
-                    assert line == 'fa --'
+                    assert line.strip() == 'fa --'
                 elif i == 1:
                     # separator for ftNames and data
-                    assert line == ''
+                    assert line.strip() == '┌──────'
                 else:
-                    assert line == 'a  --'
+                    assert line.strip() == '{} │ a  --'.format(i - 2)
 
-        # width of 8 will return first ft, colHold, last ft ('a  -- cc')
+        # width of 12 will return first ft, colHold, last ft ('a  -- cc')
         # 2 for first column based on feature name 'fa', 2 for colHold,
         # 2 for last column (both feature name and data have same width),
         # and 2 separating spaces
-        ret = data.toString(maxWidth=8, includeNames=True)
+        ret = data.toString(maxWidth=12)
         # ignore last index since ret always ends with \n
         retSplit = ret.split('\n')[:-1]
         for i, line in enumerate(retSplit):
             if i == 0:
-                assert line == 'fa -- fc'
+                assert line.strip() == 'fa -- fc'
             elif i == 1:
                 # separator for ftNames and data
-                assert line == ''
+                assert line.strip() == '┌─────────'
             else:
-                assert line == 'a  -- cc'
+                assert line .strip() == '{} │ a  -- cc'.format(i - 2)
 
-        # width of 9 can accommodate all data ('a  bbb cc')
+        # width of 13 can accommodate all data ('a  bbb cc')
         # 2 for first column based on feature name 'fa', 3 for second column
         # based on width of 'bbb', 2 for third column (both feature name and
         # data have same width) and 2 separating spaces
-        ret = data.toString(maxWidth=9, includeNames=True)
+        ret = data.toString(maxWidth=13)
         # ignore last index since ret always ends with \n
         retSplit = ret.split('\n')[:-1]
         for i, line in enumerate(retSplit):
             if i == 0:
-                assert line == 'fa  fb fc'
+                assert line.strip() == 'fa  fb fc'
             elif i == 1:
                 # separator for ftNames and data
-                assert line == ''
+                assert line.strip() == '┌──────────'
             else:
-                assert line == 'a  bbb cc'
+                assert line.strip() == '{} │ a  bbb cc'.format(i - 2)
 
     def test_toString_knownHeights(self):
         """ Test max string height reaches but does not exceed max height """
@@ -1180,17 +1176,17 @@ class QueryBackend(DataTestObject):
 
         data = self.constructor(randGen._data)
 
-        # for height in range 3 to 8, row separator should be present
-        for mh in range(3, 9):
-            ret = data.toString(maxHeight=mh, includeNames=False)
+        # for height in range 4 to 11, row separator should be present
+        for mh in range(4, 10):
+            ret = data.toString(maxHeight=mh)
             # ignore last index since ret always ends with \n
             retSplit = ret.split('\n')[:-1]
-            sepRow = int(mh / 2)
+            sepRow = int((mh - 2) / 2) + 2
             assert len(retSplit) == mh
-            rowSepPattern = re.compile(r'[\s\|] +')
+            rowSepPattern = re.compile(r'[\s\|│] +')
             assert re.match(rowSepPattern, retSplit[sepRow])
         # height 10 can accommodate all data
-        ret = data.toString(maxHeight=10, includeNames=False)
+        ret = data.toString(maxHeight=11)
         # ignore last index since ret always ends with \n
         retSplit = ret.split('\n')[:-1]
         for line in retSplit:
@@ -1217,7 +1213,8 @@ class QueryBackend(DataTestObject):
         rowHolder = '|'
         nameHold = '...'
 
-        raw = [[300, 310, 320], [301, 311, 321], [302, 312, 312], [303, 313, 313], [303, 313, 313]]
+        raw = [[300, 310, 320], [301, 311, 321], [302, 312, 312],
+               [303, 313, 313], [303, 313, 313]]
         initnames = ['zero', 'one', 'two', 'three', 'four']
         obj = self.constructor(raw, pointNames=initnames)
 
@@ -1283,15 +1280,14 @@ class QueryBackend(DataTestObject):
 
             return nimble.data(rType, raw)
 
-        def runTrial(pNum, fNum, valLen, maxW, maxH, colSep, includeFNames):
+        def runTrial(pNum, fNum, valLen, maxW, maxH, colSep):
             if pNum == 0 and fNum == 0:
                 return
             elif pNum == 0:
                 data = makeUniformLength("List", 1, fNum, valLen)
                 data.points.extract(0)
-                if includeFNames and fNum > 0:
-                    fNames = ['ft' + str(i) for i in range(fNum)]
-                    data.features.setNames(fNames)
+                fNames = ['ft' + str(i) for i in range(fNum)]
+                data.features.setNames(fNames)
             elif fNum == 0:
                 data = makeUniformLength("List", pNum, 1, valLen)
                 data.features.extract(0)
@@ -1300,19 +1296,17 @@ class QueryBackend(DataTestObject):
                     data = nimble.random.data("List", pNum, fNum, .25, elementType='int')
                 else:
                     data = makeUniformLength("List", pNum, fNum, valLen)
-                if includeFNames:
-                    fNames = ['ft' + str(i) for i in range(fNum)]
-                    data.features.setNames(fNames)
+                fNames = ['ft' + str(i) for i in range(fNum)]
+                data.features.setNames(fNames)
                 #			raw = data.data
             ret, widths, fNames = data._arrangeDataWithLimits(
-                maxW, maxH, includeFNames=includeFNames, colSep=colSep)
+                maxW, maxH, colSep=colSep)
 
-            if includeFNames:
-                assert len(fNames) == len(widths)
-                for name, width in zip(fNames, widths):
-                    assert len(name) <= width
-                sepLen = len(colSep) * (len(fNames) - 1)
-                assert sum(len(fn) for fn in fNames) <= maxW - sepLen
+            assert len(fNames) == len(widths)
+            for name, width in zip(fNames, widths):
+                assert len(name) <= width
+            sepLen = len(colSep) * (len(fNames) - 1)
+            assert sum(len(fn) for fn in fNames) <= maxW - sepLen
 
             assert len(ret) <= maxH
 
@@ -1340,115 +1334,64 @@ class QueryBackend(DataTestObject):
                     for maxW in [10, 20, 40, 80]:
                         for maxH in [2, 5, 10]:
                             for colSep in ['', ' ', '  ']:
-                                for inc in [False, True]:
-                                    runTrial(pNum, fNum, valLen, maxW, maxH, colSep, inc)
+                                runTrial(pNum, fNum, valLen, maxW, maxH, colSep)
 
     ############
     # __repr__ #
     ############
 
-    def back_reprOutput(self, numPts, numFts, truncated=False, defaults='none'):
+    def back_reprOutput(self, numPts, numFts, truncated=False, defaults='none',
+                        addPath=False):
         randGen = nimble.random.data("List", numPts, numFts, 0)
+        kwargs = {}
         if defaults in ['some', 'none']:
             pNames = ['pt' + str(i) for i in range(numPts)]
             fNames = ['ft' + str(i) for i in range(numFts)]
             if defaults == 'some':
                 pNames = [name if i % 2 != 0 else None for i, name in enumerate(pNames)]
                 fNames = [name if i % 2 != 0 else None for i, name in enumerate(fNames)]
-            data = self.constructor(randGen._data, pointNames=pNames, featureNames=fNames)
+            kwargs['pointNames'] = pNames
+            kwargs['featureNames'] = fNames
         else:
-            data = self.constructor(randGen._data)
+            pNames = list(map(str, range(numPts)))
+            fNames = list(map(str, range(numFts)))
+        if addPath:
+            kwargs['paths'] = (os.path.abspath('.'), os.path.relpath('.'))
+        data = self.constructor(randGen._data, **kwargs)
+
         ret = repr(data)
         retSplit = ret.split('\n')
 
-        # width check
-        assert all(len(line) <= 79 for line in retSplit)
-
-        # first line is type string
-        assert retSplit[0] == data.getTypeString() + "("
-
-        numPoints = min(30, len(data.points)) # truncated if over 30
-        # data lines formatted correctly, truncated will still pass
-        firstDataLinePattern = re.compile(r'\s{4}\[\[[0-9\.\s\-\|]+\]$')
-        midDataLinesPattern = re.compile(r'\s{5}\[[0-9\.\s\-\|]+\]$')
-        lastDataLinePattern = re.compile(r'\s{5}\[[0-9\.\s\-\|]+\]\]$')
-        assert re.match(firstDataLinePattern, retSplit[1])
-        for line in retSplit[2:numPoints]:
-            assert re.match(midDataLinesPattern, line)
-        assert re.match(lastDataLinePattern, retSplit[numPoints])
-
-        for line in retSplit[1:numPoints]:
+        # first line includes type string
+        assert retSplit[0] == ("<" + data.getTypeString() +
+                               ' {}pt x {}ft'.format(numPts, numFts))
+        for name in retSplit[1].split():
+            if name == '--':
+                assert truncated
+            else:
+                assert name in fNames
+        assert re.match('\s*┌─+$', retSplit[2])
+        dataMatch = re.compile(r'\s.*? │ [0-9\.\s\-\|]+')
+        for line in retSplit[3:-1]:
+            assert re.match(dataMatch, line)
+            pName = line.split('│')[0].strip()
+            if pName:
+                assert pName in pNames or pName == '|'
             if truncated:
                 assert '--' in line
             else:
                 assert '--' not in line
-
-        if truncated:
-            rowHoldPattern = re.compile(r'\s{5}\[[\s\|\-]+\]$')
-            assert re.match(rowHoldPattern, retSplit[16])
-
-        if defaults == 'all':
-            assert len(retSplit) == numPoints + 2
+        if addPath:
+            assert data.absolutePath in retSplit[-1]
+            assert retSplit[-1].endswith('>')
         else:
-            # pointNames
-            if truncated:
-                pNames = pNames[:15] + ['...'] + pNames[-14:]
-            if defaults == 'some':
-                pNamesString = "    pointNames=["
-                toJoin = [name if name == '...' or name is None
-                          else "'{}'".format(name) for name in pNames]
-                pNamesString += ", ".join(map(str, toJoin))
-                pNamesString += ']'
-            else:
-                pNamesString = "    pointNames={"
-                toJoin = [name if name == '...'
-                          else "'{}':{}".format(name, name[2:]) for name in pNames]
-                pNamesString += ", ".join(toJoin)
-                pNamesString += '}'
-            wrappedPNames = textwrap.wrap(pNamesString, width=79, subsequent_indent=' '*8)
-            fNameIndexStart = numPoints + len(wrappedPNames) + 1
-            for line, wrapped in zip(retSplit[numPoints + 1:fNameIndexStart], wrappedPNames):
-                # remove trailing whitespace which may differ between the two
-                line = line.rstrip()
-                wrapped = wrapped.rstrip()
-                assert line == wrapped
-
-            # featureNames
-            if truncated:
-                # get only the data between brackets
-                firstDataLine = retSplit[1][6:-1]
-                # could still have trailing whitespace
-                firstDataLine = firstDataLine.rstrip()
-                # split at column separator
-                lCols, rCols = firstDataLine.split(' -- ')
-
-                # split at whitespace to find the number of cols on left and right
-                lColsLen = len(lCols.split())
-                rColsLen = len(rCols.split())
-                fNames = fNames[:lColsLen] + ['...'] + fNames[-rColsLen:]
-
-            if defaults == 'some':
-                fNamesString = "    featureNames=["
-                toJoin = [name if name == '...' or name is None
-                          else "'{}'".format(name) for name in fNames]
-                fNamesString += ", ".join(map(str, toJoin))
-                fNamesString += ']'
-            else:
-                fNamesString = "    featureNames={"
-                toJoin = [name if name == '...'
-                          else "'{}':{}".format(name, name[2:]) for name in fNames]
-                fNamesString += ", ".join(toJoin)
-                fNamesString += '}'
-            wrappedFNames = textwrap.wrap(fNamesString, width=79, subsequent_indent=' '*8)
-            fNameIndexEnd = fNameIndexStart + len(wrappedFNames)
-            for line, wrapped in zip(retSplit[fNameIndexStart:fNameIndexEnd + 1], wrappedFNames):
-                # remove trailing whitespace which may differ between the two
-                line = line.rstrip()
-                wrapped = wrapped.rstrip()
-                assert line == wrapped
+            assert retSplit[-1] == ' >'
 
     def test_repr_notTruncated(self):
         self.back_reprOutput(9, 9)
+
+    def test_repr_withPath(self):
+        self.back_reprOutput(9, 9, addPath=True)
 
     def test_repr_truncated(self):
         self.back_reprOutput(40, 20, truncated=True)
@@ -3319,15 +3262,16 @@ class QueryBackend(DataTestObject):
 # Helpers #
 ###########
 
-def checkToStringRet(ret, data, includeNames, maxWidth, maxHeight):
+def checkToStringRet(ret, data, maxWidth, maxHeight):
     cHold = '--'
     rHold = '|'
-    pnameSep = '   '
+    pnameSep = '\u2502'
+    fnameSep = '\u2500'
+    corner = '\u250C'
     colSep = ' '
     sigDigits = 3
     rows = ret.split('\n')
     rows = rows[:(len(rows) - 1)]
-
     splitRetLines = ret.split('\n')[:-1] # ends with newline; will ignore
     maxWidth = maxWidth if maxWidth else max(len(line) for line in splitRetLines)
     maxHeight = maxHeight if maxHeight else len(splitRetLines)
@@ -3337,28 +3281,26 @@ def checkToStringRet(ret, data, includeNames, maxWidth, maxHeight):
 
     negRow = False
 
-    if includeNames:
-        rowOffset = 2
-        fnamesRaw = rows[0]
-        fnamesSplit = fnamesRaw.split(colSep)
-        fnames = []
-        for val in fnamesSplit:
-            if len(val) != 0:
-                fnames.append(val)
-        # -1 for the fnames,  -1 for the blank row
-        assert len(rows) - 2 <= len(data.points)
-    else:
-        rowOffset = 0
-        assert len(rows) <= len(data.points)
+    rowOffset = 2
+    fnamesRaw = rows[0]
+    fnamesSplit = fnamesRaw.split(colSep)
+    fnames = []
+    for val in fnamesSplit:
+        if len(val) != 0:
+            fnames.append(val)
+    assert len(rows[1]) <= maxWidth
+    assert rows[1].strip().startswith(corner)
+    assert rows[1].strip().endswith(fnameSep * (len(rows[1].strip()) - 1))
+    # -1 for the fnames,  -1 for the separator row
+    assert len(rows) - 2 <= len(data.points)
 
     for r in range(rowOffset, len(rows)):
         row = rows[r]
-        if includeNames:
-            # remove leading whitespace to correctly extract point name
-            row = row.strip()
-            namesSplit = row.split(pnameSep, 1)
-            pname = namesSplit[0]
-            row = namesSplit[1]
+        # remove leading whitespace to correctly extract point name
+        row = row.strip()
+        namesSplit = row.split(colSep + pnameSep + colSep, 1)
+        pname = namesSplit[0]
+        row = namesSplit[1]
         spaceSplit = row.split(colSep)
         vals = []
         for possible in spaceSplit:
@@ -3374,8 +3316,7 @@ def checkToStringRet(ret, data, includeNames, maxWidth, maxHeight):
 
         negCol = False
         assert len(vals) <= len(data.features)
-        if includeNames:
-            assert len(fnames) == len(vals)
+        assert len(fnames) == len(vals)
         for c in range(len(vals)):
             if vals[c] == cHold:
                 negCol = True
@@ -3390,20 +3331,19 @@ def checkToStringRet(ret, data, includeNames, maxWidth, maxHeight):
             have = vals[c]
             assert wantedS == have
 
-            if includeNames:
-                # generate name from indices
-                offset = len(data.points) if negRow else 0
-                fromIndexPname = data.points.getName(offset + rDataIndex)
-                assert fromIndexPname == pname
+            # generate name from indices
+            offset = len(data.points) if negRow else 0
+            fromIndexPname = data.points.getName(offset + rDataIndex)
+            assert fromIndexPname == pname
 
-                offset = len(data.features) if negCol else 0
-                fromIndexFname = data.features.getName(offset + cDataIndex)
+            offset = len(data.features) if negCol else 0
+            fromIndexFname = data.features.getName(offset + cDataIndex)
 
-                # long feature names may have been truncated
-                if fnames[cDataIndex].endswith('...'):
-                    truncatedLen = len(fnames[cDataIndex]) - 3
-                    fromIndexFname = fromIndexFname[:truncatedLen]
-                assert fromIndexFname == fnames[cDataIndex]
+            # long feature names may have been truncated
+            if fnames[cDataIndex].endswith('...'):
+                truncatedLen = len(fnames[cDataIndex]) - 3
+                fromIndexFname = fromIndexFname[:truncatedLen]
+            assert fromIndexFname == fnames[cDataIndex]
 
 
 def test_elementQueryString():

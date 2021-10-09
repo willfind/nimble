@@ -46,7 +46,6 @@ from ._dataHelpers import plotConfidenceIntervalMeanAndError, plotErrorBars
 from ._dataHelpers import plotSingleBarChart, plotMultiBarChart
 from ._dataHelpers import looksNumeric, checkNumeric
 from ._dataHelpers import mergeNames, mergeNonDefaultNames
-from ._dataHelpers import makeNamesLines
 from ._dataHelpers import binaryOpNamePathMerge
 from ._dataHelpers import indicesSplit
 
@@ -2203,12 +2202,19 @@ class Base(ABC):
         fNameOrientation = 'center'
 
         # setup a bundle of default values
+        numPoints = len(self.points)
         if maxHeight is None:
-            maxHeight = len(self.points) + 2
+            maxDataRows = numPoints
+            maxHeight = maxDataRows + 2
+        else:
+            maxDataRows = min(maxHeight - 2, numPoints)
+            if maxDataRows <= 1 and numPoints > maxDataRows:
+                msg = 'The minimum maxHeight for this data is '
+                msg += str(2 + min(numPoints, 2))
+                raise InvalidArgumentValue(msg)
+
         maxWidth = float('inf') if maxWidth is None else maxWidth
         maxDataWidth = maxWidth - len(indent)
-        maxDataRows = min(maxHeight, len(self.points))
-
         pnames, pnamesWidth = self._arrangePointNames(
             maxDataRows, maxColumnWidth, rowHold, nameHolder)
         # The available space for the data is reduced by the width of the
@@ -2285,7 +2291,7 @@ class Base(ABC):
         return self._show()
 
     def __repr__(self):
-        ret = "<{} ".format(self.__class__.__name__)
+        ret = "<{} ".format(self.getTypeString())
         indent = ' '
         # remove leading and trailing newlines
         ret += self._show(indent=indent, forRepr=True)
@@ -2297,8 +2303,8 @@ class Base(ABC):
         return ret
 
     def show(self, description=None, includeObjectName=True,
-             includeAxisNames=True, maxWidth='automatic',
-             maxHeight='automatic', sigDigits=3, maxColumnWidth=19):
+             maxWidth='automatic', maxHeight='automatic', sigDigits=3,
+             maxColumnWidth=19):
         """
         A printed representation of the data.
 
@@ -2315,9 +2321,6 @@ class Base(ABC):
         includeObjectName : bool
             True will include printing of the object's ``name``
             attribute, False will not print the object's name.
-        includeAxisNames : bool
-            True will include printing of the object's point and feature
-            names, False will not print the point or feature names.
         maxWidth : int, None
             A bound on the maximum number of characters allowed on each
             line of the output. If None, an attempt will be made to
@@ -5112,11 +5115,10 @@ class Base(ABC):
 
     def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold):
         """
-        Prepare point names for string output. Grab only those names
-        that fit according to the given row limitation, process them for
-        length, omit them if they are default. Returns a list of
-        prepared names, and a int bounding the length of each name
-        representation.
+        Prepare point names for string output. Grab only section of
+        those names that fit according to the given row limitation,
+        and process them for length. Returns a list of prepared names
+        and an int bounding the length of each name representation.
         """
         names = []
         pnamesWidth = 0
@@ -5126,7 +5128,14 @@ class Base(ABC):
         if self.points._allDefaultNames():
             pnames = list(map(str, range(len(self.points))))
         else:
-            pnames = self.points.getNames()
+            pnames = []
+            for name in self.points.getNames():
+                if name is None:
+                    pnames.append('')
+                elif len(name) <= nameLength:
+                    pnames.append(name)
+                else:
+                    pnames.append(name[:nameCutIndex] + nameHold)
 
         topNames = [pnames[i] for i in tRowIDs]
         bottomNames = [pnames[i] for i in bRowIDs]
@@ -5231,7 +5240,8 @@ class Base(ABC):
             currWidth = fNameLen
 
             # check all values in this column (in the accepted rows)
-            for i, rID in enumerate(combinedRowIDs):
+            i = 0
+            for rID in combinedRowIDs:
                 val = self[rID, currIndex]
                 valFormed = formatIfNeeded(val, sigDigits)
                 if len(valFormed) <= maxStrLength:
@@ -5247,6 +5257,11 @@ class Base(ABC):
                     currCol.append(rowHold)
 
                 currCol.append(valLimited)
+                i += 1
+
+            # placeholder row needs to be placed at bottom
+            if i == rowHolderIndex:
+                currCol.append(rowHold)
 
             totalWidth += currWidth
             # only add this column if it won't put us over the limit
