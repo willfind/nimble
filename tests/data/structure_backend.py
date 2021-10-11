@@ -7728,6 +7728,21 @@ class StructureModifying(StructureShared):
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == TEST_REL_PATH
 
+    def test_transformElements_builtin(self):
+        # builtins are implemented in C, so may behave differently
+        data = [['1', '0', '3'], ['0', '5', '6'], ['7', '0', '9']]
+        toTest = self.constructor(data)
+        assert all(isinstance(x, str) for x in toTest.iterateElements())
+
+        toTest.transformElements(int)
+        assert all(isinstance(x, (int, np.integer)) for x in toTest.iterateElements())
+
+        toTest.transformElements(float)
+        assert all(isinstance(x, (float, np.floating)) for x in toTest.iterateElements())
+
+        toTest.transformElements(str)
+        assert all(isinstance(x, str) for x in toTest.iterateElements())
+
     @oneLogEntryExpected
     def test_transformElements_plusOnePreserve(self):
         data = [[1, 0, 3], [0, 5, 6], [7, 0, 9]]

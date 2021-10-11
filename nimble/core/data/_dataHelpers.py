@@ -605,8 +605,14 @@ def validateElementFunction(func, preserveZeros, skipNoneReturnValues,
     if isinstance(func, dict):
         func = _getDictionaryMappingFunction(func)
 
-    a, _, _, d = inspectArguments(func)
-    numRequiredArgs = len(a) - len(d)
+    try:
+        a, _, _, d = inspectArguments(func)
+        numRequiredArgs = len(a) - len(d)
+    except ValueError:
+        # functions implemented in C cannot be inspected. We will assume these
+        # are builtins and that they take one argument (str, int, float, etc.)
+        numRequiredArgs = 1
+
     if numRequiredArgs == 3:
         oneArg = False
 

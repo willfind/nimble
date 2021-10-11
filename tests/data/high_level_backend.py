@@ -864,6 +864,21 @@ class HighLevelDataSafe(DataTestObject):
         assertNoNamesGenerated(toTest)
         assertNoNamesGenerated(ret)
 
+    def test_calculateOnElements_builtin(self):
+        # builtins are implemented in C, so may behave differently
+        data = [['1', '0', '3'], ['0', '5', '6'], ['7', '0', '9']]
+        toTest = self.constructor(data)
+        assert all(isinstance(x, str) for x in toTest.iterateElements())
+
+        ret = toTest.calculateOnElements(int)
+        assert all(isinstance(x, (int, np.integer)) for x in ret.iterateElements())
+
+        ret = toTest.calculateOnElements(float)
+        assert all(isinstance(x, (float, np.floating)) for x in ret.iterateElements())
+
+        ret = toTest.calculateOnElements(str)
+        assert all(isinstance(x, str) for x in ret.iterateElements())
+
     def test_calculateOnElements_plusOnePreserve(self):
         data = [[1, 0, 3], [0, 5, 6], [7, 0, 9]]
         toTest = self.constructor(data)
