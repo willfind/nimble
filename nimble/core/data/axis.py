@@ -112,9 +112,9 @@ class Axis(ABC):
             obj = self._base
         else:
             obj = self._base.T
-        preview = obj._show(indent=' ', preview=True)
-        # ignore header lines of preview
-        s += '\n'.join(preview.split('\n')[3:])
+        string = obj._show(indent=' ')
+        # ignore header lines of string
+        s += '\n'.join(string.split('\n')[3:])
         return s
 
     ########################

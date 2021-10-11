@@ -56,6 +56,8 @@ def main(colabPath):
             newCells = {}
             clIdx = 0
             for exCell in exCells:
+                if exCell['metadata'].get('nbsphinx', '') == 'hidden':
+                    continue
                 assert clCells[clIdx]['cell_type'] == exCell['cell_type']
                 # ignore the download links at bottom of the notebook
                 if clIdx == 0:

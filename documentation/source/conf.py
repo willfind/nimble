@@ -595,9 +595,11 @@ texinfo_documents = [
 # suffix for source files, by default is .txt
 html_sourcelink_suffix = ''
 
-# input and output prompts
-# nbsphinx_input_prompt = 'In [%s]:'
-# nbsphinx_output_prompt = 'Out [%s]:'
+# recommended when matplotlib is used
+nbsphinx_execute_arguments = [
+    "--InlineBackend.figure_formats={'svg', 'pdf'}",
+    "--InlineBackend.rc=figure.dpi=96",
+]
 
 # removes input and output prompts
 nbsphinx_prolog = """
@@ -631,6 +633,16 @@ class PYtoIPYNB:
 
     def convertToNotebook(self):
         with open(self.file, 'r') as f:
+            setTerminalSize = [
+                "import os\n",
+                "import shutil\n",
+                "size = os.terminal_size((120, 30))\n",
+                "shutil.get_terminal_size = lambda *args, **kwargs: size\n"
+            ]
+            terminalSize = dict(source=setTerminalSize, cell_type='code',
+                                execution_count=None,
+                                metadata={"nbsphinx": "hidden"}, outputs=[])
+            self.notebook['cells'].append(terminalSize)
             for line in f.readlines():
                 if re.match(r'["\']{3}\n?', line):
                     self.multiline = not self.multiline
@@ -664,7 +676,7 @@ class PYtoIPYNB:
             self._addNewCell(cellInfo)
         elif not (isNewline or isMarkdown) and self.celltype != 'code':
             self.celltype = 'code'
-            cellInfo = dict(cell_type=self.celltype, execution_count= None,
+            cellInfo = dict(cell_type=self.celltype, execution_count=None,
                             metadata={}, outputs=[], source=[])
             self._addNewCell(cellInfo)
 

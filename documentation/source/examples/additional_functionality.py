@@ -88,7 +88,7 @@ wifi = nimble.data('Matrix', path, name='wifiData')
 ## feature.
 headers = ['source' + str(i) for i in range(7)] + ['room']
 wifi.features.setNames(headers)
-wifi.show('wifi signal strengths', maxHeight=9)
+wifi.show('wifi signal strengths', maxHeight=12)
 
 ## Logging ##
 
@@ -145,7 +145,7 @@ nimble.showLog()
 ## This means that the points in our randomly permuted object shown below are
 ## always in the same order every time for everyone running this script.
 wifi.points.permute()
-wifi.show('randomly permuted', maxHeight=9)
+wifi.show('randomly permuted', maxHeight=12)
 
 ## Nimble uses its `nimble.random.setSeed` function on import to control the
 ## random state, but this function is also publicly available to set a new seed

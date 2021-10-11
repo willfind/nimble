@@ -2255,17 +2255,16 @@ class Base(ABC):
 
     def _show(self, description=None, includeObjectName=True,
               maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-              maxColumnWidth=19, indent='', forRepr=False):
+              maxColumnWidth=19, indent=''):
         # when dynamically sizing, fit within current window
-        terminalSize = shutil.get_terminal_size((80, 24))
+        terminalSize = shutil.get_terminal_size()
         if maxWidth == 'automatic':
             maxWidth = max(79, terminalSize[0] - 1)
         if maxHeight == 'automatic':
-            maxHeight = max(30, terminalSize[1])
+            maxHeight = max(30, terminalSize[1] - 1)
         if maxHeight is not None:
-            # subtract lines for description, header and separator rows, and
-            # closing line for repr
-            maxHeight -= 4 if forRepr else 3
+            # subtract lines for data details and last line
+            maxHeight -= 2
 
         ret = ''
         if description is not None:
@@ -2294,7 +2293,7 @@ class Base(ABC):
         ret = "<{} ".format(self.getTypeString())
         indent = ' '
         # remove leading and trailing newlines
-        ret += self._show(indent=indent, forRepr=True)
+        ret += self._show(indent=indent)
         if self.path is not None:
             ret += indent + "path=" + self.path + '>'
         else:
@@ -2321,15 +2320,18 @@ class Base(ABC):
         includeObjectName : bool
             True will include printing of the object's ``name``
             attribute, False will not print the object's name.
-        maxWidth : int, None
+        maxWidth : 'automatic', int, None
             A bound on the maximum number of characters allowed on each
-            line of the output. If None, an attempt will be made to
-            determine the terminal width but will default to 79 if
-            unsuccessful.
-        maxHeight : int, None
+            line of the output. The default, 'automatic', enforces a
+            minimum width of 79 but expands dynamically when the width
+            of the terminal is greater than 80 characters. None will
+            disable the bound on width.
+        maxHeight : 'automatic', int, None
             A bound on the maximum number of lines allowed for the
-            output.  If None, an attempt will be made to determine the
-            terminal height but will default to 79 if unsuccessful.
+            output.  The default, 'automatic', enforces a minimum
+            height of 30 lines but expands dynamically when the height
+            of the terminal is greater than 30. None will disable the
+            bound on height.
         sigDigits : int
             The number of significant digits to display in the output.
         maxColumnWidth : int
