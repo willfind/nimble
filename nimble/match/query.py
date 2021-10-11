@@ -87,7 +87,7 @@ class QueryString:
      1 │  True  True True
      2 │  True  True True
      3 │  True False True
-     >
+    >
     >>> toQuery.points.delete('ft3 == -1')
     >>> toQuery
     <DataFrame 2pt x 3ft
@@ -95,7 +95,7 @@ class QueryString:
        ┌────────────────
      0 │  -1  True 2.000
      1 │  -1 False 3.000
-     >
+    >
     """
     _accepted = {n: getattr(match, n) for n in _setAll(vars(match))}
     _accepted['True'] = lambda e: e is True

@@ -204,7 +204,7 @@ class Base(ABC):
          0 │ 0 0 0 0
          1 │ 5 6 7 8
          2 │ 1 2 3 4
-         >
+        >
 
         Keywords
         --------
@@ -246,7 +246,7 @@ class Base(ABC):
          0 │ 4 3 2 1
          1 │ 8 7 6 5
          2 │ 0 0 0 0
-         >
+        >
 
         Keywords
         --------
@@ -443,7 +443,7 @@ class Base(ABC):
          0 │   1.000     0.000     0.000
          1 │   0.000     1.000     0.000
          2 │   0.000     0.000     1.000
-         >
+        >
 
         Keywords
         --------
@@ -526,7 +526,7 @@ class Base(ABC):
          0 │   1       0       1
          1 │   2       1       2
          2 │   3       2       3
-         >
+        >
 
         Keywords
         --------
@@ -625,7 +625,7 @@ class Base(ABC):
          0 │ 2.000 2.000 2.000
          1 │ 2.000 2.000 2.000
          2 │ 2.000 2.000 2.000
-         >
+        >
 
         Transform while preserving zero values.
 
@@ -639,7 +639,7 @@ class Base(ABC):
          0 │ 11.000 0.000  0.000
          1 │ 0.000  11.000 0.000
          2 │ 0.000  0.000  11.000
-         >
+        >
 
         Transforming a subset of points and features.
 
@@ -654,7 +654,7 @@ class Base(ABC):
          1 │ 2.000 1.000 2.000 1.000
          2 │ 1.000 1.000 1.000 1.000
          3 │ 1.000 1.000 1.000 1.000
-         >
+        >
 
         Transforming with None return values. With the ``addTenToEvens``
         function defined below, An even values will be return a value,
@@ -676,10 +676,10 @@ class Base(ABC):
         <Matrix 3pt x 3ft
                0      1      2
            ┌─────────────────────
-         0 │  nan   12.000  nan
-         1 │ 14.000  nan   16.000
-         2 │  nan   18.000  nan
-         >
+         0 │        12.000
+         1 │ 14.000        16.000
+         2 │        18.000
+        >
         >>> skip = nimble.data('Matrix', lst)
         >>> skip.transformElements(addTenToEvens,
         ...                        skipNoneReturnValues=True)
@@ -690,7 +690,7 @@ class Base(ABC):
          0 │ 1  12 3
          1 │ 14 5  16
          2 │ 7  18 9
-         >
+        >
 
         Keywords
         --------
@@ -775,7 +775,7 @@ class Base(ABC):
          0 │ 2.000 2.000 2.000
          1 │ 2.000 2.000 2.000
          2 │ 2.000 2.000 2.000
-         >
+        >
 
         Calculate while preserving zero values.
 
@@ -789,7 +789,7 @@ class Base(ABC):
          0 │ 11.000 0.000  0.000
          1 │ 0.000  11.000 0.000
          2 │ 0.000  0.000  11.000
-         >
+        >
 
         Calculate on a subset of points and features.
 
@@ -803,7 +803,7 @@ class Base(ABC):
            ┌────────────
          0 │ 2.000 2.000
          1 │ 2.000 2.000
-         >
+        >
 
         Calculating with None return values. With the ``addTenToEvens``
         function defined below, An even values will be return a value,
@@ -823,12 +823,12 @@ class Base(ABC):
         >>> dontSkip = X.calculateOnElements(addTenToEvens)
         >>> dontSkip
         <Matrix 3pt x 3ft
-              0   1   2
-           ┌────────────
-         0 │ nan  12 nan
-         1 │  14 nan  16
-         2 │ nan  18 nan
-         >
+             0  1  2
+           ┌─────────
+         0 │    12
+         1 │ 14    16
+         2 │    18
+        >
         >>> skip = X.calculateOnElements(addTenToEvens,
         ...                              skipNoneReturnValues=True)
         >>> skip
@@ -838,7 +838,7 @@ class Base(ABC):
          0 │ 1  12 3
          1 │ 14 5  16
          2 │ 7  18 9
-         >
+        >
 
         Keywords
         --------
@@ -910,7 +910,7 @@ class Base(ABC):
            ┌──────────────────
          0 │ False  True False
          1 │ False False False
-         >
+        >
 
         >>> from nimble import match
         >>> lst = [[1, -1, None], [None, 3, -3]]
@@ -922,7 +922,7 @@ class Base(ABC):
            ┌──────────────────
          0 │ False False  True
          1 │  True False False
-         >
+        >
 
         >>> from nimble import match
         >>> lst = [[1, -1, 1], [-3, 3, -3]]
@@ -934,7 +934,7 @@ class Base(ABC):
            ┌──────────────────
          0 │  True False  True
          1 │ False  True False
-         >
+        >
 
         Keywords
         --------
@@ -1196,7 +1196,7 @@ class Base(ABC):
          0 │     SEC      Alabama    14
          1 │    Big 10   Ohio State  13
          2 │ Independent Notre Dame  12
-         >
+        >
         >>> groupByLosses[3]
         <DataFrame 3pt x 3ft
              conference   team  wins
@@ -1204,7 +1204,7 @@ class Base(ABC):
          0 │    SEC       LSU    10
          1 │    SEC     Florida  10
          2 │    SEC     Georgia  11
-         >
+        >
 
         Keywords
         --------
@@ -1378,14 +1378,14 @@ class Base(ABC):
          b │ 0 1 0
          f │ 0 0 1
          c │ 0 0 1
-         >
+        >
         >>> testData
         <Matrix "test" 2pt x 3ft
              0 1 2
            ┌──────
          e │ 0 1 0
          d │ 1 0 0
-         >
+        >
 
         Returning a 4-tuple.
 
@@ -1409,7 +1409,7 @@ class Base(ABC):
          b │ 0 1 0
          f │ 0 0 1
          c │ 0 0 1
-         >
+        >
         >>> trainY
         <Matrix "trainY" 4pt x 1ft
              0
@@ -1418,21 +1418,21 @@ class Base(ABC):
          b │ 2
          f │ 3
          c │ 3
-         >
+        >
         >>> testX
         <Matrix "testX" 2pt x 3ft
              0 1 2
            ┌──────
          e │ 0 1 0
          d │ 1 0 0
-         >
+        >
         >>> testY
         <Matrix "testY" 2pt x 1ft
              0
            ┌──
          e │ 2
          d │ 1
-         >
+        >
 
         Keywords
         --------
@@ -1796,14 +1796,14 @@ class Base(ABC):
                 id  age   department   salary gender
              ┌──────────────────────────────────────
          pam │ 4331  26 administration 28000    f
-         >
+        >
         >>> office[[3, 1], :]
         <Matrix 2pt x 5ft
                    id  age department salary gender
                 ┌──────────────────────────────────
          dwight │ 4211  45   sales    33000    m
             jim │ 4434  26   sales    26000    m
-         >
+        >
 
         *Note: retains list order; index 3 placed before index 1*
 
@@ -1815,7 +1815,7 @@ class Base(ABC):
             pam │ 4331  26 administration 28000    f
          dwight │ 4211  45     sales      33000    m
          angela │ 4344  45   accounting   43500    f
-         >
+        >
 
         *Note: slices are inclusive; index 4 ('gender') was included*
 
@@ -1830,7 +1830,7 @@ class Base(ABC):
              pam │ administration
           dwight │     sales
           angela │   accounting
-         >
+        >
         >>> office[:, ['gender', 'age']]
         <Matrix 5pt x 2ft
                    gender age
@@ -1840,7 +1840,7 @@ class Base(ABC):
              pam │   f     26
           dwight │   m     45
           angela │   f     45
-         >
+        >
 
         *Note: retains list order; 'gender' placed before 'age'*
 
@@ -1853,7 +1853,7 @@ class Base(ABC):
              pam │ administration 28000
           dwight │     sales      33000
           angela │   accounting   43500
-         >
+        >
 
         *Note: slices are inclusive; 'salary' was included*
 
@@ -1865,7 +1865,7 @@ class Base(ABC):
                 ┌──────────────────────
             pam │ 28000  administration
          angela │ 43500    accounting
-         >
+        >
 
         *Note: list orders retained; 'pam' precedes 'angela' and index 3
         ('salary') precedes index 2 ('department')*
@@ -1877,7 +1877,7 @@ class Base(ABC):
          michael │  41
              jim │  26
              pam │  26
-         >
+        >
 
         *Note: slices are inclusive; index 2 ('pam') was included*
         """
@@ -2297,7 +2297,7 @@ class Base(ABC):
         if self.path is not None:
             ret += indent + "path=" + self.path + '>'
         else:
-            ret += indent + '>'
+            ret += '>'
 
         return ret
 
@@ -3088,7 +3088,7 @@ class Base(ABC):
            ┌──────
          0 │ 1 2 3
          1 │ 4 5 6
-         >
+        >
         >>> X.transpose()
         >>> X
         <List 3pt x 2ft
@@ -3097,7 +3097,7 @@ class Base(ABC):
          0 │ 1 4
          1 │ 2 5
          2 │ 3 6
-         >
+        >
 
         Keywords
         --------
@@ -3138,7 +3138,7 @@ class Base(ABC):
            ┌──────
          0 │ 1 2 3
          1 │ 4 5 6
-         >
+        >
         >>> X.T
         <List 3pt x 2ft
              0 1
@@ -3146,7 +3146,7 @@ class Base(ABC):
          0 │ 1 4
          1 │ 2 5
          2 │ 3 6
-         >
+        >
         """
         ret = self.copy()
         ret.transpose(useLog=False)
@@ -3200,7 +3200,7 @@ class Base(ABC):
               ┌──────
           odd │ 1 3 5
          even │ 2 4 6
-         >
+        >
         >>> XCopy = X.copy()
         >>> XCopy
         <List "odd&even" 2pt x 3ft
@@ -3208,7 +3208,7 @@ class Base(ABC):
               ┌──────
           odd │ 1 3 5
          even │ 2 4 6
-         >
+        >
 
         Copy to other formats.
 
@@ -3223,7 +3223,7 @@ class Base(ABC):
            ┌────────────
          0 │ 1.000 0.000
          1 │ 0.000 1.000
-         >
+        >
         >>> asNumpyArray = X.copy(to='numpy array')
         >>> asNumpyArray
         array([[1., 0.],
@@ -3406,7 +3406,7 @@ class Base(ABC):
          1 │ 0.000 0.000 1.000 1.000
          2 │ 1.000 1.000 1.000 1.000
          3 │ 1.000 1.000 1.000 1.000
-         >
+        >
 
         Keywords
         --------
@@ -3549,7 +3549,7 @@ class Base(ABC):
                      1 | a 1 | b 3 | a 3 | b
                    ┌────────────────────────
          Flattened │   1     2     3     4
-         >
+        >
 
         >>> lst = [[1, 2],
         ...        [3, 4]]
@@ -3563,7 +3563,7 @@ class Base(ABC):
                      1 | a 3 | a 1 | b 3 | b
                    ┌────────────────────────
          Flattened │   1     3     2     4
-         >
+        >
 
         Keywords
         --------
@@ -3702,7 +3702,7 @@ class Base(ABC):
          0 │ 1 2 3
          1 │ 4 5 6
          2 │ 7 8 9
-         >
+        >
 
         Unflatten a point in feature order with default names.
 
@@ -3716,7 +3716,7 @@ class Base(ABC):
          0 │ 1 4 7
          1 │ 2 5 8
          2 │ 3 6 9
-         >
+        >
 
         Unflatten a feature in feature order with default names.
 
@@ -3730,7 +3730,7 @@ class Base(ABC):
          0 │ 1 2 3
          1 │ 4 5 6
          2 │ 7 8 9
-         >
+        >
 
         Unflatten a feature in point order with default names.
 
@@ -3744,7 +3744,7 @@ class Base(ABC):
          0 │ 1 4 7
          1 │ 2 5 8
          2 │ 3 6 9
-         >
+        >
 
         Unflatten a point with names that can be unflattened.
 
@@ -3761,7 +3761,7 @@ class Base(ABC):
          1 │ 1 2 3
          4 │ 4 5 6
          7 │ 7 8 9
-         >
+        >
 
         Keywords
         --------
@@ -3903,7 +3903,7 @@ class Base(ABC):
          p1 │ a  1  X  d  4
          p2 │ b  2  Y  e  5
          p3 │ c  3  Z  f  6
-         >
+        >
         >>> left = nimble.data('Matrix', lstL, pointNames=pNamesL,
         ...                    featureNames=fNamesL)
         >>> left.merge(right, point='strict', feature='intersection')
@@ -3914,7 +3914,7 @@ class Base(ABC):
          p1 │ X
          p2 │ Y
          p3 │ Z
-         >
+        >
 
         Additional merge combinations. In this example, the feature
         ``"id"`` contains a unique value for each point (just as point
@@ -3931,14 +3931,14 @@ class Base(ABC):
         ...            onFeature="id")
         >>> left
         <DataFrame 5pt x 5ft
-              f1   f2   id  f4   f5
-           ┌────────────────────────
-         0 │  a  1.000 id1 nan  nan
-         1 │  b  2.000 id2 nan  nan
-         2 │  c  3.000 id3  x  7.000
-         3 │ nan  nan  id4  y  8.000
-         4 │ nan  nan  id5  z  9.000
-         >
+             f1   f2   id f4   f5
+           ┌──────────────────────
+         0 │ a  1.000 id1
+         1 │ b  2.000 id2
+         2 │ c  3.000 id3 x  7.000
+         3 │          id4 y  8.000
+         4 │          id5 z  9.000
+        >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='union', feature='intersection',
         ...            onFeature="id")
@@ -3951,20 +3951,20 @@ class Base(ABC):
          2 │ id3
          3 │ id4
          4 │ id5
-         >
+        >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='union', feature='left',
         ...            onFeature="id")
         >>> left
         <DataFrame 5pt x 3ft
-              f1   f2   id
-           ┌──────────────
-         0 │  a  1.000 id1
-         1 │  b  2.000 id2
-         2 │  c  3.000 id3
-         3 │ nan  nan  id4
-         4 │ nan  nan  id5
-         >
+             f1   f2   id
+           ┌─────────────
+         0 │ a  1.000 id1
+         1 │ b  2.000 id2
+         2 │ c  3.000 id3
+         3 │          id4
+         4 │          id5
+        >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='intersection', feature='union',
         ...            onFeature="id")
@@ -3973,7 +3973,7 @@ class Base(ABC):
              f1 f2  id f4 f5
            ┌────────────────
          0 │ c  3  id3 x  7
-         >
+        >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='intersection',
         ...            feature='intersection', onFeature="id")
@@ -3982,7 +3982,7 @@ class Base(ABC):
               id
            ┌────
          0 │ id3
-         >
+        >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='intersection', feature='left',
         ...            onFeature="id")
@@ -3991,18 +3991,18 @@ class Base(ABC):
              f1 f2  id
            ┌──────────
          0 │ c  3  id3
-         >
+        >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='union',
         ...            onFeature="id")
         >>> left
         <DataFrame 3pt x 5ft
-             f1 f2  id  f4   f5
-           ┌────────────────────
-         0 │ a  1  id1 nan  nan
-         1 │ b  2  id2 nan  nan
-         2 │ c  3  id3  x  7.000
-         >
+             f1 f2  id f4   f5
+           ┌───────────────────
+         0 │ a  1  id1
+         1 │ b  2  id2
+         2 │ c  3  id3 x  7.000
+        >
 
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='intersection',
@@ -4014,7 +4014,7 @@ class Base(ABC):
          0 │ id1
          1 │ id2
          2 │ id3
-         >
+        >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='left',
         ...            onFeature="id")
@@ -4025,7 +4025,7 @@ class Base(ABC):
          0 │ a  1  id1
          1 │ b  2  id2
          2 │ c  3  id3
-         >
+        >
 
         Keywords
         --------
@@ -5011,7 +5011,7 @@ class Base(ABC):
          0 │ 1 4  9
          1 │ 4 10 18
          2 │ 0 -2 -6
-         >
+        >
 
         Stretched feature with nimble Base object.
 
@@ -5026,7 +5026,7 @@ class Base(ABC):
          0 │ 2 3 4
          1 │ 6 7 8
          2 │ 3 2 1
-         >
+        >
 
         Two stretched objects.
 
@@ -5041,7 +5041,7 @@ class Base(ABC):
          0 │ 0  1  2
          1 │ -1 0  1
          2 │ -2 -1 0
-         >
+        >
         >>> featObj.stretch - pointObj.stretch
         <List 3pt x 3ft
              0 1  2
@@ -5049,7 +5049,7 @@ class Base(ABC):
          0 │ 0 -1 -2
          1 │ 1 0  -1
          2 │ 2 1  0
-         >
+        >
 
         Keywords
         --------

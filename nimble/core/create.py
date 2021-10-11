@@ -187,7 +187,7 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
        ┌──────
      0 │ 1 2 3
      1 │ 4 5 6
-     >
+    >
 
     Loading data from a file.
 
@@ -213,7 +213,7 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
        ┌──────
      1 │ 0 0 1
      2 │ 1 0 0
-     >
+    >
 
     Replacing missing values.
 
@@ -229,7 +229,7 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
        ┌────────
      0 │ 1 -1 -1
      1 │ 4 -1 6
-     >
+    >
 
     Keywords
     --------
@@ -327,7 +327,7 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
      2 │ 1.000 1.000 1.000 1.000 1.000
      3 │ 1.000 1.000 1.000 1.000 1.000
      4 │ 1.000 1.000 1.000 1.000 1.000
-     >
+    >
 
     Named object of ones with pointNames and featureNames.
 
@@ -343,7 +343,7 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
      2 │ 1.000 1.000 1.000 1.000
      3 │ 1.000 1.000 1.000 1.000
      4 │ 1.000 1.000 1.000 1.000
-     >
+    >
 
     Keywords
     --------
@@ -406,7 +406,7 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
      2 │ 0.000 0.000 0.000 0.000 0.000
      3 │ 0.000 0.000 0.000 0.000 0.000
      4 │ 0.000 0.000 0.000 0.000 0.000
-     >
+    >
 
     Named object of zeros with pointNames and featureNames.
 
@@ -422,7 +422,7 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
      2 │ 0.000 0.000 0.000 0.000
      3 │ 0.000 0.000 0.000 0.000
      4 │ 0.000 0.000 0.000 0.000
-     >
+    >
 
     Keywords
     --------
@@ -483,7 +483,7 @@ def identity(returnType, size, pointNames='automatic',
      2 │ 0.000 0.000 1.000 0.000 0.000
      3 │ 0.000 0.000 0.000 1.000 0.000
      4 │ 0.000 0.000 0.000 0.000 1.000
-     >
+    >
 
     Named object of zeros with pointNames and featureNames.
 
@@ -498,7 +498,7 @@ def identity(returnType, size, pointNames='automatic',
      1 │ 1.000 0.000 0.000
      2 │ 0.000 1.000 0.000
      3 │ 0.000 0.000 1.000
-     >
+    >
 
     Keywords
     --------

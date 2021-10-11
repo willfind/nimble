@@ -99,7 +99,7 @@ traffic.features.splitByParsing('date_time', dateTimeSplitter,
 ## of text into 5 numeric features.
 traffic.show('New parsed features in traffic data', maxHeight=16)
 
-## Above, we also see that the `holiday` feature has many `nan` values. Let's
+## Above, we also see that the `holiday` feature has many missing values. Let's
 ## take a look at a selection of points that include a holiday to get a better
 ## understanding of this feature.
 pointsWithHoliday = slice(1368, 1372)
@@ -108,9 +108,9 @@ sample = traffic[pointsWithHoliday, dateInfoFeatures]
 sample.show('Data sample with a holiday', maxHeight=16)
 
 ## Now we can see that this feature records the holiday name for the first data
-## point recorded on a holiday, otherwise the value is `nan`. This means most
-## data points falling on a holiday still have `nan` as the holiday value. It
-## would be more helpful if this feature identified **every** point that
+## point recorded on a holiday, otherwise the value is missing. So, even points
+## that fall on a holday can have a missing value in the holiday feature. It
+## would be much more helpful if this feature identified if **each** point
 ## occurred on a holiday.
 
 ## We need a more complex custom function to differentiate between missing

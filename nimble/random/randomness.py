@@ -120,7 +120,7 @@ def data(
      c │ 86 1  91 91 69
      d │ 30 44 97 39 63
      e │ 42 92 32 55 65
-     >
+    >
 
     Random floats, high sparsity.
 
@@ -135,7 +135,7 @@ def data(
      2 │ 0.000 -0.298 0.000 0.000  0.000
      3 │ 0.000 0.000  0.000 0.000  0.000
      4 │ 0.000 0.000  0.000 0.000  0.000
-     >
+    >
     """
     validateReturnType(returnType)
     if numPoints < 1:

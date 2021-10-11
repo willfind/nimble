@@ -1385,7 +1385,7 @@ class QueryBackend(DataTestObject):
             assert data.absolutePath in retSplit[-1]
             assert retSplit[-1].endswith('>')
         else:
-            assert retSplit[-1] == ' >'
+            assert retSplit[-1] == '>'
 
     def test_repr_notTruncated(self):
         self.back_reprOutput(9, 9)

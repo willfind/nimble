@@ -372,7 +372,7 @@ class Features(ABC):
          b │ 1
          c │ 1
          d │ 1
-         >
+        >
         >>> multiple = X.features.copy(['1', 3])
         >>> multiple
         <Matrix 4pt x 2ft
@@ -382,7 +382,7 @@ class Features(ABC):
          b │ 1 4
          c │ 1 4
          d │ 1 4
-         >
+        >
         >>> func = X.features.copy(lambda ft: sum(ft) < 10)
         >>> func
         <Matrix 4pt x 2ft
@@ -392,7 +392,7 @@ class Features(ABC):
          b │ 1 2
          c │ 1 2
          d │ 1 2
-         >
+        >
         >>> strFunc = X.features.copy("a >= 3")
         >>> strFunc
         <Matrix 4pt x 2ft
@@ -402,7 +402,7 @@ class Features(ABC):
          b │ 3 4
          c │ 3 4
          d │ 3 4
-         >
+        >
         >>> startEnd = X.features.copy(start=1, end=2)
         >>> startEnd
         <Matrix 4pt x 2ft
@@ -412,7 +412,7 @@ class Features(ABC):
          b │ 2 3
          c │ 2 3
          d │ 2 3
-         >
+        >
         >>> numberNoRandom = X.features.copy(number=2)
         >>> numberNoRandom
         <Matrix 4pt x 2ft
@@ -422,7 +422,7 @@ class Features(ABC):
          b │ 1 2
          c │ 1 2
          d │ 1 2
-         >
+        >
         >>> nimble.random.setSeed(42)
         >>> numberRandom = X.features.copy(number=2, randomize=True)
         >>> numberRandom
@@ -433,7 +433,7 @@ class Features(ABC):
          b │ 1 4
          c │ 1 4
          d │ 1 4
-         >
+        >
 
         Keywords
         --------
@@ -513,7 +513,7 @@ class Features(ABC):
          0 │ 1.000
          1 │ 0.000
          2 │ 0.000
-         >
+        >
         >>> X
         <List 3pt x 2ft
                b     c
@@ -521,7 +521,7 @@ class Features(ABC):
          0 │ 0.000 0.000
          1 │ 1.000 0.000
          2 │ 0.000 1.000
-         >
+        >
 
         Extract multiple features.
 
@@ -535,7 +535,7 @@ class Features(ABC):
          0 │ 1.000 0.000
          1 │ 0.000 0.000
          2 │ 0.000 1.000
-         >
+        >
         >>> X
         <List 3pt x 1ft
                b
@@ -543,7 +543,7 @@ class Features(ABC):
          0 │ 0.000
          1 │ 1.000
          2 │ 0.000
-         >
+        >
 
         Extract feature when the function returns True.
 
@@ -557,7 +557,7 @@ class Features(ABC):
          0 │ 0.000
          1 │ 0.000
          2 │ 1.000
-         >
+        >
         >>> X
         <List 3pt x 2ft
                a     b
@@ -565,7 +565,7 @@ class Features(ABC):
          0 │ 1.000 0.000
          1 │ 0.000 1.000
          2 │ 0.000 0.000
-         >
+        >
 
         Extract feature when the query string returns True.
 
@@ -579,7 +579,7 @@ class Features(ABC):
          p1 │ 0.000
          p2 │ 1.000
          p3 │ 0.000
-         >
+        >
         >>> X
         <List 3pt x 2ft
                 a     c
@@ -587,7 +587,7 @@ class Features(ABC):
          p1 │ 1.000 0.000
          p2 │ 0.000 0.000
          p3 │ 0.000 1.000
-         >
+        >
 
         Extract features from the inclusive start to the inclusive end.
 
@@ -601,7 +601,7 @@ class Features(ABC):
          0 │ 0.000 0.000
          1 │ 1.000 0.000
          2 │ 0.000 1.000
-         >
+        >
         >>> X
         <List 3pt x 1ft
                a
@@ -609,7 +609,7 @@ class Features(ABC):
          0 │ 1.000
          1 │ 0.000
          2 │ 0.000
-         >
+        >
 
         Select a set number to extract, starting from the first feature.
 
@@ -624,7 +624,7 @@ class Features(ABC):
          0 │ 1.000 0.000
          1 │ 0.000 1.000
          2 │ 0.000 0.000
-         >
+        >
         >>> X
         <List 3pt x 1ft
                c
@@ -632,7 +632,7 @@ class Features(ABC):
          0 │ 0.000
          1 │ 0.000
          2 │ 1.000
-         >
+        >
 
         Select a set number to extract, choosing features at random.
 
@@ -646,7 +646,7 @@ class Features(ABC):
          0 │ 0.000 1.000
          1 │ 0.000 0.000
          2 │ 1.000 0.000
-         >
+        >
         >>> X
         <List 3pt x 1ft
                b
@@ -654,7 +654,7 @@ class Features(ABC):
          0 │ 0.000
          1 │ 1.000
          2 │ 0.000
-         >
+        >
 
         Keywords
         --------
@@ -730,7 +730,7 @@ class Features(ABC):
          0 │ 0.000 0.000
          1 │ 1.000 0.000
          2 │ 0.000 1.000
-         >
+        >
 
         Delete multiple features.
 
@@ -744,7 +744,7 @@ class Features(ABC):
          0 │ 0.000
          1 │ 1.000
          2 │ 0.000
-         >
+        >
 
         Delete feature when the function returns True.
 
@@ -758,7 +758,7 @@ class Features(ABC):
          0 │ 1.000 0.000
          1 │ 0.000 1.000
          2 │ 0.000 0.000
-         >
+        >
 
         Delete feature when the query string returns True.
 
@@ -773,7 +773,7 @@ class Features(ABC):
          p1 │ 1.000 0.000
          p2 │ 0.000 0.000
          p3 │ 0.000 1.000
-         >
+        >
 
         Delete features from the inclusive start to the inclusive end.
 
@@ -787,7 +787,7 @@ class Features(ABC):
          0 │ 1.000
          1 │ 0.000
          2 │ 0.000
-         >
+        >
 
         Select a set number to delete, starting from the first feature.
 
@@ -801,7 +801,7 @@ class Features(ABC):
          0 │ 0.000
          1 │ 0.000
          2 │ 1.000
-         >
+        >
 
         Select a set number to delete, choosing features at random.
 
@@ -816,7 +816,7 @@ class Features(ABC):
          0 │ 0.000
          1 │ 1.000
          2 │ 0.000
-         >
+        >
 
         Keywords
         --------
@@ -892,7 +892,7 @@ class Features(ABC):
          0 │ 1.000
          1 │ 0.000
          2 │ 0.000
-         >
+        >
 
         Retain multiple features.
 
@@ -906,7 +906,7 @@ class Features(ABC):
          0 │ 1.000 0.000
          1 │ 0.000 0.000
          2 │ 0.000 1.000
-         >
+        >
 
         Retain feature when the function returns True.
 
@@ -920,7 +920,7 @@ class Features(ABC):
          0 │ 0.000
          1 │ 0.000
          2 │ 1.000
-         >
+        >
 
         Retain feature when the query string returns True.
 
@@ -935,7 +935,7 @@ class Features(ABC):
          p1 │ 0.000
          p2 │ 1.000
          p3 │ 0.000
-         >
+        >
 
         Retain features from the inclusive start to the inclusive end.
 
@@ -949,7 +949,7 @@ class Features(ABC):
          0 │ 0.000 0.000
          1 │ 1.000 0.000
          2 │ 0.000 1.000
-         >
+        >
 
         Select a set number to retain, starting from the first feature.
 
@@ -963,7 +963,7 @@ class Features(ABC):
          0 │ 1.000 0.000
          1 │ 0.000 1.000
          2 │ 0.000 0.000
-         >
+        >
 
         Select a set number to retain, choosing features at random.
 
@@ -978,7 +978,7 @@ class Features(ABC):
          0 │ 0.000 1.000
          1 │ 0.000 0.000
          2 │ 1.000 0.000
-         >
+        >
 
         Keywords
         --------
@@ -1085,7 +1085,7 @@ class Features(ABC):
          1 │    71     68        66
          2 │    71     73        70
          3 │    40     45        51
-         >
+        >
 
         Sort by points.
 
@@ -1103,7 +1103,7 @@ class Features(ABC):
          1 │ 0 1 10 11 100
          2 │ 0 2 20 21 200
          3 │ 0 3 30 31 300
-         >
+        >
 
         Sort using function.
 
@@ -1124,7 +1124,7 @@ class Features(ABC):
          1 │      66        68      71
          2 │      70        73      71
          3 │      51        45      40
-         >
+        >
 
         Keywords
         --------
@@ -1174,7 +1174,7 @@ class Features(ABC):
          0 │ 3.000 3.000 3.000 3.000 3.000
          1 │ 3.000 3.000 3.000 3.000 3.000
          2 │ 3.000 3.000 3.000 3.000 3.000
-         >
+        >
 
         Transform all features; apply to certain points. Note that the
         function recieves a read-only view of each feature, so we need
@@ -1193,7 +1193,7 @@ class Features(ABC):
          0 │ 1.000 1.000 1.000 1.000 1.000
          1 │ 5.000 5.000 5.000 5.000 5.000
          2 │ 1.000 1.000 1.000 1.000 1.000
-         >
+        >
 
         Transform a subset of features.
 
@@ -1206,7 +1206,7 @@ class Features(ABC):
          0 │ 1.000 7.000 1.000 7.000 1.000
          1 │ 1.000 7.000 1.000 7.000 1.000
          2 │ 1.000 7.000 1.000 7.000 1.000
-         >
+        >
 
         Keywords
         --------
@@ -1264,7 +1264,7 @@ class Features(ABC):
          0 │ 3.000 3.000 3.000 3.000 3.000
          1 │ 3.000 3.000 3.000 3.000 3.000
          2 │ 3.000 3.000 3.000 3.000 3.000
-         >
+        >
 
         Apply calculation to all features; function modifies a specific
         point. Note that the function recieves a read-only view of each
@@ -1283,7 +1283,7 @@ class Features(ABC):
          0 │ 1.000 1.000 1.000 1.000 1.000
          1 │ 5.000 5.000 5.000 5.000 5.000
          2 │ 1.000 1.000 1.000 1.000 1.000
-         >
+        >
 
         Apply calculation to a subset of features.
 
@@ -1298,7 +1298,7 @@ class Features(ABC):
          0 │ 6.000 7.000
          1 │ 6.000 6.000
          2 │ 7.000 6.000
-         >
+        >
 
         Keywords
         --------
@@ -1345,7 +1345,7 @@ class Features(ABC):
                          0     1    2
                      ┌─────────────────
          allPositive │ False False True
-         >
+        >
 
         >>> from nimble import match
         >>> lst = [[1, float('nan'), 1], [-3, 3, 3]]
@@ -1356,7 +1356,7 @@ class Features(ABC):
                         0    1     2
                     ┌─────────────────
          anyMissing │ False True False
-         >
+        >
 
         Keywords
         --------
@@ -1413,7 +1413,7 @@ class Features(ABC):
          0 │ 0.000 1.000 1.000 0.000
          1 │ 0.000 1.000 1.000 0.000
          2 │ 0.000 1.000 1.000 0.000
-         >
+        >
 
         Insert before another point; mixed object types.
 
@@ -1429,7 +1429,7 @@ class Features(ABC):
            ┌────────
          0 │ 1 2 3 4
          1 │ 5 6 7 8
-         >
+        >
 
         Reorder names.
 
@@ -1445,7 +1445,7 @@ class Features(ABC):
            ┌────────
          a │ 1 2 3 4
          b │ 5 6 7 8
-         >
+        >
 
         Keywords
         --------
@@ -1498,7 +1498,7 @@ class Features(ABC):
          0 │ 0.000 0.000 1.000 1.000
          1 │ 0.000 0.000 1.000 1.000
          2 │ 0.000 0.000 1.000 1.000
-         >
+        >
 
         Append mixed object types.
 
@@ -1514,7 +1514,7 @@ class Features(ABC):
            ┌────────
          0 │ 1 2 3 4
          1 │ 5 6 7 8
-         >
+        >
 
         Reorder names.
 
@@ -1530,7 +1530,7 @@ class Features(ABC):
            ┌────────
          a │ 1 2 3 4
          b │ 5 6 7 8
-         >
+        >
 
         Keywords
         --------
@@ -1584,7 +1584,7 @@ class Features(ABC):
          0 │ 0.000 1.000 0.000
          1 │ 0.000 1.000 0.000
          2 │ 0.000 1.000 0.000
-         >
+        >
 
         >>> obj = nimble.zeros('Sparse', 3, 4)
         >>> replacement = [[1, 9], [2, 8], [3, 7]]
@@ -1596,7 +1596,7 @@ class Features(ABC):
          0 │ 0.000 1.000 9.000 0.000
          1 │ 0.000 2.000 8.000 0.000
          2 │ 0.000 3.000 7.000 0.000
-         >
+        >
 
         >>> obj = nimble.zeros('DataFrame', 3, 3,
         ...                    featureNames=['a', 'b', 'c'])
@@ -1608,7 +1608,7 @@ class Features(ABC):
          0 │ 0.000 Y 0.000
          1 │ 0.000 N 0.000
          2 │ 0.000 Y 0.000
-         >
+        >
 
         Keywords
         --------
@@ -1662,7 +1662,7 @@ class Features(ABC):
            ┌────────────────
          0 │ <class 'int'> 1
          1 │ <class 'str'> 2
-         >
+        >
         """
         return self._mapReduce(mapper, reducer, useLog)
 
@@ -1712,7 +1712,7 @@ class Features(ABC):
          1 │ 3 2 4 1
          2 │ 3 2 4 1
          3 │ 3 2 4 1
-         >
+        >
 
         Permute with a list of identifiers.
 
@@ -1731,7 +1731,7 @@ class Features(ABC):
          1 │ 98    10    gard
          2 │ 14    1     home
          3 │ 11    3     home
-         >
+        >
 
         Keywords
         --------
@@ -1808,7 +1808,7 @@ class Features(ABC):
          2 │ 1  1 -1
          3 │ 2  2 2
          4 │ -1 2 2
-         >
+        >
 
         Fill using nimble's match and fill modules; limit to first
         feature. Note: None is converted to np.nan in nimble.
@@ -1828,10 +1828,10 @@ class Features(ABC):
            ┌──────────────────
          0 │ 1.000 1.000 1.000
          1 │ 1.000 1.000 1.000
-         2 │ 1.000 1.000  nan
+         2 │ 1.000 1.000
          3 │ 2.000 2.000 2.000
          4 │ 1.250 2.000 2.000
-         >
+        >
         """
         return self._fillMatching(fillWith, matchingElements, features,
                                   useLog, **kwarguments)
@@ -1890,7 +1890,7 @@ class Features(ABC):
          movie1 │  1.000   1.000   1.000
          movie2 │  0.333   0.471   0.460
          movie3 │  0.000   0.000   0.000
-         >
+        >
 
         With applyResultTo.
 
@@ -1914,14 +1914,14 @@ class Features(ABC):
          movie1 │  1.336   1.248   1.149
          movie2 │  -0.267  -0.048  0.139
          movie3 │  -1.069  -1.200  -1.288
-         >
+        >
         >>> test
         <Matrix 2pt x 3ft
                   review1 review2 review3
                 ┌────────────────────────
          movie4 │  0.535   0.996   -0.307
          movie5 │  -0.267  -0.444  1.031
-         >
+        >
 
         Keywords
         --------
@@ -2058,7 +2058,7 @@ class Features(ABC):
          0 │ Cape Town South Africa
          1 │    Lima       Peru
          2 │   Moscow     Russia
-         >
+        >
 
         Split with an index for ``rule``.
 
@@ -2077,7 +2077,7 @@ class Features(ABC):
          1 │   AGG    734    11
          2 │   HEQ    892    1
          3 │   LEQ    331    2
-         >
+        >
 
         Keywords
         --------
@@ -2186,7 +2186,7 @@ class Features(ABC):
          0 │  1   1   1
          1 │  2   2   2
          2 │  3   3   3
-         >
+        >
 
         Two-dimensional, copyFeatureByFeature is False
 
@@ -2200,7 +2200,7 @@ class Features(ABC):
          0 │  1   2   1   2
          1 │  3   4   3   4
          2 │  5   6   5   6
-         >
+        >
 
         Two-dimensional, copyFeatureByFeature is True
 
@@ -2214,7 +2214,7 @@ class Features(ABC):
          0 │  1   1   2   2
          1 │  3   3   4   4
          2 │  5   5   6   6
-         >
+        >
 
         Keywords
         --------
@@ -2256,7 +2256,7 @@ class Features(ABC):
          1 │ a  5  6
          2 │ b  7  1
          3 │ c  2  9
-         >
+        >
 
         Keywords
         --------

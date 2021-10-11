@@ -363,7 +363,7 @@ class Points(ABC):
              a b c d
            ┌────────
          1 │ 1 1 1 1
-         >
+        >
         >>> multiple = X.points.copy(['1', 3])
         >>> multiple
         <Matrix 2pt x 4ft
@@ -371,7 +371,7 @@ class Points(ABC):
            ┌────────
          1 │ 1 1 1 1
          4 │ 4 4 4 4
-         >
+        >
         >>> func = X.points.copy(lambda pt: sum(pt) < 10)
         >>> func
         <Matrix 2pt x 4ft
@@ -379,7 +379,7 @@ class Points(ABC):
            ┌────────
          1 │ 1 1 1 1
          2 │ 2 2 2 2
-         >
+        >
         >>> strFunc = X.points.copy("a >= 3")
         >>> strFunc
         <Matrix 2pt x 4ft
@@ -387,7 +387,7 @@ class Points(ABC):
            ┌────────
          3 │ 3 3 3 3
          4 │ 4 4 4 4
-         >
+        >
         >>> startEnd = X.points.copy(start=1, end=2)
         >>> startEnd
         <Matrix 2pt x 4ft
@@ -395,7 +395,7 @@ class Points(ABC):
            ┌────────
          2 │ 2 2 2 2
          3 │ 3 3 3 3
-         >
+        >
         >>> numberNoRandom = X.points.copy(number=2)
         >>> numberNoRandom
         <Matrix 2pt x 4ft
@@ -403,7 +403,7 @@ class Points(ABC):
            ┌────────
          1 │ 1 1 1 1
          2 │ 2 2 2 2
-         >
+        >
         >>> nimble.random.setSeed(42)
         >>> numberRandom = X.points.copy(number=2, randomize=True)
         >>> numberRandom
@@ -412,7 +412,7 @@ class Points(ABC):
            ┌────────
          1 │ 1 1 1 1
          4 │ 4 4 4 4
-         >
+        >
 
         Keywords
         --------
@@ -489,14 +489,14 @@ class Points(ABC):
                0     1     2
            ┌──────────────────
          a │ 1.000 0.000 0.000
-         >
+        >
         >>> X
         <Matrix 2pt x 3ft
                0     1     2
            ┌──────────────────
          b │ 0.000 1.000 0.000
          c │ 0.000 0.000 1.000
-         >
+        >
 
         Extract multiple points.
 
@@ -509,13 +509,13 @@ class Points(ABC):
            ┌──────────────────
          a │ 1.000 0.000 0.000
          c │ 0.000 0.000 1.000
-         >
+        >
         >>> X
         <Matrix 1pt x 3ft
                0     1     2
            ┌──────────────────
          b │ 0.000 1.000 0.000
-         >
+        >
 
         Extract point when the function returns True.
 
@@ -527,14 +527,14 @@ class Points(ABC):
                0     1     2
            ┌──────────────────
          c │ 0.000 0.000 1.000
-         >
+        >
         >>> X
         <Matrix 2pt x 3ft
                0     1     2
            ┌──────────────────
          a │ 1.000 0.000 0.000
          b │ 0.000 1.000 0.000
-         >
+        >
 
         Extract point when the query string returns True.
 
@@ -547,14 +547,14 @@ class Points(ABC):
                f1    f2    f3
            ┌──────────────────
          b │ 0.000 1.000 0.000
-         >
+        >
         >>> X
         <Matrix 2pt x 3ft
                f1    f2    f3
            ┌──────────────────
          a │ 1.000 0.000 0.000
          c │ 0.000 0.000 1.000
-         >
+        >
 
         Extract points from the inclusive start to the inclusive end.
 
@@ -567,13 +567,13 @@ class Points(ABC):
            ┌──────────────────
          b │ 0.000 1.000 0.000
          c │ 0.000 0.000 1.000
-         >
+        >
         >>> X
         <Matrix 1pt x 3ft
                0     1     2
            ┌──────────────────
          a │ 1.000 0.000 0.000
-         >
+        >
 
         Select a set number to extract, starting from the first point.
 
@@ -586,13 +586,13 @@ class Points(ABC):
            ┌──────────────────
          a │ 1.000 0.000 0.000
          b │ 0.000 1.000 0.000
-         >
+        >
         >>> X
         <Matrix 1pt x 3ft
                0     1     2
            ┌──────────────────
          c │ 0.000 0.000 1.000
-         >
+        >
 
         Select a set number to extract, choosing points at random.
 
@@ -606,13 +606,13 @@ class Points(ABC):
            ┌──────────────────
          c │ 0.000 0.000 1.000
          a │ 1.000 0.000 0.000
-         >
+        >
         >>> X
         <Matrix 1pt x 3ft
                0     1     2
            ┌──────────────────
          b │ 0.000 1.000 0.000
-         >
+        >
 
         Keywords
         --------
@@ -686,7 +686,7 @@ class Points(ABC):
            ┌──────────────────
          b │ 0.000 1.000 0.000
          c │ 0.000 0.000 1.000
-         >
+        >
 
         Delete multiple points.
 
@@ -698,7 +698,7 @@ class Points(ABC):
                0     1     2
            ┌──────────────────
          b │ 0.000 1.000 0.000
-         >
+        >
 
         Delete point when the function returns True.
 
@@ -711,7 +711,7 @@ class Points(ABC):
            ┌──────────────────
          a │ 1.000 0.000 0.000
          b │ 0.000 1.000 0.000
-         >
+        >
 
         Delete point when the query string returns True.
 
@@ -725,7 +725,7 @@ class Points(ABC):
            ┌──────────────────
          a │ 1.000 0.000 0.000
          c │ 0.000 0.000 1.000
-         >
+        >
 
         Delete points from the inclusive start to the inclusive end.
 
@@ -737,7 +737,7 @@ class Points(ABC):
                0     1     2
            ┌──────────────────
          a │ 1.000 0.000 0.000
-         >
+        >
 
         Select a set number to delete, starting from the first point.
 
@@ -749,7 +749,7 @@ class Points(ABC):
                0     1     2
            ┌──────────────────
          c │ 0.000 0.000 1.000
-         >
+        >
 
         Select a set number to delete, choosing points at random.
 
@@ -762,7 +762,7 @@ class Points(ABC):
                0     1     2
            ┌──────────────────
          b │ 0.000 1.000 0.000
-         >
+        >
 
         Keywords
         --------
@@ -835,7 +835,7 @@ class Points(ABC):
                0     1     2
            ┌──────────────────
          a │ 1.000 0.000 0.000
-         >
+        >
 
         Retain multiple points.
 
@@ -848,7 +848,7 @@ class Points(ABC):
            ┌──────────────────
          a │ 1.000 0.000 0.000
          c │ 0.000 0.000 1.000
-         >
+        >
 
         Retain point when the function returns True.
 
@@ -860,7 +860,7 @@ class Points(ABC):
                0     1     2
            ┌──────────────────
          c │ 0.000 0.000 1.000
-         >
+        >
 
         Retain point when the query string returns True.
 
@@ -873,7 +873,7 @@ class Points(ABC):
                f1    f2    f3
            ┌──────────────────
          b │ 0.000 1.000 0.000
-         >
+        >
 
         Retain points from the inclusive start to the inclusive end.
 
@@ -886,7 +886,7 @@ class Points(ABC):
            ┌──────────────────
          b │ 0.000 1.000 0.000
          c │ 0.000 0.000 1.000
-         >
+        >
 
         Select a set number to retain, starting from the first point.
 
@@ -899,7 +899,7 @@ class Points(ABC):
            ┌──────────────────
          a │ 1.000 0.000 0.000
          b │ 0.000 1.000 0.000
-         >
+        >
 
         Select a set number to retain, choosing points at random.
 
@@ -913,7 +913,7 @@ class Points(ABC):
            ┌──────────────────
          c │ 0.000 0.000 1.000
          a │ 1.000 0.000 0.000
-         >
+        >
         """
         self._retain(toRetain, start, end, number, randomize, useLog)
 
@@ -1015,7 +1015,7 @@ class Points(ABC):
          1 │ home 81    3     2.490
          2 │ home 11    3     3.890
          3 │ gard 98    10    0.990
-         >
+        >
 
         Sort using a comparator function.
 
@@ -1038,7 +1038,7 @@ class Points(ABC):
          1 │ gard 98    10    0.990
          2 │ home 14    1     8.990
          3 │ home 81    3     2.490
-         >
+        >
 
         Sort using a scoring function.
 
@@ -1061,7 +1061,7 @@ class Points(ABC):
          1 │ home 11    3     3.890
          2 │ gard 98    10    0.990
          3 │ home 14    1     8.990
-         >
+        >
 
         Keywords
         --------
@@ -1111,7 +1111,7 @@ class Points(ABC):
          0 │ 3.000 3.000 3.000 3.000 3.000
          1 │ 3.000 3.000 3.000 3.000 3.000
          2 │ 3.000 3.000 3.000 3.000 3.000
-         >
+        >
 
         Transform all points; apply to certain features. Note that the
         function recieves a read-only view of each point, so we need to
@@ -1130,7 +1130,7 @@ class Points(ABC):
          0 │ 1.000 1.000 5.000 1.000 1.000
          1 │ 1.000 1.000 5.000 1.000 1.000
          2 │ 1.000 1.000 5.000 1.000 1.000
-         >
+        >
 
         Transform a subset of points.
 
@@ -1143,7 +1143,7 @@ class Points(ABC):
          0 │ 7.000 7.000 7.000 7.000 7.000
          1 │ 1.000 1.000 1.000 1.000 1.000
          2 │ 7.000 7.000 7.000 7.000 7.000
-         >
+        >
         """
         self._transform(function, points, useLog)
 
@@ -1197,7 +1197,7 @@ class Points(ABC):
          0 │ 3.000 3.000 3.000 3.000 3.000
          1 │ 3.000 3.000 3.000 3.000 3.000
          2 │ 3.000 3.000 3.000 3.000 3.000
-         >
+        >
 
         Apply calculation to all points; function modifies a specific
         feature. Note that the function recieves a read-only view of
@@ -1216,7 +1216,7 @@ class Points(ABC):
          0 │ 1.000 1.000 5.000 1.000 1.000
          1 │ 1.000 1.000 5.000 1.000 1.000
          2 │ 1.000 1.000 5.000 1.000 1.000
-         >
+        >
 
         Apply calculation to a subset of points.
 
@@ -1230,7 +1230,7 @@ class Points(ABC):
             ┌──────────────────
          p3 │ 6.000 6.000 7.000
          p1 │ 7.000 6.000 6.000
-         >
+        >
 
         Keywords: apply, modify, alter
         """
@@ -1277,7 +1277,7 @@ class Points(ABC):
          0 │    False
          1 │    False
          2 │     True
-         >
+        >
 
         >>> from nimble import match
         >>> lst = [[1, -1, float('nan')], [-3, 3, 3], [5, 5, 5]]
@@ -1290,7 +1290,7 @@ class Points(ABC):
          0 │    True
          1 │   False
          2 │   False
-         >
+        >
 
         Keywords
         --------
@@ -1347,7 +1347,7 @@ class Points(ABC):
          1 │ 1.000 1.000 1.000
          2 │ 1.000 1.000 1.000
          3 │ 0.000 0.000 0.000
-         >
+        >
 
         Insert before another point; mixed object types.
 
@@ -1365,7 +1365,7 @@ class Points(ABC):
          2 │ 2 2 2
          3 │ 3 3 3
          4 │ 4 4 4
-         >
+        >
 
         Reorder names.
 
@@ -1384,7 +1384,7 @@ class Points(ABC):
          1 │ 1 2 3
          2 │ 1 2 3
          3 │ 1 2 3
-         >
+        >
         """
         self._insert(insertBefore, toInsert, False, useLog)
 
@@ -1433,7 +1433,7 @@ class Points(ABC):
          1 │ 0.000 0.000 0.000
          2 │ 1.000 1.000 1.000
          3 │ 1.000 1.000 1.000
-         >
+        >
 
         Append mixed object types.
 
@@ -1451,7 +1451,7 @@ class Points(ABC):
          2 │ 2 2 2
          3 │ 3 3 3
          4 │ 4 4 4
-         >
+        >
 
         Reorder names.
 
@@ -1470,7 +1470,7 @@ class Points(ABC):
          1 │ 1 2 3
          2 │ 1 2 3
          3 │ 1 2 3
-         >
+        >
 
         Keywords
         --------
@@ -1523,7 +1523,7 @@ class Points(ABC):
          a │ 0.000 0.000 0.000
          b │ 1.000 1.000 1.000
          c │ 0.000 0.000 0.000
-         >
+        >
 
         >>> obj = nimble.zeros('Sparse', 4, 3)
         >>> replacement = [[1, 2, 3], [9, 8, 7]]
@@ -1536,7 +1536,7 @@ class Points(ABC):
          1 │ 1.000 2.000 3.000
          2 │ 9.000 8.000 7.000
          3 │ 0.000 0.000 0.000
-         >
+        >
 
         >>> obj = nimble.zeros('DataFrame', 3, 3,
         ...                    pointNames=['a', 'b', 'c'])
@@ -1548,7 +1548,7 @@ class Points(ABC):
          a │ 0.000 0.000 0.000
          b │ 2.000 3.000 2.000
          c │ 0.000 0.000 0.000
-         >
+        >
 
         Keywords
         --------
@@ -1604,7 +1604,7 @@ class Points(ABC):
            ┌───────
          0 │ Open 3
          1 │ Dome 2
-         >
+        >
 
         Keywords
         --------
@@ -1657,7 +1657,7 @@ class Points(ABC):
          1 │ 2 2 2 2
          2 │ 4 4 4 4
          3 │ 1 1 1 1
-         >
+        >
 
         Permute with a list of identifiers.
 
@@ -1676,7 +1676,7 @@ class Points(ABC):
          o_2 │ home 14 1
          o_3 │ gard 98 10
          o_4 │ home 81 3
-         >
+        >
 
         Keywords
         --------
@@ -1752,7 +1752,7 @@ class Points(ABC):
          2 │ 1  1 -1
          3 │ 2  2 2
          4 │ -1 2 2
-         >
+        >
 
         Fill using nimble's match and fill modules; limit to last point.
         Note: None is converted to np.nan in nimble.
@@ -1772,10 +1772,10 @@ class Points(ABC):
            ┌──────────────────
          0 │ 1.000 1.000 1.000
          1 │ 1.000 1.000 1.000
-         2 │ 1.000 1.000  nan
+         2 │ 1.000 1.000
          3 │ 2.000 2.000 2.000
          4 │ 2.000 2.000 2.000
-         >
+        >
         """
         return self._fillMatching(fillWith, matchingElements, points,
                                   useLog, **kwarguments)
@@ -1878,7 +1878,7 @@ class Points(ABC):
          6 │ CHI   jan   0
          7 │ CHI   feb   2
          8 │ CHI   mar   7
-         >
+        >
 
         Keywords
         --------
@@ -1992,7 +1992,7 @@ class Points(ABC):
             +-----------+------+-------+    +-----------+------+-------+
             | Bolt      | 100m | 9.81  |    | Bolt      | 9.81 | 19.78 |
             +-----------+------+-------+ -> +-----------+------+-------+
-            | Bolt      | 200m | 19.78 |    | Gatlin    | 9.89 | nan   |
+            | Bolt      | 200m | 19.78 |    | Gatlin    | 9.89 |       |
             +-----------+------+-------+    +-----------+------+-------+
             | Gatlin    | 100m | 9.89  |    | de Grasse | 9.91 | 20.02 |
             +-----------+------+-------+    +-----------+------+-------+
@@ -2026,9 +2026,9 @@ class Points(ABC):
               athlete   100m  200m
            ┌───────────────────────
          0 │    Bolt   9.810 19.780
-         1 │   Gatlin  9.890  nan
+         1 │   Gatlin  9.890
          2 │ de Grasse 9.910 20.020
-         >
+        >
 
         Keywords
         --------
@@ -2166,7 +2166,7 @@ class Points(ABC):
          a_1 │ 1 2 3
          a_2 │ 1 2 3
          a_3 │ 1 2 3
-         >
+        >
 
         Two-dimensional, copyPointByPoint is False
 
@@ -2180,7 +2180,7 @@ class Points(ABC):
          b_1 │ 4 5 6
          a_2 │ 1 2 3
          b_2 │ 4 5 6
-         >
+        >
 
         Two-dimensional, copyPointByPoint is True
 
@@ -2194,7 +2194,7 @@ class Points(ABC):
          a_2 │ 1 2 3
          b_1 │ 4 5 6
          b_2 │ 4 5 6
-         >
+        >
         """
         return self._repeat(totalCopies, copyPointByPoint)
 
@@ -2231,7 +2231,7 @@ class Points(ABC):
          p1 │ a 1 3
          p2 │ b 5 6
          p3 │ b 7 1
-         >
+        >
 
         Keywords
         --------

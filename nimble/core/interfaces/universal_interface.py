@@ -1096,7 +1096,7 @@ class TrainedLearner(object):
          0 │ 1
          1 │ 2
          2 │ 3
-         >
+        >
         """
         startTime = time.process_time()
         if trackEntry.isEntryPoint:
@@ -1260,7 +1260,7 @@ class TrainedLearner(object):
            ┌──
          0 │ 3
          1 │ 1
-         >
+        >
         >>> lstTrainX2 = [[4, 4], [5, 5], [6, 6]]
         >>> trainX2 = nimble.data('Matrix', lstTrainX2)
         >>> lstTrainY2 = [[4], [5], [6]]
@@ -1272,7 +1272,7 @@ class TrainedLearner(object):
            ┌──
          0 │ 6
          1 │ 4
-         >
+        >
 
         Changing the learner arguments.
 
@@ -1290,7 +1290,7 @@ class TrainedLearner(object):
            ┌──
          0 │ 1
          1 │ 3
-         >
+        >
         >>> tl.retrain(trainX, trainY, k=3)
         >>> tl.apply(testX)
         <Matrix 2pt x 1ft
@@ -1298,7 +1298,7 @@ class TrainedLearner(object):
            ┌──
          0 │ 3
          1 │ 3
-         >
+        >
         """
         validateLearningArguments(trainX, trainY, arguments=arguments)
         has2dOutput = False

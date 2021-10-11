@@ -138,7 +138,7 @@ tempData.show('Fully merged (untidy) data', maxHeight=16)
 ## ```
 ##    date    station  extreme  hr0   hr1   hr2   --  hr22   hr23
 ##
-## 2011-01-01 downtown   min   2.840 2.019  nan   --  9.399  11.859
+## 2011-01-01 downtown   min   2.840 2.019        --  9.399  11.859
 ## 2011-01-01 downtown   max   2.840 2.021 2.022  --  9.401  11.861
 ## ```
 ## To tidy that same data, we modify the structure to include one point for

@@ -52,7 +52,7 @@ def constant(vector, match, constantValue):
          0 1 2 3 4
        ┌──────────
      0 │ 1 0 3 0 5
-     >
+    >
 
     Match using a function from nimble's match module.
 
@@ -64,7 +64,7 @@ def constant(vector, match, constantValue):
          0 1  2 3  4
        ┌────────────
      0 │ 1 99 3 99 5
-     >
+    >
     """
     toFill = _booleanElementMatch(vector, match)
 
@@ -115,7 +115,7 @@ def mean(vector, match):
            0     1     2     3     4
        ┌──────────────────────────────
      0 │ 1.000 3.000 3.000 3.000 5.000
-     >
+    >
 
     Match using a function from nimble's match module.
 
@@ -127,7 +127,7 @@ def mean(vector, match):
            0     1     2     3     4
        ┌──────────────────────────────
      0 │ 6.000 4.000 2.000 4.000 4.000
-     >
+    >
     """
     return statsBackend(vector, match, 'mean', nimble.calculate.mean)
 
@@ -171,7 +171,7 @@ def median(vector, match):
            0     1     2     3     4
        ┌──────────────────────────────
      0 │ 1.000 3.000 3.000 3.000 5.000
-     >
+    >
 
     Match using a function from nimble's match module.
 
@@ -183,7 +183,7 @@ def median(vector, match):
            0     1     2     3     4
        ┌──────────────────────────────
      0 │ 6.000 4.000 2.000 4.000 4.000
-     >
+    >
     """
     return statsBackend(vector, match, 'median', nimble.calculate.median)
 
@@ -225,7 +225,7 @@ def mode(vector, match):
          0 1 2 3 4
        ┌──────────
      0 │ 1 1 1 1 5
-     >
+    >
 
     Match using a function from nimble's match module.
 
@@ -237,7 +237,7 @@ def mode(vector, match):
          0 1 2 3 4
        ┌──────────
      0 │ 6 6 2 6 6
-     >
+    >
     """
     return statsBackend(vector, match, 'mode', nimble.calculate.mode)
 
@@ -282,7 +282,7 @@ def forwardFill(vector, match):
          0 1 2 3 4
        ┌──────────
      0 │ 1 1 3 3 5
-     >
+    >
 
     Match using a function from nimble's match module.
 
@@ -294,7 +294,7 @@ def forwardFill(vector, match):
          0 1 2 3 4
        ┌──────────
      0 │ 6 6 2 2 4
-     >
+    >
     """
     toFill = _booleanElementMatch(vector, match)
     if toFill[0]:
@@ -355,7 +355,7 @@ def backwardFill(vector, match):
          0 1 2 3 4
        ┌──────────
      0 │ 1 3 3 5 5
-     >
+    >
 
     Match using a function from nimble's match module.
 
@@ -367,7 +367,7 @@ def backwardFill(vector, match):
          0 1 2 3 4
        ┌──────────
      0 │ 6 2 2 4 4
-     >
+    >
     """
     toFill = _booleanElementMatch(vector, match)
     if toFill[-1]:
@@ -435,7 +435,7 @@ def interpolate(vector, match, **kwarguments):
            0     1     2     3     4
        ┌──────────────────────────────
      0 │ 1.000 2.000 3.000 4.000 5.000
-     >
+    >
 
     Match using a function from nimble's match module.
 
@@ -447,7 +447,7 @@ def interpolate(vector, match, **kwarguments):
            0     1     2     3     4
        ┌──────────────────────────────
      0 │ 6.000 5.000 4.000 3.000 2.000
-     >
+    >
     """
     toFill = _booleanElementMatch(vector, match)
     if 'x' in kwarguments:
