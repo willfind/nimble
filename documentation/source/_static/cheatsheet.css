@@ -30,6 +30,10 @@ a:hover {
   text-decoration: underline;
 }
 
+.text-bottom {
+  vertical-align: bottom;
+}
+
 .row {
   display: inline-flex;
   margin-bottom: -4px;
@@ -43,11 +47,24 @@ a:hover {
   padding: 0;
 }
 
+.clear {
+  clear: both;
+}
+
+.text-center {
+  text-align: center;
+}
+
 .outline {
   width: 100%;
   box-sizing: border-box;
   border: 2px solid black;
   margin-bottom: 2px;
+}
+
+.outlined {
+  padding-left: 2px;
+  margin-right: -2px;
 }
 
 .center {
@@ -165,6 +182,8 @@ a:hover {
 #description {
   font-size: 9px;
   margin: 0;
+  padding-left: 2px;
+  width: 440px;
 }
 
 #image {
