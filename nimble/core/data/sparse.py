@@ -4,6 +4,7 @@ coo_matrix.
 """
 
 import warnings
+import numbers
 
 import numpy as np
 
@@ -175,6 +176,8 @@ class Sparse(Base):
             self._data.data = modifyNumpyArrayValue(self._data.data, index,
                                                     currRet)
 
+        if all(issubclass(type(d), numbers.Number) for d in self._data.data):
+            self._data.data = np.array(list(self._data.data))
         self._data.eliminate_zeros()
 
     def _calculate_implementation(self, function, points, features,
