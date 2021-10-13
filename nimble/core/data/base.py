@@ -2644,7 +2644,12 @@ class Base(ABC):
 
         See Also
         --------
-            matplotlib.pyplot.plot, matplotlib.colors, matplotlib.markers
+        matplotlib.pyplot.plot, matplotlib.colors, matplotlib.markers
+
+        Keywords
+        --------
+        graph, scatter, line, chart, relationship, figure, image,
+        graphics, visualization
         """
         self._plotFeatureAgainstFeature(
             x, y, groupByFeature, sampleSizeForAverage, trend, outPath, show,
