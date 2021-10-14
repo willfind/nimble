@@ -132,8 +132,11 @@ def formatIfNeeded(value, sigDigits):
     Format the value into a string, and in the case of a float typed value,
     limit the output to the given number of significant digits.
     """
-    if isinstance(value, (float, np.float)) and sigDigits is not None:
-        return format(value, '.' + str(int(sigDigits)) + 'f')
+    if isinstance(value, (float, np.float)):
+        if value != value:
+            return ''
+        if sigDigits is not None:
+            return format(value, '.' + str(int(sigDigits)) + 'f')
     return str(value)
 
 
@@ -165,73 +168,6 @@ def indicesSplit(allowed, total):
         bIndices = bIndices[1:]
 
     return (fIndices, bIndices)
-
-def makeNamesLines(indent, maxW, numDisplayNames, count, namesList, nameType):
-    """
-    Helper for __repr__ in Base.
-    """
-    if not namesList:
-        return ''
-    namesString = ""
-    (posL, posR) = indicesSplit(numDisplayNames, count)
-    possibleIndices = posL + posR
-
-
-    if namesList is None:
-        return ""
-
-    noneNames = [namesList[i] is None for i in possibleIndices]
-    if all(noneNames):
-        return ""
-
-    if any(noneNames): # names will be a list
-        start = '=['
-        end = ']'
-        def nameString(**kwargs):
-            if kwargs['name'] is None:
-                return 'None'
-            return "'{}'".format(kwargs['name'])
-    else: # names will be a dict
-        start = '={'
-        end = '}'
-        def nameString(**kwargs):
-            return "'{}':{}".format(kwargs['name'], kwargs['index'])
-
-    currNamesString = indent + nameType + start
-    newStartString = indent * 2
-    prevIndex = -1
-    for i, currIndex in enumerate(possibleIndices):
-        # means there was a gap, need to insert elipses
-        if currIndex - prevIndex > 1:
-            addition = '..., '
-            if len(currNamesString) + len(addition) > maxW:
-                namesString += currNamesString + '\n'
-                currNamesString = newStartString
-            currNamesString += addition
-        prevIndex = currIndex
-
-        # get name and truncate if needed
-        fullName = namesList[currIndex]
-        currName = fullName
-        if currName is not None and len(currName) > 11:
-            currName = currName[:8] + '...'
-        addition = nameString(name=currName, index=currIndex)
-
-        # if it isn't the last entry, comma and space. if it is
-        # the end-cbrace
-        addition += ', ' if i != (len(possibleIndices) - 1) else end
-
-        # if adding this would put us above the limit, add the line
-        # to namesString before, and start a new line
-        if len(currNamesString) + len(addition) > maxW:
-            namesString += currNamesString + '\n'
-            currNamesString = newStartString
-
-        currNamesString += addition
-
-    namesString += currNamesString + '\n'
-    return namesString
-
 
 def cleanKeywordInput(string):
     """
@@ -824,19 +760,15 @@ def arrangeFinalTable(pnames, pnamesWidth, dataTable, dataWidths, fnames,
     """
     Arrange the final table of values for Base string representation.
     """
-    if fnames is not None:
-        fnamesWidth = list(map(len, fnames))
-    else:
-        fnamesWidth = []
+    fnamesWidth = list(map(len, fnames))
 
     # We make extensive use of list addition in this helper in order
     # to prepend single values onto lists.
 
     # glue point names onto the left of the data
-    if pnames is not None:
-        for i, data in enumerate(dataTable):
-            dataTable[i] = [pnames[i], pnameSep] + data
-        dataWidths = [pnamesWidth, len(pnameSep)] + dataWidths
+    for i, data in enumerate(dataTable):
+        dataTable[i] = [pnames[i], pnameSep] + data
+    dataWidths = [pnamesWidth, len(pnameSep)] + dataWidths
 
     # glue feature names onto the top of the data
     if fnames is not None:
@@ -845,10 +777,7 @@ def arrangeFinalTable(pnames, pnamesWidth, dataTable, dataWidths, fnames,
             fnames = ["", ""] + fnames
             fnamesWidth = [0, 0] + fnamesWidth
 
-        # make gap row:
-        gapRow = [""] * len(fnames)
-
-        dataTable = [fnames, gapRow] + dataTable
+        dataTable = [fnames] + dataTable
         # finalize widths by taking the largest of the two possibilities
         for i in range(len(fnames)):
             nameWidth = fnamesWidth[i]

@@ -7,6 +7,7 @@ import os
 import subprocess
 import tempfile
 import re
+import shutil
 
 import pytest
 
@@ -16,19 +17,37 @@ def back_singleExample(scriptLoc):
     """
     Execute the script at the given location, and return the CompletedProcess
     """
-    cmd = ("python", scriptLoc)
-    out = subprocess.PIPE
-    err = subprocess.PIPE
+    # Copy the script, to use the same terminal size used in examples and
+    # comment out plotting functions
+    with open(scriptLoc) as f:
+        with tempfile.NamedTemporaryFile('w+') as tempFile:
+            # set a terminal size that will display the data as we would like
+            terminalSize = [
+                "import os",
+                "import shutil",
+                "size = os.terminal_size((120, 30))",
+                "shutil.get_terminal_size = lambda *args, **kwargs: size"
+                ]
+            tempFile.write('\n'.join(terminalSize))
+            tempFile.write('\n')
+            tempFile.write(f.read())
 
-    # We want these scripts to run with the local copy of nimble, so we
-    # need the curren(t working directory as established by runTests) to be
-    # on the path variable in the subprocess. However, we also want the
-    # environment to otherwise be the same (because we know it works).
-    # Therefore we reuse the environment, except with a modification to
-    # PYTHONPATH
-    env = os.environ
-    env['PYTHONPATH'] = os.getcwd()
-    return subprocess.run(cmd, stdout=out, stderr=err, cwd=EXDIR, env=env)
+            tempFile.seek(0)
+
+            cmd = ("python", tempFile.name)
+            out = subprocess.PIPE
+            err = subprocess.PIPE
+
+            # We want these scripts to run with the local copy of nimble, so we
+            # need the curren(t working directory as established by runTests)
+            # to be on the path variable in the subprocess. However, we also
+            # want the environment to otherwise be the same (because we know it
+            # works). Therefore we reuse the environment, except with a
+            # modification to PYTHONPATH
+            env = os.environ
+            env['PYTHONPATH'] = os.getcwd()
+            return subprocess.run(cmd, stdout=out, stderr=err, cwd=EXDIR,
+                                  env=env)
 
 def back_singleExample_withPlots(scriptLoc):
     """
@@ -47,7 +66,7 @@ def back_singleExample_withPlots(scriptLoc):
                     line.replace('show=True', 'show=False')
                     seenShow = True
                 if ')' in line:
-                    useComma = line[line.index(')')-1] != '(' 
+                    useComma = line[line.index(')')-1] != '('
                     changeTxt = "outPath='{}')".format(tPlot.name)
                     if not seenShow:
                         changeTxt = "show=False, " + changeTxt
@@ -74,7 +93,7 @@ def back_callExampleAsMain(script):
         cp = back_singleExample(scriptLoc)
 
     outputFile = script[:-3] + '_output.txt'
-    expOut = os.path.join(EXDIR, 'outputs', outputFile)
+    expOut = os.path.join(os.getcwd(), 'tests', 'landingPage', outputFile)
     assert cp.returncode == 0
 
     outLines = cp.stdout.split(b'\n')
@@ -85,6 +104,8 @@ def back_callExampleAsMain(script):
     with open(expOut, 'rb') as exp:
         expLines = exp.readlines()
         for out, exp in zip(outLines, expLines):
+            print(out)
+            print(exp)
             # remove trailing whitespace
             out = out.rstrip()
             exp = exp.rstrip()

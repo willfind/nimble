@@ -28,7 +28,6 @@ url = bucket + 'online_shoppers_intention_explore.csv'
 visits = nimble.data('Matrix', url)
 
 featureNames = visits.features.getNames()
-settingsForShow = {'maxWidth': 120, 'maxHeight': 9}
 
 ## Data Overview ##
 
@@ -40,15 +39,15 @@ settingsForShow = {'maxWidth': 120, 'maxHeight': 9}
 ## features record the counts and durations of time spent on each page type for
 ## each visit.
 pageActivityFts = featureNames[:6]
-visits[:, pageActivityFts].show('Page activity features', **settingsForShow)
+visits[:, pageActivityFts].show('Page activity features', maxHeight=12)
 
 ## The next 3 features are website analytics collected during the visit.
 analyticFts = featureNames[6:9]
-visits[:, analyticFts].show('Website analytic features', **settingsForShow)
+visits[:, analyticFts].show('Website analytic features', maxHeight=12)
 
 ## The last 9 features are details about the visit or visitor.
 visitDetailFts = featureNames[9:]
-visits[:, visitDetailFts].show('Visit detail features', **settingsForShow)
+visits[:, visitDetailFts].show('Visit detail features', maxHeight=12)
 
 ## Now that we have a better understanding of our data, let's see what we can
 ## learn from it.

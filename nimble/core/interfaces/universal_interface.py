@@ -1090,11 +1090,13 @@ class TrainedLearner(object):
         ...                   trainY=3)
         >>> predict = tl.apply(testX)
         >>> predict
-        Matrix(
-            [[1]
-             [2]
-             [3]]
-            )
+        <Matrix 3pt x 1ft
+             0
+           ┌──
+         0 │ 1
+         1 │ 2
+         2 │ 3
+        >
         """
         startTime = time.process_time()
         if trackEntry.isEntryPoint:
@@ -1253,20 +1255,24 @@ class TrainedLearner(object):
         >>> testX = nimble.data('Matrix', lstTestX)
         >>> tl = nimble.train('nimble.KNNClassifier', trainX1, trainY1)
         >>> tl.apply(testX)
-        Matrix(
-            [[3]
-             [1]]
-            )
+        <Matrix 2pt x 1ft
+             0
+           ┌──
+         0 │ 3
+         1 │ 1
+        >
         >>> lstTrainX2 = [[4, 4], [5, 5], [6, 6]]
         >>> trainX2 = nimble.data('Matrix', lstTrainX2)
         >>> lstTrainY2 = [[4], [5], [6]]
         >>> trainY2 = nimble.data('Matrix', lstTrainY2)
         >>> tl.retrain(trainX2, trainY2)
         >>> tl.apply(testX)
-        Matrix(
-            [[6]
-             [4]]
-            )
+        <Matrix 2pt x 1ft
+             0
+           ┌──
+         0 │ 6
+         1 │ 4
+        >
 
         Changing the learner arguments.
 
@@ -1279,16 +1285,20 @@ class TrainedLearner(object):
         >>> tl = nimble.train('nimble.KNNClassifier', trainX, trainY,
         ...                   k=1)
         >>> tl.apply(testX)
-        Matrix(
-            [[1]
-             [3]]
-            )
+        <Matrix 2pt x 1ft
+             0
+           ┌──
+         0 │ 1
+         1 │ 3
+        >
         >>> tl.retrain(trainX, trainY, k=3)
         >>> tl.apply(testX)
-        Matrix(
-            [[3]
-             [3]]
-            )
+        <Matrix 2pt x 1ft
+             0
+           ┌──
+         0 │ 3
+         1 │ 3
+        >
         """
         validateLearningArguments(trainX, trainY, arguments=arguments)
         has2dOutput = False

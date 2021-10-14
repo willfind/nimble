@@ -1,0 +1,99 @@
+Raw traffic data
+"Metro Interstate Traffic Volume" 48204pt x 9ft
+        holiday   temp  rain_1h snow_1h clouds_all weather_main weather_description      date_time      traffic_volume
+      ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────
+    0 │         288.280  0.000   0.000      40        Clouds      scattered clouds  2012-10-02 09:00:00      5545
+    1 │         289.360  0.000   0.000      75        Clouds       broken clouds    2012-10-02 10:00:00      4516
+    2 │         289.580  0.000   0.000      90        Clouds      overcast clouds   2012-10-02 11:00:00      4767
+    3 │         290.130  0.000   0.000      90        Clouds      overcast clouds   2012-10-02 12:00:00      5026
+    4 │         291.140  0.000   0.000      75        Clouds       broken clouds    2012-10-02 13:00:00      4918
+    | │    |       |       |       |        |           |                |                   |                |
+48199 │         283.450  0.000   0.000      75        Clouds       broken clouds    2018-09-30 19:00:00      3543
+48200 │         282.760  0.000   0.000      90        Clouds      overcast clouds   2018-09-30 20:00:00      2781
+48201 │         282.730  0.000   0.000      90     Thunderstorm proximity thunde... 2018-09-30 21:00:00      2159
+48202 │         282.090  0.000   0.000      90        Clouds      overcast clouds   2018-09-30 22:00:00      1450
+48203 │         282.120  0.000   0.000      90        Clouds      overcast clouds   2018-09-30 23:00:00      954
+
+Feature statistics
+9pt x 5ft
+                      index         mode        minimum maximum  count
+                    ┌─────────────────────────────────────────────────
+            holiday │   0        Labor Day                         61
+               temp │   1         274.150        0.000  310.070  48204
+            rain_1h │   2          0.000         0.000  9831.300 48204
+            snow_1h │   3          0.000         0.000   0.510   48204
+         clouds_all │   4            90            0      100    48204
+       weather_main │   5          Clouds                        48204
+weather_description │   6       sky is clear                     48204
+          date_time │   7   2013-04-18 22:00:00                  48204
+     traffic_volume │   8           353            0      7280   48204
+
+Modified feature report
+2pt x 5ft
+          index   mode  minimum maximum count
+        ┌────────────────────────────────────
+   temp │   1   274.150 243.390 310.070 48193
+rain_1h │   2    0.000   0.000   55.630 48193
+
+Number of points with errors: 11
+New parsed features in traffic data
+"Metro Interstate Traffic Volume" 48193pt x 13ft
+        holiday   temp  rain_1h snow_1h clouds_all weather_main -- year month day hour weekday traffic_volume
+      ┌──────────────────────────────────────────────────────────────────────────────────────────────────────
+    0 │         288.280  0.000   0.000      40        Clouds    -- 2012   10   2   9      1         5545
+    1 │         289.360  0.000   0.000      75        Clouds    -- 2012   10   2   10     1         4516
+    2 │         289.580  0.000   0.000      90        Clouds    -- 2012   10   2   11     1         4767
+    3 │         290.130  0.000   0.000      90        Clouds    -- 2012   10   2   12     1         5026
+    4 │         291.140  0.000   0.000      75        Clouds    -- 2012   10   2   13     1         4918
+    | │    |       |       |       |        |           |       --  |     |    |   |      |          |
+48188 │         283.450  0.000   0.000      75        Clouds    -- 2018   9    30  19     6         3543
+48189 │         282.760  0.000   0.000      90        Clouds    -- 2018   9    30  20     6         2781
+48190 │         282.730  0.000   0.000      90     Thunderstorm -- 2018   9    30  21     6         2159
+48191 │         282.090  0.000   0.000      90        Clouds    -- 2018   9    30  22     6         1450
+48192 │         282.120  0.000   0.000      90        Clouds    -- 2018   9    30  23     6         954
+
+Data sample with a holiday
+5pt x 5ft
+        holiday      year month day hour
+  ┌─────────────────────────────────────
+0 │                  2012   11   21  22
+1 │                  2012   11   21  23
+2 │ Thanksgiving Day 2012   11   22  0
+3 │                  2012   11   22  1
+4 │                  2012   11   22  2
+
+Data sample with converted holiday feature
+5pt x 5ft
+    holiday year month day hour
+  ┌────────────────────────────
+0 │  False  2012   11   21  22
+1 │  False  2012   11   21  23
+2 │   True  2012   11   22  0
+3 │   True  2012   11   22  1
+4 │   True  2012   11   22  2
+
+Sample of binary weather features
+5pt x 3ft
+    weather_main=Clouds weather_main=Clear weather_main=Mist
+  ┌─────────────────────────────────────────────────────────
+0 │        1.000              0.000              0.000
+1 │        1.000              0.000              0.000
+2 │        0.000              0.000              1.000
+3 │        0.000              0.000              1.000
+4 │        0.000              1.000              0.000
+
+Cleaned traffic data
+"Metro Interstate Traffic Volume" 48193pt x 22ft
+        holiday   temp  rain_1h snow_1h clouds_all weather_main=Clouds -- year month day hour weekday traffic_volume
+      ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────
+    0 │  False  288.280  0.000   0.000      40            1.000        -- 2012   10   2   9      1         5545
+    1 │  False  289.360  0.000   0.000      75            1.000        -- 2012   10   2   10     1         4516
+    2 │  False  289.580  0.000   0.000      90            1.000        -- 2012   10   2   11     1         4767
+    3 │  False  290.130  0.000   0.000      90            1.000        -- 2012   10   2   12     1         5026
+    4 │  False  291.140  0.000   0.000      75            1.000        -- 2012   10   2   13     1         4918
+    | │    |       |       |       |        |               |          --  |     |    |   |      |          |
+48188 │  False  283.450  0.000   0.000      75            1.000        -- 2018   9    30  19     6         3543
+48189 │  False  282.760  0.000   0.000      90            1.000        -- 2018   9    30  20     6         2781
+48190 │  False  282.730  0.000   0.000      90            0.000        -- 2018   9    30  21     6         2159
+48191 │  False  282.090  0.000   0.000      90            1.000        -- 2018   9    30  22     6         1450
+48192 │  False  282.120  0.000   0.000      90            1.000        -- 2018   9    30  23     6         954

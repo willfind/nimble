@@ -100,6 +100,23 @@ class Axis(ABC):
     def _iter(self):
         return AxisIterator(self)
 
+    def __repr__(self):
+        s = "<"
+        s += self.__str__()
+        s += " >"
+        return s
+
+    def __str__(self):
+        s = "{} {}s \n".format(len(self), self._axis)
+        if self._axis == 'point':
+            obj = self._base
+        else:
+            obj = self._base.T
+        string = obj._show(indent=' ')
+        # ignore header lines of string
+        s += '\n'.join(string.split('\n')[3:])
+        return s
+
     ########################
     # Low Level Operations #
     ########################

@@ -47,7 +47,7 @@ airptMaxPM = nimble.data('Matrix', bucket + 'airport_pm_max.csv')
 ## time of day (AM or PM). All of our files have the same header row and cover
 ## the same date range. Let's look at one of our objects to see these headers
 ## and understand the current format of our data.
-dwtnMinAM.show('Example of data file structure', maxWidth=120, maxHeight=9)
+dwtnMinAM.show('Example of data file structure', maxHeight=12)
 
 ## Combining the data ##
 
@@ -72,7 +72,7 @@ dwtnMaxAM.merge(dwtnMaxPM, onFeature='date', point='union')
 airptMinAM.merge(airptMinPM, onFeature='date', point='union')
 airptMaxAM.merge(airptMaxPM, onFeature='date', point='union')
 
-dwtnMinAM.show('Downtown data merged on date', maxWidth=120, maxHeight=9)
+dwtnMinAM.show('Downtown data merged on date', maxHeight=12)
 
 ## Next, we can reduce our number of objects from 4 to 2 by combining the
 ## objects with different extremes (min vs. max) for the same location.
@@ -91,7 +91,7 @@ for obj in [dwtnMinAM, dwtnMaxAM, airptMinAM, airptMaxAM]:
 dwtnMinAM.points.append(dwtnMaxAM)
 airptMinAM.points.append(airptMaxAM)
 
-dwtnMinAM.show('Downtown combined extreme data', maxWidth=120, maxHeight=9)
+dwtnMinAM.show('Downtown combined extreme data', maxHeight=12)
 
 ## Finally, we can combine our two objects into one by combining our two
 ## weather stations (downtown vs. airport). Just like in the last step, we need
@@ -117,7 +117,7 @@ tempData = dwtnMinAM
 tempData.name = 'combined temperature data'
 tempData.points.sort('date')
 
-tempData.show('Fully merged (untidy) data', maxWidth=120, maxHeight=13)
+tempData.show('Fully merged (untidy) data', maxHeight=16)
 
 ## Tidying the data ##
 
@@ -138,7 +138,7 @@ tempData.show('Fully merged (untidy) data', maxWidth=120, maxHeight=13)
 ## ```
 ##    date    station  extreme  hr0   hr1   hr2   --  hr22   hr23
 ##
-## 2011-01-01 downtown   min   2.840 2.019  nan   --  9.399  11.859
+## 2011-01-01 downtown   min   2.840 2.019        --  9.399  11.859
 ## 2011-01-01 downtown   max   2.840 2.021 2.022  --  9.401  11.861
 ## ```
 ## To tidy that same data, we modify the structure to include one point for
@@ -165,8 +165,7 @@ tempData.points.splitByCollapsingFeatures(featuresToCollapse=hourFts,
                                           featureForNames='hour',
                                           featureForValues='temp')
 tempData.points.sort(['date', 'hour'])
-tempData.show('Split points by collapsing the hour features', maxWidth=120,
-              maxHeight=13)
+tempData.show('Split points by collapsing the hour features', maxHeight=16)
 
 ## This is looking closer now that each point refers to a single hour of time.
 ## However, we still have separate points storing our maximum and minimum
@@ -178,7 +177,7 @@ tempData.show('Split points by collapsing the hour features', maxWidth=120,
 tempData.features.transform(lambda ft: [int(v[2:]) for v in ft],
                             features=['hour'])
 tempData.points.sort(['date', 'hour'])
-tempData.show('Date and hour sorted', maxWidth=120, maxHeight=11)
+tempData.show('Date and hour sorted', maxHeight=16)
 
 ## We see above that `hr0` on `2011-01-01` for the `downtown` station, for
 ## example, is still represented by two points. This is because each point
@@ -189,8 +188,7 @@ tempData.show('Date and hour sorted', maxWidth=120, maxHeight=11)
 ## feature contains the values that fill the new `min` and `max` features.
 tempData.points.combineByExpandingFeatures(featureWithFeatureNames='extreme',
                                            featuresWithValues='temp')
-tempData.show('Combined points by expanding extreme feature', maxWidth=120,
-              maxHeight=13)
+tempData.show('Combined points by expanding extreme feature', maxHeight=16)
 
 ## Our object is now organized how we wanted with a tidy structure. There is
 ## one more tidying function in Nimble as well. It is designed to separate a
@@ -199,8 +197,7 @@ tempData.show('Combined points by expanding extreme feature', maxWidth=120,
 ## create `year`, `month` and `day` features.
 tempData.features.splitByParsing('date', lambda val: val.split('-'),
                                  ['year', 'month', 'day'])
-tempData.show('Split features by parsing the date feature', maxWidth=120,
-              maxHeight=13)
+tempData.show('Split features by parsing the date feature', maxHeight=16)
 
 ## **Reference:**
 

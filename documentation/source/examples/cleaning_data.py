@@ -43,13 +43,10 @@ traffic = nimble.data('Matrix', path, name='Metro Interstate Traffic Volume')
 
 ## The `show` method provides control over the printed output for an object.
 ## It prints a description, the `name` and `shape` of the object and the object
-## data (truncating if necessary) given the parameters. To see a good selection
-## of our data throughout this example, we will want to adjust the ``maxWidth``
-## and ``maxHeight``. Since we will often want to use these same width and
-## height settings in many of the calls to `show` in this example, it will be
-## best to pack the values for these keyword arguments into a dictionary.
-keywordsForShow = {'maxWidth': 120, 'maxHeight': 9}
-traffic.show("Raw traffic data", **keywordsForShow)
+## data (truncating if necessary) given the parameters. By default, `show` sets
+## the width and height of the output based on the size of the terminal. To
+## preview our data, we will limit the output to 15 lines.
+traffic.show("Raw traffic data", maxHeight=16)
 
 ## The machine learning algorithms we plan to use require numeric data and can
 ## be sensitive to outliers. Our data contains 48,204 points and 9 features,
@@ -100,20 +97,20 @@ traffic.features.splitByParsing('date_time', dateTimeSplitter,
 
 ## Now let's take a look at our data again after splitting a single feature
 ## of text into 5 numeric features.
-traffic.show('New parsed features in traffic data', **keywordsForShow)
+traffic.show('New parsed features in traffic data', maxHeight=16)
 
-## Above, we also see that the `holiday` feature has many `nan` values. Let's
+## Above, we also see that the `holiday` feature has many missing values. Let's
 ## take a look at a selection of points that include a holiday to get a better
 ## understanding of this feature.
 pointsWithHoliday = slice(1368, 1372)
 dateInfoFeatures = ['holiday', 'year', 'month', 'day', 'hour']
 sample = traffic[pointsWithHoliday, dateInfoFeatures]
-sample.show('Data sample with a holiday', **keywordsForShow)
+sample.show('Data sample with a holiday', maxHeight=16)
 
 ## Now we can see that this feature records the holiday name for the first data
-## point recorded on a holiday, otherwise the value is `nan`. This means most
-## data points falling on a holiday still have `nan` as the holiday value. It
-## would be more helpful if this feature identified **every** point that
+## point recorded on a holiday, otherwise the value is missing. So, even points
+## that fall on a holday can have a missing value in the holiday feature. It
+## would be much more helpful if this feature identified if **each** point
 ## occurred on a holiday.
 
 ## We need a more complex custom function to differentiate between missing
@@ -141,7 +138,7 @@ def holidayToBoolean(point):
 
 traffic.points.transform(holidayToBoolean)
 sample = traffic[pointsWithHoliday, dateInfoFeatures]
-sample.show('Data sample with converted holiday feature', **keywordsForShow)
+sample.show('Data sample with converted holiday feature', maxHeight=16)
 
 ## We have two features related to categorizing the weather conditions. We saw
 ## in our first look at the data that the `weather_description` feature is more
@@ -158,12 +155,12 @@ traffic.features.delete('weather_description')
 newCols = traffic.replaceFeatureWithBinaryFeatures('weather_main')
 sampleFts = ['weather_main=Clouds', 'weather_main=Clear', 'weather_main=Mist']
 traffic[pointsWithHoliday, sampleFts].show('Sample of binary weather features',
-                                           **keywordsForShow)
+                                           maxHeight=16)
 
 ## Now that we have removed any bad points and transformed all of our data to
 ## numeric values, our dataset is ready for machine learning. We will be using
 ## this data to predict the `traffic_volume` feature from the other features.
-traffic.show('Cleaned traffic data', **keywordsForShow)
+traffic.show('Cleaned traffic data', maxHeight=16)
 
 ## Writing to a file ##
 

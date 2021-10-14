@@ -83,33 +83,38 @@ class HighDimensionSafe(DataTestObject):
         stdoutBackup = sys.stdout
         for tensor in tensors:
             toTest = self.constructor(tensor, name='test')
+            dims = ' x '.join(map(str, toTest._shape))
             expData = toTest.copy()._data # get 2D data
             exp = self.constructor(expData, name='test')
+            shape = '3pt x {0}ft'.format(len(exp.features))
             assert len(exp._shape) == 2
             assert toTest.toString() == exp.toString()
-            assert toTest.__str__() == exp.__str__()
-            assert toTest.__repr__() == exp.__repr__()
-
-
+            testStr = str(toTest).split('\n')
+            expStr = str(exp).split('\n')
+            assert dims in testStr[0] and shape in expStr[0]
+            assert testStr[1:] == expStr[1:]
+            testRepr = repr(toTest).split('\n')
+            expRepr = repr(exp).split('\n')
+            assert dims in testRepr[0] and shape in expRepr[0]
+            assert testRepr[1:] == expRepr[1:]
+            
             try:
                 stdout1 = StringIO()
                 stdout2 = StringIO()
 
                 sys.stdout = stdout1
-                show = toTest.show('testing')
+                show = toTest.show()
                 sys.stdout = stdout2
-                expShow = exp.show('testing')
+                expShow = exp.show()
                 stdout1.seek(0)
                 stdout2.seek(0)
                 testLines = stdout1.readlines()
                 expLines = stdout2.readlines()
                 assert len(testLines) > 0
                 for l1, l2 in zip(testLines, expLines):
-                    if l1.startswith('test :'):
-                        stringHD = ' x '.join(map(str, toTest._shape)) + ' \n'
-                        string2D = '3pt x {0}ft \n'.format(len(exp.features))
-                        assert l1.endswith(stringHD)
-                        assert l2.endswith(string2D)
+                    if l1.startswith('"test"'):
+                        assert l1.endswith(dims + '\n')
+                        assert l2.endswith(shape + '\n')
                     else:
                         assert l1 == l2
             finally:

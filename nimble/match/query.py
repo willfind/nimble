@@ -80,20 +80,22 @@ class QueryString:
     >>> toQuery = nimble.data('DataFrame', lst, featureNames=fnames)
     >>> missing = toQuery.matchingElements("is nonZero")
     >>> missing
-    DataFrame(
-        [[False  True True]
-         [ True  True True]
-         [ True  True True]
-         [ True False True]]
-        featureNames={'ft1':0, 'ft2':1, 'ft3':2}
-        )
+    <DataFrame 4pt x 3ft
+          ft1   ft2  ft3
+       ┌─────────────────
+     0 │ False  True True
+     1 │  True  True True
+     2 │  True  True True
+     3 │  True False True
+    >
     >>> toQuery.points.delete('ft3 == -1')
     >>> toQuery
-    DataFrame(
-        [[-1  True 2.000]
-         [-1 False 3.000]]
-        featureNames={'ft1':0, 'ft2':1, 'ft3':2}
-        )
+    <DataFrame 2pt x 3ft
+         ft1  ft2   ft3
+       ┌────────────────
+     0 │  -1  True 2.000
+     1 │  -1 False 3.000
+    >
     """
     _accepted = {n: getattr(match, n) for n in _setAll(vars(match))}
     _accepted['True'] = lambda e: e is True
