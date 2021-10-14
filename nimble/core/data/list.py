@@ -566,9 +566,15 @@ class List(Base):
         if level > 0:
             if len(self._data) > 0:
                 expectedLength = len(self._data[0])
+                assert expectedLength == self._numFeatures
             for point in self._data:
-            #				assert isinstance(point, list)
+                if not isinstance(self, BaseView):
+                    assert isinstance(point, list)
                 assert len(point) == expectedLength
+        if level > 1:
+            for ithList in self._data:
+                for jval in ithList:
+                    assert isAllowedSingleElement(jval)
 
     def _containsZero_implementation(self):
         """
@@ -681,6 +687,7 @@ class FeatureViewer(object):
     def __init__(self, source, fStart, fEnd, pIndex):
         self.source = source
         self.fStart = fStart
+        self.fEnd = fEnd
         self.fRange = fEnd - fStart
         self.limit = pIndex
 
@@ -709,6 +716,9 @@ class FeatureViewer(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def __copy__(self):
+        return self.source._data[self.limit][self.fStart:self.fEnd]
 
 class ListPassThrough(object):
     """

@@ -47,7 +47,7 @@ class ListAxis(Axis, metaclass=ABCMeta):
         """
         pointNames, featureNames = self._getStructuralNames(targetList)
         if self._isPoint:
-            satisfying = [self._base._data[pt] for pt in targetList]
+            satisfying = [copy.copy(self._base._data[pt]) for pt in targetList]
             if structure != 'copy':
                 keepList = [i for i in range(len(self)) if i not in targetList]
                 self._base._data = [self._base._data[pt] for pt in keepList]

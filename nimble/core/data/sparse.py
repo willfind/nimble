@@ -924,18 +924,19 @@ class Sparse(Base):
             sortedAxis = self._sorted['axis']
             sortedIndices = self._sorted['indices']
             if sortedAxis is not None:
-                row = self._data.row
-                col = self._data.col
+                rowBefore = self._data.row.copy()
+                colBefore = self._data.col.copy()
                 self._resetSorted()
                 if sortedIndices is not None:
                     self._sortInternal(sortedAxis, setIndices=True)
-                    # _sortInternal indices sort incorrect
+                    # _sortInternal indices sort incorrect?
                     assert all(self._sorted['indices'][:] == sortedIndices[:])
                 else:
                     self._sortInternal(sortedAxis)
-                # _sortInternal axis sort incorrect
-                assert all(self._data.row[:] == row[:])
-                assert all(self._data.col[:] == col[:])
+                # _sortInternal axis sort incorrect?
+                assert all(self._data.row[:] == rowBefore[:])
+                assert all(self._data.col[:] == colBefore[:])
+
 
             without_replicas_coo = removeDuplicatesNative(self._data)
             assert len(self._data.data) == len(without_replicas_coo.data)

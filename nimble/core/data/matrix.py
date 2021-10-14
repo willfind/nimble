@@ -9,7 +9,9 @@ import numpy as np
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
+from nimble._utility import allowedNumpyDType
 from nimble._utility import inheritDocstringsFactory
+from nimble._utility import isAllowedSingleElement
 from nimble._utility import numpy2DArray
 from nimble._utility import scipy, pd
 from .base import Base
@@ -48,6 +50,7 @@ class Matrix(Base):
 
         if isinstance(data, (np.matrix, list)):
             data = numpy2DArray(data)
+
         if reuseData:
             self._data = data
         else:
@@ -416,7 +419,13 @@ class Matrix(Base):
         shape = np.shape(self._data)
         assert shape[0] == len(self.points)
         assert shape[1] == len(self.features)
+        assert len(shape) == 2
+        assert allowedNumpyDType(self._data.dtype)
 
+        if level >1:
+            if self._data.dtype == object:
+                allowed = np.vectorize(isAllowedSingleElement, otypes=[bool])
+                assert allowed(self._data).all()
 
     def _containsZero_implementation(self):
         """
