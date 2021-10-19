@@ -1679,10 +1679,9 @@ class Base(ABC):
         Parameters
         ----------
         outputPath : str
-            The location (including file name and extension) where
-            we want to write the output file. If filename extension
-            .nimd is not included in file name it would be added to the
-            output file.
+            The location (including file name and extension) where we
+            want to write the output file. If a filename extension is
+            not included, the ".pickle" extension will be added.
 
         Keywords
         --------
@@ -1692,16 +1691,12 @@ class Base(ABC):
             msg = "To save nimble objects, cloudpickle must be installed"
             raise PackageException(msg)
 
-        extension = '.nimd'
-        if not outputPath.endswith(extension):
-            outputPath = outputPath + extension
+        extension = os.path.splitext(outputPath)[1]
+        if not extension:
+            outputPath += '.pickle'
 
         with open(outputPath, 'wb') as file:
             cloudpickle.dump(self, file)
-        # TODO: save session
-        # print('session_' + outputFilename)
-        # print(globals())
-        # dill.dump_session('session_' + outputFilename)
 
     def getTypeString(self):
         """

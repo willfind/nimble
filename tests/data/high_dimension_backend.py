@@ -183,7 +183,7 @@ class HighDimensionSafe(DataTestObject):
             toSaveShape = toSave._shape
             assert len(toSave._shape) > 2
 
-            with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
+            with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
                 toSave.save(tmpFile.name)
                 loadObj = nimble.data(None, tmpFile.name)
 

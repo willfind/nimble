@@ -12,6 +12,7 @@ import sys
 import numbers
 import time
 import warnings
+import os
 
 import numpy as np
 
@@ -1178,17 +1179,17 @@ class TrainedLearner(object):
         Parameters
         ----------
         outputPath : str
-            The location (including file name and extension) where
-            we want to write the output file. If filename extension
-            .nimm is not included in file name it would be added to the
-            output file.
+            The location (including file name and extension) where we
+            want to write the output file. If a filename extension is
+            not included, the ".pickle" extension will be added.
         """
         if not cloudpickle.nimbleAccessible():
             msg = "To save nimble models, cloudpickle must be installed"
             raise PackageException(msg)
-        extension = '.nimm'
-        if not outputPath.endswith(extension):
-            outputPath = outputPath + extension
+
+        extension = os.path.splitext(outputPath)[-1]
+        if not extension:
+            outputPath = outputPath + '.pickle'
 
         with open(outputPath, 'wb') as file:
             cloudpickle.dump(self, file)

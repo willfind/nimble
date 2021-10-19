@@ -60,10 +60,10 @@ def loadAndCheck(toCall, useLog, *args):
 def test_data():
     for rType in nimble.core.data.available:
         back_load(nimble.data, rType, [[1, 2, 3], [4, 5, 6]])
-    
+
     for constructor in constructors:
         obj = constructor([[1, 2, 3], [4, 5, 6]], useLog=False)
-        with tempfile.NamedTemporaryFile(suffix='.nimd') as tmpFile:
+        with tempfile.NamedTemporaryFile(suffix='.pickle') as tmpFile:
             obj.save(tmpFile.name)
             back_load(nimble.data, None, tmpFile.name)
 
@@ -78,7 +78,7 @@ def test_loadTrainedLearner():
         trainX = constructor([[0, 0, 1], [0, 1, 0], [1, 0, 0]], useLog=False)
         trainY = constructor([[3], [2], [1]], useLog=False)
         tl = nimble.train('nimble.KNNClassifier', trainX, trainY)
-        with tempfile.NamedTemporaryFile(suffix='.nimm') as tmpFile:
+        with tempfile.NamedTemporaryFile(suffix='.pickle') as tmpFile:
             tl.save(tmpFile.name)
             back_load(nimble.loadTrainedLearner, tmpFile.name)
 

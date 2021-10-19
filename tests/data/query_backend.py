@@ -352,20 +352,35 @@ class QueryBackend(DataTestObject):
         data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         featureNames = ['one', 'two', 'three']
         pointNames = ['1', 'one', '2', '0']
-        toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        toSave = self.constructor(data, pointNames=pointNames,
+                                  featureNames=featureNames)
 
-        with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
+        with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
             toSave.save(tmpFile.name)
-            LoadObj = nimble.data(None, tmpFile.name)
+            load1 = nimble.data(None, tmpFile.name)
 
-        assert toSave.isIdentical(LoadObj)
-        assert LoadObj.isIdentical(toSave)
+        assert toSave.isIdentical(load1)
+        assert load1.isIdentical(toSave)
+
+        with tempfile.NamedTemporaryFile(suffix=".p") as tmpFile:
+            toSave.save(tmpFile.name)
+            load2 = nimble.data(None, tmpFile.name)
+
+        assert toSave.isIdentical(load2)
+        assert load2.isIdentical(toSave)
+
+        with tempfile.NamedTemporaryFile() as tmpFile:
+            toSave.save(tmpFile.name)
+            load3 = nimble.data(None, tmpFile.name + ".pickle")
+
+        assert toSave.isIdentical(load3)
+        assert load3.isIdentical(toSave)
 
     def test_save_lazyNameGeneration(self):
         data = [[1, 2, 3], [1, 2, 3], [2, 4, 6], [0, 0, 0]]
         toSave = self.constructor(data)
 
-        with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
+        with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
             toSave.save(tmpFile.name)
 
         assertNoNamesGenerated(toSave)
@@ -376,13 +391,13 @@ class QueryBackend(DataTestObject):
         pointNames = ['1', 'one', '2', '0']
         toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
-            # save without extension to ensure the .nimd extension is added
-            fileNameWithoutExtension = tmpFile.name[:-5]
+        with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
+            # save without extension to ensure the .pickle extension is added
+            fileNameWithoutExtension = tmpFile.name[:-7]
             # it is important that the saved object has the same name as the
             # tmpFile otherwise a new file will be created and saved which will
             # not be cleaned up by tempfile.
-            assert fileNameWithoutExtension + '.nimd' == tmpFile.name
+            assert fileNameWithoutExtension + '.pickle' == tmpFile.name
 
             toSave.save(fileNameWithoutExtension)
             LoadObj = nimble.data(None, tmpFile.name)
@@ -398,7 +413,7 @@ class QueryBackend(DataTestObject):
         pointNames = ['1', 'one', '2', '0']
         toSave = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
 
-        with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
+        with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
             toSave.save(tmpFile.name)
             LoadObj = nimble.data(None, tmpFile.name)
 

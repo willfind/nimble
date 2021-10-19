@@ -199,7 +199,7 @@ def testLoadTypeFunctionsUseLog():
     assert "'numPoints': 4" in logInfo
     assert "'numFeatures': 1" in logInfo
 
-    with tempfile.NamedTemporaryFile(suffix=".nimd") as tmpFile:
+    with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
         trainXObj.save(tmpFile.name)
         load = nimble.data(None, tmpFile.name)
     logInfo = getLastLogData()
@@ -216,7 +216,7 @@ def testLoadTypeFunctionsUseLog():
 
     # loadTrainedLearner
     tl = nimble.train('nimble.KNNClassifier', trainXObj, trainYObj, arguments={'k': 1})
-    with tempfile.NamedTemporaryFile(suffix=".nimm") as tmpFile:
+    with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
         tl.save(tmpFile.name)
         load = nimble.loadTrainedLearner(tmpFile.name)
     logInfo = getLastLogData()
