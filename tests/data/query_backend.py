@@ -369,9 +369,15 @@ class QueryBackend(DataTestObject):
         assert toSave.isIdentical(load2)
         assert load2.isIdentical(toSave)
 
-        with tempfile.NamedTemporaryFile() as tmpFile:
-            toSave.save(tmpFile.name)
-            load3 = nimble.data(None, tmpFile.name + ".pickle")
+        with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
+            # save without extension to ensure the .pickle extension is added
+            fileNameWithoutExtension = tmpFile.name[:-7]
+            # it is important that the saved object has the same name as the
+            # tmpFile otherwise a new file will be created and saved which will
+            # not be cleaned up by tempfile.
+            assert fileNameWithoutExtension + '.pickle' == tmpFile.name
+            toSave.save(fileNameWithoutExtension)
+            load3 = nimble.data(None, tmpFile.name)
 
         assert toSave.isIdentical(load3)
         assert load3.isIdentical(toSave)
