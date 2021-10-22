@@ -3159,6 +3159,8 @@ class Base(ABC):
         Return a new object containing the same data as this object.
         When copying to a nimble format, the pointNames and featureNames
         will also be copied, as well as any name and path metadata.
+        A deep copy is made in all cases, no references are shared
+        between this object and the copy.
 
         Parameters
         ----------

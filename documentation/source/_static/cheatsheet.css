@@ -225,6 +225,10 @@ a:hover {
   height: 156px;
 }
 
+#query-head {
+  margin-right: 2px;
+}
+
 #query {
   width: 552px;
 }
@@ -269,16 +273,18 @@ a:hover {
 #training {
   width: 656px;
   border-top: 0;
-  height: 372px;
+  height: 382px;
 }
 
 #interfaces {
   width: 532px;
+  height: 292px;
   border-top: 0;
   border-left: 0;
 }
 
 #submodules {
-  width: 528px;
-  margin-left: 4px;
+  width: 530px;
+  height: 88px;
+  margin-left: 2px;
 }

@@ -304,9 +304,9 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     Calls on the functionality of a package to train on some data and
     then return the modified ``trainX`` and ``testX`` (if provided)
     according to the results of the trained model. If only ``trainX`` is
-    proved, the normalized ``trainX`` is returned. If ``testX`` is also
-    provided a tuple (normalizedTrain, normalizedTest) is returned. The
-    name of the learner will be added to each normalized object's
+    provided, the normalized ``trainX`` is returned. If ``testX`` is
+    also provided a tuple (normalizedTrain, normalizedTest) is returned.
+    The name of the learner will be added to each normalized object's
     ``name`` attribute to indicate the normalization that has been
     applied. Point and feature names are preserved when possible.
 
