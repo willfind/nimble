@@ -2,81 +2,111 @@
 Similarity calculations.
 """
 
+from math import sqrt
+
 import numpy as np
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.calculate.loss import _validatePredictedAsLabels
 from nimble.calculate.loss import fractionIncorrect
 from nimble.calculate.loss import varianceFractionRemaining
 from nimble.core.data._dataHelpers import createDataNoValidation
+from .utility import performanceFunction
 
+
+@performanceFunction('max')
 def cosineSimilarity(knownValues, predictedValues):
     """
     Calculate the cosine similarity between known and predicted values.
     """
-    _validatePredictedAsLabels(predictedValues)
-    if not isinstance(knownValues, nimble.core.data.Base):
-        msg = "knownValues must be derived class of nimble.core.data.Base"
-        raise InvalidArgumentType(msg)
-
-    known = knownValues.copy(to="numpy array").flatten()
-    predicted = predictedValues.copy(to="numpy array").flatten()
-
-    numerator = (np.dot(known, predicted))
-    denominator = (np.linalg.norm(known) * np.linalg.norm(predicted))
+    numerator = knownValues.T.matrixMultiply(predictedValues)[0, 0]
+    denominator = (sqrt(sum(knownValues ** 2))
+                   * sqrt(sum(predictedValues ** 2)))
 
     return numerator / denominator
 
 
-cosineSimilarity.optimal = 'max'
+def _nanCovCorr(X, X_T=None, sample=True, corr=False):
+    """
+    Calculate the covariance or correlation between points in X when
+    the data contains missing values. If X_T is not provided, a copy of
+    X will be made in this function.
+    """
+    # pylint: disable=invalid-name
+    if X_T is None:
+        X_T = X.T
 
+    arrX = X.copy('numpy array').astype(float)
+    arrXT = X_T.copy('numpy array').astype(float)
+    maskX = np.isfinite(arrX)
+    maskXT = np.isfinite(arrXT)
+
+    if maskX.all() and maskXT.all(): # no missing data
+        means = np.mean(arrX, axis=1, keepdims=True)
+        results = np.dot(arrX - means, arrXT - means.T)
+        if sample:
+            results /= (arrX.shape[1] - 1)
+        else:
+            results /= arrX.shape[1]
+        if corr:
+            results /= np.dot(np.std(arrX, axis=1, keepdims=True),
+                              np.std(arrXT, axis=0, keepdims=True))
+    else: # contains missing values
+        numPts = len(arrX)
+        results = np.empty((numPts,) * 2)
+
+        for i in range(numPts):
+            for j in range(i, numPts):
+                use = maskX[i] & maskXT[:, j]
+                if not use.any():
+                    val = np.nan
+                else:
+                    row = arrX[i][use]
+                    col = arrXT[:, j][use]
+                    val = np.dot(row - np.mean(row), col - np.mean(col))
+                    if sample:
+                        denominator = len(row) - 1
+                    else:
+                        denominator = len(row)
+                    if denominator:
+                        val /= denominator
+                    else:
+                        val = np.nan
+                    if corr:
+                        corrDenominator = (np.std(row) * np.std(col))
+                        if corrDenominator:
+                            val /= corrDenominator
+                        else:
+                            val = np.nan
+
+                results[i, j] = val
+                if i != j:
+                    results[j, i] = val
+
+    names = X.points._getNamesNoGeneration()
+    return createDataNoValidation(X.getTypeString(), results, pointNames=names,
+                                  featureNames=names)
 
 def correlation(X, X_T=None):
     """
     Calculate the Pearson correlation coefficients between points in X.
+
     If X_T is not provided, a copy of X will be made in this function.
     """
     # pylint: disable=invalid-name
-    if X_T is None:
-        X_T = X.T
-    stdVector = X.points.statistics('populationstd')
-    stdVector_T = stdVector.T
-
-    cov = covariance(X, X_T, False)
-    stdMatrix = stdVector.matrixMultiply(stdVector_T)
-    ret = cov / stdMatrix
-
-    return ret
-
+    return _nanCovCorr(X, X_T, False, True)
 
 def covariance(X, X_T=None, sample=True):
     """
-    Calculate the covariance between points in X. If X_T is not
-    provided, a copy of X will be made in this function.
+    Calculate the covariance between points in X.
+
+    If X_T is not provided, a copy of X will be made in this function.
     """
     # pylint: disable=invalid-name
-    if X_T is None:
-        X_T = X.T
-    pointMeansVector = X.points.statistics('mean')
-    fill = lambda x: [x[0]] * len(X.features)
-    pointMeans = pointMeansVector.points.calculate(fill, useLog=False)
-    pointMeans_T = pointMeans.T
-
-    XminusEofX = X - pointMeans
-    X_TminusEofX_T = X_T - pointMeans_T
-
-    # doing sample covariance calculation
-    if sample:
-        divisor = len(X.features) - 1
-    # doing population covariance calculation
-    else:
-        divisor = len(X.features)
-
-    ret = (XminusEofX.matrixMultiply(X_TminusEofX_T)) / divisor
-    return ret
+    return _nanCovCorr(X, X_T, sample)
 
 
+@performanceFunction('max', validate=False)
 def fractionCorrect(knownValues, predictedValues):
     """
     Calculate how many values in predictedValues are equal to the
@@ -85,21 +115,14 @@ def fractionCorrect(knownValues, predictedValues):
     """
     return 1 - fractionIncorrect(knownValues, predictedValues)
 
-
-fractionCorrect.optimal = 'max'
-
-
+@performanceFunction('max', validate=False)
 def rSquared(knownValues, predictedValues):
     """
     Calculate the r-squared (or coefficient of determination) of the
     predictedValues given the knownValues. This will be equal to 1 -
     nimble.calculate.varianceFractionRemaining() of the same inputs.
-
     """
     return 1.0 - varianceFractionRemaining(knownValues, predictedValues)
-
-
-rSquared.optimal = 'max'
 
 
 def confusionMatrix(knownValues, predictedValues, labels=None,

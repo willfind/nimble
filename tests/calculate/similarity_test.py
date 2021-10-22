@@ -6,6 +6,7 @@ import nimble
 from nimble.calculate import cosineSimilarity
 from nimble.calculate import confusionMatrix
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
 from tests.helpers import raises
 from tests.helpers import noLogEntryExpected
 from tests.helpers import getDataConstructors
@@ -15,6 +16,8 @@ from tests.helpers import getDataConstructors
 ####################
 @noLogEntryExpected
 def test_cosineSimilarity():
+    assert cosineSimilarity.optimal == 'max'
+
     orig = np.array([[1], [0]])
     orth = np.array([[0], [1]])
     neg = np.array([[-1], [0]])
@@ -54,7 +57,7 @@ def test_cosineSimilarityPredictedWrongType():
 
     result = cosineSimilarity(origMatrix, orig)
 
-@raises(InvalidArgumentValue)
+@raises(InvalidArgumentValueCombination)
 def test_cosineSimilarityPredictedWrongShape():
     orig = np.array([[1], [0]])
     origMatrix = nimble.data('Matrix', source=orig)
@@ -400,3 +403,88 @@ def test_confusionMatrix_strings():
         expObj = constructor(expData, pointNames, featureNames, useLog=False)
 
         assert cm.isIdentical(expObj)
+
+@noLogEntryExpected
+def test_covariance_sample():
+    x = [[1, 2, 3, 4],
+         [2, 4, 6, 8],
+         [-2, -4, -6, -8]]
+    exp = [[(5/3), (10/3), (-10/3)],
+           [(10/3), (20/3), (-20/3)],
+           [(-10/3), (-20/3), (20/3)]]
+
+    for constructor in getDataConstructors():
+        pnames = ['a', 'b', 'c']
+        toTest = constructor(x, pointNames=pnames, useLog=False)
+        expObj = constructor(exp, pointNames=pnames, featureNames=pnames,
+                             useLog=False)
+        cov = nimble.calculate.covariance(toTest)
+        assert cov.isApproximatelyEqual(expObj)
+
+@noLogEntryExpected
+def test_covariance_population():
+    x = [[1, 2, 3, 4],
+         [2, 4, 6, 8],
+         [-2, -4, -6, -8]]
+    exp = [[(5/4), (5/2), (-5/2)],
+           [(5/2), 5, -5],
+           [(-5/2), -5, 5]]
+
+    for constructor in getDataConstructors():
+        pnames = ['a', 'b', 'c']
+        toTest = constructor(x, pointNames=pnames, useLog=False)
+        expObj = constructor(exp, pointNames=pnames, featureNames=pnames,
+                             useLog=False)
+        cov = nimble.calculate.covariance(toTest, sample=False)
+        assert cov.isApproximatelyEqual(expObj)
+
+@noLogEntryExpected
+def test_covariance_withMissing():
+    x = [[1, np.nan, 3, 4],
+         [2, 4, np.nan, 8],
+         [-2, -4, -6, -8]]
+    exp = [[(7/3), 9, (-14/3)],
+           [9, (28/3), (-28/3)],
+           [(-14/3), (-28/3), (20/3)]]
+
+    for constructor in getDataConstructors():
+        pnames = ['a', 'b', 'c']
+        toTest = constructor(x, pointNames=pnames, useLog=False)
+        expObj = constructor(exp, pointNames=pnames, featureNames=pnames,
+                             useLog=False)
+        cov = nimble.calculate.covariance(toTest)
+        assert cov.isApproximatelyEqual(expObj)
+
+@noLogEntryExpected
+def test_correlation():
+    x = [[1, 2, 3, 4],
+         [2, 4, 6, 8],
+         [-2, -4, -6, -8]]
+    exp = [[1, 1, -1],
+           [1, 1, -1],
+           [-1, -1, 1]]
+
+    for constructor in getDataConstructors():
+        pnames = ['a', 'b', 'c']
+        toTest = constructor(x, pointNames=pnames, useLog=False)
+        expObj = constructor(exp, pointNames=pnames, featureNames=pnames,
+                             useLog=False)
+        cov = nimble.calculate.correlation(toTest)
+        assert cov.isApproximatelyEqual(expObj)
+
+@noLogEntryExpected
+def test_correlation_withMissing():
+    x = [[1, np.nan, 3, 4],
+         [2, 4, np.nan, 8],
+         [-2, -4, -6, -8]]
+    exp = [[1, 1, -1],
+           [1, 1, -1],
+           [-1, -1, 1]]
+
+    for constructor in getDataConstructors():
+        pnames = ['a', 'b', 'c']
+        toTest = constructor(x, pointNames=pnames, useLog=False)
+        expObj = constructor(exp, pointNames=pnames, featureNames=pnames,
+                             useLog=False)
+        cov = nimble.calculate.correlation(toTest)
+        assert cov.isApproximatelyEqual(expObj)

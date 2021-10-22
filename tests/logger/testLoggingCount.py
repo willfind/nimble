@@ -74,7 +74,7 @@ calculate_funcs = [
     'recall', 'residuals', 'rootMeanSquareError',
     'rootMeanSquareErrorConfidenceInterval', 'rSquared', 'solve',
     'specificity', 'standardDeviation', 'sum', 'trueNegative', 'truePositive',
-    'uniqueCount', 'varianceFractionRemaining',
+    'uniqueCount', 'variance', 'varianceFractionRemaining',
     ]
 calculate_tested = list(map(prefixAdder('nimble.calculate'), calculate_funcs))
 
