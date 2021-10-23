@@ -1548,6 +1548,11 @@ class TrainedLearners(TrainedLearner):
         on extracting various results from this object.
     method : str
         The multiClassStrategy used, "OneVsAll" or "OneVsOne".
+
+    See Also
+    --------
+    nimble.train
+
     """
     def __init__(self, trainedLearners, method, labelSet):
         """

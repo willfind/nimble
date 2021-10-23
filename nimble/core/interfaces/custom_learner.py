@@ -191,6 +191,10 @@ class CustomLearner(metaclass=abc.ABCMeta):
     Furthermore, a subclass must not require any arguments for its
     ``__init__`` method.
 
+    See Also
+    --------
+    nimble.train, nimble.normalizeData, nimble.fillMatching
+
     Keywords
     --------
     algorithm, model, regression, classification, neural network,

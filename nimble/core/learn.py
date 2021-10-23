@@ -51,6 +51,10 @@ def learnerType(learnerNames): # pylint: disable=redefined-outer-name
     str, list
         string for a single learner or a list for multiple learners.
 
+    See Also
+    --------
+    train, normalizeData, fillMatching
+
     Keywords
     --------
     classifier, regressor, regression, classification, clustering,
@@ -115,8 +119,8 @@ def learnerNames(package=None):
 
     See Also
     --------
-    showLearnerNames, showAvailablePackages, train, trainAndApply,
-    trainAndTest, trainAndTestOnTrainingData,
+    showLearnerNames, showAvailablePackages, train, normalizeData,
+    fillmatching
 
     Keywords
     --------
@@ -159,8 +163,7 @@ def showLearnerNames(package=None):
 
     See Also
     --------
-    learnerNames, train, trainAndApply, trainAndTest,
-    trainAndTestOnTrainingData
+    learnerNames
 
     Keywords
     --------
@@ -192,7 +195,7 @@ def learnerParameters(name):
 
     See Also
     --------
-    learnerParameterDefaults, showLearnerParameters
+    learnerNames, learnerParameterDefaults, showLearnerParameters
 
     Keywords
     --------
@@ -216,7 +219,7 @@ def showLearnerParameters(name):
 
     See Also
     --------
-    learnerParameterDefaults, learnerParameters
+    learnerNames, learnerParameterDefaults, learnerParameters
 
     Keywords
     --------
@@ -252,7 +255,7 @@ def learnerParameterDefaults(name):
 
     See Also
     --------
-    learnerParameters, showLearnerParameterDefaults
+    learnerNames, learnerParameters, showLearnerParameterDefaults
 
     Keywords
     --------
@@ -276,7 +279,7 @@ def showLearnerParameterDefaults(name):
 
     See Also
     --------
-    learnerParameterDefaults, learnerParameters
+    learnerNames, learnerParameterDefaults, learnerParameters
 
     Keywords
     --------
@@ -346,7 +349,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     See Also
     --------
-    nimble.core.data.Features.normalize
+    train, Init, nimble.core.data.Features.normalize
 
     Examples
     --------
@@ -476,6 +479,7 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
 
     See Also
     --------
+    train, Init, nimble.fill, nimble.match,
     nimble.core.data.Points.fillMatching,
     nimble.core.data.Features.fillMatching
 
@@ -642,7 +646,7 @@ def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
 
     See Also
     --------
-    nimble.core.learn.KFoldCrossValidator
+    nimble.core.learn.KFoldCrossValidator, CV, Init
 
     Examples
     --------
@@ -767,7 +771,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     See Also
     --------
     trainAndApply, trainAndTest, trainAndTestOnTrainingData, CV,
-    nimble.core.interfaces.TrainedLearner
+    nimble.core.interfaces.TrainedLearner, Init
 
     Examples
     --------
@@ -953,8 +957,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
     See Also
     --------
-    train, trainAndTest, trainAndTestOnTrainingData, CV,
-    nimble.core.interfaces.TrainedLearner.apply
+    train, CV, Init, nimble.core.interfaces.TrainedLearner.apply
 
     Examples
     --------
@@ -1167,7 +1170,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
 
     See Also
     --------
-    train, trainAndApply, trainAndTestOnTrainingData, CV,
+    train, trainAndTestOnTrainingData, CV, Init,
     nimble.core.interfaces.TrainedLearner.test
 
     Examples
@@ -1350,7 +1353,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
 
     See Also
     --------
-    train, trainAndApply, trainAndTest, CV
+    train, trainAndTest, CV, Init
 
     Examples
     --------
@@ -1446,6 +1449,10 @@ class CV(object):
     argumentList : list
         A list of values for the argument.
 
+    See Also
+    --------
+    crossValidate, KFoldCrossValidator
+
     Keywords
     --------
     cross-validation, parameter, argument, hyperparameters, tuning,
@@ -1491,6 +1498,10 @@ class Init(object):
     kwargs
         Any keyword arguments will be used as instantiation parameters.
 
+    See Also
+    --------
+    learnerParameters
+
     Keywords
     --------
     instantiate, argument, initialize, initialization, create
@@ -1531,6 +1542,10 @@ class KFoldCrossValidator(object):
     randomSeed : int
         The random seed used for the learner. Only applicable if the
         learner utilizes randomness.
+
+    See Also
+    --------
+    CV, crossValidate
 
     Keywords
     --------
