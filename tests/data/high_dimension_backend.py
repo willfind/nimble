@@ -97,7 +97,7 @@ class HighDimensionSafe(DataTestObject):
             expRepr = repr(exp).split('\n')
             assert dims in testRepr[0] and shape in expRepr[0]
             assert testRepr[1:] == expRepr[1:]
-            
+
             try:
                 stdout1 = StringIO()
                 stdout2 = StringIO()
@@ -669,6 +669,18 @@ class HighDimensionModifying(DataTestObject):
         ftAxis = getattr(toTest, 'features')
         for method in ftDisallowed:
             assert isLimitedTo2D(ftAxis, method)
+
+    def test_highDimension_strings(self):
+        """Test that string representations work for high dimensions"""
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+            str(toTest)
+            repr(toTest)
+            toTest.show()
+            str(toTest.points)
+            repr(toTest.points)
+            str(toTest.features)
+            repr(toTest.features)
 
 class HighDimensionAll(HighDimensionSafe, HighDimensionModifying):
     pass

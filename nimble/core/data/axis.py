@@ -101,21 +101,64 @@ class Axis(ABC):
         return AxisIterator(self)
 
     def __repr__(self):
-        s = "<"
-        s += self.__str__()
-        s += " >"
-        return s
-
-    def __str__(self):
-        s = "{} {}s \n".format(len(self), self._axis)
-        if self._axis == 'point':
+        ret = "< {} {}s\n".format(len(self), self._axis)
+        maxIdxLen = len(str(len(self) - 1))
+        indent = ' '
+        if self._isPoint:
             obj = self._base
         else:
-            obj = self._base.T
-        string = obj._show(indent=' ')
-        # ignore header lines of string
-        s += '\n'.join(string.split('\n')[3:])
-        return s
+            with self._base._treatAs2D():
+                obj = self._base.T
+        # will be adding a new column, so increase indent to make room
+        if self._namesCreated():
+            indent = ' ' * (maxIdxLen + 4)
+
+        start = len(indent) - 1 # to remove extra indentation when adding col
+        string = obj._show(indent=indent)
+        match = re.search(u'[ \|\u2502\-]+\n', string)
+        newLine = u' {} \u2502{}\n'
+        if match:
+            top, bottom = string.split(match.group(0))
+            for i, line in enumerate(top.split('\n')[:-1]):
+                if i < 3:
+                    continue
+                line = line[start:]
+                if self._namesCreated():
+                    ret += newLine.format(str(i - 3).rjust(maxIdxLen), line)
+                else:
+                    ret += line + '\n'
+            if self._namesCreated():
+                ret += ' ' + '|'.rjust(maxIdxLen) + u' \u2502'
+            ret += match.group(0)[start:]
+
+            bottomIdx = len(self) - len(bottom.split('\n')) + 1
+            for i, line in enumerate(bottom.split('\n')[:-1]):
+                line = line[start:]
+                if self._namesCreated():
+                    ret += newLine.format(str(bottomIdx).rjust(maxIdxLen),
+                                          line)
+                else:
+                    ret += line + '\n'
+                bottomIdx += 1
+        else:
+            for i, line in enumerate(string.split('\n')):
+                if i < 3 or not line:
+                    continue
+                line = line[start:]
+                if self._namesCreated():
+                    ret += newLine.format(str(i - 3).rjust(maxIdxLen), line)
+                else:
+                    ret += line + '\n'
+        ret += " >"
+        return ret
+
+    def __str__(self):
+        """
+        Displays the total number of points/features. Each point/feature
+        is displayed as a row. When names are present, an extra column
+        of index values is inserted.
+        """
+        return self.__repr__()[2:-2]
 
     ########################
     # Low Level Operations #

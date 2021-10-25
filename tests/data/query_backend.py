@@ -3,9 +3,10 @@ Methods tested in this file (none modify the data):
 
 pointCount, featureCount, isIdentical, writeFile, __getitem__,
 pointView, featureView, view, containsZero, __eq__, __ne__, toString,
-__repr__, points.similarities, features.similarities, points.statistics,
-features.statistics, points.__iter__, features.__iter__,
-iterateElements, inverse, solveLinearSystem, report, features.report
+__repr__, points.__repr__, features.__repr__, points.similarities,
+features.similarities, points.statistics, features.statistics,
+points.__iter__, features.__iter__, iterateElements, inverse,
+solveLinearSystem, report, features.report
 """
 
 import math
@@ -1357,9 +1358,9 @@ class QueryBackend(DataTestObject):
                             for colSep in ['', ' ', '  ']:
                                 runTrial(pNum, fNum, valLen, maxW, maxH, colSep)
 
-    ############
-    # __repr__ #
-    ############
+    ################################################
+    # __repr__, points.__repr__, features.__repr__ #
+    ################################################
 
     def back_reprOutput(self, numPts, numFts, truncated=False, defaults='none',
                         addPath=False):
@@ -1392,7 +1393,7 @@ class QueryBackend(DataTestObject):
             else:
                 assert name in fNames
         assert re.match('\s*┌─+$', retSplit[2])
-        dataMatch = re.compile(r'\s.*? │ [0-9\.\s\-\|]+')
+        dataMatch = re.compile(r' +[pf]?t?([0-9]+)?\|? │ [0-9\.\s\-\|]+')
         for line in retSplit[3:-1]:
             assert re.match(dataMatch, line)
             pName = line.split('│')[0].strip()
@@ -1407,6 +1408,23 @@ class QueryBackend(DataTestObject):
             assert retSplit[-1].endswith('>')
         else:
             assert retSplit[-1] == '>'
+
+        addIdxMatch = re.compile(r' [ 0-9|]+? │( +\|?| +[pf]t[0-9]+) │ [0-9\. \-\|]+')
+        for axis, length in [(data.points, numPts), (data.features, numFts)]:
+            axRepr = repr(axis)
+            axSplit = axRepr.split('\n')
+            assert axSplit[0] == "< " + str(length) + " {}s".format(axis._axis)
+            for line in axSplit[1:-1]:
+                print(line)
+                if defaults == 'all':
+                    assert re.match(dataMatch, line)
+                else:
+                    assert re.match(addIdxMatch, line)
+                if truncated:
+                    assert '--' in line
+                else:
+                    assert '--' not in line
+            assert axSplit[-1] == ' >'
 
     def test_repr_notTruncated(self):
         self.back_reprOutput(9, 9)
