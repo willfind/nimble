@@ -120,7 +120,7 @@ def learnerNames(package=None):
     See Also
     --------
     showLearnerNames, showAvailablePackages, train, normalizeData,
-    fillmatching
+    fillMatching
 
     Keywords
     --------
@@ -1451,7 +1451,7 @@ class CV(object):
 
     See Also
     --------
-    crossValidate, KFoldCrossValidator
+    crossValidate, nimble.core.learn.KFoldCrossValidator
 
     Keywords
     --------
@@ -1545,7 +1545,7 @@ class KFoldCrossValidator(object):
 
     See Also
     --------
-    CV, crossValidate
+    nimble.CV, nimble.crossValidate
 
     Keywords
     --------

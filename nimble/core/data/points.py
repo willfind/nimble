@@ -1746,7 +1746,8 @@ class Points(ABC):
 
         See Also
         --------
-        nimble.fill, nimble.match, Base.replaceRectangle
+        nimble.fill, nimble.match, Base.replaceRectangle,
+        nimble.fillMatching
 
         Examples
         --------
@@ -2033,7 +2034,7 @@ class Points(ABC):
 
         See Also
         --------
-        splitBycollapsingFeatures
+        splitByCollapsingFeatures
 
         Examples
         --------
@@ -2288,7 +2289,7 @@ class Points(ABC):
 
         See Also
         --------
-        statistics
+        statistics, nimble.calculate.similarity
 
         Keywords
         --------
@@ -2318,7 +2319,7 @@ class Points(ABC):
 
         See Also
         --------
-        similarities
+        similarities, nimble.calculate.statistic
 
         Keywords
         --------

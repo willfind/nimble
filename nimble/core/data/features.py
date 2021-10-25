@@ -1802,7 +1802,8 @@ class Features(ABC):
 
         See Also
         --------
-        nimble.fill, nimble.match, Base.replaceRectangle
+        nimble.fill, nimble.match, Base.replaceRectangle,
+        nimble.fillMatching
 
         Examples
         --------
@@ -2410,7 +2411,7 @@ class Features(ABC):
 
         See Also
         --------
-        statistics
+        statistics, nimble.calculate.similarity
 
         Keywords
         --------
@@ -2440,7 +2441,7 @@ class Features(ABC):
 
         See Also
         --------
-        similarities
+        similarities, nimble.calculate.statistic
 
         Keywords
         --------

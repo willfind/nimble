@@ -1077,7 +1077,7 @@ class Base(ABC):
 
         See Also
         --------
-        Points.count, Features.count, matchElements, nimble.match
+        Points.count, Features.count, matchingElements, nimble.match
 
         Examples
         --------
@@ -1751,7 +1751,7 @@ class Base(ABC):
 
         See Also
         --------
-        writeFile, nimble.data
+        nimble.data, writeFile
 
         Keywords
         --------
@@ -2192,7 +2192,7 @@ class Base(ABC):
 
         See Also
         --------
-        countElements, matchElements, nimble.match.zero
+        countElements, matchingElements, nimble.match.zero
 
         Keywords
         --------
@@ -3603,7 +3603,7 @@ class Base(ABC):
 
         See Also
         --------
-        unflatten, shape, dimension
+        unflatten, shape, dimensions
 
         Examples
         --------
@@ -3755,7 +3755,7 @@ class Base(ABC):
 
         See Also
         --------
-        flatten, shape, dimension
+        flatten, shape, dimensions
 
         Examples
         --------
