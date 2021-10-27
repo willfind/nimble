@@ -118,7 +118,8 @@ random_tested = list(map(prefixAdder('nimble.random'), random_funcs))
 # NOTES:
 #  The functionality of these functions is untested, but a test of their
 #  expected log count can be found in this script:
-#      copy, report, getTypeString, groupByFeature, hashCode, show, validate
+#      copy, report, getTypeString, groupByFeature, hashCode, show,
+#      checkInvariants
 base_logged = [
     'calculateOnElements', 'flatten', 'groupByFeature', 'matchingElements',
     'merge', 'replaceFeatureWithBinaryFeatures', 'replaceRectangle', 'report',
@@ -132,7 +133,7 @@ base_notLogged = [
     'matrixPower', 'plotHeatMap', 'plotFeatureAgainstFeature',
     'plotFeatureAgainstFeatureRollingAverage', 'plotFeatureDistribution',
     'plotFeatureGroupMeans', 'plotFeatureGroupStatistics', 'pointView',
-    'save', 'show', 'solveLinearSystem', 'toString', 'validate', 'view',
+    'save', 'show', 'solveLinearSystem', 'toString', 'checkInvariants', 'view',
     'writeFile',
     ]
 base_funcs = base_logged + base_notLogged
@@ -283,10 +284,10 @@ def test_toString_logCount():
     captureOutput(wrapped)
 
 @noLogEntryExpected
-def test_validate_logCount():
+def test_checkInvariants_logCount():
     for constructor in getDataConstructors():
         obj = constructor([[1,2,3],[4,5,6]], useLog=False)
-        isDefault = obj.validate()
+        isDefault = obj.checkInvariants()
 
 ############################
 # Points/Features/Elements #

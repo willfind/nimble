@@ -2088,7 +2088,7 @@ class Base(ABC):
                                          featureStart, featureEnd,
                                          dropDimension)
 
-    def validate(self, level=2):
+    def checkInvariants(self, level=2):
         """
         Check the integrity of the data.
 
@@ -2098,30 +2098,32 @@ class Base(ABC):
         Parameters
         ----------
         level : int
-            The extent to which to validate the data.
+            The extent to which to validate the data. Higher numbers are more
+            stringent checks. Allowed: 0 to 2 inclusive.
         """
         if self.points._namesCreated():
-            assert len(self.points) == len(self.points.getNames())
+            assert self.shape[0] == len(self.points.namesInverse)
         if self.features._namesCreated():
-            assert len(self.features) == len(self.features.getNames())
+            assert self.shape[1] == len(self.features.namesInverse)
 
         if level > 0:
-            if self.points._namesCreated():
-                for i, key in enumerate(self.points.getNames()):
-                    if key is not None:
-                        assert self.points.getIndex(key) == i
-                        assert self.points.getName(i) == key
-                    else:
-                        assert self.points.getName(i) is None
-            if self.features._namesCreated():
-                for i, key in enumerate(self.features.getNames()):
-                    if key is not None:
-                        assert self.features.getIndex(key) == i
-                        assert self.features.getName(i) == key
-                    else:
-                        assert self.features.getName(i) is None
+            def checkAxisNameState(axis):
+                if axis._namesCreated():
+                    for i, key in enumerate(axis.namesInverse):
+                        if key is not None:
+                            assert axis.names[key] == i
+                            assert axis.namesInverse[i] == key
+                        else:
+                            assert axis.namesInverse[i] is None
+                            assert i not in axis.names.values()
+                else:
+                    assert axis.names is None
+                    assert axis.namesInverse is None
 
-        self._validate_implementation(level)
+            checkAxisNameState(self.points)
+            checkAxisNameState(self.features)
+
+        self._checkInvariants_implementation(level)
 
     def containsZero(self):
         """
@@ -5413,7 +5415,7 @@ class Base(ABC):
         pass
 
     @abstractmethod
-    def _validate_implementation(self, level):
+    def _checkInvariants_implementation(self, level):
         pass
 
     @abstractmethod

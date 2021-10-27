@@ -411,10 +411,10 @@ class ListSpecificDataModifying(DataTestObject):
     """Tests for List implementation details which modify data """
 
     @raises(AssertionError)
-    def test_validate_outOfNimble_badValue(self):
+    def test_invariant_outOfNimble_badValue(self):
         obj = self.constructor([1,2])
         obj._data[0][0] = {'no':1}
-        obj.validate(2)
+        obj.checkInvariants(2)
 
 class ListSpecificAll(ListSpecificDataModifying):
     """Tests for List implementation details """
