@@ -114,9 +114,9 @@ class Axis(ABC):
             indent = ' ' * (maxIdxLen + 4)
 
         start = len(indent) - 1 # to remove extra indentation when adding col
-        string = obj._show(indent=indent)
-        match = re.search(u'[ \|\u2502\-]+\n', string)
-        newLine = u' {} \u2502{}\n'
+        string = obj._show(indent=indent, quoteNames=False)
+        match = re.search(u' +\u2502[ \u2502\u2500]+\n', string)
+        newLine = u' {} \u2502{}\n'.format
         if match:
             top, bottom = string.split(match.group(0))
             for i, line in enumerate(top.split('\n')[:-1]):
@@ -124,19 +124,19 @@ class Axis(ABC):
                     continue
                 line = line[start:]
                 if self._namesCreated():
-                    ret += newLine.format(str(i - 3).rjust(maxIdxLen), line)
+                    ret += newLine(str(i - 3).rjust(maxIdxLen), line)
                 else:
                     ret += line + '\n'
             if self._namesCreated():
-                ret += ' ' + '|'.rjust(maxIdxLen) + u' \u2502'
+                if maxIdxLen > 2:
+                    ret += ' ' + u'\u2502'.rjust(maxIdxLen) + u' \u2502'
             ret += match.group(0)[start:]
 
             bottomIdx = len(self) - len(bottom.split('\n')) + 1
             for i, line in enumerate(bottom.split('\n')[:-1]):
                 line = line[start:]
                 if self._namesCreated():
-                    ret += newLine.format(str(bottomIdx).rjust(maxIdxLen),
-                                          line)
+                    ret += newLine(str(bottomIdx).rjust(maxIdxLen), line)
                 else:
                     ret += line + '\n'
                 bottomIdx += 1
@@ -146,7 +146,7 @@ class Axis(ABC):
                     continue
                 line = line[start:]
                 if self._namesCreated():
-                    ret += newLine.format(str(i - 3).rjust(maxIdxLen), line)
+                    ret += newLine(str(i - 3).rjust(maxIdxLen), line)
                 else:
                     ret += line + '\n'
         ret += " >"

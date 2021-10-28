@@ -636,7 +636,7 @@ class PYtoIPYNB:
             setTerminalSize = [
                 "import os\n",
                 "import shutil\n",
-                "size = os.terminal_size((120, 30))\n",
+                "size = os.terminal_size((132, 30))\n",
                 "shutil.get_terminal_size = lambda *args, **kwargs: size\n"
             ]
             terminalSize = dict(source=setTerminalSize, cell_type='code',

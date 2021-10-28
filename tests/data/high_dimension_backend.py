@@ -113,7 +113,8 @@ class HighDimensionSafe(DataTestObject):
                 assert len(testLines) > 0
                 for l1, l2 in zip(testLines, expLines):
                     if l1.startswith('"test"'):
-                        assert l1.endswith(dims + '\n')
+                        both = dims + " dimensions encoded as " + shape
+                        assert l1.endswith(both + '\n')
                         assert l2.endswith(shape + '\n')
                     else:
                         assert l1 == l2

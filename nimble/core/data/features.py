@@ -366,73 +366,73 @@ class Features(ABC):
         >>> single = X.features.copy('1')
         >>> single
         <Matrix 4pt x 1ft
-             1
-           ┌──
-         a │ 1
-         b │ 1
-         c │ 1
-         d │ 1
+               '1'
+             ┌────
+         'a' │  1
+         'b' │  1
+         'c' │  1
+         'd' │  1
         >
         >>> multiple = X.features.copy(['1', 3])
         >>> multiple
         <Matrix 4pt x 2ft
-             1 4
-           ┌────
-         a │ 1 4
-         b │ 1 4
-         c │ 1 4
-         d │ 1 4
+               '1' '4'
+             ┌────────
+         'a' │  1   4
+         'b' │  1   4
+         'c' │  1   4
+         'd' │  1   4
         >
         >>> func = X.features.copy(lambda ft: sum(ft) < 10)
         >>> func
         <Matrix 4pt x 2ft
-             1 2
-           ┌────
-         a │ 1 2
-         b │ 1 2
-         c │ 1 2
-         d │ 1 2
+               '1' '2'
+             ┌────────
+         'a' │  1   2
+         'b' │  1   2
+         'c' │  1   2
+         'd' │  1   2
         >
         >>> strFunc = X.features.copy("a >= 3")
         >>> strFunc
         <Matrix 4pt x 2ft
-             3 4
-           ┌────
-         a │ 3 4
-         b │ 3 4
-         c │ 3 4
-         d │ 3 4
+               '3' '4'
+             ┌────────
+         'a' │  3   4
+         'b' │  3   4
+         'c' │  3   4
+         'd' │  3   4
         >
         >>> startEnd = X.features.copy(start=1, end=2)
         >>> startEnd
         <Matrix 4pt x 2ft
-             2 3
-           ┌────
-         a │ 2 3
-         b │ 2 3
-         c │ 2 3
-         d │ 2 3
+               '2' '3'
+             ┌────────
+         'a' │  2   3
+         'b' │  2   3
+         'c' │  2   3
+         'd' │  2   3
         >
         >>> numberNoRandom = X.features.copy(number=2)
         >>> numberNoRandom
         <Matrix 4pt x 2ft
-             1 2
-           ┌────
-         a │ 1 2
-         b │ 1 2
-         c │ 1 2
-         d │ 1 2
+               '1' '2'
+             ┌────────
+         'a' │  1   2
+         'b' │  1   2
+         'c' │  1   2
+         'd' │  1   2
         >
         >>> nimble.random.setSeed(42)
         >>> numberRandom = X.features.copy(number=2, randomize=True)
         >>> numberRandom
         <Matrix 4pt x 2ft
-             1 4
-           ┌────
-         a │ 1 4
-         b │ 1 4
-         c │ 1 4
-         d │ 1 4
+               '1' '4'
+             ┌────────
+         'a' │  1   4
+         'b' │  1   4
+         'c' │  1   4
+         'd' │  1   4
         >
 
         Keywords
@@ -508,7 +508,7 @@ class Features(ABC):
         >>> single = X.features.extract('a')
         >>> single
         <List 3pt x 1ft
-               a
+              'a'
            ┌──────
          0 │ 1.000
          1 │ 0.000
@@ -516,7 +516,7 @@ class Features(ABC):
         >
         >>> X
         <List 3pt x 2ft
-               b     c
+              'b'   'c'
            ┌────────────
          0 │ 0.000 0.000
          1 │ 1.000 0.000
@@ -530,7 +530,7 @@ class Features(ABC):
         >>> multiple = X.features.extract(['a', 2])
         >>> multiple
         <List 3pt x 2ft
-               a     c
+              'a'   'c'
            ┌────────────
          0 │ 1.000 0.000
          1 │ 0.000 0.000
@@ -538,7 +538,7 @@ class Features(ABC):
         >
         >>> X
         <List 3pt x 1ft
-               b
+              'b'
            ┌──────
          0 │ 0.000
          1 │ 1.000
@@ -552,7 +552,7 @@ class Features(ABC):
         >>> func = X.features.extract(lambda ft: ft[2] == 1)
         >>> func
         <List 3pt x 1ft
-               c
+              'c'
            ┌──────
          0 │ 0.000
          1 │ 0.000
@@ -560,7 +560,7 @@ class Features(ABC):
         >
         >>> X
         <List 3pt x 2ft
-               a     b
+              'a'   'b'
            ┌────────────
          0 │ 1.000 0.000
          1 │ 0.000 1.000
@@ -574,19 +574,19 @@ class Features(ABC):
         >>> strFunc = X.features.extract("p2 != 0")
         >>> strFunc
         <List 3pt x 1ft
-                b
-            ┌──────
-         p1 │ 0.000
-         p2 │ 1.000
-         p3 │ 0.000
+                 'b'
+              ┌──────
+         'p1' │ 0.000
+         'p2' │ 1.000
+         'p3' │ 0.000
         >
         >>> X
         <List 3pt x 2ft
-                a     c
-            ┌────────────
-         p1 │ 1.000 0.000
-         p2 │ 0.000 0.000
-         p3 │ 0.000 1.000
+                 'a'   'c'
+              ┌────────────
+         'p1' │ 1.000 0.000
+         'p2' │ 0.000 0.000
+         'p3' │ 0.000 1.000
         >
 
         Extract features from the inclusive start to the inclusive end.
@@ -596,7 +596,7 @@ class Features(ABC):
         >>> startEnd = X.features.extract(start=1, end=2)
         >>> startEnd
         <List 3pt x 2ft
-               b     c
+              'b'   'c'
            ┌────────────
          0 │ 0.000 0.000
          1 │ 1.000 0.000
@@ -604,7 +604,7 @@ class Features(ABC):
         >
         >>> X
         <List 3pt x 1ft
-               a
+              'a'
            ┌──────
          0 │ 1.000
          1 │ 0.000
@@ -619,7 +619,7 @@ class Features(ABC):
         >>> numberNoRandom = X.features.extract(number=2)
         >>> numberNoRandom
         <List 3pt x 2ft
-               a     b
+              'a'   'b'
            ┌────────────
          0 │ 1.000 0.000
          1 │ 0.000 1.000
@@ -627,7 +627,7 @@ class Features(ABC):
         >
         >>> X
         <List 3pt x 1ft
-               c
+              'c'
            ┌──────
          0 │ 0.000
          1 │ 0.000
@@ -641,7 +641,7 @@ class Features(ABC):
         >>> numberRandom = X.features.extract(number=2, randomize=True)
         >>> numberRandom
         <List 3pt x 2ft
-               c     a
+              'c'   'a'
            ┌────────────
          0 │ 0.000 1.000
          1 │ 0.000 0.000
@@ -649,7 +649,7 @@ class Features(ABC):
         >
         >>> X
         <List 3pt x 1ft
-               b
+              'b'
            ┌──────
          0 │ 0.000
          1 │ 1.000
@@ -725,7 +725,7 @@ class Features(ABC):
         >>> X.features.delete('a')
         >>> X
         <List 3pt x 2ft
-               b     c
+              'b'   'c'
            ┌────────────
          0 │ 0.000 0.000
          1 │ 1.000 0.000
@@ -739,7 +739,7 @@ class Features(ABC):
         >>> X.features.delete(['a', 2])
         >>> X
         <List 3pt x 1ft
-               b
+              'b'
            ┌──────
          0 │ 0.000
          1 │ 1.000
@@ -753,7 +753,7 @@ class Features(ABC):
         >>> X.features.delete(lambda ft: ft[2] == 1)
         >>> X
         <List 3pt x 2ft
-               a     b
+              'a'   'b'
            ┌────────────
          0 │ 1.000 0.000
          1 │ 0.000 1.000
@@ -768,11 +768,11 @@ class Features(ABC):
         >>> X.features.delete("p2 != 0")
         >>> X
         <List 3pt x 2ft
-                a     c
-            ┌────────────
-         p1 │ 1.000 0.000
-         p2 │ 0.000 0.000
-         p3 │ 0.000 1.000
+                 'a'   'c'
+              ┌────────────
+         'p1' │ 1.000 0.000
+         'p2' │ 0.000 0.000
+         'p3' │ 0.000 1.000
         >
 
         Delete features from the inclusive start to the inclusive end.
@@ -782,7 +782,7 @@ class Features(ABC):
         >>> X.features.delete(start=1, end=2)
         >>> X
         <List 3pt x 1ft
-               a
+              'a'
            ┌──────
          0 │ 1.000
          1 │ 0.000
@@ -796,7 +796,7 @@ class Features(ABC):
         >>> X.features.delete(number=2)
         >>> X
         <List 3pt x 1ft
-               c
+              'c'
            ┌──────
          0 │ 0.000
          1 │ 0.000
@@ -811,7 +811,7 @@ class Features(ABC):
         >>> X.features.delete(number=2,  randomize=True)
         >>> X
         <List 3pt x 1ft
-               b
+              'b'
            ┌──────
          0 │ 0.000
          1 │ 1.000
@@ -887,7 +887,7 @@ class Features(ABC):
         >>> X.features.retain('a')
         >>> X
         <List 3pt x 1ft
-               a
+              'a'
            ┌──────
          0 │ 1.000
          1 │ 0.000
@@ -901,7 +901,7 @@ class Features(ABC):
         >>> X.features.retain(['a', 2])
         >>> X
         <List 3pt x 2ft
-               a     c
+              'a'   'c'
            ┌────────────
          0 │ 1.000 0.000
          1 │ 0.000 0.000
@@ -915,7 +915,7 @@ class Features(ABC):
         >>> X.features.retain(lambda ft: ft[2] == 1)
         >>> X
         <List 3pt x 1ft
-               c
+              'c'
            ┌──────
          0 │ 0.000
          1 │ 0.000
@@ -930,11 +930,11 @@ class Features(ABC):
         >>> X.features.retain("p2 != 0")
         >>> X
         <List 3pt x 1ft
-                b
-            ┌──────
-         p1 │ 0.000
-         p2 │ 1.000
-         p3 │ 0.000
+                 'b'
+              ┌──────
+         'p1' │ 0.000
+         'p2' │ 1.000
+         'p3' │ 0.000
         >
 
         Retain features from the inclusive start to the inclusive end.
@@ -944,7 +944,7 @@ class Features(ABC):
         >>> X.features.retain(start=1, end=2)
         >>> X
         <List 3pt x 2ft
-               b     c
+              'b'   'c'
            ┌────────────
          0 │ 0.000 0.000
          1 │ 1.000 0.000
@@ -958,7 +958,7 @@ class Features(ABC):
         >>> X.features.retain(number=2)
         >>> X
         <List 3pt x 2ft
-               a     b
+              'a'   'b'
            ┌────────────
          0 │ 1.000 0.000
          1 │ 0.000 1.000
@@ -973,7 +973,7 @@ class Features(ABC):
         >>> X.features.retain(number=2, randomize=True)
         >>> X
         <List 3pt x 2ft
-               c     a
+              'c'   'a'
            ┌────────────
          0 │ 0.000 1.000
          1 │ 0.000 0.000
@@ -1079,12 +1079,12 @@ class Features(ABC):
         >>> highTemps.features.sort()
         >>> highTemps
         <Matrix 4pt x 3ft
-             Boulder Denver Fort Collins
-           ┌────────────────────────────
-         0 │    67     64        64
-         1 │    71     68        66
-         2 │    71     73        70
-         3 │    40     45        51
+             'Boulder' 'Denver' 'Fort Collins'
+           ┌──────────────────────────────────
+         0 │     67       64          64
+         1 │     71       68          66
+         2 │     71       73          70
+         3 │     40       45          51
         >
 
         Sort by points.
@@ -1118,12 +1118,12 @@ class Features(ABC):
         >>> highTemps.features.sort(averageHighTemp, reverse=True)
         >>> highTemps
         <Matrix 4pt x 3ft
-             Fort Collins Denver Boulder
-           ┌────────────────────────────
-         0 │      64        64      67
-         1 │      66        68      71
-         2 │      70        73      71
-         3 │      51        45      40
+             'Fort Collins' 'Denver' 'Boulder'
+           ┌──────────────────────────────────
+         0 │       64          64        67
+         1 │       66          68        71
+         2 │       70          73        71
+         3 │       51          45        40
         >
 
         Keywords
@@ -1293,7 +1293,7 @@ class Features(ABC):
         ...                             features=[2, 0])
         >>> calc
         <Matrix 3pt x 2ft
-               f3    f1
+              'f3'  'f1'
            ┌────────────
          0 │ 6.000 7.000
          1 │ 6.000 6.000
@@ -1342,9 +1342,9 @@ class Features(ABC):
         >>> allPositiveFts = X.features.matching(match.allPositive)
         >>> allPositiveFts
         <Matrix 1pt x 3ft
-                         0     1    2
-                     ┌─────────────────
-         allPositive │ False False True
+                           0     1    2
+                       ┌─────────────────
+         'allPositive' │ False False True
         >
 
         >>> from nimble import match
@@ -1353,9 +1353,9 @@ class Features(ABC):
         >>> ftHasMissing = X.features.matching(match.anyMissing)
         >>> ftHasMissing
         <Matrix 1pt x 3ft
-                        0    1     2
-                    ┌─────────────────
-         anyMissing │ False True False
+                          0    1     2
+                      ┌─────────────────
+         'anyMissing' │ False True False
         >
 
         Keywords
@@ -1425,10 +1425,10 @@ class Features(ABC):
         >>> X.features.insert('4', toInsert)
         >>> X
         <Matrix 2pt x 4ft
-             1 2 3 4
-           ┌────────
-         0 │ 1 2 3 4
-         1 │ 5 6 7 8
+             '1' '2' '3' '4'
+           ┌────────────────
+         0 │  1   2   3   4
+         1 │  5   6   7   8
         >
 
         Reorder names.
@@ -1441,10 +1441,10 @@ class Features(ABC):
         >>> X.features.insert(2, toInsert)
         >>> X
         <Matrix 2pt x 4ft
-             0 1 2 3
-           ┌────────
-         a │ 1 2 3 4
-         b │ 5 6 7 8
+               0 1 2 3
+             ┌────────
+         'a' │ 1 2 3 4
+         'b' │ 5 6 7 8
         >
 
         Keywords
@@ -1510,10 +1510,10 @@ class Features(ABC):
         >>> X.features.append(toAppend)
         >>> X
         <Matrix 2pt x 4ft
-             1 2 3 4
-           ┌────────
-         0 │ 1 2 3 4
-         1 │ 5 6 7 8
+             '1' '2' '3' '4'
+           ┌────────────────
+         0 │  1   2   3   4
+         1 │  5   6   7   8
         >
 
         Reorder names.
@@ -1526,10 +1526,10 @@ class Features(ABC):
         >>> X.features.append(toAppend)
         >>> X
         <Matrix 2pt x 4ft
-             0 1 2 3
-           ┌────────
-         a │ 1 2 3 4
-         b │ 5 6 7 8
+               0 1 2 3
+             ┌────────
+         'a' │ 1 2 3 4
+         'b' │ 5 6 7 8
         >
 
         Keywords
@@ -1579,7 +1579,7 @@ class Features(ABC):
         >>> obj.features.replace(newFt, features='b')
         >>> obj
         <Matrix 3pt x 3ft
-               a     b     c
+              'a'   'b'   'c'
            ┌──────────────────
          0 │ 0.000 1.000 0.000
          1 │ 0.000 1.000 0.000
@@ -1603,11 +1603,11 @@ class Features(ABC):
         >>> obj.features.replace(['Y', 'N', 'Y'], featureNames=['b'])
         >>> obj
         <DataFrame 3pt x 3ft
-               a   b   c
-           ┌──────────────
-         0 │ 0.000 Y 0.000
-         1 │ 0.000 N 0.000
-         2 │ 0.000 Y 0.000
+              'a'  'b'  'c'
+           ┌────────────────
+         0 │ 0.000  Y  0.000
+         1 │ 0.000  N  0.000
+         2 │ 0.000  Y  0.000
         >
 
         Keywords
@@ -1725,12 +1725,12 @@ class Features(ABC):
         >>> orders.features.permute(['ID', 'quantity', 'dept'])
         >>> orders
         <DataFrame 4pt x 3ft
-             ID quantity dept
-           ┌─────────────────
-         0 │ 81    3     home
-         1 │ 98    10    gard
-         2 │ 14    1     home
-         3 │ 11    3     home
+             'ID' 'quantity' 'dept'
+           ┌───────────────────────
+         0 │  81      3       home
+         1 │  98      10      gard
+         2 │  14      1       home
+         3 │  11      3       home
         >
 
         Keywords
@@ -1885,11 +1885,11 @@ class Features(ABC):
         >>> train.features.normalize(range0to1Normalize)
         >>> train
         <Matrix 3pt x 3ft
-                  review1 review2 review3
-                ┌────────────────────────
-         movie1 │  1.000   1.000   1.000
-         movie2 │  0.333   0.471   0.460
-         movie3 │  0.000   0.000   0.000
+                    'review1' 'review2' 'review3'
+                  ┌──────────────────────────────
+         'movie1' │   1.000     1.000     1.000
+         'movie2' │   0.333     0.471     0.460
+         'movie3' │   0.000     0.000     0.000
         >
 
         With applyResultTo.
@@ -1909,18 +1909,18 @@ class Features(ABC):
         ...                          applyResultTo=test)
         >>> train
         <Matrix 3pt x 3ft
-                  review1 review2 review3
-                ┌────────────────────────
-         movie1 │  1.336   1.248   1.149
-         movie2 │  -0.267  -0.048  0.139
-         movie3 │  -1.069  -1.200  -1.288
+                    'review1' 'review2' 'review3'
+                  ┌──────────────────────────────
+         'movie1' │   1.336     1.248     1.149
+         'movie2' │   -0.267    -0.048    0.139
+         'movie3' │   -1.069    -1.200    -1.288
         >
         >>> test
         <Matrix 2pt x 3ft
-                  review1 review2 review3
-                ┌────────────────────────
-         movie4 │  0.535   0.996   -0.307
-         movie5 │  -0.267  -0.444  1.031
+                    'review1' 'review2' 'review3'
+                  ┌──────────────────────────────
+         'movie4' │   0.535     0.996     -0.307
+         'movie5' │   -0.267    -0.444    1.031
         >
 
         Keywords
@@ -2053,7 +2053,7 @@ class Features(ABC):
         ...                                   ['city', 'country'])
         >>> locations
         <Matrix 3pt x 2ft
-                city     country
+               'city'   'country'
            ┌───────────────────────
          0 │ Cape Town South Africa
          1 │    Lima       Peru
@@ -2071,12 +2071,12 @@ class Features(ABC):
         >>> inventory.features.splitByParsing(0, 3, ['category', 'id'])
         >>> inventory
         <List 4pt x 3ft
-             category  id quantity
-           ┌──────────────────────
-         0 │   AGG    932    44
-         1 │   AGG    734    11
-         2 │   HEQ    892    1
-         3 │   LEQ    331    2
+             'category' 'id' 'quantity'
+           ┌───────────────────────────
+         0 │    AGG     932      44
+         1 │    AGG     734      11
+         2 │    HEQ     892      1
+         3 │    LEQ     331      2
         >
 
         Keywords
@@ -2181,11 +2181,11 @@ class Features(ABC):
         >>> X.features.repeat(totalCopies=3,
         ...                      copyFeatureByFeature=False)
         <Matrix 3pt x 3ft
-             a_1 a_2 a_3
-           ┌────────────
-         0 │  1   1   1
-         1 │  2   2   2
-         2 │  3   3   3
+             'a_1' 'a_2' 'a_3'
+           ┌──────────────────
+         0 │   1     1     1
+         1 │   2     2     2
+         2 │   3     3     3
         >
 
         Two-dimensional, copyFeatureByFeature is False
@@ -2195,11 +2195,11 @@ class Features(ABC):
         >>> X.features.repeat(totalCopies=2,
         ...                      copyFeatureByFeature=False)
         <Matrix 3pt x 4ft
-             a_1 b_1 a_2 b_2
-           ┌────────────────
-         0 │  1   2   1   2
-         1 │  3   4   3   4
-         2 │  5   6   5   6
+             'a_1' 'b_1' 'a_2' 'b_2'
+           ┌────────────────────────
+         0 │   1     2     1     2
+         1 │   3     4     3     4
+         2 │   5     6     5     6
         >
 
         Two-dimensional, copyFeatureByFeature is True
@@ -2209,11 +2209,11 @@ class Features(ABC):
         >>> X.features.repeat(totalCopies=2,
         ...                      copyFeatureByFeature=True)
         <Matrix 3pt x 4ft
-             a_1 a_2 b_1 b_2
-           ┌────────────────
-         0 │  1   1   2   2
-         1 │  3   3   4   4
-         2 │  5   5   6   6
+             'a_1' 'a_2' 'b_1' 'b_2'
+           ┌────────────────────────
+         0 │   1     1     2     2
+         1 │   3     3     4     4
+         2 │   5     5     6     6
         >
 
         Keywords
@@ -2250,12 +2250,12 @@ class Features(ABC):
         >>> uniqueFeatures = X.features.unique()
         >>> uniqueFeatures
         <Matrix 4pt x 3ft
-             f1 f2 f3
-           ┌─────────
-         0 │ a  1  3
-         1 │ a  5  6
-         2 │ b  7  1
-         3 │ c  2  9
+             'f1' 'f2' 'f3'
+           ┌───────────────
+         0 │  a    1    3
+         1 │  a    5    6
+         2 │  b    7    1
+         3 │  c    2    9
         >
 
         Keywords
