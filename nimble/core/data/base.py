@@ -115,7 +115,7 @@ class Base(ABC):
         self._id = Base._id
         Base._id += 1
 
-        self._shape = list(shape)
+        self._dims = list(shape)
         self._name = name
 
         self._points = self._getPoints(pointNames)
@@ -156,9 +156,9 @@ class Base(ABC):
         --------
         dimensions
         """
-        if len(self._shape) > 2:
-            return self._shape[0], np.prod(self._shape[1:])
-        return self._shape[0], self._shape[1]
+        if len(self._dims) > 2:
+            return self._dims[0], np.prod(self._dims[1:])
+        return self._dims[0], self._dims[1]
 
     @property
     def dimensions(self):
@@ -169,7 +169,7 @@ class Base(ABC):
         --------
         shape
         """
-        return tuple(self._shape)
+        return tuple(self._dims)
 
     @property
     def points(self):
@@ -306,13 +306,13 @@ class Base(ABC):
         when the data has more than two dimensions due to the ambiguity
         in the definition of elements.
         """
-        if len(self._shape) > 2:
-            savedShape = self._shape
-            self._shape = [len(self.points), len(self.features)]
+        if len(self._dims) > 2:
+            savedShape = self._dims
+            self._dims = [len(self.points), len(self.features)]
             try:
                 yield self
             finally:
-                self._shape = savedShape
+                self._dims = savedShape
         else:
             yield self
 
@@ -347,7 +347,7 @@ class Base(ABC):
         raise ImproperObjectAction(msg)
 
     def __bool__(self):
-        return self._shape[0] > 0 and self._shape[-1] > 0
+        return self._dims[0] > 0 and self._dims[-1] > 0
 
     @limitedTo2D
     def iterateElements(self, order='point', only=None):
@@ -1303,7 +1303,7 @@ class Base(ABC):
         equivalent, matches, equals, compare, comparison, same, similar
         """
         #first check to make sure they have the same dimensions
-        if self._shape != other._shape:
+        if self._dims != other._dims:
             return False
         #now check if the hashes of each matrix are the same
 
@@ -1461,7 +1461,7 @@ class Base(ABC):
             else:
                 trainX.name = "train"
                 testX.name = "test"
-        elif len(self._shape) > 2:
+        elif len(self._dims) > 2:
             msg = "labels parameter must be None when the data has more "
             msg += "than two dimensions"
             raise ImproperObjectAction(msg)
@@ -1538,10 +1538,10 @@ class Base(ABC):
         results = []
         fnames = []
         fnames.append('Values')
-        results.append(np.prod(self._shape))
-        if len(self._shape) > 2:
+        results.append(np.prod(self._dims))
+        if len(self._dims) > 2:
             fnames.append('Dimensions')
-            results.append(' x '.join(map(str, self._shape)))
+            results.append(' x '.join(map(str, self._dims)))
         else:
             fnames.extend(['Points', 'Features'])
             results.extend([self.shape[0], self.shape[1]])
@@ -1582,7 +1582,7 @@ class Base(ABC):
         """
         if not isinstance(other, Base):
             return False
-        if self._shape != other._shape:
+        if self._dims != other._dims:
             return False
         if not self._equalFeatureNames(other):
             return False
@@ -1655,7 +1655,7 @@ class Base(ABC):
 
         if fileFormat.lower() in ['hdf5', 'h5']:
             self._writeFileHDF_implementation(outPath, includePointNames)
-        elif len(self._shape) > 2:
+        elif len(self._dims) > 2:
             msg = 'Data with more than two dimensions can only be written '
             msg += 'to .hdf5 or .h5 formats otherwise the dimensionality '
             msg += 'would be lost'
@@ -2079,7 +2079,7 @@ class Base(ABC):
             # make exclusive now that it won't ruin the validation check
             featureEnd += 1
 
-        if len(self._shape) > 2:
+        if len(self._dims) > 2:
             if featureStart != 0 or featureEnd != len(self.features):
                 msg = "feature limited views are not allowed for data with "
                 msg += "more than two dimensions."
@@ -2266,8 +2266,8 @@ class Base(ABC):
 
         if includeObjectName and self.name is not None:
             ret += '"{}" '.format(self._name)
-        if len(self._shape) > 2:
-            ret += " x ".join(map(str, self._shape))
+        if len(self._dims) > 2:
+            ret += " x ".join(map(str, self._dims))
             ret += " dimensions encoded as "
         ret += str(len(self.points)) + "pt x "
         ret += str(len(self.features)) + "ft"
@@ -3102,7 +3102,7 @@ class Base(ABC):
         """
         self._transpose_implementation()
 
-        self._shape = [len(self.features), len(self.points)]
+        self._dims = [len(self.features), len(self.points)]
         ptNames, ftNames = (self.features._getNamesNoGeneration(),
                             self.points._getNamesNoGeneration())
         self.points.setNames(ptNames, useLog=False)
@@ -3258,7 +3258,7 @@ class Base(ABC):
                 msg += "'and dict of list'"
                 raise InvalidArgumentValue(msg)
 
-        if len(self._shape) > 2:
+        if len(self._dims) > 2:
             if to in ['listofdict', 'dictoflist', 'scipycsr', 'scipycsc']:
                 msg = 'Objects with more than two dimensions cannot be '
                 msg += 'copied to {0}'.format(origTo)
@@ -3291,7 +3291,7 @@ class Base(ABC):
         # nimble, numpy and scipy types
         ret = self._copy_implementation(to)
         if isinstance(ret, Base):
-            ret._shape = self._shape.copy()
+            ret._dims = self._dims.copy()
             if not rowsArePoints:
                 ret.transpose(useLog=False)
             ret._name = self.name
@@ -3315,8 +3315,8 @@ class Base(ABC):
 
     def _copy_pythonList(self, rowsArePoints):
         ret = self._copy_implementation('pythonlist')
-        if len(self._shape) > 2:
-            ret = np.reshape(ret, self._shape).tolist()
+        if len(self._dims) > 2:
+            ret = np.reshape(ret, self._dims).tolist()
         if not rowsArePoints:
             ret = np.transpose(ret).tolist()
         return ret
@@ -3579,7 +3579,7 @@ class Base(ABC):
             msg = "Can only flatten when there is one or more "
             msg += "features. This object has 0 features."
             raise ImproperObjectAction(msg)
-        if order == 'feature' and len(self._shape) > 2:
+        if order == 'feature' and len(self._dims) > 2:
             msg = "order='feature' is not allowed for flattening objects with "
             msg += 'more than two dimensions'
             raise ImproperObjectAction(msg)
@@ -3587,9 +3587,9 @@ class Base(ABC):
         fNames = None
         if self.points._namesCreated() or self.features._namesCreated():
             fNames = self._flattenNames(order)
-        self._shape = list(self.shape) # make 2D before flattening
+        self._dims = list(self.shape) # make 2D before flattening
         self._flatten_implementation(order)
-        self._shape = [1, len(self.points) * len(self.features)]
+        self._dims = [1, len(self.points) * len(self.features)]
 
         self.features.setNames(fNames, useLog=False)
         self.points.setNames(['Flattened'], useLog=False)
@@ -3806,7 +3806,7 @@ class Base(ABC):
         else:
             pNames, fNames = (None, None)
 
-        self._shape = list(dataDimensions)
+        self._dims = list(dataDimensions)
         self.points.setNames(pNames, useLog=False)
         self.features.setNames(fNames, useLog=False)
 
@@ -4658,7 +4658,7 @@ class Base(ABC):
         """
         with self._treatAs2D():
             ret = self.calculateOnElements(abs, useLog=False)
-        ret._shape = self._shape.copy()
+        ret._dims = self._dims.copy()
         if self.points._namesCreated():
             ret.points.setNames(self.points.getNames(), useLog=False)
         else:
@@ -4689,7 +4689,7 @@ class Base(ABC):
             raise ImproperObjectAction(msg) from e
 
     def _genericBinary_sizeValidation(self, opName, other):
-        if self._shape != other._shape:
+        if self._dims != other._dims:
             msg = "The dimensions of the objects must be equal."
             raise InvalidArgumentValue(msg)
         if len(self.points) != len(other.points):
@@ -4898,7 +4898,7 @@ class Base(ABC):
             obj._diagnoseFailureAndRaiseException(opName, other, error)
             raise # backup; should be diagnosed and raised above
 
-        ret._shape = self._shape
+        ret._dims = self._dims
         if opName.startswith('__i'):
             self._referenceFrom(ret, paths=(self._absPath, self._relPath))
             ret = self
@@ -5082,13 +5082,13 @@ class Base(ABC):
             raise InvalidArgumentValue(msg)
         if 'shape' in kwargs:
             msg = 'Cannot provide "shape" keyword, the shape is determined by '
-            msg = 'other._shape'
+            msg = 'other._dims'
             raise InvalidArgumentValue(msg)
         if hasattr(other, '_source'): # view
             other = other.copy()
 
         kwargs['data'] = other._data
-        kwargs['shape'] = other._shape
+        kwargs['shape'] = other._dims
         # setdefault only sets if the key is not already present
         kwargs.setdefault('name', self.name)
         kwargs.setdefault('paths', (other._absPath, other._relPath))

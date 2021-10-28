@@ -1211,7 +1211,7 @@ def flattenToOneDimension(data, toFill=None, dimensions=None):
     flattened point by point.
     """
     # if Base and not a vector, use points attribute for __len__ and __iter__
-    if _isBase(data) and (len(data._shape) > 2 or data.shape[0] > 1):
+    if _isBase(data) and (len(data._dims) > 2 or data.shape[0] > 1):
         data = data.points
     if toFill is None:
         toFill = []
@@ -1385,7 +1385,7 @@ def initDataObject(
     if _isBase(rawData):
         # only use data; point/featureNames, treatAsMissing, etc. may vary
         # _data is always 2D, but _shape could be higher dimension
-        kwargs['shape'] = rawData._shape
+        kwargs['shape'] = rawData._dims
         if isinstance(rawData, nimble.core.data.BaseView):
             rawData = rawData.copy()
             copied = True

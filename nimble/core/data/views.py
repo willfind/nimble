@@ -57,7 +57,7 @@ class BaseView(Base, metaclass=ABCMeta):
         self._pEnd = pointEnd
         self._fStart = featureStart
         self._fEnd = featureEnd
-        if len(source._shape) > 2:
+        if len(source._dims) > 2:
             if self._fStart != 0 or self._fEnd != len(source.features):
                 msg = "feature limited views are not allowed for data with "
                 msg += "more than two dimensions."
@@ -129,17 +129,17 @@ class BaseView(Base, metaclass=ABCMeta):
 
     @contextmanager
     def _treatAs2D(self):
-        if len(self._shape) > 2:
-            savedShape = self._shape
-            savedSource = self._source._shape
-            self._shape = [len(self.points), len(self.features)]
-            self._source._shape = [len(self._source.points),
+        if len(self._dims) > 2:
+            savedShape = self._dims
+            savedSource = self._source._dims
+            self._dims = [len(self.points), len(self.features)]
+            self._source._dims = [len(self._source.points),
                                    len(self._source.features)]
             try:
                 yield self
             finally:
-                self._shape = savedShape
-                self._source._shape = savedSource
+                self._dims = savedShape
+                self._source._dims = savedSource
         else:
             yield self
 

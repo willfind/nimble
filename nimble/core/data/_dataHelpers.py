@@ -745,9 +745,9 @@ def limitedTo2D(method):
     @wraps(method)
     def wrapped(self, *args, **kwargs):
         if hasattr(self, '_base'):
-            tensorRank = len(self._base._shape)
+            tensorRank = len(self._base._dims)
         else:
-            tensorRank = len(self._shape)
+            tensorRank = len(self._dims)
         if tensorRank > 2:
             msg = "{0} is not permitted when the ".format(method.__name__)
             msg += "data has more than two dimensions"

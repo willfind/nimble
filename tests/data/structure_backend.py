@@ -2245,19 +2245,19 @@ class StructureModifying(StructureShared):
         # _reshape refers to elements, not entire object
         elem = [1, 2, 3]
         ret = self.constructor([[elem, elem], [elem, elem]])
-        assert ret._shape == [2, 2, 3]
+        assert ret._dims == [2, 2, 3]
         assert len(ret.points) == 2
         assert len(ret.features) == 6
 
         data1 = [elem, elem, elem]
         ret = self.constructor([[data1, data1], [data1, data1]])
-        assert ret._shape == [2, 2, 3, 3]
+        assert ret._dims == [2, 2, 3, 3]
         assert len(ret.points) == 2
         assert len(ret.features) == 18
 
         data2 = [data1, data1, data1]
         ret = self.constructor([[data2, data2], [data2, data2]])
-        assert ret._shape == [2, 2, 3, 3, 3]
+        assert ret._dims == [2, 2, 3, 3, 3]
         assert len(ret.points) == 2
         assert len(ret.features) == 54
 
