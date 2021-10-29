@@ -121,6 +121,15 @@ class SparseSpecificDataModifying(DataTestObject):
     def test_ipow_Sparse_scalarOfOne(self):
         back_sparseScalarOfOne(self.constructor, '__ipow__')
 
+    def test_invariant_outOfNimble_badValue(self):
+        data = [[0, "a1", 0.], [1, "b2", 1.], [2, "c3", 2.]]
+        toTest = self.constructor(data)
+        toTest._data.data[0] = {"bad":1}
+
+        with raises(AssertionError):
+            toTest.checkInvariants(2)
+
+
 class SparseSpecificAll(SparseSpecificDataSafe, SparseSpecificDataModifying):
     """Tests for Sparse implementation details """
 
@@ -402,6 +411,13 @@ class DataFrameSpecificDataModifying(DataTestObject):
                      np.dtype(object), np.dtype(float))
         assert tuple(toTest._data.dtypes) == expDtypes
 
+    def test_invariant_outOfNimble_badValue(self):
+        data = [[0, "a1", 0.], [1, "b2", 1.], [2, "c3", 2.]]
+        toTest = self.constructor(data)
+        toTest._data.at[0,0] = lambda _ : 1
+        with raises(AssertionError):
+            toTest.checkInvariants(2)
+
 class DataFrameSpecificAll(DataFrameSpecificDataSafe,
                            DataFrameSpecificDataModifying):
     """Tests for DataFrame implementation details """
@@ -410,11 +426,24 @@ class DataFrameSpecificAll(DataFrameSpecificDataSafe,
 class ListSpecificDataModifying(DataTestObject):
     """Tests for List implementation details which modify data """
 
-    @raises(AssertionError)
     def test_invariant_outOfNimble_badValue(self):
         obj = self.constructor([1,2])
         obj._data[0][0] = {'no':1}
-        obj.checkInvariants(2)
+        with raises(AssertionError):
+            obj.checkInvariants(2)
 
 class ListSpecificAll(ListSpecificDataModifying):
+    """Tests for List implementation details """
+
+
+class MatrixSpecificDataModifying(DataTestObject):
+    """Tests for List implementation details which modify data """
+
+    def test_invariant_outOfNimble_badValue(self):
+        obj = self.constructor([1,2, "objType"])
+        obj._data[0,0] = {'no':1}
+        with raises(AssertionError):
+            obj.checkInvariants(2)
+
+class MatrixSpecificAll(MatrixSpecificDataModifying):
     """Tests for List implementation details """

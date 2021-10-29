@@ -949,7 +949,7 @@ class Sparse(Base):
                 # call the coo_matrix structure consistency checker
                 self._data._check()
 
-        if level > 1 and self._data.data.dtype is object:
+        if level > 1 and self._data.data.dtype == object:
             allowed = np.vectorize(isAllowedSingleElement, otypes=[bool])
             assert allowed(self._data.data).all()
 

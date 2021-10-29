@@ -46,6 +46,7 @@ from .data_specific_backend import SparseSpecificAll
 from .data_specific_backend import DataFrameSpecificAll
 from .data_specific_backend import DataFrameSpecificDataSafe
 from .data_specific_backend import ListSpecificAll
+from .data_specific_backend import MatrixSpecificAll
 
 listViewConstructor = viewConstructorMaker('List')
 matrixViewConstructor = viewConstructorMaker('Matrix')
@@ -95,7 +96,7 @@ class TestList(BaseChildTests, ListSpecificAll):
         return listConstructor(*args, **kwargs)
 
 
-class TestMatrix(BaseChildTests):
+class TestMatrix(BaseChildTests, MatrixSpecificAll):
     def constructor(self, *args, **kwargs):
         matrixConstructor = objConstructorMaker('Matrix')
         return matrixConstructor(*args, **kwargs)

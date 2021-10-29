@@ -422,7 +422,7 @@ class Matrix(Base):
         assert len(mShape) == 2
         assert allowedNumpyDType(self._data.dtype)
 
-        if level > 1 and self._data.dtype is object:
+        if level > 1 and self._data.dtype == object:
             allowed = np.vectorize(isAllowedSingleElement, otypes=[bool])
             assert allowed(self._data).all()
 
