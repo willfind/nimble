@@ -559,9 +559,9 @@ class List(Base):
 
         return List(data, shape=self._shape[1:], reuseData=True)
 
-    def _validate_implementation(self, level):
-        assert len(self._data) == len(self.points)
-        assert self._numFeatures == len(self.features)
+    def _checkInvariants_implementation(self, level):
+        assert len(self._data) == self.shape[0]
+        assert self._numFeatures == self.shape[1]
 
         if level > 0:
             if len(self._data) > 0:

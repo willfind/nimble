@@ -415,17 +415,16 @@ class Matrix(Base):
         data = self._data[pointIndex].reshape(reshape)
         return Matrix(data, shape=self._shape[1:], reuseData=True)
 
-    def _validate_implementation(self, level):
-        shape = np.shape(self._data)
-        assert shape[0] == len(self.points)
-        assert shape[1] == len(self.features)
-        assert len(shape) == 2
+    def _checkInvariants_implementation(self, level):
+        mShape = np.shape(self._data)
+        assert mShape[0] == self.shape[0]
+        assert mShape[1] == self.shape[1]
+        assert len(mShape) == 2
         assert allowedNumpyDType(self._data.dtype)
 
-        if level >1:
-            if self._data.dtype == object:
-                allowed = np.vectorize(isAllowedSingleElement, otypes=[bool])
-                assert allowed(self._data).all()
+        if level > 1 and self._data.dtype == object:
+            allowed = np.vectorize(isAllowedSingleElement, otypes=[bool])
+            assert allowed(self._data).all()
 
     def _containsZero_implementation(self):
         """

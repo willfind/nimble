@@ -9,7 +9,9 @@ import numpy as np
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
+from nimble._utility import allowedNumpyDType
 from nimble._utility import inheritDocstringsFactory
+from nimble._utility import isAllowedSingleElement
 from nimble._utility import pandasDataFrameToList
 from nimble._utility import scipy, pd
 from .base import Base
@@ -434,12 +436,18 @@ class DataFrame(Base):
         data = self._asNumpyArray()[pointIndex].reshape(reshape)
         return DataFrame(data, shape=self._shape[1:], reuseData=True)
 
-    def _validate_implementation(self, level):
-        shape = self._data.shape
-        assert shape[0] == len(self.points)
-        assert shape[1] == len(self.features)
-        assert all(self._data.index == pd.RangeIndex(len(self.points)))
-        assert all(self._data.columns == pd.RangeIndex(len(self.features)))
+    def _checkInvariants_implementation(self, level):
+        dfShape = self._data.shape
+        assert dfShape[0] == self.shape[0]
+        assert dfShape[1] == self.shape[1]
+        assert all(self._data.index == pd.RangeIndex(self.shape[0]))
+        assert all(self._data.columns == pd.RangeIndex(self.shape[1]))
+
+        assert all(allowedNumpyDType(d) for d in self._data.dtypes)
+        if level > 1 and any(d == object for d in self._data.dtypes):
+            for pt, ft in itertools.product(range(dfShape[0]),
+                                            range(dfShape[1])):
+                assert isAllowedSingleElement(self._data.at[pt,ft])
 
     def _containsZero_implementation(self):
         """

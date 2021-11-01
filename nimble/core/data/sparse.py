@@ -12,6 +12,7 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import PackageException
 from nimble._utility import inheritDocstringsFactory
+from nimble._utility import isAllowedSingleElement
 from nimble._utility import scipy, pd
 from nimble._utility import sparseMatrixToArray, removeDuplicatesNative
 from nimble._utility import numpy2DArray
@@ -907,9 +908,9 @@ class Sparse(Base):
 
         return SparseView(**kwds)
 
-    def _validate_implementation(self, level):
-        assert self._data.shape[0] == len(self.points)
-        assert self._data.shape[1] == len(self.features)
+    def _checkInvariants_implementation(self, level):
+        assert self._data.shape[0] == self.shape[0]
+        assert self._data.shape[1] == self.shape[1]
         assert scipy.sparse.isspmatrix_coo(self._data)
 
         if level > 0:
@@ -940,14 +941,17 @@ class Sparse(Base):
                 assert all(self._data.row[:] == rowBefore[:])
                 assert all(self._data.col[:] == colBefore[:])
 
-
-            without_replicas_coo = removeDuplicatesNative(self._data)
-            assert len(self._data.data) == len(without_replicas_coo.data)
+            withoutReplicasCoo = removeDuplicatesNative(self._data)
+            assert len(self._data.data) == len(withoutReplicasCoo.data)
 
             with warnings.catch_warnings():
                 warnings.simplefilter('error')
                 # call the coo_matrix structure consistency checker
                 self._data._check()
+
+        if level > 1 and self._data.data.dtype == object:
+            allowed = np.vectorize(isAllowedSingleElement, otypes=[bool])
+            assert allowed(self._data.data).all()
 
     def _containsZero_implementation(self):
         """
@@ -1252,8 +1256,8 @@ class SparseView(BaseView, Sparse):
     def _getFeatures(self, names):
         return SparseFeaturesView(self, names)
 
-    def _validate_implementation(self, level):
-        self._source.validate(level)
+    def _checkInvariants_implementation(self, level):
+        self._source.checkInvariants(level)
 
     def _getitem_implementation(self, x, y):
         adjX = x + self._pStart

@@ -162,11 +162,11 @@ def methodObjectValidation(func):
         startRelPath = source._relPath
 
         ret = func(self, *args, **kwargs)
-        source.validate()
+        source.checkInvariants()
         if isinstance(ret, nimble.core.data.Base):
-            ret.validate()
+            ret.checkInvariants()
         for arg in baseArgs:
-            arg.validate()
+            arg.checkInvariants()
 
         assert source._name == startName
         funcName = func.__name__
@@ -204,8 +204,8 @@ def objectValidationMethods(cls):
         if inspect.isfunction(getattr(cls, attr)):
             func = getattr(cls, attr)
             # ignore functions that interfere with __init__ or recurse
-            # because they are used in validate
-            ignore = ['__init__', 'validate', 'getTypeString', 'setNames',
+            # because they are used in checkInvariants
+            ignore = ['__init__', 'checkInvariants', 'getTypeString', 'setNames',
                       'getName', 'getNames', 'getIndex', '__len__',
                       '__getitem__'] # __getitem__ ignored for efficiency
             if (func.__name__ not in ignore and
