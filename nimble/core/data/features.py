@@ -1890,7 +1890,7 @@ class Features(ABC):
 
         See Also
         --------
-        nimble.calculate, nimble.normalizeData
+        nimble.calculate.normalize, nimble.normalizeData
 
         Examples
         --------
@@ -2319,7 +2319,7 @@ class Features(ABC):
 
         See Also
         --------
-        Base.report, nimble.calculate
+        Base.report, nimble.calculate.statistic
 
         Keywords
         --------
@@ -2632,7 +2632,7 @@ class Features(ABC):
 
         See Also
         --------
-        matplotlib.pyplot.bar
+        matplotlib.pyplot.bar, nimble.calculate.statistic
 
         Keywords
         --------

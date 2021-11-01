@@ -3017,7 +3017,7 @@ class Base(ABC):
 
         See Also
         --------
-        nimble.calculate, matplotlib.pyplot.bar
+        nimble.calculate.statistic, matplotlib.pyplot.bar
 
         Keywords
         --------

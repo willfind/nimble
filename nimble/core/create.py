@@ -616,7 +616,7 @@ def fetchFile(source, overwrite=False):
 
     See Also
     --------
-    fetchFiles, nimble.data
+    fetchFiles, data
 
     Examples
     --------
@@ -683,7 +683,7 @@ def fetchFiles(source, overwrite=False):
 
     See Also
     --------
-    fetchFile, nimble.data
+    fetchFile, data
 
     Examples
     --------
