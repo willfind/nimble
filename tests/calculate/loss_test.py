@@ -19,23 +19,27 @@ from tests.helpers import noLogEntryExpected
 # performanceFunction #
 #######################
 
-@raises(InvalidArgumentValue)
+@performanceFunction('min')
+def generic(knownValues, predictedValues):
+    return 1
+
 def testGenericPerformanceFunctionEmpty():
     """
     Test that performanceFunction raises an exception if data is empty
     """
-    knownLabels = np.array([])
-    predictedLabels = np.array([])
+    emptyArray = np.array([])
+    nonEmptyArray = np.array([1, 2, 3])
+    emptyMatrix = nimble.data('Matrix', source=emptyArray)
+    nonEmptyMatrix = nimble.data('Matrix', source=nonEmptyArray)
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+    with raises(InvalidArgumentValue):
+        perf = generic(emptyMatrix, emptyMatrix)
 
-    @performanceFunction('min')
-    def generic(knownValues, predictedValues):
-        return 1
+    with raises(InvalidArgumentValue):
+        perf = generic(nonEmptyMatrix, emptyMatrix)
 
-    perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
-
+    with raises(InvalidArgumentValue):
+        perf = generic(emptyMatrix, nonEmptyMatrix)
 
 @raises(InvalidArgumentValue)
 def testGenericPerformanceFunctionNansNoData():
@@ -48,20 +52,12 @@ def testGenericPerformanceFunctionNansNoData():
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
 
-    @performanceFunction('min')
-    def generic(knownValues, predictedValues):
-        return 1
-
     perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
 
 def testGenericPerformanceFunctionInvalidInputs():
     """
     Test that performanceFunction raises an exception for invalid types
     """
-    @performanceFunction('min')
-    def generic(knownValues, predictedValues):
-        return 1
-
     with raises(InvalidArgumentType):
         knownLabels = np.array([[1], [2], [3]])
         predictedLabels = np.array([[1], [2], [3]])
@@ -82,10 +78,6 @@ def testGenericPerformanceFunctionShapeMismatch():
     """
     Test that performanceFunction raises an exception if shapes don't match
     """
-    @performanceFunction('min')
-    def generic(knownValues, predictedValues):
-        return 1
-
     with raises(InvalidArgumentValueCombination):
         knownLabels = np.array([[1], [2], [3]])
         predictedLabels = np.array([[1], [2]])
@@ -114,8 +106,8 @@ def testGenericPerformanceFunctionShapeMismatch():
         perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
 
     with raises(InvalidArgumentValueCombination):
-        knownLabels = np.array([[1, 1], [2, 2], [3, 3]])
-        predictedLabels = np.array([[1], [2], [3]])
+        knownLabels = np.array([[1], [2], [3]])
+        predictedLabels = np.array([[1, 1], [2, 2], [3, 3]])
 
         knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
         predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
@@ -129,9 +121,6 @@ def testGenericPerformanceFunction2D():
     """
 
     with raises(InvalidArgumentValue):
-        @performanceFunction('min')
-        def generic1D(knownValues, predictedValues):
-            return 1
 
         knownLabels = np.array([[1, 2], [2, 3], [3, 4]])
         predictedLabels = np.array([[1, 2], [2, 3], [3, 4]])
@@ -139,7 +128,7 @@ def testGenericPerformanceFunction2D():
         knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
         predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
 
-        perf = generic1D(knownLabelsMatrix, predictedLabelsMatrix)
+        perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
 
     @performanceFunction('min', requires1D=False)
     def generic2D(knownValues, predictedValues):
@@ -156,7 +145,7 @@ def testGenericPerformanceFunction2D():
 
 def testGenericPerformanceFunctionWithValidData():
     """
-    Test that performanceFunction ignores nan values
+    Test that performanceFunction wrapper works as expected
     """
     knownLabels = [[1.0], [3.0], [0.0], [4.0]]
     predictedLabels = [[1.0], [2.0], [0.0], [3.0]]
@@ -165,12 +154,12 @@ def testGenericPerformanceFunctionWithValidData():
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
 
     @performanceFunction('min')
-    def generic(knownValues, predictedValues):
+    def performance(knownValues, predictedValues):
         return _computeError(knownValues, predictedValues,
                              lambda x, y, z: z + (x - y), lambda x, y: x / y)
 
     assert generic.optimal == 'min'
-    perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
+    perf = performance(knownLabelsMatrix, predictedLabelsMatrix)
     assert perf == 0.5
 
 def testGenericPerformanceFunctionSkipValidation():
@@ -184,11 +173,11 @@ def testGenericPerformanceFunctionSkipValidation():
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
 
     @performanceFunction('max', validate=False)
-    def generic(knownValues, predictedValues):
+    def noValidation(knownValues, predictedValues):
         return 1
 
-    assert generic.optimal == 'max'
-    perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
+    assert noValidation.optimal == 'max'
+    perf = noValidation(knownLabelsMatrix, predictedLabelsMatrix)
     assert perf == 1
 
 #################
