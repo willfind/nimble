@@ -154,7 +154,7 @@ class Base(ABC):
 
         See Also
         --------
-        dimensions
+        dimensions, Points, Features
         """
         if len(self._shape) > 2:
             return self._shape[0], np.prod(self._shape[1:])
@@ -167,7 +167,7 @@ class Base(ABC):
 
         See Also
         --------
-        shape
+        shape, flatten, unflatten
         """
         return tuple(self._shape)
 
@@ -274,6 +274,10 @@ class Base(ABC):
         """
         The path to the file this data originated from in absolute form.
 
+        See Also
+        --------
+        relativePath
+
         Keywords
         --------
         file, location
@@ -285,6 +289,10 @@ class Base(ABC):
         """
         The path to the file this data originated from in relative form.
 
+        See Also
+        --------
+        absolutePath
+
         Keywords
         --------
         file, location
@@ -295,6 +303,10 @@ class Base(ABC):
     def path(self):
         """
         The path to the file this data originated from.
+
+        See Also
+        --------
+        absolutePath, relativePath
         """
         return self.absolutePath
 
@@ -370,7 +382,7 @@ class Base(ABC):
 
         See Also
         --------
-        Points, Features
+        Points, Features, nimble.match
 
         Examples
         --------
@@ -898,6 +910,10 @@ class Base(ABC):
         nimble Base object
             This object will only contain boolean values.
 
+        See Also
+        --------
+        Points.matching, Features.matching, nimble.match, countElements
+
         Examples
         --------
         >>> from nimble import match
@@ -1061,7 +1077,7 @@ class Base(ABC):
 
         See Also
         --------
-        Points.count, Features.count
+        Points.count, Features.count, matchingElements, nimble.match
 
         Examples
         --------
@@ -1173,6 +1189,10 @@ class Base(ABC):
             features of points within that group. When
             ``countUniqueValueOnly`` is True, the values are the number
             of points within that group.
+
+        See Also
+        --------
+        plotFeatureAgainstFeature
 
         Examples
         --------
@@ -1298,6 +1318,10 @@ class Base(ABC):
         bool
             True if approximately equal, else False.
 
+        See Also
+        --------
+        isIdentical
+
         Keywords
         --------
         equivalent, matches, equals, compare, comparison, same, similar
@@ -1355,6 +1379,10 @@ class Base(ABC):
             If ``labels`` is non-None, a length 4 tupes containing the
             training and testing data objects and the training a testing
             labels objects (trainX, trainY, testX, testY).
+
+        See Also
+        --------
+        nimble.train, Points.extract, Features.extract
 
         Examples
         --------
@@ -1530,6 +1558,10 @@ class Base(ABC):
             False, do **NOT** send to the logger, regardless of the
             global option.
 
+        See Also
+        --------
+        Features.report
+
         Keywords
         --------
         summary, information, description, analyze, statistics, stats,
@@ -1576,6 +1608,10 @@ class Base(ABC):
         Return True if all values and names in the other object match
         the values and names in this object.
 
+        See Also
+        --------
+        isApproximatelyEqual
+
         Keywords
         --------
         equality, match, matches, equals, compare, comparison, same
@@ -1609,6 +1645,10 @@ class Base(ABC):
             names into the file. The format of the embedding is
             dependant on the format of the file: csv will embed names
             into the data, mtx will place names in a comment.
+
+        See Also
+        --------
+        nimble.data, save
 
         Keywords
         --------
@@ -1709,6 +1749,10 @@ class Base(ABC):
             want to write the output file. If a filename extension is
             not included, the ".pickle" extension will be added.
 
+        See Also
+        --------
+        nimble.data, writeFile
+
         Keywords
         --------
         write, disk, file
@@ -1735,6 +1779,10 @@ class Base(ABC):
         Returns
         -------
         str
+
+        See Also
+        --------
+        copy, nimble.data
 
         Keywords
         --------
@@ -1947,6 +1995,10 @@ class Base(ABC):
         BaseView
             The read-only object for this point.
 
+        See Also
+        --------
+        view
+
         Keywords
         --------
         data point, instance, observation, value, locked, read only,
@@ -1976,6 +2028,10 @@ class Base(ABC):
         -------
         BaseView
             The read-only object for this feature.
+
+        See Also
+        --------
+        view
 
         Keywords
         --------
@@ -2136,6 +2192,10 @@ class Base(ABC):
         -------
         bool
 
+        See Also
+        --------
+        countElements, matchingElements, nimble.match.zero
+
         Keywords
         --------
         zeros, sparse
@@ -2178,6 +2238,10 @@ class Base(ABC):
             width of single column (feature) in each line.
         indent : str
             The string to use as indentation.
+
+        See Also
+        --------
+        show
 
         Keywords
         --------
@@ -2608,7 +2672,8 @@ class Base(ABC):
 
         See Also
         --------
-        matplotlib.pyplot.plot, matplotlib.colors, matplotlib.markers
+        matplotlib.pyplot.plot, matplotlib.colors, matplotlib.markers,
+        plotFeatureAgainstFeature
 
         Keywords
         --------
@@ -2686,7 +2751,8 @@ class Base(ABC):
 
         See Also
         --------
-        matplotlib.pyplot.plot, matplotlib.colors, matplotlib.markers
+        matplotlib.pyplot.plot, matplotlib.colors, matplotlib.markers,
+        plotFeatureAgainstFeatureRollingAverage
 
         Keywords
         --------
@@ -2953,7 +3019,7 @@ class Base(ABC):
 
         See Also
         --------
-        matplotlib.pyplot.bar
+        nimble.calculate.statistic, matplotlib.pyplot.bar
 
         Keywords
         --------
@@ -3187,6 +3253,10 @@ class Base(ABC):
         object
             A copy of this object.  If ``to`` is not None, the copy will
             be in the specified format.
+
+        See Also
+        --------
+        Points.copy, Features.copy
 
         Examples
         --------
@@ -3535,7 +3605,7 @@ class Base(ABC):
 
         See Also
         --------
-        unflatten
+        unflatten, shape, dimensions
 
         Examples
         --------
@@ -3687,7 +3757,7 @@ class Base(ABC):
 
         See Also
         --------
-        flatten
+        flatten, shape, dimensions
 
         Examples
         --------
@@ -3873,7 +3943,7 @@ class Base(ABC):
 
         See Also
         --------
-        Points.add, Features.add
+        Points.append, Features.append
 
         Examples
         --------
@@ -4273,6 +4343,10 @@ class Base(ABC):
         ----------
         pseudoInverse : bool
             Whether to compute pseudoInverse or multiplicative inverse.
+
+        See Also
+        --------
+        nimble.calculate.inverse, nimble.calculate.pseudoInverse
 
         Keywords
         --------

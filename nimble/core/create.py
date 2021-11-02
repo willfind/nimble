@@ -311,7 +311,7 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
 
     See Also
     --------
-    zeros
+    zeros, identity
 
     Examples
     --------
@@ -390,7 +390,7 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
 
     See Also
     --------
-    ones
+    ones, identity
 
     Examples
     --------
@@ -468,6 +468,10 @@ def identity(returnType, size, pointNames='automatic',
     -------
     nimble.core.data.Base
         Subclass of Base object corresponding with the ``returnType``.
+
+    See Also
+    --------
+    ones, zeros
 
     Examples
     --------
@@ -548,7 +552,7 @@ def loadTrainedLearner(source, useLog=None):
 
     See Also
     --------
-    nimble.core.interfaces.TrainedLearner
+    nimble.train, nimble.core.interfaces.TrainedLearner
 
     Keywords
     --------
@@ -612,7 +616,7 @@ def fetchFile(source, overwrite=False):
 
     See Also
     --------
-    fetchFiles
+    fetchFiles, data
 
     Examples
     --------
@@ -679,7 +683,7 @@ def fetchFiles(source, overwrite=False):
 
     See Also
     --------
-    fetchFile
+    fetchFile, data
 
     Examples
     --------

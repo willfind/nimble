@@ -821,6 +821,11 @@ class TrainedLearner(object):
         ``help(nimble.core.learn.KFoldCrossValidator)`` or the Examples
         section in ``help(nimble.crossValidate)`` for more information
         on extracting various results from this object.
+
+    See Also
+    --------
+    nimble.train
+
     """
     def __init__(self, learnerName, arguments, transformedArguments,
                  customDict, backend, interfaceObject, has2dOutput,
@@ -1548,6 +1553,11 @@ class TrainedLearners(TrainedLearner):
         on extracting various results from this object.
     method : str
         The multiClassStrategy used, "OneVsAll" or "OneVsOne".
+
+    See Also
+    --------
+    nimble.train
+
     """
     def __init__(self, trainedLearners, method, labelSet):
         """

@@ -138,7 +138,7 @@ class Features(ABC):
 
         See Also
         --------
-        setNames
+        setNames, getName, getNames
 
         Examples
         --------
@@ -181,7 +181,7 @@ class Features(ABC):
 
         See Also
         --------
-        setName
+        setName, getName, getNames
 
         Examples
         --------
@@ -352,7 +352,7 @@ class Features(ABC):
 
         See Also
         --------
-        Base.copy
+        Base.copy, nimble.match
 
         Examples
         --------
@@ -1009,7 +1009,7 @@ class Features(ABC):
 
         See Also
         --------
-        Base.countElements, Base.countUniqueElements
+        Base.countElements, Base.countUniqueElements, matching, nimble.match
 
         Examples
         --------
@@ -1065,6 +1065,10 @@ class Features(ABC):
             send to the logger regardless of the global option. If
             False, do **NOT** send to the logger, regardless of the
             global option.
+
+        See Also
+        --------
+        permute
 
         Examples
         --------
@@ -1159,7 +1163,7 @@ class Features(ABC):
 
         See Also
         --------
-        calculate
+        calculate, Base.transformElements
 
         Examples
         --------
@@ -1249,7 +1253,7 @@ class Features(ABC):
 
         See Also
         --------
-        transform
+        transform, Base.calculateOnElements
 
         Examples
         --------
@@ -1333,6 +1337,10 @@ class Features(ABC):
         -------
         nimble Base object
             A point vector of boolean values.
+
+        See Also
+        --------
+        count, nimble.match
 
         Examples
         --------
@@ -1482,7 +1490,7 @@ class Features(ABC):
 
         See Also
         --------
-        insert
+        insert, Base.merge
 
         Examples
         --------
@@ -1570,6 +1578,10 @@ class Features(ABC):
             Any keyword arguments accepted by ``nimble.data`` to use
             to construct a nimble data object from ``data``. These only
             apply when ``data`` is not already a nimble data object.
+
+        See Also
+        --------
+        Base.replaceRectangle
 
         Examples
         --------
@@ -1695,6 +1707,10 @@ class Features(ABC):
         not be sufficiently random for large number of features.
         See random.shuffle()'s documentation.
 
+        See Also
+        --------
+        sort
+
         Examples
         --------
         >>> nimble.random.setSeed(42)
@@ -1786,7 +1802,8 @@ class Features(ABC):
 
         See Also
         --------
-        nimble.fill, nimble.match
+        nimble.fill, nimble.match, Base.replaceRectangle,
+        nimble.fillMatching
 
         Examples
         --------
@@ -1870,6 +1887,10 @@ class Features(ABC):
             send to the logger regardless of the global option. If
             False, do **NOT** send to the logger, regardless of the
             global option.
+
+        See Also
+        --------
+        nimble.calculate.normalize, nimble.normalizeData
 
         Examples
         --------
@@ -2296,6 +2317,10 @@ class Features(ABC):
             False, do **NOT** send to the logger, regardless of the
             global option.
 
+        See Also
+        --------
+        Base.report, nimble.calculate.statistic
+
         Keywords
         --------
         statistic, summary, information, analyze, statistics, stats,
@@ -2384,6 +2409,10 @@ class Features(ABC):
         -------
         nimble Base object
 
+        See Also
+        --------
+        statistics, nimble.calculate.similarity
+
         Keywords
         --------
         correlation, covariance, sample covariance,
@@ -2409,6 +2438,10 @@ class Features(ABC):
         Returns
         -------
         nimble Base object
+
+        See Also
+        --------
+        similarities, nimble.calculate.statistic
 
         Keywords
         --------
@@ -2599,7 +2632,7 @@ class Features(ABC):
 
         See Also
         --------
-        matplotlib.pyplot.bar
+        matplotlib.pyplot.bar, nimble.calculate.statistic
 
         Keywords
         --------

@@ -49,6 +49,10 @@ class SessionConfiguration(object):
     for a similar purpose. To see the current settings call
     ``nimble.settings.get()``.
 
+    See Also
+    --------
+    nimble.settings
+
     Keywords
     --------
     configure, configuration, options
@@ -344,6 +348,10 @@ def showAvailablePackages():
     Print a table identifying each optional dependency for Nimble,
     whether or not is available in the current environment, and a short
     description the package's use within Nimble.
+
+    See Also
+    --------
+    nimble.learnerNames
 
     Keywords
     --------

@@ -132,7 +132,7 @@ class Points(ABC):
 
         See Also
         --------
-        setNames
+        setNames, getName, getNames
 
         Examples
         --------
@@ -175,7 +175,7 @@ class Points(ABC):
 
         See Also
         --------
-        setName
+        setName, getName, getNames
 
         Examples
         --------
@@ -346,7 +346,7 @@ class Points(ABC):
 
         See Also
         --------
-        Base.copy
+        Base.copy, nimble.match
 
         Examples
         --------
@@ -940,7 +940,7 @@ class Points(ABC):
 
         See Also
         --------
-        Base.countElements, Base.countUniqueElements
+        Base.countElements, Base.countUniqueElements, matching, nimble.match
 
         Examples
         --------
@@ -995,6 +995,10 @@ class Points(ABC):
             send to the logger regardless of the global option. If
             False, do **NOT** send to the logger, regardless of the
             global option.
+
+        See Also
+        --------
+        permute
 
         Examples
         --------
@@ -1096,7 +1100,7 @@ class Points(ABC):
 
         See Also
         --------
-        calculate
+        calculate, Base.transformElements
 
         Examples
         --------
@@ -1182,7 +1186,7 @@ class Points(ABC):
 
         See Also
         --------
-        transform
+        transform, Base.calculateOnElements
 
         Examples
         --------
@@ -1263,6 +1267,10 @@ class Points(ABC):
         -------
         nimble Base object
             A feature vector of boolean values.
+
+        See Also
+        --------
+        count, nimble.match
 
         Examples
         --------
@@ -1416,7 +1424,7 @@ class Points(ABC):
 
         See Also
         --------
-        insert
+        insert, Base.merge
 
         Examples
         --------
@@ -1509,6 +1517,10 @@ class Points(ABC):
             Any keyword arguments accepted by ``nimble.data`` to use
             to construct a nimble data object from ``data``. These only
             apply when ``data`` is not already a nimble data object.
+
+        See Also
+        --------
+        Base.replaceRectangle
 
         Examples
         --------
@@ -1640,6 +1652,10 @@ class Points(ABC):
         not be sufficiently random for large number of points.
         See random.shuffle()'s documentation.
 
+        See Also
+        --------
+        sort
+
         Examples
         --------
         >>> nimble.random.setSeed(42)
@@ -1730,7 +1746,8 @@ class Points(ABC):
 
         See Also
         --------
-        nimble.fill, nimble.match
+        nimble.fill, nimble.match, Base.replaceRectangle,
+        nimble.fillMatching
 
         Examples
         --------
@@ -1855,6 +1872,10 @@ class Points(ABC):
         .. [1] Wickham, H. (2014). Tidy Data. Journal of Statistical
            Software, 59(10), 1 - 23.
            doi:http://dx.doi.org/10.18637/jss.v059.i10
+
+        See Also
+        --------
+        combineByExpandingFeatures
 
         Examples
         --------
@@ -2010,6 +2031,10 @@ class Points(ABC):
         .. [1] Wickham, H. (2014). Tidy Data. Journal of Statistical
            Software, 59(10), 1 - 23.
            doi:http://dx.doi.org/10.18637/jss.v059.i10
+
+        See Also
+        --------
+        splitByCollapsingFeatures
 
         Examples
         --------
@@ -2262,6 +2287,10 @@ class Points(ABC):
         -------
         nimble Base object
 
+        See Also
+        --------
+        statistics, nimble.calculate.similarity
+
         Keywords
         --------
         correlation, covariance, sample covariance,
@@ -2287,6 +2316,10 @@ class Points(ABC):
         Returns
         -------
         nimble Base object
+
+        See Also
+        --------
+        similarities, nimble.calculate.statistic
 
         Keywords
         --------
