@@ -4,11 +4,14 @@ functions.
 """
 
 import math
+from functools import wraps
 
 import numpy as np
 
 import nimble
-from nimble.exceptions import InvalidArgumentValue
+from nimble import match
+from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.random import numpyRandom
 
 
@@ -322,3 +325,56 @@ class _NoDifferenceResultsException(Exception):
 
     def __str__(self):
         return repr(self.value)
+
+
+def performanceFunction(optimal, requires1D=True, validate=True):
+    """
+    A wrapper to set the optimal value for Nimble performance functions
+    and validate the inputs. The validation can be skipped for
+    performance functions that call another performance function, so the
+    validation only occurs once.
+    """
+    def toWrap(func):
+        # should only occur when function calls another performanceFunction
+        if not validate:
+            func.optimal = optimal
+            return func
+
+        @wraps(func)
+        def wrapped(knownValues, predictedValues):
+            if not isinstance(knownValues, nimble.core.data.Base):
+                msg = "knownValues is not a Nimble data object"
+                raise InvalidArgumentType(msg)
+            if not isinstance(predictedValues, nimble.core.data.Base):
+                msg = "predictedValues is not a Nimble data object"
+                raise InvalidArgumentType(msg)
+            if 0 in knownValues.shape or 0 in predictedValues.shape:
+                msg = 'Cannot calculate performance on an empty object'
+                raise InvalidArgumentValue(msg)
+            if len(knownValues.points) != len(predictedValues.points):
+                msg = "The known and predicted data must have the same number "
+                msg += "of points"
+                raise InvalidArgumentValueCombination(msg)
+            if len(knownValues.features) != len(predictedValues.features):
+                msg = "The known and predicted data must have the same number "
+                msg += "of features"
+                raise InvalidArgumentValueCombination(msg)
+            if requires1D and len(predictedValues.features) > 1:
+                msg = "predictedValues must be labels only; this has more "
+                msg += "than one feature"
+                raise InvalidArgumentValue(msg)
+            if match.anyMissing(knownValues) :
+                msg = "Unable to calculate the performance because the  "
+                msg += "knownValues contain missing data."
+                raise InvalidArgumentValue(msg)
+            if match.anyMissing(predictedValues):
+                msg = "Unable to calculate the performance because the  "
+                msg += "predictedValues contain missing data."
+                raise InvalidArgumentValue(msg)
+
+            return func(knownValues, predictedValues)
+
+        wrapped.optimal = optimal
+        return wrapped
+
+    return toWrap

@@ -7,22 +7,10 @@ level of correctness in the predicted values.
 
 from math import sqrt
 
-import numpy as np
-
 import nimble
-from nimble.core.data import Base
-from nimble.core.data import Matrix
-from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
-
-def _validatePredictedAsLabels(predictedValues):
-    if not isinstance(predictedValues, nimble.core.data.Base):
-        msg = "predictedValues must be derived class of nimble.core.data.Base"
-        raise InvalidArgumentType(msg)
-    if len(predictedValues.features) > 1:
-        msg = "predictedValues must be labels only; this has more than "
-        msg += "one feature"
-        raise InvalidArgumentValue(msg)
+from .utility import performanceFunction
 
 
 def _computeError(knownValues, predictedValues, loopFunction,
@@ -40,39 +28,6 @@ def _computeError(knownValues, predictedValues, loopFunction,
     runningTotal, the final output of loopFunction, and n, the number of
     values in knownValues/predictedValues.
     """
-    knownIsEmpty = (len(knownValues.points) == 0
-                    or len(knownValues.features) == 0)
-    predIsEmpty = (len(predictedValues.points) == 0
-                   or len(predictedValues.features) == 0)
-    if knownValues is None or not isinstance(knownValues, Base):
-        msg = "knownValues must be derived class of nimble.core.data.Base"
-        raise InvalidArgumentType(msg)
-    if knownIsEmpty:
-        msg = "Empty 'knownValues' object in error calculator"
-        raise InvalidArgumentValue(msg)
-    if predictedValues is None or not isinstance(predictedValues, Base):
-        msg = "predictedValues must be derived class of nimble.core.data.Base"
-        raise InvalidArgumentType(msg)
-    if predIsEmpty:
-        msg = "Empty 'predictedValues' object in error calculator"
-        raise InvalidArgumentValue(msg)
-
-    if len(knownValues.points) != len(predictedValues.points):
-        msg = "The knownValues and predictedValues must have the same number "
-        msg += "of points"
-        raise InvalidArgumentValueCombination(msg)
-
-    if len(knownValues.features) != len(predictedValues.features):
-        msg = "The knownValues and predictedValues must have the same number "
-        msg += "of features"
-        raise InvalidArgumentValueCombination(msg)
-
-    if not isinstance(knownValues, Matrix):
-        knownValues = knownValues.copy(to="Matrix")
-
-    if not isinstance(predictedValues, Matrix):
-        predictedValues = predictedValues.copy(to="Matrix")
-
     n = 0.0
     runningTotal = 0.0
     # Go through all values in known and predicted values, and pass those
@@ -97,20 +52,18 @@ def _computeError(knownValues, predictedValues, loopFunction,
     return runningTotal
 
 
+@performanceFunction('min')
 def rootMeanSquareError(knownValues, predictedValues):
     """
     Compute the root mean square error.  Assumes that knownValues and
     predictedValues contain numerical values, rather than categorical
     data.
     """
-    _validatePredictedAsLabels(predictedValues)
     return _computeError(knownValues, predictedValues,
                          lambda x, y, z: z + (y - x) ** 2,
                          lambda x, y: sqrt(x / y))
 
-
-rootMeanSquareError.optimal = 'min'
-
+@performanceFunction('min', requires1D=False)
 def meanFeaturewiseRootMeanSquareError(knownValues, predictedValues):
     """
     For 2d prediction data, compute the RMSE of each feature, then
@@ -119,10 +72,6 @@ def meanFeaturewiseRootMeanSquareError(knownValues, predictedValues):
     if len(knownValues.features) != len(predictedValues.features):
         msg = "The known and predicted data must have the same number of "
         msg += "features"
-        raise InvalidArgumentValueCombination(msg)
-    if len(knownValues.points) != len(predictedValues.points):
-        msg = "The known and predicted data must have the same number of "
-        msg += "points"
         raise InvalidArgumentValueCombination(msg)
 
     results = []
@@ -133,60 +82,37 @@ def meanFeaturewiseRootMeanSquareError(knownValues, predictedValues):
 
     return float(sum(results)) / len(knownValues.features)
 
-
-meanFeaturewiseRootMeanSquareError.optimal = 'min'
-
-
+@performanceFunction('min')
 def meanAbsoluteError(knownValues, predictedValues):
     """
     Compute mean absolute error. Assumes that knownValues and
     predictedValues contain numerical values, rather than categorical
     data.
     """
-    _validatePredictedAsLabels(predictedValues)
     return _computeError(knownValues, predictedValues,
                          lambda x, y, z: z + abs(y - x),
                          lambda x, y: x / y)
 
-
-meanAbsoluteError.optimal = 'min'
-
-
+@performanceFunction('min')
 def fractionIncorrect(knownValues, predictedValues):
     """
     Compute the proportion of incorrect predictions within a set of
     instances.  Assumes that values in knownValues and predictedValues
     are categorical.
     """
-    _validatePredictedAsLabels(predictedValues)
     return _computeError(knownValues, predictedValues,
                          lambda x, y, z: z if x == y else z + 1,
                          lambda x, y: x / y)
 
-
-fractionIncorrect.optimal = 'min'
-
-
+@performanceFunction('min')
 def varianceFractionRemaining(knownValues, predictedValues):
     """
-    Calculate the how much variance is has not been correctly predicted in the
-    predicted values. This will be equal to 1 - nimble.calculate.rsquared() of
-    the same inputs.
+    Calculate the how much variance has not been correctly predicted in
+    the predicted values. This will be equal to
+    1 - nimble.calculate.rSquared() of the same inputs.
     """
-    if len(knownValues.points) != len(predictedValues.points):
-        msg = "Objects had different numbers of points"
-        raise InvalidArgumentValueCombination(msg)
-    if len(knownValues.features) != len(predictedValues.features):
-        msg = "Objects had different numbers of features. Known values had "
-        msg += str(len(knownValues.features)) + " and predicted values had "
-        msg += str(len(predictedValues.features))
-        raise InvalidArgumentValueCombination(msg)
-    diffObject = predictedValues - knownValues
-    rawDiff = diffObject.copy(to="numpy array")
-    rawKnowns = knownValues.copy(to="numpy array")
-    assert rawDiff.shape[1] == 1
-    avgSqDif = np.dot(rawDiff.T, rawDiff)[0, 0] / float(len(rawDiff))
-    return avgSqDif / float(np.var(rawKnowns))
+    diffObj = predictedValues - knownValues
 
+    avgSqDiff = diffObj.T.matrixMultiply(diffObj)[0, 0] / float(len(diffObj))
 
-varianceFractionRemaining.optimal = 'min'
+    return avgSqDiff / float(nimble.calculate.variance(knownValues, False))

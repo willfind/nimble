@@ -33,6 +33,7 @@ from .statistic import proportionZero
 from .statistic import quartiles
 from .statistic import residuals
 from .statistic import standardDeviation
+from .statistic import variance
 from .statistic import sum # pylint: disable=redefined-builtin
 from .utility import detectBestResult
 from .linalg import inverse

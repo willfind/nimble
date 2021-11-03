@@ -1,7 +1,7 @@
 import numpy as np
 
 import nimble
-from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.calculate import meanAbsoluteError
 from nimble.calculate import rootMeanSquareError
@@ -10,40 +10,179 @@ from nimble.calculate import fractionCorrect
 from nimble.calculate import fractionIncorrect
 from nimble.calculate import rSquared
 from nimble.calculate import varianceFractionRemaining
+from nimble.calculate.loss import _computeError
+from nimble.calculate.utility import performanceFunction
 from tests.helpers import raises
 from tests.helpers import noLogEntryExpected
+
+#######################
+# performanceFunction #
+#######################
+
+@performanceFunction('min')
+def generic(knownValues, predictedValues):
+    return 1
+
+def testGenericPerformanceFunctionEmpty():
+    """
+    Test that performanceFunction raises an exception if data is empty
+    """
+    emptyArray = np.array([])
+    nonEmptyArray = np.array([1, 2, 3])
+    emptyMatrix = nimble.data('Matrix', source=emptyArray)
+    nonEmptyMatrix = nimble.data('Matrix', source=nonEmptyArray)
+
+    with raises(InvalidArgumentValue):
+        perf = generic(emptyMatrix, emptyMatrix)
+
+    with raises(InvalidArgumentValue):
+        perf = generic(nonEmptyMatrix, emptyMatrix)
+
+    with raises(InvalidArgumentValue):
+        perf = generic(emptyMatrix, nonEmptyMatrix)
+
+@raises(InvalidArgumentValue)
+def testGenericPerformanceFunctionNansNoData():
+    """
+    Test that performanceFunction raises an exception if nans prevent calculation.
+    """
+    knownLabels = np.array([1, np.nan, 3])
+    predictedLabels = np.array([np.nan, 3, np.nan])
+
+    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
+    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+
+    perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
+
+def testGenericPerformanceFunctionInvalidInputs():
+    """
+    Test that performanceFunction raises an exception for invalid types
+    """
+    with raises(InvalidArgumentType):
+        knownLabels = np.array([[1], [2], [3]])
+        predictedLabels = np.array([[1], [2], [3]])
+
+        predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+
+        perf = generic(knownLabels, predictedLabelsMatrix)
+
+    with raises(InvalidArgumentType):
+        knownLabels = np.array([[1], [2], [3]])
+        predictedLabels = np.array([[1], [2], [3]])
+
+        knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
+
+        perf = generic(knownLabelsMatrix, predictedLabels)
+
+def testGenericPerformanceFunctionShapeMismatch():
+    """
+    Test that performanceFunction raises an exception if shapes don't match
+    """
+    with raises(InvalidArgumentValueCombination):
+        knownLabels = np.array([[1], [2], [3]])
+        predictedLabels = np.array([[1], [2]])
+
+        knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
+        predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+
+        perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
+
+    with raises(InvalidArgumentValueCombination):
+        knownLabels = np.array([[1], [2]])
+        predictedLabels = np.array([[1], [2], [3]])
+
+        knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
+        predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+
+        perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
+
+    with raises(InvalidArgumentValueCombination):
+        knownLabels = np.array([[1, 1], [2, 2], [3, 3]])
+        predictedLabels = np.array([[1], [2], [3]])
+
+        knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
+        predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+
+        perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
+
+    with raises(InvalidArgumentValueCombination):
+        knownLabels = np.array([[1], [2], [3]])
+        predictedLabels = np.array([[1, 1], [2, 2], [3, 3]])
+
+        knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
+        predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+
+        perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
+
+
+def testGenericPerformanceFunction2D():
+    """
+    Test that performanceFunction checks allowed input shape
+    """
+
+    with raises(InvalidArgumentValue):
+
+        knownLabels = np.array([[1, 2], [2, 3], [3, 4]])
+        predictedLabels = np.array([[1, 2], [2, 3], [3, 4]])
+
+        knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
+        predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+
+        perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
+
+    @performanceFunction('min', requires1D=False)
+    def generic2D(knownValues, predictedValues):
+        return 1
+
+    knownLabels = np.array([[1, 2], [2, 3], [3, 4]])
+    predictedLabels = np.array([[1, 2], [2, 3], [3, 4]])
+
+    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
+    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+
+    perf = generic2D(knownLabelsMatrix, predictedLabelsMatrix)
+    assert perf == 1
+
+def testGenericPerformanceFunctionWithValidData():
+    """
+    Test that performanceFunction wrapper works as expected
+    """
+    knownLabels = [[1.0], [3.0], [0.0], [4.0]]
+    predictedLabels = [[1.0], [2.0], [0.0], [3.0]]
+
+    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
+    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+
+    @performanceFunction('min')
+    def performance(knownValues, predictedValues):
+        return _computeError(knownValues, predictedValues,
+                             lambda x, y, z: z + (x - y), lambda x, y: x / y)
+
+    assert generic.optimal == 'min'
+    perf = performance(knownLabelsMatrix, predictedLabelsMatrix)
+    assert perf == 0.5
+
+def testGenericPerformanceFunctionSkipValidation():
+    """
+    Test that a performance function that does not require validation
+    """
+    knownLabels = np.array([[1, 2], [3, 4]])
+    predictedLabels = np.array([[1], [2], [3]])
+
+    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
+    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+
+    @performanceFunction('max', validate=False)
+    def noValidation(knownValues, predictedValues):
+        return 1
+
+    assert noValidation.optimal == 'max'
+    perf = noValidation(knownLabelsMatrix, predictedLabelsMatrix)
+    assert perf == 1
 
 #################
 # _computeError #
 #################
-
-@raises(InvalidArgumentValue)
-def testGenericErrorCalculatorEmptyKnownInput():
-    """
-    Test that _computeError raises an exception if knownLabels is empty
-    """
-    knownLabels = np.array([])
-    predictedLabels = np.array([1, 2, 3])
-
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
-
-    nimble.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z, lambda x, y: x)
-
-
-@raises(InvalidArgumentValue)
-def testGenericErrorCalculatorEmptyPredictedInput():
-    """
-    Test that _computeError raises an exception if predictedLabels is empty
-    """
-    knownLabels = np.array([1, 2, 3])
-    predictedLabels = np.array([])
-
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
-
-    nimble.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z, lambda x, y: x)
-
 
 @raises(ZeroDivisionError)
 def testGenericErrorCalculatorDivideByZero():
@@ -57,7 +196,8 @@ def testGenericErrorCalculatorDivideByZero():
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
 
-    nimble.calculate.loss._computeError(knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z, lambda x, y: y / x)
+    _computeError(knownLabelsMatrix, predictedLabelsMatrix,
+                  lambda x, y, z: z, lambda x, y: y / x)
 
 
 def testGenericErrorCalculator():
@@ -67,43 +207,15 @@ def testGenericErrorCalculator():
     knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
     predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
 
-    sameRate = nimble.calculate.loss._computeError(
-        knownLabelsMatrix, predictedLabelsMatrix, lambda x, y, z: z, lambda x, y: x)
+    sameRate = _computeError(
+        knownLabelsMatrix, predictedLabelsMatrix,
+        lambda x, y, z: z, lambda x, y: x)
     assert sameRate == 0.0
 
 
 #######################
 # Mean Absolute Error #
 #######################
-
-@raises(InvalidArgumentValue)
-def testMeanAbsoluteErrorEmptyKnownValues():
-    """
-    Check that the mean absolute error calculator correctly throws an
-    exception if knownLabels vector is empty
-    """
-    knownLabels = np.array([])
-    predictedLabels = np.array([1, 2, 3])
-
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
-
-    maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
-
-
-@raises(InvalidArgumentValue)
-def testMeanAbsoluteErrorEmptyPredictedValues():
-    """
-    Check that the mean absolute error calculator correctly throws an
-    exception if predictedLabels vector is empty
-    """
-    predictedLabels = np.array([])
-    knownLabels = np.array([1, 2, 3])
-
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
-
-    maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
 
 @noLogEntryExpected
 def testMeanAbsoluteError():
@@ -112,6 +224,8 @@ def testMeanAbsoluteError():
     all inputs are zero, or predictions are exactly the same as all known
     values, and are non-zero
     """
+    assert meanAbsoluteError.optimal == 'min'
+
     predictedLabels = np.array([0, 0, 0])
     knownLabels = np.array([0, 0, 0])
 
@@ -152,35 +266,6 @@ def testMeanAbsoluteError():
 ###########################
 # Root mean squared error #
 ###########################
-
-@raises(InvalidArgumentValue)
-def testRmseEmptyKnownValues():
-    """
-    rootMeanSquareError calculator throws exception if knownLabels is empty
-    """
-    knownLabels = np.array([])
-    predictedLabels = np.array([1, 2, 3])
-
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
-
-    rootMeanSquareErrorRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
-
-
-@raises(InvalidArgumentValue)
-def testRmseEmptyPredictedValues():
-    """
-    rootMeanSquareError calculator throws exception if predictedLabels is empty
-    """
-
-    predictedLabels = np.array([])
-    knownLabels = np.array([1, 2, 3])
-
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
-
-    rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
-
 @noLogEntryExpected
 def testRmse():
     """
@@ -188,6 +273,8 @@ def testRmse():
     all inputs are zero, and when all known values are
     the same as predicted values.
     """
+    assert rootMeanSquareError.optimal == 'min'
+
     predictedLabels = np.array([[0], [0], [0]])
     knownLabels = np.array([[0], [0], [0]])
 
@@ -260,34 +347,6 @@ def testMFRMSE_simpleSuccess():
 # fractionCorrect #
 ###################
 
-@raises(InvalidArgumentValue)
-def testFractionCorrectEmptyKnownValues():
-    """
-    fractionCorrect calculator throws exception if knownLabels is empty
-    """
-    knownLabels = np.array([])
-    predictedLabels = np.array([1, 2, 3])
-
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
-
-    fc = fractionCorrect(knownLabelsMatrix, predictedLabelsMatrix)
-
-
-@raises(InvalidArgumentValue)
-def testFractionCorrectEmptyPredictedValues():
-    """
-    fractionCorrect calculator throws exception if predictedLabels is empty
-    """
-
-    predictedLabels = np.array([])
-    knownLabels = np.array([1, 2, 3])
-
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
-
-    fc = fractionCorrect(knownLabelsMatrix, predictedLabelsMatrix)
-
 @noLogEntryExpected
 def testFractionCorrect():
     """
@@ -295,6 +354,8 @@ def testFractionCorrect():
     all inputs are zero, and when all known values are
     the same as predicted values.
     """
+    assert fractionCorrect.optimal == 'max'
+
     predictedLabels = np.array([[0], [0], [0]])
     knownLabels = np.array([[0], [0], [0]])
 
@@ -329,34 +390,6 @@ def testFractionCorrect():
 # fractionIncorrect #
 #####################
 
-@raises(InvalidArgumentValue)
-def testFractionIncorrectEmptyKnownValues():
-    """
-    fractionIncorrect calculator throws exception if knownLabels is empty
-    """
-    knownLabels = np.array([])
-    predictedLabels = np.array([1, 2, 3])
-
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
-
-    fi = fractionIncorrect(knownLabelsMatrix, predictedLabelsMatrix)
-
-
-@raises(InvalidArgumentValue)
-def testFractionIncorrectEmptyPredictedValues():
-    """
-    fractionIncorrect calculator throws exception if predictedLabels is empty
-    """
-
-    predictedLabels = np.array([])
-    knownLabels = np.array([1, 2, 3])
-
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
-
-    fi = fractionIncorrect(knownLabelsMatrix, predictedLabelsMatrix)
-
 @noLogEntryExpected
 def testFractionIncorrect():
     """
@@ -364,6 +397,8 @@ def testFractionIncorrect():
     all inputs are zero, and when all known values are
     the same as predicted values.
     """
+    assert fractionIncorrect.optimal == 'min'
+
     predictedLabels = np.array([[0], [0], [0]])
     knownLabels = np.array([[0], [0], [0]])
 
@@ -398,39 +433,13 @@ def testFractionIncorrect():
 # varianceFractionRemaining #
 #############################
 
-@raises(InvalidArgumentValueCombination)
-def testVarianceFractionRemainingEmptyKnownValues():
-    """
-    varianceFractionRemaining calculator throws exception if knownLabels is empty
-    """
-    knownLabels = np.array([])
-    predictedLabels = np.array([1, 2, 3])
-
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
-
-    vfr = varianceFractionRemaining(knownLabelsMatrix, predictedLabelsMatrix)
-
-
-@raises(InvalidArgumentValueCombination)
-def testVarianceFractionRemainingEmptyPredictedValues():
-    """
-    varianceFractionRemaining calculator throws exception if predictedLabels is empty
-    """
-
-    predictedLabels = np.array([])
-    knownLabels = np.array([1, 2, 3])
-
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
-
-    vfr = varianceFractionRemaining(knownLabelsMatrix, predictedLabelsMatrix)
-
 @noLogEntryExpected
 def testVarianceFractionRemaining():
     """
     Check that the varianceFractionRemaining calculator works correctly.
     """
+    assert varianceFractionRemaining.optimal == 'min'
+
     predictedLabels = np.array([[1.0], [2.0], [3.0]])
     knownLabels = np.array([[1.0], [2.0], [3.0]])
 
@@ -455,39 +464,13 @@ def testVarianceFractionRemaining():
 # rSquared #
 ############
 
-@raises(InvalidArgumentValueCombination)
-def testRSquaredEmptyKnownValues():
-    """
-    rSquared calculator throws exception if knownLabels is empty
-    """
-    knownLabels = np.array([])
-    predictedLabels = np.array([1, 2, 3])
-
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
-
-    rsq = rSquared(knownLabelsMatrix, predictedLabelsMatrix)
-
-
-@raises(InvalidArgumentValueCombination)
-def testRSquaredEmptyPredictedValues():
-    """
-    rSquared calculator throws exception if predictedLabels is empty
-    """
-
-    predictedLabels = np.array([])
-    knownLabels = np.array([1, 2, 3])
-
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
-
-    rsq = rSquared(knownLabelsMatrix, predictedLabelsMatrix)
-
 @noLogEntryExpected
 def testRSquared():
     """
     Check that the rSquared calculator works correctly.
     """
+    assert rSquared.optimal == 'max'
+
     predictedLabels = np.array([[1.0], [2.0], [3.0]])
     knownLabels = np.array([[1.0], [2.0], [3.0]])
 

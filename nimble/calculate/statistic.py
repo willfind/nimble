@@ -263,6 +263,48 @@ def mode(values):
     return sorted(modes)[center]
 
 @numericRequired
+def variance(values, sample=True):
+    """
+    The variance of the values in a vector.
+
+    This function requires numeric data and ignores any NaN values.
+    Non-numeric values will results in NaN being returned.
+
+    Parameters
+    ----------
+    values : nimble Base object
+        Must be one-dimensional.
+    sample : bool
+        If True, the default, the sample standard deviation is
+        returned. If False, the population standard deviation is returned.
+
+    Examples
+    --------
+    >>> lst = [1, 2, 3, 4, 5, 6, float('nan')]
+    >>> vector = nimble.data('Matrix', lst)
+    >>> variance(vector)
+    3.5
+    >>> variance(vector, sample=False)
+    2.9166666666666665
+    """
+    if values.getTypeString() == 'Sparse':
+        nonZero = values._data.data.astype(np.float)
+        numNan = np.sum(np.isnan(nonZero))
+        meanRet = _meanSparseBackend(nonZero, len(values), numNan)
+
+        dataSumSquared = np.nansum((nonZero - meanRet) ** 2)
+        zeroSumSquared = meanRet ** 2 * (len(values) - values._data.nnz)
+        divisor = len(values) - numNan
+        if sample:
+            divisor -= 1
+        return (dataSumSquared + zeroSumSquared) / divisor
+
+    arr = values.copy('numpyarray', outputAs1D=True).astype(np.float)
+    if sample:
+        return np.nanvar(arr, ddof=1)
+    return np.nanvar(arr)
+
+@numericRequired
 def standardDeviation(values, sample=True):
     """
     The standard deviation of the values in a vector.
@@ -287,23 +329,7 @@ def standardDeviation(values, sample=True):
     >>> standardDeviation(vector, sample=False)
     1.707825127659933
     """
-    if values.getTypeString() == 'Sparse':
-        nonZero = values._data.data.astype(np.float)
-        numNan = np.sum(np.isnan(nonZero))
-        meanRet = _meanSparseBackend(nonZero, len(values), numNan)
-
-        dataSumSquared = np.nansum((nonZero - meanRet) ** 2)
-        zeroSumSquared = meanRet ** 2 * (len(values) - values._data.nnz)
-        divisor = len(values) - numNan
-        if sample:
-            divisor -= 1
-        var = (dataSumSquared + zeroSumSquared) / divisor
-        return np.sqrt(var)
-
-    arr = values.copy('numpyarray', outputAs1D=True).astype(np.float)
-    if sample:
-        return np.nanstd(arr, ddof=1)
-    return np.nanstd(arr)
+    return np.sqrt(variance(values, sample))
 
 @numericRequired
 def medianAbsoluteDeviation(values):
