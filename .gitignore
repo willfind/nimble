@@ -5,6 +5,7 @@
 configuration.ini
 documentation/doctrees
 documentation/html
+documentation/source/_static/cheatsheet.pdf
 documentation/source/examples/Metro_Interstate_Traffic_Volume_Cleaned.csv
 .coverage
 coverage_html
