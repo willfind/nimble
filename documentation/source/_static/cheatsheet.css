@@ -11,7 +11,7 @@ table {
 
 table td {
   padding: 0;
-  padding-right: 5px;
+  padding-right: 4px;
 }
 
 tr {
@@ -21,17 +21,13 @@ tr {
 }
 
 a {
-  color: inherit;
+  color: #004B6B;
   text-decoration: inherit;
 }
 
 a:hover {
-  color: inherit;
+  color: #6D4100;
   text-decoration: underline;
-}
-
-.text-bottom {
-  vertical-align: bottom;
 }
 
 .row {
@@ -53,6 +49,7 @@ a:hover {
 
 .text-center {
   text-align: center;
+  width: 100%;
 }
 
 .outline {
@@ -129,14 +126,16 @@ a:hover {
   padding-left: 1px;
 }
 
+.highlight {
+  font-size: 10px;
+}
+
 .inline {
   background-color: lightgray;
-  margin-left: 2px;
-  margin-right: 2px;
 }
 
 .row1 {
-  height: 348px;
+  height: 356px;
 }
 
 .first-half {
@@ -170,6 +169,7 @@ a:hover {
 
 #title {
   font-size: 28px;
+  font-weight: bold;
   display: inline;
   float: left;
   color: #004B6B;
@@ -181,8 +181,10 @@ a:hover {
 
 #description {
   font-size: 9px;
+  font-weight: bold;
   margin: 0;
   padding-left: 2px;
+  padding-top: 10px;
   width: 440px;
 }
 
@@ -247,12 +249,13 @@ a:hover {
 
 #manipulation {
   width: 1188px;
-  height: 326px;
+  height: 328px;
 }
 
 #cleaning {
   margin-left: 2px;
   width: 784px;
+  padding-bottom: 2px;
 }
 
 #math {
@@ -273,18 +276,17 @@ a:hover {
 #training {
   width: 656px;
   border-top: 0;
-  height: 382px;
+  height: 292px;
 }
 
 #interfaces {
   width: 532px;
-  height: 292px;
   border-top: 0;
-  border-left: 0;
+  border-right: 0;
+  height: 292px;
 }
 
 #submodules {
-  width: 530px;
-  height: 88px;
-  margin-left: 2px;
+  width: 1188px;
+  height: 58px;
 }

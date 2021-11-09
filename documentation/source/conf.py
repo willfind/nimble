@@ -318,7 +318,8 @@ extensions = [
 ]
 
 intersphinx_mapping = {'numpy': ('http://docs.scipy.org/doc/numpy/', None),
-                       'matplotlib': ('https://matplotlib.org/stable/', None)}
+                       'matplotlib': ('https://matplotlib.org/stable/', None),
+                       'random': ('https://docs.python.org/3/', None)}
 
 autodoc_default_options = {
     'undoc-members': True,
