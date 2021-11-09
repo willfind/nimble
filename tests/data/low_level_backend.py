@@ -1282,21 +1282,21 @@ class LowLevelBackend(object):
 
     def test_highDimension_shapes(self):
         toTest3D = self.constructor((3, 3, 5))
-        assert toTest3D._shape == [3, 3, 5]
+        assert toTest3D._dims == [3, 3, 5]
         assert toTest3D.dimensions == (3, 3, 5)
         assert toTest3D.shape == (3, 15)
         assert len(toTest3D.points) == 3
         assert len(toTest3D.features) == 15
 
         toTest4D = self.constructor((4, 3, 3, 5))
-        assert toTest4D._shape == [4, 3, 3, 5]
+        assert toTest4D._dims == [4, 3, 3, 5]
         assert toTest4D.dimensions == (4, 3, 3, 5)
         assert toTest4D.shape == (4, 45)
         assert len(toTest4D.points) == 4
         assert len(toTest4D.features) == 45
 
         toTest3DEmpty = self.constructor((0, 0, 0))
-        assert toTest3DEmpty._shape == [0, 0, 0]
+        assert toTest3DEmpty._dims == [0, 0, 0]
         assert toTest3DEmpty.dimensions == (0, 0, 0)
         assert toTest3DEmpty.shape == (0, 0)
         assert len(toTest3DEmpty.points) == 0
@@ -1356,61 +1356,61 @@ class LowLevelBackend(object):
 
     def test_treatAs2D(self):
         tensor2D = self.constructor((3, 5))
-        origShape = tensor2D._shape
+        origShape = tensor2D._dims
         # 2D _treatAs2D context manager without as
-        assert len(tensor2D._shape) == 2
+        assert len(tensor2D._dims) == 2
         with tensor2D._treatAs2D():
-            assert len(tensor2D._shape) == 2
-            assert tensor2D._shape == origShape
-        assert len(tensor2D._shape) == 2
-        assert tensor2D._shape == origShape
+            assert len(tensor2D._dims) == 2
+            assert tensor2D._dims == origShape
+        assert len(tensor2D._dims) == 2
+        assert tensor2D._dims == origShape
 
         # 2D _treatAs2D context manager with as
         with tensor2D._treatAs2D() as tensor:
-            assert len(tensor._shape) == 2
-            assert tensor._shape == origShape
-        assert len(tensor2D._shape) == 2
-        assert tensor2D._shape == origShape
+            assert len(tensor._dims) == 2
+            assert tensor._dims == origShape
+        assert len(tensor2D._dims) == 2
+        assert tensor2D._dims == origShape
 
         # 2D _treatAs2D context manager encounters error
         try:
             with tensor2D._treatAs2D():
                 raise TypeError()
         except TypeError:
-            assert len(tensor2D._shape) == 2
-            assert tensor2D._shape == origShape
+            assert len(tensor2D._dims) == 2
+            assert tensor2D._dims == origShape
 
 
         tensor3D = self.constructor((3, 3, 5))
         tensor4D = self.constructor((4, 3, 3, 5))
         tensor5D = self.constructor((5, 4, 3, 3, 5))
         for tensor in [tensor3D, tensor4D, tensor5D]:
-            origShape = tensor._shape
+            origShape = tensor._dims
             shape2D = tensor.shape
             # 3D+ _treatAs2D context manager without as
-            assert len(tensor._shape) > 2
+            assert len(tensor._dims) > 2
             with tensor._treatAs2D():
-                assert len(tensor._shape) == 2
-                assert tensor.shape == tuple(tensor._shape)
-                assert tensor._shape != origShape
-            assert len(tensor._shape) > 2
-            assert tensor._shape == origShape
+                assert len(tensor._dims) == 2
+                assert tensor.shape == tuple(tensor._dims)
+                assert tensor._dims != origShape
+            assert len(tensor._dims) > 2
+            assert tensor._dims == origShape
 
             # 3D+ _treatAs2D context manager with as
             with tensor._treatAs2D() as tensor2D:
-                assert len(tensor._shape) == 2
-                assert tensor.shape == tuple(tensor._shape)
-                assert tensor._shape != origShape
-            assert len(tensor._shape) > 2
-            assert tensor._shape == origShape
+                assert len(tensor._dims) == 2
+                assert tensor.shape == tuple(tensor._dims)
+                assert tensor._dims != origShape
+            assert len(tensor._dims) > 2
+            assert tensor._dims == origShape
 
             # 3D+ _treatAs2D context manager encounters error
             try:
                 with tensor._treatAs2D():
                     raise TypeError()
             except TypeError:
-                assert len(tensor._shape) > 2
-                assert tensor._shape == origShape
+                assert len(tensor._dims) > 2
+                assert tensor._dims == origShape
 
     ########
     # Name #

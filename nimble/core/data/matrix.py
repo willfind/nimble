@@ -169,13 +169,13 @@ class Matrix(Base):
             return createDataNoValidation(to, self._data, ptNames, ftNames)
         if to == 'pythonlist':
             return self._data.tolist()
-        needsReshape = len(self._shape) > 2
+        needsReshape = len(self._dims) > 2
         if to == 'numpyarray':
             if needsReshape:
-                return self._data.reshape(self._shape)
+                return self._data.reshape(self._dims)
             return self._data.copy()
         if needsReshape:
-            data = np.empty(self._shape[:2], dtype=np.object_)
+            data = np.empty(self._dims[:2], dtype=np.object_)
             for i in range(self.shape[0]):
                 data[i] = self.points[i].copy('pythonlist')
         else:
@@ -360,16 +360,16 @@ class Matrix(Base):
                     pt[left.shape[1]:] = row[notMatchingR]
                     merged.append(pt)
 
-        self._shape = [len(merged), left.shape[1] + unmatchedPtCountR]
+        self._dims = [len(merged), left.shape[1] + unmatchedPtCountR]
         if len(merged) == 0 and onFeature is None:
             merged = np.empty((0, left.shape[1] + unmatchedPtCountR - 1))
-            self._shape[1] -= 1
+            self._dims[1] -= 1
         elif len(merged) == 0:
             merged = np.empty((0, left.shape[1] + unmatchedPtCountR))
         elif onFeature is None:
             # remove point names feature
             merged = [row[1:] for row in merged]
-            self._shape[1] -= 1
+            self._dims[1] -= 1
 
         self._data = numpy2DArray(merged, dtype=np.object_)
 
@@ -388,16 +388,16 @@ class Matrix(Base):
         kwds = {}
         kwds['data'] = self._data[pointStart:pointEnd, featureStart:featureEnd]
         kwds['source'] = self
-        if len(self._shape) > 2:
+        if len(self._dims) > 2:
             if dropDimension:
-                shape = self._shape[1:]
+                shape = self._dims[1:]
                 source = self._createNestedObject(pointStart)
                 kwds['source'] = source
                 kwds['data'] = source._data
                 pointStart, pointEnd = 0, source.shape[0]
                 featureStart, featureEnd = 0, source.shape[1]
             else:
-                shape = self._shape.copy()
+                shape = self._dims.copy()
                 shape[0] = pointEnd - pointStart
             kwds['shape'] = shape
         kwds['pointStart'] = pointStart
@@ -411,9 +411,9 @@ class Matrix(Base):
         """
         Create an object of one less dimension
         """
-        reshape = (self._shape[1], int(np.prod(self._shape[2:])))
+        reshape = (self._dims[1], int(np.prod(self._dims[2:])))
         data = self._data[pointIndex].reshape(reshape)
-        return Matrix(data, shape=self._shape[1:], reuseData=True)
+        return Matrix(data, shape=self._dims[1:], reuseData=True)
 
     def _checkInvariants_implementation(self, level):
         mShape = np.shape(self._data)

@@ -114,9 +114,9 @@ class Axis(ABC):
             indent = ' ' * (maxIdxLen + 4)
 
         start = len(indent) - 1 # to remove extra indentation when adding col
-        string = obj._show(indent=indent)
-        match = re.search(u'[ \|\u2502\-]+\n', string)
-        newLine = u' {} \u2502{}\n'
+        string = obj._show(indent=indent, quoteNames=False)
+        match = re.search(u' +\u2502[ \u2502\u2500]+\n', string)
+        newLine = u' {} \u2502{}\n'.format
         if match:
             top, bottom = string.split(match.group(0))
             for i, line in enumerate(top.split('\n')[:-1]):
@@ -124,19 +124,19 @@ class Axis(ABC):
                     continue
                 line = line[start:]
                 if self._namesCreated():
-                    ret += newLine.format(str(i - 3).rjust(maxIdxLen), line)
+                    ret += newLine(str(i - 3).rjust(maxIdxLen), line)
                 else:
                     ret += line + '\n'
             if self._namesCreated():
-                ret += ' ' + '|'.rjust(maxIdxLen) + u' \u2502'
+                if maxIdxLen > 2:
+                    ret += ' ' + u'\u2502'.rjust(maxIdxLen) + u' \u2502'
             ret += match.group(0)[start:]
 
             bottomIdx = len(self) - len(bottom.split('\n')) + 1
             for i, line in enumerate(bottom.split('\n')[:-1]):
                 line = line[start:]
                 if self._namesCreated():
-                    ret += newLine.format(str(bottomIdx).rjust(maxIdxLen),
-                                          line)
+                    ret += newLine(str(bottomIdx).rjust(maxIdxLen), line)
                 else:
                     ret += line + '\n'
                 bottomIdx += 1
@@ -146,7 +146,7 @@ class Axis(ABC):
                     continue
                 line = line[start:]
                 if self._namesCreated():
-                    ret += newLine.format(str(i - 3).rjust(maxIdxLen), line)
+                    ret += newLine(str(i - 3).rjust(maxIdxLen), line)
                 else:
                     ret += line + '\n'
         ret += " >"
@@ -322,7 +322,7 @@ class Axis(ABC):
         if key is None:
             return self._base.copy()
 
-        if singleKey and len(self._base._shape) > 2:
+        if singleKey and len(self._base._dims) > 2:
             return self._base.pointView(key[0]).copy()
         return self._structuralBackend_implementation('copy', key)
 
@@ -400,7 +400,7 @@ class Axis(ABC):
         # identifiers
         elif not callable(by):
             if self._isPoint:
-                if len(self._base._shape) > 2:
+                if len(self._base._dims) > 2:
                     msg = "For object with more than two-dimensions, sorting "
                     msg += "can only be performed on point names or using a "
                     msg += "function."
@@ -466,10 +466,10 @@ class Axis(ABC):
 
 
     def _transform(self, function, limitTo, useLog=None):
-        if self._base._shape[0] == 0:
+        if self._base._dims[0] == 0:
             msg = "We disallow this function when there are 0 points"
             raise ImproperObjectAction(msg)
-        if self._base._shape[1] == 0:
+        if self._base._dims[1] == 0:
             msg = "We disallow this function when there are 0 features"
             raise ImproperObjectAction(msg)
 
@@ -575,7 +575,7 @@ class Axis(ABC):
             if isAllowedSingleElement(currOut):
                 currOut = [currOut]
             elif (isinstance(currOut, nimble.core.data.Base)
-                  and len(currOut._shape) == 2):
+                  and len(currOut._dims) == 2):
                 # make 2D if a vector and axis does not match vector direction
                 axisIdx = 0 if self._isPoint else 1
                 if 1 in currOut.shape and currOut.shape[axisIdx] != 1:
@@ -658,7 +658,7 @@ class Axis(ABC):
 
         dataAxis = dataObj._getAxis(self._axis)
         # locations will take priority over axis name matches
-        if locations is None and self._base._shape == dataObj._shape:
+        if locations is None and self._base._dims == dataObj._dims:
             locations = range(len(self))
         elif locations is None:
             if not self._namesCreated():
@@ -678,7 +678,7 @@ class Axis(ABC):
         iterData = iter(dataAxis)
         for i in locations:
             replacement = next(iterData)
-            if len(self._base._shape) > 2:
+            if len(self._base._dims) > 2:
                 replacement = replacement.copy()
                 replacement.flatten(useLog=False)
             with self._base._treatAs2D():
@@ -840,7 +840,7 @@ class Axis(ABC):
         ret = createDataNoValidation(self._base.getTypeString(), repeated,
                                      pointNames=ptNames, featureNames=ftNames)
         if self._isPoint:
-            ret._shape[1:] = self._base._shape[1:]
+            ret._dims[1:] = self._base._dims[1:]
         return ret
 
     ###################
@@ -850,7 +850,7 @@ class Axis(ABC):
     def _unique(self):
         ret = self._unique_implementation()
         if self._isPoint:
-            ret._shape[1:] = self._base._shape[1:]
+            ret._dims[1:] = self._base._dims[1:]
         ret._absPath = self._base.absolutePath
         ret._relPath = self._base.relativePath
 
@@ -1161,7 +1161,7 @@ class Axis(ABC):
                 target = self._getIndex(target)
                 targetList.append(target)
             # if not a name then assume it's a query string
-            elif len(self._base._shape) > 2:
+            elif len(self._base._dims) > 2:
                 msg = "query strings for {0} are not supported for data with "
                 msg += "more than two dimensions"
                 raise ImproperObjectAction(msg.format(argName))
@@ -1181,7 +1181,7 @@ class Axis(ABC):
                 raise InvalidArgumentValue(msg)
         # boolean function
         elif target is not None:
-            if len(self._base._shape) > 2:
+            if len(self._base._dims) > 2:
                 msg = "functions for {0} are not supported for data with more "
                 msg += "than two dimensions"
                 raise ImproperObjectAction(msg.format(argName))
@@ -1225,13 +1225,13 @@ class Axis(ABC):
 
         if self._isPoint and ret is not None:
             # retain internal dimensions
-            ret._shape[1:] = self._base._shape[1:]
+            ret._dims[1:] = self._base._dims[1:]
 
         # remove names that are no longer in the object
         if structure in ['extract', 'delete']:
             shapeIdx = 0 if self._isPoint else 1
             retAxis = ret._getAxis(self._axis)
-            self._base._shape[shapeIdx] -= len(retAxis)
+            self._base._dims[shapeIdx] -= len(retAxis)
             if self._namesCreated():
                 targetSet = set(targetList)
                 reindexedInverse = []
@@ -1318,7 +1318,7 @@ class Axis(ABC):
         funcName = self._axis + 's.' + func
 
         if objOffAxisLen != insertOffAxisLen:
-            if len(self._base._shape) > 2:
+            if len(self._base._dims) > 2:
                 msg = "Cannot perform {0} operation when data has "
                 msg += "different dimensions"
                 raise ImproperObjectAction(msg.format(funcName))
@@ -1495,12 +1495,12 @@ class Axis(ABC):
         newCount = len(self) + len(insertedAxis)
         # only need to adjust names if names are present
         if not (self._namesCreated() or insertedAxis._namesCreated()):
-            self._base._shape[shapeIdx] = newCount
+            self._base._dims[shapeIdx] = newCount
             return
         objNames = self._getNames()
         insertedNames = insertedAxis.getNames()
         # must change point count AFTER getting names
-        self._base._shape[shapeIdx] = newCount
+        self._base._dims[shapeIdx] = newCount
 
         startNames = objNames[:insertedBefore]
         endNames = objNames[insertedBefore:]

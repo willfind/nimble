@@ -25,7 +25,7 @@ def back_singleExample(scriptLoc):
             terminalSize = [
                 "import os",
                 "import shutil",
-                "size = os.terminal_size((120, 30))",
+                "size = os.terminal_size((132, 30))",
                 "shutil.get_terminal_size = lambda *args, **kwargs: size"
                 ]
             tempFile.write('\n'.join(terminalSize))

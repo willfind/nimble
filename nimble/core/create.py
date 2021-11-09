@@ -209,10 +209,10 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     ...                        featureNames=True)
     >>> asSparse
     <Sparse 2pt x 3ft
-         a b c
-       ┌──────
-     1 │ 0 0 1
-     2 │ 1 0 0
+           'a' 'b' 'c'
+         ┌────────────
+     '1' │  0   0   1
+     '2' │  1   0   0
     >
 
     Replacing missing values.
@@ -225,10 +225,10 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     ...                           replaceMissingWith=-1)
     >>> asDataFrame
     <DataFrame 2pt x 3ft
-         a b  c
-       ┌────────
-     0 │ 1 -1 -1
-     1 │ 4 -1 6
+         'a' 'b' 'c'
+       ┌────────────
+     0 │  1   -1  -1
+     1 │  4   -1  6
     >
 
     Keywords
@@ -337,12 +337,12 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
     ...                      name='ones DataFrame')
     >>> onesDF
     <DataFrame "ones DataFrame" 4pt x 4ft
-           a     b     c     d
-       ┌────────────────────────
-     1 │ 1.000 1.000 1.000 1.000
-     2 │ 1.000 1.000 1.000 1.000
-     3 │ 1.000 1.000 1.000 1.000
-     4 │ 1.000 1.000 1.000 1.000
+            'a'   'b'   'c'   'd'
+         ┌────────────────────────
+     '1' │ 1.000 1.000 1.000 1.000
+     '2' │ 1.000 1.000 1.000 1.000
+     '3' │ 1.000 1.000 1.000 1.000
+     '4' │ 1.000 1.000 1.000 1.000
     >
 
     Keywords
@@ -416,12 +416,12 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
     ...                            name='Sparse all-zeros')
     >>> zerosSparse
     <Sparse "Sparse all-zeros" 4pt x 4ft
-           a     b     c     d
-       ┌────────────────────────
-     1 │ 0.000 0.000 0.000 0.000
-     2 │ 0.000 0.000 0.000 0.000
-     3 │ 0.000 0.000 0.000 0.000
-     4 │ 0.000 0.000 0.000 0.000
+            'a'   'b'   'c'   'd'
+         ┌────────────────────────
+     '1' │ 0.000 0.000 0.000 0.000
+     '2' │ 0.000 0.000 0.000 0.000
+     '3' │ 0.000 0.000 0.000 0.000
+     '4' │ 0.000 0.000 0.000 0.000
     >
 
     Keywords
@@ -497,11 +497,11 @@ def identity(returnType, size, pointNames='automatic',
     ...                             name='identity matrix list')
     >>> identityList
     <List "identity matrix list" 3pt x 3ft
-           a     b     c
-       ┌──────────────────
-     1 │ 1.000 0.000 0.000
-     2 │ 0.000 1.000 0.000
-     3 │ 0.000 0.000 1.000
+            'a'   'b'   'c'
+         ┌──────────────────
+     '1' │ 1.000 0.000 0.000
+     '2' │ 0.000 1.000 0.000
+     '3' │ 0.000 0.000 1.000
     >
 
     Keywords

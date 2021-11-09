@@ -362,11 +362,11 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     ...                                   trainX)
     >>> normTrainX
     <Matrix 3pt x 3ft
-          age   height weight
-       ┌─────────────────────
-     a │ -1.225 1.298  1.279
-     b │ 1.225  -1.136 -1.162
-     c │ 0.000  -0.162 -0.116
+           'age'  'height' 'weight'
+         ┌─────────────────────────
+     'a' │ -1.225  1.298    1.279
+     'b' │ 1.225   -1.136   -1.162
+     'c' │ 0.000   -0.162   -0.116
     >
 
     Normalize training and testing data.

@@ -115,7 +115,7 @@ class Base(ABC):
         self._id = Base._id
         Base._id += 1
 
-        self._shape = list(shape)
+        self._dims = list(shape)
         self._name = name
 
         self._points = self._getPoints(pointNames)
@@ -156,9 +156,9 @@ class Base(ABC):
         --------
         dimensions, Points, Features
         """
-        if len(self._shape) > 2:
-            return self._shape[0], np.prod(self._shape[1:])
-        return self._shape[0], self._shape[1]
+        if len(self._dims) > 2:
+            return self._dims[0], np.prod(self._dims[1:])
+        return self._dims[0], self._dims[1]
 
     @property
     def dimensions(self):
@@ -169,7 +169,7 @@ class Base(ABC):
         --------
         shape, flatten, unflatten
         """
-        return tuple(self._shape)
+        return tuple(self._dims)
 
     @property
     def points(self):
@@ -318,13 +318,13 @@ class Base(ABC):
         when the data has more than two dimensions due to the ambiguity
         in the definition of elements.
         """
-        if len(self._shape) > 2:
-            savedShape = self._shape
-            self._shape = [len(self.points), len(self.features)]
+        if len(self._dims) > 2:
+            savedShape = self._dims
+            self._dims = [len(self.points), len(self.features)]
             try:
                 yield self
             finally:
-                self._shape = savedShape
+                self._dims = savedShape
         else:
             yield self
 
@@ -359,7 +359,7 @@ class Base(ABC):
         raise ImproperObjectAction(msg)
 
     def __bool__(self):
-        return self._shape[0] > 0 and self._shape[-1] > 0
+        return self._dims[0] > 0 and self._dims[-1] > 0
 
     @limitedTo2D
     def iterateElements(self, order='point', only=None):
@@ -450,11 +450,11 @@ class Base(ABC):
         ['replace=a', 'replace=b', 'replace=c']
         >>> X
         <Matrix 3pt x 3ft
-             replace=a replace=b replace=c
-           ┌──────────────────────────────
-         0 │   1.000     0.000     0.000
-         1 │   0.000     1.000     0.000
-         2 │   0.000     0.000     1.000
+             'replace=a' 'replace=b' 'replace=c'
+           ┌────────────────────────────────────
+         0 │    1.000       0.000       0.000
+         1 │    0.000       1.000       0.000
+         2 │    0.000       0.000       1.000
         >
 
         Keywords
@@ -533,11 +533,11 @@ class Base(ABC):
         {0: 'a', 1: 'b', 2: 'c'}
         >>> X
         <Matrix 3pt x 3ft
-             keep1 transform keep2
-           ┌──────────────────────
-         0 │   1       0       1
-         1 │   2       1       2
-         2 │   3       2       3
+             'keep1' 'transform' 'keep2'
+           ┌────────────────────────────
+         0 │    1         0         1
+         1 │    2         1         2
+         2 │    3         2         3
         >
 
         Keywords
@@ -1211,19 +1211,19 @@ class Base(ABC):
         [0, 1, 2, 3]
         >>> groupByLosses[1]
         <DataFrame 3pt x 3ft
-              conference    team    wins
-           ┌────────────────────────────
-         0 │     SEC      Alabama    14
-         1 │    Big 10   Ohio State  13
-         2 │ Independent Notre Dame  12
+             'conference'   'team'   'wins'
+           ┌───────────────────────────────
+         0 │     SEC       Alabama     14
+         1 │    Big 10    Ohio State   13
+         2 │ Independent  Notre Dame   12
         >
         >>> groupByLosses[3]
         <DataFrame 3pt x 3ft
-             conference   team  wins
-           ┌────────────────────────
-         0 │    SEC       LSU    10
-         1 │    SEC     Florida  10
-         2 │    SEC     Georgia  11
+             'conference'  'team' 'wins'
+           ┌────────────────────────────
+         0 │     SEC        LSU     10
+         1 │     SEC      Florida   10
+         2 │     SEC      Georgia   11
         >
 
         Keywords
@@ -1327,7 +1327,7 @@ class Base(ABC):
         equivalent, matches, equals, compare, comparison, same, similar
         """
         #first check to make sure they have the same dimensions
-        if self._shape != other._shape:
+        if self._dims != other._dims:
             return False
         #now check if the hashes of each matrix are the same
 
@@ -1400,19 +1400,19 @@ class Base(ABC):
         >>> trainData, testData = X.trainAndTestSets(.34)
         >>> trainData
         <Matrix "train" 4pt x 3ft
-             0 1 2
-           ┌──────
-         a │ 1 0 0
-         b │ 0 1 0
-         f │ 0 0 1
-         c │ 0 0 1
+               0 1 2
+             ┌──────
+         'a' │ 1 0 0
+         'b' │ 0 1 0
+         'f' │ 0 0 1
+         'c' │ 0 0 1
         >
         >>> testData
         <Matrix "test" 2pt x 3ft
-             0 1 2
-           ┌──────
-         e │ 0 1 0
-         d │ 1 0 0
+               0 1 2
+             ┌──────
+         'e' │ 0 1 0
+         'd' │ 1 0 0
         >
 
         Returning a 4-tuple.
@@ -1431,35 +1431,35 @@ class Base(ABC):
         >>> testX, testY = fourTuple[2], fourTuple[3]
         >>> trainX
         <Matrix "trainX" 4pt x 3ft
-             0 1 2
-           ┌──────
-         a │ 1 0 0
-         b │ 0 1 0
-         f │ 0 0 1
-         c │ 0 0 1
+               0 1 2
+             ┌──────
+         'a' │ 1 0 0
+         'b' │ 0 1 0
+         'f' │ 0 0 1
+         'c' │ 0 0 1
         >
         >>> trainY
         <Matrix "trainY" 4pt x 1ft
-             0
-           ┌──
-         a │ 1
-         b │ 2
-         f │ 3
-         c │ 3
+               0
+             ┌──
+         'a' │ 1
+         'b' │ 2
+         'f' │ 3
+         'c' │ 3
         >
         >>> testX
         <Matrix "testX" 2pt x 3ft
-             0 1 2
-           ┌──────
-         e │ 0 1 0
-         d │ 1 0 0
+               0 1 2
+             ┌──────
+         'e' │ 0 1 0
+         'd' │ 1 0 0
         >
         >>> testY
         <Matrix "testY" 2pt x 1ft
-             0
-           ┌──
-         e │ 2
-         d │ 1
+               0
+             ┌──
+         'e' │ 2
+         'd' │ 1
         >
 
         Keywords
@@ -1489,7 +1489,7 @@ class Base(ABC):
             else:
                 trainX.name = "train"
                 testX.name = "test"
-        elif len(self._shape) > 2:
+        elif len(self._dims) > 2:
             msg = "labels parameter must be None when the data has more "
             msg += "than two dimensions"
             raise ImproperObjectAction(msg)
@@ -1570,10 +1570,10 @@ class Base(ABC):
         results = []
         fnames = []
         fnames.append('Values')
-        results.append(np.prod(self._shape))
-        if len(self._shape) > 2:
+        results.append(np.prod(self._dims))
+        if len(self._dims) > 2:
             fnames.append('Dimensions')
-            results.append(' x '.join(map(str, self._shape)))
+            results.append(' x '.join(map(str, self._dims)))
         else:
             fnames.extend(['Points', 'Features'])
             results.extend([self.shape[0], self.shape[1]])
@@ -1618,7 +1618,7 @@ class Base(ABC):
         """
         if not isinstance(other, Base):
             return False
-        if self._shape != other._shape:
+        if self._dims != other._dims:
             return False
         if not self._equalFeatureNames(other):
             return False
@@ -1695,7 +1695,7 @@ class Base(ABC):
 
         if fileFormat.lower() in ['hdf5', 'h5']:
             self._writeFileHDF_implementation(outPath, includePointNames)
-        elif len(self._shape) > 2:
+        elif len(self._dims) > 2:
             msg = 'Data with more than two dimensions can only be written '
             msg += 'to .hdf5 or .h5 formats otherwise the dimensionality '
             msg += 'would be lost'
@@ -1836,28 +1836,28 @@ class Base(ABC):
 
         >>> office['pam', :]
         <Matrix 1pt x 5ft
-                id  age   department   salary gender
-             ┌──────────────────────────────────────
-         pam │ 4331  26 administration 28000    f
+                 'id' 'age'  'department'  'salary' 'gender'
+               ┌────────────────────────────────────────────
+         'pam' │ 4331   26  administration  28000      f
         >
         >>> office[[3, 1], :]
         <Matrix 2pt x 5ft
-                   id  age department salary gender
-                ┌──────────────────────────────────
-         dwight │ 4211  45   sales    33000    m
-            jim │ 4434  26   sales    26000    m
+                    'id' 'age' 'department' 'salary' 'gender'
+                  ┌──────────────────────────────────────────
+         'dwight' │ 4211   45     sales      33000      m
+            'jim' │ 4434   26     sales      26000      m
         >
 
         *Note: retains list order; index 3 placed before index 1*
 
         >>> office[1:4, :]
         <Matrix 4pt x 5ft
-                   id  age   department   salary gender
-                ┌──────────────────────────────────────
-            jim │ 4434  26     sales      26000    m
-            pam │ 4331  26 administration 28000    f
-         dwight │ 4211  45     sales      33000    m
-         angela │ 4344  45   accounting   43500    f
+                    'id' 'age'  'department'  'salary' 'gender'
+                  ┌────────────────────────────────────────────
+            'jim' │ 4434   26      sales       26000      m
+            'pam' │ 4331   26  administration  28000      f
+         'dwight' │ 4211   45      sales       33000      m
+         'angela' │ 4344   45    accounting    43500      f
         >
 
         *Note: slices are inclusive; index 4 ('gender') was included*
@@ -1866,37 +1866,38 @@ class Base(ABC):
 
         >>> office[:, 2]
         <Matrix 5pt x 1ft
-                     department
-                 ┌───────────────
-         michael │   management
-             jim │     sales
-             pam │ administration
-          dwight │     sales
-          angela │   accounting
+                      'department'
+                   ┌───────────────
+         'michael' │   management
+             'jim' │     sales
+             'pam' │ administration
+          'dwight' │     sales
+          'angela' │   accounting
         >
         >>> office[:, ['gender', 'age']]
         <Matrix 5pt x 2ft
-                   gender age
-                 ┌───────────
-         michael │   m     41
-             jim │   m     26
-             pam │   f     26
-          dwight │   m     45
-          angela │   f     45
+                     'gender' 'age'
+                   ┌───────────────
+         'michael' │    m       41
+             'jim' │    m       26
+             'pam' │    f       26
+          'dwight' │    m       45
+          'angela' │    f       45
         >
 
         *Note: retains list order; 'gender' placed before 'age'*
 
         >>> office[:, 'department':'salary']
         <Matrix 5pt x 2ft
-                     department   salary
-                 ┌──────────────────────
-         michael │   management   50000
-             jim │     sales      26000
-             pam │ administration 28000
-          dwight │     sales      33000
-          angela │   accounting   43500
+                      'department'  'salary'
+                   ┌────────────────────────
+         'michael' │   management    50000
+             'jim' │     sales       26000
+             'pam' │ administration  28000
+          'dwight' │     sales       33000
+          'angela' │   accounting    43500
         >
+
 
         *Note: slices are inclusive; 'salary' was included*
 
@@ -1904,10 +1905,10 @@ class Base(ABC):
 
         >>> office[['pam', 'angela'], [3,2]]
         <Matrix 2pt x 2ft
-                  salary   department
-                ┌──────────────────────
-            pam │ 28000  administration
-         angela │ 43500    accounting
+                    'salary'  'department'
+                  ┌────────────────────────
+            'pam' │  28000   administration
+         'angela' │  43500     accounting
         >
 
         *Note: list orders retained; 'pam' precedes 'angela' and index 3
@@ -1915,11 +1916,11 @@ class Base(ABC):
 
         >>> office[:2, 'age']
         <Matrix 3pt x 1ft
-                   age
-                 ┌────
-         michael │  41
-             jim │  26
-             pam │  26
+                     'age'
+                   ┌──────
+         'michael' │   41
+             'jim' │   26
+             'pam' │   26
         >
 
         *Note: slices are inclusive; index 2 ('pam') was included*
@@ -2134,7 +2135,7 @@ class Base(ABC):
             # make exclusive now that it won't ruin the validation check
             featureEnd += 1
 
-        if len(self._shape) > 2:
+        if len(self._dims) > 2:
             if featureStart != 0 or featureEnd != len(self.features):
                 msg = "feature limited views are not allowed for data with "
                 msg += "more than two dimensions."
@@ -2213,7 +2214,7 @@ class Base(ABC):
         return not self.__eq__(other)
 
     def toString(self, maxWidth=79, maxHeight=30, sigDigits=3,
-                 maxColumnWidth=19, indent=''):
+                 maxColumnWidth=19, indent='', quoteNames=True):
         """
         A string representation of this object.
 
@@ -2247,13 +2248,10 @@ class Base(ABC):
         --------
         text, write, display, stringify
         """
-        if len(self.points) == 0 or len(self.features) == 0:
-            return ""
-
         # setup a bundle of fixed constants
         colSep = ' '
-        colHold = '--'
-        rowHold = '|'
+        colHold = '\u2500\u2500'
+        rowHold = '\u2502'
         pnameSep = '\u2502'
         fnameSep = '\u2500'
         corner = '\u250C'
@@ -2277,7 +2275,7 @@ class Base(ABC):
         maxWidth = float('inf') if maxWidth is None else maxWidth
         maxDataWidth = maxWidth - len(indent)
         pnames, pnamesWidth = self._arrangePointNames(
-            maxDataRows, maxColumnWidth, rowHold, nameHolder)
+            maxDataRows, maxColumnWidth, rowHold, nameHolder, quoteNames)
         # The available space for the data is reduced by the width of the
         # pnames, a column separator, the pnames separator, and another
         # column separator
@@ -2287,12 +2285,10 @@ class Base(ABC):
         with self._treatAs2D():
             dataTable, colWidths, fnames = self._arrangeDataWithLimits(
                 maxDataWidth, maxDataRows, sigDigits, maxColumnWidth, colSep,
-                colHold, rowHold, nameHolder)
-
+                colHold, rowHold, nameHolder, quoteNames)
         # combine names into finalized table
         finalTable, finalWidths = arrangeFinalTable(
             pnames, pnamesWidth, dataTable, colWidths, fnames, pnameSep)
-
         # set up output string
         out = ""
         for i, row in enumerate(finalTable):
@@ -2304,19 +2300,20 @@ class Base(ABC):
                 else:
                     padded = getattr(val, dataOrientation)(finalWidths[j])
                 row[j] = padded
-                line = indent + colSep.join(finalTable[i])
+            line = indent + colSep.join(finalTable[i])
             out += line.rstrip() + "\n"
             if i == 0: # add separator row
                 out += indent
                 blank =  ' '.join(' ' * w for w in finalWidths[:1]) + ' '
-                sepStr = fnameSep.join([fnameSep * w for w in finalWidths[2:]])
+                ftWidths = [w for w in finalWidths[2:] if w]
+                sepStr = fnameSep.join([fnameSep * w for w in ftWidths])
                 out += blank + corner + fnameSep + sepStr + '\n'
 
         return out
 
     def _show(self, description=None, includeObjectName=True,
               maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-              maxColumnWidth=19, indent=''):
+              maxColumnWidth=19, indent='', quoteNames=True):
         # when dynamically sizing, fit within current window
         terminalSize = shutil.get_terminal_size()
         if maxWidth == 'automatic':
@@ -2335,15 +2332,15 @@ class Base(ABC):
 
         if includeObjectName and self.name is not None:
             ret += '"{}" '.format(self._name)
-        if len(self._shape) > 2:
-            ret += " x ".join(map(str, self._shape))
-        else:
-            ret += str(len(self.points)) + "pt x "
-            ret += str(len(self.features)) + "ft"
+        if len(self._dims) > 2:
+            ret += " x ".join(map(str, self._dims))
+            ret += " dimensions encoded as "
+        ret += str(len(self.points)) + "pt x "
+        ret += str(len(self.features)) + "ft"
         ret += '\n'
 
         ret += self.toString(maxWidth, maxHeight, sigDigits, maxColumnWidth,
-                             indent=indent)
+                             indent=indent, quoteNames=quoteNames)
 
         return ret
 
@@ -3173,7 +3170,7 @@ class Base(ABC):
         """
         self._transpose_implementation()
 
-        self._shape = [len(self.features), len(self.points)]
+        self._dims = [len(self.features), len(self.points)]
         ptNames, ftNames = (self.features._getNamesNoGeneration(),
                             self.points._getNamesNoGeneration())
         self.points.setNames(ptNames, useLog=False)
@@ -3268,18 +3265,18 @@ class Base(ABC):
         ...                 name="odd&even")
         >>> X
         <List "odd&even" 2pt x 3ft
-                0 1 2
-              ┌──────
-          odd │ 1 3 5
-         even │ 2 4 6
+                  0 1 2
+                ┌──────
+          'odd' │ 1 3 5
+         'even' │ 2 4 6
         >
         >>> XCopy = X.copy()
         >>> XCopy
         <List "odd&even" 2pt x 3ft
-                0 1 2
-              ┌──────
-          odd │ 1 3 5
-         even │ 2 4 6
+                  0 1 2
+                ┌──────
+          'odd' │ 1 3 5
+         'even' │ 2 4 6
         >
 
         Copy to other formats.
@@ -3291,10 +3288,10 @@ class Base(ABC):
         >>> asDataFrame = X.copy(to='DataFrame')
         >>> asDataFrame
         <DataFrame 2pt x 2ft
-               a     b
-           ┌────────────
-         0 │ 1.000 0.000
-         1 │ 0.000 1.000
+                'a'   'b'
+             ┌────────────
+         '0' │ 1.000 0.000
+         '1' │ 0.000 1.000
         >
         >>> asNumpyArray = X.copy(to='numpy array')
         >>> asNumpyArray
@@ -3333,7 +3330,7 @@ class Base(ABC):
                 msg += "'and dict of list'"
                 raise InvalidArgumentValue(msg)
 
-        if len(self._shape) > 2:
+        if len(self._dims) > 2:
             if to in ['listofdict', 'dictoflist', 'scipycsr', 'scipycsc']:
                 msg = 'Objects with more than two dimensions cannot be '
                 msg += 'copied to {0}'.format(origTo)
@@ -3366,7 +3363,7 @@ class Base(ABC):
         # nimble, numpy and scipy types
         ret = self._copy_implementation(to)
         if isinstance(ret, Base):
-            ret._shape = self._shape.copy()
+            ret._dims = self._dims.copy()
             if not rowsArePoints:
                 ret.transpose(useLog=False)
             ret._name = self.name
@@ -3390,8 +3387,8 @@ class Base(ABC):
 
     def _copy_pythonList(self, rowsArePoints):
         ret = self._copy_implementation('pythonlist')
-        if len(self._shape) > 2:
-            ret = np.reshape(ret, self._shape).tolist()
+        if len(self._dims) > 2:
+            ret = np.reshape(ret, self._dims).tolist()
         if not rowsArePoints:
             ret = np.transpose(ret).tolist()
         return ret
@@ -3618,9 +3615,9 @@ class Base(ABC):
         >>> X.flatten()
         >>> X
         <Matrix 1pt x 4ft
-                     1 | a 1 | b 3 | a 3 | b
-                   ┌────────────────────────
-         Flattened │   1     2     3     4
+                       '1 | a' '1 | b' '3 | a' '3 | b'
+                     ┌────────────────────────────────
+         'Flattened' │    1       2       3       4
         >
 
         >>> lst = [[1, 2],
@@ -3632,9 +3629,9 @@ class Base(ABC):
         >>> X.flatten(order='feature')
         >>> X
         <Matrix 1pt x 4ft
-                     1 | a 3 | a 1 | b 3 | b
-                   ┌────────────────────────
-         Flattened │   1     3     2     4
+                       '1 | a' '3 | a' '1 | b' '3 | b'
+                     ┌────────────────────────────────
+         'Flattened' │    1       3       2       4
         >
 
         Keywords
@@ -3654,7 +3651,7 @@ class Base(ABC):
             msg = "Can only flatten when there is one or more "
             msg += "features. This object has 0 features."
             raise ImproperObjectAction(msg)
-        if order == 'feature' and len(self._shape) > 2:
+        if order == 'feature' and len(self._dims) > 2:
             msg = "order='feature' is not allowed for flattening objects with "
             msg += 'more than two dimensions'
             raise ImproperObjectAction(msg)
@@ -3662,9 +3659,9 @@ class Base(ABC):
         fNames = None
         if self.points._namesCreated() or self.features._namesCreated():
             fNames = self._flattenNames(order)
-        self._shape = list(self.shape) # make 2D before flattening
+        self._dims = list(self.shape) # make 2D before flattening
         self._flatten_implementation(order)
-        self._shape = [1, len(self.points) * len(self.features)]
+        self._dims = [1, len(self.points) * len(self.features)]
 
         self.features.setNames(fNames, useLog=False)
         self.points.setNames(['Flattened'], useLog=False)
@@ -3828,11 +3825,11 @@ class Base(ABC):
         >>> X.unflatten((3, 3))
         >>> X
         <Matrix 3pt x 3ft
-             a b c
-           ┌──────
-         1 │ 1 2 3
-         4 │ 4 5 6
-         7 │ 7 8 9
+               'a' 'b' 'c'
+             ┌────────────
+         '1' │  1   2   3
+         '4' │  4   5   6
+         '7' │  7   8   9
         >
 
         Keywords
@@ -3881,7 +3878,7 @@ class Base(ABC):
         else:
             pNames, fNames = (None, None)
 
-        self._shape = list(dataDimensions)
+        self._dims = list(dataDimensions)
         self.points.setNames(pNames, useLog=False)
         self.features.setNames(fNames, useLog=False)
 
@@ -3970,22 +3967,22 @@ class Base(ABC):
         >>> left.merge(right, point='strict', feature='union')
         >>> left
         <Matrix 3pt x 5ft
-              f1 f2 f3 f4 f5
-            ┌───────────────
-         p1 │ a  1  X  d  4
-         p2 │ b  2  Y  e  5
-         p3 │ c  3  Z  f  6
+                'f1' 'f2' 'f3' 'f4' 'f5'
+              ┌─────────────────────────
+         'p1' │  a    1    X    d    4
+         'p2' │  b    2    Y    e    5
+         'p3' │  c    3    Z    f    6
         >
         >>> left = nimble.data('Matrix', lstL, pointNames=pNamesL,
         ...                    featureNames=fNamesL)
         >>> left.merge(right, point='strict', feature='intersection')
         >>> left
         <Matrix 3pt x 1ft
-              f3
-            ┌───
-         p1 │ X
-         p2 │ Y
-         p3 │ Z
+                'f3'
+              ┌─────
+         'p1' │  X
+         'p2' │  Y
+         'p3' │  Z
         >
 
         Additional merge combinations. In this example, the feature
@@ -4003,21 +4000,21 @@ class Base(ABC):
         ...            onFeature="id")
         >>> left
         <DataFrame 5pt x 5ft
-             f1   f2   id f4   f5
-           ┌──────────────────────
-         0 │ a  1.000 id1
-         1 │ b  2.000 id2
-         2 │ c  3.000 id3 x  7.000
-         3 │          id4 y  8.000
-         4 │          id5 z  9.000
+             'f1'  'f2' 'id' 'f4'  'f5'
+           ┌───────────────────────────
+         0 │  a   1.000 id1
+         1 │  b   2.000 id2
+         2 │  c   3.000 id3   x   7.000
+         3 │            id4   y   8.000
+         4 │            id5   z   9.000
         >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='union', feature='intersection',
         ...            onFeature="id")
         >>> left
         <DataFrame 5pt x 1ft
-              id
-           ┌────
+             'id'
+           ┌─────
          0 │ id1
          1 │ id2
          2 │ id3
@@ -4029,30 +4026,30 @@ class Base(ABC):
         ...            onFeature="id")
         >>> left
         <DataFrame 5pt x 3ft
-             f1   f2   id
-           ┌─────────────
-         0 │ a  1.000 id1
-         1 │ b  2.000 id2
-         2 │ c  3.000 id3
-         3 │          id4
-         4 │          id5
+             'f1'  'f2' 'id'
+           ┌────────────────
+         0 │  a   1.000 id1
+         1 │  b   2.000 id2
+         2 │  c   3.000 id3
+         3 │            id4
+         4 │            id5
         >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='intersection', feature='union',
         ...            onFeature="id")
         >>> left
         <DataFrame 1pt x 5ft
-             f1 f2  id f4 f5
-           ┌────────────────
-         0 │ c  3  id3 x  7
+             'f1' 'f2' 'id' 'f4' 'f5'
+           ┌─────────────────────────
+         0 │  c    3   id3   x    7
         >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='intersection',
         ...            feature='intersection', onFeature="id")
         >>> left
         <DataFrame 1pt x 1ft
-              id
-           ┌────
+             'id'
+           ┌─────
          0 │ id3
         >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
@@ -4060,29 +4057,28 @@ class Base(ABC):
         ...            onFeature="id")
         >>> left
         <DataFrame 1pt x 3ft
-             f1 f2  id
-           ┌──────────
-         0 │ c  3  id3
+             'f1' 'f2' 'id'
+           ┌───────────────
+         0 │  c    3   id3
         >
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='union',
         ...            onFeature="id")
         >>> left
         <DataFrame 3pt x 5ft
-             f1 f2  id f4   f5
-           ┌───────────────────
-         0 │ a  1  id1
-         1 │ b  2  id2
-         2 │ c  3  id3 x  7.000
+             'f1' 'f2' 'id' 'f4'  'f5'
+           ┌──────────────────────────
+         0 │  a    1   id1
+         1 │  b    2   id2
+         2 │  c    3   id3   x   7.000
         >
-
         >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='intersection',
         ...            onFeature="id")
         >>> left
         <DataFrame 3pt x 1ft
-              id
-           ┌────
+             'id'
+           ┌─────
          0 │ id1
          1 │ id2
          2 │ id3
@@ -4092,11 +4088,11 @@ class Base(ABC):
         ...            onFeature="id")
         >>> left
         <DataFrame 3pt x 3ft
-             f1 f2  id
-           ┌──────────
-         0 │ a  1  id1
-         1 │ b  2  id2
-         2 │ c  3  id3
+             'f1' 'f2' 'id'
+           ┌───────────────
+         0 │  a    1   id1
+         1 │  b    2   id2
+         2 │  c    3   id3
         >
 
         Keywords
@@ -4738,7 +4734,7 @@ class Base(ABC):
         """
         with self._treatAs2D():
             ret = self.calculateOnElements(abs, useLog=False)
-        ret._shape = self._shape.copy()
+        ret._dims = self._dims.copy()
         if self.points._namesCreated():
             ret.points.setNames(self.points.getNames(), useLog=False)
         else:
@@ -4769,7 +4765,7 @@ class Base(ABC):
             raise ImproperObjectAction(msg) from e
 
     def _genericBinary_sizeValidation(self, opName, other):
-        if self._shape != other._shape:
+        if self._dims != other._dims:
             msg = "The dimensions of the objects must be equal."
             raise InvalidArgumentValue(msg)
         if len(self.points) != len(other.points):
@@ -4978,7 +4974,7 @@ class Base(ABC):
             obj._diagnoseFailureAndRaiseException(opName, other, error)
             raise # backup; should be diagnosed and raised above
 
-        ret._shape = self._shape
+        ret._dims = self._dims
         if opName.startswith('__i'):
             self._referenceFrom(ret, paths=(self._absPath, self._relPath))
             ret = self
@@ -5162,13 +5158,13 @@ class Base(ABC):
             raise InvalidArgumentValue(msg)
         if 'shape' in kwargs:
             msg = 'Cannot provide "shape" keyword, the shape is determined by '
-            msg = 'other._shape'
+            msg = 'other._dims'
             raise InvalidArgumentValue(msg)
         if hasattr(other, '_source'): # view
             other = other.copy()
 
         kwargs['data'] = other._data
-        kwargs['shape'] = other._shape
+        kwargs['shape'] = other._dims
         # setdefault only sets if the key is not already present
         kwargs.setdefault('name', self.name)
         kwargs.setdefault('paths', (other._absPath, other._relPath))
@@ -5191,29 +5187,44 @@ class Base(ABC):
         self._id = idVal
         Base._id -= 1
 
-    def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold):
+    def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold,
+                           quoteNames):
         """
         Prepare point names for string output. Grab only section of
         those names that fit according to the given row limitation,
         and process them for length. Returns a list of prepared names
         and an int bounding the length of each name representation.
         """
+        if len(self.points) == 0:
+            return [], 0
+
         names = []
         pnamesWidth = 0
         nameCutIndex = nameLength - len(nameHold)
-        (tRowIDs, bRowIDs) = indicesSplit(maxRows, len(self.points))
+        tRowIDs, bRowIDs = indicesSplit(maxRows, len(self.points))
 
         if self.points._allDefaultNames():
             pnames = list(map(str, range(len(self.points))))
         else:
             pnames = []
-            for name in self.points.getNames():
+            for i, name in enumerate(self.points.getNames()):
                 if name is None:
-                    pnames.append('')
-                elif len(name) <= nameLength:
-                    pnames.append(name)
+                    if quoteNames:
+                        pnames.append(str(i))
+                    else:
+                        pnames.append('')
+                elif quoteNames:
+                    if len(name) <= nameLength - 2:
+                        finalName = name
+                    else:
+                        finalName = name[:nameCutIndex - 2] + nameHold
+                    pnames.append("'" + finalName + "'")
                 else:
-                    pnames.append(name[:nameCutIndex] + nameHold)
+                    if len(name) <= nameLength:
+                        finalName = name
+                    else:
+                        finalName = name[:nameCutIndex] + nameHold
+                    pnames.append(finalName)
 
         topNames = [pnames[i] for i in tRowIDs]
         bottomNames = [pnames[i] for i in bRowIDs]
@@ -5228,9 +5239,9 @@ class Base(ABC):
 
         return names, pnamesWidth
 
-    def _arrangeDataWithLimits(self, maxWidth, maxHeight, sigDigits=3,
-                               maxStrLength=19, colSep=' ', colHold='--',
-                               rowHold='|', strHold='...'):
+    def _arrangeDataWithLimits(self, maxWidth, maxHeight, sigDigits,
+                               maxStrLength, colSep, colHold, rowHold,
+                               strHold, quoteNames):
         """
         Arrange the data in this object into a table structure, while
         respecting the given boundaries. If there is more data than
@@ -5248,10 +5259,6 @@ class Base(ABC):
         third returned value is a list of feature names matching the columns
         represented in the first return value.
         """
-        if len(self.points) == 0 or len(self.features) == 0:
-            fNames = []
-            return [[]], [], fNames
-
         if maxHeight < 2 and maxHeight != len(self.points):
             msg = "If the number of points in this object is two or greater, "
             msg += "then we require that the input argument maxHeight also "
@@ -5261,19 +5268,27 @@ class Base(ABC):
         cHoldWidth = len(colHold)
         cHoldTotal = len(colSep) + cHoldWidth
         nameCutIndex = maxStrLength - len(strHold)
-
         #setup a bundle of default values
+        numPts = len(self.points)
+        numFts = len(self.features)
         if maxHeight is None:
-            maxHeight = len(self.points)
+            maxHeight = numPts
         if maxWidth is None:
             maxWidth = float('inf')
 
-        maxRows = min(maxHeight, len(self.points))
+        maxRows = min(maxHeight, numPts)
         maxDataRows = maxRows
 
-        (tRowIDs, bRowIDs) = indicesSplit(maxDataRows, len(self.points))
+        if numFts == 0:
+            return [[]] * maxDataRows, [], []
+
+        if numPts > 0:
+            tRowIDs, bRowIDs = indicesSplit(maxDataRows, numPts)
+        else:
+            tRowIDs, bRowIDs = [], []
         combinedRowIDs = tRowIDs + bRowIDs
-        if len(combinedRowIDs) < len(self.points):
+
+        if len(combinedRowIDs) < numPts:
             rowHolderIndex = len(tRowIDs)
         else:
             rowHolderIndex = sys.maxsize
@@ -5291,15 +5306,15 @@ class Base(ABC):
         # why the end condition makes use of an exact stop value, which
         # varies between positive and negative depending on the number of
         # features
-        endIndex = len(self.features) // 2
-        if len(self.features) % 2 == 1:
+        endIndex = numFts // 2
+        if numFts % 2 == 1:
             endIndex *= -1
             endIndex -= 1
         currIndex = 0
         numAdded = 0
 
         if self.features._allDefaultNames():
-            fnames = list(map(str, range(len(self.features))))
+            fnames = None
         else:
             fnames = self.features.getNames()
 
@@ -5308,14 +5323,27 @@ class Base(ABC):
             currCol = []
             currWidth = 0
 
-            currFName = fnames[currIndex]
+            if fnames is None:
+                currFName = None
+            else:
+                currFName = fnames[currIndex]
             if currFName is None:
-                currFName = ''
-            fNameLen = len(currFName)
-            if fNameLen > maxStrLength:
-                currFName = currFName[:nameCutIndex] + strHold
-                fNameLen = maxStrLength
-            currWidth = fNameLen
+                if quoteNames:
+                    if currIndex < 0:
+                        currFName = str(numFts + currIndex)
+                    else:
+                        currFName = str(currIndex)
+                else:
+                    currFName = ''
+            elif quoteNames:
+                if len(currFName) > maxStrLength - 2:
+                    currFName = currFName[:nameCutIndex - 2] + strHold
+                currFName = "'" + currFName + "'"
+            else:
+                if len(currFName) > maxStrLength:
+                    currFName = currFName[:nameCutIndex] + strHold
+
+            currWidth = len(currFName)
 
             # check all values in this column (in the accepted rows)
             i = 0
@@ -5361,7 +5389,7 @@ class Base(ABC):
                     lColWidths.append(currWidth)
 
             # ignore column separator if the next column is the last
-            if numAdded == (len(self.features) - 1):
+            if numAdded == (numFts - 1):
                 totalWidth -= cHoldTotal
             totalWidth += len(colSep)
 
@@ -5370,7 +5398,7 @@ class Base(ABC):
         rColWidths.reverse()
         rFNames.reverse()
         fNames = lFNames + rFNames
-        if numAdded == len(self.features):
+        if numAdded == numFts:
             lColWidths += rColWidths
         else:
             lColWidths += [cHoldWidth] + rColWidths
@@ -5385,7 +5413,7 @@ class Base(ABC):
             else:
                 toAdd = []
 
-            if numAdded == len(self.features):
+            if numAdded == numFts:
                 lTable[rowIndex] += toAdd
             else:
                 lTable[rowIndex] += [colHold] + toAdd

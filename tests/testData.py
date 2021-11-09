@@ -4013,7 +4013,7 @@ def test_data_multidimensionalData():
             for i in range(idx % 3):
                 expShape.insert(0, 3)
             expFeatures = np.prod(expShape[1:])
-            assert toTest._shape == expShape
+            assert toTest._dims == expShape
             assert len(toTest.points) == expPoints
             assert len(toTest.features) == expFeatures
 
@@ -4023,7 +4023,7 @@ def test_data_multidimensionalData():
             for i in range(idx % 3):
                 expShape.insert(0, 3)
             expFeatures = np.prod(expShape[1:])
-            assert toTest._shape == expShape
+            assert toTest._dims == expShape
             assert len(toTest.points) == expPoints
             assert len(toTest.features) == expFeatures
 
@@ -4064,9 +4064,9 @@ def test_data_multidimensionalData_listsOfMultiDimensionalObjects():
         nim1D = nimble.data(rType1, [1, 2, 3, 0])
 
         fromListArr1D = nimble.data(rType2, [arr1D, arr1D, arr1D])
-        assert fromListArr1D._shape == [3, 4]
+        assert fromListArr1D._dims == [3, 4]
         fromListNim1D = nimble.data(rType2, [nim1D, nim1D, nim1D])
-        assert fromListNim1D._shape == [3, 4]
+        assert fromListNim1D._dims == [3, 4]
 
         arr2D = fromListArr1D._data
         coo2D = scipy.sparse.coo_matrix([[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 3, 0]])
@@ -4074,18 +4074,18 @@ def test_data_multidimensionalData_listsOfMultiDimensionalObjects():
         nim2D = fromListNim1D
 
         fromListArr2D = nimble.data(rType2, [arr2D, arr2D, arr2D])
-        assert fromListArr2D._shape == [3, 3, 4]
+        assert fromListArr2D._dims == [3, 3, 4]
         fromListCoo2D = nimble.data(rType2, [coo2D, coo2D, coo2D])
 
-        assert fromListCoo2D._shape == [3, 3, 4]
+        assert fromListCoo2D._dims == [3, 3, 4]
         fromListDF2D = nimble.data(rType2, [df2D, df2D, df2D])
-        assert fromListDF2D._shape == [3, 3, 4]
+        assert fromListDF2D._dims == [3, 3, 4]
         fromListNim2D = nimble.data(rType2, [nim2D, nim2D, nim2D])
-        assert fromListNim2D._shape == [3, 3, 4]
+        assert fromListNim2D._dims == [3, 3, 4]
 
         nim3D = fromListNim2D
         fromListNim3D = nimble.data(rType2, [nim3D, nim3D])
-        assert fromListNim3D._shape == [2, 3, 3, 4]
+        assert fromListNim3D._dims == [2, 3, 3, 4]
 
 # Tests when input data matches the backend data type
 

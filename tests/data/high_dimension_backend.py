@@ -72,9 +72,9 @@ class HighDimensionSafe(DataTestObject):
             toTest = self.constructor(tensor)
             train, test = toTest.trainAndTestSets(0.33)
             assert len(train.points) == 2
-            assert len(train._shape) > 2
+            assert len(train._dims) > 2
             assert len(test.points) == 1
-            assert len(train._shape) > 2
+            assert len(train._dims) > 2
 
             with raises(ImproperObjectAction):
                 fourTuple = toTest.trainAndTestSets(0.33, labels=0)
@@ -83,11 +83,11 @@ class HighDimensionSafe(DataTestObject):
         stdoutBackup = sys.stdout
         for tensor in tensors:
             toTest = self.constructor(tensor, name='test')
-            dims = ' x '.join(map(str, toTest._shape))
+            dims = ' x '.join(map(str, toTest._dims))
             expData = toTest.copy()._data # get 2D data
             exp = self.constructor(expData, name='test')
             shape = '3pt x {0}ft'.format(len(exp.features))
-            assert len(exp._shape) == 2
+            assert len(exp._dims) == 2
             assert toTest.toString() == exp.toString()
             testStr = str(toTest).split('\n')
             expStr = str(exp).split('\n')
@@ -113,7 +113,8 @@ class HighDimensionSafe(DataTestObject):
                 assert len(testLines) > 0
                 for l1, l2 in zip(testLines, expLines):
                     if l1.startswith('"test"'):
-                        assert l1.endswith(dims + '\n')
+                        both = dims + " dimensions encoded as " + shape
+                        assert l1.endswith(both + '\n')
                         assert l2.endswith(shape + '\n')
                     else:
                         assert l1 == l2
@@ -127,7 +128,7 @@ class HighDimensionSafe(DataTestObject):
                 for rType in nimble.core.data.available:
                     testCopy = toTest.copy(rType)
                     exp = nimble.data(rType, tensor)
-                    assert toTest._shape == testCopy._shape
+                    assert toTest._dims == testCopy._dims
                     assert testCopy == exp
 
                 listCopy = toTest.copy('python list')
@@ -137,7 +138,7 @@ class HighDimensionSafe(DataTestObject):
                 assert np.array_equal(arrCopy, np.array(tensor))
                 assert arrCopy.shape == toTest.dimensions
 
-                objArr = np.empty(toTest._shape[:2], dtype=np.object_)
+                objArr = np.empty(toTest._dims[:2], dtype=np.object_)
                 for i, lst in enumerate(tensor):
                     objArr[i] = lst
 
@@ -169,15 +170,15 @@ class HighDimensionSafe(DataTestObject):
         for tensor in tensors:
             toTest = self.constructor(tensor)
             testView = toTest.view()
-            assert toTest._shape == testView._shape
+            assert toTest._dims == testView._dims
 
             ptView = toTest.pointView(1)
-            assert ptView._shape[0] == toTest._shape[1]
-            assert ptView._shape[1:] == toTest._shape[2:]
+            assert ptView._dims[0] == toTest._dims[1]
+            assert ptView._dims[1:] == toTest._dims[2:]
 
             ptsView = toTest.view(pointStart=1, pointEnd=2)
-            assert ptsView._shape[0] == 2
-            assert ptsView._shape[1:] == toTest._shape[1:]
+            assert ptsView._dims[0] == 2
+            assert ptsView._dims[1:] == toTest._dims[1:]
 
             with raises(ImproperObjectAction):
                 ftsView = toTest.view(featureStart=1, featureEnd=2)
@@ -185,14 +186,14 @@ class HighDimensionSafe(DataTestObject):
     def test_highDimension_save(self):
         for tensor in tensors:
             toSave = self.constructor(tensor)
-            toSaveShape = toSave._shape
-            assert len(toSave._shape) > 2
+            toSaveShape = toSave._dims
+            assert len(toSave._dims) > 2
 
             with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
                 toSave.save(tmpFile.name)
                 loadObj = nimble.data(None, tmpFile.name)
 
-            assert loadObj._shape == toSaveShape
+            assert loadObj._dims == toSaveShape
             assert toSave.isIdentical(loadObj)
             assert loadObj.isIdentical(toSave)
 
@@ -236,10 +237,10 @@ class HighDimensionSafe(DataTestObject):
             for tensor in nzTensors:
                 toTest = self.constructor(tensor)
                 ret = getattr(toTest, op)(3)
-                assert ret._shape == toTest._shape
+                assert ret._dims == toTest._dims
 
                 ret = getattr(toTest, op)(toTest)
-                assert ret._shape == toTest._shape
+                assert ret._dims == toTest._dims
 
     def test_highDimension_flattenAndUnflatten(self):
 
@@ -259,13 +260,13 @@ class HighDimensionSafe(DataTestObject):
             orig = self.constructor(tensor)
             expPt = self.constructor(flatPt, pointNames=['Flattened'])
             # sanity check flattenTensor worked as expected
-            assert expPt._shape[0] == 1 and len(expPt._shape) == 2
+            assert expPt._dims[0] == 1 and len(expPt._dims) == 2
 
             toTestPt = orig.copy()
             toTestPt.flatten()
             assert toTestPt == expPt
 
-            toTestPt.unflatten(orig._shape)
+            toTestPt.unflatten(orig._dims)
             assert toTestPt == orig
 
             toTestFt = orig.copy()
@@ -274,7 +275,7 @@ class HighDimensionSafe(DataTestObject):
 
             flat = expPt.copy()
             with raises(ImproperObjectAction):
-                flat.unflatten(orig._shape, order='feature')
+                flat.unflatten(orig._dims, order='feature')
 
     def test_highDimension_points_iter(self):
         for idx, tensor in enumerate(tensors):
@@ -286,7 +287,7 @@ class HighDimensionSafe(DataTestObject):
             toTest = self.constructor(tensor, pointNames=ptNames,
                                       featureNames=ftNames)
             for pt in toTest.points:
-                assert pt._shape == toTest._shape[1:]
+                assert pt._dims == toTest._dims[1:]
                 assert not pt.points._namesCreated()
                 assert not pt.features._namesCreated()
 
@@ -295,7 +296,7 @@ class HighDimensionSafe(DataTestObject):
             toTest = self.constructor(tensor)
             for i in range(len(toTest.points)):
                 pt = toTest.points[i]
-                assert pt._shape == toTest._shape[1:]
+                assert pt._dims == toTest._dims[1:]
 
     def test_highDimension_points_copy(self):
         params = [([[0, 1]], {}),
@@ -338,8 +339,8 @@ class HighDimensionSafe(DataTestObject):
         for tensor in tensors:
             toTest = self.constructor(tensor)
             unique = toTest.points.unique()
-            assert unique._shape[0] == 1
-            assert unique._shape[1:] == toTest._shape[1:]
+            assert unique._dims[0] == 1
+            assert unique._dims[1:] == toTest._dims[1:]
 
 class HighDimensionModifying(DataTestObject):
 
@@ -363,11 +364,11 @@ class HighDimensionModifying(DataTestObject):
             for tensor in nzTensors:
                 toTest = self.constructor(tensor)
                 ret = getattr(toTest, op)(2)
-                assert ret._shape == toTest._shape
+                assert ret._dims == toTest._dims
 
                 toTest = self.constructor(tensor)
                 ret = getattr(toTest, op)(toTest)
-                assert ret._shape == toTest._shape
+                assert ret._dims == toTest._dims
 
     def test_highDimension_sort(self):
 
@@ -439,16 +440,16 @@ class HighDimensionModifying(DataTestObject):
     def test_highDimension_insertAndAppend(self):
         for tensor in tensors:
             toTest = self.constructor(tensor)
-            origShape = toTest._shape
+            origShape = toTest._dims
             numPts = len(toTest.points)
 
             toTest.points.insert(0, toTest)
-            assert toTest._shape[0] == numPts * 2
-            assert toTest._shape[1:] == origShape[1:]
+            assert toTest._dims[0] == numPts * 2
+            assert toTest._dims[1:] == origShape[1:]
 
             toTest.points.append(toTest)
-            assert toTest._shape[0] == numPts * 4
-            assert toTest._shape[1:] == origShape[1:]
+            assert toTest._dims[0] == numPts * 4
+            assert toTest._dims[1:] == origShape[1:]
 
             with raises(ImproperObjectAction):
                 toTest.features.insert(0, toTest)
@@ -461,7 +462,7 @@ class HighDimensionModifying(DataTestObject):
             for tens2 in tensors:
                 toTest = self.constructor(tens1)
                 toInsert = self.constructor(tens2)
-                if toTest._shape != toInsert._shape:
+                if toTest._dims != toInsert._dims:
                     with raises(ImproperObjectAction):
                         toTest.points.insert(0, toInsert)
 
@@ -471,11 +472,11 @@ class HighDimensionModifying(DataTestObject):
     def test_highDimension_permute(self):
         for tensor in tensors:
             toTest = self.constructor(tensor, pointNames=['a', 'b', 'c'])
-            origShape = toTest._shape
+            origShape = toTest._dims
             permuted = False
             for i in range(5):
                 toTest.points.permute()
-                assert toTest._shape == origShape
+                assert toTest._dims == origShape
                 if toTest.points.getNames() != ['a', 'b', 'c']:
                     permuted = True
                     break
@@ -546,11 +547,11 @@ class HighDimensionModifying(DataTestObject):
     def test_highDimension_axis_repeat(self):
         for tensor in tensors:
             toTest = self.constructor(tensor)
-            origShape = toTest._shape
+            origShape = toTest._dims
             repeated = toTest.points.repeat(2, True)
-            assert toTest._shape == origShape
-            assert repeated._shape[0] == origShape[0] * 2
-            assert repeated._shape[1:] == origShape[1:]
+            assert toTest._dims == origShape
+            assert repeated._dims[0] == origShape[0] * 2
+            assert repeated._dims[1:] == origShape[1:]
 
             with raises(ImproperObjectAction):
                 repeated = toTest.features.repeat(2, True)
@@ -566,7 +567,7 @@ class HighDimensionModifying(DataTestObject):
 
             toTest = self.constructor(tensor)
 
-            expShape = toTest._shape
+            expShape = toTest._dims
 
             exp0 = toTest.points[0]
             exp1 = toTest.points[1]
@@ -576,7 +577,7 @@ class HighDimensionModifying(DataTestObject):
 
             assert toTest.points[1] == exp0
             assert toTest.points[2] == exp1
-            assert toTest._shape == expShape
+            assert toTest._dims == expShape
 
     def test_highDimension_disallowed(self):
         # Goal here is to make sure that all functions that we have not

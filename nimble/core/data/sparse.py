@@ -350,14 +350,14 @@ class Sparse(Base):
                                           reuseData=True)
         if to == 'pythonlist':
             return sparseMatrixToArray(self._data).tolist()
-        needsReshape = len(self._shape) > 2
+        needsReshape = len(self._dims) > 2
         if to == 'numpyarray':
             ret = sparseMatrixToArray(self._data)
             if needsReshape:
-                return ret.reshape(self._shape)
+                return ret.reshape(self._dims)
             return ret
         if needsReshape:
-            data = np.empty(self._shape[:2], dtype=np.object_)
+            data = np.empty(self._dims[:2], dtype=np.object_)
             for i in range(self.shape[0]):
                 data[i] = self.points[i].copy('pythonlist')
         elif 'scipy' in to:
@@ -756,7 +756,7 @@ class Sparse(Base):
         if len(mergedData) == 0:
             mergedData = []
 
-        self._shape = [numPts, numFts]
+        self._dims = [numPts, numFts]
         self._data = scipy.sparse.coo_matrix(
             (mergedData, (mergedRow, mergedCol)), shape=(numPts, numFts))
 
@@ -857,20 +857,20 @@ class Sparse(Base):
                 start = start + innerStart
                 end = outerStart + innerEnd
             # high dimension data only allowed for points
-            if singlePoint and len(self._shape) > 2:
+            if singlePoint and len(self._dims) > 2:
                 if dropDimension:
                     firstIdx = 1
-                    pshape = self._shape[firstIdx]
-                    fshape = int(np.prod(self._shape[firstIdx + 1:]))
+                    pshape = self._dims[firstIdx]
+                    fshape = int(np.prod(self._dims[firstIdx + 1:]))
                     kwds['pointStart'] = 0
-                    kwds['pointEnd'] = self._shape[1]
+                    kwds['pointEnd'] = self._dims[1]
                     kwds['featureStart'] = 0
-                    kwds['featureEnd'] = int(np.prod(self._shape[2:]))
+                    kwds['featureEnd'] = int(np.prod(self._dims[2:]))
                 else:
                     firstIdx = 0
                 primary = sortedSecondary[start:end] // fshape
                 secondary = sortedSecondary[start:end] % fshape
-                kwds['shape'] = [pshape] + self._shape[firstIdx + 1:]
+                kwds['shape'] = [pshape] + self._dims[firstIdx + 1:]
             else:
                 primary = np.zeros((end - start,), dtype=int)
                 secondary = sortedSecondary[start:end] - secondaryStart
@@ -887,7 +887,7 @@ class Sparse(Base):
             newInternal = Sparse._cooMatrixSkipCheck(
                 (data, (row, col)), shape=(pshape, fshape), copy=False)
             kwds['data'] = newInternal
-            if singlePoint and len(self._shape) > 2 and dropDimension:
+            if singlePoint and len(self._dims) > 2 and dropDimension:
                 kwds['source'] = Sparse(newInternal, shape=kwds['shape'],
                                         reuseData=True)
 
@@ -901,8 +901,8 @@ class Sparse(Base):
                               featureEnd - featureStart)
         newInternal._data = None
         kwds['data'] = newInternal
-        if len(self._shape) > 2:
-            shape = self._shape.copy()
+        if len(self._dims) > 2:
+            shape = self._dims.copy()
             shape[0] = pointEnd - pointStart
             kwds['shape'] = shape
 
@@ -1293,7 +1293,7 @@ class SparseView(BaseView, Sparse):
             return Sparse(coo, pointNames=pNames, featureNames=fNames)
 
         if len(self.points) == 0 or len(self.features) == 0:
-            emptyStandin = np.empty(self._shape)
+            emptyStandin = np.empty(self._dims)
             intermediate = nimble.data('Matrix', emptyStandin, useLog=False)
             return intermediate.copy(to=to)
 
@@ -1302,8 +1302,8 @@ class SparseView(BaseView, Sparse):
             fStart, fEnd = self._fStart, self._fEnd
             asArray = sparseMatrixToArray(self._source._data)
             limited = asArray[pStart:pEnd, fStart:fEnd]
-            if len(self._shape) > 2:
-                return limited.reshape(self._shape)
+            if len(self._dims) > 2:
+                return limited.reshape(self._dims)
             return limited.copy()
 
         limited = self._source.points.copy(start=self._pStart,

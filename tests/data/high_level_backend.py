@@ -148,7 +148,7 @@ class HighLevelDataSafe(DataTestObject):
             return [list(point)]
 
         calc = toTest.points.calculate(return2D)
-        assert calc._shape == [4, 1, 3]
+        assert calc._dims == [4, 1, 3]
 
     @raises(InvalidArgumentValue)
     def test_points_calculate_functionReturnsInvalidObj(self):

@@ -267,17 +267,17 @@ class List(Base):
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
 
-        needsReshape = len(self._shape) > 2
+        needsReshape = len(self._dims) > 2
         if to == 'numpyarray':
             if isEmpty:
                 ret = emptyData
             else:
                 ret = _convertList(numpy2DArray, self._data)
             if needsReshape:
-                return ret.reshape(self._shape)
+                return ret.reshape(self._dims)
             return ret
         if needsReshape:
-            data = np.empty(self._shape[:2], dtype=np.object_)
+            data = np.empty(self._dims[:2], dtype=np.object_)
             for i in range(self.shape[0]):
                 data[i] = self.points[i].copy('pythonlist')
             if isEmpty:
@@ -500,12 +500,12 @@ class List(Base):
                                          if i not in matchingFtIdx[1]]
                     merged.append(pt)
 
-        self._shape = [len(merged), len(left[0]) + unmatchedFtCountR]
+        self._dims = [len(merged), len(left[0]) + unmatchedFtCountR]
         if onFeature is None:
             # remove point names feature
             merged = [row[1:] for row in merged]
-            self._shape[1] -= 1
-        self._numFeatures = self._shape[1]
+            self._dims[1] -= 1
+        self._numFeatures = self._dims[1]
 
         self._data = merged
 
@@ -526,16 +526,16 @@ class List(Base):
                                        featureStart, featureEnd)
         kwds['shape'] = (pointEnd - pointStart, featureEnd - featureStart)
         kwds['source'] = self
-        if len(self._shape) > 2:
+        if len(self._dims) > 2:
             if dropDimension:
-                shape = self._shape[1:]
+                shape = self._dims[1:]
                 source = self._createNestedObject(pointStart)
                 kwds['source'] = source
                 kwds['data'] = source._data
                 pointStart, pointEnd = 0, source.shape[0]
                 featureStart, featureEnd = 0, source.shape[1]
             else:
-                shape = self._shape.copy()
+                shape = self._dims.copy()
                 shape[0] = pointEnd - pointStart
             kwds['shape'] = shape
         kwds['pointStart'] = pointStart
@@ -549,7 +549,7 @@ class List(Base):
         """
         Create an object of one less dimension
         """
-        reshape = (self._shape[1], int(np.prod(self._shape[2:])))
+        reshape = (self._dims[1], int(np.prod(self._dims[2:])))
         data = []
         point = self._data[pointIndex]
         for i in range(reshape[0]):
@@ -557,7 +557,7 @@ class List(Base):
             end = start + reshape[1]
             data.append(point[start:end])
 
-        return List(data, shape=self._shape[1:], reuseData=True)
+        return List(data, shape=self._dims[1:], reuseData=True)
 
     def _checkInvariants_implementation(self, level):
         assert len(self._data) == self.shape[0]
@@ -582,7 +582,7 @@ class List(Base):
         contained in this object. False otherwise
         """
         for point in self.points:
-            if len(point._shape) == 2 and point._shape[0] == 1:
+            if len(point._dims) == 2 and point._dims[0] == 1:
                 for val in point:
                     if val == 0:
                         return True
@@ -654,7 +654,7 @@ class ListView(BaseView, List):
         # for copy
         if ((len(self.points) == 0 or len(self.features) == 0)
                 and to != 'List'):
-            emptyStandin = np.empty(self._shape)
+            emptyStandin = np.empty(self._dims)
             intermediate = nimble.data('Matrix', emptyStandin, useLog=False)
             return intermediate.copy(to=to)
 

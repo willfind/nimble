@@ -193,7 +193,7 @@ class DataFrame(Base):
             return createDataNoValidation(to, data, ptNames, ftNames,
                                           reuseData=True)
 
-        needsReshape = len(self._shape) > 2
+        needsReshape = len(self._dims) > 2
         if to in ['pythonlist', 'numpyarray']:
             # convert pandas Timestamp type if necessary
             timestamp = [d.type == np.datetime64 for d in self._data.dtypes]
@@ -204,7 +204,7 @@ class DataFrame(Base):
                 arr[:, timestamp] = convTimestamp(arr[:, timestamp])
 
             if needsReshape:
-                arr = arr.reshape(self._shape)
+                arr = arr.reshape(self._dims)
             if to == 'pythonlist':
                 return arr.tolist()
             if needsReshape:
@@ -212,7 +212,7 @@ class DataFrame(Base):
             return arr.copy()
 
         if needsReshape:
-            data = np.empty(self._shape[:2], dtype=np.object_)
+            data = np.empty(self._dims[:2], dtype=np.object_)
             for i in range(self.shape[0]):
                 data[i] = self.points[i].copy('pythonlist')
         elif to == 'pandasdataframe':
@@ -379,7 +379,7 @@ class DataFrame(Base):
         numFeatures = (numColsL + len(tmpDfR.columns) - len(matchingFtIdx[1]))
         numPoints = len(self._data.index)
 
-        self._shape = [numPoints, numFeatures]
+        self._dims = [numPoints, numFeatures]
 
     def _replaceFeatureWithBinaryFeatures_implementation(self, uniqueIdx):
         toFill = np.zeros((len(self.points), len(uniqueIdx)))
@@ -400,9 +400,9 @@ class DataFrame(Base):
         kwds['source'] = self
         pRange = pointEnd - pointStart
         fRange = featureEnd - featureStart
-        if len(self._shape) > 2:
+        if len(self._dims) > 2:
             if dropDimension:
-                shape = self._shape[1:]
+                shape = self._dims[1:]
                 source = self._createNestedObject(pointStart)
                 kwds['source'] = source
                 kwds['data'] = source._data
@@ -411,7 +411,7 @@ class DataFrame(Base):
                 pRange = source.shape[0]
                 fRange = source.shape[1]
             else:
-                shape = self._shape.copy()
+                shape = self._dims.copy()
                 shape[0] = pRange
             kwds['shape'] = shape
         kwds['pointStart'] = pointStart
@@ -432,9 +432,9 @@ class DataFrame(Base):
         """
         Create an object of one less dimension.
         """
-        reshape = (self._shape[1], int(np.prod(self._shape[2:])))
+        reshape = (self._dims[1], int(np.prod(self._dims[2:])))
         data = self._asNumpyArray()[pointIndex].reshape(reshape)
-        return DataFrame(data, shape=self._shape[1:], reuseData=True)
+        return DataFrame(data, shape=self._dims[1:], reuseData=True)
 
     def _checkInvariants_implementation(self, level):
         dfShape = self._data.shape

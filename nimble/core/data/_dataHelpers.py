@@ -745,9 +745,9 @@ def limitedTo2D(method):
     @wraps(method)
     def wrapped(self, *args, **kwargs):
         if hasattr(self, '_base'):
-            tensorRank = len(self._base._shape)
+            tensorRank = len(self._base._dims)
         else:
-            tensorRank = len(self._shape)
+            tensorRank = len(self._dims)
         if tensorRank > 2:
             msg = "{0} is not permitted when the ".format(method.__name__)
             msg += "data has more than two dimensions"
@@ -766,29 +766,27 @@ def arrangeFinalTable(pnames, pnamesWidth, dataTable, dataWidths, fnames,
     """
     Arrange the final table of values for Base string representation.
     """
-    fnamesWidth = list(map(len, fnames))
-
     # We make extensive use of list addition in this helper in order
     # to prepend single values onto lists.
 
     # glue point names onto the left of the data
     for i, data in enumerate(dataTable):
-        dataTable[i] = [pnames[i], pnameSep] + data
+        if pnames:
+            dataTable[i] = [pnames[i], pnameSep] + data
+        else:
+            dataTable[i] = ['', ''] + data
+
     dataWidths = [pnamesWidth, len(pnameSep)] + dataWidths
+    fnames = ['', ''] + fnames
 
     # glue feature names onto the top of the data
-    if fnames is not None:
-        # adjust with the empty space in the upper left corner, if needed
-        if pnames is not None:
-            fnames = ["", ""] + fnames
-            fnamesWidth = [0, 0] + fnamesWidth
-
-        dataTable = [fnames] + dataTable
-        # finalize widths by taking the largest of the two possibilities
-        for i in range(len(fnames)):
-            nameWidth = fnamesWidth[i]
-            valWidth = dataWidths[i]
-            dataWidths[i] = max(nameWidth, valWidth)
+    fnamesWidth = list(map(len, fnames))
+    dataTable = [fnames] + dataTable
+    # finalize widths by taking the largest of the two possibilities
+    for i in range(len(fnames)):
+        nameWidth = fnamesWidth[i]
+        valWidth = dataWidths[i]
+        dataWidths[i] = max(nameWidth, valWidth)
 
     return dataTable, dataWidths
 

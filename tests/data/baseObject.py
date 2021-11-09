@@ -58,14 +58,14 @@ def viewConstructorMaker(concreteType):
         # data in the concrete object
         origPaths = (orig.absolutePath, orig.relativePath)
         if len(orig.points) != 0:
-            firstPRaw = np.zeros([1] + orig._shape[1:], dtype=int).tolist()
+            firstPRaw = np.zeros([1] + orig._dims[1:], dtype=int).tolist()
             fNamesParam = orig.features._getNamesNoGeneration()
             firstPoint = nimble.core._createHelpers.initDataObject(
                 concreteType, rawData=firstPRaw, pointNames=['firstPNonView'],
                 featureNames=fNamesParam, name=name,
                 convertToType=convertToType, paths=origPaths)
 
-            lastPRaw = (np.ones([1] + orig._shape[1:], dtype=int) * 3).tolist()
+            lastPRaw = (np.ones([1] + orig._dims[1:], dtype=int) * 3).tolist()
             lastPoint = nimble.core._createHelpers.initDataObject(
                 concreteType, rawData=lastPRaw, pointNames=['lastPNonView'],
                 featureNames=fNamesParam, name=name,
@@ -84,7 +84,7 @@ def viewConstructorMaker(concreteType):
 
         # generate features of data to be present before and after the viewable
         # data in the concrete object
-        if len(orig.features) != 0 and not len(orig._shape) > 2:
+        if len(orig.features) != 0 and not len(orig._dims) > 2:
             lastFRaw = [[1] * len(full.points)]
             fNames = full.points._getNamesNoGeneration()
             lastFeature = nimble.core._createHelpers.initDataObject(
