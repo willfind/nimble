@@ -107,6 +107,9 @@ publish:
 	@echo "Build finished. The HTML pages are in $(PUBLISHDIR)"
 
 html:
+	@echo
+	python update_cheatsheet-pdf.py
+	@echo "Cheatsheet updated"
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html"

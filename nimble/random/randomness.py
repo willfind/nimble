@@ -1,6 +1,6 @@
 """
 Contains functions and objects controlling how randomness is used in
-nimble functions and tests.
+Nimble functions and tests.
 """
 
 import random
@@ -49,7 +49,11 @@ def data(
     """
     Generate a data object with random contents.
 
-    The range of values is dependent on the elementType.
+    The range of values and the distribution are dependent on the
+    elementType. For the default elementType "float", the data will be a
+    normal distribution of values with mean 0 and standard deviation of
+    1. If the elementType is "int", values are sampled from a uniform
+    distribution of the range 1 to 100.
 
     Parameters
     ----------

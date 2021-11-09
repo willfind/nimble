@@ -293,6 +293,10 @@ def exampleHyperlinks(app, pagename, templatename, context, doctree):
     elif pagename.startswith('docs/index'):
         app.nimble_nolink = ['nimble'] # no need to link to same page
         context['body'] = addMarkdownLinks(app, context['body'])
+    elif pagename.startswith('cheatsheet'):
+        # remove header that sphinx adds
+        context['body'] = re.sub('<h1>cheatsheet', '', context['body'])
+        context['body'] = re.sub('</h1>', '', context['body'])
 
 def setup(app):
     app.connect('autodoc-process-docstring', process_docstring)
@@ -314,7 +318,8 @@ extensions = [
 ]
 
 intersphinx_mapping = {'numpy': ('http://docs.scipy.org/doc/numpy/', None),
-                       'matplotlib': ('https://matplotlib.org/stable/', None)}
+                       'matplotlib': ('https://matplotlib.org/stable/', None),
+                       'random': ('https://docs.python.org/3/', None)}
 
 autodoc_default_options = {
     'undoc-members': True,

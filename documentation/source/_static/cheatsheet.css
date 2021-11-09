@@ -1,0 +1,292 @@
+tr, p {
+  font-size: 8px;
+  font-family: "Courier New", monospace;
+  margin: 1px;
+}
+
+table {
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+
+table td {
+  padding: 0;
+  padding-right: 4px;
+}
+
+tr {
+  font-size: 7.4px;
+  font-family: "Courier New", monospace;
+  margin: 1px;
+}
+
+a {
+  color: #004B6B;
+  text-decoration: inherit;
+}
+
+a:hover {
+  color: #6D4100;
+  text-decoration: underline;
+}
+
+.row {
+  display: inline-flex;
+  margin-bottom: -4px;
+  clear: both;
+  line-height: 9px;
+}
+
+.col {
+  float: left;
+  margin: 2px;
+  padding: 0;
+}
+
+.clear {
+  clear: both;
+}
+
+.text-center {
+  text-align: center;
+  width: 100%;
+}
+
+.outline {
+  width: 100%;
+  box-sizing: border-box;
+  border: 2px solid black;
+  margin-bottom: 2px;
+}
+
+.outlined {
+  padding-left: 2px;
+  margin-right: -2px;
+}
+
+.center {
+  text-align: center;
+}
+
+.outline p {
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+.section-head {
+  background-color: #004B6B;
+  color: white;
+  text-align: center;
+  height: 16px;
+}
+
+.section-head h3 {
+  font-size: 14px;
+  margin: 0;
+  padding-top: 2px;
+}
+
+.subhead {
+  background-color: #A1B6C4;
+  color: black;
+  height: 14px;
+}
+
+.subhead h4 {
+  font-size: 12px;
+  text-align: center;
+  margin: 0;
+  padding-top: 2px;
+}
+
+.subsubhead {
+  background-color: #E4EADD;
+  color: black;
+  height: 13px;
+}
+
+.subsubhead h5 {
+  font-size: 10px;
+  text-align: center;
+  margin: 0;
+  padding-top: 2px;
+}
+
+.code {
+  background-color: lightgray;
+  margin-left: 2px;
+  margin-right: 2px;
+  margin-bottom: 2px;
+  padding-bottom: 1px;
+  padding-top: 1px;
+}
+
+.code p {
+  margin: 1px;
+  padding-left: 1px;
+}
+
+.highlight {
+  font-size: 10px;
+}
+
+.inline {
+  background-color: lightgray;
+}
+
+.row1 {
+  height: 356px;
+}
+
+.first-half {
+  float: left;
+  margin-right: 4px;
+}
+
+.left {
+  float: left;
+}
+
+.half {
+  float: left;
+  width: 50%;
+}
+
+.pad {
+  margin-top: 0;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+.lower {
+  margin-top: 4px;
+}
+
+.rborder {
+  border-right: 2px solid black;
+  margin-right: -2px;
+}
+
+#title {
+  font-size: 28px;
+  font-weight: bold;
+  display: inline;
+  float: left;
+  color: #004B6B;
+  font-family: Tahoma, Verdana, Arial;
+  margin-right: 5px;
+  margin: 0;
+  margin-bottom: -2px;
+}
+
+#description {
+  font-size: 9px;
+  font-weight: bold;
+  margin: 0;
+  padding-left: 2px;
+  padding-top: 10px;
+  width: 440px;
+}
+
+#image {
+  text-align: center;
+  margin-bottom: 8px;
+  margin-right: 8px;
+}
+
+#data {
+  height: 120px;
+  width: 220px;
+}
+
+#points {
+  background-color: rgba(208, 2, 27, 0.5);
+}
+
+#features {
+  background-color: rgba(248, 231, 28, 0.5);
+}
+
+#data-structure {
+  width: 530px;
+}
+
+#io {
+  width: 340px;
+}
+
+#info {
+  width: 310px;
+}
+
+#vizAndIter {
+  width: 632px;
+}
+
+#indexing {
+  height: 156px;
+}
+
+#query-head {
+  margin-right: 2px;
+}
+
+#query {
+  width: 552px;
+}
+
+#visualization {
+  height: 234px;
+}
+
+#iteration {
+  height: 102px;
+}
+
+#querying {
+  height: 338px;
+}
+
+#manipulation {
+  width: 1188px;
+  height: 328px;
+}
+
+#cleaning {
+  margin-left: 2px;
+  width: 784px;
+  padding-bottom: 2px;
+}
+
+#math {
+  height: 296px;
+  width: 398px;
+}
+
+#ml {
+  width: 1188px;
+  margin-top: 4px;
+}
+
+#section-ml {
+  border: 2px solid black;
+  border-bottom: 0;
+}
+
+#training {
+  width: 656px;
+  border-top: 0;
+  height: 292px;
+}
+
+#interfaces {
+  width: 532px;
+  border-top: 0;
+  border-right: 0;
+  height: 292px;
+}
+
+#submodules {
+  width: 1188px;
+  height: 58px;
+}
