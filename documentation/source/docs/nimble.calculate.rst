@@ -149,6 +149,7 @@ Statistic
    standardDeviation
    sum
    uniqueCount
+   variance
 
 Utility
 -------
