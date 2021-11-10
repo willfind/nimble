@@ -167,6 +167,11 @@ a:hover {
   margin-right: -2px;
 }
 
+.inplace {
+  color: red;
+  font-weight: bold;
+}
+
 #title {
   font-size: 28px;
   font-weight: bold;
