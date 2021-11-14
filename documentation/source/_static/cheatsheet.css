@@ -1,21 +1,21 @@
 tr, p {
-  font-size: 8px;
+  font-size: 7px;
   font-family: "Courier New", monospace;
   margin: 1px;
 }
 
 table {
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   font-weight: bold;
 }
 
 table td {
   padding: 0;
-  padding-right: 4px;
+  padding-right: 3px;
 }
 
 tr {
-  font-size: 7.4px;
+  font-size: 7px;
   font-family: "Courier New", monospace;
   margin: 1px;
 }
@@ -31,10 +31,10 @@ a:hover {
 }
 
 .row {
-  display: inline-flex;
-  margin-bottom: -4px;
+  display: block;
+  margin-bottom: -3px;
   clear: both;
-  line-height: 9px;
+  line-height: 7px;
 }
 
 .col {
@@ -54,14 +54,15 @@ a:hover {
 
 .outline {
   width: 100%;
+  height: 100%;
   box-sizing: border-box;
-  border: 2px solid black;
-  margin-bottom: 2px;
+  border: 1px solid black;
+  margin-bottom: 1px;
+  padding-bottom: 2px;
 }
 
-.outlined {
-  padding-left: 2px;
-  margin-right: -2px;
+.bordered {
+  margin-left: 1px;
 }
 
 .center {
@@ -69,47 +70,34 @@ a:hover {
 }
 
 .outline p {
-  padding-left: 2px;
-  padding-right: 2px;
+  padding-left: 1px;
+  padding-right: 1px;
 }
 
 .section-head {
   background-color: #004B6B;
   color: white;
   text-align: center;
-  height: 16px;
+  height: 13px;
 }
 
 .section-head h3 {
-  font-size: 14px;
+  font-size: 10px;
   margin: 0;
-  padding-top: 2px;
+  padding-top: 3px;
 }
 
 .subhead {
   background-color: #A1B6C4;
   color: black;
-  height: 14px;
+  height: 12px;
 }
 
 .subhead h4 {
-  font-size: 12px;
+  font-size: 9px;
   text-align: center;
   margin: 0;
-  padding-top: 2px;
-}
-
-.subsubhead {
-  background-color: #E4EADD;
-  color: black;
-  height: 13px;
-}
-
-.subsubhead h5 {
-  font-size: 10px;
-  text-align: center;
-  margin: 0;
-  padding-top: 2px;
+  padding-top: 3px;
 }
 
 .code {
@@ -119,28 +107,21 @@ a:hover {
   margin-bottom: 2px;
   padding-bottom: 1px;
   padding-top: 1px;
-}
-
-.code p {
   margin: 1px;
   padding-left: 1px;
 }
 
 .highlight {
-  font-size: 10px;
+  font-size: 8px;
 }
 
 .inline {
   background-color: lightgray;
 }
 
-.row1 {
-  height: 356px;
-}
-
 .first-half {
   float: left;
-  margin-right: 4px;
+  margin-right: 2px;
 }
 
 .left {
@@ -159,12 +140,18 @@ a:hover {
 }
 
 .lower {
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .rborder {
-  border-right: 2px solid black;
-  margin-right: -2px;
+  box-sizing: border-box;
+  border-right: 1px solid black;
+  margin-right: -1px;
+}
+
+.inplace {
+  color: red;
+  font-weight: bold;
 }
 
 .inplace {
@@ -173,7 +160,7 @@ a:hover {
 }
 
 #title {
-  font-size: 28px;
+  font-size: 23px;
   font-weight: bold;
   display: inline;
   float: left;
@@ -185,23 +172,23 @@ a:hover {
 }
 
 #description {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: bold;
   margin: 0;
   padding-left: 2px;
-  padding-top: 10px;
-  width: 440px;
+  padding-top: 9px;
+  width: 380px;
 }
 
 #image {
   text-align: center;
-  margin-bottom: 8px;
-  margin-right: 8px;
+  margin-bottom: 4px;
+  margin-right: 4px;
 }
 
 #data {
-  height: 120px;
-  width: 220px;
+  height: 80px;
+  width: 150px;
 }
 
 #points {
@@ -213,85 +200,85 @@ a:hover {
 }
 
 #data-structure {
-  width: 530px;
+  width: 482px;
+  height: 288px;
 }
 
 #io {
-  width: 340px;
+  width: 304px;
+  height: 288px;
 }
 
 #info {
-  width: 310px;
+  width: 264px;
+  height: 280px;
 }
 
 #vizAndIter {
-  width: 632px;
-}
-
-#indexing {
-  height: 156px;
-}
-
-#query-head {
-  margin-right: 2px;
-}
-
-#query {
-  width: 552px;
+  width: 522px;
 }
 
 #visualization {
-  height: 234px;
+  height: 191px;
 }
 
 #iteration {
-  height: 102px;
+  height: 87px;
+  margin-top: 2px;
 }
 
-#querying {
-  height: 338px;
+#query {
+  height: 273px;
+  width: 498px;
+}
+
+#indexing {
+  height: 125px;
+}
+
+#math {
+  height: 273px;
+  width: 288px;
 }
 
 #manipulation {
-  width: 1188px;
-  height: 328px;
+  width: 596px;
+  height: 303px;
+}
+
+#submodules {
+  width: 190px;
+  height: 303px;
 }
 
 #cleaning {
   margin-left: 2px;
-  width: 784px;
+  width: 782px;
   padding-bottom: 2px;
 }
 
-#math {
-  height: 296px;
-  width: 398px;
-}
-
 #ml {
-  width: 1188px;
-  margin-top: 4px;
+  width: 790px;
+  height: 339px;
 }
 
-#section-ml {
-  border: 2px solid black;
-  border-bottom: 0;
+#ml-left {
+  width: 408px;
+}
+
+#ml-right {
+  width: 380px;
 }
 
 #training {
-  width: 656px;
+  width: 646px;
   border-top: 0;
   height: 292px;
 }
 
 #interfaces {
-  width: 532px;
+  width: 522px;
   border-top: 0;
   border-right: 0;
   height: 292px;
-}
-
-#submodules {
-  width: 1188px;
-  height: 58px;
 }
