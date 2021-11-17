@@ -1,58 +1,59 @@
-tr, p {
+div.body tr, div.body p {
   font-size: 7px;
   font-family: "Courier New", monospace;
   margin: 1px;
+  hyphens: none;
 }
 
-table {
+div.body table {
   margin-bottom: 3px;
   font-weight: bold;
 }
 
-table td {
+div.body table td {
   padding: 0;
   padding-right: 3px;
 }
 
-tr {
+div.body tr {
   font-size: 7px;
   font-family: "Courier New", monospace;
   margin: 1px;
 }
 
-a {
+div.body a {
   color: #004B6B;
   text-decoration: inherit;
 }
 
-a:hover {
+div.body a:hover {
   color: #6D4100;
   text-decoration: underline;
 }
 
-.row {
+div.body .new-row {
   display: block;
   margin-bottom: -3px;
   clear: both;
   line-height: 7px;
 }
 
-.col {
+div.body .col {
   float: left;
   margin: 2px;
   padding: 0;
 }
 
-.clear {
+div.body .clear {
   clear: both;
 }
 
-.text-center {
+div.body .text-center {
   text-align: center;
   width: 100%;
 }
 
-.outline {
+div.body .outline {
   width: 100%;
   height: 100%;
   box-sizing: border-box;
@@ -61,46 +62,40 @@ a:hover {
   padding-bottom: 2px;
 }
 
-.bordered {
+div.body .bordered {
   margin-left: 1px;
 }
 
-.center {
+div.body .center {
   text-align: center;
 }
 
-.outline p {
+div.body .outline p {
   padding-left: 1px;
   padding-right: 1px;
 }
 
-.section-head {
+div.body .section-head {
   background-color: #004B6B;
   color: white;
   text-align: center;
-  height: 13px;
-}
-
-.section-head h3 {
   font-size: 10px;
   margin: 0;
   padding-top: 3px;
+  padding-bottom: 2px;
 }
 
-.subhead {
+div.body .subhead {
   background-color: #A1B6C4;
   color: black;
-  height: 12px;
-}
-
-.subhead h4 {
   font-size: 9px;
   text-align: center;
   margin: 0;
   padding-top: 3px;
+  padding-bottom: 2px;
 }
 
-.code {
+div.body .code {
   background-color: lightgray;
   margin-left: 2px;
   margin-right: 2px;
@@ -111,45 +106,45 @@ a:hover {
   padding-left: 1px;
 }
 
-.highlight {
+div.body .highlight {
   font-size: 8px;
 }
 
-.inline {
+div.body .inline {
   background-color: lightgray;
 }
 
-.first-half {
+div.body .first-half {
   float: left;
   margin-right: 2px;
 }
 
-.left {
+div.body .left {
   float: left;
 }
 
-.half {
+div.body .half {
   float: left;
   width: 50%;
 }
 
-.pad {
+div.body .pad {
   margin-top: 0;
   padding-top: 2px;
   padding-bottom: 2px;
 }
 
-.lower {
+div.body .lower {
   margin-top: 2px;
 }
 
-.rborder {
+div.body .rborder {
   box-sizing: border-box;
   border-right: 1px solid black;
   margin-right: -1px;
 }
 
-.inplace {
+div.body .inplace {
   color: red;
   font-weight: bold;
 }

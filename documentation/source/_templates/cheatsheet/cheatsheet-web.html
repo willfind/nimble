@@ -1,0 +1,296 @@
+{% extends 'cheatsheet-template.html' %}
+
+{% block css %}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="_static/alabaster.css">
+  <link rel="stylesheet" href="_static/cheatsheet.css">
+  {{super()}}
+{% endblock %}
+
+{% block image %}
+                <a href="_static/nimbleObject.png">
+                  <img src="_static/nimbleObject.png" class="img-fluid" id="data">
+                </a>
+{% endblock %}
+
+{% block jquery %}
+      $("#tl").addClass("lower");
+      $(".subhead.lower").css("margin-top", "0");
+      $(".subhead.lower").css("margin-top", "0");
+      $(".content").slice(3).css("display", "none");
+      $(".icon").slice(1).text("+");
+      $(".heading").click(function () {
+        if ($(this).hasClass("active")) {
+          $(this).parent().find(".subhead.lower").css("margin-top", "0");
+          $(this).parent().find(".icon").text("+");
+          $(this).parent().find(".content").slideUp(400);
+          $(this).removeClass("active");
+        } else {
+          $(this).parent().find(".subhead.lower").css("margin-top", "6px");
+          $(this).parent().find(".icon").text("-");
+          $(this).parent().find(".content").slideDown(400);
+          $(this).addClass("active");
+        }
+        return false;
+      });
+{% endblock %}
+
+{% block style %}
+  <style>
+    div.sphinxsidebarwrapper h1, h3 {
+      line-height: 1.5;
+    }
+
+    div.sphinxsidebarwrapper h1.logo {
+      font-size: 2em;
+      font-weight: bold;
+    }
+
+    div.body tr, div.body p {
+      font-size: 12px;
+      font-family: "Courier New", monospace;
+      margin: auto;
+    }
+
+    div.body .section {
+      margin-bottom: 0.5rem;
+    }
+
+    div.body .content {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+
+    div.body .section-head {
+      font-size: 16px;
+    }
+
+    div.body .subhead {
+      font-size: 14px;
+    }
+
+    div.body .highlight {
+      font-size: 12px;
+    }
+
+    div.body .code {
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    div.body .code p {
+      font-size: 11px;
+    }
+
+    div.body .heading {
+      display: inline-flex;
+      width: 100%;
+      background-color: #004B6B;
+      color: white;
+    }
+
+    div.body .heading h3 {
+      text-align: center;
+      width: 98%;
+      float: left;
+    }
+
+    div.body .icon {
+      float: right;
+      padding-right: 0.5rem;
+    }
+
+    #title {
+      font-size: 28px;
+    }
+
+    #image {
+      text-align: left;
+      margin: 2px;
+    }
+
+    #data {
+      height: 200px;
+      width: 440px;
+    }
+
+  </style>
+{% endblock %}
+
+{% block cheatsheet %}
+  <div class="container-fluid">
+    <div class="row">
+      <p style="font-size:1rem">
+        <a href="_static/cheatsheet.pdf" target="_blank">Download as PDF</a>
+      </p>
+    </div>
+    <div class="row">
+      <div class="col-lg-auto">
+        {% block title %}{{super()}}{% endblock %}
+      </div>
+      <div class="col-lg-6">
+        {% block description %}{{super()}}{% endblock %}
+      </div>
+    </div>
+    <div class="row section">
+      <div class="col-lg-12">
+        {% block object_head %}
+        <div class="heading active">
+          {{super()}}
+          <div class="icon">-</div>
+        </div>
+        {% endblock %}
+        <div class="row">
+          <div class="col-lg-5">
+            <div class="content">{% block object_image %}{{super()}}{% endblock %}</div>
+          </div>
+          <div class="col-lg-7">
+            <div class="content">{% block object_description %}{{super()}}{% endblock %}</div>
+          </div>
+        </div>
+        <div class="content">{% block object_info %}{{super()}}{% endblock %}</div>
+      </div>
+    </div>
+    <div class="row section">
+      <div class="col-lg-12">
+        {% block io_head %}
+        <div class="heading">
+          {{super()}}
+          <div class="icon">-</div>
+        </div>
+        {% endblock %}
+        {% block io_data_head %}{{super()}}{% endblock %}
+        <div class="content">{% block io_data_content %}{{super()}}{% endblock %}</div>
+        {% block io_fetching_head %}{{super()}}{% endblock %}
+        <div class="content">{% block io_fetching_content %}{{super()}}{% endblock %}</div>
+        {% block io_saving_head %}{{super()}}{% endblock %}
+        <div class="content"> {% block io_saving_content %}{{super()}}{% endblock %}</div>
+      </div>
+    </div>
+    <div class="row section">
+      <div class="col-lg-12">
+        {% block info_head %}
+        <div class="heading">
+          {{super()}}
+          <div class="icon">-</div>
+        </div>
+        {% endblock %}
+        <div class="content">{% block info_content %}{{super()}}{% endblock %}</div>
+      </div>
+    </div>
+    <div class="row section">
+      <div class="col-lg-12">
+        {% block visualization_head %}
+        <div class="heading">
+          {{super()}}
+          <div class="icon">-</div>
+        </div>
+        {% endblock %}
+        {% block visualization_printing_head %}{{super()}}{% endblock %}
+        <div class="content">{% block visualization_printing_content %}{{super()}}{% endblock %}</div>
+        {% block visualization_plotting_head %}{{super()}}{% endblock %}
+        <div class="content">{% block visualization_plotting_content %}{{super()}}{% endblock %}</div>
+      </div>
+    </div>
+    <div class="row section">
+      <div class="col-lg-12">
+        {% block iteration_head %}
+        <div class="heading">
+          {{super()}}
+          <div class="icon">-</div>
+        </div>
+        {% endblock %}
+        <div class="content">{% block iteration_content %}{{super()}}{% endblock %}</div>
+      </div>
+    </div>
+    <div class="row section">
+      <div class="col-lg-12">
+        {% block querying_head %}
+        <div class="heading">
+          {{super()}}
+          <div class="icon">-</div>
+        </div>
+        {% endblock %}
+        {% block querying_data_head %}{{super()}}{% endblock %}
+        <div class="content">{% block querying_data_content %}{{super()}}{% endblock %}</div>
+        {% block querying_indexing_head %}{{super()}}{% endblock %}
+        <div class="content">{% block querying_indexing_content %}{{super()}}{% endblock %}</div>
+        {% block querying_querystrings_head %}{{super()}}{% endblock %}
+        <div class="content">{% block querying_querystrings_content %}{{super()}}{% endblock %}</div>
+      </div>
+    </div>
+    <div class="row section">
+      <div class="col-lg-12">
+        {% block math_head %}
+        <div class="heading">
+          {{super()}}
+          <div class="icon">-</div>
+        </div>
+        {% endblock %}
+        {% block math_operators_head %}{{super()}}{% endblock %}
+        <div class="content">{% block math_operators_content %}{{super()}}{% endblock %}</div>
+        {% block math_linalg_head %}{{super()}}{% endblock %}
+        <div class="content">{% block math_linalg_content %}{{super()}}{% endblock %}</div>
+      </div>
+    </div>
+    <div class="row section">
+      <div class="col-lg-12">
+        {% block manipulation_head %}
+        <div class="heading">
+          {{super()}}
+          <div class="icon">-</div>
+        </div>
+        {% endblock %}
+        {% block manipulation_copying_head %}{{super()}}{% endblock %}
+        <div class="content">{% block manipulation_copying_content %}{{super()}}{% endblock %}</div>
+        {% block manipulation_modification_head %}{{super()}}{% endblock %}
+        <div class="content">{% block manipulation_modification_content %}{{super()}}{% endblock %}</div>
+        {% block manipulation_structural_head %}{{super()}}{% endblock %}
+        <div class="content">{% block manipulation_structural_content %}{{super()}}{% endblock %}</div>
+        <div class="content center">{% block manipulation_footnote %}{{super()}}{% endblock %}</div>
+      </div>
+    </div>
+    <div class="row section">
+      <div class="col-lg-12">
+        {% block submodules_head %}
+        <div class="heading">
+          {{super()}}
+          <div class="icon">-</div>
+        </div>
+        {% endblock %}
+        <div class="content">{% block submodules_content %}{{super()}}{% endblock %}</div>
+      </div>
+    </div>
+    <div class="row section">
+      <div class="col-lg-12">
+        {% block ml_head %}
+        <div class="heading">
+          {{super()}}
+          <div class="icon">-</div>
+        </div>
+        {% endblock %}
+        {% block ml_interfaces_head %}{{super()}}{% endblock %}
+        <div class="content">{% block ml_interfaces_content %}{{super()}}{% endblock %}</div>
+        {% block ml_arguments_head %}{{super()}}{% endblock %}
+        <div class="content">{% block ml_arguments_content %}{{super()}}{% endblock %}</div>
+        {% block ml_trainedlearner_head %}{{super()}}{% endblock %}
+        <div class="content">{% block ml_trainedlearner_content %}{{super()}}{% endblock %}</div>
+        {% block ml_training_head %}{{super()}}{% endblock %}
+        <div class="content">{% block ml_training_content %}{{super()}}{% endblock %}</div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block rst %}
+cheatsheet
+==========
+
+.. raw:: html
+
+  {% filter indent(width=2, first=True) %}
+  {{super()}}
+  {% endfilter %}
+
+{% endblock %}
