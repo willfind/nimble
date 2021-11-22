@@ -12,7 +12,13 @@
       $("#tl").addClass("lower");
       $(".subhead.lower").css("margin-top", "0");
       $(".subhead.lower").css("margin-top", "0");
+      <!-- modify some of the pdf styling -->
+      $(".first-half > p").each(function() {
+        $(this).html($(this).html().replace(/(&nbsp;|\s){2,}$/, ''));
+      });
+      <!-- Show the first section when page loads -->
       $(".content").slice(0, 3).show();
+      <!-- Controls for hiding and showing content -->
       $(".heading").click(function () {
         if ($(this).hasClass("active")) {
           $(this).parent().find(".bi").removeClass("bi-caret-down-fill")
@@ -33,20 +39,35 @@
           top.find(".bi").removeClass("bi-caret-right-fill");
           top.find(".bi").addClass("bi-caret-down-fill");
           top.addClass("active");
-          subs.parent().find(".footnote").hide()
-          active.last().parent().find(".footnote").show()
+          subs.parent().find(".footnote").hide();
+          active.last().parent().find(".footnote").slideDown(400);
         } else if (subs.length && active.length === 0) {
           top.find(".bi").removeClass("bi-caret-down-fill");
           top.find(".bi").addClass("bi-caret-right-fill");
           top.removeClass("active");
-          section.find(".footnote").hide()
+          section.find(".footnote").hide();
         }
         return false;
+      });
+      $("#expand").click(function () {
+        $(document).find(".heading:not(.active)").addClass("active");
+        $(document).find(".bi").removeClass("bi-caret-right-fill");
+        $(document).find(".bi").addClass("bi-caret-down-fill");
+        $(document).find(".content").slideDown(400);
+        $(document).find(".footnote").last().slideDown(400);
+      });
+      $("#collapse").click(function () {
+        $(document).find(".heading.active").removeClass("active");
+        $(document).find(".bi").removeClass("bi-caret-down-fill");
+        $(document).find(".bi").addClass("bi-caret-right-fill");
+        $(document).find(".content").slideUp(400);
+        $(document).find(".footnote").slideUp(400);
       });
 {% endblock %}
 
 {% block style %}
   <style>
+    /* Bootstrap is overriding alabaster settings for sidebar */
     div.sphinxsidebarwrapper h1, h3 {
       line-height: 1.5;
     }
@@ -56,11 +77,16 @@
       font-weight: bold;
     }
 
+    /* Alabaster wraps everything in div class body */
     div.body tr, div.body p {
       font-size: 12px;
       font-family: "Courier New", monospace;
       margin: auto;
       line-height: 1.5;
+    }
+
+    div.body td {
+      padding-right: 3rem;
     }
 
     div.body .section {
@@ -109,11 +135,16 @@
       display: inline-flex;
       width: 100%;
       border: 1px solid lightgray;
+      cursor: pointer;
     }
 
     div.body .heading h3 {
       text-align: left;
       float: right;
+    }
+
+    div.body .first-half {
+      margin-right: 0.5rem;
     }
 
     div.body .bi {
@@ -123,8 +154,44 @@
       padding-bottom: 2px;
     }
 
+    div.body .button {
+      padding: .2rem .4rem;
+      margin: .2rem;
+      font-size: .75rem;
+      border-radius: .2rem;
+      display: inline-block;
+      font-weight: 400;
+      line-height: 1.5;
+      color: #004B6B;
+      border-color: #004B6B;
+      text-align: center;
+      text-decoration: none;
+      vertical-align: middle;
+      cursor: pointer;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      user-select: none;
+      border: 1px solid #004B6B;
+      white-space: nowrap;
+      }
+
+    div.body .button:hover {
+      background-color: #004B6B;
+      color: white;
+    }
+
     #title {
       font-size: 28px;
+      margin: 0;
+    }
+
+    /* Allow title to wrap to delay overflow */
+    @media (min-width: 1200px) and (max-width: 1264px) {
+      #title {
+        font-size: 28px;
+        margin: 0;
+        max-width: 150px;
+      }
     }
 
     #image {
@@ -156,12 +223,18 @@
       </p>
     </div>
     <br>
-    <div class="row">
-      <div class="col-lg-auto">
-        {% block title %}{{super()}}{% endblock %}
+    <div class="row align-items-end">
+      <div class="col-12 col-xl-auto">
+      {% block title %}{{super()}}{% endblock %}
       </div>
-      <div class="col-lg-6">
+      <div class="col-12 col-xl">
         {% block description %}{{super()}}{% endblock %}
+      </div>
+      <div class="col-12 col-xl-auto">
+        <p>
+          <button class="button" id="expand">expand all</button>
+          <button class="button" id="collapse">collapse all</button>
+        </p>
       </div>
     </div>
     <div class="row section">
@@ -174,13 +247,25 @@
         {% endblock %}
         <div class="row">
           <div class="col-lg-5">
-            <div class="content">{% block object_image %}{{super()}}{% endblock %}</div>
+            <div class="content">
+              {% block object_image %}
+              {{super()}}
+              {% endblock %}
+            </div>
           </div>
           <div class="col-lg-7">
-            <div class="content">{% block object_description %}{{super()}}{% endblock %}</div>
+            <div class="content">
+              {% block object_description %}
+              {{super()}}
+              {% endblock %}
+            </div>
           </div>
         </div>
-        <div class="content">{% block object_info %}{{super()}}{% endblock %}</div>
+        <div class="content">
+          {% block object_info %}
+          {{super()}}
+          {% endblock %}
+        </div>
       </div>
     </div>
     <div class="row section">
@@ -364,6 +449,19 @@
           </div>
           <div class="content">
             {% block math_operators_content %}
+            {{super()}}
+            {% endblock %}
+          </div>
+        </div>
+        <div class="subsection">
+          <div class="heading rounded subhead">
+            {% block math_stretch_head %}
+            <i class="bi bi-caret-right-fill"></i>
+            {{super()}}
+            {% endblock %}
+          </div>
+          <div class="content">
+            {% block math_stretch_content %}
             {{super()}}
             {% endblock %}
           </div>

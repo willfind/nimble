@@ -1,4 +1,6 @@
-div.body tr, div.body p {
+
+/* Alabaster wraps everything in div class body and we mirror this for pdf */
+div.body p {
   font-size: 7px;
   font-family: "Courier New", monospace;
   margin: 1px;
@@ -10,15 +12,18 @@ div.body table {
   font-weight: bold;
 }
 
-div.body table td {
+div.body thead {
+  text-align: center;
+}
+
+div.body td {
   padding: 0;
-  padding-right: 3px;
+  padding-right: 10px;
 }
 
 div.body tr {
   font-size: 7px;
   font-family: "Courier New", monospace;
-  margin: 1px;
 }
 
 div.body a {
@@ -254,7 +259,7 @@ div.body .inplace {
 
 #ml {
   width: 790px;
-  height: 339px;
+  height: 331px;
 }
 
 #ml-left {

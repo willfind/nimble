@@ -54,11 +54,11 @@
           </td>
           <td id="description">
             {% block description %}
-            <p>
+            <p><strong>
               Nimble is built on top of Python’s most popular data science and
               machine learning libraries to provide a single, easy to use, API
               for any data science job.
-            </p>
+            </strong></p>
             {% endblock %}
           </td>
         </tr>
@@ -309,9 +309,15 @@
           </div>
           <div class="code">
             <p>X.<a href="docs/generated/nimble.core.data.Base.name.html">name</a>
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# A getter and setter</p>
-            <p>X.<a href="docs/generated/nimble.core.data.Base.absolutePath.html">absolutePath</a> # A getter only</p>
-            <p>X.<a href="docs/generated/nimble.core.data.Base.relativePath.html">relativePath</a> # A getter only</p>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              # A getter and setter</p>
+            <p>X.<a href="docs/generated/nimble.core.data.Base.absolutePath.html">absolutePath</a>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              # A getter only</p>
+            <p>X.<a href="docs/generated/nimble.core.data.Base.relativePath.html">relativePath</a>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              # A getter only</p>
             <p>X.[<a class="point" href="docs/generated/nimble.core.data.Points.getNames.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.getNames.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.getNames.html">getNames</a>()</p>
             <p>X.[<a class="point" href="docs/generated/nimble.core.data.Points.getName.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.getName.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.getName.html">getName</a>(index)</p>
             <p>X.[<a class="point" href="docs/generated/nimble.core.data.Points.setNames.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.setNames.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.setNames.html">setNames</a>(assignments)</p>
@@ -423,17 +429,14 @@
           </div>
           <div class="code">
             <p>>>> for element in X.<a href="docs/generated/nimble.core.data.Base.iterateElements.html">iterateElements</a>(order, only):</p>
-            <p>...&nbsp;&nbsp;&nbsp;&nbsp;print(element
-              )&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            <p>...&nbsp;&nbsp;&nbsp;&nbsp;print(element)
               # A single value</p>
             <p>>>> for point in X.<a href="docs/generated/nimble.core.data.Points.html">points</a>:</p>
-            <p>...&nbsp;&nbsp;&nbsp;&nbsp;print(point)
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              # New Nimble data object containing the data from a single point</p>
+            <p>...&nbsp;&nbsp;&nbsp;&nbsp;print(point)&nbsp;&nbsp;
+              # A new Nimble data object containing the data from a single point</p>
             <p>>>> for feature in X.<a href="docs/generated/nimble.core.data.Features.html">features</a>:</p>
             <p>...&nbsp;&nbsp;&nbsp;&nbsp;print(feature)
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              # New Nimble data object containing the data from a single feature</p>
+              # A new Nimble data object containing the data from a single feature</p>
           </div>
           {% endblock %}
         </div>
@@ -567,14 +570,30 @@
             </p>
           </div>
           <div class="code">
-            <p>X + Y &nbsp;# Elementwise Addition</p>
-            <p>X - Y &nbsp;# Elementwise Subtraction</p>
-            <p>X * Y &nbsp;# Elementwise Multiplication</p>
-            <p>X / Y &nbsp;# Elementwise Division</p>
-            <p>X ** Y # Elementwise Power</p>
-            <p>X % Y &nbsp;# Elementwise Modulo</p>
-            <p>X @ Y &nbsp;# Matrix Multiplication</p>
+            <div class="first-half">
+              <p>X + Y</p>
+              <p>X - Y</p>
+              <p>X * Y</p>
+              <p>X / Y</p>
+              <p>X ** Y</p>
+              <p>X % Y</p>
+              <p>X @ Y</p>
+            </div>
+            <div>
+              <p># Elementwise Addition</p>
+              <p># Elementwise Subtraction</p>
+              <p># Elementwise Multiplication</p>
+              <p># Elementwise Division</p>
+              <p># Elementwise Power</p>
+              <p># Elementwise Modulo</p>
+              <p># Matrix Multiplication</p>
+            </div>
           </div>
+          {% endblock %}
+          {% block math_stretch_head %}
+          <h4 class="subhead lower">Stretch</h4>
+          {% endblock %}
+          {% block math_stretch_content %}
           <div class="pad">
             <p>The <a class="inline" href="docs/generated/nimble.core.data.Base.stretch.html">stretch</a> property allows for expanded (broadcasting)
               computation with one-dimensional data objects. The one-dimensional
@@ -586,7 +605,7 @@
             <div class="first-half">
               <p>X + Y.<a href="docs/generated/nimble.core.data.Base.stretch.html">stretch</a></p>
               <p>X.<a href="docs/generated/nimble.core.data.Base.stretch.html">stretch</a> / Y</p>
-              <p>X.<a href="docs/generated/nimble.core.data.Base.stretch.html">stretch</a> * Y.<a href="docs/generated/nimble.core.data.Base.stretch.html">stretch</a></p>
+              <p>X.<a href="docs/generated/nimble.core.data.Base.stretch.html">stretch</a> * Y.<a href="docs/generated/nimble.core.data.Base.stretch.html">stretch</a>&nbsp;&nbsp;</p>
             </div>
             <div>
               <p># 2D + 1D</p>
@@ -678,8 +697,8 @@
               <p># Replace a section of the data with other data</p>
               <p># Change elements to new values</p>
               <p># Apply a calculation to each element</p>
-              <p># Map unique values to an integer and replace each element with</p>
-              <p>&nbsp;&nbsp;the integer value</p>
+              <p># Map unique values to an integer and replace each element with the</p>
+              <p>&nbsp;&nbsp;integer value</p>
               <p># Replace elements in  points/features with a different value(s)</p>
               <p># Replace points/features with a new points/features </p>
               <p># Modify the elements within points/features</p>
@@ -908,8 +927,8 @@
                 <p># Evaluate the accuracy of the predictions on the testing data</p>
                 <p># Evaluate the accuracy of the predictions on the used for training</p>
                 <p># Evaluate the accuracy with varying arguments. Returns a <a href="docs/generated/nimble.core.learn.KFoldCrossValidator.html">KFoldCrossValidator</a></p>
-                <p># Transform the training (and optionally testing) data using the learnerName specified</p>
-                <p>&nbsp;&nbsp;normalization</p>
+                <p># Transform the training (and optionally testing) data using the learnerName</p>
+                <p>&nbsp;&nbsp;specified normalization</p>
                 <p># Replace matching elements in points/features with provided or calculated values</p>
               </div>
             </div>
