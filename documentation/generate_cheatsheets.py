@@ -16,7 +16,7 @@ env = Environment(
 
 pdf = env.get_template('cheatsheet-template.html')
 
-web = env.get_template('cheatsheet-web.html')
+web = env.get_template('cheatsheet-web.rst')
 
 cheatsheetPdf = os.path.join(static, 'cheatsheet.html')
 with open(cheatsheetPdf, 'w') as f:

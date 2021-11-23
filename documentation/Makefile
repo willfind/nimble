@@ -111,8 +111,8 @@ publish:
 
 html:
 	@echo
-	python update_cheatsheet-pdf.py
-	@echo "Cheatsheet updated"
+	python generate_cheatsheets.py
+	@echo "Cheatsheets generated"
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html"
