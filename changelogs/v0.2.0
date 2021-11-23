@@ -1,0 +1,35 @@
+* __repr__ is now more analogous to __str__
+
+* show() and __str__ for data objects polished
+-- solid line separators
+-- quotes around names, auto-insertion of indices when missing
+-- points and features now printable
+-- missing data represented as blank space
+-- default width/height based on terminal size
+
+* eliminated nimble.loadData, functionality now in nimble.data
+
+* QueryStrings
+-- points/features matching and fillMatching methods now allow QueryStrings
+
+* Changed all nimble-specific file extensions to the standard representations of the file type.
+
+* plotFeatureAgainstFeature has a parameter to allow different colors based on the value of a group label.
+
+* figureID for plotting functions now allowed to be any hashable, not just a string.
+
+* python builtins now acceptable inputs for the transformElements and calculateOnElements methods
+
+* Bugfixes
+-- correct dtype handling of numpy inputs to prevent accidental string conversion causing long-string memory allocation explosion
+-- nans correctly handled by nimble.calculate functions
+
+* Documentation
+-- See Also sections vastly more populated
+-- cheat sheet for introductory clarity and easy visual searching
+-- search tags/keywords added to most functions
+-- word choice changes for cleaner search results
+-- various typo / sentence clarity improvements from feedback.
+
+* Various small code quality, efficiency, and backend bug fixes
+
