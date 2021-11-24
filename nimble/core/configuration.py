@@ -95,8 +95,13 @@ class SessionConfiguration(object):
         return ret.rstrip()
 
     def __repr__(self):
-        ret = "<SessionConfiguration object, as if loaded from .ini file:\n"
-        ret += self.__str__()
+        ret = "<SessionConfiguration state, expressed in .ini file syntax:"
+        ret += "\n"
+
+        origStr = self.__str__()
+        lineList = origStr.split('\n')
+        ret += " " + "\n ".join(lineList)
+
         ret += "\n>"
         return ret
 
