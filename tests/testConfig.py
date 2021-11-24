@@ -460,6 +460,23 @@ def test_settings_str():
     assert 'fetch' in cp
     assert 'location' in cp['fetch']
 
+def test_settings_repr():
+    """ Test nimble.settings __repr__ has expected sections and options """
+
+    s = repr(nimble.settings)
+    _, s = s.split('\n', 1)
+    s, _ = s.rsplit('\n', 1)
+    # check that string is valid for configparser and use configparser to test
+    # that it contains the expected sections and options for logger and fetch
+    cp = configparser.ConfigParser()
+    cp.read_string(s)
+    assert 'logger' in cp
+    assert 'location' in cp['logger']
+    assert 'enabledByDefault' in cp['logger']
+    assert 'enableCrossValidationDeepLogging' in cp['logger']
+    assert 'fetch' in cp
+    assert 'location' in cp['fetch']
+
 @patch(nimble.core.interfaces, 'predefined', [FailedPredefined])
 def testSetLocationForFailedPredefinedInterface():
     nimble.settings.set('FailedPredefined', 'location', 'path/to/mock')

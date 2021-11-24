@@ -94,6 +94,17 @@ class SessionConfiguration(object):
             ret += '\n'
         return ret.rstrip()
 
+    def __repr__(self):
+        ret = "<SessionConfiguration state, expressed in .ini file syntax:"
+        ret += "\n"
+
+        origStr = self.__str__()
+        lineList = origStr.split('\n')
+        ret += " " + "\n ".join(lineList)
+
+        ret += "\n>"
+        return ret
+
     def get(self, section=None, option=None):
         """
         Query the current settings.
