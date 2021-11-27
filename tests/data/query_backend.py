@@ -1381,6 +1381,11 @@ class QueryBackend(DataTestObject):
     def back_reprOutput(self, numPts, numFts, truncated=False, defaults='none',
                         addPath=False):
         randGen = nimble.random.data("List", numPts, numFts, 0)
+        # make a row and column all missing
+        def makeMissing(vect):
+            return [np.nan for _ in vect]
+        randGen.points.transform(makeMissing, points=1)
+        randGen.features.transform(makeMissing, features=1)
         kwargs = {}
         if defaults != 'all':
             pNames = ['pt' + str(i) for i in range(numPts)]
@@ -1419,7 +1424,7 @@ class QueryBackend(DataTestObject):
                 assert name in fNames
 
         assert re.match(u'\s*\u250C\u2500+$', retSplit[2])
-        dataMatch = re.compile(u"( +| +[0-9]+| +'[pf]t[0-9]+'| +\u2502) \u2502 [-0-9\. \u2502\u2500]+")
+        dataMatch = re.compile(u"( +| +[0-9]+| +'[pf]t[0-9]+'| +\u2502) \u2502($| [-0-9\. \u2502\u2500]+)")
         for line in retSplit[3:-1]:
             assert re.match(dataMatch, line)
             pName = line.split(u'\u2502')[0].strip()
@@ -1446,7 +1451,7 @@ class QueryBackend(DataTestObject):
         else:
             assert retSplit[-1] == '>'
 
-        addIdxMatch = re.compile(u' [ 0-9\u2502]+? \u2502( +\u2502?| +[pf]t[0-9]+) \u2502 [-0-9\. \u2502\u2500]+')
+        addIdxMatch = re.compile(u' [ 0-9\u2502]+? \u2502( +\u2502?| +[pf]t[0-9]+) \u2502($| [-0-9\. \u2502\u2500]+)')
         for axis, length in [(data.points, numPts), (data.features, numFts)]:
             axRepr = repr(axis)
             axSplit = axRepr.split('\n')
