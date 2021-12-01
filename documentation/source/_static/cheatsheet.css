@@ -1,170 +1,157 @@
-tr, p {
-  font-size: 8px;
+
+/* Alabaster wraps everything in div class body and we mirror this for pdf */
+div.body p {
+  font-size: 7px;
   font-family: "Courier New", monospace;
   margin: 1px;
+  hyphens: none;
 }
 
-table {
-  margin-bottom: 4px;
+div.body table {
+  margin-bottom: 3px;
   font-weight: bold;
 }
 
-table td {
+div.body thead {
+  text-align: center;
+}
+
+div.body td {
   padding: 0;
-  padding-right: 4px;
+  padding-right: 10px;
 }
 
-tr {
-  font-size: 7.4px;
+div.body tr {
+  font-size: 7px;
   font-family: "Courier New", monospace;
-  margin: 1px;
 }
 
-a {
+div.body a {
   color: #004B6B;
   text-decoration: inherit;
 }
 
-a:hover {
+div.body a:hover {
   color: #6D4100;
   text-decoration: underline;
 }
 
-.row {
-  display: inline-flex;
-  margin-bottom: -4px;
+div.body .new-row {
+  display: block;
+  margin-bottom: -3px;
   clear: both;
-  line-height: 9px;
+  line-height: 7px;
 }
 
-.col {
+div.body .col {
   float: left;
   margin: 2px;
   padding: 0;
 }
 
-.clear {
+div.body .clear {
   clear: both;
 }
 
-.text-center {
+div.body .text-center {
   text-align: center;
   width: 100%;
 }
 
-.outline {
+div.body .outline {
   width: 100%;
+  height: 100%;
   box-sizing: border-box;
-  border: 2px solid black;
-  margin-bottom: 2px;
+  border: 1px solid black;
+  margin-bottom: 1px;
+  padding-bottom: 2px;
 }
 
-.outlined {
-  padding-left: 2px;
-  margin-right: -2px;
+div.body .bordered {
+  margin-left: 1px;
 }
 
-.center {
+div.body .center {
   text-align: center;
 }
 
-.outline p {
-  padding-left: 2px;
-  padding-right: 2px;
+div.body .outline p {
+  padding-left: 1px;
+  padding-right: 1px;
 }
 
-.section-head {
+div.body .section-head {
   background-color: #004B6B;
   color: white;
   text-align: center;
-  height: 16px;
-}
-
-.section-head h3 {
-  font-size: 14px;
+  font-size: 10px;
   margin: 0;
-  padding-top: 2px;
+  padding-top: 3px;
+  padding-bottom: 2px;
 }
 
-.subhead {
+div.body .subhead {
   background-color: #A1B6C4;
   color: black;
-  height: 14px;
-}
-
-.subhead h4 {
-  font-size: 12px;
+  font-size: 9px;
   text-align: center;
   margin: 0;
-  padding-top: 2px;
+  padding-top: 3px;
+  padding-bottom: 2px;
 }
 
-.subsubhead {
-  background-color: #E4EADD;
-  color: black;
-  height: 13px;
-}
-
-.subsubhead h5 {
-  font-size: 10px;
-  text-align: center;
-  margin: 0;
-  padding-top: 2px;
-}
-
-.code {
+div.body .code {
   background-color: lightgray;
   margin-left: 2px;
   margin-right: 2px;
   margin-bottom: 2px;
   padding-bottom: 1px;
   padding-top: 1px;
-}
-
-.code p {
   margin: 1px;
   padding-left: 1px;
 }
 
-.highlight {
-  font-size: 10px;
+div.body .highlighter {
+  font-size: 8px;
 }
 
-.inline {
+div.body .inline {
   background-color: lightgray;
 }
 
-.row1 {
-  height: 356px;
-}
-
-.first-half {
+div.body .first-half {
   float: left;
-  margin-right: 4px;
+  margin-right: 2px;
 }
 
-.left {
+div.body .left {
   float: left;
 }
 
-.half {
+div.body .half {
   float: left;
   width: 50%;
 }
 
-.pad {
+div.body .pad {
   margin-top: 0;
   padding-top: 2px;
   padding-bottom: 2px;
 }
 
-.lower {
-  margin-top: 4px;
+div.body .lower {
+  margin-top: 2px;
 }
 
-.rborder {
-  border-right: 2px solid black;
-  margin-right: -2px;
+div.body .rborder {
+  box-sizing: border-box;
+  border-right: 1px solid black;
+  margin-right: -1px;
+}
+
+div.body .inplace {
+  color: red;
+  font-weight: bold;
 }
 
 .inplace {
@@ -173,7 +160,7 @@ a:hover {
 }
 
 #title {
-  font-size: 28px;
+  font-size: 23px;
   font-weight: bold;
   display: inline;
   float: left;
@@ -185,23 +172,23 @@ a:hover {
 }
 
 #description {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: bold;
   margin: 0;
   padding-left: 2px;
-  padding-top: 10px;
-  width: 440px;
+  padding-top: 9px;
+  width: 380px;
 }
 
 #image {
   text-align: center;
-  margin-bottom: 8px;
-  margin-right: 8px;
+  margin-bottom: 4px;
+  margin-right: 4px;
 }
 
 #data {
-  height: 120px;
-  width: 220px;
+  height: 80px;
+  width: 150px;
 }
 
 #points {
@@ -213,85 +200,85 @@ a:hover {
 }
 
 #data-structure {
-  width: 530px;
+  width: 482px;
+  height: 288px;
 }
 
 #io {
-  width: 340px;
+  width: 304px;
+  height: 288px;
 }
 
 #info {
-  width: 310px;
+  width: 264px;
+  height: 280px;
 }
 
 #vizAndIter {
-  width: 632px;
-}
-
-#indexing {
-  height: 156px;
-}
-
-#query-head {
-  margin-right: 2px;
-}
-
-#query {
-  width: 552px;
+  width: 522px;
 }
 
 #visualization {
-  height: 234px;
+  height: 191px;
 }
 
 #iteration {
-  height: 102px;
+  height: 87px;
+  margin-top: 2px;
 }
 
-#querying {
-  height: 338px;
+#query {
+  height: 273px;
+  width: 498px;
+}
+
+#indexing {
+  height: 125px;
+}
+
+#math {
+  height: 273px;
+  width: 288px;
 }
 
 #manipulation {
-  width: 1188px;
-  height: 328px;
+  width: 596px;
+  height: 303px;
+}
+
+#submodules {
+  width: 190px;
+  height: 303px;
 }
 
 #cleaning {
   margin-left: 2px;
-  width: 784px;
+  width: 782px;
   padding-bottom: 2px;
 }
 
-#math {
-  height: 296px;
-  width: 398px;
-}
-
 #ml {
-  width: 1188px;
-  margin-top: 4px;
+  width: 790px;
+  height: 331px;
 }
 
-#section-ml {
-  border: 2px solid black;
-  border-bottom: 0;
+#ml-left {
+  width: 408px;
+}
+
+#ml-right {
+  width: 380px;
 }
 
 #training {
-  width: 656px;
+  width: 646px;
   border-top: 0;
   height: 292px;
 }
 
 #interfaces {
-  width: 532px;
+  width: 522px;
   border-top: 0;
   border-right: 0;
   height: 292px;
-}
-
-#submodules {
-  width: 1188px;
-  height: 58px;
 }

@@ -91,6 +91,9 @@ clean:
 	rm -fr $(PUBLISHDIR)/examples
 	rm -fr $(PUBLISHDIR)/docs
 	rm -fr $(SOURCEDIR)/docs/generated
+	rm -fr $(SOURCEDIR)/_static/cheatsheet.html
+	rm -fr $(SOURCEDIR)/_static/cheatsheet.pdf
+	rm -fr $(SOURCEDIR)/cheatsheet.rst
 	rm -fr $(EXAMPLESDIR)/logs-nimble
 	rm -fr $(EXAMPLESDIR)/*.ipynb
 	rm -f $(EXAMPLESDIR)/Metro_Interstate_Traffic_Volume_Cleaned.csv
@@ -108,8 +111,8 @@ publish:
 
 html:
 	@echo
-	python update_cheatsheet-pdf.py
-	@echo "Cheatsheet updated"
+	python generate_cheatsheets.py
+	@echo "Cheatsheets generated"
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html"
