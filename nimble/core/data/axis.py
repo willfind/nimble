@@ -115,10 +115,10 @@ class Axis(ABC):
 
         start = len(indent) - 1 # to remove extra indentation when adding col
         string = obj._show(indent=indent, quoteNames=False)
-        match = re.search(u' +\u2502[ \u2502\u2500]+\n', string)
+        match = re.search(u'\n +\u2502[ \u2502\u2500]+\n', string)
         newLine = u' {} \u2502{}\n'.format
         if match:
-            top, bottom = string.split(match.group(0))
+            top, bottom = string.split(match.group(0)[1:])
             for i, line in enumerate(top.split('\n')[:-1]):
                 if i < 3:
                     continue
@@ -127,10 +127,10 @@ class Axis(ABC):
                     ret += newLine(str(i - 3).rjust(maxIdxLen), line)
                 else:
                     ret += line + '\n'
+
             if self._namesCreated():
-                if maxIdxLen > 2:
-                    ret += ' ' + u'\u2502'.rjust(maxIdxLen) + u' \u2502'
-            ret += match.group(0)[start:]
+                ret += ' ' + u'\u2502'.rjust(maxIdxLen) + u' \u2502'
+            ret += match.group(0)[start + 1:]
 
             bottomIdx = len(self) - len(bottom.split('\n')) + 1
             for i, line in enumerate(bottom.split('\n')[:-1]):
