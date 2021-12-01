@@ -30,7 +30,7 @@ def main(colabPath):
 
     # name of wheel built for the colab notebooks in cloud storage
     # update when a new wheel is built for a python version upgrade in Colab
-    wheel = 'nimble-0.0.0.dev1-cp37-cp37m-linux_x86_64.whl'
+    wheel = 'nimble-0.2.0-cp37-cp37m-linux_x86_64.whl'
 
     install = ('To use Nimble in Colab, we will need to copy the wheel file '
                'from Google Cloud Storage and then install it using `pip`.')
