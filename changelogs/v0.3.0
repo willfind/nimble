@@ -1,0 +1,11 @@
+
+### Cheat Sheet ###
+* For html: now formatted as a browser-width sensitive vertical accordion.
+* For pdf: now formatted as a two page vertical stack with larger font.
+* Typo and clarity corrections.
+
+### Small Changes ###
+* The SessionConfiguration object / nimble.settings now has a __repr__ implementation.
+
+### Bug Fixes ###
+* Axis __repr__ corrected to handle a point or feature containing only missing values.
