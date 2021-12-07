@@ -8,4 +8,4 @@
 * The SessionConfiguration object / nimble.settings now has a __repr__ implementation.
 
 ### Bug Fixes ###
-* Axis __repr__ corrected to handle a point or feature containing only missing values.
+* Points / Features __repr__ can now handle fully missing valued points and features.
