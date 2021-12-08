@@ -588,10 +588,12 @@ class Axis(ABC):
             if not self._isPoint:
                 try:
                     validateAllAllowedElements(currOut)
-                except ImproperObjectAction as e:
+                except InvalidArgumentValue as e:
                     msg = "function must return a one-dimensional object "
                     raise ImproperObjectAction(msg) from e
                 except TypeError as e:
+                    if isinstance(e, ImproperObjectAction):
+                        raise
                     msg = "function must return a valid single element or "
                     msg += "an iterable, but got type " + str(type(currOut))
                     raise InvalidArgumentValue(msg) from e

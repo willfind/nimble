@@ -28,7 +28,6 @@ from tests.helpers import oneLogEntryExpected, noLogEntryExpected
 from tests.helpers import patch, assertCalled, assertNotCalled
 
 returnTypes = copy.copy(nimble.core.data.available)
-returnTypes.append(None)
 
 datetimeTypes = (datetime.datetime, np.datetime64, pd.Timestamp)
 
@@ -195,8 +194,8 @@ def test_data_listOfDict():
         with raises(InvalidArgumentValue, match='must contain the same keys'):
             nimble.data(t, [{'a': 1, 'b': 2}, {'a': 3, 'c': 4}])
 
-        with raises(InvalidArgumentValue, match='Numbers, strings, None, and nan'):
-            nimble.data(t, [{'a': 1, 'b': 2}, {'a': {}, 'c': 4}])
+        with raises(InvalidArgumentValue, match='Number, string, None, nan'):
+            nimble.data(t, [{'a': 1, 'b': 2}, {'a': {}, 'b': 4}])
 
 def test_data_raw_acceptedTypeSuccessWithNames():
     for t in nimble.core.data.available:
@@ -4365,6 +4364,77 @@ def test_rowsArePoints_containerOfEmpty():
         assert rowsFts.shape == (2, 3)
         assert rowsFts.points.getNames() == pNames
         assert rowsFts.features.getNames() == fNames
+
+
+def test_returnType_autodetection_listLike():
+    # 1D
+    test1 = nimble.data(None, [1, 2, 3])
+    assert test1.getTypeString() == "Matrix"
+    test2 = nimble.data(None, [1, 2, 'a'])
+    assert test2.getTypeString() == "DataFrame"
+    # 2D
+    test3 = nimble.data(None, [[1, 2], [3, 4]])
+    assert test3.getTypeString() == "Matrix"
+    test4 = nimble.data(None, [[1, 'a'], [2, 'b']])
+    assert test4.getTypeString() == "DataFrame"
+    # 3D is always a Matrix
+    test5 = nimble.data(None, [[[1, 2], [3, 4]], [[1, 2], [3, 4]]])
+    assert test5.getTypeString() == "Matrix"
+    test6 = nimble.data(None, [[[1, 'a'], [2, 'b']], [[1, 'a'], [2, 'b']]])
+    assert test6.getTypeString() == "Matrix"
+    # make pandas unavailable to check that Matrix is used
+    from nimble._utility import pd
+    backup = pd.nimbleAccessible
+    pd.nimbleAccessible = lambda: False
+    try:
+        test7 = nimble.data(None, [1, 2, 'a'])
+        assert test7.getTypeString() == "Matrix"
+        test8 = nimble.data(None, [[1, 'a'], [2, 'b']])
+        assert test8.getTypeString() == "Matrix"
+    finally:
+        pd.nimbleAccessible = backup
+
+def test_returnType_autodetection_csv():
+    # 1D
+    with tempfile.NamedTemporaryFile('w+') as f1:
+        f1.write('1,2,3\n')
+        f1.seek(0)
+        test1 = nimble.data(None, f1)
+        assert test1.getTypeString() == "Matrix"
+    with tempfile.NamedTemporaryFile('w+') as f2:
+        f2.write('1,2,a\n')
+        f2.seek(0)
+        test2 = nimble.data(None, f2)
+        assert test2.getTypeString() == "DataFrame"
+    # 2D
+    with tempfile.NamedTemporaryFile('w+') as f3:
+        f3.write('1,2\n3,4\n')
+        f3.seek(0)
+        test3 = nimble.data(None, f3)
+        assert test3.getTypeString() == "Matrix"
+    with tempfile.NamedTemporaryFile('w+') as f4:
+        f4.write('1,a\n3,b\n')
+        f4.seek(0)
+        test4 = nimble.data(None, f4)
+        assert test4.getTypeString() == "DataFrame"
+    # make pandas unavailable to check that Matrix is used
+    from nimble._utility import pd
+    backup = pd.nimbleAccessible
+    pd.nimbleAccessible = lambda: False
+    try:
+        with tempfile.NamedTemporaryFile('w+') as f5:
+            f5.write('1,2,a\n')
+            f5.seek(0)
+            test5 = nimble.data(None, f5)
+            assert test5.getTypeString() == "Matrix"
+        with tempfile.NamedTemporaryFile('w+') as f6:
+            f6.write('1,a\n3,b\n')
+            f6.seek(0)
+            test6 = nimble.data(None, f6)
+            assert test6.getTypeString() == "Matrix"
+    finally:
+        pd.nimbleAccessible = backup
+
 
 # tests for combination of one name set being specified and one set being
 # in data.
