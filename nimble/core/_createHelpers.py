@@ -1335,6 +1335,7 @@ def analyzeValues(rawData, returnType, skipDataProcessing):
         if returnType is None:
             returnType = "Matrix"
         return returnType
+
     # processing has already occurred for 1D objects only need returnType
     if isAllowedSingleElement(first):
         if returnType is None:
@@ -1379,7 +1380,7 @@ def analyzeValues(rawData, returnType, skipDataProcessing):
     return returnType
 
 def initDataObject(
-        returnType, rawData, pointNames, featureNames, name=None,
+        rawData, pointNames, featureNames, returnType, name=None,
         convertToType=None, keepPoints='all', keepFeatures='all',
         treatAsMissing=DEFAULT_MISSING, replaceMissingWith=np.nan,
         rowsArePoints=True, copyData=True, skipDataProcessing=False,
@@ -2047,7 +2048,7 @@ def _decompressGZip(ioStream):
         return BytesIO(unzipped.read())
 
 def createDataFromFile(
-        returnType, source, pointNames, featureNames, name, convertToType,
+        source, pointNames, featureNames, returnType, name, convertToType,
         keepPoints, keepFeatures, treatAsMissing, replaceMissingWith,
         rowsArePoints, ignoreNonNumericalFeatures, inputSeparator):
     """
@@ -2114,7 +2115,7 @@ def createDataFromFile(
     try:
         ret = pickle.loads(content)
         return initDataObject(
-            returnType, ret, pointNames, featureNames, name, convertToType,
+            ret, pointNames, featureNames, returnType, name, convertToType,
             keepPoints, keepFeatures, treatAsMissing=treatAsMissing,
             replaceMissingWith=replaceMissingWith, rowsArePoints=rowsArePoints,
             copyData=None)
@@ -2190,7 +2191,7 @@ def createDataFromFile(
             retFNames = featureNames
 
     return initDataObject(
-        returnType, retData, retPNames, retFNames, name, convertToType,
+        retData, retPNames, retFNames, returnType, name, convertToType,
         keepPoints, keepFeatures, treatAsMissing=treatAsMissing,
         replaceMissingWith=replaceMissingWith, rowsArePoints=rowsArePoints,
         copyData=None, paths=pathsToPass, extracted=extracted)
@@ -2231,12 +2232,12 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
             rawSparse = scipy.sparse.coo_matrix((numPoints, numFeatures))
         else:
             raise ValueError('numpyMaker must be np.ones or np.zeros')
-        return nimble.data(returnType, rawSparse, pointNames=pointNames,
+        return nimble.data(rawSparse, pointNames=pointNames,
                            featureNames=featureNames, name=name, useLog=False)
 
     raw = numpyMaker((numPoints, numFeatures))
-    return nimble.data(returnType, raw, pointNames=pointNames,
-                       featureNames=featureNames, name=name, useLog=False)
+    return nimble.data(raw, pointNames=pointNames, featureNames=featureNames,
+                       returnType=returnType, name=name, useLog=False)
 
 
 def _intFloatOrString(inString):

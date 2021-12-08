@@ -22,13 +22,13 @@ returnTypes = copy.copy(nimble.core.data.available)
 
 def back_constant_sizeChecking(toTest):
     with raises(InvalidArgumentValue):
-        toTest("Matrix", -1, 5)
+        toTest(-1, 5)
 
     with raises(InvalidArgumentValue):
-        toTest("Matrix", 4, -3)
+        toTest(4, -3)
 
     with raises(InvalidArgumentValueCombination):
-        toTest("Matrix", 0, 0)
+        toTest(0, 0)
 
 
 def back_constant_emptyCreation(toTest):
@@ -36,11 +36,11 @@ def back_constant_emptyCreation(toTest):
     pEmpty = fEmpty.T
 
     for t in returnTypes:
-        retPEmpty = toTest(t, 0, 2)
-        retFEmpty = toTest(t, 2, 0)
+        retPEmpty = toTest(0, 2, returnType=t)
+        retFEmpty = toTest(2, 0, returnType=t)
 
-        expFEmpty = nimble.data(t, fEmpty)
-        expPEmpty = nimble.data(t, pEmpty)
+        expFEmpty = nimble.data(fEmpty, returnType=t)
+        expPEmpty = nimble.data(pEmpty, returnType=t)
 
         assert retPEmpty == expPEmpty
         assert retFEmpty == expFEmpty
@@ -51,7 +51,7 @@ def back_constant_correctSizeAndContents(toTest, value):
 
     for t in returnTypes:
         for size in checkSizes:
-            ret = toTest(t, size[0], size[1])
+            ret = toTest(size[0], size[1], returnType=t)
             assert t == ret.getTypeString()
 
             assert len(ret.points) == size[0]
@@ -68,7 +68,8 @@ def back_constant_correctNames(toTest):
     fnames = ["f1", "f2"]
 
     for t in returnTypes:
-        ret = toTest(t, 2, 2, pointNames=pnames, featureNames=fnames, name=objName)
+        ret = toTest(2, 2, pointNames=pnames, featureNames=fnames,
+                     returnType=t, name=objName)
 
         assert ret.points.getNames() == pnames
         assert ret.features.getNames() == fnames
@@ -79,11 +80,11 @@ def back_constant_conversionEqualityBetweenTypes(toTest):
     p, f = (10, 2)
 
     for makeT in returnTypes:
-        ret = toTest(makeT, p, f)
+        ret = toTest(p, f, returnType=makeT)
 
         for matchT in returnTypes:
             convertedRet = ret.copy(to=matchT)
-            toMatch = toTest(matchT, p, f)
+            toMatch = toTest(p, f, returnType=matchT)
 
             assert convertedRet == toMatch
 
@@ -92,7 +93,7 @@ def back_constant_logCount(toTest):
 
     @noLogEntryExpected
     def byType(rType):
-        out = toTest(rType, 5, 5)
+        out = toTest(5, 5, returnType=rType)
 
     for t in returnTypes:
         byType(t)
@@ -180,16 +181,16 @@ def test_zeros_logCount():
 
 def test_identity_sizeChecking():
     with raises(InvalidArgumentValue):
-        nimble.identity("Matrix", -1)
+        nimble.identity(-1)
 
     with raises(InvalidArgumentValue):
-        nimble.identity("Matrix", 0)
+        nimble.identity(0)
 
 
 def test_identity_correctSizeAndContents():
     for t in returnTypes:
         for size in range(1, 5):
-            toTest = nimble.identity(t, size)
+            toTest = nimble.identity(size, returnType=t)
             assert t == toTest.getTypeString()
             for p in range(size):
                 for f in range(size):
@@ -205,7 +206,8 @@ def test_identity_correctNames():
     fnames = ["f1", "f2"]
 
     for t in returnTypes:
-        ret = nimble.identity(t, 2, pointNames=pnames, featureNames=fnames, name=objName)
+        ret = nimble.identity(2, pointNames=pnames, featureNames=fnames,
+                              returnType=t, name=objName)
 
         assert ret.points.getNames() == pnames
         assert ret.features.getNames() == fnames
@@ -216,11 +218,11 @@ def test_identity_conversionEqualityBetweenTypes():
     size = 7
 
     for makeT in returnTypes:
-        ret = nimble.identity(makeT, size)
+        ret = nimble.identity(size, returnType=makeT)
 
         for matchT in returnTypes:
             convertedRet = ret.copy(to=matchT)
-            toMatch = nimble.identity(matchT, size)
+            toMatch = nimble.identity(size, returnType=matchT)
 
             assert convertedRet == toMatch
 
@@ -228,7 +230,7 @@ def test_identity_logCount():
 
     @noLogEntryExpected
     def byType(rType):
-        toTest = nimble.identity(rType, 5)
+        toTest = nimble.identity(5, returnType=rType)
 
     for t in returnTypes:
         byType(t)

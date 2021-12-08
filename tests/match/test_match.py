@@ -258,7 +258,7 @@ def test_match_QueryString_elementQueryIsSet():
 
     axis = match.QueryString('== feature one > 3', elementQuery=False)
     fnames = ['== feature one', '== feature two', '== feature three']
-    data = nimble.data('Matrix', [[1, 3, 5], [4, 6, 8]], featureNames=fnames)
+    data = nimble.data([[1, 3, 5], [4, 6, 8]], featureNames=fnames)
     assert axis(data.points[1])
     assert not axis(data.points[0])
 

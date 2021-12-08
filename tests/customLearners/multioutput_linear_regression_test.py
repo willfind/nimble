@@ -5,16 +5,16 @@ from nimble.learners import MultiOutputLinearRegression
 
 def test_MultiOutputLinearRegression_simple():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2]]
-    trainX = nimble.data('Matrix', data)
+    trainX = nimble.data(data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222]]
-    trainY = nimble.data('Matrix', data)
+    trainY = nimble.data(data)
 
     trainY0 = trainY.features.copy(0)
     trainY1 = trainY.features.copy(1)
 
     data = [[5, 5, 5], [0, 0, 1]]
-    testX = nimble.data('Matrix', data)
+    testX = nimble.data(data)
 
     name = 'scikitlearn.LinearRegression'
     ret0 = nimble.trainAndApply(name, trainX=trainX, trainY=trainY0, testX=testX)

@@ -49,7 +49,7 @@ class KNNClassifier(CustomLearner):
             else:
                 predictions.append([bestLabels[0]])
 
-        return initDataObject(testX.getTypeString(), predictions, None, None,
+        return initDataObject(predictions, None, None, testX.getTypeString(),
                               skipDataProcessing=True)
 
 
@@ -67,8 +67,9 @@ class KNNClassifier(CustomLearner):
             _, labelVotes = self._kNeighborOrderedLabelsAndVotes(point)
             scoreList = [labelVotes[val] if val in labelVotes else 0
                          for val in labelVals]
-            scores = initDataObject(testX.getTypeString(), scoreList,
-                                    None, None, skipDataProcessing=True)
+            scores = initDataObject(scoreList, None, None,
+                                    testX.getTypeString(),
+                                    skipDataProcessing=True)
             if ret is None:
                 ret = scores
             else:

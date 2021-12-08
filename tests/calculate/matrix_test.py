@@ -39,8 +39,8 @@ def test_elementwiseMultiply():
 def test_elementwiseMultiply_logCount():
     left = [[1, 2, 3], [4, 5, 6]]
     right = [[6, 5, 4], [3, 2, 1]]
-    leftObj = nimble.data('Matrix', left, useLog=False)
-    rightObj = nimble.data('Matrix', right, useLog=False)
+    leftObj = nimble.data(left, useLog=False)
+    rightObj = nimble.data(right, useLog=False)
     mult = elementwiseMultiply(leftObj, rightObj)
 
 
@@ -74,6 +74,6 @@ def test_elementwisePower():
 def test_elementwisePower_logCount():
     left = [[1, 2, 3], [4, 5, 6]]
     right = [[6, 5, 4], [3, 2, 1]]
-    leftObj = nimble.data('Matrix', left, useLog=False)
-    rightObj = nimble.data('Matrix', right, useLog=False)
+    leftObj = nimble.data(left, useLog=False)
+    rightObj = nimble.data(right, useLog=False)
     mult = elementwisePower(leftObj, rightObj)

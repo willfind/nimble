@@ -290,7 +290,7 @@ class AlwaysWarnInterface(UniversalInterface):
         self.issueWarnings()
         num = len(testX.points)
         raw = [0] * num
-        return nimble.data("Matrix", raw, useLog=False)
+        return nimble.data(raw, useLog=False)
 
     def _getScoresOrder(self, learner):
         self.issueWarnings()

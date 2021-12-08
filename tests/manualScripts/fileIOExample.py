@@ -30,7 +30,7 @@ if __name__ == "__main__":
     # we specify that we want a Matrix object returned, and that we want the first row to
     # taken as the featureNames. Given the .csv extension on the path it will infer the
     # format of the file to be loaded, though that could be explicitly specified if desired.
-    full = nimble.data("DataFrame", pathOrig, featureNames=True)
+    full = nimble.data(pathOrig, featureNames=True)
 
     # scrub the set of any string valued data
     full.features.delete(match.anyNonNumeric)

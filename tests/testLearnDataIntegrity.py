@@ -285,28 +285,28 @@ def testDataIntegrityTrainedLearner():
 @assertCalled(nimble.core.learn, 'mergeArguments')
 def testArgumentIntegrityTrain():
     arguments = {'k': 1}
-    train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    train = nimble.data([[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
     tl = nimble.train('nimble.KNNClassifier', train, 2, arguments=arguments)
 
 @assertCalled(nimble.core.learn, 'mergeArguments')
 def testArgumentIntegrityTrainAndApply():
     arguments = {'k': 1}
-    train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
-    test = nimble.data('Matrix', [[0, 1], [1, 0]])
+    train = nimble.data([[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    test = nimble.data([[0, 1], [1, 0]])
     pred = nimble.trainAndApply('nimble.KNNClassifier', train, 2, test, arguments=arguments)
 
 @assertCalled(nimble.core.learn, 'mergeArguments')
 def testArgumentIntegrityTrainAndTest():
     arguments = {'k': 1}
-    train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
-    test = nimble.data('Matrix', [[0, 1, 1], [1, 0, 2]])
+    train = nimble.data([[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    test = nimble.data([[0, 1, 1], [1, 0, 2]])
     perf = nimble.trainAndTest('nimble.KNNClassifier', train, 2, test, 2,
                                performanceFunction=nimble.calculate.fractionIncorrect,
                                arguments=arguments)
 
 def testArgumentIntegrityTrainAndTestOnTrainingData():
     arguments = {'k': 1}
-    train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    train = nimble.data([[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
     mergeArgumentsCalled = assertCalled(nimble.core.learn, 'mergeArguments')
     with mergeArgumentsCalled:
         perf = nimble.trainAndTestOnTrainingData(
@@ -323,16 +323,16 @@ def testArgumentIntegrityTrainAndTestOnTrainingData():
 @assertCalled(nimble.core.interfaces.universal_interface, 'mergeArguments')
 def testArgumentIntegrityTLApply():
     arguments = {'k': 1}
-    train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]],
+    train = nimble.data([[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]],
                         pointNames=['0', '1', '2', '3'])
-    test = nimble.data('Matrix', [[0, 1], [1, 0]], pointNames=['4', '5'])
+    test = nimble.data([[0, 1], [1, 0]], pointNames=['4', '5'])
     tl = nimble.train('nimble.KNNClassifier', train, 2, arguments=arguments)
     pred = tl.apply(test)
 
 @assertCalled(nimble.core.interfaces.universal_interface, 'mergeArguments')
 def testArgumentIntegrityTLTest():
     arguments = {'k': 1}
-    train = nimble.data('Matrix', [[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
-    test = nimble.data('Matrix', [[0, 1, 1], [1, 0, 2]])
+    train = nimble.data([[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
+    test = nimble.data([[0, 1, 1], [1, 0, 2]])
     tl = nimble.train('nimble.KNNClassifier', train, 2, arguments=arguments)
     perf = tl.test(test, 2, performanceFunction=nimble.calculate.fractionIncorrect)

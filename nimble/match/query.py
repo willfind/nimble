@@ -77,7 +77,7 @@ class QueryString:
     ...        [2, True, -1.0],
     ...        [-1, False, 3.0]]
     >>> fnames = ['ft1', 'ft2', 'ft3']
-    >>> toQuery = nimble.data('DataFrame', lst, featureNames=fnames)
+    >>> toQuery = nimble.data(lst, featureNames=fnames)
     >>> missing = toQuery.matchingElements("is nonZero")
     >>> missing
     <DataFrame 4pt x 3ft

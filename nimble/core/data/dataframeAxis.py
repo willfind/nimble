@@ -98,11 +98,13 @@ class DataFrameAxis(Axis, metaclass=ABCMeta):
         axisNames, offAxisNames = self._uniqueNameGetter(uniqueIndices)
 
         if self._isPoint:
-            return nimble.data('DataFrame', uniqueData, pointNames=axisNames,
-                               featureNames=offAxisNames, useLog=False)
+            return nimble.data(uniqueData, pointNames=axisNames,
+                               featureNames=offAxisNames,
+                               returnType='DataFrame', useLog=False)
 
-        return nimble.data('DataFrame', uniqueData, featureNames=axisNames,
-                           pointNames=offAxisNames, useLog=False)
+        return nimble.data(uniqueData, featureNames=axisNames,
+                           pointNames=offAxisNames,
+                           returnType='DataFrame', useLog=False)
 
     def _repeat_implementation(self, totalCopies, copyVectorByVector):
         repeated = {}

@@ -22,7 +22,7 @@ from tests.helpers import skipMissingPackage
 
 def testStDev():
     dataArr = np.array([[1], [1], [3], [4], [2], [6], [12], [0]])
-    testRowList = nimble.data('List', source=dataArr, featureNames=['nums'])
+    testRowList = nimble.data(source=dataArr, featureNames=['nums'])
     stDevContainer = testRowList.features.calculate(standardDeviation)
     stDev = stDevContainer[0, 0]
     assert stDev == pytest.approx(3.8891, abs=1e-4)
@@ -30,12 +30,12 @@ def testStDev():
 @noLogEntryExpected
 def testQuartilesAPI():
     raw = [5]
-    obj = nimble.data("Matrix", raw, useLog=False)
+    obj = nimble.data(raw, useLog=False)
     ret = quartiles(obj.pointView(0))
     assert ret == (5, 5, 5)
 
     raw = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-    obj = nimble.data("List", raw, useLog=False)
+    obj = nimble.data(raw, useLog=False)
     ret = quartiles(obj)
     assert ret == (2, 4, 6)
 
@@ -258,35 +258,35 @@ def testNonMissingNonZero():
 @raises(PackageException)
 @patch(nimble.calculate.statistic.scipy, 'nimbleAccessible', lambda: False)
 def test_residuals_exception_sciPyNotInstalled():
-    pred = nimble.data("Matrix", [[2],[3],[4]])
-    control = nimble.data("Matrix", [[2],[3],[4]])
+    pred = nimble.data([[2],[3],[4]])
+    control = nimble.data([[2],[3],[4]])
     nimble.calculate.residuals(pred, control)
 
 # L not nimble object
 @raises(InvalidArgumentType)
 def test_residuals_exception_toPredictNotNimble():
     pred = [[1],[2],[3]]
-    control = nimble.data("Matrix", [[2],[3],[4]])
+    control = nimble.data([[2],[3],[4]])
     nimble.calculate.residuals(pred, control)
 
 # R not nimble object
 @raises(InvalidArgumentType)
 def test_residuals_exception_controlVarsNotNimble():
-    pred = nimble.data("Matrix", [[2],[3],[4]])
+    pred = nimble.data([[2],[3],[4]])
     control = [[1],[2],[3]]
     nimble.calculate.residuals(pred, control)
 
 # diff number of points
 @raises(InvalidArgumentValueCombination)
 def test_residauls_exception_differentNumberOfPoints():
-    pred = nimble.data("Matrix", [[2],[3],[4]])
-    control = nimble.data("Matrix", [[2],[3],[4],[5]])
+    pred = nimble.data([[2],[3],[4]])
+    control = nimble.data([[2],[3],[4],[5]])
     nimble.calculate.residuals(pred, control)
 
 # zero points or zero features
 def test_residuals_exception_zeroAxisOnParam():
-    predOrig = nimble.data("Matrix", [[2],[3],[4]])
-    controlOrig = nimble.data("Matrix", [[2,2],[3,3],[4,4]])
+    predOrig = nimble.data([[2],[3],[4]])
+    controlOrig = nimble.data([[2,2],[3,3],[4,4]])
 
     with raises(InvalidArgumentValue):
         pred = predOrig.copy().points.extract(lambda x: False)
@@ -308,8 +308,8 @@ def test_residuals_matches_SKL():
     nimble.core._learnHelpers.findBestInterface("scikitlearn")
 
     # with handmade data
-    pred = nimble.data("Matrix", [[0],[2],[4]], useLog=False)
-    control = nimble.data("Matrix", [[1],[2],[3]], useLog=False)
+    pred = nimble.data([[0],[2],[4]], useLog=False)
+    control = nimble.data([[1],[2],[3]], useLog=False)
     nimbleRet = nimble.calculate.residuals(pred, control)
     tl = nimble.train("scikitlearn.LinearRegression", control, pred, useLog=False)
     sklRet = pred - tl.apply(control, useLog=False)

@@ -31,7 +31,7 @@ if __name__ == "__main__":
         givenShow = True if sys.argv[2].lower() != "false" else False
 
     rawNorm = np.random.normal(loc=0, scale=1, size=(1000, 1))
-    objNorm = nimble.data("Matrix", rawNorm, featureNames=["N(0,1)"])
+    objNorm = nimble.data(rawNorm, featureNames=["N(0,1)"])
 
     # 1000 samples of N(0,1)
     def plotDistributionNormal(plotObj, outDir, givenShow):
@@ -67,8 +67,8 @@ if __name__ == "__main__":
         raw1 = np.random.rand(50, 1)
         raw2 = np.random.rand(50, 1)
         scaled = (raw1 * 3) + raw2
-        obj1 = nimble.data("Matrix", raw1)
-        obj2 = nimble.data("Matrix", scaled)
+        obj1 = nimble.data(raw1)
+        obj2 = nimble.data(scaled)
         obj1.features.append(obj2)
 
         #obj1.features.setName(0, "[0, 1) random noise")
@@ -84,7 +84,7 @@ if __name__ == "__main__":
         raw1 = np.random.rand(60, 3)
         raw1[:, 1] = raw1[:, 0] + raw1[:, 1]
         raw1[:, 2] = raw1[:, 0] + raw1[:, 2]
-        obj1 = nimble.data("Matrix", raw1)
+        obj1 = nimble.data(raw1)
 
         obj1.plotFeatureAgainstFeatureRollingAverage(
             0, 1, 10, outPath=None, show=False, figureID='noise', label='1')
@@ -95,18 +95,18 @@ if __name__ == "__main__":
             0, 2, 10, outPath=outPath, show=givenShow, figureID='noise',
             label='2', title=title, yAxisLabel='')
 
-        labels = nimble.data('List', ['ONE', 'TWO', 'THREE'] * 20).T
+        labels = nimble.data(['ONE', 'TWO', 'THREE'] * 20).T
         obj1.features.append(labels)
         obj1.plotFeatureAgainstFeatureRollingAverage(
             0, 1, 5, 3, show=givenShow, linestyle='-',
             color={'ONE': 'green', 'TWO': 'red', 'THREE': 'blue'})
 
-    checkObj = nimble.data("Matrix", np.zeros((15, 12)), name="Checkerboard")
+    checkObj = nimble.data(np.zeros((15, 12)), name="Checkerboard")
 
     def plotClusters(outDir, givenShow):
-        centers = nimble.data('Matrix', [[0, 0], [1, 1], [2, 2], [3, 3]])
+        centers = nimble.data([[0, 0], [1, 1], [2, 2], [3, 3]])
 
-        obj = nimble.data("Matrix", np.random.rand(25, 2))
+        obj = nimble.data(np.random.rand(25, 2))
 
         label = 'cluster0'
         # by setting yMin=0.5, it will trigger yMax to be set to ~1 for
@@ -124,7 +124,7 @@ if __name__ == "__main__":
                 show = givenShow
                 outPath = getOutPath(outDir, "Clusters")
 
-            obj = nimble.data("Matrix", np.random.rand(25, 2))
+            obj = nimble.data(np.random.rand(25, 2))
             scaled = obj + centers.points[i].stretch
 
             label = 'cluster' + str(i)
@@ -172,7 +172,7 @@ if __name__ == "__main__":
               ['G3', 'W', 29], ['G3', 'W', 28], ['G3', 'W', 28]]
 
     features = ['GroupID', 'Gender', 'Score']
-    groupObj = nimble.data('Matrix', groups, featureNames=features)
+    groupObj = nimble.data(groups, featureNames=features)
 
     def plotGroupMeans(plotObj, outDir, givenShow):
         outPath = getOutPath(outDir, "groupMeansCI")
@@ -223,7 +223,7 @@ if __name__ == "__main__":
                     count[1] = sum(subgroup)
             counts[name] = count
 
-        countObj = nimble.data('Matrix', counts, rowsArePoints=False)
+        countObj = nimble.data(counts, rowsArePoints=False)
         countObj.points.setNames(['W', 'M'])
         countObj.features.plot(outPath=outPath, show=givenShow,
                                yAxisLabel='sum', title='Score sum by GroupID',
@@ -237,7 +237,7 @@ if __name__ == "__main__":
         d[:, 4] = 1
         d[:250, 5] = -2
         d[250:, 5] = 4
-        plotObj = nimble.data("Matrix", d)
+        plotObj = nimble.data(d)
         plotObj.name = 'MAD'
 
         pathCI = getOutPath(outDir, "featureMeansCI")
@@ -258,14 +258,14 @@ if __name__ == "__main__":
         d[3, :] = [0.8 if v < 0.8 else v for v in d[3, :]]
         pnames = ['Patient #' + str(i) for i in range(1, 6)]
         fnames = ['Trial #' + str(i) for i in range(1, 11)]
-        plotObj = nimble.data("DataFrame", d, pointNames=pnames,
+        plotObj = nimble.data(d, pointNames=pnames,
                               featureNames=fnames)
         plotObj.name = 'Patient Trials'
 
         pathBar = getOutPath(outDir, "pointMinMax")
         # stat function returning multiple values
         def minmax(pt):
-            return nimble.data('DataFrame', [min(pt), max(pt)],
+            return nimble.data([min(pt), max(pt)],
                                featureNames=['min', 'max'])
 
         plotObj.points.plotStatistics(minmax, outPath=pathBar,

@@ -8,7 +8,7 @@ from tests.helpers import logCountAssertionFactory
 # successful run no testX
 def test_normalizeData_successTest_noTestX():
     data = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
-    trainX = nimble.data("Matrix", data)
+    trainX = nimble.data(data)
     orig = trainX.copy()
 
     norm = nimble.normalizeData('scikitlearn.PCA', trainX, n_components=2)
@@ -22,11 +22,11 @@ def test_normalizeData_successTest_BothDataSets():
     for learner, args in zip(learners, [{'n_components': 2}, {}]):
         data1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
         ftNames = ['a', 'b', 'c']
-        trainX = nimble.data("Matrix", data1, pointNames=['0', '1', '2'],
+        trainX = nimble.data(data1, pointNames=['0', '1', '2'],
                              featureNames=ftNames)
 
         data2 = [[-1, 0, 5]]
-        testX = nimble.data("Matrix", data2, pointNames=['4'],
+        testX = nimble.data(data2, pointNames=['4'],
                             featureNames=ftNames)
 
         norms = nimble.normalizeData(learner, trainX, testX=testX,
@@ -55,10 +55,10 @@ def test_normalizeData_successTest_BothDataSets():
 
 def test_normalizeData_returnNamesDefault():
     data1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
-    trainX = nimble.data("Matrix", data1, name='trainX')
+    trainX = nimble.data(data1, name='trainX')
 
     data2 = [[-1, 0, 5]]
-    testX = nimble.data("Matrix", data2, name='testX')
+    testX = nimble.data(data2, name='testX')
 
     norms = nimble.normalizeData('scikitlearn.PCA', trainX, testX=testX,
                                  n_components=2)
@@ -69,9 +69,9 @@ def test_normalizeData_returnNamesDefault():
 @logCountAssertionFactory(2)
 def test_normalizeData_logCount():
     data1 = [[0, 1, 3], [-1, 1, 2], [1, 2, 2]]
-    trainX = nimble.data("Matrix", data1, useLog=False)
+    trainX = nimble.data(data1, useLog=False)
     data2 = [[-1, 0, 5]]
-    testX = nimble.data("Matrix", data2, useLog=False)
+    testX = nimble.data(data2, useLog=False)
 
     _ = nimble.normalizeData('scikitlearn.StandardScaler', trainX, testX=testX)
     _ = nimble.normalizeData('scikitlearn.PCA', trainX, testX=testX,

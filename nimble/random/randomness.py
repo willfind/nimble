@@ -42,10 +42,9 @@ def setSeed(seed, useLog=None):
 # When using alternateControl, using setSeed is not allowed.
 setSeed._settable = True
 
-def data(
-        returnType, numPoints, numFeatures, sparsity, pointNames='automatic',
-        featureNames='automatic', elementType='float', name=None,
-        randomSeed=None, useLog=None):
+def data(numPoints, numFeatures, sparsity, pointNames='automatic',
+         featureNames='automatic', elementType='float', returnType=None,
+         name=None, randomSeed=None, useLog=None):
     """
     Generate a data object with random contents.
 
@@ -57,9 +56,6 @@ def data(
 
     Parameters
     ----------
-    returnType : str
-        May be any of the allowed types specified in
-        nimble.core.data.available.
     numPoints : int
         The number of points in the returned object.
     numFeatures : int
@@ -85,6 +81,11 @@ def data(
         be specified explictly by a list-like or dict-like object, so
         long as all features in the data are assigned a name and the
         names for each feature are unique.
+    returnType : str, None
+        Indicates which Nimble data object to return. Options are the
+        **case sensitive** strings "List", "Matrix", "Sparse" and
+        "DataFrame". If None, Nimble will detect the most appropriate
+        type from the data and/or packages available in the environment.
     name : str
         When not None, this value is set as the name attribute of the
         returned object.
@@ -113,7 +114,7 @@ def data(
 
     >>> nimble.random.setSeed(42)
     >>> ptNames = ['a', 'b', 'c', 'd', 'e']
-    >>> random = nimble.random.data('Matrix', 5, 5, 0, pointNames=ptNames,
+    >>> random = nimble.random.data(5, 5, 0, pointNames=ptNames,
     ...                             elementType='int')
     >>> random
     <Matrix 5pt x 5ft
@@ -129,7 +130,7 @@ def data(
     Random floats, high sparsity.
 
     >>> nimble.random.setSeed(42)
-    >>> sparse = nimble.random.data('Sparse', 5, 5, .9)
+    >>> sparse = nimble.random.data(5, 5, .9, returnType="Sparse")
     >>> sparse
     <Sparse 5pt x 5ft
            0     1      2     3      4
@@ -197,12 +198,13 @@ def data(
             else:
                 randData = numpyRandom.normal(loc=0.0, scale=1.0, size=size)
 
-    ret = initDataObject(returnType, rawData=randData, pointNames=pointNames,
-                         featureNames=featureNames, name=name, copyData=False,
-                         skipDataProcessing=True)
+    ret = initDataObject(randData, pointNames=pointNames,
+                         featureNames=featureNames, returnType=returnType,
+                         name=name, copyData=False, skipDataProcessing=True)
 
-    handleLogging(useLog, 'load', "Random " + returnType, numPoints,
-                  numFeatures, name, sparsity=sparsity, seed=randomSeed)
+    handleLogging(useLog, 'load', returnType, "Random " + ret.getTypeString(),
+                  numPoints, numFeatures, name, sparsity=sparsity,
+                  seed=randomSeed)
 
     return ret
 

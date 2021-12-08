@@ -29,8 +29,8 @@ def testGenericPerformanceFunctionEmpty():
     """
     emptyArray = np.array([])
     nonEmptyArray = np.array([1, 2, 3])
-    emptyMatrix = nimble.data('Matrix', source=emptyArray)
-    nonEmptyMatrix = nimble.data('Matrix', source=nonEmptyArray)
+    emptyMatrix = nimble.data(source=emptyArray)
+    nonEmptyMatrix = nimble.data(source=nonEmptyArray)
 
     with raises(InvalidArgumentValue):
         perf = generic(emptyMatrix, emptyMatrix)
@@ -49,8 +49,8 @@ def testGenericPerformanceFunctionNansNoData():
     knownLabels = np.array([1, np.nan, 3])
     predictedLabels = np.array([np.nan, 3, np.nan])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+    knownLabelsMatrix = nimble.data(source=knownLabels)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels)
 
     perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
 
@@ -62,7 +62,7 @@ def testGenericPerformanceFunctionInvalidInputs():
         knownLabels = np.array([[1], [2], [3]])
         predictedLabels = np.array([[1], [2], [3]])
 
-        predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+        predictedLabelsMatrix = nimble.data(source=predictedLabels)
 
         perf = generic(knownLabels, predictedLabelsMatrix)
 
@@ -70,7 +70,7 @@ def testGenericPerformanceFunctionInvalidInputs():
         knownLabels = np.array([[1], [2], [3]])
         predictedLabels = np.array([[1], [2], [3]])
 
-        knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
+        knownLabelsMatrix = nimble.data(source=knownLabels)
 
         perf = generic(knownLabelsMatrix, predictedLabels)
 
@@ -82,8 +82,8 @@ def testGenericPerformanceFunctionShapeMismatch():
         knownLabels = np.array([[1], [2], [3]])
         predictedLabels = np.array([[1], [2]])
 
-        knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-        predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+        knownLabelsMatrix = nimble.data(source=knownLabels)
+        predictedLabelsMatrix = nimble.data(source=predictedLabels)
 
         perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
 
@@ -91,8 +91,8 @@ def testGenericPerformanceFunctionShapeMismatch():
         knownLabels = np.array([[1], [2]])
         predictedLabels = np.array([[1], [2], [3]])
 
-        knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-        predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+        knownLabelsMatrix = nimble.data(source=knownLabels)
+        predictedLabelsMatrix = nimble.data(source=predictedLabels)
 
         perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
 
@@ -100,8 +100,8 @@ def testGenericPerformanceFunctionShapeMismatch():
         knownLabels = np.array([[1, 1], [2, 2], [3, 3]])
         predictedLabels = np.array([[1], [2], [3]])
 
-        knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-        predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+        knownLabelsMatrix = nimble.data(source=knownLabels)
+        predictedLabelsMatrix = nimble.data(source=predictedLabels)
 
         perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
 
@@ -109,8 +109,8 @@ def testGenericPerformanceFunctionShapeMismatch():
         knownLabels = np.array([[1], [2], [3]])
         predictedLabels = np.array([[1, 1], [2, 2], [3, 3]])
 
-        knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-        predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+        knownLabelsMatrix = nimble.data(source=knownLabels)
+        predictedLabelsMatrix = nimble.data(source=predictedLabels)
 
         perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
 
@@ -125,8 +125,8 @@ def testGenericPerformanceFunction2D():
         knownLabels = np.array([[1, 2], [2, 3], [3, 4]])
         predictedLabels = np.array([[1, 2], [2, 3], [3, 4]])
 
-        knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-        predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+        knownLabelsMatrix = nimble.data(source=knownLabels)
+        predictedLabelsMatrix = nimble.data(source=predictedLabels)
 
         perf = generic(knownLabelsMatrix, predictedLabelsMatrix)
 
@@ -137,8 +137,8 @@ def testGenericPerformanceFunction2D():
     knownLabels = np.array([[1, 2], [2, 3], [3, 4]])
     predictedLabels = np.array([[1, 2], [2, 3], [3, 4]])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+    knownLabelsMatrix = nimble.data(source=knownLabels)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels)
 
     perf = generic2D(knownLabelsMatrix, predictedLabelsMatrix)
     assert perf == 1
@@ -150,8 +150,8 @@ def testGenericPerformanceFunctionWithValidData():
     knownLabels = [[1.0], [3.0], [0.0], [4.0]]
     predictedLabels = [[1.0], [2.0], [0.0], [3.0]]
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+    knownLabelsMatrix = nimble.data(source=knownLabels)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels)
 
     @performanceFunction('min')
     def performance(knownValues, predictedValues):
@@ -169,8 +169,8 @@ def testGenericPerformanceFunctionSkipValidation():
     knownLabels = np.array([[1, 2], [3, 4]])
     predictedLabels = np.array([[1], [2], [3]])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+    knownLabelsMatrix = nimble.data(source=knownLabels)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels)
 
     @performanceFunction('max', validate=False)
     def noValidation(knownValues, predictedValues):
@@ -193,8 +193,8 @@ def testGenericErrorCalculatorDivideByZero():
     knownLabels = np.array([1, 2, 3])
     predictedLabels = np.array([1, 2, 3])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+    knownLabelsMatrix = nimble.data(source=knownLabels)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels)
 
     _computeError(knownLabelsMatrix, predictedLabelsMatrix,
                   lambda x, y, z: z, lambda x, y: y / x)
@@ -204,8 +204,8 @@ def testGenericErrorCalculator():
     knownLabels = np.array([1.0, 2.0, 3.0])
     predictedLabels = np.array([1.0, 2.0, 3.0])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels)
+    knownLabelsMatrix = nimble.data(source=knownLabels)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels)
 
     sameRate = _computeError(
         knownLabelsMatrix, predictedLabelsMatrix,
@@ -229,8 +229,8 @@ def testMeanAbsoluteError():
     predictedLabels = np.array([0, 0, 0])
     knownLabels = np.array([0, 0, 0])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
+    knownLabelsMatrix = nimble.data(source=knownLabels, useLog=False)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels,
                                         useLog=False)
     knownLabelsMatrix.transpose(useLog=False)
     predictedLabelsMatrix.transpose(useLog=False)
@@ -241,9 +241,9 @@ def testMeanAbsoluteError():
     predictedLabels = np.array([1.0, 2.0, 3.0])
     knownLabels = np.array([1.0, 2.0, 3.0])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
+    knownLabelsMatrix = nimble.data(source=knownLabels, useLog=False)
     knownLabelsMatrix.transpose(useLog=False)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
+    predictedLabelsMatrix = nimble.data(source=predictedLabels,
                                         useLog=False)
     predictedLabelsMatrix.transpose(useLog=False)
 
@@ -253,9 +253,9 @@ def testMeanAbsoluteError():
     predictedLabels = np.array([1.0, 2.0, 3.0])
     knownLabels = np.array([1.5, 2.5, 3.5])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
+    knownLabelsMatrix = nimble.data(source=knownLabels, useLog=False)
     knownLabelsMatrix.transpose(useLog=False)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels, useLog=False)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels, useLog=False)
     predictedLabelsMatrix.transpose(useLog=False)
 
     maeRate = meanAbsoluteError(knownLabelsMatrix, predictedLabelsMatrix)
@@ -278,8 +278,8 @@ def testRmse():
     predictedLabels = np.array([[0], [0], [0]])
     knownLabels = np.array([[0], [0], [0]])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
+    knownLabelsMatrix = nimble.data(source=knownLabels, useLog=False)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels,
                                         useLog=False)
 
     rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
@@ -288,8 +288,8 @@ def testRmse():
     predictedLabels = np.array([[1.0], [2.0], [3.0]])
     knownLabels = np.array([[1.0], [2.0], [3.0]])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
+    knownLabelsMatrix = nimble.data(source=knownLabels, useLog=False)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels,
                                         useLog=False)
 
     rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
@@ -298,8 +298,8 @@ def testRmse():
     predictedLabels = np.array([[1.0], [2.0], [3.0]])
     knownLabels = np.array([[1.5], [2.5], [3.5]])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
+    knownLabelsMatrix = nimble.data(source=knownLabels, useLog=False)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels,
                                         useLog=False)
 
     rmseRate = rootMeanSquareError(knownLabelsMatrix, predictedLabelsMatrix)
@@ -316,8 +316,8 @@ def testMFRMSE_badshapePoints():
     predictedLabels = np.array([[0, 2], [0, 2], [0, 2], [0, 2]])
     knownLabels = np.array([[0, 0], [0, 0], [0, 0]])
 
-    knowns = nimble.data('Matrix', source=knownLabels)
-    predicted = nimble.data('Matrix', source=predictedLabels)
+    knowns = nimble.data(source=knownLabels)
+    predicted = nimble.data(source=predictedLabels)
 
     meanFeaturewiseRootMeanSquareError(knowns, predicted)
 
@@ -327,8 +327,8 @@ def testMFRMSE_badshapeFeatures():
     predictedLabels = np.array([[0], [0], [0], [0]])
     knownLabels = np.array([[0, 0], [0, 0], [0, 0], [0, 0]])
 
-    knowns = nimble.data('Matrix', source=knownLabels)
-    predicted = nimble.data('Matrix', source=predictedLabels)
+    knowns = nimble.data(source=knownLabels)
+    predicted = nimble.data(source=predictedLabels)
 
     meanFeaturewiseRootMeanSquareError(knowns, predicted)
 
@@ -337,8 +337,8 @@ def testMFRMSE_simpleSuccess():
     predictedLabels = np.array([[0, 2], [0, 2], [0, 2], [0, 2]])
     knownLabels = np.array([[0, 0], [0, 0], [0, 0], [0, 0]])
 
-    knowns = nimble.data('Matrix', source=knownLabels, useLog=False)
-    predicted = nimble.data('Matrix', source=predictedLabels, useLog=False)
+    knowns = nimble.data(source=knownLabels, useLog=False)
+    predicted = nimble.data(source=predictedLabels, useLog=False)
 
     mfrmseRate = meanFeaturewiseRootMeanSquareError(knowns, predicted)
     assert mfrmseRate == 1.0
@@ -359,8 +359,8 @@ def testFractionCorrect():
     predictedLabels = np.array([[0], [0], [0]])
     knownLabels = np.array([[0], [0], [0]])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
+    knownLabelsMatrix = nimble.data(source=knownLabels, useLog=False)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels,
                                         useLog=False)
 
     fc = fractionCorrect(knownLabelsMatrix, predictedLabelsMatrix)
@@ -369,8 +369,8 @@ def testFractionCorrect():
     predictedLabels = np.array([[1.0], [2.0], [3.0]])
     knownLabels = np.array([[1.0], [2.0], [3.0]])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
+    knownLabelsMatrix = nimble.data(source=knownLabels, useLog=False)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels,
                                         useLog=False)
 
     fc = fractionCorrect(knownLabelsMatrix, predictedLabelsMatrix)
@@ -379,8 +379,8 @@ def testFractionCorrect():
     predictedLabels = np.array([[1.0], [2.0], [3.0], [4.0]])
     knownLabels = np.array([[1.0], [2.0], [1.0], [2.0]])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
+    knownLabelsMatrix = nimble.data(source=knownLabels, useLog=False)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels,
                                         useLog=False)
 
     fc = fractionCorrect(knownLabelsMatrix, predictedLabelsMatrix)
@@ -402,8 +402,8 @@ def testFractionIncorrect():
     predictedLabels = np.array([[0], [0], [0]])
     knownLabels = np.array([[0], [0], [0]])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
+    knownLabelsMatrix = nimble.data(source=knownLabels, useLog=False)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels,
                                         useLog=False)
 
     fi = fractionIncorrect(knownLabelsMatrix, predictedLabelsMatrix)
@@ -412,8 +412,8 @@ def testFractionIncorrect():
     predictedLabels = np.array([[1.0], [2.0], [3.0]])
     knownLabels = np.array([[1.0], [2.0], [3.0]])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
+    knownLabelsMatrix = nimble.data(source=knownLabels, useLog=False)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels,
                                         useLog=False)
 
     fi = fractionIncorrect(knownLabelsMatrix, predictedLabelsMatrix)
@@ -422,8 +422,8 @@ def testFractionIncorrect():
     predictedLabels = np.array([[1.0], [2.0], [3.0], [4.0]])
     knownLabels = np.array([[1.0], [2.0], [1.0], [2.0]])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
+    knownLabelsMatrix = nimble.data(source=knownLabels, useLog=False)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels,
                                         useLog=False)
 
     fi = fractionIncorrect(knownLabelsMatrix, predictedLabelsMatrix)
@@ -443,8 +443,8 @@ def testVarianceFractionRemaining():
     predictedLabels = np.array([[1.0], [2.0], [3.0]])
     knownLabels = np.array([[1.0], [2.0], [3.0]])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
+    knownLabelsMatrix = nimble.data(source=knownLabels, useLog=False)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels,
                                         useLog=False)
 
     vfr = varianceFractionRemaining(knownLabelsMatrix, predictedLabelsMatrix)
@@ -453,8 +453,8 @@ def testVarianceFractionRemaining():
     predictedLabels = np.array([[1.0], [2.0], [3.0], [4.0]])
     knownLabels = np.array([[1.0], [2.0], [4.0], [3.0]])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
+    knownLabelsMatrix = nimble.data(source=knownLabels, useLog=False)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels,
                                         useLog=False)
 
     vfr = varianceFractionRemaining(knownLabelsMatrix, predictedLabelsMatrix)
@@ -474,8 +474,8 @@ def testRSquared():
     predictedLabels = np.array([[1.0], [2.0], [3.0]])
     knownLabels = np.array([[1.0], [2.0], [3.0]])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
+    knownLabelsMatrix = nimble.data(source=knownLabels, useLog=False)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels,
                                         useLog=False)
 
     rsq = rSquared(knownLabelsMatrix, predictedLabelsMatrix)
@@ -484,8 +484,8 @@ def testRSquared():
     predictedLabels = np.array([[1.0], [2.0], [3.0], [4.0]])
     knownLabels = np.array([[1.0], [2.0], [4.0], [3.0]])
 
-    knownLabelsMatrix = nimble.data('Matrix', source=knownLabels, useLog=False)
-    predictedLabelsMatrix = nimble.data('Matrix', source=predictedLabels,
+    knownLabelsMatrix = nimble.data(source=knownLabels, useLog=False)
+    predictedLabelsMatrix = nimble.data(source=predictedLabels,
                                         useLog=False)
 
     rsq = rSquared(knownLabelsMatrix, predictedLabelsMatrix)

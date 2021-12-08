@@ -26,7 +26,8 @@ import nimble
 from nimble.calculate import meanStandardDeviationNormalize
 
 bucket = 'https://storage.googleapis.com/nimble/datasets/'
-visits = nimble.data('Matrix', bucket + 'online_shoppers_intention_clean.csv')
+visits = nimble.data(bucket + 'online_shoppers_intention_clean.csv',
+                     returnType="Matrix")
 
 ## We are going to focus on categorizing our visitors that made a purchase.
 ## First, we will copy any data points for visits that resulted in a purchase
@@ -81,8 +82,7 @@ for i in range(1, 11):
     inertia = trainedLearner.getAttributes()['inertia_']
     withinClusterSumSquares.append([i, inertia])
 
-wcss = nimble.data('List', withinClusterSumSquares,
-                   featureNames=['clusters', 'wcss'])
+wcss = nimble.data(withinClusterSumSquares, featureNames=['clusters', 'wcss'])
 wcss.plotFeatureAgainstFeature('clusters', 'wcss', linestyle='-')
 
 ## The elbow method suggests that the "elbow" of the plot above provides the
@@ -123,7 +123,7 @@ purchasePCA.plotFeatureAgainstFeature(
 ## centers are clearly visible and we will add it to our same
 ## 'clustersWithCenters' figure. Now that all of our plots have been added to
 ## our figure, the default `show=True` will display the figure.
-centers = nimble.data('Matrix', kmeans.getAttributes()['cluster_centers_'],
+centers = nimble.data(kmeans.getAttributes()['cluster_centers_'],
                       featureNames=['component_1', 'component_2'])
 centers.points.setNames(['cluster' + str(i) for i in range(numClusters)])
 
@@ -160,7 +160,7 @@ for i in range(numClusters):
 ## feature means in each cluster, we will make a new Nimble data object. This
 ## object has three points (one for each cluster) containing our calculated
 ## feature means.
-clusterMeans = nimble.data('Matrix', means, featureNames=purchaseOnlyFtNames,
+clusterMeans = nimble.data(means, featureNames=purchaseOnlyFtNames,
                            pointNames=meanPtNames)
 
 ## For this example, a good visual way to analyze differences in feature means

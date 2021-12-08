@@ -39,7 +39,8 @@ from datetime import datetime
 import nimble
 
 path = nimble.fetchFile('uci::Metro Interstate Traffic Volume')
-traffic = nimble.data('Matrix', path, name='Metro Interstate Traffic Volume')
+traffic = nimble.data(path, name='Metro Interstate Traffic Volume',
+                      returnType="Matrix")
 
 ## The `show` method provides control over the printed output for an object.
 ## It prints a description, the `name` and `shape` of the object and the object

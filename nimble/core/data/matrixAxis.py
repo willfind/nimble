@@ -80,11 +80,15 @@ class MatrixAxis(Axis, metaclass=ABCMeta):
 
         axisNames, offAxisNames = self._uniqueNameGetter(uniqueIndices)
         if self._isPoint:
-            return nimble.data('Matrix', uniqueData, pointNames=axisNames,
-                               featureNames=offAxisNames, useLog=False)
+            return nimble.data(uniqueData, pointNames=axisNames,
+                               featureNames=offAxisNames,
+                               returnType=self._base.getTypeString(),
+                               useLog=False)
 
-        return nimble.data('Matrix', uniqueData, pointNames=offAxisNames,
-                           featureNames=axisNames, useLog=False)
+        return nimble.data(uniqueData, pointNames=offAxisNames,
+                           featureNames=axisNames,
+                           returnType=self._base.getTypeString(),
+                           useLog=False)
 
     def _repeat_implementation(self, totalCopies, copyVectorByVector):
         if self._isPoint:

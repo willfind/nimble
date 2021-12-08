@@ -34,7 +34,7 @@ def _randomLabeledDataSet(numPoints=50, numFeatures=5, numLabels=3,
     the second object in the tuple contains the labels for each feature ('Y' in nimble language)
     """
     if constructor is None:
-        constructor = functools.partial(nimble.data, 'Matrix')
+        constructor = nimble.data
     if numLabels is None:
         labelsRaw = [[pythonRandom.random()] for _x in range(numPoints)]
     else:  # labels data set
@@ -132,8 +132,8 @@ def test_crossValidate_reasonable_results():
     numPoints = 50
     points = [[pythonRandom.gauss(0, 1) for _x in range(numFeats)] for _y in range(numPoints)]
     labels = [[sum(featVector)] for featVector in points]
-    X = nimble.data('Matrix', points)
-    Y = nimble.data('Matrix', labels)
+    X = nimble.data(points)
+    Y = nimble.data(labels)
 
     #run in crossValidate
     crossValidator = crossValidate(regressionAlgo, X, Y, meanAbsoluteError, {}, folds=5)
@@ -169,8 +169,8 @@ def test_crossValidate_2d_api_check():
     numPoints = 50
     points = [[pythonRandom.gauss(0, 1) for _x in range(numFeats)] for _y in range(numPoints)]
     labels = [[sum(featVector), sum(featVector)] for featVector in points]
-    X = nimble.data('Matrix', points)
-    Y = nimble.data('Matrix', labels)
+    X = nimble.data(points)
+    Y = nimble.data(labels)
 
     # crossValidate.bestResult
     metric = meanFeaturewiseRootMeanSquareError
@@ -225,8 +225,8 @@ def test_crossValidate_2d_Non_label_scoremodes_disallowed():
     numPoints = 50
     points = [[pythonRandom.gauss(0, 1) for _x in range(numFeats)] for _y in range(numPoints)]
     labels = [[sum(featVector), sum(featVector)] for featVector in points]
-    X = nimble.data('Matrix', points)
-    Y = nimble.data('Matrix', labels)
+    X = nimble.data(points)
+    Y = nimble.data(labels)
 
     #run in crossValidate
     metric = meanFeaturewiseRootMeanSquareError
@@ -436,8 +436,8 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected():
     numPoints = 50
     points = [[pythonRandom.gauss(0, 1) for _x in range(numFeats)] for _y in range(numPoints)]
     labels = [[sum(featVector)] for featVector in points]
-    X = nimble.data('Matrix', points)
-    Y = nimble.data('Matrix', labels)
+    X = nimble.data(points)
+    Y = nimble.data(labels)
 
     def copiedPerfFunc(knowns, predicted):
         return meanAbsoluteError(knowns, predicted)
@@ -478,9 +478,9 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected_orderReliant():
     copiedPerfFunc.optimal = fractionIncorrect.optimal
 
     data = [1, 3, 5, 6, 8, 4, 10, -12, -2, 22]
-    X = nimble.data("Matrix", data)
+    X = nimble.data(data)
     X.transpose()
-    Y = nimble.data("Matrix", data)
+    Y = nimble.data(data)
     Y.transpose()
 
     copiedPerfFunc.avgFolds = False
@@ -572,8 +572,8 @@ def test_KFoldCrossValidator_invalidPerformanceFunction():
     yRaw = [[1], [2], [3],
             [1], [2], [3],
             [1], [2], [3]]
-    X = nimble.data('Matrix', xRaw)
-    Y = nimble.data('Matrix', yRaw)
+    X = nimble.data(xRaw)
+    Y = nimble.data(yRaw)
     crossValidator = KFoldCrossValidator(
         'nimble.KNNClassifier', X, Y, arguments={'k': 3},
         performanceFunction=noOptimal, folds=3)
@@ -586,8 +586,8 @@ def test_KFoldCrossValidator_zeroFolds():
     yRaw = [[1], [2], [3],
             [1], [2], [3],
             [1], [2], [3]]
-    X = nimble.data('Matrix', xRaw)
-    Y = nimble.data('Matrix', yRaw)
+    X = nimble.data(xRaw)
+    Y = nimble.data(yRaw)
     crossValidator = KFoldCrossValidator(
         'nimble.KNNClassifier', X, Y, arguments={'k': 3},
         performanceFunction=fractionIncorrect, folds=0)

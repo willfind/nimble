@@ -59,17 +59,17 @@ def loadAndCheck(toCall, useLog, *args):
 
 def test_data():
     for rType in nimble.core.data.available:
-        back_load(nimble.data, rType, [[1, 2, 3], [4, 5, 6]])
+        back_load(nimble.data, [[1, 2, 3], [4, 5, 6]], returnType=rType)
 
     for constructor in constructors:
         obj = constructor([[1, 2, 3], [4, 5, 6]], useLog=False)
         with tempfile.NamedTemporaryFile(suffix='.pickle') as tmpFile:
             obj.save(tmpFile.name)
-            back_load(nimble.data, None, tmpFile.name)
+            back_load(nimble.data, tmpFile.name)
 
 def test_random_data():
     for rType in nimble.core.data.available:
-        back_load(nimble.random.data, rType, 5, 5, 0.99)
+        back_load(nimble.random.data, 5, 5, 0.99, returnType=rType)
 
 def test_loadTrainedLearner():
     # Weird failure for SparseView (something to do with __getstate__ attribute
@@ -424,7 +424,7 @@ def test_merge():
     mData = [[1, 4], [2, 5], [3, 6]]
     mPtNames = ['p0', 'p6', 'p12']
     mFtNames = ['f2', 'f3']
-    mergeObj = nimble.data('Matrix', mData, pointNames=mPtNames,
+    mergeObj = nimble.data(mData, pointNames=mPtNames,
                            featureNames=mFtNames)
     def wrapped(obj, useLog):
         obj.merge(mergeObj, point='intersection', feature='union', useLog=useLog)
@@ -626,7 +626,7 @@ def test_features_transform():
 def test_points_insert():
     def wrapped(obj, useLog):
         insertData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
-        toInsert = nimble.data("Matrix", insertData, useLog=False)
+        toInsert = nimble.data(insertData, useLog=False)
         return obj.points.insert(0, toInsert, useLog=useLog)
 
     for constructor in nonViewConstructors:
@@ -635,7 +635,7 @@ def test_points_insert():
 def test_features_insert():
     def wrapped(obj, useLog):
         insertData = np.zeros((18,1))
-        toInsert = nimble.data("Matrix", insertData, useLog=False)
+        toInsert = nimble.data(insertData, useLog=False)
         return obj.features.insert(0, toInsert, useLog=useLog)
 
     for constructor in nonViewConstructors:
@@ -645,7 +645,7 @@ def test_points_append():
 
     def wrapped(obj, useLog):
         appendData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
-        toAppend = nimble.data("Matrix", appendData, useLog=False)
+        toAppend = nimble.data(appendData, useLog=False)
         return obj.points.append(toAppend, useLog=useLog)
 
     for constructor in nonViewConstructors:
@@ -654,7 +654,7 @@ def test_points_append():
 def test_features_append():
     def wrapped(obj, useLog):
         appendData = np.zeros((18,1))
-        toAppend = nimble.data("Matrix", appendData, useLog=False)
+        toAppend = nimble.data(appendData, useLog=False)
         return obj.features.append(toAppend, useLog=useLog)
 
     for constructor in nonViewConstructors:
@@ -690,7 +690,7 @@ def test_points_combineByExpandingFeatures():
                    ['de Grasse', '200m', 20.02],
                    ['de Grasse', '100m', 9.91]]
         fNames = ['athlete', 'dist', 'time']
-        newObj = nimble.data('Matrix', newData, featureNames=fNames, useLog=False)
+        newObj = nimble.data(newData, featureNames=fNames, useLog=False)
         return newObj.points.combineByExpandingFeatures('dist', 'time', useLog=useLog)
 
     for constructor in nonViewConstructors:

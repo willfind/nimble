@@ -230,12 +230,12 @@ def _runTrialGivenParameters(toCheck, knowns, predictionType):
 
 
 def _generateAllZeros(length):
-    return nimble.data("List", np.zeros([length, 1], dtype=int),
+    return nimble.data(np.zeros([length, 1], dtype=int),
                        useLog=False)
 
 
 def _generateAllOnes(length):
-    return nimble.data("List", np.ones([length, 1], dtype=int),
+    return nimble.data(np.ones([length, 1], dtype=int),
                        useLog=False)
 
 
@@ -245,7 +245,7 @@ def _generateMixedRandom(length):
         # we don't want all zeros or all ones
         if np.any(correct) and not np.all(correct):
             break
-    correct = nimble.data(returnType="List", source=correct, useLog=False)
+    correct = nimble.data(source=correct, useLog=False)
     return correct
 
 
@@ -264,7 +264,7 @@ def _generatePredicted(knowns, predictionType):
     # Labels and the score for that label (aka 'bestScores')
     if predictionType == 1:
         scores = numpyRandom.randint(2, size=[len(workingCopy.points), 1])
-        scores = nimble.data(returnType="List", source=scores,
+        scores = nimble.data(source=scores,
                              featureNames=['LabelScore'], useLog=False)
         workingCopy.features.append(scores, useLog=False)
         return workingCopy
@@ -282,7 +282,7 @@ def _generatePredicted(knowns, predictionType):
             currConfidences[1] = winner
         dataToFill.append(currConfidences)
 
-    scores = nimble.data(returnType="List", source=dataToFill,
+    scores = nimble.data(source=dataToFill,
                          featureNames=['0', '1'], useLog=False)
     return scores
 

@@ -655,7 +655,7 @@ class ListView(BaseView, List):
         if ((len(self.points) == 0 or len(self.features) == 0)
                 and to != 'List'):
             emptyStandin = np.empty(self._dims)
-            intermediate = nimble.data('Matrix', emptyStandin, useLog=False)
+            intermediate = nimble.data(emptyStandin, useLog=False)
             return intermediate.copy(to=to)
 
         # fastest way to generate list of view data

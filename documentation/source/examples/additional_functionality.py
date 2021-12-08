@@ -74,7 +74,7 @@ nimble.settings.set('logger', 'enabledByDefault', 'True')
 ## in shorthand for datasets in the UCI repository that we use to get our
 ## dataset for this example.
 path = nimble.fetchFile('uci::Wireless Indoor Localization')
-wifi = nimble.data('Matrix', path, name='wifiData')
+wifi = nimble.data(path, name='wifiData')
 
 ## As a reminder, this data used a mobile phone to collect wifi signal strength
 ## values from seven different wifi sources in four different rooms. Imagine
@@ -266,8 +266,8 @@ class LeastFeatureMeanDistance(nimble.CustomLearner):
 
 # Since this is only for testing purposes, we won't log this part.
 
-rTrainX = nimble.random.data('Matrix', numPoints=2000, numFeatures=2,
-                             sparsity=0, elementType='int', useLog=False)
+rTrainX = nimble.random.data(numPoints=2000, numFeatures=2, sparsity=0,
+                             elementType='int', useLog=False)
 rTrainX.features.setNames(['x', 'y'], useLog=False)
 
 def roomIdentifier(pt):

@@ -101,12 +101,12 @@ def _getViewFunc(returnType):
     Helper for dataConstructors.
     """
     def getView(*args, **kwargs):
-        obj = nimble.data(returnType, *args, **kwargs)
+        obj = nimble.data(*args, returnType=returnType, **kwargs)
         return obj.view()
     # mirror attributes of functools.partial
     getView.func = nimble.data
-    getView.args = (returnType,)
-    getView.kwargs = {}
+    getView.args = tuple()
+    getView.keywords = {'returnType': returnType}
     return getView
 
 def getDataConstructors(includeViews=True):
@@ -116,7 +116,7 @@ def getDataConstructors(includeViews=True):
     """
     constructors = []
     for returnType in nimble.core.data.available:
-        constructors.append(partial(nimble.data, returnType))
+        constructors.append(partial(nimble.data, returnType=returnType))
         if includeViews:
             constructors.append(_getViewFunc(returnType))
     return constructors

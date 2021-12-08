@@ -46,9 +46,9 @@ def constant(vector, match, constantValue):
     Match a value.
 
     >>> lst = [1, 'na', 3, 'na', 5]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> constant(X, 'na', 0)
-    <Matrix 1pt x 5ft
+    <DataFrame 1pt x 5ft
          0 1 2 3 4
        ┌──────────
      0 │ 1 0 3 0 5
@@ -58,7 +58,7 @@ def constant(vector, match, constantValue):
 
     >>> from nimble import match
     >>> lst = [1, 0, 3, 0, 5]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> constant(X, match.zero, 99)
     <Matrix 1pt x 5ft
          0 1  2 3  4
@@ -109,19 +109,19 @@ def mean(vector, match):
     Match a value.
 
     >>> lst = [1, 'na', 3, 'na', 5]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> mean(X, 'na')
-    <Matrix 1pt x 5ft
-           0     1     2     3     4
-       ┌──────────────────────────────
-     0 │ 1.000 3.000 3.000 3.000 5.000
+    <DataFrame 1pt x 5ft
+         0   1   2   3   4
+       ┌──────────────────
+     0 │ 1 3.000 3 3.000 5
     >
 
     Match using a function from nimble's match module.
 
     >>> from nimble import match
     >>> lst = [6, 0, 2, 0, 4]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> mean(X, match.zero)
     <Matrix 1pt x 5ft
            0     1     2     3     4
@@ -165,19 +165,19 @@ def median(vector, match):
     Match a value.
 
     >>> lst = [1, 'na', 3, 'na', 5]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> median(X, 'na')
-    <Matrix 1pt x 5ft
-           0     1     2     3     4
-       ┌──────────────────────────────
-     0 │ 1.000 3.000 3.000 3.000 5.000
+    <DataFrame 1pt x 5ft
+         0   1   2   3   4
+       ┌──────────────────
+     0 │ 1 3.000 3 3.000 5
     >
 
     Match using a function from nimble's match module.
 
     >>> from nimble import match
     >>> lst = [6, 0, 2, 0, 4]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> median(X, match.zero)
     <Matrix 1pt x 5ft
            0     1     2     3     4
@@ -219,9 +219,9 @@ def mode(vector, match):
     Match a value.
 
     >>> lst = [1, 'na', 1, 'na', 5]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> mode(X, 'na')
-    <Matrix 1pt x 5ft
+    <DataFrame 1pt x 5ft
          0 1 2 3 4
        ┌──────────
      0 │ 1 1 1 1 5
@@ -231,7 +231,7 @@ def mode(vector, match):
 
     >>> from nimble import match
     >>> lst = [6, 6, 2, 0, 0]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> mode(X, match.zero)
     <Matrix 1pt x 5ft
          0 1 2 3 4
@@ -276,9 +276,9 @@ def forwardFill(vector, match):
     Match a value.
 
     >>> lst = [1, 'na', 3, 'na', 5]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> forwardFill(X, 'na')
-    <Matrix 1pt x 5ft
+    <DataFrame 1pt x 5ft
          0 1 2 3 4
        ┌──────────
      0 │ 1 1 3 3 5
@@ -288,7 +288,7 @@ def forwardFill(vector, match):
 
     >>> from nimble import match
     >>> lst = [6, 0, 2, 0, 4]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> forwardFill(X, match.zero)
     <Matrix 1pt x 5ft
          0 1 2 3 4
@@ -349,9 +349,9 @@ def backwardFill(vector, match):
     Match a value.
 
     >>> lst = [1, 'na', 3, 'na', 5]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> backwardFill(X, 'na')
-    <Matrix 1pt x 5ft
+    <DataFrame 1pt x 5ft
          0 1 2 3 4
        ┌──────────
      0 │ 1 3 3 5 5
@@ -361,7 +361,7 @@ def backwardFill(vector, match):
 
     >>> from nimble import match
     >>> lst = [6, 0, 2, 0, 4]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> backwardFill(X, match.zero)
     <Matrix 1pt x 5ft
          0 1 2 3 4
@@ -429,19 +429,19 @@ def interpolate(vector, match, **kwarguments):
     Match a value.
 
     >>> lst = [1, 'na', 3, 'na', 5]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> interpolate(X, 'na')
-    <Matrix 1pt x 5ft
-           0     1     2     3     4
-       ┌──────────────────────────────
-     0 │ 1.000 2.000 3.000 4.000 5.000
+    <DataFrame 1pt x 5ft
+         0   1   2   3   4
+       ┌──────────────────
+     0 │ 1 2.000 3 4.000 5
     >
 
     Match using a function from nimble's match module.
 
     >>> from nimble import match
     >>> lst = [6, 0, 4, 0, 2]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> interpolate(X, match.zero)
     <Matrix 1pt x 5ft
            0     1     2     3     4

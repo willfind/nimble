@@ -32,14 +32,14 @@ all of the data from our 8 original files.
 import nimble
 
 bucket = 'https://storage.googleapis.com/nimble/datasets/tidy/'
-dwtnMinAM = nimble.data('Matrix', bucket + 'downtown_am_min.csv')
-dwtnMaxAM = nimble.data('Matrix', bucket + 'downtown_am_max.csv')
-dwtnMinPM = nimble.data('Matrix', bucket + 'downtown_pm_min.csv')
-dwtnMaxPM = nimble.data('Matrix', bucket + 'downtown_pm_max.csv')
-airptMinAM = nimble.data('Matrix', bucket + 'airport_am_min.csv')
-airptMaxAM = nimble.data('Matrix', bucket + 'airport_am_max.csv')
-airptMinPM = nimble.data('Matrix', bucket + 'airport_pm_min.csv')
-airptMaxPM = nimble.data('Matrix', bucket + 'airport_pm_max.csv')
+dwtnMinAM = nimble.data(bucket + 'downtown_am_min.csv', returnType="Matrix")
+dwtnMaxAM = nimble.data(bucket + 'downtown_am_max.csv', returnType="Matrix")
+dwtnMinPM = nimble.data(bucket + 'downtown_pm_min.csv', returnType="Matrix")
+dwtnMaxPM = nimble.data(bucket + 'downtown_pm_max.csv', returnType="Matrix")
+airptMinAM = nimble.data(bucket + 'airport_am_min.csv', returnType="Matrix")
+airptMaxAM = nimble.data(bucket + 'airport_am_max.csv', returnType="Matrix")
+airptMinPM = nimble.data(bucket + 'airport_pm_min.csv', returnType="Matrix")
+airptMaxPM = nimble.data(bucket + 'airport_pm_max.csv', returnType="Matrix")
 
 ## To begin, we create 8 objects from 8 different files. The variable names
 ## and object names for each object represent the weather station location
@@ -84,7 +84,7 @@ dwtnMinAM.show('Downtown data merged on date', maxHeight=12)
 for obj in [dwtnMinAM, dwtnMaxAM, airptMinAM, airptMaxAM]:
     extreme = 'min' if 'min' in obj.name else 'max'
     ftData = [[extreme] for _ in range(len(obj.points))]
-    newFt = nimble.data('Matrix', ftData, featureNames=['extreme'])
+    newFt = nimble.data(ftData, featureNames=['extreme'])
     # New feature will be added at index position 1 (after "date" feature)
     obj.features.insert(1, newFt)
 
@@ -100,7 +100,7 @@ dwtnMinAM.show('Downtown combined extreme data', maxHeight=12)
 for obj in [dwtnMinAM, airptMinAM]:
     station = 'downtown' if 'downtown' in obj.name else 'airport'
     stationData = [[station] for _ in range(len(obj.points))]
-    newFt = nimble.data('Matrix', stationData, featureNames=['station'])
+    newFt = nimble.data(stationData, featureNames=['station'])
     obj.features.insert(1, newFt)
     obj.features.setName(1, 'station')
 

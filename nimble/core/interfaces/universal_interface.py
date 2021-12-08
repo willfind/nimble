@@ -974,10 +974,8 @@ class TrainedLearner(object):
         ...             [0, 0, 1, 3]]
         >>> lstTest = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
         >>> ftNames = ['a', 'b', 'c', 'label']
-        >>> trainData = nimble.data('Matrix', lstTrain,
-        ...                         featureNames=ftNames)
-        >>> testData = nimble.data('Matrix', lstTest,
-        ...                        featureNames=ftNames)
+        >>> trainData = nimble.data(lstTrain, featureNames=ftNames)
+        >>> testData = nimble.data(lstTest, featureNames=ftNames)
         >>> knn = nimble.train('nimble.KNNClassifier', trainX=trainData,
         ...                    trainY='label')
         >>> knn.test(testX=testData, testY='label',
@@ -1090,8 +1088,8 @@ class TrainedLearner(object):
         ...             [0, 1, 0, 2],
         ...             [0, 0, 1, 3]]
         >>> lstTestX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-        >>> trainData = nimble.data('Matrix', lstTrain)
-        >>> testX = nimble.data('Matrix', lstTestX)
+        >>> trainData = nimble.data(lstTrain)
+        >>> testX = nimble.data(lstTestX)
         >>> tl = nimble.train('nimble.KNNClassifier', trainX=trainData,
         ...                   trainY=3)
         >>> predict = tl.apply(testX)
@@ -1254,11 +1252,11 @@ class TrainedLearner(object):
         Changing the training data.
 
         >>> lstTrainX1 = [[1, 1], [2, 2], [3, 3]]
-        >>> trainX1 = nimble.data('Matrix', lstTrainX1)
+        >>> trainX1 = nimble.data(lstTrainX1)
         >>> lstTrainY1 = [[1], [2], [3]]
-        >>> trainY1 = nimble.data('Matrix', lstTrainY1)
+        >>> trainY1 = nimble.data(lstTrainY1)
         >>> lstTestX = [[8, 8], [-3, -3]]
-        >>> testX = nimble.data('Matrix', lstTestX)
+        >>> testX = nimble.data(lstTestX)
         >>> tl = nimble.train('nimble.KNNClassifier', trainX1, trainY1)
         >>> tl.apply(testX)
         <Matrix 2pt x 1ft
@@ -1268,9 +1266,9 @@ class TrainedLearner(object):
          1 │ 1
         >
         >>> lstTrainX2 = [[4, 4], [5, 5], [6, 6]]
-        >>> trainX2 = nimble.data('Matrix', lstTrainX2)
+        >>> trainX2 = nimble.data(lstTrainX2)
         >>> lstTrainY2 = [[4], [5], [6]]
-        >>> trainY2 = nimble.data('Matrix', lstTrainY2)
+        >>> trainY2 = nimble.data(lstTrainY2)
         >>> tl.retrain(trainX2, trainY2)
         >>> tl.apply(testX)
         <Matrix 2pt x 1ft
@@ -1283,11 +1281,11 @@ class TrainedLearner(object):
         Changing the learner arguments.
 
         >>> lstTrainX = [[1, 1], [3, 3], [3, 3]]
-        >>> trainX = nimble.data('Matrix', lstTrainX)
+        >>> trainX = nimble.data(lstTrainX)
         >>> lstTrainY = [[1], [3], [3]]
-        >>> trainY = nimble.data('Matrix', lstTrainY)
+        >>> trainY = nimble.data(lstTrainY)
         >>> lstTestX = [[1, 1], [3, 3]]
-        >>> testX = nimble.data('Matrix', lstTestX)
+        >>> testX = nimble.data(lstTestX)
         >>> tl = nimble.train('nimble.KNNClassifier', trainX, trainY,
         ...                   k=1)
         >>> tl.apply(testX)
@@ -1441,7 +1439,7 @@ class TrainedLearner(object):
         numLabels = len(order)
         if numLabels == 2 and len(rawScores.features) == 1:
             ret = generateBinaryScoresFromHigherSortedLabelScores(rawScores)
-            return nimble.data("Matrix", ret, useLog=False)
+            return nimble.data(ret, returnType="Matrix", useLog=False)
 
         if applyResults is None:
             applyResults = self._interface._applier(
@@ -1464,7 +1462,7 @@ class TrainedLearner(object):
                     rawScores.pointView(i), numLabels)
                 scores.append(combinedScores)
             scores = np.array(scores)
-            return nimble.data("Matrix", scores, useLog=False)
+            return nimble.data(scores, returnType="Matrix", useLog=False)
 
         return rawScores
 
@@ -1709,8 +1707,8 @@ class TrainedLearners(TrainedLearner):
                 for [winningIndex] in winningPredictionIndices:
                     winningLabels.append([self._labelSet[int(winningIndex)]])
                 return nimble.data(
-                    rawPredictions.getTypeString(), winningLabels,
-                    featureNames=['winningLabel'], useLog=False)
+                    winningLabels, featureNames=['winningLabel'],
+                    returnType=rawPredictions.getTypeString(), useLog=False)
 
             if scoreMode.lower() == 'bestScore'.lower():
                 #construct a list of lists, with each row in the list
@@ -1726,9 +1724,9 @@ class TrainedLearners(TrainedLearner):
                                             bestLabelAndScore[1]])
                 #wrap the results data in a List container
                 featureNames = ['PredictedClassLabel', 'LabelScore']
-                resultsContainer = nimble.data("List", tempResultsList,
-                                               featureNames=featureNames,
-                                               useLog=False)
+                resultsContainer = nimble.data(
+                    tempResultsList, featureNames=featureNames,
+                    returnType="List", useLog=False)
                 return resultsContainer
 
             if scoreMode.lower() == 'allScores'.lower():
@@ -1753,8 +1751,8 @@ class TrainedLearners(TrainedLearner):
                         finalRow[finalIndex] = score
                     resultsContainer.append(finalRow)
                 #wrap data in Base container
-                return nimble.data(rawPredictions.getTypeString(),
-                                   resultsContainer, featureNames=colHeaders,
+                return nimble.data(resultsContainer, featureNames=colHeaders,
+                                   returnType=rawPredictions.getTypeString(),
                                    useLog=False)
 
             msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
@@ -1797,9 +1795,9 @@ class TrainedLearners(TrainedLearner):
 
                 #wrap the results data in a List container
                 featureNames = ['PredictedClassLabel', 'LabelScore']
-                resultsContainer = nimble.data("List", tempResultsList,
-                                               featureNames=featureNames,
-                                               useLog=False)
+                resultsContainer = nimble.data(
+                    tempResultsList, featureNames=featureNames,
+                    returnType="Matrix", useLog=False)
                 return resultsContainer
             if scoreMode.lower() == 'allScores'.lower():
                 colHeaders = sorted([str(float(i)) for i in self._labelSet])
@@ -1815,8 +1813,8 @@ class TrainedLearners(TrainedLearner):
                         finalRow[finalIndex] = score
                     resultsContainer.append(finalRow)
 
-                return nimble.data(rawPredictions.getTypeString(),
-                                   resultsContainer, featureNames=colHeaders,
+                return nimble.data(resultsContainer, featureNames=colHeaders,
+                                   returnType=rawPredictions.getTypeString(),
                                    useLog=False)
 
             msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"

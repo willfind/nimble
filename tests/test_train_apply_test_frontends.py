@@ -15,12 +15,12 @@ def test_trainAndApply_dataInputs():
     numPoints = 20
     data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
              for _ in range(numPoints)]
-    trainObj = nimble.data('Matrix', source=data, featureNames=variables)
+    trainObj = nimble.data(source=data, featureNames=variables)
     trainObjData = trainObj[:, :2]
     trainObjLabels = trainObj[:, 3]
 
     testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
-    testObj = nimble.data('Matrix', source=testData, featureNames=variables)
+    testObj = nimble.data(source=testData, featureNames=variables)
     testObjNoLabels = testObj[:, :2]
 
     for learner in ['nimble.KNNClassifier', KNNClassifier]:
@@ -56,12 +56,12 @@ def test_trainAndTest_dataInputs():
     numPoints = 20
     data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
              for _pt in range(numPoints)]
-    trainObj = nimble.data('Matrix', source=data, featureNames=variables)
+    trainObj = nimble.data(source=data, featureNames=variables)
     trainObjData = trainObj[:, :2]
     trainObjLabels = trainObj[:, 3]
 
     testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
-    testObj = nimble.data('Matrix', source=testData, featureNames=variables)
+    testObj = nimble.data(source=testData, featureNames=variables)
     testObjData = testObj[:, :2]
     testObjLabels = testObj[:, 3]
 
@@ -85,12 +85,12 @@ def test_TrainedLearnerTest_dataInputs():
     numPoints = 20
     data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
              for _pt in range(numPoints)]
-    trainObj = nimble.data('Matrix', source=data, featureNames=variables)
+    trainObj = nimble.data(source=data, featureNames=variables)
     trainObjData = trainObj[:, :2]
     trainObjLabels = trainObj[:, 3]
 
     testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
-    testObj = nimble.data('Matrix', source=testData, featureNames=variables)
+    testObj = nimble.data(source=testData, featureNames=variables)
     testObjData = testObj[:, :2]
     testObjLabels = testObj[:, 3]
 
@@ -126,7 +126,7 @@ class VariablePointPredictor(nimble.CustomLearner):
             retData = [[0]] * len(testX.points)
         else:
             retData = [0]
-        return nimble.data(testX.getTypeString(), retData)
+        return nimble.data(retData)
 
 def test_TrainedLearnerApply_pointNamePreservation():
     variables = ["x1", "x2", "x3", "label"]
@@ -134,20 +134,20 @@ def test_TrainedLearnerApply_pointNamePreservation():
     getRandom = pythonRandom.random
     data = [[getRandom(), getRandom(), getRandom(), int(getRandom() * 3) + 1]
              for _pt in range(numPoints)]
-    trainObj = nimble.data('Matrix', source=data, featureNames=variables)
+    trainObj = nimble.data(source=data, featureNames=variables)
     trainObjData = trainObj[:, :2]
     trainObjLabels = trainObj[:, 3]
 
     testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
     testPtNames = ['test1', 'test2', 'test3']
-    testObj = nimble.data('Matrix', source=testData, featureNames=variables,
+    testObj = nimble.data(source=testData, featureNames=variables,
                           pointNames=testPtNames)
     testObjData = testObj[:, :2]
     testObjLabels = testObj[:, 3]
 
     tl1 = nimble.train(VariablePointPredictor, trainObjData, trainObjLabels)
 
-    exp1 = nimble.data('Matrix', [[0], [0], [0]], pointNames=testPtNames)
+    exp1 = nimble.data([[0], [0], [0]], pointNames=testPtNames)
 
     out1 = tl1.apply(testObjData)
     assert out1 == exp1
@@ -155,7 +155,7 @@ def test_TrainedLearnerApply_pointNamePreservation():
     tl2 = nimble.train(VariablePointPredictor, trainObjData, trainObjLabels,
                        matchTestPoints=False)
 
-    exp2 = nimble.data('Matrix', [0])
+    exp2 = nimble.data([0])
 
     out2 = tl2.apply(testObjData)
     assert out2 == exp2
@@ -174,10 +174,10 @@ def test_trainAndTest():
     data1 = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
              for _pt in range(numPoints)]
     # data1 = [[1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1], [0,1,0,2], [0,0,1,3], [1,0,0,1],[0,1,0,2], [0,0,1,3], [1,0,0,3], [0,1,0,1], [0,0,1,2]]
-    trainObj1 = nimble.data('Matrix', source=data1, featureNames=variables)
+    trainObj1 = nimble.data(source=data1, featureNames=variables)
 
     testData1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
-    testObj1 = nimble.data('Matrix', source=testData1)
+    testObj1 = nimble.data(source=testData1)
 
     #with default ie no args
     runError = trainAndTest('nimble.KNNClassifier', trainObj1, 3, testObj1, 3, fractionIncorrect)
@@ -194,7 +194,7 @@ def test_trainAndTest():
 
     #with small data set
     data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2]]
-    trainObj1 = nimble.data('Matrix', source=data1, featureNames=variables)
+    trainObj1 = nimble.data(source=data1, featureNames=variables)
     runError = trainAndTest('nimble.KNNClassifier', trainObj1, 3, testObj1, 3,
                             fractionIncorrect, k=nimble.CV([1, 2]), folds=3)
     assert isinstance(runError, float)
@@ -203,20 +203,20 @@ def test_trainAndTest():
 def test_multioutput_learners_callable_from_all():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
-    trainX = nimble.data('Matrix', data)
+    trainX = nimble.data(data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10],
             [2, -2]]
-    trainY = nimble.data('Matrix', data)
+    trainY = nimble.data(data)
 
     trainY0 = trainY.features.copy(0)
     trainY1 = trainY.features.copy(1)
 
     data = [[5, 5, 5], [0, 0, 1]]
-    testX = nimble.data('Matrix', data)
+    testX = nimble.data(data)
 
     data = [[555, -555], [1, -1]]
-    testY = nimble.data('Matrix', data)
+    testY = nimble.data(data)
 
     testY0 = testY.features.copy(0)
     testY1 = testY.features.copy(1)
@@ -324,11 +324,11 @@ def test_multioutput_learners_callable_from_all():
 def test_train_multiclassStrat_disallowed_multioutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
-    trainX = nimble.data('Matrix', data)
+    trainX = nimble.data(data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10],
             [2, -2]]
-    trainY = nimble.data('Matrix', data)
+    trainY = nimble.data(data)
 
     testName = 'nimble.MultiOutputRidgeRegression'
 
@@ -339,14 +339,14 @@ def test_train_multiclassStrat_disallowed_multioutput():
 def test_trainAndApply_scoreMode_disallowed_multiOutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
-    trainX = nimble.data('Matrix', data)
+    trainX = nimble.data(data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10],
             [2, -2]]
-    trainY = nimble.data('Matrix', data)
+    trainY = nimble.data(data)
 
     data = [[5, 5, 5], [0, 0, 1]]
-    testX = nimble.data('Matrix', data)
+    testX = nimble.data(data)
 
     testName = 'nimble.MultiOutputRidgeRegression'
 
@@ -357,14 +357,14 @@ def test_trainAndApply_scoreMode_disallowed_multiOutput():
 def test_trainAndApply_multiClassStrat_disallowed_multiOutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
-    trainX = nimble.data('Matrix', data)
+    trainX = nimble.data(data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10],
             [2, -2]]
-    trainY = nimble.data('Matrix', data)
+    trainY = nimble.data(data)
 
     data = [[5, 5, 5], [0, 0, 1]]
-    testX = nimble.data('Matrix', data)
+    testX = nimble.data(data)
 
     testName = 'nimble.MultiOutputRidgeRegression'
 
@@ -375,17 +375,17 @@ def test_trainAndApply_multiClassStrat_disallowed_multiOutput():
 def test_trainAndTest_scoreMode_disallowed_multioutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
-    trainX = nimble.data('Matrix', data)
+    trainX = nimble.data(data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10],
             [2, -2]]
-    trainY = nimble.data('Matrix', data)
+    trainY = nimble.data(data)
 
     data = [[5, 5, 5], [0, 0, 1]]
-    testX = nimble.data('Matrix', data)
+    testX = nimble.data(data)
 
     data = [[555, -555], [1, -1]]
-    testY = nimble.data('Matrix', data)
+    testY = nimble.data(data)
 
     testName = 'nimble.MultiOutputRidgeRegression'
     metric = nimble.calculate.meanFeaturewiseRootMeanSquareError
@@ -398,11 +398,11 @@ def test_trainAndTest_scoreMode_disallowed_multioutput():
 def test_trainAndTestOnTrainingData_scoreMode_disallowed_multioutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
-    trainX = nimble.data('Matrix', data)
+    trainX = nimble.data(data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10],
             [2, -2]]
-    trainY = nimble.data('Matrix', data)
+    trainY = nimble.data(data)
 
     testName = 'nimble.MultiOutputRidgeRegression'
     metric = nimble.calculate.meanFeaturewiseRootMeanSquareError
@@ -415,17 +415,17 @@ def test_trainAndTestOnTrainingData_scoreMode_disallowed_multioutput():
 def test_trainAndTest_multiclassStrat_disallowed_multioutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
-    trainX = nimble.data('Matrix', data)
+    trainX = nimble.data(data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10],
             [2, -2]]
-    trainY = nimble.data('Matrix', data)
+    trainY = nimble.data(data)
 
     data = [[5, 5, 5], [0, 0, 1]]
-    testX = nimble.data('Matrix', data)
+    testX = nimble.data(data)
 
     data = [[555, -555], [1, -1]]
-    testY = nimble.data('Matrix', data)
+    testY = nimble.data(data)
 
     testName = 'nimble.MultiOutputRidgeRegression'
     metric = nimble.calculate.meanFeaturewiseRootMeanSquareError
@@ -438,11 +438,11 @@ def test_trainAndTest_multiclassStrat_disallowed_multioutput():
 def test_trainAndTestOnTrainingData_multiclassStrat_disallowed_multioutput():
     data = [[0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0], [0, 0, 2], [12, 0, 0], [2, 2, 2], [0, 1, 0],
             [0, 0, 2], ]
-    trainX = nimble.data('Matrix', data)
+    trainX = nimble.data(data)
 
     data = [[10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10], [2, -2], [1200, -1200], [222, -222], [10, -10],
             [2, -2]]
-    trainY = nimble.data('Matrix', data)
+    trainY = nimble.data(data)
 
     testName = 'nimble.MultiOutputRidgeRegression'
     metric = nimble.calculate.meanFeaturewiseRootMeanSquareError
@@ -456,12 +456,12 @@ def test_trainFunctions_cv_triggered_errors():
     numPoints = 10
     data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
              for _pt in range(numPoints)]
-    trainObj = nimble.data('Matrix', source=data, featureNames=variables)
+    trainObj = nimble.data(source=data, featureNames=variables)
     trainObjData = trainObj[:, :2]
     trainObjLabels = trainObj[:, 3]
 
     testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
-    testObj = nimble.data('Matrix', source=testData, featureNames=variables)
+    testObj = nimble.data(source=testData, featureNames=variables)
     testObjData = testObj[:, :2]
     testObjLabels = testObj[:, 3]
 
@@ -502,8 +502,8 @@ def test_frontend_CV_triggering():
     variables = ["x1", "x2", "x3"]
     data = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0], [0, 1, 0]]
     labels = [[1], [2], [3], [1], [2]]
-    trainObj = nimble.data('Matrix', source=data, featureNames=variables)
-    labelsObj = nimble.data("Matrix", source=labels)
+    trainObj = nimble.data(source=data, featureNames=variables)
+    labelsObj = nimble.data(source=labels)
 
     calledCrossValidate = assertCalled(nimble.core.learn, 'crossValidate')
     # confirm that the calls are being made
@@ -527,8 +527,8 @@ def test_frontend_CV_triggering_success():
     variables = ["x1", "x2", "x3"]
     data = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0], [0, 1, 0]]
     labels = [[1], [2], [3], [1], [2]]
-    trainObj = nimble.data('Matrix', source=data, featureNames=variables)
-    labelsObj = nimble.data("Matrix", source=labels)
+    trainObj = nimble.data(source=data, featureNames=variables)
+    labelsObj = nimble.data(source=labels)
 
     tl = train('nimble.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                performanceFunction=fractionIncorrect, k=nimble.CV([1, 2]), folds=5)
@@ -553,8 +553,8 @@ def test_train_trainAndApply_perfFunc_reqForCV():
     variables = ["x1", "x2", "x3"]
     data = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0], [0, 1, 0]]
     labels = [[1], [2], [3], [1], [2]]
-    trainObj = nimble.data('Matrix', source=data, featureNames=variables)
-    labelsObj = nimble.data("Matrix", source=labels)
+    trainObj = nimble.data(source=data, featureNames=variables)
+    labelsObj = nimble.data(source=labels)
 
     # Default value of performanceFunction is None, which since we're doing
     # CV should InvalidArgumentValueCombination
@@ -572,12 +572,12 @@ def back_logCount(toCall):
     numPoints = 20
     data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(),
              int(pythonRandom.random() * 3) + 1] for _pt in range(numPoints)]
-    trainObj = nimble.data('Matrix', source=data, featureNames=variables, useLog=False)
+    trainObj = nimble.data(source=data, featureNames=variables, useLog=False)
     trainObjData = trainObj[:, :2]
     trainObjLabels = trainObj[:, 3]
 
     testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
-    testObj = nimble.data('Matrix', source=testData, featureNames=variables, useLog=False)
+    testObj = nimble.data(source=testData, featureNames=variables, useLog=False)
     testObjData = testObj[:, :2]
     testObjLabels = testObj[:, 3]
 
@@ -666,12 +666,12 @@ def test_trainAndApply_testXValidation():
     numPoints = 20
     data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
              for _ in range(numPoints)]
-    trainObj = nimble.data('Matrix', source=data, featureNames=variables)
+    trainObj = nimble.data(source=data, featureNames=variables)
     trainObjData = trainObj[:, :2]
     trainObjLabels = trainObj[:, 3]
 
     testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
-    testObj = nimble.data('Matrix', source=testData, featureNames=variables)
+    testObj = nimble.data(source=testData, featureNames=variables)
     testObjNoLabels = testObj[:, :2]
 
     learner = 'nimble.KNNClassifier'
@@ -685,12 +685,12 @@ def test_trainAndTest_testXValidation():
     numPoints = 20
     data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
              for _ in range(numPoints)]
-    trainObj = nimble.data('Matrix', source=data, featureNames=variables)
+    trainObj = nimble.data(source=data, featureNames=variables)
     trainObjData = trainObj[:, :2]
     trainObjLabels = trainObj[:, 3]
 
     testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
-    testObj = nimble.data('Matrix', source=testData, featureNames=variables)
+    testObj = nimble.data(source=testData, featureNames=variables)
     testObjData = testObj[:, :2]
     testObjLabels = testObj[:, 3]
 
@@ -707,12 +707,12 @@ def test_TL_apply_testXValidation():
     numPoints = 20
     data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
              for _ in range(numPoints)]
-    trainObj = nimble.data('Matrix', source=data, featureNames=variables)
+    trainObj = nimble.data(source=data, featureNames=variables)
     trainObjData = trainObj[:, :2]
     trainObjLabels = trainObj[:, 3]
 
     testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
-    testObj = nimble.data('Matrix', source=testData, featureNames=variables)
+    testObj = nimble.data(source=testData, featureNames=variables)
     testObjNoLabels = testObj[:, :2]
 
     learner = 'nimble.KNNClassifier'
@@ -727,12 +727,12 @@ def test_TL_test_testXValidation():
     numPoints = 20
     data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
              for _ in range(numPoints)]
-    trainObj = nimble.data('Matrix', source=data, featureNames=variables)
+    trainObj = nimble.data(source=data, featureNames=variables)
     trainObjData = trainObj[:, :2]
     trainObjLabels = trainObj[:, 3]
 
     testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
-    testObj = nimble.data('Matrix', source=testData, featureNames=variables)
+    testObj = nimble.data(source=testData, featureNames=variables)
     testObjData = testObj[:, :2]
     testObjLabels = testObj[:, 3]
 
@@ -749,12 +749,12 @@ def test_TL_getScores_testXValidation():
     numPoints = 20
     data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
              for _ in range(numPoints)]
-    trainObj = nimble.data('Matrix', source=data, featureNames=variables)
+    trainObj = nimble.data(source=data, featureNames=variables)
     trainObjData = trainObj[:, :2]
     trainObjLabels = trainObj[:, 3]
 
     testData = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
-    testObj = nimble.data('Matrix', source=testData, featureNames=variables)
+    testObj = nimble.data(source=testData, featureNames=variables)
     testObjData = testObj[:, :2]
     testObjLabels = testObj[:, 3]
 
@@ -775,13 +775,13 @@ def test_trainAndTestOneVsOne():
              [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
              [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1],
              [0, 0, 1, 2]]
-    trainObj1 = nimble.data('Matrix', source=data1, featureNames=variables)
-    trainObj2 = nimble.data('Matrix', source=data2, featureNames=variables)
+    trainObj1 = nimble.data(source=data1, featureNames=variables)
+    trainObj2 = nimble.data(source=data2, featureNames=variables)
 
     testData1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
     testData2 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [0, 1, 1, 2]]
-    testObj1 = nimble.data('Matrix', source=testData1)
-    testObj2 = nimble.data('Matrix', source=testData2)
+    testObj1 = nimble.data(source=testData1)
+    testObj2 = nimble.data(source=testData2)
 
     metricFunc = fractionIncorrect
 
@@ -802,13 +802,13 @@ def test_trainAndTestOneVsAll():
              [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
              [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1],
              [0, 0, 1, 2]]
-    trainObj1 = nimble.data('Matrix', source=data1, featureNames=variables)
-    trainObj2 = nimble.data('Matrix', source=data2, featureNames=variables)
+    trainObj1 = nimble.data(source=data1, featureNames=variables)
+    trainObj2 = nimble.data(source=data2, featureNames=variables)
 
     testData1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
     testData2 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [0, 1, 1, 2]]
-    testObj1 = nimble.data('Matrix', source=testData1)
-    testObj2 = nimble.data('Matrix', source=testData2)
+    testObj1 = nimble.data(source=testData1)
+    testObj2 = nimble.data(source=testData2)
 
     metricFunc = fractionIncorrect
 
@@ -826,10 +826,10 @@ def test_trainAndApplyOneVsAll():
              [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
              [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
 
-    trainObj1 = nimble.data('Sparse', source=data1, featureNames=variables)
+    trainObj1 = nimble.data(source=data1, featureNames=variables)
 
     testData1 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    testObj1 = nimble.data('Sparse', source=testData1)
+    testObj1 = nimble.data(source=testData1)
 
     results1 = trainAndApply('nimble.KNNClassifier', trainObj1, trainY=3,
                              testX=testObj1, scoreMode='label', multiClassStrategy='OneVsAll')
@@ -849,10 +849,10 @@ def test_trainAndApplyOneVsOne():
     data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1],
              [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
              [0, 0, 1, 3], [1, 0, 0, 3], [0, 1, 0, 1], [0, 0, 1, 2]]
-    trainObj1 = nimble.data('Matrix', source=data1, featureNames=variables)
+    trainObj1 = nimble.data(source=data1, featureNames=variables)
 
     testData1 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-    testObj1 = nimble.data('Matrix', source=testData1)
+    testObj1 = nimble.data(source=testData1)
 
     results1 = trainAndApply('nimble.KNNClassifier', trainObj1, trainY=3,
                              testX=testObj1, scoreMode='label', multiClassStrategy='OneVsOne')

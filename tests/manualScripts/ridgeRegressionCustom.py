@@ -19,10 +19,10 @@ if __name__ == "__main__":
     testYRaw = testXRaw.dot(targetCoefs)
 
     # encapsulate in nimble Base objects
-    trainX = nimble.data("Matrix", trainXRaw)
-    trainY = nimble.data("Matrix", trainYRaw)
-    testX = nimble.data("Matrix", testXRaw)
-    testY = nimble.data("Matrix", testYRaw)
+    trainX = nimble.data(trainXRaw)
+    trainY = nimble.data(trainYRaw)
+    testX = nimble.data(testXRaw)
+    testY = nimble.data(testYRaw)
 
     # an example of getting a TrainedLearner and querying its attributes. In
     # RidgeRegression's case, we check the learned coefficients, named 'w'
