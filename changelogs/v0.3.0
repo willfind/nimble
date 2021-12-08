@@ -4,6 +4,10 @@
 * For pdf: now formatted as a two page vertical stack with larger font.
 * Typo and clarity corrections.
 
+### returnType ###
+* "DataFrame" can now be auto-detected as the returnType in data constructor functions.
+* returnType was made optional with None, the default, triggering auto-detection.
+
 ### Small Changes ###
 * The SessionConfiguration object / nimble.settings now has a __repr__ implementation.
 
