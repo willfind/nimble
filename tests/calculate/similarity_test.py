@@ -22,9 +22,9 @@ def test_cosineSimilarity():
     orth = np.array([[0], [1]])
     neg = np.array([[-1], [0]])
 
-    origMatrix = nimble.data('Matrix', source=orig, useLog=False)
-    orthMatrix = nimble.data('Matrix', source=orth, useLog=False)
-    negMatrix = nimble.data('Matrix', source=neg, useLog=False)
+    origMatrix = nimble.data(source=orig, useLog=False)
+    orthMatrix = nimble.data(source=orth, useLog=False)
+    negMatrix = nimble.data(source=neg, useLog=False)
 
     result0 = cosineSimilarity(origMatrix, origMatrix)
     result1 = cosineSimilarity(origMatrix, orthMatrix)
@@ -37,7 +37,7 @@ def test_cosineSimilarity():
 def test_cosineSimilarityZeros():
     zeros = [[0], [0]]
 
-    zerosMatrix = nimble.data('Matrix', source=zeros)
+    zerosMatrix = nimble.data(source=zeros)
 
     result0 = cosineSimilarity(zerosMatrix, zerosMatrix)
 
@@ -46,23 +46,23 @@ def test_cosineSimilarityZeros():
 @raises(InvalidArgumentType)
 def test_cosineSimilarityKnownWrongType():
     orig = np.array([[1], [0]])
-    origMatrix = nimble.data('Matrix', source=orig)
+    origMatrix = nimble.data(source=orig)
 
     result = cosineSimilarity(orig, origMatrix)
 
 @raises(InvalidArgumentType)
 def test_cosineSimilarityPredictedWrongType():
     orig = np.array([[1], [0]])
-    origMatrix = nimble.data('Matrix', source=orig)
+    origMatrix = nimble.data(source=orig)
 
     result = cosineSimilarity(origMatrix, orig)
 
 @raises(InvalidArgumentValueCombination)
 def test_cosineSimilarityPredictedWrongShape():
     orig = np.array([[1], [0]])
-    origMatrix = nimble.data('Matrix', source=orig)
+    origMatrix = nimble.data(source=orig)
     pred = np.array([[1, 1], [0, 0]])
-    predMatrix = nimble.data('Matrix', source=pred)
+    predMatrix = nimble.data(source=pred)
 
     result = cosineSimilarity(origMatrix, predMatrix)
 
@@ -76,8 +76,8 @@ def test_confusionMatrix_exception_wrongType():
             [1], [2], [3], [4],
             [4], [3], [2], [1],]
 
-    knownObj = nimble.data('Matrix', known, useLog=False)
-    predObj = nimble.data('Matrix', pred, useLog=False)
+    knownObj = nimble.data(known, useLog=False)
+    predObj = nimble.data(pred, useLog=False)
 
     with raises(InvalidArgumentType):
         cm = confusionMatrix(known, predObj)
@@ -95,8 +95,8 @@ def test_confusionMatrix_exception_labelsMissingKnown():
             [0], [1], [2], [3],
             [3], [2], [1], [0]]
 
-    knownObj = nimble.data('Matrix', known, useLog=False)
-    predObj = nimble.data('Matrix', pred, useLog=False)
+    knownObj = nimble.data(known, useLog=False)
+    predObj = nimble.data(pred, useLog=False)
 
     # short
     with raises(IndexError):
@@ -118,8 +118,8 @@ def test_confusionMatrix_exception_labelListInvalid_wrongType():
             ['dog'], ['cat'], ['fish'], ['bear'],
             ['cat'], ['dog'], ['bear'], ['fish']]
 
-    knownObj = nimble.data('Matrix', known, useLog=False)
-    predObj = nimble.data('Matrix', pred, useLog=False)
+    knownObj = nimble.data(known, useLog=False)
+    predObj = nimble.data(pred, useLog=False)
 
     labels = ['zero', 'one', 'two', 'three']
     cm = confusionMatrix(knownObj, predObj, labels=labels)
@@ -135,8 +135,8 @@ def test_confusionMatrix_exception_labelListInvalid_outOfRange():
             [1], [2], [3], [4],
             [4], [3], [2], [1]]
 
-    knownObj = nimble.data('Matrix', known, useLog=False)
-    predObj = nimble.data('Matrix', pred, useLog=False)
+    knownObj = nimble.data(known, useLog=False)
+    predObj = nimble.data(pred, useLog=False)
 
     labels = ['zero', 'one', 'two', 'three']
     cm = confusionMatrix(knownObj, predObj, labels=labels)
@@ -152,8 +152,8 @@ def test_confusionMatrix_exception_labelDictInvalidKey():
             [1], [2], [3], [4],
             [4], [3], [2], [1]]
 
-    knownObj = nimble.data('Matrix', known, useLog=False)
-    predObj = nimble.data('Matrix', pred, useLog=False)
+    knownObj = nimble.data(known, useLog=False)
+    predObj = nimble.data(pred, useLog=False)
 
     labels = {0:'zero', 1:'one', 2:'two', 3:'three'}
     cm = confusionMatrix(knownObj, predObj, labels=labels)

@@ -4101,10 +4101,10 @@ class HighLevelModifying(DataTestObject):
         if single:
             replace.append(pd.Series)
 
-        nimLst = functools.partial(nimble.data, "List", useLog=False)
-        nimMtx = functools.partial(nimble.data, "Matrix", useLog=False)
-        nimSp = functools.partial(nimble.data, "Sparse", useLog=False)
-        nimDF = functools.partial(nimble.data, "DataFrame", useLog=False)
+        nimLst = functools.partial(nimble.data, returnType="List", useLog=False)
+        nimMtx = functools.partial(nimble.data, returnType="Matrix", useLog=False)
+        nimSp = functools.partial(nimble.data, returnType="Sparse", useLog=False)
+        nimDF = functools.partial(nimble.data, returnType="DataFrame", useLog=False)
 
         if axis == 'point':
             replace.extend([nimLst, nimMtx, nimSp, nimDF])

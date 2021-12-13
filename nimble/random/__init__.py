@@ -31,7 +31,7 @@ from .._utility import _setAll
 #: Keywords
 #: --------
 #: state, seed, number generator
-pythonRandom = pythonRandom
+pythonRandom = pythonRandom # pylint: disable=self-assigning-variable
 
 # for Sphinx docstring
 #: The np.random.RandomState instance used within Nimble.
@@ -46,7 +46,7 @@ pythonRandom = pythonRandom
 #: Keywords
 #: --------
 #: state, seed, number generator
-numpyRandom = numpyRandom
+numpyRandom = numpyRandom # pylint: disable=self-assigning-variable
 
 
 

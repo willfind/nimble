@@ -38,7 +38,7 @@ def inverse(aObj):
     Examples
     --------
     >>> lst = [[1, 2], [3, 4]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> X
     <Matrix 2pt x 2ft
          0 1
@@ -100,7 +100,7 @@ def inverse(aObj):
                 raise InvalidArgumentType(msg) from exception
             raise exception
 
-    return nimble.data(aObj.getTypeString(), invData, useLog=False)
+    return nimble.data(invData, returnType=aObj.getTypeString(), useLog=False)
 
 
 def pseudoInverse(aObj, method='svd'):
@@ -134,7 +134,7 @@ def pseudoInverse(aObj, method='svd'):
     Examples
     --------
     >>> lst = [[1, 2], [3, 4]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> X
     <Matrix 2pt x 2ft
          0 1
@@ -184,7 +184,7 @@ def pseudoInverse(aObj, method='svd'):
         except ValueError as exception:
             _handleNonSupportedTypes(exception)
 
-    return nimble.data(aObj.getTypeString(), pinvData, useLog=False)
+    return nimble.data(pinvData, returnType=aObj.getTypeString(), useLog=False)
 
 
 def solve(aObj, bObj):
@@ -218,9 +218,9 @@ def solve(aObj, bObj):
     Examples
     --------
     >>> aData = [[3,2,0],[1,-1,0],[0,5,1]]
-    >>> aObj = nimble.data('Matrix', aData)
+    >>> aObj = nimble.data(aData)
     >>> bData = [2,4,-1]
-    >>> bObj = nimble.data('Matrix', bData)
+    >>> bObj = nimble.data(bData)
     >>> aObj
     <Matrix 3pt x 3ft
          0 1  2
@@ -284,8 +284,8 @@ def leastSquaresSolution(aObj, bObj):
     ...      [3, 1],
     ...      [4, 1]]
     >>> b = [6, 9, 12, 15, 18]
-    >>> aObj = nimble.data('Matrix', a)
-    >>> bObj = nimble.data('Matrix', b)
+    >>> aObj = nimble.data(a)
+    >>> bObj = nimble.data(b)
     >>> nimble.calculate.leastSquaresSolution(aObj, bObj)
     <Matrix 1pt x 2ft
            0     1
@@ -329,8 +329,8 @@ def _backendSolvers(aObj, bObj, solverFunction):
             solution = scipy.sparse.linalg.lsqr(aData, bData)
             solution = solution[0]
 
-    sol = nimble.data(aOriginalType, solution,
-                      featureNames=aObj.features.getNames(), useLog=False)
+    sol = nimble.data(solution, featureNames=aObj.features.getNames(),
+                      returnType=aOriginalType, useLog=False)
     return sol
 
 

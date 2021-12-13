@@ -40,7 +40,7 @@ def testCannotImportSciPy():
 @noLogEntryExpected
 def test_rootMeanSquareErrorConfidenceInterval():
     def getActual(n):
-        return nimble.data('Matrix', numpyRandom.normal(size=(n, 1)),
+        return nimble.data(numpyRandom.normal(size=(n, 1)),
                            useLog=False)
 
     def getPredictions(actual):
@@ -56,7 +56,7 @@ def test_rootMeanSquareErrorConfidenceInterval():
 @noLogEntryExpected
 def test_meanAbsoluteErrorConfidenceInterval():
     def getActual(n):
-        return nimble.data('Matrix', numpyRandom.normal(size=(n,1)),
+        return nimble.data(numpyRandom.normal(size=(n,1)),
                            useLog=False)
 
     def getPredictions(actual):
@@ -74,8 +74,7 @@ def test_meanAbsoluteErrorConfidenceInterval():
 @noLogEntryExpected
 def test_fractionIncorrectConfidenceInterval():
     def getActual(n):
-        return nimble.data('Matrix',
-                           numpyRandom.binomial(1, 0.5, size=(n,1)),
+        return nimble.data(numpyRandom.binomial(1, 0.5, size=(n,1)),
                            useLog=False)
 
     def getPredictions(actual):

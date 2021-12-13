@@ -345,14 +345,16 @@ class SparseAxis(Axis, metaclass=ABCMeta):
             shape = (axisCount, len(self._base.features))
             uniqueCoo = scipy.sparse.coo_matrix(
                 (uniqueData, (uniqueAxis, uniqueOffAxis)), shape=shape)
-            return nimble.data('Sparse', uniqueCoo, pointNames=axisNames,
-                               featureNames=offAxisNames, useLog=False)
+            return nimble.data(uniqueCoo, pointNames=axisNames,
+                               featureNames=offAxisNames,
+                               returnType='Sparse', useLog=False)
 
         shape = (len(self._base.points), axisCount)
         uniqueCoo = scipy.sparse.coo_matrix(
             (uniqueData, (uniqueOffAxis, uniqueAxis)), shape=shape)
-        return nimble.data('Sparse', uniqueCoo, pointNames=offAxisNames,
-                           featureNames=axisNames, useLog=False)
+        return nimble.data(uniqueCoo, pointNames=offAxisNames,
+                           featureNames=axisNames,
+                           returnType='Sparse', useLog=False)
 
 
 class SparsePoints(SparseAxis, Points):

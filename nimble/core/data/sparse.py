@@ -1039,7 +1039,7 @@ class Sparse(Base):
             # for other._data as any dense or sparse matrix
             retData = self._data * other._data
 
-        return nimble.data('Sparse', retData, useLog=False)
+        return nimble.data(retData, returnType='Sparse', useLog=False)
 
     def _inplaceBinary_implementation(self, opName, other):
         notInplace = '__' + opName[3:]
@@ -1294,7 +1294,7 @@ class SparseView(BaseView, Sparse):
 
         if len(self.points) == 0 or len(self.features) == 0:
             emptyStandin = np.empty(self._dims)
-            intermediate = nimble.data('Matrix', emptyStandin, useLog=False)
+            intermediate = nimble.data(emptyStandin, useLog=False)
             return intermediate.copy(to=to)
 
         if to == 'numpyarray':

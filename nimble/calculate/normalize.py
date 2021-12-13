@@ -19,7 +19,7 @@ def meanNormalize(values1, values2=None):
     Examples
     --------
     >>> lst1 = [[1], [2], [3], [4], [5]]
-    >>> X1 = nimble.data('Matrix', lst1)
+    >>> X1 = nimble.data(lst1)
     >>> meanNormalize(X1)
     <Matrix 5pt x 1ft
            0
@@ -31,7 +31,7 @@ def meanNormalize(values1, values2=None):
      4 │ 2.000
     >
     >>> lst2 = [[3], [2], [6]]
-    >>> X2 = nimble.data('Matrix', lst2)
+    >>> X2 = nimble.data(lst2)
     >>> norm1, norm2 = meanNormalize(X1, X2)
     >>> norm2
     <Matrix 3pt x 1ft
@@ -65,7 +65,7 @@ def meanStandardDeviationNormalize(values1, values2=None):
     Examples
     --------
     >>> lst1 = [[1], [2], [3], [4], [5]]
-    >>> X1 = nimble.data('Matrix', lst1)
+    >>> X1 = nimble.data(lst1)
     >>> meanStandardDeviationNormalize(X1)
     <Matrix 5pt x 1ft
            0
@@ -77,7 +77,7 @@ def meanStandardDeviationNormalize(values1, values2=None):
      4 │ 1.414
     >
     >>> lst2 = [[3], [2], [6]]
-    >>> X2 = nimble.data('Matrix', lst2)
+    >>> X2 = nimble.data(lst2)
     >>> norm1, norm2 = meanStandardDeviationNormalize(X1, X2)
     >>> norm2
     <Matrix 3pt x 1ft
@@ -143,7 +143,7 @@ def range0to1Normalize(values1, values2=None):
     Examples
     --------
     >>> lst1 = [[1], [2], [3], [4], [5]]
-    >>> X1 = nimble.data('Matrix', lst1)
+    >>> X1 = nimble.data(lst1)
     >>> range0to1Normalize(X1)
     <Matrix 5pt x 1ft
            0
@@ -155,7 +155,7 @@ def range0to1Normalize(values1, values2=None):
      4 │ 1.000
     >
     >>> lst2 = [[3], [2], [6]]
-    >>> X2 = nimble.data('Matrix', lst2)
+    >>> X2 = nimble.data(lst2)
     >>> norm1, norm2 = range0to1Normalize(X1, X2)
     >>> norm2
     <Matrix 3pt x 1ft
@@ -189,7 +189,7 @@ def percentileNormalize(values1, values2=None):
     Examples
     --------
     >>> lst1 = [[1], [2], [4], [4], [5]]
-    >>> X1 = nimble.data('Matrix', lst1)
+    >>> X1 = nimble.data(lst1)
     >>> percentileNormalize(X1)
     <Matrix 5pt x 1ft
            0
@@ -201,7 +201,7 @@ def percentileNormalize(values1, values2=None):
      4 │ 1.000
     >
     >>> lst2 = [[3], [2], [6]]
-    >>> X2 = nimble.data('Matrix', lst2)
+    >>> X2 = nimble.data(lst2)
     >>> norm1, norm2 = percentileNormalize(X1, X2)
     >>> norm2
     <Matrix 3pt x 1ft

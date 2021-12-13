@@ -24,9 +24,8 @@ extract useful insights.
 import nimble
 
 bucket = 'https://storage.googleapis.com/nimble/datasets/'
-url = bucket + 'online_shoppers_intention_explore.csv'
-visits = nimble.data('Matrix', url)
-
+visits = nimble.data(bucket + 'online_shoppers_intention_explore.csv',
+                     returnType="Matrix")
 featureNames = visits.features.getNames()
 
 ## Data Overview ##

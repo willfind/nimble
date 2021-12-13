@@ -22,8 +22,8 @@ def test_binary_confusionMatrix_nonBinary():
             [2], [1], [2], [1],
             [2], [1], [2], [1]]
 
-    knownObj = nimble.data('Matrix', known, useLog=False)
-    predObj = nimble.data('Matrix', pred, useLog=False)
+    knownObj = nimble.data(known, useLog=False)
+    predObj = nimble.data(pred, useLog=False)
 
     # check that confusionMatrix raises IndexError but using the binary
     # functions raises InvalidArgumentValue because confusionMatrix error
@@ -48,8 +48,8 @@ def test_binary_confusionMatrixValues():
             [0], [0],                               # 2 TN
             [0], [0], [0], [0]]                     # 4 FN
 
-    knownObj = nimble.data('Matrix', known, useLog=False)
-    predObj = nimble.data('Matrix', pred, useLog=False)
+    knownObj = nimble.data(known, useLog=False)
+    predObj = nimble.data(pred, useLog=False)
 
     expTP = 6
     expTN = 2
@@ -72,8 +72,8 @@ def test_binary_confusionMatrixMetrics():
             [0], [0],                               # 2 TN
             [0], [0], [0], [0]]                     # 4 FN
 
-    knownObj = nimble.data('Matrix', known, useLog=False)
-    predObj = nimble.data('Matrix', pred, useLog=False)
+    knownObj = nimble.data(known, useLog=False)
+    predObj = nimble.data(pred, useLog=False)
 
     expRecall = .6
     expPrecision = 6 / 14
@@ -95,8 +95,8 @@ def test_binary_metricsAsPerformanceFunction():
                [0, 0], [0, 0],                                                 # 2 TN
                [1, 0], [1, 0], [1, 0], [1, 0]]                                 # 4 FN
 
-    trainData = nimble.data('Matrix', rawTrain, useLog=False)
-    testData = nimble.data('Matrix', rawTest, useLog=False)
+    trainData = nimble.data(rawTrain, useLog=False)
+    testData = nimble.data(rawTest, useLog=False)
 
     tl = train('nimble.KNNClassifier', trainData, 0, arguments={'k': 1}, useLog=False)
     score1 = tl.test(testData, 0, truePositive, useLog=False)

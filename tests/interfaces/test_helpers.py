@@ -54,7 +54,7 @@ def testExtractWinningPredictionLabel():
     Unit test for extractWinningPrediction function in runner.py
     """
     predictionData = [[1, 3, 3, 2, 3, 2], [2, 3, 3, 2, 2, 2], [1, 1, 1, 1, 1, 1], [4, 4, 4, 3, 3, 3]]
-    BaseObj = nimble.data('Matrix', predictionData)
+    BaseObj = nimble.data(predictionData)
     BaseObj.transpose()
     predictions = BaseObj.features.calculate(extractWinningPredictionLabel)
     listPredictions = predictions.copy(to="python list")

@@ -138,13 +138,13 @@ def checkClassificationStrategy(interface, learnerName, algArgs, seed):
     """
     dataX = [[-100, 3], [-122, 1], [118, 1], [117, 5],
              [1, -191], [-2, -118], [-1, 200], [3, 222]]
-    xObj = nimble.data("Matrix", dataX, useLog=False)
+    xObj = nimble.data(dataX, useLog=False)
     # we need classes > 2 to test the multiclass strategy, and we should be
     # able to tell structurally when classes != 3
     dataY = [[0], [0], [1], [1], [2], [2], [3], [3]]
-    yObj = nimble.data("Matrix", dataY, useLog=False)
+    yObj = nimble.data(dataY, useLog=False)
     dataTest = [[0, 0], [-100, 0], [100, 0], [0, -100], [0, 100]]
-    testObj = nimble.data("Matrix", dataTest, useLog=False)
+    testObj = nimble.data(dataTest, useLog=False)
 
     tlObj = interface.train(learnerName, xObj, yObj, arguments=algArgs,
                             randomSeed=seed)
@@ -169,10 +169,10 @@ def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels,
     different strategies.
     """
     if not isinstance(scoresPerPoint, nimble.core.data.Base):
-        scoresPerPoint = nimble.data('Matrix', scoresPerPoint, copyData=True,
+        scoresPerPoint = nimble.data(scoresPerPoint, copyData=True,
                                      useLog=False)
     if not isinstance(predictedLabels, nimble.core.data.Base):
-        predictedLabels = nimble.data('Matrix', predictedLabels,
+        predictedLabels = nimble.data(predictedLabels,
                                       copyData=True, useLog=False)
     length = len(scoresPerPoint.points)
     scoreLength = len(scoresPerPoint.features)

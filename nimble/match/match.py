@@ -489,7 +489,7 @@ def anyValues(match):
     >>> lst = [[1, 1, 1],
     ...        [1, 1, 1],
     ...        [1, 1, -1]]
-    >>> X =nimble.data('Matrix', lst)
+    >>> X =nimble.data(lst)
     >>> anyNegativeOne = anyValues(-1)
     >>> anyNegativeOne(X)
     True
@@ -497,7 +497,7 @@ def anyValues(match):
     >>> lst = [['A', 'B', 'C'],
     ...        ['A', 'B', 'C'],
     ...        ['A', 'B', 'C']]
-    >>> X =nimble.data('List', lst)
+    >>> X =nimble.data(lst)
     >>> anyLetterD = anyValues('D')
     >>> anyLetterD(X)
     False
@@ -538,7 +538,7 @@ def allValues(match):
     >>> lst = [[1, 1, 1],
     ...        [1, 1, 1],
     ...        [1, 1, 1]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> allOne = allValues(1)
     >>> allOne(X)
     True
@@ -546,7 +546,7 @@ def allValues(match):
     >>> lst = [['A', 'B', 'C'],
     ...        ['A', 'B', 'C'],
     ...        ['A', 'B', 'C']]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> allLetterA = allValues('A')
     >>> allLetterA(X)
     False
@@ -581,14 +581,14 @@ def anyMissing(data):
     >>> lst = [[1, 1, 1],
     ...        [1, 1, 1],
     ...        [1, None, 1]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> anyMissing(X)
     True
 
     >>> lst = [['A', 'B', 'C'],
     ...        ['A', 'B', 'C'],
     ...        ['A', 'B', 'C']]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> anyMissing(X)
     False
     """
@@ -618,14 +618,14 @@ def allMissing(data):
     >>> lst = [[float('nan'), None, None],
     ...        [float('nan'), None, None],
     ...        [float('nan'), None, None]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> allMissing(X)
     True
 
     >>> lst = [[float('nan'), None, None],
     ...        [float('nan'), 0, None],
     ...        [float('nan'), None, None]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> allMissing(X)
     False
     """
@@ -656,14 +656,14 @@ def anyNonMissing(data):
     >>> lst = [[1, 1, None],
     ...        [None, 1, 1],
     ...        [1, None, 1]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> anyNonMissing(X)
     True
 
     >>> lst = [[float('nan'), None, None],
     ...        [float('nan'), None, None],
     ...        [float('nan'), None, None]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> anyNonMissing(X)
     False
     """
@@ -693,14 +693,14 @@ def allNonMissing(data):
     >>> lst = [[1, 1, 3.0],
     ...        [2, 0, 2.0],
     ...        [3, -1, 1.0]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> allNonMissing(X)
     True
 
     >>> lst = [[1, 1, 3.0],
     ...        [2, float('nan'), 2.0],
     ...        [3, -1, 1.0]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> allNonMissing(X)
     False
     """
@@ -730,14 +730,14 @@ def anyNumeric(data):
     >>> lst = [[1, 'a', None],
     ...        [1, 'b', 3],
     ...        [1, 'c', None]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> anyNumeric(X)
     True
 
     >>> lst = [['A', 'B', 'C'],
     ...        ['A', 'B', 'C'],
     ...        ['A', 'B', 'C']]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> anyNumeric(X)
     False
     """
@@ -767,14 +767,14 @@ def allNumeric(data):
     >>> lst = [[1, 2, 3],
     ...        [4, 5, 6],
     ...        [-1, -2, float('nan')]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> allNumeric(X)
     True
 
     >>> lst = [[1, 2, 3],
     ...        [4, 5, 6],
     ...        [-1, -2, '?']]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> allNumeric(X)
     False
     """
@@ -805,14 +805,14 @@ def anyNonNumeric(data):
     >>> lst = [[1, 'a', None],
     ...        [1, 'b', 3],
     ...        [1, 'c', None]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> anyNonNumeric(X)
     True
 
     >>> lst = [[1, 2, 3],
     ...        [1, 2, 3],
     ...        [1, 2, 3]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> anyNonNumeric(X)
     False
     """
@@ -842,14 +842,14 @@ def allNonNumeric(data):
     >>> lst = [['A', 'B', 'C'],
     ...        ['A', 'B', 'C'],
     ...        ['A', 'B', 'C']]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> allNonNumeric(X)
     True
 
     >>> lst = [[1, 'a', None],
     ...        [1, 'b', 3],
     ...        [1, 'c', None]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> allNonNumeric(X)
     False
     """
@@ -879,14 +879,14 @@ def anyZero(data):
     >>> lst = [[1, 'a', 0],
     ...        [1, 'b', 3],
     ...        [1, 'c', None]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> anyZero(X)
     True
 
     >>> lst = [[1, 2, 3],
     ...        [1, 2, 3],
     ...        [1, 2, 3]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> anyZero(X)
     False
     """
@@ -916,14 +916,14 @@ def allZero(data):
     >>> lst = [[0, 0.0, 0],
     ...        [0, 0.0, 0],
     ...        [0, 0.0, 0]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> allZero(X)
     True
 
     >>> lst = [[0, 0.0, 0],
     ...        [0, 0.0, 0],
     ...        [0, 0.0, 1]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> allZero(X)
     False
     """
@@ -953,14 +953,14 @@ def anyNonZero(data):
     >>> lst = [[1, 'a', 0],
     ...        [1, 'b', 3],
     ...        [1, 'c', None]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> anyNonZero(X)
     True
 
     >>> lst = [[0, 0, 0.0],
     ...        [0, 0, 0.0],
     ...        [0, 0, 0.0]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> anyNonZero(X)
     False
     """
@@ -990,14 +990,14 @@ def allNonZero(data):
     >>> lst = [[1, 'a', None],
     ...        [2, 'b', -2],
     ...        [3, 'c', -3.0]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> allNonZero(X)
     True
 
     >>> lst = [[1, 'a', None],
     ...        [2, 'b', -2],
     ...        [3, 'c', 0.0]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> allNonZero(X)
     False
     """
@@ -1027,14 +1027,14 @@ def anyPositive(data):
     >>> lst = [[1, 'a', -1],
     ...        [1, 'b', -2],
     ...        [1, 'c', -3]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> anyPositive(X)
     True
 
     >>> lst = [[0, 'a', -1],
     ...        [0, 'b', -2],
     ...        [0, 'c', -3]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> anyPositive(X)
     False
     """
@@ -1064,14 +1064,14 @@ def allPositive(data):
     >>> lst = [[1, 2, 3],
     ...        [1, 2, 3],
     ...        [1.0, 2.0, 3.0]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> allPositive(X)
     True
 
     >>> lst = [[1, 2, 3],
     ...        [1, 2, 3],
     ...        [0.0, 2.0, 3.0]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> allPositive(X)
     False
     """
@@ -1101,14 +1101,14 @@ def anyNegative(data):
     >>> lst = [[0, 'a', -1],
     ...        [1, 'b', -2],
     ...        [2, 'c', -3]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> anyNegative(X)
     True
 
     >>> lst = [[1, 'a', 0],
     ...        [1, 'b', None],
     ...        [1, 'c', 3]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> anyNegative(X)
     False
     """
@@ -1138,14 +1138,14 @@ def allNegative(data):
     >>> lst = [[-1, -2, -3],
     ...        [-1, -2, -3],
     ...        [-1.0, -2.0, -3.0]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> allNegative(X)
     True
 
     >>> lst = [[-1, -2, -3],
     ...        [-1, -2, -3],
     ...        [0.0, -2.0, -3.0]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> allNegative(X)
     False
     """
@@ -1175,14 +1175,14 @@ def anyInfinity(data):
     >>> lst = [[0, -1.0, float('inf')],
     ...        [1, -2.0, 0],
     ...        [2, -3.0, 0]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> anyInfinity(X)
     True
 
     >>> lst = [[0, -1.0, 'infinity'],
     ...        [1, -2.0, 'zero'],
     ...        [2, -3.0, 'one']]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> anyInfinity(X)
     False
     """
@@ -1212,14 +1212,14 @@ def allInfinity(data):
     >>> lst = [[float('inf'), float('inf'), float('inf')],
     ...        [float('inf'), float('inf'), float('inf')],
     ...        [float('inf'), float('inf'), float('inf')]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> allInfinity(X)
     True
 
     >>> lst = [[float('inf'), float('inf'), float('inf')],
     ...        [float('inf'), 0, float('inf')],
     ...        [float('inf'), float('inf'), float('inf')]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> allInfinity(X)
     False
     """
@@ -1248,14 +1248,14 @@ def anyBoolean(data):
     >>> lst = [[0, -1.0, True],
     ...        [1, -2.0, False],
     ...        [2, -3.0, False]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> anyBoolean(X)
     True
 
     >>> lst = [[0, -1.0, 'a'],
     ...        [1, -2.0, 'b'],
     ...        [2, -3.0, 'c']]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> anyBoolean(X) # Note: 0 and 1 are not boolean type
     False
     """
@@ -1284,14 +1284,14 @@ def allBoolean(data):
     >>> lst = [[True, True, False],
     ...        [True, True, True],
     ...        [False, True, True]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> anyBoolean(X)
     True
 
     >>> lst = [[0, True, False],
     ...        [1, True, True],
     ...        [0, True, True]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> allBoolean(X) # Note: 0 and 1 are not boolean type
     False
     """
@@ -1320,14 +1320,14 @@ def anyInteger(data):
     >>> lst = [[0, -1.0, None],
     ...        [1, -2.0, None],
     ...        [2, -3.0, None]]
-    >>> X = nimble.data('DataFrame', lst)
+    >>> X = nimble.data(lst)
     >>> anyInteger(X)
     True
 
     >>> lst = [['a', -1.0, None],
     ...        ['b', -2.0, None],
     ...        ['c', -3.0, None]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> anyInteger(X)
     False
     """
@@ -1356,14 +1356,14 @@ def allInteger(data):
     >>> lst = [[1, 9, True],
     ...        [2, 8, False],
     ...        [3, 7, True]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> allInteger(X)
     True
 
     >>> lst = [[1, 9, -1.1],
     ...        [2, 8, -2.2],
     ...        [3, 7, -3.3]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> allInteger(X)
     False
     """
@@ -1392,14 +1392,14 @@ def anyFloating(data):
     >>> lst = [[0, -1.0, True],
     ...        [1, -2.0, False],
     ...        [2, -3.0, False]]
-    >>> X = nimble.data('DataFrame', lst)
+    >>> X = nimble.data(lst)
     >>> anyFloating(X)
     True
 
     >>> lst = [['a', -1, True],
     ...        ['b', -2, False],
     ...        ['c', -3, False]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> anyFloating(X)
     False
     """
@@ -1428,14 +1428,14 @@ def allFloating(data):
     >>> lst = [[1.1, 9.0, 0.1],
     ...        [2.2, 8.0, 0.2],
     ...        [3.3, 7.0, 0.3]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> allFloating(X)
     True
 
     >>> lst = [[1.1, 9.0, 1],
     ...        [2.2, 8.0, 2],
     ...        [3.3, 7.0, 3]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> allFloating(X)
     False
     """
@@ -1464,14 +1464,14 @@ def anyTrue(data):
     >>> lst = [[0, -1.0, True],
     ...        [1, -2.0, False],
     ...        [2, -3.0, False]]
-    >>> X = nimble.data('Sparse', lst)
+    >>> X = nimble.data(lst)
     >>> anyTrue(X)
     True
 
     >>> lst = [[0, -1.0, False],
     ...        [1, -2.0, False],
     ...        [2, -3.0, False]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> anyTrue(X) # Note: 1 is not boolean type
     False
     """
@@ -1500,14 +1500,14 @@ def allTrue(data):
     >>> lst = [[True, True, True],
     ...        [True, True, True],
     ...        [True, True, True]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> allTrue(X)
     True
 
     >>> lst = [[True, True, True],
     ...        [True, False, True],
     ...        [True, True, True]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> allTrue(X)
     False
     """
@@ -1536,14 +1536,14 @@ def anyFalse(data):
     >>> lst = [[0, -1.0, True],
     ...        [1, -2.0, True],
     ...        [2, -3.0, False]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> anyFalse(X)
     True
 
     >>> lst = [[0, -1.0, True],
     ...        [1, -2.0, True],
     ...        [2, -3.0, True]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> anyFalse(X) # Note: 0 is not boolean type
     False
     """
@@ -1572,14 +1572,14 @@ def allFalse(data):
     >>> lst = [[False, False, False],
     ...        [False, False, False],
     ...        [False, False, False]]
-    >>> X = nimble.data('Matrix', lst)
+    >>> X = nimble.data(lst)
     >>> allFalse(X)
     True
 
     >>> lst = [[False, False, True],
     ...        [False, False, True],
     ...        [False, True, False]]
-    >>> X = nimble.data('List', lst)
+    >>> X = nimble.data(lst)
     >>> allFalse(X)
     False
     """

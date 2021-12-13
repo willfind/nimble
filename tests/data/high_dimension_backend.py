@@ -127,7 +127,7 @@ class HighDimensionSafe(DataTestObject):
                 toTest = self.constructor(tensor)
                 for rType in nimble.core.data.available:
                     testCopy = toTest.copy(rType)
-                    exp = nimble.data(rType, tensor)
+                    exp = nimble.data(tensor, returnType=rType)
                     assert toTest._dims == testCopy._dims
                     assert testCopy == exp
 
@@ -191,7 +191,7 @@ class HighDimensionSafe(DataTestObject):
 
             with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
                 toSave.save(tmpFile.name)
-                loadObj = nimble.data(None, tmpFile.name)
+                loadObj = nimble.data(tmpFile.name)
 
             assert loadObj._dims == toSaveShape
             assert toSave.isIdentical(loadObj)

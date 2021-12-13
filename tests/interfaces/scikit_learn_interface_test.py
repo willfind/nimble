@@ -42,10 +42,10 @@ def testScikitLearnAliases():
     """ Test availability of correct aliases for 'sciKitLearn' """
     variables = ["Y", "x1", "x2"]
     data = [[2, 1, 1], [3, 1, 2], [4, 2, 2], ]
-    trainingObj = nimble.data('Matrix', data, featureNames=variables, useLog=False)
+    trainingObj = nimble.data(data, featureNames=variables, useLog=False)
 
     data2 = [[0, 1]]
-    testObj = nimble.data('Matrix', data2, useLog=False)
+    testObj = nimble.data(data2, useLog=False)
 
     # make a bundle of calls, don't care about the results, only
     # that they work.
@@ -64,10 +64,10 @@ def testSciKitLearnHandmadeRegression():
     """ Test sciKitLearn() by calling on a regression learner with known output """
     variables = ["Y", "x1", "x2"]
     data = [[2, 1, 1], [3, 1, 2], [4, 2, 2], ]
-    trainingObj = nimble.data('Matrix', data, featureNames=variables, useLog=False)
+    trainingObj = nimble.data(data, featureNames=variables, useLog=False)
 
     data2 = [[0, 1]]
-    testObj = nimble.data('Matrix', data2, useLog=False)
+    testObj = nimble.data(data2, useLog=False)
 
     ret = nimble.trainAndApply(toCall("LinearRegression"), trainingObj, trainY="Y", testX=testObj,
                             output=None, arguments={})
@@ -75,7 +75,7 @@ def testSciKitLearnHandmadeRegression():
     assert ret is not None
 
     expected = [[1.]]
-    expectedObj = nimble.data('Matrix', expected, useLog=False)
+    expectedObj = nimble.data(expected, useLog=False)
 
     np.testing.assert_approx_equal(ret[0, 0], 1.)
 
@@ -92,7 +92,7 @@ def testSciKitLearnSparseRegression():
     cols2 = numpyRandom.randint(0, x, c)
     data = numpyRandom.rand(c)
     A = scipy.sparse.coo_matrix((data, (points, cols)), shape=(x, x))
-    obj = nimble.data('Sparse', A, useLog=False)
+    obj = nimble.data(A, useLog=False)
     testObj = obj.copy()
     testObj.features.extract(cols[0], useLog=False)
 
@@ -107,10 +107,10 @@ def testSciKitLearnHandmadeClustering():
     """ Test sciKitLearn() by calling a clustering classifier with known output """
     variables = ["x1", "x2"]
     data = [[1, 0], [3, 3], [5, 0], ]
-    trainingObj = nimble.data('Matrix', data, featureNames=variables, useLog=False)
+    trainingObj = nimble.data(data, featureNames=variables, useLog=False)
 
     data2 = [[1, 0], [1, 1], [5, 1], [3, 4]]
-    testObj = nimble.data('Matrix', data2, useLog=False)
+    testObj = nimble.data(data2, useLog=False)
 
     ret = nimble.trainAndApply(toCall("KMeans"), trainingObj, testX=testObj, output=None,
                             arguments={'n_clusters': 3})
@@ -132,13 +132,13 @@ def testSciKitLearnHandmadeSparseClustering():
     trainData[0, :] = [2, 3, 1]
     trainData[1, :] = [2, 2, 1]
     trainData[2, :] = [0, 0, 0]
-    trainData = nimble.data('Sparse', source=trainData, useLog=False)
+    trainData = nimble.data(source=trainData, useLog=False)
 
     testData = scipy.sparse.lil_matrix((3, 2))
     testData[0, :] = [3, 3]
     testData[1, :] = [3, 2]
     testData[2, :] = [-1, 0]
-    testData = nimble.data('Sparse', source=testData, useLog=False)
+    testData = nimble.data(source=testData, useLog=False)
 
     ret = nimble.trainAndApply(toCall('MiniBatchKMeans'), trainData, trainY=2, testX=testData, arguments={'n_clusters': 2})
 
@@ -152,10 +152,10 @@ def testSciKitLearnScoreMode():
     """ Test sciKitLearn() scoreMode flags"""
     variables = ["Y", "x1", "x2"]
     data = [[0, 1, 1], [0, 0, 1], [1, 3, 2], [2, -300, 2]]
-    trainingObj = nimble.data('Matrix', data, featureNames=variables, useLog=False)
+    trainingObj = nimble.data(data, featureNames=variables, useLog=False)
 
     data2 = [[2, 3], [-200, 0]]
-    testObj = nimble.data('Matrix', data2, useLog=False)
+    testObj = nimble.data(data2, useLog=False)
 
     # default scoreMode is 'label'
     ret = nimble.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={})
@@ -181,10 +181,10 @@ def testSciKitLearnScoreModeBinary():
     """ Test sciKitLearn() scoreMode flags, binary case"""
     variables = ["Y", "x1", "x2"]
     data = [[1, 30, 2], [2, 1, 1], [2, 0, 1], [2, -1, -1], [1, 30, 3], [1, 34, 4]]
-    trainingObj = nimble.data('Matrix', data, featureNames=variables, useLog=False)
+    trainingObj = nimble.data(data, featureNames=variables, useLog=False)
 
     data2 = [[2, 1], [25, 0]]
-    testObj = nimble.data('Matrix', data2, useLog=False)
+    testObj = nimble.data(data2, useLog=False)
 
     # default scoreMode is 'label'
     ret = nimble.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={})
@@ -210,12 +210,12 @@ def testSciKitLearnCrossDecomp():
     """ Test SKL on learners which take 2d Y data """
     variables = ["x1", "x2"]
     data = [[1, 0], [3, 3], [50, 0], [12, 3], [8, 228]]
-    trainingObj = nimble.data('Matrix', data, featureNames=variables, useLog=False)
+    trainingObj = nimble.data(data, featureNames=variables, useLog=False)
     dataY = [[0, 1], [0, 1], [2, 2], [1, 30], [5, 21]]
-    trainingYObj = nimble.data('Matrix', dataY, useLog=False)
+    trainingYObj = nimble.data(dataY, useLog=False)
 
     data2 = [[1, 0], [1, 1], [5, 1], [34, 4]]
-    testObj = nimble.data('Matrix', data2, useLog=False)
+    testObj = nimble.data(data2, useLog=False)
 
     nimble.trainAndApply(toCall("CCA"), trainingObj, testX=testObj, trainY=trainingYObj)
     nimble.trainAndApply(toCall("PLSCanonical"), trainingObj, testX=testObj, trainY=trainingYObj)
@@ -243,7 +243,7 @@ def testSciKitLearnListLearners():
 @sklSkipDec
 @raises(InvalidArgumentValue)
 def testSciKitLearnExcludedLearners():
-    trainX = nimble.data('Matrix', [1,2,3])
+    trainX = nimble.data([1,2,3])
     apply = nimble.trainAndApply(toCall('KernelCenterer'), trainX)
 
 
@@ -283,7 +283,7 @@ def testSciKitLearnClassificationLearners():
         arguments = setupSKLArguments(sciKitLearnObj)
         sciKitLearnObj.fit(Xtrain, Ytrain)
         predSKL = sciKitLearnObj.predict(Xtest)
-        predSKL = nimble.data('Matrix', predSKL.reshape(-1,1), useLog=False)
+        predSKL = nimble.data(predSKL.reshape(-1,1), useLog=False)
 
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments,
@@ -320,7 +320,7 @@ def testSciKitLearnRegressionLearners():
         arguments = setupSKLArguments(sciKitLearnObj)
         sciKitLearnObj.fit(Xtrain, Ytrain)
         predSKL = sciKitLearnObj.predict(Xtest)
-        predSKL = nimble.data('Matrix', predSKL.reshape(-1,1), useLog=False)
+        predSKL = nimble.data(predSKL.reshape(-1,1), useLog=False)
 
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments,
@@ -346,9 +346,9 @@ def testSciKitLearnMultiTaskRegressionLearners():
     trainY = [[0, 0], [1, 1], [2, 2], [0, 0], [1, 1], [2, 2]]
     testX = [[2., 2.], [0., 0.], [1., 1.]]
 
-    trainXObj = nimble.data('Matrix', trainX, useLog=False)
-    trainYObj = nimble.data('Matrix', trainY, useLog=False)
-    testXObj = nimble.data('Matrix', testX, useLog=False)
+    trainXObj = nimble.data(trainX, useLog=False)
+    trainYObj = nimble.data(trainY, useLog=False)
+    testXObj = nimble.data(testX, useLog=False)
 
     regressors = getLearnersByType('regression')
     multiTaskLearners = [r for r in regressors if 'MultiTask' in r]
@@ -362,7 +362,7 @@ def testSciKitLearnMultiTaskRegressionLearners():
         sciKitLearnObj.fit(trainX, trainY)
         predictionSciKit = sciKitLearnObj.predict(testX)
         # convert to nimble Base object for comparison
-        predictionSciKit = nimble.data('Matrix', predictionSciKit,
+        predictionSciKit = nimble.data(predictionSciKit,
                                        useLog=False)
 
         seed = adjustRandomParamForNimble(arguments)
@@ -400,7 +400,7 @@ def testSciKitLearnClusterLearners():
             predSKL = sciKitLearnObj.predict(Xtest)
         except AttributeError:
             predSKL = sciKitLearnObj.fit_predict(Xtrain, Xtest)
-        predSKL = nimble.data('Matrix', predSKL.reshape(-1,1), useLog=False)
+        predSKL = nimble.data(predSKL.reshape(-1,1), useLog=False)
 
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainX, arguments=arguments,
@@ -437,7 +437,7 @@ def testSciKitLearnOtherPredictLearners():
         arguments = setupSKLArguments(sciKitLearnObj)
         sciKitLearnObj.fit(Xtrain, Ytrain)
         predSKL = sciKitLearnObj.predict(Xtest)
-        predSKL = nimble.data('Matrix', predSKL.reshape(-1,1), useLog=False)
+        predSKL = nimble.data(predSKL.reshape(-1,1), useLog=False)
 
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments,
@@ -465,7 +465,7 @@ def testSciKitLearnTransformationLearners():
         arguments = setupSKLArguments(sciKitLearnObj)
         sciKitLearnObj.fit(Xtrain, Ytrain)
         transSKL = sciKitLearnObj.transform(Xtrain)
-        transSKL = nimble.data('Matrix', transSKL, useLog=False)
+        transSKL = nimble.data(transSKL, useLog=False)
 
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments,
@@ -484,7 +484,7 @@ def testSciKitLearnTransformationLearners():
         arguments = setupSKLArguments(sciKitLearnObj)
 
         transSKL = sciKitLearnObj.fit_transform(Xtrain)
-        transSKL = nimble.data('Matrix', transSKL, useLog=False)
+        transSKL = nimble.data(transSKL, useLog=False)
 
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainX, arguments=arguments,
@@ -509,7 +509,7 @@ def testSciKitLearnTransformationLearners():
                 compareSingleInputOutputs(learner)
             except ValueError:
                 # GaussianRandomProjection, SparseRandomProjection,
-                trainX = nimble.random.data('Matrix', 10, 5000, 0.98)
+                trainX = nimble.random.data(10, 5000, 0.98)
                 Xtrain = trainX._data
                 compareSingleInputOutputs(learner)
 
@@ -518,7 +518,7 @@ def testSciKitLearnTransformationLearners():
 @pytest.mark.slow
 def testSciKitLearnSparsePCATransformation():
     # do not accept sparse matrices
-    trainX = nimble.random.data('Matrix', 100, 10, sparsity=0.9)
+    trainX = nimble.random.data(100, 10, sparsity=0.9)
     Xtrain = trainX._data
 
     learners = ['MiniBatchSparsePCA', 'SparsePCA',]
@@ -532,7 +532,7 @@ def testSciKitLearnSparsePCATransformation():
         arguments = setupSKLArguments(sciKitLearnObj)
         sciKitLearnObj.fit(Xtrain)
         transSKL = sciKitLearnObj.transform(Xtrain)
-        transSKL = nimble.data('Matrix', transSKL, useLog=False)
+        transSKL = nimble.data(transSKL, useLog=False)
 
         arguments['ridge_alpha'] = 0.1
         seed = adjustRandomParamForNimble(arguments)
@@ -568,7 +568,7 @@ def testSciKitLearnOtherFitTransformLearners():
         arguments = setupSKLArguments(sciKitLearnObj)
 
         transSKL = sciKitLearnObj.fit_transform(Xtrain)
-        transSKL = nimble.data('Matrix', transSKL, useLog=False)
+        transSKL = nimble.data(transSKL, useLog=False)
 
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainX, arguments=arguments,
@@ -590,7 +590,7 @@ def testSciKitLearnTextVectorizers():
     'And the third one.',
     'Is this the first document?',
 ]
-    trainX = nimble.data('Matrix', data)
+    trainX = nimble.data(data)
     Xtrain = data
 
 
@@ -603,7 +603,7 @@ def testSciKitLearnTextVectorizers():
         sciKitLearnObj = sklObj()
 
         transSKL = sciKitLearnObj.fit_transform(Xtrain)
-        transSKL = nimble.data('Matrix', transSKL, useLog=False)
+        transSKL = nimble.data(transSKL, useLog=False)
 
         TL = nimble.train(toCall(learner), trainX)
         transNimble = TL.apply(trainX)
@@ -619,10 +619,10 @@ def testSciKitLearnTextVectorizers():
 def testCustomRidgeRegressionCompare():
     """ Sanity check for custom RidgeRegression, compare results to SKL's Ridge """
     data = [[0, 1, 2], [13, 12, 4], [345, 233, 76]]
-    trainObj = nimble.data('Matrix', data, useLog=False)
+    trainObj = nimble.data(data, useLog=False)
 
     data2 = [[122, 34], [76, -3]]
-    testObj = nimble.data('Matrix', data2, useLog=False)
+    testObj = nimble.data(data2, useLog=False)
 
     name = 'nimble.RidgeRegression'
     TL = nimble.train(name, trainX=trainObj, trainY=0, arguments={'lamb': 1})
@@ -638,8 +638,8 @@ def testCustomRidgeRegressionCompare():
 @logCountAssertionFactory(4)
 def testCustomRidgeRegressionCompareRandomized():
     """ Sanity check for custom RidgeRegression, compare results to SKL's Ridge on random data"""
-    trainObj = nimble.random.data("Matrix", 1000, 60, .1, useLog=False)
-    testObj = nimble.random.data("Matrix", 100, 59, .1, useLog=False)
+    trainObj = nimble.random.data(1000, 60, .1, useLog=False)
+    testObj = nimble.random.data(100, 59, .1, useLog=False)
 
     name = 'nimble.RidgeRegression'
     TL = nimble.train(name, trainX=trainObj, trainY=0, arguments={'lamb': 1})
@@ -716,19 +716,21 @@ def testConvertYTrainDType():
     test = [['a', 1, -2, -1, -3, -2],
             ['c', 3, 1, 2, 3, 1]]
     # object will have 'object' dtype because of strings in data
-    trainObj = nimble.data('Matrix', train, useLog=False)
+    trainObj = nimble.data(train, useLog=False)
     trainObj.features.retain([1, 2, 3, 4, 5], useLog=False)
-    testObj = nimble.data('Matrix', test, useLog=False)
+    testObj = nimble.data(test, useLog=False)
     testObj.features.retain([2,3,4,5], useLog=False)
 
     # case1 trainY passed as integer
-    assert trainObj[:,0]._data.dtype == np.object_
-    pred = nimble.trainAndApply('SciKitLearn.LogisticRegression', trainObj, 0, testObj)
+    assert trainObj[:,0].getTypeString() == "DataFrame"
+    pred = nimble.trainAndApply('SciKitLearn.LogisticRegression', trainObj, 0,
+                                testObj)
 
     #case2 trainY passed as nimble object
     trainY = trainObj.features.extract(0, useLog=False)
-    assert trainY._data.dtype == np.object_
-    pred = nimble.trainAndApply('SciKitLearn.LogisticRegression', trainObj, trainY, testObj)
+    assert trainY.getTypeString() == "DataFrame"
+    pred = nimble.trainAndApply('SciKitLearn.LogisticRegression', trainObj,
+                                trainY, testObj)
 
 @sklSkipDec
 @logCountAssertionFactory(3)
@@ -739,7 +741,7 @@ def test_applier_acceptsNewArguments():
             [ 1.,  1.],
             [ 1.,  1.]]
 
-    dataObj = nimble.data('Matrix', data, useLog=False)
+    dataObj = nimble.data(data, useLog=False)
 
     # StandardScaler.transform takes a 'copy' argument. Default is None.
     tl = nimble.train('SciKitLearn.StandardScaler', dataObj)
@@ -758,7 +760,7 @@ def test_applier_exception():
             [ 1.,  1.],
             [ 1.,  1.]]
 
-    dataObj = nimble.data('Matrix', data)
+    dataObj = nimble.data(data)
 
     # StandardScaler.transform does not takes a 'foo' argument
     tl = nimble.train('SciKitLearn.StandardScaler', dataObj)
@@ -779,8 +781,8 @@ def test_getScores_acceptsNewArguments():
     testX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
     # Need to set convertToType b/c conversion will not be done when check_input=False
-    trainObj = nimble.data('Matrix', train, convertToType=np.float32, useLog=False)
-    testObj = nimble.data('Matrix', testX, convertToType=np.float32, useLog=False)
+    trainObj = nimble.data(train, convertToType=np.float32, useLog=False)
+    testObj = nimble.data(testX, convertToType=np.float32, useLog=False)
 
     # DecisionTreeClassifier.predict_proba takes a 'check_input' argument. Default is True.
     tl = nimble.train('SciKitLearn.DecisionTreeClassifier', trainObj, 0)
@@ -798,8 +800,8 @@ def test_getScores_exception():
              [1, 1, 0, 0], [2, 0, 1, 0], [3, 0, 0, 1]]
     testX = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
-    trainObj = nimble.data('Matrix', train, convertToType=np.float32)
-    testObj = nimble.data('Matrix', testX, convertToType=np.float32)
+    trainObj = nimble.data(train, convertToType=np.float32)
+    testObj = nimble.data(testX, convertToType=np.float32)
 
     # DecisionTreeClassifier.predict_proba does not take a 'foo' argument.
     tl = nimble.train('SciKitLearn.DecisionTreeClassifier', trainObj, 0)
@@ -827,7 +829,7 @@ def test_saveLoadTrainedLearner_logCount():
     train = [[1, -1, -3, -3, -1],
               [2, 0.4, -0.8, 0.2, -0.3],
               [3, 2, 1, 2, 4]]
-    trainObj = nimble.data('Matrix', train, useLog=False)
+    trainObj = nimble.data(train, useLog=False)
 
     tl = nimble.train('SciKitLearn.LogisticRegression', trainObj, 0, useLog=False)
     with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:

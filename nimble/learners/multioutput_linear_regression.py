@@ -46,4 +46,4 @@ class MultiOutputLinearRegression(CustomLearner):
         results = numpy2DArray(results)
         results = results.transpose()
 
-        return nimble.data("Matrix", results, useLog=False)
+        return nimble.data(results, useLog=False)

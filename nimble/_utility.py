@@ -17,7 +17,7 @@ import math
 import numpy as np
 
 # only allowed imports from nimble are exceptions and _dependencies
-from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
+from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._dependencies import checkVersion
 
@@ -332,7 +332,7 @@ def validateAllAllowedElements(data):
     if not all(map(isAllowedSingleElement, data)):
         msg = "Number, string, None, nan, and datetime objects are "
         msg += "the only elements allowed in nimble data objects"
-        raise ImproperObjectAction(msg)
+        raise InvalidArgumentValue(msg)
 
 def pandasDataFrameToList(pdDataFrame):
     """

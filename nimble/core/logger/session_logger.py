@@ -309,9 +309,9 @@ class SessionLogger(object):
     ### LOG ENTRIES ###
     ###################
 
-    def logLoad(self, useLog, returnType, numPoints=None, numFeatures=None,
-                name=None, path=None, sparsity=None, seed=None,
-                learnerName=None, learnerArgs=None):
+    def logLoad(self, useLog, returnType, objectType, numPoints=None,
+                numFeatures=None, name=None, path=None, sparsity=None,
+                seed=None, learnerName=None, learnerArgs=None):
         """
         Log information about the loading of data or a trained learner.
 
@@ -336,6 +336,7 @@ class SessionLogger(object):
             logType = "load"
             logInfo = {}
             logInfo["returnType"] = returnType
+            logInfo["objectType"] = objectType
             logInfo["numPoints"] = numPoints
             logInfo["numFeatures"] = numFeatures
             logInfo["name"] = name
@@ -832,13 +833,13 @@ def _buildLoadLogString(timestamp, entry):
     """
     Constructs the string that will be output for load logTypes.
     """
-    dataCol = "{0} Loaded".format(entry["returnType"])
+    dataCol = "{0} Loaded".format(entry["objectType"])
     fullLog = _logHeader(dataCol, timestamp)
-    if entry["returnType"] != "TrainedLearner":
+    if entry["objectType"] != "TrainedLearner":
         line = '{:<14} {}\n'
         fullLog += line.format("# of points", entry["numPoints"])
         fullLog += line.format("# of features", entry["numFeatures"])
-        for title in ['sparsity', 'name', 'path', 'seed']:
+        for title in ['returnType', 'sparsity', 'name', 'path', 'seed']:
             if entry[title] is not None:
                 fullLog += title + ' ' * (15 - len(title))
                 fullLog += textwrap.fill(entry[title], 64,

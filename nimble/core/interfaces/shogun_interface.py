@@ -347,7 +347,7 @@ To install shogun
             retRaw = outputValue
 
         outputType = customDict['match']
-        ret = nimble.data(outputType, retRaw, useLog=False)
+        ret = nimble.data(retRaw, useLog=False)
 
         if outputFormat == 'label' and 'remap' in customDict:
             remap = customDict['remap']

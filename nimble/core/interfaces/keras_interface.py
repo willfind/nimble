@@ -320,7 +320,7 @@ To install keras
         outputType = 'Matrix'
         if outputType == 'match':
             outputType = customDict['match']
-        return nimble.data(outputType, outputValue, useLog=False)
+        return nimble.data(outputValue, returnType=outputType, useLog=False)
 
 
     def _setRandomness(self, arguments, randomSeed):

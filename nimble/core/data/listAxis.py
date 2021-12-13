@@ -104,11 +104,13 @@ class ListAxis(Axis, metaclass=ABCMeta):
 
         axisNames, offAxisNames = self._uniqueNameGetter(uniqueIndices)
         if self._isPoint:
-            return nimble.data('List', uniqueData, pointNames=axisNames,
-                               featureNames=offAxisNames, useLog=False)
+            return nimble.data(uniqueData, pointNames=axisNames,
+                               featureNames=offAxisNames,
+                               returnType='List', useLog=False)
 
-        return nimble.data('List', uniqueData, pointNames=offAxisNames,
-                           featureNames=axisNames, useLog=False)
+        return nimble.data(uniqueData, pointNames=offAxisNames,
+                           featureNames=axisNames,
+                           returnType='List', useLog=False)
 
     def _repeat_implementation(self, totalCopies, copyVectorByVector):
         if self._isPoint:

@@ -1131,39 +1131,16 @@ def isHighDimensionData(rawData, rowsArePoints, skipDataProcessing, copied):
                 if _isScipySparse(rawData):
                     rawData.eliminate_zeros()
 
-        if not skipDataProcessing:
-            toIter = GenericRowIterator(rawData)
-            first = next(toIter)
-            # if an invalid value is found at this stage, need to use TypeError
-            # to raise exception because ImproperObjectAction will continue
-            try:
-                validateAllAllowedElements(first)
-            except ImproperObjectAction as e:
-                raise TypeError(str(e)) from e
-            firstLength = len(first)
-            for i, row in enumerate(toIter):
-                if not len(row) == firstLength:
-                    msg = "All rows in the data do not have the same "
-                    msg += "number of columns. The first row had {0} "
-                    msg += "columns but the row at index {1} had {2} "
-                    msg += "columns"
-                    msg = msg.format(firstLength, i + 1, len(row))
-                    raise InvalidArgumentValue(msg)
-                try:
-                    validateAllAllowedElements(row)
-                except ImproperObjectAction as e:
-                    raise TypeError(str(e)) from e
-
-        return rawData, False, copied
-
     except IndexError: # rawData or rawData[0] is empty
         return rawData, False, copied
     except (ImproperObjectAction, InvalidArgumentType): # high dimension Base
         return rawData, True, copied
     except TypeError as e: # invalid non-subscriptable object
-        msg = "Numbers, strings, None, and nan are the only "
-        msg += "values allowed in nimble data objects"
+        msg = "Number, string, None, nan, and datetime objects are "
+        msg += "the only elements allowed in nimble data objects"
         raise InvalidArgumentValue(msg) from e
+
+    return rawData, False, copied
 
 def highDimensionNames(rawData, pointNames, featureNames):
     """
@@ -1342,8 +1319,68 @@ def convertToTypeDictToList(convertToType, featuresObj, featureNames):
 
     return convertList
 
+def analyzeValues(rawData, returnType, skipDataProcessing):
+    """
+    Validates the data values and determines the returnType.
+
+    Both validation and returnType determination require iteration
+    through the data, but each is only performed if necessary.
+    """
+    invalid = "Number, string, None, nan, and datetime objects are the "
+    invalid += "only elements allowed in nimble data objects"
+    toIter = GenericRowIterator(rawData)
+    try:
+        first = next(toIter)
+    except StopIteration:
+        if returnType is None:
+            returnType = "Matrix"
+        return returnType
+
+    # processing has already occurred for 1D objects only need returnType
+    if isAllowedSingleElement(first):
+        if returnType is None:
+            if len(set(map(type, rawData))) <= 1:
+                returnType = "Matrix"
+            else:
+                returnType = "DataFrame"
+        return returnType
+    if isinstance(first, dict):
+        first = list(first.values())
+    if not all(map(isAllowedSingleElement, first)):
+        raise InvalidArgumentValue(invalid)
+    firstType = None
+    firstLength = None
+    for i, row in enumerate(toIter):
+        if isinstance(row, dict):
+            row = list(row.values())
+        if firstLength is None:
+            firstLength = len(row)
+        elif not skipDataProcessing and not len(row) == firstLength:
+            msg = "All rows in the data do not have the same number of "
+            msg += "columns. The first row had {0} columns but the row at "
+            msg += "index {1} had {2} columns"
+            msg = msg.format(firstLength, i, len(row))
+            raise InvalidArgumentValue(msg)
+        for val in row:
+            if not skipDataProcessing and not isAllowedSingleElement(val):
+                raise InvalidArgumentValue(invalid)
+            if returnType is None:
+                if firstType is None:
+                    firstType = type(val)
+                    if issubclass(firstType, str):
+                        returnType = "DataFrame"
+                        if skipDataProcessing: # only need the returnType
+                            return returnType
+                elif firstType != type(val):
+                    returnType = "DataFrame"
+                    if skipDataProcessing: # only need the returnType
+                        return returnType
+    if returnType is None: # data was homogenous
+        returnType = "Matrix"
+    return returnType
+
 def initDataObject(
-        returnType, rawData, pointNames, featureNames, name=None,
+        rawData, pointNames, featureNames, returnType, name=None,
         convertToType=None, keepPoints='all', keepFeatures='all',
         treatAsMissing=DEFAULT_MISSING, replaceMissingWith=np.nan,
         rowsArePoints=True, copyData=True, skipDataProcessing=False,
@@ -1379,6 +1416,8 @@ def initDataObject(
     ptsExtracted = extracted[0] if extracted[0] else pointNames is True
     ftsExtracted = extracted[1] if extracted[1] else featureNames is True
 
+    # When returnType is None, can set it now if rawData is a Base, numpy,
+    # pandas, or scipy object. For other types, will determine later.
     copied = False
     kwargs = {}
     # point/featureNames, treatAsMissing, etc. may vary so only use the data
@@ -1397,29 +1436,34 @@ def initDataObject(
             returnType = rawData.getTypeString()
         rawData = rawData._data
     # convert these types as indexing may cause dimensionality confusion
-    elif _isNumpyMatrix(rawData):
-        rawData = np.array(rawData)
-        copied = True
-    elif _isScipySparse(rawData) and not scipy.sparse.isspmatrix_coo(rawData):
-        rawData = rawData.tocoo()
-        copied = True
+    elif _isNumpyArray(rawData):
+        if _isNumpyMatrix(rawData):
+            rawData = np.array(rawData)
+            copied = True
+        if returnType is None:
+            returnType = "Matrix"
+    elif _isScipySparse(rawData):
+        if not scipy.sparse.isspmatrix_coo(rawData):
+            rawData = rawData.tocoo()
+            copied = True
+        if returnType is None:
+            returnType = "Sparse"
+    elif _isPandasObject(rawData):
+        if returnType is None:
+            if _isPandasSparse(rawData):
+                returnType = "Sparse"
+            elif _isPandasDense(rawData):
+                returnType = "DataFrame"
+    elif returnType is None and not pd.nimbleAccessible():
+        returnType = "Matrix" # can't use DataFrame so default to Matrix
     # anything we do not recognize turn into a list, this allows for source to
     # be range, generator, map, iter, etc., and other list-like data structures
-    elif not (isinstance(rawData, (list, dict)) or
-              _isNumpyArray(rawData) or _isPandasObject(rawData) or
-              _isScipySparse(rawData)):
+    elif not isinstance(rawData, (list, dict)):
         rawData = list(rawData)
         copied = True
 
     rawData, highDim, copied = isHighDimensionData(rawData, rowsArePoints,
                                                    skipDataProcessing, copied)
-
-    if returnType is None:
-        # scipy sparse matrix or a pandas sparse object
-        if _isScipySparse(rawData) or _isPandasSparse(rawData):
-            returnType = 'Sparse'
-        else:
-            returnType = 'Matrix'
 
     if copyData is None:
         # signals data was constructed internally and can be modified so it
@@ -1443,6 +1487,8 @@ def initDataObject(
         rawData, tensorShape = flattenHighDimensionFeatures(rawData)
         kwargs['shape'] = tensorShape
         copied = True
+        if returnType is None:
+            returnType = "Matrix"
     # If skipping data processing, no modification needs to be made
     # to the data, so we can skip name extraction and missing replacement.
     if skipDataProcessing:
@@ -1466,6 +1512,8 @@ def initDataObject(
         if treatAsMissing is not None:
             rawData, copied = _replaceMissingData(rawData, treatAsMissing,
                                                   replaceMissingWith, copied)
+    if not skipDataProcessing or returnType is None:
+        returnType = analyzeValues(rawData, returnType, skipDataProcessing)
     # convert data to a type compatible with the returnType init method
     rawData = convertData(returnType, rawData, pointNames, featureNames,
                           copied)
@@ -2000,7 +2048,7 @@ def _decompressGZip(ioStream):
         return BytesIO(unzipped.read())
 
 def createDataFromFile(
-        returnType, source, pointNames, featureNames, name, convertToType,
+        source, pointNames, featureNames, returnType, name, convertToType,
         keepPoints, keepFeatures, treatAsMissing, replaceMissingWith,
         rowsArePoints, ignoreNonNumericalFeatures, inputSeparator):
     """
@@ -2067,7 +2115,7 @@ def createDataFromFile(
     try:
         ret = pickle.loads(content)
         return initDataObject(
-            returnType, ret, pointNames, featureNames, name, convertToType,
+            ret, pointNames, featureNames, returnType, name, convertToType,
             keepPoints, keepFeatures, treatAsMissing=treatAsMissing,
             replaceMissingWith=replaceMissingWith, rowsArePoints=rowsArePoints,
             copyData=None)
@@ -2143,7 +2191,7 @@ def createDataFromFile(
             retFNames = featureNames
 
     return initDataObject(
-        returnType, retData, retPNames, retFNames, name, convertToType,
+        retData, retPNames, retFNames, returnType, name, convertToType,
         keepPoints, keepFeatures, treatAsMissing=treatAsMissing,
         replaceMissingWith=replaceMissingWith, rowsArePoints=rowsArePoints,
         copyData=None, paths=pathsToPass, extracted=extracted)
@@ -2184,12 +2232,12 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
             rawSparse = scipy.sparse.coo_matrix((numPoints, numFeatures))
         else:
             raise ValueError('numpyMaker must be np.ones or np.zeros')
-        return nimble.data(returnType, rawSparse, pointNames=pointNames,
+        return nimble.data(rawSparse, pointNames=pointNames,
                            featureNames=featureNames, name=name, useLog=False)
 
     raw = numpyMaker((numPoints, numFeatures))
-    return nimble.data(returnType, raw, pointNames=pointNames,
-                       featureNames=featureNames, name=name, useLog=False)
+    return nimble.data(raw, pointNames=pointNames, featureNames=featureNames,
+                       returnType=returnType, name=name, useLog=False)
 
 
 def _intFloatOrString(inString):
@@ -2251,7 +2299,7 @@ def _csvColTypeTracking(row, convertCols, nonNumericFeatures):
             del convertCols[key]
             nonNumericFeatures.append(key)
 
-def _colTypeConversion(row, convertCols):
+def _colTypeConversion(row, convertCols, containsMissing):
     """
     Converts values in each row that are in numeric/boolean columns.
 
@@ -2261,7 +2309,8 @@ def _colTypeConversion(row, convertCols):
     for idx, cType in convertCols.items():
         val = row[idx]
         if val == '':
-            row[idx] = None
+            row[idx] = np.nan
+            containsMissing.add(idx)
         elif cType is bool and val == 'False':
             # bool('False') would return True since val is still a string
             row[idx] = False
@@ -2859,9 +2908,47 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
         msg += "found in the data"
         raise InvalidArgumentValue(msg)
 
-    if convertCols:
+    # remove last feature of all missing values if no feature name is provided
+    if (lastFtRemovable and
+            (not retFNames or len(retFNames) == firstRowLength - 1
+             or (featureNames is True and retFNames[-1] is None))):
         for row in retData:
-            _colTypeConversion(row, convertCols)
+            row.pop()
+        if featureNames is True:
+            retFNames.pop()
+        nonNumericFeatures.pop()
+        firstRowLength -= 1
+
+    if convertCols:
+        containsMissing = set()
+        # convertCols only contains columns that need numeric conversion, so
+        # heterogenous data is indicated by using columns that do not require
+        # conversion or convertCols containing more than one numeric type.
+        if limitFeatures:
+            expectedLength = len(keepFeatures)
+        else:
+            expectedLength = firstRowLength
+        if ignoreNonNumericalFeatures:
+            expectedLength -= len(nonNumericFeatures)
+
+        for row in retData:
+            _colTypeConversion(row, convertCols, containsMissing)
+        # upcast features with missing data to float
+        for idx in containsMissing:
+            convertCols[idx] = float
+
+        if (pd.nimbleAccessible()
+                and (len(set(convertCols.values())) > 1
+                     or len(convertCols) < expectedLength)):
+            constructor = pd.DataFrame
+        else:
+            constructor = numpy2DArray
+    # no conversion means all strings so use a dataframe if possible
+    else:
+        if pd.nimbleAccessible():
+            constructor = pd.DataFrame
+        else:
+            constructor = numpy2DArray
 
     if ignoreNonNumericalFeatures:
         if retFNames:
@@ -2872,15 +2959,6 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
             removeNonNumeric.append([row[i] for i in range(len(row))
                                      if i not in nonNumericFeatures])
         retData = removeNonNumeric
-
-    # remove last feature of all missing values if no feature name is provided
-    if (lastFtRemovable and
-            (not retFNames or len(retFNames) == firstRowLength - 1
-             or (featureNames is True and retFNames[-1] is None))):
-        for row in retData:
-            row.pop()
-        if featureNames is True:
-            retFNames.pop()
 
     if pointNames is True:
         retPNames = extractedPointNames
@@ -2897,7 +2975,7 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
     else:
         retPNames = pointNames
 
-    return retData, retPNames, retFNames
+    return constructor(retData), retPNames, retFNames
 
 def fileFetcher(source, overwrite, allowMultiple=True):
     """

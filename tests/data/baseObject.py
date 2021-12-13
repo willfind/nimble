@@ -18,8 +18,8 @@ def objConstructorMaker(returnType):
         # Case: source is a path to a file
         if isinstance(source, str):
             return nimble.data(
-                returnType, source=source, pointNames=pointNames,
-                featureNames=featureNames, name=name,
+                source=source, pointNames=pointNames,
+                featureNames=featureNames, returnType=returnType, name=name,
                 convertToType=convertToType, treatAsMissing=treatAsMissing,
                 replaceMissingWith=replaceMissingWith,
                 rowsArePoints=rowsArePoints, useLog=False)
@@ -27,11 +27,10 @@ def objConstructorMaker(returnType):
         # instead of nimble.data because we sometimes need to specify a
         # particular path attribute.
         return nimble.core._createHelpers.initDataObject(
-            returnType, source, pointNames=pointNames,
-            featureNames=featureNames, name=name,
+            source, pointNames=pointNames, featureNames=featureNames,
+            returnType=returnType, name=name, paths=paths,
             convertToType=convertToType, treatAsMissing=treatAsMissing,
-            replaceMissingWith=replaceMissingWith, rowsArePoints=rowsArePoints,
-            paths=paths)
+            replaceMissingWith=replaceMissingWith, rowsArePoints=rowsArePoints)
 
     return constructor
 
@@ -61,14 +60,14 @@ def viewConstructorMaker(concreteType):
             firstPRaw = np.zeros([1] + orig._dims[1:], dtype=int).tolist()
             fNamesParam = orig.features._getNamesNoGeneration()
             firstPoint = nimble.core._createHelpers.initDataObject(
-                concreteType, rawData=firstPRaw, pointNames=['firstPNonView'],
-                featureNames=fNamesParam, name=name,
+                rawData=firstPRaw, pointNames=['firstPNonView'],
+                featureNames=fNamesParam, returnType=concreteType, name=name,
                 convertToType=convertToType, paths=origPaths)
 
             lastPRaw = (np.ones([1] + orig._dims[1:], dtype=int) * 3).tolist()
             lastPoint = nimble.core._createHelpers.initDataObject(
-                concreteType, rawData=lastPRaw, pointNames=['lastPNonView'],
-                featureNames=fNamesParam, name=name,
+                rawData=lastPRaw, pointNames=['lastPNonView'],
+                featureNames=fNamesParam, returnType=concreteType, name=name,
                 convertToType=convertToType, paths=origPaths)
 
             firstPoint.points.append(orig, useLog=False)
@@ -88,9 +87,9 @@ def viewConstructorMaker(concreteType):
             lastFRaw = [[1] * len(full.points)]
             fNames = full.points._getNamesNoGeneration()
             lastFeature = nimble.core._createHelpers.initDataObject(
-                concreteType, rawData=lastFRaw, featureNames=fNames,
-                pointNames=['lastFNonView'], name=name,
-                convertToType=convertToType, paths=origPaths)
+                rawData=lastFRaw, featureNames=fNames,
+                pointNames=['lastFNonView'], returnType=concreteType,
+                name=name, convertToType=convertToType, paths=origPaths)
 
             lastFeature.transpose(useLog=False)
 

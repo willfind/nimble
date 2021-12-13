@@ -65,8 +65,8 @@ def testKerasAPI(optimizer):
     """
     Test Keras can handle a variety of arguments passed to all major learning functions
     """
-    x_train = nimble.data('Matrix', np.random.random((1000, 20)), useLog=False)
-    y_train = nimble.data('Matrix', np.random.randint(2, size=(1000, 1)),
+    x_train = nimble.data(np.random.random((1000, 20)), useLog=False)
+    y_train = nimble.data(np.random.randint(2, size=(1000, 1)),
                           convertToType=float, useLog=False)
 
     layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
@@ -118,8 +118,8 @@ def testKerasIncremental(optimizer):
     """
     Test Keras can handle and incrementalTrain call
     """
-    x_train = nimble.data('Matrix', np.random.random((1000, 20)), useLog=False)
-    y_train = nimble.data('Matrix', np.random.randint(2, size=(1000, 1)),
+    x_train = nimble.data(np.random.random((1000, 20)), useLog=False)
+    y_train = nimble.data(np.random.randint(2, size=(1000, 1)),
                           convertToType=float, useLog=False)
 
     layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
@@ -147,8 +147,8 @@ def testKeras_Sparse_FitGenerator(optimizer):
     x_data = np.random.random((20, 7))
     y_data = np.random.randint(2, size=(20, 1))
 
-    x_train = nimble.data('Sparse', x_data, useLog=False)
-    y_train = nimble.data('Matrix', y_data, useLog=False, convertToType=float)
+    x_train = nimble.data(x_data, returnType="Sparse", useLog=False)
+    y_train = nimble.data(y_data, useLog=False, convertToType=float)
 
     layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=7)
     layer1 = nimble.Init('Dropout', rate=0.5)
@@ -167,8 +167,8 @@ def testKeras_Sparse_FitGenerator(optimizer):
 @chooseOptimizer
 def testKeras_TrainedLearnerApplyArguments(optimizer):
     """ Test a keras function that accept arguments for predict"""
-    x_train = nimble.data('Matrix', np.random.random((1000, 20)), useLog=False)
-    y_train = nimble.data('Matrix', np.random.randint(2, size=(1000, 1)),
+    x_train = nimble.data(np.random.random((1000, 20)), useLog=False)
+    y_train = nimble.data(np.random.randint(2, size=(1000, 1)),
                           convertToType=float, useLog=False)
 
     layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
@@ -191,8 +191,8 @@ def testKeras_TrainedLearnerApplyArguments(optimizer):
 @chooseOptimizer
 def testKeras_TrainedLearnerApplyArguments_exception(optimizer):
     """ Test an keras function with invalid arguments for predict"""
-    x_train = nimble.data('Matrix', np.random.random((1000, 20)), useLog=False)
-    y_train = nimble.data('Matrix', np.random.randint(2, size=(1000, 1)),
+    x_train = nimble.data(np.random.random((1000, 20)), useLog=False)
+    y_train = nimble.data(np.random.randint(2, size=(1000, 1)),
                           convertToType=float, useLog=False)
 
     layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
@@ -219,8 +219,8 @@ def testKeras_fitGeneratorOnlyParametersDisallowedForDense(optimizer):
     x_data = np.random.random((20, 7))
     y_data = np.random.randint(2, size=(20, 1))
 
-    x_train = nimble.data('Matrix', x_data, useLog=False)
-    y_train = nimble.data('Matrix', y_data, useLog=False, convertToType=float)
+    x_train = nimble.data(x_data, useLog=False)
+    y_train = nimble.data(y_data, useLog=False, convertToType=float)
 
     layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=7)
     layer1 = nimble.Init('Dropout', rate=0.5)
@@ -240,8 +240,8 @@ def testKeras_fitOnlyParametersDisallowedForSparse(optimizer):
     x_data = np.random.random((20, 7))
     y_data = np.random.randint(2, size=(20, 1))
 
-    x_train = nimble.data('Sparse', x_data, useLog=False)
-    y_train = nimble.data('Matrix', y_data, useLog=False, convertToType=float)
+    x_train = nimble.data(x_data, returnType='Sparse', useLog=False)
+    y_train = nimble.data(y_data, useLog=False, convertToType=float)
 
     layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=7)
     layer1 = nimble.Init('Dropout', rate=0.5)
@@ -280,8 +280,8 @@ def testKerasReproducibility(optimizer):
         nimble.random.setSeed(1234, useLog=False)
         x_data = nimble.random.numpyRandom.random((1000, 20))
         y_data = nimble.random.numpyRandom.randint(2, size=(1000, 1))
-        x_train = nimble.data('Matrix', x_data, useLog=False)
-        y_train = nimble.data('Matrix', y_data, convertToType=float, useLog=False)
+        x_train = nimble.data(x_data, useLog=False)
+        y_train = nimble.data(y_data, convertToType=float, useLog=False)
 
         layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
         layer1 = nimble.Init('Dropout', rate=0.5)
@@ -298,8 +298,8 @@ def testKerasReproducibility(optimizer):
         nimble.random.setSeed(1234, useLog=False)
         x_data = nimble.random.numpyRandom.random((1000, 20))
         y_data = nimble.random.numpyRandom.randint(2, size=(1000, 1))
-        x_train = nimble.data('Matrix', x_data, useLog=False)
-        y_train = nimble.data('Matrix', y_data, convertToType=float, useLog=False)
+        x_train = nimble.data(x_data, useLog=False)
+        y_train = nimble.data(y_data, convertToType=float, useLog=False)
 
         layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
         layer1 = nimble.Init('Dropout', rate=0.5)

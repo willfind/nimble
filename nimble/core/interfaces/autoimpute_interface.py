@@ -160,7 +160,7 @@ To install autoimpute
         outputType = 'Matrix'
         if outputType == 'match':
             outputType = customDict['match']
-        return nimble.data(outputType, outputValue, useLog=False)
+        return nimble.data(outputValue, returnType=outputType, useLog=False)
 
     def _initLearner(self, learnerName, trainX, trainY, arguments, randomSeed):
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]

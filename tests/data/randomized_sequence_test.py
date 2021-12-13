@@ -69,7 +69,7 @@ def TODO_RandomSequenceOfMethods():
     # dense int trial
     sparcity = 0.05
     objectList = []
-    first = nimble.random.data('List', points, features, sparcity, elementType='int')
+    first = nimble.random.data(points, features, sparcity, elementType='int')
     objectList.append(first)
     objectList.append(first.copy(to='Matrix'))
     objectList.append(first.copy(to='Sparse'))
@@ -78,7 +78,7 @@ def TODO_RandomSequenceOfMethods():
     ## dense float trial
     sparcity = 0.05
     objectList = []
-    first = nimble.random.data('List', points, features, sparcity, elementType='float')
+    first = nimble.random.data(points, features, sparcity, elementType='float')
     objectList.append(first)
     objectList.append(first.copy(to='Matrix'))
     objectList.append(first.copy(to='Sparse'))
@@ -87,7 +87,7 @@ def TODO_RandomSequenceOfMethods():
     # sparse int trial
     sparcity = 0.9
     objectList = []
-    first = nimble.random.data('List', points, features, sparcity, elementType='int')
+    first = nimble.random.data(points, features, sparcity, elementType='int')
     objectList.append(first)
     objectList.append(first.copy(to='Matrix'))
     objectList.append(first.copy(to='Sparse'))
@@ -96,7 +96,7 @@ def TODO_RandomSequenceOfMethods():
     # sparse float trial
     sparcity = 0.9
     objectList = []
-    first = nimble.random.data('List', points, features, sparcity, elementType='float')
+    first = nimble.random.data(points, features, sparcity, elementType='float')
     objectList.append(first)
     objectList.append(first.copy(to='Matrix'))
     objectList.append(first.copy(to='Sparse'))
@@ -245,12 +245,12 @@ def genObj(dataObj, seed, matchType=True, matchPoints=False, matchFeatures=False
 
     if points == 0 or features == 0:
         rawData = np.empty((points, features))
-        ret = nimble.data('Matrix', rawData)
+        ret = nimble.data(rawData)
         ret = ret.copy(to=dataType)
     else:
         with nimble.random.alternateControl():
             nimble.random.setSeed(random.randint(0, 2**32 - 1))
-            ret = nimble.random.data("Matrix", points, features, .5, elementType='int')
+            ret = nimble.random.data(points, features, .5, elementType='int')
             ret = ret.copy(to=dataType)
 
     return ret
@@ -640,7 +640,7 @@ def makeParams(funcName, dataObj, seed):
 
 def TODO_GeneratorListSandC():
     data = [[1, 2, 3], [4, 5, 6]]
-    dobj = nimble.data('List', data)
+    dobj = nimble.data(data)
 
     allMethods = dir(Base)
     testable = []
@@ -663,7 +663,7 @@ def TODO_GeneratorListSandC():
 
 def TODO_MakeParamsExclusivity():
     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    dobj = nimble.data('List', data)
+    dobj = nimble.data(data)
 
     for funcName in mutuallyExclusiveParams.keys():
         # random trials

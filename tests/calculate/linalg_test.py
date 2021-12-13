@@ -27,7 +27,7 @@ def testInverseSquareObject():
     fnames = ['f1', 'f2', 'f3']
 
     for constructor in getDataConstructors():
-        identityObj = constructor(nimble.identity('Matrix', 3))
+        identityObj = constructor(nimble.identity(3))
         origObj = constructor(data, pointNames=pnames, featureNames=fnames)
         obj = constructor(data, pointNames=pnames, featureNames=fnames)
         objNoNames = constructor(data)
@@ -120,8 +120,8 @@ def testPseudoInverseObject():
 
     def _pseudoInverseTestImplementation(obj, method):
         origObj = obj.copy()
-        identity = nimble.identity(obj.getTypeString(),
-                                   min(len(obj.points), len(obj.features)))
+        identity = nimble.identity(min(len(obj.points), len(obj.features)),
+                                   returnType=obj.getTypeString())
         objPinv = pseudoInverse(obj, method=method)
 
         if len(obj.points) <= len(obj.features):

@@ -193,7 +193,7 @@ class Base(ABC):
         Examples
         --------
         >>> lst = [[1, 2, 3, 4], [5, 6, 7, 8], [0, 0, 0, 0]]
-        >>> X = nimble.data('Matrix', lst)
+        >>> X = nimble.data(lst)
         >>> len(X.points)
         3
         >>> X.points.permute([2, 1, 0])
@@ -235,7 +235,7 @@ class Base(ABC):
         Examples
         --------
         >>> lst = [[1, 2, 3, 4], [5, 6, 7, 8], [0, 0, 0, 0]]
-        >>> X = nimble.data('Matrix', lst)
+        >>> X = nimble.data(lst)
         >>> len(X.features)
         4
         >>> X.features.permute([3, 2, 1, 0])
@@ -388,7 +388,7 @@ class Base(ABC):
         --------
         >>> from nimble.match import nonZero, positive
         >>> lst = [[0, 1, 2], [-2, -1, 0]]
-        >>> X = nimble.data('Matrix', lst)
+        >>> X = nimble.data(lst)
         >>> list(X.iterateElements(order='point'))
         [0, 1, 2, -2, -1, 0]
         >>> list(X.iterateElements(order='feature'))
@@ -444,12 +444,12 @@ class Base(ABC):
         Examples
         --------
         >>> lst = [['a'], ['b'], ['c']]
-        >>> X = nimble.data('Matrix', lst, featureNames=['replace'])
+        >>> X = nimble.data(lst, featureNames=['replace'])
         >>> replaced = X.replaceFeatureWithBinaryFeatures('replace')
         >>> replaced
         ['replace=a', 'replace=b', 'replace=c']
         >>> X
-        <Matrix 3pt x 3ft
+        <DataFrame 3pt x 3ft
              'replace=a' 'replace=b' 'replace=c'
            ┌────────────────────────────────────
          0 │    1.000       0.000       0.000
@@ -527,12 +527,12 @@ class Base(ABC):
         --------
         >>> lst = [[1, 'a', 1], [2, 'b', 2], [3, 'c', 3]]
         >>> featureNames = ['keep1', 'transform', 'keep2']
-        >>> X = nimble.data('Matrix', lst, featureNames=featureNames)
+        >>> X = nimble.data(lst, featureNames=featureNames)
         >>> mapping = X.transformFeatureToIntegers('transform')
         >>> mapping
         {0: 'a', 1: 'b', 2: 'c'}
         >>> X
-        <Matrix 3pt x 3ft
+        <DataFrame 3pt x 3ft
              'keep1' 'transform' 'keep2'
            ┌────────────────────────────
          0 │    1         0         1
@@ -628,7 +628,7 @@ class Base(ABC):
         --------
         Simple transformation to all elements.
 
-        >>> X = nimble.ones('Matrix', 3, 3)
+        >>> X = nimble.ones(3, 3)
         >>> X.transformElements(lambda elem: elem + 1)
         >>> X
         <Matrix 3pt x 3ft
@@ -641,7 +641,7 @@ class Base(ABC):
 
         Transform while preserving zero values.
 
-        >>> X = nimble.identity('Sparse', 3)
+        >>> X = nimble.identity(3, returnType="Sparse")
         >>> X.transformElements(lambda elem: elem + 10,
         ...                     preserveZeros=True)
         >>> X
@@ -655,7 +655,7 @@ class Base(ABC):
 
         Transforming a subset of points and features.
 
-        >>> X = nimble.ones('List', 4, 4)
+        >>> X = nimble.ones(4, 4, returnType="List")
         >>> X.transformElements(lambda elem: elem + 1, points=[0, 1],
         ...                     features=[0, 2])
         >>> X
@@ -682,7 +682,7 @@ class Base(ABC):
         >>> lst = [[1, 2, 3],
         ...        [4, 5, 6],
         ...        [7, 8, 9]]
-        >>> dontSkip = nimble.data('Matrix', lst)
+        >>> dontSkip = nimble.data(lst)
         >>> dontSkip.transformElements(addTenToEvens)
         >>> dontSkip
         <Matrix 3pt x 3ft
@@ -692,7 +692,7 @@ class Base(ABC):
          1 │ 14.000        16.000
          2 │        18.000
         >
-        >>> skip = nimble.data('Matrix', lst)
+        >>> skip = nimble.data(lst)
         >>> skip.transformElements(addTenToEvens,
         ...                        skipNoneReturnValues=True)
         >>> skip
@@ -778,7 +778,7 @@ class Base(ABC):
         --------
         Simple calculation on all elements.
 
-        >>> X = nimble.ones('Matrix', 3, 3)
+        >>> X = nimble.ones(3, 3)
         >>> twos = X.calculateOnElements(lambda elem: elem + 1)
         >>> twos
         <Matrix 3pt x 3ft
@@ -791,7 +791,7 @@ class Base(ABC):
 
         Calculate while preserving zero values.
 
-        >>> X = nimble.identity('Sparse', 3)
+        >>> X = nimble.identity(3, returnType="Sparse")
         >>> addTen = X.calculateOnElements(lambda x: x + 10,
         ...                                preserveZeros=True)
         >>> addTen
@@ -805,7 +805,7 @@ class Base(ABC):
 
         Calculate on a subset of points and features.
 
-        >>> X = nimble.ones('List', 4, 4)
+        >>> X = nimble.ones(4, 4, returnType="List")
         >>> calc = X.calculateOnElements(lambda elem: elem + 1,
         ...                              points=[0, 1],
         ...                              features=[0, 2])
@@ -831,7 +831,7 @@ class Base(ABC):
         >>> lst = [[1, 2, 3],
         ...        [4, 5, 6],
         ...        [7, 8, 9]]
-        >>> X = nimble.data('Matrix', lst)
+        >>> X = nimble.data(lst)
         >>> dontSkip = X.calculateOnElements(addTenToEvens)
         >>> dontSkip
         <Matrix 3pt x 3ft
@@ -918,7 +918,7 @@ class Base(ABC):
         --------
         >>> from nimble import match
         >>> lst = [[1, -1, 1], [-3, 3, -3]]
-        >>> X = nimble.data('Matrix', lst)
+        >>> X = nimble.data(lst)
         >>> isNegativeOne = X.matchingElements(-1)
         >>> isNegativeOne
         <Matrix 2pt x 3ft
@@ -930,10 +930,10 @@ class Base(ABC):
 
         >>> from nimble import match
         >>> lst = [[1, -1, None], [None, 3, -3]]
-        >>> X = nimble.data('Matrix', lst)
+        >>> X = nimble.data(lst)
         >>> isMissing = X.matchingElements(match.missing)
         >>> isMissing
-        <Matrix 2pt x 3ft
+        <DataFrame 2pt x 3ft
                0     1     2
            ┌──────────────────
          0 │ False False  True
@@ -942,7 +942,7 @@ class Base(ABC):
 
         >>> from nimble import match
         >>> lst = [[1, -1, 1], [-3, 3, -3]]
-        >>> X = nimble.data('Matrix', lst)
+        >>> X = nimble.data(lst)
         >>> isPositive = X.matchingElements(">0")
         >>> isPositive
         <Matrix 2pt x 3ft
@@ -1028,7 +1028,8 @@ class Base(ABC):
                     fIdx += 1
                 pIdx += 1
 
-        ret = nimble.data(optType, values, treatAsMissing=[None], useLog=False)
+        ret = nimble.data(values, returnType=optType, treatAsMissing=[None],
+                          useLog=False)
 
         ret._absPath = self.absolutePath
         ret._relPath = self.relativePath
@@ -1085,7 +1086,7 @@ class Base(ABC):
 
         >>> def greaterThanZero(elem):
         ...     return elem > 0
-        >>> X = nimble.identity('Matrix', 5)
+        >>> X = nimble.identity(5)
         >>> numGreaterThanZero = X.countElements(greaterThanZero)
         >>> numGreaterThanZero
         5
@@ -1140,14 +1141,14 @@ class Base(ABC):
         --------
         Count for all elements.
 
-        >>> X = nimble.identity('Matrix', 5)
+        >>> X = nimble.identity(5)
         >>> unique = X.countUniqueElements()
         >>> unique
         {0.0: 20, 1.0: 5}
 
         Count for a subset of elements.
 
-        >>> X = nimble.identity('Matrix', 5)
+        >>> X = nimble.identity(5)
         >>> unique = X.countUniqueElements(points=0,
         ...                                   features=[0, 1, 2])
         >>> unique
@@ -1205,7 +1206,7 @@ class Base(ABC):
         ...        ['SEC', 'Florida', 10, 3],
         ...        ['SEC', 'Georgia', 11, 3]]
         >>> ftNames = ['conference', 'team', 'wins', 'losses']
-        >>> top10 = nimble.data('DataFrame', lst, featureNames=ftNames)
+        >>> top10 = nimble.data(lst, featureNames=ftNames)
         >>> groupByLosses = top10.groupByFeature('losses')
         >>> list(groupByLosses.keys())
         [0, 1, 2, 3]
@@ -1396,7 +1397,7 @@ class Base(ABC):
         ...        [0, 1, 0],
         ...        [0, 0, 1]]
         >>> ptNames = ['a', 'b', 'c', 'd', 'e', 'f']
-        >>> X = nimble.data('Matrix', lst, pointNames=ptNames)
+        >>> X = nimble.data(lst, pointNames=ptNames)
         >>> trainData, testData = X.trainAndTestSets(.34)
         >>> trainData
         <Matrix "train" 4pt x 3ft
@@ -1425,7 +1426,7 @@ class Base(ABC):
         ...        [0, 1, 0, 2],
         ...        [0, 0, 1, 3]]
         >>> ptNames = ['a', 'b', 'c', 'd', 'e', 'f']
-        >>> X = nimble.data('Matrix', lst, pointNames=ptNames)
+        >>> X = nimble.data(lst, pointNames=ptNames)
         >>> fourTuple = X.trainAndTestSets(.34, labels=3)
         >>> trainX, trainY = fourTuple[0], fourTuple[1]
         >>> testX, testY = fourTuple[2], fourTuple[3]
@@ -1588,8 +1589,8 @@ class Base(ABC):
                            / len(self.features))
                 results.append(calc)
 
-        report = nimble.data('List', results, featureNames=fnames,
-                             useLog=False)
+        report = nimble.data(results, featureNames=fnames,
+                             returnType=self.getTypeString(), useLog=False)
 
         handleLogging(useLog, 'data', "summary", str(report))
 
@@ -1820,7 +1821,7 @@ class Base(ABC):
         >>> pointNames = ['michael', 'jim', 'pam', 'dwight', 'angela']
         >>> featureNames = ['id', 'age', 'department', 'salary',
         ...                 'gender']
-        >>> office = nimble.data('Matrix', lst, pointNames=pointNames,
+        >>> office = nimble.data(lst, pointNames=pointNames,
         ...                      featureNames=featureNames)
 
         Get a single value.
@@ -1835,13 +1836,13 @@ class Base(ABC):
         Get based on points only.
 
         >>> office['pam', :]
-        <Matrix 1pt x 5ft
+        <DataFrame 1pt x 5ft
                  'id' 'age'  'department'  'salary' 'gender'
                ┌────────────────────────────────────────────
          'pam' │ 4331   26  administration  28000      f
         >
         >>> office[[3, 1], :]
-        <Matrix 2pt x 5ft
+        <DataFrame 2pt x 5ft
                     'id' 'age' 'department' 'salary' 'gender'
                   ┌──────────────────────────────────────────
          'dwight' │ 4211   45     sales      33000      m
@@ -1851,7 +1852,7 @@ class Base(ABC):
         *Note: retains list order; index 3 placed before index 1*
 
         >>> office[1:4, :]
-        <Matrix 4pt x 5ft
+        <DataFrame 4pt x 5ft
                     'id' 'age'  'department'  'salary' 'gender'
                   ┌────────────────────────────────────────────
             'jim' │ 4434   26      sales       26000      m
@@ -1865,7 +1866,7 @@ class Base(ABC):
         Get based on features only.
 
         >>> office[:, 2]
-        <Matrix 5pt x 1ft
+        <DataFrame 5pt x 1ft
                       'department'
                    ┌───────────────
          'michael' │   management
@@ -1875,7 +1876,7 @@ class Base(ABC):
           'angela' │   accounting
         >
         >>> office[:, ['gender', 'age']]
-        <Matrix 5pt x 2ft
+        <DataFrame 5pt x 2ft
                      'gender' 'age'
                    ┌───────────────
          'michael' │    m       41
@@ -1888,7 +1889,7 @@ class Base(ABC):
         *Note: retains list order; 'gender' placed before 'age'*
 
         >>> office[:, 'department':'salary']
-        <Matrix 5pt x 2ft
+        <DataFrame 5pt x 2ft
                       'department'  'salary'
                    ┌────────────────────────
          'michael' │   management    50000
@@ -1904,7 +1905,7 @@ class Base(ABC):
         Get based on points and features.
 
         >>> office[['pam', 'angela'], [3,2]]
-        <Matrix 2pt x 2ft
+        <DataFrame 2pt x 2ft
                     'salary'  'department'
                   ┌────────────────────────
             'pam' │  28000   administration
@@ -1915,7 +1916,7 @@ class Base(ABC):
         ('salary') precedes index 2 ('department')*
 
         >>> office[:2, 'age']
-        <Matrix 3pt x 1ft
+        <DataFrame 3pt x 1ft
                      'age'
                    ┌──────
          'michael' │   41
@@ -3146,9 +3147,9 @@ class Base(ABC):
         Examples
         --------
         >>> lst = [[1, 2, 3], [4, 5, 6]]
-        >>> X = nimble.data('List', lst)
+        >>> X = nimble.data(lst)
         >>> X
-        <List 2pt x 3ft
+        <Matrix 2pt x 3ft
              0 1 2
            ┌──────
          0 │ 1 2 3
@@ -3156,7 +3157,7 @@ class Base(ABC):
         >
         >>> X.transpose()
         >>> X
-        <List 3pt x 2ft
+        <Matrix 3pt x 2ft
              0 1
            ┌────
          0 │ 1 4
@@ -3196,16 +3197,16 @@ class Base(ABC):
         Examples
         --------
         >>> lst = [[1, 2, 3], [4, 5, 6]]
-        >>> X = nimble.data('List', lst)
+        >>> X = nimble.data(lst)
         >>> X
-        <List 2pt x 3ft
+        <Matrix 2pt x 3ft
              0 1 2
            ┌──────
          0 │ 1 2 3
          1 │ 4 5 6
         >
         >>> X.T
-        <List 3pt x 2ft
+        <Matrix 3pt x 2ft
              0 1
            ┌────
          0 │ 1 4
@@ -3263,10 +3264,10 @@ class Base(ABC):
 
         >>> lst = [[1, 3, 5], [2, 4, 6]]
         >>> ptNames = ['odd', 'even']
-        >>> X = nimble.data('List', lst, pointNames=ptNames,
+        >>> X = nimble.data(lst, pointNames=ptNames,
         ...                 name="odd&even")
         >>> X
-        <List "odd&even" 2pt x 3ft
+        <Matrix "odd&even" 2pt x 3ft
                   0 1 2
                 ┌──────
           'odd' │ 1 3 5
@@ -3274,7 +3275,7 @@ class Base(ABC):
         >
         >>> XCopy = X.copy()
         >>> XCopy
-        <List "odd&even" 2pt x 3ft
+        <Matrix "odd&even" 2pt x 3ft
                   0 1 2
                 ┌──────
           'odd' │ 1 3 5
@@ -3285,7 +3286,7 @@ class Base(ABC):
 
         >>> ptNames = ['0', '1']
         >>> ftNames = ['a', 'b']
-        >>> X = nimble.identity('Matrix', 2, pointNames=ptNames,
+        >>> X = nimble.identity(2, pointNames=ptNames,
         ...                     featureNames=ftNames)
         >>> asDataFrame = X.copy(to='DataFrame')
         >>> asDataFrame
@@ -3466,8 +3467,8 @@ class Base(ABC):
         --------
         An object of ones filled with zeros from (0, 0) to (2, 2).
 
-        >>> X = nimble.ones('Matrix', 4, 4)
-        >>> filler = nimble.zeros('Matrix', 2, 2)
+        >>> X = nimble.ones(4, 4)
+        >>> filler = nimble.zeros(2, 2)
         >>> X.replaceRectangle(filler, 0, 0, 1, 1)
         >>> X
         <Matrix 4pt x 4ft
@@ -3612,7 +3613,7 @@ class Base(ABC):
         ...        [3, 4]]
         >>> ptNames = ['1', '3']
         >>> ftNames = ['a', 'b']
-        >>> X = nimble.data('Matrix', lst, pointNames=ptNames,
+        >>> X = nimble.data(lst, pointNames=ptNames,
         ...                 featureNames=ftNames)
         >>> X.flatten()
         >>> X
@@ -3626,7 +3627,7 @@ class Base(ABC):
         ...        [3, 4]]
         >>> ptNames = ['1', '3']
         >>> ftNames = ['a', 'b']
-        >>> X = nimble.data('Matrix', lst, pointNames=ptNames,
+        >>> X = nimble.data(lst, pointNames=ptNames,
         ...                 featureNames=ftNames)
         >>> X.flatten(order='feature')
         >>> X
@@ -3764,7 +3765,7 @@ class Base(ABC):
         Unflatten a point in point order with default names.
 
         >>> lst = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
-        >>> X = nimble.data('Matrix', lst)
+        >>> X = nimble.data(lst)
         >>> X.unflatten((3, 3))
         >>> X
         <Matrix 3pt x 3ft
@@ -3778,7 +3779,7 @@ class Base(ABC):
         Unflatten a point in feature order with default names.
 
         >>> lst = [[1, 2, 3, 4, 5, 6, 7, 8, 9]]
-        >>> X = nimble.data('Matrix', lst)
+        >>> X = nimble.data(lst)
         >>> X.unflatten((3, 3), order='feature')
         >>> X
         <Matrix 3pt x 3ft
@@ -3792,7 +3793,7 @@ class Base(ABC):
         Unflatten a feature in feature order with default names.
 
         >>> lst = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
-        >>> X = nimble.data('Matrix', lst)
+        >>> X = nimble.data(lst)
         >>> X.unflatten((3, 3), order='feature')
         >>> X
         <Matrix 3pt x 3ft
@@ -3806,7 +3807,7 @@ class Base(ABC):
         Unflatten a feature in point order with default names.
 
         >>> lst = [[1], [4], [7], [2], [5], [8], [3], [6], [9]]
-        >>> X = nimble.data('Matrix', lst)
+        >>> X = nimble.data(lst)
         >>> X.unflatten((3, 3), order='point')
         >>> X
         <Matrix 3pt x 3ft
@@ -3823,7 +3824,7 @@ class Base(ABC):
         >>> ftNames = ['1 | a', '1 | b', '1 | c',
         ...            '4 | a', '4 | b', '4 | c',
         ...            '7 | a', '7 | b', '7 | c']
-        >>> X = nimble.data('Matrix', lst, featureNames=ftNames)
+        >>> X = nimble.data(lst, featureNames=ftNames)
         >>> X.unflatten((3, 3))
         >>> X
         <Matrix 3pt x 3ft
@@ -3959,27 +3960,27 @@ class Base(ABC):
         >>> lstL = [["a", 1, 'X'], ["b", 2, 'Y'], ["c", 3, 'Z']]
         >>> fNamesL = ["f1", "f2", "f3"]
         >>> pNamesL = ["p1", "p2", "p3"]
-        >>> left = nimble.data('Matrix', lstL, pointNames=pNamesL,
+        >>> left = nimble.data(lstL, pointNames=pNamesL,
         ...                    featureNames=fNamesL)
         >>> lstR = [['Z', "f", 6], ['Y', "e", 5], ['X', "d", 4]]
         >>> fNamesR = ["f3", "f4", "f5"]
         >>> pNamesR = ["p3", "p2", "p1"]
-        >>> right = nimble.data('Matrix', lstR, pointNames=pNamesR,
+        >>> right = nimble.data(lstR, pointNames=pNamesR,
         ...                     featureNames=fNamesR)
         >>> left.merge(right, point='strict', feature='union')
         >>> left
-        <Matrix 3pt x 5ft
+        <DataFrame 3pt x 5ft
                 'f1' 'f2' 'f3' 'f4' 'f5'
               ┌─────────────────────────
          'p1' │  a    1    X    d    4
          'p2' │  b    2    Y    e    5
          'p3' │  c    3    Z    f    6
         >
-        >>> left = nimble.data('Matrix', lstL, pointNames=pNamesL,
+        >>> left = nimble.data(lstL, pointNames=pNamesL,
         ...                    featureNames=fNamesL)
         >>> left.merge(right, point='strict', feature='intersection')
         >>> left
-        <Matrix 3pt x 1ft
+        <DataFrame 3pt x 1ft
                 'f3'
               ┌─────
          'p1' │  X
@@ -3994,10 +3995,10 @@ class Base(ABC):
 
         >>> lstL = [["a", 1, 'id1'], ["b", 2, 'id2'], ["c", 3, 'id3']]
         >>> fNamesL = ["f1", "f2", "id"]
-        >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
+        >>> left = nimble.data(lstL, featureNames=fNamesL)
         >>> lstR = [['id3', "x", 7], ['id4', "y", 8], ['id5', "z", 9]]
         >>> fNamesR = ["id", "f4", "f5"]
-        >>> right = nimble.data("DataFrame", lstR, featureNames=fNamesR)
+        >>> right = nimble.data(lstR, featureNames=fNamesR)
         >>> left.merge(right, point='union', feature='union',
         ...            onFeature="id")
         >>> left
@@ -4010,7 +4011,7 @@ class Base(ABC):
          3 │            id4   y   8.000
          4 │            id5   z   9.000
         >
-        >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
+        >>> left = nimble.data(lstL, featureNames=fNamesL)
         >>> left.merge(right, point='union', feature='intersection',
         ...            onFeature="id")
         >>> left
@@ -4023,7 +4024,7 @@ class Base(ABC):
          3 │ id4
          4 │ id5
         >
-        >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
+        >>> left = nimble.data(lstL, featureNames=fNamesL)
         >>> left.merge(right, point='union', feature='left',
         ...            onFeature="id")
         >>> left
@@ -4036,7 +4037,7 @@ class Base(ABC):
          3 │            id4
          4 │            id5
         >
-        >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
+        >>> left = nimble.data(lstL, featureNames=fNamesL)
         >>> left.merge(right, point='intersection', feature='union',
         ...            onFeature="id")
         >>> left
@@ -4045,7 +4046,7 @@ class Base(ABC):
            ┌─────────────────────────
          0 │  c    3   id3   x    7
         >
-        >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
+        >>> left = nimble.data(lstL, featureNames=fNamesL)
         >>> left.merge(right, point='intersection',
         ...            feature='intersection', onFeature="id")
         >>> left
@@ -4054,7 +4055,7 @@ class Base(ABC):
            ┌─────
          0 │ id3
         >
-        >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
+        >>> left = nimble.data(lstL, featureNames=fNamesL)
         >>> left.merge(right, point='intersection', feature='left',
         ...            onFeature="id")
         >>> left
@@ -4063,7 +4064,7 @@ class Base(ABC):
            ┌───────────────
          0 │  c    3   id3
         >
-        >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
+        >>> left = nimble.data(lstL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='union',
         ...            onFeature="id")
         >>> left
@@ -4074,7 +4075,7 @@ class Base(ABC):
          1 │  b    2   id2
          2 │  c    3   id3   x   7.000
         >
-        >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
+        >>> left = nimble.data(lstL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='intersection',
         ...            onFeature="id")
         >>> left
@@ -4085,7 +4086,7 @@ class Base(ABC):
          1 │ id2
          2 │ id3
         >
-        >>> left = nimble.data("DataFrame", lstL, featureNames=fNamesL)
+        >>> left = nimble.data(lstL, featureNames=fNamesL)
         >>> left.merge(right, point='left', feature='left',
         ...            onFeature="id")
         >>> left
@@ -4520,7 +4521,8 @@ class Base(ABC):
             msg += '(number of points is equal to number of features)'
             raise ImproperObjectAction(msg)
         if power == 0:
-            operand = nimble.identity(self.getTypeString(), len(self.points))
+            operand = nimble.identity(len(self.points),
+                                      returnType=self.getTypeString())
         elif power > 0:
             operand = self.copy()
             # avoid name conflict in matrixMultiply; names set later
@@ -5076,8 +5078,8 @@ class Base(ABC):
 
         >>> lst3x3 = [[1, 2, 3], [4, 5, 6], [0, -1, -2]]
         >>> lst1x3 = [1, 2, 3]
-        >>> baseObj = nimble.data('Matrix', lst3x3)
-        >>> pointObj = nimble.data('List', lst1x3)
+        >>> baseObj = nimble.data(lst3x3)
+        >>> pointObj = nimble.data(lst1x3)
         >>> baseObj * pointObj.stretch
         <Matrix 3pt x 3ft
              0 1  2
@@ -5091,10 +5093,10 @@ class Base(ABC):
 
         >>> lst3x3 = [[1, 2, 3], [4, 5, 6], [0, -1, -2]]
         >>> lst1x3 = [[1], [2], [3]]
-        >>> baseObj = nimble.data('Matrix', lst3x3)
-        >>> featObj = nimble.data('List', lst1x3)
+        >>> baseObj = nimble.data(lst3x3)
+        >>> featObj = nimble.data(lst1x3)
         >>> featObj.stretch + baseObj
-        <List 3pt x 3ft
+        <Matrix 3pt x 3ft
              0 1 2
            ┌──────
          0 │ 2 3 4
@@ -5106,8 +5108,8 @@ class Base(ABC):
 
         >>> lst1x3 = [[1, 2, 3]]
         >>> lst3x1 = [[1], [2], [3]]
-        >>> pointObj = nimble.data('Matrix', lst1x3)
-        >>> featObj = nimble.data('List', lst3x1)
+        >>> pointObj = nimble.data(lst1x3)
+        >>> featObj = nimble.data(lst3x1)
         >>> pointObj.stretch - featObj.stretch
         <Matrix 3pt x 3ft
              0  1  2
@@ -5117,7 +5119,7 @@ class Base(ABC):
          2 │ -2 -1 0
         >
         >>> featObj.stretch - pointObj.stretch
-        <List 3pt x 3ft
+        <Matrix 3pt x 3ft
              0 1  2
            ┌────────
          0 │ 0 -1 -2

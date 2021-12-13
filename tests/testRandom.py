@@ -45,7 +45,7 @@ def testSetRandomSeedPropagate():
     data = [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12], [13, 14, 15], [17, 18, 19], [2, 2, 2], [3, 3, 3], [4, 4, 4],
             [5, 5, 5]]
     featureNames = ['1', '2', '3']
-    toTest1 = nimble.data("List", data, featureNames=featureNames, useLog=False)
+    toTest1 = nimble.data(data, featureNames=featureNames, useLog=False)
     toTest2 = toTest1.copy()
     toTest3 = toTest1.copy()
 
@@ -94,8 +94,9 @@ def testReturnsFundamentalsCorrect():
         for curReturnType in returnTypes:
             for curSparsity in sparsities:
                 nimble.random.setSeed(1)
-                returned = nimble.random.data(curReturnType, nPoints, nFeatures,
-                                              curSparsity, elementType=curType)
+                returned = nimble.random.data(nPoints, nFeatures, curSparsity,
+                                              returnType=curReturnType,
+                                              elementType=curType)
 
                 assert (len(returned.points) == nPoints)
                 assert (len(returned.features) == nFeatures)
@@ -136,8 +137,9 @@ def testSparsityReturnedPlausible():
     for curType in supportedFundamentalTypes:
         for curReturnType in returnTypes:
             for curSparsity in sparsities:
-                returned = nimble.random.data(curReturnType, nPoints, nFeatures,
-                                              curSparsity, elementType=curType)
+                returned = nimble.random.data(nPoints, nFeatures, curSparsity,
+                                              returnType=curReturnType,
+                                              elementType=curType)
 
                 if curReturnType.lower() == 'sparse':
                     nonZerosCount = returned._data.nnz
@@ -182,8 +184,9 @@ def test_createRandomizedData_names_passed():
         for curReturnType in returnTypes:
             for curSparsity in sparsities:
                 ret = nimble.random.data(
-                    curReturnType, numberPoints, numberFeatures, curSparsity,
-                    elementType=curType, pointNames=pnames, featureNames=fnames)
+                    numberPoints, numberFeatures, curSparsity,
+                    returnType=curReturnType, pointNames=pnames,
+                    featureNames=fnames, elementType=curType)
 
                 assert ret.points.getNames() == pnames
                 assert ret.features.getNames() == fnames
@@ -192,7 +195,7 @@ def test_random_data_logCount():
 
     @oneLogEntryExpected
     def byType(rType):
-        toTest = nimble.random.data(rType, 5, 5, 0)
+        toTest = nimble.random.data(5, 5, 0)
 
     for t in returnTypes:
         byType(t)

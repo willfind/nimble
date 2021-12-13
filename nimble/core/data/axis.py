@@ -533,12 +533,12 @@ class Axis(ABC):
         retData, offAxisNames = self._calculate_implementation(function,
                                                                limitTo)
         if self._isPoint:
-            ret = nimble.data(self._base.getTypeString(), retData,
+            ret = nimble.data(retData, returnType=self._base.getTypeString(),
                               useLog=False)
             axisNameSetter = ret.points.setNames
             offAxisNameSetter = ret.features.setNames
         else:
-            ret = nimble.data(self._base.getTypeString(), retData,
+            ret = nimble.data(retData, returnType=self._base.getTypeString(),
                               rowsArePoints=False, useLog=False)
             axisNameSetter = ret.features.setNames
             offAxisNameSetter = ret.points.setNames
@@ -588,10 +588,12 @@ class Axis(ABC):
             if not self._isPoint:
                 try:
                     validateAllAllowedElements(currOut)
-                except ImproperObjectAction as e:
+                except InvalidArgumentValue as e:
                     msg = "function must return a one-dimensional object "
                     raise ImproperObjectAction(msg) from e
                 except TypeError as e:
+                    if isinstance(e, ImproperObjectAction):
+                        raise
                     msg = "function must return a valid single element or "
                     msg += "an iterable, but got type " + str(type(currOut))
                     raise InvalidArgumentValue(msg) from e
@@ -612,13 +614,14 @@ class Axis(ABC):
 
         self._validateInsertableData(toInsert, append)
         if self._base.getTypeString() != toInsert.getTypeString():
-            toInsert = toInsert.copy(to=self._base.getTypeString())
+            insertObj = toInsert.copy(to=self._base.getTypeString())
+        else:
+            insertObj = toInsert
 
-        toInsert = self._alignNames(toInsert)
-        self._insert_implementation(insertBefore, toInsert)
+        insertObj = self._alignNames(insertObj)
+        self._insert_implementation(insertBefore, insertObj)
 
-        self._setInsertedCountAndNames(toInsert, insertBefore)
-
+        self._setInsertedCountAndNames(insertObj, insertBefore)
         if append:
             handleLogging(useLog, 'prep', '{ax}s.append'.format(ax=self._axis),
                           self._base.getTypeString(), self._sigFunc('append'),
@@ -714,8 +717,8 @@ class Axis(ABC):
             raise InvalidArgumentType("The reducer must be callable")
 
         if targetCount == 0:
-            ret = nimble.data(self._base.getTypeString(),
-                              np.empty(shape=(0, 0)), useLog=False)
+            ret = nimble.data(np.empty(shape=(0, 0)), useLog=False,
+                              returnType=self._base.getTypeString())
         else:
             mapResults = {}
             # apply the mapper to each point in the data
@@ -737,7 +740,8 @@ class Axis(ABC):
                 if redRet is not None:
                     (redKey, redValue) = redRet
                     ret.append([redKey, redValue])
-            ret = nimble.data(self._base.getTypeString(), ret, useLog=False)
+            ret = nimble.data(ret, returnType=self._base.getTypeString(),
+                              useLog=False)
 
         ret._absPath = self._base.absolutePath
         ret._relPath = self._base.relativePath

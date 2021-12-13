@@ -28,10 +28,10 @@ predictions using our supervised machine learning model.
 import nimble
 
 bucket = 'https://storage.googleapis.com/nimble/datasets/'
-traffic = nimble.data('Matrix',
-                      bucket + 'Metro_Interstate_Traffic_Volume_Cleaned.csv')
-forecast = nimble.data('Matrix',
-                       bucket + 'Metro_Interstate_Traffic_Volume_Predict.csv')
+traffic = nimble.data(bucket + 'Metro_Interstate_Traffic_Volume_Cleaned.csv',
+                      returnType="Matrix")
+forecast = nimble.data(bucket + 'Metro_Interstate_Traffic_Volume_Predict.csv',
+                       returnType="Matrix")
 
 ## Test five different machine learning algorithms ##
 

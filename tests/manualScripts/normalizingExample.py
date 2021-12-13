@@ -12,13 +12,13 @@ if __name__ == "__main__":
     # we separate into classes accoring to whether x1 is positive or negative
     variables = ["y", "x1", "x2", "x3"]
     data1 = [[1, 6, 0, 0], [1, 3, 0, 0], [0, -5, 0, 0], [0, -3, 0, 0]]
-    trainObj = nimble.data('Matrix', source=data1, featureNames=variables)
+    trainObj = nimble.data(source=data1, featureNames=variables)
     trainObjY = trainObj.features.extract('y')
 
     # data we're going to classify
     variables2 = ["x1", "x2", "x3"]
     data2 = [[1, 0, 0], [4, 0, 0], [-1, 0, 0], [-2, 0, 0]]
-    testObj = nimble.data('Matrix', source=data2, featureNames=variables2)
+    testObj = nimble.data(source=data2, featureNames=variables2)
 
     # baseline check
     assert len(trainObj.features) == 3

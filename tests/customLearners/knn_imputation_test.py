@@ -15,7 +15,7 @@ from tests.helpers import getDataConstructors
 @raises(InvalidArgumentValue)
 def test_KNNImputation_exception_invalidMode():
     data = [[1, 'na', 'x'], [1, 3, 6], [2, 1, 6], [1, 3, 7], ['na', 3, 'x']]
-    toTest = nimble.data('Matrix', data)
+    toTest = nimble.data(data)
     learner = KNNImputation()
     learner.train(toTest, mode='classify')
 
@@ -51,7 +51,7 @@ def test_KNNImputation_regression():
 @patch(nimble.learners.knn_imputation, '_sklPresent', lambda: False)
 def test_KNNImputation_regression_exception_NoSKL():
     data = [[1, None, None], [1, 3, 9], [2, 1, 6], [3, 2, 3], [None, 3, None]]
-    toTest = nimble.data('Matrix', data)
+    toTest = nimble.data(data)
     learner = KNNImputation()
     learner.train(toTest, mode='regression')
 

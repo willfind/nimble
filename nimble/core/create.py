@@ -21,11 +21,12 @@ from nimble.core._createHelpers import fileFetcher
 from nimble.core._createHelpers import DEFAULT_MISSING
 
 
-def data(returnType, source, pointNames='automatic', featureNames='automatic',
-         name=None, convertToType=None, keepPoints='all', keepFeatures='all',
-         treatAsMissing=DEFAULT_MISSING, replaceMissingWith=np.nan,
-         rowsArePoints=True, ignoreNonNumericalFeatures=False,
-         inputSeparator='automatic', copyData=True, useLog=None):
+def data(source, pointNames='automatic', featureNames='automatic',
+         returnType=None, name=None, convertToType=None, keepPoints='all',
+         keepFeatures='all', treatAsMissing=DEFAULT_MISSING,
+         replaceMissingWith=np.nan, rowsArePoints=True,
+         ignoreNonNumericalFeatures=False, inputSeparator='automatic',
+         copyData=True, useLog=None):
     """
     Function to instantiate one of the Nimble data container types.
 
@@ -41,11 +42,6 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
 
     Parameters
     ----------
-    returnType : str, None
-        Indicates which Nimble data object to return. Options are the
-        **case sensitive** strings "List", "Matrix", "Sparse" and
-        "DataFrame". If None is given, Nimble will attempt to detect the
-        type most appropriate for the data.
     source : object, str
         The source of the data to be loaded into the returned object.
 
@@ -83,6 +79,11 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
           and the names for each feature must be unique. As a list, the
           index of the name will define the feature index. As a dict,
           the value mapped to each name will define the feature index.
+    returnType : str, None
+        Indicates which Nimble data object to return. Options are the
+        **case sensitive** strings "List", "Matrix", "Sparse" and
+        "DataFrame". If None, Nimble will detect the most appropriate
+        type from the data and/or packages available in the environment.
     name : str
         When not None, this value is set as the name attribute of the
         returned object.
@@ -180,7 +181,7 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     Examples
     --------
     >>> data = [[1, 2, 3], [4, 5, 6]]
-    >>> asList = nimble.data('List', data, name='simple')
+    >>> asList = nimble.data(data, returnType="List", name='simple')
     >>> asList
     <List "simple" 2pt x 3ft
          0 1 2
@@ -193,7 +194,7 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
 
     >>> with open('simpleData.csv', 'w') as cd:
     ...     out = cd.write('1,2,3\\n4,5,6')
-    >>> fromFile = nimble.data('Matrix', 'simpleData.csv')
+    >>> fromFile = nimble.data('simpleData.csv')
     >>> fromFile # doctest: +ELLIPSIS
     <Matrix "simpleData.csv" 2pt x 3ft
          0 1 2
@@ -205,8 +206,8 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     Adding point and feature names.
 
     >>> data = [['a', 'b', 'c'], [0, 0, 1], [1, 0, 0]]
-    >>> asSparse = nimble.data('Sparse', data, pointNames=['1', '2'],
-    ...                        featureNames=True)
+    >>> asSparse = nimble.data(data, pointNames=['1', '2'],
+    ...                        featureNames=True, returnType="Sparse")
     >>> asSparse
     <Sparse 2pt x 3ft
            'a' 'b' 'c'
@@ -219,8 +220,8 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
 
     >>> data = [[1, 'Missing', 3], [4, 'Missing', 6]]
     >>> ftNames = {'a': 0, 'b': 1, 'c': 2}
-    >>> asDataFrame = nimble.data('DataFrame', data,
-    ...                           featureNames=ftNames,
+    >>> asDataFrame = nimble.data(data, featureNames=ftNames,
+    ...                           returnType="DataFrame",
     ...                           treatAsMissing=["Missing", 3],
     ...                           replaceMissingWith=-1)
     >>> asDataFrame
@@ -247,8 +248,8 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     # input is raw data
     if isAllowedRaw(source):
         ret = initDataObject(
-            returnType=returnType, rawData=source, pointNames=pointNames,
-            featureNames=featureNames, name=name, convertToType=convertToType,
+            rawData=source, pointNames=pointNames, featureNames=featureNames,
+            returnType=returnType, name=name, convertToType=convertToType,
             keepPoints=keepPoints, keepFeatures=keepFeatures,
             treatAsMissing=treatAsMissing,
             replaceMissingWith=replaceMissingWith, rowsArePoints=rowsArePoints,
@@ -256,8 +257,8 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
     # input is an open file or a path to a file
     elif isinstance(source, str) or looksFileLike(source):
         ret = createDataFromFile(
-            returnType=returnType, source=source, pointNames=pointNames,
-            featureNames=featureNames, name=name, convertToType=convertToType,
+            source=source, pointNames=pointNames, featureNames=featureNames,
+            returnType=returnType, name=name, convertToType=convertToType,
             keepPoints=keepPoints, keepFeatures=keepFeatures,
             treatAsMissing=treatAsMissing,
             replaceMissingWith=replaceMissingWith, rowsArePoints=rowsArePoints,
@@ -269,21 +270,18 @@ def data(returnType, source, pointNames='automatic', featureNames='automatic',
         msg += "be loaded"
         raise InvalidArgumentType(msg)
 
-    handleLogging(useLog, 'load', returnType, len(ret.points),
-                  len(ret.features), ret.name, ret.path)
+    handleLogging(useLog, 'load', returnType, ret.getTypeString(),
+                  len(ret.points), len(ret.features), ret.name, ret.path)
     return ret
 
 
-def ones(returnType, numPoints, numFeatures, pointNames='automatic',
-         featureNames='automatic', name=None):
+def ones(numPoints, numFeatures, pointNames='automatic',
+         featureNames='automatic', returnType="Matrix", name=None):
     """
     Return a data object of the given shape containing all 1 values.
 
     Parameters
     ----------
-    returnType : str
-        May be any of the allowed types specified in
-        nimble.core.data.available.
     numPoints : int
         The number of points in the returned object.
     numFeatures : int
@@ -300,6 +298,9 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
         be specified explictly by some list-like or dict-like object, so
         long as all features in the data are assigned a name and the
         names for each feature are unique.
+    returnType : str
+        May be any of the allowed types specified in
+        nimble.core.data.available. Default is "Matrix".
     name : str
         When not None, this value is set as the name attribute of the
         returned object.
@@ -317,7 +318,7 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
     --------
     Ones with default names.
 
-    >>> ones = nimble.ones('List', 5, 5)
+    >>> ones = nimble.ones(5, 5, returnType='List')
     >>> ones
     <List 5pt x 5ft
            0     1     2     3     4
@@ -331,9 +332,9 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
 
     Named object of ones with pointNames and featureNames.
 
-    >>> onesDF = nimble.ones('DataFrame', 4, 4,
-    ...                      pointNames=['1', '2', '3', '4'],
+    >>> onesDF = nimble.ones(4, 4, pointNames=['1', '2', '3', '4'],
     ...                      featureNames=['a', 'b', 'c', 'd'],
+    ...                      returnType="DataFrame",
     ...                      name='ones DataFrame')
     >>> onesDF
     <DataFrame "ones DataFrame" 4pt x 4ft
@@ -353,16 +354,13 @@ def ones(returnType, numPoints, numFeatures, pointNames='automatic',
                                 pointNames, featureNames, name)
 
 
-def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
-          featureNames='automatic', name=None):
+def zeros(numPoints, numFeatures, pointNames='automatic',
+          featureNames='automatic', returnType="Matrix", name=None):
     """
     Return a data object of the given shape containing all 0 values.
 
     Parameters
     ----------
-    returnType : str
-        May be any of the allowed types specified in
-        nimble.core.data.available.
     numPoints : int
         The number of points in the returned object.
     numFeatures : int
@@ -379,6 +377,9 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
         be specified explictly by some list-like or dict-like object, so
         long as all features in the data are assigned a name and the
         names for each feature are unique.
+    returnType : str
+        May be any of the allowed types specified in
+        nimble.core.data.available. Default is "Matrix".
     name : str
         When not None, this value is set as the name attribute of the
         returned object.
@@ -396,7 +397,7 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
     --------
     Zeros with default names.
 
-    >>> zeros = nimble.zeros('Matrix', 5, 5)
+    >>> zeros = nimble.zeros(5, 5)
     >>> zeros
     <Matrix 5pt x 5ft
            0     1     2     3     4
@@ -410,7 +411,7 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
 
     Named object of zeros with pointNames and featureNames.
 
-    >>> zerosSparse = nimble.zeros('Sparse', 4, 4,
+    >>> zerosSparse = nimble.zeros(4, 4, returnType="Sparse",
     ...                            pointNames=['1', '2', '3', '4'],
     ...                            featureNames=['a', 'b', 'c', 'd'],
     ...                            name='Sparse all-zeros')
@@ -432,8 +433,8 @@ def zeros(returnType, numPoints, numFeatures, pointNames='automatic',
                                 pointNames, featureNames, name)
 
 
-def identity(returnType, size, pointNames='automatic',
-             featureNames='automatic', name=None):
+def identity(size, pointNames='automatic', featureNames='automatic',
+             returnType="Matrix", name=None):
     """
     Return a data object representing an identity matrix.
 
@@ -443,9 +444,6 @@ def identity(returnType, size, pointNames='automatic',
 
     Parameters
     ----------
-    returnType : str
-        May be any of the allowed types specified in
-        nimble.core.data.available.
     size : int
         The number of points and features in the returned object.
     pointNames : 'automatic', list, dict
@@ -460,6 +458,9 @@ def identity(returnType, size, pointNames='automatic',
         be specified explictly by some list-like or dict-like object, so
         long as all features in the data are assigned a name and the
         names for each feature are unique.
+    returnType : str
+        May be any of the allowed types specified in
+        nimble.core.data.available. Default is "Matrix".
     name : str
         When not None, this value is set as the name attribute of the
         returned object.
@@ -477,7 +478,7 @@ def identity(returnType, size, pointNames='automatic',
     --------
     Identity matrix with default names.
 
-    >>> identity = nimble.identity('Matrix', 5)
+    >>> identity = nimble.identity(5)
     >>> identity
     <Matrix 5pt x 5ft
            0     1     2     3     4
@@ -491,10 +492,10 @@ def identity(returnType, size, pointNames='automatic',
 
     Named object of zeros with pointNames and featureNames.
 
-    >>> identityList = nimble.identity('List', 3,
-    ...                             pointNames=['1', '2', '3'],
-    ...                             featureNames=['a', 'b', 'c'],
-    ...                             name='identity matrix list')
+    >>> identityList = nimble.identity(3, returnType="List",
+    ...                                pointNames=['1', '2', '3'],
+    ...                                featureNames=['a', 'b', 'c'],
+    ...                                name='identity matrix list')
     >>> identityList
     <List "identity matrix list" 3pt x 3ft
             'a'   'b'   'c'
@@ -522,12 +523,13 @@ def identity(returnType, size, pointNames='automatic',
         assert returnType == 'Sparse'
         rawDiag = scipy.sparse.identity(size)
         rawCoo = scipy.sparse.coo_matrix(rawDiag)
-        return nimble.data(returnType, rawCoo, pointNames=pointNames,
-                           featureNames=featureNames, name=name, useLog=False)
+        return nimble.data(rawCoo, pointNames=pointNames,
+                           featureNames=featureNames, returnType=returnType,
+                           name=name, useLog=False)
 
     raw = np.identity(size)
-    return nimble.data(returnType, raw, pointNames=pointNames,
-                       featureNames=featureNames, name=name, useLog=False)
+    return nimble.data(raw, pointNames=pointNames, featureNames=featureNames,
+                       returnType=returnType, name=name, useLog=False)
 
 
 def loadTrainedLearner(source, useLog=None):
@@ -568,7 +570,7 @@ def loadTrainedLearner(source, useLog=None):
         msg = 'File does not contain a valid Nimble TrainedLearner object.'
         raise InvalidArgumentType(msg)
 
-    handleLogging(useLog, 'load', "TrainedLearner",
+    handleLogging(useLog, 'load', None, "TrainedLearner",
                   learnerName=ret.learnerName, learnerArgs=ret.arguments)
     return ret
 

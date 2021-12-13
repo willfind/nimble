@@ -65,7 +65,7 @@ def test_fillMatching_matchingElementsAsFunction():
 
 def test_fillMatching_matchingElementsAsBooleanMatrix():
     raw = [[1, 1, 1, -1], [1, 1, 1, 1], [2, 2, 2, -2], [2, 2, 2, 4]]
-    obj = nimble.data('Matrix', raw)
+    obj = nimble.data(raw)
     matchingElements = obj.matchingElements(match.negative)
     expRaw = [[1, 1, 1, 1], [1, 1, 1, 1], [2, 2, 2, 4], [2, 2, 2, 4]]
     backend_fillMatching(matchingElements, raw, expRaw)
@@ -73,17 +73,17 @@ def test_fillMatching_matchingElementsAsBooleanMatrix():
 @raises(InvalidArgumentValue)
 def test_fillMatching_matchingElementsAsBooleanMatrix_exception_wrongSize():
     raw = [[1, 1, 1, -1], [1, 1, 1, 1], [2, 2, 2, -2], [2, 2, 2, 4]]
-    obj = nimble.data('Matrix', raw)
+    obj = nimble.data(raw)
     # reshaped to cause failure
     matchingElements = obj.matchingElements(match.negative)[:2, :2]
-    data = nimble.data('Matrix', raw, useLog=False)
+    data = nimble.data(raw, useLog=False)
     nimble.fillMatching('nimble.KNNImputation', matchingElements, data,
                         mode='classification', k=1)
 
 @raises(InvalidArgumentValue)
 def test_KNNImputation_exception_invalidMode():
     data = [[1, 'na', 'x'], [1, 3, 6], [2, 1, 6], [1, 3, 7], ['na', 3, 'x']]
-    toTest = nimble.data('Matrix', data)
+    toTest = nimble.data(data)
     nimble.fillMatching('nimble.KNNImputation', match.nonNumeric, toTest,
                         k=3, mode='classify')
 
@@ -105,7 +105,7 @@ def test_fillMatching_sklDisallowedArgument():
     fNames = ['a', 'b', 'c']
     pNames = ['p0', 'p1', 'p2', 'p3', 'p4']
     data = [[1, 0, 0], [1, 3, 6], [2, 1, 6], [1, 3, 7], [0, 3, 0]]
-    toTest = nimble.data('Matrix', data, pointNames=pNames, featureNames=fNames)
+    toTest = nimble.data(data, pointNames=pNames, featureNames=fNames)
     nimble.fillMatching('skl.SimpleImputer', match.zero, toTest,
                         missing_values=0)
 

@@ -358,14 +358,14 @@ class QueryBackend(DataTestObject):
 
         with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
             toSave.save(tmpFile.name)
-            load1 = nimble.data(None, tmpFile.name)
+            load1 = nimble.data(tmpFile.name)
 
         assert toSave.isIdentical(load1)
         assert load1.isIdentical(toSave)
 
         with tempfile.NamedTemporaryFile(suffix=".p") as tmpFile:
             toSave.save(tmpFile.name)
-            load2 = nimble.data(None, tmpFile.name)
+            load2 = nimble.data(tmpFile.name)
 
         assert toSave.isIdentical(load2)
         assert load2.isIdentical(toSave)
@@ -378,7 +378,7 @@ class QueryBackend(DataTestObject):
             # not be cleaned up by tempfile.
             assert fileNameWithoutExtension + '.pickle' == tmpFile.name
             toSave.save(fileNameWithoutExtension)
-            load3 = nimble.data(None, tmpFile.name)
+            load3 = nimble.data(tmpFile.name)
 
         assert toSave.isIdentical(load3)
         assert load3.isIdentical(toSave)
@@ -407,11 +407,11 @@ class QueryBackend(DataTestObject):
             assert fileNameWithoutExtension + '.pickle' == tmpFile.name
 
             toSave.save(fileNameWithoutExtension)
-            LoadObj = nimble.data(None, tmpFile.name)
+            LoadObj = nimble.data(tmpFile.name)
             assert isinstance(LoadObj, nimble.core.data.Base)
 
             with raises(InvalidArgumentValue):
-                LoadObj = nimble.data(None, fileNameWithoutExtension)
+                LoadObj = nimble.data(fileNameWithoutExtension)
 
     @oneLogEntryExpected
     def test_saveAndLoad_logCount(self):
@@ -422,7 +422,7 @@ class QueryBackend(DataTestObject):
 
         with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
             toSave.save(tmpFile.name)
-            LoadObj = nimble.data(None, tmpFile.name)
+            LoadObj = nimble.data(tmpFile.name)
 
     ##############
     # __getitem__#
@@ -1101,7 +1101,7 @@ class QueryBackend(DataTestObject):
         """ Regression test with random data and limits. Recreates expected results """
         for pNum in [3, 9]:
             for fNum in [2, 5, 8, 15]:
-                randGen = nimble.random.data("List", pNum, fNum, 0)
+                randGen = nimble.random.data(pNum, fNum, 0)
                 raw = randGen._data
 
                 fnames = ['fn0', 'fn1', 'fn2', 'fn3', 'fn4', 'fn5', 'fn6',
@@ -1127,7 +1127,7 @@ class QueryBackend(DataTestObject):
 
     def test_toString_nameAndValRecreation_randomized_longNames(self):
         """ Test long point and feature names do not exceed max width"""
-        randGen = nimble.random.data("List", 9, 9, 0)
+        randGen = nimble.random.data(9, 9, 0)
         raw = randGen._data
 
         suffix = [1, 22, 333, 4444, 55555, 666666, 7777777, 88888888, 999999999]
@@ -1192,7 +1192,7 @@ class QueryBackend(DataTestObject):
 
     def test_toString_knownHeights(self):
         """ Test max string height reaches but does not exceed max height """
-        randGen = nimble.random.data("List", 9, 3, 0)
+        randGen = nimble.random.data(9, 3, 0)
 
         data = self.constructor(randGen._data)
 
@@ -1293,7 +1293,7 @@ class QueryBackend(DataTestObject):
 
     @raises(InvalidArgumentValue)
     def test_arrangeDataWithLimits_exception_maxH(self):
-        randGen = nimble.random.data("List", 5, 5, 0, elementType='int')
+        randGen = nimble.random.data(5, 5, 0, elementType='int')
         randGen._arrangeDataWithLimits(maxHeight=1, maxWidth=120, sigDigits=3,
                                        maxStrLength=19, colSep=" ",
                                        colHold=u"\u2500\u2500", rowHold=u"\u2502",
@@ -1312,7 +1312,7 @@ class QueryBackend(DataTestObject):
                 for j in range(f):
                     raw[i].append(val)
 
-            return nimble.data(rType, raw)
+            return nimble.data(raw)
 
         def runTrial(pNum, fNum, valLen, maxW, maxH, colSep, quoteNames):
             if pNum == 0 and fNum == 0:
@@ -1327,7 +1327,7 @@ class QueryBackend(DataTestObject):
                 data.features.delete(0)
             else:
                 if valLen is None:
-                    data = nimble.random.data("List", pNum, fNum, .25, elementType='int')
+                    data = nimble.random.data(pNum, fNum, .25, elementType='int')
                 else:
                     data = makeUniformLength("List", pNum, fNum, valLen)
                 fNames = ['ft' + str(i) for i in range(fNum)]
@@ -1380,7 +1380,7 @@ class QueryBackend(DataTestObject):
 
     def back_reprOutput(self, numPts, numFts, truncated=False, defaults='none',
                         addPath=False):
-        randGen = nimble.random.data("List", numPts, numFts, 0)
+        randGen = nimble.random.data(numPts, numFts, 0)
         # make a row and column all missing
         def makeMissing(vect):
             return [np.nan for _ in vect]
@@ -2346,7 +2346,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = nimble.random.data("List", 10, 10, 0, useLog=False)
+            randGenerated = nimble.random.data(10, 10, 0, useLog=False)
             raw = randGenerated.copy(to='pythonlist')
             obj = self.constructor(raw)
             obj.plotHeatMap(outPath=path, show=False)
@@ -2367,7 +2367,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = nimble.random.data("List", 10, 10, 0, useLog=False)
+            randGenerated = nimble.random.data(10, 10, 0, useLog=False)
             raw = randGenerated.copy(to='pythonlist')
             obj = self.constructor(raw)
             obj.plotFeatureDistribution(feature=0, outPath=path, show=False)
@@ -2389,7 +2389,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            randGenerated = nimble.random.data("List", 10, 10, 0, useLog=False)
+            randGenerated = nimble.random.data(10, 10, 0, useLog=False)
             raw = randGenerated.copy(to='pythonlist')
             obj = self.constructor(raw)
             obj.plotFeatureAgainstFeature(x=0, y=1, outPath=path, show=False)
@@ -2410,7 +2410,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            obj = nimble.random.data("List", 3, 3, 0, useLog=False)
+            obj = nimble.random.data(3, 3, 0, useLog=False)
             obj.features.plot(outPath=path, show=False)
 
             endSize = os.path.getsize(path)
@@ -2429,7 +2429,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            obj = nimble.random.data("List", 10, 10, 0, useLog=False)
+            obj = nimble.random.data(10, 10, 0, useLog=False)
             obj.features.plotMeans(outPath=path, show=False)
 
             endSize = os.path.getsize(path)
@@ -2448,7 +2448,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            obj = nimble.random.data("List", 10, 10, 0, useLog=False)
+            obj = nimble.random.data(10, 10, 0, useLog=False)
             obj.features.plotStatistics(sum, outPath=path, show=False)
 
             endSize = os.path.getsize(path)
@@ -2469,8 +2469,8 @@ class QueryBackend(DataTestObject):
 
             groups = [['a'], ['a'], ['a'], ['b'], ['b'], ['b'],
                       ['c'], ['c'], ['c'], ['d']]
-            groupObj = nimble.data('List', groups, useLog=False)
-            obj = nimble.random.data("List", 10, 1, 0, useLog=False)
+            groupObj = nimble.data(groups, useLog=False)
+            obj = nimble.random.data(10, 1, 0, useLog=False)
             obj.features.append(groupObj, useLog=False)
 
             obj.plotFeatureGroupMeans(0, 1, outPath=path, show=False)
@@ -2493,8 +2493,8 @@ class QueryBackend(DataTestObject):
 
             groups = [['a'], ['a'], ['a'], ['b'], ['b'], ['b'],
                       ['c'], ['c'], ['c'], ['d']]
-            groupObj = nimble.data('List', groups, useLog=False)
-            obj = nimble.random.data("List", 10, 1, 0, useLog=False)
+            groupObj = nimble.data(groups, useLog=False)
+            obj = nimble.random.data(10, 1, 0, useLog=False)
             obj.features.append(groupObj, useLog=False)
 
             obj.plotFeatureGroupStatistics(sum, 0, 1, outPath=path, show=False)
@@ -2515,7 +2515,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            obj = nimble.random.data("List", 3, 3, 0, useLog=False)
+            obj = nimble.random.data(3, 3, 0, useLog=False)
             obj.points.plot(outPath=path, show=False)
 
             endSize = os.path.getsize(path)
@@ -2534,7 +2534,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            obj = nimble.random.data("List", 10, 10, 0, useLog=False)
+            obj = nimble.random.data(10, 10, 0, useLog=False)
             obj.points.plotMeans(outPath=path, show=False)
 
             endSize = os.path.getsize(path)
@@ -2553,7 +2553,7 @@ class QueryBackend(DataTestObject):
             startSize = os.path.getsize(path)
             assert startSize == 0
 
-            obj = nimble.random.data("List", 10, 10, 0, useLog=False)
+            obj = nimble.random.data(10, 10, 0, useLog=False)
             obj.points.plotStatistics(sum, outPath=path, show=False)
 
             endSize = os.path.getsize(path)
@@ -3090,7 +3090,7 @@ class QueryBackend(DataTestObject):
                [1, 2, 2, 0, 1, 2, 3, 4, 3, 3, 2],
                [2, 9, 9, 8.8, 8.9, 9, 9.1, 9.2, 3, 3, 0.2]]
 
-        exp = nimble.data("List", rep, fnames, heads)
+        exp = nimble.data(rep, fnames, heads)
 
         assert ret.isApproximatelyEqual(exp)
 
@@ -3106,7 +3106,7 @@ class QueryBackend(DataTestObject):
         rep = [[0, 2, 2, 1, 1.5, 2, 2.5, 3, 3, 3, 1],
                [1, 2, 2, 1, 1.5, 2, 2.5, 3, 3, 3, 1],
                [2, np.nan, 'b', np.nan, np.nan, np.nan, np.nan, np.nan, 3, 3, np.nan]]
-        exp = nimble.data("List", rep, fnames, heads)
+        exp = nimble.data(rep, fnames, heads)
 
         assert ret == exp
 
@@ -3125,7 +3125,7 @@ class QueryBackend(DataTestObject):
                [1, 0, 1, 2, 3, 4, 2],
                [2, 8.8, 8.9, 9, 9.1, 9.2, 9]]
 
-        exp = nimble.data("List", rep, fnames, heads)
+        exp = nimble.data(rep, fnames, heads)
 
         assert ret == exp
 
@@ -3146,11 +3146,11 @@ class QueryBackend(DataTestObject):
 
         heads = ['index', 'sum', 'minMaxAvg', '<lambda> (0)', '<lambda> (1)']
 
-        rep = [[0, 6, 2, 1, 42],
-               [1, 6, 2, 1, 42],
-               [2, 27, 9, 1, 42]]
+        rep = [[0, 6.0, 2.0, 1, 42],
+               [1, 6.0, 2.0, 1, 42],
+               [2, 27.0, 9.0, 1, 42]]
 
-        exp = nimble.data("List", rep, fnames, heads)
+        exp = nimble.data(rep, fnames, heads)
 
         assert ret == exp
 
@@ -3176,7 +3176,7 @@ class QueryBackend(DataTestObject):
         ret = obj.report()
         heads = ['Values', 'Points', 'Features', 'proportionZero', 'proportionMissing']
         rep =  [9, 3, 3, (2 / 9), (1 / 9)]
-        exp = nimble.data("List", rep, featureNames=heads)
+        exp = self.constructor(rep, featureNames=heads)
 
         assert ret == exp
 
@@ -3185,7 +3185,7 @@ class QueryBackend(DataTestObject):
         ret = obj.report()
         heads = ['Values', 'Dimensions', 'proportionZero', 'proportionMissing']
         rep = [9, '3 x 1 x 1 x 3', (2 / 9), (1 / 9)]
-        exp = nimble.data("List", rep, featureNames=heads)
+        exp = self.constructor(rep, featureNames=heads)
 
         assert ret == exp
 

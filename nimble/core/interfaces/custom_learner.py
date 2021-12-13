@@ -128,7 +128,7 @@ class CustomLearnerInterface(UniversalInterface):
         if isinstance(outputValue, nimble.core.data.Base):
             return outputValue
 
-        return nimble.data('Matrix', outputValue, useLog=False)
+        return nimble.data(outputValue, useLog=False)
 
     def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
                  customDict):

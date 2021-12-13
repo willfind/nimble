@@ -29,7 +29,7 @@ example, [0,0,0,1,0,0,0,0,0,0] is a 3 and [0,0,0,0,0,0,0,0,0,1] is a 9.
 import nimble
 
 path = nimble.fetchFile('uci::Semeion Handwritten Digit')
-images = nimble.data('Matrix', path)
+images = nimble.data(path, returnType="Matrix")
 
 ## Preparing the data ##
 
@@ -49,7 +49,7 @@ labels.show('one-hot encoded labels', maxHeight=12)
 ## label and the value in the feature vector that corresponds with the index of
 ## the label's `1` value. So, we quickly create a 1593 x 1 object with our
 ## labels as the integers 0 through 9.
-intLabels = labels @ nimble.data('Matrix', list(range(10))).T
+intLabels = labels @ nimble.data(range(10)).T
 intLabels.show('integer labels', maxHeight=12)
 
 ## Now that we have a single feature of labels, we can randomly partition our

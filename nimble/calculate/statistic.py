@@ -49,7 +49,7 @@ def proportionMissing(values):
     Examples
     --------
     >>> lst = [1, 2, float('nan'), 4, float('nan')]
-    >>> vector = nimble.data('Matrix', lst)
+    >>> vector = nimble.data(lst)
     >>> proportionMissing(vector)
     0.4
     """
@@ -68,7 +68,7 @@ def proportionZero(values):
     Examples
     --------
     >>> lst = [0, 1, 2, 3]
-    >>> vector = nimble.data('Matrix', lst)
+    >>> vector = nimble.data(lst)
     >>> proportionZero(vector)
     0.25
     """
@@ -94,7 +94,7 @@ def minimum(values):
     Examples
     --------
     >>> lst = [0, 1, 2, float('nan')]
-    >>> vector = nimble.data('Matrix', lst)
+    >>> vector = nimble.data(lst)
     >>> minimum(vector)
     0.0
     """
@@ -116,7 +116,7 @@ def maximum(values):
     Examples
     --------
     >>> lst = [0, 1, 2, float('nan')]
-    >>> vector = nimble.data('Matrix', lst)
+    >>> vector = nimble.data(lst)
     >>> maximum(vector)
     2.0
     """
@@ -173,7 +173,7 @@ def mean(values):
     Examples
     --------
     >>> lst = [0, 1, 2, float('nan'), float('nan'), 5]
-    >>> vector = nimble.data('Matrix', lst)
+    >>> vector = nimble.data(lst)
     >>> mean(vector)
     2.0
     """
@@ -204,7 +204,7 @@ def median(values):
     Examples
     --------
     >>> lst = [0, 1, 2, float('nan'), float('nan'), 5, 6]
-    >>> vector = nimble.data('Matrix', lst)
+    >>> vector = nimble.data(lst)
     >>> median(vector)
     2.0
     """
@@ -232,7 +232,7 @@ def mode(values):
     Examples
     --------
     >>> lst = [0, 1, 2, float('nan'), float('nan'), float('nan'), 0, 6]
-    >>> vector = nimble.data('Matrix', lst)
+    >>> vector = nimble.data(lst)
     >>> mode(vector)
     0.0
     """
@@ -281,7 +281,7 @@ def variance(values, sample=True):
     Examples
     --------
     >>> lst = [1, 2, 3, 4, 5, 6, float('nan')]
-    >>> vector = nimble.data('Matrix', lst)
+    >>> vector = nimble.data(lst)
     >>> variance(vector)
     3.5
     >>> variance(vector, sample=False)
@@ -323,7 +323,7 @@ def standardDeviation(values, sample=True):
     Examples
     --------
     >>> lst = [1, 2, 3, 4, 5, 6, float('nan')]
-    >>> vector = nimble.data('Matrix', lst)
+    >>> vector = nimble.data(lst)
     >>> standardDeviation(vector)
     1.8708286933869707
     >>> standardDeviation(vector, sample=False)
@@ -347,7 +347,7 @@ def medianAbsoluteDeviation(values):
     Examples
     --------
     >>> lst = [1, 2, 3, 4, 5, 6, float('nan')]
-    >>> vector = nimble.data('Matrix', lst)
+    >>> vector = nimble.data(lst)
     >>> medianAbsoluteDeviation(vector)
     1.5
     """
@@ -390,7 +390,7 @@ def quartiles(values):
     Examples
     --------
     >>> lst = [1, 5, 12, 13, 14, 21, 23, float('nan')]
-    >>> vector = nimble.data('Matrix', lst)
+    >>> vector = nimble.data(lst)
     >>> quartiles(vector)
     (8.5, 13.0, 17.5)
     """
@@ -457,7 +457,8 @@ def residuals(toPredict, controlVars):
 
     workingType = controlVars.getTypeString()
     workingCV = controlVars.copy()
-    workingCV.features.append(nimble.ones(workingType, cvP, 1), useLog=False)
+    workingCV.features.append(nimble.ones(cvP, 1, returnType=workingType),
+                              useLog=False)
     workingCV = dtypeConvert(workingCV.copy(to="numpy array"))
     workingTP = dtypeConvert(toPredict.copy(to="numpy array"))
 

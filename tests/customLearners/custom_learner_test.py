@@ -154,7 +154,7 @@ class LoveAtFirstSightClassifier(CustomLearner):
         ret = []
         for point in testX.points:
             ret.append([self.prediction])
-        return nimble.data("Matrix", ret)
+        return nimble.data(ret)
 
     def getScores(self, testX):
         ret = []
@@ -166,7 +166,7 @@ class LoveAtFirstSightClassifier(CustomLearner):
                 else:
                     currScores.append(0)
             ret.append(currScores)
-        return nimble.data("Matrix", ret)
+        return nimble.data(ret)
 
 
 def testCustomLearnerGetScores():
@@ -174,11 +174,11 @@ def testCustomLearnerGetScores():
     data = [[1, 3], [2, -5], [1, 44]]
     labels = [[0], [2], [1]]
 
-    trainObj = nimble.data('Matrix', data)
-    labelsObj = nimble.data('Matrix', labels)
+    trainObj = nimble.data(data)
+    labelsObj = nimble.data(labels)
 
     tdata = [[23, 2343], [23, 22], [454, -44]]
-    testObj = nimble.data('Matrix', tdata)
+    testObj = nimble.data(tdata)
 
     name = LoveAtFirstSightClassifier
     preds = nimble.trainAndApply(name, trainX=trainObj, trainY=labelsObj, testX=testObj, scoreMode='label')
@@ -196,11 +196,11 @@ def testCustomLearnerIncTrainCheck():
     """ Test that a CustomLearner with incrementalTrain() but no train() works as expected """
     data = [[1, 3], [2, -5], [1, 44]]
     labels = [[0], [2], [1]]
-    trainObj = nimble.data('Matrix', data)
-    labelsObj = nimble.data('Matrix', labels)
+    trainObj = nimble.data(data)
+    labelsObj = nimble.data(labels)
 
     tdata = [[23, 2343], [23, 22], [454, -44]]
-    testObj = nimble.data('Matrix', tdata)
+    testObj = nimble.data(tdata)
 
     def verifyScores(scores, currPredIndex):
         for rowNum in range(len(scores.points)):
@@ -221,8 +221,8 @@ def testCustomLearnerIncTrainCheck():
 
     extendData = [[-343, -23]]
     extendLabels = [[3]]
-    extTrainObj = nimble.data("Matrix", extendData)
-    extLabelsObj = nimble.data("Matrix", extendLabels)
+    extTrainObj = nimble.data(extendData)
+    extLabelsObj = nimble.data(extendLabels)
 
     tlObj.incrementalTrain(extTrainObj, extLabelsObj)
     # check incrementalTrain does not instantiate a new backend
@@ -234,8 +234,8 @@ def testCustomLearnerIncTrainCheck():
 
     reData = [[11, 12], [13, 14], [-22, -48]]
     reLabels = [[-1], [-1], [-2]]
-    reTrainObj = nimble.data("Matrix", reData)
-    reLabelsObj = nimble.data('Matrix', reLabels)
+    reTrainObj = nimble.data(reData)
+    reLabelsObj = nimble.data(reLabels)
 
     tlObj.retrain(reTrainObj, reLabelsObj)
     # retrain instantiates a new trained backend on only the retrain data,
@@ -258,13 +258,13 @@ class OneOrZeroClassifier(CustomLearner):
 
     def apply(self, testX):
         preds = [[self.prediction] for _ in range(len(testX.points))]
-        return nimble.data("Matrix", preds)
+        return nimble.data(preds)
 
 def test_retrain_withArg():
-    trainObj = nimble.random.data('Matrix', 4, 3, 0)
-    testObj = nimble.data('Matrix', [[0, 0], [1, 1]])
-    expZeros = nimble.zeros('Matrix', 2, 1)
-    expOnes = nimble.ones('Matrix', 2, 1)
+    trainObj = nimble.random.data(4, 3, 0)
+    testObj = nimble.data([[0, 0], [1, 1]])
+    expZeros = nimble.zeros(2, 1)
+    expOnes = nimble.ones(2, 1)
 
     tl = nimble.train(OneOrZeroClassifier, trainObj, 0)
     predOnes1 = tl.apply(testObj)
@@ -276,10 +276,10 @@ def test_retrain_withArg():
 
 @raises(InvalidArgumentValue)
 def test_retrain_invalidArg():
-    trainObj = nimble.random.data('Matrix', 4, 3, 0)
-    testObj = nimble.data('Matrix', [[0, 0], [1, 1]])
-    expZeros = nimble.zeros('Matrix', 2, 1)
-    expOnes = nimble.ones('Matrix', 2, 1)
+    trainObj = nimble.random.data(4, 3, 0)
+    testObj = nimble.data([[0, 0], [1, 1]])
+    expZeros = nimble.zeros(2, 1)
+    expOnes = nimble.ones(2, 1)
 
     tl = nimble.train(OneOrZeroClassifier, trainObj, 0)
     predOnes1 = tl.apply(testObj)
@@ -289,10 +289,10 @@ def test_retrain_invalidArg():
 
 @raises(InvalidArgumentValue)
 def test_retrain_CVArg():
-    trainObj = nimble.random.data('Matrix', 4, 3, 0)
-    testObj = nimble.data('Matrix', [[0, 0], [1, 1]])
-    expZeros = nimble.zeros('Matrix', 2, 1)
-    expOnes = nimble.ones('Matrix', 2, 1)
+    trainObj = nimble.random.data(4, 3, 0)
+    testObj = nimble.data([[0, 0], [1, 1]])
+    expZeros = nimble.zeros(2, 1)
+    expOnes = nimble.ones(2, 1)
 
     tl = nimble.train(OneOrZeroClassifier, trainObj, 0)
     predOnes1 = tl.apply(testObj)
@@ -316,8 +316,8 @@ def testCustomPackage():
 
     data = [[1, 2, 3], [4, 5, 6], [0, 0, 0]]
     labels = [[1], [2], [0]]
-    trainX = nimble.data('Matrix', data)
-    trainY = nimble.data('Matrix', labels)
+    trainX = nimble.data(data)
+    trainY = nimble.data(labels)
 
     nimble.train(LoveAtFirstSightClassifier, trainX, trainY)
     nimble.train(UncallableLearner, trainX, trainY, foo='foo')
@@ -333,8 +333,8 @@ def testNimblePackage():
 
     data = [[1, 2, 3], [4, 5, 6], [0, 0, 0]]
     labels = [[1], [2], [0]]
-    trainX = nimble.data('Matrix', data)
-    trainY = nimble.data('Matrix', labels)
+    trainX = nimble.data(data)
+    trainY = nimble.data(labels)
 
     nimble.train(RidgeRegression, trainX, trainY, lamb=1)
     nimble.train(KNNClassifier, trainX, trainY, k=1)
@@ -361,8 +361,8 @@ def test_logCount():
 
     data = [[1, 2, 3], [4, 5, 6], [0, 0, 0]]
     labels = [[1], [2], [0]]
-    trainX = nimble.data('Matrix', data, useLog=False)
-    trainY = nimble.data('Matrix', labels, useLog=False)
+    trainX = nimble.data(data, useLog=False)
+    trainY = nimble.data(labels, useLog=False)
 
     nimble.train(LoveAtFirstSightClassifier, trainX, trainY, useLog=False)
     lst = nimble.learnerNames("custom")
@@ -406,9 +406,9 @@ def test_learnerQueries():
 def test_redefinedLearner():
     data = [[1, 2, 3], [4, 5, 6], [0, 0, 0]]
     labels = [[1], [2], [0]]
-    trainX = nimble.data('Matrix', data)
-    trainY = nimble.data('Matrix', labels)
-    testX = nimble.data('Matrix', [[0, 0, 0], [1, 2, 3]])
+    trainX = nimble.data(data)
+    trainY = nimble.data(labels)
+    testX = nimble.data([[0, 0, 0], [1, 2, 3]])
 
     class Redefine(LoveAtFirstSightClassifier):
         pass
@@ -436,7 +436,7 @@ class MeanConstant(CustomLearner):
         raw = np.zeros(len(testX.points))
         np.ndarray.fill(raw, self.mean)
 
-        ret = nimble.data("Matrix", raw, useLog=False)
+        ret = nimble.data(raw, useLog=False)
         ret.transpose(useLog=False)
         return ret
 
@@ -445,10 +445,10 @@ def testMeanConstantSimple():
     """ Test MeanConstant by checking the ouput given simple hand made inputs """
 
     dataX = [[0, 0, 0], [1, 10, 10], [0, -1, 4], [1, 0, 20], [0, 1, 0], [1, 2, 3]]
-    trainX = nimble.data('Matrix', dataX)
+    trainX = nimble.data(dataX)
 
     dataY = [[0], [1], [0], [1], [0], [1]]
-    trainY = nimble.data('Matrix', dataY)
+    trainY = nimble.data(dataY)
 
     for value in [MeanConstant, 'custom.MeanConstant']:
         ret = nimble.trainAndApply(value, trainX=trainX, trainY=trainY, testX=trainX)
@@ -480,7 +480,7 @@ class RandomControl(CustomLearner):
         return [v * self.rand for v in testX]
 
 def test_customLearnerRandomControl():
-    trainX = nimble.data('Matrix', [[1], [2], [3]])
+    trainX = nimble.data([[1], [2], [3]])
     trainY = trainX.copy()
     testX = trainX.copy()
     a = nimble.trainAndApply(RandomControl, trainX, trainY, testX, randomSeed=1)
