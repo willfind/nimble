@@ -632,11 +632,11 @@ class Base(ABC):
         >>> X.transformElements(lambda elem: elem + 1)
         >>> X
         <Matrix 3pt x 3ft
-               0     1     2
-           ┌──────────────────
-         0 │ 2.000 2.000 2.000
-         1 │ 2.000 2.000 2.000
-         2 │ 2.000 2.000 2.000
+             0 1 2
+           ┌──────
+         0 │ 2 2 2
+         1 │ 2 2 2
+         2 │ 2 2 2
         >
 
         Transform while preserving zero values.
@@ -660,12 +660,12 @@ class Base(ABC):
         ...                     features=[0, 2])
         >>> X
         <List 4pt x 4ft
-               0     1     2     3
-           ┌────────────────────────
-         0 │ 2.000 1.000 2.000 1.000
-         1 │ 2.000 1.000 2.000 1.000
-         2 │ 1.000 1.000 1.000 1.000
-         3 │ 1.000 1.000 1.000 1.000
+             0 1 2 3
+           ┌────────
+         0 │ 2 1 2 1
+         1 │ 2 1 2 1
+         2 │ 1 1 1 1
+         3 │ 1 1 1 1
         >
 
         Transforming with None return values. With the ``addTenToEvens``
@@ -782,11 +782,11 @@ class Base(ABC):
         >>> twos = X.calculateOnElements(lambda elem: elem + 1)
         >>> twos
         <Matrix 3pt x 3ft
-               0     1     2
-           ┌──────────────────
-         0 │ 2.000 2.000 2.000
-         1 │ 2.000 2.000 2.000
-         2 │ 2.000 2.000 2.000
+             0 1 2
+           ┌──────
+         0 │ 2 2 2
+         1 │ 2 2 2
+         2 │ 2 2 2
         >
 
         Calculate while preserving zero values.
@@ -811,10 +811,10 @@ class Base(ABC):
         ...                              features=[0, 2])
         >>> calc
         <List 2pt x 2ft
-               0     1
-           ┌────────────
-         0 │ 2.000 2.000
-         1 │ 2.000 2.000
+             0 1
+           ┌────
+         0 │ 2 2
+         1 │ 2 2
         >
 
         Calculating with None return values. With the ``addTenToEvens``
@@ -3472,12 +3472,12 @@ class Base(ABC):
         >>> X.replaceRectangle(filler, 0, 0, 1, 1)
         >>> X
         <Matrix 4pt x 4ft
-               0     1     2     3
-           ┌────────────────────────
-         0 │ 0.000 0.000 1.000 1.000
-         1 │ 0.000 0.000 1.000 1.000
-         2 │ 1.000 1.000 1.000 1.000
-         3 │ 1.000 1.000 1.000 1.000
+             0 1 2 3
+           ┌────────
+         0 │ 0 0 1 1
+         1 │ 0 0 1 1
+         2 │ 1 1 1 1
+         3 │ 1 1 1 1
         >
 
         Keywords

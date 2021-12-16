@@ -1166,11 +1166,11 @@ class Features(ABC):
         >>> X.features.transform(lambda ft: ft + 2)
         >>> X
         <Matrix 3pt x 5ft
-               0     1     2     3     4
-           ┌──────────────────────────────
-         0 │ 3.000 3.000 3.000 3.000 3.000
-         1 │ 3.000 3.000 3.000 3.000 3.000
-         2 │ 3.000 3.000 3.000 3.000 3.000
+             0 1 2 3 4
+           ┌──────────
+         0 │ 3 3 3 3 3
+         1 │ 3 3 3 3 3
+         2 │ 3 3 3 3 3
         >
 
         Transform all features; apply to certain points. Note that the
@@ -1185,11 +1185,11 @@ class Features(ABC):
         >>> X.features.transform(transformMiddlePoint)
         >>> X
         <Matrix 3pt x 5ft
-               0     1     2     3     4
-           ┌──────────────────────────────
-         0 │ 1.000 1.000 1.000 1.000 1.000
-         1 │ 5.000 5.000 5.000 5.000 5.000
-         2 │ 1.000 1.000 1.000 1.000 1.000
+             0 1 2 3 4
+           ┌──────────
+         0 │ 1 1 1 1 1
+         1 │ 5 5 5 5 5
+         2 │ 1 1 1 1 1
         >
 
         Transform a subset of features.
@@ -1198,11 +1198,11 @@ class Features(ABC):
         >>> X.features.transform(lambda ft: ft + 6, features=[1, 3])
         >>> X
         <Matrix 3pt x 5ft
-               0     1     2     3     4
-           ┌──────────────────────────────
-         0 │ 1.000 7.000 1.000 7.000 1.000
-         1 │ 1.000 7.000 1.000 7.000 1.000
-         2 │ 1.000 7.000 1.000 7.000 1.000
+             0 1 2 3 4
+           ┌──────────
+         0 │ 1 7 1 7 1
+         1 │ 1 7 1 7 1
+         2 │ 1 7 1 7 1
         >
 
         Keywords
@@ -1256,11 +1256,11 @@ class Features(ABC):
         >>> addTwo = X.features.calculate(lambda ft: ft + 2)
         >>> addTwo
         <Matrix 3pt x 5ft
-               0     1     2     3     4
-           ┌──────────────────────────────
-         0 │ 3.000 3.000 3.000 3.000 3.000
-         1 │ 3.000 3.000 3.000 3.000 3.000
-         2 │ 3.000 3.000 3.000 3.000 3.000
+             0 1 2 3 4
+           ┌──────────
+         0 │ 3 3 3 3 3
+         1 │ 3 3 3 3 3
+         2 │ 3 3 3 3 3
         >
 
         Apply calculation to all features; function modifies a specific
@@ -1275,11 +1275,11 @@ class Features(ABC):
         >>> middleChange = X.features.calculate(changeMiddlePoint)
         >>> middleChange
         <Matrix 3pt x 5ft
-               0     1     2     3     4
-           ┌──────────────────────────────
-         0 │ 1.000 1.000 1.000 1.000 1.000
-         1 │ 5.000 5.000 5.000 5.000 5.000
-         2 │ 1.000 1.000 1.000 1.000 1.000
+             0 1 2 3 4
+           ┌──────────
+         0 │ 1 1 1 1 1
+         1 │ 5 5 5 5 5
+         2 │ 1 1 1 1 1
         >
 
         Apply calculation to a subset of features.
@@ -1409,11 +1409,11 @@ class Features(ABC):
         >>> X.features.insert(1, toInsert)
         >>> X
         <Matrix 3pt x 4ft
-               0     1     2     3
-           ┌────────────────────────
-         0 │ 0.000 1.000 1.000 0.000
-         1 │ 0.000 1.000 1.000 0.000
-         2 │ 0.000 1.000 1.000 0.000
+             0 1 2 3
+           ┌────────
+         0 │ 0 1 1 0
+         1 │ 0 1 1 0
+         2 │ 0 1 1 0
         >
 
         Insert before another point; mixed object types.
@@ -1494,11 +1494,11 @@ class Features(ABC):
         >>> X.features.append(toAppend)
         >>> X
         <Matrix 3pt x 4ft
-               0     1     2     3
-           ┌────────────────────────
-         0 │ 0.000 0.000 1.000 1.000
-         1 │ 0.000 0.000 1.000 1.000
-         2 │ 0.000 0.000 1.000 1.000
+             0 1 2 3
+           ┌────────
+         0 │ 0 0 1 1
+         1 │ 0 0 1 1
+         2 │ 0 0 1 1
         >
 
         Append mixed object types.
@@ -1583,11 +1583,11 @@ class Features(ABC):
         >>> obj.features.replace(newFt, features='b')
         >>> obj
         <Matrix 3pt x 3ft
-              'a'   'b'   'c'
-           ┌──────────────────
-         0 │ 0.000 1.000 0.000
-         1 │ 0.000 1.000 0.000
-         2 │ 0.000 1.000 0.000
+             'a' 'b' 'c'
+           ┌────────────
+         0 │  0   1   0
+         1 │  0   1   0
+         2 │  0   1   0
         >
 
         >>> obj = nimble.zeros(3, 4, returnType='Sparse')
@@ -1595,11 +1595,11 @@ class Features(ABC):
         >>> obj.features.replace(replacement, [1, 2])
         >>> obj
         <Sparse 3pt x 4ft
-               0     1     2     3
-           ┌────────────────────────
-         0 │ 0.000 1.000 9.000 0.000
-         1 │ 0.000 2.000 8.000 0.000
-         2 │ 0.000 3.000 7.000 0.000
+             0 1 2 3
+           ┌────────
+         0 │ 0 1 9 0
+         1 │ 0 2 8 0
+         2 │ 0 3 7 0
         >
 
         >>> obj = nimble.zeros(3, 3, featureNames=['a', 'b', 'c'],
@@ -1607,11 +1607,11 @@ class Features(ABC):
         >>> obj.features.replace(['Y', 'N', 'Y'], featureNames=['b'])
         >>> obj
         <DataFrame 3pt x 3ft
-              'a'  'b'  'c'
-           ┌────────────────
-         0 │ 0.000  Y  0.000
-         1 │ 0.000  N  0.000
-         2 │ 0.000  Y  0.000
+             'a' 'b' 'c'
+           ┌────────────
+         0 │  0   Y   0
+         1 │  0   N   0
+         2 │  0   Y   0
         >
 
         Keywords

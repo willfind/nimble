@@ -1098,11 +1098,11 @@ class Points(ABC):
         >>> X.points.transform(lambda pt: pt + 2)
         >>> X
         <Matrix 3pt x 5ft
-               0     1     2     3     4
-           ┌──────────────────────────────
-         0 │ 3.000 3.000 3.000 3.000 3.000
-         1 │ 3.000 3.000 3.000 3.000 3.000
-         2 │ 3.000 3.000 3.000 3.000 3.000
+             0 1 2 3 4
+           ┌──────────
+         0 │ 3 3 3 3 3
+         1 │ 3 3 3 3 3
+         2 │ 3 3 3 3 3
         >
 
         Transform all points; apply to certain features. Note that the
@@ -1117,11 +1117,11 @@ class Points(ABC):
         >>> X.points.transform(transformMiddleFeature)
         >>> X
         <Matrix 3pt x 5ft
-               0     1     2     3     4
-           ┌──────────────────────────────
-         0 │ 1.000 1.000 5.000 1.000 1.000
-         1 │ 1.000 1.000 5.000 1.000 1.000
-         2 │ 1.000 1.000 5.000 1.000 1.000
+             0 1 2 3 4
+           ┌──────────
+         0 │ 1 1 5 1 1
+         1 │ 1 1 5 1 1
+         2 │ 1 1 5 1 1
         >
 
         Transform a subset of points.
@@ -1130,11 +1130,11 @@ class Points(ABC):
         >>> X.points.transform(lambda pt: pt + 6, points=[0, 2])
         >>> X
         <Matrix 3pt x 5ft
-               0     1     2     3     4
-           ┌──────────────────────────────
-         0 │ 7.000 7.000 7.000 7.000 7.000
-         1 │ 1.000 1.000 1.000 1.000 1.000
-         2 │ 7.000 7.000 7.000 7.000 7.000
+             0 1 2 3 4
+           ┌──────────
+         0 │ 7 7 7 7 7
+         1 │ 1 1 1 1 1
+         2 │ 7 7 7 7 7
         >
         """
         self._transform(function, points, useLog)
@@ -1184,11 +1184,11 @@ class Points(ABC):
         >>> addTwo = X.points.calculate(lambda pt: pt + 2)
         >>> addTwo
         <Matrix 3pt x 5ft
-               0     1     2     3     4
-           ┌──────────────────────────────
-         0 │ 3.000 3.000 3.000 3.000 3.000
-         1 │ 3.000 3.000 3.000 3.000 3.000
-         2 │ 3.000 3.000 3.000 3.000 3.000
+             0 1 2 3 4
+           ┌──────────
+         0 │ 3 3 3 3 3
+         1 │ 3 3 3 3 3
+         2 │ 3 3 3 3 3
         >
 
         Apply calculation to all points; function modifies a specific
@@ -1203,11 +1203,11 @@ class Points(ABC):
         >>> changeMiddle = X.points.calculate(changeMiddleFeature)
         >>> changeMiddle
         <Matrix 3pt x 5ft
-               0     1     2     3     4
-           ┌──────────────────────────────
-         0 │ 1.000 1.000 5.000 1.000 1.000
-         1 │ 1.000 1.000 5.000 1.000 1.000
-         2 │ 1.000 1.000 5.000 1.000 1.000
+             0 1 2 3 4
+           ┌──────────
+         0 │ 1 1 5 1 1
+         1 │ 1 1 5 1 1
+         2 │ 1 1 5 1 1
         >
 
         Apply calculation to a subset of points.
@@ -1337,12 +1337,12 @@ class Points(ABC):
         >>> X.points.insert(1, toInsert)
         >>> X
         <Matrix 4pt x 3ft
-               0     1     2
-           ┌──────────────────
-         0 │ 0.000 0.000 0.000
-         1 │ 1.000 1.000 1.000
-         2 │ 1.000 1.000 1.000
-         3 │ 0.000 0.000 0.000
+             0 1 2
+           ┌──────
+         0 │ 0 0 0
+         1 │ 1 1 1
+         2 │ 1 1 1
+         3 │ 0 0 0
         >
 
         Insert before another point; mixed object types.
@@ -1421,12 +1421,12 @@ class Points(ABC):
         >>> X.points.append(toAppend)
         >>> X
         <Matrix 4pt x 3ft
-               0     1     2
-           ┌──────────────────
-         0 │ 0.000 0.000 0.000
-         1 │ 0.000 0.000 0.000
-         2 │ 1.000 1.000 1.000
-         3 │ 1.000 1.000 1.000
+             0 1 2
+           ┌──────
+         0 │ 0 0 0
+         1 │ 0 0 0
+         2 │ 1 1 1
+         3 │ 1 1 1
         >
 
         Append mixed object types.
@@ -1514,11 +1514,11 @@ class Points(ABC):
         >>> obj.points.replace(newPt, points='b')
         >>> obj
         <Matrix 3pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'a' │ 0.000 0.000 0.000
-         'b' │ 1.000 1.000 1.000
-         'c' │ 0.000 0.000 0.000
+               0 1 2
+             ┌──────
+         'a' │ 0 0 0
+         'b' │ 1 1 1
+         'c' │ 0 0 0
         >
 
         >>> obj = nimble.zeros(4, 3, returnType='Sparse')
@@ -1526,12 +1526,12 @@ class Points(ABC):
         >>> obj.points.replace(replacement, [1, 2])
         >>> obj
         <Sparse 4pt x 3ft
-               0     1     2
-           ┌──────────────────
-         0 │ 0.000 0.000 0.000
-         1 │ 1.000 2.000 3.000
-         2 │ 9.000 8.000 7.000
-         3 │ 0.000 0.000 0.000
+             0 1 2
+           ┌──────
+         0 │ 0 0 0
+         1 │ 1 2 3
+         2 │ 9 8 7
+         3 │ 0 0 0
         >
 
         >>> obj = nimble.zeros(3, 3, pointNames=['a', 'b', 'c'],
@@ -1539,11 +1539,11 @@ class Points(ABC):
         >>> obj.points.replace([2, 3, 2], pointNames=['b'])
         >>> obj
         <DataFrame 3pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'a' │ 0.000 0.000 0.000
-         'b' │ 2.000 3.000 2.000
-         'c' │ 0.000 0.000 0.000
+               0 1 2
+             ┌──────
+         'a' │ 0 0 0
+         'b' │ 2 3 2
+         'c' │ 0 0 0
         >
 
         Keywords

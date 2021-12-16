@@ -98,12 +98,14 @@ def back_constant_logCount(toTest):
     for t in returnTypes:
         byType(t)
 
+def back_constant_hasInts(toTest):
+    for t in returnTypes:
+        out = toTest(5, 5, returnType=t)
+        assert out.countElements(nimble.match.integer) == 25
 
 ############
 ### ones ###
 ############
-
-#nimble.ones(returnType, numPoints, numFeatures, pointNames=None, featureNames=None, name=None)
 
 # This function relies on nimble.data to actually instantiate our data, and
 # never touches the pointNames, featureNames, or names arguments. The
@@ -133,11 +135,12 @@ def test_ones_conversionEqualityBetweenTypes():
 def test_ones_logCount():
     back_constant_logCount(nimble.ones)
 
+def test_ones_hasInts():
+    back_constant_hasInts(nimble.ones)
+
 #############
 ### zeros ###
 #############
-
-#nimble.zeros(returnType, numPoints, numFeatures, pointNames=None, featureNames=None, name=None)
 
 # This function relies on nimble.data to actually instantiate our data, and
 # never touches the pointNames, featureNames, or names arguments. The
@@ -166,12 +169,13 @@ def test_zeros_conversionEqualityBetweenTypes():
 def test_zeros_logCount():
     back_constant_logCount(nimble.zeros)
 
+def test_zeros_hasInts():
+    back_constant_hasInts(nimble.zeros)
+
 
 ################
 ### identity ###
 ################
-
-#nimble.identity(returnType, size, pointNames=None, featureNames=None, name=None)
 
 # This function relies on nimble.data to actually instantiate our data, and
 # never touches the pointNames, featureNames, or names arguments. The

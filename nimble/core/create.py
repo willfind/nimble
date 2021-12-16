@@ -321,13 +321,13 @@ def ones(numPoints, numFeatures, pointNames='automatic',
     >>> ones = nimble.ones(5, 5, returnType='List')
     >>> ones
     <List 5pt x 5ft
-           0     1     2     3     4
-       ┌──────────────────────────────
-     0 │ 1.000 1.000 1.000 1.000 1.000
-     1 │ 1.000 1.000 1.000 1.000 1.000
-     2 │ 1.000 1.000 1.000 1.000 1.000
-     3 │ 1.000 1.000 1.000 1.000 1.000
-     4 │ 1.000 1.000 1.000 1.000 1.000
+         0 1 2 3 4
+       ┌──────────
+     0 │ 1 1 1 1 1
+     1 │ 1 1 1 1 1
+     2 │ 1 1 1 1 1
+     3 │ 1 1 1 1 1
+     4 │ 1 1 1 1 1
     >
 
     Named object of ones with pointNames and featureNames.
@@ -338,12 +338,12 @@ def ones(numPoints, numFeatures, pointNames='automatic',
     ...                      name='ones DataFrame')
     >>> onesDF
     <DataFrame "ones DataFrame" 4pt x 4ft
-            'a'   'b'   'c'   'd'
-         ┌────────────────────────
-     '1' │ 1.000 1.000 1.000 1.000
-     '2' │ 1.000 1.000 1.000 1.000
-     '3' │ 1.000 1.000 1.000 1.000
-     '4' │ 1.000 1.000 1.000 1.000
+           'a' 'b' 'c' 'd'
+         ┌────────────────
+     '1' │  1   1   1   1
+     '2' │  1   1   1   1
+     '3' │  1   1   1   1
+     '4' │  1   1   1   1
     >
 
     Keywords
@@ -400,13 +400,13 @@ def zeros(numPoints, numFeatures, pointNames='automatic',
     >>> zeros = nimble.zeros(5, 5)
     >>> zeros
     <Matrix 5pt x 5ft
-           0     1     2     3     4
-       ┌──────────────────────────────
-     0 │ 0.000 0.000 0.000 0.000 0.000
-     1 │ 0.000 0.000 0.000 0.000 0.000
-     2 │ 0.000 0.000 0.000 0.000 0.000
-     3 │ 0.000 0.000 0.000 0.000 0.000
-     4 │ 0.000 0.000 0.000 0.000 0.000
+         0 1 2 3 4
+       ┌──────────
+     0 │ 0 0 0 0 0
+     1 │ 0 0 0 0 0
+     2 │ 0 0 0 0 0
+     3 │ 0 0 0 0 0
+     4 │ 0 0 0 0 0
     >
 
     Named object of zeros with pointNames and featureNames.
@@ -417,12 +417,12 @@ def zeros(numPoints, numFeatures, pointNames='automatic',
     ...                            name='Sparse all-zeros')
     >>> zerosSparse
     <Sparse "Sparse all-zeros" 4pt x 4ft
-            'a'   'b'   'c'   'd'
-         ┌────────────────────────
-     '1' │ 0.000 0.000 0.000 0.000
-     '2' │ 0.000 0.000 0.000 0.000
-     '3' │ 0.000 0.000 0.000 0.000
-     '4' │ 0.000 0.000 0.000 0.000
+           'a' 'b' 'c' 'd'
+         ┌────────────────
+     '1' │  0   0   0   0
+     '2' │  0   0   0   0
+     '3' │  0   0   0   0
+     '4' │  0   0   0   0
     >
 
     Keywords
