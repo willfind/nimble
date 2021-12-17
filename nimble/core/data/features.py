@@ -501,19 +501,19 @@ class Features(ABC):
         >>> single = X.features.extract('a')
         >>> single
         <List 3pt x 1ft
-              'a'
-           ┌──────
-         0 │ 1.000
-         1 │ 0.000
-         2 │ 0.000
+             'a'
+           ┌────
+         0 │  1
+         1 │  0
+         2 │  0
         >
         >>> X
         <List 3pt x 2ft
-              'b'   'c'
-           ┌────────────
-         0 │ 0.000 0.000
-         1 │ 1.000 0.000
-         2 │ 0.000 1.000
+             'b' 'c'
+           ┌────────
+         0 │  0   0
+         1 │  1   0
+         2 │  0   1
         >
 
         Extract multiple features.
@@ -523,19 +523,19 @@ class Features(ABC):
         >>> multiple = X.features.extract(['a', 2])
         >>> multiple
         <List 3pt x 2ft
-              'a'   'c'
-           ┌────────────
-         0 │ 1.000 0.000
-         1 │ 0.000 0.000
-         2 │ 0.000 1.000
+             'a' 'c'
+           ┌────────
+         0 │  1   0
+         1 │  0   0
+         2 │  0   1
         >
         >>> X
         <List 3pt x 1ft
-              'b'
-           ┌──────
-         0 │ 0.000
-         1 │ 1.000
-         2 │ 0.000
+             'b'
+           ┌────
+         0 │  0
+         1 │  1
+         2 │  0
         >
 
         Extract feature when the function returns True.
@@ -545,19 +545,19 @@ class Features(ABC):
         >>> func = X.features.extract(lambda ft: ft[2] == 1)
         >>> func
         <List 3pt x 1ft
-              'c'
-           ┌──────
-         0 │ 0.000
-         1 │ 0.000
-         2 │ 1.000
+             'c'
+           ┌────
+         0 │  0
+         1 │  0
+         2 │  1
         >
         >>> X
         <List 3pt x 2ft
-              'a'   'b'
-           ┌────────────
-         0 │ 1.000 0.000
-         1 │ 0.000 1.000
-         2 │ 0.000 0.000
+             'a' 'b'
+           ┌────────
+         0 │  1   0
+         1 │  0   1
+         2 │  0   0
         >
 
         Extract feature when the query string returns True.
@@ -568,19 +568,19 @@ class Features(ABC):
         >>> strFunc = X.features.extract("p2 != 0")
         >>> strFunc
         <List 3pt x 1ft
-                 'b'
-              ┌──────
-         'p1' │ 0.000
-         'p2' │ 1.000
-         'p3' │ 0.000
+                'b'
+              ┌────
+         'p1' │  0
+         'p2' │  1
+         'p3' │  0
         >
         >>> X
         <List 3pt x 2ft
-                 'a'   'c'
-              ┌────────────
-         'p1' │ 1.000 0.000
-         'p2' │ 0.000 0.000
-         'p3' │ 0.000 1.000
+                'a' 'c'
+              ┌────────
+         'p1' │  1   0
+         'p2' │  0   0
+         'p3' │  0   1
         >
 
         Extract features from the inclusive start to the inclusive end.
@@ -590,19 +590,19 @@ class Features(ABC):
         >>> startEnd = X.features.extract(start=1, end=2)
         >>> startEnd
         <List 3pt x 2ft
-              'b'   'c'
-           ┌────────────
-         0 │ 0.000 0.000
-         1 │ 1.000 0.000
-         2 │ 0.000 1.000
+             'b' 'c'
+           ┌────────
+         0 │  0   0
+         1 │  1   0
+         2 │  0   1
         >
         >>> X
         <List 3pt x 1ft
-              'a'
-           ┌──────
-         0 │ 1.000
-         1 │ 0.000
-         2 │ 0.000
+             'a'
+           ┌────
+         0 │  1
+         1 │  0
+         2 │  0
         >
 
         Select a set number to extract, starting from the first feature.
@@ -613,19 +613,19 @@ class Features(ABC):
         >>> numberNoRandom = X.features.extract(number=2)
         >>> numberNoRandom
         <List 3pt x 2ft
-              'a'   'b'
-           ┌────────────
-         0 │ 1.000 0.000
-         1 │ 0.000 1.000
-         2 │ 0.000 0.000
+             'a' 'b'
+           ┌────────
+         0 │  1   0
+         1 │  0   1
+         2 │  0   0
         >
         >>> X
         <List 3pt x 1ft
-              'c'
-           ┌──────
-         0 │ 0.000
-         1 │ 0.000
-         2 │ 1.000
+             'c'
+           ┌────
+         0 │  0
+         1 │  0
+         2 │  1
         >
 
         Select a set number to extract, choosing features at random.
@@ -635,19 +635,19 @@ class Features(ABC):
         >>> numberRandom = X.features.extract(number=2, randomize=True)
         >>> numberRandom
         <List 3pt x 2ft
-              'c'   'a'
-           ┌────────────
-         0 │ 0.000 1.000
-         1 │ 0.000 0.000
-         2 │ 1.000 0.000
+             'c' 'a'
+           ┌────────
+         0 │  0   1
+         1 │  0   0
+         2 │  1   0
         >
         >>> X
         <List 3pt x 1ft
-              'b'
-           ┌──────
-         0 │ 0.000
-         1 │ 1.000
-         2 │ 0.000
+             'b'
+           ┌────
+         0 │  0
+         1 │  1
+         2 │  0
         >
 
         Keywords
@@ -719,11 +719,11 @@ class Features(ABC):
         >>> X.features.delete('a')
         >>> X
         <List 3pt x 2ft
-              'b'   'c'
-           ┌────────────
-         0 │ 0.000 0.000
-         1 │ 1.000 0.000
-         2 │ 0.000 1.000
+             'b' 'c'
+           ┌────────
+         0 │  0   0
+         1 │  1   0
+         2 │  0   1
         >
 
         Delete multiple features.
@@ -733,11 +733,11 @@ class Features(ABC):
         >>> X.features.delete(['a', 2])
         >>> X
         <List 3pt x 1ft
-              'b'
-           ┌──────
-         0 │ 0.000
-         1 │ 1.000
-         2 │ 0.000
+             'b'
+           ┌────
+         0 │  0
+         1 │  1
+         2 │  0
         >
 
         Delete feature when the function returns True.
@@ -747,11 +747,11 @@ class Features(ABC):
         >>> X.features.delete(lambda ft: ft[2] == 1)
         >>> X
         <List 3pt x 2ft
-              'a'   'b'
-           ┌────────────
-         0 │ 1.000 0.000
-         1 │ 0.000 1.000
-         2 │ 0.000 0.000
+             'a' 'b'
+           ┌────────
+         0 │  1   0
+         1 │  0   1
+         2 │  0   0
         >
 
         Delete feature when the query string returns True.
@@ -762,11 +762,11 @@ class Features(ABC):
         >>> X.features.delete("p2 != 0")
         >>> X
         <List 3pt x 2ft
-                 'a'   'c'
-              ┌────────────
-         'p1' │ 1.000 0.000
-         'p2' │ 0.000 0.000
-         'p3' │ 0.000 1.000
+                'a' 'c'
+              ┌────────
+         'p1' │  1   0
+         'p2' │  0   0
+         'p3' │  0   1
         >
 
         Delete features from the inclusive start to the inclusive end.
@@ -776,11 +776,11 @@ class Features(ABC):
         >>> X.features.delete(start=1, end=2)
         >>> X
         <List 3pt x 1ft
-              'a'
-           ┌──────
-         0 │ 1.000
-         1 │ 0.000
-         2 │ 0.000
+             'a'
+           ┌────
+         0 │  1
+         1 │  0
+         2 │  0
         >
 
         Select a set number to delete, starting from the first feature.
@@ -790,11 +790,11 @@ class Features(ABC):
         >>> X.features.delete(number=2)
         >>> X
         <List 3pt x 1ft
-              'c'
-           ┌──────
-         0 │ 0.000
-         1 │ 0.000
-         2 │ 1.000
+             'c'
+           ┌────
+         0 │  0
+         1 │  0
+         2 │  1
         >
 
         Select a set number to delete, choosing features at random.
@@ -805,11 +805,11 @@ class Features(ABC):
         >>> X.features.delete(number=2,  randomize=True)
         >>> X
         <List 3pt x 1ft
-              'b'
-           ┌──────
-         0 │ 0.000
-         1 │ 1.000
-         2 │ 0.000
+             'b'
+           ┌────
+         0 │  0
+         1 │  1
+         2 │  0
         >
 
         Keywords
@@ -881,11 +881,11 @@ class Features(ABC):
         >>> X.features.retain('a')
         >>> X
         <List 3pt x 1ft
-              'a'
-           ┌──────
-         0 │ 1.000
-         1 │ 0.000
-         2 │ 0.000
+             'a'
+           ┌────
+         0 │  1
+         1 │  0
+         2 │  0
         >
 
         Retain multiple features.
@@ -895,11 +895,11 @@ class Features(ABC):
         >>> X.features.retain(['a', 2])
         >>> X
         <List 3pt x 2ft
-              'a'   'c'
-           ┌────────────
-         0 │ 1.000 0.000
-         1 │ 0.000 0.000
-         2 │ 0.000 1.000
+             'a' 'c'
+           ┌────────
+         0 │  1   0
+         1 │  0   0
+         2 │  0   1
         >
 
         Retain feature when the function returns True.
@@ -909,11 +909,11 @@ class Features(ABC):
         >>> X.features.retain(lambda ft: ft[2] == 1)
         >>> X
         <List 3pt x 1ft
-              'c'
-           ┌──────
-         0 │ 0.000
-         1 │ 0.000
-         2 │ 1.000
+             'c'
+           ┌────
+         0 │  0
+         1 │  0
+         2 │  1
         >
 
         Retain feature when the query string returns True.
@@ -924,11 +924,11 @@ class Features(ABC):
         >>> X.features.retain("p2 != 0")
         >>> X
         <List 3pt x 1ft
-                 'b'
-              ┌──────
-         'p1' │ 0.000
-         'p2' │ 1.000
-         'p3' │ 0.000
+                'b'
+              ┌────
+         'p1' │  0
+         'p2' │  1
+         'p3' │  0
         >
 
         Retain features from the inclusive start to the inclusive end.
@@ -938,11 +938,11 @@ class Features(ABC):
         >>> X.features.retain(start=1, end=2)
         >>> X
         <List 3pt x 2ft
-              'b'   'c'
-           ┌────────────
-         0 │ 0.000 0.000
-         1 │ 1.000 0.000
-         2 │ 0.000 1.000
+             'b' 'c'
+           ┌────────
+         0 │  0   0
+         1 │  1   0
+         2 │  0   1
         >
 
         Select a set number to retain, starting from the first feature.
@@ -952,11 +952,11 @@ class Features(ABC):
         >>> X.features.retain(number=2)
         >>> X
         <List 3pt x 2ft
-              'a'   'b'
-           ┌────────────
-         0 │ 1.000 0.000
-         1 │ 0.000 1.000
-         2 │ 0.000 0.000
+             'a' 'b'
+           ┌────────
+         0 │  1   0
+         1 │  0   1
+         2 │  0   0
         >
 
         Select a set number to retain, choosing features at random.
@@ -967,11 +967,11 @@ class Features(ABC):
         >>> X.features.retain(number=2, randomize=True)
         >>> X
         <List 3pt x 2ft
-              'c'   'a'
-           ┌────────────
-         0 │ 0.000 1.000
-         1 │ 0.000 0.000
-         2 │ 1.000 0.000
+             'c' 'a'
+           ┌────────
+         0 │  0   1
+         1 │  0   0
+         2 │  1   0
         >
 
         Keywords
@@ -1290,11 +1290,11 @@ class Features(ABC):
         ...                             features=[2, 0])
         >>> calc
         <Matrix 3pt x 2ft
-              'f3'  'f1'
-           ┌────────────
-         0 │ 6.000 7.000
-         1 │ 6.000 6.000
-         2 │ 7.000 6.000
+             'f3' 'f1'
+           ┌──────────
+         0 │  6    7
+         1 │  6    6
+         2 │  7    6
         >
 
         Keywords

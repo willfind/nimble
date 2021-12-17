@@ -239,4 +239,9 @@ def test_identity_logCount():
     for t in returnTypes:
         byType(t)
 
+def test_identity_hasInts():
+    for t in returnTypes:
+        out = nimble.identity(5, returnType=t)
+        assert out.countElements(nimble.match.integer) == 25
+
 # EOF Marker

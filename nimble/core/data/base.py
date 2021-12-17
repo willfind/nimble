@@ -646,11 +646,11 @@ class Base(ABC):
         ...                     preserveZeros=True)
         >>> X
         <Sparse 3pt x 3ft
-               0      1      2
-           ┌─────────────────────
-         0 │ 11.000 0.000  0.000
-         1 │ 0.000  11.000 0.000
-         2 │ 0.000  0.000  11.000
+             0  1  2
+           ┌─────────
+         0 │ 11 0  0
+         1 │ 0  11 0
+         2 │ 0  0  11
         >
 
         Transforming a subset of points and features.
@@ -796,11 +796,11 @@ class Base(ABC):
         ...                                preserveZeros=True)
         >>> addTen
         <Sparse 3pt x 3ft
-               0      1      2
-           ┌─────────────────────
-         0 │ 11.000 0.000  0.000
-         1 │ 0.000  11.000 0.000
-         2 │ 0.000  0.000  11.000
+             0  1  2
+           ┌─────────
+         0 │ 11 0  0
+         1 │ 0  11 0
+         2 │ 0  0  11
         >
 
         Calculate on a subset of points and features.
@@ -1144,7 +1144,7 @@ class Base(ABC):
         >>> X = nimble.identity(5)
         >>> unique = X.countUniqueElements()
         >>> unique
-        {0.0: 20, 1.0: 5}
+        {0: 20, 1: 5}
 
         Count for a subset of elements.
 
@@ -1152,7 +1152,7 @@ class Base(ABC):
         >>> unique = X.countUniqueElements(points=0,
         ...                                   features=[0, 1, 2])
         >>> unique
-        {0.0: 2, 1.0: 1}
+        {0: 2, 1: 1}
 
         Keywords
         --------
@@ -3291,18 +3291,18 @@ class Base(ABC):
         >>> asDataFrame = X.copy(to='DataFrame')
         >>> asDataFrame
         <DataFrame 2pt x 2ft
-                'a'   'b'
-             ┌────────────
-         '0' │ 1.000 0.000
-         '1' │ 0.000 1.000
+               'a' 'b'
+             ┌────────
+         '0' │  1   0
+         '1' │  0   1
         >
         >>> asNumpyArray = X.copy(to='numpy array')
         >>> asNumpyArray
-        array([[1., 0.],
-               [0., 1.]])
+        array([[1, 0],
+               [0, 1]])
         >>> asListOfDict = X.copy(to='list of dict')
         >>> asListOfDict
-        [{'a': 1.0, 'b': 0.0}, {'a': 0.0, 'b': 1.0}]
+        [{'a': 1, 'b': 0}, {'a': 0, 'b': 1}]
 
         Keywords
         --------
