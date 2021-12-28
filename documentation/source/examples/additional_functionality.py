@@ -351,28 +351,34 @@ print('LeastFeatureMeanDistance accuracy:', performance)
 nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
 
 ## Enabling deep logging for cross-validation, will generate log entries for
-## each fold during our k-fold cross validation. Below, `trainAndTest` with
-## `folds=3` and `k=nimble.CV([3, 5, 7])` will perform 3-fold cross validation
-## on each of our 3 `k` values and use the `k` value that performed the best
-## during cross validation.
+## each fold during our k-fold cross-validation. Below, `trainAndTest` with
+## `k=nimble.Tune([3, 5, 7])` will trigger hyperparameter tuning for our three
+## `k` values. The `Tuning` object defines a method for selecting each argument
+## set and how each argument set will be validated. All three `k` values will
+## be checked with the default "consecutive" method, since we are only tuning
+## a single parameter. The default validation is already "cross validation" but
+## we will set it to perform 3-fold cross-validation instead of the default
+## 5-fold. Then, `trainAndTest` will apply the `k` value that performed the
+## best during validation to the test data.
 performance = nimble.trainAndTest('nimble.KNNClassifier', trainX, trainY,
                                   testX, testY,
                                   nimble.calculate.fractionCorrect,
-                                  folds=3, k=nimble.CV([3, 5, 7]))
+                                  k=nimble.Tune([3, 5, 7]),
+                                  tuning=nimble.Tuning(folds=3))
 
 ## With deep logging for cross validation enabled, we just created 11 new log
 ## entries. We get 9 cross validation logs (3-fold cross validation for 3
 ## different `k` values). These entries would not be added to the logger
 ## without deep logging being enabled and `showLog` filters these entries out
 ## unless `levelOfDetail` is set to 3 (the highest level). The 10th entry is a
-## summary of the cross validation results and the last entry is the results of
-## our call to `trainAndTest`. The last two entries are logged as long as
-## regular logging is enabled and will be displayed if `levelOfDetail` is 2
-## (the default) or greater. A `levelOfDetail` of 1 (the lowest) filters out
-## all but logs for data loading and data reports. Our 9 cross validation log
-## entries look similar so we will only show the last two cross validation
-## entries, the cross validation summary entry and our `trainAndTest` log entry
-## by setting `maximumEntries=4`.
+## summary of the hyperparameter tuning results and the last entry is the
+## results of our call to `trainAndTest`. The last two entries are logged as
+## long as regular logging is enabled and will be displayed if `levelOfDetail`
+## is 2 (the default) or greater. A `levelOfDetail` of 1 (the lowest) filters
+## out all but logs for data loading and data reports. Our 9 cross validation
+## log entries look similar so we will only show the last two cross validation
+## entries, the tuning summary entry and our `trainAndTest` log entry by
+## setting `maximumEntries=4`.
 nimble.showLog(levelOfDetail=3, maximumEntries=4)
 
 ## We can see that `k=5` slightly outperformed `k=7` on the last fold and

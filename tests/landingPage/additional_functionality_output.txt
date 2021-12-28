@@ -97,21 +97,21 @@ LeastFeatureMeanDistance accuracy: 0.9716666666666667
 ...............................................................................
 REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 
-KFoldCrossValidation("nimble.KNNClassifier")
+KFold("nimble.KNNClassifier")
 Data                      # points                  # features
-trainX                    934                       7
-trainY                    934                       1
-testX                     466                       7
-testY                     466                       1
+trainX                    933                       7
+trainY                    933                       1
+testX                     467                       7
+testY                     467                       1
 
-Arguments: k=5
-Random Seed: 99320166
-Extra Info: Fold=3/3
-Metrics: fractionCorrect=0.9849785407725322
+Arguments: k=7
+Random Seed: 2127877500
+Extra Info: Fold=2/3
+Metrics: fractionCorrect=0.9764453961456103
 ...............................................................................
 REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 
-KFoldCrossValidation("nimble.KNNClassifier")
+KFold("nimble.KNNClassifier")
 Data                      # points                  # features
 trainX                    934                       7
 trainY                    934                       1
@@ -119,20 +119,19 @@ testX                     466                       7
 testY                     466                       1
 
 Arguments: k=7
-Random Seed: 99320166
+Random Seed: 2127877500
 Extra Info: Fold=3/3
-Metrics: fractionCorrect=0.9828326180257511
+Metrics: fractionCorrect=0.9785407725321889
 ...............................................................................
-REGEX: Cross Validating for nimble.KNNClassifier                   \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: "nimble.KNNClassifier" Hyperparameter Tuning                \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 
-3-folding using fractionCorrect optimizing for max values
-
-Variable Arguments: k=CV([3, 5, 7])
-
-Results             Arguments
-0.984               k=3
-0.985               k=5
-0.984               k=7
+Tuned using the "consecutive" method (loops=1) and validated using the "cross
+validation" method (folds=3). The fractionCorrect function was used to
+calculate each result, with max values being optimal.
+Result          Arguments
+0.983           k=3
+0.981           k=5
+0.981           k=7
 ...............................................................................
 REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 
@@ -143,9 +142,9 @@ wifiData trainY           1400                      1
 wifiData testX            600                       7
 wifiData testY            600                       1
 
-Arguments: k=CV([3, 5, 7])
-Random Seed: 522510084
-Extra Info: bestParams={'k': 5}
+Arguments: k=Tune([3, 5, 7])
+Random Seed: 99320166
+Extra Info: bestArguments={'k': 3}
 Metrics: fractionCorrect=0.985
 ...............................................................................
                                   NIMBLE LOGS
@@ -180,8 +179,8 @@ wifiData trainY           1400                      1
 wifiData testX            600                       7
 wifiData testY            600                       1
 
-Arguments: k=CV([3, 5, 7])
-Random Seed: 522510084
-Extra Info: bestParams={'k': 5}
+Arguments: k=Tune([3, 5, 7])
+Random Seed: 99320166
+Extra Info: bestArguments={'k': 3}
 Metrics: fractionCorrect=0.985
 ...............................................................................

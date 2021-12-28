@@ -68,7 +68,7 @@ def prepopulatedLogSafetyWrapper(testFunc):
             results = nimble.trainAndTest(
                 'nimble.KNNClassifier', trainX=trainObj, trainY=trainYObj,
                 testX=testObj, testY=testYObj, performanceFunction=RMSE,
-                folds=5, arguments={"k": nimble.CV([3, 5])})
+                arguments={"k": nimble.Tune([3, 5])})
         # edit log sessionNumbers and timestamps
         location = nimble.settings.get("logger", "location")
         name = nimble.settings.get("logger", "name")
@@ -305,13 +305,6 @@ def testRunTypeFunctionsUseLog():
     assert re.search(timePattern, logInfo)
     assert re.search(randomSeedPattern, logInfo)
 
-    # crossValidate
-    top = nimble.crossValidate('nimble.KNNClassifier', trainXObj, trainYObj,
-                               performanceFunction=RMSE)
-    logInfo = getLastLogData()
-    assert "'learner': 'nimble.KNNClassifier'" in logInfo
-    assert re.search(randomSeedPattern, logInfo)
-
     # randomSeed for top level functions
     tl = nimble.train("sciKitLearn.SVC", trainXObj, trainYObj, randomSeed=123)
     logInfo = getLastLogData()
@@ -338,11 +331,6 @@ def testRunTypeFunctionsUseLog():
     results = nimble.trainAndTestOnTrainingData(
         "sciKitLearn.SVC", trainXObj, trainYObj,  performanceFunction=RMSE,
         randomSeed=123)
-    logInfo = getLastLogData()
-    assert "'randomSeed': 123" in logInfo
-
-    top = nimble.crossValidate('nimble.KNNClassifier', trainXObj, trainYObj,
-                               performanceFunction=RMSE, randomSeed=123)
     logInfo = getLastLogData()
     assert "'randomSeed': 123" in logInfo
 
@@ -993,7 +981,7 @@ def testShowLogSearchFilters():
     nimble.showLog(levelOfDetail=3, leastSessionsAgo=1, mostSessionsAgo=5, saveToFileName=pathToFile)
     moreSessionsAgoSize = os.path.getsize(pathToFile)
     assert moreSessionsAgoSize < fullShowLogSize
-
+    nimble.showLog(levelOfDetail=3, leastSessionsAgo=1, mostSessionsAgo=5)
     assert moreSessionsAgoSize == fewerSessionsAgoSize
 
     nimble.showLog(levelOfDetail=3, leastSessionsAgo=2, mostSessionsAgo=4, saveToFileName=pathToFile)

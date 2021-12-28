@@ -12,20 +12,16 @@ import numpy as np
 import nimble
 from nimble import match
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
-from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._utility import mergeArguments, tableString
-from nimble.core.logger import handleLogging, loggingEnabled
-from nimble.core.logger import deepLoggingEnabled
+from nimble.core.logger import handleLogging
 from nimble.core._learnHelpers import findBestInterface
 from nimble.core._learnHelpers import _learnerQuery
 from nimble.core._learnHelpers import _unpackLearnerName
 from nimble.core._learnHelpers import validateLearningArguments
 from nimble.core._learnHelpers import trackEntry
 from nimble.core._learnHelpers import LearnerInspector
-from nimble.core._learnHelpers import ArgumentIterator
-from nimble.core._learnHelpers import FoldIterator
-from nimble.core._learnHelpers import computeMetrics
 from nimble.core._learnHelpers import initAvailablePredefinedInterfaces
+from nimble.core.tune import Tune, Tuning
 
 
 def learnerType(learnerNames): # pylint: disable=redefined-outer-name
@@ -318,9 +314,9 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     learnerName : str
         The learner to be called. This can be a string in the form
         'package.learner' or the learner class object.
-    trainX: nimble Base object
+    trainX : nimble Base object
         Data to be used for training.
-    trainY: identifier, nimble Base object
+    trainY : identifier, nimble Base object
         A name or index of the feature in ``trainX`` containing the
         labels or another nimble Base object containing the labels that
         correspond to ``trainX``.
@@ -328,11 +324,13 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         Data to be used for testing.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
-        during training and application.
-        Example: {'dimensions':5, 'k':5}
-        If an argument requires its own parameters for instantiation,
-        use a nimble.Init object.
-        Example: {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        during training and application (e.g., {'dimensions':5, 'k':5}).
+        To provide an argument that is an object from the same package
+        as the learner, use a ``nimble.Init`` object with the object
+        name and its instantiation arguments (e.g.,
+        {'kernel': nimble.Init('KernelGaussian', width=2.0)}).
+        Note: learner arguments can also be passed as ``kwarguments`` so
+        this dictionary will be merged with any keyword arguments.
     randomSeed : int
        Set a random seed for the operation. When None, the randomness is
        controlled by Nimble's random seed. Ignored if learner does not
@@ -345,7 +343,11 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         send to the logger, regardless of the global option.
     kwarguments
         Keyword arguments specified variables that are passed to the
-        learner. Same format as the arguments parameter.
+        learner. These are combined with the ``arguments`` parameter.
+        To provide an argument that is an object from the same package
+        as the learner, use a ``nimble.Init`` object with the object
+        name and its instantiation arguments (e.g.,
+        kernel=nimble.Init('KernelGaussian', width=2.0)).
 
     See Also
     --------
@@ -449,15 +451,17 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     learnerName : str
         The learner to be called. This can be a string in the form
         'package.learner' or the learner class object.
-    trainX: nimble Base object
+    trainX : nimble Base object
         Data to be used for training.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
-        during training and application.
-        Example: {'dimensions': 5, 'k': 5}
-        If an argument requires its own parameters for instantiation,
-        use a nimble.Init object.
-        Example: {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
+        during training and application (e.g., {'dimensions':5, 'k':5}).
+        To provide an argument that is an object from the same package
+        as the learner, use a ``nimble.Init`` object with the object
+        name and its instantiation arguments (e.g.,
+        {'kernel': nimble.Init('KernelGaussian', width=2.0)}).
+        Note: learner arguments can also be passed as ``kwarguments`` so
+        this dictionary will be merged with any keyword arguments.
     points : identifier, list of identifiers, None
         May be a single point name or index, an iterable,
         container of point names and/or indices. None indicates
@@ -476,7 +480,11 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
         send to the logger, regardless of the global option.
     kwarguments
         Keyword arguments specified variables that are passed to the
-        learner. Same format as the arguments parameter.
+        learner. These are combined with the ``arguments`` parameter.
+        To provide an argument that is an object from the same package
+        as the learner, use a ``nimble.Init`` object with the object
+        name and its instantiation arguments (e.g.,
+        kernel=nimble.Init('KernelGaussian', width=2.0)).
 
     See Also
     --------
@@ -578,129 +586,10 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
                   learnerName, merged, time=totalTime)
 
 
-def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
-                  folds=10, scoreMode='label', randomSeed=None, useLog=None,
-                  **kwarguments):
-    """
-    Perform K-fold cross validation.
-
-    The object returned provides access to the results. All results, the
-    best set of arguments and the best result can be accessed through
-    its ``allResults``, ``bestArguments`` and ``bestResult`` attributes,
-    respectively.
-
-    Parameters
-    ----------
-    learnerName : str
-        The learner to be called. This can be a string in the form
-        'package.learner' or the learner class object.
-    X : nimble Base object
-        points/features data
-    Y : nimble Base object
-        labels/data about points in X
-    performanceFunction : function
-        Premade options are available in nimble.calculate.
-        Function used to evaluate the performance score for each run.
-        Function is of the form: def func(knownValues, predictedValues).
-    arguments : dict
-        Mapping argument names (strings) to their values, to be used
-        during training and application. eg. {'dimensions':5, 'k':5}
-        To trigger cross-validation using multiple values for arguments,
-        specify different values for each parameter using a nimble.CV
-        object. eg. {'k': nimble.CV([1,3,5])} will generate an error
-        score for  the learner when the learner was passed all three
-        values of ``k``, separately. If an argument requires its own
-        parameters for instantiation, use a nimble.Init object.
-        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
-        ``arguments`` will be merged with the learner ``kwarguments`` .
-    folds : int
-        The number of folds used in the cross validation. Can't exceed
-        the number of points in X, Y.
-    scoreMode : str
-        Used by computeMetrics.
-    randomSeed : int
-       Set a random seed for the operation. When None, the randomness is
-       controlled by Nimble's random seed. Ignored if learner does not
-       depend on randomness.
-    useLog : bool, None
-        Local control for whether to send results/timing to the logger.
-        If None (default), use the value as specified in the "logger"
-        "enabledByDefault" configuration option. If True, send to the
-        logger regardless of the global option. If False, do **NOT**
-        send to the logger, regardless of the global option.
-    kwarguments
-        Keyword arguments specified variables that are passed to the
-        learner. To trigger cross-validation using multiple values for
-        arguments, specify different values for each parameter using a
-        nimble.CV object. eg. arg1=nimble.CV([1,2,3]),
-        arg2=nimble.CV([4,5,6]) which correspond to permutations/
-        argument states with one element from arg1 and one element from
-        arg2, such that an example generated permutation/argument state
-        would be ``arg1=2, arg2=4``. Will be merged with ``arguments``.
-
-    Returns
-    -------
-    KFoldCrossValidator
-        Object which performs the cross-validation and provides the
-        results which can be accessed through the object's attributes
-        and methods.
-
-    See Also
-    --------
-    nimble.core.learn.KFoldCrossValidator, CV, Init
-
-    Examples
-    --------
-    >>> nimble.random.setSeed(42)
-    >>> xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
-    ...         [1, 0, 0], [0, 1, 0], [0, 0, 1],
-    ...         [1, 0, 1], [1, 1, 0], [0, 1, 1]]
-    >>> yRaw = [[1], [2], [3],
-    ...         [1], [2], [3],
-    ...         [1], [2], [3]]
-    >>> X = nimble.data(xRaw)
-    >>> Y = nimble.data(yRaw)
-    >>> crossValidator = nimble.crossValidate(
-    ...    'nimble.KNNClassifier', X, Y,
-    ...    performanceFunction=nimble.calculate.fractionIncorrect,
-    ...    folds=3, k=3)
-    >>> type(crossValidator)
-    <class 'nimble.core.learn.KFoldCrossValidator'>
-    >>> crossValidator.learnerName
-    'nimble.KNNClassifier'
-    >>> crossValidator.folds
-    3
-    >>> crossValidator.bestArguments
-    {'k': 3}
-    >>> crossValidator.bestResult
-    0.3333333333333333
-    >>> crossValidator.getFoldResults(crossValidator.bestArguments)
-    [0.3333333333333333, 0.6666666666666666, 0.0]
-    >>> crossValidator.allResults
-    [{'k': 3, 'fractionIncorrect': 0.3333333333333333}]
-
-    Keywords
-    --------
-    cross validation, k-fold, k fold, resampling, partition, rotation
-    estimation, out-of-sample, out of sample, model validation,
-    hyperparameters, tuning
-    """
-    if trackEntry.isEntryPoint:
-        validateLearningArguments(X, Y, arguments=arguments,
-                                  scoreMode=scoreMode)
-    kfcv = KFoldCrossValidator(learnerName, X, Y, performanceFunction,
-                               arguments, folds, scoreMode, randomSeed,
-                               useLog, **kwarguments)
-    handleLogging(useLog, 'crossVal', kfcv.learnerName, kfcv.arguments,
-                  kfcv.performanceFunction, kfcv._allResults, kfcv.folds,
-                  kfcv.randomSeed)
-
-    return kfcv
-
 @trackEntry
-def train(learnerName, trainX, trainY=None, performanceFunction=None,
-          arguments=None, scoreMode='label', multiClassStrategy='default',
-          folds=10, randomSeed=None, useLog=None, **kwarguments):
+def train(learnerName, trainX, trainY=None, arguments=None, scoreMode='label',
+          multiClassStrategy='default', randomSeed=None, tuning=None,
+          performanceFunction=None, useLog=None, **kwarguments):
     """
     Train a specified learner using the provided data.
 
@@ -709,46 +598,46 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     learnerName : str
         The learner to be called. This can be a string in the form
         'package.learner' or the learner class object.
-    trainX: nimble Base object
+    trainX : nimble Base object
         Data to be used for training.
-    trainY: identifier, nimble Base object
+    trainY : identifier, nimble Base object
         A name or index of the feature in ``trainX`` containing the
         labels or another nimble Base object containing the labels that
         correspond to ``trainX``.
-    performanceFunction : function
-        If cross validation is triggered to select from the given
-        argument set, then this function will be used to generate a
-        performance score for the run. Function is of the form:
-        def func(knownValues, predictedValues).
-        Look in nimble.calculate for pre-made options. Default is None,
-        since if there is no parameter selection to be done, it is not
-        used.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
-        during training and application. eg. {'dimensions':5, 'k':5}
-        To trigger cross-validation using multiple values for arguments,
-        specify different values for each parameter using a nimble.CV
-        object. eg. {'k': nimble.CV([1,3,5])} will generate an error
-        score for  the learner when the learner was passed all three
-        values of ``k``, separately. If an argument requires its own
-        parameters for instantiation, use a nimble.Init object.
-        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
-        ``arguments`` will be merged with the learner ``kwarguments``
+        during training and application (e.g., {'dimensions':5, 'k':5}).
+        Multiple values for arguments can be provided by using a
+        ``Tune`` object (e.g., {'k': Tune([3, 5, 7])}) to initiate
+        hyperparameter tuning and return the learner trained on the best
+        set of arguments. To provide an argument that is an object from
+        the same package as the learner, use a ``nimble.Init`` object
+        with the object name and its instantiation arguments (e.g.,
+        {'kernel': nimble.Init('KernelGaussian', width=2.0)}).
+        Note: learner arguments can also be passed as ``kwarguments`` so
+        this dictionary will be merged with any keyword arguments.
     scoreMode : str
         In the case of a classifying learner, this specifies the type of
-        output wanted: 'label' if we class labels are desired,
+        output wanted: 'label' if the class labels are desired,
         'bestScore' if both the class label and the score associated
         with that class are desired, or 'allScores' if a matrix
         containing the scores for every class label are desired.
     multiClassStrategy : str
         May only be 'default', 'OneVsAll' or 'OneVsOne'.
-    folds : int
-        The number of folds used in the cross validation. Cannot exceed
-        the number of points in ``trainX``. Default 10.
     randomSeed : int
        Set a random seed for the operation. When None, the randomness is
        controlled by Nimble's random seed. Ignored if learner does not
        depend on randomness.
+    tuning : nimble.Tuning, None
+        Used when hyperparameter tuning has been initiated through
+        ``Tune`` objects in the arguments. If hyperparameter tuning is
+        triggered and this is None, the default Tuning will be applied
+        and a performanceFunction must be provided.
+    performanceFunction : function, None
+        If hyperparameter tuning is triggered and the Tuning does not
+        have a performanceFunction set, then this function will be used
+        to generate a performance score for each validation run. See
+        nimble.calculate for pre-made options. Default is None.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -757,13 +646,14 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
         send to the logger, regardless of the global option.
     kwarguments
         Keyword arguments specified variables that are passed to the
-        learner. To trigger cross-validation using multiple values for
-        arguments, specify different values for each parameter using a
-        nimble.CV object. eg. arg1=nimble.CV([1,2,3]),
-        arg2=nimble.CV([4,5,6]) which correspond to permutations/
-        argument states with one element from arg1 and one element from
-        arg2, such that an example generated permutation/argument state
-        would be ``arg1=2, arg2=4``. Will be merged with ``arguments``.
+        learner. These are combined with the ``arguments`` parameter.
+        Multiple values for arguments can be provided by using a
+        ``Tune`` object (e.g., k=Tune([3, 5, 7])) to initiate
+        hyperparameter tuning and return the learner trained on the best
+        set of arguments. To provide an argument that is an object from
+        the same package as the learner, use a ``nimble.Init`` object
+        with the object name and its instantiation arguments (e.g.,
+        kernel=nimble.Init('KernelGaussian', width=2.0)).
 
     Returns
     -------
@@ -771,8 +661,11 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
 
     See Also
     --------
-    trainAndApply, trainAndTest, trainAndTestOnTrainingData, CV,
-    nimble.core.interfaces.TrainedLearner, Init
+    trainAndApply, trainAndTest, trainAndTestOnTrainingData,
+    nimble.core.interfaces.TrainedLearner, nimble.Init, nimble.Tune,
+    nimble.Tuning
+
+
 
     Examples
     --------
@@ -819,7 +712,7 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     machine learning
     """
     startTime = time.process_time()
-    crossValLog = useLog
+    tuneLog = useLog
     if trackEntry.isEntryPoint:
         validateLearningArguments(trainX, trainY, arguments=arguments,
                                   scoreMode=scoreMode,
@@ -827,38 +720,27 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     else:
         useLog = False
 
-    merged = mergeArguments(arguments, kwarguments)
     interface, trueLearnerName = _unpackLearnerName(learnerName)
 
-    # perform CV (if needed)
-    argCheck = ArgumentIterator(merged)
-    if argCheck.numPermutations != 1:
-        if performanceFunction is None:
-            msg = "Cross validation was triggered to select the best "
-            msg += "parameter set, yet no performanceFunction was specified. "
-            msg += "Either one must be specified (see nimble.calculate for "
-            msg += "out-of-the-box options) or there must be no choices in "
-            msg += "the parameters."
-            raise InvalidArgumentValueCombination(msg)
-        if folds > len(trainX.points):
-            msg = "There must be a minimum of one fold per point in the data."
-            msg += "Cross validation was triggered to select the best "
-            msg += "parameter set but the 'folds' parameter was set to "
-            msg += str(folds) + " and trainX only contains "
-            msg += str(len(trainX.points)) + " points."
-            raise InvalidArgumentValueCombination(msg)
-        crossValidationResults = crossValidate(
-            learnerName, trainX, trainY, performanceFunction, merged,
-            folds=folds, scoreMode=scoreMode, randomSeed=randomSeed,
-            useLog=crossValLog)
-        bestArguments = crossValidationResults.bestArguments
+    # perform hyperparameter optimization (if needed)
+    arguments = mergeArguments(arguments, kwarguments)
+    if (tuning is not None or
+            any(isinstance(arg, Tune) for arg in arguments.values())):
+        if tuning is None:
+            tuning = Tuning()
+        tuning.tune(
+            learnerName, trainX, trainY, arguments, performanceFunction,
+            randomSeed, tuneLog)
+        bestArguments = tuning.bestArguments
+        # subsequent tune calls to same Tuning will overwrite, so need to
+        # attach a copy to the TrainedLearner
+        tuning = tuning.copy()
     else:
-        crossValidationResults = None
-        bestArguments = merged
+        bestArguments = arguments
 
     trainedLearner = interface.train(trueLearnerName, trainX, trainY,
                                      bestArguments, multiClassStrategy,
-                                     randomSeed, crossValidationResults)
+                                     randomSeed, tuning)
     totalTime = time.process_time() - startTime
 
     funcString = interface.getCanonicalName() + '.' + trueLearnerName
@@ -869,10 +751,10 @@ def train(learnerName, trainX, trainY=None, performanceFunction=None,
     return trainedLearner
 
 @trackEntry
-def trainAndApply(learnerName, trainX, trainY=None, testX=None,
-                  performanceFunction=None, arguments=None, output=None,
-                  scoreMode='label', multiClassStrategy='default',
-                  folds=10, randomSeed=None, useLog=None, **kwarguments):
+def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments=None,
+                  output=None, scoreMode='label', multiClassStrategy='default',
+                  randomSeed=None, tuning=None, performanceFunction=None,
+                  useLog=None, **kwarguments):
     """
     Train a model and apply it to the test data.
 
@@ -885,9 +767,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
     learnerName : str
         The learner to be called. This can be a string in the form
         'package.learner' or the learner class object.
-    trainX: nimble Base object
+    trainX : nimble Base object
         Data to be used for training.
-    trainY: identifier, nimble Base object
+    trainY : identifier, nimble Base object
         A name or index of the feature in ``trainX`` containing the
         labels or another nimble Base object containing the labels that
         correspond to ``trainX``.
@@ -895,25 +777,18 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         Data set on which the trained learner will be applied (i.e.
         performing prediction, transformation, etc. as appropriate to
         the learner).
-    performanceFunction : function
-        If cross validation is triggered to select from the given
-        argument set, then this function will be used to generate a
-        performance score for the run. Function is of the form:
-        def func(knownValues, predictedValues).
-        Look in nimble.calculate for pre-made options. Default is None,
-        since if there is no parameter selection to be done, it is not
-        used.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
-        during training and application. eg. {'dimensions':5, 'k':5}
-        To trigger cross-validation using multiple values for arguments,
-        specify different values for each parameter using a nimble.CV
-        object. eg. {'k': nimble.CV([1,3,5])} will generate an error
-        score for  the learner when the learner was passed all three
-        values of ``k``, separately. If an argument requires its own
-        parameters for instantiation, use a nimble.Init object.
-        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
-        ``arguments`` will be merged with the learner ``kwarguments``
+        during training and application (e.g., {'dimensions':5, 'k':5}).
+        Multiple values for arguments can be provided by using a
+        ``Tune`` object (e.g., {'k': Tune([3, 5, 7])}) to initiate
+        hyperparameter tuning and return the learner trained on the best
+        set of arguments. To provide an argument that is an object from
+        the same package as the learner, use a ``nimble.Init`` object
+        with the object name and its instantiation arguments (e.g.,
+        {'kernel': nimble.Init('KernelGaussian', width=2.0)}).
+        Note: learner arguments can also be passed as ``kwarguments`` so
+        this dictionary will be merged with any keyword arguments.
     output : str
         The kind of nimble Base object that the output of this function
         should be in. Any of the normal string inputs to the nimble.data
@@ -928,13 +803,20 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         containing the scores for every class label are desired.
     multiClassStrategy : str
         May only be 'default', 'OneVsAll' or 'OneVsOne'.
-    folds : int
-        The number of folds used in the cross validation. Cannot exceed
-        the number of points in ``trainX``. Default 10.
     randomSeed : int
        Set a random seed for the operation. When None, the randomness is
        controlled by Nimble's random seed. Ignored if learner does not
        depend on randomness.
+    tuning : nimble.Tuning, None
+        Used when hyperparameter tuning has been initiated through
+        ``Tune`` objects in the arguments. If hyperparameter tuning is
+        triggered and this is None, the default Tuning will be applied
+        and a performanceFunction must be provided.
+    performanceFunction : function, None
+        If hyperparameter tuning is triggered and the Tuning does not
+        have a performanceFunction set, then this function will be used
+        to generate a performance score for each validation run. See
+        nimble.calculate for pre-made options. Default is None.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -943,13 +825,14 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
         send to the logger, regardless of the global option.
     kwarguments
         Keyword arguments specified variables that are passed to the
-        learner. To trigger cross-validation using multiple values for
-        arguments, specify different values for each parameter using a
-        nimble.CV object. eg. arg1=nimble.CV([1,2,3]),
-        arg2=nimble.CV([4,5,6]) which correspond to permutations/
-        argument states with one element from arg1 and one element from
-        arg2, such that an example generated permutation/argument state
-        would be ``arg1=2, arg2=4``. Will be merged with ``arguments``.
+        learner. These are combined with the ``arguments`` parameter.
+        Multiple values for arguments can be provided by using a
+        ``Tune`` object (e.g., k=Tune([3, 5, 7])) to initiate
+        hyperparameter tuning and return the learner trained on the best
+        set of arguments. To provide an argument that is an object from
+        the same package as the learner, use a ``nimble.Init`` object
+        with the object name and its instantiation arguments (e.g.,
+        kernel=nimble.Init('KernelGaussian', width=2.0)).
 
     Returns
     -------
@@ -958,7 +841,8 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
     See Also
     --------
-    train, CV, Init, nimble.core.interfaces.TrainedLearner.apply
+    train, nimble.Init, nimble.Tune, nimble.Tuning,
+    nimble.core.interfaces.TrainedLearner.apply
 
     Examples
     --------
@@ -1024,11 +908,10 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
                                   scoreMode=scoreMode,
                                   multiClassStrategy=multiClassStrategy)
     merged = mergeArguments(arguments, kwarguments)
-
-    trainedLearner = train(learnerName, trainX, trainY, performanceFunction,
-                           merged, scoreMode='label',
-                           multiClassStrategy=multiClassStrategy, folds=folds,
-                           randomSeed=randomSeed, useLog=useLog, **kwarguments)
+    trainedLearner = train(
+        learnerName, trainX, trainY, arguments=merged, scoreMode=scoreMode,
+        multiClassStrategy=multiClassStrategy, randomSeed=randomSeed,
+        performanceFunction=performanceFunction, tuning=tuning, useLog=useLog)
 
     if testX is None:
         if isinstance(trainY, (str, int, np.integer)):
@@ -1042,7 +925,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
     extraInfo = None
     if merged != trainedLearner.arguments:
-        extraInfo = {"bestParams": trainedLearner.arguments}
+        extraInfo = {"bestArguments": trainedLearner.arguments}
     handleLogging(useLog, "run", "trainAndApply", trainX, trainY, testX, None,
                   learnerName, merged, trainedLearner.randomSeed,
                   extraInfo=extraInfo, time=totalTime)
@@ -1051,14 +934,14 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None,
 
 def _trainAndTestBackend(learnerName, trainX, trainY, testX, testY,
                          performanceFunction, arguments, output, scoreMode,
-                         multiClassStrategy, folds, randomSeed, useLog,
+                         multiClassStrategy, randomSeed, tuning, useLog,
                          **kwarguments):
     merged = mergeArguments(arguments, kwarguments)
 
-    trainedLearner = train(learnerName, trainX, trainY, performanceFunction,
-                           merged, scoreMode='label',
-                           multiClassStrategy=multiClassStrategy, folds=folds,
-                           randomSeed=randomSeed, useLog=useLog)
+    trainedLearner = train(learnerName, trainX, trainY, merged,
+                           multiClassStrategy=multiClassStrategy,
+                           performanceFunction=performanceFunction,
+                           randomSeed=randomSeed, tuning=tuning, useLog=useLog)
 
     if isinstance(testY, (str, int, np.integer)):
         testX = testX.copy()
@@ -1072,7 +955,8 @@ def _trainAndTestBackend(learnerName, trainX, trainY, testX, testY,
 def trainAndTest(learnerName, trainX, trainY, testX, testY,
                  performanceFunction, arguments=None, output=None,
                  scoreMode='label', multiClassStrategy='default',
-                 folds=10, randomSeed=None, useLog=None, **kwarguments):
+                 randomSeed=None, tuning=None, useLog=None,
+                 **kwarguments):
     """
     Train a model and get the results of its performance.
 
@@ -1093,7 +977,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     learnerName : str
         The learner to be called. This can be a string in the form
         'package.learner' or the learner class object.
-    trainX: nimble Base object
+    trainX : nimble Base object
         Data to be used for training.
     trainY : identifier, nimble Base object
         * identifier - The name or index of the feature in ``trainX``
@@ -1108,24 +992,22 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         * nimble Base object - contains the labels that correspond to
           ``testX``.
     performanceFunction : function
-        If cross validation is triggered to select from the given
-        argument set, then this function will be used to generate a
-        performance score for the run. Function is of the form:
-        def func(knownValues, predictedValues).
-        Look in nimble.calculate for pre-made options. Default is None,
-        since if there is no parameter selection to be done, it is not
-        used.
+        The function used to determine the performance of the learner.
+        Look in nimble.calculate for pre-made options. If hyperparameter
+        tuning is triggered and the Tuning does not have a set
+        performanceFunction, the function will be applied there as well.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
-        during training and application. eg. {'dimensions':5, 'k':5}
-        To trigger cross-validation using multiple values for arguments,
-        specify different values for each parameter using a nimble.CV
-        object. eg. {'k': nimble.CV([1,3,5])} will generate an error
-        score for  the learner when the learner was passed all three
-        values of ``k``, separately. If an argument requires its own
-        parameters for instantiation, use a nimble.Init object.
-        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
-        ``arguments`` will be merged with the learner ``kwarguments``
+        during training and application (e.g., {'dimensions':5, 'k':5}).
+        Multiple values for arguments can be provided by using a
+        ``Tune`` object (e.g., {'k': Tune([3, 5, 7])}) to initiate
+        hyperparameter tuning and return the learner trained on the best
+        set of arguments. To provide an argument that is an object from
+        the same package as the learner, use a ``nimble.Init`` object
+        with the object name and its instantiation arguments (e.g.,
+        {'kernel': nimble.Init('KernelGaussian', width=2.0)}).
+        Note: learner arguments can also be passed as ``kwarguments`` so
+        this dictionary will be merged with any keyword arguments.
     output : str
         The kind of nimble Base object that the output of this function
         should be in. Any of the normal string inputs to the nimble.data
@@ -1140,13 +1022,14 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         containing the scores for every class label are desired.
     multiClassStrategy : str
         May only be 'default', 'OneVsAll' or 'OneVsOne'.
-    folds : int
-        The number of folds used in the cross validation. Cannot exceed
-        the number of points in ``trainX``. Default 10.
     randomSeed : int
        Set a random seed for the operation. When None, the randomness is
        controlled by Nimble's random seed. Ignored if learner does not
        depend on randomness.
+    tuning : nimble.Tuning, None
+        Used when hyperparameter tuning has been initiated through
+        ``Tune`` objects in the arguments. If hyperparameter tuning is
+        triggered and this is None, the default Tuning will be applied.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1155,13 +1038,14 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         send to the logger, regardless of the global option.
     kwarguments
         Keyword arguments specified variables that are passed to the
-        learner. To trigger cross-validation using multiple values for
-        arguments, specify different values for each parameter using a
-        nimble.CV object. eg. arg1=nimble.CV([1,2,3]),
-        arg2=nimble.CV([4,5,6]) which correspond to permutations/
-        argument states with one element from arg1 and one element from
-        arg2, such that an example generated permutation/argument state
-        would be ``arg1=2, arg2=4``. Will be merged with ``arguments``.
+        learner. These are combined with the ``arguments`` parameter.
+        Multiple values for arguments can be provided by using a
+        ``Tune`` object (e.g., k=Tune([3, 5, 7])) to initiate
+        hyperparameter tuning and return the learner trained on the best
+        set of arguments. To provide an argument that is an object from
+        the same package as the learner, use a ``nimble.Init`` object
+        with the object name and its instantiation arguments (e.g.,
+        kernel=nimble.Init('KernelGaussian', width=2.0)).
 
     Returns
     -------
@@ -1171,8 +1055,8 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
 
     See Also
     --------
-    train, trainAndTestOnTrainingData, CV, Init,
-    nimble.core.interfaces.TrainedLearner.test
+    train, trainAndTestOnTrainingData, nimble.Init, nimble.Tune,
+    nimble.Tuning, nimble.core.interfaces.TrainedLearner.test
 
     Examples
     --------
@@ -1233,8 +1117,8 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
 
     performance, trainedLearner, merged = _trainAndTestBackend(
         learnerName, trainX, trainY, testX, testY, performanceFunction,
-        arguments, output, scoreMode, multiClassStrategy, folds,
-        randomSeed, useLog, **kwarguments)
+        arguments, output, scoreMode, multiClassStrategy, randomSeed, tuning,
+        useLog, **kwarguments)
 
     totalTime = time.process_time() - startTime
 
@@ -1243,7 +1127,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         metrics[key.__name__] = value
     extraInfo = None
     if merged != trainedLearner.arguments:
-        extraInfo = {"bestParams": trainedLearner.arguments}
+        extraInfo = {"bestArguments": trainedLearner.arguments}
     handleLogging(useLog, "run", 'trainAndTest', trainX, trainY, testX, testY,
                   learnerName, merged, trainedLearner.randomSeed, metrics,
                   extraInfo, totalTime)
@@ -1252,11 +1136,11 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
 
 
 @trackEntry
-def trainAndTestOnTrainingData(learnerName, trainX, trainY,
-                               performanceFunction, crossValidationError=False,
-                               folds=10, arguments=None, output=None,
-                               scoreMode='label', multiClassStrategy='default',
-                               randomSeed=None, useLog=None, **kwarguments):
+def trainAndTestOnTrainingData(
+    learnerName, trainX, trainY, performanceFunction,
+    crossValidationError=False, folds=5, arguments=None, output=None,
+    scoreMode='label', multiClassStrategy='default', randomSeed=None,
+    tuning=None, useLog=None, **kwarguments):
     """
     Train a model using the train data and get the performance results.
 
@@ -1265,7 +1149,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     (no withheld testing set). By default, this will calculate training
     error for the learner trained on that data set. However, cross
     validation error can instead be calculated by setting the parameter
-    ``crossVadiationError`` to be True. In that case, we will partition
+    ``crossValidationError`` to be True. In that case, we will partition
     the training set into a parameter controlled number of folds, and
     iteratively withhold each single fold to be used as the testing set
     of the learner trained on the rest of the data.
@@ -1275,20 +1159,17 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
     learnerName : str
         The learner to be called. This can be a string in the form
         'package.learner' or the learner class object.
-    trainX: nimble Base object
+    trainX : nimble Base object
         Data to be used for training.
-    trainY: identifier, nimble Base object
+    trainY : identifier, nimble Base object
         A name or index of the feature in ``trainX`` containing the
         labels or another nimble Base object containing the labels that
         correspond to ``trainX``.
     performanceFunction : function
-        If cross validation is triggered to select from the given
-        argument set, then this function will be used to generate a
-        performance score for the run. Function is of the form:
-        def func(knownValues, predictedValues).
-        Look in nimble.calculate for pre-made options. Default is None,
-        since if there is no parameter selection to be done, it is not
-        used.
+        The function used to determine the performance of the learner.
+        Look in nimble.calculate for pre-made options. If hyperparameter
+        tuning is triggered and the Tuning does not have a set
+        performanceFunction, the function will be applied there as well.
     crossValidationError: bool
         Whether we will calculate cross validation error or training
         error. In True case, the training data is split in the
@@ -1300,19 +1181,21 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         training data, and then use the same data as the withheld
         testing data. By default, this flag is set to False.
     folds : int
-        The number of folds used in the cross validation. Cannot exceed
-        the number of points in ``trainX``. Default 10.
+        The number of folds used in the cross validation. Defaults to 5,
+        cannot exceed the number of points in ``trainX``, and only
+        applies when ``crossValidationError`` is True.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
-        during training and application. eg. {'dimensions':5, 'k':5}
-        To trigger cross-validation using multiple values for arguments,
-        specify different values for each parameter using a nimble.CV
-        object. eg. {'k': nimble.CV([1,3,5])} will generate an error
-        score for  the learner when the learner was passed all three
-        values of ``k``, separately. If an argument requires its own
-        parameters for instantiation, use a nimble.Init object.
-        eg. {'kernel':nimble.Init('KernelGaussian', width=2.0)}.
-        ``arguments`` will be merged with the learner ``kwarguments``
+        during training and application (e.g., {'dimensions':5, 'k':5}).
+        Multiple values for arguments can be provided by using a
+        ``Tune`` object (e.g., {'k': Tune([3, 5, 7])}) to initiate
+        hyperparameter tuning and return the learner trained on the best
+        set of arguments. To provide an argument that is an object from
+        the same package as the learner, use a ``nimble.Init`` object
+        with the object name and its instantiation arguments (e.g.,
+        {'kernel': nimble.Init('KernelGaussian', width=2.0)}).
+        Note: learner arguments can also be passed as ``kwarguments`` so
+        this dictionary will be merged with any keyword arguments.
     output : str
         The kind of nimble Base object that the output of this function
         should be in. Any of the normal string inputs to the nimble.data
@@ -1331,6 +1214,10 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
        Set a random seed for the operation. When None, the randomness is
        controlled by Nimble's random seed. Ignored if learner does not
        depend on randomness.
+    tuning : nimble.Tuning, None
+        Used when hyperparameter tuning has been initiated through
+        ``Tune`` objects in the arguments. If hyperparameter tuning is
+        triggered and this is None, the default Tuning will be applied.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1339,13 +1226,14 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
         send to the logger, regardless of the global option.
     kwarguments
         Keyword arguments specified variables that are passed to the
-        learner. To trigger cross-validation using multiple values for
-        arguments, specify different values for each parameter using a
-        nimble.CV object. eg. arg1=nimble.CV([1,2,3]),
-        arg2=nimble.CV([4,5,6]) which correspond to permutations/
-        argument states with one element from arg1 and one element from
-        arg2, such that an example generated permutation/argument state
-        would be ``arg1=2, arg2=4``. Will be merged with ``arguments``.
+        learner. These are combined with the ``arguments`` parameter.
+        Multiple values for arguments can be provided by using a
+        ``Tune`` object (e.g., k=Tune([3, 5, 7])) to initiate
+        hyperparameter tuning and return the learner trained on the best
+        set of arguments. To provide an argument that is an object from
+        the same package as the learner, use a ``nimble.Init`` object
+        with the object name and its instantiation arguments (e.g.,
+        kernel=nimble.Init('KernelGaussian', width=2.0)).
 
     Returns
     -------
@@ -1354,7 +1242,7 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
 
     See Also
     --------
-    train, trainAndTest, CV, Init
+    train, trainAndTest, nimble.Init, nimble.Tune, nimble.Tuning
 
     Examples
     --------
@@ -1407,26 +1295,28 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
                                   multiClassStrategy=multiClassStrategy)
 
     startTime = time.process_time()
-    if crossValidationError:
-        merged = mergeArguments(arguments, kwarguments)
-        results = crossValidate(learnerName, trainX, trainY,
-                                performanceFunction, merged, folds,
-                                scoreMode, randomSeed, useLog)
-        performance = results.bestResult
-        logSeed = results.randomSeed
-        extraInfo = {'crossValidationError': True}
-    else:
-        performance, trainedLearner, merged = _trainAndTestBackend(
-            learnerName, trainX, trainY, trainX, trainY, performanceFunction,
-            arguments, output, scoreMode, multiClassStrategy, folds,
-            randomSeed, useLog, **kwarguments)
-
-        logSeed = trainedLearner.randomSeed
-        extraInfo = None
-        if merged != trainedLearner.arguments:
-            extraInfo = {"bestParams": trainedLearner.arguments}
+    merged = mergeArguments(arguments, kwarguments)
+    performance, trainedLearner, merged = _trainAndTestBackend(
+        learnerName, trainX, trainY, trainX, trainY, performanceFunction,
+        merged, output, scoreMode, multiClassStrategy, randomSeed, tuning,
+        useLog)
 
     totalTime = time.process_time() - startTime
+
+    if trainedLearner.tuning is not None:
+        bestArgs = trainedLearner.arguments
+        extraInfo = {"bestArguments": bestArgs}
+    else:
+        bestArgs = merged
+        extraInfo = None
+    if crossValidationError:
+        # use tuning with only the bestArgs for final cross validation
+        cvTuning = Tuning(folds=folds)
+        cvTuning.tune(learnerName, trainX, trainY, bestArgs,
+                      performanceFunction, randomSeed, useLog)
+        performance = cvTuning.bestResult
+
+    logSeed = trainedLearner.randomSeed
 
     metrics = {}
     for key, value in zip([performanceFunction], [performance]):
@@ -1436,51 +1326,6 @@ def trainAndTestOnTrainingData(learnerName, trainX, trainY,
                   logSeed, metrics, extraInfo, totalTime)
 
     return performance
-
-
-class CV(object):
-    """
-    Provide a list of values to an argument for cross-validation.
-
-    Triggers cross-validation to occur for the learner using each of the
-    values provided and scoring each one.
-
-    Parameters
-    ----------
-    argumentList : list
-        A list of values for the argument.
-
-    See Also
-    --------
-    crossValidate, nimble.core.learn.KFoldCrossValidator
-
-    Keywords
-    --------
-    cross-validation, parameter, argument, hyperparameters, tuning,
-    optimization, cross validate, learn, hyper parameters,
-    hyperparameters, choose, grid search, GridSearchCV
-    """
-    def __init__(self, argumentList):
-        try:
-            self.argumentTuple = tuple(argumentList)
-        except TypeError as e:
-            msg = "argumentList must be iterable."
-            raise InvalidArgumentValue(msg) from e
-
-    def __getitem__(self, key):
-        return self.argumentTuple[key]
-
-    def __setitem__(self, key, value):
-        raise ImproperObjectAction("CV objects are immutable")
-
-    def __len__(self):
-        return len(self.argumentTuple)
-
-    def __str__(self):
-        return str(self.argumentTuple)
-
-    def __repr__(self):
-        return "CV(" + str(list(self.argumentTuple)) + ")"
 
 
 class Init(object):
@@ -1518,466 +1363,3 @@ class Init(object):
         formatKwargs = ["{}={}".format(k, v) for k, v in self.kwargs.items()]
         kwargStr = ", ".join(formatKwargs)
         return "Init({}, {})".format(repr(self.name), kwargStr)
-
-class KFoldCrossValidator(object):
-    """
-    Returned by nimble.crossValidate to access cross-validation results.
-
-    Provides full access to the outcome of cross-validation including
-    results for each argument set and the best argument set and results.
-
-    Attributes
-    ----------
-    learnerName : str
-        The learner used for training.
-    performanceFunction : function
-        The performance function that will or has been used during
-        cross-validation.
-    folds : int
-        The number of folds that will or has been used during
-        cross-validation.
-    scoreMode : str
-        The scoreMode set for training.
-    arguments : dict
-        A dictionary of the merged arguments and kwarguments.
-    randomSeed : int
-        The random seed used for the learner. Only applicable if the
-        learner utilizes randomness.
-
-    See Also
-    --------
-    nimble.CV, nimble.crossValidate
-
-    Keywords
-    --------
-    cross validation, k-fold, k fold, resampling, partition, rotation
-    estimation, out-of-sample, out of sample, model validation,
-    hyperparameters, tuning
-    """
-    def __init__(self, learnerName, X, Y, performanceFunction, arguments=None,
-                 folds=10, scoreMode='label', randomSeed=None, useLog=None,
-                 **kwarguments):
-        """
-        Perform k-fold cross-validation and store the results.
-
-        On instantiation, cross-validation will be performed.  The results
-        can be accessed through the object's attributes and methods.
-
-        Parameters
-        ----------
-        learnerName : str
-            The learner to be called. This can be a string in the form
-            'package.learner' or the learner class object.
-        X : nimble Base object
-            points/features data
-        Y : nimble Base object
-            labels/data about points in X
-        performanceFunction : function
-            Premade options are available in nimble.calculate.
-            Function used to evaluate the performance score for each
-            run. Function is of the form:
-            def func(knownValues, predictedValues).
-        arguments : dict
-            Mapping argument names (strings) to their values, to be used
-            during training and application. eg. {'dimensions':5, 'k':5}
-            To trigger cross-validation using multiple values for
-            arguments, specify different values for each parameter using
-            a nimble.CV object. eg. {'k': nimble.CV([1,3,5])} will
-            generate an error score for  the learner when the learner
-            was passed all three values of ``k``, separately. These will
-            be merged any kwarguments for the learner.
-        folds : int
-            The number of folds used in the cross validation. Can't
-            exceed the number of points in X, Y.
-        scoreMode : str
-            Used by computeMetrics.
-        randomSeed : int
-           The random seed to apply (when applicable).
-        useLog : bool, None
-            Local control for whether to send results/timing to the
-            logger.
-        kwarguments
-            Keyword arguments specified variables that are passed to the
-            learner. To trigger cross-validation using multiple values
-            for arguments, specify different values for each parameter
-            using a nimble.CV object.
-            eg. arg1=nimble.CV([1,2,3]), arg2=nimble.CV([4,5,6])
-            which correspond to permutations/argument states with one
-            element from arg1 and one element from arg2, such that an
-            example generated permutation/argument state would be
-            ``arg1=2, arg2=4``. Will be merged with ``arguments``.
-        """
-        self.learnerName = learnerName
-        # detectBestResult will raise exception for invalid performanceFunction
-        detected = nimble.calculate.detectBestResult(performanceFunction)
-        self.maximumIsOptimal = detected == 'max'
-        self.performanceFunction = performanceFunction
-        self.folds = folds
-        self.scoreMode = scoreMode
-        self.arguments = mergeArguments(arguments, kwarguments)
-        self.randomSeed = randomSeed
-        self._allResults = None
-        self._bestArguments = None
-        self._bestResult = None
-        self._resultsByFold = []
-        self._crossValidate(X, Y, useLog)
-
-    def _crossValidate(self, X, Y, useLog):
-        """
-        Perform K-fold cross-validation on the data.
-
-        Cross-validation will be performed based on the instantiation
-        parameters for this instance.
-
-        Parameters
-        ----------
-        X : nimble Base object
-            points/features data
-        Y : nimble Base object
-            labels/data about points in X
-        useLog : bool, None
-            Local control for whether to send results/timing to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-        """
-        if Y is not None:
-            if isinstance(Y, (int, str, list)):
-                X = X.copy()
-                Y = X.features.extract(Y, useLog=False)
-
-            if len(Y.features) > 1 and self.scoreMode != 'label':
-                msg = "When dealing with multi dimensional outputs / "
-                msg += "predictions, then the scoreMode flag is required to "
-                msg += "be set to 'label'"
-                raise InvalidArgumentValueCombination(msg)
-
-            if not len(X.points) == len(Y.points):
-                #todo support indexing if Y is an index for X instead
-                msg = "X and Y must contain the same number of points"
-                raise InvalidArgumentValueCombination(msg)
-
-        #get an iterator for the argument combinations- iterator
-        #handles case of merged arguments being {}
-        argumentCombinationIterator = ArgumentIterator(self.arguments)
-
-        # we want the folds for each argument combination to be the same
-        foldIter = FoldIterator([X, Y], self.folds)
-
-        # setup container for outputs, a tuple entry for each arg set,
-        # containing a list for the results of those args on each fold
-        numArgSets = argumentCombinationIterator.numPermutations
-        performanceOfEachCombination = []
-        for i in range(numArgSets):
-            performanceOfEachCombination.append([None, []])
-
-        # control variables determining if we save all results before
-        # calculating performance or if we can calculate for each fold and
-        # then avg the results
-        canAvgFolds = (hasattr(self.performanceFunction, 'avgFolds')
-                       and self.performanceFunction.avgFolds)
-
-        # folditerator randomized the point order, so if we are collecting all
-        # the results, we also have to collect the correct order of the known
-        # values
-        if not canAvgFolds:
-            collectedY = None
-
-        # Folding should be the same for each argset (and is expensive) so
-        # iterate over folds first
-        deepLog = loggingEnabled(useLog) and deepLoggingEnabled()
-        for foldNum, fold in enumerate(foldIter):
-            [(curTrainX, curTestingX), (curTrainY, curTestingY)] = fold
-            argSetIndex = 0
-            # given this fold, do a run for each argument combination
-            for curArgumentCombination in argumentCombinationIterator:
-                #run algorithm on the folds' training and testing sets
-                startTime = time.process_time()
-                curTL = train(
-                    self.learnerName, curTrainX, curTrainY,
-                    arguments=curArgumentCombination, scoreMode=self.scoreMode,
-                    randomSeed=self.randomSeed, useLog=False)
-                if self.randomSeed is None: # use same random seed each time
-                    self.randomSeed = curTL.randomSeed
-                curRunResult = curTL.apply(curTestingX, useLog=False)
-                totalTime = time.process_time() - startTime
-                performanceOfEachCombination[argSetIndex][0] = (
-                    curArgumentCombination)
-
-                # calculate error of prediction, using performanceFunction
-                # store fold error to CrossValidationResults
-                curPerformance = computeMetrics(curTestingY, None,
-                                                curRunResult,
-                                                self.performanceFunction)
-                self._resultsByFold.append((curArgumentCombination,
-                                            curPerformance))
-
-                if canAvgFolds:
-                    performanceOfEachCombination[argSetIndex][1].append(
-                        curPerformance)
-                else:
-                    performanceOfEachCombination[argSetIndex][1].append(
-                        curRunResult)
-
-                metrics = {self.performanceFunction.__name__: curPerformance}
-                extraInfo = {'Fold': '{}/{}'.format(foldNum + 1, self.folds)}
-                handleLogging(deepLog, "runCV", "KFoldCrossValidation",
-                              curTrainX, curTrainY, curTestingX, curTestingY,
-                              self.learnerName, curArgumentCombination,
-                              self.randomSeed, metrics=metrics,
-                              extraInfo=extraInfo, time=totalTime)
-
-                argSetIndex += 1
-
-            if not canAvgFolds:
-                if collectedY is None:
-                    collectedY = curTestingY
-                else:
-                    collectedY.points.append(curTestingY, useLog=False)
-
-            # setup for next iteration
-            argumentCombinationIterator.reset()
-
-        # We consume the saved results, either by averaging the individual
-        # results calculations for each fold, or combining the saved
-        # predictions and calculating performance of the entire set.
-        for i, (curArgSet, results) in enumerate(performanceOfEachCombination):
-            # average score from each fold (works for one fold as well)
-            if canAvgFolds:
-                finalPerformance = sum(results) / float(len(results))
-            # combine the results objects into one, and then calc performance
-            else:
-                for resultIndex in range(1, len(results)):
-                    results[0].points.append(results[resultIndex],
-                                             useLog=False)
-
-                # TODO raise RuntimeError(
-                #     "How do we guarantee Y and results are in same order?")
-                finalPerformance = computeMetrics(collectedY, None, results[0],
-                                                  self.performanceFunction)
-
-            # we use the current results container to be the return value
-            performanceOfEachCombination[i] = (curArgSet, finalPerformance)
-
-        # store results
-        self._allResults = performanceOfEachCombination
-
-    @property
-    def allResults(self):
-        """
-        Each argument permutation and its performance.
-
-        Each dictionary in the returned list will contain a permutation
-        of the arguments and the performance of that permutation. A list
-        of dictionaries containing each argument permutation and its
-        performance based on the ``performanceFunction``.  The key to
-        access the performance value will be the __name__ attribute of
-        the ``performanceFunction``. If the ``performanceFunction`` has
-        no __name__ attribute or is a lambda function the key will be
-        set to 'performance'.
-
-        Returns
-        -------
-        list
-            List of dictionaries.
-
-        Examples
-        --------
-        >>> nimble.random.setSeed(42)
-        >>> xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
-        ...         [1, 0, 0], [0, 1, 0], [0, 0, 1],
-        ...         [1, 0, 1], [1, 1, 0], [0, 1, 1]]
-        >>> yRaw = [[1], [2], [3],
-        ...         [1], [2], [3],
-        ...         [1], [2], [3]]
-        >>> X = nimble.data(xRaw)
-        >>> Y = nimble.data(yRaw)
-        >>> crossValidator = KFoldCrossValidator(
-        ...    'nimble.KNNClassifier', X, Y, arguments={'k': 3},
-        ...    performanceFunction=nimble.calculate.fractionIncorrect,
-        ...    folds=3)
-        >>> crossValidator.allResults
-        [{'k': 3, 'fractionIncorrect': 0.3333333333333333}]
-        """
-        resultsList = []
-        for argSet, result in self._allResults:
-            resultDict = argSet.copy()
-            if (hasattr(self.performanceFunction, '__name__')
-                    and self.performanceFunction.__name__ != '<lambda>'):
-                resultDict[self.performanceFunction.__name__] = result
-            else:
-                resultDict['performance'] = result
-            resultsList.append(resultDict)
-        return resultsList
-
-    @property
-    def bestArguments(self):
-        """
-        The arguments permutation with the most optimal performance.
-
-        Returns
-        -------
-        dict
-            The argument permutation names and values which provided the
-            optimal result according to the ``performanceFunction``.
-        """
-        if self._bestArguments is not None:
-            return self._bestArguments
-        bestResults = self._bestArgumentsAndResult()
-        self._bestArguments = bestResults[0]
-        self._bestResult = bestResults[1]
-        return self._bestArguments
-
-    @property
-    def bestResult(self):
-        """
-        The performance value for the best argument permutation.
-
-        Returns
-        -------
-        value
-            The optimal output value from the ``performanceFunction``
-            according to ``performanceFunction.optimal``.
-        """
-        if self._bestResult is not None:
-            return self._bestResult
-        bestResults = self._bestArgumentsAndResult()
-        self._bestArguments = bestResults[0]
-        self._bestResult = bestResults[1]
-        return self._bestResult
-
-    def getFoldResults(self, arguments=None, **kwarguments):
-        """
-        The result from each fold for a given permutation of arguments.
-
-        Parameters
-        ----------
-        arguments : dict
-            Dictionary of learner argument names and values. Will be
-            merged with any kwarguments. After merge, must match an
-            argument permutation generated during cross-validation.
-        kwarguments
-            Learner argument names and values as keywords. Will be
-            merged with ``arguments``. After merge, must match an
-            argument permutation generated during cross-validation.
-
-        Returns
-        -------
-        list
-            The ``performanceFunction`` results from each fold for this
-            argument permutation.
-
-        Examples
-        --------
-        >>> nimble.random.setSeed(42)
-        >>> xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
-        ...         [1, 0, 0], [0, 1, 0], [0, 0, 1],
-        ...         [1, 0, 1], [1, 1, 0], [0, 1, 1]]
-        >>> yRaw = [[1], [2], [3],
-        ...         [1], [2], [3],
-        ...         [1], [2], [3]]
-        >>> X = nimble.data(xRaw)
-        >>> Y = nimble.data(yRaw)
-        >>> kValues = nimble.CV([1, 3])
-        >>> crossValidator = KFoldCrossValidator(
-        ...    'nimble.KNNClassifier', X, Y, arguments={},
-        ...    performanceFunction=nimble.calculate.fractionIncorrect,
-        ...    folds=3, k=kValues)
-        >>> crossValidator.getFoldResults(arguments={'k': 1})
-        [0.3333333333333333, 0.0, 0.0]
-        >>> crossValidator.getFoldResults(k=1)
-        [0.3333333333333333, 0.0, 0.0]
-        >>> crossValidator.getFoldResults({'k': 3})
-        [0.3333333333333333, 0.6666666666666666, 0.0]
-        """
-        merged = mergeArguments(arguments, kwarguments)
-        foldErrors = []
-        # self._resultsByFold is a list of two-tuples (argumentSet, foldScore)
-        for argSet, score in self._resultsByFold:
-            if argSet == merged:
-                foldErrors.append(score)
-        if not foldErrors:
-            self._noMatchingArguments()
-        return foldErrors
-
-    def getResult(self, arguments=None, **kwarguments):
-        """
-        The result over all folds for a given permutation of arguments.
-
-        Parameters
-        ----------
-        arguments : dict
-            Dictionary of learner argument names and values. Will be
-            merged with any kwarguments. After merge, must match an
-            argument permutation generated during cross-validation.
-        kwarguments
-            Learner argument names and values as keywords. Will be
-            merged with ``arguments``. After merge, must match an
-            argument permutation generated during cross-validation.
-
-        Returns
-        -------
-        value
-            The output value of the ``performanceFunction`` for this
-            argument permutation.
-
-        Examples
-        --------
-        >>> nimble.random.setSeed(42)
-        >>> xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
-        ...         [1, 0, 0], [0, 1, 0], [0, 0, 1],
-        ...         [1, 0, 1], [1, 1, 0], [0, 1, 1]]
-        >>> yRaw = [[1], [2], [3],
-        ...         [1], [2], [3],
-        ...         [1], [2], [3]]
-        >>> X = nimble.data(xRaw)
-        >>> Y = nimble.data(yRaw)
-        >>> kValues = nimble.CV([1, 3])
-        >>> crossValidator = KFoldCrossValidator(
-        ...    'nimble.KNNClassifier', X, Y, arguments={},
-        ...    performanceFunction=nimble.calculate.fractionIncorrect,
-        ...    folds=3, k=kValues)
-        >>> crossValidator.getResult(arguments={'k': 1})
-        0.1111111111111111
-        >>> crossValidator.getResult(k=1)
-        0.1111111111111111
-        >>> crossValidator.getResult({'k': 3})
-        0.3333333333333333
-        """
-        merged = mergeArguments(arguments, kwarguments)
-        # self._allResults is a list of two-tuples (argumentSet, totalScore)
-        for argSet, result in self._allResults:
-            if argSet == merged:
-                return result
-        return self._noMatchingArguments()
-
-    def _bestArgumentsAndResult(self):
-        """
-        The best argument and result based on the performanceFunction.
-        """
-        bestArgumentAndScoreTuple = None
-        for curResultTuple in self._allResults:
-            _, curScore = curResultTuple
-            #if curArgument is the first or best we've seen:
-            #store its details in bestArgumentAndScoreTuple
-            if bestArgumentAndScoreTuple is None:
-                bestArgumentAndScoreTuple = curResultTuple
-            else:
-                if (self.maximumIsOptimal
-                        and curScore > bestArgumentAndScoreTuple[1]):
-                    bestArgumentAndScoreTuple = curResultTuple
-                if (not self.maximumIsOptimal
-                        and curScore < bestArgumentAndScoreTuple[1]):
-                    bestArgumentAndScoreTuple = curResultTuple
-
-        return bestArgumentAndScoreTuple
-
-    def _noMatchingArguments(self):
-        """
-        Raise exception when passed arguments are not valid.
-        """
-        msg = "No matching argument sets found. Available argument sets are: "
-        msg += ",".join(str(arg) for arg, _ in self._allResults)
-        raise InvalidArgumentValue(msg)

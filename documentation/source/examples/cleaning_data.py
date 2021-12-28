@@ -110,7 +110,7 @@ sample.show('Data sample with a holiday', maxHeight=16)
 
 ## Now we can see that this feature records the holiday name for the first data
 ## point recorded on a holiday, otherwise the value is missing. So, even points
-## that fall on a holday can have a missing value in the holiday feature. It
+## that fall on a holiday can have a missing value in the holiday feature. It
 ## would be much more helpful if this feature identified if **each** point
 ## occurred on a holiday.
 

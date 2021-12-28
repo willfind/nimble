@@ -288,7 +288,7 @@ def test_retrain_invalidArg():
     tl.retrain(trainObj, 0, foo=True)
 
 @raises(InvalidArgumentValue)
-def test_retrain_CVArg():
+def test_retrain_TuneArg():
     trainObj = nimble.random.data(4, 3, 0)
     testObj = nimble.data([[0, 0], [1, 1]])
     expZeros = nimble.zeros(2, 1)
@@ -298,7 +298,7 @@ def test_retrain_CVArg():
     predOnes1 = tl.apply(testObj)
     assert predOnes1 == expOnes
 
-    tl.retrain(trainObj, 0, predictZero=nimble.CV([True, False]))
+    tl.retrain(trainObj, 0, predictZero=nimble.Tune([True, False]))
 
 
 class UncallableLearner(CustomLearner):

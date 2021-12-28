@@ -59,7 +59,7 @@ def process_signature(app, what, name, obj, options, signature,
     Prevents Sphinx from showing the signature for classes that are not
     designed to be constructed by the user.
     """
-    keepSignatures = ['nimble.CV', 'nimble.Init']
+    keepSignatures = ['nimble.Tune', 'nimble.Init', 'nimble.Tuning']
     if what == 'class' and name not in keepSignatures:
         signature = ''
     # all nan values display as "nan", so we need to be more specific.
@@ -106,7 +106,7 @@ def setHyperlinks(app):
             # classes
             if re.match(r'[A-Z]', pathSplit[-1][0]):
                 className = pathSplit[-1]
-                if className in ['CV', 'Init', 'CustomLearner']:
+                if className in ['Tune', 'Init', 'CustomLearner', 'Tuning']:
                     # leave 'nimble.' prefix, class name for markdown only
                     name = path
                     markdownOnly[className] = link
@@ -279,7 +279,8 @@ def exampleHyperlinks(app, pagename, templatename, context, doctree):
     app.nimble_mapping = {
         'train': path('nimble.train'),
         '.train': path('nimble.core.interfaces.TrainedLearner.train'),
-        '.apply': path('nimble.core.interfaces.TrainedLearner.apply')}
+        '.apply': path('nimble.core.interfaces.TrainedLearner.apply'),
+        '.copy': path('nimble.core.data.Base.copy')}
     if pagename.startswith('examples/'):
         if 'additional_functionality' in pagename:
             app.nimble_nolink = ['tempDir.name', 'learnerType']

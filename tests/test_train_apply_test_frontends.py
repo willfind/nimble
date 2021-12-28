@@ -2,6 +2,7 @@ import nimble
 from nimble import train
 from nimble import trainAndApply
 from nimble import trainAndTest
+from nimble import Tuning
 from nimble.calculate import fractionIncorrect
 from nimble.random import pythonRandom
 from nimble.learners import KNNClassifier
@@ -189,14 +190,16 @@ def test_trainAndTest():
 
     #with multiple values for one argument for the algorithm
     runError = trainAndTest('nimble.KNNClassifier', trainObj1, 3, testObj1, 3,
-                            fractionIncorrect, k=nimble.CV([1, 2]), folds=3)
+                            fractionIncorrect, k=nimble.Tune([1, 2]),
+                            tuning=Tuning(folds=3))
     assert isinstance(runError, float)
 
     #with small data set
     data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2]]
     trainObj1 = nimble.data(source=data1, featureNames=variables)
     runError = trainAndTest('nimble.KNNClassifier', trainObj1, 3, testObj1, 3,
-                            fractionIncorrect, k=nimble.CV([1, 2]), folds=3)
+                            fractionIncorrect, k=nimble.Tune([1, 2]),
+                            tuning=Tuning(folds=3))
     assert isinstance(runError, float)
 
 
@@ -451,10 +454,11 @@ def test_trainAndTestOnTrainingData_multiclassStrat_disallowed_multioutput():
                                    multiClassStrategy="OneVsOne", lamb=1)
 
 
-def test_trainFunctions_cv_triggered_errors():
+def test_trainFunctions_Tune_triggered_errors():
     variables = ["x1", "x2", "x3", "label"]
     numPoints = 10
-    data = [[pythonRandom.random(), pythonRandom.random(), pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
+    data = [[pythonRandom.random(), pythonRandom.random(),
+             pythonRandom.random(), int(pythonRandom.random() * 3) + 1]
              for _pt in range(numPoints)]
     trainObj = nimble.data(source=data, featureNames=variables)
     trainObjData = trainObj[:, :2]
@@ -467,37 +471,42 @@ def test_trainFunctions_cv_triggered_errors():
 
     learner = 'nimble.KNNClassifier'
     # no performanceFunction (only train and trainAndApply; required in Test functions)
-    with raises(InvalidArgumentValueCombination, match="performanceFunction"):
-        nimble.train(learner, trainObjData, trainObjLabels, k=nimble.CV([1, 3]))
-    with raises(InvalidArgumentValueCombination, match="performanceFunction"):
+    with raises(InvalidArgumentValue, match="performanceFunction"):
+        nimble.train(learner, trainObjData, trainObjLabels, k=nimble.Tune([1, 3]))
+    with raises(InvalidArgumentValue, match="performanceFunction"):
         nimble.trainAndApply(learner, trainObjData, trainObjLabels, testObjData,
-                             k=nimble.CV([1, 3]))
+                             k=nimble.Tune([1, 3]))
 
     # folds too large
     with raises(InvalidArgumentValueCombination, match="folds"):
         nimble.train(learner, trainObjData, trainObjLabels,
                      performanceFunction=fractionIncorrect,
-                     k=nimble.CV([1, 3]), folds=11)
+                     k=nimble.Tune([1, 3]),
+                     tuning=Tuning(folds=11))
     with raises(InvalidArgumentValueCombination, match="folds"):
         nimble.trainAndApply(learner, trainObjData, trainObjLabels, testObjData,
                              performanceFunction=fractionIncorrect,
-                             k=nimble.CV([1, 3]), folds=11)
+                             k=nimble.Tune([1, 3]),
+                             tuning=Tuning(folds=11))
     with raises(InvalidArgumentValueCombination, match="folds"):
         nimble.trainAndTest(learner, trainObjData, trainObjLabels, testObjData,
                             testObjLabels, performanceFunction=fractionIncorrect,
-                            k=nimble.CV([1, 3]), folds=11)
+                            k=nimble.Tune([1, 3]),
+                            tuning=Tuning(folds=11))
     with raises(InvalidArgumentValueCombination, match="folds"):
         # training error
         nimble.trainAndTestOnTrainingData(learner, trainObjData, trainObjLabels,
                                           performanceFunction=fractionIncorrect,
-                                          k=nimble.CV([1, 3]), folds=11)
-    with raises(InvalidArgumentValue, match="folds"):
+                                          k=nimble.Tune([1, 3]),
+                                          tuning=Tuning(folds=11))
+    with raises(InvalidArgumentValueCombination, match="folds"):
         # cross-validation error
         nimble.trainAndTestOnTrainingData(learner, trainObjData, trainObjLabels,
                                           performanceFunction=fractionIncorrect,
-                                          crossValidationError=True, folds=11)
+                                          crossValidationError=True, folds=11,
+                                          k=5)
 
-def test_frontend_CV_triggering():
+def test_frontend_Tune_triggering():
     #with small data set
     variables = ["x1", "x2", "x3"]
     data = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0], [0, 1, 0]]
@@ -505,24 +514,24 @@ def test_frontend_CV_triggering():
     trainObj = nimble.data(source=data, featureNames=variables)
     labelsObj = nimble.data(source=labels)
 
-    calledCrossValidate = assertCalled(nimble.core.learn, 'crossValidate')
+    calledTune = assertCalled(nimble.core.tune.Tuning, 'tune')
     # confirm that the calls are being made
-    with calledCrossValidate:
+    with calledTune:
         train('nimble.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-              performanceFunction=fractionIncorrect, k=nimble.CV([1, 2]), folds=5)
+              performanceFunction=fractionIncorrect, k=nimble.Tune([1, 2]))
 
-    with calledCrossValidate:
+    with calledTune:
         trainAndApply('nimble.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                       performanceFunction=fractionIncorrect, testX=trainObj,
-                      k=nimble.CV([1, 2]), folds=5)
+                      k=nimble.Tune([1, 2]))
 
-    with calledCrossValidate:
+    with calledTune:
         trainAndTest('nimble.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                      testX=trainObj, testY=labelsObj,
                      performanceFunction=fractionIncorrect,
-                     k=nimble.CV([1, 2]), folds=5)
+                     k=nimble.Tune([1, 2]))
 
-def test_frontend_CV_triggering_success():
+def test_frontend_Tune_triggering_success():
     #with small data set
     variables = ["x1", "x2", "x3"]
     data = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0], [0, 1, 0]]
@@ -531,24 +540,25 @@ def test_frontend_CV_triggering_success():
     labelsObj = nimble.data(source=labels)
 
     tl = train('nimble.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-               performanceFunction=fractionIncorrect, k=nimble.CV([1, 2]), folds=5)
+               performanceFunction=fractionIncorrect, k=nimble.Tune([1, 2]))
     assert hasattr(tl, 'apply')
-    assert tl.crossValidation is not None
-    assert tl.crossValidation.performanceFunction == fractionIncorrect
-    assert tl.crossValidation.folds == 5
+    assert tl.tuning is not None
+    assert tl.tuning.bestArguments == {'k': 1} or tl.tuning.bestArguments == {'k': 2}
+    assert tl.tuning.validator.performanceFunction == fractionIncorrect
+    assert tl.tuning.validator.folds == 5
 
     result = trainAndApply('nimble.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                            testX=trainObj, performanceFunction=fractionIncorrect,
-                           k=nimble.CV([1, 2]), folds=5)
+                           k=nimble.Tune([1, 2]))
     assert isinstance(result, nimble.core.data.Matrix)
 
     error = trainAndTest('nimble.KNNClassifier', trainX=trainObj, trainY=labelsObj,
                          testX=trainObj, testY=labelsObj, performanceFunction=fractionIncorrect,
-                         k=nimble.CV([1, 2]), folds=5)
+                         k=nimble.Tune([1, 2]))
     assert isinstance(error, float)
 
 
-def test_train_trainAndApply_perfFunc_reqForCV():
+def test_train_trainAndApply_perfFunc_reqForTune():
     #with small data set
     variables = ["x1", "x2", "x3"]
     data = [[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0], [0, 1, 0]]
@@ -557,15 +567,15 @@ def test_train_trainAndApply_perfFunc_reqForCV():
     labelsObj = nimble.data(source=labels)
 
     # Default value of performanceFunction is None, which since we're doing
-    # CV should InvalidArgumentValueCombination
-    with raises(InvalidArgumentValueCombination):
+    # Tune should InvalidArgumentValue
+    with raises(InvalidArgumentValue):
         tl = train('nimble.KNNClassifier', trainX=trainObj, trainY=labelsObj,
-                   k=nimble.CV([1, 2]))
+                   k=nimble.Tune([1, 2]))
 
-    with raises(InvalidArgumentValueCombination):
+    with raises(InvalidArgumentValue):
         result = trainAndApply('nimble.KNNClassifier', trainX=trainObj,
                                trainY=labelsObj, testX=trainObj,
-                               k=nimble.CV([1, 2]))
+                               k=nimble.Tune([1, 2]))
 
 def back_logCount(toCall):
     variables = ["x1", "x2", "x3", "label"]
@@ -585,79 +595,86 @@ def back_logCount(toCall):
            testObjLabels, fractionIncorrect)
 
 @oneLogEntryExpected
-def test_train_logCount_noCV():
+def test_train_logCount_noTune():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
         return nimble.train(learner, trainX, trainY)
     back_logCount(wrapped)
 
 @oneLogEntryExpected
-def test_trainAndApply_logCount_noCV():
+def test_trainAndApply_logCount_noTune():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return nimble.trainAndApply(learner, trainX, trainY, testX, performanceFunction)
+        return nimble.trainAndApply(learner, trainX, trainY, testX,
+                                    performanceFunction=performanceFunction)
     back_logCount(wrapped)
 
 @oneLogEntryExpected
-def test_trainAndTest_logCount_noCV():
+def test_trainAndTest_logCount_noTune():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
         return nimble.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction)
     back_logCount(wrapped)
 
 @oneLogEntryExpected
-def test_trainAndTestOnTrainingData_logCount_noCV():
+def test_trainAndTestOnTrainingData_logCount_noTune():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
         return nimble.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction)
     back_logCount(wrapped)
 
-@logCountAssertionFactory(22)
-def test_train_logCount_withCV_deep():
+@logCountAssertionFactory(12)
+def test_train_logCount_withTune_deep():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return nimble.train(learner, trainX, trainY, performanceFunction=performanceFunction, k=nimble.CV([1, 2]))
+        return nimble.train(learner, trainX, trainY, performanceFunction=performanceFunction, k=nimble.Tune([1, 2]))
     back_logCount(wrapped)
 
-@logCountAssertionFactory(22)
-def test_trainAndApply_logCount_withCV_deep():
+@logCountAssertionFactory(12)
+def test_trainAndApply_logCount_withTune_deep():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return nimble.trainAndApply(learner, trainX, trainY, testX, performanceFunction, k=nimble.CV([1, 2]))
+        return nimble.trainAndApply(learner, trainX, trainY, testX,
+                                    performanceFunction=performanceFunction,
+                                    k=nimble.Tune([1, 2]))
     back_logCount(wrapped)
 
-@logCountAssertionFactory(22)
-def test_trainAndTest_logCount_withCV_deep():
+@logCountAssertionFactory(12)
+def test_trainAndTest_logCount_withTune_deep():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return nimble.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction, k=nimble.CV([1, 2]))
+        return nimble.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction, k=nimble.Tune([1, 2]))
     back_logCount(wrapped)
 
-@logCountAssertionFactory(22)
-def test_trainAndTestOnTrainingData_logCount_withCV_deep():
+@logCountAssertionFactory(12)
+def test_trainAndTestOnTrainingData_logCount_withTune_deep():
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return nimble.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction, k=nimble.CV([1, 2]))
-    back_logCount(wrapped)
-
-@logCountAssertionFactory(2)
-def test_train_logCount_withCV_noDeep():
-    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
-    def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return nimble.train(learner, trainX, trainY, performanceFunction=performanceFunction, k=nimble.CV([1, 2]))
+        return nimble.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction, k=nimble.Tune([1, 2]))
     back_logCount(wrapped)
 
 @logCountAssertionFactory(2)
-def test_trainAndApply_logCount_withCV_noDeep():
+def test_train_logCount_withTune_noDeep():
     nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return nimble.trainAndApply(learner, trainX, trainY, testX, performanceFunction, k=nimble.CV([1, 2]))
+        return nimble.train(learner, trainX, trainY,
+                            performanceFunction=performanceFunction,
+                            k=nimble.Tune([1, 2]))
     back_logCount(wrapped)
 
 @logCountAssertionFactory(2)
-def test_trainAndTest_logCount_withCV_noDeep():
+def test_trainAndApply_logCount_withTune_noDeep():
     nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return nimble.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction, k=nimble.CV([1, 2]))
+        return nimble.trainAndApply(learner, trainX, trainY, testX,
+                                    performanceFunction=performanceFunction,
+                                    k=nimble.Tune([1, 2]))
     back_logCount(wrapped)
 
 @logCountAssertionFactory(2)
-def test_trainAndTestOnTrainingData_logCount_withCV_noDeep():
+def test_trainAndTest_logCount_withTune_noDeep():
     nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
-        return nimble.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction, k=nimble.CV([1, 2]))
+        return nimble.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction, k=nimble.Tune([1, 2]))
+    back_logCount(wrapped)
+
+@logCountAssertionFactory(2)
+def test_trainAndTestOnTrainingData_logCount_withTune_noDeep():
+    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
+    def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
+        return nimble.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction, k=nimble.Tune([1, 2]))
     back_logCount(wrapped)
 
 @assertCalled(nimble.core.interfaces.TrainedLearner, '_validTestData')

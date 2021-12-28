@@ -457,25 +457,40 @@ def denseCountUnique(obj, points=None, features=None):
         array = obj
     else:
         raise InvalidArgumentValue("obj must be nimble object or numpy array")
+    # unique treats every name value as a unique value, we want to treat them
+    # as the same
     if issubclass(array.dtype.type, np.number):
         vals, counts = np.unique(array, return_counts=True)
-        return dict(zip(vals, counts))
+        intMap = None
+    else:
+        mapping = {}
+        nextIdx = [0]
+        def mapper(val):
+            if val in mapping:
+                return mapping[val]
 
-    mapping = {}
-    nextIdx = [0]
-    def mapper(val):
-        if val in mapping:
+            mapping[val] = nextIdx[0]
+            nextIdx[0] += 1
             return mapping[val]
 
-        mapping[val] = nextIdx[0]
-        nextIdx[0] += 1
-        return mapping[val]
+        vectorMap = np.vectorize(mapper)
+        array = vectorMap(array)
+        intMap = {v: k for k, v in mapping.items()}
+        vals, counts = np.unique(array, return_counts=True)
+    ret = {}
+    nan = np.nan
+    for val, count in zip(vals, counts):
+        if val != val:
+            if nan in ret:
+                ret[nan] += count
+            else:
+                ret[nan] = count
+        elif intMap is None:
+            ret[val] = count
+        else:
+            ret[intMap[val]] = count
 
-    vectorMap = np.vectorize(mapper)
-    array = vectorMap(array)
-    intMap = {v: k for k, v in mapping.items()}
-    vals, counts = np.unique(array, return_counts=True)
-    return {intMap[val]: count for val, count in zip(vals, counts)}
+    return ret
 
 
 def wrapMatchFunctionFactory(matchFunc, elementwise=True):

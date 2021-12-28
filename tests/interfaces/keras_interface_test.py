@@ -59,7 +59,7 @@ def test_Keras_version():
     assert interface.version() == version
 
 @keraSkipDec
-@logCountAssertionFactory(16)
+@logCountAssertionFactory(5)
 @chooseOptimizer
 def testKerasAPI(optimizer):
     """
@@ -92,14 +92,6 @@ def testKerasAPI(optimizer):
                             loss='binary_crossentropy', metrics=['accuracy'], epochs=20,
                             batch_size=128,
                             performanceFunction=nimble.calculate.loss.rootMeanSquareError)
-
-    #########test CV
-    results = nimble.crossValidate(
-        "keras.Sequential", X=x_train, Y=y_train, optimizer=optimizer, layers=layers,
-        loss='binary_crossentropy', metrics=['accuracy'], epochs=20, batch_size=128,
-        performanceFunction=nimble.calculate.loss.rootMeanSquareError)
-    bestArguments = results.bestArguments
-    bestScore = results.bestResult
 
     #####test fit with Sequential object
     try:

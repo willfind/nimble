@@ -101,10 +101,6 @@ def wrappedTrainAndTestOvA(learnerName, trainX, trainY, testX, testY):
                                multiClassStrategy='OneVsAll')
 
 
-def wrappedCrossValidate(learnerName, trainX, trainY, testX, testY):
-    return nimble.crossValidate(learnerName, trainX, trainY, performanceFunction=nimble.calculate.fractionIncorrect)
-
-
 def setupAndCallIncrementalTrain(learnerName, trainX, trainY, testX, testY):
     tl = nimble.train(learnerName, trainX, trainY)
     tl.incrementalTrain(trainX.points.copy([0]), trainY.points.copy([0]))
@@ -259,11 +255,6 @@ def testDataIntegrityTLTest():
 def testDataIntegrityTrainAndTestMulticlassStrategies():
     backend(wrappedTrainAndTestOvO, .1, False)
     backend(wrappedTrainAndTestOvA, .1, False)
-
-# test crossValidate x3
-@pytest.mark.slow
-def testDataIntegrityCrossValidate():
-    backend(wrappedCrossValidate, 1)
 
 # test TrainedLearner methods
 # only those that the top level trainers, appliers, and testers are not reliant on.
