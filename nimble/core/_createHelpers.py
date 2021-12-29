@@ -2226,16 +2226,17 @@ def createConstantHelper(numpyMaker, returnType, numPoints, numFeatures,
             msg = "scipy is not available"
             raise PackageException(msg)
         if numpyMaker is np.ones:
-            rawDense = numpyMaker((numPoints, numFeatures))
-            rawSparse = scipy.sparse.coo_matrix(rawDense)
+            rawDense = numpyMaker((numPoints, numFeatures), dtype=int)
+            rawSparse = scipy.sparse.coo_matrix(rawDense, dtype=int)
         elif numpyMaker is np.zeros:
-            rawSparse = scipy.sparse.coo_matrix((numPoints, numFeatures))
+            rawSparse = scipy.sparse.coo_matrix((numPoints, numFeatures),
+                                                dtype=int)
         else:
             raise ValueError('numpyMaker must be np.ones or np.zeros')
         return nimble.data(rawSparse, pointNames=pointNames,
                            featureNames=featureNames, name=name, useLog=False)
 
-    raw = numpyMaker((numPoints, numFeatures))
+    raw = numpyMaker((numPoints, numFeatures), dtype=int)
     return nimble.data(raw, pointNames=pointNames, featureNames=featureNames,
                        returnType=returnType, name=name, useLog=False)
 

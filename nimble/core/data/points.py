@@ -478,16 +478,16 @@ class Points(ABC):
         >>> single = X.points.extract('a')
         >>> single
         <Matrix 1pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'a' │ 1.000 0.000 0.000
+               0 1 2
+             ┌──────
+         'a' │ 1 0 0
         >
         >>> X
         <Matrix 2pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'b' │ 0.000 1.000 0.000
-         'c' │ 0.000 0.000 1.000
+               0 1 2
+             ┌──────
+         'b' │ 0 1 0
+         'c' │ 0 0 1
         >
 
         Extract multiple points.
@@ -497,16 +497,16 @@ class Points(ABC):
         >>> multiple = X.points.extract(['a', 2])
         >>> multiple
         <Matrix 2pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'a' │ 1.000 0.000 0.000
-         'c' │ 0.000 0.000 1.000
+               0 1 2
+             ┌──────
+         'a' │ 1 0 0
+         'c' │ 0 0 1
         >
         >>> X
         <Matrix 1pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'b' │ 0.000 1.000 0.000
+               0 1 2
+             ┌──────
+         'b' │ 0 1 0
         >
 
         Extract point when the function returns True.
@@ -516,16 +516,16 @@ class Points(ABC):
         >>> func = X.points.extract(lambda pt: pt[2] == 1)
         >>> func
         <Matrix 1pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'c' │ 0.000 0.000 1.000
+               0 1 2
+             ┌──────
+         'c' │ 0 0 1
         >
         >>> X
         <Matrix 2pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'a' │ 1.000 0.000 0.000
-         'b' │ 0.000 1.000 0.000
+               0 1 2
+             ┌──────
+         'a' │ 1 0 0
+         'b' │ 0 1 0
         >
 
         Extract point when the query string returns True.
@@ -535,16 +535,16 @@ class Points(ABC):
         >>> strFunc = X.points.extract("f2 != 0")
         >>> strFunc
         <Matrix 1pt x 3ft
-                'f1'  'f2'  'f3'
-             ┌──────────────────
-         'b' │ 0.000 1.000 0.000
+               'f1' 'f2' 'f3'
+             ┌───────────────
+         'b' │  0    1    0
         >
         >>> X
         <Matrix 2pt x 3ft
-                'f1'  'f2'  'f3'
-             ┌──────────────────
-         'a' │ 1.000 0.000 0.000
-         'c' │ 0.000 0.000 1.000
+               'f1' 'f2' 'f3'
+             ┌───────────────
+         'a' │  1    0    0
+         'c' │  0    0    1
         >
 
         Extract points from the inclusive start to the inclusive end.
@@ -554,16 +554,16 @@ class Points(ABC):
         >>> startEnd = X.points.extract(start=1, end=2)
         >>> startEnd
         <Matrix 2pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'b' │ 0.000 1.000 0.000
-         'c' │ 0.000 0.000 1.000
+               0 1 2
+             ┌──────
+         'b' │ 0 1 0
+         'c' │ 0 0 1
         >
         >>> X
         <Matrix 1pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'a' │ 1.000 0.000 0.000
+               0 1 2
+             ┌──────
+         'a' │ 1 0 0
         >
 
         Select a set number to extract, starting from the first point.
@@ -573,16 +573,16 @@ class Points(ABC):
         >>> numberNoRandom = X.points.extract(number=2)
         >>> numberNoRandom
         <Matrix 2pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'a' │ 1.000 0.000 0.000
-         'b' │ 0.000 1.000 0.000
+               0 1 2
+             ┌──────
+         'a' │ 1 0 0
+         'b' │ 0 1 0
         >
         >>> X
         <Matrix 1pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'c' │ 0.000 0.000 1.000
+               0 1 2
+             ┌──────
+         'c' │ 0 0 1
         >
 
         Select a set number to extract, choosing points at random.
@@ -593,16 +593,16 @@ class Points(ABC):
         >>> numberRandom = X.points.extract(number=2, randomize=True)
         >>> numberRandom
         <Matrix 2pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'c' │ 0.000 0.000 1.000
-         'a' │ 1.000 0.000 0.000
+               0 1 2
+             ┌──────
+         'c' │ 0 0 1
+         'a' │ 1 0 0
         >
         >>> X
         <Matrix 1pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'b' │ 0.000 1.000 0.000
+               0 1 2
+             ┌──────
+         'b' │ 0 1 0
         >
 
         Keywords
@@ -673,10 +673,10 @@ class Points(ABC):
         >>> X.points.delete('a')
         >>> X
         <Matrix 2pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'b' │ 0.000 1.000 0.000
-         'c' │ 0.000 0.000 1.000
+               0 1 2
+             ┌──────
+         'b' │ 0 1 0
+         'c' │ 0 0 1
         >
 
         Delete multiple points.
@@ -686,9 +686,9 @@ class Points(ABC):
         >>> X.points.delete(['a', 2])
         >>> X
         <Matrix 1pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'b' │ 0.000 1.000 0.000
+               0 1 2
+             ┌──────
+         'b' │ 0 1 0
         >
 
         Delete point when the function returns True.
@@ -698,10 +698,10 @@ class Points(ABC):
         >>> X.points.delete(lambda pt: pt[2] == 1)
         >>> X
         <Matrix 2pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'a' │ 1.000 0.000 0.000
-         'b' │ 0.000 1.000 0.000
+               0 1 2
+             ┌──────
+         'a' │ 1 0 0
+         'b' │ 0 1 0
         >
 
         Delete point when the query string returns True.
@@ -711,10 +711,10 @@ class Points(ABC):
         >>> X.points.delete("f2 != 0")
         >>> X
         <Matrix 2pt x 3ft
-                'f1'  'f2'  'f3'
-             ┌──────────────────
-         'a' │ 1.000 0.000 0.000
-         'c' │ 0.000 0.000 1.000
+               'f1' 'f2' 'f3'
+             ┌───────────────
+         'a' │  1    0    0
+         'c' │  0    0    1
         >
 
         Delete points from the inclusive start to the inclusive end.
@@ -724,9 +724,9 @@ class Points(ABC):
         >>> X.points.delete(start=1, end=2)
         >>> X
         <Matrix 1pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'a' │ 1.000 0.000 0.000
+               0 1 2
+             ┌──────
+         'a' │ 1 0 0
         >
 
         Select a set number to delete, starting from the first point.
@@ -736,9 +736,9 @@ class Points(ABC):
         >>> X.points.delete(number=2)
         >>> X
         <Matrix 1pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'c' │ 0.000 0.000 1.000
+               0 1 2
+             ┌──────
+         'c' │ 0 0 1
         >
 
         Select a set number to delete, choosing points at random.
@@ -749,9 +749,9 @@ class Points(ABC):
         >>> X.points.delete(number=2, randomize=True)
         >>> X
         <Matrix 1pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'b' │ 0.000 1.000 0.000
+               0 1 2
+             ┌──────
+         'b' │ 0 1 0
         >
 
         Keywords
@@ -822,9 +822,9 @@ class Points(ABC):
         >>> X.points.retain('a')
         >>> X
         <Matrix 1pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'a' │ 1.000 0.000 0.000
+               0 1 2
+             ┌──────
+         'a' │ 1 0 0
         >
 
         Retain multiple points.
@@ -834,10 +834,10 @@ class Points(ABC):
         >>> X.points.retain(['a', 2])
         >>> X
         <Matrix 2pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'a' │ 1.000 0.000 0.000
-         'c' │ 0.000 0.000 1.000
+               0 1 2
+             ┌──────
+         'a' │ 1 0 0
+         'c' │ 0 0 1
         >
 
         Retain point when the function returns True.
@@ -847,9 +847,9 @@ class Points(ABC):
         >>> X.points.retain(lambda pt: pt[2] == 1)
         >>> X
         <Matrix 1pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'c' │ 0.000 0.000 1.000
+               0 1 2
+             ┌──────
+         'c' │ 0 0 1
         >
 
         Retain point when the query string returns True.
@@ -859,9 +859,9 @@ class Points(ABC):
         >>> X.points.retain("f2 != 0")
         >>> X
         <Matrix 1pt x 3ft
-                'f1'  'f2'  'f3'
-             ┌──────────────────
-         'b' │ 0.000 1.000 0.000
+               'f1' 'f2' 'f3'
+             ┌───────────────
+         'b' │  0    1    0
         >
 
         Retain points from the inclusive start to the inclusive end.
@@ -871,10 +871,10 @@ class Points(ABC):
         >>> X.points.retain(start=1, end=2)
         >>> X
         <Matrix 2pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'b' │ 0.000 1.000 0.000
-         'c' │ 0.000 0.000 1.000
+               0 1 2
+             ┌──────
+         'b' │ 0 1 0
+         'c' │ 0 0 1
         >
 
         Select a set number to retain, starting from the first point.
@@ -884,10 +884,10 @@ class Points(ABC):
         >>> X.points.retain(number=2)
         >>> X
         <Matrix 2pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'a' │ 1.000 0.000 0.000
-         'b' │ 0.000 1.000 0.000
+               0 1 2
+             ┌──────
+         'a' │ 1 0 0
+         'b' │ 0 1 0
         >
 
         Select a set number to retain, choosing points at random.
@@ -898,10 +898,10 @@ class Points(ABC):
         >>> X.points.retain(number=2, randomize=True)
         >>> X
         <Matrix 2pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'c' │ 0.000 0.000 1.000
-         'a' │ 1.000 0.000 0.000
+               0 1 2
+             ┌──────
+         'c' │ 0 0 1
+         'a' │ 1 0 0
         >
         """
         self._retain(toRetain, start, end, number, randomize, useLog)
@@ -1098,11 +1098,11 @@ class Points(ABC):
         >>> X.points.transform(lambda pt: pt + 2)
         >>> X
         <Matrix 3pt x 5ft
-               0     1     2     3     4
-           ┌──────────────────────────────
-         0 │ 3.000 3.000 3.000 3.000 3.000
-         1 │ 3.000 3.000 3.000 3.000 3.000
-         2 │ 3.000 3.000 3.000 3.000 3.000
+             0 1 2 3 4
+           ┌──────────
+         0 │ 3 3 3 3 3
+         1 │ 3 3 3 3 3
+         2 │ 3 3 3 3 3
         >
 
         Transform all points; apply to certain features. Note that the
@@ -1117,11 +1117,11 @@ class Points(ABC):
         >>> X.points.transform(transformMiddleFeature)
         >>> X
         <Matrix 3pt x 5ft
-               0     1     2     3     4
-           ┌──────────────────────────────
-         0 │ 1.000 1.000 5.000 1.000 1.000
-         1 │ 1.000 1.000 5.000 1.000 1.000
-         2 │ 1.000 1.000 5.000 1.000 1.000
+             0 1 2 3 4
+           ┌──────────
+         0 │ 1 1 5 1 1
+         1 │ 1 1 5 1 1
+         2 │ 1 1 5 1 1
         >
 
         Transform a subset of points.
@@ -1130,11 +1130,11 @@ class Points(ABC):
         >>> X.points.transform(lambda pt: pt + 6, points=[0, 2])
         >>> X
         <Matrix 3pt x 5ft
-               0     1     2     3     4
-           ┌──────────────────────────────
-         0 │ 7.000 7.000 7.000 7.000 7.000
-         1 │ 1.000 1.000 1.000 1.000 1.000
-         2 │ 7.000 7.000 7.000 7.000 7.000
+             0 1 2 3 4
+           ┌──────────
+         0 │ 7 7 7 7 7
+         1 │ 1 1 1 1 1
+         2 │ 7 7 7 7 7
         >
         """
         self._transform(function, points, useLog)
@@ -1184,11 +1184,11 @@ class Points(ABC):
         >>> addTwo = X.points.calculate(lambda pt: pt + 2)
         >>> addTwo
         <Matrix 3pt x 5ft
-               0     1     2     3     4
-           ┌──────────────────────────────
-         0 │ 3.000 3.000 3.000 3.000 3.000
-         1 │ 3.000 3.000 3.000 3.000 3.000
-         2 │ 3.000 3.000 3.000 3.000 3.000
+             0 1 2 3 4
+           ┌──────────
+         0 │ 3 3 3 3 3
+         1 │ 3 3 3 3 3
+         2 │ 3 3 3 3 3
         >
 
         Apply calculation to all points; function modifies a specific
@@ -1203,11 +1203,11 @@ class Points(ABC):
         >>> changeMiddle = X.points.calculate(changeMiddleFeature)
         >>> changeMiddle
         <Matrix 3pt x 5ft
-               0     1     2     3     4
-           ┌──────────────────────────────
-         0 │ 1.000 1.000 5.000 1.000 1.000
-         1 │ 1.000 1.000 5.000 1.000 1.000
-         2 │ 1.000 1.000 5.000 1.000 1.000
+             0 1 2 3 4
+           ┌──────────
+         0 │ 1 1 5 1 1
+         1 │ 1 1 5 1 1
+         2 │ 1 1 5 1 1
         >
 
         Apply calculation to a subset of points.
@@ -1218,10 +1218,10 @@ class Points(ABC):
         ...                              points=[2, 0])
         >>> calc
         <Matrix 2pt x 3ft
-                  0     1     2
-              ┌──────────────────
-         'p3' │ 6.000 6.000 7.000
-         'p1' │ 7.000 6.000 6.000
+                0 1 2
+              ┌──────
+         'p3' │ 6 6 7
+         'p1' │ 7 6 6
         >
 
         Keywords: apply, modify, alter
@@ -1337,12 +1337,12 @@ class Points(ABC):
         >>> X.points.insert(1, toInsert)
         >>> X
         <Matrix 4pt x 3ft
-               0     1     2
-           ┌──────────────────
-         0 │ 0.000 0.000 0.000
-         1 │ 1.000 1.000 1.000
-         2 │ 1.000 1.000 1.000
-         3 │ 0.000 0.000 0.000
+             0 1 2
+           ┌──────
+         0 │ 0 0 0
+         1 │ 1 1 1
+         2 │ 1 1 1
+         3 │ 0 0 0
         >
 
         Insert before another point; mixed object types.
@@ -1421,12 +1421,12 @@ class Points(ABC):
         >>> X.points.append(toAppend)
         >>> X
         <Matrix 4pt x 3ft
-               0     1     2
-           ┌──────────────────
-         0 │ 0.000 0.000 0.000
-         1 │ 0.000 0.000 0.000
-         2 │ 1.000 1.000 1.000
-         3 │ 1.000 1.000 1.000
+             0 1 2
+           ┌──────
+         0 │ 0 0 0
+         1 │ 0 0 0
+         2 │ 1 1 1
+         3 │ 1 1 1
         >
 
         Append mixed object types.
@@ -1514,11 +1514,11 @@ class Points(ABC):
         >>> obj.points.replace(newPt, points='b')
         >>> obj
         <Matrix 3pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'a' │ 0.000 0.000 0.000
-         'b' │ 1.000 1.000 1.000
-         'c' │ 0.000 0.000 0.000
+               0 1 2
+             ┌──────
+         'a' │ 0 0 0
+         'b' │ 1 1 1
+         'c' │ 0 0 0
         >
 
         >>> obj = nimble.zeros(4, 3, returnType='Sparse')
@@ -1526,12 +1526,12 @@ class Points(ABC):
         >>> obj.points.replace(replacement, [1, 2])
         >>> obj
         <Sparse 4pt x 3ft
-               0     1     2
-           ┌──────────────────
-         0 │ 0.000 0.000 0.000
-         1 │ 1.000 2.000 3.000
-         2 │ 9.000 8.000 7.000
-         3 │ 0.000 0.000 0.000
+             0 1 2
+           ┌──────
+         0 │ 0 0 0
+         1 │ 1 2 3
+         2 │ 9 8 7
+         3 │ 0 0 0
         >
 
         >>> obj = nimble.zeros(3, 3, pointNames=['a', 'b', 'c'],
@@ -1539,11 +1539,11 @@ class Points(ABC):
         >>> obj.points.replace([2, 3, 2], pointNames=['b'])
         >>> obj
         <DataFrame 3pt x 3ft
-                 0     1     2
-             ┌──────────────────
-         'a' │ 0.000 0.000 0.000
-         'b' │ 2.000 3.000 2.000
-         'c' │ 0.000 0.000 0.000
+               0 1 2
+             ┌──────
+         'a' │ 0 0 0
+         'b' │ 2 3 2
+         'c' │ 0 0 0
         >
 
         Keywords
