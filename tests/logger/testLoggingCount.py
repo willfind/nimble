@@ -44,14 +44,13 @@ def prefixAdder(prefix):
 
 
 nimble_logged = [
-    'crossValidate', 'data', 'fillMatching', 'log', 'loadTrainedLearner',
-    'normalizeData', 'train', 'trainAndApply', 'trainAndTest',
-    'trainAndTestOnTrainingData',
+    'data', 'fillMatching', 'log', 'loadTrainedLearner', 'normalizeData',
+    'train', 'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 nimble_notLogged = [
-    'CustomLearner', 'CV', 'Init', 'fetchFile', 'fetchFiles', 'identity',
-    'learnerNames', 'learnerParameters', 'learnerParameterDefaults',
-    'learnerType', 'ones', 'showAvailablePackages',
+    'Tuning', 'CustomLearner', 'Tune', 'Init', 'fetchFile', 'fetchFiles',
+    'identity', 'learnerNames', 'learnerParameters',
+    'learnerParameterDefaults', 'learnerType', 'ones', 'showAvailablePackages',
     'showLearnerParameterDefaults', 'showLearnerNames',
     'showLearnerParameters', 'showLog', 'zeros',
     ]
@@ -217,8 +216,8 @@ def test_showLog_logCount():
     captureOutput(wrapped)
 
 @noLogEntryExpected
-def test_CV_logCount():
-    k = nimble.CV([1, 3, 5])
+def test_Tune_logCount():
+    k = nimble.Tune([1, 3, 5])
 
 @noLogEntryExpected
 def test_Init_logCount():

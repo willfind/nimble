@@ -182,8 +182,9 @@ class SessionLogger(object):
         self.isAvailable = False
         self.logTypes = {'load': self.logLoad, 'prep': self.logPrep,
                          'run': self.logRun, 'data': self.logData,
-                         'crossVal': self.logCrossValidation,
-                         'runCV': self.logRunCV, 'setSeed': self.logRandomSeed}
+                         'tuning': self.logTuning,
+                         'deepRun': self.logDeepRun,
+                         'setSeed': self.logRandomSeed}
 
 
     def setup(self, newFileName=None):
@@ -257,14 +258,14 @@ class SessionLogger(object):
         ----------
         logType : str
             The type of information being added to the log. The values
-            'load', 'prep', 'run', 'data', and 'crossVal', generate a
+            'load', 'prep', 'run', 'data', and 'tuning', generate a
             custom output of the ``logInfo`` when printing the log.  Any
             other log type will print a string of ``logInfo`` without
             any additional formatting.
         logInfo : dict, list, str
             All types for this value will be converted and added to the
             log. If provided a dictionary; ``logType`` 'load', 'prep',
-            'run', 'data', and 'crossVal' generate a custom output when
+            'run', 'data', and 'tuning' generate a custom output when
             printing the log.
         """
         if not self.isAvailable:
@@ -513,15 +514,15 @@ class SessionLogger(object):
                      testData, testLabels, learnerFunction, arguments,
                      randomSeed, metrics, extraInfo, time)
 
-    def logRunCV(self, useLog, nimbleFunction, trainData, trainLabels,
-                 testData, testLabels, learnerFunction, arguments,
-                 randomSeed, metrics=None, extraInfo=None, time=None):
+    def logDeepRun(self, useLog, nimbleFunction, trainData, trainLabels,
+                   testData, testLabels, learnerFunction, arguments,
+                   randomSeed, metrics=None, extraInfo=None, time=None):
         """
         Log information about each run during cross-validation.
 
         If this will be logged, store an entry in the database with
-        "runCV" as the logType and a dictionary (stored as a string) of
-        the learner function called and its arguments as the logInfo.
+        "deepRun" as the logType and a dictionary (stored as a string)
+        of the learner function called and its arguments as the logInfo.
 
         Parameters
         ----------
@@ -549,47 +550,35 @@ class SessionLogger(object):
         time : float, None
             The time to run the function. None if function is not timed.
         """
-        self._logRun("runCV", useLog, nimbleFunction, trainData, trainLabels,
+        self._logRun("deepRun", useLog, nimbleFunction, trainData, trainLabels,
                      testData, testLabels, learnerFunction, arguments,
                      randomSeed, metrics, extraInfo, time)
 
-    def logCrossValidation(self, useLog, learnerFunction, arguments, metric,
-                           performance, folds, randomSeed):
+    def logTuning(self, useLog, selector, validator):
         """
         Log the results of cross validation.
 
         If this will be logged, store an entry in the database with
-        "crossVal" as the logType and a dictionary (stored as a string)
-        of the preprocessing function called and its arguments as the
-        logInfo. Cross validation can occur at any time, even by
-        internal calls to the function, based on the useLog value and
-        the value of enableCrossValidationDeepLogging in config.
+        "tuning" as the logType and a dictionary (stored as a string).
 
         Parameters
         ----------
-        learnerFunction : str
-            The name of the learner function.
-        arguments : dict
-            The arguments passed to the learner.
-        metric : function
-            The results of the testing on a run.
-        performance : list
-            A list of the performance results of each permutation.
-        folds : int
-            The number of folds.
+        selector: nimble.core.tune.ArgumentSelector
+        validator: nimble.core.tune.Validator
         """
         if loggingEnabled(useLog):
-            logType = "crossVal"
+            logType = "tuning"
             logInfo = {}
-            logInfo["learner"] = learnerFunction
-            for name, value in arguments.items():
-                if isinstance(value, nimble.CV):
-                    arguments[name] = repr(value)
-            logInfo["learnerArgs"] = arguments
-            logInfo["folds"] = folds
-            logInfo["randomSeed"] = randomSeed
-            logInfo["metric"] = (metric.__name__, metric.optimal)
-            logInfo["performance"] = performance
+            logInfo["selection"] = selector.name
+            logInfo["selectionArgs"] = selector._keywords
+            logInfo["validation"] = validator.name
+            logInfo["validationArgs"] = validator._keywords
+            logInfo["learnerName"] = validator.learnerName
+            performanceFunction = validator.performanceFunction
+            logInfo["metric"] = (performanceFunction.optimal,
+                                 performanceFunction.__name__)
+            logInfo["performances"] = list(zip(validator._results,
+                                               validator._arguments))
 
             self.log(logType, logInfo)
 
@@ -842,7 +831,7 @@ def _buildLoadLogString(timestamp, entry):
         for title in ['returnType', 'sparsity', 'name', 'path', 'seed']:
             if entry[title] is not None:
                 fullLog += title + ' ' * (15 - len(title))
-                fullLog += textwrap.fill(entry[title], 64,
+                fullLog += textwrap.fill(str(entry[title]), 64,
                                          subsequent_indent=" "*15)
                 fullLog += '\n'
     else:
@@ -945,25 +934,37 @@ def _buildRunLogString(timestamp, entry):
 
     return fullLog
 
-def _buildCVLogString(timestamp, entry):
+def _buildTuneLogString(timestamp, entry):
     """
-    Constructs the string that will be output for crossVal logTypes.
+    Constructs the string that will be output for tuning logTypes.
     """
-    crossVal = "Cross Validating for {0}".format(entry["learner"])
-    fullLog = _logHeader(crossVal, timestamp)
+    if len(entry["performances"]) > 1:
+        heading =  '"{}" Hyperparameter Tuning'.format(entry["learnerName"])
+        fullLog = _logHeader(heading, timestamp)
+        fullLog += "\n"
+        description = 'Tuned using the "{}" method'.format(entry["selection"])
+        if entry["selectionArgs"]:
+            selectionArgs = _dictToKeywordString(entry["selectionArgs"])
+            description += ' ({})'.format(selectionArgs)
+        description += ' and v' # continue to validation with lowercase v
+    else: # no tuning only validation occurred
+        fullLog = _logHeader(entry["learnerName"] + " Validation", timestamp)
+        description = 'V' # start validation with capital letter
+    description += 'alidated using the "{}" method'.format(entry["validation"])
+    if entry["validationArgs"]:
+        validationArgs = _dictToKeywordString(entry["validationArgs"])
+        description += ' ({})'.format(validationArgs)
+    optimal, funcName = entry["metric"]
+    description += '. The {} function was used to calculate '.format(funcName)
+    description += 'each result, with {} values being optimal.'.format(optimal)
+    fullLog += textwrap.fill(description, 79)
     fullLog += "\n"
-    folds = entry["folds"]
-    metricName, metricOptimal = entry["metric"]
-    fullLog += "{0}-folding using {1} ".format(folds, metricName)
-    fullLog += "optimizing for {0} values\n\n".format(metricOptimal)
-    if entry["learnerArgs"]:
-        fullLog += "Variable Arguments: "
-        fullLog += _dictToKeywordString(entry["learnerArgs"])
-        fullLog += "\n\n"
-    fullLog += "{0:<20s}{1:20s}\n".format("Results", "Arguments")
-    for arguments, result in entry["performance"]:
-        argString = _dictToKeywordString(arguments)
-        fullLog += "{0:<20.3f}{1:20s}".format(result, argString)
+    fullLog += "{0:<16s}{1}\n".format("Result", "Arguments")
+    for perf, args in entry["performances"]:
+        argString = _dictToKeywordString(args) if args else "{}"
+        if len(argString) > 63:
+            argString = textwrap.fill(argString, 63, subsequent_indent=' '*16)
+        fullLog += "{0:<16.3f}{1}".format(perf, argString)
         fullLog += "\n"
     return fullLog
 
@@ -1134,8 +1135,8 @@ logBuilders = {'load': (_buildLoadLogString, 1),
                'data': (_buildDataLogString, 1),
                'prep': (_buildPrepLogString, 2),
                'run': (_buildRunLogString, 2),
-               'runCV': (_buildRunLogString, 3),
-               'crossVal': (_buildCVLogString, 2),
+               'deepRun': (_buildRunLogString, 3),
+               'tuning': (_buildTuneLogString, 2),
                'setSeed': (_buildSetSeedLogString, 1)}
 
 def _showLogOutputString(listOfLogs, levelOfDetail, append):

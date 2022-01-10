@@ -36,10 +36,11 @@ if __name__ == "__main__":
     assert pred1.isIdentical(pred2)
 
     # Using cross validation to explicitly determine a winning argument set
-    results = nimble.crossValidate("nimble.RidgeRegression", trainX, trainY, RMSE,
-                                lamb=nimble.CV([0, .5, 1]))
-    bestArguments = results.bestArguments
-    bestScore = results.bestResult
+    results = nimble.train("nimble.RidgeRegression", trainX, trainY,
+                           performanceFunction=RMSE,
+                           lamb=nimble.Tune([0, .5, 1]))
+    bestArguments = results.tuning.bestArguments
+    bestScore = results.tuning.bestResult
 
     print("Best argument set: " + str(bestArguments))
     print("Best score: " + str(bestScore))

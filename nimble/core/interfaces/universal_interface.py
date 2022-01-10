@@ -118,8 +118,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
 
     @captureOutput
     def train(self, learnerName, trainX, trainY=None, arguments=None,
-              multiClassStrategy='default', randomSeed=None,
-              crossValidationResults=None):
+              multiClassStrategy='default', randomSeed=None, tuning=None):
         """
         Fit the learner model using training data.
 
@@ -145,9 +144,9 @@ class UniversalInterface(metaclass=abc.ABCMeta):
            Set a random seed for the operation. When not None, allows for
            reproducible results for each function call. Ignored if learner
            does not depend on randomness.
-        crossValidationResults : KFoldCrossValidator
-            The results of any cross-validation performed prior to
-            training.
+        tuning : nimble.Tuning
+            A Tuning object if hyperparameter tuning occurred during
+            training, otherwise None.
         """
         self._confirmValidLearner(learnerName)
         randomSeed = self._getValidSeed(randomSeed)
@@ -190,7 +189,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                                                              useLog=False)
                     trainedLearner = self._train(
                         learnerName, trainX, trainLabels, arguments,
-                        randomSeed, crossValidationResults)
+                        randomSeed, tuning)
                     trainedLearner.label = label
                     trainedLearners.append(trainedLearner)
 
@@ -229,7 +228,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
                         self._train(
                             learnerName, pairData.copy(),
                             pairTrueLabels.copy(), arguments, randomSeed,
-                            crossValidationResults)
+                            tuning)
                         )
                     pairData.features.append(pairTrueLabels, useLog=False)
                     trainX.points.append(pairData, useLog=False)
@@ -241,12 +240,12 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             trainX = trainX.copy()
             trainY = trainX.features.extract(toExtract=trainY, useLog=False)
         return self._train(learnerName, trainX, trainY, arguments,
-                           randomSeed, crossValidationResults)
+                           randomSeed, tuning)
 
 
     @captureOutput
     def _train(self, learnerName, trainX, trainY, arguments, randomSeed,
-               crossValidationResults):
+               tuning):
         packedBackend = self._trainBackend(learnerName, trainX, trainY,
                                            arguments, randomSeed)
         trainedBackend, transformedInputs, customDict = packedBackend
@@ -265,8 +264,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         # encapsulate into TrainedLearner object
         return TrainedLearner(learnerName, arguments, transformedArguments,
                               customDict, trainedBackend, self, has2dOutput,
-                              crossValidationResults, trainXShape, trainYNames,
-                              randomSeed)
+                              tuning, trainXShape, trainYNames, randomSeed)
 
     def _trainBackend(self, learnerName, trainX, trainY, arguments,
                       randomSeed):
@@ -815,22 +813,18 @@ class TrainedLearner(object):
     randomSeed : int
         The random seed used for the learner. Only applicable if the
         learner utilizes randomness.
-    crossValidation : KFoldCrossValidator
-        The object containing the cross-validation results, provided
-        cross-validation occurred.  See the Attributes section in
-        ``help(nimble.core.learn.KFoldCrossValidator)`` or the Examples
-        section in ``help(nimble.crossValidate)`` for more information
-        on extracting various results from this object.
+    tuning : nimble.Tuning
+        If hyperparameter tuning occurred during training, this is set
+        to the Tuning object to provide access to the validation results
+        during the tuning process.
 
     See Also
     --------
-    nimble.train
-
+    nimble.train, nimble.Tuning
     """
     def __init__(self, learnerName, arguments, transformedArguments,
                  customDict, backend, interfaceObject, has2dOutput,
-                 crossValidationResults, trainXShape, trainYNames,
-                 randomSeed):
+                 tuning, trainXShape, trainYNames, randomSeed):
         """
         Initialize the object wrapping the trained learner stored in
         backend, and setting up the object methods that may be used to
@@ -859,10 +853,9 @@ class TrainedLearner(object):
         has2dOutput : bool
             True if output will be 2-dimensional, False assumes the
             output will be 1-dimensional.
-        crossValidationResults : KFoldsCrossValidator
-            The object containing the cross-validation results if
-            cross-validation occurred while training the learner,
-            otherwise None.
+        tuning : nimble.Tuning, None
+            A Tuning object if hyperparameter tuning occurred during
+            training, otherwise None.
         trainXShape : tuple
             The shape, (numPts, numFts), of the trainX object.
         trainYNames : list
@@ -874,7 +867,7 @@ class TrainedLearner(object):
         self.learnerName = learnerName
         self.arguments = arguments
         self.randomSeed = randomSeed
-        self.crossValidation = crossValidationResults
+        self.tuning = tuning
 
         self._transformedArguments = transformedArguments
         self._customDict = customDict
@@ -1317,10 +1310,10 @@ class TrainedLearner(object):
         self._interface._validateLearnerArgumentValues(self.learnerName,
                                                        merged)
         for arg, value in merged.items():
-            if isinstance(value, nimble.CV):
-                msg = "Cannot provide a cross-validation arguments "
+            if isinstance(value, nimble.Tune):
+                msg = "Cannot provide a hyperparameter tuning arguments "
                 msg += "for parameters to retrain a TrainedLearner. "
-                msg += "If wanting to perform cross-validation, use "
+                msg += "If wanting to perform hyperparameter tuning, use "
                 msg += "nimble.train()"
                 raise InvalidArgumentValue(msg)
             self.arguments[arg] = value
@@ -1345,7 +1338,7 @@ class TrainedLearner(object):
         self._transformedArguments = transformedInputs[3]
         self._customDict = customDict
         self._has2dOutput = has2dOutput
-        self.crossValidation = None
+        self.tuning = None
 
         handleLogging(useLog, 'run', 'TrainedLearner.retrain', trainX, trainY,
                       None, None, self.learnerName, self.arguments,
@@ -1543,12 +1536,10 @@ class TrainedLearners(TrainedLearner):
         The name of the learner used for training.
     arguments : dict
         The original arguments passed to the learner.
-    crossValidation : KFoldCrossValidator
-        The object containing the cross-validation results, provided
-        cross-validation occurred.  See the Attributes section in
-        ``help(nimble.core.learn.KFoldCrossValidator)`` or the Examples
-        section in ``help(nimble.crossValidate)`` for more information
-        on extracting various results from this object.
+    tuning : nimble.Tuning
+        If hyperparameter tuning occurred during training, this is set
+        to the Tuning object to provide access to the validation results
+        during the tuning process.
     method : str
         The multiClassStrategy used, "OneVsAll" or "OneVsOne".
 
@@ -1588,14 +1579,13 @@ class TrainedLearners(TrainedLearner):
         backend = trainedLearnerAttrs._backend
         interfaceObject = trainedLearnerAttrs._interface
         has2dOutput = trainedLearnerAttrs._has2dOutput
-        crossValidationResults = trainedLearnerAttrs.crossValidation
+        tuningResults = trainedLearnerAttrs.tuning
         trainXShape = trainedLearnerAttrs._trainXShape
         trainYNames = trainedLearnerAttrs._trainYNames
 
         super().__init__(learnerName, arguments, transformedArguments,
                          customDict, backend, interfaceObject, has2dOutput,
-                         crossValidationResults, trainXShape, trainYNames,
-                         randomSeed)
+                         tuningResults, trainXShape, trainYNames, randomSeed)
 
     @captureOutput
     def apply(self, testX, arguments=None, output='match', scoreMode='label',

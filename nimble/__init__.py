@@ -31,9 +31,9 @@ from nimble.core.learn import trainAndTest
 from nimble.core.learn import trainAndTestOnTrainingData
 from nimble.core.learn import normalizeData
 from nimble.core.learn import fillMatching
-from nimble.core.learn import crossValidate
-from nimble.core.learn import CV
 from nimble.core.learn import Init
+from nimble.core.tune import Tune
+from nimble.core.tune import Tuning
 from nimble.core.logger import log
 from nimble.core.logger import showLog
 from nimble.core.interfaces import CustomLearner
@@ -49,7 +49,6 @@ from nimble import random
 from nimble import match
 from nimble import fill
 from nimble import exceptions
-
 # load settings from configuration file (comments below for Sphinx docstring)
 #: User control over configurable options.
 #:

@@ -1,31 +1,35 @@
 """
-Tests for the user facing functions for cross validation and
-the backend helpers they rely on.
+Tests k-fold cross-validation. These tests were formerly for the
+crossValidate function, which has now been removed but can be replicated
+using BruteForce and KFold
 """
 
 import math
-import functools
 
 import pytest
 
 import nimble
-from nimble import crossValidate
-from nimble import CV
 from nimble import CustomLearner
+from nimble.core.tune import Tuning
 from nimble.exceptions import InvalidArgumentValue
-from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.exceptions import ImproperObjectAction
 from nimble.calculate import fractionIncorrect, fractionCorrect
-from nimble.calculate import rootMeanSquareError, meanAbsoluteError
+from nimble.calculate import meanAbsoluteError
 from nimble.calculate import meanFeaturewiseRootMeanSquareError
 from nimble.random import pythonRandom
 from nimble.learners import KNNClassifier
-from nimble.core.learn import KFoldCrossValidator
-from tests.helpers import raises
+from nimble._utility import mergeArguments
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import generateClassificationData
 from tests.helpers import getDataConstructors
 
+def crossValidate(learnerName, X, Y, performanceFunction, arguments=None,
+                  folds=5, **kwargs):
+    arguments = mergeArguments(arguments, kwargs)
+    crossValidator = Tuning("brute force", "cross validation", folds=folds)
+    crossValidator.tune(learnerName, X, Y, arguments, performanceFunction,
+                        None, None)
+
+    return crossValidator
 
 def _randomLabeledDataSet(numPoints=50, numFeatures=5, numLabels=3,
                           constructor=None):
@@ -190,19 +194,17 @@ def test_crossValidate_2d_api_check():
 
     # repeat for crossValidate.allResults
     crossValidator = crossValidate(regressionAlgo, X, Y, metric, {}, folds=5)
-    resultsList = crossValidator.allResults
+    resultsList = list(zip(crossValidator.allResults, crossValidator.allArguments))
     assert len(resultsList) == 1
-    assert isinstance(resultsList[0], dict) and len(resultsList[0]) == 1
-    assert metric.__name__ in resultsList[0]
-    performance = resultsList[0][metric.__name__]
+    assert resultsList[0][1] == {}
+    performance = resultsList[0][0]
     assert isinstance(performance, float) and performance < .001
 
     crossValidator = crossValidate(regressionAlgo, combined, [index, 'Y2'], metric, {}, folds=5)
-    resultsList = crossValidator.allResults
+    resultsList = list(zip(crossValidator.allResults, crossValidator.allArguments))
     assert len(resultsList) == 1
-    assert isinstance(resultsList[0], dict) and len(resultsList[0]) == 1
-    assert metric.__name__ in resultsList[0]
-    performance = resultsList[0][metric.__name__]
+    assert resultsList[0][1] == {}
+    performance = resultsList[0][0]
     assert isinstance(performance, float) and performance < .001
 
     # repeat for crossValidate.bestArgument
@@ -213,7 +215,6 @@ def test_crossValidate_2d_api_check():
 def test_crossValidate_2d_Non_label_scoremodes_disallowed():
     """
     Cross validation methods on 2d label data disallow non-default scoreModes
-
     """
     #assert that for an easy dataset (no noise, overdetermined linear hyperplane!),
     #crossValidated error is perfect
@@ -230,13 +231,7 @@ def test_crossValidate_2d_Non_label_scoremodes_disallowed():
 
     #run in crossValidate
     metric = meanFeaturewiseRootMeanSquareError
-    with raises(InvalidArgumentValueCombination):
-        crossValidate(regressionAlgo, X, Y, metric, {}, folds=5,
-                      scoreMode='bestScore')
-
-    with raises(InvalidArgumentValueCombination):
-        crossValidate(regressionAlgo, X, Y, metric, {}, folds=5,
-                      scoreMode='allScores')
+    crossValidate(regressionAlgo, X, Y, metric, {}, folds=5)
 
 
 @pytest.mark.slow
@@ -269,14 +264,13 @@ def test_crossValidateResults():
     X, Y = _randomLabeledDataSet(numPoints=50, numFeatures=10, numLabels=5)
     #try with no extra arguments at all; yet we know an argument exists (k):
     crossValidator = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect)
-    resultsList = crossValidator.allResults
+    resultsList = list(zip(crossValidator.allResults, crossValidator.allArguments))
     assert resultsList
     assert 1 == len(resultsList)
-    assert len(resultsList[0]) == 1 and 'fractionIncorrect' in resultsList[0]
+    assert resultsList[0][1] == {}
     #try with some extra elements, including the default
-    crossValidator = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, k=nimble.CV([1, 2, 3]))
-    resultsList = crossValidator.allResults
-    assert resultsList
+    crossValidator = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, k=nimble.Tune([1, 2, 3]))
+    resultsList = list(zip(crossValidator.allResults, crossValidator.allArguments))
     assert 3 == len(resultsList)
 
     # since the same seed is used, and these calls are effectively building the
@@ -284,24 +278,22 @@ def test_crossValidateResults():
     # ordered differently
     seed = nimble.random.pythonRandom.randint(0, 2**32 - 1)
     nimble.random.setSeed(seed)
-    result1 = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, k=nimble.CV([1, 2, 3, 4, 5]))
+    result1 = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, k=nimble.Tune([1, 2, 3, 4, 5]))
     nimble.random.setSeed(seed)
-    result2 = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, k=nimble.CV([1, 5, 4, 3, 2]))
+    result2 = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect, k=nimble.Tune([1, 5, 4, 3, 2]))
     #assert the the resulting SCORES are identical
     #uncertain about the order
-    resultOneScores = [curEntry['fractionIncorrect'] for curEntry in result1.allResults]
-    resultTwoScores = [curEntry['fractionIncorrect'] for curEntry in result2.allResults]
-    resultsOneSet = set(resultOneScores)
-    resultsTwoSet = set(resultTwoScores)
+    resultsOneSet = set(result1.allResults)
+    resultsTwoSet = set(result2.allResults)
     assert resultsOneSet == resultsTwoSet
 
     #assert results have the expected data structure:
     #a list of tuples where the first entry is the argument dict
     #and second entry is the score (float)
     assert isinstance(result1.allResults, list)
-    for curResult in result1.allResults:
-        assert isinstance(curResult, dict)
-        assert isinstance(curResult['fractionIncorrect'], float)
+    assert isinstance(result1.allArguments, list)
+    assert isinstance(result1.deepResults, list)
+    assert result1.performanceFunction is fractionIncorrect
 
 
 @pytest.mark.slow
@@ -342,29 +334,24 @@ def test_crossValidateBestArguments():
         # get a baseline result
         nimble.random.setSeed(seed)
         crossValidator = crossValidate(FlipWrapper, X, Y,
-                                   metric, flip=nimble.CV([0, .5, .9]),
+                                   metric, {}, flip=nimble.Tune([0, .5, .9]),
                                    wrapped="nimble.KNNClassifier")
-        resultTuple = (crossValidator.bestArguments, crossValidator.bestResult)
+        resultTuple = (crossValidator.bestResult, crossValidator.bestArguments)
         assert resultTuple
 
         # Confirm that the best result is also returned in the 'returnAll' results
         nimble.random.setSeed(seed)
         crossValidator = crossValidate(FlipWrapper, X, Y,
-                                   metric, flip=nimble.CV([0, .5, .9]),
+                                   metric, {}, flip=nimble.Tune([0, .5, .9]),
                                    wrapped="nimble.KNNClassifier")
-        allResultsList = crossValidator.allResults
-        #since same args were used, the best tuple should be in allResultsList
-        allArguments = []
-        allScores = []
-        for result in allResultsList:
-            score = result.pop(metric.__name__)
-            allArguments.append(result)
-            allScores.append(score)
-        assert resultTuple[0] in allArguments
-        assert resultTuple[1] in allScores
+        allResultsList = list(zip(crossValidator.allResults,
+                                  crossValidator.allArguments))
+        assert resultTuple[0] == allResultsList[0][0]
+        assert resultTuple[1] == allResultsList[0][1]
 
         # confirm that we have actually tested something: ie, that there is a difference
         # in the results and the ordering therefore matters
+        allScores = crossValidator.allResults
         for i in range(len(allScores)):
             for j in range(i + 1, len(allScores)):
                 assert allScores[i] != allScores[j]
@@ -373,9 +360,9 @@ def test_crossValidateBestArguments():
         for curError in allScores:
             #assert that the error is not 'better' than our best error:
             if maximize:
-                assert curError <= resultTuple[1]
+                assert curError <= resultTuple[0]
             else:
-                assert curError >= resultTuple[1]
+                assert curError >= resultTuple[0]
 
 
     trial(fractionIncorrect, False)
@@ -395,10 +382,11 @@ def test_crossValidate_attributes_withDefaultArgs():
     assert bestTuple[0] == {}
     #run return all with default arguments
     crossValidator = crossValidate('nimble.KNNClassifier', X, Y, fractionIncorrect)
-    allResultsList = crossValidator.allResults
+    allResultsList = list(zip(crossValidator.allResults,
+                              crossValidator.allArguments))
     assert allResultsList
     assert 1 == len(allResultsList)
-    assert len(allResultsList[0]) == 1 and 'fractionIncorrect' in allResultsList[0]
+    assert not allResultsList[0][1] # no arguments provided
 
 
 @pytest.mark.slow
@@ -494,118 +482,6 @@ def test_crossValidate_sameResults_avgfold_vs_allcollected_orderReliant():
     # should have 100 percent accuracy, so these results should be the same
     assert nonAvgResult == avgResult
 
-class MockedKFoldCrossValidator(KFoldCrossValidator):
-    def _crossValidate(self, X, Y, useLog):
-        pass
-
-def test_KFoldCrossValidator():
-    # we have mocked the object so it will not actually perform crossValidation
-    # instead we will pass our own dummy data to the backend so we can check
-    # the outputs match our expectations
-    learnerName = 'nimble.KNNClassifier'
-    X, Y = None, None # not actually used when not crossValidating
-    performanceFunction = rootMeanSquareError
-    aVals = nimble.CV([1, 2])
-    arguments = {'a': aVals}
-    bVals = nimble.CV([1, 2]) # will be passed as kwarguments
-    folds = 3
-    scoreMode = 'label'
-    crossValidator = MockedKFoldCrossValidator(
-        learnerName, X, Y, performanceFunction, arguments, folds, scoreMode,
-        useLog=False, b=bVals)
-    assert crossValidator.learnerName == learnerName
-    assert crossValidator.folds == folds
-    assert crossValidator.performanceFunction == performanceFunction
-    assert crossValidator.arguments == {'a': aVals, 'b': bVals}
-    assert crossValidator.scoreMode == 'label'
-
-    # add dummy results
-    results = [({'a': 1, 'b': 1}, .25), ({'a': 1, 'b': 2}, .5),
-               ({'a': 2, 'b': 1}, .75), ({'a': 2, 'b': 2}, 1.0)]
-    crossValidator._allResults = results
-    assert crossValidator.allResults != results
-    retResults = [{'a': 1, 'b': 1, 'rootMeanSquareError': .25},
-                  {'a': 1, 'b': 2, 'rootMeanSquareError': .5},
-                  {'a': 2, 'b': 1, 'rootMeanSquareError': .75},
-                  {'a': 2, 'b': 2, 'rootMeanSquareError': 1.0}]
-    assert crossValidator.allResults == retResults
-    # best arguments/score should not be calculated until requested
-    assert crossValidator._bestArguments is None
-    assert crossValidator._bestResult is None
-    assert crossValidator.bestArguments == {'a': 1, 'b': 1}
-    # accessing bestArguments property will also set bestScore
-    assert crossValidator._bestResult is not None
-    assert crossValidator.bestResult == .25
-    assert crossValidator.getResult(crossValidator.bestArguments) == .25
-    assert crossValidator.getResult(a=2, b=1) == .75
-    assert crossValidator.getResult({'a': 1}, b=2) == .5
-
-    # add some dummy fold results
-    fold_results = ([({'a': 1, 'b': 1}, .25), ({'a': 1, 'b': 2}, .5),
-                     ({'a': 2, 'b': 1}, .75), ({'a': 2, 'b': 2}, 1.0)] * folds)
-    crossValidator._resultsByFold = fold_results
-    assert crossValidator.getFoldResults({'a': 1, 'b': 1}) == [.25] * folds
-    assert crossValidator.getFoldResults(a=2, b=2) == [1.0] * folds
-    assert crossValidator.getFoldResults({'a': 1}, b=2) == [.5] * folds
-
-    # test allResults for lambda or unnamed function
-    retResults = [{'a': 1, 'b': 1, 'performance': .25},
-                  {'a': 1, 'b': 2, 'performance': .5},
-                  {'a': 2, 'b': 1, 'performance': .75},
-                  {'a': 2, 'b': 2, 'performance': 1.0}]
-    # these performanceFunction are invalid, but since we have already
-    # instantiated this object this is acceptable because allResults only
-    # attempts to access the __name__ attribute of a performanceFunction
-    crossValidator.performanceFunction = None
-    assert crossValidator.allResults == retResults
-    crossValidator.performanceFunction = lambda y, yPred: None
-    assert crossValidator.allResults == retResults
-
-@raises(InvalidArgumentValue)
-def test_KFoldCrossValidator_invalidPerformanceFunction():
-    def noOptimal(yActual, yPred):
-        return 100
-
-    xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
-            [1, 0, 0], [0, 1, 0], [0, 0, 1],
-            [1, 0, 1], [1, 1, 0], [0, 1, 1]]
-    yRaw = [[1], [2], [3],
-            [1], [2], [3],
-            [1], [2], [3]]
-    X = nimble.data(xRaw)
-    Y = nimble.data(yRaw)
-    crossValidator = KFoldCrossValidator(
-        'nimble.KNNClassifier', X, Y, arguments={'k': 3},
-        performanceFunction=noOptimal, folds=3)
-
-@raises(InvalidArgumentValue)
-def test_KFoldCrossValidator_zeroFolds():
-    xRaw = [[1, 0, 0], [0, 1, 0], [0, 0, 1],
-            [1, 0, 0], [0, 1, 0], [0, 0, 1],
-            [1, 0, 1], [1, 1, 0], [0, 1, 1]]
-    yRaw = [[1], [2], [3],
-            [1], [2], [3],
-            [1], [2], [3]]
-    X = nimble.data(xRaw)
-    Y = nimble.data(yRaw)
-    crossValidator = KFoldCrossValidator(
-        'nimble.KNNClassifier', X, Y, arguments={'k': 3},
-        performanceFunction=fractionIncorrect, folds=0)
-
-def test_CV():
-    crossVal = CV([1, 2, 3])
-    assert len(crossVal) == 3
-    assert crossVal[1] == 2
-    assert str(crossVal) == "(1, 2, 3)"
-    assert repr(crossVal) == "CV([1, 2, 3])"
-
-@raises(ImproperObjectAction)
-def test_CV_immutable():
-    crossVal = CV([1, 2, 3])
-    # can get
-    assert crossVal[1] == 2
-    # cannot set
-    crossVal[1] = 0
 
 @logCountAssertionFactory(6)
 def test_crossValidate_logCount():

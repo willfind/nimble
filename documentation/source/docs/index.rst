@@ -118,9 +118,8 @@ their exact location within the package. For example,
    nimble.trainAndTestOnTrainingData
    nimble.normalizeData
    nimble.fillMatching
-   nimble.crossValidate
-   ~nimble.core.learn.KFoldCrossValidator
-   nimble.CV
+   nimble.Tune
+   nimble.Tuning
    nimble.Init
 
 The table below shows the current interfaces built in to Nimble. As an added

@@ -5,7 +5,6 @@ They are separated here so that that (most) top level user-facing
 functions are contained in learn.py without the distraction of helpers.
 """
 
-import itertools
 from functools import wraps
 
 import numpy as np
@@ -16,7 +15,6 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import PackageException
 from nimble.core.data import Base
 from nimble.random import pythonRandom
-from nimble.random import numpyRandom
 from nimble.core.configuration import setInterfaceOptions
 
 
@@ -150,178 +148,6 @@ def computeMetrics(dependentVar, knownData, predictedData,
     result = performanceFunction(knownLabels, predictedData)
 
     return result
-
-
-class FoldIterator(object):
-    """
-    Create and iterate through folds.
-
-    Parameters
-    ----------
-    dataList : list
-        A list of data objects to divide into folds.
-    folds : int
-        The number of folds to create.
-    """
-    def __init__(self, dataList, folds):
-        self.dataList = dataList
-        if folds <= 0:
-            msg = "Number of folds must be greater than 0"
-            raise InvalidArgumentValue(msg)
-        self.folds = folds
-        self.foldList = self._makeFoldList()
-        self.index = 0
-        for dat in self.dataList:
-            if dat is not None and dat.getTypeString() == 'Sparse':
-                dat._sortInternal('point')
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self.index >= len(self.foldList):
-            raise StopIteration
-        # we're going to be separating training and testing sets through
-        # extraction, so we have to copy the data in order not to destroy the
-        # original sets across multiple folds
-        copiedList = []
-        for data in self.dataList:
-            if data is None:
-                copiedList.append(None)
-            else:
-                copiedList.append(data.copy())
-
-            # we want each training set to be permuted wrt its ordering in the
-            # original data. This is setting up a permutation to be applied to
-            # each object
-            #		indices = range(0, len(copiedList[0].points)
-            #                              - len(self.foldList[self.index])))
-            #		pythonRandom.shuffle(indices)
-        indices = np.arange(0, (len(copiedList[0].points)
-                                   - len(self.foldList[self.index])))
-        numpyRandom.shuffle(indices)
-
-        resultsList = []
-        for copied in copiedList:
-            if copied is None:
-                resultsList.append((None, None))
-            else:
-                copied.name = None
-                currTest = copied.points.extract(self.foldList[self.index],
-                                                 useLog=False)
-                currTrain = copied
-                currTrain.points.permute(indices, useLog=False)
-                resultsList.append((currTrain, currTest))
-        self.index = self.index + 1
-        return resultsList
-
-    def _makeFoldList(self):
-        if self.dataList is None:
-            raise InvalidArgumentType('dataList may not be None')
-        if len(self.dataList) == 0:
-            raise InvalidArgumentValue("dataList may not be or empty")
-
-        points = len(self.dataList[0].points)
-        for data in self.dataList:
-            if data is not None:
-                if len(data.points) == 0:
-                    msg = "One of the objects has 0 points, it is impossible "
-                    msg += "to specify a valid number of folds"
-                    raise InvalidArgumentValueCombination(msg)
-                if len(data.points) != len(self.dataList[0].points):
-                    msg = "All data objects in the list must have the same "
-                    msg += "number of points and features"
-                    raise InvalidArgumentValueCombination(msg)
-
-        # When number of points does not divide evenly by number of folds
-        # some folds will need one more point than minNumInFold.
-        # Ex. 10 folds and 98 points, we make 8 folds of 10 then 2 folds of 9
-        minNumInFold, numFoldsToAddPoint = divmod(points, self.folds)
-        if minNumInFold == 0:
-            msg = "Must specify few enough folds so there is a point in each"
-            raise InvalidArgumentValue(msg)
-
-        # randomly select the folded portions
-        indices = list(range(points))
-        pythonRandom.shuffle(indices)
-        foldList = []
-        end = 0
-        for fold in range(self.folds):
-            start = end
-            end = (fold + 1) * minNumInFold
-            if fold < numFoldsToAddPoint:
-                end += fold + 1
-            else:
-                end += numFoldsToAddPoint
-            foldList.append(indices[start:end])
-
-        return foldList
-
-class ArgumentIterator(object):
-    """
-    Create and iterate through argument permutations.
-
-    Parameters
-    ----------
-    rawArgumentInput : dict
-        Mapping of argument names (strings) to values.
-        e.g. {'a': CV([1, 2, 3]), 'b': nimble.CV([4,5]), 'c': 6}
-    """
-
-    def __init__(self, rawArgumentInput):
-        self.rawArgumentInput = rawArgumentInput
-        self.index = 0
-        if not isinstance(rawArgumentInput, dict):
-            msg = "ArgumentIterator objects require dictionary's to "
-            msg += "initialize- e.g. {'a':CV([1,2,3]), 'b':CV([4,5])} This "
-            msg += "is the form generated by **args in a function argument."
-            raise InvalidArgumentType(msg)
-
-        # i.e. if rawArgumentInput == {}
-        if len(rawArgumentInput) == 0:
-            self.numPermutations = 1
-            self.permutationsList = [{}]
-        else:
-            iterableArgDict = {}
-            self.numPermutations = 1
-            for key in rawArgumentInput.keys():
-                if isinstance(rawArgumentInput[key], nimble.CV):
-                    self.numPermutations *= len(rawArgumentInput[key])
-                    iterableArgDict[key] = rawArgumentInput[key]
-                else: # numPermutations not increased
-                    # wrap in iterable so that itertools.product will treat
-                    # whatever this value is as a single argument value even
-                    # if the value itself is an iterable
-                    iterableArgDict[key] = (rawArgumentInput[key],)
-
-            # note: calls to keys() and values() will directly correspond as
-            # since no modification is made to iterableArgDict between calls.
-            self.permutationsList = []
-            for permutation in itertools.product(*iterableArgDict.values()):
-                permutationDict = {}
-                for i, argument in enumerate(iterableArgDict.keys()):
-                    permutationDict[argument] = permutation[i]
-                self.permutationsList.append(permutationDict)
-
-            assert len(self.permutationsList) == self.numPermutations
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self.index >= self.numPermutations:
-            self.index = 0
-            raise StopIteration
-        permutation = self.permutationsList[self.index]
-        self.index += 1
-        return permutation
-
-    def reset(self):
-        """
-        Reset index to 0.
-        """
-        self.index = 0
-
 
 # with class-based refactor:
 # todo add scale control as paramater for generateClusteredPoints

@@ -64,10 +64,10 @@ trainX, trainY, testX, testY = traffic.trainAndTestSets(testFraction, yFeature)
 ## learning algorithm's root mean square error.
 learners = ['sklearn.LinearRegression', 'sklearn.Ridge', 'sklearn.Lasso',
             'sklearn.KNeighborsRegressor', 'sklearn.GradientBoostingRegressor']
-performanceFunction = nimble.calculate.rootMeanSquareError
+rootMeanSquareError = nimble.calculate.rootMeanSquareError
 for learner in learners:
     performance = nimble.trainAndTest(learner, trainX, trainY, testX, testY,
-                                      performanceFunction)
+                                      rootMeanSquareError)
     print(learner, 'error:', performance)
 
 ## `'sklearn.KNeighborsRegressor'` and `'sklearn.GradientBoostingRegressor'`
@@ -86,44 +86,53 @@ nimble.showLearnerParameters('sklearn.KNeighborsRegressor')
 nimble.showLearnerParameterDefaults('sklearn.KNeighborsRegressor')
 
 ## Furthermore, we can test multiple values for the same parameter
-## by using the `nimble.CV` object. The presence of `nimble.CV` will trigger
-## k-fold cross validation where k is the value of the `folds` argument.
-## Nimble's training functions will find the argument combination with the best
-## average `performanceFunction` result from the k-fold cross validation and
-## use that model.
+## by using the `nimble.Tune` object. The presence of `nimble.Tune` will
+## trigger hyperparameter tuning. By default, it tunes the arguments
+## consecutively using 5-fold cross-validation, but this can be modified by
+## providing an `Tuning` object to the `tuning` parameter.
+## The tuning will find the argument combination with the best average
+## `performanceFunction` result and return the `TrainedLearner` using the best
+## arguments.
 
-## For KNeighborsRegressor, we will use `nimble.CV` to try 3, 5, and 7 for the
-## number of nearest neighbors and for `GradientBoostingRegressor` we will try
-## different learning rate values. Note, some interfaces have alias options for
-## the package name, below we use the alias 'skl' for the 'sklearn' package.
-knnArgs = {'n_neighbors': nimble.CV([3, 5, 7])}
+## For KNeighborsRegressor, we will use `nimble.Tune` to try 3, 5, and 7 for
+## the number of nearest neighbors and for `GradientBoostingRegressor` we will
+## try different learning rate values. The `Tuning` object defines a method for
+## selecting each argument set and how each argument set will be validated.
+## Below, we will use the default "consecutive" method but instead of the
+## default "cross validation", we will hold out a random 20% of our training
+## data for validation. For details on all tuning options, see the `Tuning`
+## documentation.
+tuning = nimble.Tuning(validation=0.2, performanceFunction=rootMeanSquareError)
+# some interfaces have alias options for the package name
+# below we use the alias 'skl' for the 'sklearn' package.
 knnTL = nimble.train('skl.KNeighborsRegressor', trainX, trainY,
-                     performanceFunction, folds=2, arguments=knnArgs)
+                     arguments={'n_neighbors': nimble.Tune([3, 5, 7])},
+                     tuning=tuning)
 gbTL = nimble.train('skl.GradientBoostingRegressor', trainX, trainY,
-                    performanceFunction, folds=2,
-                    learning_rate=nimble.CV([0.01, 0.1, 1]))
+                    learning_rate=nimble.Tune([0.01, 0.1, 1]),
+                    tuning=tuning)
 
 ## The `nimble.train` function returns a `TrainedLearner`. With a
 ## `TrainedLearner` we can `apply` (make predictions on a test set), `test`
 ## (measure the performance on a test set with known labels) and it provides
 ## many other additional methods and attributes. The `knnTL` object was trained
-## with the `n_neighbors` value that performed best during 2-fold cross
-## validation. `TrainedLearner` objects store the cross validation results,
-## let's see all of the results for `knnTL`.
-for result in knnTL.crossValidation.allResults:
-    print(result)
+## with the `n_neighbors` value that performed best during validation.
+## When hyperparameter tuning occured, `TrainedLearner.tuning` provides access
+## to the tuning results. The `allResults` and `allArguments` properties are
+## sorted from best to worst. Let's see how each `knnTL` argument performed.
+for result, args in zip(knnTL.tuning.allResults, knnTL.tuning.allArguments):
+    print(result, args)
 
 ## Similarly `gbTL` was trained with the best of our three possible learning
 ## rates. Instead of seeing all the results, let's just see the best argument
 ## and best result this time.
-print(gbTL.crossValidation.bestArguments)
-print(gbTL.crossValidation.bestResult)
+print(gbTL.tuning.bestResult, gbTL.tuning.bestArguments)
 
 ## `knnTL` found `n_neighbors` of 5 to be the best setting.  This is the same
 ## as the default value so we already know how it performs on our testing data.
 ## However, `gbTL` found `learning_rate` of 1 outperformed the default, 0.1.
 ## Let's see how it performs on our testing (out-of-sample) data.
-gbPerf = gbTL.test(testX, testY, performanceFunction)
+gbPerf = gbTL.test(testX, testY, rootMeanSquareError)
 print('sklearn.GradientBoostingRegressor', 'learning_rate=1', 'error', gbPerf)
 
 ## Applying our learner ##

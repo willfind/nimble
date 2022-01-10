@@ -150,7 +150,7 @@ def test_trainAndTestOnTrainingData_trainError():
     def wrapped(trainX, trainY, testX, testY, useLog):
         return nimble.trainAndTestOnTrainingData(
             learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
-            crossValidationError=False, useLog=useLog)
+            useLog=useLog)
 
     backend(wrapped, runAndCheck)
 
@@ -185,15 +185,12 @@ def test_TrainedLearner_test():
     backend(wrapped, runAndCheck)
 
 def backendDeep(toCall, validator):
-    if toCall.__name__ == "crossValidate":
-        entriesWithoutDeep = 1
-        entriesFromFolds = 10
-    elif toCall.__name__ == "trainAndTestOnTrainingData":
+    if toCall.__name__ == "trainAndTestOnTrainingData":
         entriesWithoutDeep = 2
-        entriesFromFolds = 10
+        entriesFromFolds = 5
     elif toCall.__name__.startswith("train"):
         entriesWithoutDeep = 2
-        entriesFromFolds = 20 # 10 folds * 2 args
+        entriesFromFolds = 10 # 5 folds * 2 args
     else:
         msg = "The function name for this test is not recognized. "
         msg += "Functions using this backend must have the wrapped 'toCall' "
@@ -210,6 +207,7 @@ def backendDeep(toCall, validator):
     # control, so we confirm that in those instances where
     # logging should be disable, it is still disabled
     (startT1, endT1) = validator(toCall, useLog=True)
+    nimble.showLog(levelOfDetail=3)
     (startT2, endT2) = validator(toCall, useLog=None)
     (startT3, endT3) = validator(toCall, useLog=False) # 0 logs added
     assert startT1 + expectedLogChangeTrue == endT1
@@ -254,38 +252,30 @@ def backendDeep(toCall, validator):
     # the deep flag is different
     assert (endT1 - startT1) - entriesFromFolds == (endF1 - startF1)
 
-def test_Deep_crossValidate():
-    def wrapped(trainX, trainY, testX, testY, useLog):
-        return nimble.crossValidate(learnerName, trainX, trainY,
-                                 performanceFunction=fractionIncorrect,
-                                 useLog=useLog)
-    wrapped.__name__ = 'crossValidate'
-    backendDeep(wrapped, runAndCheck)
-
 def test_Deep_train():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        k = nimble.CV([2, 3])  # we are not calling CV directly, we need to trigger it
-        return nimble.train(learnerName, trainX, trainY,
-                         performanceFunction=fractionIncorrect, useLog=useLog,
-                         k=k)
+        k = nimble.Tune([2, 3])  # trigger hyperparameter tuning
+        return nimble.train(
+            learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
+            useLog=useLog, k=k)
     wrapped.__name__ = 'train'
     backendDeep(wrapped, runAndCheck)
 
 def test_Deep_trainAndApply():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        k = nimble.CV([2, 3])  # we are not calling CV directly, we need to trigger it
-        return nimble.trainAndApply(learnerName, trainX, trainY, testX,
-                                 performanceFunction=fractionIncorrect,
-                                 useLog=useLog, k=k)
+        k = nimble.Tune([2, 3])  # trigger hyperparameter tuning
+        return nimble.trainAndApply(
+            learnerName, trainX, trainY, testX,
+            performanceFunction=fractionIncorrect, useLog=useLog, k=k)
     wrapped.__name__ = 'trainAndApply'
     backendDeep(wrapped, runAndCheck)
 
 def test_Deep_trainAndTest():
     def wrapped(trainX, trainY, testX, testY, useLog):
-        k = nimble.CV([2, 3])  # we are not calling CV directly, we need to trigger it
-        return nimble.trainAndTest(learnerName, trainX, trainY, testX, testY,
-                                performanceFunction=fractionIncorrect,
-                                useLog=useLog, k=k)
+        k = nimble.Tune([2, 3])  # trigger hyperparameter tuning
+        return nimble.trainAndTest(
+            learnerName, trainX, trainY, testX, testY,
+            performanceFunction=fractionIncorrect, useLog=useLog, k=k)
     wrapped.__name__ = 'trainAndTest'
     backendDeep(wrapped, runAndCheck)
 
