@@ -22,10 +22,7 @@ if __name__ == '__main__':
         args.insert(1, 'nimble')
     # always run any doctests
     args.append('--doctest-modules')
-    # disable faulthandler and warnings by default
-    if 'faulthandler' not in args:
-        # do not output segfault info from shogun tests
-        args.extend(['-p', 'no:faulthandler'])
+    # disable warnings by default
     if 'warnings' not in args:
         # ignore all warnings unless turned on in test
         args.extend(['-p', 'no:warnings'])

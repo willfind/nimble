@@ -140,10 +140,6 @@ instead of ``"sklearn.LinearRegression"``).
    +----------------+--------------------------------+
    | `autoimpute`_  |                                |
    +----------------+--------------------------------+
-   | `shogun`_      |                                |
-   +----------------+--------------------------------+
-   | `mlpy`_        |                                |
-   +----------------+--------------------------------+
 
 Custom Learner
 --------------
@@ -250,6 +246,4 @@ Submodules
 .. _sklearn: https://scikit-learn.org/stable/install.html
 .. _tensorflow: https://www.tensorflow.org/install
 .. _autoimpute: https://autoimpute.readthedocs.io/en/latest/user_guide/getting_started.html
-.. _shogun: https://www.shogun.ml/install
 .. _keras: https://keras.io/getting_started/
-.. _mlpy: https://github.com/richardARPANET/mlpy

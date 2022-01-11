@@ -508,7 +508,8 @@ def _unpackLearnerName(learnerName):
         if len(splitList) < 2:
             msg = "Recieved ill formed learner name '" + learnerName + "'. "
             msg += "The learner name must identify both the desired package "
-            msg += "and learner, separated by a dot. Example:'mlpy.KNN'"
+            msg += "and learner, separated by a dot. Example:"
+            msg += "'sklearn.KNeighborsClassifier'"
             raise InvalidArgumentValue(msg)
         package, name = splitList
     else:

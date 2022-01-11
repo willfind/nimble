@@ -33,18 +33,6 @@ def testClassifyAlgorithms(printResultsDontThrow=False):
         knownAlgorithmToTypeHash['sciKitLearn.RadiusNeighborsRegressor'] = 'regression'
     except PackageException:
         pass
-    try:
-        findBestInterface('mlpy')
-        knownAlgorithmToTypeHash['mlpy.LDAC'] = 'classification'
-        knownAlgorithmToTypeHash['mlpy.Ridge'] = 'regression'
-    except PackageException:
-        pass
-    try:
-        findBestInterface('shogun')
-        knownAlgorithmToTypeHash['shogun.MulticlassOCAS'] = 'classification'
-        knownAlgorithmToTypeHash['shogun.LibSVR'] = 'regression'
-    except PackageException:
-        pass
 
     for curAlgorithm in knownAlgorithmToTypeHash.keys():
         actualType = knownAlgorithmToTypeHash[curAlgorithm]

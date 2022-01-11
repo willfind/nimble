@@ -113,8 +113,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             raise InvalidArgumentValue(msg)
 
     def _getValidSeed(self, randomSeed):
-        forShogun = self.getCanonicalName() == 'shogun'
-        return nimble.random._getValidSeed(randomSeed, forShogun)
+        return nimble.random._getValidSeed(randomSeed)
 
     @captureOutput
     def train(self, learnerName, trainX, trainY=None, arguments=None,

@@ -152,7 +152,6 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
     numSamples = int(len(allLearners) * portionToTest)
     toTest = pythonRandom.sample(allLearners, numSamples)
 
-#    toTest = filter(lambda x: x[:6] == 'shogun', allLearners)
     for learner in toTest:
         package = learner.split('.', 1)[0].lower()
         lType = nimble.learnerType(learner)
@@ -189,9 +188,6 @@ def backend(toCall, portionToTest, allowRegression=True, allowNotImplemented=Fal
                                     backCTrainComInt, backCTestComInt)
             # this is meant to safely bypass those learners that have required arguments
             except InvalidArgumentValue as iav:
-                continue
-            # this is generally how shogun explodes
-            except SystemError as se:
                 continue
             except NotImplementedError as nie:
                 if not allowNotImplemented:

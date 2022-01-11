@@ -186,16 +186,9 @@ def testRandomnessControl():
 
     for interface in nimble.core.interfaces.available.values():
         interfaceName = interface.getCanonicalName()
-        # if interfaceName != 'shogun':
-        #     continue
-
         listOf = nimble.learnerNames(interfaceName)
 
-        shogunIgnore = ['LibLinearRegression', 'SGDQN']
-
         for learner in listOf:
-            if interfaceName == 'shogun' and learner in shogunIgnore:
-                continue
             currType = nimble.learnerType(interfaceName + '.' + learner)
             if currType == 'regression':
                 ((trainData, trainLabels), (testData, _)) = generateRegressionData(5, 10, 9)
@@ -261,15 +254,9 @@ def getCanonicalNameAndPossibleAliases(interface):
     if interface.__name__ == 'SciKitLearn':
         canonicalName = 'sklearn'
         aliases = ['scikitlearn', 'skl', 'SciKitLearn', 'sKLeARN', 'SKL']
-    elif interface.__name__ == 'Mlpy':
-        canonicalName = 'mlpy'
-        aliases = ['mlpy', 'MLPY', 'mLpY']
     elif interface.__name__ == 'Keras':
         canonicalName = 'keras'
         aliases = ['keras', 'KERAS', 'KeRaS', 'tensorflow.keras', 'tf.keras']
-    elif interface.__name__ == 'Shogun':
-        canonicalName = 'shogun'
-        aliases = ['shogun', 'SHOGUN', 'ShOGUn']
     elif interface.__name__ == 'Autoimpute':
         canonicalName = 'autoimpute'
         aliases = ['autoimpute', 'AUTOIMPUTE', 'AuToImpUTe']
