@@ -671,11 +671,11 @@ class SessionLogger(object):
         if saveToFileName is not None:
             filePath = os.path.join(self.logLocation, saveToFileName)
             if append:
-                with open(filePath, mode='a') as f:
+                with open(filePath, mode='a', encoding='utf-8') as f:
                     f.write("\n")
                     f.write(logOutput)
             else:
-                with open(filePath, mode='w') as f:
+                with open(filePath, mode='w', encoding='utf-8') as f:
                     f.write(logOutput)
         else:
             print(logOutput)
@@ -803,7 +803,7 @@ def _showLogQueryAndValues(leastSessionsAgo, mostSessionsAgo, startDate,
         includedValues.append(searchForText)
         includedValues.append(searchForText)
 
-    if whereQueryList != []:
+    if whereQueryList:
         whereQuery = " and ".join(whereQueryList)
         fullQuery = selectQuery + " WHERE " + whereQuery
     else:
@@ -822,7 +822,7 @@ def _buildLoadLogString(timestamp, entry):
     """
     Constructs the string that will be output for load logTypes.
     """
-    dataCol = "{0} Loaded".format(entry["objectType"])
+    dataCol = f"{entry['objectType']} Loaded"
     fullLog = _logHeader(dataCol, timestamp)
     if entry["objectType"] != "TrainedLearner":
         line = '{:<14} {}\n'
@@ -847,7 +847,7 @@ def _buildPrepLogString(timestamp, entry):
     """
     Constructs the string that will be output for prep logTypes.
     """
-    function = "{0}.{1}".format(entry["object"], entry["function"])
+    function = f"{entry['object']}.{entry['function']}"
     fullLog = _logHeader(function, timestamp)
     if entry['arguments']:
         argString = "Arguments: "
@@ -873,9 +873,9 @@ def _buildRunLogString(timestamp, entry):
     # header data
     time = entry.get("time", "")
     if time:
-        time = "Completed in {0:.3f} seconds".format(entry['time'])
+        time = f"Completed in {entry['time']:.3f} seconds"
     fullLog = _logHeader(time, timestamp)
-    fullLog += '\n{0}("{1}")\n'.format(entry['function'], entry["learner"])
+    fullLog += f"""\n{entry['function']}("{entry['learner']}")\n"""
     # train and test data
     fullLog += _formatSessionLine("Data", "# points", "# features")
     if "trainData" in entry:
@@ -939,32 +939,32 @@ def _buildTuneLogString(timestamp, entry):
     Constructs the string that will be output for tuning logTypes.
     """
     if len(entry["performances"]) > 1:
-        heading =  '"{}" Hyperparameter Tuning'.format(entry["learnerName"])
+        heading =  f'''"{entry['learnerName']}" Hyperparameter Tuning'''
         fullLog = _logHeader(heading, timestamp)
         fullLog += "\n"
-        description = 'Tuned using the "{}" method'.format(entry["selection"])
+        description = f'''Tuned using the "{entry['selection']}" method'''
         if entry["selectionArgs"]:
             selectionArgs = _dictToKeywordString(entry["selectionArgs"])
-            description += ' ({})'.format(selectionArgs)
+            description += f' ({selectionArgs})'
         description += ' and v' # continue to validation with lowercase v
     else: # no tuning only validation occurred
         fullLog = _logHeader(entry["learnerName"] + " Validation", timestamp)
         description = 'V' # start validation with capital letter
-    description += 'alidated using the "{}" method'.format(entry["validation"])
+    description += f'''alidated using the "{entry['validation']}" method'''
     if entry["validationArgs"]:
         validationArgs = _dictToKeywordString(entry["validationArgs"])
-        description += ' ({})'.format(validationArgs)
+        description += f' ({validationArgs})'
     optimal, funcName = entry["metric"]
-    description += '. The {} function was used to calculate '.format(funcName)
-    description += 'each result, with {} values being optimal.'.format(optimal)
+    description += f'. The {funcName} function was used to calculate '
+    description += f'each result, with {optimal} values being optimal.'
     fullLog += textwrap.fill(description, 79)
     fullLog += "\n"
-    fullLog += "{0:<16s}{1}\n".format("Result", "Arguments")
+    fullLog += f"{'Result':<16s}Arguments\n"
     for perf, args in entry["performances"]:
         argString = _dictToKeywordString(args) if args else "{}"
         if len(argString) > 63:
             argString = textwrap.fill(argString, 63, subsequent_indent=' '*16)
-        fullLog += "{0:<16.3f}{1}".format(perf, argString)
+        fullLog += f"{perf:<16.3f}{argString}"
         fullLog += "\n"
     return fullLog
 
@@ -972,7 +972,7 @@ def _buildSetSeedLogString(timestamp, entry):
     """
     Constructs the string that will be output for setSeed logTypes.
     """
-    asHeader = entry['action'] + '(seed={})'.format(entry['seed'])
+    asHeader = f'{entry["action"]}(seed={entry["seed"]})'
     fullLog = _logHeader(asHeader, timestamp)
     return fullLog
 
@@ -1002,7 +1002,7 @@ def _dictToKeywordString(dictionary):
     """
     kvStrings = []
     for key, value in dictionary.items():
-        string = "{0}={1}".format(key, value)
+        string = f"{key}={value}"
         kvStrings.append(string)
     return ", ".join(kvStrings)
 
@@ -1028,7 +1028,7 @@ def _logHeader(left, right):
     Formats the first line of each log entry.
     """
     lineLog = "\n"
-    lineLog += "{0:60}{1:>19}\n".format(left, right)
+    lineLog += f"{left:60}{right:>19}\n"
     return lineLog
 
 def _buildArgDict(func, *args, **kwargs):
@@ -1146,7 +1146,7 @@ def _showLogOutputString(listOfLogs, levelOfDetail, append):
     """
     fullLog = ""
     if not append:
-        fullLog = "{0:^79}\n".format("NIMBLE LOGS")
+        fullLog = f"{'NIMBLE LOGS':^79}\n"
         fullLog += "." * 79
     previousLogSessionNumber = None
     for entry in listOfLogs:
@@ -1163,9 +1163,8 @@ def _showLogOutputString(listOfLogs, levelOfDetail, append):
             # skip first new line if appending because append inserts newline
             if not (previousLogSessionNumber is None and append):
                 fullLog += "\n"
-            logString = "SESSION {0}".format(sessionNumber)
-            fullLog += ".{0:^77}.".format(logString)
-            fullLog += "\n"
+            logString = f"SESSION {sessionNumber}"
+            fullLog += f".{logString:^77}.\n"
             fullLog += "." * 79
             previousLogSessionNumber = sessionNumber
         try:

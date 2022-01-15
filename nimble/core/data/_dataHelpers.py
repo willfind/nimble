@@ -124,7 +124,7 @@ def checkNumeric(val):
     Check if value looks numeric. Raise ValueError if not.
     """
     if not looksNumeric(val):
-        raise ValueError("Value '{}' does not seem to be numeric".format(val))
+        raise ValueError(f"Value '{val}' does not seem to be numeric")
 
 
 def formatIfNeeded(value, sigDigits):
@@ -224,9 +224,8 @@ def exceptionDocstringFactory(cls):
         name = func.__name__
         baseDoc = getattr(cls, name).__doc__
         if baseDoc is not None:
-            viewMsg = "The {0} method is object modifying ".format(name)
-            viewMsg += "and will always raise an exception for view "
-            viewMsg += "objects.\n\n"
+            viewMsg = f"The {name} method is object modifying and will always "
+            viewMsg += "raise an exception for view objects.\n\n"
             viewMsg += "For reference, the docstring for this method "
             viewMsg += "when objects can be modified is below:\n"
             func.__doc__ = viewMsg + baseDoc
@@ -276,8 +275,8 @@ def valuesToPythonList(values, argName):
         for val in values:
             valuesList.append(val)
     except TypeError as e:
-        msg = "The argument '{0}' is not an integer ".format(argName)
-        msg += "(python or numpy), string, or an iterable container object."
+        msg = f"The argument '{argName}' is not an integer (python or numpy), "
+        msg += "string, or an iterable container object."
         raise InvalidArgumentType(msg) from e
 
     return valuesList
@@ -293,8 +292,7 @@ def constructIndicesList(obj, axis, values, argName=None):
     # pandas DataFrames are iterable but do not iterate through the values
     if pd.nimbleAccessible() and isinstance(values, pd.DataFrame):
         msg = "A pandas DataFrame object is not a valid input "
-        msg += "for '{0}'. ".format(argName)
-        msg += "Only one-dimensional objects are accepted."
+        msg += f"for '{argName}'. Only one-dimensional objects are accepted."
         raise InvalidArgumentType(msg)
 
     valuesList = valuesToPythonList(values, argName)
@@ -306,7 +304,7 @@ def constructIndicesList(obj, axis, values, argName=None):
                              and 0 <= v < axisLen)
                        else axisObj.getIndex(v) for v in valuesList]
     except InvalidArgumentValue as iav:
-        msg = "Invalid value for the argument '{0}'. ".format(argName)
+        msg = f"Invalid value for the argument '{argName}'. "
         # add more detail to msg; slicing to exclude quotes
         msg += str(iav)[1:-1]
         raise InvalidArgumentValue(msg) from iav
@@ -611,8 +609,8 @@ def validateAxisFunction(func, axis, allowedLength=None):
         if isinstance(ret, dict):
             msg = "The return of 'function' cannot be a dictionary. The "
             msg += 'returned object must contain only new values for each '
-            msg += '{0} and it is unclear what the key/value '.format(axis)
-            msg += 'pairs represent'
+            msg += f'{axis} and it is unclear what the key/value pairs '
+            msg += 'represent'
             raise InvalidArgumentValue(msg)
 
         # for transform, we need to validate the function's returned values
@@ -623,7 +621,7 @@ def validateAxisFunction(func, axis, allowedLength=None):
                         or len(ret) != allowedLength)):
                 oppositeAxis = 'point' if axis == 'feature' else 'feature'
                 msg = "'function' must return an iterable with as many "
-                msg += "elements as {0}s in this object".format(oppositeAxis)
+                msg += f"elements as {oppositeAxis}s in this object"
                 raise InvalidArgumentValue(msg)
             if isAllowedSingleElement(ret):
                 wrappedAxisFunc.updateConvertType(type(ret))
@@ -750,7 +748,7 @@ def csvCommaFormat(name):
     if isinstance(name, str) and ',' in name:
         if '"' in name:
             name = re.sub(r'"', '""', name)
-        name = '"{0}"'.format(name)
+        name = f'"{name}"'
     return name
 
 def limitedTo2D(method):
@@ -764,8 +762,8 @@ def limitedTo2D(method):
         else:
             tensorRank = len(self._dims)
         if tensorRank > 2:
-            msg = "{0} is not permitted when the ".format(method.__name__)
-            msg += "data has more than two dimensions"
+            msg = f"{method.__name__} is not permitted when the data has more "
+            msg += "than two dimensions"
             raise ImproperObjectAction(msg)
         return method(self, *args, **kwargs)
     return wrapped
@@ -891,7 +889,7 @@ def equalNames(selfNames, otherNames):
         return False
 
     namesUnequal = unequalNames(selfNames, otherNames)
-    return namesUnequal == {}
+    return not namesUnequal
 
 def validateAxis(axis):
     """

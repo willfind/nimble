@@ -500,7 +500,7 @@ def _extractNamesFromListOfDict(rawData, pointNames, featureNames, copied):
         ftNames = featureNames # names may have been reorderd
     for i, row in enumerate(rawData[1:]):
         if row.keys() != keys:
-            msg = "The keys at index {} do not match ".format(i + 1)
+            msg = f"The keys at index {i + 1} do not match "
             msg += "the keys at index 0. Each dictionary in the list must "
             msg += "contain the same keys."
             raise InvalidArgumentValue(msg)
@@ -548,9 +548,9 @@ def _extractNamesFromListOfBase(rawData, pointNames, featureNames, copied):
                     msg += 'No feature names were detected in the object at '
                     msg += 'index {}'
                 else:
-                    msg += 'The feature names at index {} are different than '
-                    msg += 'those in the first feature'
-                    raise InvalidArgumentValue(msg.format(i))
+                    msg += f'The feature names at index {i} are different '
+                    msg += 'than those in the first feature'
+                    raise InvalidArgumentValue(msg)
 
         if pointNames is True and ptNames and len(ptNames) == numNoPtName:
             msg = 'pointNames cannot be True when none of the objects '
@@ -739,8 +739,8 @@ def convertData(returnType, rawData, pointNames, featureNames, copied):
             package = 'scipy'
         if returnType == 'DataFrame':
             package = 'pandas'
-        msg = "{0} must be installed to create a {1} object"
-        raise PackageException(msg.format(package, returnType)) from e
+        msg = f"{package} must be installed to create a {returnType} object"
+        raise PackageException(msg) from e
 
     # if the data can be used to instantiate the object we pass it as-is
     # otherwise choose the best option, a 2D list or numpy array, based on
@@ -908,7 +908,7 @@ def elementTypeConvert(data, convertToType):
 
     except (ValueError, TypeError) as error:
         msg = 'Unable to convert the data to convertToType '
-        msg += "'{0}'. {1}".format(convertToType, repr(error))
+        msg += f"'{convertToType}'. {repr(error)}"
         raise InvalidArgumentValue(msg) from error
 
 def _replaceMissingData(rawData, treatAsMissing, replaceMissingWith, copied):
@@ -1161,8 +1161,8 @@ def highDimensionNames(rawData, pointNames, featureNames):
             failedAxis.append('feature')
         if failedAxis:
             axes = ' and '.join(failedAxis)
-            msg = '{} names cannot be True for data with more '.format(axes)
-            msg += "than two dimensions "
+            msg = f'{axes} names cannot be True for data with more than two '
+            msg += "dimensions "
             raise InvalidArgumentValue(msg)
 
     pointNames = False if pointNames == 'automatic' else pointNames
@@ -1243,9 +1243,9 @@ def flattenHighDimensionFeatures(rawData):
             flat, dims = flattenToOneDimension(point)
             if dims != ptDims:
                 msg = 'The dimensions of each nested object must equal. The '
-                msg += 'first point had dimensions {0}, but point {1} had '
-                msg += 'dimensions {2}'
-                raise InvalidArgumentValue(msg.format(ptDims, i + 1, dims))
+                msg += f'first point had dimensions {ptDims}, but point '
+                msg += f'{i + 1} had dimensions {dims}'
+                raise InvalidArgumentValue(msg)
             rawData[i + 1] = flat
 
     return rawData, origDims
@@ -1264,12 +1264,11 @@ def getKeepIndexValues(axisObj, keepList):
             cleaned.append(converted)
         else:
             # we know no duplicates present so an index and name must match
-            msg = "Values in {keep} must represent unique {axis}s. "
-            msg += "'{name}' and {idx} represent the same {axis}. "
             axis = axisObj._axis
             keep = 'keepPoints' if axis == 'point' else 'keepFeatures'
             name = axisObj.getName(converted)
-            msg = msg.format(axis=axis, keep=keep, name=name, idx=converted)
+            msg = f"Values in {keep} must represent unique {axis}s. "
+            msg += f"'{name}' and {converted} represent the same {axis}. "
             raise InvalidArgumentValue(msg)
 
     return cleaned
@@ -1293,9 +1292,9 @@ def convertToTypeDictToList(convertToType, featuresObj, featureNames):
                 del convertToType[i]
                 del convertToType[ftName]
             else:
-                msg = "The keys '{name}' and {idx} represent the same "
+                msg = f"The keys '{ftName}' and {i} represent the same "
                 msg += "feature but have different values"
-                raise InvalidArgumentValue(msg.format(name=ftName, idx=i))
+                raise InvalidArgumentValue(msg)
         if i in convertToType:
             convertList[i] = convertToType[i]
             del convertToType[i]
@@ -1313,9 +1312,9 @@ def convertToTypeDictToList(convertToType, featuresObj, featureNames):
                         or key in featureNames):
                     fail.append(key)
         if fail:
-            msg = 'The key(s) {keys} in convertToType are not valid for '
+            msg = f'The key(s) {fail} in convertToType are not valid for '
             msg += 'this object'
-            raise InvalidArgumentValue(msg.format(keys=fail))
+            raise InvalidArgumentValue(msg)
 
     return convertList
 
@@ -1357,9 +1356,8 @@ def analyzeValues(rawData, returnType, skipDataProcessing):
             firstLength = len(row)
         elif not skipDataProcessing and not len(row) == firstLength:
             msg = "All rows in the data do not have the same number of "
-            msg += "columns. The first row had {0} columns but the row at "
-            msg += "index {1} had {2} columns"
-            msg = msg.format(firstLength, i, len(row))
+            msg += f"columns. The first row had {firstLength} columns but the "
+            msg += f"row at index {i} had {len(row)} columns"
             raise InvalidArgumentValue(msg)
         for val in row:
             if not skipDataProcessing and not isAllowedSingleElement(val):
@@ -1595,12 +1593,10 @@ def initDataObject(
             if len(convertToType) == numFts:
                 convertToType = [convertToType[i] for i in cleaned]
             elif len(convertToType) != len(cleaned):
-                msg = "Invalid length of convertToType. convertToType must "
-                msg += "be either the length of the full dataset ({full}) "
-                msg += "or the length of the limited dataset ({limited}), but "
-                msg += "was length {actual}."
-                msg = msg.format(full=numFts, limited=len(cleaned),
-                                 actual=len(convertToType))
+                msg = "Invalid length of convertToType. convertToType must be "
+                msg += f"either the length of the full dataset ({numFts}) or "
+                msg += f"the length of the limited dataset ({len(cleaned)}), "
+                msg += f"but was length {len(convertToType)}."
                 raise InvalidArgumentValue(msg)
         if len(cleaned) == numFts:
             fCmp = makeCmp(cleaned, ret, 'feature')
@@ -1617,11 +1613,11 @@ def initDataObject(
                                                 featureNames)
     elif isinstance(convertToType, list):
         if len(convertToType) != len(ret.features):
+            numFts=len(ret.features)
+            numElems=len(convertToType)
             msg = 'A list for convertToType must have many elements as '
-            msg += 'features in the data. The object contains {numFts} '
-            msg += 'features, but convertToType has {numElems} elements.'
-            msg = msg.format(numFts=len(ret.features),
-                             numElems=len(convertToType))
+            msg += f'features in the data. The object contains {numFts} '
+            msg += f'features, but convertToType has {numElems} elements.'
             raise InvalidArgumentValue(msg)
         if all(v == convertToType[0] for v in convertToType[1:]):
             convertToType = convertToType[0]
@@ -1832,8 +1828,8 @@ def _getURLResponse(source):
     response = requests.get(source, allow_redirects=True)
     if not response.ok:
         msg = "The data could not be accessed from the webpage. "
-        msg += "HTTP Status: {0}, ".format(response.status_code)
-        msg += "Reason: {0}".format(response.reason)
+        msg += f"HTTP Status: {response.status_code}, "
+        msg += f"Reason: {response.reason}"
         raise InvalidArgumentValue(msg)
 
     return response
@@ -2448,14 +2444,13 @@ def _detectDialectFromSeparator(ioStream, inputSeparator):
 def _checkForDuplicates(lst, varName):
     duplicates = set(x for x in lst if lst.count(x) > 1)
     if duplicates:
-        msg = "{var} cannot contain duplicate values. "
+        msg = f"{varName} cannot contain duplicate values. "
         if len(duplicates) == 1:
             duplicateString = str(list(duplicates)[0])
-            msg += "The value {val} was duplicated"
+            msg += f"The value {duplicateString} was duplicated"
         else:
             duplicateString = ",".join(map(str, duplicates))
-            msg += "The values {val} were duplicated"
-        msg = msg.format(var=varName, val=duplicateString)
+            msg += f"The values {duplicateString} were duplicated"
         raise InvalidArgumentValue(msg)
 
 
@@ -2469,22 +2464,19 @@ def _keepIndexValuesValidation(axis, keepList, nameList):
         # cannot determine the index location of the feature by name since
         # featureNames is only defining the names of the returned features
         if isinstance(idVal, str) and nameList:
-            msg = "Since {axis}Names were only provided for the values in "
-            msg += "{keep}, {keep} can contain only index values referencing "
-            msg += "the {axis}'s location in the data. If attempting to use "
-            msg += "{keep} to reorder all {axis}s, instead create the object "
-            msg += "first then sort the {axis}s."
-            msg = msg.format(axis=axis, keep=keep)
+            msg = f"Since {axis}Names were only provided for the values in "
+            msg += f"{keep}, {keep} can contain only index values referencing "
+            msg += f"the {axis}'s location in the data. If attempting to use "
+            msg += f"{keep} to reorder all {axis}s, instead create the object "
+            msg += f"first then sort the {axis}s."
             raise InvalidArgumentValue(msg)
         if isinstance(idVal, str):
-            msg = "{keep} can contain only index values because no "
-            msg += "{axis}Names were provided"
-            msg = msg.format(axis=axis, keep=keep)
+            msg = f"{keep} can contain only index values because no "
+            msg += f"{axis}Names were provided"
             raise InvalidArgumentValue(msg)
         if idVal < 0:
             msg = "Negative index values are not permitted, found "
-            msg += "{value} in {keep}"
-            msg = msg.format(value=idVal, keep=keep)
+            msg += f"{idVal} in {keep}"
             raise InvalidArgumentValue(msg)
 
 
@@ -2494,9 +2486,8 @@ def _raiseKeepIndexNameConflict(axis, index, name):
     represent the same point/feature.
     """
     keep = 'keepPoints' if axis == 'point' else 'keepFeatures'
-    msg = "{keep} cannot contain duplicate values. The index {index} and the "
-    msg += "name '{name}' represent the same {axis} and are both in {keep} "
-    msg = msg.format(keep=keep, index=index, name=name, axis=axis)
+    msg = f"{keep} cannot contain duplicate values. The index {index} and the "
+    msg += f"name '{name}' represent the same {axis} and are both in {keep} "
     raise InvalidArgumentValue(msg)
 
 
@@ -2507,11 +2498,10 @@ def _raiseKeepLengthConflict(axis):
     the values in the order of the data or order of keepPoints/Features.
     """
     keep = 'keepPoints' if axis == 'point' else 'keepFeatures'
-    msg = "The length of {keep} cannot be the same as the number of {axis}s. "
-    msg += "If attempting to use {keep} to keep and/or reorder all {axis}s, "
-    msg += "instead create the object using {keep}='all', then sort the "
-    msg += "{axis}s."
-    msg = msg.format(keep=keep, axis=axis)
+    msg = f"The length of {keep} cannot be the same as the number of {axis}s. "
+    msg += f"If attempting to use {keep} to keep and/or reorder all {axis}s, "
+    msg += f"instead create the object using {keep}='all', then sort the "
+    msg += f"{axis}s."
     raise InvalidArgumentValue(msg)
 
 
@@ -2533,8 +2523,8 @@ def _limitToKeptFeatures(keepFeatures, retFNames):
             keepIndices.append(idx)
             keepNames.append(ftID)
         elif isinstance(ftID, str):
-            msg = "The value '{v}' in keepFeatures is not a valid featureName"
-            msg = msg.format(v=ftID)
+            msg = f"The value '{ftID}' in keepFeatures is not a valid "
+            msg += "featureName"
             raise InvalidArgumentValue(msg)
         # index values
         elif 0 <= ftID < len(retFNames):
@@ -2544,14 +2534,12 @@ def _limitToKeptFeatures(keepFeatures, retFNames):
             keepIndices.append(ftID)
             keepNames.append(name)
         elif ftID >= 0:
-            msg = "The index {idx} is greater than the number of features in "
-            msg += "the data, {numFts}"
-            msg = msg.format(idx=ftID, numFts=len(retFNames))
+            msg = f"The index {ftID} is greater than the number of features "
+            msg += f"in the data, {len(retFNames)}"
             raise InvalidArgumentValue(msg)
         else:
-            msg = "Negative index values are not permitted, found {v} in "
+            msg = f"Negative index values are not permitted, found {ftID} in "
             msg += "keepFeatures"
-            msg = msg.format(v=ftID)
             raise InvalidArgumentValue(msg)
 
     return keepIndices, keepNames
@@ -2656,9 +2644,8 @@ def _loadhdf5ForAuto(ioStream, pointNames, featureNames):
                 expShape = ptShape
             elif expShape != ptShape:
                 msg = 'Each point in the data must have the same shape. '
-                msg += "The data in key '{k}' had shape {act} but the first "
-                msg += 'point had shape {exp}'
-                msg = msg.format(k=key, act=ptShape, exp=expShape)
+                msg += f"The data in key '{key}' had shape {ptShape} but the "
+                msg += f'first point had shape {expShape}'
                 raise InvalidArgumentValue(msg)
             pnames.append(key)
             data.append(ptData)
@@ -2683,10 +2670,11 @@ def _loadhdf5ForAuto(ioStream, pointNames, featureNames):
         elif numNames > 1:
             msg = 'This file contains a single Dataset. The length of '
             msg += 'pointNames can either be 1, indicating the data in the '
-            msg += 'Dataset will be loaded as a single point, or {0} '
-            msg += 'indicating the data in the Dataset will be loaded '
-            msg += 'directly, but pointNames contained {1} names'
-            raise InvalidArgumentValue(msg.format(innerShape, numNames))
+            msg += 'Dataset will be loaded as a single point, or '
+            msg += f'{innerShape} indicating the data in the Dataset will be '
+            msg += f'loaded directly, but pointNames contained {numNames} '
+            msg += 'names'
+            raise InvalidArgumentValue(msg)
     elif len(data) == 1 and not pointNames:
         data = data[0]
 

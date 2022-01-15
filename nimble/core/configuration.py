@@ -88,9 +88,9 @@ class SessionConfiguration(object):
         """
         ret = ''
         for section, options in self.get().items():
-            ret += '[{}]\n'.format(section)
+            ret += f'[{section}]\n'
             for option, value in options.items():
-                ret += '{} = {}\n'.format(option, value)
+                ret += f'{option} = {value}\n'
             ret += '\n'
         return ret.rstrip()
 
@@ -264,7 +264,7 @@ class SessionConfiguration(object):
         None and option is not None, an exception is raised.
         """
         # if no changes have been made, nothing needs to be saved.
-        if self.changes == {}:
+        if not self.changes:
             return
 
         def changeIndividual(changeSec, changeOpt, changeVal):
@@ -300,7 +300,7 @@ class SessionConfiguration(object):
             if len(self.changes[section]) == 0:
                 del self.changes[section]
 
-        with open(self.path, 'w') as configFile:
+        with open(self.path, 'w', encoding='utf-8') as configFile:
             self.parser.write(configFile)
 
 
@@ -317,7 +317,7 @@ def loadSettings():
 
     if not os.path.exists(currPath):
         if not os.path.exists(homePath):
-            with open(homePath, 'w'):
+            with open(homePath, 'w', encoding='utf-8'):
                 pass
         target = homePath
     else:

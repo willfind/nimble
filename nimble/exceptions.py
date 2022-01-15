@@ -16,8 +16,7 @@ class NimbleException(Exception):
         return self.message
 
     def __repr__(self):
-        return "{cls}({msg})".format(cls=self.__class__.__name__,
-                                     msg=repr(self.message))
+        return f"{self.__class__.__name__}({repr(self.message)})"
 
 class InvalidArgumentType(NimbleException, TypeError):
     """

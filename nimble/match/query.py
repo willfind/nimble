@@ -178,15 +178,15 @@ class QueryString:
         queryHelp += 'requirements'
         if elementQuery is True and wise == 'axis':
             msg = 'The query string is designated as elementwise but does not '
-            msg += 'begin with an operator. {}'
-            raise InvalidArgumentValue(msg.format(queryHelp))
+            msg += f'begin with an operator. {queryHelp}'
+            raise InvalidArgumentValue(msg)
         if elementQuery is False and wise == 'element':
             msg = 'The query string is designated for points/features but '
-            msg += 'appears to be elementwise. {}'
-            raise InvalidArgumentValue(msg.format(queryHelp))
+            msg += f'appears to be elementwise. {queryHelp}'
+            raise InvalidArgumentValue(msg)
         if self.function is None:
-            msg = 'QueryString was not able to parse the string. {}'
-            raise InvalidArgumentValue(msg.format(queryHelp))
+            msg = f'QueryString was not able to parse the string. {queryHelp}'
+            raise InvalidArgumentValue(msg)
 
     def __call__(self, value):
         args = []
@@ -200,7 +200,7 @@ class QueryString:
         return self.function(*args)
 
     def __repr__(self):
-        return "QueryString({})".format(self.string)
+        return f"QueryString({self.string})"
 
     def __str__(self):
         return self.string

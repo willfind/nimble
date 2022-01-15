@@ -284,10 +284,9 @@ def _validateIndex(idx, numLabels, sourceArg):
     elif not 0 <= idx < numLabels:
         errorType = IndexError
     if errorType is not None:
-        msg = '{arg} contains an invalid value: {val}. All values must be '
-        msg += 'equal to integers 0 through {lastIdx} (inclusive) indicating '
-        msg += 'an index value for the labels argument'
-        msg = msg.format(arg=sourceArg, val=idx, lastIdx=numLabels-1)
+        msg = f'{sourceArg} contains an invalid value: {idx}. All values must '
+        msg += f'be equal to integers 0 through {numLabels-1} (inclusive) '
+        msg += 'indicating an index value for the labels argument'
         raise errorType(msg)
 
 def _confusionMatrixWithLabelsList(knownValues, predictedValues, labels):
@@ -309,8 +308,8 @@ def _confusionMatrixWithLabelsList(knownValues, predictedValues, labels):
 
 def _validateKey(key, labels, sourceArg):
     if key not in labels:
-        msg = '{key} was found in {arg} but is not a key in labels'
-        raise KeyError(msg.format(key=key, arg=sourceArg))
+        msg = f'{key} was found in {sourceArg} but is not a key in labels'
+        raise KeyError(msg)
 
 def _confusionMatrixWithLabelsDict(knownValues, predictedValues, labels):
     sortedLabels = sorted(labels)

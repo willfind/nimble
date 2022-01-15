@@ -1497,9 +1497,9 @@ class Base(ABC):
         else:
             if isinstance(labels, Base):
                 if len(labels.points) != len(self.points):
-                    msg = 'labels must have the same number of points ({0}) '
-                    msg += 'as the calling object ({1})'
-                    msg = msg.format(len(labels.points), len(self.points))
+                    msg = 'labels must have the same number of points '
+                    msg += f'({len(labels.points)}) as the calling object '
+                    msg += f'({len(self.points)})'
                     raise InvalidArgumentValue(msg)
                 try:
                     self._validateEqualNames('point', 'point', '', labels)
@@ -2332,7 +2332,7 @@ class Base(ABC):
                 maxHeight -= 1
 
         if includeObjectName and self.name is not None:
-            ret += '"{}" '.format(self._name)
+            ret += f'"{self._name}" '
         if len(self._dims) > 2:
             ret += " x ".join(map(str, self._dims))
             ret += " dimensions encoded as "
@@ -2349,7 +2349,7 @@ class Base(ABC):
         return self._show()
 
     def __repr__(self):
-        ret = "<{} ".format(self.getTypeString())
+        ret = f"<{self.getTypeString()} "
         indent = ' '
         # remove leading and trailing newlines
         ret += self._show(indent=indent)
@@ -2852,7 +2852,7 @@ class Base(ABC):
             xToPlot = np.convolve(xToPlot, convShape)[startIdx:-startIdx]
             yToPlot = np.convolve(yToPlot, convShape)[startIdx:-startIdx]
 
-            tmpStr = ' (%s sample average)' % sampleSizeForAverage
+            tmpStr = f' ({sampleSizeForAverage} sample average)'
             xlabel += tmpStr
             ylabel += tmpStr
             xName += ' average'
@@ -2887,9 +2887,9 @@ class Base(ABC):
             raise InvalidArgumentValue(msg)
 
         if title is True and self.name is None:
-            title = ('%s vs. %s') % (xName, yName)
+            title = f'{xName} vs. {yName}'
         elif title is True:
-            title = ('%s: %s vs. %s') % (self.name, xName, yName)
+            title = f'{self.name}: {xName} vs. {yName}'
         elif title is False:
             title = None
         ax.set_title(title)
@@ -3077,10 +3077,8 @@ class Base(ABC):
                     heights[subname][i] = statistic(subgroup)
             subgroup = self._formattedStringID('feature', subgroupFeature)
             if title is True:
-                title = "{feat} {stat} by {group}"
                 group = self._formattedStringID('feature', groupFeature)
-                title = title.format(feat=featureName, stat=statName,
-                                     group=group)
+                title = f"{featureName} {statName} by {group}"
 
             plotMultiBarChart(ax, heights, horizontal, subgroup, **kwargs)
 
@@ -3092,10 +3090,8 @@ class Base(ABC):
             plotSingleBarChart(ax, axisRange, heights, horizontal, **kwargs)
 
             if title is True:
-                title = "{feat} {stat} by {group}"
                 group = self._formattedStringID('feature', groupFeature)
-                title = title.format(feat=featureName, stat=statName,
-                                     group=group)
+                title = f"{featureName} {statName} by {group}"
 
         if title is False:
             title = None
@@ -3336,7 +3332,7 @@ class Base(ABC):
         if len(self._dims) > 2:
             if to in ['listofdict', 'dictoflist', 'scipycsr', 'scipycsc']:
                 msg = 'Objects with more than two dimensions cannot be '
-                msg += 'copied to {0}'.format(origTo)
+                msg += f'copied to {origTo}'
                 raise ImproperObjectAction(msg)
             if outputAs1D or not rowsArePoints:
                 if outputAs1D:
@@ -3345,8 +3341,8 @@ class Base(ABC):
                 elif not rowsArePoints:
                     param = 'rowsArePoints'
                     value = True
-                msg = '{0} must be {1} when the data '.format(param, value)
-                msg += 'has more than two dimensions'
+                msg = f'{param} must be {value} when the data has more than '
+                msg += 'two dimensions'
                 raise ImproperObjectAction(msg)
         # only 'numpyarray' and 'pythonlist' are allowed to use outputAs1D flag
         if outputAs1D:
@@ -3554,23 +3550,23 @@ class Base(ABC):
         fNames = self.features.getNames()
 
         ret = []
-        pointNumber = '_PT#{}'
-        featureNumber = '_FT#{}'
+        pointNumber = '_PT#{}'.format
+        featureNumber = '_FT#{}'.format
         if order == 'point':
             for (i, p), (j, f) in itertools.product(enumerate(pNames),
                                                     enumerate(fNames)):
                 if p is None:
-                    p = pointNumber.format(i)
+                    p = pointNumber(i)
                 if f is None:
-                    f = featureNumber.format(j)
+                    f = featureNumber(j)
                 ret.append(' | '.join([p, f]))
         else:
             for (j, f), (i, p) in itertools.product(enumerate(fNames),
                                                     enumerate(pNames)):
                 if f is None:
-                    f = featureNumber.format(j)
+                    f = featureNumber(j)
                 if p is None:
-                    p = pointNumber.format(i)
+                    p = pointNumber(i)
                 ret.append(' | '.join([p, f]))
         return ret
 
@@ -4147,7 +4143,7 @@ class Base(ABC):
 
         if len(lAxis) != len(rAxis):
             msg = "Both objects must have the same number of "
-            msg += "{0}s when {0}='strict'".format(axis)
+            msg += f"{axis}s when {axis}='strict'"
             raise InvalidArgumentValue(msg)
         # if using strict with onFeature instead of point names, we need to
         # make sure each id has a unique match in the other object
@@ -4163,8 +4159,7 @@ class Base(ABC):
                     msg += "matching value in each object"
                     raise InvalidArgumentValueCombination(msg)
             except KeyError as e:
-                msg = "could not locate feature '{0}' ".format(onFeature)
-                msg += "in both objects"
+                msg = f"could not locate feature '{onFeature}' in both objects"
                 raise InvalidArgumentValue(msg) from e
 
             self._genericMergeFrontend(tmpOther, point, feature, onFeature)
@@ -4178,8 +4173,8 @@ class Base(ABC):
             # is treated as equal.
             if lAllNames and rAllNames:
                 if sorted(lNames) != sorted(rNames):
-                    msg = "When {0}='strict', the {0} names may ".format(axis)
-                    msg += "be in a different order but must match exactly"
+                    msg = "When {axis}='strict', the {axis} names may be in a "
+                    msg += "different order but must match exactly"
                     raise InvalidArgumentValue(msg)
                 endNames = lNames
             elif force and lAllNames and rNames is None:
@@ -4199,17 +4194,16 @@ class Base(ABC):
                     lAxis.setNames(strictNames, useLog=False)
                     rAxis.setNames(strictNames, useLog=False)
                 except InvalidArgumentValue as e:
-                    msg = "When {axis}='strict' and default {axis} names "
-                    msg += "exist, names cannot be reordered. The {axis} "
+                    msg = f"When {axis}='strict' and default {axis} names "
+                    msg += f"exist, names cannot be reordered. The {axis} "
                     msg += "names do not match at each index where both  "
-                    msg += "objects have non-default {axis} names."
-                    msg = msg.format(axis=axis)
+                    msg += f"objects have non-default {axis} names."
                     raise InvalidArgumentValue(msg) from e
             else: # default names and not force
-                msg = 'Non-default {axis} names are required in both objects '
+                msg = f'Non-default {axis} names are required in both objects '
                 msg += 'unless the force parameter is set to True to indicate '
-                msg += 'that each {axis} is equal between the two objects'
-                raise InvalidArgumentValue(msg.format(axis=axis))
+                msg += f'that each {axis} is equal between the two objects'
+                raise InvalidArgumentValue(msg)
 
             self._genericMergeFrontend(tmpOther, point, feature, onFeature)
 
@@ -4239,8 +4233,8 @@ class Base(ABC):
                 ftName = self.features.getName(onFeature)
                 if (ftName != other.features.getName(onFeature)
                         or ftName is None):
-                    msg = 'The feature names at index {0} '.format(onFeature)
-                    msg += 'do not match in each object'
+                    msg = f'The feature names at index {onFeature} do not '
+                    msg += 'match in each object'
                     raise InvalidArgumentValue(msg)
                 onFeature = ftName
             try:
@@ -4251,8 +4245,7 @@ class Base(ABC):
                     msg += "contains only unique values in one or both objects"
                     raise InvalidArgumentValue(msg)
             except KeyError as e:
-                msg = "could not locate feature '{0}' ".format(onFeature)
-                msg += "in both objects"
+                msg = f"could not locate feature '{onFeature}' in both objects"
                 raise InvalidArgumentValue(msg) from e
 
         matchingFts = self.features._getMatchingNames(other)
@@ -4865,10 +4858,10 @@ class Base(ABC):
         # for *NamesEqual to be False, the left and right objects must have
         # at least one unequal non-default name along that axis.
         if not ftNamesEqual and not ptNamesEqual:
-            msg = "When both point and feature names are present, {0} "
+            msg = f"When both point and feature names are present, {opName} "
             msg += "requires either the point names or feature names to "
             msg += "be equal between the left and right objects"
-            raise InvalidArgumentValue(msg.format(opName))
+            raise InvalidArgumentValue(msg)
 
         # determine axis names for returned object
         try:
@@ -4907,10 +4900,9 @@ class Base(ABC):
 
         if not set(sNames).isdisjoint(oNames):
             matches = [n for n in sNames if n in oNames]
-            msg = "{0} between objects with equal {1} names must have "
-            msg += "unique {2} names. However, the {2} names {3} were "
-            msg += "found in both the left and right objects"
-            msg = msg.format(opName, equalAxis, axis, matches)
+            msg = f"{opName} between objects with equal {equalAxis} names "
+            msg += f"must have unique {axis} names. However, the {axis} names "
+            msg += f"{matches} were found in both the left and right objects"
             raise InvalidArgumentValue(msg)
 
     def _convertToNumericTypes(self, allowInt=True, allowBool=True):
@@ -5456,7 +5448,7 @@ class Base(ABC):
                 return
             inconsistencies = inconsistentNames(lnames, rnames)
 
-            if inconsistencies != {}:
+            if inconsistencies:
                 table = [['left', 'ID', 'right']]
                 for i in sorted(inconsistencies.keys()):
                     lname = lnames[i]

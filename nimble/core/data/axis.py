@@ -71,10 +71,8 @@ class Axis(ABC):
             raise TypeError(msg)
 
         if names is not None and len(names) != len(self):
-            msg = "The length of the {axis}Names ({lenNames}) must match the "
-            msg += "{axis}s given in shape ({lenAxis})"
-            msg = msg.format(axis=self._axis, lenNames=len(names),
-                             lenAxis=len(self))
+            msg = f"The length of the {self._axis}Names ({len(names)}) must "
+            msg += f"match the {self._axis}s given in shape ({len(self)})"
             raise InvalidArgumentValue(msg)
 
         # Set up point names
@@ -101,7 +99,7 @@ class Axis(ABC):
         return AxisIterator(self)
 
     def __repr__(self):
-        ret = "< {} {}s\n".format(len(self), self._axis)
+        ret = f"< {len(self)} {self._axis}s\n"
         maxIdxLen = len(str(len(self) - 1))
         indent = ' '
         if self._isPoint:
@@ -179,8 +177,8 @@ class Axis(ABC):
 
     def _setName(self, oldIdentifier, newName, useLog=None):
         if len(self) == 0:
-            msg = "Cannot set any {0} names; this object has no {0}s"
-            msg = msg.format(self._axis)
+            axis = self._axis
+            msg = f"Cannot set any {axis} names; this object has no {axis}s"
             raise ImproperObjectAction(msg)
         if not isinstance(newName, (str, type(None))):
             msg = "The new name must be either None or a string"
@@ -209,7 +207,7 @@ class Axis(ABC):
         if newName is not None:
             self.names[newName] = index
 
-        handleLogging(useLog, 'prep', '{ax}s.setName'.format(ax=self._axis),
+        handleLogging(useLog, 'prep', self._funcStr('setName'),
                       self._base.getTypeString(), self._sigFunc('setName'),
                       oldIdentifier, newName)
 
@@ -217,7 +215,7 @@ class Axis(ABC):
     def _setNames(self, assignments, useLog=None):
         self._setNamesBackend(assignments)
 
-        handleLogging(useLog, 'prep', '{ax}s.setNames'.format(ax=self._axis),
+        handleLogging(useLog, 'prep', self._funcStr('setNames'),
                       self._base.getTypeString(), self._sigFunc('setNames'),
                       assignments)
 
@@ -348,7 +346,7 @@ class Axis(ABC):
         ret._absPath = self._base.absolutePath
         ret._relPath = self._base.relativePath
 
-        handleLogging(useLog, 'prep', '{ax}s.copy'.format(ax=self._axis),
+        handleLogging(useLog, 'prep', self._funcStr('copy'),
                       self._base.getTypeString(), self._sigFunc('copy'),
                       toCopy, start, end, number, randomize)
 
@@ -362,7 +360,7 @@ class Axis(ABC):
         ret._relPath = self._base.relativePath
         ret._absPath = self._base.absolutePath
 
-        handleLogging(useLog, 'prep', '{ax}s.extract'.format(ax=self._axis),
+        handleLogging(useLog, 'prep', self._funcStr('extract'),
                       self._base.getTypeString(), self._sigFunc('extract'),
                       toExtract, start, end, number, randomize)
 
@@ -373,7 +371,7 @@ class Axis(ABC):
         _ = self._genericStructuralFrontend('delete', toDelete, start, end,
                                               number, randomize)
 
-        handleLogging(useLog, 'prep', '{ax}s.delete'.format(ax=self._axis),
+        handleLogging(useLog, 'prep', self._funcStr('delete'),
                       self._base.getTypeString(), self._sigFunc('delete'),
                       toDelete, start, end, number, randomize)
 
@@ -385,7 +383,7 @@ class Axis(ABC):
         paths = (self._base.absolutePath, self._base.relativePath)
         self._base._referenceFrom(ref, paths=paths)
 
-        handleLogging(useLog, 'prep', '{ax}s.retain'.format(ax=self._axis),
+        handleLogging(useLog, 'prep', self._funcStr('retain'),
                       self._base.getTypeString(), self._sigFunc('retain'),
                       toRetain, start, end, number, randomize)
 
@@ -426,7 +424,7 @@ class Axis(ABC):
                 func = by
             self._sortByFunction(func, reverse)
 
-        handleLogging(useLog, 'prep', '{ax}s.sort'.format(ax=self._axis),
+        handleLogging(useLog, 'prep', self._funcStr('sort'),
                       self._base.getTypeString(), self._sigFunc('sort'),
                       by, reverse)
 
@@ -440,14 +438,12 @@ class Axis(ABC):
             order = constructIndicesList(self._base, self._axis, order,
                                          'order')
             if len(order) != len(self):
-                msg = "This object contains {0} {1}s, "
-                msg += "but order has {2} identifiers"
-                msg = msg.format(len(self), self._axis, len(order))
+                msg = f"This object contains {len(self)} {self._axis}s, "
+                msg += f"but order has {len(order)} identifiers"
                 raise InvalidArgumentValue(msg)
             if len(order) != len(set(order)):
-                msg = "This object contains {0} unique identifiers but "
-                msg += "but order has {1} {2}s"
-                msg = msg.format(len(self), len(set(order)), self._axis)
+                msg = f"This object contains {len(self)} unique identifiers "
+                msg += f"but order has {len(set(order))} {self._axis}s"
                 raise InvalidArgumentValue(msg)
 
         # only one possible permutation
@@ -461,7 +457,7 @@ class Axis(ABC):
             reorderedNames = [names[idx] for idx in order]
             self._setNames(reorderedNames, useLog=False)
 
-        handleLogging(useLog, 'prep', '{ax}s.permute'.format(ax=self._axis),
+        handleLogging(useLog, 'prep', self._funcStr('permute'),
                       self._base.getTypeString(), self._sigFunc('permute'))
 
 
@@ -483,7 +479,7 @@ class Axis(ABC):
 
         self._transform_implementation(wrappedFunc, limitTo)
 
-        handleLogging(useLog, 'prep', '{ax}s.transform'.format(ax=self._axis),
+        handleLogging(useLog, 'prep', self._funcStr('transform'),
                       self._base.getTypeString(), self._sigFunc('transform'),
                       function, limitTo)
 
@@ -495,7 +491,7 @@ class Axis(ABC):
         wrappedFunc = validateAxisFunction(function, self._axis)
         ret = self._calculate_backend(wrappedFunc, limitTo)
 
-        handleLogging(useLog, 'prep', '{ax}s.calculate'.format(ax=self._axis),
+        handleLogging(useLog, 'prep', self._funcStr('calculate'),
                       self._base.getTypeString(), self._sigFunc('calculate'),
                       function, limitTo)
         return ret
@@ -512,7 +508,7 @@ class Axis(ABC):
             else:
                 ret.points.setNames([function.__name__], useLog=False)
 
-        handleLogging(useLog, 'prep', '{ax}s.matching'.format(ax=self._axis),
+        handleLogging(useLog, 'prep', self._funcStr('matching'),
                       self._base.getTypeString(), self._sigFunc('matching'),
                       function)
         return ret
@@ -605,7 +601,7 @@ class Axis(ABC):
     def _insert(self, insertBefore, toInsert, append=False, useLog=None):
         if not append and insertBefore is None:
             msg = "insertBefore must be an index in range 0 to "
-            msg += "{l} or {ax} name".format(l=len(self), ax=self._axis)
+            msg += f"{len(self)} or {self._axis} name"
             raise InvalidArgumentType(msg)
         if insertBefore is None:
             insertBefore = len(self)
@@ -623,11 +619,11 @@ class Axis(ABC):
 
         self._setInsertedCountAndNames(insertObj, insertBefore)
         if append:
-            handleLogging(useLog, 'prep', '{ax}s.append'.format(ax=self._axis),
+            handleLogging(useLog, 'prep', self._funcStr('append'),
                           self._base.getTypeString(), self._sigFunc('append'),
                           toInsert)
         else:
-            handleLogging(useLog, 'prep', '{ax}s.insert'.format(ax=self._axis),
+            handleLogging(useLog, 'prep', self._funcStr('insert'),
                           self._base.getTypeString(), self._sigFunc('insert'),
                           insertBefore, toInsert)
 
@@ -659,25 +655,26 @@ class Axis(ABC):
             if fnames:
                 dataObj.features.setNames(fnames[0], useLog=False)
 
-        dataAxis = dataObj._getAxis(self._axis)
+        axis = self._axis
+        dataAxis = dataObj._getAxis(axis)
         # locations will take priority over axis name matches
         if locations is None and self._base._dims == dataObj._dims:
             locations = range(len(self))
         elif locations is None:
             if not self._namesCreated():
-                msg = '{0}s argument is required when {0}Names do not exist'
-                raise InvalidArgumentValue(msg.format(self._axis))
+                msg = f'{axis}s argument is required when {axis}Names do not '
+                msg += 'exist'
+                raise InvalidArgumentValue(msg)
             if not dataAxis._namesCreated():
-                msg = 'data must have {0}Names if {0}s is None'
-                raise InvalidArgumentValue(msg.format(self._axis))
+                msg = f'data must have {axis}Names if {axis}s is None'
+                raise InvalidArgumentValue(msg)
             locations = dataAxis._getNames()
 
         locations = constructIndicesList(self._base, self._axis, locations)
         if len(locations) != len(dataAxis):
-            msg = 'The number of locations ({0}) must match the number of '
-            msg += '{1}s in data ({2})'
-            raise InvalidArgumentValue(msg.format(len(locations), self._axis,
-                                                  len(dataAxis)))
+            msg = f'The number of locations ({len(locations)}) must match the '
+            msg += f'number of {axis}s in data ({len(dataAxis)})'
+            raise InvalidArgumentValue(msg)
         iterData = iter(dataAxis)
         for i in locations:
             replacement = next(iterData)
@@ -688,7 +685,7 @@ class Axis(ABC):
                 # pylint: disable=cell-var-from-loop
                 self._transform(lambda _: replacement, i, useLog=False)
 
-        handleLogging(useLog, 'prep', '{ax}s.replace'.format(ax=self._axis),
+        handleLogging(useLog, 'prep', self._funcStr('replace'),
                       self._base.getTypeString(), self._sigFunc('replace'),
                       data, locations)
 
@@ -705,8 +702,8 @@ class Axis(ABC):
             viewIter = self._base.features
 
         if otherCount == 0:
-            msg = "We do not allow operations over {0}s if there are 0 {1}s"
-            msg = msg.format(self._axis, otherAxis)
+            msg = f"We do not allow operations over {self._axis}s if there "
+            msg += f"are 0 {otherAxis}s"
             raise ImproperObjectAction(msg)
 
         if mapper is None or reducer is None:
@@ -746,7 +743,7 @@ class Axis(ABC):
         ret._absPath = self._base.absolutePath
         ret._relPath = self._base.relativePath
 
-        handleLogging(useLog, 'prep', '{ax}s.mapReduce'.format(ax=self._axis),
+        handleLogging(useLog, 'prep', self._funcStr('mapReduce'),
                       self._base.getTypeString(), self._sigFunc('mapReduce'),
                       mapper, reducer)
 
@@ -800,8 +797,8 @@ class Axis(ABC):
         for kwarg in removeKwargs:
             del kwarguments[kwarg]
 
-        funcName = '{ax}s.fillMatching'.format(ax=self._axis)
-        handleLogging(useLog, 'prep', funcName, self._base.getTypeString(),
+        handleLogging(useLog, 'prep', self._funcStr('fillMatching'),
+                      self._base.getTypeString(),
                       self._sigFunc('fillMatching'), fillWith,
                       matchingElements, limitTo, **kwarguments)
 
@@ -1013,7 +1010,7 @@ class Axis(ABC):
             if title is True:
                 title = ''
                 if self._base.name is not None:
-                    title += "{}: ".format(self._base.name)
+                    title += f"{self._base.name}: "
                 title += "Feature Comparison"
 
         if title is False:
@@ -1096,20 +1093,20 @@ class Axis(ABC):
         if numBool == length:
             return [i for i, v in enumerate(key) if v]
         if numBool > 0:
-            msg = 'The key provided for {ax}s contains boolean values. '
-            msg += 'Booleans are only permitted if the key contains only '
-            msg += 'boolean type values for every {ax} in this object.'
-            raise KeyError(msg.format(ax=self._axis))
+            msg = f'The key provided for {self._axis}s contains boolean '
+            msg += 'values. Booleans are only permitted if the key contains '
+            msg += f'only boolean type values for every {self._axis} in this '
+            msg += 'object.'
+            raise KeyError(msg)
         key = [self._getIndex(i, allowFloats=True) for i in key]
         if key == list(range(length)):  # full slice
             return None
         if len(set(key)) != len(key):
             duplicates = set(val for val in key if key.count(val) > 1)
             msg = 'Duplicate values in the key are not allowed. The '
-            msg += 'following values were duplicated: {dup}. Duplicate '
-            msg += '{ax}s can be generated using the repeat() method of '
-            msg += "this object's {ax}s attribute"
-            msg = msg.format(dup=duplicates, ax=self._axis)
+            msg += f'following values were duplicated: {duplicates}. '
+            msg += f'Duplicate {self._axis}s can be generated using the '
+            msg += f"repeat() method of this object's {self._axis}s attribute"
             raise KeyError(msg)
         return key
 
@@ -1129,22 +1126,19 @@ class Axis(ABC):
             operatorCount = len(re.findall(r'(?=\s(==|!=|>=|>|<=|<)\s)',
                                            string))
             if operatorCount <= 1:
-                msg = "'{0}' is not a valid {1} name nor a valid query "
-                msg += "string. See help(nimble.match.QueryString) for query "
-                msg += "string requirements."
-                msg = msg.format(string, offAxis)
+                msg = f"'{string}' is not a valid {offAxis} name nor a valid "
+                msg += "query string. See help(nimble.match.QueryString) for "
+                msg += "query string requirements."
             else:
                 msg = "Multiple operators in query string. Strings containing "
                 msg += "more than one whitespace padded operator cannot be "
-                msg += "parsed. Use a function instead or modify the {0}Name "
-                msg += "or values that includes a whitespace padded operator."
-                msg = msg.format(offAxis)
-
+                msg += "parsed. Use a function instead or modify the "
+                msg += f"{offAxis}Name or values that includes a whitespace "
+                msg += "padded operator."
             raise InvalidArgumentValue(msg) from e
 
         if not self._base._getAxis(offAxis)._hasName(query.identifier):
-            msg = "the {0} '{1}' does not exist".format(offAxis,
-                                                        query.identifier)
+            msg = f"the {offAxis} '{query.identifier}' does not exist"
             raise InvalidArgumentValue(msg)
 
         return query
@@ -1166,9 +1160,9 @@ class Axis(ABC):
                 targetList.append(target)
             # if not a name then assume it's a query string
             elif len(self._base._dims) > 2:
-                msg = "query strings for {0} are not supported for data with "
-                msg += "more than two dimensions"
-                raise ImproperObjectAction(msg.format(argName))
+                msg = f"query strings for {argName} are not supported for "
+                msg += "data with more than two dimensions"
+                raise ImproperObjectAction(msg)
             else:
                 target = self._axisQueryFunction(target)
 
@@ -1178,17 +1172,17 @@ class Axis(ABC):
                                               argName)
             if len(set(targetList)) != len(targetList):
                 dup = set(v for v in targetList if targetList.count(v) > 1)
-                msg = '{name} cannot contain duplicate values. The following '
-                msg += 'were duplicated: {dup}. Duplicate {ax}s can be '
-                msg += "generated using an object's {ax}s.repeat() method"
-                msg = msg.format(name=argName, dup=dup, ax=self._axis)
+                msg = f'{argName} cannot contain duplicate values. The '
+                msg += f'following were duplicated: {dup}. Duplicate '
+                msg += f"{self._axis}s can be generated using an object's "
+                msg += f"{self._axis}s.repeat() method"
                 raise InvalidArgumentValue(msg)
         # boolean function
         elif target is not None:
             if len(self._base._dims) > 2:
-                msg = "functions for {0} are not supported for data with more "
-                msg += "than two dimensions"
-                raise ImproperObjectAction(msg.format(argName))
+                msg = f"functions for {argName} are not supported for data "
+                msg += "with more than two dimensions"
+                raise ImproperObjectAction(msg)
             # construct list from function
             for targetID, view in enumerate(self):
                 if target(view):
@@ -1213,9 +1207,8 @@ class Axis(ABC):
 
         if number:
             if number > len(targetList):
-                msg = "The value for 'number' ({0}) ".format(number)
-                msg += "is greater than the number of {0}s ".format(axis)
-                msg += "to {0} ({1})".format(structure, len(targetList))
+                msg = f"The value for 'number' ({number}) is greater than the "
+                msg += f"number of {axis}s to {structure} ({len(targetList)})"
                 raise InvalidArgumentValue(msg)
             if randomize:
                 targetList = nimble.random.pythonRandom.sample(targetList,
@@ -1260,10 +1253,10 @@ class Axis(ABC):
 
     def _sortByNames(self, reverse):
         if self.names is None or self._anyDefaultNames():
-            msg = "When by=None, all {0} names must be defined (non-default). "
-            msg += "Either set the {0} names of this object or provide "
-            msg += "another argument for by"
-            raise InvalidArgumentValue(msg.format(self._axis))
+            msg = f"When by=None, all {self._axis} names must be defined "
+            msg += f"(non-default). Either set the {self._axis} names of this "
+            msg += "object or provide another argument for by"
+            raise InvalidArgumentValue(msg)
         self._permute(sorted(self._getNames(), reverse=reverse),
                       useLog=False)
 
@@ -1300,12 +1293,11 @@ class Axis(ABC):
             argName = 'toInsert'
             func = 'insert'
         if not isinstance(toInsert, nimble.core.data.Base):
-            msg = "The argument '{arg}' must be an instance of the "
+            msg = f"The argument '{argName}' must be an instance of the "
             msg += "nimble.core.data.Base class. The value we received was "
-            msg += str(toInsert) + ", had the type " + str(type(toInsert))
-            msg += ", and a method resolution order of "
-            msg += str(inspect.getmro(toInsert.__class__))
-            raise InvalidArgumentType(msg.format(arg=argName))
+            msg += f"{toInsert}, had the type {type(toInsert)}, and a method "
+            msg += f"resolution order of {inspect.getmro(toInsert.__class__)}"
+            raise InvalidArgumentType(msg)
 
         shapeIdx = 1 if self._isPoint else 0
         offAxis = 'feature' if self._isPoint else 'point'
@@ -1323,16 +1315,13 @@ class Axis(ABC):
 
         if objOffAxisLen != insertOffAxisLen:
             if len(self._base._dims) > 2:
-                msg = "Cannot perform {0} operation when data has "
+                msg = f"Cannot perform {funcName} operation when data has "
                 msg += "different dimensions"
-                raise ImproperObjectAction(msg.format(funcName))
-            msg = "The argument '{arg}' must have the same number of "
-            msg += "{offAxis}s as the caller object. This object contains "
-            msg += "{objCount} {offAxis}s and {arg} contains {insertCount} "
-            msg += "{offAxis}s."
-            msg = msg.format(arg=argName, offAxis=offAxis,
-                             objCount=objOffAxisLen,
-                             insertCount=insertOffAxisLen)
+                raise ImproperObjectAction(msg)
+            msg = f"The argument '{argName}' must have the same number of "
+            msg += f"{offAxis}s as the caller object. This object contains "
+            msg += f"{objOffAxisLen} {offAxis}s and {argName} contains "
+            msg += f"{insertOffAxisLen} {offAxis}s."
             raise InvalidArgumentValue(msg)
 
         # this helper ignores default names - so we can only have an
@@ -1354,7 +1343,7 @@ class Axis(ABC):
                 if name is not None:
                     shared.append(name)
 
-        if shared != []:
+        if shared:
             truncated = False
             if len(shared) > 10:
                 full = len(shared)
@@ -1547,6 +1536,9 @@ class Axis(ABC):
             return getattr(Points, funcName)
         return getattr(Features, funcName)
 
+    def _funcStr(self, funcStr):
+        return f'{self._axis}s.' + funcStr
+
     ####################
     # Abstract Methods #
     ####################
@@ -1586,21 +1578,20 @@ def _validateStructuralArguments(structure, axis, target, start, end,
     """
     targetName = 'to' + structure.capitalize()
     if all(param is None for param in [target, start, end, number]):
-        msg = "You must provide a value for {0}, ".format(targetName)
-        msg += " or start/end, or number."
+        msg = f"You must provide a value for {targetName}, or start/end, or "
+        msg += "number."
         raise InvalidArgumentTypeCombination(msg)
     if number is not None and number < 1:
         msg = "number must be greater than zero"
         raise InvalidArgumentValue(msg)
     if number is None and randomize:
-        msg = "randomize selects a random subset of "
-        msg += "{0}s to {1}. ".format(axis, structure)
+        msg = f"randomize selects a random subset of {axis}s to {structure}. "
         msg += "When randomize=True, the number argument cannot be None"
         raise InvalidArgumentValueCombination(msg)
     if target is not None:
         if start is not None or end is not None:
-            msg = "Range removal is exclusive, to use it, "
-            msg += "{0} must be None".format(targetName)
+            msg = f"Range removal is exclusive, to use it, {targetName} must "
+            msg += "be None"
             raise InvalidArgumentTypeCombination(msg)
 
 def _validateStartEndRange(start, end, axis, axisLength):
