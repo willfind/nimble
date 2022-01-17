@@ -738,9 +738,13 @@ def train(learnerName, trainX, trainY=None, arguments=None, scoreMode='label',
     else:
         bestArguments = arguments
 
-    trainedLearner = interface.train(trueLearnerName, trainX, trainY,
-                                     bestArguments, multiClassStrategy,
-                                     randomSeed, tuning)
+    if tuning is not None and hasattr(tuning.validator, 'bestTrainedLearner'):
+        trainedLearner = tuning.validator.bestTrainedLearner
+        trainedLearner.tuning = tuning
+    else:
+        trainedLearner = interface.train(trueLearnerName, trainX, trainY,
+                                         bestArguments, multiClassStrategy,
+                                         randomSeed, tuning)
     totalTime = time.process_time() - startTime
 
     funcString = interface.getCanonicalName() + '.' + trueLearnerName

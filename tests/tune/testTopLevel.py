@@ -1,11 +1,19 @@
+"""
+Test Tuning function available at nimble top level.
+
+Includes: Tune, Tuning
+"""
+
+import numpy as np
 
 import nimble
 from nimble import Tune, Tuning
 from nimble.core.tune import KFold, LeaveOneOut, LeaveOneGroupOut
 from nimble.core.tune import HoldoutData, HoldoutProportion
-from nimble.core.tune import BruteForce, Consecutive # Bayesian, Iterative
+from nimble.core.tune import BruteForce, Consecutive, Bayesian, Iterative
 from nimble.calculate import fractionIncorrect, meanAbsoluteError
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
+from nimble.exceptions import InvalidArgumentValueCombination
 
 from tests.helpers import raises, noLogEntryExpected
 
@@ -13,14 +21,60 @@ def test_Tune():
     crossVal = Tune([1, 2, 3])
     assert len(crossVal) == 3
     assert crossVal[1] == 2
-    assert str(crossVal) == "(1, 2, 3)"
-    assert repr(crossVal) == "Tune([1, 2, 3])"
+    assert str(crossVal) == 'Tune(values=[1, 2, 3])'
+    assert repr(crossVal) == "Tune(values=[1, 2, 3])"
+
+def test_Tune_exceptions():
+    with raises(InvalidArgumentValueCombination):
+        Tune(None, end=None)
+
+    with raises(InvalidArgumentValue):
+        Tune(end=10, changeType="bad")
 
 @raises(ImproperObjectAction)
 def test_Tune_immutable():
     crossVal = Tune([1, 2, 3])
     assert crossVal[1] == 2 # can get
     crossVal[1] = 0 # cannot set
+
+def test_Tune_range_linear():
+    lin = Tune(start=1, end=10, changeType='add')
+    assert list(lin) == list(range(1, 11))
+
+    lin = Tune(start=1, end=10, change=2)
+    assert list(lin) == list(range(1, 11, 2))
+
+    lin = Tune(start=10, end=1, change=-1)
+    assert list(lin) == list(range(10, 0, -1))
+
+    lin = Tune(start=1, end=10, change=9/49)
+    assert np.allclose(lin, np.linspace(1, 10, 50))
+    assert list(lin)[-1] == 10
+
+    with raises(InvalidArgumentValue):
+        Tune(start=1, end=10, change=-2)
+
+    with raises(InvalidArgumentValue):
+        Tune(start=10, end=1, change=2)
+
+    with raises(InvalidArgumentValue):
+        Tune(start=1, end=10, change=0)
+
+def test_Tune_range_exponential():
+    mul = Tune(start=0.0001, end=10, change=10, changeType='multiply')
+    assert list(mul) == [0.0001, 0.001, 0.01, 0.1, 1, 10]
+
+    mul = Tune(start=10, end=0.0001, change=0.1, changeType='multiply')
+    assert np.allclose(mul, [10, 1, 0.1, 0.01, 0.001, 0.0001])
+
+    with raises(InvalidArgumentValue):
+        mul = Tune(start=0.0001, end=10, change=0.1, changeType='multiply')
+
+    with raises(InvalidArgumentValue):
+        mul = Tune(start=10, end=0.0001, change=10, changeType='multiply')
+
+
+
 
 @noLogEntryExpected
 def test_Tuning():
@@ -58,7 +112,7 @@ def test_Tuning():
     assert bfLogo._validatorArgs == {'foldFeature': "groups"}
 
     bfHod = Tuning(selection="bruteforce", validation="data",
-                   validateX="TrainX", validateY="TrainY")
+                   validateX="ValX", validateY="ValY")
     # Note: validateX/Y won't work, but those are validated later by the
     # validator, not during Tuning init
     assert bfHod.selection == "bruteforce"
@@ -66,8 +120,7 @@ def test_Tuning():
     assert bfHod._selector == BruteForce
     assert not bfHod._selectorArgs
     assert bfHod._validator == HoldoutData
-    assert bfHod._validatorArgs == {'validateX': "TrainX",
-                                     'validateY': "TrainY"}
+    assert bfHod._validatorArgs == {'validateX': "ValX", 'validateY': "ValY"}
 
     conProp = Tuning(validation=0.33)
     assert conProp.selection == "consecutive"
@@ -77,6 +130,26 @@ def test_Tuning():
     assert conProp._validator == HoldoutProportion
     assert conProp._validatorArgs == {'proportion': 0.33}
 
+    bayHod = Tuning(selection="bayesian", validation="data", validateX="ValX",
+                    validateY="ValY", timeout=2400, threshold=0.000000001)
+    assert bayHod.selection == "bayesian"
+    assert bayHod.validation == "data"
+    assert bayHod._selector == Bayesian
+    assert bayHod._selectorArgs == {'maxIterations': 100, 'timeout': 2400,
+                                    'threshold': 0.000000001}
+    assert bayHod._validator == HoldoutData
+    assert bfHod._validatorArgs == {'validateX': "ValX", 'validateY': "ValY"}
+
+    itrHod = Tuning(selection="iterative", validation="data", validateX="ValX",
+                    validateY="ValY", maxIterations=None, timeout=2400)
+    assert itrHod.selection == "iterative"
+    assert itrHod.validation == "data"
+    assert itrHod._selector == Iterative
+    assert itrHod._selectorArgs == {'maxIterations': None, 'timeout': 2400,
+                                    'threshold': None}
+    assert itrHod._validator == HoldoutData
+    assert itrHod._validatorArgs == {'validateX': "ValX", 'validateY': "ValY"}
+
     with raises(InvalidArgumentValue):
         invalid = Tuning(selection="not a selection")
 
@@ -85,6 +158,15 @@ def test_Tuning():
 
     with raises(InvalidArgumentValue):
         invalid = Tuning(validation=100)
+
+    for selection in ['bayesian', 'iterative']:
+        with raises(InvalidArgumentValueCombination):
+            invalid = Tuning(selection, .2) # require "data" validation
+
+        with raises(InvalidArgumentValueCombination):
+             # maxIterations, timeout, and threshold cannot all be None
+            invalid = Tuning(selection, "data", validateX="ValX",
+                             validateY="ValY", maxIterations=None)
 
 def test_Tuning_performanceFunction():
     at = Tuning()

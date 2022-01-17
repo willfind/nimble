@@ -22,24 +22,25 @@ def Y():
 
 class GenericValidator(Validator):
     name = "generic"
-    def _validate(self, arguments, useLog):
+    def _validate(self, arguments):
         return 1 if arguments['foo'] == 'high' else 0
 
 def test_Validator(X, Y):
     # since _validate does not call train we do not need a real learner
-    gv = GenericValidator("test.Learner", X, Y, fractionIncorrect, None)
+    gv = GenericValidator("test.Learner", X, Y, fractionIncorrect, None, False)
     assert gv.learnerName == 'test.Learner'
     assert gv.X == X
     assert gv.Y == Y
     assert gv.performanceFunction == fractionIncorrect
     assert gv.performanceFunction.optimal == 'min'
     assert gv.randomSeed is not None
+    assert gv.useLog is False
     gv.validate(foo='high')
     gv.validate(foo='low')
     assert gv._results == [1,  0]
     assert gv._arguments == [{'foo': 'high'}, {'foo': 'low'}]
     assert gv._best == (0, {'foo': 'low'})
-    gv = GenericValidator("test.Learner", X, Y, fractionCorrect, None)
+    gv = GenericValidator("test.Learner", X, Y, fractionCorrect, None, False)
     gv.validate(foo='high')
     gv.validate(foo='low')
     assert gv._results == [1,  0]
@@ -53,9 +54,11 @@ def test_Validator(X, Y):
            + r'performanceFunction=fractionCorrect, randomSeed=[0-9]+\)')
     assert re.match(exp, rep)
 
-    gv = GenericValidator("test.Learner", X, 0, fractionCorrect, 23, bar='baz')
+    gv = GenericValidator("test.Learner", X, 0, fractionCorrect, 23,
+                          useLog=True, bar='baz')
     assert gv.Y != 0 and isinstance(gv.Y, nimble.core.data.Base)
     assert gv.randomSeed == 23
+    assert gv.useLog is True
     string = str(gv)
     rep = repr(gv)
     assert string == rep
@@ -64,11 +67,12 @@ def test_Validator(X, Y):
                    + 'bar="baz")')
 
     with raises(InvalidArgumentValue):
-        gv = GenericValidator("test.Learner", X, None, fractionCorrect, None)
+        gv = GenericValidator("test.Learner", X, None, fractionCorrect, None,
+                              False)
 
     with raises(InvalidArgumentValueCombination):
         gv = GenericValidator("test.Learner", X, Y.points[5:], fractionCorrect,
-                              None)
+                              None, False)
 
 class CountingPerformance:
     """

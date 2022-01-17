@@ -57,6 +57,8 @@ _DEPENDENCIES = [
     Dependency('h5py', 'h5py>=2.10', 'operation', 'Loading hdf5 files'),
     Dependency('dateutil', 'python-dateutil>=2.6', 'operation',
                'Parsing strings to datetime objects'),
+    Dependency('hyperopt', 'hyperopt>=0.2', 'operation',
+               'Bayesian approach for hyperparameter tuning'),
     Dependency('sklearn', 'scikit-learn>=0.19', 'interfaces',
                'Machine Learning'),
     Dependency('tensorflow', 'tensorflow>=1.14', 'interfaces',
