@@ -789,6 +789,42 @@ def test_data_CSV_lastFeatureAllMissing():
             assert fromList2 == fromCSV7
 
 
+def test_data_CSV_emptyFirstValue():
+    """Test if empty first value automatically detects pointNames correctly"""
+    # should trigger pointNames
+    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+        tmpCSV.write(',ft1,ft2,ft3\n')
+        tmpCSV.write('a,1,2,3\n')
+        tmpCSV.write('b,3,4,5\n')
+        tmpCSV.flush()
+        fromCSV = nimble.data(tmpCSV.name)
+        assert fromCSV.shape == (2, 3)
+        assert fromCSV.features.getNames() == ['ft1', 'ft2', 'ft3']
+        assert fromCSV.points.getNames() == ['a', 'b']
+
+    # no pointNames, first column is not unique
+    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+        tmpCSV.write(',ft1,ft2,ft3\n')
+        tmpCSV.write('a,1,2,3\n')
+        tmpCSV.write('a,3,4,5\n')
+        tmpCSV.flush()
+        fromCSV = nimble.data(tmpCSV.name)
+        assert fromCSV.shape == (2, 4)
+        assert fromCSV.features.getNames() == [None, 'ft1', 'ft2', 'ft3']
+        assert not fromCSV.points._namesCreated()
+
+    # no pointNames, only the first value of first row can be empty
+    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+        tmpCSV.write(',ft1,,ft3\n')
+        tmpCSV.write('a,1,2,3\n')
+        tmpCSV.write('b,3,4,5\n')
+        tmpCSV.flush()
+        fromCSV = nimble.data(tmpCSV.name)
+        assert fromCSV.shape == (2, 4)
+        assert fromCSV.features.getNames() == [None, 'ft1', None, 'ft3']
+        assert not fromCSV.points._namesCreated()
+
+
 def test_data_MTXArr_data():
     """ Test of data() loading a mtx (arr format) file, default params """
     for t in returnTypes:
