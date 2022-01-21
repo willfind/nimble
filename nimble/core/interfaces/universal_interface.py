@@ -113,8 +113,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             raise InvalidArgumentValue(msg)
 
     def _getValidSeed(self, randomSeed):
-        forShogun = self.getCanonicalName() == 'shogun'
-        return nimble.random._getValidSeed(randomSeed, forShogun)
+        return nimble.random._getValidSeed(randomSeed)
 
     @captureOutput
     def train(self, learnerName, trainX, trainY=None, arguments=None,
@@ -384,7 +383,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         """
         initObject = self.findCallable(toInit.name)
         if initObject is None:
-            msg = 'Unable to locate "{}" in this interface'.format(toInit.name)
+            msg = f'Unable to locate "{toInit.name}" in this interface'
             raise InvalidArgumentValue(msg)
 
         initArgs = {}
@@ -1515,11 +1514,11 @@ class TrainedLearner(object):
         trainXIsSquare = self._trainXShape[0] == self._trainXShape[1]
         if trainXIsSquare and len(testX.points) == len(testX.features):
             return
-        msg = "The number of features in testX ({0}) must be equal to the "
-        msg += "number of features in the training data ({1}) "
-        msg = msg.format(len(testX.features), self._trainXShape[1])
+        msg = f"The number of features in testX ({len(testX.features)}) must "
+        msg += "be equal to the number of features in the training data "
+        msg += f"({self._trainXShape[1]})"
         if trainXIsSquare:
-            msg += "or the testing data must be square-shaped"
+            msg += " or the testing data must be square-shaped"
         raise InvalidArgumentValueCombination(msg)
 
 

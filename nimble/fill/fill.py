@@ -552,9 +552,9 @@ def getLocationMsg(name, index):
     Helper function to format the error message with either a name or index.
     """
     if name is not None:
-        location = "'{0}'".format(name)
+        location = f"'{name}'"
     else:
-        location = "at index '{0}'".format(index)
+        location = f"at index '{index}'"
 
     return location
 

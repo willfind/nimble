@@ -75,10 +75,6 @@ Machine-Learning Interfaces
    +----------------+--------------------------------------------------+------+----------------------------+
    | `autoimpute`_  | Imputation. Machine Learning with missing data.  | |cm| |                            |
    +----------------+--------------------------------------------------+------+----------------------------+
-   | `shogun`_      | Machine Learning.                                |      | |cm| (conda-forge channel) |
-   +----------------+--------------------------------------------------+------+----------------------------+
-   | `mlpy`_        | Machine Learning.                                | |cm| | |cm| (conda-forge channel) |
-   +----------------+--------------------------------------------------+------+----------------------------+
 
 .. _tensorflow-note:
 
@@ -213,6 +209,4 @@ operations requiring an optional package that is not installed.
 .. _sklearn: https://scikit-learn.org/stable/install.html
 .. _tensorflow: https://www.tensorflow.org/install
 .. _autoimpute: https://autoimpute.readthedocs.io/en/latest/user_guide/getting_started.html
-.. _shogun: https://www.shogun.ml/install
 .. _keras: https://keras.io/getting_started/
-.. _mlpy: https://github.com/richardARPANET/mlpy

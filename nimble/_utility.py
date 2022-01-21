@@ -225,8 +225,8 @@ class DeferredModuleImport(object):
             msg = "Cannot access attributes for {mod} because the "
             msg += "accessibility of the module has not been determined. "
             msg += "A call must be made to {mod}.nimbleAccessible() first "
-            msg += "to determine if nimble is able to import {mod}."
-            raise AttributeError(msg.format(mod=self.name))
+            msg += f"to determine if nimble is able to import {self.name}."
+            raise AttributeError(msg)
         try:
             asSubmodule = '.'.join([self.name, name])
             submod = importlib.import_module(asSubmodule)
@@ -454,7 +454,7 @@ def prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str,
     """
     def itemFormatter(item):
         key, value = item
-        return '{0}{1}{2}'.format(keyStr(key), delimiter, valueStr(value))
+        return f'{keyStr(key)}{delimiter}{valueStr(value)}'
 
     return _prettyString(inDict, useAnd, numberItems,
                          iterator=lambda d: d.items(), formatter=itemFormatter)

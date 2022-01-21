@@ -2133,10 +2133,9 @@ class Features(ABC):
             else:
                 splitList.append(rule(value))
             if len(splitList[-1]) != numResultingFts:
-                msg = "The value at index {0} split into ".format(i)
-                msg += "{0} values, ".format(len(splitList[-1]))
-                msg += "but resultingNames contains "
-                msg += "{0} features".format(numResultingFts)
+                msg = f"The value at index {i} split into "
+                msg += f"{len(splitList[-1])} values, but resultingNames "
+                msg += f"contains {numResultingFts} features"
                 raise InvalidArgumentValueCombination(msg)
 
         featureIndex = self.getIndex(feature)
@@ -2325,7 +2324,7 @@ class Features(ABC):
             if any(stat not in allow for stat in basicStatistics):
                 allowed = prettyListString(allow, True, itemStr="'{}'".format)
                 msg = 'Invalid value found in basicStatistics. Allowed '
-                msg += 'values are {}'.format(allowed)
+                msg += f'values are {allowed}'
                 raise InvalidArgumentValue(msg)
             stats = basicStatistics
         else:
@@ -2345,7 +2344,7 @@ class Features(ABC):
             for val in fnames:
                 if counter[val] > 1:
                     diff = counter[val] - remaining[val]
-                    editedNames.append('{} ({})'.format(val, diff))
+                    editedNames.append(f'{val} ({diff})')
                     remaining[val] -= 1
                 else:
                     editedNames.append(val)

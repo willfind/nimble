@@ -165,11 +165,10 @@ def run_setup():
     setupKwargs['description'] = "Interfaces and tools for data science."
     setupKwargs['url'] = "https://nimbledata.org"
     setupKwargs['packages'] = find_packages(exclude=('tests', 'tests.*'))
-    setupKwargs['python_requires'] = '>=3.6'
+    setupKwargs['python_requires'] = '>=3.7'
     setupKwargs['classifiers'] = [
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',

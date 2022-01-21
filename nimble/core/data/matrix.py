@@ -118,7 +118,7 @@ class Matrix(Base):
         Function to write the data in this object to a CSV file at the
         designated path.
         """
-        with open(outPath, 'w') as outFile:
+        with open(outPath, 'w', encoding='utf-8') as outFile:
             if includeFeatureNames:
                 self._writeFeatureNamesToCSV(outFile, includePointNames)
             if not np.issubdtype(self._data.dtype, np.number):
@@ -191,8 +191,8 @@ class Matrix(Base):
             try:
                 ret = data.astype(np.float)
             except ValueError as e:
-                msg = 'Can only create scipy {0} matrix from numeric data'
-                raise ValueError(msg.format(to[-3:])) from e
+                msg = f'Must create scipy {to[-3:]} matrix from numeric data'
+                raise ValueError(msg) from e
             if to == 'scipycsc':
                 return scipy.sparse.csc_matrix(ret)
             if to == 'scipycsr':

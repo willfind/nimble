@@ -64,11 +64,8 @@ _DEPENDENCIES = [
     Dependency('keras', 'keras>=2.0', 'interfaces', 'Neural Networks'),
     Dependency('autoimpute', 'autoimpute>=0.12', 'interfaces',
                'Imputation & machine learning with missing data'),
-    Dependency('shogun', 'shogun>=v3', 'interfaces', 'Machine Learning'),
-    Dependency('mlpy', 'machine-learning-py>=3.5;python_version<"3.7"',
-               'interfaces', 'Machine Learning'),
-    Dependency('pytest', 'pytest>=2.7.4', 'development'),
-    Dependency('pylint', 'pylint>=6.2', 'development'),
+    Dependency('pylint', 'pytest>=2.7.4', 'development'),
+    Dependency('pytest', 'pylint>=6.2', 'development'),
     Dependency('cython', 'cython>=0.29', 'development'),
     Dependency('sphinx', 'sphinx>=3.3', 'development'),
     ]
@@ -94,6 +91,6 @@ def checkVersion(package):
         if legacy and not isinstance(specifier, LegacySpecifier):
             specifier = LegacySpecifier(str(specifier))
         if not specifier.contains(vers):
-            msg = 'The installed version of {0} ({1}) does not meet the '
-            msg += 'version requirements: {2}'
-            raise PackageException(msg.format(req.name, vers, requirement))
+            msg = f'The installed version of {req.name} ({vers}) does not '
+            msg += f'meet the version requirements: {requirement}'
+            raise PackageException(msg)

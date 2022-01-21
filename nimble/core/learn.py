@@ -288,7 +288,7 @@ def showLearnerParameterDefaults(name):
         defaults = []
         for param, default in defaultValues:
             if isinstance(default, str):
-                default = "'{}'".format(default)
+                default = f"'{default}'"
             defaults.append([param, default])
         print(tableString(defaults, rowHeadJustify='left',
                           colValueJustify='left',
@@ -1360,6 +1360,6 @@ class Init(object):
         return self.__repr__()
 
     def __repr__(self):
-        formatKwargs = ["{}={}".format(k, v) for k, v in self.kwargs.items()]
+        formatKwargs = [f"{k}={v}" for k, v in self.kwargs.items()]
         kwargStr = ", ".join(formatKwargs)
-        return "Init({}, {})".format(repr(self.name), kwargStr)
+        return f"Init({repr(self.name)}, {kwargStr})"

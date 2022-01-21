@@ -172,10 +172,9 @@ To install autoimpute
         if (isinstance(learner, self.package.imputations.BaseImputer)
                 and 'strategy' not in initParams):
             strategies = list(learner.strategies.keys())
-            msg = "Due to the level of complexity of {learnerName}'s default "
+            msg = f"Due to the level of complexity of {learnerName}'s default "
             msg += "arguments, nimble requires the 'strategy' argument. "
-            msg += "The options for strategy are {strategies}"
-            msg = msg.format(learnerName=learnerName, strategies=strategies)
+            msg += f"The options for strategy are {strategies}"
             raise InvalidArgumentValue(msg)
         # for regressors, also need to check that MultipleImputer strategy is
         # defined if the user did not provide a MultipleImputer directly
@@ -184,14 +183,13 @@ To install autoimpute
                 and ('mi_kwgs' not in initParams
                      or 'strategy' not in initParams['mi_kwgs'])):
             strategies = list(learner.mi.strategies.keys())
-            msg = "Due to the level of complexity of {learnerName}'s "
+            msg = f"Due to the level of complexity of {learnerName}'s "
             msg += "default arguments, nimble requires the MultipleImputer "
             msg += "strategy argument. This can be accomplished 1) by "
             msg += "providing a dictionary with a 'strategy' key as the "
             msg += "'mi_kwgs' argument or 2) providing a MultipleImputer "
             msg += "as the 'mi' argument using nimble.Init('MultipleImputer', "
-            msg += "strategy=...). The options for strategy are {strategies}"
-            msg = msg.format(learnerName=learnerName, strategies=strategies)
+            msg += f"strategy=...). The options for strategy are {strategies}"
             raise InvalidArgumentValue(msg)
 
         return learner
@@ -229,9 +227,8 @@ To install autoimpute
         if 'Imputer' in toInit.name and 'strategy' not in toInit.kwargs:
             strategies = list(initObj.strategies.keys())
             msg = "Due to the complexity of the default arguments, nimble "
-            msg += "does not allow {name} to be instantiated without "
+            msg += f"does not allow {toInit.name} to be instantiated without "
             msg += "specifying the 'strategy' keyword argument. The options "
-            msg += "for strategy are {strategies}"
-            msg = msg.format(name=toInit.name, strategies=strategies)
+            msg += f"for strategy are {strategies}"
             raise InvalidArgumentValue(msg)
         return initObj

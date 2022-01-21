@@ -1918,7 +1918,7 @@ class Points(ABC):
             appendedPts = []
             for name in self.getNames():
                 for i in range(numCollapsed):
-                    appendedPts.append("{0}_{1}".format(name, i))
+                    appendedPts.append(f"{name}_{i}")
             self.setNames(appendedPts, useLog=False)
 
         handleLogging(useLog, 'prep', 'points.splitByCollapsingFeatures',
@@ -2064,10 +2064,10 @@ class Points(ABC):
                     pNames.append(self.getName(idx))
             nameIdxVal = row[namesIdx]
             if nameIdxVal in unique[uncombined]:
-                msg = "The point at index {0} cannot be combined ".format(idx)
-                msg += "because there is already a value for the feature "
-                msg += "{0} in another point which this ".format(nameIdxVal)
-                msg += "point would be combined with."
+                msg = f"The point at index {idx} cannot be combined because "
+                msg += "there is already a value for the feature "
+                msg += f"{nameIdxVal} in another point which this point "
+                msg += "would be combined with."
                 raise ImproperObjectAction(msg)
             if nameIdxVal not in uniqueNames:
                 uniqueNames.append(nameIdxVal)

@@ -219,12 +219,11 @@ def _generateSubsidiarySeed():
     """
     # must range from zero to maxSeed because numpy random wants an
     # unsigned 32 bit int. Negative numbers can cause conversion errors,
-    # and larger numbers can cause exceptions. 0 has no effect on randomness
-    # control in shogun so start at 1.
+    # and larger numbers can cause exceptions.
     maxSeed = (2 ** 32) - 1
     return pythonRandom.randint(1, maxSeed)
 
-def _getValidSeed(seed, forShogun=False):
+def _getValidSeed(seed):
     """
     Validate the random seed value.
     """
@@ -232,10 +231,6 @@ def _getValidSeed(seed, forShogun=False):
         seed = _generateSubsidiarySeed()
     elif not isinstance(seed, int):
         raise InvalidArgumentType('seed must be an integer')
-    elif forShogun and seed == 0:
-        msg = "The seed 0 does not generate reproducible results in shogun. "
-        msg += "Set randomSeed such that 1<=randomSeed<=4294967295."
-        raise InvalidArgumentValue(msg)
     elif not 0 <= seed <= (2 ** 32) - 1:
         msg = 'randomSeed is required to be an unsigned 32 bit integer. '
         msg += 'Set randomSeed such that 0<=randomSeed<=4294967295.'

@@ -84,7 +84,7 @@ class List(Base):
                             raise InvalidArgumentValue(msg)
                         for j in i:
                             if not isAllowedSingleElement(j):
-                                msg = '%s is invalid input data format.'%j
+                                msg = f'{j} is invalid input data format.'
                                 raise InvalidArgumentValue(msg)
                 if shape is None:
                     shape = (len(data), numFeatures)
@@ -188,7 +188,7 @@ class List(Base):
         Function to write the data in this object to a CSV file at the
         designated path.
         """
-        with open(outPath, 'w') as outFile:
+        with open(outPath, 'w', encoding='utf-8') as outFile:
             if includeFeatureNames:
                 self._writeFeatureNamesToCSV(outFile, includePointNames)
 
@@ -212,7 +212,7 @@ class List(Base):
         Function to write the data in this object to a matrix market
         file at the designated path.
         """
-        with open(outPath, 'w') as outFile:
+        with open(outPath, 'w', encoding='utf-8') as outFile:
             outFile.write("%%MatrixMarket matrix array real general\n")
 
             def writeNames(nameList):
@@ -233,8 +233,7 @@ class List(Base):
             else:
                 outFile.write('%#\n')
 
-            outFile.write("{0} {1}\n".format(len(self.points),
-                                             len(self.features)))
+            outFile.write(f"{len(self.points)} {len(self.features)}\n")
 
             for j in range(len(self.features)):
                 for i in range(len(self.points)):

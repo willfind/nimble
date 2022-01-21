@@ -7,9 +7,7 @@ from nimble._utility import inheritDocstringsFactory
 from nimble.core.data import Base, Matrix, List, Sparse, DataFrame
 from nimble.core.interfaces.universal_interface import UniversalInterface
 from nimble.core.interfaces.keras_interface import Keras
-from nimble.core.interfaces.mlpy_interface import Mlpy
 from nimble.core.interfaces.scikit_learn_interface import SciKitLearn
-from nimble.core.interfaces.shogun_interface import Shogun
 from nimble.core.interfaces.custom_learner import CustomLearnerInterface
 
 ############################
@@ -77,6 +75,4 @@ def test_UniversalIntefaceSubclassInherit():
     UniversalDoc = UniversalInterface.accessible.__doc__
     assert CustomLearnerInterface.accessible.__doc__ == UniversalDoc
     assert Keras.accessible.__doc__ == UniversalDoc
-    assert Mlpy.accessible.__doc__ == UniversalDoc
     assert SciKitLearn.accessible.__doc__ == UniversalDoc
-    assert Shogun.accessible.__doc__ == UniversalDoc
