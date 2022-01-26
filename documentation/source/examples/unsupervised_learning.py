@@ -10,10 +10,16 @@ but a version that has been prepared for machine learning,
 unsupervised machine learning algorithm to gain a better understanding
 of visitors that made a purchase during their visit.
 
-[Open this example in Google Colab][colab]
+In this example we will learn about:
 
-[Download this example as a script or notebook][files]
+* [Normalizing data](#Getting-Started)
+* [Reducing the dimensionality of our learner](#Train-a-learner)
+* [Applying a clustering algorithm](#Train-a-learner)
+* [Plotting data clusters](#Cluster-Visualization)
+* [Plotting data by cluster](#Cluster-Analysis)
 
+[Open this example in Google Colab][colab]\
+[Download this example as a script or notebook][files]\
 [Download the dataset for this example][datasets]
 
 [colab]: https://colab.research.google.com/drive/10KZjKMnrrahHbOmDQa-dne44FmMMPePS?usp=sharing

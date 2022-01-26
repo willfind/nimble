@@ -84,9 +84,10 @@ def data(source, pointNames='automatic', featureNames='automatic',
         **case sensitive** strings "List", "Matrix", "Sparse" and
         "DataFrame". If None, Nimble will detect the most appropriate
         type from the data and/or packages available in the environment.
-    name : str
-        When not None, this value is set as the name attribute of the
-        returned object.
+    name : str, None
+        A string describing the data that will display when printing or
+        logging the returned object. This value is also set as the name
+        attribute of the returned object.
     convertToType : type, dict, list, None
         A one-time conversion of features to the provided type or types.
         By default, object types within ``source`` are not modified,
@@ -301,9 +302,10 @@ def ones(numPoints, numFeatures, pointNames='automatic',
     returnType : str
         May be any of the allowed types specified in
         nimble.core.data.available. Default is "Matrix".
-    name : str
-        When not None, this value is set as the name attribute of the
-        returned object.
+    name : str, None
+        A string describing the data that will display when printing or
+        logging the returned object. This value is also set as the name
+        attribute of the returned object.
 
     Returns
     -------
@@ -380,9 +382,10 @@ def zeros(numPoints, numFeatures, pointNames='automatic',
     returnType : str
         May be any of the allowed types specified in
         nimble.core.data.available. Default is "Matrix".
-    name : str
-        When not None, this value is set as the name attribute of the
-        returned object.
+    name : str, None
+        A string describing the data that will display when printing or
+        logging the returned object. This value is also set as the name
+        attribute of the returned object.
 
     Returns
     -------
@@ -461,9 +464,10 @@ def identity(size, pointNames='automatic', featureNames='automatic',
     returnType : str
         May be any of the allowed types specified in
         nimble.core.data.available. Default is "Matrix".
-    name : str
-        When not None, this value is set as the name attribute of the
-        returned object.
+    name : str, None
+        A string describing the data that will display when printing or
+        logging the returned object. This value is also set as the name
+        attribute of the returned object.
 
     Returns
     -------

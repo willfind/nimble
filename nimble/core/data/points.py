@@ -291,8 +291,12 @@ class Points(ABC):
         Copy certain points of this object.
 
         A variety of methods for specifying the points to copy based on
-        the provided parameters. If toCopy is not None, start and end
-        must be None. If start or end is not None, toCopy must be None.
+        the provided parameters. If ``toCopy`` is not None, ``start``
+        and ``end`` must be None. If ``start`` or ``end`` is not None,
+        ``toCopy`` must be None.
+
+        The ``nimble.match`` module contains many helpful functions that
+        could be used for ``toCopy``.
 
         Parameters
         ----------
@@ -301,7 +305,7 @@ class Points(ABC):
             * list of identifiers - an iterable container of identifiers
             * function - accepts a point as its only argument and
               returns a boolean value to indicate if the point should
-              be copied
+              be copied. See ``nimble.match`` for common functions.
             * query - string in the format 'FEATURENAME OPERATOR VALUE'
               (i.e "ft1 < 10", "id4 == yes", or "col4 is nonZero") where
               OPERATOR is separated from the FEATURENAME and VALUE by
@@ -343,12 +347,12 @@ class Points(ABC):
 
         Examples
         --------
-        >>> lst = [[1, 1, 1, 1],
+        >>> lst = [[0, 0, 0, 0],
+        ...        [1, 1, 1, 1],
         ...        [2, 2, 2, 2],
-        ...        [3, 3, 3, 3],
-        ...        [4, 4, 4, 4]]
+        ...        [3, 3, 3, 3]]
         >>> X = nimble.data(lst, featureNames=['a', 'b', 'c', 'd'],
-        ...                 pointNames=['1', '2', '3', '4'])
+        ...                 pointNames=['0', '1', '2', '3'])
         >>> single = X.points.copy('1')
         >>> single
         <Matrix 1pt x 4ft
@@ -362,39 +366,38 @@ class Points(ABC):
                'a' 'b' 'c' 'd'
              ┌────────────────
          '1' │  1   1   1   1
-         '4' │  4   4   4   4
+         '3' │  3   3   3   3
         >
-        >>> func = X.points.copy(lambda pt: sum(pt) < 10)
+        >>> func = X.points.copy(nimble.match.allZero)
         >>> func
-        <Matrix 2pt x 4ft
+        <Matrix 1pt x 4ft
                'a' 'b' 'c' 'd'
              ┌────────────────
-         '1' │  1   1   1   1
-         '2' │  2   2   2   2
+         '0' │  0   0   0   0
         >
-        >>> strFunc = X.points.copy("a >= 3")
+        >>> strFunc = X.points.copy("a >= 2")
         >>> strFunc
         <Matrix 2pt x 4ft
                'a' 'b' 'c' 'd'
              ┌────────────────
+         '2' │  2   2   2   2
          '3' │  3   3   3   3
-         '4' │  4   4   4   4
         >
         >>> startEnd = X.points.copy(start=1, end=2)
         >>> startEnd
         <Matrix 2pt x 4ft
                'a' 'b' 'c' 'd'
              ┌────────────────
+         '1' │  1   1   1   1
          '2' │  2   2   2   2
-         '3' │  3   3   3   3
         >
         >>> numberNoRandom = X.points.copy(number=2)
         >>> numberNoRandom
         <Matrix 2pt x 4ft
                'a' 'b' 'c' 'd'
              ┌────────────────
+         '0' │  0   0   0   0
          '1' │  1   1   1   1
-         '2' │  2   2   2   2
         >
         >>> nimble.random.setSeed(42)
         >>> numberRandom = X.points.copy(number=2, randomize=True)
@@ -402,8 +405,8 @@ class Points(ABC):
         <Matrix 2pt x 4ft
                'a' 'b' 'c' 'd'
              ┌────────────────
-         '1' │  1   1   1   1
-         '4' │  4   4   4   4
+         '0' │  0   0   0   0
+         '3' │  3   3   3   3
         >
 
         Keywords
@@ -418,9 +421,12 @@ class Points(ABC):
         Move certain points of this object into their own object.
 
         A variety of methods for specifying the points to extract based
-        on the provided parameters. If toExtract is not None, start and
-        end must be None. If start or end is not None, toExtract must be
-        None.
+        on the provided parameters. If ``toExtract`` is not None,
+        ``start`` and ``end`` must be None. If ``start`` or ``end`` is
+        not None, ``toExtract`` must be None.
+
+        The ``nimble.match`` module contains many helpful functions that
+        could be used for ``toExtract``.
 
         Parameters
         ----------
@@ -429,7 +435,7 @@ class Points(ABC):
             * list of identifiers - an iterable container of identifiers
             * function - accepts a point as its only argument and
               returns a boolean value to indicate if the point should
-              be extracted
+              be extracted. See ``nimble.match`` for common functions.
             * query - string in the format 'FEATURENAME OPERATOR VALUE'
               (i.e "ft1 < 10", "id4 == yes", or "col4 is nonZero") where
               OPERATOR is separated from the FEATURENAME and VALUE by
@@ -511,21 +517,21 @@ class Points(ABC):
 
         Extract point when the function returns True.
 
-        >>> X = nimble.identity(3)
+        >>> X = nimble.data([[1, 2, 3], [4, 5, 6], [-1, -2, -3]])
         >>> X.points.setNames(['a', 'b', 'c'])
-        >>> func = X.points.extract(lambda pt: pt[2] == 1)
-        >>> func
-        <Matrix 1pt x 3ft
-               0 1 2
-             ┌──────
-         'c' │ 0 0 1
-        >
-        >>> X
+        >>> positives = X.points.extract(nimble.match.allPositive)
+        >>> positives
         <Matrix 2pt x 3ft
                0 1 2
              ┌──────
-         'a' │ 1 0 0
-         'b' │ 0 1 0
+         'a' │ 1 2 3
+         'b' │ 4 5 6
+        >
+        >>> X
+        <Matrix 1pt x 3ft
+               0  1  2
+             ┌─────────
+         'c' │ -1 -2 -3
         >
 
         Extract point when the query string returns True.
@@ -617,9 +623,12 @@ class Points(ABC):
         Remove certain points from this object.
 
         A variety of methods for specifying points to delete based on
-        the provided parameters. If toDelete is not None, start and end
-        must be None. If start or end is not None, toDelete must be
-        None.
+        the provided parameters. If ``toDelete`` is not None, ``start``
+        and ``end`` must be None. If ``start`` or ``end`` is not None,
+        ``toDelete`` must be None.
+
+        The ``nimble.match`` module contains many helpful functions that
+        could be used for ``toDelete``.
 
         Parameters
         ----------
@@ -628,7 +637,7 @@ class Points(ABC):
             * list of identifiers - an iterable container of identifiers
             * function - accepts a point as its only argument and
               returns a boolean value to indicate if the point should
-              be deleted
+              be deleted. See ``nimble.match`` for common functions.
             * query - string in the format 'FEATURENAME OPERATOR VALUE'
               (i.e "ft1 < 10", "id4 == yes", or "col4 is nonZero") where
               OPERATOR is separated from the FEATURENAME and VALUE by
@@ -693,15 +702,15 @@ class Points(ABC):
 
         Delete point when the function returns True.
 
-        >>> X = nimble.identity(3)
+        >>> X = nimble.data([[1, 2, 3], [4, 5, 6], [-1, -2, -3]])
         >>> X.points.setNames(['a', 'b', 'c'])
-        >>> X.points.delete(lambda pt: pt[2] == 1)
+        >>> X.points.delete(nimble.match.allNegative)
         >>> X
         <Matrix 2pt x 3ft
                0 1 2
              ┌──────
-         'a' │ 1 0 0
-         'b' │ 0 1 0
+         'a' │ 1 2 3
+         'b' │ 4 5 6
         >
 
         Delete point when the query string returns True.
@@ -766,9 +775,12 @@ class Points(ABC):
         Keep only certain points of this object.
 
         A variety of methods for specifying points to keep based on
-        the provided parameters. If toRetain is not None, start and end
-        must be None. If start or end is not None, toRetain must be
-        None.
+        the provided parameters. If ``toRetain`` is not None, ``start``
+        and ``end`` must be None. If ``start`` or ``end`` is not None,
+        ``toRetain`` must be None.
+
+        The ``nimble.match`` module contains many helpful functions that
+        could be used for ``toRetain``.
 
         Parameters
         ----------
@@ -777,7 +789,7 @@ class Points(ABC):
             * list of identifiers - an iterable container of identifiers
             * function - accepts a point as its only argument and
               returns a boolean value to indicate if the point should
-              be retained
+              be retained. See ``nimble.match`` for common functions.
             * query - string in the format 'FEATURENAME OPERATOR VALUE'
               (i.e "ft1 < 10", "id4 == yes", or "col4 is nonZero") where
               OPERATOR is separated from the FEATURENAME and VALUE by
@@ -842,14 +854,15 @@ class Points(ABC):
 
         Retain point when the function returns True.
 
-        >>> X = nimble.identity(3)
+        >>> X = nimble.data([[1, 2, 3], [4, 5, 6], [-1, -2, -3]])
         >>> X.points.setNames(['a', 'b', 'c'])
-        >>> X.points.retain(lambda pt: pt[2] == 1)
+        >>> X.points.retain(nimble.match.allPositive)
         >>> X
-        <Matrix 1pt x 3ft
+        <Matrix 2pt x 3ft
                0 1 2
              ┌──────
-         'c' │ 0 0 1
+         'a' │ 1 2 3
+         'b' │ 4 5 6
         >
 
         Retain point when the query string returns True.

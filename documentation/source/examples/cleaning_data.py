@@ -12,10 +12,15 @@ which may affect the traffic volume on an interstate highway as well as
 the current traffic volume. A new data point is recorded each time a
 change occurs in one of the weather forecast features.
 
-[Open this example in Google Colab][colab]
+In this example we will learn about:
 
-[Download this example as a script or notebook][files]
+* [Loading and displaying data](#Getting-started)
+* [Cleaning numeric data](#Cleaning-numeric-data)
+* [Cleaning non-numeric data](#Cleaning-non-numeric-data)
+* [Writing data to a file](#Writing-to-a-file)
 
+[Open this example in Google Colab][colab]\
+[Download this example as a script or notebook][files]\
 [Download the dataset for this example][datasets]
 
 [colab]: https://colab.research.google.com/drive/1TBeGjU7Jzt2XNzD9X_WFtmos4MvnrOje?usp=sharing
@@ -42,11 +47,14 @@ path = nimble.fetchFile('uci::Metro Interstate Traffic Volume')
 traffic = nimble.data(path, name='Metro Interstate Traffic Volume',
                       returnType="Matrix")
 
-## The `show` method provides control over the printed output for an object.
-## It prints a description, the `name` and `shape` of the object and the object
-## data (truncating if necessary) given the parameters. By default, `show` sets
-## the width and height of the output based on the size of the terminal. To
-## preview our data, we will limit the output to 15 lines.
+## The `show` method provides more flexibility for the printed output than
+## using `print` or `repr`. It prints a description, the `name` and `shape` of
+## the object and the object data (truncating if necessary) given the
+## parameters. The `maxWidth` and `maxHeight` parameters control the number of
+## characters printed horizontally and vertically, respectively. By default
+## these are set dynamically based on the terminal size, but more or less of
+## the data can be displayed by setting them manually. To preview our data, we
+## will limit the output to 16 lines.
 traffic.show("Raw traffic data", maxHeight=16)
 
 ## The machine learning algorithms we plan to use require numeric data and can
@@ -100,32 +108,14 @@ traffic.features.splitByParsing('date_time', dateTimeSplitter,
 ## of text into 5 numeric features.
 traffic.show('New parsed features in traffic data', maxHeight=16)
 
-## Above, we also see that the `holiday` feature has many missing values. Let's
-## take a look at a selection of points that include a holiday to get a better
-## understanding of this feature.
-pointsWithHoliday = slice(1368, 1372)
-dateInfoFeatures = ['holiday', 'year', 'month', 'day', 'hour']
-sample = traffic[pointsWithHoliday, dateInfoFeatures]
-sample.show('Data sample with a holiday', maxHeight=16)
-
-## Now we can see that this feature records the holiday name for the first data
-## point recorded on a holiday, otherwise the value is missing. So, even points
-## that fall on a holiday can have a missing value in the holiday feature. It
-## would be much more helpful if this feature identified if **each** point
-## occurred on a holiday.
-
-## We need a more complex custom function to differentiate between missing
-## values that fall on a holiday and those that don't. The `holidayToBoolean`
-## function relies on the fact that our data points are chronological. As
-## `points.transform` iterates through each data point, each point with a
-## string value in the `holiday` feature indicates the start of a holiday.
-## `currentHoliday` stores the year, month and day of that holiday so that
-## subsequent points occurring on the same date can also be identified as
-## holidays. Ultimately, every value in `holiday` is replaced with a boolean
-## value.
+## The `holiday` feature is extremely idiosyncratic, so it will require a
+## complex function to transform. Since this case this unique to this dataset,
+## we won't dig into the details but Nimble can definitely handle complex cases
+## like this one. The purpose of the function is to create a binary feature
+## that identifies the points in the data that occur on a holiday.
 holidayIndex = traffic.features.getIndex('holiday')
 currentHoliday = {'date': None}
-def holidayToBoolean(point):
+def holidayToBinary(point):
     newPt = list(point)
     dateTuple = (point['year'], point['month'], point['day'])
     if isinstance(point['holiday'], str):
@@ -137,7 +127,9 @@ def holidayToBoolean(point):
 
     return newPt
 
-traffic.points.transform(holidayToBoolean)
+pointsWithHoliday = slice(1368, 1372)
+dateInfoFeatures = ['holiday', 'year', 'month', 'day', 'hour']
+traffic.points.transform(holidayToBinary)
 sample = traffic[pointsWithHoliday, dateInfoFeatures]
 sample.show('Data sample with converted holiday feature', maxHeight=16)
 

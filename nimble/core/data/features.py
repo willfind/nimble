@@ -297,8 +297,12 @@ class Features(ABC):
         Copy certain features of this object.
 
         A variety of methods for specifying the features to copy based
-        on the provided parameters. If toCopy is not None, start and end
-        must be None. If start or end is not None, toCopy must be None.
+        on the provided parameters. If ``toCopy`` is not None, ``start``
+        and ``end`` must be None. If ``start`` or ``end`` is not None,
+        ``toCopy`` must be None.
+
+        The ``nimble.match`` module contains many helpful functions that
+        could be used for ``toCopy``.
 
         Parameters
         ----------
@@ -307,7 +311,7 @@ class Features(ABC):
             * list of identifiers - an iterable container of identifiers
             * function - accepts a feature as its only argument and
               returns a boolean value to indicate if the feature should
-              be copied
+              be copied. See ``nimble.match`` for common functions.
             * query - string in the format 'POINTNAME OPERATOR VALUE'
               (i.e "pt1 < 10", "id4 == yes", or "row4 is nonZero") where
               OPERATOR is separated from the POINTNAME and VALUE by
@@ -349,55 +353,45 @@ class Features(ABC):
 
         Examples
         --------
-        >>> lst = [[1, 2, 3, 4],
-        ...        [1, 2, 3, 4],
-        ...        [1, 2, 3, 4],
-        ...        [1, 2, 3, 4]]
+        >>> lst = [[0, 1, 2, 3],
+        ...        [0, 1, 2, 3],
+        ...        [0, 1, 2, 3],
+        ...        [0, 1, 2, 3]]
         >>> X = nimble.data(lst,
         ...                 pointNames=['a', 'b', 'c', 'd'],
-        ...                 featureNames=['1', '2', '3', '4'])
-        >>> single = X.features.copy('1')
+        ...                 featureNames=['0', '1', '2', '3'])
+        >>> single = X.features.copy('0')
         >>> single
         <Matrix 4pt x 1ft
-               '1'
+               '0'
              ┌────
-         'a' │  1
-         'b' │  1
-         'c' │  1
-         'd' │  1
+         'a' │  0
+         'b' │  0
+         'c' │  0
+         'd' │  0
         >
-        >>> multiple = X.features.copy(['1', 3])
+        >>> multiple = X.features.copy(['0', 3])
         >>> multiple
         <Matrix 4pt x 2ft
-               '1' '4'
+               '0' '3'
              ┌────────
-         'a' │  1   4
-         'b' │  1   4
-         'c' │  1   4
-         'd' │  1   4
+         'a' │  0   3
+         'b' │  0   3
+         'c' │  0   3
+         'd' │  0   3
         >
-        >>> func = X.features.copy(lambda ft: sum(ft) < 10)
+        >>> func = X.features.copy(nimble.match.allZero)
         >>> func
-        <Matrix 4pt x 2ft
-               '1' '2'
-             ┌────────
-         'a' │  1   2
-         'b' │  1   2
-         'c' │  1   2
-         'd' │  1   2
+        <Matrix 4pt x 1ft
+               '0'
+             ┌────
+         'a' │  0
+         'b' │  0
+         'c' │  0
+         'd' │  0
         >
-        >>> strFunc = X.features.copy("a >= 3")
+        >>> strFunc = X.features.copy("a >= 2")
         >>> strFunc
-        <Matrix 4pt x 2ft
-               '3' '4'
-             ┌────────
-         'a' │  3   4
-         'b' │  3   4
-         'c' │  3   4
-         'd' │  3   4
-        >
-        >>> startEnd = X.features.copy(start=1, end=2)
-        >>> startEnd
         <Matrix 4pt x 2ft
                '2' '3'
              ┌────────
@@ -406,26 +400,36 @@ class Features(ABC):
          'c' │  2   3
          'd' │  2   3
         >
+        >>> startEnd = X.features.copy(start=1, end=3) # Note: Inclusive
+        >>> startEnd
+        <Matrix 4pt x 3ft
+               '1' '2' '3'
+             ┌────────────
+         'a' │  1   2   3
+         'b' │  1   2   3
+         'c' │  1   2   3
+         'd' │  1   2   3
+        >
         >>> numberNoRandom = X.features.copy(number=2)
         >>> numberNoRandom
         <Matrix 4pt x 2ft
-               '1' '2'
+               '0' '1'
              ┌────────
-         'a' │  1   2
-         'b' │  1   2
-         'c' │  1   2
-         'd' │  1   2
+         'a' │  0   1
+         'b' │  0   1
+         'c' │  0   1
+         'd' │  0   1
         >
         >>> nimble.random.setSeed(42)
         >>> numberRandom = X.features.copy(number=2, randomize=True)
         >>> numberRandom
         <Matrix 4pt x 2ft
-               '1' '4'
+               '0' '3'
              ┌────────
-         'a' │  1   4
-         'b' │  1   4
-         'c' │  1   4
-         'd' │  1   4
+         'a' │  0   3
+         'b' │  0   3
+         'c' │  0   3
+         'd' │  0   3
         >
 
         Keywords
@@ -441,9 +445,12 @@ class Features(ABC):
         Move certain features of this object into their own object.
 
         A variety of methods for specifying the features to extract
-        based on the provided parameters. If toExtract is not None,
-        start and end must be None. If start or end is not None,
-        toExtract must be None.
+        based on the provided parameters. If ``toExtract`` is not None,
+        ``start`` and ``end`` must be None. If ``start`` or ``end`` is
+        not None, ``toExtract`` must be None.
+
+        The ``nimble.match`` module contains many helpful functions that
+        could be used for ``toExtract``.
 
         Parameters
         ----------
@@ -452,7 +459,7 @@ class Features(ABC):
             * list of identifiers - an iterable container of identifiers
             * function - accepts a feature as its only argument and
               returns a boolean value to indicate if the feature should
-              be extracted
+              be extracted. See ``nimble.match`` for common functions.
             * query - string in the format 'POINTNAME OPERATOR VALUE'
               (i.e "pt1 < 10", "id4 == yes", or "row4 is nonZero") where
               OPERATOR is separated from the POINTNAME and VALUE by
@@ -540,24 +547,24 @@ class Features(ABC):
 
         Extract feature when the function returns True.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.data([[1, 2, 3], [4, 5, None], [7, 8, 9]])
         >>> X.features.setNames(['a', 'b', 'c'])
-        >>> func = X.features.extract(lambda ft: ft[2] == 1)
+        >>> func = X.features.extract(nimble.match.anyMissing)
         >>> func
-        <List 3pt x 1ft
-             'c'
-           ┌────
-         0 │  0
-         1 │  0
-         2 │  1
+        <DataFrame 3pt x 1ft
+              'c'
+           ┌──────
+         0 │ 3.000
+         1 │
+         2 │ 9.000
         >
         >>> X
-        <List 3pt x 2ft
+        <DataFrame 3pt x 2ft
              'a' 'b'
            ┌────────
-         0 │  1   0
-         1 │  0   1
-         2 │  0   0
+         0 │  1   2
+         1 │  4   5
+         2 │  7   8
         >
 
         Extract feature when the query string returns True.
@@ -663,9 +670,12 @@ class Features(ABC):
         Remove certain features from this object.
 
         A variety of methods for specifying features to delete based on
-        the provided parameters. If toDelete is not None, start and end
-        must be None. If start or end is not None, toDelete must be
-        None.
+        the provided parameters. If ``toDelete`` is not None, ``start``
+        and ``end`` must be None. If start or end is not None,
+        ``toDelete`` must be None.
+
+        The ``nimble.match`` module contains many helpful functions that
+        could be used for ``toDelete``.
 
         Parameters
         ----------
@@ -674,7 +684,7 @@ class Features(ABC):
             * list of identifiers - an iterable container of identifiers
             * function - accepts a feature as its only argument and
               returns a boolean value to indicate if the feature should
-              be deleted
+              be deleted. See ``nimble.match`` for common functions.
             * query - string in the format 'POINTNAME OPERATOR VALUE'
               (i.e "pt1 < 10", "id4 == yes", or "row4 is nonZero") where
               OPERATOR is separated from the POINTNAME and VALUE by
@@ -742,16 +752,16 @@ class Features(ABC):
 
         Delete feature when the function returns True.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.data([[1, 2, 3], [4, 5, None], [7, 8, 9]])
         >>> X.features.setNames(['a', 'b', 'c'])
-        >>> X.features.delete(lambda ft: ft[2] == 1)
+        >>> X.features.delete(nimble.match.anyMissing)
         >>> X
-        <List 3pt x 2ft
+        <DataFrame 3pt x 2ft
              'a' 'b'
            ┌────────
-         0 │  1   0
-         1 │  0   1
-         2 │  0   0
+         0 │  1   2
+         1 │  4   5
+         2 │  7   8
         >
 
         Delete feature when the query string returns True.
@@ -825,9 +835,12 @@ class Features(ABC):
         Keep only certain features of this object.
 
         A variety of methods for specifying features to keep based on
-        the provided parameters. If toRetain is not None, start and end
-        must be None. If start or end is not None, toRetain must be
-        None.
+        the provided parameters. If ``toRetain`` is not None, ``start``
+        and ``end`` must be None. If ``start`` or ``end`` is not None,
+        ``toRetain`` must be None.
+
+        The ``nimble.match`` module contains many helpful functions that
+        could be used for ``toRetain``.
 
         Parameters
         ----------
@@ -836,7 +849,7 @@ class Features(ABC):
             * list of identifiers - an iterable container of identifiers
             * function - accepts a feature as its only argument and
               returns a boolean value to indicate if the feature should
-              be retained
+              be retained. See ``nimble.match`` for common functions.
             * query - string in the format 'POINTNAME OPERATOR VALUE'
               (i.e "pt1 < 10", "id4 == yes", or "row4 is nonZero") where
               OPERATOR is separated from the POINTNAME and VALUE by
@@ -904,16 +917,16 @@ class Features(ABC):
 
         Retain feature when the function returns True.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.data([[1, None, 3], [None, 5, 6], [7, 8, 9]])
         >>> X.features.setNames(['a', 'b', 'c'])
-        >>> X.features.retain(lambda ft: ft[2] == 1)
+        >>> X.features.retain(nimble.match.allNonMissing)
         >>> X
-        <List 3pt x 1ft
+        <DataFrame 3pt x 1ft
              'c'
            ┌────
-         0 │  0
-         1 │  0
-         2 │  1
+         0 │  3
+         1 │  6
+         2 │  9
         >
 
         Retain feature when the query string returns True.

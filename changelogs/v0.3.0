@@ -37,3 +37,10 @@
 * Python 3.6 reached EOL Dec 2021. Support for it has been removed.
 * The mlpy package, since it required python 3.6 , has been removed.
 * The shogun package, since it required python 3.6, has been removed.
+
+### Documentation Changes ###
+* Provide more information on data object from API Documentation page
+* Add hyperlinked list of concepts covered in each example
+* Open hyperlinks to API documentation in examples as a new tab
+* Clarifications in examples and docstrings
+* Removed cells specific to online examples from downloadable notebooks

@@ -15,13 +15,17 @@ provides functions that reorganize points and features to create data
 that is "tidy". Our goal is to create one tidy data object containing
 all of the data from our 8 original files.
 
-[Open this example in Google Colab][colab]
+[wickham]: http://dx.doi.org/10.18637/jss.v059.i10
 
-[Download this example as a script or notebook][files]
+In this example we will learn about:
 
+* [Combining data objects together](#Combining the data)
+* [Applying tidy data functions](#Tidying the data)
+
+[Open this example in Google Colab][colab]\
+[Download this example as a script or notebook][files]\
 [Download the dataset for this example][datasets]
 
-[wickham]: http://dx.doi.org/10.18637/jss.v059.i10
 [colab]: https://colab.research.google.com/drive/1v6bayDRsovOnzFnjRDYRaJ-PRSN7DIlE?usp=sharing
 [files]: files.rst#merging-and-tidying-data
 [datasets]: ../datasets.rst#merging-and-tidying-data

@@ -172,15 +172,19 @@ def getHyperlink(app, value):
 
 def addExampleLinks(app, string):
     exampleReplacements = []
-    anchor = '<a href="{}">{}</a>'.format
+    anchor = '<a href="{}" target="_blank">{}</a>'.format
     for example, href in app.nimble_examples.items():
         string = re.sub(example, anchor(href, example), string)
 
     return string
 
-def addMarkdownLinks(app, string):
+def addMarkdownLinks(app, string, newTab=False):
     markdownReplacements = []
-    anchor = '<a class="nimble-hyperlink" href="{}">{}</a>'.format
+    anchor = '<a class="nimble-hyperlink" href="{}"'
+    if newTab:
+        anchor += 'target="_blank"'
+    anchor += '>{}</a>'
+    anchor = anchor.format
     for match in re.finditer(r'<span class="pre">(.*?)</span>', string):
         variable = match.group(1)
         if variable in app.nimble_blacklist:
@@ -222,7 +226,7 @@ def addCodeLinks(app, string):
         html += dotSpan.join(spannedName)
         htmlLinks.append(html)
     linkPattern = '|'.join(htmlLinks)
-    anchor = '<a class="nimble-hyperlink" href="{}">{}</a>'.format
+    anchor = '<a class="nimble-hyperlink" href="{}" target="_blank">{}</a>'.format
     # we will replace the code (in the <pre> tags) with code that wraps
     # nimble calls with anchor tags to their api documentation
     codeReplacements = []
@@ -293,7 +297,7 @@ def exampleHyperlinks(app, pagename, templatename, context, doctree):
             app.nimble_mapping['.train'] = path('nimble.CustomLearner.train')
             app.nimble_mapping['.apply'] = path('nimble.CustomLearner.apply')
         context['body'] = addExampleLinks(app, context['body'])
-        context['body'] = addMarkdownLinks(app, context['body'])
+        context['body'] = addMarkdownLinks(app, context['body'], newTab=True)
         context['body'] = addCodeLinks(app, context['body'])
     elif pagename.startswith('docs/index'):
         app.nimble_blacklist = {'nimble',} # no need to link to same page
@@ -393,6 +397,7 @@ language = None
 exclude_patterns = [
     'docs/generated/nimble.rst',
     'docs/generated/nimble.calculate.rst',
+    'examples/nimble_*.ipynb',
     ]
 
 # The reST default role (used for this markup: `text`) to use for all
@@ -667,9 +672,19 @@ class PYtoIPYNB:
                 self._createCells(line)
             self._trimPreviousCellNewlines()
 
-        ipynb = self.name + '.ipynb'
-        with open(ipynb, 'w+') as notebookFile:
+        onlineNB = self.name + '.ipynb'
+        with open(onlineNB, 'w+') as notebookFile:
             json.dump(self.notebook, notebookFile, indent=1)
+
+        head, tail = os.path.split(self.name)
+        downloadNB = os.path.join(head, 'nimble_' + tail + '.ipynb')
+        with open(downloadNB, 'w+') as notebookFile:
+            notebook = self.notebook.copy()
+            # remove the online sizing cell
+            notebook['cells'] = self.notebook['cells'][1:]
+            # remove the links in description
+            notebook['cells'][0]['source'] = notebook['cells'][0]['source'][:-8]
+            json.dump(notebook, notebookFile, indent=1)
 
     def _createCells(self, line):
         pattern = r'(##\s)(.*?)(#*)(\n)'

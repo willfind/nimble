@@ -61,7 +61,7 @@ def main(colabPath):
                 assert clCells[clIdx]['cell_type'] == exCell['cell_type']
                 # ignore the download links at bottom of the notebook
                 if clIdx == 0:
-                    clCells[clIdx]['source'] = exCell['source'][:-10]
+                    clCells[clIdx]['source'] = exCell['source'][:-8]
                 # account for setup for nimble in colab
                 elif clIdx == 1:
                     # use heading then add colab nimble install
