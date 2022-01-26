@@ -175,7 +175,7 @@ class GroupFoldIterator(FoldIterator):
 
 def _quoteStr(val):
     if isinstance(val, str):
-        return '"{}"'.format(val)
+        return f'"{val}"'
     return str(val)
 
 class Validator(ABC):
@@ -187,7 +187,7 @@ class Validator(ABC):
     validation is run, the results are stored within the object.
     """
     def __init__(self, learnerName, X, Y, performanceFunction, randomSeed,
-                 useLog, **kwargs):
+                 useLog, **logInfo):
         if not hasattr(self, "name"):
             raise AttributeError("A Validator must have a name attribute")
 
@@ -222,17 +222,17 @@ class Validator(ABC):
         self._arguments = []
         self._best = None
         # used in __str__ and __repr__
-        self._keywords = kwargs
+        self._logInfo = logInfo
 
     def __str__(self):
         return self.__repr__()
 
     def __repr__(self):
-        ret = '{}("{}", performanceFunction={}, randomSeed={}'.format(
-            self.__class__.__name__, self.learnerName,
-            self.performanceFunction.__name__, self.randomSeed)
-        if self._keywords:
-            ret += ", " + prettyDictString(self._keywords, valueStr=_quoteStr)
+        ret = f'{self.__class__.__name__}("{self.learnerName}", '
+        ret += f'performanceFunction={self.performanceFunction.__name__}, '
+        ret += f'randomSeed={self.randomSeed}'
+        if self._logInfo:
+            ret += ", " + prettyDictString(self._logInfo, valueStr=_quoteStr)
         ret += ")"
         return ret
 
@@ -270,9 +270,6 @@ class CrossValidator(Validator):
         # a result should be added here for every fold
         self._deepResults = []
         self._foldIterator = foldIterator([self.X, self.Y], **kwargs)
-        # NOTE: no performance functions have this attribute
-        self._canAvgFolds = (hasattr(self.performanceFunction, 'avgFolds')
-                             and self.performanceFunction.avgFolds)
 
     def _validate(self, arguments):
         """
@@ -283,9 +280,7 @@ class CrossValidator(Validator):
         # fold iterator randomized the point order, so if we are collecting all
         # the results, we also have to collect the correct order of the known
         # values
-        if not self._canAvgFolds:
-            collectedY = None
-
+        collectedY = None
         performances = []
         foldByFold = []
         deepLog = loggingEnabled(self.useLog) and deepLoggingEnabled()
@@ -298,25 +293,21 @@ class CrossValidator(Validator):
                 self.learnerName, curTrainX, curTrainY, curTestingX,
                 arguments=arguments, randomSeed=self.randomSeed, useLog=False)
 
-            totalTime = time.process_time() - startTime
-
             # calculate error of prediction, using performanceFunction
             curPerformance = computeMetrics(curTestingY, None, curRunResult,
                                             self.performanceFunction)
 
-            foldByFold.append(curPerformance)
+            totalTime = time.process_time() - startTime
 
-            if self._canAvgFolds:
-                performances.append(curPerformance)
+            foldByFold.append(curPerformance)
+            performances.append(curRunResult)
+            if collectedY is None:
+                collectedY = curTestingY
             else:
-                performances.append(curRunResult)
-                if collectedY is None:
-                    collectedY = curTestingY
-                else:
-                    collectedY.points.append(curTestingY, useLog=False)
+                collectedY.points.append(curTestingY, useLog=False)
 
             metrics = {self.performanceFunction.__name__: curPerformance}
-            extraInfo = {'Fold': '{}/{}'.format(foldNum + 1, numFolds)}
+            extraInfo = {'Fold': f'{foldNum + 1}/{numFolds}'}
 
             handleLogging(deepLog, "deepRun", self.__class__.__name__,
                           curTrainX, curTrainY, curTestingX, curTestingY,
@@ -325,19 +316,12 @@ class CrossValidator(Validator):
 
         self._deepResults.append(foldByFold)
 
-        # We consume the saved performances, either by averaging the individual
-        # performances calculations for each fold, or combining the saved
-        # predictions and calculating performance of the entire set.
-        # average score from each fold (works for one fold as well)
-        if self._canAvgFolds:
-            finalPerformance = sum(performances) / float(len(performances))
         # combine the performances objects into one, and then calc performance
-        else:
-            for performanceIdx in range(1, len(performances)):
-                performances[0].points.append(performances[performanceIdx],
-                                              useLog=False)
-            finalPerformance = computeMetrics(
-                collectedY, None, performances[0], self.performanceFunction)
+        for performanceIdx in range(1, len(performances)):
+            performances[0].points.append(performances[performanceIdx],
+                                          useLog=False)
+        finalPerformance = computeMetrics(
+            collectedY, None, performances[0], self.performanceFunction)
 
         return finalPerformance
 
@@ -419,7 +403,7 @@ class LeaveOneOut(CrossValidator):
         super().__init__(KFoldIterator, learnerName, X, Y, performanceFunction,
                          randomSeed, useLog, folds=len(X.points))
         # set in super, but not a parameter
-        del self._keywords['folds']
+        del self._logInfo['folds']
 
 
 class LeaveOneGroupOut(CrossValidator):
@@ -462,32 +446,24 @@ class LeaveOneGroupOut(CrossValidator):
             msg = "foldFeature cannot be done when using leave one "
             msg += "group out validation"
             raise InvalidArgumentValue(msg)
-        if isinstance(foldFeature, (str, int)):
-            self.foldFeature = foldFeature
-            X = X.copy()
-            if isinstance(Y, (str, int)):
-                if foldFeature == Y:
-                    msg = "foldFeature and Y cannot be the same feature"
-                    raise InvalidArgumentValueCombination(msg)
-                removed = X.features.extract([Y, foldFeature], useLog=False)
-                Y, foldFt = removed.features
-            elif isinstance(Y, list):
-                Y = X.features.extract(Y + [foldFeature], useLog=False)
-                foldFt = Y.features.extract(-1, useLog=False)
-            else:
-                foldFt = X.features.extract(foldFeature, useLog=False)
-        else:
-            if len(foldFeature.points) != len(X.points):
-                msg = "foldFeature must have the same number of points "
-                msg += "as the X data"
-                raise InvalidArgumentValue(msg)
-            self.foldFeature = foldFeature.getTypeString()
-            foldFt = foldFeature
+        self.foldFeature = foldFeature
+        if isinstance(foldFeature, (str, int, list)):
+            if foldFeature == Y:
+                msg = "foldFeature and Y cannot be the same feature"
+                raise InvalidArgumentValueCombination(msg)
+            foldFeature = X.features[foldFeature]
+            if isinstance(Y, (str, int, list)):
+                X = X.copy()
+                Y = X.features.extract(Y, useLog=False)
+        elif len(foldFeature.points) != len(X.points):
+            msg = "foldFeature must have the same number of points as the X "
+            msg += "data"
+            raise InvalidArgumentValue(msg)
         super().__init__(GroupFoldIterator, learnerName, X, Y,
                          performanceFunction, randomSeed, useLog,
-                         foldFeature=foldFt)
+                         foldFeature=foldFeature)
         # use type string instead of object
-        self._keywords['foldFeature'] = self.foldFeature
+        self._logInfo['foldFeature'] = self.foldFeature
 
 
 class HoldoutValidator(Validator):
@@ -497,7 +473,7 @@ class HoldoutValidator(Validator):
     All subclasses provide the a validateX and validateY data objects.
     """
     def __init__(self, learnerName, X, Y, performanceFunction, randomSeed,
-                 useLog, validateX, validateY, keywords):
+                 useLog, validateX, validateY, logInfo):
         if validateX is None:
             msg = "validateX cannot be None"
             raise InvalidArgumentValue(msg)
@@ -520,16 +496,16 @@ class HoldoutValidator(Validator):
         if validateY.name is None:
             validateY.name = "validateY"
 
-        self._validateX = validateX
-        self._validateY = validateY
+        self.validateX = validateX
+        self.validateY = validateY
 
         super().__init__(learnerName, X, Y, performanceFunction, randomSeed,
-                         useLog, **keywords)
+                         useLog, **logInfo)
 
     def _validate(self, arguments):
         startTime = time.process_time()
         performance = nimble.trainAndTest(
-            self.learnerName, self.X, self.Y, self._validateX, self._validateY,
+            self.learnerName, self.X, self.Y, self.validateX, self.validateY,
             self.performanceFunction, arguments=arguments,
             randomSeed=self.randomSeed, useLog=False)
         totalTime = time.process_time() - startTime
@@ -538,9 +514,9 @@ class HoldoutValidator(Validator):
         deepLog = loggingEnabled(self.useLog) and deepLoggingEnabled()
 
         handleLogging(deepLog, "deepRun", self.__class__.__name__,
-                      self.X, self.Y, self._validateX, self._validateY,
+                      self.X, self.Y, self.validateX, self.validateY,
                       self.learnerName, arguments, self.randomSeed,
-                      metrics=metrics, extraInfo=self._keywords,
+                      metrics=metrics, extraInfo=self._logInfo,
                       time=totalTime)
 
         return performance
@@ -580,15 +556,11 @@ class HoldoutData(HoldoutValidator):
 
     def __init__(self, learnerName, X, Y, performanceFunction, validateX,
                  validateY, randomSeed=None, useLog=None):
-        self.validateX = validateX.getTypeString()
-        try:
-            self.validateY = Y.getTypeString()
-        except AttributeError:
-            self.validateY = Y
 
-        keywords = {'validateX': self.validateX, 'validateY': self.validateY}
+
+        logInfo = {'validateX': validateX, 'validateY': validateY}
         super().__init__(learnerName, X, Y, performanceFunction, randomSeed,
-                         useLog, validateX, validateY, keywords)
+                         useLog, validateX, validateY, logInfo)
 
         self._trainedLearner = None
         self._trainedLearnerBase = None
@@ -643,7 +615,7 @@ class HoldoutData(HoldoutValidator):
             self._lastArguments = arguments
 
         performance = self._trainedLearner.test(
-            self._validateX, self._validateY, self.performanceFunction,
+            self.validateX, self.validateY, self.performanceFunction,
             useLog=False)
 
         return performance
@@ -699,9 +671,9 @@ class HoldoutProportion(HoldoutValidator):
             Y = Y.copy()
             validateY = Y.points.extract(selection, useLog=False)
 
-        keywords = {"proportion": proportion}
+        logInfo = {"proportion": proportion}
         super().__init__(learnerName, X, Y, performanceFunction, randomSeed,
-                         useLog, validateX, validateY, keywords)
+                         useLog, validateX, validateY, logInfo)
 
 
 class ArgumentSelector(ABC):
@@ -720,14 +692,14 @@ class ArgumentSelector(ABC):
     """
     name = None
 
-    def __init__(self, arguments, validator, **kwargs):
+    def __init__(self, arguments, validator, **logInfo):
         if self.name is None:
             msg = "An ArgumentSelector must have a name attribute"
             raise AttributeError(msg)
         self.validator = validator
         self.arguments = arguments
         # these provide information for the logger
-        self._keywords = kwargs
+        self._logInfo = logInfo
 
     def __iter__(self):
         return self
@@ -830,10 +802,10 @@ class Consecutive(ArgumentSelector):
         if loops < 1:
             msg = "loops must be greater than 1"
             raise InvalidArgumentValue(msg)
-        kwargs = {'loops': loops}
+        logInfo = {'loops': loops}
         if order is not None:
-            kwargs['order'] = order
-        super().__init__(arguments, validator, **kwargs)
+            logInfo['order'] = order
+        super().__init__(arguments, validator, **logInfo)
         self.loops = loops
         self.order = order
         self._currentLoop = 1
@@ -861,7 +833,7 @@ class Consecutive(ArgumentSelector):
                     if createOrder:
                         self.order.append(key)
                     elif key not in self.order:
-                        msg = "{} is not in the order list".format(key)
+                        msg = f"{key} is not in the order list"
                         raise ImproperObjectAction(msg)
                 else:
                     self._currArgs[key] = val
@@ -933,14 +905,14 @@ class Bayesian(ArgumentSelector):
 
     def __init__(self, arguments, validator, maxIterations=100, timeout=None,
                  threshold=None):
-        kwargs = {}
+        logInfo = {}
         if maxIterations is not None:
-            kwargs['maxIterations'] = maxIterations
+            logInfo['maxIterations'] = maxIterations
         if timeout is not None:
-            kwargs['timeout'] = timeout
+            logInfo['timeout'] = timeout
         if threshold is not None:
-            kwargs['threshold'] = threshold
-        super().__init__(arguments, validator, **kwargs)
+            logInfo['threshold'] = threshold
+        super().__init__(arguments, validator, **logInfo)
         if not hyperopt.nimbleAccessible():
             msg = "The hyperopt library must be installed to perform "
             msg += "hyperparameter tuning with the Bayesian method"
@@ -1046,14 +1018,14 @@ class Iterative(ArgumentSelector):
 
     def __init__(self, arguments, validator, maxIterations=100, timeout=None,
                  threshold=None):
-        kwargs = {}
+        logInfo = {}
         if maxIterations is not None:
-            kwargs['maxIterations'] = maxIterations
+            logInfo['maxIterations'] = maxIterations
         if timeout is not None:
-            kwargs['timeout'] = timeout
+            logInfo['timeout'] = timeout
         if threshold is not None:
-            kwargs['threshold'] = threshold
-        super().__init__(arguments, validator, **kwargs)
+            logInfo['threshold'] = threshold
+        super().__init__(arguments, validator, **logInfo)
         if maxIterations is None:
             maxIterations = sys.maxsize
         self.maxIterations = maxIterations
@@ -1473,7 +1445,7 @@ class Tuning:
             validation = validation.lower().replace(" ", "")
             validation = validation.lower().replace("-", "")
         if selection in ['bayesian', 'iterative'] and validation != 'data':
-            msg = "'data' validation is required. '{}' ".format(selection)
+            msg = f"'data' validation is required. '{selection}' "
             msg += "selection cannot use any training data for validation."
             raise InvalidArgumentValueCombination(msg)
         if validation not in Tuning._validators.keys():
