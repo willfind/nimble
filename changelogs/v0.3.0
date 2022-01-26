@@ -1,8 +1,24 @@
+### Documentation ###
+* API Documentation will now link to the QueryString object in docstring text
 
 ### Cheat Sheet ###
 * For html: now formatted as a browser-width sensitive vertical accordion.
 * For pdf: now formatted as a two page vertical stack with larger font.
 * Typo and clarity corrections.
+
+### Hyperparameter Tuning ###
+* Replaced and generalized the previous Cross Validate functionality.
+* Each learning function now takes a Tuning object.
+* This object specifies two things:
+-- A selection process, which specifies how to search through the argument set possibilities.
+-- The possibilities are: BruteForce, Consecutive, Bayesian, and Iterative
+-- A validation process, which specifies how to evaluate the perforence of an argument set.
+-- The possibilities are: KFold, LeaveOneOut, LeaveOneGroupOut, HoldOutData, HoldoutPorportion.
+-- There are other contextual parameters to Tuning depending on the choosen selection or validation process.
+* Instead of marking parameters to be tuned with nimble.CV, the object nimble.Tune is now used.
+-- This allows for not just a list of possibilities, but to specify a range.
+* See the Tuning object's documentation for more details.
+* Some functions and parameters have been shifted or removed to be consistent with the new style.
 
 ### returnType ###
 * "DataFrame" can now be auto-detected as the returnType in data constructor functions.
@@ -10,6 +26,14 @@
 
 ### Small Changes ###
 * The SessionConfiguration object / nimble.settings now has a __repr__ implementation.
+* The ones, zeros, and identity data creation functions now generate int valued output.
+* Support for automatic pointName detection for csv files with a header row that starts with a missing value.
+-- This is the format of how pandas records csv files.
 
 ### Bug Fixes ###
 * Points / Features __repr__ can now handle fully missing valued points and features.
+
+### Deprecation ###
+* Python 3.6 reached EOL Dec 2021. Support for it has been removed.
+* The mlpy package, since it required python 3.6 , has been removed.
+* The shogun package, since it required python 3.6, has been removed.
