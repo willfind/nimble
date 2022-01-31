@@ -23,7 +23,7 @@ from nimble.core.logger import handleLogging, loggingEnabled
 from nimble.core.logger import deepLoggingEnabled
 from nimble.random import pythonRandom, numpyRandom
 from nimble.core._learnHelpers import computeMetrics
-from nimble._utility import prettyDictString, prettyListString
+from nimble._utility import prettyDictString, prettyListString, quoteStrings
 from nimble._utility import mergeArguments
 
 
@@ -168,10 +168,6 @@ class GroupFoldIterator(FoldIterator):
 
         return list(foldDict.values())
 
-def _quoteStr(val):
-    if isinstance(val, str):
-        return '"{}"'.format(val)
-    return str(val)
 
 class Validator(ABC):
     """
@@ -226,7 +222,8 @@ class Validator(ABC):
             self.__class__.__name__, self.learnerName,
             self.performanceFunction.__name__, self.randomSeed)
         if self._keywords:
-            ret += ", " + prettyDictString(self._keywords, valueStr=_quoteStr)
+            ret += ", "
+            ret += prettyDictString(self._keywords, valueStr=quoteStrings)
         ret += ")"
         return ret
 
@@ -643,7 +640,8 @@ class ArgumentSelector(ABC):
     def __repr__(self):
         ret = '{}({}'.format(self.__class__.__name__, self.arguments)
         if self._keywords:
-            ret += ", " + prettyDictString(self._keywords, valueStr=_quoteStr)
+            ret += ", "
+            ret += prettyDictString(self._keywords, valueStr=quoteStrings)
         ret += ')'
         return ret
 

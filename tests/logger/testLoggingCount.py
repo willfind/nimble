@@ -133,7 +133,6 @@ base_notLogged = [
     'plotFeatureAgainstFeatureRollingAverage', 'plotFeatureDistribution',
     'plotFeatureGroupMeans', 'plotFeatureGroupStatistics', 'pointView',
     'save', 'show', 'solveLinearSystem', 'toString', 'checkInvariants', 'view',
-    'writeFile',
     ]
 base_funcs = base_logged + base_notLogged
 base_tested = list(map(prefixAdder('Base'), base_funcs))

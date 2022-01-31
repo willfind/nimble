@@ -1612,7 +1612,7 @@ class HighLevelDataSafe(DataTestObject):
         data = [[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]]
         toTest = self.constructor(data, )
         with tempfile.NamedTemporaryFile(suffix='.csv') as tmpFile:
-            toTest.writeFile(tmpFile.name, fileFormat='csv')
+            toTest.save(tmpFile.name, fileFormat='csv')
 
             toTest = self.constructor(tmpFile.name, name='toTest')
 

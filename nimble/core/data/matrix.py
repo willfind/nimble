@@ -112,8 +112,8 @@ class Matrix(Base):
         return allDataIdentical(self._data, other._data)
 
 
-    def _writeFileCSV_implementation(self, outPath, includePointNames,
-                                     includeFeatureNames):
+    def _saveCSV_implementation(self, outPath, includePointNames,
+                                includeFeatureNames):
         """
         Function to write the data in this object to a CSV file at the
         designated path.
@@ -133,8 +133,8 @@ class Matrix(Base):
 
             np.savetxt(outFile, viewData, delimiter=',', fmt='%s')
 
-    def _writeFileMTX_implementation(self, outPath, includePointNames,
-                                     includeFeatureNames):
+    def _saveMTX_implementation(self, outPath, includePointNames,
+                                includeFeatureNames):
         if not scipy.nimbleAccessible():
             msg = "scipy is not available"
             raise PackageException(msg)

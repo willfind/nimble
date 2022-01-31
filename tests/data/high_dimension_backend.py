@@ -187,15 +187,23 @@ class HighDimensionSafe(DataTestObject):
         for tensor in tensors:
             toSave = self.constructor(tensor)
             toSaveShape = toSave._dims
+            toSaveType = toSave.getTypeString()
             assert len(toSave._dims) > 2
 
             with tempfile.NamedTemporaryFile(suffix=".pickle") as tmpFile:
                 toSave.save(tmpFile.name)
-                loadObj = nimble.data(tmpFile.name)
+                pklObj = nimble.data(tmpFile.name, returnType=toSaveType)
 
-            assert loadObj._dims == toSaveShape
-            assert toSave.isIdentical(loadObj)
-            assert loadObj.isIdentical(toSave)
+            with tempfile.NamedTemporaryFile(suffix=".hdf5") as tmpFile:
+                toSave.save(tmpFile.name)
+                hdf5Obj = nimble.data(tmpFile.name, returnType=toSaveType)
+
+            assert pklObj._dims == hdf5Obj._dims == toSaveShape
+            assert toSave.isIdentical(pklObj)
+
+            assert toSave.isIdentical(hdf5Obj)
+            assert pklObj.isIdentical(toSave)
+            assert hdf5Obj.isIdentical(toSave)
 
     def test_highDimension_getTypeString(self):
         retType = self.constructor([]).getTypeString()
@@ -637,9 +645,9 @@ class HighDimensionModifying(DataTestObject):
             '__rmod__', '__imod__', '__pow__', '__rpow__', '__ipow__',
             '__str__', '__repr__', '__pos__', '__neg__', '__abs__', '__copy__',
             '__deepcopy__', 'isApproximatelyEqual', 'trainAndTestSets',
-            'report', 'isIdentical', 'writeFile', 'getTypeString',
-            'pointView', 'view', 'checkInvariants', 'containsZero', 'save',
-            'toString', 'show', 'copy', 'flatten', 'unflatten',))
+            'report', 'isIdentical', 'getTypeString', 'pointView', 'view',
+            'checkInvariants', 'containsZero', 'save', 'toString', 'show',
+            'copy', 'flatten', 'unflatten',))
         baseDisallowed = baseUser.difference(baseAllowed)
 
         for method in baseDisallowed:
