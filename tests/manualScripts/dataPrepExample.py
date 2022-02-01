@@ -47,4 +47,4 @@ if __name__ == "__main__":
     processed.features.delete(match.anyNonNumeric)
 
     # output the cleaned data set for later usage
-    processed.writeFile(pathOut, includeNames=True)
+    processed.save(pathOut, includeNames=True)

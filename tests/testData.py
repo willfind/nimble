@@ -1575,12 +1575,12 @@ def test_csv_roundtrip_autonames():
         withBoth = nimble.data(data, featureNames=fnames, pointNames=pnames)
 
         with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSVFnames:
-            withFnames.writeFile(tmpCSVFnames.name, 'csv', includeNames=True)
+            withFnames.save(tmpCSVFnames.name, 'csv', includeNames=True)
             fromFileFnames = nimble.data(source=tmpCSVFnames.name)
             assert fromFileFnames == withFnames
 
         with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSVBoth:
-            withBoth.writeFile(tmpCSVBoth.name, 'csv', includeNames=True)
+            withBoth.save(tmpCSVBoth.name, 'csv', includeNames=True)
             fromFileBoth = nimble.data(source=tmpCSVBoth.name)
             assert fromFileBoth == withBoth
 
@@ -1592,7 +1592,7 @@ def test_hdf_roundtrip_autonames():
         withPNames = nimble.data(data, pointNames=pNames)
 
         with tempfile.NamedTemporaryFile(suffix=".hdf5") as tmpHDF:
-            withPNames.writeFile(tmpHDF.name, includeNames=True)
+            withPNames.save(tmpHDF.name, includeNames=True)
             fromFile = nimble.data(tmpHDF.name)
             assert withPNames == fromFile
 
@@ -2851,7 +2851,7 @@ def test_data_keepPF_AllPossibleNatOrder():
         data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
         orig = nimble.data(source=data)
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
+            orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [2], [0, 1], [0, 2], [1, 2], 'all']
@@ -2870,7 +2870,7 @@ def test_data_keepPF_AllPossibleReverseOrder():
         data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
         orig = nimble.data(source=data)
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
+            orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0, 1], [0, 2], [1, 2]]
@@ -2903,7 +2903,7 @@ def test_data_keepPF_AllPossibleWithNames_extracted():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
+            orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [0, 1], [1, 0], 'all']
@@ -2946,7 +2946,7 @@ def test_data_keepPF_AllPossibleWithNames_fullNamesListProvided():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
+            orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [0, 1], [1, 0], [0, 2], [2, 0], [1, 2], [2, 1], 'all']
@@ -2989,7 +2989,7 @@ def test_data_keepPF_AllPossibleWithNames_fullNamesDictProvided():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
+            orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [0, 1], [1, 0], [0, 2], [2, 0], [1, 2], [2, 1], 'all']
@@ -3032,7 +3032,7 @@ def test_data_keepPF_AllCombosWithExactNamesProvided():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
+            orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             toUseData = orig.copy(to="pythonlist")
