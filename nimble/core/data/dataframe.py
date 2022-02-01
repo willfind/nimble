@@ -130,8 +130,8 @@ class DataFrame(Base):
 
         return allDataIdentical(self._asNumpyArray(), other._asNumpyArray())
 
-    def _writeFileCSV_implementation(self, outPath, includePointNames,
-                                     includeFeatureNames):
+    def _saveCSV_implementation(self, outPath, includePointNames,
+                                includeFeatureNames):
         """
         Function to write the data in this object to a CSV file at the
         designated path.
@@ -153,8 +153,8 @@ class DataFrame(Base):
         if includeFeatureNames:
             self._data.columns = pd.RangeIndex(len(self._data.columns))
 
-    def _writeFileMTX_implementation(self, outPath, includePointNames,
-                                     includeFeatureNames):
+    def _saveMTX_implementation(self, outPath, includePointNames,
+                                includeFeatureNames):
         """
         Function to write the data in this object to a matrix market
         file at the designated path.

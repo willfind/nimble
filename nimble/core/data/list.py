@@ -182,8 +182,8 @@ class List(Base):
                         return False
         return True
 
-    def _writeFileCSV_implementation(self, outPath, includePointNames,
-                                     includeFeatureNames):
+    def _saveCSV_implementation(self, outPath, includePointNames,
+                                includeFeatureNames):
         """
         Function to write the data in this object to a CSV file at the
         designated path.
@@ -206,8 +206,8 @@ class List(Base):
                     first = False
                 outFile.write('\n')
 
-    def _writeFileMTX_implementation(self, outPath, includePointNames,
-                                     includeFeatureNames):
+    def _saveMTX_implementation(self, outPath, includePointNames,
+                                includeFeatureNames):
         """
         Function to write the data in this object to a matrix market
         file at the designated path.

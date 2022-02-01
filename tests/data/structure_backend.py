@@ -680,7 +680,7 @@ class StructureDataSafe(StructureShared):
         name = 'copyTestName'
         orig = self.constructor(data)
         with tempfile.NamedTemporaryFile(suffix=".csv") as source:
-            orig.writeFile(source.name, 'csv', includeNames=False)
+            orig.save(source.name, 'csv', includeNames=False)
             orig = self.constructor(source.name, name=name)
             path = source.name
 

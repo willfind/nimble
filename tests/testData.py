@@ -789,6 +789,42 @@ def test_data_CSV_lastFeatureAllMissing():
             assert fromList2 == fromCSV7
 
 
+def test_data_CSV_emptyFirstValue():
+    """Test if empty first value automatically detects pointNames correctly"""
+    # should trigger pointNames
+    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+        tmpCSV.write(',ft1,ft2,ft3\n')
+        tmpCSV.write('a,1,2,3\n')
+        tmpCSV.write('b,3,4,5\n')
+        tmpCSV.flush()
+        fromCSV = nimble.data(tmpCSV.name)
+        assert fromCSV.shape == (2, 3)
+        assert fromCSV.features.getNames() == ['ft1', 'ft2', 'ft3']
+        assert fromCSV.points.getNames() == ['a', 'b']
+
+    # no pointNames, first column is not unique
+    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+        tmpCSV.write(',ft1,ft2,ft3\n')
+        tmpCSV.write('a,1,2,3\n')
+        tmpCSV.write('a,3,4,5\n')
+        tmpCSV.flush()
+        fromCSV = nimble.data(tmpCSV.name)
+        assert fromCSV.shape == (2, 4)
+        assert fromCSV.features.getNames() == [None, 'ft1', 'ft2', 'ft3']
+        assert not fromCSV.points._namesCreated()
+
+    # no pointNames, only the first value of first row can be empty
+    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+        tmpCSV.write(',ft1,,ft3\n')
+        tmpCSV.write('a,1,2,3\n')
+        tmpCSV.write('b,3,4,5\n')
+        tmpCSV.flush()
+        fromCSV = nimble.data(tmpCSV.name)
+        assert fromCSV.shape == (2, 4)
+        assert fromCSV.features.getNames() == [None, 'ft1', None, 'ft3']
+        assert not fromCSV.points._namesCreated()
+
+
 def test_data_MTXArr_data():
     """ Test of data() loading a mtx (arr format) file, default params """
     for t in returnTypes:
@@ -1539,12 +1575,12 @@ def test_csv_roundtrip_autonames():
         withBoth = nimble.data(data, featureNames=fnames, pointNames=pnames)
 
         with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSVFnames:
-            withFnames.writeFile(tmpCSVFnames.name, 'csv', includeNames=True)
+            withFnames.save(tmpCSVFnames.name, 'csv', includeNames=True)
             fromFileFnames = nimble.data(source=tmpCSVFnames.name)
             assert fromFileFnames == withFnames
 
         with tempfile.NamedTemporaryFile(suffix=".csv") as tmpCSVBoth:
-            withBoth.writeFile(tmpCSVBoth.name, 'csv', includeNames=True)
+            withBoth.save(tmpCSVBoth.name, 'csv', includeNames=True)
             fromFileBoth = nimble.data(source=tmpCSVBoth.name)
             assert fromFileBoth == withBoth
 
@@ -1556,7 +1592,7 @@ def test_hdf_roundtrip_autonames():
         withPNames = nimble.data(data, pointNames=pNames)
 
         with tempfile.NamedTemporaryFile(suffix=".hdf5") as tmpHDF:
-            withPNames.writeFile(tmpHDF.name, includeNames=True)
+            withPNames.save(tmpHDF.name, includeNames=True)
             fromFile = nimble.data(tmpHDF.name)
             assert withPNames == fromFile
 
@@ -2815,7 +2851,7 @@ def test_data_keepPF_AllPossibleNatOrder():
         data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
         orig = nimble.data(source=data)
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
+            orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [2], [0, 1], [0, 2], [1, 2], 'all']
@@ -2834,7 +2870,7 @@ def test_data_keepPF_AllPossibleReverseOrder():
         data = [[1, 2, 3], [11, 22, 33], [111, 222, 333]]
         orig = nimble.data(source=data)
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
+            orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0, 1], [0, 2], [1, 2]]
@@ -2867,7 +2903,7 @@ def test_data_keepPF_AllPossibleWithNames_extracted():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
+            orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [0, 1], [1, 0], 'all']
@@ -2910,7 +2946,7 @@ def test_data_keepPF_AllPossibleWithNames_fullNamesListProvided():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
+            orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [0, 1], [1, 0], [0, 2], [2, 0], [1, 2], [2, 1], 'all']
@@ -2953,7 +2989,7 @@ def test_data_keepPF_AllPossibleWithNames_fullNamesDictProvided():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
+            orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             poss = [[0], [1], [0, 1], [1, 0], [0, 2], [2, 0], [1, 2], [2, 1], 'all']
@@ -2996,7 +3032,7 @@ def test_data_keepPF_AllCombosWithExactNamesProvided():
     filesForms = ['csv', 'mtx']
     for (t, f) in itertools.product(returnTypes, filesForms):
         with tempfile.NamedTemporaryFile(suffix="." + f) as tmpF:
-            orig.writeFile(tmpF.name, fileFormat=f, includeNames=False)
+            orig.save(tmpF.name, fileFormat=f, includeNames=False)
             tmpF.flush()
 
             toUseData = orig.copy(to="pythonlist")

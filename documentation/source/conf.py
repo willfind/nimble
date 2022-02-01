@@ -289,7 +289,8 @@ def exampleHyperlinks(app, pagename, templatename, context, doctree):
         'train': path('nimble.train'),
         '.train': path('nimble.core.interfaces.TrainedLearner.train'),
         '.apply': path('nimble.core.interfaces.TrainedLearner.apply'),
-        '.copy': path('nimble.core.data.Base.copy')}
+        '.copy': path('nimble.core.data.Base.copy'),
+        '.save': path('nimble.core.data.Base.save')}
     if pagename.startswith('examples/'):
         if 'additional_functionality' in pagename:
             app.nimble_blacklist = {'tempDir.name', 'learnerType'}

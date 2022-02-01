@@ -248,14 +248,14 @@
           {% endblock %}
           {% block io_saving_content %}
           <div class="pad">
-            <p>Nimble data objects can be written to a csv or mtx file or saved as a pickle file.
+            <p>Nimble data objects can be written to a file in a variety of formats.
               <a class="inline" href="docs/generated/nimble.core.interfaces.TrainedLearner.html">TrainedLearner</a>
               objects can also be pickled.</p>
           </div>
           <div class="code">
-            <p> X.<a href="docs/generated/nimble.core.data.Base.writeFile.html">writeFile</a>('saved.csv')</p>
-            <p> X.<a href="docs/generated/nimble.core.data.Base.save.html">save</a>('saved.pickle')</p>
-            <p> trainedLearner.<a href="docs/generated/nimble.core.interfaces.TrainedLearner.save.html">save</a>('saved.pickle')</p>
+            <p> X.<a href="docs/generated/nimble.core.data.Base.save.html">save</a>('data.csv')</p>
+            <p> X.<a href="docs/generated/nimble.core.data.Base.save.html">save</a>('data.pickle')</p>
+            <p> trainedLearner.<a href="docs/generated/nimble.core.interfaces.TrainedLearner.save.html">save</a>('learner.pickle')</p>
           </div>
           {% endblock %}
         </div>
