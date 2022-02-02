@@ -272,8 +272,8 @@ class Sparse(Base):
     def _getTypeString_implementation(self):
         return 'Sparse'
 
-    def _writeFileCSV_implementation(self, outPath, includePointNames,
-                                     includeFeatureNames):
+    def _saveCSV_implementation(self, outPath, includePointNames,
+                                includeFeatureNames):
         """
         Function to write the data in this object to a CSV file at the
         designated path.
@@ -306,8 +306,8 @@ class Sparse(Base):
                     outFile.write(str(value))
                 outFile.write('\n')
 
-    def _writeFileMTX_implementation(self, outPath, includePointNames,
-                                     includeFeatureNames):
+    def _saveMTX_implementation(self, outPath, includePointNames,
+                                includeFeatureNames):
         def makeNameString(count, namesItoN):
             nameString = "#"
             for i in range(count):
@@ -1366,17 +1366,17 @@ class SparseView(BaseView, Sparse):
             other = other.copy(to=other.getTypeString())
         return selfConv._matmul__implementation(other)
 
-    def _writeFileCSV_implementation(self, outPath, includePointNames,
-                                     includeFeatureNames):
+    def _saveCSV_implementation(self, outPath, includePointNames,
+                                includeFeatureNames):
         selfConv = self.copy(to="Sparse")
-        selfConv._writeFileCSV_implementation(outPath, includePointNames,
-                                              includeFeatureNames)
+        selfConv._saveCSV_implementation(outPath, includePointNames,
+                                         includeFeatureNames)
 
-    def _writeFileMTX_implementation(self, outPath, includePointNames,
-                                     includeFeatureNames):
+    def _saveMTX_implementation(self, outPath, includePointNames,
+                                includeFeatureNames):
         selfConv = self.copy(to="Sparse")
-        selfConv._writeFileMTX_implementation(outPath, includePointNames,
-                                              includeFeatureNames)
+        selfConv._saveMTX_implementation(outPath, includePointNames,
+                                         includeFeatureNames)
 
     def _convertToNumericTypes_implementation(self, usableTypes):
         self._source._convertToNumericTypes_implementation(usableTypes)

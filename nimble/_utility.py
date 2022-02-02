@@ -460,6 +460,17 @@ def prettyDictString(inDict, useAnd=False, numberItems=False, keyStr=str,
     return _prettyString(inDict, useAnd, numberItems,
                          iterator=lambda d: d.items(), formatter=itemFormatter)
 
+def quoteStrings(val):
+    """
+    Wrap string values in quotes.
+
+    A helper function convenient for the formatting (*Str) parameters in
+    the pretty*String functions.
+    """
+    if isinstance(val, str):
+        return f'"{val}"'
+    return str(val)
+
 def tableString(table, rowHeader=True, colHeaders=None, roundDigits=None,
                 columnSeparator="  ", maxRowsToShow=None, snipIndex=None,
                 includeTrailingNewLine=True,  rowHeadJustify='right',

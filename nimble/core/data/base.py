@@ -26,7 +26,7 @@ from nimble.core.logger import handleLogging
 from nimble.match import QueryString
 from nimble._utility import cloudpickle, h5py, plt
 from nimble._utility import isDatetime
-from nimble._utility import tableString
+from nimble._utility import tableString, prettyListString, quoteStrings
 from .stretch import Stretch
 from ._dataHelpers import formatIfNeeded
 from ._dataHelpers import constructIndicesList
@@ -1628,28 +1628,31 @@ class Base(ABC):
 
         return self._isIdentical_implementation(other)
 
-    def writeFile(self, outPath, fileFormat=None, includeNames=True):
+    def save(self, outPath, fileFormat=None, includeNames=True):
         """
         Write the data in this object to a file in the specified format.
+
+        Can write the data object to a csv, mtx, hdf5, or pickle file.
+        If the ``outPath`` does not have an extension and ``fileFormat``
+        is None, this will default to writing a csv file.
 
         Parameters
         ----------
         outPath : str
-            The location (including file name and extension) where
-            we want to write the output file.
+            The location to write the output file.
         fileFormat : str
-            The formating of the file we write. May be None, 'csv', or
-            'mtx'; if None, we use the extension of outPath to determine
-            the format.
+            The formatting of the file to write. If None, the extension
+            of outPath determines the format. Otherwise can be 'csv',
+            'mtx', 'hdf5', 'h5', 'pickle', 'p', or 'pkl'.
         includeNames : bool
             Indicates whether the file will embed the point and feature
             names into the file. The format of the embedding is
-            dependant on the format of the file: csv will embed names
-            into the data, mtx will place names in a comment.
+            dependent on the format of the file. Names will always be
+            included for pickle files.
 
         See Also
         --------
-        nimble.data, save
+        nimble.data
 
         Keywords
         --------
@@ -1662,16 +1665,28 @@ class Base(ABC):
 
         # if format is not specified, we fall back on the extension in outPath
         if fileFormat is None:
-            split = outPath.rsplit('.', 1)
-            fileFormat = None
-            if len(split) > 1:
-                fileFormat = split[1].lower()
+            extension = os.path.splitext(outPath)[1]
+            if extension:
+                fileFormat = extension[1:].lower() # remove leading '.'
+            else:
+                fileFormat = 'csv'
 
-        if fileFormat not in ['csv', 'mtx', 'hdf5', 'h5']:
-            msg = "Unrecognized file format. Accepted types are 'csv', "
-            msg += "'mtx', 'hdf5', and 'h5'. They may either be input as the "
-            msg += "format parameter, or as the extension in the outPath"
+        acceptedFormats = ['csv', 'mtx', 'hdf5', 'h5', 'pickle', 'p', 'pkl']
+        if fileFormat not in acceptedFormats:
+            accepted = prettyListString(acceptedFormats, useAnd=True,
+                                        itemStr=quoteStrings)
+            msg = f"Unrecognized file format. Accepted types are {accepted}"
+            msg += "It may either be input as the format parameter, or as the "
+            msg += "extension in the outPath"
             raise InvalidArgumentValue(msg)
+
+        if fileFormat in ['pickle', 'p', 'pkl']:
+            if not cloudpickle.nimbleAccessible():
+                msg = "To pickle nimble objects, cloudpickle must be installed"
+                raise PackageException(msg)
+
+            with open(outPath, 'wb') as file:
+                return cloudpickle.dump(self, file)
 
         includePointNames = includeNames
         if includePointNames:
@@ -1695,18 +1710,19 @@ class Base(ABC):
 
 
         if fileFormat.lower() in ['hdf5', 'h5']:
-            self._writeFileHDF_implementation(outPath, includePointNames)
-        elif len(self._dims) > 2:
+            return self._saveHDF_implementation(outPath, includePointNames)
+        if len(self._dims) > 2:
             msg = 'Data with more than two dimensions can only be written '
             msg += 'to .hdf5 or .h5 formats otherwise the dimensionality '
             msg += 'would be lost'
             raise InvalidArgumentValue(msg)
-        elif fileFormat.lower() == "csv":
-            self._writeFileCSV_implementation(
+        if fileFormat.lower() == "csv":
+            return self._saveCSV_implementation(
                 outPath, includePointNames, includeFeatureNames)
-        elif fileFormat.lower() == "mtx":
-            self._writeFileMTX_implementation(
-                outPath, includePointNames, includeFeatureNames)
+
+        return self._saveMTX_implementation(
+            outPath, includePointNames, includeFeatureNames)
+
 
     def _writeFeatureNamesToCSV(self, openFile, includePointNames):
         fnames = list(map(csvCommaFormat, self.features.getNames()))
@@ -1716,7 +1732,7 @@ class Base(ABC):
         fnamesLine += '\n'
         openFile.write(fnamesLine)
 
-    def _writeFileHDF_implementation(self, outPath, includePointNames):
+    def _saveHDF_implementation(self, outPath, includePointNames):
         if not h5py.nimbleAccessible():
             msg = 'h5py must be installed to write to an hdf file'
             raise PackageException(msg)
@@ -1736,38 +1752,6 @@ class Base(ABC):
             with open(outPath, 'rb+') as f:
                 f.write(b'includePointNames ')
                 f.flush()
-
-    def save(self, outputPath):
-        """
-        Save object to a file.
-
-        Uses the cloudpickle library to serialize this object.
-
-        Parameters
-        ----------
-        outputPath : str
-            The location (including file name and extension) where we
-            want to write the output file. If a filename extension is
-            not included, the ".pickle" extension will be added.
-
-        See Also
-        --------
-        nimble.data, writeFile
-
-        Keywords
-        --------
-        write, disk, file
-        """
-        if not cloudpickle.nimbleAccessible():
-            msg = "To save nimble objects, cloudpickle must be installed"
-            raise PackageException(msg)
-
-        extension = os.path.splitext(outputPath)[1]
-        if not extension:
-            outputPath += '.pickle'
-
-        with open(outputPath, 'wb') as file:
-            cloudpickle.dump(self, file)
 
     def getTypeString(self):
         """
@@ -5490,12 +5474,12 @@ class Base(ABC):
         pass
 
     @abstractmethod
-    def _writeFileCSV_implementation(self, outPath, includePointNames,
+    def _saveCSV_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
         pass
 
     @abstractmethod
-    def _writeFileMTX_implementation(self, outPath, includePointNames,
+    def _saveMTX_implementation(self, outPath, includePointNames,
                                      includeFeatureNames):
         pass
 

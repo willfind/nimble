@@ -167,7 +167,7 @@ traffic.show('Cleaned traffic data', maxHeight=16)
 
 ## We'd like to be able to load the cleaned data for our Supervised Learning
 ## example any time we want, so we will write it to a new csv file.
-traffic.writeFile('Metro_Interstate_Traffic_Volume_Cleaned.csv')
+traffic.save('Metro_Interstate_Traffic_Volume_Cleaned.csv')
 
 ## **References:**
 

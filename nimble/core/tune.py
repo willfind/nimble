@@ -27,7 +27,7 @@ from nimble.core.logger import handleLogging, loggingEnabled
 from nimble.core.logger import deepLoggingEnabled
 from nimble.random import pythonRandom, numpyRandom
 from nimble.core._learnHelpers import computeMetrics
-from nimble._utility import prettyDictString, prettyListString
+from nimble._utility import prettyDictString, prettyListString, quoteStrings
 from nimble._utility import mergeArguments
 from nimble._utility import hyperopt
 
@@ -173,10 +173,6 @@ class GroupFoldIterator(FoldIterator):
 
         return list(foldDict.values())
 
-def _quoteStr(val):
-    if isinstance(val, str):
-        return f'"{val}"'
-    return str(val)
 
 class Validator(ABC):
     """
@@ -232,7 +228,8 @@ class Validator(ABC):
         ret += f'performanceFunction={self.performanceFunction.__name__}, '
         ret += f'randomSeed={self.randomSeed}'
         if self._logInfo:
-            ret += ", " + prettyDictString(self._logInfo, valueStr=_quoteStr)
+            ret += ", "
+            ret += prettyDictString(self._logInfo, valueStr=quoteStrings)
         ret += ")"
         return ret
 
@@ -1279,7 +1276,7 @@ class Tune:
         for arg, val in self._args.items():
             if val is not None:
                 args[arg] = val
-        ret += prettyDictString(args, valueStr=_quoteStr)
+        ret += prettyDictString(args, valueStr=quoteStrings)
         ret += ")"
         return ret
 

@@ -66,8 +66,8 @@ _DEPENDENCIES = [
     Dependency('keras', 'keras>=2.0', 'interfaces', 'Neural Networks'),
     Dependency('autoimpute', 'autoimpute>=0.12', 'interfaces',
                'Imputation & machine learning with missing data'),
-    Dependency('pylint', 'pytest>=2.7.4', 'development'),
-    Dependency('pytest', 'pylint>=6.2', 'development'),
+    Dependency('pytest', 'pytest>=6.2', 'development'),
+    Dependency('pylint', 'pylint>=2.7.4', 'development'),
     Dependency('cython', 'cython>=0.29', 'development'),
     Dependency('sphinx', 'sphinx>=3.3', 'development'),
     ]

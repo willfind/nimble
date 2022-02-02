@@ -2331,6 +2331,7 @@ def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
     # these are saved to use in further autodetection
     ioStream.seek(startPosition)
     rowReader = csv.reader(ioStream, dialect)
+    possiblePtNames = False
     try:
         firstRow = next(rowReader)
         while firstRow == []:
@@ -2340,7 +2341,7 @@ def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
             secondRow = next(rowReader)
         firstDataRow = []
         secondDataRow = []
-        for first, second in zip(firstRow, secondRow):
+        for i, (first, second) in enumerate(zip(firstRow, secondRow)):
             first = _intFloatOrString(first)
             second = _intFloatOrString(second)
             # can treat missing first values as possible default names except
@@ -2349,6 +2350,12 @@ def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
             if first is not None or second is None:
                 firstDataRow.append(first)
                 secondDataRow.append(second)
+            elif first is None:
+                if i:
+                    possiblePtNames = False
+                else:
+                    possiblePtNames = True
+
     except StopIteration:
         firstDataRow = None
         secondDataRow = None
@@ -2356,10 +2363,13 @@ def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
     pointNames, featureNames = autoDetectNamesFromRaw(
         pointNames, featureNames, firstDataRow, secondDataRow)
 
+    # possible pointNames if first was missing and rest could be featureNames
+    trackPoints = possiblePtNames and featureNames
+
     # reset everything to make the loop easier
     ioStream.seek(startPosition)
 
-    return pointNames, featureNames
+    return pointNames, featureNames, trackPoints
 
 
 def _filterCSVRow(row):
@@ -2740,8 +2750,8 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
         function call.
     """
     dialect = _detectDialectFromSeparator(ioStream, inputSeparator)
-    pointNames, featureNames = _checkCSVForNames(ioStream, pointNames,
-                                                 featureNames, dialect)
+    pointNames, featureNames, trackPoints = _checkCSVForNames(
+        ioStream, pointNames, featureNames, dialect)
 
     pointNames = _namesDictToList(pointNames, 'point', 'pointNames')
     featureNames = _namesDictToList(featureNames, 'feature', 'featureNames')
@@ -2757,7 +2767,7 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
     firstRowLength = None
     if featureNames is True:
         retFNames = [v if v else None for v in next(lineReader)]
-        if pointNames is True:
+        if pointNames is True or trackPoints:
             retFNames = retFNames[1:]
         firstRowLength = len(retFNames)
         lengthDefiningLine = skippedLines
@@ -2807,15 +2817,28 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
     nonNumericFeatures = []
     # possibly remove last feature if all values are '' and '' is missing value
     lastFtRemovable = not limitFeatures and emptyIsMissing
+    possiblePtNames = set()
     # lineReader is now at the first line of data
     for i, row in enumerate(lineReader):
-        if pointNames is True:
+        if pointNames is True or trackPoints:
             ptName = row[0]
             row = row[1:]
         elif pointNames and len(pointNames) > len(keepPoints):
             ptName = pointNames[i]
         else:
             ptName = None
+        if trackPoints:
+            if ptName in possiblePtNames:
+                # duplicate value, need to add possible names back in as data
+                for idx, name in enumerate(possiblePtNames):
+                    retData[idx].insert(0, name)
+                row.insert(0, ptName)
+                retFNames.insert(0, None)
+                firstRowLength += 1
+                trackPoints = False
+                pointNames = False
+            else:
+                possiblePtNames.add(ptName)
         if not keepFeaturesValidated:
             if any(val >= len(row) for val in keepFeatures):
                 for val in keepFeatures:
@@ -2865,7 +2888,7 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
 
             if keepPoints == 'all':
                 retData.append(row)
-                if pointNames is True:
+                if pointNames is True or trackPoints:
                     extractedPointNames.append(ptName)
             else:
                 if ptName is not None and ptName in keepPoints:
@@ -2877,12 +2900,14 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
                 location = keepPoints.index(locate)
                 locatedPoints.append(locate)
                 retData[location] = row
-                if pointNames is True:
+                if pointNames is True or trackPoints:
                     extractedPointNames[location] = ptName
         if lastFtRemovable and row[-1] != '':
             lastFtRemovable = False
         totalPoints = i + 1
 
+    if trackPoints:
+        pointNames = trackPoints
     if (keepPoints != 'all' and pointNames
             and pointNames is not True
             and len(retData) == totalPoints == len(keepPoints)):
