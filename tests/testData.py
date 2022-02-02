@@ -813,16 +813,32 @@ def test_data_CSV_emptyFirstValue():
         assert fromCSV.features.getNames() == [None, 'ft1', 'ft2', 'ft3']
         assert not fromCSV.points._namesCreated()
 
-    # no pointNames, only the first value of first row can be empty
+    # pointNames, keepPoints with unique first column
     with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
-        tmpCSV.write(',ft1,,ft3\n')
+        tmpCSV.write(',ft1,ft2,ft3\n')
         tmpCSV.write('a,1,2,3\n')
-        tmpCSV.write('b,3,4,5\n')
+        tmpCSV.write('b,4,5,6\n')
+        tmpCSV.write('c,7,8,9\n')
+        tmpCSV.write('d,-1,-2,-3\n')
         tmpCSV.flush()
-        fromCSV = nimble.data(tmpCSV.name)
-        assert fromCSV.shape == (2, 4)
-        assert fromCSV.features.getNames() == [None, 'ft1', None, 'ft3']
-        assert not fromCSV.points._namesCreated()
+        limitCSV = nimble.data(source=tmpCSV.name, keepPoints=[0, 3])
+        assert limitCSV.shape == (2, 3)
+        assert limitCSV.features.getNames() == ['ft1', 'ft2', 'ft3']
+        assert limitCSV.points.getNames() == ['a', 'd']
+
+    # no pointNames, keepPoints with non unique first column
+    # does not matter whether the kept points are unique or not
+    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+        tmpCSV.write(',ft1,ft2,ft3\n')
+        tmpCSV.write('a,1,2,3\n')
+        tmpCSV.write('b,4,5,6\n')
+        tmpCSV.write('b,7,8,9\n')
+        tmpCSV.write('d,-1,-2,-3\n')
+        tmpCSV.flush()
+        limitCSV = nimble.data(source=tmpCSV.name, keepPoints=[0, 3])
+        assert limitCSV.shape == (2, 4)
+        assert limitCSV.features.getNames() == [None, 'ft1', 'ft2', 'ft3']
+        assert not limitCSV.points._namesCreated()
 
 
 def test_data_MTXArr_data():

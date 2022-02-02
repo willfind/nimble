@@ -2350,11 +2350,8 @@ def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
             if first is not None or second is None:
                 firstDataRow.append(first)
                 secondDataRow.append(second)
-            elif first is None:
-                if i:
-                    possiblePtNames = False
-                else:
-                    possiblePtNames = True
+            elif first is None and not i:
+                possiblePtNames = True
 
     except StopIteration:
         firstDataRow = None
@@ -2830,8 +2827,9 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
         if trackPoints:
             if ptName in possiblePtNames:
                 # duplicate value, need to add possible names back in as data
-                for idx, name in enumerate(possiblePtNames):
-                    retData[idx].insert(0, name)
+                for idx, name in enumerate(extractedPointNames):
+                    if retData[idx] is not None:
+                        retData[idx].insert(0, name)
                 row.insert(0, ptName)
                 retFNames.insert(0, None)
                 firstRowLength += 1
