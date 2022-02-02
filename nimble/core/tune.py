@@ -1417,7 +1417,7 @@ class Tuning:
         self._selectorArgs = {}
         selection = selection.lower().replace(" ", "")
         selection = selection.lower().replace("-", "")
-        if selection not in Tuning._selectors.keys():
+        if selection not in Tuning._selectors:
             msg = prettyListString(Tuning._selections, useAnd=True)
             msg += " are the only accepted _selections."
             raise InvalidArgumentValue(msg)
@@ -1445,7 +1445,7 @@ class Tuning:
             msg = f"'data' validation is required. '{selection}' "
             msg += "selection cannot use any training data for validation."
             raise InvalidArgumentValueCombination(msg)
-        if validation not in Tuning._validators.keys():
+        if validation not in Tuning._validators:
             msg = prettyListString(Tuning._validations)
             msg += ", or a float representing a holdout proportion of "
             msg += "the training data are the only accepted _validations."
