@@ -802,6 +802,17 @@ def test_data_CSV_emptyFirstValue():
         assert fromCSV.features.getNames() == ['ft1', 'ft2', 'ft3']
         assert fromCSV.points.getNames() == ['a', 'b']
 
+    # should also trigger pointNames
+    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+        tmpCSV.write(',ft1,ft2,\n')
+        tmpCSV.write('a,1,2,3\n')
+        tmpCSV.write('b,3,4,5\n')
+        tmpCSV.flush()
+        fromCSV = nimble.data(tmpCSV.name)
+        assert fromCSV.shape == (2, 3)
+        assert fromCSV.features.getNames() == ['ft1', 'ft2', None]
+        assert fromCSV.points.getNames() == ['a', 'b']
+
     # no pointNames, first column is not unique
     with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
         tmpCSV.write(',ft1,ft2,ft3\n')
