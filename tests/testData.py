@@ -1238,6 +1238,24 @@ def test_featNamesOnly_AutoDetectedBlankLines_CSV():
         tmpCSV.close()
         assert fromList == fromCSV
 
+def test_featNamesOnly_AutoDetectedCommentedLine_CSV():
+    for t in returnTypes:
+        fromList = nimble.data(source=[[1, 2, 3], [4, 5, 6]])
+
+        # instantiate from csv file
+        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
+        tmpCSV.write("\n")
+        tmpCSV.write("\n")
+        tmpCSV.write("#one,two,three\n")
+        tmpCSV.write("1,2,3\n")
+        tmpCSV.write("4,5,6\n")
+        tmpCSV.flush()
+
+        fromCSV = nimble.data(source=tmpCSV.name)
+        tmpCSV.close()
+        assert fromList == fromCSV
+        assert fromCSV.features._getNamesNoGeneration() is None
+
 def test_pointNames_AutoDetected_from_specified_featNames_CSV():
     fNames = ['one', 'two', 'three']
     pNames = ['pn1']
