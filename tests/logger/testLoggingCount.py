@@ -139,28 +139,28 @@ base_tested = list(map(prefixAdder('Base'), base_funcs))
 
 features_logged = [
     'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
-    'insert', 'mapReduce', 'matching', 'normalize', 'permute', 'replace',
-    'report', 'retain', 'setName', 'setNames', 'sort', 'transform',
+    'insert', 'mapReduce', 'matching', 'normalize', 'permute', 'repeat',
+    'replace', 'report', 'retain', 'setName', 'setNames', 'sort', 'transform',
     'splitByParsing',
     ]
 features_notLogged = [
-    'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
-    'hasName', 'plot', 'plotMeans', 'plotStatistics', 'similarities',
-    'statistics', 'unique',
+    'count', 'getIndex', 'getIndices', 'getName', 'getNames', 'hasName',
+    'plot', 'plotMeans', 'plotStatistics', 'similarities', 'statistics',
+    'unique',
     ]
 features_funcs = features_logged + features_notLogged
 features_tested = list(map(prefixAdder('Features'), features_funcs))
 
 points_logged = [
     'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
-    'insert', 'mapReduce', 'matching', 'permute', 'replace', 'retain',
-    'setName', 'setNames', 'sort', 'transform', 'combineByExpandingFeatures',
-    'splitByCollapsingFeatures',
+    'insert', 'mapReduce', 'matching', 'permute', 'repeat', 'replace',
+    'retain', 'setName', 'setNames', 'sort', 'transform',
+    'combineByExpandingFeatures', 'splitByCollapsingFeatures',
     ]
 points_notLogged = [
-    'count', 'repeat', 'getIndex', 'getIndices', 'getName', 'getNames',
-    'hasName', 'plot', 'plotMeans', 'plotStatistics', 'similarities',
-    'statistics', 'unique',
+    'count', 'getIndex', 'getIndices', 'getName', 'getNames', 'hasName',
+    'plot', 'plotMeans', 'plotStatistics', 'similarities', 'statistics',
+    'unique',
     ]
 points_funcs = points_logged + points_notLogged
 points_tested = list(map(prefixAdder('Points'), points_funcs))

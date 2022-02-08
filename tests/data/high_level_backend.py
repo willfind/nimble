@@ -1618,24 +1618,24 @@ class HighLevelDataSafe(DataTestObject):
 
             trX, trY, teX, teY = toTest.trainAndTestSets(.5, 0)
 
-            assert trX.name == 'toTest trainX'
+            assert trX.name == 'toTest_trainX'
             assert trX.path == tmpFile.name
             assert trX.absolutePath == tmpFile.name
             assert trX.relativePath == os.path.relpath(tmpFile.name)
 
-            assert trY.name == 'toTest trainY'
+            assert trY.name == 'toTest_trainY'
             assert trY.path == tmpFile.name
             assert trY.path == tmpFile.name
             assert trY.absolutePath == tmpFile.name
             assert trY.relativePath == os.path.relpath(tmpFile.name)
 
-            assert teX.name == 'toTest testX'
+            assert teX.name == 'toTest_testX'
             assert teX.path == tmpFile.name
             assert teX.path == tmpFile.name
             assert teX.absolutePath == tmpFile.name
             assert teX.relativePath == os.path.relpath(tmpFile.name)
 
-            assert teY.name == 'toTest testY'
+            assert teY.name == 'toTest_testY'
             assert teY.path == tmpFile.name
             assert teY.path == tmpFile.name
             assert teY.absolutePath == tmpFile.name
@@ -2053,7 +2053,7 @@ class HighLevelDataSafe(DataTestObject):
         toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
         repeated = toTest.points.repeat(totalCopies=1, copyPointByPoint=True)
 
-    @noLogEntryExpected
+    @logCountAssertionFactory(2)
     def test_points_repeat_1D(self):
         data = [0, 1, 2, 3]
         ptNames = ['pt']
@@ -2070,7 +2070,7 @@ class HighLevelDataSafe(DataTestObject):
         # return is same for either copyPointByPoint when 1D
         assert repeated1 == repeated2
 
-    @noLogEntryExpected
+    @oneLogEntryExpected
     def test_points_repeat_2D_copyPointByPointFalse(self):
         data = [[1, 2, 3, 0], [4, 5, 6, 0], [0, 0, 0, 0]]
         ptNames = ['1', '4', '0']
@@ -2092,7 +2092,7 @@ class HighLevelDataSafe(DataTestObject):
         ptNames = ['1', '4', '0']
         ftNames = ['a', 'b', 'c', 'd']
         toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-        repeated = toTest.points.repeat(3, copyPointByPoint=True)
+        repeated = toTest.points.repeat(3, copyPointByPoint=True, useLog=False)
 
         expData = [[1, 2, 3, 0], [1, 2, 3, 0], [1, 2, 3, 0],
                    [4, 5, 6, 0], [4, 5, 6, 0], [4, 5, 6, 0],
@@ -2126,7 +2126,7 @@ class HighLevelDataSafe(DataTestObject):
         toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
         repeated = toTest.features.repeat(totalCopies=1, copyFeatureByFeature=False)
 
-    @noLogEntryExpected
+    @logCountAssertionFactory(2)
     def test_features_repeat_1D(self):
         data = [[0], [1], [2], [3]]
         ptNames = ['pt0', 'pt1', 'pt2', 'pt3']
@@ -2143,7 +2143,7 @@ class HighLevelDataSafe(DataTestObject):
         # return is same for either copyFeatureByFeature when 1D
         assert repeated1 == repeated2
 
-    @noLogEntryExpected
+    @oneLogEntryExpected
     def test_features_repeat_2D_copyFeatureByFeatureFalse(self):
         data = [[1, 2, 3, 0], [4, 5, 6, 0], [0, 0, 0, 0]]
         ptNames = ['1', '4', '0']
@@ -2165,7 +2165,7 @@ class HighLevelDataSafe(DataTestObject):
         ptNames = ['1', '4', '0']
         ftNames = ['a', 'b', 'c', 'd']
         toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-        repeated = toTest.features.repeat(3, copyFeatureByFeature=True)
+        repeated = toTest.features.repeat(3, copyFeatureByFeature=True, useLog=False)
 
         expData = [[1, 1, 1, 2, 2, 2, 3, 3, 3, 0, 0, 0],
                    [4, 4, 4, 5, 5, 5, 6, 6, 6, 0, 0, 0],
@@ -2989,8 +2989,8 @@ class HighLevelModifying(DataTestObject):
     def test_features_normalize_parameterCount(self):
         obj = self.constructor([[1, 2], [3, 4]])
         a, _, _, d = nimble._utility.inspectArguments(obj.features.normalize)
-        assert len(a) == 5 # self, function, applyResultTo, features, useLog
-        assert d == (None, None, None)
+        assert len(a) == 4 # self, function, applyResultTo, features
+        assert d == (None, None)
 
     def test_features_normalize_exception_unexpectedInputType(self):
         obj = self.constructor([[1, 2], [3, 4]])

@@ -227,7 +227,7 @@ class Validator(ABC):
         ret += ")"
         return ret
 
-    def validate(self, arguments=None, useLog=None, **kwarguments):
+    def validate(self, arguments=None, *, useLog=None, **kwarguments):
         """
         Apply the validation to a learner with the given arguments.
         """
@@ -509,12 +509,10 @@ class HoldoutValidator(Validator):
 
         metrics = {self.performanceFunction.__name__: performance}
         deepLog = loggingEnabled(useLog) and deepLoggingEnabled()
-
         handleLogging(deepLog, "deepRun", self.__class__.__name__,
                       self.X, self.Y, self._validateX, self._validateY,
                       self.learnerName, arguments, self.randomSeed,
-                      metrics=metrics, extraInfo=self._keywords,
-                      time=totalTime)
+                      metrics=metrics, time=totalTime)
 
         return performance
 
@@ -1062,7 +1060,7 @@ class Tuning:
         else:
             selector = self._selector(arguments, **self._selectorArgs)
         for argSet in selector:
-            performance = self.validator.validate(argSet, useLog)
+            performance = self.validator.validate(argSet, useLog=useLog)
             selector.update(performance)
 
         # reverse based on optimal for performanceFunction

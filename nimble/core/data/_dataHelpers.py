@@ -19,6 +19,7 @@ from nimble._utility import is2DArray
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import ImproperObjectAction, PackageException
+from nimble.core.logger import handleLogging
 
 def binaryOpNamePathMerge(caller, other, ret, nameSource, pathSource):
     """
@@ -1167,3 +1168,15 @@ def getFeatureDtypes(obj):
             dtypeList.append(np.object_)
 
     return tuple(dtypeList)
+
+def prepLog(method):
+    """
+    Provides logging for methods that manipulate data.
+    """
+    @wraps(method)
+    def wrapped(self, *args, useLog=None, **kwargs):
+        ret = method(self, *args, useLog=None, **kwargs)
+        handleLogging(useLog, 'prep', self, wrapped.__name__, ret, *args,
+                      **kwargs)
+        return ret
+    return wrapped

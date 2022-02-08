@@ -296,7 +296,7 @@ def showLearnerParameterDefaults(name):
 
 @trackEntry
 def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
-                  randomSeed=None, useLog=None, **kwarguments):
+                  randomSeed=None, *, useLog=None, **kwarguments):
     """
     Modify data according to a produced model.
 
@@ -439,7 +439,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
 @trackEntry
 def fillMatching(learnerName, matchingElements, trainX, arguments=None,
-                 points=None, features=None, useLog=None, **kwarguments):
+                 points=None, features=None, *, useLog=None, **kwarguments):
     """
     Fill matching values using imputation learners.
 
@@ -589,7 +589,7 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
 @trackEntry
 def train(learnerName, trainX, trainY=None, arguments=None, scoreMode='label',
           multiClassStrategy='default', randomSeed=None, tuning=None,
-          performanceFunction=None, useLog=None, **kwarguments):
+          performanceFunction=None, *, useLog=None, **kwarguments):
     """
     Train a specified learner using the provided data.
 
@@ -746,7 +746,7 @@ def train(learnerName, trainX, trainY=None, arguments=None, scoreMode='label',
     funcString = interface.getCanonicalName() + '.' + trueLearnerName
     handleLogging(useLog, "run", "train", trainX, trainY, None, None,
                   funcString, bestArguments, trainedLearner.randomSeed,
-                  time=totalTime)
+                  time=totalTime, returned=trainedLearner)
 
     return trainedLearner
 
@@ -754,7 +754,7 @@ def train(learnerName, trainX, trainY=None, arguments=None, scoreMode='label',
 def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments=None,
                   output=None, scoreMode='label', multiClassStrategy='default',
                   randomSeed=None, tuning=None, performanceFunction=None,
-                  useLog=None, **kwarguments):
+                  *, useLog=None, **kwarguments):
     """
     Train a model and apply it to the test data.
 
@@ -925,10 +925,10 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     extraInfo = None
     if merged != trainedLearner.arguments:
-        extraInfo = {"bestArguments": trainedLearner.arguments}
+        extraInfo = {'Best Arguments': trainedLearner.arguments}
     handleLogging(useLog, "run", "trainAndApply", trainX, trainY, testX, None,
                   learnerName, merged, trainedLearner.randomSeed,
-                  extraInfo=extraInfo, time=totalTime)
+                  extraInfo=extraInfo, time=totalTime, returned=results)
 
     return results
 
@@ -955,7 +955,7 @@ def _trainAndTestBackend(learnerName, trainX, trainY, testX, testY,
 def trainAndTest(learnerName, trainX, trainY, testX, testY,
                  performanceFunction, arguments=None, output=None,
                  scoreMode='label', multiClassStrategy='default',
-                 randomSeed=None, tuning=None, useLog=None,
+                 randomSeed=None, tuning=None, *, useLog=None,
                  **kwarguments):
     """
     Train a model and get the results of its performance.
@@ -1127,7 +1127,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         metrics[key.__name__] = value
     extraInfo = None
     if merged != trainedLearner.arguments:
-        extraInfo = {"bestArguments": trainedLearner.arguments}
+        extraInfo = {'Best Arguments': trainedLearner.arguments}
     handleLogging(useLog, "run", 'trainAndTest', trainX, trainY, testX, testY,
                   learnerName, merged, trainedLearner.randomSeed, metrics,
                   extraInfo, totalTime)
@@ -1140,7 +1140,7 @@ def trainAndTestOnTrainingData(
     learnerName, trainX, trainY, performanceFunction,
     crossValidationError=False, folds=5, arguments=None, output=None,
     scoreMode='label', multiClassStrategy='default', randomSeed=None,
-    tuning=None, useLog=None, **kwarguments):
+    tuning=None, *, useLog=None, **kwarguments):
     """
     Train a model using the train data and get the performance results.
 
@@ -1305,7 +1305,7 @@ def trainAndTestOnTrainingData(
 
     if trainedLearner.tuning is not None:
         bestArgs = trainedLearner.arguments
-        extraInfo = {"bestArguments": bestArgs}
+        extraInfo = {'Best Arguments': bestArgs}
     else:
         bestArgs = merged
         extraInfo = None

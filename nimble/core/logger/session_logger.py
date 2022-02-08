@@ -26,6 +26,7 @@ from ast import literal_eval
 import textwrap
 import datetime
 from configparser import NoSectionError
+import itertools
 
 import numpy as np
 
@@ -88,14 +89,16 @@ def showLog(levelOfDetail=2, leastSessionsAgo=0, mostSessionsAgo=2,
 
         * Level 1 - Data loading, data preparation and
           preprocessing, custom user logs.
-        * Level 2 - Outputs basic information about learner runs.
-          Includes timestamp, session number, learner name, train and
-          test object details, parameter, metric, and timer data if
-          available.
-        * Level 3 - Include cross-validation data. Note: The
-          'enableCrossValidationDeepLogging' option in the 'logger'
-          section of nimble.settings, must be set to 'True' during the
-          session in order for Level 3 data to be stored in the log.
+        * Level 2 - Output an overview of learner runs in addition to
+          logs in Level 1. Includes timestamps, learner names, train and
+          test object details, parameters, metrics, tuning results, and
+          timer data when applicable.
+        * Level 3 - Output all available data. Adds individual
+          validation results from hyperparameter tuning.
+          Note: The 'enableCrossValidationDeepLogging' option in the
+          'logger' section of nimble.settings, must be set to 'True'
+          during the session in order for Level 3 data to be stored in
+          the log.
     leastSessionsAgo : int
         The least number of sessions since the most recent session to
         include in the log. Default is 0.
@@ -180,11 +183,12 @@ class SessionLogger(object):
         self.connection = None
         self.cursor = None
         self.isAvailable = False
-        self.logTypes = {'load': self.logLoad, 'prep': self.logPrep,
-                         'run': self.logRun, 'data': self.logData,
-                         'tuning': self.logTuning,
-                         'deepRun': self.logDeepRun,
-                         'setSeed': self.logRandomSeed}
+        self.logTypes = {
+            'load': self.logLoad, 'tl': self.logTrainedLearner,
+            'prep': self.logPrep, 'run': self.logRun, 'TLrun': self.logTLRun,
+            'report': self.logReport, 'tuning': self.logTuning,
+            'deepRun': self.logDeepRun, 'setSeed': self.logRandomSeed
+            }
 
 
     def setup(self, newFileName=None):
@@ -258,14 +262,14 @@ class SessionLogger(object):
         ----------
         logType : str
             The type of information being added to the log. The values
-            'load', 'prep', 'run', 'data', and 'tuning', generate a
+            'load', 'prep', 'run', 'report', and 'tuning', generate a
             custom output of the ``logInfo`` when printing the log.  Any
             other log type will print a string of ``logInfo`` without
             any additional formatting.
         logInfo : dict, list, str
             All types for this value will be converted and added to the
             log. If provided a dictionary; ``logType`` 'load', 'prep',
-            'run', 'data', and 'tuning' generate a custom output when
+            'run', 'report', and 'tuning' generate a custom output when
             printing the log.
         """
         if not self.isAvailable:
@@ -310,11 +314,9 @@ class SessionLogger(object):
     ### LOG ENTRIES ###
     ###################
 
-    def logLoad(self, useLog, returnType, objectType, numPoints=None,
-                numFeatures=None, name=None, path=None, sparsity=None,
-                seed=None, learnerName=None, learnerArgs=None):
+    def logLoad(self, useLog, obj, **kwargs):
         """
-        Log information about the loading of data or a trained learner.
+        Log information about the loading of data.
 
         If this will be logged, store an entry in the database with
         "load" as the logType and a dictionary (stored as a string) of
@@ -322,40 +324,48 @@ class SessionLogger(object):
 
         Parameters
         ----------
-        returnType : str
-            The type of the loaded object.
-        numPoints : int
-            The number of points in the loaded object.
-        numFeatures : int
-            The number of features in the loaded object.
-        name : str
-            The name of the loaded object.
-        path : str
-            The path to the data in the loaded object.
+        obj : nimble.core.data.Base
+            The data object to extract the logged information from.
         """
         if loggingEnabled(useLog):
             logType = "load"
             logInfo = {}
-            logInfo["returnType"] = returnType
-            logInfo["objectType"] = objectType
-            logInfo["numPoints"] = numPoints
-            logInfo["numFeatures"] = numFeatures
-            logInfo["name"] = name
-            logInfo["path"] = path
-            logInfo["sparsity"] = sparsity
-            logInfo["seed"] = seed
-            logInfo["learnerName"] = learnerName
-            logInfo["learnerArgs"] = learnerArgs
+            logInfo["numPoints"], logInfo["numFeatures"] = obj.shape
+            if obj.path is not None:
+                logInfo["path"] = obj.path
+            logInfo.update(kwargs)
+            logInfo.update(identifyObject(obj))
 
             self.log(logType, logInfo)
 
-    def logData(self, useLog, reportType, reportInfo):
+    def logTrainedLearner(self, useLog, obj):
+        """
+        Log information about the loading a trained learner.
+
+        If this will be logged, store an entry in the database with
+        "load" as the logType and a dictionary (stored as a string) of
+        attributes for the loaded object as the logInfo.
+
+        Parameters
+        ----------
+        obj : nimble.core.data.Base
+            The data object to extract the logged information from.
+        """
+        if loggingEnabled(useLog):
+            logType = 'tl'
+            logInfo = identifyObject(obj)
+            logInfo['learnerName'] = obj.learnerName
+            logInfo['learnerArgs'] = obj.arguments
+
+            self.log(logType, logInfo)
+
+    def logReport(self, useLog, reportType, reportInfo):
         """
         Log an object's information reports.
 
         If this will be logged, store an entry in the database with
-        "data" as the logType and a dictionary (stored as a string) of
-        the report data as the logInfo.
+        "report" as the logType and a dictionary (stored as a string) of
+        the report report as the logInfo.
 
         reportType : str
             'feature' or 'summary' based on the type of report.
@@ -364,15 +374,14 @@ class SessionLogger(object):
             function.
         """
         if loggingEnabled(useLog):
-            logType = "data"
+            logType = "report"
             logInfo = {}
             logInfo["reportType"] = reportType
             logInfo["reportInfo"] = reportInfo
 
             self.log(logType, logInfo)
 
-    def logPrep(self, useLog, nimbleFunction, dataObject, func, *args,
-                **kwargs):
+    def logPrep(self, useLog, obj, func, returned, *args, **kwargs):
         """
         Log information about a data preparation step performed.
 
@@ -383,26 +392,40 @@ class SessionLogger(object):
 
         Parameters
         ----------
-        nimbleFunction : str
-            The name of the nimble function called.
-        dataObject : str
-            The class of the calling object.
-        arguments : dict
-            A mapping of the argument name to the argument's value.
+        obj : Base, Points, Features
+            The calling object.
+        func : str
+            The name of the method being called.
         """
         if loggingEnabled(useLog):
             logType = "prep"
             logInfo = {}
-            logInfo["function"] = nimbleFunction
-            logInfo["object"] = dataObject
-            arguments = _buildArgDict(func, *args, **kwargs)
+            if hasattr(obj, '_base'):
+                if 'features' in obj.__class__.__name__.lower():
+                    function = f'features.{func}'
+                else:
+                    function = f'points.{func}'
+                logInfo.update(identifyObject(obj._base))
+            else:
+                function = func
+                logInfo.update(identifyObject(obj))
+
+            logInfo["function"] = function
+            logIDs = []
+            arguments = _buildArgDict(getattr(obj, func), logIDs, *args,
+                                      **kwargs)
             logInfo["arguments"] = arguments
+            if returned is not None:
+                logInfo["returned"] = identifyReturnedData(returned, logIDs)
+            if logIDs:
+                # _logIDs are for searchability and not displayed in the output
+                logInfo["_logIDs"] = logIDs
 
             self.log(logType, logInfo)
 
     def _logRun(self, logType, useLog, nimbleFunction, trainData, trainLabels,
                 testData, testLabels, learnerFunction, arguments, randomSeed,
-                metrics, extraInfo, time):
+                metrics, extraInfo, time, returned=None):
         if loggingEnabled(useLog):
             logInfo = {}
             logInfo["function"] = nimbleFunction
@@ -462,21 +485,24 @@ class SessionLogger(object):
 
             if randomSeed is not None and randomSeed:
                 logInfo['randomSeed'] = randomSeed
-
             if metrics is not None and metrics:
                 logInfo["metrics"] = metrics
-
             if extraInfo is not None and extraInfo:
                 logInfo["extraInfo"] = extraInfo
-
-            if time:
+            if time is not None:
                 logInfo["time"] = time
+            logIDs = []
+            if returned is not None:
+                logInfo['returned'] = identifyReturnedData(returned, logIDs)
+            if logIDs:
+                # _logIDs are for searchability and not displayed in the output
+                logInfo['_logIDs'] = logIDs
 
             self.log(logType, logInfo)
 
     def logRun(self, useLog, nimbleFunction, trainData, trainLabels, testData,
                testLabels, learnerFunction, arguments, randomSeed=None,
-               metrics=None, extraInfo=None, time=None):
+               metrics=None, extraInfo=None, time=None, returned=None):
         """
         Log information about each run.
 
@@ -504,15 +530,17 @@ class SessionLogger(object):
             The arguments passed to the learner.
         metrics : dict
             The results of the testing on a run.
-        extraInfo: dict
-            Any extra information to add to the log. Here provides the
-            best parameters from cross validation.
+        extraInfo : dict
+            Any additional information to add to the log. For each pair
+            a new line in the format "key: value" is displayed.
         time : float, None
             The time to run the function. None if function is not timed.
+        returned
+            The return of the function call.
         """
         self._logRun("run", useLog, nimbleFunction, trainData, trainLabels,
                      testData, testLabels, learnerFunction, arguments,
-                     randomSeed, metrics, extraInfo, time)
+                     randomSeed, metrics, extraInfo, time, returned)
 
     def logDeepRun(self, useLog, nimbleFunction, trainData, trainLabels,
                    testData, testLabels, learnerFunction, arguments,
@@ -544,15 +572,61 @@ class SessionLogger(object):
             The arguments passed to the learner.
         metrics : dict
             The results of the testing on a run.
-        extraInfo: dict
-            Any extra information to add to the log. Here provides the
-            fold number.
+        extraInfo : dict
+            Any additional information to add to the log. For each pair
+            a new line in the format "key: value" is displayed.
         time : float, None
             The time to run the function. None if function is not timed.
         """
         self._logRun("deepRun", useLog, nimbleFunction, trainData, trainLabels,
                      testData, testLabels, learnerFunction, arguments,
                      randomSeed, metrics, extraInfo, time)
+
+    def logTLRun(self, useLog, tlObject, method, arguments, trainData=None,
+                 trainLabels=None, testData=None, testLabels=None,
+                 randomSeed=None, metrics=None, extraInfo=None, time=None,
+                 returned=None):
+        """
+        Log information for calls to TrainedLearner methods.
+
+        If this will be logged, store an entry in the database with
+        "run" as the logType and a dictionary (stored as a string) of
+        the learner function called and its arguments as the logInfo.
+
+        Parameters
+        ----------
+        tlObject : TrainedLearner
+            The TrainedLearner object making the call.
+        method : str
+            The name of the nimble function called.
+        arguments : dict
+            The arguments passed to the learner.
+        trainData : nimble data object
+            The object containing the training data.
+        trainLabels : nimble data object, int
+            The object or feature in ``trainData`` containing the
+            training labels.
+        testData : nimble data object
+            The object containing the testing data.
+        testLabels : nimble data object, int
+            The object or feature in ``testData`` containing the
+            training labels.
+        metrics : dict
+            The results of the testing on a run.
+        extraInfo : dict
+            Any additional information to add to the log. For each pair
+            a new line in the format "key: value" is displayed.
+        time : float, None
+            The time to run the function. None if function is not timed.
+        returned
+            The return of the function call.
+        """
+        funcName = f'{tlObject.logID}.{method}'
+        interfaceName = tlObject._interface.getCanonicalName()
+        learnerFunction = f'{interfaceName}.{tlObject.learnerName}'
+        self._logRun("run", useLog, funcName, trainData, trainLabels, testData,
+                     testLabels, learnerFunction, arguments, randomSeed,
+                     metrics, extraInfo, time, returned)
 
     def logTuning(self, useLog, selector, validator):
         """
@@ -763,6 +837,41 @@ def stringToDatetime(string):
         msg += "'YYYY-MM-DD', 'YYYY-MM-DD HH:MM', or 'YYYY-MM-DD HH:MM:SS'"
         raise InvalidArgumentValue(msg) from e
 
+
+def identifyObject(obj):
+    """
+    The identifier will be name when available otherwise logID.
+
+    The logID is always added to the log as well, this allows for object
+    identification even if duplicate names are used.
+    """
+    identification = {}
+    if hasattr(obj, 'name') and obj.name is not None:
+        identification["identifier"] = obj.name
+        identification["logID"] = obj.logID
+    else:
+        identification["identifier"] = obj.logID
+
+    return identification
+
+def identifyReturnedData(returned, logIDs):
+    """
+    Identify any nimble data or trainedlearner objects returned.
+    """
+    if isinstance(returned, tuple):
+        objs = []
+        for item in returned:
+            if hasattr(item, 'logID'):
+                identification = identifyObject(item)
+                s = identification["identifier"]
+                if "logID" in identification:
+                    logIDs.append(identification['logID'])
+                objs.append(s)
+        return ', '.join(objs)
+    if hasattr(returned, 'logID'):
+        return identifyObject(returned)['identifier']
+    return None
+
 def _showLogQueryAndValues(leastSessionsAgo, mostSessionsAgo, startDate,
                            endDate, maximumEntries, searchForText, regex):
     """
@@ -822,43 +931,48 @@ def _buildLoadLogString(timestamp, entry):
     """
     Constructs the string that will be output for load logTypes.
     """
-    dataCol = f"{entry['objectType']} Loaded"
-    fullLog = _logHeader(dataCol, timestamp)
-    if entry["objectType"] != "TrainedLearner":
-        line = '{:<14} {}\n'
-        fullLog += line.format("# of points", entry["numPoints"])
-        fullLog += line.format("# of features", entry["numFeatures"])
-        for title in ['returnType', 'sparsity', 'name', 'path', 'seed']:
-            if entry[title] is not None:
-                fullLog += title + ' ' * (15 - len(title))
-                fullLog += textwrap.fill(str(entry[title]), 64,
-                                         subsequent_indent=" "*15)
-                fullLog += '\n'
-    else:
-        fullLog += _formatSessionLine("Learner name", entry["learnerName"])
-        if entry['learnerArgs'] is not None and entry['learnerArgs']:
-            argString = "Arguments: "
-            argString += _dictToKeywordString(entry["learnerArgs"])
-            fullLog += textwrap.fill(argString, 79, subsequent_indent=" "*11)
-            fullLog += "\n"
+    fullLog = _logHeader(f"Loaded: {entry['identifier']}", timestamp)
+    line = '{:<14} {}\n'
+    fullLog += line.format("# of points", entry["numPoints"])
+    fullLog += line.format("# of features", entry["numFeatures"])
+    for title, val in entry.items():
+        if (title not in ['identifier', 'numPoints', 'numFeatures']
+                and val is not None):
+            fullLog += title + ' ' * (15 - len(title))
+            fullLog += textwrap.fill(str(val), 64, subsequent_indent=" "*15)
+            fullLog += '\n'
+    return fullLog
+
+def _buildTrainedLearnerLogString(timestamp, entry):
+    fullLog = _logHeader(f"Loaded: {entry['identifier']}", timestamp)
+    fullLog += _formatSessionLine("Learner name", entry["learnerName"])
+    if entry.get('learnerArgs', None) is not None:
+        argString = "Arguments: "
+        argString += _dictToKeywordString(entry["learnerArgs"])
+        fullLog += textwrap.fill(argString, 79, subsequent_indent=" "*11)
+        fullLog += "\n"
     return fullLog
 
 def _buildPrepLogString(timestamp, entry):
     """
     Constructs the string that will be output for prep logTypes.
     """
-    function = f"{entry['object']}.{entry['function']}"
+    function = f"{entry['identifier']}.{entry['function']}"
     fullLog = _logHeader(function, timestamp)
     if entry['arguments']:
         argString = "Arguments: "
         argString += _dictToKeywordString(entry["arguments"])
         fullLog += textwrap.fill(argString, 79, subsequent_indent=" "*11)
         fullLog += "\n"
+    if 'returned' in entry:
+        argString = "Returned: " + str(entry["returned"])
+        fullLog += textwrap.fill(argString, 79, subsequent_indent=" "*10)
+        fullLog += "\n"
     return fullLog
 
-def _buildDataLogString(timestamp, entry):
+def _buildReportLogString(timestamp, entry):
     """
-    Constructs the string that will be output for data logTypes.
+    Constructs the string that will be output for report logTypes.
     """
     reportName = entry["reportType"].capitalize() + " Report"
     fullLog = _logHeader(reportName, timestamp)
@@ -919,17 +1033,22 @@ def _buildRunLogString(timestamp, entry):
         fullLog += textwrap.fill(argString, 79, subsequent_indent=" "*11)
         fullLog += "\n"
     # randomSeed
-    fullLog += "Random Seed: " + str(entry["randomSeed"])
-    fullLog += "\n"
+    if entry.get("randomSeed", False):
+        fullLog += "Random Seed: " + str(entry["randomSeed"])
+        fullLog += "\n"
     # extraInfo
     if entry.get("extraInfo", False):
-        fullLog += "Extra Info: "
-        fullLog += _dictToKeywordString(entry["extraInfo"])
-        fullLog += "\n"
+        for key, value in entry["extraInfo"].items():
+            fullLog += f'{key}: {value}'
+            fullLog += "\n"
     # metric data
     if entry.get("metrics", False):
         fullLog += "Metrics: "
         fullLog += _dictToKeywordString(entry["metrics"])
+        fullLog += "\n"
+    # returned objects (apply)
+    if entry.get("returned", False):
+        fullLog += "Returned: " + entry["returned"]
         fullLog += "\n"
 
     return fullLog
@@ -1031,7 +1150,7 @@ def _logHeader(left, right):
     lineLog += f"{left:60}{right:>19}\n"
     return lineLog
 
-def _buildArgDict(func, *args, **kwargs):
+def _buildArgDict(func, logIDs, *args, **kwargs):
     """
     Creates the dictionary of arguments for the prep logType. Adds all
     required arguments and any keyword arguments that are not the
@@ -1048,36 +1167,36 @@ def _buildArgDict(func, *args, **kwargs):
     argNames = argNames[1:] # ignore self arg
     nameArgMap = {}
     for name, arg in zip(argNames, args):
-        if callable(arg):
-            nameArgMap[name] = _extractFunctionString(arg)
-        elif isinstance(arg, nimble.core.data.Base):
-            if arg.name is not None:
-                nameArgMap[name] = arg.name
-            else:
-                nameArgMap[name] = arg.getTypeString()
-        else:
-            nameArgMap[name] = str(arg)
+        nameArgMap[name] = arg
+    nameArgMap.update(kwargs)
 
     defaultDict = {}
     if defaults:
         startDefaults = len(argNames) - len(defaults)
         defaultArgs = argNames[startDefaults:]
         for name, value in zip(defaultArgs, defaults):
-            if name != 'useLog':
-                defaultDict[name] = str(value)
+            defaultDict[name] = value
 
     argDict = {}
     for name, arg in nameArgMap.items():
-        if name not in defaultDict:
-            argDict[name] = arg
-        elif arg != defaultDict[name]:
-            argDict[name] = arg
-    for name, value in kwargs.items():
-        value = str(value)
-        if name in defaultDict and value != defaultDict[name]:
-            argDict[name] = value
+        if name in defaultDict:
+            try:
+                if arg == defaultDict[name]:
+                    continue
+            except TypeError:
+                pass
+        if callable(arg):
+            string = _extractFunctionString(arg)
+        elif isinstance(arg, nimble.core.data.Base):
+            if arg.name is not None:
+                string = arg.name
+                logIDs.append(arg.logID)
+            else:
+                string = arg.logID
         else:
-            argDict[name] = value
+            string = str(arg)
+
+        argDict[name] = string
 
     return argDict
 
@@ -1132,7 +1251,8 @@ def _lambdaFunctionString(function):
     return lambdaString
 
 logBuilders = {'load': (_buildLoadLogString, 1),
-               'data': (_buildDataLogString, 1),
+               'tl': (_buildTrainedLearnerLogString, 1),
+               'report': (_buildReportLogString, 1),
                'prep': (_buildPrepLogString, 2),
                'run': (_buildRunLogString, 2),
                'deepRun': (_buildRunLogString, 3),
@@ -1234,3 +1354,23 @@ def cleanThenReInitName(newName):
     nimble.core.logger.active.cleanup()
     currLoc = nimble.settings.get("logger", 'location')
     nimble.core.logger.active = SessionLogger(currLoc, newName)
+
+class LogID:
+    """
+    Descriptor to generate an id for user objects.
+
+    Best practice is to only call the object attribute associated with
+    this descriptor when the logging is occurring. Calling it within the
+    object methods can generate unused IDs and sequential ID ordering in
+    the log will be lost.
+    """
+    def __init__(self, idString):
+        self.idString = idString
+        self.idNumbers = itertools.count()
+
+    def __get__(self, obj, objtype=None):
+        if obj is None: # if getting from class not instance
+            return None
+        if not hasattr(obj, '_logID'):
+            obj._logID = next(self.idNumbers)
+        return f'_{self.idString}_{obj._logID}_'

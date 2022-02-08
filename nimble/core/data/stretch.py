@@ -237,9 +237,11 @@ class StretchSparse(Stretch):
     def _stretchArithmetic_implementation(self, opName, other):
         if not isinstance(other, Stretch):
             if self._source.shape[0] == 1 and other.shape[0] > 1:
-                lhs = self._source.points.repeat(other.shape[0], True)
+                lhs = self._source.points.repeat(other.shape[0], True,
+                                                 useLog=False)
             elif self._source.shape[1] == 1 and other.shape[1] > 1:
-                lhs = self._source.features.repeat(other.shape[1], True)
+                lhs = self._source.features.repeat(other.shape[1], True,
+                                                   useLog=False)
             else:
                 lhs = self._source
             rhs = other.copy()
@@ -247,12 +249,12 @@ class StretchSparse(Stretch):
         elif self._numPts == 1:
             selfFts = len(self._source.features)
             otherPts = len(other._source.points)
-            lhs = self._source.points.repeat(otherPts, True)
-            rhs = other._source.features.repeat(selfFts, True)
+            lhs = self._source.points.repeat(otherPts, True, useLog=False)
+            rhs = other._source.features.repeat(selfFts, True, useLog=False)
         else:
             selfPts = len(self._source.points)
             otherFts = len(other._source.features)
-            rhs = other._source.points.repeat(selfPts, True)
-            lhs = self._source.features.repeat(otherFts, True)
+            rhs = other._source.points.repeat(selfPts, True, useLog=False)
+            lhs = self._source.features.repeat(otherFts, True, useLog=False)
 
         return lhs._binaryOperations_implementation(opName, rhs)
