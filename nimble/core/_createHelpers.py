@@ -2333,7 +2333,6 @@ def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
         secondRow = next(rowReader)
         while secondRow == []:
             secondRow = next(rowReader)
-        print(firstRow, secondRow)
         firstDataRow = []
         secondDataRow = []
         for i, (first, second) in enumerate(zip(firstRow, secondRow)):
