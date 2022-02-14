@@ -17,7 +17,7 @@ In this example we will learn about:
 
 * [Creating a simple neural network](#Simple-neural-network)
 * [Using objects from other packages as training parameters](#Simple-neural-network)
-* [Creating a Convolutional Neural Network](#Convolutional Neural Network)
+* [Creating a Convolutional Neural Network](#Convolutional-Neural-Network)
 
 [Open this example in Google Colab][colab]\
 [Download this example as a script or notebook][files]\
