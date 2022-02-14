@@ -2321,15 +2321,9 @@ def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
     point and/or feature names will be extracted from the data.
     """
     startPosition = ioStream.tell()
-
-    # walk past all the comments
-    currLine = "#"
-    while currLine.startswith('#'):
-        currLine = ioStream.readline()
-
+    _ = _advancePastComments(ioStream)
     # Use the robust csv reader to read the first two lines (if available)
     # these are saved to use in further autodetection
-    ioStream.seek(startPosition)
     rowReader = csv.reader(ioStream, dialect)
     possiblePtNames = False
     try:
@@ -2367,14 +2361,6 @@ def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
     ioStream.seek(startPosition)
 
     return pointNames, featureNames, trackPoints
-
-
-def _filterCSVRow(row):
-    if len(row) == 0:
-        return False
-    if row[0] == '\n':
-        return False
-    return True
 
 
 def _advancePastComments(ioStream):
@@ -2757,7 +2743,7 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
     # how many are skipped
     skippedLines = _advancePastComments(ioStream)
     # remake the file iterator to ignore empty lines
-    filtered = filter(_filterCSVRow, ioStream)
+    filtered = filter(lambda row: row[0] != '\n', ioStream)
     # send that line iterator to the csv reader
     lineReader = csv.reader(filtered, dialect)
 
