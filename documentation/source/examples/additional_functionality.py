@@ -16,8 +16,8 @@ wifi signal strength data.
 In this example we will learn about:
 
 * [Changing Nimble's configurable settings](#Configuration)
-* [Nimble's logging basics](#logging)
-* [Randomness control](#randomness)
+* [Nimble's logging basics](#Logging)
+* [Randomness control](#Randomness)
 * [Creating a CustomLearner](#Custom-Learners)
 * [Deep Logging for cross-validation](#Cross-Validation-Deep-Logging)
 * [Viewing existing logs](#Viewing-existing-logs)

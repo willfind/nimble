@@ -15,8 +15,8 @@ example, [0,0,0,1,0,0,0,0,0,0] is a 3 and [0,0,0,0,0,0,0,0,0,1] is a 9.
 
 In this example we will learn about:
 
-* [Creating a simple neural network](#Simple neural network)
-* [Using objects from other packages as training parameters](#Simple neural network)
+* [Creating a simple neural network](#Simple-neural-network)
+* [Using objects from other packages as training parameters](#Simple-neural-network)
 * [Creating a Convolutional Neural Network](#Convolutional Neural Network)
 
 [Open this example in Google Colab][colab]\

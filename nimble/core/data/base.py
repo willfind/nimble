@@ -1232,11 +1232,21 @@ class Base(ABC):
         split, organize, categorize, groupby, variable, dimension,
         attribute, predictor
         """
+        # Numbers coming from a float dtyped object that are equivalent to
+        # ints are assumed to be int valued labels, and formatted as such.
+        def prettyKey(val):
+            if isinstance(val, str):
+                return val
+            if isinstance(val, numbers.Number):
+                iVal = int(val)
+                return iVal if iVal == val else val
+            return val
+
         def findKey1(point, by):#if by is a string or int
-            return point[by]
+            return prettyKey(point[by])
 
         def findKey2(point, by):#if by is a list of string or a list of int
-            return tuple(point[i] for i in by)
+            return tuple(prettyKey(point[i]) for i in by)
 
         #if by is a list, then use findKey2; o.w. use findKey1
         if isinstance(by, (str, numbers.Number)):
