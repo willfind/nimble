@@ -19,8 +19,8 @@ all of the data from our 8 original files.
 
 In this example we will learn about:
 
-* [Combining data objects together](#Combining the data)
-* [Applying tidy data functions](#Tidying the data)
+* [Combining data objects together](#Combining-the-data)
+* [Applying tidy data functions](#Tidying-the-data)
 
 [Open this example in Google Colab][colab]\
 [Download this example as a script or notebook][files]\

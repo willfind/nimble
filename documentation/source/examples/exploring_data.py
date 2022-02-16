@@ -5,12 +5,12 @@
 
 Our dataset, `online_shoppers_intention_clean.csv`, stores data on the
 behaviors of visitors to an online shopping website. Our goal is to
-study this use behavior using a variety of Nimble features in order to
-extract useful insights.
+study this behavior via a variety of Nimble features in order to
+extract insights on the users.
 
 In this example we will learn about:
 
-* [Calculating statistics using the nimble.calculate module](#Exploring-data-through-Nimble's-calculate-module)
+* [Calculating statistics using the nimble.calculate module](#Exploring-data-through-Nimble%E2%80%99s-calculate-module)
 * [Calculating statistics using data object methods](#Exploring-data-through-data-object-methods)
 * [Plotting data](#Exploring-data-through-plotting)
 
