@@ -4,7 +4,9 @@ Metrics available for binary classification.
 
 from nimble.exceptions import InvalidArgumentValue
 from .similarity import confusionMatrix
+from .utility import performanceFunction
 
+@performanceFunction('max')
 def truePositive(knownValues, predictedValues):
     """
     Number of predicted positive values that were known to be positive.
@@ -12,8 +14,7 @@ def truePositive(knownValues, predictedValues):
     confMtx = _getBinaryConfusionMatrix(knownValues, predictedValues)
     return _getTruePositive(confMtx)
 
-truePositive.optimal = 'max'
-
+@performanceFunction('max')
 def trueNegative(knownValues, predictedValues):
     """
     Number of predicted negative values that were known to be negative.
@@ -21,8 +22,7 @@ def trueNegative(knownValues, predictedValues):
     confMtx = _getBinaryConfusionMatrix(knownValues, predictedValues)
     return _getTrueNegative(confMtx)
 
-trueNegative.optimal = 'max'
-
+@performanceFunction('min')
 def falsePositive(knownValues, predictedValues):
     """
     Number of predicted positive values that were known to be negative.
@@ -30,8 +30,7 @@ def falsePositive(knownValues, predictedValues):
     confMtx = _getBinaryConfusionMatrix(knownValues, predictedValues)
     return _getFalsePositive(confMtx)
 
-falsePositive.optimal = 'min'
-
+@performanceFunction('min')
 def falseNegative(knownValues, predictedValues):
     """
     Number of predicted negative values that were known to be positive.
@@ -39,8 +38,7 @@ def falseNegative(knownValues, predictedValues):
     confMtx = _getBinaryConfusionMatrix(knownValues, predictedValues)
     return _getFalseNegative(confMtx)
 
-falseNegative.optimal = 'min'
-
+@performanceFunction('max')
 def recall(knownValues, predictedValues):
     """
     The ratio of true positive values to known positive values.
@@ -48,8 +46,7 @@ def recall(knownValues, predictedValues):
     confMtx = _getBinaryConfusionMatrix(knownValues, predictedValues)
     return _getRecall(confMtx)
 
-recall.optimal = 'max'
-
+@performanceFunction('max')
 def precision(knownValues, predictedValues):
     """
     The ratio of true positive values to predicted positive values.
@@ -57,8 +54,7 @@ def precision(knownValues, predictedValues):
     confMtx = _getBinaryConfusionMatrix(knownValues, predictedValues)
     return _getPrecision(confMtx)
 
-precision.optimal = 'max'
-
+@performanceFunction('max')
 def specificity(knownValues, predictedValues):
     """
     The ratio of true negative values to known negative values.
@@ -66,8 +62,7 @@ def specificity(knownValues, predictedValues):
     confMtx = _getBinaryConfusionMatrix(knownValues, predictedValues)
     return _getSpecificity(confMtx)
 
-specificity.optimal = 'max'
-
+@performanceFunction('max')
 def balancedAccuracy(knownValues, predictedValues):
     """
     Accurracy measure accounting for imbalances in the label counts.
@@ -78,8 +73,7 @@ def balancedAccuracy(knownValues, predictedValues):
 
     return (recall_ + specificity_) / 2
 
-balancedAccuracy.optimal = 'max'
-
+@performanceFunction('max')
 def f1Score(knownValues, predictedValues):
     """
     The harmonic mean of precision and recall.
@@ -90,7 +84,6 @@ def f1Score(knownValues, predictedValues):
 
     return 2 * ((precision_ * recall_) / (precision_ + recall_))
 
-f1Score.optimal = 'max'
 
 ###########
 # Helpers #

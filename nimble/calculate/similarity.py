@@ -14,7 +14,7 @@ from nimble.core.data._dataHelpers import createDataNoValidation
 from .utility import performanceFunction
 
 
-@performanceFunction('max')
+@performanceFunction('max', 1)
 def cosineSimilarity(knownValues, predictedValues):
     """
     Calculate the cosine similarity between known and predicted values.
@@ -105,8 +105,9 @@ def covariance(X, X_T=None, sample=True):
     # pylint: disable=invalid-name
     return _nanCovCorr(X, X_T, sample)
 
-
-@performanceFunction('max', validate=False)
+# The following two performance functions make calls to validated functions
+# so do not repeat the validation.
+@performanceFunction('max', 1, validate=False)
 def fractionCorrect(knownValues, predictedValues):
     """
     Calculate how many values in predictedValues are equal to the
@@ -115,7 +116,7 @@ def fractionCorrect(knownValues, predictedValues):
     """
     return 1 - fractionIncorrect(knownValues, predictedValues)
 
-@performanceFunction('max', validate=False)
+@performanceFunction('max', 1, validate=False)
 def rSquared(knownValues, predictedValues):
     """
     Calculate the r-squared (or coefficient of determination) of the
