@@ -2358,13 +2358,16 @@ class Features(ABC):
             row = [i]
             quartileCalcs = None
             for stat in stats:
-                if stat in quartiles:
-                    if quartileCalcs is None:
-                        quartileCalcs = nimble.calculate.quartiles(ft)
-                    row.append(quartileCalcs[quartiles[stat]])
-                else:
-                    func = getattr(nimble.calculate, stat)
-                    row.append(func(ft))
+                try:
+                    if stat in quartiles:
+                        if quartileCalcs is None:
+                            quartileCalcs = nimble.calculate.quartiles(ft)
+                        row.append(quartileCalcs[quartiles[stat]])
+                    else:
+                        func = getattr(nimble.calculate, stat)
+                        row.append(func(ft))
+                except ValueError:
+                    row.append(np.nan)
 
             for func in extraStatisticFunctions:
                 row.append(func(ft))

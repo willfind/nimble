@@ -2265,7 +2265,8 @@ def _intFloatBoolOrString(inString):
 
 typeHierarchy = {bool: 0, int: 1, float: 2, str: 3}
 
-def _csvColTypeTracking(row, convertCols, nonNumericFeatures):
+def _csvColTypeTracking(row, convertCols, nonNumericFeatures,
+                        allEmptyFeatures):
     """
     Track the possible types of values in each column.
 
@@ -2291,10 +2292,18 @@ def _csvColTypeTracking(row, convertCols, nonNumericFeatures):
                 elif colType is bool:
                     delKeys.append(idx)
 
+    if allEmptyFeatures:
+        for idx in allEmptyFeatures:
+            if row[idx] != '':
+                delKeys.append(idx)
+
     if delKeys:
         for key in delKeys:
-            del convertCols[key]
-            nonNumericFeatures.append(key)
+            if key in convertCols:
+                del convertCols[key]
+                nonNumericFeatures.add(key)
+            else:
+                allEmptyFeatures.remove(key)
 
 def _colTypeConversion(row, convertCols, containsMissing):
     """
@@ -2797,9 +2806,8 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
         extractedPointNames = [None] * len(keepPoints)
 
     convertCols = None
-    nonNumericFeatures = []
-    # possibly remove last feature if all values are '' and '' is missing value
-    lastFtRemovable = not limitFeatures and emptyIsMissing
+    nonNumericFeatures = set()
+    allEmptyFeatures = set()
     possiblePtNames = set()
     # lineReader is now at the first line of data
     for i, row in enumerate(lineReader):
@@ -2866,9 +2874,12 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
                     if colType not in (str, type(None)):
                         convertCols[idx] = colType
                     else:
-                        nonNumericFeatures.append(idx)
+                        nonNumericFeatures.add(idx)
+                        if val == '':
+                            allEmptyFeatures.add(idx)
             else: # continue to track column types in subsequent rows
-                _csvColTypeTracking(row, convertCols, nonNumericFeatures)
+                _csvColTypeTracking(row, convertCols, nonNumericFeatures,
+                                    allEmptyFeatures)
 
             if keepPoints == 'all':
                 retData.append(row)
@@ -2886,10 +2897,13 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
                 retData[location] = row
                 if pointNames is True or trackPoints:
                     extractedPointNames[location] = ptName
-        if lastFtRemovable and row[-1] != '':
-            lastFtRemovable = False
+
         totalPoints = i + 1
 
+    if allEmptyFeatures and emptyIsMissing:
+        for idx in allEmptyFeatures:
+            convertCols[idx] = float
+            nonNumericFeatures.remove(idx)
     if trackPoints:
         pointNames = trackPoints
     if (keepPoints != 'all' and pointNames
@@ -2906,15 +2920,18 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
         msg += "found in the data"
         raise InvalidArgumentValue(msg)
 
-    # remove last feature of all missing values if no feature name is provided
-    if (lastFtRemovable and
-            (not retFNames or len(retFNames) == firstRowLength - 1
-             or (featureNames is True and retFNames[-1] is None))):
+    # remove last feature if all values are '' (all rows ended with delimiter),
+    # '' is missing value, and no feature name is provided
+    lastFtRemovable = (not limitFeatures and emptyIsMissing
+                       and firstRowLength - 1 in allEmptyFeatures)
+    noLastFtName = (not retFNames or len(retFNames) == firstRowLength - 1
+                    or (featureNames is True and retFNames[-1] is None))
+    if lastFtRemovable and noLastFtName:
         for row in retData:
             row.pop()
         if featureNames is True:
             retFNames.pop()
-        nonNumericFeatures.pop()
+        del convertCols[firstRowLength -1]
         firstRowLength -= 1
 
     if convertCols:
