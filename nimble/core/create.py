@@ -26,7 +26,7 @@ def data(source, pointNames='automatic', featureNames='automatic',
          keepFeatures='all', treatAsMissing=DEFAULT_MISSING,
          replaceMissingWith=np.nan, rowsArePoints=True,
          ignoreNonNumericalFeatures=False, inputSeparator='automatic',
-         copyData=True, useLog=None):
+         copyData=True, *, useLog=None):
     """
     Function to instantiate one of the Nimble data container types.
 
@@ -197,7 +197,7 @@ def data(source, pointNames='automatic', featureNames='automatic',
     ...     out = cd.write('1,2,3\\n4,5,6')
     >>> fromFile = nimble.data('simpleData.csv')
     >>> fromFile # doctest: +ELLIPSIS
-    <Matrix "simpleData.csv" 2pt x 3ft
+    <Matrix 2pt x 3ft
          0 1 2
        ┌──────
      0 │ 1 2 3
@@ -271,8 +271,7 @@ def data(source, pointNames='automatic', featureNames='automatic',
         msg += "be loaded"
         raise InvalidArgumentType(msg)
 
-    handleLogging(useLog, 'load', returnType, ret.getTypeString(),
-                  len(ret.points), len(ret.features), ret.name, ret.path)
+    handleLogging(useLog, 'load', ret, returnType=returnType)
     return ret
 
 
@@ -535,7 +534,7 @@ def identity(size, pointNames='automatic', featureNames='automatic',
                        returnType=returnType, name=name, useLog=False)
 
 
-def loadTrainedLearner(source, useLog=None):
+def loadTrainedLearner(source, *, useLog=None):
     """
     Load nimble TrainedLearner object.
 
@@ -573,8 +572,7 @@ def loadTrainedLearner(source, useLog=None):
         msg = 'File does not contain a valid Nimble TrainedLearner object.'
         raise InvalidArgumentType(msg)
 
-    handleLogging(useLog, 'load', None, "TrainedLearner",
-                  learnerName=ret.learnerName, learnerArgs=ret.arguments)
+    handleLogging(useLog, 'tl', ret)
     return ret
 
 def fetchFile(source, overwrite=False):

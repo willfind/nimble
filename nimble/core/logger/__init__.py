@@ -10,5 +10,6 @@ from .session_logger import handleLogging
 from .session_logger import loggingEnabled
 from .session_logger import deepLoggingEnabled
 from .session_logger import stringToDatetime
+from .session_logger import LogID
 
 active = None

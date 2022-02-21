@@ -1,5 +1,5 @@
 Example of data file structure
-"downtown_am_min.csv" 712pt x 13ft
+712pt x 13ft
         'date'   'hr0'  'hr1'  'hr2'  'hr3'  'hr4'  'hr5'  'hr6'  'hr7'  'hr8'  'hr9'  'hr10' 'hr11'
     ┌───────────────────────────────────────────────────────────────────────────────────────────────
   0 │ 2011-01-01 2.840  2.019         2.839  2.838  2.840  2.020  1.199  2.839  6.119  8.579  7.760
@@ -11,7 +11,7 @@ Example of data file structure
 711 │ 2012-12-31 0.380  0.379  -0.440 -0.441 -1.261 -0.441 -0.440 -0.440 -1.260 0.379  1.199  2.020
 
 Downtown data merged on date
-"downtown_am_min.csv" 717pt x 25ft
+717pt x 25ft
         'date'   'hr0'  'hr1'  'hr2'  'hr3' 'hr4'  'hr5'  'hr6'  'hr7'  ── 'hr16' 'hr17' 'hr18' 'hr19' 'hr20' 'hr21' 'hr22' 'hr23'
     ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
   0 │ 2011-01-01 2.840  2.019         2.839 2.838  2.840  2.020  1.199  ── 10.219 11.039 10.219 10.219 9.399  9.399  9.399  11.859
@@ -23,7 +23,7 @@ Downtown data merged on date
 716 │ 2012-04-16                                                        ── 25.800 25.798 25.799 24.159 23.339 20.878 20.880 21.699
 
 Downtown combined extreme data
-"downtown_am_min.csv" 1430pt x 26ft
+1430pt x 26ft
          'date'   'extreme' 'hr0'  'hr1'  'hr2'  'hr3' 'hr4'  'hr5'  ── 'hr16' 'hr17' 'hr18' 'hr19' 'hr20' 'hr21' 'hr22' 'hr23'
      ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
    0 │ 2011-01-01    min    2.840  2.019         2.839 2.838  2.840  ── 10.219 11.039 10.219 10.219 9.399  9.399  9.399  11.859
@@ -35,7 +35,7 @@ Downtown combined extreme data
 1429 │ 2012-09-25    max                                             ── 20.061 20.060 19.240 18.422 17.602 17.600 17.600 17.601
 
 Fully merged (untidy) data
-"combined temperature data" 2840pt x 27ft
+"combinedTemperatureData" 2840pt x 27ft
          'date'   'station' 'extreme' 'hr0' 'hr1' 'hr2'  'hr3'  'hr4'  ── 'hr16' 'hr17' 'hr18' 'hr19' 'hr20' 'hr21' 'hr22' 'hr23'
      ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
    0 │ 2011-01-01  downtown    min    2.840 2.019        2.839  2.838  ── 10.219 11.039 10.219 10.219 9.399  9.399  9.399  11.859
@@ -51,7 +51,7 @@ Fully merged (untidy) data
 2839 │ 2012-12-31  airport     max    0.391 0.421 -0.399 -0.400 -1.248 ── 3.681  3.681  3.661  3.661  3.682  3.681  3.670  3.651
 
 Split points by collapsing the hour features
-"combined temperature data" 68160pt x 5ft
+"combinedTemperatureData" 68160pt x 5ft
           'date'   'station' 'extreme' 'hour' 'temp'
       ┌─────────────────────────────────────────────
     0 │ 2011-01-01  downtown    min     hr0   2.840
@@ -67,7 +67,7 @@ Split points by collapsing the hour features
 68159 │ 2012-12-31  airport     max     hr9   0.422
 
 Date and hour sorted
-"combined temperature data" 68160pt x 5ft
+"combinedTemperatureData" 68160pt x 5ft
           'date'   'station' 'extreme' 'hour' 'temp'
       ┌─────────────────────────────────────────────
     0 │ 2011-01-01  downtown    min      0    2.840
@@ -83,7 +83,7 @@ Date and hour sorted
 68159 │ 2012-12-31  airport     max      23   3.651
 
 Combined points by expanding extreme feature
-"combined temperature data" 35064pt x 5ft
+"combinedTemperatureData" 35064pt x 5ft
           'date'   'station' 'min' 'max' 'hour'
       ┌────────────────────────────────────────
     0 │ 2011-01-01  downtown 2.840 2.840   0
@@ -99,7 +99,7 @@ Combined points by expanding extreme feature
 35063 │ 2012-12-31  airport  3.649 3.651   23
 
 Split features by parsing the date feature
-"combined temperature data" 35064pt x 7ft
+"combinedTemperatureData" 35064pt x 7ft
         'year' 'month' 'day' 'station' 'min' 'max' 'hour'
       ┌──────────────────────────────────────────────────
     0 │  2011     01     01   downtown 2.840 2.840   0

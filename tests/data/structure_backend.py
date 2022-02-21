@@ -7059,7 +7059,6 @@ class StructureModifying(StructureShared):
         featureNames = ['one', 'two', 'three']
         pNames = ['1', 'one', '2', '0']
         orig = self.constructor(data1, pointNames=pNames, featureNames=featureNames)
-        origID = orig._id
         idOrig = id(orig)
 
         data2 = [[-1, -2, -3, -4]]
@@ -7069,7 +7068,6 @@ class StructureModifying(StructureShared):
 
         ret = orig._referenceFrom(other)  # RET CHECK
 
-        assert orig._id == origID
         assert id(orig) == idOrig
         assert orig._data is other._data
         assert '-1' in orig.points.getNames()
@@ -7082,7 +7080,6 @@ class StructureModifying(StructureShared):
         pNames = ['1', 'one', '2', '0']
         orig = self.constructor(data1, name='orig', pointNames=pNames,
                                 featureNames=featureNames)
-        origID = orig._id
         idOrig = id(orig)
 
         data2 = [[-1, -2, -3, -4]]
@@ -7093,7 +7090,6 @@ class StructureModifying(StructureShared):
 
         orig._referenceFrom(other.view())
 
-        assert orig._id == origID
         assert id(orig) == idOrig
         assert orig._data is not other._data # copy must be made for view
         assert orig == other

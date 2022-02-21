@@ -1122,10 +1122,6 @@ def test_data_objName_and_path_CSV():
             relExp = os.path.relpath(ret.absolutePath)
             assert ret.relativePath == relExp
 
-            retDefName = nimble.data(source=tmpCSV.name)
-            tokens = tmpCSV.name.rsplit(os.path.sep)
-            assert retDefName.name == tokens[len(tokens) - 1]
-
 
 def test_data_objName_and_path_MTXArr():
     for t in returnTypes:
@@ -1147,10 +1143,6 @@ def test_data_objName_and_path_MTXArr():
             relExp = os.path.relpath(ret.absolutePath)
             assert ret.relativePath == relExp
 
-            retDefName = nimble.data(source=tmpMTXArr.name)
-            tokens = tmpMTXArr.name.rsplit(os.path.sep)
-            assert retDefName.name == tokens[len(tokens) - 1]
-
 
 def test_data_objName_and_path_MTXCoo():
     for t in returnTypes:
@@ -1171,10 +1163,6 @@ def test_data_objName_and_path_MTXCoo():
 
             relExp = os.path.relpath(ret.absolutePath)
             assert ret.relativePath == relExp
-
-            retDefName = nimble.data(source=tmpMTXCoo.name)
-            tokens = tmpMTXCoo.name.rsplit(os.path.sep)
-            assert retDefName.name == tokens[len(tokens) - 1]
 
 
 ###################################
@@ -2000,7 +1988,6 @@ def test_data_GZIP_passedOpen():
             tempGZIP.seek(0)
             fromGZIP = nimble.data(tempGZIP, returnType=t)
             assert fromList == fromGZIP
-            assert fromGZIP.name == os.path.basename(tempGZIP.name)
             assert fromGZIP.path  == tempGZIP.name
             assert fromGZIP.absolutePath == tempGZIP.name
             assert fromGZIP.relativePath == os.path.relpath(tempGZIP.name)
@@ -2014,7 +2001,6 @@ def test_data_ZIP_passedOpen():
             tempZIP.seek(0)
             fromZIP = nimble.data(tempZIP, returnType=t)
             assert fromList == fromZIP
-            assert fromZIP.name == os.path.basename(tempZIP.name)
             assert fromZIP.path  == tempZIP.name
             assert fromZIP.absolutePath == tempZIP.name
             assert fromZIP.relativePath == os.path.relpath(tempZIP.name)
@@ -2031,7 +2017,6 @@ def test_data_TAR_passedOpen():
             tempTAR.seek(0)
             fromZIP = nimble.data(tempTAR, returnType=t)
             assert fromList == fromZIP
-            assert fromZIP.name == os.path.basename(tempTAR.name)
             assert fromZIP.path  == tempTAR.name
             assert fromZIP.absolutePath == tempTAR.name
             assert fromZIP.relativePath == os.path.relpath(tempTAR.name)

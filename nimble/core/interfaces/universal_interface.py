@@ -26,7 +26,7 @@ from nimble._utility import mergeArguments
 from nimble._utility import prettyListString
 from nimble._utility import prettyDictString
 from nimble._dependencies import checkVersion
-from nimble.core.logger import handleLogging
+from nimble.core.logger import handleLogging, LogID
 from nimble.core.configuration import configErrors
 from nimble.core._learnHelpers import computeMetrics
 from nimble.core._learnHelpers import validateLearningArguments, trackEntry
@@ -821,6 +821,8 @@ class TrainedLearner(object):
     --------
     nimble.train, nimble.Tuning
     """
+    logID = LogID('TRAINEDLEARNER')
+
     def __init__(self, learnerName, arguments, transformedArguments,
                  customDict, backend, interfaceObject, has2dOutput,
                  tuning, trainXShape, trainYNames, randomSeed):
@@ -878,10 +880,11 @@ class TrainedLearner(object):
         # Set if using TrainedLearners
         self.label = None
 
+
     @captureOutput
     @trackEntry
     def test(self, testX, testY, performanceFunction, arguments=None,
-             output='match', scoreMode='label', useLog=None, **kwarguments):
+             output='match', scoreMode='label', *, useLog=None, **kwarguments):
         """
         Evaluate the performance of the trained learner.
 
@@ -993,21 +996,16 @@ class TrainedLearner(object):
         for key, value in zip([performanceFunction], [performance]):
             metrics[key.__name__] = value
 
-        fullName = self._interface.getCanonicalName() + self.learnerName
-        # Signature:
-        # (nimbleFunction, trainData, trainLabels, testData, testLabels,
-        # learnerFunction, arguments, metrics, extraInfo=None, folds=None)
-        handleLogging(useLog, 'run', "TrainedLearner.test", trainData=None,
-                      trainLabels=None, testData=testX, testLabels=testY,
-                      learnerFunction=fullName, arguments=mergedArguments,
-                      metrics=metrics, time=totalTime)
+        handleLogging(useLog, 'TLrun', self, "test", mergedArguments,
+                      testData=testX, testLabels=testY, time=totalTime,
+                      metrics=metrics)
 
         return performance
 
     @captureOutput
     @trackEntry
     def apply(self, testX, arguments=None, output='match', scoreMode='label',
-              useLog=None, **kwarguments):
+              *, useLog=None, **kwarguments):
         """
         Apply the learner to the test data.
 
@@ -1159,11 +1157,8 @@ class TrainedLearner(object):
 
         totalTime = time.process_time() - startTime
 
-        fullName = self._interface.getCanonicalName() + self.learnerName
-        handleLogging(useLog, 'run', "TrainedLearner.apply", trainData=None,
-                      trainLabels=None, testData=testX, testLabels=None,
-                      learnerFunction=fullName, arguments=mergedArguments,
-                      time=totalTime)
+        handleLogging(useLog, 'TLrun', self, "apply", mergedArguments,
+                      testData=testX, time=totalTime, returned=ret)
 
         return ret
 
@@ -1193,7 +1188,7 @@ class TrainedLearner(object):
 
     @captureOutput
     def retrain(self, trainX, trainY=None, arguments=None, randomSeed=None,
-                useLog=None, **kwarguments):
+                *, useLog=None, **kwarguments):
         """
         Train the model on new data.
 
@@ -1339,13 +1334,12 @@ class TrainedLearner(object):
         self._has2dOutput = has2dOutput
         self.tuning = None
 
-        handleLogging(useLog, 'run', 'TrainedLearner.retrain', trainX, trainY,
-                      None, None, self.learnerName, self.arguments,
-                      self.randomSeed)
+        handleLogging(useLog, 'TLrun', self, 'retrain', self.arguments, trainX,
+                      trainY, randomSeed=self.randomSeed)
 
     @captureOutput
     def incrementalTrain(self, trainX, trainY=None, randomSeed=None,
-                         useLog=None):
+                         *, useLog=None):
         """
         Extend the training of this learner with additional data.
 
@@ -1385,9 +1379,9 @@ class TrainedLearner(object):
             transformedTrainY, transformedArguments, randomSeed,
             self._customDict)
 
-        handleLogging(useLog, 'run', 'TrainedLearner.incrementalTrain', trainX,
-                      trainY, None, None, self.learnerName, self.arguments,
-                      self.randomSeed, None)
+        handleLogging(useLog, 'TLrun', self, 'incrementalTrain',
+                      self.arguments, trainX, trainY,
+                      randomSeed=self.randomSeed)
 
     @captureOutput
     def getAttributes(self):
@@ -1588,7 +1582,7 @@ class TrainedLearners(TrainedLearner):
 
     @captureOutput
     def apply(self, testX, arguments=None, output='match', scoreMode='label',
-              useLog=None, **kwarguments):
+              *, useLog=None, **kwarguments):
         """
         Apply the learner to the test data.
 
@@ -1669,7 +1663,7 @@ class TrainedLearners(TrainedLearner):
             for trainedLearner in self._trainedLearnersList:
                 oneLabelResults = trainedLearner.apply(testX, arguments,
                                                        output, 'label',
-                                                       useLog)
+                                                       useLog=useLog)
                 label = trainedLearner.label
                 # put all results into one Base container; same type as trainX
                 if rawPredictions is None:
@@ -1753,7 +1747,7 @@ class TrainedLearners(TrainedLearner):
             for trainedLearner in self._trainedLearnersList:
                 # train classifier on that data; apply it to the test set
                 partialResults = trainedLearner.apply(testX, arguments, output,
-                                                      'label', useLog)
+                                                      'label', useLog=useLog)
                 # put predictions into table of predictions
                 if rawPredictions is None:
                     rawPredictions = partialResults.copy(to="List")

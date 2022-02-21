@@ -2080,12 +2080,6 @@ def createDataFromFile(
 
             response = _getURLResponse(urlManager.source)
             path = source
-            if name is None:
-                if "Content-Disposition" in response.headers:
-                    contentDisp = response.headers["Content-Disposition"][0]
-                    name = contentDisp.split('filename=')[1]
-                else:
-                    name = source.split("/")[-1]
 
             content = response.content
             if response.apparent_encoding is not None:
@@ -2170,10 +2164,6 @@ def createDataFromFile(
             absPath = os.path.abspath(path)
             relPath = path
             pathsToPass = (absPath, relPath)
-
-    if path is not None and name is None:
-        tokens = path.rsplit(os.path.sep)
-        name = tokens[-1]
 
     extracted = (pointNames is True, featureNames is True)
     if selectSuccess:

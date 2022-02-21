@@ -17,7 +17,7 @@ from nimble.core._createHelpers import validateReturnType, initDataObject
 pythonRandom = random.Random(42)
 numpyRandom = np.random.RandomState(42) # pylint: disable=no-member
 
-def setSeed(seed, useLog=None):
+def setSeed(seed, *, useLog=None):
     """
     Set the seeds on all sources of randomness in nimble.
 
@@ -44,7 +44,7 @@ setSeed._settable = True
 
 def data(numPoints, numFeatures, sparsity, pointNames='automatic',
          featureNames='automatic', elementType='float', returnType=None,
-         name=None, randomSeed=None, useLog=None):
+         name=None, randomSeed=None, *, useLog=None):
     """
     Generate a data object with random contents.
 
@@ -202,9 +202,7 @@ def data(numPoints, numFeatures, sparsity, pointNames='automatic',
                          featureNames=featureNames, returnType=returnType,
                          name=name, copyData=False, skipDataProcessing=True)
 
-    handleLogging(useLog, 'load', returnType, "Random " + ret.getTypeString(),
-                  numPoints, numFeatures, name, sparsity=sparsity,
-                  seed=randomSeed)
+    handleLogging(useLog, 'load', ret, sparsity=sparsity, seed=randomSeed)
 
     return ret
 
@@ -259,7 +257,7 @@ def _stillDefaultState():
 #return _stillDefault
 
 @contextmanager
-def alternateControl(seed=None, useLog=None):
+def alternateControl(seed=None, *, useLog=None):
     """
     Context manager to operate outside of the current random state.
 

@@ -14,6 +14,7 @@ import os.path
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 import shutil
+import re
 
 import numpy as np
 
@@ -22,7 +23,7 @@ from nimble import match
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.exceptions import InvalidArgumentValueCombination
-from nimble.core.logger import handleLogging
+from nimble.core.logger import handleLogging, LogID
 from nimble.match import QueryString
 from nimble._utility import cloudpickle, h5py, plt
 from nimble._utility import isDatetime
@@ -48,6 +49,7 @@ from ._dataHelpers import looksNumeric, checkNumeric
 from ._dataHelpers import mergeNames, mergeNonDefaultNames
 from ._dataHelpers import binaryOpNamePathMerge
 from ._dataHelpers import indicesSplit
+from ._dataHelpers import prepLog
 
 def to2args(f):
     """
@@ -77,17 +79,17 @@ class Base(ABC):
     methods that apply point-by-point and feature-by-feature,
     respectively.
     """
-    _id = 0
+    logID = LogID('NIMBLE')
 
     def __init__(self, shape, pointNames=None, featureNames=None, name=None,
                  paths=(None, None), **kwds):
         """
         Class defining important data manipulation operations.
 
-        Specifically, this includes setting the object _id, name, shape,
-        originating paths for the data, and sets the point and feature axis
-        objects. Note: this method (as should all other __init__ methods in
-        this hierarchy) makes use of super().
+        Specifically, this includes setting the object name, shape,
+        originating paths for the data, and sets the point and feature
+        axis objects. Note: this method (as should all other __init__
+        methods in this hierarchy) makes use of super().
 
         Parameters
         ----------
@@ -112,9 +114,6 @@ class Base(ABC):
             Note, however, that this class is the root of the object
             hierarchy as statically defined.
         """
-        self._id = Base._id
-        Base._id += 1
-
         self._dims = list(shape)
         self._name = name
 
@@ -264,9 +263,13 @@ class Base(ABC):
 
     @name.setter
     def name(self, value):
-        if not isinstance(value, str) and value is not None:
-            msg = "The name of an object may only be a string or None"
-            raise ValueError(msg)
+        if value is not None:
+            if not isinstance(value, str):
+                msg = "The name of an object may only be a string or None"
+                raise InvalidArgumentType(msg)
+            if re.search(r'\s', value):
+                msg = "Names are not permitted to have whitespace"
+                raise InvalidArgumentValue(msg)
         self._name = value
 
     @property
@@ -416,7 +419,9 @@ class Base(ABC):
     # Higher Order Operations #
     ###########################
     @limitedTo2D
-    def replaceFeatureWithBinaryFeatures(self, featureToReplace, useLog=None):
+    @prepLog
+    def replaceFeatureWithBinaryFeatures(self, featureToReplace, *,
+                                         useLog=None): # pylint: disable=unused-argument
         """
         Create binary features for each unique value in a feature.
 
@@ -496,14 +501,12 @@ class Base(ABC):
             # insert data at same index of the original feature
             self.features.insert(index, binaryObj, useLog=False)
 
-        handleLogging(useLog, 'prep', "replaceFeatureWithBinaryFeatures",
-                      self.getTypeString(),
-                      Base.replaceFeatureWithBinaryFeatures, featureToReplace)
-
         return ftNames
 
     @limitedTo2D
-    def transformFeatureToIntegers(self, featureToConvert, useLog=None):
+    @prepLog
+    def transformFeatureToIntegers(self, featureToConvert, *,
+                                   useLog=None): # pylint: disable=unused-argument
         """
         Represent each unique value in a feature with a unique integer.
 
@@ -575,16 +578,13 @@ class Base(ABC):
 
         self.features.transform(applyMap, features=ftIndex, useLog=False)
 
-        handleLogging(useLog, 'prep', "transformFeatureToIntegers",
-                      self.getTypeString(), Base.transformFeatureToIntegers,
-                      featureToConvert)
-
         return {v: k for k, v in mapping.items()}
 
     @limitedTo2D
+    @prepLog
     def transformElements(self, toTransform, points=None, features=None,
-                          preserveZeros=False, skipNoneReturnValues=False,
-                          useLog=None):
+                          preserveZeros=False, skipNoneReturnValues=False, *,
+                          useLog=None): # pylint: disable=unused-argument
         """
         Modify each element using a function or mapping.
 
@@ -720,15 +720,13 @@ class Base(ABC):
 
         self._transform_implementation(transformer, points, features)
 
-        handleLogging(useLog, 'prep', 'transformElements',
-                      self.getTypeString(), Base.transformElements,
-                      toTransform, points, features, preserveZeros,
-                      skipNoneReturnValues)
 
     @limitedTo2D
+    @prepLog
     def calculateOnElements(self, toCalculate, points=None, features=None,
                             preserveZeros=False, skipNoneReturnValues=False,
-                            outputType=None, useLog=None):
+                            outputType=None, *,
+                            useLog=None): # pylint: disable=unused-argument
         """
         Apply a calculation to each element.
 
@@ -864,16 +862,12 @@ class Base(ABC):
         ret = self._calculate_backend(calculator, points, features,
                                       preserveZeros, outputType)
 
-        handleLogging(useLog, 'prep', 'calculateOnElements',
-                      self.getTypeString(), Base.calculateOnElements,
-                      toCalculate, points, features, preserveZeros,
-                      skipNoneReturnValues, outputType)
-
         return ret
 
     @limitedTo2D
-    def matchingElements(self, toMatch, points=None, features=None,
-                         useLog=None):
+    @prepLog
+    def matchingElements(self, toMatch, points=None, features=None, *,
+                         useLog=None): # pylint: disable=unused-argument
         """
         Identify values meeting the provided criteria.
 
@@ -982,9 +976,6 @@ class Base(ABC):
             fnames = [fnames[j] for j in ftIdx]
         ret.points.setNames(pnames, useLog=False)
         ret.features.setNames(fnames, useLog=False)
-
-        handleLogging(useLog, 'prep', 'matchingElements', self.getTypeString(),
-                      Base.matchingElements, toMatch, points, features)
 
         return ret
 
@@ -1161,7 +1152,9 @@ class Base(ABC):
         return self._countUnique_implementation(points, features)
 
     @limitedTo2D
-    def groupByFeature(self, by, countUniqueValueOnly=False, useLog=None):
+    @prepLog
+    def groupByFeature(self, by, countUniqueValueOnly=False, *,
+                       useLog=None): # pylint: disable=unused-argument
         """
         Group data object by one or more features.
 
@@ -1273,10 +1266,6 @@ class Base(ABC):
             for obj in res.values():
                 obj.features.delete(by, useLog=False)
 
-        handleLogging(useLog, 'prep', "groupByFeature",
-                      self.getTypeString(), Base.groupByFeature, by,
-                      countUniqueValueOnly)
-
         return res
 
     @limitedTo2D
@@ -1346,8 +1335,9 @@ class Base(ABC):
             with other._treatAs2D():
                 return self.hashCode() == other.hashCode()
 
-    def trainAndTestSets(self, testFraction, labels=None, randomOrder=True,
-                         useLog=None):
+    @prepLog
+    def trainAndTestSets(self, testFraction, labels=None, randomOrder=True, *,
+                         useLog=None): # pylint: disable=unused-argument
         """
         Divide the data into training and testing sets.
 
@@ -1495,8 +1485,8 @@ class Base(ABC):
         if labels is None:
             ret = trainX, testX
             if self.name is not None:
-                trainX.name = self.name + " train"
-                testX.name = self.name + " test"
+                trainX.name = self.name + "_train"
+                testX.name = self.name + "_test"
             else:
                 trainX.name = "train"
                 testX.name = "test"
@@ -1528,10 +1518,10 @@ class Base(ABC):
                 testY = testX.features.extract(toExtract, useLog=False)
 
             if self.name is not None:
-                trainX.name = self.name + " trainX"
-                testX.name = self.name + " testX"
-                trainY.name = self.name + " trainY"
-                testY.name = self.name + " testY"
+                trainX.name = self.name + "_trainX"
+                testX.name = self.name + "_testX"
+                trainY.name = self.name + "_trainY"
+                testY.name = self.name + "_testY"
             else:
                 trainX.name = "trainX"
                 testX.name = "testX"
@@ -1539,9 +1529,6 @@ class Base(ABC):
                 testY.name = "testY"
 
             ret = trainX, trainY, testX, testY
-
-        handleLogging(useLog, 'prep', "trainAndTestSets", self.getTypeString(),
-                      Base.trainAndTestSets, testFraction, labels, randomOrder)
 
         return ret
 
@@ -1551,7 +1538,7 @@ class Base(ABC):
     ########################################
     ########################################
 
-    def report(self, useLog=None):
+    def report(self, *, useLog=None):
         """
         Report containing information regarding the data in this object.
 
@@ -1602,7 +1589,7 @@ class Base(ABC):
         report = nimble.data(results, featureNames=fnames,
                              returnType=self.getTypeString(), useLog=False)
 
-        handleLogging(useLog, 'data', "summary", str(report))
+        handleLogging(useLog, 'report', "summary", str(report))
 
         return report
 
@@ -3112,7 +3099,9 @@ class Base(ABC):
     ##################################################################
     ##################################################################
     @limitedTo2D
-    def transpose(self, useLog=None):
+    @prepLog
+    def transpose(self, *,
+                  useLog=None): # pylint: disable=unused-argument
         """
         Invert the feature and point indices of the data.
 
@@ -3166,9 +3155,6 @@ class Base(ABC):
                             self.points._getNamesNoGeneration())
         self.points.setNames(ptNames, useLog=False)
         self.features.setNames(ftNames, useLog=False)
-
-        handleLogging(useLog, 'prep', "transpose", self.getTypeString(),
-                      Base.transpose)
 
     @property
     @limitedTo2D
@@ -3406,8 +3392,10 @@ class Base(ABC):
         return self.copy()
 
     @limitedTo2D
+    @prepLog
     def replaceRectangle(self, replaceWith, pointStart, featureStart,
-                         pointEnd=None, featureEnd=None, useLog=None):
+                         pointEnd=None, featureEnd=None, *,
+                         useLog=None): # pylint: disable=unused-argument
         """
         Replace values in the data with other values.
 
@@ -3530,10 +3518,6 @@ class Base(ABC):
         self._replaceRectangle_implementation(replaceWith, psIndex, fsIndex,
                                               peIndex, feIndex)
 
-        handleLogging(useLog, 'prep', "replaceRectangle",
-                      self.getTypeString(), Base.replaceRectangle, replaceWith,
-                      pointStart, featureStart, pointEnd, featureEnd)
-
 
     def _flattenNames(self, order):
         """
@@ -3564,7 +3548,9 @@ class Base(ABC):
                 ret.append(' | '.join([p, f]))
         return ret
 
-    def flatten(self, order='point', useLog=None):
+    @prepLog
+    def flatten(self, order='point', *,
+                useLog=None): # pylint: disable=unused-argument
         """
         Modify this object so that its values are in a single point.
 
@@ -3659,9 +3645,6 @@ class Base(ABC):
         self.features.setNames(fNames, useLog=False)
         self.points.setNames(['Flattened'], useLog=False)
 
-        handleLogging(useLog, 'prep', "flatten", self.getTypeString(),
-                      Base.flatten, order)
-
 
     def _unflattenNames(self):
         """
@@ -3714,7 +3697,9 @@ class Base(ABC):
 
 
     @limitedTo2D
-    def unflatten(self, dataDimensions, order='point', useLog=None):
+    @prepLog
+    def unflatten(self, dataDimensions, order='point', *,
+                  useLog=None): # pylint: disable=unused-argument
         """
         Adjust a single point or feature to contain multiple points.
 
@@ -3875,13 +3860,12 @@ class Base(ABC):
         self.points.setNames(pNames, useLog=False)
         self.features.setNames(fNames, useLog=False)
 
-        handleLogging(useLog, 'prep', "unflatten", self.getTypeString(),
-                      Base.unflatten, dataDimensions, order)
-
 
     @limitedTo2D
+    @prepLog
     def merge(self, other, point='strict', feature='union', onFeature=None,
-              force=False, useLog=None):
+              force=False, *,
+              useLog=None): # pylint: disable=unused-argument
         """
         Combine data from another object with this object.
 
@@ -4110,8 +4094,6 @@ class Base(ABC):
         else:
             self._genericMergeFrontend(other, point, feature, onFeature)
 
-        handleLogging(useLog, 'prep', "merge", self.getTypeString(),
-                      Base.merge, other, point, feature, onFeature, force)
 
     def _genericStrictMerge_implementation(self, other, point, feature,
                                            onFeature, force):
@@ -5167,15 +5149,9 @@ class Base(ABC):
     def _referenceFrom_implementation(self, other, kwargs):
         """
         Reinitialize the object with the new keyword arguments.
-
-        __init__ affects _id for this object and Base. self._id should stay
-        the same and Base._id should be not increment.
         """
         # pylint: disable=unused-argument
-        idVal = self._id
         self.__init__(**kwargs)
-        self._id = idVal
-        Base._id -= 1
 
     def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold,
                            quoteNames):

@@ -70,7 +70,7 @@ class ViewAccess(DataTestObject):
             testObject.transpose()
 
         with raises(TypeError, match="disallowed for View objects"):
-            testObject.replaceRectangle(self, [99, 99, 99], 0, 0, 0, 2)
+            testObject.replaceRectangle([99, 99, 99], 0, 0, 0, 2)
 
         with raises(TypeError, match="disallowed for View objects"):
             testObject.flatten()
