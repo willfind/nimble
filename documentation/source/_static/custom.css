@@ -34,3 +34,92 @@ table.align-default {
   color: inherit;
   text-decoration: underline;
 }
+
+/* Mirrors Bootstrap grid system, move table to the right on large screens */
+div.grid-container {
+  width: 100%;
+}
+
+div.grid-container .row {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+div.grid-container .row > * {
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (min-width: 1400px) {
+  div.grid-container .column-1 {
+    flex: 0 0 auto;
+    width: 44%;
+  }
+
+  div.grid-container .column-2 {
+    flex: 0 0 auto;
+    width: 55%;
+  }
+}
+
+table#data-table {
+  width: auto;
+  table-layout: fixed;
+  margin-left: 1rem;
+}
+
+table#data-table thead {
+  text-align: center;
+}
+
+table#data-table tr {
+  font-family: "Courier New", monospace;
+}
+
+table#data-table td {
+  width: auto;
+}
+
+img#floating-img, img#data-img {
+  width: 400px;
+  height: auto;
+  margin-right: 1rem;
+  margin-left: 1rem;
+}
+/* by default show the data object example image below the text */
+img#floating-img {
+  display: none;
+  float: right;
+}
+img#data-img {
+  display: block;
+  float: none;
+}
+/* show image floating for wide screens */
+@media screen and (min-width: 993px) {
+  img#floating-img {
+    display: block;
+  }
+  img#data-img {
+    display: none;
+  }
+}
+/* show image below text for smaller screens with sidebar menu */
+@media screen and (min-width: 877px) and (max-width: 992){
+  img#floating-img {
+    display: none;
+  }
+  img#data-img {
+    display: block;
+  }
+}
+/* show the image floating right when no sidebar and still adequate width */
+@media screen and (min-width: 712px) and (max-width: 876px) {
+  img#floating-img {
+    display: block;
+  }
+  img#data-img {
+    display: none;
+  }
+}

@@ -13,10 +13,17 @@ The final feature identifies which of four rooms the mobile device was
 in. Our goal will be to predict the room that the phone is in based on
 wifi signal strength data.
 
-[Open this example in Google Colab][colab]
+In this example we will learn about:
 
-[Download this example as a script or notebook][files]
+* [Changing Nimble's configurable settings](#Configuration)
+* [Nimble's logging basics](#Logging)
+* [Randomness control](#Randomness)
+* [Creating a CustomLearner](#Custom-Learners)
+* [Deep Logging for cross-validation](#Cross-Validation-Deep-Logging)
+* [Viewing existing logs](#Viewing-existing-logs)
 
+[Open this example in Google Colab][colab]\
+[Download this example as a script or notebook][files]\
 [Download the dataset for this example][datasets]
 
 [colab]: https://colab.research.google.com/drive/1CZecbz9Z2xR3auR7lj97cVWGIVTXKZmk?usp=sharing

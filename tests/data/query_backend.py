@@ -1953,6 +1953,22 @@ class QueryBackend(DataTestObject):
         assert expObjm == res['m']
 
     @noLogEntryExpected
+    def test_featureStatistics_groupbyfeature(self):
+        fnames = ['a','b', 'c', 'gender', 'subgroup']
+        orig = self.constructor([[1,2,3,'f','foo'], [4,5,6,'m','foo'], [7,8,9,'f','foo'],
+                                [10,11,12,'m','bar']], featureNames=fnames)
+        if isinstance(orig, nimble.core.data.BaseView):
+            return
+        #don't test view.
+        res = orig.features.statistics('mean', groupByFeature=['gender', 'subgroup'])
+        expObjf_f = self.constructor([4,5,6], featureNames=['a','b', 'c'], pointNames=['mean'])
+        expObjm_f = self.constructor([4,5,6], featureNames=['a','b', 'c'], pointNames=['mean'])
+        expObjm_b = self.constructor([10,11,12], featureNames=['a','b', 'c'], pointNames=['mean'])
+        assert expObjf_f == res['f', 'foo']
+        assert expObjm_f == res['m', 'foo']
+        assert expObjm_b == res['m', 'bar']
+
+    @noLogEntryExpected
     def backend_Stat_mean(self, axis):
         data = [[1, 1, 1], [0, 1, 1], [1, 0, 0]]
         dataT = np.array(data).T.tolist()
