@@ -79,6 +79,18 @@ class Base(ABC):
     methods that apply point-by-point and feature-by-feature,
     respectively.
     """
+    # comments below for Sphinx docstring
+    #: Identifier for this object within the log.
+    #:
+    #: An identifier unique within the current logging session is generated
+    #: when the logID attribute is first accessed. Each ``logID`` string begins
+    #: with "NIMBLE\_" and is followed an integer value. The integer values
+    #: start at 0 and increment by 1. Assuming logging is enabled, this occurs
+    #: when the object is created whenever possible, otherwise it will be
+    #: generated when the first loggable method is called or triggered by user
+    #: access. Note: User access can generate ``logID`` values that do not
+    #: appear in the log, otherwise searching for the ``logID`` text in the log
+    #: will locate all logged usages of this object.
     logID = LogID('NIMBLE')
 
     def __init__(self, shape, pointNames=None, featureNames=None, name=None,

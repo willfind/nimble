@@ -201,7 +201,7 @@ def backendDeep(toCall, validator):
     expectedLogChangeFalse = entriesWithoutDeep
 
     nimble.settings.set('logger', 'enabledByDefault', 'True')
-    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
+    nimble.settings.set('logger', 'enableDeepLogging', 'True')
 
     # the deep logging flag is continget on global and local
     # control, so we confirm that in those instances where
@@ -214,7 +214,7 @@ def backendDeep(toCall, validator):
     assert startT2 + expectedLogChangeTrue == endT2
     assert startT3 == endT3
 
-    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
+    nimble.settings.set('logger', 'enableDeepLogging', 'False')
 
     (startF1, endF1) = validator(toCall, useLog=True)
     (startF2, endF2) = validator(toCall, useLog=None)
@@ -229,7 +229,7 @@ def backendDeep(toCall, validator):
     assert (endT2 - startT2) - entriesFromFolds == (endF2 - startF2)
 
     nimble.settings.set('logger', 'enabledByDefault', 'False')
-    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
+    nimble.settings.set('logger', 'enableDeepLogging', 'True')
 
     # the deep logging flag is contingent on global and local
     # control, so we confirm that logging is called or
@@ -240,7 +240,7 @@ def backendDeep(toCall, validator):
     (startT3, endT3) = validator(toCall, useLog=False) # 0 logs added
     assert startT3 == endT3
 
-    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
+    nimble.settings.set('logger', 'enableDeepLogging', 'False')
 
     (startF1, endF1) = validator(toCall, useLog=True) # 1 logs added
     (startF2, endF2) = validator(toCall, useLog=None) # 0 logs added

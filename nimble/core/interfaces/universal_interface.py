@@ -803,24 +803,41 @@ class TrainedLearner(object):
     methods for applying, testing and accessing cross-validation
     results and other learned attributes.
 
-    Attributes
-    ----------
-    learnerName : str
-        The name of the learner used for training.
-    arguments : dict
-        The original arguments passed to the learner.
-    randomSeed : int
-        The random seed used for the learner. Only applicable if the
-        learner utilizes randomness.
-    tuning : nimble.Tuning
-        If hyperparameter tuning occurred during training, this is set
-        to the Tuning object to provide access to the validation results
-        during the tuning process.
-
     See Also
     --------
     nimble.train, nimble.Tuning
+
+    Examples
+    --------
+    >>> lst = [[1, 0, 1], [0, 1, 2], [0, 0, 3], [1, 1, 4]] * 10
+    >>> lstTest = [[1, 0, 1], [0, -1, 2], [0, 1, 2], [1, 1, 4]]
+    >>> ftNames = ['a', 'b' , 'label']
+    >>> trainData = nimble.data(lst, featureNames=ftNames)
+    >>> testData = nimble.data(lstTest, featureNames=ftNames)
+    >>> tl = nimble.train('nimble.KNNClassifier', trainX=trainData,
+    ...                   trainY='label')
+    >>> tl.apply(testX=testData[:, :'b'])
+    <Matrix 4pt x 1ft
+         'label'
+       ┌────────
+     0 │    1
+     1 │    3
+     2 │    2
+     3 │    4
+    >
+    >>> tl.test(testX=testData, testY='label',
+    ...         performanceFunction=nimble.calculate.fractionIncorrect)
+    0.25
     """
+    # comments below for Sphinx docstring
+    #: Identifier for this object within the log.
+    #:
+    #: An identifier unique within the current logging session is generated
+    #: when the logID attribute is first accessed. Each ``logID`` string begins
+    #: with "TRAINEDLEARNER\_" and is followed an integer value. The integer
+    #: values start at 0 and increment by 1. Assuming logging is enabled, this
+    #: occurs when the object is created. Searching for the ``logID`` text in
+    #: the log will locate all logged usages of this object.
     logID = LogID('TRAINEDLEARNER')
 
     def __init__(self, learnerName, arguments, transformedArguments,
@@ -865,10 +882,11 @@ class TrainedLearner(object):
            The random seed to use (when applicable). Also supports
            logging the randomSeed for top-level functions.
         """
-        self.learnerName = learnerName
-        self.arguments = arguments
-        self.randomSeed = randomSeed
-        self.tuning = tuning
+        # make user-facing as properties to prevent modification and document
+        self._learnerName = learnerName
+        self._arguments = arguments
+        self._randomSeed = randomSeed
+        self._tuning = tuning
 
         self._transformedArguments = transformedArguments
         self._customDict = customDict
@@ -880,6 +898,39 @@ class TrainedLearner(object):
         # Set if using TrainedLearners
         self.label = None
 
+    @property
+    def learnerName(self):
+        """
+        The name of the learner used for training.
+        """
+        return self._learnerName
+
+    @property
+    def arguments(self):
+        """
+        The original arguments passed to the learner.
+        """
+        return self._arguments
+
+    @property
+    def randomSeed(self):
+        """
+        The random seed used for the learner.
+
+        Only applicable if the learner utilizes randomness.
+        """
+        return self._randomSeed
+
+    @property
+    def tuning(self):
+        """
+        Tuning object storing validation results.
+
+        If hyperparameter tuning occurred during training, this is set
+        to the Tuning object to provide access to the validation results
+        during the tuning process.
+        """
+        return self._tuning
 
     @captureOutput
     @trackEntry
@@ -1298,7 +1349,7 @@ class TrainedLearner(object):
             has2dOutput = len(outputData.features) > 1
         elif isinstance(outputData, (list, tuple)):
             has2dOutput = len(outputData) > 1
-        self.randomSeed = self._interface._getValidSeed(randomSeed)
+        self._randomSeed = self._interface._getValidSeed(randomSeed)
 
         merged = mergeArguments(arguments, kwarguments)
         self._interface._validateLearnerArgumentValues(self.learnerName,
@@ -1310,7 +1361,7 @@ class TrainedLearner(object):
                 msg += "If wanting to perform hyperparameter tuning, use "
                 msg += "nimble.train()"
                 raise InvalidArgumentValue(msg)
-            self.arguments[arg] = value
+            self._arguments[arg] = value
             self._transformedArguments[arg] = value
 
         # separate training data / labels if needed
@@ -1328,11 +1379,11 @@ class TrainedLearner(object):
 
         self._backend = newBackend
         self._trainXShape = trainX.shape
-        self.arguments = merged
+        self._arguments = merged
         self._transformedArguments = transformedInputs[3]
         self._customDict = customDict
         self._has2dOutput = has2dOutput
-        self.tuning = None
+        self._tuning = None
 
         handleLogging(useLog, 'TLrun', self, 'retrain', self.arguments, trainX,
                       trainY, randomSeed=self.randomSeed)
@@ -1473,10 +1524,9 @@ class TrainedLearner(object):
             self.learnerName, None, None, testX, usedArguments,
             self._customDict)
 
-        rawScores = self._interface._getScores(self.learnerName, self._backend,
-                                               testX, usedArguments,
-                                               self._transformedArguments,
-                                               self._customDict)
+        rawScores = self._interface._getScores(
+            self.learnerName, self._backend, testX, usedArguments,
+            self._transformedArguments, self._customDict)
         nimbleTypeRawScores = self._interface._outputTransformation(
             self.learnerName, rawScores, usedArguments, "Matrix", "allScores",
             self._customDict)

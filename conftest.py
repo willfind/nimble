@@ -31,7 +31,7 @@ configuration = {
     'logger': {'location': tempdir.name,
                'name': "tmpLogs",
                'enabledByDefault': "False",
-               'enableCrossValidationDeepLogging': "False"},
+               'enableDeepLogging': "False"},
     'fetch': {'location': tempdir.name}
     }
 # Predefined interfaces were previously loaded on nimble import but

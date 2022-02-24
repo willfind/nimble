@@ -239,7 +239,7 @@ log can be added to and queried using ``nimble.log`` and ``nimble.showLog``,
 respectively. There are four :ref:`configurable <configuration>` options in the
 "logger" section. By default, the "location" is the current directory and the
 file "name" is "log-nimble". The "enabledByDefault" option is set to "True" and
-"enableCrossValidationDeepLogging" is set to "False".
+"enableDeepLogging" is set to "False".
 
 .. autosummary::
    :toctree: generated/
