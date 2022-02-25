@@ -984,11 +984,12 @@ def _buildRunLogString(timestamp, entry):
     Constructs the string that will be output for run logTypes.
     """
     # header data
-    time = entry.get("time", "")
-    if time:
-        time = f"Completed in {entry['time']:.3f} seconds"
-    fullLog = _logHeader(time, timestamp)
-    fullLog += f"""\n{entry['function']}("{entry['learner']}")\n"""
+    run = f"""{entry['function']}("{entry['learner']}")"""
+    fullLog = _logHeader(run, timestamp)
+    time = entry.get("time", None)
+    if time is not None:
+        fullLog += f"Completed in {time:.3f} seconds\n"
+    fullLog += "\n"
     # train and test data
     fullLog += _formatSessionLine("Data", "# points", "# features")
     if "trainData" in entry:
