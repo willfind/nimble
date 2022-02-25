@@ -34,6 +34,11 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 
+def _BaseNameOrType(obj):
+    if obj.name is not None:
+        return obj.name
+    return obj.getTypeString()
+
 def log(heading, logInfo):
     """
     Enter an entry into the active logger's database file.
@@ -644,9 +649,19 @@ class SessionLogger(object):
             logType = "tuning"
             logInfo = {}
             logInfo["selection"] = selector.name
-            logInfo["selectionArgs"] = selector._keywords
+            logInfo["selectionArgs"] = {}
+            for name, arg in selector._logInfo.items():
+                if isinstance(arg, nimble.core.data.Base):
+                    logInfo["selectionArgs"][name] = _BaseNameOrType(arg)
+                else:
+                    logInfo["selectionArgs"][name] = arg
             logInfo["validation"] = validator.name
-            logInfo["validationArgs"] = validator._keywords
+            logInfo["validationArgs"] = {}
+            for name, arg in validator._logInfo.items():
+                if isinstance(arg, nimble.core.data.Base):
+                    logInfo["validationArgs"][name] = _BaseNameOrType(arg)
+                else:
+                    logInfo["validationArgs"][name] = arg
             logInfo["learnerName"] = validator.learnerName
             performanceFunction = validator.performanceFunction
             logInfo["metric"] = (performanceFunction.optimal,

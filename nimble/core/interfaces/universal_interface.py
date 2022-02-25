@@ -1338,8 +1338,8 @@ class TrainedLearner(object):
                       trainY, randomSeed=self.randomSeed)
 
     @captureOutput
-    def incrementalTrain(self, trainX, trainY=None, randomSeed=None,
-                         *, useLog=None):
+    def incrementalTrain(self, trainX, trainY=None, arguments=None,
+                         randomSeed=None, *, useLog=None):
         """
         Extend the training of this learner with additional data.
 
@@ -1368,6 +1368,8 @@ class TrainedLearner(object):
             global option.
         """
         validateLearningArguments(trainX, trainY)
+        if arguments is not None:
+            self.arguments.update(arguments)
         transformed = self._interface._inputTransformation(
             self.learnerName, trainX, trainY, None, self.arguments,
             self._customDict)

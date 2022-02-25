@@ -92,12 +92,12 @@ nimble.showLearnerParameterDefaults('sklearn.KNeighborsRegressor')
 
 ## Furthermore, we can test multiple values for the same parameter
 ## by using the `nimble.Tune` object. The presence of `nimble.Tune` will
-## trigger hyperparameter tuning. By default, it tunes the arguments
-## consecutively using 5-fold cross-validation, but this can be modified by
-## providing an `Tuning` object to the `tuning` parameter.
-## The tuning will find the argument combination with the best average
-## `performanceFunction` result and return the `TrainedLearner` using the best
-## arguments.
+## trigger hyperparameter tuning. By default, this tunes the arguments
+## consecutively (optimizing one argument at a time while holding the others
+## constant) and uses 5-fold cross-validation. This can be modified by
+## providing a `Tuning` object to the `tuning` parameter. The tuning will find
+## the argument combination with the best average `performanceFunction` result
+## and return the `TrainedLearner` using the best arguments.
 
 ## For KNeighborsRegressor, we will use `nimble.Tune` to try 3, 5, and 7 for
 ## the number of nearest neighbors and for `GradientBoostingRegressor` we will

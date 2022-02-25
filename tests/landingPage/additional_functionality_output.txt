@@ -142,7 +142,7 @@ wifiData_trainY           1400                      1
 wifiData_testX            600                       7
 wifiData_testY            600                       1
 
-Arguments: k=Tune([3, 5, 7])
+Arguments: k=Tune(values=[3, 5, 7])
 Random Seed: 99320166
 Best Arguments: {'k': 3}
 Metrics: fractionCorrect=0.985
@@ -201,7 +201,7 @@ wifiData_trainY           1400                      1
 wifiData_testX            600                       7
 wifiData_testY            600                       1
 
-Arguments: k=Tune([3, 5, 7])
+Arguments: k=Tune(values=[3, 5, 7])
 Random Seed: 99320166
 Best Arguments: {'k': 3}
 Metrics: fractionCorrect=0.985

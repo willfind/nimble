@@ -328,7 +328,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         To provide an argument that is an object from the same package
         as the learner, use a ``nimble.Init`` object with the object
         name and its instantiation arguments (e.g.,
-        {'kernel': nimble.Init('KernelGaussian', width=2.0)}).
+        {'optimizer': nimble.Init('SGD', learning_rate=0.01}).
         Note: learner arguments can also be passed as ``kwarguments`` so
         this dictionary will be merged with any keyword arguments.
     randomSeed : int
@@ -347,7 +347,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         To provide an argument that is an object from the same package
         as the learner, use a ``nimble.Init`` object with the object
         name and its instantiation arguments (e.g.,
-        kernel=nimble.Init('KernelGaussian', width=2.0)).
+        optimizer=nimble.Init('SGD', learning_rate=0.01)).
 
     See Also
     --------
@@ -459,7 +459,7 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
         To provide an argument that is an object from the same package
         as the learner, use a ``nimble.Init`` object with the object
         name and its instantiation arguments (e.g.,
-        {'kernel': nimble.Init('KernelGaussian', width=2.0)}).
+        {'optimizer': nimble.Init('SGD', learning_rate=0.01}).
         Note: learner arguments can also be passed as ``kwarguments`` so
         this dictionary will be merged with any keyword arguments.
     points : identifier, list of identifiers, None
@@ -484,7 +484,7 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
         To provide an argument that is an object from the same package
         as the learner, use a ``nimble.Init`` object with the object
         name and its instantiation arguments (e.g.,
-        kernel=nimble.Init('KernelGaussian', width=2.0)).
+        optimizer=nimble.Init('SGD', learning_rate=0.01)).
 
     See Also
     --------
@@ -613,7 +613,7 @@ def train(learnerName, trainX, trainY=None, arguments=None, scoreMode='label',
         set of arguments. To provide an argument that is an object from
         the same package as the learner, use a ``nimble.Init`` object
         with the object name and its instantiation arguments (e.g.,
-        {'kernel': nimble.Init('KernelGaussian', width=2.0)}).
+        {'optimizer': nimble.Init('SGD', learning_rate=0.01}).
         Note: learner arguments can also be passed as ``kwarguments`` so
         this dictionary will be merged with any keyword arguments.
     scoreMode : str
@@ -653,7 +653,7 @@ def train(learnerName, trainX, trainY=None, arguments=None, scoreMode='label',
         set of arguments. To provide an argument that is an object from
         the same package as the learner, use a ``nimble.Init`` object
         with the object name and its instantiation arguments (e.g.,
-        kernel=nimble.Init('KernelGaussian', width=2.0)).
+        optimizer=nimble.Init('SGD', learning_rate=0.01)).
 
     Returns
     -------
@@ -738,9 +738,13 @@ def train(learnerName, trainX, trainY=None, arguments=None, scoreMode='label',
     else:
         bestArguments = arguments
 
-    trainedLearner = interface.train(trueLearnerName, trainX, trainY,
-                                     bestArguments, multiClassStrategy,
-                                     randomSeed, tuning)
+    if tuning is not None and hasattr(tuning.validator, 'bestTrainedLearner'):
+        trainedLearner = tuning.validator.bestTrainedLearner
+        trainedLearner.tuning = tuning
+    else:
+        trainedLearner = interface.train(trueLearnerName, trainX, trainY,
+                                         bestArguments, multiClassStrategy,
+                                         randomSeed, tuning)
     totalTime = time.process_time() - startTime
 
     funcString = interface.getCanonicalName() + '.' + trueLearnerName
@@ -786,7 +790,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments=None,
         set of arguments. To provide an argument that is an object from
         the same package as the learner, use a ``nimble.Init`` object
         with the object name and its instantiation arguments (e.g.,
-        {'kernel': nimble.Init('KernelGaussian', width=2.0)}).
+        {'optimizer': nimble.Init('SGD', learning_rate=0.01}).
         Note: learner arguments can also be passed as ``kwarguments`` so
         this dictionary will be merged with any keyword arguments.
     output : str
@@ -832,7 +836,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments=None,
         set of arguments. To provide an argument that is an object from
         the same package as the learner, use a ``nimble.Init`` object
         with the object name and its instantiation arguments (e.g.,
-        kernel=nimble.Init('KernelGaussian', width=2.0)).
+        optimizer=nimble.Init('SGD', learning_rate=0.01)).
 
     Returns
     -------
@@ -1005,7 +1009,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         set of arguments. To provide an argument that is an object from
         the same package as the learner, use a ``nimble.Init`` object
         with the object name and its instantiation arguments (e.g.,
-        {'kernel': nimble.Init('KernelGaussian', width=2.0)}).
+        {'optimizer': nimble.Init('SGD', learning_rate=0.01}).
         Note: learner arguments can also be passed as ``kwarguments`` so
         this dictionary will be merged with any keyword arguments.
     output : str
@@ -1045,7 +1049,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         set of arguments. To provide an argument that is an object from
         the same package as the learner, use a ``nimble.Init`` object
         with the object name and its instantiation arguments (e.g.,
-        kernel=nimble.Init('KernelGaussian', width=2.0)).
+        optimizer=nimble.Init('SGD', learning_rate=0.01)).
 
     Returns
     -------
@@ -1193,7 +1197,7 @@ def trainAndTestOnTrainingData(
         set of arguments. To provide an argument that is an object from
         the same package as the learner, use a ``nimble.Init`` object
         with the object name and its instantiation arguments (e.g.,
-        {'kernel': nimble.Init('KernelGaussian', width=2.0)}).
+        {'optimizer': nimble.Init('SGD', learning_rate=0.01}).
         Note: learner arguments can also be passed as ``kwarguments`` so
         this dictionary will be merged with any keyword arguments.
     output : str
@@ -1233,7 +1237,7 @@ def trainAndTestOnTrainingData(
         set of arguments. To provide an argument that is an object from
         the same package as the learner, use a ``nimble.Init`` object
         with the object name and its instantiation arguments (e.g.,
-        kernel=nimble.Init('KernelGaussian', width=2.0)).
+        optimizer=nimble.Init('SGD', learning_rate=0.01)).
 
     Returns
     -------
@@ -1301,8 +1305,6 @@ def trainAndTestOnTrainingData(
         merged, output, scoreMode, multiClassStrategy, randomSeed, tuning,
         useLog)
 
-    totalTime = time.process_time() - startTime
-
     if trainedLearner.tuning is not None:
         bestArgs = trainedLearner.arguments
         extraInfo = {'Best Arguments': bestArgs}
@@ -1317,10 +1319,10 @@ def trainAndTestOnTrainingData(
         performance = cvTuning.bestResult
 
     logSeed = trainedLearner.randomSeed
-
     metrics = {}
     for key, value in zip([performanceFunction], [performance]):
         metrics[key.__name__] = value
+    totalTime = time.process_time() - startTime
     handleLogging(useLog, "run", 'trainAndTestOnTrainingData', trainX,
                   trainY, None, None, learnerName, merged,
                   logSeed, metrics, extraInfo, totalTime)

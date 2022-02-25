@@ -11,6 +11,10 @@ import itertools
 import time
 import operator
 from operator import itemgetter
+import numbers
+import copy
+import sys
+from timeit import default_timer
 
 import numpy as np
 
@@ -18,13 +22,14 @@ import nimble
 from nimble import match
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
-from nimble.exceptions import ImproperObjectAction
+from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.core.logger import handleLogging, loggingEnabled
 from nimble.core.logger import deepLoggingEnabled
 from nimble.random import pythonRandom, numpyRandom
 from nimble.core._learnHelpers import computeMetrics
 from nimble._utility import prettyDictString, prettyListString, quoteStrings
 from nimble._utility import mergeArguments
+from nimble._utility import hyperopt
 
 
 class FoldIterator(ABC):
@@ -178,7 +183,7 @@ class Validator(ABC):
     validation is run, the results are stored within the object.
     """
     def __init__(self, learnerName, X, Y, performanceFunction, randomSeed,
-                 **kwargs):
+                 useLog, **logInfo):
         if not hasattr(self, "name"):
             raise AttributeError("A Validator must have a name attribute")
 
@@ -207,41 +212,43 @@ class Validator(ABC):
             self.randomSeed = nimble.random._generateSubsidiarySeed()
         else:
             self.randomSeed = randomSeed
+        self.useLog = useLog
 
         self._results = []
         self._arguments = []
         self._best = None
         # used in __str__ and __repr__
-        self._keywords = kwargs
+        self._logInfo = logInfo
 
     def __str__(self):
         return self.__repr__()
 
     def __repr__(self):
-        ret = '{}("{}", performanceFunction={}, randomSeed={}'.format(
-            self.__class__.__name__, self.learnerName,
-            self.performanceFunction.__name__, self.randomSeed)
-        if self._keywords:
+        ret = f'{self.__class__.__name__}("{self.learnerName}", '
+        ret += f'performanceFunction={self.performanceFunction.__name__}, '
+        ret += f'randomSeed={self.randomSeed}'
+        if self._logInfo:
             ret += ", "
-            ret += prettyDictString(self._keywords, valueStr=quoteStrings)
+            ret += prettyDictString(self._logInfo, valueStr=quoteStrings)
         ret += ")"
         return ret
 
-    def validate(self, arguments=None, *, useLog=None, **kwarguments):
+    def validate(self, arguments=None, record=True, **kwarguments):
         """
         Apply the validation to a learner with the given arguments.
         """
         arguments = mergeArguments(arguments, kwarguments)
-        performance = self._validate(arguments, useLog)
-        self._results.append(performance)
-        self._arguments.append(arguments)
-        if self._best is None or self._isBest(performance, self._best[0]):
-            self._best = (performance, arguments)
+        performance = self._validate(arguments)
+        if record:
+            self._results.append(performance)
+            self._arguments.append(arguments)
+            if self._best is None or self._isBest(performance, self._best[0]):
+                self._best = (performance, arguments)
 
         return performance
 
     @abstractmethod
-    def _validate(self, arguments, useLog):
+    def _validate(self, arguments):
         pass
 
 
@@ -254,17 +261,14 @@ class CrossValidator(Validator):
     than in the subclass, so that X and Y can be preprocessed first.
     """
     def __init__(self, foldIterator, learnerName, X, Y, performanceFunction,
-                 randomSeed, **kwargs):
+                 randomSeed, useLog, **kwargs):
         super().__init__(learnerName, X, Y, performanceFunction, randomSeed,
-                         **kwargs)
+                         useLog, **kwargs)
         # a result should be added here for every fold
         self._deepResults = []
         self._foldIterator = foldIterator([self.X, self.Y], **kwargs)
-        # NOTE: no performance functions have this attribute
-        self._canAvgFolds = (hasattr(self.performanceFunction, 'avgFolds')
-                             and self.performanceFunction.avgFolds)
 
-    def _validate(self, arguments, useLog):
+    def _validate(self, arguments):
         """
         Cross validate and return the overall performance.
 
@@ -273,12 +277,10 @@ class CrossValidator(Validator):
         # fold iterator randomized the point order, so if we are collecting all
         # the results, we also have to collect the correct order of the known
         # values
-        if not self._canAvgFolds:
-            collectedY = None
-
+        collectedY = None
         performances = []
         foldByFold = []
-        deepLog = loggingEnabled(useLog) and deepLoggingEnabled()
+        deepLog = loggingEnabled(self.useLog) and deepLoggingEnabled()
         numFolds = len(self._foldIterator.foldList)
         for foldNum, fold in enumerate(self._foldIterator):
             [(curTrainX, curTestingX), (curTrainY, curTestingY)] = fold
@@ -288,25 +290,21 @@ class CrossValidator(Validator):
                 self.learnerName, curTrainX, curTrainY, curTestingX,
                 arguments=arguments, randomSeed=self.randomSeed, useLog=False)
 
-            totalTime = time.process_time() - startTime
-
             # calculate error of prediction, using performanceFunction
             curPerformance = computeMetrics(curTestingY, None, curRunResult,
                                             self.performanceFunction)
 
-            foldByFold.append(curPerformance)
+            totalTime = time.process_time() - startTime
 
-            if self._canAvgFolds:
-                performances.append(curPerformance)
+            foldByFold.append(curPerformance)
+            performances.append(curRunResult)
+            if collectedY is None:
+                collectedY = curTestingY
             else:
-                performances.append(curRunResult)
-                if collectedY is None:
-                    collectedY = curTestingY
-                else:
-                    collectedY.points.append(curTestingY, useLog=False)
+                collectedY.points.append(curTestingY, useLog=False)
 
             metrics = {self.performanceFunction.__name__: curPerformance}
-            extraInfo = {'Fold': '{}/{}'.format(foldNum + 1, numFolds)}
+            extraInfo = {'Fold': f'{foldNum + 1}/{numFolds}'}
 
             handleLogging(deepLog, "deepRun", self.__class__.__name__,
                           curTrainX, curTrainY, curTestingX, curTestingY,
@@ -315,19 +313,12 @@ class CrossValidator(Validator):
 
         self._deepResults.append(foldByFold)
 
-        # We consume the saved performances, either by averaging the individual
-        # performances calculations for each fold, or combining the saved
-        # predictions and calculating performance of the entire set.
-        # average score from each fold (works for one fold as well)
-        if self._canAvgFolds:
-            finalPerformance = sum(performances) / float(len(performances))
         # combine the performances objects into one, and then calc performance
-        else:
-            for performanceIdx in range(1, len(performances)):
-                performances[0].points.append(performances[performanceIdx],
-                                              useLog=False)
-            finalPerformance = computeMetrics(
-                collectedY, None, performances[0], self.performanceFunction)
+        for performanceIdx in range(1, len(performances)):
+            performances[0].points.append(performances[performanceIdx],
+                                          useLog=False)
+        finalPerformance = computeMetrics(
+            collectedY, None, performances[0], self.performanceFunction)
 
         return finalPerformance
 
@@ -356,14 +347,20 @@ class KFold(CrossValidator):
     randomSeed : int
        Set a random seed for the operation. When None, the randomness is
        controlled by Nimble's random seed.
+    useLog : bool, None
+        Local control for whether to send object creation to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
     """
     name = "cross validation"
 
     def __init__(self, learnerName, X, Y, performanceFunction, folds=5,
-                 randomSeed=None):
+                 randomSeed=None, useLog=None):
         self.folds = folds
         super().__init__(KFoldIterator, learnerName, X, Y, performanceFunction,
-                         randomSeed, folds=folds)
+                         randomSeed, useLog, folds=folds)
 
 
 class LeaveOneOut(CrossValidator):
@@ -389,15 +386,21 @@ class LeaveOneOut(CrossValidator):
     randomSeed : int
        Set a random seed for the operation. When None, the randomness is
        controlled by Nimble's random seed.
+    useLog : bool, None
+        Local control for whether to send object creation to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
     """
     name = "leave one out"
 
     def __init__(self, learnerName, X, Y, performanceFunction,
-                 randomSeed=None):
+                 randomSeed=None, useLog=None):
         super().__init__(KFoldIterator, learnerName, X, Y, performanceFunction,
-                         randomSeed, folds=len(X.points))
+                         randomSeed, useLog, folds=len(X.points))
         # set in super, but not a parameter
-        del self._keywords['folds']
+        del self._logInfo['folds']
 
 
 class LeaveOneGroupOut(CrossValidator):
@@ -425,41 +428,39 @@ class LeaveOneGroupOut(CrossValidator):
     randomSeed : int
        Set a random seed for the operation. When None, the randomness is
        controlled by Nimble's random seed.
+    useLog : bool, None
+        Local control for whether to send object creation to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
     """
     name = "leave one group out"
 
     def __init__(self, learnerName, X, Y, performanceFunction, foldFeature,
-                 randomSeed=None):
+                 randomSeed=None, useLog=None):
         if foldFeature is None:
             msg = "foldFeature cannot be done when using leave one "
             msg += "group out validation"
             raise InvalidArgumentValue(msg)
-        if isinstance(foldFeature, (str, int)):
-            self.foldFeature = foldFeature
-            X = X.copy()
-            if isinstance(Y, (str, int)):
-                if foldFeature == Y:
-                    msg = "foldFeature and Y cannot be the same feature"
-                    raise InvalidArgumentValueCombination(msg)
-                removed = X.features.extract([Y, foldFeature], useLog=False)
-                Y, foldFt = removed.features
-            elif isinstance(Y, list):
-                Y = X.features.extract(Y + [foldFeature], useLog=False)
-                foldFt = Y.features.extract(-1, useLog=False)
-            else:
-                foldFt = X.features.extract(foldFeature, useLog=False)
-        else:
-            if len(foldFeature.points) != len(X.points):
-                msg = "foldFeature must have the same number of points "
-                msg += "as the X data"
-                raise InvalidArgumentValue(msg)
-            self.foldFeature = foldFeature.getTypeString()
-            foldFt = foldFeature
+        self.foldFeature = foldFeature
+        if isinstance(foldFeature, (str, int, list)):
+            if foldFeature == Y:
+                msg = "foldFeature and Y cannot be the same feature"
+                raise InvalidArgumentValueCombination(msg)
+            foldFeature = X.features[foldFeature]
+            if isinstance(Y, (str, int, list)):
+                X = X.copy()
+                Y = X.features.extract(Y, useLog=False)
+        elif len(foldFeature.points) != len(X.points):
+            msg = "foldFeature must have the same number of points as the X "
+            msg += "data"
+            raise InvalidArgumentValue(msg)
         super().__init__(GroupFoldIterator, learnerName, X, Y,
-                         performanceFunction, randomSeed,
-                         foldFeature=foldFt)
+                         performanceFunction, randomSeed, useLog,
+                         foldFeature=foldFeature)
         # use type string instead of object
-        self._keywords['foldFeature'] = self.foldFeature
+        self._logInfo['foldFeature'] = self.foldFeature
 
 
 class HoldoutValidator(Validator):
@@ -469,7 +470,7 @@ class HoldoutValidator(Validator):
     All subclasses provide the a validateX and validateY data objects.
     """
     def __init__(self, learnerName, X, Y, performanceFunction, randomSeed,
-                 validateX, validateY, keywords):
+                 useLog, validateX, validateY, logInfo):
         if validateX is None:
             msg = "validateX cannot be None"
             raise InvalidArgumentValue(msg)
@@ -492,27 +493,28 @@ class HoldoutValidator(Validator):
         if validateY.name is None:
             validateY.name = "validateY"
 
-        self._validateX = validateX
-        self._validateY = validateY
+        self.validateX = validateX
+        self.validateY = validateY
 
         super().__init__(learnerName, X, Y, performanceFunction, randomSeed,
-                         **keywords)
+                         useLog, **logInfo)
 
-    def _validate(self, arguments, useLog):
+    def _validate(self, arguments):
         startTime = time.process_time()
         performance = nimble.trainAndTest(
-            self.learnerName, self.X, self.Y, self._validateX, self._validateY,
+            self.learnerName, self.X, self.Y, self.validateX, self.validateY,
             self.performanceFunction, arguments=arguments,
             randomSeed=self.randomSeed, useLog=False)
-
         totalTime = time.process_time() - startTime
 
         metrics = {self.performanceFunction.__name__: performance}
-        deepLog = loggingEnabled(useLog) and deepLoggingEnabled()
+        deepLog = loggingEnabled(self.useLog) and deepLoggingEnabled()
+
         handleLogging(deepLog, "deepRun", self.__class__.__name__,
-                      self.X, self.Y, self._validateX, self._validateY,
+                      self.X, self.Y, self.validateX, self.validateY,
                       self.learnerName, arguments, self.randomSeed,
-                      metrics=metrics, time=totalTime)
+                      metrics=metrics, extraInfo=self._logInfo,
+                      time=totalTime)
 
         return performance
 
@@ -540,21 +542,80 @@ class HoldoutData(HoldoutValidator):
     randomSeed : int
        Set a random seed for the operation. When None, the randomness is
        controlled by Nimble's random seed.
+    useLog : bool, None
+        Local control for whether to send object creation to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
     """
     name = "data holdout"
 
     def __init__(self, learnerName, X, Y, performanceFunction, validateX,
-                 validateY, randomSeed=None):
-        self.validateX = validateX.getTypeString()
-        try:
-            self.validateY = Y.getTypeString()
-        except AttributeError:
-            self.validateY = Y
+                 validateY, randomSeed=None, useLog=None):
 
+
+        logInfo = {'validateX': validateX, 'validateY': validateY}
         super().__init__(learnerName, X, Y, performanceFunction, randomSeed,
-                         validateX, validateY,
-                         {'validateX': self.validateX,
-                          'validateY': self.validateY})
+                         useLog, validateX, validateY, logInfo)
+
+        self._trainedLearner = None
+        self._trainedLearnerBase = None
+        self._incremental = None
+        self._updater = None
+        self._lastArguments = {}
+        self.bestTrainedLearner = None
+
+    def validate(self, arguments=None, record=True, **kwarguments):
+        """
+        Apply the validation to a learner with the given arguments.
+        """
+        arguments = mergeArguments(arguments, kwarguments)
+        performance = self._validate(arguments)
+        if record:
+            self._results.append(performance)
+            self._arguments.append(arguments)
+            if self._best is None or self._isBest(performance, self._best[0]):
+                self._best = (performance, arguments)
+                self.bestTrainedLearner = copy.copy(self._trainedLearnerBase)
+
+        return performance
+
+    def _updateTrainedLearner(self, trial):
+        if trial:
+            self._trainedLearner = copy.copy(self._trainedLearnerBase)
+        else:
+            self._trainedLearner = self._trainedLearnerBase
+
+    def _validate(self, arguments):
+        if self._trainedLearner is None:
+            self._trainedLearnerBase = nimble.train(
+                self.learnerName, self.X, self.Y, arguments, useLog=False)
+            self._trainedLearner = self._trainedLearnerBase
+            self._lastArguments = arguments
+        elif self._updater is None:
+            try:
+                self._trainedLearner.incrementalTrain(self.X, self.Y,
+                                                      arguments, useLog=False)
+                self._updater = self._trainedLearner.incrementalTrain
+                self._incremental = True
+            except TypeError:
+                self._incremental = False
+                self._updater = self._trainedLearner.retrain
+                # only retrain if arguments have changed
+                if arguments != self._lastArguments:
+                    self._trainedLearner.retrain(self.X, self.Y, arguments,
+                                                 useLog=False)
+            self._lastArguments = arguments
+        elif self._incremental or arguments != self._lastArguments:
+            self._updater(self.X, self.Y, arguments, useLog=False)
+            self._lastArguments = arguments
+
+        performance = self._trainedLearner.test(
+            self.validateX, self.validateY, self.performanceFunction,
+            useLog=False)
+
+        return performance
 
 
 class HoldoutProportion(HoldoutValidator):
@@ -581,11 +642,17 @@ class HoldoutProportion(HoldoutValidator):
     randomSeed : int
        Set a random seed for the operation. When None, the randomness is
        controlled by Nimble's random seed.
+    useLog : bool, None
+        Local control for whether to send object creation to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
     """
     name = "holdout proportion"
 
     def __init__(self, learnerName, X, Y, performanceFunction, proportion=0.2,
-                 randomSeed=None):
+                 randomSeed=None, useLog=None):
         if proportion <= 0 or proportion >= 1:
             msg = "proportion must be between 0 and 1 (exclusive)"
             raise InvalidArgumentValue(msg)
@@ -601,8 +668,9 @@ class HoldoutProportion(HoldoutValidator):
             Y = Y.copy()
             validateY = Y.points.extract(selection, useLog=False)
 
+        logInfo = {"proportion": proportion}
         super().__init__(learnerName, X, Y, performanceFunction, randomSeed,
-                         validateX, validateY, {"proportion": proportion})
+                         useLog, validateX, validateY, logInfo)
 
 
 class ArgumentSelector(ABC):
@@ -621,36 +689,28 @@ class ArgumentSelector(ABC):
     """
     name = None
 
-    def __init__(self, arguments, **kwargs):
+    def __init__(self, arguments, validator, **logInfo):
         if self.name is None:
             msg = "An ArgumentSelector must have a name attribute"
             raise AttributeError(msg)
+        self.validator = validator
         self.arguments = arguments
-        # used for  __str__ and __repr__
-        self._keywords = kwargs
+        # these provide information for the logger
+        self._logInfo = logInfo
 
     def __iter__(self):
         return self
-
-    def __str__(self):
-        return self.__repr__()
-
-    def __repr__(self):
-        ret = '{}({}'.format(self.__class__.__name__, self.arguments)
-        if self._keywords:
-            ret += ", "
-            ret += prettyDictString(self._keywords, valueStr=quoteStrings)
-        ret += ')'
-        return ret
 
     @abstractmethod
     def __next__(self):
         pass
 
-    def update(self, performance):
+    def validateAll(self):
         """
-        Adjust attributes using the performance of the last arguments.
+        Validate every argument by exhausting the iterator.
         """
+        for _ in self:
+            pass
 
 
 class BruteForce(ArgumentSelector):
@@ -664,11 +724,13 @@ class BruteForce(ArgumentSelector):
     ----------
     arguments : dict
         Mapping argument names (strings) to their values, to be used.
+    validator : Validator
+        The instance providing the validation method and data.
     """
     name = "brute force"
 
-    def __init__(self, arguments):
-        super().__init__(arguments)
+    def __init__(self, arguments, validator):
+        super().__init__(arguments, validator)
         self._index = 0
         if self.arguments:
             iterableArgDict = {}
@@ -701,6 +763,7 @@ class BruteForce(ArgumentSelector):
             raise StopIteration
         combination = self._combinationsList[self._index]
         self._index += 1
+        self.validator.validate(combination)
         return combination
 
 
@@ -721,36 +784,25 @@ class Consecutive(ArgumentSelector):
     ----------
     arguments : dict
         Mapping argument names (strings) to their values, to be used.
-    optimal : str
-        Either 'max' or 'min'.
+    validator : Validator
+        The instance providing the validation method and data.
     loops : int
         The number of time to loop through the argument values being
         tuned.
     order : list
         A list of argument names indicating the order to tune the
         arguments.
-    kwarguments
-        Keyword arguments specified variables that are passed to the
-        learner. These are combined with the ``arguments`` parameter.
-        Multiple values for arguments can be provided by using a ``Tune``
-        object (e.g., k=Tune([3, 5, 7])) to initiate hyperparameter
-        tuning and return the learner trained on the best set of
-        arguments. To provide an argument that is an object from the
-        same package as the learner, use a ``nimble.Init`` object with
-        the object name and its instantiation arguments (e.g.,
-        kernel=nimble.Init('KernelGaussian', width=2.0)).
     """
     name = "consecutive"
 
-    def __init__(self, arguments, optimal, loops=1, order=None):
+    def __init__(self, arguments, validator, loops=1, order=None):
         if loops < 1:
             msg = "loops must be greater than 1"
             raise InvalidArgumentValue(msg)
-        kwargs = {'loops': loops}
+        logInfo = {'loops': loops}
         if order is not None:
-            kwargs['order'] = order
-        super().__init__(arguments, **kwargs)
-        self.optimal = optimal
+            logInfo['order'] = order
+        super().__init__(arguments, validator, **logInfo)
         self.loops = loops
         self.order = order
         self._currentLoop = 1
@@ -758,7 +810,6 @@ class Consecutive(ArgumentSelector):
         self._target = 0
         self._bestPerformance = None
         self._bestArgs = None
-        self._isBest = operator.gt if optimal == 'max' else operator.lt
         self._currArgs = None
         self._tried = set()
 
@@ -779,7 +830,7 @@ class Consecutive(ArgumentSelector):
                     if createOrder:
                         self.order.append(key)
                     elif key not in self.order:
-                        msg = "{} is not in the order list".format(key)
+                        msg = f"{key} is not in the order list"
                         raise ImproperObjectAction(msg)
                 else:
                     self._currArgs[key] = val
@@ -813,43 +864,289 @@ class Consecutive(ArgumentSelector):
             return self.__next__()
         # save combo to avoid future loops from repeating combo
         self._tried.add(tuple(self._currArgs.items()))
-
-        return self._currArgs.copy()
-
-    def update(self, performance):
+        performance = self.validator.validate(self._currArgs)
         if (self._bestPerformance is None
-                or self._isBest(performance, self._bestPerformance)):
+                or self.validator._isBest(performance, self._bestPerformance)):
             self._bestPerformance = performance
             self._bestArgs = self._currArgs.copy()
+        return self._currArgs.copy()
 
-# TODO
+
 class Bayesian(ArgumentSelector):
     """
     Apply a bayesian algorithm to select the argument sets.
+
+    This requires the hyperopt library to apply Tree Parzen Estimators
+    (TPE) and Expected Improvement (EI) algorithms to determine the
+    next best set of arguments to try.
+
+    Parameters
+    ----------
+    arguments : dict
+        Mapping argument names (strings) to their values, to be used.
+    validator : Validator
+        The instance providing the validation method and data.
+    maxIterations : int
+        The number of times to evaluate the argument space. Default is
+        100.
+    timeout : float, int, None
+        The maximum amount of time in seconds to spend finding the best
+        arguments. Default is ``None``, meaning this will stop based on
+        ``maxIterations`` or ``threshold``.
+    threshold : float, int, None
+        Stop selection if performance is better than or equal to the
+        threshold. Default is ``None``, meaning this will stop based on
+        ``maxIterations`` or ``timeout``.
     """
     name = "bayesian"
+
+    def __init__(self, arguments, validator, maxIterations=100, timeout=None,
+                 threshold=None):
+        logInfo = {}
+        if maxIterations is not None:
+            logInfo['maxIterations'] = maxIterations
+        if timeout is not None:
+            logInfo['timeout'] = timeout
+        if threshold is not None:
+            logInfo['threshold'] = threshold
+        super().__init__(arguments, validator, **logInfo)
+        if not hyperopt.nimbleAccessible():
+            msg = "The hyperopt library must be installed to perform "
+            msg += "hyperparameter tuning with the Bayesian method"
+            raise PackageException(msg)
+
+        if validator.optimal != 'min':
+            msg = "The performanceFunction must be minimum optimal for "
+            msg += 'Bayesian'
+            raise InvalidArgumentValue(msg)
+        hp = hyperopt.hp
+        if maxIterations is None:
+            maxIterations = sys.maxsize
+        self.maxIterations = maxIterations
+        self.timeout = timeout
+        self.threshold = threshold
+        space = {}
+        self._noTune = True
+        # determine the distribution for each argument
+        for name, arg in self.arguments.items():
+            if isinstance(arg, Tune):
+                self._noTune = False
+                if arg._changeType == 'add':
+                    if all(v % 1 == 0 for v
+                           in [arg._start, arg._end, arg._change]):
+                        space[name] = hp.uniformint(name, arg._start, arg._end,
+                                                    q=arg._change)
+                    else:
+                        space[name] = hp.quniform(name, arg._start, arg._end,
+                                                  arg._change)
+                elif arg._changeType == 'exponential':
+                    space[name] = hp.qloguniform(name, arg._start, arg._end,
+                                                 arg._change)
+                else:
+                    space[name] = hp.choice(name, arg._values)
+            else:
+                space[name] = arg
+
+        domain = hyperopt.Domain(self.validator.validate, space)
+        self.trials = hyperopt.Trials()
+
+        self.iterator = hyperopt.FMinIter(
+            hyperopt.tpe.suggest, domain, self.trials,
+            nimble.random.numpyRandom, max_evals=self.maxIterations)
+
+        self._stopIteration = False
+        self._startTime = None
+
+    def __next__(self):
+        # calling next on FMinIter does not properly manage threshold and
+        # timing so these are handled internally
+        if self._startTime is None:
+            self._startTime = default_timer()
+        if (self._stopIteration
+                or (self._noTune and self.validator._incremental is False)
+                or (self.timeout is not None
+                    and default_timer() - self._startTime > self.timeout)
+                or (self.validator._results and self.threshold is not None
+                    and self.validator._results[-1] <= self.threshold)):
+            raise StopIteration
+        # FMinIter raises StopIteration immediately after the last validation
+        # call so need to catch and return the arguments used during that call
+        # then stop iteration on the next call
+        try:
+            _ = next(self.iterator)
+        except StopIteration:
+            self._stopIteration = True
+        return self.validator._arguments[-1]
 
 
 class Iterative(ArgumentSelector):
     """
     Select next arguments by testing small changes to the current set.
+
+    Each iteration, a higher and lower value from the ``Tune`` arguments
+    are validated. If at the upper or lower bound of the arguments, only
+    the one side will be tested. The value that provides the best
+    increase in performance will be used to update the training model
+    for the next iteration. On the next iteration, the best values from
+    the previous iteration are the starting points. If a one surrounding
+    value provided the same performance, the search for better values
+    will continue in that direction. If both provided the same
+    performance, the direction will be chosen at random.
+
+    Parameters
+    ----------
+    arguments : dict
+        Mapping argument names (strings) to their values, to be used.
+    validator : Validator
+        The instance providing the validation method and data.
+    maxIterations : int
+        The number of times to evaluate the argument space. Default is
+        100.
+    timeout : float, int, None
+        The maximum amount of time in seconds to spend finding the best
+        arguments. Default is ``None``, meaning this will stop based on
+        ``maxIterations`` or ``threshold``.
+    threshold : float, int, None
+        Stop selection if performance is better than or equal to the
+        threshold. Default is ``None``, meaning this will stop based on
+        ``maxIterations`` or ``timeout``.
     """
     name = "iterative"
+
+    def __init__(self, arguments, validator, maxIterations=100, timeout=None,
+                 threshold=None):
+        logInfo = {}
+        if maxIterations is not None:
+            logInfo['maxIterations'] = maxIterations
+        if timeout is not None:
+            logInfo['timeout'] = timeout
+        if threshold is not None:
+            logInfo['threshold'] = threshold
+        super().__init__(arguments, validator, **logInfo)
+        if maxIterations is None:
+            maxIterations = sys.maxsize
+        self.maxIterations = maxIterations
+        self.timeout = timeout
+        self.threshold = threshold
+        self._currIteration = 0
+
+        self._currArgs = {}
+        self._tuneIdx = {}
+        self._tuneVals = {}
+        for name, arg in arguments.items():
+            if isinstance(arg, Tune):
+                vals = sorted(arg)
+                idx = len(vals) // 2 # start with middle value
+                self._tuneIdx[name] = idx
+                self._tuneVals[name] = vals
+                self._currArgs[name] = vals[idx]
+            else:
+                self._currArgs[name] = arg
+
+        self._startTime = None
+        self._bestPerf = None
+        self._bestArgs = None
+
+    def __next__(self):
+        if self._startTime is None:
+            self._startTime = default_timer()
+            self._bestPerf = self.validator.validate(self._currArgs)
+            self._bestArgs = self._currArgs.copy()
+            self._currIteration += 1
+            return self._currArgs.copy()
+
+        if (self._currIteration >= self.maxIterations
+                or (self.timeout is not None
+                    and default_timer() - self._startTime > self.timeout)
+                or (self.threshold is not None
+                    and (self.validator._isBest(self._bestPerf, self.threshold)
+                         or self._bestPerf == self.threshold))):
+            raise StopIteration
+        self.validator._updateTrainedLearner(trial=False)
+        best = {}
+        for name, idx in self._tuneIdx.items():
+            baseArgs = self._bestArgs.copy()
+            values = self._tuneVals[name]
+            if idx - 1 >= 0:
+                argLow = values[idx - 1]
+                baseArgs[name] = argLow
+                self.validator._updateTrainedLearner(trial=True)
+                perfLow = self.validator.validate(baseArgs, record=False)
+                lowBest = self.validator._isBest(perfLow, self._bestPerf)
+            else:
+                lowBest = False
+            if idx + 1 < len(values):
+                argHigh = values[idx + 1]
+                baseArgs[name] = argHigh
+                self.validator._updateTrainedLearner(trial=True)
+                perfHigh = self.validator.validate(baseArgs, record=False)
+                highBest = self.validator._isBest(perfHigh, self._bestPerf)
+            else:
+                highBest = False
+            if lowBest and highBest: # select better of the two
+                if self.validator._isBest(perfHigh, perfLow):
+                    best[name] = argLow
+                    self._tuneIdx[name] += 1
+                else:
+                    best[name] = argHigh
+                    self._tuneIdx[name] -= 1
+            elif lowBest:
+                best[name] = argLow
+                self._tuneIdx[name] -= 1
+            elif highBest:
+                best[name] = argHigh
+                self._tuneIdx[name] += 1
+
+        if not best and not self.validator._incremental:
+            # if it is not possible to incrementally train, these
+            # results will not improve from here
+            raise StopIteration
+        if best:
+            self._currArgs.update(best)
+            self.validator._updateTrainedLearner(trial=True)
+            performance = self.validator.validate(self._currArgs)
+            if self.validator._isBest(performance, self._bestPerf):
+                self._bestPerf = performance
+                self._bestArgs = self._currArgs.copy()
+        # even if no new parameters were best, incremental training could still
+        # find better future parameters so continue
+        self._currIteration += 1
+        return self._currArgs.copy()
 
 
 class Tune:
     """
     Triggers hyperparameter optimization to occur during training.
 
-    Any arguments in a the list of arguments provided to this object
-    will be placed in the hyperparameter optimization protocol
-    (defined by a ``Tuning`` object) and the best argument will be used
-    to train the learner.
+    Provide or generate the possible argument values to use during the
+    hyperparameter optimization process (defined by a ``Tuning`` object)
+    and the best argument will be used to train the learner. A list of
+    predetermined values can be passed as the ``values`` parameter or a
+    range of values can be constructed using the ``start``, ``end``,
+    ``change`` and ``changeType`` parameters. Only ``end`` is required
+    in this case, the other parameters will be assigned default values
+    if not explicitly set (see below).
 
     Parameters
     ----------
-    argumentList : list
-        A list of values for the argument.
+    values : list
+        A list of argument values to use for tuning. Either this
+        or ``end`` must not be None.
+    start : int, float
+        The inclusive start value of the values in a range. Default to 0
+        and only applies when ``end`` is not None.
+    end : int, float
+        The inclusive end value of the values in a range. Either this or
+        ``values`` must not be None.
+    change : int, float
+        The amount by which to changeType the data in the range. The
+        ``changeType`` parameter will dictate whether this uses addition
+        or multiplication. Defaults to 1 and only applies when when
+        ``end`` is not None.
+    changeType : str
+        Either 'add' or 'multiply' to indicate how the ``change`` will
+        be used to generate the range. Defaults to 'add' and only
+        applies when ``end`` is not None.
 
     See Also
     --------
@@ -861,27 +1158,127 @@ class Tune:
     optimization, cross validate, learn, hyper parameters,
     hyperparameters, choose, grid search, GridSearchCV
     """
-    def __init__(self, argumentList):
-        try:
-            self.argumentTuple = tuple(argumentList)
-        except TypeError as e:
-            msg = "argumentList must be iterable."
-            raise InvalidArgumentValue(msg) from e
+
+    def __init__(self, values=None, start=None, end=None, change=None,
+                 changeType=None):
+        if values is None and end is None:
+            msg = 'Either values or end must not be None'
+            raise InvalidArgumentValueCombination(msg)
+        if values is not None and end is not None:
+            msg = "If values is provided, "
+        self._values = values
+        self._start = start
+        self._end = end
+        self._change = change
+        self._changeType = changeType
+
+        # prevents needing to autodetect a linear range
+        if isinstance(values, range):
+            self._values = None
+            self._start = values.start
+            self._end = values.stop - 1
+            self._change = values.step
+
+        self._args = {'values': values, 'start': start, 'end': end,
+                      'change': change, 'changeType': changeType}
+
+        if self._values is None:
+            if self._start is None:
+                self._start = 0
+            if self._change is None:
+                self._change = 1
+            if self._changeType is None:
+                self._changeType = 'add'
+                linear = True
+            else:
+                linear = changeType == 'add'
+            if self._changeType == 'add':
+                op = operator.add
+            elif self._changeType == 'multiply':
+                op = operator.mul
+            else:
+                msg = "changeType must be 'add' or 'multiply'"
+                raise InvalidArgumentValue(msg)
+
+            start = self._start
+            change = self._change
+            self._values = []
+            if self._start < self._end:
+                if not linear and change < 1:
+                    msg = "change must be greater than 1"
+                    raise InvalidArgumentValue(msg)
+                if linear and change <= 0:
+                    msg = "change must be greater than 0"
+                    raise InvalidArgumentValue(msg)
+                comp = operator.le
+            elif self._start > self._end:
+                if not linear and (self._change >= 1 or self._change <= 0):
+                    msg = "change must be between 0 and 1 (exclusive)"
+                    raise InvalidArgumentValue(msg)
+                if linear and self._change >= 0:
+                    msg = "change must be less than 0"
+                    raise InvalidArgumentValue(msg)
+                comp = operator.ge
+
+            curr = self._start
+            while comp(curr, self._end):
+                self._values.append(curr)
+                curr = op(curr, self._change)
+                # rounding errors can prevent end from being included
+                if linear and round(curr, 12) == self._end:
+                    curr = self._end
+
+        else:
+            # detect if values is linear or exponential, i.e if values was set
+            # to range(2, 10) this would identify the data as linear.
+            try:
+                if (len(values) > 2 and
+                    all(isinstance(v, numbers.Number) for v in values)):
+                    sort = sorted(values)
+                    difLin = sort[1] - sort[0]
+                    linDiffs = (sort[i + 1] - sort[i] for i
+                                in range(len(sort) - 1))
+                    if all(d == difLin for d in linDiffs):
+                        self._start = sort[0]
+                        self._end = sort[-1]
+                        self._change = difLin
+                        self._changeType = 'add'
+                    elif sort[0]:
+                        difExp = sort[1] / sort[0]
+                        expDiffs = (sort[i + 1] / sort[i] for i
+                                    in range(len(sort) - 1))
+                        # round to avoid floating point issues
+                        if all(round(d, 12) == difExp for d in expDiffs):
+                            self._start = sort[0]
+                            self._end = sort[-1]
+                            self._change = difExp
+                            self._changeType = 'exponential'
+            except TypeError as e:
+                msg = "values must be iterable."
+                raise InvalidArgumentType(msg) from e
+
 
     def __getitem__(self, key):
-        return self.argumentTuple[key]
+        return self._values[key]
 
     def __setitem__(self, key, value):
         raise ImproperObjectAction("Tune objects are immutable")
 
     def __len__(self):
-        return len(self.argumentTuple)
+        return len(self._values)
 
     def __str__(self):
-        return str(self.argumentTuple)
+        return self.__repr__()
 
     def __repr__(self):
-        return "Tune(" + str(list(self.argumentTuple)) + ")"
+        ret = "Tune("
+        args = {}
+        for arg, val in self._args.items():
+            if val is not None:
+                args[arg] = val
+        ret += prettyDictString(args, valueStr=quoteStrings)
+        ret += ")"
+        return ret
 
 
 class Tuning:
@@ -904,6 +1301,19 @@ class Tuning:
         - "consecutive" : Optimize one argument at a time, holding the
           others constant. Optionally, multiple ``loops`` can occur and
           the ``order`` that the parameters are tuned can be defined.
+        - "bayesian" : Apply a bayesian algorithm to the argument space.
+          Note: When there is a correlation between an argument value
+          and loss, the ``Tune`` objects provided should provide a
+          linear or exponential range of values. This allows all values
+          in that space to be sampled, otherwise only the provided
+          values will be sampled and assumed to have no correlation with
+          loss.
+        - "iterative" : Beginning with the middle value of the sorted
+          arguments, tries the higher and lower values (holding others
+          constant) then applies the best (higher, lower, or same)
+          argument on the next iteration. Note: This requires arguments
+          to be numeric and assumes there is a correlation between the
+          values and the performance.
 
     The ``validation`` parameter identifies how the performance will be
     evaluated and accepts the following:
@@ -928,10 +1338,8 @@ class Tuning:
     Parameters
     ----------
     selection : str
-        How the next argument set will be chosen. Accepts "brute force"
-        and "consecutive". Note that when optimizing for a single
-        argument, "brute force" and "consecutive" are effectively the
-        same.
+        How the next argument set will be chosen. Accepts "brute force",
+        "consecutive", "bayesian" and "iterative".
     validation : str, float
         How each argument set will be validated. Accepts
         "cross validation", "leave one out", "leave one group out",
@@ -949,6 +1357,18 @@ class Tuning:
     order : list
        Applies when ``selection`` is "consecutive". A list of argument
        names defining the order to use when tuning.
+    maxIterations : int
+        Applies when ``selection`` is "bayesian" or "iterative". The
+        maximum number of times iterate through the argument selection
+        process. Default is 100.
+    timeout : int, None
+        Applies when ``selection`` is "bayesian" or "iterative". The
+        maximum number of seconds to perform the argument selection
+        process. Defaults to None.
+    threshold : float, None
+        Applies when ``selection`` is "bayesian" or "iterative". Stop
+        the argument selection process if the performance is better than
+        or equal to the threshold.
     folds : int
         Applies when ``validation`` is "cross validation". Default is 5.
     foldFeature : identifier
@@ -972,18 +1392,21 @@ class Tuning:
     --------
     Tune, nimble.train
     """
-    _selections = ["brute force", "consecutive"]
+    _selections = ["brute force", "consecutive", "bayesian"]
     _validations = ["cross validation", "leave one out", "leave one group out",
                     "data", "proportion"]
     _selectors = {"bruteforce": BruteForce,
-                  "consecutive": Consecutive}
+                  "consecutive": Consecutive,
+                  "bayesian": Bayesian,
+                  "iterative": Iterative}
     _validators = {"crossvalidation": KFold,
                    "leaveoneout": LeaveOneOut,
                    "leaveonegroupout": LeaveOneGroupOut,
                    "data": HoldoutData,
                    "proportion": HoldoutProportion}
     def __init__(self, selection="consecutive", validation="cross validation",
-                 performanceFunction=None, loops=1, order=None, folds=5,
+                 performanceFunction=None, loops=1, order=None,
+                 maxIterations=100, timeout=None, threshold=None, folds=5,
                  foldFeature=None, validateX=None, validateY=None,
                  proportion=None):
         self.selection = selection
@@ -994,7 +1417,7 @@ class Tuning:
         self._selectorArgs = {}
         selection = selection.lower().replace(" ", "")
         selection = selection.lower().replace("-", "")
-        if selection not in Tuning._selectors.keys():
+        if selection not in Tuning._selectors:
             msg = prettyListString(Tuning._selections, useAnd=True)
             msg += " are the only accepted _selections."
             raise InvalidArgumentValue(msg)
@@ -1003,6 +1426,13 @@ class Tuning:
         if selection == "consecutive":
             self._selectorArgs['loops'] = loops
             self._selectorArgs['order'] = order
+        elif selection in ["bayesian", "iterative"]:
+            if maxIterations is None and timeout is None and threshold is None:
+                msg = "One of maxIterations, timeout, or threshold must be set"
+                raise InvalidArgumentValueCombination(msg)
+            self._selectorArgs['maxIterations'] = maxIterations
+            self._selectorArgs['timeout'] = timeout
+            self._selectorArgs['threshold'] = threshold
         self._validatorArgs = {}
         if isinstance(validation, float):
             validation, proportion = "proportion", validation
@@ -1011,7 +1441,11 @@ class Tuning:
         else:
             validation = validation.lower().replace(" ", "")
             validation = validation.lower().replace("-", "")
-        if validation not in Tuning._validators.keys():
+        if selection in ['bayesian', 'iterative'] and validation != 'data':
+            msg = f"'data' validation is required. '{selection}' "
+            msg += "selection cannot use any training data for validation."
+            raise InvalidArgumentValueCombination(msg)
+        if validation not in Tuning._validators:
             msg = prettyListString(Tuning._validations)
             msg += ", or a float representing a holdout proportion of "
             msg += "the training data are the only accepted _validations."
@@ -1049,19 +1483,12 @@ class Tuning:
             raise InvalidArgumentValue(msg)
         if self.performanceFunction is None:
             self.performanceFunction = performanceFunction
-        # detectBestResult will raise exception for invalid performanceFunction
-        optimal = nimble.calculate.detectBestResult(self.performanceFunction)
         self.validator = self._validator(
             learnerName, trainX, trainY, self.performanceFunction,
-            randomSeed=randomSeed, **self._validatorArgs)
-        if self._selection != 'bruteforce':
-            selector = self._selector(arguments, optimal=optimal,
-                                      **self._selectorArgs)
-        else:
-            selector = self._selector(arguments, **self._selectorArgs)
-        for argSet in selector:
-            performance = self.validator.validate(argSet, useLog=useLog)
-            selector.update(performance)
+            randomSeed=randomSeed, useLog=useLog, **self._validatorArgs)
+        selector = self._selector(arguments, self.validator,
+                                  **self._selectorArgs)
+        selector.validateAll()
 
         # reverse based on optimal for performanceFunction
         highestIsBest = self.validator.optimal == 'max'
