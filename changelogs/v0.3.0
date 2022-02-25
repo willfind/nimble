@@ -1,5 +1,10 @@
 ### Documentation ###
 * API Documentation will now link to the QueryString object in docstring text
+* Provide more information on data object from API Documentation page.
+* Add hyperlinked list of concepts covered in each example.
+* Open hyperlinks to API documentation in examples as a new tab.
+* Clarifications in examples and docstrings.
+* Removed cells specific to online examples from downloadable notebooks.
 
 ### Cheat Sheet ###
 * For html: now formatted as a browser-width sensitive vertical accordion.
@@ -39,4 +44,4 @@
 * The shogun package, since it required python 3.6, has been removed.
 
 ### Save ###
-* Combine writeFile() and save() into a single save() method
+* Combine writeFile() and save() into a single save() method.

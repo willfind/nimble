@@ -14,9 +14,8 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 
 import nimble
-from nimble.core.logger import handleLogging
 from nimble.exceptions import ImproperObjectAction
-from ._dataHelpers import limitedTo2D
+from ._dataHelpers import limitedTo2D, prepLog
 
 class Points(ABC):
     """
@@ -104,7 +103,10 @@ class Points(ABC):
         """
         return self._getNames()
 
-    def setName(self, oldIdentifier, newName, useLog=None):
+
+    @prepLog
+    def setName(self, oldIdentifier, newName, *,
+                useLog=None): # pylint: disable=unused-argument
         """
         Set or change a pointName.
 
@@ -143,9 +145,12 @@ class Points(ABC):
         --------
         row, key, index, header, heading, identifier
         """
-        self._setName(oldIdentifier, newName, useLog)
+        self._setName(oldIdentifier, newName)
 
-    def setNames(self, assignments, useLog=None):
+
+    @prepLog
+    def setNames(self, assignments, *,
+                 useLog=None): # pylint: disable=unused-argument
         """
         Set or rename all of the point names of this object.
 
@@ -185,7 +190,7 @@ class Points(ABC):
         --------
         rows, keys, indexes, indices, headers, headings, identifiers
         """
-        self._setNames(assignments, useLog)
+        self._setNames(assignments)
 
     def getIndex(self, identifier):
         """
@@ -284,15 +289,20 @@ class Points(ABC):
     #########################
     # Structural Operations #
     #########################
-
+    @prepLog
     def copy(self, toCopy=None, start=None, end=None, number=None,
-             randomize=False, useLog=None):
+             randomize=False, *,
+             useLog=None): # pylint: disable=unused-argument
         """
         Copy certain points of this object.
 
         A variety of methods for specifying the points to copy based on
-        the provided parameters. If toCopy is not None, start and end
-        must be None. If start or end is not None, toCopy must be None.
+        the provided parameters. If ``toCopy`` is not None, ``start``
+        and ``end`` must be None. If ``start`` or ``end`` is not None,
+        ``toCopy`` must be None.
+
+        The ``nimble.match`` module contains many helpful functions that
+        could be used for ``toCopy``.
 
         Parameters
         ----------
@@ -301,7 +311,7 @@ class Points(ABC):
             * list of identifiers - an iterable container of identifiers
             * function - accepts a point as its only argument and
               returns a boolean value to indicate if the point should
-              be copied
+              be copied. See ``nimble.match`` for common functions.
             * query - string in the format 'FEATURENAME OPERATOR VALUE'
               (i.e "ft1 < 10", "id4 == yes", or "col4 is nonZero") where
               OPERATOR is separated from the FEATURENAME and VALUE by
@@ -343,12 +353,12 @@ class Points(ABC):
 
         Examples
         --------
-        >>> lst = [[1, 1, 1, 1],
+        >>> lst = [[0, 0, 0, 0],
+        ...        [1, 1, 1, 1],
         ...        [2, 2, 2, 2],
-        ...        [3, 3, 3, 3],
-        ...        [4, 4, 4, 4]]
+        ...        [3, 3, 3, 3]]
         >>> X = nimble.data(lst, featureNames=['a', 'b', 'c', 'd'],
-        ...                 pointNames=['1', '2', '3', '4'])
+        ...                 pointNames=['0', '1', '2', '3'])
         >>> single = X.points.copy('1')
         >>> single
         <Matrix 1pt x 4ft
@@ -362,39 +372,38 @@ class Points(ABC):
                'a' 'b' 'c' 'd'
              ┌────────────────
          '1' │  1   1   1   1
-         '4' │  4   4   4   4
+         '3' │  3   3   3   3
         >
-        >>> func = X.points.copy(lambda pt: sum(pt) < 10)
+        >>> func = X.points.copy(nimble.match.allZero)
         >>> func
-        <Matrix 2pt x 4ft
+        <Matrix 1pt x 4ft
                'a' 'b' 'c' 'd'
              ┌────────────────
-         '1' │  1   1   1   1
-         '2' │  2   2   2   2
+         '0' │  0   0   0   0
         >
-        >>> strFunc = X.points.copy("a >= 3")
+        >>> strFunc = X.points.copy("a >= 2")
         >>> strFunc
         <Matrix 2pt x 4ft
                'a' 'b' 'c' 'd'
              ┌────────────────
+         '2' │  2   2   2   2
          '3' │  3   3   3   3
-         '4' │  4   4   4   4
         >
         >>> startEnd = X.points.copy(start=1, end=2)
         >>> startEnd
         <Matrix 2pt x 4ft
                'a' 'b' 'c' 'd'
              ┌────────────────
+         '1' │  1   1   1   1
          '2' │  2   2   2   2
-         '3' │  3   3   3   3
         >
         >>> numberNoRandom = X.points.copy(number=2)
         >>> numberNoRandom
         <Matrix 2pt x 4ft
                'a' 'b' 'c' 'd'
              ┌────────────────
+         '0' │  0   0   0   0
          '1' │  1   1   1   1
-         '2' │  2   2   2   2
         >
         >>> nimble.random.setSeed(42)
         >>> numberRandom = X.points.copy(number=2, randomize=True)
@@ -402,25 +411,30 @@ class Points(ABC):
         <Matrix 2pt x 4ft
                'a' 'b' 'c' 'd'
              ┌────────────────
-         '1' │  1   1   1   1
-         '4' │  4   4   4   4
+         '0' │  0   0   0   0
+         '3' │  3   3   3   3
         >
 
         Keywords
         --------
         duplicate, replicate, clone
         """
-        return self._copy(toCopy, start, end, number, randomize, useLog)
+        return self._copy(toCopy, start, end, number, randomize)
 
+    @prepLog
     def extract(self, toExtract=None, start=None, end=None, number=None,
-                randomize=False, useLog=None):
+                randomize=False, *,
+                useLog=None): # pylint: disable=unused-argument
         """
         Move certain points of this object into their own object.
 
         A variety of methods for specifying the points to extract based
-        on the provided parameters. If toExtract is not None, start and
-        end must be None. If start or end is not None, toExtract must be
-        None.
+        on the provided parameters. If ``toExtract`` is not None,
+        ``start`` and ``end`` must be None. If ``start`` or ``end`` is
+        not None, ``toExtract`` must be None.
+
+        The ``nimble.match`` module contains many helpful functions that
+        could be used for ``toExtract``.
 
         Parameters
         ----------
@@ -429,7 +443,7 @@ class Points(ABC):
             * list of identifiers - an iterable container of identifiers
             * function - accepts a point as its only argument and
               returns a boolean value to indicate if the point should
-              be extracted
+              be extracted. See ``nimble.match`` for common functions.
             * query - string in the format 'FEATURENAME OPERATOR VALUE'
               (i.e "ft1 < 10", "id4 == yes", or "col4 is nonZero") where
               OPERATOR is separated from the FEATURENAME and VALUE by
@@ -511,21 +525,21 @@ class Points(ABC):
 
         Extract point when the function returns True.
 
-        >>> X = nimble.identity(3)
+        >>> X = nimble.data([[1, 2, 3], [4, 5, 6], [-1, -2, -3]])
         >>> X.points.setNames(['a', 'b', 'c'])
-        >>> func = X.points.extract(lambda pt: pt[2] == 1)
-        >>> func
-        <Matrix 1pt x 3ft
-               0 1 2
-             ┌──────
-         'c' │ 0 0 1
-        >
-        >>> X
+        >>> positives = X.points.extract(nimble.match.allPositive)
+        >>> positives
         <Matrix 2pt x 3ft
                0 1 2
              ┌──────
-         'a' │ 1 0 0
-         'b' │ 0 1 0
+         'a' │ 1 2 3
+         'b' │ 4 5 6
+        >
+        >>> X
+        <Matrix 1pt x 3ft
+               0  1  2
+             ┌─────────
+         'c' │ -1 -2 -3
         >
 
         Extract point when the query string returns True.
@@ -609,17 +623,22 @@ class Points(ABC):
         --------
         move, pull, separate, withdraw, cut, hsplit
         """
-        return self._extract(toExtract, start, end, number, randomize, useLog)
+        return self._extract(toExtract, start, end, number, randomize)
 
+    @prepLog
     def delete(self, toDelete=None, start=None, end=None, number=None,
-               randomize=False, useLog=None):
+               randomize=False, *,
+               useLog=None): # pylint: disable=unused-argument
         """
         Remove certain points from this object.
 
         A variety of methods for specifying points to delete based on
-        the provided parameters. If toDelete is not None, start and end
-        must be None. If start or end is not None, toDelete must be
-        None.
+        the provided parameters. If ``toDelete`` is not None, ``start``
+        and ``end`` must be None. If ``start`` or ``end`` is not None,
+        ``toDelete`` must be None.
+
+        The ``nimble.match`` module contains many helpful functions that
+        could be used for ``toDelete``.
 
         Parameters
         ----------
@@ -628,7 +647,7 @@ class Points(ABC):
             * list of identifiers - an iterable container of identifiers
             * function - accepts a point as its only argument and
               returns a boolean value to indicate if the point should
-              be deleted
+              be deleted. See ``nimble.match`` for common functions.
             * query - string in the format 'FEATURENAME OPERATOR VALUE'
               (i.e "ft1 < 10", "id4 == yes", or "col4 is nonZero") where
               OPERATOR is separated from the FEATURENAME and VALUE by
@@ -693,15 +712,15 @@ class Points(ABC):
 
         Delete point when the function returns True.
 
-        >>> X = nimble.identity(3)
+        >>> X = nimble.data([[1, 2, 3], [4, 5, 6], [-1, -2, -3]])
         >>> X.points.setNames(['a', 'b', 'c'])
-        >>> X.points.delete(lambda pt: pt[2] == 1)
+        >>> X.points.delete(nimble.match.allNegative)
         >>> X
         <Matrix 2pt x 3ft
                0 1 2
              ┌──────
-         'a' │ 1 0 0
-         'b' │ 0 1 0
+         'a' │ 1 2 3
+         'b' │ 4 5 6
         >
 
         Delete point when the query string returns True.
@@ -758,17 +777,22 @@ class Points(ABC):
         --------
         remove, drop, exclude, eliminate, destroy, cut
         """
-        self._delete(toDelete, start, end, number, randomize, useLog)
+        self._delete(toDelete, start, end, number, randomize)
 
+    @prepLog
     def retain(self, toRetain=None, start=None, end=None, number=None,
-               randomize=False, useLog=None):
+               randomize=False, *,
+               useLog=None): # pylint: disable=unused-argument
         """
         Keep only certain points of this object.
 
         A variety of methods for specifying points to keep based on
-        the provided parameters. If toRetain is not None, start and end
-        must be None. If start or end is not None, toRetain must be
-        None.
+        the provided parameters. If ``toRetain`` is not None, ``start``
+        and ``end`` must be None. If ``start`` or ``end`` is not None,
+        ``toRetain`` must be None.
+
+        The ``nimble.match`` module contains many helpful functions that
+        could be used for ``toRetain``.
 
         Parameters
         ----------
@@ -777,7 +801,7 @@ class Points(ABC):
             * list of identifiers - an iterable container of identifiers
             * function - accepts a point as its only argument and
               returns a boolean value to indicate if the point should
-              be retained
+              be retained. See ``nimble.match`` for common functions.
             * query - string in the format 'FEATURENAME OPERATOR VALUE'
               (i.e "ft1 < 10", "id4 == yes", or "col4 is nonZero") where
               OPERATOR is separated from the FEATURENAME and VALUE by
@@ -842,14 +866,15 @@ class Points(ABC):
 
         Retain point when the function returns True.
 
-        >>> X = nimble.identity(3)
+        >>> X = nimble.data([[1, 2, 3], [4, 5, 6], [-1, -2, -3]])
         >>> X.points.setNames(['a', 'b', 'c'])
-        >>> X.points.retain(lambda pt: pt[2] == 1)
+        >>> X.points.retain(nimble.match.allPositive)
         >>> X
-        <Matrix 1pt x 3ft
+        <Matrix 2pt x 3ft
                0 1 2
              ┌──────
-         'c' │ 0 0 1
+         'a' │ 1 2 3
+         'b' │ 4 5 6
         >
 
         Retain point when the query string returns True.
@@ -904,7 +929,7 @@ class Points(ABC):
          'a' │ 1 0 0
         >
         """
-        self._retain(toRetain, start, end, number, randomize, useLog)
+        self._retain(toRetain, start, end, number, randomize)
 
     @limitedTo2D
     def count(self, condition):
@@ -953,7 +978,9 @@ class Points(ABC):
         """
         return self._count(condition)
 
-    def sort(self, by=None, reverse=False, useLog=None):
+    @prepLog
+    def sort(self, by=None, reverse=False, *,
+             useLog=None): # pylint: disable=unused-argument
         """
         Arrange the points in this object.
 
@@ -1059,10 +1086,12 @@ class Points(ABC):
         --------
         arrange, order
         """
-        self._sort(by, reverse, useLog)
+        self._sort(by, reverse)
 
     @limitedTo2D
-    def transform(self, function, points=None, useLog=None):
+    @prepLog
+    def transform(self, function, points=None, *,
+                  useLog=None): # pylint: disable=unused-argument
         """
         Modify this object by applying a function to each point.
 
@@ -1137,13 +1166,15 @@ class Points(ABC):
          2 │ 7 7 7 7 7
         >
         """
-        self._transform(function, points, useLog)
+        self._transform(function, points)
 
     ###########################
     # Higher Order Operations #
     ###########################
     @limitedTo2D
-    def calculate(self, function, points=None, useLog=None):
+    @prepLog
+    def calculate(self, function, points=None, *,
+                  useLog=None): # pylint: disable=unused-argument
         """
         Apply a calculation to each point.
 
@@ -1226,10 +1257,12 @@ class Points(ABC):
 
         Keywords: apply, modify, alter
         """
-        return self._calculate(function, points, useLog)
+        return self._calculate(function, points)
 
     @limitedTo2D
-    def matching(self, function, useLog=None):
+    @prepLog
+    def matching(self, function, *,
+                 useLog=None): # pylint: disable=unused-argument
         """
         Identifying points matching the given criteria.
 
@@ -1293,9 +1326,11 @@ class Points(ABC):
         boolean, equivalent, identical, same, matches, equals, compare,
         comparison, same
         """
-        return self._matching(function, useLog)
+        return self._matching(function)
 
-    def insert(self, insertBefore, toInsert, useLog=None):
+    @prepLog
+    def insert(self, insertBefore, toInsert, *,
+               useLog=None): # pylint: disable=unused-argument
         """
         Insert more points into this object.
 
@@ -1380,9 +1415,11 @@ class Points(ABC):
          3 │  1   2   3
         >
         """
-        self._insert(insertBefore, toInsert, False, useLog)
+        self._insert(insertBefore, toInsert, False)
 
-    def append(self, toAppend, useLog=None):
+    @prepLog
+    def append(self, toAppend, *,
+               useLog=None): # pylint: disable=unused-argument
         """
         Append points to this object.
 
@@ -1470,9 +1507,12 @@ class Points(ABC):
         affix, adjoin, concatenate, concat, vstack, add, attach, join,
         merge
         """
-        self._insert(None, toAppend, True, useLog)
+        self._insert(None, toAppend, True)
 
-    def replace(self, data, points=None, useLog=None, **dataKwds):
+    @prepLog
+    def replace(self, data, points=None, *,
+                useLog=None, # pylint: disable=unused-argument
+                **dataKwds):
         """
         Replace the data in one or more of the points in this object.
 
@@ -1550,10 +1590,12 @@ class Points(ABC):
         --------
         change, substitute, alter, transform
         """
-        return self._replace(data, points, useLog, **dataKwds)
+        return self._replace(data, points, **dataKwds)
 
     @limitedTo2D
-    def mapReduce(self, mapper, reducer, useLog=None):
+    @prepLog
+    def mapReduce(self, mapper, reducer, *,
+                  useLog=None): # pylint: disable=unused-argument
         """
         Apply a mapper and reducer function to this object.
 
@@ -1606,9 +1648,11 @@ class Points(ABC):
         --------
         map, reduce, apply
         """
-        return self._mapReduce(mapper, reducer, useLog)
+        return self._mapReduce(mapper, reducer)
 
-    def permute(self, order=None, useLog=None):
+    @prepLog
+    def permute(self, order=None, *,
+                useLog=None): # pylint: disable=unused-argument
         """
         Permute the indexing of the points.
 
@@ -1682,11 +1726,13 @@ class Points(ABC):
         --------
         reorder, rearrange, shuffle
         """
-        self._permute(order, useLog)
+        self._permute(order)
 
     @limitedTo2D
-    def fillMatching(self, fillWith, matchingElements, points=None,
-                     useLog=None, **kwarguments):
+    @prepLog
+    def fillMatching(self, fillWith, matchingElements, points=None, *,
+                     useLog=None, # pylint: disable=unused-argument,
+                     **kwarguments):
         """
         Replace given values in each point with other values.
 
@@ -1779,11 +1825,13 @@ class Points(ABC):
         >
         """
         return self._fillMatching(fillWith, matchingElements, points,
-                                  useLog, **kwarguments)
+                                  **kwarguments)
 
     @limitedTo2D
+    @prepLog
     def splitByCollapsingFeatures(self, featuresToCollapse, featureForNames,
-                                  featureForValues, useLog=None):
+                                  featureForValues, *,
+                                  useLog=None): # pylint: disable=unused-argument
         """
         Separate feature/value pairs into unique points.
 
@@ -1921,16 +1969,13 @@ class Points(ABC):
                     appendedPts.append(f"{name}_{i}")
             self.setNames(appendedPts, useLog=False)
 
-        handleLogging(useLog, 'prep', 'points.splitByCollapsingFeatures',
-                      self._base.getTypeString(),
-                      Points.splitByCollapsingFeatures, featuresToCollapse,
-                      featureForNames, featureForValues)
 
     @limitedTo2D
+    @prepLog
     def combineByExpandingFeatures(self, featureWithFeatureNames,
                                    featuresWithValues,
-                                   modifyDuplicateFeatureNames=False,
-                                   useLog=None):
+                                   modifyDuplicateFeatureNames=False, *,
+                                   useLog=None): # pylint: disable=unused-argument
         """
         Combine similar points based on a differentiating feature.
 
@@ -2129,12 +2174,9 @@ class Points(ABC):
         if self._base.points._namesCreated():
             self.setNames(pNames, useLog=False)
 
-        handleLogging(useLog, 'prep', 'points.combineByExpandingFeatures',
-                      self._base.getTypeString(),
-                      Points.combineByExpandingFeatures,
-                      featureWithFeatureNames, featuresWithValues)
-
-    def repeat(self, totalCopies, copyPointByPoint):
+    @prepLog
+    def repeat(self, totalCopies, copyPointByPoint, *,
+               useLog=None): # pylint: disable=unused-argument
         """
         Create an object using copies of this object's points.
 
@@ -2156,6 +2198,13 @@ class Points(ABC):
             copies are made as if the object is only iterated once,
             making ``totalCopies`` copies of each point before iterating
             to the next point.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Returns
         -------
@@ -2524,11 +2573,11 @@ class Points(ABC):
         pass
 
     @abstractmethod
-    def _setName(self, oldIdentifier, newName, useLog):
+    def _setName(self, oldIdentifier, newName):
         pass
 
     @abstractmethod
-    def _setNames(self, assignments, useLog):
+    def _setNames(self, assignments):
         pass
 
     @abstractmethod
@@ -2544,19 +2593,19 @@ class Points(ABC):
         pass
 
     @abstractmethod
-    def _copy(self, toCopy, start, end, number, randomize, useLog=None):
+    def _copy(self, toCopy, start, end, number, randomize):
         pass
 
     @abstractmethod
-    def _extract(self, toExtract, start, end, number, randomize, useLog=None):
+    def _extract(self, toExtract, start, end, number, randomize):
         pass
 
     @abstractmethod
-    def _delete(self, toDelete, start, end, number, randomize, useLog=None):
+    def _delete(self, toDelete, start, end, number, randomize):
         pass
 
     @abstractmethod
-    def _retain(self, toRetain, start, end, number, randomize, useLog=None):
+    def _retain(self, toRetain, start, end, number, randomize):
         pass
 
     @abstractmethod
@@ -2564,39 +2613,39 @@ class Points(ABC):
         pass
 
     @abstractmethod
-    def _sort(self, by, reverse, useLog=None):
+    def _sort(self, by, reverse):
         pass
 
     @abstractmethod
-    def _transform(self, function, limitTo, useLog=None):
+    def _transform(self, function, limitTo):
         pass
 
     @abstractmethod
-    def _calculate(self, function, limitTo, useLog=None):
+    def _calculate(self, function, limitTo):
         pass
 
     @abstractmethod
-    def _matching(self, function, useLog=None):
+    def _matching(self, function):
         pass
 
     @abstractmethod
-    def _insert(self, insertBefore, toInsert, append=False, useLog=None):
+    def _insert(self, insertBefore, toInsert, append=False):
         pass
 
     @limitedTo2D
-    def _replace(self, data, locations, useLog=None):
+    def _replace(self, data, locations):
         pass
 
     @abstractmethod
-    def _mapReduce(self, mapper, reducer, useLog=None):
+    def _mapReduce(self, mapper, reducer):
         pass
 
     @abstractmethod
-    def _permute(self, order=None, useLog=None):
+    def _permute(self, order=None):
         pass
 
     @abstractmethod
-    def _fillMatching(self, match, fill, limitTo, useLog=None, **kwarguments):
+    def _fillMatching(self, match, fill, limitTo, **kwarguments):
         pass
 
     @abstractmethod

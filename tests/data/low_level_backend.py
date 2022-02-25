@@ -87,21 +87,6 @@ class LowLevelBackend(object):
         """ Test that object validation has been setup """
         assert hasattr(Base, 'objectValidation')
 
-    #######
-    # _id #
-    #######
-    def test_id_allUnique(self):
-        a = self.constructor()
-        b = self.constructor()
-        c = self.constructor()
-        d = self.constructor()
-        # The _id for returned objects will not always increment by one, but
-        # no additional internal objects are created during a call to
-        # constructor() so here each new object _id will increment by one
-        assert b._id == a._id + 1
-        assert c._id == b._id + 1
-        assert d._id == c._id + 1
-
     ############################
     # points._nameDifference() #
     ############################

@@ -802,6 +802,17 @@ def test_data_CSV_emptyFirstValue():
         assert fromCSV.features.getNames() == ['ft1', 'ft2', 'ft3']
         assert fromCSV.points.getNames() == ['a', 'b']
 
+    # should also trigger pointNames
+    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+        tmpCSV.write(',ft1,ft2,\n')
+        tmpCSV.write('a,1,2,3\n')
+        tmpCSV.write('b,3,4,5\n')
+        tmpCSV.flush()
+        fromCSV = nimble.data(tmpCSV.name)
+        assert fromCSV.shape == (2, 3)
+        assert fromCSV.features.getNames() == ['ft1', 'ft2', None]
+        assert fromCSV.points.getNames() == ['a', 'b']
+
     # no pointNames, first column is not unique
     with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
         tmpCSV.write(',ft1,ft2,ft3\n')
@@ -813,16 +824,32 @@ def test_data_CSV_emptyFirstValue():
         assert fromCSV.features.getNames() == [None, 'ft1', 'ft2', 'ft3']
         assert not fromCSV.points._namesCreated()
 
-    # no pointNames, only the first value of first row can be empty
+    # pointNames, keepPoints with unique first column
     with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
-        tmpCSV.write(',ft1,,ft3\n')
+        tmpCSV.write(',ft1,ft2,ft3\n')
         tmpCSV.write('a,1,2,3\n')
-        tmpCSV.write('b,3,4,5\n')
+        tmpCSV.write('b,4,5,6\n')
+        tmpCSV.write('c,7,8,9\n')
+        tmpCSV.write('d,-1,-2,-3\n')
         tmpCSV.flush()
-        fromCSV = nimble.data(tmpCSV.name)
-        assert fromCSV.shape == (2, 4)
-        assert fromCSV.features.getNames() == [None, 'ft1', None, 'ft3']
-        assert not fromCSV.points._namesCreated()
+        limitCSV = nimble.data(source=tmpCSV.name, keepPoints=[0, 3])
+        assert limitCSV.shape == (2, 3)
+        assert limitCSV.features.getNames() == ['ft1', 'ft2', 'ft3']
+        assert limitCSV.points.getNames() == ['a', 'd']
+
+    # no pointNames, keepPoints with non unique first column
+    # does not matter whether the kept points are unique or not
+    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+        tmpCSV.write(',ft1,ft2,ft3\n')
+        tmpCSV.write('a,1,2,3\n')
+        tmpCSV.write('b,4,5,6\n')
+        tmpCSV.write('b,7,8,9\n')
+        tmpCSV.write('d,-1,-2,-3\n')
+        tmpCSV.flush()
+        limitCSV = nimble.data(source=tmpCSV.name, keepPoints=[0, 3])
+        assert limitCSV.shape == (2, 4)
+        assert limitCSV.features.getNames() == [None, 'ft1', 'ft2', 'ft3']
+        assert not limitCSV.points._namesCreated()
 
 
 def test_data_MTXArr_data():
@@ -1095,10 +1122,6 @@ def test_data_objName_and_path_CSV():
             relExp = os.path.relpath(ret.absolutePath)
             assert ret.relativePath == relExp
 
-            retDefName = nimble.data(source=tmpCSV.name)
-            tokens = tmpCSV.name.rsplit(os.path.sep)
-            assert retDefName.name == tokens[len(tokens) - 1]
-
 
 def test_data_objName_and_path_MTXArr():
     for t in returnTypes:
@@ -1120,10 +1143,6 @@ def test_data_objName_and_path_MTXArr():
             relExp = os.path.relpath(ret.absolutePath)
             assert ret.relativePath == relExp
 
-            retDefName = nimble.data(source=tmpMTXArr.name)
-            tokens = tmpMTXArr.name.rsplit(os.path.sep)
-            assert retDefName.name == tokens[len(tokens) - 1]
-
 
 def test_data_objName_and_path_MTXCoo():
     for t in returnTypes:
@@ -1144,10 +1163,6 @@ def test_data_objName_and_path_MTXCoo():
 
             relExp = os.path.relpath(ret.absolutePath)
             assert ret.relativePath == relExp
-
-            retDefName = nimble.data(source=tmpMTXCoo.name)
-            tokens = tmpMTXCoo.name.rsplit(os.path.sep)
-            assert retDefName.name == tokens[len(tokens) - 1]
 
 
 ###################################
@@ -1210,6 +1225,24 @@ def test_featNamesOnly_AutoDetectedBlankLines_CSV():
         fromCSV = nimble.data(source=tmpCSV.name)
         tmpCSV.close()
         assert fromList == fromCSV
+
+def test_featNamesOnly_AutoDetectedCommentedLine_CSV():
+    for t in returnTypes:
+        fromList = nimble.data(source=[[1, 2, 3], [4, 5, 6]])
+
+        # instantiate from csv file
+        tmpCSV = tempfile.NamedTemporaryFile(suffix=".csv", mode='w')
+        tmpCSV.write("\n")
+        tmpCSV.write("\n")
+        tmpCSV.write("#one,two,three\n")
+        tmpCSV.write("1,2,3\n")
+        tmpCSV.write("4,5,6\n")
+        tmpCSV.flush()
+
+        fromCSV = nimble.data(source=tmpCSV.name)
+        tmpCSV.close()
+        assert fromList == fromCSV
+        assert fromCSV.features._getNamesNoGeneration() is None
 
 def test_pointNames_AutoDetected_from_specified_featNames_CSV():
     fNames = ['one', 'two', 'three']
@@ -1955,7 +1988,6 @@ def test_data_GZIP_passedOpen():
             tempGZIP.seek(0)
             fromGZIP = nimble.data(tempGZIP, returnType=t)
             assert fromList == fromGZIP
-            assert fromGZIP.name == os.path.basename(tempGZIP.name)
             assert fromGZIP.path  == tempGZIP.name
             assert fromGZIP.absolutePath == tempGZIP.name
             assert fromGZIP.relativePath == os.path.relpath(tempGZIP.name)
@@ -1969,7 +2001,6 @@ def test_data_ZIP_passedOpen():
             tempZIP.seek(0)
             fromZIP = nimble.data(tempZIP, returnType=t)
             assert fromList == fromZIP
-            assert fromZIP.name == os.path.basename(tempZIP.name)
             assert fromZIP.path  == tempZIP.name
             assert fromZIP.absolutePath == tempZIP.name
             assert fromZIP.relativePath == os.path.relpath(tempZIP.name)
@@ -1986,7 +2017,6 @@ def test_data_TAR_passedOpen():
             tempTAR.seek(0)
             fromZIP = nimble.data(tempTAR, returnType=t)
             assert fromList == fromZIP
-            assert fromZIP.name == os.path.basename(tempTAR.name)
             assert fromZIP.path  == tempTAR.name
             assert fromZIP.absolutePath == tempTAR.name
             assert fromZIP.relativePath == os.path.relpath(tempTAR.name)

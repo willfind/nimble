@@ -13,10 +13,14 @@ represent pixel values for the flattened image. The last 10 features
 identify the known label for the image using one-hot encoding. For
 example, [0,0,0,1,0,0,0,0,0,0] is a 3 and [0,0,0,0,0,0,0,0,0,1] is a 9.
 
-[Open this example in Google Colab][colab]
+In this example we will learn about:
 
-[Download this example as a script or notebook][files]
+* [Creating a simple neural network](#Simple-neural-network)
+* [Using objects from other packages as training parameters](#Simple-neural-network)
+* [Creating a Convolutional Neural Network](#Convolutional-Neural-Network)
 
+[Open this example in Google Colab][colab]\
+[Download this example as a script or notebook][files]\
 [Download the dataset for this example][datasets]
 
 [colab]: https://colab.research.google.com/drive/1o-1M9MWiqPdgXeAZ0RUDBN-ilx4J_rh1?usp=sharing

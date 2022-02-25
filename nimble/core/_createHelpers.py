@@ -2080,12 +2080,6 @@ def createDataFromFile(
 
             response = _getURLResponse(urlManager.source)
             path = source
-            if name is None:
-                if "Content-Disposition" in response.headers:
-                    contentDisp = response.headers["Content-Disposition"][0]
-                    name = contentDisp.split('filename=')[1]
-                else:
-                    name = source.split("/")[-1]
 
             content = response.content
             if response.apparent_encoding is not None:
@@ -2170,10 +2164,6 @@ def createDataFromFile(
             absPath = os.path.abspath(path)
             relPath = path
             pathsToPass = (absPath, relPath)
-
-    if path is not None and name is None:
-        tokens = path.rsplit(os.path.sep)
-        name = tokens[-1]
 
     extracted = (pointNames is True, featureNames is True)
     if selectSuccess:
@@ -2321,15 +2311,9 @@ def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
     point and/or feature names will be extracted from the data.
     """
     startPosition = ioStream.tell()
-
-    # walk past all the comments
-    currLine = "#"
-    while currLine.startswith('#'):
-        currLine = ioStream.readline()
-
+    _ = _advancePastComments(ioStream)
     # Use the robust csv reader to read the first two lines (if available)
     # these are saved to use in further autodetection
-    ioStream.seek(startPosition)
     rowReader = csv.reader(ioStream, dialect)
     possiblePtNames = False
     try:
@@ -2350,11 +2334,8 @@ def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
             if first is not None or second is None:
                 firstDataRow.append(first)
                 secondDataRow.append(second)
-            elif first is None:
-                if i:
-                    possiblePtNames = False
-                else:
-                    possiblePtNames = True
+            elif first is None and not i:
+                possiblePtNames = True
 
     except StopIteration:
         firstDataRow = None
@@ -2370,14 +2351,6 @@ def _checkCSVForNames(ioStream, pointNames, featureNames, dialect):
     ioStream.seek(startPosition)
 
     return pointNames, featureNames, trackPoints
-
-
-def _filterCSVRow(row):
-    if len(row) == 0:
-        return False
-    if row[0] == '\n':
-        return False
-    return True
 
 
 def _advancePastComments(ioStream):
@@ -2760,7 +2733,7 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
     # how many are skipped
     skippedLines = _advancePastComments(ioStream)
     # remake the file iterator to ignore empty lines
-    filtered = filter(_filterCSVRow, ioStream)
+    filtered = filter(lambda row: row[0] != '\n', ioStream)
     # send that line iterator to the csv reader
     lineReader = csv.reader(filtered, dialect)
 
@@ -2830,8 +2803,9 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
         if trackPoints:
             if ptName in possiblePtNames:
                 # duplicate value, need to add possible names back in as data
-                for idx, name in enumerate(possiblePtNames):
-                    retData[idx].insert(0, name)
+                for idx, name in enumerate(extractedPointNames):
+                    if retData[idx] is not None:
+                        retData[idx].insert(0, name)
                 row.insert(0, ptName)
                 retFNames.insert(0, None)
                 firstRowLength += 1

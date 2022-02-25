@@ -20,7 +20,7 @@ from nimble.core.logger import handleLogging
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._utility import prettyListString, quoteStrings
-from ._dataHelpers import limitedTo2D
+from ._dataHelpers import limitedTo2D, prepLog
 
 class Features(ABC):
     """
@@ -110,7 +110,10 @@ class Features(ABC):
         """
         return self._getNames()
 
-    def setName(self, oldIdentifier, newName, useLog=None):
+
+    @prepLog
+    def setName(self, oldIdentifier, newName, *,
+                useLog=None): # pylint: disable=unused-argument
         """
         Set or change a featureName.
 
@@ -149,9 +152,12 @@ class Features(ABC):
         --------
         column, title, header, heading, attribute, identifier
         """
-        self._setName(oldIdentifier, newName, useLog)
+        self._setName(oldIdentifier, newName)
 
-    def setNames(self, assignments, useLog=None):
+
+    @prepLog
+    def setNames(self, assignments, *,
+                 useLog=None): # pylint: disable=unused-argument
         """
         Set or rename all of the feature names of this object.
 
@@ -191,7 +197,7 @@ class Features(ABC):
         --------
         columns, titles, headers, headings, attributes, identifiers
         """
-        self._setNames(assignments, useLog)
+        self._setNames(assignments)
 
     def getIndex(self, identifier):
         """
@@ -291,14 +297,20 @@ class Features(ABC):
     # Structural Operations #
     #########################
     @limitedTo2D
+    @prepLog
     def copy(self, toCopy=None, start=None, end=None, number=None,
-             randomize=False, useLog=None):
+             randomize=False, *,
+             useLog=None): # pylint: disable=unused-argument
         """
         Copy certain features of this object.
 
         A variety of methods for specifying the features to copy based
-        on the provided parameters. If toCopy is not None, start and end
-        must be None. If start or end is not None, toCopy must be None.
+        on the provided parameters. If ``toCopy`` is not None, ``start``
+        and ``end`` must be None. If ``start`` or ``end`` is not None,
+        ``toCopy`` must be None.
+
+        The ``nimble.match`` module contains many helpful functions that
+        could be used for ``toCopy``.
 
         Parameters
         ----------
@@ -307,7 +319,7 @@ class Features(ABC):
             * list of identifiers - an iterable container of identifiers
             * function - accepts a feature as its only argument and
               returns a boolean value to indicate if the feature should
-              be copied
+              be copied. See ``nimble.match`` for common functions.
             * query - string in the format 'POINTNAME OPERATOR VALUE'
               (i.e "pt1 < 10", "id4 == yes", or "row4 is nonZero") where
               OPERATOR is separated from the POINTNAME and VALUE by
@@ -349,55 +361,45 @@ class Features(ABC):
 
         Examples
         --------
-        >>> lst = [[1, 2, 3, 4],
-        ...        [1, 2, 3, 4],
-        ...        [1, 2, 3, 4],
-        ...        [1, 2, 3, 4]]
+        >>> lst = [[0, 1, 2, 3],
+        ...        [0, 1, 2, 3],
+        ...        [0, 1, 2, 3],
+        ...        [0, 1, 2, 3]]
         >>> X = nimble.data(lst,
         ...                 pointNames=['a', 'b', 'c', 'd'],
-        ...                 featureNames=['1', '2', '3', '4'])
-        >>> single = X.features.copy('1')
+        ...                 featureNames=['0', '1', '2', '3'])
+        >>> single = X.features.copy('0')
         >>> single
         <Matrix 4pt x 1ft
-               '1'
+               '0'
              ┌────
-         'a' │  1
-         'b' │  1
-         'c' │  1
-         'd' │  1
+         'a' │  0
+         'b' │  0
+         'c' │  0
+         'd' │  0
         >
-        >>> multiple = X.features.copy(['1', 3])
+        >>> multiple = X.features.copy(['0', 3])
         >>> multiple
         <Matrix 4pt x 2ft
-               '1' '4'
+               '0' '3'
              ┌────────
-         'a' │  1   4
-         'b' │  1   4
-         'c' │  1   4
-         'd' │  1   4
+         'a' │  0   3
+         'b' │  0   3
+         'c' │  0   3
+         'd' │  0   3
         >
-        >>> func = X.features.copy(lambda ft: sum(ft) < 10)
+        >>> func = X.features.copy(nimble.match.allZero)
         >>> func
-        <Matrix 4pt x 2ft
-               '1' '2'
-             ┌────────
-         'a' │  1   2
-         'b' │  1   2
-         'c' │  1   2
-         'd' │  1   2
+        <Matrix 4pt x 1ft
+               '0'
+             ┌────
+         'a' │  0
+         'b' │  0
+         'c' │  0
+         'd' │  0
         >
-        >>> strFunc = X.features.copy("a >= 3")
+        >>> strFunc = X.features.copy("a >= 2")
         >>> strFunc
-        <Matrix 4pt x 2ft
-               '3' '4'
-             ┌────────
-         'a' │  3   4
-         'b' │  3   4
-         'c' │  3   4
-         'd' │  3   4
-        >
-        >>> startEnd = X.features.copy(start=1, end=2)
-        >>> startEnd
         <Matrix 4pt x 2ft
                '2' '3'
              ┌────────
@@ -406,44 +408,59 @@ class Features(ABC):
          'c' │  2   3
          'd' │  2   3
         >
+        >>> startEnd = X.features.copy(start=1, end=3) # Note: Inclusive
+        >>> startEnd
+        <Matrix 4pt x 3ft
+               '1' '2' '3'
+             ┌────────────
+         'a' │  1   2   3
+         'b' │  1   2   3
+         'c' │  1   2   3
+         'd' │  1   2   3
+        >
         >>> numberNoRandom = X.features.copy(number=2)
         >>> numberNoRandom
         <Matrix 4pt x 2ft
-               '1' '2'
+               '0' '1'
              ┌────────
-         'a' │  1   2
-         'b' │  1   2
-         'c' │  1   2
-         'd' │  1   2
+         'a' │  0   1
+         'b' │  0   1
+         'c' │  0   1
+         'd' │  0   1
         >
         >>> nimble.random.setSeed(42)
         >>> numberRandom = X.features.copy(number=2, randomize=True)
         >>> numberRandom
         <Matrix 4pt x 2ft
-               '1' '4'
+               '0' '3'
              ┌────────
-         'a' │  1   4
-         'b' │  1   4
-         'c' │  1   4
-         'd' │  1   4
+         'a' │  0   3
+         'b' │  0   3
+         'c' │  0   3
+         'd' │  0   3
         >
 
         Keywords
         --------
         duplicate, replicate, clone
         """
-        return self._copy(toCopy, start, end, number, randomize, useLog)
+        return self._copy(toCopy, start, end, number, randomize)
 
     @limitedTo2D
+    @prepLog
     def extract(self, toExtract=None, start=None, end=None, number=None,
-                randomize=False, useLog=None):
+                randomize=False, *,
+                useLog=None): # pylint: disable=unused-argument
         """
         Move certain features of this object into their own object.
 
         A variety of methods for specifying the features to extract
-        based on the provided parameters. If toExtract is not None,
-        start and end must be None. If start or end is not None,
-        toExtract must be None.
+        based on the provided parameters. If ``toExtract`` is not None,
+        ``start`` and ``end`` must be None. If ``start`` or ``end`` is
+        not None, ``toExtract`` must be None.
+
+        The ``nimble.match`` module contains many helpful functions that
+        could be used for ``toExtract``.
 
         Parameters
         ----------
@@ -452,7 +469,7 @@ class Features(ABC):
             * list of identifiers - an iterable container of identifiers
             * function - accepts a feature as its only argument and
               returns a boolean value to indicate if the feature should
-              be extracted
+              be extracted. See ``nimble.match`` for common functions.
             * query - string in the format 'POINTNAME OPERATOR VALUE'
               (i.e "pt1 < 10", "id4 == yes", or "row4 is nonZero") where
               OPERATOR is separated from the POINTNAME and VALUE by
@@ -540,24 +557,24 @@ class Features(ABC):
 
         Extract feature when the function returns True.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.data([[1, 2, 3], [4, 5, None], [7, 8, 9]])
         >>> X.features.setNames(['a', 'b', 'c'])
-        >>> func = X.features.extract(lambda ft: ft[2] == 1)
+        >>> func = X.features.extract(nimble.match.anyMissing)
         >>> func
-        <List 3pt x 1ft
-             'c'
-           ┌────
-         0 │  0
-         1 │  0
-         2 │  1
+        <DataFrame 3pt x 1ft
+              'c'
+           ┌──────
+         0 │ 3.000
+         1 │
+         2 │ 9.000
         >
         >>> X
-        <List 3pt x 2ft
+        <DataFrame 3pt x 2ft
              'a' 'b'
            ┌────────
-         0 │  1   0
-         1 │  0   1
-         2 │  0   0
+         0 │  1   2
+         1 │  4   5
+         2 │  7   8
         >
 
         Extract feature when the query string returns True.
@@ -654,18 +671,23 @@ class Features(ABC):
         --------
         move, pull, separate, withdraw, cut, vsplit
         """
-        return self._extract(toExtract, start, end, number, randomize, useLog)
+        return self._extract(toExtract, start, end, number, randomize)
 
     @limitedTo2D
+    @prepLog
     def delete(self, toDelete=None, start=None, end=None, number=None,
-               randomize=False, useLog=None):
+               randomize=False, *,
+               useLog=None): # pylint: disable=unused-argument
         """
         Remove certain features from this object.
 
         A variety of methods for specifying features to delete based on
-        the provided parameters. If toDelete is not None, start and end
-        must be None. If start or end is not None, toDelete must be
-        None.
+        the provided parameters. If ``toDelete`` is not None, ``start``
+        and ``end`` must be None. If start or end is not None,
+        ``toDelete`` must be None.
+
+        The ``nimble.match`` module contains many helpful functions that
+        could be used for ``toDelete``.
 
         Parameters
         ----------
@@ -674,7 +696,7 @@ class Features(ABC):
             * list of identifiers - an iterable container of identifiers
             * function - accepts a feature as its only argument and
               returns a boolean value to indicate if the feature should
-              be deleted
+              be deleted. See ``nimble.match`` for common functions.
             * query - string in the format 'POINTNAME OPERATOR VALUE'
               (i.e "pt1 < 10", "id4 == yes", or "row4 is nonZero") where
               OPERATOR is separated from the POINTNAME and VALUE by
@@ -742,16 +764,16 @@ class Features(ABC):
 
         Delete feature when the function returns True.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.data([[1, 2, 3], [4, 5, None], [7, 8, 9]])
         >>> X.features.setNames(['a', 'b', 'c'])
-        >>> X.features.delete(lambda ft: ft[2] == 1)
+        >>> X.features.delete(nimble.match.anyMissing)
         >>> X
-        <List 3pt x 2ft
+        <DataFrame 3pt x 2ft
              'a' 'b'
            ┌────────
-         0 │  1   0
-         1 │  0   1
-         2 │  0   0
+         0 │  1   2
+         1 │  4   5
+         2 │  7   8
         >
 
         Delete feature when the query string returns True.
@@ -816,18 +838,23 @@ class Features(ABC):
         --------
         remove, drop, exclude, eliminate, destroy, cut
         """
-        self._delete(toDelete, start, end, number, randomize, useLog)
+        self._delete(toDelete, start, end, number, randomize)
 
     @limitedTo2D
+    @prepLog
     def retain(self, toRetain=None, start=None, end=None, number=None,
-               randomize=False, useLog=None):
+               randomize=False, *,
+               useLog=None): # pylint: disable=unused-argument
         """
         Keep only certain features of this object.
 
         A variety of methods for specifying features to keep based on
-        the provided parameters. If toRetain is not None, start and end
-        must be None. If start or end is not None, toRetain must be
-        None.
+        the provided parameters. If ``toRetain`` is not None, ``start``
+        and ``end`` must be None. If ``start`` or ``end`` is not None,
+        ``toRetain`` must be None.
+
+        The ``nimble.match`` module contains many helpful functions that
+        could be used for ``toRetain``.
 
         Parameters
         ----------
@@ -836,7 +863,7 @@ class Features(ABC):
             * list of identifiers - an iterable container of identifiers
             * function - accepts a feature as its only argument and
               returns a boolean value to indicate if the feature should
-              be retained
+              be retained. See ``nimble.match`` for common functions.
             * query - string in the format 'POINTNAME OPERATOR VALUE'
               (i.e "pt1 < 10", "id4 == yes", or "row4 is nonZero") where
               OPERATOR is separated from the POINTNAME and VALUE by
@@ -904,16 +931,16 @@ class Features(ABC):
 
         Retain feature when the function returns True.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.data([[1, None, 3], [None, 5, 6], [7, 8, 9]])
         >>> X.features.setNames(['a', 'b', 'c'])
-        >>> X.features.retain(lambda ft: ft[2] == 1)
+        >>> X.features.retain(nimble.match.allNonMissing)
         >>> X
-        <List 3pt x 1ft
+        <DataFrame 3pt x 1ft
              'c'
            ┌────
-         0 │  0
-         1 │  0
-         2 │  1
+         0 │  3
+         1 │  6
+         2 │  9
         >
 
         Retain feature when the query string returns True.
@@ -978,7 +1005,7 @@ class Features(ABC):
         --------
         keep, hold, maintain, preserve, remove
         """
-        self._retain(toRetain, start, end, number, randomize, useLog)
+        self._retain(toRetain, start, end, number, randomize)
 
     @limitedTo2D
     def count(self, condition):
@@ -1028,7 +1055,9 @@ class Features(ABC):
         return self._count(condition)
 
     @limitedTo2D
-    def sort(self, by=None, reverse=False, useLog=None):
+    @prepLog
+    def sort(self, by=None, reverse=False, *,
+             useLog=None): # pylint: disable=unused-argument
         """
         Arrange the features in this object.
 
@@ -1127,10 +1156,12 @@ class Features(ABC):
         --------
         arrange, order
         """
-        self._sort(by, reverse, useLog)
+        self._sort(by, reverse)
 
     @limitedTo2D
-    def transform(self, function, features=None, useLog=None):
+    @prepLog
+    def transform(self, function, features=None, *,
+                  useLog=None): # pylint: disable=unused-argument
         """
         Modify this object by applying a function to each feature.
 
@@ -1209,13 +1240,15 @@ class Features(ABC):
         --------
         apply, modify, alter, change, map, compute
         """
-        self._transform(function, features, useLog)
+        self._transform(function, features)
 
     ###########################
     # Higher Order Operations #
     ###########################
     @limitedTo2D
-    def calculate(self, function, features=None, useLog=None):
+    @prepLog
+    def calculate(self, function, features=None, *,
+                  useLog=None): # pylint: disable=unused-argument
         """
         Apply a calculation to each feature.
 
@@ -1301,10 +1334,12 @@ class Features(ABC):
         --------
         apply, modify, alter, statistics, stats, compute
         """
-        return self._calculate(function, features, useLog)
+        return self._calculate(function, features)
 
     @limitedTo2D
-    def matching(self, function, useLog=None):
+    @prepLog
+    def matching(self, function, *,
+                 useLog=None): # pylint: disable=unused-argument
         """
         Identifying features matching the given criteria.
 
@@ -1364,10 +1399,12 @@ class Features(ABC):
         boolean, equivalent, identical, same, matches, equals, compare,
         comparison, same
         """
-        return self._matching(function, useLog)
+        return self._matching(function)
 
     @limitedTo2D
-    def insert(self, insertBefore, toInsert, useLog=None):
+    @prepLog
+    def insert(self, insertBefore, toInsert, *,
+               useLog=None): # pylint: disable=unused-argument
         """
         Insert more features into this object.
 
@@ -1452,10 +1489,12 @@ class Features(ABC):
         --------
         embed, include, inject, alter, position
         """
-        self._insert(insertBefore, toInsert, False, useLog)
+        self._insert(insertBefore, toInsert, False)
 
     @limitedTo2D
-    def append(self, toAppend, useLog=None):
+    @prepLog
+    def append(self, toAppend, *,
+               useLog=None): # pylint: disable=unused-argument
         """
         Append features to this object.
 
@@ -1538,10 +1577,13 @@ class Features(ABC):
         affix, adjoin, concatenate, concat, hstack, add, attach, join,
         merge
         """
-        self._insert(None, toAppend, True, useLog)
+        self._insert(None, toAppend, True)
 
     @limitedTo2D
-    def replace(self, data, features=None, useLog=None, **dataKwds):
+    @prepLog
+    def replace(self, data, features=None, *,
+                useLog=None, # pylint: disable=unused-argument
+                **dataKwds):
         """
         Replace the data in one or more of the features in this object.
 
@@ -1618,10 +1660,12 @@ class Features(ABC):
         --------
         change, substitute, alter, transform
         """
-        return self._replace(data, features, useLog, **dataKwds)
+        return self._replace(data, features, **dataKwds)
 
     @limitedTo2D
-    def mapReduce(self, mapper, reducer, useLog=None):
+    @prepLog
+    def mapReduce(self, mapper, reducer, *,
+                  useLog=None): # pylint: disable=unused-argument
         """
         Apply a mapper and reducer function to this object.
 
@@ -1668,10 +1712,12 @@ class Features(ABC):
          1 │    <class 'str'>    2
         >
         """
-        return self._mapReduce(mapper, reducer, useLog)
+        return self._mapReduce(mapper, reducer)
 
     @limitedTo2D
-    def permute(self, order=None, useLog=None):
+    @prepLog
+    def permute(self, order=None, *,
+                useLog=None): # pylint: disable=unused-argument
         """
         Permute the indexing of the features.
 
@@ -1745,11 +1791,13 @@ class Features(ABC):
         --------
         reorder, rearrange, shuffle
         """
-        self._permute(order, useLog)
+        self._permute(order)
 
     @limitedTo2D
-    def fillMatching(self, fillWith, matchingElements, features=None,
-                     useLog=None, **kwarguments):
+    @prepLog
+    def fillMatching(self, fillWith, matchingElements, features=None, *,
+                     useLog=None, # pylint: disable=unused-argument
+                     **kwarguments):
         """
         Replace given values in each feature with other values.
 
@@ -1843,11 +1891,12 @@ class Features(ABC):
         >
         """
         return self._fillMatching(fillWith, matchingElements, features,
-                                  useLog, **kwarguments)
+                                  **kwarguments)
 
     @limitedTo2D
-    def normalize(self, function, applyResultTo=None, features=None,
-                  useLog=None):
+    @prepLog
+    def normalize(self, function, applyResultTo=None, features=None, *,
+                  useLog=None): # pylint: disable=unused-argument
         """
         Modify all features in this object using the given function.
 
@@ -1970,12 +2019,11 @@ class Features(ABC):
             msg = 'applyResultTo must be None or an instance of Base'
             raise InvalidArgumentType(msg)
 
-        handleLogging(useLog, 'prep', 'features.normalize',
-                      self._base.getTypeString(), Features.normalize,
-                      function, applyResultTo, features)
 
     @limitedTo2D
-    def splitByParsing(self, feature, rule, resultingNames, useLog=None):
+    @prepLog
+    def splitByParsing(self, feature, rule, resultingNames, *,
+                       useLog=None): # pylint: disable=unused-argument
         """
         Split a feature into multiple features.
 
@@ -2150,12 +2198,11 @@ class Features(ABC):
         self._base._dims[1] = numRetFeatures
         self.setNames(fNames, useLog=False)
 
-        handleLogging(useLog, 'prep', 'features.splitByParsing',
-                      self._base.getTypeString(), Features.splitByParsing,
-                      feature, rule, resultingNames)
 
     @limitedTo2D
-    def repeat(self, totalCopies, copyFeatureByFeature):
+    @prepLog
+    def repeat(self, totalCopies, copyFeatureByFeature, *,
+               useLog=None): # pylint: disable=unused-argument
         """
         Create an object using copies of this object's features.
 
@@ -2177,6 +2224,13 @@ class Features(ABC):
             copies are made as if the object is only iterated once,
             making ``totalCopies`` copies of each feature before
             iterating to the next feature.
+        useLog : bool, None
+            Local control for whether to send object creation to the
+            logger. If None (default), use the value as specified in the
+            "logger" "enabledByDefault" configuration option. If True,
+            send to the logger regardless of the global option. If
+            False, do **NOT** send to the logger, regardless of the
+            global option.
 
         Returns
         -------
@@ -2276,7 +2330,7 @@ class Features(ABC):
         return self._unique()
 
     @limitedTo2D
-    def report(self, basicStatistics=True, extraStatisticFunctions=(),
+    def report(self, basicStatistics=True, extraStatisticFunctions=(), *,
                useLog=None):
         """
         Report containing a summary and statistics for each feature.
@@ -2372,7 +2426,7 @@ class Features(ABC):
 
         report = nimble.data(results, pnames, fnames, useLog=False)
 
-        handleLogging(useLog, 'data', "feature", str(report))
+        handleLogging(useLog, 'report', "feature", str(report))
 
         return report
 
@@ -2653,11 +2707,11 @@ class Features(ABC):
         pass
 
     @abstractmethod
-    def _setName(self, oldIdentifier, newName, useLog):
+    def _setName(self, oldIdentifier, newName):
         pass
 
     @abstractmethod
-    def _setNames(self, assignments, useLog):
+    def _setNames(self, assignments):
         pass
 
     @abstractmethod
@@ -2673,19 +2727,19 @@ class Features(ABC):
         pass
 
     @abstractmethod
-    def _copy(self, toCopy, start, end, number, randomize, useLog=None):
+    def _copy(self, toCopy, start, end, number, randomize):
         pass
 
     @abstractmethod
-    def _extract(self, toExtract, start, end, number, randomize, useLog=None):
+    def _extract(self, toExtract, start, end, number, randomize):
         pass
 
     @abstractmethod
-    def _delete(self, toDelete, start, end, number, randomize, useLog=None):
+    def _delete(self, toDelete, start, end, number, randomize):
         pass
 
     @abstractmethod
-    def _retain(self, toRetain, start, end, number, randomize, useLog=None):
+    def _retain(self, toRetain, start, end, number, randomize):
         pass
 
     @abstractmethod
@@ -2693,39 +2747,39 @@ class Features(ABC):
         pass
 
     @abstractmethod
-    def _sort(self, by, reverse, useLog=None):
+    def _sort(self, by, reverse,):
         pass
 
     @abstractmethod
-    def _transform(self, function, limitTo, useLog=None):
+    def _transform(self, function, limitTo):
         pass
 
     @abstractmethod
-    def _calculate(self, function, limitTo, useLog=None):
+    def _calculate(self, function, limitTo):
         pass
 
     @abstractmethod
-    def _matching(self, function, useLog=None):
+    def _matching(self, function):
         pass
 
     @abstractmethod
-    def _insert(self, insertBefore, toInsert, append=False, useLog=None):
+    def _insert(self, insertBefore, toInsert, append=False):
         pass
 
     @limitedTo2D
-    def _replace(self, data, locations, useLog=None):
+    def _replace(self, data, locations):
         pass
 
     @abstractmethod
-    def _mapReduce(self, mapper, reducer, useLog=None):
+    def _mapReduce(self, mapper, reducer):
         pass
 
     @abstractmethod
-    def _permute(self, order=None, useLog=None):
+    def _permute(self, order=None):
         pass
 
     @abstractmethod
-    def _fillMatching(self, match, fill, limitTo, useLog=None, **kwarguments):
+    def _fillMatching(self, match, fill, limitTo, **kwarguments):
         pass
 
     @abstractmethod

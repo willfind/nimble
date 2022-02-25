@@ -28,7 +28,6 @@ from nimble.exceptions import InvalidArgumentTypeCombination
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble._utility import isAllowedSingleElement, validateAllAllowedElements
 from nimble._utility import prettyListString
-from nimble.core.logger import handleLogging
 from nimble._utility import inspectArguments
 from nimble._utility import tableString
 from .points import Points
@@ -80,10 +79,10 @@ class Axis(ABC):
             self.namesInverse = None
             self.names = None
         elif isinstance(names, dict):
-            self._setNames(names, useLog=False)
+            self._setNames(names)
         else:
             names = valuesToPythonList(names, self._axis + 'Names')
-            self._setNames(names, useLog=False)
+            self._setNames(names)
 
         super().__init__(base, **kwargs)
 
@@ -174,8 +173,7 @@ class Axis(ABC):
 
         return copy.copy(self.namesInverse)
 
-
-    def _setName(self, oldIdentifier, newName, useLog=None):
+    def _setName(self, oldIdentifier, newName):
         if len(self) == 0:
             axis = self._axis
             msg = f"Cannot set any {axis} names; this object has no {axis}s"
@@ -207,19 +205,8 @@ class Axis(ABC):
         if newName is not None:
             self.names[newName] = index
 
-        handleLogging(useLog, 'prep', self._funcStr('setName'),
-                      self._base.getTypeString(), self._sigFunc('setName'),
-                      oldIdentifier, newName)
 
-
-    def _setNames(self, assignments, useLog=None):
-        self._setNamesBackend(assignments)
-
-        handleLogging(useLog, 'prep', self._funcStr('setNames'),
-                      self._base.getTypeString(), self._sigFunc('setNames'),
-                      assignments)
-
-    def _setNamesBackend(self, assignments):
+    def _setNames(self, assignments):
         if assignments is None:
             self.names = None
             self.namesInverse = None
@@ -333,7 +320,7 @@ class Axis(ABC):
     #########################
     # Structural Operations #
     #########################
-    def _copy(self, toCopy, start, end, number, randomize, useLog=None):
+    def _copy(self, toCopy, start, end, number, randomize):
         ret = self._genericStructuralFrontend('copy', toCopy, start, end,
                                               number, randomize)
         if self._isPoint:
@@ -346,53 +333,36 @@ class Axis(ABC):
         ret._absPath = self._base.absolutePath
         ret._relPath = self._base.relativePath
 
-        handleLogging(useLog, 'prep', self._funcStr('copy'),
-                      self._base.getTypeString(), self._sigFunc('copy'),
-                      toCopy, start, end, number, randomize)
-
         return ret
 
 
-    def _extract(self, toExtract, start, end, number, randomize, useLog=None):
+    def _extract(self, toExtract, start, end, number, randomize):
         ret = self._genericStructuralFrontend('extract', toExtract, start, end,
                                               number, randomize)
 
         ret._relPath = self._base.relativePath
         ret._absPath = self._base.absolutePath
 
-        handleLogging(useLog, 'prep', self._funcStr('extract'),
-                      self._base.getTypeString(), self._sigFunc('extract'),
-                      toExtract, start, end, number, randomize)
-
         return ret
 
 
-    def _delete(self, toDelete, start, end, number, randomize, useLog=None):
+    def _delete(self, toDelete, start, end, number, randomize):
         _ = self._genericStructuralFrontend('delete', toDelete, start, end,
                                               number, randomize)
 
-        handleLogging(useLog, 'prep', self._funcStr('delete'),
-                      self._base.getTypeString(), self._sigFunc('delete'),
-                      toDelete, start, end, number, randomize)
-
-
-    def _retain(self, toRetain, start, end, number, randomize, useLog=None):
+    def _retain(self, toRetain, start, end, number, randomize):
         ref = self._genericStructuralFrontend('retain', toRetain, start, end,
                                               number, randomize)
 
         paths = (self._base.absolutePath, self._base.relativePath)
         self._base._referenceFrom(ref, paths=paths)
 
-        handleLogging(useLog, 'prep', self._funcStr('retain'),
-                      self._base.getTypeString(), self._sigFunc('retain'),
-                      toRetain, start, end, number, randomize)
-
 
     def _count(self, condition):
         return self._genericStructuralFrontend('count', condition)
 
 
-    def _sort(self, by, reverse, useLog=None):
+    def _sort(self, by, reverse):
         if by is None:
             self._sortByNames(reverse)
         # identifiers
@@ -424,12 +394,8 @@ class Axis(ABC):
                 func = by
             self._sortByFunction(func, reverse)
 
-        handleLogging(useLog, 'prep', self._funcStr('sort'),
-                      self._base.getTypeString(), self._sigFunc('sort'),
-                      by, reverse)
 
-
-    def _permute(self, order=None, useLog=None):
+    def _permute(self, order=None):
         if order is None:
             values = len(self)
             order = list(range(values))
@@ -455,13 +421,10 @@ class Axis(ABC):
         if self._namesCreated():
             names = self._getNames()
             reorderedNames = [names[idx] for idx in order]
-            self._setNames(reorderedNames, useLog=False)
-
-        handleLogging(useLog, 'prep', self._funcStr('permute'),
-                      self._base.getTypeString(), self._sigFunc('permute'))
+            self._setNames(reorderedNames)
 
 
-    def _transform(self, function, limitTo, useLog=None):
+    def _transform(self, function, limitTo):
         if self._base._dims[0] == 0:
             msg = "We disallow this function when there are 0 points"
             raise ImproperObjectAction(msg)
@@ -479,38 +442,28 @@ class Axis(ABC):
 
         self._transform_implementation(wrappedFunc, limitTo)
 
-        handleLogging(useLog, 'prep', self._funcStr('transform'),
-                      self._base.getTypeString(), self._sigFunc('transform'),
-                      function, limitTo)
-
     ###########################
     # Higher Order Operations #
     ###########################
 
-    def _calculate(self, function, limitTo, useLog=None):
+    def _calculate(self, function, limitTo):
         wrappedFunc = validateAxisFunction(function, self._axis)
         ret = self._calculate_backend(wrappedFunc, limitTo)
 
-        handleLogging(useLog, 'prep', self._funcStr('calculate'),
-                      self._base.getTypeString(), self._sigFunc('calculate'),
-                      function, limitTo)
         return ret
 
-    def _matching(self, function, useLog=None):
+    def _matching(self, function):
         wrappedMatch = wrapMatchFunctionFactory(function, elementwise=False)
 
         ret = self._calculate_backend(wrappedMatch, None)
 
-        self._setNames(self._getNamesNoGeneration(), useLog=False)
+        self._setNames(self._getNamesNoGeneration())
         if hasattr(function, '__name__') and function.__name__ != '<lambda>':
             if self._isPoint:
                 ret.features.setNames([function.__name__], useLog=False)
             else:
                 ret.points.setNames([function.__name__], useLog=False)
 
-        handleLogging(useLog, 'prep', self._funcStr('matching'),
-                      self._base.getTypeString(), self._sigFunc('matching'),
-                      function)
         return ret
 
     def _calculate_backend(self, function, limitTo):
@@ -529,12 +482,14 @@ class Axis(ABC):
         retData, offAxisNames = self._calculate_implementation(function,
                                                                limitTo)
         if self._isPoint:
-            ret = nimble.data(retData, returnType=self._base.getTypeString(),
+            ret = nimble.data(retData, pointNames=False, featureNames=False,
+                              returnType=self._base.getTypeString(),
                               useLog=False)
             axisNameSetter = ret.points.setNames
             offAxisNameSetter = ret.features.setNames
         else:
-            ret = nimble.data(retData, returnType=self._base.getTypeString(),
+            ret = nimble.data(retData, pointNames=False, featureNames=False,
+                              returnType=self._base.getTypeString(),
                               rowsArePoints=False, useLog=False)
             axisNameSetter = ret.features.setNames
             offAxisNameSetter = ret.points.setNames
@@ -598,7 +553,7 @@ class Axis(ABC):
         return retData, offAxisNames
 
 
-    def _insert(self, insertBefore, toInsert, append=False, useLog=None):
+    def _insert(self, insertBefore, toInsert, append=False):
         if not append and insertBefore is None:
             msg = "insertBefore must be an index in range 0 to "
             msg += f"{len(self)} or {self._axis} name"
@@ -618,16 +573,9 @@ class Axis(ABC):
         self._insert_implementation(insertBefore, insertObj)
 
         self._setInsertedCountAndNames(insertObj, insertBefore)
-        if append:
-            handleLogging(useLog, 'prep', self._funcStr('append'),
-                          self._base.getTypeString(), self._sigFunc('append'),
-                          toInsert)
-        else:
-            handleLogging(useLog, 'prep', self._funcStr('insert'),
-                          self._base.getTypeString(), self._sigFunc('insert'),
-                          insertBefore, toInsert)
 
-    def _replace(self, data, locations, useLog=None, **dataKwds):
+
+    def _replace(self, data, locations, **dataKwds):
         if isinstance(data, nimble.core.data.Base):
             if dataKwds:
                 msg = 'dataKwds only apply when data is not an instance of '
@@ -683,13 +631,10 @@ class Axis(ABC):
                 replacement.flatten(useLog=False)
             with self._base._treatAs2D():
                 # pylint: disable=cell-var-from-loop
-                self._transform(lambda _: replacement, i, useLog=False)
+                self._transform(lambda _: replacement, i)
 
-        handleLogging(useLog, 'prep', self._funcStr('replace'),
-                      self._base.getTypeString(), self._sigFunc('replace'),
-                      data, locations)
 
-    def _mapReduce(self, mapper, reducer, useLog=None):
+    def _mapReduce(self, mapper, reducer):
         if self._isPoint:
             targetCount = len(self._base.points)
             otherCount = len(self._base.features)
@@ -743,15 +688,11 @@ class Axis(ABC):
         ret._absPath = self._base.absolutePath
         ret._relPath = self._base.relativePath
 
-        handleLogging(useLog, 'prep', self._funcStr('mapReduce'),
-                      self._base.getTypeString(), self._sigFunc('mapReduce'),
-                      mapper, reducer)
-
         return ret
 
 
     def _fillMatching(self, fillWith, matchingElements, limitTo=None,
-                      useLog=None, **kwarguments):
+                      **kwarguments):
         removeKwargs = []
         # use our fill.constant function with the fillWith value
         if not callable(fillWith):
@@ -791,16 +732,11 @@ class Axis(ABC):
 
             return fillFunc(vector, matcher, **kwarguments)
 
-        self._transform(fillFunction, limitTo, useLog=False)
+        self._transform(fillFunction, limitTo)
 
         # prevent kwargs we added from being logged
         for kwarg in removeKwargs:
             del kwarguments[kwarg]
-
-        handleLogging(useLog, 'prep', self._funcStr('fillMatching'),
-                      self._base.getTypeString(),
-                      self._sigFunc('fillMatching'), fillWith,
-                      matchingElements, limitTo, **kwarguments)
 
 
     def _repeat(self, totalCopies, copyVectorByVector):
@@ -941,7 +877,7 @@ class Axis(ABC):
         return res
 
     def _statisticsBackend(self, cleanFuncName, toCall):
-        ret = self._calculate(toCall, limitTo=None, useLog=False)
+        ret = self._calculate(toCall, limitTo=None)
         if self._isPoint:
             ret.points.setNames(self._getNames(), useLog=False)
             ret.features.setName(0, cleanFuncName, useLog=False)
@@ -1257,8 +1193,7 @@ class Axis(ABC):
             msg += f"(non-default). Either set the {self._axis} names of this "
             msg += "object or provide another argument for by"
             raise InvalidArgumentValue(msg)
-        self._permute(sorted(self._getNames(), reverse=reverse),
-                      useLog=False)
+        self._permute(sorted(self._getNames(), reverse=reverse))
 
     def _sortByIdentifier(self, index, reverse):
         if isinstance(index, list):
@@ -1271,12 +1206,12 @@ class Axis(ABC):
                 data = self._base.points[index]
             sortedIndex = sorted(enumerate(data), key=operator.itemgetter(1),
                                  reverse=reverse)
-            self._permute((val[0] for val in sortedIndex), useLog=False)
+            self._permute((val[0] for val in sortedIndex))
 
     def _sortByFunction(self, func, reverse):
         sortedData = sorted(enumerate(self), key=lambda x: func(x[1]),
                             reverse=reverse)
-        self._permute((val[0] for val in sortedData), useLog=False)
+        self._permute((val[0] for val in sortedData))
 
     ##########################
     #  Higher Order Helpers  #
@@ -1499,7 +1434,7 @@ class Axis(ABC):
         endNames = objNames[insertedBefore:]
 
         newNames = startNames + insertedNames + endNames
-        self._setNames(newNames, useLog=False)
+        self._setNames(newNames)
 
     def _uniqueNameGetter(self, uniqueIndices):
         """

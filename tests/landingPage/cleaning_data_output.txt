@@ -52,16 +52,6 @@ New parsed features in traffic data
 48191 │           282.090   0.000     0.000        90          Clouds     ──  2018     9      30    22       6           1450
 48192 │           282.120   0.000     0.000        90          Clouds     ──  2018     9      30    23       6           954
 
-Data sample with a holiday
-5pt x 5ft
-       'holiday'     'year' 'month' 'day' 'hour'
-  ┌─────────────────────────────────────────────
-0 │                   2012     11     21    22
-1 │                   2012     11     21    23
-2 │ Thanksgiving Day  2012     11     22    0
-3 │                   2012     11     22    1
-4 │                   2012     11     22    2
-
 Data sample with converted holiday feature
 5pt x 5ft
     'holiday' 'year' 'month' 'day' 'hour'

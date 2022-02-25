@@ -5,13 +5,17 @@
 
 Our dataset, `online_shoppers_intention_clean.csv`, stores data on the
 behaviors of visitors to an online shopping website. Our goal is to
-study this use behavior using a variety of Nimble features in order to
-extract useful insights.
+study this behavior via a variety of Nimble features in order to
+extract insights on the users.
 
-[Open this example in Google Colab][colab]
+In this example we will learn about:
 
-[Download this example as a script or notebook][files]
+* [Calculating statistics using the nimble.calculate module](#Exploring-data-through-Nimble%E2%80%99s-calculate-module)
+* [Calculating statistics using data object methods](#Exploring-data-through-data-object-methods)
+* [Plotting data](#Exploring-data-through-plotting)
 
+[Open this example in Google Colab][colab]\
+[Download this example as a script or notebook][files]\
 [Download the dataset for this example][datasets]
 
 [colab]: https://colab.research.google.com/drive/1QwTiHODLKlZp94pOGJCcnvNKA903uov1?usp=sharing
@@ -73,7 +77,7 @@ print('Proportion of visitors that view a product page:', 1 - noProduct)
 ## that nearly every visitor interacts with at least one product related page
 ## during their visit.
 
-## Exploring data through data object methods. ##
+## Exploring data through data object methods ##
 
 ## Now that we know visitors are typically viewing product pages, let's focus
 ## on the Purchase feature. Purchase is a boolean feature indicating whether

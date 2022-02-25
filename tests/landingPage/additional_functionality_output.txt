@@ -14,14 +14,14 @@ wifi signal strengths
 ...............................................................................
 .                                  SESSION 0                                  .
 ...............................................................................
-REGEX: Matrix Loaded                                               \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: Loaded: wifiData                                            \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 # of points    2000
 # of features  8
-name           wifiData
 REGEX: path           \S+
 REGEX:                \S+
+logID          _NIMBLE_0_
 ...............................................................................
-REGEX: Matrix.features.setNames                                    \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: wifiData.features.setNames                                  \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 Arguments: assignments=['source0', 'source1', 'source2', 'source3', 'source4',
            'source5', 'source6', 'room']
 ...............................................................................
@@ -42,14 +42,14 @@ Wifi signal strength data from 7 sources in 4 possible rooms
 ...............................................................................
 .                                  SESSION 0                                  .
 ...............................................................................
-REGEX: Matrix Loaded                                               \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: Loaded: wifiData                                            \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 # of points    2000
 # of features  8
-name           wifiData
 REGEX: path           \S+
 REGEX:                \S+
+logID          _NIMBLE_0_
 ...............................................................................
-REGEX: Matrix.features.setNames                                    \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: wifiData.features.setNames                                  \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 Arguments: assignments=['source0', 'source1', 'source2', 'source3', 'source4',
            'source5', 'source6', 'room']
 ...............................................................................
@@ -106,7 +106,7 @@ testY                     467                       1
 
 Arguments: k=7
 Random Seed: 2127877500
-Extra Info: Fold=2/3
+Fold: 2/3
 Metrics: fractionCorrect=0.9764453961456103
 ...............................................................................
 REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
@@ -120,7 +120,7 @@ testY                     466                       1
 
 Arguments: k=7
 Random Seed: 2127877500
-Extra Info: Fold=3/3
+Fold: 3/3
 Metrics: fractionCorrect=0.9785407725321889
 ...............................................................................
 REGEX: "nimble.KNNClassifier" Hyperparameter Tuning                \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
@@ -137,35 +137,57 @@ REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 
 trainAndTest("nimble.KNNClassifier")
 Data                      # points                  # features
-wifiData trainX           1400                      7
-wifiData trainY           1400                      1
-wifiData testX            600                       7
-wifiData testY            600                       1
+wifiData_trainX           1400                      7
+wifiData_trainY           1400                      1
+wifiData_testX            600                       7
+wifiData_testY            600                       1
 
 Arguments: k=Tune(values=[3, 5, 7])
 Random Seed: 99320166
-Extra Info: bestArguments={'k': 3}
+Best Arguments: {'k': 3}
 Metrics: fractionCorrect=0.985
 ...............................................................................
                                   NIMBLE LOGS
 ...............................................................................
 .                                  SESSION 0                                  .
 ...............................................................................
-REGEX: Matrix Loaded                                               \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: Loaded: wifiData                                            \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 # of points    2000
 # of features  8
-name           wifiData
 REGEX: path           \S+
 REGEX:                \S+
+logID          _NIMBLE_0_
+...............................................................................
+REGEX: wifiData.features.setNames                                  \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+Arguments: assignments=['source0', 'source1', 'source2', 'source3', 'source4',
+           'source5', 'source6', 'room']
+...............................................................................
+REGEX: wifiData.points.permute                                     \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+...............................................................................
+REGEX: wifiData.points.copy                                        \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+Arguments: number=5, randomize=True
+Returned: _NIMBLE_1_
+...............................................................................
+REGEX: wifiData.points.copy                                        \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+Arguments: number=5, randomize=True
+Returned: _NIMBLE_2_
+...............................................................................
+REGEX: wifiData.trainAndTestSets                                   \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+Arguments: testFraction=0.3, labels=room, randomOrder=False
+Returned: wifiData_trainX, wifiData_trainY, wifiData_testX, wifiData_testY
+...............................................................................
+REGEX: wifiData_testX.points.calculate                             \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+Arguments: function=leastDistance
+Returned: _NIMBLE_9_
 ...............................................................................
 REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 
 trainAndTest("custom.LeastFeatureMeanDistance")
 Data                      # points                  # features
-wifiData trainX           1400                      7
-wifiData trainY           1400                      1
-wifiData testX            600                       7
-wifiData testY            600                       1
+wifiData_trainX           1400                      7
+wifiData_trainY           1400                      1
+wifiData_testX            600                       7
+wifiData_testY            600                       1
 
 Random Seed: 506456970
 Metrics: fractionCorrect=0.9716666666666667
@@ -174,13 +196,13 @@ REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 
 trainAndTest("nimble.KNNClassifier")
 Data                      # points                  # features
-wifiData trainX           1400                      7
-wifiData trainY           1400                      1
-wifiData testX            600                       7
-wifiData testY            600                       1
+wifiData_trainX           1400                      7
+wifiData_trainY           1400                      1
+wifiData_testX            600                       7
+wifiData_testY            600                       1
 
 Arguments: k=Tune(values=[3, 5, 7])
 Random Seed: 99320166
-Extra Info: bestArguments={'k': 3}
+Best Arguments: {'k': 3}
 Metrics: fractionCorrect=0.985
 ...............................................................................

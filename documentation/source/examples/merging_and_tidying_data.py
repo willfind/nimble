@@ -15,13 +15,17 @@ provides functions that reorganize points and features to create data
 that is "tidy". Our goal is to create one tidy data object containing
 all of the data from our 8 original files.
 
-[Open this example in Google Colab][colab]
+[wickham]: http://dx.doi.org/10.18637/jss.v059.i10
 
-[Download this example as a script or notebook][files]
+In this example we will learn about:
 
+* [Combining data objects together](#Combining-the-data)
+* [Applying tidy data functions](#Tidying-the-data)
+
+[Open this example in Google Colab][colab]\
+[Download this example as a script or notebook][files]\
 [Download the dataset for this example][datasets]
 
-[wickham]: http://dx.doi.org/10.18637/jss.v059.i10
 [colab]: https://colab.research.google.com/drive/1v6bayDRsovOnzFnjRDYRaJ-PRSN7DIlE?usp=sharing
 [files]: files.rst#merging-and-tidying-data
 [datasets]: ../datasets.rst#merging-and-tidying-data
@@ -82,7 +86,7 @@ dwtnMinAM.show('Downtown data merged on date', maxHeight=12)
 ## in the combined objects. Once our new feature is added, we can
 ## `points.append` our objects from the same weather station.
 for obj in [dwtnMinAM, dwtnMaxAM, airptMinAM, airptMaxAM]:
-    extreme = 'min' if 'min' in obj.name else 'max'
+    extreme = 'min' if 'min' in obj.path else 'max'
     ftData = [[extreme] for _ in range(len(obj.points))]
     newFt = nimble.data(ftData, featureNames=['extreme'])
     # New feature will be added at index position 1 (after "date" feature)
@@ -98,7 +102,7 @@ dwtnMinAM.show('Downtown combined extreme data', maxHeight=12)
 ## to create a new 'station' feature for each object based on which weather
 ## station location (downtown vs. airport) recorded the data.
 for obj in [dwtnMinAM, airptMinAM]:
-    station = 'downtown' if 'downtown' in obj.name else 'airport'
+    station = 'downtown' if 'downtown' in obj.path else 'airport'
     stationData = [[station] for _ in range(len(obj.points))]
     newFt = nimble.data(stationData, featureNames=['station'])
     obj.features.insert(1, newFt)
@@ -114,7 +118,7 @@ dwtnMinAM.points.append(airptMinAM)
 ## weather station. Taking a look at our data will also help us start exploring
 ## how we can begin to tidy it.
 tempData = dwtnMinAM
-tempData.name = 'combined temperature data'
+tempData.name = 'combinedTemperatureData'
 tempData.points.sort('date')
 
 tempData.show('Fully merged (untidy) data', maxHeight=16)

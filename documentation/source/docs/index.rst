@@ -21,13 +21,49 @@ that are returned by some of these functions are documented here as well.
 
 Creating Data Objects
 ---------------------
-Most functions for creating data objects are found at the top-level of
-``nimble``. Nimble provides four data object types: List, Matrix, Sparse, and
-DataFrame. Each object has the same functionality, but differ on how data are
-stored and manipulated on the backend. List uses a Python list, Matrix uses a
-numpy array, Sparse uses a scipy COO Matrix and DataFrame uses a pandas
-DataFrame. While the functionality is the same, choosing the best type may
-provide efficiencies over other types.
+
+.. container:: grid-container
+
+   .. container:: row
+
+     .. container:: column-1
+
+        Nimble has 4 data types that share the same API. Each use a different
+        backend to optimize the operations based on the type of data in the
+        object. **By default, Nimble will assign the type that it detects would
+        be best** based on the data and the packages available in the
+        environment. The functions also include a parameter to set this
+        manually. Selecting the type that best matches the data will make each
+        operation as efficient as possible.
+
+     .. container:: column-2
+
+        .. list-table::
+           :header-rows: 1
+           :name: data-table
+           :widths: auto
+           :align: right
+
+           * - Type
+             - Data
+             - Backend
+           * - List
+             - any data
+             - Python list
+           * - Matrix
+             - all the same type
+             - NumPy array
+           * - DataFrame
+             - each column has 1 type
+             - Pandas DataFrame
+           * - Sparse
+             - mostly missing or 0
+             - SciPy coo_matrix
+
+
+The primary functions for creating data objects are found at the top-level of
+``nimble``. The :doc:`../cheatsheet` can also be helpful source of information
+about these functions.
 
 .. autosummary::
    :toctree: generated/
@@ -39,27 +75,42 @@ provide efficiencies over other types.
    nimble.random.data
 
 .. note::
-   List and Matrix are always available because ``numpy`` is a dependency.
-   To use Sparse, ``scipy`` must be installed.
-   To use DataFrame, ``pandas`` must be installed.
+   To use Sparse, `scipy`_ must be installed.
+   To use DataFrame, `pandas`_ must be installed.
 
 Using Data Objects
 ------------------
 
-All four data objects, List, Matrix, Sparse, and DataFrame, have the same
-functionality because they inherit from Nimble's ``Base`` object. The ``Base``
-object methods handle operations that apply to the entire data object or the
-individual elements of the object. Each object has ``features`` and ``points``
-attributes to connect the ``Base`` object with the ``Features`` and ``Points``
-objects, respectively. These provide methods that operate over the data not as
-a collection of elements, but as a collection of abstract slices: each point
-being those elements within some shared context, and each feature being all
-elements of the same kind across different contexts.
+.. image:: ../_static/nimbleObject.png
+ :alt: Nimble data object visualization
+ :width: 400
+ :height: 200
+ :name: floating-img
 
-Points and Features form the two axes along which a Base object is organized
-Each element, being contained in exactly one of the object's points and exactly
-one of the object's features, has its position referred to by the index or name
-of both the containing point and feature.
+A **Nimble data object** acts as the container of all individual elements of
+your data. But for manipulating that data, Nimble defines an API that abstracts
+away from the structure of how it is recorded to emphasize the meaning of how
+elements inter-relate.
+
+Instead of operating on rows and columns (as with a spreadsheet or matrix),
+Nimble defines methods over ``points`` and ``features``. This aligns with the
+goal of machine learning ready data, where each point should be a single
+observation of unique variables and each feature should define a single
+variable that has been recorded across observations. Nimble's API provides
+tools to tidy data towards that goal while behaving in a way that respects the
+observational meaning of data.
+
+.. image:: ../_static/nimbleObject.png
+ :alt: Nimble data object visualization
+ :width: 400
+ :height: 200
+ :name: data-img
+
+The methods of ``Base`` control operations that apply to the entire object or
+each element in the data. The ``Points`` and ``Features`` methods of the object
+have additional methods for operations that apply along that axis of the data
+object. The :doc:`../cheatsheet` can also be helpful to find data object
+methods.
 
 .. autosummary::
    :toctree: generated/
@@ -75,7 +126,8 @@ In Nimble, all algorithms used for machine learning or deep learning are
 referred to as "learners". Nimble provides interfaces to use learners defined
 in popular machine learning packages, ``nimble.learners``, and user created
 custom learners. This makes a wide variety of algorithms available under the
-same api.
+same api. The :doc:`../cheatsheet` can also be helpful to understand Nimble's
+machine learning API.
 
 **Choosing a learner**
 
@@ -243,6 +295,8 @@ Submodules
 
    nimble.calculate
 
+.. _scipy: https://www.scipy.org/install.html
+.. _pandas: https://pandas.pydata.org/pandas-docs/stable/getting_started/install.html
 .. _sklearn: https://scikit-learn.org/stable/install.html
 .. _tensorflow: https://www.tensorflow.org/install
 .. _autoimpute: https://autoimpute.readthedocs.io/en/latest/user_guide/getting_started.html

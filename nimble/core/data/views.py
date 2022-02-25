@@ -49,7 +49,6 @@ class BaseView(Base, metaclass=ABCMeta):
         Included due to best practices so args may automatically be
         passed further up into the hierarchy if needed.
     """
-
     def __init__(self, source, pointStart, pointEnd, featureStart, featureEnd,
                  **kwds):
         self._source = source
@@ -143,16 +142,18 @@ class BaseView(Base, metaclass=ABCMeta):
         else:
             yield self
 
+    # pylint: disable=unused-argument
     ###########################
     # Higher Order Operations #
     ###########################
 
     @baseExceptionDoc
-    def replaceFeatureWithBinaryFeatures(self, featureToReplace, useLog=None):
+    def replaceFeatureWithBinaryFeatures(self, featureToReplace, *,
+                                         useLog=None):
         readOnlyException("replaceFeatureWithBinaryFeatures")
 
     @baseExceptionDoc
-    def transformFeatureToIntegers(self, featureToConvert, useLog=None):
+    def transformFeatureToIntegers(self, featureToConvert, *, useLog=None):
         readOnlyException("transformFeatureToIntegers")
 
     @baseExceptionDoc
@@ -182,29 +183,29 @@ class BaseView(Base, metaclass=ABCMeta):
     @baseExceptionDoc
     def transformElements(self, toTransform, points=None, features=None,
                           preserveZeros=False, skipNoneReturnValues=False,
-                          useLog=None):
+                          *, useLog=None):
         readOnlyException("transform")
 
     @baseExceptionDoc
-    def transpose(self, useLog=None):
+    def transpose(self, *, useLog=None):
         readOnlyException("transpose")
 
     @baseExceptionDoc
     def replaceRectangle(self, replaceWith, pointStart, featureStart,
-                         pointEnd=None, featureEnd=None, useLog=None):
+                         pointEnd=None, featureEnd=None, *, useLog=None):
         readOnlyException("replaceRectangle")
 
     @baseExceptionDoc
-    def flatten(self, order='point', useLog=None):
+    def flatten(self, order='point', *, useLog=None):
         readOnlyException("flatten")
 
     @baseExceptionDoc
-    def unflatten(self, dataDimensions, order='point', useLog=None):
+    def unflatten(self, dataDimensions, order='point', *, useLog=None):
         readOnlyException("unflatten")
 
     @baseExceptionDoc
     def merge(self, other, point='strict', feature='union', onFeature=None,
-              force=False, useLog=None):
+              force=False, *, useLog=None):
         readOnlyException('merge')
 
     ###############################################################
@@ -257,17 +258,18 @@ class PointsView(Points, metaclass=ABCMeta):
     base : BaseView
         The BaseView instance that will be queried.
     """
+    # pylint: disable=unused-argument
 
     ####################################
     # Low Level Operations, Disallowed #
     ####################################
 
     @pointsExceptionDoc
-    def setName(self, oldIdentifier, newName, useLog=None):
+    def setName(self, oldIdentifier, newName, *, useLog=None):
         readOnlyException('setName')
 
     @pointsExceptionDoc
-    def setNames(self, assignments, useLog=None):
+    def setNames(self, assignments, *, useLog=None):
         readOnlyException('setNames')
 
     #####################################
@@ -276,37 +278,37 @@ class PointsView(Points, metaclass=ABCMeta):
 
     @pointsExceptionDoc
     def extract(self, toExtract=None, start=None, end=None, number=None,
-                randomize=False, useLog=None):
+                randomize=False, *, useLog=None):
         readOnlyException('extract')
 
     @pointsExceptionDoc
     def delete(self, toDelete=None, start=None, end=None, number=None,
-               randomize=False, useLog=None):
+               randomize=False, *, useLog=None):
         readOnlyException('delete')
 
     @pointsExceptionDoc
     def retain(self, toRetain=None, start=None, end=None, number=None,
-               randomize=False, useLog=None):
+               randomize=False, *, useLog=None):
         readOnlyException('retain')
 
     @pointsExceptionDoc
-    def insert(self, insertBefore, toInsert, useLog=None):
+    def insert(self, insertBefore, toInsert, *, useLog=None):
         readOnlyException('insert')
 
     @pointsExceptionDoc
-    def append(self, toAppend, useLog=None):
+    def append(self, toAppend, *, useLog=None):
         readOnlyException('append')
 
     @pointsExceptionDoc
-    def permute(self, order=None, useLog=None):
+    def permute(self, order=None, *, useLog=None):
         readOnlyException('permute')
 
     @pointsExceptionDoc
-    def sort(self, by=None, reverse=False, useLog=None):
+    def sort(self, by=None, reverse=False, *, useLog=None):
         readOnlyException('sort')
 
     @pointsExceptionDoc
-    def transform(self, function, points=None, useLog=None):
+    def transform(self, function, points=None, *, useLog=None):
         readOnlyException('transform')
 
     ######################################
@@ -315,23 +317,23 @@ class PointsView(Points, metaclass=ABCMeta):
 
     @pointsExceptionDoc
     def fillMatching(self, fillWith, matchingElements, points=None,
-                     useLog=None, **kwarguments):
+                     *, useLog=None, **kwarguments):
         readOnlyException('fill')
 
     @pointsExceptionDoc
     def splitByCollapsingFeatures(self, featuresToCollapse, featureForNames,
-                                  featureForValues, useLog=None):
+                                  featureForValues, *, useLog=None):
         readOnlyException('splitByCollapsingFeatures')
 
     @pointsExceptionDoc
     def combineByExpandingFeatures(self, featureWithFeatureNames,
                                    featuresWithValues,
                                    modifyDuplicateFeatureNames=False,
-                                   useLog=None):
+                                   *, useLog=None):
         readOnlyException('combineByExpandingFeatures')
 
     @pointsExceptionDoc
-    def replace(self, data, points=None, useLog=None, **dataKwds):
+    def replace(self, data, points=None, *, useLog=None, **dataKwds):
         readOnlyException('replace')
 
 @inheritDocstringsFactory(Features)
@@ -345,17 +347,18 @@ class FeaturesView(Features, metaclass=ABCMeta):
     base : BaseView
         The BaseView instance that will be queried.
     """
+    # pylint: disable=unused-argument
 
     ####################################
     # Low Level Operations, Disallowed #
     ####################################
 
     @featuresExceptionDoc
-    def setName(self, oldIdentifier, newName, useLog=None):
+    def setName(self, oldIdentifier, newName, *, useLog=None):
         readOnlyException('setName')
 
     @featuresExceptionDoc
-    def setNames(self, assignments, useLog=None):
+    def setNames(self, assignments, *, useLog=None):
         readOnlyException('setNames')
 
     #####################################
@@ -364,37 +367,37 @@ class FeaturesView(Features, metaclass=ABCMeta):
 
     @featuresExceptionDoc
     def extract(self, toExtract=None, start=None, end=None, number=None,
-                randomize=False, useLog=None):
+                randomize=False, *, useLog=None):
         readOnlyException('extract')
 
     @featuresExceptionDoc
     def delete(self, toDelete=None, start=None, end=None, number=None,
-               randomize=False, useLog=None):
+               randomize=False, *, useLog=None):
         readOnlyException('delete')
 
     @featuresExceptionDoc
     def retain(self, toRetain=None, start=None, end=None, number=None,
-               randomize=False, useLog=None):
+               randomize=False, *, useLog=None):
         readOnlyException('retain')
 
     @featuresExceptionDoc
-    def insert(self, insertBefore, toInsert, useLog=None):
+    def insert(self, insertBefore, toInsert, *, useLog=None):
         readOnlyException('insert')
 
     @featuresExceptionDoc
-    def append(self, toAppend, useLog=None):
+    def append(self, toAppend, *, useLog=None):
         readOnlyException('append')
 
     @featuresExceptionDoc
-    def permute(self, order=None, useLog=None):
+    def permute(self, order=None, *, useLog=None):
         readOnlyException('permute')
 
     @featuresExceptionDoc
-    def sort(self, by=None, reverse=False, useLog=None):
+    def sort(self, by=None, reverse=False, *, useLog=None):
         readOnlyException('sort')
 
     @featuresExceptionDoc
-    def transform(self, function, features=None, useLog=None):
+    def transform(self, function, features=None, *, useLog=None):
         readOnlyException('transform')
 
     ######################################
@@ -403,18 +406,18 @@ class FeaturesView(Features, metaclass=ABCMeta):
 
     @featuresExceptionDoc
     def fillMatching(self, fillWith, matchingElements, features=None,
-                     useLog=None, **kwarguments):
+                     *, useLog=None, **kwarguments):
         readOnlyException('fill')
 
     @featuresExceptionDoc
     def normalize(self, function, applyResultTo=None, features=None,
-                  useLog=None):
+                  *, useLog=None):
         readOnlyException('normalize')
 
     @featuresExceptionDoc
-    def splitByParsing(self, feature, rule, resultingNames, useLog=None):
+    def splitByParsing(self, feature, rule, resultingNames, *, useLog=None):
         readOnlyException('splitByParsing')
 
     @featuresExceptionDoc
-    def replace(self, data, features=None, useLog=None, **dataKwds):
+    def replace(self, data, features=None, *, useLog=None, **dataKwds):
         readOnlyException('replace')

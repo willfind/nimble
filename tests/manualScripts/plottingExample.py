@@ -151,7 +151,7 @@ if __name__ == "__main__":
 
     checkGradObj = checkObj.points.calculate(addGradient)
     checkGradObj = checkGradObj.features.calculate(addGradient)
-    checkGradObj.name = "Checkerboard with linear gradient"
+    checkGradObj.name = "Checkerboard_with_linear_gradient"
 
     # plot
     #heatMap: checkboard pattern, even columns 0s, odds = 1's, offset every other point
@@ -260,7 +260,7 @@ if __name__ == "__main__":
         fnames = ['Trial #' + str(i) for i in range(1, 11)]
         plotObj = nimble.data(d, pointNames=pnames,
                               featureNames=fnames)
-        plotObj.name = 'Patient Trials'
+        plotObj.name = 'Patient_Trials'
 
         pathBar = getOutPath(outDir, "pointMinMax")
         # stat function returning multiple values

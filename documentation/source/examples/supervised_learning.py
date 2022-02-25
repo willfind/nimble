@@ -12,10 +12,15 @@ use to build our supervised learning models.
 "forecast" data that we will use to simulate making traffic volume
 predictions using our supervised machine learning model.
 
-[Open this example in Google Colab][colab]
+In this example we will learn about:
 
-[Download this example as a script or notebook][files]
+* [Testing machine learning algorithms](#Test-five-different-machine-learning-algorithms)
+* [Hyperparameter tuning](#Improve-performance-by-tuning-hyperparameters)
+* [Nimble's TraineLearner class](#Improve-performance-by-tuning-hyperparameters)
+* [Applying a learner to new data](#Applying-our-learner)
 
+[Open this example in Google Colab][colab]\
+[Download this example as a script or notebook][files]\
 [Download the dataset for this example][datasets]
 
 [colab]: https://colab.research.google.com/drive/1XAqGkVFdI7UbJiegabkx5PynKZU-za3W?usp=sharing
@@ -74,7 +79,7 @@ for learner in learners:
 ## had better performance for predicting traffic volume with this data than the
 ## linear regression based learners, so let's focus on optimizing those two.
 
-## Cross-validate arguments to improve performance ##
+## Improve performance by tuning hyperparameters ##
 
 ## The default arguments are unlikely to yield the best performance, so now we
 ## will adjust some parameter values for our two best learners. These

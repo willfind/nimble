@@ -26,7 +26,7 @@ def data(source, pointNames='automatic', featureNames='automatic',
          keepFeatures='all', treatAsMissing=DEFAULT_MISSING,
          replaceMissingWith=np.nan, rowsArePoints=True,
          ignoreNonNumericalFeatures=False, inputSeparator='automatic',
-         copyData=True, useLog=None):
+         copyData=True, *, useLog=None):
     """
     Function to instantiate one of the Nimble data container types.
 
@@ -84,9 +84,10 @@ def data(source, pointNames='automatic', featureNames='automatic',
         **case sensitive** strings "List", "Matrix", "Sparse" and
         "DataFrame". If None, Nimble will detect the most appropriate
         type from the data and/or packages available in the environment.
-    name : str
-        When not None, this value is set as the name attribute of the
-        returned object.
+    name : str, None
+        A string describing the data that will display when printing or
+        logging the returned object. This value is also set as the name
+        attribute of the returned object.
     convertToType : type, dict, list, None
         A one-time conversion of features to the provided type or types.
         By default, object types within ``source`` are not modified,
@@ -196,7 +197,7 @@ def data(source, pointNames='automatic', featureNames='automatic',
     ...     out = cd.write('1,2,3\\n4,5,6')
     >>> fromFile = nimble.data('simpleData.csv')
     >>> fromFile # doctest: +ELLIPSIS
-    <Matrix "simpleData.csv" 2pt x 3ft
+    <Matrix 2pt x 3ft
          0 1 2
        ┌──────
      0 │ 1 2 3
@@ -270,8 +271,7 @@ def data(source, pointNames='automatic', featureNames='automatic',
         msg += "be loaded"
         raise InvalidArgumentType(msg)
 
-    handleLogging(useLog, 'load', returnType, ret.getTypeString(),
-                  len(ret.points), len(ret.features), ret.name, ret.path)
+    handleLogging(useLog, 'load', ret, returnType=returnType)
     return ret
 
 
@@ -301,9 +301,10 @@ def ones(numPoints, numFeatures, pointNames='automatic',
     returnType : str
         May be any of the allowed types specified in
         nimble.core.data.available. Default is "Matrix".
-    name : str
-        When not None, this value is set as the name attribute of the
-        returned object.
+    name : str, None
+        A string describing the data that will display when printing or
+        logging the returned object. This value is also set as the name
+        attribute of the returned object.
 
     Returns
     -------
@@ -380,9 +381,10 @@ def zeros(numPoints, numFeatures, pointNames='automatic',
     returnType : str
         May be any of the allowed types specified in
         nimble.core.data.available. Default is "Matrix".
-    name : str
-        When not None, this value is set as the name attribute of the
-        returned object.
+    name : str, None
+        A string describing the data that will display when printing or
+        logging the returned object. This value is also set as the name
+        attribute of the returned object.
 
     Returns
     -------
@@ -461,9 +463,10 @@ def identity(size, pointNames='automatic', featureNames='automatic',
     returnType : str
         May be any of the allowed types specified in
         nimble.core.data.available. Default is "Matrix".
-    name : str
-        When not None, this value is set as the name attribute of the
-        returned object.
+    name : str, None
+        A string describing the data that will display when printing or
+        logging the returned object. This value is also set as the name
+        attribute of the returned object.
 
     Returns
     -------
@@ -531,7 +534,7 @@ def identity(size, pointNames='automatic', featureNames='automatic',
                        returnType=returnType, name=name, useLog=False)
 
 
-def loadTrainedLearner(source, useLog=None):
+def loadTrainedLearner(source, *, useLog=None):
     """
     Load nimble TrainedLearner object.
 
@@ -569,8 +572,7 @@ def loadTrainedLearner(source, useLog=None):
         msg = 'File does not contain a valid Nimble TrainedLearner object.'
         raise InvalidArgumentType(msg)
 
-    handleLogging(useLog, 'load', None, "TrainedLearner",
-                  learnerName=ret.learnerName, learnerArgs=ret.arguments)
+    handleLogging(useLog, 'tl', ret)
     return ret
 
 def fetchFile(source, overwrite=False):
