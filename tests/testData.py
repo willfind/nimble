@@ -851,6 +851,32 @@ def test_data_CSV_emptyFirstValue():
         assert limitCSV.features.getNames() == [None, 'ft1', 'ft2', 'ft3']
         assert not limitCSV.points._namesCreated()
 
+def test_data_CSV_allMissingColumn():
+    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+        tmpCSV.write('ft0,ft1,ft2,ft3\n')
+        tmpCSV.write(',1,a,3.0\n')
+        tmpCSV.write(',4,b,6.0\n')
+        tmpCSV.write(',7,c,9.0\n')
+        tmpCSV.write(',-1,d,-3.0\n')
+        tmpCSV.flush()
+        dfCSVMissing = nimble.data(source=tmpCSV.name)
+        assert dfCSVMissing.getTypeString() == 'DataFrame'
+        dtypes = dfCSVMissing._data.dtypes
+        assert dtypes[0] == np.dtype(float)
+        assert dtypes[1] == np.dtype(int)
+        assert dtypes[2] == np.dtype(object)
+        assert dtypes[3] == np.dtype(float)
+
+    with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
+        tmpCSV.write('ft0,ft1,ft2,ft3\n')
+        tmpCSV.write('1.,2.,,3.0\n')
+        tmpCSV.write('4.,5.,,6.0\n')
+        tmpCSV.write('7.,8.,,9.0\n')
+        tmpCSV.write('-1.,-2.,,-3.0\n')
+        tmpCSV.flush()
+        mtxCSVMissing = nimble.data(source=tmpCSV.name)
+        assert mtxCSVMissing.getTypeString() == 'Matrix'
+        assert mtxCSVMissing._data.dtype == np.dtype(np.float)
 
 def test_data_MTXArr_data():
     """ Test of data() loading a mtx (arr format) file, default params """
