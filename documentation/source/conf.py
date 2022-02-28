@@ -655,13 +655,15 @@ class PYtoIPYNB:
 
     def convertToNotebook(self):
         with open(self.file, 'r') as f:
-            setTerminalSize = [
-                "import os\n",
-                "import shutil\n",
-                "size = os.terminal_size((132, 30))\n",
-                "shutil.get_terminal_size = lambda *args, **kwargs: size\n"
-            ]
-            terminalSize = dict(source=setTerminalSize, cell_type='code',
+            notebookConfig = '\n'.join([
+                "import os",
+                "import shutil",
+                "import warnings",
+                "size = os.terminal_size((132, 30))",
+                "shutil.get_terminal_size = lambda *args, **kwargs: size",
+                "warnings.simplefilter('ignore')"
+            ])
+            terminalSize = dict(source=notebookConfig, cell_type='code',
                                 execution_count=None,
                                 metadata={"nbsphinx": "hidden"}, outputs=[])
             self.notebook['cells'].append(terminalSize)
