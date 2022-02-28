@@ -91,6 +91,18 @@ class Base(ABC):
     #: access. Note: User access can generate ``logID`` values that do not
     #: appear in the log, otherwise searching for the ``logID`` text in the log
     #: will locate all logged usages of this object.
+    #:
+    #: Examples
+    #: --------
+    #: >>> noName = nimble.data([])
+    #: >>> noName.name
+    #: >>> noName.logID
+    #: '_NIMBLE_0_'
+    #: >>> withName = nimble.data([], name='data')
+    #: >>> withName.name
+    #: 'data'
+    #: >>> withName.logID
+    #: '_NIMBLE_1_'
     logID = LogID('NIMBLE')
 
     def __init__(self, shape, pointNames=None, featureNames=None, name=None,

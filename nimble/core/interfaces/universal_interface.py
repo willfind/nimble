@@ -838,6 +838,13 @@ class TrainedLearner(object):
     #: values start at 0 and increment by 1. Assuming logging is enabled, this
     #: occurs when the object is created. Searching for the ``logID`` text in
     #: the log will locate all logged usages of this object.
+    #:
+    #: Examples
+    #: --------
+    #: >>> train = nimble.data([[0, 0, 0], [0, 1, 1], [1, 0, 2]])
+    #: >>> tl = nimble.train('nimble.KNNClassifier', train, 2)
+    #: >>> tl.logID
+    #: '_TRAINEDLEARNER_0_'
     logID = LogID('TRAINEDLEARNER')
 
     def __init__(self, learnerName, arguments, transformedArguments,
