@@ -36,6 +36,7 @@ from .statistic import standardDeviation
 from .statistic import variance
 from .statistic import sum # pylint: disable=redefined-builtin
 from .utility import detectBestResult
+from .utility import performanceFunction
 from .linalg import inverse
 from .linalg import pseudoInverse
 from .linalg import solve

@@ -52,7 +52,7 @@ def _computeError(knownValues, predictedValues, loopFunction,
     return runningTotal
 
 
-@performanceFunction('min')
+@performanceFunction('min', 0)
 def rootMeanSquareError(knownValues, predictedValues):
     """
     Compute the root mean square error.  Assumes that knownValues and
@@ -63,7 +63,7 @@ def rootMeanSquareError(knownValues, predictedValues):
                          lambda x, y, z: z + (y - x) ** 2,
                          lambda x, y: sqrt(x / y))
 
-@performanceFunction('min', requires1D=False)
+@performanceFunction('min', 0, requires1D=False)
 def meanFeaturewiseRootMeanSquareError(knownValues, predictedValues):
     """
     For 2d prediction data, compute the RMSE of each feature, then
@@ -82,7 +82,7 @@ def meanFeaturewiseRootMeanSquareError(knownValues, predictedValues):
 
     return float(sum(results)) / len(knownValues.features)
 
-@performanceFunction('min')
+@performanceFunction('min', 0)
 def meanAbsoluteError(knownValues, predictedValues):
     """
     Compute mean absolute error. Assumes that knownValues and
@@ -93,7 +93,7 @@ def meanAbsoluteError(knownValues, predictedValues):
                          lambda x, y, z: z + abs(y - x),
                          lambda x, y: x / y)
 
-@performanceFunction('min')
+@performanceFunction('min', 0)
 def fractionIncorrect(knownValues, predictedValues):
     """
     Compute the proportion of incorrect predictions within a set of
@@ -104,7 +104,7 @@ def fractionIncorrect(knownValues, predictedValues):
                          lambda x, y, z: z if x == y else z + 1,
                          lambda x, y: x / y)
 
-@performanceFunction('min')
+@performanceFunction('min', 0)
 def varianceFractionRemaining(knownValues, predictedValues):
     """
     Calculate the how much variance has not been correctly predicted in

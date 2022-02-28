@@ -4,6 +4,7 @@ from nimble import trainAndApply
 from nimble import trainAndTest
 from nimble import Tuning
 from nimble.calculate import fractionIncorrect
+from nimble.calculate import performanceFunction
 from nimble.random import pythonRandom
 from nimble.learners import KNNClassifier
 from nimble.exceptions import InvalidArgumentValue
@@ -906,3 +907,43 @@ def test_trainAndApplyOneVsOne():
             else:
                 if score == 2:
                     assert results3FeatureMap[j] == str(float(3))
+
+
+def test_trainAndTest_scoreModes():
+    trainX = nimble.data([[0, 0], [2, 2], [-2, -2]] * 10)
+    trainY = nimble.data([0, 1, 2] * 10).T
+    testX = nimble.data([[0, 0], [1, 1], [2, 2], [1, 1], [-1, -2]])
+    testY = nimble.data([0, 0, 1, 1, 2]).T
+
+    # with bestScore
+    @performanceFunction('min', 0, requires1D=False, sameFtCount=False)
+    def votesWhenIncorrect(knownValues, predictedValues):
+        incorrect = 0
+        for true, best in zip(knownValues, predictedValues.points):
+            if true != best[0]:
+                incorrect += best[1]
+        return incorrect
+
+    performance = nimble.trainAndTest(
+        'nimble.KNNClassifier', trainX, trainY, testX, testY,
+        votesWhenIncorrect, scoreMode='bestScore', k=3)
+    assert performance == 2 # 1 incorrect label receiving 2 votes
+
+    # with allScores
+    @performanceFunction('max', 1, requires1D=False, sameFtCount=False)
+    def correctVoteRatio(knownValues, predictedValues):
+        cumulative = 0
+        totalVotes = 0
+        for true, votes in zip(knownValues, predictedValues.points):
+            cumulative += votes[true]
+            totalVotes += sum(votes)
+        return cumulative / totalVotes
+
+    trainX = nimble.data([[0, 0], [2, 2], [-2, -2]] * 10)
+    trainY = nimble.data([0, 1, 2] * 10).T
+    testX = nimble.data([[0, 0], [1, 1], [2, 2], [1, 1], [-1, -2]])
+    testY = nimble.data([0, 0, 1, 1, 2]).T
+    performance = nimble.trainAndTest(
+        'nimble.KNNClassifier', trainX, trainY, testX, testY, correctVoteRatio,
+        scoreMode='allScores', k=3)
+    assert performance == 0.8 # 12/15 votes correct
