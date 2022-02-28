@@ -648,7 +648,7 @@ def test_trainAndTestOnTrainingData_logCount_withTune_deep():
 
 @logCountAssertionFactory(2)
 def test_train_logCount_withTune_noDeep():
-    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
+    nimble.settings.set('logger', 'enableDeepLogging', 'False')
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
         return nimble.train(learner, trainX, trainY,
                             performanceFunction=performanceFunction,
@@ -657,7 +657,7 @@ def test_train_logCount_withTune_noDeep():
 
 @logCountAssertionFactory(2)
 def test_trainAndApply_logCount_withTune_noDeep():
-    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
+    nimble.settings.set('logger', 'enableDeepLogging', 'False')
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
         return nimble.trainAndApply(learner, trainX, trainY, testX,
                                     performanceFunction=performanceFunction,
@@ -666,14 +666,14 @@ def test_trainAndApply_logCount_withTune_noDeep():
 
 @logCountAssertionFactory(2)
 def test_trainAndTest_logCount_withTune_noDeep():
-    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
+    nimble.settings.set('logger', 'enableDeepLogging', 'False')
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
         return nimble.trainAndTest(learner, trainX, trainY, testX, testY, performanceFunction, k=nimble.Tune([1, 2]))
     back_logCount(wrapped)
 
 @logCountAssertionFactory(2)
 def test_trainAndTestOnTrainingData_logCount_withTune_noDeep():
-    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'False')
+    nimble.settings.set('logger', 'enableDeepLogging', 'False')
     def wrapped(learner, trainX, trainY, testX, testY, performanceFunction):
         return nimble.trainAndTestOnTrainingData(learner, trainX, trainY, performanceFunction, k=nimble.Tune([1, 2]))
     back_logCount(wrapped)

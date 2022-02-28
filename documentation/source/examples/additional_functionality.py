@@ -350,12 +350,11 @@ print('LeastFeatureMeanDistance accuracy:', performance)
 ## for points near other rooms. However, we usually do not know the best value
 ## for `k` (the number of nearest neighbors) so we will cross validate for
 ## three different values of `k`. Logging has another configurable option named
-## "enableCrossValidationDeepLogging". By default it is set to "False" because
-## logging cross validation can increase the size of the log file much more
-## quickly. However, we can learn a lot of useful information from these cross
-## validation logs so let's set the value to True for the remainder of this
-## session.
-nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
+## "enableDeepLogging". By default it is set to "False" because logging cross
+## validation can increase the size of the log file much more quickly. However,
+## we can learn a lot of useful information from these cross validation logs so
+## let's set the value to True for the remainder of this session.
+nimble.settings.set('logger', 'enableDeepLogging', 'True')
 
 ## Enabling deep logging for cross-validation, will generate log entries for
 ## each fold during our k-fold cross-validation. Below, `trainAndTest` with

@@ -42,7 +42,7 @@ def prepopulatedLogSafetyWrapper(testFunc):
         removeLogFile()
         # change settings and input dummy data into log
         nimble.settings.set('logger', 'enabledByDefault', 'True')
-        nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
+        nimble.settings.set('logger', 'enableDeepLogging', 'True')
         # create an example log file
         variables = ["x1", "x2", "x3", "label"]
         data1 = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2],
@@ -352,7 +352,7 @@ def testRunTypeFunctionsUseLog():
     # randomSeed recorded during training
     assert re.search(randomSeedPattern, logInfo) is None
 
-    nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
+    nimble.settings.set('logger', 'enableDeepLogging', 'True')
 
 def checkLogContents(funcName, objectID, arguments=None):
     lastLog = getLastLogData()

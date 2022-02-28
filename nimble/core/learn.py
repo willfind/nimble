@@ -728,9 +728,8 @@ def train(learnerName, trainX, trainY=None, arguments=None, scoreMode='label',
             any(isinstance(arg, Tune) for arg in arguments.values())):
         if tuning is None:
             tuning = Tuning()
-        tuning.tune(
-            learnerName, trainX, trainY, arguments, performanceFunction,
-            randomSeed, tuneLog)
+        tuning.tune(learnerName, trainX, trainY, arguments,
+                    performanceFunction, randomSeed, tuneLog)
         bestArguments = tuning.bestArguments
         # subsequent tune calls to same Tuning will overwrite, so need to
         # attach a copy to the TrainedLearner
