@@ -32,7 +32,6 @@ def test_Validator(X, Y):
     assert gv.X == X
     assert gv.Y == Y
     assert gv.performanceFunction == fractionIncorrect
-    assert gv.performanceFunction.optimal == 'min'
     assert gv.randomSeed is not None
     assert gv.useLog is False
     gv.validate(foo='high')
@@ -66,10 +65,6 @@ def test_Validator(X, Y):
                    + 'performanceFunction=fractionCorrect, randomSeed=23, '
                    + 'bar="baz")')
 
-    with raises(InvalidArgumentValue):
-        gv = GenericValidator("test.Learner", X, None, fractionCorrect, None,
-                              False)
-
     with raises(InvalidArgumentValueCombination):
         gv = GenericValidator("test.Learner", X, Y.points[5:], fractionCorrect,
                               None, False)
@@ -82,6 +77,8 @@ class CountingPerformance:
     """
     def __init__(self, optimal, argCount, folds=None):
         self.optimal = optimal
+        self.best = None
+        self.predict = lambda tl, X, args: tl.apply(X, args, useLog=False)
         if folds is None:
             num = argCount
             self.div = 1

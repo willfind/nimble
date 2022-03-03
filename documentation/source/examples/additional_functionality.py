@@ -43,6 +43,7 @@ In this example we will learn about:
 import tempfile
 
 import nimble
+from nimble.calculate import fractionCorrect
 
 tempDir = tempfile.TemporaryDirectory('nimble-logs')
 
@@ -310,9 +311,9 @@ rTestY = rTrainY.points.extract(number=500, useLog=False)
 expAcc = rTestY.points.count(lambda pt: pt[0] == pt[1]) / len(rTestY.points)
 print('LeastFeatureMeanDistance test expected accuracy', expAcc)
 
-actAcc = nimble.trainAndTest(LeastFeatureMeanDistance, rTrainX, rTrainY[:, 0],
-                             rTestX, rTestY[:, 0],
-                             nimble.calculate.fractionCorrect, useLog=False)
+actAcc = nimble.trainAndTest(LeastFeatureMeanDistance, fractionCorrect,
+                             rTrainX, rTrainY[:, 0], rTestX, rTestY[:, 0],
+                             useLog=False)
 print('LeastFeatureMeanDistance test actual accuracy', actAcc)
 
 ## Our actual prediction accuracy is very similar to our expected accuracy so
@@ -326,9 +327,8 @@ print('LeastFeatureMeanDistance test actual accuracy', actAcc)
 trainX, trainY, testX, testY = wifi.trainAndTestSets(testFraction=0.3,
                                                      labels='room',
                                                      randomOrder=False)
-performance = nimble.trainAndTest(LeastFeatureMeanDistance,
-                                  trainX, trainY, testX, testY,
-                                  nimble.calculate.fractionCorrect)
+performance = nimble.trainAndTest(LeastFeatureMeanDistance, fractionCorrect,
+                                  trainX, trainY, testX, testY)
 print('LeastFeatureMeanDistance accuracy:', performance)
 
 ## Our simple custom learner worked quite well, predicting the correct room in
@@ -366,9 +366,8 @@ nimble.settings.set('logger', 'enableDeepLogging', 'True')
 ## we will set it to perform 3-fold cross-validation instead of the default
 ## 5-fold. Then, `trainAndTest` will apply the `k` value that performed the
 ## best during validation to the test data.
-performance = nimble.trainAndTest('nimble.KNNClassifier', trainX, trainY,
-                                  testX, testY,
-                                  nimble.calculate.fractionCorrect,
+performance = nimble.trainAndTest('nimble.KNNClassifier', fractionCorrect,
+                                  trainX, trainY, testX, testY,
                                   k=nimble.Tune([3, 5, 7]),
                                   tuning=nimble.Tuning(folds=3))
 

@@ -941,8 +941,8 @@ class TrainedLearner(object):
 
     @captureOutput
     @trackEntry
-    def test(self, testX, testY, performanceFunction, arguments=None,
-             output='match', scoreMode='label', *, useLog=None, **kwarguments):
+    def test(self, performanceFunction, testX, testY=None, arguments=None, *,
+             useLog=None, **kwarguments):
         """
         Evaluate the performance of the trained learner.
 
@@ -953,6 +953,12 @@ class TrainedLearner(object):
 
         Parameters
         ----------
+        performanceFunction : function
+            The function used to determine the performance of the
+            learner. Pre-made functions are available in
+            nimble.calculate. If hyperparameter tuning and the Tuning
+            instance does not have a set performanceFunction, it will
+            utilize this function as well.
         testX : nimble.core.data.Base
             The object containing the test data.
         testY : identifier, nimble Base object
@@ -976,19 +982,6 @@ class TrainedLearner(object):
             generate an error score for  the learner when the learner
             was passed all three values of ``k``, separately. These will
             be merged with kwarguments for the learner.
-        output : str
-            The kind of nimble Base object that the output of this
-            function should be in. Any of the normal string inputs to
-            the nimble.data ``returnType`` parameter are accepted here.
-            Alternatively, the value 'match' will indicate to use the
-            type of the ``trainX`` parameter.
-        scoreMode : str
-            In the case of a classifying learner, this specifies the
-            type of output wanted: 'label' if we class labels are
-            desired, 'bestScore' if both the class label and the score
-            associated with that class are desired, or 'allScores' if a
-            matrix containing the scores for every class label are
-            desired.
         useLog : bool, None
             Local control for whether to send results/timing to the
             logger. If None (default), use the value as specified in the
@@ -1031,22 +1024,23 @@ class TrainedLearner(object):
         >>> testData = nimble.data(lstTest, featureNames=ftNames)
         >>> knn = nimble.train('nimble.KNNClassifier', trainX=trainData,
         ...                    trainY='label')
-        >>> knn.test(testX=testData, testY='label',
-        ...          performanceFunction=fractionIncorrect)
+        >>> knn.test(fractionIncorrect, testX=testData, testY='label')
         0.0
         """
         startTime = time.process_time()
         if trackEntry.isEntryPoint:
-            validateTestingArguments(testX, testY, True, arguments, scoreMode,
+            validateTestingArguments(testX, testY, arguments,
                                      self._has2dOutput)
 
-        if not isinstance(testY, nimble.core.data.Base):
+        if testY is None:
+            testY = testX # testX is the knownValue data
+        elif not isinstance(testY, nimble.core.data.Base):
             testX = testX.copy()
             testY = testX.features.extract(testY, useLog=False)
 
         mergedArguments = mergeArguments(arguments, kwarguments)
-        pred = self.apply(testX, mergedArguments, output, scoreMode,
-                          useLog=False)
+
+        pred = performanceFunction.predict(self, testX, mergedArguments)
         performance = computeMetrics(testY, None, pred, performanceFunction)
         totalTime = time.process_time() - startTime
 
@@ -1062,8 +1056,8 @@ class TrainedLearner(object):
 
     @captureOutput
     @trackEntry
-    def apply(self, testX, arguments=None, output='match', scoreMode='label',
-              *, useLog=None, **kwarguments):
+    def apply(self, testX, arguments=None, scoreMode=None, *, useLog=None,
+              **kwarguments):
         """
         Apply the learner to the test data.
 
@@ -1089,18 +1083,12 @@ class TrainedLearner(object):
             generate an error score for  the learner when the learner
             was passed all three values of ``k``, separately. These will
             be merged with kwarguments for the learner.
-        output : str
-            The kind of nimble Base object that the output of this
-            function should be in. Any of the normal string inputs to
-            the nimble.data ``returnType`` parameter are accepted here.
-            Alternatively, the value 'match' will indicate to use the
-            type of the ``trainX`` parameter.
-        scoreMode : str
-            In the case of a classifying learner, this specifies the
-            type of output wanted: 'label' if class labels are desired,
-            'bestScore' if both the class label and the score associated
-            with that class are desired, or 'allScores' if a matrix
-            containing the scores for every class label are desired.
+        scoreMode : str, None
+            For learners that offer a scoring method, this can be set to
+            'bestScore' or 'allScores'. The 'bestScore' option returns
+            two features, the predicted class and score for that class.
+            The 'allScores' option will construct a matrix where each
+            feature represents the scores for that class.
         useLog : bool, None
             Local control for whether to send results/timing to the
             logger. If None (default), use the value as specified in the
@@ -1140,8 +1128,7 @@ class TrainedLearner(object):
         >>> testX = nimble.data(lstTestX)
         >>> tl = nimble.train('nimble.KNNClassifier', trainX=trainData,
         ...                   trainY=3)
-        >>> predict = tl.apply(testX)
-        >>> predict
+        >>> tl.apply(testX)
         <Matrix 3pt x 1ft
              0
            ┌──
@@ -1168,7 +1155,7 @@ class TrainedLearner(object):
 
         # depending on the mode, we need different information.
         labels = None
-        if scoreMode != 'label':
+        if scoreMode is not None:
             scores = self.getScores(testX, usedArguments)
         if scoreMode != 'allScores':
             labels = self._interface._applier(self.learnerName, self._backend,
@@ -1176,13 +1163,13 @@ class TrainedLearner(object):
                                               self._transformedArguments,
                                               self._customDict)
             labels = self._interface._outputTransformation(
-                self.learnerName, labels, usedArguments, output, "label",
+                self.learnerName, labels, usedArguments, 'match', "label",
                 self._customDict)
         # if this application is for a classification or regression learner,
         # we will apply featureNames to the output if possible
         lType = self._interface.learnerType(self.learnerName)
         applyFtNames = lType in ['classification', 'regression']
-        if scoreMode == 'label':
+        if scoreMode is None:
             ret = labels
             if applyFtNames:
                 ret.features.setNames(self._trainYNames, useLog=False)
@@ -1206,7 +1193,7 @@ class TrainedLearner(object):
                 ftNames.append('bestScore')
                 ret.features.setNames(ftNames, useLog=False)
         else:
-            msg = 'scoreMode must be "label", "bestScore", or "allScores"'
+            msg = 'scoreMode must be None, "bestScore", or "allScores"'
             raise InvalidArgumentValue(msg)
 
         if len(testX.points) == len(ret.points):
@@ -1640,8 +1627,8 @@ class TrainedLearners(TrainedLearner):
                          tuningResults, trainXShape, trainYNames, randomSeed)
 
     @captureOutput
-    def apply(self, testX, arguments=None, output='match', scoreMode='label',
-              *, useLog=None, **kwarguments):
+    def apply(self, testX, arguments=None, scoreMode=None, *, useLog=None,
+              **kwarguments):
         """
         Apply the learner to the test data.
 
@@ -1673,19 +1660,12 @@ class TrainedLearners(TrainedLearner):
             generate an error score for  the learner when the learner
             was passed all three values of ``k``, separately. These will
             be merged with kwarguments for the learner.
-        output : str
-            The kind of nimble Base object that the output of this
-            function should be in. Any of the normal string inputs to
-            the nimble.data ``returnType`` parameter are accepted here.
-            Alternatively, the value 'match' will indicate to use the
-            type of the ``trainX`` parameter.
-        scoreMode : str
-            In the case of a classifying learner, this specifies the
-            type of output wanted: 'label' if we class labels are
-            desired, 'bestScore' if both the class label and the score
-            associated with that class are desired, or 'allScores' if a
-            matrix containing the scores for every class label are
-            desired.
+        scoreMode : str, None
+            For learners that offer a scoring method, this can be set to
+            'bestScore' or 'allScores'. The 'bestScore' option returns
+            two features, the predicted class and score for that class.
+            The 'allScores' option will construct a matrix where each
+            feature represents the scores for that class.
         useLog : bool, None
             Local control for whether to send results/timing to the
             logger. If None (default), use the value as specified in the
@@ -1721,7 +1701,6 @@ class TrainedLearners(TrainedLearner):
         if self.method == 'OneVsAll':
             for trainedLearner in self._trainedLearnersList:
                 oneLabelResults = trainedLearner.apply(testX, arguments,
-                                                       output, 'label',
                                                        useLog=useLog)
                 label = trainedLearner.label
                 # put all results into one Base container; same type as trainX
@@ -1739,7 +1718,7 @@ class TrainedLearners(TrainedLearner):
                     rawPredictions.features.append(oneLabelResults,
                                                    useLog=False)
 
-            if scoreMode.lower() == 'label'.lower():
+            if scoreMode is None:
 
                 getWinningPredictionIndices = rawPredictions.points.calculate(
                     extractWinningPredictionIndex, useLog=False)
@@ -1797,7 +1776,7 @@ class TrainedLearners(TrainedLearner):
                                    returnType=rawPredictions.getTypeString(),
                                    useLog=False)
 
-            msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
+            msg = "scoreMode must be None, 'bestScore', or 'allScores'"
             raise InvalidArgumentValue(msg)
 
         #1 VS 1
@@ -1805,8 +1784,8 @@ class TrainedLearners(TrainedLearner):
             predictionFeatureID = 0
             for trainedLearner in self._trainedLearnersList:
                 # train classifier on that data; apply it to the test set
-                partialResults = trainedLearner.apply(testX, arguments, output,
-                                                      'label', useLog=useLog)
+                partialResults = trainedLearner.apply(testX, arguments,
+                                                      useLog=useLog)
                 # put predictions into table of predictions
                 if rawPredictions is None:
                     rawPredictions = partialResults.copy(to="List")
@@ -1818,7 +1797,7 @@ class TrainedLearners(TrainedLearner):
                                                    useLog=False)
                 predictionFeatureID += 1
             # set up the return data based on which format has been requested
-            if scoreMode.lower() == 'label'.lower():
+            if scoreMode is None:
                 ret = rawPredictions.points.calculate(
                     extractWinningPredictionLabel, useLog=False)
                 ret.features.setName(0, "winningLabel", useLog=False)
@@ -1859,7 +1838,7 @@ class TrainedLearners(TrainedLearner):
                                    returnType=rawPredictions.getTypeString(),
                                    useLog=False)
 
-            msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
+            msg = "scoreMode must be None, 'bestScore', or 'allScores'"
             raise InvalidArgumentValue(msg)
 
         raise ImproperObjectAction('Wrong multiclassification method.')

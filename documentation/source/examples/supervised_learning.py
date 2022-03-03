@@ -71,8 +71,8 @@ learners = ['sklearn.LinearRegression', 'sklearn.Ridge', 'sklearn.Lasso',
             'sklearn.KNeighborsRegressor', 'sklearn.GradientBoostingRegressor']
 rootMeanSquareError = nimble.calculate.rootMeanSquareError
 for learner in learners:
-    performance = nimble.trainAndTest(learner, trainX, trainY, testX, testY,
-                                      rootMeanSquareError)
+    performance = nimble.trainAndTest(learner, rootMeanSquareError, trainX,
+                                      trainY, testX, testY)
     print(learner, 'error:', performance)
 
 ## `'sklearn.KNeighborsRegressor'` and `'sklearn.GradientBoostingRegressor'`
@@ -137,7 +137,7 @@ print(gbTL.tuning.bestResult, gbTL.tuning.bestArguments)
 ## as the default value so we already know how it performs on our testing data.
 ## However, `gbTL` found `learning_rate` of 1 outperformed the default, 0.1.
 ## Let's see how it performs on our testing (out-of-sample) data.
-gbPerf = gbTL.test(testX, testY, rootMeanSquareError)
+gbPerf = gbTL.test(rootMeanSquareError, testX, testY) 
 print('sklearn.GradientBoostingRegressor', 'learning_rate=1', 'error', gbPerf)
 
 ## Applying our learner ##

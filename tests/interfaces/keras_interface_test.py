@@ -87,11 +87,12 @@ def testKerasAPI(optimizer):
                              metrics=['accuracy'], epochs=20, batch_size=128)
 
     #########test trainAndTest
-    x = nimble.trainAndTest('keras.Sequential', trainX=x_train, testX=x_train, trainY=y_train,
-                            testY=y_train, optimizer=optimizer, layers=layers,
-                            loss='binary_crossentropy', metrics=['accuracy'], epochs=20,
-                            batch_size=128,
-                            performanceFunction=nimble.calculate.loss.rootMeanSquareError)
+    RMSE = nimble.calculate.loss.rootMeanSquareError
+    x = nimble.trainAndTest('keras.Sequential', RMSE, trainX=x_train,
+                            testX=x_train, trainY=y_train, testY=y_train,
+                            optimizer=optimizer, layers=layers,
+                            loss='binary_crossentropy', metrics=['accuracy'],
+                            epochs=20, batch_size=128)
 
     #####test fit with Sequential object
     try:

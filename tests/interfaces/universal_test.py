@@ -5,6 +5,7 @@ Unit tests for the universal interface object.
 import warnings
 
 import nimble
+from nimble.calculate import performanceFunction
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import PackageException
@@ -385,6 +386,7 @@ def test_warningscapture_TL_test():
     cData = generateClassificationData(2, 10, 5)
     ((trainX, trainY), (testX, testY)) = cData
 
+    @performanceFunction('max', requires1D=False, sameFtCount=False)
     def metric(x, y):
         return 0
 
@@ -393,7 +395,7 @@ def test_warningscapture_TL_test():
 
     @oneLogEntryExpected
     def wrapped(arg):
-        arg.test(testX, testY, metric)
+        arg.test(metric, testX, testY)
 
     backend_warningscapture(wrapped, prep)
 
@@ -483,10 +485,11 @@ def test_warningscapture_TL_exceptions_featureMismatch():
         backend_warningscapture(wrapped, prep)
 
     with raises(InvalidArgumentValueCombination):
+        @performanceFunction('max')
         def metric(x, y):
             pass
         def wrapped(tl):
-            tl.test(testX, testY, metric)
+            tl.test(metric, testX, testY)
         backend_warningscapture(wrapped, prep)
 
     with raises(InvalidArgumentValueCombination):
