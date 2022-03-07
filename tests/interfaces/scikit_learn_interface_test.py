@@ -69,8 +69,8 @@ def testSciKitLearnHandmadeRegression():
     data2 = [[0, 1]]
     testObj = nimble.data(data2, useLog=False)
 
-    ret = nimble.trainAndApply(toCall("LinearRegression"), trainingObj, trainY="Y", testX=testObj,
-                            output=None, arguments={})
+    ret = nimble.trainAndApply(toCall("LinearRegression"), trainingObj,
+                               trainY="Y", testX=testObj, arguments={})
 
     assert ret is not None
 
@@ -112,8 +112,8 @@ def testSciKitLearnHandmadeClustering():
     data2 = [[1, 0], [1, 1], [5, 1], [3, 4]]
     testObj = nimble.data(data2, useLog=False)
 
-    ret = nimble.trainAndApply(toCall("KMeans"), trainingObj, testX=testObj, output=None,
-                            arguments={'n_clusters': 3})
+    ret = nimble.trainAndApply(toCall("KMeans"), trainingObj, testX=testObj,
+                               arguments={'n_clusters': 3})
 
     # clustering returns a row vector of indices, referring to the cluster centers,
     # we don't care about the exact numbers, this verifies that the appropriate
@@ -157,7 +157,7 @@ def testSciKitLearnScoreMode():
     data2 = [[2, 3], [-200, 0]]
     testObj = nimble.data(data2, useLog=False)
 
-    # default scoreMode is 'label'
+    # default scoredMode is None
     ret = nimble.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={})
     assert len(ret.points) == 2
     assert len(ret.features) == 1
@@ -186,7 +186,7 @@ def testSciKitLearnScoreModeBinary():
     data2 = [[2, 1], [25, 0]]
     testObj = nimble.data(data2, useLog=False)
 
-    # default scoreMode is 'label'
+    # default scoredMode is None
     ret = nimble.trainAndApply(toCall("SVC"), trainingObj, trainY="Y", testX=testObj, arguments={})
     assert len(ret.points) == 2
     assert len(ret.features) == 1

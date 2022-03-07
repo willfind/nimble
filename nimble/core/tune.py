@@ -188,16 +188,12 @@ class Validator(ABC):
             raise AttributeError("A Validator must have a name attribute")
 
         self.learnerName = learnerName
-        if Y is None:
-            msg = "Validation can only be performed for supervised learning. "
-            msg += "Y data cannot be None"
-            raise InvalidArgumentValue(msg)
 
         if isinstance(Y, (int, str, list)):
             X = X.copy()
             Y = X.features.extract(Y, useLog=False)
 
-        if not len(X.points) == len(Y.points):
+        if Y is not None and not len(X.points) == len(Y.points):
             msg = "X and Y must contain the same number of points"
             raise InvalidArgumentValueCombination(msg)
         self.X = X
@@ -502,8 +498,8 @@ class HoldoutValidator(Validator):
     def _validate(self, arguments):
         startTime = time.process_time()
         performance = nimble.trainAndTest(
-            self.learnerName, self.X, self.Y, self.validateX, self.validateY,
-            self.performanceFunction, arguments=arguments,
+            self.learnerName, self.performanceFunction, self.X, self.Y,
+            self.validateX, self.validateY, arguments=arguments,
             randomSeed=self.randomSeed, useLog=False)
         totalTime = time.process_time() - startTime
 
@@ -612,7 +608,7 @@ class HoldoutData(HoldoutValidator):
             self._lastArguments = arguments
 
         performance = self._trainedLearner.test(
-            self.validateX, self.validateY, self.performanceFunction,
+            self.performanceFunction, self.validateX, self.validateY,
             useLog=False)
 
         return performance

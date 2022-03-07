@@ -403,7 +403,7 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
     """
     startTime = time.process_time()
     if trackEntry.isEntryPoint:
-        validateLearningArguments(trainX, trainY, testX, False)
+        validateLearningArguments(trainX, trainY, testX)
     merged = mergeArguments(arguments, kwarguments)
 
     tl = train(learnerName, trainX, trainY, arguments=merged,
@@ -587,9 +587,9 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
 
 
 @trackEntry
-def train(learnerName, trainX, trainY=None, arguments=None, scoreMode='label',
-          multiClassStrategy='default', randomSeed=None, tuning=None,
-          performanceFunction=None, *, useLog=None, **kwarguments):
+def train(learnerName, trainX, trainY=None, arguments=None,
+          multiClassStrategy=None, randomSeed=None, tuning=None, *,
+          useLog=None, **kwarguments):
     """
     Train a specified learner using the provided data.
 
@@ -616,28 +616,21 @@ def train(learnerName, trainX, trainY=None, arguments=None, scoreMode='label',
         {'optimizer': nimble.Init('SGD', learning_rate=0.01}).
         Note: learner arguments can also be passed as ``kwarguments`` so
         this dictionary will be merged with any keyword arguments.
-    scoreMode : str
-        In the case of a classifying learner, this specifies the type of
-        output wanted: 'label' if the class labels are desired,
-        'bestScore' if both the class label and the score associated
-        with that class are desired, or 'allScores' if a matrix
-        containing the scores for every class label are desired.
-    multiClassStrategy : str
-        May only be 'default', 'OneVsAll' or 'OneVsOne'.
+    multiClassStrategy : str, None
+        May be 'OneVsAll' or 'OneVsOne' to train the learner using that
+        multiclass strategy. When None, the learner is trained on the
+        data as provided.
     randomSeed : int
        Set a random seed for the operation. When None, the randomness is
        controlled by Nimble's random seed. Ignored if learner does not
        depend on randomness.
-    tuning : nimble.Tuning, None
-        Used when hyperparameter tuning has been initiated through
-        ``Tune`` objects in the arguments. If hyperparameter tuning is
-        triggered and this is None, the default Tuning will be applied
-        and a performanceFunction must be provided.
-    performanceFunction : function, None
-        If hyperparameter tuning is triggered and the Tuning does not
-        have a performanceFunction set, then this function will be used
-        to generate a performance score for each validation run. See
-        nimble.calculate for pre-made options. Default is None.
+    tuning : nimble.Tuning, performanceFunction, None
+        Required when hyperparameter tuning is initiated by ``Tune``
+        objects in the arguments. A Tuning instance details how the
+        argument sets will be selected and validated. For convenience,
+        a performanceFunction may instead be provided and this will
+        trigger construction of a Tuning instance using the default
+        consecutive selection method with 5-fold cross validation.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -715,7 +708,6 @@ def train(learnerName, trainX, trainY=None, arguments=None, scoreMode='label',
     tuneLog = useLog
     if trackEntry.isEntryPoint:
         validateLearningArguments(trainX, trainY, arguments=arguments,
-                                  scoreMode=scoreMode,
                                   multiClassStrategy=multiClassStrategy)
     else:
         useLog = False
@@ -726,10 +718,15 @@ def train(learnerName, trainX, trainY=None, arguments=None, scoreMode='label',
     arguments = mergeArguments(arguments, kwarguments)
     if (tuning is not None or
             any(isinstance(arg, Tune) for arg in arguments.values())):
-        if tuning is None:
-            tuning = Tuning()
-        tuning.tune(learnerName, trainX, trainY, arguments,
-                    performanceFunction, randomSeed, tuneLog)
+        if not isinstance(tuning, Tuning):
+            if tuning is None:
+                msg = 'tuning cannot be None when performing hyperparameter '
+                msg += 'tuning. It must be set to a nimble.Tuning instance or '
+                msg += 'can be a performanceFunction if the other Tuning '
+                msg += 'defaults are satisfactory'
+            tuning = Tuning(performanceFunction=tuning)
+        tuning.tune(
+            learnerName, trainX, trainY, arguments, None, randomSeed, tuneLog)
         bestArguments = tuning.bestArguments
         # subsequent tune calls to same Tuning will overwrite, so need to
         # attach a copy to the TrainedLearner
@@ -755,15 +752,18 @@ def train(learnerName, trainX, trainY=None, arguments=None, scoreMode='label',
 
 @trackEntry
 def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments=None,
-                  output=None, scoreMode='label', multiClassStrategy='default',
-                  randomSeed=None, tuning=None, performanceFunction=None,
-                  *, useLog=None, **kwarguments):
+                  multiClassStrategy=None, randomSeed=None, tuning=None,
+                  scoreMode=None, *, useLog=None, **kwarguments):
     """
     Train a model and apply it to the test data.
 
     The learner will be trained using the training data, then
     prediction, transformation, etc. as appropriate to the learner will
-    be applied to the test data and returned.
+    be applied to the test data and returned. For learners that offer a
+    scoring method, the ``scoreMode`` can be set to 'bestScore' or
+    'allScores'. The 'bestScore' option returns two features, the
+    predicted class and score for that class. The 'allScores' option
+    will return a matrix with a feature of scores for each class.
 
     Parameters
     ----------
@@ -792,34 +792,27 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments=None,
         {'optimizer': nimble.Init('SGD', learning_rate=0.01}).
         Note: learner arguments can also be passed as ``kwarguments`` so
         this dictionary will be merged with any keyword arguments.
-    output : str
-        The kind of nimble Base object that the output of this function
-        should be in. Any of the normal string inputs to the nimble.data
-        ``returnType`` parameter are accepted here. Alternatively, the
-        value 'match' will indicate to use the type of the ``trainX``
-        parameter.
-    scoreMode : str
-        In the case of a classifying learner, this specifies the type of
-        output wanted: 'label' if we class labels are desired,
-        'bestScore' if both the class label and the score associated
-        with that class are desired, or 'allScores' if a matrix
-        containing the scores for every class label are desired.
-    multiClassStrategy : str
-        May only be 'default', 'OneVsAll' or 'OneVsOne'.
+    multiClassStrategy : str, None
+        May be 'OneVsAll' or 'OneVsOne' to train the learner using that
+        multiclass strategy. When None, the learner is trained on the
+        data as provided.
     randomSeed : int
        Set a random seed for the operation. When None, the randomness is
        controlled by Nimble's random seed. Ignored if learner does not
        depend on randomness.
-    tuning : nimble.Tuning, None
-        Used when hyperparameter tuning has been initiated through
-        ``Tune`` objects in the arguments. If hyperparameter tuning is
-        triggered and this is None, the default Tuning will be applied
-        and a performanceFunction must be provided.
-    performanceFunction : function, None
-        If hyperparameter tuning is triggered and the Tuning does not
-        have a performanceFunction set, then this function will be used
-        to generate a performance score for each validation run. See
-        nimble.calculate for pre-made options. Default is None.
+    tuning : nimble.Tuning, performanceFunction, None
+        Required when hyperparameter tuning is initiated by ``Tune``
+        objects in the arguments. A Tuning instance details how the
+        argument sets will be selected and validated. For convenience,
+        a performanceFunction may instead be provided and this will
+        trigger construction of a Tuning instance using the default
+        consecutive selection method with 5-fold cross validation.
+    scoreMode : str, None
+        For learners that offer a scoring method, this can be set to
+        'bestScore' or 'allScores'. The 'bestScore' option returns two
+        features, the predicted class and score for that class. The
+        'allScores' option will construct a matrix where each feature
+        represents the scores for that class.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -912,9 +905,9 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments=None,
                                   multiClassStrategy=multiClassStrategy)
     merged = mergeArguments(arguments, kwarguments)
     trainedLearner = train(
-        learnerName, trainX, trainY, arguments=merged, scoreMode=scoreMode,
+        learnerName, trainX, trainY, arguments=merged,
         multiClassStrategy=multiClassStrategy, randomSeed=randomSeed,
-        performanceFunction=performanceFunction, tuning=tuning, useLog=useLog)
+        tuning=tuning, useLog=useLog)
 
     if testX is None:
         if isinstance(trainY, (str, int, np.integer)):
@@ -923,7 +916,7 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments=None,
         else:
             testX = trainX
 
-    results = trainedLearner.apply(testX, {}, output, scoreMode, useLog=False)
+    results = trainedLearner.apply(testX, {}, scoreMode, useLog=False)
     totalTime = time.process_time() - startTime
 
     extraInfo = None
@@ -935,51 +928,61 @@ def trainAndApply(learnerName, trainX, trainY=None, testX=None, arguments=None,
 
     return results
 
-def _trainAndTestBackend(learnerName, trainX, trainY, testX, testY,
-                         performanceFunction, arguments, output, scoreMode,
-                         multiClassStrategy, randomSeed, tuning, useLog,
-                         **kwarguments):
+def _trainAndTestBackend(performanceFunction, learnerName, trainX, trainY,
+                         testX, testY, arguments, multiClassStrategy,
+                         randomSeed, tuning, useLog, **kwarguments):
     merged = mergeArguments(arguments, kwarguments)
+    if any(isinstance(arg, Tune) for arg in merged.values()):
+        if tuning is None:
+            tuning = Tuning(performanceFunction=performanceFunction)
+        elif not isinstance(tuning, Tuning):
+            tuning = Tuning(performanceFunction=tuning)
+        elif tuning.performanceFunction is None:
+            tuning.performanceFunction=performanceFunction
 
     trainedLearner = train(learnerName, trainX, trainY, merged,
                            multiClassStrategy=multiClassStrategy,
-                           performanceFunction=performanceFunction,
                            randomSeed=randomSeed, tuning=tuning, useLog=useLog)
 
-    if isinstance(testY, (str, int, np.integer)):
+    if testX is None:
+        testX = trainX
+    if testY is None:
+        testY = trainY
+    elif isinstance(testY, (str, int, np.integer)):
         testX = testX.copy()
         testY = testX.features.extract(testY, useLog=False)
-    performance = trainedLearner.test(testX, testY, performanceFunction, {},
-                                      output, scoreMode, useLog=False)
+    performance = trainedLearner.test(performanceFunction, testX, testY, {},
+                                      useLog=False)
 
     return performance, trainedLearner, merged
 
 @trackEntry
-def trainAndTest(learnerName, trainX, trainY, testX, testY,
-                 performanceFunction, arguments=None, output=None,
-                 scoreMode='label', multiClassStrategy='default',
-                 randomSeed=None, tuning=None, *, useLog=None,
-                 **kwarguments):
+def trainAndTest(learnerName, performanceFunction, trainX, trainY=None,
+                 testX=None, testY=None, arguments=None,
+                 multiClassStrategy=None, randomSeed=None, tuning=None, *,
+                 useLog=None, **kwarguments):
     """
     Train a model and get the results of its performance.
 
-    For each permutation of the merge of 'arguments' and 'kwarguments'
-    (more below), this function uses cross validation to generate a
-    performance score for the algorithm, given the particular argument
-    permutation. The argument permutation that performed best cross
-    validating over the training data is then used as the lone argument
-    for training on the whole training data set. Finally, the learned
-    model generates predictions for the testing set, and the performance
-    of those predictions is calculated and returned. If no additional
-    arguments are supplied via arguments or kwarguments, then the
-    result is the performance of the algorithm with default arguments on
-    the testing data.
+    The ``performanceFunction`` is used to calculate a metric that
+    compares the known data to the predicted data generated after
+    training the model. A performance function is a specialized function
+    that allows Nimble to extract the correct prediction data and
+    analyze and compare values returned by the function. Most common
+    performance functions are available in nimble.calculate or see
+    nimble.calculate.performanceFunction for support on creating a
+    customized performance function.
 
     Parameters
     ----------
     learnerName : str
         The learner to be called. This can be a string in the form
         'package.learner' or the learner class object.
+    performanceFunction : function
+        The function used to determine the performance of the learner.
+        Pre-made functions are available in nimble.calculate. If
+        hyperparameter tuning and the Tuning instance does not have a
+        set performanceFunction, it will utilize this function as well.
     trainX : nimble Base object
         Data to be used for training.
     trainY : identifier, nimble Base object
@@ -994,11 +997,6 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
           containing the labels.
         * nimble Base object - contains the labels that correspond to
           ``testX``.
-    performanceFunction : function
-        The function used to determine the performance of the learner.
-        Look in nimble.calculate for pre-made options. If hyperparameter
-        tuning is triggered and the Tuning does not have a set
-        performanceFunction, the function will be applied there as well.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application (e.g., {'dimensions':5, 'k':5}).
@@ -1011,28 +1009,22 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
         {'optimizer': nimble.Init('SGD', learning_rate=0.01}).
         Note: learner arguments can also be passed as ``kwarguments`` so
         this dictionary will be merged with any keyword arguments.
-    output : str
-        The kind of nimble Base object that the output of this function
-        should be in. Any of the normal string inputs to the nimble.data
-        ``returnType`` parameter are accepted here. Alternatively, the
-        value 'match' will indicate to use the type of the ``trainX``
-        parameter.
-    scoreMode : str
-        In the case of a classifying learner, this specifies the type of
-        output wanted: 'label' if we class labels are desired,
-        'bestScore' if both the class label and the score associated
-        with that class are desired, or 'allScores' if a matrix
-        containing the scores for every class label are desired.
-    multiClassStrategy : str
-        May only be 'default', 'OneVsAll' or 'OneVsOne'.
+    multiClassStrategy : str, None
+        May be 'OneVsAll' or 'OneVsOne' to train the learner using that
+        multiclass strategy. When None, the learner is trained on the
+        data as provided.
     randomSeed : int
        Set a random seed for the operation. When None, the randomness is
        controlled by Nimble's random seed. Ignored if learner does not
        depend on randomness.
-    tuning : nimble.Tuning, None
-        Used when hyperparameter tuning has been initiated through
-        ``Tune`` objects in the arguments. If hyperparameter tuning is
-        triggered and this is None, the default Tuning will be applied.
+    tuning : nimble.Tuning, performanceFunction, None
+        Applies when hyperparameter tuning is initiated by ``Tune``
+        objects in the arguments. A Tuning instance details how the
+        argument sets will be selected and validated. For convenience,
+        a performanceFunction may instead be provided or None will
+        provide the performanceFunction from this function and this will
+        trigger construction of a Tuning instance using the default
+        consecutive selection method with 5-fold cross validation.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1060,6 +1052,7 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     --------
     train, trainAndTestOnTrainingData, nimble.Init, nimble.Tune,
     nimble.Tuning, nimble.core.interfaces.TrainedLearner.test
+    nimble.calculate.performanceFunction
 
     Examples
     --------
@@ -1077,9 +1070,9 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     ...                         featureNames=ftNames)
     >>> testData = nimble.data(lstTest, featureNames=ftNames)
     >>> perform = nimble.trainAndTest(
-    ...     'nimble.KNNClassifier', trainX=trainData, trainY='label',
-    ...     testX=testData, testY='label',
-    ...     performanceFunction=nimble.calculate.fractionIncorrect)
+    ...     'nimble.KNNClassifier', nimble.calculate.fractionIncorrect,
+    ...     trainX=trainData, trainY='label', testX=testData,
+    ...     testY='label')
     >>> perform
     0.0
 
@@ -1101,9 +1094,8 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     >>> testX = nimble.data(lstTestX)
     >>> testY = nimble.data(lstTestY)
     >>> perform = nimble.trainAndTest(
-    ...     'sciKitLearn.SVC', trainX=trainX, trainY=trainY,
-    ...     testX=testX, testY=testY,
-    ...     performanceFunction=nimble.calculate.fractionIncorrect,
+    ...     'sciKitLearn.SVC', nimble.calculate.fractionIncorrect,
+    ...     trainX=trainX, trainY=trainY, testX=testX, testY=testY,
     ...     arguments={'C': 0.1}, kernel='linear')
     >>> perform
     0.0
@@ -1115,13 +1107,13 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
     """
     startTime = time.process_time()
     if trackEntry.isEntryPoint:
-        validateLearningArguments(trainX, trainY, testX, True, testY, True,
-                                  arguments, scoreMode, multiClassStrategy)
+        validateLearningArguments(trainX, trainY, testX, testY, arguments,
+                                  multiClassStrategy)
 
     performance, trainedLearner, merged = _trainAndTestBackend(
-        learnerName, trainX, trainY, testX, testY, performanceFunction,
-        arguments, output, scoreMode, multiClassStrategy, randomSeed, tuning,
-        useLog, **kwarguments)
+        performanceFunction, learnerName, trainX, trainY, testX, testY,
+        arguments, multiClassStrategy, randomSeed, tuning, useLog,
+        **kwarguments)
 
     totalTime = time.process_time() - startTime
 
@@ -1140,10 +1132,9 @@ def trainAndTest(learnerName, trainX, trainY, testX, testY,
 
 @trackEntry
 def trainAndTestOnTrainingData(
-    learnerName, trainX, trainY, performanceFunction,
-    crossValidationError=False, folds=5, arguments=None, output=None,
-    scoreMode='label', multiClassStrategy='default', randomSeed=None,
-    tuning=None, *, useLog=None, **kwarguments):
+    learnerName, performanceFunction, trainX, trainY,
+    crossValidationFolds=None, arguments=None, multiClassStrategy=None,
+    randomSeed=None, tuning=None, *, useLog=None, **kwarguments):
     """
     Train a model using the train data and get the performance results.
 
@@ -1152,8 +1143,8 @@ def trainAndTestOnTrainingData(
     (no withheld testing set). By default, this will calculate training
     error for the learner trained on that data set. However, cross
     validation error can instead be calculated by setting the parameter
-    ``crossValidationError`` to be True. In that case, we will partition
-    the training set into a parameter controlled number of folds, and
+    ``crossValidationFolds`` to an integer. In that case, we will
+    partition the training set into that number of folds, and
     iteratively withhold each single fold to be used as the testing set
     of the learner trained on the rest of the data.
 
@@ -1162,31 +1153,25 @@ def trainAndTestOnTrainingData(
     learnerName : str
         The learner to be called. This can be a string in the form
         'package.learner' or the learner class object.
+    performanceFunction : function
+        The function used to determine the performance of the learner.
+        Pre-made functions are available in nimble.calculate. If
+        hyperparameter tuning and the Tuning instance does not have a
+        set performanceFunction, it will utilize this function as well.
     trainX : nimble Base object
         Data to be used for training.
     trainY : identifier, nimble Base object
         A name or index of the feature in ``trainX`` containing the
         labels or another nimble Base object containing the labels that
         correspond to ``trainX``.
-    performanceFunction : function
-        The function used to determine the performance of the learner.
-        Look in nimble.calculate for pre-made options. If hyperparameter
-        tuning is triggered and the Tuning does not have a set
-        performanceFunction, the function will be applied there as well.
-    crossValidationError: bool
-        Whether we will calculate cross validation error or training
-        error. In True case, the training data is split in the
-        ``folds`` number of partitions. Each of those is iteratively
-        withheld and used as the testing set for a learner trained on
-        the combination of all of the non-withheld data. The performance
-        results for each of those tests are then averaged together to
-        act as the return value. In the False case, we train on the
-        training data, and then use the same data as the withheld
-        testing data. By default, this flag is set to False.
-    folds : int
-        The number of folds used in the cross validation. Defaults to 5,
-        cannot exceed the number of points in ``trainX``, and only
-        applies when ``crossValidationError`` is True.
+    crossValidationFolds: int, None
+        When None, the learner is trained on the training data and then
+        tested using the same data. When an integer, the training data
+        is partitioned into that number of folds. Each fold is
+        iteratively withheld and used as the testing set for a learner
+        trained on the combination of all of the non-withheld data. The
+        performance results for each of those tests are then averaged
+        together to act as the return value.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during training and application (e.g., {'dimensions':5, 'k':5}).
@@ -1199,28 +1184,22 @@ def trainAndTestOnTrainingData(
         {'optimizer': nimble.Init('SGD', learning_rate=0.01}).
         Note: learner arguments can also be passed as ``kwarguments`` so
         this dictionary will be merged with any keyword arguments.
-    output : str
-        The kind of nimble Base object that the output of this function
-        should be in. Any of the normal string inputs to the nimble.data
-        ``returnType`` parameter are accepted here. Alternatively, the
-        value 'match' will indicate to use the type of the ``trainX``
-        parameter.
-    scoreMode : str
-        In the case of a classifying learner, this specifies the type of
-        output wanted: 'label' if we class labels are desired,
-        'bestScore' if both the class label and the score associated
-        with that class are desired, or 'allScores' if a matrix
-        containing the scores for every class label are desired.
-    multiClassStrategy : str
-        May only be 'default', 'OneVsAll' or 'OneVsOne'.
+    multiClassStrategy : str, None
+        May be 'OneVsAll' or 'OneVsOne' to train the learner using that
+        multiclass strategy. When None, the learner is trained on the
+        data as provided.
     randomSeed : int
        Set a random seed for the operation. When None, the randomness is
        controlled by Nimble's random seed. Ignored if learner does not
        depend on randomness.
-    tuning : nimble.Tuning, None
-        Used when hyperparameter tuning has been initiated through
-        ``Tune`` objects in the arguments. If hyperparameter tuning is
-        triggered and this is None, the default Tuning will be applied.
+    tuning : nimble.Tuning, performanceFunction, None
+        Applies when hyperparameter tuning is initiated by ``Tune``
+        objects in the arguments. A Tuning instance details how the
+        argument sets will be selected and validated. For convenience,
+        a performanceFunction may instead be provided or None will
+        provide the performanceFunction from this function and this will
+        trigger construction of a Tuning instance using the default
+        consecutive selection method with 5-fold cross validation.
     useLog : bool, None
         Local control for whether to send results/timing to the logger.
         If None (default), use the value as specified in the "logger"
@@ -1261,8 +1240,8 @@ def trainAndTestOnTrainingData(
     >>> trainData = nimble.data(lstTrain,
     ...                         featureNames=ftNames)
     >>> perform = nimble.trainAndTestOnTrainingData(
-    ...     'nimble.KNNClassifier', trainX=trainData, trainY='label',
-    ...     performanceFunction=nimble.calculate.fractionIncorrect)
+    ...     'nimble.KNNClassifier', nimble.calculate.fractionIncorrect,
+    ...     trainX=trainData, trainY='label')
     >>> perform
     0.0
 
@@ -1280,9 +1259,9 @@ def trainAndTestOnTrainingData(
     >>> trainX = nimble.data(lstTrainX)
     >>> trainY = nimble.data(lstTrainY)
     >>> perform = nimble.trainAndTestOnTrainingData(
-    ...     'sciKitLearn.SVC', trainX=trainX, trainY=trainY,
-    ...     performanceFunction=nimble.calculate.fractionIncorrect,
-    ...     arguments={'C': 0.1}, kernel='linear')
+    ...     'sciKitLearn.SVC', nimble.calculate.fractionIncorrect,
+    ...     trainX=trainX, trainY=trainY, arguments={'C': 0.1},
+    ...     kernel='linear')
     >>> perform
     0.0
 
@@ -1294,15 +1273,13 @@ def trainAndTestOnTrainingData(
     """
     if trackEntry.isEntryPoint:
         validateLearningArguments(trainX, trainY, arguments=arguments,
-                                  scoreMode=scoreMode,
                                   multiClassStrategy=multiClassStrategy)
 
     startTime = time.process_time()
     merged = mergeArguments(arguments, kwarguments)
     performance, trainedLearner, merged = _trainAndTestBackend(
-        learnerName, trainX, trainY, trainX, trainY, performanceFunction,
-        merged, output, scoreMode, multiClassStrategy, randomSeed, tuning,
-        useLog)
+        performanceFunction, learnerName, trainX, trainY, trainX, trainY,
+        merged, multiClassStrategy, randomSeed, tuning, useLog)
 
     if trainedLearner.tuning is not None:
         bestArgs = trainedLearner.arguments
@@ -1310,9 +1287,9 @@ def trainAndTestOnTrainingData(
     else:
         bestArgs = merged
         extraInfo = None
-    if crossValidationError:
+    if crossValidationFolds is not None:
         # use tuning with only the bestArgs for final cross validation
-        cvTuning = Tuning(folds=folds)
+        cvTuning = Tuning(folds=crossValidationFolds)
         cvTuning.tune(learnerName, trainX, trainY, bestArgs,
                       performanceFunction, randomSeed, useLog)
         performance = cvTuning.bestResult

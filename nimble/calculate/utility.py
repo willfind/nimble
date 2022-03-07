@@ -326,23 +326,32 @@ class _NoDifferenceResultsException(Exception):
         return repr(self.value)
 
 
-def performanceFunction(optimal, best=None, validate=True, requires1D=True,
-                        samePtCount=True, sameFtCount=True, allowEmpty=False,
-                        allowMissing=False):
+def performanceFunction(optimal, best=None, predict=None, validate=True,
+                        requires1D=True, samePtCount=True, sameFtCount=True,
+                        allowEmpty=False, allowMissing=False):
     """
     Decorator factory for Nimble performance functions.
 
     A convenient way to make a function compatible with Nimble's testing
     API. The function that will be decorated must take the form:
-    function(knownValues, predictedValues) as these are provided by
-    Nimble during testing (including validation testing). The returned
-    decorator will attach the ``optimal`` and ``best`` values as
-    function attributes to allow Nimble to compare and analyze the
-    performance values. The remaining parameters apply validations to
-    the two inputs values provided ``validate=True``. By default, both
-    knownValues and predictedValues must be non-empty Nimble data
-    objects with one feature, an equal number of points, and no missing
-    values.
+    ``function(knownValues, predictedValues)`` as these inputs are
+    provided by Nimble during testing (including validation testing).
+    The ``optimal``, ``best``, and ``predict`` become attributes of the
+    function that allow Nimble to compare and analyze the performances.
+    The remaining parameters control validations of the data input to
+    the decorated function. By default, both knownValues and
+    predictedValues must be non-empty Nimble data objects with one
+    feature, an equal number of points, and no missing values.
+
+    The ``predict`` parameter informs Nimble how to generate the
+    predictedValues for the decorated function. Values of None,
+    'bestScore' and 'allScores' utilize ``TrainedLearner.apply`` with
+    ``predict`` providing the scoreMode argument. More complex cases
+    are handled by providing a custom function to ``predict`` which must
+    be in the form: ``predict(trainedLearner, knownValues, arguments)``.
+    With access to the TrainedLearner instance, knownValues, and the
+    arguments provided to the testing function it should be possible to
+    generate the desired predicted values.
 
     Note
     ----
@@ -356,6 +365,11 @@ def performanceFunction(optimal, best=None, validate=True, requires1D=True,
     best : int, float, None
         The best possible value for the performance function. None
         assumes that the values have no bound in the optimal direction.
+    predict : str, function
+        Informs Nimble how to produce the predictedValues. May be None,
+        'bestScore', or 'allScores' to utilize TrainedLearner.apply() or
+        a custom function in the form:
+        predict(trainedLearner, knownValues, arguments)
     validate : bool
         Whether to perform validation on the function inputs. If False,
         none of the parameters below will apply.
@@ -386,7 +400,7 @@ def performanceFunction(optimal, best=None, validate=True, requires1D=True,
     vector of known labels and the predictedValues to be a matrix of
     vote counts for each label.
 
-    >>> @performanceFunction('max', 1, requires1D=False,
+    >>> @performanceFunction('max', 1, 'allScores', requires1D=False,
     ...                      sameFtCount=False)
     ... def correctVoteRatio(knownValues, predictedValues):
     ...     cumulative = 0
@@ -401,8 +415,8 @@ def performanceFunction(optimal, best=None, validate=True, requires1D=True,
     >>> testX = nimble.data([[0, 0], [1, 1], [2, 2], [1, 1], [-1, -2]])
     >>> testY = nimble.data([0, 0, 1, 1, 2]).T
     >>> knn = nimble.train('nimble.KNNClassifier', trainX, trainY, k=3)
-    >>> predictions = knn.apply(testX, scoreMode='allScores')
-    >>> predictions
+    >>> # Can visualize our predictedValues for this case using apply()
+    >>> knn.apply(testX, scoreMode='allScores') # 12/15 votes correct
     <Matrix 5pt x 3ft
          '0' '1' '2'
        ┌────────────
@@ -412,18 +426,52 @@ def performanceFunction(optimal, best=None, validate=True, requires1D=True,
      3 │  2   1   0
      4 │  0   0   3
     >
-    >>> performance = knn.test(testX, testY, correctVoteRatio,
-    ...                        scoreMode='allScores')
-    >>> print(performance) # 12/15 votes correct
+    >>> knn.test(correctVoteRatio, testX, testY)
     0.8
+
+    Here, ``averageDistanceToCenter`` calculates the average distance of
+    a point to its center. This function expects the predictedValues to
+    be the cluster center for the predicted label of each point in the
+    knownValues. The string options for 'predict' do not cover this
+    case, so it requires the ``labelsWithCenters`` function.
+
+    >>> def labelsWithCenters(trainedLearner, knownValues, arguments):
+    ...     labels = trainedLearner.apply(knownValues)
+    ...     centers = trainedLearner.getAttributes()['cluster_centers_']
+    ...     return nimble.data([centers[l] for l in labels])
+    ...
+    >>> @performanceFunction('min', 0, predict=labelsWithCenters,
+    ...                      requires1D=False, sameFtCount=False)
+    ... def averageDistanceToCenter(knownValues, predictedValues):
+    ...     rootSqDiffs = ((knownValues - predictedValues) ** 2) ** 0.5
+    ...     distances = rootSqDiffs.points.calculate(lambda pt: sum(pt))
+    ...     return sum(distances) / len(distances.points)
+    ...
+    >>> X = nimble.data([[0, 0], [4, 0], [0, 4], [4, 4]] * 25)
+    >>> X += nimble.random.data(100, 2, 0, randomSeed=1) # add noise
+    >>> nimble.trainAndTest('skl.KMeans', averageDistanceToCenter, X,
+    ...                     n_clusters=4)
+    1.3493987354974297
     """
     if optimal not in ['min', 'max']:
         raise InvalidArgumentValue('optimal must be "min" or "max"')
+    if not callable(predict):
+        if predict is None or predict.lower() in ['bestscore', 'allscores']:
+            scoreMode = predict
+            # pylint: disable=function-redefined
+            def predict(trainedLearner, knownValues, arguments):
+                return trainedLearner.apply(knownValues, arguments, scoreMode,
+                                            useLog=False)
+        else:
+            msg = 'predict must be callable or a valid scoreMode (None, '
+            msg += '"bestScore", "allScores") for TrainedLearner.apply '
+            raise InvalidArgumentType(msg)
 
     def performanceFunctionDecorator(func):
+        func.optimal = optimal
+        func.best = best
+        func.predict = predict
         if not validate:
-            func.optimal = optimal
-            func.best = best
             return func
 
         @functools.wraps(func)
@@ -462,9 +510,6 @@ def performanceFunction(optimal, best=None, validate=True, requires1D=True,
                 raise InvalidArgumentValue(msg)
 
             return func(knownValues, predictedValues)
-
-        wrapped.optimal = optimal
-        wrapped.best = best
 
         return wrapped
 

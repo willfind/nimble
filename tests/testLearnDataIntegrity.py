@@ -8,6 +8,7 @@ import pytest
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
+from nimble.calculate import fractionIncorrect
 from nimble.random import pythonRandom
 from tests.helpers import assertCalled
 from tests.helpers import generateClassificationData
@@ -79,26 +80,24 @@ def wrappedTrainAndApplyOvA(learnerName, trainX, trainY, testX, testY):
 
 def wrappedTrainAndTest(learnerName, trainX, trainY, testX, testY):
     # our performance function doesn't actually matter, we're just checking the data
-    return nimble.trainAndTest(learnerName, trainX, trainY, testX, testY,
-                               performanceFunction=nimble.calculate.fractionIncorrect)
+    return nimble.trainAndTest(learnerName, fractionIncorrect, trainX, trainY,
+                               testX, testY)
 
 
 def wrappedTLTest(learnerName, trainX, trainY, testX, testY):
     # our performance function doesn't actually matter, we're just checking the data
     tl = nimble.train(learnerName, trainX, trainY)
-    return tl.test(testX, testY, performanceFunction=nimble.calculate.fractionIncorrect)
+    return tl.test(fractionIncorrect, testX, testY)
 
 
 def wrappedTrainAndTestOvO(learnerName, trainX, trainY, testX, testY):
-    return nimble.trainAndTest(learnerName, trainX, trainY, testX, testY,
-                               performanceFunction=nimble.calculate.fractionIncorrect,
-                               multiClassStrategy='OneVsOne')
+    return nimble.trainAndTest(learnerName, fractionIncorrect, trainX, trainY,
+                               testX, testY, multiClassStrategy='OneVsOne')
 
 
 def wrappedTrainAndTestOvA(learnerName, trainX, trainY, testX, testY):
-    return nimble.trainAndTest(learnerName, trainX, trainY, testX, testY,
-                               performanceFunction=nimble.calculate.fractionIncorrect,
-                               multiClassStrategy='OneVsAll')
+    return nimble.trainAndTest(learnerName, fractionIncorrect, trainX, trainY,
+                               testX, testY, multiClassStrategy='OneVsAll')
 
 
 def setupAndCallIncrementalTrain(learnerName, trainX, trainY, testX, testY):
@@ -287,9 +286,8 @@ def testArgumentIntegrityTrainAndTest():
     arguments = {'k': 1}
     train = nimble.data([[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
     test = nimble.data([[0, 1, 1], [1, 0, 2]])
-    perf = nimble.trainAndTest('nimble.KNNClassifier', train, 2, test, 2,
-                               performanceFunction=nimble.calculate.fractionIncorrect,
-                               arguments=arguments)
+    perf = nimble.trainAndTest('nimble.KNNClassifier', fractionIncorrect,
+                               train, 2, test, 2, arguments=arguments)
 
 def testArgumentIntegrityTrainAndTestOnTrainingData():
     arguments = {'k': 1}
@@ -297,14 +295,13 @@ def testArgumentIntegrityTrainAndTestOnTrainingData():
     mergeArgumentsCalled = assertCalled(nimble.core.learn, 'mergeArguments')
     with mergeArgumentsCalled:
         perf = nimble.trainAndTestOnTrainingData(
-            'nimble.KNNClassifier', train, 2, arguments=arguments,
-            performanceFunction=nimble.calculate.fractionIncorrect)
+            'nimble.KNNClassifier', fractionIncorrect, train, 2,
+            arguments=arguments)
 
     with mergeArgumentsCalled:
         perf = nimble.trainAndTestOnTrainingData(
-            'nimble.KNNClassifier', train, 2, folds=2, arguments=arguments,
-            crossValidationError=True,
-            performanceFunction=nimble.calculate.fractionIncorrect)
+            'nimble.KNNClassifier', fractionIncorrect, train, 2, folds=2,
+            arguments=arguments, crossValidationError=True)
 
 
 @assertCalled(nimble.core.interfaces.universal_interface, 'mergeArguments')
@@ -322,4 +319,4 @@ def testArgumentIntegrityTLTest():
     train = nimble.data([[0, 0, 0], [0, 1, 1], [1, 0, 2], [1, 1, 3]])
     test = nimble.data([[0, 1, 1], [1, 0, 2]])
     tl = nimble.train('nimble.KNNClassifier', train, 2, arguments=arguments)
-    perf = tl.test(test, 2, performanceFunction=nimble.calculate.fractionIncorrect)
+    perf = tl.test(fractionIncorrect, test, 2)

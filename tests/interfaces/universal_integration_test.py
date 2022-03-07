@@ -138,7 +138,7 @@ def testApplyFeatureNames():
             trainLabels.features.setNames(['label'])
             trainData.features.transform(lambda ft: abs(ft))
             testData.features.transform(lambda ft: abs(ft))
-            for mode in ['label', 'allScores', 'bestScore']:
+            for mode in [None, 'allScores', 'bestScore']:
                 strResult = None
                 try:
                     result = nimble.trainAndApply(interfaceName + '.' + learner,
@@ -152,7 +152,7 @@ def testApplyFeatureNames():
                             testData, scoreMode=mode)
                 except InvalidArgumentValue:
                     # try multioutput learner; only label mode is allowed
-                    if mode != 'label':
+                    if mode is not None:
                         continue
                     multiLabels = trainLabels.copy()
                     labels2 = trainLabels.copy()
@@ -166,7 +166,7 @@ def testApplyFeatureNames():
                         continue # incompatible data for this operation
                 except Exception:
                     continue
-                if mode == 'label':
+                if mode is None:
                     assert result.features.getName(0) == 'label'
                 elif mode == 'bestScore':
                     assert result.features.getNames() == ['label', 'bestScore']

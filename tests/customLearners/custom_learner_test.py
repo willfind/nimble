@@ -181,7 +181,7 @@ def testCustomLearnerGetScores():
     testObj = nimble.data(tdata)
 
     name = LoveAtFirstSightClassifier
-    preds = nimble.trainAndApply(name, trainX=trainObj, trainY=labelsObj, testX=testObj, scoreMode='label')
+    preds = nimble.trainAndApply(name, trainX=trainObj, trainY=labelsObj, testX=testObj)
     assert len(preds.points) == 3
     assert len(preds.features) == 1
     best = nimble.trainAndApply(name, trainX=trainObj, trainY=labelsObj, testX=testObj, scoreMode='bestScore')

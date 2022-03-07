@@ -24,14 +24,13 @@ if __name__ == "__main__":
     testObj = nimble.data(source=data2, featureNames=variables)
     tesObjNoY = testObj.features.copy([0,1,2])
 
-    results = trainAndTest('sciKitLearn.SVC', trainX=trainObj, trainY=3,
-                            testX=testObj, testY=3, performanceFunction=fractionIncorrect)
+    results = trainAndTest('sciKitLearn.SVC', fractionIncorrect, 
+                           trainX=trainObj, trainY=3, testX=testObj, testY=3)
     print('Standard trainAndTest call, fractionIncorrect: ' + str(results))
     print("")
 
     resultsLabelsOvO = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
-                             testX=tesObjNoY, scoreMode='label',
-                             multiClassStrategy="OneVsOne")
+                             testX=tesObjNoY, multiClassStrategy="OneVsOne")
     print('One vs One predictions (aka labels format):')
     print(resultsLabelsOvO)
 
@@ -48,8 +47,7 @@ if __name__ == "__main__":
     print(resultsAllScoresOvO)
 
     resultsLabelsOvA = trainAndApply('sciKitLearn.SVC', trainX=trainObj, trainY=3,
-                             testX=tesObjNoY, scoreMode='label',
-                             multiClassStrategy="OneVsAll")
+                             testX=tesObjNoY, multiClassStrategy="OneVsAll")
     print('One vs All predictions (aka labels format):')
     print(resultsLabelsOvA)
 

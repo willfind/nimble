@@ -66,8 +66,8 @@ def prepopulatedLogSafetyWrapper(testFunc):
             testYObj = testObj.features.extract(3)
             # run and crossVal
             results = nimble.trainAndTest(
-                'nimble.KNNClassifier', trainX=trainObj, trainY=trainYObj,
-                testX=testObj, testY=testYObj, performanceFunction=RMSE,
+                'nimble.KNNClassifier', RMSE, trainX=trainObj,
+                trainY=trainYObj, testX=testObj, testY=testYObj,
                 arguments={"k": nimble.Tune([3, 5])})
         # edit log sessionNumbers and timestamps
         location = nimble.settings.get("logger", "location")
@@ -277,9 +277,8 @@ def testRunTypeFunctionsUseLog():
     assert re.search(randomSeedPattern, logInfo)
 
     # trainAndTest
-    performance = nimble.trainAndTest("sciKitLearn.SVC", trainXObj, trainYObj,
-                                   testXObj, testYObj,
-                                   performanceFunction=RMSE)
+    performance = nimble.trainAndTest(
+        "sciKitLearn.SVC", RMSE, trainXObj, trainYObj, testXObj, testYObj)
     logInfo = getLastLogData()
     assert "'function': 'trainAndTest'" in logInfo
     # ensure that metrics is storing performanceFunction and result
@@ -297,7 +296,7 @@ def testRunTypeFunctionsUseLog():
 
     # trainAndTestOnTrainingData
     results = nimble.trainAndTestOnTrainingData(
-        "sciKitLearn.SVC", trainXObj, trainYObj, performanceFunction=RMSE)
+        "sciKitLearn.SVC", RMSE, trainXObj, trainYObj)
     logInfo = getLastLogData()
     assert "'function': 'trainAndTestOnTrainingData'" in logInfo
     # ensure that metrics is storing performanceFunction and result
@@ -315,9 +314,8 @@ def testRunTypeFunctionsUseLog():
     logInfo = getLastLogData()
     assert "'randomSeed': 123" in logInfo
 
-    res = nimble.trainAndTest("sciKitLearn.SVC", trainXObj, trainYObj,
-                              testXObj, testYObj, performanceFunction=RMSE,
-                              randomSeed=123)
+    res = nimble.trainAndTest("sciKitLearn.SVC", RMSE, trainXObj, trainYObj,
+                              testXObj, testYObj, randomSeed=123)
     logInfo = getLastLogData()
     assert "'randomSeed': 123" in logInfo
 
@@ -329,8 +327,7 @@ def testRunTypeFunctionsUseLog():
     assert "'randomSeed': 123" in logInfo
 
     results = nimble.trainAndTestOnTrainingData(
-        "sciKitLearn.SVC", trainXObj, trainYObj,  performanceFunction=RMSE,
-        randomSeed=123)
+        "sciKitLearn.SVC", RMSE, trainXObj, trainYObj, randomSeed=123)
     logInfo = getLastLogData()
     assert "'randomSeed': 123" in logInfo
 
@@ -343,7 +340,7 @@ def testRunTypeFunctionsUseLog():
     assert re.search(randomSeedPattern, logInfo) is None
 
     # TrainedLearner.test
-    performance = tl.test(testXObj, testYObj, performanceFunction=RMSE)
+    performance = tl.test(RMSE, testXObj, testYObj)
     logInfo = getLastLogData()
     assert f"'function': '{tl.logID}.test'" in logInfo
     # ensure that metrics is storing performanceFunction and result

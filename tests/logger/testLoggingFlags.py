@@ -141,16 +141,15 @@ def test_trainAndApply():
 def test_trainAndTest():
     def wrapped(trainX, trainY, testX, testY, useLog):
         return nimble.trainAndTest(
-            learnerName, trainX, trainY, testX, testY,
-            performanceFunction=fractionIncorrect, useLog=useLog)
+            learnerName, fractionIncorrect, trainX, trainY, testX, testY,
+            useLog=useLog)
 
     backend(wrapped, runAndCheck)
 
 def test_trainAndTestOnTrainingData_trainError():
     def wrapped(trainX, trainY, testX, testY, useLog):
         return nimble.trainAndTestOnTrainingData(
-            learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
-            useLog=useLog)
+            learnerName, fractionIncorrect, trainX, trainY, useLog=useLog)
 
     backend(wrapped, runAndCheck)
 
@@ -179,8 +178,7 @@ def test_TrainedLearner_test():
     tl = nimble.train(learnerName, trainX, trainY, useLog=False)
 
     def wrapped(trainX, trainY, testX, testY, useLog):
-        return tl.test(testX, testY, performanceFunction=fractionIncorrect,
-                       useLog=useLog)
+        return tl.test(fractionIncorrect, testX, testY, useLog=useLog)
 
     backend(wrapped, runAndCheck)
 
@@ -256,7 +254,7 @@ def test_Deep_train():
     def wrapped(trainX, trainY, testX, testY, useLog):
         k = nimble.Tune([2, 3])  # trigger hyperparameter tuning
         return nimble.train(
-            learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
+            learnerName, trainX, trainY, tuning=fractionIncorrect,
             useLog=useLog, k=k)
     wrapped.__name__ = 'train'
     backendDeep(wrapped, runAndCheck)
@@ -265,8 +263,8 @@ def test_Deep_trainAndApply():
     def wrapped(trainX, trainY, testX, testY, useLog):
         k = nimble.Tune([2, 3])  # trigger hyperparameter tuning
         return nimble.trainAndApply(
-            learnerName, trainX, trainY, testX,
-            performanceFunction=fractionIncorrect, useLog=useLog, k=k)
+            learnerName, trainX, trainY, testX, tuning=fractionIncorrect,
+            useLog=useLog, k=k)
     wrapped.__name__ = 'trainAndApply'
     backendDeep(wrapped, runAndCheck)
 
@@ -274,16 +272,16 @@ def test_Deep_trainAndTest():
     def wrapped(trainX, trainY, testX, testY, useLog):
         k = nimble.Tune([2, 3])  # trigger hyperparameter tuning
         return nimble.trainAndTest(
-            learnerName, trainX, trainY, testX, testY,
-            performanceFunction=fractionIncorrect, useLog=useLog, k=k)
+            learnerName, fractionIncorrect, trainX, trainY, testX, testY,
+            useLog=useLog, k=k)
     wrapped.__name__ = 'trainAndTest'
     backendDeep(wrapped, runAndCheck)
 
 def test_Deep_trainAndTestOnTrainingData_CVError():
     def wrapped(trainX, trainY, testX, testY, useLog):
         return nimble.trainAndTestOnTrainingData(
-            learnerName, trainX, trainY, performanceFunction=fractionIncorrect,
-            crossValidationError=True, useLog=useLog)
+            learnerName, fractionIncorrect, trainX, trainY,
+            crossValidationFolds=5, useLog=useLog)
     wrapped.__name__ = 'trainAndTestOnTrainingData'
     backendDeep(wrapped, runAndCheck)
 
