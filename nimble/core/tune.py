@@ -14,6 +14,7 @@ from operator import itemgetter
 import numbers
 import copy
 import sys
+from packaging.version import Version
 from timeit import default_timer
 
 import numpy as np
@@ -946,9 +947,16 @@ class Bayesian(ArgumentSelector):
         domain = hyperopt.Domain(self.validator.validate, space)
         self.trials = hyperopt.Trials()
 
+        # 0.2.6 and afterwards only allows for BitGenerator rng sources
+        if Version(hyperopt.__version__) >= Version("0.2.6"):
+            sourceSeed = pythonRandom.randint(1, (2 ** 32) - 1)
+            randSource = np.random.default_rng(sourceSeed)
+        else:
+            randSource = nimble.random.numpyRandom
+
         self.iterator = hyperopt.FMinIter(
             hyperopt.tpe.suggest, domain, self.trials,
-            nimble.random.numpyRandom, max_evals=self.maxIterations)
+            randSource, max_evals=self.maxIterations)
 
         self._stopIteration = False
         self._startTime = None
