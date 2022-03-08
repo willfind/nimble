@@ -14,8 +14,8 @@ from operator import itemgetter
 import numbers
 import copy
 import sys
-from packaging.version import Version
 from timeit import default_timer
+from packaging.version import Version
 
 import numpy as np
 
