@@ -260,7 +260,7 @@ clusterMeans[:, os].features.plot()
 ## different browsers between these two clusters. We also see that visitors in
 ## `cluster1` and `cluster2` generally use similar browsers. It seems strange
 ## that visitors using browser 2 span two clusters with very different
-## behaviors, yet visitors on browser 0 mostly fall into the same cluster.
+## behaviors, yet visitors on browser 1 mostly fall into the same cluster.
 
 ## Cluster Assumptions ##
 
