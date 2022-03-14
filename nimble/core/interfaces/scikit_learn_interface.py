@@ -1,5 +1,5 @@
 """
-Relies on being scikit-learn 0.19 or above
+Relies on being scikit-learn 1.0 or above
 
 TODO: multinomialHMM requires special input processing for obs param
 """
@@ -359,15 +359,8 @@ class SciKitLearn(_SciKitLearnAPI):
             warnings.simplefilter('ignore', (DeprecationWarning,
                                              FutureWarning))
             with mock.patch('pkgutil.walk_packages', mockWalkPackages):
-                try:
-                    utils = modifyImportPathAndImport('sklearn',
-                                                      'sklearn.utils')
-                    estimatorDict = utils.all_estimators()
-                except AttributeError: # version < 0.22
-                    utils = modifyImportPathAndImport('sklearn',
-                                                      'sklearn.utils.testing')
-                    estimatorDict = utils.all_estimators(
-                        include_dont_test=True)
+                utils = modifyImportPathAndImport('sklearn', 'sklearn.utils')
+                estimatorDict = utils.all_estimators()
 
             self.allEstimators = {}
             for name, obj in estimatorDict:
