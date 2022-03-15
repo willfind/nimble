@@ -171,22 +171,4 @@ def test_examples_supervised_learning():
 @pytest.mark.slow
 def test_examples_unsupervised_learning():
     script = 'unsupervised_learning.py'
-
-    def checkLines(toCheck):
-        # python versions can return slightly different values and ordering
-        # 1864 points with cluster sizes approximately 380, 410, and 1075
-        counts = []
-        percentages = []
-        for match in toCheck.values():
-            count = int(match.group(1))
-            if count < 1000:
-                assert 370 < count < 420
-            else:
-                assert 1065 < count < 1085
-            counts.append(count)
-            percentage = float(match.group(2))
-            percentages.append(percentage)
-        assert sum(counts) == 1864
-        assert round(sum(percentages)) == 100
-
-    back_callExampleAsMain(script, checkLines)
+    back_callExampleAsMain(script)
