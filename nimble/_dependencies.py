@@ -58,6 +58,8 @@ _DEPENDENCIES = [
     Dependency('dateutil', 'python-dateutil>=2.6', 'operation',
                'Parsing strings to datetime objects'),
     Dependency('sklearn', 'scikit-learn>=1.0', 'interfaces',
+    Dependency('hyperopt', 'hyperopt>=0.2', 'operation',
+               'Bayesian approach for hyperparameter tuning'),
                'Machine Learning'),
     Dependency('tensorflow', 'tensorflow>=1.14', 'interfaces',
                'Neural Networks'),

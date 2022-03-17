@@ -803,24 +803,48 @@ class TrainedLearner(object):
     methods for applying, testing and accessing cross-validation
     results and other learned attributes.
 
-    Attributes
-    ----------
-    learnerName : str
-        The name of the learner used for training.
-    arguments : dict
-        The original arguments passed to the learner.
-    randomSeed : int
-        The random seed used for the learner. Only applicable if the
-        learner utilizes randomness.
-    tuning : nimble.Tuning
-        If hyperparameter tuning occurred during training, this is set
-        to the Tuning object to provide access to the validation results
-        during the tuning process.
-
     See Also
     --------
     nimble.train, nimble.Tuning
+
+    Examples
+    --------
+    >>> lst = [[1, 0, 1], [0, 1, 2], [0, 0, 3], [1, 1, 4]] * 10
+    >>> lstTest = [[1, 0, 1], [0, -1, 2], [0, 1, 2], [1, 1, 4]]
+    >>> ftNames = ['a', 'b' , 'label']
+    >>> trainData = nimble.data(lst, featureNames=ftNames)
+    >>> testData = nimble.data(lstTest, featureNames=ftNames)
+    >>> tl = nimble.train('nimble.KNNClassifier', trainX=trainData,
+    ...                   trainY='label')
+    >>> tl.apply(testX=testData[:, :'b'])
+    <Matrix 4pt x 1ft
+         'label'
+       ┌────────
+     0 │    1
+     1 │    3
+     2 │    2
+     3 │    4
+    >
+    >>> tl.test(testX=testData, testY='label',
+    ...         performanceFunction=nimble.calculate.fractionIncorrect)
+    0.25
     """
+    # comments below for Sphinx docstring
+    #: Identifier for this object within the log.
+    #:
+    #: An identifier unique within the current logging session is generated
+    #: when the logID attribute is first accessed. Each ``logID`` string begins
+    #: with "TRAINEDLEARNER\_" and is followed an integer value. The integer
+    #: values start at 0 and increment by 1. Assuming logging is enabled, this
+    #: occurs when the object is created. Searching for the ``logID`` text in
+    #: the log will locate all logged usages of this object.
+    #:
+    #: Examples
+    #: --------
+    #: >>> train = nimble.data([[0, 0, 0], [0, 1, 1], [1, 0, 2]])
+    #: >>> tl = nimble.train('nimble.KNNClassifier', train, 2)
+    #: >>> tl.logID
+    #: '_TRAINEDLEARNER_0_'
     logID = LogID('TRAINEDLEARNER')
 
     def __init__(self, learnerName, arguments, transformedArguments,
@@ -865,10 +889,11 @@ class TrainedLearner(object):
            The random seed to use (when applicable). Also supports
            logging the randomSeed for top-level functions.
         """
-        self.learnerName = learnerName
-        self.arguments = arguments
-        self.randomSeed = randomSeed
-        self.tuning = tuning
+        # make user-facing as properties to prevent modification and document
+        self._learnerName = learnerName
+        self._arguments = arguments
+        self._randomSeed = randomSeed
+        self._tuning = tuning
 
         self._transformedArguments = transformedArguments
         self._customDict = customDict
@@ -880,11 +905,44 @@ class TrainedLearner(object):
         # Set if using TrainedLearners
         self.label = None
 
+    @property
+    def learnerName(self):
+        """
+        The name of the learner used for training.
+        """
+        return self._learnerName
+
+    @property
+    def arguments(self):
+        """
+        The original arguments passed to the learner.
+        """
+        return self._arguments
+
+    @property
+    def randomSeed(self):
+        """
+        The random seed used for the learner.
+
+        Only applicable if the learner utilizes randomness.
+        """
+        return self._randomSeed
+
+    @property
+    def tuning(self):
+        """
+        Tuning object storing validation results.
+
+        If hyperparameter tuning occurred during training, this is set
+        to the Tuning object to provide access to the validation results
+        during the tuning process.
+        """
+        return self._tuning
 
     @captureOutput
     @trackEntry
-    def test(self, testX, testY, performanceFunction, arguments=None,
-             output='match', scoreMode='label', *, useLog=None, **kwarguments):
+    def test(self, performanceFunction, testX, testY=None, arguments=None, *,
+             useLog=None, **kwarguments):
         """
         Evaluate the performance of the trained learner.
 
@@ -895,6 +953,12 @@ class TrainedLearner(object):
 
         Parameters
         ----------
+        performanceFunction : function
+            The function used to determine the performance of the
+            learner. Pre-made functions are available in
+            nimble.calculate. If hyperparameter tuning and the Tuning
+            instance does not have a set performanceFunction, it will
+            utilize this function as well.
         testX : nimble.core.data.Base
             The object containing the test data.
         testY : identifier, nimble Base object
@@ -918,19 +982,6 @@ class TrainedLearner(object):
             generate an error score for  the learner when the learner
             was passed all three values of ``k``, separately. These will
             be merged with kwarguments for the learner.
-        output : str
-            The kind of nimble Base object that the output of this
-            function should be in. Any of the normal string inputs to
-            the nimble.data ``returnType`` parameter are accepted here.
-            Alternatively, the value 'match' will indicate to use the
-            type of the ``trainX`` parameter.
-        scoreMode : str
-            In the case of a classifying learner, this specifies the
-            type of output wanted: 'label' if we class labels are
-            desired, 'bestScore' if both the class label and the score
-            associated with that class are desired, or 'allScores' if a
-            matrix containing the scores for every class label are
-            desired.
         useLog : bool, None
             Local control for whether to send results/timing to the
             logger. If None (default), use the value as specified in the
@@ -973,22 +1024,23 @@ class TrainedLearner(object):
         >>> testData = nimble.data(lstTest, featureNames=ftNames)
         >>> knn = nimble.train('nimble.KNNClassifier', trainX=trainData,
         ...                    trainY='label')
-        >>> knn.test(testX=testData, testY='label',
-        ...          performanceFunction=fractionIncorrect)
+        >>> knn.test(fractionIncorrect, testX=testData, testY='label')
         0.0
         """
         startTime = time.process_time()
         if trackEntry.isEntryPoint:
-            validateTestingArguments(testX, testY, True, arguments, scoreMode,
+            validateTestingArguments(testX, testY, arguments,
                                      self._has2dOutput)
 
-        if not isinstance(testY, nimble.core.data.Base):
+        if testY is None:
+            testY = testX # testX is the knownValue data
+        elif not isinstance(testY, nimble.core.data.Base):
             testX = testX.copy()
             testY = testX.features.extract(testY, useLog=False)
 
         mergedArguments = mergeArguments(arguments, kwarguments)
-        pred = self.apply(testX, mergedArguments, output, scoreMode,
-                          useLog=False)
+
+        pred = performanceFunction.predict(self, testX, mergedArguments)
         performance = computeMetrics(testY, None, pred, performanceFunction)
         totalTime = time.process_time() - startTime
 
@@ -1004,8 +1056,8 @@ class TrainedLearner(object):
 
     @captureOutput
     @trackEntry
-    def apply(self, testX, arguments=None, output='match', scoreMode='label',
-              *, useLog=None, **kwarguments):
+    def apply(self, testX, arguments=None, scoreMode=None, *, useLog=None,
+              **kwarguments):
         """
         Apply the learner to the test data.
 
@@ -1031,18 +1083,12 @@ class TrainedLearner(object):
             generate an error score for  the learner when the learner
             was passed all three values of ``k``, separately. These will
             be merged with kwarguments for the learner.
-        output : str
-            The kind of nimble Base object that the output of this
-            function should be in. Any of the normal string inputs to
-            the nimble.data ``returnType`` parameter are accepted here.
-            Alternatively, the value 'match' will indicate to use the
-            type of the ``trainX`` parameter.
-        scoreMode : str
-            In the case of a classifying learner, this specifies the
-            type of output wanted: 'label' if class labels are desired,
-            'bestScore' if both the class label and the score associated
-            with that class are desired, or 'allScores' if a matrix
-            containing the scores for every class label are desired.
+        scoreMode : str, None
+            For learners that offer a scoring method, this can be set to
+            'bestScore' or 'allScores'. The 'bestScore' option returns
+            two features, the predicted class and score for that class.
+            The 'allScores' option will construct a matrix where each
+            feature represents the scores for that class.
         useLog : bool, None
             Local control for whether to send results/timing to the
             logger. If None (default), use the value as specified in the
@@ -1082,8 +1128,7 @@ class TrainedLearner(object):
         >>> testX = nimble.data(lstTestX)
         >>> tl = nimble.train('nimble.KNNClassifier', trainX=trainData,
         ...                   trainY=3)
-        >>> predict = tl.apply(testX)
-        >>> predict
+        >>> tl.apply(testX)
         <Matrix 3pt x 1ft
              0
            ┌──
@@ -1110,7 +1155,7 @@ class TrainedLearner(object):
 
         # depending on the mode, we need different information.
         labels = None
-        if scoreMode != 'label':
+        if scoreMode is not None:
             scores = self.getScores(testX, usedArguments)
         if scoreMode != 'allScores':
             labels = self._interface._applier(self.learnerName, self._backend,
@@ -1118,13 +1163,13 @@ class TrainedLearner(object):
                                               self._transformedArguments,
                                               self._customDict)
             labels = self._interface._outputTransformation(
-                self.learnerName, labels, usedArguments, output, "label",
+                self.learnerName, labels, usedArguments, 'match', "label",
                 self._customDict)
         # if this application is for a classification or regression learner,
         # we will apply featureNames to the output if possible
         lType = self._interface.learnerType(self.learnerName)
         applyFtNames = lType in ['classification', 'regression']
-        if scoreMode == 'label':
+        if scoreMode is None:
             ret = labels
             if applyFtNames:
                 ret.features.setNames(self._trainYNames, useLog=False)
@@ -1148,7 +1193,7 @@ class TrainedLearner(object):
                 ftNames.append('bestScore')
                 ret.features.setNames(ftNames, useLog=False)
         else:
-            msg = 'scoreMode must be "label", "bestScore", or "allScores"'
+            msg = 'scoreMode must be None, "bestScore", or "allScores"'
             raise InvalidArgumentValue(msg)
 
         if len(testX.points) == len(ret.points):
@@ -1298,7 +1343,7 @@ class TrainedLearner(object):
             has2dOutput = len(outputData.features) > 1
         elif isinstance(outputData, (list, tuple)):
             has2dOutput = len(outputData) > 1
-        self.randomSeed = self._interface._getValidSeed(randomSeed)
+        self._randomSeed = self._interface._getValidSeed(randomSeed)
 
         merged = mergeArguments(arguments, kwarguments)
         self._interface._validateLearnerArgumentValues(self.learnerName,
@@ -1310,7 +1355,7 @@ class TrainedLearner(object):
                 msg += "If wanting to perform hyperparameter tuning, use "
                 msg += "nimble.train()"
                 raise InvalidArgumentValue(msg)
-            self.arguments[arg] = value
+            self._arguments[arg] = value
             self._transformedArguments[arg] = value
 
         # separate training data / labels if needed
@@ -1328,18 +1373,18 @@ class TrainedLearner(object):
 
         self._backend = newBackend
         self._trainXShape = trainX.shape
-        self.arguments = merged
+        self._arguments = merged
         self._transformedArguments = transformedInputs[3]
         self._customDict = customDict
         self._has2dOutput = has2dOutput
-        self.tuning = None
+        self._tuning = None
 
         handleLogging(useLog, 'TLrun', self, 'retrain', self.arguments, trainX,
                       trainY, randomSeed=self.randomSeed)
 
     @captureOutput
-    def incrementalTrain(self, trainX, trainY=None, randomSeed=None,
-                         *, useLog=None):
+    def incrementalTrain(self, trainX, trainY=None, arguments=None,
+                         randomSeed=None, *, useLog=None):
         """
         Extend the training of this learner with additional data.
 
@@ -1368,6 +1413,8 @@ class TrainedLearner(object):
             global option.
         """
         validateLearningArguments(trainX, trainY)
+        if arguments is not None:
+            self.arguments.update(arguments)
         transformed = self._interface._inputTransformation(
             self.learnerName, trainX, trainY, None, self.arguments,
             self._customDict)
@@ -1473,10 +1520,9 @@ class TrainedLearner(object):
             self.learnerName, None, None, testX, usedArguments,
             self._customDict)
 
-        rawScores = self._interface._getScores(self.learnerName, self._backend,
-                                               testX, usedArguments,
-                                               self._transformedArguments,
-                                               self._customDict)
+        rawScores = self._interface._getScores(
+            self.learnerName, self._backend, testX, usedArguments,
+            self._transformedArguments, self._customDict)
         nimbleTypeRawScores = self._interface._outputTransformation(
             self.learnerName, rawScores, usedArguments, "Matrix", "allScores",
             self._customDict)
@@ -1581,8 +1627,8 @@ class TrainedLearners(TrainedLearner):
                          tuningResults, trainXShape, trainYNames, randomSeed)
 
     @captureOutput
-    def apply(self, testX, arguments=None, output='match', scoreMode='label',
-              *, useLog=None, **kwarguments):
+    def apply(self, testX, arguments=None, scoreMode=None, *, useLog=None,
+              **kwarguments):
         """
         Apply the learner to the test data.
 
@@ -1614,19 +1660,12 @@ class TrainedLearners(TrainedLearner):
             generate an error score for  the learner when the learner
             was passed all three values of ``k``, separately. These will
             be merged with kwarguments for the learner.
-        output : str
-            The kind of nimble Base object that the output of this
-            function should be in. Any of the normal string inputs to
-            the nimble.data ``returnType`` parameter are accepted here.
-            Alternatively, the value 'match' will indicate to use the
-            type of the ``trainX`` parameter.
-        scoreMode : str
-            In the case of a classifying learner, this specifies the
-            type of output wanted: 'label' if we class labels are
-            desired, 'bestScore' if both the class label and the score
-            associated with that class are desired, or 'allScores' if a
-            matrix containing the scores for every class label are
-            desired.
+        scoreMode : str, None
+            For learners that offer a scoring method, this can be set to
+            'bestScore' or 'allScores'. The 'bestScore' option returns
+            two features, the predicted class and score for that class.
+            The 'allScores' option will construct a matrix where each
+            feature represents the scores for that class.
         useLog : bool, None
             Local control for whether to send results/timing to the
             logger. If None (default), use the value as specified in the
@@ -1662,7 +1701,6 @@ class TrainedLearners(TrainedLearner):
         if self.method == 'OneVsAll':
             for trainedLearner in self._trainedLearnersList:
                 oneLabelResults = trainedLearner.apply(testX, arguments,
-                                                       output, 'label',
                                                        useLog=useLog)
                 label = trainedLearner.label
                 # put all results into one Base container; same type as trainX
@@ -1680,7 +1718,7 @@ class TrainedLearners(TrainedLearner):
                     rawPredictions.features.append(oneLabelResults,
                                                    useLog=False)
 
-            if scoreMode.lower() == 'label'.lower():
+            if scoreMode is None:
 
                 getWinningPredictionIndices = rawPredictions.points.calculate(
                     extractWinningPredictionIndex, useLog=False)
@@ -1738,7 +1776,7 @@ class TrainedLearners(TrainedLearner):
                                    returnType=rawPredictions.getTypeString(),
                                    useLog=False)
 
-            msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
+            msg = "scoreMode must be None, 'bestScore', or 'allScores'"
             raise InvalidArgumentValue(msg)
 
         #1 VS 1
@@ -1746,8 +1784,8 @@ class TrainedLearners(TrainedLearner):
             predictionFeatureID = 0
             for trainedLearner in self._trainedLearnersList:
                 # train classifier on that data; apply it to the test set
-                partialResults = trainedLearner.apply(testX, arguments, output,
-                                                      'label', useLog=useLog)
+                partialResults = trainedLearner.apply(testX, arguments,
+                                                      useLog=useLog)
                 # put predictions into table of predictions
                 if rawPredictions is None:
                     rawPredictions = partialResults.copy(to="List")
@@ -1759,7 +1797,7 @@ class TrainedLearners(TrainedLearner):
                                                    useLog=False)
                 predictionFeatureID += 1
             # set up the return data based on which format has been requested
-            if scoreMode.lower() == 'label'.lower():
+            if scoreMode is None:
                 ret = rawPredictions.points.calculate(
                     extractWinningPredictionLabel, useLog=False)
                 ret.features.setName(0, "winningLabel", useLog=False)
@@ -1800,7 +1838,7 @@ class TrainedLearners(TrainedLearner):
                                    returnType=rawPredictions.getTypeString(),
                                    useLog=False)
 
-            msg = "scoreMode must be 'label', 'bestScore', or 'allScores'"
+            msg = "scoreMode must be None, 'bestScore', or 'allScores'"
             raise InvalidArgumentValue(msg)
 
         raise ImproperObjectAction('Wrong multiclassification method.')

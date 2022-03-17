@@ -23,7 +23,7 @@ def logCountAssertionFactory(count):
         @wraps(function)
         def wrapped(*args, **kwargs):
             nimble.settings.set('logger', 'enabledByDefault', 'True')
-            nimble.settings.set('logger', 'enableCrossValidationDeepLogging', 'True')
+            nimble.settings.set('logger', 'enableDeepLogging', 'True')
             logger = nimble.core.logger.active
             countQuery = "SELECT COUNT(entry) FROM logger"
             startCount = logger.extractFromLog(countQuery)[0][0]

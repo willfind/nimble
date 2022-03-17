@@ -71,8 +71,8 @@ learners = ['sklearn.LinearRegression', 'sklearn.Ridge', 'sklearn.Lasso',
             'sklearn.KNeighborsRegressor', 'sklearn.GradientBoostingRegressor']
 rootMeanSquareError = nimble.calculate.rootMeanSquareError
 for learner in learners:
-    performance = nimble.trainAndTest(learner, trainX, trainY, testX, testY,
-                                      rootMeanSquareError)
+    performance = nimble.trainAndTest(learner, rootMeanSquareError, trainX,
+                                      trainY, testX, testY)
     print(learner, 'error:', performance)
 
 ## `'sklearn.KNeighborsRegressor'` and `'sklearn.GradientBoostingRegressor'`
@@ -92,12 +92,12 @@ nimble.showLearnerParameterDefaults('sklearn.KNeighborsRegressor')
 
 ## Furthermore, we can test multiple values for the same parameter
 ## by using the `nimble.Tune` object. The presence of `nimble.Tune` will
-## trigger hyperparameter tuning. By default, it tunes the arguments
-## consecutively using 5-fold cross-validation, but this can be modified by
-## providing an `Tuning` object to the `tuning` parameter.
-## The tuning will find the argument combination with the best average
-## `performanceFunction` result and return the `TrainedLearner` using the best
-## arguments.
+## trigger hyperparameter tuning. By default, this tunes the arguments
+## consecutively (optimizing one argument at a time while holding the others
+## constant) and uses 5-fold cross-validation. This can be modified by
+## providing a `Tuning` object to the `tuning` parameter. The tuning will find
+## the argument combination with the best average `performanceFunction` result
+## and return the `TrainedLearner` using the best arguments.
 
 ## For KNeighborsRegressor, we will use `nimble.Tune` to try 3, 5, and 7 for
 ## the number of nearest neighbors and for `GradientBoostingRegressor` we will
@@ -137,7 +137,7 @@ print(gbTL.tuning.bestResult, gbTL.tuning.bestArguments)
 ## as the default value so we already know how it performs on our testing data.
 ## However, `gbTL` found `learning_rate` of 1 outperformed the default, 0.1.
 ## Let's see how it performs on our testing (out-of-sample) data.
-gbPerf = gbTL.test(testX, testY, rootMeanSquareError)
+gbPerf = gbTL.test(rootMeanSquareError, testX, testY) 
 print('sklearn.GradientBoostingRegressor', 'learning_rate=1', 'error', gbPerf)
 
 ## Applying our learner ##

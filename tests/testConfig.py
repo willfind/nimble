@@ -187,7 +187,7 @@ def test_settings_GetFullConfig():
     startConfig = nimble.settings.get()
     assert 'logger' in startConfig
     loggerOptions = ['name', 'location', 'enabledByDefault',
-                     'enableCrossValidationDeepLogging']
+                     'enableDeepLogging']
     assert all(opt in startConfig['logger'] for opt in loggerOptions)
 
     nimble.settings.setDefault("TestSec1", "op1", '1')
@@ -456,7 +456,7 @@ def test_settings_str():
     assert 'logger' in cp
     assert 'location' in cp['logger']
     assert 'enabledByDefault' in cp['logger']
-    assert 'enableCrossValidationDeepLogging' in cp['logger']
+    assert 'enableDeepLogging' in cp['logger']
     assert 'fetch' in cp
     assert 'location' in cp['fetch']
 
@@ -473,7 +473,7 @@ def test_settings_repr():
     assert 'logger' in cp
     assert 'location' in cp['logger']
     assert 'enabledByDefault' in cp['logger']
-    assert 'enableCrossValidationDeepLogging' in cp['logger']
+    assert 'enableDeepLogging' in cp['logger']
     assert 'fetch' in cp
     assert 'location' in cp['fetch']
 

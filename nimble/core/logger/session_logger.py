@@ -34,6 +34,11 @@ import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 
+def _BaseNameOrType(obj):
+    if obj.name is not None:
+        return obj.name
+    return obj.getTypeString()
+
 def log(heading, logInfo):
     """
     Enter an entry into the active logger's database file.
@@ -71,7 +76,7 @@ def log(heading, logInfo):
     nimble.core.logger.active.log(heading, logInfo)
 
 
-def showLog(levelOfDetail=2, leastSessionsAgo=0, mostSessionsAgo=2,
+def showLog(levelOfDetail=2, leastSessionsAgo=0, mostSessionsAgo=1,
             startDate=None, endDate=None, maximumEntries=100,
             searchForText=None, regex=False, saveToFileName=None,
             append=False):
@@ -95,16 +100,15 @@ def showLog(levelOfDetail=2, leastSessionsAgo=0, mostSessionsAgo=2,
           timer data when applicable.
         * Level 3 - Output all available data. Adds individual
           validation results from hyperparameter tuning.
-          Note: The 'enableCrossValidationDeepLogging' option in the
-          'logger' section of nimble.settings, must be set to 'True'
-          during the session in order for Level 3 data to be stored in
-          the log.
+          Note: The 'enableDeepLogging' option in the 'logger' section
+          of nimble.settings, must be set to 'True' during the session
+          in order for Level 3 data to be stored in the log.
     leastSessionsAgo : int
         The least number of sessions since the most recent session to
         include in the log. Default is 0.
     mostSessionsAgo : int
         The most number of sessions since the most recent session to
-        include in the log. Default is 2.
+        include in the log. Default is 1.
     startDate :  str, datetime
         A string or datetime object of the date to begin adding sessions
         to the log.
@@ -644,9 +648,19 @@ class SessionLogger(object):
             logType = "tuning"
             logInfo = {}
             logInfo["selection"] = selector.name
-            logInfo["selectionArgs"] = selector._keywords
+            logInfo["selectionArgs"] = {}
+            for name, arg in selector._logInfo.items():
+                if isinstance(arg, nimble.core.data.Base):
+                    logInfo["selectionArgs"][name] = _BaseNameOrType(arg)
+                else:
+                    logInfo["selectionArgs"][name] = arg
             logInfo["validation"] = validator.name
-            logInfo["validationArgs"] = validator._keywords
+            logInfo["validationArgs"] = {}
+            for name, arg in validator._logInfo.items():
+                if isinstance(arg, nimble.core.data.Base):
+                    logInfo["validationArgs"][name] = _BaseNameOrType(arg)
+                else:
+                    logInfo["validationArgs"][name] = arg
             logInfo["learnerName"] = validator.learnerName
             performanceFunction = validator.performanceFunction
             logInfo["metric"] = (performanceFunction.optimal,
@@ -769,9 +783,9 @@ def loggingEnabled(useLog):
 
 def deepLoggingEnabled():
     """
-    Access enableCrossValidationDeepLogging value from configuration.
+    Access enableDeepLogging value from configuration.
     """
-    deepLog = nimble.settings.get("logger", "enableCrossValidationDeepLogging")
+    deepLog = nimble.settings.get("logger", "enableDeepLogging")
 
     return deepLog.lower() == 'true'
 
@@ -985,11 +999,12 @@ def _buildRunLogString(timestamp, entry):
     Constructs the string that will be output for run logTypes.
     """
     # header data
-    time = entry.get("time", "")
-    if time:
-        time = f"Completed in {entry['time']:.3f} seconds"
-    fullLog = _logHeader(time, timestamp)
-    fullLog += f"""\n{entry['function']}("{entry['learner']}")\n"""
+    run = f"""{entry['function']}("{entry['learner']}")"""
+    fullLog = _logHeader(run, timestamp)
+    time = entry.get("time", None)
+    if time is not None:
+        fullLog += f"Completed in {time:.3f} seconds\n"
+    fullLog += "\n"
     # train and test data
     fullLog += _formatSessionLine("Data", "# points", "# features")
     if "trainData" in entry:
@@ -1331,9 +1346,8 @@ def initLoggerAndLogConfig():
     if not logSettings.get('enabledByDefault', ""):
         nimble.settings.setDefault("logger", "enabledByDefault", 'True')
 
-    if not logSettings.get('enableCrossValidationDeepLogging', ""):
-        nimble.settings.setDefault("logger",
-                                   'enableCrossValidationDeepLogging', 'False')
+    if not logSettings.get('enableDeepLogging', ""):
+        nimble.settings.setDefault("logger", 'enableDeepLogging', 'False')
 
     nimble.core.logger.active = SessionLogger(location, name)
 

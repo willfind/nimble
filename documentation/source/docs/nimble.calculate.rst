@@ -162,4 +162,5 @@ Utility
 .. autosummary::
    :toctree: generated/
 
+   performanceFunction
    detectBestResult

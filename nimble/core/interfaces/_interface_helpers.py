@@ -616,13 +616,12 @@ def extractConfidenceScores(predictionScores, featureNamesItoN):
 
     return scoreMap
 
-def validateTestingArguments(testX, testY=None, testYRequired=False,
-                             arguments=None, scoreMode=None,
-                             has2dOutput=False):
+def validateTestingArguments(testX, testY=None, arguments=None,
+                             has2dOutput=False, scoreMode=None):
     """
     Argument validation for trained learner methods.
     """
-    _validTestData(testX, testY, [True, testYRequired])
+    _validTestData(testX, testY)
     _validArguments(arguments)
     _validScoreMode(scoreMode)
     _2dOutputFlagCheck(has2dOutput, None, scoreMode, None)

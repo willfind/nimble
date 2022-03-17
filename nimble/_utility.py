@@ -225,16 +225,16 @@ class DeferredModuleImport(object):
             msg = "Cannot access attributes for {mod} because the "
             msg += "accessibility of the module has not been determined. "
             msg += "A call must be made to {mod}.nimbleAccessible() first "
-            msg += f"to determine if nimble is able to import {self.name}."
-            raise AttributeError(msg)
-        try:
-            asSubmodule = '.'.join([self.name, name])
-            submod = importlib.import_module(asSubmodule)
-            setattr(self, name, submod)
-            return submod
-        except ImportError:
-            pass
+            msg += "to determine if nimble is able to import {mod}."
+            raise AttributeError(msg.format(mod=self.name))
         ret = getattr(self.imported, name)
+        if isinstance(ret, ModuleType):
+            asSubmodule = '.'.join([self.name, name])
+            try:
+                submod = importlib.import_module(asSubmodule)
+                ret = submod
+            except ImportError:
+                pass
         setattr(self, name, ret)
         return ret
 
@@ -255,6 +255,7 @@ requests = DeferredModuleImport('requests')
 cloudpickle = DeferredModuleImport('cloudpickle')
 h5py = DeferredModuleImport('h5py')
 dateutil = DeferredModuleImport('dateutil')
+hyperopt = DeferredModuleImport('hyperopt')
 
 def sparseMatrixToArray(sparseMatrix):
     """

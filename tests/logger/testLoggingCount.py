@@ -68,12 +68,12 @@ calculate_funcs = [
     'meanAbsoluteErrorConfidenceInterval',
     'meanFeaturewiseRootMeanSquareError', 'meanNormalize',
     'meanStandardDeviationNormalize', 'median', 'medianAbsoluteDeviation',
-    'minimum', 'mode', 'percentileNormalize', 'precision', 'proportionMissing',
-    'proportionZero', 'pseudoInverse', 'quartiles', 'range0to1Normalize',
-    'recall', 'residuals', 'rootMeanSquareError',
-    'rootMeanSquareErrorConfidenceInterval', 'rSquared', 'solve',
-    'specificity', 'standardDeviation', 'sum', 'trueNegative', 'truePositive',
-    'uniqueCount', 'variance', 'varianceFractionRemaining',
+    'minimum', 'mode', 'percentileNormalize', 'precision',
+    'performanceFunction', 'proportionMissing', 'proportionZero',
+    'pseudoInverse', 'quartiles', 'range0to1Normalize', 'recall', 'residuals',
+    'rootMeanSquareError', 'rootMeanSquareErrorConfidenceInterval', 'rSquared',
+    'solve', 'specificity', 'standardDeviation', 'sum', 'trueNegative',
+    'truePositive', 'uniqueCount', 'variance', 'varianceFractionRemaining',
     ]
 calculate_tested = list(map(prefixAdder('nimble.calculate'), calculate_funcs))
 

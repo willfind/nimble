@@ -134,6 +134,12 @@ def _minmax(values, minmax):
             toProcess.append(0) # if sparse object has zeros add zero to list
     else:
         toProcess = values.copy('numpyarray')
+        if toProcess.dtype == np.object_:
+            if any(not isinstance(v, (np.integer, np.bool_))
+                   for v in toProcess):
+                toProcess = toProcess.astype(float)
+            else:
+                toProcess = toProcess.astype(int)
     if minmax == 'min':
         ret = np.nanmin(toProcess)
     else:
@@ -240,10 +246,15 @@ def mode(values):
         numZero = len(values) - values._data.nnz
         toProcess = values.iterateElements(only=nonMissingNonZero)
         counter = collections.Counter(toProcess)
-        counter.update({0: numZero})
+        if numZero:
+            counter.update({0: numZero})
     else:
         toProcess = values.iterateElements(only=nonMissing)
         counter = collections.Counter(toProcess)
+    if not counter:
+        msg = 'The mode could not be calculated, the object either contained '
+        msg += 'no values or all values were missing'
+        raise InvalidArgumentValue(msg)
     mostCommon = counter.most_common()
     first, modeCount = mostCommon[0]
     modes = [first]

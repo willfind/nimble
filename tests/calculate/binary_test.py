@@ -99,38 +99,38 @@ def test_binary_metricsAsPerformanceFunction():
     testData = nimble.data(rawTest, useLog=False)
 
     tl = train('nimble.KNNClassifier', trainData, 0, arguments={'k': 1}, useLog=False)
-    score1 = tl.test(testData, 0, truePositive, useLog=False)
+    score1 = tl.test(truePositive, testData, 0, useLog=False)
     assert score1 == 6
     assert truePositive.optimal == 'max'
 
-    score2 = tl.test(testData, 0, falsePositive, useLog=False)
+    score2 = tl.test(falsePositive, testData, 0, useLog=False)
     assert score2 == 8
     assert falsePositive.optimal == 'min'
 
-    score3 = tl.test(testData, 0, trueNegative, useLog=False)
+    score3 = tl.test(trueNegative, testData, 0, useLog=False)
     assert score3 == 2
     assert trueNegative.optimal == 'max'
 
-    score4 = tl.test(testData, 0, falseNegative, useLog=False)
+    score4 = tl.test(falseNegative, testData, 0, useLog=False)
     assert score4 == 4
     assert falseNegative.optimal == 'min'
 
-    score5 = tl.test(testData, 0, recall, useLog=False)
+    score5 = tl.test(recall, testData, 0, useLog=False)
     assert score5 == .6
     assert recall.optimal == 'max'
 
-    score6 = tl.test(testData, 0, precision, useLog=False)
+    score6 = tl.test(precision, testData, 0, useLog=False)
     assert score6 == 6 / 14
     assert precision.optimal == 'max'
 
-    score7 = tl.test(testData, 0, specificity, useLog=False)
+    score7 = tl.test(specificity, testData, 0, useLog=False)
     assert score7 == .2
     assert specificity.optimal == 'max'
 
-    score8 = tl.test(testData, 0, balancedAccuracy, useLog=False)
+    score8 = tl.test(balancedAccuracy, testData, 0, useLog=False)
     assert score8 == .4
     assert balancedAccuracy.optimal == 'max'
 
-    score9 = tl.test(testData, 0, f1Score, useLog=False)
+    score9 = tl.test(f1Score, testData, 0, useLog=False)
     assert score9 == .5
     assert f1Score.optimal == 'max'

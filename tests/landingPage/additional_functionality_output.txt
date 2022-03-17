@@ -95,9 +95,9 @@ LeastFeatureMeanDistance accuracy: 0.9716666666666667
 ...............................................................................
 .                                  SESSION 0                                  .
 ...............................................................................
-REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: KFold\("nimble\.KNNClassifier"\)                               \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: Completed\sin\s\d+\.\d{3}\sseconds
 
-KFold("nimble.KNNClassifier")
 Data                      # points                  # features
 trainX                    933                       7
 trainY                    933                       1
@@ -109,9 +109,9 @@ Random Seed: 2127877500
 Fold: 2/3
 Metrics: fractionCorrect=0.9764453961456103
 ...............................................................................
-REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: KFold\("nimble\.KNNClassifier"\)                               \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: Completed\sin\s\d+\.\d{3}\sseconds
 
-KFold("nimble.KNNClassifier")
 Data                      # points                  # features
 trainX                    934                       7
 trainY                    934                       1
@@ -123,7 +123,7 @@ Random Seed: 2127877500
 Fold: 3/3
 Metrics: fractionCorrect=0.9785407725321889
 ...............................................................................
-REGEX: "nimble.KNNClassifier" Hyperparameter Tuning                \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: "nimble\.KNNClassifier" Hyperparameter Tuning                \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
 
 Tuned using the "consecutive" method (loops=1) and validated using the "cross
 validation" method (folds=3). The fractionCorrect function was used to
@@ -133,16 +133,16 @@ Result          Arguments
 0.981           k=5
 0.981           k=7
 ...............................................................................
-REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: trainAndTest\("nimble\.KNNClassifier"\)                        \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: Completed\sin\s\d+\.\d{3}\sseconds
 
-trainAndTest("nimble.KNNClassifier")
 Data                      # points                  # features
 wifiData_trainX           1400                      7
 wifiData_trainY           1400                      1
 wifiData_testX            600                       7
 wifiData_testY            600                       1
 
-Arguments: k=Tune([3, 5, 7])
+Arguments: k=Tune(values=[3, 5, 7])
 Random Seed: 99320166
 Best Arguments: {'k': 3}
 Metrics: fractionCorrect=0.985
@@ -180,9 +180,9 @@ REGEX: wifiData_testX.points.calculate                             \d{4}-\d\d-\d
 Arguments: function=leastDistance
 Returned: _NIMBLE_9_
 ...............................................................................
-REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: trainAndTest\("custom\.LeastFeatureMeanDistance"\)             \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: Completed\sin\s\d+\.\d{3}\sseconds
 
-trainAndTest("custom.LeastFeatureMeanDistance")
 Data                      # points                  # features
 wifiData_trainX           1400                      7
 wifiData_trainY           1400                      1
@@ -192,16 +192,16 @@ wifiData_testY            600                       1
 Random Seed: 506456970
 Metrics: fractionCorrect=0.9716666666666667
 ...............................................................................
-REGEX: Completed\sin\s\d+\.\d{3}\sseconds\s+\d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: trainAndTest\("nimble\.KNNClassifier"\)                        \d{4}-\d\d-\d\d\s\d\d:\d\d:\d\d
+REGEX: Completed\sin\s\d+\.\d{3}\sseconds
 
-trainAndTest("nimble.KNNClassifier")
 Data                      # points                  # features
 wifiData_trainX           1400                      7
 wifiData_trainY           1400                      1
 wifiData_testX            600                       7
 wifiData_testY            600                       1
 
-Arguments: k=Tune([3, 5, 7])
+Arguments: k=Tune(values=[3, 5, 7])
 Random Seed: 99320166
 Best Arguments: {'k': 3}
 Metrics: fractionCorrect=0.985

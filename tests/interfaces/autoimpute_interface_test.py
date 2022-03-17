@@ -89,15 +89,15 @@ def test_autoimpute_MiLinearRegression():
         # test data cannot have missing values
         testX.features.fillMatching(fill.mean, match.missing)
 
-        rmse = nimble.trainAndTest('autoimpute.MiLinearRegression', trainX,
-                                   trainY, testX, testY, rootMeanSquareError,
+        rmse = nimble.trainAndTest('autoimpute.MiLinearRegression', rootMeanSquareError,
+                                   trainX, trainY, testX, testY,
                                    mi_kwgs={'n': 1, 'strategy': {'x': 'mean'}})
 
         nimble.fillMatching('autoimpute.SingleImputer', match.missing, trainX,
                             strategy='mean')
 
-        exp = nimble.trainAndTest('skl.LinearRegression', trainX, trainY,
-                                  testX, testY, rootMeanSquareError)
+        exp = nimble.trainAndTest('skl.LinearRegression', rootMeanSquareError,
+                                  trainX, trainY, testX, testY)
 
         np.testing.assert_almost_equal(rmse, exp)
 
@@ -108,15 +108,15 @@ def test_autoimpute_MiLinearRegression_noNames():
         trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels=0)
         testX.features.fillMatching(fill.mean, match.missing)
 
-        rmse = nimble.trainAndTest('autoimpute.MiLinearRegression', trainX,
-                                   trainY, testX, testY, rootMeanSquareError,
+        rmse = nimble.trainAndTest('autoimpute.MiLinearRegression', rootMeanSquareError,
+                                   trainX, trainY, testX, testY,
                                    mi_kwgs={'n': 1, 'strategy':'mode'})
 
         nimble.fillMatching('autoimpute.SingleImputer', match.missing, trainX,
                             strategy='mode')
 
-        exp = nimble.trainAndTest('skl.LinearRegression', trainX, trainY,
-                                  testX, testY, rootMeanSquareError)
+        exp = nimble.trainAndTest('skl.LinearRegression', rootMeanSquareError,
+                                  trainX, trainY, testX, testY)
 
         np.testing.assert_almost_equal(rmse, exp)
 
@@ -127,8 +127,8 @@ def test_autoimpute_MiLinearRegression_exception_noStrategy():
     trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels='y')
     testX.features.fillMatching(fill.mean, match.missing)
 
-    nimble.trainAndTest('autoimpute.MiLinearRegression', trainX, trainY,
-                        testX, testY, rootMeanSquareError, mi_kwgs={'n': 1})
+    nimble.trainAndTest('autoimpute.MiLinearRegression', rootMeanSquareError,
+                        trainX, trainY, testX, testY, mi_kwgs={'n': 1})
 
 @autoimputeSkipDec
 def test_autoimpute_MiLogisticRegression():
@@ -137,17 +137,16 @@ def test_autoimpute_MiLogisticRegression():
         trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels='y')
         # test data cannot have missing values
         testX.features.fillMatching(fill.mean, match.missing)
-        fc = nimble.trainAndTest('autoimpute.MiLogisticRegression', trainX,
-                                 trainY, testX, testY, fractionCorrect,
-                                 model_lib='sklearn',
+        fc = nimble.trainAndTest('autoimpute.MiLogisticRegression', fractionCorrect,
+                                 trainX, trainY, testX, testY, model_lib='sklearn',
                                  mi_kwgs={'n': 1, 'strategy': {'x': 'mean'},
                                           'seed': 0})
 
         nimble.fillMatching('autoimpute.SingleImputer', match.missing, trainX,
                             strategy='mean')
 
-        exp = nimble.trainAndTest('skl.LogisticRegression', trainX, trainY,
-                                  testX, testY, fractionCorrect, randomSeed=0)
+        exp = nimble.trainAndTest('skl.LogisticRegression', fractionCorrect,
+                                  trainX, trainY, testX, testY, randomSeed=0)
 
         np.testing.assert_almost_equal(fc, exp)
 
@@ -158,8 +157,8 @@ def test_autoimpute_MiLogisticRegression_directMultipleImputer():
         trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels='y')
         # test data cannot have missing values
         testX.features.fillMatching(fill.mean, match.missing)
-        trainArgs = ['autoimpute.MiLogisticRegression', trainX, trainY, testX,
-                     testY, fractionCorrect,]
+        trainArgs = ['autoimpute.MiLogisticRegression', fractionCorrect,
+                     trainX, trainY, testX, testY]
         try:
             fc = nimble.trainAndTest(*trainArgs, model_lib='sklearn',
                                      mi=nimble.Init('MultipleImputer', n=1,
@@ -175,8 +174,8 @@ def test_autoimpute_MiLogisticRegression_directMultipleImputer():
         nimble.fillMatching(imputer, match.missing, trainX,
                             n=1, strategy='interpolate')
 
-        exp = nimble.trainAndTest('skl.LogisticRegression', trainX, trainY,
-                                  testX, testY, fractionCorrect)
+        exp = nimble.trainAndTest('skl.LogisticRegression', fractionCorrect,
+                                  trainX, trainY, testX, testY)
 
         np.testing.assert_almost_equal(fc, exp)
 
@@ -187,16 +186,15 @@ def test_autoimpute_MiLogisticRegression_noNames():
         trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels=0)
 
         testX.features.fillMatching(fill.mean, match.missing)
-        fc = nimble.trainAndTest('autoimpute.MiLogisticRegression', trainX,
-                                 trainY, testX, testY, fractionCorrect,
-                                 model_lib='sklearn',
+        fc = nimble.trainAndTest('autoimpute.MiLogisticRegression', fractionCorrect,
+                                 trainX, trainY, testX, testY, model_lib='sklearn',
                                  mi_kwgs={'n': 1, 'strategy': 'median'})
 
         nimble.fillMatching('autoimpute.SingleImputer', match.missing, trainX,
                             strategy='median')
 
-        exp = nimble.trainAndTest('skl.LogisticRegression', trainX, trainY,
-                                  testX, testY, fractionCorrect)
+        exp = nimble.trainAndTest('skl.LogisticRegression', fractionCorrect,
+                                  trainX, trainY, testX, testY)
 
         np.testing.assert_almost_equal(fc, exp)
 
@@ -206,8 +204,8 @@ def test_autoimpute_MiLogisticRegression_exception_noStrategy():
     data = getDataWithMissing('Matrix', yBinary=True)
     trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels='y')
     testX.features.fillMatching(fill.mean, match.missing)
-    nimble.trainAndTest('autoimpute.MiLogisticRegression', trainX, trainY,
-                        testX, testY, fractionCorrect)
+    nimble.trainAndTest('autoimpute.MiLogisticRegression', fractionCorrect,
+                        trainX, trainY, testX, testY)
 
 @autoimputeSkipDec
 @raises(InvalidArgumentValue)
@@ -216,6 +214,6 @@ def test_autoimpute_MiLogisticRegression_exception_directMultipleImputerNoStrate
     trainX, trainY, testX, testY = data.trainAndTestSets(0.25, labels='y')
 
     testX.features.fillMatching(fill.mean, match.missing)
-    nimble.trainAndTest('autoimpute.MiLogisticRegression', trainX, trainY,
-                        testX, testY, fractionCorrect,
+    nimble.trainAndTest('autoimpute.MiLogisticRegression', fractionCorrect,
+                        trainX, trainY, testX, testY,
                         mi=nimble.Init('MultipleImputer', n=1))

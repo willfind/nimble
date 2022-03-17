@@ -37,8 +37,7 @@ if __name__ == "__main__":
 
     # Using cross validation to explicitly determine a winning argument set
     results = nimble.train("nimble.RidgeRegression", trainX, trainY,
-                           performanceFunction=RMSE,
-                           lamb=nimble.Tune([0, .5, 1]))
+                           tuning=RMSE, lamb=nimble.Tune([0, .5, 1]))
     bestArguments = results.tuning.bestArguments
     bestScore = results.tuning.bestResult
 
@@ -49,5 +48,5 @@ if __name__ == "__main__":
     # Also: arguments to the learner are given in the python **kwargs style, not as
     # an explicit dict like  seen above.
     # Using lamb = 1 in this case so that there actually are errors
-    error = nimble.trainAndTest("nimble.RidgeRegression", trainX, trainY, testX, testY, RMSE, lamb=1)
+    error = nimble.trainAndTest("nimble.RidgeRegression", RMSE, trainX, trainY, testX, testY, lamb=1)
     print("rootMeanSquareError of predictions with lamb=1: " + str(error))

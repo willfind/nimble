@@ -6,6 +6,7 @@ functions are contained in learn.py without the distraction of helpers.
 """
 
 from functools import wraps
+import numbers
 
 import numpy as np
 
@@ -548,21 +549,17 @@ def _validTrainData(trainX, trainY):
                 msg += "number of points as trainX"
                 raise InvalidArgumentValueCombination(msg)
 
-def _validTestData(testX, testY, testRequired):
+def _validTestData(testX, testY):
     # testX is allowed to be None, sometimes it is appropriate to have it be
     # filled using the trainX argument (ie things which transform data, or
     # learn internal structure)
-    if testRequired[0] and testX is None:
-        raise InvalidArgumentType("testX must be provided")
     if testX is not None:
         if not isinstance(testX, Base):
             msg = "testX may only be an object derived from Base"
             raise InvalidArgumentType(msg)
 
-    if testRequired[1] and testY is None:
-        raise InvalidArgumentType("testY must be provided")
     if testY is not None:
-        if not isinstance(testY, (Base, str, int, int)):
+        if not isinstance(testY, (Base, str, numbers.Integral)):
             msg = "testY may only be an object derived from Base, or an ID "
             msg += "of the feature containing labels in testX"
             raise InvalidArgumentType(msg)
@@ -589,9 +586,8 @@ def _validScoreMode(scoreMode):
     accepted value.
     """
     if scoreMode is not None:
-        scoreMode = scoreMode.lower()
-        if scoreMode not in ['label', 'bestscore', 'allscores']:
-            msg = "scoreMode may only be 'label', 'bestScore', or 'allScores'"
+        if scoreMode.lower() not in ['bestscore', 'allscores']:
+            msg = "scoreMode may only be None, 'bestScore', or 'allScores'"
             raise InvalidArgumentValue(msg)
 
 
@@ -620,26 +616,25 @@ def _2dOutputFlagCheck(X, Y, scoreMode, multiClassStrategy):
         needToCheck = False
 
     if needToCheck:
-        if scoreMode is not None and scoreMode != 'label':
+        if scoreMode is not None:
             msg = "When dealing with multi dimensional outputs / predictions, "
-            msg += "the scoreMode flag is required to be set to 'label'"
+            msg += "the scoreMode flag is required to be set to None"
             raise InvalidArgumentValueCombination(msg)
-        if multiClassStrategy is not None and multiClassStrategy != 'default':
+        if multiClassStrategy is not None:
             msg = "When dealing with multi dimensional outputs / predictions, "
             msg += "the multiClassStrategy flag is required to be set to "
-            msg += "'default'"
+            msg += "None"
             raise InvalidArgumentValueCombination(msg)
 
 
 def validateLearningArguments(
-        trainX, trainY=None, testX=None, testXRequired=False, testY=None,
-        testYRequired=False, arguments=None, scoreMode=None,
-        multiClassStrategy=None):
+        trainX, trainY=None, testX=None, testY=None, arguments=None,
+        multiClassStrategy=None, scoreMode=None):
     """
     Argument validation for learning functions.
     """
     _validTrainData(trainX, trainY)
-    _validTestData(testX, testY, [testXRequired, testYRequired])
+    _validTestData(testX, testY)
     _validArguments(arguments)
     _validScoreMode(scoreMode)
     _validMultiClassStrategy(multiClassStrategy)

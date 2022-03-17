@@ -4,7 +4,7 @@ functions.
 """
 
 import math
-from functools import wraps
+import functools
 
 import numpy as np
 
@@ -17,30 +17,29 @@ from nimble.random import numpyRandom
 
 def detectBestResult(functionToCheck):
     """
-    Provides sample data to the function in question and evaluates the
+    Determine if higher or lower values are optimal for the function.
+
+    Provides sample data to the ``functionToCheck`` and evaluates the
     results to determine whether the function associates correctness of
     predictions with minimum returned values or maximum returned values.
-    If the user wants these trials to be avoided, then they can add an
-    attribute named 'optimal' to functionToCheck. Two values are
-    accepted: 'min' if lower values are associated with correctness of
-    predictions by functionToCheck, or 'max' if higher values are
-    associated with correctness. If the attribute 'optimal' is set to
-    any other value then the trials are run in the same way as if
-    functionToCheck had no attribute by that name.
+    The trials are avoided if ``functionToCheck`` has an 'optimal'
+    attribute with the value 'min' or 'max'. The optimal values are
+    'min' if lower values are associated with correctness of predictions
+    by ``functionToCheck``, or 'max' if higher values are associated
+    with correctness.
 
-    functionToCheck may only take two or three arguments. In the two
-    argument case, the first must be a vector of desired values and the
-    second must be a vector of predicted values. In the second case, the
-    first argument must be a vector of known labes, the second argument
-    must be an object containing confidence scores for different labels,
-    and the third argument must be the value of a label value present in
-    the data. In either cause, the functions must return a float value.
+    Functions are expected to take two parameters, knownValues and
+    predictedValues. The knownValues are the known data which will be
+    compared to the predictedValues. The predictedValues should accept
+    data in one of three forms, depending whether the 'scoreMode' is set
+    to 'labels', 'bestScore', or 'allScores'. This function will test
+    also determine the 'scoreMode' expected by ``functionToCheck``.
 
-    returns: Either 'min' or 'max'; the former if lower values returned
-    from functionToCheck are associated with correctness of predictions,
-    the later if larger values are associated with correctness. If we
-    are unable to determine which is correct, then an
-    InvalidArgumentValue is thrown.
+    Parameters
+    ----------
+    functionToCheck : function
+        In the form function(knownValues, predictedValues) that is
+        expected to return a single numeric value.
     """
     if hasattr(functionToCheck, 'optimal'):
         if functionToCheck.optimal == 'min':
@@ -78,7 +77,7 @@ def detectBestResult(functionToCheck):
             confidenceTrials = 1 if predictionType == 0 else 10
 
             # Since we are doing randomly generated data, if the performance
-            # funciton is only considering subsets of the data, then it is
+            # function is only considering subsets of the data, then it is
             # possible for us to generate numbers cause weirdness or outright
             # failures. We allow for one such result
             freebieAvailable = not predictionType
@@ -327,20 +326,155 @@ class _NoDifferenceResultsException(Exception):
         return repr(self.value)
 
 
-def performanceFunction(optimal, requires1D=True, validate=True):
+def performanceFunction(optimal, best=None, predict=None, validate=True,
+                        requires1D=True, samePtCount=True, sameFtCount=True,
+                        allowEmpty=False, allowMissing=False):
     """
-    A wrapper to set the optimal value for Nimble performance functions
-    and validate the inputs. The validation can be skipped for
-    performance functions that call another performance function, so the
-    validation only occurs once.
+    Decorator factory for Nimble performance functions.
+
+    A convenient way to make a function compatible with Nimble's testing
+    API. The function that will be decorated must take the form:
+    ``function(knownValues, predictedValues)`` as these inputs are
+    provided by Nimble during testing (including validation testing).
+    The ``optimal``, ``best``, and ``predict`` become attributes of the
+    function that allow Nimble to compare and analyze the performances.
+    The remaining parameters control validations of the data input to
+    the decorated function. By default, both knownValues and
+    predictedValues must be non-empty Nimble data objects with one
+    feature, an equal number of points, and no missing values.
+
+    The ``predict`` parameter informs Nimble how to generate the
+    predictedValues for the decorated function. Values of None,
+    'bestScore' and 'allScores' utilize ``TrainedLearner.apply`` with
+    ``predict`` providing the scoreMode argument. More complex cases
+    are handled by providing a custom function to ``predict`` which must
+    be in the form: ``predict(trainedLearner, knownValues, arguments)``.
+    With access to the TrainedLearner instance, knownValues, and the
+    arguments provided to the testing function it should be possible to
+    generate the desired predicted values.
+
+    Note
+    ----
+    Common performance functions are available in nimble.calculate.
+
+    Parameters
+    ----------
+    optimal : str
+        Either 'max' or 'min' indicating whether higher or lower values
+        are better.
+    best : int, float, None
+        The best possible value for the performance function. None
+        assumes that the values have no bound in the optimal direction.
+    predict : str, function
+        Informs Nimble how to produce the predictedValues. May be None,
+        'bestScore', or 'allScores' to utilize TrainedLearner.apply() or
+        a custom function in the form:
+        predict(trainedLearner, knownValues, arguments)
+    validate : bool
+        Whether to perform validation on the function inputs. If False,
+        none of the parameters below will apply.
+    requires1D : bool
+        Checks that the predictedValues object is one-dimensional.
+    samePtCount : bool
+        Checks that the knownValues and predictedValues have the same
+        number of points.
+    sameFtCount : bool
+        Checks that the knownValues and predictedValues have the same
+        number of features.
+    allowEmpty : bool
+        Allow the knownValues and predictedValues objects to be empty.
+    allowMissing : bool
+        Allow the knownValues and predictedValues to contain missing
+        values.
+
+    See Also
+    --------
+    nimble.calculate
+
+    Examples
+    --------
+    Here, ``correctVoteRatio`` finds the number of times the correct
+    label received a vote and divides by the total number of votes. The
+    best score is 1, indicating that 100% of the votes were for the
+    correct labels. As inputs it expects the knownValues to be a feature
+    vector of known labels and the predictedValues to be a matrix of
+    vote counts for each label.
+
+    >>> @performanceFunction('max', 1, 'allScores', requires1D=False,
+    ...                      sameFtCount=False)
+    ... def correctVoteRatio(knownValues, predictedValues):
+    ...     cumulative = 0
+    ...     totalVotes = 0
+    ...     for true, votes in zip(knownValues, predictedValues.points):
+    ...         cumulative += votes[true]
+    ...         totalVotes += sum(votes)
+    ...     return cumulative / totalVotes
+    ...
+    >>> trainX = nimble.data([[0, 0], [2, 2], [-2, -2]] * 10)
+    >>> trainY = nimble.data([0, 1, 2] * 10).T
+    >>> testX = nimble.data([[0, 0], [1, 1], [2, 2], [1, 1], [-1, -2]])
+    >>> testY = nimble.data([0, 0, 1, 1, 2]).T
+    >>> knn = nimble.train('nimble.KNNClassifier', trainX, trainY, k=3)
+    >>> # Can visualize our predictedValues for this case using apply()
+    >>> knn.apply(testX, scoreMode='allScores') # 12/15 votes correct
+    <Matrix 5pt x 3ft
+         '0' '1' '2'
+       ┌────────────
+     0 │  3   0   0
+     1 │  2   1   0
+     2 │  0   3   0
+     3 │  2   1   0
+     4 │  0   0   3
+    >
+    >>> knn.test(correctVoteRatio, testX, testY)
+    0.8
+
+    Here, ``averageDistanceToCenter`` calculates the average distance of
+    a point to its center. This function expects the predictedValues to
+    be the cluster center for the predicted label of each point in the
+    knownValues. The string options for 'predict' do not cover this
+    case, so it requires the ``labelsWithCenters`` function.
+
+    >>> def labelsWithCenters(trainedLearner, knownValues, arguments):
+    ...     labels = trainedLearner.apply(knownValues)
+    ...     centers = trainedLearner.getAttributes()['cluster_centers_']
+    ...     return nimble.data([centers[l] for l in labels])
+    ...
+    >>> @performanceFunction('min', 0, predict=labelsWithCenters,
+    ...                      requires1D=False, sameFtCount=False)
+    ... def averageDistanceToCenter(knownValues, predictedValues):
+    ...     rootSqDiffs = ((knownValues - predictedValues) ** 2) ** 0.5
+    ...     distances = rootSqDiffs.points.calculate(lambda pt: sum(pt))
+    ...     return sum(distances) / len(distances.points)
+    ...
+    >>> X = nimble.data([[0, 0], [4, 0], [0, 4], [4, 4]] * 25)
+    >>> X += nimble.random.data(100, 2, 0, randomSeed=1) # add noise
+    >>> nimble.trainAndTest('skl.KMeans', averageDistanceToCenter, X,
+    ...                     n_clusters=4)
+    1.3493987354974297
     """
-    def toWrap(func):
-        # should only occur when function calls another performanceFunction
+    if optimal not in ['min', 'max']:
+        raise InvalidArgumentValue('optimal must be "min" or "max"')
+    if not callable(predict):
+        if predict is None or predict.lower() in ['bestscore', 'allscores']:
+            scoreMode = predict
+            # pylint: disable=function-redefined
+            def predict(trainedLearner, knownValues, arguments):
+                return trainedLearner.apply(knownValues, arguments, scoreMode,
+                                            useLog=False)
+        else:
+            msg = 'predict must be callable or a valid scoreMode (None, '
+            msg += '"bestScore", "allScores") for TrainedLearner.apply '
+            raise InvalidArgumentType(msg)
+
+    def performanceFunctionDecorator(func):
+        func.optimal = optimal
+        func.best = best
+        func.predict = predict
         if not validate:
-            func.optimal = optimal
             return func
 
-        @wraps(func)
+        @functools.wraps(func)
         def wrapped(knownValues, predictedValues):
             if not isinstance(knownValues, nimble.core.data.Base):
                 msg = "knownValues is not a Nimble data object"
@@ -348,14 +482,17 @@ def performanceFunction(optimal, requires1D=True, validate=True):
             if not isinstance(predictedValues, nimble.core.data.Base):
                 msg = "predictedValues is not a Nimble data object"
                 raise InvalidArgumentType(msg)
-            if 0 in knownValues.shape or 0 in predictedValues.shape:
+            if (not allowEmpty and (0 in knownValues.shape
+                                    or 0 in predictedValues.shape)):
                 msg = 'Cannot calculate performance on an empty object'
                 raise InvalidArgumentValue(msg)
-            if len(knownValues.points) != len(predictedValues.points):
+            if (samePtCount and (len(knownValues.points)
+                                 != len(predictedValues.points))):
                 msg = "The known and predicted data must have the same number "
                 msg += "of points"
                 raise InvalidArgumentValueCombination(msg)
-            if len(knownValues.features) != len(predictedValues.features):
+            if (sameFtCount and (len(knownValues.features)
+                                 != len(predictedValues.features))):
                 msg = "The known and predicted data must have the same number "
                 msg += "of features"
                 raise InvalidArgumentValueCombination(msg)
@@ -363,18 +500,17 @@ def performanceFunction(optimal, requires1D=True, validate=True):
                 msg = "predictedValues must be labels only; this has more "
                 msg += "than one feature"
                 raise InvalidArgumentValue(msg)
-            if match.anyMissing(knownValues) :
+            if not allowMissing and match.anyMissing(knownValues):
                 msg = "Unable to calculate the performance because the  "
                 msg += "knownValues contain missing data."
                 raise InvalidArgumentValue(msg)
-            if match.anyMissing(predictedValues):
+            if not allowMissing and match.anyMissing(predictedValues):
                 msg = "Unable to calculate the performance because the  "
                 msg += "predictedValues contain missing data."
                 raise InvalidArgumentValue(msg)
 
             return func(knownValues, predictedValues)
 
-        wrapped.optimal = optimal
         return wrapped
 
-    return toWrap
+    return performanceFunctionDecorator
