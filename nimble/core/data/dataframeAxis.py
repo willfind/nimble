@@ -4,6 +4,7 @@ operations on a nimble DataFrame object.
 """
 
 from abc import ABCMeta, abstractmethod
+import numbers
 
 import numpy as np
 
@@ -176,6 +177,13 @@ class DataFramePoints(DataFrameAxis, Points):
             # given nimble objects or 2d arrays
             if isinstance(currRet, Base):
                 currRet = currRet.copy("numpyarray", outputAs1D=True)
+
+            datetimeCols = [i for i, dt in enumerate(self._base._data.dtypes)
+                            if dt.type == np.datetime64]
+            for col in datetimeCols:
+                if isinstance(currRet[col], (numbers.Number, str)):
+                    objectCol = self._base._data.iloc[:, col].astype(object)
+                    self._base._data.iloc[:, col] = objectCol
 
             self._base._data.iloc[i, :] = currRet
 

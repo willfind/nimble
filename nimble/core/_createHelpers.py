@@ -19,6 +19,7 @@ import shutil
 import urllib.parse
 import locale
 import pickle
+import numbers
 
 import numpy as np
 
@@ -954,13 +955,6 @@ def _replaceMissingData(rawData, treatAsMissing, replaceMissingWith, copied):
 
         return data
 
-    # pandas 1.0: SparseDataFrame still in pd namespace but does not work
-    # Sparse functionality now determined by presence of .sparse accessor
-    # need to convert sparse objects to coo matrix before handling missing
-    if _isPandasSparse(rawData):
-        rawData = scipy.sparse.coo_matrix(rawData)
-        copied = True
-
     if _isNumpyArray(rawData):
         replaceLocs = getNumpyReplaceLocations(rawData)
         if replaceLocs.any():
@@ -1369,7 +1363,9 @@ def analyzeValues(rawData, returnType, skipDataProcessing):
                         returnType = "DataFrame"
                         if skipDataProcessing: # only need the returnType
                             return returnType
-                elif firstType != type(val):
+                elif (firstType != type(val)
+                        and (isinstance(val, (bool, np.bool_))
+                             or not isinstance(val, numbers.Number))):
                     returnType = "DataFrame"
                     if skipDataProcessing: # only need the returnType
                         return returnType
@@ -1447,11 +1443,15 @@ def initDataObject(
         if returnType is None:
             returnType = "Sparse"
     elif _isPandasObject(rawData):
-        if returnType is None:
-            if _isPandasSparse(rawData):
+        if _isPandasSparse(rawData):
+            if hasattr(rawData, 'sparse'):
+                rawData = rawData.sparse.to_coo()
+            else:
+                rawData = rawData.to_coo()
+            if returnType is None:
                 returnType = "Sparse"
-            elif _isPandasDense(rawData):
-                returnType = "DataFrame"
+        elif returnType is None:
+            returnType = "DataFrame"
     elif returnType is None and not pd.nimbleAccessible():
         returnType = "Matrix" # can't use DataFrame so default to Matrix
     # anything we do not recognize turn into a list, this allows for source to
@@ -2941,10 +2941,11 @@ def _loadcsvUsingPython(ioStream, pointNames, featureNames,
         # upcast features with missing data to float
         for idx in containsMissing:
             convertCols[idx] = float
-
+        # if the data is all numeric use array o/w dataframe if possible
+        convertTypes = set(convertCols.values())
         if (pd.nimbleAccessible()
-                and (len(set(convertCols.values())) > 1
-                     or len(convertCols) < expectedLength)):
+                and (len(convertCols) < expectedLength
+                     or (len(convertTypes) > 1 and bool in convertTypes))):
             constructor = pd.DataFrame
         else:
             constructor = numpy2DArray

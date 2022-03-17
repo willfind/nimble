@@ -506,7 +506,7 @@ def fillMatching(learnerName, matchingElements, trainX, arguments=None,
     >>> nimble.fillMatching('nimble.KNNImputation', toMatch, X,
     ...                     mode='classification', k=3)
     >>> X
-    <DataFrame 5pt x 3ft
+    <Matrix 5pt x 3ft
            0     1     2
        ┌──────────────────
      0 │ 1.000 3.000 6.000

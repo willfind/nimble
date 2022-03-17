@@ -513,11 +513,11 @@ class Features(ABC):
         --------
         Extract a single feature.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.identity(3)
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> single = X.features.extract('a')
         >>> single
-        <List 3pt x 1ft
+        <Matrix 3pt x 1ft
              'a'
            ┌────
          0 │  1
@@ -525,7 +525,7 @@ class Features(ABC):
          2 │  0
         >
         >>> X
-        <List 3pt x 2ft
+        <Matrix 3pt x 2ft
              'b' 'c'
            ┌────────
          0 │  0   0
@@ -535,11 +535,11 @@ class Features(ABC):
 
         Extract multiple features.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.identity(3)
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> multiple = X.features.extract(['a', 2])
         >>> multiple
-        <List 3pt x 2ft
+        <Matrix 3pt x 2ft
              'a' 'c'
            ┌────────
          0 │  1   0
@@ -547,7 +547,7 @@ class Features(ABC):
          2 │  0   1
         >
         >>> X
-        <List 3pt x 1ft
+        <Matrix 3pt x 1ft
              'b'
            ┌────
          0 │  0
@@ -561,7 +561,7 @@ class Features(ABC):
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> func = X.features.extract(nimble.match.anyMissing)
         >>> func
-        <DataFrame 3pt x 1ft
+        <Matrix 3pt x 1ft
               'c'
            ┌──────
          0 │ 3.000
@@ -569,22 +569,21 @@ class Features(ABC):
          2 │ 9.000
         >
         >>> X
-        <DataFrame 3pt x 2ft
-             'a' 'b'
-           ┌────────
-         0 │  1   2
-         1 │  4   5
-         2 │  7   8
+        <Matrix 3pt x 2ft
+              'a'   'b'
+           ┌────────────
+         0 │ 1.000 2.000
+         1 │ 4.000 5.000
+         2 │ 7.000 8.000
         >
 
         Extract feature when the query string returns True.
 
         >>> X = nimble.identity(3, featureNames=['a', 'b', 'c'],
-        ...                     pointNames=['p1', 'p2', 'p3'],
-        ...                     returnType="List")
+        ...                     pointNames=['p1', 'p2', 'p3'])
         >>> strFunc = X.features.extract("p2 != 0")
         >>> strFunc
-        <List 3pt x 1ft
+        <Matrix 3pt x 1ft
                 'b'
               ┌────
          'p1' │  0
@@ -592,7 +591,7 @@ class Features(ABC):
          'p3' │  0
         >
         >>> X
-        <List 3pt x 2ft
+        <Matrix 3pt x 2ft
                 'a' 'c'
               ┌────────
          'p1' │  1   0
@@ -602,11 +601,11 @@ class Features(ABC):
 
         Extract features from the inclusive start to the inclusive end.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.identity(3)
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> startEnd = X.features.extract(start=1, end=2)
         >>> startEnd
-        <List 3pt x 2ft
+        <Matrix 3pt x 2ft
              'b' 'c'
            ┌────────
          0 │  0   0
@@ -614,7 +613,7 @@ class Features(ABC):
          2 │  0   1
         >
         >>> X
-        <List 3pt x 1ft
+        <Matrix 3pt x 1ft
              'a'
            ┌────
          0 │  1
@@ -625,11 +624,11 @@ class Features(ABC):
         Select a set number to extract, starting from the first feature.
 
         >>> nimble.random.setSeed(42)
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.identity(3)
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> numberNoRandom = X.features.extract(number=2)
         >>> numberNoRandom
-        <List 3pt x 2ft
+        <Matrix 3pt x 2ft
              'a' 'b'
            ┌────────
          0 │  1   0
@@ -637,7 +636,7 @@ class Features(ABC):
          2 │  0   0
         >
         >>> X
-        <List 3pt x 1ft
+        <Matrix 3pt x 1ft
              'c'
            ┌────
          0 │  0
@@ -647,11 +646,11 @@ class Features(ABC):
 
         Select a set number to extract, choosing features at random.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.identity(3)
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> numberRandom = X.features.extract(number=2, randomize=True)
         >>> numberRandom
-        <List 3pt x 2ft
+        <Matrix 3pt x 2ft
              'c' 'a'
            ┌────────
          0 │  0   1
@@ -659,7 +658,7 @@ class Features(ABC):
          2 │  1   0
         >
         >>> X
-        <List 3pt x 1ft
+        <Matrix 3pt x 1ft
              'b'
            ┌────
          0 │  0
@@ -736,11 +735,11 @@ class Features(ABC):
         --------
         Delete a single feature.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.identity(3)
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> X.features.delete('a')
         >>> X
-        <List 3pt x 2ft
+        <Matrix 3pt x 2ft
              'b' 'c'
            ┌────────
          0 │  0   0
@@ -750,11 +749,11 @@ class Features(ABC):
 
         Delete multiple features.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.identity(3)
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> X.features.delete(['a', 2])
         >>> X
-        <List 3pt x 1ft
+        <Matrix 3pt x 1ft
              'b'
            ┌────
          0 │  0
@@ -768,22 +767,21 @@ class Features(ABC):
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> X.features.delete(nimble.match.anyMissing)
         >>> X
-        <DataFrame 3pt x 2ft
-             'a' 'b'
-           ┌────────
-         0 │  1   2
-         1 │  4   5
-         2 │  7   8
+        <Matrix 3pt x 2ft
+              'a'   'b'
+           ┌────────────
+         0 │ 1.000 2.000
+         1 │ 4.000 5.000
+         2 │ 7.000 8.000
         >
 
         Delete feature when the query string returns True.
 
         >>> X = nimble.identity(3, featureNames=['a', 'b', 'c'],
-        ...                     pointNames=['p1', 'p2', 'p3'],
-        ...                     returnType="List")
+        ...                     pointNames=['p1', 'p2', 'p3'])
         >>> X.features.delete("p2 != 0")
         >>> X
-        <List 3pt x 2ft
+        <Matrix 3pt x 2ft
                 'a' 'c'
               ┌────────
          'p1' │  1   0
@@ -793,11 +791,11 @@ class Features(ABC):
 
         Delete features from the inclusive start to the inclusive end.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.identity(3)
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> X.features.delete(start=1, end=2)
         >>> X
-        <List 3pt x 1ft
+        <Matrix 3pt x 1ft
              'a'
            ┌────
          0 │  1
@@ -807,11 +805,11 @@ class Features(ABC):
 
         Select a set number to delete, starting from the first feature.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.identity(3)
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> X.features.delete(number=2)
         >>> X
-        <List 3pt x 1ft
+        <Matrix 3pt x 1ft
              'c'
            ┌────
          0 │  0
@@ -822,11 +820,11 @@ class Features(ABC):
         Select a set number to delete, choosing features at random.
 
         >>> nimble.random.setSeed(42)
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.identity(3)
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> X.features.delete(number=2,  randomize=True)
         >>> X
-        <List 3pt x 1ft
+        <Matrix 3pt x 1ft
              'b'
            ┌────
          0 │  0
@@ -903,11 +901,11 @@ class Features(ABC):
         --------
         Retain a single feature.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.identity(3)
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> X.features.retain('a')
         >>> X
-        <List 3pt x 1ft
+        <Matrix 3pt x 1ft
              'a'
            ┌────
          0 │  1
@@ -917,11 +915,11 @@ class Features(ABC):
 
         Retain multiple features.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.identity(3)
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> X.features.retain(['a', 2])
         >>> X
-        <List 3pt x 2ft
+        <Matrix 3pt x 2ft
              'a' 'c'
            ┌────────
          0 │  1   0
@@ -935,22 +933,21 @@ class Features(ABC):
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> X.features.retain(nimble.match.allNonMissing)
         >>> X
-        <DataFrame 3pt x 1ft
-             'c'
-           ┌────
-         0 │  3
-         1 │  6
-         2 │  9
+        <Matrix 3pt x 1ft
+              'c'
+           ┌──────
+         0 │ 3.000
+         1 │ 6.000
+         2 │ 9.000
         >
 
         Retain feature when the query string returns True.
 
         >>> X = nimble.identity(3, featureNames=['a', 'b', 'c'],
-        ...                     pointNames=['p1', 'p2', 'p3'],
-        ...                     returnType="List")
+        ...                     pointNames=['p1', 'p2', 'p3'])
         >>> X.features.retain("p2 != 0")
         >>> X
-        <List 3pt x 1ft
+        <Matrix 3pt x 1ft
                 'b'
               ┌────
          'p1' │  0
@@ -960,11 +957,11 @@ class Features(ABC):
 
         Retain features from the inclusive start to the inclusive end.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.identity(3)
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> X.features.retain(start=1, end=2)
         >>> X
-        <List 3pt x 2ft
+        <Matrix 3pt x 2ft
              'b' 'c'
            ┌────────
          0 │  0   0
@@ -974,11 +971,11 @@ class Features(ABC):
 
         Select a set number to retain, starting from the first feature.
 
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.identity(3)
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> X.features.retain(number=2)
         >>> X
-        <List 3pt x 2ft
+        <Matrix 3pt x 2ft
              'a' 'b'
            ┌────────
          0 │  1   0
@@ -989,11 +986,11 @@ class Features(ABC):
         Select a set number to retain, choosing features at random.
 
         >>> nimble.random.setSeed(42)
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.identity(3)
         >>> X.features.setNames(['a', 'b', 'c'])
         >>> X.features.retain(number=2, randomize=True)
         >>> X
-        <List 3pt x 2ft
+        <Matrix 3pt x 2ft
              'c' 'a'
            ┌────────
          0 │  0   1
@@ -1880,14 +1877,14 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.fillMatching(fill.mean, match.missing, features=0)
         >>> X
-        <DataFrame 5pt x 3ft
-               0   1   2
-           ┌──────────────
-         0 │ 1.000 1 1.000
-         1 │ 1.000 1 1.000
-         2 │ 1.000 1
-         3 │ 2.000 2 2.000
-         4 │ 1.250 2 2.000
+        <Matrix 5pt x 3ft
+               0     1     2
+           ┌──────────────────
+         0 │ 1.000 1.000 1.000
+         1 │ 1.000 1.000 1.000
+         2 │ 1.000 1.000
+         3 │ 2.000 2.000 2.000
+         4 │ 1.250 2.000 2.000
         >
         """
         return self._fillMatching(fillWith, matchingElements, features,
@@ -1946,7 +1943,7 @@ class Features(ABC):
         >>> train = nimble.data(lstTrain, pts, fts)
         >>> train.features.normalize(range0to1Normalize)
         >>> train
-        <DataFrame 3pt x 3ft
+        <Matrix 3pt x 3ft
                     'review1' 'review2' 'review3'
                   ┌──────────────────────────────
          'movie1' │   1.000     1.000     1.000
@@ -1970,7 +1967,7 @@ class Features(ABC):
         >>> train.features.normalize(meanStandardDeviationNormalize,
         ...                          applyResultTo=test)
         >>> train
-        <DataFrame 3pt x 3ft
+        <Matrix 3pt x 3ft
                     'review1' 'review2' 'review3'
                   ┌──────────────────────────────
          'movie1' │   1.336     1.248     1.149
@@ -1978,7 +1975,7 @@ class Features(ABC):
          'movie3' │   -1.069    -1.200    -1.288
         >
         >>> test
-        <DataFrame 2pt x 3ft
+        <Matrix 2pt x 3ft
                     'review1' 'review2' 'review3'
                   ┌──────────────────────────────
          'movie4' │   0.535     0.996     -0.307

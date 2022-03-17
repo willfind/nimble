@@ -3,6 +3,7 @@ Class extending Base, using a pandas DataFrame to store data.
 """
 
 import itertools
+import numbers
 
 import numpy as np
 
@@ -86,7 +87,10 @@ class DataFrame(Base):
                 currRet = toTransform(currVal)
             else:
                 currRet = toTransform(currVal, i, j)
-
+            # convert datetime columns so pandas can't convert to datetimes
+            if (self._data.dtypes.iloc[j].type == np.datetime64
+                    and isinstance(currRet, (numbers.Number, str))):
+                self._data.iloc[:, j] = self._data.iloc[:, j].astype(object)
             self._data.iloc[i, j] = currRet
 
     # pylint: disable=unused-argument

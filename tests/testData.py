@@ -221,7 +221,7 @@ def test_data_raw_acceptedTypeSuccessWithNames():
                             featureNames, returnType=t)
         assert test5 == exp
         try:
-            test6 = nimble.data(pd.DataFrame(rawData, dtype='Sparse[object]'),
+            test6 = nimble.data(pd.DataFrame(rawData, dtype=pd.SparseDtype(object, 0)),
                                 pointNames=pointNames, featureNames=featureNames,
                                 returnType=t)
         except TypeError:
@@ -3883,7 +3883,7 @@ def test_DataOutputWithMissingDataTypes1D():
         orig10 = nimble.data(scipy.sparse.csc_matrix(np.array([1,2,float('nan')])))
         orig11 = nimble.data(scipy.sparse.csr_matrix(np.array([1,2,float('nan')])))
         try:
-            orig12 = nimble.data(pd.DataFrame([[1,2,"None"]], dtype='Sparse[object]'))
+            orig12 = nimble.data(pd.DataFrame([[1,2,"None"]], dtype=pd.SparseDtype(object, 0)))
         except TypeError:
             orig12 = nimble.data(pd.SparseDataFrame([[1,2,"None"]]))
 
@@ -3924,7 +3924,7 @@ def test_DataOutputWithMissingDataTypes2D():
         orig7 = nimble.data(pd.DataFrame([[1,2,'None'], [3,4,'b']]))
         orig8 = nimble.data(scipy.sparse.coo_matrix(np.array([[1,2,'None'], [3,4,'b']], dtype=object)))
         try:
-            orig9 = nimble.data(pd.DataFrame([[1,2,'None'], [3,4,'b']], dtype='Sparse[object]'))
+            orig9 = nimble.data(pd.DataFrame([[1,2,'None'], [3,4,'b']], dtype=pd.SparseDtype(object, 0)))
         except TypeError:
             orig9 = nimble.data(pd.SparseDataFrame([[1,2,'None'], [3,4,'b']]))
 

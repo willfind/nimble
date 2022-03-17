@@ -2135,8 +2135,9 @@ class StructureModifying(StructureShared):
         orig7 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']]), featureNames=['a', 'b', 'c'])
         orig8 = self.constructor(scipy.sparse.coo_matrix(np.matrix([[1,2,'a'], [3,4,'b']], dtype=object)),
                                  featureNames=['a', 'b', 'c'])
-        try: # SparseDataFrame removed in 1.0 in favor of using SparseDType
-            orig9 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']], dtype='Sparse[object]'),
+        try: # SparseDataFrame removed in 1.0 in favor of using SparseDtype
+            orig9 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']],
+                                                  dtype=pd.SparseDtype(object, 0)),
                                      featureNames=['a', 'b', 'c'])
         except TypeError:
             orig9 = self.constructor(pd.SparseDataFrame([[1,2,'a'], [3,4,'b']]),

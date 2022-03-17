@@ -962,7 +962,7 @@ class Points(ABC):
 
         >>> def sumIsOne(pt):
         ...     return sum(pt) == 1
-        >>> X = nimble.identity(3, returnType='List')
+        >>> X = nimble.identity(3)
         >>> X.points.count(sumIsOne)
         3
 
@@ -1574,11 +1574,10 @@ class Points(ABC):
          3 │ 0 0 0
         >
 
-        >>> obj = nimble.zeros(3, 3, pointNames=['a', 'b', 'c'],
-        ...                    returnType="DataFrame")
+        >>> obj = nimble.zeros(3, 3, pointNames=['a', 'b', 'c'])
         >>> obj.points.replace([2, 3, 2], pointNames=['b'])
         >>> obj
-        <DataFrame 3pt x 3ft
+        <Matrix 3pt x 3ft
                0 1 2
              ┌──────
          'a' │ 0 0 0
@@ -1814,7 +1813,7 @@ class Points(ABC):
         >>> X = nimble.data(lst)
         >>> X.points.fillMatching(fill.mode, match.missing, points=4)
         >>> X
-        <DataFrame 5pt x 3ft
+        <Matrix 5pt x 3ft
                0     1     2
            ┌──────────────────
          0 │ 1.000 1.000 1.000

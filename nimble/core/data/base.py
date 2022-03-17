@@ -951,7 +951,7 @@ class Base(ABC):
         >>> X = nimble.data(lst)
         >>> isMissing = X.matchingElements(match.missing)
         >>> isMissing
-        <DataFrame 2pt x 3ft
+        <Matrix 2pt x 3ft
                0     1     2
            ┌──────────────────
          0 │ False False  True
