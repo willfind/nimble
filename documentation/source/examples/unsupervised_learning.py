@@ -195,14 +195,14 @@ clusterMeans[:, ['NewVisitor']].features.plot()
 ## Above, the plot shows that `cluster2` is very unlikely to contain new
 ## visitors. This seems to imply that returning visitors are likely to visit
 ## more pages and spend a longer time on the website. We also see that
-## `cluster1` contains the highest percentage of new visitors, followed closely
-## by `cluster0`. However, since we know `cluster0` is much larger, it will
+## `cluster0` contains the highest percentage of new visitors, followed closely
+## by `cluster1`. However, since we know `cluster1` is much larger, it will
 ## contain more new visitors overall. Next we will look at the distribution of
 ## geographic regions in each cluster.
 region = [ft for ft in purchaseOnlyFtNames if ft.startswith('Region')]
 clusterMeans[:, region].features.plot()
 
-## We see above that the majority of visitors in each cluster are from region
+## We see above that the plurality of visitors in each cluster are from region
 ## 1. No cluster contains drastically more visitors from a certain region than
 ## the other clusters and all regions are represented in each cluster. This
 ## is important because it indicates that differences between clusters are not
@@ -210,11 +210,11 @@ clusterMeans[:, region].features.plot()
 ## differ between clusters.
 clusterMeans[:, ['Weekend', 'SpecialDay']].features.plot()
 
-## The average purchaser in `cluster1` is more likely to visit on a weekend,
-## relative to the other clusters. This is the first time that `cluster1` has
-## been significantly different from `cluster0`, so maybe `cluster1` represents
-## more "Weekend Shoppers".  We also see `cluster0` leads in special day
-## shopping. This could suggest that `cluster0` has more "Holiday Shoppers". We
+## The average purchaser in `cluster0` is more likely to visit on a weekend,
+## relative to the other clusters. This is the first time that `cluster0` has
+## been significantly different from `cluster1`, so maybe `cluster0` represents
+## more "Weekend Shoppers".  We also see `cluster1` leads in special day
+## shopping. This could suggest that `cluster1` has more "Holiday Shoppers". We
 ## will keep these ideas in mind, but it is also possible that these
 ## differences are due to random chance. We also see that `cluster2` rarely
 ## makes a special day purchase, so their long durations on the site are not
@@ -239,13 +239,13 @@ months = [ft for ft in purchaseOnlyFtNames if ft.startswith('Month')]
 clusterMeans[:, months].features.plot()
 
 ## Above, we see an overwhelming majority of `cluster2`’s purchases came in
-## Month 7, as did a good percentage of `cluster1`’s. Since `cluster2` is
+## Month 7, as did a good percentage of `cluster0`’s. Since `cluster2` is
 ## primarily returning visitors, it is possible some marketing or other event
 ## took place in month 7 that led visitors to return and make a purchase at
 ## that time. Additionally, `cluster2` rarely buys for special days, so we can
 ## assume that the purchases in month 7 were not due to a special occasion. We
-## see `cluster0` purchases more consistently, this seems to contradict our
-## previous idea that `cluster0` could contain "Holiday Shoppers".
+## see `cluster1` purchases more consistently, this seems to contradict our
+## previous idea that `cluster1` could contain "Holiday Shoppers".
 
 ## Last, we will look at the operating systems and browsers that visitors are
 ## using within the clusters.
@@ -258,7 +258,7 @@ clusterMeans[:, os].features.plot()
 ## of visitors used browser 1 or 2. Up to this point, `cluster0` and `cluster1`
 ## appeared mostly similar, however we see above that visitors use very
 ## different browsers between these two clusters. We also see that visitors in
-## `cluster0` and `cluster2` generally use similar browsers. It seems strange
+## `cluster1` and `cluster2` generally use similar browsers. It seems strange
 ## that visitors using browser 2 span two clusters with very different
 ## behaviors, yet visitors on browser 1 mostly fall into the same cluster.
 
@@ -276,14 +276,14 @@ clusterMeans[:, os].features.plot()
 ## of pages visited and duration spent on the site. The average visitor in both
 ## of these clusters visited around 30 pages and spent about 20 minutes on the
 ## site. They also both have similar average page values that are much higher
-## than `cluster2`, with `cluster0` being slightly higher than `cluster1`. So,
+## than `cluster2`, with `cluster1` being slightly higher than `cluster0`. So,
 ## these visitors appear to be targeting specific, often more expensive, items
 ## when they visit the site, rather than browsing the site’s inventory.
 
-## More purchases in `cluster1` were on a weekend but browser differentiated it
+## More purchases in `cluster0` were on a weekend but browser differentiated it
 ## most from the other clusters. Nearly all purchases that use browser 1 are
-## found in `cluster1`. Most users of other browsers are found in either
-## `cluster0` or `cluster2`. We might expect customer behavior to be mostly
+## found in `cluster0`. Most users of other browsers are found in either
+## `cluster1` or `cluster2`. We might expect customer behavior to be mostly
 ## consistent across browsers, but purchasers using browser 1 are very rarely
 ## spend long durations on the site. The association between browser 1 and
 ## shorter durations spent on the site is likely something worth investigation.

@@ -1,6 +1,15 @@
 """
-Defines a single test to check the functionality of all of the
-scripts contained in the examples folder.
+Defines the tests to check that of all of the scripts contained in the
+examples folder can be run without error and generate the expected
+output.
+
+Each example script has an accompanying [example_name]_output.txt file
+in this directory that the output from running the script will be
+checked against. For examples that produce variable data, the .txt files
+can include lines that start with "REGEX: " followed by a regular
+expression that is expected to match the actual output. If the regular
+expression is insufficient to fully verify the output, the individual
+tests can define a function to further validate the output.
 """
 
 import os
@@ -82,7 +91,14 @@ def back_singleExample_withPlots(scriptLoc):
 
         return back_singleExample(tSrc.name)
 
-def back_callExampleAsMain(script):
+def back_callExampleAsMain(script, checkLines=None):
+    """
+    If a regular expression cannot fully verify the output, a
+    ``checkLines`` function can be provided. A dictionary with line
+    numbers as keys and re.Match objects as values is passed to this
+    function so it can apply a custom set of requirements to each of
+    these lines as necessary.
+    """
     # check which backend needed
     scriptsWithPlots = ['unsupervised_learning.py', 'exploring_data.py']
 
@@ -101,9 +117,10 @@ def back_callExampleAsMain(script):
         # check only final line output, ignore intermediate updates
         outLines = [l.split(b'\r')[-1] for l in outLines]
 
+    toCheck = {} # stores {linenumber: re.Match}
     with open(expOut, 'rb') as exp:
         expLines = exp.readlines()
-        for out, exp in zip(outLines, expLines):
+        for i, (out, exp) in enumerate(zip(outLines, expLines)):
             print(out)
             print(exp)
             # remove trailing whitespace
@@ -111,9 +128,15 @@ def back_callExampleAsMain(script):
             exp = exp.rstrip()
             if exp.startswith(b'REGEX: '):
                 exp = exp[7:]
-                assert re.match(exp, out)
+                match = re.match(exp, out)
+                assert match
+                toCheck[i + 1] = match
             else:
                 assert exp == out
+
+    if checkLines is not None:
+        assert toCheck # expecting lines to further validate but found none
+        checkLines(toCheck)
 
 @pytest.mark.slow
 def test_examples_additional_functionality():
