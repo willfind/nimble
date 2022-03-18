@@ -171,7 +171,7 @@ class DataFrameSpecificDataSafe(DataTestObject):
         assert tuple(obj._data.dtypes) == startDtypes
         assert tuple(ret._data.dtypes) == floatDtypes
 
-        ret = obj ** -1
+        ret = obj ** -2
         assert tuple(obj._data.dtypes) == startDtypes
         assert tuple(ret._data.dtypes) == floatDtypes
 
@@ -252,7 +252,7 @@ class DataFrameSpecificDataModifying(DataTestObject):
         assert tuple(toTest._data.dtypes) == floatDtypes
 
         toTest = obj.copy()
-        toTest **= -1
+        toTest **= -2
         assert tuple(toTest._data.dtypes) == floatDtypes
 
         toTest = obj.copy()

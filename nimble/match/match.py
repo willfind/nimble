@@ -1317,9 +1317,9 @@ def anyInteger(data):
 
     Examples
     --------
-    >>> lst = [[0, -1.0, None],
-    ...        [1, -2.0, None],
-    ...        [2, -3.0, None]]
+    >>> lst = [[0, -1.0, 'a'],
+    ...        [1, -2.0, 'b'],
+    ...        [2, -3.0, 'c']]
     >>> X = nimble.data(lst)
     >>> anyInteger(X)
     True
@@ -1432,9 +1432,9 @@ def allFloating(data):
     >>> allFloating(X)
     True
 
-    >>> lst = [[1.1, 9.0, 1],
-    ...        [2.2, 8.0, 2],
-    ...        [3.3, 7.0, 3]]
+    >>> lst = [[1.1, 9.0, 'a'],
+    ...        [2.2, 8.0, 'b'],
+    ...        [3.3, 7.0, 'c']]
     >>> X = nimble.data(lst)
     >>> allFloating(X)
     False
