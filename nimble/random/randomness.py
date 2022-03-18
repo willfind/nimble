@@ -207,13 +207,19 @@ def data(numPoints, numFeatures, sparsity, pointNames='automatic',
     return ret
 
 
-def _generateSubsidiarySeed():
+def generateSubsidiarySeed():
     """
-    Randomly generate an integer seed.
+    Generate a random integer usable as a python or numpy random seed.
 
-    The seed will be used in a call to a subroutine our external system,
-    so that even though our internal sources of randomness are not used,
-    the results are still dependent on our random state.
+    Used for when it is necessary to make a subroutine call or object
+    external to Nimble. By generating a seed using Nimble's random state,
+    the execution of that external process is made to be contingent on
+    Nimble's random state, and should therefore be subject to the same
+    reproducibility guarantees.
+
+    See Also
+    --------
+    pythonRandom, numpyRandom, alternateControl
     """
     # must range from zero to maxSeed because numpy random wants an
     # unsigned 32 bit int. Negative numbers can cause conversion errors,
@@ -226,7 +232,7 @@ def _getValidSeed(seed):
     Validate the random seed value.
     """
     if seed is None:
-        seed = _generateSubsidiarySeed()
+        seed = generateSubsidiarySeed()
     elif not isinstance(seed, int):
         raise InvalidArgumentType('seed must be an integer')
     elif not 0 <= seed <= (2 ** 32) - 1:
