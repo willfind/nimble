@@ -511,6 +511,33 @@ def test_data_raw_listlikeObjects():
 
         assert testGenerator2D == testMap2D == testIter2D == exp2D
 
+
+# test auto to matrix for int/float value mix
+def test_data_raw_intMissing_autoMatrix():
+    intMiss = [[1,2,3],[None,1,6],[7,8,None]]
+    ret = nimble.data(intMiss, returnType=None)
+    exp = nimble.data(intMiss, returnType="Matrix")
+    assert isinstance(ret, nimble.core.data.Matrix)
+    assert ret == exp
+
+# test date time (not just str) yields DataFrame
+def test_data_raw_firstObjNonStr_autoDF():
+    dt = datetime.datetime(1,2,23)
+    nonStrObj = [[dt,2,3],[dt,1,6],[7,8,None]]
+    ret = nimble.data(nonStrObj, returnType=None)
+    exp = nimble.data(nonStrObj, returnType="DataFrame")
+    assert isinstance(ret, nimble.core.data.DataFrame)
+    assert ret == exp
+
+# check first line is being processed, yielding a Dataframe
+# (instead of a Matrix)
+def test_data_raw_check_firstLine_processed():
+    probFirstLine = [[1,2,"I'm not a number"],[4,5,6],[7,8,9]]
+    ret = nimble.data(probFirstLine, returnType=None)
+    exp = nimble.data(probFirstLine, returnType="DataFrame")
+    assert isinstance(ret, nimble.core.data.DataFrame)
+    assert ret == exp
+
 ################################
 # File data values correctness #
 ################################
