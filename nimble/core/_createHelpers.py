@@ -20,6 +20,7 @@ import urllib.parse
 import locale
 import pickle
 import numbers
+import itertools
 
 import numpy as np
 
@@ -1337,10 +1338,11 @@ def analyzeValues(rawData, returnType, skipDataProcessing):
             else:
                 returnType = "DataFrame"
         return returnType
-    if isinstance(first, dict):
-        first = list(first.values())
-    if not all(map(isAllowedSingleElement, first)):
-        raise InvalidArgumentValue(invalid)
+
+    # restore first line to front, so it's included in testing and
+    # returnType checking
+    toIter = itertools.chain([first], toIter)
+
     firstType = None
     firstLength = None
     for i, row in enumerate(toIter):
@@ -1357,19 +1359,31 @@ def analyzeValues(rawData, returnType, skipDataProcessing):
             if not skipDataProcessing and not isAllowedSingleElement(val):
                 raise InvalidArgumentValue(invalid)
             if returnType is None:
+                valType = type(val)
                 if firstType is None:
-                    firstType = type(val)
+                    firstType = valType
                     if issubclass(firstType, str):
                         returnType = "DataFrame"
                         if skipDataProcessing: # only need the returnType
                             return returnType
-                elif (firstType != type(val)
-                        and (isinstance(val, (bool, np.bool_))
-                             or not isinstance(val, numbers.Number))):
-                    returnType = "DataFrame"
-                    if skipDataProcessing: # only need the returnType
-                        return returnType
-    if returnType is None: # data was homogenous
+                elif firstType != valType:
+                    ftBool = issubclass(firstType, (bool, np.bool_))
+                    ftNum = issubclass(firstType, (numbers.Number, np.number))
+                    vtBool = issubclass(valType, (bool, np.bool_))
+                    vtNum = issubclass(valType, (numbers.Number, np.number))
+                    # If all non-bool numeric, record umbrella type and
+                    # keep checking for bad values / non-numeric
+                    if (ftNum and not ftBool) and (vtNum and not vtBool):
+                        fDt = np.dtype(firstType)
+                        vDt = np.dtype(valType)
+                        umbrella = max(fDt, vDt)
+                        firstType = firstType if umbrella == fDt else valType
+                    # Column with non-numeric value, use DataFrame
+                    else:
+                        returnType = "DataFrame"
+                        if skipDataProcessing: # only need the returnType
+                            return returnType
+    if returnType is None: # data was homogenous (or all int/float numeric)
         returnType = "Matrix"
     return returnType
 
