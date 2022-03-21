@@ -10,7 +10,7 @@ import pytest
 import nimble
 from nimble import loadTrainedLearner
 from nimble.random import numpyRandom
-from nimble.random import _generateSubsidiarySeed
+from nimble.random import generateSubsidiarySeed
 from nimble.exceptions import InvalidArgumentValue
 from nimble.core._learnHelpers import generateClusteredPoints
 from nimble._utility import scipy
@@ -851,7 +851,7 @@ def equalityAssertHelper(ret1, ret2, ret3=None):
 def setupSKLArguments(sciKitLearnObj):
     arguments = {}
     if 'random_state' in sciKitLearnObj.get_params():
-        arguments['random_state'] = _generateSubsidiarySeed()
+        arguments['random_state'] = generateSubsidiarySeed()
         sciKitLearnObj.set_params(**arguments)
     return arguments
 

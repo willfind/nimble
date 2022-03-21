@@ -1373,7 +1373,7 @@ class StructureDataSafe(StructureShared):
         toTest4 = toTest1.copy()
         expTest = toTest1.copy()
 
-        seed = nimble.random._generateSubsidiarySeed()
+        seed = nimble.random.generateSubsidiarySeed()
         with nimble.random.alternateControl(seed):
             ret = getattr(toTest1, toCall).copy(number=3, randomize=True)
 
@@ -1423,7 +1423,7 @@ class StructureDataSafe(StructureShared):
             exp1 = toTest1[:, 1]
             exp2 = toTest1[:, 2]
 
-        seed = nimble.random._generateSubsidiarySeed()
+        seed = nimble.random.generateSubsidiarySeed()
         with nimble.random.alternateControl(seed):
             retList = getattr(toTest1, toCall).copy([1, 2], number=1,
                                                     randomize=True)
@@ -4264,7 +4264,7 @@ class StructureModifying(StructureShared):
         toTest3 = toTest1.copy()
         toTest4 = toTest1.copy()
 
-        seed = nimble.random._generateSubsidiarySeed()
+        seed = nimble.random.generateSubsidiarySeed()
         with nimble.random.alternateControl(seed):
             ret = getattr(toTest1, toCall).extract(number=3, randomize=True)
 
@@ -4318,7 +4318,7 @@ class StructureModifying(StructureShared):
             expTest1 = toTest1[:, [0, 1, 3]]
             expTest2 = toTest1[:, [0, 2, 3]]
 
-        seed = nimble.random._generateSubsidiarySeed()
+        seed = nimble.random.generateSubsidiarySeed()
         with nimble.random.alternateControl(seed):
             retList = getattr(toTest1, toCall).extract([1, 2], number=1,
                                                        randomize=True)
@@ -5371,7 +5371,7 @@ class StructureModifying(StructureShared):
         toTest3 = toTest1.copy()
         toTest4 = toTest1.copy()
 
-        seed = nimble.random._generateSubsidiarySeed()
+        seed = nimble.random.generateSubsidiarySeed()
         with nimble.random.alternateControl(seed):
             getattr(toTest1, toCall).delete(number=3, randomize=True)
 
@@ -5415,7 +5415,7 @@ class StructureModifying(StructureShared):
             exp1 = toTest1[:, [0, 1, 3]]
             exp2 = toTest1[:, [0, 2, 3]]
 
-        seed = nimble.random._generateSubsidiarySeed()
+        seed = nimble.random.generateSubsidiarySeed()
         with nimble.random.alternateControl(seed):
             getattr(toTest1, toCall).delete([1, 2], number=1, randomize=True)
 
@@ -6463,7 +6463,7 @@ class StructureModifying(StructureShared):
         toTest3 = toTest1.copy()
         toTest4 = toTest1.copy()
 
-        seed = nimble.random._generateSubsidiarySeed()
+        seed = nimble.random.generateSubsidiarySeed()
         with nimble.random.alternateControl(seed):
             getattr(toTest1, toCall).retain(number=3, randomize=True)
 
@@ -6507,7 +6507,7 @@ class StructureModifying(StructureShared):
             exp1 = toTest1[:, 1]
             exp2 = toTest1[:, 2]
 
-        seed = nimble.random._generateSubsidiarySeed()
+        seed = nimble.random.generateSubsidiarySeed()
         with nimble.random.alternateControl(seed):
             getattr(toTest1, toCall).retain([1, 2], number=1, randomize=True)
 

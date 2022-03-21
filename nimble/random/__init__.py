@@ -14,7 +14,7 @@ from .randomness import numpyRandom
 from .randomness import pythonRandom
 from .randomness import setSeed
 from .randomness import alternateControl
-from .randomness import _generateSubsidiarySeed
+from .randomness import generateSubsidiarySeed
 from .randomness import _getValidSeed
 from .._utility import _setAll
 

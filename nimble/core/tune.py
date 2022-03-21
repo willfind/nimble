@@ -15,6 +15,7 @@ import numbers
 import copy
 import sys
 from timeit import default_timer
+from packaging.version import Version
 
 import numpy as np
 
@@ -205,7 +206,7 @@ class Validator(ABC):
         self._isBest = operator.gt if optimal == 'max' else operator.lt
         # use same random seed each time
         if randomSeed is None:
-            self.randomSeed = nimble.random._generateSubsidiarySeed()
+            self.randomSeed = nimble.random.generateSubsidiarySeed()
         else:
             self.randomSeed = randomSeed
         self.useLog = useLog
@@ -946,9 +947,16 @@ class Bayesian(ArgumentSelector):
         domain = hyperopt.Domain(self.validator.validate, space)
         self.trials = hyperopt.Trials()
 
+        # 0.2.6 and afterwards only allows for BitGenerator rng sources
+        if Version(hyperopt.__version__) >= Version("0.2.6"):
+            sourceSeed = nimble.random.generateSubsidiarySeed()
+            randSource = np.random.default_rng(sourceSeed)
+        else:
+            randSource = nimble.random.numpyRandom
+
         self.iterator = hyperopt.FMinIter(
             hyperopt.tpe.suggest, domain, self.trials,
-            nimble.random.numpyRandom, max_evals=self.maxIterations)
+            randSource, max_evals=self.maxIterations)
 
         self._stopIteration = False
         self._startTime = None
