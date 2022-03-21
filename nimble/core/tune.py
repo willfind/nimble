@@ -206,7 +206,7 @@ class Validator(ABC):
         self._isBest = operator.gt if optimal == 'max' else operator.lt
         # use same random seed each time
         if randomSeed is None:
-            self.randomSeed = nimble.random._generateSubsidiarySeed()
+            self.randomSeed = nimble.random.generateSubsidiarySeed()
         else:
             self.randomSeed = randomSeed
         self.useLog = useLog
