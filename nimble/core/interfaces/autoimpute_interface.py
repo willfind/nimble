@@ -6,6 +6,8 @@ Interface to autoimpute package.
 
 import types
 import logging
+import numpy as np
+from packaging.version import Version
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
@@ -48,6 +50,13 @@ class Autoimpute(_SciKitLearnAPI):
             hasFitTrans = hasattr(obj, 'fit_transform')
 
             return hasPred or hasTrans or hasFitPred or hasFitTrans
+
+        # Issue relating to dependency pymc3 relying on dead project
+        # theano, which incorrectly accesses information in numpy.
+        # This should make the relevant information available.
+        if Version("1.22") <= Version(np.__version__):
+            target = np.__config__.blas_ilp64_opt_info #pylint: disable=no-member
+            np.distutils.__config__.blas_opt_info = target
 
         self._searcher = PythonSearcher(self.package, isLearner, 1)
 
