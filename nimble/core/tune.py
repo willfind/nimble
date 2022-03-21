@@ -949,7 +949,7 @@ class Bayesian(ArgumentSelector):
 
         # 0.2.6 and afterwards only allows for BitGenerator rng sources
         if Version(hyperopt.__version__) >= Version("0.2.6"):
-            sourceSeed = pythonRandom.randint(1, (2 ** 32) - 1)
+            sourceSeed = nimble.random.generateSubsidiarySeed()
             randSource = np.random.default_rng(sourceSeed)
         else:
             randSource = nimble.random.numpyRandom
