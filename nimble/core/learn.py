@@ -54,7 +54,7 @@ def learnerType(learnerNames): # pylint: disable=redefined-outer-name
     Keywords
     --------
     classifier, regressor, regression, classification, clustering,
-    machine learning, preditor, model
+    machine learning, predictor, model
     """
     #argument checking
     if not isinstance(learnerNames, list):
@@ -63,14 +63,13 @@ def learnerType(learnerNames): # pylint: disable=redefined-outer-name
     resultsList = []
     secondPassLearnerNames = []
     for name in learnerNames:
-        splitTuple = _unpackLearnerName(name)
-        currInterface = splitTuple[0]
+        currInterface, currName = _unpackLearnerName(name)
         allValidLearnerNames = currInterface.learnerNames()
-        if not splitTuple[1] in allValidLearnerNames:
+        if not currName in allValidLearnerNames:
             msg = name + " is not a valid learner on your machine."
             raise InvalidArgumentValue(msg)
-        result = currInterface.learnerType(splitTuple[1])
-        if result == 'UNKNOWN' or result == 'other' or result is None:
+        result = currInterface.learnerType(currName)
+        if result == 'UNKNOWN':
             resultsList.append(None)
             secondPassLearnerNames.append(name)
         else:

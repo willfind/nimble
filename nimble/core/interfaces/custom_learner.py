@@ -61,8 +61,8 @@ class CustomLearnerInterface(UniversalInterface):
         return list(self.registeredLearners.keys())
 
 
-    def learnerType(self, name):
-        return self.registeredLearners[name].learnerType
+    def _learnerType(self, learnerBackend):
+        return learnerBackend.learnerType
 
 
     def _findCallableBackend(self, name):
@@ -314,8 +314,8 @@ def validateCustomLearnerSubclass(check):
     specification.
     """
     # check learnerType
-    accepted = ["unknown", 'regression', 'classification',
-                'featureselection', 'dimensionalityreduction']
+    accepted = ['regression', 'classification', 'cluster', 'transformation',
+                'undefined'] # sometimes must be defined after init
     if check.learnerType not in accepted:
         msg = "The custom learner must have a class variable named "
         msg += "'learnerType' with a value from the list " + str(accepted)

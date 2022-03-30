@@ -375,7 +375,7 @@ def collectAttributes(obj, generators, checkers):
                     ret[k] = val
                 # safety against any sort of error someone may have in their
                 # property code.
-                except AttributeError:
+                except (AttributeError, ValueError):
                     pass
             return ret
 

@@ -421,8 +421,8 @@ class LearnerInspector:
         # behavior, return other
         # todo this is where to insert future sensors for other types of
         # algorithms, but currently we can only resolve classifiers,
-        # regressors, and other.
-        return 'other'
+        # regressors, and UNKNOWN.
+        return 'UNKNOWN'
 
     def _regressorTrial(self, learnerName):
         """

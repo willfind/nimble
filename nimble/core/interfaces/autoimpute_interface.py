@@ -84,12 +84,11 @@ To install autoimpute
     def _learnerNamesBackend(self):
         return self._searcher.allLearners()
 
-    def learnerType(self, name):
-        obj = self.findCallable(name)
-        if issubclass(obj, self.package.imputations.BaseImputer):
+    def _learnerType(self, learnerBackend):
+        if isinstance(learnerBackend, self.package.imputations.BaseImputer):
             return 'transformation'
-        if issubclass(obj, self.package.analysis.MiBaseRegressor):
-            if 'LogisticRegression' in name:
+        if isinstance(learnerBackend, self.package.analysis.MiBaseRegressor):
+            if learnerBackend.__class__.__name__ == 'LogisticRegression':
                 return 'classification'
             return 'regression'
 

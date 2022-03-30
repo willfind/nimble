@@ -133,7 +133,7 @@ class TestPredefinedInterface(PredefinedInterfaceMixin):
     def _getScoresOrder(self, learner):
         pass
 
-    def learnerType(self, name):
+    def _learnerType(self, learnerBackend):
         pass
 
     def _getAttributes(self, learnerBackend):
@@ -211,7 +211,7 @@ def test_getCanonicalName():
 
 @noLogEntryExpected
 def test_learnerType():
-    assert TestObject.learnerType('l0') is None
+    assert TestObject.learnerType('l0') == "UNKNOWN"
 
 @noLogEntryExpected
 def test_isAlias():
@@ -283,7 +283,7 @@ class AlwaysWarnInterface(UniversalInterface):
     def _getLearnerDefaultValuesBackend(self, name):
         return self._getDefaultValues(name)
 
-    def learnerType(self, name):
+    def _learnerType(self, learnerBackend):
         pass
 
     def _getScores(self, learnerName, learner, testX, newArguments,

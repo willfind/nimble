@@ -479,6 +479,16 @@ class UniversalInterface(metaclass=abc.ABCMeta):
 
         return applyArgs
 
+    def learnerType(self, name):
+        """
+        Returns a string referring to the action the learner takes out
+        of the possibilities: classifier, regressor, clustering, or
+        transformation.
+        """
+        try:
+            return self._learnerType(self.findCallable(name)())
+        except (TypeError, ValueError):
+            return "UNKNOWN"
 
     ##############################################
     ### CACHING FRONTENDS FOR ABSTRACT METHODS ###
@@ -643,13 +653,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def learnerType(self, name):
-        """
-        Returns a string referring to the action the learner takes out
-        of the possibilities: classifier, regressor, featureSelection,
-        dimensionalityReduction
-        TODO
-        """
+    def _learnerType(self, learnerBackend):
+        pass
 
     @abc.abstractmethod
     def _getScores(self, learnerName, learner, testX, newArguments,
@@ -911,6 +916,13 @@ class TrainedLearner(object):
         The name of the learner used for training.
         """
         return self._learnerName
+
+    @property
+    def learnerType(self):
+        """
+        The type of learner that has been trained.
+        """
+        return self._interface._learnerType(self._backend)
 
     @property
     def arguments(self):

@@ -426,7 +426,7 @@ def testSciKitLearnOtherPredictLearners():
     Xtest = testX._data
 
     skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
-    predictors = getLearnersByType('other')
+    predictors = getLearnersByType('UNKNOWN')
     learners = [p for p in predictors if hasattr(skl.findCallable(p), 'predict')]
     assert learners
 
@@ -557,7 +557,7 @@ def testSciKitLearnOtherFitTransformLearners():
 
     skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
     text = ['CountVectorizer', 'TfidfVectorizer']
-    transform = getLearnersByType('other', ignore=text)
+    transform = getLearnersByType('UNKNOWN', ignore=text)
     learners = [t for t in transform if hasattr(skl.findCallable(t), 'fit_transform')]
     assert learners
 

@@ -24,6 +24,31 @@ from ._interface_helpers import noLeading__, notCallable, notABCAssociated
 from ._interface_helpers import checkArgsForRandomParam
 
 
+LEARNERTYPES = {
+    'classification': [
+        'BinaryCrossentropy', 'binary_crossentropy',
+        'CategoricalCrossentropy', 'categorical_crossentropy',
+        'SparseCategoricalCrossentropy', 'sparse_categorical_crossentropy',
+        'Poisson', 'poisson',
+        'KLDivergence', 'kl_divergence',
+        'Hinge', 'hinge',
+        'SquaredHinge', 'squared_hinge',
+        'CategoricalHinge', 'categorical_hinge',
+    ],
+    'regression': [
+        'MeanSquaredError', 'mean_squared_error',
+        'MeanAbsoluteError', 'mean_absolute_error',
+        'MeanAbsolutePercentageError', 'mean_absolute_percentage_error',
+        'MeanSquaredLogarithmicError', 'mean_squared_logarithmic_error',
+        'CosineSimilarity', 'cosine_similarity',
+        'Huber', 'huber',
+        'LogCosh', 'log_cosh',
+    ]
+}
+
+
+
+
 @inheritDocstringsFactory(PredefinedInterfaceMixin)
 class Keras(PredefinedInterfaceMixin):
     """
@@ -152,7 +177,22 @@ To install keras
 
         return ret
 
-    def learnerType(self, name):
+    def learnerType(self, name): # pylint: disable=unused-argument
+        """
+        Keras learner types cannot be defined until compiled.
+        """
+        return 'undefined'
+
+    def _learnerType(self, learnerBackend):
+        for lt, losses in LEARNERTYPES.items():
+            attrs = self._getAttributes(learnerBackend)
+            if 'loss' not in attrs:
+                return 'UNKNOWN'
+            loss = attrs['loss']
+            if hasattr(loss, '__name__'):
+                loss = loss.__name__
+            if loss in losses:
+                return lt
         return 'UNKNOWN'
 
     def _findCallableBackend(self, name):

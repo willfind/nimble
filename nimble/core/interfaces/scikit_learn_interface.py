@@ -300,7 +300,7 @@ class _SciKitLearnAPI(PredefinedInterfaceMixin):
         pass
 
     @abc.abstractmethod
-    def learnerType(self, name):
+    def _learnerType(self, learnerBackend):
         pass
 
     @abc.abstractmethod
@@ -432,24 +432,16 @@ To install scikit-learn
 
         return possibilities
 
-    def learnerType(self, name):
-        obj = self.findCallable(name)
-        if issubclass(obj, self.package.base.ClassifierMixin):
+    def _learnerType(self, learnerBackend):
+        if isinstance(learnerBackend, self.package.base.ClassifierMixin):
             return 'classification'
-        if issubclass(obj, self.package.base.RegressorMixin):
+        if isinstance(learnerBackend, self.package.base.RegressorMixin):
             return 'regression'
-        if issubclass(obj, self.package.base.ClusterMixin):
+        if isinstance(learnerBackend, self.package.base.ClusterMixin):
             return 'cluster'
-        if issubclass(obj, self.package.base.TransformerMixin):
+        if isinstance(learnerBackend, self.package.base.TransformerMixin):
             return 'transformation'
-        # if (hasattr(obj, 'classes_') or hasattr(obj, 'label_')
-        #         or hasattr(obj, 'labels_')):
-        #     return 'classification'
-        # if "Classifier" in obj.__name__:
-        #     return 'classification'
-        #
-        # if "Regressor" in obj.__name__:
-        #     return 'regression'
+        # TODO classify some additional learners on case-by-case basis
 
         return 'UNKNOWN'
 
