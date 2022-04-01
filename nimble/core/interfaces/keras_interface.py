@@ -256,24 +256,12 @@ To install keras
 
     def _getScores(self, learnerName, learner, testX, newArguments,
                    storedArguments, customDict):
-        if hasattr(learner, 'decision_function'):
-            method = 'decision_function'
-            toCall = learner.decision_function
-        elif hasattr(learner, 'predict_proba'):
-            method = 'predict_proba'
-            toCall = learner.predict_proba
-        else:
-            raise NotImplementedError('Cannot get scores for this learner')
-        ignore = ['X', 'x', 'self']
-        backendArgs = self._paramQuery(method, learnerName, ignore)[0]
-        scoreArgs = self._getMethodArguments(backendArgs, newArguments,
-                                             storedArguments)
-        raw = toCall(testX, **scoreArgs)
-        # in binary classification, we return a row vector. need to reshape
-        if len(raw.shape) == 1:
-            return raw.reshape(len(raw), 1)
+        if self._learnerType(learner) == 'classification':
+            return self._applyBackend(learnerName, learner, testX,
+                                      newArguments, storedArguments,
+                                      customDict)
 
-        return raw
+        raise NotImplementedError('Cannot get scores for this learner')
 
 
     def _getScoresOrder(self, learner):
@@ -427,15 +415,8 @@ To install keras
         else:
             learner.fit(**fitParams)
 
-        if (hasattr(learner, 'decision_function')
-                or hasattr(learner, 'predict_proba')):
-            if trainY is not None:
-                labelOrder = np.unique(trainY)
-            else:
-                allLabels = learner.predict(trainX)
-                labelOrder = np.unique(allLabels)
-
-            learner.UIgetScoreOrder = labelOrder
+        if self._learnerType(learner) == 'classification':
+            learner.UIgetScoreOrder = np.unique(trainY)
 
         return learner
 
@@ -459,9 +440,8 @@ To install keras
         learner.train_on_batch(**trainOnBatchParams)
         return learner
 
-
-    def _applier(self, learnerName, learner, testX, newArguments,
-                 storedArguments, customDict):
+    def _applyBackend(self, learnerName, learner, testX, newArguments,
+                      storedArguments, customDict):
         if not hasattr(learner, 'predict'):
             msg = "Cannot apply this learner to data, no predict function"
             raise TypeError(msg)
@@ -481,6 +461,16 @@ To install keras
         applyArgs = self._getMethodArguments(backendArgs, newArguments,
                                              storedArguments)
         return self._predict(learner, testX, applyArgs, customDict)
+
+    def _applier(self, learnerName, learner, testX, newArguments,
+                 storedArguments, customDict):
+        ret = self._applyBackend(learnerName, learner, testX, newArguments,
+                                 storedArguments, customDict)
+        # for classification, convert to labels
+        if self._learnerType(learner) == 'classification':
+            ret = np.argmax(ret, axis=1)
+
+        return ret
 
 
     def _getAttributes(self, learnerBackend):

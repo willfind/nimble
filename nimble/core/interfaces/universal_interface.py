@@ -1073,13 +1073,19 @@ class TrainedLearner(object):
         """
         Apply the learner to the test data.
 
-        Return the application of this learner to the given test data
-        (i.e. performing prediction, transformation, etc. as appropriate
-        to the learner). If ``testX`` has pointNames and the output
-        object has the same number of points, the pointNames from
-        ``testX`` will be applied to the output object. Equivalent to
-        having called ``trainAndApply``, as long as the data and
-        parameter setup for training was the same.
+        Return the application of this learner to the given test data.
+        The output depends on the type of learner:
+
+          * classification: The predicted labels
+          * regression: The predicted values
+          * cluster : The assigned cluster number
+          * transformation: The transformed data
+
+        If ``testX`` has pointNames and the output object has the same
+        number of points, the pointNames from ``testX`` will be applied
+        to the output object. Equivalent to having called
+        ``trainAndApply``, as long as the data and parameter setup for
+        training was the same.
 
         Parameters
         ----------
@@ -1165,8 +1171,8 @@ class TrainedLearner(object):
         transTestX = transformedInputs[2]
         usedArguments = transformedInputs[3]
 
+        lType = self._interface.learnerType(self.learnerName)
         # depending on the mode, we need different information.
-        labels = None
         if scoreMode is not None:
             scores = self.getScores(testX, usedArguments)
         if scoreMode != 'allScores':
@@ -1179,7 +1185,6 @@ class TrainedLearner(object):
                 self._customDict)
         # if this application is for a classification or regression learner,
         # we will apply featureNames to the output if possible
-        lType = self._interface.learnerType(self.learnerName)
         applyFtNames = lType in ['classification', 'regression']
         if scoreMode is None:
             ret = labels
@@ -1497,7 +1502,8 @@ class TrainedLearner(object):
             strategy = ovaNotOvOFormatted(rawScores, applyResults, numLabels)
         else:
             strategy = checkClassificationStrategy(
-                self._interface, self.learnerName, arguments, self.randomSeed)
+                self._interface, self.learnerName, self.arguments, arguments,
+                self._trainXShape, self.randomSeed)
         # want the scores to be per label, regardless of the original format,
         # so we check the strategy, and modify it if necessary
         if not strategy:

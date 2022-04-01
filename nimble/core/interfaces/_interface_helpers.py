@@ -7,12 +7,14 @@ import importlib
 import configparser
 import warnings
 import inspect
+import re
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue
 from nimble.random import pythonRandom
 from nimble.core._learnHelpers import _validTestData, _validArguments
 from nimble.core._learnHelpers import _validScoreMode, _2dOutputFlagCheck
+from nimble.core._learnHelpers import generateClusteredPoints
 
 
 class PythonSearcher(object):
@@ -130,34 +132,53 @@ class PythonSearcher(object):
         return None
 
 
-def checkClassificationStrategy(interface, learnerName, algArgs, seed):
+def checkClassificationStrategy(interface, learnerName, trainArgs, scoreArgs,
+                                shape, seed):
     """
     Helper to determine the classification strategy used for a given
     learner called using the given interface with the given args. Runs a
     trial on data with 4 classes so that we can use structural.
     """
-    dataX = [[-100, 3], [-122, 1], [118, 1], [117, 5],
-             [1, -191], [-2, -118], [-1, 200], [3, 222]]
-    xObj = nimble.data(dataX, useLog=False)
     # we need classes > 2 to test the multiclass strategy, and we should be
-    # able to tell structurally when classes != 3
-    dataY = [[0], [0], [1], [1], [2], [2], [3], [3]]
-    yObj = nimble.data(dataY, useLog=False)
-    dataTest = [[0, 0], [-100, 0], [100, 0], [0, -100], [0, 100]]
-    testObj = nimble.data(dataTest, useLog=False)
+    # able to tell structurally when classes != 3. Shape of data must match
+    # original for some learners
+    numPts, numFts = shape
+    # ensure there are enough total points to match original data and reorder
+    # labels as 0, 1, 2 ,3, 0, 1, 2, 3, ... so testing object is guaranteed to
+    # have one of each label
+    numPointsPerCluster = max(1, numPts // 4) * 2
+    dataX, _, dataY = generateClusteredPoints(4, numPointsPerCluster,
+                                              numFts, addLabelNoise=False)
+    reorder = []
+    for i in range(numPointsPerCluster):
+        for j in range(4):
+            reorder.append(i + (j * numPointsPerCluster))
+    dataX.points.permute(reorder, useLog=False)
+    dataY.points.permute(reorder, useLog=False)
+    # Note this check will fail if the learner expects data with shape[0] < 4
+    endIdx = max(4, numPts)
+    xObj = dataX[:endIdx, :]
+    yObj = dataY[:endIdx, :]
+    testObj = xObj.copy()
+    try:
+        tlObj = interface.train(learnerName, xObj, yObj, arguments=trainArgs,
+                                randomSeed=seed)
+        applyResults = tlObj.apply(testObj, arguments=scoreArgs, useLog=False)
+        (_, _, testTrans, _) = interface._inputTransformation(
+        learnerName, None, None, testObj, trainArgs, tlObj._customDict)
+        rawScores = interface._getScores(tlObj.learnerName, tlObj._backend,
+                                         testTrans, scoreArgs,
+                                         tlObj._transformedArguments,
+                                         tlObj._customDict)
+        return ovaNotOvOFormatted(rawScores, applyResults, 4)
 
-    tlObj = interface.train(learnerName, xObj, yObj, arguments=algArgs,
-                            randomSeed=seed)
-    applyResults = tlObj.apply(testObj, arguments=algArgs, useLog=False)
-    (_, _, testTrans, _) = interface._inputTransformation(
-        learnerName, None, None, testObj, algArgs, tlObj._customDict)
-    rawScores = interface._getScores(tlObj.learnerName, tlObj._backend,
-                                     testTrans, algArgs,
-                                     tlObj._transformedArguments,
-                                     tlObj._customDict)
-
-    return ovaNotOvOFormatted(rawScores, applyResults, 4)
-
+    except Exception as e:
+        # 4 labels is more than Keras learner expected, should be ova
+        labelErr = r'Received a label value of 3 which is outside the '
+        labelErr += 'valid range'
+        if re.search(labelErr, str(e)):
+            return True
+        raise
 
 def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels,
                        useSize=True):
@@ -176,14 +197,12 @@ def ovaNotOvOFormatted(scoresPerPoint, predictedLabels, numLabels,
                                       copyData=True, useLog=False)
     length = len(scoresPerPoint.points)
     scoreLength = len(scoresPerPoint.features)
-
     # let n = number of classes
     # ova : number scores = n
     # ovo : number scores = (n * (n-1) ) / 2
     # only at n = 3 are they equal
     if useSize and numLabels != 3:
         return scoreLength == numLabels
-
     # we want to check random points out of all the possible data
     check = 20
     if length < check:
