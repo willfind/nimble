@@ -26,6 +26,22 @@ from ._interface_helpers import noLeading__, notCallable, notABCAssociated
 from ._interface_helpers import validInitParams
 
 
+MANUAL_LEARNERTYPES = {
+    'BayesianGaussianMixture': 'cluster',
+    'CountVectorizer': 'transformation',
+    # 'EllipticEnvelope': 'classification', # TODO outliers
+    'GaussianMixture': 'cluster',
+    # 'IsolationForest': 'classification', # TODO outliers
+    'MDS': 'transformation',
+    # 'OneClassSVM': 'classification', # TODO outliers
+    'PatchExtractor': 'transformation',
+    'RandomTreesEmbedding': 'transformation',
+    # 'SGDOneClassSVM': 'classification', # TODO outliers
+    'SpectralEmbedding': 'transformation',
+    'TSNE': 'transformation',
+    'TfidfVectorizer': 'transformation',
+}
+
 @inheritDocstringsFactory(PredefinedInterfaceMixin)
 class _SciKitLearnAPI(PredefinedInterfaceMixin):
     """
@@ -441,9 +457,9 @@ To install scikit-learn
             return 'cluster'
         if isinstance(learnerBackend, self.package.base.TransformerMixin):
             return 'transformation'
-        # TODO classify some additional learners on case-by-case basis
 
-        return 'UNKNOWN'
+        learnerClass = learnerBackend.__class__.__name__
+        return MANUAL_LEARNERTYPES.get(learnerClass, 'UNKNOWN')
 
     def _findCallableBackend(self, name):
         try:
@@ -457,7 +473,9 @@ To install scikit-learn
         mustCopyTrainX = ['PLSRegression']
         if trainX is not None:
             customDict['match'] = trainX.getTypeString()
-            if (trainX.getTypeString() == 'Matrix'
+            if trainX.shape != trainX.dimensions:
+                trainX = trainX.copy(to='numpy array')
+            elif (trainX.getTypeString() == 'Matrix'
                     and learnerName not in mustCopyTrainX):
                 trainX = trainX._data
             elif trainX.getTypeString() == 'Sparse':
@@ -467,15 +485,17 @@ To install scikit-learn
             trainX = dtypeConvert(trainX)
 
         if trainY is not None:
-            if len(trainY.features) > 1:
-                trainY = (trainY.copy(to='numpy array'))
+            if len(trainY.features) > 1 or trainY.shape != trainY.dimensions:
+                trainY = trainY.copy(to='numpy array')
             else:
                 trainY = trainY.copy(to='numpy array', outputAs1D=True)
             trainY = dtypeConvert(trainY)
 
         if testX is not None:
             mustCopyTestX = ['StandardScaler']
-            if (testX.getTypeString() == 'Matrix'
+            if testX.shape != testX.dimensions:
+                testX = testX.copy(to='numpy array')
+            elif (testX.getTypeString() == 'Matrix'
                     and learnerName not in mustCopyTestX):
                 testX = testX._data
             elif testX.getTypeString() == 'Sparse':
