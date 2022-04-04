@@ -217,3 +217,11 @@ def test_autoimpute_MiLogisticRegression_exception_directMultipleImputerNoStrate
     nimble.trainAndTest('autoimpute.MiLogisticRegression', fractionCorrect,
                         trainX, trainY, testX, testY,
                         mi=nimble.Init('MultipleImputer', n=1))
+
+@autoimputeSkipDec
+def testLearnerTypes():
+    learners = ['autoimpute.' + l for l in nimble.learnerNames('autoimpute')]
+    allowed = ['classification', 'regression', 'transformation', 'UNKNOWN']
+    # TODO MissingnessClassifier is UNKNOWN because getScores does not align
+    # with expectation for classification
+    assert all(lt in allowed for lt in nimble.learnerType(learners))

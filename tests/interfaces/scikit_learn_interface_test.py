@@ -289,6 +289,7 @@ def testSciKitLearnClassificationLearners():
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments,
                           randomSeed=seed)
+        assert TL.learnerType == 'classification'
         predNimble = TL.apply(testX)
         predSL = _apply_saveLoad(TL, testX)
 
@@ -326,6 +327,7 @@ def testSciKitLearnRegressionLearners():
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments,
                           randomSeed=seed)
+        assert TL.learnerType == 'regression'
         predNimble = TL.apply(testX)
         predSL = _apply_saveLoad(TL, testX)
 
@@ -369,6 +371,7 @@ def testSciKitLearnMultiTaskRegressionLearners():
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainXObj, trainYObj,
                           randomSeed=seed)
+        assert TL.learnerType == 'regression'
         predNimble = TL.apply(testXObj)
         predSL = _apply_saveLoad(TL, testXObj)
 
@@ -406,6 +409,7 @@ def testSciKitLearnClusterLearners():
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainX, arguments=arguments,
                           randomSeed=seed)
+        assert TL.learnerType == 'cluster'
         predNimble = TL.apply(testX)
         predSL = _apply_saveLoad(TL, testX)
 
@@ -474,6 +478,7 @@ def testSciKitLearnTransformationLearners():
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments,
                           randomSeed=seed)
+        assert TL.learnerType == 'transformation'
         transSL = _apply_saveLoad(TL, trainX)
         transNimble = TL.apply(trainX)
 
@@ -719,12 +724,14 @@ def testGetAttributesCallable():
     for learner in toTest:
         fullName = 'scikitlearn.' + learner
         lType = nimble.learnerType(fullName)
-        if lType in ['classification', 'transformation', 'cluster', 'other']:
+        if lType in ['classification', 'transformation', 'cluster', 'UNKNOWN']:
             X = cTrainX
             Y = cTrainY
-        if lType == 'regression':
+        elif lType == 'regression':
             X = rTrainX
             Y = rTrainY
+        else:
+            raise ValueError('unexpected learnerType')
 
         try:
             tl = nimble.train(fullName, X, Y)
@@ -894,3 +901,10 @@ def adjustRandomParamForNimble(arguments):
     else:
         seed = None
     return seed
+
+@sklSkipDec
+def testLearnerTypes():
+    learners = ['skl.' + l for l in nimble.learnerNames('skl')]
+    allowed = ['classification', 'regression', 'transformation', 'cluster',
+               'UNKNOWN'] # TODO outlier classifiers are currently UNKNOWN
+    assert all(lt in allowed for lt in nimble.learnerType(learners))

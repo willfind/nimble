@@ -48,12 +48,25 @@ class _SciKitLearnAPI(PredefinedInterfaceMixin):
     Base class for interfaces following the scikit-learn api.
     """
     def __init__(self, randomParam):
+        self._skl = modifyImportPathAndImport('sklearn', 'sklearn')
         self.randomParam = randomParam
         super().__init__()
 
     #######################################
     ### ABSTRACT METHOD IMPLEMENTATIONS ###
     #######################################
+
+    def _learnerType(self, learnerBackend):
+        if isinstance(learnerBackend, self._skl.base.ClassifierMixin):
+            return 'classification'
+        if isinstance(learnerBackend, self._skl.base.RegressorMixin):
+            return 'regression'
+        if isinstance(learnerBackend, self._skl.base.ClusterMixin):
+            return 'cluster'
+        if isinstance(learnerBackend, self._skl.base.TransformerMixin):
+            return 'transformation'
+
+        return 'UNKNOWN'
 
     def _getParameterNamesBackend(self, name):
         ret = self._paramQuery(name, None)
@@ -316,10 +329,6 @@ class _SciKitLearnAPI(PredefinedInterfaceMixin):
         pass
 
     @abc.abstractmethod
-    def _learnerType(self, learnerBackend):
-        pass
-
-    @abc.abstractmethod
     def _findCallableBackend(self, name):
         pass
 
@@ -449,17 +458,11 @@ To install scikit-learn
         return possibilities
 
     def _learnerType(self, learnerBackend):
-        if isinstance(learnerBackend, self.package.base.ClassifierMixin):
-            return 'classification'
-        if isinstance(learnerBackend, self.package.base.RegressorMixin):
-            return 'regression'
-        if isinstance(learnerBackend, self.package.base.ClusterMixin):
-            return 'cluster'
-        if isinstance(learnerBackend, self.package.base.TransformerMixin):
-            return 'transformation'
-
-        learnerClass = learnerBackend.__class__.__name__
-        return MANUAL_LEARNERTYPES.get(learnerClass, 'UNKNOWN')
+        ret = super()._learnerType(learnerBackend)
+        if ret == 'UNKNOWN':
+            learnerClass = learnerBackend.__class__.__name__
+            return MANUAL_LEARNERTYPES.get(learnerClass, 'UNKNOWN')
+        return ret
 
     def _findCallableBackend(self, name):
         try:

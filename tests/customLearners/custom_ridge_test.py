@@ -14,6 +14,8 @@ def testRidgeRegressionShapes():
     testObj = nimble.data(data2)
 
     for value in ['nimble.RidgeRegression', RidgeRegression]:
+        tl = nimble.train(value, trainX=trainObj, trainY=0)
+        assert tl.learnerType == 'regression'
         ret = nimble.trainAndApply(value, trainX=trainObj, trainY=0,
                                    testX=testObj, arguments={'lamb': 0})
 

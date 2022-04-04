@@ -481,9 +481,13 @@ class UniversalInterface(metaclass=abc.ABCMeta):
 
     def learnerType(self, name):
         """
-        Returns a string referring to the action the learner takes out
-        of the possibilities: classifier, regressor, clustering, or
-        transformation.
+        Returns a string referring to the action the learner.
+
+        The learner types are : 'classifier', 'regressor', 'cluster', or
+        'transformation'. May also be 'undefined' if the learner object
+        can represent multiple types depending on how it is configured.
+        'UNKNOWN' is returned if the standard methods for identifying a
+        learner type are unable to identify the type.
         """
         try:
             return self._learnerType(self.findCallable(name)())
