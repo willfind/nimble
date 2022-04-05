@@ -478,14 +478,7 @@ class SessionLogger(object):
 
             if arguments is not None and arguments:
                 arguments = arguments.copy() # don't modify original dict
-                for name, value in arguments.items():
-                    try:
-                        literal_eval(repr(value))
-                        arguments[name] = value
-                    except (ValueError, SyntaxError):
-                        # use repr for objects which cannot eval
-                        arguments[name] = repr(value)
-                logInfo['arguments'] = arguments
+                logInfo['arguments'] = literalOnlyArguments(arguments)
 
             if randomSeed is not None and randomSeed:
                 logInfo['randomSeed'] = randomSeed
@@ -665,8 +658,9 @@ class SessionLogger(object):
             performanceFunction = validator.performanceFunction
             logInfo["metric"] = (performanceFunction.optimal,
                                  performanceFunction.__name__)
-            logInfo["performances"] = list(zip(validator._results,
-                                               validator._arguments))
+            logInfo["performances"] = list(
+                zip(validator._results,
+                    literalOnlyArguments(validator._arguments)))
 
             self.log(logType, logInfo)
 
@@ -1316,6 +1310,33 @@ def _showLogOutputString(listOfLogs, levelOfDetail, append):
             fullLog += '.' * 79
 
     return fullLog
+
+def literalOnlyArguments(arguments):
+    """
+    Store logged argument values in the most readable way.
+    """
+    arguments = arguments.copy() # don't modify original
+    if isinstance(arguments, dict):
+        for name, value in arguments.items():
+            if isinstance(value, (dict, list)):
+                value = literalOnlyArguments(value)
+            try:
+                literal_eval(repr(value))
+                arguments[name] = value
+            except (ValueError, SyntaxError):
+                # use repr for objects which cannot eval
+                arguments[name] = repr(value)
+    else:
+        for i, value in enumerate(arguments):
+            if isinstance(value, (dict, list)):
+                value = literalOnlyArguments(value)
+            try:
+                literal_eval(repr(value))
+                arguments[i] = value
+            except (ValueError, SyntaxError):
+                # use repr for objects which cannot eval
+                arguments[i] = repr(value)
+    return arguments
 
 #######################
 ### Initialization  ###

@@ -9,6 +9,7 @@ from nimble import Tune
 from nimble.random import pythonRandom
 from nimble.core.tune import ArgumentSelector
 from nimble.core.tune import BruteForce, Consecutive, Bayesian, Iterative
+from nimble.core.tune import StochasticRandomMutator
 from nimble.calculate import fractionIncorrect
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
@@ -436,3 +437,69 @@ def test_Iterative(maxValidator):
     assert next(itr) == {'k': 7, 'p': 2}
     with raises(StopIteration):
         next(itr)
+
+def test_StochasticRandomMutator(minValidator):
+    # single argument, no tune
+    srm = StochasticRandomMutator({'k': 5}, minValidator, maxIterations=5)
+    assert next(srm) == {'k': 5}
+    with raises(StopIteration):
+        next(srm)
+
+    # single argument, tune
+    # make k=1 the optimal value
+    minValidator._performanceFunction = lambda args: (args['k'] - 1) * 100
+    # NOTE: given this an an oversimplified example, using ordered parameters
+    # is prone to triggering an infinite loop so use an unordered set
+    srm = StochasticRandomMutator({'k': Tune([1, 3, 4, 9, 21])}, minValidator,
+                                  initRandom=4, randomizeAxisFactor=0)
+    # first guess 4 guesses are random and do not repeat
+    best = next(srm)['k']
+    for _ in range(3):
+        arg = next(srm)['k']
+        if arg < best:
+            best = arg
+    arg = next(srm)['k'] # last guess is the one that wasn't guessed randomly
+    with raises(StopIteration):
+        next(srm)
+
+    # multiple arguments, no tune
+    minValidator.reset()
+    srm = StochasticRandomMutator({'k': 5, 'p': 2}, minValidator,
+                                  maxIterations=3)
+    assert next(srm) == {'k': 5, 'p': 2}
+    with raises(StopIteration):
+        next(srm)
+
+    # multiple arguments, tune, with timeout
+    minValidator.reset()
+    minValidator._performanceFunction = wait(1)
+    srm = StochasticRandomMutator({'k': Tune(start=3, end=101),
+                                   'p': Tune(range(1, 10))}, minValidator,
+                                   timeout=2)
+    start = default_timer()
+    for i in range(4):
+        try:
+            args = next(srm)
+        except StopIteration:
+            break
+    duration = default_timer() - start
+    assert 2 < duration < 2.1
+    # with 1 second sleep, StopIteration should occur on 3rd iteration
+    assert i == 2
+
+    # multiple arguments, tune, with threshold
+    # k = 3, p=1 is optimal
+    minValidator.reset()
+    minValidator._performanceFunction = lambda args: ((args['k'] * args['p']) - 3) * 10
+    srm = StochasticRandomMutator({'k': Tune(range(3, 11)), 'p': Tune([1, 2])},
+                                  minValidator, threshold=2)
+    for i in range(100):
+        try:
+            args = next(srm)
+        except StopIteration:
+            break
+
+    assert args['k'] == 3
+    assert args['p'] == 1
+
+    assert i < 100

@@ -735,7 +735,7 @@ def train(learnerName, trainX, trainY=None, arguments=None,
 
     if tuning is not None and hasattr(tuning.validator, 'bestTrainedLearner'):
         trainedLearner = tuning.validator.bestTrainedLearner
-        trainedLearner.tuning = tuning
+        trainedLearner._tuning = tuning
     else:
         trainedLearner = interface.train(trueLearnerName, trainX, trainY,
                                          bestArguments, multiClassStrategy,

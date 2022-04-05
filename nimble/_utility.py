@@ -256,6 +256,7 @@ cloudpickle = DeferredModuleImport('cloudpickle')
 h5py = DeferredModuleImport('h5py')
 dateutil = DeferredModuleImport('dateutil')
 hyperopt = DeferredModuleImport('hyperopt')
+storm_tuner = DeferredModuleImport('storm_tuner')
 
 def sparseMatrixToArray(sparseMatrix):
     """

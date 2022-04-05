@@ -55,6 +55,11 @@ Operational Support
    +----------------+----------------------------------------------+------+-------+
    | `h5py`_        | Loading hdf5 files.                          | |cm| | |cm|  |
    +----------------+----------------------------------------------+------+-------+
+   | `hyperopt`_    | Bayesian method for hyperparameter tuning.   | |cm| | |cm|  |
+   +----------------+----------------------------------------------+------+-------+
+   | `storm_tuner`_ | StochasticRandomMutator for hyperparameter   | |cm| |       |
+   |                | tuning.                                      |      |       |
+   +----------------+----------------------------------------------+------+-------+
 
 .. _ml-interfaces:
 
@@ -206,6 +211,8 @@ operations requiring an optional package that is not installed.
 .. _cloudpickle: https://github.com/cloudpipe/cloudpickle
 .. _dateutil: https://dateutil.readthedocs.io/en/stable/
 .. _h5py: https://docs.h5py.org/en/stable/build.html
+.. _hyperopt: http://hyperopt.github.io/hyperopt/
+.. _storm_tuner: https://github.com/ben-arnao/StoRM
 .. _sklearn: https://scikit-learn.org/stable/install.html
 .. _tensorflow: https://www.tensorflow.org/install
 .. _autoimpute: https://autoimpute.readthedocs.io/en/latest/user_guide/getting_started.html
