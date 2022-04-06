@@ -1239,6 +1239,26 @@ class StructureDataSafe(StructureShared):
     def test_points_copy_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('copy', 'point')
 
+    def test_points_copy_featureLimited(self):
+        data = [[1, 2, 3], [None, 11, None], [None, 11, 15], [7, 8, None]]
+        ftNames = ['a', 'b', 'c']
+        toTest = self.constructor(data, featureNames=ftNames)
+        expTest = self.constructor(data, featureNames=ftNames)
+        ret = toTest.points.copy(match.anyMissing, features=['c', 'b'])
+        expRet = self.constructor([[None, 11, None], [7, 8, None]],
+                                  featureNames=ftNames)
+        assert toTest == expTest
+        assert ret == expRet
+
+        data = [[11, 2, 3], [None, 11, None], [None, 11, 15], [7, 8, None]]
+        toTest = self.constructor(data, featureNames=ftNames)
+        expTest = self.constructor(data, featureNames=ftNames)
+        ret = toTest.points.copy(lambda pt: 11 in pt, features=['c', 'b'])
+        expRet = self.constructor([[None, 11, None], [None, 11, 15]],
+                                  featureNames=ftNames)
+        assert toTest == expTest
+        assert ret == expRet
+
     ### using match module ###
 
     def test_points_copy_match_missing(self):
@@ -1937,6 +1957,25 @@ class StructureDataSafe(StructureShared):
     @raises(InvalidArgumentValue)
     def test_features_copy_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('copy', 'feature')
+
+    def test_features_copy_pointLimited(self):
+        data = [[1, 2, 3], [None, 11, None], [None, 11, 15], [7, None, 9]]
+        ptNames = ['a', 'b', 'c', 'd']
+        toTest = self.constructor(data, pointNames=ptNames)
+        expTest = toTest.copy()
+        ret = toTest.features.copy(match.anyMissing, points=[1, 2])
+        expRet = self.constructor([[1, 3], [None, None], [None, 15], [7, 9]],
+                                  pointNames=ptNames)
+        assert toTest == expTest
+        assert ret == expRet
+
+        data = [[11, 2, 3], [None, 11, None], [None, 11, 15], [7, None, 9]]
+        toTest = self.constructor(data, pointNames=ptNames)
+        expTest = toTest.copy()
+        ret = toTest.features.copy(lambda ft: 11 in ft, points=['b', 'c'])
+        expRet = self.constructor([[2], [11], [11], [None]], pointNames=ptNames)
+        assert toTest == expTest
+        assert ret == expRet
 
     ### using match module ###
 
@@ -4123,6 +4162,24 @@ class StructureModifying(StructureShared):
     def test_points_extract_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('extract', 'point')
 
+    def test_points_extract_featureLimited(self):
+        data = [[1, 2, 3], [None, 11, None], [None, 11, 15], [7, 8, None]]
+        ftNames = ['a', 'b', 'c']
+        toTest = self.constructor(data, featureNames=ftNames)
+        ret = toTest.points.extract(match.anyMissing, features=[2, 1])
+        expTest = self.constructor([[1, 2, 3], [None, 11, 15]], featureNames=ftNames)
+        expRet = self.constructor([[None, 11, None], [7, 8, None]], featureNames=ftNames)
+        assert toTest == expTest
+        assert ret == expRet
+
+        data = [[11, 2, 3], [None, 11, None], [None, 11, 15], [7, 8, None]]
+        toTest = self.constructor(data, featureNames=ftNames)
+        ret = toTest.points.extract(lambda pt: 11 in pt, features=[2, 1])
+        expTest = self.constructor([[11, 2, 3], [7, 8, None]], featureNames=ftNames)
+        expRet = self.constructor([[None, 11, None], [None, 11, 15]], featureNames=ftNames)
+        assert toTest == expTest
+        assert ret == expRet
+
     ### using match module ###
 
     def test_points_extract_match_missing(self):
@@ -4778,6 +4835,26 @@ class StructureModifying(StructureShared):
     def test_features_extract_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('extract', 'feature')
 
+    def test_features_extract_pointLimited(self):
+        data = [[1, 2, 3], [None, 11, None], [None, 11, 15], [7, None, 9]]
+        ptNames = ['a', 'b', 'c', 'd']
+        toTest = self.constructor(data, pointNames=ptNames)
+        ret = toTest.features.extract(match.anyMissing, points=[1, 2])
+        expTest = self.constructor([[2], [11], [11], [None]], pointNames=ptNames)
+        expRet = self.constructor([[1, 3], [None, None], [None, 15], [7, 9]],
+                                  pointNames=ptNames)
+        assert toTest == expTest
+        assert ret == expRet
+
+        data = [[11, 2, 3], [None, 11, None], [None, 11, 15], [7, None, 9]]
+        toTest = self.constructor(data, pointNames=ptNames)
+        ret = toTest.features.extract(lambda ft: 11 in ft, points=['b', 'c'])
+        expTest = self.constructor([[11, 3], [None, None], [None, 15], [7, 9]],
+                                   pointNames=ptNames)
+        expRet = self.constructor([[2], [11], [11], [None]], pointNames=ptNames)
+        assert toTest == expTest
+        assert ret == expRet
+
     ### using match module ###
 
     def test_features_extract_match_missing(self):
@@ -5259,6 +5336,20 @@ class StructureModifying(StructureShared):
     @raises(InvalidArgumentValue)
     def test_points_delete_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('delete', 'point')
+
+    def test_points_delete_featureLimited(self):
+        data = [[1, 2, 3], [None, 11, None], [None, 11, 15], [7, 8, None]]
+        ftNames = ['a', 'b', 'c']
+        toTest = self.constructor(data, featureNames=ftNames)
+        toTest.points.delete(match.anyMissing, features=['b', 'c'])
+        exp = self.constructor([[1, 2, 3], [None, 11, 15]], featureNames=ftNames)
+        assert toTest == exp
+
+        data = [[11, 2, 3], [None, 11, None], [None, 11, 15], [7, 8, None]]
+        toTest = self.constructor(data, featureNames=ftNames)
+        toTest.points.delete(lambda pt: 11 in pt, features=['b', 'c'])
+        exp = self.constructor([[11, 2, 3], [7, 8, None]], featureNames=ftNames)
+        assert toTest == exp
 
     ### using match module ###
 
@@ -5860,6 +5951,21 @@ class StructureModifying(StructureShared):
     def test_features_delete_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('delete', 'feature')
 
+    def test_features_delete_pointLimited(self):
+        data = [[1, 2, 3], [None, 11, None], [None, 11, 15], [7, None, 9]]
+        ptNames = ['a', 'b', 'c', 'd']
+        toTest = self.constructor(data, pointNames=ptNames)
+        ret = toTest.features.delete(match.anyMissing, points=[1, 2])
+        expTest = self.constructor([[2], [11], [11], [None]], pointNames=ptNames)
+        assert toTest == expTest
+
+        data = [[11, 2, 3], [None, 11, None], [None, 11, 15], [7, None, 9]]
+        toTest = self.constructor(data, pointNames=ptNames)
+        ret = toTest.features.delete(lambda ft: 11 in ft, points=['b', 'c'])
+        expTest = self.constructor([[11, 3], [None, None], [None, 15], [7, 9]],
+                                   pointNames=ptNames)
+        assert toTest == expTest
+
     ### using match module ###
 
     def test_features_delete_match_missing(self):
@@ -6352,6 +6458,22 @@ class StructureModifying(StructureShared):
     def test_points_retain_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('retain', 'point')
 
+    def test_points_retain_featureLimited(self):
+        data = [[1, 2, 3], [None, 11, None], [None, 11, 15], [7, 8, None]]
+        ftNames = ['a', 'b', 'c']
+        toTest = self.constructor(data, featureNames=ftNames)
+        ret = toTest.points.retain(match.anyMissing, features=[1, 2])
+        expTest = self.constructor([[None, 11, None], [7, 8, None]],
+                                   featureNames=ftNames)
+        assert toTest == expTest
+
+        data = [[11, 2, 3], [None, 11, None], [None, 11, 15], [7, 8, None]]
+        toTest = self.constructor(data, featureNames=ftNames)
+        ret = toTest.points.retain(lambda pt: 11 in pt, features=[1, 2])
+        expTest = self.constructor([[None, 11, None], [None, 11, 15]],
+                                   featureNames=ftNames)
+        assert toTest == expTest
+
     ### using match module ###
 
     def test_points_retain_match_missing(self):
@@ -6364,6 +6486,12 @@ class StructureModifying(StructureShared):
         toTest = self.constructor([[None, None, None], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         ret = toTest.points.retain(match.allMissing)
         expTest = self.constructor([[None, None, None]])
+        expTest.features.setNames(['a', 'b', 'c'])
+        assert toTest == expTest
+
+        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.points.retain(match.anyMissing)
+        expTest = self.constructor([[None, 11, None], [7, 11, None]])
         expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
@@ -6975,6 +7103,21 @@ class StructureModifying(StructureShared):
     @raises(InvalidArgumentValue)
     def test_features_retain_range_numberGreaterThanTargeted(self):
         self.back_structural_range_numberGreaterThanTargeted('retain', 'feature')
+
+    def test_features_retain_pointLimited(self):
+        data = [[1, 2, 3], [None, 11, None], [None, 11, 15], [7, None, 9]]
+        ptNames = ['a', 'b', 'c', 'd']
+        toTest = self.constructor(data, pointNames=ptNames)
+        ret = toTest.features.retain(match.anyMissing, points=[1, 2])
+        expTest = self.constructor([[1, 3], [None, None], [None, 15], [7, 9]],
+                                   pointNames=ptNames)
+        assert toTest == expTest
+
+        data = [[11, 2, 3], [None, 11, None], [None, 11, 15], [7, None, 9]]
+        toTest = self.constructor(data, pointNames=ptNames)
+        ret = toTest.features.retain(lambda ft: 11 in ft, points=['b', 'c'])
+        expTest = self.constructor([[2], [11], [11], [None]], pointNames=ptNames)
+        assert toTest == expTest
 
     ### using match module ###
 

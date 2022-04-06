@@ -291,7 +291,7 @@ class Points(ABC):
     #########################
     @prepLog
     def copy(self, toCopy=None, start=None, end=None, number=None,
-             randomize=False, *,
+             randomize=False, features=None, *,
              useLog=None): # pylint: disable=unused-argument
         """
         Copy certain points of this object.
@@ -335,6 +335,11 @@ class Points(ABC):
             False, the chosen points are determined by point order,
             otherwise it is uniform random across the space of possible
             points.
+        features : None, identifier, list of identifiers
+            Only apply the target function to a selection of features in
+            each point. May be a single feature name or index, an
+            iterable, container of feature names and/or indices. None
+            indicates application to all features.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -419,11 +424,11 @@ class Points(ABC):
         --------
         duplicate, replicate, clone
         """
-        return self._copy(toCopy, start, end, number, randomize)
+        return self._copy(toCopy, start, end, number, randomize, features)
 
     @prepLog
     def extract(self, toExtract=None, start=None, end=None, number=None,
-                randomize=False, *,
+                randomize=False, features=None, *,
                 useLog=None): # pylint: disable=unused-argument
         """
         Move certain points of this object into their own object.
@@ -467,6 +472,11 @@ class Points(ABC):
             False, the chosen points are determined by point order,
             otherwise it is uniform random across the space of possible
             points.
+        features : None, identifier, list of identifiers
+            Only apply the target function to a selection of features in
+            each point. May be a single feature name or index, an
+            iterable, container of feature names and/or indices. None
+            indicates application to all features.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -623,11 +633,12 @@ class Points(ABC):
         --------
         move, pull, separate, withdraw, cut, hsplit
         """
-        return self._extract(toExtract, start, end, number, randomize)
+        return self._extract(toExtract, start, end, number, randomize,
+                             features)
 
     @prepLog
     def delete(self, toDelete=None, start=None, end=None, number=None,
-               randomize=False, *,
+               randomize=False, features=None, *,
                useLog=None): # pylint: disable=unused-argument
         """
         Remove certain points from this object.
@@ -671,6 +682,11 @@ class Points(ABC):
             False, the chosen points are determined by point order,
             otherwise it is uniform random across the space of possible
             points.
+        features : None, identifier, list of identifiers
+            Only apply the target function to a selection of features in
+            each point. May be a single feature name or index, an
+            iterable, container of feature names and/or indices. None
+            indicates application to all features.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -777,11 +793,11 @@ class Points(ABC):
         --------
         remove, drop, exclude, eliminate, destroy, cut
         """
-        self._delete(toDelete, start, end, number, randomize)
+        self._delete(toDelete, start, end, number, randomize, features)
 
     @prepLog
     def retain(self, toRetain=None, start=None, end=None, number=None,
-               randomize=False, *,
+               randomize=False, features=None, *,
                useLog=None): # pylint: disable=unused-argument
         """
         Keep only certain points of this object.
@@ -825,6 +841,11 @@ class Points(ABC):
             False, the chosen points are determined by point order,
             otherwise it is uniform random across the space of possible
             points.
+        features : None, identifier, list of identifiers
+            Only apply the target function to a selection of features in
+            each point. May be a single feature name or index, an
+            iterable, container of feature names and/or indices. None
+            indicates application to all features.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -929,16 +950,17 @@ class Points(ABC):
          'a' │ 1 0 0
         >
         """
-        self._retain(toRetain, start, end, number, randomize)
+        self._retain(toRetain, start, end, number, randomize, features)
 
     @limitedTo2D
-    def count(self, condition):
+    def count(self, condition, features=None):
         """
         The number of points which satisfy the condition.
 
         Parameters
         ----------
         condition : function, query
+
             * function - accepts a point as its only argument and
               returns a boolean value to indicate if the point should
               be counted
@@ -947,6 +969,12 @@ class Points(ABC):
               OPERATOR is separated from the FEATURENAME and VALUE by
               whitespace characters. See ``nimble.match.QueryString``
               for string requirements.
+
+        features : None, identifier, list of identifiers
+            Only apply the condition function to a selection of features
+            in each point. May be a single feature name or index, an
+            iterable, container of feature names and/or indices. None
+            indicates application to all features.
 
         Returns
         -------
@@ -976,7 +1004,7 @@ class Points(ABC):
         --------
         number, counts, tally
         """
-        return self._count(condition)
+        return self._count(condition, features)
 
     @prepLog
     def sort(self, by=None, reverse=False, *,

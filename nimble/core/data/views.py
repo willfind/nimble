@@ -278,17 +278,17 @@ class PointsView(Points, metaclass=ABCMeta):
 
     @pointsExceptionDoc
     def extract(self, toExtract=None, start=None, end=None, number=None,
-                randomize=False, *, useLog=None):
+                randomize=False, features=None, *, useLog=None):
         readOnlyException('extract')
 
     @pointsExceptionDoc
     def delete(self, toDelete=None, start=None, end=None, number=None,
-               randomize=False, *, useLog=None):
+               randomize=False, features=None, *, useLog=None):
         readOnlyException('delete')
 
     @pointsExceptionDoc
     def retain(self, toRetain=None, start=None, end=None, number=None,
-               randomize=False, *, useLog=None):
+               randomize=False, features=None, *, useLog=None):
         readOnlyException('retain')
 
     @pointsExceptionDoc
@@ -367,17 +367,17 @@ class FeaturesView(Features, metaclass=ABCMeta):
 
     @featuresExceptionDoc
     def extract(self, toExtract=None, start=None, end=None, number=None,
-                randomize=False, *, useLog=None):
+                randomize=False, points=None, *, useLog=None):
         readOnlyException('extract')
 
     @featuresExceptionDoc
     def delete(self, toDelete=None, start=None, end=None, number=None,
-               randomize=False, *, useLog=None):
+               randomize=False, points=None, *, useLog=None):
         readOnlyException('delete')
 
     @featuresExceptionDoc
     def retain(self, toRetain=None, start=None, end=None, number=None,
-               randomize=False, *, useLog=None):
+               randomize=False, points=None, *, useLog=None):
         readOnlyException('retain')
 
     @featuresExceptionDoc

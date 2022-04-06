@@ -299,7 +299,7 @@ class Features(ABC):
     @limitedTo2D
     @prepLog
     def copy(self, toCopy=None, start=None, end=None, number=None,
-             randomize=False, *,
+             randomize=False, points=None, *,
              useLog=None): # pylint: disable=unused-argument
         """
         Copy certain features of this object.
@@ -343,6 +343,11 @@ class Features(ABC):
             False, the chosen features are determined by feature order,
             otherwise it is uniform random across the space of possible
             features.
+        points : None, identifier, list of identifiers
+            Only apply the target function to a selection of points in
+            each feature. May be a single point name or index, an
+            iterable, container of point names and/or indices. None
+            indicates application to all points.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -444,12 +449,12 @@ class Features(ABC):
         --------
         duplicate, replicate, clone
         """
-        return self._copy(toCopy, start, end, number, randomize)
+        return self._copy(toCopy, start, end, number, randomize, points)
 
     @limitedTo2D
     @prepLog
     def extract(self, toExtract=None, start=None, end=None, number=None,
-                randomize=False, *,
+                randomize=False, points=None, *,
                 useLog=None): # pylint: disable=unused-argument
         """
         Move certain features of this object into their own object.
@@ -493,6 +498,11 @@ class Features(ABC):
             False, the chosen features are determined by feature order,
             otherwise it is uniform random across the space of possible
             features.
+        points : None, identifier, list of identifiers
+            Only apply the target function to a selection of points in
+            each feature. May be a single point name or index, an
+            iterable, container of point names and/or indices. None
+            indicates application to all points.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -670,12 +680,12 @@ class Features(ABC):
         --------
         move, pull, separate, withdraw, cut, vsplit
         """
-        return self._extract(toExtract, start, end, number, randomize)
+        return self._extract(toExtract, start, end, number, randomize, points)
 
     @limitedTo2D
     @prepLog
     def delete(self, toDelete=None, start=None, end=None, number=None,
-               randomize=False, *,
+               randomize=False, points=None, *,
                useLog=None): # pylint: disable=unused-argument
         """
         Remove certain features from this object.
@@ -719,6 +729,11 @@ class Features(ABC):
             False, the chosen features are determined by feature order,
             otherwise it is uniform random across the space of possible
             features.
+        points : None, identifier, list of identifiers
+            Only apply the target function to a selection of points in
+            each feature. May be a single point name or index, an
+            iterable, container of point names and/or indices. None
+            indicates application to all points.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -836,12 +851,12 @@ class Features(ABC):
         --------
         remove, drop, exclude, eliminate, destroy, cut
         """
-        self._delete(toDelete, start, end, number, randomize)
+        self._delete(toDelete, start, end, number, randomize, points)
 
     @limitedTo2D
     @prepLog
     def retain(self, toRetain=None, start=None, end=None, number=None,
-               randomize=False, *,
+               randomize=False, points=None, *,
                useLog=None): # pylint: disable=unused-argument
         """
         Keep only certain features of this object.
@@ -885,6 +900,11 @@ class Features(ABC):
             False, the chosen features are determined by feature order,
             otherwise it is uniform random across the space of possible
             features.
+        points : None, identifier, list of identifiers
+            Only apply the target function to a selection of points in
+            each feature. May be a single point name or index, an
+            iterable, container of point names and/or indices. None
+            indicates application to all points.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -1002,16 +1022,17 @@ class Features(ABC):
         --------
         keep, hold, maintain, preserve, remove
         """
-        self._retain(toRetain, start, end, number, randomize)
+        self._retain(toRetain, start, end, number, randomize, points)
 
     @limitedTo2D
-    def count(self, condition):
+    def count(self, condition, points=None):
         """
         The number of features which satisfy the condition.
 
         Parameters
         ----------
         condition : function, query
+
             * function - accepts a feature as its only argument and
               returns a boolean value to indicate if the feature should
               be counted
@@ -1020,6 +1041,12 @@ class Features(ABC):
               OPERATOR is separated from the POINTNAME and VALUE by
               whitespace characters. See ``nimble.match.QueryString``
               for string requirements.
+
+        points : None, identifier, list of identifiers
+            Only apply the condition function to a selection of points
+            in each feature. May be a single point name or index, an
+            iterable, container of point names and/or indices. None
+            indicates application to all points.
 
         Returns
         -------
@@ -1049,7 +1076,7 @@ class Features(ABC):
         --------
         number, counts, tally
         """
-        return self._count(condition)
+        return self._count(condition, points)
 
     @limitedTo2D
     @prepLog
