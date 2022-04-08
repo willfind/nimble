@@ -324,3 +324,21 @@ def testRSquared():
 
     rsq = rSquared(knownLabelsMatrix, predictedLabelsMatrix)
     assert rsq == 0.6
+
+# ##################################
+# # averageDistanceToClusterCenter #
+# ##################################
+#
+# @noLogEntryExpected
+# def test_averageDistanceToClusterCenter():
+#     assert averageDistanceToClusterCenter.optimal == 'min'
+#
+#     predCenters = nimble.data([[0, 0], [1, 1], [-1, -1], [0, 0]], useLog=False)
+#
+#     knownValues = nimble.data([[0, 0], [1, 1], [-1, -1], [0, 0]], useLog=False)
+#     adc = averageDistanceToClusterCenter(knownValues, predCenters)
+#     assert adc == 0
+#
+#     knownValues = nimble.data([[4, 3], [4, 5], [-4, -5], [-3, 4]], useLog=False)
+#     adc = averageDistanceToClusterCenter(knownValues, predCenters)
+#     assert adc == 5
