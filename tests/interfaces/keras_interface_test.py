@@ -313,3 +313,18 @@ def testKerasReproducibility(optimizer):
 def testLearnerTypes():
     learners = ['keras.' + l for l in nimble.learnerNames('keras')]
     assert all(lt == 'undefined' for lt in nimble.learnerType(learners))
+
+@keraSkipDec
+def testLossCoverage():
+    kerasInt = nimble.core._learnHelpers.findBestInterface('keras')
+    lts = nimble.core.interfaces.keras_interface.LEARNERTYPES
+    fullLossList = lts["classification"] + lts["regression"]
+
+    # For all Loss classes (which should cover all possiblilities that Keras
+    # provides), check to see that it is represented in the LEARNERTYPES
+    # constant.
+    for n in dir(kerasInt.package.losses):
+        val = getattr(kerasInt.package.losses, n)
+        if type(val) is type and issubclass(val, kerasInt.package.losses.Loss):
+            if not (val is kerasInt.package.losses.Loss):
+                assert val.__name__ in fullLossList
