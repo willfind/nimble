@@ -77,6 +77,7 @@ def testKerasAPI(optimizer):
     mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
                        layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
                        epochs=20, batch_size=128)
+    assert mym.learnerType == 'classification'
 
     #######test apply
     x = mym.apply(testX=x_train)
@@ -101,8 +102,9 @@ def testKerasAPI(optimizer):
         from keras.models import Sequential
 
     mym = nimble.train(Sequential, trainX=x_train, trainY=y_train, optimizer=optimizer,
-                       layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
+                       layers=layers, loss='mean_squared_error', metrics=['accuracy'],
                        epochs=20, batch_size=128)
+    assert mym.learnerType == 'regression'
 
 @keraSkipDec
 @logCountAssertionFactory(3)
@@ -306,3 +308,8 @@ def testKerasReproducibility(optimizer):
         applied2 = mym.apply(testX=x_train, useLog=False)
 
         assert applied1 == applied2
+
+@keraSkipDec
+def testLearnerTypes():
+    learners = ['keras.' + l for l in nimble.learnerNames('keras')]
+    assert all(lt == 'undefined' for lt in nimble.learnerType(learners))

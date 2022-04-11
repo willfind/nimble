@@ -13,7 +13,7 @@ class MultiOutputRidgeRegression(CustomLearner):
     matches that output shape when apply() is called.
     """
 
-    learnerType = 'unknown'
+    learnerType = 'regression'
 
     def train(self, trainX, trainY, lamb=0):
         self._learners = []

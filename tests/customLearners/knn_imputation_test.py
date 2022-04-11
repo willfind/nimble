@@ -29,6 +29,7 @@ def test_KNNImputation_classification():
         expTest = constructor(expData, pointNames=pNames, featureNames=fNames, useLog=False)
         learner = KNNImputation()
         learner.train(toTest, k=3, mode='classification')
+        assert learner.learnerType == 'transformation'
         ret = learner.apply(toTest)
 
         assert ret == expTest

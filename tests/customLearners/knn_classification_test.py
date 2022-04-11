@@ -29,6 +29,7 @@ def testKNNClassificationSimpleScores():
 
     for value in ['nimble.KNNClassifier', KNNClassifier]:
         tl = nimble.train(value, trainX=trainObj, trainY=0, k=3)
+        assert tl.learnerType == 'classification'
 
         ret = tl.getScores(testObj)
 

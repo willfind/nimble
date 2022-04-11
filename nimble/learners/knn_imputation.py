@@ -21,7 +21,7 @@ class KNNImputation(CustomLearner):
     """
     Imputation using K-Nearest Neighbors algorithms.
     """
-    learnerType = 'unknown'
+    learnerType = 'transformation'
 
     def train(self, trainX, trainY=None, k=5, mode=None):
         if mode not in ['classification', 'regression']:

@@ -117,7 +117,7 @@ class VariablePointPredictor(nimble.CustomLearner):
     TrainedLearner apply is based on the number of points returned
     by the learner.
     """
-    learnerType = 'unknown'
+    learnerType = 'undefined'
 
     def train(self, trainX, trainY, matchTestPoints=True):
         self.matchTestPoints = matchTestPoints

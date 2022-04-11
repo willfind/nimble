@@ -82,21 +82,11 @@ layers = [layer0, layer1, layer2]
 ## our testX data. Similar to above, the string 'keras.Sequential' informs
 ## Nimble to use the Sequential object from Keras, so importing the object
 ## manually is not necessary.
-digitProbability = nimble.trainAndApply(
+predictions = nimble.trainAndApply(
     'keras.Sequential', trainX=trainX, trainY=trainY, testX=testX,
     layers=layers, optimizer='adam', loss='sparse_categorical_crossentropy',
     metrics=['accuracy'], epochs=10)
 
-## The returned `digitProbability` object has 10 features where each feature
-## denotes the probability for the label at that index.  For our prediction,
-## we will use the index with the maximum probability (that is, the digit that
-## the model thinks is most likely for that data point). Then we can see how
-## our simple neural net performed on our test set.
-def maximumProbability(pt):
-    maximum = max(pt)
-    return list(pt).index(maximum)
-
-predictions = digitProbability.points.calculate(maximumProbability)
 accuracy = nimble.calculate.fractionCorrect(testY, predictions)
 print('Accuracy of simple neural network:', accuracy)
 
@@ -145,14 +135,13 @@ layersCNN.append(nimble.Init('Flatten'))
 layersCNN.append(nimble.Init('Dense', units=128, activation='relu'))
 layersCNN.append(nimble.Init('Dense', units=10, activation='softmax'))
 
-probabilityCNN = nimble.trainAndApply(
+predictionsCNN = nimble.trainAndApply(
     'keras.Sequential', trainX=trainX, trainY=trainY, testX=testX,
     layers=layersCNN, optimizer='adam', loss='sparse_categorical_crossentropy',
     metrics=['accuracy'], epochs=10)
 
 ## We see that the loss and accuracy of this model improved much faster than
 ## our previous model. Let's check how it performed on our test set.
-predictionsCNN = probabilityCNN.points.calculate(maximumProbability)
 accuracyCNN = nimble.calculate.fractionCorrect(testY, predictionsCNN)
 print('Accuracy of 2D convolutional neural network:', accuracyCNN)
 

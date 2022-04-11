@@ -36,6 +36,17 @@ def checkFormatRaw(scores, numLabels):
     assert (scores.shape[1] == numLabels
             or scores.shape[1] == (numLabels * (numLabels - 1)) / 2)
 
+# # TODO outliers as 'classification' see test__getScoresFormat and testGetScoresFormat
+# OUTLIER_LEARNERS = ['EllipticEnvelope', 'IsolationForest', 'OneClassSVM',
+#                     'SGDOneClassSVM']
+#
+# def checkOutlierFormat(scores, testX):
+#     """
+#     Outliers give a single score per point
+#     """
+#     assert scores.shape[0] == testX.shape[0]
+#     assert scores.shape[1] == 1
+
 @pytest.mark.slow
 def test__getScoresFormat():
     """
@@ -78,6 +89,11 @@ def test__getScoresFormat():
                         # this is to catch learners that cannot output scores
                         continue
                     checkFormatRaw(scores, i)
+                    # # TODO handle outlier classifiers correctly
+                    # if lName in OUTLIER_LEARNERS:
+                    #     checkOutlierFormat(scores, testX)
+                    # else:
+                    #     checkFormatRaw(scores, i)
 
 @pytest.mark.slow
 def testGetScoresFormat():
@@ -115,7 +131,12 @@ def testGetScoresFormat():
                     except (NotImplementedError, SystemError):
                         # this is to catch learners that cannot output scores
                         continue
-                    checkFormat(scores, i)
+                    checkFormatRaw(scores, i)
+                    # # TODO handle outlier classifiers correctly
+                    # if lName in OUTLIER_LEARNERS:
+                    #     checkOutlierFormat(scores, testX)
+                    # else:
+                    #     checkFormatRaw(scores, i)
 
 
 @pytest.mark.slow

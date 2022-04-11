@@ -29,7 +29,7 @@ def testCustomLearnerValidationWrongParamsTrain():
     """ Test CustomLearner's validation of required train() parameters """
 
     class WrongArgs(CustomLearner):
-        learnerType = 'unknown'
+        learnerType = 'undefined'
 
         def train(self, trainZ, foo):
             return None
@@ -45,7 +45,7 @@ def testCustomLearnerValidationWrongParamsIncTrain():
     """ Test CustomLearner's validation of required incrementalTrain() parameters """
 
     class WrongArgs(CustomLearner):
-        learnerType = 'unknown'
+        learnerType = 'undefined'
 
         def train(self, trainX, trainY):
             return None
@@ -64,7 +64,7 @@ def testCustomLearnerValidationWrongParamsApply():
     """ Test CustomLearner's validation of required apply() parameters """
 
     class WrongArgs(CustomLearner):
-        learnerType = 'unknown'
+        learnerType = 'undefined'
 
         def train(self, trainX, trainY):
             return None
@@ -80,7 +80,7 @@ def testCustomLearnerValidationNoTrainOrIncTrain():
     """ Test CustomLearner's validation of requiring either train() or incrementalTrain() """
 
     class NoTrain(CustomLearner):
-        learnerType = 'unknown'
+        learnerType = 'undefined'
 
         def apply(self, testX):
             return None
@@ -468,7 +468,7 @@ def testMeanConstantSimple():
 
 
 class RandomControl(CustomLearner):
-    learnerType = 'unknown'
+    learnerType = 'undefined'
 
     def train(self, trainX, trainY):
         self.rand = nimble.random.pythonRandom.randint(0, 1e15)

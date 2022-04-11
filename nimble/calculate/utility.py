@@ -450,7 +450,7 @@ def performanceFunction(optimal, best=None, predict=None, validate=True,
     >>> X = nimble.data([[0, 0], [4, 0], [0, 4], [4, 4]] * 25)
     >>> X += nimble.random.data(100, 2, 0, randomSeed=1) # add noise
     >>> nimble.trainAndTest('skl.KMeans', averageDistanceToCenter, X,
-    ...                     n_clusters=4)
+    ...                     n_clusters=4, randomSeed=1)
     1.3493987354974297
     """
     if optimal not in ['min', 'max']:

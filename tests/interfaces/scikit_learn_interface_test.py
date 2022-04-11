@@ -247,7 +247,7 @@ def testSciKitLearnExcludedLearners():
     apply = nimble.trainAndApply(toCall('KernelCenterer'), trainX)
 
 
-def getLearnersByType(lType=None, ignore=[]):
+def getLearnersByType(lType=None, ignore=[], learnersRequired=True):
     learners = nimble.learnerNames(packageName)
     typeMatch = []
     for learner in learners:
@@ -257,7 +257,8 @@ def getLearnersByType(lType=None, ignore=[]):
                 typeMatch.append(learner)
         elif learner not in ignore:
             typeMatch.append(learner)
-    assert typeMatch # check not returning an empty list
+    if learnersRequired:
+        assert typeMatch # check not returning an empty list
     return typeMatch
 
 
@@ -288,6 +289,7 @@ def testSciKitLearnClassificationLearners():
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments,
                           randomSeed=seed)
+        assert TL.learnerType == 'classification'
         predNimble = TL.apply(testX)
         predSL = _apply_saveLoad(TL, testX)
 
@@ -325,6 +327,7 @@ def testSciKitLearnRegressionLearners():
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments,
                           randomSeed=seed)
+        assert TL.learnerType == 'regression'
         predNimble = TL.apply(testX)
         predSL = _apply_saveLoad(TL, testX)
 
@@ -368,6 +371,7 @@ def testSciKitLearnMultiTaskRegressionLearners():
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainXObj, trainYObj,
                           randomSeed=seed)
+        assert TL.learnerType == 'regression'
         predNimble = TL.apply(testXObj)
         predSL = _apply_saveLoad(TL, testXObj)
 
@@ -405,6 +409,7 @@ def testSciKitLearnClusterLearners():
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainX, arguments=arguments,
                           randomSeed=seed)
+        assert TL.learnerType == 'cluster'
         predNimble = TL.apply(testX)
         predSL = _apply_saveLoad(TL, testX)
 
@@ -426,9 +431,8 @@ def testSciKitLearnOtherPredictLearners():
     Xtest = testX._data
 
     skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
-    predictors = getLearnersByType('other')
+    predictors = getLearnersByType('UNKNOWN', learnersRequired=False)
     learners = [p for p in predictors if hasattr(skl.findCallable(p), 'predict')]
-    assert learners
 
     @logCountAssertionFactory(3)
     def compareOutputs(learner):
@@ -454,7 +458,8 @@ def testSciKitLearnOtherPredictLearners():
 @sklSkipDec
 @pytest.mark.slow
 def testSciKitLearnTransformationLearners():
-    ignore = ['MiniBatchSparsePCA', 'SparsePCA'] # tested elsewhere
+    ignore = ['MiniBatchSparsePCA', 'SparsePCA', 'CountVectorizer',
+              'TfidfVectorizer', 'PatchExtractor'] # tested elsewhere
     learners = getLearnersByType('transformation', ignore)
 
     @logCountAssertionFactory(3)
@@ -463,13 +468,17 @@ def testSciKitLearnTransformationLearners():
         sklObj = skl.findCallable(learner)
         sciKitLearnObj = sklObj()
         arguments = setupSKLArguments(sciKitLearnObj)
-        sciKitLearnObj.fit(Xtrain, Ytrain)
-        transSKL = sciKitLearnObj.transform(Xtrain)
+        if hasattr(sciKitLearnObj, 'transform'):
+            sciKitLearnObj.fit(Xtrain, Ytrain)
+            transSKL = sciKitLearnObj.transform(Xtrain)
+        else:
+            transSKL = sciKitLearnObj.fit_transform(Xtrain, Ytrain)
         transSKL = nimble.data(transSKL, useLog=False)
 
         seed = adjustRandomParamForNimble(arguments)
         TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments,
                           randomSeed=seed)
+        assert TL.learnerType == 'transformation'
         transSL = _apply_saveLoad(TL, trainX)
         transNimble = TL.apply(trainX)
 
@@ -483,7 +492,11 @@ def testSciKitLearnTransformationLearners():
         sciKitLearnObj = sklObj()
         arguments = setupSKLArguments(sciKitLearnObj)
 
-        transSKL = sciKitLearnObj.fit_transform(Xtrain)
+        if hasattr(sciKitLearnObj, 'transform'):
+            sciKitLearnObj.fit(Xtrain)
+            transSKL = sciKitLearnObj.transform(Xtrain)
+        else:
+            transSKL = sciKitLearnObj.fit_transform(Xtrain)
         transSKL = nimble.data(transSKL, useLog=False)
 
         seed = adjustRandomParamForNimble(arguments)
@@ -556,10 +569,8 @@ def testSciKitLearnOtherFitTransformLearners():
 
 
     skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
-    text = ['CountVectorizer', 'TfidfVectorizer']
-    transform = getLearnersByType('other', ignore=text)
+    transform = getLearnersByType('UNKNOWN', learnersRequired=False)
     learners = [t for t in transform if hasattr(skl.findCallable(t), 'fit_transform')]
-    assert learners
 
     @logCountAssertionFactory(3)
     def compareOutputs(learner):
@@ -613,6 +624,31 @@ def testSciKitLearnTextVectorizers():
 
     for learner in learners:
         compareOutputs(learner)
+
+@sklSkipDec
+@logCountAssertionFactory(3)
+def testSciKitLearnPatchExtractor():
+    data = np.array([[[ 2, 19, 13], [ 3, 18, 13], [ 7, 20, 13], [ 8, 21, 14]],
+                     [[ 1, 18, 12], [ 3, 18, 13], [ 7, 20, 13], [ 8, 21, 14]],
+                     [[ 2, 17, 12], [ 6, 19, 12], [ 7, 20, 13], [ 7, 20, 13]],
+                     [[ 3, 18, 13], [ 7, 20, 13], [ 7, 20, 13], [ 5, 20, 13]]])
+    trainX = nimble.data(data, useLog=False)
+    Xtrain = data
+
+    skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
+
+
+    sklObj = skl.findCallable('PatchExtractor')
+    sciKitLearnObj = sklObj(patch_size=(2, 2))
+    sciKitLearnObj.fit(Xtrain)
+    transSKL = sciKitLearnObj.transform(Xtrain)
+    transSKL = nimble.data(transSKL, useLog=False)
+
+    TL = nimble.train(toCall('PatchExtractor'), trainX, patch_size=(2, 2))
+    transNimble = TL.apply(trainX)
+    transSL = _apply_saveLoad(TL, trainX)
+
+    equalityAssertHelper(transSKL, transNimble, transSL)
 
 @sklSkipDec
 @logCountAssertionFactory(4)
@@ -688,12 +724,14 @@ def testGetAttributesCallable():
     for learner in toTest:
         fullName = 'scikitlearn.' + learner
         lType = nimble.learnerType(fullName)
-        if lType in ['classification', 'transformation', 'cluster', 'other']:
+        if lType in ['classification', 'transformation', 'cluster', 'UNKNOWN']:
             X = cTrainX
             Y = cTrainY
-        if lType == 'regression':
+        elif lType == 'regression':
             X = rTrainX
             Y = rTrainY
+        else:
+            raise ValueError('unexpected learnerType')
 
         try:
             tl = nimble.train(fullName, X, Y)
@@ -863,3 +901,10 @@ def adjustRandomParamForNimble(arguments):
     else:
         seed = None
     return seed
+
+@sklSkipDec
+def testLearnerTypes():
+    learners = ['skl.' + l for l in nimble.learnerNames('skl')]
+    allowed = ['classification', 'regression', 'transformation', 'cluster',
+               'UNKNOWN'] # TODO outlier classifiers are currently UNKNOWN
+    assert all(lt in allowed for lt in nimble.learnerType(learners))
