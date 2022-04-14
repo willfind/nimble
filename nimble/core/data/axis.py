@@ -61,9 +61,11 @@ class Axis(ABC):
         self._base = base
         if isinstance(self, Points):
             self._axis = 'point'
+            self._offAxis = 'feature'
             self._isPoint = True
         elif isinstance(self, Features):
             self._axis = 'feature'
+            self._offAxis = 'point'
             self._isPoint = False
         else:
             msg = 'Axis objects must also inherit from Points or Features'
@@ -320,9 +322,9 @@ class Axis(ABC):
     #########################
     # Structural Operations #
     #########################
-    def _copy(self, toCopy, start, end, number, randomize):
+    def _copy(self, toCopy, start, end, number, randomize, limitTo):
         ret = self._genericStructuralFrontend('copy', toCopy, start, end,
-                                              number, randomize)
+                                              number, randomize, limitTo)
         if self._isPoint:
             ret.features.setNames(self._base.features._getNamesNoGeneration(),
                                   useLog=False)
@@ -336,9 +338,9 @@ class Axis(ABC):
         return ret
 
 
-    def _extract(self, toExtract, start, end, number, randomize):
+    def _extract(self, toExtract, start, end, number, randomize, limitTo):
         ret = self._genericStructuralFrontend('extract', toExtract, start, end,
-                                              number, randomize)
+                                              number, randomize, limitTo)
 
         ret._relPath = self._base.relativePath
         ret._absPath = self._base.absolutePath
@@ -346,20 +348,21 @@ class Axis(ABC):
         return ret
 
 
-    def _delete(self, toDelete, start, end, number, randomize):
+    def _delete(self, toDelete, start, end, number, randomize, limitTo):
         _ = self._genericStructuralFrontend('delete', toDelete, start, end,
-                                              number, randomize)
+                                              number, randomize, limitTo)
 
-    def _retain(self, toRetain, start, end, number, randomize):
+    def _retain(self, toRetain, start, end, number, randomize, limitTo):
         ref = self._genericStructuralFrontend('retain', toRetain, start, end,
-                                              number, randomize)
+                                              number, randomize, limitTo)
 
         paths = (self._base.absolutePath, self._base.relativePath)
         self._base._referenceFrom(ref, paths=paths)
 
 
-    def _count(self, condition):
-        return self._genericStructuralFrontend('count', condition)
+    def _count(self, condition, limitTo):
+        return self._genericStructuralFrontend('count', condition,
+                                               limitTo=limitTo)
 
 
     def _sort(self, by, reverse):
@@ -1054,7 +1057,7 @@ class Axis(ABC):
         """
         Convert a query string to an axis input function.
         """
-        offAxis = 'feature' if self._isPoint else 'point'
+        offAxis = self._offAxis
         try:
             query = QueryString(string, elementQuery=False)
         except InvalidArgumentValue as e:
@@ -1079,14 +1082,14 @@ class Axis(ABC):
 
         return query
 
-    def _genericStructuralFrontend(self, structure, target=None,
-                                   start=None, end=None, number=None,
-                                   randomize=False):
-        axis = self._axis
+    def _genericStructuralFrontend(self, structure, target=None, start=None,
+                                   end=None, number=None, randomize=False,
+                                   limitTo=None):
         axisLength = len(self)
 
-        _validateStructuralArguments(structure, axis, target, start,
-                                     end, number, randomize)
+        _validateStructuralArguments(structure, self._axis, self._offAxis,
+                                     target, start, end, number, randomize,
+                                     limitTo)
         targetList = []
         argName = 'to' + structure.capitalize()
         if target is not None and isinstance(target, str):
@@ -1104,7 +1107,7 @@ class Axis(ABC):
 
         # list-like container types
         if target is not None and not hasattr(target, '__call__'):
-            targetList = constructIndicesList(self._base, axis, target,
+            targetList = constructIndicesList(self._base, self._axis, target,
                                               argName)
             if len(set(targetList)) != len(targetList):
                 dup = set(v for v in targetList if targetList.count(v) > 1)
@@ -1120,7 +1123,12 @@ class Axis(ABC):
                 msg += "with more than two dimensions"
                 raise ImproperObjectAction(msg)
             # construct list from function
-            for targetID, view in enumerate(self):
+            if limitTo is not None:
+                obj = self._base._getAxis(self._offAxis).copy(limitTo)
+                toIter = obj._getAxis(self._axis)
+            else:
+                toIter = self
+            for targetID, view in enumerate(toIter):
                 if target(view):
                     targetList.append(targetID)
 
@@ -1133,7 +1141,7 @@ class Axis(ABC):
                 end = axisLength - 1
             else:
                 end = self._getIndex(end)
-            _validateStartEndRange(start, end, axis, axisLength)
+            _validateStartEndRange(start, end, self._axis, axisLength)
 
             # end + 1 because our range is inclusive
             targetList = list(range(start, end + 1))
@@ -1144,7 +1152,8 @@ class Axis(ABC):
         if number:
             if number > len(targetList):
                 msg = f"The value for 'number' ({number}) is greater than the "
-                msg += f"number of {axis}s to {structure} ({len(targetList)})"
+                msg += f"number of {self._axis}s to {structure} "
+                msg += f"({len(targetList)})"
                 raise InvalidArgumentValue(msg)
             if randomize:
                 targetList = nimble.random.pythonRandom.sample(targetList,
@@ -1235,7 +1244,7 @@ class Axis(ABC):
             raise InvalidArgumentType(msg)
 
         shapeIdx = 1 if self._isPoint else 0
-        offAxis = 'feature' if self._isPoint else 'point'
+        offAxis = self._offAxis
         objOffAxis = self._base._getAxis(offAxis)
         toInsertAxis = toInsert._getAxis(self._axis)
         toInsertOffAxis = toInsert._getAxis(offAxis)
@@ -1268,7 +1277,7 @@ class Axis(ABC):
         # there can be no inconsistency, so both objects must have names
         # assigned for this to be relevant.
         if objHasOffAxisNames and insertHasOffAxisNames:
-            self._validateReorderedNames(offAxis, funcName, toInsert)
+            self._validateReorderedNames(self._offAxis, funcName, toInsert)
 
     def _validateEmptyNamesIntersection(self, argName, argValue):
         intersection = self._nameIntersection(argValue)
@@ -1396,9 +1405,8 @@ class Axis(ABC):
         original object will be returned. Assumes validation of the
         names has already occurred.
         """
-        offAxis = 'feature' if self._isPoint else 'point'
-        offAxisObj = self._base._getAxis(offAxis)
-        toInsertAxis = toInsert._getAxis(offAxis)
+        offAxisObj = self._base._getAxis(self._offAxis)
+        toInsertAxis = toInsert._getAxis(self._offAxis)
         # This may not look exhaustive, but because of the previous call to
         # _validateInsertableData before this helper, most of the toInsert
         # cases will have already caused an exception
@@ -1409,7 +1417,7 @@ class Axis(ABC):
             if not (objAllDefault or toInsertAllDefault) and reorder:
                 # use copy when reordering so toInsert object is not modified
                 toInsert = toInsert.copy()
-                toInsert._getAxis(offAxis).permute(offAxisObj.getNames())
+                toInsert._getAxis(self._offAxis).permute(offAxisObj.getNames())
 
         return toInsert
 
@@ -1440,8 +1448,7 @@ class Axis(ABC):
         """
         Get the first point or feature names of the object's unique values.
         """
-        offAxis = 'feature' if self._isPoint else 'point'
-        offAxisObj = self._base._getAxis(offAxis)
+        offAxisObj = self._base._getAxis(self._offAxis)
         axisNames = False
         offAxisNames = False
         if self._namesCreated():
@@ -1506,8 +1513,8 @@ class Axis(ABC):
 # Helpers #
 ###########
 
-def _validateStructuralArguments(structure, axis, target, start, end,
-                                 number, randomize):
+def _validateStructuralArguments(structure, axis, offAxis, target, start, end,
+                                 number, randomize, limitTo):
     """
     Check for conflicting and co-dependent arguments.
     """
@@ -1528,6 +1535,14 @@ def _validateStructuralArguments(structure, axis, target, start, end,
             msg = f"Range removal is exclusive, to use it, {targetName} must "
             msg += "be None"
             raise InvalidArgumentTypeCombination(msg)
+    if limitTo is not None:
+        msg = f'{offAxis}s can only be used '
+        if target is None:
+            msg += 'when the target parameter is not None'
+            raise InvalidArgumentValueCombination(msg)
+        if not hasattr(target, '__call__'):
+            msg += 'when target is a function'
+            raise InvalidArgumentValue(msg)
 
 def _validateStartEndRange(start, end, axis, axisLength):
     """
