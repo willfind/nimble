@@ -6489,12 +6489,6 @@ class StructureModifying(StructureShared):
         expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
-        toTest = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.points.retain(match.anyMissing)
-        expTest = self.constructor([[None, 11, None], [7, 11, None]])
-        expTest.features.setNames(['a', 'b', 'c'])
-        assert toTest == expTest
-
     def test_points_retain_match_nonNumeric(self):
         toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
         ret = toTest.points.retain(match.anyNonNumeric)
