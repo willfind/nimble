@@ -361,7 +361,7 @@ def collectAttributes(obj, generators, checkers):
     """
     Helper to collect, validate, and return all (relevant) attributes
     associated with a python object (learner, kernel, etc.). The
-    returned value will be a dict, mapping names of attribtues to values
+    returned value will be a dict, mapping names of attributes to values
     of attributes. In the case of collisions (especially in the
     recursive case) the attribute names will be prefaced with the name
     of the object from which they originate.
@@ -384,35 +384,39 @@ def collectAttributes(obj, generators, checkers):
         the possible attribute is to be included in the output, the
         function must return True.
     """
-    if generators is None:
-        def wrappedDir(obj):
-            ret = {}
-            keys = dir(obj)
-            for k in keys:
-                try:
-                    val = getattr(obj, k)
-                    ret[k] = val
-                # safety against any sort of error someone may have in their
-                # property code.
-                except (AttributeError, ValueError):
-                    pass
-            return ret
+    with warnings.catch_warnings():
+        # interfaces can issue many warnings when getting certain attributes
+        # and they are not relevant to the user at this point so ignore them
+        warnings.simplefilter('ignore')
+        if generators is None:
+            def wrappedDir(obj):
+                ret = {}
+                keys = dir(obj)
+                for k in keys:
+                    try:
+                        val = getattr(obj, k)
+                        ret[k] = val
+                    # safety against any sort of error someone may have in
+                    # their property code.
+                    except (AttributeError, ValueError):
+                        pass
+                return ret
 
-        generators = [wrappedDir]
+            generators = [wrappedDir]
 
-    ret = {}
+        ret = {}
 
-    for gen in generators:
-        possibleDict = gen(obj)
-        for possibleName, possibleValue in possibleDict.items():
-            add = True
-            for check in checkers:
-                if not check(obj, possibleName, possibleValue):
-                    add = False
-            if add:
-                ret[possibleName] = possibleValue
+        for gen in generators:
+            possibleDict = gen(obj)
+            for possibleName, possibleValue in possibleDict.items():
+                add = True
+                for check in checkers:
+                    if not check(obj, possibleName, possibleValue):
+                        add = False
+                if add:
+                    ret[possibleName] = possibleValue
 
-    return ret
+        return ret
 
 
 def noLeading__(obj, name, value): # pylint: disable=unused-argument, invalid-name

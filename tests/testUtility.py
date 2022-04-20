@@ -80,6 +80,8 @@ def test_DeferredModuleImport_invalidVersion():
     msg = 'does not meet the version requirements'
     for pkg in opt:
         mod = importlib.import_module(pkg)
+        if not hasattr(mod, '__version__'):
+            continue
         saved = mod.__version__
         try:
             mod.__version__ = '0.0.0'

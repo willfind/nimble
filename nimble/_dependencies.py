@@ -61,6 +61,8 @@ _DEPENDENCIES = [
                'Machine Learning'),
     Dependency('hyperopt', 'hyperopt>=0.2', 'operation',
                'Bayesian approach for hyperparameter tuning'),
+    Dependency('storm_tuner', 'storm_tuner', 'operation', # no __version__
+               'Stochastic Random Mutator for hyperparameter tuning'),
     Dependency('tensorflow', 'tensorflow>=1.14', 'interfaces',
                'Neural Networks'),
     Dependency('keras', 'keras>=2.0', 'interfaces', 'Neural Networks'),
@@ -78,21 +80,23 @@ def checkVersion(package):
     """
     Compare the package requirements to the available version.
     """
-    version = package.__version__
-    try:
-        vers = Version(version)
-        legacy = False
-    except InvalidVersion:
-        vers = LegacyVersion(version)
-        legacy = True
-    name = package.__name__
-    requirement = DEPENDENCIES[name].requires
-    req = Requirement(requirement)
-    for specifier in req.specifier:
-        # when vers is a LegacyVersion, need specifiers to be LegacySpecifier
-        if legacy and not isinstance(specifier, LegacySpecifier):
-            specifier = LegacySpecifier(str(specifier))
-        if not specifier.contains(vers):
-            msg = f'The installed version of {req.name} ({vers}) does not '
-            msg += f'meet the version requirements: {requirement}'
-            raise PackageException(msg)
+
+    if hasattr(package, '__version__'):
+        version = package.__version__
+        try:
+            vers = Version(version)
+            legacy = False
+        except InvalidVersion:
+            vers = LegacyVersion(version)
+            legacy = True
+        name = package.__name__
+        requirement = DEPENDENCIES[name].requires
+        req = Requirement(requirement)
+        for specifier in req.specifier:
+            # need specifiers to be LegacySpecifier for LegacyVersion
+            if legacy and not isinstance(specifier, LegacySpecifier):
+                specifier = LegacySpecifier(str(specifier))
+            if not specifier.contains(vers):
+                msg = f'The installed version of {req.name} ({vers}) does not '
+                msg += f'meet the version requirements: {requirement}'
+                raise PackageException(msg)

@@ -325,12 +325,17 @@ To install keras
 
         instantiatedArgs = {}
         for arg, val in arguments.items():
-            if arg == 'layers':
-                for i, v in enumerate(val):
-                    if isinstance(v, nimble.Init):
-                        val[i] = self.findCallable(v.name)(**v.kwargs)
-            elif isinstance(val, nimble.Init):
+            if isinstance(val, nimble.Init):
                 val = self._argumentInit(val)
+            elif hasattr(val, '__iter__') or hasattr(val, '__getitem__'):
+                try:
+                    for i, v in enumerate(val):
+                        if isinstance(v, nimble.Init):
+                            val[i] = self.findCallable(v.name)(**v.kwargs)
+                        elif isinstance(v, nimble.core.data.Base):
+                            val[i] = v.copy('numpy array')
+                except TypeError:
+                    pass
             instantiatedArgs[arg] = val
 
         return (trainX, trainY, testX, instantiatedArgs)

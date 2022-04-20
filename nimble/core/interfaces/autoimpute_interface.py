@@ -105,7 +105,7 @@ To install autoimpute
             return 'regression'
         return "UNKNOWN"
         # TODO MissingnessClassifier can be identified as a classifier using
-        # super method, but its scoring method is currently failing tests if 
+        # super method, but its scoring method is currently failing tests if
         # categorized as classification
         # return super()._learnerType(learnerBackend)
 

@@ -11,6 +11,7 @@ from nimble import Tune, Tuning
 from nimble.core.tune import KFold, LeaveOneOut, LeaveOneGroupOut
 from nimble.core.tune import HoldoutData, HoldoutProportion
 from nimble.core.tune import BruteForce, Consecutive, Bayesian, Iterative
+from nimble.core.tune import StochasticRandomMutator
 from nimble.calculate import fractionIncorrect, meanAbsoluteError
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
 from nimble.exceptions import InvalidArgumentValueCombination
@@ -148,7 +149,24 @@ def test_Tuning():
     assert itrHod._selectorArgs == {'maxIterations': None, 'timeout': 2400,
                                     'threshold': None}
     assert itrHod._validator == HoldoutData
-    assert itrHod._validatorArgs == {'validateX': "ValX", 'validateY': "ValY"}
+    assert itrHod._validatorArgs == {'allowIncremental': True,
+                                     'validateX': "ValX", 'validateY': "ValY"}
+
+    def build():
+        pass
+
+    srmHod = Tuning(selection="storm", validation="data", validateX="ValX",
+                    validateY="ValY", maxIterations=None, threshold=3,
+                    timeout=None, learnerArgsFunc=build)
+    assert srmHod.selection == "storm"
+    assert srmHod.validation == "data"
+    assert srmHod._selector == StochasticRandomMutator
+    assert srmHod._selectorArgs == {'maxIterations': None, 'timeout': None,
+                                    'threshold': 3,  'learnerArgsFunc': build,
+                                    'initRandom': 5,
+                                    'randomizeAxisFactor': 0.75}
+    assert srmHod._validator == HoldoutData
+    assert srmHod._validatorArgs == {'validateX': "ValX", 'validateY': "ValY"}
 
     with raises(InvalidArgumentValue):
         invalid = Tuning(selection="not a selection")
@@ -159,7 +177,7 @@ def test_Tuning():
     with raises(InvalidArgumentValue):
         invalid = Tuning(validation=100)
 
-    for selection in ['bayesian', 'iterative']:
+    for selection in ['bayesian', 'iterative', 'storm']:
         with raises(InvalidArgumentValueCombination):
             invalid = Tuning(selection, .2) # require "data" validation
 

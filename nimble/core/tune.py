@@ -15,8 +15,9 @@ import numbers
 import copy
 import sys
 from timeit import default_timer
-from packaging.version import Version
+from functools import wraps
 
+from packaging.version import Version
 import numpy as np
 
 import nimble
@@ -30,7 +31,7 @@ from nimble.random import pythonRandom, numpyRandom
 from nimble.core._learnHelpers import computeMetrics
 from nimble._utility import prettyDictString, prettyListString, quoteStrings
 from nimble._utility import mergeArguments
-from nimble._utility import hyperopt
+from nimble._utility import hyperopt, storm_tuner
 
 
 class FoldIterator(ABC):
@@ -549,16 +550,14 @@ class HoldoutData(HoldoutValidator):
     name = "data holdout"
 
     def __init__(self, learnerName, X, Y, performanceFunction, validateX,
-                 validateY, randomSeed=None, useLog=None):
-
-
+                 validateY, allowIncremental=False, randomSeed=None,
+                 useLog=None):
         logInfo = {'validateX': validateX, 'validateY': validateY}
         super().__init__(learnerName, X, Y, performanceFunction, randomSeed,
                          useLog, validateX, validateY, logInfo)
-
         self._trainedLearner = None
         self._trainedLearnerBase = None
-        self._incremental = None
+        self._incremental = None if allowIncremental else False
         self._updater = None
         self._lastArguments = {}
         self.bestTrainedLearner = None
@@ -591,13 +590,15 @@ class HoldoutData(HoldoutValidator):
             self._trainedLearner = self._trainedLearnerBase
             self._lastArguments = arguments
         elif self._updater is None:
-            try:
-                self._trainedLearner.incrementalTrain(self.X, self.Y,
-                                                      arguments, useLog=False)
-                self._updater = self._trainedLearner.incrementalTrain
-                self._incremental = True
-            except TypeError:
-                self._incremental = False
+            if self._incremental is None:
+                try:
+                    self._trainedLearner.incrementalTrain(
+                        self.X, self.Y, arguments, useLog=False)
+                    self._updater = self._trainedLearner.incrementalTrain
+                    self._incremental = True
+                except TypeError:
+                    self._incremental = False
+            if not self._incremental:
                 self._updater = self._trainedLearner.retrain
                 # only retrain if arguments have changed
                 if arguments != self._lastArguments:
@@ -1117,6 +1118,204 @@ class Iterative(ArgumentSelector):
         self._currIteration += 1
         return self._currArgs.copy()
 
+class StochasticRandomMutator(ArgumentSelector):
+    """
+    Argument selection with a stochastic random mutator (storm).
+
+    This requires the storm_tuner library to be installed. For arguments
+    provided to the learner, ``Tune`` objects can be used as they
+    normally are. However, storm_tuner also supports tuning parameters
+    that are not parameters of the learner object. For example, changing
+    the activation function used within the neural network layers or
+    even varying the number of hidden layers in the network. Nimble
+    supports this as well and how to do so is explained below.
+
+    Hyperparameter tuning with storm_tuner, requires a function that
+    builds the model with adjustable parameters and for Nimble this
+    works in a similar way. The difference is that Nimble requires the
+    function to return the arguments to build the model instead of a
+    model object. The function accepts a HyperParameters instance from
+    storm_tuner and is used in the same way. Below, each call to
+    hp.Param defines the name and possible options for that
+    hyperparameter. The current value of the hyperparameter are also
+    accessible through hp.values, a dictionary. The function then
+    returns a dictionary that Nimble will merge with any other arguments
+    while training and testing. See the example below.
+
+    def modelArguments(hp):
+        layers = []
+        kernel0 = hp.Param('kernelSize0', [64, 128, 256], ordered=True)
+        activation = hp.Param('activation', ['relu', 'elu'])
+        # layers created from the current choice for the above arguments
+        layers.append(nimble.Init('Dense', units=kernel0))
+        layers.append(nimble.Init('Activation', activation=activation))
+        # access the current kernelSize0 value to determine future units
+        kernelSize = hp.values['kernelSize0']
+        # build a variable number of hidden layers
+        for x in range(hp.Param('num_layers', [1, 2, 3], ordered=True)):
+            kernelSize = int(0.75 * kernelSize)
+            layers.append(nimble.Init('Dense', units=kernelSize))
+            layers.append(nimble.Init('Activation',
+                                      activation=activation))
+
+        layers.append(nimble.Init('Dense', units=3,
+                                  activation='sigmoid'))
+
+        return {'layers': layers}
+
+    # Without hyperparameter tuning, layers would need to be provided
+    # but here modelArguments will determine the best layers.
+    nimble.train('Keras.Sequential', trainX, trainY, epochs=25,
+                 tuning=Tuning('storm', 'data', fractionIncorrect,
+                               validateX=valX, validateY=valY,
+                               learnerArgsFunc=modelArguments),
+                 loss='sparse_categorical_crossentropy',
+                 optimizer=Tune(['Adam', 'Adamax']),
+                 metrics=['accuracy'], verbose=0)
+
+    Parameters
+    ----------
+    arguments : dict
+        Mapping argument names (strings) to their values, to be used.
+    validator : Validator
+        The instance providing the validation method and data.
+    learnerArgsFunc : function, None
+        The function defining how each learner is built based on the
+        current parameters. Required when building the learner requires
+        tuning parameters that are outside the scope of ``Tune``.
+    maxIterations : int
+        The number of times to evaluate the argument space. Default is
+        100.
+    timeout : float, int, None
+        The maximum amount of time in seconds to spend finding the best
+        arguments. Default is ``None``, meaning this will stop based on
+        ``maxIterations`` or ``threshold``.
+    threshold : float, int, None
+        Stop selection if performance is better than or equal to the
+        threshold. Default is ``None``, meaning this will stop based on
+        ``maxIterations`` or ``timeout``.
+    """
+    name = 'storm'
+
+    def __init__(self, arguments, validator, learnerArgsFunc=None,
+                 initRandom=5, randomizeAxisFactor=0.75, maxIterations=100,
+                 timeout=None, threshold=None):
+        logInfo = {}
+        if learnerArgsFunc is not None:
+            logInfo['learnerArgsFunc'] = learnerArgsFunc.__name__
+        if initRandom is not None:
+            logInfo['initRandom'] = initRandom
+        else:
+            initRandom = 5
+        if randomizeAxisFactor is not None:
+            logInfo['randomizeAxisFactor'] = randomizeAxisFactor
+        else:
+            randomizeAxisFactor = 0.75
+        if maxIterations is not None:
+            logInfo['maxIterations'] = maxIterations
+        if timeout is not None:
+            logInfo['timeout'] = timeout
+        if threshold is not None:
+            logInfo['threshold'] = threshold
+        super().__init__(arguments, validator, **logInfo)
+        if not storm_tuner.nimbleAccessible():
+            msg = "The storm_tuner library must be installed to perform "
+            msg += "hyperparameter tuning with the StoRM (Stochastic Random "
+            msg += "Mutator) method"
+            raise PackageException(msg)
+        # override storm_tuner randomness reproducibility
+        storm_tuner.tuner.random = pythonRandom
+        # storm_tuner saves the best trial result to a project directory and
+        # creates one if not provided. We won't support saving, so need to
+        # prevent Path.mkdir from generating the default directory
+        storm_tuner.tuner.Path.mkdir = lambda *args, **kwargs: None
+
+        self.maxIterations = maxIterations
+        self.timeout = timeout
+        self.threshold = threshold
+
+        @wraps(learnerArgsFunc)
+        def _wrappedBuildFunc(hp):
+            # all arguments in one dictionary; convert to hp.Param for Tune
+            buildArgs = {}
+            logArgs = {}
+            if learnerArgsFunc is not None:
+                buildArgs.update(learnerArgsFunc(hp))
+                logArgs.update(hp.values)
+            for name, arg in self.arguments.items():
+                if name in buildArgs:
+                    msg = f'The "{name}" argument should not be provided '
+                    msg += 'because it is being defined by the learnerArgsFunc'
+                    raise InvalidArgumentValueCombination(msg)
+                if isinstance(arg, Tune):
+                    buildArgs[name] = hp.Param(
+                        name, list(arg), ordered=arg._changeType is not None)
+                    logArgs[name] = buildArgs[name]
+                else:
+                    buildArgs[name] = arg
+                    logArgs[name] = buildArgs[name]
+
+            return buildArgs, logArgs
+
+        class Tuner(storm_tuner.Tuner):
+            """
+            Tuner to use within nimble.
+            """
+            def __init__(self, validator, project_dir=None, build_fn=None,
+                         randomize_axis_factor=0.75, init_random=5,
+                         overwrite=True, max_iters=100, seed=None):
+                super().__init__(project_dir, build_fn, randomize_axis_factor,
+                                 init_random, validator.optimal, overwrite,
+                                 max_iters, seed)
+                self._iters_checked = False
+
+            def run_trial(self, trial, selector):
+                """
+                Use validator to score the trial.
+                """
+                hp = trial.hyperparameters
+                # infinite loop if max_iters is greater than the total number
+                # of permutations
+                if not self._iters_checked:
+                    maxOptions = len(list(itertools.product(
+                        *(p.values for p in hp.space.values()))))
+                    # pylint: disable=attribute-defined-outside-init
+                    self.max_iters = min(self.max_iters, maxOptions)
+                buildArgs, logArgs = _wrappedBuildFunc(hp)
+                score = selector.validator.validate(buildArgs)
+                # the validator stores arguments and best values based on the
+                # buildArgs, but want to store the hyperparameters set within
+                # _wrappedBuildFunc (which generated the buildArgs)
+                selector.validator._arguments[-1] = logArgs
+                self.score_trial(trial, score)
+                if (selector._bestPerf is None or
+                        selector.validator._isBest(score, selector._bestPerf)):
+                    selector._bestPerf = score
+                    selector.validator._best = (score, logArgs)
+
+        self.tuner = Tuner(self.validator, build_fn=_wrappedBuildFunc,
+                           init_random=initRandom, max_iters=maxIterations,
+                           randomize_axis_factor=randomizeAxisFactor)
+
+        self._startTime = None
+        self._bestPerf = None
+
+    def __next__(self):
+        if self._startTime is None:
+            self._startTime = default_timer()
+        if (len(self.tuner.trials) >= self.tuner.max_iters
+                or (self.timeout is not None
+                    and default_timer() - self._startTime > self.timeout)
+                or (self.threshold is not None and self._bestPerf is not None
+                    and (self.validator._isBest(self._bestPerf, self.threshold)
+                         or self._bestPerf == self.threshold))):
+            raise StopIteration
+        # from storm_tuner.Tuner.search
+        trial = self.tuner._create_trial()
+        trial.hyperparameters.initialized = True
+        self.tuner.run_trial(trial, self)
+        return self.validator._arguments[-1]
+
 
 class Tune:
     """
@@ -1318,6 +1517,12 @@ class Tuning:
           argument on the next iteration. Note: This requires arguments
           to be numeric and assumes there is a correlation between the
           values and the performance.
+        - "storm" : Apply a stochastic random mutator to the argument
+          space. Randomly selects argument sets to begin, then starts
+          to optimize the best performing set, while selecting random
+          values at some given probability to avoid local optima.
+          Note: For ordered numeric values, this assumes there is a
+          correlation between the values and the performance.
 
     The ``validation`` parameter identifies how the performance will be
     evaluated and accepts the following:
@@ -1362,17 +1567,34 @@ class Tuning:
        Applies when ``selection`` is "consecutive". A list of argument
        names defining the order to use when tuning.
     maxIterations : int
-        Applies when ``selection`` is "bayesian" or "iterative". The
-        maximum number of times iterate through the argument selection
-        process. Default is 100.
+        Applies when ``selection`` is "bayesian", "iterative", or
+        "storm". The maximum number of times iterate through the
+        argument selection process. Default is 100.
     timeout : int, None
-        Applies when ``selection`` is "bayesian" or "iterative". The
-        maximum number of seconds to perform the argument selection
-        process. Defaults to None.
+        Applies when ``selection`` is "bayesian", "iterative", or
+        "storm". The maximum number of seconds to perform the argument
+        selection process.
     threshold : float, None
-        Applies when ``selection`` is "bayesian" or "iterative". Stop
-        the argument selection process if the performance is better than
-        or equal to the threshold.
+        Applies when ``selection`` is "bayesian", "iterative", or
+        "storm". Stop the argument selection process if the performance
+        is better than or equal to the threshold.
+    learnerArgsFunc : function, None
+        Applies when the ``selection`` is "storm". A function defining
+        how to build the model with variable hyperparameters. Takes the
+        form: learnerArgsFunc(hyperparameters) where hyperparameters
+        will be a HyperParameters instance from storm_tuner and must
+        return a dictionary to use as the arguments parameter for
+        nimble.train.
+    initRandom : int
+        Applies when the ``selection`` is "storm". The number of initial
+        iterations to perform a random search. Recommended value is
+        between 3 and 8.
+    randomizeAxisFactor : float
+        Applies when the ``selection`` is "storm". Controls the tradeoff
+        between explorative and exploitative selection. Values closer to
+        1 are likely to generate more mutations, while values closer to
+        0 are more likely to only perform a single mutation during each
+        step.
     folds : int
         Applies when ``validation`` is "cross validation". Default is 5.
     foldFeature : identifier
@@ -1396,13 +1618,15 @@ class Tuning:
     --------
     Tune, nimble.train
     """
-    _selections = ["brute force", "consecutive", "bayesian"]
+    _selections = ["brute force", "consecutive", "bayesian", "iterative",
+                   "storm"]
     _validations = ["cross validation", "leave one out", "leave one group out",
                     "data", "proportion"]
     _selectors = {"bruteforce": BruteForce,
                   "consecutive": Consecutive,
                   "bayesian": Bayesian,
-                  "iterative": Iterative}
+                  "iterative": Iterative,
+                  "storm": StochasticRandomMutator}
     _validators = {"crossvalidation": KFold,
                    "leaveoneout": LeaveOneOut,
                    "leaveonegroupout": LeaveOneGroupOut,
@@ -1410,9 +1634,10 @@ class Tuning:
                    "proportion": HoldoutProportion}
     def __init__(self, selection="consecutive", validation="cross validation",
                  performanceFunction=None, loops=1, order=None,
-                 maxIterations=100, timeout=None, threshold=None, folds=5,
-                 foldFeature=None, validateX=None, validateY=None,
-                 proportion=None):
+                 maxIterations=100, timeout=None, threshold=None,
+                 learnerArgsFunc=None, initRandom=5, randomizeAxisFactor=0.75,
+                 folds=5, foldFeature=None, validateX=None, validateY=None,
+                 proportion=0.2):
         self.selection = selection
         self.validation = validation
         self.performanceFunction = performanceFunction
@@ -1423,17 +1648,22 @@ class Tuning:
         selection = selection.lower().replace("-", "")
         if selection not in Tuning._selectors:
             msg = prettyListString(Tuning._selections, useAnd=True)
-            msg += " are the only accepted _selections."
+            msg += " are the only accepted selections."
             raise InvalidArgumentValue(msg)
         self._selection = selection
         self._selector = Tuning._selectors[selection]
+        dataOnly = ['bayesian', 'iterative', 'storm']
         if selection == "consecutive":
             self._selectorArgs['loops'] = loops
             self._selectorArgs['order'] = order
-        elif selection in ["bayesian", "iterative"]:
+        elif selection in dataOnly:
             if maxIterations is None and timeout is None and threshold is None:
                 msg = "One of maxIterations, timeout, or threshold must be set"
                 raise InvalidArgumentValueCombination(msg)
+            if selection == 'storm':
+                self._selectorArgs['learnerArgsFunc'] = learnerArgsFunc
+                self._selectorArgs['initRandom'] = initRandom
+                self._selectorArgs['randomizeAxisFactor'] = randomizeAxisFactor
             self._selectorArgs['maxIterations'] = maxIterations
             self._selectorArgs['timeout'] = timeout
             self._selectorArgs['threshold'] = threshold
@@ -1445,7 +1675,7 @@ class Tuning:
         else:
             validation = validation.lower().replace(" ", "")
             validation = validation.lower().replace("-", "")
-        if selection in ['bayesian', 'iterative'] and validation != 'data':
+        if selection in dataOnly and validation != 'data':
             msg = f"'data' validation is required. '{selection}' "
             msg += "selection cannot use any training data for validation."
             raise InvalidArgumentValueCombination(msg)
@@ -1464,6 +1694,8 @@ class Tuning:
         elif validation == 'data':
             self._validatorArgs['validateX'] = validateX
             self._validatorArgs['validateY'] = validateY
+            if selection == 'iterative':
+                self._validatorArgs['allowIncremental'] = True
         elif validation == 'proportion':
             self._validatorArgs['proportion'] = proportion
 
