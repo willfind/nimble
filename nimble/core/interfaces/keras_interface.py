@@ -20,7 +20,7 @@ from ._interface_helpers import PythonSearcher
 from ._interface_helpers import modifyImportPathAndImport
 from ._interface_helpers import collectAttributes
 from ._interface_helpers import removeFromTailMatchedLists
-from ._interface_helpers import noLeading__, notCallable, notABCAssociated
+from ._interface_helpers import notCallable, notABCAssociated
 from ._interface_helpers import checkArgsForRandomParam
 
 
@@ -480,13 +480,24 @@ To install keras
 
     def _getAttributes(self, learnerBackend):
         obj = learnerBackend
-        generators = None
-        checkers = []
-        checkers.append(noLeading__)
-        checkers.append(notCallable)
-        checkers.append(notABCAssociated)
+        checkers = [notCallable, notABCAssociated]
 
-        ret = collectAttributes(obj, generators, checkers)
+        def wrappedDir(obj):
+            ret = {}
+            keys = dir(obj)
+            func = lambda n: not n.startswith("_") and n != "submodules"
+            acceptedKeys = filter(func, keys)
+            for k in acceptedKeys:
+                try:
+                    val = getattr(obj, k)
+                    ret[k] = val
+                # safety against any sort of error someone may have in their
+                # property code.
+                except (AttributeError, ValueError):
+                    pass
+            return ret
+
+        ret = collectAttributes(obj, [wrappedDir], checkers)
         return ret
 
     def _optionDefaults(self, option):
