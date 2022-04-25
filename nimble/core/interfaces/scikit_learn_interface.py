@@ -233,12 +233,12 @@ class _SciKitLearnAPI(PredefinedInterfaceMixin):
         ret = collectAttributes(obj, generators, checkers)
         return ret
 
-
-    def _optionDefaults(self, option):
+    @classmethod
+    def _optionDefaults(cls, option):
         return None
 
-
-    def _configurableOptionNames(self):
+    @classmethod
+    def _configurableOptionNames(cls):
         return ['location']
 
     # fit_transform

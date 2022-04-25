@@ -7,7 +7,7 @@ import importlib
 
 import nimble
 from .universal_interface import PredefinedInterfaceMixin
-from .custom_learner import CustomLearnerInterface
+from .custom_learner import CustomLearnerInterface, NimbleLearnerInterface
 
 
 def initInterfaceSetup():
@@ -52,7 +52,7 @@ def initInterfaceSetup():
     # available #
     #############
     available = {}
-    nimbleInterface = CustomLearnerInterface('nimble')
+    nimbleInterface = NimbleLearnerInterface('nimble')
     for learnerName in nimble.learners.__all__:
         learner = getattr(nimble.learners, learnerName)
         nimbleInterface.registerLearnerClass(learner)

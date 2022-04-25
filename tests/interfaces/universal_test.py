@@ -88,13 +88,15 @@ class TestPredefinedInterface(PredefinedInterfaceMixin):
             return [{'C': 1, 'thresh': 0.5, 'sub': None}]
         return [{}]
 
-    def isAlias(self, name):
+    @classmethod
+    def isAlias(cls, name):
         if name.lower() in ['test']:
             return True
         else:
             return False
 
-    def getCanonicalName(self):
+    @classmethod
+    def getCanonicalName(cls):
         return "Test"
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
@@ -103,10 +105,12 @@ class TestPredefinedInterface(PredefinedInterfaceMixin):
     def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
         return outputValue
 
-    def _configurableOptionNames(self):
+    @classmethod
+    def _configurableOptionNames(cls):
         return ['option']
 
-    def _optionDefaults(self, option):
+    @classmethod
+    def _optionDefaults(cls, option):
         return None
 
     def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
@@ -297,13 +301,15 @@ class AlwaysWarnInterface(UniversalInterface):
         self.issueWarnings()
         return [0, 1]
 
-    def isAlias(self, name):
+    @classmethod
+    def isAlias(cls, name):
         if name.lower() in ['alwayswarn']:
             return True
         else:
             return False
 
-    def getCanonicalName(self):
+    @classmethod
+    def getCanonicalName(cls):
         return "AlwaysWarn"
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
@@ -333,10 +339,12 @@ class AlwaysWarnInterface(UniversalInterface):
         self.issueWarnings()
         pass
 
-    def _optionDefaults(self, option):
+    @classmethod
+    def _optionDefaults(cls, option):
         return []
 
-    def _configurableOptionNames(self):
+    @classmethod
+    def _configurableOptionNames(cls):
         return []
 
     def version(self):

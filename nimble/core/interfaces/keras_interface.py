@@ -500,10 +500,12 @@ To install keras
         ret = collectAttributes(obj, [wrappedDir], checkers)
         return ret
 
-    def _optionDefaults(self, option):
+    @classmethod
+    def _optionDefaults(cls, option):
         return None
 
-    def _configurableOptionNames(self):
+    @classmethod
+    def _configurableOptionNames(cls):
         return ['location']
 
     def _predict(self, learner, testX, arguments, customDict):

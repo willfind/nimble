@@ -89,8 +89,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             msg += "a string"
             raise TypeError(msg)
 
-
-    def isAlias(self, name):
+    @classmethod
+    def isAlias(cls, name):
         """
         Determine if the name is an accepted alias for this interface.
 
@@ -104,7 +104,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         bool
             True if the name is a accepted alias, False otherwise.
         """
-        return name.lower() == self.getCanonicalName().lower()
+        return name.lower() == cls.getCanonicalName().lower()
 
     def _confirmValidLearner(self, learnerName):
         if not learnerName in self.learnerNames():
@@ -621,17 +621,6 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def getCanonicalName(self):
-        """
-        The string name that will uniquely identify this interface.
-
-        Returns
-        -------
-        str
-            The canonical name for this interface.
-        """
-
-    @abc.abstractmethod
     def _learnerNamesBackend(self):
         pass
 
@@ -799,6 +788,23 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         str
             The version of this interface as a string.
         """
+
+    ##############################
+    ### ABSTRACT CLASS METHODS ###
+    ##############################
+
+    @classmethod
+    @abc.abstractmethod
+    def getCanonicalName(cls):
+        """
+        The string name that will uniquely identify this interface.
+
+        Returns
+        -------
+        str
+            The canonical name for this interface.
+        """
+
 
 ##################
 # TrainedLearner #
@@ -1946,18 +1952,18 @@ class PredefinedInterfaceMixin(UniversalInterface):
                 msg += _formatPathMessage(name)
             raise PackageException(msg).with_traceback(origTraceback)
 
-    @property
-    def optionNames(self):
+    @classmethod
+    def optionNames(cls):
         """
         TODO
         """
-        return copy.copy(self._configurableOptionNames())
+        return copy.copy(cls._configurableOptionNames())
 
     def setOption(self, option, value):
         """
         TODO
         """
-        if option not in self.optionNames:
+        if option not in self.optionNames():
             msg = str(option)
             msg += " is not one of the accepted configurable option names"
             raise InvalidArgumentValue(msg)
@@ -1965,11 +1971,12 @@ class PredefinedInterfaceMixin(UniversalInterface):
         nimble.settings.set(self.getCanonicalName(), option, value)
 
 
-    def getOption(self, option):
+    @classmethod
+    def getOption(cls, option):
         """
         TODO
         """
-        if option not in self.optionNames:
+        if option not in cls.optionNames():
             msg = str(option)
             msg += " is not one of the accepted configurable option names"
             raise InvalidArgumentValue(msg)
@@ -1979,17 +1986,18 @@ class PredefinedInterfaceMixin(UniversalInterface):
         # value for it.
         ret = ''
         try:
-            ret = nimble.settings.get(self.getCanonicalName(), option)
+            ret = nimble.settings.get(cls.getCanonicalName(), option)
         except configErrors:
             # it is possible that the config file doesn't have an option of
             # this name yet. Just pass through and grab the hardcoded default
             pass
         if ret == '':
-            ret = self._optionDefaults(option)
+            ret = cls._optionDefaults(option)
         return ret
 
+    @classmethod
     @abc.abstractmethod
-    def _optionDefaults(self, option):
+    def _optionDefaults(cls, option):
         """
         Define package default values that will be used for as long as a
         default value hasn't been registered in the nimble configuration
@@ -1998,8 +2006,9 @@ class PredefinedInterfaceMixin(UniversalInterface):
         """
 
 
+    @classmethod
     @abc.abstractmethod
-    def _configurableOptionNames(self):
+    def _configurableOptionNames(cls):
         """
         Returns a list of strings, where each string is the name of a
         configurable option of this interface whose value will be stored
