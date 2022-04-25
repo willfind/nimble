@@ -52,13 +52,13 @@ def initInterfaceSetup():
     # available #
     #############
     available = {}
-    nimbleInterface = NimbleLearnerInterface('nimble')
+    nimbleInterface = NimbleLearnerInterface()
     for learnerName in nimble.learners.__all__:
         learner = getattr(nimble.learners, learnerName)
         nimbleInterface.registerLearnerClass(learner)
     available['nimble'] = nimbleInterface
 
-    customInterface = CustomLearnerInterface('custom')
+    customInterface = CustomLearnerInterface()
     available['custom'] = customInterface
 
     nimble.core.interfaces.available = available

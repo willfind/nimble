@@ -25,8 +25,7 @@ class CustomLearnerInterface(UniversalInterface):
 
     _ignoreNames = ['trainX', 'trainY', 'testX']
 
-    def __init__(self, packageName):
-        self.name = packageName
+    def __init__(self):
         self.registeredLearners = {}
         super().__init__()
 
