@@ -35,17 +35,21 @@ def getInterfaces(ignoreCustomInterfaces=False):
                       if int.getCanonicalName() not in ['nimble', 'custom']]
     return interfaces
 
-class OptionNamedLookalike(object):
-    def __init__(self, name, optNames):
-        self.name = name
-        self.optionNames = optNames
+def optionNamedLookalikeFactory(name, optNames):
+    class OptionNamedLookalike(object):
+        @classmethod
+        def optionNames(cls):
+            return optNames
 
-    def getCanonicalName(self):
-        return self.name
+        @classmethod
+        def getCanonicalName(cls):
+            return name
 
-    def isAlias(self, name):
-        return name.lower() == self.getCanonicalName()
+        @classmethod
+        def isAlias(cls, name):
+            return name.lower() == cls.getCanonicalName()
 
+    return OptionNamedLookalike()
 
 class FailedPredefined(object):
     def __init__(self):
@@ -114,7 +118,7 @@ def test_settings_GetSet():
         name = interface.getCanonicalName()
         if name in ['nimble', 'custom']:
             continue # custom learners do not have options
-        for option in interface.optionNames:
+        for option in interface.optionNames():
             # get values of options
             origValue = nimble.settings.get(name, option)
 
@@ -289,10 +293,12 @@ def setAvailableInterfaceOptions(save=False):
 
 def test_settings_addingNewInterface():
     """ Test nimble.core.configuration.setInterfaceOptions correctly sets options """
-    tempInterface = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
-    nimble.core.interfaces.available[tempInterface.name] = tempInterface
-    ignoreInterface = OptionNamedLookalike("ig", [])
-    nimble.core.interfaces.available[ignoreInterface.name] = ignoreInterface
+    name = "Test"
+    tempInterface = optionNamedLookalikeFactory(name, ['Temp0', 'Temp1'])
+    nimble.core.interfaces.available[name] = tempInterface
+    name = "ig"
+    ignoreInterface = optionNamedLookalikeFactory(name, [])
+    nimble.core.interfaces.available[name] = ignoreInterface
 
     # set options for all interfaces
     setAvailableInterfaceOptions()
@@ -328,10 +334,12 @@ def test_settings_addingNewInterface():
 @useSessionConfiguration
 def test_settings_setInterfaceOptionsSafety():
     """ Test that setting options preserves values already in the config file """
-    tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
-    nimble.core.interfaces.available[tempInterface1.name] = tempInterface1
-    tempInterface2 = OptionNamedLookalike("TestOther", ['Temp0'])
-    nimble.core.interfaces.available[tempInterface2.name] = tempInterface2
+    name = "Test"
+    tempInterface1 = optionNamedLookalikeFactory(name, ['Temp0', 'Temp1'])
+    nimble.core.interfaces.available[name] = tempInterface1
+    name = "TestOther"
+    tempInterface2 = optionNamedLookalikeFactory(name, ['Temp0'])
+    nimble.core.interfaces.available[name] = tempInterface2
 
     # set options for all interfaces
     setAvailableInterfaceOptions()
@@ -359,10 +367,12 @@ def test_settings_setInterfaceOptionsSafety():
 
 def test_settings_setInterfaceOptionsChanges():
     """ Test that setting interface options properly saves current changes """
-    tempInterface1 = OptionNamedLookalike("Test", ['Temp0', 'Temp1'])
-    tempInterface2 = OptionNamedLookalike("TestOther", ['Temp0'])
-    nimble.core.interfaces.available[tempInterface1.name] = tempInterface1
-    nimble.core.interfaces.available[tempInterface2.name] = tempInterface2
+    name1 = "Test"
+    name2 = "TestOther"
+    tempInterface1 = optionNamedLookalikeFactory(name1, ['Temp0', 'Temp1'])
+    tempInterface2 = optionNamedLookalikeFactory(name2, ['Temp0'])
+    nimble.core.interfaces.available[name1] = tempInterface1
+    nimble.core.interfaces.available[name2] = tempInterface2
 
     # set with new interfaces
     setAvailableInterfaceOptions()
@@ -374,28 +384,27 @@ def test_settings_setInterfaceOptionsChanges():
     assert nimble.settings.get('Test', 'Temp0') == '0'
 
     # change Test option names and reset options for all interfaces
-    tempInterface1.optionNames[1] = 'NotTemp1'
-    setAvailableInterfaceOptions()
+    with patch(tempInterface1, "optionNames", lambda: ["Temp0", "NotTemp1"]):
+        setAvailableInterfaceOptions()
 
-    # NOTE: our interfaces do not currently allow for option names to be
-    # changed, but in that case we would want the following behavior
+        # NOTE: our interfaces do not currently allow for option names to be
+        # changed, but in that case we would want the following behavior
 
-    # check value of unchanged option
-    assert nimble.settings.get('Test', 'Temp0') == '0'
-    # previous option and value are available and unchanged
-    # we do not delete as this could become a valid option again later
-    assert nimble.settings.get('Test', 'Temp1') == '1'
-    # new option now available
-    assert nimble.settings.get('Test', 'NotTemp1') == ''
-    # check that the temp value for TestOther is unaffected
-    assert nimble.settings.get('TestOther', 'Temp0') == 'unchanged'
-    # set should only allow setting for new option
-    nimble.settings.set('Test', 'NotTemp1', '2')
-    with raises(InvalidArgumentValue):
-        nimble.settings.set('Test', 'Temp1', '2')
+        # check value of unchanged option
+        assert nimble.settings.get('Test', 'Temp0') == '0'
+        # previous option and value are available and unchanged
+        # we do not delete as this could become a valid option again later
+        assert nimble.settings.get('Test', 'Temp1') == '1'
+        # new option now available
+        assert nimble.settings.get('Test', 'NotTemp1') == ''
+        # check that the temp value for TestOther is unaffected
+        assert nimble.settings.get('TestOther', 'Temp0') == 'unchanged'
+        # set should only allow setting for new option
+        nimble.settings.set('Test', 'NotTemp1', '2')
+        with raises(InvalidArgumentValue):
+            nimble.settings.set('Test', 'Temp1', '2')
 
-    # now change the option back to the original
-    tempInterface1.optionNames[1] = 'Temp1'
+    # outside of patch, option name now back to the original
     setAvailableInterfaceOptions()
 
     nimble.settings.set('Test', 'Temp1', '2')

@@ -221,7 +221,7 @@ class SessionConfiguration(object):
                 msg = section + " is associated with an interface that does "
                 msg += "not support configurable options"
                 raise InvalidArgumentValue(msg)
-            acceptedNames = interface.optionNames
+            acceptedNames = interface.optionNames()
             if option not in acceptedNames:
                 msg = section + " is associated with an interface that only "
                 msg += "allows the options: " + str(acceptedNames) + "but "
@@ -342,7 +342,7 @@ def setInterfaceOptions(interface, save):
     interface.
     """
     interfaceName = interface.getCanonicalName()
-    optionNames = interface.optionNames
+    optionNames = interface.optionNames()
     # set new option names
     for opName in optionNames:
         try:

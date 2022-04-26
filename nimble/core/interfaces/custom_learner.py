@@ -25,8 +25,7 @@ class CustomLearnerInterface(UniversalInterface):
 
     _ignoreNames = ['trainX', 'trainY', 'testX']
 
-    def __init__(self, packageName):
-        self.name = packageName
+    def __init__(self):
         self.registeredLearners = {}
         super().__init__()
 
@@ -46,8 +45,9 @@ class CustomLearnerInterface(UniversalInterface):
     def accessible(self):
         return True
 
-    def getCanonicalName(self):
-        return self.name
+    @classmethod
+    def getCanonicalName(cls):
+        return "custom"
 
     @captureOutput
     def learnerNames(self):
@@ -175,6 +175,16 @@ class CustomLearnerInterface(UniversalInterface):
 
     def version(self):
         pass
+
+
+@inheritDocstringsFactory(CustomLearnerInterface)
+class NimbleLearnerInterface(CustomLearnerInterface):
+    """
+    Interface class specifically for those learners that come with Nimble
+    """
+    @classmethod
+    def getCanonicalName(cls):
+        return "nimble"
 
 
 class CustomLearner(metaclass=abc.ABCMeta):
