@@ -116,3 +116,47 @@ def varianceFractionRemaining(knownValues, predictedValues):
     avgSqDiff = diffObj.T.matrixMultiply(diffObj)[0, 0] / float(len(diffObj))
 
     return avgSqDiff / float(nimble.calculate.variance(knownValues, False))
+
+# TODO: Work in progress - performance metrics for clustering
+# NOTES:
+#    1) Is this a good metric? Will averageDistanceToClusterCenter always
+#       imporove when increasing the number of clusters?
+#       Better options are probably silhoutte score or davies-bouldin
+#    2) I do not think that the validation protocols used for tuning are setup
+#       for unsupervised learning. They always expect Y data.
+#    3) If usable, a test is commented out in tests/calculate/loss
+
+# def _predictedClusterCenters(trainedLearner, knownValues, arguments=None):
+#     """
+#     Return the cluster center for each point in the knownValues.
+#
+#     Will use the stored cluster centers if possible, otherwise will
+#     calculate them.
+#     """
+#     clusters = trainedLearner.apply(knownValues, arguments, useLog=False)
+#     centers = trainedLearner.getAttributes().get('cluster_centers_', None)
+#     if centers is None:
+#         clustered = knownValues.copy()
+#         clustered.features.append(clusters, useLog=False)
+#         centers = {i: cluster.features.statistics('mean') for i, cluster
+#                    in clustered.groupByFeature(-1, useLog=False).items()}
+#     else:
+#         centers = {i: center for i, center in enumerate(centers)}
+#
+#     return nimble.data([centers[i] for i in clusters], useLog=False)
+
+# @performanceFunction('min', 0, predict=_predictedClusterCenters,
+#                      requires1D=False)
+# def averageDistanceToClusterCenter(knownValues, clusterCenters):
+#     """
+#     The average euclidean distance of the clusters from their center.
+#
+#     The knownValues and clusterCenters should have the same shape. The
+#     clusterCenters must be the center of the cluster assigned to each
+#     each point.
+#     """
+#     squaredDiff = (knownValues - clusterCenters) ** 2
+#     rootSquaredSum = squaredDiff.points.calculate(lambda pt: sqrt(sum(pt)),
+#                                                   useLog=False)
+#
+#     return sum(rootSquaredSum) / len(knownValues.points)
