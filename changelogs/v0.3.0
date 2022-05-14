@@ -11,37 +11,77 @@
 * For pdf: now formatted as a two page vertical stack with larger font.
 * Typo and clarity corrections.
 
+### Learning Functions ###
+* nimble.learnerType expanded include "transformation", or "cluster" as outputs
+* Expanded sklearn and keras interfaces to more accurately report these new labels.
+* keras "classifiers" will return labels when calling .apply, instead of scores.
+
 ### Hyperparameter Tuning ###
 * Replaced and generalized the previous Cross Validate functionality.
 * Each learning function now takes a Tuning object.
 * This object specifies two things:
--- A selection process, which specifies how to search through the argument set possibilities.
--- The possibilities are: BruteForce, Consecutive, Bayesian, and Iterative
+-- A selection process, which specifies how to search the argument set possibilities.
+-- The possibilities are: BruteForce, Consecutive, Bayesian, Iterative, and STORM
+   (Stochastic Random Mutator)
 -- A validation process, which specifies how to evaluate the perforence of an argument set.
 -- The possibilities are: KFold, LeaveOneOut, LeaveOneGroupOut, HoldOutData, HoldoutPorportion.
--- There are other contextual parameters to Tuning depending on the choosen selection or validation process.
+-- There are other contextual parameters to Tuning depending on the choosen selection or
+   validation process.
 * Instead of marking parameters to be tuned with nimble.CV, the object nimble.Tune is now used.
 -- This allows for not just a list of possibilities, but to specify a range.
 * See the Tuning object's documentation for more details.
 * Some functions and parameters have been shifted or removed to be consistent with the new style.
 
-### returnType ###
+### Performance Functions ###
+* The performanceFunction decorator has been extended.
+-- This applies for use by both nimble's out of the box metrics and user defined ones
+-- Now takes a number of useful metadata attributes that ensure the implementaions are correct..
+-- Some of the parameters to the learning functions, have consequently been shifted, removed, or made
+   optional (contextually).
+* see nimble.calculate.performanceFunction for details
+* The avgDistanceToClusterCenter performance metric is now available.
+
+### Data Construction ###
 * "DataFrame" can now be auto-detected as the returnType in data constructor functions.
 * returnType was made optional with None, the default, triggering auto-detection.
-
-### Small Changes ###
-* The SessionConfiguration object / nimble.settings now has a __repr__ implementation.
 * The ones, zeros, and identity data creation functions now generate int valued output.
-* Support for automatic pointName detection for csv files with a header row that starts with a missing value.
+* Support automatic pointName detection for csv files with a header row starting with a missing value.
 -- This is the format of how pandas records csv files.
+* Combination int/float or int/missing valued input arrays will now automatically detect Matrix as the
+  return type, not Dataframe.
+* A mixed int and float valued input will be automatically packed into a Matrix data object now,
+  instead of a DataFrame object.
+
+### Data Methods ###
+* The structural methods (extract, copy, etc.) now take an off-axis limiter, allowing filter functions
+to only apply to a subset of the possible point or feature in question.
+* Combine writeFile() and save() into a single save() method.
+
+### Logging ###
+* The SessionConfiguration object / nimble.settings now has a __repr__ implementation.
+* All data and TrainedLearner objects now have a unique ID which is searchable in the log.
+* nimble.showLog() will by default only show entries from the current session.
+* the enableCrossValidatDeepLogging configuration variable has been renamed to
+  enableDeepLogging since it now applies to holdout validation as well.
+* Every function or method with a useLog parameter has been modified so
+  that it is now keyword-only.
 
 ### Bug Fixes ###
 * Points / Features __repr__ can now handle fully missing valued points and features.
+* Corrected csv reading bug where leading comments could erroneously cause
+  the first line of data to be interpreted as feature names.
+* The calculate module, report, and features.report should all now be
+  able to gracefully handle fully missing columns.
+* Corrected dtype handling when loading csv files so issing values will
+  be interpreted as floats, not strings; this then persists into the dtype
+  handling of Matrix and DataFrame objects.
+* pandas dataframe object with sparse dtype columns can now be processed
+  without raising an exception.
+* Correct how Autoimpute/pymc3 load theano, which for numpy 1.22 or greater
+  would cause an exception.
 
-### Deprecation ###
+### Dependencies ###
+* The minimum requirement for scikit-learn is now 1.0
 * Python 3.6 reached EOL Dec 2021. Support for it has been removed.
-* The mlpy package, since it required python 3.6 , has been removed.
-* The shogun package, since it required python 3.6, has been removed.
-
-### Save ###
-* Combine writeFile() and save() into a single save() method.
+-- The mlpy package, since it required python 3.6 , has been removed.
+-- The shogun package, since it required python 3.6, has been removed.
