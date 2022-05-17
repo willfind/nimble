@@ -71,4 +71,4 @@ core.logger.initLoggerAndLogConfig()
 
 __all__ = _setAll(vars(), includeModules=True, ignore=['core'])
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"

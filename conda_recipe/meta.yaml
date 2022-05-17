@@ -1,6 +1,6 @@
 package:
   name: nimble
-  version: "0.2.0"
+  version: "0.3.0"
 
 source:
   path: ../
@@ -35,7 +35,7 @@ outputs:
         - requests
         - h5py
         - python-dateutil
-        - scikit-learn
+        - scikit-learn >=1.0
       run:
         - python
         - pandas
@@ -45,7 +45,7 @@ outputs:
         - requests
         - h5py
         - python-dateutil
-        - scikit-learn
+        - scikit-learn >=1.0
         - {{ pin_subpackage('nimble', max_pin="x.x.x.x") }}
     test:
       imports:
