@@ -157,7 +157,10 @@ def test_settings_HooksException_unHookable():
     def nothing(value):
         pass
 
-    nimble.settings.hook("TestS", "TestOp", nothing)
+    try:
+        nimble.settings.hook("TestS", "TestOp", nothing)
+    finally:
+        del nimble.settings.hooks[("TestS", "TestOp")]
 
 
 @raises(InvalidArgumentValue)
@@ -241,6 +244,10 @@ def test_settings_savingSection():
     """ Test nimble.settings.saveChanges when specifying a section """
     nimble.settings.changes = {}
 
+    # Ensure no bleed from other tests
+    with raises(configparser.NoSectionError):
+        _ = nimble.settings.get('TestSec2', "op1")
+
     nimble.settings.set("TestSec1", "op1", '1')
     nimble.settings.set("TestSec1", "op2", '2')
     nimble.settings.set("TestSec2", "op1", '1')
@@ -251,6 +258,7 @@ def test_settings_savingSection():
     assert nimble.settings.get("TestSec2", "op1") == '1'
 
     # reload it with the starup function, make sure settings saved.
+
     temp = nimble.core.configuration.loadSettings()
     assert temp.get('TestSec1', "op1") == '1'
     assert temp.get('TestSec1', "op2") == '2'
