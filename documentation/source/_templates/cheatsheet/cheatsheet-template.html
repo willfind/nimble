@@ -79,7 +79,7 @@
               <div id="image">
                 {% block image %}
                 <a href="nimbleObject.png">
-                  <img src="nimbleObject.png" id="data">
+                  <img src="nimbleObject.png" id="data" width="230" height="95">
                 </a>
                 {% endblock %}
               </div>
@@ -91,9 +91,10 @@
                 <p>Nimble has 4 data types that share the same API.</p>
                 <p>&nbsp;</p>
                 <p>
-                  Each use a different backend to optimize the operations based on
+                  Each use a different backend to optimize the operations based on
                   the type of data in the object. Choosing the type that best
-                  matches the data will support more efficient operations.
+                  matches the data will support more efficient operations. By
+                  default, Nimble will attempt to automatically detect the best type.
                 </p>
                 <p>&nbsp;</p>
                 <table>
@@ -200,8 +201,8 @@
             </p>
           </div>
           <div class="code">
-            <p> X = <a href="docs/generated/nimble.data.html">nimble.data</a>('DataFrame', [[1, 'a'], [2, 'b']])</p>
-            <p> X = <a href="docs/generated/nimble.data.html">nimble.data</a>('Matrix', '/path/to/X.mtx')</p>
+            <p> X = <a href="docs/generated/nimble.data.html">nimble.data</a>([[1, 'a'], [2, 'b']])</p>
+            <p> X = <a href="docs/generated/nimble.data.html">nimble.data</a>('/path/to/X.mtx')</p>
           </div>
           <div class="pad">
             <p>For convenience,
@@ -213,9 +214,9 @@
              </p>
           </div>
           <div class="code">
-            <p> allOnes = <a href="docs/generated/nimble.ones.html">nimble.ones</a>('Matrix', 10, 10)</p>
-            <p> allZeros = <a href="docs/generated/nimble.zeros.html">nimble.zeros</a>('Sparse', 10, 10)</p>
-            <p> identity = <a href="docs/generated/nimble.identity.html">nimble.identity</a>('List', 10)</p>
+            <p> allOnes = <a href="docs/generated/nimble.ones.html">nimble.ones</a>(10, 10)</p>
+            <p> allZeros = <a href="docs/generated/nimble.zeros.html">nimble.zeros</a>(10, 10)</p>
+            <p> identity = <a href="docs/generated/nimble.identity.html">nimble.identity</a>(10)</p>
           </div>
           <div class="pad">
             <p><span class="inline"><a href="docs/generated/nimble.random.data.html">nimble.random.data</a></span>
@@ -225,7 +226,7 @@
             </p>
           </div>
           <div class="code">
-            <p> randomData = <a href="docs/generated/nimble.random.data.html">nimble.random.data</a>('Matrix', 10, 10, 0)</p>
+            <p> randomData = <a href="docs/generated/nimble.random.data.html">nimble.random.data</a>(10, 10, 0, returnType='Matrix')</p>
           </div>
           {% endblock %}
           {% block io_fetching_head %}
@@ -270,36 +271,45 @@
           {% block info_content %}
           <div class="pad">
             <p>Some information is set automatically on creation. By default
-              automatic detection of pointNames and featureNames occurs. Data
-              information can also be controlled by some of the parameters for
+              automatic detection of returnType, pointNames, and featureNames occurs. Data
+              object information can also be controlled by some of the parameters for
               <span class="inline"><a href="docs/generated/nimble.data.html">nimble.data</a></span>.
             </p>
           </div>
           <div class="code">
-            <p>>>> X = <a href="docs/generated/nimble.data.html">nimble.data</a>('DataFrame', '/path/to/X.csv')</p>
+            <p>>>> X = <a href="docs/generated/nimble.data.html">nimble.data</a>('/path/to/X.csv')</p>
             <p>>>> X.<a href="docs/generated/nimble.core.data.Base.shape.html">shape</a>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              &nbsp;&nbsp;&nbsp;# Always set</p>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              # Always set</p>
             <p>(3, 4)</p>
             <p>>>> X.<a href="docs/generated/nimble.core.data.Base.path.html">path</a>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              &nbsp;&nbsp;&nbsp;&nbsp;# Set when source is a path</p>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              # Set when source is a path</p>
             <p>'/path/to/X.csv'</p>
-            <p>>>> X.<a href="docs/generated/nimble.core.data.Features.getNames.html">features.getNames</a>() # Automatically detected</p>
+            <p>>>> X.<a href="docs/generated/nimble.core.data.Base.getTypeString.html">getTypeString</a>()
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              # Automatically detected</p>
+            <p>'Matrix'</p>
+            <p>>>> X.<a href="docs/generated/nimble.core.data.Features.getNames.html">features.getNames</a>() 
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              # Automatically detected</p>
             <p>['h', 'w', 'd']</p>
             <p>>>> X.<a href="docs/generated/nimble.core.data.Points.getNames.html">points.getNames</a>()
-              &nbsp;&nbsp;# Automatically detected</p>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              # Automatically detected</p>
             <p>['0k1r3', '6t3n1', '8i7i3', '0k2r2']</p>
             <p>>>> headers = ['height', 'width', 'depth']</p>
             <p>>>> items = ['couch', 'table', 'chair', 'love seat']</p>
-            <p>>>> X = <a href="docs/generated/nimble.data.html">nimble.data</a>('Matrix', '/path/to/dataset.csv',</p>
+            <p>>>> X = <a href="docs/generated/nimble.data.html">nimble.data</a>('/path/to/dataset.csv', </p>
             <p>... &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               &nbsp;&nbsp;&nbsp;&nbsp;
               pointNames=items', featureNames=headers,
             </p>
             <p>... &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               &nbsp;&nbsp;&nbsp;&nbsp;
-              name='furniture')
+              returnType="DataFrame", name='furniture')
             </p>
           </div>
           <div class="pad">
@@ -310,14 +320,17 @@
           <div class="code">
             <p>X.<a href="docs/generated/nimble.core.data.Base.name.html">name</a>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              &nbsp;&nbsp;&nbsp;
               # A getter and setter</p>
-            <p>X.<a href="docs/generated/nimble.core.data.Base.absolutePath.html">absolutePath</a>
+<!-- Low priority attributes, removed due to vertial space concerns
+              <p>X.<a href="docs/generated/nimble.core.data.Base.absolutePath.html">absolutePath</a>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               # A getter only</p>
             <p>X.<a href="docs/generated/nimble.core.data.Base.relativePath.html">relativePath</a>
               &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
               # A getter only</p>
+-->
             <p>X.[<a class="point" href="docs/generated/nimble.core.data.Points.getNames.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.getNames.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.getNames.html">getNames</a>()</p>
             <p>X.[<a class="point" href="docs/generated/nimble.core.data.Points.getName.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.getName.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.getName.html">getName</a>(index)</p>
             <p>X.[<a class="point" href="docs/generated/nimble.core.data.Points.setNames.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.setNames.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.setNames.html">setNames</a>(assignments)</p>
@@ -348,7 +361,7 @@
             <div class="first-half">
               <p>X</p>
               <p>print(X)</p>
-              <p>X.<a href="docs/generated/nimble.core.data.Base.show.html">show</a>(description, ...)</p>
+              <p>X.<a href="docs/generated/nimble.core.data.Base.show.html">show</a>(description, ...)&nbsp;</p>
             </div>
             <div>
               <p># A representation of the data object that conforms to
@@ -364,14 +377,14 @@
           {% endblock %}
           {% block visualization_plotting_content %}
           <div class="pad">
-            <p>Nimble  provides basic plotting functions using the matplotlib
+            <p>Nimble  provides basic plotting functions using the matplotlib
               package on the backend.
             </p>
           </div>
           <div class="code">
             <div class="first-half">
               <p>X.<a href="docs/generated/nimble.core.data.Base.plotFeatureAgainstFeature.html">plotFeatureAgainstFeature</a>(x, y, ...)</p>
-              <p>X.<a href="docs/generated/nimble.core.data.Base.plotFeatureAgainstFeatureRollingAverage.html">plotFeatureAgainstFeatureRollingAverage</a>(x, y, ...)</p>
+              <p>X.<a href="docs/generated/nimble.core.data.Base.plotFeatureAgainstFeatureRollingAverage.html">plotFeatureAgainstFeatureRollingAverage</a>(x, y, ...)&nbsp;</p>
               <p>X.<a href="docs/generated/nimble.core.data.Base.plotFeatureDistribution.html">plotFeatureDistribution</a>(feature, ...)</p>
               <p>X.<a href="docs/generated/nimble.core.data.Base.plotFeatureGroupMeans.html">plotFeatureGroupMeans</a>(feature, groupFeature, ...)</p>
               <p>X.<a href="docs/generated/nimble.core.data.Base.plotFeatureGroupStatistics.html">plotFeatureGroupStatistics</a>(statistic, feature,</p>
@@ -384,19 +397,17 @@
               <p>X.<a href="docs/generated/nimble.core.data.Base.plotHeatMap.html">plotHeatMap</a>(...)</p>
               <p>X.[<a class="point" href="docs/generated/nimble.core.data.Points.plot.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.plot.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.plot.html">plot</a>(identifiers, ...)</p>
               <p>X.[<a class="point" href="docs/generated/nimble.core.data.Points.plotMeans.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.plotMeans.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.plotMeans.html">plotMeans</a>(identifiers, ...)</p>
-              <p>X.[<a class="point" href="docs/generated/nimble.core.data.Points.plotStatistics.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.plotStatistics.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.plotStatistics.html">plotStatistics</a>(statistic,)</p>
+              <p>X.[<a class="point" href="docs/generated/nimble.core.data.Points.plotStatistics.html">points</a>/<a class="feature" href="docs/generated/nimble.core.data.Features.plotStatistics.html">features</a>].<a class="method" href="docs/generated/nimble.core.data.Points.plotStatistics.html">plotStatistics</a>(statistic,</p>
               <p>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                &nbsp;
-                identifiers, ...)
+                &nbsp; identifiers, ...)
               </p>
             </div>
             <div>
               <p>
-                # A scatter plot showing one feature plotted against another
-                feature
+                # A scatter plot showing feature x plotted against feature y
               </p>
               <p>
                 # A rolling average of one feature plotted against another feature
@@ -410,11 +421,8 @@
               <p># Display a heat map of the data</p>
               <p># Bar chart comparing points/features</p>
               <p># Plot means with 95% confidence interval bars</p>
-              <p>
-                # Bar chart comparing an aggregate statistic between
-                points/features
-              </p>
-              <p>&nbsp;</p>
+              <p># Bar chart comparing an aggregate statistic between points or</p>
+              <p>&nbsp;&nbsp;features</p>
             </div>
           </div>
           {% endblock %}
@@ -841,7 +849,7 @@
               <div>
                 <p># A list of parameters that the learner accepts</p>
                 <p># Print parameters of the learner</p>
-                <p># A dictionary of parameters and their default values</p>
+                <p># A dict of parameters to their default values</p>
                 <p># Print the default values of the learner</p>
               </div>
             </div>
@@ -864,7 +872,7 @@
                 <p>tl.<a href="docs/generated/nimble.core.interfaces.TrainedLearner.html">learnerName</a></p>
                 <p>tl.<a href="docs/generated/nimble.core.interfaces.TrainedLearner.html">arguments</a></p>
                 <p>tl.<a href="docs/generated/nimble.core.interfaces.TrainedLearner.html">randomSeed</a></p>
-                <p>tl.<a href="docs/generated/nimble.core.interfaces.TrainedLearner.html">crossValidation</a></p>
+                <p>tl.<a href="docs/generated/nimble.core.interfaces.TrainedLearner.html">tuning</a></p>
                 <p>&nbsp;</p>
                 <p>tl.<a href="docs/generated/nimble.core.interfaces.TrainedLearner.apply.html">apply</a>(testX, ...)</p>
                 <p>&nbsp;</p>
@@ -874,20 +882,20 @@
                 <p>tl.<a href="docs/generated/nimble.core.interfaces.TrainedLearner.incrementalTrain.html">incrementalTrain</a>(trainX, trainY, ...)</p>
                 <p>tl.<a href="docs/generated/nimble.core.interfaces.TrainedLearner.retrain.html">retrain</a>(trainX, trainY, ...)</p>
                 <p>tl.<a href="docs/generated/nimble.core.interfaces.TrainedLearner.save.html">save</a>(outPath)</p>
-                <p>tl.<a href="docs/generated/nimble.core.interfaces.TrainedLearner.test.html">test</a>(testX, testY,</p>
+                <p>tl.<a href="docs/generated/nimble.core.interfaces.TrainedLearner.test.html">test</a>(performanceFunction,</p>
                 <p>
                   &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                  performanceFunction, ...)
+                  testX, testY, ...)
                 </p>
               </div>
               <div>
                 <p># The name of learner used for training</p>
                 <p># The arguments used for training</p>
                 <p># The randomSeed applied for training</p>
-                <p># <a href="docs/generated/nimble.core.learn.KFoldCrossValidator.html">KFoldCrossValidator</a>
-                  object of the
+                <p># <a href="docs/generated/nimble.Tuning.html">Tuning</a>
+                  object containing the
                 </p>
-                <p>&nbsp;&nbsp;cross-validation results</p>
+                <p>&nbsp;&nbsp;hyperparameter tuning results</p>
                 <p># Apply the trained learner to new data</p>
                 <p>&nbsp;&nbsp;data</p>
                 <p># Dictionary with attributes generated by the</p>
@@ -914,9 +922,8 @@
               <div class="first-half">
                 <p>trainedLearner = <a href="docs/generated/nimble.train.html">nimble.train</a>(learnerName, trainX, trainY, ...)</p>
                 <p>predictedY = <a href="docs/generated/nimble.trainAndApply.html">nimble.trainAndApply</a>(learnerName, trainX, trainY, testX, ...)</p>
-                <p>performance = <a href="docs/generated/nimble.trainAndTest.html">nimble.trainAndTest</a>(learnerName, trainX, trainY, testX, testY, performanceFunction, ...)</p>
-                <p>performance = <a href="docs/generated/nimble.trainAndTestOnTrainingData.html">nimble.trainAndTestOnTrainingData</a>(learnerName, trainX, trainY, performanceFunction, ...)</p>
-                <p>kFoldCrossvalidator = <a href="docs/generated/nimble.crossValidate.html">nimble.crossValidate</a>(learnerName, X, Y, performanceFunction, ...)</p>
+                <p>performance = <a href="docs/generated/nimble.trainAndTest.html">nimble.trainAndTest</a>(learnerName, performanceFunction, trainX, trainY, testX, testY, ...)</p>
+                <p>performance = <a href="docs/generated/nimble.trainAndTestOnTrainingData.html">nimble.trainAndTestOnTrainingData</a>(learnerName, performanceFunction, trainX, trainY, ...)</p>
                 <p>normalizedX = <a href="docs/generated/nimble.normalizeData.html">nimble.normalizeData</a>(learnerName, trainX, ...)</p>
                 <p>&nbsp;</p>
                 <p>filledX = <a href="docs/generated/nimble.fillMatching.html">nimble.fillMatching</a>(learnerName, matchingElements, trainX, ...)</p>
@@ -926,7 +933,6 @@
                 <p># Make predictions on new data</p>
                 <p># Evaluate the accuracy of the predictions on the testing data</p>
                 <p># Evaluate the accuracy of the predictions on the used for training</p>
-                <p># Evaluate the accuracy with varying arguments. Returns a <a href="docs/generated/nimble.core.learn.KFoldCrossValidator.html">KFoldCrossValidator</a></p>
                 <p># Transform the training (and optionally testing) data using the learnerName</p>
                 <p>&nbsp;&nbsp;specified normalization</p>
                 <p># Replace matching elements in points/features with provided or calculated values</p>
@@ -935,9 +941,12 @@
             <div class="pad">
               <p>Arguments can be set in two ways: by using the arguments parameter
                 in the nimble function or by passing the learner object's
-                parameters as keyword arguments. Cross-validation can also be
-                triggered using a
-                <a href="docs/generated/nimble.CV.html">nimble.CV</a> object.
+                parameters as keyword arguments. Hyperparameter tuning is triggered
+                by annotating the parameters in question with a
+                <a class="inline" href="docs/generated/nimble.Tune.html">nimble.Tune</a> object.
+                and by passing a 
+                <a class="inline" href="docs/generated/nimble.Tuning.html">nimble.Tuning</a> object
+                into training.
               </p>
             </div>
             <div class="code">
@@ -948,8 +957,11 @@
               <p>
                 >>> tl = <a href="docs/generated/nimble.train.html">nimble.train</a>("sklearn.KMeans', trainX, trainY, n_clusters=7)
               </p>
+              <p>
+                >>> tuningObj = <a href="docs/generated/nimble.Tuning.html">nimble.Tuning</a>(validation=0.2, performanceFunction=rootMeanSquareError)
+              </p>
               <p>>>> tl = <a href="docs/generated/nimble.train.html">nimble.train</a>("sklearn.Ridge', trainX, trainY,
-                alpha=<a href="docs/generated/nimble.CV.html">nimble.CV</a>([0.1, 1.0]))
+                alpha=<a href="docs/generated/nimble.Tune.html">nimble.Tune</a>([0.1, 1.0]), tuning=tuningObj)
               </p>
             </div>
           {% endblock %}

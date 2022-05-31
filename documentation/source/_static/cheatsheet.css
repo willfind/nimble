@@ -181,7 +181,7 @@ div.body .inplace {
 }
 
 #image {
-  text-align: center;
+  text-align: left;
   margin-bottom: 4px;
   margin-right: 4px;
 }
@@ -210,12 +210,12 @@ div.body .inplace {
 }
 
 #info {
-  width: 264px;
+  width: 266px;
   height: 280px;
 }
 
 #vizAndIter {
-  width: 522px;
+  width: 520px;
 }
 
 #visualization {
@@ -263,11 +263,11 @@ div.body .inplace {
 }
 
 #ml-left {
-  width: 408px;
+  width: 385px;
 }
 
 #ml-right {
-  width: 380px;
+  width: 403px;
 }
 
 #training {
