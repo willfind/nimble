@@ -50,6 +50,35 @@ def testClassifyAlgorithms(printResultsDontThrow=False):
                 print('Passed test for ' + curAlgorithm)
 
 
+def testGenerateClusteredPoints_handmade():
+    clusterCount = 2
+    pointsPer = 1
+    featuresPer = 2
+
+    dataset, labelsObj, _ = generateClusteredPoints(
+        clusterCount, pointsPer, featuresPer, addFeatureNoise=False,
+        addLabelNoise=False, addLabelColumn=False)
+
+    dataExp = [[0, 0], [-1,-1]]
+    labelsExp = [[0],[1]]
+
+    assert dataset == nimble.data(dataExp)
+    assert labelsObj == nimble.data(labelsExp)
+
+    clusterCount = 5
+    pointsPer = 1
+    featuresPer = 6
+
+    dataset, labelsObj, _ = generateClusteredPoints(
+        clusterCount, pointsPer, featuresPer, addFeatureNoise=False,
+        addLabelNoise=False, addLabelColumn=False)
+
+    dataExp = [[0,0,0,0,0,0],[-1,0,0,-1,0,0],[0,2,0,0,2,0],[0,-3,0,0,-3,0],[0,0,4,0,0,4]]
+    labelsExp = [[0],[1],[2],[3],[4]]
+
+    assert dataset == nimble.data(dataExp)
+    assert labelsObj == nimble.data(labelsExp)
+
 def testGenerateClusteredPoints():
     """tests that the shape of data produced by generateClusteredPoints() is predictable and that the noisiness of the data
     matches that requested via the addFeatureNoise and addLabelNoise flags"""
@@ -57,7 +86,7 @@ def testGenerateClusteredPoints():
     pointsPer = 10
     featuresPer = 5
 
-    dataset, labelsObj, noiselessLabels = generateClusteredPoints(
+    dataset, _, noiselessLabels = generateClusteredPoints(
         clusterCount, pointsPer, featuresPer, addFeatureNoise=True,
         addLabelNoise=True, addLabelColumn=True)
     pts, feats = len(noiselessLabels.points), len(noiselessLabels.features)
@@ -72,7 +101,7 @@ def testGenerateClusteredPoints():
             #assert dataset has noise for all entries
             assert (dataset[i, j] % 1 != 0.0)
 
-    dataset, labelsObj, noiselessLabels = generateClusteredPoints(
+    dataset, _, noiselessLabels = generateClusteredPoints(
         clusterCount, pointsPer, featuresPer, addFeatureNoise=False,
         addLabelNoise=False, addLabelColumn=True)
     pts, feats = len(noiselessLabels.points), len(noiselessLabels.features)
@@ -88,7 +117,7 @@ def testGenerateClusteredPoints():
             assert (dataset[i, j] % 1 == 0.0)
 
     #test that addLabelColumn flag works
-    dataset, labelsObj, noiselessLabels = generateClusteredPoints(
+    dataset, _, noiselessLabels = generateClusteredPoints(
         clusterCount, pointsPer, featuresPer, addFeatureNoise=False,
         addLabelNoise=False, addLabelColumn=False)
     labelColumnlessRows, labelColumnlessCols = len(dataset.points), len(dataset.features)
@@ -96,23 +125,30 @@ def testGenerateClusteredPoints():
     assert (labelColumnlessCols - feats == -1)
     assert (labelColumnlessRows - pts == 0)
 
-
     #test that generated points have plausible values expected from the nature of generateClusteredPoints
-    allNoiseDataset, labsObj, noiselessLabels = generateClusteredPoints(
+    allNoiseDataset, _, noiselessLabels = generateClusteredPoints(
         clusterCount, pointsPer, featuresPer, addFeatureNoise=True,
         addLabelNoise=True, addLabelColumn=True)
     pts, feats = len(allNoiseDataset.points), len(allNoiseDataset.features)
     for curRow in range(pts):
+        currentClusterNumber = math.floor(curRow / pointsPer)
         for curCol in range(feats):
             #assert dataset has no noise for all entries
             assert (allNoiseDataset[curRow, curCol] % 1 > 0.0000000001)
 
-            currentClusterNumber = math.floor(curRow / pointsPer)
-            expectedNoiselessValue = currentClusterNumber
+            # last column is a noisy label
+            if curCol != feats - 1:
+
+                check = curCol % int(math.ceil(clusterCount/2)) == (currentClusterNumber//2)
+                expectedNoiselessValue = currentClusterNumber if check else 0
+                if currentClusterNumber % 2 == 1:
+                    expectedNoiselessValue *= -1
+            else:
+                expectedNoiselessValue = currentClusterNumber
+
             absoluteDifference = abs(allNoiseDataset[curRow, curCol] - expectedNoiselessValue)
             #assert that the noise is reasonable:
             assert (absoluteDifference < 0.01)
-
 
 def testSumDifferenceFunction():
     """ Function verifies that for different shaped matricies, generated via nimble.data, sumAbsoluteDifference() throws an InvalidArgumentValueCombination."""

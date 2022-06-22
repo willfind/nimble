@@ -181,6 +181,10 @@ def generateClusteredPoints(numClusters, numPointsPerCluster,
     tuple of nimble.Base objects:
     (pointsObj, labelsObj, noiselessLabelsObj)
     """
+    if numFeaturesPerPoint < numClusters/2:
+        msg = "There must be at least as many features as possible cluster "
+        msg += "labels divided by 2"
+        raise InvalidArgumentValue(msg)
 
     pointsList = []
     labelsList = []
@@ -189,28 +193,35 @@ def generateClusteredPoints(numClusters, numPointsPerCluster,
     def _noiseTerm():
         return pythonRandom.random() * 0.0001 - 0.00005
 
-    for curCluster in range(numClusters):
+    for curr in range(numClusters):
         for _ in range(numPointsPerCluster):
-            curFeatureVector = [float(curCluster) for x
-                                in range(numFeaturesPerPoint)]
+            # Each cluster gets packed into the positive or negative direction
+            # on an axis shared by another cluster. If there are more features
+            # being generated than needed, the pattern will repeat using mod
+            # to partition the features according to which clusters will be
+            # represented in them.
+            ftCycle = ((numClusters // 2) + numClusters % 2)
+            sign = 1 if curr % 2 == 0 else -1
+            featureVector = [(curr * sign) if x % ftCycle == (curr//2) else 0
+                                for x in range(numFeaturesPerPoint)]
 
             if addFeatureNoise:
-                curFeatureVector = [_noiseTerm() + entry for entry
-                                    in curFeatureVector]
+                featureVector = [_noiseTerm() + entry for entry
+                                    in featureVector]
 
             if addLabelNoise:
-                curLabel = _noiseTerm() + curCluster
+                curLabel = _noiseTerm() + curr
             else:
-                curLabel = curCluster
+                curLabel = curr
 
             if addLabelColumn:
-                curFeatureVector.append(curLabel)
+                featureVector.append(curLabel)
 
             #append curLabel as a list to maintain dimensionality
             labelsList.append([curLabel])
 
-            pointsList.append(curFeatureVector)
-            clusterNoiselessLabelList.append([float(curCluster)])
+            pointsList.append(featureVector)
+            clusterNoiselessLabelList.append([float(curr)])
 
     pointsArray = np.array(pointsList, dtype=np.float)
     labelsArray = np.array(labelsList, dtype=np.float)
