@@ -73,7 +73,7 @@ def testGenerateClusteredPoints_handmade():
         clusterCount, pointsPer, featuresPer, addFeatureNoise=False,
         addLabelNoise=False, addLabelColumn=False)
 
-    dataExp = [[0,0,0,0,0,0],[-1,0,0,-1,0,0],[0,2,0,0,2,0],[0,-3,0,0,-3,0],[0,0,4,0,0,4]]
+    dataExp = [[0,0,0,0,0,0],[-1,-1,0,0,0,0],[0,0,2,2,0,0],[0,0,-3,-3,0,0],[0,0,0,0,4,4]]
     labelsExp = [[0],[1],[2],[3],[4]]
 
     assert dataset == nimble.data(dataExp)
@@ -129,6 +129,11 @@ def testGenerateClusteredPoints():
     allNoiseDataset, _, noiselessLabels = generateClusteredPoints(
         clusterCount, pointsPer, featuresPer, addFeatureNoise=True,
         addLabelNoise=True, addLabelColumn=True)
+
+    # map cluster numbers to indices where they will be non-zero in generated
+    # points.
+    nonZeroIds = {0:[0,1,2], 1:[0,1,2], 2:[3,4]}
+
     pts, feats = len(allNoiseDataset.points), len(allNoiseDataset.features)
     for curRow in range(pts):
         currentClusterNumber = math.floor(curRow / pointsPer)
@@ -138,8 +143,7 @@ def testGenerateClusteredPoints():
 
             # last column is a noisy label
             if curCol != feats - 1:
-
-                check = curCol % int(math.ceil(clusterCount/2)) == (currentClusterNumber//2)
+                check = curCol in nonZeroIds[currentClusterNumber]
                 expectedNoiselessValue = currentClusterNumber if check else 0
                 if currentClusterNumber % 2 == 1:
                     expectedNoiselessValue *= -1

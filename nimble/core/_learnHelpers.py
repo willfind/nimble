@@ -7,6 +7,7 @@ functions are contained in learn.py without the distraction of helpers.
 
 from functools import wraps
 import numbers
+import math
 
 import numpy as np
 
@@ -167,10 +168,11 @@ def generateClusteredPoints(numClusters, numPointsPerCluster,
     feature values for each point.
 
     generateClusteredPoints() outputs a dataset of the following format:
-    each point associated with a cluster has numFeaturesPerPoint
-    features. The value of each entry in the feature vector is
-    clusterNumber+noise. Each point in the cluster has the same feature
-    vector, with different noise.
+    the value of each entry is either 0 or (+/-)1+noise. The
+    features of the generated object are partitioned so that every cluster
+    is represented in at least one of the returned features, with the even
+    numbered clusters present with a positive value and the odd numbered
+    clusters present with a negative value.
 
     NOTE: if addFeatureNoise and addLabelNoise are false, then the
     'clusters' are actually all contain just repeated points, where each
@@ -180,6 +182,22 @@ def generateClusteredPoints(numClusters, numPointsPerCluster,
     -------
     tuple of nimble.Base objects:
     (pointsObj, labelsObj, noiselessLabelsObj)
+    Examples
+    --------
+    >>> ret = generateClusteredPoints(numClusters=5, numPointsPerCluster=1,
+    ...       numFeaturesPerPoint=6, addFeatureNoise=False,
+    ...       addLabelNoise=False, addLabelColumn=False)
+    >>> ret[0]
+    <Matrix 5pt x 6ft
+           0      1      2      3      4     5
+       ┌────────────────────────────────────────
+     0 │ 0.000  0.000  0.000  0.000  0.000 0.000
+     1 │ -1.000 -1.000 0.000  0.000  0.000 0.000
+     2 │ 0.000  0.000  2.000  2.000  0.000 0.000
+     3 │ 0.000  0.000  -3.000 -3.000 0.000 0.000
+     4 │ 0.000  0.000  0.000  0.000  4.000 4.000
+    >
+
     """
     if numFeaturesPerPoint < numClusters/2:
         msg = "There must be at least as many features as possible cluster "
@@ -200,10 +218,12 @@ def generateClusteredPoints(numClusters, numPointsPerCluster,
             # being generated than needed, the pattern will repeat using mod
             # to partition the features according to which clusters will be
             # represented in them.
-            ftCycle = ((numClusters // 2) + numClusters % 2)
-            sign = 1 if curr % 2 == 0 else -1
-            featureVector = [(curr * sign) if x % ftCycle == (curr//2) else 0
-                                for x in range(numFeaturesPerPoint)]
+
+            ftsPerPt = numFeaturesPerPoint
+            ftsPerCluster = int(math.ceil(ftsPerPt / math.ceil(numClusters/2)))
+            val = curr if curr % 2 == 0 else -curr
+            featureVector = [val if curr//2 == x//ftsPerCluster else 0
+                             for x in range(ftsPerPt)]
 
             if addFeatureNoise:
                 featureVector = [_noiseTerm() + entry for entry
