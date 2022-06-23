@@ -213,12 +213,6 @@ def generateClusteredPoints(numClusters, numPointsPerCluster,
 
     for curr in range(numClusters):
         for _ in range(numPointsPerCluster):
-            # Each cluster gets packed into the positive or negative direction
-            # on an axis shared by another cluster. If there are more features
-            # being generated than needed, the pattern will repeat using mod
-            # to partition the features according to which clusters will be
-            # represented in them.
-
             ftsPerPt = numFeaturesPerPoint
             ftsPerCluster = int(math.ceil(ftsPerPt / math.ceil(numClusters/2)))
             val = curr if curr % 2 == 0 else -curr
