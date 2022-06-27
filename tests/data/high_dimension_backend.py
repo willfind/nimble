@@ -33,8 +33,9 @@ nzMatrix = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [-1, -2, -3, -4, -5]]
 
 nzTensors = makeTensorData(nzMatrix)
 
-class HighDimensionSafe(DataTestObject):
 
+class HighDimensionSafe(DataTestObject):
+    
     def test_highDimension_equality(self):
         for tens1, tens2 in zip(tensors, tensors):
             toTest1 = self.constructor(tens1)
@@ -74,10 +75,22 @@ class HighDimensionSafe(DataTestObject):
             assert len(train.points) == 2
             assert len(train._dims) > 2
             assert len(test.points) == 1
-            assert len(train._dims) > 2
+            assert len(test._dims) > 2
 
             with raises(ImproperObjectAction):
                 fourTuple = toTest.trainAndTestSets(0.33, labels=0)
+
+    def test_highDimension_trainAndTestSets_dataObject_nimbleLabel(self):
+        objectLabel = nimble.data([['dog'], ['cat'], ['cat']])
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+            trainX, trainY, testX, testY = toTest.trainAndTestSets(0.33,labels=objectLabel)
+            assert len(trainX.points) == 2
+            assert len(trainX._dims) > 2
+            assert len(testX.points) == 1
+            assert len(testX._dims) > 2
+            assert len(trainY.points) == 2
+            assert len(testY.points) == 1
 
     def test_highDimension_stringRepresentations(self):
         stdoutBackup = sys.stdout
@@ -298,7 +311,7 @@ class HighDimensionSafe(DataTestObject):
                 assert pt._dims == toTest._dims[1:]
                 assert not pt.points._namesCreated()
                 assert not pt.features._namesCreated()
-
+                
     def test_highDimension_points_getitem(self):
         for tensor in tensors:
             toTest = self.constructor(tensor)
