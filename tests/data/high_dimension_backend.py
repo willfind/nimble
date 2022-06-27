@@ -79,7 +79,7 @@ class HighDimensionSafe(DataTestObject):
 
             with raises(ImproperObjectAction):
                 fourTuple = toTest.trainAndTestSets(0.33, labels=0)
-    
+
     def test_highDimension_trainAndTestSets_dataObject_nimbleLabel(self):
         objectLabel = nimble.data([['dog'], ['cat'], ['cat']])
         for tensor in tensors:
@@ -275,7 +275,7 @@ class HighDimensionSafe(DataTestObject):
                     flattenTensor(pt, store)
 
             return store
-    
+
         for tensor in tensors:
             flatPt = flattenTensor(tensor)
             orig = self.constructor(tensor)
@@ -297,7 +297,7 @@ class HighDimensionSafe(DataTestObject):
             flat = expPt.copy()
             with raises(ImproperObjectAction):
                 flat.unflatten(orig._dims, order='feature')
-                
+
     def test_highDimension_points_iter(self):
         for idx, tensor in enumerate(tensors):
             flattenedLen = 15
@@ -706,5 +706,3 @@ class HighDimensionModifying(DataTestObject):
 
 class HighDimensionAll(HighDimensionSafe, HighDimensionModifying):
     pass
-    # def test_highDimension_trainAndTestSetsSplit(self):
-    #     pass 

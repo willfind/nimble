@@ -1514,7 +1514,7 @@ class Base(ABC):
             else:
                 trainX.name = "train"
                 testX.name = "test"
-       
+
         else:
             if isinstance(labels, Base):
                 if len(labels.points) != len(self.points):
@@ -1529,12 +1529,12 @@ class Base(ABC):
                     raise InvalidArgumentValue(msg) from e
                 trainY = labels.points.copy(order[:splitIndex], useLog=False)
                 testY = labels.points.copy(order[splitIndex:], useLog=False)
-            else:    
+            else:
                 if len(self._dims) > 2:
-                    msg = "labels parameter must be None when the data has more "
-                    msg += "than two dimensions"
+                    msg = "labels parameter must be None when the data has "
+                    msg += "more than two dimensions"
                     raise ImproperObjectAction(msg)
-                
+
                 # safety for empty objects
                 toExtract = labels
                 if testXSize == 0:
