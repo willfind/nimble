@@ -81,12 +81,7 @@ class HighDimensionSafe(DataTestObject):
                 fourTuple = toTest.trainAndTestSets(0.33, labels=0)
     
     def test_highDimension_trainAndTestSets_dataObject_nimbleLabel(self):
-        # figure out a way to test the proposition in 1517 of Base 
-        # test case where label is provided and IS nimble data object 
-        # test case where label is provided 
-        # labels used for testing high dimensional case
         objectLabel = nimble.data([['dog'], ['cat'], ['cat']])
-        #objectLabel = nimble.data([['1'], ['0'], ['0']])
         for tensor in tensors:
             toTest = self.constructor(tensor)
             trainX, trainY, testX, testY = toTest.trainAndTestSets(0.33,labels=objectLabel)
@@ -96,10 +91,6 @@ class HighDimensionSafe(DataTestObject):
             assert len(testX._dims) > 2
             assert len(trainY.points) == 2
             assert len(testY.points) == 1
-            #assert len(train._dims) > 2
-
-            with raises(ImproperObjectAction):
-                fourTuple = toTest.trainAndTestSets(0.33, labels=0)
 
     def test_highDimension_stringRepresentations(self):
         stdoutBackup = sys.stdout
