@@ -11,10 +11,8 @@ from packaging.version import parse
 
 import nimble
 from nimble._utility import inspectArguments, dtypeConvert
-from nimble._utility import inheritDocstringsFactory, numpy2DArray
-from nimble._utility import prettyListString
+from nimble._utility import inheritDocstringsFactory
 from nimble._dependencies import checkVersion
-from nimble.exceptions import InvalidArgumentValue
 from .universal_interface import PredefinedInterfaceMixin
 from ._interface_helpers import PythonSearcher
 from ._interface_helpers import modifyImportPathAndImport
@@ -27,6 +25,7 @@ from ._interface_helpers import checkArgsForRandomParam
 LEARNERTYPES = {
     'classification': [
         'BinaryCrossentropy', 'binary_crossentropy',
+        'BinaryFocalCrossEntropy', 'binary_focal_crossentropy',
         'CategoricalCrossentropy', 'categorical_crossentropy',
         'SparseCategoricalCrossentropy', 'sparse_categorical_crossentropy',
         'Poisson', 'poisson',
@@ -206,18 +205,16 @@ To install keras
         return [objArgs]
 
     def _getLearnerParameterNamesBackend(self, learnerName):
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'obs', 'T', 'seed']
-        init = self._paramQuery('__init__', learnerName, ignore)
-        fit = self._paramQuery('fit', learnerName, ignore)
-        fitGenerator = self._paramQuery('fit_generator', learnerName, ignore)
-        predict = self._paramQuery('predict', learnerName, ignore)
-        compile_ = self._paramQuery('compile', learnerName, ignore)
+        ignore = ['self', 'X', 'x', 'Y', 'y']
+        start = self._paramQuery('__init__', learnerName, ignore)
 
-        ret = init[0] + fit[0] + predict[0]
-        if fitGenerator is not None:
-            ret += fitGenerator[0]
-        if compile_ is not None:
-            ret += compile_[0]
+        # All models share the same compile / fit /predict API
+        compile_ = self._paramQuery('compile', "Model", ignore)
+        fit = self._paramQuery('fit', "Model", ignore)
+        predict = self._paramQuery('predict', "Model", ignore)
+
+        ret = start[0] + compile_[0] + fit[0] + predict[0]
+
         return [ret]
 
     def _getDefaultValuesBackend(self, name):
@@ -233,14 +230,16 @@ To install keras
         return [ret]
 
     def _getLearnerDefaultValuesBackend(self, learnerName):
-        ignore = ['self', 'X', 'x', 'Y', 'y', 'T', 'seed']
-        init = self._paramQuery('__init__', learnerName, ignore)
-        fit = self._paramQuery('fit', learnerName, ignore)
-        fitGenerator = self._paramQuery('fit_generator', learnerName, ignore)
-        predict = self._paramQuery('predict', learnerName, ignore)
-        compile_ = self._paramQuery('compile', learnerName, ignore)
+        ignore = ['self', 'X', 'x', 'Y', 'y']
 
-        toProcess = [init, fit, fitGenerator, compile_, predict]
+        start = self._paramQuery('__init__', learnerName, ignore)
+
+        # All models share the same compile / fit /predict API
+        compile_ = self._paramQuery('compile', "Model", ignore)
+        fit = self._paramQuery('fit', "Model", ignore)
+        predict = self._paramQuery('predict', "Model", ignore)
+
+        toProcess = [start, compile_, fit, predict]
 
         ret = {}
         for stage in [stg for stg in toProcess if stg is not None]:
@@ -267,47 +266,13 @@ To install keras
     def _getScoresOrder(self, learner):
         return learner.UIgetScoreOrder
 
-    def _validateFitArguments(self, dataType, learnerName, arguments):
-        fitArgs = self._paramQuery('fit', learnerName)[0]
-        fitGenArgs = self._paramQuery('fit_generator', learnerName)[0]
-        if fitGenArgs is not None and dataType == 'Sparse':
-            useArgs = fitGenArgs
-            ignoreArgs = fitArgs
-        elif dataType == 'Sparse':
-            useArgs = fitArgs
-            ignoreArgs = []
-        else:
-            # when not Sparse, ignore fit args that only apply to generators
-            genArgs = ['max_queue_size', 'workers', 'use_multiprocessing']
-            useArgs = [arg for arg in fitArgs if arg not in genArgs]
-            ignoreArgs = fitGenArgs if fitGenArgs is not None else []
-
-        invalid = frozenset(ignoreArgs) - frozenset(useArgs)
-        extra = []
-        for arg in invalid:
-            if arg in arguments:
-                extra.append(arg)
-        if extra:
-            msg = "EXTRA LEARNER PARAMETER! "
-            msg += "When trying to validate arguments for "
-            msg += learnerName + ", the following list of parameter "
-            msg += "names were not matched: "
-            msg += prettyListString(extra, useAnd=True)
-            msg += ". Those parameters are only suitable for "
-            if dataType == 'Sparse':
-                msg += "dense types (List, Matrix, DataFrame) and this object "
-                msg += "is Sparse"
-            else:
-                msg += "Sparse objects and this a " + dataType
-            raise InvalidArgumentValue(msg)
-
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
                              arguments, customDict):
         if trainX is not None:
             dataType = trainX.getTypeString()
-            self._validateFitArguments(dataType, learnerName, arguments)
-            if dataType != 'Sparse':
-            #for sparse cases, keep it untouched here.
+            if dataType == 'Sparse':
+                trainX = trainX.copy(to="scipycsr")
+            else:
                 trainX = trainX.copy(to='numpy array')
                 trainX = dtypeConvert(trainX)
         if trainY is not None:
@@ -318,8 +283,10 @@ To install keras
             trainY = dtypeConvert(trainY)
 
         if testX is not None:
-            if testX.getTypeString() != 'Sparse':
-            #for sparse cases, keep it untouched here.
+            dataType = testX.getTypeString()
+            if dataType == 'Sparse':
+                testX = testX.copy(to="scipycsr")
+            else:
                 testX = testX.copy(to='numpy array')
                 testX = dtypeConvert(testX)
 
@@ -366,20 +333,9 @@ To install keras
                  customDict):
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
         compileNames = self._paramQuery('compile', learnerName, ['self'])[0]
-        isSparse = isinstance(trainX, nimble.core.data.Sparse)
 
         self._setRandomness(arguments, randomSeed)
-        # keras 2.2.5+ fit_generator functionality merged into fit.
-        # fit_generator may be removed, but will be used when possible
-        # to support earlier versions.
-        if isSparse:
-            param = 'fit_generator'
-        else:
-            param = 'fit'
-        fitNames = self._paramQuery(param, learnerName, ['self'])[0]
-        if fitNames is None: # fit_generator has been removed
-            param = 'fit'
-            fitNames = self._paramQuery('fit', learnerName, ['self'])[0]
+        fitNames = self._paramQuery('fit', learnerName, ['self'])[0]
 
         # pack parameter sets
         initParams = {name: arguments[name] for name in initNames
@@ -390,22 +346,10 @@ To install keras
                          if name in arguments}
         learner.compile(**compileParams)
 
-        def sparseGenerator():
-            while True:
-                for i in range(len(trainX.points)):
-                    tmpData = (trainX.pointView(i).copy(to='numpyarray'),
-                               numpy2DArray(trainY[i]))
-                    yield tmpData
-
-        fitForGenerator = param == 'fit' and isSparse
         fitParams = {}
         for name in fitNames:
-            if name.lower() in ['x', 'obs'] and fitForGenerator:
-                value = sparseGenerator()
-            elif name.lower() in ['x', 'obs']:
+            if name.lower() in ['x']:
                 value = trainX
-            elif name.lower() == 'y' and fitForGenerator:
-                continue # y not allowed when using fit with generator
             elif name.lower() == 'y':
                 value = trainY
             elif name in arguments:
@@ -414,11 +358,7 @@ To install keras
                 continue
             fitParams[name] = value
 
-        if param == 'fit_generator':
-            fitParams['generator'] = sparseGenerator()
-            learner.fit_generator(**fitParams)
-        else:
-            learner.fit(**fitParams)
+        learner.fit(**fitParams)
 
         if self._learnerType(learner) == 'classification':
             learner.UIgetScoreOrder = np.unique(trainY)
@@ -450,19 +390,10 @@ To install keras
         if not hasattr(learner, 'predict'):
             msg = "Cannot apply this learner to data, no predict function"
             raise TypeError(msg)
-        # keras 2.2.5+ predict_generator functionality merged into predict.
-        # predict_generator may be removed but will be used when possible
-        # to support earlier versions.
-        if isinstance(testX, nimble.core.data.Sparse):
-            method = 'predict_generator'
-        else:
-            method = 'predict'
+
         ignore = ['X', 'x', 'self']
-        backendArgs = self._paramQuery(method, learnerName, ignore)[0]
-        if backendArgs is None: # predict_generator has been removed
-            method = 'predict'
-            backendArgs = self._paramQuery(method, learnerName, ignore)[0]
-        customDict['predictMethod'] = method
+        backendArgs = self._paramQuery('predict', learnerName, ignore)[0]
+
         applyArgs = self._getMethodArguments(backendArgs, newArguments,
                                              storedArguments)
         return self._predict(learner, testX, applyArgs, customDict)
@@ -472,6 +403,8 @@ To install keras
         ret = self._applyBackend(learnerName, learner, testX, newArguments,
                                  storedArguments, customDict)
         # for classification, convert to labels
+        # TODO adjust according to the requirements of the recorded
+        # loss function.
         if self._learnerType(learner) == 'classification':
             ret = np.argmax(ret, axis=1)
 
@@ -508,24 +441,11 @@ To install keras
     def _configurableOptionNames(cls):
         return ['location']
 
-    def _predict(self, learner, testX, arguments, customDict):
+    def _predict(self, learner, testX, arguments, _):
         """
         Wrapper for the underlying predict function of a keras learner
         object.
         """
-        def sparseGenerator():
-            while True:
-                for i in range(len(testX.points)):
-                    tmpData = testX.pointView(i).copy(to='numpy array')
-                    yield tmpData
-
-        predGenerator = customDict['predictMethod'] == 'predict_generator'
-        isSparse = isinstance(testX, nimble.core.data.Sparse)
-        if predGenerator and isSparse:
-            arguments['generator'] = sparseGenerator()
-            return learner.predict_generator(**arguments)
-        if isSparse:
-            return learner.predict(sparseGenerator(), **arguments)
         return learner.predict(testX, **arguments)
 
 
@@ -541,17 +461,6 @@ To install keras
         """
         if ignore is None:
             ignore = []
-        if name == 'fit_generator':
-            return (['steps_per_epoch', 'epochs', 'verbose', 'callbacks',
-                     'validation_data', 'validation_steps', 'class_weight',
-                     'max_queue_size', 'workers', 'use_multiprocessing',
-                     'initial_epoch'],
-                    'args', 'kwargs',
-                    [None, 1, 1, None, None, None, None, 10, 1, False, 0])
-        if name == 'predict_generator':
-            return (['steps', 'max_queue_size', 'workers',
-                     'use_multiprocessing', 'verbose'],
-                    'args', 'kwargs', [None, 10, 1, False, 0])
 
         namedModule = self._searcher.findInPackage(parent, name)
 
