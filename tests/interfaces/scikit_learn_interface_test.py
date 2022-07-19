@@ -532,8 +532,8 @@ def testSciKitLearnTransformationLearners():
         trainX = abs(data[0][0])
         trainY = abs(data[0][1])
 
-        if learner in ["PLSSVD", "CCA"]:
-            # Variations on PLSCanonical, which operates on multiple targets
+        if learner in ["PLSSVD"]:
+            # Operates on multiple targets
             trainY.features.append(trainY)
         if learner in ["GaussianRandomProjection", "SparseRandomProjection"]:
             # These learners (with default args and this number of samples)
