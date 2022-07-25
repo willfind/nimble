@@ -1401,7 +1401,7 @@ class Base(ABC):
         tuple
             If ``labels`` is None, a length 2 tuple containing the
             training and testing objects (trainX, testX).
-            If ``labels`` is non-None, a length 4 tupes containing the
+            If ``labels`` is non-None, a length 4 tuple containing the
             training and testing data objects and the training a testing
             labels objects (trainX, trainY, testX, testY).
 
@@ -2538,9 +2538,15 @@ class Base(ABC):
         histogram, chart, figure, image, graphics, kde, density,
         probability density function, visualization
         """
-        self._plotFeatureDistribution(feature, outPath, show, figureID,
-                                      title, xAxisLabel, yAxisLabel, xMin,
-                                      xMax, **kwargs)
+        if isinstance(feature, list):     
+            for listItem in feature:
+                self._plotFeatureDistribution(listItem, outPath, show, figureID,
+                                        title, xAxisLabel, yAxisLabel, xMin,
+                                        xMax, **kwargs)
+        else: 
+            self._plotFeatureDistribution(feature, outPath, show, figureID,
+                                          title, xAxisLabel, yAxisLabel, xMin,
+                                          xMax, **kwargs)
 
     def _plotFeatureDistribution(self, feature, outPath, show, figureID,
                                  title, xAxisLabel, yAxisLabel, xMin, xMax,
