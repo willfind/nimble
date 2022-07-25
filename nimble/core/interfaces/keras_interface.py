@@ -25,7 +25,7 @@ from ._interface_helpers import checkArgsForRandomParam
 LEARNERTYPES = {
     'classification': [
         'BinaryCrossentropy', 'binary_crossentropy',
-        'BinaryFocalCrossEntropy', 'binary_focal_crossentropy',
+        'BinaryFocalCrossentropy', 'binary_focal_crossentropy',
         'CategoricalCrossentropy', 'categorical_crossentropy',
         'SparseCategoricalCrossentropy', 'sparse_categorical_crossentropy',
         'Poisson', 'poisson',
