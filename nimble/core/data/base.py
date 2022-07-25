@@ -1379,9 +1379,10 @@ class Base(ABC):
             The fraction of the data to be placed in the testing sets.
             If ``randomOrder`` is False, then the points are taken from
             the end of this object.
-        labels : Base object, identifier, list of identifiers, None
+        labels : Base object, identifier, list of identifiers, or None
             A separate Base object containing the labels for this data
-            or the name(s) or index(es) of the data labels within this object.
+            or the feature axis name(s) or index(es) of the data labels 
+            within this object.
             A value of None implies this data does not contain labels. This
             parameter will affect the shape of the returned tuple.
         randomOrder : bool
