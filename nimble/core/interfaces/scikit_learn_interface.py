@@ -57,12 +57,18 @@ class _SciKitLearnAPI(PredefinedInterfaceMixin):
     #######################################
 
     def _learnerType(self, learnerBackend):
+
+        # Operating on Clusters supercedes all other mixin considerations
+        if isinstance(learnerBackend, self._skl.base.ClusterMixin):
+            return 'cluster'
         if isinstance(learnerBackend, self._skl.base.ClassifierMixin):
             return 'classification'
         if isinstance(learnerBackend, self._skl.base.RegressorMixin):
             return 'regression'
-        if isinstance(learnerBackend, self._skl.base.ClusterMixin):
-            return 'cluster'
+        # There are a number of classifiers and regressors which also have the
+        # TransformerMixin. They are prefered to be what _applier (according
+        # to the current implementation) treats them as. As such, this is
+        # checked last to short circuit to the other options.
         if isinstance(learnerBackend, self._skl.base.TransformerMixin):
             return 'transformation'
 
