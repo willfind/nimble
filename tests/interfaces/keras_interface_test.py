@@ -48,14 +48,17 @@ def chooseOptimizer(func):
         try:
             optimizer = nimble.Init('SGD', **kwNew)
             return func(optimizer=optimizer)
-        except InvalidArgumentValue:
-            pass
+        except InvalidArgumentValue as IAV:
+            if "When trying to validate arguments for " in str(IAV):
+                pass
+            raise IAV
         # execute this case outside of the except clause; makes for
         # slightly clearer output if there is a subsequent exception
         optimizer = nimble.Init('SGD', **kwOld)
         return func(optimizer=optimizer)
 
     return wrapped
+
 
 @keraSkipDec
 @noLogEntryExpected
@@ -137,6 +140,97 @@ def testKerasAPIClassification(optimizer):
     raw_eval = raw.evaluate(x_np_test, y_np_test)
     assert ret_TaT == ret_raw_test
     assert ret_TaT == raw_eval[1]
+
+
+@keraSkipDec
+@logCountAssertionFactory(4)
+@chooseOptimizer
+def testKerasBinaryClassificationOutputUnpacking(optimizer):
+    binary = ['BinaryCrossentropy', 'Hinge', 'SquaredHinge']
+
+    numClasses = 2
+    allData = generateClassificationData(numClasses, 100, 8, 5)
+    ((x_train, y_train), (x_test, y_test)) = allData
+
+    y_train_cat = y_train.copy()
+    y_train_cat.replaceFeatureWithBinaryFeatures(0, useLog=False)
+
+    # All the losses here are 0/1 label to single logit/probability
+    layer0 = nimble.Init('Dense', units=4, activation='linear', input_dim=8,kernel_initializer="ones")
+    layerlogit = nimble.Init('Dense', units=1, activation='linear', kernel_initializer="zeros")
+    layerprob = nimble.Init('Dense', units=1, activation='sigmoid', kernel_initializer="zeros")
+
+    FC = nimble.calculate.fractionCorrect
+
+    for lossFunc in binary:
+        argSets = []
+        args = {"loss":nimble.Init(lossFunc), "layers":[layer0, layerprob]}
+        argSets.append(args)
+
+        # Want to try this with both from_logits True and False
+        if lossFunc == "BinaryCrossentropy":
+            args = {"loss":nimble.Init(lossFunc, from_logits=True),
+                    "layers":[layer0, layerlogit]}
+            argSets.append(args)
+
+        for currArgs in argSets:
+            ret_TaTL = nimble.trainAndTest('keras.Sequential', FC, trainX=x_train,
+                                    testX=x_test, trainY=y_train, testY=y_test,
+                                    optimizer=optimizer, metrics=['accuracy'],
+                                    **currArgs)
+
+            assert ret_TaTL == 1
+
+@keraSkipDec
+@logCountAssertionFactory(5)
+@chooseOptimizer
+def testKerasMultiClassificationOutputUnpacking(optimizer):
+    multi = ["CategoricalCrossentropy", 'SparseCategoricalCrossentropy',
+             'CategoricalHinge']
+
+    numClasses = 3
+    allData = generateClassificationData(numClasses, 100, 9, 5)
+    ((x_train, y_train), (x_test, y_test)) = allData
+
+    y_train_cat = y_train.copy()
+    y_train_cat.replaceFeatureWithBinaryFeatures(0, useLog=False)
+
+    # Categorical: one hot to number of classes of probabilities/logits
+    # Sparse Cat: label to number of classes of probabilities/logits
+    # Cat Hinge: one hot to singleton score
+    layer0 = nimble.Init('Dense', units=3, activation='linear', input_dim=9, kernel_initializer="ones")
+    layerlogit = nimble.Init('Dense', units=3, activation='linear', kernel_initializer="zeros")
+    layerprob = nimble.Init('Dense', units=3, activation='softmax', kernel_initializer="zeros")
+
+    FC = nimble.calculate.fractionCorrect
+
+    for lossFunc in multi:
+        argSets = []
+        print("lossFunc")
+        if lossFunc == "CategoricalCrossentropy":
+            args = {"layers": [layer0, layerlogit], "loss":nimble.Init(lossFunc, from_logits=True)}
+            argSets.append(args)
+            args = {"layers": [layer0, layerprob], "loss":nimble.Init(lossFunc, from_logits=False)}
+            argSets.append(args)
+            selectY = y_train_cat
+        if lossFunc == "SparseCategoricalCrossentropy":
+            args = {"layers": [layer0, layerlogit], "loss":nimble.Init(lossFunc, from_logits=True)}
+            argSets.append(args)
+            args = {"layers": [layer0, layerprob], "loss":nimble.Init(lossFunc, from_logits=False)}
+            argSets.append(args)
+            selectY = y_train
+        if lossFunc == "CategoricalHinge":
+            args = {"layers": [layer0, layerprob], "loss":nimble.Init(lossFunc)}
+            argSets.append(args)
+            selectY = y_train_cat
+
+        for currArgs in argSets:
+            ret_TaTL = nimble.trainAndTest('keras.Sequential', FC, trainX=x_train,
+                                    testX=x_test, trainY=selectY, testY=y_test,
+                                    optimizer=optimizer, metrics=['accuracy'],
+                                    **currArgs)
+
+            assert ret_TaTL == 1
 
 @keraSkipDec
 @logCountAssertionFactory(8)
@@ -240,8 +334,8 @@ def testKeras_TrainedLearnerApplyArguments(optimizer):
     # using kwarguments
     second = CustomCallback()
     assert second.numHits == 0
-    _ = mym.apply(testX=x_train, steps=30, callbacks=[second])
-    assert second.numHits == 30
+    _ = mym.apply(testX=x_train, steps=50, callbacks=[second])
+    assert second.numHits == 50
 
 @keraSkipDec
 @logCountAssertionFactory(1)
