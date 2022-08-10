@@ -72,7 +72,7 @@ trainX, trainY, testX, testY = images.trainAndTestSets(testFraction=0.25,
 ## with any keyword arguments. So we can avoid extra imports (i.e., `from
 ## keras.layers import  Dense, Dropout`) and there is no need to recall the
 ## package's module names that contain the objects we want to use.
-layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=256)
+layer0 = nimble.Init('Dense', units=64, activation='relu')
 layer1 = nimble.Init('Dropout', rate=0.5)
 layer2 = nimble.Init('Dense', units=10, activation='softmax')
 layers = [layer0, layer1, layer2]
@@ -125,8 +125,9 @@ print('testX.shape', testX.shape, 'testX.dimensions', testX.dimensions)
 ## above, we can use `nimble.Init` to instantiate these objects without
 ## directly importing them from Keras.
 layersCNN = []
+layersCNN.append(nimble.Init("Input", shape=(16, 16, 1)))
 layersCNN.append(nimble.Init('Conv2D', filters=64, kernel_size=3,
-                             activation='relu', input_shape=(16, 16, 1)))
+                             activation='relu', ))
 layersCNN.append(nimble.Init('Conv2D', filters=32, kernel_size=3,
                              activation='relu'))
 layersCNN.append(nimble.Init('Dropout', rate=0.2))

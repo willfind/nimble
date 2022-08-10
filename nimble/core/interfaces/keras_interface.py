@@ -5,6 +5,8 @@ Relies on being keras 2.0.8
 import os
 import logging
 import warnings
+import inspect
+import copy
 
 import numpy as np
 from packaging.version import parse
@@ -296,10 +298,11 @@ To install keras
                 val = self._argumentInit(val)
             elif not isinstance(val, str) and (hasattr(val, '__iter__') or
                                                hasattr(val, '__getitem__')):
+                val = copy.copy(val)
                 try:
                     for i, v in enumerate(val):
                         if isinstance(v, nimble.Init):
-                            val[i] = self.findCallable(v.name)(**v.kwargs)
+                            val[i] = self._argumentInit(v)
                         elif isinstance(v, nimble.core.data.Base):
                             val[i] = v.copy('numpy array')
                 except TypeError:
@@ -389,7 +392,7 @@ To install keras
     def _applyBackend(self, learnerName, learner, testX, newArguments,
                       storedArguments, customDict):
         if not hasattr(learner, 'predict'):
-            msg = "Cannot apply this learner to data, no predict function"
+            msg = f"Cannot apply {learnerName} to data, no predict function"
             raise TypeError(msg)
 
         ignore = ['X', 'x', 'self']
@@ -414,7 +417,8 @@ To install keras
             # means we must be in the single value case and have to distinguish
             # between logits and probability
             else:
-                if hasattr(learner.loss, "from_logits") and learner.loss.from_logits:
+                lrnLoss = learner.loss
+                if hasattr(lrnLoss, "from_logits") and lrnLoss.from_logits:
                     ret = ret >= 0
                 else:
                     ret = ret >= 0.5
@@ -479,9 +483,9 @@ To install keras
         if ignore is None:
             ignore = []
 
-        namedModule = self._searcher.findInPackage(parent, name)
+        found = self._searcher.findInPackage(parent, name)
 
-        if namedModule is None:
+        if found is None:
             return None
 
         class InheritedEmptyInit(object):
@@ -489,12 +493,19 @@ To install keras
             Class with an empty __init__ (no parameters)
             """
 
-        if isinstance(namedModule,
+        if isinstance(found,
                       type(getattr(InheritedEmptyInit, '__init__'))):
             return ([], None, None, None)
 
+        # Keras uses metaclassing and __new__ extensively to select backends
+        # for objects, and Signature targets __new__ over __init__. As such,
+        # for all objects we explicitly target __init__ to get the allowed
+        # parameters.
+        if inspect.isclass(found):
+            found = found.__init__
+
         try:
-            (args, v, k, d) = inspectArguments(namedModule)
+            (args, v, k, d) = inspectArguments(found)
             args, d = removeFromTailMatchedLists(args, d, ignore)
             return (args, v, k, d)
         except TypeError:
