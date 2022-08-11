@@ -2403,8 +2403,10 @@ class Base(ABC):
             The number of significant digits to display in the output.
         maxColumnWidth : int
             A bound on the maximum number of characters allowed for the
-            width of single column (feature) in each line.
-
+            width of single column (feature) in each line. 
+            If the column text is too long for the set bound, 3 characters
+            will be used up for the ellipses during truncation.
+            
         Keywords
         --------
         print, representation, visualize, out, stdio, visualize, output,
