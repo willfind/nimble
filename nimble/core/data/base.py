@@ -2579,13 +2579,13 @@ class Base(ABC):
         toPlot = getter(index)
 
         if 'bins' not in kwargs:
-            if type(max(toPlot)) in [float, int]:
+            valMax = max(toPlot)
+            if type(valMax) in [float, int]:
                 quartiles = nimble.calculate.quartiles(toPlot)
                 IQR = quartiles[2] - quartiles[0]
                 binWidth = (2 * IQR) / (len(toPlot) ** (1. / 3))
                 # TODO: replace with calculate points after it subsumes
                 # pointStatistics?
-                valMax = max(toPlot)
                 valMin = min(toPlot)
                 if binWidth == 0:
                     binCount = 1
