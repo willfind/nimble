@@ -188,8 +188,8 @@ To install keras
             if 'loss' not in attrs:
                 return 'UNKNOWN'
             loss = attrs['loss']
-            if hasattr(loss, '__name__'):
-                loss = loss.__name__
+            if hasattr(loss, 'name'):
+                loss = loss.name
             if loss in losses:
                 return lt
         return 'UNKNOWN'
@@ -294,7 +294,8 @@ To install keras
         for arg, val in arguments.items():
             if isinstance(val, nimble.Init):
                 val = self._argumentInit(val)
-            elif hasattr(val, '__iter__') or hasattr(val, '__getitem__'):
+            elif not isinstance(val, str) and (hasattr(val, '__iter__') or
+                                               hasattr(val, '__getitem__')):
                 try:
                     for i, v in enumerate(val):
                         if isinstance(v, nimble.Init):
@@ -332,10 +333,10 @@ To install keras
     def _trainer(self, learnerName, trainX, trainY, arguments, randomSeed,
                  customDict):
         initNames = self._paramQuery('__init__', learnerName, ['self'])[0]
-        compileNames = self._paramQuery('compile', learnerName, ['self'])[0]
+        compileNames = self._paramQuery('compile', "Model", ['self'])[0]
 
         self._setRandomness(arguments, randomSeed)
-        fitNames = self._paramQuery('fit', learnerName, ['self'])[0]
+        fitNames = self._paramQuery('fit', "Model", ['self'])[0]
 
         # pack parameter sets
         initParams = {name: arguments[name] for name in initNames
@@ -392,7 +393,7 @@ To install keras
             raise TypeError(msg)
 
         ignore = ['X', 'x', 'self']
-        backendArgs = self._paramQuery('predict', learnerName, ignore)[0]
+        backendArgs = self._paramQuery('predict', "Model", ignore)[0]
 
         applyArgs = self._getMethodArguments(backendArgs, newArguments,
                                              storedArguments)
@@ -402,18 +403,34 @@ To install keras
                  storedArguments, customDict):
         ret = self._applyBackend(learnerName, learner, testX, newArguments,
                                  storedArguments, customDict)
-        # for classification, convert to labels
-        # TODO adjust according to the requirements of the recorded
-        # loss function.
-        if self._learnerType(learner) == 'classification':
-            ret = np.argmax(ret, axis=1)
 
+        # for classification, convert to labels
+        if self._learnerType(learner) == 'classification':
+            # This indicates we're in the distribution case; argmax will
+            # grab the right category regardless of encoding via probability
+            # or logits
+            if len(ret) > 1 and len(ret[0]) > 1:
+                ret = np.argmax(ret, axis=1)
+            # means we must be in the single value case and have to distinguish
+            # between logits and probability
+            else:
+                if hasattr(learner.loss, "from_logits") and learner.loss.from_logits:
+                    ret = ret >= 0
+                else:
+                    ret = ret >= 0.5
         return ret
 
 
     def _getAttributes(self, learnerBackend):
         obj = learnerBackend
-        checkers = [notCallable, notABCAssociated]
+        # the loss attribute of learners, when an object, was being excluded
+        # since it was callable
+        def notCallableExceptLoss(obj, name, val):
+            if name == "loss":
+                return True
+            return notCallable(obj, name, val)
+
+        checkers = [notCallableExceptLoss, notABCAssociated]
 
         def wrappedDir(obj):
             ret = {}
