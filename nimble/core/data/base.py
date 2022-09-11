@@ -2594,7 +2594,9 @@ class Base(ABC):
                     # functions matplotlib calls will require it.
                     binCount = int(math.ceil((valMax - valMin) / binWidth))
                 kwargs['bins'] = binCount
-
+        else:
+            toPlot = sorted(list(toPlot))
+            
         ax.hist(toPlot, **kwargs)
         if 'label' in kwargs:
             ax.legend()
