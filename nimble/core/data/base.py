@@ -2577,10 +2577,10 @@ class Base(ABC):
             title = None
         ax.set_title(title)
         toPlot = getter(index)
-
-        if 'bins' not in kwargs:
-            valMax = max(toPlot)
-            if type(valMax) in [float, int]:
+              
+        valMax = max(toPlot)
+        if type(valMax) in [float, int]:
+            if 'bins' not in kwargs:
                 quartiles = nimble.calculate.quartiles(toPlot)
                 IQR = quartiles[2] - quartiles[0]
                 binWidth = (2 * IQR) / (len(toPlot) ** (1. / 3))
@@ -2596,7 +2596,7 @@ class Base(ABC):
                 kwargs['bins'] = binCount
         else:
             toPlot = sorted(list(toPlot))
-            
+          
         ax.hist(toPlot, **kwargs)
         if 'label' in kwargs:
             ax.legend()
