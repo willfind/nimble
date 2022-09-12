@@ -1530,14 +1530,6 @@ class Base(ABC):
                     raise InvalidArgumentValue(msg) from e
                 trainY = labels.points.copy(order[:splitIndex], useLog=False)
                 testY = labels.points.copy(order[splitIndex:], useLog=False)
-                if self.features._namesCreated() and labels.features._namesCreated(): 
-                    featureNamesList = [featureName.lower() for featureName in self.features.getNames()]
-                    labelNameList = labels.features.getNames() 
-                    labelName = labelNameList[0].lower()
-                    if labelName in featureNamesList:
-                        labelIndex = featureNamesList.index(labelName)
-                        trainY = trainX.features.extract(labelIndex, useLog=False)
-                        testY = testX.features.extract(labelIndex, useLog=False)    
             else:
                 if len(self._dims) > 2:
                     msg = "labels parameter must be None when the data has "
