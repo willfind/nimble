@@ -2586,23 +2586,26 @@ class Base(ABC):
             title = None
         ax.set_title(title)
         toPlot = getter(index)
-
-        if 'bins' not in kwargs:
-            quartiles = nimble.calculate.quartiles(toPlot)
-            IQR = quartiles[2] - quartiles[0]
-            binWidth = (2 * IQR) / (len(toPlot) ** (1. / 3))
-            # TODO: replace with calculate points after it subsumes
-            # pointStatistics?
-            valMax = max(toPlot)
-            valMin = min(toPlot)
-            if binWidth == 0:
-                binCount = 1
-            else:
-                # we must convert to int, in some versions of numpy, the helper
-                # functions matplotlib calls will require it.
-                binCount = int(math.ceil((valMax - valMin) / binWidth))
-            kwargs['bins'] = binCount
-
+              
+        valMax = max(toPlot)
+        if type(valMax) in [float, int]:
+            if 'bins' not in kwargs:
+                quartiles = nimble.calculate.quartiles(toPlot)
+                IQR = quartiles[2] - quartiles[0]
+                binWidth = (2 * IQR) / (len(toPlot) ** (1. / 3))
+                # TODO: replace with calculate points after it subsumes
+                # pointStatistics?
+                valMin = min(toPlot)
+                if binWidth == 0:
+                    binCount = 1
+                else:
+                    # we must convert to int, in some versions of numpy, the helper
+                    # functions matplotlib calls will require it.
+                    binCount = int(math.ceil((valMax - valMin) / binWidth))
+                kwargs['bins'] = binCount
+        else:
+            toPlot = sorted(list(toPlot))
+          
         ax.hist(toPlot, **kwargs)
         if 'label' in kwargs:
             ax.legend()
