@@ -2,6 +2,7 @@ import operator
 import time
 from timeit import default_timer
 
+import pytest
 from pytest import fixture
 
 import nimble
@@ -14,6 +15,9 @@ from nimble.calculate import fractionIncorrect
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from tests.helpers import noLogEntryExpected, raises
+from nimble._utility import DeferredModuleImport
+
+storm_tuner = DeferredModuleImport('storm_tuner')
 
 def wait(sec):
     def performance(args):
@@ -230,6 +234,7 @@ def test_Consecutive(maxValidator):
     with raises(StopIteration):
         next(con)
 
+@pytest.mark.skipif(storm_tuner=False, reason='Storm Tuner unavailable.')
 @noLogEntryExpected
 def test_Bayesian(minValidator, maxValidator):
     # requires min optimal performanceFunction
@@ -438,6 +443,8 @@ def test_Iterative(maxValidator):
     with raises(StopIteration):
         next(itr)
 
+
+@pytest.mark.skipif(storm_tuner=False, reason='Storm Tuner unavailable.')
 def test_StochasticRandomMutator(minValidator):
     # single argument, no tune
     srm = StochasticRandomMutator({'k': 5}, minValidator, maxIterations=5)
