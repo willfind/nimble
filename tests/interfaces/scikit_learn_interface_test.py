@@ -205,7 +205,7 @@ def testSciKitLearnScoreModeBinary():
 
 
 @sklSkipDec
-@logCountAssertionFactory(4)
+@logCountAssertionFactory(9)
 def testSciKitLearnCrossDecomp():
     """ Test SKL on learners which take 2d Y data """
     variables = ["x1", "x2"]
@@ -217,10 +217,29 @@ def testSciKitLearnCrossDecomp():
     data2 = [[1, 0], [1, 1], [5, 1], [34, 4]]
     testObj = nimble.data(data2, useLog=False)
 
-    nimble.trainAndApply(toCall("CCA"), trainingObj, testX=testObj, trainY=trainingYObj)
-    nimble.trainAndApply(toCall("PLSCanonical"), trainingObj, testX=testObj, trainY=trainingYObj)
-    nimble.trainAndApply(toCall("PLSRegression"), trainingObj, testX=testObj, trainY=trainingYObj)
-    nimble.trainAndApply(toCall("PLSSVD"), trainingObj, testX=testObj, trainY=trainingYObj)
+    learners = ["PLSCanonical", "PLSRegression", "CCA"]
+
+    @logCountAssertionFactory(3)
+    def compareOutputs(learner):
+        skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
+        sklObj = skl.findCallable(learner)
+        sciKitLearnObj = sklObj()
+        arguments = setupSKLArguments(sciKitLearnObj)
+        sciKitLearnObj.fit(data, dataY)
+        predSKL = sciKitLearnObj.predict(data2)
+        predSKL = nimble.data(predSKL, useLog=False)
+
+        seed = adjustRandomParamForNimble(arguments)
+        TL = nimble.train(toCall(learner), trainingObj, trainingYObj, arguments=arguments,
+                          randomSeed=seed)
+        assert TL.learnerType == 'regression'
+        predNimble = TL.apply(testObj)
+        predSL = _apply_saveLoad(TL, testObj)
+
+        equalityAssertHelper(predSKL, predNimble, predSL)
+
+    for learner in learners:
+        compareOutputs(learner)
 
 
 @sklSkipDec
@@ -310,7 +329,10 @@ def testSciKitLearnRegressionLearners():
     Ytrain = trainY._data
     Xtest = testX._data
 
-    regressors = getLearnersByType('regression')
+    # requires 2D Y data, tested in cross decomp
+    ignore = ["PLSCanonical", "PLSRegression", "CCA"]
+
+    regressors = getLearnersByType('regression', ignore=ignore)
     learners = [r for r in regressors if 'MultiTask' not in r]
     assert learners
 
@@ -455,6 +477,49 @@ def testSciKitLearnOtherPredictLearners():
         compareOutputs(learner)
 
 
+@logCountAssertionFactory(3)
+def _compareDualInputOutputs(learner, XObj, XNP, YObj, YNP):
+    skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
+    sklObj = skl.findCallable(learner)
+    sciKitLearnObj = sklObj()
+    arguments = setupSKLArguments(sciKitLearnObj)
+    if hasattr(sciKitLearnObj, 'transform'):
+        sciKitLearnObj.fit(XNP, YNP)
+        transSKL = sciKitLearnObj.transform(XNP)
+    else:
+        transSKL = sciKitLearnObj.fit_transform(XNP, YNP)
+    transSKL = nimble.data(transSKL, useLog=False)
+
+    seed = adjustRandomParamForNimble(arguments)
+    TL = nimble.train(toCall(learner), XObj, YObj, arguments=arguments,
+                        randomSeed=seed)
+    assert TL.learnerType == 'transformation'
+    transSL = _apply_saveLoad(TL, XObj)
+    transNimble = TL.apply(XObj)
+    equalityAssertHelper(transSKL, transNimble, transSL)
+
+@logCountAssertionFactory(3)
+def _compareSingleInputOutputs(learner, XObj, XNP):
+    skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
+    sklObj = skl.findCallable(learner)
+    sciKitLearnObj = sklObj()
+    arguments = setupSKLArguments(sciKitLearnObj)
+
+    if hasattr(sciKitLearnObj, 'transform'):
+        sciKitLearnObj.fit(XNP)
+        transSKL = sciKitLearnObj.transform(XNP)
+    else:
+        transSKL = sciKitLearnObj.fit_transform(XNP)
+    transSKL = nimble.data(transSKL, useLog=False)
+
+    seed = adjustRandomParamForNimble(arguments)
+    TL = nimble.train(toCall(learner), XObj, arguments=arguments,
+                        randomSeed=seed)
+    transNimble = TL.apply(XObj)
+    transSL = _apply_saveLoad(TL, XObj)
+
+    equalityAssertHelper(transSKL, transNimble, transSL)
+
 @sklSkipDec
 @pytest.mark.slow
 def testSciKitLearnTransformationLearners():
@@ -462,69 +527,30 @@ def testSciKitLearnTransformationLearners():
               'TfidfVectorizer', 'PatchExtractor'] # tested elsewhere
     learners = getLearnersByType('transformation', ignore)
 
-    @logCountAssertionFactory(3)
-    def compareDualInputOutputs(learner):
-        skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
-        sklObj = skl.findCallable(learner)
-        sciKitLearnObj = sklObj()
-        arguments = setupSKLArguments(sciKitLearnObj)
-        if hasattr(sciKitLearnObj, 'transform'):
-            sciKitLearnObj.fit(Xtrain, Ytrain)
-            transSKL = sciKitLearnObj.transform(Xtrain)
-        else:
-            transSKL = sciKitLearnObj.fit_transform(Xtrain, Ytrain)
-        transSKL = nimble.data(transSKL, useLog=False)
-
-        seed = adjustRandomParamForNimble(arguments)
-        TL = nimble.train(toCall(learner), trainX, trainY, arguments=arguments,
-                          randomSeed=seed)
-        assert TL.learnerType == 'transformation'
-        transSL = _apply_saveLoad(TL, trainX)
-        transNimble = TL.apply(trainX)
-
-
-        equalityAssertHelper(transSKL, transNimble, transSL)
-
-    @logCountAssertionFactory(3)
-    def compareSingleInputOutputs(learner):
-        skl = nimble.core._learnHelpers.findBestInterface('scikitlearn')
-        sklObj = skl.findCallable(learner)
-        sciKitLearnObj = sklObj()
-        arguments = setupSKLArguments(sciKitLearnObj)
-
-        if hasattr(sciKitLearnObj, 'transform'):
-            sciKitLearnObj.fit(Xtrain)
-            transSKL = sciKitLearnObj.transform(Xtrain)
-        else:
-            transSKL = sciKitLearnObj.fit_transform(Xtrain)
-        transSKL = nimble.data(transSKL, useLog=False)
-
-        seed = adjustRandomParamForNimble(arguments)
-        TL = nimble.train(toCall(learner), trainX, arguments=arguments,
-                          randomSeed=seed)
-        transNimble = TL.apply(trainX)
-        transSL = _apply_saveLoad(TL, trainX)
-
-        equalityAssertHelper(transSKL, transNimble, transSL)
-
     data = generateClassificationData(2, 20, 10)
     for learner in learners:
         trainX = abs(data[0][0])
         trainY = abs(data[0][1])
-        Xtrain = trainX._data
-        Ytrain = trainY._data
+
+        if learner in ["PLSSVD"]:
+            # Operates on multiple targets
+            trainY.features.append(trainY)
+        if learner in ["GaussianRandomProjection", "SparseRandomProjection"]:
+            # These learners (with default args and this number of samples)
+            # requires inputs with a large number of feature dimensions
+            trainX = nimble.random.data(40, 5000, 0.98)
+
+        # Check all transformers as both supervised and unsupervised;
+        # some are supervised only.
+        _compareDualInputOutputs(learner, trainX, trainX.copy("numpyarray"),
+                                 trainY, trainY.copy("numpyArray"))
+
         try:
-            # fit(X, y)
-            compareDualInputOutputs(learner)
-        except (TypeError, ValueError):
-            try:
-                # fit(X)
-                compareSingleInputOutputs(learner)
-            except ValueError:
-                # GaussianRandomProjection, SparseRandomProjection,
-                trainX = nimble.random.data(10, 5000, 0.98)
-                Xtrain = trainX._data
-                compareSingleInputOutputs(learner)
+            _compareSingleInputOutputs(learner, trainX, trainX.copy("numpyarray"))
+        except TypeError as TE:
+            # at issue could be the the parameter 'y' or 'Y' - .lower covers both
+            # cases
+            assert str(TE).lower() == "fit() missing 1 required positional argument: 'y'"
 
 
 @sklSkipDec

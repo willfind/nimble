@@ -17,9 +17,16 @@ from nimble._utility import DeferredModuleImport
 from tests.helpers import raises
 from tests.helpers import logCountAssertionFactory, noLogEntryExpected
 from tests.helpers import skipMissingPackage
+from tests.helpers import generateClassificationData
 
 keras = DeferredModuleImport("keras")
 tfKeras = DeferredModuleImport('tensorflow.keras')
+
+try:
+    from tensorflow.keras.models import Sequential
+except ImportError:
+    from keras.models import Sequential
+
 
 keraSkipDec = skipMissingPackage('Keras')
 
@@ -39,13 +46,19 @@ def chooseOptimizer(func):
         # keras 2.3+ decay deprecated and lr changed to learning_rate
         kwNew =  {'learning_rate': 0.1, 'momentum': 0.9, 'nesterov': True}
         try:
-            optimizer = nimble.Init('SGD', **kwOld)
-            return func(optimizer=optimizer)
-        except InvalidArgumentValue:
             optimizer = nimble.Init('SGD', **kwNew)
             return func(optimizer=optimizer)
+        except InvalidArgumentValue as IAV:
+            if "When trying to validate arguments for " in str(IAV):
+                pass
+            raise IAV
+        # execute this case outside of the except clause; makes for
+        # slightly clearer output if there is a subsequent exception
+        optimizer = nimble.Init('SGD', **kwOld)
+        return func(optimizer=optimizer)
 
     return wrapped
+
 
 @keraSkipDec
 @noLogEntryExpected
@@ -59,103 +72,225 @@ def test_Keras_version():
     assert interface.version() == version
 
 @keraSkipDec
-@logCountAssertionFactory(5)
+@logCountAssertionFactory(4)
 @chooseOptimizer
-def testKerasAPI(optimizer):
+def testKerasAPIClassification(optimizer):
     """
     Test Keras can handle a variety of arguments passed to all major learning functions
     """
-    x_train = nimble.data(np.random.random((1000, 20)), useLog=False)
-    y_train = nimble.data(np.random.randint(2, size=(1000, 1)),
-                          convertToType=float, useLog=False)
+    numClasses = 3
+    allData = generateClassificationData(numClasses, 100, 16, 5)
+    ((x_train, y_train), (x_test, y_test)) = allData
 
-    layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
+    x_np = x_train.copy(to="numpyarray")
+    y_np = y_train.copy(to="numpyarray")
+    x_np_test = x_test.copy(to="numpyarray")
+    y_np_test = y_test.copy(to="numpyarray")
+
+    layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=16)
     layer1 = nimble.Init('Dropout', rate=0.5)
-    layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
+    layer2 = nimble.Init('Dense', units=numClasses, activation='softmax')
     layers = [layer0, layer1, layer2]
     #####test fit
     mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
-                       layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
-                       epochs=20, batch_size=128)
+                       layers=layers, loss='sparse_categorical_crossentropy', metrics=['accuracy'],
+                       epochs=20, batch_size=50)
     assert mym.learnerType == 'classification'
 
     #######test apply
-    x = mym.apply(testX=x_train)
+    ret_A = mym.apply(testX=x_test)
 
     #########test trainAndApply
-    x = nimble.trainAndApply('keras.Sequential', trainX=x_train, trainY=y_train, testX=x_train,
-                             optimizer=optimizer, layers=layers, loss='binary_crossentropy',
-                             metrics=['accuracy'], epochs=20, batch_size=128)
+    ret_TaA = nimble.trainAndApply('keras.Sequential', trainX=x_train, trainY=y_train, testX=x_test,
+                             optimizer=optimizer, layers=layers, loss='sparse_categorical_crossentropy',
+                             metrics=['accuracy'], epochs=20, batch_size=50)
+
+    # Comparison to raw in-keras calculation. Different versions require different access
+    try:
+        if tfKeras.nimbleAccessible():
+            opt_raw = getattr(tfKeras.optimizers, optimizer.name)(**optimizer.kwargs)
+    except AttributeError:
+        if keras.nimbleAccessible():
+            opt_raw = getattr(keras.optimizers, optimizer.name)(**optimizer.kwargs)
+
+    raw = Sequential(layers)
+    raw.compile(optimizer=opt_raw, loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
+    raw.fit(x=x_np, y=y_np, epochs=20, batch_size=50)
+
+    ret_raw_scores = raw.predict(x=x_np_test)
+    # convert scores to labels
+    ret_raw = np.argmax(ret_raw_scores, axis=1)
+    ret_raw_obj = nimble.data(ret_raw.reshape(len(y_test.points),1), useLog=False)
+
+    assert ret_A == ret_raw_obj
+    assert ret_TaA == ret_raw_obj
+    assert ret_raw_obj == y_test
 
     #########test trainAndTest
-    RMSE = nimble.calculate.loss.rootMeanSquareError
-    x = nimble.trainAndTest('keras.Sequential', RMSE, trainX=x_train,
-                            testX=x_train, trainY=y_train, testY=y_train,
+    FC = nimble.calculate.fractionCorrect
+    ret_TaT = nimble.trainAndTest('keras.Sequential', FC, trainX=x_train,
+                            testX=x_test, trainY=y_train, testY=y_test,
                             optimizer=optimizer, layers=layers,
-                            loss='binary_crossentropy', metrics=['accuracy'],
-                            epochs=20, batch_size=128)
+                            loss='sparse_categorical_crossentropy', metrics=['accuracy'],
+                            epochs=20, batch_size=50)
 
-    #####test fit with Sequential object
-    try:
-        from tensorflow.keras.models import Sequential
-    except ImportError:
-        from keras.models import Sequential
+    ### Comparison of trainAndTest results with raw predict results scores and evaluate
+    ret_raw_test = FC(y_test, ret_raw_obj)
+    raw_eval = raw.evaluate(x_np_test, y_np_test)
+    assert ret_TaT == ret_raw_test
+    assert ret_TaT == raw_eval[1]
 
-    mym = nimble.train(Sequential, trainX=x_train, trainY=y_train, optimizer=optimizer,
-                       layers=layers, loss='mean_squared_error', metrics=['accuracy'],
-                       epochs=20, batch_size=128)
-    assert mym.learnerType == 'regression'
 
 @keraSkipDec
-@logCountAssertionFactory(3)
+@logCountAssertionFactory(4)
+@chooseOptimizer
+def testKerasBinaryClassificationOutputUnpacking(optimizer):
+    binary = ['BinaryCrossentropy', 'Hinge', 'SquaredHinge']
+
+    numClasses = 2
+    allData = generateClassificationData(numClasses, 100, 8, 5)
+    ((x_train, y_train), (x_test, y_test)) = allData
+
+    y_train_cat = y_train.copy()
+    y_train_cat.replaceFeatureWithBinaryFeatures(0, useLog=False)
+
+    # All the losses here are 0/1 label to single logit/probability
+    layer0 = nimble.Init('Dense', units=4, activation='linear', input_dim=8,kernel_initializer="ones")
+    layerlogit = nimble.Init('Dense', units=1, activation='linear', kernel_initializer="zeros")
+    layerprob = nimble.Init('Dense', units=1, activation='sigmoid', kernel_initializer="zeros")
+
+    FC = nimble.calculate.fractionCorrect
+
+    for lossFunc in binary:
+        argSets = []
+        args = {"loss":nimble.Init(lossFunc), "layers":[layer0, layerprob]}
+        argSets.append(args)
+
+        # Want to try this with both from_logits True and False
+        if lossFunc == "BinaryCrossentropy":
+            args = {"loss":nimble.Init(lossFunc, from_logits=True),
+                    "layers":[layer0, layerlogit]}
+            argSets.append(args)
+
+        for currArgs in argSets:
+            ret_TaTL = nimble.trainAndTest('keras.Sequential', FC, trainX=x_train,
+                                    testX=x_test, trainY=y_train, testY=y_test,
+                                    optimizer=optimizer, metrics=['accuracy'],
+                                    **currArgs)
+
+            assert ret_TaTL == 1
+
+@keraSkipDec
+@logCountAssertionFactory(5)
+@chooseOptimizer
+def testKerasMultiClassificationOutputUnpacking(optimizer):
+    multi = ["CategoricalCrossentropy", 'SparseCategoricalCrossentropy',
+             'CategoricalHinge']
+
+    numClasses = 3
+    allData = generateClassificationData(numClasses, 100, 9, 5)
+    ((x_train, y_train), (x_test, y_test)) = allData
+
+    y_train_cat = y_train.copy()
+    y_train_cat.replaceFeatureWithBinaryFeatures(0, useLog=False)
+
+    # Categorical: one hot to number of classes of probabilities/logits
+    # Sparse Cat: label to number of classes of probabilities/logits
+    # Cat Hinge: one hot to singleton score
+    layer0 = nimble.Init('Dense', units=3, activation='linear', input_dim=9, kernel_initializer="ones")
+    layerlogit = nimble.Init('Dense', units=3, activation='linear', kernel_initializer="zeros")
+    layerprob = nimble.Init('Dense', units=3, activation='softmax', kernel_initializer="zeros")
+
+    FC = nimble.calculate.fractionCorrect
+
+    for lossFunc in multi:
+        argSets = []
+        print("lossFunc")
+        if lossFunc == "CategoricalCrossentropy":
+            args = {"layers": [layer0, layerlogit], "loss":nimble.Init(lossFunc, from_logits=True)}
+            argSets.append(args)
+            args = {"layers": [layer0, layerprob], "loss":nimble.Init(lossFunc, from_logits=False)}
+            argSets.append(args)
+            selectY = y_train_cat
+        if lossFunc == "SparseCategoricalCrossentropy":
+            args = {"layers": [layer0, layerlogit], "loss":nimble.Init(lossFunc, from_logits=True)}
+            argSets.append(args)
+            args = {"layers": [layer0, layerprob], "loss":nimble.Init(lossFunc, from_logits=False)}
+            argSets.append(args)
+            selectY = y_train
+        if lossFunc == "CategoricalHinge":
+            args = {"layers": [layer0, layerprob], "loss":nimble.Init(lossFunc)}
+            argSets.append(args)
+            selectY = y_train_cat
+
+        for currArgs in argSets:
+            ret_TaTL = nimble.trainAndTest('keras.Sequential', FC, trainX=x_train,
+                                    testX=x_test, trainY=selectY, testY=y_test,
+                                    optimizer=optimizer, metrics=['accuracy'],
+                                    **currArgs)
+
+            assert ret_TaTL == 1
+
+@keraSkipDec
+@logCountAssertionFactory(8)
 @chooseOptimizer
 def testKerasIncremental(optimizer):
     """
     Test Keras can handle and incrementalTrain call
     """
-    x_train = nimble.data(np.random.random((1000, 20)), useLog=False)
-    y_train = nimble.data(np.random.randint(2, size=(1000, 1)),
-                          convertToType=float, useLog=False)
+    numClasses = 3
+    small = generateClassificationData(numClasses, 1, 16, 0)
+    ((x_small, y_small), (_, _)) = small
 
-    layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
+    ret = generateClassificationData(numClasses, 100, 16, 10)
+    ((x_train, y_train), (x_test, y_test)) = ret
+    FC = nimble.calculate.fractionCorrect
+
+    layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=16)
     layer1 = nimble.Init('Dropout', rate=0.5)
-    layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
+    layer2 = nimble.Init('Dense', units=numClasses, activation='softmax')
     layers = [layer0, layer1, layer2]
-    #####test fit
-    mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
-                       layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
-                       epochs=20, batch_size=128)
+    ##### Poor Fit using a tiny portion of the data, without all of the labels represented
+    # delete data associated with label 1
+    x_small.points.delete(1,useLog=False)
+    y_small.points.delete(1,useLog=False)
+    mym = nimble.train('keras.Sequential', trainX=x_small, trainY=y_small, optimizer=optimizer,
+                       layers=layers, loss='sparse_categorical_crossentropy', metrics=['accuracy'],
+                       epochs=1)
 
-    #####test incrementalTrain
-    mym.incrementalTrain(x_train, y_train)
+    before = mym.test(FC, x_test, y_test)
 
-    x = mym.apply(testX=x_train)
-    assert len(x.points) == len(x_train.points)
+    ##### Better fit after 5 more batches over all the data, with all possible labels
+    for _ in range(5):
+        mym.incrementalTrain(x_train, y_train)
+
+    after  = mym.test(FC, x_test, y_test)
+    assert after > before
 
 @keraSkipDec
 @logCountAssertionFactory(2)
 @chooseOptimizer
-def testKeras_Sparse_FitGenerator(optimizer):
+def testKeras_Sparse_Input(optimizer):
     """
-    Test Keras on Sparse data; uses different training method - fit_generator
+    Test Keras on Sparse data; formerly uses different training method - fit_generator, should
+    now usable with normal pipeline.
     """
-    x_data = np.random.random((20, 7))
-    y_data = np.random.randint(2, size=(20, 1))
+    numClasses = 3
+    allData = generateClassificationData(numClasses, 20, 16, 5)
+    ((x_train, y_train), (x_test, y_test)) = allData
 
-    x_train = nimble.data(x_data, returnType="Sparse", useLog=False)
-    y_train = nimble.data(y_data, useLog=False, convertToType=float)
-
-    layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=7)
+    layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=16)
     layer1 = nimble.Init('Dropout', rate=0.5)
-    layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
+    layer2 = nimble.Init('Dense', units=numClasses, activation='softmax')
     layers = [layer0, layer1, layer2]
 
     mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
-                       layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
-                       epochs=2, steps_per_epoch=20, max_queue_size=1, steps=20)
+                       layers=layers, loss='sparse_categorical_crossentropy', metrics=['accuracy'],
+                       epochs=5, steps_per_epoch=20)
 
-    x = mym.apply(testX=x_train)
-    assert len(x.points) == len(x_train.points)
+    ret = mym.apply(testX=x_test)
+    assert ret == y_test
 
 @keraSkipDec
 @logCountAssertionFactory(3)
@@ -176,10 +311,31 @@ def testKeras_TrainedLearnerApplyArguments(optimizer):
         'keras.Sequential', trainX=x_train, trainY=y_train,
         optimizer=optimizer, layers=layers, loss='binary_crossentropy',
         metrics=['accuracy'], epochs=1, shuffle=False)
+
+    # Setup the callback we'll be passing to apply
+    try:
+        if tfKeras.nimbleAccessible():
+            CBBase = getattr(tfKeras.callbacks, "Callback")
+    except AttributeError:
+        if keras.nimbleAccessible():
+            CBBase = getattr(keras.callbacks, "Callback")
+    class CustomCallback(CBBase):
+        def __init__(self):
+            self.numHits = 0
+
+        def on_predict_batch_begin(self, batch, logs=None):
+            self.numHits += 1
+
     # using arguments parameter
-    newArgs = mym.apply(testX=x_train, arguments={'steps': 50})
+    first = CustomCallback()
+    assert first.numHits == 0
+    _ = mym.apply(testX=x_train, arguments={'steps': 10, "callbacks":[first]})
+    assert first.numHits == 10
     # using kwarguments
-    newArgs = mym.apply(testX=x_train, steps=50)
+    second = CustomCallback()
+    assert second.numHits == 0
+    _ = mym.apply(testX=x_train, steps=50, callbacks=[second])
+    assert second.numHits == 50
 
 @keraSkipDec
 @logCountAssertionFactory(1)
@@ -208,48 +364,6 @@ def testKeras_TrainedLearnerApplyArguments_exception(optimizer):
         newArgs2 = mym.apply(testX=x_train, foo=50)
 
 @keraSkipDec
-@raises(InvalidArgumentValue)
-@chooseOptimizer
-def testKeras_fitGeneratorOnlyParametersDisallowedForDense(optimizer):
-    x_data = np.random.random((20, 7))
-    y_data = np.random.randint(2, size=(20, 1))
-
-    x_train = nimble.data(x_data, useLog=False)
-    y_train = nimble.data(y_data, useLog=False, convertToType=float)
-
-    layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=7)
-    layer1 = nimble.Init('Dropout', rate=0.5)
-    layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
-    layers = [layer0, layer1, layer2]
-
-    # max_queue_size only applies to fit_generator for Sparse data
-    mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train,
-                       optimizer=optimizer, layers=layers,
-                       loss='binary_crossentropy', metrics=['accuracy'],
-                       epochs=2, steps_per_epoch=20, max_queue_size=10)
-
-@keraSkipDec
-@raises(InvalidArgumentValue)
-@chooseOptimizer
-def testKeras_fitOnlyParametersDisallowedForSparse(optimizer):
-    x_data = np.random.random((20, 7))
-    y_data = np.random.randint(2, size=(20, 1))
-
-    x_train = nimble.data(x_data, returnType='Sparse', useLog=False)
-    y_train = nimble.data(y_data, useLog=False, convertToType=float)
-
-    layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=7)
-    layer1 = nimble.Init('Dropout', rate=0.5)
-    layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
-    layers = [layer0, layer1, layer2]
-
-    # max_queue_size only applies to fit_generator for Sparse data
-    mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train,
-                       optimizer=optimizer, layers=layers,
-                       loss='binary_crossentropy', metrics=['accuracy'],
-                       epochs=2, steps_per_epoch=20, shuffle=True)
-
-@keraSkipDec
 @noLogEntryExpected
 @chooseOptimizer
 def testKerasReproducibility(optimizer):
@@ -272,37 +386,31 @@ def testKerasReproducibility(optimizer):
             assert rec and str(rec[0].message).startswith(start)
     else:
         # for version2 we expect reproducibility
-        nimble.random.setSeed(1234, useLog=False)
+        numClasses = 3
         x_data = nimble.random.numpyRandom.random((1000, 20))
-        y_data = nimble.random.numpyRandom.randint(2, size=(1000, 1))
+        y_data = nimble.random.numpyRandom.randint(numClasses, size=(1000, 1))
         x_train = nimble.data(x_data, useLog=False)
         y_train = nimble.data(y_data, convertToType=float, useLog=False)
 
+        nimble.random.setSeed(1234, useLog=False)
         layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
         layer1 = nimble.Init('Dropout', rate=0.5)
-        layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
+        layer2 = nimble.Init('Dense', units=numClasses, activation='sigmoid')
         layers = [layer0, layer1, layer2]
-
         mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
-                           layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
+                           layers=layers, loss='sparse_categorical_crossentropy', metrics=['accuracy'],
                            epochs=20, batch_size=128, useLog=False)
 
         applied1 = mym.apply(testX=x_train, useLog=False)
 
 
         nimble.random.setSeed(1234, useLog=False)
-        x_data = nimble.random.numpyRandom.random((1000, 20))
-        y_data = nimble.random.numpyRandom.randint(2, size=(1000, 1))
-        x_train = nimble.data(x_data, useLog=False)
-        y_train = nimble.data(y_data, convertToType=float, useLog=False)
-
         layer0 = nimble.Init('Dense', units=64, activation='relu', input_dim=20)
         layer1 = nimble.Init('Dropout', rate=0.5)
-        layer2 = nimble.Init('Dense', units=1, activation='sigmoid')
+        layer2 = nimble.Init('Dense', units=numClasses, activation='sigmoid')
         layers = [layer0, layer1, layer2]
-
         mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
-                           layers=layers, loss='binary_crossentropy', metrics=['accuracy'],
+                           layers=layers, loss='sparse_categorical_crossentropy', metrics=['accuracy'],
                            epochs=20, batch_size=128, useLog=False)
 
         applied2 = mym.apply(testX=x_train, useLog=False)
