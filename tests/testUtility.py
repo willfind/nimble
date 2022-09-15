@@ -72,6 +72,7 @@ def test_DeferredModuleImport_bogus_nimbleAccessibleFailure():
     if bogus.nimbleAccessible():
         assert False
 
+#needs skip for hyperopt
 def test_DeferredModuleImport_invalidVersion():
     opt = []
     for dependency in DEPENDENCIES.values():
