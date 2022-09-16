@@ -18,6 +18,7 @@ from tests.helpers import noLogEntryExpected, raises
 from nimble._utility import DeferredModuleImport
 
 storm_tuner = DeferredModuleImport('storm_tuner')
+hyperopt = DeferredModuleImport('hyperopt')
 
 def wait(sec):
     def performance(args):
@@ -235,6 +236,7 @@ def test_Consecutive(maxValidator):
         next(con)
 
 @pytest.mark.skipif(storm_tuner=False, reason='Storm Tuner unavailable.')
+@pytest.mark.skipif(hyperopt=False, reason='Hyperopt unavailable.')
 @noLogEntryExpected
 def test_Bayesian(minValidator, maxValidator):
     # requires min optimal performanceFunction
