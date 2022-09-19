@@ -1423,16 +1423,17 @@ class HighLevelDataSafe(DataTestObject):
         assertNoNamesGenerated(teY)
 
     # simple sucess - single label
-    @logCountAssertionFactory(2)
+    @logCountAssertionFactory(3)
     def test_trainAndTestSets_simple_nimbleLabels(self):
         data = [[5, -1, 3, 33], [5, -2, 6, 66], [5, -2, 9, 99], [5, -4, 12, 111]]
         labels = [[1], [3], [2], [4]]
         featureNames = ['fives', 'labs2', 'bozo', 'long']
         pointNames = ['pt0', 'pt1', 'pt2', 'pt3']
+        labelsFtName = 'labs1'
         toTest = self.constructor(data, pointNames=pointNames,
                                   featureNames=featureNames)
         toTestLabels = self.constructor(labels, pointNames=pointNames,
-                                        featureNames=['labs1'])
+                                        featureNames=[labelsFtName])
 
         trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=toTestLabels)
         assert len(trX.points) == 2
@@ -1445,6 +1446,22 @@ class HighLevelDataSafe(DataTestObject):
         assert len(teY.points) == 2
         assert len(teY.features) == 1
         assert teX.points.getNames() == teY.points.getNames()
+
+        # try the same test with labels also being present in toTest
+        # Since we test on View objects, we have to remake from the start
+        # instead of modifying the current toTest
+        data = [[5, -1, 3, 33, 1], [5, -2, 6, 66, 3], [5, -2, 9, 99, 2], [5, -4, 12, 111, 4]]
+        featureNames = ['fives', 'labs2', 'bozo', 'long', 'labs1']
+        pointNames = ['pt0', 'pt1', 'pt2', 'pt3']
+        labelsFtName = 'labs1'
+        toTest = self.constructor(data, pointNames=pointNames,
+                                  featureNames=featureNames)
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=toTestLabels)
+        assert not trX.features.hasName(labelsFtName)
+        assert len(trX.features) == 4
+        assert not teX.features.hasName(labelsFtName)
+        assert len(teX.features) == 4
 
         # try the same test with a default named object
         toTest = self.constructor(data)
@@ -1513,7 +1530,7 @@ class HighLevelDataSafe(DataTestObject):
         trX, trY, teX, teY = toTest.trainAndTestSets(.5, toTestLabels)
 
     # simple sucess - multi label
-    @logCountAssertionFactory(2)
+    @logCountAssertionFactory(3)
     def test_trainAndTestSets_simple_multilabel(self):
         data = [[1, 5, -1, 3, 33], [2, 5, -2, 6, 66], [3, 5, -2, 9, 99], [4, 5, -4, 12, 111]]
         featureNames = ['labs1', 'fives', 'labs2', 'bozo', 'long']
@@ -1529,6 +1546,18 @@ class HighLevelDataSafe(DataTestObject):
         assert len(teX.features) == 3
         assert len(teY.points) == 2
         assert len(teY.features) == 2
+
+        # try the same test with a nimble labels object and labels in toTest
+        toTest = self.constructor(data, featureNames=featureNames)
+        toTestLabels = toTest.features.copy([0, 'labs2'], useLog=False)
+
+        trX, trY, teX, teY = toTest.trainAndTestSets(.5, labels=toTestLabels)
+        assert not trX.features.hasName("labs1")
+        assert not trX.features.hasName("labs2")
+        assert len(trX.features) == 3
+        assert not teX.features.hasName("labs1")
+        assert not teX.features.hasName("labs2")
+        assert len(teX.features) == 3
 
         # try the same test with a default named object
         toTest = self.constructor(data)
