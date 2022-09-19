@@ -1379,9 +1379,10 @@ class Base(ABC):
             The fraction of the data to be placed in the testing sets.
             If ``randomOrder`` is False, then the points are taken from
             the end of this object.
-        labels : Base object, identifier, list of identifiers, None
+        labels : Base object, identifier, list of identifiers, or None
             A separate Base object containing the labels for this data
-            or the name(s) or index(es) of the data labels within this object.
+            or the feature axis name(s) or index(es) of the data labels 
+            within this object.
             A value of None implies this data does not contain labels. This
             parameter will affect the shape of the returned tuple.
         randomOrder : bool
@@ -1401,7 +1402,7 @@ class Base(ABC):
         tuple
             If ``labels`` is None, a length 2 tuple containing the
             training and testing objects (trainX, testX).
-            If ``labels`` is non-None, a length 4 tupes containing the
+            If ``labels`` is non-None, a length 4 tuple containing the
             training and testing data objects and the training a testing
             labels objects (trainX, trainY, testX, testY).
 
@@ -2410,8 +2411,10 @@ class Base(ABC):
             The number of significant digits to display in the output.
         maxColumnWidth : int
             A bound on the maximum number of characters allowed for the
-            width of single column (feature) in each line.
-
+            width of single column (feature) in each line. 
+            If the column text is too long for the set bound, 3 characters
+            will be used up for the ellipses during truncation.
+            
         Keywords
         --------
         print, representation, visualize, out, stdio, visualize, output,
@@ -2546,9 +2549,15 @@ class Base(ABC):
         histogram, chart, figure, image, graphics, kde, density,
         probability density function, visualization
         """
-        self._plotFeatureDistribution(feature, outPath, show, figureID,
-                                      title, xAxisLabel, yAxisLabel, xMin,
-                                      xMax, **kwargs)
+        if isinstance(feature, list):     
+            for listItem in feature:
+                self._plotFeatureDistribution(listItem, outPath, show, figureID,
+                                        title, xAxisLabel, yAxisLabel, xMin,
+                                        xMax, **kwargs)
+        else: 
+            self._plotFeatureDistribution(feature, outPath, show, figureID,
+                                          title, xAxisLabel, yAxisLabel, xMin,
+                                          xMax, **kwargs)
 
     def _plotFeatureDistribution(self, feature, outPath, show, figureID,
                                  title, xAxisLabel, yAxisLabel, xMin, xMax,
@@ -2585,23 +2594,26 @@ class Base(ABC):
             title = None
         ax.set_title(title)
         toPlot = getter(index)
-
-        if 'bins' not in kwargs:
-            quartiles = nimble.calculate.quartiles(toPlot)
-            IQR = quartiles[2] - quartiles[0]
-            binWidth = (2 * IQR) / (len(toPlot) ** (1. / 3))
-            # TODO: replace with calculate points after it subsumes
-            # pointStatistics?
-            valMax = max(toPlot)
-            valMin = min(toPlot)
-            if binWidth == 0:
-                binCount = 1
-            else:
-                # we must convert to int, in some versions of numpy, the helper
-                # functions matplotlib calls will require it.
-                binCount = int(math.ceil((valMax - valMin) / binWidth))
-            kwargs['bins'] = binCount
-
+              
+        valMax = max(toPlot)
+        if type(valMax) in [float, int]:
+            if 'bins' not in kwargs:
+                quartiles = nimble.calculate.quartiles(toPlot)
+                IQR = quartiles[2] - quartiles[0]
+                binWidth = (2 * IQR) / (len(toPlot) ** (1. / 3))
+                # TODO: replace with calculate points after it subsumes
+                # pointStatistics?
+                valMin = min(toPlot)
+                if binWidth == 0:
+                    binCount = 1
+                else:
+                    # we must convert to int, in some versions of numpy, the helper
+                    # functions matplotlib calls will require it.
+                    binCount = int(math.ceil((valMax - valMin) / binWidth))
+                kwargs['bins'] = binCount
+        else:
+            toPlot = sorted(list(toPlot))
+          
         ax.hist(toPlot, **kwargs)
         if 'label' in kwargs:
             ax.legend()
