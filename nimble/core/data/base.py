@@ -1530,6 +1530,16 @@ class Base(ABC):
                     raise InvalidArgumentValue(msg) from e
                 trainY = labels.points.copy(order[:splitIndex], useLog=False)
                 testY = labels.points.copy(order[splitIndex:], useLog=False)
+                
+                if self.features._namesCreated() and \
+                        labels.features._namesCreated():
+                    labelNames = labels.features.getNames()
+                    # filter names for ones that overlap with self
+                    namesInBoth = [name for name in labelNames
+                                   if self.features.hasName(name)]
+                    if namesInBoth:
+                        trainX.features.delete(namesInBoth, useLog=False)
+                        testX.features.delete(namesInBoth, useLog=False)
             else:
                 if len(self._dims) > 2:
                     msg = "labels parameter must be None when the data has "
