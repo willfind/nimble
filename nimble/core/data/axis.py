@@ -1162,6 +1162,11 @@ class Axis(ABC):
                 targetList = targetList[:number]
 
         if structure == 'count':
+            # validate query structure AND provide propagating error message 
+            try:
+                QueryString(target)
+            except InvalidArgumentValue:
+                    matcher = target
             return len(targetList)
         ret = self._structuralBackend_implementation(structure, targetList)
 
