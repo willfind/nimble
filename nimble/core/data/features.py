@@ -1691,10 +1691,10 @@ class Features(ABC):
     def mapReduce(self, mapper, reducer, *,
                   useLog=None): # pylint: disable=unused-argument
         """
-        Apply a mapper and reducer function to this object.
+        Apply a mapper and reducer function to the Features in this object.
 
         Return a new object containing the results of the given mapper
-        and reducer functions.
+        and reducer functions along the Features axis.
 
         Parameters
         ----------
