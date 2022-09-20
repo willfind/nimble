@@ -68,16 +68,16 @@ trainX, trainY, testX, testY = traffic.trainAndTestSets(testFraction, yFeature)
 ## keep things simple). We can then analyze the performance by comparing each
 ## learning algorithm's root mean square error.
 learners = ['sklearn.LinearRegression', 'sklearn.Ridge', 'sklearn.Lasso',
-            'sklearn.KNeighborsRegressor', 'sklearn.GradientBoostingRegressor']
+            'sklearn.KNeighborsRegressor', 'sklearn.HistGradientBoostingRegressor']
 rootMeanSquareError = nimble.calculate.rootMeanSquareError
 for learner in learners:
     performance = nimble.trainAndTest(learner, rootMeanSquareError, trainX,
                                       trainY, testX, testY)
     print(learner, 'error:', performance)
 
-## `'sklearn.KNeighborsRegressor'` and `'sklearn.GradientBoostingRegressor'`
-## had better performance for predicting traffic volume with this data than the
-## linear regression based learners, so let's focus on optimizing those two.
+## `'sklearn.KNeighborsRegressor'` and `'sklearn.HistGradientBoostingRegressor'`
+## had better out-of-the-box performance with this data than the linear
+## regression based learners, so let's focus on optimizing those two.
 
 ## Improve performance by tuning hyperparameters ##
 
@@ -100,53 +100,56 @@ nimble.showLearnerParameterDefaults('sklearn.KNeighborsRegressor')
 ## and return the `TrainedLearner` using the best arguments.
 
 ## For KNeighborsRegressor, we will use `nimble.Tune` to try 3, 5, and 7 for
-## the number of nearest neighbors and for `GradientBoostingRegressor` we will
-## try different learning rate values. The `Tuning` object defines a method for
-## selecting each argument set and how each argument set will be validated.
-## Below, we will use the default "consecutive" method but instead of the
-## default "cross validation", we will hold out a random 20% of our training
-## data for validation. For details on all tuning options, see the `Tuning`
-## documentation.
+## the number of nearest neighbors and for `HistGradientBoostingRegressor` we
+## will try different learning rate values. The `Tuning` object defines both a
+## method for selecting each argument set and how each argument set will be
+## validated. Below, we will use the default "consecutive" method but instead
+## of the default "cross validation", we will hold out a random 20% of our
+## training data for validation. For details on all tuning options, see the
+## `Tuning` documentation.
 tuning = nimble.Tuning(validation=0.2, performanceFunction=rootMeanSquareError)
 # some interfaces have alias options for the package name
 # below we use the alias 'skl' for the 'sklearn' package.
 knnTL = nimble.train('skl.KNeighborsRegressor', trainX, trainY,
                      arguments={'n_neighbors': nimble.Tune([3, 5, 7])},
                      tuning=tuning)
-gbTL = nimble.train('skl.GradientBoostingRegressor', trainX, trainY,
-                    learning_rate=nimble.Tune([0.01, 0.1, 1]),
+hgbTL = nimble.train('skl.HistGradientBoostingRegressor', trainX, trainY,
+                    learning_rate=nimble.Tune([0.1, 0.5, 1]),
                     tuning=tuning)
 
 ## The `nimble.train` function returns a `TrainedLearner`. With a
 ## `TrainedLearner` we can `apply` (make predictions on a test set), `test`
 ## (measure the performance on a test set with known labels) and it provides
-## many other additional methods and attributes. The `knnTL` object was trained
-## with the `n_neighbors` value that performed best during validation.
-## When hyperparameter tuning occured, `TrainedLearner.tuning` provides access
-## to the tuning results. The `allResults` and `allArguments` properties are
-## sorted from best to worst. Let's see how each `knnTL` argument performed.
-for result, args in zip(knnTL.tuning.allResults, knnTL.tuning.allArguments):
+## many other additional methods and attributes. In this case, beacuse
+## hyperparameter tuning occured, `TrainedLearner.tuning` provides access to
+## the tuning results. Let's check the best score and argument combination
+## for `knnTL`.
+print(knnTL.tuning.bestResult, knnTL.tuning.bestArguments)
+
+## As such, the `knnTL` object we have access to was trained with
+## `n_neighbors=3` since it had the best performance. Similarly `hgbTL` was
+## trained with the best of our three possible learning rates. For `hgbTL` we
+## will try checking the `allResults` and `allArguments` properties, which are
+## sorted from best to worst performance and show the results for each
+## of the tested argument sets.
+for result, args in zip(hgbTL.tuning.allResults, hgbTL.tuning.allArguments):
     print(result, args)
 
-## Similarly `gbTL` was trained with the best of our three possible learning
-## rates. Instead of seeing all the results, let's just see the best argument
-## and best result this time.
-print(gbTL.tuning.bestResult, gbTL.tuning.bestArguments)
-
-## `knnTL` found `n_neighbors` of 5 to be the best setting.  This is the same
-## as the default value so we already know how it performs on our testing data.
-## However, `gbTL` found `learning_rate` of 1 outperformed the default, 0.1.
-## Let's see how it performs on our testing (out-of-sample) data.
-gbPerf = gbTL.test(rootMeanSquareError, testX, testY) 
-print('sklearn.GradientBoostingRegressor', 'learning_rate=1', 'error', gbPerf)
+## `knnTL` found `n_neighbors` of 3 to be the best choice, but even so
+## the best performance was not that great. However, `hgbTL` seems promising,
+## with a `learning_rate` of 0.5 outperforming the default of 0.1. As a final
+## check, let's see how it performs on our testing (out-of-sample) data.
+gbPerf = hgbTL.test(rootMeanSquareError, testX, testY)
+print('sklearn.HistGradientBoostingRegressor', 'learning_rate=0.5', 'error', gbPerf)
 
 ## Applying our learner ##
 
-## We see a further improvement in the performance so the
-## GradientBoostingRegressor with a learning rate of 1 is our best model. Now
-## we will apply our `gbTL` trained learner to our `forecast` dataset to
-## predict traffic volumes for a future day.
-predictedTraffic = gbTL.apply(forecast)
+## We see a further improvement in the performance as compared to our original
+## `nimble.trainAndTest` calls, so the `HistGradientBoostingRegressor` with a
+## learning rate of 0.5 is our best model. Now we will apply our `hgbTL`
+## trained learner to our `forecast` dataset to predict traffic volumes for a
+## future day.
+predictedTraffic = hgbTL.apply(forecast)
 predictedTraffic.features.setName(0, 'volume')
 
 ## Before printing, we will append the `hour` feature from `forecasts` to get
@@ -155,8 +158,9 @@ predictedTraffic.features.append(forecast.features['hour'])
 predictedTraffic.show('Traffic Volume Predictions')
 
 ## Based on our forecasted data, our learner is predicting heavier traffic
-## volumes between 6 am and 6 pm with peak congestion expected around the 7 am
-## hour for the morning commute and the 4 pm hour for the afternoon commute.
+## volumes between 6 am and 6 pm, trailing off into the evening. The peak
+## congestion is expected around the 7 am hour for the morning commute and
+## the 4 pm hour for the afternoon commute.
 
 ## **Reference:**
 
