@@ -78,7 +78,7 @@ def generateClassificationData(labels, pointsPer, featuresPer, testSizePerLabel=
 
 
 # TODO: polish and relocate to random module
-def generateRegressionData(labels, pointsPer, featuresPer):
+def generateRegressionData(labels, pointsPer, featuresPer, testSizePerLabel=1):
     """
     Randomly generate sensible data for a regression problem. Returns a
     tuple of tuples, where the first value is a tuple containing
@@ -90,7 +90,7 @@ def generateRegressionData(labels, pointsPer, featuresPer):
         labels, pointsPer, featuresPer, addFeatureNoise=True,
         addLabelNoise=True, addLabelColumn=False)
     regressorTestData, testLabels, _ = generateClusteredPoints(
-        labels, 1, featuresPer, addFeatureNoise=True, addLabelNoise=True,
+        labels, testSizePerLabel, featuresPer, addFeatureNoise=True, addLabelNoise=True,
         addLabelColumn=False)
 
     return ((regressorTrainData, trainLabels), (regressorTestData, testLabels))
