@@ -54,7 +54,7 @@ class TestPredefinedInterface(PredefinedInterfaceMixin):
     def accessible(self):
         return True
 
-    def _learnerNamesBackend(self, onlyTrained):
+    def _learnerNamesBackend(self, onlyTrained=False):
         return ['l0', 'l1', 'l2', 'exposeTest', 'foo']
 
     def _getLearnerParameterNamesBackend(self, name):
@@ -265,7 +265,7 @@ class AlwaysWarnInterface(UniversalInterface):
     def accessible(self):
         return True
 
-    def _learnerNamesBackend(self, onlyTrained):
+    def _learnerNamesBackend(self, onlyTrained=False):
         self.issueWarnings()
         return ['foo']
 

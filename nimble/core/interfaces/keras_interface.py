@@ -104,10 +104,10 @@ class Keras(PredefinedInterfaceMixin):
             isn't one of the excluded ones), whereas any of the loader
             functions in the keras.applications submodle are wanted.
             """
-            # The basic Model object isn't allowed. WideDeepModel is
-            # currently experimental, and it isn't clear how we might
-            # want to handle it.
-            excluded = ["Model", "WideDeepModel"]
+            # The basic Model object isn't allowed. WideDeepModel and
+            # Linear model are currently experimental, and it isn't
+            # clear how we might want to handle them.
+            excluded = ["Model", "WideDeepModel", "LinearModel"]
             if obj.__name__ in excluded:
                 return False
 
@@ -117,7 +117,9 @@ class Keras(PredefinedInterfaceMixin):
 
             # This combined with the correct depth limit is sufficient to
             # grab the application loading functions.
-            inApps = "keras.applications" in obj.__module__
+            inApps = False
+            if hasattr(obj, "__module__"):
+                inApps = "keras.applications" in obj.__module__
 
             if (hasFit and hasPred and hasCompile) or inApps:
                 return True
@@ -221,7 +223,12 @@ To install keras
 
     def _getLearnerParameterNamesBackend(self, learnerName):
         ignore = ['self', 'X', 'x', 'Y', 'y']
+        isApp = (learnerName != "Sequential")
+        # Checking object init or keras apps loader func respectively
         start = self._paramQuery('__init__', learnerName, ignore)
+        if isApp:
+            # want info on the function itself
+            start = self._paramQuery(learnerName, None, ignore)
 
         # All models share the same compile / fit /predict API
         compile_ = self._paramQuery('compile', "Model", ignore)
@@ -246,8 +253,12 @@ To install keras
 
     def _getLearnerDefaultValuesBackend(self, learnerName):
         ignore = ['self', 'X', 'x', 'Y', 'y']
-
+        isApp = (learnerName != "Sequential")
+        # Checking object init or keras apps loader func respectively
         start = self._paramQuery('__init__', learnerName, ignore)
+        if isApp:
+            # want info on the function itself
+            start = self._paramQuery(learnerName, None, ignore)
 
         # All models share the same compile / fit /predict API
         compile_ = self._paramQuery('compile', "Model", ignore)
@@ -523,4 +534,3 @@ To install keras
             return (args, v, k, d)
         except TypeError:
             return None
-

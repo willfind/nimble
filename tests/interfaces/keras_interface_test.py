@@ -522,6 +522,29 @@ def testLearnerTypes():
     assert all(lt == 'undefined' for lt in nimble.learnerType(learners))
 
 @keraSkipDec
+def testLearnerParameters():
+    for learner in nimble.learnerNames('Keras'):
+        params = nimble.learnerParameters('Keras.' + learner)
+        # Params guaranteed by model to be in the compile API
+        compileParams = ["optimizer", "loss", "metrics", "loss_weights",
+                         "weighted_metrics", "run_eagerly"]
+        # Common params shared by the keras apps loader functions
+        appLoadParams = ["weights", "include_top", "input_shape",
+                         "input_tensor", "pooling", "classes"]
+        if learner == "Sequential":
+            checkIn = compileParams
+            checkOut = appLoadParams
+        else:
+            checkIn = appLoadParams
+            checkOut = compileParams
+
+        for check in checkIn:
+            assert check in params
+        for check in checkOut:
+            assert check not in params
+
+
+@keraSkipDec
 def testLossCoverage():
     kerasInt = nimble.core._learnHelpers.findBestInterface('keras')
     lts = nimble.core.interfaces.keras_interface.LEARNERTYPES
