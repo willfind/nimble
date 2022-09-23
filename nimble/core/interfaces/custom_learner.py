@@ -57,7 +57,10 @@ class CustomLearnerInterface(UniversalInterface):
         # can't cache because new learners can be registered
         return self._learnerNamesBackend()
 
-    def _learnerNamesBackend(self):
+    def _learnerNamesBackend(self, onlyTrained=False):
+        if onlyTrained:
+            return []
+
         return list(self.registeredLearners.keys())
 
 

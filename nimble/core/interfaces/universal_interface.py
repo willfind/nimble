@@ -510,6 +510,13 @@ class UniversalInterface(metaclass=abc.ABCMeta):
             ret = self._learnerNamesCached
         return ret
 
+    def trainedLearnerNames(self):
+        """
+        Return a list of only the trained learners callable through this
+        interface.
+        """
+
+
     @captureOutput
     def findCallable(self, name):
         """
@@ -621,7 +628,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         """
 
     @abc.abstractmethod
-    def _learnerNamesBackend(self):
+    def _learnerNamesBackend(self, onlyTrained=False):
         pass
 
     @abc.abstractmethod

@@ -93,7 +93,10 @@ To install autoimpute
     https://autoimpute.readthedocs.io/en/latest/user_guide/getting_started.html"""
         return msg
 
-    def _learnerNamesBackend(self):
+    def _learnerNamesBackend(self, onlyTrained=False):
+        if onlyTrained:
+            return []
+
         return self._searcher.allLearners()
 
     def _learnerType(self, learnerBackend):

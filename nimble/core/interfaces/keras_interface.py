@@ -98,18 +98,33 @@ class Keras(PredefinedInterfaceMixin):
 
         def isLearner(obj):
             """
-            In Keras, there are 2 learners: Sequential and Model.
+            In Keras, there are two classes of learners: from scratch,
+            and known structures from Keras Applications. From scratch
+            must have the full pipeline of functions (so long as it
+            isn't one of the excluded ones), whereas any of the loader
+            functions in the keras.applications submodle are wanted.
             """
+            # The basic Model object isn't allowed. WideDeepModel is
+            # currently experimental, and it isn't clear how we might
+            # want to handle it.
+            excluded = ["Model", "WideDeepModel"]
+            if obj.__name__ in excluded:
+                return False
+
             hasFit = hasattr(obj, 'fit')
             hasPred = hasattr(obj, 'predict')
             hasCompile = hasattr(obj, 'compile')
 
-            if not (hasFit and hasPred and hasCompile):
-                return False
+            # This combined with the correct depth limit is sufficient to
+            # grab the application loading functions.
+            inApps = "keras.applications" in obj.__module__
 
-            return True
+            if (hasFit and hasPred and hasCompile) or inApps:
+                return True
 
-        self._searcher = PythonSearcher(self.package, isLearner, 2)
+            return False
+
+        self._searcher = PythonSearcher(self.package, isLearner, 1)
 
         super().__init__()
 
@@ -166,7 +181,7 @@ To install keras
     """
         return msg
 
-    def _learnerNamesBackend(self):
+    def _learnerNamesBackend(self, onlyTrained=False):
         possibilities = self._searcher.allLearners()
         exclude = []
         ret = []
@@ -508,3 +523,4 @@ To install keras
             return (args, v, k, d)
         except TypeError:
             return None
+

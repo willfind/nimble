@@ -331,10 +331,6 @@ class _SciKitLearnAPI(PredefinedInterfaceMixin):
         pass
 
     @abc.abstractmethod
-    def _learnerNamesBackend(self):
-        pass
-
-    @abc.abstractmethod
     def _findCallableBackend(self, name):
         pass
 
@@ -445,7 +441,10 @@ To install scikit-learn
     https://scikit-learn.org/stable/install.html"""
         return msg
 
-    def _learnerNamesBackend(self):
+    def _learnerNamesBackend(self, onlyTrained=False):
+        if onlyTrained:
+            return []
+
         possibilities = []
         exclude = [
             'DictVectorizer', 'FeatureHasher', 'HashingVectorizer',
