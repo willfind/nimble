@@ -30,11 +30,10 @@ LEARNERTYPES = {
         'BinaryFocalCrossentropy', 'binary_focal_crossentropy',
         'CategoricalCrossentropy', 'categorical_crossentropy',
         'SparseCategoricalCrossentropy', 'sparse_categorical_crossentropy',
-        'Poisson', 'poisson',
         'KLDivergence', 'kl_divergence',
         'Hinge', 'hinge',
-        'SquaredHinge', 'squared_hinge',
         'CategoricalHinge', 'categorical_hinge',
+        'SquaredHinge', 'squared_hinge',
     ],
     'regression': [
         'MeanSquaredError', 'mean_squared_error',
@@ -44,10 +43,9 @@ LEARNERTYPES = {
         'CosineSimilarity', 'cosine_similarity',
         'Huber', 'huber',
         'LogCosh', 'log_cosh',
+        'Poisson', 'poisson',  # Seems to be for regression of 'counting' data?
     ]
 }
-
-
 
 
 @inheritDocstringsFactory(PredefinedInterfaceMixin)
