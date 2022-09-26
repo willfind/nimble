@@ -72,7 +72,9 @@ def test_DeferredModuleImport_bogus_nimbleAccessibleFailure():
     if bogus.nimbleAccessible():
         assert False
 
-
+# NEEDS DECORATOR FOR STORM_TUNER AND HYPEROPT
+# @pytest.mark.skipif(storm_tuner=False, reason='Storm Tuner unavailable.')
+# @pytest.mark.skipif(hyperopt=False, reason='Hyperopt unavailable.')
 def test_DeferredModuleImport_invalidVersion():
     opt = []
     for dependency in DEPENDENCIES.values():
