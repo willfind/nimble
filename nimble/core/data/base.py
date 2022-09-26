@@ -1527,7 +1527,7 @@ class Base(ABC):
                     self._validateEqualNames('point', 'point', '', labels)
                 except InvalidArgumentValue as e:
                     msg = 'labels and calling object pointNames must be equal'
-                    raise InvalidArgumentValue(msg) from e
+                    raise InvalidArgumentValue(msg) from e 
                 trainY = labels.points.copy(order[:splitIndex], useLog=False)
                 testY = labels.points.copy(order[splitIndex:], useLog=False)
                 

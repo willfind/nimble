@@ -1624,10 +1624,10 @@ class Points(ABC):
     def mapReduce(self, mapper, reducer, *,
                   useLog=None): # pylint: disable=unused-argument
         """
-        Apply a mapper and reducer function to this object.
+        Apply a mapper and reducer function to the Points in this object.
 
         Return a new object containing the results of the given mapper
-        and reducer functions.
+        and reducer functions along the Points axis.
 
         Parameters
         ----------
@@ -1647,28 +1647,28 @@ class Points(ABC):
 
         Examples
         --------
-        mapReduce the counts of roof styles in the points.
+        mapReduce that finds the average distance traveled by state across points.
 
-        >>> def roofMapper(pt):
-        ...     style = 'Open'
-        ...     if pt['ROOF_TYPE'] == 'Dome':
-        ...         style = 'Dome'
-        ...     return [(style, 1)]
-        >>> def roofReducer(style, totals):
-        ...     return (style, sum(totals))
-        >>> stadiums = [[61500, 'Open', 'Chicago Bears'],
-        ...             [71228, 'Dome', 'Atlanta Falcons'],
-        ...             [77000, 'Open', 'Kansas City Chiefs'],
-        ...             [72968, 'Dome', 'New Orleans Saints'],
-        ...             [76500, 'Open', 'Miami Dolphins']]
-        >>> fts = ['CAPACITY', 'ROOF_TYPE', 'TEAM']
-        >>> X = nimble.data(stadiums, featureNames=fts)
-        >>> X.points.mapReduce(roofMapper, roofReducer)
-        <DataFrame 2pt x 2ft
-              0   1
-           ┌───────
-         0 │ Open 3
-         1 │ Dome 2
+        >>> def distanceMapper(pt):
+        ...     location = pt[0]
+        ...     distance = pt[1] * pt[2]
+        ...     return [(location, distance)]
+        >>> def distanceReducer(location, distance):
+        ...     return (location, sum(distance)/len(distance))
+        >>> travelData = [['Iowa', 0.5, 19],
+        ...               ['Maryland', 1.5, 48],
+        ...               ['Maryland', 2, 40],
+        ...               ['Texas', 3.2, 50],
+        ...               ['Texas', 3, 45]]
+        >>> fts = ['STATE', 'HOURS', 'MPH']
+        >>> X = nimble.data(travelData, featureNames=fts)
+        >>> X.points.mapReduce(distanceMapper, distanceReducer)
+        <DataFrame 3pt x 2ft
+                0        1
+           ┌─────────────────
+         0 │   Iowa    9.500
+         1 │ Maryland  76.000
+         2 │  Texas   147.500
         >
 
         Keywords
