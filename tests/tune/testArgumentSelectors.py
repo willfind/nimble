@@ -445,8 +445,6 @@ def test_Iterative(maxValidator):
     with raises(StopIteration):
         next(itr)
 
-
-@pytest.mark.skipif(storm_tuner=False, reason='Storm Tuner unavailable.')
 def test_StochasticRandomMutator(minValidator):
     # single argument, no tune
     srm = StochasticRandomMutator({'k': 5}, minValidator, maxIterations=5)
