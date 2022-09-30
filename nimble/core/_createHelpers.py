@@ -265,6 +265,11 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID, copied):
     # we allow single dimension arrays as input, but we assume 2d from here
     # forward; reshape so that the values constitute a single row.
     addedDim = False
+    
+    # Special consideration for Structured Numpy arrays
+    if data.dtype.fields:
+        
+        
     if len(data.shape) == 1:
         data = data.reshape(1, data.shape[0])
         addedDim = True
@@ -1445,6 +1450,8 @@ def initDataObject(
         rawData = rawData._data
     # convert these types as indexing may cause dimensionality confusion
     elif _isNumpyArray(rawData):
+        # THERE NEEDS TO BE A CHECK TO SEE IF NON-FULLY NUMERIC 
+        # THIS SHOULD BE CONVERTED TO A PANDAS DATAFRAME 
         if _isNumpyMatrix(rawData):
             rawData = np.array(rawData)
             copied = True
