@@ -23,6 +23,7 @@ import numbers
 import itertools
 
 import numpy as np
+import pandas as pd
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
@@ -268,7 +269,11 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID, copied):
     
     # Special consideration for Structured Numpy arrays
     if data.dtype.fields:
-        
+        # perform mapping to create appropriate numpy array with 2 digit shape 
+        reshapedData = [list(data[x]) for  x in range(len(data))]
+        data = np.array(reshapedData)
+        # featureNames needs to be used at higher level for object
+        featureNames = [x for x in data.dtype.fields.keys()]
         
     if len(data.shape) == 1:
         data = data.reshape(1, data.shape[0])
@@ -1450,8 +1455,10 @@ def initDataObject(
         rawData = rawData._data
     # convert these types as indexing may cause dimensionality confusion
     elif _isNumpyArray(rawData):
-        # THERE NEEDS TO BE A CHECK TO SEE IF NON-FULLY NUMERIC 
-        # THIS SHOULD BE CONVERTED TO A PANDAS DATAFRAME 
+        # if not numeric only; turn rawData into
+        if rawData.dtype.fields and numeric: 
+            rawData = pd.DataFrame(rawData)
+            returnType = "DataFrame"
         if _isNumpyMatrix(rawData):
             rawData = np.array(rawData)
             copied = True
