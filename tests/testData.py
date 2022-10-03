@@ -4247,6 +4247,16 @@ def test_data_copyData_False_copyMadeWhenNamesExtracted():
 # rowsArePoints #
 #################
 
+def test_rowsArePoints_numpyStructuredArrays():
+    pass 
+
+def test_convertStructuredArraytoDataFrames():
+    pass 
+
+def test_featureNamesFromStructuredArrayFields():
+    pass 
+    
+
 def test_rowsArePoints_numpyArrays():
     ptData = np.array([[1, 2, 3], [0, 0, 0], [-1, -2, -3]])
     ftData = np.array([[1, 0, -1], [2, 0, -2], [3, 0, -3]])
