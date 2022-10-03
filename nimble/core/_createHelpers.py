@@ -265,15 +265,14 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID, copied):
 
     # we allow single dimension arrays as input, but we assume 2d from here
     # forward; reshape so that the values constitute a single row.
-    addedDim = False
-    
+    addedDim = False    
+    retPNames = None
+    retFNames = None
     # Special consideration for Structured Numpy arrays
     if data.dtype.fields:
-        # perform mapping to create appropriate numpy array with 2 digit shape 
+        retFNames = [x for x in data.dtype.fields.keys()] # needs to be retFNames 
         reshapedData = [list(data[x]) for  x in range(len(data))]
         data = np.array(reshapedData)
-        # featureNames needs to be used at higher level for object
-        featureNames = [x for x in data.dtype.fields.keys()]
         
     if len(data.shape) == 1:
         data = data.reshape(1, data.shape[0])
@@ -284,8 +283,6 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID, copied):
     pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow,
                                                 secondRow)
 
-    retPNames = None
-    retFNames = None
     if pnamesID is True:
         retPNames = np.array(data[:, 0]).flatten()
         data = np.delete(data, 0, 1)
@@ -1455,10 +1452,15 @@ def initDataObject(
         rawData = rawData._data
     # convert these types as indexing may cause dimensionality confusion
     elif _isNumpyArray(rawData):
-        # if not numeric only; turn rawData into
-        if rawData.dtype.fields and numeric: 
-            rawData = pd.DataFrame(rawData)
-            returnType = "DataFrame"
+        if rawData.dtype.fields:
+            rowTuple = rawData[0]
+            if len(rowTuple) > 0:
+                allNumeric = [isinstance(rowTuple[i-1], np.number)
+                            for i in range(len(rowTuple))]  
+                if not all(allNumeric):
+                    rawData = pd.DataFrame(rawData)
+                    copied = True
+                    returnType = "DataFrame"
         if _isNumpyMatrix(rawData):
             rawData = np.array(rawData)
             copied = True
