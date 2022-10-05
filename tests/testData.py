@@ -4247,14 +4247,27 @@ def test_data_copyData_False_copyMadeWhenNamesExtracted():
 # rowsArePoints #
 #################
 
-def test_rowsArePoints_numpyStructuredArrays():
-    pass 
-
 def test_convertStructuredArraytoDataFrames():
+    structArray = np.array([('Rex', 9, 81.0), ('Fido', 3, 27.0)],
+             dtype=[('name', 'U10'), ('age', 'i4'), ('weight', 'f4')])
+    dataArray = nimble.data(structArray)
+    assert type(dataArray) == nimble.core.data.dataframe.DataFrame
+
+def test_tuplesArePoints_numpyStructuredArrays():
+    structArray = np.array([(12, 23, 34, 45),( 11, 21, 31, 41),(13, 21, 31, 43)],
+                        dtype=[('Weight', 'f4'), ('Speed', np.float32), ('Age', 'i4'), ('RPM', 'f4')])
+    dataArray = nimble.data(structArray)
+    # assert that row 1 = 12, 23, 34, 45, row 2 = 11, 21, 31, 41
+     
+
     pass 
 
 def test_featureNamesFromStructuredArrayFields():
-    pass 
+    structArray = np.array([(12, 23, 34, 45),( 11, 21, 31, 41),(13, 21, 31, 43)],
+                        dtype=[('Weight', 'f4'), ('Speed', np.float32), ('Age', 'i4'), ('RPM', 'f4')])
+    dataArray = nimble.data(structArray)
+    fNames = ['Weight', 'Speed', 'Age', 'RPM']
+    assert fNames == dataArray.features.getNames()
     
 
 def test_rowsArePoints_numpyArrays():
