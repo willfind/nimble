@@ -15,10 +15,10 @@ from nimble.calculate import fractionIncorrect
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
 from tests.helpers import noLogEntryExpected, raises
-from nimble._utility import DeferredModuleImport
+from nimble._utility import storm_tuner, hyperopt
 
-storm_tuner = DeferredModuleImport('storm_tuner')
-hyperopt = DeferredModuleImport('hyperopt')
+noStormTuner = not storm_tuner.nimbleAccessible()
+noHyperOpt = not hyperopt.nimbleAccessible()
 
 def wait(sec):
     def performance(args):
@@ -235,8 +235,8 @@ def test_Consecutive(maxValidator):
     with raises(StopIteration):
         next(con)
 
-@pytest.mark.skipif(storm_tuner=False, reason='Storm Tuner unavailable.')
-@pytest.mark.skipif(hyperopt=False, reason='Hyperopt unavailable.')
+@pytest.mark.skipif(noStormTuner, reason='Storm Tuner unavailable.')
+@pytest.mark.skipif(noHyperOpt, reason='Hyperopt unavailable.')
 @noLogEntryExpected
 def test_Bayesian(minValidator, maxValidator):
     # requires min optimal performanceFunction

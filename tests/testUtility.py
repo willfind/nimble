@@ -13,10 +13,14 @@ from nimble.exceptions import PackageException
 from nimble._utility import DeferredModuleImport
 from nimble._utility import mergeArguments
 from nimble._utility import inspectArguments
+from nimble._utility import storm_tuner, hyperopt
 from nimble._utility import numpy2DArray, is2DArray
 from nimble._utility import _setAll
 from nimble._dependencies import DEPENDENCIES
 from tests.helpers import raises
+
+noStormTuner = not storm_tuner.nimbleAccessible()
+noHyperOpt = not hyperopt.nimbleAccessible()
 
 def test_DeferredModuleImport_numpy():
     optNumpy = DeferredModuleImport('numpy')
@@ -73,8 +77,8 @@ def test_DeferredModuleImport_bogus_nimbleAccessibleFailure():
     if bogus.nimbleAccessible():
         assert False
 
-@pytest.mark.skipif(storm_tuner=False, reason='Storm Tuner unavailable.')
-@pytest.mark.skipif(hyperopt=False, reason='Hyperopt unavailable.')
+@pytest.mark.skipif(noStormTuner, reason='Storm Tuner unavailable.')
+@pytest.mark.skipif(noHyperOpt, reason='Hyperopt unavailable.')
 def test_DeferredModuleImport_invalidVersion():
     opt = []
     for dependency in DEPENDENCIES.values():
