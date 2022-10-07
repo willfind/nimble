@@ -235,7 +235,6 @@ def test_Consecutive(maxValidator):
     with raises(StopIteration):
         next(con)
 
-@pytest.mark.skipif(noStormTuner, reason='Storm Tuner unavailable.')
 @pytest.mark.skipif(noHyperOpt, reason='Hyperopt unavailable.')
 @noLogEntryExpected
 def test_Bayesian(minValidator, maxValidator):
@@ -445,6 +444,7 @@ def test_Iterative(maxValidator):
     with raises(StopIteration):
         next(itr)
 
+@pytest.mark.skipif(noStormTuner, reason='Storm Tuner unavailable.')
 def test_StochasticRandomMutator(minValidator):
     # single argument, no tune
     srm = StochasticRandomMutator({'k': 5}, minValidator, maxIterations=5)
