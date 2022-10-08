@@ -469,14 +469,6 @@ def test_point_mapReduce():
     for constructor in constructors:
         backend(wrapped, prepAndCheck, constructor=constructor)
 
-def test_features_mapReduce():
-    def wrapped(obj, useLog):
-        # transpose data to make use of same mapper and reducer
-        return obj.T.features.mapReduce(simpleMapper, simpleReducer, useLog=useLog)
-
-    for constructor in constructors:
-        backend(wrapped, prepAndCheck, constructor=constructor)
-
 def test_points_calculate():
     def wrapped(obj, useLog):
         return obj.points.calculate(lambda x: len(x), useLog=useLog)

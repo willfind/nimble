@@ -494,13 +494,6 @@ def testPrepTypeFunctionsUseLog():
     checkLogContents('points.mapReduce', dataObj.logID, {"mapper": "simpleMapper",
                                                          "reducer": "simpleReducer"})
 
-    # features.mapReduce
-    dataObj = nimble.data(np.array(data, dtype=object).T, name='mapReduce',
-                          featureNames=False, useLog=False)
-    calculated = dataObj.features.mapReduce(simpleMapper,simpleReducer)
-    checkLogContents('features.mapReduce', "mapReduce", {"mapper": "simpleMapper",
-                                                         "reducer": "simpleReducer"})
-
     # points.calculate
     dataObj = nimble.data(data, useLog=False)
     calculated = dataObj.points.calculate(lambda x: len(x))

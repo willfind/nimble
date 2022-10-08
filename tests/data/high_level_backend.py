@@ -10,9 +10,9 @@ Methods tested in this file:
 In object HighLevelDataSafe:
 points.calculate, features.calculate, calculateOnElements, points.count,
 features.count, countElements, countUniqueElements, points.unique,
-features.unique, points.mapReduce, features.mapReduce,
-isApproximatelyEqual, trainAndTestSets, points.repeat,
-features.repeat, points.matching, features.matching, matchingElements
+features.unique, points.mapReduce, isApproximatelyEqual, trainAndTestSets,
+points.repeat, features.repeat, points.matching, features.matching,
+matchingElements
 
 In object HighLevelModifying:
 replaceFeatureWithBinaryFeatures, points.permute, features.permute,
@@ -1178,112 +1178,6 @@ class HighLevelDataSafe(DataTestObject):
         ret = toTest.points.mapReduce(simpleMapper, oddOnlyReducer)
 
         exp = self.constructor([[1, 5], [7, 17]])
-
-        assert (ret.isIdentical(exp))
-        assert (toTest.isIdentical(self.constructor(data, featureNames=featureNames)))
-
-
-    ########################
-    # features.mapReduce() #
-    ########################
-
-    @raises(ImproperObjectAction)
-    def test_features_mapReduce_ExceptionNoPoints(self):
-        """ Test features.mapReduce() for ImproperObjectAction when there are no points  """
-        data = [[], []]
-        data = np.array(data).T
-        toTest = self.constructor(data)
-        toTest.features.mapReduce(simpleMapper, simpleReducer)
-
-    def test_features_mapReduce_emptyResultNoFeatures(self):
-        """ Test features.mapReduce() when given feature empty data """
-        data = [[], []]
-        data = np.array(data)
-        toTest = self.constructor(data)
-        ret = toTest.features.mapReduce(simpleMapper, simpleReducer)
-
-        data = np.empty(shape=(0, 0))
-        exp = self.constructor(data)
-        assert ret.isIdentical(exp)
-
-    @raises(InvalidArgumentType)
-    def test_features_mapReduce_ExceptionNoneMap(self):
-        """ Test features.mapReduce() for InvalidArgumentType when mapper is None """
-        featureNames = ["one", "two", "three"]
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data, featureNames=featureNames)
-        toTest.features.mapReduce(None, simpleReducer)
-
-    @raises(InvalidArgumentType)
-    def test_features_mapReduce_ExceptionNoneReduce(self):
-        """ Test features.mapReduce() for InvalidArgumentType when reducer is None """
-        featureNames = ["one", "two", "three"]
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data, featureNames=featureNames)
-        toTest.features.mapReduce(simpleMapper, None)
-
-    @raises(InvalidArgumentType)
-    def test_features_mapReduce_ExceptionUncallableMap(self):
-        """ Test features.mapReduce() for InvalidArgumentType when mapper is not callable """
-        featureNames = ["one", "two", "three"]
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data, featureNames=featureNames)
-        toTest.features.mapReduce("hello", simpleReducer)
-
-    @raises(InvalidArgumentType)
-    def test_features_mapReduce_ExceptionUncallableReduce(self):
-        """ Test features.mapReduce() for InvalidArgumentType when reducer is not callable """
-        featureNames = ["one", "two", "three"]
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data, featureNames=featureNames)
-        toTest.features.mapReduce(simpleMapper, 5)
-
-    @oneLogEntryExpected
-    def test_features_mapReduce_handmade(self):
-        """ Test features.mapReduce() against handmade output """
-        featureNames = ["one", "two", "three"]
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data, featureNames=featureNames)
-        ret = toTest.features.mapReduce(simpleMapper, simpleReducer)
-
-        exp = self.constructor([[1, 11], [2, 13], [3, 15]])
-
-        assert (ret.isIdentical(exp))
-        assert (toTest.isIdentical(self.constructor(data, featureNames=featureNames)))
-
-    def test_features_mapReduce_handmade_lazyNameGeneration(self):
-        """ Test features.mapReduce() against handmade output """
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data)
-        ret = toTest.features.mapReduce(simpleMapper, simpleReducer)
-
-        assertNoNamesGenerated(toTest)
-        assertNoNamesGenerated(ret)
-
-    def test_features_mapReduce_NamePath_preservation(self):
-        featureNames = ["one", "two", "three"]
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data, featureNames=featureNames,
-                                  name=preserveName, paths=preservePair)
-
-        ret = toTest.features.mapReduce(simpleMapper, simpleReducer)
-
-        assert toTest.name == preserveName
-        assert toTest.absolutePath == preserveAPath
-        assert toTest.relativePath == preserveRPath
-
-        assert ret.name is None
-        assert ret.absolutePath == preserveAPath
-        assert ret.relativePath == preserveRPath
-
-    def test_features_mapReduce_handmadeNoneReturningReducer(self):
-        """ Test features.mapReduce() against handmade output with a None returning Reducer """
-        featureNames = ["one", "two", "three"]
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data, featureNames=featureNames)
-        ret = toTest.features.mapReduce(simpleMapper, oddOnlyReducer)
-
-        exp = self.constructor([[1, 11], [3, 15]])
 
         assert (ret.isIdentical(exp))
         assert (toTest.isIdentical(self.constructor(data, featureNames=featureNames)))

@@ -139,9 +139,8 @@ base_tested = list(map(prefixAdder('Base'), base_funcs))
 
 features_logged = [
     'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
-    'insert', 'mapReduce', 'matching', 'normalize', 'permute', 'repeat',
-    'replace', 'report', 'retain', 'setName', 'setNames', 'sort', 'transform',
-    'splitByParsing',
+    'insert', 'matching', 'normalize', 'permute', 'repeat','replace', 'report',
+    'retain', 'setName', 'setNames', 'sort', 'transform', 'splitByParsing',
     ]
 features_notLogged = [
     'count', 'getIndex', 'getIndices', 'getName', 'getNames', 'hasName',
