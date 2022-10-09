@@ -1458,8 +1458,6 @@ def initDataObject(
                 allNumeric = [isinstance(rowTuple[i-1], np.number)
                             for i in range(len(rowTuple))]  
                 if not all(allNumeric):
-                    rawData = pd.DataFrame(rawData)
-                    copied = True
                     returnType = "DataFrame"
         if _isNumpyMatrix(rawData):
             rawData = np.array(rawData)
