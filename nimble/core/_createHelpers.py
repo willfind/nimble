@@ -270,7 +270,7 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID, copied):
     retFNames = None
     # Special consideration for Structured Numpy arrays
     if data.dtype.fields:
-        retFNames = [x for x in data.dtype.fields.keys()] # needs to be retFNames 
+        retFNames = [x for x in data.dtype.fields.keys()]
         reshapedData = [list(data[x]) for  x in range(len(data))]
         data = np.array(reshapedData)
         
@@ -1456,7 +1456,7 @@ def initDataObject(
             rowTuple = rawData[0]
             if len(rowTuple) > 0:
                 allNumeric = [isinstance(rowTuple[i-1], np.number)
-                            for i in range(len(rowTuple))]  
+                            for i in range(len(rowTuple))]
                 if not all(allNumeric):
                     returnType = "DataFrame"
         if _isNumpyMatrix(rawData):
