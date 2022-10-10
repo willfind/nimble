@@ -18,7 +18,7 @@ class QueryString:
     Query strings are used when an object method iterates through the
     elements, points, or features of the object as a quick method to
     define a boolean function. Since queries can be elementwise or
-    operate over points and features, the strings will differ sligtly,
+    operate over points and features, the strings will differ slightly,
     but all follow the same rules. All queries require an operator.
     Valid operators are::
 
