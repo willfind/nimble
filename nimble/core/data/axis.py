@@ -1162,6 +1162,14 @@ class Axis(ABC):
                 targetList = targetList[:number]
 
         if structure == 'count':
+            if type(target) == int:
+                axisNames = self._getNames()
+                targetString = self._getName(target)
+                if targetString in axisNames:
+                    msg = f"This is not a valid query. If you want to query along the "
+                    msg += f"{self._axis}s, provide a query in the form of '"
+                    msg += f"{self._offAxis} operator value'."
+                    raise InvalidArgumentValue(msg) 
             return len(targetList)
         ret = self._structuralBackend_implementation(structure, targetList)
 

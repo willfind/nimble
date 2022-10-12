@@ -1318,6 +1318,15 @@ class HighLevelDataSafe(DataTestObject):
         ret = toTest.points.count(lambda x: x['b'] >= 5)
         assert ret == 2
 
+    @noLogEntryExpected    
+    @raises(InvalidArgumentValue)
+    def test_points_count_pointNameQuery(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, pointNames=['one', 'two', 'three'],
+                                  featureNames=['a', 'b', 'c'])
+        ret = toTest.points.count('one')
+
+
     ####################
     # features.count() #
     ####################
@@ -1331,6 +1340,15 @@ class HighLevelDataSafe(DataTestObject):
 
         ret = toTest.features.count(lambda x: x['two'] >= 5)
         assert ret == 2
+        
+    @noLogEntryExpected
+    @raises(InvalidArgumentValue)
+    def test_features_count_featureNameQuery(self):
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data, pointNames=['one', 'two', 'three'],
+                                  featureNames=['a', 'b', 'c'])
+        ret = toTest.features.count('c')
+
 
     ##########################
     # isApproximatelyEqual() #
