@@ -1652,7 +1652,12 @@ def initDataObject(
 
     if convertToType is not None:
         ret._data = elementTypeConvert(ret._data, convertToType)
-
+          
+    # Conditional to take a "returnType=Matrix/List" and seeing 
+    if returnType == "Matrix":
+        if convertToType not in [int, float, complex, None]:# and convertToType is not None:
+            pass #ret._data = pd.DataFrame(ret._data)#returnType = "DataFrame"
+ 
     if not rowsArePoints:
         ret.transpose(useLog=False)
 
