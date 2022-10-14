@@ -1487,7 +1487,7 @@ def initDataObject(
     elif not isinstance(rawData, (list, dict)):
         rawData = list(rawData)
         copied = True
-
+        
     rawData, highDim, copied = isHighDimensionData(rawData, rowsArePoints,
                                                    skipDataProcessing, copied)
 
@@ -1540,6 +1540,12 @@ def initDataObject(
                                                   replaceMissingWith, copied)
     if not skipDataProcessing or returnType is None:
         returnType = analyzeValues(rawData, returnType, skipDataProcessing)
+        
+    # Conditional to take a "returnType=Matrix/List" and seeing 
+    if returnType == "Matrix": # some 
+        if convertToType not in [int, float, complex, np.datetime64, None]:
+            returnType = "DataFrame" 
+   
     # convert data to a type compatible with the returnType init method
     rawData = convertData(returnType, rawData, pointNames, featureNames,
                           copied)
