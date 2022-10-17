@@ -283,6 +283,8 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID, copied):
     pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow,
                                                 secondRow)
 
+    retPNames = None
+    retFNames = None
     if pnamesID is True:
         retPNames = np.array(data[:, 0]).flatten()
         data = np.delete(data, 0, 1)
