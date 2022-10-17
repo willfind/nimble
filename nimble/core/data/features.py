@@ -1688,58 +1688,6 @@ class Features(ABC):
 
     @limitedTo2D
     @prepLog
-    def mapReduce(self, mapper, reducer, *,
-                  useLog=None): # pylint: disable=unused-argument
-        """
-        Apply a mapper and reducer function to the Features in this object.
-
-        Return a new object containing the results of the given mapper
-        and reducer functions along the Features axis.
-
-        Parameters
-        ----------
-        mapper : function
-            Input a feature and output an iterable containing
-            two-tuple(s) of mapping identifiers and feature values.
-        reducer : function
-            Input the ``mapper`` output and output a two-tuple
-            containing the identifier and the reduced value.
-        useLog : bool, None
-            Local control for whether to send object creation to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-
-        Examples
-        --------
-        mapReduce the counts of data types in the features.
-
-        >>> def typeMapper(ft):
-        ...     ftType = str(type(ft[0]))
-        ...     return [(ftType, 1)]
-        >>> def typeReducer(ftType, totals):
-        ...     return (ftType, sum(totals))
-        >>> lst = [[61500, 'Open', 'Chicago Bears'],
-        ...        [71228, 'Dome', 'Atlanta Falcons'],
-        ...        [77000, 'Open', 'Kansas City Chiefs'],
-        ...        [72968, 'Dome', 'New Orleans Saints'],
-        ...        [76500, 'Open', 'Miami Dolphins']]
-        >>> ftNames = ['CAPACITY', 'ROOF_TYPE', 'TEAM']
-        >>> X = nimble.data(lst, featureNames=ftNames)
-        >>> X.features.mapReduce(typeMapper, typeReducer)
-        <DataFrame 2pt x 2ft
-                      0          1
-           ┌──────────────────────
-         0 │ <class 'numpy.in... 1
-         1 │    <class 'str'>    2
-        >
-        """
-        return self._mapReduce(mapper, reducer)
-
-    @limitedTo2D
-    @prepLog
     def permute(self, order=None, *,
                 useLog=None): # pylint: disable=unused-argument
         """
