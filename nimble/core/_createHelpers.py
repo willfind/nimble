@@ -1456,7 +1456,8 @@ def initDataObject(
             rowTuple = rawData[0]
             if len(rowTuple) > 0:
                 allNumeric = [isinstance(rowTuple[i-1], np.number)
-                            for i in range(len(rowTuple))]
+                             for i in range(len(rowTuple))]
+                #allNumeric = list(map( lambda x: isinstance(x, np.number), rowTuple))#[map(lambda x: isinstance(x, ))]
                 if not all(allNumeric):
                     returnType = "DataFrame"
         if _isNumpyMatrix(rawData):
@@ -1543,9 +1544,19 @@ def initDataObject(
         
     # Conditional to take a "returnType=Matrix/List" and seeing 
     if returnType == "Matrix": # some 
-        if convertToType not in [int, float, complex, np.datetime64, None]:
+        matrixConvertTypes = [int, float, complex, np.datetime64, None]
+        if type(convertToType) == list:
+            if len(set(convertToType)) == 1:
+                if convertToType[0] not in matrixConvertTypes:
+                    returnType = "DataFrame"
+            else:
+                returnType = "DataFrame"
+                              
+        elif convertToType not in matrixConvertTypes:
             returnType = "DataFrame" 
-   
+    # if returnType == "List":
+    #     returnType = "DataFrame"
+    
     # convert data to a type compatible with the returnType init method
     rawData = convertData(returnType, rawData, pointNames, featureNames,
                           copied)
@@ -1657,13 +1668,8 @@ def initDataObject(
             convertToType = convertToType[0]
 
     if convertToType is not None:
-        ret._data = elementTypeConvert(ret._data, convertToType)
-          
-    # Conditional to take a "returnType=Matrix/List" and seeing 
-    if returnType == "Matrix":
-        if convertToType not in [int, float, complex, None]:# and convertToType is not None:
-            pass #ret._data = pd.DataFrame(ret._data)#returnType = "DataFrame"
- 
+        ret._data = elementTypeConvert(ret._data, convertToType)        
+        
     if not rowsArePoints:
         ret.transpose(useLog=False)
 

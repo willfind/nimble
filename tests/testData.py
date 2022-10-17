@@ -4530,9 +4530,24 @@ def test_returnType_autodetection_csv():
         pd.nimbleAccessible = backup
         
 def test_returnType_convertToType_overwrite():
-    rawData = [[1,2,3], [2,4,6]]
-    data = nimble.data(rawData, convertToType=[float, float, int]) # needs test to be written for each type of data type that would yield a DataFrame? 
+    #rawData = np.array([[1,2,3, '01-01-01'], [2,4,6, '02-02-2002']])
+    rawData = np.array([[1,2,3], [2,4,6]])
+    data = nimble.data(rawData, returnType="Matrix", convertToType=[float, float, int])#, np.datetime64]) # needs test to be written for each type of data type that would yield a DataFrame? 
     assert type(data) == nimble.core.data.dataframe.DataFrame
+    
+    #multi-type integer number
+    data2 = nimble.data(rawData, returnType="Matrix", convertToType=[float, float, float])
+    assert type(data2) == nimble.core.data.matrix.Matrix
+    
+    #multi-type 
+    data3 = nimble.data(rawData, returnType="Matrix", convertToType={0: str, 1: int, 2: int})
+    assert type(data3) == nimble.core.data.dataframe.DataFrame
+    
+    data4 = nimble.data(rawData, returnType="Matrix", convertToType=type('c'))
+    assert type(data4) == nimble.core.data.dataframe.DataFrame
+    # assert 
+    
+    
 
 # tests for combination of one name set being specified and one set being
 # in data.
