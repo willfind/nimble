@@ -4247,7 +4247,7 @@ def test_data_copyData_False_copyMadeWhenNamesExtracted():
 # rowsArePoints #
 #################
 
-def test_converttoDataFrames_numpyStructuredArray():
+def test_converttoDataFrames_numpyStructuredArrays():
     structArray = np.array([('Rex', 9, 81.0), ('Fido', 3, 27.0)],
              dtype=[('name', 'U10'), ('age', 'i4'), ('weight', 'f4')])
     dataArray = nimble.data(structArray)
@@ -4261,35 +4261,33 @@ def test_tuplesArePoints_numpyStructuredArrays():
     regularMatrix = nimble.data(regularArray, featureNames=['Weight', 'Speed', 'Age', 'RPM'])
     assert dataArray == regularMatrix
 
-def test_featureNames_numpyStructuredArrayFields():
+def test_featureNames_numpyStructuredArrays():
     structArray = np.array([(12, 23, 34, 45),( 11, 21, 31, 41),(13, 21, 31, 43)],
                         dtype=[('Weight', 'f4'), ('Speed', np.float32), ('Age', 'i4'), ('RPM', 'f4')])
     dataArray = nimble.data(structArray)
     fNames = ['Weight', 'Speed', 'Age', 'RPM']
     assert fNames == dataArray.features.getNames()
     
-
-def test_converttoDataFrames_numpyStructuredArray():
-    structArray = np.array([('Rex', 9, 81.0), ('Fido', 3, 27.0)],
-             dtype=[('name', 'U10'), ('age', 'i4'), ('weight', 'f4')])
-    dataArray = nimble.data(structArray)
-    assert type(dataArray) == nimble.core.data.dataframe.DataFrame
-
-def test_tuplesArePoints_numpyStructuredArrays():
+def test_PointsNames_numpyStructuredArrays():
     structArray = np.array([(12, 23, 34, 45),( 11, 21, 31, 41),(13, 21, 31, 43)],
                         dtype=[('Weight', 'f4'), ('Speed', np.float32), ('Age', 'i4'), ('RPM', 'f4')])
-    dataArray = nimble.data(structArray)
+    pNames = ['a', 'b', 'c']
+    dataArray = nimble.data(structArray, pointNames=['a', 'b', 'c'])
     regularArray = np.array([[12, 23, 34, 45],[11, 21, 31, 41],[13, 21, 31, 43]])
-    regularMatrix = nimble.data(regularArray, featureNames=['Weight', 'Speed', 'Age', 'RPM'])
+    regularMatrix = nimble.data(regularArray, featureNames=['Weight', 'Speed', 'Age', 'RPM'], pointNames=pNames)
     assert dataArray == regularMatrix
-
-def test_featureNames_numpyStructuredArrayFields():
+    assert dataArray.points.getNames() == regularMatrix.points.getNames()
+    
+@raises(AssertionError)
+def test_featuresAssignedTwice_numpyStructuredArrays():
     structArray = np.array([(12, 23, 34, 45),( 11, 21, 31, 41),(13, 21, 31, 43)],
                         dtype=[('Weight', 'f4'), ('Speed', np.float32), ('Age', 'i4'), ('RPM', 'f4')])
-    dataArray = nimble.data(structArray)
     fNames = ['Weight', 'Speed', 'Age', 'RPM']
+    dataArray = nimble.data(structArray, featureNames=fNames)
+    regularArray = np.array([[12, 23, 34, 45],[11, 21, 31, 41],[13, 21, 31, 43]])
+    regularMatrix = nimble.data(regularArray, featureNames=fNames)
     assert fNames == dataArray.features.getNames()
-    
+    assert dataArray.features.getNames() == regularMatrix.features.getNames()
 
 def test_rowsArePoints_numpyArrays():
     ptData = np.array([[1, 2, 3], [0, 0, 0], [-1, -2, -3]])
@@ -4569,7 +4567,9 @@ def test_returnType_convertToType_overwrite():
     assert type(data4) == nimble.core.data.dataframe.DataFrame
     # assert 
     
-    data = nimble.data(rawData, convertToType=str) # needs test to be written for each type of data type that would yield a DataFrame? 
+    data = nimble.data(rawData, convertToType=str) 
+    # needs test to be written for each type of data type that would yield a DataFrame? 
+    # use a loop 
     assert type(data) == nimble.core.data.dataframe.DataFrame
      
 

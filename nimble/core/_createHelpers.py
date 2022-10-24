@@ -139,6 +139,14 @@ def isEmptyRaw(raw):
 
     return False
 
+def isNum(value):
+    return isinstance(value, (bool, int, float, np.number))
+
+def isNumType(value):
+    if type(value) == type:    
+        return  issubclass(value, (bool, int, float, np.number))
+    else:
+        return isinstance(value, (bool, int, float, np.number)) # or np.datetime
 
 def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
                            secondValues):
@@ -153,9 +161,6 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
         return (failPN, failFN)
     if featureNames is False:
         return (failPN, failFN)
-
-    def isNum(value):
-        return isinstance(value, (bool, int, float, np.number))
 
     def noDuplicates(row):
         return len(row) == len(set(row))
@@ -282,9 +287,6 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID, copied):
     secondRow = data[1] if len(data) > 1 else None
     pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow,
                                                 secondRow)
-
-    retPNames = None
-    retFNames = None
     if pnamesID is True:
         retPNames = np.array(data[:, 0]).flatten()
         data = np.delete(data, 0, 1)
@@ -1543,18 +1545,22 @@ def initDataObject(
                                                   replaceMissingWith, copied)
     if not skipDataProcessing or returnType is None:
         returnType = analyzeValues(rawData, returnType, skipDataProcessing)
-        
+    
+    def isMatrixValid(x):
+        pass 
+            
     # Conditional to take a "returnType=Matrix/List" and seeing 
+    # need to create an inner function to repeat this logic !!!!
     if returnType == "Matrix": # some 
         matrixConvertTypes = [int, float, complex, np.datetime64, None]
         if type(convertToType) == list:
             if len(set(convertToType)) == 1:
-                if convertToType[0] not in matrixConvertTypes:
+                if not isNumType(convertToType) and convertToType[0] not in matrixConvertTypes:# or not issubclass(convertToType, np.number):
                     returnType = "DataFrame"
             else:
                 returnType = "DataFrame"
                               
-        elif convertToType not in matrixConvertTypes:
+        elif not isNumType(convertToType) and convertToType not in matrixConvertTypes:# or not issubclass(convertToType, np.number): 
             returnType = "DataFrame" 
     # if returnType == "List":
     #     returnType = "DataFrame"
