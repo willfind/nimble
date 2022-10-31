@@ -41,6 +41,8 @@ from nimble._utility import allowedNumpyDType
 # The values that will be considered missing in data by default
 DEFAULT_MISSING = (float('nan'), np.nan, None, '', 'None', 'nan', 'NULL', 'NA')
 
+NUM_TUPLE = (bool, int, float, np.number)
+
 ###########
 # Helpers #
 ###########
@@ -139,14 +141,16 @@ def isEmptyRaw(raw):
 
     return False
 
-def isNum(value):
-    return isinstance(value, (bool, int, float, np.number))
 
-def isNumType(value):
-    if type(value) == type:    
-        return  issubclass(value, (bool, int, float, np.number))
+def isNum(value):
+    """
+    Determine if a value is numerical.
+    """
+    if type(value) == type:   
+        return  issubclass(value, NUM_TUPLE)
     else:
-        return isinstance(value, (bool, int, float, np.number)) # or np.datetime
+        return isinstance(value, NUM_TUPLE)
+    
 
 def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
                            secondValues):
@@ -1460,12 +1464,11 @@ def initDataObject(
         rawData = rawData._data
     # convert these types as indexing may cause dimensionality confusion
     elif _isNumpyArray(rawData):
+        # decide if numpy structured array should be Nimble DataFrame not Matrix
         if rawData.dtype.fields:
             rowTuple = rawData[0]
             if len(rowTuple) > 0:
-                allNumeric = [isinstance(rowTuple[i-1], np.number)
-                             for i in range(len(rowTuple))]
-                #allNumeric = list(map( lambda x: isinstance(x, np.number), rowTuple))#[map(lambda x: isinstance(x, ))]
+                allNumeric = list(map(isNum, rowTuple))
                 if not all(allNumeric):
                     returnType = "DataFrame"
         if _isNumpyMatrix(rawData):
@@ -1550,24 +1553,18 @@ def initDataObject(
     if not skipDataProcessing or returnType is None:
         returnType = analyzeValues(rawData, returnType, skipDataProcessing)
     
-    def isMatrixValid(x):
-        pass 
-            
-    # Conditional to take a "returnType=Matrix/List" and seeing 
-    # need to create an inner function to repeat this logic !!!!
+    # Decide if nimble Matrix is better as DataFrame given convertToType input.
     if returnType == "Matrix": # some 
-        matrixConvertTypes = [int, float, complex, np.datetime64, None]
+        #matrixConvertTypes = [int, float, np.datetime64, None]
+        matrixConvertTypes = list(NUM_TUPLE) + [np.datetime64, None]
         if type(convertToType) == list:
             if len(set(convertToType)) == 1:
-                if not isNumType(convertToType) and convertToType[0] not in matrixConvertTypes:# or not issubclass(convertToType, np.number):
+                if not isNum(convertToType[0]) and convertToType[0] not in matrixConvertTypes:
                     returnType = "DataFrame"
             else:
                 returnType = "DataFrame"
-                              
-        elif not isNumType(convertToType) and convertToType not in matrixConvertTypes:# or not issubclass(convertToType, np.number): 
-            returnType = "DataFrame" 
-    # if returnType == "List":
-    #     returnType = "DataFrame"
+        elif not isNum(convertToType) and convertToType not in matrixConvertTypes:
+            returnType = "DataFrame"
     
     # convert data to a type compatible with the returnType init method
     rawData = convertData(returnType, rawData, pointNames, featureNames,
