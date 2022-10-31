@@ -277,6 +277,10 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID, copied):
     if data.dtype.fields:
         retFNames = [x for x in data.dtype.fields.keys()]
         reshapedData = [list(data[x]) for  x in range(len(data))]
+        if pnamesID == True:
+            msg = "Using embedded pointNames with numpy structured arrays is "
+            msg += "not supported. Consider representing data as a pandas dataframe."
+            raise ValueError(msg)
         data = np.array(reshapedData)
         
     if len(data.shape) == 1:

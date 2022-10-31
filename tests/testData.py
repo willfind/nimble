@@ -4268,15 +4268,20 @@ def test_featureNames_numpyStructuredArrays():
     fNames = ['Weight', 'Speed', 'Age', 'RPM']
     assert fNames == dataArray.features.getNames()
     
-def test_PointsNames_numpyStructuredArrays():
+def test_pointsNames_numpyStructuredArrays():
     structArray = np.array([(12, 23, 34, 45),( 11, 21, 31, 41),(13, 21, 31, 43)],
                         dtype=[('Weight', 'f4'), ('Speed', np.float32), ('Age', 'i4'), ('RPM', 'f4')])
     pNames = ['a', 'b', 'c']
     dataArray = nimble.data(structArray, pointNames=['a', 'b', 'c'])
     regularArray = np.array([[12, 23, 34, 45],[11, 21, 31, 41],[13, 21, 31, 43]])
     regularMatrix = nimble.data(regularArray, featureNames=['Weight', 'Speed', 'Age', 'RPM'], pointNames=pNames)
-    assert dataArray == regularMatrix
     assert dataArray.points.getNames() == regularMatrix.points.getNames()
+
+@raises(ValueError)
+def test_pointNamesEmbedded_numpyStructuredArrays():
+    structArray = np.array([('a', 23, 34, 45),( 'b', 21, 31, 41),('c', 21, 31, 43)],
+                        dtype=[('pointNames', 'U10'), ('Speed', np.float32), ('Age', 'i4'), ('RPM', 'f4')])
+    dataArray = nimble.data(structArray, pointNames=True)
     
 @raises(AssertionError)
 def test_featuresAssignedTwice_numpyStructuredArrays():
@@ -4284,10 +4289,6 @@ def test_featuresAssignedTwice_numpyStructuredArrays():
                         dtype=[('Weight', 'f4'), ('Speed', np.float32), ('Age', 'i4'), ('RPM', 'f4')])
     fNames = ['Weight', 'Speed', 'Age', 'RPM']
     dataArray = nimble.data(structArray, featureNames=fNames)
-    regularArray = np.array([[12, 23, 34, 45],[11, 21, 31, 41],[13, 21, 31, 43]])
-    regularMatrix = nimble.data(regularArray, featureNames=fNames)
-    assert fNames == dataArray.features.getNames()
-    assert dataArray.features.getNames() == regularMatrix.features.getNames()
 
 def test_rowsArePoints_numpyArrays():
     ptData = np.array([[1, 2, 3], [0, 0, 0], [-1, -2, -3]])
@@ -4549,8 +4550,9 @@ def test_returnType_autodetection_csv():
     finally:
         pd.nimbleAccessible = backup
         
-def test_returnType_convertToType_overwrite():
+def test_convertToType_overwriteMatrixReturnType():
     #rawData = np.array([[1,2,3, '01-01-01'], [2,4,6, '02-02-2002']])
+    nonNumericTypes =  [str, None, ]
     rawData = np.array([[1,2,3], [2,4,6]])
     data = nimble.data(rawData, returnType="Matrix", convertToType=[float, float, int])#, np.datetime64]) # needs test to be written for each type of data type that would yield a DataFrame? 
     assert type(data) == nimble.core.data.dataframe.DataFrame
@@ -4563,7 +4565,7 @@ def test_returnType_convertToType_overwrite():
     data3 = nimble.data(rawData, returnType="Matrix", convertToType={0: str, 1: int, 2: int})
     assert type(data3) == nimble.core.data.dataframe.DataFrame
     
-    data4 = nimble.data(rawData, returnType="Matrix", convertToType=type('c'))
+    data4 = nimble.data(rawData, returnType="Matrix", convertToType=type('c')) # redundant given below?
     assert type(data4) == nimble.core.data.dataframe.DataFrame
     # assert 
     
