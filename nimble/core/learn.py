@@ -304,7 +304,8 @@ def loadTrainedLearner(source, arguments=None, *, useLog=None, **kwarguments):
     source : file, str
         * open file-like object
         * string path or url to the data file.
-        * string name in the form 'package.learner.checkpoint'
+        * string name in the form 'package.learner' where learner is the
+        name of a pre-trained learner available in the given package.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during loading and application (e.g., {'include_top':True}).
@@ -340,9 +341,19 @@ def loadTrainedLearner(source, arguments=None, *, useLog=None, **kwarguments):
     --------
     open, import, model, pretrained, transfer learning
     """
+    merged = mergeArguments(arguments, kwarguments)
+
     if isinstance(source, str):
-        with open(source, 'rb') as file:
-            ret = pickle.load(file)
+        try:
+            interface, name = _unpackLearnerName(source)
+        except InvalidArgumentValue:
+            interface = None
+
+        if interface is not None:
+            ret = interface.loadTrainedLearner(name, merged)
+        else:
+            with open(source, 'rb') as file:
+                ret = pickle.load(file)
     else:
         ret = pickle.load(source)
 

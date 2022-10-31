@@ -116,6 +116,33 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         return nimble.random._getValidSeed(randomSeed)
 
     @captureOutput
+    def loadTrainedLearner(self, learnerName, arguments):
+        """
+        Instantiate a TrainedLearner that's structure, hyperparameters and
+        weights are already set due to prior training.
+        """
+        # Confirm an allowed learner
+        self._confirmValidLearner(learnerName)
+        # This is the only learner that is *not* loadable
+        if learnerName == "Sequential":
+            msg = "'Sequential' is not loadable by loadTrainedLearner"
+            raise InvalidArgumentValue(msg)
+
+        # validate the arguments provided
+        self._validateLearnerArgumentValues(learnerName, arguments)
+
+        # execute interface implementor's input transformation.
+        transformedInputs = self._inputTransformation(
+            learnerName, None, None, None, arguments, None)
+        _, _, _, transArguments = transformedInputs
+
+        rawModel = self._loadTrainedLearnerBackend(learnerName, transArguments)
+
+        return TrainedLearner(learnerName, arguments, transArguments,
+                              None, rawModel, self, False,
+                              None, None, None, None)
+
+    @captureOutput
     def train(self, learnerName, trainX, trainY=None, arguments=None,
               multiClassStrategy='default', randomSeed=None, tuning=None):
         """
@@ -794,6 +821,12 @@ class UniversalInterface(metaclass=abc.ABCMeta):
         -------
         str
             The version of this interface as a string.
+        """
+
+    @abc.abstractclassmethod
+    def _loadTrainedLearnerBackend(self, learnerName, arguments):
+        """
+        Backend for loading pre-trained models for this particular interface.
         """
 
     ##############################
@@ -1584,6 +1617,11 @@ class TrainedLearner(object):
         """
         Validate testing data is compatible with the training data.
         """
+        # We use this to indicate there is no enforced limitation on data
+        # point size.
+        if self._trainXShape is None:
+            return
+
         if self._trainXShape[1] == len(testX.features):
             return
         trainXIsSquare = self._trainXShape[0] == self._trainXShape[1]

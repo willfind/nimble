@@ -179,6 +179,9 @@ class CustomLearnerInterface(UniversalInterface):
     def version(self):
         pass
 
+    def _loadTrainedLearnerBackend(self, learnerName, arguments):
+        msg = "This interface offers no pre-trained Learners"
+        raise InvalidArgumentValue(msg)
 
 @inheritDocstringsFactory(CustomLearnerInterface)
 class NimbleLearnerInterface(CustomLearnerInterface):

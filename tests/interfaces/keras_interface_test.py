@@ -9,6 +9,9 @@ import warnings
 
 import numpy as np
 import pytest
+import sys
+import os
+import PIL
 
 import nimble
 from nimble.core.interfaces.keras_interface import Keras
@@ -527,16 +530,16 @@ def testLearnerParameters():
         params = nimble.learnerParameters('Keras.' + learner)
         # Params guaranteed by model to be in the compile API
         compileParams = ["optimizer", "loss", "metrics", "loss_weights",
-                         "weighted_metrics", "run_eagerly"]
+                         "weighted_metrics"]
         # Common params shared by the keras apps loader functions
         appLoadParams = ["weights", "include_top", "input_shape",
-                         "input_tensor", "pooling", "classes"]
+                         "input_tensor", "classes"]
         if learner == "Sequential":
             checkIn = compileParams
             checkOut = appLoadParams
         else:
-            checkIn = appLoadParams
-            checkOut = compileParams
+            checkIn = appLoadParams + compileParams
+            checkOut = []
 
         for check in checkIn:
             assert check in params
@@ -558,3 +561,48 @@ def testLossCoverage():
         if type(val) is type and issubclass(val, kerasInt.package.losses.Loss):
             if not (val is kerasInt.package.losses.Loss):
                 assert val.__name__ in fullLossList
+
+
+def testLoadTrainedLearnerPredict():
+    possible = nimble.learnerNames("keras")
+
+    testImagesFolder = os.path.join(os.getcwd(), 'tests', 'interfaces', "testImages")
+
+    allImages = []
+    allImageIDs = []
+    for imgName in sorted(os.listdir(testImagesFolder)):
+        currPath = os.path.join(testImagesFolder, imgName)
+        currIm = PIL.Image.open(currPath)
+        currArr = np.array(currIm)
+        currObj = nimble.data(currArr)
+        dims = currObj.dimensions
+        desired = [1] + list(dims)
+        currObj.flatten()
+        currObj.unflatten(desired)
+
+        allImages.append(currObj)
+        allImageIDs.append(imgName.split("_")[0])
+
+    testY = nimble.data(allImageIDs, rowsArePoints=False)
+
+    for name in possible:
+        if name == "Sequential":
+            continue
+        # These aren't playing nice with the input_tensor trick
+        if "VGG" in name:
+            continue
+
+        loadName = "keras." + name
+
+        temp = nimble.Init("Input", shape=(None, None, 3))
+        TL = nimble.loadTrainedLearner(loadName, weights="imagenet", input_tensor=temp)
+
+        results = []
+        for imgObj in allImages:
+            ret = TL.apply(imgObj)[0]
+            results.append(ret)
+
+        retY = nimble.data(results, rowsArePoints=False)
+
+        correct = nimble.calculate.fractionCorrect(testY, retY)
+        assert correct >= 0.8

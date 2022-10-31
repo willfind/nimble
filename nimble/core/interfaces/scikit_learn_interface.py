@@ -277,6 +277,10 @@ class _SciKitLearnAPI(PredefinedInterfaceMixin):
         """
         return learner.embedding_
 
+    def _loadTrainedLearnerBackend(self, learnerName, arguments):
+        msg = "This interface offers no pre-trained Learners"
+        raise InvalidArgumentValue(msg)
+
     ###############
     ### HELPERS ###
     ###############

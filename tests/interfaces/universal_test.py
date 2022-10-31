@@ -159,6 +159,10 @@ class TestPredefinedInterface(PredefinedInterfaceMixin):
     def _installInstructions(self):
         return ""
 
+    def _loadTrainedLearnerBackend(self, learnerName, arguments):
+        msg = "This interface offers no pre-trained Learners"
+        raise InvalidArgumentValue(msg)
+
 TestObject = TestPredefinedInterface()
 
 ###################
@@ -350,6 +354,10 @@ class AlwaysWarnInterface(UniversalInterface):
     def version(self):
         return "0.0.0"
 
+    def _loadTrainedLearnerBackend(self, learnerName, arguments):
+        self.issueWarnings()
+        return [[]]
+
 
 #def test_warningscapture_init():
 #	AWObject = AlwaysWarnInterface()
@@ -534,6 +542,13 @@ def test_warningscapture_getLearnerDefaultValues():
     @noLogEntryExpected
     def wrapped(AWObject):
         AWObject.getLearnerDefaultValues('foo')
+
+    backend_warningscapture(wrapped)
+
+def test_warningscapture_loadTrainedLearner():
+    @noLogEntryExpected
+    def wrapped(AWObject):
+        AWObject.loadTrainedLearner('foo', {})
 
     backend_warningscapture(wrapped)
 

@@ -14,6 +14,7 @@ from packaging.version import parse
 import nimble
 from nimble._utility import inspectArguments, dtypeConvert
 from nimble._utility import inheritDocstringsFactory
+from nimble._utility import mergeArguments
 from nimble._dependencies import checkVersion
 from .universal_interface import PredefinedInterfaceMixin
 from ._interface_helpers import PythonSearcher
@@ -45,6 +46,35 @@ LEARNERTYPES = {
         'LogCosh', 'log_cosh',
         'Poisson', 'poisson',  # Seems to be for regression of 'counting' data?
     ]
+}
+
+# Hard coded params and defaults to be used for those versions of keras that
+# can't report them
+APPSBASELINEPARAMS = {
+    "include_top": True,
+    "weights": "imagenet",
+    "input_tensor": None,
+    "input_shape": None,
+    "pooling": None,
+    "classes": 1000,
+    "classifier_activation":"softmax"
+}
+
+# Hard coded params and defaults beyond the baseline shared by all apps,
+# to be used on top of APPSBASELINEPARAMS
+APPSNAMESTOEXTRAPARAMS = {
+    'MobileNet': {"alpha": 1.0,
+                  "depth_multiplier": 1,
+                  "dropout": 0.001},
+    'MobileNetV2': {"alpha": 1.0},
+    'EfficientNetV2B0': {"include_preprocessing":True},
+    'EfficientNetV2B1': {"include_preprocessing":True},
+    'EfficientNetV2B2': {"include_preprocessing":True},
+    'EfficientNetV2B3': {"include_preprocessing":True},
+    'EfficientNetV2S': {"include_preprocessing":True},
+    'EfficientNetV2M': {"include_preprocessing":True},
+    'EfficientNetV2L': {"include_preprocessing":True},
+
 }
 
 
@@ -185,7 +215,11 @@ To install keras
 
     def _learnerNamesBackend(self, onlyTrained=False):
         possibilities = self._searcher.allLearners()
-        exclude = []
+        # mismatch between weights='imagenet' and network structure, so we
+        # disable in all cases
+        exclude = ["NASNetMobile", "NASNetLarge",]
+        if onlyTrained:
+            exclude.append("Sequential")
         ret = []
         for name in possibilities:
             if not name in exclude:
@@ -201,10 +235,9 @@ To install keras
 
     def _learnerType(self, learnerBackend):
         for lt, losses in LEARNERTYPES.items():
-            attrs = self._getAttributes(learnerBackend)
-            if 'loss' not in attrs:
+            if not hasattr(learnerBackend, 'loss'):
                 return 'UNKNOWN'
-            loss = attrs['loss']
+            loss = getattr(learnerBackend, 'loss')
             if hasattr(loss, 'name'):
                 loss = loss.name
             if loss in losses:
@@ -333,6 +366,16 @@ To install keras
                     pass
             instantiatedArgs[arg] = val
 
+        isApp = (learnerName != "Sequential")
+        if isApp:
+            learnerModule = self._findAppsSubModule(learnerName)
+
+            preprocessor = learnerModule.preprocess_input
+            if trainX is not None:
+                trainX = preprocessor(trainX)
+            if testX is not None:
+                testX = preprocessor(testX)
+
         return (trainX, trainY, testX, instantiatedArgs)
 
 
@@ -344,8 +387,22 @@ To install keras
         if outputFormat == "label" and len(outputValue.shape) == 1:
             outputValue = outputValue.reshape(len(outputValue), 1)
 
-        # TODO correct
-        outputType = 'Matrix'
+        # In the case of predicting with one of the pretrained on imagenet
+        # learners, the outputs are the scores for all 1000 categories.
+        # We use decode outputs to pick the highest confidence "label"
+        isPreTrained = learnerName != "Sequential"
+        if outputFormat == "label" and isPreTrained:
+            learnerModule = self._findAppsSubModule(learnerName)
+
+            decoder = learnerModule.decode_predictions
+            outputValue = decoder(outputValue, top=1)
+            # Output now in form of a list of lists of (ID, plain-text-name, score).
+            # We're defining the ID as the label, and redefining the result as a list
+            # of lists to match the shape of a feature.
+            for i in range(len(outputValue)):
+                outputValue[i] = [outputValue[i][0][0]]
+
+        outputType = None
         if outputType == 'match':
             outputType = customDict['match']
         return nimble.data(outputValue, returnType=outputType, useLog=False)
@@ -493,6 +550,14 @@ To install keras
         """
         return learner.predict(testX, **arguments)
 
+    def _loadTrainedLearnerBackend(self, learnerName, arguments):
+        loadParams = self._paramQuery(learnerName, None, 'self')[0]
+
+        loadArgs = {name: arguments[name] for name in loadParams
+                         if name in arguments}
+
+        toInit = self._findCallableBackend(learnerName)
+        return toInit(**loadArgs)
 
     ###############
     ### HELPERS ###
@@ -531,6 +596,37 @@ To install keras
         try:
             (args, v, k, d) = inspectArguments(found)
             args, d = removeFromTailMatchedLists(args, d, ignore)
-            return (args, v, k, d)
+            ret = (args, v, k, d)
         except TypeError:
-            return None
+            ret = None
+
+        if name in self._learnerNamesBackend(True) and not ret[0]:
+            ret = self._appsParamQuery(name)
+        return ret
+
+    def _findAppsSubModule(self, learnerName):
+        learnerModuleName = self.findCallable(learnerName).__module__.split('.')[-1]
+        if "applications" not in learnerModuleName:
+            return getattr(self.package.applications, learnerModuleName)
+
+        for entry in dir(self.package.applications):
+            temp = getattr(self.package.applications, entry)
+            if learnerName in dir(temp):
+                return temp
+
+        return None
+
+    def _appsParamQuery(self, name):
+        extra = {}
+        if name in APPSNAMESTOEXTRAPARAMS:
+            extra = APPSNAMESTOEXTRAPARAMS[name]
+
+        merged = mergeArguments(APPSBASELINEPARAMS, extra)
+
+        a = []
+        d = []
+        for k,v in merged.items():
+            a.append(k)
+            d.append(v)
+
+        return [a, None, None, d]
