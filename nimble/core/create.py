@@ -2,8 +2,6 @@
 Module the user-facing data creation functions for the top level
 nimble import.
 """
-import pickle
-
 import numpy as np
 
 import nimble
@@ -532,48 +530,6 @@ def identity(size, pointNames='automatic', featureNames='automatic',
     raw = np.identity(size, dtype=int)
     return nimble.data(raw, pointNames=pointNames, featureNames=featureNames,
                        returnType=returnType, name=name, useLog=False)
-
-
-def loadTrainedLearner(source, *, useLog=None):
-    """
-    Load nimble TrainedLearner object.
-
-    Parameters
-    ----------
-    source : file, str
-        * open file-like object
-        * string path or url to the data file.
-    useLog : bool, None
-        Local control for whether to send object creation to the logger.
-        If None (default), use the value as specified in the "logger"
-        "enabledByDefault" configuration option. If True, send to the
-        logger regardless of the global option. If False, do **NOT**
-        send to the logger, regardless of the global option.
-
-    Returns
-    -------
-    TrainedLearner
-
-    See Also
-    --------
-    nimble.train, nimble.core.interfaces.TrainedLearner
-
-    Keywords
-    --------
-    open, import, model, pretrained, transfer learning
-    """
-    if isinstance(source, str):
-        with open(source, 'rb') as file:
-            ret = pickle.load(file)
-    else:
-        ret = pickle.load(source)
-
-    if not isinstance(ret, nimble.core.interfaces.TrainedLearner):
-        msg = 'File does not contain a valid Nimble TrainedLearner object.'
-        raise InvalidArgumentType(msg)
-
-    handleLogging(useLog, 'tl', ret)
-    return ret
 
 def fetchFile(source, overwrite=False):
     """

@@ -68,7 +68,7 @@ class PythonSearcher(object):
         if hasattr(module, '__all__'):
             return module.__all__
         return [d for d in dir(module)
-                if d == '__init__' or not d.startswith("_")]
+                if d == '__init__' or d == '__call__' or not d.startswith("_")]
 
     def findInPackage(self, parent, name):
         """

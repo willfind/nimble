@@ -3,6 +3,7 @@ Module containing the user-facing learner functions for the top level
 nimble import.
 """
 
+import pickle
 from types import ModuleType
 import time
 from operator import itemgetter
@@ -12,6 +13,7 @@ import numpy as np
 import nimble
 from nimble import match
 from nimble.exceptions import InvalidArgumentValue, ImproperObjectAction
+from nimble.exceptions import InvalidArgumentType
 from nimble._utility import mergeArguments, tableString
 from nimble.core.logger import handleLogging
 from nimble.core._learnHelpers import findBestInterface
@@ -89,7 +91,6 @@ def learnerType(learnerNames): # pylint: disable=redefined-outer-name
         resultsList = resultsList[0]
 
     return resultsList
-
 
 def learnerNames(package=None):
     """
@@ -292,6 +293,76 @@ def showLearnerParameterDefaults(name):
         print(tableString(defaults, rowHeadJustify='left',
                           colValueJustify='left',
                           includeTrailingNewLine=False))
+
+
+def loadTrainedLearner(source, arguments=None, *, useLog=None, **kwarguments):
+    """
+    Load nimble TrainedLearner object.
+
+    Parameters
+    ----------
+    source : file, str
+        * open file-like object
+        * string path or url to the data file.
+        * string name in the form 'package.learner' where learner is the
+        name of a pre-trained learner available in the given package.
+    arguments : dict
+        Mapping argument names (strings) to their values, to be used
+        during loading and application (e.g., {'include_top':True}).
+        To provide an argument that is an object from the same package
+        as the learner, use a ``nimble.Init`` object with the object
+        name and its instantiation arguments (e.g.,
+        {'classifier_activation': nimble.Init('relu', alpha=0.1}).
+        Note: learner arguments can also be passed as ``kwarguments`` so
+        this dictionary will be merged with any keyword arguments.
+    useLog : bool, None
+        Local control for whether to send object creation to the logger.
+        If None (default), use the value as specified in the "logger"
+        "enabledByDefault" configuration option. If True, send to the
+        logger regardless of the global option. If False, do **NOT**
+        send to the logger, regardless of the global option.
+    kwarguments
+        Keyword arguments specified variables that are passed to the
+        learner. These are combined with the ``arguments`` parameter.
+        To provide an argument that is an object from the same package
+        as the learner, use a ``nimble.Init`` object with the object
+        name and its instantiation arguments (e.g.,
+        classifier_activation=nimble.Init('relu', alpha=0.1)).
+
+    Returns
+    -------
+    TrainedLearner
+
+    See Also
+    --------
+    nimble.train, nimble.core.interfaces.TrainedLearner
+
+    Keywords
+    --------
+    open, import, model, pretrained, transfer learning
+    """
+    merged = mergeArguments(arguments, kwarguments)
+
+    if isinstance(source, str):
+        try:
+            interface, name = _unpackLearnerName(source)
+        except InvalidArgumentValue:
+            interface = None
+
+        if interface is not None:
+            ret = interface.loadTrainedLearner(name, merged)
+        else:
+            with open(source, 'rb') as file:
+                ret = pickle.load(file)
+    else:
+        ret = pickle.load(source)
+
+    if not isinstance(ret, nimble.core.interfaces.TrainedLearner):
+        msg = 'File does not contain a valid Nimble TrainedLearner object.'
+        raise InvalidArgumentType(msg)
+
+    handleLogging(useLog, 'tl', ret)
+    return ret
 
 @trackEntry
 def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,

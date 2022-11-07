@@ -277,6 +277,10 @@ class _SciKitLearnAPI(PredefinedInterfaceMixin):
         """
         return learner.embedding_
 
+    def _loadTrainedLearnerBackend(self, learnerName, arguments):
+        msg = "This interface offers no pre-trained Learners"
+        raise InvalidArgumentValue(msg)
+
     ###############
     ### HELPERS ###
     ###############
@@ -328,10 +332,6 @@ class _SciKitLearnAPI(PredefinedInterfaceMixin):
     @classmethod
     @abc.abstractmethod
     def _installInstructions(cls):
-        pass
-
-    @abc.abstractmethod
-    def _learnerNamesBackend(self):
         pass
 
     @abc.abstractmethod
@@ -445,7 +445,10 @@ To install scikit-learn
     https://scikit-learn.org/stable/install.html"""
         return msg
 
-    def _learnerNamesBackend(self):
+    def _learnerNamesBackend(self, onlyTrained=False):
+        if onlyTrained:
+            return []
+
         possibilities = []
         exclude = [
             'DictVectorizer', 'FeatureHasher', 'HashingVectorizer',

@@ -57,7 +57,10 @@ class CustomLearnerInterface(UniversalInterface):
         # can't cache because new learners can be registered
         return self._learnerNamesBackend()
 
-    def _learnerNamesBackend(self):
+    def _learnerNamesBackend(self, onlyTrained=False):
+        if onlyTrained:
+            return []
+
         return list(self.registeredLearners.keys())
 
 
@@ -176,6 +179,9 @@ class CustomLearnerInterface(UniversalInterface):
     def version(self):
         pass
 
+    def _loadTrainedLearnerBackend(self, learnerName, arguments):
+        msg = "This interface offers no pre-trained Learners"
+        raise InvalidArgumentValue(msg)
 
 @inheritDocstringsFactory(CustomLearnerInterface)
 class NimbleLearnerInterface(CustomLearnerInterface):
