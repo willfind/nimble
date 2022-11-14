@@ -4277,11 +4277,16 @@ def test_pointsNames_numpyStructuredArrays():
     regularMatrix = nimble.data(regularArray, featureNames=['Weight', 'Speed', 'Age', 'RPM'], pointNames=pNames)
     assert dataArray.points.getNames() == regularMatrix.points.getNames()
 
-@raises(ValueError)
 def test_pointNamesEmbedded_numpyStructuredArrays():
     structArray = np.array([('a', 23, 34, 45),( 'b', 21, 31, 41),('c', 21, 31, 43)],
                         dtype=[('pointNames', 'U10'), ('Speed', np.float32), ('Age', 'i4'), ('RPM', 'f4')])
     dataArray = nimble.data(structArray, pointNames=True)
+    data = [[23, 34, 45], [ 21, 31, 41], [21, 31 ,43]]
+    nbData = nimble.data( data,  pointNames=['a', 'b', 'c'], featureNames=['Speed', 'Age', 'RPM'])
+    assert dataArray.points.getNames() == nbData.points.getNames()
+    assert dataArray.features.getNames() == nbData.features.getNames()
+    assert type(dataArray._data) == np.ndarray 
+    assert dataArray == nbData
     
 @raises(AssertionError)
 def test_featuresAssignedTwice_numpyStructuredArrays():

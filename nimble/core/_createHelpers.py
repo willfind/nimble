@@ -274,18 +274,52 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID, copied):
 
     # we allow single dimension arrays as input, but we assume 2d from here
     # forward; reshape so that the values constitute a single row.
-    addedDim = False    
+    addedDim = False   
     retPNames = None
     retFNames = None
     # Special consideration for Structured Numpy arrays
     if data.dtype.fields:
         retFNames = [x for x in data.dtype.fields.keys()]
         reshapedData = [list(data[x]) for  x in range(len(data))]
-        if pnamesID == True:
-            msg = "Using embedded pointNames with numpy structured arrays is "
-            msg += "not supported. Consider representing data as a pandas dataframe."
-            raise ValueError(msg)
-        data = np.array(reshapedData)
+        allNumeric = list(map(isNum, reshapedData[0]))
+        if all(allNumeric):
+            data = np.array(reshapedData)
+        else:
+            if pnamesID == True:
+                if all(allNumeric[1:]):
+                    retFNames.pop(0)
+                    data = list()
+                    retPNames = list()
+                    for i in reshapedData:
+                        data.append(i[1:])
+                        retPNames.append(i[0])
+                    data = np.array(data)
+                    return data, retPNames, retFNames, copied
+                    #data = warped?
+                # pop out retFNames 
+                else:
+                    data = pd.DataFrame(reshapedData, columns =retFNames)
+                    return extractNamesFromPdDataFrame(data, pnamesID, fnamesID, copied)
+                
+            else: # supposed to be DataFrame
+                data = pd.DataFrame(reshapedData, columns =retFNames)
+                return extractNamesFromPdDataFrame(data, pnamesID, fnamesID, copied)
+                
+        #rowTuple = data[0]
+        # if len(rowTuple) > 0:
+            # allNumeric = list(map(isNum, rowTuple))
+            # if not all(allNumeric):
+            #     #returnType = "DataFrame"
+            # if pnamesID is True:
+            #     if all(allNumeric[1:]):
+            #         returnType = "Matrix"
+        # retFNames = [x for x in data.dtype.fields.keys()]
+        # reshapedData = [list(data[x]) for  x in range(len(data))]
+        # if pnamesID == True: # assign approriately and take out 
+        #     retPNames = [retFNames.pop(0)]
+        # # if all Num, do below
+        # data = np.array(reshapedData) # return data, retPNames, retFNames, copied
+        # # else : if all Num- after 1: , 
         
     if len(data.shape) == 1:
         data = data.reshape(1, data.shape[0])
@@ -1471,6 +1505,9 @@ def initDataObject(
                 allNumeric = list(map(isNum, rowTuple))
                 if not all(allNumeric):
                     returnType = "DataFrame"
+                if pointNames is True:
+                    if all(allNumeric[1:]):
+                        returnType = "Matrix"
         if _isNumpyMatrix(rawData):
             rawData = np.array(rawData)
             copied = True
