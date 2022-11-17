@@ -277,7 +277,13 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID, copied):
     addedDim = False   
     retPNames = None
     retFNames = None
+    
     # Special consideration for Structured Numpy arrays
+    def _convertStructuredNumpyToDataFrame(data):
+        data = pd.DataFrame(data, columns=retFNames)
+        fnamesID = True
+        return extractNamesFromPdDataFrame(data, pnamesID, fnamesID, copied)
+    
     if data.dtype.fields:
         retFNames = [x for x in data.dtype.fields.keys()]
         reshapedData = [list(data[x]) for  x in range(len(data))]
@@ -295,32 +301,12 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID, copied):
                         retPNames.append(i[0])
                     data = np.array(data)
                     return data, retPNames, retFNames, copied
-                    #data = warped?
-                # pop out retFNames 
                 else:
-                    data = pd.DataFrame(reshapedData, columns =retFNames)
-                    return extractNamesFromPdDataFrame(data, pnamesID, fnamesID, copied)
-                
-            else: # supposed to be DataFrame
-                data = pd.DataFrame(reshapedData, columns =retFNames)
-                return extractNamesFromPdDataFrame(data, pnamesID, fnamesID, copied)
-                
-        #rowTuple = data[0]
-        # if len(rowTuple) > 0:
-            # allNumeric = list(map(isNum, rowTuple))
-            # if not all(allNumeric):
-            #     #returnType = "DataFrame"
-            # if pnamesID is True:
-            #     if all(allNumeric[1:]):
-            #         returnType = "Matrix"
-        # retFNames = [x for x in data.dtype.fields.keys()]
-        # reshapedData = [list(data[x]) for  x in range(len(data))]
-        # if pnamesID == True: # assign approriately and take out 
-        #     retPNames = [retFNames.pop(0)]
-        # # if all Num, do below
-        # data = np.array(reshapedData) # return data, retPNames, retFNames, copied
-        # # else : if all Num- after 1: , 
-        
+                    return _convertStructuredNumpyToDataFrame(reshapedData)
+            else:
+                return _convertStructuredNumpyToDataFrame(reshapedData)
+
+            
     if len(data.shape) == 1:
         data = data.reshape(1, data.shape[0])
         addedDim = True

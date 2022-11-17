@@ -4252,6 +4252,17 @@ def test_converttoDataFrames_numpyStructuredArrays():
              dtype=[('name', 'U10'), ('age', 'i4'), ('weight', 'f4')])
     dataArray = nimble.data(structArray)
     assert type(dataArray) == nimble.core.data.dataframe.DataFrame
+    assert dataArray._data.dtypes[0].name == 'object'
+    assert dataArray._data.dtypes[1].name == 'int32'
+    assert dataArray._data.dtypes[2].name == 'float32'
+    assert dataArray.features.getNames() == ['name', 'age', 'weight']
+# def test_preserveDataTypes_numpyStructuredArrays():
+#     structArray = np.array([('Rex', 9, 81.0), ('Fido', 3, 27.0)],
+#              dtype=[('name', 'U10'), ('age', 'i4'), ('weight', 'f4')])
+#     dataArray = nimble.data(structArray)
+#     assert type(dataArray._data.dtypes[0].name) is str
+#     assert dataArray._data.dtypes[1].name is 'int32'
+
 
 def test_tuplesArePoints_numpyStructuredArrays():
     structArray = np.array([(12, 23, 34, 45),( 11, 21, 31, 41),(13, 21, 31, 43)],
@@ -4260,6 +4271,7 @@ def test_tuplesArePoints_numpyStructuredArrays():
     regularArray = np.array([[12, 23, 34, 45],[11, 21, 31, 41],[13, 21, 31, 43]])
     regularMatrix = nimble.data(regularArray, featureNames=['Weight', 'Speed', 'Age', 'RPM'])
     assert dataArray == regularMatrix
+    assert dataArray._data.dtype == float
 
 def test_featureNames_numpyStructuredArrays():
     structArray = np.array([(12, 23, 34, 45),( 11, 21, 31, 41),(13, 21, 31, 43)],
