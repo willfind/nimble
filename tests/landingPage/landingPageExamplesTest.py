@@ -30,11 +30,12 @@ def back_singleExample(scriptLoc):
     # comment out plotting functions
     with open(scriptLoc) as f:
         with tempfile.NamedTemporaryFile('w+') as tempFile:
-            # set a terminal size that will display the data as we would like
+            # set a terminal size that will display the data as if it were in
+            # small resolution Notebook
             terminalSize = [
                 "import os",
                 "import shutil",
-                "size = os.terminal_size((132, 30))",
+                "size = os.terminal_size((117, 30))",
                 "shutil.get_terminal_size = lambda *args, **kwargs: size"
                 ]
             tempFile.write('\n'.join(terminalSize))
