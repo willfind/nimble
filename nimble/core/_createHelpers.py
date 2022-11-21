@@ -1575,8 +1575,7 @@ def initDataObject(
         returnType = analyzeValues(rawData, returnType, skipDataProcessing)
     
     # Decide if nimble Matrix is better as DataFrame given convertToType input.
-    if returnType == "Matrix": # some 
-        #matrixConvertTypes = [int, float, np.datetime64, None]
+    if returnType == "Matrix":
         matrixConvertTypes = list(NUM_TUPLE) + [np.datetime64, None]
         if type(convertToType) == list:
             if len(set(convertToType)) == 1:
