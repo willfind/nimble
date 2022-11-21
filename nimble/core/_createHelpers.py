@@ -277,7 +277,7 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID, copied):
     addedDim = False   
     retPNames = None
     retFNames = None
-    
+ 
     # Special consideration for Structured Numpy arrays
     def _convertStructuredNumpyToDataFrame(data):
         data = pd.DataFrame(data, columns=retFNames)
@@ -306,7 +306,7 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID, copied):
             else:
                 return _convertStructuredNumpyToDataFrame(reshapedData)
 
-            
+           
     if len(data.shape) == 1:
         data = data.reshape(1, data.shape[0])
         addedDim = True
@@ -360,8 +360,6 @@ def extractNamesFromScipySparse(data, pnamesID, fnamesID, copied):
         copied = True
     # gather up the first two rows of entries, to check for automatic name
     # extraction.
-#    import pdb
-#    pdb.set_trace()
     if fnamesID == 'automatic' or pnamesID == 'automatic':
         firstRow = [0] * data.shape[1]
         secondRow = [0] * data.shape[1]
@@ -1484,7 +1482,7 @@ def initDataObject(
         rawData = rawData._data
     # convert these types as indexing may cause dimensionality confusion
     elif _isNumpyArray(rawData):
-        # decide if numpy structured array should be Nimble DataFrame not Matrix
+    # decide if numpy structured array should be Nimble DataFrame not Matrix
         if rawData.dtype.fields:
             rowTuple = rawData[0]
             if len(rowTuple) > 0:
@@ -1522,7 +1520,7 @@ def initDataObject(
     elif not isinstance(rawData, (list, dict)):
         rawData = list(rawData)
         copied = True
-        
+
     rawData, highDim, copied = isHighDimensionData(rawData, rowsArePoints,
                                                    skipDataProcessing, copied)
 
