@@ -4,7 +4,7 @@ Support for query strings.
 import operator
 import re
 
-from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble._utility import _setAll
 from . import match
 
