@@ -14,6 +14,7 @@ from abc import ABC, abstractmethod
 from collections import Counter
 
 import numpy as np
+import pandas as pd
 
 import nimble
 from nimble.core.logger import handleLogging
@@ -2452,6 +2453,18 @@ class Features(ABC):
             results.append(row)
 
         report = nimble.data(results, pnames, fnames, useLog=False)
+        
+        def featureTypeEval(data):
+            toEval = data._data 
+            
+            
+            
+            return featureTypeList
+        
+        # adding unifying type 
+        Dtype = featureTypeEval(nimbleData)
+        unifyingType = nimble.data(Dtype, pointNames=pnames)
+        report.features.append(unifyingType)
 
         handleLogging(useLog, 'report', "feature", str(report))
 
