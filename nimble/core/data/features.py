@@ -2454,17 +2454,27 @@ class Features(ABC):
 
         report = nimble.data(results, pnames, fnames, useLog=False)
         
-        def featureTypeEval(data):
+        def unifyingType(data):
             toEval = data._data 
             
+            if hasattr(toEval, 'dtypes'):
+                featureTypeList = [ [toEval.dtypes.tolist()[i].name] for i in range(len(toEval.dtypes.tolist())) ] 
             
-            
+            elif hasattr(toEval, 'dtype'):
+                featureTypeList = [[toEval.dtype.name] for i in range(len(data.features))]
+
+            else:
+                print('Sparse or List, deal with accordingly')
+                featureTypeList = None 
+                    
             return featureTypeList
         
+        # if this calculation has not been run previously
+        if 'DataTypes' not in report.features.getNames():
         # adding unifying type 
-        Dtype = featureTypeEval(nimbleData)
-        unifyingType = nimble.data(Dtype, pointNames=pnames)
-        report.features.append(unifyingType)
+            Dtype = unifyingType(nimbleData)
+            featureTypes = nimble.data(Dtype, featureNames=['DataTypes'])
+            report.features.append(featureTypes)
 
         handleLogging(useLog, 'report', "feature", str(report))
 
