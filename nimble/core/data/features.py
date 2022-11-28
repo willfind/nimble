@@ -2356,7 +2356,7 @@ class Features(ABC):
 
     @limitedTo2D
     def report(self, basicStatistics=True, extraStatisticFunctions=(), *,
-               useLog=None):
+               useLog=None, dtypes=False):
         """
         Report containing a summary and statistics for each feature.
 
@@ -2455,7 +2455,7 @@ class Features(ABC):
         report = nimble.data(results, pnames, fnames, useLog=False)
         
         def unifyingType(data):
-            toEval = data._data 
+            toEval = data._data
             
             if hasattr(toEval, 'dtypes'):
                 featureTypeList = [ [toEval.dtypes.tolist()[i].name] for i in range(len(toEval.dtypes.tolist())) ] 
@@ -2464,17 +2464,17 @@ class Features(ABC):
                 featureTypeList = [[toEval.dtype.name] for i in range(len(data.features))]
 
             else:
-                print('Sparse or List, deal with accordingly')
-                featureTypeList = None 
+                featureTypeList = None
                     
             return featureTypeList
         
-        # if this calculation has not been run previously
-        if 'DataTypes' not in report.features.getNames():
-        # adding unifying type 
-            Dtype = unifyingType(nimbleData)
-            featureTypes = nimble.data(Dtype, featureNames=['DataTypes'])
-            report.features.append(featureTypes)
+        if dtypes is True:
+            # if this calculation has not been run previously
+            if 'dataType' not in report.features.getNames():
+                featureDtype = unifyingType(self._base)
+                if featureDtype: 
+                    featureTypes = nimble.data(featureDtype, featureNames=['dataType'])
+                    report.features.append(featureTypes)
 
         handleLogging(useLog, 'report', "feature", str(report))
 

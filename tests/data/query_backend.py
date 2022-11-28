@@ -3093,6 +3093,18 @@ class QueryBackend(DataTestObject):
         selection = ['minimum', 'Q1', 'meedian', 'Q3', 'maximum', 'mean']
 
         ret = obj.features.report(selection)
+        
+    # def test_features_report_unifyingType(self):
+    #     fnames = ['one', 'two', 'three']
+    #     obj = self.constructor([[1, '6', 9], [2, 'Oslo', 9.2], [3, 'Kyoto', 8.8]],
+    #                            featureNames=fnames)
+
+    #     ret = obj.features.report(dtypes=True)
+        
+    #     expFeatureTypes = ['int64', 'object', 'float64']
+
+    #     assert 'dataType' in ret.features.getNames()
+    #     assert list(ret.features['dataType']) == expFeatureTypes
 
     ##########
     # report #
