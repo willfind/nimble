@@ -185,10 +185,10 @@ class DeferredModuleImport(object):
     __setstate__ were defined due to issues loading trained learners
     trained using SparseView objects.
     """
-    def __init__(self, name):
+    def __init__(self, name, validate=True):
         self.name = name
         self.imported = None
-        self.validated = False
+        self.validated = not validate
 
     def nimbleAccessible(self):
         """
@@ -257,6 +257,7 @@ h5py = DeferredModuleImport('h5py')
 dateutil = DeferredModuleImport('dateutil')
 hyperopt = DeferredModuleImport('hyperopt')
 storm_tuner = DeferredModuleImport('storm_tuner')
+IPython = DeferredModuleImport('IPython', False)
 
 def sparseMatrixToArray(sparseMatrix):
     """

@@ -25,7 +25,7 @@ from nimble.exceptions import ImproperObjectAction, PackageException
 from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.core.logger import handleLogging, LogID
 from nimble.match import QueryString
-from nimble._utility import cloudpickle, h5py, plt
+from nimble._utility import cloudpickle, h5py, plt, IPython
 from nimble._utility import isDatetime
 from nimble._utility import tableString, prettyListString, quoteStrings
 from .stretch import Stretch
@@ -2330,11 +2330,35 @@ class Base(ABC):
 
         return out
 
+    def _getNotebookTerminalSize(self, _):
+        """
+        Aspirational helper for detecting the available space for printing
+        within a notebook. However, no viable method has been found to
+        do so. We therefore return a handpicked default, choosen to be
+        an acceptable max width even on a 1360x768 laptop screen.
+        """
+        # Sane default
+        return (117, 30)
+
+
     def _show(self, description=None, includeObjectName=True,
               maxWidth='automatic', maxHeight='automatic', sigDigits=3,
               maxColumnWidth=19, indent='', quoteNames=True):
-        # when dynamically sizing, fit within current window
-        terminalSize = shutil.get_terminal_size()
+
+        # Check if we're in IPython / a Notebook
+        if IPython.nimbleAccessible():
+            # even if IPython is accessible, it's only operational if
+            # we are able to grab the currently used shell
+            shell = IPython.core.getipython.get_ipython()
+        else:
+            shell = None
+
+        # Resolve the 'automatic' values for maxWidth and maxHeight
+        if shell is not None:
+            terminalSize = self._getNotebookTerminalSize(shell)
+        else:
+            terminalSize = shutil.get_terminal_size()
+
         if maxWidth == 'automatic':
             maxWidth = max(79, terminalSize[0] - 1)
         if maxHeight == 'automatic':
@@ -2398,11 +2422,12 @@ class Base(ABC):
             True will include printing of the object's ``name``
             attribute, False will not print the object's name.
         maxWidth : 'automatic', int, None
-            A bound on the maximum number of characters allowed on each
-            line of the output. The default, 'automatic', enforces a
-            minimum width of 79 but expands dynamically when the width
-            of the terminal is greater than 80 characters. None will
-            disable the bound on width.
+            A bound on the maximum number of characters allowed on each line
+            of the output. In CPython, the default value 'automatic', resolves
+            to a width of 79 but expands dynamically when the width of the
+            terminal is greater than 80 characters. In IPython / Notebooks
+            'automatic' always resolves to 117. A value of None will allow an
+            unbounded width.
         maxHeight : 'automatic', int, None
             A bound on the maximum number of lines allowed for the
             output.  The default, 'automatic', enforces a minimum
