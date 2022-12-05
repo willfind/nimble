@@ -2464,7 +2464,7 @@ class Features(ABC):
                 featureTypeList = [[toEval.dtype.name] for i in range(len(data.features))]
 
             else:
-                featureTypeList = None
+                featureTypeList = [['object'] for i in range(len(data.features))]
                     
             return featureTypeList
         

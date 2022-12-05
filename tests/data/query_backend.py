@@ -3094,17 +3094,34 @@ class QueryBackend(DataTestObject):
 
         ret = obj.features.report(selection)
         
-    # def test_features_report_unifyingType(self):
-    #     fnames = ['one', 'two', 'three']
-    #     obj = self.constructor([[1, '6', 9], [2, 'Oslo', 9.2], [3, 'Kyoto', 8.8]],
-    #                            featureNames=fnames)
+    def test_features_report_unifyingType(self):
+        fnames = ['one', 'two', 'three']
+        obj = self.constructor([[1, '6', 9], [2, 'Oslo', 9.2], [3, 'Kyoto', 8.8]],
+                               featureNames=fnames)
 
-    #     ret = obj.features.report(dtypes=True)
+        # Nimble list
+
+        #Nimble dataframe 
         
-    #     expFeatureTypes = ['int64', 'object', 'float64']
+        # nimble 
+        ret = obj.features.report(dtypes=True)
+        
+        assert 'dataType' in ret.features.getNames()
+        expFeatureTypes = ['int64', 'object', 'float64']
 
-    #     assert 'dataType' in ret.features.getNames()
-    #     assert list(ret.features['dataType']) == expFeatureTypes
+        if type(obj) is nimble.core.data.matrix.Matrix or nimble.core.data.sparse.Sparse:
+            assert list(ret.features['dataType']) == ['object', 'object', 'object']
+        elif type(obj) is nimble.core.data.list.List:
+            assert list(ret.features['dataType']) == ['object', 'object', 'object']
+        elif type(obj) is nimble.core.data.dataframe.DataFrame:
+            assert list(ret.features['dataType']) == expFeatureTypes
+        # elif type(obj) is nimble.core.data.sparse.Sparse:
+        #     assert list(ret.features['dataType']) == ['float64', 'float64', 'float64']
+        
+        
+        
+    
+    
 
     ##########
     # report #
