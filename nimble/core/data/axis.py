@@ -192,7 +192,7 @@ class Axis(ABC):
         else:
             oldName = self.namesInverse[index]
 
-        if newName in self.names:
+        if newName in self.names: # under what condition is this fine? 
             if self.namesInverse[index] == newName:
                 return
             msg = "This name '" + newName + "' is already in use"
@@ -202,61 +202,111 @@ class Axis(ABC):
         if oldName is not None:
             del self.names[oldName]
 
-        # setup the new name
+        # setup the new name #    
         self.namesInverse[index] = newName
         if newName is not None:
             self.names[newName] = index
 
 
-    def _setNames(self, assignments):
+    def _setNames(self, assignments, oldIdentifiers=None):
+        # check if assignments is less than full len, if yes - must equal length of oldidentifiers
         if assignments is None:
             self.names = None
             self.namesInverse = None
             return
-        if not isinstance(assignments, (list, dict)):
+        if not isinstance(assignments, (list, dict)): # allows single string be converted.
             assignments = valuesToPythonList(assignments, 'assignments')
         count = len(self)
-        if len(assignments) != count:
-            msg = "assignments may only be an ordered container type, with as "
-            msg += "many entries (" + str(len(assignments)) + ") as this axis "
-            msg += "is long (" + str(count) + ")"
-            raise InvalidArgumentValue(msg)
-        if count == 0:
-            self.names = {}
-            self.namesInverse = []
-            return
-        if not isinstance(assignments, dict):
-            # convert to dict so we only write the checking code once
-            # validation will occur when generating the inverse list
-            names = {}
-            for i, name in enumerate(assignments):
-                if name in names:
-                    msg = "Cannot input duplicate names: " + str(name)
-                    raise InvalidArgumentValue(msg)
-                if name is not None:
-                    names[name] = i
-        else:
-            # have to copy the input, could be from another object
-            names = copy.deepcopy(assignments)
-            if None in names:
-                del names[None]
-        # at this point, the input must be a dict
-        # check input before assigning to attributes
-        reverseMap = [None] * len(self)
-        for name, value in names.items():
-            if not isinstance(name, str):
-                raise InvalidArgumentValue("Names must be strings")
-            if not isinstance(value, int):
-                raise InvalidArgumentValue("Indices must be integers")
-            if value < 0 or value >= count:
-                msg = "Indices must be within 0 to "
-                msg += "len(self." + self._axis + "s) - 1"
+        #if len(assignments) <= count and len(assignments) == len(oldIdentifiers)
+        if not oldIdentifiers:
+            if len(assignments) != count: # alter, 1. fulfil current flow is ==, and if > count, delete.
+                # if < = count AND == oldIdentifiers , do logic for "selective naming"
+                msg = "assignments may only be an ordered container type, with as "
+                msg += "many entries (" + str(len(assignments)) + ") as this axis "
+                msg += "is long (" + str(count) + ")"
                 raise InvalidArgumentValue(msg)
+            if count == 0:
+                self.names = {}
+                self.namesInverse = []
+                return
+            if not isinstance(assignments, dict):
+                # convert to dict so we only write the checking code once
+                # validation will occur when generating the inverse list
+                names = {}
+                for i, name in enumerate(assignments):
+                    if name in names:
+                        msg = "Cannot input duplicate names: " + str(name)
+                        raise InvalidArgumentValue(msg)
+                    if name is not None:
+                        names[name] = i
+            else:
+                # have to copy the input, could be from another object
+                names = copy.deepcopy(assignments)
+                if None in names:
+                    del names[None]
+            # at this point, the input must be a dict
+            # check input before assigning to attributes
+            reverseMap = [None] * len(self)
+            for name, value in names.items():
+                if not isinstance(name, str):
+                    raise InvalidArgumentValue("Names must be strings")
+                if not isinstance(value, int):
+                    raise InvalidArgumentValue("Indices must be integers")
+                if value < 0 or value >= count:
+                    msg = "Indices must be within 0 to "
+                    msg += "len(self." + self._axis + "s) - 1"
+                    raise InvalidArgumentValue(msg)
 
-            reverseMap[value] = name
+                reverseMap[value] = name
 
-        self.names = names
-        self.namesInverse = reverseMap
+            self.names = names
+            self.namesInverse = reverseMap # needs to accomodate all inverses, including incomplete dicts
+        else:
+            if len(assignments) <= count and len(assignments) == len(oldIdentifiers):
+                
+                indices = []
+                oldNames = []
+                for name in oldIdentifiers:
+                    index = self._getIndex(name)
+                    indices.append(index)
+                    if name in self.names: 
+                        oldName = name
+                    else:
+                        oldName = self.namesInverse[index]
+                    oldNames.append(oldName)
+
+                old_dict = dict(zip(oldNames,indices))
+                assignments_dict = dict(zip(assignments, indices))  
+                 # iterate through list of assignments, // how do you match this with old identifiers?
+                for name, index in assignments_dict.items():
+                    if name in self.names: # verifying that none of the new assignments is used previously 
+                        # does having index here suggest we need to pack them together? old name 
+                        if self.namesInverse[index] == name: ## if the name is being used with the new assignment already
+                            return # should we return ? or abort altogether?
+                        msg = "The name '" + name + "' is already in use"
+                        raise InvalidArgumentValue(msg) 
+                    if not isinstance(name, str):
+                        raise InvalidArgumentValue("New names assigned must be strings")
+                    
+                     #remove the current name # we SHOULD only do this after checks have been made. 
+                for name, index in old_dict.items():
+                    if name is not None:
+                        del self.names[name]
+                for name, index in assignments_dict.items():    
+                    self.namesInverse[index] = name 
+                    if name is not None:
+                        self.names[name] = index
+                        
+                
+                
+                
+            else:
+                msg = "The number of old names being changed must match "
+                msg += "the number of new names provided."
+                raise InvalidArgumentValue(msg)
+                
+
+                
 
     def _getIndex(self, identifier, allowFloats=False):
         num = len(self)
