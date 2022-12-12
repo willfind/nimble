@@ -2338,7 +2338,8 @@ class Base(ABC):
         an acceptable max width even on a 1360x768 laptop screen.
         """
         # Sane default
-        return (117, 30)
+        #return (117, 30)
+        return (7,3)
 
 
     def _show(self, description=None, includeObjectName=True,
