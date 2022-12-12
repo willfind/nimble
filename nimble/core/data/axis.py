@@ -262,14 +262,19 @@ class Axis(ABC):
             self.names = names
             self.namesInverse = reverseMap # needs to accomodate all inverses, including incomplete dicts
         else:
+            if type(assignments) in [int, str]:
+                assignments = [assignments]
+            if type(oldIdentifiers) in [int, str, None]:
+                oldIdentifiers = [oldIdentifiers]
             if len(assignments) <= count and len(assignments) == len(oldIdentifiers):
-                
                 indices = []
                 oldNames = []
+                if self.names is None:
+                    self._setAllDefault()
                 for name in oldIdentifiers:
                     index = self._getIndex(name)
                     indices.append(index)
-                    if name in self.names: 
+                    if name in self.names:
                         oldName = name
                     else:
                         oldName = self.namesInverse[index]

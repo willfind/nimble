@@ -156,7 +156,7 @@ class Features(ABC):
 
 
     @prepLog
-    def setNames(self, assignments, *,
+    def setNames(self, assignments, *, oldIdentifiers=None,
                  useLog=None): # pylint: disable=unused-argument
         """
         Set or rename all of the feature names of this object.
@@ -197,7 +197,7 @@ class Features(ABC):
         --------
         columns, titles, headers, headings, attributes, identifiers
         """
-        self._setNames(assignments)
+        self._setNames(assignments, oldIdentifiers)
 
     def getIndex(self, identifier):
         """
@@ -2686,7 +2686,7 @@ class Features(ABC):
         pass
 
     @abstractmethod
-    def _setNames(self, assignments):
+    def _setNames(self, assignments, oldIdentifiers=None):
         pass
 
     @abstractmethod

@@ -229,7 +229,7 @@ def test_Tuning_tune():
 
     bfLogo = Tuning(selection="bruteforce", validation="leaveonegroupout",
                     foldFeature="groups")
-    X.features.setName(2, "groups", useLog=False)
+    X.features.setNames("groups", oldIdentifiers=2, useLog=False)
     bfLogo.tune("nimble.KNNClassifier", X, Y, {}, fractionIncorrect, None,
                 False)
     assert bfLogo._selector is BruteForce
