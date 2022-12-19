@@ -3096,14 +3096,14 @@ class QueryBackend(DataTestObject):
         
     def test_features_report_unifyingType(self):
         fnames = ['one', 'two', 'three']
-        obj = self.constructor([[1, '6', 9], [2, 'Oslo', 9.2], [3, 'Kyoto', 8.8]],
+        obj = self.constructor([[1,'6', 9.1], [2,'Oslo', 9.2], [3, 'Kyoto', 8.8]],
                                featureNames=fnames)
 
         # Nimble list
 
-        #Nimble dataframe 
+        # Nimble dataframe 
         
-        # nimble 
+        # Nimble 
         ret = obj.features.report(dtypes=True)
         
         assert 'dataType' in ret.features.getNames()
@@ -3116,8 +3116,14 @@ class QueryBackend(DataTestObject):
         elif type(obj) is nimble.core.data.dataframe.DataFrame:
             assert list(ret.features['dataType']) == expFeatureTypes
         # elif type(obj) is nimble.core.data.sparse.Sparse:
+        #     assert list(ret.features['dataType']) == ['object', 'object', 'object']
+
         #     assert list(ret.features['dataType']) == ['float64', 'float64', 'float64']
         
+            
+        # assert np.issubdtype(dataArray._data.dtypes[0], np.object_)
+        # assert np.issubdtype(dataArray._data.dtypes[1], np.integer)
+        # assert np.issubdtype(dataArray._data.dtypes[2], np.float)
         
         
     
