@@ -2456,15 +2456,16 @@ class Features(ABC):
         
         def unifyingType(data):
             toEval = data._data
-            
+            featureCount = range(len(data.features))
+
             if hasattr(toEval, 'dtypes'):
-                featureTypeList = [ [toEval.dtypes.tolist()[i].name] for i in range(len(toEval.dtypes.tolist())) ] 
+                featureTypeList = [[toEval.dtypes.tolist()[i].name] for i in featureCount ]
             
             elif hasattr(toEval, 'dtype'):
-                featureTypeList = [[toEval.dtype.name] for i in range(len(data.features))]
+                featureTypeList = [[toEval.dtype.name] for i in featureCount]
 
             else:
-                featureTypeList = [['object'] for i in range(len(data.features))]
+                featureTypeList = [['object'] for i in featureCount]
                     
             return featureTypeList
         
