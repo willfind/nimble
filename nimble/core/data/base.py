@@ -2337,9 +2337,43 @@ class Base(ABC):
         do so. We therefore return a handpicked default, choosen to be
         an acceptable max width even on a 1360x768 laptop screen.
         """
-        # Sane default
-        #return (117, 30)
-        return (7,3)
+        # Sane defaults
+        # f = 1, columnWidth = 50 ? max
+        # f = 2, columnWidth = 25 , maxWidth, 119 
+        # f = 3, columnWidth = 20 
+        # f = 4, columnWidth = 15 
+        # f = 5, columnWidth = 10 
+        # f = 6, columnWidth =  
+        # f = 7, columnWidth =  
+        # f = 8, columnWidth =  
+        # f = 9, columnWidth =  
+        
+        adjustedMaxWidth = 0 #  consider formula
+        adjustedColumnWidth = 0
+        featNumber = len(self.features)
+        
+        
+        
+        if featNumber == 1:
+            adjustedMaxWidth = 100
+            adjustedColumnWidth = 50
+        elif featNumber == 2:
+            
+             
+        
+        if maxWidth == 'automatic':
+            maxWidth = max(79, terminalSize[0] - 1)
+        if maxHeight == 'automatic':
+            maxHeight = max(30, terminalSize[1] - 1)
+        if maxHeight is not None:
+            # subtract lines for data details and last line
+            maxHeight -= 2
+        
+        adjustedMaxWidth = 0
+        adjustedColumnWidth = 0
+        
+        return (adjustedMaxWidth, adjustedColumnWidth)
+        #return (7,3)
 
 
     def _show(self, description=None, includeObjectName=True,
