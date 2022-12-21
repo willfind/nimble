@@ -2348,38 +2348,38 @@ class Base(ABC):
         # f = 8, columnWidth =  
         # f = 9, columnWidth =  
         
-        adjustedMaxWidth = 0 #  consider formula
-        adjustedColumnWidth = 0
-        featNumber = len(self.features)
+        # adjustedMaxWidth = 0 #  consider formula
+        # adjustedColumnWidth = 0
+        # featNumber = len(self.features)
         
         
         
-        if featNumber == 1:
-            adjustedMaxWidth = 100
-            adjustedColumnWidth = 50
-        elif featNumber == 2:
+        # if featNumber == 1:
+        #     adjustedMaxWidth = 100
+        #     adjustedColumnWidth = 50
+        # elif featNumber == 2:
             
              
         
-        if maxWidth == 'automatic':
-            maxWidth = max(79, terminalSize[0] - 1)
-        if maxHeight == 'automatic':
-            maxHeight = max(30, terminalSize[1] - 1)
-        if maxHeight is not None:
-            # subtract lines for data details and last line
-            maxHeight -= 2
+        # if maxWidth == 'automatic':
+        #     maxWidth = max(79, terminalSize[0] - 1)
+        # if maxHeight == 'automatic':
+        #     maxHeight = max(30, terminalSize[1] - 1)
+        # if maxHeight is not None:
+        #     # subtract lines for data details and last line
+        #     maxHeight -= 2
         
-        adjustedMaxWidth = 0
-        adjustedColumnWidth = 0
+        # adjustedMaxWidth = 0
+        # adjustedColumnWidth = 0
         
-        return (adjustedMaxWidth, adjustedColumnWidth)
-        #return (7,3)
+        #return (adjustedMaxWidth, adjustedColumnWidth)
+        return (117, 30)
 
 
     def _show(self, description=None, includeObjectName=True,
               maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-              maxColumnWidth=19, indent='', quoteNames=True):
-
+              maxColumnWidth='automatic', indent='', quoteNames=True):
+        
         # Check if we're in IPython / a Notebook
         if IPython.nimbleAccessible():
             # even if IPython is accessible, it's only operational if
@@ -2388,6 +2388,8 @@ class Base(ABC):
         else:
             shell = None
 
+        # need my code here to resolve a more dynamic column width for all sizes 
+        
         # Resolve the 'automatic' values for maxWidth and maxHeight
         if shell is not None:
             terminalSize = self._getNotebookTerminalSize(shell)
@@ -2407,6 +2409,14 @@ class Base(ABC):
             ret += indent + description + '\n'
             if maxHeight is not None:
                 maxHeight -= 1
+        
+        # proposed to ge     
+        if maxColumnWidth == 'automatic':
+            #maxColumnWidth = 19 # previous default 
+            maxColumnWidth = maxWidth // len(self.features)
+            if maxColumnWidth < 8:
+                maxColumnWidth = 8 # NEEDS LOWER BOUND
+            
 
         if includeObjectName and self.name is not None:
             ret += f'"{self._name}" '
