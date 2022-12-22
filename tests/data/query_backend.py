@@ -3098,37 +3098,19 @@ class QueryBackend(DataTestObject):
         fnames = ['one', 'two', 'three']
         obj = self.constructor([[1,'6', 9.1], [2,'Oslo', 9.2], [3, 'Kyoto', 8.8]],
                                featureNames=fnames)
-
-        # Nimble list
-
-        # Nimble dataframe 
         
-        # Nimble 
         ret = obj.features.report(dtypes=True)
         
         assert 'dataType' in ret.features.getNames()
         expFeatureTypes = ['int64', 'object', 'float64']
 
-        if type(obj) is nimble.core.data.matrix.Matrix or nimble.core.data.sparse.Sparse:
+        if type(obj) is nimble.core.data.matrix.Matrix or type(obj) is nimble.core.data.sparse.Sparse:
             assert list(ret.features['dataType']) == ['object', 'object', 'object']
         elif type(obj) is nimble.core.data.list.List:
             assert list(ret.features['dataType']) == ['object', 'object', 'object']
         elif type(obj) is nimble.core.data.dataframe.DataFrame:
             assert list(ret.features['dataType']) == expFeatureTypes
-        # elif type(obj) is nimble.core.data.sparse.Sparse:
-        #     assert list(ret.features['dataType']) == ['object', 'object', 'object']
-
-        #     assert list(ret.features['dataType']) == ['float64', 'float64', 'float64']
-        
-            
-        # assert np.issubdtype(dataArray._data.dtypes[0], np.object_)
-        # assert np.issubdtype(dataArray._data.dtypes[1], np.integer)
-        # assert np.issubdtype(dataArray._data.dtypes[2], np.float)
-        
-        
-    
-    
-
+      
     ##########
     # report #
     ##########
