@@ -979,7 +979,7 @@ class Base(ABC):
         if not callable(matchArg):
             try:
                 func = QueryString(matchArg, elementQuery=True)
-            except InvalidArgumentValue:
+            except InvalidArgumentType: # because invalid argument value is not being caught
                 # if not a query string, element must equal matchArg
                 matchVal = matchArg
                 func = lambda elem: elem == matchVal
@@ -1117,13 +1117,7 @@ class Base(ABC):
         number, counts, tally
         """
         if not hasattr(condition, '__call__'):
-            try:
-                condition = QueryString(condition, elementQuery=True)
-            except InvalidArgumentValue as e:
-                msg = 'condition can only be a function or string containing '
-                msg += 'a comparison operator and a value'
-                raise InvalidArgumentType(msg) from e
-
+            condition = QueryString(condition, elementQuery=True)
         ret = self.calculateOnElements(condition, outputType='Matrix',
                                        useLog=False)
         return int(np.sum(ret._data))

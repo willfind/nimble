@@ -105,8 +105,7 @@ class QueryString:
     def __init__(self, string, elementQuery=None):
         if not isinstance(string, str):
             msg = 'string for QueryString is not a string'
-            raise InvalidArgumentType(msg) # rationale is; if expected string variable passed is not a string - then it ought to be invalidArgumentType
-        self.string = string
+            raise InvalidArgumentType(msg)
         # elementQuery can be True or False when QueryStrings are constructed
         # to indicate whether the operation part of the string is expected at
         # the beginning (elementwise) or the middle (axiswise) to eliminate
