@@ -746,8 +746,8 @@ def test_data_CSV_data_defaultFeatureNames():
                 [True,'False',None,'three'],
                 [None,'TRUE',4,'']]
         fromList = nimble.data(source=data, returnType=t)
-        fromList.features.setName(1, 'a')
-        fromList.features.setName(2, 'b')
+        fromList.features.setNames('a', oldIdentifiers=1)
+        fromList.features.setNames('b', oldIdentifiers=2)
         # instantiate from csv file
         with tempfile.NamedTemporaryFile(suffix=".csv", mode='w') as tmpCSV:
             tmpCSV.write(",a,b,\n")

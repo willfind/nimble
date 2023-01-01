@@ -938,9 +938,11 @@ class Axis(ABC):
         ret = self._calculate(toCall, limitTo=None)
         if self._isPoint:
             ret.points.setNames(self._getNames(), useLog=False)
-            ret.features.setName(0, cleanFuncName, useLog=False)
+            #ret.features.setName(0, cleanFuncName, useLog=False)
+            ret.features.setNames(cleanFuncName, oldIdentifiers=0, useLog=False)
         else:
-            ret.points.setName(0, cleanFuncName, useLog=False)
+            #ret.points.setName(0, cleanFuncName, useLog=False)
+            ret.points.setNames(cleanFuncName, oldIdentifiers=0, useLog=False)
             ret.features.setNames(self._getNames(), useLog=False)
 
         return ret

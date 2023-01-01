@@ -103,7 +103,8 @@ kmeans = kmeans[numClusters]
 ## feature vector storing a cluster number (0, 1, or 2) for each point in the
 ## data.
 clusters = kmeans.apply(purchasePCA)
-clusters.features.setName(0, 'cluster')
+clusters.features.setNames('cluster', oldIdentifiers=0)
+
 
 ## Cluster Visualization ##
 

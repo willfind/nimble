@@ -732,11 +732,11 @@ class LowLevelBackend(object):
         """ Test _equalPointNames() for inequality of some default named, different sized objects """
         toTest1 = self.constructor(pointNames=['1', '2'])
         toTest2 = self.constructor(pointNames=['1', '2', '3'])
-        toTest1.points.setName(0, None)
-        toTest1.points.setName(1, None)
-        toTest2.points.setName(0, None)
-        toTest2.points.setName(1, None)
-        toTest2.points.setName(2, None)
+        toTest1.points.setNames(None, oldIdentifiers=0)
+        toTest1.points.setNames(None, oldIdentifiers=1)
+        toTest2.points.setNames(None, oldIdentifiers=0)
+        toTest2.points.setNames(None, oldIdentifiers=1)
+        toTest2.points.setNames(None, oldIdentifiers=2)
         assert not toTest1._equalPointNames(toTest2)
         assert not toTest2._equalPointNames(toTest1)
 
@@ -744,25 +744,25 @@ class LowLevelBackend(object):
         """ Test _equalPointNames() for equality of default named objects """
         toTest1 = self.constructor(pointNames=['1', '2'])
         toTest2 = self.constructor(pointNames=['1', '2'])
-        toTest1.points.setName(0, None)
-        toTest1.points.setName(1, None)
-        toTest2.points.setName(0, None)
-        toTest2.points.setName(1, None)
+        toTest1.points.setNames(None, oldIdentifiers=0)
+        toTest1.points.setNames(None, oldIdentifiers=1)
+        toTest2.points.setNames(None, oldIdentifiers=0)
+        toTest2.points.setNames(None, oldIdentifiers=1)
         assert toTest1._equalPointNames(toTest2)
         assert toTest2._equalPointNames(toTest1)
 
     def test__equalPointNames_mixedDefaultsAndActual(self):
         toTest1 = self.constructor(pointNames=['1', '2'])
         toTest2 = self.constructor(pointNames=['1', '2'])
-        toTest1.points.setName(0, None)
-        toTest1.points.setName(1, '1')
-        toTest2.points.setName(1, None)
+        toTest1.points.setNames(None, oldIdentifiers=0)
+        toTest1.points.setNames('1', oldIdentifiers=1)
+        toTest2.points.setNames(None, oldIdentifiers=1)
         # have: test1 [Default, '1']
         # test2 ['1', Default]
         assert not toTest1._equalPointNames(toTest2)
         assert not toTest2._equalPointNames(toTest1)
-        toTest1.points.setName(1, '2')
-        toTest1.points.setName(1, None)
+        toTest1.points.setNames('2', oldIdentifiers=1)
+        toTest1.points.setNames(None, oldIdentifiers=1)
         # have: test1 [Default, '2']
         # test2: ['1', Default]
         assert not toTest1._equalPointNames(toTest2)
@@ -806,11 +806,11 @@ class LowLevelBackend(object):
         """ Test _equalFeatureNames() for inequality of some default named, different sized objects """
         toTest1 = self.constructor(featureNames=['1', '2'])
         toTest2 = self.constructor(featureNames=['1', '2', '3'])
-        toTest1.features.setName(0, None)
-        toTest1.features.setName(1, None)
-        toTest2.features.setName(0, None)
-        toTest2.features.setName(1, None)
-        toTest2.features.setName(2, None)
+        toTest1.features.setNames(None, oldIdentifiers=0)
+        toTest1.features.setNames(None, oldIdentifiers=1)
+        toTest2.features.setNames(None, oldIdentifiers=0)
+        toTest2.features.setNames(None, oldIdentifiers=1)
+        toTest2.features.setNames(None, oldIdentifiers=2)
         assert not toTest1._equalFeatureNames(toTest2)
         assert not toTest2._equalFeatureNames(toTest1)
 
@@ -818,25 +818,25 @@ class LowLevelBackend(object):
         """ Test _equalFeatureNames() for equality of default named objects """
         toTest1 = self.constructor(featureNames=['1', '2'])
         toTest2 = self.constructor(featureNames=['1', '2'])
-        toTest1.features.setName(0, None)
-        toTest1.features.setName(1, None)
-        toTest2.features.setName(0, None)
-        toTest2.features.setName(1, None)
+        toTest1.features.setNames(None, oldIdentifiers=0)
+        toTest1.features.setNames(None, oldIdentifiers=1)
+        toTest2.features.setNames(None, oldIdentifiers=0)
+        toTest2.features.setNames(None, oldIdentifiers=1)
         assert toTest1._equalFeatureNames(toTest2)
         assert toTest2._equalFeatureNames(toTest1)
 
     def test_equalFeatureNames_mixedDefaultsAndActual(self):
         toTest1 = self.constructor(featureNames=['1', '2'])
         toTest2 = self.constructor(featureNames=['1', '2'])
-        toTest1.features.setName(0, None)
-        toTest1.features.setName(1, '1')
-        toTest2.features.setName(1, None)
+        toTest1.features.setNames(None, oldIdentifiers=0)
+        toTest1.features.setNames('1', oldIdentifiers=1)
+        toTest2.features.setNames(None, oldIdentifiers=1)
         # have: test1 [Default, '1']
         # test2 ['1', Default]
         assert not toTest1._equalFeatureNames(toTest2)
         assert not toTest2._equalFeatureNames(toTest1)
-        toTest1.features.setName(1, '2')
-        toTest1.features.setName(1, None)
+        toTest1.features.setNames('2', oldIdentifiers=1)
+        toTest1.features.setNames(None, oldIdentifiers=1)
         # have: test1 [Default, '2']
         # test2: ['1', Default]
         assert not toTest1._equalFeatureNames(toTest2)
@@ -863,7 +863,7 @@ class LowLevelBackend(object):
     def test_points_getNames_mixedDefault(self):
         pnames = {'zero': 0, 'one': 1, 'hello': 2}
         toTest = self.constructor(pointNames=pnames, fsize=2)
-        toTest.points.setName(0, None)
+        toTest.points.setNames(None, oldIdentifiers=0)
 
         ret = toTest.points.getNames()
         assert ret[0] is None
@@ -877,7 +877,7 @@ class LowLevelBackend(object):
         ret = toTest.points.getNames()
 
         ret[0] = 'modified'
-        toTest.points.setName(1, 'modified')
+        toTest.points.setNames('modified', oldIdentifiers=1)
 
         assert ret[1] == 'one'
         assert toTest.points.getIndex('zero') == 0
@@ -904,7 +904,7 @@ class LowLevelBackend(object):
     def test_features_getNames_mixedDefault(self):
         fnames = {'zero': 0, 'one': 1, 'hello': 2}
         toTest = self.constructor(featureNames=fnames, psize=2)
-        toTest.features.setName(0, None)
+        toTest.features.setNames(None, oldIdentifiers=0)
 
         ret = toTest.features.getNames()
         assert ret[0] is None
@@ -918,7 +918,7 @@ class LowLevelBackend(object):
         ret = toTest.features.getNames()
 
         ret[0] = 'modified'
-        toTest.features.setName(1, 'modified')
+        toTest.features.setNames('modified', oldIdentifiers=1)
 
         assert ret[1] == 'one'
         assert toTest.features.getIndex('zero') == 0
@@ -1306,13 +1306,13 @@ class LowLevelBackend(object):
         assert toTest3D.features.getNames() == newFNames
         assert toTest3D.features.getIndices(['ft_1', 'ft_0']) == [1, 0]
 
-        toTest3D.points.setName('a', 'z')
+        toTest3D.points.setNames('z', oldIdentifiers='a')
         assert not toTest3D.points.hasName('a')
         assert toTest3D.points.hasName('z')
         assert toTest3D.points.getName(0) == 'z'
         assert toTest3D.points.getIndex('z') == 0
 
-        toTest3D.features.setName('ft_0', 'ft_first')
+        toTest3D.features.setNames('ft_first', oldIdentifiers='ft_0')
         assert not toTest3D.features.hasName('ft_0')
         assert toTest3D.features.hasName('ft_first')
         assert toTest3D.features.getName(0) == 'ft_first'

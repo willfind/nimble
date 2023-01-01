@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # 1000 samples of N(0,1), squared
     def plotDistributionNormalSquared(plotObj, outDir, givenShow):
         plotObj **= 2
-        plotObj.features.setName(0, "N(0,1) squared")
+        plotObj.features.setNames("N(0,1) squared", oldIdentifiers=0)
 
         outPath = getOutPath(outDir, "NormalSquared")
         plotObj.plotFeatureDistribution(0, outPath=outPath, show=givenShow)
@@ -72,7 +72,7 @@ if __name__ == "__main__":
         obj1.features.append(obj2)
 
         #obj1.features.setName(0, "[0, 1) random noise")
-        obj1.features.setName(1, "(Feature 0 * 3) + noise")
+        obj1.features.setNames("(Feature 0 * 3) + noise", oldIdentifiers=1)
         obj1.name = "Noise"
 
         outPath = getOutPath(outDir, "NoiseVsScaled")
