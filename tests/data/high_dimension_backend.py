@@ -135,6 +135,18 @@ class HighDimensionSafe(DataTestObject):
                 sys.stdout = stdoutBackup
                 
     def test_adaptive_maxColumnWidth(self):
+        ''' 
+        1. create nimble data object from csv 
+        2. know how many chars to expect in columns
+        3. set aside number of chars as validation metric
+        4. use StringIO to measure chars and compare result
+        '''
+        testData = nimble.data([['france', 'argentina'], ['morocco', 'croatia']], 
+                               featureNames=['left_sided_wc_semi-final_branch', 'right_sided_wc_semi-final_branch'])
+        lineExp = 80
+        
+        assert lineCount == lineExp 
+        
         pass
 
     def test_highDimension_copy(self):
