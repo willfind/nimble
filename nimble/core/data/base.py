@@ -2413,7 +2413,7 @@ class Base(ABC):
         # proposed to ge     
         if maxColumnWidth == 'automatic':
             #maxColumnWidth = 19 # previous default 
-            maxColumnWidth = maxWidth // len(self.features)
+            maxColumnWidth = maxWidth // (len(self.features) * 10)
             if maxColumnWidth < 8:
                 maxColumnWidth = 8 # NEEDS LOWER BOUND
             
