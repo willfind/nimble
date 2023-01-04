@@ -4247,6 +4247,59 @@ def test_data_copyData_False_copyMadeWhenNamesExtracted():
 # rowsArePoints #
 #################
 
+def test_converttoDataFrames_numpyStructuredArrays():
+    structArray = np.array([('Rex', 9, 81.0), ('Fido', 3, 27.0)],
+             dtype=[('name', 'U10'), ('age', 'i4'), ('weight', 'f4')])
+    dataArray = nimble.data(structArray)
+    assert type(dataArray) == nimble.core.data.dataframe.DataFrame
+    assert np.issubdtype(dataArray._data.dtypes[0], np.object_)
+    assert np.issubdtype(dataArray._data.dtypes[1], np.integer)
+    assert np.issubdtype(dataArray._data.dtypes[2], np.float)
+    assert dataArray.features.getNames() == ['name', 'age', 'weight']
+
+def test_tuplesArePoints_numpyStructuredArrays():
+    structArray = np.array([(12, 23, 34, 45),( 11, 21, 31, 41),(13, 21, 31, 43)],
+                        dtype=[('Weight', 'f4'), ('Speed', np.float32), ('Age', 'i4'), ('RPM', 'f4')])
+    dataArray = nimble.data(structArray)
+    regularArray = np.array([[12, 23, 34, 45],[11, 21, 31, 41],[13, 21, 31, 43]])
+    regularMatrix = nimble.data(regularArray, featureNames=['Weight', 'Speed', 'Age', 'RPM'])
+    assert dataArray == regularMatrix
+    assert np.issubdtype(dataArray._data.dtype, np.float)
+
+def test_featureNames_numpyStructuredArrays():
+    structArray = np.array([(12, 23, 34, 45),( 11, 21, 31, 41),(13, 21, 31, 43)],
+                        dtype=[('Weight', 'f4'), ('Speed', np.float32), ('Age', 'i4'), ('RPM', 'f4')])
+    dataArray = nimble.data(structArray)
+    fNames = ['Weight', 'Speed', 'Age', 'RPM']
+    assert fNames == dataArray.features.getNames()
+    
+def test_pointsNames_numpyStructuredArrays():
+    structArray = np.array([(12, 23, 34, 45),( 11, 21, 31, 41),(13, 21, 31, 43)],
+                        dtype=[('Weight', 'f4'), ('Speed', np.float32), ('Age', 'i4'), ('RPM', 'f4')])
+    pNames = ['a', 'b', 'c']
+    dataArray = nimble.data(structArray, pointNames=['a', 'b', 'c'])
+    regularArray = np.array([[12, 23, 34, 45],[11, 21, 31, 41],[13, 21, 31, 43]])
+    regularMatrix = nimble.data(regularArray, featureNames=['Weight', 'Speed', 'Age', 'RPM'], pointNames=pNames)
+    assert dataArray.points.getNames() == regularMatrix.points.getNames()
+
+def test_pointNamesEmbedded_numpyStructuredArrays():
+    structArray = np.array([('a', 23, 34, 45),( 'b', 21, 31, 41),('c', 21, 31, 43)],
+                        dtype=[('pointNames', 'U10'), ('Speed', np.float32), ('Age', 'i4'), ('RPM', 'f4')])
+    dataArray = nimble.data(structArray, pointNames=True)
+    data = [[23, 34, 45], [ 21, 31, 41], [21, 31 ,43]]
+    nbData = nimble.data( data,  pointNames=['a', 'b', 'c'], featureNames=['Speed', 'Age', 'RPM'])
+    assert dataArray.points.getNames() == nbData.points.getNames()
+    assert dataArray.features.getNames() == nbData.features.getNames()
+    assert type(dataArray._data) == np.ndarray 
+    assert dataArray == nbData
+    
+@raises(AssertionError)
+def test_featuresAssignedTwice_numpyStructuredArrays():
+    structArray = np.array([(12, 23, 34, 45),( 11, 21, 31, 41),(13, 21, 31, 43)],
+                        dtype=[('Weight', 'f4'), ('Speed', np.float32), ('Age', 'i4'), ('RPM', 'f4')])
+    fNames = ['Weight', 'Speed', 'Age', 'RPM']
+    dataArray = nimble.data(structArray, featureNames=fNames)
+
 def test_rowsArePoints_numpyArrays():
     ptData = np.array([[1, 2, 3], [0, 0, 0], [-1, -2, -3]])
     ftData = np.array([[1, 0, -1], [2, 0, -2], [3, 0, -3]])
@@ -4506,8 +4559,14 @@ def test_returnType_autodetection_csv():
             assert test6.getTypeString() == "Matrix"
     finally:
         pd.nimbleAccessible = backup
-
-
+        
+def test_convertToType_overwriteMatrixReturnType():
+    nonNumericTypes =  [str, {0: str, 1: int, 2: int}, [float, float, int]]
+    rawData = np.array([[1,2,3], [2,4,6]])
+    for i in nonNumericTypes:
+        data = nimble.data(rawData, returnType="Matrix", convertToType=i) 
+        assert type(data) == nimble.core.data.dataframe.DataFrame
+    
 # tests for combination of one name set being specified and one set being
 # in data.
 
