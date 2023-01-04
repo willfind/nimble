@@ -4252,9 +4252,9 @@ def test_converttoDataFrames_numpyStructuredArrays():
              dtype=[('name', 'U10'), ('age', 'i4'), ('weight', 'f4')])
     dataArray = nimble.data(structArray)
     assert type(dataArray) == nimble.core.data.dataframe.DataFrame
-    assert dataArray._data.dtypes[0].name == 'object'
-    assert dataArray._data.dtypes[1].name == 'int32'
-    assert dataArray._data.dtypes[2].name == 'float32'
+    assert np.issubdtype(dataArray._data.dtypes[0], np.object_)
+    assert np.issubdtype(dataArray._data.dtypes[1], np.integer)
+    assert np.issubdtype(dataArray._data.dtypes[2], np.float)
     assert dataArray.features.getNames() == ['name', 'age', 'weight']
 
 def test_tuplesArePoints_numpyStructuredArrays():
@@ -4264,7 +4264,7 @@ def test_tuplesArePoints_numpyStructuredArrays():
     regularArray = np.array([[12, 23, 34, 45],[11, 21, 31, 41],[13, 21, 31, 43]])
     regularMatrix = nimble.data(regularArray, featureNames=['Weight', 'Speed', 'Age', 'RPM'])
     assert dataArray == regularMatrix
-    assert dataArray._data.dtype == float
+    assert np.issubdtype(dataArray._data.dtype, np.float)
 
 def test_featureNames_numpyStructuredArrays():
     structArray = np.array([(12, 23, 34, 45),( 11, 21, 31, 41),(13, 21, 31, 43)],
