@@ -269,7 +269,7 @@ class PointsView(Points, metaclass=ABCMeta):
         readOnlyException('setName')
 
     @pointsExceptionDoc
-    def setNames(self, assignments, *, useLog=None):
+    def setNames(self, assignments, *, oldIdentifiers=[], useLog=None):
         readOnlyException('setNames')
 
     #####################################
@@ -358,7 +358,7 @@ class FeaturesView(Features, metaclass=ABCMeta):
         readOnlyException('setName')
 
     @featuresExceptionDoc
-    def setNames(self, assignments, *, useLog=None):
+    def setNames(self, assignments, *, oldIdentifiers=[], useLog=None):
         readOnlyException('setNames')
 
     #####################################

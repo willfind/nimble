@@ -208,7 +208,7 @@ class Axis(ABC):
             self.names[newName] = index
 
 
-    def _setNames(self, assignments, oldIdentifiers=None):
+    def _setNames(self, assignments, oldIdentifiers=[]):
         # check if assignments is less than full len, if yes - must equal length of oldidentifiers
         if assignments is None:
             self.names = None
@@ -218,7 +218,7 @@ class Axis(ABC):
             assignments = valuesToPythonList(assignments, 'assignments')
         count = len(self)
         #if len(assignments) <= count and len(assignments) == len(oldIdentifiers)
-        if oldIdentifiers == None:
+        if oldIdentifiers == []:
             if len(assignments) != count: # alter, 1. fulfil current flow is ==, and if > count, delete.
                 # if < = count AND == oldIdentifiers , do logic for "selective naming"
                 msg = "assignments may only be an ordered container type, with as "
@@ -301,9 +301,6 @@ class Axis(ABC):
                     self.namesInverse[index] = name 
                     if name is not None:
                         self.names[name] = index
-                        
-                
-                
                 
             else:
                 msg = "The number of old names being changed must match "
