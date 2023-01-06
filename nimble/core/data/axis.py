@@ -218,7 +218,7 @@ class Axis(ABC):
             assignments = valuesToPythonList(assignments, 'assignments')
         count = len(self)
         #if len(assignments) <= count and len(assignments) == len(oldIdentifiers)
-        if not oldIdentifiers:
+        if oldIdentifiers == None:
             if len(assignments) != count: # alter, 1. fulfil current flow is ==, and if > count, delete.
                 # if < = count AND == oldIdentifiers , do logic for "selective naming"
                 msg = "assignments may only be an ordered container type, with as "

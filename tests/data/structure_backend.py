@@ -10718,6 +10718,9 @@ class StructureModifying(StructureShared):
         assert leftObj == exp
 
     def test_merge_featureStrict_pointUnion_ptNames_ptNamesOnly(self):
+        # import pdb
+        # pdb.set_trace()
+        
         dataL = [[1,1,"a"], [1,1,"b"], [1,1,"c"], [1,1,"d"]]
         dataR = [["d",1,1], ["x",2,2], ["y",2,2], ["z",2,2]]
         pNamesL = ["p1", "p2", "p3", "p4"]
