@@ -141,17 +141,46 @@ class HighDimensionSafe(DataTestObject):
         3. set aside number of chars as validation metric
         4. use StringIO to measure chars and compare result
         '''
+        from io import StringIO
+        import sys
+        #import tempfile
+        import shutil
+        import re 
+        
+        
+        import pdb
+        pdb.set_trace()
+        
         testData = nimble.data([['france', 'argentina'], ['morocco', 'croatia']], 
                                featureNames=['left_sided_wc_semi-final_branch', 'right_sided_wc_semi-final_branch'])
-        lineExp = 80
-        
-        assert lineCount == lineExp 
-        
+    #lineExp = 80
+        maxWidth = 79
+        # assert lineCount == lineEx
+        colNumber = len(testData.features)
+
         # test that maxColumnWidth is currently whatever it is
-        expWidth = max(columnWidth , terminalSize)
-        assert columnWidth == terminalSize / expWidth
+        terminalSize = shutil.get_terminal_size()
+        expMaxWidth = max(maxWidth, terminalSize[0] - 1)
+        maxColumnWidth = expMaxWidth // (colNumber * 10)
+
+        # expWidth is then created by estimating the maxColumnWidth by putting 
+        # algorithm against expWidth 
+         
+        old_output = sys.stdout
+        temp_output = StringIO()
+        sys.stdout = temp_output
         
-        pass
+        testData.show()
+        sys.stdout = old_output
+        rec_line = temp_output.getvalue()
+        
+        measure = re.search('(\\n *)(.*?)\\n', rec_line)
+        output_line = measure.group(2)
+        
+        lineLength = len(output_line) 
+        # read line one or line two of file? 
+        testColumnWidth = lineLength // colNumber  
+        assert maxColumnWidth == testColumnWidth
 
     def test_highDimension_copy(self):
         for tensorList in [tensors, emptyTensors]:
