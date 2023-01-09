@@ -147,6 +147,10 @@ class HighDimensionSafe(DataTestObject):
         
         assert lineCount == lineExp 
         
+        # test that maxColumnWidth is currently whatever it is
+        expWidth = max(columnWidth , terminalSize)
+        assert columnWidth == terminalSize / expWidth
+        
         pass
 
     def test_highDimension_copy(self):
