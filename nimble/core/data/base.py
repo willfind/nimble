@@ -979,7 +979,7 @@ class Base(ABC):
         if not callable(matchArg):
             try:
                 func = QueryString(matchArg, elementQuery=True)
-            except InvalidArgumentType: # because invalid argument value is not being caught
+            except (InvalidArgumentValue, InvalidArgumentType) : 
                 # if not a query string, element must equal matchArg
                 matchVal = matchArg
                 func = lambda elem: elem == matchVal

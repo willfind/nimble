@@ -106,6 +106,7 @@ class QueryString:
         if not isinstance(string, str):
             msg = 'string for QueryString is not a string'
             raise InvalidArgumentType(msg)
+        self.string = string
         # elementQuery can be True or False when QueryStrings are constructed
         # to indicate whether the operation part of the string is expected at
         # the beginning (elementwise) or the middle (axiswise) to eliminate
