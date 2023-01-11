@@ -2413,7 +2413,7 @@ class Base(ABC):
         # proposed to ge     
         if maxColumnWidth == 'automatic':
             #maxColumnWidth = 19 # previous default 
-            maxColumnWidth = maxWidth // (len(self.features) * 10)
+            maxColumnWidth = maxWidth // (len(self.features) * 2)
             if maxColumnWidth < 8:
                 maxColumnWidth = 8 # NEEDS LOWER BOUND
             
@@ -2449,7 +2449,7 @@ class Base(ABC):
 
     def show(self, description=None, includeObjectName=True,
              maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-             maxColumnWidth=19):
+             maxColumnWidth='automatic'):
         """
         A printed representation of the data.
 

@@ -146,14 +146,20 @@ class HighDimensionSafe(DataTestObject):
         #import tempfile
         import shutil
         import re 
+        # import pandas as pd
         
+        # df = pd.read_csv('/Users/niniola/Downloads/online_shoppers_intention_explore.csv')
         
-        import pdb
-        pdb.set_trace()
+        # import pdb
+        # pdb.set_trace()
         
-        testData = nimble.data([['france', 'argentina'], ['morocco', 'croatia']], 
-                               featureNames=['left_sided_wc_semi-final_branch', 'right_sided_wc_semi-final_branch'])
-    #lineExp = 80
+        testData = nimble.data(df, featureNames=True)
+        # testData = nimble.data([['france', 'argentina'], ['morocco', 'croatia']], 
+        #                        featureNames=['left_sided_wc_semi-final_branch', 'right_sided_wc_semi-final_branch'])
+
+        testData = nimble.data([['france', 'argentina', 'portugal', 'spain'], ['morocco', 'croatia', 'brazil', 'england']], 
+                               featureNames=['left_sided_wc_semi-final_branch', 'right_sided_wc_semi-final_branch', 'left_sided_wc_quarter-final_exits', 'right_sided_wc_quarter-final_exit'])
+
         maxWidth = 79
         # assert lineCount == lineEx
         colNumber = len(testData.features)
@@ -170,7 +176,7 @@ class HighDimensionSafe(DataTestObject):
         temp_output = StringIO()
         sys.stdout = temp_output
         
-        testData.show()
+        testData[:3,:].show() # put maxColumnWidth as parameter in here
         sys.stdout = old_output
         rec_line = temp_output.getvalue()
         
