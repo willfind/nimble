@@ -2155,6 +2155,8 @@ class HighLevelDataSafe(DataTestObject):
         assert matches[1, 2] is False or matches[1, 2] is np.bool_(False)
 
     def test_matchingElements_valueInput(self):
+        # import pdb
+        # pdb.set_trace()
         raw = [[1, 2, 3], [-1, -2, -3], [0, 'a', 0]]
         obj = self.constructor(raw)
         match1 = obj.matchingElements(lambda x: x == 0)

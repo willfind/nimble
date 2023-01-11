@@ -4,7 +4,7 @@ Support for query strings.
 import operator
 import re
 
-from nimble.exceptions import InvalidArgumentValue
+from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble._utility import _setAll
 from . import match
 
@@ -105,7 +105,7 @@ class QueryString:
     def __init__(self, string, elementQuery=None):
         if not isinstance(string, str):
             msg = 'string for QueryString is not a string'
-            raise InvalidArgumentValue(msg)
+            raise InvalidArgumentType(msg)
         self.string = string
         # elementQuery can be True or False when QueryStrings are constructed
         # to indicate whether the operation part of the string is expected at
