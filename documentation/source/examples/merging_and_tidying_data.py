@@ -107,7 +107,7 @@ for obj in [dwtnMinAM, airptMinAM]:
     newFt = nimble.data(stationData, featureNames=['station'])
     obj.features.insert(1, newFt)
     #obj.features.setName(1, 'station')
-    obj.features.setNames('station', oldIdenfifiers=0)
+    obj.features.setNames('station', oldIdentifiers=1)
 
 dwtnMinAM.points.append(airptMinAM)
 

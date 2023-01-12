@@ -208,19 +208,25 @@ class Axis(ABC):
             self.names[newName] = index
 
 
-    def _setNames(self, assignments, oldIdentifiers=[]):
-        # check if assignments is less than full len, if yes - must equal length of oldidentifiers
-        if assignments is None:
+    def _setNames(self, assignments, oldIdentifiers=None):
+        # Special case where we remove the entirety of the names, but only if there aren't
+        # any specified oldIdentifiers
+        if assignments is None and oldIdentifiers is None:
             self.names = None
             self.namesInverse = None
             return
-        if not isinstance(assignments, (list, dict)): # allows single string be converted.
+
+        # As needed, wrap (for singletons) or unpack (for non-standard iterables),
+        # both cases below need to have assignments in list form
+        if type(assignments) in [int, str, type(None)]:
+            assignments = [assignments]
+        elif not isinstance(assignments, (list, dict)):
             assignments = valuesToPythonList(assignments, 'assignments')
+
         count = len(self)
-        #if len(assignments) <= count and len(assignments) == len(oldIdentifiers)
-        if oldIdentifiers == []:
-            if len(assignments) != count: # alter, 1. fulfil current flow is ==, and if > count, delete.
-                # if < = count AND == oldIdentifiers , do logic for "selective naming"
+        # Case: oldIdentifiers not specified, so assignments must be changing ALL names
+        if oldIdentifiers is None:
+            if len(assignments) != count:
                 msg = "assignments may only be an ordered container type, with as "
                 msg += "many entries (" + str(len(assignments)) + ") as this axis "
                 msg += "is long (" + str(count) + ")"
@@ -261,11 +267,12 @@ class Axis(ABC):
 
             self.names = names
             self.namesInverse = reverseMap # needs to accomodate all inverses, including incomplete dicts
+        # Case: A single name, or subset of names to replace have been specified
         else:
-            if type(assignments) in [int, str]:
-                assignments = [assignments]
-            if type(oldIdentifiers) in [int, str, None]:
+            # at this point oldIdentifiers CANNOT be None
+            if type(oldIdentifiers) in [int, str]:
                 oldIdentifiers = [oldIdentifiers]
+
             if len(assignments) <= count and len(assignments) == len(oldIdentifiers):
                 indices = []
                 oldNames = []
@@ -281,27 +288,27 @@ class Axis(ABC):
                     oldNames.append(oldName)
 
                 old_dict = dict(zip(oldNames,indices))
-                assignments_dict = dict(zip(assignments, indices))  
+                assignments_dict = dict(zip(assignments, indices))
                  # iterate through list of assignments, // how do you match this with old identifiers?
                 for name, index in assignments_dict.items():
-                    if name in self.names: # verifying that none of the new assignments is used previously 
-                        # does having index here suggest we need to pack them together? old name 
-                        if self.namesInverse[index] == name: ## if the name is being used with the new assignment already
-                            return # should we return ? or abort altogether?
+                    # verifying that none of the new assignments is used previously
+                    if name in self.names:
+                        if self.namesInverse[index] == name:
+                            continue # there could be more to check in the dict
                         msg = "The name '" + name + "' is already in use"
-                        raise InvalidArgumentValue(msg) 
-                    if not isinstance(name, str):
-                        raise InvalidArgumentValue("New names assigned must be strings")
-                    
-                     #remove the current name # we SHOULD only do this after checks have been made. 
+                        raise InvalidArgumentValue(msg)
+                    if not isinstance(name, (str, type(None))):
+                        msg = "New names assigned must be strings or None"
+                        raise InvalidArgumentValue(msg)
+
                 for name, index in old_dict.items():
                     if name is not None:
                         del self.names[name]
-                for name, index in assignments_dict.items():    
-                    self.namesInverse[index] = name 
+                for name, index in assignments_dict.items():
+                    self.namesInverse[index] = name
                     if name is not None:
                         self.names[name] = index
-                
+
             else:
                 msg = "The number of old names being changed must match "
                 msg += "the number of new names provided."
