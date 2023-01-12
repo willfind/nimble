@@ -149,7 +149,7 @@ class Points(ABC):
 
 
     @prepLog
-    def setNames(self, assignments,  *, oldIdentifiers=None,
+    def setNames(self, assignments, oldIdentifiers=None, *,
                  useLog=None): # pylint: disable=unused-argument
         """
         Set or rename all of the point names of this object.
