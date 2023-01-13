@@ -146,14 +146,15 @@ class HighDimensionSafe(DataTestObject):
         #import tempfile
         import shutil
         import re 
-        # import pandas as pd
         
+        
+        import pandas as pd
+        
+        import pdb
+        pdb.set_trace()
         # df = pd.read_csv('/Users/niniola/Downloads/online_shoppers_intention_explore.csv')
         
-        # import pdb
-        # pdb.set_trace()
-        
-        testData = nimble.data(df, featureNames=True)
+        # testData = nimble.data(df, featureNames=True)
         # testData = nimble.data([['france', 'argentina'], ['morocco', 'croatia']], 
         #                        featureNames=['left_sided_wc_semi-final_branch', 'right_sided_wc_semi-final_branch'])
 
@@ -167,25 +168,22 @@ class HighDimensionSafe(DataTestObject):
         # test that maxColumnWidth is currently whatever it is
         terminalSize = shutil.get_terminal_size()
         expMaxWidth = max(maxWidth, terminalSize[0] - 1)
-        maxColumnWidth = expMaxWidth // (colNumber * 10)
+        maxColumnWidth = expMaxWidth // (colNumber + 0.5)
 
-        # expWidth is then created by estimating the maxColumnWidth by putting 
-        # algorithm against expWidth 
-         
         old_output = sys.stdout
         temp_output = StringIO()
         sys.stdout = temp_output
         
-        testData[:3,:].show() # put maxColumnWidth as parameter in here
+        testData.show() # put maxColumnWidth as parameter in here
         sys.stdout = old_output
-        rec_line = temp_output.getvalue()
+        #rec_line = temp_output.getvalue()
         
-        measure = re.search('(\\n *)(.*?)\\n', rec_line)
+        measure = re.search('(\\n *)(.*?)\\n', temp_output.getvalue())#rec_line)
         output_line = measure.group(2)
         
         lineLength = len(output_line) 
         # read line one or line two of file? 
-        testColumnWidth = lineLength // colNumber  
+        testColumnWidth = lineLength - (colNumber - 1) // colNumber  
         assert maxColumnWidth == testColumnWidth
 
     def test_highDimension_copy(self):
