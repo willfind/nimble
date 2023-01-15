@@ -667,13 +667,13 @@ def testPrepTypeFunctionsUseLog():
 
     # points.setName
     dataObj = nimble.data(data, returnType='Matrix', useLog=False)
-    dataObj.points.setNames('newPtName', oldIdentifiers=0)
+    dataObj.points.setName(0, 'newPtName')
     checkLogContents('points.setName', dataObj.logID, {'oldIdentifier': 0,
                                                   'newName': 'newPtName'})
 
     # features.setName
     dataObj = nimble.data(data, returnType='Matrix', useLog=False)
-    dataObj.features.setNames('newFtName', oldIdentifiers=0)
+    dataObj.features.setName(0, 'newFtName')
     checkLogContents('features.setName', dataObj.logID, {'oldIdentifier': 0,
                                                     'newName': 'newFtName'})
 
