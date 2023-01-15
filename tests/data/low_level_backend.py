@@ -305,48 +305,48 @@ class LowLevelBackend(object):
         """ Test points.setName() for InvalidArgumentType when given the wrong type for prev"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        toTest.points.setName(oldIdentifier=0.3, newName="New!")
+        toTest.points.setNames("New!", oldIdentifiers=0.3)
 
     @raises(IndexError)
     def test_points_setName_exceptionPrevInvalidIndex(self):
         """ Test points.setName() for InvalidArgumentValue when given an invalid prev index"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        toTest.points.setName(oldIdentifier=12, newName="New!")
+        toTest.points.setNames("New!", oldIdentifiers=12)
 
     @raises(KeyError)
     def test_points_setName_exceptionPrevNotFound(self):
         """ Test points.setName() for InvalidArgumentValue when the prev pointName is not found"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        toTest.points.setName(oldIdentifier="Previous!", newName="New!")
+        toTest.points.setNames( "New!", oldIdentifiers="Previous!")
 
     @raises(InvalidArgumentType)
     def test_points_setName_exceptionNewInvalidType(self):
         """ Test points.setName() for InvalidArgumentValue when the new pointName is not a string"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        toTest.points.setName(oldIdentifier="three", newName=4)
+        toTest.points.setNames(4, oldIdentifiers="three")
 
     @raises(InvalidArgumentValue)
     def test_points_setName_exceptionNonUnique(self):
         """ Test points.setName() for InvalidArgumentValue when a duplicate pointName is given"""
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        toTest.points.setName(oldIdentifier="three", newName="two")
+        toTest.points.setNames( "two", oldIdentifiers="three")
 
     @raises(ImproperObjectAction)
     def test_points_setName_exceptionNoPoints(self):
         toTest = self.constructor()
-        toTest.points.setName("hello", "2")
+        toTest.points.setNames( "2", oldIdentifiers="hello")
 
     @logCountAssertionFactory(2)
     def test_points_setName_handmade_viaIndex(self):
         """ Test points.setName() against handmade input when specifying the pointName by index """
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        toTest.points.setName(0, "ZERO")
-        toTest.points.setName(3, "3")
+        toTest.points.setNames("ZERO", oldIdentifiers=0)
+        toTest.points.setNames( "3", oldIdentifiers=3)
         expectedNames = ["ZERO", "one", "two", "3"]
         confirmExpectedNames(toTest, 'point', expectedNames)
 
@@ -354,8 +354,8 @@ class LowLevelBackend(object):
         """ Test points.setName() against handmade input when specifying the pointName by name """
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        toTest.points.setName("zero", "ZERO")
-        toTest.points.setName("three", "3")
+        toTest.points.setNames("ZERO", oldIdentifiers="zero")
+        toTest.points.setNames("3", oldIdentifiers="three")
         expectedNames = ["ZERO", "one", "two", "3"]
         confirmExpectedNames(toTest, 'point', expectedNames)
 
@@ -363,7 +363,7 @@ class LowLevelBackend(object):
         """ Test points.setName() return None as output """
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
-        ret = toTest.points.setName("zero", "ZERO")
+        ret = toTest.points.setNames("ZERO", oldIdentifiers="zero")
         assert ret is None
 
 
@@ -376,48 +376,48 @@ class LowLevelBackend(object):
         """ Test features.setName() for InvalidArgumentType when given the wrong type for prev"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.features.setName(oldIdentifier=0.3, newName="New!")
+        toTest.features.setNames("New!", oldIdentifiers=0.3)
 
     @raises(IndexError)
     def test_features_setName_exceptionPrevInvalidIndex(self):
         """ Test features.setName() for InvalidArgumentValue when given an invalid prev index"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.features.setName(oldIdentifier=12, newName="New!")
+        toTest.features.setNames("New!", oldIdentifiers=12)
 
     @raises(KeyError)
     def test_features_setName_exceptionPrevNotFound(self):
         """ Test features.setName() for InvalidArgumentValue when the prev featureName is not found"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.features.setName(oldIdentifier="Previous!", newName="New!")
+        toTest.features.setNames("New!", oldIdentifiers="Previous!")
 
     @raises(InvalidArgumentType)
     def test_features_setName_exceptionNewInvalidType(self):
         """ Test features.setName() for InvalidArgumentValue when the new featureName is not a string"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.features.setName(oldIdentifier="three", newName=4)
+        toTest.features.setNames(4, oldIdentifiers="three")
 
     @raises(InvalidArgumentValue)
     def test_features_setName_exceptionNonUnique(self):
         """ Test features.setName() for InvalidArgumentValue when a duplicate featureName is given"""
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.features.setName(oldIdentifier="three", newName="two")
+        toTest.features.setNames("two", oldIdentifiers="three")
 
     @raises(ImproperObjectAction)
     def test_features_setName_exceptionNoFeatures(self):
         toTest = self.constructor()
-        toTest.features.setName("hello", "2")
+        toTest.features.setNames("2", oldIdentifiers="hello")
 
     @logCountAssertionFactory(2)
     def test_features_setName_handmade_viaIndex(self):
         """ Test features.setName() against handmade input when specifying the featureName by index """
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.features.setName(0, "ZERO")
-        toTest.features.setName(3, "3")
+        toTest.features.setNames( "ZERO", oldIdentifiers=0)
+        toTest.features.setNames("3", oldIdentifiers=3)
         expectedFeatureNames = ["ZERO", "one", "two", "3"]
         confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
 
@@ -425,8 +425,8 @@ class LowLevelBackend(object):
         """ Test features.setName() against handmade input when specifying the featureName by name """
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.features.setName("zero", "ZERO")
-        toTest.features.setName("three", "3")
+        toTest.features.setNames("ZERO", oldIdentifiers="zero")
+        toTest.features.setNames("3", oldIdentifiers="three")
         expectedFeatureNames = ["ZERO", "one", "two", "3"]
         confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
 
@@ -434,7 +434,7 @@ class LowLevelBackend(object):
         """ Test features.setName() returns None as output """
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        ret = toTest.features.setName("zero", "ZERO")
+        ret = toTest.features.setNames("ZERO", oldIdentifiers="zero")
         assert ret is None
 
     #####################

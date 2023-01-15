@@ -676,16 +676,16 @@ def test_points_combineByExpandingFeatures():
     for constructor in nonViewConstructors:
         backend(wrapped, prepAndCheck, constructor=constructor)
 
-def test_points_setName():
+def test_points_setName(): # to be replaced or augmented
     def wrapped(obj, useLog):
-        return obj.points.setName(0, 'newPointName', useLog=useLog)
+        return obj.points.setNames('newPointName', oldIdentifiers=0, useLog=useLog)
 
     for constructor in nonViewConstructors:
         backend(wrapped, prepAndCheck, constructor=constructor)
 
-def test_features_setName():
+def test_features_setName(): # to be replaced or augmented 
     def wrapped(obj, useLog):
-        return obj.features.setName(0, 'newFeatureName', useLog=useLog)
+        return obj.features.setNames('newFeatureName', oldIdentifiers=0, useLog=useLog)
 
     for constructor in nonViewConstructors:
         backend(wrapped, prepAndCheck, constructor=constructor)

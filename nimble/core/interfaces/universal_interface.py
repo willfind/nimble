@@ -1873,7 +1873,7 @@ class TrainedLearners(TrainedLearner):
             if scoreMode is None:
                 ret = rawPredictions.points.calculate(
                     extractWinningPredictionLabel, useLog=False)
-                ret.features.setName(0, "winningLabel", useLog=False)
+                ret.features.setNames("winningLabel", oldIdentifiers=0, useLog=False)
                 return ret
             if scoreMode.lower() == 'bestScore'.lower():
                 # construct a list of lists, with each row in the list

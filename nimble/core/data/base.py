@@ -3100,7 +3100,6 @@ class Base(ABC):
         if subgroupFeature:
             subgroupFt = self.features[subgroupFeature]
             # remove name in case is same as feature
-            #subgroupFt.features.setName(0, None)
             subgroupFt.features.setNames(None, oldIdentifiers=0)
             toGroup.features.insert(1, subgroupFt)
         grouped = toGroup.groupByFeature(0, useLog=False)

@@ -2197,7 +2197,7 @@ class Points(ABC):
             self._base.features.setNames(fNames, useLog=False)
         else:
             for i, name in enumerate(newFtNames):
-                self._base.features.setName(namesIdx + i, name, useLog=False)
+                self._base.features.setNames( name, oldIdentifiers=namesIdx + i, useLog=False)
         if self._base.points._namesCreated():
             self.setNames(pNames, useLog=False)
 
