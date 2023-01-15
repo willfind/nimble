@@ -2355,8 +2355,8 @@ class Features(ABC):
         return self._unique()
 
     @limitedTo2D
-    def report(self, basicStatistics=True, extraStatisticFunctions=(), *,
-               useLog=None, dtypes=False):
+    def report(self, basicStatistics=True, extraStatisticFunctions=(), 
+               dtypes=False, *, useLog=None):
         """
         Report containing a summary and statistics for each feature.
 
@@ -2378,6 +2378,10 @@ class Features(ABC):
             A list of functions to include in the report. Functions must
             accept a feature view as the only input and output a single
             value.
+        dtypes : bool
+            True will add an additional column to the features report
+            which would include the data type of each feature in the
+            dataset.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the

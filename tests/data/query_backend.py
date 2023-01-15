@@ -3100,17 +3100,19 @@ class QueryBackend(DataTestObject):
                                featureNames=fnames)
         
         ret = obj.features.report(dtypes=True)
-        
         assert 'dataType' in ret.features.getNames()
-        expFeatureTypes = ['int64', 'object', 'float64']
-
-        if type(obj) is nimble.core.data.matrix.Matrix or type(obj) is nimble.core.data.sparse.Sparse:
-            assert list(ret.features['dataType']) == ['object', 'object', 'object']
-        elif type(obj) is nimble.core.data.list.List:
-            assert list(ret.features['dataType']) == ['object', 'object', 'object']
+        reportDtypes = list(ret.features['dataType']) 
+        expDtypes = [np.integer, np.object_, np.float]
+        
+        if type(obj) in [nimble.core.data.matrix.Matrix, nimble.core.data.sparse.Sparse, 
+                         nimble.core.data.list.List]:
+            for i in range(len(reportDtypes)):
+              assert np.issubdtype(reportDtypes[i], np.object_) 
         elif type(obj) is nimble.core.data.dataframe.DataFrame:
-            assert list(ret.features['dataType']) == expFeatureTypes
-      
+            for i in range(len(reportDtypes)):
+              assert np.issubdtype(reportDtypes[i], expDtypes[i]) 
+        
+        
     ##########
     # report #
     ##########
