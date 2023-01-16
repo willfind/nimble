@@ -2334,10 +2334,10 @@ class Base(ABC):
         """
         Aspirational helper for detecting the available space for printing
         within a notebook. However, no viable method has been found to
-        do so. We therefore return a handpicked default, choosen to be
+        do so. We therefore return a handpicked default, chosen to be
         an acceptable max width even on a 1360x768 laptop screen.
         """
-       
+        # Sane default
         return (117, 30)
 
 
@@ -2378,7 +2378,6 @@ class Base(ABC):
             if maxColumnWidth < 8:
                 maxColumnWidth = 8 # lower limit for dynamic column width
             
-
         if includeObjectName and self.name is not None:
             ret += f'"{self._name}" '
         if len(self._dims) > 2:

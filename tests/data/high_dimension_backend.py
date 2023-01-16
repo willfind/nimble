@@ -4,6 +4,8 @@
 import sys
 from io import StringIO
 import tempfile
+import shutil
+import re 
 
 import numpy as np
 import pandas as pd
@@ -141,49 +143,34 @@ class HighDimensionSafe(DataTestObject):
         3. set aside number of chars as validation metric
         4. use StringIO to measure chars and compare result
         '''
-        from io import StringIO
-        import sys
-        #import tempfile
-        import shutil
-        import re 
-        
-        
-        import pandas as pd
-        
-        import pdb
-        pdb.set_trace()
-        # df = pd.read_csv('/Users/niniola/Downloads/online_shoppers_intention_explore.csv')
-        
-        # testData = nimble.data(df, featureNames=True)
-        # testData = nimble.data([['france', 'argentina'], ['morocco', 'croatia']], 
-        #                        featureNames=['left_sided_wc_semi-final_branch', 'right_sided_wc_semi-final_branch'])
-
-        testData = nimble.data([['france', 'argentina', 'portugal', 'spain'], ['morocco', 'croatia', 'brazil', 'england']], 
-                               featureNames=['left_sided_wc_semi-final_branch', 'right_sided_wc_semi-final_branch', 'left_sided_wc_quarter-final_exits', 'right_sided_wc_quarter-final_exit'])
+    
+        # import pdb
+        # pdb.set_trace()
+        testData = nimble.data([['france', 'argentina', 'portugal', 'spain'],
+                                ['morocco', 'croatia', 'brazil', 'england']],
+                               featureNames=['left_sided_wc_semi-final_branch',
+                                             'right_sided_wc_semi-final_branch',
+                                             'left_sided_wc_quarter-final_exits',
+                                             'right_sided_wc_quarter-final_exit'])
 
         maxWidth = 79
-        # assert lineCount == lineEx
         colNumber = len(testData.features)
-
-        # test that maxColumnWidth is currently whatever it is
         terminalSize = shutil.get_terminal_size()
         expMaxWidth = max(maxWidth, terminalSize[0] - 1)
         maxColumnWidth = expMaxWidth // (colNumber + 2)
-
+        if maxColumnWidth < 8:
+            maxColumnWidth = 8
+            
         old_output = sys.stdout
         temp_output = StringIO()
         sys.stdout = temp_output
-        
-        testData.show() # put maxColumnWidth as parameter in here
+        testData.show()
         sys.stdout = old_output
-        #rec_line = temp_output.getvalue()
-        
-        measure = re.search('(\\n *)(.*?)\\n', temp_output.getvalue())#rec_line)
-        output_line = measure.group(2)
-        
-        lineLength = len(output_line) 
-        # read line one or line two of file? 
-        testColumnWidth = (lineLength - (colNumber - 1)) // (colNumber)  
+               
+        measure = re.search('(\\n *)(.*?)\\n', temp_output.getvalue())
+        output_line = measure.group(2) # second line of output which the feature names are on
+        lineLength = len(output_line)
+        testColumnWidth = (lineLength - (colNumber - 1)) // (colNumber) 
         assert maxColumnWidth == testColumnWidth
 
     def test_highDimension_copy(self):
