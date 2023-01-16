@@ -2374,7 +2374,7 @@ class Base(ABC):
                 maxHeight -= 1
         
         if maxColumnWidth == 'automatic':
-            maxColumnWidth = maxWidth // (len(self.features) + 0.5)
+            maxColumnWidth = maxWidth // (len(self.features) + 2)
             if maxColumnWidth < 8:
                 maxColumnWidth = 8 # lower limit for dynamic column width
             

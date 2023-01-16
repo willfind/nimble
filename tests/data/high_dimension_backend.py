@@ -168,7 +168,7 @@ class HighDimensionSafe(DataTestObject):
         # test that maxColumnWidth is currently whatever it is
         terminalSize = shutil.get_terminal_size()
         expMaxWidth = max(maxWidth, terminalSize[0] - 1)
-        maxColumnWidth = expMaxWidth // (colNumber + 0.5)
+        maxColumnWidth = expMaxWidth // (colNumber + 2)
 
         old_output = sys.stdout
         temp_output = StringIO()
@@ -183,7 +183,7 @@ class HighDimensionSafe(DataTestObject):
         
         lineLength = len(output_line) 
         # read line one or line two of file? 
-        testColumnWidth = lineLength - (colNumber - 1) // colNumber  
+        testColumnWidth = (lineLength - (colNumber - 1)) // (colNumber)  
         assert maxColumnWidth == testColumnWidth
 
     def test_highDimension_copy(self):
