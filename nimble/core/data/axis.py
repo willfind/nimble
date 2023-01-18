@@ -218,11 +218,16 @@ class Axis(ABC):
 
         # As needed, wrap (for singletons) or unpack (for non-standard iterables),
         # both cases below need to have assignments in list form
-        if type(assignments) in [int, str, type(None)]:
+        if type(assignments) in [str, type(None)]:
             assignments = [assignments]
+        elif type(assignments) in [int, float, np.integer]:
+            msg = "New assignments for points or feature names may only be of type "
+            msg += "str or None."
+            raise InvalidArgumentType(msg)
+
         elif not isinstance(assignments, (list, dict)):
             assignments = valuesToPythonList(assignments, 'assignments')
-
+        
         count = len(self)
         # Case: oldIdentifiers not specified, so assignments must be changing ALL names
         if oldIdentifiers is None:
@@ -272,6 +277,10 @@ class Axis(ABC):
             # at this point oldIdentifiers CANNOT be None
             if type(oldIdentifiers) in [int, str]:
                 oldIdentifiers = [oldIdentifiers]
+                
+            elif not isinstance(oldIdentifiers, (list, dict)):
+                msg = "oldIdentifiers may be of int, str, list, or dict only."
+                raise InvalidArgumentType(msg)
 
             if len(assignments) <= count and len(assignments) == len(oldIdentifiers):
                 indices = []
