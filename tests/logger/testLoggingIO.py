@@ -665,17 +665,17 @@ def testPrepTypeFunctionsUseLog():
     checkLogContents('points.combineByExpandingFeatures', dataObj.logID,
                      {'featureWithFeatureNames': 'dist', 'featuresWithValues': 'time'})
 
-    # points.setName
-    dataObj = nimble.data(data, returnType='Matrix', useLog=False)
-    dataObj.points.setNames('newPtName', oldIdentifiers=0)
-    checkLogContents('points.setName', dataObj.logID, {'oldIdentifier': 0,
-                                                  'newName': 'newPtName'})
+    # # points.setName
+    # dataObj = nimble.data(data, returnType='Matrix', useLog=False)
+    # dataObj.points.setNames('newPtName', oldIdentifiers=0)
+    # checkLogContents('points.setNames', dataObj.logID, {'oldIdentifiers': 0,
+    #                                               'assignments': 'newPtName'})
 
-    # features.setName
-    dataObj = nimble.data(data, returnType='Matrix', useLog=False)
-    dataObj.features.setNames('newFtName', oldIdentifiers=0)
-    checkLogContents('features.setName', dataObj.logID, {'oldIdentifier': 0,
-                                                    'newName': 'newFtName'})
+    # # features.setName
+    # dataObj = nimble.data(data, returnType='Matrix', useLog=False)
+    # dataObj.features.setNames('newFtName', oldIdentifiers=0)
+    # checkLogContents('features.setNames', dataObj.logID, {'oldIdentifiers': 0,
+    #                                                 'assignments': 'newFtName'})
 
     # points.setNames
     dataObj = nimble.data(data, returnType='Matrix', useLog=False)

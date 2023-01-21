@@ -174,42 +174,10 @@ class Axis(ABC):
             self._setAllDefault()
 
         return copy.copy(self.namesInverse)
-
-    def _setName(self, oldIdentifier, newName):
-        if len(self) == 0:
-            axis = self._axis
-            msg = f"Cannot set any {axis} names; this object has no {axis}s"
-            raise ImproperObjectAction(msg)
-        if not isinstance(newName, (str, type(None))):
-            msg = "The new name must be either None or a string"
-            raise InvalidArgumentType(msg)
-        if self.names is None:
-            self._setAllDefault()
-
-        index = self._getIndex(oldIdentifier)
-        if oldIdentifier in self.names:
-            oldName = oldIdentifier
-        else:
-            oldName = self.namesInverse[index]
-
-        if newName in self.names: # under what condition is this fine? 
-            if self.namesInverse[index] == newName:
-                return
-            msg = "This name '" + newName + "' is already in use"
-            raise InvalidArgumentValue(msg)
-
-        #remove the current name
-        if oldName is not None:
-            del self.names[oldName]
-
-        # setup the new name #    
-        self.namesInverse[index] = newName
-        if newName is not None:
-            self.names[newName] = index
-
+   
 
     def _setNames(self, assignments, oldIdentifiers=None):
-        # Special case where we remove the entirety of the names, but only if there aren't
+       # Special case where we remove the entirety of the names, but only if there aren't
         # any specified oldIdentifiers
         if assignments is None and oldIdentifiers is None:
             self.names = None
@@ -275,12 +243,17 @@ class Axis(ABC):
         # Case: A single name, or subset of names to replace have been specified
         else:
             # at this point oldIdentifiers CANNOT be None
-            if type(oldIdentifiers) in [int, str]:
+            if type(oldIdentifiers) in [int, str]: # i think we can't have int
                 oldIdentifiers = [oldIdentifiers]
                 
             elif not isinstance(oldIdentifiers, (list, dict)):
                 msg = "oldIdentifiers may be of int, str, list, or dict only."
                 raise InvalidArgumentType(msg)
+            
+            if len(self) == 0:
+                axis = self._axis
+                msg = f"Cannot set any {axis} names; this object has no {axis}s"
+                raise ImproperObjectAction(msg)
 
             if len(assignments) <= count and len(assignments) == len(oldIdentifiers):
                 indices = []

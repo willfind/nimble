@@ -2682,10 +2682,6 @@ class Features(ABC):
         pass
 
     @abstractmethod
-    def _setName(self, oldIdentifier, newName):
-        pass
-
-    @abstractmethod
     def _setNames(self, assignments, oldIdentifiers=None):
         pass
 

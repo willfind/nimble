@@ -364,6 +364,8 @@ class LowLevelBackend(object):
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
         ret = toTest.points.setNames("ZERO", oldIdentifiers="zero")
+        #ret = toTest.points.setName("zero","ZERO")
+
         assert ret is None
 
 
@@ -377,6 +379,8 @@ class LowLevelBackend(object):
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
         toTest.features.setNames("New!", oldIdentifiers=0.3)
+        #toTest.features.setName(0.3, "New!")
+
 
     @raises(IndexError)
     def test_features_setName_exceptionPrevInvalidIndex(self):
@@ -441,9 +445,9 @@ class LowLevelBackend(object):
     # points.setNames() #
     #####################
 
-    @raises(InvalidArgumentValue)
+    @raises(InvalidArgumentType)
     def test_points_setNames_exceptionWrongTypeObject(self):
-        """ Test points.setNames() for InvalidArgumentValue a point in point Names is an unexpected type """
+        """ Test points.setNames() for InvalidArgumentType a point in point Names is an unexpected type """
         # a list is the expected argument type, but the value is the incorrect type
         toTest = self.constructor(pointNames=['one'])
         toTest.points.setNames(12)
@@ -570,7 +574,7 @@ class LowLevelBackend(object):
     # features.setNames() #
     #######################
 
-    @raises(InvalidArgumentValue)
+    @raises(InvalidArgumentType)
     def test_features_setNames_exceptionWrongTypeObject(self):
         """ Test features.setNames() for InvalidArgumentType when a feature in featureNames is an unexpected type """
         # a list is the expected argument type, but the value is the incorrect type
