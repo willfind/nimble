@@ -110,51 +110,6 @@ class Features(ABC):
         """
         return self._getNames()
 
-
-    @prepLog
-    def setName(self, oldIdentifier, newName, *,
-                useLog=None): # pylint: disable=unused-argument
-        """
-        Set or change a featureName.
-
-        Set the name of the feature at ``oldIdentifier`` with the value
-        of ``newName``.
-
-        Parameters
-        ----------
-        oldIdentifier : str, int
-            A string or integer, specifying either a current featureName
-            or the index of a current featureName.
-        newName : str
-            May be either a string not currently in the featureName set,
-            or None for an default featureName. newName cannot begin
-            with the default prefix.
-        useLog : bool, None
-            Local control for whether to send object creation to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-
-        See Also
-        --------
-        setNames, getName, getNames
-
-        Examples
-        --------
-        >>> X = nimble.identity(4, featureNames=['a', 'b', 'c', 'd'])
-        >>> X.features.setName('b', 'new')
-        >>> X.features.getNames()
-        ['a', 'new', 'c', 'd']
-
-        Keywords
-        --------
-        column, title, header, heading, attribute, identifier
-        """
-        self._setName(oldIdentifier, newName)
-
-
     @prepLog
     def setNames(self, assignments, oldIdentifiers=None, *,
                  useLog=None): # pylint: disable=unused-argument

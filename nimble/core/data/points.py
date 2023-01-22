@@ -105,50 +105,6 @@ class Points(ABC):
 
 
     @prepLog
-    def setName(self, oldIdentifier, newName, *,
-                useLog=None): # pylint: disable=unused-argument
-        """
-        Set or change a pointName.
-
-        Set the name of the point at ``oldIdentifier`` with the value of
-        ``newName``.
-
-        Parameters
-        ----------
-        oldIdentifier : str, int
-            A string or integer, specifying either a current pointName
-            or the index of a current pointName.
-        newName : str
-            May be either a string not currently in the pointName set,
-            or None for an default pointName. newName cannot begin with
-            the default prefix.
-        useLog : bool, None
-            Local control for whether to send object creation to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-
-        See Also
-        --------
-        setNames, getName, getNames
-
-        Examples
-        --------
-        >>> X = nimble.identity(4, pointNames=['a', 'b', 'c', 'd'])
-        >>> X.points.setName('b', 'new')
-        >>> X.points.getNames()
-        ['a', 'new', 'c', 'd']
-
-        Keywords
-        --------
-        row, key, index, header, heading, identifier
-        """
-        self._setName(oldIdentifier, newName)
-
-
-    @prepLog
     def setNames(self, assignments, oldIdentifiers=None, *,
                  useLog=None): # pylint: disable=unused-argument
         """

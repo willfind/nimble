@@ -71,7 +71,6 @@ if __name__ == "__main__":
         obj2 = nimble.data(scaled)
         obj1.features.append(obj2)
 
-        #obj1.features.setName(0, "[0, 1) random noise")
         obj1.features.setNames("(Feature 0 * 3) + noise", oldIdentifiers=1)
         obj1.name = "Noise"
 
