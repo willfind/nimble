@@ -11,9 +11,8 @@ Methods tested in this file (none modify the data):
 ID, points._nameDifference, features._nameDifference, points._nameIntersection,
 features._nameIntersection, points._nameSymmetricDifference,
 features._nameSymmetricDifference, points._nameUnion, features._nameUnion,
-points.setName, features.setName, points.setNames, features.setNames,
-_removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
-_equalFeatureNames, points.getNames, features.getNames, __len__,
+points.setNames, features.setNames, _removePointNameAndShift, _removeFeatureNameAndShift, 
+_equalPointNames, _equalFeatureNames, points.getNames, features.getNames, __len__,
 features.getIndex, features.getName, points.getIndex, points.getName,
 points.getIndices, features.getIndices, constructIndicesList, copy
 features.hasName, points.hasName, __bool__, _treatAs2D
@@ -307,6 +306,14 @@ class LowLevelBackend(object):
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
         toTest.points.setNames("New!", oldIdentifiers=0.3)
+     
+    @raises(InvalidArgumentType)
+    def test_points_setNames_m_exceptionPrevWrongType(self):
+        """ Test points.setName() for InvalidArgumentType when given the wrong type for prev"""
+        origNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(pointNames=origNames)
+        toTest.points.setNames(["New!", "newer!"], oldIdentifiers=[0.3, 1])   
+        
 
     @raises(IndexError)
     def test_points_setName_exceptionPrevInvalidIndex(self):
@@ -351,7 +358,7 @@ class LowLevelBackend(object):
         expectedNames = ["ZERO", "one", "two", "3"]
         confirmExpectedNames(toTest, 'point', expectedNames)
 
-    def test_points_setName_handmade_viaPointName(self):
+    def test_points_setNames_m_handmade_viaPointName(self):
         """ Test points.setName() against handmade input when specifying the pointName by name """
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
@@ -497,7 +504,6 @@ class LowLevelBackend(object):
     # features.setNames() #
     #######################
     
-    
     @raises(InvalidArgumentType)
     def test_features_setName_exceptionPrevWrongType(self):
         """ Test features.setName() for InvalidArgumentType when given the wrong type for prev"""
@@ -548,12 +554,14 @@ class LowLevelBackend(object):
         expectedFeatureNames = ["ZERO", "one", "two", "3"]
         confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
 
-    def test_features_setName_handmade_viaFeatureName(self):
+    def test_features_setNames_m_handmade_viaFeatureName(self):
+        # removed the single test and replaced it with a multi-test
+        # should have both
         """ Test features.setName() against handmade input when specifying the featureName by name """
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.features.setNames("ZERO", oldIdentifiers="zero")
-        toTest.features.setNames("3", oldIdentifiers="three")
+        toTest.features.setNames(["ZERO", "3"], oldIdentifiers=["zero", "three"])
+        #toTest.features.setNames("3", oldIdentifiers="three")
         expectedFeatureNames = ["ZERO", "one", "two", "3"]
         confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
 

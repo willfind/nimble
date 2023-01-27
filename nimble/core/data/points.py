@@ -65,7 +65,7 @@ class Points(ABC):
 
         See Also
         --------
-        getNames, setName, setNames
+        getNames, setNames
 
         Examples
         --------
@@ -89,7 +89,7 @@ class Points(ABC):
 
         See Also
         --------
-        getName, setName, setNames
+        getName, setNames
 
         Examples
         --------
@@ -133,7 +133,7 @@ class Points(ABC):
 
         See Also
         --------
-        setName, getName, getNames
+        getName, getNames
 
         Examples
         --------
@@ -141,6 +141,13 @@ class Points(ABC):
         >>> X.points.setNames(['1', '2', '3', '4'])
         >>> X.points.getNames()
         ['1', '2', '3', '4']
+        >>> X.points.setNames(['newer', 'sea'], oldIdentifiers=['1', '3'])
+        >>> X.points.getNames()
+        ['newer', '2', 'sea', '4']
+        >>> X.points.setNames('by', oldIdentifiers='2')
+        >>> X.points.getNames()
+        ['newer', 'by', 'sea', '4']
+        
 
         Keywords
         --------

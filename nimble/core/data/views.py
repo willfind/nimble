@@ -265,10 +265,6 @@ class PointsView(Points, metaclass=ABCMeta):
     ####################################
 
     @pointsExceptionDoc
-    def setName(self, oldIdentifier, newName, *, useLog=None):
-        readOnlyException('setName')
-
-    @pointsExceptionDoc
     def setNames(self, assignments, oldIdentifiers=None, *, useLog=None):
         readOnlyException('setNames')
 
@@ -353,9 +349,6 @@ class FeaturesView(Features, metaclass=ABCMeta):
     # Low Level Operations, Disallowed #
     ####################################
 
-    @featuresExceptionDoc
-    def setName(self, oldIdentifier, newName, *, useLog=None):
-        readOnlyException('setName')
 
     @featuresExceptionDoc
     def setNames(self, assignments, oldIdentifiers=None, *, useLog=None):
