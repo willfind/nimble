@@ -349,9 +349,27 @@ class LowLevelBackend(object):
         toTest.points.setNames( "3", oldIdentifiers=3)
         expectedNames = ["ZERO", "one", "two", "3"]
         confirmExpectedNames(toTest, 'point', expectedNames)
-
+    
+    @logCountAssertionFactory(1)
+    def test_points_setNames_handmade_multiAssign_viaIndex(self):
+        """ Test points.setNames() against handmade input when specifying the pointName by index """
+        origNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(pointNames=origNames)
+        toTest.points.setNames(["ZERO", "3"], oldIdentifiers=[0,3])
+        expectedNames = ["ZERO", "one", "two", "3"]
+        confirmExpectedNames(toTest, 'point', expectedNames)
+        
     def test_points_setNames_handmade_viaPointName(self):
         """ Test points.setNames() against handmade input when specifying the pointName by name """
+        origNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(pointNames=origNames)
+        toTest.points.setNames("ZERO", oldIdentifiers="zero")
+        toTest.points.setNames("3", oldIdentifiers="three")
+        expectedNames = ["ZERO", "one", "two", "3"]
+        confirmExpectedNames(toTest, 'point', expectedNames)
+
+    def test_points_setNames_handmade_multiAssign_viaPointName(self):
+        """ Test points.setNames() against handmade input when specifying the pointNames by name """
         origNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(pointNames=origNames)
         toTest.points.setNames(["ZERO", "3"], oldIdentifiers=["zero", "three"])
@@ -544,9 +562,27 @@ class LowLevelBackend(object):
         toTest.features.setNames("3", oldIdentifiers=3)
         expectedFeatureNames = ["ZERO", "one", "two", "3"]
         confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
-
-    def test_features_setNames_handmade_viaFeatureName(self):
+    
+    @logCountAssertionFactory(1)
+    def test_features_setNames_handmade_multiAssign_viaIndex(self):
+        """ Test features.setNames() against handmade input when specifying the featureName by index """
+        origNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(featureNames=origNames)
+        toTest.features.setNames(["ZERO", "3"], oldIdentifiers=[0,3])
+        expectedNames = ["ZERO", "one", "two", "3"]
+        confirmExpectedNames(toTest, 'feature', expectedNames)
+        
+    def test_features_setName_handmade_viaFeatureName(self):
         """ Test features.setNames() against handmade input when specifying the featureName by name """
+        origFeatureNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(featureNames=origFeatureNames)
+        toTest.features.setNames("ZERO", oldIdentifiers="zero")
+        toTest.features.setNames("3", oldIdentifiers="three")
+        expectedFeatureNames = ["ZERO", "one", "two", "3"]
+        confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
+
+    def test_features_setNames_handmade_multiAssign_viaFeatureName(self):
+        """ Test features.setNames() against handmade input when specifying the featureNames by name """
         origFeatureNames = ["zero", "one", "two", "three"]
         toTest = self.constructor(featureNames=origFeatureNames)
         toTest.features.setNames(["ZERO", "3"], oldIdentifiers=["zero", "three"])
