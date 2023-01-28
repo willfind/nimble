@@ -133,7 +133,7 @@ class Features(ABC):
               feature names.
             * dict - The mapping for each feature name in the format
               {name:index}
-            * None - This will remove names from this object.
+            * None - remove names from this object.
         oldIdentifiers : str, int, iterable, None
             * iterable - The names of features to be renamed.
             * str - The name of a feature to be renamed.

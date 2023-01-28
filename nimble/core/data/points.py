@@ -111,18 +111,28 @@ class Points(ABC):
         Set or rename all of the point names of this object.
 
         Set the point names of this object according to the values
-        specified by the ``assignments`` parameter. If assignments is
-        None, then all point names will be given new default values.
+        specified by the ``assignments`` parameter. If the number of
+        new point names being passed as assignments is less than the
+        number of points in the object, then the ``oldIdentifiers``
+        argument must be passed with the corresponding previous point
+        names that are to be changed. If assignments is None, then all
+        point names will be given new default values.
 
         Parameters
         ----------
-        assignments : iterable, dict, None
+        assignments : str, iterable, dict, None
+            * str - A string not currently in the pointName set.
             * iterable - Given a list-like container, the mapping
               between names and array indices will be used to define the
               point names.
             * dict - The mapping for each point name in the format
               {name:index}
-            * None - remove names from this object
+            * None - remove names from this object.
+        oldIdentifiers : str, int, iterable, None
+            * iterable - The names of points to be renamed.
+            * str - The name of a point to be renamed.
+            * None - The default when assigning names to all points in the
+              data.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
