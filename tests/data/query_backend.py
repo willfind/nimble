@@ -2906,7 +2906,7 @@ class QueryBackend(DataTestObject):
         pointNames =  ['1', 'one', '2']
         featureNames = ['one', 'two', 'three']
 
-        data_pinv = linalg.pinv2(data)
+        data_pinv = linalg.pinv(data)
         resObj = self.constructor(data_pinv)
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
