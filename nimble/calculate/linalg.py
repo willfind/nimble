@@ -172,17 +172,12 @@ def pseudoInverse(aObj, method='svd'):
             raise InvalidArgumentValue(msg) from exception
         raise exception
 
+
     pinvObj = dtypeConvert(aObj.copy(to='numpy array'))
-    if method == 'svd':
-        try:
-            pinvData = scipy.linalg.pinv2(pinvObj)
-        except ValueError as exception:
-            _handleNonSupportedTypes(exception)
-    else:
-        try:
-            pinvData = scipy.linalg.pinv(pinvObj)
-        except ValueError as exception:
-            _handleNonSupportedTypes(exception)
+    try:
+        pinvData = scipy.linalg.pinv(pinvObj)
+    except ValueError as exception:
+        _handleNonSupportedTypes(exception)
 
     return nimble.data(pinvData, returnType=aObj.getTypeString(), useLog=False)
 
