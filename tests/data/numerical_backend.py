@@ -38,7 +38,6 @@ preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
 preserveRPath = os.path.relpath(preserveAPath)
 preservePair = (preserveAPath, preserveRPath)
 
-
 def calleeConstructor(data, constructor):
     if constructor is None:
         return pythonRandom.random()
