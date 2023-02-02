@@ -4,6 +4,7 @@
 import sys
 from io import StringIO
 import tempfile
+import re
 
 import numpy as np
 import pandas as pd
@@ -134,6 +135,25 @@ class HighDimensionSafe(DataTestObject):
             finally:
                 sys.stdout = stdoutBackup
 
+    def test_showIndicesInsteadOfNames(self):
+        '''Test that show() works with indices instead of names.'''
+        
+        testData = nimble.data([['france', 'argentina', 'portugal', 'spain'],
+                                ['morocco', 'croatia', 'brazil', 'england']],
+                               featureNames=['left_sided_wc_semi-final_branch',
+                                             'right_sided_wc_semi-final_branch',
+                                             'left_sided_wc_quarter-final_exits',
+                                             'right_sided_wc_quarter-final_exit'])
+        # import pdb
+        # pdb.set_trace()
+        old_output = sys.stdout
+        temp_output = StringIO()
+        sys.stdout = temp_output
+        testData.show(includePointNames=False, includeFeatureNames=False)
+        sys.stdout = old_output
+        
+        printed_out = re.search('(\\n *)(.*?)\\n', temp_output.getvalue()).group(2)
+    
     def test_highDimension_copy(self):
         for tensorList in [tensors, emptyTensors]:
             for tensor in tensorList:

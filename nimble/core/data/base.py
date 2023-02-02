@@ -2337,7 +2337,8 @@ class Base(ABC):
 
     def _show(self, description=None, includeObjectName=True,
               maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-              maxColumnWidth=19, indent='', quoteNames=True):
+              maxColumnWidth=19, indent='', quoteNames=True, includePointNames, 
+              includeFeatureNames):
 
         # Check if we're in IPython / a Notebook
         if IPython.nimbleAccessible():
@@ -2398,7 +2399,8 @@ class Base(ABC):
 
     def show(self, description=None, includeObjectName=True,
              maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-             maxColumnWidth=19):
+             maxColumnWidth=19, includePointNames=True, includeFeatureNames=True,
+             quoteNames=True):
         """
         A printed representation of the data.
 
@@ -2435,6 +2437,14 @@ class Base(ABC):
             width of single column (feature) in each line. 
             If the column text is too long for the set bound, 3 characters
             will be used up for the ellipses during truncation.
+        includePointNames : bool
+            Used to control whether the point names are printed alongside the
+            data in the points rows. If set to 'False' the indices
+            of the points will be displayed instead of the names.
+        includeFeatureNames : bool
+            Used to control whether the feature names are printed alongside 
+            the data in the features column. If set to 'False' the indices
+            of the features will be displayed instead of the names.
             
         Keywords
         --------
@@ -2442,7 +2452,7 @@ class Base(ABC):
         write, text, repr, represent, display, terminal
         """
         print(self._show(description, includeObjectName, maxWidth, maxHeight,
-                         sigDigits, maxColumnWidth))
+                         sigDigits, maxColumnWidth, includePointNames, includeFeatureNames))
 
     @limitedTo2D
     def plotHeatMap(self, includeColorbar=False, outPath=None, show=True,
