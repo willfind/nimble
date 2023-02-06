@@ -72,7 +72,7 @@ class Features(ABC):
 
         See Also
         --------
-        getNames, setName, setNames
+        getNames, setNames
 
         Examples
         --------
@@ -96,7 +96,7 @@ class Features(ABC):
 
         See Also
         --------
-        getName, setName, setNames
+        getName, setNames
 
         Examples
         --------
@@ -110,70 +110,35 @@ class Features(ABC):
         """
         return self._getNames()
 
-
     @prepLog
-    def setName(self, oldIdentifier, newName, *,
-                useLog=None): # pylint: disable=unused-argument
-        """
-        Set or change a featureName.
-
-        Set the name of the feature at ``oldIdentifier`` with the value
-        of ``newName``.
-
-        Parameters
-        ----------
-        oldIdentifier : str, int
-            A string or integer, specifying either a current featureName
-            or the index of a current featureName.
-        newName : str
-            May be either a string not currently in the featureName set,
-            or None for an default featureName. newName cannot begin
-            with the default prefix.
-        useLog : bool, None
-            Local control for whether to send object creation to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-
-        See Also
-        --------
-        setNames, getName, getNames
-
-        Examples
-        --------
-        >>> X = nimble.identity(4, featureNames=['a', 'b', 'c', 'd'])
-        >>> X.features.setName('b', 'new')
-        >>> X.features.getNames()
-        ['a', 'new', 'c', 'd']
-
-        Keywords
-        --------
-        column, title, header, heading, attribute, identifier
-        """
-        self._setName(oldIdentifier, newName)
-
-
-    @prepLog
-    def setNames(self, assignments, *, oldIdentifiers=None,
+    def setNames(self, assignments, oldIdentifiers=None, *,
                  useLog=None): # pylint: disable=unused-argument
         """
-        Set or rename all of the feature names of this object.
+        Set or rename one or more feature names of this object.
 
         Set the feature names of this object according to the values
-        specified by the ``assignments`` parameter. If assignments is
-        None, then all feature names will be given new default values.
+        specified by the ``assignments`` parameter. If the number of
+        new feature names being passed as assignments is less than the
+        number of features in the object, then the ``oldIdentifiers``
+        argument must be passed with the corresponding previous feature
+        names that are to be changed. If assignments is None, then all feature
+        names will be given new default values.
 
         Parameters
         ----------
-        assignments : iterable, dict, None
+        assignments : str, iterable, dict, None
+            * str - A string not currently in the featureName set.
             * iterable - Given a list-like container, the mapping
               between names and array indices will be used to define the
               feature names.
             * dict - The mapping for each feature name in the format
               {name:index}
-            * None - remove names from this object
+            * None - remove names from this object.
+        oldIdentifiers : str, int, iterable, None
+            * iterable - The names of features to be renamed.
+            * str - The name of a feature to be renamed.
+            * None - The default when assigning names to all features in the
+              data.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -184,7 +149,7 @@ class Features(ABC):
 
         See Also
         --------
-        setName, getName, getNames
+        getName, getNames
 
         Examples
         --------
@@ -192,6 +157,12 @@ class Features(ABC):
         >>> X.features.setNames(['1', '2', '3', '4'])
         >>> X.features.getNames()
         ['1', '2', '3', '4']
+        >>> X.features.setNames(['newer', 'sea'], oldIdentifiers=['1', '3'])
+        >>> X.features.getNames()
+        ['newer', '2', 'sea', '4']
+        >>> X.features.setNames('by', oldIdentifiers='2')
+        >>> X.features.getNames()
+        ['newer', 'by', 'sea', '4']
 
         Keywords
         --------
@@ -2679,10 +2650,6 @@ class Features(ABC):
 
     @abstractmethod
     def _getNames(self):
-        pass
-
-    @abstractmethod
-    def _setName(self, oldIdentifier, newName):
         pass
 
     @abstractmethod
