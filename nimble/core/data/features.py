@@ -14,6 +14,7 @@ from abc import ABC, abstractmethod
 from collections import Counter
 
 import numpy as np
+import pandas as pd
 
 import nimble
 from nimble.core.logger import handleLogging
@@ -2273,8 +2274,8 @@ class Features(ABC):
         return self._unique()
 
     @limitedTo2D
-    def report(self, basicStatistics=True, extraStatisticFunctions=(), *,
-               useLog=None):
+    def report(self, basicStatistics=True, extraStatisticFunctions=(), 
+               dtypes=False, *, useLog=None):
         """
         Report containing a summary and statistics for each feature.
 
@@ -2296,6 +2297,10 @@ class Features(ABC):
             A list of functions to include in the report. Functions must
             accept a feature view as the only input and output a single
             value.
+        dtypes : bool
+            True will add an additional column to the features report
+            which would include the data type of each feature in the
+            dataset.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -2371,6 +2376,29 @@ class Features(ABC):
             results.append(row)
 
         report = nimble.data(results, pnames, fnames, useLog=False)
+        
+        def unifyingType(data):
+            toEval = data._data
+            featureCount = range(len(data.features))
+
+            if hasattr(toEval, 'dtypes'):
+                featureTypeList = [[toEval.dtypes.tolist()[i].name] for i in featureCount ]
+            
+            elif hasattr(toEval, 'dtype'):
+                featureTypeList = [[toEval.dtype.name] for i in featureCount]
+
+            else:
+                featureTypeList = [['object'] for i in featureCount]
+                    
+            return featureTypeList
+        
+        if dtypes is True:
+            # if this calculation has not been run previously
+            if 'dataType' not in report.features.getNames():
+                featureDtype = unifyingType(self._base)
+                if featureDtype: 
+                    featureTypes = nimble.data(featureDtype, featureNames=['dataType'])
+                    report.features.append(featureTypes)
 
         handleLogging(useLog, 'report', "feature", str(report))
 
