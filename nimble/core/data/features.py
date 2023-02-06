@@ -136,8 +136,9 @@ class Features(ABC):
               {name:index}
             * None - remove names from this object.
         oldIdentifiers : str, int, iterable, None
-            * iterable - The names of features to be renamed.
             * str - The name of a feature to be renamed.
+            * int - The index of a feature to be renamed.
+            * iterable - The names or indices of features to be renamed.
             * None - The default when assigning names to all features in the
               data.
         useLog : bool, None
