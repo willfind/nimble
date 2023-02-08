@@ -2337,8 +2337,8 @@ class Base(ABC):
 
     def _show(self, description=None, includeObjectName=True,
               maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-              maxColumnWidth=19, indent='', quoteNames=True, includePointNames, 
-              includeFeatureNames):
+              maxColumnWidth=19, indent='', quoteNames=True, includePointNames=True, 
+              includeFeatureNames=True):
 
         # Check if we're in IPython / a Notebook
         if IPython.nimbleAccessible():
