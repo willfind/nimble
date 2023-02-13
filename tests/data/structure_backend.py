@@ -4219,21 +4219,21 @@ class StructureModifying(StructureShared):
         expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
-
+        
     def test_points_extract_match_list(self):
-        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.points.extract(match.anyValues(['a', 'c', 'x']))
+        toTest = self.constructor([[1, 2, 3], [999, 11, 9999], [7, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.points.extract(match.anyValues([999, 9999, 99999])) #a = 999, c = 9999, x = 99999
         expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
-        expRet = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
+        expRet = self.constructor([[999, 11, 9999], [7, 11, 9999]])
         expTest.features.setNames(['a', 'b', 'c'])
         expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
-        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.points.extract(match.allValues(['a', 'c', 'x']))
-        expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
-        expRet = self.constructor([['a', 'x', 'c']])
+        toTest = self.constructor([[999, 99999, 9999], [999, 11, 9999], [7, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.points.extract(match.allValues([999, 9999, 99999]))
+        expTest = self.constructor([[999, 11, 9999], [7, 11, 9999], [7, 8, 9]])
+        expRet = self.constructor([[999, 99999, 9999]])
         expTest.features.setNames(['a', 'b', 'c'])
         expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
@@ -4896,19 +4896,19 @@ class StructureModifying(StructureShared):
         assert ret == expRet
 
     def test_features_extract_match_list(self):
-        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.features.extract(match.anyValues(['a', 'c', 'x']))
+        toTest = self.constructor([[1, 2, 3], [999, 11, 9999], [99999, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.features.extract(match.anyValues([999, 9999, 99999]))
         expTest = self.constructor([[2], [11], [11], [8]])
-        expRet = self.constructor([[1, 3], ['a', 'c'], ['x', 'c'], [7, 9]])
+        expRet = self.constructor([[1, 3], [999, 9999], [99999, 9999], [7, 9]])
         expTest.features.setNames(['b'])
         expRet.features.setNames(['a', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
-        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
-        ret = toTest.features.extract(match.allValues(['a', 'c', 'x']))
-        expTest = self.constructor([[1, 2], ['a', 11], ['x', 11], [7, 8]])
-        expRet = self.constructor([['c'], ['c'], ['c'], ['c']])
+        toTest = self.constructor([[1, 2, 9999], [999, 11, 9999], [99999, 11, 9999], [7, 8, 9999]], featureNames=['a', 'b', 'c'])
+        ret = toTest.features.extract(match.allValues([999, 9999, 99999]))
+        expTest = self.constructor([[1, 2], [999, 11], [99999, 11], [7, 8]])
+        expRet = self.constructor([[9999], [9999], [9999], [9999]])
         expTest.features.setNames(['a', 'b'])
         expRet.features.setNames(['c'])
         assert toTest == expTest
@@ -5380,15 +5380,15 @@ class StructureModifying(StructureShared):
         assert toTest == exp
 
     def test_points_delete_match_list(self):
-        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.points.delete(match.anyValues(['a', 'c', 'x']))
+        toTest = self.constructor([[1, 2, 3], [999, 11, 9999], [7, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.points.delete(match.anyValues([999, 9999, 99999]))
         exp = self.constructor([[1, 2, 3], [7, 8, 9]])
         exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
-        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.points.delete(match.allValues(['a', 'c', 'x']))
-        exp = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
+        toTest = self.constructor([[999, 99999, 9999], [999, 11, 9999], [7, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.points.delete(match.allValues([999, 9999, 99999]))
+        exp = self.constructor([[999, 11, 9999], [7, 11, 9999], [7, 8, 9]])
         exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
@@ -5993,17 +5993,17 @@ class StructureModifying(StructureShared):
         exp = self.constructor([[1, 2], ['a', 11], [7, 11], [7, 8]])
         exp.features.setNames(['a', 'b'])
         assert toTest == exp
-
+        
     def test_features_delete_match_list(self):
-        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.features.delete(match.anyValues(['a', 'c', 'x']))
+        toTest = self.constructor([[1, 2, 3], [999, 11, 9999], [99999, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.features.delete(match.anyValues([999, 9999, 99999]))
         exp = self.constructor([[2], [11], [11], [8]])
         exp.features.setNames(['b'])
         assert toTest == exp
 
-        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
-        toTest.features.delete(match.allValues(['a', 'c', 'x']))
-        exp = self.constructor([[1, 2], ['a', 11], ['x', 11], [7, 8]])
+        toTest = self.constructor([[1, 2, 9999], [999, 11, 9999], [99999, 11, 9999], [7, 8, 9999]], featureNames=['a', 'b', 'c'])
+        toTest.features.delete(match.allValues([999, 9999, 99999]))
+        exp = self.constructor([[1, 2], [999, 11], [99999, 11], [7, 8]])
         exp.features.setNames(['a', 'b'])
         assert toTest == exp
 
@@ -6503,15 +6503,15 @@ class StructureModifying(StructureShared):
         assert toTest == expTest
 
     def test_points_retain_match_list(self):
-        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.points.retain(match.anyValues(['a', 'c', 'x']))
-        expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
+        toTest = self.constructor([[1, 2, 3], [999, 11, 9999], [7, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.points.retain(match.anyValues([999, 9999, 99999]))
+        expTest = self.constructor([[999, 11, 9999], [7, 11, 9999]])
         expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
-        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.points.retain(match.allValues(['a', 'c', 'x']))
-        expTest = self.constructor([['a', 'x', 'c']])
+        toTest = self.constructor([[999, 99999, 9999], [999, 11, 9999], [7, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.points.retain(match.allValues([999, 9999, 99999]))
+        expTest = self.constructor([[999, 99999, 9999]])
         expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
@@ -7140,17 +7140,17 @@ class StructureModifying(StructureShared):
         expTest = self.constructor([['c'], ['c'], ['c'], ['c']])
         expTest.features.setNames(['c'])
         assert toTest == expTest
-
+    
     def test_features_retain_match_list(self):
-        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.features.retain(match.anyValues(['a', 'c', 'x']))
-        expTest = self.constructor([[1, 3], ['a', 'c'], ['x', 'c'], [7, 9]])
+        toTest = self.constructor([[1, 2, 3], [999, 11, 9999], [99999, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.features.retain(match.anyValues([999, 9999, 99999]))
+        expTest = self.constructor([[1, 3], [999, 9999], [99999, 9999], [7, 9]])
         expTest.features.setNames(['a', 'c'])
         assert toTest == expTest
-
-        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
-        ret = toTest.features.retain(match.allValues(['a', 'c', 'x']))
-        expTest = self.constructor([['c'], ['c'], ['c'], ['c']])
+        
+        toTest = self.constructor([[1, 2, 9999], [999, 11, 9999], [99999, 11, 9999], [7, 8, 9999]], featureNames=['a', 'b', 'c'])
+        ret = toTest.features.retain(match.allValues([999, 9999, 99999]))
+        expTest = self.constructor([[9999], [9999], [9999], [9999]])
         expTest.features.setNames(['c'])
         assert toTest == expTest
 
