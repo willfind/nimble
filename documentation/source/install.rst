@@ -9,7 +9,20 @@ functionality is accessed by installing third-party :ref:`optional-packages`.
 The `packaging` dependency is used to validate the installed versions of any
 optional packages. For convenience, installing optional packages can also be
 triggered while installing Nimble. We recommend the :ref:`quickstart-install`
-to make much of Nimble's functionality available with a single install.
+to make much of Nimble's functionality available with a single command.
+
+Download Binary Wheels
+----------------------
+
+All methods of installation require having downloaded the appropriate 
+precompiled wheel for your OS and version of python. The current possible
+options available are linked below (more will be added over time). Downloading
+and/or installing Nimble constitutes agreement to the Nimble
+:doc:`License Agreement<legal>`.
+
+*  :download:`Linux, Python 3.7 <wheels/nimble-0.4.0-cp37-cp37m-linux_x86_64.whl>`
+*  :download:`Linux, Python 3.8 <wheels/nimble-0.4.0-cp38-cp38-linux_x86_64.whl>`
+*  :download:`Linux, Python 3.9 <wheels/nimble-0.4.0-cp39-cp39-linux_x86_64.whl>`
 
 Install Methods
 ---------------
@@ -23,8 +36,14 @@ Install Methods
 Optional Packages
 -----------------
 
+..
+  Many components of Nimble rely on the following third-party packages.
+  Most packages are ``pip`` and ``conda`` installable, but install
+  recommendations vary and some offer further optimizations. **Reading the
+  linked installation instructions for each package is highly recommended.**
+
 Many components of Nimble rely on the following third-party packages.
-Most packages are ``pip`` and ``conda`` installable, but install
+Most packages are ``pip`` installable, but install
 recommendations vary and some offer further optimizations. **Reading the
 linked installation instructions for each package is highly recommended.**
 
@@ -37,6 +56,30 @@ Operational Support
    :align: left
    :widths: auto
 
+   +----------------+----------------------------------------------+------+
+   | Package        | Supports                                     | pip  |
+   +================+==============================================+======+
+   | `scipy`_       | Nimble's ``Sparse`` object and various       | |cm| |
+   |                | scientific calculations.                     |      |
+   +----------------+----------------------------------------------+------+
+   | `pandas`_      | Nimble's ``DataFrame`` object.               | |cm| |
+   +----------------+----------------------------------------------+------+
+   | `matplotlib`_  | Plotting.                                    | |cm| |
+   +----------------+----------------------------------------------+------+
+   | `requests`_    | Retrieving data from the web.                | |cm| |
+   +----------------+----------------------------------------------+------+
+   | `cloudpickle`_ | Saving Nimble data objects.                  | |cm| |
+   +----------------+----------------------------------------------+------+
+   | `dateutil`_    | Parsing strings to `datetime`_ objects.      | |cm| |
+   +----------------+----------------------------------------------+------+
+   | `h5py`_        | Loading hdf5 files.                          | |cm| |
+   +----------------+----------------------------------------------+------+
+   | `hyperopt`_    | Bayesian method for hyperparameter tuning.   | |cm| |
+   +----------------+----------------------------------------------+------+
+   | `storm_tuner`_ | StochasticRandomMutator for hyperparameter   | |cm| |
+   |                | tuning.                                      |      |
+   +----------------+----------------------------------------------+------+
+..
    +----------------+----------------------------------------------+------+-------+
    | Package        | Supports                                     | pip  | conda |
    +================+==============================================+======+=======+
@@ -66,10 +109,24 @@ Operational Support
 Machine-Learning Interfaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+
 .. table::
    :align: left
    :widths: auto
 
+   +----------------+--------------------------------------------------+------+
+   | Package        | Provides                                         | pip  |
+   +================+==================================================+======+
+   | `sklearn`_     | Machine Learning.                                | |cm| |
+   +----------------+--------------------------------------------------+------+
+   | `tensorflow`_/ | Neural Networks.                                 | |cm| |
+   | `keras`_       | See :ref:`install note <tensorflow-note>` below. |      |
+   +----------------+--------------------------------------------------+------+
+   | `autoimpute`_  | Imputation. Machine Learning with missing data.  | |cm| |
+   +----------------+--------------------------------------------------+------+
+
+
+..
    +----------------+--------------------------------------------------+------+----------------------------+
    | Package        | Provides                                         | pip  | conda                      |
    +================+==================================================+======+============================+
@@ -95,11 +152,19 @@ Machine-Learning Interfaces
 Nimble Install Quickstart
 -------------------------
 
+..
+  To install a selection of :ref:`optional-packages` while installing Nimble,
+  both ``pip`` and ``conda`` installs offer a quickstart option. Quickstart
+  installs all :ref:`operational-support` packages and SciKit-Learn from the
+  :ref:`ml-interfaces`. These packages were chosen because they are reliably
+  installable through ``pip`` and ``conda`` and provide access to the majority
+  of Nimble's functionality.
+
 To install a selection of :ref:`optional-packages` while installing Nimble,
-both ``pip`` and ``conda`` installs offer a quickstart option. Quickstart
+``pip`` offer a quickstart option. Quickstart
 installs all :ref:`operational-support` packages and SciKit-Learn from the
 :ref:`ml-interfaces`. These packages were chosen because they are reliably
-installable through ``pip`` and ``conda`` and provide access to the majority
+installable through ``pip`` and provide access to the majority
 of Nimble's functionality.
 
 **With pip:**
@@ -108,30 +173,35 @@ Nimble uses extras to provide the ``quickstart`` shortcut
 
 .. code-block::
 
-  pip install nimble[quickstart]
+  pip install nimble[quickstart] --find-links=*pathToDownloadsFolder*
 
 .. note:: The brackets may need to be escaped in some shells.
 
-**With conda:**
+..
+  **With conda:**
 
-The nimble-data channel provides an alternative package, ``nimble-quickstart``.
-Once installed, import still occurs with ``import nimble``, the name
-``nimble-quickstart`` serves to install nimble and the other included
-packages.
+  The nimble-data channel provides an alternative package, ``nimble-quickstart``.
+  Once installed, import still occurs with ``import nimble``, the name
+  ``nimble-quickstart`` serves to install nimble and the other included
+  packages.
 
-.. code-block::
+  .. code-block::
 
-  conda install -c nimble-data nimble-quickstart
+    conda install -c nimble-data nimble-quickstart
 
 .. _specific-install:
 
 Install with Specific Packages
 ------------------------------
 
-:ref:`optional-packages` can always be installed separately with ``pip`` or
-``conda``, for example: ``pip install scipy`` or ``conda install scipy``.
-However, both package managers offer ways to install optional packages while
-installing Nimble.
+..
+  :ref:`optional-packages` can always be installed separately with ``pip`` or
+  ``conda``, for example: ``pip install scipy`` or ``conda install scipy``.
+  However, both package managers offer ways to install optional packages while
+
+:ref:`optional-packages` can always be installed separately via ``pip``
+using the command ``pip install scipy``.
+However, this can also be accomplished in the same step as installing nimble.
 
 .. warning:: Installs will fail if any package fails to install.
 
@@ -147,11 +217,14 @@ install.
 
 .. code-block::
 
-  pip install nimble[dateutil]                    # single extra
+  # single extra
+  pip install nimble[dateutil] --find-links=*pathToDownloadsFolder*
     or
-  pip install nimble[requests,matplotlib,sklearn] # multiple extras
+  # multiple extras
+  pip install nimble[requests,matplotlib,sklearn] --find-links=*pathToDownloadsFolder*
     or
-  pip install nimble[data]                        # shortcut (scipy and pandas)
+  # shortcut (scipy and pandas)
+  pip install nimble[data] --find-links=*pathToDownloadsFolder*
 
 .. note::
    - The names of the extras match the names displayed in the "Package" columns
@@ -159,22 +232,23 @@ install.
 
    - The brackets may need to be escaped in some shells.
 
-**With conda:**
+..
+  **With conda:**
 
-For ``conda``, :ref:`optional-packages` must be installed manually. However,
-``conda`` allows for multiple packages to be installed at the same time so
-they can be listed alongside ``nimble``, provided they are available in the
-available channels.
+  For ``conda``, :ref:`optional-packages` must be installed manually. However,
+  ``conda`` allows for multiple packages to be installed at the same time so
+  they can be listed alongside ``nimble``, provided they are available in the
+  available channels.
 
-.. code-block::
+  .. code-block::
 
-  conda install -c nimble-data nimble matplotlib scikit-learn
+    conda install -c nimble-data nimble matplotlib scikit-learn
 
-.. note::
-   - The package names used for the installation do not always match the
-     names displayed in the "Package" columns in :ref:`optional-packages`,
-     for example, "scikit-learn" is used to install the ``sklearn`` package and
-     "python-dateutil" is used to install the ``dateutil`` package.
+  .. note::
+    - The package names used for the installation do not always match the
+      names displayed in the "Package" columns in :ref:`optional-packages`,
+      for example, "scikit-learn" is used to install the ``sklearn`` package and
+      "python-dateutil" is used to install the ``dateutil`` package.
 
 .. _basic-install:
 
@@ -186,18 +260,14 @@ of Nimble's functionality will require manually installing the
 :ref:`optional-packages`. Nimble will raise its ``PackageException`` for
 operations requiring an optional package that is not installed.
 
-**with pip**::
+**With pip**::
 
-  pip install nimble
+  pip install nimble --find-links=*pathToDownloadsFolder*
 
-**with conda**::
+..
+  **With conda**::
 
-  conda install -c nimble-data nimble
-
-**with setup.py (not recommended)**::
-
-  # from nimble directory
-  python setup.py install
+    conda install -c nimble-data nimble
 
 .. |cm| unicode:: U+02713 .. check mark
 

@@ -305,7 +305,7 @@ def loadTrainedLearner(source, arguments=None, *, useLog=None, **kwarguments):
         * open file-like object
         * string path or url to the data file.
         * string name in the form 'package.learner' where learner is the
-        name of a pre-trained learner available in the given package.
+          name of a pre-trained learner available in the given package.
     arguments : dict
         Mapping argument names (strings) to their values, to be used
         during loading and application (e.g., {'include_top':True}).
@@ -402,9 +402,9 @@ def normalizeData(learnerName, trainX, trainY=None, testX=None, arguments=None,
         Note: learner arguments can also be passed as ``kwarguments`` so
         this dictionary will be merged with any keyword arguments.
     randomSeed : int
-       Set a random seed for the operation. When None, the randomness is
-       controlled by Nimble's random seed. Ignored if learner does not
-       depend on randomness.
+        Set a random seed for the operation. When None, the randomness is
+        controlled by Nimble's random seed. Ignored if learner does not
+        depend on randomness.
     useLog : bool, None
         Local control for whether to send object creation to the logger.
         If None (default), use the value as specified in the "logger"
