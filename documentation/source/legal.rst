@@ -1,8 +1,12 @@
 Legal Information
 #################
 
-Nimble® License Agreement
-*************************
+..
+  Nimble® License Agreement
+  *************************
+Nimble License Agreement
+************************
+
 
 Acceptance
 ^^^^^^^^^^
@@ -10,7 +14,7 @@ This is a binding Agreement: read all terms; retain a copy.
 
 The terms and conditions of this License Agreement are subject to change without notice from time
 to time at our sole discretion. We will notify You of amendments to these terms and conditions by
-posting them at https://willfind.github.io/nimble/legal.html .
+posting them at https://willfind.github.io/nimble/legal.html or https://www.sparkwave.tech/nimble .
 
 Carefully read the following terms and conditions before accessing, installing or using the
 Software. By downloading the Product or installing/using the Product, You are consenting to be
@@ -20,13 +24,13 @@ uninstall/remove/destroy any additional or already installed copies of the Produ
 
 Definitions
 ^^^^^^^^^^^
-"SW": Spark Wave LLC - 244 Fifth Avenue, Suite D59 New York NY 10001
+"SW": Spark Wave LLC - 244 Fifth Avenue, Suite D59, New York, NY 10001
 
 "You/Licensee": The individual or organization obtaining the Product. If You/Licensee agree to
 these terms on behalf of an organization, You represent to SW that You are authorized to accept
 these terms on the organization's behalf.
 
-"Software": The Nimble  computer program provided by SW under this Agreement.
+"Software": The Nimble computer program and package provided by SW under this Agreement.
 
 "Documentation": The user guides, study guides, website, and other documentation made available by
 SW from time to time, whether or not made available in connection with the delivery of the Software,
@@ -44,12 +48,12 @@ Ownership
 ^^^^^^^^^
 SW is the sole owner of the Product. SW is the holder of the Intellectual Property Rights in the
 Product, including, without limitation, such aspects of the Software as its code, structure,
-sequence, organization, "look and feel", programming language and compilations of command names,
+sequence, package, organization, "look and feel", programming language code and compilations of command names,
 descriptors and data. Use of the Product, unless pursuant to the terms of a license granted by SW
 or as otherwise authorized by law, is an infringement of Intellectual Property Rights. When
 publishing academic or research papers for which Nimble was used, the Product should be appropriately
 cited as a reference and/or described in a methods section. Notwithstanding the obligation to provide
-acknowledgment stated above, no other right to use the names, marks or other distinctions of the
+acknowledgment stated above, no other right to use the names, marks, or other distinctions of the
 Product or SW is granted.
 
 Permitted Uses and Installations	
@@ -60,17 +64,18 @@ continue concurrent use of the older version, this License Agreement shall be me
 superseded by the upgraded License Agreement such that Your continued use will be allowed under
 the terms, conditions and restrictions therein. Your license to use the Product terminates when
 notice of the termination has been indicated at the https://willfind.github.io/nimble/legal.html
-website.  Provisions of this Agreement that by their nature express ongoing rights or obligations
+or https://www.sparkwave.tech/nimble
+websites.  Provisions of this Agreement that by their nature express ongoing rights or obligations
 shall survive the expiration or termination of this Agreement. You are also authorized to:
 
 #. install and operate the Software on up to two computers that are each owned, leased or
    controlled by You; Provided that the Software is only accessible to, and operated by You. The
    Software may be physically transferred from one computer to another owned, leased, or controlled
    by You but shall permanently delete the Software from the transferor computer such that the
-   Software is installed on up to a maximum of two computers at any one time.
+   Software is installed on up to a maximum of two computers at any one time;
 
-#. use the Software for personal use or research purposes. Use of the Software for commercial,
-   instruction, and teaching purposes are not permitted.
+#. use the Software for personal use, educational use, or research purposes. Use of the Software
+   for commercial purposes are not permitted.
 
 Prohibited Uses
 ^^^^^^^^^^^^^^^
@@ -78,10 +83,10 @@ All uses of the Software and other elements of the Product not specifically stat
 Permitted Uses and Installations section of this Agreement or otherwise set forth in alternative
 or supplemental license agreements or terms of use are prohibited, including, without limitation:
 
-#. use of the Software for commercial, instruction, and teaching purposes;
-#. decompiling, disassembling or reverse engineering the Software;
+#. use of the Software for commercial purposes;
+#. decompiling, disassembling or reverse-engineering the Software;
 #. modifying the Software in any manner, except those portions included as examples;
-#. distributing, publishing, transferring, sublicensing, lending, leasing, renting or otherwise
+#. distributing, publishing, transferring, reselling, sublicensing, lending, leasing, renting or otherwise
    making available the Product or any portion of the Software, including collections of data;
 #. copying or allowing copying of the Product or any elements of the Product, except as permitted
    as allowed by the Permitted Uses and Installations section of this Agreement;
@@ -95,7 +100,7 @@ Online Services and Data
 ^^^^^^^^^^^^^^^^^^^^^^^^
 Certain Product functionality may require the Software to access collections of data available
 through external servers. SW makes no warranty that access to such data will be uninterrupted or
-that the data itself will be error free. SW reserves the right to restrict access to, add, update,
+that the data itself will be error-free. SW reserves the right to restrict access to, add, update,
 modify or remove collections of data based on availability or otherwise at SW’s discretion. You
 agree all data access and use shall be limited to the Permitted Uses, and agree not to access or
 use data collections in such a manner that could damage, disable, overburden or impair the servers
@@ -105,14 +110,14 @@ be terminated or restricted at any time.
 Limited Warranty and Disclaimer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 SW does not warrant that the Product is free from all errors and/or omissions, and in fact it may
-contain them. Except as specifically set forth above, the Product is provided "as is". SW makes no
+contain them. Except as specifically set forth above, the Product is provided "as is." SW makes no
 representations or warranties, express, statutory or implied, with respect to the Product or the
 Software contained in the Product or data accessed thereby, including, without limitation, any
 implied warranties of merchantability, interoperability or fitness for a particular purpose, all
 of which are expressly disclaimed. SW does not warrant that the functions contained in the Product
-will meet Your requirements or that the operation of the Product will be uninterrupted or error free.
+will meet Your requirements or that the operation of the Product will be uninterrupted or error-free.
 
-SW, and its agents, representatives and independent contractors, shall not be obligated to provide
+SW, and its agents, representatives, and independent contractors, shall not be obligated to provide
 or liable, under any circumstances, for providing information on or corrections to errors and/or
 omissions discovered at any time in the Product, whether or not they were aware of the errors and/or
 omissions. SW does not recommend the use of the Product for applications in which errors and/or
@@ -124,7 +129,7 @@ law provisions.
 
 Limited Damages	
 ^^^^^^^^^^^^^^^
-In no event shall SW or its agents, representatives and independent contractors be liable for any
+In no event shall SW or its agents, representatives, and independent contractors be liable for any
 lost profits, lost use, lost benefits or any consequential, indirect, incidental, special or punitive
 damages, whether in contract, tort or otherwise, even if SW has been advised of the possibility of
 such damages.
@@ -134,11 +139,12 @@ United States Federal Government Restricted Rights
 If this Software is acquired by or on behalf of the US federal government, this provision applies.
 Use, duplication or disclosure of this Software is subject to restrictions set forth in
 FAR 52.227-19 and DFAR 227.7200–227.7202-4, as applicable. The Software is "commercial computer
-software" and is licensed with only "Restricted Rights".
+software" and is licensed with only "Restricted Rights."
 
-General	
-^^^^^^^
-Nimble is a registered trademark of SW.
+..
+  General
+  ^^^^^^^
+  Nimble is a registered trademark of SW.
 
 License Termination Notification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

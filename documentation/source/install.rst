@@ -161,7 +161,7 @@ Nimble Install Quickstart
   of Nimble's functionality.
 
 To install a selection of :ref:`optional-packages` while installing Nimble,
-``pip`` offer a quickstart option. Quickstart
+``pip`` offers a quickstart option. Quickstart
 installs all :ref:`operational-support` packages and SciKit-Learn from the
 :ref:`ml-interfaces`. These packages were chosen because they are reliably
 installable through ``pip`` and provide access to the majority
