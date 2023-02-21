@@ -32,7 +32,7 @@ from nimble._utility import DeferredModuleImport, tableString
 from nimble._dependencies import DEPENDENCIES, checkVersion
 
 # source file is __init__.py, we split to get the directory containing it
-nimblePath = os.path.dirname(inspect.getsourcefile(nimble))
+nimblePath = os.path.dirname(inspect.getfile(nimble))
 configErrors = (configparser.NoSectionError, configparser.NoOptionError)
 
 
