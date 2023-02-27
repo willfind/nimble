@@ -23,14 +23,7 @@ from distutils import log
 from distutils.command.clean import clean
 from distutils.dir_util import remove_tree
 
-try:
-    from Cython.Build import cythonize
-    CYTHON_AVAILABLE = True
-except ImportError:
-    CYTHON_AVAILABLE = False
-
-from nimble import __version__
-from nimble._dependencies import DEPENDENCIES
+from Cython.Build import cythonize
 
 def getCFiles():
     return glob.glob(os.path.join('nimble', '**', '*.c'), recursive=True)
@@ -55,18 +48,13 @@ def cythonizeFiles():
                     os.path.join('nimble', 'match', '*.py'),
                     os.path.join('nimble', 'random', '*.py'),
                     os.path.join('nimble', '*.py')
-                    ]
+                   ]
     exclude = []
     cythonize(to_cythonize, exclude=exclude, force=True,
               compiler_directives={'always_allow_keywords': True,
                                    'language_level': 3,
                                    'binding': True},
               exclude_failures=True,)
-
-class ExtensionsFailed(Exception):
-    """
-    Raised when any process related to the C extensions is unsuccessful.
-    """
 
 
 def commandUsesExtensions(commands):
@@ -85,33 +73,25 @@ class NimbleDistribution(Distribution):
     """
     def __init__(self, attrs=None):
         super().__init__(attrs)
-        try:
-            self.parse_command_line()
-            if commandUsesExtensions(self.commands):
-                if CYTHON_AVAILABLE:
-                    cythonizeFiles()
-                extensions = getExtensions()
-                attrs['ext_modules'] = extensions
-                # re-init with ext_modules
-                super().__init__(attrs)
-        except Exception:
-            raise ExtensionsFailed()
+        self.parse_command_line()
+        if commandUsesExtensions(self.commands):
+            cythonizeFiles()
+            extensions = getExtensions()
+            attrs['ext_modules'] = extensions
+            # re-init with ext_modules
+            super().__init__(attrs)
+
 
 class _build_ext(build_ext):
     """
     Allows C extension building to fail but python build to continue.
     """
     def run(self):
-        try:
-            build_ext.run(self)
-        except Exception:
-            raise ExtensionsFailed()
+        build_ext.run(self)
 
     def build_extension(self, ext):
-        try:
-            build_ext.build_extension(self, ext)
-        except Exception:
-            raise ExtensionsFailed()
+        build_ext.build_extension(self, ext)
+
 
 class CleanCommand(clean):
     """
@@ -127,6 +107,7 @@ class CleanCommand(clean):
                 if not self.dry_run:
                     os.remove(f)
                 log.info('removing %s', os.path.relpath(f))
+
 
 class EmptyConfigFile:
     """
@@ -159,100 +140,13 @@ class EmptyConfigFile:
 
 def run_setup():
     setupKwargs = {}
-    setupKwargs['name'] = 'nimble'
-    setupKwargs['version'] = __version__
-    setupKwargs['author'] = "Spark Wave LLC"
-    setupKwargs['author_email'] = "willfind@gmail.com"
-    setupKwargs['description'] = "Interfaces and tools for data science."
-    setupKwargs['url'] = "https://willfind.github.io/nimble/index.html"
-    setupKwargs['license'] = "Proprietary"
-    setupKwargs['packages'] = find_packages(exclude=('tests', 'tests.*'))
-    setupKwargs['python_requires'] = '>=3.8'
-    setupKwargs['classifiers'] = [
-        'Development Status :: 3 - Alpha',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.10',
-        'Operating System :: OS Independent',
-        'License :: Other/Proprietary License',
-        ]
-
-    setupKwargs['include_package_data'] = True
-    setupKwargs['convert_2to3_doctests'] = []
-
-    packages = {}
-    for dependency in DEPENDENCIES.values():
-        if dependency.section not in packages:
-            packages[dependency.section] = {}
-        packages[dependency.section][dependency.name] = dependency.requires
-    setupKwargs['install_requires'] = list(packages['required'].values())
-    # extras
-    data = packages['data']
-    operation = packages['operation']
-    interfaces = packages['interfaces']
-    development = packages['development']
-
-    setupKwargs['extras_require'] = {
-        'data': list(data.values()), 'development': list(development.values()),
-        }
-    setupKwargs['extras_require'].update(data)
-    setupKwargs['extras_require'].update(operation)
-    setupKwargs['extras_require'].update(interfaces)
-    setupKwargs['extras_require'].update(development)
-
-    quickstart = list(data.values()) + list(operation.values())
-    userAll = quickstart.copy()
-    quickstart.append(interfaces['sklearn'])
-    del interfaces['keras'] # tensorflow includes keras
-    userAll.extend(interfaces.values())
-
-    setupKwargs['extras_require']['quickstart'] = quickstart
-    setupKwargs['extras_require']['all'] = userAll
-
-    # TODO
-    # determine best version requirements for install_requires, extras_require
-    # make any changes to setup metadata (author, description, classifiers, etc.)
-    # additional setup metadata (see below)
-        # with open("README.md", "r") as fh:
-        #     long_description = fh.read()
-
-        # long_description=long_description,
-        # long_description_content_type="text/markdown",
-    # discuss versioning style (semantic versioning recommended)
 
     setupKwargs['cmdclass'] = {'clean': CleanCommand,
                                'build_ext': _build_ext}
-    try:
-        # our Distribution class that builds and C includes extensions
-        setupKwargs['distclass'] = NimbleDistribution
-        dist = setup(**setupKwargs)
-    except ExtensionsFailed:
-        # The default Distribution without extensions added
-        setupKwargs['distclass'] = Distribution
-        dist = setup(**setupKwargs)
+    # our Distribution class that builds and C includes extensions
+    setupKwargs['distclass'] = NimbleDistribution
+    dist = setup(**setupKwargs)
 
-    # print if able to build nimble with extensions
-    if commandUsesExtensions(dist.commands):
-        if dist.has_ext_modules():
-            msg = 'Nimble built successfully with C extensions.'
-        else:
-            msg = 'Nimble built successfully in pure python. The '
-            msg += "functionality is the same but will not benefit speed "
-            msg += 'increases of the C extensions. '
-            if CYTHON_AVAILABLE:
-                msg += 'Cython was available to generate the extension files '
-                msg += 'but there was an error when building the extensions.'
-            else:
-                msg += 'If wanting to generate the extension files, install '
-                msg += 'Cython.'
-
-        lineFormat = '* {:74s} *\n'
-        out = '*' * 78 + '\n'
-        for text in textwrap.wrap(msg, 74):
-            out += lineFormat.format(text)
-        out += '*' * 78
-        print(out)
 
 if __name__ == '__main__':
     with EmptyConfigFile():
