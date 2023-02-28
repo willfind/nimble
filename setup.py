@@ -14,21 +14,26 @@ clean - remove setup generated directories and files. By default, clean
 
 import os
 import glob
-import textwrap
 
-from setuptools import setup, find_packages, Distribution
-from setuptools.extension import Extension
-from setuptools.command.build_ext import build_ext
 from distutils import log
 from distutils.command.clean import clean
 from distutils.dir_util import remove_tree
+from setuptools import setup, Distribution
+from setuptools.extension import Extension
 
 from Cython.Build import cythonize
 
+
 def getCFiles():
+    """
+    return list of all C files within the nimble module
+    """
     return glob.glob(os.path.join('nimble', '**', '*.c'), recursive=True)
 
 def getExtensions():
+    """
+    After C files have been generated, make list of Extension classes for each
+    """
     extensions = []
     for extension in getCFiles():
         # name convention dir.subdir.filename
@@ -37,20 +42,12 @@ def getExtensions():
     return extensions
 
 def cythonizeFiles():
-    corePath = os.path.join('nimble', 'core')
-    to_cythonize = [os.path.join('nimble', 'calculate', '*.py'),
-                    os.path.join(corePath, 'data', '*.py'),
-                    os.path.join(corePath, 'interfaces', '*.py'),
-                    os.path.join(corePath, 'logger', '*.py'),
-                    os.path.join(corePath, '*.py'),
-                    os.path.join('nimble', 'fill', '*.py'),
-                    os.path.join('nimble', 'learners', '*.py'),
-                    os.path.join('nimble', 'match', '*.py'),
-                    os.path.join('nimble', 'random', '*.py'),
-                    os.path.join('nimble', '*.py')
-                   ]
+    """
+    Use cython to convert to C sources
+    """
+    toCythonize = glob.glob(os.path.join('nimble', '**', '*.py'), recursive=True)
     exclude = []
-    cythonize(to_cythonize, exclude=exclude, force=True,
+    cythonize(toCythonize, exclude=exclude, force=True,
               compiler_directives={'always_allow_keywords': True,
                                    'language_level': 3,
                                    'binding': True},
@@ -80,17 +77,6 @@ class NimbleDistribution(Distribution):
             attrs['ext_modules'] = extensions
             # re-init with ext_modules
             super().__init__(attrs)
-
-
-class _build_ext(build_ext):
-    """
-    Allows C extension building to fail but python build to continue.
-    """
-    def run(self):
-        build_ext.run(self)
-
-    def build_extension(self, ext):
-        build_ext.build_extension(self, ext)
 
 
 class CleanCommand(clean):
@@ -137,17 +123,9 @@ class EmptyConfigFile:
                 for line in self.configLines:
                     config.write(line)
 
-
-def run_setup():
-    setupKwargs = {}
-
-    setupKwargs['cmdclass'] = {'clean': CleanCommand,
-                               'build_ext': _build_ext}
-    # our Distribution class that builds and C includes extensions
-    setupKwargs['distclass'] = NimbleDistribution
-    dist = setup(**setupKwargs)
-
-
 if __name__ == '__main__':
     with EmptyConfigFile():
-        run_setup()
+        setupKwargs = {}
+        setupKwargs['cmdclass'] = {'clean': CleanCommand}
+        setupKwargs['distclass'] = NimbleDistribution
+        setup(**setupKwargs)

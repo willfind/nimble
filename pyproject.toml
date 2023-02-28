@@ -1,5 +1,6 @@
 [build-system]
 build-backend = "setuptools.build_meta"
+# setuptools req needed for pyproject.toml support
 requires = [
     "setuptools>=61.0",
     "wheel",
@@ -13,7 +14,7 @@ authors = [
         { name="Spark Wave LLC", email="willfind@gmail.com" },
         ]
 description = "Interfaces and tools for data science."
-requires-python = ">=3.7"
+requires-python = ">=3.7, <3.10"
 license = {text = "Proprietary"}
 classifiers = [
         'Development Status :: 3 - Alpha',
@@ -84,8 +85,15 @@ all = [
 "Homepage" = "https://willfind.github.io/nimble/index.html"
 
 
-[tool.setuptools]
-packages = ["nimble"]
+[tool.setuptools.packages.find]
+# automatic discovery fails because of the other modules top level
+# (documentation, tests, etc.) so we use a simple custom discovery
+# instead, where everything within nimble (caught by a "nimble"
+# prefaced glob) is included, so long as it is in a module with
+# an __init__.py (caused by namespaces=false).
+where = [""]
+include = ["nimble*"]
+namespaces = false
 
 
 [tool.setuptools.dynamic]
@@ -93,5 +101,13 @@ version = {attr = "nimble.__version__"}
 
 
 [tool.cibuildwheel]
-test-requires = "pytest"
-test-command = "python runTests.py {project}/tests"
+# No 32 bit builds, no pypy builds, no musl linux builds
+skip = ["*-win32", "*-manylinux_i686", "pp*", "*-musllinux_*"]
+
+# script to remove .py and .c files from wheel
+repair-wheel-command = "python remove_source.py {dest_dir} {wheel}"
+
+# Test Env: nimble[all] with pytest and pylint
+test-requires = ['pytest', 'pylint']
+test-extras = ['all']
+test-command = "python {project}/runTests.py {project}/tests"
