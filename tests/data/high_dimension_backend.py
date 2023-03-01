@@ -392,7 +392,7 @@ class HighDimensionModifying(DataTestObject):
                 assert ret._dims == toTest._dims
 
     def test_highDimension_sort(self):
-
+        import pdb; pdb.set_trace() 
         tensor3D = [[[2]], [[3]], [[1]]]
         tensor4D = [[[[2]]], [[[3]]], [[[1]]]]
         tensor5D = [[[[[2]]]], [[[[3]]]], [[[[1]]]]]

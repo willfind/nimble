@@ -103,7 +103,7 @@ def inverse(aObj):
     return nimble.data(invData, returnType=aObj.getTypeString(), useLog=False)
 
 
-def pseudoInverse(aObj, method='svd'):
+def pseudoInverse(aObj):
     """
     Compute the (Moore-Penrose) pseudo-inverse of a nimble Base object.
 
@@ -114,9 +114,6 @@ def pseudoInverse(aObj, method='svd'):
     ----------
     aObj : nimble Base object.
         Square object to be pseudo-inverted.
-    method : str.
-        * 'svd'. Uses singular-value decomposition by default.
-        * 'least-squares'.  Uses least squares solver included.
 
     Returns
     -------
@@ -159,9 +156,9 @@ def pseudoInverse(aObj, method='svd'):
             "Object must be derived class of nimble.core.data.Base.")
     if not aObj.points and not aObj.features:
         return aObj
-    if method not in ['least-squares', 'svd']:
-        raise InvalidArgumentValue(
-            "Supported methods are 'least-squares' and 'svd'.")
+    # if method not in ['least-squares', 'svd']:
+    #     raise InvalidArgumentValue(
+    #         "Supported methods are 'least-squares' and 'svd'.")
 
     def _handleNonSupportedTypes(exception):
         if re.match('.*object arrays*', str(exception), re.I):
