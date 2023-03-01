@@ -108,7 +108,7 @@ def pseudoInverse(aObj):
     Compute the (Moore-Penrose) pseudo-inverse of a nimble Base object.
 
     Calculate a generalized inverse of a matrix using singular-value
-    decomposition (default) or least squares solver.
+    decomposition solver.
 
     Parameters
     ----------
@@ -125,8 +125,6 @@ def pseudoInverse(aObj):
     InvalidArgumentType
         If ``aObj`` is not a nimble Base Object.
         If ``aObj`` elements types are not supported.
-    InvalidArgumentValue
-        If ``method`` name is not supported.
 
     Examples
     --------
@@ -156,9 +154,6 @@ def pseudoInverse(aObj):
             "Object must be derived class of nimble.core.data.Base.")
     if not aObj.points and not aObj.features:
         return aObj
-    # if method not in ['least-squares', 'svd']:
-    #     raise InvalidArgumentValue(
-    #         "Supported methods are 'least-squares' and 'svd'.")
 
     def _handleNonSupportedTypes(exception):
         if re.match('.*object arrays*', str(exception), re.I):
