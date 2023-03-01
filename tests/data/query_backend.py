@@ -441,18 +441,18 @@ class QueryBackend(DataTestObject):
         """
 
         """
-        featureNames = ["one", "two", "three", "zero", "gender"]
+        featureNames = ["one", "two", "three", "zero", "unit"]
         pnames = ['1', '4', '7', '0']
-        data = [[1, 2, 3, 0, 'f'], [4, 5, 0, 0, 'm'], [7, 0, 9, 0, 'f'], [0, 0, 0, 0, 'm']]
+        data = [[1, 2, 3, 0, 200], [4, 5, 0, 0, 100], [7, 0, 9, 0, 200], [0, 0, 0, 0, 100]]
 
         toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
 
         tmp1 = self.constructor(data[1], featureNames=featureNames, pointNames=[pnames[1]])
         assert toTest[1, :] == tmp1
         assert toTest['4', :] == tmp1
-        assert toTest[0, 'gender'] == 'f'
-        assert toTest[0, 4] == 'f'
-        assert toTest['1', 'gender'] == 'f'
+        assert toTest[0, 'unit'] == 200
+        assert toTest[0, 4] == 200
+        assert toTest['1', 'unit'] == 200
 
         tmp2 = self.constructor(data[1:], featureNames=featureNames, pointNames=pnames[1:])
         assert toTest[1:, :] == tmp2
@@ -461,21 +461,21 @@ class QueryBackend(DataTestObject):
         assert toTest[[1,2,3], :] == tmp2
         assert toTest[['4', '7', '0'], :] == tmp2
 
-        tmp3 = self.constructor([['f'], ['m'], ['f'], ['m']], featureNames=['gender'], pointNames=pnames)
+        tmp3 = self.constructor([[200], [100], [200], [100]], featureNames=['unit'], pointNames=pnames)
         assert toTest[:, 4] == tmp3
-        assert toTest[:, 'gender'] == tmp3
+        assert toTest[:, 'unit'] == tmp3
 
-        tmp4 = self.constructor([['f', 0], ['m', 0], ['f', 0], ['m', 0]], featureNames=['gender', 'zero'], pointNames=pnames)
+        tmp4 = self.constructor([[200, 0], [100, 0], [200, 0], [100, 0]], featureNames=['unit', 'zero'], pointNames=pnames)
         assert toTest[:, 4:3:-1] == tmp4
-        assert toTest[:, "gender":"zero":-1] == tmp4
+        assert toTest[:, "unit":"zero":-1] == tmp4
         assert toTest[:, [4,3]] == tmp4
-        assert toTest[:, ['gender', 'zero']] == tmp4
+        assert toTest[:, ['unit', 'zero']] == tmp4
 
-        tmp5 = self.constructor([['f', 0], ['m', 0]], featureNames=['gender', 'zero'], pointNames=pnames[:2])
+        tmp5 = self.constructor([[200, 0], [100, 0]], featureNames=['unit', 'zero'], pointNames=pnames[:2])
         assert toTest[:1, 4:3:-1] == tmp5
-        assert toTest[:"4", "gender":"zero":-1] == tmp5
+        assert toTest[:"4", "unit":"zero":-1] == tmp5
         assert toTest[['1', '4'], [4,3]] == tmp5
-        assert toTest[[0,1], ['gender', 'zero']] == tmp5
+        assert toTest[[0,1], ['unit', 'zero']] == tmp5
 
 
     def test_getitem_simpleExampleWithZeroes(self):
@@ -708,9 +708,9 @@ class QueryBackend(DataTestObject):
     ###############################
     @noLogEntryExpected
     def test_pf_getitem(self):
-        featureNames = ["one", "two", "three", "zero", "gender"]
+        featureNames = ["one", "two", "three", "zero", "unit"]
         pnames = ['1', '4', '7', '0']
-        data = [[1, 2, 3, 0, 'f'], [4, 5, 0, 0, 'm'], [7, 0, 9, 0, 'f'], [0, 0, 0, 0, 'm']]
+        data = [[1, 2, 3, 0, 200], [4, 5, 0, 0, 100], [7, 0, 9, 0, 200], [0, 0, 0, 0, 100]]
 
         toTest = self.constructor(data, pointNames=pnames, featureNames=featureNames)
 
@@ -726,21 +726,21 @@ class QueryBackend(DataTestObject):
         assert toTest.points[['4', '7', '0']] == tmp2
         assert toTest.points[0:3] == toTest
 
-        tmp3 = self.constructor([['f'], ['m'], ['f'], ['m']], featureNames=['gender'], pointNames=pnames)
+        tmp3 = self.constructor([[200], [100], [200], [100]], featureNames=['unit'], pointNames=pnames)
         assert toTest.features[4] == tmp3
-        assert toTest.features['gender'] == tmp3
+        assert toTest.features['unit'] == tmp3
 
-        tmp4 = self.constructor([['f', 0], ['m', 0], ['f', 0], ['m', 0]], featureNames=['gender', 'zero'], pointNames=pnames)
+        tmp4 = self.constructor([[200, 0], [100, 0], [200, 0], [100, 0]], featureNames=['unit', 'zero'], pointNames=pnames)
         assert toTest.features[4:3:-1] == tmp4
-        assert toTest.features["gender":"zero":-1] == tmp4
+        assert toTest.features["unit":"zero":-1] == tmp4
         assert toTest.features[[4,3]] == tmp4
-        assert toTest.features[['gender', 'zero']] == tmp4
+        assert toTest.features[['unit', 'zero']] == tmp4
 
-        tmp5 = self.constructor([['f', 0], ['m', 0]], featureNames=['gender', 'zero'], pointNames=pnames[:2])
+        tmp5 = self.constructor([[200, 0], [100, 0]], featureNames=['unit', 'zero'], pointNames=pnames[:2])
         assert toTest.points[:1].features[4:3:-1] == tmp5
-        assert toTest.points[:"4"].features["gender":"zero":-1] == tmp5
+        assert toTest.points[:"4"].features["unit":"zero":-1] == tmp5
         assert toTest.points[['1', '4']].features[[4,3]] == tmp5
-        assert toTest.points[[0,1]].features[['gender', 'zero']] == tmp5
+        assert toTest.points[[0,1]].features[['unit', 'zero']] == tmp5
 
     @raises(KeyError)
     def test_points_getitem_exception_duplicateValues(self):
@@ -1965,31 +1965,31 @@ class QueryBackend(DataTestObject):
 
     @noLogEntryExpected
     def test_featureStatistics_groupbyfeature(self):
-        orig = self.constructor([[1,2,3,'f'], [4,5,6,'m'], [7,8,9,'f'], [10,11,12,'m']], featureNames=['a','b', 'c', 'gender'])
+        orig = self.constructor([[1,2,3,200], [4,5,6,100], [7,8,9,200], [10,11,12,100]], featureNames=['a','b', 'c', 'unit'])
         if isinstance(orig, nimble.core.data.BaseView):
             return
         #don't test view.
-        res = orig.features.statistics('mean', groupByFeature='gender')
+        res = orig.features.statistics('mean', groupByFeature='unit')
         expObjf = self.constructor([4,5,6], featureNames=['a','b', 'c'], pointNames=['mean'])
         expObjm = self.constructor([7,8,9], featureNames=['a','b', 'c'], pointNames=['mean'])
-        assert expObjf == res['f']
-        assert expObjm == res['m']
+        assert expObjf == res[200]
+        assert expObjm == res[100]
 
     @noLogEntryExpected
     def test_featureStatistics_groupbyfeature(self):
-        fnames = ['a','b', 'c', 'gender', 'subgroup']
-        orig = self.constructor([[1,2,3,'f','foo'], [4,5,6,'m','foo'], [7,8,9,'f','foo'],
-                                [10,11,12,'m','bar']], featureNames=fnames)
+        fnames = ['a','b', 'c', 'unit', 'subclass']
+        orig = self.constructor([[1,2,3,200,4], [4,5,6,100,4], [7,8,9,200,4],
+                                [10,11,12,100,5]], featureNames=fnames)
         if isinstance(orig, nimble.core.data.BaseView):
             return
         #don't test view.
-        res = orig.features.statistics('mean', groupByFeature=['gender', 'subgroup'])
+        res = orig.features.statistics('mean', groupByFeature=['unit', 'subclass'])
         expObjf_f = self.constructor([4,5,6], featureNames=['a','b', 'c'], pointNames=['mean'])
         expObjm_f = self.constructor([4,5,6], featureNames=['a','b', 'c'], pointNames=['mean'])
         expObjm_b = self.constructor([10,11,12], featureNames=['a','b', 'c'], pointNames=['mean'])
-        assert expObjf_f == res['f', 'foo']
-        assert expObjm_f == res['m', 'foo']
-        assert expObjm_b == res['m', 'bar']
+        assert expObjf_f == res[200, 4]
+        assert expObjm_f == res[100, 4]
+        assert expObjm_b == res[100, 5]
 
     @noLogEntryExpected
     def backend_Stat_mean(self, axis):
@@ -2906,7 +2906,7 @@ class QueryBackend(DataTestObject):
         pointNames =  ['1', 'one', '2']
         featureNames = ['one', 'two', 'three']
 
-        data_pinv = linalg.pinv2(data)
+        data_pinv = linalg.pinv(data)
         resObj = self.constructor(data_pinv)
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)

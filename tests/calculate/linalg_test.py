@@ -118,11 +118,11 @@ def testPseudoInverseObject():
 
         return objsList
 
-    def _pseudoInverseTestImplementation(obj, method):
+    def _pseudoInverseTestImplementation(obj):
         origObj = obj.copy()
         identity = nimble.identity(min(len(obj.points), len(obj.features)),
                                    returnType=obj.getTypeString())
-        objPinv = pseudoInverse(obj, method=method)
+        objPinv = pseudoInverse(obj)
 
         if len(obj.points) <= len(obj.features):
             identityFromPinv = obj @ objPinv
@@ -132,10 +132,9 @@ def testPseudoInverseObject():
         assert origObj == obj
 
     for constructor in getDataConstructors():
-        for method in ['least-squares', 'svd']:
-            objList = _testPseudoInverseCreateObjects(constructor)
-            for obj in objList:
-                _pseudoInverseTestImplementation(obj, method)
+        objList = _testPseudoInverseCreateObjects(constructor)
+        for obj in objList:
+            _pseudoInverseTestImplementation(obj)
 
 
 def testPseudoInverseEmptyObject():
