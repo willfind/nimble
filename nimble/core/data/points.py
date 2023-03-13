@@ -129,8 +129,9 @@ class Points(ABC):
               {name:index}
             * None - remove names from this object.
         oldIdentifiers : str, int, iterable, None
-            * iterable - The names of points to be renamed.
             * str - The name of a point to be renamed.
+            * int - The index of a point to be renamed
+            * iterable - The names or indices of points to be renamed.
             * None - The default when assigning names to all points in the
               data.
         useLog : bool, None
