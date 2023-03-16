@@ -15,6 +15,16 @@ import nimble
 from nimble.core.configuration import SessionConfiguration
 from nimble.core._learnHelpers import initAvailablePredefinedInterfaces
 
+
+TEMPDIRLOG = tempfile.TemporaryDirectory()
+DUMMYCONFIG = {
+    'logger': {'location': TEMPDIRLOG.name,
+               'name': "tmpLogs",
+               'enabledByDefault': "False",
+               'enableDeepLogging': "False"},
+    'fetch': {'location': TEMPDIRLOG.name}
+    }
+
 @pytest.fixture(autouse=True)
 def addNimble(doctest_namespace):
     """
@@ -22,18 +32,20 @@ def addNimble(doctest_namespace):
     """
     doctest_namespace["nimble"] = nimble
 
-currPath = os.path.abspath(inspect.getfile(inspect.currentframe()))
-nimblePath = os.path.dirname(currPath)
-sys.path.append(os.path.dirname(nimblePath))
+@pytest.fixture
+def tmpDataToFileFixture():
+    """
+    Used for doctests which write out a file in the cwd. This will change
+    the cwd temporarily so that this doctest will not polute the filesystem
+    """
+    backupCWD = os.getcwd()
+    with tempfile.TemporaryDirectory() as tmpdirForCSV:
+        try:
+            os.chdir(tmpdirForCSV)
+            yield
+        finally:
+            os.chdir(backupCWD)
 
-tempdir = tempfile.TemporaryDirectory()
-configuration = {
-    'logger': {'location': tempdir.name,
-               'name': "tmpLogs",
-               'enabledByDefault': "False",
-               'enableDeepLogging': "False"},
-    'fetch': {'location': tempdir.name}
-    }
 # Predefined interfaces were previously loaded on nimble import but
 # are now loaded as requested. Some tests operate under the assumption
 # that all these interfaces have already been loaded, but since that
@@ -89,7 +101,7 @@ def overrideSettings():
     Replace nimble.settings with DictSessionConfig using default testing
     settings. This avoids any need to interact with the config file.
     """
-    currSettings = copy.deepcopy(configuration)
+    currSettings = copy.deepcopy(DUMMYCONFIG)
 
     def loadSavedSettings():
         return DictSessionConfig(currSettings)
@@ -123,11 +135,4 @@ def pytest_sessionfinish():
     """
     Cleanup after all tests have completed.
     """
-    tempdir.cleanup()
-
-    deleteFiles = ['simpleData.csv']
-
-    for fileName in deleteFiles:
-        fullPath = os.path.join(nimblePath, fileName)
-        if os.path.exists(fullPath):
-            os.remove(fullPath)
+    TEMPDIRLOG.cleanup()

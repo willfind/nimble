@@ -3,6 +3,7 @@ Module the user-facing data creation functions for the top level
 nimble import.
 """
 import numpy as np
+import pytest
 
 import nimble
 from nimble.exceptions import InvalidArgumentType, InvalidArgumentValue
@@ -19,6 +20,7 @@ from nimble.core._createHelpers import fileFetcher
 from nimble.core._createHelpers import DEFAULT_MISSING
 
 
+@pytest.mark.usefixtures('tmpDataToFileFixture')
 def data(source, pointNames='automatic', featureNames='automatic',
          returnType=None, name=None, convertToType=None, keepPoints='all',
          keepFeatures='all', treatAsMissing=DEFAULT_MISSING,
