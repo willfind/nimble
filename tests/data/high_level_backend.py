@@ -605,6 +605,198 @@ class HighLevelDataSafeSparseUnsafe(DataTestObject):
     
     def test_features_matching_varietyOfFuncs(self):
         self.back_pointsfeatures_matching_varietyOfFuncs('feature')
+    
+    def test_calculateOnElements_toDatetime(self):
+        data = [['2019-01-01', '2019-12-31'],
+                ['2020-01-01', '2020-12-31'],
+                ['2021-01-01', '2021-12-31']]
+        toTest = self.constructor(data)
+
+        def toDatetime(elem):
+            return datetime.datetime.strptime(elem, '%Y-%m-%d')
+
+        expData = [[datetime.datetime(2019, 1, 1), datetime.datetime(2019, 12, 31)],
+                   [datetime.datetime(2020, 1, 1), datetime.datetime(2020, 12, 31)],
+                   [datetime.datetime(2021, 1, 1), datetime.datetime(2021, 12, 31)]]
+
+        exp = self.constructor(expData)
+
+        datetimes = toTest.calculateOnElements(toDatetime)
+
+        assert datetimes == exp
+    
+    def test_features_unique_allNames_string(self):
+        data = [['a','b','c','a','b','c'],
+                ['1','2','3','1','2','4'],
+                ['0','0','0','0','0','0']]
+        ptNames = ["p0", "p1", "p2"]
+        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['a','b','c','c'], ['1','2','3','4'], ['0','0','0','0']]
+        exp = self.constructor(expData, pointNames=ptNames, featureNames=["f0", "f1", "f2", "f5"])
+
+        ret = test.features.unique()
+
+        assert ret == exp
+    
+    def test_transformFeatureToIntegers_positioning(self):
+        """ Test transformFeatureToIntegers preserves featurename mapping """
+        data = [['a', 0], ['b', 1], ['c', 2], ['b', 3], ['a', 4]]
+        pnames = ['1a', '2a', '3', '2b', '1b']
+        fnames = ['col', 'pos']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        ret = toTest.transformFeatureToIntegers(0)
+
+        assert toTest[0, 0] == toTest[4, 0]
+        assert toTest[1, 0] == toTest[3, 0]
+        assert toTest[0, 0] != toTest[1, 0]
+        assert toTest[0, 0] != toTest[2, 0]
+
+        assert toTest[0, 1] == 0
+        assert toTest[1, 1] == 1
+        assert toTest[2, 1] == 2
+        assert toTest[3, 1] == 3
+        assert toTest[4, 1] == 4
+
+        # ensure data was transformed to a numeric type.
+        for i in range(len(toTest.points)):
+            # Matrix and Sparse might store values as floats or numpy types
+            assert isinstance(toTest[i, 0], (int, float, np.number))
+
+        # check ret
+        assert len(ret) == 3
+        assert all(isinstance(key, int) for key in ret.keys())
+        for value in ret.values():
+            assert value in ['a', 'b', 'c']
+    
+    ###################
+    # features.unique #
+    ###################
+
+    def test_transformFeatureToIntegers_ZerosInFeatureValuesPreserved(self):
+        data = [['a'], [52], [0], [0], [0], [52], ['a']]
+
+        toTest = self.constructor(data, featureNames=False)
+        ret = toTest.transformFeatureToIntegers(0)
+
+        assert ret[0] == 0
+        assert toTest[0, 0] == toTest[6, 0]
+        assert toTest[1, 0] == toTest[5, 0]
+        assert toTest[2, 0] == 0
+        assert toTest[3, 0] == 0
+        assert toTest[4, 0] == 0
+    
+    #######################
+    # countUniqueElements #
+    #######################
+    @noLogEntryExpected
+    def test_countUniqueElements_allPtsAndFtrs(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        toTest = self.constructor(data)
+        unique = toTest.countUniqueElements()
+
+        assert len(unique) == 6
+        assert unique[1] == 2
+        assert unique[2] == 2
+        assert unique[3] == 2
+        assert unique['a'] == 1
+        assert unique['b'] == 1
+        assert unique['c'] == 1
+        # for Sparse, 0 is added to returned dictionary manually
+        # want to test 0 is not added if the data doesn't contain zeros
+        assert 0 not in unique
+        assertNoNamesGenerated(toTest)
+    
+    def test_countUniqueElements_limitPoints(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        pNames = ['p1', 'p2', 'p3']
+        toTest = self.constructor(data, pointNames=pNames)
+        unique = toTest.countUniqueElements(points=0)
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[2] == 1
+        assert unique[3] == 1
+
+        unique = toTest.countUniqueElements(points='p1')
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[2] == 1
+        assert unique[3] == 1
+
+        unique = toTest.countUniqueElements(points=[0,'p3'])
+
+        assert len(unique) == 3
+        assert unique[1] == 2
+        assert unique[2] == 2
+        assert unique[3] == 2
+
+    @noLogEntryExpected
+    def test_countUniqueElements_limitPointsAndFeatures_cornercase(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        fNames = ['f1', 'f2', 'f3']
+        pNames = ['p1', 'p2', 'p3']
+        toTest = self.constructor(data, featureNames=fNames, pointNames=pNames)
+
+        unique = toTest.countUniqueElements(features=[0,'f3'], points=[0,'p3'])
+
+        assert len(unique) == 2
+        assert unique[1] == 2
+        assert unique[3] == 2
+    
+    def test_matchingElements_valueInput(self):
+        # import pdb
+        # pdb.set_trace()
+        raw = [[1, 2, 3], [-1, -2, -3], [0, 'a', 0]]
+        obj = self.constructor(raw)
+        match1 = obj.matchingElements(lambda x: x == 0)
+        match2 = obj.matchingElements(0)
+        assert match1 == match2
+
+        match1 = obj.matchingElements(lambda x: x == 'a')
+        match2 = obj.matchingElements('a')
+        assert match1 == match2
+    
+    @logCountAssertionFactory(4)
+    def test_matchingElements_varietyOfFuncs(self):
+        raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
+        obj = self.constructor(raw)
+
+        exp = [[True, True, True], [False, False, False], [False, False, False]]
+        expObj = self.constructor(exp)
+        matchPositive = obj.matchingElements(match.positive)
+
+        assert matchPositive == expObj
+
+        exp = [[True, True, True], [True, False, False], [True, True, True]]
+        expObj = self.constructor(exp)
+        greaterEqualToNeg1 = obj.matchingElements(lambda x: x >= -1)
+
+        assert greaterEqualToNeg1 == expObj
+
+        raw = [['a', None, 'c'], [np.nan, None, -3], [0, 'zero', None]]
+        obj = self.constructor(raw)
+
+        exp = [[False, True, False], [True, True, False], [False, False, True]]
+        expObj = self.constructor(exp)
+        isMissing = obj.matchingElements(match.missing)
+
+        assert isMissing == expObj
+
+        # None is converted to nan by nimble.data, here we explicitly pass the
+        # value the underlying representation uses, so we avoid making it
+        # look like None is considered a numeric
+        raw = [['a', np.nan, 'c'], [np.nan, np.nan, -3], [0, 'zero', np.nan]]
+        obj = self.constructor(raw)
+        exp = [[True, False, True], [False, False, False], [False, True, False]]
+
+        expObj = self.constructor(exp)
+        isNonNumeric = obj.matchingElements(match.nonNumeric)
+
+        assert isNonNumeric == expObj
+        
 class HighLevelDataSafeSparseSafe(DataTestObject):
     #######################
     # .points.calculate() #
@@ -878,83 +1070,6 @@ class HighLevelDataSafeSparseSafe(DataTestObject):
     ###################
     # features.unique #
     ###################
-    
-    def test_features_unique_allNames_string(self):
-        data = [['a','b','c','a','b','c'],
-                ['1','2','3','1','2','4'],
-                ['0','0','0','0','0','0']]
-        ptNames = ["p0", "p1", "p2"]
-        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
-        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-
-        expData = [['a','b','c','c'], ['1','2','3','4'], ['0','0','0','0']]
-        exp = self.constructor(expData, pointNames=ptNames, featureNames=["f0", "f1", "f2", "f5"])
-
-        ret = test.features.unique()
-
-        assert ret == exp
-    
-    def test_calculateOnElements_toDatetime(self):
-        data = [['2019-01-01', '2019-12-31'],
-                ['2020-01-01', '2020-12-31'],
-                ['2021-01-01', '2021-12-31']]
-        toTest = self.constructor(data)
-
-        def toDatetime(elem):
-            return datetime.datetime.strptime(elem, '%Y-%m-%d')
-
-        expData = [[datetime.datetime(2019, 1, 1), datetime.datetime(2019, 12, 31)],
-                   [datetime.datetime(2020, 1, 1), datetime.datetime(2020, 12, 31)],
-                   [datetime.datetime(2021, 1, 1), datetime.datetime(2021, 12, 31)]]
-
-        exp = self.constructor(expData)
-
-        datetimes = toTest.calculateOnElements(toDatetime)
-
-        assert datetimes == exp
-    
-    def test_transformFeatureToIntegers_positioning(self):
-        """ Test transformFeatureToIntegers preserves featurename mapping """
-        data = [['a', 0], ['b', 1], ['c', 2], ['b', 3], ['a', 4]]
-        pnames = ['1a', '2a', '3', '2b', '1b']
-        fnames = ['col', 'pos']
-        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        ret = toTest.transformFeatureToIntegers(0)
-
-        assert toTest[0, 0] == toTest[4, 0]
-        assert toTest[1, 0] == toTest[3, 0]
-        assert toTest[0, 0] != toTest[1, 0]
-        assert toTest[0, 0] != toTest[2, 0]
-
-        assert toTest[0, 1] == 0
-        assert toTest[1, 1] == 1
-        assert toTest[2, 1] == 2
-        assert toTest[3, 1] == 3
-        assert toTest[4, 1] == 4
-
-        # ensure data was transformed to a numeric type.
-        for i in range(len(toTest.points)):
-            # Matrix and Sparse might store values as floats or numpy types
-            assert isinstance(toTest[i, 0], (int, float, np.number))
-
-        # check ret
-        assert len(ret) == 3
-        assert all(isinstance(key, int) for key in ret.keys())
-        for value in ret.values():
-            assert value in ['a', 'b', 'c']
-
-    def test_transformFeatureToIntegers_ZerosInFeatureValuesPreserved(self):
-        data = [['a'], [52], [0], [0], [0], [52], ['a']]
-
-        toTest = self.constructor(data, featureNames=False)
-        ret = toTest.transformFeatureToIntegers(0)
-
-        assert ret[0] == 0
-        assert toTest[0, 0] == toTest[6, 0]
-        assert toTest[1, 0] == toTest[5, 0]
-        assert toTest[2, 0] == 0
-        assert toTest[3, 0] == 0
-        assert toTest[4, 0] == 0
 
 
     ##########################
@@ -1983,62 +2098,6 @@ class HighLevelDataSafeSparseSafe(DataTestObject):
     #######################
     # countUniqueElements #
     #######################
-    @noLogEntryExpected
-    def test_countUniqueElements_allPtsAndFtrs(self):
-        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
-        toTest = self.constructor(data)
-        unique = toTest.countUniqueElements()
-
-        assert len(unique) == 6
-        assert unique[1] == 2
-        assert unique[2] == 2
-        assert unique[3] == 2
-        assert unique['a'] == 1
-        assert unique['b'] == 1
-        assert unique['c'] == 1
-        # for Sparse, 0 is added to returned dictionary manually
-        # want to test 0 is not added if the data doesn't contain zeros
-        assert 0 not in unique
-        assertNoNamesGenerated(toTest)
-
-    def test_countUniqueElements_limitPoints(self):
-        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
-        pNames = ['p1', 'p2', 'p3']
-        toTest = self.constructor(data, pointNames=pNames)
-        unique = toTest.countUniqueElements(points=0)
-
-        assert len(unique) == 3
-        assert unique[1] == 1
-        assert unique[2] == 1
-        assert unique[3] == 1
-
-        unique = toTest.countUniqueElements(points='p1')
-
-        assert len(unique) == 3
-        assert unique[1] == 1
-        assert unique[2] == 1
-        assert unique[3] == 1
-
-        unique = toTest.countUniqueElements(points=[0,'p3'])
-
-        assert len(unique) == 3
-        assert unique[1] == 2
-        assert unique[2] == 2
-        assert unique[3] == 2
-
-
-    @noLogEntryExpected
-    def test_countUniqueElements_limitPointsAndFeatures_cornercase(self):
-        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
-        fNames = ['f1', 'f2', 'f3']
-        pNames = ['p1', 'p2', 'p3']
-        toTest = self.constructor(data, featureNames=fNames, pointNames=pNames)
-
-        unique = toTest.countUniqueElements(features=[0,'f3'], points=[0,'p3'])
-
-        assert len(unique) == 2
-        assert unique[1] == 2
-        assert unique[3] == 2
 
     def test_countUniqueElements_zeroCount(self):
         data = [[0, 0, 0, 0, 1], [2, 0, 0, 0, 0], [0, 0, 3, 0, 0]]
@@ -2220,19 +2279,6 @@ class HighLevelDataSafeSparseSafe(DataTestObject):
         assert matches[1, 1] is False or matches[1, 1] is np.bool_(False)
         assert matches[1, 2] is False or matches[1, 2] is np.bool_(False)
 
-    def test_matchingElements_valueInput(self):
-        # import pdb
-        # pdb.set_trace()
-        raw = [[1, 2, 3], [-1, -2, -3], [0, 'a', 0]]
-        obj = self.constructor(raw)
-        match1 = obj.matchingElements(lambda x: x == 0)
-        match2 = obj.matchingElements(0)
-        assert match1 == match2
-
-        match1 = obj.matchingElements(lambda x: x == 'a')
-        match2 = obj.matchingElements('a')
-        assert match1 == match2
-
     def test_matchingElements_comparisonStringInput(self):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
         obj = self.constructor(raw)
@@ -2277,44 +2323,6 @@ class HighLevelDataSafeSparseSafe(DataTestObject):
         expRaw = [[True, False]]
         expected = self.constructor(expRaw, ['1'], ['b', 'c'])
         assert matches == expected
-
-    @logCountAssertionFactory(4)
-    def test_matchingElements_varietyOfFuncs(self):
-        raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
-        obj = self.constructor(raw)
-
-        exp = [[True, True, True], [False, False, False], [False, False, False]]
-        expObj = self.constructor(exp)
-        matchPositive = obj.matchingElements(match.positive)
-
-        assert matchPositive == expObj
-
-        exp = [[True, True, True], [True, False, False], [True, True, True]]
-        expObj = self.constructor(exp)
-        greaterEqualToNeg1 = obj.matchingElements(lambda x: x >= -1)
-
-        assert greaterEqualToNeg1 == expObj
-
-        raw = [['a', None, 'c'], [np.nan, None, -3], [0, 'zero', None]]
-        obj = self.constructor(raw)
-
-        exp = [[False, True, False], [True, True, False], [False, False, True]]
-        expObj = self.constructor(exp)
-        isMissing = obj.matchingElements(match.missing)
-
-        assert isMissing == expObj
-
-        # None is converted to nan by nimble.data, here we explicitly pass the
-        # value the underlying representation uses, so we avoid making it
-        # look like None is considered a numeric
-        raw = [['a', np.nan, 'c'], [np.nan, np.nan, -3], [0, 'zero', np.nan]]
-        obj = self.constructor(raw)
-        exp = [[True, False, True], [False, False, False], [False, True, False]]
-
-        expObj = self.constructor(exp)
-        isNonNumeric = obj.matchingElements(match.nonNumeric)
-
-        assert isNonNumeric == expObj
 
     def test_matchingElements_pfname_preservation(self):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]

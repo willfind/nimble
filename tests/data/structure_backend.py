@@ -655,126 +655,6 @@ class StructureDataSafeSparseSafe(StructureShared):
         assert dictOfList == {}
 
     @noLogEntryExpected
-    def test_copy_rightTypeTrueCopy(self):
-        """ Test copy() will return all of the right type and do not show each other's modifications"""
-
-        data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0], ['a', 'b', 'c']]
-        featureNames = ['one', 'two', 'three']
-        pointNames = ['1', 'one', '2', '0', 'str']
-        orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        sparseObj = nimble.data(data, pointNames=pointNames, featureNames=featureNames,
-                                returnType="Sparse", useLog=False)
-        listObj = nimble.data(data, pointNames=pointNames, featureNames=featureNames,
-                                returnType="List", useLog=False)
-        matrixObj = nimble.data(data, pointNames=pointNames, featureNames=featureNames,
-                                returnType="Matrix", useLog=False)
-        dataframeObj = nimble.data(data, pointNames=pointNames, featureNames=featureNames,
-                                returnType="DataFrame", useLog=False)
-
-        pointsShuffleIndices = [4, 3, 1, 2, 0]
-        featuresShuffleIndices = [1, 2, 0]
-
-        copySparse = orig.copy(to='Sparse')
-        assert copySparse.isIdentical(sparseObj)
-        assert sparseObj.isIdentical(copySparse)
-        assert type(copySparse) == Sparse
-        copySparse.features.setName('two', '2', useLog=False)
-        copySparse.points.setName('one', 'WHAT', useLog=False)
-        assert 'two' in orig.features.getNames()
-        assert 'one' in orig.points.getNames()
-        copySparse.points.permute(pointsShuffleIndices, useLog=False)
-        copySparse.features.permute(featuresShuffleIndices, useLog=False)
-        assert orig[0, 0] == 1
-
-        copyList = orig.copy(to='List')
-        assert copyList.isIdentical(listObj)
-        assert listObj.isIdentical(copyList)
-        assert type(copyList) == List
-        copyList.features.setName('two', '2', useLog=False)
-        copyList.points.setName('one', 'WHAT', useLog=False)
-        assert 'two' in orig.features.getNames()
-        assert 'one' in orig.points.getNames()
-        copyList.points.permute(pointsShuffleIndices, useLog=False)
-        copyList.features.permute(featuresShuffleIndices, useLog=False)
-        assert orig[0, 0] == 1
-
-        copyMatrix = orig.copy(to='Matrix')
-        assert copyMatrix.isIdentical(matrixObj)
-        assert matrixObj.isIdentical(copyMatrix)
-        assert type(copyMatrix) == Matrix
-        copyMatrix.features.setName('two', '2', useLog=False)
-        copyMatrix.points.setName('one', 'WHAT', useLog=False)
-        assert 'two' in orig.features.getNames()
-        assert 'one' in orig.points.getNames()
-        copyMatrix.points.permute(pointsShuffleIndices, useLog=False)
-        copyMatrix.features.permute(featuresShuffleIndices, useLog=False)
-        assert orig[0, 0] == 1
-
-        copyDataFrame = orig.copy(to='DataFrame')
-        assert copyDataFrame.isIdentical(dataframeObj)
-        assert dataframeObj.isIdentical(copyDataFrame)
-        assert type(copyDataFrame) == DataFrame
-        copyDataFrame.features.setName('two', '2', useLog=False)
-        copyDataFrame.points.setName('one', 'WHAT', useLog=False)
-        assert 'two' in orig.features.getNames()
-        assert 'one' in orig.points.getNames()
-        copyDataFrame.points.permute(pointsShuffleIndices, useLog=False)
-        copyDataFrame.features.permute(featuresShuffleIndices, useLog=False)
-        assert orig[0, 0] == 1
-
-        pyList = orig.copy(to='python list')
-        assert type(pyList) == list
-        pyList[0][0] = 5
-        assert orig[0, 0] == 1
-
-        numpyArray = orig.copy(to='numpy array')
-        assert type(numpyArray) == type(np.array([]))
-        numpyArray[0, 0] = 5
-        assert orig[0, 0] == 1
-
-        numpyMatrix = orig.copy(to='numpy matrix')
-        assert type(numpyMatrix) == type(np.matrix([]))
-        numpyMatrix[0, 0] = 5
-        assert orig[0, 0] == 1
-
-        # copying to scipy requires numeric values only
-        numeric = self.constructor(data[:4], pointNames=pointNames[:4],
-                                   featureNames=featureNames)
-        spcsc = numeric.copy(to='scipy csc')
-        assert type(spcsc) == type(scipy.sparse.csc_matrix([]))
-        spcsc[0, 0] = 5
-        assert numeric[0, 0] == 1
-
-        spcsr = numeric.copy(to='scipy csr')
-        assert type(spcsr) == type(scipy.sparse.csr_matrix([]))
-        spcsr[0, 0] = 5
-        assert numeric[0, 0] == 1
-
-        spcoo = numeric.copy(to='scipy coo')
-        assert type(spcoo) == type(scipy.sparse.coo_matrix([]))
-        spcoo.data[(spcoo.row == 0) & (spcoo.col == 0)] = 5
-        assert numeric[0, 0] == 1
-
-        pandasDF = orig.copy(to='pandas dataframe')
-        assert type(pandasDF) == type(pd.DataFrame([]))
-        assert np.array_equal(pandasDF.columns, featureNames)
-        assert np.array_equal(pandasDF.index, pointNames)
-        pandasDF.iloc[0, 0] = 5
-        assert orig[0, 0] == 1
-
-        listOfDict = orig.copy(to='list of dict')
-        assert type(listOfDict) == list
-        assert type(listOfDict[0]) == dict
-        listOfDict[0]['one'] = 5
-        assert orig[0, 0] == 1
-
-        dictOfList = orig.copy(to='dict of list')
-        assert type(dictOfList) == dict
-        assert type(dictOfList['one']) == list
-        dictOfList['one'][0] = 5
-        assert orig[0, 0] == 1
-
-    @noLogEntryExpected
     def test_copy_rowsArePointsFalse(self):
         """ Test copy() will return data in the right places when rowsArePoints is False"""
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
@@ -1387,20 +1267,6 @@ class StructureDataSafeSparseSafe(StructureShared):
 
         toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
         ret = toTest.points.copy('four == 1')
-
-    def test_points_copy_handmadeString_multipleOperators_success(self):
-        featureNames = ["one", "two", "<three>"]
-        pointNames = ['1', '4', '7']
-        data = [[1, 2, '<3'], [4, 5, '>3'], [7, 8, '=3']]
-
-        toTest = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        ret = toTest.points.copy('<three> == <3')
-        expectedRet = self.constructor([[1, 2, '<3']], pointNames=pointNames[:1],
-                                       featureNames=featureNames)
-        expectedTest = self.constructor(data, pointNames=pointNames,
-                                        featureNames=featureNames)
-        assert expectedRet.isIdentical(ret)
-        assert expectedTest.isIdentical(toTest)
 
     @raises(InvalidArgumentValue)
     def test_points_copy_handmadeString_multipleOperators_nameException(self):
@@ -4530,9 +4396,60 @@ class StructureModifyingSparseUnsafe(StructureShared):
         rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
         leftObj.merge(rightObj, point='strict', feature='union', onFeature='id')
 
+    def test_points_sort_stability(self):
+        colors = [[124, 1], [43, 1], [9, 1],
+                  [124, 2], [43, 2], [9, 2],
+                  [124, 3], [43, 3], [9, 3]]
+        toTest = self.constructor(colors)
+        toTest.points.sort(0)
 
+        expData = [[43, 1], [43, 2], [43, 3],
+                   [9, 1], [9, 2], [9, 3],
+                   [124, 1], [124, 2], [124, 3]]
+        exp = self.constructor(expData)
+        assert toTest.isIdentical(exp)
+
+        testRev = self.constructor(colors)
+        testRev.points.sort(0, reverse=True)
+
+        dataRev = [[124, 1], [124, 2], [124, 3],
+                   [9, 1], [9, 2], [9, 3],
+                   [43, 1], [43, 2], [43, 3]]
+        expRev = self.constructor(dataRev)
+        assert testRev.isIdentical(expRev)
     
+    def test_features_sort_stability(self):
+        colors = [[124, 43, 9, 124, 43, 9, 124, 43, 9],
+              [1, 1, 1, 2, 2, 2, 3, 3, 3]]
+        toTest = self.constructor(colors)
+        toTest.features.sort(0)
+
+        expData = [[43, 43, 43, 9, 9, 9, 124, 124, 124],
+                [1, 2, 3, 1, 2, 3, 1, 2, 3]]
+        exp = self.constructor(expData)
+        assert toTest.isIdentical(exp)
+
+        testRev = self.constructor(colors)
+        testRev.features.sort(0, reverse=True)
+
+        dataRev = [[124, 124, 124, 9, 9, 9, 43, 43, 43],
+                [1, 2, 3, 1, 2, 3, 1, 2, 3]]
+        expRev = self.constructor(dataRev)
+        assert testRev.isIdentical(expRev)
     
+    def test_merge_ptIntersection_ftUnion_pointNames_exactMatch(self):
+        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
+        dataR = [[3, 4], [7, 8], [-3, -4]]
+        pNames = ['a', 'b', 'c']
+        fNamesL = ['id', 'f1', 'f2']
+        fNamesR = ['f3', 'f4']
+        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
+        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
+        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
+        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
+        exp = self.constructor(expData, pointNames=pNames, featureNames=fNamesExp)
+        leftObj.merge(rightObj, point='intersection', feature='union')
+        assert leftObj == exp
     
 class StructureModifyingSparseSafe(StructureShared):    
     ##############
@@ -5816,27 +5733,6 @@ class StructureModifyingSparseSafe(StructureShared):
         assert toTest.isIdentical(objExp)
         assertNoNamesGenerated(toTest)
 
-    def test_points_sort_stability(self):
-        colors = [[124, 1], [43, 1], [9, 1],
-                  [124, 2], [43, 2], [9, 2],
-                  [124, 3], [43, 3], [9, 3]]
-        toTest = self.constructor(colors)
-        toTest.points.sort(0)
-
-        expData = [[43, 1], [43, 2], [43, 3],
-                   [9, 1], [9, 2], [9, 3],
-                   [124, 1], [124, 2], [124, 3]]
-        exp = self.constructor(expData)
-        assert toTest.isIdentical(exp)
-
-        testRev = self.constructor(colors)
-        testRev.points.sort(0, reverse=True)
-
-        dataRev = [[124, 1], [124, 2], [124, 3],
-                   [9, 1], [9, 2], [9, 3],
-                   [43, 1], [43, 2], [43, 3]]
-        expRev = self.constructor(dataRev)
-        assert testRev.isIdentical(expRev)
     
     def test_points_sort_stability_chained(self):
         names = [[3, 11, 6], [3, 195, 2], [4, 150, 6], [4, 370, 2],
@@ -6021,25 +5917,6 @@ class StructureModifyingSparseSafe(StructureShared):
         revExp = self.constructor(revExpected)
 
         assert toTest.isIdentical(revExp)
-
-    def test_features_sort_stability(self):
-        colors = [[124, 43, 9, 124, 43, 9, 124, 43, 9],
-              [1, 1, 1, 2, 2, 2, 3, 3, 3]]
-        toTest = self.constructor(colors)
-        toTest.features.sort(0)
-
-        expData = [[43, 43, 43, 9, 9, 9, 124, 124, 124],
-                [1, 2, 3, 1, 2, 3, 1, 2, 3]]
-        exp = self.constructor(expData)
-        assert toTest.isIdentical(exp)
-
-        testRev = self.constructor(colors)
-        testRev.features.sort(0, reverse=True)
-
-        dataRev = [[124, 124, 124, 9, 9, 9, 43, 43, 43],
-                [1, 2, 3, 1, 2, 3, 1, 2, 3]]
-        expRev = self.constructor(dataRev)
-        assert testRev.isIdentical(expRev)
 
 
     def test_features_sort_stability_chained(self):
@@ -10968,24 +10845,6 @@ class StructureModifyingSparseSafe(StructureShared):
         leftObj = self.constructor(dataL, featureNames=fNamesL)
         rightObj = self.constructor(dataR, featureNames=fNamesR)
         leftObj.merge(rightObj, point='intersection', feature='union')
-
-    
-    def test_merge_ptIntersection_ftUnion_pointNames_exactMatch(self):
-        dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
-        dataR = [[3, 4], [7, 8], [-3, -4]]
-        pNames = ['a', 'b', 'c']
-        fNamesL = ['id', 'f1', 'f2']
-        fNamesR = ['f3', 'f4']
-        leftObj = self.constructor(dataL, pointNames=pNames, featureNames=fNamesL)
-        rightObj = self.constructor(dataR, pointNames=pNames, featureNames=fNamesR)
-        expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
-        fNamesExp = ['id', 'f1', 'f2', 'f3', 'f4']
-        exp = self.constructor(expData, pointNames=pNames, featureNames=fNamesExp)
-        leftObj.merge(rightObj, point='intersection', feature='union')
-        assert leftObj == exp
-
-    
-    
 
         ##################
         # ptLeft/ftUnion #

@@ -538,6 +538,18 @@ class HighDimensionModifyingSparseUnsafe(DataTestObject):
             assert toTest.points[1] == exp0
             assert toTest.points[2] == exp1
             assert toTest._dims == expShape
+    
+    def test_highDimension_strings(self):
+        """Test that string representations work for high dimensions"""
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+            str(toTest)
+            repr(toTest)
+            toTest.show()
+            str(toTest.points)
+            repr(toTest.points)
+            str(toTest.features)
+            repr(toTest.features)
 
 class HighDimensionModifyingSparseSafe(DataTestObject):
   
@@ -698,15 +710,3 @@ class HighDimensionModifyingSparseSafe(DataTestObject):
         ftAxis = getattr(toTest, 'features')
         for method in ftDisallowed:
             assert isLimitedTo2D(ftAxis, method)
-
-    def test_highDimension_strings(self):
-        """Test that string representations work for high dimensions"""
-        for tensor in tensors:
-            toTest = self.constructor(tensor)
-            str(toTest)
-            repr(toTest)
-            toTest.show()
-            str(toTest.points)
-            repr(toTest.points)
-            str(toTest.features)
-            repr(toTest.features)

@@ -15,13 +15,11 @@ from tests.helpers import assertNoNamesGenerated
 from tests.helpers import noLogEntryExpected
 from tests.helpers import getDataConstructors
 from .baseObject import DataTestObject
-
-class StretchDataSafeSparseSafe(DataTestObject):
-    pass
+    
 class StretchDataSafeSparseUnsafe(DataTestObject):
     pass
-class StretchDataSafe(DataTestObject):
-
+class StretchDataSafeSparseSafe(DataTestObject):
+  
     ##############
     # Exceptions #
     ##############
@@ -845,12 +843,10 @@ class StretchDataSafe(DataTestObject):
         chain4 = obj2.stretch * obj3.stretch - obj2.stretch / obj3.stretch
         assert chain4 == expObj4
 
-class StretchDataModifyingSparseSafe(DataTestObject):
-    pass
 class StretchDataModifyingSparseUnsafe(DataTestObject):
     pass
 
-class StretchDataModifying(DataTestObject):
+class StretchDataModifyingSparseSafe(DataTestObject):
     ########################
     # Base / Stretch Point #
     ########################
