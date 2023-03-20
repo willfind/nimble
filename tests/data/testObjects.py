@@ -20,26 +20,36 @@ from .baseObject import viewConstructorMaker
 from .baseObject import startObjectValidation
 from .baseObject import stopObjectValidation
 
-from .numerical_backend import AllNumerical
-from .numerical_backend import NumericalDataSafe
+from .numerical_backend import NumericalDataSafeSparseSafe
+from .numerical_backend import NumericalDataSafeSparseUnsafe
+from .numerical_backend import NumericalModifyingSparseSafe
+from .numerical_backend import NumericalModifyingSparseUnsafe
 
 from .query_backend import QueryBackend
 
-from .high_level_backend import HighLevelAll
-from .high_level_backend import HighLevelDataSafe
+from .high_level_backend import HighLevelDataSafeSparseSafe
+from .high_level_backend import HighLevelDataSafeSparseUnsafe
+from .high_level_backend import HighLevelModifyingSparseSafe
+from .high_level_backend import HighLevelModifyingSparseUnsafe
 
 from .low_level_backend import LowLevelBackend
 
-from .structure_backend import StructureAll
-from .structure_backend import StructureDataSafe
+from .structure_backend import StructureDataSafeSparseSafe
+from .structure_backend import StructureDataSafeSparseUnsafe
+from .structure_backend import StructureModifyingSparseSafe
+from .structure_backend import StructureModifyingSparseUnsafe
 
 from .view_access_backend import ViewAccess
 
-from .stretch_backend import StretchAll
-from .stretch_backend import StretchDataSafe
+from .stretch_backend import StretchDataSafeSparseSafe
+from .stretch_backend import StretchDataSafeSparseUnsafe
+from .stretch_backend import StretchDataModifyingSparseSafe
+from .stretch_backend import StretchDataModifyingSparseUnsafe
 
-from .high_dimension_backend import HighDimensionAll
-from .high_dimension_backend import HighDimensionSafe
+from .high_dimension_backend import HighDimensionModifyingSparseSafe
+from .high_dimension_backend import HighDimensionModifyingSparseUnsafe
+from .high_dimension_backend import HighDimensionSafeSparseSafe
+from .high_dimension_backend import HighDimensionSafeSparseUnsafe
 
 from .data_specific_backend import SparseSpecificDataSafe
 from .data_specific_backend import SparseSpecificAll
@@ -57,58 +67,81 @@ matrixConstructor = objConstructorMaker('Matrix')
 sparseConstructor = objConstructorMaker('Sparse')
 dataframeConstructor = objConstructorMaker('DataFrame')
 
-class BaseViewChildTests(HighLevelDataSafe, NumericalDataSafe, QueryBackend,
-                         StructureDataSafe, ViewAccess, StretchDataSafe,
-                         HighDimensionSafe):
+class BaseViewAllTests(HighLevelDataSafeSparseSafe, HighLevelDataSafeSparseUnsafe,
+                        NumericalDataSafeSparseSafe, NumericalDataSafeSparseUnsafe,
+                       QueryBackend, StructureDataSafeSparseSafe, StructureDataSafeSparseUnsafe,
+                       ViewAccess, StretchDataSafeSparseSafe, StretchDataSafeSparseUnsafe,
+                       HighDimensionSafeSparseSafe, HighDimensionSafeSparseUnsafe):
     pass
 
-class BaseChildTests(HighLevelAll, AllNumerical, QueryBackend, StructureAll,
-                     StretchAll, HighDimensionAll):
+class BaseViewSparseSafeTests(HighLevelDataSafeSparseSafe, NumericalDataSafeSparseSafe,
+                              QueryBackend, StructureDataSafeSparseSafe, ViewAccess,
+                              StretchDataSafeSparseSafe, HighDimensionSafeSparseSafe):
     pass
 
-class TestListView(BaseViewChildTests):
+class BaseChildAllTests(HighLevelDataSafeSparseSafe, HighLevelModifyingSparseSafe,
+                        HighLevelDataSafeSparseUnsafe, HighLevelModifyingSparseUnsafe,
+                        NumericalDataSafeSparseSafe, NumericalModifyingSparseSafe,
+                        NumericalDataSafeSparseUnsafe, NumericalModifyingSparseUnsafe,
+                        QueryBackend, StretchDataSafeSparseSafe, StretchDataModifyingSparseSafe,
+                        StretchDataSafeSparseUnsafe, StretchDataModifyingSparseUnsafe,
+                        StructureDataSafeSparseSafe, StructureModifyingSparseSafe,
+                        StructureDataSafeSparseUnsafe, StructureModifyingSparseUnsafe,
+                        HighDimensionModifyingSparseSafe, HighDimensionModifyingSparseUnsafe,
+                        HighDimensionSafeSparseSafe, HighDimensionSafeSparseUnsafe,
+                        ):
+    pass
+
+class BaseChildSparseSafeTests(HighLevelDataSafeSparseSafe, HighLevelModifyingSparseSafe,
+                               NumericalDataSafeSparseSafe, NumericalModifyingSparseSafe,
+                               QueryBackend, StretchDataSafeSparseSafe, StretchDataModifyingSparseSafe,
+                               StructureDataSafeSparseSafe, StructureModifyingSparseSafe,
+                               HighDimensionSafeSparseSafe, HighDimensionModifyingSparseSafe):
+    pass
+
+class TestListView(BaseViewAllTests):
     def constructor(self, *args, **kwargs):
         listViewConstructor = viewConstructorMaker('List')
         return listViewConstructor(*args, **kwargs)
 
 
-class TestMatrixView(BaseViewChildTests):
+class TestMatrixView(BaseViewAllTests):
     def constructor(self, *args, **kwargs):
         matrixViewConstructor = viewConstructorMaker('Matrix')
         return matrixViewConstructor(*args, **kwargs)
 
 
-class TestSparseView(BaseViewChildTests, SparseSpecificDataSafe):
+class TestSparseView(BaseViewSparseSafeTests, SparseSpecificDataSafe):
     def constructor(self, *args, **kwargs):
         sparseViewConstructor = viewConstructorMaker('Sparse')
         return sparseViewConstructor(*args, **kwargs)
 
 
-class TestDataFrameView(BaseViewChildTests, DataFrameSpecificDataSafe):
+class TestDataFrameView(BaseViewAllTests, DataFrameSpecificDataSafe):
     def constructor(self, *args, **kwargs):
         dataframeViewConstructor = viewConstructorMaker('DataFrame')
         return dataframeViewConstructor(*args, **kwargs)
 
 
-class TestList(BaseChildTests, ListSpecificAll):
+class TestList(BaseChildAllTests, ListSpecificAll):
     def constructor(self, *args, **kwargs):
         listConstructor = objConstructorMaker('List')
         return listConstructor(*args, **kwargs)
 
 
-class TestMatrix(BaseChildTests, MatrixSpecificAll):
+class TestMatrix(BaseChildAllTests, MatrixSpecificAll):
     def constructor(self, *args, **kwargs):
         matrixConstructor = objConstructorMaker('Matrix')
         return matrixConstructor(*args, **kwargs)
 
 
-class TestSparse(BaseChildTests, SparseSpecificAll):
+class TestSparse(BaseChildSparseSafeTests, SparseSpecificAll):
     def constructor(self, *args, **kwargs):
         sparseConstructor = objConstructorMaker('Sparse')
         return sparseConstructor(*args, **kwargs)
 
 
-class TestDataFrame(BaseChildTests, DataFrameSpecificAll):
+class TestDataFrame(BaseChildAllTests, DataFrameSpecificAll):
     def constructor(self, *args, **kwargs):
         dataframeConstructor = objConstructorMaker('DataFrame')
         return dataframeConstructor(*args, **kwargs)

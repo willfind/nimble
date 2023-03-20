@@ -20,6 +20,17 @@ from tests.helpers import noLogEntryExpected
 from tests.helpers import getDataConstructors
 from tests.helpers import skipMissingPackage
 
+#Tests not safe 
+# pytest -v -k 'testMinimum'
+# pytest -v -k 'testMaximum'
+# pytest -v -k 'testMean'
+# pytest -v -k 'testMedian'
+# pytest -v -k 'testStandardDeviation'
+# pytest -v -k 'testMedianAbsoluteDeviation'
+# pytest -v -k 'testUniqueCount'
+# pytest -v -k 'testQuartiles'
+# pytest -v -k 'test_count'
+
 def testStDev():
     dataArr = np.array([[1], [1], [3], [4], [2], [6], [12], [0]])
     testRowList = nimble.data(source=dataArr, featureNames=['nums'])

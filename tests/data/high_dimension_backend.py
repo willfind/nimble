@@ -35,64 +35,7 @@ nzMatrix = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10], [-1, -2, -3, -4, -5]]
 nzTensors = makeTensorData(nzMatrix)
 
 
-class HighDimensionSafe(DataTestObject):
-    
-    def test_highDimension_equality(self):
-        for tens1, tens2 in zip(tensors, tensors):
-            toTest1 = self.constructor(tens1)
-            toTest2 = self.constructor(tens2)
-            assert toTest1.isIdentical(toTest2)
-            assert toTest2.isIdentical(toTest1)
-            assert toTest1 == toTest2
-            assert toTest2 == toTest1
-
-        vector1 = [0, 1, 2.000000001, 3, 0]
-        vector2 = [4, 5, 0, 6, 7.0000000002]
-        vector3 = [8, 0, 8.9999999999, 0, 8]
-        matrix = [vector1, vector2, vector3]
-
-        apprxTensors = makeTensorData(matrix)
-
-        for tens1, tens2 in zip(tensors, apprxTensors):
-            toTest1 = self.constructor(tens1)
-            toTest2 = self.constructor(tens2)
-            assert toTest1.isApproximatelyEqual(toTest2)
-            assert toTest2.isApproximatelyEqual(toTest1)
-
-        for tens1, tens2 in zip(tensors, tensors[1:]):
-            toTest1 = self.constructor(tens1)
-            toTest2 = self.constructor(tens2)
-            assert not toTest1.isIdentical(toTest2)
-            assert not toTest2.isIdentical(toTest1)
-            assert not toTest1.isApproximatelyEqual(toTest2)
-            assert not toTest2.isApproximatelyEqual(toTest1)
-            assert toTest1 != toTest2
-            assert toTest2 != toTest1
-
-    def test_highDimension_trainAndTestSets(self):
-        for tensor in tensors:
-            toTest = self.constructor(tensor)
-            train, test = toTest.trainAndTestSets(0.33)
-            assert len(train.points) == 2
-            assert len(train._dims) > 2
-            assert len(test.points) == 1
-            assert len(test._dims) > 2
-
-            with raises(ImproperObjectAction):
-                fourTuple = toTest.trainAndTestSets(0.33, labels=0)
-
-    def test_highDimension_trainAndTestSets_dataObject_nimbleLabel(self):
-        objectLabel = nimble.data([['dog'], ['cat'], ['cat']])
-        for tensor in tensors:
-            toTest = self.constructor(tensor)
-            trainX, trainY, testX, testY = toTest.trainAndTestSets(0.33,labels=objectLabel)
-            assert len(trainX.points) == 2
-            assert len(trainX._dims) > 2
-            assert len(testX.points) == 1
-            assert len(testX._dims) > 2
-            assert len(trainY.points) == 2
-            assert len(testY.points) == 1
-
+class HighDimensionSafeSparseUnsafe(DataTestObject):
     def test_highDimension_stringRepresentations(self):
         stdoutBackup = sys.stdout
         for tensor in tensors:
@@ -134,25 +77,6 @@ class HighDimensionSafe(DataTestObject):
                         assert l1 == l2
             finally:
                 sys.stdout = stdoutBackup
-
-    def test_showIndicesInsteadOfNames(self):
-        '''Test that show() works with indices instead of names.'''
-        
-        testData = nimble.data([['france', 'argentina', 'portugal', 'spain'],
-                                ['morocco', 'croatia', 'brazil', 'england']],
-                               featureNames=['left_sided_wc_semi-final_branch',
-                                             'right_sided_wc_semi-final_branch',
-                                             'left_sided_wc_quarter-final_exits',
-                                             'right_sided_wc_quarter-final_exit'])
-        # import pdb
-        # pdb.set_trace()
-        old_output = sys.stdout
-        temp_output = StringIO()
-        sys.stdout = temp_output
-        testData.show(includePointNames=False, includeFeatureNames=False)
-        sys.stdout = old_output
-        
-        printed_out = re.search('(\\n *)(.*?)\\n', temp_output.getvalue()).group(2)
     
     def test_highDimension_copy(self):
         for tensorList in [tensors, emptyTensors]:
@@ -237,13 +161,7 @@ class HighDimensionSafe(DataTestObject):
             assert toSave.isIdentical(hdf5Obj)
             assert pklObj.isIdentical(toSave)
             assert hdf5Obj.isIdentical(toSave)
-
-    def test_highDimension_getTypeString(self):
-        retType = self.constructor([]).getTypeString()
-        for tensor in tensors:
-            toTest = self.constructor(tensor)
-            assert toTest.getTypeString() == retType
-
+            
     def test_highDimension_posNegAbs(self):
         mixedSigns = [[0, -1, -2, 3, 0], [4, -5, 0, -6, 7], [8, 0, -9, 0, -8]]
         mixedTensors = makeTensorData(mixedSigns)
@@ -258,18 +176,7 @@ class HighDimensionSafe(DataTestObject):
             assert +toTest == toTest
             assert -toTest == expNeg
             assert abs(toTest) == expAbs
-
-    def test_highDimension_containsZero(self):
-        noZeros = [[1, 1, 2, -3, 3], [-4, 5, -5, 6, -7], [-8, 9, 9, -9, 8]]
-        noZerosTensors = makeTensorData(noZeros)
-
-        for tensor in tensors:
-            toTest = self.constructor(tensor)
-            assert toTest.containsZero()
-        for nzTensor in noZerosTensors:
-            toTest = self.constructor(nzTensor)
-            assert not toTest.containsZero()
-
+    
     def test_highDimension_binaryOperations(self):
         ops = ['__add__', '__sub__', '__mul__', '__truediv__', '__floordiv__',
                '__mod__', '__radd__', '__rsub__', '__rmul__', '__rtruediv__',
@@ -365,6 +272,86 @@ class HighDimensionSafe(DataTestObject):
                                             featureNames=ftNames)
                 with raises(ImproperObjectAction):
                     retCopy = testCopy.points.copy(arg)
+    
+    def test_highDimension_axis_unique(self):
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+            unique = toTest.points.unique()
+            assert unique._dims[0] == 1
+            assert unique._dims[1:] == toTest._dims[1:]
+    
+    def test_highDimension_equality(self):
+        for tens1, tens2 in zip(tensors, tensors):
+            toTest1 = self.constructor(tens1)
+            toTest2 = self.constructor(tens2)
+            assert toTest1.isIdentical(toTest2)
+            assert toTest2.isIdentical(toTest1)
+            assert toTest1 == toTest2
+            assert toTest2 == toTest1
+
+        vector1 = [0, 1, 2.000000001, 3, 0]
+        vector2 = [4, 5, 0, 6, 7.0000000002]
+        vector3 = [8, 0, 8.9999999999, 0, 8]
+        matrix = [vector1, vector2, vector3]
+
+        apprxTensors = makeTensorData(matrix)
+
+        for tens1, tens2 in zip(tensors, apprxTensors):
+            toTest1 = self.constructor(tens1)
+            toTest2 = self.constructor(tens2)
+            assert toTest1.isApproximatelyEqual(toTest2)
+            assert toTest2.isApproximatelyEqual(toTest1)
+
+        for tens1, tens2 in zip(tensors, tensors[1:]):
+            toTest1 = self.constructor(tens1)
+            toTest2 = self.constructor(tens2)
+            assert not toTest1.isIdentical(toTest2)
+            assert not toTest2.isIdentical(toTest1)
+            assert not toTest1.isApproximatelyEqual(toTest2)
+            assert not toTest2.isApproximatelyEqual(toTest1)
+            assert toTest1 != toTest2
+            assert toTest2 != toTest1
+
+    def test_highDimension_trainAndTestSets(self):
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+            train, test = toTest.trainAndTestSets(0.33)
+            assert len(train.points) == 2
+            assert len(train._dims) > 2
+            assert len(test.points) == 1
+            assert len(test._dims) > 2
+
+            with raises(ImproperObjectAction):
+                fourTuple = toTest.trainAndTestSets(0.33, labels=0)
+
+    def test_highDimension_trainAndTestSets_dataObject_nimbleLabel(self):
+        objectLabel = nimble.data([['dog'], ['cat'], ['cat']])
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+            trainX, trainY, testX, testY = toTest.trainAndTestSets(0.33,labels=objectLabel)
+            assert len(trainX.points) == 2
+            assert len(trainX._dims) > 2
+            assert len(testX.points) == 1
+            assert len(testX._dims) > 2
+            assert len(trainY.points) == 2
+            assert len(testY.points) == 1
+    
+    def test_highDimension_getTypeString(self):
+        retType = self.constructor([]).getTypeString()
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+            assert toTest.getTypeString() == retType
+
+    def test_highDimension_containsZero(self):
+        noZeros = [[1, 1, 2, -3, 3], [-4, 5, -5, 6, -7], [-8, 9, 9, -9, 8]]
+        noZerosTensors = makeTensorData(noZeros)
+
+        for tensor in tensors:
+            toTest = self.constructor(tensor)
+            assert toTest.containsZero()
+        for nzTensor in noZerosTensors:
+            toTest = self.constructor(nzTensor)
+            assert not toTest.containsZero()
 
     def test_highDimension_axis_count(self):
         for tensor in tensors:
@@ -376,43 +363,33 @@ class HighDimensionSafe(DataTestObject):
             with raises(ImproperObjectAction):
                 toTest.features.count(lambda ft: True)
 
-    def test_highDimension_axis_unique(self):
-        for tensor in tensors:
-            toTest = self.constructor(tensor)
-            unique = toTest.points.unique()
-            assert unique._dims[0] == 1
-            assert unique._dims[1:] == toTest._dims[1:]
 
-class HighDimensionModifying(DataTestObject):
 
-    def test_highDimension_referenceFrom(self):
-        toTest3D = self.constructor(tensors[0])
-        toTest4D = self.constructor(tensors[1])
-        toTest5D = self.constructor(tensors[2])
+class HighDimensionSafeSparseSafe(DataTestObject):
+        
+    def test_showIndicesInsteadOfNames(self):
+        '''Test that show() works with indices instead of names.'''
+        
+        testData = nimble.data([['france', 'argentina', 'portugal', 'spain'],
+                                ['morocco', 'croatia', 'brazil', 'england']],
+                               featureNames=['left_sided_wc_semi-final_branch',
+                                             'right_sided_wc_semi-final_branch',
+                                             'left_sided_wc_quarter-final_exits',
+                                             'right_sided_wc_quarter-final_exit'])
+        # import pdb
+        # pdb.set_trace()
+        old_output = sys.stdout
+        temp_output = StringIO()
+        sys.stdout = temp_output
+        testData.show(includePointNames=False, includeFeatureNames=False)
+        sys.stdout = old_output
+        
+        printed_out = re.search('(\\n *)(.*?)\\n', temp_output.getvalue()).group(2)
+    
 
-        for tensor1 in tensors:
-            for tensor2 in tensors:
-                testTensor = self.constructor(tensor1)
-                refTensor = self.constructor(tensor2)
-                if testTensor != refTensor:
-                    testTensor._referenceFrom(refTensor)
-                    assert testTensor == refTensor
-
-    def test_highDimension_inplaceBinaryOperations(self):
-        ops = ['__iadd__', '__isub__', '__imul__', '__itruediv__',
-               '__ifloordiv__']
-        for op in ops:
-            for tensor in nzTensors:
-                toTest = self.constructor(tensor)
-                ret = getattr(toTest, op)(2)
-                assert ret._dims == toTest._dims
-
-                toTest = self.constructor(tensor)
-                ret = getattr(toTest, op)(toTest)
-                assert ret._dims == toTest._dims
-
+class HighDimensionModifyingSparseUnsafe(DataTestObject):
     def test_highDimension_sort(self):
-
+  
         tensor3D = [[[2]], [[3]], [[1]]]
         tensor4D = [[[[2]]], [[[3]]], [[[1]]]]
         tensor5D = [[[[[2]]]], [[[[3]]]], [[[[1]]]]]
@@ -497,47 +474,7 @@ class HighDimensionModifying(DataTestObject):
 
             with raises(ImproperObjectAction):
                 toTest.features.append(toTest)
-
-    def test_highDimension_insertAndAppend_wrongShape(self):
-        for tens1 in tensors:
-            for tens2 in tensors:
-                toTest = self.constructor(tens1)
-                toInsert = self.constructor(tens2)
-                if toTest._dims != toInsert._dims:
-                    with raises(ImproperObjectAction):
-                        toTest.points.insert(0, toInsert)
-
-                    with raises(ImproperObjectAction):
-                        toTest.points.append(toInsert)
-
-    def test_highDimension_permute(self):
-        for tensor in tensors:
-            toTest = self.constructor(tensor, pointNames=['a', 'b', 'c'])
-            origShape = toTest._dims
-            permuted = False
-            for i in range(5):
-                toTest.points.permute()
-                assert toTest._dims == origShape
-                if toTest.points.getNames() != ['a', 'b', 'c']:
-                    permuted = True
-                    break
-            assert permuted
-
-            with raises(ImproperObjectAction):
-                toTest.features.permute()
-
-            toTest = self.constructor(tensor, pointNames=['a', 'b', 'c'])
-
-            toTest.points.permute([2, 0, 1])
-
-            expData = [tensor[2], tensor[0], tensor[1]]
-            exp = self.constructor(expData, pointNames=['c', 'a', 'b'])
-            assert toTest == exp
-
-            with raises(ImproperObjectAction):
-                toTest.features.permute([2, 0, 1])
-
-
+    
     def test_highDimension_points_structuralModifying(self):
         params = [([[0, 1]], {}),
                   ([['a', 'b']], {}),
@@ -619,6 +556,74 @@ class HighDimensionModifying(DataTestObject):
             assert toTest.points[1] == exp0
             assert toTest.points[2] == exp1
             assert toTest._dims == expShape
+
+class HighDimensionModifyingSparseSafe(DataTestObject):
+  
+    def test_highDimension_referenceFrom(self):
+        toTest3D = self.constructor(tensors[0])
+        toTest4D = self.constructor(tensors[1])
+        toTest5D = self.constructor(tensors[2])
+
+        for tensor1 in tensors:
+            for tensor2 in tensors:
+                testTensor = self.constructor(tensor1)
+                refTensor = self.constructor(tensor2)
+                if testTensor != refTensor:
+                    testTensor._referenceFrom(refTensor)
+                    assert testTensor == refTensor
+
+    def test_highDimension_inplaceBinaryOperations(self):
+        ops = ['__iadd__', '__isub__', '__imul__', '__itruediv__',
+               '__ifloordiv__']
+        for op in ops:
+            for tensor in nzTensors:
+                toTest = self.constructor(tensor)
+                ret = getattr(toTest, op)(2)
+                assert ret._dims == toTest._dims
+
+                toTest = self.constructor(tensor)
+                ret = getattr(toTest, op)(toTest)
+                assert ret._dims == toTest._dims
+
+    def test_highDimension_insertAndAppend_wrongShape(self):
+        for tens1 in tensors:
+            for tens2 in tensors:
+                toTest = self.constructor(tens1)
+                toInsert = self.constructor(tens2)
+                if toTest._dims != toInsert._dims:
+                    with raises(ImproperObjectAction):
+                        toTest.points.insert(0, toInsert)
+
+                    with raises(ImproperObjectAction):
+                        toTest.points.append(toInsert)
+
+    def test_highDimension_permute(self):
+        for tensor in tensors:
+            toTest = self.constructor(tensor, pointNames=['a', 'b', 'c'])
+            origShape = toTest._dims
+            permuted = False
+            for i in range(5):
+                toTest.points.permute()
+                assert toTest._dims == origShape
+                if toTest.points.getNames() != ['a', 'b', 'c']:
+                    permuted = True
+                    break
+            assert permuted
+
+            with raises(ImproperObjectAction):
+                toTest.features.permute()
+
+            toTest = self.constructor(tensor, pointNames=['a', 'b', 'c'])
+
+            toTest.points.permute([2, 0, 1])
+
+            expData = [tensor[2], tensor[0], tensor[1]]
+            exp = self.constructor(expData, pointNames=['c', 'a', 'b'])
+            assert toTest == exp
+
+            with raises(ImproperObjectAction):
+                toTest.features.permute([2, 0, 1])
+
 
     def test_highDimension_disallowed(self):
         # Goal here is to make sure that all functions that we have not
@@ -723,6 +728,3 @@ class HighDimensionModifying(DataTestObject):
             repr(toTest.points)
             str(toTest.features)
             repr(toTest.features)
-
-class HighDimensionAll(HighDimensionSafe, HighDimensionModifying):
-    pass

@@ -31,6 +31,21 @@ returnTypes = copy.copy(nimble.core.data.available)
 
 datetimeTypes = (datetime.datetime, np.datetime64, pd.Timestamp)
 
+#Tests not Safe 
+# pytest -v -k 'test_data_raw_acceptedTypeSuccessWithNames'
+# pytest -v -k 'test_data_multidimensionalData'
+# pytest -v -k 'test_data_multidimensionalData_pointNames'
+# pytest -v -k 'test_data_multidimensionalData_featureNames'
+# pytest -v -k 'test_names_dataUnmodified'
+# pytest -v -k 'test_DataOutputWithMissingDataTypes1D'
+# pytest -v -k 'test_DataOutputWithMissingDataTypes2D'
+# pytest -v -k 'test_rowsArePoints_scipySparse'
+
+# # safe tests
+# pytest -v -k 'test_automaticByType_fnames_rawAndCSV'
+# pytest -v -k 'test_userOverrideOfAutomaticByType_fnames_rawAndCSV'
+# pytest -v -k 'test_automaticByType_pname_interaction_with_fname'
+
 class NoIter(object):
     def __init__(self, vals):
         self.vals = vals
