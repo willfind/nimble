@@ -65,7 +65,7 @@ class Points(ABC):
 
         See Also
         --------
-        getNames, setName, setNames
+        getNames, setNames
 
         Examples
         --------
@@ -89,7 +89,7 @@ class Points(ABC):
 
         See Also
         --------
-        getName, setName, setNames
+        getName, setNames
 
         Examples
         --------
@@ -105,68 +105,35 @@ class Points(ABC):
 
 
     @prepLog
-    def setName(self, oldIdentifier, newName, *,
-                useLog=None): # pylint: disable=unused-argument
-        """
-        Set or change a pointName.
-
-        Set the name of the point at ``oldIdentifier`` with the value of
-        ``newName``.
-
-        Parameters
-        ----------
-        oldIdentifier : str, int
-            A string or integer, specifying either a current pointName
-            or the index of a current pointName.
-        newName : str
-            May be either a string not currently in the pointName set,
-            or None for an default pointName. newName cannot begin with
-            the default prefix.
-        useLog : bool, None
-            Local control for whether to send object creation to the
-            logger. If None (default), use the value as specified in the
-            "logger" "enabledByDefault" configuration option. If True,
-            send to the logger regardless of the global option. If
-            False, do **NOT** send to the logger, regardless of the
-            global option.
-
-        See Also
-        --------
-        setNames, getName, getNames
-
-        Examples
-        --------
-        >>> X = nimble.identity(4, pointNames=['a', 'b', 'c', 'd'])
-        >>> X.points.setName('b', 'new')
-        >>> X.points.getNames()
-        ['a', 'new', 'c', 'd']
-
-        Keywords
-        --------
-        row, key, index, header, heading, identifier
-        """
-        self._setName(oldIdentifier, newName)
-
-
-    @prepLog
-    def setNames(self, assignments, *,
+    def setNames(self, assignments, oldIdentifiers=None, *,
                  useLog=None): # pylint: disable=unused-argument
         """
         Set or rename all of the point names of this object.
 
         Set the point names of this object according to the values
-        specified by the ``assignments`` parameter. If assignments is
-        None, then all point names will be given new default values.
+        specified by the ``assignments`` parameter. If the number of
+        new point names being passed as assignments is less than the
+        number of points in the object, then the ``oldIdentifiers``
+        argument must be passed with the corresponding previous point
+        names that are to be changed. If assignments is None, then all
+        point names will be given new default values.
 
         Parameters
         ----------
-        assignments : iterable, dict, None
+        assignments : str, iterable, dict, None
+            * str - A string not currently in the pointName set.
             * iterable - Given a list-like container, the mapping
               between names and array indices will be used to define the
               point names.
             * dict - The mapping for each point name in the format
               {name:index}
-            * None - remove names from this object
+            * None - remove names from this object.
+        oldIdentifiers : str, int, iterable, None
+            * str - The name of a point to be renamed.
+            * int - The index of a point to be renamed
+            * iterable - The names or indices of points to be renamed.
+            * None - The default when assigning names to all points in the
+              data.
         useLog : bool, None
             Local control for whether to send object creation to the
             logger. If None (default), use the value as specified in the
@@ -177,7 +144,7 @@ class Points(ABC):
 
         See Also
         --------
-        setName, getName, getNames
+        getName, getNames
 
         Examples
         --------
@@ -185,12 +152,19 @@ class Points(ABC):
         >>> X.points.setNames(['1', '2', '3', '4'])
         >>> X.points.getNames()
         ['1', '2', '3', '4']
+        >>> X.points.setNames(['newer', 'sea'], oldIdentifiers=['1', '3'])
+        >>> X.points.getNames()
+        ['newer', '2', 'sea', '4']
+        >>> X.points.setNames('by', oldIdentifiers='2')
+        >>> X.points.getNames()
+        ['newer', 'by', 'sea', '4']
+        
 
         Keywords
         --------
         rows, keys, indexes, indices, headers, headings, identifiers
         """
-        self._setNames(assignments)
+        self._setNames(assignments, oldIdentifiers)
 
     def getIndex(self, identifier):
         """
@@ -2197,7 +2171,7 @@ class Points(ABC):
             self._base.features.setNames(fNames, useLog=False)
         else:
             for i, name in enumerate(newFtNames):
-                self._base.features.setName(namesIdx + i, name, useLog=False)
+                self._base.features.setNames( name, oldIdentifiers=namesIdx + i, useLog=False)
         if self._base.points._namesCreated():
             self.setNames(pNames, useLog=False)
 
@@ -2600,11 +2574,7 @@ class Points(ABC):
         pass
 
     @abstractmethod
-    def _setName(self, oldIdentifier, newName):
-        pass
-
-    @abstractmethod
-    def _setNames(self, assignments):
+    def _setNames(self, assignments, oldIdentifiers=None):
         pass
 
     @abstractmethod

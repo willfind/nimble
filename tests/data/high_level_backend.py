@@ -2155,6 +2155,8 @@ class HighLevelDataSafe(DataTestObject):
         assert matches[1, 2] is False or matches[1, 2] is np.bool_(False)
 
     def test_matchingElements_valueInput(self):
+        # import pdb
+        # pdb.set_trace()
         raw = [[1, 2, 3], [-1, -2, -3], [0, 'a', 0]]
         obj = self.constructor(raw)
         match1 = obj.matchingElements(lambda x: x == 0)
@@ -3671,8 +3673,8 @@ class HighLevelModifying(DataTestObject):
                    [2,2,2,-1], [2,2,3,-2], [2,2,4,-3], [2,2,5,-4]]
 
         exp = self.constructor(expData)
-        exp.features.setName(2, "ftIndex")
-        exp.features.setName(3, "ftValues")
+        exp.features.setNames("ftIndex", oldIdentifiers=2)
+        exp.features.setNames("ftValues", oldIdentifiers=3)
 
         toCollapse = [2, 3, 4, 5]
         toTest.points.splitByCollapsingFeatures(toCollapse, "ftIndex", "ftValues")
@@ -3818,12 +3820,12 @@ class HighLevelModifying(DataTestObject):
                    ["p1", 200, 18.1, 18.0, 20.1, 20.2, 19.8, 19.9]]
 
         exp = self.constructor(expData,)
-        exp.features.setName(2, 'r1_3')
-        exp.features.setName(3, 'r1_4')
-        exp.features.setName(4, 'r2_3')
-        exp.features.setName(5, 'r2_4')
-        exp.features.setName(6, 'r3_3')
-        exp.features.setName(7, 'r3_4')
+        exp.features.setNames('r1_3', oldIdentifiers=2)
+        exp.features.setNames('r1_4', oldIdentifiers=3)
+        exp.features.setNames('r2_3', oldIdentifiers=4)
+        exp.features.setNames('r2_4', oldIdentifiers=5)
+        exp.features.setNames('r3_3', oldIdentifiers=6)
+        exp.features.setNames('r3_4', oldIdentifiers=7)
 
         toTest.points.combineByExpandingFeatures(2, [3, 4])
         assert toTest == exp
@@ -4007,8 +4009,8 @@ class HighLevelModifying(DataTestObject):
 
         expData = [[0, "a", "1", 0], [1, "b", "2", 1], [2, "c", "3", 2]]
         exp = self.constructor(expData)
-        exp.features.setName(1,"split0")
-        exp.features.setName(2,"split1")
+        exp.features.setNames("split0", oldIdentifiers=1)
+        exp.features.setNames("split1", oldIdentifiers=2)
 
         toTest.features.splitByParsing(1, 1, ["split0", "split1"])
         assert toTest == exp

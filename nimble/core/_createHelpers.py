@@ -23,6 +23,7 @@ import numbers
 import itertools
 
 import numpy as np
+import pandas as pd
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
@@ -39,6 +40,8 @@ from nimble._utility import allowedNumpyDType
 
 # The values that will be considered missing in data by default
 DEFAULT_MISSING = (float('nan'), np.nan, None, '', 'None', 'nan', 'NULL', 'NA')
+
+NUM_TUPLE = (bool, int, float, np.number)
 
 ###########
 # Helpers #
@@ -139,6 +142,16 @@ def isEmptyRaw(raw):
     return False
 
 
+def isNum(value):
+    """
+    Determine if a value is numerical.
+    """
+    if type(value) == type:   
+        return  issubclass(value, NUM_TUPLE)
+    else:
+        return isinstance(value, NUM_TUPLE)
+    
+
 def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
                            secondValues):
     """
@@ -152,9 +165,6 @@ def autoDetectNamesFromRaw(pointNames, featureNames, firstValues,
         return (failPN, failFN)
     if featureNames is False:
         return (failPN, failFN)
-
-    def isNum(value):
-        return isinstance(value, (bool, int, float, np.number))
 
     def noDuplicates(row):
         return len(row) == len(set(row))
@@ -264,7 +274,39 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID, copied):
 
     # we allow single dimension arrays as input, but we assume 2d from here
     # forward; reshape so that the values constitute a single row.
-    addedDim = False
+    addedDim = False   
+    retPNames = None
+    retFNames = None
+ 
+    # Special consideration for Structured Numpy arrays
+    def _convertStructuredNumpyToDataFrame(data):
+        data = pd.DataFrame(data, columns=retFNames)
+        fnamesID = True
+        return extractNamesFromPdDataFrame(data, pnamesID, fnamesID, copied)
+    
+    if data.dtype.fields:
+        retFNames = [x for x in data.dtype.fields.keys()]
+        reshapedData = [list(data[x]) for  x in range(len(data))]
+        allNumeric = list(map(isNum, reshapedData[0]))
+        if all(allNumeric):
+            data = np.array(reshapedData)
+        else:
+            if pnamesID == True:
+                if all(allNumeric[1:]):
+                    retFNames.pop(0)
+                    data = list()
+                    retPNames = list()
+                    for i in reshapedData:
+                        data.append(i[1:])
+                        retPNames.append(i[0])
+                    data = np.array(data)
+                    return data, retPNames, retFNames, copied
+                else:
+                    return _convertStructuredNumpyToDataFrame(reshapedData)
+            else:
+                return _convertStructuredNumpyToDataFrame(reshapedData)
+
+           
     if len(data.shape) == 1:
         data = data.reshape(1, data.shape[0])
         addedDim = True
@@ -273,9 +315,6 @@ def extractNamesFromNumpy(data, pnamesID, fnamesID, copied):
     secondRow = data[1] if len(data) > 1 else None
     pnamesID, fnamesID = autoDetectNamesFromRaw(pnamesID, fnamesID, firstRow,
                                                 secondRow)
-
-    retPNames = None
-    retFNames = None
     if pnamesID is True:
         retPNames = np.array(data[:, 0]).flatten()
         data = np.delete(data, 0, 1)
@@ -321,8 +360,6 @@ def extractNamesFromScipySparse(data, pnamesID, fnamesID, copied):
         copied = True
     # gather up the first two rows of entries, to check for automatic name
     # extraction.
-#    import pdb
-#    pdb.set_trace()
     if fnamesID == 'automatic' or pnamesID == 'automatic':
         firstRow = [0] * data.shape[1]
         secondRow = [0] * data.shape[1]
@@ -1445,6 +1482,16 @@ def initDataObject(
         rawData = rawData._data
     # convert these types as indexing may cause dimensionality confusion
     elif _isNumpyArray(rawData):
+    # decide if numpy structured array should be Nimble DataFrame not Matrix
+        if rawData.dtype.fields:
+            rowTuple = rawData[0]
+            if len(rowTuple) > 0:
+                allNumeric = list(map(isNum, rowTuple))
+                if not all(allNumeric):
+                    returnType = "DataFrame"
+                if pointNames is True:
+                    if all(allNumeric[1:]):
+                        returnType = "Matrix"
         if _isNumpyMatrix(rawData):
             rawData = np.array(rawData)
             copied = True
@@ -1526,6 +1573,19 @@ def initDataObject(
                                                   replaceMissingWith, copied)
     if not skipDataProcessing or returnType is None:
         returnType = analyzeValues(rawData, returnType, skipDataProcessing)
+    
+    # Decide if nimble Matrix is better as DataFrame given convertToType input.
+    if returnType == "Matrix":
+        matrixConvertTypes = list(NUM_TUPLE) + [np.datetime64, None]
+        if type(convertToType) == list:
+            if len(set(convertToType)) == 1:
+                if not isNum(convertToType[0]) and convertToType[0] not in matrixConvertTypes:
+                    returnType = "DataFrame"
+            else:
+                returnType = "DataFrame"
+        elif not isNum(convertToType) and convertToType not in matrixConvertTypes:
+            returnType = "DataFrame"
+    
     # convert data to a type compatible with the returnType init method
     rawData = convertData(returnType, rawData, pointNames, featureNames,
                           copied)
@@ -1637,8 +1697,8 @@ def initDataObject(
             convertToType = convertToType[0]
 
     if convertToType is not None:
-        ret._data = elementTypeConvert(ret._data, convertToType)
-
+        ret._data = elementTypeConvert(ret._data, convertToType)        
+        
     if not rowsArePoints:
         ret.transpose(useLog=False)
 

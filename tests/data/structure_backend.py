@@ -467,8 +467,8 @@ class StructureDataSafe(StructureShared):
         assert copySparse.isIdentical(sparseObj)
         assert sparseObj.isIdentical(copySparse)
         assert type(copySparse) == Sparse
-        copySparse.features.setName('two', '2', useLog=False)
-        copySparse.points.setName('one', 'WHAT', useLog=False)
+        copySparse.features.setNames('2', oldIdentifiers='two', useLog=False)
+        copySparse.points.setNames('WHAT', oldIdentifiers='one', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
         copySparse.points.permute(pointsShuffleIndices, useLog=False)
@@ -479,8 +479,8 @@ class StructureDataSafe(StructureShared):
         assert copyList.isIdentical(listObj)
         assert listObj.isIdentical(copyList)
         assert type(copyList) == List
-        copyList.features.setName('two', '2', useLog=False)
-        copyList.points.setName('one', 'WHAT', useLog=False)
+        copyList.features.setNames( '2', oldIdentifiers='two', useLog=False)
+        copyList.points.setNames('WHAT', oldIdentifiers='one',  useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
         copyList.points.permute(pointsShuffleIndices, useLog=False)
@@ -491,8 +491,8 @@ class StructureDataSafe(StructureShared):
         assert copyMatrix.isIdentical(matrixObj)
         assert matrixObj.isIdentical(copyMatrix)
         assert type(copyMatrix) == Matrix
-        copyMatrix.features.setName('two', '2', useLog=False)
-        copyMatrix.points.setName('one', 'WHAT', useLog=False)
+        copyMatrix.features.setNames('2', oldIdentifiers='two', useLog=False)
+        copyMatrix.points.setNames('WHAT', oldIdentifiers='one', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
         copyMatrix.points.permute(pointsShuffleIndices, useLog=False)
@@ -503,8 +503,8 @@ class StructureDataSafe(StructureShared):
         assert copyDataFrame.isIdentical(dataframeObj)
         assert dataframeObj.isIdentical(copyDataFrame)
         assert type(copyDataFrame) == DataFrame
-        copyDataFrame.features.setName('two', '2', useLog=False)
-        copyDataFrame.points.setName('one', 'WHAT', useLog=False)
+        copyDataFrame.features.setNames('2', oldIdentifiers='two', useLog=False)
+        copyDataFrame.points.setNames('WHAT', oldIdentifiers='one', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
         copyDataFrame.points.permute(pointsShuffleIndices, useLog=False)
@@ -2851,10 +2851,10 @@ class StructureModifying(StructureShared):
         toTest1 = self.constructor([[1, 2, 3]])
         toTest2 = self.constructor([[1, 3, 2]])
 
-        toTest1.features.setName(1, '2')
-        toTest1.features.setName(2, '3')
-        toTest2.features.setName(1, '3')
-        toTest2.features.setName(2, '2')
+        toTest1.features.setNames('2', oldIdentifiers=1)
+        toTest1.features.setNames('3', oldIdentifiers=2)
+        toTest2.features.setNames('3', oldIdentifiers=1)
+        toTest2.features.setNames('2', oldIdentifiers=2)
 
         if axis == 'point':
             toTest1.points.insert(len(toTest1.points), toTest2)
@@ -3053,9 +3053,9 @@ class StructureModifying(StructureShared):
 
             exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
             exp.features.setNames(fNames)
-            exp.points.setName(0, '1')
-            exp.points.setName(1, '4')
-            exp.points.setName(2, '7')
+            exp.points.setNames('1', oldIdentifiers=0)
+            exp.points.setNames('4', oldIdentifiers=1)
+            exp.points.setNames('7', oldIdentifiers=2)
             toTest.points.insert(len(toTest.points), toInsert)
 
         else:
@@ -3066,9 +3066,9 @@ class StructureModifying(StructureShared):
 
             exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
             exp.points.setNames(pNames)
-            exp.features.setName(0, 'a')
-            exp.features.setName(1, 'b')
-            exp.features.setName(2, 'c')
+            exp.features.setNames('a', oldIdentifiers=0,)
+            exp.features.setNames('b', oldIdentifiers=1)
+            exp.features.setNames('c', oldIdentifiers=2)
             toTest.features.insert(len(toTest.features), toInsert)
 
         assert toTest == exp
@@ -4219,21 +4219,21 @@ class StructureModifying(StructureShared):
         expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
-
+        
     def test_points_extract_match_list(self):
-        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.points.extract(match.anyValues(['a', 'c', 'x']))
+        toTest = self.constructor([[1, 2, 3], [999, 11, 9999], [7, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.points.extract(match.anyValues([999, 9999, 99999])) #a = 999, c = 9999, x = 99999
         expTest = self.constructor([[1, 2, 3], [7, 8, 9]])
-        expRet = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
+        expRet = self.constructor([[999, 11, 9999], [7, 11, 9999]])
         expTest.features.setNames(['a', 'b', 'c'])
         expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
-        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.points.extract(match.allValues(['a', 'c', 'x']))
-        expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
-        expRet = self.constructor([['a', 'x', 'c']])
+        toTest = self.constructor([[999, 99999, 9999], [999, 11, 9999], [7, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.points.extract(match.allValues([999, 9999, 99999]))
+        expTest = self.constructor([[999, 11, 9999], [7, 11, 9999], [7, 8, 9]])
+        expRet = self.constructor([[999, 99999, 9999]])
         expTest.features.setNames(['a', 'b', 'c'])
         expRet.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
@@ -4896,19 +4896,19 @@ class StructureModifying(StructureShared):
         assert ret == expRet
 
     def test_features_extract_match_list(self):
-        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.features.extract(match.anyValues(['a', 'c', 'x']))
+        toTest = self.constructor([[1, 2, 3], [999, 11, 9999], [99999, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.features.extract(match.anyValues([999, 9999, 99999]))
         expTest = self.constructor([[2], [11], [11], [8]])
-        expRet = self.constructor([[1, 3], ['a', 'c'], ['x', 'c'], [7, 9]])
+        expRet = self.constructor([[1, 3], [999, 9999], [99999, 9999], [7, 9]])
         expTest.features.setNames(['b'])
         expRet.features.setNames(['a', 'c'])
         assert toTest == expTest
         assert ret == expRet
 
-        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
-        ret = toTest.features.extract(match.allValues(['a', 'c', 'x']))
-        expTest = self.constructor([[1, 2], ['a', 11], ['x', 11], [7, 8]])
-        expRet = self.constructor([['c'], ['c'], ['c'], ['c']])
+        toTest = self.constructor([[1, 2, 9999], [999, 11, 9999], [99999, 11, 9999], [7, 8, 9999]], featureNames=['a', 'b', 'c'])
+        ret = toTest.features.extract(match.allValues([999, 9999, 99999]))
+        expTest = self.constructor([[1, 2], [999, 11], [99999, 11], [7, 8]])
+        expRet = self.constructor([[9999], [9999], [9999], [9999]])
         expTest.features.setNames(['a', 'b'])
         expRet.features.setNames(['c'])
         assert toTest == expTest
@@ -5380,15 +5380,15 @@ class StructureModifying(StructureShared):
         assert toTest == exp
 
     def test_points_delete_match_list(self):
-        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.points.delete(match.anyValues(['a', 'c', 'x']))
+        toTest = self.constructor([[1, 2, 3], [999, 11, 9999], [7, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.points.delete(match.anyValues([999, 9999, 99999]))
         exp = self.constructor([[1, 2, 3], [7, 8, 9]])
         exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
-        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.points.delete(match.allValues(['a', 'c', 'x']))
-        exp = self.constructor([['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]])
+        toTest = self.constructor([[999, 99999, 9999], [999, 11, 9999], [7, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.points.delete(match.allValues([999, 9999, 99999]))
+        exp = self.constructor([[999, 11, 9999], [7, 11, 9999], [7, 8, 9]])
         exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
 
@@ -5993,17 +5993,17 @@ class StructureModifying(StructureShared):
         exp = self.constructor([[1, 2], ['a', 11], [7, 11], [7, 8]])
         exp.features.setNames(['a', 'b'])
         assert toTest == exp
-
+        
     def test_features_delete_match_list(self):
-        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        toTest.features.delete(match.anyValues(['a', 'c', 'x']))
+        toTest = self.constructor([[1, 2, 3], [999, 11, 9999], [99999, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.features.delete(match.anyValues([999, 9999, 99999]))
         exp = self.constructor([[2], [11], [11], [8]])
         exp.features.setNames(['b'])
         assert toTest == exp
 
-        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
-        toTest.features.delete(match.allValues(['a', 'c', 'x']))
-        exp = self.constructor([[1, 2], ['a', 11], ['x', 11], [7, 8]])
+        toTest = self.constructor([[1, 2, 9999], [999, 11, 9999], [99999, 11, 9999], [7, 8, 9999]], featureNames=['a', 'b', 'c'])
+        toTest.features.delete(match.allValues([999, 9999, 99999]))
+        exp = self.constructor([[1, 2], [999, 11], [99999, 11], [7, 8]])
         exp.features.setNames(['a', 'b'])
         assert toTest == exp
 
@@ -6503,15 +6503,15 @@ class StructureModifying(StructureShared):
         assert toTest == expTest
 
     def test_points_retain_match_list(self):
-        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.points.retain(match.anyValues(['a', 'c', 'x']))
-        expTest = self.constructor([['a', 11, 'c'], [7, 11, 'c']])
+        toTest = self.constructor([[1, 2, 3], [999, 11, 9999], [7, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.points.retain(match.anyValues([999, 9999, 99999]))
+        expTest = self.constructor([[999, 11, 9999], [7, 11, 9999]])
         expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
-        toTest = self.constructor([['a', 'x', 'c'], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.points.retain(match.allValues(['a', 'c', 'x']))
-        expTest = self.constructor([['a', 'x', 'c']])
+        toTest = self.constructor([[999, 99999, 9999], [999, 11, 9999], [7, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        ret = toTest.points.retain(match.allValues([999, 9999, 99999]))
+        expTest = self.constructor([[999, 99999, 9999]])
         expTest.features.setNames(['a', 'b', 'c'])
         assert toTest == expTest
 
@@ -7140,17 +7140,17 @@ class StructureModifying(StructureShared):
         expTest = self.constructor([['c'], ['c'], ['c'], ['c']])
         expTest.features.setNames(['c'])
         assert toTest == expTest
-
+    
     def test_features_retain_match_list(self):
-        toTest = self.constructor([[1, 2, 3], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        ret = toTest.features.retain(match.anyValues(['a', 'c', 'x']))
-        expTest = self.constructor([[1, 3], ['a', 'c'], ['x', 'c'], [7, 9]])
+        toTest = self.constructor([[1, 2, 3], [999, 11, 9999], [99999, 11, 9999], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        toTest.features.retain(match.anyValues([999, 9999, 99999]))
+        expTest = self.constructor([[1, 3], [999, 9999], [99999, 9999], [7, 9]])
         expTest.features.setNames(['a', 'c'])
         assert toTest == expTest
-
-        toTest = self.constructor([[1, 2, 'c'], ['a', 11, 'c'], ['x', 11, 'c'], [7, 8, 'c']], featureNames=['a', 'b', 'c'])
-        ret = toTest.features.retain(match.allValues(['a', 'c', 'x']))
-        expTest = self.constructor([['c'], ['c'], ['c'], ['c']])
+        
+        toTest = self.constructor([[1, 2, 9999], [999, 11, 9999], [99999, 11, 9999], [7, 8, 9999]], featureNames=['a', 'b', 'c'])
+        ret = toTest.features.retain(match.allValues([999, 9999, 99999]))
+        expTest = self.constructor([[9999], [9999], [9999], [9999]])
         expTest.features.setNames(['c'])
         assert toTest == expTest
 
@@ -8559,14 +8559,14 @@ class StructureModifying(StructureShared):
         checkMsg = False
         names = ["a | 1", "b | 1", "a | 2", "b | 2"]
         testPt = self.constructor([1, 2, 3, 4], featureNames=names)
-        testPt.features.setName(1, None)
+        testPt.features.setNames(None, oldIdentifiers=1)
         testPt.unflatten((2, 2), order)
         assert testPt.shape == (2, 2)
         assert not testPt.points._namesCreated()
         assert not testPt.features._namesCreated()
 
         testFt = self.constructor([[1], [2], [3], [4]], pointNames=names)
-        testFt.points.setName(1, None)
+        testFt.points.setNames(None, oldIdentifiers=1)
         testFt.unflatten((2, 2), order)
         assert testFt.shape == (2, 2)
         assert not testFt.points._namesCreated()
@@ -9946,8 +9946,8 @@ class StructureModifying(StructureShared):
         fNamesR = ['f3', 'f4']
         leftObj = self.constructor(dataL, featureNames=fNamesL)
         rightObj = self.constructor(dataR, featureNames=fNamesR)
-        leftObj.points.setName(0, 'a')
-        rightObj.points.setName(0, 'a')
+        leftObj.points.setNames('a', oldIdentifiers=0)
+        rightObj.points.setNames('a', oldIdentifiers=0)
         assert leftObj.points.getName(1) is None
         assert rightObj.points.getName(1) is None
 
@@ -10043,11 +10043,11 @@ class StructureModifying(StructureShared):
         pNames = ['a', 'b', 'c']
         leftObj = self.constructor(dataL, pointNames=pNames)
         rightObj = self.constructor(dataR, pointNames=pNames)
-        leftObj.features.setName(0, 'id')
-        rightObj.features.setName(0, 'id')
+        leftObj.features.setNames('id', oldIdentifiers=0)
+        rightObj.features.setNames('id', oldIdentifiers=0)
         expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
         exp = self.constructor(expData)
-        exp.features.setName(0, 'id')
+        exp.features.setNames('id', oldIdentifiers=0)
         leftObj.merge(rightObj, point='union', feature='union', onFeature=0)
         assert leftObj == exp
 
@@ -10249,8 +10249,8 @@ class StructureModifying(StructureShared):
         fNamesR = ['f3', 'f4']
         leftObj = self.constructor(dataL, featureNames=fNamesL)
         rightObj = self.constructor(dataR, featureNames=fNamesR)
-        leftObj.points.setName(0, 'a')
-        rightObj.points.setName(0, 'a')
+        leftObj.points.setNames('a', oldIdentifiers=0)
+        rightObj.points.setNames('a', oldIdentifiers=0)
         assert leftObj.points.getName(1) is None
         assert rightObj.points.getName(1) is None
         expData = [['a', 1, 2, 3, 4]]
@@ -10644,11 +10644,11 @@ class StructureModifying(StructureShared):
         fNamesR = ['c', 'd']
         leftObj = self.constructor(dataL, featureNames=fNamesL)
         rightObj = self.constructor(dataR, featureNames=fNamesR)
-        leftObj.points.setName(0, 'id')
-        rightObj.points.setName(0, 'id')
+        leftObj.points.setNames('id', oldIdentifiers=0)
+        rightObj.points.setNames('id', oldIdentifiers=0)
         expData = [['a', 1, 2, 3], ['b', 5, 6, 7], ['c', -1, -2, -3]]
         exp = self.constructor(expData, featureNames=['a', 'b', 'c', 'd'])
-        exp.points.setName(0, 'id')
+        exp.points.setNames('id', oldIdentifiers=0)
         leftObj.merge(rightObj, point='strict', feature='union', force=True)
         assert leftObj == exp
 
@@ -10660,8 +10660,8 @@ class StructureModifying(StructureShared):
         fNamesR = ['c', 'd']
         leftObj = self.constructor(dataL, featureNames=fNamesL)
         rightObj = self.constructor(dataR, featureNames=fNamesR)
-        leftObj.points.setName(0, 'id')
-        rightObj.points.setName(1, 'id')
+        leftObj.points.setNames('id', oldIdentifiers=0)
+        rightObj.points.setNames('id', oldIdentifiers=1)
         leftObj.merge(rightObj, point='strict', feature='union')
 
         #################
@@ -10784,11 +10784,11 @@ class StructureModifying(StructureShared):
         pNamesR = ['c', 'd']
         leftObj = self.constructor(dataL, pointNames=pNamesL)
         rightObj = self.constructor(dataR, pointNames=pNamesR)
-        leftObj.features.setName(0, 'id')
-        rightObj.features.setName(0, 'id')
+        leftObj.features.setNames('id', oldIdentifiers=0)
+        rightObj.features.setNames('id', oldIdentifiers=0)
         expData = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', 3, 4]]
         exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd'])
-        exp.features.setName(0, 'id')
+        exp.features.setNames('id', oldIdentifiers=0)
         leftObj.merge(rightObj, point='union', feature='strict', force=True)
         assert leftObj == exp
 
@@ -10800,8 +10800,8 @@ class StructureModifying(StructureShared):
         pNamesR = ['d']
         leftObj = self.constructor(dataL, pointNames=pNamesL)
         rightObj = self.constructor(dataR, pointNames=pNamesR)
-        leftObj.features.setName(0, 'id')
-        rightObj.features.setName(1, 'id')
+        leftObj.features.setNames('id', oldIdentifiers=0)
+        rightObj.features.setNames('id', oldIdentifiers=1)
 
         leftObj.merge(rightObj, point='union', feature='strict')
 
@@ -10812,11 +10812,11 @@ class StructureModifying(StructureShared):
         pNamesR = ['f', 'd']
         leftObj = self.constructor(dataL, pointNames=pNamesL)
         rightObj = self.constructor(dataR, pointNames=pNamesR)
-        leftObj.features.setName(0, 'id')
-        rightObj.features.setName(0, 'id')
+        leftObj.features.setNames('id', oldIdentifiers=0)
+        rightObj.features.setNames('id', oldIdentifiers=0)
         expData = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', 3, 4]]
         exp = self.constructor(expData) # no pointNames
-        exp.features.setName(0, 'id')
+        exp.features.setNames('id', oldIdentifiers=0)
         leftObj.merge(rightObj, point='union', feature='strict',
                       onFeature='id', force=True)
         assert leftObj == exp
@@ -10829,10 +10829,10 @@ class StructureModifying(StructureShared):
         pNamesR = ['d']
         leftObj = self.constructor(dataL, pointNames=pNamesL)
         rightObj = self.constructor(dataR, pointNames=pNamesR)
-        leftObj.features.setName(0, 'id')
-        rightObj.features.setName(0, 'id')
-        leftObj.features.setName(1, 'one')
-        rightObj.features.setName(2, 'one')
+        leftObj.features.setNames('id', oldIdentifiers=0)
+        rightObj.features.setNames('id', oldIdentifiers=0)
+        leftObj.features.setNames('one', oldIdentifiers=1)
+        rightObj.features.setNames('one', oldIdentifiers=2)
         leftObj.merge(rightObj, point='union', feature='strict',
                       onFeature='id')
 
@@ -10843,12 +10843,12 @@ class StructureModifying(StructureShared):
         pNamesR = ['c', 'd']
         leftObj = self.constructor(dataL, pointNames=pNamesL)
         rightObj = self.constructor(dataR, pointNames=pNamesR)
-        leftObj.features.setName(0, 'str')
-        rightObj.features.setName(2, 'float')
+        leftObj.features.setNames('str', oldIdentifiers=0)
+        rightObj.features.setNames('float', oldIdentifiers=2)
         expData = [['a', 1, 2.3], ['b', 5, 6.7], ['c', -1, -2.1], ['d', 3, 4.5]]
         exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd'])
-        exp.features.setName(0, 'str')
-        exp.features.setName(2, 'float')
+        exp.features.setNames('str', oldIdentifiers=0)
+        exp.features.setNames('float', oldIdentifiers=2)
         leftObj.merge(rightObj, point='union', feature='strict', force=True)
         assert leftObj == exp
 

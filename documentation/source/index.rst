@@ -33,6 +33,7 @@ Resources
    API Documentation <docs/index>
    Cheatsheet <cheatsheet>
    datasets
+   legal
 
 Indices and tables
 ------------------
