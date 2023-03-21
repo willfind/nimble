@@ -4,6 +4,8 @@
 import sys
 from io import StringIO
 import tempfile
+import shutil
+import re 
 
 import numpy as np
 import pandas as pd
@@ -133,6 +135,43 @@ class HighDimensionSafe(DataTestObject):
                         assert l1 == l2
             finally:
                 sys.stdout = stdoutBackup
+                
+    def test_adaptive_maxColumnWidth(self):
+        ''' 
+        1. create nimble data object from csv 
+        2. know how many chars to expect in columns
+        3. set aside number of chars as validation metric
+        4. use StringIO to measure chars and compare result
+        '''
+    
+        # import pdb
+        # pdb.set_trace()
+        testData = nimble.data([['france', 'argentina', 'portugal', 'spain'],
+                                ['morocco', 'croatia', 'brazil', 'england']],
+                               featureNames=['left_sided_wc_semi-final_branch',
+                                             'right_sided_wc_semi-final_branch',
+                                             'left_sided_wc_quarter-final_exits',
+                                             'right_sided_wc_quarter-final_exit'])
+
+        maxWidth = 79
+        colNumber = len(testData.features)
+        terminalSize = shutil.get_terminal_size()
+        expMaxWidth = max(maxWidth, terminalSize[0] - 1)
+        maxColumnWidth = expMaxWidth // (colNumber + 2)
+        if maxColumnWidth < 8:
+            maxColumnWidth = 8
+            
+        old_output = sys.stdout
+        temp_output = StringIO()
+        sys.stdout = temp_output
+        testData.show()
+        sys.stdout = old_output
+               
+        measure = re.search('(\\n *)(.*?)\\n', temp_output.getvalue())
+        output_line = measure.group(2) # second line of output which the feature names are on
+        lineLength = len(output_line)
+        testColumnWidth = (lineLength - (colNumber - 1)) // (colNumber) 
+        assert maxColumnWidth == testColumnWidth
 
     def test_highDimension_copy(self):
         for tensorList in [tensors, emptyTensors]:
