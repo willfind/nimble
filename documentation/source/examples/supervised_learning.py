@@ -150,7 +150,7 @@ print('sklearn.HistGradientBoostingRegressor', 'learning_rate=0.5', 'error', gbP
 ## trained learner to our `forecast` dataset to predict traffic volumes for a
 ## future day.
 predictedTraffic = hgbTL.apply(forecast)
-predictedTraffic.features.setName(0, 'volume')
+predictedTraffic.features.setNames('volume', oldIdentifiers=0)
 
 ## Before printing, we will append the `hour` feature from `forecasts` to get
 ## a better visual of the traffic throughout the day.

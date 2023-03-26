@@ -8157,7 +8157,6 @@ class StructureModifyingSparseSafe(StructureShared):
         exp.features.setNames(['a', 'b'])
         assert toTest == exp
 
-    
 
     def test_features_delete_match_function(self):
         toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
@@ -9689,6 +9688,7 @@ class StructureModifyingSparseSafe(StructureShared):
 
         toTest.features.transform(noChange, features=['a', 'b'])
 
+
     @oneLogEntryExpected
     def test_features_transform_Handmade(self):
         featureNames = {'number': 0, 'centi': 2, 'deci': 1}
@@ -10856,15 +10856,6 @@ class StructureModifyingSparseSafe(StructureShared):
         # pointStrict #
         ###############
 
-    
-   
-    
-    
-    
-    
-
-
-    
 
     @raises(InvalidArgumentValue)
     def test_merge_pointStrict_featureUnion_ptNames_mixedPtNames_exc(self):
@@ -10874,35 +10865,14 @@ class StructureModifyingSparseSafe(StructureShared):
         fNamesR = ['c', 'd']
         leftObj = self.constructor(dataL, featureNames=fNamesL)
         rightObj = self.constructor(dataR, featureNames=fNamesR)
-        leftObj.points.setName(0, 'id')
-        rightObj.points.setName(1, 'id')
+        leftObj.points.setNames('id', oldIdentifiers=0)
+        rightObj.points.setNames('id', oldIdentifiers=1)
         leftObj.merge(rightObj, point='strict', feature='union')
 
         #################
         # featureStrict #
         #################
 
-    
-
-    
-
-    
-
-    
-   
-    
-
-    
-
-    
-    
-
-    
-    
-
-    
-
-    
 
 def exceptionHelper(testObj, target, args, wanted, checkMsg):
     with raises(wanted) as exc:

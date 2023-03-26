@@ -77,7 +77,7 @@ class HighDimensionSafeSparseUnsafe(DataTestObject):
                         assert l1 == l2
             finally:
                 sys.stdout = stdoutBackup
-    
+
     def test_highDimension_copy(self):
         for tensorList in [tensors, emptyTensors]:
             for tensor in tensorList:

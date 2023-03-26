@@ -60,7 +60,7 @@ def back_unary_pfname_preservations(callerCon, op):
 
     # changing the returned value, in case the caller is read-only.
     # We confirm the separation of the name recording either way.
-    ret.points.setName('p1', 'p0')
+    ret.points.setNames('p0', oldIdentifiers='p1')
 
     assert 'p1' in caller.points.getNames()
     assert 'p0' not in caller.points.getNames()
@@ -106,7 +106,7 @@ def back_binaryscalar_pfname_preservations(callerCon, op, inplace):
         assert ret.features.getNames() == fnames
 
         try:
-            caller.points.setName('p1', 'p0')
+            caller.points.setNames('p0', oldIdentifiers='p1')
         except ImproperObjectAction: # Views
             continue
 
@@ -162,13 +162,13 @@ def back_binaryelementwise_pfname_preservations(callerCon, op, inplace):
     assert ret.features.getNames() == fnames
 
     if inplace:
-        caller.points.setName('p1', 'p0')
+        caller.points.setNames('p0', oldIdentifiers='p1')
         assert 'p0' in ret.points.getNames()
         assert 'p1' not in ret.points.getNames()
         assert 'p0' in caller.points.getNames()
         assert 'p1' not in caller.points.getNames()
     else:
-        ret.points.setName('p1', 'p0')
+        ret.points.setNames('p0', oldIdentifiers='p1')
         assert 'p0' not in caller.points.getNames()
         assert 'p1' in caller.points.getNames()
         assert 'p0' in ret.points.getNames()
@@ -529,7 +529,7 @@ def back_matrixmul_pfname_preservations(callerCon, attr1, inplace):
     assert ret.features.getNames() == other.features.getNames()
 
     # check name separation between caller and returned object
-    ret.points.setName('p1', 'p0')
+    ret.points.setNames('p0', oldIdentifiers='p1')
     if inplace:
         assert 'p0' in caller.points.getNames()
         assert 'p1' not in caller.points.getNames()

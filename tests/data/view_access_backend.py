@@ -113,7 +113,7 @@ class ViewAccess(DataTestObject):
         testObject = self.constructor(data)
 
         with raises(TypeError, match="disallowed for View objects"):
-            testObject.points.setName(0, 'set')
+            testObject.points.setNames('set', oldIdentifiers=0)
 
         with raises(TypeError, match="disallowed for View objects"):
             testObject.points.setNames(None, useLog=False)
@@ -155,7 +155,7 @@ class ViewAccess(DataTestObject):
         testObject = self.constructor(data)
 
         with raises(TypeError, match="disallowed for View objects"):
-            testObject.features.setName(0, 'set')
+            testObject.features.setNames('set', oldIdentifiers=0)
 
         with raises(TypeError, match="disallowed for View objects"):
             testObject.features.setNames(None, useLog=False)

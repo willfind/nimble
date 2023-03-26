@@ -256,7 +256,7 @@ def _generatePredicted(knowns, predictionType):
     consistent with correctness
     """
     workingCopy = knowns.copy()
-    workingCopy.features.setName(0, 'PredictedClassLabel', useLog=False)
+    workingCopy.features.setNames('PredictedClassLabel', oldIdentifiers=0, useLog=False)
     # Labels
     if predictionType == 0:
         return workingCopy

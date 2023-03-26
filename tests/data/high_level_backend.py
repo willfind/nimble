@@ -3716,8 +3716,6 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         assert obj2 == exp2
 
 
-    
-
     @raises(InvalidArgumentValue)
     def test_features_fillMatching_mean_allMatches(self):
         obj = self.constructor([[1, None, 3], [4, None, 6], [7, None, 9]])

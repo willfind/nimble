@@ -1781,12 +1781,12 @@ class TrainedLearners(TrainedLearner):
                     rawPredictions = oneLabelResults
                     # as it's added to results object,
                     # rename each column with its corresponding class label
-                    rawPredictions.features.setName(0, str(label),
+                    rawPredictions.features.setNames(str(label),oldIdentifiers=0,
                                                     useLog=False)
                 else:
                     # as it's added to results object,
                     # rename each column with its corresponding class label
-                    oneLabelResults.features.setName(0, str(label),
+                    oneLabelResults.features.setNames(str(label), oldIdentifiers=0, 
                                                      useLog=False)
                     rawPredictions.features.append(oneLabelResults,
                                                    useLog=False)
@@ -1864,7 +1864,7 @@ class TrainedLearners(TrainedLearner):
                     rawPredictions = partialResults.copy(to="List")
                 else:
                     predictionName = 'predictions-' + str(predictionFeatureID)
-                    partialResults.features.setName(0, predictionName,
+                    partialResults.features.setNames(predictionName, oldIdentifiers=0, 
                                                     useLog=False)
                     rawPredictions.features.append(partialResults,
                                                    useLog=False)
@@ -1873,7 +1873,7 @@ class TrainedLearners(TrainedLearner):
             if scoreMode is None:
                 ret = rawPredictions.points.calculate(
                     extractWinningPredictionLabel, useLog=False)
-                ret.features.setName(0, "winningLabel", useLog=False)
+                ret.features.setNames("winningLabel", oldIdentifiers=0, useLog=False)
                 return ret
             if scoreMode.lower() == 'bestScore'.lower():
                 # construct a list of lists, with each row in the list
