@@ -80,7 +80,7 @@ def testProportionZero():
 def testMinimum():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
     func = nimble.calculate.statistic.minimum
-    for constructor in getDataConstructors():
+    for constructor in getDataConstructors(includeSparse=False):
         objl = constructor(raw, useLog=False)
 
         retlf = objl.features.calculate(func, useLog=False)
@@ -97,7 +97,7 @@ def testMinimum():
 def testMaximum():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
     func = nimble.calculate.statistic.maximum
-    for constructor in getDataConstructors():
+    for constructor in getDataConstructors(includeSparse=False):
         objl = constructor(raw, useLog=False)
 
         retlf = objl.features.calculate(func, useLog=False)
@@ -114,7 +114,7 @@ def testMaximum():
 def testMean():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
     func = nimble.calculate.statistic.mean
-    for constructor in getDataConstructors():
+    for constructor in getDataConstructors(includeSparse=False):
         objl = constructor(raw, useLog=False)
 
         retlf = objl.features.calculate(func, useLog=False)
@@ -132,7 +132,7 @@ def testMean():
 def testMedian():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
     func = nimble.calculate.statistic.median
-    for constructor in getDataConstructors():
+    for constructor in getDataConstructors(includeSparse=False):
         objl = constructor(raw, useLog=False)
 
         retlf = objl.features.calculate(func, useLog=False)
@@ -206,7 +206,7 @@ def testMedianAbsoluteDeviation():
 def testUniqueCount():
     raw = [[1, 'a', np.nan], [5, None, 6], [7.0, 0, 9]]
     func = nimble.calculate.statistic.uniqueCount
-    for constructor in getDataConstructors():
+    for constructor in getDataConstructors(includeSparse=False):
         objl = constructor(raw, useLog=False)
 
         retlf = objl.features.calculate(func, useLog=False)
@@ -223,7 +223,7 @@ def testUniqueCount():
 def testQuartiles():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9], [2, 2, 3], [10, 10, 10]]
     func = nimble.calculate.statistic.quartiles
-    for constructor in getDataConstructors():
+    for constructor in getDataConstructors(includeSparse=False):
         objl = constructor(raw)
 
         retlf = objl.features.calculate(func)

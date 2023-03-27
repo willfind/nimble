@@ -67,6 +67,7 @@ def testNonInvertibleObject():
     Test inverse for non invertible object.
     """
     data = [[1, 1], [1, 1]]
+    #import pdb; pdb.set_trace()
 
     for constructor in getDataConstructors():
         obj = constructor(data)
