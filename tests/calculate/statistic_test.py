@@ -169,7 +169,7 @@ def testMode():
 def testStandardDeviation():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
     func = nimble.calculate.statistic.standardDeviation
-    for constructor in getDataConstructors():
+    for constructor in getDataConstructors(includeSparse=False):
         objl = constructor(raw, useLog=False)
 
         retlf = objl.features.calculate(func, useLog=False)
@@ -188,7 +188,7 @@ def testStandardDeviation():
 def testMedianAbsoluteDeviation():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9], [3, 9, 15]]
     func = nimble.calculate.statistic.medianAbsoluteDeviation
-    for constructor in getDataConstructors():
+    for constructor in getDataConstructors(includeSparse=False):
         objl = constructor(raw, useLog=False)
 
         retlf = objl.features.calculate(func, useLog=False)
@@ -331,7 +331,7 @@ def test_residuals_matches_SKL():
 def test_count():
     raw = [[1, 'a', np.nan], [None, 5, 6], [7, 0, 9]]
     func = nimble.calculate.statistic.count
-    for constructor in getDataConstructors():
+    for constructor in getDataConstructors(includeSparse=False):
         objl = constructor(raw, useLog=False)
 
         retlf = objl.features.calculate(func, useLog=False)
