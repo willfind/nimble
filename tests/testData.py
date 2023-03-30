@@ -4335,9 +4335,10 @@ def test_rowsArePoints_pandasDataFrames():
         assert rowsPts == rowsFts == rowsFts2
 
 def test_rowsArePoints_scipySparse():
+    #import pdb; pdb.set_trace()
     ptData = scipy.sparse.coo_matrix([[1, 2, 3], [0, 0, 0], [-1, -2, -3]])
     ftData = scipy.sparse.coo_matrix([[1, 0, -1], [2, 0, -2], [3, 0, -3]])
-    arrayOfLists = np.empty((3, 3), dtype=np.object_)
+    arrayOfLists = np.empty((3, 3))#, dtype=np.float)
     arrayOfLists[0] = [[1], [0], [-1]]
     arrayOfLists[1] = [[2], [0], [-2]]
     arrayOfLists[2] = [[3], [0], [-3]]
