@@ -1,6 +1,6 @@
 package:
   name: nimble
-  version: "0.3.0"
+  version: "0.4.1"
 
 source:
   path: ../
@@ -9,44 +9,36 @@ build:
   number: 0
 
 requirements:
-  host:
+  build:
     - python {{ python }}
     - setuptools
-    - numpy >=1.14
-    - packaging
-
+    - numpy>=1.14,<1.24
+    - packaging>=20.0,<=21.3
   run:
     - python {{ python }}
-    - numpy
-    - packaging
+    - numpy>=1.14,<1.24
+    - packaging>=20.0,<=21.3
 
 outputs:
   - name: nimble
-
   - name: nimble-quickstart
     requirements:
       build:
-      host:
-        - python
-        - pandas
-        - scipy
-        - matplotlib
-        - cloudpickle
-        - requests
-        - h5py
-        - python-dateutil
-        - scikit-learn >=1.0
       run:
         - python
-        - pandas
-        - scipy
-        - matplotlib
-        - cloudpickle
-        - requests
-        - h5py
-        - python-dateutil
+        - pandas>=0.24
+        - scipy>=1.1,<1.9
+        - matplotlib>=3.1
+        - cloudpickle>=1.0
+        - requests>2.12
+        - h5py>=2.10
+        - python-dateutil>=2.6
         - scikit-learn >=1.0
         - {{ pin_subpackage('nimble', max_pin="x.x.x.x") }}
+      run_constrained:
+        - keras>=2.0
+        - tensorflow>=1.14
+        - hyperopt>=0.2
     test:
       imports:
         - nimble
