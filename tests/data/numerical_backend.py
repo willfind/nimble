@@ -38,28 +38,6 @@ preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
 preserveRPath = os.path.relpath(preserveAPath)
 preservePair = (preserveAPath, preserveRPath)
 
-#UNSAFE TESTS
-# pytest -v -k 'test_matmul_selfNotNumericException'
-# pytest -v -k 'test_rmatmul_selfNotNumericException'
-# pytest -v -k 'test_invert_exception_InvalidValue'
-# pytest -v -k 'test_add_fullSuite'
-# pytest -v -k 'test_radd_fullSuite'
-# pytest -v -k 'test_sub_fullSuite'
-# pytest -v -k 'test_rsub_fullSuite'
-# pytest -v -k 'test_mul_fullSuite'
-# pytest -v -k 'test_rmul_fullSuite'
-# pytest -v -k 'test_truediv_fullSuite'
-# pytest -v -k 'test_rtruediv_fullSuite'
-# pytest -v -k 'test_floordiv_fullSuite'
-# pytest -v -k 'test_rfloordiv_fullSuite'
-# pytest -v -k 'test_mod_fullSuite'
-# pytest -v -k 'test_rmod_fullSuite'
-# pytest -v -k 'test_pow_fullSuite'
-# pytest -v -k 'test_rpow_fullSuite'
-# pytest -v -k 'test_logical_and_fullSuite'
-# pytest -v -k 'test_logical_or_fullSuite'
-# pytest -v -k 'test_logical_xor_fullSuite'
-
 def calleeConstructor(data, constructor):
     if constructor is None:
         return pythonRandom.random()

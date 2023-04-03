@@ -369,23 +369,25 @@ class HighDimensionSafeSparseSafe(DataTestObject):
         
     def test_showIndicesInsteadOfNames(self):
         '''Test that show() works with indices instead of names.'''
-        
+                
         testData = nimble.data([['france', 'argentina', 'portugal', 'spain'],
                                 ['morocco', 'croatia', 'brazil', 'england']],
                                featureNames=['left_sided_wc_semi-final_branch',
                                              'right_sided_wc_semi-final_branch',
                                              'left_sided_wc_quarter-final_exits',
-                                             'right_sided_wc_quarter-final_exit'])
-        # import pdb
-        # pdb.set_trace()
+                                             'right_sided_wc_quarter-final_exit'],
+                               pointNames=['A', 'B'])
+        
         old_output = sys.stdout
         temp_output = StringIO()
         sys.stdout = temp_output
-        testData.show(includePointNames=False, includeFeatureNames=False)
+        testData.show(includePointNames=True, includeFeatureNames=False)
         sys.stdout = old_output
         
         printed_out = re.search('(\\n *)(.*?)\\n', temp_output.getvalue()).group(2)
-    
+        indexCharList = printed_out.split(' ')
+        no_of_index_chars = sum(len(s) for s in indexCharList if s)
+        assert no_of_index_chars == 4
 
 class HighDimensionModifyingSparseUnsafe(DataTestObject):
     def test_highDimension_sort(self):

@@ -2227,7 +2227,8 @@ class Base(ABC):
         return not self.__eq__(other)
 
     def toString(self, maxWidth=79, maxHeight=30, sigDigits=3,
-                 maxColumnWidth=19, indent='', quoteNames=True):
+                 maxColumnWidth=19, indent='', includePointNames=True, 
+                 includeFeatureNames=True, quoteNames=True):
         """
         A string representation of this object.
 
@@ -2290,7 +2291,8 @@ class Base(ABC):
         # we want to only prepare pointNames if "include=True"
         # else table should include data but no pointnames + space for it 
         pnames, pnamesWidth = self._arrangePointNames(
-            maxDataRows, maxColumnWidth, rowHold, nameHolder, quoteNames)
+            maxDataRows, maxColumnWidth, rowHold, nameHolder, includePointNames,
+            quoteNames)
         # The available space for the data is reduced by the width of the
         # pnames, a column separator, the pnames separator, and another
         # column separator
@@ -2300,7 +2302,7 @@ class Base(ABC):
         with self._treatAs2D():
             dataTable, colWidths, fnames = self._arrangeDataWithLimits(
                 maxDataWidth, maxDataRows, sigDigits, maxColumnWidth, colSep,
-                colHold, rowHold, nameHolder, quoteNames)
+                colHold, rowHold, nameHolder, includeFeatureNames, quoteNames)
         # combine names into finalized table
         finalTable, finalWidths = arrangeFinalTable(
             pnames, pnamesWidth, dataTable, colWidths, fnames, pnameSep)
@@ -2339,8 +2341,8 @@ class Base(ABC):
 
     def _show(self, description=None, includeObjectName=True,
               maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-              maxColumnWidth=19, indent='', quoteNames=True, includePointNames=True, 
-              includeFeatureNames=True):
+              maxColumnWidth=19, includePointNames=True, includeFeatureNames=True, 
+               indent='', quoteNames=True):
 
         # Check if we're in IPython / a Notebook
         if IPython.nimbleAccessible():
@@ -2380,7 +2382,8 @@ class Base(ABC):
         ret += '\n'
 
         ret += self.toString(maxWidth, maxHeight, sigDigits, maxColumnWidth,
-                             indent=indent, quoteNames=quoteNames)
+                              includePointNames=includePointNames, includeFeatureNames=includeFeatureNames,
+                              indent=indent, quoteNames=quoteNames)
 
         return ret
 
@@ -2401,8 +2404,7 @@ class Base(ABC):
 
     def show(self, description=None, includeObjectName=True,
              maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-             maxColumnWidth=19, includePointNames=True, includeFeatureNames=True,
-             quoteNames=True):
+             maxColumnWidth=19, includePointNames=True, includeFeatureNames=True):
         """
         A printed representation of the data.
 
@@ -5232,8 +5234,8 @@ class Base(ABC):
         # pylint: disable=unused-argument
         self.__init__(**kwargs)
 
-    def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold,
-                           quoteNames):
+    def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold, 
+                           includePointNames, quoteNames):
         """
         Prepare point names for string output. Grab only section of
         those names that fit according to the given row limitation,
@@ -5248,7 +5250,7 @@ class Base(ABC):
         nameCutIndex = nameLength - len(nameHold)
         tRowIDs, bRowIDs = indicesSplit(maxRows, len(self.points))
 
-        if self.points._allDefaultNames():
+        if self.points._allDefaultNames() or includePointNames is False:
             pnames = list(map(str, range(len(self.points))))
         else:
             pnames = []
@@ -5286,7 +5288,7 @@ class Base(ABC):
 
     def _arrangeDataWithLimits(self, maxWidth, maxHeight, sigDigits,
                                maxStrLength, colSep, colHold, rowHold,
-                               strHold, quoteNames):
+                               strHold, includeFeatureNames, quoteNames):
         """
         Arrange the data in this object into a table structure, while
         respecting the given boundaries. If there is more data than
@@ -5358,7 +5360,7 @@ class Base(ABC):
         currIndex = 0
         numAdded = 0
 
-        if self.features._allDefaultNames():
+        if self.features._allDefaultNames() or includeFeatureNames is False:
             fnames = None
         else:
             fnames = self.features.getNames()
