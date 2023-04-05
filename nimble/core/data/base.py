@@ -2253,6 +2253,14 @@ class Base(ABC):
             width of single column (feature) in each line.
         indent : str
             The string to use as indentation.
+        includePointNames : bool
+            Used to control whether the point names are printed alongside the
+            data in the points rows. If set to 'False' the indices
+            of the points will be displayed instead of the names.
+        includeFeatureNames : bool
+            Used to control whether the feature names are printed alongside 
+            the data in the features column. If set to 'False' the indices
+            of the features will be displayed instead of the names.
 
         See Also
         --------
