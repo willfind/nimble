@@ -370,8 +370,8 @@ class HighDimensionSafeSparseSafe(DataTestObject):
     def test_showIndicesInsteadOfNames(self):
         '''Test that show() works with indices instead of names.'''
                 
-        testData = nimble.data([['ffffff', 'aaaaaaaaa', 'ppppppp', 'sssssssss'],
-                                ['mmmmm', 'ccccccccc', 'bbbbbbbb', 'eeeeeeee']],
+        testData = nimble.data([[6666666666, 11111111, 99999999, 555555555],
+                                [6666666666, 11111111, 22222222, 555555555]],
                                featureNames=['0000_0000_0000_0000', '1111_1111_1111_1111', 
                                              '2222_2222_2222_2222', '3333_3333_3333_3333'],
                                pointNames=['A', 'B'])
