@@ -3,6 +3,7 @@ Unit tests for the universal interface object.
 """
 
 import warnings
+import pytest
 
 import nimble
 from nimble.calculate import performanceFunction
@@ -148,10 +149,12 @@ class TestPredefinedInterface(PredefinedInterfaceMixin):
         pass
 
     def _checkVersion(self):
-        testDep = nimble._dependencies.Dependency('tests', 'tests>=1.0',
-                                                  'operation', 'test')
+        testDep = nimble._dependencies.Dependency('tests', 'operation', 'test')
         with patch(nimble._dependencies, 'DEPENDENCIES', {'tests': testDep}):
-            super()._checkVersion()
+            def dummyReq(_):
+                return "tests>=1.0"
+            with patch(nimble._dependencies, "_getRequirementText", dummyReq):
+                super()._checkVersion()
 
     def version(self):
         return "1.2.3"
@@ -163,7 +166,11 @@ class TestPredefinedInterface(PredefinedInterfaceMixin):
         msg = "This interface offers no pre-trained Learners"
         raise InvalidArgumentValue(msg)
 
-TestObject = TestPredefinedInterface()
+@pytest.fixture()
+def TestObject():
+    """Fixture used to avoid object instantion during test collection (before
+    session configurion adjustments are done by conftest.py)"""
+    yield TestPredefinedInterface()
 
 ###################
 ### nimble.Init ###
@@ -184,59 +191,64 @@ def test_Init_args():
 #######################
 
 @raises(InvalidArgumentValue)
-def test_argumentInit_MissingArgumentForObjectInstantiation():
+def test_argumentInit_MissingArgumentForObjectInstantiation(TestObject):
     toInit = nimble.Init('subObj')
     TestObject._argumentInit(toInit)
 
 @raises(InvalidArgumentValue)
-def test_argumentInit_ExtraArgumentForObjectInstantiation():
+def test_argumentInit_ExtraArgumentForObjectInstantiation(TestObject):
     toInit = nimble.Init('subObj', dup=2, bar=5)
     TestObject._argumentInit(toInit)
 
-def test_argumentInit_ObjectInstantiatedDefault():
+def test_argumentInit_ObjectInstantiatedDefault(TestObject):
     toInit = nimble.Init('initable')
     ret = TestObject._argumentInit(toInit)
     assert ret == Initable()
 
-def test_argumentInit_ObjectInstantiated_UninstantiatedParams():
+def test_argumentInit_ObjectInstantiated_UninstantiatedParams(TestObject):
     toInit = nimble.Init('initable', C=0.1, thresh=0.05)
     ret = TestObject._argumentInit(toInit)
     assert ret == Initable(C=0.1, thresh=0.05)
 
-def test_argumentInit_ObjectInstantiated_InstantiatedParam():
+def test_argumentInit_ObjectInstantiated_InstantiatedParam(TestObject):
     sub = nimble.Init('subObj', dup=2)
     toInit = nimble.Init('initable', C=1, thresh=0.05, sub=sub)
     ret = TestObject._argumentInit(toInit)
     assert ret == Initable(C=1, thresh=0.05, sub=SubObj(2))
 
 @noLogEntryExpected
-def test_accessible():
+def test_accessible(TestObject):
     assert TestObject.accessible()
 
 @noLogEntryExpected
-def test_getCanonicalName():
+def test_getCanonicalName(TestObject):
     assert TestObject.getCanonicalName() == 'Test'
 
 @noLogEntryExpected
-def test_learnerType():
+def test_learnerType(TestObject):
     assert TestObject.learnerType('l0') == "UNKNOWN"
 
 @noLogEntryExpected
-def test_isAlias():
+def test_isAlias(TestObject):
     assert TestObject.isAlias('test')
 
 @noLogEntryExpected
-def test_version():
+def test_version(TestObject):
     assert TestObject.version() == '1.2.3'
 
 @noLogEntryExpected
 @raises(PackageException, match='does not meet the version requirements')
 def test_version_invalid():
-    tests.__version__ = '0.0.0'
-    TestPredefinedInterface()
+    try:
+        tests.__version__ = '0.0.0'
+        TestPredefinedInterface()
+    # reset version to avoid issues with test bleed.
+    finally:
+        tests.__version__ = '1.2.3'
 
 @noLogEntryExpected
-def test_setOptionGetOption():
+def test_setOptionGetOption(TestObject):
+
     assert TestObject.getOption('option') is None
     TestObject.setOption('option', 'set')
     assert TestObject.getOption('option') == 'set'

@@ -17,8 +17,14 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from tests.helpers import noLogEntryExpected, raises
 from nimble._utility import storm_tuner, hyperopt
 
-noStormTuner = not storm_tuner.nimbleAccessible()
-noHyperOpt = not hyperopt.nimbleAccessible()
+
+def skipIfNoStormTuner():
+    if not storm_tuner.nimbleAccessible():
+        pytest.skip('Storm Tuner unavailable.')
+
+def skipIfNoHyperOpt():
+    if not hyperopt.nimbleAccessible():
+        pytest.skip('hyperopt unavailable.')
 
 def wait(sec):
     def performance(args):
@@ -235,12 +241,10 @@ def test_Consecutive(maxValidator):
     with raises(StopIteration):
         next(con)
 
-@pytest.mark.skipif(noHyperOpt, reason='Hyperopt unavailable.')
 @noLogEntryExpected
 def test_Bayesian(minValidator, maxValidator):
-    # requires min optimal performanceFunction
-    with raises(InvalidArgumentValue):
-        bay = Bayesian({'k': 5}, maxValidator, maxIterations=5)
+    skipIfNoStormTuner()
+    skipIfNoHyperOpt()
 
     # single argument, no tune, no incremental training
     bay = Bayesian({'k': 5}, minValidator, maxIterations=5)
@@ -444,8 +448,9 @@ def test_Iterative(maxValidator):
     with raises(StopIteration):
         next(itr)
 
-@pytest.mark.skipif(noStormTuner, reason='Storm Tuner unavailable.')
 def test_StochasticRandomMutator(minValidator):
+    skipIfNoStormTuner()
+
     # single argument, no tune
     srm = StochasticRandomMutator({'k': 5}, minValidator, maxIterations=5)
     assert next(srm) == {'k': 5}

@@ -14,7 +14,7 @@ authors = [
         { name="Spark Wave LLC", email="willfind@gmail.com" },
         ]
 description = "Interfaces and tools for data science."
-requires-python = ">=3.7, <3.10"
+requires-python = ">=3.7, <3.11"
 license = {text = "Proprietary"}
 classifiers = [
         'Development Status :: 3 - Alpha',
@@ -110,4 +110,4 @@ repair-wheel-command = "python remove_source.py {dest_dir} {wheel}"
 # Test Env: nimble[all] with pytest and pylint
 test-requires = ['pytest', 'pylint']
 test-extras = ['all']
-test-command = "python {project}/runTests.py {project}/tests"
+test-command = "pytest {project}/tests"

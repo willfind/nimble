@@ -6,8 +6,9 @@ import os
 import tempfile
 import configparser
 import copy
+import importlib
 import inspect
-import sys
+import shutil
 
 import pytest
 
@@ -24,6 +25,7 @@ DUMMYCONFIG = {
                'enableDeepLogging': "False"},
     'fetch': {'location': TEMPDIRLOG.name}
     }
+
 
 @pytest.fixture(autouse=True)
 def addNimble(doctest_namespace):
@@ -46,15 +48,6 @@ def tmpDataToFileFixture():
         finally:
             os.chdir(backupCWD)
 
-# Predefined interfaces were previously loaded on nimble import but
-# are now loaded as requested. Some tests operate under the assumption
-# that all these interfaces have already been loaded, but since that
-# is no longer the case we need to load them now to ensure that those
-# tests continue to test all interfaces.
-initAvailablePredefinedInterfaces()
-interfaces = nimble.core.interfaces.available
-# loading interfaces adds changes (interface options) to settings
-changes = nimble.settings.changes
 
 class DictSessionConfig(SessionConfiguration):
     """
@@ -96,43 +89,95 @@ class DictSessionConfig(SessionConfiguration):
                     self.parser.set(sect, opt, value)
             self.changes = {}
 
-def overrideSettings():
+    def reset(self, backingDict, changes):
+        """ Reuse the same object for each test by just changing the state"""
+        self.parser.read_dict(backingDict)
+        self.dictionary = backingDict
+        self.changes = changes
+
+
+class OverrideSettings:
     """
     Replace nimble.settings with DictSessionConfig using default testing
-    settings. This avoids any need to interact with the config file.
+    settings. This avoids any need to interact with the config file
+    which is a benefit to both safety and speed.
+
+    This is done via the override method of a stateful object so that
+    the sessionstart function can set the original backup values that will be
+    applied every test.
     """
-    currSettings = copy.deepcopy(DUMMYCONFIG)
+    def __init__(self):
+        self.backupChanges = {}
+        self.backupInterfaces = {}
+        self.backupConfig = None
 
-    def loadSavedSettings():
-        return DictSessionConfig(currSettings)
+    def override(self):
+        """ Execute the per test settings override """
+        # copying interfaces does not copy registeredLearners attribute and
+        # deepcopy cannot be used so we reset it to have no custom learners
+        nimble.core.interfaces.available = copy.copy(self.backupInterfaces)
+        self.backupInterfaces['custom'].registeredLearners = {}
 
-    nimble.settings = loadSavedSettings()
-    # include changes made during call to begin()
-    nimble.settings.changes = copy.deepcopy(changes)
-    # for tests that load settings during the test
-    nimble.core.configuration.loadSettings = loadSavedSettings
-    # setup logger to use new settings and set logging hooks in settings
-    nimble.core.logger.initLoggerAndLogConfig()
+        def loadSavedSettings():
+            baseDict = copy.deepcopy(DUMMYCONFIG)
+            self.backupConfig.reset(baseDict, self.backupChanges)
+            return self.backupConfig
+
+        nimble.settings = loadSavedSettings()
+        # include changes made during call to begin()
+        nimble.settings.changes = copy.deepcopy(self.backupChanges)
+        # for tests that load settings during the test
+        nimble.core.configuration.loadSettings = loadSavedSettings
+        # setup logger to use new settings and set logging hooks in settings
+        nimble.core.logger.initLoggerAndLogConfig()
+
+overrideObj = OverrideSettings()
 
 def pytest_sessionstart():
     """
     Setup prior to running any tests.
     """
-    overrideSettings()
+    # Only proceed if we are NOT using an installed version of nimble,
+    # which we take to mean that it either cannot be found, or isn't
+    # found in a standard install location (in a 'site-packages' subfolder)
+    nimbleSpec = importlib.util.find_spec("nimble")
+    if nimbleSpec is None or 'site-packages' not in nimbleSpec.origin:
+        currPath = os.path.abspath(inspect.getfile(inspect.currentframe()))
+        projectPath = os.path.dirname(currPath)
+        target = os.path.join(projectPath, "pyproject.toml")
+        destination = os.path.join(projectPath, "nimble", "pyproject.toml")
+        shutil.copy(target, destination)
+
+    # Predefined interfaces were previously loaded on nimble import but
+    # are now loaded as requested. Some tests operate under the assumption
+    # that all these interfaces have already been loaded, but since that
+    # is no longer the case we need to load them now to ensure that those
+    # tests continue to test all interfaces.
+    initAvailablePredefinedInterfaces()
+
+    # For use to standardize interface state per test
+    overrideObj.backupInterfaces = nimble.core.interfaces.available
+    # loading interfaces adds changes (interface options) to settings
+    overrideObj.backupChanges = nimble.settings.changes
+
+    # setup our initial non-file backed settings object.
+    # This allows override to simply reset this object
+    overrideObj.backupConfig = DictSessionConfig(copy.deepcopy(DUMMYCONFIG))
 
 def pytest_runtest_setup():
     """
     Ensure nimble is in the same state at the start of each test.
     """
-    # copying interfaces does not copy registeredLearners attribute and
-    # deepcopy cannot be used so we reset it to have no custom learners
-    interfaces['custom'].registeredLearners = {}
-    nimble.core.interfaces.available = copy.copy(interfaces)
-
-    overrideSettings()
+    overrideObj.override()
 
 def pytest_sessionfinish():
     """
     Cleanup after all tests have completed.
     """
     TEMPDIRLOG.cleanup()
+
+    currPath = os.path.abspath(inspect.getfile(inspect.currentframe()))
+    projectPath = os.path.dirname(currPath)
+    destination = os.path.join(projectPath, "nimble", "pyproject.toml")
+    if os.path.exists(destination):
+        os.remove(destination)
