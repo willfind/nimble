@@ -119,7 +119,7 @@ To install autoimpute
                              arguments, customDict):
 
         def dtypeConvert(dataframe):
-            for idx, ser in dataframe.iteritems():
+            for idx, ser in dataframe.items():
                 try:
                     dataframe.loc[:, idx] = ser.astype(float)
                 except ValueError:

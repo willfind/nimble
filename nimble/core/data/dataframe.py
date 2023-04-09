@@ -555,7 +555,7 @@ class DataFrame(Base):
             if len(self._data.dtypes) != len(tuple(dtypes)):
                 msg = 'A dtype must be specified for each feature'
                 raise InvalidArgumentValue(msg)
-            for (i, col), dtype in zip(self._data.iteritems(), dtypes):
+            for (i, col), dtype in zip(self._data.items(), dtypes):
                 if col.dtype !=  dtype:
                     self._data[i] = col.astype(dtype)
 

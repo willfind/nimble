@@ -274,7 +274,7 @@ class Base(ABC):
         Keywords
         --------
         columns, variables, dimensions, attributes, predictors, iterate,
-        iteritems
+        items
         """
         return self._features
 
