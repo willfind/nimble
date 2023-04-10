@@ -110,14 +110,14 @@ class DataFrameAxis(Axis, metaclass=ABCMeta):
     def _repeat_implementation(self, totalCopies, copyVectorByVector):
         repeated = {}
         if self._isPoint:
-            for i, series in self._base._data.iteritems():
+            for i, series in self._base._data.items():
                 if copyVectorByVector:
                     repeated[i] = np.repeat(series, totalCopies)
                 else:
                     repeated[i] = np.tile(series, totalCopies)
             ret = pd.DataFrame(repeated).reset_index(drop=True)
         else:
-            for i, series in self._base._data.iteritems():
+            for i, series in self._base._data.items():
                 if copyVectorByVector:
                     for idx in range(totalCopies):
                         repeated[i * totalCopies + idx] = series
@@ -214,7 +214,7 @@ class DataFramePoints(DataFrameAxis, Points):
 
     def _combineByExpandingFeatures_implementation(
         self, uniqueDict, namesIdx, valuesIdx, uniqueNames, numRetFeatures):
-        uncombined = [dtype for i, dtype in self._base._data.dtypes.iteritems()
+        uncombined = [dtype for i, dtype in self._base._data.dtypes.items()
                       if i not in valuesIdx + [namesIdx]]
         combined = list(self._base._data.dtypes.iloc[valuesIdx])
         dtypes = (uncombined[:namesIdx]
@@ -227,7 +227,7 @@ class DataFramePoints(DataFrameAxis, Points):
 
         self._base._data = pd.DataFrame(tmpData)
         if tuple(self._base._data.dtypes) != tuple(dtypes):
-            for (i, col), dtype in zip(self._base._data.iteritems(), dtypes):
+            for (i, col), dtype in zip(self._base._data.items(), dtypes):
                 if col.dtype !=  dtype:
                     self._base._data[i] = col.astype(dtype)
 

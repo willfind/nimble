@@ -928,7 +928,7 @@ def elementTypeConvert(data, convertToType):
                     data.data[colMask] = feature
                 data.data[colMask] = data.data[colMask].astype(convType)
         elif _isPandasDataFrame(data):
-            for i, (idx, ft) in enumerate(data.iteritems()):
+            for i, (idx, ft) in enumerate(data.items()):
                 convType = convertToType[i]
                 if convType is None:
                     continue

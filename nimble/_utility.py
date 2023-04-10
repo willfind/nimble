@@ -341,7 +341,7 @@ def pandasDataFrameToList(pdDataFrame):
     """
     Transform a pandas DataFrame into a 2D list.
     """
-    return list(map(list, zip(*(col for _, col in pdDataFrame.iteritems()))))
+    return list(map(list, zip(*(col for _, col in pdDataFrame.items()))))
 
 def removeDuplicatesNative(cooObj):
     """
