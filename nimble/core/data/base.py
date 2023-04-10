@@ -2227,8 +2227,8 @@ class Base(ABC):
         return not self.__eq__(other)
 
     def toString(self, maxWidth=79, maxHeight=30, sigDigits=3,
-                 maxColumnWidth=19, indent='', includePointNames=True, 
-                 includeFeatureNames=True, quoteNames=True):
+                 maxColumnWidth=19, includePointNames=True,
+                 includeFeatureNames=True, indent='', quoteNames=True):
         """
         A string representation of this object.
 
@@ -2251,16 +2251,16 @@ class Base(ABC):
         maxColumnWidth : int
             A bound on the maximum number of characters allowed for the
             width of single column (feature) in each line.
-        indent : str
-            The string to use as indentation.
         includePointNames : bool
             Used to control whether the point names are printed alongside the
             data in the points rows. If set to 'False' the indices
             of the points will be displayed instead of the names.
         includeFeatureNames : bool
-            Used to control whether the feature names are printed alongside 
+            Used to control whether the feature names are printed alongside
             the data in the features column. If set to 'False' the indices
             of the features will be displayed instead of the names.
+        indent : str
+            The string to use as indentation.
 
         See Also
         --------
@@ -2347,8 +2347,8 @@ class Base(ABC):
 
     def _show(self, description=None, includeObjectName=True,
               maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-              maxColumnWidth='automatic', includePointNames=True, includeFeatureNames=True,
-              indent='', quoteNames=True):
+              maxColumnWidth='automatic', includePointNames=True,
+              includeFeatureNames=True, indent='', quoteNames=True):
 
         # Check if we're in IPython / a Notebook
         if IPython.nimbleAccessible():
@@ -2415,7 +2415,8 @@ class Base(ABC):
 
     def show(self, description=None, includeObjectName=True,
              maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-             maxColumnWidth='automatic', includePointNames=True, includeFeatureNames=True):
+             maxColumnWidth='automatic', includePointNames=True,
+             includeFeatureNames=True):
         """
         A printed representation of the data.
 
@@ -2467,7 +2468,8 @@ class Base(ABC):
         write, text, repr, represent, display, terminal
         """
         print(self._show(description, includeObjectName, maxWidth, maxHeight,
-                         sigDigits, maxColumnWidth, includePointNames, includeFeatureNames))
+                         sigDigits, maxColumnWidth, includePointNames,
+                         includeFeatureNames))
 
     @limitedTo2D
     def plotHeatMap(self, includeColorbar=False, outPath=None, show=True,
@@ -5245,7 +5247,7 @@ class Base(ABC):
         # pylint: disable=unused-argument
         self.__init__(**kwargs)
 
-    def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold, 
+    def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold,
                            includePointNames, quoteNames):
         """
         Prepare point names for string output. Grab only section of
