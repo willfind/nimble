@@ -3707,7 +3707,6 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         exp2.features.setNames(['a', 'b', 'c'], useLog=False)
         assert obj2 == exp2
 
-
     
 
     @raises(InvalidArgumentValue)

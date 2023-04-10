@@ -140,7 +140,7 @@ base_tested = list(map(prefixAdder('Base'), base_funcs))
 features_logged = [
     'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
     'insert', 'matching', 'normalize', 'permute', 'repeat','replace', 'report',
-    'retain', 'setName', 'setNames', 'sort', 'transform', 'splitByParsing',
+    'retain', 'setNames', 'sort', 'transform', 'splitByParsing',
     ]
 features_notLogged = [
     'count', 'getIndex', 'getIndices', 'getName', 'getNames', 'hasName',
@@ -153,7 +153,7 @@ features_tested = list(map(prefixAdder('Features'), features_funcs))
 points_logged = [
     'append', 'calculate', 'copy', 'delete', 'extract', 'fillMatching',
     'insert', 'mapReduce', 'matching', 'permute', 'repeat', 'replace',
-    'retain', 'setName', 'setNames', 'sort', 'transform',
+    'retain', 'setNames', 'sort', 'transform',
     'combineByExpandingFeatures', 'splitByCollapsingFeatures',
     ]
 points_notLogged = [
@@ -183,7 +183,14 @@ USER_FACING_TESTED = (nimble_tested + calculate_tested + exceptions_tested
 ##############
 
 def testAllUserFacingLoggingTested():
-    """Ensure that all user facing functions are tested for logging"""
+    """
+    Ensure that all user facing functions are tested for logging.
+
+    Checks consistency by a hand maintained list of methods the developers
+    have confirmed are tested for the presence of absence of logging side
+    effects against a list of user accessible methods that has been
+    programatically generated.
+    """
     if not sorted(USER_FACING_TESTED) == sorted(ALL_USER_FACING):
         missing = [f for f in ALL_USER_FACING if f not in USER_FACING_TESTED]
         removed = [f for f in USER_FACING_TESTED if f not in ALL_USER_FACING]

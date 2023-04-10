@@ -45,17 +45,18 @@ def getExtensions():
 
 def cythonizeFiles():
     corePath = os.path.join('nimble', 'core')
-    to_cythonize = [os.path.join(corePath, 'create.py'),
-                    os.path.join(corePath, '_createHelpers.py'),
-                    os.path.join(corePath, 'learn.py'),
-                    os.path.join(corePath, '_learnHelpers.py'),
+    to_cythonize = [os.path.join('nimble', 'calculate', '*.py'),
                     os.path.join(corePath, 'data', '*.py'),
-                    os.path.join('nimble', 'calculate', '*.py'),
-                    os.path.join('nimble', 'random', '*.py'),
+                    os.path.join(corePath, 'interfaces', '*.py'),
+                    os.path.join(corePath, 'logger', '*.py'),
+                    os.path.join(corePath, '*.py'),
+                    os.path.join('nimble', 'fill', '*.py'),
+                    os.path.join('nimble', 'learners', '*.py'),
                     os.path.join('nimble', 'match', '*.py'),
-                    os.path.join('nimble', 'fill', '*.py')]
-    exclude = [os.path.join('nimble', '*', '__init__.py'),
-               os.path.join(corePath, '*', '__init__.py')]
+                    os.path.join('nimble', 'random', '*.py'),
+                    os.path.join('nimble', '*.py')
+                    ]
+    exclude = []
     cythonize(to_cythonize, exclude=exclude, force=True,
               compiler_directives={'always_allow_keywords': True,
                                    'language_level': 3,
@@ -160,10 +161,11 @@ def run_setup():
     setupKwargs = {}
     setupKwargs['name'] = 'nimble'
     setupKwargs['version'] = __version__
-    setupKwargs['author'] = "Spark Wave"
+    setupKwargs['author'] = "Spark Wave LLC"
     setupKwargs['author_email'] = "willfind@gmail.com"
     setupKwargs['description'] = "Interfaces and tools for data science."
-    setupKwargs['url'] = "https://nimbledata.org"
+    setupKwargs['url'] = "https://willfind.github.io/nimble/index.html"
+    setupKwargs['license'] = "Proprietary"
     setupKwargs['packages'] = find_packages(exclude=('tests', 'tests.*'))
     setupKwargs['python_requires'] = '>=3.7'
     setupKwargs['classifiers'] = [
@@ -173,6 +175,7 @@ def run_setup():
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
         'Operating System :: OS Independent',
+        'License :: Other/Proprietary License',
         ]
 
     setupKwargs['include_package_data'] = True

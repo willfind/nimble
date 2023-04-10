@@ -103,20 +103,17 @@ def inverse(aObj):
     return nimble.data(invData, returnType=aObj.getTypeString(), useLog=False)
 
 
-def pseudoInverse(aObj, method='svd'):
+def pseudoInverse(aObj):
     """
     Compute the (Moore-Penrose) pseudo-inverse of a nimble Base object.
 
     Calculate a generalized inverse of a matrix using singular-value
-    decomposition (default) or least squares solver.
+    decomposition solver.
 
     Parameters
     ----------
     aObj : nimble Base object.
         Square object to be pseudo-inverted.
-    method : str.
-        * 'svd'. Uses singular-value decomposition by default.
-        * 'least-squares'.  Uses least squares solver included.
 
     Returns
     -------
@@ -128,8 +125,6 @@ def pseudoInverse(aObj, method='svd'):
     InvalidArgumentType
         If ``aObj`` is not a nimble Base Object.
         If ``aObj`` elements types are not supported.
-    InvalidArgumentValue
-        If ``method`` name is not supported.
 
     Examples
     --------
@@ -159,9 +154,6 @@ def pseudoInverse(aObj, method='svd'):
             "Object must be derived class of nimble.core.data.Base.")
     if not aObj.points and not aObj.features:
         return aObj
-    if method not in ['least-squares', 'svd']:
-        raise InvalidArgumentValue(
-            "Supported methods are 'least-squares' and 'svd'.")
 
     def _handleNonSupportedTypes(exception):
         if re.match('.*object arrays*', str(exception), re.I):
@@ -172,17 +164,12 @@ def pseudoInverse(aObj, method='svd'):
             raise InvalidArgumentValue(msg) from exception
         raise exception
 
+
     pinvObj = dtypeConvert(aObj.copy(to='numpy array'))
-    if method == 'svd':
-        try:
-            pinvData = scipy.linalg.pinv2(pinvObj)
-        except ValueError as exception:
-            _handleNonSupportedTypes(exception)
-    else:
-        try:
-            pinvData = scipy.linalg.pinv(pinvObj)
-        except ValueError as exception:
-            _handleNonSupportedTypes(exception)
+    try:
+        pinvData = scipy.linalg.pinv(pinvObj)
+    except ValueError as exception:
+        _handleNonSupportedTypes(exception)
 
     return nimble.data(pinvData, returnType=aObj.getTypeString(), useLog=False)
 

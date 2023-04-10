@@ -11,9 +11,8 @@ Methods tested in this file (none modify the data):
 ID, points._nameDifference, features._nameDifference, points._nameIntersection,
 features._nameIntersection, points._nameSymmetricDifference,
 features._nameSymmetricDifference, points._nameUnion, features._nameUnion,
-points.setName, features.setName, points.setNames, features.setNames,
-_removePointNameAndShift, _removeFeatureNameAndShift, _equalPointNames,
-_equalFeatureNames, points.getNames, features.getNames, __len__,
+points.setNames, features.setNames, _removePointNameAndShift, _removeFeatureNameAndShift, 
+_equalPointNames, _equalFeatureNames, points.getNames, features.getNames, __len__,
 features.getIndex, features.getName, points.getIndex, points.getName,
 points.getIndices, features.getIndices, constructIndicesList, copy
 features.hasName, points.hasName, __bool__, _treatAs2D
@@ -296,154 +295,98 @@ class LowLevelBackend(object):
         assert "three" in results
         assert "four" in results
 
-    ####################
-    # points.setName() #
-    ####################
-
-    @raises(InvalidArgumentType)
-    def test_points_setName_exceptionPrevWrongType(self):
-        """ Test points.setName() for InvalidArgumentType when given the wrong type for prev"""
-        origNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(pointNames=origNames)
-        toTest.points.setName(oldIdentifier=0.3, newName="New!")
-
-    @raises(IndexError)
-    def test_points_setName_exceptionPrevInvalidIndex(self):
-        """ Test points.setName() for InvalidArgumentValue when given an invalid prev index"""
-        origNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(pointNames=origNames)
-        toTest.points.setName(oldIdentifier=12, newName="New!")
-
-    @raises(KeyError)
-    def test_points_setName_exceptionPrevNotFound(self):
-        """ Test points.setName() for InvalidArgumentValue when the prev pointName is not found"""
-        origNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(pointNames=origNames)
-        toTest.points.setName(oldIdentifier="Previous!", newName="New!")
-
-    @raises(InvalidArgumentType)
-    def test_points_setName_exceptionNewInvalidType(self):
-        """ Test points.setName() for InvalidArgumentValue when the new pointName is not a string"""
-        origNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(pointNames=origNames)
-        toTest.points.setName(oldIdentifier="three", newName=4)
-
-    @raises(InvalidArgumentValue)
-    def test_points_setName_exceptionNonUnique(self):
-        """ Test points.setName() for InvalidArgumentValue when a duplicate pointName is given"""
-        origNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(pointNames=origNames)
-        toTest.points.setName(oldIdentifier="three", newName="two")
-
-    @raises(ImproperObjectAction)
-    def test_points_setName_exceptionNoPoints(self):
-        toTest = self.constructor()
-        toTest.points.setName("hello", "2")
-
-    @logCountAssertionFactory(2)
-    def test_points_setName_handmade_viaIndex(self):
-        """ Test points.setName() against handmade input when specifying the pointName by index """
-        origNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(pointNames=origNames)
-        toTest.points.setName(0, "ZERO")
-        toTest.points.setName(3, "3")
-        expectedNames = ["ZERO", "one", "two", "3"]
-        confirmExpectedNames(toTest, 'point', expectedNames)
-
-    def test_points_setName_handmade_viaPointName(self):
-        """ Test points.setName() against handmade input when specifying the pointName by name """
-        origNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(pointNames=origNames)
-        toTest.points.setName("zero", "ZERO")
-        toTest.points.setName("three", "3")
-        expectedNames = ["ZERO", "one", "two", "3"]
-        confirmExpectedNames(toTest, 'point', expectedNames)
-
-    def test_points_setName_NoneOutput(self):
-        """ Test points.setName() return None as output """
-        origNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(pointNames=origNames)
-        ret = toTest.points.setName("zero", "ZERO")
-        assert ret is None
-
-
-    ######################
-    # features.setName() #
-    ######################
-
-    @raises(InvalidArgumentType)
-    def test_features_setName_exceptionPrevWrongType(self):
-        """ Test features.setName() for InvalidArgumentType when given the wrong type for prev"""
-        origFeatureNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.features.setName(oldIdentifier=0.3, newName="New!")
-
-    @raises(IndexError)
-    def test_features_setName_exceptionPrevInvalidIndex(self):
-        """ Test features.setName() for InvalidArgumentValue when given an invalid prev index"""
-        origFeatureNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.features.setName(oldIdentifier=12, newName="New!")
-
-    @raises(KeyError)
-    def test_features_setName_exceptionPrevNotFound(self):
-        """ Test features.setName() for InvalidArgumentValue when the prev featureName is not found"""
-        origFeatureNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.features.setName(oldIdentifier="Previous!", newName="New!")
-
-    @raises(InvalidArgumentType)
-    def test_features_setName_exceptionNewInvalidType(self):
-        """ Test features.setName() for InvalidArgumentValue when the new featureName is not a string"""
-        origFeatureNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.features.setName(oldIdentifier="three", newName=4)
-
-    @raises(InvalidArgumentValue)
-    def test_features_setName_exceptionNonUnique(self):
-        """ Test features.setName() for InvalidArgumentValue when a duplicate featureName is given"""
-        origFeatureNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.features.setName(oldIdentifier="three", newName="two")
-
-    @raises(ImproperObjectAction)
-    def test_features_setName_exceptionNoFeatures(self):
-        toTest = self.constructor()
-        toTest.features.setName("hello", "2")
-
-    @logCountAssertionFactory(2)
-    def test_features_setName_handmade_viaIndex(self):
-        """ Test features.setName() against handmade input when specifying the featureName by index """
-        origFeatureNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.features.setName(0, "ZERO")
-        toTest.features.setName(3, "3")
-        expectedFeatureNames = ["ZERO", "one", "two", "3"]
-        confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
-
-    def test_features_setName_handmade_viaFeatureName(self):
-        """ Test features.setName() against handmade input when specifying the featureName by name """
-        origFeatureNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(featureNames=origFeatureNames)
-        toTest.features.setName("zero", "ZERO")
-        toTest.features.setName("three", "3")
-        expectedFeatureNames = ["ZERO", "one", "two", "3"]
-        confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
-
-    def test_features_setName_NoneOutput(self):
-        """ Test features.setName() returns None as output """
-        origFeatureNames = ["zero", "one", "two", "three"]
-        toTest = self.constructor(featureNames=origFeatureNames)
-        ret = toTest.features.setName("zero", "ZERO")
-        assert ret is None
 
     #####################
     # points.setNames() #
     #####################
+    
+    @raises(InvalidArgumentType)
+    def test_points_setNames_exceptionPrevWrongType(self):
+        """ Test points.setNames() for InvalidArgumentType when given the wrong type for prev"""
+        origNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(pointNames=origNames)
+        toTest.points.setNames("New!", oldIdentifiers=0.3)
+
+    @raises(IndexError)
+    def test_points_setNames_exceptionPrevInvalidIndex(self):
+        """ Test points.setNames() for InvalidArgumentValue when given an invalid prev index"""
+        origNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(pointNames=origNames)
+        toTest.points.setNames("New!", oldIdentifiers=12)
+
+    @raises(KeyError)
+    def test_points_setNames_exceptionPrevNotFound(self):
+        """ Test points.setNames() for InvalidArgumentValue when the prev pointName is not found"""
+        origNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(pointNames=origNames)
+        toTest.points.setNames( "New!", oldIdentifiers="Previous!")
+
+    @raises(InvalidArgumentType)
+    def test_points_setNames_exceptionNewInvalidType(self):
+        """ Test points.setNames() for InvalidArgumentValue when the new pointName is not a string"""
+        origNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(pointNames=origNames)
+        toTest.points.setNames(4, oldIdentifiers="three")
 
     @raises(InvalidArgumentValue)
+    def test_points_setNames_exceptionNonUnique(self):
+        """ Test points.setNames() for InvalidArgumentValue when a duplicate pointName is given"""
+        origNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(pointNames=origNames)
+        toTest.points.setNames( "two", oldIdentifiers="three")
+
+    @raises(ImproperObjectAction)
+    def test_points_setNames_exceptionNoPoints(self):
+        toTest = self.constructor()
+        toTest.points.setNames( "2", oldIdentifiers="hello")
+
+    @logCountAssertionFactory(2)
+    def test_points_setNames_handmade_viaIndex(self):
+        """ Test points.setNames() against handmade input when specifying the pointName by index """
+        origNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(pointNames=origNames)
+        toTest.points.setNames("ZERO", oldIdentifiers=0)
+        toTest.points.setNames( "3", oldIdentifiers=3)
+        expectedNames = ["ZERO", "one", "two", "3"]
+        confirmExpectedNames(toTest, 'point', expectedNames)
+    
+    @logCountAssertionFactory(1)
+    def test_points_setNames_handmade_multiAssign_viaIndex(self):
+        """ Test points.setNames() against handmade input when specifying the pointName by index """
+        origNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(pointNames=origNames)
+        toTest.points.setNames(["ZERO", "3"], oldIdentifiers=[0,3])
+        expectedNames = ["ZERO", "one", "two", "3"]
+        confirmExpectedNames(toTest, 'point', expectedNames)
+        
+    def test_points_setNames_handmade_viaPointName(self):
+        """ Test points.setNames() against handmade input when specifying the pointName by name """
+        origNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(pointNames=origNames)
+        toTest.points.setNames("ZERO", oldIdentifiers="zero")
+        toTest.points.setNames("3", oldIdentifiers="three")
+        expectedNames = ["ZERO", "one", "two", "3"]
+        confirmExpectedNames(toTest, 'point', expectedNames)
+
+    def test_points_setNames_handmade_multiAssign_viaPointName(self):
+        """ Test points.setNames() against handmade input when specifying the pointNames by name """
+        origNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(pointNames=origNames)
+        toTest.points.setNames(["ZERO", "3"], oldIdentifiers=["zero", "three"])
+        expectedNames = ["ZERO", "one", "two", "3"]
+        confirmExpectedNames(toTest, 'point', expectedNames)
+
+    def test_points_setNames_NoneOutput(self):
+        """ Test points.setNames() return None as output """
+        origNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(pointNames=origNames)
+        ret = toTest.points.setNames("ZERO", oldIdentifiers="zero")
+
+        assert ret is None
+
+    @raises(InvalidArgumentType)
     def test_points_setNames_exceptionWrongTypeObject(self):
-        """ Test points.setNames() for InvalidArgumentValue a point in point Names is an unexpected type """
+        """ Test points.setNames() for InvalidArgumentType a point in point Names is an unexpected type """
         # a list is the expected argument type, but the value is the incorrect type
         toTest = self.constructor(pointNames=['one'])
         toTest.points.setNames(12)
@@ -569,8 +512,91 @@ class LowLevelBackend(object):
     #######################
     # features.setNames() #
     #######################
+    
+    @raises(InvalidArgumentType)
+    def test_features_setNames_exceptionPrevWrongType(self):
+        """ Test features.setNames() for InvalidArgumentType when given the wrong type for prev"""
+        origFeatureNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(featureNames=origFeatureNames)
+        toTest.features.setNames("New!", oldIdentifiers=0.3)
+
+    @raises(IndexError)
+    def test_features_setNames_exceptionPrevInvalidIndex(self):
+        """ Test features.setNames() for InvalidArgumentValue when given an invalid prev index"""
+        origFeatureNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(featureNames=origFeatureNames)
+        toTest.features.setNames("New!", oldIdentifiers=12)
+
+    @raises(KeyError)
+    def test_features_setNames_exceptionPrevNotFound(self):
+        """ Test features.setNames() for InvalidArgumentValue when the prev featureName is not found"""
+        origFeatureNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(featureNames=origFeatureNames)
+        toTest.features.setNames("New!", oldIdentifiers="Previous!")
+
+    @raises(InvalidArgumentType)
+    def test_features_setNames_exceptionNewInvalidType(self):
+        """ Test features.setNames() for InvalidArgumentValue when the new featureName is not a string"""
+        origFeatureNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(featureNames=origFeatureNames)
+        toTest.features.setNames(4, oldIdentifiers="three")
 
     @raises(InvalidArgumentValue)
+    def test_features_setNames_exceptionNonUnique(self):
+        """ Test features.setNames() for InvalidArgumentValue when a duplicate featureName is given"""
+        origFeatureNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(featureNames=origFeatureNames)
+        toTest.features.setNames("two", oldIdentifiers="three")
+
+    @raises(ImproperObjectAction)
+    def test_features_setNames_exceptionNoFeatures(self):
+        toTest = self.constructor()
+        toTest.features.setNames("2", oldIdentifiers="hello")
+
+    @logCountAssertionFactory(2)
+    def test_features_setNames_handmade_viaIndex(self):
+        """ Test features.setNames() against handmade input when specifying the featureName by index """
+        origFeatureNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(featureNames=origFeatureNames)
+        toTest.features.setNames( "ZERO", oldIdentifiers=0)
+        toTest.features.setNames("3", oldIdentifiers=3)
+        expectedFeatureNames = ["ZERO", "one", "two", "3"]
+        confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
+    
+    @logCountAssertionFactory(1)
+    def test_features_setNames_handmade_multiAssign_viaIndex(self):
+        """ Test features.setNames() against handmade input when specifying the featureName by index """
+        origNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(featureNames=origNames)
+        toTest.features.setNames(["ZERO", "3"], oldIdentifiers=[0,3])
+        expectedNames = ["ZERO", "one", "two", "3"]
+        confirmExpectedNames(toTest, 'feature', expectedNames)
+        
+    def test_features_setName_handmade_viaFeatureName(self):
+        """ Test features.setNames() against handmade input when specifying the featureName by name """
+        origFeatureNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(featureNames=origFeatureNames)
+        toTest.features.setNames("ZERO", oldIdentifiers="zero")
+        toTest.features.setNames("3", oldIdentifiers="three")
+        expectedFeatureNames = ["ZERO", "one", "two", "3"]
+        confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
+
+    def test_features_setNames_handmade_multiAssign_viaFeatureName(self):
+        """ Test features.setNames() against handmade input when specifying the featureNames by name """
+        origFeatureNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(featureNames=origFeatureNames)
+        toTest.features.setNames(["ZERO", "3"], oldIdentifiers=["zero", "three"])
+        expectedFeatureNames = ["ZERO", "one", "two", "3"]
+        confirmExpectedNames(toTest, 'feature', expectedFeatureNames)
+
+    def test_features_setNames_NoneOutput(self):
+        """ Test features.setNames() returns None as output """
+        origFeatureNames = ["zero", "one", "two", "three"]
+        toTest = self.constructor(featureNames=origFeatureNames)
+        ret = toTest.features.setNames("ZERO", oldIdentifiers="zero")
+        assert ret is None
+
+    @raises(InvalidArgumentType)
     def test_features_setNames_exceptionWrongTypeObject(self):
         """ Test features.setNames() for InvalidArgumentType when a feature in featureNames is an unexpected type """
         # a list is the expected argument type, but the value is the incorrect type
@@ -627,7 +653,7 @@ class LowLevelBackend(object):
         ret = toTest.features.setNames(toAssign)
         confirmExpectedNames(toTest, 'feature', toAssign)
         assert ret is None
-
+    
     @raises(InvalidArgumentValue)
     def test_features_setNames_exceptionNonStringFeatureNameInList(self):
         """ Test features.setNames() for InvalidArgumentValue when a list element is not a string """
@@ -732,11 +758,11 @@ class LowLevelBackend(object):
         """ Test _equalPointNames() for inequality of some default named, different sized objects """
         toTest1 = self.constructor(pointNames=['1', '2'])
         toTest2 = self.constructor(pointNames=['1', '2', '3'])
-        toTest1.points.setName(0, None)
-        toTest1.points.setName(1, None)
-        toTest2.points.setName(0, None)
-        toTest2.points.setName(1, None)
-        toTest2.points.setName(2, None)
+        toTest1.points.setNames(None, oldIdentifiers=0)
+        toTest1.points.setNames(None, oldIdentifiers=1)
+        toTest2.points.setNames(None, oldIdentifiers=0)
+        toTest2.points.setNames(None, oldIdentifiers=1)
+        toTest2.points.setNames(None, oldIdentifiers=2)
         assert not toTest1._equalPointNames(toTest2)
         assert not toTest2._equalPointNames(toTest1)
 
@@ -744,25 +770,25 @@ class LowLevelBackend(object):
         """ Test _equalPointNames() for equality of default named objects """
         toTest1 = self.constructor(pointNames=['1', '2'])
         toTest2 = self.constructor(pointNames=['1', '2'])
-        toTest1.points.setName(0, None)
-        toTest1.points.setName(1, None)
-        toTest2.points.setName(0, None)
-        toTest2.points.setName(1, None)
+        toTest1.points.setNames(None, oldIdentifiers=0)
+        toTest1.points.setNames(None, oldIdentifiers=1)
+        toTest2.points.setNames(None, oldIdentifiers=0)
+        toTest2.points.setNames(None, oldIdentifiers=1)
         assert toTest1._equalPointNames(toTest2)
         assert toTest2._equalPointNames(toTest1)
 
     def test__equalPointNames_mixedDefaultsAndActual(self):
         toTest1 = self.constructor(pointNames=['1', '2'])
         toTest2 = self.constructor(pointNames=['1', '2'])
-        toTest1.points.setName(0, None)
-        toTest1.points.setName(1, '1')
-        toTest2.points.setName(1, None)
+        toTest1.points.setNames(None, oldIdentifiers=0)
+        toTest1.points.setNames('1', oldIdentifiers=1)
+        toTest2.points.setNames(None, oldIdentifiers=1)
         # have: test1 [Default, '1']
         # test2 ['1', Default]
         assert not toTest1._equalPointNames(toTest2)
         assert not toTest2._equalPointNames(toTest1)
-        toTest1.points.setName(1, '2')
-        toTest1.points.setName(1, None)
+        toTest1.points.setNames('2', oldIdentifiers=1)
+        toTest1.points.setNames(None, oldIdentifiers=1)
         # have: test1 [Default, '2']
         # test2: ['1', Default]
         assert not toTest1._equalPointNames(toTest2)
@@ -806,11 +832,11 @@ class LowLevelBackend(object):
         """ Test _equalFeatureNames() for inequality of some default named, different sized objects """
         toTest1 = self.constructor(featureNames=['1', '2'])
         toTest2 = self.constructor(featureNames=['1', '2', '3'])
-        toTest1.features.setName(0, None)
-        toTest1.features.setName(1, None)
-        toTest2.features.setName(0, None)
-        toTest2.features.setName(1, None)
-        toTest2.features.setName(2, None)
+        toTest1.features.setNames(None, oldIdentifiers=0)
+        toTest1.features.setNames(None, oldIdentifiers=1)
+        toTest2.features.setNames(None, oldIdentifiers=0)
+        toTest2.features.setNames(None, oldIdentifiers=1)
+        toTest2.features.setNames(None, oldIdentifiers=2)
         assert not toTest1._equalFeatureNames(toTest2)
         assert not toTest2._equalFeatureNames(toTest1)
 
@@ -818,25 +844,25 @@ class LowLevelBackend(object):
         """ Test _equalFeatureNames() for equality of default named objects """
         toTest1 = self.constructor(featureNames=['1', '2'])
         toTest2 = self.constructor(featureNames=['1', '2'])
-        toTest1.features.setName(0, None)
-        toTest1.features.setName(1, None)
-        toTest2.features.setName(0, None)
-        toTest2.features.setName(1, None)
+        toTest1.features.setNames(None, oldIdentifiers=0)
+        toTest1.features.setNames(None, oldIdentifiers=1)
+        toTest2.features.setNames(None, oldIdentifiers=0)
+        toTest2.features.setNames(None, oldIdentifiers=1)
         assert toTest1._equalFeatureNames(toTest2)
         assert toTest2._equalFeatureNames(toTest1)
 
     def test_equalFeatureNames_mixedDefaultsAndActual(self):
         toTest1 = self.constructor(featureNames=['1', '2'])
         toTest2 = self.constructor(featureNames=['1', '2'])
-        toTest1.features.setName(0, None)
-        toTest1.features.setName(1, '1')
-        toTest2.features.setName(1, None)
+        toTest1.features.setNames(None, oldIdentifiers=0)
+        toTest1.features.setNames('1', oldIdentifiers=1)
+        toTest2.features.setNames(None, oldIdentifiers=1)
         # have: test1 [Default, '1']
         # test2 ['1', Default]
         assert not toTest1._equalFeatureNames(toTest2)
         assert not toTest2._equalFeatureNames(toTest1)
-        toTest1.features.setName(1, '2')
-        toTest1.features.setName(1, None)
+        toTest1.features.setNames('2', oldIdentifiers=1)
+        toTest1.features.setNames(None, oldIdentifiers=1)
         # have: test1 [Default, '2']
         # test2: ['1', Default]
         assert not toTest1._equalFeatureNames(toTest2)
@@ -863,7 +889,7 @@ class LowLevelBackend(object):
     def test_points_getNames_mixedDefault(self):
         pnames = {'zero': 0, 'one': 1, 'hello': 2}
         toTest = self.constructor(pointNames=pnames, fsize=2)
-        toTest.points.setName(0, None)
+        toTest.points.setNames(None, oldIdentifiers=0)
 
         ret = toTest.points.getNames()
         assert ret[0] is None
@@ -877,7 +903,7 @@ class LowLevelBackend(object):
         ret = toTest.points.getNames()
 
         ret[0] = 'modified'
-        toTest.points.setName(1, 'modified')
+        toTest.points.setNames('modified', oldIdentifiers=1)
 
         assert ret[1] == 'one'
         assert toTest.points.getIndex('zero') == 0
@@ -904,7 +930,7 @@ class LowLevelBackend(object):
     def test_features_getNames_mixedDefault(self):
         fnames = {'zero': 0, 'one': 1, 'hello': 2}
         toTest = self.constructor(featureNames=fnames, psize=2)
-        toTest.features.setName(0, None)
+        toTest.features.setNames(None, oldIdentifiers=0)
 
         ret = toTest.features.getNames()
         assert ret[0] is None
@@ -918,7 +944,7 @@ class LowLevelBackend(object):
         ret = toTest.features.getNames()
 
         ret[0] = 'modified'
-        toTest.features.setName(1, 'modified')
+        toTest.features.setNames('modified', oldIdentifiers=1)
 
         assert ret[1] == 'one'
         assert toTest.features.getIndex('zero') == 0
@@ -1306,13 +1332,13 @@ class LowLevelBackend(object):
         assert toTest3D.features.getNames() == newFNames
         assert toTest3D.features.getIndices(['ft_1', 'ft_0']) == [1, 0]
 
-        toTest3D.points.setName('a', 'z')
+        toTest3D.points.setNames('z', oldIdentifiers='a')
         assert not toTest3D.points.hasName('a')
         assert toTest3D.points.hasName('z')
         assert toTest3D.points.getName(0) == 'z'
         assert toTest3D.points.getIndex('z') == 0
 
-        toTest3D.features.setName('ft_0', 'ft_first')
+        toTest3D.features.setNames('ft_first', oldIdentifiers='ft_0')
         assert not toTest3D.features.hasName('ft_0')
         assert toTest3D.features.hasName('ft_first')
         assert toTest3D.features.getName(0) == 'ft_first'

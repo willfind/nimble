@@ -24,13 +24,17 @@ def initInterfaceSetup():
     for fileName in possibleFiles:
         if '.' not in fileName:
             continue
-        (name, extension) = fileName.rsplit('.', 1)
-        if extension == 'py' and not name.startswith('_'):
+        # for the case of compiled cython extensions, there might be a platform indicator
+        # in a middle segment.
+        pieces = fileName.rsplit('.')
+        name = pieces[0]
+        extension = pieces[-1]
+        if extension in ['py', 'so'] and not name.startswith('_'):
             pythonModules.append(name)
     # setup seen with the interfaces we know we don't want to load/try to load
     seen = set(["PredefinedInterfaceMixin"])
     for toImport in pythonModules:
-        importedModule = importlib.import_module('.' + toImport, __package__)
+        importedModule = importlib.import_module('.' + toImport, "nimble.core.interfaces")
         contents = dir(importedModule)
 
         # for each attribute of the module, we will check to see if it is a

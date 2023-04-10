@@ -3109,7 +3109,7 @@ class QueryBackend(DataTestObject):
 
         ret = obj.features.report(selection)
 
-    ##########  
+    ########## 
     # report #
     ##########
 

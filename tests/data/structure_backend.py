@@ -678,8 +678,8 @@ class StructureDataSafeSparseSafe(StructureShared):
         assert copySparse.isIdentical(sparseObj)
         assert sparseObj.isIdentical(copySparse)
         assert type(copySparse) == Sparse
-        copySparse.features.setName('two', '2', useLog=False)
-        copySparse.points.setName('one', 'WHAT', useLog=False)
+        copySparse.features.setNames('2', oldIdentifiers='two', useLog=False)
+        copySparse.points.setNames('WHAT', oldIdentifiers='one', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
         copySparse.points.permute(pointsShuffleIndices, useLog=False)
@@ -690,8 +690,8 @@ class StructureDataSafeSparseSafe(StructureShared):
         assert copyList.isIdentical(listObj)
         assert listObj.isIdentical(copyList)
         assert type(copyList) == List
-        copyList.features.setName('two', '2', useLog=False)
-        copyList.points.setName('one', 'WHAT', useLog=False)
+        copyList.features.setNames( '2', oldIdentifiers='two', useLog=False)
+        copyList.points.setNames('WHAT', oldIdentifiers='one',  useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
         copyList.points.permute(pointsShuffleIndices, useLog=False)
@@ -702,8 +702,8 @@ class StructureDataSafeSparseSafe(StructureShared):
         assert copyMatrix.isIdentical(matrixObj)
         assert matrixObj.isIdentical(copyMatrix)
         assert type(copyMatrix) == Matrix
-        copyMatrix.features.setName('two', '2', useLog=False)
-        copyMatrix.points.setName('one', 'WHAT', useLog=False)
+        copyMatrix.features.setNames('2', oldIdentifiers='two', useLog=False)
+        copyMatrix.points.setNames('WHAT', oldIdentifiers='one', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
         copyMatrix.points.permute(pointsShuffleIndices, useLog=False)
@@ -714,8 +714,8 @@ class StructureDataSafeSparseSafe(StructureShared):
         assert copyDataFrame.isIdentical(dataframeObj)
         assert dataframeObj.isIdentical(copyDataFrame)
         assert type(copyDataFrame) == DataFrame
-        copyDataFrame.features.setName('two', '2', useLog=False)
-        copyDataFrame.points.setName('one', 'WHAT', useLog=False)
+        copyDataFrame.features.setNames('2', oldIdentifiers='two', useLog=False)
+        copyDataFrame.points.setNames('WHAT', oldIdentifiers='one', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
         copyDataFrame.points.permute(pointsShuffleIndices, useLog=False)
@@ -5383,6 +5383,7 @@ class StructureModifyingSparseSafe(StructureShared):
     def test_features_insert_automaticReorder_fullySpecifiedNames_mid(self):
         self.backend_insert_automaticReorder('feature', False, 1)
 
+
     def test_points_insert_automaticReorder_defaultPointNames_mid(self):
         self.backend_insert_automaticReorder('point', True, 1)
 
@@ -7689,7 +7690,6 @@ class StructureModifyingSparseSafe(StructureShared):
         exp = self.constructor([[None, 11, None], [7, 11, None], [7, 8, 9]])
         exp.features.setNames(['a', 'b', 'c'])
         assert toTest == exp
-
     
     def test_points_delete_match_function(self):
         toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [7, 11, -3], [7, 8, 9]], featureNames=['a', 'b', 'c'])
@@ -8279,8 +8279,6 @@ class StructureModifyingSparseSafe(StructureShared):
         exp = self.constructor([[1, 2], [None, 11], [7, 11], [7, 8]])
         exp.features.setNames(['a', 'b'])
         assert toTest == exp
-
-    
 
     def test_features_delete_match_function(self):
         toTest = self.constructor([[1, 2, 3], [-1, 11, -3], [-1, 11, -1], [7, 8, 9]], featureNames=['a', 'b', 'c'])
@@ -9832,7 +9830,6 @@ class StructureModifyingSparseSafe(StructureShared):
 
         assert lowerCounts is None
         assert origObj.isIdentical(exp)
-
     def test_features_transform_Handmade_lazyNameGeneration(self):
         origData = [[1, 0.1, 0.01], [1, 0.1, 0.02], [1, 0.1, 0.03], [1, 0.2, 0.02]]
         origObj = self.constructor(copy.deepcopy(origData))
@@ -10997,15 +10994,6 @@ class StructureModifyingSparseSafe(StructureShared):
         # pointStrict #
         ###############
 
-    
-   
-    
-    
-    
-    
-
-
-    
 
     @raises(InvalidArgumentValue)
     def test_merge_pointStrict_featureUnion_ptNames_mixedPtNames_exc(self):
@@ -11015,35 +11003,13 @@ class StructureModifyingSparseSafe(StructureShared):
         fNamesR = ['c', 'd']
         leftObj = self.constructor(dataL, featureNames=fNamesL)
         rightObj = self.constructor(dataR, featureNames=fNamesR)
-        leftObj.points.setName(0, 'id')
-        rightObj.points.setName(1, 'id')
+        leftObj.points.setNames('id', oldIdentifiers=0)
+        rightObj.points.setNames('id', oldIdentifiers=1)
         leftObj.merge(rightObj, point='strict', feature='union')
 
         #################
         # featureStrict #
         #################
-
-    
-
-    
-
-    
-
-    
-   
-    
-
-    
-
-    
-    
-
-    
-    
-
-    
-
-    
 
 def exceptionHelper(testObj, target, args, wanted, checkMsg):
     with raises(wanted) as exc:

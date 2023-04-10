@@ -2338,7 +2338,7 @@ class Base(ABC):
         """
         Aspirational helper for detecting the available space for printing
         within a notebook. However, no viable method has been found to
-        do so. We therefore return a handpicked default, choosen to be
+        do so. We therefore return a handpicked default, chosen to be
         an acceptable max width even on a 1360x768 laptop screen.
         """
         # Sane default
@@ -2347,9 +2347,8 @@ class Base(ABC):
 
     def _show(self, description=None, includeObjectName=True,
               maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-              maxColumnWidth=19, includePointNames=True, includeFeatureNames=True, 
-               indent='', quoteNames=True):
-
+              maxColumnWidth='automatic', indent='', quoteNames=True):
+        
         # Check if we're in IPython / a Notebook
         if IPython.nimbleAccessible():
             # even if IPython is accessible, it's only operational if
@@ -2357,7 +2356,7 @@ class Base(ABC):
             shell = IPython.core.getipython.get_ipython()
         else:
             shell = None
-
+        
         # Resolve the 'automatic' values for maxWidth and maxHeight
         if shell is not None:
             terminalSize = self._getNotebookTerminalSize(shell)
@@ -2377,7 +2376,12 @@ class Base(ABC):
             ret += indent + description + '\n'
             if maxHeight is not None:
                 maxHeight -= 1
-
+        
+        if maxColumnWidth == 'automatic':
+            maxColumnWidth = (maxWidth // len(self.features)) + 7
+            if maxColumnWidth < 8:
+                maxColumnWidth = 8 # lower limit for dynamic column width
+            
         if includeObjectName and self.name is not None:
             ret += f'"{self._name}" '
         if len(self._dims) > 2:
@@ -2410,7 +2414,7 @@ class Base(ABC):
 
     def show(self, description=None, includeObjectName=True,
              maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-             maxColumnWidth=19, includePointNames=True, includeFeatureNames=True):
+             maxColumnWidth='automatic'):
         """
         A printed representation of the data.
 
@@ -3114,7 +3118,7 @@ class Base(ABC):
         if subgroupFeature:
             subgroupFt = self.features[subgroupFeature]
             # remove name in case is same as feature
-            subgroupFt.features.setName(0, None)
+            subgroupFt.features.setNames(None, oldIdentifiers=0)
             toGroup.features.insert(1, subgroupFt)
         grouped = toGroup.groupByFeature(0, useLog=False)
 

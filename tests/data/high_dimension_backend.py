@@ -4,7 +4,9 @@
 import sys
 from io import StringIO
 import tempfile
-import re
+
+import shutil
+import re 
 
 import numpy as np
 import pandas as pd
@@ -77,7 +79,7 @@ class HighDimensionSafeSparseUnsafe(DataTestObject):
                         assert l1 == l2
             finally:
                 sys.stdout = stdoutBackup
-    
+
     def test_highDimension_copy(self):
         for tensorList in [tensors, emptyTensors]:
             for tensor in tensorList:
@@ -389,7 +391,7 @@ class HighDimensionSafeSparseSafe(DataTestObject):
 
 class HighDimensionModifyingSparseUnsafe(DataTestObject):
     def test_highDimension_sort(self):
-  
+
         tensor3D = [[[2]], [[3]], [[1]]]
         tensor4D = [[[[2]]], [[[3]]], [[[1]]]]
         tensor5D = [[[[[2]]]], [[[[3]]]], [[[[1]]]]]

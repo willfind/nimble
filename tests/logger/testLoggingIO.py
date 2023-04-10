@@ -665,18 +665,6 @@ def testPrepTypeFunctionsUseLog():
     checkLogContents('points.combineByExpandingFeatures', dataObj.logID,
                      {'featureWithFeatureNames': 'dist', 'featuresWithValues': 'time'})
 
-    # points.setName
-    dataObj = nimble.data(data, returnType='Matrix', useLog=False)
-    dataObj.points.setName(0, 'newPtName')
-    checkLogContents('points.setName', dataObj.logID, {'oldIdentifier': 0,
-                                                  'newName': 'newPtName'})
-
-    # features.setName
-    dataObj = nimble.data(data, returnType='Matrix', useLog=False)
-    dataObj.features.setName(0, 'newFtName')
-    checkLogContents('features.setName', dataObj.logID, {'oldIdentifier': 0,
-                                                    'newName': 'newFtName'})
-
     # points.setNames
     dataObj = nimble.data(data, returnType='Matrix', useLog=False)
     newPtNames = ['point' + str(i) for i in range(18)]
