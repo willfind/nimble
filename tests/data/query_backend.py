@@ -1225,19 +1225,19 @@ class QueryBackend(DataTestObject):
         initnames = ['zero', 'one', 'two', 'three', 'four']
         obj = self.constructor(raw, pointNames=initnames)
 
-        pnames, bound = obj._arrangePointNames(2, 11, rowHolder, nameHold, True)
+        pnames, bound = obj._arrangePointNames(2, 11, rowHolder, nameHold, True, True)
         assert pnames == ["'zero'", rowHolder]
         assert bound == len("'zero'")
 
-        pnames, bound = obj._arrangePointNames(3, 11, rowHolder, nameHold, True)
+        pnames, bound = obj._arrangePointNames(3, 11, rowHolder, nameHold, True, True)
         assert pnames == ["'zero'", rowHolder, "'four'"]
         assert bound == len("'four'")
 
-        pnames, bound = obj._arrangePointNames(4, 11, rowHolder, nameHold, False)
+        pnames, bound = obj._arrangePointNames(4, 11, rowHolder, nameHold, True, False)
         assert pnames == ['zero', 'one', rowHolder, 'four']
         assert bound == len('four')
 
-        pnames, bound = obj._arrangePointNames(5, 11, rowHolder, nameHold, False)
+        pnames, bound = obj._arrangePointNames(5, 11, rowHolder, nameHold, True, False)
         assert pnames == ['zero', 'one', 'two', 'three', 'four']
         assert bound == len('three')
 
@@ -1250,7 +1250,7 @@ class QueryBackend(DataTestObject):
         initnames = ['zerooo', 'one', 'two', 'threee']
         obj = self.constructor(raw, pointNames=initnames)
 
-        pnames, bound = obj._arrangePointNames(4, 3, rowHolder, nameHold, False)
+        pnames, bound = obj._arrangePointNames(4, 3, rowHolder, nameHold, True, False)
         assert pnames == ['...', 'one', 'two', '...']
         assert bound == 3
 
@@ -1264,11 +1264,11 @@ class QueryBackend(DataTestObject):
         obj = self.constructor(raw, pointNames=initnames)
 
         # when quoteNames is True use index
-        pnames, bound = obj._arrangePointNames(4, 11, rowHolder, nameHold, True)
+        pnames, bound = obj._arrangePointNames(4, 11, rowHolder, nameHold, True, True)
         assert pnames == ['0', "'one'", '2', "'three'"]
         assert bound == len("'three'")
         # when quoteNames is False, leave blank
-        pnames, bound = obj._arrangePointNames(4, 11, rowHolder, nameHold, False)
+        pnames, bound = obj._arrangePointNames(4, 11, rowHolder, nameHold, True, False)
         assert pnames == ['', 'one', '', 'three']
         assert bound == len('three')
 
@@ -1278,7 +1278,8 @@ class QueryBackend(DataTestObject):
         randGen._arrangeDataWithLimits(maxHeight=1, maxWidth=120, sigDigits=3,
                                        maxStrLength=19, colSep=" ",
                                        colHold=u"\u2500\u2500", rowHold=u"\u2502",
-                                       strHold="...", quoteNames=True)
+                                       strHold="...", includeFeatureNames=True,
+                                       quoteNames=True)
 
     @pytest.mark.slow
     def test_arrangeDataWithLimits(self):
@@ -1317,7 +1318,7 @@ class QueryBackend(DataTestObject):
             ret, widths, fNames = data._arrangeDataWithLimits(
                 maxW, maxH, sigDigits=3, maxStrLength=19, colSep=colSep,
                 colHold=u"\u2500\u2500", rowHold=u"\u2502", strHold="...",
-                quoteNames=quoteNames)
+                includeFeatureNames=True, quoteNames=quoteNames)
 
             assert len(fNames) == len(widths)
             for name, width in zip(fNames, widths):
