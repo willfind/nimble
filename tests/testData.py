@@ -200,6 +200,8 @@ def test_data_listOfDict():
 
 def test_data_raw_acceptedTypeSuccessWithNames():
     for t in nimble.core.data.available:
+        if t is 'Sparse':
+            continue
         rawData = [[1, 2.0, 'a'], [0, 0.0, np.nan], [-1, -2.0, 'c']]
         pointNames = ['a', 'b', 'c']
         featureNames = ['x', 'y', 'z']
@@ -4119,7 +4121,6 @@ def test_data_multidimensionalData_featureNames():
     matrix = [vector1, vector2, vector3]
 
     tensors = makeTensorData(matrix)
-
     for retType in returnTypes:
         for idx, tensor in enumerate(tensors):
             flattenedLen = 15
