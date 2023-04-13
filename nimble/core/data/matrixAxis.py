@@ -117,7 +117,7 @@ class MatrixAxis(Axis, metaclass=ABCMeta):
         baseDtype = self._base._data.dtype
         if baseDtype != np.object_ and retDtype == np.object_:
             self._base._data = self._base._data.astype(np.object_)
-        elif baseDtype == np.int and retDtype == np.float:
+        elif baseDtype == np.int_ and retDtype == np.float:
             self._base._data = self._base._data.astype(np.float)
         elif baseDtype == np.bool_ and retDtype != np.bool_:
             self._base._data = self._base._data.astype(retDtype)

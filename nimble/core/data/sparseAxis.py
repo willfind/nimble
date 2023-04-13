@@ -94,8 +94,8 @@ class SparseAxis(Axis, metaclass=ABCMeta):
         # still compatible with the data that was not transformed
         if (limitTo is not None and
                 (baseDtype == np.object_ or
-                 (baseDtype == np.float and retDtype is not object) or
-                 (baseDtype == np.int and retDtype not in (float, object))
+                 (baseDtype == np.float_ and retDtype is not object) or
+                 (baseDtype == np.int_ and retDtype not in (float, object))
                  )):
             retDtype = baseDtype
 
