@@ -151,7 +151,7 @@ class SparseAxis(Axis, metaclass=ABCMeta):
         else:
             numpyFunc = np.tile
         repData = numpyFunc(self._base._data.data, totalCopies)
-        fillDup = np.empty_like(repData, dtype=np.int)
+        fillDup = np.empty_like(repData, dtype=np.int_)
         if self._isPoint:
             repCol = numpyFunc(self._base._data.col, totalCopies)
             repRow = fillDup

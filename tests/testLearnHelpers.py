@@ -261,7 +261,7 @@ def test_computeMetrics_2d_2arg():
 
     metricFunctions = nimble.calculate.meanFeaturewiseRootMeanSquareError
     result = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
-    assert isinstance(result, float)
+    assert isinstance(result, np.float_)
     assert result == 0.0
 
 

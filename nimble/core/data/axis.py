@@ -784,7 +784,7 @@ class Axis(ABC):
 
 
     def _repeat(self, totalCopies, copyVectorByVector):
-        if not isinstance(totalCopies, (int, np.int)) or totalCopies < 1:
+        if not isinstance(totalCopies, (int, np.int_)) or totalCopies < 1:
             raise InvalidArgumentType("totalCopies must be a positive integer")
         if totalCopies == 1:
             return self._base.copy()

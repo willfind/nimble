@@ -158,7 +158,7 @@ class Matrix(Base):
         else:
             header += '#\n'
 
-        scipy.io.mmwrite(target=outPath, a=self._data.astype(np.float),
+        scipy.io.mmwrite(target=outPath, a=self._data.astype(np.float_),
                          comment=header)
 
     def _copy_implementation(self, to):

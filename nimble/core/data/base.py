@@ -4553,7 +4553,7 @@ class Base(ABC):
         --------
         exponent, raise, square, squared, raised
         """
-        if not isinstance(power, (int, np.int)):
+        if not isinstance(power, (int, np.int_)):
             msg = 'power must be an integer'
             raise InvalidArgumentType(msg)
         if not len(self.points) == len(self.features):
