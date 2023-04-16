@@ -28,7 +28,7 @@ from tests.helpers import oneLogEntryExpected, noLogEntryExpected
 from tests.helpers import patch, assertCalled, assertNotCalled
 
 returnTypes = copy.copy(nimble.core.data.available)
-returnTypesNoSparse = [retType for retType in returnTypes if retType != 'Sparse']
+#returnTypesNoSparse = [retType for retType in returnTypes if retType != 'Sparse']
 
 datetimeTypes = (datetime.datetime, np.datetime64, pd.Timestamp)
 
@@ -4036,13 +4036,13 @@ def makeTensorData(matrix):
     rank3Array = np.array(rank3List)
     rank4Array = np.array(rank4List)
     rank5Array = np.array(rank5List)
-    rank3Array2D = np.empty((3, 3), dtype=int)
+    rank3Array2D = np.empty((3, 3), dtype=object)
     for i, lst in enumerate(rank3List):
         rank3Array2D[i] = lst
-    rank4Array2D = np.empty((3, 3), dtype=int)
+    rank4Array2D = np.empty((3, 3), dtype=object)
     for i, lst in enumerate(rank4List):
         rank4Array2D[i] = lst
-    rank5Array2D = np.empty((3, 3), dtype=int)
+    rank5Array2D = np.empty((3, 3), dtype=object)
     for i, lst in enumerate(rank5List):
         rank5Array2D[i] = lst
     rank3DF = pd.DataFrame(rank3Array2D)
@@ -4079,7 +4079,7 @@ def test_data_multidimensionalData():
     emptyTensors = makeTensorData([[], [], []])
 
     expPoints = 3
-    for retType in returnTypesNoSparse:
+    for retType in returnTypes:
         for idx, tensor in enumerate(tensors):
             toTest = nimble.data(tensor)
             expShape = [3, 3, 5]
@@ -4109,7 +4109,7 @@ def test_data_multidimensionalData_pointNames():
     tensors = makeTensorData(matrix)
 
     ptNames = ['a', 'b', 'c']
-    for retType in returnTypesNoSparse:
+    for retType in returnTypes:
         for tensor in tensors:
             toTest = nimble.data(tensor, pointNames=ptNames)
             assert toTest.points.getNames() == ptNames
@@ -4121,7 +4121,7 @@ def test_data_multidimensionalData_featureNames():
     matrix = [vector1, vector2, vector3]
 
     tensors = makeTensorData(matrix)
-    for retType in returnTypesNoSparse:
+    for retType in returnTypes:
         for idx, tensor in enumerate(tensors):
             flattenedLen = 15
             for i in range(idx % 3):
@@ -4336,7 +4336,6 @@ def test_rowsArePoints_pandasDataFrames():
         assert rowsPts == rowsFts == rowsFts2
 
 def test_rowsArePoints_scipySparse():
-    #import pdb; pdb.set_trace()
     ptData = scipy.sparse.coo_matrix([[1, 2, 3], [0, 0, 0], [-1, -2, -3]])
     ftData = scipy.sparse.coo_matrix([[1, 0, -1], [2, 0, -2], [3, 0, -3]])
     # arrayOfLists = np.empty((3, 3), dtype=np.object)
