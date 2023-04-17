@@ -136,7 +136,7 @@ def test_fillMatching_pointsFeaturesLimited():
 def test_fillMatching_lazyNameGeneration():
     data = [[1, 'na', 'x'], [1, 3, 6], [2, 1, 6], [1, 3, 7], ['na', 3, 'x']]
     expData = [[1, 3, 6], [1, 3, 6], [2, 1, 6], [1, 3, 7], [1, 3, 6]]
-    for constructor in constructors:
+    for constructor in getDataConstructors(includeViews=False, includeSparse=False):
         toTest = constructor(data)
         expTest = constructor(expData)
         nimble.fillMatching('nimble.KNNImputation', match.nonNumeric, toTest,
