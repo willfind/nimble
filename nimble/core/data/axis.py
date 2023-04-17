@@ -315,7 +315,7 @@ class Axis(ABC):
                 raise IndexError(msg)
         elif isinstance(identifier, str):
             identifier = self._getIndexByName(identifier)
-        elif allowFloats and isinstance(identifier, (float, np.float)):
+        elif allowFloats and isinstance(identifier, (float, np.float_)):
             if identifier % 1: # x!=int(x)
                 idVal = str(identifier)
                 msg = "A float valued key of value x is only accepted if x == "

@@ -253,6 +253,7 @@ def test_computeMetrics_1d_labelsInData():
 
 # multi val, two arg metric
 def test_computeMetrics_2d_2arg():
+    #import pdb; pdb.set_trace()
     knownLabels = np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
     predictedLabels = np.array([[1.0, 1.0], [2.0, 2.0], [3.0, 3.0]])
 
@@ -261,7 +262,7 @@ def test_computeMetrics_2d_2arg():
 
     metricFunctions = nimble.calculate.meanFeaturewiseRootMeanSquareError
     result = computeMetrics(knownLabelsMatrix, None, predictedLabelsMatrix, metricFunctions)
-    assert isinstance(result, np.float_)
+    assert isinstance(result, float)
     assert result == 0.0
 
 

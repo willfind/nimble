@@ -135,7 +135,7 @@ def _minmax(values, minmax):
     else:
         toProcess = values.copy('numpyarray')
         if toProcess.dtype == np.object_:
-            if any(not isinstance(v, (np.integer_, np.bool_))
+            if any(not isinstance(v, (np.int_, np.bool_))
                    for v in toProcess):
                 toProcess = toProcess.astype(float)
             else:

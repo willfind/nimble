@@ -4253,7 +4253,7 @@ def test_converttoDataFrames_numpyStructuredArrays():
     dataArray = nimble.data(structArray)
     assert type(dataArray) == nimble.core.data.dataframe.DataFrame
     assert np.issubdtype(dataArray._data.dtypes[0], np.object_)
-    assert np.issubdtype(dataArray._data.dtypes[1], np.integer_)
+    assert np.issubdtype(dataArray._data.dtypes[1], np.int_)
     assert np.issubdtype(dataArray._data.dtypes[2], np.float_)
     assert dataArray.features.getNames() == ['name', 'age', 'weight']
 
