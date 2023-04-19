@@ -6,6 +6,7 @@ Interface to autoimpute package.
 
 import types
 import logging
+import importlib
 import numpy as np
 from numpy.distutils import system_info as npdusi
 from packaging.version import Version
@@ -35,6 +36,20 @@ class Autoimpute(_SciKitLearnAPI):
 
         """
         self.package = modifyImportPathAndImport('autoimpute', 'autoimpute')
+
+        # Need to import the analysis module so that it's readily available
+        # in the other methods. BUT autoimpute experiences an import failure
+        # when scipy>=1.8.0 so we patch the problem attribute with its new
+        # location.
+        if nimble._utility.scipy.nimbleAccessible():
+            verStr = nimble._utility.scipy.__version__
+            ver = Version(verStr)
+            if ver >= Version("1.8.0"):
+                sigTools = importlib.import_module("scipy.signal.signaltools")
+                _sigTools = importlib.import_module("scipy.signal._signaltools")
+                sigTools._centered = _sigTools._centered
+                # import the submodule that accesses the changed attribute
+                importlib.import_module(".analysis", "autoimpute")
 
         def isLearner(obj):
             try:
