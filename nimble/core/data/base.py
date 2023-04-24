@@ -2227,7 +2227,8 @@ class Base(ABC):
         return not self.__eq__(other)
 
     def toString(self, maxWidth=79, maxHeight=30, sigDigits=3,
-                 maxColumnWidth=19, indent='', quoteNames=True):
+                 maxColumnWidth=19, includePointNames=True,
+                 includeFeatureNames=True, indent='', quoteNames=True):
         """
         A string representation of this object.
 
@@ -2250,6 +2251,14 @@ class Base(ABC):
         maxColumnWidth : int
             A bound on the maximum number of characters allowed for the
             width of single column (feature) in each line.
+        includePointNames : bool
+            Used to control whether the point names are printed alongside the
+            data in the points rows. If set to 'False' the indices
+            of the points will be displayed instead of the names.
+        includeFeatureNames : bool
+            Used to control whether the feature names are printed alongside
+            the data in the features column. If set to 'False' the indices
+            of the features will be displayed instead of the names.
         indent : str
             The string to use as indentation.
 
@@ -2288,7 +2297,8 @@ class Base(ABC):
         maxWidth = float('inf') if maxWidth is None else maxWidth
         maxDataWidth = maxWidth - len(indent)
         pnames, pnamesWidth = self._arrangePointNames(
-            maxDataRows, maxColumnWidth, rowHold, nameHolder, quoteNames)
+            maxDataRows, maxColumnWidth, rowHold, nameHolder, includePointNames,
+            quoteNames)
         # The available space for the data is reduced by the width of the
         # pnames, a column separator, the pnames separator, and another
         # column separator
@@ -2298,7 +2308,7 @@ class Base(ABC):
         with self._treatAs2D():
             dataTable, colWidths, fnames = self._arrangeDataWithLimits(
                 maxDataWidth, maxDataRows, sigDigits, maxColumnWidth, colSep,
-                colHold, rowHold, nameHolder, quoteNames)
+                colHold, rowHold, nameHolder, includeFeatureNames, quoteNames)
         # combine names into finalized table
         finalTable, finalWidths = arrangeFinalTable(
             pnames, pnamesWidth, dataTable, colWidths, fnames, pnameSep)
@@ -2337,8 +2347,9 @@ class Base(ABC):
 
     def _show(self, description=None, includeObjectName=True,
               maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-              maxColumnWidth='automatic', indent='', quoteNames=True):
-        
+              maxColumnWidth='automatic', includePointNames=True,
+              includeFeatureNames=True, indent='', quoteNames=True):
+
         # Check if we're in IPython / a Notebook
         if IPython.nimbleAccessible():
             # even if IPython is accessible, it's only operational if
@@ -2382,7 +2393,8 @@ class Base(ABC):
         ret += '\n'
 
         ret += self.toString(maxWidth, maxHeight, sigDigits, maxColumnWidth,
-                             indent=indent, quoteNames=quoteNames)
+                              includePointNames=includePointNames, includeFeatureNames=includeFeatureNames,
+                              indent=indent, quoteNames=quoteNames)
 
         return ret
 
@@ -2403,7 +2415,8 @@ class Base(ABC):
 
     def show(self, description=None, includeObjectName=True,
              maxWidth='automatic', maxHeight='automatic', sigDigits=3,
-             maxColumnWidth='automatic'):
+             maxColumnWidth='automatic', includePointNames=True,
+             includeFeatureNames=True):
         """
         A printed representation of the data.
 
@@ -2440,6 +2453,14 @@ class Base(ABC):
             width of single column (feature) in each line. 
             If the column text is too long for the set bound, 3 characters
             will be used up for the ellipses during truncation.
+        includePointNames : bool
+            Used to control whether the point names are printed alongside the
+            data in the points rows. If set to 'False' the indices
+            of the points will be displayed instead of the names.
+        includeFeatureNames : bool
+            Used to control whether the feature names are printed alongside 
+            the data in the features column. If set to 'False' the indices
+            of the features will be displayed instead of the names.
             
         Keywords
         --------
@@ -2447,7 +2468,8 @@ class Base(ABC):
         write, text, repr, represent, display, terminal
         """
         print(self._show(description, includeObjectName, maxWidth, maxHeight,
-                         sigDigits, maxColumnWidth))
+                         sigDigits, maxColumnWidth, includePointNames,
+                         includeFeatureNames))
 
     @limitedTo2D
     def plotHeatMap(self, includeColorbar=False, outPath=None, show=True,
@@ -5226,7 +5248,7 @@ class Base(ABC):
         self.__init__(**kwargs)
 
     def _arrangePointNames(self, maxRows, nameLength, rowHolder, nameHold,
-                           quoteNames):
+                           includePointNames, quoteNames):
         """
         Prepare point names for string output. Grab only section of
         those names that fit according to the given row limitation,
@@ -5241,7 +5263,7 @@ class Base(ABC):
         nameCutIndex = nameLength - len(nameHold)
         tRowIDs, bRowIDs = indicesSplit(maxRows, len(self.points))
 
-        if self.points._allDefaultNames():
+        if self.points._allDefaultNames() or includePointNames is False:
             pnames = list(map(str, range(len(self.points))))
         else:
             pnames = []
@@ -5279,7 +5301,7 @@ class Base(ABC):
 
     def _arrangeDataWithLimits(self, maxWidth, maxHeight, sigDigits,
                                maxStrLength, colSep, colHold, rowHold,
-                               strHold, quoteNames):
+                               strHold, includeFeatureNames, quoteNames):
         """
         Arrange the data in this object into a table structure, while
         respecting the given boundaries. If there is more data than
@@ -5351,7 +5373,7 @@ class Base(ABC):
         currIndex = 0
         numAdded = 0
 
-        if self.features._allDefaultNames():
+        if self.features._allDefaultNames() or includeFeatureNames is False:
             fnames = None
         else:
             fnames = self.features.getNames()
