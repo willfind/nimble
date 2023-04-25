@@ -315,7 +315,7 @@ class Axis(ABC):
                 raise IndexError(msg)
         elif isinstance(identifier, str):
             identifier = self._getIndexByName(identifier)
-        elif allowFloats and isinstance(identifier, (float, np.float)):
+        elif allowFloats and isinstance(identifier, (float, np.float_)):
             if identifier % 1: # x!=int(x)
                 idVal = str(identifier)
                 msg = "A float valued key of value x is only accepted if x == "
@@ -784,7 +784,7 @@ class Axis(ABC):
 
 
     def _repeat(self, totalCopies, copyVectorByVector):
-        if not isinstance(totalCopies, (int, np.int)) or totalCopies < 1:
+        if not isinstance(totalCopies, (int, np.int_)) or totalCopies < 1:
             raise InvalidArgumentType("totalCopies must be a positive integer")
         if totalCopies == 1:
             return self._base.copy()

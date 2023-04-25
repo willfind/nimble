@@ -523,6 +523,7 @@ def _compareSingleInputOutputs(learner, XObj, XNP):
 @sklSkipDec
 @pytest.mark.slow
 def testSciKitLearnTransformationLearners():
+    import pdb; pdb.set_trace()
     ignore = ['MiniBatchSparsePCA', 'SparsePCA', 'CountVectorizer',
               'TfidfVectorizer', 'PatchExtractor'] # tested elsewhere
     learners = getLearnersByType('transformation', ignore)

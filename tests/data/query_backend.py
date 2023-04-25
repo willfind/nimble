@@ -3103,7 +3103,7 @@ class QueryBackend(DataTestObject):
         ret = obj.features.report(dtypes=True)
         assert 'dataType' in ret.features.getNames()
         reportDtypes = list(ret.features['dataType']) 
-        expDtypes = [np.integer, np.object_, np.float]
+        expDtypes = [np.integer, np.object_, np.float_]
         
         if type(obj) in [nimble.core.data.matrix.Matrix, nimble.core.data.sparse.Sparse, 
                          nimble.core.data.list.List]:

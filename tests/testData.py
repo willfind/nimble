@@ -891,10 +891,10 @@ def test_data_CSV_allMissingColumn():
         dfCSVMissing = nimble.data(source=tmpCSV.name)
         assert dfCSVMissing.getTypeString() == 'DataFrame'
         dtypes = dfCSVMissing._data.dtypes
-        assert dtypes[0] == np.dtype(float)
-        assert dtypes[1] == np.dtype(int)
-        assert dtypes[2] == np.dtype(object)
-        assert dtypes[3] == np.dtype(float)
+        assert dtypes[0] == np.float_
+        assert dtypes[1] == np.int_
+        assert dtypes[2] == np.object_
+        assert dtypes[3] == np.float_
 
     with tempfile.NamedTemporaryFile('w+', suffix='.csv') as tmpCSV:
         tmpCSV.write('ft0,ft1,ft2,ft3\n')
@@ -905,7 +905,7 @@ def test_data_CSV_allMissingColumn():
         tmpCSV.flush()
         mtxCSVMissing = nimble.data(source=tmpCSV.name)
         assert mtxCSVMissing.getTypeString() == 'Matrix'
-        assert mtxCSVMissing._data.dtype == np.dtype(np.float)
+        assert mtxCSVMissing._data.dtype == np.float_
 
 def test_data_MTXArr_data():
     """ Test of data() loading a mtx (arr format) file, default params """
@@ -4255,7 +4255,7 @@ def test_converttoDataFrames_numpyStructuredArrays():
     assert type(dataArray) == nimble.core.data.dataframe.DataFrame
     assert np.issubdtype(dataArray._data.dtypes[0], np.object_)
     assert np.issubdtype(dataArray._data.dtypes[1], np.integer)
-    assert np.issubdtype(dataArray._data.dtypes[2], np.float)
+    assert np.issubdtype(dataArray._data.dtypes[2], np.floating)
     assert dataArray.features.getNames() == ['name', 'age', 'weight']
 
 def test_tuplesArePoints_numpyStructuredArrays():
@@ -4265,7 +4265,7 @@ def test_tuplesArePoints_numpyStructuredArrays():
     regularArray = np.array([[12, 23, 34, 45],[11, 21, 31, 41],[13, 21, 31, 43]])
     regularMatrix = nimble.data(regularArray, featureNames=['Weight', 'Speed', 'Age', 'RPM'])
     assert dataArray == regularMatrix
-    assert np.issubdtype(dataArray._data.dtype, np.float)
+    assert np.issubdtype(dataArray._data.dtype, np.float_)
 
 def test_featureNames_numpyStructuredArrays():
     structArray = np.array([(12, 23, 34, 45),( 11, 21, 31, 41),(13, 21, 31, 43)],

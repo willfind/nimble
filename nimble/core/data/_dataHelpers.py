@@ -133,7 +133,7 @@ def formatIfNeeded(value, sigDigits):
     Format the value into a string, and in the case of a float typed value,
     limit the output to the given number of significant digits.
     """
-    if isinstance(value, (float, np.float)):
+    if isinstance(value, (float, np.float_)):
         if value != value:
             return ''
         if sigDigits is not None:
@@ -1140,7 +1140,7 @@ def modifyNumpyArrayValue(arr, index, newVal):
     if nonNumericNewVal and arr.dtype != np.object_:
         arr = arr.astype(np.object_)
     elif floatNewVal and arr.dtype not in (np.floating, np.object_):
-        arr = arr.astype(np.float)
+        arr = arr.astype(np.float_)
 
     arr[index] = newVal
 

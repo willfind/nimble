@@ -5,8 +5,7 @@ Also includes helpers for validating optional dependency versions at
 runtime.
 """
 from packaging.requirements import Requirement
-from packaging.version import Version, LegacyVersion, InvalidVersion
-from packaging.specifiers import LegacySpecifier
+from packaging.version import Version, InvalidVersion
 
 from nimble.exceptions import PackageException
 
@@ -83,19 +82,13 @@ def checkVersion(package):
 
     if hasattr(package, '__version__'):
         version = package.__version__
-        try:
-            vers = Version(version)
-            legacy = False
-        except InvalidVersion:
-            vers = LegacyVersion(version)
-            legacy = True
+        vers = Version(version)
+        legacy = False
+        
         name = package.__name__
         requirement = DEPENDENCIES[name].requires
         req = Requirement(requirement)
         for specifier in req.specifier:
-            # need specifiers to be LegacySpecifier for LegacyVersion
-            if legacy and not isinstance(specifier, LegacySpecifier):
-                specifier = LegacySpecifier(str(specifier))
             if not specifier.contains(vers):
                 msg = f'The installed version of {req.name} ({vers}) does not '
                 msg += f'meet the version requirements: {requirement}'

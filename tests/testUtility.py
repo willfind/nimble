@@ -5,7 +5,7 @@ import importlib
 
 import pytest 
 import numpy as np
-from packaging.version import parse, Version, LegacyVersion
+from packaging.version import parse, Version
 
 from nimble.exceptions import InvalidArgumentValue
 from nimble.exceptions import InvalidArgumentValueCombination
