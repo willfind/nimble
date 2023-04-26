@@ -5,7 +5,7 @@ Also includes helpers for validating optional dependency versions at
 runtime.
 """
 from packaging.requirements import Requirement
-from packaging.version import Version, InvalidVersion
+from packaging.version import Version
 
 from nimble.exceptions import PackageException
 
@@ -43,10 +43,10 @@ class Dependency:
 
 # All dependencies, required and optional, must be included here
 _DEPENDENCIES = [
-    Dependency('numpy', 'numpy>=1.14, <1.24', 'required'),
-    Dependency('packaging', 'packaging>=20.0,<=21.3', 'required'),
+    Dependency('numpy', 'numpy>=1.14', 'required'),
+    Dependency('packaging', 'packaging>=20.0', 'required'),
     Dependency('pandas', 'pandas>=0.24', 'data', "Nimble's DataFrame object"),
-    Dependency('scipy', 'scipy>=1.1,<1.9', 'data',
+    Dependency('scipy', 'scipy>=1.1', 'data',
                "Nimble's Sparse object and scientific calculations"),
     Dependency('matplotlib', 'matplotlib>=3.1', 'operation', 'Plotting'),
     Dependency('cloudpickle', 'cloudpickle>=1.0', 'operation',
@@ -83,7 +83,6 @@ def checkVersion(package):
     if hasattr(package, '__version__'):
         version = package.__version__
         vers = Version(version)
-        legacy = False
         
         name = package.__name__
         requirement = DEPENDENCIES[name].requires
