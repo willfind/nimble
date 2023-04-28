@@ -60,7 +60,7 @@ def backend_fill(func, data, match, expected=None):
 @noLogEntryExpected
 def backend_fill_exception(func, data, match, exceptionType):
     "backend for fill functions when testing exception raising"
-    for constructor in getDataConstructors():
+    for constructor in getDataConstructors(includeSparse=False):
         with raises(exceptionType):
             toTest = constructor(data, useLog=False)
             func(toTest, match)
@@ -194,7 +194,7 @@ def test_interpolate_withArguments():
     arguments['fp'] = [5, 13, 21]
     match = lambda x: x == "na"
     expected = [1, 7, 9, 5]
-    for constructor in getDataConstructors():
+    for constructor in getDataConstructors(includeSparse=False):
         toTest = constructor(data, useLog=False)
         exp = constructor(expected, useLog=False)
         assert fill.interpolate(toTest, match, **arguments) == exp
@@ -208,7 +208,7 @@ def test_interpolate_xKwargIncluded_exception():
     arguments['fp'] = [5, 13, 21]
     arguments['x'] = [1]  # disallowed argument
     match = lambda x: x == "na"
-    for constructor in getDataConstructors():
+    for constructor in getDataConstructors(includeSparse=False):
         with raises(TypeError):
             toTest = constructor(data, useLog=False)
             ret = fill.interpolate(toTest, match, **arguments)

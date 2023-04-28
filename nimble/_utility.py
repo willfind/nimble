@@ -293,7 +293,7 @@ def dtypeConvert(obj):
     """
     if hasattr(obj, 'dtype') and obj.dtype == np.object_:
         try:
-            obj = obj.astype(np.float)
+            obj = obj.astype(np.float_)
         except ValueError:
             pass
     return obj
@@ -341,7 +341,7 @@ def pandasDataFrameToList(pdDataFrame):
     """
     Transform a pandas DataFrame into a 2D list.
     """
-    return list(map(list, zip(*(col for _, col in pdDataFrame.iteritems()))))
+    return list(map(list, zip(*(col for _, col in pdDataFrame.items()))))
 
 def removeDuplicatesNative(cooObj):
     """

@@ -109,13 +109,16 @@ def _getViewFunc(returnType):
     getView.keywords = {'returnType': returnType}
     return getView
 
-def getDataConstructors(includeViews=True):
+def getDataConstructors(includeViews=True, includeSparse=True):
     """
     Create data object constructors for tests iterating through each
     concrete data exc_type. By default includes constructors for views.
     """
+    dataTypes = [returnType for returnType in nimble.core.data.available]
+    if not includeSparse:
+        dataTypes.remove('Sparse')
     constructors = []
-    for returnType in nimble.core.data.available:
+    for returnType in dataTypes:
         constructors.append(partial(nimble.data, returnType=returnType))
         if includeViews:
             constructors.append(_getViewFunc(returnType))

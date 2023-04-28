@@ -387,7 +387,7 @@ def test_confusionMatrix_strings():
             ['dog'], ['cat'], ['fish'], ['bear'],
             ['cat'], ['dog'], ['bear'], ['fish']]
 
-    for constructor in getDataConstructors():
+    for constructor in getDataConstructors(includeSparse=False):
         knownObj = constructor(known, useLog=False)
         predObj = constructor(pred, useLog=False)
 

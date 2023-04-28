@@ -330,7 +330,7 @@ class Sparse(Base):
         else:
             header += '#\n'
 
-        scipy.io.mmwrite(target=outPath, a=self._data.astype(np.float),
+        scipy.io.mmwrite(target=outPath, a=self._data.astype(np.float_),
                          comment=header)
 
     def _referenceFrom_implementation(self, other, kwargs):
@@ -372,7 +372,7 @@ class Sparse(Base):
                     return scipy.sparse.coo_matrix(data)
                 return data.copy()
             try:
-                ret = data.astype(np.float)
+                ret = data.astype(np.float_)
             except ValueError as e:
                 msg = f'Must create scipy {to[-3:]} matrix from numeric data'
                 raise ValueError(msg) from e

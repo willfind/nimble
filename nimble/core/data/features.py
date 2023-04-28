@@ -14,7 +14,6 @@ from abc import ABC, abstractmethod
 from collections import Counter
 
 import numpy as np
-import pandas as pd
 
 import nimble
 from nimble.core.logger import handleLogging

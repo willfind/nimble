@@ -17,12 +17,12 @@ def backend_match_value(toMatch, true, false):
 
 missingValues = [None, float('nan'), np.nan]
 stringValues = ['a', str(1)]
-zeroValues = [0, float(0), np.int(0), np.float(0)]
-positiveValues = [3, float(3), np.int(3), np.float(3)]
-negativeValues = [-3, float(-3), np.int(-3), np.float(-3)]
+zeroValues = [0, float(0), np.int_(0), np.float_(0)]
+positiveValues = [3, float(3), np.int_(3), np.float_(3)]
+negativeValues = [-3, float(-3), np.int_(-3), np.float_(-3)]
 infinityValues = [float('inf'), -float('inf'), np.inf, -np.inf]
-trueValues = [True, np.bool(True), np.bool_(True)]
-falseValues = [False, np.bool(False), np.bool_(False)]
+trueValues = [True, np.bool_(True), np.bool_(True)]
+falseValues = [False, np.bool_(False), np.bool_(False)]
 boolValues = trueValues + falseValues
 
 numericValues = (positiveValues + negativeValues + zeroValues
@@ -75,17 +75,17 @@ def test_match_infinity():
 
 def test_match_boolean():
     true = boolValues
-    false = [1, np.int(1), 0, np.int(0), 1.0, np.float(1), 0.0, np.float(0)]
+    false = [1, np.int_(1), 0, np.int_(0), 1.0, np.float_(1), 0.0, np.float_(0)]
     backend_match_value(match.boolean, true, false)
 
 def test_match_integer():
-    true = [1, np.int(1), -1, np.int(-1), True, False]
-    false = [1.0, np.float(1), -1.0, np.float(-1)]
+    true = [1, np.int_(1), -1, np.int_(-1), True, False]
+    false = [1.0, np.float_(1), -1.0, np.float_(-1)]
     backend_match_value(match.integer, true, false)
 
 def test_match_floating():
-    true = [1.0, np.float(1), -1.0, np.float(-1)]
-    false = [True, False, 1, np.int(1), -1, np.int(-1)]
+    true = [1.0, np.float_(1), -1.0, np.float_(-1)]
+    false = [True, False, 1, np.int_(1), -1, np.int_(-1)]
     backend_match_value(match.floating, true, false)
 
 @noLogEntryExpected

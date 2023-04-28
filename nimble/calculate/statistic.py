@@ -135,7 +135,7 @@ def _minmax(values, minmax):
     else:
         toProcess = values.copy('numpyarray')
         if toProcess.dtype == np.object_:
-            if any(not isinstance(v, (np.integer, np.bool_))
+            if any(not isinstance(v, (np.int_, np.bool_))
                    for v in toProcess):
                 toProcess = toProcess.astype(float)
             else:
@@ -184,10 +184,10 @@ def mean(values):
     2.0
     """
     if values.getTypeString() == 'Sparse':
-        nonZero = values._data.data.astype(np.float)
+        nonZero = values._data.data.astype(np.float_)
         numNan = np.sum(np.isnan(nonZero))
         return _meanSparseBackend(nonZero, len(values), numNan)
-    arr = values.copy('numpyarray', outputAs1D=True).astype(np.float)
+    arr = values.copy('numpyarray', outputAs1D=True).astype(np.float_)
     return np.nanmean(arr)
 
 @numericRequired
@@ -214,7 +214,7 @@ def median(values):
     >>> median(vector)
     2.0
     """
-    arr = values.copy('numpyarray', outputAs1D=True).astype(np.float)
+    arr = values.copy('numpyarray', outputAs1D=True).astype(np.float_)
     return np.nanmedian(arr, overwrite_input=True)
 
 def mode(values):
@@ -299,7 +299,7 @@ def variance(values, sample=True):
     2.9166666666666665
     """
     if values.getTypeString() == 'Sparse':
-        nonZero = values._data.data.astype(np.float)
+        nonZero = values._data.data.astype(np.float_)
         numNan = np.sum(np.isnan(nonZero))
         meanRet = _meanSparseBackend(nonZero, len(values), numNan)
 
@@ -310,7 +310,7 @@ def variance(values, sample=True):
             divisor -= 1
         return (dataSumSquared + zeroSumSquared) / divisor
 
-    arr = values.copy('numpyarray', outputAs1D=True).astype(np.float)
+    arr = values.copy('numpyarray', outputAs1D=True).astype(np.float_)
     if sample:
         return np.nanvar(arr, ddof=1)
     return np.nanvar(arr)
@@ -362,7 +362,7 @@ def medianAbsoluteDeviation(values):
     >>> medianAbsoluteDeviation(vector)
     1.5
     """
-    arr = values.copy('numpy array', outputAs1D=True).astype(np.float)
+    arr = values.copy('numpy array', outputAs1D=True).astype(np.float_)
     mad = np.nanmedian(np.abs(arr - np.nanmedian(arr)))
     return mad
 
