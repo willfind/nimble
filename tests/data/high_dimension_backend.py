@@ -690,7 +690,7 @@ class HighDimensionModifyingSparseSafe(DataTestObject):
                 assert isLimitedTo2D(toTest, method)
 
         axisAllowed = set((
-            '__len__', 'getName', 'getNames', 'setName', 'setNames',
+            '__len__', 'getName', 'getNames', 'setNames',
             'getIndex', 'getIndices', 'hasName',))
         ptUser = getNimbleDefined(nimble.core.data.Points)
         ptAllowed = set((

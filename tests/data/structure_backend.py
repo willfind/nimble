@@ -200,8 +200,8 @@ class StructureDataSafeSparseUnsafe(StructureShared):
         assert copySparse.isIdentical(sparseObj)
         assert sparseObj.isIdentical(copySparse)
         assert type(copySparse) == Sparse
-        copySparse.features.setName('two', '2', useLog=False)
-        copySparse.points.setName('one', 'WHAT', useLog=False)
+        copySparse.features.setNames('2', 'two', useLog=False)
+        copySparse.points.setNames("WHAT", 'one', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
         copySparse.points.permute(pointsShuffleIndices, useLog=False)
@@ -212,8 +212,8 @@ class StructureDataSafeSparseUnsafe(StructureShared):
         assert copyList.isIdentical(listObj)
         assert listObj.isIdentical(copyList)
         assert type(copyList) == List
-        copyList.features.setName('two', '2', useLog=False)
-        copyList.points.setName('one', 'WHAT', useLog=False)
+        copyList.features.setNames('2', 'two', useLog=False)
+        copyList.points.setNames("WHAT", 'one', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
         copyList.points.permute(pointsShuffleIndices, useLog=False)
@@ -224,8 +224,8 @@ class StructureDataSafeSparseUnsafe(StructureShared):
         assert copyMatrix.isIdentical(matrixObj)
         assert matrixObj.isIdentical(copyMatrix)
         assert type(copyMatrix) == Matrix
-        copyMatrix.features.setName('two', '2', useLog=False)
-        copyMatrix.points.setName('one', 'WHAT', useLog=False)
+        copyMatrix.features.setNames('2', 'two', useLog=False)
+        copyMatrix.points.setNames("WHAT", 'one', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
         copyMatrix.points.permute(pointsShuffleIndices, useLog=False)
@@ -236,8 +236,8 @@ class StructureDataSafeSparseUnsafe(StructureShared):
         assert copyDataFrame.isIdentical(dataframeObj)
         assert dataframeObj.isIdentical(copyDataFrame)
         assert type(copyDataFrame) == DataFrame
-        copyDataFrame.features.setName('two', '2', useLog=False)
-        copyDataFrame.points.setName('one', 'WHAT', useLog=False)
+        copyDataFrame.features.setNames('2', 'two', useLog=False)
+        copyDataFrame.points.setNames("WHAT", 'one', useLog=False)
         assert 'two' in orig.features.getNames()
         assert 'one' in orig.points.getNames()
         copyDataFrame.points.permute(pointsShuffleIndices, useLog=False)
@@ -3536,8 +3536,8 @@ class StructureModifyingSparseUnsafe(StructureShared):
         fNamesR = ['f3', 'f4']
         leftObj = self.constructor(dataL, featureNames=fNamesL)
         rightObj = self.constructor(dataR, featureNames=fNamesR)
-        leftObj.points.setName(0, 'a')
-        rightObj.points.setName(0, 'a')
+        leftObj.points.setNames('a', 0)
+        rightObj.points.setNames('a', 0)
         assert leftObj.points.getName(1) is None
         assert rightObj.points.getName(1) is None
 
@@ -3633,11 +3633,11 @@ class StructureModifyingSparseUnsafe(StructureShared):
         pNames = ['a', 'b', 'c']
         leftObj = self.constructor(dataL, pointNames=pNames)
         rightObj = self.constructor(dataR, pointNames=pNames)
-        leftObj.features.setName(0, 'id')
-        rightObj.features.setName(0, 'id')
+        leftObj.features.setNames('id', 0)
+        rightObj.features.setNames('id', 0)
         expData = [['a', 1, 2, 3, 4], ['b', 5, 6, 7, 8], ['c', -1, -2, -3, -4]]
         exp = self.constructor(expData)
-        exp.features.setName(0, 'id')
+        exp.features.setNames('id', 0)
         leftObj.merge(rightObj, point='union', feature='union', onFeature=0)
         assert leftObj == exp
         
@@ -3797,8 +3797,8 @@ class StructureModifyingSparseUnsafe(StructureShared):
         fNamesR = ['f3', 'f4']
         leftObj = self.constructor(dataL, featureNames=fNamesL)
         rightObj = self.constructor(dataR, featureNames=fNamesR)
-        leftObj.points.setName(0, 'a')
-        rightObj.points.setName(0, 'a')
+        leftObj.points.setNames('a', 0)
+        rightObj.points.setNames('a', 0)
         assert leftObj.points.getName(1) is None
         assert rightObj.points.getName(1) is None
         expData = [['a', 1, 2, 3, 4]]
@@ -4170,11 +4170,11 @@ class StructureModifyingSparseUnsafe(StructureShared):
         fNamesR = ['c', 'd']
         leftObj = self.constructor(dataL, featureNames=fNamesL)
         rightObj = self.constructor(dataR, featureNames=fNamesR)
-        leftObj.points.setName(0, 'id')
-        rightObj.points.setName(0, 'id')
+        leftObj.points.setNames('id', 0)
+        rightObj.points.setNames('id', 0)
         expData = [['a', 1, 2, 3], ['b', 5, 6, 7], ['c', -1, -2, -3]]
         exp = self.constructor(expData, featureNames=['a', 'b', 'c', 'd'])
-        exp.points.setName(0, 'id')
+        exp.points.setNames('id', 0)
         leftObj.merge(rightObj, point='strict', feature='union', force=True)
         assert leftObj == exp
     
@@ -4294,11 +4294,11 @@ class StructureModifyingSparseUnsafe(StructureShared):
         pNamesR = ['c', 'd']
         leftObj = self.constructor(dataL, pointNames=pNamesL)
         rightObj = self.constructor(dataR, pointNames=pNamesR)
-        leftObj.features.setName(0, 'id')
-        rightObj.features.setName(0, 'id')
+        leftObj.features.setNames('id', 0)
+        rightObj.features.setNames('id', 0)
         expData = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', 3, 4]]
         exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd'])
-        exp.features.setName(0, 'id')
+        exp.features.setNames('id', 0)
         leftObj.merge(rightObj, point='union', feature='strict', force=True)
         assert leftObj == exp
     
@@ -4310,8 +4310,8 @@ class StructureModifyingSparseUnsafe(StructureShared):
         pNamesR = ['d']
         leftObj = self.constructor(dataL, pointNames=pNamesL)
         rightObj = self.constructor(dataR, pointNames=pNamesR)
-        leftObj.features.setName(0, 'id')
-        rightObj.features.setName(1, 'id')
+        leftObj.features.setNames('id', 0)
+        rightObj.features.setNames('id', 1)
 
         leftObj.merge(rightObj, point='union', feature='strict')
     
@@ -4322,11 +4322,11 @@ class StructureModifyingSparseUnsafe(StructureShared):
         pNamesR = ['f', 'd']
         leftObj = self.constructor(dataL, pointNames=pNamesL)
         rightObj = self.constructor(dataR, pointNames=pNamesR)
-        leftObj.features.setName(0, 'id')
-        rightObj.features.setName(0, 'id')
+        leftObj.features.setNames('id', 0)
+        rightObj.features.setNames('id', 0)
         expData = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2], ['d', 3, 4]]
         exp = self.constructor(expData) # no pointNames
-        exp.features.setName(0, 'id')
+        exp.features.setNames('id', 0)
         leftObj.merge(rightObj, point='union', feature='strict',
                       onFeature='id', force=True)
         assert leftObj == exp
@@ -4339,10 +4339,10 @@ class StructureModifyingSparseUnsafe(StructureShared):
         pNamesR = ['d']
         leftObj = self.constructor(dataL, pointNames=pNamesL)
         rightObj = self.constructor(dataR, pointNames=pNamesR)
-        leftObj.features.setName(0, 'id')
-        rightObj.features.setName(0, 'id')
-        leftObj.features.setName(1, 'one')
-        rightObj.features.setName(2, 'one')
+        leftObj.features.setNames('id', 0)
+        rightObj.features.setNames('id', 0)
+        leftObj.features.setNames('one', 1)
+        rightObj.features.setNames('one', 2)
         leftObj.merge(rightObj, point='union', feature='strict',
                       onFeature='id')
 
@@ -4353,12 +4353,12 @@ class StructureModifyingSparseUnsafe(StructureShared):
         pNamesR = ['c', 'd']
         leftObj = self.constructor(dataL, pointNames=pNamesL)
         rightObj = self.constructor(dataR, pointNames=pNamesR)
-        leftObj.features.setName(0, 'str')
-        rightObj.features.setName(2, 'float')
+        leftObj.features.setNames('str', 0)
+        rightObj.features.setNames('float', 2)
         expData = [['a', 1, 2.3], ['b', 5, 6.7], ['c', -1, -2.1], ['d', 3, 4.5]]
         exp = self.constructor(expData, pointNames=['a', 'b', 'c', 'd'])
-        exp.features.setName(0, 'str')
-        exp.features.setName(2, 'float')
+        exp.features.setNames('str', 0)
+        exp.features.setNames('float', 2)
         leftObj.merge(rightObj, point='union', feature='strict', force=True)
         assert leftObj == exp
     
@@ -5172,10 +5172,10 @@ class StructureModifyingSparseSafe(StructureShared):
         toTest1 = self.constructor([[1, 2, 3]])
         toTest2 = self.constructor([[1, 3, 2]])
 
-        toTest1.features.setName(1, '2')
-        toTest1.features.setName(2, '3')
-        toTest2.features.setName(1, '3')
-        toTest2.features.setName(2, '2')
+        toTest1.features.setNames('2', 1)
+        toTest1.features.setNames('3', 2)
+        toTest2.features.setNames('3', 1)
+        toTest2.features.setNames('2', 2)
 
         if axis == 'point':
             toTest1.points.insert(len(toTest1.points), toTest2)
@@ -5374,9 +5374,9 @@ class StructureModifyingSparseSafe(StructureShared):
 
             exp = self.constructor([[1, 2, 3], [4, 5, 6], [7, 8, 9], [-1, -2, -3]])
             exp.features.setNames(fNames)
-            exp.points.setName(0, '1')
-            exp.points.setName(1, '4')
-            exp.points.setName(2, '7')
+            exp.points.setNames('1', 0)
+            exp.points.setNames('4', 1)
+            exp.points.setNames('7', 2)
             toTest.points.insert(len(toTest.points), toInsert)
 
         else:
@@ -5387,9 +5387,9 @@ class StructureModifyingSparseSafe(StructureShared):
 
             exp = self.constructor([[1, 2, 3, -1], [4, 5, 6, -2], [7, 8, 9, -3]])
             exp.points.setNames(pNames)
-            exp.features.setName(0, 'a')
-            exp.features.setName(1, 'b')
-            exp.features.setName(2, 'c')
+            exp.features.setNames('a', 0)
+            exp.features.setNames('b', 1)
+            exp.features.setNames('c', 2)
             toTest.features.insert(len(toTest.features), toInsert)
 
         assert toTest == exp
@@ -10548,14 +10548,14 @@ class StructureModifyingSparseSafe(StructureShared):
         checkMsg = False
         names = ["a | 1", "b | 1", "a | 2", "b | 2"]
         testPt = self.constructor([1, 2, 3, 4], featureNames=names)
-        testPt.features.setName(1, None)
+        testPt.features.setNames(None, 1)
         testPt.unflatten((2, 2), order)
         assert testPt.shape == (2, 2)
         assert not testPt.points._namesCreated()
         assert not testPt.features._namesCreated()
 
         testFt = self.constructor([[1], [2], [3], [4]], pointNames=names)
-        testFt.points.setName(1, None)
+        testFt.points.setNames(None, 1)
         testFt.unflatten((2, 2), order)
         assert testFt.shape == (2, 2)
         assert not testFt.points._namesCreated()
