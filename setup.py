@@ -167,13 +167,13 @@ def run_setup():
     setupKwargs['url'] = "https://willfind.github.io/nimble/index.html"
     setupKwargs['license'] = "Proprietary"
     setupKwargs['packages'] = find_packages(exclude=('tests', 'tests.*'))
-    setupKwargs['python_requires'] = '>=3.7'
+    setupKwargs['python_requires'] = '>=3.8'
     setupKwargs['classifiers'] = [
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Operating System :: OS Independent',
         'License :: Other/Proprietary License',
         ]

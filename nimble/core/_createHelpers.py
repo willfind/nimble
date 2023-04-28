@@ -23,7 +23,6 @@ import numbers
 import itertools
 
 import numpy as np
-import pandas as pd
 
 import nimble
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
