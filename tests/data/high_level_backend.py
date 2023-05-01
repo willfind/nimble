@@ -291,7 +291,7 @@ class HighLevelDataSafeSparseUnsafe(DataTestObject):
 
         assert datetimes == exp
         
-     #################
+    #################
     # points.unique #
     #################
 
@@ -566,7 +566,7 @@ class HighLevelDataSafeSparseUnsafe(DataTestObject):
 
         assert ret == exp
     
-     ###################
+    ###################
     # features.unique #
     ###################
 
@@ -624,7 +624,11 @@ class HighLevelDataSafeSparseUnsafe(DataTestObject):
         datetimes = toTest.calculateOnElements(toDatetime)
 
         assert datetimes == exp
-    
+
+    ###################
+    # features.unique #
+    ###################
+
     def test_features_unique_allNames_string(self):
         data = [['a','b','c','a','b','c'],
                 ['1','2','3','1','2','4'],
@@ -639,53 +643,6 @@ class HighLevelDataSafeSparseUnsafe(DataTestObject):
         ret = test.features.unique()
 
         assert ret == exp
-    
-    def test_transformFeatureToIntegers_positioning(self):
-        """ Test transformFeatureToIntegers preserves featurename mapping """
-        data = [['a', 0], ['b', 1], ['c', 2], ['b', 3], ['a', 4]]
-        pnames = ['1a', '2a', '3', '2b', '1b']
-        fnames = ['col', 'pos']
-        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        ret = toTest.transformFeatureToIntegers(0)
-
-        assert toTest[0, 0] == toTest[4, 0]
-        assert toTest[1, 0] == toTest[3, 0]
-        assert toTest[0, 0] != toTest[1, 0]
-        assert toTest[0, 0] != toTest[2, 0]
-
-        assert toTest[0, 1] == 0
-        assert toTest[1, 1] == 1
-        assert toTest[2, 1] == 2
-        assert toTest[3, 1] == 3
-        assert toTest[4, 1] == 4
-
-        # ensure data was transformed to a numeric type.
-        for i in range(len(toTest.points)):
-            # Matrix and Sparse might store values as floats or numpy types
-            assert isinstance(toTest[i, 0], (int, float, np.number))
-
-        # check ret
-        assert len(ret) == 3
-        assert all(isinstance(key, int) for key in ret.keys())
-        for value in ret.values():
-            assert value in ['a', 'b', 'c']
-    
-    ###################
-    # features.unique #
-    ###################
-
-    def test_transformFeatureToIntegers_ZerosInFeatureValuesPreserved(self):
-        data = [['a'], [52], [0], [0], [0], [52], ['a']]
-
-        toTest = self.constructor(data, featureNames=False)
-        ret = toTest.transformFeatureToIntegers(0)
-
-        assert ret[0] == 0
-        assert toTest[0, 0] == toTest[6, 0]
-        assert toTest[1, 0] == toTest[5, 0]
-        assert toTest[2, 0] == 0
-        assert toTest[3, 0] == 0
-        assert toTest[4, 0] == 0
     
     #######################
     # countUniqueElements #
@@ -2532,101 +2489,7 @@ class HighLevelDataSafeSparseSafe(DataTestObject):
         assert allZeros.name != preserveName
         assert allZeros.name is None
     
-    ##################
-    # points.replace #
-    ##################
-    
-    def test_points_replace_all(self):
-        self.back_replace_all('point')
-    
-    ####################
-    # features.replace #
-    ####################
 
-    def test_features_replace_all(self):
-        self.back_replace_all('feature')
-    
-
-class HighLevelModifyingSparseSafe(DataTestObject):
-    
-    @oneLogEntryExpected
-    def test_replaceFeatureWithBinaryFeatures_insertLocation(self):
-        """ Test replaceFeatureWithBinaryFeatures() replaces at same index """
-        data = [['a', 1, 'a'], ['b', 2, 'b'], ['c', 3, 'c']]
-        featureNames = ['stay1', 'replace', 'stay2']
-        toTest = self.constructor(data, featureNames=featureNames)
-        getNames = self.constructor(data, featureNames=featureNames)
-        ret = toTest.replaceFeatureWithBinaryFeatures(1)
-
-        expData = [['a', 1, 0, 0, 'a'], ['b', 0, 1, 0, 'b'], ['c', 0, 0, 1, 'c']]
-        expFeatureNames = []
-        for point in getNames.points:
-            expFeatureNames.append('replace=' + str(point[1]))
-        expFeatureNames.insert(0, 'stay1')
-        expFeatureNames.append('stay2')
-        exp = self.constructor(expData, featureNames=expFeatureNames)
-
-        assert toTest.isIdentical(exp)
-        assert ret == expFeatureNames[1: -1]
-    
-    @oneLogEntryExpected
-    def test_transformFeatureToIntegers_handmade(self):
-        """ Test transformFeatureToIntegers() against handmade output """
-        data = [['a'], ['b'], ['c'], ['b'], ['a']]
-        featureNames = ['col']
-        toTest = self.constructor(data, featureNames=featureNames)
-        ret = toTest.transformFeatureToIntegers(0)
-
-        assert toTest[0, 0] == toTest[4, 0]
-        assert toTest[1, 0] == toTest[3, 0]
-        assert toTest[0, 0] != toTest[1, 0]
-        assert toTest[0, 0] != toTest[2, 0]
-
-        # ensure data was transformed to a numeric type.
-        for i in range(len(toTest.points)):
-            # Matrix and Sparse might store values as floats or numpy types
-            assert isinstance(toTest[i, 0], (int, float, np.number))
-
-        # check ret
-        assert len(ret) == 3
-        assert all(isinstance(key, int) for key in ret.keys())
-        for value in ret.values():
-            assert value in ['a', 'b', 'c']
-
-    def test_transformFeatureToIntegers_handmade_lazyNameGeneration(self):
-        """ Test transformFeatureToIntegers() against handmade output """
-        data = [['a'], ['b'], ['c'], ['b'], ['a']]
-        toTest = self.constructor(data)
-        ret = toTest.transformFeatureToIntegers(0)
-
-        assertNoNamesGenerated(toTest)
-    
-    def test_transformFeatureToIntegers_pointNames(self):
-        """ Test transformFeatureToIntegers preserves pointNames """
-        data = [['a'], ['b'], ['c'], ['b'], ['a']]
-        pnames = ['1a', '2a', '3', '2b', '1b']
-        fnames = ['col']
-        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
-        ret = toTest.transformFeatureToIntegers(0)
-
-        assert toTest.points.getName(0) == '1a'
-        assert toTest.points.getName(1) == '2a'
-        assert toTest.points.getName(2) == '3'
-        assert toTest.points.getName(3) == '2b'
-        assert toTest.points.getName(4) == '1b'
-
-        # ensure data was transformed to a numeric type.
-        for i in range(len(toTest.points)):
-            # Matrix and Sparse might store values as floats or numpy types
-            assert isinstance(toTest[i, 0], (int, float, np.number))
-
-        # check ret
-        assert len(ret) == 3
-        assert all(isinstance(key, int) for key in ret.keys())
-        for value in ret.values():
-            assert value in ['a', 'b', 'c']
-
-    
 class HighLevelModifyingSparseUnsafe(DataTestObject):
     
     def test_features_fillMatching_mode(self):
@@ -2643,7 +2506,7 @@ class HighLevelModifyingSparseUnsafe(DataTestObject):
         exp1 = self.constructor([['a','b','g'], ['e','d', 'g'], ['e','d', 'g'], ['e','f', 'g']])
         exp1.features.setNames(['a', 'b', 'c'])
         assert obj1 == exp1
-    
+
     @logCountAssertionFactory(3)
     def test_points_splitByCollapsingFeatures_sequentialFeatures(self):
         data = [[0,0,1,2,3,4], [1,1,5,6,7,8], [2,2,-1,-2,-3,-4]]
@@ -3273,8 +3136,6 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         assert toTest.isIdentical(exp)
         assert ret == expFeatureNames
 
-    
-
     def test_replaceFeatureWithBinaryFeatures_NamePath_preservation(self):
         data = [[1], [2], [3]]
         featureNames = ['col']
@@ -3290,6 +3151,25 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
+    @oneLogEntryExpected
+    def test_replaceFeatureWithBinaryFeatures_insertLocation(self):
+        """ Test replaceFeatureWithBinaryFeatures() replaces at same index """
+        data = [[111, 1, 111], [222, 2, 222], [333, 3, 333]]
+        featureNames = ['stay1', 'replace', 'stay2']
+        toTest = self.constructor(data, featureNames=featureNames)
+        getNames = self.constructor(data, featureNames=featureNames)
+        ret = toTest.replaceFeatureWithBinaryFeatures(1)
+
+        expData = [[111, 1, 0, 0, 111], [222, 0, 1, 0, 222], [333, 0, 0, 1, 333]]
+        expFeatureNames = []
+        for point in getNames.points:
+            expFeatureNames.append('replace=' + str(point[1]))
+        expFeatureNames.insert(0, 'stay1')
+        expFeatureNames.append('stay2')
+        exp = self.constructor(expData, featureNames=expFeatureNames)
+
+        assert toTest.isIdentical(exp)
+        assert ret == expFeatureNames[1: -1]
 
     ##############################
     # transformFeatureToIntegers #
@@ -3325,6 +3205,85 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         assert toTest.name == "TestName"
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
+
+    @oneLogEntryExpected
+    def test_transformFeatureToIntegers_handmade(self):
+        """ Test transformFeatureToIntegers() against handmade output """
+        data = [[111], [222], [333], [222], [111]]
+        featureNames = ['col']
+        toTest = self.constructor(data, featureNames=featureNames)
+        ret = toTest.transformFeatureToIntegers(0)
+
+        assert toTest[0, 0] == toTest[4, 0]
+        assert toTest[1, 0] == toTest[3, 0]
+        assert toTest[0, 0] != toTest[1, 0]
+        assert toTest[0, 0] != toTest[2, 0]
+
+        # check ret
+        assert len(ret) == 3
+        assert all(isinstance(key, int) for key in ret.keys())
+        for value in ret.values():
+            assert value in [111, 222, 333]
+
+    def test_transformFeatureToIntegers_handmade_lazyNameGeneration(self):
+        """ Test transformFeatureToIntegers() against handmade output """
+        data = [[111], [222], [333], [222], [111]]
+        toTest = self.constructor(data)
+        ret = toTest.transformFeatureToIntegers(0)
+
+        assertNoNamesGenerated(toTest)
+
+    def test_transformFeatureToIntegers_pointNames(self):
+        """ Test transformFeatureToIntegers preserves pointNames """
+        data = [[111], [222], [333], [222], [111]]
+        pnames = ['1a', '2a', '3', '2b', '1b']
+        fnames = ['col']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        ret = toTest.transformFeatureToIntegers(0)
+
+        assert toTest.points.getName(0) == '1a'
+        assert toTest.points.getName(1) == '2a'
+        assert toTest.points.getName(2) == '3'
+        assert toTest.points.getName(3) == '2b'
+        assert toTest.points.getName(4) == '1b'
+
+    def test_transformFeatureToIntegers_positioning(self):
+        """ Test transformFeatureToIntegers preserves featurename mapping """
+        data = [[111, 0], [222, 1], [333, 2], [222, 3], [111, 4]]
+        pnames = ['1a', '2a', '3', '2b', '1b']
+        fnames = ['col', 'pos']
+        toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
+        ret = toTest.transformFeatureToIntegers(0)
+
+        assert toTest[0, 0] == toTest[4, 0]
+        assert toTest[1, 0] == toTest[3, 0]
+        assert toTest[0, 0] != toTest[1, 0]
+        assert toTest[0, 0] != toTest[2, 0]
+
+        assert toTest[0, 1] == 0
+        assert toTest[1, 1] == 1
+        assert toTest[2, 1] == 2
+        assert toTest[3, 1] == 3
+        assert toTest[4, 1] == 4
+
+        # check ret
+        assert len(ret) == 3
+        assert all(isinstance(key, int) for key in ret.keys())
+        for value in ret.values():
+            assert value in [111, 222, 333]
+
+    def test_transformFeatureToIntegers_ZerosInFeatureValuesPreserved(self):
+        data = [[111], [52], [0], [0], [0], [52], [111]]
+
+        toTest = self.constructor(data, featureNames=False)
+        ret = toTest.transformFeatureToIntegers(0)
+
+        assert ret[0] == 0
+        assert toTest[0, 0] == toTest[6, 0]
+        assert toTest[1, 0] == toTest[5, 0]
+        assert toTest[2, 0] == 0
+        assert toTest[3, 0] == 0
+        assert toTest[4, 0] == 0
 
     ####################
     # points.permute() #
@@ -4214,7 +4173,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
                                             **{kwarg: replaceNames})
 
     def back_replace_all(self, axis):
-        data = [['x', 'x', 'x'], ['y', 'y', 'y'], ['z', 'z', 'z']]
+        data = [[0, 0, 0], [-1, -1, -1], [-2, -2, -2]]
         exp = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
 
         toTest = self.constructor(data)
@@ -4254,6 +4213,9 @@ class HighLevelModifyingSparseSafe(DataTestObject):
 
         assert toTest == self.constructor(exp)
 
+    def test_points_replace_all(self):
+        self.back_replace_all('point')
+
     ####################
     # features.replace #
     ####################
@@ -4276,6 +4238,6 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         replaceLocs = [1, 2]
         self.back_replace('feature', data, exp, replace, replaceLocs)
 
-    
+    def test_features_replace_all(self):
+        self.back_replace_all('feature')
 
-   

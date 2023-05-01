@@ -16,7 +16,8 @@ import os.path
 from functools import reduce
 from copy import deepcopy
 import re
-import textwrap
+import sys
+from io import StringIO
 
 import numpy as np
 import pytest
