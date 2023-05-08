@@ -3138,8 +3138,27 @@ class QueryBackend(DataTestObject):
         selection = ['minimum', 'Q1', 'meedian', 'Q3', 'maximum', 'mean']
 
         ret = obj.features.report(selection)
-
-    ##########  
+        
+    def test_features_report_unifyingType(self):
+        fnames = ['one', 'two', 'three']
+        obj = self.constructor([[1,'6', 9.1], [2,'Oslo', 9.2], [3, 'Kyoto', 8.8]],
+                               featureNames=fnames)
+        
+        ret = obj.features.report(dtypes=True)
+        assert 'dataType' in ret.features.getNames()
+        reportDtypes = list(ret.features['dataType']) 
+        expDtypes = [np.integer, np.object_, np.float_]
+        
+        if type(obj) in [nimble.core.data.matrix.Matrix, nimble.core.data.sparse.Sparse, 
+                         nimble.core.data.list.List]:
+            for i in range(len(reportDtypes)):
+              assert np.issubdtype(reportDtypes[i], np.object_) 
+        elif type(obj) is nimble.core.data.dataframe.DataFrame:
+            for i in range(len(reportDtypes)):
+              assert np.issubdtype(reportDtypes[i], expDtypes[i]) 
+        
+        
+    ##########
     # report #
     ##########
 

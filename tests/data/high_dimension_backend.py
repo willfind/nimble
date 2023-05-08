@@ -371,6 +371,26 @@ class HighDimensionSafeSparseSafe(DataTestObject):
 
 class HighDimensionModifyingSparseUnsafe(DataTestObject):
 
+    def test_showIndicesInsteadOfNames(self):
+        '''Test that show() works with indices instead of names.'''
+
+        testData = nimble.data([[6666666666, 11111111, 99999999, 555555555],
+                                [6666666666, 11111111, 22222222, 555555555]],
+                               featureNames=['0000_0000_0000_0000', '1111_1111_1111_1111',
+                                             '2222_2222_2222_2222', '3333_3333_3333_3333'],
+                               pointNames=['A', 'B'])
+
+        old_output = sys.stdout
+        temp_output = StringIO()
+        sys.stdout = temp_output
+        testData.show(includePointNames=True, includeFeatureNames=False)
+        sys.stdout = old_output
+
+        printed_out = re.search('(\\n *)(.*?)\\n', temp_output.getvalue()).group(2)
+        indexCharList = printed_out.split(' ')
+        no_of_index_chars = sum(len(s) for s in indexCharList if s)
+        assert no_of_index_chars == 4
+
     def test_highDimension_sort(self):
   
         tensor3D = [[[2]], [[3]], [[1]]]
