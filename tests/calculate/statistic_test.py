@@ -20,6 +20,8 @@ from tests.helpers import noLogEntryExpected
 from tests.helpers import getDataConstructors
 from tests.helpers import skipMissingPackage
 
+
+
 def testStDev():
     dataArr = np.array([[1], [1], [3], [4], [2], [6], [12], [0]])
     testRowList = nimble.data(source=dataArr, featureNames=['nums'])

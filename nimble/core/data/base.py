@@ -2296,6 +2296,8 @@ class Base(ABC):
 
         maxWidth = float('inf') if maxWidth is None else maxWidth
         maxDataWidth = maxWidth - len(indent)
+        # we want to only prepare pointNames if "include=True"
+        # else table should include data but no pointnames + space for it 
         pnames, pnamesWidth = self._arrangePointNames(
             maxDataRows, maxColumnWidth, rowHold, nameHolder, includePointNames,
             quoteNames)

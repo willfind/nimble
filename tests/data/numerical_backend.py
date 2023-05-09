@@ -869,8 +869,108 @@ def run_full_backend(constructor, opName, inplace, sparsity):
     back_autoVsNumpyObjCalleeDiffTypes(constructor, opName, inplace, sparsity)
 
 
-class NumericalDataSafe(DataTestObject):
+class NumericalDataSafeSparseUnsafe(DataTestObject):
+    
+    @raises(ImproperObjectAction)
+    def test_matmul_selfNotNumericException(self):
+        """ Test __matmul__ raises exception if self has non numeric data """
+        back_selfNotNumericException(self.constructor, self.constructor, '__matmul__')
 
+    @raises(ImproperObjectAction)
+    def test_rmatmul_selfNotNumericException(self):
+        """ Test __rmatmul__ raises exception if self has non numeric data """
+        back_selfNotNumericException(self.constructor, self.constructor, '__rmatmul__')
+
+    @raises(ImproperObjectAction)
+    def test_invert_exception_InvalidValue(self):
+        bools = [[True, 2], [False, 0]]
+        boolsObj = self.constructor(bools)
+        ~boolsObj
+
+    @noLogEntryExpected
+    def test_add_fullSuite(self):
+        """ __add__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backend(self.constructor, '__add__', False, 0.2)
+
+    @noLogEntryExpected
+    def test_radd_fullSuite(self):
+        """ __radd__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backend(self.constructor, '__radd__', False, 0.2)
+
+    @noLogEntryExpected
+    def test_sub_fullSuite(self):
+        """ __sub__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backend(self.constructor, '__sub__', False, 0.2)
+
+    @noLogEntryExpected
+    def test_rsub_fullSuite(self):
+        """ __rsub__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backend(self.constructor, '__rsub__', False, 0.2)
+
+    @noLogEntryExpected
+    def test_mul_fullSuite(self):
+        """ __mul__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backend(self.constructor, '__mul__', False, 0.2)
+
+    @noLogEntryExpected
+    def test_rmul_fullSuite(self):
+        """ __rmul__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backend(self.constructor, '__rmul__', False, 0.2)
+
+    @noLogEntryExpected
+    def test_truediv_fullSuite(self):
+        """ __truediv__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod(self.constructor, '__truediv__', False, 0)
+
+    @noLogEntryExpected
+    def test_rtruediv_fullSuite(self):
+        """ __rtruediv__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod(self.constructor, '__rtruediv__', False, 0)
+
+    @noLogEntryExpected
+    def test_floordiv_fullSuite(self):
+        """ __floordiv__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod(self.constructor, '__floordiv__', False, 0)
+
+    @noLogEntryExpected
+    def test_rfloordiv_fullSuite(self):
+        """ __rfloordiv__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod(self.constructor, '__rfloordiv__', False, 0)
+
+    @noLogEntryExpected
+    def test_mod_fullSuite(self):
+        """ __mod__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod(self.constructor, '__mod__', False, 0)
+
+    @noLogEntryExpected
+    def test_rmod_fullSuite(self):
+        """ __rmod__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backendDivMod(self.constructor, '__rmod__', False, 0)
+
+    @noLogEntryExpected
+    def test_pow_fullSuite(self):
+        """ __pow__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backend(self.constructor, '__pow__', False, 0)
+
+    @noLogEntryExpected
+    def test_rpow_fullSuite(self):
+        """ __rpow__ Run the full standardized suite of tests for a binary numeric op """
+        run_full_backend(self.constructor, '__rpow__', False, 0)
+
+    def test_logical_and_fullSuite(self):
+        self.run_logical_fullBackend('__and__')
+    
+    def test_logical_or_fullSuite(self):
+        self.run_logical_fullBackend('__or__')
+    
+    def test_logical_xor_fullSuite(self):
+        self.run_logical_fullBackend('__xor__')
+
+
+
+
+class NumericalDataSafeSparseSafe(DataTestObject):
+  
     ###############
     # matrixPower #
     ###############
@@ -963,11 +1063,6 @@ class NumericalDataSafe(DataTestObject):
 
         caller.matrixMultiply(callee)
 
-    @raises(ImproperObjectAction)
-    def test_matmul_selfNotNumericException(self):
-        """ Test __matmul__ raises exception if self has non numeric data """
-        back_selfNotNumericException(self.constructor, self.constructor, '__matmul__')
-
     @raises(InvalidArgumentValue)
     def test_matmul_otherNotNumericException(self):
         """ Test __matmul__ raises exception if param object has non numeric data """
@@ -1025,11 +1120,6 @@ class NumericalDataSafe(DataTestObject):
     # __rmatmul__ #
     ###############
 
-    @raises(ImproperObjectAction)
-    def test_rmatmul_selfNotNumericException(self):
-        """ Test __rmatmul__ raises exception if self has non numeric data """
-        back_selfNotNumericException(self.constructor, self.constructor, '__rmatmul__')
-
     @raises(InvalidArgumentValue)
     def test_rmatmul_otherNotNumericException(self):
         """ Test __rmatmul__ raises exception if param object has non numeric data """
@@ -1086,11 +1176,7 @@ class NumericalDataSafe(DataTestObject):
     ############
     # __add__ #
     ############
-    @noLogEntryExpected
-    def test_add_fullSuite(self):
-        """ __add__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backend(self.constructor, '__add__', False, 0.2)
-
+    
     def test_add_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __add__ with scalar arg"""
         back_binaryscalar_pfname_preservations(self.constructor, '__add__', False)
@@ -1108,11 +1194,7 @@ class NumericalDataSafe(DataTestObject):
     ############
     # __radd__ #
     ############
-    @noLogEntryExpected
-    def test_radd_fullSuite(self):
-        """ __radd__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backend(self.constructor, '__radd__', False, 0.2)
-
+    
     def test_radd_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __radd__ with scalar arg"""
         back_binaryscalar_pfname_preservations(self.constructor, '__radd__', False)
@@ -1131,11 +1213,7 @@ class NumericalDataSafe(DataTestObject):
     ############
     # __sub__ #
     ############
-    @noLogEntryExpected
-    def test_sub_fullSuite(self):
-        """ __sub__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backend(self.constructor, '__sub__', False, 0.2)
-
+   
     def test_sub_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __sub__ with scalar arg"""
         back_binaryscalar_pfname_preservations(self.constructor, '__sub__', False)
@@ -1154,11 +1232,7 @@ class NumericalDataSafe(DataTestObject):
     ############
     # __rsub__ #
     ############
-    @noLogEntryExpected
-    def test_rsub_fullSuite(self):
-        """ __rsub__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backend(self.constructor, '__rsub__', False, 0.2)
-
+   
     def test_rsub_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __rsub__ with scalar arg"""
         back_binaryscalar_pfname_preservations(self.constructor, '__rsub__', False)
@@ -1176,11 +1250,7 @@ class NumericalDataSafe(DataTestObject):
     ############
     # __mul__ #
     ############
-    @noLogEntryExpected
-    def test_mul_fullSuite(self):
-        """ __mul__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backend(self.constructor, '__mul__', False, 0.2)
-
+    
     def test_mul_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __mul__ with scalar arg"""
         back_binaryscalar_pfname_preservations(self.constructor, '__mul__', False)
@@ -1198,11 +1268,7 @@ class NumericalDataSafe(DataTestObject):
     ############
     # __rmul__ #
     ############
-    @noLogEntryExpected
-    def test_rmul_fullSuite(self):
-        """ __rmul__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backend(self.constructor, '__rmul__', False, 0.2)
-
+    
     def test_rmul_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __rmul__ with scalar arg"""
         back_binaryscalar_pfname_preservations(self.constructor, '__rmul__', False)
@@ -1220,11 +1286,7 @@ class NumericalDataSafe(DataTestObject):
     ###############
     # __truediv__ #
     ###############
-    @noLogEntryExpected
-    def test_truediv_fullSuite(self):
-        """ __truediv__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backendDivMod(self.constructor, '__truediv__', False, 0)
-
+    
     def test_truediv_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __truediv__ with scalar arg"""
         back_binaryscalar_pfname_preservations(self.constructor, '__truediv__', False)
@@ -1243,11 +1305,7 @@ class NumericalDataSafe(DataTestObject):
     ################
     # __rtruediv__ #
     ################
-    @noLogEntryExpected
-    def test_rtruediv_fullSuite(self):
-        """ __rtruediv__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backendDivMod(self.constructor, '__rtruediv__', False, 0)
-
+    
     def test_rtruediv_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __rtruediv__ with scalar arg"""
         back_binaryscalar_pfname_preservations(self.constructor, '__rtruediv__', False)
@@ -1265,11 +1323,7 @@ class NumericalDataSafe(DataTestObject):
     ###############
     # __floordiv__ #
     ###############
-    @noLogEntryExpected
-    def test_floordiv_fullSuite(self):
-        """ __floordiv__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backendDivMod(self.constructor, '__floordiv__', False, 0)
-
+    
     def test_floordiv_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __floordiv__ with scalar arg"""
         back_binaryscalar_pfname_preservations(self.constructor, '__floordiv__', False)
@@ -1288,11 +1342,7 @@ class NumericalDataSafe(DataTestObject):
     ################
     # __rfloordiv__ #
     ################
-    @noLogEntryExpected
-    def test_rfloordiv_fullSuite(self):
-        """ __rfloordiv__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backendDivMod(self.constructor, '__rfloordiv__', False, 0)
-
+    
     def test_rfloordiv_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __rfloordiv__ with scalar arg"""
         back_binaryscalar_pfname_preservations(self.constructor, '__rfloordiv__', False)
@@ -1311,11 +1361,7 @@ class NumericalDataSafe(DataTestObject):
     ###############
     # __mod__ #
     ###############
-    @noLogEntryExpected
-    def test_mod_fullSuite(self):
-        """ __mod__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backendDivMod(self.constructor, '__mod__', False, 0)
-
+    
     def test_mod_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __mod__ with scalar arg"""
         back_binaryscalar_pfname_preservations(self.constructor, '__mod__', False)
@@ -1334,11 +1380,7 @@ class NumericalDataSafe(DataTestObject):
     ################
     # __rmod__ #
     ################
-    @noLogEntryExpected
-    def test_rmod_fullSuite(self):
-        """ __rmod__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backendDivMod(self.constructor, '__rmod__', False, 0)
-
+    
     def test_rmod_binaryscalar_pfname_preservations(self):
         """ Test p/f names are preserved when calling __rmod__ with scalar arg"""
         back_binaryscalar_pfname_preservations(self.constructor, '__rmod__', False)
@@ -1356,11 +1398,7 @@ class NumericalDataSafe(DataTestObject):
     ###########
     # __pow__ #
     ###########
-    @noLogEntryExpected
-    def test_pow_fullSuite(self):
-        """ __pow__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backend(self.constructor, '__pow__', False, 0)
-
+    
     @raises(ZeroDivisionError)
     def test_pow_nimbleObj_zeroDivision_exception(self):
         lhs = [[1, 2, 0], [4, 5, 6], [7, 8, 9]]
@@ -1421,11 +1459,6 @@ class NumericalDataSafe(DataTestObject):
     ############
     # __rpow__ #
     ############
-
-    @noLogEntryExpected
-    def test_rpow_fullSuite(self):
-        """ __rpow__ Run the full standardized suite of tests for a binary numeric op """
-        run_full_backend(self.constructor, '__rpow__', False, 0)
 
     @raises(ZeroDivisionError)
     def test_rpow_scalar_zeroDivision_exception(self):
@@ -1644,9 +1677,6 @@ class NumericalDataSafe(DataTestObject):
     # __and__ #
     ###########
 
-    def test_logical_and_fullSuite(self):
-        self.run_logical_fullBackend('__and__')
-
     def test_logical_and_binaryelementwise_pfname_preservations(self):
         """ Test p/f names are preserved when calling elementwise __and__"""
         back_binaryelementwise_pfname_preservations(self.constructor, '__and__', False)
@@ -1659,9 +1689,6 @@ class NumericalDataSafe(DataTestObject):
     # __or__ #
     ##########
 
-    def test_logical_or_fullSuite(self):
-        self.run_logical_fullBackend('__or__')
-
     def test_logical_or_binaryelementwise_pfname_preservations(self):
         """ Test p/f names are preserved when calling elementwise __or__"""
         back_binaryelementwise_pfname_preservations(self.constructor, '__or__', False)
@@ -1673,9 +1700,6 @@ class NumericalDataSafe(DataTestObject):
     # __xor__ #
     ##########
 
-    def test_logical_xor_fullSuite(self):
-        self.run_logical_fullBackend('__xor__')
-
     def test_logical_xor_binaryelementwise_pfname_preservations(self):
         """ Test p/f names are preserved when calling elementwise __xor__"""
         back_binaryelementwise_pfname_preservations(self.constructor, '__xor__', False)
@@ -1686,12 +1710,6 @@ class NumericalDataSafe(DataTestObject):
     ##############
     # __invert__ #
     ##############
-
-    @raises(ImproperObjectAction)
-    def test_invert_exception_InvalidValue(self):
-        bools = [[True, 2], [False, 0]]
-        boolsObj = self.constructor(bools)
-        ~boolsObj
 
     def test_invert_returnsAllBools(self):
         bools = [[True, True], [False, False]]
@@ -1755,8 +1773,10 @@ class NumericalDataSafe(DataTestObject):
         assert boolsInvert.name is None
 
 
-class NumericalModifying(DataTestObject):
+class NumericalModifyingSparseUnsafe(DataTestObject):
+    pass
 
+class NumericalModifyingSparseSafe(DataTestObject):
     ###############
     # __imatmul__ #
     ###############
@@ -2021,6 +2041,3 @@ class NumericalModifying(DataTestObject):
 
     def test_ipow_binaryscalar_NamePath_preservations(self):
         back_binaryscalar_NamePath_preservations(self.constructor, '__ipow__')
-
-class AllNumerical(NumericalDataSafe, NumericalModifying):
-    pass

@@ -102,8 +102,659 @@ def noNormalize(values1, values2=None):
         return values1
     return values1, values2
 
+class HighLevelDataSafeSparseUnsafe(DataTestObject):
+    
+    def test_points_calculate_fromDatetime(self):
+        data = [[datetime.datetime(2020, 1, 1)],
+                [datetime.datetime(2020, 1, 2)],
+                [datetime.datetime(2020, 1, 3)]]
+        toTest = self.constructor(data)
 
-class HighLevelDataSafe(DataTestObject):
+        def fromDatetime(pt):
+            return [pt[0].month, pt[0].day, pt[0].year]
+
+        expData = [[1, 1, 2020], [1, 2, 2020], [1, 3, 2020]]
+
+        exp = self.constructor(expData)
+
+        datetimes = toTest.points.calculate(fromDatetime)
+
+        assert datetimes == exp
+    
+    def test_points_unique_allNames_numeric(self):
+        data = [[0, 0], [0, 0],
+                [99, 99], [99, 99],
+                [5.5, 11], [5.5, 11],  [5.5, 11],
+                [-1, -2]]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [[0, 0], [99, 99], [5.5, 11], [-1, -2]]
+        exp = self.constructor(expData, pointNames=["p0", "p2", "p4", "p7"], featureNames=ftNames)
+
+        ret = test.points.unique()
+
+        assert ret == exp
+    
+    def test_features_unique_allNames_numeric(self):
+        data = [[0, 1, 2, 0, 1, 2],
+                [0, 0, 0, 0, 0, 0],
+                [-1, -2, -3, -1, -1, -3]]
+        ptNames = ["p0", "p1", "p2"]
+        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [[0, 1, 2, 1], [0, 0, 0, 0], [-1, -2, -3, -1]]
+        exp = self.constructor(expData, pointNames=ptNames, featureNames=["f0", "f1", "f2", "f4"])
+
+        ret = test.features.unique()
+
+        assert ret == exp
+    
+    def test_points_calculate_reshape(self):
+  
+        def reshape3D(pt):
+            pt = pt.copy()
+            pt.unflatten((2, 2))
+            return pt
+
+        orig = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, 0, 0, 0]])
+        exp3D = self.constructor([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[0, 0], [0, 0]]])
+
+        ret = orig.points.calculate(reshape3D)
+        assert ret == exp3D
+
+        def reshape5D(pt):
+            pt = pt.copy()
+            pt.unflatten((1, 2, 2, 1))
+            return pt
+
+        exp5D = self.constructor([[[[[1], [2]], [[3], [4]]]],
+                                  [[[[5], [6]], [[7], [8]]]],
+                                  [[[[0], [0]], [[0], [0]]]]])
+
+        ret = orig.points.calculate(reshape5D)
+        assert ret == exp5D
+    
+    def test_points_calculate_toDatetime(self):
+        data = [[1, 1, 2020], [1, 2, 2020], [1, 3, 2020]]
+        fnames = ['month', 'day', 'year']
+        toTest = self.constructor(data, featureNames=fnames)
+
+        def toDatetime(pt):
+            return datetime.datetime(pt['year'], pt['month'], pt['day'])
+
+        expData = [[datetime.datetime(2020, 1, 1)],
+                   [datetime.datetime(2020, 1, 2)],
+                   [datetime.datetime(2020, 1, 3)]]
+
+        exp = self.constructor(expData)
+
+        datetimes = toTest.points.calculate(toDatetime)
+
+        assert datetimes == exp
+    
+    def test_calculateOnElements_dictionaryMapping(self):
+        data = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
+        reverseMap = {k: v for k, v in zip(range(9), range(8, -1, -1))}
+
+        toTest = self.constructor(data)
+        ret = toTest.calculateOnElements(reverseMap)
+        exp = self.constructor([[8, 7, 6], [5, 4, 3], [2, 1, 0]])
+        assert ret == exp
+
+        toTest = self.constructor(data)
+        ret = toTest.calculateOnElements(reverseMap, points=[0, 2], features=[1, 2])
+        exp = self.constructor([[7, 6], [1, 0]])
+        assert ret == exp
+
+        toTest = self.constructor(data)
+        ret = toTest.calculateOnElements(reverseMap, preserveZeros=True)
+        exp = self.constructor([[0, 7, 6], [5, 4, 3], [2, 1, 0]])
+        assert ret == exp
+
+        reverseMap[2] = None
+        reverseMap[7] = None
+
+        toTest = self.constructor(data)
+        ret = toTest.calculateOnElements(reverseMap, skipNoneReturnValues=True)
+        exp = self.constructor([[8, 7, 2], [5, 4, 3], [2, 7, 0]])
+        assert ret == exp
+
+        toTest = self.constructor(data)
+        ret = toTest.calculateOnElements(reverseMap, skipNoneReturnValues=False)
+        exp = self.constructor([[8, 7, None], [5, 4, 3], [2, None, 0]])
+        assert ret == exp
+    
+    def test_calculateOnElements_fromDatetime(self):
+        data = [[datetime.datetime(2019, 1, 1), datetime.datetime(2019, 12, 31)],
+                [datetime.datetime(2020, 1, 1), datetime.datetime(2020, 12, 31)],
+                [datetime.datetime(2021, 1, 1), datetime.datetime(2021, 12, 31)]]
+        toTest = self.constructor(data)
+
+        def fromDatetime(elem):
+            return '-'.join(map(str, [elem.year, elem.month, elem.day]))
+
+        expData = [['2019-1-1', '2019-12-31'],
+                   ['2020-1-1', '2020-12-31'],
+                   ['2021-1-1', '2021-12-31']]
+
+        exp = self.constructor(expData)
+
+        datetimes = toTest.calculateOnElements(fromDatetime)
+
+        assert datetimes == exp
+    
+    def test_points_calculate_featureVector(self):
+  
+        def asFeature(pt):
+            return pt.T
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        exp = self.constructor([[[1], [2], [3]], [[4], [5], [6]], [[0], [0], [0]]])
+
+        ret = orig.points.calculate(asFeature)
+        assert ret == exp
+    
+    def test_features_calculate_toDatetime(self):
+        data = [['2020-01-01'], ['2020-01-02'], ['2020-01-03']]
+        toTest = self.constructor(data)
+
+        def toDatetime(ft):
+            return [datetime.datetime.strptime(dt, '%Y-%m-%d') for dt in ft]
+
+        expData = [[datetime.datetime(2020, 1, 1)],
+                   [datetime.datetime(2020, 1, 2)],
+                   [datetime.datetime(2020, 1, 3)]]
+
+        exp = self.constructor(expData)
+
+        datetimes = toTest.features.calculate(toDatetime)
+
+        assert datetimes == exp
+
+    def test_features_calculate_fromDatetime(self):
+        data = [[datetime.datetime(2020, 1, 1)],
+                [datetime.datetime(2020, 1, 2)],
+                [datetime.datetime(2020, 1, 3)]]
+        toTest = self.constructor(data)
+
+        def fromDatetime(ft):
+            return ['-'.join(map(str, [d.year, d.month, d.day])) for d in ft]
+
+        expData = [['2020-1-1'], ['2020-1-2'], ['2020-1-3']]
+
+        exp = self.constructor(expData)
+
+        datetimes = toTest.features.calculate(fromDatetime)
+
+        assert datetimes == exp
+        
+    #################
+    # points.unique #
+    #################
+
+    def test_points_unique_allNames_string(self):
+        data = [['George', 'Washington'], ['George', 'Washington'],
+                ['John', 'Adams'], ['John', 'Adams'], ['John', 'Adams'],
+                ['Thomas', 'Jefferson'],  ['Thomas', 'Jefferson'],
+                ['James', 'Madison']]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['George', 'Washington'], ['John', 'Adams'],
+                   ['Thomas', 'Jefferson'], ['James', 'Madison']]
+        exp = self.constructor(expData, pointNames=["p0", "p2", "p5", "p7"], featureNames=ftNames)
+
+        ret = test.points.unique()
+
+        assert ret == exp
+
+    @noLogEntryExpected
+    def test_points_unique_allNames_mixed(self):
+        data = [['George', 0], ['George', 0],
+                ['John', 1], ['John', 1], ['John', 1],
+                ['Thomas', 2],  ['Thomas', 2],
+                ['James', 3]]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['George', 0], ['John', 1],
+                   ['Thomas', 2], ['James', 3]]
+        exp = self.constructor(expData, pointNames=["p0", "p2", "p5", "p7"], featureNames=ftNames)
+
+        ret = test.points.unique()
+
+        assert ret == exp
+
+    def test_points_unique_allDefaultNames(self):
+        data = [['George', 'Washington'], ['George', 'Washington'],
+                ['John', 'Adams'], ['John', 'Adams'], ['John', 'Adams'],
+                ['Thomas', 'Jefferson'],  ['Thomas', 'Jefferson'],
+                ['James', 'Madison']]
+        test = self.constructor(data)
+        expData = [['George', 'Washington'], ['John', 'Adams'],
+                   ['Thomas', 'Jefferson'], ['James', 'Madison']]
+        exp = self.constructor(expData)
+
+        ret = test.points.unique()
+
+        assert ret == exp
+        assertNoNamesGenerated(test)
+        assertNoNamesGenerated(ret)
+    
+    def test_points_unique_subsetFeature0(self):
+        data = [['George', 'Washington'], ['John', 'Adams'],
+                ['Thomas', 'Jefferson'], ['James', 'Madison'],
+                ['James', 'Monroe'], ['John Quincy', 'Adams'],
+                ['Andrew', 'Jackson'], ['Martin', 'Van Buren']]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['George'], ['John'], ['Thomas'], ['James'],
+                   ['John Quincy'], ['Andrew'], ['Martin']]
+        expPtNames = ["p0", "p1", "p2", "p3", "p5", "p6", "p7"]
+        exp = self.constructor(expData, pointNames=expPtNames, featureNames=["firstName"])
+
+        ret = test[:, 0].points.unique()
+
+        assert ret == exp
+
+    def test_points_unique_subsetFeature1(self):
+        data = [['George', 'Washington'], ['John', 'Adams'],
+                ['Thomas', 'Jefferson'], ['James', 'Madison'],
+                ['James', 'Monroe'], ['John Quincy', 'Adams'],
+                ['Andrew', 'Jackson'], ['Martin', 'Van Buren']]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['Washington'], ['Adams'], ['Jefferson'], ['Madison'],
+                   ['Monroe'], ['Jackson'], ['Van Buren']]
+        expPtNames = ["p0", "p1", "p2", "p3", "p4", "p6", "p7"]
+        exp = self.constructor(expData, pointNames=expPtNames, featureNames=["lastName"])
+
+        ret = test[:, 1].points.unique()
+
+        assert ret == exp
+    
+    def test_features_unique_allDefaultNames(self):
+        data = [['George', 0, 'George', 0, 'George', 0],
+                ['John', 1, 'James', 3, 'John', 3],
+                ['Thomas', 2, 'Thomas', 2, 'Thomas', 2]]
+        test = self.constructor(data)
+
+        expData = [['George', 0, 'George', 0],
+                   ['John', 1, 'James', 3],
+                   ['Thomas', 2, 'Thomas', 2]]
+        exp = self.constructor(expData)
+
+        ret = test.features.unique()
+
+        assert ret == exp
+        assertNoNamesGenerated(test)
+        assertNoNamesGenerated(ret)
+
+    def test_features_unique_subsetPoint0(self):
+        data = [['George', 0, 'George', 0, 'George', 0],
+                ['John', 1, 'James', 3, 'John', 3],
+                ['Thomas', 2, 'Thomas', 2, 'Thomas', 2]]
+        ptNames = ["p0", "p1", "p2"]
+        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['George', 0]]
+        exp = self.constructor(expData, pointNames=["p0"], featureNames=["f0", "f1"])
+
+        ret = test[0, :].features.unique()
+
+        assert ret == exp
+
+    def test_features_unique_subsetPoint1(self):
+        data = [['George', 0, 'George', 0, 'George', 0],
+                ['John', 1, 'James', 3, 'John', 3],
+                ['Thomas', 2, 'Thomas', 2, 'Thomas', 2]]
+        ptNames = ["p0", "p1", "p2"]
+        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['John', 1, 'James', 3]]
+        exp = self.constructor(expData, pointNames=["p1"], featureNames=["f0", "f1", "f2", "f3"])
+
+        ret = test[1, :].features.unique()
+
+        assert ret == exp
+    
+    def test_countUniqueElements_limitFeatures(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        fNames = ['f1', 'f2', 'f3']
+        toTest = self.constructor(data, featureNames=fNames)
+        unique = toTest.countUniqueElements(features=0)
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[3] == 1
+        assert unique['a'] == 1
+
+        unique = toTest.countUniqueElements(features='f1')
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[3] == 1
+        assert unique['a'] == 1
+
+        unique = toTest.countUniqueElements(features=[0,'f3'])
+
+        assert len(unique) == 4
+        assert unique[1] == 2
+        assert unique[3] == 2
+        assert unique['a'] == 1
+        assert unique['c'] == 1
+    
+    def test_points_calculate_stringReturnsPreserved(self):
+  
+        def toString(pt):
+            return [str(v) for v in pt]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']])
+
+        ret = orig.points.calculate(toString)
+        assert ret == exp
+    
+    @raises(InvalidArgumentValue)
+    def test_calculateOnElements_invalidElementReturned(self):
+        data = [['a', 'b', 'c'], ['d', 'e', 'f'], ['g', 'h', 'i']]
+        toTest = self.constructor(data)
+        toTest.calculateOnElements(lambda e: [e])
+    
+    def test_calculateOnElements_builtin(self):
+        # builtins are implemented in C, so may behave differently
+        data = [['1', '0', '3'], ['0', '5', '6'], ['7', '0', '9']]
+        toTest = self.constructor(data)
+        assert all(isinstance(x, str) for x in toTest.iterateElements())
+
+        ret = toTest.calculateOnElements(int)
+        assert all(isinstance(x, (int, np.integer)) for x in ret.iterateElements())
+
+        ret = toTest.calculateOnElements(float)
+        assert all(isinstance(x, (float, np.floating)) for x in ret.iterateElements())
+
+        ret = toTest.calculateOnElements(str)
+        assert all(isinstance(x, str) for x in ret.iterateElements())
+
+    def test_calculateOnElements_String_conversion_manipulations(self):
+        def allString(val):
+            return str(val)
+
+        toSMap = {2:'two', 4:'four', 6:'six', 8:'eight'}
+        def f1(val):
+            return toSMap[val] if val in toSMap else val
+
+        toIMap = {'two':2, 'four':4, 'six':6, 'eight':8}
+        def f2(val):
+            return toIMap[val] if val in toIMap else val
+
+        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+        toTest = self.constructor(data)
+        ret0A = toTest.calculateOnElements(allString)
+        ret0B = toTest.calculateOnElements(allString, preserveZeros=True)
+
+        exp0Data = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
+        exp0Obj = self.constructor(exp0Data)
+        assert ret0A == exp0Obj
+        assert ret0B == exp0Obj
+
+        ret1 = toTest.calculateOnElements(f1)
+
+        exp1Data = [[1, 'two', 3], ['four', 5, 'six'], [7, 'eight', 9]]
+        exp1Obj = self.constructor(exp1Data)
+
+        assert ret1 == exp1Obj
+
+        ret2 = ret1.calculateOnElements(f2)
+
+        exp2Obj = self.constructor(data)
+
+        assert ret2 == exp2Obj
+    
+    def test_features_unique_allNames_allUnique(self):
+        data = [['George', 0, 'George', 1, 'James', 2],
+                ['John', 1, 'James', 0, 'John', 1],
+                ['Thomas', 2, 'Thomas', 2, 'Thomas', 0]]
+        ptNames = ["p0", "p1", "p2"]
+        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        exp = test.copy()
+
+        ret = test.features.unique()
+
+        assert ret == exp
+    
+    def test_features_calculate_stringReturnsPreserved(self):
+  
+        def toString(ft):
+            return [str(v) for v in ft]
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']])
+
+        ret = orig.features.calculate(toString)
+        assert ret == exp
+    
+    #################
+    # points.unique #
+    #################
+
+    def test_points_unique_allNames_allUnique(self):
+        data = [['George', 'Washington'], ['John', 'Adams'],
+                ['Thomas', 'Jefferson'], ['James', 'Madison'],
+                ['James', 'Monroe'], ['John Quincy', 'Adams'],
+                ['Andrew', 'Jackson'], ['Martin', 'Van Buren']]
+        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
+        ftNames = ["firstName", "lastName"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        exp = test.copy()
+
+        ret = test.points.unique()
+
+        assert ret == exp
+    
+    ###################
+    # features.unique #
+    ###################
+
+    @noLogEntryExpected
+    def test_features_unique_allNames_mixed(self):
+        data = [['George', 0, 'George', 0, 'George', 0],
+                ['John', 1, 'James', 3, 'John', 3],
+                ['Thomas', 2, 'Thomas', 2, 'Thomas', 2]]
+        ptNames = ["p0", "p1", "p2"]
+        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['George', 0, 'George', 0],
+                   ['John', 1, 'James', 3],
+                   ['Thomas', 2, 'Thomas', 2]]
+        exp = self.constructor(expData, pointNames=ptNames, featureNames=["f0", "f1", "f2", "f3"])
+
+        ret = test.features.unique()
+
+        assert ret == exp
+    
+    def test_calculateOnElements_stringReturnsPreserved(self):
+  
+        def toString(e):
+            return str(e)
+
+        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
+        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']])
+
+        ret = orig.calculateOnElements(toString)
+        assert ret == exp
+    
+    #####################
+    # features.matching #
+    #####################
+    
+    def test_features_matching_varietyOfFuncs(self):
+        self.back_pointsfeatures_matching_varietyOfFuncs('feature')
+    
+    def test_calculateOnElements_toDatetime(self):
+        data = [['2019-01-01', '2019-12-31'],
+                ['2020-01-01', '2020-12-31'],
+                ['2021-01-01', '2021-12-31']]
+        toTest = self.constructor(data)
+
+        def toDatetime(elem):
+            return datetime.datetime.strptime(elem, '%Y-%m-%d')
+
+        expData = [[datetime.datetime(2019, 1, 1), datetime.datetime(2019, 12, 31)],
+                   [datetime.datetime(2020, 1, 1), datetime.datetime(2020, 12, 31)],
+                   [datetime.datetime(2021, 1, 1), datetime.datetime(2021, 12, 31)]]
+
+        exp = self.constructor(expData)
+
+        datetimes = toTest.calculateOnElements(toDatetime)
+
+        assert datetimes == exp
+
+    ###################
+    # features.unique #
+    ###################
+
+    def test_features_unique_allNames_string(self):
+        data = [['a','b','c','a','b','c'],
+                ['1','2','3','1','2','4'],
+                ['0','0','0','0','0','0']]
+        ptNames = ["p0", "p1", "p2"]
+        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
+        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [['a','b','c','c'], ['1','2','3','4'], ['0','0','0','0']]
+        exp = self.constructor(expData, pointNames=ptNames, featureNames=["f0", "f1", "f2", "f5"])
+
+        ret = test.features.unique()
+
+        assert ret == exp
+    
+    #######################
+    # countUniqueElements #
+    #######################
+    @noLogEntryExpected
+    def test_countUniqueElements_allPtsAndFtrs(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        toTest = self.constructor(data)
+        unique = toTest.countUniqueElements()
+
+        assert len(unique) == 6
+        assert unique[1] == 2
+        assert unique[2] == 2
+        assert unique[3] == 2
+        assert unique['a'] == 1
+        assert unique['b'] == 1
+        assert unique['c'] == 1
+        # for Sparse, 0 is added to returned dictionary manually
+        # want to test 0 is not added if the data doesn't contain zeros
+        assert 0 not in unique
+        assertNoNamesGenerated(toTest)
+    
+    def test_countUniqueElements_limitPoints(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        pNames = ['p1', 'p2', 'p3']
+        toTest = self.constructor(data, pointNames=pNames)
+        unique = toTest.countUniqueElements(points=0)
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[2] == 1
+        assert unique[3] == 1
+
+        unique = toTest.countUniqueElements(points='p1')
+
+        assert len(unique) == 3
+        assert unique[1] == 1
+        assert unique[2] == 1
+        assert unique[3] == 1
+
+        unique = toTest.countUniqueElements(points=[0,'p3'])
+
+        assert len(unique) == 3
+        assert unique[1] == 2
+        assert unique[2] == 2
+        assert unique[3] == 2
+
+    @noLogEntryExpected
+    def test_countUniqueElements_limitPointsAndFeatures_cornercase(self):
+        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
+        fNames = ['f1', 'f2', 'f3']
+        pNames = ['p1', 'p2', 'p3']
+        toTest = self.constructor(data, featureNames=fNames, pointNames=pNames)
+
+        unique = toTest.countUniqueElements(features=[0,'f3'], points=[0,'p3'])
+
+        assert len(unique) == 2
+        assert unique[1] == 2
+        assert unique[3] == 2
+    
+    def test_matchingElements_valueInput(self):
+        # import pdb
+        # pdb.set_trace()
+        raw = [[1, 2, 3], [-1, -2, -3], [0, 'a', 0]]
+        obj = self.constructor(raw)
+        match1 = obj.matchingElements(lambda x: x == 0)
+        match2 = obj.matchingElements(0)
+        assert match1 == match2
+
+        match1 = obj.matchingElements(lambda x: x == 'a')
+        match2 = obj.matchingElements('a')
+        assert match1 == match2
+    
+    @logCountAssertionFactory(4)
+    def test_matchingElements_varietyOfFuncs(self):
+        raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
+        obj = self.constructor(raw)
+
+        exp = [[True, True, True], [False, False, False], [False, False, False]]
+        expObj = self.constructor(exp)
+        matchPositive = obj.matchingElements(match.positive)
+
+        assert matchPositive == expObj
+
+        exp = [[True, True, True], [True, False, False], [True, True, True]]
+        expObj = self.constructor(exp)
+        greaterEqualToNeg1 = obj.matchingElements(lambda x: x >= -1)
+
+        assert greaterEqualToNeg1 == expObj
+
+        raw = [['a', None, 'c'], [np.nan, None, -3], [0, 'zero', None]]
+        obj = self.constructor(raw)
+
+        exp = [[False, True, False], [True, True, False], [False, False, True]]
+        expObj = self.constructor(exp)
+        isMissing = obj.matchingElements(match.missing)
+
+        assert isMissing == expObj
+
+        # None is converted to nan by nimble.data, here we explicitly pass the
+        # value the underlying representation uses, so we avoid making it
+        # look like None is considered a numeric
+        raw = [['a', np.nan, 'c'], [np.nan, np.nan, -3], [0, 'zero', np.nan]]
+        obj = self.constructor(raw)
+        exp = [[True, False, True], [False, False, False], [False, True, False]]
+
+        expObj = self.constructor(exp)
+        isNonNumeric = obj.matchingElements(match.nonNumeric)
+
+        assert isNonNumeric == expObj
+        
+class HighLevelDataSafeSparseSafe(DataTestObject):
     #######################
     # .points.calculate() #
     #######################
@@ -372,87 +1023,11 @@ class HighLevelDataSafe(DataTestObject):
         ret = orig.points.calculate(addTenth)
         assert ret == exp
 
-    def test_points_calculate_stringReturnsPreserved(self):
+    
+    ###################
+    # features.unique #
+    ###################
 
-        def toString(pt):
-            return [str(v) for v in pt]
-
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
-        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']])
-
-        ret = orig.points.calculate(toString)
-        assert ret == exp
-
-    def test_points_calculate_featureVector(self):
-
-        def asFeature(pt):
-            return pt.T
-
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
-        exp = self.constructor([[[1], [2], [3]], [[4], [5], [6]], [[0], [0], [0]]])
-
-        ret = orig.points.calculate(asFeature)
-        assert ret == exp
-
-    def test_points_calculate_reshape(self):
-
-        def reshape3D(pt):
-            pt = pt.copy()
-            pt.unflatten((2, 2))
-            return pt
-
-        orig = self.constructor([[1, 2, 3, 4], [5, 6, 7, 8], [0, 0, 0, 0]])
-        exp3D = self.constructor([[[1, 2], [3, 4]], [[5, 6], [7, 8]], [[0, 0], [0, 0]]])
-
-        ret = orig.points.calculate(reshape3D)
-        assert ret == exp3D
-
-        def reshape5D(pt):
-            pt = pt.copy()
-            pt.unflatten((1, 2, 2, 1))
-            return pt
-
-        exp5D = self.constructor([[[[[1], [2]], [[3], [4]]]],
-                                  [[[[5], [6]], [[7], [8]]]],
-                                  [[[[0], [0]], [[0], [0]]]]])
-
-        ret = orig.points.calculate(reshape5D)
-        assert ret == exp5D
-
-    def test_points_calculate_toDatetime(self):
-        data = [[1, 1, 2020], [1, 2, 2020], [1, 3, 2020]]
-        fnames = ['month', 'day', 'year']
-        toTest = self.constructor(data, featureNames=fnames)
-
-        def toDatetime(pt):
-            return datetime.datetime(pt['year'], pt['month'], pt['day'])
-
-        expData = [[datetime.datetime(2020, 1, 1)],
-                   [datetime.datetime(2020, 1, 2)],
-                   [datetime.datetime(2020, 1, 3)]]
-
-        exp = self.constructor(expData)
-
-        datetimes = toTest.points.calculate(toDatetime)
-
-        assert datetimes == exp
-
-    def test_points_calculate_fromDatetime(self):
-        data = [[datetime.datetime(2020, 1, 1)],
-                [datetime.datetime(2020, 1, 2)],
-                [datetime.datetime(2020, 1, 3)]]
-        toTest = self.constructor(data)
-
-        def fromDatetime(pt):
-            return [pt[0].month, pt[0].day, pt[0].year]
-
-        expData = [[1, 1, 2020], [1, 2, 2020], [1, 3, 2020]]
-
-        exp = self.constructor(expData)
-
-        datetimes = toTest.points.calculate(fromDatetime)
-
-        assert datetimes == exp
 
     ##########################
     # .features.calculate() #
@@ -744,16 +1319,6 @@ class HighLevelDataSafe(DataTestObject):
         ret = orig.features.calculate(addTenth)
         assert ret == exp
 
-    def test_features_calculate_stringReturnsPreserved(self):
-
-        def toString(ft):
-            return [str(v) for v in ft]
-
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
-        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']])
-
-        ret = orig.features.calculate(toString)
-        assert ret == exp
 
     @raises(ImproperObjectAction)
     def test_features_calculate_pointVector(self):
@@ -775,40 +1340,7 @@ class HighLevelDataSafe(DataTestObject):
         orig = self.constructor([[1, 5, 0], [2, 6, 0], [3, 7, 0], [4, 8, 0]])
         ret = orig.features.calculate(reshape3D)
 
-    def test_features_calculate_toDatetime(self):
-        data = [['2020-01-01'], ['2020-01-02'], ['2020-01-03']]
-        toTest = self.constructor(data)
-
-        def toDatetime(ft):
-            return [datetime.datetime.strptime(dt, '%Y-%m-%d') for dt in ft]
-
-        expData = [[datetime.datetime(2020, 1, 1)],
-                   [datetime.datetime(2020, 1, 2)],
-                   [datetime.datetime(2020, 1, 3)]]
-
-        exp = self.constructor(expData)
-
-        datetimes = toTest.features.calculate(toDatetime)
-
-        assert datetimes == exp
-
-    def test_features_calculate_fromDatetime(self):
-        data = [[datetime.datetime(2020, 1, 1)],
-                [datetime.datetime(2020, 1, 2)],
-                [datetime.datetime(2020, 1, 3)]]
-        toTest = self.constructor(data)
-
-        def fromDatetime(ft):
-            return ['-'.join(map(str, [d.year, d.month, d.day])) for d in ft]
-
-        expData = [['2020-1-1'], ['2020-1-2'], ['2020-1-3']]
-
-        exp = self.constructor(expData)
-
-        datetimes = toTest.features.calculate(fromDatetime)
-
-        assert datetimes == exp
-
+    
     #######################
     # calculateOnElements #
     #######################
@@ -830,12 +1362,6 @@ class HighLevelDataSafe(DataTestObject):
             return point
 
         ret = toTest.calculateOnElements(noChange, features=['a', 'b'])
-
-    @raises(InvalidArgumentValue)
-    def test_calculateOnElements_invalidElementReturned(self):
-        data = [['a', 'b', 'c'], ['d', 'e', 'f'], ['g', 'h', 'i']]
-        toTest = self.constructor(data)
-        toTest.calculateOnElements(lambda e: [e])
 
     def test_calculateOnElements_NamePath_preservation(self):
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -863,21 +1389,6 @@ class HighLevelDataSafe(DataTestObject):
         assert [7, 8, 9] in retRaw
         assertNoNamesGenerated(toTest)
         assertNoNamesGenerated(ret)
-
-    def test_calculateOnElements_builtin(self):
-        # builtins are implemented in C, so may behave differently
-        data = [['1', '0', '3'], ['0', '5', '6'], ['7', '0', '9']]
-        toTest = self.constructor(data)
-        assert all(isinstance(x, str) for x in toTest.iterateElements())
-
-        ret = toTest.calculateOnElements(int)
-        assert all(isinstance(x, (int, np.integer)) for x in ret.iterateElements())
-
-        ret = toTest.calculateOnElements(float)
-        assert all(isinstance(x, (float, np.floating)) for x in ret.iterateElements())
-
-        ret = toTest.calculateOnElements(str)
-        assert all(isinstance(x, str) for x in ret.iterateElements())
 
     def test_calculateOnElements_plusOnePreserve(self):
         data = [[1, 0, 3], [0, 5, 6], [7, 0, 9]]
@@ -924,73 +1435,6 @@ class HighLevelDataSafe(DataTestObject):
         assert ret1 == expObj
         assert ret2 == expObj
 
-    def test_calculateOnElements_String_conversion_manipulations(self):
-        def allString(val):
-            return str(val)
-
-        toSMap = {2:'two', 4:'four', 6:'six', 8:'eight'}
-        def f1(val):
-            return toSMap[val] if val in toSMap else val
-
-        toIMap = {'two':2, 'four':4, 'six':6, 'eight':8}
-        def f2(val):
-            return toIMap[val] if val in toIMap else val
-
-        data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-        toTest = self.constructor(data)
-        ret0A = toTest.calculateOnElements(allString)
-        ret0B = toTest.calculateOnElements(allString, preserveZeros=True)
-
-        exp0Data = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9']]
-        exp0Obj = self.constructor(exp0Data)
-        assert ret0A == exp0Obj
-        assert ret0B == exp0Obj
-
-        ret1 = toTest.calculateOnElements(f1)
-
-        exp1Data = [[1, 'two', 3], ['four', 5, 'six'], [7, 'eight', 9]]
-        exp1Obj = self.constructor(exp1Data)
-
-        assert ret1 == exp1Obj
-
-        ret2 = ret1.calculateOnElements(f2)
-
-        exp2Obj = self.constructor(data)
-
-        assert ret2 == exp2Obj
-
-    def test_calculateOnElements_dictionaryMapping(self):
-        data = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
-        reverseMap = {k: v for k, v in zip(range(9), range(8, -1, -1))}
-
-        toTest = self.constructor(data)
-        ret = toTest.calculateOnElements(reverseMap)
-        exp = self.constructor([[8, 7, 6], [5, 4, 3], [2, 1, 0]])
-        assert ret == exp
-
-        toTest = self.constructor(data)
-        ret = toTest.calculateOnElements(reverseMap, points=[0, 2], features=[1, 2])
-        exp = self.constructor([[7, 6], [1, 0]])
-        assert ret == exp
-
-        toTest = self.constructor(data)
-        ret = toTest.calculateOnElements(reverseMap, preserveZeros=True)
-        exp = self.constructor([[0, 7, 6], [5, 4, 3], [2, 1, 0]])
-        assert ret == exp
-
-        reverseMap[2] = None
-        reverseMap[7] = None
-
-        toTest = self.constructor(data)
-        ret = toTest.calculateOnElements(reverseMap, skipNoneReturnValues=True)
-        exp = self.constructor([[8, 7, 2], [5, 4, 3], [2, 7, 0]])
-        assert ret == exp
-
-        toTest = self.constructor(data)
-        ret = toTest.calculateOnElements(reverseMap, skipNoneReturnValues=False)
-        exp = self.constructor([[8, 7, None], [5, 4, 3], [2, None, 0]])
-        assert ret == exp
-
     def test_calculateOnElements_zerosReturned(self):
 
         def returnAllZero(elem):
@@ -1028,54 +1472,7 @@ class HighLevelDataSafe(DataTestObject):
         ret = orig.calculateOnElements(addTenth)
         assert ret == exp
 
-    def test_calculateOnElements_stringReturnsPreserved(self):
 
-        def toString(e):
-            return str(e)
-
-        orig = self.constructor([[1, 2, 3], [4, 5, 6], [0, 0, 0]])
-        exp = self.constructor([['1', '2', '3'], ['4', '5', '6'], ['0', '0', '0']])
-
-        ret = orig.calculateOnElements(toString)
-        assert ret == exp
-
-    def test_calculateOnElements_toDatetime(self):
-        data = [['2019-01-01', '2019-12-31'],
-                ['2020-01-01', '2020-12-31'],
-                ['2021-01-01', '2021-12-31']]
-        toTest = self.constructor(data)
-
-        def toDatetime(elem):
-            return datetime.datetime.strptime(elem, '%Y-%m-%d')
-
-        expData = [[datetime.datetime(2019, 1, 1), datetime.datetime(2019, 12, 31)],
-                   [datetime.datetime(2020, 1, 1), datetime.datetime(2020, 12, 31)],
-                   [datetime.datetime(2021, 1, 1), datetime.datetime(2021, 12, 31)]]
-
-        exp = self.constructor(expData)
-
-        datetimes = toTest.calculateOnElements(toDatetime)
-
-        assert datetimes == exp
-
-    def test_calculateOnElements_fromDatetime(self):
-        data = [[datetime.datetime(2019, 1, 1), datetime.datetime(2019, 12, 31)],
-                [datetime.datetime(2020, 1, 1), datetime.datetime(2020, 12, 31)],
-                [datetime.datetime(2021, 1, 1), datetime.datetime(2021, 12, 31)]]
-        toTest = self.constructor(data)
-
-        def fromDatetime(elem):
-            return '-'.join(map(str, [elem.year, elem.month, elem.day]))
-
-        expData = [['2019-1-1', '2019-12-31'],
-                   ['2020-1-1', '2020-12-31'],
-                   ['2021-1-1', '2021-12-31']]
-
-        exp = self.constructor(expData)
-
-        datetimes = toTest.calculateOnElements(fromDatetime)
-
-        assert datetimes == exp
 
     ######################
     # points.mapReduce() #
@@ -1654,325 +2051,10 @@ class HighLevelDataSafe(DataTestObject):
 
         assert False  # implausible number of checks for random order were unsucessful
 
-    #################
-    # points.unique #
-    #################
-
-    def test_points_unique_allNames_string(self):
-        data = [['George', 'Washington'], ['George', 'Washington'],
-                ['John', 'Adams'], ['John', 'Adams'], ['John', 'Adams'],
-                ['Thomas', 'Jefferson'],  ['Thomas', 'Jefferson'],
-                ['James', 'Madison']]
-        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
-        ftNames = ["firstName", "lastName"]
-        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-
-        expData = [['George', 'Washington'], ['John', 'Adams'],
-                   ['Thomas', 'Jefferson'], ['James', 'Madison']]
-        exp = self.constructor(expData, pointNames=["p0", "p2", "p5", "p7"], featureNames=ftNames)
-
-        ret = test.points.unique()
-
-        assert ret == exp
-
-    def test_points_unique_allNames_numeric(self):
-        data = [[0, 0], [0, 0],
-                [99, 99], [99, 99],
-                [5.5, 11], [5.5, 11],  [5.5, 11],
-                [-1, -2]]
-        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
-        ftNames = ["firstName", "lastName"]
-        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-
-        expData = [[0, 0], [99, 99], [5.5, 11], [-1, -2]]
-        exp = self.constructor(expData, pointNames=["p0", "p2", "p4", "p7"], featureNames=ftNames)
-
-        ret = test.points.unique()
-
-        assert ret == exp
-
-    @noLogEntryExpected
-    def test_points_unique_allNames_mixed(self):
-        data = [['George', 0], ['George', 0],
-                ['John', 1], ['John', 1], ['John', 1],
-                ['Thomas', 2],  ['Thomas', 2],
-                ['James', 3]]
-        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
-        ftNames = ["firstName", "lastName"]
-        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-
-        expData = [['George', 0], ['John', 1],
-                   ['Thomas', 2], ['James', 3]]
-        exp = self.constructor(expData, pointNames=["p0", "p2", "p5", "p7"], featureNames=ftNames)
-
-        ret = test.points.unique()
-
-        assert ret == exp
-
-    def test_points_unique_allNames_allUnique(self):
-        data = [['George', 'Washington'], ['John', 'Adams'],
-                ['Thomas', 'Jefferson'], ['James', 'Madison'],
-                ['James', 'Monroe'], ['John Quincy', 'Adams'],
-                ['Andrew', 'Jackson'], ['Martin', 'Van Buren']]
-        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
-        ftNames = ["firstName", "lastName"]
-        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-
-        exp = test.copy()
-
-        ret = test.points.unique()
-
-        assert ret == exp
-
-    def test_points_unique_allDefaultNames(self):
-        data = [['George', 'Washington'], ['George', 'Washington'],
-                ['John', 'Adams'], ['John', 'Adams'], ['John', 'Adams'],
-                ['Thomas', 'Jefferson'],  ['Thomas', 'Jefferson'],
-                ['James', 'Madison']]
-        test = self.constructor(data)
-        expData = [['George', 'Washington'], ['John', 'Adams'],
-                   ['Thomas', 'Jefferson'], ['James', 'Madison']]
-        exp = self.constructor(expData)
-
-        ret = test.points.unique()
-
-        assert ret == exp
-        assertNoNamesGenerated(test)
-        assertNoNamesGenerated(ret)
-
-    def test_points_unique_subsetFeature0(self):
-        data = [['George', 'Washington'], ['John', 'Adams'],
-                ['Thomas', 'Jefferson'], ['James', 'Madison'],
-                ['James', 'Monroe'], ['John Quincy', 'Adams'],
-                ['Andrew', 'Jackson'], ['Martin', 'Van Buren']]
-        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
-        ftNames = ["firstName", "lastName"]
-        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-
-        expData = [['George'], ['John'], ['Thomas'], ['James'],
-                   ['John Quincy'], ['Andrew'], ['Martin']]
-        expPtNames = ["p0", "p1", "p2", "p3", "p5", "p6", "p7"]
-        exp = self.constructor(expData, pointNames=expPtNames, featureNames=["firstName"])
-
-        ret = test[:, 0].points.unique()
-
-        assert ret == exp
-
-    def test_points_unique_subsetFeature1(self):
-        data = [['George', 'Washington'], ['John', 'Adams'],
-                ['Thomas', 'Jefferson'], ['James', 'Madison'],
-                ['James', 'Monroe'], ['John Quincy', 'Adams'],
-                ['Andrew', 'Jackson'], ['Martin', 'Van Buren']]
-        ptNames = ["p0", "p1", "p2", "p3", "p4", "p5", "p6", "p7"]
-        ftNames = ["firstName", "lastName"]
-        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-
-        expData = [['Washington'], ['Adams'], ['Jefferson'], ['Madison'],
-                   ['Monroe'], ['Jackson'], ['Van Buren']]
-        expPtNames = ["p0", "p1", "p2", "p3", "p4", "p6", "p7"]
-        exp = self.constructor(expData, pointNames=expPtNames, featureNames=["lastName"])
-
-        ret = test[:, 1].points.unique()
-
-        assert ret == exp
-
-    ###################
-    # features.unique #
-    ###################
-
-    def test_features_unique_allNames_string(self):
-        data = [['a','b','c','a','b','c'],
-                ['1','2','3','1','2','4'],
-                ['0','0','0','0','0','0']]
-        ptNames = ["p0", "p1", "p2"]
-        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
-        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-
-        expData = [['a','b','c','c'], ['1','2','3','4'], ['0','0','0','0']]
-        exp = self.constructor(expData, pointNames=ptNames, featureNames=["f0", "f1", "f2", "f5"])
-
-        ret = test.features.unique()
-
-        assert ret == exp
-
-    def test_features_unique_allNames_numeric(self):
-        data = [[0, 1, 2, 0, 1, 2],
-                [0, 0, 0, 0, 0, 0],
-                [-1, -2, -3, -1, -1, -3]]
-        ptNames = ["p0", "p1", "p2"]
-        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
-        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-
-        expData = [[0, 1, 2, 1], [0, 0, 0, 0], [-1, -2, -3, -1]]
-        exp = self.constructor(expData, pointNames=ptNames, featureNames=["f0", "f1", "f2", "f4"])
-
-        ret = test.features.unique()
-
-        assert ret == exp
-
-    @noLogEntryExpected
-    def test_features_unique_allNames_mixed(self):
-        data = [['George', 0, 'George', 0, 'George', 0],
-                ['John', 1, 'James', 3, 'John', 3],
-                ['Thomas', 2, 'Thomas', 2, 'Thomas', 2]]
-        ptNames = ["p0", "p1", "p2"]
-        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
-        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-
-        expData = [['George', 0, 'George', 0],
-                   ['John', 1, 'James', 3],
-                   ['Thomas', 2, 'Thomas', 2]]
-        exp = self.constructor(expData, pointNames=ptNames, featureNames=["f0", "f1", "f2", "f3"])
-
-        ret = test.features.unique()
-
-        assert ret == exp
-
-    def test_features_unique_allNames_allUnique(self):
-        data = [['George', 0, 'George', 1, 'James', 2],
-                ['John', 1, 'James', 0, 'John', 1],
-                ['Thomas', 2, 'Thomas', 2, 'Thomas', 0]]
-        ptNames = ["p0", "p1", "p2"]
-        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
-        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-
-        exp = test.copy()
-
-        ret = test.features.unique()
-
-        assert ret == exp
-
-    def test_features_unique_allDefaultNames(self):
-        data = [['George', 0, 'George', 0, 'George', 0],
-                ['John', 1, 'James', 3, 'John', 3],
-                ['Thomas', 2, 'Thomas', 2, 'Thomas', 2]]
-        test = self.constructor(data)
-
-        expData = [['George', 0, 'George', 0],
-                   ['John', 1, 'James', 3],
-                   ['Thomas', 2, 'Thomas', 2]]
-        exp = self.constructor(expData)
-
-        ret = test.features.unique()
-
-        assert ret == exp
-        assertNoNamesGenerated(test)
-        assertNoNamesGenerated(ret)
-
-    def test_features_unique_subsetPoint0(self):
-        data = [['George', 0, 'George', 0, 'George', 0],
-                ['John', 1, 'James', 3, 'John', 3],
-                ['Thomas', 2, 'Thomas', 2, 'Thomas', 2]]
-        ptNames = ["p0", "p1", "p2"]
-        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
-        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-
-        expData = [['George', 0]]
-        exp = self.constructor(expData, pointNames=["p0"], featureNames=["f0", "f1"])
-
-        ret = test[0, :].features.unique()
-
-        assert ret == exp
-
-    def test_features_unique_subsetPoint1(self):
-        data = [['George', 0, 'George', 0, 'George', 0],
-                ['John', 1, 'James', 3, 'John', 3],
-                ['Thomas', 2, 'Thomas', 2, 'Thomas', 2]]
-        ptNames = ["p0", "p1", "p2"]
-        ftNames = ["f0", "f1", "f2", "f3", "f4", "f5"]
-        test = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-
-        expData = [['John', 1, 'James', 3]]
-        exp = self.constructor(expData, pointNames=["p1"], featureNames=["f0", "f1", "f2", "f3"])
-
-        ret = test[1, :].features.unique()
-
-        assert ret == exp
 
     #######################
     # countUniqueElements #
     #######################
-    @noLogEntryExpected
-    def test_countUniqueElements_allPtsAndFtrs(self):
-        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
-        toTest = self.constructor(data)
-        unique = toTest.countUniqueElements()
-
-        assert len(unique) == 6
-        assert unique[1] == 2
-        assert unique[2] == 2
-        assert unique[3] == 2
-        assert unique['a'] == 1
-        assert unique['b'] == 1
-        assert unique['c'] == 1
-        # for Sparse, 0 is added to returned dictionary manually
-        # want to test 0 is not added if the data doesn't contain zeros
-        assert 0 not in unique
-        assertNoNamesGenerated(toTest)
-
-    def test_countUniqueElements_limitPoints(self):
-        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
-        pNames = ['p1', 'p2', 'p3']
-        toTest = self.constructor(data, pointNames=pNames)
-        unique = toTest.countUniqueElements(points=0)
-
-        assert len(unique) == 3
-        assert unique[1] == 1
-        assert unique[2] == 1
-        assert unique[3] == 1
-
-        unique = toTest.countUniqueElements(points='p1')
-
-        assert len(unique) == 3
-        assert unique[1] == 1
-        assert unique[2] == 1
-        assert unique[3] == 1
-
-        unique = toTest.countUniqueElements(points=[0,'p3'])
-
-        assert len(unique) == 3
-        assert unique[1] == 2
-        assert unique[2] == 2
-        assert unique[3] == 2
-
-    def test_countUniqueElements_limitFeatures(self):
-        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
-        fNames = ['f1', 'f2', 'f3']
-        toTest = self.constructor(data, featureNames=fNames)
-        unique = toTest.countUniqueElements(features=0)
-
-        assert len(unique) == 3
-        assert unique[1] == 1
-        assert unique[3] == 1
-        assert unique['a'] == 1
-
-        unique = toTest.countUniqueElements(features='f1')
-
-        assert len(unique) == 3
-        assert unique[1] == 1
-        assert unique[3] == 1
-        assert unique['a'] == 1
-
-        unique = toTest.countUniqueElements(features=[0,'f3'])
-
-        assert len(unique) == 4
-        assert unique[1] == 2
-        assert unique[3] == 2
-        assert unique['a'] == 1
-        assert unique['c'] == 1
-
-    @noLogEntryExpected
-    def test_countUniqueElements_limitPointsAndFeatures_cornercase(self):
-        data = [[1, 2, 3], ['a', 'b', 'c'], [3, 2, 1]]
-        fNames = ['f1', 'f2', 'f3']
-        pNames = ['p1', 'p2', 'p3']
-        toTest = self.constructor(data, featureNames=fNames, pointNames=pNames)
-
-        unique = toTest.countUniqueElements(features=[0,'f3'], points=[0,'p3'])
-
-        assert len(unique) == 2
-        assert unique[1] == 2
-        assert unique[3] == 2
 
     def test_countUniqueElements_zeroCount(self):
         data = [[0, 0, 0, 0, 1], [2, 0, 0, 0, 0], [0, 0, 3, 0, 0]]
@@ -2154,19 +2236,6 @@ class HighLevelDataSafe(DataTestObject):
         assert matches[1, 1] is False or matches[1, 1] is np.bool_(False)
         assert matches[1, 2] is False or matches[1, 2] is np.bool_(False)
 
-    def test_matchingElements_valueInput(self):
-        # import pdb
-        # pdb.set_trace()
-        raw = [[1, 2, 3], [-1, -2, -3], [0, 'a', 0]]
-        obj = self.constructor(raw)
-        match1 = obj.matchingElements(lambda x: x == 0)
-        match2 = obj.matchingElements(0)
-        assert match1 == match2
-
-        match1 = obj.matchingElements(lambda x: x == 'a')
-        match2 = obj.matchingElements('a')
-        assert match1 == match2
-
     def test_matchingElements_comparisonStringInput(self):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
         obj = self.constructor(raw)
@@ -2211,44 +2280,6 @@ class HighLevelDataSafe(DataTestObject):
         expRaw = [[True, False]]
         expected = self.constructor(expRaw, ['1'], ['b', 'c'])
         assert matches == expected
-
-    @logCountAssertionFactory(4)
-    def test_matchingElements_varietyOfFuncs(self):
-        raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
-        obj = self.constructor(raw)
-
-        exp = [[True, True, True], [False, False, False], [False, False, False]]
-        expObj = self.constructor(exp)
-        matchPositive = obj.matchingElements(match.positive)
-
-        assert matchPositive == expObj
-
-        exp = [[True, True, True], [True, False, False], [True, True, True]]
-        expObj = self.constructor(exp)
-        greaterEqualToNeg1 = obj.matchingElements(lambda x: x >= -1)
-
-        assert greaterEqualToNeg1 == expObj
-
-        raw = [['a', None, 'c'], [np.nan, None, -3], [0, 'zero', None]]
-        obj = self.constructor(raw)
-
-        exp = [[False, True, False], [True, True, False], [False, False, True]]
-        expObj = self.constructor(exp)
-        isMissing = obj.matchingElements(match.missing)
-
-        assert isMissing == expObj
-
-        # None is converted to nan by nimble.data, here we explicitly pass the
-        # value the underlying representation uses, so we avoid making it
-        # look like None is considered a numeric
-        raw = [['a', np.nan, 'c'], [np.nan, np.nan, -3], [0, 'zero', np.nan]]
-        obj = self.constructor(raw)
-        exp = [[True, False, True], [False, False, False], [False, True, False]]
-
-        expObj = self.constructor(exp)
-        isNonNumeric = obj.matchingElements(match.nonNumeric)
-
-        assert isNonNumeric == expObj
 
     def test_matchingElements_pfname_preservation(self):
         raw = [[1, 2, 3], [-1, -2, -3], [0, 0, 0]]
@@ -2431,9 +2462,6 @@ class HighLevelDataSafe(DataTestObject):
         assert matches[0, 1] is False or matches[0, 1] is np.bool_(False)
         assert matches[0, 2] is False or matches[0, 2] is np.bool_(False)
 
-    def test_features_matching_varietyOfFuncs(self):
-        self.back_pointsfeatures_matching_varietyOfFuncs('feature')
-
     def test_features_matching_pfname_preservation(self):
         raw = [[1, -1, 0], [2, -2, 0], [3, -3, 0]]
         fnames = ['pos', 'neg', 'zero']
@@ -2460,9 +2488,615 @@ class HighLevelDataSafe(DataTestObject):
         assert allZeros.relativePath == preserveRPath
         assert allZeros.name != preserveName
         assert allZeros.name is None
+    
 
+class HighLevelModifyingSparseUnsafe(DataTestObject):
+    
+    def test_features_fillMatching_mode(self):
+        obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj0.features.fillMatching(None, 9)
+        obj0.features.fillMatching(fill.mode, match.missing)
+        exp0 = self.constructor([[1, 2, 3], [7, 11, 3], [7, 11, 3], [7, 8, 3]])
+        exp0.features.setNames(['a', 'b', 'c'])
+        assert obj0 == exp0
 
-class HighLevelModifying(DataTestObject):
+        obj1 = self.constructor([['a','b','c'], [None, 'd', None], ['e','d','c'], ['e','f','g']], featureNames=['a', 'b', 'c'])
+        obj1.features.fillMatching(None, 'c')
+        obj1.features.fillMatching(fill.mode, match.missing)
+        exp1 = self.constructor([['a','b','g'], ['e','d', 'g'], ['e','d', 'g'], ['e','f', 'g']])
+        exp1.features.setNames(['a', 'b', 'c'])
+        assert obj1 == exp1
+
+    @logCountAssertionFactory(3)
+    def test_points_splitByCollapsingFeatures_sequentialFeatures(self):
+        data = [[0,0,1,2,3,4], [1,1,5,6,7,8], [2,2,-1,-2,-3,-4]]
+        ptNames = ["0", "1", "2"]
+        ftNames = ["ret0", "ret1", "coll0", "coll1", "coll2", "coll3"]
+
+        toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [[0,0,"coll0",1], [0,0,"coll1",2], [0,0,"coll2",3], [0,0,"coll3",4],
+                   [1,1,"coll0",5], [1,1,"coll1",6], [1,1,"coll2",7], [1,1,"coll3",8],
+                   [2,2,"coll0",-1], [2,2,"coll1",-2], [2,2,"coll2",-3], [2,2,"coll3",-4]]
+        expPnames = ["0_0", "0_1", "0_2", "0_3",
+                     "1_0", "1_1", "1_2", "1_3",
+                     "2_0", "2_1", "2_2", "2_3"]
+        expFNames = ["ret0", "ret1", "ftNames", "ftValues"]
+
+        exp = self.constructor(expData, pointNames=expPnames, featureNames=expFNames)
+
+        nameFeatureNames = "ftNames"
+        nameFeatureValues = "ftValues"
+        test0 = toTest.copy()
+        toCollapse = ["coll0", "coll1", "coll2", "coll3"]
+        test0.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        assert test0 == exp
+
+        test1 = toTest.copy()
+        toCollapse = [2, 3, 4, 5]
+        test1.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        assert test1 == exp
+
+        test2 = toTest.copy()
+        toCollapse = [2, "coll1", 4, "coll3"]
+        test2.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        assert test2 == exp
+
+    @logCountAssertionFactory(3)
+    def test_points_splitByCollapsingFeatures_nonSequentialFeatures(self):
+        data = [[1,0,2,0,3,4], [5,1,6,1,7,8], [-1,2,-2,2,-3,-4]]
+        ptNames = ["0", "1", "2"]
+        ftNames = ["coll0", "ret0", "coll1", "ret1", "coll2", "coll3"]
+
+        toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
+
+        expData = [[0,0,"coll3",4], [0,0,"coll1",2], [0,0,"coll2",3], [0,0,"coll0",1],
+                   [1,1,"coll3",8], [1,1,"coll1",6], [1,1,"coll2",7], [1,1,"coll0",5],
+                   [2,2,"coll3",-4], [2,2,"coll1",-2], [2,2,"coll2",-3], [2,2,"coll0",-1]]
+        expPnames = ["0_0", "0_1", "0_2", "0_3",
+                     "1_0", "1_1", "1_2", "1_3",
+                     "2_0", "2_1", "2_2", "2_3"]
+        expFNames = ["ret0", "ret1", "ftNames", "ftValues"]
+
+        exp = self.constructor(expData, pointNames=expPnames, featureNames=expFNames)
+
+        nameFeatureNames = "ftNames"
+        nameFeatureValues = "ftValues"
+        test0 = toTest.copy()
+        toCollapse = ["coll3", "coll1", "coll2", "coll0"]
+        test0.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        assert test0 == exp
+
+        test1 = toTest.copy()
+        toCollapse = [5, 2, 4, 0]
+        test1.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        assert test1 == exp
+
+        test2 = toTest.copy()
+        toCollapse = [5, "coll1", "coll2", 0]
+        test2.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        assert test2 == exp
+    
+    def test_points_splitByCollapsingFeatures_noPointNames(self):
+        data = [[0,0,1,2,3,4], [1,1,5,6,7,8], [2,2,-1,-2,-3,-4]]
+        ftNames = ["ret0", "ret1", "coll0", "coll1", "coll2", "coll3"]
+
+        toTest = self.constructor(data, featureNames=ftNames)
+
+        expData = [[0,0,"coll0",1], [0,0,"coll1",2], [0,0,"coll2",3], [0,0,"coll3",4],
+                   [1,1,"coll0",5], [1,1,"coll1",6], [1,1,"coll2",7], [1,1,"coll3",8],
+                   [2,2,"coll0",-1], [2,2,"coll1",-2], [2,2,"coll2",-3], [2,2,"coll3",-4]]
+        expFNames = ["ret0", "ret1", "ftNames", "ftValues"]
+
+        exp = self.constructor(expData, featureNames=expFNames)
+
+        toCollapse = ["coll0", "coll1", "coll2", "coll3"]
+        toTest.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
+        assert toTest == exp
+    
+    def test_features_fillMatching_fillNumericWithNonNumeric(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj = self.constructor(data)
+        obj.features.fillMatching('na', 999)
+
+        exp = self.constructor([[1, 2, 'na', 4], [5, 'na', 'na', 8], [9, 10, 11, 'na']])
+        assert obj == exp
+    
+    def test_points_fillMatching_fillNumericWithNonNumeric(self):
+        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
+        obj = self.constructor(data)
+        obj.points.fillMatching('na', 999)
+
+        exp = self.constructor([[1, 2, 'na', 4], [5, 'na', 'na', 8], [9, 10, 11, 'na']])
+        assert obj == exp
+    
+    ####################################
+    # points.splitByCollapsingFeatures #
+    ####################################
+
+    def test_points_splitByCollapsingFeatures_noNames(self):
+        data = [[0,0,1,2,3,4], [1,1,5,6,7,8], [2,2,-1,-2,-3,-4]]
+
+        toTest = self.constructor(data)
+
+        expData = [[0,0,2,1], [0,0,3,2], [0,0,4,3], [0,0,5,4],
+                   [1,1,2,5], [1,1,3,6], [1,1,4,7], [1,1,5,8],
+                   [2,2,2,-1], [2,2,3,-2], [2,2,4,-3], [2,2,5,-4]]
+
+        exp = self.constructor(expData)
+        exp.features.setNames("ftIndex", 2)
+        exp.features.setNames("ftValues", 3)
+
+        toCollapse = [2, 3, 4, 5]
+        toTest.points.splitByCollapsingFeatures(toCollapse, "ftIndex", "ftValues")
+
+        assert toTest == exp
+    
+    def test_features_fillMatching_mean_nonNumeric(self):
+        obj0 = self.constructor([[1, 2, 3], ['na', 11, 'na'], [7, 11, 'na'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj1 = obj0.copy()
+        obj1.features.fillMatching(fill.mean, match.nonNumeric)
+        exp1 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
+        exp1.features.setNames(['a', 'b', 'c'])
+        assert obj1 == exp1
+
+        obj2 = obj0.copy()
+        obj2.features.fillMatching('na', [3, 7])
+        obj2.features.fillMatching(fill.mean, match.nonNumeric)
+        exp2 = self.constructor([[1, 2, 9], [1, 11, 9], [1, 11, 9], [1, 8, 9]])
+        exp2.features.setNames(['a', 'b', 'c'])
+        assert obj2 == exp2
+    
+    def test_features_fillMatching_median_nonNumeric(self):
+        obj = self.constructor([[1, 2, 3], ['na', 11, 'na'], [7, 11, 'na'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj.features.fillMatching('na', 11)
+        obj.features.fillMatching(fill.median, match.nonNumeric)
+        exp = self.constructor([[1, 2, 3], [7, 5, 6], [7, 5, 6], [7, 8, 9]])
+        exp.features.setNames(['a', 'b', 'c'])
+        assert obj == exp
+    
+    def test_features_fillMatching_NamePath_preservation(self):
+        data = [['a'], ['b'], [1]]
+        toTest = self.constructor(data)
+
+        toTest._name = "TestName"
+        toTest._absPath = os.path.abspath("TestAbsPath")
+        toTest._relPath = "testRelPath"
+
+        toTest.features.fillMatching(0, match.nonNumeric)
+
+        assert toTest.name == "TestName"
+        assert toTest.absolutePath == os.path.abspath("TestAbsPath")
+        assert toTest.relativePath == 'testRelPath'
+  
+    def test_points_fillMatching_queryString(self):
+        obj0 = self.constructor([[1, 2, 3, 4], ['na', 6, 'na', 8], [9, 1, 11, 'na']], pointNames=['a', 'b', 'c'])
+        obj0.points.fillMatching(fill.mean, "is not numeric")
+        exp0 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
+        exp0.points.setNames(['a', 'b', 'c'])
+        assert obj0 == exp0
+
+        obj1 = self.constructor([[1, 2, 3, 4], [None, 6, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
+        obj1.points.fillMatching(fill.mean, "is missing")
+        exp1 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
+        exp1.points.setNames(['a', 'b', 'c'], useLog=False)
+        assert obj1 == exp1
+    
+    def test_points_fillMatching_median_nonNumeric(self):
+        obj = self.constructor([[1, 2, 3, 4], ['na', 6, 'na', 8], [9, 1, 11, 'na']], pointNames=['a', 'b', 'c'])
+        obj.points.fillMatching('na', 11)
+        obj.points.fillMatching(fill.median, match.nonNumeric)
+        exp = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 5, 5]])
+        exp.points.setNames(['a', 'b', 'c'])
+        assert obj == exp
+    
+    def test_points_fillMatching_NamePath_preservation(self):
+        data = [['a', 'b', 1]]
+        toTest = self.constructor(data)
+
+        toTest._name = "TestName"
+        toTest._absPath = os.path.abspath("TestAbsPath")
+        toTest._relPath = "testRelPath"
+
+        toTest.points.fillMatching(0, match.nonNumeric)
+
+        assert toTest.name == "TestName"
+        assert toTest.absolutePath == os.path.abspath("TestAbsPath")
+        assert toTest.relativePath == 'testRelPath'
+    
+    def test_features_splitByParsing_listIntegers(self):
+        data = [[0, "a1z9000AAA"], [1, "b2y8000BBB"], [2, "c3x7000CCC"]]
+        pNames = ["0", "1", "2"]
+        fNames = ["f0", "merged"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [[0, "a1", "z9", "000", "AAA"], [1, "b2", "y8", "000", "BBB"],
+                   [2, "c3", "x7", "000", "CCC"]]
+        expFNames = ["f0", "split0", "split1", "split2", "split3"]
+        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
+
+        toTest.features.splitByParsing("merged", [2,4,7], ["split0", "split1", "split2", "split3"])
+        assert toTest == exp
+        
+    def test_features_splitByParsing_listStrings(self):
+        data = [[0, "a1/9000-AAA"], [1, "b2/8000-BBB"], [2, "c3/7000-CCC"]]
+        pNames = ["0", "1", "2"]
+        fNames = ["f0", "merged"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [[0, "a1", "9000", "AAA"], [1, "b2", "8000", "BBB"],
+                   [2, "c3", "7000", "CCC"]]
+        expFNames = ["f0", "split0", "split1", "split2"]
+        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
+
+        toTest.features.splitByParsing(1, ['/','-'], ["split0", "split1", "split2"])
+        assert toTest == exp
+    
+    def test_features_splitByParsing_noNames(self):
+        data = [[0, "a1", 0], [1, "b2", 1], [2, "c3", 2]]
+        toTest = self.constructor(data)
+
+        expData = [[0, "a", "1", 0], [1, "b", "2", 1], [2, "c", "3", 2]]
+        exp = self.constructor(expData)
+        exp.features.setNames("split0", 1)
+        exp.features.setNames("split1", 2)
+
+        toTest.features.splitByParsing(1, 1, ["split0", "split1"])
+        assert toTest == exp
+    
+    @raises(InvalidArgumentValueCombination)
+    def test_features_splitByParsing_shortSplitList(self):
+        data = [["a-1", 0], ["b-2", 1], ["c3", 2]]
+        pNames = ["a", "b", "c"]
+        fNames = ["merged", "f0"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        toTest.features.splitByParsing("merged", '-', ["split0", "split1"])
+
+    @raises(InvalidArgumentValueCombination)
+    def test_features_splitByParsing_longSplitList(self):
+        data = [["a-1", 0], ["b-2-2", 1], ["c-3", 2]]
+        pNames = ["a", "b", "c"]
+        fNames = ["merged", "f0"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        toTest.features.splitByParsing("merged", '-', ["split0", "split1"])
+
+    def test_features_replace_order(self):
+        data = [['x', 'y', 'z'], ['x', 'y', 'z'], ['x', 'y', 'z']]
+        repl = [[0, 2], [3, 5], [6, 8]]
+        exp = [[2, 'y', 0], [5, 'y', 3], [8, 'y', 6]]
+
+        toTest = self.constructor(data)
+        toTest.features.replace(repl, features=[2, 0])
+
+        assert toTest == self.constructor(exp)
+    
+    def test_features_fillMatching_queryString(self):
+        obj0 = self.constructor([[1, 2, 3], ['na', 11, 'na'], [7, 11, 'na'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj0.features.fillMatching(fill.mean, "== na")
+        exp0 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
+        exp0.features.setNames(['a', 'b', 'c'])
+        assert obj0 == exp0
+
+        obj1 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
+        obj1.features.fillMatching(fill.mean, "is missing")
+        exp1 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
+        exp1.features.setNames(['a', 'b', 'c'], useLog=False)
+        assert obj1 == exp1
+    
+    def test_points_fillMatching_mean_nonNumeric(self):
+        obj0 = self.constructor([[1, 2, 3, 4], ['na', 6, 'na', 8], [9, 1, 11, 'na']], pointNames=['a', 'b', 'c'])
+        obj1 = obj0.copy()
+        obj1.points.fillMatching(fill.mean, match.nonNumeric)
+        exp1 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
+        exp1.points.setNames(['a', 'b', 'c'])
+        assert obj1 == exp1
+
+        obj2 = obj0.copy()
+        obj2.points.fillMatching('na', [4, 8])
+        obj2.points.fillMatching(fill.mean, match.nonNumeric)
+        exp2 = self.constructor([[1, 2, 3, 2], [6, 6, 6, 6], [9, 1, 11, 7]])
+        exp2.points.setNames(['a', 'b', 'c'])
+        assert obj2 == exp2
+    
+    @oneLogEntryExpected
+    def test_features_splitByParsing_listMixed(self):
+        data = [[0, "a1/9z000-AAA"], [1, "b2/8y000-BBB"], [2, "c3/7x000-CCC"]]
+        pNames = ["0", "1", "2"]
+        fNames = ["f0", "merged"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [[0, "a1", "9z", "000", "AAA"], [1, "b2", "8y", "000", "BBB"],
+                   [2, "c3", "7x", "000", "CCC"]]
+        expFNames = ["f0", "split0", "split1", "split2", "split3"]
+        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
+
+        toTest.features.splitByParsing(1, ['/', 5, '-'], ["split0", "split1", "split2", "split3"])
+        assert toTest == exp
+
+    def test_features_splitByParsing_function(self):
+        data = [["a1z9000AAA"], ["b2y8000BBB"], ["c3x7000CCC"]]
+        pNames = ["a", "b", "c"]
+        fNames = ["merged"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [["a1z9", "AAA"], ["b2y8", "BBB"], ["c3x7", "CCC"]]
+        expFNames = ["split0", "split1"]
+        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
+
+        def splitter(value):
+            return value.split('000')
+
+        toTest.features.splitByParsing("merged", splitter, ["split0", "split1"])
+        assert toTest == exp
+
+    def test_features_splitByParsing_regex(self):
+        data = [["a1z9000AAA", '001'], ["b2y8000BBB", '001'], ["c3x7000CCC", '002']]
+        pNames = ["a", "b", "c"]
+        fNames = ["merged", "f0"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [["a1", "9000AAA", '001'], ["b2", "8000BBB", '001'], ["c3", "7000CCC", '002']]
+        expFNames = ["split0", "split1", "f0"]
+        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
+
+        def splitter(value):
+            import re
+            return re.split('[xyz]', value)
+
+        toTest.features.splitByParsing("merged", splitter, ["split0", "split1"])
+        assert toTest == exp
+    
+    #####################################
+    # points.combineByExpandingFeatures #
+    #####################################
+    @logCountAssertionFactory(3)
+    def test_points_combineByExpandingFeatures_singleValuesFeature(self):
+        data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
+                ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
+                ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2], ["p3", 100, 'r3', 11.0],
+                ["p1", 200, 'r1', 18.1], ["p1", 200, 'r2', 20.1], ["p1", 200, 'r3', 19.8]]
+        pNames = [str(i) for i in range(12)]
+        fNames = ['type', 'dist', 'run', 'time']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [["p1", 100, 9.5, 9.9, 9.8],
+                   ["p2", 100, 6.5, 6.0, 5.9],
+                   ["p3", 100, 11, 11.2, 11.0],
+                   ["p1", 200, 18.1, 20.1, 19.8]]
+        expFNames = ['type', 'dist', 'r1', 'r2', 'r3']
+        expPNames = ["0", "3", "6", "9"]
+        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
+
+        test0 = toTest.copy()
+        test0.points.combineByExpandingFeatures('run', 'time')
+        assert test0 == exp
+
+        test1 = toTest.copy()
+        test1.points.combineByExpandingFeatures(2, 3)
+        assert test1 == exp
+
+        test2 = toTest.copy()
+        test2.points.combineByExpandingFeatures('run', 3)
+        assert test2 == exp
+
+    @logCountAssertionFactory(3)
+    def test_points_combineByExpandingFeatures_multipleValuesFeatures(self):
+        data = [["p1", 100, 'r1', 9.5, 9.4], ["p1", 100, 'r2', 9.9, 9.7], ["p1", 100, 'r3', 9.8, 9.8],
+                ["p2", 100, 'r1', 6.5, 6.5], ["p2", 100, 'r2', 6.0, 6.2], ["p2", 100, 'r3', 5.9, 6.1],
+                ["p3", 100, 'r1', 11.0, 10.9], ["p3", 100, 'r2', 11.2, 11.1], ["p3", 100, 'r3', 11.0, 11.0],
+                ["p1", 200, 'r1', 18.1, 18.0], ["p1", 200, 'r2', 20.1, 20.2], ["p1", 200, 'r3', 19.8, 19.9]]
+        pNames = [str(i) for i in range(12)]
+        fNames = ['type', 'dist', 'run', 'timer1', 'timer2']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [["p1", 100, 9.5, 9.4, 9.9, 9.7, 9.8, 9.8],
+                   ["p2", 100, 6.5, 6.5, 6.0, 6.2, 5.9, 6.1],
+                   ["p3", 100, 11, 10.9, 11.2, 11.1, 11.0, 11.0],
+                   ["p1", 200, 18.1, 18.0, 20.1, 20.2, 19.8, 19.9]]
+        expFNames = ['type', 'dist', 'r1_timer1', 'r1_timer2', 'r2_timer1',
+                     'r2_timer2', 'r3_timer1', 'r3_timer2']
+        expPNames = ["0", "3", "6", "9"]
+        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
+
+        test0 = toTest.copy()
+        test0.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
+        assert test0 == exp
+
+        test1 = toTest.copy()
+        test1.points.combineByExpandingFeatures(2, [3, 4])
+        assert test1 == exp
+
+        test2 = toTest.copy()
+        test2.points.combineByExpandingFeatures('run', [3, 4])
+        assert test2 == exp
+
+    def test_points_combineByExpandingFeatures_withMissing(self):
+        data = [["p1", 100, 'r2', 9.9, 9.7], ["p1", 100, 'r3', 9.8, 9.8],
+                ["p2", 100, 'r1', 6.5, 6.5], ["p2", 100, 'r2', 6.0, 6.2], ["p2", 100, 'r3', 5.9, 6.1],
+                ["p3", 100, 'r1', 11.0, 10.9], ["p3", 100, 'r2', 11.2, 11.1],
+                ["p1", 200, 'r1', 18.1, 18.0], ["p1", 200, 'r2', 20.1, 20.2], ["p1", 200, 'r3', 19.8, 19.9]]
+        pNames = [str(i) for i in range(10)]
+        fNames = ['type', 'dist', 'run', 'timer1', 'timer2']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [["p1", 100, 9.9, 9.7, 9.8, 9.8, None, None],
+                   ["p2", 100, 6.0, 6.2, 5.9, 6.1, 6.5, 6.5],
+                   ["p3", 100, 11.2, 11.1, None, None, 11.0, 10.9],
+                   ["p1", 200, 20.1, 20.2, 19.8, 19.9, 18.1, 18.0]]
+        expFNames = ['type', 'dist', 'r2_timer1', 'r2_timer2', 'r3_timer1',
+                     'r3_timer2', 'r1_timer1', 'r1_timer2']
+        expPNames = ["0", "2", "5", "7"]
+        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
+
+        toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
+
+        assert toTest == exp
+
+    def test_points_combineByExpandingFeatures_nonConcurrentNamesAndValues(self):
+        data = [[100, 'r1', "p1", 9.5, 9.4], [100, 'r2', "p1", 9.9, 9.7], [100, 'r3', "p1", 9.8, 9.8],
+                [100, 'r1', "p2", 6.5, 6.5], [100, 'r2', "p2", 6.0, 6.2], [100, 'r3', "p2", 5.9, 6.1],
+                [100, 'r1', "p3", 11.0, 10.9], [100, 'r2', "p3", 11.2, 11.1], [100, 'r3', "p3", 11.0, 11.0],
+                [200, 'r1', "p1", 18.1, 18.0], [200, 'r2', "p1", 20.1, 20.2], [200, 'r3', "p1", 19.8, 19.9]]
+        pNames = [str(i) for i in range(12)]
+        fNames = ['type', 'run', 'dist', 'timer1', 'timer2']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [[100, 9.5, 9.4, 9.9, 9.7, 9.8, 9.8, "p1"],
+                   [100, 6.5, 6.5, 6.0, 6.2, 5.9, 6.1, "p2"],
+                   [100, 11, 10.9, 11.2, 11.1, 11.0, 11.0, "p3"],
+                   [200, 18.1, 18.0, 20.1, 20.2, 19.8, 19.9, "p1"]]
+        expFNames = ['type', 'r1_timer1', 'r1_timer2', 'r2_timer1',
+                     'r2_timer2', 'r3_timer1', 'r3_timer2', 'dist']
+        expPNames = ["0", "3", "6", "9"]
+        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
+
+        toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
+        assert toTest == exp
+
+    def test_points_combineByExpandingFeatures_noPointNames(self):
+        data = [["p1", 100, 'r1', 9.5, 9.4], ["p1", 100, 'r2', 9.9, 9.7], ["p1", 100, 'r3', 9.8, 9.8],
+                ["p2", 100, 'r1', 6.5, 6.5], ["p2", 100, 'r2', 6.0, 6.2], ["p2", 100, 'r3', 5.9, 6.1],
+                ["p3", 100, 'r1', 11.0, 10.9], ["p3", 100, 'r2', 11.2, 11.1], ["p3", 100, 'r3', 11.0, 11.0],
+                ["p1", 200, 'r1', 18.1, 18.0], ["p1", 200, 'r2', 20.1, 20.2], ["p1", 200, 'r3', 19.8, 19.9]]
+        fNames = ['type', 'dist', 'run', 'timer1', 'timer2']
+        toTest = self.constructor(data, featureNames=fNames)
+
+        expData = [["p1", 100, 9.5, 9.4, 9.9, 9.7, 9.8, 9.8],
+                   ["p2", 100, 6.5, 6.5, 6.0, 6.2, 5.9, 6.1],
+                   ["p3", 100, 11, 10.9, 11.2, 11.1, 11.0, 11.0],
+                   ["p1", 200, 18.1, 18.0, 20.1, 20.2, 19.8, 19.9]]
+        expFNames = ['type', 'dist', 'r1_timer1', 'r1_timer2', 'r2_timer1',
+                     'r2_timer2', 'r3_timer1', 'r3_timer2']
+        exp = self.constructor(expData, featureNames=expFNames)
+
+        toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
+        assert toTest == exp
+
+    def test_points_combineByExpandingFeatures_noNames(self):
+        data = [["p1", 100, 'r1', 9.5, 9.4], ["p1", 100, 'r2', 9.9, 9.7], ["p1", 100, 'r3', 9.8, 9.8],
+                ["p2", 100, 'r1', 6.5, 6.5], ["p2", 100, 'r2', 6.0, 6.2], ["p2", 100, 'r3', 5.9, 6.1],
+                ["p3", 100, 'r1', 11.0, 10.9], ["p3", 100, 'r2', 11.2, 11.1], ["p3", 100, 'r3', 11.0, 11.0],
+                ["p1", 200, 'r1', 18.1, 18.0], ["p1", 200, 'r2', 20.1, 20.2], ["p1", 200, 'r3', 19.8, 19.9]]
+        toTest = self.constructor(data)
+
+        expData = [["p1", 100, 9.5, 9.4, 9.9, 9.7, 9.8, 9.8],
+                   ["p2", 100, 6.5, 6.5, 6.0, 6.2, 5.9, 6.1],
+                   ["p3", 100, 11, 10.9, 11.2, 11.1, 11.0, 11.0],
+                   ["p1", 200, 18.1, 18.0, 20.1, 20.2, 19.8, 19.9]]
+
+        exp = self.constructor(expData,)
+        exp.features.setNames('r1_3', 2)
+        exp.features.setNames('r1_4', 3)
+        exp.features.setNames('r2_3', 4)
+        exp.features.setNames('r2_4', 5)
+        exp.features.setNames('r3_3', 6)
+        exp.features.setNames('r3_4', 7)
+
+        toTest.points.combineByExpandingFeatures(2, [3, 4])
+        assert toTest == exp
+
+    @raises(ImproperObjectAction)
+    def test_points_combineByExpandingFeatures_2valuesSameFeature(self):
+        data = [["p1", 100, 'r1', 9.5, 9.4], ["p1", 100, 'r2', 9.9, 9.7], ["p1", 100, 'r3', 9.8, 9.8],
+                ["p2", 100, 'r1', 6.5, 6.5], ["p2", 100, 'r2', 6.0, 6.2], ["p2", 100, 'r3', 5.9, 6.1],
+                ["p3", 100, 'r1', 11.0, 10.9], ["p3", 100, 'r2', 11.2, 11.1], ["p3", 100, 'r1', 11.0, 11.0], # r1 in p3 twice
+                ["p1", 200, 'r1', 18.1, 18.0], ["p1", 200, 'r2', 20.1, 20.2], ["p1", 200, 'r3', 19.8, 19.9]]
+        pNames = [str(i) for i in range(12)]
+        fNames = ['type', 'dist', 'run', 'timer1', 'timer2']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
+
+    def test_points_combineByExpandingFeatures_single_valuesMapToSameString(self):
+
+        data = [["p1", 100, 1, 9.5], ["p1", 100, 2, 9.9], ["p1", 100, '2', 9.8],
+                ["p2", 100, 1, 6.5], ["p2", 100, 2, 6.0], ["p2", 100, '2', 5.9],
+                ["p3", 100, 1, 11], ["p3", 100, 2, 11.2], ["p3", 100, '2', 11.0],
+                ["p1", 200, 1, 18.1], ["p1", 200, 2, 20.1], ["p1", 200, '2', 19.8]]
+        pNames = [str(i) for i in range(12)]
+        fNames = ['type', 'dist', 'run', 'time']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [["p1", 100, 9.5, 9.9, 9.8],
+                   ["p2", 100, 6.5, 6.0, 5.9],
+                   ["p3", 100, 11, 11.2, 11.0],
+                   ["p1", 200, 18.1, 20.1, 19.8]]
+        expFNames = ['type', 'dist', '1', '2(int)', '2(str)']
+        expPNames = ["0", "3", "6", "9"]
+        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
+
+        msg = 'Identical strings returned by classes that are unequal in '
+        msg += 'featureWithFeatureNames.'
+        with raises(ImproperObjectAction, match=msg):
+            toTest.points.combineByExpandingFeatures('run', 'time')
+
+        toTest.points.combineByExpandingFeatures('run', 'time',
+                                                 modifyDuplicateFeatureNames=True)
+        assert toTest == exp
+
+    def test_points_combineByExpandingFeatures_multiple_valuesMapToSameString(self):
+        data = [["p1", 100, '1', 9.5, 9.4], ["p1", 100, '2', 9.9, 9.7], ["p1", 100, 2, 9.8, 9.8],
+                ["p2", 100, '1', 6.5, 6.5], ["p2", 100, '2', 6.0, 6.2], ["p2", 100, 2, 5.9, 6.1],
+                ["p3", 100, '1', 11.0, 10.9], ["p3", 100, '2', 11.2, 11.1], ["p3", 100, 2, 11.0, 11.0],
+                ["p1", 200, '1', 18.1, 18.0], ["p1", 200, '2', 20.1, 20.2], ["p1", 200, 2, 19.8, 19.9]]
+        pNames = [str(i) for i in range(12)]
+        fNames = ['type', 'dist', 'run', 'timer1', 'timer2']
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [["p1", 100, 9.5, 9.4, 9.9, 9.7, 9.8, 9.8],
+                   ["p2", 100, 6.5, 6.5, 6.0, 6.2, 5.9, 6.1],
+                   ["p3", 100, 11, 10.9, 11.2, 11.1, 11.0, 11.0],
+                   ["p1", 200, 18.1, 18.0, 20.1, 20.2, 19.8, 19.9]]
+        expFNames = ['type', 'dist', '1_timer1', '1_timer2', '2(str)_timer1',
+                     '2(str)_timer2', '2(int)_timer1', '2(int)_timer2']
+        expPNames = ["0", "3", "6", "9"]
+        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
+
+        msg = 'Identical strings returned by classes that are unequal in '
+        msg += 'featureWithFeatureNames.'
+        with raises(ImproperObjectAction, match=msg):
+            toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
+
+        toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'],
+                                                 modifyDuplicateFeatureNames=True)
+        assert toTest == exp
+    
+    ###########################
+    # features.splitByParsing #
+    ###########################
+    
+    @oneLogEntryExpected
+    def test_features_splitByParsing_integer(self):
+        data = [[0, "a1", 0], [1, "b2", 1], [2, "c3", 2]]
+        pNames = ["0", "1", "2"]
+        fNames = ["f0", "merged", "f1"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [[0, "a", "1", 0], [1, "b", "2", 1], [2, "c", "3", 2]]
+        expFNames = ["f0", "split0", "split1", "f1"]
+        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
+
+        toTest.features.splitByParsing(1, 1, ["split0", "split1"])
+        assert toTest == exp
+
+    @oneLogEntryExpected
+    def test_features_splitByParsing_string(self):
+        data = [["a-1", 0], ["b-2", 1], ["c-3", 2]]
+        pNames = ["a", "b", "c"]
+        fNames = ["merged", "f0"]
+        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
+
+        expData = [["a", "1", 0], ["b", "2", 1], ["c", "3", 2]]
+        expFNames = ["split0", "split1", "f0"]
+        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
+
+        toTest.features.splitByParsing(0, '-', ["split0", "split1"])
+        assert toTest == exp
+    
+    
+class HighLevelModifyingSparseSafe(DataTestObject):
 
     ####################################
     # replaceFeatureWithBinaryFeatures #
@@ -2502,26 +3136,6 @@ class HighLevelModifying(DataTestObject):
         assert toTest.isIdentical(exp)
         assert ret == expFeatureNames
 
-    @oneLogEntryExpected
-    def test_replaceFeatureWithBinaryFeatures_insertLocation(self):
-        """ Test replaceFeatureWithBinaryFeatures() replaces at same index """
-        data = [['a', 1, 'a'], ['b', 2, 'b'], ['c', 3, 'c']]
-        featureNames = ['stay1', 'replace', 'stay2']
-        toTest = self.constructor(data, featureNames=featureNames)
-        getNames = self.constructor(data, featureNames=featureNames)
-        ret = toTest.replaceFeatureWithBinaryFeatures(1)
-
-        expData = [['a', 1, 0, 0, 'a'], ['b', 0, 1, 0, 'b'], ['c', 0, 0, 1, 'c']]
-        expFeatureNames = []
-        for point in getNames.points:
-            expFeatureNames.append('replace=' + str(point[1]))
-        expFeatureNames.insert(0, 'stay1')
-        expFeatureNames.append('stay2')
-        exp = self.constructor(expData, featureNames=expFeatureNames)
-
-        assert toTest.isIdentical(exp)
-        assert ret == expFeatureNames[1: -1]
-
     def test_replaceFeatureWithBinaryFeatures_NamePath_preservation(self):
         data = [[1], [2], [3]]
         featureNames = ['col']
@@ -2537,6 +3151,25 @@ class HighLevelModifying(DataTestObject):
         assert toTest.absolutePath == "TestAbsPath"
         assert toTest.relativePath == 'testRelPath'
 
+    @oneLogEntryExpected
+    def test_replaceFeatureWithBinaryFeatures_insertLocation(self):
+        """ Test replaceFeatureWithBinaryFeatures() replaces at same index """
+        data = [[111, 1, 111], [222, 2, 222], [333, 3, 333]]
+        featureNames = ['stay1', 'replace', 'stay2']
+        toTest = self.constructor(data, featureNames=featureNames)
+        getNames = self.constructor(data, featureNames=featureNames)
+        ret = toTest.replaceFeatureWithBinaryFeatures(1)
+
+        expData = [[111, 1, 0, 0, 111], [222, 0, 1, 0, 222], [333, 0, 0, 1, 333]]
+        expFeatureNames = []
+        for point in getNames.points:
+            expFeatureNames.append('replace=' + str(point[1]))
+        expFeatureNames.insert(0, 'stay1')
+        expFeatureNames.append('stay2')
+        exp = self.constructor(expData, featureNames=expFeatureNames)
+
+        assert toTest.isIdentical(exp)
+        assert ret == expFeatureNames[1: -1]
 
     ##############################
     # transformFeatureToIntegers #
@@ -2558,10 +3191,25 @@ class HighLevelModifying(DataTestObject):
         toTest = self.constructor(data)
         toTest.transformFeatureToIntegers(0)
 
+    def test_transformFeatureToIntegers_NamePath_preservation(self):
+        data = [[10], [20], [30.5], [20], [10]]
+        featureNames = ['col']
+        toTest = self.constructor(data, featureNames=featureNames)
+
+        toTest._name = "TestName"
+        toTest._absPath = "TestAbsPath"
+        toTest._relPath = "testRelPath"
+
+        toTest.transformFeatureToIntegers(0)
+
+        assert toTest.name == "TestName"
+        assert toTest.absolutePath == "TestAbsPath"
+        assert toTest.relativePath == 'testRelPath'
+
     @oneLogEntryExpected
     def test_transformFeatureToIntegers_handmade(self):
         """ Test transformFeatureToIntegers() against handmade output """
-        data = [['a'], ['b'], ['c'], ['b'], ['a']]
+        data = [[111], [222], [333], [222], [111]]
         featureNames = ['col']
         toTest = self.constructor(data, featureNames=featureNames)
         ret = toTest.transformFeatureToIntegers(0)
@@ -2571,20 +3219,15 @@ class HighLevelModifying(DataTestObject):
         assert toTest[0, 0] != toTest[1, 0]
         assert toTest[0, 0] != toTest[2, 0]
 
-        # ensure data was transformed to a numeric type.
-        for i in range(len(toTest.points)):
-            # Matrix and Sparse might store values as floats or numpy types
-            assert isinstance(toTest[i, 0], (int, float, np.number))
-
         # check ret
         assert len(ret) == 3
         assert all(isinstance(key, int) for key in ret.keys())
         for value in ret.values():
-            assert value in ['a', 'b', 'c']
+            assert value in [111, 222, 333]
 
     def test_transformFeatureToIntegers_handmade_lazyNameGeneration(self):
         """ Test transformFeatureToIntegers() against handmade output """
-        data = [['a'], ['b'], ['c'], ['b'], ['a']]
+        data = [[111], [222], [333], [222], [111]]
         toTest = self.constructor(data)
         ret = toTest.transformFeatureToIntegers(0)
 
@@ -2592,7 +3235,7 @@ class HighLevelModifying(DataTestObject):
 
     def test_transformFeatureToIntegers_pointNames(self):
         """ Test transformFeatureToIntegers preserves pointNames """
-        data = [['a'], ['b'], ['c'], ['b'], ['a']]
+        data = [[111], [222], [333], [222], [111]]
         pnames = ['1a', '2a', '3', '2b', '1b']
         fnames = ['col']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
@@ -2604,20 +3247,9 @@ class HighLevelModifying(DataTestObject):
         assert toTest.points.getName(3) == '2b'
         assert toTest.points.getName(4) == '1b'
 
-        # ensure data was transformed to a numeric type.
-        for i in range(len(toTest.points)):
-            # Matrix and Sparse might store values as floats or numpy types
-            assert isinstance(toTest[i, 0], (int, float, np.number))
-
-        # check ret
-        assert len(ret) == 3
-        assert all(isinstance(key, int) for key in ret.keys())
-        for value in ret.values():
-            assert value in ['a', 'b', 'c']
-
     def test_transformFeatureToIntegers_positioning(self):
         """ Test transformFeatureToIntegers preserves featurename mapping """
-        data = [['a', 0], ['b', 1], ['c', 2], ['b', 3], ['a', 4]]
+        data = [[111, 0], [222, 1], [333, 2], [222, 3], [111, 4]]
         pnames = ['1a', '2a', '3', '2b', '1b']
         fnames = ['col', 'pos']
         toTest = self.constructor(data, pointNames=pnames, featureNames=fnames)
@@ -2634,19 +3266,14 @@ class HighLevelModifying(DataTestObject):
         assert toTest[3, 1] == 3
         assert toTest[4, 1] == 4
 
-        # ensure data was transformed to a numeric type.
-        for i in range(len(toTest.points)):
-            # Matrix and Sparse might store values as floats or numpy types
-            assert isinstance(toTest[i, 0], (int, float, np.number))
-
         # check ret
         assert len(ret) == 3
         assert all(isinstance(key, int) for key in ret.keys())
         for value in ret.values():
-            assert value in ['a', 'b', 'c']
+            assert value in [111, 222, 333]
 
     def test_transformFeatureToIntegers_ZerosInFeatureValuesPreserved(self):
-        data = [['a'], [52], [0], [0], [0], [52], ['a']]
+        data = [[111], [52], [0], [0], [0], [52], [111]]
 
         toTest = self.constructor(data, featureNames=False)
         ret = toTest.transformFeatureToIntegers(0)
@@ -2657,21 +3284,6 @@ class HighLevelModifying(DataTestObject):
         assert toTest[2, 0] == 0
         assert toTest[3, 0] == 0
         assert toTest[4, 0] == 0
-
-    def test_transformFeatureToIntegers_NamePath_preservation(self):
-        data = [[10], [20], [30.5], [20], [10]]
-        featureNames = ['col']
-        toTest = self.constructor(data, featureNames=featureNames)
-
-        toTest._name = "TestName"
-        toTest._absPath = "TestAbsPath"
-        toTest._relPath = "testRelPath"
-
-        toTest.transformFeatureToIntegers(0)
-
-        assert toTest.name == "TestName"
-        assert toTest.absolutePath == "TestAbsPath"
-        assert toTest.relativePath == 'testRelPath'
 
     ####################
     # points.permute() #
@@ -3062,33 +3674,6 @@ class HighLevelModifying(DataTestObject):
         exp2.features.setNames(['a', 'b', 'c'], useLog=False)
         assert obj2 == exp2
 
-    def test_features_fillMatching_mean_nonNumeric(self):
-        obj0 = self.constructor([[1, 2, 3], ['na', 11, 'na'], [7, 11, 'na'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        obj1 = obj0.copy()
-        obj1.features.fillMatching(fill.mean, match.nonNumeric)
-        exp1 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
-        exp1.features.setNames(['a', 'b', 'c'])
-        assert obj1 == exp1
-
-        obj2 = obj0.copy()
-        obj2.features.fillMatching('na', [3, 7])
-        obj2.features.fillMatching(fill.mean, match.nonNumeric)
-        exp2 = self.constructor([[1, 2, 9], [1, 11, 9], [1, 11, 9], [1, 8, 9]])
-        exp2.features.setNames(['a', 'b', 'c'])
-        assert obj2 == exp2
-
-    def test_features_fillMatching_queryString(self):
-        obj0 = self.constructor([[1, 2, 3], ['na', 11, 'na'], [7, 11, 'na'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        obj0.features.fillMatching(fill.mean, "== na")
-        exp0 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
-        exp0.features.setNames(['a', 'b', 'c'])
-        assert obj0 == exp0
-
-        obj1 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        obj1.features.fillMatching(fill.mean, "is missing")
-        exp1 = self.constructor([[1, 2, 3], [5, 11, 6], [7, 11, 6], [7, 8, 9]])
-        exp1.features.setNames(['a', 'b', 'c'], useLog=False)
-        assert obj1 == exp1
 
     @raises(InvalidArgumentValue)
     def test_features_fillMatching_mean_allMatches(self):
@@ -3103,33 +3688,13 @@ class HighLevelModifying(DataTestObject):
         exp.features.setNames(['a', 'b', 'c'])
         assert obj == exp
 
-    def test_features_fillMatching_median_nonNumeric(self):
-        obj = self.constructor([[1, 2, 3], ['na', 11, 'na'], [7, 11, 'na'], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        obj.features.fillMatching('na', 11)
-        obj.features.fillMatching(fill.median, match.nonNumeric)
-        exp = self.constructor([[1, 2, 3], [7, 5, 6], [7, 5, 6], [7, 8, 9]])
-        exp.features.setNames(['a', 'b', 'c'])
-        assert obj == exp
+    
 
     @raises(InvalidArgumentValue)
     def test_features_fillMatching_median_allMatches(self):
         obj = self.constructor([[1, None, 3], [4, None, 6], [7, None, 9]])
         obj.features.fillMatching(fill.median, match.missing)
 
-    def test_features_fillMatching_mode(self):
-        obj0 = self.constructor([[1, 2, 3], [None, 11, None], [7, 11, None], [7, 8, 9]], featureNames=['a', 'b', 'c'])
-        obj0.features.fillMatching(None, 9)
-        obj0.features.fillMatching(fill.mode, match.missing)
-        exp0 = self.constructor([[1, 2, 3], [7, 11, 3], [7, 11, 3], [7, 8, 3]])
-        exp0.features.setNames(['a', 'b', 'c'])
-        assert obj0 == exp0
-
-        obj1 = self.constructor([['a','b','c'], [None, 'd', None], ['e','d','c'], ['e','f','g']], featureNames=['a', 'b', 'c'])
-        obj1.features.fillMatching(None, 'c')
-        obj1.features.fillMatching(fill.mode, match.missing)
-        exp1 = self.constructor([['a','b','g'], ['e','d', 'g'], ['e','d', 'g'], ['e','f', 'g']])
-        exp1.features.setNames(['a', 'b', 'c'])
-        assert obj1 == exp1
 
     @raises(InvalidArgumentValue)
     def test_features_fillMatching_mode_allMatches(self):
@@ -3286,27 +3851,6 @@ class HighLevelModifying(DataTestObject):
         exp = self.constructor([[1, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
         assert obj == exp
 
-    def test_features_fillMatching_fillNumericWithNonNumeric(self):
-        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
-        obj = self.constructor(data)
-        obj.features.fillMatching('na', 999)
-
-        exp = self.constructor([[1, 2, 'na', 4], [5, 'na', 'na', 8], [9, 10, 11, 'na']])
-        assert obj == exp
-
-    def test_features_fillMatching_NamePath_preservation(self):
-        data = [['a'], ['b'], [1]]
-        toTest = self.constructor(data)
-
-        toTest._name = "TestName"
-        toTest._absPath = os.path.abspath("TestAbsPath")
-        toTest._relPath = "testRelPath"
-
-        toTest.features.fillMatching(0, match.nonNumeric)
-
-        assert toTest.name == "TestName"
-        assert toTest.absolutePath == os.path.abspath("TestAbsPath")
-        assert toTest.relativePath == 'testRelPath'
 
     #######################
     # points.fillMatching #
@@ -3328,33 +3872,9 @@ class HighLevelModifying(DataTestObject):
         exp2.points.setNames(['a', 'b', 'c'], useLog=False)
         assert obj2 == exp2
 
-    def test_points_fillMatching_mean_nonNumeric(self):
-        obj0 = self.constructor([[1, 2, 3, 4], ['na', 6, 'na', 8], [9, 1, 11, 'na']], pointNames=['a', 'b', 'c'])
-        obj1 = obj0.copy()
-        obj1.points.fillMatching(fill.mean, match.nonNumeric)
-        exp1 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
-        exp1.points.setNames(['a', 'b', 'c'])
-        assert obj1 == exp1
+    
 
-        obj2 = obj0.copy()
-        obj2.points.fillMatching('na', [4, 8])
-        obj2.points.fillMatching(fill.mean, match.nonNumeric)
-        exp2 = self.constructor([[1, 2, 3, 2], [6, 6, 6, 6], [9, 1, 11, 7]])
-        exp2.points.setNames(['a', 'b', 'c'])
-        assert obj2 == exp2
-
-    def test_points_fillMatching_queryString(self):
-        obj0 = self.constructor([[1, 2, 3, 4], ['na', 6, 'na', 8], [9, 1, 11, 'na']], pointNames=['a', 'b', 'c'])
-        obj0.points.fillMatching(fill.mean, "is not numeric")
-        exp0 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
-        exp0.points.setNames(['a', 'b', 'c'])
-        assert obj0 == exp0
-
-        obj1 = self.constructor([[1, 2, 3, 4], [None, 6, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
-        obj1.points.fillMatching(fill.mean, "is missing")
-        exp1 = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 7]])
-        exp1.points.setNames(['a', 'b', 'c'], useLog=False)
-        assert obj1 == exp1
+    
 
     @raises(InvalidArgumentValue)
     def test_points_fillMatching_mean_allMatches(self):
@@ -3365,14 +3885,6 @@ class HighLevelModifying(DataTestObject):
         obj = self.constructor([[1, 2, 3, 4], [None, 6, None, 8], [9, 1, 11, None]], pointNames=['a', 'b', 'c'])
         obj.points.fillMatching(fill.median, match.missing)
         exp = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 11, 9]])
-        exp.points.setNames(['a', 'b', 'c'])
-        assert obj == exp
-
-    def test_points_fillMatching_median_nonNumeric(self):
-        obj = self.constructor([[1, 2, 3, 4], ['na', 6, 'na', 8], [9, 1, 11, 'na']], pointNames=['a', 'b', 'c'])
-        obj.points.fillMatching('na', 11)
-        obj.points.fillMatching(fill.median, match.nonNumeric)
-        exp = self.constructor([[1, 2, 3, 4], [7, 6, 7, 8], [9, 1, 5, 5]])
         exp.points.setNames(['a', 'b', 'c'])
         assert obj == exp
 
@@ -3551,488 +4063,6 @@ class HighLevelModifying(DataTestObject):
         exp = self.constructor([[1, 2, 0, 4], [5, 0, 0, 8], [9, 10, 11, 0]])
         assert obj == exp
 
-    def test_points_fillMatching_fillNumericWithNonNumeric(self):
-        data = [[1, 2, 999, 4], [5, 999, 999, 8], [9, 10, 11, 999]]
-        obj = self.constructor(data)
-        obj.points.fillMatching('na', 999)
-
-        exp = self.constructor([[1, 2, 'na', 4], [5, 'na', 'na', 8], [9, 10, 11, 'na']])
-        assert obj == exp
-
-    def test_points_fillMatching_NamePath_preservation(self):
-        data = [['a', 'b', 1]]
-        toTest = self.constructor(data)
-
-        toTest._name = "TestName"
-        toTest._absPath = os.path.abspath("TestAbsPath")
-        toTest._relPath = "testRelPath"
-
-        toTest.points.fillMatching(0, match.nonNumeric)
-
-        assert toTest.name == "TestName"
-        assert toTest.absolutePath == os.path.abspath("TestAbsPath")
-        assert toTest.relativePath == 'testRelPath'
-
-    ####################################
-    # points.splitByCollapsingFeatures #
-    ####################################
-    @logCountAssertionFactory(3)
-    def test_points_splitByCollapsingFeatures_sequentialFeatures(self):
-        data = [[0,0,1,2,3,4], [1,1,5,6,7,8], [2,2,-1,-2,-3,-4]]
-        ptNames = ["0", "1", "2"]
-        ftNames = ["ret0", "ret1", "coll0", "coll1", "coll2", "coll3"]
-
-        toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-
-        expData = [[0,0,"coll0",1], [0,0,"coll1",2], [0,0,"coll2",3], [0,0,"coll3",4],
-                   [1,1,"coll0",5], [1,1,"coll1",6], [1,1,"coll2",7], [1,1,"coll3",8],
-                   [2,2,"coll0",-1], [2,2,"coll1",-2], [2,2,"coll2",-3], [2,2,"coll3",-4]]
-        expPnames = ["0_0", "0_1", "0_2", "0_3",
-                     "1_0", "1_1", "1_2", "1_3",
-                     "2_0", "2_1", "2_2", "2_3"]
-        expFNames = ["ret0", "ret1", "ftNames", "ftValues"]
-
-        exp = self.constructor(expData, pointNames=expPnames, featureNames=expFNames)
-
-        nameFeatureNames = "ftNames"
-        nameFeatureValues = "ftValues"
-        test0 = toTest.copy()
-        toCollapse = ["coll0", "coll1", "coll2", "coll3"]
-        test0.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
-        assert test0 == exp
-
-        test1 = toTest.copy()
-        toCollapse = [2, 3, 4, 5]
-        test1.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
-        assert test1 == exp
-
-        test2 = toTest.copy()
-        toCollapse = [2, "coll1", 4, "coll3"]
-        test2.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
-        assert test2 == exp
-
-    @logCountAssertionFactory(3)
-    def test_points_splitByCollapsingFeatures_nonSequentialFeatures(self):
-        data = [[1,0,2,0,3,4], [5,1,6,1,7,8], [-1,2,-2,2,-3,-4]]
-        ptNames = ["0", "1", "2"]
-        ftNames = ["coll0", "ret0", "coll1", "ret1", "coll2", "coll3"]
-
-        toTest = self.constructor(data, pointNames=ptNames, featureNames=ftNames)
-
-        expData = [[0,0,"coll3",4], [0,0,"coll1",2], [0,0,"coll2",3], [0,0,"coll0",1],
-                   [1,1,"coll3",8], [1,1,"coll1",6], [1,1,"coll2",7], [1,1,"coll0",5],
-                   [2,2,"coll3",-4], [2,2,"coll1",-2], [2,2,"coll2",-3], [2,2,"coll0",-1]]
-        expPnames = ["0_0", "0_1", "0_2", "0_3",
-                     "1_0", "1_1", "1_2", "1_3",
-                     "2_0", "2_1", "2_2", "2_3"]
-        expFNames = ["ret0", "ret1", "ftNames", "ftValues"]
-
-        exp = self.constructor(expData, pointNames=expPnames, featureNames=expFNames)
-
-        nameFeatureNames = "ftNames"
-        nameFeatureValues = "ftValues"
-        test0 = toTest.copy()
-        toCollapse = ["coll3", "coll1", "coll2", "coll0"]
-        test0.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
-        assert test0 == exp
-
-        test1 = toTest.copy()
-        toCollapse = [5, 2, 4, 0]
-        test1.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
-        assert test1 == exp
-
-        test2 = toTest.copy()
-        toCollapse = [5, "coll1", "coll2", 0]
-        test2.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
-        assert test2 == exp
-
-    def test_points_splitByCollapsingFeatures_noPointNames(self):
-        data = [[0,0,1,2,3,4], [1,1,5,6,7,8], [2,2,-1,-2,-3,-4]]
-        ftNames = ["ret0", "ret1", "coll0", "coll1", "coll2", "coll3"]
-
-        toTest = self.constructor(data, featureNames=ftNames)
-
-        expData = [[0,0,"coll0",1], [0,0,"coll1",2], [0,0,"coll2",3], [0,0,"coll3",4],
-                   [1,1,"coll0",5], [1,1,"coll1",6], [1,1,"coll2",7], [1,1,"coll3",8],
-                   [2,2,"coll0",-1], [2,2,"coll1",-2], [2,2,"coll2",-3], [2,2,"coll3",-4]]
-        expFNames = ["ret0", "ret1", "ftNames", "ftValues"]
-
-        exp = self.constructor(expData, featureNames=expFNames)
-
-        toCollapse = ["coll0", "coll1", "coll2", "coll3"]
-        toTest.points.splitByCollapsingFeatures(toCollapse, "ftNames", "ftValues")
-        assert toTest == exp
-
-    def test_points_splitByCollapsingFeatures_noNames(self):
-        data = [[0,0,1,2,3,4], [1,1,5,6,7,8], [2,2,-1,-2,-3,-4]]
-
-        toTest = self.constructor(data)
-
-        expData = [[0,0,2,1], [0,0,3,2], [0,0,4,3], [0,0,5,4],
-                   [1,1,2,5], [1,1,3,6], [1,1,4,7], [1,1,5,8],
-                   [2,2,2,-1], [2,2,3,-2], [2,2,4,-3], [2,2,5,-4]]
-
-        exp = self.constructor(expData)
-        exp.features.setNames("ftIndex", oldIdentifiers=2)
-        exp.features.setNames("ftValues", oldIdentifiers=3)
-
-        toCollapse = [2, 3, 4, 5]
-        toTest.points.splitByCollapsingFeatures(toCollapse, "ftIndex", "ftValues")
-
-        assert toTest == exp
-
-    #####################################
-    # points.combineByExpandingFeatures #
-    #####################################
-    @logCountAssertionFactory(3)
-    def test_points_combineByExpandingFeatures_singleValuesFeature(self):
-        data = [["p1", 100, 'r1', 9.5], ["p1", 100, 'r2', 9.9], ["p1", 100, 'r3', 9.8],
-                ["p2", 100, 'r1', 6.5], ["p2", 100, 'r2', 6.0], ["p2", 100, 'r3', 5.9],
-                ["p3", 100, 'r1', 11], ["p3", 100, 'r2', 11.2], ["p3", 100, 'r3', 11.0],
-                ["p1", 200, 'r1', 18.1], ["p1", 200, 'r2', 20.1], ["p1", 200, 'r3', 19.8]]
-        pNames = [str(i) for i in range(12)]
-        fNames = ['type', 'dist', 'run', 'time']
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        expData = [["p1", 100, 9.5, 9.9, 9.8],
-                   ["p2", 100, 6.5, 6.0, 5.9],
-                   ["p3", 100, 11, 11.2, 11.0],
-                   ["p1", 200, 18.1, 20.1, 19.8]]
-        expFNames = ['type', 'dist', 'r1', 'r2', 'r3']
-        expPNames = ["0", "3", "6", "9"]
-        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
-
-        test0 = toTest.copy()
-        test0.points.combineByExpandingFeatures('run', 'time')
-        assert test0 == exp
-
-        test1 = toTest.copy()
-        test1.points.combineByExpandingFeatures(2, 3)
-        assert test1 == exp
-
-        test2 = toTest.copy()
-        test2.points.combineByExpandingFeatures('run', 3)
-        assert test2 == exp
-
-    @logCountAssertionFactory(3)
-    def test_points_combineByExpandingFeatures_multipleValuesFeatures(self):
-        data = [["p1", 100, 'r1', 9.5, 9.4], ["p1", 100, 'r2', 9.9, 9.7], ["p1", 100, 'r3', 9.8, 9.8],
-                ["p2", 100, 'r1', 6.5, 6.5], ["p2", 100, 'r2', 6.0, 6.2], ["p2", 100, 'r3', 5.9, 6.1],
-                ["p3", 100, 'r1', 11.0, 10.9], ["p3", 100, 'r2', 11.2, 11.1], ["p3", 100, 'r3', 11.0, 11.0],
-                ["p1", 200, 'r1', 18.1, 18.0], ["p1", 200, 'r2', 20.1, 20.2], ["p1", 200, 'r3', 19.8, 19.9]]
-        pNames = [str(i) for i in range(12)]
-        fNames = ['type', 'dist', 'run', 'timer1', 'timer2']
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        expData = [["p1", 100, 9.5, 9.4, 9.9, 9.7, 9.8, 9.8],
-                   ["p2", 100, 6.5, 6.5, 6.0, 6.2, 5.9, 6.1],
-                   ["p3", 100, 11, 10.9, 11.2, 11.1, 11.0, 11.0],
-                   ["p1", 200, 18.1, 18.0, 20.1, 20.2, 19.8, 19.9]]
-        expFNames = ['type', 'dist', 'r1_timer1', 'r1_timer2', 'r2_timer1',
-                     'r2_timer2', 'r3_timer1', 'r3_timer2']
-        expPNames = ["0", "3", "6", "9"]
-        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
-
-        test0 = toTest.copy()
-        test0.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
-        assert test0 == exp
-
-        test1 = toTest.copy()
-        test1.points.combineByExpandingFeatures(2, [3, 4])
-        assert test1 == exp
-
-        test2 = toTest.copy()
-        test2.points.combineByExpandingFeatures('run', [3, 4])
-        assert test2 == exp
-
-    def test_points_combineByExpandingFeatures_withMissing(self):
-        data = [["p1", 100, 'r2', 9.9, 9.7], ["p1", 100, 'r3', 9.8, 9.8],
-                ["p2", 100, 'r1', 6.5, 6.5], ["p2", 100, 'r2', 6.0, 6.2], ["p2", 100, 'r3', 5.9, 6.1],
-                ["p3", 100, 'r1', 11.0, 10.9], ["p3", 100, 'r2', 11.2, 11.1],
-                ["p1", 200, 'r1', 18.1, 18.0], ["p1", 200, 'r2', 20.1, 20.2], ["p1", 200, 'r3', 19.8, 19.9]]
-        pNames = [str(i) for i in range(10)]
-        fNames = ['type', 'dist', 'run', 'timer1', 'timer2']
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        expData = [["p1", 100, 9.9, 9.7, 9.8, 9.8, None, None],
-                   ["p2", 100, 6.0, 6.2, 5.9, 6.1, 6.5, 6.5],
-                   ["p3", 100, 11.2, 11.1, None, None, 11.0, 10.9],
-                   ["p1", 200, 20.1, 20.2, 19.8, 19.9, 18.1, 18.0]]
-        expFNames = ['type', 'dist', 'r2_timer1', 'r2_timer2', 'r3_timer1',
-                     'r3_timer2', 'r1_timer1', 'r1_timer2']
-        expPNames = ["0", "2", "5", "7"]
-        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
-
-        toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
-
-        assert toTest == exp
-
-    def test_points_combineByExpandingFeatures_nonConcurrentNamesAndValues(self):
-        data = [[100, 'r1', "p1", 9.5, 9.4], [100, 'r2', "p1", 9.9, 9.7], [100, 'r3', "p1", 9.8, 9.8],
-                [100, 'r1', "p2", 6.5, 6.5], [100, 'r2', "p2", 6.0, 6.2], [100, 'r3', "p2", 5.9, 6.1],
-                [100, 'r1', "p3", 11.0, 10.9], [100, 'r2', "p3", 11.2, 11.1], [100, 'r3', "p3", 11.0, 11.0],
-                [200, 'r1', "p1", 18.1, 18.0], [200, 'r2', "p1", 20.1, 20.2], [200, 'r3', "p1", 19.8, 19.9]]
-        pNames = [str(i) for i in range(12)]
-        fNames = ['type', 'run', 'dist', 'timer1', 'timer2']
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        expData = [[100, 9.5, 9.4, 9.9, 9.7, 9.8, 9.8, "p1"],
-                   [100, 6.5, 6.5, 6.0, 6.2, 5.9, 6.1, "p2"],
-                   [100, 11, 10.9, 11.2, 11.1, 11.0, 11.0, "p3"],
-                   [200, 18.1, 18.0, 20.1, 20.2, 19.8, 19.9, "p1"]]
-        expFNames = ['type', 'r1_timer1', 'r1_timer2', 'r2_timer1',
-                     'r2_timer2', 'r3_timer1', 'r3_timer2', 'dist']
-        expPNames = ["0", "3", "6", "9"]
-        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
-
-        toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
-        assert toTest == exp
-
-    def test_points_combineByExpandingFeatures_noPointNames(self):
-        data = [["p1", 100, 'r1', 9.5, 9.4], ["p1", 100, 'r2', 9.9, 9.7], ["p1", 100, 'r3', 9.8, 9.8],
-                ["p2", 100, 'r1', 6.5, 6.5], ["p2", 100, 'r2', 6.0, 6.2], ["p2", 100, 'r3', 5.9, 6.1],
-                ["p3", 100, 'r1', 11.0, 10.9], ["p3", 100, 'r2', 11.2, 11.1], ["p3", 100, 'r3', 11.0, 11.0],
-                ["p1", 200, 'r1', 18.1, 18.0], ["p1", 200, 'r2', 20.1, 20.2], ["p1", 200, 'r3', 19.8, 19.9]]
-        fNames = ['type', 'dist', 'run', 'timer1', 'timer2']
-        toTest = self.constructor(data, featureNames=fNames)
-
-        expData = [["p1", 100, 9.5, 9.4, 9.9, 9.7, 9.8, 9.8],
-                   ["p2", 100, 6.5, 6.5, 6.0, 6.2, 5.9, 6.1],
-                   ["p3", 100, 11, 10.9, 11.2, 11.1, 11.0, 11.0],
-                   ["p1", 200, 18.1, 18.0, 20.1, 20.2, 19.8, 19.9]]
-        expFNames = ['type', 'dist', 'r1_timer1', 'r1_timer2', 'r2_timer1',
-                     'r2_timer2', 'r3_timer1', 'r3_timer2']
-        exp = self.constructor(expData, featureNames=expFNames)
-
-        toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
-        assert toTest == exp
-
-    def test_points_combineByExpandingFeatures_noNames(self):
-        data = [["p1", 100, 'r1', 9.5, 9.4], ["p1", 100, 'r2', 9.9, 9.7], ["p1", 100, 'r3', 9.8, 9.8],
-                ["p2", 100, 'r1', 6.5, 6.5], ["p2", 100, 'r2', 6.0, 6.2], ["p2", 100, 'r3', 5.9, 6.1],
-                ["p3", 100, 'r1', 11.0, 10.9], ["p3", 100, 'r2', 11.2, 11.1], ["p3", 100, 'r3', 11.0, 11.0],
-                ["p1", 200, 'r1', 18.1, 18.0], ["p1", 200, 'r2', 20.1, 20.2], ["p1", 200, 'r3', 19.8, 19.9]]
-        toTest = self.constructor(data)
-
-        expData = [["p1", 100, 9.5, 9.4, 9.9, 9.7, 9.8, 9.8],
-                   ["p2", 100, 6.5, 6.5, 6.0, 6.2, 5.9, 6.1],
-                   ["p3", 100, 11, 10.9, 11.2, 11.1, 11.0, 11.0],
-                   ["p1", 200, 18.1, 18.0, 20.1, 20.2, 19.8, 19.9]]
-
-        exp = self.constructor(expData,)
-        exp.features.setNames('r1_3', oldIdentifiers=2)
-        exp.features.setNames('r1_4', oldIdentifiers=3)
-        exp.features.setNames('r2_3', oldIdentifiers=4)
-        exp.features.setNames('r2_4', oldIdentifiers=5)
-        exp.features.setNames('r3_3', oldIdentifiers=6)
-        exp.features.setNames('r3_4', oldIdentifiers=7)
-
-        toTest.points.combineByExpandingFeatures(2, [3, 4])
-        assert toTest == exp
-
-    @raises(ImproperObjectAction)
-    def test_points_combineByExpandingFeatures_2valuesSameFeature(self):
-        data = [["p1", 100, 'r1', 9.5, 9.4], ["p1", 100, 'r2', 9.9, 9.7], ["p1", 100, 'r3', 9.8, 9.8],
-                ["p2", 100, 'r1', 6.5, 6.5], ["p2", 100, 'r2', 6.0, 6.2], ["p2", 100, 'r3', 5.9, 6.1],
-                ["p3", 100, 'r1', 11.0, 10.9], ["p3", 100, 'r2', 11.2, 11.1], ["p3", 100, 'r1', 11.0, 11.0], # r1 in p3 twice
-                ["p1", 200, 'r1', 18.1, 18.0], ["p1", 200, 'r2', 20.1, 20.2], ["p1", 200, 'r3', 19.8, 19.9]]
-        pNames = [str(i) for i in range(12)]
-        fNames = ['type', 'dist', 'run', 'timer1', 'timer2']
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
-
-    def test_points_combineByExpandingFeatures_single_valuesMapToSameString(self):
-
-        data = [["p1", 100, 1, 9.5], ["p1", 100, 2, 9.9], ["p1", 100, '2', 9.8],
-                ["p2", 100, 1, 6.5], ["p2", 100, 2, 6.0], ["p2", 100, '2', 5.9],
-                ["p3", 100, 1, 11], ["p3", 100, 2, 11.2], ["p3", 100, '2', 11.0],
-                ["p1", 200, 1, 18.1], ["p1", 200, 2, 20.1], ["p1", 200, '2', 19.8]]
-        pNames = [str(i) for i in range(12)]
-        fNames = ['type', 'dist', 'run', 'time']
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        expData = [["p1", 100, 9.5, 9.9, 9.8],
-                   ["p2", 100, 6.5, 6.0, 5.9],
-                   ["p3", 100, 11, 11.2, 11.0],
-                   ["p1", 200, 18.1, 20.1, 19.8]]
-        expFNames = ['type', 'dist', '1', '2(int)', '2(str)']
-        expPNames = ["0", "3", "6", "9"]
-        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
-
-        msg = 'Identical strings returned by classes that are unequal in '
-        msg += 'featureWithFeatureNames.'
-        with raises(ImproperObjectAction, match=msg):
-            toTest.points.combineByExpandingFeatures('run', 'time')
-
-        toTest.points.combineByExpandingFeatures('run', 'time',
-                                                 modifyDuplicateFeatureNames=True)
-        assert toTest == exp
-
-    def test_points_combineByExpandingFeatures_multiple_valuesMapToSameString(self):
-        data = [["p1", 100, '1', 9.5, 9.4], ["p1", 100, '2', 9.9, 9.7], ["p1", 100, 2, 9.8, 9.8],
-                ["p2", 100, '1', 6.5, 6.5], ["p2", 100, '2', 6.0, 6.2], ["p2", 100, 2, 5.9, 6.1],
-                ["p3", 100, '1', 11.0, 10.9], ["p3", 100, '2', 11.2, 11.1], ["p3", 100, 2, 11.0, 11.0],
-                ["p1", 200, '1', 18.1, 18.0], ["p1", 200, '2', 20.1, 20.2], ["p1", 200, 2, 19.8, 19.9]]
-        pNames = [str(i) for i in range(12)]
-        fNames = ['type', 'dist', 'run', 'timer1', 'timer2']
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        expData = [["p1", 100, 9.5, 9.4, 9.9, 9.7, 9.8, 9.8],
-                   ["p2", 100, 6.5, 6.5, 6.0, 6.2, 5.9, 6.1],
-                   ["p3", 100, 11, 10.9, 11.2, 11.1, 11.0, 11.0],
-                   ["p1", 200, 18.1, 18.0, 20.1, 20.2, 19.8, 19.9]]
-        expFNames = ['type', 'dist', '1_timer1', '1_timer2', '2(str)_timer1',
-                     '2(str)_timer2', '2(int)_timer1', '2(int)_timer2']
-        expPNames = ["0", "3", "6", "9"]
-        exp = self.constructor(expData, pointNames=expPNames, featureNames=expFNames)
-
-        msg = 'Identical strings returned by classes that are unequal in '
-        msg += 'featureWithFeatureNames.'
-        with raises(ImproperObjectAction, match=msg):
-            toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'])
-
-        toTest.points.combineByExpandingFeatures('run', ['timer1', 'timer2'],
-                                                 modifyDuplicateFeatureNames=True)
-        assert toTest == exp
-
-    ###########################
-    # features.splitByParsing #
-    ###########################
-    @oneLogEntryExpected
-    def test_features_splitByParsing_integer(self):
-        data = [[0, "a1", 0], [1, "b2", 1], [2, "c3", 2]]
-        pNames = ["0", "1", "2"]
-        fNames = ["f0", "merged", "f1"]
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        expData = [[0, "a", "1", 0], [1, "b", "2", 1], [2, "c", "3", 2]]
-        expFNames = ["f0", "split0", "split1", "f1"]
-        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
-
-        toTest.features.splitByParsing(1, 1, ["split0", "split1"])
-        assert toTest == exp
-
-    @oneLogEntryExpected
-    def test_features_splitByParsing_string(self):
-        data = [["a-1", 0], ["b-2", 1], ["c-3", 2]]
-        pNames = ["a", "b", "c"]
-        fNames = ["merged", "f0"]
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        expData = [["a", "1", 0], ["b", "2", 1], ["c", "3", 2]]
-        expFNames = ["split0", "split1", "f0"]
-        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
-
-        toTest.features.splitByParsing(0, '-', ["split0", "split1"])
-        assert toTest == exp
-
-    def test_features_splitByParsing_listIntegers(self):
-        data = [[0, "a1z9000AAA"], [1, "b2y8000BBB"], [2, "c3x7000CCC"]]
-        pNames = ["0", "1", "2"]
-        fNames = ["f0", "merged"]
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        expData = [[0, "a1", "z9", "000", "AAA"], [1, "b2", "y8", "000", "BBB"],
-                   [2, "c3", "x7", "000", "CCC"]]
-        expFNames = ["f0", "split0", "split1", "split2", "split3"]
-        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
-
-        toTest.features.splitByParsing("merged", [2,4,7], ["split0", "split1", "split2", "split3"])
-        assert toTest == exp
-
-    def test_features_splitByParsing_listStrings(self):
-        data = [[0, "a1/9000-AAA"], [1, "b2/8000-BBB"], [2, "c3/7000-CCC"]]
-        pNames = ["0", "1", "2"]
-        fNames = ["f0", "merged"]
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        expData = [[0, "a1", "9000", "AAA"], [1, "b2", "8000", "BBB"],
-                   [2, "c3", "7000", "CCC"]]
-        expFNames = ["f0", "split0", "split1", "split2"]
-        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
-
-        toTest.features.splitByParsing(1, ['/','-'], ["split0", "split1", "split2"])
-        assert toTest == exp
-
-    @oneLogEntryExpected
-    def test_features_splitByParsing_listMixed(self):
-        data = [[0, "a1/9z000-AAA"], [1, "b2/8y000-BBB"], [2, "c3/7x000-CCC"]]
-        pNames = ["0", "1", "2"]
-        fNames = ["f0", "merged"]
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        expData = [[0, "a1", "9z", "000", "AAA"], [1, "b2", "8y", "000", "BBB"],
-                   [2, "c3", "7x", "000", "CCC"]]
-        expFNames = ["f0", "split0", "split1", "split2", "split3"]
-        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
-
-        toTest.features.splitByParsing(1, ['/', 5, '-'], ["split0", "split1", "split2", "split3"])
-        assert toTest == exp
-
-    def test_features_splitByParsing_function(self):
-        data = [["a1z9000AAA"], ["b2y8000BBB"], ["c3x7000CCC"]]
-        pNames = ["a", "b", "c"]
-        fNames = ["merged"]
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        expData = [["a1z9", "AAA"], ["b2y8", "BBB"], ["c3x7", "CCC"]]
-        expFNames = ["split0", "split1"]
-        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
-
-        def splitter(value):
-            return value.split('000')
-
-        toTest.features.splitByParsing("merged", splitter, ["split0", "split1"])
-        assert toTest == exp
-
-    def test_features_splitByParsing_regex(self):
-        data = [["a1z9000AAA", '001'], ["b2y8000BBB", '001'], ["c3x7000CCC", '002']]
-        pNames = ["a", "b", "c"]
-        fNames = ["merged", "f0"]
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        expData = [["a1", "9000AAA", '001'], ["b2", "8000BBB", '001'], ["c3", "7000CCC", '002']]
-        expFNames = ["split0", "split1", "f0"]
-        exp = self.constructor(expData, pointNames=pNames, featureNames=expFNames)
-
-        def splitter(value):
-            import re
-            return re.split('[xyz]', value)
-
-        toTest.features.splitByParsing("merged", splitter, ["split0", "split1"])
-        assert toTest == exp
-
-    def test_features_splitByParsing_noNames(self):
-        data = [[0, "a1", 0], [1, "b2", 1], [2, "c3", 2]]
-        toTest = self.constructor(data)
-
-        expData = [[0, "a", "1", 0], [1, "b", "2", 1], [2, "c", "3", 2]]
-        exp = self.constructor(expData)
-        exp.features.setNames("split0", oldIdentifiers=1)
-        exp.features.setNames("split1", oldIdentifiers=2)
-
-        toTest.features.splitByParsing(1, 1, ["split0", "split1"])
-        assert toTest == exp
-
-    @raises(InvalidArgumentValueCombination)
-    def test_features_splitByParsing_shortSplitList(self):
-        data = [["a-1", 0], ["b-2", 1], ["c3", 2]]
-        pNames = ["a", "b", "c"]
-        fNames = ["merged", "f0"]
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        toTest.features.splitByParsing("merged", '-', ["split0", "split1"])
-
-    @raises(InvalidArgumentValueCombination)
-    def test_features_splitByParsing_longSplitList(self):
-        data = [["a-1", 0], ["b-2-2", 1], ["c-3", 2]]
-        pNames = ["a", "b", "c"]
-        fNames = ["merged", "f0"]
-        toTest = self.constructor(data, pointNames=pNames, featureNames=fNames)
-
-        toTest.features.splitByParsing("merged", '-', ["split0", "split1"])
-
     ###################
     # replace helpers #
     ###################
@@ -4143,7 +4173,7 @@ class HighLevelModifying(DataTestObject):
                                             **{kwarg: replaceNames})
 
     def back_replace_all(self, axis):
-        data = [['x', 'x', 'x'], ['y', 'y', 'y'], ['z', 'z', 'z']]
+        data = [[0, 0, 0], [-1, -1, -1], [-2, -2, -2]]
         exp = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
 
         toTest = self.constructor(data)
@@ -4167,24 +4197,24 @@ class HighLevelModifying(DataTestObject):
         toTest.points.replace([3, 4, 5], 1)
 
     def test_points_replace_multiple(self):
-        data = [[0, 1, 2], ['x', 'x', 'x'], ['x', 'x', 'x'], [0, -1, -2]]
+        data = [[0, 1, 2], [22, 22, 22], [22, 22, 22], [0, -1, -2]]
         exp = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, -1, -2]]
         replace = [[3, 4, 5], [6, 7, 8]]
         replaceLocs = [1, 2]
         self.back_replace('point', data, exp, replace, replaceLocs)
 
-    def test_points_replace_all(self):
-        self.back_replace_all('point')
-
     def test_points_replace_order(self):
-        data = [['x', 'x', 'x'], ['y', 'y', 'y'], ['z', 'z', 'z']]
+        data = [[22, 22, 22], [33, 33, 33], [44, 44, 44]]
         repl = [[0, 1, 2], [6, 7, 8]]
-        exp = [[6, 7, 8], ['y', 'y', 'y'], [0, 1, 2]]
+        exp = [[6, 7, 8], [33, 33, 33], [0, 1, 2]]
 
         toTest = self.constructor(data)
         toTest.points.replace(repl, points=[2, 0])
 
         assert toTest == self.constructor(exp)
+
+    def test_points_replace_all(self):
+        self.back_replace_all('point')
 
     ####################
     # features.replace #
@@ -4192,7 +4222,7 @@ class HighLevelModifying(DataTestObject):
 
     @oneLogEntryExpected
     def test_features_replace_single(self):
-        data = [[0, 'x', 2], [3, 'x', 5], [6, 'x', 8]]
+        data = [[0, 22, 2], [3, 22, 5], [6, 22, 8]]
         exp = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
         replace = [1, 4, 7]
         replaceLocs = [1]
@@ -4202,7 +4232,7 @@ class HighLevelModifying(DataTestObject):
         toTest.features.replace([1, 4, 7], 1)
 
     def test_features_replace_multiple(self):
-        data = [[0, 'x', 'x', 3], [4, 'x', 'x', 7], [8, 'x', 'x', -1]]
+        data = [[0, 22, 22, 3], [4, 22, 22, 7], [8, 22, 22, -1]]
         exp = [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 0, -1]]
         replace = [[1, 2], [5, 6], [9, 0]]
         replaceLocs = [1, 2]
@@ -4211,16 +4241,3 @@ class HighLevelModifying(DataTestObject):
     def test_features_replace_all(self):
         self.back_replace_all('feature')
 
-    def test_features_replace_order(self):
-        data = [['x', 'y', 'z'], ['x', 'y', 'z'], ['x', 'y', 'z']]
-        repl = [[0, 2], [3, 5], [6, 8]]
-        exp = [[2, 'y', 0], [5, 'y', 3], [8, 'y', 6]]
-
-        toTest = self.constructor(data)
-        toTest.features.replace(repl, features=[2, 0])
-
-        assert toTest == self.constructor(exp)
-
-
-class HighLevelAll(HighLevelDataSafe, HighLevelModifying):
-    pass
