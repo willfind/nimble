@@ -1052,6 +1052,7 @@ def plotConfidenceIntervalMeanAndError(feature):
     # two tailed 95% CI with n -1 degrees of freedom
     tStat = scipy.stats.t.ppf(0.025, len(feature) - 1)
     error = tStat * (std / np.sqrt(len(feature)))
+    error = np.abs(error)
 
     return mean, error
 
