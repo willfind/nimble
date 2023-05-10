@@ -273,7 +273,7 @@ class DataFrameFeatures(DataFrameAxis, Features):
                 continue
             currRet = function(f)
 
-            self._base._data.iloc[:, j] = currRet
+            self._base._data[j] = currRet
 
 
     ################################
