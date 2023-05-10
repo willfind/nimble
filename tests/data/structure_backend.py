@@ -4395,47 +4395,6 @@ class StructureModifyingSparseUnsafe(StructureShared):
         leftObj = self.constructor(dataL, pointNames=pNamesL, featureNames=fNamesL)
         rightObj = self.constructor(dataR, pointNames=pNamesR, featureNames=fNamesR)
         leftObj.merge(rightObj, point='strict', feature='union', onFeature='id')
-
-    def test_points_sort_stability(self):
-        colors = [[124, 1], [4, 1], [9, 1],
-                  [124, 2], [4, 2], [9, 2],
-                  [124, 3], [4, 3], [9, 3]]
-        toTest = self.constructor(colors)
-        toTest.points.sort(0)
-
-        expData = [[4, 1], [4, 2], [4, 3],
-                   [9, 1], [9, 2], [9, 3],
-                   [124, 1], [124, 2], [124, 3]]
-        exp = self.constructor(expData)
-        assert toTest.isIdentical(exp)
-
-        testRev = self.constructor(colors)
-        testRev.points.sort(0, reverse=True)
-
-        dataRev = [[124, 1], [124, 2], [124, 3],
-                   [9, 1], [9, 2], [9, 3],
-                   [4, 1], [4, 2], [4, 3]]
-        expRev = self.constructor(dataRev)
-        assert testRev.isIdentical(expRev)
-    
-    def test_features_sort_stability(self):
-        colors = [[124, 4, 9, 124, 4, 9, 124, 4, 9],
-              [1, 1, 1, 2, 2, 2, 3, 3, 3]]
-        toTest = self.constructor(colors)
-        toTest.features.sort(0)
-
-        expData = [[4, 4, 4, 9, 9, 9, 124, 124, 124],
-                [1, 2, 3, 1, 2, 3, 1, 2, 3]]
-        exp = self.constructor(expData)
-        assert toTest.isIdentical(exp)
-
-        testRev = self.constructor(colors)
-        testRev.features.sort(0, reverse=True)
-
-        dataRev = [[124, 124, 124, 9, 9, 9, 4, 4, 4],
-                [1, 2, 3, 1, 2, 3, 1, 2, 3]]
-        expRev = self.constructor(dataRev)
-        assert testRev.isIdentical(expRev)
     
     def test_merge_ptIntersection_ftUnion_pointNames_exactMatch(self):
         dataL = [['a', 1, 2], ['b', 5, 6], ['c', -1, -2]]
@@ -5733,6 +5692,46 @@ class StructureModifyingSparseSafe(StructureShared):
         assert toTest.isIdentical(objExp)
         assertNoNamesGenerated(toTest)
 
+    def test_points_sort_stability(self):
+        colors = [[124, 1], [4, 1], [9, 1],
+                [124, 2], [4, 2], [9, 2],
+                [124, 3], [4, 3], [9, 3]]
+        toTest = self.constructor(colors)
+        toTest.points.sort(0)
+
+        expData = [[4, 1], [4, 2], [4, 3],
+                [9, 1], [9, 2], [9, 3],
+                [124, 1], [124, 2], [124, 3]]
+        exp = self.constructor(expData)
+        assert toTest.isIdentical(exp)
+
+        testRev = self.constructor(colors)
+        testRev.points.sort(0, reverse=True)
+
+        dataRev = [[124, 1], [124, 2], [124, 3],
+                [9, 1], [9, 2], [9, 3],
+                [4, 1], [4, 2], [4, 3]]
+        expRev = self.constructor(dataRev)
+        assert testRev.isIdentical(expRev)
+    
+    def test_features_sort_stability(self):
+        colors = [[124, 4, 9, 124, 4, 9, 124, 4, 9],
+              [1, 1, 1, 2, 2, 2, 3, 3, 3]]
+        toTest = self.constructor(colors)
+        toTest.features.sort(0)
+
+        expData = [[4, 4, 4, 9, 9, 9, 124, 124, 124],
+                [1, 2, 3, 1, 2, 3, 1, 2, 3]]
+        exp = self.constructor(expData)
+        assert toTest.isIdentical(exp)
+
+        testRev = self.constructor(colors)
+        testRev.features.sort(0, reverse=True)
+
+        dataRev = [[124, 124, 124, 9, 9, 9, 4, 4, 4],
+                [1, 2, 3, 1, 2, 3, 1, 2, 3]]
+        expRev = self.constructor(dataRev)
+        assert testRev.isIdentical(expRev)
     
     def test_points_sort_stability_chained(self):
         names = [[3, 11, 6], [3, 195, 2], [4, 150, 6], [4, 370, 2],
