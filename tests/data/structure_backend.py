@@ -4397,16 +4397,15 @@ class StructureModifyingSparseUnsafe(StructureShared):
         leftObj.merge(rightObj, point='strict', feature='union', onFeature='id')
 
     def test_points_sort_stability(self):
-        colors = [[124, 1], [43, 1], [9, 1],
-                  [124, 2], [43, 2], [9, 2],
-                  [124, 3], [43, 3], [9, 3]]
+        colors = [[124, 1], [4, 1], [9, 1],
+                  [124, 2], [4, 2], [9, 2],
+                  [124, 3], [4, 3], [9, 3]]
         toTest = self.constructor(colors)
         toTest.points.sort(0)
 
-        expData = [[43, 1], [43, 2], [43, 3],
+        expData = [[4, 1], [4, 2], [4, 3],
                    [9, 1], [9, 2], [9, 3],
                    [124, 1], [124, 2], [124, 3]]
-        import pdb; pdb.set_trace()
         exp = self.constructor(expData)
         assert toTest.isIdentical(exp)
 
@@ -4415,17 +4414,17 @@ class StructureModifyingSparseUnsafe(StructureShared):
 
         dataRev = [[124, 1], [124, 2], [124, 3],
                    [9, 1], [9, 2], [9, 3],
-                   [43, 1], [43, 2], [43, 3]]
+                   [4, 1], [4, 2], [4, 3]]
         expRev = self.constructor(dataRev)
         assert testRev.isIdentical(expRev)
     
     def test_features_sort_stability(self):
-        colors = [[124, 43, 9, 124, 43, 9, 124, 43, 9],
+        colors = [[124, 4, 9, 124, 4, 9, 124, 4, 9],
               [1, 1, 1, 2, 2, 2, 3, 3, 3]]
         toTest = self.constructor(colors)
         toTest.features.sort(0)
 
-        expData = [[43, 43, 43, 9, 9, 9, 124, 124, 124],
+        expData = [[4, 4, 4, 9, 9, 9, 124, 124, 124],
                 [1, 2, 3, 1, 2, 3, 1, 2, 3]]
         exp = self.constructor(expData)
         assert toTest.isIdentical(exp)
@@ -4433,7 +4432,7 @@ class StructureModifyingSparseUnsafe(StructureShared):
         testRev = self.constructor(colors)
         testRev.features.sort(0, reverse=True)
 
-        dataRev = [[124, 124, 124, 9, 9, 9, 43, 43, 43],
+        dataRev = [[124, 124, 124, 9, 9, 9, 4, 4, 4],
                 [1, 2, 3, 1, 2, 3, 1, 2, 3]]
         expRev = self.constructor(dataRev)
         assert testRev.isIdentical(expRev)
