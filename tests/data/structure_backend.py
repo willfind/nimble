@@ -4406,6 +4406,7 @@ class StructureModifyingSparseUnsafe(StructureShared):
         expData = [[43, 1], [43, 2], [43, 3],
                    [9, 1], [9, 2], [9, 3],
                    [124, 1], [124, 2], [124, 3]]
+        import pdb; pdb.set_trace()
         exp = self.constructor(expData)
         assert toTest.isIdentical(exp)
 
