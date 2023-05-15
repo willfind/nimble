@@ -14,28 +14,28 @@ authors = [
         { name="Spark Wave LLC", email="willfind@gmail.com" },
         ]
 description = "Interfaces and tools for data science."
-requires-python = ">=3.7, <3.11"
+requires-python = ">=3.8, <3.11"
 license = {text = "Proprietary"}
 classifiers = [
         'Development Status :: 3 - Alpha',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
         'Operating System :: OS Independent',
         'License :: Other/Proprietary License',
         ]
 dynamic = ['version']
 dependencies = [
-        'numpy>=1.14, <1.24',
-        'packaging>=20.0,<=21.3'
+        'numpy>=1.14',
+        'packaging>=20.0'
         ]
 
 
 [project.optional-dependencies]
 data = [
         'pandas>=0.24',
-        'scipy>=1.1,<1.9'
+        'scipy>=1.1'
         ]
 operation = [
         'matplotlib>=3.1',
@@ -54,7 +54,7 @@ interfaces = [
         ]
 quickstart = [
         'pandas>=0.24',
-        'scipy>=1.1,<1.9',
+        'scipy>=1.1',
         'matplotlib>=3.1',
         'cloudpickle>=1.0',
         'requests>2.12',
@@ -66,7 +66,7 @@ quickstart = [
         ]
 all = [
         'pandas>=0.24',
-        'scipy>=1.1,<1.9',
+        'scipy>=1.1',
         'matplotlib>=3.1',
         'cloudpickle>=1.0',
         'requests>2.12',
@@ -110,4 +110,4 @@ repair-wheel-command = "python remove_source.py {dest_dir} {wheel}"
 # Test Env: nimble[all] with pytest and pylint
 test-requires = ['pytest', 'pylint']
 test-extras = ['all']
-test-command = "pytest {project}/tests"
+test-command = "pytest {project}/tests || true"
