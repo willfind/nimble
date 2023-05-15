@@ -182,8 +182,7 @@ class DataFramePoints(DataFrameAxis, Points):
                             if dt.type == np.datetime64]
             for col in datetimeCols:
                 if isinstance(currRet[col], (numbers.Number, str)):
-                    objectCol = self._base._data.iloc[:, col].astype(object)
-                    self._base._data.iloc[:, col] = objectCol
+                    self._base._data[col]  = self._base._data[col].astype(object)
 
             self._base._data.iloc[i, :] = currRet
 
@@ -274,7 +273,7 @@ class DataFrameFeatures(DataFrameAxis, Features):
                 continue
             currRet = function(f)
 
-            self._base._data.iloc[:, j] = currRet
+            self._base._data[j] = currRet
 
 
     ################################

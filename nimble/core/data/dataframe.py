@@ -90,7 +90,7 @@ class DataFrame(Base):
             # convert datetime columns so pandas can't convert to datetimes
             if (self._data.dtypes.iloc[j].type == np.datetime64
                     and isinstance(currRet, (numbers.Number, str))):
-                self._data.iloc[:, j] = self._data.iloc[:, j].astype(object)
+                self._data[j] = self._data[j].astype(object)
             self._data.iloc[i, j] = currRet
 
     # pylint: disable=unused-argument
