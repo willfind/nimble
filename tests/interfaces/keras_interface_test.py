@@ -285,8 +285,8 @@ def testKerasAPIRegression():
 
     layer0 = nimble.Init('Dense', units=16, kernel_initializer="zeros")
     layer0Raw = Dense(units=16, kernel_initializer="zeros")
-    layer1 = nimble.Init('Dense', units=1)
-    layer1Raw = Dense(units=1)
+    layer1 = nimble.Init('Dense', units=1, kernel_initializer="zeros")
+    layer1Raw = Dense(units=1, kernel_initializer="zeros")
     layers = [layer0, layer1]
     layersRaw = [layer0Raw, layer1Raw]
 
