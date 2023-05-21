@@ -21,8 +21,8 @@ zeroValues = [0, float(0), np.int_(0), np.float_(0)]
 positiveValues = [3, float(3), np.int_(3), np.float_(3)]
 negativeValues = [-3, float(-3), np.int_(-3), np.float_(-3)]
 infinityValues = [float('inf'), -float('inf'), np.inf, -np.inf]
-trueValues = [True, np.bool_(True), np.bool_(True)]
-falseValues = [False, np.bool_(False), np.bool_(False)]
+trueValues = [True, np.bool_(True)]
+falseValues = [False, np.bool_(False)]
 boolValues = trueValues + falseValues
 
 numericValues = (positiveValues + negativeValues + zeroValues
