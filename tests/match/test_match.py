@@ -28,6 +28,9 @@ boolValues = trueValues + falseValues
 numericValues = (positiveValues + negativeValues + zeroValues
                  + infinityValues + missingValues[1:])
 
+sparseUnsafeMatches = [match.missing, match.anyMissing, match.allMissing, 
+                       match.nonMissing, match.anyNonMissing, match.nonNumeric,]
+
 def test_match_missing():
     true = missingValues
     false = numericValues[:-2] + stringValues + boolValues
@@ -91,8 +94,14 @@ def test_match_floating():
 @noLogEntryExpected
 def backend_match_anyAll(anyOrAll, func, data):
     """backend for match functions accepting 1D and 2D data and testing for any or all"""
-    data = np.array(data, dtype=np.object_)
-    for constructor in getDataConstructors():
+    #import pdb; pdb.set_trace()
+    sparseSafe = True
+    if func not in sparseUnsafeMatches:
+        sparseSafe = False 
+        data = np.array(data, dtype=np.object_)
+    else:
+        data = np.array(data)
+    for constructor in getDataConstructors(includeSparse=sparseSafe):
         toTest = constructor(data, useLog=False)
         # test whole matrix
         if anyOrAll == 'any':
@@ -186,7 +195,7 @@ def test_match_anyNonZero():
     backend_match_anyAll('any', match.anyNonZero, data)
 
 def test_match_allNonZero():
-    fill = 'a'
+    fill = 1
     data = [[0,0,fill], [0,0,fill], [0,fill,fill]]
     backend_match_anyAll('all', match.allNonZero, data)
 
