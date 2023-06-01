@@ -12,6 +12,7 @@ import pytest
 import sys
 import os
 import PIL
+import datetime
 
 import nimble
 from nimble.core.interfaces.keras_interface import Keras
@@ -499,11 +500,11 @@ def testKerasReproducibility(optimizer):
         layer1 = nimble.Init('Dropout', rate=0.5)
         layer2 = nimble.Init('Dense', units=numClasses, activation='sigmoid')
         layers = [layer0, layer1, layer2]
-        mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
+        mym1 = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
                            layers=layers, loss='sparse_categorical_crossentropy', metrics=['accuracy'],
                            epochs=20, batch_size=128, useLog=False)
 
-        applied1 = mym.apply(testX=x_train, useLog=False)
+        applied1 = mym1.apply(testX=x_train, useLog=False)
 
 
         nimble.random.setSeed(1234, useLog=False)
@@ -511,11 +512,11 @@ def testKerasReproducibility(optimizer):
         layer1 = nimble.Init('Dropout', rate=0.5)
         layer2 = nimble.Init('Dense', units=numClasses, activation='sigmoid')
         layers = [layer0, layer1, layer2]
-        mym = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
+        mym2 = nimble.train('keras.Sequential', trainX=x_train, trainY=y_train, optimizer=optimizer,
                            layers=layers, loss='sparse_categorical_crossentropy', metrics=['accuracy'],
                            epochs=20, batch_size=128, useLog=False)
 
-        applied2 = mym.apply(testX=x_train, useLog=False)
+        applied2 = mym2.apply(testX=x_train, useLog=False)
 
         assert applied1 == applied2
 

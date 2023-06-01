@@ -75,7 +75,7 @@ def test__getScoresFormat():
                             continue
                         raise VE
                     (transTrainX, _, transTestX, _) = interface._inputTransformation(
-                        lName, trainX, None, testX, {}, tl._customDict)
+                        lName, trainX, None, testX, 42, {}, tl._customDict)
                     try:
                         scores = interface._getScores(
                             lName, tl._backend, transTestX, {},
