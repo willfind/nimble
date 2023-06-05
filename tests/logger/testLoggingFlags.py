@@ -613,7 +613,7 @@ def test_features_transform():
 
 def test_points_insert():
     def wrapped(obj, useLog):
-        insertData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
+        insertData = [[45, 4, 4], [45, 4, 4], [45, 4, 4], [45, 4, 4], [45, 4, 4], [45, 4, 4]]
         toInsert = nimble.data(insertData, useLog=False)
         return obj.points.insert(0, toInsert, useLog=useLog)
 
