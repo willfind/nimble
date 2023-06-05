@@ -94,7 +94,6 @@ def test_match_floating():
 @noLogEntryExpected
 def backend_match_anyAll(anyOrAll, func, data):
     """backend for match functions accepting 1D and 2D data and testing for any or all"""
-    #import pdb; pdb.set_trace()
     sparseSafe = True
     if func not in sparseUnsafeMatches:
         sparseSafe = False 
