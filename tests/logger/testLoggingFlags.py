@@ -287,11 +287,6 @@ def test_Deep_trainAndTestOnTrainingData_CVError():
     backendDeep(wrapped, runAndCheck)
 
 def prepAndCheck(toCall, constructor, useLog):
-    # data = [["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1],
-    #         ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
-    #         ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
-    # import pdb; pdb.set_trace()
-
     data = [[12, 1, 1], [12, 1, 1], [12, 1, 1], [12, 1, 1], [12, 1, 1], [12, 1, 1],
         [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2],
         [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3]]
@@ -438,7 +433,7 @@ def test_transformElements():
 
 def test_calculateOnElements():
     def wrapped(obj, useLog):
-        return obj.calculateOnElements(lambda x: len(x), features=0, useLog=useLog)
+        return obj.calculateOnElements(lambda x: x+x, features=0, useLog=useLog)
 
     for constructor in constructors:
         backend(wrapped, prepAndCheck, constructor=constructor)
@@ -632,7 +627,7 @@ def test_features_insert():
 def test_points_append():
 
     def wrapped(obj, useLog):
-        appendData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
+        appendData = [[45, 4, 4], [45, 4, 4], [45, 4, 4], [45, 4, 4], [45, 4, 4], [45, 4, 4]]
         toAppend = nimble.data(appendData, useLog=False)
         return obj.points.append(toAppend, useLog=useLog)
 
