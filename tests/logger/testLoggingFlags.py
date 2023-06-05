@@ -15,6 +15,7 @@ from tests.helpers import getDataConstructors
 
 constructors = getDataConstructors()
 nonViewConstructors = getDataConstructors(includeViews=False)
+noSparseNoViewConstructors = getDataConstructors(includeViews=False, includeSparse=False)
 
 learnerName = 'nimble.KNNClassifier'
 
@@ -287,6 +288,7 @@ def test_Deep_trainAndTestOnTrainingData_CVError():
     backendDeep(wrapped, runAndCheck)
 
 def prepAndCheck(toCall, constructor, useLog):
+
     data = [[12, 1, 1], [12, 1, 1], [12, 1, 1], [12, 1, 1], [12, 1, 1], [12, 1, 1],
         [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2],
         [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3]]
@@ -654,7 +656,7 @@ def test_features_splitByParsing():
     def wrapped(obj, useLog):
         return obj.features.splitByParsing(1, customParser, ['str', 'int'], useLog=useLog)
 
-    for constructor in nonViewConstructors:
+    for constructor in noSparseNoViewConstructors:
         backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_splitByCollapsingFeatures():
@@ -662,7 +664,7 @@ def test_points_splitByCollapsingFeatures():
         return obj.points.splitByCollapsingFeatures(['f0', 'f1', 'f2'],
                                                     'featureNames', 'values',
                                                     useLog = useLog)
-    for constructor in nonViewConstructors:
+    for constructor in noSparseNoViewConstructors:
         backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_combineByExpandingFeatures():
