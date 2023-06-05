@@ -2,6 +2,7 @@
 Group of tests which checks that use controlled local and global
 mechanisms for controlling logging are functioning as expected.
 """
+from functools import wraps, partial
 
 import tempfile
 
@@ -103,7 +104,7 @@ def runAndCheck(toCall, useLog):
 
 def backend(toCall, validator, **kwargs):
     # for each combination of local and global, call and check
-
+    # import pdb; pdb.set_trace()
     nimble.settings.set('logger', 'enabledByDefault', 'True')
 
     (start, end) = validator(toCall, useLog=True, **kwargs)
@@ -289,7 +290,8 @@ def prepAndCheck(toCall, constructor, useLog):
     # data = [["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1],
     #         ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
     #         ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
-    
+    # import pdb; pdb.set_trace()
+
     data = [[12, 1, 1], [12, 1, 1], [12, 1, 1], [12, 1, 1], [12, 1, 1], [12, 1, 1],
         [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2],
         [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3]]
@@ -424,6 +426,7 @@ def test_merge():
 
     for constructor in nonViewConstructors:
         backend(wrapped, prepAndCheck, constructor=constructor)
+
 
 def test_transformElements():
     def wrapped(obj, useLog):
