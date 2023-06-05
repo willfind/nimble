@@ -594,8 +594,6 @@ class Sparse(Base):
 
     def _merge_implementation(self, other, point, feature, onFeature,
                               matchingFtIdx):
-        #import pdb; pdb.set_trace()
-
         self._sortInternal('feature')
         other._sortInternal('feature')
         tempFtsL = len(self.features)

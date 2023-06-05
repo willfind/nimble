@@ -4287,7 +4287,6 @@ class Base(ABC):
 
     def _genericMergeFrontend(self, other, point, feature, onFeature):
         # validation
-
         bothPtNamesCreated = (self.points._namesCreated()
                               and other.points._namesCreated())
         if onFeature is None and not bothPtNamesCreated:

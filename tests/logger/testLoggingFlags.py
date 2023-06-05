@@ -2,7 +2,6 @@
 Group of tests which checks that use controlled local and global
 mechanisms for controlling logging are functioning as expected.
 """
-from functools import wraps, partial
 
 import tempfile
 
@@ -105,7 +104,6 @@ def runAndCheck(toCall, useLog):
 
 def backend(toCall, validator, **kwargs):
     # for each combination of local and global, call and check
-    # import pdb; pdb.set_trace()
     nimble.settings.set('logger', 'enabledByDefault', 'True')
 
     (start, end) = validator(toCall, useLog=True, **kwargs)
@@ -288,11 +286,9 @@ def test_Deep_trainAndTestOnTrainingData_CVError():
     backendDeep(wrapped, runAndCheck)
 
 def prepAndCheck(toCall, constructor, useLog):
-
     data = [[12, 1, 1], [12, 1, 1], [12, 1, 1], [12, 1, 1], [12, 1, 1], [12, 1, 1],
-        [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2],
-        [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3]]
-    
+            [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2],
+            [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3]]
     pNames = ['p' + str(i) for i in range(18)]
     fNames = ['f0', 'f1', 'f2']
     # nimble.data not logged
@@ -423,7 +419,6 @@ def test_merge():
 
     for constructor in nonViewConstructors:
         backend(wrapped, prepAndCheck, constructor=constructor)
-
 
 def test_transformElements():
     def wrapped(obj, useLog):
