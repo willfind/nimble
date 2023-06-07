@@ -63,7 +63,7 @@ class Dependency:
     Parameters
     ----------
     name : str
-        The name of the package.
+        The name of the package as it is imported.
     section : str
         The category for setup.py to classify this dependency.
     description : str, None
@@ -120,10 +120,6 @@ _DEPENDENCIES = [
     Dependency('keras', 'interfaces', 'Neural Networks'),
     Dependency('autoimpute', 'interfaces',
                'Imputation & machine learning with missing data'),
-    Dependency('pytest', 'development'),
-    Dependency('pylint', 'development'),
-    Dependency('cython', 'development'),
-    Dependency('sphinx', 'development'),
     ]
 
 DEPENDENCIES = {dep.name: dep for dep in _DEPENDENCIES}
