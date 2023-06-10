@@ -28,8 +28,13 @@ boolValues = trueValues + falseValues
 numericValues = (positiveValues + negativeValues + zeroValues
                  + infinityValues + missingValues[1:])
 
-sparseUnsafeMatches = [match.missing, match.anyMissing, match.allMissing, 
-                       match.nonMissing, match.anyNonMissing, match.nonNumeric,]
+# These are testable with a constant value object, split by
+# expected result.
+sparseUnsafeFalse = ['anyNonNumeric', 'allNonNumeric']
+sparseUnsafeTrue = ['anyNumeric', 'allNumeric']
+# These are dependent on local values where the function is
+# defined; we check the data directly to determine if it's ok
+sparseUnsafeCheck= ['allValueFinder', 'anyValueFinder']
 
 def test_match_missing():
     true = missingValues
@@ -94,14 +99,24 @@ def test_match_floating():
 @noLogEntryExpected
 def backend_match_anyAll(anyOrAll, func, data):
     """backend for match functions accepting 1D and 2D data and testing for any or all"""
-    sparseSafe = True
-    if func not in sparseUnsafeMatches:
-        sparseSafe = False 
-        data = np.array(data, dtype=np.object_)
+    sparseExpMatch = None
+    if func.__name__ in sparseUnsafeFalse:
+        sparseSafe = False
+        sparseExpMatch = False
+    elif func.__name__ in sparseUnsafeTrue:
+        sparseSafe = False
+        sparseExpMatch = True
+    elif func.__name__ in sparseUnsafeCheck:
+        sparseSafe = not isinstance(data[0][2], str)
     else:
-        data = np.array(data)
+        sparseSafe = True
+
     for constructor in getDataConstructors(includeSparse=sparseSafe):
-        toTest = constructor(data, useLog=False)
+        if "list" in constructor.keywords['returnType'].lower():
+            typeLock = np.array(data, dtype=np.object_)
+            toTest = constructor(typeLock, useLog=False)
+        else:
+            toTest = constructor(data, useLog=False)
         # test whole matrix
         if anyOrAll == 'any':
             assert func(toTest)
@@ -136,6 +151,18 @@ def backend_match_anyAll(anyOrAll, func, data):
             # index 2 contains all matching values
             else:
                 assert func(point)
+
+    # Sanity check Sparse against simpler data in some cases
+    if sparseExpMatch is not None:
+        # toTest is already transposed, so we transpose it back.
+        # 0th ft only has non-matching, 2nd ft only has matching;
+        # we grab what we need
+        if sparseExpMatch:
+            sparseTest = toTest.T[:, 2].copy("Sparse")
+        else:
+            sparseTest = toTest.T[:, 0].copy("Sparse")
+        ret = func(sparseTest)
+        assert ret if sparseExpMatch else not ret
 
 
 def test_match_anyMissing():
@@ -239,12 +266,12 @@ def test_match_allValues_str():
     backend_match_anyAll('all', match.allValues(fill), data)
 
 def test_match_anyValues_list():
-    data = [[0,0,1], [0,0,2], [0,'a','a']]
-    backend_match_anyAll('any', match.anyValues([1, 2, 'a']), data)
+    data = [[0,0,1], [0,0,2], [0,3,3]]
+    backend_match_anyAll('any', match.anyValues([1, 2, 3]), data)
 
 def test_match_allValues_list():
-    data = [[0,0,1], [0,0,2], [0,'a','a']]
-    backend_match_anyAll('all', match.allValues([1, 2, 'a']), data)
+    data = [[0,0,1], [0,0,2], [0,3,3]]
+    backend_match_anyAll('all', match.allValues([1, 2, 3]), data)
 
 def test_match_anyValues_func():
     data = [[0,0,1], [0,0,2], [0,3,3]]
