@@ -14,6 +14,7 @@ from tests.helpers import getDataConstructors
 
 constructors = getDataConstructors()
 nonViewConstructors = getDataConstructors(includeViews=False)
+noSparseNoViewConstructors = getDataConstructors(includeViews=False, includeSparse=False)
 
 learnerName = 'nimble.KNNClassifier'
 
@@ -103,7 +104,6 @@ def runAndCheck(toCall, useLog):
 
 def backend(toCall, validator, **kwargs):
     # for each combination of local and global, call and check
-
     nimble.settings.set('logger', 'enabledByDefault', 'True')
 
     (start, end) = validator(toCall, useLog=True, **kwargs)
@@ -286,9 +286,9 @@ def test_Deep_trainAndTestOnTrainingData_CVError():
     backendDeep(wrapped, runAndCheck)
 
 def prepAndCheck(toCall, constructor, useLog):
-    data = [["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1],
-            ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
-            ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
+    data = [[12, 1, 1], [12, 1, 1], [12, 1, 1], [12, 1, 1], [12, 1, 1], [12, 1, 1],
+            [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2], [23, 2, 2],
+            [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3], [34, 3, 3]]
     pNames = ['p' + str(i) for i in range(18)]
     fNames = ['f0', 'f1', 'f2']
     # nimble.data not logged
@@ -430,7 +430,7 @@ def test_transformElements():
 
 def test_calculateOnElements():
     def wrapped(obj, useLog):
-        return obj.calculateOnElements(lambda x: len(x), features=0, useLog=useLog)
+        return obj.calculateOnElements(lambda x: x+x, features=0, useLog=useLog)
 
     for constructor in constructors:
         backend(wrapped, prepAndCheck, constructor=constructor)
@@ -605,7 +605,7 @@ def test_features_transform():
 
 def test_points_insert():
     def wrapped(obj, useLog):
-        insertData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
+        insertData = [[45, 4, 4], [45, 4, 4], [45, 4, 4], [45, 4, 4], [45, 4, 4], [45, 4, 4]]
         toInsert = nimble.data(insertData, useLog=False)
         return obj.points.insert(0, toInsert, useLog=useLog)
 
@@ -624,7 +624,7 @@ def test_features_insert():
 def test_points_append():
 
     def wrapped(obj, useLog):
-        appendData = [["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4], ["d", 4, 4]]
+        appendData = [[45, 4, 4], [45, 4, 4], [45, 4, 4], [45, 4, 4], [45, 4, 4], [45, 4, 4]]
         toAppend = nimble.data(appendData, useLog=False)
         return obj.points.append(toAppend, useLog=useLog)
 
@@ -651,7 +651,7 @@ def test_features_splitByParsing():
     def wrapped(obj, useLog):
         return obj.features.splitByParsing(1, customParser, ['str', 'int'], useLog=useLog)
 
-    for constructor in nonViewConstructors:
+    for constructor in noSparseNoViewConstructors:
         backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_splitByCollapsingFeatures():
@@ -659,7 +659,7 @@ def test_points_splitByCollapsingFeatures():
         return obj.points.splitByCollapsingFeatures(['f0', 'f1', 'f2'],
                                                     'featureNames', 'values',
                                                     useLog = useLog)
-    for constructor in nonViewConstructors:
+    for constructor in noSparseNoViewConstructors:
         backend(wrapped, prepAndCheck, constructor=constructor)
 
 def test_points_combineByExpandingFeatures():

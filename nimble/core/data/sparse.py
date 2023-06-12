@@ -650,7 +650,7 @@ class Sparse(Base):
             matchingFtIdx[1] = list(map(lambda x: x + 1, matchingFtIdx[1]))
             matchingFtIdx[1].insert(0, 0)
 
-        mergedData = np.empty((0, 0), dtype=np.object_)
+        mergedData = np.empty((0, 0))
         mergedRow = []
         mergedCol = []
         matched = []
@@ -756,6 +756,7 @@ class Sparse(Base):
         if len(mergedData) == 0:
             mergedData = []
 
+        mergedData = mergedData.astype(np.float_)
         self._dims = [numPts, numFts]
         self._data = scipy.sparse.coo_matrix(
             (mergedData, (mergedRow, mergedCol)), shape=(numPts, numFts))
