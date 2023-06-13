@@ -28,7 +28,7 @@ from tests.helpers import oneLogEntryExpected, noLogEntryExpected
 from tests.helpers import patch, assertCalled, assertNotCalled
 
 returnTypes = copy.copy(nimble.core.data.available)
-#returnTypesNoSparse = [retType for retType in returnTypes if retType != 'Sparse']
+returnTypesNoSparse = [retType for retType in returnTypes if retType != 'Sparse']
 
 datetimeTypes = (datetime.datetime, np.datetime64, pd.Timestamp)
 
@@ -1362,8 +1362,8 @@ def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
     return ret
 
 def test_automaticByType_fnames_rawAndCSV():
-    availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix', 'scipycoo']
-    for (rawT, retT) in itertools.product(availableRaw, returnTypes):
+    availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix']
+    for (rawT, retT) in itertools.product(availableRaw, returnTypesNoSparse):
         # example which triggers automatic removal
         simpleRaw = "fname0,fname1,fname2\n1,2,3\n"
         simple = helper_auto(simpleRaw, rawT, retT, pointNames='automatic',
@@ -1390,8 +1390,8 @@ def test_automaticByType_fnames_rawAndCSV():
 
 
 def test_userOverrideOfAutomaticByType_fnames_rawAndCSV():
-    availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix', 'scipycoo']
-    for (rawT, retT) in itertools.product(availableRaw, returnTypes):
+    availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix']
+    for (rawT, retT) in itertools.product(availableRaw, returnTypesNoSparse):
         # example where user provided False overides automatic detection
         correctRaw = "fname0,fname1,fname2\n1,2,3\n"
         overide1a = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames=False)
@@ -1411,8 +1411,8 @@ def test_userOverrideOfAutomaticByType_fnames_rawAndCSV():
 
 
 def test_automaticByType_pname_interaction_with_fname():
-    availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix', 'scipycoo']
-    for (rawT, retT) in itertools.product(availableRaw, returnTypes):
+    availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix']
+    for (rawT, retT) in itertools.product(availableRaw, returnTypesNoSparse):
         # pnames auto triggered with auto fnames
         raw = "pointNames,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')

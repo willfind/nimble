@@ -25,7 +25,8 @@ from .numerical_backend import NumericalDataSafeSparseUnsafe
 from .numerical_backend import NumericalModifyingSparseSafe
 from .numerical_backend import NumericalModifyingSparseUnsafe
 
-from .query_backend import QueryBackend
+from .query_backend import QueryBackendSparseSafe
+from .query_backend import QueryBackendSparseUnsafe
 
 from .high_level_backend import HighLevelDataSafeSparseSafe
 from .high_level_backend import HighLevelDataSafeSparseUnsafe
@@ -69,13 +70,14 @@ dataframeConstructor = objConstructorMaker('DataFrame')
 
 class BaseViewAllTests(HighLevelDataSafeSparseSafe, HighLevelDataSafeSparseUnsafe,
                         NumericalDataSafeSparseSafe, NumericalDataSafeSparseUnsafe,
-                       QueryBackend, StructureDataSafeSparseSafe, StructureDataSafeSparseUnsafe,
+                       QueryBackendSparseSafe, QueryBackendSparseUnsafe,
+                       StructureDataSafeSparseSafe, StructureDataSafeSparseUnsafe,
                        ViewAccess, StretchDataSafeSparseSafe, StretchDataSafeSparseUnsafe,
                        HighDimensionSafeSparseSafe, HighDimensionSafeSparseUnsafe):
     pass
 
 class BaseViewSparseSafeTests(HighLevelDataSafeSparseSafe, NumericalDataSafeSparseSafe,
-                              QueryBackend, StructureDataSafeSparseSafe, ViewAccess,
+                              QueryBackendSparseSafe, StructureDataSafeSparseSafe, ViewAccess,
                               StretchDataSafeSparseSafe, HighDimensionSafeSparseSafe):
     pass
 
@@ -83,7 +85,8 @@ class BaseChildAllTests(HighLevelDataSafeSparseSafe, HighLevelModifyingSparseSaf
                         HighLevelDataSafeSparseUnsafe, HighLevelModifyingSparseUnsafe,
                         NumericalDataSafeSparseSafe, NumericalModifyingSparseSafe,
                         NumericalDataSafeSparseUnsafe, NumericalModifyingSparseUnsafe,
-                        QueryBackend, StretchDataSafeSparseSafe, StretchDataModifyingSparseSafe,
+                        QueryBackendSparseSafe, QueryBackendSparseUnsafe, 
+                        StretchDataSafeSparseSafe, StretchDataModifyingSparseSafe,
                         StretchDataSafeSparseUnsafe, StretchDataModifyingSparseUnsafe,
                         StructureDataSafeSparseSafe, StructureModifyingSparseSafe,
                         StructureDataSafeSparseUnsafe, StructureModifyingSparseUnsafe,
@@ -94,7 +97,7 @@ class BaseChildAllTests(HighLevelDataSafeSparseSafe, HighLevelModifyingSparseSaf
 
 class BaseChildSparseSafeTests(HighLevelDataSafeSparseSafe, HighLevelModifyingSparseSafe,
                                NumericalDataSafeSparseSafe, NumericalModifyingSparseSafe,
-                               QueryBackend, StretchDataSafeSparseSafe, StretchDataModifyingSparseSafe,
+                               QueryBackendSparseSafe, StretchDataSafeSparseSafe, StretchDataModifyingSparseSafe,
                                StructureDataSafeSparseSafe, StructureModifyingSparseSafe,
                                HighDimensionSafeSparseSafe, HighDimensionModifyingSparseSafe):
     pass

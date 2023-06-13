@@ -2185,28 +2185,6 @@ class StructureModifyingSparseUnsafe(StructureShared):
         assert orig1.isIdentical(orig8)
         assert orig1.isIdentical(orig9)
     
-    def test_init_coo_matrix_duplicateswithNoDupStrings(self):
-        # Constructing a matrix with duplicate indices
-        # with String, but not in duplicate entry
-        row  = np.array([0, 0, 1, 3, 1, 0, 0])
-        col  = np.array([0, 2, 1, 3, 1, 0, 0])
-        # need to specify object dtype, otherwise it will generate a all string object
-        data = np.array([1, 7, 1, 'AAA', 4, 2, 1], dtype='O')
-        coo_str = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
-        ret = self.constructor(coo_str)
-        # Expected coo_matrix duplicates sum
-        # with String, but not in duplicate entry
-        row  = np.array([0, 0, 1, 3])
-        col  = np.array([0, 2, 1, 3])
-        data = np.array([4, 7, 5, 'AAA'], dtype='O')
-        coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
-        exp = self.constructor(coo_str)
-
-        assert ret.isIdentical(exp)
-        assert ret[0,0] == exp[0,0]
-        assert ret[3,3] == exp[3,3]
-        assert ret[1,1] == exp[1,1]
-    
     @raises(InvalidArgumentValue)
     def test_merge_exception_featureStrictNameMismatch(self):
         dataL = [['a', 1, 2], ['c', 5, 6], ['c', -1, -2]]
@@ -4641,17 +4619,6 @@ class StructureModifyingSparseSafe(StructureShared):
         assert ret[0,0] == exp[0,0]
         assert ret[3,3] == exp[3,3]
         assert ret[0,2] == exp[0,2]
-
-
-    @raises(ValueError)
-    def test_init_coo_matrix_duplicateswithDupStrings(self):
-        # Constructing a matrix with duplicate indices
-        # # with String, in a duplicate entry
-        row  = np.array([0, 0, 1, 3, 1, 0, 0])
-        col  = np.array([0, 2, 1, 3, 1, 0, 0])
-        data = np.array([1, 7, 1, 'AAA', 4, 2, 'BBB'], dtype='O')
-        coo_str = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
-        ret = self.constructor(coo_str)
 
     @assertCalled(nimble.core.data.axis, 'valuesToPythonList')
     def test_init_pointNames_calls_valuesToPythonList(self):

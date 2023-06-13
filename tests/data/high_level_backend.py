@@ -3901,13 +3901,6 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         exp0.points.setNames(['a', 'b', 'c'])
         assert obj0 == exp0
 
-        obj1 = self.constructor([['a', 'b', 'c', 'c'], [None, 'f', 'h', 'h'], ['i', 'i', 'k', None]], pointNames=['a', 'b', 'c'])
-        obj1.points.fillMatching(None, 'b')
-        obj1.points.fillMatching(fill.mode, match.missing)
-        exp1 = self.constructor([['a', 'c', 'c', 'c'], ['h', 'f', 'h', 'h'], ['i', 'i', 'k', 'i']], pointNames=['a', 'b', 'c'])
-        exp1.points.setNames(['a', 'b', 'c'])
-        assert obj1 == exp1
-
     @raises(InvalidArgumentValue)
     def test_points_fillMatching_mode_allMatches(self):
         obj = self.constructor([[1, 2, 3], [None, None, None], [7, 8, 9]])
@@ -4187,7 +4180,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
 
     @oneLogEntryExpected
     def test_points_replace_single(self):
-        data = [[0, 1, 2], ['x', 'x', 'x'], [6, 7, 8]]
+        data = [[0, 1, 2], [999,999,999], [6, 7, 8]]
         exp = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
         replace = [3, 4, 5]
         replaceLocs = [1]

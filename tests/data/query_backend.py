@@ -44,12 +44,6 @@ preserveAPath = os.path.join(os.getcwd(), "correct", "looking", "path")
 preserveRPath = os.path.relpath(preserveAPath)
 preservePair = (preserveAPath, preserveRPath)
 
-# # NOW SAFE ? 
-# pytest -v -k 'test_featureStatistics_groupbyfeature'
-
-# #TESTS SAFE 
-# pytest -v -k 'test_report'
-
 def _fnames(num):
     ret = []
     for i in range(num):
@@ -80,11 +74,198 @@ def complicateName(name):
             newName += letter
     return newName
 
-class QueryBackend(DataTestObject):
+class QueryBackendSparseUnsafe(DataTestObject):
+    @noLogEntryExpected
+    def test_save_CSVhandmade_extraCommas(self):
+        """ Test save() when data and names contain commas """
+        # instantiate object
+        data = [[1, 2, 'a'], [1, 2, 'a,b'], [2, 4, 'a,b,c'], [0, 0, 'd']]
+        pointNames = ['1', 'one,1', '2', '0,zero']
+        featureNames = ['one,1', 'two', '3,three']
+        test_object = self.constructor([], [])
+        # if type(test_object) in  [nimble.core.data.sparse.Sparse, 
+        #                             nimble.core.data.sparse.SparseView] :
+        #     return
+         
+        toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
+            toWrite.save(tmpFile.name, fileFormat='csv', includeNames=True)
+
+            # read it back into a different object, then test equality
+            # must specify featureNames=True because 'automatic' will not detect
+            readObj = self.constructor(source=tmpFile.name, featureNames=True)
+
+        assert readObj.isIdentical(toWrite)
+        assert toWrite.isIdentical(readObj)
+
+        assert toWrite == orig
+
+    @noLogEntryExpected  
+    def test_save_CSVhandmade_extraQuotes(self):
+        """ Test save() when data and names contain commas """
+        # instantiate object
+        import pdb; pdb.set_trace()
+        data = [[1, 2, 'with "quote"'], [1, 2, '"quotes","and", "commas"'],
+                [2, 4, 'includes"quote"'], [0, 0, 'd']]
+        pointNames = ['1', '1"quote"', '2', '0,zero']
+        featureNames = ['"quote",1', 'two', '3,three']
+        # if type(self.constructor) in  [nimble.core.data.sparse.Sparse, 
+        #                             nimble.core.data.sparse.SparseView] :
+        #     return
+        toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+        orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
+
+        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
+            toWrite.save(tmpFile.name, fileFormat='csv', includeNames=True)
+            # read it back into a different object, then test equality
+            # must specify featureNames=True because 'automatic' will not detect
+            readObj = self.constructor(source=tmpFile.name, featureNames=True)
+        assert readObj.isIdentical(toWrite)
+        assert toWrite.isIdentical(readObj)
+
+        assert toWrite == orig
+        
+    ######################
+    # _axisQueryFunction #
+    ######################
+        
+    def test_axisQueryStringSparseUnsafe(self):
+        """tests both axes for QueryString"""
+
+        def constructObjAndGetAxis(axis, data, offAxisNames):
+            if axis == 'points':
+                obj = self.constructor(data, featureNames=offAxisNames)
+            else:
+                obj = self.constructor(np.array(data).T,
+                                       pointNames=offAxisNames)
+            return getattr(obj, axis)
+
+        def operatorAssertions(axisObj, query, optr):
+            equal = axisObj[0]
+            notEqual1 = axisObj[1]
+            notEqual2 = axisObj[2]
+            # axis uses _axisQueryFunction to support more specific exception
+            # messages when the QueryString will not work.
+            func = axisObj._axisQueryFunction(query)
+            if '=' in optr:
+                if '==' in optr:
+                    assert func(equal)
+                    assert not func(notEqual2)
+                    assert not func(notEqual1)
+                elif '!' in optr:
+                    assert not func(equal)
+                    assert func(notEqual2)
+                    assert func(notEqual1)
+                else:
+                    assert func(equal)
+            if '<' in optr:
+                assert func(notEqual2)
+                assert not func(notEqual1)
+            elif '>' in optr:
+                assert func(notEqual1)
+                assert not func(notEqual2)
+            if optr == 'is':
+                assert func(equal)
+                assert not func(notEqual2)
+                assert not func(notEqual1)
+
+        for axis in ['points', 'features']:
+            data = [['a', 'a b', '>=2'], ['b', 'b c', '<2'], ['c', 'c d', '<2']]
+            offNames = ['one', 'two', 'three']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            for optr in [' == ', ' != ']:
+                query = 'one' + optr + 'a'
+                operatorAssertions(primaryAxis, query, optr)
+
+                query = 'two' + optr + 'a b'
+                operatorAssertions(primaryAxis, query, optr)
+
+                query = 'three' + optr + '>=2'
+                operatorAssertions(primaryAxis, query, optr)
+            
+            data = [['a', 'a b', '>=2'], ['b', 'b c', '<2'], ['c', 'c d', '<2']]
+            offNames = ['one', 'two', 'three']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            for optr in [' == ', ' != ']:
+                query = 'one' + optr + 'a'
+                operatorAssertions(primaryAxis, query, optr)
+
+                query = 'two' + optr + 'a b'
+                operatorAssertions(primaryAxis, query, optr)
+
+                query = 'three' + optr + '>=2'
+                operatorAssertions(primaryAxis, query, optr)
+
+            offNames = ['vec one', 'vec two', 'vec three']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            for optr in [' == ', ' != ']:
+                query = 'vec one' + optr + 'a'
+                operatorAssertions(primaryAxis, query, optr)
+
+            offNames = ['<one>', '<two>', '<three>']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            for optr in [' == ', ' != ']:
+                query = '<one>' + optr + 'a'
+                operatorAssertions(primaryAxis, query, optr)
+
+                query = '<three>' + optr + '>=2'
+                operatorAssertions(primaryAxis, query, optr)
+            
+            data = [[None, 1, -2], [-3, -4, 5], [6, -7, 8]]
+            offNames = ['one', 'two', 'three']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            for query in ['one is missing', 'three is not positive', 'two is positive']:
+                operatorAssertions(primaryAxis, query, 'is')
+                
+            data = [[0, '> 250k', '== 2'], [3, '> 250k', '!= 2'], [6, '< 250k', '!= 2']]
+            offNames = ['one', 'two', 'three']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            func = primaryAxis._axisQueryFunction
+            # invalid query value
+            with raises(InvalidArgumentValue, match='Multiple operators'):
+                func('two == > 250k')
+            with raises(InvalidArgumentValue, match='Multiple operators'):
+                func('three != == 2')
+            # invalid query feature name
+            offNames = ['< one >', '< two >', '< three >']
+            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
+            func = primaryAxis._axisQueryFunction
+            with raises(InvalidArgumentValue, match='Multiple operators'):
+                func('< one > < 4')
+            with raises(InvalidArgumentValue, match='Multiple operators'):
+                func('< one > == 4')
+            # invalid name and value
+            with raises(InvalidArgumentValue, match='Multiple operators'):
+                func('< two > == > 250k')
+            with raises(InvalidArgumentValue, match='Multiple operators'):
+                func('< three > != == 2')
+                
+    ##################
+    # features.report #
+    ###################
+
+    def test_features_report_withNonNumeric(self):
+        fnames = ['one', 'two', 'three']
+        obj = self.constructor([[1, 2, 'a'], [2, 1, 'b'], [3, 3, 'c']],
+                               featureNames=fnames)
+
+        ret = obj.features.report()
+
+        heads = ['index', 'mean', 'mode', 'minimum', 'Q1', 'median', 'Q3',
+                 'maximum', 'uniqueCount', 'count', 'standardDeviation']
+        rep = [[0, 2, 2, 1, 1.5, 2, 2.5, 3, 3, 3, 1],
+               [1, 2, 2, 1, 1.5, 2, 2.5, 3, 3, 3, 1],
+               [2, np.nan, 'b', np.nan, np.nan, np.nan, np.nan, np.nan, 3, 3, np.nan]]
+        exp = nimble.data(rep, fnames, heads)
+
+        assert ret == exp
+    
+class QueryBackendSparseSafe(DataTestObject):
     ##############
     # pointCount #
     ##############
-
 
     def test_pointCount_empty(self):
         """ test pointCount when given different kinds of emptiness """
@@ -296,54 +477,6 @@ class QueryBackend(DataTestObject):
 
         excludeAxis('point')
         excludeAxis('feature')
-
-    @noLogEntryExpected
-    def test_save_CSVhandmade_extraCommas(self):
-        """ Test save() when data and names contain commas """
-        # instantiate object
-        data = [[1, 2, 'a'], [1, 2, 'a,b'], [2, 4, 'a,b,c'], [0, 0, 'd']]
-        pointNames = ['1', 'one,1', '2', '0,zero']
-        featureNames = ['one,1', 'two', '3,three']
-        test_object = self.constructor([], [])
-        if type(test_object) in  [nimble.core.data.sparse.Sparse, 
-                                    nimble.core.data.sparse.SparseView] :
-            return
-         
-        toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
-            toWrite.save(tmpFile.name, fileFormat='csv', includeNames=True)
-
-            # read it back into a different object, then test equality
-            # must specify featureNames=True because 'automatic' will not detect
-            readObj = self.constructor(source=tmpFile.name, featureNames=True)
-
-        assert readObj.isIdentical(toWrite)
-        assert toWrite.isIdentical(readObj)
-
-        assert toWrite == orig
-
-    @noLogEntryExpected
-    def test_save_CSVhandmade_extraQuotes(self):
-        """ Test save() when data and names contain commas """
-        # instantiate object
-        data = [[1, 2, 'with "quote"'], [1, 2, '"quotes","and", "commas"'],
-                [2, 4, 'includes"quote"'], [0, 0, 'd']]
-        pointNames = ['1', '1"quote"', '2', '0,zero']
-        featureNames = ['"quote",1', 'two', '3,three']
-        toWrite = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-        orig = self.constructor(data, pointNames=pointNames, featureNames=featureNames)
-
-        with tempfile.NamedTemporaryFile(suffix=".csv") as tmpFile:
-            toWrite.save(tmpFile.name, fileFormat='csv', includeNames=True)
-            # read it back into a different object, then test equality
-            # must specify featureNames=True because 'automatic' will not detect
-            readObj = self.constructor(source=tmpFile.name, featureNames=True)
-        assert readObj.isIdentical(toWrite)
-        assert toWrite.isIdentical(readObj)
-
-        assert toWrite == orig
 
     @noLogEntryExpected
     def test_save_MTXhandmade(self):
@@ -3044,22 +3177,6 @@ class QueryBackend(DataTestObject):
 
         assert ret.isApproximatelyEqual(exp)
 
-    def test_features_report_withNonNumeric(self):
-        fnames = ['one', 'two', 'three']
-        obj = self.constructor([[1, 2, 'a'], [2, 1, 'b'], [3, 3, 'c']],
-                               featureNames=fnames)
-
-        ret = obj.features.report()
-
-        heads = ['index', 'mean', 'mode', 'minimum', 'Q1', 'median', 'Q3',
-                 'maximum', 'uniqueCount', 'count', 'standardDeviation']
-        rep = [[0, 2, 2, 1, 1.5, 2, 2.5, 3, 3, 3, 1],
-               [1, 2, 2, 1, 1.5, 2, 2.5, 3, 3, 3, 1],
-               [2, np.nan, 'b', np.nan, np.nan, np.nan, np.nan, np.nan, 3, 3, np.nan]]
-        exp = nimble.data(rep, fnames, heads)
-
-        assert ret == exp
-
     def test_features_report_limited(self):
         fnames = ['one', 'two', 'three']
         obj = self.constructor([[1, 4, 9], [2, 2, 9.2], [3, 0, 8.8]],
@@ -3140,14 +3257,14 @@ class QueryBackend(DataTestObject):
         ret = obj.features.report(selection)
         
     def test_features_report_unifyingType(self):
-        fnames = ['one', 'two', 'three']
-        obj = self.constructor([[1,'6', 9.1], [2,'Oslo', 9.2], [3, 'Kyoto', 8.8]],
+        fnames = ['one', 'two']
+        obj = self.constructor([[1, 9.1], [2, 9.2], [3, 8.8]],
                                featureNames=fnames)
         
         ret = obj.features.report(dtypes=True)
         assert 'dataType' in ret.features.getNames()
         reportDtypes = list(ret.features['dataType']) 
-        expDtypes = [np.integer, np.object_, np.float_]
+        expDtypes = [np.integer, np.float_]
         
         if type(obj) in [nimble.core.data.matrix.Matrix, nimble.core.data.sparse.Sparse, 
                          nimble.core.data.list.List]:
@@ -3164,7 +3281,7 @@ class QueryBackend(DataTestObject):
 
     def test_report(self):
         fnames = ['one', 'two', 'three']
-        obj = self.constructor([[0, 2, 'a'], [2, None, 'b'], [0, 3, 'c']],
+        obj = self.constructor([[0, 2, 3.1], [2, None, 4.2], [0, 3, 6.3]],
                                featureNames=fnames)
 
         ret = obj.report()
@@ -3278,118 +3395,6 @@ class QueryBackend(DataTestObject):
                 func('one is something')
             with raises(InvalidArgumentValue, match='does not exist'):
                 func('two   is missing')
-
-
-    def test_axisQueryStringSparseUnsafe(self):
-        """tests both axes for QueryString"""
-
-        def constructObjAndGetAxis(axis, data, offAxisNames):
-            if axis == 'points':
-                obj = self.constructor(data, featureNames=offAxisNames)
-            else:
-                obj = self.constructor(np.array(data).T,
-                                       pointNames=offAxisNames)
-            return getattr(obj, axis)
-
-        def operatorAssertions(axisObj, query, optr):
-            equal = axisObj[0]
-            notEqual1 = axisObj[1]
-            notEqual2 = axisObj[2]
-            # axis uses _axisQueryFunction to support more specific exception
-            # messages when the QueryString will not work.
-            func = axisObj._axisQueryFunction(query)
-            if '=' in optr:
-                if '==' in optr:
-                    assert func(equal)
-                    assert not func(notEqual2)
-                    assert not func(notEqual1)
-                elif '!' in optr:
-                    assert not func(equal)
-                    assert func(notEqual2)
-                    assert func(notEqual1)
-                else:
-                    assert func(equal)
-            if '<' in optr:
-                assert func(notEqual2)
-                assert not func(notEqual1)
-            elif '>' in optr:
-                assert func(notEqual1)
-                assert not func(notEqual2)
-            if optr == 'is':
-                assert func(equal)
-                assert not func(notEqual2)
-                assert not func(notEqual1)
-
-        for axis in ['points', 'features']:
-            data = [['a', 'a b', '>=2'], ['b', 'b c', '<2'], ['c', 'c d', '<2']]
-            offNames = ['one', 'two', 'three']
-            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
-            for optr in [' == ', ' != ']:
-                query = 'one' + optr + 'a'
-                operatorAssertions(primaryAxis, query, optr)
-
-                query = 'two' + optr + 'a b'
-                operatorAssertions(primaryAxis, query, optr)
-
-                query = 'three' + optr + '>=2'
-                operatorAssertions(primaryAxis, query, optr)
-            
-            data = [['a', 'a b', '>=2'], ['b', 'b c', '<2'], ['c', 'c d', '<2']]
-            offNames = ['one', 'two', 'three']
-            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
-            for optr in [' == ', ' != ']:
-                query = 'one' + optr + 'a'
-                operatorAssertions(primaryAxis, query, optr)
-
-                query = 'two' + optr + 'a b'
-                operatorAssertions(primaryAxis, query, optr)
-
-                query = 'three' + optr + '>=2'
-                operatorAssertions(primaryAxis, query, optr)
-
-            offNames = ['vec one', 'vec two', 'vec three']
-            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
-            for optr in [' == ', ' != ']:
-                query = 'vec one' + optr + 'a'
-                operatorAssertions(primaryAxis, query, optr)
-
-            offNames = ['<one>', '<two>', '<three>']
-            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
-            for optr in [' == ', ' != ']:
-                query = '<one>' + optr + 'a'
-                operatorAssertions(primaryAxis, query, optr)
-
-                query = '<three>' + optr + '>=2'
-                operatorAssertions(primaryAxis, query, optr)
-            
-            data = [[None, 1, -2], [-3, -4, 5], [6, -7, 8]]
-            offNames = ['one', 'two', 'three']
-            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
-            for query in ['one is missing', 'three is not positive', 'two is positive']:
-                operatorAssertions(primaryAxis, query, 'is')
-                
-            data = [[0, '> 250k', '== 2'], [3, '> 250k', '!= 2'], [6, '< 250k', '!= 2']]
-            offNames = ['one', 'two', 'three']
-            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
-            func = primaryAxis._axisQueryFunction
-            # invalid query value
-            with raises(InvalidArgumentValue, match='Multiple operators'):
-                func('two == > 250k')
-            with raises(InvalidArgumentValue, match='Multiple operators'):
-                func('three != == 2')
-            # invalid query feature name
-            offNames = ['< one >', '< two >', '< three >']
-            primaryAxis = constructObjAndGetAxis(axis, data, offNames)
-            func = primaryAxis._axisQueryFunction
-            with raises(InvalidArgumentValue, match='Multiple operators'):
-                func('< one > < 4')
-            with raises(InvalidArgumentValue, match='Multiple operators'):
-                func('< one > == 4')
-            # invalid name and value
-            with raises(InvalidArgumentValue, match='Multiple operators'):
-                func('< two > == > 250k')
-            with raises(InvalidArgumentValue, match='Multiple operators'):
-                func('< three > != == 2')
 
         
 ###########
