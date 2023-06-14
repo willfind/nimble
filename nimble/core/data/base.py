@@ -5183,7 +5183,7 @@ class Base(ABC):
          2 │ -2 -1 0
         >
         >>> featObj.stretch - pointObj.stretch
-        <Matrix 3pt x 3ft
+        <Mxatrix 3pt x 3ft
              0 1  2
            ┌────────
          0 │ 0 -1 -2
@@ -5197,6 +5197,38 @@ class Base(ABC):
         shape, dimensions, reshape, resize, spread, restructure
         """
         return Stretch(self)
+    
+    ############################
+    ############################
+    ###  Alternate functions ###
+    ############################
+    ############################
+     
+    def describe(self):
+        # catch for pandas df.describe()
+        msg = 'Did you mean '
+    # def sort_values()
+        
+    # def corr():
+    
+    # def hist()
+    
+    # def insert()
+    
+    # def fillna()
+    
+    
+        
+    def __getattr__(self, name):
+        # Check if the attribute exists in DataFrame
+        if hasattr(pd.DataFrame, name):
+            # If it exists, suggest it as an alternative
+            raise AttributeError(f"Do you mean {name} in DataFrame?")
+        else:
+            # If it doesn't exist, raise the original AttributeError
+            raise AttributeError(f"'Noble' object has no attribute '{name}'")
+
+
 
     ############################
     ############################
