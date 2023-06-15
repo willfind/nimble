@@ -75,11 +75,14 @@ purchasePCA.features.setNames(['component_1', 'component_2'])
 ## The reduced dimensionality data from PCA is well suited for the k-means
 ## clustering algorithm. When doing k-means clustering, a major question is how
 ## many clusters to use (i.e., how many groups to automatically divide our data
-## points between). We will repeatedly train k-means on our PCA data, varying
+## points between). There are many different strategies for finding this value;
+## but here we will use the
+## [Elbow Method](https://en.wikipedia.org/wiki/Elbow_method_(clustering)).
+##
+## We will repeatedly train k-means on our PCA data, varying
 ## the number of clusters from 1 to 10. Each time we will record the number of
 ## clusters and the inertia (the sum of squared distances to the closest
-## cluster center). Plotting these values will help us determine the best
-## number of clusters to use.
+## cluster center). We will then plot these values and examine the plot.
 kmeans = {}
 withinClusterSumSquares = []
 for i in range(1, 11):

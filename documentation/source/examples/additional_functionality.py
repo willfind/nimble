@@ -148,10 +148,12 @@ nimble.showLog()
 ## If you revisit our data above, we can see that the points appear to be
 ## sorted by room. For our machine learning, we will want to randomize the
 ## order. When we call `points.permute` with no arguments, a random permutation
-## is used to reorder our points. However, Nimble wants each run of a script to
-## produce consistent results, so the random seed is controlled by default.
-## This means that the points in our randomly permuted object shown below are
-## always in the same order every time for everyone running this script.
+## is used to reorder our points. As much as possible, Nimble wants each run of
+## a script to produce consistent results, so the random seed for all Nimble
+## methods is controlled by default. For fixed versions of an OS, python, numpy,
+## and nimble the randomly permuted object shown below will always be the same
+## across runs multiple runs of this script. However, what you see may not
+## match, for example, the ordering shown on the website.
 wifi.points.permute()
 wifi.show('randomly permuted', maxHeight=12)
 
