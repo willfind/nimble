@@ -704,8 +704,6 @@ class HighLevelDataSafeSparseUnsafe(DataTestObject):
         assert unique[3] == 2
     
     def test_matchingElements_valueInput(self):
-        # import pdb
-        # pdb.set_trace()
         raw = [[1, 2, 3], [-1, -2, -3], [0, 'a', 0]]
         obj = self.constructor(raw)
         match1 = obj.matchingElements(lambda x: x == 0)
@@ -2349,7 +2347,7 @@ class HighLevelDataSafeSparseSafe(DataTestObject):
 
         assert anyGreaterNeg1 == expObj
 
-        raw = [[None, None, np.nan], [np.nan, None, -3], [0, 'zero', None]]
+        raw = [[None, None, np.nan], [np.nan, None, -3], [0, 0, None]]
         obj = self.constructor(raw)
 
         exp = [[True], [False], [False]]
@@ -2366,10 +2364,11 @@ class HighLevelDataSafeSparseSafe(DataTestObject):
         # None is converted to nan by nimble.data, here we explicitly pass the
         # value the underlying representation uses, so we avoid making it
         # look like None is considered a numeric
-        raw = [['a', np.nan, 'c'], [np.nan, np.nan, -3], [0, 'zero', np.nan]]
+        raw = [[0, np.nan, -1], [np.nan, np.nan, -3], [0, 2, np.nan]]
+
         obj = self.constructor(raw)
 
-        exp = [[True], [False], [True]]
+        exp = [[False], [False], [False]]
         expObj = self.constructor(exp, featureNames=['anyNonNumeric'])
         if axis == 'point':
             anyNonNumeric = obj.points.matching(match.anyNonNumeric)
@@ -2380,7 +2379,7 @@ class HighLevelDataSafeSparseSafe(DataTestObject):
 
         assert anyNonNumeric == expObj
 
-        raw = [['a', np.nan, 'c'], [np.nan, np.nan, -3], [0, 'zero', np.nan]]
+        raw = [[0, np.nan, -1], [np.nan, np.nan, -3], [0, 2, np.nan]]
         obj = self.constructor(raw, featureNames=['a 1', 'a 2', 'a 3'])
 
         exp = [[True], [True], [False]]

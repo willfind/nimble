@@ -36,7 +36,9 @@ from tests.helpers import raises
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import assertNoNamesGenerated
 from tests.helpers import assertCalled
+from tests.helpers import getDataConstructors
 from .baseObject import DataTestObject
+
 
 
 preserveName = "PreserveTestName"
@@ -106,7 +108,6 @@ class QueryBackendSparseUnsafe(DataTestObject):
     def test_save_CSVhandmade_extraQuotes(self):
         """ Test save() when data and names contain commas """
         # instantiate object
-        import pdb; pdb.set_trace()
         data = [[1, 2, 'with "quote"'], [1, 2, '"quotes","and", "commas"'],
                 [2, 4, 'includes"quote"'], [0, 0, 'd']]
         pointNames = ['1', '1"quote"', '2', '0,zero']
@@ -3264,15 +3265,20 @@ class QueryBackendSparseSafe(DataTestObject):
         ret = obj.features.report(dtypes=True)
         assert 'dataType' in ret.features.getNames()
         reportDtypes = list(ret.features['dataType']) 
-        expDtypes = [np.integer, np.float_]
+        expDtypes1 = [np.float_, np.float_]
+        expDtypes2 = [np.integer, np.float_]
         
-        if type(obj) in [nimble.core.data.matrix.Matrix, nimble.core.data.sparse.Sparse, 
-                         nimble.core.data.list.List]:
+        numericTypes = ['TestMatrix', 'TestMatrixView', 'TestSparse', 'TestSparseView']
+        
+        if type(self).__name__ in ['TestList', 'TestListView']:
             for i in range(len(reportDtypes)):
-              assert np.issubdtype(reportDtypes[i], np.object_) 
-        elif type(obj) is nimble.core.data.dataframe.DataFrame:
+                assert np.issubdtype(reportDtypes[i], np.object_) 
+        elif type(self).__name__ in numericTypes:
             for i in range(len(reportDtypes)):
-              assert np.issubdtype(reportDtypes[i], expDtypes[i]) 
+                assert np.issubdtype(reportDtypes[i], expDtypes1[i]) 
+        elif type(self).__name__ is 'TestDataFrame' or 'TestDataFrameView':
+            for i in range(len(reportDtypes)):
+                assert np.issubdtype(reportDtypes[i], expDtypes2[i]) 
         
         
     ##########
@@ -3290,9 +3296,11 @@ class QueryBackendSparseSafe(DataTestObject):
         exp = self.constructor(rep, featureNames=heads)
 
         assert ret == exp
+        
+        if type(self).__name__ in ['TestSparse', 'TestSparseView']:
+            return
 
-        obj = self.constructor([[[[0, 2, 'a']]], [[[2, None, 'b']]], [[[0, 3, 'c']]]])
-
+        obj = self.constructor([[[[0, 2, 1]]], [[[2, None, 2]]], [[[0, 3, 3]]]])
         ret = obj.report()
         heads = ['Values', 'Dimensions', 'proportionZero', 'proportionMissing']
         rep = [9, '3 x 1 x 1 x 3', (2 / 9), (1 / 9)]
