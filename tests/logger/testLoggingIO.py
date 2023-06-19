@@ -374,9 +374,9 @@ def testPrepTypeFunctionsUseLog():
     """Test that the functions in base using useLog are being logged"""
     nimble.settings.set('logger', 'enabledByDefault', 'True')
 
-    data = [["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1],
-            ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
-            ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
+    data = [[1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [2, 2, 2], 
+            [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3], 
+            [3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]]
 
     ########
     # Base #
@@ -458,9 +458,9 @@ def testPrepTypeFunctionsUseLog():
 
     # calculateOnElements
     dataObj = nimble.data(data, useLog=False)
-    calculated = dataObj.calculateOnElements(lambda x: len(x), features=0)
+    calculated = dataObj.calculateOnElements(lambda x: x*2, features=0)
     checkLogContents('calculateOnElements', dataObj.logID,
-                     {'toCalculate': "lambda x: len(x)", 'features': 0})
+                     {'toCalculate': "lambda x: x*2", 'features': 0})
 
     # matchingElements
     dataObj = nimble.data(data, useLog=False)
@@ -763,10 +763,11 @@ def testFailedLambdaStringConversion():
 @emptyLogSafetyWrapper
 def testLambdaStringConversionCommas():
     nimble.settings.set('logger', 'enabledByDefault', 'True')
+    
+    data = [[1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [1, 1, 1], [2, 2, 2], 
+            [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [2, 2, 2], [3, 3, 3], [3, 3, 3], 
+            [3, 3, 3], [3, 3, 3], [3, 3, 3], [3, 3, 3]]
 
-    data = [["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1], ["a", 1, 1],
-            ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2], ["b", 2, 2],
-            ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3], ["c", 3, 3]]
     for constructor in getDataConstructors():
         dataObj = constructor(data, useLog=False)
         calculated1 = dataObj.points.calculate(lambda x: [x[0], x[2]], points=0)
