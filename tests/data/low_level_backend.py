@@ -1436,3 +1436,13 @@ class LowLevelBackend(object):
 
         test.name = changeName
         assert test.name == changeName
+
+    ############
+    # __getattr__ #
+    ############
+
+    def test_DS_goto(self):
+        import pdb; pdb.set_trace()
+        data = self.constructor((3, 3, 5))
+        data.describe()
+        assert 1 == 1 

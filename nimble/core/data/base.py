@@ -5220,13 +5220,20 @@ class Base(ABC):
     
         
     def __getattr__(self, name):
-        # Check if the attribute exists in DataFrame
-        if hasattr(pd.DataFrame, name):
-            # If it exists, suggest it as an alternative
-            raise AttributeError(f"Do you mean {name} in DataFrame?")
-        else:
-            # If it doesn't exist, raise the original AttributeError
-            raise AttributeError(f"'Noble' object has no attribute '{name}'")
+        if name == "describe()":
+            raise AttributeError(f"Do you mean data.report()?")
+            #return "We suggest you try data.report()"
+        elif name == "hist()":
+            return "We suggest you try data.plotFeatureDistribution()"
+        
+
+        # # Check if the attribute exists in DataFrame
+        # if hasattr(pd.DataFrame, name):
+        #     # If it exists, suggest it as an alternative
+        #     raise AttributeError(f"Do you mean {name} in DataFrame?")
+        # else:
+        #     # If it doesn't exist, raise the original AttributeError
+        #     raise AttributeError(f"'Noble' object has no attribute '{name}'")
 
 
 
