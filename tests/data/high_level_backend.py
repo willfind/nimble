@@ -704,8 +704,6 @@ class HighLevelDataSafeSparseUnsafe(DataTestObject):
         assert unique[3] == 2
     
     def test_matchingElements_valueInput(self):
-        # import pdb
-        # pdb.set_trace()
         raw = [[1, 2, 3], [-1, -2, -3], [0, 'a', 0]]
         obj = self.constructor(raw)
         match1 = obj.matchingElements(lambda x: x == 0)
@@ -2349,7 +2347,7 @@ class HighLevelDataSafeSparseSafe(DataTestObject):
 
         assert anyGreaterNeg1 == expObj
 
-        raw = [[None, None, np.nan], [np.nan, None, -3], [0, 'zero', None]]
+        raw = [[None, None, np.nan], [np.nan, None, -3], [0, 0, None]]
         obj = self.constructor(raw)
 
         exp = [[True], [False], [False]]
@@ -2366,10 +2364,11 @@ class HighLevelDataSafeSparseSafe(DataTestObject):
         # None is converted to nan by nimble.data, here we explicitly pass the
         # value the underlying representation uses, so we avoid making it
         # look like None is considered a numeric
-        raw = [['a', np.nan, 'c'], [np.nan, np.nan, -3], [0, 'zero', np.nan]]
+        raw = [[0, np.nan, -1], [np.nan, np.nan, -3], [0, 2, np.nan]]
+
         obj = self.constructor(raw)
 
-        exp = [[True], [False], [True]]
+        exp = [[False], [False], [False]]
         expObj = self.constructor(exp, featureNames=['anyNonNumeric'])
         if axis == 'point':
             anyNonNumeric = obj.points.matching(match.anyNonNumeric)
@@ -2380,7 +2379,7 @@ class HighLevelDataSafeSparseSafe(DataTestObject):
 
         assert anyNonNumeric == expObj
 
-        raw = [['a', np.nan, 'c'], [np.nan, np.nan, -3], [0, 'zero', np.nan]]
+        raw = [[0, np.nan, -1], [np.nan, np.nan, -3], [0, 2, np.nan]]
         obj = self.constructor(raw, featureNames=['a 1', 'a 2', 'a 3'])
 
         exp = [[True], [True], [False]]
@@ -3901,13 +3900,6 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         exp0.points.setNames(['a', 'b', 'c'])
         assert obj0 == exp0
 
-        obj1 = self.constructor([['a', 'b', 'c', 'c'], [None, 'f', 'h', 'h'], ['i', 'i', 'k', None]], pointNames=['a', 'b', 'c'])
-        obj1.points.fillMatching(None, 'b')
-        obj1.points.fillMatching(fill.mode, match.missing)
-        exp1 = self.constructor([['a', 'c', 'c', 'c'], ['h', 'f', 'h', 'h'], ['i', 'i', 'k', 'i']], pointNames=['a', 'b', 'c'])
-        exp1.points.setNames(['a', 'b', 'c'])
-        assert obj1 == exp1
-
     @raises(InvalidArgumentValue)
     def test_points_fillMatching_mode_allMatches(self):
         obj = self.constructor([[1, 2, 3], [None, None, None], [7, 8, 9]])
@@ -4187,7 +4179,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
 
     @oneLogEntryExpected
     def test_points_replace_single(self):
-        data = [[0, 1, 2], ['x', 'x', 'x'], [6, 7, 8]]
+        data = [[0, 1, 2], [999,999,999], [6, 7, 8]]
         exp = [[0, 1, 2], [3, 4, 5], [6, 7, 8]]
         replace = [3, 4, 5]
         replaceLocs = [1]

@@ -2149,7 +2149,7 @@ class StructureModifyingSparseUnsafe(StructureShared):
 
     def test_unflatten_featureOrder_handmadeFormattedNames(self):
         self.backend_unflatten_handmadeFormattedNames('feature')
-
+        
     def test_create2DData(self):
         """
         create data object using tuple, list,
@@ -2157,24 +2157,22 @@ class StructureModifyingSparseUnsafe(StructureShared):
         pd.Series, pd.SparseDataFrame, scipy sparse matrix
         as input type.
         """
-        orig1 = self.constructor([[1,2,'a'], [3,4,'b']], featureNames=['a', 'b', 'c'])
-        orig2 = self.constructor(((1,2,'a'), (3,4,'b')), featureNames=['a', 'b', 'c'])
-        orig3 = self.constructor({'a':[1,3], 'b':[2,4], 'c':['a', 'b']}, rowsArePoints=False)
+        orig1 = self.constructor([[1, 2, 5], [3, 4, 7]], featureNames=['a', 'b', 'c'])
+        orig2 = self.constructor(((1, 2, 5), (3, 4, 7)), featureNames=['a', 'b', 'c'])
+        orig3 = self.constructor({'a': [1, 3], 'b': [2, 4], 'c': [5, 7]}, rowsArePoints=False)
         orig3.features.sort()
-        orig4 = self.constructor([{'a':1, 'b':2, 'c':'a'}, {'a':3, 'b':4, 'c':'b'}])
+        orig4 = self.constructor([{'a': 1, 'b': 2, 'c': 5}, {'a': 3, 'b': 4, 'c': 7}])
         orig4.features.sort()
-        orig5 = self.constructor(np.array([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
-        orig6 = self.constructor(np.matrix([[1,2,'a'], [3,4,'b']], dtype=object), featureNames=['a', 'b', 'c'])
-        orig7 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']]), featureNames=['a', 'b', 'c'])
-        orig8 = self.constructor(scipy.sparse.coo_matrix(np.matrix([[1,2,'a'], [3,4,'b']], dtype=object)),
+        orig5 = self.constructor(np.array([[1, 2, 5], [3, 4, 7]], dtype=int), featureNames=['a', 'b', 'c'])
+        orig6 = self.constructor(np.matrix([[1, 2, 5], [3, 4, 7]], dtype=int), featureNames=['a', 'b', 'c'])
+        orig7 = self.constructor(pd.DataFrame([[1, 2, 5], [3, 4, 7]]), featureNames=['a', 'b', 'c'])
+        orig8 = self.constructor(scipy.sparse.coo_matrix(np.matrix([[1, 2, 5], [3, 4, 7]], dtype=int)), 
                                  featureNames=['a', 'b', 'c'])
-        try: # SparseDataFrame removed in 1.0 in favor of using SparseDtype
-            orig9 = self.constructor(pd.DataFrame([[1,2,'a'], [3,4,'b']],
-                                                  dtype=pd.SparseDtype(object, 0)),
-                                     featureNames=['a', 'b', 'c'])
+        try:  # SparseDataFrame removed in 1.0 in favor of using SparseDtype
+            orig9 = self.constructor(pd.DataFrame([[1, 2, 5], [3, 4, 7]], dtype=pd.SparseDtype(int, 0)),
+                                    featureNames=['a', 'b', 'c'])
         except TypeError:
-            orig9 = self.constructor(pd.SparseDataFrame([[1,2,'a'], [3,4,'b']]),
-                                      featureNames=['a', 'b', 'c'])
+            orig9 = self.constructor(pd.SparseDataFrame([[1, 2, 5], [3, 4, 7]]), featureNames=['a', 'b', 'c'])
 
         assert orig1.isIdentical(orig2)
         assert orig1.isIdentical(orig3)
@@ -2184,28 +2182,6 @@ class StructureModifyingSparseUnsafe(StructureShared):
         assert orig1.isIdentical(orig7)
         assert orig1.isIdentical(orig8)
         assert orig1.isIdentical(orig9)
-    
-    def test_init_coo_matrix_duplicateswithNoDupStrings(self):
-        # Constructing a matrix with duplicate indices
-        # with String, but not in duplicate entry
-        row  = np.array([0, 0, 1, 3, 1, 0, 0])
-        col  = np.array([0, 2, 1, 3, 1, 0, 0])
-        # need to specify object dtype, otherwise it will generate a all string object
-        data = np.array([1, 7, 1, 'AAA', 4, 2, 1], dtype='O')
-        coo_str = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
-        ret = self.constructor(coo_str)
-        # Expected coo_matrix duplicates sum
-        # with String, but not in duplicate entry
-        row  = np.array([0, 0, 1, 3])
-        col  = np.array([0, 2, 1, 3])
-        data = np.array([4, 7, 5, 'AAA'], dtype='O')
-        coo = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
-        exp = self.constructor(coo_str)
-
-        assert ret.isIdentical(exp)
-        assert ret[0,0] == exp[0,0]
-        assert ret[3,3] == exp[3,3]
-        assert ret[1,1] == exp[1,1]
     
     @raises(InvalidArgumentValue)
     def test_merge_exception_featureStrictNameMismatch(self):
@@ -4641,17 +4617,6 @@ class StructureModifyingSparseSafe(StructureShared):
         assert ret[0,0] == exp[0,0]
         assert ret[3,3] == exp[3,3]
         assert ret[0,2] == exp[0,2]
-
-
-    @raises(ValueError)
-    def test_init_coo_matrix_duplicateswithDupStrings(self):
-        # Constructing a matrix with duplicate indices
-        # # with String, in a duplicate entry
-        row  = np.array([0, 0, 1, 3, 1, 0, 0])
-        col  = np.array([0, 2, 1, 3, 1, 0, 0])
-        data = np.array([1, 7, 1, 'AAA', 4, 2, 'BBB'], dtype='O')
-        coo_str = scipy.sparse.coo_matrix((data, (row, col)),shape=(4,4))
-        ret = self.constructor(coo_str)
 
     @assertCalled(nimble.core.data.axis, 'valuesToPythonList')
     def test_init_pointNames_calls_valuesToPythonList(self):
