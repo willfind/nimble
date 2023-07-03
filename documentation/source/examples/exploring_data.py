@@ -81,9 +81,10 @@ print('Proportion of visitors that view a product page:', 1 - noProduct)
 
 ## Now that we know visitors are typically viewing product pages, let's focus
 ## on the Purchase feature. Purchase is a boolean feature indicating whether
-## a purchase was made. Let's find the proportion of visits that result in a
-## purchase.
-purchases = visits.points.count(lambda pt: pt['Purchase'])
+## a purchase was made. Let's count the number of times the Purchase feature
+## was true, and divide by the number of visits to see the proportion that
+## result in a purchase.
+purchases = visits.points.count(lambda pt: bool(pt['Purchase']))
 print('Proportion of visits with a purchase:', purchases / len(visits.points))
 
 ## Now let's check how Purchase correlates with our other features.
