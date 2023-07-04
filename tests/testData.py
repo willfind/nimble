@@ -64,6 +64,82 @@ class GetItemOnly(object):
 ###############################
 # Raw data values correctness #
 ###############################
+
+def test_create1DData():
+    """
+    Create data objects using all possible raw input types for vector / one
+    dimensional data and assert equality of resultant objects.
+
+    Includes: tuple, list, dict, np.ndarray, np.matrix, pd.DataFrame,
+    pd.Series, pd.DataFrame with SparseDType, and scipy sparse matrix
+    """
+    for t in returnTypes:
+        constructor = functools.partial(nimble.data, returnType=t)
+        orig1 = constructor([1,2,3], featureNames=['a', 'b', 'c'])
+        orig2 = constructor((1,2,3), featureNames=['a', 'b', 'c'])
+        orig3 = constructor({'a':1, 'b':2, 'c':3}, rowsArePoints=False)
+        orig3.features.sort()
+        orig4 = constructor([{'a':1, 'b':2, 'c':3}])
+        orig4.features.sort()
+        orig5 = constructor(np.array([1,2,3]), featureNames=['a', 'b', 'c'])
+        orig6 = constructor(np.matrix([1,2,3]), featureNames=['a', 'b', 'c'])
+        orig7 = constructor(pd.DataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
+        orig8 = constructor(pd.Series([1,2,3]), featureNames=['a', 'b', 'c'])
+        orig9 = constructor(scipy.sparse.coo_matrix([1,2,3]), featureNames=['a', 'b', 'c'])
+        try: # SparseDataFrame removed in 1.0 in favor of using SparseDType
+            orig10 = constructor(pd.DataFrame([[1,2,3]], dtype='Sparse[int]'),
+                                      featureNames=['a', 'b', 'c'])
+        except TypeError:
+            orig10 = constructor(pd.SparseDataFrame([[1,2,3]]),
+                                      featureNames=['a', 'b', 'c'])
+
+        assert orig1.isIdentical(orig2)
+        assert orig1.isIdentical(orig3)
+        assert orig1.isIdentical(orig4)
+        assert orig1.isIdentical(orig5)
+        assert orig1.isIdentical(orig6)
+        assert orig1.isIdentical(orig7)
+        assert orig1.isIdentical(orig8)
+        assert orig1.isIdentical(orig9)
+        assert orig1.isIdentical(orig10)
+
+def test_create2DData():
+    """
+    Create data objects using all possible raw input types for two dimensional
+    data and assert equality of resultant objects.
+
+    Includes: list of list, tuple of tuple, dict of list, list of dict,
+    np.ndarray, np.matrix, pd.DataFrame, pd.Series, pd.DataFrame with sparse
+    dtype, and scipy sparse matrix
+    """
+    for t in returnTypes:
+        constructor = functools.partial(nimble.data, returnType=t)
+        orig1 = constructor([[1, 2, 5], [3, 4, 7]], featureNames=['a', 'b', 'c'])
+        orig2 = constructor(((1, 2, 5), (3, 4, 7)), featureNames=['a', 'b', 'c'])
+        orig3 = constructor({'a': [1, 3], 'b': [2, 4], 'c': [5, 7]}, rowsArePoints=False)
+        orig3.features.sort()
+        orig4 = constructor([{'a': 1, 'b': 2, 'c': 5}, {'a': 3, 'b': 4, 'c': 7}])
+        orig4.features.sort()
+        orig5 = constructor(np.array([[1, 2, 5], [3, 4, 7]], dtype=int), featureNames=['a', 'b', 'c'])
+        orig6 = constructor(np.matrix([[1, 2, 5], [3, 4, 7]], dtype=int), featureNames=['a', 'b', 'c'])
+        orig7 = constructor(pd.DataFrame([[1, 2, 5], [3, 4, 7]]), featureNames=['a', 'b', 'c'])
+        orig8 = constructor(scipy.sparse.coo_matrix(np.matrix([[1, 2, 5], [3, 4, 7]], dtype=int)), 
+                                 featureNames=['a', 'b', 'c'])
+        try:  # SparseDataFrame removed in 1.0 in favor of using SparseDtype
+            orig9 = constructor(pd.DataFrame([[1, 2, 5], [3, 4, 7]], dtype=pd.SparseDtype(int, 0)),
+                                    featureNames=['a', 'b', 'c'])
+        except TypeError:
+            orig9 = constructor(pd.SparseDataFrame([[1, 2, 5], [3, 4, 7]]), featureNames=['a', 'b', 'c'])
+
+        assert orig1.isIdentical(orig2)
+        assert orig1.isIdentical(orig3)
+        assert orig1.isIdentical(orig4)
+        assert orig1.isIdentical(orig5)
+        assert orig1.isIdentical(orig6)
+        assert orig1.isIdentical(orig7)
+        assert orig1.isIdentical(orig8)
+        assert orig1.isIdentical(orig9)
+
 def test_data_dictOfList():
     dataDict = {'c': [3, 6, 9], 'a': [1, 4, 7], 'b': [2, 5, 8]}
     for t in returnTypes:
@@ -1363,7 +1439,7 @@ def helper_auto(rawStr, rawType, returnType, pointNames, featureNames):
 
 def test_automaticByType_fnames_rawAndCSV():
     availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix']
-    for (rawT, retT) in itertools.product(availableRaw, returnTypesNoSparse):
+    for (rawT, retT) in itertools.product(availableRaw, returnTypes):
         # example which triggers automatic removal
         simpleRaw = "fname0,fname1,fname2\n1,2,3\n"
         simple = helper_auto(simpleRaw, rawT, retT, pointNames='automatic',
@@ -1391,7 +1467,7 @@ def test_automaticByType_fnames_rawAndCSV():
 
 def test_userOverrideOfAutomaticByType_fnames_rawAndCSV():
     availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix']
-    for (rawT, retT) in itertools.product(availableRaw, returnTypesNoSparse):
+    for (rawT, retT) in itertools.product(availableRaw, returnTypes):
         # example where user provided False overides automatic detection
         correctRaw = "fname0,fname1,fname2\n1,2,3\n"
         overide1a = helper_auto(correctRaw, rawT, retT, pointNames='automatic', featureNames=False)
@@ -1412,7 +1488,7 @@ def test_userOverrideOfAutomaticByType_fnames_rawAndCSV():
 
 def test_automaticByType_pname_interaction_with_fname():
     availableRaw = ['csv', 'pythonlist', 'numpyarray', 'numpymatrix']
-    for (rawT, retT) in itertools.product(availableRaw, returnTypesNoSparse):
+    for (rawT, retT) in itertools.product(availableRaw, returnTypes):
         # pnames auto triggered with auto fnames
         raw = "pointNames,fname0,fname1,fname2\npname0,1,2,3\n"
         testObj = helper_auto(raw, rawT, retT, pointNames='automatic', featureNames='automatic')

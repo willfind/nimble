@@ -2053,42 +2053,7 @@ class StructureDataSafeSparseSafe(StructureShared):
         assert ret == expRet
 
 class StructureModifyingSparseUnsafe(StructureShared):
-    
-    def test_create1DData(self):
-        """
-        create data object using tuple, list,
-        dict, np.ndarray, np.matrix, pd.DataFrame,
-        pd.Series, pd.SparseDataFrame, scipy sparse matrix
-        as input type.
-        """
-        orig1 = self.constructor([1,2,3], featureNames=['a', 'b', 'c'])
-        orig2 = self.constructor((1,2,3), featureNames=['a', 'b', 'c'])
-        orig3 = self.constructor({'a':1, 'b':2, 'c':3}, rowsArePoints=False)
-        orig3.features.sort()
-        orig4 = self.constructor([{'a':1, 'b':2, 'c':3}])
-        orig4.features.sort()
-        orig5 = self.constructor(np.array([1,2,3]), featureNames=['a', 'b', 'c'])
-        orig6 = self.constructor(np.matrix([1,2,3]), featureNames=['a', 'b', 'c'])
-        orig7 = self.constructor(pd.DataFrame([[1,2,3]]), featureNames=['a', 'b', 'c'])
-        orig8 = self.constructor(pd.Series([1,2,3]), featureNames=['a', 'b', 'c'])
-        orig9 = self.constructor(scipy.sparse.coo_matrix([1,2,3]), featureNames=['a', 'b', 'c'])
-        try: # SparseDataFrame removed in 1.0 in favor of using SparseDType
-            orig10 = self.constructor(pd.DataFrame([[1,2,3]], dtype='Sparse[int]'),
-                                      featureNames=['a', 'b', 'c'])
-        except TypeError:
-            orig10 = self.constructor(pd.SparseDataFrame([[1,2,3]]),
-                                      featureNames=['a', 'b', 'c'])
 
-        assert orig1.isIdentical(orig2)
-        assert orig1.isIdentical(orig3)
-        assert orig1.isIdentical(orig4)
-        assert orig1.isIdentical(orig5)
-        assert orig1.isIdentical(orig6)
-        assert orig1.isIdentical(orig7)
-        assert orig1.isIdentical(orig8)
-        assert orig1.isIdentical(orig9)
-        assert orig1.isIdentical(orig10)
-    
     def test_points_transform_fromDatetime(self):
         data = [[datetime.datetime(2020, 1, 1)],
                 [datetime.datetime(2020, 1, 2)],
@@ -2149,39 +2114,6 @@ class StructureModifyingSparseUnsafe(StructureShared):
 
     def test_unflatten_featureOrder_handmadeFormattedNames(self):
         self.backend_unflatten_handmadeFormattedNames('feature')
-        
-    def test_create2DData(self):
-        """
-        create data object using tuple, list,
-        dict, np.ndarray, np.matrix, pd.DataFrame,
-        pd.Series, pd.SparseDataFrame, scipy sparse matrix
-        as input type.
-        """
-        orig1 = self.constructor([[1, 2, 5], [3, 4, 7]], featureNames=['a', 'b', 'c'])
-        orig2 = self.constructor(((1, 2, 5), (3, 4, 7)), featureNames=['a', 'b', 'c'])
-        orig3 = self.constructor({'a': [1, 3], 'b': [2, 4], 'c': [5, 7]}, rowsArePoints=False)
-        orig3.features.sort()
-        orig4 = self.constructor([{'a': 1, 'b': 2, 'c': 5}, {'a': 3, 'b': 4, 'c': 7}])
-        orig4.features.sort()
-        orig5 = self.constructor(np.array([[1, 2, 5], [3, 4, 7]], dtype=int), featureNames=['a', 'b', 'c'])
-        orig6 = self.constructor(np.matrix([[1, 2, 5], [3, 4, 7]], dtype=int), featureNames=['a', 'b', 'c'])
-        orig7 = self.constructor(pd.DataFrame([[1, 2, 5], [3, 4, 7]]), featureNames=['a', 'b', 'c'])
-        orig8 = self.constructor(scipy.sparse.coo_matrix(np.matrix([[1, 2, 5], [3, 4, 7]], dtype=int)), 
-                                 featureNames=['a', 'b', 'c'])
-        try:  # SparseDataFrame removed in 1.0 in favor of using SparseDtype
-            orig9 = self.constructor(pd.DataFrame([[1, 2, 5], [3, 4, 7]], dtype=pd.SparseDtype(int, 0)),
-                                    featureNames=['a', 'b', 'c'])
-        except TypeError:
-            orig9 = self.constructor(pd.SparseDataFrame([[1, 2, 5], [3, 4, 7]]), featureNames=['a', 'b', 'c'])
-
-        assert orig1.isIdentical(orig2)
-        assert orig1.isIdentical(orig3)
-        assert orig1.isIdentical(orig4)
-        assert orig1.isIdentical(orig5)
-        assert orig1.isIdentical(orig6)
-        assert orig1.isIdentical(orig7)
-        assert orig1.isIdentical(orig8)
-        assert orig1.isIdentical(orig9)
     
     @raises(InvalidArgumentValue)
     def test_merge_exception_featureStrictNameMismatch(self):

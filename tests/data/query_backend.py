@@ -3264,21 +3264,21 @@ class QueryBackendSparseSafe(DataTestObject):
         
         ret = obj.features.report(dtypes=True)
         assert 'dataType' in ret.features.getNames()
-        reportDtypes = list(ret.features['dataType']) 
+        reportDtypes = list(ret.features['dataType'])
         expDtypes1 = [np.float_, np.float_]
         expDtypes2 = [np.integer, np.float_]
         
         numericTypes = ['TestMatrix', 'TestMatrixView', 'TestSparse', 'TestSparseView']
-        
+
         if type(self).__name__ in ['TestList', 'TestListView']:
             for i in range(len(reportDtypes)):
-                assert np.issubdtype(reportDtypes[i], np.object_) 
+                assert np.issubdtype(reportDtypes[i], np.object_)
         elif type(self).__name__ in numericTypes:
             for i in range(len(reportDtypes)):
-                assert np.issubdtype(reportDtypes[i], expDtypes1[i]) 
+                assert np.issubdtype(reportDtypes[i], expDtypes1[i])
         elif type(self).__name__ is 'TestDataFrame' or 'TestDataFrameView':
             for i in range(len(reportDtypes)):
-                assert np.issubdtype(reportDtypes[i], expDtypes2[i]) 
+                assert np.issubdtype(reportDtypes[i], expDtypes2[i])
         
         
     ##########
