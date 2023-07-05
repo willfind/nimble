@@ -5218,10 +5218,13 @@ class Base(ABC):
     def __getattr__(self, name):
         #use try except and inside try use suepr class getattr and then in the else; 
         # do the look up you're trying currently
+        try:
+            super().__getattr__(name)        
+        except: 
         if name in self.__dict__:
             return True
         elif name == 'describe':
-            raise AttributeError("Try instead nimble.data.report(), '{name}' does not exist in Nimble.")
+            raise AttributeError("Try instead nimble.data.report(), {name} does not exist in Nimble.")
         else:
             raise AttributeError
     #     # import pdb; pdb.set_trace()
