@@ -307,6 +307,7 @@ class StructureDataSafeSparseUnsafe(StructureShared):
         ret = toTest.points.copy('three == < 3')
     
     def test_points_copy_match_nonNumeric(self):
+        # import pdb; pdb.set_trace()
         data = [[1, 2, 3], ['a', 11, 'c'], [7, 11, 'c'], [7, 8, 9]]
         toTest = self.constructor(data, featureNames=['a', 'b', 'c'])
         expTest = self.constructor(data, featureNames=['a', 'b', 'c'])

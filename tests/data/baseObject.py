@@ -205,7 +205,7 @@ def objectValidationMethods(cls):
             # ignore functions that interfere with __init__ or recurse
             # because they are used in checkInvariants
             ignore = ['__init__', 'checkInvariants', 'getTypeString', 'setNames',
-                      'getName', 'getNames', 'getIndex', '__len__',
+                      'getName', 'getNames', 'getIndex', '__len__', '__getattr__',
                       '__getitem__'] # __getitem__ ignored for efficiency
             if (func.__name__ not in ignore and
                     (not func.__name__.startswith('_')

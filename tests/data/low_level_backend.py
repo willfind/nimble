@@ -1441,8 +1441,28 @@ class LowLevelBackend(object):
     # __getattr__ #
     ############
 
-    def test_DS_goto(self):
+    # def test_DS_goto(self):
+    #     # import pdb; pdb.set_trace()
+    #     data = self.constructor((3, 3, 5))
+    #     data.describe()
+    #     assert 1 == 1 
+        
+    def test_getattr_suggestions(self):
         import pdb; pdb.set_trace()
-        data = self.constructor((3, 3, 5))
-        data.describe()
-        assert 1 == 1 
+        data = [[1, 2, 3], [111, 11, 333], [7, 11, 333], [7, 8, 9]]
+        toTest = nimble.data(data)
+        #obj = self.constructor([3, 3, 5])  # Instantiate an object of the class
+
+        # Test attribute "describe()"
+        try:
+            result1 = toTest.describe()  # Access the attribute
+            expected1 = "We suggest you try data.report()"  # Expected suggestion
+        except AttributeError:  # If the attribute does not exist
+            result1 = "AttributeError"
+            expected1 = "AttributeError"
+        assert result1 == expected1  # Check if the result matches the expectation
+
+    #     #Test attribute "hist()"
+    #     result2 = obj.hist()  # Access the attribute
+    #     expected2 = "We suggest you try data.plotFeatureDistribution()"  # Expected suggestion
+    #     assert result2 == expected2  # Check if the result matches the expectation

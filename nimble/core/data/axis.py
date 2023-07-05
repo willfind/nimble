@@ -1626,6 +1626,7 @@ class AxisIterator(object):
 
     def __next__(self):
         if self._position < self._axisLen:
+            #import pdb; pdb.set_trace()
             value = self.viewer(self._position)
             self._position += 1
             return value

@@ -5204,27 +5204,38 @@ class Base(ABC):
     ############################
     ############################
      
-    def describe(self):
-        # catch for pandas df.describe()
-        msg = 'Did you mean '
-    # def sort_values()
+    #  describe():
+    #  hist()
+    
+    # insert()
+    #  sort_values()
         
-    # def corr():
-    
-    # def hist()
-    
-    # def insert()
+    # corr()
     
     # def fillna()
     
-    
         
     def __getattr__(self, name):
-        if name == "describe()":
-            raise AttributeError(f"Do you mean data.report()?")
-            #return "We suggest you try data.report()"
-        elif name == "hist()":
-            return "We suggest you try data.plotFeatureDistribution()"
+        #use try except and inside try use suepr class getattr and then in the else; 
+        # do the look up you're trying currently
+        if name in self.__dict__:
+            return True
+        elif name == 'describe':
+            raise AttributeError("Try instead nimble.data.report(), '{name}' does not exist in Nimble.")
+        else:
+            raise AttributeError
+    #     # import pdb; pdb.set_trace()
+        # if name == "describe()":
+        #     raise AttributeError(f"Do you mean data.report()?")
+        # if name == "describe":
+        #     raise AttributeError(f"Do you mean data.report()?")
+        #     #return "We suggesqt you try data.report()"
+        # elif name == "hist()":
+        #     return "We suggest you try data.plotFeatureDistribution()"
+        # elif name == 'insert':
+        #    raise AttributeError(f"Do you mean data___?")
+        
+    #     pass
         
 
         # # Check if the attribute exists in DataFrame
