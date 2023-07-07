@@ -5220,14 +5220,76 @@ class Base(ABC):
         # do the look up you're trying currently
         try:
             super().__getattr__(name)        
-        except: 
-        if name in self.__dict__:
-            return True
-        elif name == 'describe':
-            raise AttributeError("Try instead nimble.data.report(), {name} does not exist in Nimble.")
-        else:
-            raise AttributeError
-    #     # import pdb; pdb.set_trace()
+        except AttributeError: 
+            if name == "hist":
+                raise AttributeError(f"Do you mean data.plotFeatureDistribution()?")    
+            elif name == 'describe':
+                raise AttributeError("Try instead nimble.data.report(), {name} does not exist in Nimble.")
+            if name == "hist":
+                raise AttributeError("Invalid attribute: 'hist' is not supported.")
+            elif name == "info":
+                # Code for 'info'
+                pass
+            elif name == "head":
+                # Code for 'head'
+                pass
+            elif name == "value_counts":
+                # Code for 'value_counts'
+                pass
+            elif name == "columns":
+                # Code for 'columns'
+                pass
+            elif name == "isna":
+                # Code for 'isna'
+                pass
+            elif name == "isnull":
+                # Code for 'isnull'
+                pass
+            elif name == "nunique":
+                # Code for 'nunique'
+                pass
+            elif name == "astype":
+                # Code for 'astype'
+                pass
+            elif name == "drop_duplicates":
+                # Code for 'drop_duplicates'
+                pass
+            elif name == "sum":
+                # Code for 'sum'
+                pass
+            elif name == "cumsum":
+                # Code for 'cumsum'
+                pass
+            elif name == "scatter_matrix":
+                # Code for 'scatter_matrix'
+                pass
+            elif name == "corr":
+                # Code for 'corr'
+                pass
+            elif name == "cut":
+                # Code for 'cut'
+                pass
+            elif name == "dropna":
+                # Code for 'dropna'
+                pass
+            elif name == "fillna":
+                # Code for 'fillna'
+                pass
+            elif name == "insert":
+                # Code for 'insert'
+                pass
+            elif name == "sort_values":
+                # Code for 'sort_values'
+                pass
+            elif name == "concat":
+                # Code for 'concat'
+                pass
+            else:
+                raise AttributeError(f"Invalid attribute: '{name}' is not recognized.")
+
+            else:
+                raise AttributeError("That's not a valid Nimble attribute.")
+            
         # if name == "describe()":
         #     raise AttributeError(f"Do you mean data.report()?")
         # if name == "describe":

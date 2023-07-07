@@ -1462,6 +1462,13 @@ class LowLevelBackend(object):
             expected1 = "AttributeError"
         assert result1 == expected1  # Check if the result matches the expectation
 
+        try:
+            result1 = toTest.hist()  # Access the attribute
+            expected1 = "We suggest you try data.report()"  # Expected suggestion
+        except AttributeError:  # If the attribute does not exist
+            result1 = "AttributeError"
+            expected1 = "AttributeError"
+        assert result1 == expected1 
     #     #Test attribute "hist()"
     #     result2 = obj.hist()  # Access the attribute
     #     expected2 = "We suggest you try data.plotFeatureDistribution()"  # Expected suggestion
