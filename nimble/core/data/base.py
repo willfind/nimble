@@ -5183,7 +5183,7 @@ class Base(ABC):
          2 │ -2 -1 0
         >
         >>> featObj.stretch - pointObj.stretch
-        <Mxatrix 3pt x 3ft
+        <Matrix 3pt x 3ft
              0 1  2
            ┌────────
          0 │ 0 -1 -2

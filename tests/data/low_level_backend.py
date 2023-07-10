@@ -33,7 +33,6 @@ from tests.helpers import raises, assertCalled
 from tests.helpers import logCountAssertionFactory
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 
-
 ###########
 # helpers #
 ###########
