@@ -5200,118 +5200,36 @@ class Base(ABC):
     
     ############################
     ############################
-    ###  Alternate functions ###
+    ###  dunder functions ###
     ############################
     ############################
-     
-    #  describe():
-    #  hist()
-    
-    # insert()
-    #  sort_values()
-        
-    # corr()
-    
-    # def fillna()
-    
         
     def __getattr__(self, name):
-        #use try except and inside try use suepr class getattr and then in the else; 
-        # do the look up you're trying currently
         try:
-            super().__getattr__(name)        
-        except AttributeError: 
+            super().__getattr__(name)
+        except AttributeError as e:
             if name == "hist":
-                raise AttributeError(f"Do you mean data.plotFeatureDistribution()?")    
+                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Try .plotFeatureDistribution() instead.") from e
             elif name == 'describe':
-                raise AttributeError("Try instead nimble.data.report(), {name} does not exist in Nimble.")
-            if name == "hist":
-                raise AttributeError("Invalid attribute: 'hist' is not supported.")
-            elif name == "info":
-                # Code for 'info'
-                pass
-            elif name == "head":
-                # Code for 'head'
-                pass
-            elif name == "value_counts":
-                # Code for 'value_counts'
-                pass
+                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Try .report() instead.") from e
             elif name == "columns":
-                # Code for 'columns'
-                pass
-            elif name == "isna":
-                # Code for 'isna'
-                pass
-            elif name == "isnull":
-                # Code for 'isnull'
-                pass
-            elif name == "nunique":
-                # Code for 'nunique'
-                pass
-            elif name == "astype":
-                # Code for 'astype'
-                pass
-            elif name == "drop_duplicates":
-                # Code for 'drop_duplicates'
-                pass
-            elif name == "sum":
-                # Code for 'sum'
-                pass
-            elif name == "cumsum":
-                # Code for 'cumsum'
-                pass
+                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Try .features.getNames() instead.") from e
+            elif name in ["isna", "isnull"]:
+                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects.  Look up the Nimble QueryString object in the documentation.") from e
+            elif name in ["sum", "cumsum", "corr", "nunique"]:
+                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Check for similar methods available in Nimble.calculate.") from e
             elif name == "scatter_matrix":
-                # Code for 'scatter_matrix'
-                pass
-            elif name == "corr":
-                # Code for 'corr'
-                pass
-            elif name == "cut":
-                # Code for 'cut'
-                pass
+                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Try .plotFeatureAgainstFeature()instead.") from e
             elif name == "dropna":
-                # Code for 'dropna'
-                pass
+                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Look up how to combine .[points/features].delete with the Nimble.match in the documentation.") from e
             elif name == "fillna":
-                # Code for 'fillna'
-                pass
+                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Look up how to use Nimble.fill in the documentation.") from e
             elif name == "insert":
-                # Code for 'insert'
-                pass
+                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Try .[points/features].insert() instead.") from e
             elif name == "sort_values":
-                # Code for 'sort_values'
-                pass
-            elif name == "concat":
-                # Code for 'concat'
-                pass
+                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Try .[points/features].sort() instead.") from e
             else:
-                raise AttributeError(f"Invalid attribute: '{name}' is not recognized.")
-
-            else:
-                raise AttributeError("That's not a valid Nimble attribute.")
-            
-        # if name == "describe()":
-        #     raise AttributeError(f"Do you mean data.report()?")
-        # if name == "describe":
-        #     raise AttributeError(f"Do you mean data.report()?")
-        #     #return "We suggesqt you try data.report()"
-        # elif name == "hist()":
-        #     return "We suggest you try data.plotFeatureDistribution()"
-        # elif name == 'insert':
-        #    raise AttributeError(f"Do you mean data___?")
-        
-    #     pass
-        
-
-        # # Check if the attribute exists in DataFrame
-        # if hasattr(pd.DataFrame, name):
-        #     # If it exists, suggest it as an alternative
-        #     raise AttributeError(f"Do you mean {name} in DataFrame?")
-        # else:
-        #     # If it doesn't exist, raise the original AttributeError
-        #     raise AttributeError(f"'Noble' object has no attribute '{name}'")
-
-
+                raise AttributeError(f"Invalid attribute: '{name}' is not recognized.") from e
 
     ############################
     ############################
