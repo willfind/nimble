@@ -340,7 +340,7 @@ class _SciKitLearnAPI(PredefinedInterfaceMixin):
 
     @abc.abstractmethod
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
-                             arguments, customDict):
+                             randomSeed, arguments, customDict):
         pass
 
     @abc.abstractmethod
@@ -480,7 +480,7 @@ To install scikit-learn
             return None
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
-                             arguments, customDict):
+                             randomSeed, arguments, customDict):
 
         mustCopyTrainX = ['PLSRegression']
         if trainX is not None:

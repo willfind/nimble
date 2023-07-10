@@ -36,7 +36,8 @@ from ._interface_helpers import (
     ovaNotOvOFormatted, checkClassificationStrategy, cacheWrapper,
     generateAllPairs, countWins, extractWinningPredictionIndex,
     extractWinningPredictionLabel, extractWinningPredictionIndexAndScore,
-    extractConfidenceScores, validateTestingArguments)
+    extractConfidenceScores, validateTestingArguments,
+    validInitParams)
 
 
 def captureOutput(toWrap):
@@ -133,7 +134,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
 
         # execute interface implementor's input transformation.
         transformedInputs = self._inputTransformation(
-            learnerName, None, None, None, arguments, None)
+            learnerName, None, None, None, None, arguments, None)
         _, _, _, transArguments = transformedInputs
 
         rawModel = self._loadTrainedLearnerBackend(learnerName, transArguments)
@@ -305,7 +306,8 @@ class UniversalInterface(metaclass=abc.ABCMeta):
 
         # execute interface implementor's input transformation.
         transformedInputs = self._inputTransformation(
-            learnerName, trainX, trainY, None, arguments, customDict)
+            learnerName, trainX, trainY, None, randomSeed, arguments,
+            customDict)
         transTrainX, transTrainY, _, transArguments = transformedInputs
 
         transformedInputs = (transformedInputs[0], transformedInputs[1],
@@ -406,7 +408,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
 
     def _argumentInit(self, toInit):
         """
-        Recursive function for instantiating learner subobjects
+        Recursive function for instantiating learner subobjects.
         """
         initObject = self.findCallable(toInit.name)
         if initObject is None:
@@ -701,7 +703,7 @@ class UniversalInterface(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
-                             arguments, customDict):
+                             randomSeed, arguments, customDict):
         """
         Method called before any package level function which transforms
         all parameters provided by a nimble user.
@@ -1216,8 +1218,8 @@ class TrainedLearner(object):
 
         # input transformation
         transformedInputs = self._interface._inputTransformation(
-            self.learnerName, None, None, testX, mergedArguments,
-            self._customDict)
+            self.learnerName, None, None, testX, self._randomSeed,
+            mergedArguments, self._customDict)
         transTestX = transformedInputs[2]
         usedArguments = transformedInputs[3]
 
@@ -1483,8 +1485,8 @@ class TrainedLearner(object):
         if arguments is not None:
             self.arguments.update(arguments)
         transformed = self._interface._inputTransformation(
-            self.learnerName, trainX, trainY, None, self.arguments,
-            self._customDict)
+            self.learnerName, trainX, trainY, None, self._randomSeed,
+            self.arguments, self._customDict)
         transformedTrainX = transformed[0]
         transformedTrainY = transformed[1]
         transformedArguments = transformed[3]
@@ -1585,8 +1587,8 @@ class TrainedLearner(object):
         self._validTestData(testX)
         usedArguments = mergeArguments(arguments, kwarguments)
         (_, _, testX, usedArguments) = self._interface._inputTransformation(
-            self.learnerName, None, None, testX, usedArguments,
-            self._customDict)
+            self.learnerName, None, None, testX, self._randomSeed,
+            usedArguments, self._customDict)
 
         rawScores = self._interface._getScores(
             self.learnerName, self._backend, testX, usedArguments,

@@ -119,7 +119,7 @@ class CustomLearnerInterface(UniversalInterface):
         raise InvalidArgumentValue(msg)
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
-                             arguments, customDict):
+                             randomSeed, arguments, customDict):
         retArgs = None
         if arguments is not None:
             retArgs = copy.copy(arguments)

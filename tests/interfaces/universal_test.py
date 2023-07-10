@@ -99,7 +99,7 @@ class TestPredefinedInterface(PredefinedInterfaceMixin):
     def getCanonicalName(cls):
         return "Test"
 
-    def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
+    def _inputTransformation(self, learnerName, trainX, trainY, testX, randomSeed, arguments, customDict):
         return (trainX, trainY, testX, arguments)
 
     def _outputTransformation(self, learnerName, outputValue, transformedInputs, outputType, outputFormat, customDict):
@@ -316,7 +316,7 @@ class AlwaysWarnInterface(UniversalInterface):
     def getCanonicalName(cls):
         return "AlwaysWarn"
 
-    def _inputTransformation(self, learnerName, trainX, trainY, testX, arguments, customDict):
+    def _inputTransformation(self, learnerName, trainX, trainY, testX, randomSeed, arguments, customDict):
         self.issueWarnings()
         return (trainX, trainY, testX, arguments)
 

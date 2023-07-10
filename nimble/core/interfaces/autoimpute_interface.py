@@ -131,7 +131,7 @@ To install autoimpute
         return self._searcher.findInPackage(None, name)
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
-                             arguments, customDict):
+                             randomSeed, arguments, customDict):
 
         def dtypeConvert(dataframe):
             for idx, ser in dataframe.items():

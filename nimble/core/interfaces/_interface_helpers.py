@@ -164,8 +164,11 @@ def checkClassificationStrategy(interface, learnerName, trainArgs, scoreArgs,
         tlObj = interface.train(learnerName, xObj, yObj, arguments=trainArgs,
                                 randomSeed=seed)
         applyResults = tlObj.apply(testObj, arguments=scoreArgs, useLog=False)
-        (_, _, testTrans, _) = interface._inputTransformation(
-        learnerName, None, None, testObj, trainArgs, tlObj._customDict)
+
+        transformer = interface._inputTransformation
+        (_, _, testTrans, _) =  transformer(learnerName, None, None, testObj,
+                                            None, trainArgs, tlObj._customDict)
+
         rawScores = interface._getScores(tlObj.learnerName, tlObj._backend,
                                          testTrans, scoreArgs,
                                          tlObj._transformedArguments,

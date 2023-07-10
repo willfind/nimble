@@ -16,6 +16,7 @@ from nimble._utility import inspectArguments, dtypeConvert
 from nimble._utility import inheritDocstringsFactory
 from nimble._utility import mergeArguments
 from nimble._dependencies import checkVersion
+from nimble.exceptions import InvalidArgumentValue
 from .universal_interface import PredefinedInterfaceMixin
 from ._interface_helpers import PythonSearcher
 from ._interface_helpers import modifyImportPathAndImport
@@ -248,7 +249,7 @@ To install keras
         return self._searcher.findInPackage(None, name)
 
     def _getParameterNamesBackend(self, name):
-        ret = self._paramQuery(name, None, ignore=['self'])
+        ret = self._paramQuery(name, None, ignore=['self', 'seed'])
         if ret is None:
             return ret
         (objArgs, _, _, _) = ret
@@ -273,7 +274,7 @@ To install keras
         return [ret]
 
     def _getDefaultValuesBackend(self, name):
-        ret = self._paramQuery(name, None)
+        ret = self._paramQuery(name, None, ignore=['seed'])
         if ret is None:
             return ret
         (objArgs, _, _, d) = ret
@@ -326,7 +327,7 @@ To install keras
         return learner.UIgetScoreOrder
 
     def _inputTransformation(self, learnerName, trainX, trainY, testX,
-                             arguments, customDict):
+                             randomSeed, arguments, customDict):
         if trainX is not None:
             dataType = trainX.getTypeString()
             if dataType == 'Sparse':
@@ -352,18 +353,15 @@ To install keras
         instantiatedArgs = {}
         for arg, val in arguments.items():
             if isinstance(val, nimble.Init):
-                val = self._argumentInit(val)
+                val = self._seedingArgumentInit(val, randomSeed)
             elif not isinstance(val, str) and (hasattr(val, '__iter__') or
                                                hasattr(val, '__getitem__')):
                 val = copy.copy(val)
-                try:
-                    for i, v in enumerate(val):
-                        if isinstance(v, nimble.Init):
-                            val[i] = self._argumentInit(v)
-                        elif isinstance(v, nimble.core.data.Base):
-                            val[i] = v.copy('numpy array')
-                except TypeError:
-                    pass
+                for i, v in enumerate(val):
+                    if isinstance(v, nimble.Init):
+                        val[i] = self._seedingArgumentInit(v, randomSeed)
+                    elif isinstance(v, nimble.core.data.Base):
+                        val[i] = v.copy('numpy array')
             instantiatedArgs[arg] = val
 
         isApp = (learnerName != "Sequential")
@@ -562,6 +560,58 @@ To install keras
     ###############
     ### HELPERS ###
     ###############
+
+    def _seedingArgumentInit(self, toInit, seed):
+        """
+        Precurser to the _argumentInit method to handle keras specific objects
+        that require random seeding.
+        """
+        unpack = self._paramQuery('__init__', toInit.name, ['self'])
+        params, _, _, defaults = unpack
+
+        # We only need to wrangle with those arguments that represent
+        # initializers.
+        initializers = filter(lambda x: 'initializer' in x, params)
+
+        # Assumption: all initializer params will have non-None defaults
+        for name in initializers:
+            lizerIdx = params.index(name)
+            lizerNegIdx = lizerIdx - len(params)
+            defaultVal = defaults[lizerNegIdx]
+
+            present = name in toInit.kwargs
+            # user is specifying a initializer with nimble.Init
+            if present and isinstance(toInit.kwargs[name], nimble.Init):
+                lizerInit = toInit.kwargs[name]
+                lizerName = lizerInit.name
+                lizerArgs = lizerInit.kwargs.copy()
+                # verify arguments before we subsequently init the object
+                self._validateArgumentValues(lizerName, lizerArgs)
+            # user is specifying a initializer by string
+            elif present and isinstance(toInit.kwargs[name], str):
+                lizerName = toInit.kwargs[name]
+                lizerArgs = {}
+            # nothing provided, use default value
+            else:
+                lizerName = defaultVal
+                lizerArgs = {}
+
+            # not all initializers take seeds, only take action if they do
+            checkNames = self._paramQuery('__init__', lizerName,['self'])[0]
+            if 'seed' in checkNames:
+                lizerArgs['seed'] = seed
+                initObject = self.findCallable(lizerName)
+                if initObject is None:
+                    msg = f'Unable to locate "{lizerName}" in this interface'
+                    raise InvalidArgumentValue(msg)
+                lizerObj = initObject(**lizerArgs)
+
+                toInit.kwargs[name] = lizerObj
+
+        # Sub-object seeding handled if needed, can proceed with the standard
+        # recursive helper
+        return self._argumentInit(toInit)
+
 
     def _paramQuery(self, name, parent, ignore=None):
         """
