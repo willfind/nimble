@@ -30,6 +30,13 @@ def _getNimbleMetadata():
         nimbleDir = os.path.dirname(currPath)
         pyprojPath = os.path.join(nimbleDir, "pyproject.toml")
 
+        # If that doesn't work, we're likely in a local interactive session
+        # instead of a testing session, so the file will be in it's standard
+        # location in the git repo.
+        if not os.path.exists(pyprojPath):
+            nimParentDir = os.path.dirname(nimbleDir)
+            pyprojPath = os.path.join(nimParentDir, pyprojPath)
+
         with open(pyprojPath, "rb") as f:
             tomlDict = tomli.load(f)
             infoFull = tomlDict["project"]
