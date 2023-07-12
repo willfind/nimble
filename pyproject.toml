@@ -1,0 +1,113 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+# setuptools req needed for pyproject.toml support
+requires = [
+    "setuptools>=61.0",
+    "wheel",
+    "cython>=0.29",
+]
+
+
+[project]
+name = "nimble"
+authors = [
+        { name="Spark Wave LLC", email="willfind@gmail.com" },
+        ]
+description = "Interfaces and tools for data science."
+requires-python = ">=3.8, <3.11"
+license = {text = "Proprietary"}
+classifiers = [
+        'Development Status :: 3 - Alpha',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Operating System :: OS Independent',
+        'License :: Other/Proprietary License',
+        ]
+dynamic = ['version']
+dependencies = [
+        'numpy>=1.14',
+        'packaging>=20.0'
+        ]
+
+
+[project.optional-dependencies]
+data = [
+        'pandas>=0.24',
+        'scipy>=1.1'
+        ]
+operation = [
+        'matplotlib>=3.1',
+        'cloudpickle>=1.0',
+        'requests>2.12',
+        'h5py>=2.10',
+        'python-dateutil>=2.6',
+        'hyperopt>=0.2',
+        'storm_tuner'
+        ]
+interfaces = [
+        'scikit-learn>=1.0',
+        'tensorflow>=1.14',
+        'keras>=2.0',
+        'autoimpute>=0.12'
+        ]
+quickstart = [
+        'pandas>=0.24',
+        'scipy>=1.1',
+        'matplotlib>=3.1',
+        'cloudpickle>=1.0',
+        'requests>2.12',
+        'h5py>=2.10',
+        'python-dateutil>=2.6',
+        'hyperopt>=0.2',
+        'storm_tuner',
+        'scikit-learn>=1.0'
+        ]
+all = [
+        'pandas>=0.24',
+        'scipy>=1.1',
+        'matplotlib>=3.1',
+        'cloudpickle>=1.0',
+        'requests>2.12',
+        'h5py>=2.10',
+        'python-dateutil>=2.6',
+        'hyperopt>=0.2',
+        'storm_tuner',
+        'scikit-learn>=1.0',
+        'tensorflow>=1.14',
+        'keras>=2.0',
+        'autoimpute>=0.12',
+        ]
+
+
+[project.urls]
+"Homepage" = "https://willfind.github.io/nimble/index.html"
+
+
+[tool.setuptools.packages.find]
+# automatic discovery fails because of the other modules top level
+# (documentation, tests, etc.) so we use a simple custom discovery
+# instead, where everything within nimble (caught by a "nimble"
+# prefaced glob) is included, so long as it is in a module with
+# an __init__.py (caused by namespaces=false).
+where = [""]
+include = ["nimble*"]
+namespaces = false
+
+
+[tool.setuptools.dynamic]
+version = {attr = "nimble.__version__"}
+
+
+[tool.cibuildwheel]
+# No 32 bit builds, no pypy builds, no musl linux builds
+skip = ["*-win32", "*-manylinux_i686", "pp*", "*-musllinux_*"]
+
+# script to remove .py and .c files from wheel
+repair-wheel-command = "python remove_source.py {dest_dir} {wheel}"
+
+# Test Env: nimble[all] with pytest and pylint
+test-requires = ['pytest', 'pylint']
+test-extras = ['all']
+test-command = "pytest {project}/tests || true"

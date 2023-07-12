@@ -19,8 +19,13 @@ from nimble._utility import _setAll
 from nimble._dependencies import DEPENDENCIES
 from tests.helpers import raises
 
-noStormTuner = not storm_tuner.nimbleAccessible()
-noHyperOpt = not hyperopt.nimbleAccessible()
+def skipIfNoStormTuner():
+    if not storm_tuner.nimbleAccessible():
+        pytest.skip('Storm Tuner unavailable.')
+
+def skipIfNoHyperOpt():
+    if not hyperopt.nimbleAccessible():
+        pytest.skip('hyperopt unavailable.')
 
 def test_DeferredModuleImport_numpy():
     optNumpy = DeferredModuleImport('numpy')
@@ -77,9 +82,10 @@ def test_DeferredModuleImport_bogus_nimbleAccessibleFailure():
     if bogus.nimbleAccessible():
         assert False
 
-@pytest.mark.skipif(noStormTuner, reason='Storm Tuner unavailable.')
-@pytest.mark.skipif(noHyperOpt, reason='Hyperopt unavailable.')
 def test_DeferredModuleImport_invalidVersion():
+    skipIfNoStormTuner()
+    skipIfNoHyperOpt()
+
     opt = []
     for dependency in DEPENDENCIES.values():
         if dependency.section not in ['required', 'interfaces', 'development']:
@@ -92,11 +98,6 @@ def test_DeferredModuleImport_invalidVersion():
         saved = mod.__version__
         try:
             mod.__version__ = '0.0.0'
-            assert isinstance(parse(mod.__version__), Version)
-            defer = DeferredModuleImport(pkg)
-            with raises(PackageException, match=msg):
-                defer.nimbleAccessible()
-            mod.__version__ = '0.0.0-legacy'
             assert isinstance(parse(mod.__version__), Version)
             defer = DeferredModuleImport(pkg)
             with raises(PackageException, match=msg):

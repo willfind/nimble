@@ -2279,8 +2279,6 @@ def mocked_isDownloadable(url):
                 or 'ml/datasets' in url
                 or 'nimble/datasets.html' in url)
 
-# need to check request accessibility before it can be mocked
-_ = requests.nimbleAccessible()
 
 mockIsDownloadable = patch(nimble.core._createHelpers, '_isDownloadable',
                            mocked_isDownloadable)
