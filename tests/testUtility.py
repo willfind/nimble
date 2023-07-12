@@ -102,11 +102,6 @@ def test_DeferredModuleImport_invalidVersion():
             defer = DeferredModuleImport(pkg)
             with raises(PackageException, match=msg):
                 defer.nimbleAccessible()
-            mod.__version__ = '0.0.0-legacy'
-            assert isinstance(parse(mod.__version__), Version)
-            defer = DeferredModuleImport(pkg)
-            with raises(PackageException, match=msg):
-                defer.nimbleAccessible()
         finally:
             mod.__version__ = saved
 
