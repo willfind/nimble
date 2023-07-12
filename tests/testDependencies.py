@@ -16,28 +16,28 @@ def test_deps_matchingSections():
     """
 
     nimbleSpec = importlib.util.find_spec("nimble")
-    if nimbleSpec:
+    if nimbleSpec and 'site-packages' in nimbleSpec.origin:
         checker = importlib.metadata.requires
         infoFull = checker("nimble")
         infoFull = map(lambda x: x.split(";")[0], infoFull)
     else:
         currPath = os.path.abspath(inspect.getfile(inspect.currentframe()))
-        nimbleDir = os.path.dirname(currPath)
-        pyprojPath = os.path.join(nimbleDir, "pyproject.toml")
+        repoDir = os.path.dirname(os.path.dirname(currPath))
+        pyprojPath = os.path.join(repoDir, "pyproject.toml")
 
         with open(pyprojPath, "rb") as f:
             tomlDict = tomli.load(f)
             infoFull = tomlDict["project"]
 
-    optional = infoFull['optional-dependencies']['all']
+    optional = infoFull['optional-dependencies']
     required = infoFull['dependencies']
 
-    for name,depObj in nimble._dependencies.DEPENDENCIES.items():
-        if depObj.section == "requried":
-            assert None # check if its listed in required
+    for name, depObj in nimble._dependencies.DEPENDENCIES.items():
+        if depObj.section == "required":
+            assert depObj.requires in required
         else:
-            assert None # check it is in the correct part of optional
-            # check that it is in optional['all']
+            assert depObj.requires in optional['all']
+            assert depObj.requires in optional[depObj.section]
 
 
 def test_pyproject_matches_recipe():
