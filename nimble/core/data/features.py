@@ -2783,8 +2783,12 @@ class Features(ABC):
     def _getNamesNoGeneration(self):
         pass
     
-    def max(self):
-        return self._max()
+    def max(self, groupByFeature=None):
+        return self._max(groupByFeature)
+    
+    @abstractmethod
+    def _max(self, groupByFeature=None):
+        pass
     
     
     

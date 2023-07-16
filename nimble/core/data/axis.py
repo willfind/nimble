@@ -1568,7 +1568,7 @@ class Axis(ABC):
             'sample std', 'sample standard deviation'
             ]
     
-    def _max(self):
+    def _max(self, groupByFeature=None):
         FuncName = 'max'
         toCall = nimble.calculate.maximum
         if self._axis == 'point':

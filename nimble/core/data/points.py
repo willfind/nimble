@@ -2678,11 +2678,11 @@ class Points(ABC):
                         xAxisLabel, yAxisLabel, legendTitle, **kwargs):
         pass
     
-    def max(self):
-        return self._max()
+    def max(self, groupByFeature=None):
+        return self._max(groupByFeature=None)
     
     @abstractmethod    
-    def _max(self):
+    def _max(self, groupByFeature=None):
         pass
     
     # def mean():
