@@ -2782,3 +2782,87 @@ class Features(ABC):
     @abstractmethod
     def _getNamesNoGeneration(self):
         pass
+    
+    def max(self):
+        return self._max()
+    
+    
+    
+    # def mean(self):
+    #      return self._mean()
+    
+    # def median(self):
+    #     return self.median()
+    
+    # def min(self):
+    #     return self._min()
+    
+    # def unique_count(values):
+    #   pass
+
+    # def proportion_missing(values):
+    #     pass
+
+    # def proportion_zero(values):
+    #     pass
+
+    # def standard_deviation(values):
+    #     pass
+
+    # def std(values):
+    #     pass
+
+    # def population_std(values):
+    #     pass
+
+    # def population_standard_deviation(values):
+    #     pass
+
+    # def sample_std(values):
+    #     pass
+
+    # def sample_standard_deviation(values):
+    #     pass
+    
+    # @abstractmethod
+    # def _max(self):
+    #     pass 
+        
+    # @abstractmethod
+    # def _mean(self):
+    #     pass
+    
+    # @abstractmethod
+    # def _median(self):
+    #     pass
+    
+    # @abstractmethod
+    # def _min(self):
+    #     pass
+    
+    # def unique_count(values):
+    #   pass
+
+    # def proportion_missing(values):
+    #     pass
+
+    # def proportion_zero(values):
+    #     pass
+
+    # def standard_deviation(values):
+    #     pass
+
+    # def std(values):
+    #     pass
+
+    # def population_std(values):
+    #     pass
+
+    # def population_standard_deviation(values):
+    #     pass
+
+    # def sample_std(values):
+    #     pass
+
+    # def sample_standard_deviation(values):
+    #     pass

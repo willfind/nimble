@@ -2677,3 +2677,47 @@ class Points(ABC):
                         horizontal, outPath, show, figureID, title,
                         xAxisLabel, yAxisLabel, legendTitle, **kwargs):
         pass
+    
+    def max(self):
+        return self._max()
+    
+    @abstractmethod    
+    def _max(self):
+        pass
+    
+    # def mean():
+    #     pass
+    
+    # def median():
+    #     pass
+    
+    # def min():
+    #     pass
+    
+    # def unique_count(values):
+    #   pass
+
+    # def proportion_missing(values):
+    #     pass
+
+    # def proportion_zero(values):
+    #     pass
+
+    # def standard_deviation(values):
+    #     pass
+
+    # def std(values):
+    #     pass
+
+    # def population_std(values):
+    #     pass
+
+    # def population_standard_deviation(values):
+    #     pass
+
+    # def sample_std(values):
+    #     pass
+
+    # def sample_standard_deviation(values):
+    #     pass
+    

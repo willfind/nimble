@@ -4240,4 +4240,33 @@ class HighLevelModifyingSparseSafe(DataTestObject):
 
     def test_features_replace_all(self):
         self.back_replace_all('feature')
+        
+     ############################
+    # statistic methods: points #
+    ############################
+    
+    def test_points_max(self):
+        raw = [[0, 22, 2], [3, 22, 5]]
+        for constructor in getDataConstructors():
+            toTest = constructor(raw)
+            exp = nimble.data([[22],[22]], 
+                            featureNames=['max'], returnType=constructor.keywords['returnType'])
+            res = toTest.points.max()
+            assert exp == res
+        
+      ############################
+    # statistic methods: features #
+    ############################
+    
+    def test_features_max(self):
+        #import pdb; pdb.set_trace()
+        raw = [[0, 22, 2], [3, 22, 5]]
+        for constructor in getDataConstructors():
+            toTest = constructor(raw)
+            exp = nimble.data([[3,22,5]], 
+                            pointNames=['max'], returnType=constructor.keywords['returnType'])
+            res = toTest.features.max()
+            assert exp == res
+        
+        
 

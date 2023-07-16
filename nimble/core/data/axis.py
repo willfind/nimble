@@ -1558,6 +1558,65 @@ class Axis(ABC):
     def _unique_implementation(self):
         pass
 
+    ################
+    # Stats methods #
+    ###############
+    
+    statsList =[    'max', 'mean', 'median', 'min', 'unique count',
+            'proportion missing', 'proportion zero', 'standard deviation',
+            'std', 'population std', 'population standard deviation',
+            'sample std', 'sample standard deviation'
+            ]
+    
+    def _max(self):
+        FuncName = 'max'
+        toCall = nimble.calculate.maximum
+        if self._axis == 'point':
+            return self._statisticsBackend(FuncName, toCall)
+        
+        # groupByFeature is only a parameter for .features
+        res = self._base.groupByFeature(groupByFeature, useLog=False)
+        for k in res:
+            res[k] = res[k].features._statisticsBackend(FuncName, toCall)
+        return res
+    
+    # def _mean():
+    #     pass
+    
+    # def _median():
+    #     pass
+    
+    # def _min():
+    #     pass
+    
+    # def _unique_count(values):
+    #   pass
+
+    # def _proportion_missing(values):
+    #     pass
+
+    # def _proportion_zero(values):
+    #     pass
+
+    # def _standard_deviation(values):
+    #     pass
+
+    # def _std(values):
+    #     pass
+
+    # def _population_std(values):
+    #     pass
+
+    # def _population_standard_deviation(values):
+    #     pass
+
+    # def _sample_std(values):
+    #     pass
+
+    # def _sample_standard_deviation(values):
+    #     pass
+
+
 ###########
 # Helpers #
 ###########
