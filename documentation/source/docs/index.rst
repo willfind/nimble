@@ -253,8 +253,8 @@ file "name" is "log-nimble". The "enabledByDefault" option is set to "True" and
 Fetching Files
 --------------
 
-Nimble's ``fetchFile`` and ``fetchFiles`` provide efficient means for accessing
-online datasets. When a new ``source`` is passed to a fetch function, it
+Nimble's ``fetchFiles`` method provides efficient means for accessing
+online datasets. When a new ``source`` is passed to the fetch function, it
 downloads and stores the files in a directory named "nimbleData" in a
 :ref:`configurable <configuration>` local location. When a repeated ``source``
 is passed to a fetch function, no downloading occurs because the data can be
@@ -265,7 +265,6 @@ option in the "fetch" section and is set to the home directory by default.
    :toctree: generated/
    :recursive:
 
-   nimble.fetchFile
    nimble.fetchFiles
 
 

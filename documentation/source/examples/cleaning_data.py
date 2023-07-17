@@ -30,21 +30,21 @@ In this example we will learn about:
 
 ## Getting started ##
 
-## We first use `nimble.fetchFile` to retrieve our dataset. This will return
+## We first use `nimble.fetchFiles` to retrieve our dataset. This will return
 ## the path to our dataset, downloading it from the web if it is not already
 ## available locally. Nimble has built in a shorthand for datasets in the
-## [UCI repository](https://archive.ics.uci.edu/ml) that we use below. The
+## [UCI repository](https://archive.ics.uci.edu) that we use below. The
 ## second argument for `nimble.data` (`source`) can be a regular python data
 ## object, a path to a file, an open file, or URL pointing to the location on a
-## website where the data resides. Here, we use the path returned by
-## `nimble.fetchFile`.
+## website where the data resides. Then, since this dataset only has one file
+## we use the single path returned by `nimble.fetchFile` to load the data.
 
 from datetime import datetime
 
 import nimble
 
-path = nimble.fetchFile('uci::Metro Interstate Traffic Volume')
-traffic = nimble.data(path, name='Metro Interstate Traffic Volume',
+paths = nimble.fetchFiles('uci::Metro Interstate Traffic Volume')
+traffic = nimble.data(paths[0], name='Metro Interstate Traffic Volume',
                       returnType="Matrix")
 
 ## The `show` method provides more flexibility for the printed output than

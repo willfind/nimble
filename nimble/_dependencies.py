@@ -35,7 +35,7 @@ def _getNimbleMetadata():
         # location in the git repo.
         if not os.path.exists(pyprojPath):
             nimParentDir = os.path.dirname(nimbleDir)
-            pyprojPath = os.path.join(nimParentDir, pyprojPath)
+            pyprojPath = os.path.join(nimParentDir, "pyproject.toml")
 
         with open(pyprojPath, "rb") as f:
             tomlDict = tomli.load(f)
