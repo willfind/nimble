@@ -2682,7 +2682,7 @@ class Points(ABC):
         return self._max(groupByFeature=None)
     
     @abstractmethod    
-    def _max(self, groupByFeature=None):
+    def _max(self, groupByFeature):
         pass
     
     # def mean():
