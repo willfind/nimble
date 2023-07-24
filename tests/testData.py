@@ -15,6 +15,8 @@ import scipy.sparse
 import pandas as pd
 import h5py
 
+import pytest
+
 import nimble
 from nimble.exceptions import InvalidArgumentValue, InvalidArgumentType
 from nimble.exceptions import InvalidArgumentTypeCombination
@@ -2206,7 +2208,7 @@ def mocked_requests_get(url, *args, **kwargs):
             with gzip.GzipFile(fileobj=bio, mode='wb') as mygzip:
                 mygzip.write(b'1,2,3\n4,5,6')
             return MockResponse(bio.getvalue(), 200)
-    if 'ZIP' in url:
+    if 'ZIP' in url or 'zip' in url:
         with io.BytesIO() as bio:
             with zipfile.ZipFile(bio, 'w') as myzip:
                 myzip.writestr('data.csv', '1,2,3\n4,5,6')
@@ -2227,28 +2229,18 @@ def mocked_requests_get(url, *args, **kwargs):
                             tar.addfile(file2, data2)
             return MockResponse(bio.getvalue(), 200)
     if 'archive.ics.uci.edu/' in url:
-        if 'ml/datasets' in url:
+        if 'search=' in url:
+            # a search page should have a link to the associated dataset page
+            dataName = url.split("search=")[-1]
+            content = 'href="https://archive.ics.uci.edu/dataset/000/'
+            content += f'{dataName}"'
+        elif 'dataset/' in url:
             # in this case the page content is searched for the href to the
             # page containing the data files, so we will provide a mock href
-            content = 'href="https://archive.ics.uci.edu/ml/machine-learning-databases/{}/"'
-            content = content.format(url.split('/')[-1])
-        elif url.endswith('/'):
-            # in this case we return the hrefs that refer to the data files and
-            # directories. First href is always a Parent Directory that we ignore.
-            content = 'href="/ml/machine-learning-databases/"\n'
-            # put other hrefs before href to single data file so that we test
-            # that the data file is actually found, not just selected because
-            # it is the first href.
-            if 'data+multiple' in url and 'more' not in url:
-                content += 'href="more/"\n'
-            if 'data+ignored' in url:
-                content += 'href="Index"\n'
-                content += 'href="data.names"\n'
-            content += 'href="CSV.csv"\n'
-        elif 'Index' or 'data.names' in url:
-            return MockResponse(bytes('ignore', 'utf-8'), 200)
+            dataName = url.split('/')[-1]
+            content = f'href="/static/public/000/{dataName}.zip"'
         else:
-            return mocked_requests_get(url)
+            assert False
 
         return MockResponse(bytes(content, 'utf-8'), 200)
 
@@ -2284,7 +2276,7 @@ mockIsDownloadable = patch(nimble.core._createHelpers, '_isDownloadable',
                            mocked_isDownloadable)
 
 mockRequestsGet = patch(nimble.core._createHelpers.requests, 'get',
-                        mocked_requests_get)
+                        mocked_requests_get, True)
 
 @mockRequestsGet
 @mockIsDownloadable
@@ -2489,14 +2481,14 @@ def test_data_http_uciPathHandling():
         fromShorthand = nimble.data(source="uci::data")
         assert fromShorthand == exp
 
-        url = "https://archive.ics.uci.edu/ml/datasets/data"
+        url = "https://archive.ics.uci.edu/dataset/000/data"
         fromPage = nimble.data(source=url)
         assert fromPage == exp
 
         fromShorthand = nimble.data(source="uci::data ignored")
         assert fromShorthand == exp
 
-        url = "https://archive.ics.uci.edu/ml/datasets/data+ignored"
+        url = "https://archive.ics.uci.edu/dataset/000/data+ignored"
         fromPage = nimble.data(source=url)
         assert fromPage == exp
 
@@ -2522,18 +2514,31 @@ def test_data_http_linkError():
             fromWeb = nimble.data(source=url)
 
 
-##########################
-# fetchFile / fetchFiles #
-##########################
-mockReqBasePath = os.path.join(nimble.settings.get('fetch', 'location'),
+##############
+# fetchFiles #
+##############
+
+# Need to be able to call this directly for use in decorator
+def mockReqBasePath():
+    return os.path.join(nimble.settings.get('fetch', 'location'),
                                'nimbleData', 'mockrequests.nimble')
+
+# This then provides a fixture version of mockReqBasePath
+@pytest.fixture(name="mockReqBasePath")
+def mockReqBasePathFix():
+    return mockReqBasePath()
 
 def clearNimbleData(func):
     @functools.wraps(func)
     def wrapped(*args, **kwargs):
-        if os.path.exists(mockReqBasePath):
-            shutil.rmtree(mockReqBasePath)
-        return func(*args, **kwargs)
+        local = mockReqBasePath()
+        if os.path.exists(local):
+            shutil.rmtree(local)
+        os.makedirs(local)
+        try:
+            ret = func(*args, **kwargs)
+        finally:
+            shutil.rmtree(local)
     return wrapped
 
 @raises(InvalidArgumentValue)
@@ -2547,17 +2552,14 @@ def test_data_fetch_notDownloadable():
 @mockIsDownloadable
 @clearNimbleData
 def backend_fetch(url, multiple=False, exp=None):
-    path = nimble.fetchFile(url)
     paths = nimble.fetchFiles(url)
     if exp is None:
         exp = os.path.join(*url[7:].split('/'))
-    assert path.endswith(exp)
     if multiple:
         assert len(paths) > 1
         assert all(os.path.split(exp)[0] in path for path in paths)
     else:
         assert len(paths) == 1
-        assert paths[0] == path
 
 
 def test_data_fetchFiles_CSVFileOK():
@@ -2598,57 +2600,19 @@ def test_data_fetchFiles_urlSpaceFormatting():
 @mockRequestsGet
 @clearNimbleData
 def test_data_fetch_uciPathHandling():
-    urlBasePath = 'https://archive.ics.uci.edu/ml/datasets/'
-    fileBasePath = os.path.join('nimbleData','archive.ics.uci.edu', 'ml',
-                                'machine-learning-databases')
-    urlToSingleFile = urlBasePath + 'data'
-    singleFile = os.path.join(fileBasePath, 'data', 'CSV.csv')
-
-    shortFile = nimble.fetchFile('uci::data')
-    assert shortFile.endswith(singleFile)
+    urlPagePath = 'https://archive.ics.uci.edu/dataset/000/'
+    urlDataPath = 'https://archive.ics.uci.edu/static/public/000/'
+    fileBasePath = os.path.join('nimbleData','archive.ics.uci.edu', 'static',
+                                'public', '000')
+    urlToSingleFile = urlDataPath + 'data.ZIP'
+    singleFile = os.path.join(fileBasePath, 'data.csv')
 
     shortFiles = nimble.fetchFiles('UCI:: data ')
     assert len(shortFiles) == 1 and shortFiles[0].endswith(singleFile)
 
-    pageFile = nimble.fetchFile(urlToSingleFile)
-    assert pageFile.endswith(singleFile)
     pageFiles = nimble.fetchFiles(urlToSingleFile)
     assert len(pageFiles) == 1 and pageFiles[0].endswith(singleFile)
 
-    with raises(InvalidArgumentValue):
-        nimble.fetchFile('UcI::data multiple')
-    with raises(InvalidArgumentValue):
-        nimble.fetchFile(urlBasePath + 'data+multiple')
-    multiFile1 = os.path.join(fileBasePath, 'data+multiple', 'more', 'CSV.csv')
-    multiFile2 = os.path.join(fileBasePath, 'data+multiple', 'CSV.csv')
-
-    shortPaths = nimble.fetchFiles('uci:: data multiple')
-    assert (len(shortPaths) == 2
-            and shortPaths[0].endswith(multiFile1)
-            and shortPaths[1].endswith(multiFile2))
-
-    pagePaths = nimble.fetchFiles(urlBasePath + 'data+multiple')
-    # data available locally, return order is different than above
-    assert (len(pagePaths) == 2
-            and pagePaths[0].endswith(multiFile2)
-            and pagePaths[1].endswith(multiFile1))
-
-    # contains href to Index and .names files we want to ignore in fetchFile
-    ignoreFile = os.path.join(fileBasePath, 'data+ignored', 'CSV.csv')
-    urlToIgnoreFile = urlBasePath + 'data+ignored'
-
-    shortIgFile = nimble.fetchFile('Uci::data ignored')
-    assert shortIgFile.endswith(ignoreFile)
-
-    shortIgFiles = nimble.fetchFiles('uci:: data ignored ')
-    assert len(shortIgFiles) == 3
-    assert sum(f.endswith(ignoreFile) for f in shortIgFiles) == 1
-
-    pageIgFile = nimble.fetchFile(urlToIgnoreFile)
-    assert pageIgFile.endswith(ignoreFile)
-    pageIgFiles = nimble.fetchFiles(urlToIgnoreFile)
-    assert len(pageIgFiles) == 3
-    assert sum(f.endswith(ignoreFile) for f in pageIgFiles) == 1
 
 @noLogEntryExpected
 @mockIsDownloadable
@@ -2661,21 +2625,11 @@ def test_data_fetch_nimblePathHandling():
     urlToSingleFile = urlBasePath + 'data'
     singleFile = os.path.join(fileBasePath, 'hash', 'CSV.csv')
 
-    shortFile = nimble.fetchFile('nimble::data')
-    assert shortFile.endswith(singleFile)
-
     shortFiles = nimble.fetchFiles('Nimble:: data ')
     assert len(shortFiles) == 1 and shortFiles[0].endswith(singleFile)
 
-    pageFile = nimble.fetchFile(urlToSingleFile)
-    assert pageFile.endswith(singleFile)
     pageFiles = nimble.fetchFiles(urlToSingleFile)
     assert len(pageFiles) == 1 and pageFiles[0].endswith(singleFile)
-
-    with raises(InvalidArgumentValue):
-        nimble.fetchFile('NIMBLE::data multiple')
-    with raises(InvalidArgumentValue):
-        nimble.fetchFile(urlBasePath + 'data-multiple')
 
     multiFile1 = os.path.join(fileBasePath, 'hash-multiple-1', 'CSV.csv')
     multiFile2 = os.path.join(fileBasePath, 'hash-multiple-2', 'MTX.mtx')
@@ -2691,85 +2645,71 @@ def test_data_fetch_nimblePathHandling():
             and pagePaths[1].endswith(multiFile2))
 
 @mockIsDownloadable
-@assertNotCalled(nimble.core._createHelpers.requests, 'get')
 @clearNimbleData
-def test_data_fetch_getFromLocal_csv():
+def test_data_fetch_getFromLocal_csv(mockReqBasePath):
     exp = os.path.join(mockReqBasePath, 'CSV.csv')
-    if not os.path.exists(exp):
-        os.makedirs(os.path.split(exp)[0])
-        with open(exp, 'w') as f:
-            f.write('1,2,3\n4,5,6')
+    with open(exp, 'w') as f:
+        f.write('1,2,3\n4,5,6')
 
     assert os.path.exists(exp)
-    # if requests is not used, it was retrieved locally
-    path = nimble.fetchFile('http://mockrequests.nimble/CSV.csv')
-    paths = nimble.fetchFiles('http://mockrequests.nimble/CSV.csv')
+    reqModule = nimble.core._createHelpers.requests
+    with assertNotCalled(reqModule, 'get', True):
+        # if requests is not used, it was retrieved locally
+        _ = nimble.fetchFiles('http://mockrequests.nimble/CSV.csv')
 
 @mockIsDownloadable
-@assertNotCalled(nimble.core._createHelpers.requests, 'get')
 @clearNimbleData
-def test_data_fetch_getFromLocal_zip():
-    if not os.path.exists(mockReqBasePath):
-        os.makedirs(mockReqBasePath)
-
+def test_data_fetch_getFromLocal_zip(mockReqBasePath):
     exp = os.path.join(mockReqBasePath, 'ZIP.zip')
-    if not os.path.exists(exp):
-        with zipfile.ZipFile(exp, 'w') as myzip:
-            myzip.writestr('data.csv', '1,2,3\n4,5,6')
-            myzip.writestr(os.path.join('archive', 'old.csv'), '1,2,3\n4,5,6')
-        with zipfile.ZipFile(exp, 'r') as myzip:
-            myzip.extractall(mockReqBasePath)
+    with zipfile.ZipFile(exp, 'w') as myzip:
+        myzip.writestr('data.csv', '1,2,3\n4,5,6')
+        myzip.writestr(os.path.join('archive', 'old.csv'), '1,2,3\n4,5,6')
+    with zipfile.ZipFile(exp, 'r') as myzip:
+        myzip.extractall(mockReqBasePath)
 
     assert os.path.exists(exp)
     assert os.path.exists(os.path.join(mockReqBasePath, 'data.csv'))
     assert os.path.exists(os.path.join(mockReqBasePath, 'archive', 'old.csv'))
-    with assertNotCalled(zipfile.ZipFile, 'extractall'):
-        # requests and extractall should not be used
-        path = nimble.fetchFile('http://mockrequests.nimble/ZIP.zip')
-        paths = nimble.fetchFiles('http://mockrequests.nimble/ZIP.zip')
+
+    reqModule = nimble.core._createHelpers.requests
+    with assertNotCalled(reqModule, 'get', True):
+        with assertNotCalled(zipfile.ZipFile, 'extractall'):
+            # requests and extractall should not be used
+            _ = nimble.fetchFiles('http://mockrequests.nimble/ZIP.zip')
 
 @mockIsDownloadable
-@assertNotCalled(nimble.core._createHelpers.requests, 'get')
 @clearNimbleData
-def test_data_fetch_getFromLocal_gzip():
-    if not os.path.exists(mockReqBasePath):
-        os.makedirs(mockReqBasePath)
-
+def test_data_fetch_getFromLocal_gzip(mockReqBasePath):
     exp = os.path.join(mockReqBasePath, 'GZIP_data.csv')
-    if not os.path.exists(exp):
-        with open(exp, 'wb') as f:
-            f.write(b'1,2,3/n4,5,6')
-        with open(exp, 'rb') as fIn:
-            with gzip.open(exp + '.gz', 'wb') as fOut:
-                shutil.copyfileobj(fIn, fOut)
+    with open(exp, 'wb') as f:
+        f.write(b'1,2,3/n4,5,6')
+    with open(exp, 'rb') as fIn:
+        with gzip.open(exp + '.gz', 'wb') as fOut:
+            shutil.copyfileobj(fIn, fOut)
 
     assert os.path.exists(exp)
     assert os.path.exists(exp + '.gz')
-    # requests should not be used
-    path = nimble.fetchFile('http://mockrequests.nimble/GZIP_data.csv.gz')
-    paths = nimble.fetchFiles('http://mockrequests.nimble/GZIP_data.csv.gz')
-    assert path == exp
-    assert len(paths) == 1 and paths[0] == exp
+
+    reqModule = nimble.core._createHelpers.requests
+    reqModule.nimbleAccessible()
+    with assertNotCalled(reqModule, 'get', True):
+        # requests should not be used
+        paths = nimble.fetchFiles('http://mockrequests.nimble/GZIP_data.csv.gz')
+        assert len(paths) == 1 and paths[0] == exp
 
 @mockIsDownloadable
 @clearNimbleData
-def test_data_fetch_forceDownload():
-    local = os.path.join(mockReqBasePath, 'CSV.csv')
-    if not os.path.exists(local):
-        try:
-            os.makedirs(os.path.split(local)[0])
-        except FileExistsError:
-            pass
-        with open(local, 'w') as f:
-            f.write('1,2,3\n4,5,6')
+def test_data_fetch_forceDownload(mockReqBasePath):
+    local = os.path.join(mockReqBasePath, "CSV.CSV")
+    with open(local, 'w') as f:
+        f.write('1,2,3\n4,5,6')
 
     assert os.path.exists(local)
+
     # if requests is used, we downloaded the data again
-    reqGetCalled = assertCalled(nimble.core._createHelpers.requests, 'get')
-    with reqGetCalled:
+    reqModule = nimble.core._createHelpers.requests
+    with assertCalled(reqModule, 'get', True):
         nimble.fetchFiles('http://mockrequests.nimble/CSV.csv', overwrite=True)
-    with reqGetCalled:
-        nimble.fetchFile('http://mockrequests.nimble/CSV.csv', overwrite=True)
 
 ###################################
 # ignoreNonNumericalFeatures flag #

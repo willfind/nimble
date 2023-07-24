@@ -48,7 +48,7 @@ nimble_logged = [
     'train', 'trainAndApply', 'trainAndTest', 'trainAndTestOnTrainingData',
     ]
 nimble_notLogged = [
-    'Tuning', 'CustomLearner', 'Tune', 'Init', 'fetchFile', 'fetchFiles',
+    'Tuning', 'CustomLearner', 'Tune', 'Init', 'fetchFiles',
     'identity', 'learnerNames', 'learnerParameters',
     'learnerParameterDefaults', 'learnerType', 'ones', 'showAvailablePackages',
     'showLearnerParameterDefaults', 'showLearnerNames',

@@ -172,16 +172,19 @@ class patch:
     value
         The object that will replace the attribute.
     """
-    def __init__(self, obj, name, value):
+    def __init__(self, obj, name, value, forceAccessible=False):
         self.obj = obj
         self.name = name
         self.value = value
+        self.forceAccessible = forceAccessible
         self.patch = pytest.MonkeyPatch()
 
     # as decorator
     def __call__(self, func):
         @wraps(func)
         def wrapped(*args, **kwargs):
+            if self.forceAccessible:
+                self.obj.nimbleAccessible()
             self.patch.setattr(self.obj, self.name, self.value)
             try:
                 return func(*args, **kwargs)
@@ -191,19 +194,21 @@ class patch:
 
     # as context manager
     def __enter__(self):
+        if self.forceAccessible:
+            self.obj.nimbleAccessible()
         self.patch.setattr(self.obj, self.name, self.value)
 
     def __exit__(self, exc_type, value, traceback):
         self.patch.undo()
 
-def assertNotCalled(obj, name):
+def assertNotCalled(obj, name, forceAccessible=False):
     """
     Patch the object to raise a CalledFunctionException.
 
     Can be used as a decorator or a context manager. This is primarily useful
     when not expecting the mocked object to be used.
     """
-    return patch(obj, name, calledException)
+    return patch(obj, name, calledException, forceAccessible)
 
 class assertCalled:
     """
@@ -213,7 +218,9 @@ class assertCalled:
     to return a CalledFunctionException and the test passes if that exception
     occurs. The return of the context manager is a pytest.ExceptionInfo object.
     """
-    def __init__(self, obj, name):
+    def __init__(self, obj, name, forceAccessible=False):
+        self.obj = obj
+        self.forceAccessible = forceAccessible
         self.patch = assertNotCalled(obj, name)
         self.raises = raises(CalledFunctionException)
 
@@ -224,6 +231,8 @@ class assertCalled:
         return wrapped
 
     def __enter__(self):
+        if self.forceAccessible:
+            self.obj.nimbleAccessible()
         self.patch.__enter__()
         return self.raises.__enter__()
 

@@ -75,14 +75,14 @@ nimble.settings.set('logger', 'enabledByDefault', 'True')
 
 # print(nimble.settings.get('fetch', 'location'))
 
-## Within that configured directory location, `fetchFile` creates a
-## "nimbleData" directory to store downloaded data.  `fetchFile` returns the
+## Within that configured directory location, `fetchFiles` creates a
+## "nimbleData" directory to store downloaded data.  `fetchFiles` returns the
 ## path to the requested data, downloading it if it is not already available
 ## locally. Usually, `fetchFile` requires a url string, but Nimble has a built
 ## in shorthand for datasets in the UCI repository that we use to get our
 ## dataset for this example.
-path = nimble.fetchFile('uci::Wireless Indoor Localization')
-wifi = nimble.data(path, name='wifiData')
+paths = nimble.fetchFiles('uci::Wireless Indoor Localization')
+wifi = nimble.data(paths[0], name='wifiData')
 
 ## As a reminder, this data used a mobile phone to collect wifi signal strength
 ## values from seven different wifi sources in four different rooms. Imagine

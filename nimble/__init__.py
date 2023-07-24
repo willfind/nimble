@@ -15,7 +15,6 @@ from nimble.core.create import data
 from nimble.core.create import ones
 from nimble.core.create import zeros
 from nimble.core.create import identity
-from nimble.core.create import fetchFile
 from nimble.core.create import fetchFiles
 from nimble.core.learn import learnerType
 from nimble.core.learn import learnerNames

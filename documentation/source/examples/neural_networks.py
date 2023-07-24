@@ -32,8 +32,8 @@ In this example we will learn about:
 
 import nimble
 
-path = nimble.fetchFile('uci::Semeion Handwritten Digit')
-images = nimble.data(path, returnType="Matrix")
+paths = nimble.fetchFiles('uci::Semeion Handwritten Digit')
+images = nimble.data(paths[0], returnType="Matrix")
 
 ## Preparing the data ##
 
