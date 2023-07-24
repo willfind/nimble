@@ -1,11 +1,10 @@
 Legal Information
 #################
 
-..
-  Nimble® License Agreement
-  *************************
-Nimble License Agreement
-************************
+
+Nimble® License Agreement
+*************************
+
 
 
 Acceptance
@@ -141,10 +140,10 @@ Use, duplication or disclosure of this Software is subject to restrictions set f
 FAR 52.227-19 and DFAR 227.7200–227.7202-4, as applicable. The Software is "commercial computer
 software" and is licensed with only "Restricted Rights."
 
-..
-  General
-  ^^^^^^^
-  Nimble is a registered trademark of SW.
+
+General
+^^^^^^^
+Nimble is a registered trademark of SW.
 
 License Termination Notification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -157,7 +156,7 @@ Some verions of the software have active licenses only when indicated as such in
    +--------------+----------------+
    | Version      | License Status |
    +==============+================+
-   |  <= 0.4.0    | ACTIVE         |
+   | <= 0.4.2     | ACTIVE         |
    +--------------+----------------+
 
 (When the license is no longer actve, the License Status column will indicate "TERMINATED")
