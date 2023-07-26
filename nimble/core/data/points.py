@@ -2553,6 +2553,50 @@ class Points(ABC):
             statistic, points, False, horizontal, outPath, show, figureID,
             title, xAxisLabel, yAxisLabel, legendTitle, **kwargs)
 
+    ################
+    # Stats methods #
+    ###############
+    
+    def max(self):
+        return self._max()
+
+    def mean(self):
+        return self._mean()
+    
+    def median(self):
+        return self._median()
+    
+    def min(self):
+        return self._min()
+    
+    def uniqueCount(self):
+        return self._uniqueCount()
+
+    def proportionMissing(self):
+        return self._proportionMissing()
+
+    def proportionZero(self):
+        return self._proportionZero()
+
+     # def standard_deviation(values):
+    #     pass
+
+    # def std(values):
+    #     pass
+
+    # def population_std(values):
+    #     pass
+
+    # def population_standard_deviation(values):
+    #     pass
+
+    # def sample_std(values):
+    #     pass
+
+    # def sample_standard_deviation(values):
+    #     pass
+    
+    
     ####################
     # Abstract Methods #
     ####################
@@ -2677,47 +2721,35 @@ class Points(ABC):
                         horizontal, outPath, show, figureID, title,
                         xAxisLabel, yAxisLabel, legendTitle, **kwargs):
         pass
+        
     
-    def max(self, groupByFeature=None):
-        return self._max(groupByFeature=None)
     
     @abstractmethod    
-    def _max(self, groupByFeature):
+    def _max(self):
         pass
     
-    # def mean():
-    #     pass
+    @abstractmethod
+    def _mean(self):
+        pass
     
-    # def median():
-    #     pass
+    @abstractmethod
+    def _median(self):
+        pass
     
-    # def min():
-    #     pass
+    @abstractmethod
+    def _min(self):
+        pass
     
-    # def unique_count(values):
-    #   pass
+    @abstractmethod
+    def _uniqueCount(self):
+      pass
 
-    # def proportion_missing(values):
-    #     pass
+    @abstractmethod
+    def _proportionMissing(self):
+        pass
 
-    # def proportion_zero(values):
-    #     pass
+    @abstractmethod
+    def _proportionZero(self):
+        pass
 
-    # def standard_deviation(values):
-    #     pass
-
-    # def std(values):
-    #     pass
-
-    # def population_std(values):
-    #     pass
-
-    # def population_standard_deviation(values):
-    #     pass
-
-    # def sample_std(values):
-    #     pass
-
-    # def sample_standard_deviation(values):
-    #     pass
-    
+   

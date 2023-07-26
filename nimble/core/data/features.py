@@ -2660,6 +2660,50 @@ class Features(ABC):
             statistic, features, False, horizontal, outPath, show, figureID,
             title, xAxisLabel, yAxisLabel, legendTitle, **kwargs)
 
+    ################
+    # Stats methods #
+    ###############
+    
+    def max(self, groupByFeature=None):
+        return self._max(groupByFeature)    
+    
+    def mean(self, groupByFeature=None):
+         return self._mean(groupByFeature)
+    
+    def median(self, groupByFeature=None):
+        return self.median(groupByFeature)
+    
+    def min(self, groupByFeature=None):
+        return self._min(groupByFeature)
+    
+    def unique_count(self, groupByFeature=None):
+      pass
+
+    def proportion_missing(self, groupByFeature=None):
+        pass
+
+    def proportion_zero(self, groupByFeature=None):
+        pass
+
+    # def standard_deviation(values):
+    #     pass
+
+    # def std(values):
+    #     pass
+
+    # def population_std(values):
+    #     pass
+
+    # def population_standard_deviation(values):
+    #     pass
+
+    # def sample_std(values):
+    #     pass
+
+    # def sample_standard_deviation(values):
+    #     pass
+    
+
     ####################
     # Abstract Methods #
     ####################
@@ -2783,75 +2827,33 @@ class Features(ABC):
     def _getNamesNoGeneration(self):
         pass
     
-    def max(self, groupByFeature):
-        return self._max(groupByFeature=groupByFeature)
-    
     @abstractmethod
-    def _max(self, groupByFeature):
+    def _max(self, groupByFeature=None):
         pass
     
+    @abstractmethod
+    def _mean(self, groupByFeature=None):
+        pass
     
+    @abstractmethod
+    def _median(self, groupByFeature=None):
+        pass
     
-    # def mean(self):
-    #      return self._mean()
+    @abstractmethod
+    def _min(self, groupByFeature=None):
+        pass
     
-    # def median(self):
-    #     return self.median()
-    
-    # def min(self):
-    #     return self._min()
-    
-    # def unique_count(values):
-    #   pass
+    @abstractmethod
+    def _unique_count(self, groupByFeature=None):
+      pass
 
-    # def proportion_missing(values):
-    #     pass
+    @abstractmethod
+    def _proportion_missing(self, groupByFeature=None):
+        pass
 
-    # def proportion_zero(values):
-    #     pass
-
-    # def standard_deviation(values):
-    #     pass
-
-    # def std(values):
-    #     pass
-
-    # def population_std(values):
-    #     pass
-
-    # def population_standard_deviation(values):
-    #     pass
-
-    # def sample_std(values):
-    #     pass
-
-    # def sample_standard_deviation(values):
-    #     pass
-    
-    # @abstractmethod
-    # def _max(self):
-    #     pass 
-        
-    # @abstractmethod
-    # def _mean(self):
-    #     pass
-    
-    # @abstractmethod
-    # def _median(self):
-    #     pass
-    
-    # @abstractmethod
-    # def _min(self):
-    #     pass
-    
-    # def unique_count(values):
-    #   pass
-
-    # def proportion_missing(values):
-    #     pass
-
-    # def proportion_zero(values):
-    #     pass
+    @abstractmethod
+    def _proportion_zero(self, groupByFeature=None):
+        pass
 
     # def standard_deviation(values):
     #     pass

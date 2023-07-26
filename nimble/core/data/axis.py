@@ -1562,6 +1562,16 @@ class Axis(ABC):
     # Stats methods #
     ###############
     
+    def _process_statistics(self, FuncName, toCall, groupByFeature):
+        if self._axis == 'point' or groupByFeature is None:
+            return self._statisticsBackend(FuncName, toCall)
+        
+        # groupByFeature is only a parameter for .features
+        res = self._base.groupByFeature(groupByFeature, useLog=False)
+        for k in res:
+            res[k] = res[k].features._statisticsBackend(FuncName, toCall)
+        return res
+    
     statsList =[    'max', 'mean', 'median', 'min', 'unique count',
             'proportion missing', 'proportion zero', 'standard deviation',
             'std', 'population std', 'population standard deviation',
@@ -1571,32 +1581,44 @@ class Axis(ABC):
     def _max(self, groupByFeature=None):
         FuncName = 'max'
         toCall = nimble.calculate.maximum
-        if self._axis == 'point':
-            return self._statisticsBackend(FuncName, toCall)
-        
-        # groupByFeature is only a parameter for .features
-        res = self._base.groupByFeature(groupByFeature, useLog=False)
-        for k in res:
-            res[k] = res[k].features._statisticsBackend(FuncName, toCall)
-        return res
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
     
-    # def _mean():
-    #     pass
+    def _mean(self, groupByFeature=None):
+        FuncName = 'mean'
+        toCall = nimble.calculate.mean
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
     
-    # def _median():
-    #     pass
+    def _median(self, groupByFeature=None):
+        FuncName = 'median'
+        toCall = nimble.calculate.median
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
     
-    # def _min():
-    #     pass
+    def _min(self, groupByFeature=None):
+        FuncName = 'min'
+        toCall = nimble.calculate.minimum
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
     
-    # def _unique_count(values):
-    #   pass
+    def _uniqueCount(self, groupByFeature=None):
+        FuncName = 'uniquecount'
+        toCall = nimble.calculate.uniqueCount
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
 
-    # def _proportion_missing(values):
-    #     pass
+    def _proportionMissing(self, groupByFeature=None):
+        FuncName = 'proportionmissing'
+        toCall = nimble.calculate.proportionMissing
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
 
-    # def _proportion_zero(values):
-    #     pass
+    def _proportionZero(self, groupByFeature=None):
+        FuncName = 'proportionzero'
+        toCall = nimble.calculate.proportionZero
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
 
     # def _standard_deviation(values):
     #     pass

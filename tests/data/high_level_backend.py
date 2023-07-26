@@ -4245,6 +4245,13 @@ class HighLevelModifyingSparseSafe(DataTestObject):
     # statistic methods: points #
     ############################
     
+    accepted = [
+            'max', 'mean', 'median', 'min', 'unique count',
+            'proportion missing', 'proportion zero', 'standard deviation',
+            'std', 'population std', 'population standard deviation',
+            'sample std', 'sample standard deviation'
+            ]
+    
     def test_points_max(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
@@ -4253,13 +4260,76 @@ class HighLevelModifyingSparseSafe(DataTestObject):
                             featureNames=['max'], returnType=constructor.keywords['returnType'])
             res = toTest.points.max()
             assert exp == res
+    
+    def test_points_min(self):
+        raw = [[0, 22, 2], [3, 22, 5]]
+        for constructor in getDataConstructors():
+            toTest = constructor(raw)
+            exp = nimble.data([[0],[3]], 
+                            featureNames=['min'], returnType=constructor.keywords['returnType'])
+            res = toTest.points.min()
+            assert exp == res
+    
+    def test_points_mean(self):
+        raw = [[0, 22, 2], [3, 22, 5]]
+        for constructor in getDataConstructors():
+            toTest = constructor(raw)
+            exp = nimble.data([[8],[10]], 
+                            featureNames=['median'], returnType=constructor.keywords['returnType'])
+            res = toTest.points.mean()
+            assert exp == res
+    
+    def test_points_median(self):
+        raw = [[0, 22, 2], [3, 22, 5]]
+        for constructor in getDataConstructors():
+            toTest = constructor(raw)
+            exp = nimble.data([[2],[5]], 
+                            featureNames=['median'], returnType=constructor.keywords['returnType'])
+            res = toTest.points.median()
+            assert exp == res
+    
+    def test_points_unique_count(self):
+        raw =  [[1, 2, 0], [0,0,5]]
+        for constructor in getDataConstructors():
+            toTest = constructor(raw)
+            exp = nimble.data([[3],[2]], 
+                            featureNames=['uniquecount'], returnType=constructor.keywords['returnType'])
+            res = toTest.points.uniqueCount()
+            assert exp == res
+    
+    def test_points_proportion_missing(self):
+        raw = [[1, 2, 0], [0, float('nan'),5]]
+        for constructor in getDataConstructors():
+            toTest = constructor(raw)
+            exp = nimble.data([[0.000],[0.333]], 
+                            featureNames=['proportionmissing'], returnType=constructor.keywords['returnType'])
+            res = toTest.points.proportionMissing()
+            assert exp == res 
+    
+    def test_points_proportion_zero(self):
+        raw = [[1, 2, 0], [0,0,5]]
+        for constructor in getDataConstructors():
+            toTest = constructor(raw)
+            exp = nimble.data([[0.333],[0.667]], 
+                            featureNames=['proportionzero'], returnType=constructor.keywords['returnType'])
+            res = toTest.points.proportionZero()
+            assert exp == res
+    
+    def test_points_standard_deviation(self):
+        raw = [[0, 22, 2], [3, 22, 5]]
+        for constructor in getDataConstructors():
+            toTest = constructor(raw)
+            exp = nimble.data([[1.000],[3.536]], 
+                            featureNames=['std'], returnType=constructor.keywords['returnType'])
+            res = toTest.points.std()
+            assert exp == res
         
-      ############################
+        
+    ############################
     # statistic methods: features #
     ############################
     
     def test_features_max(self):
-        #import pdb; pdb.set_trace()
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
@@ -4267,6 +4337,70 @@ class HighLevelModifyingSparseSafe(DataTestObject):
                             pointNames=['max'], returnType=constructor.keywords['returnType'])
             res = toTest.features.max()
             assert exp == res
+    
+    def test_features_min(self):
+        raw = [[0, 22, 2], [3, 22, 5]]
+        for constructor in getDataConstructors():
+            toTest = constructor(raw)
+            exp = nimble.data([[0, 22, 2]], 
+                            pointNames=['min'], returnType=constructor.keywords['returnType'])
+            res = toTest.features.min()
+            assert exp == res
+    
+    def test_features_mean(self):
+        raw = [[0, 22, 2], [3, 22, 5]]
+        for constructor in getDataConstructors():
+            toTest = constructor(raw)
+            exp = nimble.data([[1.500, 22.000, 3.500]], 
+                            pointNames=['mean'], returnType=constructor.keywords['returnType'])
+            res = toTest.features.mean()
+            assert exp == res
+    
+    def test_features_median(self):
+        raw = [[0, 22, 2], [3, 22, 5]]
+        for constructor in getDataConstructors():
+            toTest = constructor(raw)
+            exp = nimble.data([[1.500, 22.000, 3.500]], 
+                            pointNames=['median'], returnType=constructor.keywords['returnType'])
+            res = toTest.features.median()
+            assert exp == res
+    
+    def test_features_unique_count(self):
+        raw = [[1, 0, 0], [0,0,5]]
+        for constructor in getDataConstructors():
+            toTest = constructor(raw)
+            exp = nimble.data([[2, 1, 2]], 
+                            pointNames=['uniquecount'], returnType=constructor.keywords['returnType'])
+            res = toTest.features.uniqueCount()
+            assert exp == res
+    
+    def test_features_proportion_missing(self):
+        raw = [[1, 2, 0], [0, float('nan'),5]]
+        for constructor in getDataConstructors():
+            toTest = constructor(raw)
+            exp = nimble.data([[0.000, 0.500, 0.000]], 
+                            pointNames=['proportionmissing'], returnType=constructor.keywords['returnType'])
+            res = toTest.features.proportionMissing()
+            assert exp == res 
+    
+    def test_features_proportion_zero(self):
+        raw = [[1, 2, 0], [0,0,5]]
+        for constructor in getDataConstructors():
+            toTest = constructor(raw)
+            exp = nimble.data([[0.500, 0.500, 0.500]], 
+                            pointNames=['proportionzero'], returnType=constructor.keywords['returnType'])
+            res = toTest.features.proportionZero()
+            assert exp == res
+    
+    def test_features_standard_deviation(self):
+        raw = [[1, 2, 0], [0,0,5]]
+        for constructor in getDataConstructors():
+            toTest = constructor(raw)
+            exp = nimble.data([[0.707, 1.414, 3.536]], 
+                            pointNames=['std'], returnType=constructor.keywords['returnType'])
+            res = toTest.features.std()
+            assert exp == res
+    
         
         
 
