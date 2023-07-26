@@ -24,15 +24,6 @@ constitutes agreement to the Nimble
   Uses substitution to fill in the download links outside of the table structure
   https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#substitution-definitions
 
-..
-  .. |nimver| replace:: nimble-0.4.2
-  .. |py3_8| replace:: cp38-cp38
-  .. |py3_9| replace:: cp39-cp39
-  .. |py310| replace:: cp310-cp310
-  .. |linArc| replace:: linux_x86_64
-  .. |macArc| replace:: macosx_x86_64
-  .. |winArc| replace:: win_amd64
-
 .. |lin3_8| replace:: :download:`nimble-0.4.2-cp38-cp38-linux_x86_64.whl <wheels/nimble-0.4.2-cp38-cp38-linux_x86_64.whl>`
 .. |lin3_9| replace:: :download:`nimble-0.4.2-cp39-cp39-linux_x86_64.whl <wheels/nimble-0.4.2-cp39-cp39-linux_x86_64.whl>`
 .. |lin310| replace:: :download:`nimble-0.4.2-cp310-cp310-linux_x86_64.whl <wheels/nimble-0.4.2-cp310-cp310-linux_x86_64.whl>`
