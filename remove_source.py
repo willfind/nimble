@@ -31,11 +31,11 @@ if __name__ == "__main__":
     target = sys.argv[2]
     version = target.split('-')[1]
 
-    cmd = ["wheel", "unpack", target, "-d", targetDir]
+    cmd = ["python", "-m", "wheel", "unpack", target, "-d", targetDir]
     compProc = subprocess.run(cmd, check=True)
 
     pkName = "nimble-" + version
     pkPath = os.path.join(targetDir, pkName)
     recursiveRemove(pkPath)
-    cmd = ["wheel", "pack", pkPath, "-d", targetDir]
+    cmd = ["python", "-m", "wheel", "pack", pkPath, "-d", targetDir]
     compProc = subprocess.run(cmd, check=True)
