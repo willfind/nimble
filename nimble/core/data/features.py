@@ -2665,25 +2665,181 @@ class Features(ABC):
     ###############
     
     def max(self, groupByFeature=None):
+        
+        """
+        Returns a nimble object representing the maximum 
+        value along the points axis.
+
+        Parameters
+        ----------
+        groupByFeature : identifier, None
+            An optional index or name of the feature that divides the x
+            and y values into groups.
+            
+        See Also
+        --------
+        minimum
+
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> vector = nimble.data(lst)
+        >>> vector.features.maximum()
+        <Matrix 1pt x 3ft
+                  0 1  2
+                ┌───────
+          'max' │ 3 22 5
+        """
         return self._max(groupByFeature)    
     
     def mean(self, groupByFeature=None):
-         return self._mean(groupByFeature)
+        
+        """
+        Returns a nimble object representing the mean 
+        value along the points axis.
+
+        Parameters
+        ----------
+        groupByFeature : identifier, None
+            An optional index or name of the feature that divides the x
+            and y values into groups.
+
+        See Also
+        --------
+        median, mode
+
+        Examples
+        --------
+        >>> lst = [0, 1, 2, float('nan'), float('nan'), 5]
+        >>> vector = nimble.data(lst)
+        >>> vector.poinfeatures.mean()
+        2.0
+        """
+        return self._mean(groupByFeature)
     
     def median(self, groupByFeature=None):
+        
+        """
+        The median of the values in a vector.
+
+        This function requires numeric data and ignores any NaN values.
+        Non-numeric values will results in NaN being returned.
+
+        Parameters
+        ----------
+        values : nimble Base object
+            Must be one-dimensional.
+
+        See Also
+        --------
+        mean, mode
+
+        Examples
+        --------
+        >>> lst = [0, 1, 2, float('nan'), float('nan'), 5, 6]
+        >>> vector = nimble.data(lst)
+        >>> median(vector)
+        2.0
+        """
+        
         return self.median(groupByFeature)
     
     def min(self, groupByFeature=None):
+        """
+        The maximum value in along the points axis.
+
+        Parameters
+        ----------
+        values : nimble Base object
+            Must be one-dimensional.
+
+        See Also
+        --------
+        minimum
+
+        Examples
+        --------
+        >>> lst = [0, 1, 2, float('nan')]
+        >>> vector = nimble.data(lst)
+        >>> vector.features.maximum(vector)
+        2.0
+        """
         return self._min(groupByFeature)
     
-    def unique_count(self, groupByFeature=None):
-      pass
+    def uniqueCount(self, groupByFeature=None):
+        """
+        The number of unique values in the vector.
+        
+        This function requires numeric data and ignores any NaN values.
+        Non-numeric values will results in NaN being returned.
 
-    def proportion_missing(self, groupByFeature=None):
-        pass
+        Parameters
+        ----------
+        values : nimble Base object
+            Must be one-dimensional.
 
-    def proportion_zero(self, groupByFeature=None):
-        pass
+        See Also
+        --------
+        mean, mode
+
+        Examples
+        --------
+        >>> lst = [0, 1, 2, float('nan'), float('nan'), 5, 6]
+        >>> vector = nimble.data(lst)
+        >>> median(vector)
+        2.0
+        """
+        
+        return self._uniqueCount(groupByFeature)
+
+    def proportionMissing(self, groupByFeature=None):
+        """
+        The proportion of values in the vector that are missing.
+
+        Calculate proportion of entries in 'values' iterator that are
+        are None or NaN.
+
+        Parameters
+        ----------
+        values : nimble Base object
+            Must be one-dimensional.
+
+        Examples
+        --------
+        >>> lst = [[1, 2, 0], [0, 0, 5]]
+        >>> vector = nimble.data(lst)
+        >>> vector.features.proportionMissing()
+        0.4
+        <Matrix 1pt x 3ft
+                             0     1     2
+                         ┌──────────────────
+        'proportionmissing' │ 0.500 0.500 0.500
+        
+        """
+        return self._proportionMissing(groupByFeature)
+
+    def proportionZero(self, groupByFeature=None):
+        """
+        The proportion of values in the vector that are equal to zero.
+
+        Parameters
+        ----------
+        values : nimble Base object
+            Must be one-dimensional.
+
+        Examples
+        --------
+        >>> lst = [[1, 2, 0], [0, 0, 5]]
+        >>> vector = nimble.data(lst)
+        >>> vector.features.proportionZero()
+        0.4
+        <Matrix 1pt x 3ft
+                             0     1     2
+                         ┌──────────────────
+        'proportionzero' │ 0.500 0.500 0.500
+        
+        """
+        return self._proportionZero(groupByFeature)
 
     # def standard_deviation(values):
     #     pass
@@ -2844,15 +3000,15 @@ class Features(ABC):
         pass
     
     @abstractmethod
-    def _unique_count(self, groupByFeature=None):
+    def _uniqueCount(self, groupByFeature=None):
       pass
 
     @abstractmethod
-    def _proportion_missing(self, groupByFeature=None):
+    def _proportionMissing(self, groupByFeature=None):
         pass
 
     @abstractmethod
-    def _proportion_zero(self, groupByFeature=None):
+    def _proportionZero(self, groupByFeature=None):
         pass
 
     # def standard_deviation(values):

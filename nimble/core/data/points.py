@@ -2558,27 +2558,175 @@ class Points(ABC):
     ###############
     
     def max(self):
+        """
+        The maximum value in along the points axis.
+
+        Parameters
+        ----------
+        values : nimble Base object
+            Must be one-dimensional.
+
+        See Also
+        --------
+        minimum
+
+        Examples
+        --------
+        >>> lst = [0, 1, 2, float('nan')]
+        >>> vector = nimble.data(lst)
+        >>> vector.features.maximum(vector)
+        2.0
+        """
         return self._max()
 
     def mean(self):
+        """
+        The mean of the values in a vector.
+
+        This function requires numeric data and ignores any NaN values.
+        Non-numeric values will results in NaN being returned.
+
+        Parameters
+        ----------
+        values : nimble Base object
+            Must be one-dimensional.
+
+        See Also
+        --------
+        median, mode
+
+        Examples
+        --------
+        >>> lst = [0, 1, 2, float('nan'), float('nan'), 5]
+        >>> vector = nimble.data(lst)
+        >>> vector.poinfeatures.mean()
+        2.0
+        """
         return self._mean()
     
     def median(self):
+        
+        """
+        The median of the values in a vector.
+
+        This function requires numeric data and ignores any NaN values.
+        Non-numeric values will results in NaN being returned.
+
+        Parameters
+        ----------
+        values : nimble Base object
+            Must be one-dimensional.
+
+        See Also
+        --------
+        mean, mode
+
+        Examples
+        --------
+        >>> lst = [0, 1, 2, float('nan'), float('nan'), 5, 6]
+        >>> vector = nimble.data(lst)
+        >>> median(vector)
+        2.0
+        """
         return self._median()
     
     def min(self):
+        """
+        The maximum value in along the points axis.
+
+        Parameters
+        ----------
+        values : nimble Base object
+            Must be one-dimensional.
+
+        See Also
+        --------
+        minimum
+
+        Examples
+        --------
+        >>> lst = [0, 1, 2, float('nan')]
+        >>> vector = nimble.data(lst)
+        >>> vector.features.maximum(vector)
+        2.0
+        """
         return self._min()
     
     def uniqueCount(self):
+        """
+        The number of unique values in the vector.
+        
+        This function requires numeric data and ignores any NaN values.
+        Non-numeric values will results in NaN being returned.
+
+        Parameters
+        ----------
+        values : nimble Base object
+            Must be one-dimensional.
+
+        See Also
+        --------
+        mean, mode
+
+        Examples
+        --------
+        >>> lst = [0, 1, 2, float('nan'), float('nan'), 5, 6]
+        >>> vector = nimble.data(lst)
+        >>> median(vector)
+        2.0
+        """
         return self._uniqueCount()
 
     def proportionMissing(self):
+        """
+        The proportion of values in the vector that are missing.
+
+        Calculate proportion of entries in 'values' iterator that are
+        are None or NaN.
+
+        Parameters
+        ----------
+        values : nimble Base object
+            Must be one-dimensional.
+
+        Examples
+        --------
+        >>> lst = [[1, 2, 0], [0, 0, 5]]
+        >>> vector = nimble.data(lst)
+        >>> vector.features.proportionMissing()
+        0.4
+        <Matrix 1pt x 3ft
+                             0     1     2
+                         ┌──────────────────
+        'proportionmissing' │ 0.500 0.500 0.500
+        
+        """
         return self._proportionMissing()
 
     def proportionZero(self):
+        """
+        The proportion of values in the vector that are equal to zero.
+
+        Parameters
+        ----------
+        values : nimble Base object
+            Must be one-dimensional.
+
+        Examples
+        --------
+        >>> lst = [[1, 2, 0], [0, 0, 5]]
+        >>> vector = nimble.data(lst)
+        >>> vector.features.proportionZero()
+        0.4
+        <Matrix 1pt x 3ft
+                             0     1     2
+                         ┌──────────────────
+        'proportionzero' │ 0.500 0.500 0.500
+        
+        """
         return self._proportionZero()
 
-     # def standard_deviation(values):
+    # def standard_deviation(values):
     #     pass
 
     # def std(values):
