@@ -1572,12 +1572,6 @@ class Axis(ABC):
             res[k] = res[k].features._statisticsBackend(FuncName, toCall)
         return res
     
-    statsList =[    'max', 'mean', 'median', 'min', 'unique count',
-            'proportion missing', 'proportion zero', 'standard deviation',
-            'std', 'population std', 'population standard deviation',
-            'sample std', 'sample standard deviation'
-            ]
-    
     def _max(self, groupByFeature=None):
         FuncName = 'max'
         toCall = nimble.calculate.maximum

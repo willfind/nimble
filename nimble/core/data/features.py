@@ -2750,7 +2750,7 @@ class Features(ABC):
          'median' │ 1.500 22.000 3.500
         """
         
-        return self.median(groupByFeature)
+        return self._median(groupByFeature)
     
     def min(self, groupByFeature=None):
         """

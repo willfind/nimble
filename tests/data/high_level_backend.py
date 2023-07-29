@@ -4275,7 +4275,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         for constructor in getDataConstructors():
             toTest = constructor(raw)
             exp = nimble.data([[8],[10]], 
-                            featureNames=['median'], returnType=constructor.keywords['returnType'])
+                            featureNames=['mean'], returnType=constructor.keywords['returnType'])
             res = toTest.points.mean()
             assert exp == res
     
@@ -4298,6 +4298,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
             assert exp == res
     
     def test_points_proportion_missing(self):
+        import pdb; pdb.set_trace()
         raw = [[1, 2, 0], [0, float('nan'),5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
@@ -4307,6 +4308,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
             assert exp == res 
     
     def test_points_proportion_zero(self):
+        import pdb; pdb.set_trace()
         raw = [[1, 2, 0], [0,0,5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
@@ -4316,15 +4318,17 @@ class HighLevelModifyingSparseSafe(DataTestObject):
             assert exp == res
     
     def test_points_standard_deviation(self):
+        import pdb; pdb.set_trace()
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[1.000],[3.536]], 
+            exp = nimble.data([[12.166],[10.440]], 
                             featureNames=['std'], returnType=constructor.keywords['returnType'])
             res = toTest.points.standardDeviation()
             assert exp == res
             
     def test_points_population_standard_deviation(self):
+        import pdb; pdb.set_trace()
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
@@ -4415,8 +4419,8 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[1.500, 0.000, 1.500]], 
-                            pointNames=['populationstd'], returnType=constructor.keywords['returnType'])
+            exp = nimble.data([[ 2.121, 0.000, 2.121]], 
+                            pointNames=['std'], returnType=constructor.keywords['returnType'])
             res = toTest.features.standardDeviation()
             assert exp == res    
         
