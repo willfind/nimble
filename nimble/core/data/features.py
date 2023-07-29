@@ -2667,15 +2667,16 @@ class Features(ABC):
     def max(self, groupByFeature=None):
         
         """
-        Returns a nimble object representing the maximum 
-        value along the points axis.
+        Returns a nimble object representing the maximum
+        value along the features axis.
 
         Parameters
         ----------
         groupByFeature : identifier, None
-            An optional index or name of the feature that divides the x
-            and y values into groups.
-            
+            An optional index or name of the feature that makes 
+            the result grouped by the point values along the chosen
+            feature axis.
+                       
         See Also
         --------
         minimum
@@ -2683,26 +2684,27 @@ class Features(ABC):
         Examples
         --------
         >>> lst = [[0, 22, 2], [3, 22, 5]]
-        >>> vector = nimble.data(lst)
-        >>> vector.features.maximum()
+        >>> X = nimble.data(lst)
+        >>> X.features.maximum()
         <Matrix 1pt x 3ft
                   0 1  2
                 ┌───────
           'max' │ 3 22 5
         """
-        return self._max(groupByFeature)    
+        return self._max(groupByFeature)
     
     def mean(self, groupByFeature=None):
         
         """
-        Returns a nimble object representing the mean 
-        value along the points axis.
+        Returns a nimble object representing the mean
+        value along the features axis.
 
         Parameters
         ----------
         groupByFeature : identifier, None
-            An optional index or name of the feature that divides the x
-            and y values into groups.
+            An optional index or name of the feature that makes 
+            the result grouped by the point values along the chosen
+            feature axis.
 
         See Also
         --------
@@ -2710,129 +2712,141 @@ class Features(ABC):
 
         Examples
         --------
-        >>> lst = [0, 1, 2, float('nan'), float('nan'), 5]
-        >>> vector = nimble.data(lst)
-        >>> vector.poinfeatures.mean()
-        2.0
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.features.mean()
+        <Matrix 1pt x 3ft
+                    0     1      2
+                ┌───────────────────
+         'mean' │ 1.500 22.000 3.500
         """
         return self._mean(groupByFeature)
     
     def median(self, groupByFeature=None):
         
         """
-        The median of the values in a vector.
-
-        This function requires numeric data and ignores any NaN values.
-        Non-numeric values will results in NaN being returned.
+        Returns a nimble object representing the median
+        value along the features axis.
 
         Parameters
         ----------
-        values : nimble Base object
-            Must be one-dimensional.
+        groupByFeature : identifier, None
+            An optional index or name of the feature that makes
+            the result grouped by the point values along the chosen
+            feature axis.
 
         See Also
         --------
-        mean, mode
+        mean
 
         Examples
         --------
-        >>> lst = [0, 1, 2, float('nan'), float('nan'), 5, 6]
-        >>> vector = nimble.data(lst)
-        >>> median(vector)
-        2.0
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.features.median()
+        <Matrix 1pt x 3ft
+                      0     1      2
+                  ┌───────────────────
+         'median' │ 1.500 22.000 3.500
         """
         
         return self.median(groupByFeature)
     
     def min(self, groupByFeature=None):
         """
-        The maximum value in along the points axis.
+        Returns a nimble object representing the minimum
+        value along the features axis.
 
         Parameters
         ----------
-        values : nimble Base object
-            Must be one-dimensional.
-
+        groupByFeature : identifier, None
+            An optional index or name of the feature that makes
+            the result grouped by the point values along the chosen
+            feature axis.
+                       
         See Also
         --------
-        minimum
+        maximum
 
         Examples
         --------
-        >>> lst = [0, 1, 2, float('nan')]
-        >>> vector = nimble.data(lst)
-        >>> vector.features.maximum(vector)
-        2.0
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.features.minimum()
+        <Matrix 1pt x 3ft
+                  0 1  2
+                ┌───────
+          'min' │ 0 22 2
         """
         return self._min(groupByFeature)
     
     def uniqueCount(self, groupByFeature=None):
         """
-        The number of unique values in the vector.
-        
-        This function requires numeric data and ignores any NaN values.
-        Non-numeric values will results in NaN being returned.
+        Returns a nimble object representing the number of unique
+        values along the features axis.
 
         Parameters
         ----------
-        values : nimble Base object
-            Must be one-dimensional.
-
-        See Also
-        --------
-        mean, mode
+        groupByFeature : identifier, None
+            An optional index or name of the feature that makes
+            the result grouped by the point values along the chosen
+            feature axis.
 
         Examples
         --------
-        >>> lst = [0, 1, 2, float('nan'), float('nan'), 5, 6]
-        >>> vector = nimble.data(lst)
-        >>> median(vector)
-        2.0
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.features.uniqueCount()
+        <Matrix 1pt x 3ft
+                         0 1 2
+                       ┌──────
+         'uniquecount' │ 2 1 2
         """
         
         return self._uniqueCount(groupByFeature)
 
     def proportionMissing(self, groupByFeature=None):
         """
-        The proportion of values in the vector that are missing.
-
-        Calculate proportion of entries in 'values' iterator that are
-        are None or NaN.
+        Returns a nimble object representing the proportion of
+        values that are None or NaN along the features axis.
 
         Parameters
         ----------
-        values : nimble Base object
-            Must be one-dimensional.
+        groupByFeature : identifier, None
+            An optional index or name of the feature that makes
+            the result grouped by the point values along the chosen
+            feature axis.
 
         Examples
         --------
-        >>> lst = [[1, 2, 0], [0, 0, 5]]
-        >>> vector = nimble.data(lst)
-        >>> vector.features.proportionMissing()
-        0.4
+        >>> lst = [[float('nan'), 2, 0], [0, 2, float('nan')]]
+        >>> X = nimble.data(lst)
+        >>> X.features.proportionMissing()
         <Matrix 1pt x 3ft
-                             0     1     2
-                         ┌──────────────────
-        'proportionmissing' │ 0.500 0.500 0.500
+                                 0     1     2
+                             ┌──────────────────
+         'proportionmissing' │ 0.500 0.000 0.500
         
         """
         return self._proportionMissing(groupByFeature)
 
     def proportionZero(self, groupByFeature=None):
         """
-        The proportion of values in the vector that are equal to zero.
+        Returns a nimble object representing the proportion of values
+        that are equal to zero along the features axis.
 
         Parameters
         ----------
-        values : nimble Base object
-            Must be one-dimensional.
+        groupByFeature : identifier, None
+            An optional index or name of the feature that makes
+            the result grouped by the point values along the chosen
+            feature axis.
 
         Examples
         --------
         >>> lst = [[1, 2, 0], [0, 0, 5]]
-        >>> vector = nimble.data(lst)
-        >>> vector.features.proportionZero()
-        0.4
+        >>> X = nimble.data(lst)
+        >>> X.features.proportionZero()
         <Matrix 1pt x 3ft
                              0     1     2
                          ┌──────────────────
@@ -2841,25 +2855,55 @@ class Features(ABC):
         """
         return self._proportionZero(groupByFeature)
 
-    # def standard_deviation(values):
-    #     pass
+    def standardDeviation(self, groupByFeature=None):
+        """
+        Returns a nimble object representing the standard deviation 
+        along the features axis.
 
-    # def std(values):
-    #     pass
+        Parameters
+        ----------
+        groupByFeature : identifier, None
+            An optional index or name of the feature that makes
+            the result grouped by the point values along the chosen
+            feature axis.
 
-    # def population_std(values):
-    #     pass
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.features.standardDeviation()
+        <Matrix 1pt x 3ft
+                  0     1     2
+              ┌──────────────────
+        'std' │ 2.121 0.000 2.121   
+        """
+        return self._standardDeviation(groupByFeature)
 
-    # def population_standard_deviation(values):
-    #     pass
 
-    # def sample_std(values):
-    #     pass
+    def populationStandardDeviation(self, groupByFeature=None):
+        """
+        Returns a nimble object representing the population standard
+        deviation along the features axis.
 
-    # def sample_standard_deviation(values):
-    #     pass
+        Parameters
+        ----------
+        groupByFeature : identifier, None
+            An optional index or name of the feature that makes
+            the result grouped by the point values along the chosen
+            feature axis.
+
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.features.populationStandardDeviation()
+        <Matrix 1pt x 3ft
+                             0     1     2
+                         ┌──────────────────
+         'populationstd' │ 1.500 0.000 1.500
+        """
+        return self._populationStandardDeviation(groupByFeature)
     
-
     ####################
     # Abstract Methods #
     ####################
@@ -3010,21 +3054,11 @@ class Features(ABC):
     @abstractmethod
     def _proportionZero(self, groupByFeature=None):
         pass
-
-    # def standard_deviation(values):
-    #     pass
-
-    # def std(values):
-    #     pass
-
-    # def population_std(values):
-    #     pass
-
-    # def population_standard_deviation(values):
-    #     pass
-
-    # def sample_std(values):
-    #     pass
-
-    # def sample_standard_deviation(values):
-    #     pass
+    
+    @abstractmethod
+    def _standardDeviation(self, groupByFeature=None):
+        pass
+    
+    @abstractmethod
+    def _populationStandardDeviation(self, groupByFeature=None):
+        pass

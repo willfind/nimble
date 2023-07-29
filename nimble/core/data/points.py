@@ -2559,191 +2559,186 @@ class Points(ABC):
     
     def max(self):
         """
-        The maximum value in along the points axis.
-
-        Parameters
-        ----------
-        values : nimble Base object
-            Must be one-dimensional.
-
+        Returns a nimble object representing the maximum
+        value along the points axis.
+           
         See Also
         --------
         minimum
 
         Examples
         --------
-        >>> lst = [0, 1, 2, float('nan')]
-        >>> vector = nimble.data(lst)
-        >>> vector.features.maximum(vector)
-        2.0
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.maximum()
+        <Matrix 2pt x 1ft
+             'max'
+           ┌──────
+         0 │   22
+         1 │   22
         """
         return self._max()
 
     def mean(self):
         """
-        The mean of the values in a vector.
-
-        This function requires numeric data and ignores any NaN values.
-        Non-numeric values will results in NaN being returned.
-
-        Parameters
-        ----------
-        values : nimble Base object
-            Must be one-dimensional.
+        Returns a nimble object representing the mean
+        value along the points axis.
 
         See Also
         --------
-        median, mode
+        median
 
         Examples
         --------
-        >>> lst = [0, 1, 2, float('nan'), float('nan'), 5]
-        >>> vector = nimble.data(lst)
-        >>> vector.poinfeatures.mean()
-        2.0
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.mean()
+        <Matrix 2pt x 1ft
+             'mean'
+           ┌───────
+         0 │ 8.000
+         1 │ 10.000
         """
         return self._mean()
     
     def median(self):
-        
         """
-        The median of the values in a vector.
-
-        This function requires numeric data and ignores any NaN values.
-        Non-numeric values will results in NaN being returned.
-
-        Parameters
-        ----------
-        values : nimble Base object
-            Must be one-dimensional.
-
+        Returns a nimble object representing the median
+        value along the points axis.
+        
         See Also
         --------
-        mean, mode
+        mean
 
         Examples
         --------
-        >>> lst = [0, 1, 2, float('nan'), float('nan'), 5, 6]
-        >>> vector = nimble.data(lst)
-        >>> median(vector)
-        2.0
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.median()
+        <Matrix 2pt x 1ft
+             'median'
+           ┌─────────
+         0 │  2.000
+         1 │  5.000
+
+
         """
         return self._median()
     
     def min(self):
         """
-        The maximum value in along the points axis.
-
-        Parameters
-        ----------
-        values : nimble Base object
-            Must be one-dimensional.
+        Returns a nimble object representing the minimum
+        value along the points axis.
 
         See Also
         --------
-        minimum
+        maximum
 
         Examples
         --------
-        >>> lst = [0, 1, 2, float('nan')]
-        >>> vector = nimble.data(lst)
-        >>> vector.features.maximum(vector)
-        2.0
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.minimum(vector)
+        <Matrix 2pt x 1ft
+             'min'
+           ┌──────
+         0 │   0
+         1 │   3
         """
         return self._min()
     
     def uniqueCount(self):
         """
-        The number of unique values in the vector.
-        
-        This function requires numeric data and ignores any NaN values.
-        Non-numeric values will results in NaN being returned.
-
-        Parameters
-        ----------
-        values : nimble Base object
-            Must be one-dimensional.
-
-        See Also
-        --------
-        mean, mode
+        Returns a nimble object representing the number of unique
+        values along the points axis.
 
         Examples
         --------
-        >>> lst = [0, 1, 2, float('nan'), float('nan'), 5, 6]
-        >>> vector = nimble.data(lst)
-        >>> median(vector)
-        2.0
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.uniqueCount()
+        <Matrix 2pt x 1ft
+             'uniquecount'
+           ┌──────────────
+         0 │       3
+         1 │       3
+
         """
         return self._uniqueCount()
 
     def proportionMissing(self):
         """
-        The proportion of values in the vector that are missing.
-
-        Calculate proportion of entries in 'values' iterator that are
-        are None or NaN.
-
-        Parameters
-        ----------
-        values : nimble Base object
-            Must be one-dimensional.
+        Returns a nimble object representing the proportion of
+        values that are None or NaN along the points axis.
 
         Examples
         --------
-        >>> lst = [[1, 2, 0], [0, 0, 5]]
-        >>> vector = nimble.data(lst)
-        >>> vector.features.proportionMissing()
-        0.4
-        <Matrix 1pt x 3ft
-                             0     1     2
-                         ┌──────────────────
-        'proportionmissing' │ 0.500 0.500 0.500
-        
+        >>> lst = [[float('nan'), 2, 0], [0, 2, float('nan')]]
+        >>> X = nimble.data(lst)
+        >>> X.points.proportionMissing()
+        <Matrix 2pt x 1ft
+             'proportionmissing'
+           ┌────────────────────
+         0 │        0.333
+         1 │        0.333
+
         """
         return self._proportionMissing()
 
     def proportionZero(self):
         """
-        The proportion of values in the vector that are equal to zero.
-
-        Parameters
-        ----------
-        values : nimble Base object
-            Must be one-dimensional.
+        Returns a nimble object representing the proportion of values
+        that are equal to zero along the points axis.
 
         Examples
         --------
         >>> lst = [[1, 2, 0], [0, 0, 5]]
-        >>> vector = nimble.data(lst)
-        >>> vector.features.proportionZero()
-        0.4
-        <Matrix 1pt x 3ft
-                             0     1     2
-                         ┌──────────────────
-        'proportionzero' │ 0.500 0.500 0.500
+        >>> X = nimble.data(lst)
+        >>> X.points.proportionZero()
+        <Matrix 2pt x 1ft
+             'proportionzero'
+           ┌─────────────────
+         0 │      0.333
+         1 │      0.667
         
         """
         return self._proportionZero()
 
-    # def standard_deviation(values):
-    #     pass
+    def standardDeviation(self):
+        '''
+        Returns a nimble object representing the standard deviation
+        along the points axis.
 
-    # def std(values):
-    #     pass
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.standardDeviation()
+        <Matrix 2pt x 1ft
+             'std'
+           ┌───────
+         0 │ 12.166
+         1 │ 10.440
+        '''
+        return self._standardDeviation()
 
-    # def population_std(values):
-    #     pass
+    def populationStandardDeviation(self):
+        """
+        Returns a nimble object representing the population standard
+        deviation along the points axis.
 
-    # def population_standard_deviation(values):
-    #     pass
-
-    # def sample_std(values):
-    #     pass
-
-    # def sample_standard_deviation(values):
-    #     pass
-    
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.features.populationStandardDeviation()
+        <Matrix 2pt x 1ft
+             'populationstd'
+           ┌────────────────
+         0 │      9.933
+         1 │      8.524
+        """ 
+        return self._populationStandardDeviation()
     
     ####################
     # Abstract Methods #
@@ -2898,6 +2893,14 @@ class Points(ABC):
 
     @abstractmethod
     def _proportionZero(self):
+        pass
+    
+    @abstractmethod
+    def _standardDeviation(self):
+        pass
+    
+    @abstractmethod
+    def _populationStandardDeviation(self):
         pass
 
    
