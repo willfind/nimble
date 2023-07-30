@@ -2731,7 +2731,7 @@ class Points(ABC):
         --------
         >>> lst = [[0, 22, 2], [3, 22, 5]]
         >>> X = nimble.data(lst)
-        >>> X.features.populationStandardDeviation()
+        >>> X.points.populationStandardDeviation()
         <Matrix 2pt x 1ft
              'populationstd'
            ┌────────────────

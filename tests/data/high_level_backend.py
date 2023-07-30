@@ -4335,6 +4335,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
             exp = nimble.data([[9.933],[8.524]], 
                             featureNames=['populationstd'], returnType=constructor.keywords['returnType'])
             res = toTest.points.populationStandardDeviation()
+            res = toTest.points.statistics('populationstd')
             assert exp == res
             
         
@@ -4407,6 +4408,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
             assert exp == res
     
     def test_features_standard_deviation(self):
+        import pdb; pdb.set_trace()
         raw = [[1, 2, 0], [0,0,5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
@@ -4416,6 +4418,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
             assert exp == res
     
     def test_features_population_standard_deviation(self):
+        import pdb; pdb.set_trace()
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
