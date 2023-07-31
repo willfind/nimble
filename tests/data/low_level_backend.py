@@ -1436,3 +1436,30 @@ class LowLevelBackend(object):
 
         test.name = changeName
         assert test.name == changeName
+
+    ############
+    # __getattr__ #
+    ############
+      
+    def test_getattr_suggestions(self):
+        data = [[1, 2, 3], [7, 8, 9]]
+        toTest = nimble.data(data)
+        
+        try:
+            toTest.hist()
+        except AttributeError as e:
+            err_message = str(e)
+            assert err_message == "Attribute hist does not exist for Nimble data objects. Try .plotFeatureDistribution() instead."
+
+        try:
+            toTest.describe()
+        except AttributeError as e:
+            err_message = str(e)
+            assert err_message == "Attribute describe does not exist for Nimble data objects. Try .report() instead."
+
+        try:
+            toTest.columns()
+        except AttributeError as e:
+            err_message = str(e)
+            assert err_message == "Attribute columns does not exist for Nimble data objects. Try .features.getNames() instead."
+
