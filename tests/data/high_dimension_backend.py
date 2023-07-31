@@ -697,7 +697,8 @@ class HighDimensionModifyingSparseSafe(DataTestObject):
             '__floordiv__', '__rfloordiv__', '__ifloordiv__', '__mod__',
             '__rmod__', '__imod__', '__pow__', '__rpow__', '__ipow__',
             '__str__', '__repr__', '__pos__', '__neg__', '__abs__', '__copy__',
-            '__deepcopy__', 'isApproximatelyEqual', 'trainAndTestSets',
+            '__deepcopy__', '__getattr__', 'isApproximatelyEqual',
+            'trainAndTestSets',
             'report', 'isIdentical', 'getTypeString', 'pointView', 'view',
             'checkInvariants', 'containsZero', 'save', 'toString', 'show',
             'copy', 'flatten', 'unflatten',))

@@ -5205,31 +5205,44 @@ class Base(ABC):
     ############################
         
     def __getattr__(self, name):
-        try:
-            super().__getattr__(name)
-        except AttributeError as e:
-            if name == "hist":
-                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Try .plotFeatureDistribution() instead.") from e
-            elif name == 'describe':
-                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Try .report() instead.") from e
-            elif name == "columns":
-                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Try .features.getNames() instead.") from e
-            elif name in ["isna", "isnull"]:
-                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects.  Look up the Nimble QueryString object in the documentation.") from e
-            elif name in ["sum", "cumsum", "corr", "nunique"]:
-                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Check for similar methods available in Nimble.calculate.") from e
-            elif name == "scatter_matrix":
-                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Try .plotFeatureAgainstFeature()instead.") from e
-            elif name == "dropna":
-                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Look up how to combine .[points/features].delete with the Nimble.match in the documentation.") from e
-            elif name == "fillna":
-                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Look up how to use Nimble.fill in the documentation.") from e
-            elif name == "insert":
-                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Try .[points/features].insert() instead.") from e
-            elif name == "sort_values":
-                raise AttributeError(f"Attribute {name} does not exist for Nimble data objects. Try .[points/features].sort() instead.") from e
-            else:
-                raise AttributeError(f"Invalid attribute: '{name}' is not recognized.") from e
+        # Want to pull msg out from raise, since that line is included
+        # in the traceback and otherwise would clutter the output.
+        base = f"Attribute {name} does not exist for Nimble data objects. "
+        if name == "hist":
+            msg = "Try .plotFeatureDistribution() instead."
+            raise AttributeError(base + msg)
+        elif name == 'describe':
+            msg = "Try .report() instead."
+            raise AttributeError(base + msg)
+        elif name == "columns":
+            msg = "Try .features.getNames() instead."
+            raise AttributeError(base + msg)
+        elif name in ["isna", "isnull"]:
+            msg = "Look up the Nimble QueryString object in the documentation."
+            raise AttributeError(base + msg)
+        elif name in ["sum", "cumsum", "corr", "nunique"]:
+            msg = "Check for similar methods available in Nimble.calculate."
+            raise AttributeError(base + msg)
+        elif name == "scatter_matrix":
+            msg = "Try .plotFeatureAgainstFeature()instead."
+            raise AttributeError(base + msg)
+        elif name == "dropna":
+            msg = "Look up how to combine .[points/features].delete with the Nimble.match in the documentation."
+            raise AttributeError(base + msg)
+        elif name == "fillna":
+            msg = "Look up how to use Nimble.fill in the documentation."
+            raise AttributeError(base + msg)
+        elif name == "insert":
+            msg = "Try .[points/features].insert() instead."
+            raise AttributeError(base + msg)
+        elif name == "sort_values":
+            msg = "Try .[points/features].sort() instead."
+            raise AttributeError(base + msg)
+        else:
+            # this re-triggers standard handling without any recursion, which
+            # includes proper instantion of the error so that name suggestions
+            # can be displayed.
+            return self.__getattribute__(name)
 
     ############################
     ############################

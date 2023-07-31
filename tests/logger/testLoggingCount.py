@@ -332,6 +332,7 @@ for call in classes:
 
 baseDunder_tested = list(map(prefixAdder('Base'),
     ['__abs__', '__add__', '__and__', '__bool__', '__copy__', '__deepcopy__',
+     '__getattr__',
      '__getitem__', '__floordiv__', '__iadd__', '__ifloordiv__', '__imod__',
      '__imatmul__', '__imul__', '__invert__', '__ipow__', '__isub__',
      '__iter__', '__itruediv__', '__len__', '__matmul__', '__mod__', '__mul__',
