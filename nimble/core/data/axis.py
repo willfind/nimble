@@ -1622,7 +1622,8 @@ class Axis(ABC):
 
     def _populationStandardDeviation(self, groupByFeature=None):
         FuncName = 'populationstd'
-        toCall = nimble.calculate.standardDeviation(self._base, False)
+        calcSTD = nimble.calculate.standardDeviation
+        toCall = functools.partial(calcSTD, sample=False)
         result = self._process_statistics(FuncName, toCall, groupByFeature)
         return result
 

@@ -2570,12 +2570,13 @@ class Points(ABC):
         --------
         >>> lst = [[0, 22, 2], [3, 22, 5]]
         >>> X = nimble.data(lst)
-        >>> X.points.maximum()
+        >>> X.points.max()
         <Matrix 2pt x 1ft
              'max'
            ┌──────
          0 │   22
          1 │   22
+        >
         """
         return self._max()
 
@@ -2598,6 +2599,7 @@ class Points(ABC):
            ┌───────
          0 │ 8.000
          1 │ 10.000
+        >
         """
         return self._mean()
     
@@ -2620,8 +2622,7 @@ class Points(ABC):
            ┌─────────
          0 │  2.000
          1 │  5.000
-
-
+        >
         """
         return self._median()
     
@@ -2638,12 +2639,13 @@ class Points(ABC):
         --------
         >>> lst = [[0, 22, 2], [3, 22, 5]]
         >>> X = nimble.data(lst)
-        >>> X.points.minimum(vector)
+        >>> X.points.min()
         <Matrix 2pt x 1ft
              'min'
            ┌──────
          0 │   0
          1 │   3
+        >
         """
         return self._min()
     
@@ -2662,7 +2664,7 @@ class Points(ABC):
            ┌──────────────
          0 │       3
          1 │       3
-
+        >
         """
         return self._uniqueCount()
 
@@ -2681,7 +2683,7 @@ class Points(ABC):
            ┌────────────────────
          0 │        0.333
          1 │        0.333
-
+        >
         """
         return self._proportionMissing()
 
@@ -2700,7 +2702,7 @@ class Points(ABC):
            ┌─────────────────
          0 │      0.333
          1 │      0.667
-        
+        >
         """
         return self._proportionZero()
 
@@ -2719,6 +2721,7 @@ class Points(ABC):
            ┌───────
          0 │ 12.166
          1 │ 10.440
+        >
         '''
         return self._standardDeviation()
 
@@ -2737,6 +2740,7 @@ class Points(ABC):
            ┌────────────────
          0 │      9.933
          1 │      8.524
+        >
         """ 
         return self._populationStandardDeviation()
     

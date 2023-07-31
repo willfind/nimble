@@ -2663,9 +2663,8 @@ class Features(ABC):
     ################
     # Stats methods #
     ###############
-    
+
     def max(self, groupByFeature=None):
-        
         """
         Returns a nimble object representing the maximum
         value along the features axis.
@@ -2673,10 +2672,10 @@ class Features(ABC):
         Parameters
         ----------
         groupByFeature : identifier, None
-            An optional index or name of the feature that makes 
+            An optional index or name of the feature that makes
             the result grouped by the point values along the chosen
             feature axis.
-                       
+
         See Also
         --------
         minimum
@@ -2685,16 +2684,16 @@ class Features(ABC):
         --------
         >>> lst = [[0, 22, 2], [3, 22, 5]]
         >>> X = nimble.data(lst)
-        >>> X.features.maximum()
+        >>> X.features.max()
         <Matrix 1pt x 3ft
-                  0 1  2
-                ┌───────
-          'max' │ 3 22 5
+                 0 1  2
+               ┌───────
+         'max' │ 3 22 5
+        >
         """
         return self._max(groupByFeature)
-    
+
     def mean(self, groupByFeature=None):
-        
         """
         Returns a nimble object representing the mean
         value along the features axis.
@@ -2719,11 +2718,11 @@ class Features(ABC):
                     0     1      2
                 ┌───────────────────
          'mean' │ 1.500 22.000 3.500
+        >
         """
         return self._mean(groupByFeature)
-    
+
     def median(self, groupByFeature=None):
-        
         """
         Returns a nimble object representing the median
         value along the features axis.
@@ -2748,10 +2747,10 @@ class Features(ABC):
                       0     1      2
                   ┌───────────────────
          'median' │ 1.500 22.000 3.500
+        >
         """
-        
         return self._median(groupByFeature)
-    
+
     def min(self, groupByFeature=None):
         """
         Returns a nimble object representing the minimum
@@ -2772,11 +2771,12 @@ class Features(ABC):
         --------
         >>> lst = [[0, 22, 2], [3, 22, 5]]
         >>> X = nimble.data(lst)
-        >>> X.features.minimum()
+        >>> X.features.min()
         <Matrix 1pt x 3ft
-                  0 1  2
-                ┌───────
-          'min' │ 0 22 2
+                 0 1  2
+               ┌───────
+         'min' │ 0 22 2
+        >
         """
         return self._min(groupByFeature)
     
@@ -2801,6 +2801,7 @@ class Features(ABC):
                          0 1 2
                        ┌──────
          'uniquecount' │ 2 1 2
+        >
         """
         
         return self._uniqueCount(groupByFeature)
@@ -2826,7 +2827,7 @@ class Features(ABC):
                                  0     1     2
                              ┌──────────────────
          'proportionmissing' │ 0.500 0.000 0.500
-        
+        >
         """
         return self._proportionMissing(groupByFeature)
 
@@ -2848,10 +2849,10 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.proportionZero()
         <Matrix 1pt x 3ft
-                             0     1     2
-                         ┌──────────────────
-        'proportionzero' │ 0.500 0.500 0.500
-        
+                              0     1     2
+                          ┌──────────────────
+         'proportionzero' │ 0.500 0.500 0.500
+        >
         """
         return self._proportionZero(groupByFeature)
 
@@ -2873,9 +2874,10 @@ class Features(ABC):
         >>> X = nimble.data(lst)
         >>> X.features.standardDeviation()
         <Matrix 1pt x 3ft
-                  0     1     2
-              ┌──────────────────
-        'std' │ 2.121 0.000 2.121   
+                   0     1     2
+               ┌──────────────────
+         'std' │ 2.121 0.000 2.121
+        >
         """
         return self._standardDeviation(groupByFeature)
 
@@ -2901,6 +2903,7 @@ class Features(ABC):
                              0     1     2
                          ┌──────────────────
          'populationstd' │ 1.500 0.000 1.500
+        >
         """
         return self._populationStandardDeviation(groupByFeature)
     
