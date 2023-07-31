@@ -11,18 +11,55 @@ optional packages. For convenience, installing optional packages can also be
 triggered while installing Nimble. We recommend the :ref:`quickstart-install`
 to make much of Nimble's functionality available with a single command.
 
-Download Binary Wheels
-----------------------
+Binary Wheels
+-------------
 
-All methods of installation require having downloaded the appropriate 
-precompiled wheel for your OS and version of python. The current possible
-options available are linked below (more will be added over time). Downloading
-and/or installing Nimble constitutes agreement to the Nimble
+The installation commands we document on this page will automatically find the correct
+precompiled binary wheel from the possible options in the table below. Not all
+systems and python versions are supported. Downloading and/or installing Nimble
+constitutes agreement to the Nimble
 :doc:`License Agreement<legal>`.
 
-*  :download:`Linux, Python 3.7 <wheels/nimble-0.4.0-cp37-cp37m-linux_x86_64.whl>`
-*  :download:`Linux, Python 3.8 <wheels/nimble-0.4.0-cp38-cp38-linux_x86_64.whl>`
-*  :download:`Linux, Python 3.9 <wheels/nimble-0.4.0-cp39-cp39-linux_x86_64.whl>`
+..
+  Uses substitution to fill in the download links outside of the table structure
+  https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#substitution-definitions
+
+.. |lin3_8| replace:: :download:`nimble-0.4.2-cp38-cp38-linux_x86_64.whl <wheels/nimble-0.4.2-cp38-cp38-linux_x86_64.whl>`
+.. |lin3_9| replace:: :download:`nimble-0.4.2-cp39-cp39-linux_x86_64.whl <wheels/nimble-0.4.2-cp39-cp39-linux_x86_64.whl>`
+.. |lin310| replace:: :download:`nimble-0.4.2-cp310-cp310-linux_x86_64.whl <wheels/nimble-0.4.2-cp310-cp310-linux_x86_64.whl>`
+.. |mac3_8| replace:: :download:`nimble-0.4.2-cp38-cp38-macosx_x86_64.whl <wheels/nimble-0.4.2-cp38-cp38-macosx_x86_64.whl>`
+.. |mac3_9| replace:: :download:`nimble-0.4.2-cp39-cp39-macosx_x86_64.whl <wheels/nimble-0.4.2-cp39-cp39-macosx_x86_64.whl>`
+.. |mac310| replace:: :download:`nimble-0.4.2-cp310-cp310-macosx_x86_64.whl <wheels/nimble-0.4.2-cp310-cp310-macosx_x86_64.whl>`
+.. |win3_8| replace:: :download:`nimble-0.4.2-cp38-cp38-win_amd64.whl <wheels/nimble-0.4.2-cp38-cp38-win_amd64.whl>`
+.. |win3_9| replace:: :download:`nimble-0.4.2-cp39-cp39-win_amd64.whl <wheels/nimble-0.4.2-cp39-cp39-win_amd64.whl>`
+.. |win310| replace:: :download:`nimble-0.4.2-cp310-cp310-win_amd64.whl <wheels/nimble-0.4.2-cp310-cp310-win_amd64.whl>`
+
+.. table::
+   :align: left
+   :widths: auto
+
+   +---------+--------+-----------+
+   | OS      | Python | Link      |
+   +=========+========+===========+
+   |         | 3.8    | |lin3_8|  |
+   +         +--------+-----------+
+   | Linux   | 3.9    | |lin3_9|  |
+   +         +--------+-----------+
+   |         | 3.10   | |lin310|  |
+   +---------+--------+-----------+
+   |         | 3.8    | |mac3_8|  |
+   +         +--------+-----------+
+   | Mac     | 3.9    | |mac3_9|  |
+   +         +--------+-----------+
+   |         | 3.10   | |mac310|  |
+   +---------+--------+-----------+
+   |         | 3.8    | |win3_8|  |
+   +         +--------+-----------+
+   | Windows | 3.9    | |win3_9|  |
+   +         +--------+-----------+
+   |         | 3.10   | |win310|  |
+   +---------+--------+-----------+
+
 
 Install Methods
 ---------------
@@ -164,8 +201,8 @@ To install a selection of :ref:`optional-packages` while installing Nimble,
 ``pip`` offers a quickstart option. Quickstart
 installs all :ref:`operational-support` packages and SciKit-Learn from the
 :ref:`ml-interfaces`. These packages were chosen because they are reliably
-installable through ``pip`` and provide access to the majority
-of Nimble's functionality.
+installable through ``pip`` across many systems and provide access to the
+majority of Nimble's functionality.
 
 **With pip:**
 
@@ -173,9 +210,15 @@ Nimble uses extras to provide the ``quickstart`` shortcut
 
 .. code-block::
 
-  pip install nimble[quickstart] --find-links=*pathToDownloadsFolder*
+  pip install nimble[quickstart] --find-links=https://willfind.github.io/nimble/install
 
-.. note:: The brackets may need to be escaped in some shells.
+.. note::
+  The brackets may need to be escaped in some shells. For example, on a mac,
+  which uses z shell as default, the command would be
+
+  .. code-block::
+
+    pip install nimble\[quickstart\] --find-links=https://willfind.github.io/nimble/install
 
 ..
   **With conda:**
@@ -218,13 +261,13 @@ install.
 .. code-block::
 
   # single extra
-  pip install nimble[dateutil] --find-links=*pathToDownloadsFolder*
+  pip install nimble[dateutil] --find-links=https://willfind.github.io/nimble/install
     or
   # multiple extras
-  pip install nimble[requests,matplotlib,sklearn] --find-links=*pathToDownloadsFolder*
+  pip install nimble[requests,matplotlib,sklearn] --find-links=https://willfind.github.io/nimble/install
     or
   # shortcut (scipy and pandas)
-  pip install nimble[data] --find-links=*pathToDownloadsFolder*
+  pip install nimble[data] --find-links=https://willfind.github.io/nimble/install
 
 .. note::
    - The names of the extras match the names displayed in the "Package" columns
@@ -262,7 +305,7 @@ operations requiring an optional package that is not installed.
 
 **With pip**::
 
-  pip install nimble --find-links=*pathToDownloadsFolder*
+  pip install nimble --find-links=https://willfind.github.io/nimble/install
 
 ..
   **With conda**::
