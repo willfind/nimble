@@ -4245,19 +4245,13 @@ class HighLevelModifyingSparseSafe(DataTestObject):
     # statistic methods: points #
     ############################
     
-    accepted = [
-            'max', 'mean', 'median', 'min', 'unique count',
-            'proportion missing', 'proportion zero', 'standard deviation',
-            'std', 'population std', 'population standard deviation',
-            'sample std', 'sample standard deviation'
-            ]
-    
     def test_points_max(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
             exp = nimble.data([[22],[22]], 
                             featureNames=['max'], returnType=constructor.keywords['returnType'])
+            exp = toTest.points.statistics('max')
             res = toTest.points.max()
             assert exp == res
     
@@ -4265,8 +4259,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[0],[3]], 
-                            featureNames=['min'], returnType=constructor.keywords['returnType'])
+            exp = toTest.points.statistics('min')
             res = toTest.points.min()
             assert exp == res
     
@@ -4274,8 +4267,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[8],[10]], 
-                            featureNames=['mean'], returnType=constructor.keywords['returnType'])
+            exp = toTest.points.statistics('mean')
             res = toTest.points.mean()
             assert exp == res
     
@@ -4283,8 +4275,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[2],[5]], 
-                            featureNames=['median'], returnType=constructor.keywords['returnType'])
+            exp = toTest.points.statistics('median')
             res = toTest.points.median()
             assert exp == res
     
@@ -4292,50 +4283,40 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         raw =  [[1, 2, 0], [0,0,5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[3],[2]], 
-                            featureNames=['uniquecount'], returnType=constructor.keywords['returnType'])
+            exp = toTest.points.statistics('unique count')
             res = toTest.points.uniqueCount()
             assert exp == res
     
     def test_points_proportion_missing(self):
-        import pdb; pdb.set_trace()
         raw = [[1, 2, 0], [0, float('nan'),5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[0.000],[0.333]], 
-                            featureNames=['proportionmissing'], returnType=constructor.keywords['returnType'])
+            exp = toTest.points.statistics('proportion missing')
             res = toTest.points.proportionMissing()
             assert exp == res 
     
     def test_points_proportion_zero(self):
-        import pdb; pdb.set_trace()
         raw = [[1, 2, 0], [0,0,5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[0.333],[0.667]], 
-                            featureNames=['proportionzero'], returnType=constructor.keywords['returnType'])
+            exp = toTest.points.statistics('proportion zero')
             res = toTest.points.proportionZero()
             assert exp == res
     
     def test_points_standard_deviation(self):
-        import pdb; pdb.set_trace()
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[12.166],[10.440]], 
-                            featureNames=['std'], returnType=constructor.keywords['returnType'])
+            exp = toTest.points.statistics('std')
             res = toTest.points.standardDeviation()
             assert exp == res
             
     def test_points_population_standard_deviation(self):
-        import pdb; pdb.set_trace()
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[9.933],[8.524]], 
-                            featureNames=['populationstd'], returnType=constructor.keywords['returnType'])
+            exp = toTest.points.statistics('populationstd')
             res = toTest.points.populationStandardDeviation()
-            res = toTest.points.statistics('populationstd')
             assert exp == res
             
         
@@ -4348,8 +4329,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[3,22,5]], 
-                            pointNames=['max'], returnType=constructor.keywords['returnType'])
+            exp = toTest.features.statistics('max')
             res = toTest.features.max()
             assert exp == res
     
@@ -4357,8 +4337,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[0, 22, 2]], 
-                            pointNames=['min'], returnType=constructor.keywords['returnType'])
+            exp = toTest.features.statistics('min')
             res = toTest.features.min()
             assert exp == res
     
@@ -4366,8 +4345,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[1.500, 22.000, 3.500]], 
-                            pointNames=['mean'], returnType=constructor.keywords['returnType'])
+            exp = toTest.features.statistics('mean')
             res = toTest.features.mean()
             assert exp == res
     
@@ -4375,8 +4353,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[1.500, 22.000, 3.500]], 
-                            pointNames=['median'], returnType=constructor.keywords['returnType'])
+            exp = toTest.features.statistics('median')
             res = toTest.features.median()
             assert exp == res
     
@@ -4384,8 +4361,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         raw = [[1, 0, 0], [0,0,5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[2, 1, 2]], 
-                            pointNames=['uniquecount'], returnType=constructor.keywords['returnType'])
+            exp = toTest.features.statistics('unique count')
             res = toTest.features.uniqueCount()
             assert exp == res
     
@@ -4393,8 +4369,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         raw = [[1, 2, 0], [0, float('nan'),5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[0.000, 0.500, 0.000]], 
-                            pointNames=['proportionmissing'], returnType=constructor.keywords['returnType'])
+            exp =   toTest.features.statistics('proportion missing')
             res = toTest.features.proportionMissing()
             assert exp == res 
     
@@ -4402,29 +4377,24 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         raw = [[1, 2, 0], [0,0,5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[0.500, 0.500, 0.500]], 
-                            pointNames=['proportionzero'], returnType=constructor.keywords['returnType'])
+            exp = toTest.features.statistics('proportion zero')
             res = toTest.features.proportionZero()
             assert exp == res
     
     def test_features_standard_deviation(self):
-        import pdb; pdb.set_trace()
         raw = [[1, 2, 0], [0,0,5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[0.707, 1.414, 3.536]], 
-                            pointNames=['std'], returnType=constructor.keywords['returnType'])
+            exp = toTest.features.statistics('std')
             res = toTest.features.standardDeviation()
             assert exp == res
     
     def test_features_population_standard_deviation(self):
-        import pdb; pdb.set_trace()
         raw = [[0, 22, 2], [3, 22, 5]]
         for constructor in getDataConstructors():
             toTest = constructor(raw)
-            exp = nimble.data([[ 2.121, 0.000, 2.121]], 
-                            pointNames=['std'], returnType=constructor.keywords['returnType'])
-            res = toTest.features.standardDeviation()
+            exp = toTest.features.statistics('populationstd')
+            res = toTest.features.populationStandardDeviation()
             assert exp == res    
         
 
