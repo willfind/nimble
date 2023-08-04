@@ -1,0 +1,57 @@
+name: BuildAndSave
+
+# For inclusion in the publishing pipeline, we need the _call,
+# we also allow direct access to this action for piecewise
+# debugging. Will eventually be automated on pushing to master.
+on:
+  workflow_call:
+    inputs:
+      saveName:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      saveName:
+        required: true
+        type: string
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os}}
+    runs-on: ${{ matrix.os}}
+    # This will automatically split off jobs for concurrency
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+#        os: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # This is supposed to cache the downloads to pip for reuse in this
+      # pipeline; unclear to what extent what is here accomplishes that.
+      - uses: actions/setup-python@v4
+        with:
+          python-version: |
+            3.8
+            3.9
+            3.10
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.14.1
+        # Allows us to specify cibuildwheel specific environment variables.
+        # Included in the comment was something helpful to limit the build
+        # output during trialing.
+        #env:
+        #  CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9, <3.10"
+        with:
+          output-dir: wheelhouse
+
+      # retention days param critical for cost saving wrt free/paid storage.
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{inputs.saveName}}
+          path: ./wheelhouse/
+          retention-days: 1

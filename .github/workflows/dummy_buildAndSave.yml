@@ -1,0 +1,34 @@
+# Instead of actually building, it grabs a wheel from the repo at the specified
+# location and saves it in the same way as buildAndSave would. This allows for
+# trialing the rest of the workflow without having to recompile a wheel.
+#
+# Currently, no such folder exists in the repo.
+
+name: BuildAndSave
+
+on:
+  workflow_call:
+    inputs:
+      saveName:
+        required: true
+        type: string
+      dummyPath:
+        required: true
+        type: string
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os}}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v3
+          
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{inputs.saveName}}
+          path: ${{dummyPath}}
+          retention-days: 1
