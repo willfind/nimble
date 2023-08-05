@@ -5,3 +5,6 @@ numpydoc
 weasyprint
 pytest
 ipykernel
+
+# Additionally, pandoc is required to be installed at the system level.
+

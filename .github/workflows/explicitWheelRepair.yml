@@ -1,6 +1,10 @@
-# Script to help debug and trial issues relating to the cibuildwheel
-# repair-wheel command, and our use of remove_source.py to make
-# binary only wheels.
+# Debugging script for isolating remove_source.py
+#
+# Ideally, this would be done by cibuildwheel, but there are os specific
+# issues that this will be used to help debug.
+#
+# Effects: artifact containing wheels that have been through remove_source.py;
+# - this saves over the previous artifact of the same name.
 
 name: ExplictWheelRepair
 
@@ -39,19 +43,19 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: ${{inputs.saveName}}
-        
+
       - name: second directory check
         run: ${{inputs.check}}
-      
+
       - name: get package
         run: pip install wheel
-      
+
       - name: remove source script
         run: python remove_source.py . *.whl
-      
+
       - name: third directory check
         run: ${{inputs.check}}
-      
+
       - uses: actions/upload-artifact@v3
         with:
           name: ${{inputs.saveName}}
