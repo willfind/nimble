@@ -1,0 +1,79 @@
+# Job to build the html docs for ghpages
+#
+# (Current) Assumptions:
+# * remove_source.py still needs to be run on the wheels, (see the
+#   repair-wheel command in pyproject.toml)
+#
+# Effects: A ghpages specific artifact containing the built site is saved.
+
+name: Build ghpages site
+
+on:
+  workflow_call:
+    inputs:
+        # The name of the artifact containing the wheels
+        saveName:
+          required: true
+          type: string
+  workflow_dispatch:
+    inputs:
+        # The name of the artifact containing the wheels
+        saveName:
+          required: true
+          type: string
+
+
+jobs:
+  build-site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      # This should prep pip to use cached downloads
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: ${{inputs.saveName}}
+
+      - name: install dependency for wheel manipulation
+        run: pip install wheel
+
+      - name: remove source scripts for all wheels
+        # small bash loop to run the script for each file that satisfies
+        # the glob
+        run: |
+          for name in *.whl; do
+              python remove_source.py . $name
+          done
+
+      - name: Move Wheels to docs source
+        run: mv *.whl ./documentation/source/wheels
+
+      - name: install nimble and dependencies for examples building
+        run: |
+          pip install nimble[quickstart] --find-links=./documentation/source/wheels
+          pip install keras tensorflow
+
+      - name: Install docs specific python dependencies
+        run: pip install -r ./documentation/requirements.txt
+
+      - name: Install pandoc system dependency via action
+        uses: pandoc/actions/setup@v1
+        with:
+          version: 2.19
+
+      - name: Build site
+        # our cwd is the project root, we -C to indicate the folder we want to build from/in
+        run: make html -C documentation
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: ./documentation/html
+          retention-days: 1
+
