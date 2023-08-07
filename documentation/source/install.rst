@@ -27,9 +27,9 @@ constitutes agreement to the Nimble
 .. |lin3_8| replace:: :download:`nimble-0.4.2-cp38-cp38-linux_x86_64.whl <wheels/nimble-0.4.2-cp38-cp38-linux_x86_64.whl>`
 .. |lin3_9| replace:: :download:`nimble-0.4.2-cp39-cp39-linux_x86_64.whl <wheels/nimble-0.4.2-cp39-cp39-linux_x86_64.whl>`
 .. |lin310| replace:: :download:`nimble-0.4.2-cp310-cp310-linux_x86_64.whl <wheels/nimble-0.4.2-cp310-cp310-linux_x86_64.whl>`
-.. |mac3_8| replace:: :download:`nimble-0.4.2-cp38-cp38-macosx_x86_64.whl <wheels/nimble-0.4.2-cp38-cp38-macosx_x86_64.whl>`
-.. |mac3_9| replace:: :download:`nimble-0.4.2-cp39-cp39-macosx_x86_64.whl <wheels/nimble-0.4.2-cp39-cp39-macosx_x86_64.whl>`
-.. |mac310| replace:: :download:`nimble-0.4.2-cp310-cp310-macosx_x86_64.whl <wheels/nimble-0.4.2-cp310-cp310-macosx_x86_64.whl>`
+.. |mac3_8| replace:: :download:`nimble-0.4.2-cp38-cp38-macosx_10_9_x86_64.whl <wheels/nimble-0.4.2-cp38-cp38-macosx_10_9_x86_64.whl>`
+.. |mac3_9| replace:: :download:`nimble-0.4.2-cp39-cp39-macosx_10_9_x86_64.whl <wheels/nimble-0.4.2-cp39-cp39-macosx_10_9_x86_64.whl>`
+.. |mac310| replace:: :download:`nimble-0.4.2-cp310-cp310-macosx_10_9_x86_64.whl <wheels/nimble-0.4.2-cp310-cp310-macosx_10_9_x86_64.whl>`
 .. |win3_8| replace:: :download:`nimble-0.4.2-cp38-cp38-win_amd64.whl <wheels/nimble-0.4.2-cp38-cp38-win_amd64.whl>`
 .. |win3_9| replace:: :download:`nimble-0.4.2-cp39-cp39-win_amd64.whl <wheels/nimble-0.4.2-cp39-cp39-win_amd64.whl>`
 .. |win310| replace:: :download:`nimble-0.4.2-cp310-cp310-win_amd64.whl <wheels/nimble-0.4.2-cp310-cp310-win_amd64.whl>`
