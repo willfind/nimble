@@ -2553,6 +2553,197 @@ class Points(ABC):
             statistic, points, False, horizontal, outPath, show, figureID,
             title, xAxisLabel, yAxisLabel, legendTitle, **kwargs)
 
+    ################
+    # Stats methods #
+    ###############
+    
+    def max(self):
+        """
+        Returns a nimble object representing the maximum
+        value along the points axis.
+           
+        See Also
+        --------
+        minimum
+
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.max()
+        <Matrix 2pt x 1ft
+             'max'
+           ┌──────
+         0 │   22
+         1 │   22
+        >
+        """
+        return self._max()
+
+    def mean(self):
+        """
+        Returns a nimble object representing the mean
+        value along the points axis.
+
+        See Also
+        --------
+        median
+
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.mean()
+        <Matrix 2pt x 1ft
+             'mean'
+           ┌───────
+         0 │ 8.000
+         1 │ 10.000
+        >
+        """
+        return self._mean()
+    
+    def median(self):
+        """
+        Returns a nimble object representing the median
+        value along the points axis.
+        
+        See Also
+        --------
+        mean
+
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.median()
+        <Matrix 2pt x 1ft
+             'median'
+           ┌─────────
+         0 │  2.000
+         1 │  5.000
+        >
+        """
+        return self._median()
+    
+    def min(self):
+        """
+        Returns a nimble object representing the minimum
+        value along the points axis.
+
+        See Also
+        --------
+        maximum
+
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.min()
+        <Matrix 2pt x 1ft
+             'min'
+           ┌──────
+         0 │   0
+         1 │   3
+        >
+        """
+        return self._min()
+    
+    def uniqueCount(self):
+        """
+        Returns a nimble object representing the number of unique
+        values along the points axis.
+
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.uniqueCount()
+        <Matrix 2pt x 1ft
+             'uniquecount'
+           ┌──────────────
+         0 │       3
+         1 │       3
+        >
+        """
+        return self._uniqueCount()
+
+    def proportionMissing(self):
+        """
+        Returns a nimble object representing the proportion of
+        values that are None or NaN along the points axis.
+
+        Examples
+        --------
+        >>> lst = [[float('nan'), 2, 0], [0, 2, float('nan')]]
+        >>> X = nimble.data(lst)
+        >>> X.points.proportionMissing()
+        <Matrix 2pt x 1ft
+             'proportionmissing'
+           ┌────────────────────
+         0 │        0.333
+         1 │        0.333
+        >
+        """
+        return self._proportionMissing()
+
+    def proportionZero(self):
+        """
+        Returns a nimble object representing the proportion of values
+        that are equal to zero along the points axis.
+
+        Examples
+        --------
+        >>> lst = [[1, 2, 0], [0, 0, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.proportionZero()
+        <Matrix 2pt x 1ft
+             'proportionzero'
+           ┌─────────────────
+         0 │      0.333
+         1 │      0.667
+        >
+        """
+        return self._proportionZero()
+
+    def standardDeviation(self):
+        '''
+        Returns a nimble object representing the standard deviation
+        along the points axis.
+
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.standardDeviation()
+        <Matrix 2pt x 1ft
+             'std'
+           ┌───────
+         0 │ 12.166
+         1 │ 10.440
+        >
+        '''
+        return self._standardDeviation()
+
+    def populationStandardDeviation(self):
+        """
+        Returns a nimble object representing the population standard
+        deviation along the points axis.
+
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.points.populationStandardDeviation()
+        <Matrix 2pt x 1ft
+             'populationstd'
+           ┌────────────────
+         0 │      9.933
+         1 │      8.524
+        >
+        """ 
+        return self._populationStandardDeviation()
+    
     ####################
     # Abstract Methods #
     ####################
@@ -2677,3 +2868,43 @@ class Points(ABC):
                         horizontal, outPath, show, figureID, title,
                         xAxisLabel, yAxisLabel, legendTitle, **kwargs):
         pass
+        
+    
+    
+    @abstractmethod    
+    def _max(self):
+        pass
+    
+    @abstractmethod
+    def _mean(self):
+        pass
+    
+    @abstractmethod
+    def _median(self):
+        pass
+    
+    @abstractmethod
+    def _min(self):
+        pass
+    
+    @abstractmethod
+    def _uniqueCount(self):
+      pass
+
+    @abstractmethod
+    def _proportionMissing(self):
+        pass
+
+    @abstractmethod
+    def _proportionZero(self):
+        pass
+    
+    @abstractmethod
+    def _standardDeviation(self):
+        pass
+    
+    @abstractmethod
+    def _populationStandardDeviation(self):
+        pass
+
+   

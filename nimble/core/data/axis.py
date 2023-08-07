@@ -1558,6 +1558,75 @@ class Axis(ABC):
     def _unique_implementation(self):
         pass
 
+    ################
+    # Stats methods #
+    ###############
+    
+    def _process_statistics(self, FuncName, toCall, groupByFeature):
+        if self._axis == 'point' or groupByFeature is None:
+            return self._statisticsBackend(FuncName, toCall)
+        
+        # groupByFeature is only a parameter for .features
+        res = self._base.groupByFeature(groupByFeature, useLog=False)
+        for k in res:
+            res[k] = res[k].features._statisticsBackend(FuncName, toCall)
+        return res
+    
+    def _max(self, groupByFeature=None):
+        FuncName = 'max'
+        toCall = nimble.calculate.maximum
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+    
+    def _mean(self, groupByFeature=None):
+        FuncName = 'mean'
+        toCall = nimble.calculate.mean
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+    
+    def _median(self, groupByFeature=None):
+        FuncName = 'median'
+        toCall = nimble.calculate.median
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+    
+    def _min(self, groupByFeature=None):
+        FuncName = 'min'
+        toCall = nimble.calculate.minimum
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+    
+    def _uniqueCount(self, groupByFeature=None):
+        FuncName = 'uniquecount'
+        toCall = nimble.calculate.uniqueCount
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+
+    def _proportionMissing(self, groupByFeature=None):
+        FuncName = 'proportionmissing'
+        toCall = nimble.calculate.proportionMissing
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+
+    def _proportionZero(self, groupByFeature=None):
+        FuncName = 'proportionzero'
+        toCall = nimble.calculate.proportionZero
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+
+    def _standardDeviation(self, groupByFeature=None):
+        FuncName = 'std'
+        toCall = nimble.calculate.standardDeviation
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+
+    def _populationStandardDeviation(self, groupByFeature=None):
+        FuncName = 'populationstd'
+        calcSTD = nimble.calculate.standardDeviation
+        toCall = functools.partial(calcSTD, sample=False)
+        result = self._process_statistics(FuncName, toCall, groupByFeature)
+        return result
+
 ###########
 # Helpers #
 ###########
