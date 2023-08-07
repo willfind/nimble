@@ -3,11 +3,14 @@ Installation
 
 Nimble can be installed in a variety of ways and strives for flexibility
 during the install process. To avoid requiring packages that may never be used,
-Nimble only has only two required dependencies, `Numpy`_ and `packaging`_.
+Nimble only has only three required dependencies, `Numpy`_, `packaging`_,
+and `tomli`_.
 `NumPy`, provides access to a limited portion of the API and additional
 functionality is accessed by installing third-party :ref:`optional-packages`.
 The `packaging` dependency is used to validate the installed versions of any
-optional packages. For convenience, installing optional packages can also be
+optional packages. The `tomli` dependency is a fallback for certain dependency
+checks of the optional dependencies.
+For convenience, installing optional packages can also be
 triggered while installing Nimble. We recommend the :ref:`quickstart-install`
 to make much of Nimble's functionality available with a single command.
 
@@ -316,6 +319,7 @@ operations requiring an optional package that is not installed.
 
 .. _NumPy: https://numpy.org/
 .. _packaging: https://packaging.pypa.io/
+.. _tomli: https://github.com/hukkin/tomli
 .. _datetime: https://docs.python.org/3/library/datetime.html
 .. _scipy: https://www.scipy.org/install.html
 .. _pandas: https://pandas.pydata.org/pandas-docs/stable/getting_started/install.html
