@@ -1,0 +1,65 @@
+# Build wheels and save as artifact, to either be manually downloaded,
+# or chained as a precursor job within another action.
+#
+# Effects: artifact containing all built wheels saved.
+
+name: BuildWheels
+
+# For inclusion in the publishing pipeline, we need the _call,
+# we also allow direct access to this action for piecewise
+# debugging.
+on:
+  workflow_call:
+    inputs:
+      # The name of the artifact to be saved
+      saveName:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      # The name of the artifact to be saved
+      saveName:
+        required: true
+        type: string
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os}}
+    # This will automatically split off concurrent jobs running-on each value
+    runs-on: ${{ matrix.os}}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+#        os: [ubuntu-latest]
+
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # This is supposed to cache the downloads to pip for reuse later in this
+      # pipeline; unclear to what extent what is here accomplishes that.
+      - uses: actions/setup-python@v4
+        with:
+          python-version: |
+            3.8
+            3.9
+            3.10
+          cache: 'pip'
+          cache-dependency-path: pyproject.toml
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.14.1
+        # Allows us to specify cibuildwheel specific environment variables.
+        # Included in the comment was something helpful to limit the build
+        # output during trialing.
+#        env:
+#          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9, <3.10"
+        with:
+          output-dir: wheelhouse
+
+      # retention days param critical for cost saving wrt free/paid storage.
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{inputs.saveName}}
+          path: ./wheelhouse/
+          retention-days: 1

@@ -1,0 +1,41 @@
+# buildWheels.yml output matching replacement.
+#
+# Instead of actually building, it grabs a wheel from the repo at the specified
+# location and saves it in the same way as buildWheels would. This allows for
+# trialing the rest of the workflow without having to recompile a wheel.
+#
+# Currently, no such folder exists in the repo; during manual testing such
+# a folder would need to be added and filled.
+#
+# Effects: artifact containing the wheels is saved
+
+name: BuildWheels(Dummy)
+
+on:
+  workflow_call:
+    inputs:
+      # The name of the artifact to be saved
+      saveName:
+        required: true
+        type: string
+      # Path to the folder of wheels to be saved
+      dummyPath:
+        required: true
+        type: string
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os}}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{inputs.saveName}}
+          path: ${{dummyPath}}
+          retention-days: 1

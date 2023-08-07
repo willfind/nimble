@@ -1,0 +1,10 @@
+# Requirements needed to build the docs and examples.
+sphinx
+nbsphinx
+numpydoc
+weasyprint
+pytest
+ipykernel
+
+# Additionally, pandoc is required to be installed at the system level.
+

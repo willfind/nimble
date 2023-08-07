@@ -28,7 +28,8 @@ classifiers = [
 dynamic = ['version']
 dependencies = [
         'numpy>=1.14',
-        'packaging>=20.0'
+        'packaging>=20.0',
+        'tomli>=2.0'
         ]
 
 
@@ -105,9 +106,12 @@ version = {attr = "nimble.__version__"}
 skip = ["*-win32", "*-manylinux_i686", "pp*", "*-musllinux_*"]
 
 # script to remove .py and .c files from wheel
-repair-wheel-command = "python remove_source.py {dest_dir} {wheel}"
+#repair-wheel-command = "python remove_source.py {dest_dir} {wheel}"
+# we don't want the extra bundling to occur via auditwheel / delocate
+repair-wheel-command = ""
 
 # Test Env: nimble[all] with pytest and pylint
-test-requires = ['pytest', 'pylint']
-test-extras = ['all']
-test-command = "pytest {project}/tests || true"
+#test-requires = ['pytest', 'pylint']
+#test-extras = ['all']
+#test-command = "pytest {project}/tests/landingPage || true"
+

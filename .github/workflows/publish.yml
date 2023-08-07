@@ -1,0 +1,24 @@
+# Action to publish the built docs, wheels, and examples to ghpages
+
+name: Publish gh-pages site
+
+# Currently, manual execution only. Eventually this will be auto triggered.
+on:
+  workflow_dispatch:
+
+jobs:
+  build-wheels:
+#    uses: ./.github/workflows/dummy_buildWheels.yml
+    uses: ./.github/workflows/buildWheels.yml
+    with:
+      saveName: built_wheels
+
+  build-site:
+    uses: ./.github/workflows/buildSite.yml
+    needs: [build-wheels]
+    with:
+      saveName: built_wheels
+
+  deploy-site:
+    uses: ./.github/workflows/deploySite.yml
+    needs: [build-site]
