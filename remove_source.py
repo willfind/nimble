@@ -15,6 +15,7 @@ If the wheel is within the target directory, it will be written over.
 import subprocess
 import os
 import sys
+import shutil
 
 
 def recursiveRemove(root):
@@ -39,3 +40,8 @@ if __name__ == "__main__":
     recursiveRemove(pkPath)
     cmd = ["python", "-m", "wheel", "pack", pkPath, "-d", targetDir]
     compProc = subprocess.run(cmd, check=True)
+
+    # Since this is being called iteratively on a bundle of wheels with
+    # the same version, we have to clean up the unpacked wheel or
+    # the files will accumulate into each successive wheel
+    shutil.rmtree(pkPath)
