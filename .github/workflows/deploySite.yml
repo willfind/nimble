@@ -20,12 +20,6 @@ jobs:
       contents: read
       pages: write
       id-token: write
-    # This was part of the boilerplate, in order to work within an established
-    # environment for deployment protection stuff. Included for best practices
-    # but as far as I can tell, not really relevant to us currently?
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
