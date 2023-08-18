@@ -47,6 +47,8 @@ paths = nimble.fetchFiles('uci::Metro Interstate Traffic Volume')
 traffic = nimble.data(paths[0], name='Metro Interstate Traffic Volume',
                       returnType="Matrix")
 
+traffic = traffic[2557:, :]
+
 ## The `show` method provides more flexibility for the printed output than
 ## using `print` or `repr`. It prints a description, the `name` and `shape` of
 ## the object and the object data (truncating if necessary) given the
@@ -138,10 +140,9 @@ def holidayToBinary(point):
 
     return newPt
 
-pointsWithHoliday = slice(1368, 1372)
 dateInfoFeatures = ['holiday', 'year', 'month', 'day', 'hour']
 traffic.points.transform(holidayToBinary)
-sample = traffic[pointsWithHoliday, dateInfoFeatures]
+sample = traffic[:, dateInfoFeatures]
 sample.show('Data sample with converted holiday feature', maxHeight=16)
 
 ## We have two features related to categorizing the weather conditions. We saw
@@ -158,7 +159,7 @@ traffic.features.delete('weather_description')
 ## 11 new binary features.
 newCols = traffic.replaceFeatureWithBinaryFeatures('weather_main')
 sampleFts = ['weather_main=Clouds', 'weather_main=Clear', 'weather_main=Mist']
-traffic[pointsWithHoliday, sampleFts].show('Sample of binary weather features',
+traffic[:, sampleFts].show('Sample of binary weather features',
                                            maxHeight=16)
 
 ## Now that we have removed any bad points and transformed all of our data to
