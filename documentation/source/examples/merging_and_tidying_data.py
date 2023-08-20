@@ -36,14 +36,14 @@ In this example we will learn about:
 import nimble
 
 bucket = 'https://storage.googleapis.com/nimble/datasets/tidy/'
-dwtnMinAM = nimble.data(bucket + 'downtown_am_min.csv', returnType="Matrix")
-dwtnMaxAM = nimble.data(bucket + 'downtown_am_max.csv', returnType="Matrix")
-dwtnMinPM = nimble.data(bucket + 'downtown_pm_min.csv', returnType="Matrix")
-dwtnMaxPM = nimble.data(bucket + 'downtown_pm_max.csv', returnType="Matrix")
-airptMinAM = nimble.data(bucket + 'airport_am_min.csv', returnType="Matrix")
-airptMaxAM = nimble.data(bucket + 'airport_am_max.csv', returnType="Matrix")
-airptMinPM = nimble.data(bucket + 'airport_pm_min.csv', returnType="Matrix")
-airptMaxPM = nimble.data(bucket + 'airport_pm_max.csv', returnType="Matrix")
+downtownTempMinAM = nimble.data(bucket + 'downtown_am_min.csv', returnType="Matrix")
+downtownTempMaxAM = nimble.data(bucket + 'downtown_am_max.csv', returnType="Matrix")
+downtownTempMinPM = nimble.data(bucket + 'downtown_pm_min.csv', returnType="Matrix")
+downtownTempMaxPM = nimble.data(bucket + 'downtown_pm_max.csv', returnType="Matrix")
+airportTempMinAM = nimble.data(bucket + 'airport_am_min.csv', returnType="Matrix")
+airportTempMaxAM = nimble.data(bucket + 'airport_am_max.csv', returnType="Matrix")
+airportTempMinPM = nimble.data(bucket + 'airport_pm_min.csv', returnType="Matrix")
+airportTempMaxPM = nimble.data(bucket + 'airport_pm_max.csv', returnType="Matrix")
 
 ## To begin, we create 8 objects from 8 different files. The variable names
 ## and object names for each object represent the weather station location
@@ -51,7 +51,7 @@ airptMaxPM = nimble.data(bucket + 'airport_pm_max.csv', returnType="Matrix")
 ## time of day (AM or PM). All of our files have the same header row and cover
 ## the same date range. Let's look at one of our objects to see these headers
 ## and understand the current format of our data.
-dwtnMinAM.show('Example of data file structure', maxHeight=12)
+downtownTempMinAM.show('Example of data file structure', maxHeight=12)
 
 ## Combining the data ##
 
@@ -63,7 +63,7 @@ dwtnMinAM.show('Example of data file structure', maxHeight=12)
 ftsPM = ['date', 'hr12', 'hr13', 'hr14', 'hr15', 'hr16', 'hr17',
          'hr18', 'hr19', 'hr20', 'hr21', 'hr22', 'hr23']
 
-for obj in [dwtnMinPM, dwtnMaxPM, airptMinPM, airptMaxPM]:
+for obj in [downtownTempMinPM, downtownTempMaxPM, airportTempMinPM, airportTempMaxPM]:
     obj.features.setNames(ftsPM)
 
 ## Now that we've differentiated our features, we can use a `merge` operation
@@ -71,12 +71,12 @@ for obj in [dwtnMinPM, dwtnMaxPM, airptMinPM, airptMaxPM]:
 ## (i.e., we are combining data with the same date) and use `point='union'`
 ## (that is, we want all the points from both files) so that we keep all
 ## possible dates, even if a date is missing for the AM or PM data.
-dwtnMinAM.merge(dwtnMinPM, onFeature='date', point='union')
-dwtnMaxAM.merge(dwtnMaxPM, onFeature='date', point='union')
-airptMinAM.merge(airptMinPM, onFeature='date', point='union')
-airptMaxAM.merge(airptMaxPM, onFeature='date', point='union')
+downtownTempMinAM.merge(downtownTempMinPM, onFeature='date', point='union')
+downtownTempMaxAM.merge(downtownTempMaxPM, onFeature='date', point='union')
+airportTempMinAM.merge(airportTempMinPM, onFeature='date', point='union')
+airportTempMaxAM.merge(airportTempMaxPM, onFeature='date', point='union')
 
-dwtnMinAM.show('Downtown data merged on date', maxHeight=12)
+downtownTempMinAM.show('Downtown data merged on date', maxHeight=12)
 
 ## Next, we can reduce our number of objects from 4 to 2 by combining the
 ## objects with different extremes (min vs. max) for the same location.
@@ -85,38 +85,38 @@ dwtnMinAM.show('Downtown data merged on date', maxHeight=12)
 ## not be able to differentiate between minimum and maximum temperature points
 ## in the combined objects. Once our new feature is added, we can
 ## `points.append` our objects from the same weather station.
-for obj in [dwtnMinAM, dwtnMaxAM, airptMinAM, airptMaxAM]:
+for obj in [downtownTempMinAM, downtownTempMaxAM, airportTempMinAM, airportTempMaxAM]:
     extreme = 'min' if 'min' in obj.path else 'max'
     ftData = [[extreme] for _ in range(len(obj.points))]
     newFt = nimble.data(ftData, featureNames=['extreme'])
     # New feature will be added at index position 1 (after "date" feature)
     obj.features.insert(1, newFt)
 
-dwtnMinAM.points.append(dwtnMaxAM)
-airptMinAM.points.append(airptMaxAM)
+downtownTempMinAM.points.append(downtownTempMaxAM)
+airportTempMinAM.points.append(airportTempMaxAM)
 
-dwtnMinAM.show('Downtown combined extreme data', maxHeight=12)
+downtownTempMinAM.show('Downtown combined extreme data', maxHeight=12)
 
 ## Finally, we can combine our two objects into one by combining our two
 ## weather stations (downtown vs. airport). Just like in the last step, we need
 ## to create a new 'station' feature for each object based on which weather
 ## station location (downtown vs. airport) recorded the data.
-for obj in [dwtnMinAM, airptMinAM]:
+for obj in [downtownTempMinAM, airportTempMinAM]:
     station = 'downtown' if 'downtown' in obj.path else 'airport'
     stationData = [[station] for _ in range(len(obj.points))]
     newFt = nimble.data(stationData, featureNames=['station'])
     obj.features.insert(1, newFt)
 
-dwtnMinAM.points.append(airptMinAM)
+downtownTempMinAM.points.append(airportTempMinAM)
 
-## Since all of these operations have been in-place, our `dwtnMinAM` object
+## Since all of these operations have been in-place, our `downtownTempMinAM` object
 ## now contains all of our data from the 8 files. This variable name could be
 ## confusing so, for clarity, let's assign this object to a new variable name,
 ## `tempData`. Let's also sort our data by date, so that we can double check
 ## that each date has a minimum and maximum temperature recording for each
 ## weather station. Taking a look at our data will also help us start exploring
 ## how we can begin to tidy it.
-tempData = dwtnMinAM
+tempData = downtownTempMinAM
 tempData.name = 'combinedTemperatureData'
 tempData.points.sort('date')
 

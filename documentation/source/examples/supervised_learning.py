@@ -110,10 +110,10 @@ nimble.showLearnerParameterDefaults('sklearn.KNeighborsRegressor')
 tuning = nimble.Tuning(validation=0.2, performanceFunction=rootMeanSquareError)
 # some interfaces have alias options for the package name
 # below we use the alias 'skl' for the 'sklearn' package.
-knnTL = nimble.train('skl.KNeighborsRegressor', trainX, trainY,
+knnModel = nimble.train('skl.KNeighborsRegressor', trainX, trainY,
                      arguments={'n_neighbors': nimble.Tune([3, 5, 7])},
                      tuning=tuning)
-hgbTL = nimble.train('skl.HistGradientBoostingRegressor', trainX, trainY,
+hgbModel = nimble.train('skl.HistGradientBoostingRegressor', trainX, trainY,
                     learning_rate=nimble.Tune([0.1, 0.5, 1]),
                     tuning=tuning)
 
@@ -139,8 +139,8 @@ for result, args in zip(hgbTL.tuning.allResults, hgbTL.tuning.allArguments):
 ## the best performance was not that great. However, `hgbTL` seems promising,
 ## with a `learning_rate` of 0.5 outperforming the default of 0.1. As a final
 ## check, let's see how it performs on our testing (out-of-sample) data.
-gbPerf = hgbTL.test(rootMeanSquareError, testX, testY)
-print('sklearn.HistGradientBoostingRegressor', 'learning_rate=0.5', 'error', gbPerf)
+hgbPerf = hgbTL.test(rootMeanSquareError, testX, testY)
+print('sklearn.HistGradientBoostingRegressor', 'learning_rate=0.5', 'error', hgbPerf)
 
 ## Applying our learner ##
 
@@ -149,7 +149,7 @@ print('sklearn.HistGradientBoostingRegressor', 'learning_rate=0.5', 'error', gbP
 ## learning rate of 0.5 is our best model. Now we will apply our `hgbTL`
 ## trained learner to our `forecast` dataset to predict traffic volumes for a
 ## future day.
-predictedTraffic = hgbTL.apply(forecast)
+predictedTraffic = hgbModel.apply(forecast)
 predictedTraffic.features.setNames('volume', oldIdentifiers=0)
 
 ## Before printing, we will append the `hour` feature from `forecasts` to get
