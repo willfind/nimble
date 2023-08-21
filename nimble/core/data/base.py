@@ -5682,3 +5682,121 @@ class Base(ABC):
     @abstractmethod
     def _binaryOperations_implementation(self, opName, other):
         pass
+    
+    ################
+    # Stats methods #
+    ###############
+    
+    def _vectorize(self):
+        baseVector = self
+        baseVector.flatten()
+        return baseVector
+    
+    def max(self):
+        """
+        Returns the maximum value in the nimble object.
+           
+        See Also
+        --------
+        minimum
+
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.max()
+        22
+        # """
+        return nimble.calculate.maximum(self._vectorize())
+
+    def mean(self):
+        """
+        Returns the mean value in the nimble object.
+
+        See Also
+        --------
+        median
+
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.mean()
+        9
+        """
+        return nimble.calculate.mean(self._vectorize())
+    
+    def median(self):
+        """
+        Returns the median value in the nimble object.
+        
+        See Also
+        --------
+        mean
+
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [33, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.median()
+        
+        """
+        return nimble.calculate.median(self._vectorize())
+    
+    def min(self):
+        """
+        Returns the minimum value in the nimble object.
+
+        See Also
+        --------
+        maximum
+
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.min()
+        0
+        """
+        return nimble.calculate.minimum(self._vectorize())
+    
+    def uniqueCount(self):
+        """
+        Returns the number of unique values in the nimble object.
+
+        Examples
+        --------
+        >>> lst = [[0, 22, 2], [3, 22, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.uniqueCount()
+        5
+        """
+        return nimble.calculate.uniqueCount(self._vectorize())
+
+    def proportionMissing(self):
+        """
+        Returns a number representing the proportion of
+        values that are None or NaN in the nimble object.
+
+        Examples
+        --------
+        >>> lst = [[float('nan'), float('nan'), 0], [0, 2, float('nan')]]
+        >>> X = nimble.data(lst)
+        >>> X.proportionMissing()
+        0.5
+        """
+        return nimble.calculate.proportionMissing(self._vectorize())
+    
+    def proportionZero(self):
+        """
+        Returns a number representing the proportion of values
+        that are equal to zero in the nimble object.
+
+        Examples
+        --------
+        >>> lst = [[1, 2, 0], [0, 0, 5]]
+        >>> X = nimble.data(lst)
+        >>> X.proportionZero()
+        0.5
+        """
+        return nimble.calculate.proportionZero(self._vectorize())

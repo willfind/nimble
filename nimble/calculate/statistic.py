@@ -127,6 +127,7 @@ def _minmax(values, minmax):
     """
     Backend for finding the minimum or maximum value in a vector.
     """
+    #import pdb; pdb.set_trace()
     # convert to list not array b/c arrays won't error with non numeric data
     if values.getTypeString() == 'Sparse':
         toProcess = values._data.data.tolist()
@@ -183,6 +184,7 @@ def mean(values):
     >>> mean(vector)
     2.0
     """
+    #import pdb; pdb.set_trace()
     if values.getTypeString() == 'Sparse':
         nonZero = values._data.data.astype(np.float_)
         numNan = np.sum(np.isnan(nonZero))

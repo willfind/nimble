@@ -4368,3 +4368,57 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         exp = toTest.features.statistics('populationstd')
         res = toTest.features.populationStandardDeviation()
         assert exp == res
+
+     ############################
+    # statistic methods: base #
+    ############################
+    
+    def test_base_max(self):
+        raw = [[0, 23, 2], [3, 22, 5]]
+        toTest = self.constructor(raw)
+        res = toTest.max()
+        exp = 23
+        assert exp == res
+    
+    def test_base_min(self):
+        raw = [[0, 22, 2], [3, 22, 5]]
+        toTest = self.constructor(raw)
+        res = toTest.min()
+        exp = 0
+        assert exp == res
+    
+    def test_base_mean(self):
+        raw = [[0, 22, 2], [3, 22, 5]]
+        toTest = self.constructor(raw)
+        exp = 9
+        res = toTest.mean()
+        assert exp == res
+
+    def test_base_median(self):
+        raw = [[0, 22, 2], [33, 22, 5]]
+        toTest = self.constructor(raw)
+        exp = 13.5
+        res = toTest.median()
+        assert exp == res
+    
+    def test_base_unique_count(self):
+        raw = [[1, 0, 0], [0,0,5]]
+        toTest = self.constructor(raw)
+        exp = 3
+        res = toTest.uniqueCount()
+        assert exp == res
+    
+    def test_base_proportion_missing(self):
+        raw = [[1, float('nan'), float('nan')], [0, float('nan'),5]]
+        toTest = self.constructor(raw)
+        exp =   0.5
+        res = toTest.proportionMissing()
+        assert exp == res
+    
+    def test_base_proportion_zero(self):
+        raw = [[1, 2, 0], [0,0,5]]
+        toTest = self.constructor(raw)
+        exp = 0.5
+        res = toTest.proportionZero()
+        assert exp == res
+    
