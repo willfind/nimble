@@ -30,12 +30,15 @@ constitutes agreement to the Nimble
 .. |lin3_8| replace:: :download:`nimble-0.4.2-cp38-cp38-linux_x86_64.whl <wheels/nimble-0.4.2-cp38-cp38-linux_x86_64.whl>`
 .. |lin3_9| replace:: :download:`nimble-0.4.2-cp39-cp39-linux_x86_64.whl <wheels/nimble-0.4.2-cp39-cp39-linux_x86_64.whl>`
 .. |lin310| replace:: :download:`nimble-0.4.2-cp310-cp310-linux_x86_64.whl <wheels/nimble-0.4.2-cp310-cp310-linux_x86_64.whl>`
+.. |lin311| replace:: :download:`nimble-0.4.2-cp311-cp311-linux_x86_64.whl <wheels/nimble-0.4.2-cp311-cp311-linux_x86_64.whl>`
 .. |mac3_8| replace:: :download:`nimble-0.4.2-cp38-cp38-macosx_10_9_x86_64.whl <wheels/nimble-0.4.2-cp38-cp38-macosx_10_9_x86_64.whl>`
 .. |mac3_9| replace:: :download:`nimble-0.4.2-cp39-cp39-macosx_10_9_x86_64.whl <wheels/nimble-0.4.2-cp39-cp39-macosx_10_9_x86_64.whl>`
 .. |mac310| replace:: :download:`nimble-0.4.2-cp310-cp310-macosx_10_9_x86_64.whl <wheels/nimble-0.4.2-cp310-cp310-macosx_10_9_x86_64.whl>`
+.. |mac311| replace:: :download:`nimble-0.4.2-cp311-cp311-macosx_10_9_x86_64.whl <wheels/nimble-0.4.2-cp311-cp311-macosx_10_9_x86_64.whl>`
 .. |win3_8| replace:: :download:`nimble-0.4.2-cp38-cp38-win_amd64.whl <wheels/nimble-0.4.2-cp38-cp38-win_amd64.whl>`
 .. |win3_9| replace:: :download:`nimble-0.4.2-cp39-cp39-win_amd64.whl <wheels/nimble-0.4.2-cp39-cp39-win_amd64.whl>`
 .. |win310| replace:: :download:`nimble-0.4.2-cp310-cp310-win_amd64.whl <wheels/nimble-0.4.2-cp310-cp310-win_amd64.whl>`
+.. |win311| replace:: :download:`nimble-0.4.2-cp311-cp311-win_amd64.whl <wheels/nimble-0.4.2-cp311-cp311-win_amd64.whl>`
 
 .. table::
    :align: left
@@ -49,18 +52,24 @@ constitutes agreement to the Nimble
    | Linux   | 3.9    | |lin3_9|  |
    +         +--------+-----------+
    |         | 3.10   | |lin310|  |
+   +         +--------+-----------+
+   |         | 3.11   | |lin311|  |
    +---------+--------+-----------+
    |         | 3.8    | |mac3_8|  |
    +         +--------+-----------+
    | Mac     | 3.9    | |mac3_9|  |
    +         +--------+-----------+
    |         | 3.10   | |mac310|  |
+   +         +--------+-----------+
+   |         | 3.11   | |mac311|  |
    +---------+--------+-----------+
    |         | 3.8    | |win3_8|  |
    +         +--------+-----------+
    | Windows | 3.9    | |win3_9|  |
    +         +--------+-----------+
    |         | 3.10   | |win310|  |
+   +         +--------+-----------+
+   |         | 3.11   | |win311|  |
    +---------+--------+-----------+
 
 
