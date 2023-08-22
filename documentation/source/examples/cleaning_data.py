@@ -115,16 +115,6 @@ traffic.show('New parsed features in traffic data', maxHeight=16)
 ## we won't dig into the details but Nimble can definitely handle complex cases
 ## like this one. The purpose of the function is to create a binary feature
 ## that identifies the points in the data that occur on a holiday.
-
-# TO BE REMOVED: finding HOLIDAY unique 
-# also : how do we show something in the page? 
-holiday_strip = traffic.features['holiday']
-holiday_strip.points.unique()  #this reveals a bunch of unique points and we pick Christmas Day
-christmas_points = traffic.points.copy('holiday == Christmas Day')
-# we realize chirstmas is only flagged for hour 0 on the days
-# we then say, let's get the slice for christmas day
-
-
  
 holidayIndex = traffic.features.getIndex('holiday')
 currentHoliday = {'date': None}
