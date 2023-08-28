@@ -47,6 +47,8 @@ paths = nimble.fetchFiles('uci::Metro Interstate Traffic Volume')
 traffic = nimble.data(paths[0], name='Metro Interstate Traffic Volume',
                       returnType="Matrix")
 
+## For clarity of the outputs we're cutting off a portion of the data;
+## but all operations still work successfully on the whole dataset.
 traffic = traffic[2557:, :]
 
 ## The `show` method provides more flexibility for the printed output than
