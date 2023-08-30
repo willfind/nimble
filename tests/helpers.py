@@ -7,6 +7,8 @@ existing tests which are also testing other functionality.
 from functools import wraps, partial
 
 import pytest
+import os
+import tempfile
 
 import nimble
 from nimble.exceptions import PackageException
@@ -251,3 +253,17 @@ def skipMissingPackage(package):
         missing = True
     reason = package + ' package is not available'
     return pytest.mark.skipif(missing, reason=reason)
+
+
+class PortableNamedTempFile():
+    def __init__(self, delete=False, **kwargs):
+        assert delete == False
+        self.file = tempfile.NamedTemporaryFile(**kwargs)
+        self.file.close()
+
+    def __enter__(self):
+        return self.file
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.file.__exit__(exc_type, exc_value, traceback)
+        os.remove(self.file.name)
