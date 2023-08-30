@@ -6,7 +6,6 @@ import os
 import shutil
 import sys
 import sqlite3
-import tempfile
 import re
 import functools
 from io import StringIO
@@ -21,7 +20,7 @@ from nimble.exceptions import InvalidArgumentValueCombination
 from nimble.exceptions import InvalidArgumentType
 from tests.helpers import raises, patch
 from tests.helpers import getDataConstructors
-from tests.helpers import PortableNamedTempFile
+from tests.helpers import PortableNamedTempFileContext
 
 #####################
 # Helpers for tests #
@@ -203,7 +202,7 @@ def testLoadTypeFunctionsUseLog():
     assert "'numPoints': 4" in logInfo
     assert "'numFeatures': 1" in logInfo
 
-    with PortableNamedTempFile(suffix=".pickle") as tmpFile:
+    with PortableNamedTempFileContext(suffix=".pickle") as tmpFile:
         trainXObj.save(tmpFile.name)
         _ = nimble.data(tmpFile.name)
     logInfo = getLastLogData()
@@ -220,7 +219,7 @@ def testLoadTypeFunctionsUseLog():
 
     # loadTrainedLearner
     tl = nimble.train('nimble.KNNClassifier', trainXObj, trainYObj, arguments={'k': 1})
-    with PortableNamedTempFile(suffix=".pickle") as tmpFile:
+    with PortableNamedTempFileContext(suffix=".pickle") as tmpFile:
         tl.save(tmpFile.name)
         _ = nimble.loadTrainedLearner(tmpFile.name)
     logInfo = getLastLogData()
@@ -808,7 +807,7 @@ def testShowLogToFile():
     nimble.data([[4, 5], [6, 7], [8, 9]], useLog=True)
     # write to log
     location = nimble.settings.get("logger", "location")
-    with PortableNamedTempFile() as out:
+    with PortableNamedTempFileContext() as out:
         pathToFile = out.name
         nimble.showLog(saveToFileName=pathToFile)
         assert os.path.exists(pathToFile)

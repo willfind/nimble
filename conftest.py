@@ -21,7 +21,7 @@ TEMPDIRLOG = tempfile.TemporaryDirectory()
 DUMMYCONFIG = {
     'logger': {'location': TEMPDIRLOG.name,
                'name': "tmpLogs",
-               'enabledByDefault': "True",
+               'enabledByDefault': "False",
                'enableDeepLogging': "False"},
     'fetch': {'location': TEMPDIRLOG.name}
     }

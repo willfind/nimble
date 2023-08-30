@@ -255,15 +255,27 @@ def skipMissingPackage(package):
     return pytest.mark.skipif(missing, reason=reason)
 
 
-class PortableNamedTempFile():
-    def __init__(self, delete=False, **kwargs):
-        assert delete == False
-        self.file = tempfile.NamedTemporaryFile(**kwargs)
-        self.file.close()
+class PortableNamedTempFileContext():
+    """
+    A wrapper for NamedTemporaryFile which guarantees that closing
+    will not delete the file, and that once the context wrapper
+    is exited, the file will always be deleted.
+
+    This is to help ease the difference between nix and Windows
+    systems. In the former one can open an already open file,
+    in the latter, it can only be closed and then reopened.
+    This allows tests to be written for both with a minimum of
+    pain, requiring only that the close() calls are added where
+    needed.
+    """
+    def __init__(self, *args, **kwargs):
+        assert "delete" not in kwargs
+        kwargs["delete"] = False
+        self.file = tempfile.NamedTemporaryFile(*args, **kwargs)
 
     def __enter__(self):
-        return self.file
+        return self.file.__enter__()
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.file.__exit__(exc_type, exc_value, traceback)
+    def __exit__(self, *args, **kwargs):
+        self.file.__exit__(*args, **kwargs)
         os.remove(self.file.name)

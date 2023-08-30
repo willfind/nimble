@@ -12,7 +12,6 @@ count should make use of the wrappers in tests/assertionHelpers.py
 """
 
 import sys
-import tempfile
 
 import nimble
 import nimble.calculate as calculate
@@ -27,6 +26,7 @@ from nimble.core.data import Features
 from nimble.core.interfaces.universal_interface import TrainedLearner
 from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import getDataConstructors
+from tests.helpers import PortableNamedTempFileContext
 
 ALL_USER_FACING = []
 modules = [nimble, calculate, exceptions, fill, match, random]
@@ -358,7 +358,7 @@ def testAllClassesDunderFunctions():
 ###########
 
 def captureOutput(toCall):
-    with tempfile.TemporaryFile(mode='w') as tmpFile:
+    with PortableNamedTempFileContext(mode='w') as tmpFile:
         backupOut = sys.stdout
         sys.stdout = tmpFile
         try:

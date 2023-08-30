@@ -3,14 +3,13 @@ Group of tests which checks that use controlled local and global
 mechanisms for controlling logging are functioning as expected.
 """
 
-import tempfile
-
 import numpy as np
 
 import nimble
 from nimble.calculate import fractionIncorrect
 from tests.helpers import generateClassificationData
 from tests.helpers import getDataConstructors
+from tests.helpers import PortableNamedTempFileContext
 
 constructors = getDataConstructors()
 nonViewConstructors = getDataConstructors(includeViews=False)
@@ -64,7 +63,7 @@ def test_data():
 
     for constructor in constructors:
         obj = constructor([[1, 2, 3], [4, 5, 6]], useLog=False)
-        with tempfile.NamedTemporaryFile(suffix='.pickle') as tmpFile:
+        with PortableNamedTempFileContext(suffix='.pickle') as tmpFile:
             obj.save(tmpFile.name)
             back_load(nimble.data, tmpFile.name)
 
@@ -79,7 +78,7 @@ def test_loadTrainedLearner():
         trainX = constructor([[0, 0, 1], [0, 1, 0], [1, 0, 0]], useLog=False)
         trainY = constructor([[3], [2], [1]], useLog=False)
         tl = nimble.train('nimble.KNNClassifier', trainX, trainY)
-        with tempfile.NamedTemporaryFile(suffix='.pickle') as tmpFile:
+        with PortableNamedTempFileContext(suffix='.pickle') as tmpFile:
             tl.save(tmpFile.name)
             back_load(nimble.loadTrainedLearner, tmpFile.name)
 

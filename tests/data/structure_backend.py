@@ -13,7 +13,6 @@ points.transform, features.transform, transformElements, replaceRectangle,
 flatten, merge, unflatten, points.append, features.append,
 """
 
-import tempfile
 import os
 import os.path
 import copy
@@ -43,6 +42,7 @@ from tests.helpers import noLogEntryExpected, oneLogEntryExpected
 from tests.helpers import assertNoNamesGenerated
 from tests.helpers import assertCalled
 from tests.helpers import getDataConstructors
+from tests.helpers import PortableNamedTempFileContext
 from .baseObject import DataTestObject
 
 ### Helpers used by tests in the test class ###
@@ -771,7 +771,7 @@ class StructureDataSafeSparseSafe(StructureShared):
         data = [[1, 2, 3], [1, 0, 3], [2, 4, 6], [0, 0, 0]]
         name = 'copyTestName'
         orig = self.constructor(data)
-        with tempfile.NamedTemporaryFile(suffix=".csv") as source:
+        with PortableNamedTempFileContext(suffix=".csv") as source:
             orig.save(source.name, 'csv', includeNames=False)
             orig = self.constructor(source.name, name=name)
             path = source.name
@@ -4412,13 +4412,13 @@ class StructureModifyingSparseSafe(StructureShared):
         fromList = self.constructor(source=[[1, 2, 3]])
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(mode='w', suffix=".csv") as tmpCSV:
+        with PortableNamedTempFileContext(mode='w', suffix=".csv") as tmpCSV:
             tmpCSV.write("1,2,3\n")
             tmpCSV.flush()
             fromCSV = self.constructor(source=tmpCSV.name)
 
         # instantiate from mtx array file
-        with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXArr:
+        with PortableNamedTempFileContext(mode='w', suffix=".mtx") as tmpMTXArr:
             tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
             tmpMTXArr.write("1 3\n")
             tmpMTXArr.write("1\n")
@@ -4428,7 +4428,7 @@ class StructureModifyingSparseSafe(StructureShared):
             fromMTXArr = self.constructor(source=tmpMTXArr.name)
 
         # instantiate from mtx coordinate file
-        with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXCoo:
+        with PortableNamedTempFileContext(mode='w', suffix=".mtx") as tmpMTXCoo:
             tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
             tmpMTXCoo.write("1 3 3\n")
             tmpMTXCoo.write("1 1 1\n")
@@ -4451,7 +4451,7 @@ class StructureModifyingSparseSafe(StructureShared):
         fromList = self.constructor(source=[[1, 2, 3]], pointNames=['1P'], featureNames=['one', 'two', 'three'])
 
         # instantiate from csv file
-        with tempfile.NamedTemporaryFile(mode='w', suffix=".csv") as tmpCSV:
+        with PortableNamedTempFileContext(mode='w', suffix=".csv") as tmpCSV:
             tmpCSV.write("\n")
             tmpCSV.write("\n")
             tmpCSV.write("pointNames,one,two,three\n")
@@ -4460,7 +4460,7 @@ class StructureModifyingSparseSafe(StructureShared):
             fromCSV = self.constructor(source=tmpCSV.name)
 
         # instantiate from mtx file
-        with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXArr:
+        with PortableNamedTempFileContext(mode='w', suffix=".mtx") as tmpMTXArr:
             tmpMTXArr.write("%%MatrixMarket matrix array integer general\n")
             tmpMTXArr.write("%#1P\n")
             tmpMTXArr.write("%#one,two,three\n")
@@ -4472,7 +4472,7 @@ class StructureModifyingSparseSafe(StructureShared):
             fromMTXArr = self.constructor(source=tmpMTXArr.name)
 
         # instantiate from mtx coordinate file
-        with tempfile.NamedTemporaryFile(mode='w', suffix=".mtx") as tmpMTXCoo:
+        with PortableNamedTempFileContext(mode='w', suffix=".mtx") as tmpMTXCoo:
             tmpMTXCoo.write("%%MatrixMarket matrix coordinate integer general\n")
             tmpMTXCoo.write("%#1P\n")
             tmpMTXCoo.write("%#one,two,three\n")
