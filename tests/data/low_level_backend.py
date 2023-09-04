@@ -1462,4 +1462,41 @@ class LowLevelBackend(object):
         except AttributeError as e:
             err_message = str(e)
             assert err_message == "Attribute columns does not exist for Nimble data objects. Try .features.getNames() instead."
+            
+    def test_ml_getattr_suggestions(self):
+        #import pdb; pdb.set_trace()
+        data = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+        ftNames = ['a', 'b' ,'c', 'label']
+        trainData = nimble.data(data, featureNames=ftNames)
+        toTest = nimble.train('nimble.KNNClassifier', trainX=trainData,trainY='label')
+                
+        try:
+            toTest.fit()
+        except AttributeError as e:
+            err_message = str(e)
+            assert err_message == "Attribute fit does not exist for Nimble model objects. Try .train() instead."
+            
+        try:
+            toTest.predict()
+        except AttributeError as e:
+            err_message = str(e)
+            assert err_message == "Attribute predict does not exist for Nimble model objects. Try .apply() instead."
 
+    def test_nimble_ml_getattr_suggestions(self):
+        #import pdb; pdb.set_trace()
+        data = [[1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3], [1, 0, 0, 1], [0, 1, 0, 2], [0, 0, 1, 3]]
+        ftNames = ['a', 'b' ,'c', 'label']
+        trainData = nimble.data(data, featureNames=ftNames)
+        #toTest = nimble.train('nimble.KNNClassifier', trainX=trainData,trainY='label')
+                
+        try:
+            toTest = nimble.fit(trainData)
+        except AttributeError as e:
+            err_message = str(e)
+            assert err_message == "Attribute fit does not exist for Nimble model objects. Try .train() instead."
+            
+        # try:
+        #     toTest.predict()
+        # except AttributeError as e:
+        #     err_message = str(e)
+        #     assert err_message == "Attribute predict does not exist for Nimble model objects. Try .apply() instead."
