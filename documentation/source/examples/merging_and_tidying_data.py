@@ -177,7 +177,7 @@ tempData.show('Split points by collapsing the hour features', maxHeight=16)
 ## feature by transforming the former feature name strings into integers. Then,
 ## we will sort our data so that `show` will clearly display point pairs
 ## that need to be combined for our data to be tidy.
-tempData.features.transform(lambda ft: [int(v[2:]) for v in ft],
+tempData.features.transform(lambda ft: [int(hourStr[2:]) for hourStr in ft],
                             features=['hour'])
 tempData.points.sort(['date', 'hour'])
 tempData.show('Date and hour sorted', maxHeight=16)
