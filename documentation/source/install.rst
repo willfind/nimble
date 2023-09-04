@@ -296,3 +296,36 @@ Binary Wheels
 The installation commands we document on this page will automatically find the correct
 precompiled binary wheel from the possible options in the table below. Not all
 systems and python versions are supported.
+
+.. flat-table::
+  :align: left
+  :widths: auto
+  :header-rows: 1
+
+  * - OS
+    - Python Version
+    - Architecture
+
+  * - :rspan:`3` MacOS
+    - 3.8
+    - :download:`nimble-0.4.2-cp38-cp38-macosx_10_9_x86_64.whl <wheels/nimble-0.4.2-cp38-cp38-macosx_10_9_x86_64.whl>`
+  * - 3.9
+    - :download:`nimble-0.4.2-cp39-cp39-macosx_10_9_x86_64.whl <wheels/nimble-0.4.2-cp39-cp39-macosx_10_9_x86_64.whl>`
+  * - 3.10
+    - :download:`nimble-0.4.2-cp310-cp310-macosx_10_9_x86_64.whl <wheels/nimble-0.4.2-cp310-cp310-macosx_10_9_x86_64.whl>`
+  * - 3.11
+    - :download:`nimble-0.4.2-cp311-cp311-macosx_10_9_universal2.whl <wheels/nimble-0.4.2-cp311-cp311-macosx_10_9_universal2.whl>`
+  * - :rspan:`2` Linux
+    - 3.8
+    - :download:`nimble-0.4.2-cp38-cp38-linux_x86_64.whl <wheels/nimble-0.4.2-cp38-cp38-linux_x86_64.whl>`
+  * - 3.9
+    - :download:`nimble-0.4.2-cp39-cp39-linux_x86_64.whl <wheels/nimble-0.4.2-cp39-cp39-linux_x86_64.whl>`
+  * - 3.10
+    - :download:`nimble-0.4.2-cp310-cp310-linux_x86_64.whl <wheels/nimble-0.4.2-cp310-cp310-linux_x86_64.whl>`
+  * - :rspan:`2` Windows
+    - 3.8
+    - :download:`nimble-0.4.2-cp38-cp38-win_amd64.whl <wheels/nimble-0.4.2-cp38-cp38-win_amd64.whl>`
+  * - 3.9
+    - :download:`nimble-0.4.2-cp39-cp39-win_amd64.whl <wheels/nimble-0.4.2-cp39-cp39-win_amd64.whl>`
+  * - 3.10
+    - :download:`nimble-0.4.2-cp310-cp310-win_amd64.whl <wheels/nimble-0.4.2-cp310-cp310-win_amd64.whl>`
