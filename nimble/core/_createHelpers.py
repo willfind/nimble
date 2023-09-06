@@ -21,6 +21,7 @@ import locale
 import pickle
 import numbers
 import itertools
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -481,39 +482,40 @@ def _extractNamesFromDict(rawData, pointNames, featureNames, copied):
     if rawData:
         ptNames = list(rawData.keys())
         rawData = list(rawData.values())
-        if isinstance(rawData[0], dict):
-            # pointNames were keys and rawData is now a list of dicts
-            return extractNames(rawData, ptNames, featureNames, copied,
-                                False)
-        if featureNames is True:
-            msg = 'featureNames cannot be True when source is a dict'
-            raise InvalidArgumentValue(msg)
-        rawData = numpy2DArray(rawData, dtype=np.object_)
-        copied = True
-        pointNames, rawData = _dictNames('point', pointNames, ptNames,
-                                         rawData)
-        if len(ptNames) != len(rawData):
-            # {'a':[1,3],'b':[2,4],'c':['a','b']} -> keys = ['a', 'c', 'b']
-            # np.matrix(values()) = [[1,3], ['a', 'b'], [2,4]]
-            # transpose is not needed
-            # {'a':1, 'b':2, 'c':3} --> keys = ['a', 'c', 'b']
-            # np.matrix(values()) = [[1,3,2]]
-            # thus transpose is needed
-            rawData = transposeMatrix(rawData)
-    else: # rawData={}
-        rawData = np.empty([0, 0])
-        copied = True
-        if pointNames is True:
-            msg = 'pointNames cannot be True when data is an empty dict'
-            raise InvalidArgumentValue(msg)
-        pointNames = None
+        # Validates consistency between pointNames (passed in by user),
+        # ptNames (embedded in data), and rawData (order consistency).
+        pointNames, rawData = _dictNames('point', pointNames, ptNames, rawData)
 
-    if featureNames == 'automatic' or featureNames is False:
-        featureNames = None
-    if pointNames is False:
-        pointNames = None
+        # This was a feature vector dict, we have extracted the pointNames
+        # and there is nothing more to pull out. But we need to transpose
+        # rawData so it will be interpreted as a feature vector
+        if isAllowedSingleElement(rawData[0]):
+            rawData = list(map(lambda val: [val], rawData))
+            copied = True
+            featureNames = None
+            return rawData, pointNames, featureNames, copied
 
-    return rawData, pointNames, featureNames, copied
+        # if we now have list of lists or the like, featureNames are
+        # disallowed from being embedded in them.
+        if isinstance(rawData[0], Sequence):
+            if featureNames is True:
+                msg = 'featureNames cannot be True when source is a dict'
+                raise InvalidArgumentValue(msg)
+
+        # rawData is now a list of lists, a list of dicts, or
+        # something else. In all these cases we go back to extractNames
+        # to handle it.
+        return extractNames(rawData, pointNames, featureNames, copied, False)
+
+    # rawData={}
+    rawData = np.empty([0, 0])
+    copied = True
+    if pointNames is True:
+        msg = 'pointNames cannot be True when data is an empty dict'
+        raise InvalidArgumentValue(msg)
+
+    # empty object has no names.
+    return rawData, None, None, copied
 
 def _extractNamesFromListOfDict(rawData, pointNames, featureNames, copied):
     if pointNames is True:
@@ -640,6 +642,8 @@ def _dictNames(axis, names, foundNames, data):
                 data = data[newOrder]
             else:
                 data = [data[i] for i in newOrder]
+    # If user has specifified ignoring the embedded names, we do no checks
+    # and we mark the name contents as None
     elif names is False:
         names = None
     elif names is not None: # 'automatic' or True
