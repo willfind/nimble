@@ -97,6 +97,7 @@ clean:
 	rm -fr $(EXAMPLESDIR)/logs-nimble
 	rm -fr $(EXAMPLESDIR)/*.ipynb
 	rm -f $(EXAMPLESDIR)/Metro_Interstate_Traffic_Volume_Cleaned.csv
+	git restore $(SOURCEDIR)/install.rst
 
 publish:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(PUBLISHDIR)
@@ -113,6 +114,10 @@ html:
 	@echo
 	python generate_cheatsheets.py
 	@echo "Cheatsheets generated"
+	@echo
+	python add_wheels_install.py
+	@echo "Wheels links table added"
+	@echo
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html"
