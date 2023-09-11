@@ -5682,20 +5682,20 @@ class Base(ABC):
     @abstractmethod
     def _binaryOperations_implementation(self, opName, other):
         pass
-    
+
     ################
     # Stats methods #
     ###############
-    
+
     def _vectorize(self):
-        baseVector = self
+        baseVector = self.copy()
         baseVector.flatten()
         return baseVector
-    
+
     def max(self):
         """
         Returns the maximum value in the nimble object.
-           
+
         See Also
         --------
         minimum
@@ -5706,7 +5706,7 @@ class Base(ABC):
         >>> X = nimble.data(lst)
         >>> X.max()
         22
-        # """
+        """
         return nimble.calculate.maximum(self._vectorize())
 
     def mean(self):
@@ -5722,14 +5722,14 @@ class Base(ABC):
         >>> lst = [[0, 22, 2], [3, 22, 5]]
         >>> X = nimble.data(lst)
         >>> X.mean()
-        9
+        9.0
         """
         return nimble.calculate.mean(self._vectorize())
-    
+
     def median(self):
         """
         Returns the median value in the nimble object.
-        
+
         See Also
         --------
         mean
@@ -5739,10 +5739,10 @@ class Base(ABC):
         >>> lst = [[0, 22, 2], [33, 22, 5]]
         >>> X = nimble.data(lst)
         >>> X.median()
-        
+        13.5
         """
         return nimble.calculate.median(self._vectorize())
-    
+
     def min(self):
         """
         Returns the minimum value in the nimble object.
@@ -5759,7 +5759,7 @@ class Base(ABC):
         0
         """
         return nimble.calculate.minimum(self._vectorize())
-    
+
     def uniqueCount(self):
         """
         Returns the number of unique values in the nimble object.
@@ -5786,7 +5786,7 @@ class Base(ABC):
         0.5
         """
         return nimble.calculate.proportionMissing(self._vectorize())
-    
+
     def proportionZero(self):
         """
         Returns a number representing the proportion of values
@@ -5800,3 +5800,4 @@ class Base(ABC):
         0.5
         """
         return nimble.calculate.proportionZero(self._vectorize())
+    
