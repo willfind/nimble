@@ -2664,6 +2664,7 @@ class Features(ABC):
     # Stats methods #
     ###############
 
+    @limitedTo2D
     def max(self, groupByFeature=None):
         """
         Returns a nimble object representing the maximum
@@ -2693,6 +2694,7 @@ class Features(ABC):
         """
         return self._max(groupByFeature)
 
+    @limitedTo2D
     def mean(self, groupByFeature=None):
         """
         Returns a nimble object representing the mean
@@ -2722,6 +2724,7 @@ class Features(ABC):
         """
         return self._mean(groupByFeature)
 
+    @limitedTo2D
     def median(self, groupByFeature=None):
         """
         Returns a nimble object representing the median
@@ -2751,6 +2754,7 @@ class Features(ABC):
         """
         return self._median(groupByFeature)
 
+    @limitedTo2D
     def min(self, groupByFeature=None):
         """
         Returns a nimble object representing the minimum
@@ -2779,7 +2783,8 @@ class Features(ABC):
         >
         """
         return self._min(groupByFeature)
-    
+
+    @limitedTo2D
     def uniqueCount(self, groupByFeature=None):
         """
         Returns a nimble object representing the number of unique
@@ -2806,6 +2811,7 @@ class Features(ABC):
         
         return self._uniqueCount(groupByFeature)
 
+    @limitedTo2D
     def proportionMissing(self, groupByFeature=None):
         """
         Returns a nimble object representing the proportion of
@@ -2831,6 +2837,7 @@ class Features(ABC):
         """
         return self._proportionMissing(groupByFeature)
 
+    @limitedTo2D
     def proportionZero(self, groupByFeature=None):
         """
         Returns a nimble object representing the proportion of values
@@ -2856,6 +2863,7 @@ class Features(ABC):
         """
         return self._proportionZero(groupByFeature)
 
+    @limitedTo2D
     def standardDeviation(self, groupByFeature=None):
         """
         Returns a nimble object representing the standard deviation 
@@ -2881,7 +2889,7 @@ class Features(ABC):
         """
         return self._standardDeviation(groupByFeature)
 
-
+    @limitedTo2D
     def populationStandardDeviation(self, groupByFeature=None):
         """
         Returns a nimble object representing the population standard
@@ -2906,7 +2914,7 @@ class Features(ABC):
         >
         """
         return self._populationStandardDeviation(groupByFeature)
-    
+
     ####################
     # Abstract Methods #
     ####################
