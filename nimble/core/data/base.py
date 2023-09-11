@@ -5689,7 +5689,7 @@ class Base(ABC):
 
     def _vectorize(self):
         baseVector = self.copy()
-        baseVector.flatten()
+        baseVector.flatten(useLog=False)
         return baseVector
 
     def max(self):

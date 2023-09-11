@@ -4236,90 +4236,101 @@ class HighLevelModifyingSparseSafe(DataTestObject):
      ############################
     # statistic methods: points #
     ############################
-    
+
+    @logCountAssertionFactory(0)
     def test_points_max(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
         exp = toTest.points.statistics('max')
         res = toTest.points.max()
         assert exp == res
-    
+
+    @logCountAssertionFactory(0)
     def test_points_min(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
         exp = toTest.points.statistics('min')
         res = toTest.points.min()
         assert exp == res
-    
+
+    @logCountAssertionFactory(0)
     def test_points_mean(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
         exp = toTest.points.statistics('mean')
         res = toTest.points.mean()
         assert exp == res
-    
+
+    @logCountAssertionFactory(0)
     def test_points_median(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
         exp = toTest.points.statistics('median')
         res = toTest.points.median()
         assert exp == res
-    
+
+    @logCountAssertionFactory(0)
     def test_points_unique_count(self):
         raw =  [[1, 2, 0], [0,0,5]]
         toTest = self.constructor(raw)
         exp = toTest.points.statistics('unique count')
         res = toTest.points.uniqueCount()
         assert exp == res
-    
+
+    @logCountAssertionFactory(0)
     def test_points_proportion_missing(self):
         raw = [[1, 2, 0], [0, float('nan'),5]]
         toTest = self.constructor(raw)
         exp = toTest.points.statistics('proportion missing')
         res = toTest.points.proportionMissing()
         assert exp == res
-    
+
+    @logCountAssertionFactory(0)
     def test_points_proportion_zero(self):
         raw = [[1, 2, 0], [0,0,5]]
         toTest = self.constructor(raw)
         exp = toTest.points.statistics('proportion zero')
         res = toTest.points.proportionZero()
         assert exp == res
-    
+
+    @logCountAssertionFactory(0)
     def test_points_standard_deviation(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
         exp = toTest.points.statistics('std')
         res = toTest.points.standardDeviation()
         assert exp == res
-            
+
+    @logCountAssertionFactory(0)
     def test_points_population_standard_deviation(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
         exp = toTest.points.statistics('populationstd')
         res = toTest.points.populationStandardDeviation()
         assert exp == res
-            
-        
-        
+
+
     ############################
     # statistic methods: features #
     ############################
-    
+
+    @logCountAssertionFactory(0)
     def test_features_max(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
         exp = toTest.features.statistics('max')
         res = toTest.features.max()
         assert exp == res
-    
+
+    @logCountAssertionFactory(0)
     def test_features_min(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
         exp = toTest.features.statistics('min')
         res = toTest.features.min()
         assert exp == res
-    
+
+    @logCountAssertionFactory(0)
     def test_features_mean(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
@@ -4327,41 +4338,47 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         res = toTest.features.mean()
         assert exp == res
 
+    @logCountAssertionFactory(0)
     def test_features_median(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
         exp = toTest.features.statistics('median')
         res = toTest.features.median()
         assert exp == res
-    
+
+    @logCountAssertionFactory(0)
     def test_features_unique_count(self):
         raw = [[1, 0, 0], [0,0,5]]
         toTest = self.constructor(raw)
         exp = toTest.features.statistics('unique count')
         res = toTest.features.uniqueCount()
         assert exp == res
-    
+
+    @logCountAssertionFactory(0)
     def test_features_proportion_missing(self):
         raw = [[1, 2, 0], [0, float('nan'),5]]
         toTest = self.constructor(raw)
         exp =   toTest.features.statistics('proportion missing')
         res = toTest.features.proportionMissing()
         assert exp == res
-    
+
+    @logCountAssertionFactory(0)
     def test_features_proportion_zero(self):
         raw = [[1, 2, 0], [0,0,5]]
         toTest = self.constructor(raw)
         exp = toTest.features.statistics('proportion zero')
         res = toTest.features.proportionZero()
         assert exp == res
-    
+
+    @logCountAssertionFactory(0)
     def test_features_standard_deviation(self):
         raw = [[1, 2, 0], [0,0,5]]
         toTest = self.constructor(raw)
         exp = toTest.features.statistics('std')
         res = toTest.features.standardDeviation()
         assert exp == res
-    
+
+    @logCountAssertionFactory(0)
     def test_features_population_standard_deviation(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
@@ -4372,7 +4389,8 @@ class HighLevelModifyingSparseSafe(DataTestObject):
      ############################
     # statistic methods: base #
     ############################
-    
+
+    @logCountAssertionFactory(0)
     def test_base_max(self):
         raw = [[0, 23, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
@@ -4380,7 +4398,8 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         exp = 23
         assert exp == res
         assert toTest == self.constructor(raw)
-    
+
+    @logCountAssertionFactory(0)
     def test_base_min(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
@@ -4388,7 +4407,8 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         exp = 0
         assert exp == res
         assert toTest == self.constructor(raw)
-    
+
+    @logCountAssertionFactory(0)
     def test_base_mean(self):
         raw = [[0, 22, 2], [3, 22, 5]]
         toTest = self.constructor(raw)
@@ -4397,6 +4417,7 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         assert exp == res
         assert toTest == self.constructor(raw)
 
+    @logCountAssertionFactory(0)
     def test_base_median(self):
         raw = [[0, 22, 2], [33, 22, 5]]
         toTest = self.constructor(raw)
@@ -4404,7 +4425,8 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         res = toTest.median()
         assert exp == res
         assert toTest == self.constructor(raw)
-    
+
+    @logCountAssertionFactory(0)
     def test_base_unique_count(self):
         raw = [[1, 0, 0], [0,0,5]]
         toTest = self.constructor(raw)
@@ -4412,7 +4434,8 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         res = toTest.uniqueCount()
         assert exp == res
         assert toTest == self.constructor(raw)
-    
+
+    @logCountAssertionFactory(0)
     def test_base_proportion_missing(self):
         raw = [[1, float('nan'), float('nan')], [0, float('nan'),5]]
         toTest = self.constructor(raw)
@@ -4420,7 +4443,8 @@ class HighLevelModifyingSparseSafe(DataTestObject):
         res = toTest.proportionMissing()
         assert exp == res
         assert toTest == self.constructor(raw)
-    
+
+    @logCountAssertionFactory(0)
     def test_base_proportion_zero(self):
         raw = [[1, 2, 0], [0,0,5]]
         toTest = self.constructor(raw)
