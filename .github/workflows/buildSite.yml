@@ -43,6 +43,13 @@ jobs:
       - name: install dependency for wheel manipulation
         run: pip install wheel
 
+      - name: validate wheel presence
+        # test -z checks if the input is a zero length string.
+        # The results of the find operation are packed into a string;
+        # if not wheels are found, abort this action so we don't
+        # build and deploy an empty site.
+        run: if test -z "$(find . -maxdepth 1 -name "*.whl")"; then exit 1; fi
+
       - name: remove source scripts for all wheels
         # small bash loop to run the script for each file that satisfies
         # the glob

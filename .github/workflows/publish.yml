@@ -8,14 +8,16 @@ on:
 
 jobs:
   build-wheels:
-#    uses: ./.github/workflows/dummy_buildWheels.yml
     uses: ./.github/workflows/buildWheels.yml
     with:
       saveName: built_wheels
 
   build-site:
-    uses: ./.github/workflows/buildSite.yml
+    # try to build the site regardless of how much of the previous job
+    # matrix completed. There are additional sanity checks within.
+    if: ${{ always() }}
     needs: [build-wheels]
+    uses: ./.github/workflows/buildSite.yml
     with:
       saveName: built_wheels
 
